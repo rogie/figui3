@@ -10,8 +10,10 @@
   --figma-color-bg-tertiary: rgba(230, 230, 230, 1);
   --bg-selected: #F5F5F5;
   --figma-color-bg-brand: #0D99FF;
+  --figma-color-icon-brand: #007BE5;
   --bg-selected-active: #E5F4FF;
   --figma-color-bg-secondary: #F5F5F5;
+  --figma-color-border-selected: #0D99FF;
   --bg-tooltip: #1E1E1E;
   --body-medium-fontSize: 0.6875rem;
   --border-selected: #0D99FF;
@@ -46,6 +48,8 @@
     --figma-color-bg-selected: #3B435E;
     --figma-color-bg-ghost-hover: rgba(255,255,255,0.05);
     --figma-color-bordertranslucent: rgba(255,255,255,0.1);
+    --figma-color-border-selected: #0C8CE9;
+    --figma-color-icon-brand: #7CC4F8;
   }
 }
 html{
@@ -225,10 +229,27 @@ input[type=button]{
     background: none;
     color: var(--figma-color-text);
 
-    &:hover{
+    &:hover:not(:active){
       background-color: var(--figma-color-bg-ghost-hover);
     }
+    &:active{
+      outline: 0;
+      background-color: var(--figma-color-bg-selected);
+    }
+    &[selected=true]{
+      background-color: var(--figma-color-bg-selected);
+    }
+    &:focus{
+      outline: 0;
+      background-color: transparent;
+      box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+    }
   }
+  &[variant="ghost"][icon][selected=true],
+  &[variant="ghost"][icon][selected=true]>button{
+    color: var(--figma-color-icon-brand);
+  }
+
   &[variant="secondary"],
   &[variant="secondary"]>button{
     box-shadow: inset 0 0 0 1px var(--figma-color-border);
@@ -236,7 +257,7 @@ input[type=button]{
     color: var(--figma-color-text);
 
     &:active{
-      background: var(--figma-color-bg-secondary);
+      background-color: var(--figma-color-bg-secondary);
     }
   }
 
@@ -966,6 +987,11 @@ dialog{
   left: 50%;
   margin: 0;
   transform: translate(-50%,-50%);
+  &[position*="bottom"]{
+    bottom: 0.5rem;
+    top: auto;
+    transform: translate(-50%,0);
+  }
 }
 
 /* Tooltip */
@@ -1060,6 +1086,9 @@ fig-tooltip{
 }
 fig-input-text{
   user-select: all;
+  &[multiline]{
+    display: block;
+  }
 }
 fig-input-text[autoresize] textarea,
 fig-input-text[autoresize] input{
@@ -1103,6 +1132,7 @@ fig-header{
 
 fig-content{
   padding: var(--spacer-3);
+  display: block;
 }
 
 vstack,
@@ -1111,7 +1141,6 @@ vstack,
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  align-items: start;
 }
 hstack,
 .hstack,
@@ -1171,4 +1200,3 @@ fig-input-color{
     align-items: stretch;
   }
 }
-
