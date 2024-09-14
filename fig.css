@@ -249,6 +249,10 @@ input[type=button]{
   &[variant="ghost"][icon][selected=true]>button{
     color: var(--figma-color-icon-brand);
   }
+  &[variant="ghost"][disabled=true],
+  &[variant="ghost"][disabled=true]>button{
+    background-color: transparent;
+  }
 
   &[variant="secondary"],
   &[variant="secondary"]>button{
@@ -309,6 +313,9 @@ input[type=button]{
 }
 fig-button{
   padding: 0;
+}
+fig-button>button{
+    width: 100%;
 }
 
 
@@ -1199,4 +1206,21 @@ fig-input-color{
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+fig-spinner{
+  width: 1rem;
+  height: 1rem;
+  display: inline-flex;
+  background-color: var(--figma-color-icon-oncomponent-tertiary);
+  clip-path: path("M15.9995 7.86066C16.0271 9.44267 15.585 10.9973 14.729 12.3281C13.8731 13.6588 12.6417 14.7058 11.1907 15.3368C9.73968 15.9677 8.13415 16.1542 6.57716 15.8726C5.02016 15.591 3.58161 14.8541 2.44344 13.755C1.30526 12.6559 0.518574 11.2439 0.182856 9.69769C-0.152862 8.15147 -0.0225313 6.54042 0.557366 5.06826C1.13726 3.59611 2.14068 2.32898 3.44073 1.4271C4.74079 0.525221 6.27908 0.0291073 7.86109 0.00149397L7.87922 1.04037C6.50268 1.06439 5.16418 1.49607 4.03298 2.28081C2.90177 3.06556 2.02868 4.16812 1.5241 5.44907C1.01952 6.73002 0.906114 8.13183 1.19823 9.47724C1.49034 10.8226 2.17486 12.0512 3.16521 13.0076C4.15556 13.9639 5.40727 14.6052 6.76204 14.8502C8.11682 15.0951 9.51382 14.9329 10.7764 14.3839C12.0389 13.8349 13.1104 12.9239 13.8552 11.766C14.5999 10.6081 14.9846 9.25533 14.9606 7.87879L15.9995 7.86066Z");
+  animation: fig-spinner-spin 1.0s linear infinite;
+}
+@keyframes fig-spinner-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }

@@ -475,32 +475,28 @@ class FigSlider extends HTMLElement {
 window.customElements.define('fig-slider', FigSlider);
 
 class FigInputText extends HTMLElement {
-    #multiline = false
-    #input
-
     constructor() {
         super()
-        //this.attachShadow({mode:"open"})
     }
     connectedCallback() {
         const div = document.createElement('div')
         div.innerHTML = this.innerHTML
         const append = div.querySelector('[slot=append]')
         const prepend = div.querySelector('[slot=prepend]')
-        this.#multiline = this.hasAttribute("multiline") || false
+        this.multiline = this.hasAttribute("multiline") || false
 
         let html = `<label><input 
       type="${this.getAttribute("type") || "text"}" 
       placeholder="${this.getAttribute("placeholder")}"
       value="${this.getAttribute("value")}" /></label>`
-        if (this.#multiline) {
+        if (this.multiline) {
             html = `<label><textarea  
       placeholder="${this.getAttribute("placeholder")}">${this.getAttribute("value")}</textarea></label>`
         }
         this.innerHTML = html
 
-        this.#input = this.querySelector('input,textarea')
-        this.#input.addEventListener('input', this.handleInput.bind(this))
+        this.input = this.querySelector('input,textarea')
+        this.input.addEventListener('input', this.handleInput.bind(this))
 
         const label = this.querySelector('label')
 
@@ -512,7 +508,17 @@ class FigInputText extends HTMLElement {
         }
     }
     handleInput() {
-        this.value = this.#input.value
+        this.value = this.input.value
+    }
+
+    static get observedAttributes() {
+        return ['value'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (this.input) {
+            this.value = this.input.value = newValue
+        }
     }
 }
 window.customElements.define('fig-input-text', FigInputText);
