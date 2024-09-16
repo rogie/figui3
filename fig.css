@@ -35,6 +35,7 @@
   --popover-min-width: 15rem;
   --figma-color-bg-selected: #e5f4ff;
   --figma-color-bg-ghost-hover: rgba(0,0,0,0.05);
+  --elevation-500-modal-window: 0px 0px .5px rgba(0, 0, 0, .08), 0px 10px 24px rgba(0, 0, 0, .18), 0px 2px 5px rgba(0, 0, 0, .15);
 
   color-scheme: light dark;
   /* Icons */
@@ -50,6 +51,7 @@
     --figma-color-bordertranslucent: rgba(255,255,255,0.1);
     --figma-color-border-selected: #0C8CE9;
     --figma-color-icon-brand: #7CC4F8;
+    --elevation-500-modal-window: 0px 10px 24px rgba(0, 0, 0, .45), 0px 3px 5px rgba(0, 0, 0, .35), inset 0px .75px 0px rgba(255, 255, 255, .1);
   }
 }
 html{
@@ -72,6 +74,11 @@ html{
 
 body{
   font-size: var(--body-medium-fontSize);
+}
+
+/* helper classes */
+.subtle{
+  color: var(--figma-color-text-tertiary);
 }
 
 button,
@@ -332,6 +339,7 @@ fig-tab,
   appearance: none;
   border: 0;
   cursor: default;
+  gap: 0 !important;
   user-select: none;
   border-radius: var(--radius-medium);
   color: var(--figma-color-text-secondary);
@@ -924,10 +932,7 @@ dialog,
   background: var(--figma-color-bg);
   min-width: var(--popover-min-width);
 
-  /* light/elevation-500-modal-window */
-  box-shadow: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.08), 
-    0px 10px 24px 0px rgba(0, 0, 0, 0.18), 
-    0px 2px 5px 0px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--elevation-500-modal-window);
   
   &:popover-open{
     display: block;
@@ -1125,10 +1130,7 @@ fig-header{
   gap: 0.25rem;
   & h3{
       font: inherit;
-  }
-  &>:first-child{
-      padding-left: var(--spacer-2);
-  }   
+  } 
   &>*:not(fig-button){
     flex-grow:1;
   }
@@ -1138,7 +1140,7 @@ fig-header{
 }
 
 fig-content{
-  padding: var(--spacer-3);
+  padding: var(--spacer-2);
   display: block;
 }
 

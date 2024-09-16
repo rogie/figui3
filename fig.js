@@ -332,6 +332,8 @@ window.customElements.define('fig-popover-2', FigPopover2);
 class FigTabs extends HTMLElement {
     constructor() {
         super()
+    }
+    connectedCallback() {
         const tabs = this.querySelectorAll('fig-tab')
         const name = this.getAttribute("name") || ("tabs-" + this.uniqueId())
         for (const tab of tabs) {
