@@ -38,39 +38,60 @@ window.customElements.define('fig-button', FigButton);
 
 /* Dropdown */
 class FigDropdown extends HTMLElement {
-    #trigger
-    #select
-    #type = "select"
     constructor() {
         super()
+        this.type = "select"
     }
     connectedCallback() {
 
-        this.#trigger = this.querySelector('[slot=trigger]')
-        if (this.#trigger) {
-            this.append(this.#trigger)
+        this.trigger = this.querySelector('[slot=trigger]')
+        if (this.trigger) {
+            this.append(this.trigger)
         }
 
-        this.#select = document.createElement("select")
-        this.append(this.#select)
-        Array.from(this.querySelectorAll("option")).forEach(option => {
-            this.#select.append(option)
+        this.select = document.createElement("select")
+        this.append(this.select)
+        Array.from(this.querySelectorAll(":scope > option")).forEach(option => {
+            this.select.append(option.cloneNode(true))
         })
 
-        this.#select.addEventListener("change", this.handleChange.bind(this))
+        this.select.addEventListener("change", this.handleChange.bind(this))
 
         if (this.getAttribute("type") === "dropdown") {
-            this.#type = "dropdown"
+            this.type = "dropdown"
         }
 
+        this.observer = new MutationObserver(this.childrenChangedCallback.bind(this))
+        this.observer.observe(this, {
+            subtree: true,
+            childList: true,
+        });
+
     }
+    disconnectedCallback() {
+        console.log('Observer disconnect')
+        this.observer.disconnect()
+    }
+
+    childrenChangedCallback(mutationsList, observer) {
+        console.log("mutation observer: ")
+        for (const mutation of mutationsList) {
+            if (mutation.target === this) {
+                this.select.innerHTML = ''
+                Array.from(this.querySelectorAll(":scope > option")).forEach(option => {
+                    this.select.append(option.cloneNode(true))
+                })
+            }
+        }
+    }
+
     attributeChangedCallback(name, oldValue, newValue) {
         //console.log(name, newValue)
     }
 
     handleChange() {
-        if (this.#type === "dropdown") {
-            this.#select.selectedIndex = 0
+        if (this.type === "dropdown") {
+            this.select.selectedIndex = 0
         }
     }
 }

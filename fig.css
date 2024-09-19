@@ -40,7 +40,11 @@
   color-scheme: light dark;
   /* Icons */
   --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(0 0 0 / 50%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
+
+  /* Elevations */
+  --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.30), 0px 1px 3px 0px rgba(0, 0, 0, 0.15);
 }
+
 @media (prefers-color-scheme: dark) {
   :root{
     --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(255 255 255 / 50%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
@@ -52,6 +56,7 @@
     --figma-color-border-selected: #0C8CE9;
     --figma-color-icon-brand: #7CC4F8;
     --elevation-500-modal-window: 0px 10px 24px rgba(0, 0, 0, .45), 0px 3px 5px rgba(0, 0, 0, .35), inset 0px .75px 0px rgba(255, 255, 255, .1);
+    --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.50), 0px 0.75px 0px 0px rgba(255, 255, 255, 0.10) inset, 0px 1px 3px 0px rgba(0, 0, 0, 0.40);
   }
 }
 html{
@@ -71,15 +76,44 @@ html{
   box-sizing: border-box;
 }
 
-
 body{
   font-size: var(--body-medium-fontSize);
 }
 
-/* helper classes */
+/* helper classes/defaults */
+::-webkit-scrollbar {
+  width: var(--spacer-1);  /* Width of the vertical scrollbar */
+  height: var(--spacer-1); /* Height of the horizontal scrollbar */
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--figma-color-bg-tertiary);
+  border-radius: calc(var(--spacer-1)/2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--figma-color-bg-secondary);
+}
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--figma-color-bg-tertiary) var(--figma-color-bg-secondary);
+}
+
 .subtle{
   color: var(--figma-color-text-tertiary);
 }
+
+/* Defaults */
+p{
+  margin: var(--spacer-2) 0;
+  line-height: 1rem;
+  color: var(--figma-color-text-secondary);
+}
+h2{
+  font-weight: var(--body-medium-strong-fontWeight);
+  margin: var(--spacer-2) 0;
+}
+
 
 button,
 select,
@@ -193,7 +227,7 @@ input[list]:active,
 input[list]:focus,
 select{
   background-image: var(--icon-chevron);
-  background-position: right center;
+  background-position: calc(100% - 0.25rem) center;
   background-repeat: no-repeat;
 }
 input[list],
@@ -206,6 +240,9 @@ fig-dropdown:has([trigger]){
         position: absolute;
         inset: 0;
     }
+}
+fig-dropdown>option{
+  display: none;
 }
 
 /* Button */
@@ -229,7 +266,7 @@ input[type=button]{
     background-color: var(--figma-color-bg-brand-pressed);
   }
 
-  /* Variants */ 
+  /* Variant: Ghost */ 
   &[variant="ghost"],
   &[variant="ghost"]>button{
     box-shadow: none;
@@ -261,6 +298,8 @@ input[type=button]{
     background-color: transparent;
   }
 
+
+  /* Variant: Secondary */
   &[variant="secondary"],
   &[variant="secondary"]>button{
     box-shadow: inset 0 0 0 1px var(--figma-color-border);
@@ -317,6 +356,21 @@ input[type=button]{
   &[full]{
     width: 100%;
   }
+
+  /* Block button */
+  &[inline=false],
+  &[inline=false]>button{
+    display: flex;
+    width: 100%;
+    justify-content: left;
+    height: auto;
+    text-align: left;
+    align-items: center;
+    padding: var(--spacer-1) var(--spacer-2);
+  }
+  &[inline=false]{
+    padding: 0;
+  }
 }
 fig-button{
   padding: 0;
@@ -365,6 +419,9 @@ fig-tab,
     background-color: var(--figma-color-bg-secondary);
     font-weight: var(--body-medium-strong-fontWeight);
     color: var(--figma-color-text);
+  }
+  &:hover{
+    background-color: var(--figma-color-bg-secondary);
   }
   & [type=radio]{
     position: absolute;      
@@ -926,13 +983,11 @@ dialog,
   outline: 0;
   border: 0;
   color: var(--figma-color-text);
-
-  /* Lack of support */
   border-radius: var(--radius-large, 0.8125rem);
   background: var(--figma-color-bg);
   min-width: var(--popover-min-width);
 
-  box-shadow: var(--elevation-500-modal-window);
+  box-shadow: var(--figma-elevation-100);
   
   &:popover-open{
     display: block;
@@ -1125,11 +1180,11 @@ fig-header{
   padding: var(--spacer-2);
   display: flex;
   align-items: center;
-  font-weight: var(--body-medium-strong-fontWeight);
   box-shadow: inset 0 -1px 0 0 var(--figma-color-border);
   gap: 0.25rem;
   & h3{
-      font: inherit;
+    padding-left: var(--spacer-1);
+    font-weight: var(--body-medium-strong-fontWeight);
   } 
   &>*:not(fig-button){
     flex-grow:1;
