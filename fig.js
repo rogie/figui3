@@ -10,17 +10,28 @@ function supportsPopover() {
 class FigButton extends HTMLElement {
     constructor() {
         super()
-        this.button = document.createElement("button")
+        this.attachShadow({ mode: 'open' })
     }
     connectedCallback() {
-        if (!this.contains(this.button)) {
-            this.render()
-            this.appendChild(this.button)
-        }
+        this.render()
     }
     render() {
-        this.button.innerHTML = this.innerHTML || 'Button'
-        this.textContent = ''
+        this.shadowRoot.innerHTML = `
+            <style>
+                button, button:hover, button:active {
+                    padding: 0;
+                    appearance: none;
+                    display: block;
+                    border: 0;
+                    font: inherit;
+                    background: transparent;
+                }
+            </style>
+            <button>
+                <slot></slot>
+            </button>
+            `;
+        this.button = this.shadowRoot.querySelector('button')
     }
     static get observedAttributes() {
         return ['disabled'];
@@ -39,63 +50,37 @@ window.customElements.define('fig-button', FigButton);
 /* Dropdown */
 class FigDropdown extends HTMLElement {
     constructor() {
-        super()
-        this.type = "select"
+        super();
+        this.attachShadow({ mode: 'open' });
     }
+
     connectedCallback() {
-
-        this.trigger = this.querySelector('[slot=trigger]')
-        if (this.trigger) {
-            this.append(this.trigger)
-        }
-
-        this.select = document.createElement("select")
-        this.append(this.select)
-        Array.from(this.querySelectorAll(":scope > option")).forEach(option => {
-            this.select.append(option.cloneNode(true))
-        })
-
-        this.select.addEventListener("change", this.handleChange.bind(this))
-
-        if (this.getAttribute("type") === "dropdown") {
-            this.type = "dropdown"
-        }
-
-        this.observer = new MutationObserver(this.childrenChangedCallback.bind(this))
-        this.observer.observe(this, {
-            subtree: true,
-            childList: true,
-        });
-
-    }
-    disconnectedCallback() {
-        console.log('Observer disconnect')
-        this.observer.disconnect()
+        this.render()
     }
 
-    childrenChangedCallback(mutationsList, observer) {
-        console.log("mutation observer: ")
-        for (const mutation of mutationsList) {
-            if (mutation.target === this) {
-                this.select.innerHTML = ''
-                Array.from(this.querySelectorAll(":scope > option")).forEach(option => {
-                    this.select.append(option.cloneNode(true))
-                })
+    render() {
+        this.select = document.createElement('select')
+        this.optionsSlot = document.createElement('slot')
+
+        this.appendChild(this.select)
+        this.shadowRoot.appendChild(this.optionsSlot)
+
+        // Move slotted options into the select element
+        this.optionsSlot.addEventListener('slotchange', this.slotChange.bind(this));
+    }
+    slotChange() {
+        while (this.select.firstChild) {
+            this.select.firstChild.remove()
+        }
+        this.optionsSlot.assignedNodes().forEach(node => {
+            if (node.nodeName === 'OPTION') {
+                this.select.appendChild(node.cloneNode(true))
             }
-        }
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        //console.log(name, newValue)
-    }
-
-    handleChange() {
-        if (this.type === "dropdown") {
-            this.select.selectedIndex = 0
-        }
+        })
     }
 }
-window.customElements.define('fig-dropdown', FigDropdown);
+
+customElements.define('fig-dropdown', FigDropdown);
 
 /* Tooltip */
 class FigTooltip extends HTMLElement {
@@ -243,6 +228,65 @@ class FigPopover extends FigTooltip {
 customElements.define("fig-popover", FigPopover);
 
 /* Dialog */
+class FigDialog extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' })
+        this.dialog = document.createElement('dialog')
+        this.contentSlot = document.createElement('slot')
+    }
+
+    connectedCallback() {
+        this.render()
+    }
+
+    disconnectedCallback() {
+        this.contentSlot.removeEventListener('slotchange', this.slotChange)
+    }
+
+    render() {
+        this.appendChild(this.dialog)
+        this.shadowRoot.appendChild(this.contentSlot)
+        this.contentSlot.addEventListener('slotchange', this.slotChange.bind(this))
+    }
+
+    slotChange() {
+        while (this.dialog.firstChild) {
+            this.dialog.firstChild.remove()
+        }
+        this.contentSlot.assignedNodes().forEach(node => {
+            if (node !== this.dialog) {
+                this.dialog.appendChild(node.cloneNode(true))
+            }
+        })
+    }
+
+    static get observedAttributes() {
+        return ['open'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        switch (name) {
+            case "open":
+                if (this?.show) {
+                    this[newValue === "true" ? "show" : "close"]()
+                }
+                break;
+        }
+    }
+
+    /* Public methods */
+    show() {
+        console.log("show dialog", this.dialog, this.dialog?.show)
+        this.dialog.show()
+    }
+    close() {
+        this.dialog.close()
+    }
+}
+customElements.define("fig-dialog", FigDialog);
+
+/*
 class FigDialog extends FigTooltip {
 
     constructor() {
@@ -288,6 +332,7 @@ class FigDialog extends FigTooltip {
     }
 }
 customElements.define("fig-dialog", FigDialog);
+*/
 
 
 class FigPopover2 extends HTMLElement {
@@ -421,76 +466,77 @@ window.customElements.define('fig-segmented-control', FigSegmentedControl);
 
 /* Slider */
 class FigSlider extends HTMLElement {
-    #input
-    #textInput
-    #slider
     constructor() {
         super()
     }
     connectedCallback() {
-        const defaults = {
-            range: { min: 0, max: 100, step: 1 },
-            hue: { min: 0, max: 255, step: 1 },
-            opacity: { min: 0, max: 1, step: 0.01 }
-        }
-        const type = this.getAttribute("type")
+        this.value = this.getAttribute("value")
         let html = ''
         let slider = `<div class="slider">
                 <input 
-                    type="range" 
-                    class="${type}"
-                    style="--color:${this.getAttribute("color")}">
+                    type="range"
+                    class="range"
+                    value="${this.value}">
             </div>`
         if (this.getAttribute("text")) {
-            html = `<hstack>
-                        ${slider}
-                        <fig-input-text
-                            placeholder="##"
-                            type="number"
-                            value="${this.getAttribute("value")}">
-                        </fig-input-text>
-                    </hstack>`
+            html = `${slider}
+                    <fig-input-text
+                        placeholder="##"
+                        type="number"
+                        value="${this.value}">
+                    </fig-input-text>`
         } else {
             html = slider
         }
         this.innerHTML = html
 
-        const attrs = ['color', 'step', 'min', 'max', 'value']
-        this.#textInput = this.querySelector("input[type=number]")
-        this.#slider = this.querySelector('.slider')
+        this.textInput = this.querySelector("input[type=number]")
+        this.slider = this.querySelector('.slider')
 
-        this.#input = this.querySelector('[type=range]')
-        this.#input.addEventListener("input", this.handleChange.bind(this))
+        this.input = this.querySelector('[type=range]')
+        this.input.addEventListener("input", this.handleChange.bind(this))
 
-        for (var i = 0; i < this.attributes.length; i++) {
-            var a = this.attributes[i]
-            if (attrs.includes(a.name)) {
-                if (a.specified) {
-                    this.#input[a.name] = a.value
-                    if (this.#textInput) {
-                        this.#textInput[a.name] = a.value
+        if (this.textInput) {
+            this.textInput.addEventListener("change", this.handleChange.bind(this))
+        }
+    }
+    static get observedAttributes() {
+        return ['value', 'step', 'min', 'max', 'type', 'disabled']
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (this.input) {
+            switch (name) {
+                case "disabled":
+                    this.disabled = this.input.disabled = newValue
+                    if (this.textInput) {
+                        this.textInput.disabled = this.disabled
                     }
-                }
+                    break;
+                case "value":
+                    this.value = this.input.value = newValue
+                    if (this.textInput) {
+                        this.textInput.value = newValue
+                    }
+                    break;
+                default:
+                    this.input[name] = newValue
+                    break;
             }
         }
-        this.#input.disabled = this.hasAttribute("disabled")
-        if (this.#textInput) {
-            this.#textInput.disabled = this.hasAttribute("disabled")
-            this.#textInput.addEventListener("change", this.handleChange.bind(this))
-        }
-        this.syncProps()
     }
+
     syncProps() {
         if (!CSS.supports('animation-timeline: scroll()')) {
-            let complete = this.#input.value / (this.#input.max - this.#input.min)
-            this.#slider.style.setProperty('--slider-percent', `${complete * 100}%`)
+            let complete = this.input.value / (this.input.max - this.input.min)
+            this.slider.style.setProperty('--slider-percent', `${complete * 100}%`)
         }
     }
     handleChange(event) {
         this.value = event.target.value
-        this.#input.value = this.value
-        if (this.#textInput) {
-            this.#textInput.value = this.value
+        this.input.value = this.value
+        if (this.textInput) {
+            this.textInput.value = this.value
         }
         this.syncProps()
     }
@@ -502,56 +548,87 @@ class FigInputText extends HTMLElement {
         super()
     }
     connectedCallback() {
-        const div = document.createElement('div')
-        div.innerHTML = this.innerHTML
-        const append = div.querySelector('[slot=append]')
-        const prepend = div.querySelector('[slot=prepend]')
+        const append = this.querySelector('[slot=append]')
+        const prepend = this.querySelector('[slot=prepend]')
         this.multiline = this.hasAttribute("multiline") || false
+        this.value = this.getAttribute("value")
+        this.type = this.getAttribute("type") || "text"
+        this.placeholder = this.getAttribute("placeholder")
 
-        let html = `<label><input 
-      type="${this.getAttribute("type") || "text"}" 
-      placeholder="${this.getAttribute("placeholder")}"
-      value="${this.getAttribute("value")}" /></label>`
+        let html = `<input 
+      type="${this.type}" 
+      placeholder="${this.placeholder}"
+      value="${this.value}" />`
         if (this.multiline) {
-            html = `<label><textarea  
-      placeholder="${this.getAttribute("placeholder")}">${this.getAttribute("value")}</textarea></label>`
+            html = `<textarea  
+      placeholder="${this.placeholder}">${this.value}</textarea>`
         }
         this.innerHTML = html
 
         this.input = this.querySelector('input,textarea')
         this.input.addEventListener('input', this.handleInput.bind(this))
 
-        const label = this.querySelector('label')
-
         if (prepend) {
-            label.prepend(prepend)
+            prepend.addEventListener('click', this.focus.bind(this))
+            this.prepend(prepend)
         }
         if (append) {
-            label.append(append)
+            append.addEventListener('click', this.focus.bind(this))
+            this.append(append)
         }
+    }
+    focus() {
+        this.input.focus()
     }
     handleInput() {
         this.value = this.input.value
     }
 
     static get observedAttributes() {
-        return ['value'];
+        return ['value', 'placeholder', 'label', 'disabled', 'type'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
         if (this.input) {
-            this.value = this.input.value = newValue
+            switch (name) {
+                case "label":
+                    this.disabled = this.input.disabled = newValue
+                    break;
+                default:
+                    this[name] = this.input[name] = newValue
+                    break;
+            }
         }
     }
 }
 window.customElements.define('fig-input-text', FigInputText);
 
 
+/* Form Field */
+class FigField extends HTMLElement {
+    constructor() {
+        super()
+    }
+    connectedCallback() {
+        this.label = this.querySelector('label')
+        this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-input"))
+        console.log('input:', this.input)
+        if (this.input) {
+            this.label.addEventListener('click', this.focus.bind(this))
+        }
+    }
+    focus() {
+        this.input.focus()
+    }
+}
+window.customElements.define('fig-field', FigField);
+
+
 /* Color swatch */
 class FigInputColor extends HTMLElement {
     #rgba
     #swatch
-    #textInput
+    textInput
     #alphaInput
     constructor() {
         super()
@@ -559,6 +636,14 @@ class FigInputColor extends HTMLElement {
     connectedCallback() {
         this.#rgba = this.convertToRGBA(this.getAttribute("value"))
         const alpha = (this.#rgba.a * 100).toFixed(0)
+        this.value = this.rgbAlphaToHex(
+            {
+                r: this.#rgba.r,
+                g: this.#rgba.g,
+                b: this.#rgba.b
+            },
+            alpha
+        )
         let html = ``
         if (this.getAttribute("text")) {
             let label = `<fig-input-text placeholder="Text" value="${this.getAttribute("value")}"></fig-input-text>`
@@ -575,25 +660,32 @@ class FigInputColor extends HTMLElement {
                 </fig-tooltip>`
             }
             html = `<div class="input-combo">
-                <input type="color" />
+                <input type="color" value="${this.value}" />
                 ${label}
             </div>`
         } else {
-            html = `<input type="color" />`
+            html = `<input type="color" value="${this.value}" />`
         }
         this.innerHTML = html
 
         this.style.setProperty('--alpha', this.#rgba.a)
 
+
         this.#swatch = this.querySelector('[type=color]')
-        this.#textInput = this.querySelector('[type=text]')
+        this.textInput = this.querySelector('[type=text]')
         this.#alphaInput = this.querySelector('[type=number]')
 
-        this.#textInput.value = this.#swatch.value = this.rgbAlphaToHex(this.#rgba, 1)
+
         this.#swatch.disabled = this.hasAttribute('disabled')
         this.#swatch.addEventListener('input', this.handleInput.bind(this))
 
-        this.#alphaInput.addEventListener('input', this.handleAlphaInput.bind(this))
+        if (this.textInput) {
+            this.textInput.value = this.#swatch.value = this.rgbAlphaToHex(this.#rgba, 1)
+        }
+
+        if (this.#alphaInput) {
+            this.#alphaInput.addEventListener('input', this.handleAlphaInput.bind(this))
+        }
 
     }
     handleAlphaInput(event) {
@@ -624,7 +716,9 @@ class FigInputColor extends HTMLElement {
         let alpha = this.#rgba.a
         this.#rgba = this.convertToRGBA(this.#swatch.value)
         this.#rgba.a = alpha
-        this.#textInput.value = this.#swatch.value
+        if (this.textInput) {
+            this.textInput.value = this.#swatch.value
+        }
         this.style.setProperty('--alpha', this.#rgba.a)
         this.value = this.rgbAlphaToHex(
             {

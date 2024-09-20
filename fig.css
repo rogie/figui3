@@ -241,8 +241,9 @@ fig-dropdown:has([trigger]){
         inset: 0;
     }
 }
+fig-dialog>*:not(dialog),
 fig-dropdown>option{
-  display: none;
+  display: none !important;
 }
 
 /* Button */
@@ -372,9 +373,6 @@ input[type=button]{
     padding: 0;
   }
 }
-fig-button{
-  padding: 0;
-}
 fig-button>button{
     width: 100%;
 }
@@ -498,8 +496,10 @@ input[type=color]::-webkit-color-swatch-wrapper{
 }
 input[type=color]::-moz-color-swatch{
   border-radius: 0.125rem;
+  padding: 0;
+  border: 0;
+  mask-image: linear-gradient(to right, black 0%, black 50%,rgba(0,0,0,var(--alpha)) 50%);
 }
-input[type=color]::-moz-color-swatch,
 input[type=color]::-webkit-color-swatch{
   padding: 0;
   border: 0;
@@ -1218,7 +1218,7 @@ fig-input-text{
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
-  display: inline-flex;
+  display: flex;
   flex-wrap: nowrap;
   justify-content: center;
   & label,
@@ -1227,14 +1227,24 @@ fig-input-text{
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
+    width: 100%;
   }
   & [slot] {
-    padding: .25rem 0.5rem;
-    padding-left: 0;
+    padding: .25rem 0.5rem;  
+    flex: 0;
+    user-select: none;
     color: var(--figma-color-text-secondary);
   }
+  & [slot=prepend]{
+    padding-right: 0;
+  }
+  & [slot=append]{
+    padding-left: 0;
+  }
+  
   & input{
     background-color: transparent !important;
+    flex: 1;
     &:focus,
     &:active{
       box-shadow: none !important;
@@ -1262,6 +1272,36 @@ fig-input-color{
     display: inline-flex;
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+fig-slider{
+  display: flex;
+  & .slider{
+    flex-grow: 1;
+  }
+  & fig-input-text[type=number]{
+    width: 3.5rem;
+  }
+}
+
+fig-field, 
+.fig-field{
+  display: flex;
+  margin: var(--spacer-3) 0;
+  gap: var(--spacer-2);
+  &>*{
+    flex: 1;
+  }
+  &>label{
+    flex: 0;
+    padding: var(--spacer-1) 0;
+    display: flex;
+    align-items: center;
+  }
+  &[direction=vertical]{
+    flex-direction: column;
+    gap: 0;
   }
 }
 
