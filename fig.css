@@ -1270,8 +1270,6 @@ fig-input-color{
   & fig-input-text[type=number]{
     width: 3.5rem;
     display: inline-flex;
-    flex-direction: column;
-    align-items: stretch;
   }
 }
 
