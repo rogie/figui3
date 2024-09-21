@@ -109,6 +109,9 @@ p{
   line-height: 1rem;
   color: var(--figma-color-text-secondary);
 }
+label{
+  color: var(--figma-color-text-secondary);
+}
 h2{
   font-weight: var(--body-medium-strong-fontWeight);
   margin: var(--spacer-2) 0;
@@ -1286,8 +1289,9 @@ fig-slider{
 fig-field, 
 .fig-field{
   display: flex;
-  margin: var(--spacer-3) 0;
-  gap: var(--spacer-2);
+  margin: var(--spacer-2) 0;
+  flex-direction: column;
+  gap: 0;
   &>*{
     flex: 1;
   }
@@ -1295,11 +1299,12 @@ fig-field,
     flex: 0;
     padding: var(--spacer-1) 0;
     display: flex;
+    min-height: calc(1rem + var(--spacer-1)*2);
     align-items: center;
   }
-  &[direction=vertical]{
-    flex-direction: column;
-    gap: 0;
+  &[direction=horizontal]{
+    gap: var(--spacer-2);
+    align-items: flex-start;
   }
 }
 

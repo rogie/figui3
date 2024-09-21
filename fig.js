@@ -466,16 +466,37 @@ window.customElements.define('fig-segmented-control', FigSegmentedControl);
 
 /* Slider */
 class FigSlider extends HTMLElement {
+    #typeDefaults = {
+        range: { min: 0, max: 100, step: 1 },
+        hue: { min: 0, max: 255, step: 1 },
+        opacity: { min: 0, max: 1, step: 0.01, color: "#FF0000" }
+    }
     constructor() {
         super()
     }
     connectedCallback() {
+
         this.value = this.getAttribute("value")
+        this.type = this.getAttribute("type") || "range"
+
+        const defaults = this.#typeDefaults[this.type]
+        this.min = this.getAttribute("min") || defaults.min
+        this.max = this.getAttribute("max") || defaults.max
+        this.step = this.getAttribute("step") || defaults.step
+        this.color = this.getAttribute("color") || defaults?.color
+
+        if (this.color) {
+            this.style.setProperty("--color", this.color)
+        }
+
         let html = ''
         let slider = `<div class="slider">
                 <input 
                     type="range"
-                    class="range"
+                    min="${this.min}"
+                    max="${this.max}"
+                    step="${this.step}"
+                    class="${this.type}"
                     value="${this.value}">
             </div>`
         if (this.getAttribute("text")) {
@@ -483,6 +504,9 @@ class FigSlider extends HTMLElement {
                     <fig-input-text
                         placeholder="##"
                         type="number"
+                        min="${this.min}"
+                        max="${this.max}"
+                        step="${this.step}"
                         value="${this.value}">
                     </fig-input-text>`
         } else {
@@ -504,23 +528,25 @@ class FigSlider extends HTMLElement {
         return ['value', 'step', 'min', 'max', 'type', 'disabled']
     }
 
+    focus() {
+        this.input.focus()
+    }
+
     attributeChangedCallback(name, oldValue, newValue) {
         if (this.input) {
             switch (name) {
-                case "disabled":
-                    this.disabled = this.input.disabled = newValue
-                    if (this.textInput) {
-                        this.textInput.disabled = this.disabled
-                    }
+                case "color":
+                    this.color = newValue
+                    this.style.setProperty("--color", this.color)
                     break;
-                case "value":
-                    this.value = this.input.value = newValue
-                    if (this.textInput) {
-                        this.textInput.value = newValue
-                    }
+                case "type":
+                    this.input.className = newValue
                     break;
                 default:
-                    this.input[name] = newValue
+                    this[value] = this.input[name] = newValue
+                    if (this.textInput) {
+                        this.textInput[name] = newValue
+                    }
                     break;
             }
         }
@@ -611,13 +637,14 @@ class FigField extends HTMLElement {
     }
     connectedCallback() {
         this.label = this.querySelector('label')
-        this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-input"))
+        this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-"))
         console.log('input:', this.input)
         if (this.input) {
             this.label.addEventListener('click', this.focus.bind(this))
         }
     }
     focus() {
+        console.log('input:', this.input)
         this.input.focus()
     }
 }
@@ -707,6 +734,10 @@ class FigInputColor extends HTMLElement {
             cancelable: true
         });
         this.dispatchEvent(e)
+    }
+
+    focus() {
+        this.#swatch.focus()
     }
 
     handleInput(event) {
@@ -873,6 +904,10 @@ class FigCheckbox extends HTMLElement {
 
     render() {
 
+    }
+
+    focus() {
+        this.input.focus()
     }
 
     disconnectedCallback() {
