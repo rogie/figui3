@@ -484,6 +484,7 @@ class FigSlider extends HTMLElement {
         this.max = this.getAttribute("max") || defaults.max
         this.step = this.getAttribute("step") || defaults.step
         this.color = this.getAttribute("color") || defaults?.color
+        this.disabled = this.getAttribute("disabled") ? true : false
 
         if (this.color) {
             this.style.setProperty("--color", this.color)
@@ -493,6 +494,7 @@ class FigSlider extends HTMLElement {
         let slider = `<div class="slider">
                 <input 
                     type="range"
+                    ${this.disabled ? "disabled" : ""}
                     min="${this.min}"
                     max="${this.max}"
                     step="${this.step}"
@@ -534,6 +536,7 @@ class FigSlider extends HTMLElement {
 
     attributeChangedCallback(name, oldValue, newValue) {
         if (this.input) {
+            console.log('attributeChangedCallback:', name, oldValue, newValue)
             switch (name) {
                 case "color":
                     this.color = newValue
@@ -542,8 +545,14 @@ class FigSlider extends HTMLElement {
                 case "type":
                     this.input.className = newValue
                     break;
+                case "disabled":
+                    this.disabled = this.input.disabled = (newValue === "true" || newValue === undefined && newValue !== null)
+                    if (this.textInput) {
+                        this.textInput.disabled = this.disabled
+                    }
+                    break;
                 default:
-                    this[value] = this.input[name] = newValue
+                    this[name] = this.input[name] = newValue
                     if (this.textInput) {
                         this.textInput[name] = newValue
                     }
