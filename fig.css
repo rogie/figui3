@@ -784,6 +784,19 @@ details{
     margin: 0 -5px !important;
     --slider-percent: calc(var(--slider-complete) * (100% - 5px));
     --color-percent: calc(var(--slider-complete) * (100%));
+    --slider-handle-shadow: inset 0 0 0 4px var(--figma-color-icon-onbrand),
+        inset 0 0 0 5px rgba(0, 0, 0, 0.1),
+        0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+        0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+        0px 3px 8px 0px rgba(0, 0, 0, 0.1),
+        0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+    --slider-handle-shadow-focus: inset 0 0 0 4px var(--figma-color-icon-onbrand),
+        inset 0 0 0 5px rgba(0, 0, 0, 0.1),
+        0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+        0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+        0px 3px 8px 0px rgba(0, 0, 0, 0.1),
+        0px 0px 0.5px 0px rgba(0, 0, 0, 0.18),
+        0 0 0 1px var(--border-selected);
     
     &.gradient{
       padding-top: 2.5rem !important;
@@ -813,7 +826,9 @@ details{
     }
     &:focus{
       outline: none;
-      /* outline: 3px solid var(--bg-selected); */
+      &::-webkit-slider-thumb{
+        box-shadow: var(--slider-handle-shadow-focus);
+      }
     }
 
     &::-webkit-slider-thumb{
@@ -826,14 +841,9 @@ details{
       border: none;
       position: relative;
       z-index: 1;
-      box-shadow: 
-        inset 0 0 0 4px var(--figma-color-icon-onbrand),
-        inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-        0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-        0px 1px 3px 0px rgba(0, 0, 0, 0.1),
-        0px 3px 8px 0px rgba(0, 0, 0, 0.1),
-        0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+      box-shadow: var(--slider-handle-shadow);
     }
+
     &:disabled{
       cursor: not-allowed;
       &::-webkit-slider-runnable-track{
@@ -888,7 +898,9 @@ details{
     }
     &:focus{
       outline: none;
-      /* outline: 3px solid var(--bg-selected); */
+      &::-moz-range-thumb{
+        box-shadow: var(--slider-handle-shadow-focus);
+      }
     }
 
     &::-moz-range-thumb{
@@ -901,13 +913,7 @@ details{
       border: none;
       position: relative;
       z-index: 1;
-      box-shadow: 
-        inset 0 0 0 4px var(--figma-color-icon-onbrand),
-        inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-        0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-        0px 1px 3px 0px rgba(0, 0, 0, 0.1),
-        0px 3px 8px 0px rgba(0, 0, 0, 0.1),
-        0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+      box-shadow: var(--slider-handle-shadow);
     }
     &:disabled{
       cursor: not-allowed;
@@ -1156,6 +1162,7 @@ fig-tooltip{
 }
 fig-input-text{
   user-select: all;
+  gap: 0;
   &[multiline]{
     display: block;
   }
