@@ -1,9 +1,361 @@
+:root {
+  --figma-color-bg: #ffffff;
+  --figma-color-bg-brand: #0d99ff;
+  --figma-color-bg-brand-hover: #007be5;
+  --figma-color-bg-brand-pressed: #007be5;
+  --figma-color-bg-brand-secondary: #0768cf;
+  --figma-color-bg-brand-tertiary: #e5f4ff;
+  --figma-color-bg-component: #9747ff;
+  --figma-color-bg-component-hover: #8638e5;
+  --figma-color-bg-component-pressed: #8638e5;
+  --figma-color-bg-component-secondary: #7c2bda;
+  --figma-color-bg-component-tertiary: #f1e5ff;
+  --figma-color-bg-danger: #f24822;
+  --figma-color-bg-danger-hover: #dc3412;
+  --figma-color-bg-danger-pressed: #dc3412;
+  --figma-color-bg-danger-secondary: #bd2915;
+  --figma-color-bg-danger-tertiary: #ffe2e0;
+  --figma-color-bg-disabled: #d9d9d9;
+  --figma-color-bg-disabled-secondary: #b3b3b3;
+  --figma-color-bg-hover: #f5f5f5;
+  --figma-color-bg-inverse: #2c2c2c;
+  --figma-color-bg-onselected: #bde3ff;
+  --figma-color-bg-onselected-hover: #bde3ff;
+  --figma-color-bg-onselected-pressed: #bde3ff;
+  --figma-color-bg-pressed: #f5f5f5;
+  --figma-color-bg-secondary: #f5f5f5;
+  --figma-color-bg-selected: #e5f4ff;
+  --figma-color-bg-selected-hover: #bde3ff;
+  --figma-color-bg-selected-pressed: #bde3ff;
+  --figma-color-bg-selected-secondary: #f2f9ff;
+  --figma-color-bg-selected-strong: #0d99ff;
+  --figma-color-bg-selected-tertiary: #f2f9ff;
+  --figma-color-bg-success: #14ae5c;
+  --figma-color-bg-success-hover: #009951;
+  --figma-color-bg-success-pressed: #009951;
+  --figma-color-bg-success-secondary: #008043;
+  --figma-color-bg-success-tertiary: #cff7d3;
+  --figma-color-bg-tertiary: #e6e6e6;
+  --figma-color-bg-warning: #ffcd29;
+  --figma-color-bg-warning-hover: #ffc21a;
+  --figma-color-bg-warning-pressed: #ffc21a;
+  --figma-color-bg-warning-secondary: #fab815;
+  --figma-color-bg-warning-tertiary: #fff1c2;
+  --figma-color-border: #e6e6e6;
+  --figma-color-border-brand: #bde3ff;
+  --figma-color-border-brand-strong: #007be5;
+  --figma-color-border-component: #e4ccff;
+  --figma-color-border-component-hover: #9747ff;
+  --figma-color-border-component-strong: #8638e5;
+  --figma-color-border-danger: #ffc7c2;
+  --figma-color-border-danger-strong: #dc3412;
+  --figma-color-border-disabled: #e6e6e6;
+  --figma-color-border-disabled-strong: #0000004d;
+  --figma-color-border-onbrand: #007be5;
+  --figma-color-border-onbrand-strong: #ffffff;
+  --figma-color-border-oncomponent: #8638e5;
+  --figma-color-border-oncomponent-strong: #ffffff;
+  --figma-color-border-ondanger: #dc3412;
+  --figma-color-border-ondanger-strong: #ffffff;
+  --figma-color-border-onselected: #bde3ff;
+  --figma-color-border-onselected-strong: #000000e5;
+  --figma-color-border-onsuccess: #009951;
+  --figma-color-border-onsuccess-strong: #ffffff;
+  --figma-color-border-onwarning: #fab815;
+  --figma-color-border-onwarning-strong: #000000e5;
+  --figma-color-border-selected: #0d99ff;
+  --figma-color-border-selected-strong: #007be5;
+  --figma-color-border-strong: #2c2c2c;
+  --figma-color-border-success: #aff4c6;
+  --figma-color-border-success-strong: #009951;
+  --figma-color-border-warning: #ffe8a3;
+  --figma-color-border-warning-strong: #b86200;
+  --figma-color-icon: #000000e5;
+  --figma-color-icon-brand: #007be5;
+  --figma-color-icon-brand-pressed: #0768cf;
+  --figma-color-icon-brand-secondary: #80caff;
+  --figma-color-icon-brand-tertiary: #bde3ff;
+  --figma-color-icon-component: #8638e5;
+  --figma-color-icon-component-pressed: #7c2bda;
+  --figma-color-icon-component-secondary: #c5b2dc;
+  --figma-color-icon-component-tertiary: #c5b2dc;
+  --figma-color-icon-danger: #f24822;
+  --figma-color-icon-danger-hover: #bd2915;
+  --figma-color-icon-danger-pressed: #bd2915;
+  --figma-color-icon-danger-secondary: #f24822;
+  --figma-color-icon-danger-secondary-hover: #f24822;
+  --figma-color-icon-danger-tertiary: #f24822;
+  --figma-color-icon-disabled: #0000004d;
+  --figma-color-icon-hover: #000000e5;
+  --figma-color-icon-onbrand: #ffffff;
+  --figma-color-icon-onbrand-secondary: #ffffffcc;
+  --figma-color-icon-onbrand-tertiary: #ffffff66;
+  --figma-color-icon-oncomponent: #ffffff;
+  --figma-color-icon-oncomponent-secondary: #ffffffcc;
+  --figma-color-icon-oncomponent-tertiary: #ffffff66;
+  --figma-color-icon-ondanger: #ffffff;
+  --figma-color-icon-ondanger-secondary: #ffffffcc;
+  --figma-color-icon-ondanger-tertiary: #ffffff66;
+  --figma-color-icon-ondisabled: #ffffff;
+  --figma-color-icon-oninverse: #ffffffe5;
+  --figma-color-icon-onselected: #000000e5;
+  --figma-color-icon-onselected-secondary: #00000080;
+  --figma-color-icon-onselected-strong: #ffffff;
+  --figma-color-icon-onselected-tertiary: #0000004d;
+  --figma-color-icon-onsuccess: #ffffff;
+  --figma-color-icon-onsuccess-secondary: #ffffffcc;
+  --figma-color-icon-onsuccess-tertiary: #ffffff66;
+  --figma-color-icon-onwarning: #000000e5;
+  --figma-color-icon-onwarning-secondary: #00000080;
+  --figma-color-icon-onwarning-tertiary: #0000004d;
+  --figma-color-icon-pressed: #007be5;
+  --figma-color-icon-secondary: #00000080;
+  --figma-color-icon-secondary-hover: #000000e5;
+  --figma-color-icon-selected: #007be5;
+  --figma-color-icon-selected-secondary: #007be5;
+  --figma-color-icon-selected-tertiary: #007be5;
+  --figma-color-icon-success: #14ae5c;
+  --figma-color-icon-success-pressed: #008043;
+  --figma-color-icon-success-secondary: #14ae5c;
+  --figma-color-icon-success-tertiary: #14ae5c;
+  --figma-color-icon-tertiary: #0000004d;
+  --figma-color-icon-tertiary-hover: #000000e5;
+  --figma-color-icon-warning: #ffcd29;
+  --figma-color-icon-warning-pressed: #b86200;
+  --figma-color-icon-warning-secondary: #ffcd29;
+  --figma-color-icon-warning-tertiary: #ffcd29;
+  --figma-color-text: #000000e5;
+  --figma-color-text-brand: #007be5;
+  --figma-color-text-brand-secondary: #007be5;
+  --figma-color-text-brand-tertiary: #007be5;
+  --figma-color-text-component: #8638e5;
+  --figma-color-text-component-pressed: #7c2bda;
+  --figma-color-text-component-secondary: #c5b2dc;
+  --figma-color-text-component-tertiary: #c5b2dc;
+  --figma-color-text-danger: #dc3412;
+  --figma-color-text-danger-secondary: #dc3412;
+  --figma-color-text-danger-tertiary: #dc3412;
+  --figma-color-text-disabled: #0000004d;
+  --figma-color-text-hover: #000000e5;
+  --figma-color-text-onbrand: #ffffff;
+  --figma-color-text-onbrand-secondary: #ffffffcc;
+  --figma-color-text-onbrand-tertiary: #ffffff66;
+  --figma-color-text-oncomponent: #ffffff;
+  --figma-color-text-oncomponent-secondary: #ffffffcc;
+  --figma-color-text-oncomponent-tertiary: #ffffff66;
+  --figma-color-text-ondanger: #ffffff;
+  --figma-color-text-ondanger-secondary: #ffffffcc;
+  --figma-color-text-ondanger-tertiary: #ffffff66;
+  --figma-color-text-ondisabled: #ffffff;
+  --figma-color-text-oninverse: #ffffffe5;
+  --figma-color-text-onselected: #000000e5;
+  --figma-color-text-onselected-secondary: #00000080;
+  --figma-color-text-onselected-strong: #ffffff;
+  --figma-color-text-onselected-tertiary: #0000004d;
+  --figma-color-text-onsuccess: #ffffff;
+  --figma-color-text-onsuccess-secondary: #ffffffcc;
+  --figma-color-text-onsuccess-tertiary: #ffffff66;
+  --figma-color-text-onwarning: #000000e5;
+  --figma-color-text-onwarning-secondary: #00000080;
+  --figma-color-text-onwarning-tertiary: #0000004d;
+  --figma-color-text-secondary: #00000080;
+  --figma-color-text-secondary-hover: #000000e5;
+  --figma-color-text-selected: #007be5;
+  --figma-color-text-selected-secondary: #007be5;
+  --figma-color-text-selected-tertiary: #007be5;
+  --figma-color-text-success: #009951;
+  --figma-color-text-success-secondary: #009951;
+  --figma-color-text-success-tertiary: #009951;
+  --figma-color-text-tertiary: #0000004d;
+  --figma-color-text-tertiary-hover: #000000e5;
+  --figma-color-text-warning: #b86200;
+  --figma-color-text-warning-secondary: #b86200;
+  --figma-color-text-warning-tertiary: #b86200;
+}
 
-:root{
+@media (prefers-color-scheme: dark) {
+  :root {
+    --figma-color-bg: #2c2c2c;
+    --figma-color-bg-brand: #0c8ce9;
+    --figma-color-bg-brand-hover: #0a6dc2;
+    --figma-color-bg-brand-pressed: #0a6dc2;
+    --figma-color-bg-brand-secondary: #105cad;
+    --figma-color-bg-brand-tertiary: #394360;
+    --figma-color-bg-component: #8a38f5;
+    --figma-color-bg-component-hover: #7a2ed6;
+    --figma-color-bg-component-pressed: #7a2ed6;
+    --figma-color-bg-component-secondary: #652ca8;
+    --figma-color-bg-component-tertiary: #473956;
+    --figma-color-bg-danger: #e03e1a;
+    --figma-color-bg-danger-hover: #c4381c;
+    --figma-color-bg-danger-pressed: #c4381c;
+    --figma-color-bg-danger-secondary: #963323;
+    --figma-color-bg-danger-tertiary: #60332a;
+    --figma-color-bg-disabled: #757575;
+    --figma-color-bg-disabled-secondary: #b3b3b3;
+    --figma-color-bg-hover: #383838;
+    --figma-color-bg-inverse: #ffffff;
+    --figma-color-bg-onselected: #667799;
+    --figma-color-bg-onselected-hover: #667799;
+    --figma-color-bg-onselected-pressed: #667799;
+    --figma-color-bg-pressed: #383838;
+    --figma-color-bg-secondary: #383838;
+    --figma-color-bg-selected: #4a5878;
+    --figma-color-bg-selected-hover: #536383;
+    --figma-color-bg-selected-pressed: #536383;
+    --figma-color-bg-selected-secondary: #394360;
+    --figma-color-bg-selected-strong: #0c8ce9;
+    --figma-color-bg-selected-tertiary: #394360;
+    --figma-color-bg-success: #198f51;
+    --figma-color-bg-success-hover: #078348;
+    --figma-color-bg-success-pressed: #078348;
+    --figma-color-bg-success-secondary: #0a5c35;
+    --figma-color-bg-success-tertiary: #476656;
+    --figma-color-bg-tertiary: #444444;
+    --figma-color-bg-warning: #f3c11b;
+    --figma-color-bg-warning-hover: #f2b50d;
+    --figma-color-bg-warning-pressed: #f2b50d;
+    --figma-color-bg-warning-secondary: #e4a711;
+    --figma-color-bg-warning-tertiary: #5c4100;
+    --figma-color-border: #444444;
+    --figma-color-border-brand: #105cad;
+    --figma-color-border-brand-strong: #7cc4f8;
+    --figma-color-border-component: #652ca8;
+    --figma-color-border-component-hover: #8a38f5;
+    --figma-color-border-component-strong: #d6b6fb;
+    --figma-color-border-danger: #963323;
+    --figma-color-border-danger-strong: #fca397;
+    --figma-color-border-disabled: #444444;
+    --figma-color-border-disabled-strong: #ffffff66;
+    --figma-color-border-onbrand: #0a6dc2;
+    --figma-color-border-onbrand-strong: #ffffff;
+    --figma-color-border-oncomponent: #7a2ed6;
+    --figma-color-border-oncomponent-strong: #ffffff;
+    --figma-color-border-ondanger: #c4381c;
+    --figma-color-border-ondanger-strong: #ffffff;
+    --figma-color-border-onselected: #667799;
+    --figma-color-border-onselected-strong: #ffffffe5;
+    --figma-color-border-onsuccess: #078348;
+    --figma-color-border-onsuccess-strong: #ffffff;
+    --figma-color-border-onwarning: #e4a711;
+    --figma-color-border-onwarning-strong: #000000e5;
+    --figma-color-border-selected: #0c8ce9;
+    --figma-color-border-selected-strong: #7cc4f8;
+    --figma-color-border-strong: #ffffffe5;
+    --figma-color-border-success: #0a5c35;
+    --figma-color-border-success-strong: #79d297;
+    --figma-color-border-warning: #925711;
+    --figma-color-border-warning-strong: #f7d15f;
+    --figma-color-icon: #ffffff;
+    --figma-color-icon-brand: #7cc4f8;
+    --figma-color-icon-brand-pressed: #0c8ce9;
+    --figma-color-icon-brand-secondary: #0a6dc2;
+    --figma-color-icon-brand-tertiary: #394360;
+    --figma-color-icon-component: #d1a8ff;
+    --figma-color-icon-component-pressed: #d6b6fb;
+    --figma-color-icon-component-secondary: #7f699b;
+    --figma-color-icon-component-tertiary: #7f699b;
+    --figma-color-icon-danger: #e03e1a;
+    --figma-color-icon-danger-hover: #fbbcb6;
+    --figma-color-icon-danger-pressed: #fbbcb6;
+    --figma-color-icon-danger-secondary: #e03e1a;
+    --figma-color-icon-danger-secondary-hover: #e03e1a;
+    --figma-color-icon-danger-tertiary: #e03e1a;
+    --figma-color-icon-disabled: #ffffff66;
+    --figma-color-icon-hover: #ffffff;
+    --figma-color-icon-onbrand: #ffffff;
+    --figma-color-icon-onbrand-secondary: #ffffffcc;
+    --figma-color-icon-onbrand-tertiary: #ffffff66;
+    --figma-color-icon-oncomponent: #ffffff;
+    --figma-color-icon-oncomponent-secondary: #ffffffcc;
+    --figma-color-icon-oncomponent-tertiary: #ffffff66;
+    --figma-color-icon-ondanger: #ffffff;
+    --figma-color-icon-ondanger-secondary: #ffffffcc;
+    --figma-color-icon-ondanger-tertiary: #ffffff66;
+    --figma-color-icon-ondisabled: #2c2c2c;
+    --figma-color-icon-oninverse: #000000e5;
+    --figma-color-icon-onselected: #ffffff;
+    --figma-color-icon-onselected-secondary: #ffffffb2;
+    --figma-color-icon-onselected-strong: #ffffff;
+    --figma-color-icon-onselected-tertiary: #ffffff66;
+    --figma-color-icon-onsuccess: #ffffff;
+    --figma-color-icon-onsuccess-secondary: #ffffffcc;
+    --figma-color-icon-onsuccess-tertiary: #ffffff66;
+    --figma-color-icon-onwarning: #000000e5;
+    --figma-color-icon-onwarning-secondary: #00000080;
+    --figma-color-icon-onwarning-tertiary: #0000004d;
+    --figma-color-icon-pressed: #0a6dc2;
+    --figma-color-icon-secondary: #ffffffb2;
+    --figma-color-icon-secondary-hover: #ffffff;
+    --figma-color-icon-selected: #7cc4f8;
+    --figma-color-icon-selected-secondary: #7cc4f8;
+    --figma-color-icon-selected-tertiary: #7cc4f8;
+    --figma-color-icon-success: #198f51;
+    --figma-color-icon-success-pressed: #a1e8b9;
+    --figma-color-icon-success-secondary: #198f51;
+    --figma-color-icon-success-tertiary: #198f51;
+    --figma-color-icon-tertiary: #ffffff66;
+    --figma-color-icon-tertiary-hover: #ffffff;
+    --figma-color-icon-warning: #f3c11b;
+    --figma-color-icon-warning-pressed: #f7d15f;
+    --figma-color-icon-warning-secondary: #f3c11b;
+    --figma-color-icon-warning-tertiary: #f3c11b;
+    --figma-color-text: #ffffff;
+    --figma-color-text-brand: #7cc4f8;
+    --figma-color-text-brand-secondary: #7cc4f8;
+    --figma-color-text-brand-tertiary: #7cc4f8;
+    --figma-color-text-component: #d1a8ff;
+    --figma-color-text-component-pressed: #d6b6fb;
+    --figma-color-text-component-secondary: #7f699b;
+    --figma-color-text-component-tertiary: #7f699b;
+    --figma-color-text-danger: #fca397;
+    --figma-color-text-danger-secondary: #fca397;
+    --figma-color-text-danger-tertiary: #fca397;
+    --figma-color-text-disabled: #ffffff66;
+    --figma-color-text-hover: #ffffff;
+    --figma-color-text-onbrand: #ffffff;
+    --figma-color-text-onbrand-secondary: #ffffffcc;
+    --figma-color-text-onbrand-tertiary: #ffffff66;
+    --figma-color-text-oncomponent: #ffffff;
+    --figma-color-text-oncomponent-secondary: #ffffffcc;
+    --figma-color-text-oncomponent-tertiary: #ffffff66;
+    --figma-color-text-ondanger: #ffffff;
+    --figma-color-text-ondanger-secondary: #ffffffcc;
+    --figma-color-text-ondanger-tertiary: #ffffff66;
+    --figma-color-text-ondisabled: #2c2c2c;
+    --figma-color-text-oninverse: #000000e5;
+    --figma-color-text-onselected: #ffffffe5;
+    --figma-color-text-onselected-secondary: #ffffffb2;
+    --figma-color-text-onselected-strong: #ffffff;
+    --figma-color-text-onselected-tertiary: #ffffff66;
+    --figma-color-text-onsuccess: #ffffff;
+    --figma-color-text-onsuccess-secondary: #ffffffcc;
+    --figma-color-text-onsuccess-tertiary: #ffffff66;
+    --figma-color-text-onwarning: #000000e5;
+    --figma-color-text-onwarning-secondary: #00000080;
+    --figma-color-text-onwarning-tertiary: #0000004d;
+    --figma-color-text-secondary: #ffffffb2;
+    --figma-color-text-secondary-hover: #ffffff;
+    --figma-color-text-selected: #7cc4f8;
+    --figma-color-text-selected-secondary: #7cc4f8;
+    --figma-color-text-selected-tertiary: #7cc4f8;
+    --figma-color-text-success: #79d297;
+    --figma-color-text-success-secondary: #79d297;
+    --figma-color-text-success-tertiary: #79d297;
+    --figma-color-text-tertiary: #ffffff66;
+    --figma-color-text-tertiary-hover: #ffffff;
+    --figma-color-text-warning: #f7d15f;
+    --figma-color-text-warning-secondary: #f7d15f;
+    --figma-color-text-warning-tertiary: #f7d15f;
+  }
+}
+
+
+:root {
   --font-size: 16px;
-  --figma-color-bordertranslucent: rgba(0,0,0,0.1);
+  --figma-color-bordertranslucent: rgba(0, 0, 0, 0.1);
   --figma-color-bg-brand: rgba(13, 153, 255, 1);
-  --checkerboard: repeating-conic-gradient(rgba(0,0,0,0.1) 0% 25%, rgba(255,255,255,0.1) 0% 50%) 0 0 / .66666rem .66666rem;
+  --checkerboard: repeating-conic-gradient(rgba(0, 0, 0, 0.1) 0% 25%, rgba(255, 255, 255, 0.1) 0% 50%) 0 0 / .66666rem .66666rem;
   --bg-hue: linear-gradient(90deg, rgba(255, 0, 0, 1), rgba(255, 48, 0, 1), rgba(255, 96, 0, 1), rgba(255, 143, 0, 1), rgba(255, 191, 0, 1), rgba(255, 239, 0, 1), rgba(223, 255, 0, 1), rgba(175, 255, 0, 1), rgba(128, 255, 0, 1), rgba(80, 255, 0, 1), rgba(32, 255, 0, 1), rgba(0, 255, 16, 1), rgba(0, 255, 64, 1), rgba(0, 255, 112, 1), rgba(0, 255, 159, 1), rgba(0, 255, 207, 1), rgba(0, 255, 255, 1), rgba(0, 207, 255, 1), rgba(0, 159, 255, 1), rgba(0, 112, 255, 1), rgba(0, 64, 255, 1), rgba(0, 16, 255, 1), rgba(32, 0, 255, 1), rgba(80, 0, 255, 1), rgba(127, 0, 255, 1), rgba(175, 0, 255, 1), rgba(223, 0, 255, 1), rgba(255, 0, 239, 1), rgba(255, 0, 191, 1), rgba(255, 0, 143, 1), rgba(255, 0, 96, 1), rgba(255, 0, 48, 1));
   --input-transition: all 0.08s ease-out;
   --figma-color-text-disabled: rgba(0, 0, 0, 0.3);
@@ -28,13 +380,13 @@
   --radius-large: 0.8125rem;
   --body-medium-strong-fontWeight: 550;
   --handle-shadow: 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-        0px 1px 3px 0px rgba(0, 0, 0, 0.05),
-        0px 3px 8px 0px rgba(0, 0, 0, 0.05),
-        0px 0px 0.5px 0px rgba(0, 0, 0, 0.1);
-  
+    0px 1px 3px 0px rgba(0, 0, 0, 0.05),
+    0px 3px 8px 0px rgba(0, 0, 0, 0.05),
+    0px 0px 0.5px 0px rgba(0, 0, 0, 0.1);
+
   --popover-min-width: 15rem;
   --figma-color-bg-selected: #e5f4ff;
-  --figma-color-bg-ghost-hover: rgba(0,0,0,0.05);
+  --figma-color-bg-ghost-hover: rgba(0, 0, 0, 0.05);
   --elevation-500-modal-window: 0px 0px .5px rgba(0, 0, 0, .08), 0px 10px 24px rgba(0, 0, 0, .18), 0px 2px 5px rgba(0, 0, 0, .15);
 
   color-scheme: light dark;
@@ -46,20 +398,21 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root{
+  :root {
     --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(255 255 255 / 50%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
-    --handle-shadow: 0px 0 0 0.75px rgba(255,255,255, 0.1),
-        0px 0px 0.5px 0px rgba(255,255,255, 0.1);
+    --handle-shadow: 0px 0 0 0.75px rgba(255, 255, 255, 0.1),
+      0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
     --figma-color-bg-selected: #3B435E;
-    --figma-color-bg-ghost-hover: rgba(255,255,255,0.05);
-    --figma-color-bordertranslucent: rgba(255,255,255,0.1);
+    --figma-color-bg-ghost-hover: rgba(255, 255, 255, 0.05);
+    --figma-color-bordertranslucent: rgba(255, 255, 255, 0.1);
     --figma-color-border-selected: #0C8CE9;
     --figma-color-icon-brand: #7CC4F8;
     --elevation-500-modal-window: 0px 10px 24px rgba(0, 0, 0, .45), 0px 3px 5px rgba(0, 0, 0, .35), inset 0px .75px 0px rgba(255, 255, 255, .1);
     --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.50), 0px 0.75px 0px 0px rgba(255, 255, 255, 0.10) inset, 0px 1px 3px 0px rgba(0, 0, 0, 0.40);
   }
 }
-html{
+
+html {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -67,24 +420,30 @@ html{
   color: var(--figma-color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: "Inter",-apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
   font-size: 16px;
-  font-weight: 500; 
+  font-weight: 500;
   background-color: var(--figma-color-bg);
 }
-*,*:before,*:after {
+
+*,
+*:before,
+*:after {
   box-sizing: border-box;
 }
 
-body{
+body {
   font-size: var(--body-medium-fontSize);
 }
 
 /* helper classes/defaults */
 ::-webkit-scrollbar {
-  width: var(--spacer-1);  /* Width of the vertical scrollbar */
-  height: var(--spacer-1); /* Height of the horizontal scrollbar */
+  width: var(--spacer-1);
+  /* Width of the vertical scrollbar */
+  height: var(--spacer-1);
+  /* Height of the horizontal scrollbar */
 }
+
 ::-webkit-scrollbar-thumb {
   background-color: var(--figma-color-bg-tertiary);
   border-radius: calc(var(--spacer-1)/2);
@@ -93,26 +452,29 @@ body{
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--figma-color-bg-secondary);
 }
+
 /* For Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--figma-color-bg-tertiary) var(--figma-color-bg-secondary);
 }
 
-.subtle{
+.subtle {
   color: var(--figma-color-text-tertiary);
 }
 
 /* Defaults */
-p{
+p {
   margin: var(--spacer-2) 0;
   line-height: 1rem;
   color: var(--figma-color-text-secondary);
 }
-label{
+
+label {
   color: var(--figma-color-text-secondary);
 }
-h2{
+
+h2 {
   font-weight: var(--body-medium-strong-fontWeight);
   margin: var(--spacer-2) 0;
 }
@@ -121,7 +483,7 @@ h2{
 button,
 select,
 input,
-fieldset{
+fieldset {
   display: inline-flex;
   align-items: center;
   margin: 0;
@@ -129,10 +491,11 @@ fieldset{
   font: inherit;
   line-height: 1rem;
 }
-textarea, 
+
+textarea,
 input[type=text],
 input[type=number],
-.input{
+.input {
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
@@ -145,18 +508,19 @@ input[type=number],
   display: flex;
   color: inherit;
 
-  &:focus{
+  &:focus {
     box-shadow: inset 0 0 0 1px var(--border-selected);
     outline: 0;
   }
-  &::-webkit-inner-spin-button{
+
+  &::-webkit-inner-spin-button {
     display: none;
   }
 }
 
 /* Segmented control */
 .segmented-control,
-fig-segmented-control{
+fig-segmented-control {
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
@@ -165,28 +529,28 @@ fig-segmented-control{
   padding: 1px;
   display: inline-flex;
   align-items: stretch;
-  
+
   &>fig-segment,
-  &>label{
+  &>label {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative; 
+    position: relative;
     appearance: none;
     padding: 0 var(--spacer-2);
-    
-    & [type=radio]{
-      position: absolute;      
+
+    & [type=radio] {
+      position: absolute;
       inset: 0;
       border-radius: 0;
       opacity: 0;
-      z-index:1;
+      z-index: 1;
       width: 100%;
       height: 100%;
     }
-    
-    &:has(:checked){
+
+    &:has(:checked) {
       background-color: var(--figma-color-bg);
       border-radius: calc(var(--radius-medium) - 1px);
       box-shadow: var(--handle-shadow);
@@ -195,7 +559,7 @@ fig-segmented-control{
 }
 
 /* Textarea */
-textarea{
+textarea {
   min-height: 2rem;
   display: block;
   width: 100%;
@@ -204,7 +568,7 @@ textarea{
 
 /* Dropdown */
 select,
-input[list]{
+input[list] {
   height: var(--spacer-4);
   padding: 0 var(--spacer-2);
   appearance: none;
@@ -217,35 +581,41 @@ input[list]{
   background-color: var(--figma-color-bg);
   box-shadow: inset 0 0 0 1px var(--figma-color-border);
   accent-color: var(--figma-color-bg-brand);
-  &:focus{
+
+  &:focus {
     box-shadow: inset 0 0 0 1px var(--border-selected);
     outline: 0;
   }
-  &::-webkit-calendar-picker-indicator{
+
+  &::-webkit-calendar-picker-indicator {
     opacity: 0;
   }
 }
+
 input[list]:hover,
 input[list]:active,
 input[list]:focus,
-select{
+select {
   background-image: var(--icon-chevron);
   background-position: calc(100% - 0.25rem) center;
   background-repeat: no-repeat;
 }
+
 input[list],
-select{
+select {
   padding-right: 1.5rem;
 }
-fig-dropdown:has([trigger]){
-    & select{
-        opacity: 0;
-        position: absolute;
-        inset: 0;
-    }
+
+fig-dropdown:has([trigger]) {
+  & select {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+  }
 }
+
 fig-dialog>*:not(dialog),
-fig-dropdown>option{
+fig-dropdown>option {
   display: none !important;
 }
 
@@ -254,7 +624,7 @@ button,
 .button,
 fig-button,
 input[type=submit],
-input[type=button]{
+input[type=button] {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,104 +636,112 @@ input[type=button]{
   color: var(--figma-color-text-onbrand);
   border-radius: var(--radius-medium);
   font-weight: 500;
-  &:active{
+
+  &:active {
     background-color: var(--figma-color-bg-brand-pressed);
   }
 
-  /* Variant: Ghost */ 
+  /* Variant: Ghost */
   &[variant="ghost"],
-  &[variant="ghost"]>button{
+  &[variant="ghost"]>button {
     box-shadow: none;
     background: none;
     color: var(--figma-color-text);
 
-    &:hover:not(:active){
+    &:hover:not(:active) {
       background-color: var(--figma-color-bg-ghost-hover);
     }
-    &:active{
+
+    &:active {
       outline: 0;
       background-color: var(--figma-color-bg-selected);
     }
-    &[selected=true]{
+
+    &[selected=true] {
       background-color: var(--figma-color-bg-selected);
     }
-    &:focus{
+
+    &:focus {
       outline: 0;
       background-color: transparent;
       box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     }
   }
+
   &[variant="ghost"][icon][selected=true],
-  &[variant="ghost"][icon][selected=true]>button{
+  &[variant="ghost"][icon][selected=true]>button {
     color: var(--figma-color-icon-brand);
   }
+
   &[variant="ghost"][disabled=true],
-  &[variant="ghost"][disabled=true]>button{
+  &[variant="ghost"][disabled=true]>button {
     background-color: transparent;
   }
 
 
   /* Variant: Secondary */
   &[variant="secondary"],
-  &[variant="secondary"]>button{
+  &[variant="secondary"]>button {
     box-shadow: inset 0 0 0 1px var(--figma-color-border);
     background: none;
     color: var(--figma-color-text);
 
-    &:active{
+    &:active {
       background-color: var(--figma-color-bg-secondary);
     }
   }
 
   /* Icon only */
   &[icon],
-  &[icon]>button{
+  &[icon]>button {
     width: var(--spacer-4);
     padding: 0;
 
-    &:hover{
+    &:hover {
       background-color: var(--figma-color-bg-ghost-hover);
     }
   }
 
   /* Upload */
   &[upload],
-  &[upload]>button{
+  &[upload]>button {
     position: relative;
-    & input[type=file]{
-        opacity: 0;
-        position: absolute;
-        inset: 0;
-        appearance: none;
-    }  
+
+    & input[type=file] {
+      opacity: 0;
+      position: absolute;
+      inset: 0;
+      appearance: none;
+    }
   }
 
   /* Disabled */
   &[disabled=true],
-  &[disabled=true]>button{
-      background-color: var(--figma-color-bg-disabled);
-      color: var(--figma-color-text-disabled);
-      pointer-events: none;
+  &[disabled=true]>button {
+    background-color: var(--figma-color-bg-disabled);
+    color: var(--figma-color-text-disabled);
+    pointer-events: none;
   }
-  
+
   /* Size */
   &[size="large"],
-  &[size="large"]>button{
+  &[size="large"]>button {
     height: var(--spacer-5);
   }
+
   &[size="large"][icon],
-  &[size="large"][icon]>button{
+  &[size="large"][icon]>button {
     width: var(--spacer-5);
   }
 
   /* Full width */
-  &[full]{
+  &[full] {
     width: 100%;
   }
 
   /* Block button */
   &[inline=false],
-  &[inline=false]>button{
+  &[inline=false]>button {
     display: flex;
     width: 100%;
     justify-content: left;
@@ -372,19 +750,21 @@ input[type=button]{
     align-items: center;
     padding: var(--spacer-1) var(--spacer-2);
   }
-  &[inline=false]{
+
+  &[inline=false] {
     padding: 0;
   }
 }
-fig-button>button{
-    width: 100%;
+
+fig-button>button {
+  width: 100%;
 }
 
 
 
 /* Tabs */
 fig-tab,
-.tab{
+.tab {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -399,9 +779,9 @@ fig-tab,
   border-radius: var(--radius-medium);
   color: var(--figma-color-text-secondary);
   position: relative;
-  
-  &[label]{
-    &::after{
+
+  &[label] {
+    &::after {
       content: attr(label);
       color: var(--figma-color-text-secondary);
       content: attr(label);
@@ -414,37 +794,40 @@ fig-tab,
       font-weight: var(--body-medium-strong-fontWeight);
     }
   }
-  
+
   &:has(:checked),
-  &[selected]{
+  &[selected] {
     background-color: var(--figma-color-bg-secondary);
     font-weight: var(--body-medium-strong-fontWeight);
     color: var(--figma-color-text);
   }
-  &:hover{
+
+  &:hover {
     background-color: var(--figma-color-bg-secondary);
   }
-  & [type=radio]{
-    position: absolute;      
+
+  & [type=radio] {
+    position: absolute;
     inset: 0;
     border-radius: 0;
     opacity: 0;
-    z-index:1;
+    z-index: 1;
     width: 100%;
     height: 100%;
   }
 }
+
 fig-tabs,
-.tabs{
+.tabs {
   display: flex;
   gap: var(--spacer-2);
 }
 
 /* Avatar */
-.avatar{
+.avatar {
   width: 1.5rem;
   display: inline-grid;
-  place-items: center; 
+  place-items: center;
   height: 1.5rem;
   border-radius: 100%;
   border: 0;
@@ -452,11 +835,13 @@ fig-tabs,
   overflow: hidden;
   color: var(--figma-color-icon-onbrand);
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-  &:has(img[src]){
+
+  &:has(img[src]) {
     background: none;
   }
 }
-.avatar img{
+
+.avatar img {
   position: absolute;
   background: var(--checkerboard);
   width: 1.5rem;
@@ -464,16 +849,17 @@ fig-tabs,
   border-radius: 100%;
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 }
-.avatar::after{
+
+.avatar::after {
   content: attr(initials);
 }
 
 /* Color input */
-input[type=color]{
+input[type=color] {
   width: 14px;
   height: 14px;
   -webkit-appearance: none;
-  appearance: none; 
+  appearance: none;
   border: 0;
   padding: 0;
   margin: 0;
@@ -483,13 +869,14 @@ input[type=color]{
   box-sizing: content-box;
   border-radius: var(--radius-medium);
   background-color: var(--figma-color-bg-secondary);
-  
-  &:focus{
+
+  &:focus {
     box-shadow: inset 0 0 0 1px var(--border-selected);
     outline: 0;
   }
 }
-input[type=color]::-webkit-color-swatch-wrapper{
+
+input[type=color]::-webkit-color-swatch-wrapper {
   padding: 0;
   border: 0;
   border-radius: 0.125rem;
@@ -497,44 +884,50 @@ input[type=color]::-webkit-color-swatch-wrapper{
   overflow: hidden;
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 }
-input[type=color]::-moz-color-swatch{
+
+input[type=color]::-moz-color-swatch {
   border-radius: 0.125rem;
   padding: 0;
   border: 0;
-  mask-image: linear-gradient(to right, black 0%, black 50%,rgba(0,0,0,var(--alpha)) 50%);
+  mask-image: linear-gradient(to right, black 0%, black 50%, rgba(0, 0, 0, var(--alpha)) 50%);
 }
-input[type=color]::-webkit-color-swatch{
+
+input[type=color]::-webkit-color-swatch {
   padding: 0;
   border: 0;
-  mask-image: linear-gradient(to right, black 0%, black 50%,rgba(0,0,0,var(--alpha)) 50%);
+  mask-image: linear-gradient(to right, black 0%, black 50%, rgba(0, 0, 0, var(--alpha)) 50%);
 }
 
 /* Combo input */
-.input-combo{
+.input-combo {
   display: inline-flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: 1px;
-  &>*{
+
+  &>* {
+
     &:first-child,
-    &:first-child>*{
+    &:first-child>* {
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
     }
+
     &:last-child,
-    &:last-child>*{
+    &:last-child>* {
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
     }
+
     &:not(:last-child):not(:first-child),
-    &:not(:last-child):not(:first-child)>*{
+    &:not(:last-child):not(:first-child)>* {
       border-radius: 0;
     }
   }
 }
 
 /* Switch */
-input[type=checkbox].switch{
+input[type=checkbox].switch {
   display: inline-flex;
   margin: 0;
   vertical-align: middle;
@@ -542,12 +935,12 @@ input[type=checkbox].switch{
   width: 2rem;
   height: 1rem;
   left: 0;
-  top:0;
+  top: 0;
   margin: 0;
   background: transparent;
   appearance: none;
   -moz-appearance: none;
-  -webkit-appearance:none;
+  -webkit-appearance: none;
   outline: none;
   border: 0;
   align-items: center;
@@ -558,7 +951,8 @@ input[type=checkbox].switch{
   box-sizing: border-box;
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 }
-input[type=checkbox].switch:after{
+
+input[type=checkbox].switch:after {
   content: '';
   background-color: var(--figma-color-icon-onbrand);
   width: calc(1rem - 2px);
@@ -569,62 +963,72 @@ input[type=checkbox].switch:after{
   transition: var(--input-transition);
   box-shadow: var(--handle-shadow);
 }
-input[type=checkbox].switch[indeterminate="true"]:after{
+
+input[type=checkbox].switch[indeterminate="true"]:after {
   width: 0.5rem;
   height: 0.125rem;
   transform: none;
 }
+
 input[type=checkbox].switch[indeterminate="true"],
-input[type=checkbox].switch:checked{
+input[type=checkbox].switch:checked {
   background-color: var(--figma-color-bg-brand);
 }
-input[type=checkbox].switch:checked:after{
+
+input[type=checkbox].switch:checked:after {
   transform: translate(0.5rem);
 }
-input[type=checkbox].switch:disabled{
+
+input[type=checkbox].switch:disabled {
   background-color: var(--figma-color-bg-tertiary);
   cursor: not-allowed;
 }
-input[type=checkbox].switch:focus{
+
+input[type=checkbox].switch:focus {
   outline: 0;
 }
-input[type=checkbox].switch:checked:focus{
+
+input[type=checkbox].switch:checked:focus {
   outline: 0;
 }
 
 /* Checkbox */
-input[type=checkbox]:not(.switch){
+input[type=checkbox]:not(.switch) {
   appearance: none;
   border-radius: var(--radius-medium);
-  width: 1rem; 
+  width: 1rem;
   height: 1rem;
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   background-color: var(--figma-color-bg-secondary);
   vertical-align: middle;
-  
-  &:hover{
+
+  &:hover {
     background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='white' opacity='0.25' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
   }
-  &:checked{
+
+  &:checked {
     background-color: var(--figma-color-bg-brand);
     background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
   }
 }
-.figma-light input[type=checkbox]:not(.switch):hover{
+
+.figma-light input[type=checkbox]:not(.switch):hover {
   background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='black' opacity='0.25' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
 }
-label.checkbox:has([type=checkbox]){
+
+label.checkbox:has([type=checkbox]) {
   padding-left: 1.5rem;
-  & [type=radio]{
+
+  & [type=radio] {
     margin-left: -1.5rem;
   }
 }
 
 /* Radio */
-input[type=radio]{
+input[type=radio] {
   appearance: none;
   border-radius: 0.5rem;
-  width: 1rem; 
+  width: 1rem;
   height: 1rem;
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   background-color: var(--figma-color-bg-secondary);
@@ -632,68 +1036,73 @@ input[type=radio]{
   margin: 0;
   display: inline-grid;
   place-content: center;
-  
-  &:checked{
+
+  &:checked {
     background-color: var(--figma-color-bg-brand);
-    
-    &::after{
+
+    &::after {
       transform: scale(1);
     }
   }
-  &:focus{
+
+  &:focus {
     box-shadow: inset 0 0 0 1px var(--border-selected);
     outline: 0;
   }
-  
-  &::after{
-    content:'';
+
+  &::after {
+    content: '';
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 0.25rem;
     background-color: var(--figma-color-text-onbrand);
     transform: scale(0);
     transition: var(--input-transition);
-    box-shadow: 
-        0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-        0px 1px 3px 0px rgba(0, 0, 0, 0.1),
-        0px 3px 8px 0px rgba(0, 0, 0, 0.1),
-        0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+    box-shadow:
+      0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+      0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+      0px 3px 8px 0px rgba(0, 0, 0, 0.1),
+      0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
   }
 }
-label.radio:has([type=radio]){
+
+label.radio:has([type=radio]) {
   padding-left: 1.5rem;
-  & [type=radio]{
+
+  & [type=radio] {
     margin-left: -1.5rem;
   }
 }
 
 /* Fieldset */
-fieldset{
+fieldset {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   border: 0;
   align-items: start;
   padding: var(--spacer-2) 0;
-  & > legend{
+
+  &>legend {
     margin-top: 0.125rem;
     font-weight: 500;
     font-size: .625rem;
     line-height: 0.875rem;
     color: var(--figma-color-text-secondary);
   }
-  & > label {
+
+  &>label {
     display: grid;
     width: 100%;
-    grid-template-columns: 4rem 1fr; 
+    grid-template-columns: 4rem 1fr;
     column-gap: var(--spacer-2);
     align-items: center;
   }
 }
 
 /* Details */
-details{
-  & > summary{
+details {
+  &>summary {
     font-weight: var(--body-medium-strong-fontWeight);
     cursor: default;
     display: flex;
@@ -702,7 +1111,8 @@ details{
     height: var(--spacer-6);
     user-select: none;
     color: var(--figma-color-text-secondary);
-    &::before{
+
+    &::before {
       content: var(--icon-chevron);
       display: inline-flex;
       align-items: start;
@@ -711,29 +1121,34 @@ details{
       transform: rotate(-90deg);
       transition: transform var(--transition-duration) var(--transition-timing-function);
     }
-    &::marker{
+
+    &::marker {
       content: "";
     }
   }
+
   &>summary:hover,
-  &[open]>summary{
-    color: inherit;   
-    &::before{
+  &[open]>summary {
+    color: inherit;
+
+    &::before {
       opacity: 1;
     }
   }
-  &[open]{
-    &>summary::before{
+
+  &[open] {
+    &>summary::before {
       transform: rotate(0deg);
     }
   }
 }
-.figma-light details>summary:before{
-    content: var(--icon-chevron);
+
+.figma-light details>summary:before {
+  content: var(--icon-chevron);
 }
 
 
-  /* Details 
+/* Details 
 
   details summary{
     cursor: pointer;
@@ -773,9 +1188,9 @@ details{
 
 
 
-@layer slider{
-  
-  .slider{
+@layer slider {
+
+  .slider {
     --start: 1;
     display: block;
     position: relative;
@@ -785,31 +1200,32 @@ details{
     --slider-percent: calc(var(--slider-complete) * (100% - 5px));
     --color-percent: calc(var(--slider-complete) * (100%));
     --slider-handle-shadow: inset 0 0 0 4px var(--figma-color-icon-onbrand),
-        inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-        0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-        0px 1px 3px 0px rgba(0, 0, 0, 0.1),
-        0px 3px 8px 0px rgba(0, 0, 0, 0.1),
-        0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+      inset 0 0 0 5px rgba(0, 0, 0, 0.1),
+      0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+      0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+      0px 3px 8px 0px rgba(0, 0, 0, 0.1),
+      0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
     --slider-handle-shadow-focus: inset 0 0 0 4px var(--figma-color-icon-onbrand),
-        inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-        0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-        0px 1px 3px 0px rgba(0, 0, 0, 0.1),
-        0px 3px 8px 0px rgba(0, 0, 0, 0.1),
-        0px 0px 0.5px 0px rgba(0, 0, 0, 0.18),
-        0 0 0 1px var(--border-selected);
-    
-    &.gradient{
+      inset 0 0 0 5px rgba(0, 0, 0, 0.1),
+      0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+      0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+      0px 3px 8px 0px rgba(0, 0, 0, 0.1),
+      0px 0px 0.5px 0px rgba(0, 0, 0, 0.18),
+      0 0 0 1px var(--border-selected);
+
+    &.gradient {
       padding-top: 2.5rem !important;
     }
-    & input[type=color]{
+
+    & input[type=color] {
       position: absolute;
       left: var(--color-percent);
-      transform: translate(-50%,calc(-100% - 0.5rem));
+      transform: translate(-50%, calc(-100% - 0.5rem));
     }
   }
 
   /* Chromium */
-  .slider input[type=range]{
+  .slider input[type=range] {
     height: 1rem;
     appearance: none;
     -webkit-appearance: none;
@@ -819,19 +1235,21 @@ details{
     cursor: grab;
     cursor: -webkit-grab;
     background-color: transparent;
-    
-    &:active { 
+
+    &:active {
       cursor: grabbing;
       cursor: -webkit-grabbing;
     }
-    &:focus{
+
+    &:focus {
       outline: none;
-      &::-webkit-slider-thumb{
+
+      &::-webkit-slider-thumb {
         box-shadow: var(--slider-handle-shadow-focus);
       }
     }
 
-    &::-webkit-slider-thumb{
+    &::-webkit-slider-thumb {
       appearance: none;
       -webkit-appearance: none;
       border-radius: 0.5rem;
@@ -844,46 +1262,55 @@ details{
       box-shadow: var(--slider-handle-shadow);
     }
 
-    &:disabled{
+    &:disabled {
       cursor: not-allowed;
-      &::-webkit-slider-runnable-track{
+
+      &::-webkit-slider-runnable-track {
         background: linear-gradient(to right, var(--figma-color-bg-secondary) 0%, var(--figma-color-bg-secondary) var(--slider-percent), var(--figma-color-bg) var(--slider-percent));
       }
-      &::-webkit-slider-thumb{
+
+      &::-webkit-slider-thumb {
         box-shadow: inset 0 0 0 1rem var(--figma-color-bg-disabled);
       }
     }
-    &::-webkit-slider-runnable-track{
+
+    &::-webkit-slider-runnable-track {
       height: 1rem;
-      background-color: transparent;    
+      background-color: transparent;
       border-radius: 0.5rem;
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-      background: radial-gradient(.55rem .55rem at var(--slider-percent) 50%, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) .55rem,transparent .55rem, transparent 100%),
+      background: radial-gradient(.55rem .55rem at var(--slider-percent) 50%, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) .55rem, transparent .55rem, transparent 100%),
         linear-gradient(to right, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) var(--slider-percent), var(--figma-color-bg-secondary) var(--slider-percent));
       background-size: 100% 100%, 100% 100%;
       background-position: 75% middle, left middle;
-      background-repeat:no-repeat;
+      background-repeat: no-repeat;
     }
-    &.hue::-webkit-slider-runnable-track{
+
+    &.hue::-webkit-slider-runnable-track {
       background: var(--bg-hue);
     }
-    &.opacity::-webkit-slider-runnable-track{
-      background: linear-gradient(to right, transparent, var(--color)),var(--checkerboard);
+
+    &.opacity::-webkit-slider-runnable-track {
+      background: linear-gradient(to right, transparent, var(--color)), var(--checkerboard);
     }
-    &.gradient{
+
+    &.gradient {
       border-radius: 0.125rem;
-      &::-webkit-slider-thumb{ 
+
+      &::-webkit-slider-thumb {
         transform: scale(1.5) translateY(-1.25rem);
         opacity: 0.5;
       }
     }
-    &.gradient::-webkit-slider-runnable-track{
+
+    &.gradient::-webkit-slider-runnable-track {
       border-radius: 0.125rem;
       background: var(--bg-hue);
     }
   }
+
   /* Firefox */
-  .slider input[type=range]{
+  .slider input[type=range] {
     height: 1rem;
     appearance: none;
     -webkit-appearance: none;
@@ -892,18 +1319,20 @@ details{
     width: 100%;
     cursor: -moz-grab;
     background-color: transparent;
-    
-    &:active { 
-      cursor: -moz-grabbing; 
+
+    &:active {
+      cursor: -moz-grabbing;
     }
-    &:focus{
+
+    &:focus {
       outline: none;
-      &::-moz-range-thumb{
+
+      &::-moz-range-thumb {
         box-shadow: var(--slider-handle-shadow-focus);
       }
     }
 
-    &::-moz-range-thumb{
+    &::-moz-range-thumb {
       appearance: none;
       -webkit-appearance: none;
       border-radius: 0.5rem;
@@ -915,45 +1344,54 @@ details{
       z-index: 1;
       box-shadow: var(--slider-handle-shadow);
     }
-    &:disabled{
+
+    &:disabled {
       cursor: not-allowed;
-      &::-moz-range-track{
+
+      &::-moz-range-track {
         background: linear-gradient(to right, var(--figma-color-bg-secondary) 0%, var(--figma-color-bg-secondary) var(--slider-percent), var(--figma-color-bg) var(--slider-percent));
       }
-      &::-moz-range-thumb{
+
+      &::-moz-range-thumb {
         box-shadow: inset 0 0 0 1rem var(--figma-color-bg-disabled);
       }
     }
-    &::-moz-range-track{
+
+    &::-moz-range-track {
       height: 1rem;
-      background-color: transparent;    
+      background-color: transparent;
       border-radius: 0.5rem;
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-      background: radial-gradient(.55rem .55rem at var(--slider-percent) 50%, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) .55rem,transparent .55rem, transparent 100%),
+      background: radial-gradient(.55rem .55rem at var(--slider-percent) 50%, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) .55rem, transparent .55rem, transparent 100%),
         linear-gradient(to right, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) var(--slider-percent), var(--figma-color-bg-secondary) var(--slider-percent));
       background-size: 100% 100%, 100% 100%;
       background-position: 75% middle, left middle;
-      background-repeat:no-repeat;
+      background-repeat: no-repeat;
     }
-    &.hue::-moz-range-track{
+
+    &.hue::-moz-range-track {
       background: var(--bg-hue);
     }
-    &.opacity::-moz-range-track{
-      background: linear-gradient(to right, transparent, var(--color)),var(--checkerboard);
+
+    &.opacity::-moz-range-track {
+      background: linear-gradient(to right, transparent, var(--color)), var(--checkerboard);
     }
-    &.gradient{
+
+    &.gradient {
       border-radius: 0.125rem;
-      &::-webkit-slider-thumb{ 
+
+      &::-webkit-slider-thumb {
         transform: scale(1.5) translateY(-1.25rem);
         opacity: 0.5;
       }
     }
-    &.gradient::-moz-range-track{
+
+    &.gradient::-moz-range-track {
       border-radius: 0.125rem;
       background: var(--bg-hue);
     }
   }
-  
+
   @supports (animation-timeline: scroll()) {
     @property --slider-complete {
       initial-value: 0;
@@ -987,7 +1425,7 @@ details{
 .dialog,
 dialog,
 .popover,
-[popover]{
+[popover] {
   padding: 0;
   outline: 0;
   border: 0;
@@ -997,12 +1435,13 @@ dialog,
   min-width: var(--popover-min-width);
 
   box-shadow: var(--figma-elevation-100);
-  
-  &:popover-open{
+
+  &:popover-open {
     display: block;
     outline: none !important;
   }
-  & header{
+
+  & header {
     height: var(--spacer-6);
     margin: 0;
     padding: var(--spacer-2);
@@ -1010,14 +1449,17 @@ dialog,
     align-items: center;
     font-weight: var(--body-medium-strong-fontWeight);
     box-shadow: inset 0 -1px 0 0 var(--figma-color-border);
-    & h3{
-        font: inherit;
+
+    & h3 {
+      font: inherit;
     }
-    &>:first-child{
-        padding-left: var(--spacer-2);
-    }   
+
+    &>:first-child {
+      padding-left: var(--spacer-2);
+    }
   }
-  &[tooltip]{
+
+  &[tooltip] {
     color: var(--color-tooltip);
     background-color: var(--bg-tooltip);
     padding: var(--spacer-1) var(--spacer-2);
@@ -1025,53 +1467,56 @@ dialog,
     box-sizing: content-box;
     min-width: var(--popover-min-width);
     max-width: var(--popover-min-width);
-        /*top: calc(anchor(top) - 1ch - (var(--spacer-1) * 2 + 1rem));*/
+    /*top: calc(anchor(top) - 1ch - (var(--spacer-1) * 2 + 1rem));*/
     top: anchor(top);
     left: anchor(center);
     /*transform: translate(-50%,-100%);*/
 
-    
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    
-    
+
+
     border-radius: var(--radius-medium, 0.3125rem);
-    box-shadow: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.15), 
-      0px 5px 12px 0px rgba(0, 0, 0, 0.13), 
+    box-shadow: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.15),
+      0px 5px 12px 0px rgba(0, 0, 0, 0.13),
       0px 1px 3px 0px rgba(0, 0, 0, 0.10);
-    
+
     @supports (-webkit-line-clamp: 2) {
       white-space: initial;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
     }
-    
-    &:popover-open{
+
+    &:popover-open {
       display: inline-block;
+
       @supports (-webkit-line-clamp: 2) {
         display: -webkit-box;
       }
+
       min-width: 0;
     }
   }
 }
 
-dialog{
+dialog {
   position: fixed;
   top: 50%;
   left: 50%;
   margin: 0;
-  transform: translate(-50%,-50%);
-  &[position*="bottom"]{
+  transform: translate(-50%, -50%);
+
+  &[position*="bottom"] {
     bottom: 0.5rem;
     top: auto;
-    transform: translate(-50%,0);
+    transform: translate(-50%, 0);
   }
 }
 
 /* Tooltip */
-.fig-tooltip{
+.fig-tooltip {
   inset: unset;
   color: var(--color-tooltip);
   background-color: var(--bg-tooltip);
@@ -1080,60 +1525,64 @@ dialog{
   display: inline-flex;
   font-weight: inherit;
   border-radius: var(--radius-medium, 0.3125rem);
-  
+
   font: inherit;
   font-weight: normal;
 
-  &:after{
+  &:after {
     content: '';
     background-color: var(--bg-tooltip);
     clip-path: path('M16 0H0L0 1H0.757359C1.55301 1 2.31607 1.31607 2.87868 1.87868L6.29587 5.29587C7.23704 6.23704 8.76296 6.23704 9.70413 5.29587L13.1213 1.87868C13.6839 1.31607 14.447 1 15.2426 1H16V0Z');
     width: 1rem;
-    height: 6px;    
+    height: 6px;
     position: absolute;
-    top: calc(100% - 1px); 
+    top: calc(100% - 1px);
     left: 50%;
     z-index: 2;
     transform: translate(-50%);
-  }  
-  &[position=bottom]{
-    &:after{
+  }
+
+  &[position=bottom] {
+    &:after {
       top: 1px;
-      transform: translate(-50%,-100%) scaleY(-1);  
+      transform: translate(-50%, -100%) scaleY(-1);
     }
   }
 }
 
-.fig-tooltip, 
-.fig-popover{
+.fig-tooltip,
+.fig-popover {
   overflow: visible;
-  box-shadow: inset 0 0.5px 0 0 rgba(255,255,255,0.1);
+  box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
   filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.10)) drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13)) drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
-  &:after{
+
+  &:after {
     content: '';
     background-color: inherit;
     clip-path: path('M16 0H0L0 1H0.757359C1.55301 1 2.31607 1.31607 2.87868 1.87868L6.29587 5.29587C7.23704 6.23704 8.76296 6.23704 9.70413 5.29587L13.1213 1.87868C13.6839 1.31607 14.447 1 15.2426 1H16V0Z');
     width: 1rem;
-    height: 6px;    
+    height: 6px;
     position: absolute;
-    top: calc(100% - 1px); 
+    top: calc(100% - 1px);
     left: 50%;
     z-index: 2;
     transform: translate(-50%);
-  }  
-  &[position=bottom]{
-    &:after{
+  }
+
+  &[position=bottom] {
+    &:after {
       top: 1px;
-      transform: translate(-50%,-100%) scaleY(-1);  
+      transform: translate(-50%, -100%) scaleY(-1);
     }
   }
 }
 
 /* UI Icons */
-fig-icon{
+fig-icon {
   display: block;
 }
-fig-icon.close{
+
+fig-icon.close {
   width: 1rem;
   height: 1rem;
   background-color: var(--figma-color-text);
@@ -1141,50 +1590,56 @@ fig-icon.close{
 }
 
 /* Web Components */
-fig-button, 
-fig-tooltip, 
+fig-button,
+fig-tooltip,
 fig-popover,
 fig-dialog,
 fig-content,
 fig-slider,
 fig-segmented-control,
 fig-switch,
-fig-input-color, 
+fig-input-color,
 fig-input-text,
 fig-checkbox,
 fig-radio,
 fig-tab,
 fig-tabs,
-fig-tooltip{
+fig-tooltip {
   display: inline-flex;
   gap: var(--spacer-2);
   user-select: none;
 }
-fig-input-text{
+
+fig-input-text {
   user-select: all;
   gap: 0;
-  &[multiline]{
+
+  &[multiline] {
     display: block;
   }
 }
+
 fig-input-text[autoresize] textarea,
-fig-input-text[autoresize] input{
+fig-input-text[autoresize] input {
   field-sizing: content;
 }
-fig-input-text[resizable] textarea{
+
+fig-input-text[resizable] textarea {
   resize: both;
 }
+
 fig-checkbox,
-fig-radio{
-  & label span{
+fig-radio {
+  & label span {
     vertical-align: middle;
   }
 }
-fig-input-color{
-    --alpha: 1;
+
+fig-input-color {
+  --alpha: 1;
 }
 
-fig-header{
+fig-header {
   height: var(--spacer-6);
   margin: 0;
   padding: var(--spacer-2);
@@ -1192,130 +1647,148 @@ fig-header{
   align-items: center;
   box-shadow: inset 0 -1px 0 0 var(--figma-color-border);
   gap: 0.25rem;
-  & h3{
+
+  & h3 {
     padding-left: var(--spacer-1);
     font-weight: var(--body-medium-strong-fontWeight);
-  } 
-  &>*:not(fig-button){
-    flex-grow:1;
   }
-  &[borderless]{
+
+  &>*:not(fig-button) {
+    flex-grow: 1;
+  }
+
+  &[borderless] {
     box-shadow: none;
   }
 }
 
-fig-content{
+fig-content {
   padding: var(--spacer-2);
   display: block;
 }
 
 vstack,
 .vstack,
-[vstack]{
+[vstack] {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+
 hstack,
 .hstack,
-[hstack]{
+[hstack] {
   display: flex;
   gap: 0.5rem;
   align-items: start;
 }
 
-fig-input-text{
+fig-input-text {
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
+
   & label,
-  & [slot]{
+  & [slot] {
     display: flex;
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
     width: 100%;
   }
+
   & [slot] {
-    padding: .25rem 0.5rem;  
+    padding: .25rem 0.5rem;
     flex: 0;
     user-select: none;
     color: var(--figma-color-text-secondary);
   }
-  & [slot=prepend]{
+
+  & [slot=prepend] {
     padding-right: 0;
   }
-  & [slot=append]{
+
+  & [slot=append] {
     padding-left: 0;
   }
-  
-  & input{
+
+  & input {
     background-color: transparent !important;
     flex: 1;
+
     &:focus,
-    &:active{
+    &:active {
       box-shadow: none !important;
     }
   }
-  &:has(input:focus){
+
+  &:has(input:focus) {
     box-shadow: inset 0 0 0 1px var(--border-selected);
     outline: 0;
   }
 }
 
-fig-input-color{
+fig-input-color {
+
   & fig-input-text:not([type]),
-  & fig-input-text[type=text]{
+  & fig-input-text[type=text] {
     min-width: 6em;
     display: inline-flex;
     flex-direction: column;
     align-items: stretch;
-    & input[type=text]{
+
+    & input[type=text] {
       width: 100%;
     }
   }
-  & fig-input-text[type=number]{
+
+  & fig-input-text[type=number] {
     width: 3.5rem;
     display: inline-flex;
   }
 }
 
-fig-slider{
+fig-slider {
   display: flex;
-  & .slider{
+
+  & .slider {
     flex-grow: 1;
   }
-  & fig-input-text[type=number]{
+
+  & fig-input-text[type=number] {
     width: 3.5rem;
   }
 }
 
-fig-field, 
-.fig-field{
+fig-field,
+.fig-field {
   display: flex;
   margin: var(--spacer-2) 0;
   flex-direction: column;
   gap: 0;
-  &>*{
+
+  &>* {
     flex: 1;
   }
-  &>label{
+
+  &>label {
     flex: 0;
     padding: var(--spacer-1) 0;
     display: flex;
     min-height: calc(1rem + var(--spacer-1)*2);
     align-items: center;
   }
-  &[direction=horizontal]{
+
+  &[direction=horizontal] {
     gap: var(--spacer-2);
     align-items: flex-start;
   }
 }
 
-fig-spinner{
+fig-spinner {
   width: 1rem;
   height: 1rem;
   display: inline-flex;
@@ -1323,11 +1796,13 @@ fig-spinner{
   clip-path: path("M15.9995 7.86066C16.0271 9.44267 15.585 10.9973 14.729 12.3281C13.8731 13.6588 12.6417 14.7058 11.1907 15.3368C9.73968 15.9677 8.13415 16.1542 6.57716 15.8726C5.02016 15.591 3.58161 14.8541 2.44344 13.755C1.30526 12.6559 0.518574 11.2439 0.182856 9.69769C-0.152862 8.15147 -0.0225313 6.54042 0.557366 5.06826C1.13726 3.59611 2.14068 2.32898 3.44073 1.4271C4.74079 0.525221 6.27908 0.0291073 7.86109 0.00149397L7.87922 1.04037C6.50268 1.06439 5.16418 1.49607 4.03298 2.28081C2.90177 3.06556 2.02868 4.16812 1.5241 5.44907C1.01952 6.73002 0.906114 8.13183 1.19823 9.47724C1.49034 10.8226 2.17486 12.0512 3.16521 13.0076C4.15556 13.9639 5.40727 14.6052 6.76204 14.8502C8.11682 15.0951 9.51382 14.9329 10.7764 14.3839C12.0389 13.8349 13.1104 12.9239 13.8552 11.766C14.5999 10.6081 14.9846 9.25533 14.9606 7.87879L15.9995 7.86066Z");
   animation: fig-spinner-spin 1.0s linear infinite;
 }
+
 @keyframes fig-spinner-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
