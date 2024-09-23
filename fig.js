@@ -109,6 +109,7 @@ class FigTooltip extends HTMLElement {
         this.popup = document.createElement('span');
         this.popup.setAttribute("class", "fig-tooltip")
         this.popup.style.position = "fixed"
+        this.popup.style.display = "none"
         this.popup.style.pointerEvents = "none"
         this.popup.innerText = this.getAttribute("text")
         document.body.append(this.popup)

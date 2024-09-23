@@ -557,7 +557,7 @@ textarea {
 
 /* Dropdown */
 select,
-input[list] {
+input[type=text][list] {
   height: var(--spacer-4);
   padding: 0 var(--spacer-2);
   appearance: none;
