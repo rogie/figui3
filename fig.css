@@ -354,18 +354,11 @@
 :root {
   --font-size: 16px;
   --figma-color-bordertranslucent: rgba(0, 0, 0, 0.1);
-  --figma-color-bg-brand: rgba(13, 153, 255, 1);
   --checkerboard: repeating-conic-gradient(rgba(0, 0, 0, 0.1) 0% 25%, rgba(255, 255, 255, 0.1) 0% 50%) 0 0 / .66666rem .66666rem;
   --bg-hue: linear-gradient(90deg, rgba(255, 0, 0, 1), rgba(255, 48, 0, 1), rgba(255, 96, 0, 1), rgba(255, 143, 0, 1), rgba(255, 191, 0, 1), rgba(255, 239, 0, 1), rgba(223, 255, 0, 1), rgba(175, 255, 0, 1), rgba(128, 255, 0, 1), rgba(80, 255, 0, 1), rgba(32, 255, 0, 1), rgba(0, 255, 16, 1), rgba(0, 255, 64, 1), rgba(0, 255, 112, 1), rgba(0, 255, 159, 1), rgba(0, 255, 207, 1), rgba(0, 255, 255, 1), rgba(0, 207, 255, 1), rgba(0, 159, 255, 1), rgba(0, 112, 255, 1), rgba(0, 64, 255, 1), rgba(0, 16, 255, 1), rgba(32, 0, 255, 1), rgba(80, 0, 255, 1), rgba(127, 0, 255, 1), rgba(175, 0, 255, 1), rgba(223, 0, 255, 1), rgba(255, 0, 239, 1), rgba(255, 0, 191, 1), rgba(255, 0, 143, 1), rgba(255, 0, 96, 1), rgba(255, 0, 48, 1));
   --input-transition: all 0.08s ease-out;
-  --figma-color-text-disabled: rgba(0, 0, 0, 0.3);
-  --figma-color-bg-tertiary: rgba(230, 230, 230, 1);
   --bg-selected: #F5F5F5;
-  --figma-color-bg-brand: #0D99FF;
-  --figma-color-icon-brand: #007BE5;
   --bg-selected-active: #E5F4FF;
-  --figma-color-bg-secondary: #F5F5F5;
-  --figma-color-border-selected: #0D99FF;
   --bg-tooltip: #1E1E1E;
   --body-medium-fontSize: 0.6875rem;
   --border-selected: #0D99FF;
@@ -385,7 +378,6 @@
     0px 0px 0.5px 0px rgba(0, 0, 0, 0.1);
 
   --popover-min-width: 15rem;
-  --figma-color-bg-selected: #e5f4ff;
   --figma-color-bg-ghost-hover: rgba(0, 0, 0, 0.05);
   --elevation-500-modal-window: 0px 0px .5px rgba(0, 0, 0, .08), 0px 10px 24px rgba(0, 0, 0, .18), 0px 2px 5px rgba(0, 0, 0, .15);
 
@@ -402,11 +394,8 @@
     --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(255 255 255 / 50%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
     --handle-shadow: 0px 0 0 0.75px rgba(255, 255, 255, 0.1),
       0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
-    --figma-color-bg-selected: #3B435E;
     --figma-color-bg-ghost-hover: rgba(255, 255, 255, 0.05);
     --figma-color-bordertranslucent: rgba(255, 255, 255, 0.1);
-    --figma-color-border-selected: #0C8CE9;
-    --figma-color-icon-brand: #7CC4F8;
     --elevation-500-modal-window: 0px 10px 24px rgba(0, 0, 0, .45), 0px 3px 5px rgba(0, 0, 0, .35), inset 0px .75px 0px rgba(255, 255, 255, .1);
     --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.50), 0px 0.75px 0px 0px rgba(255, 255, 255, 0.10) inset, 0px 1px 3px 0px rgba(0, 0, 0, 0.40);
   }
