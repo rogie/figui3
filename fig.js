@@ -109,7 +109,7 @@ class FigTooltip extends HTMLElement {
         this.popup = document.createElement('span');
         this.popup.setAttribute("class", "fig-tooltip")
         this.popup.style.position = "fixed"
-        this.popup.style.display = "none"
+        this.popup.style.visibility = "hidden"
         this.popup.style.pointerEvents = "none"
         this.popup.innerText = this.getAttribute("text")
         document.body.append(this.popup)
@@ -177,6 +177,7 @@ class FigTooltip extends HTMLElement {
         this.popup.style.top = `${top}px`;
         this.popup.style.left = `${left}px`;
         this.popup.style.opacity = "1";
+        this.popup.style.visibility = "visible"
         this.popup.style.display = "block"
         this.popup.style.pointerEvents = "all"
         this.popup.style.zIndex = parseInt((new Date()).getTime() / 1000)
@@ -655,6 +656,9 @@ class FigField extends HTMLElement {
         }
     }
     focus() {
+        if (!this.input) {
+            this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-"))
+        }
         console.log('input:', this.input)
         this.input.focus()
     }
