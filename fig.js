@@ -24,6 +24,7 @@ class FigButton extends HTMLElement {
                     display: block;
                     border: 0;
                     font: inherit;
+                    color: inherit;
                     background: transparent;
                 }
             </style>
