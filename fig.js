@@ -403,7 +403,11 @@ class FigTab extends HTMLElement {
         super()
     }
     connectedCallback() {
+        this.setAttribute("label", this.innerText)
         this.addEventListener("click", this.handleClick.bind(this))
+    }
+    disconnectedCallback() {
+        this.removeEventListener("click", this.handleClick)
     }
     handleClick() {
         this.setAttribute("selected", "true")
@@ -419,13 +423,17 @@ class FigTabs extends HTMLElement {
         this.name = this.getAttribute("name") || "tabs"
         this.addEventListener("click", this.handleClick.bind(this))
     }
+    disconnectedCallback() {
+        this.removeEventListener("click", this.handleClick)
+    }
     handleClick(event) {
         const target = event.target;
         if (target.nodeName.toLowerCase() === "fig-tab") {
             const tabs = this.querySelectorAll("fig-tab")
-            console.log("change", target, tabs, target.nodeName)
             for (const tab of tabs) {
-                if (tab !== target) {
+                if (tab === target) {
+                    this.selectedTab = tab
+                } else {
                     tab.removeAttribute("selected")
                 }
             }
@@ -433,6 +441,47 @@ class FigTabs extends HTMLElement {
     }
 }
 window.customElements.define('fig-tabs', FigTabs);
+
+/* Segmented Control */
+class FigSegment extends HTMLElement {
+    constructor() {
+        super()
+    }
+    connectedCallback() {
+        this.addEventListener("click", this.handleClick.bind(this))
+    }
+    disconnectedCallback() {
+        this.removeEventListener("click", this.handleClick)
+    }
+    handleClick() {
+        this.setAttribute("selected", "true")
+    }
+}
+window.customElements.define('fig-segment', FigSegment);
+
+class FigSegmentedControl extends HTMLElement {
+    constructor() {
+        super()
+    }
+    connectedCallback() {
+        this.name = this.getAttribute("name") || "segmented-control"
+        this.addEventListener("click", this.handleClick.bind(this))
+    }
+    handleClick(event) {
+        const target = event.target;
+        if (target.nodeName.toLowerCase() === "fig-segment") {
+            const segments = this.querySelectorAll("fig-segment")
+            for (const segment of segments) {
+                if (segment === target) {
+                    this.selectedSegment = segment
+                } else {
+                    segment.removeAttribute("selected")
+                }
+            }
+        }
+    }
+}
+window.customElements.define('fig-segmented-control', FigSegmentedControl);
 
 
 
