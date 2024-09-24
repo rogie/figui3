@@ -529,17 +529,8 @@ fig-segmented-control {
     appearance: none;
     padding: 0 var(--spacer-2);
 
-    & [type=radio] {
-      position: absolute;
-      inset: 0;
-      border-radius: 0;
-      opacity: 0;
-      z-index: 1;
-      width: 100%;
-      height: 100%;
-    }
-
-    &:has(:checked) {
+    &[selected]:not([selected=false]),
+    &[selected=true] {
       background-color: var(--figma-color-bg);
       border-radius: calc(var(--radius-medium) - 1px);
       box-shadow: var(--handle-shadow);
