@@ -398,72 +398,41 @@ window.customElements.define('fig-popover-2', FigPopover2);
 
 
 /* Tabs */
+class FigTab extends HTMLElement {
+    constructor() {
+        super()
+    }
+    connectedCallback() {
+        this.addEventListener("click", this.handleClick.bind(this))
+    }
+    handleClick() {
+        this.setAttribute("selected", "true")
+    }
+}
+window.customElements.define('fig-tab', FigTab);
+
 class FigTabs extends HTMLElement {
     constructor() {
         super()
     }
     connectedCallback() {
-        const tabs = this.querySelectorAll('fig-tab')
-        const name = this.getAttribute("name") || ("tabs-" + this.uniqueId())
-        for (const tab of tabs) {
-            let input = document.createElement('input')
-            input.type = "radio"
-            input.name = name
-            input.checked = tab.hasAttribute("selected")
-            input.value = tab.getAttribute("value") || this.slugify(tab.innerText)
-            tab.setAttribute("label", tab.innerText)
-            tab.append(input)
-            input.addEventListener("input", this.handleInput.bind(this))
-        }
+        this.name = this.getAttribute("name") || "tabs"
+        this.addEventListener("click", this.handleClick.bind(this))
     }
-    uniqueId() {
-        return Date.now().toString(36) + Math.random().toString(36).substring(2)
-    }
-    slugify(text) {
-        return text
-            .toLowerCase()
-            .trim()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/[\s_-]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-    }
-    handleInput() {
-        const radios = this.querySelectorAll("[type=radio]")
-        for (const radio of radios) {
-            if (radio.checked) {
-                this.value = radio.value
-                radio.parentNode.setAttribute("selected", "")
-            } else {
-                radio.parentNode.removeAttribute("selected")
+    handleClick(event) {
+        const target = event.target;
+        if (target.nodeName.toLowerCase() === "fig-tab") {
+            const tabs = this.querySelectorAll("fig-tab")
+            console.log("change", target, tabs, target.nodeName)
+            for (const tab of tabs) {
+                if (tab !== target) {
+                    tab.removeAttribute("selected")
+                }
             }
         }
     }
 }
 window.customElements.define('fig-tabs', FigTabs);
-
-/* Segmented Control */
-class FigSegmentedControl extends HTMLElement {
-    constructor() {
-        super()
-    }
-    connectedCallback() {
-        const segments = this.querySelectorAll('fig-segment')
-        const name = this.getAttribute("name") || "segmented-control"
-        for (const segment of segments) {
-            let input = document.createElement('input')
-            input.type = "radio"
-            input.name = name
-            input.checked = segment.hasAttribute("selected")
-            input.value = segment.getAttribute("value")
-            segment.append(input)
-            input.addEventListener("input", this.handleInput.bind(this))
-        }
-    }
-    handleInput() {
-        this.value = this.querySelector(":checked").value
-    }
-}
-window.customElements.define('fig-segmented-control', FigSegmentedControl);
 
 
 
