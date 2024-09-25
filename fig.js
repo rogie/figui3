@@ -956,6 +956,10 @@ class FigCheckbox extends HTMLElement {
             case "checked":
                 this.checked = this.input.checked = this.hasAttribute("checked") ? true : false
                 break;
+            case "name":
+            case "value":
+                this.input[name] = newValue
+                break;
         }
     }
 
@@ -967,6 +971,15 @@ class FigCheckbox extends HTMLElement {
 
 }
 window.customElements.define('fig-checkbox', FigCheckbox);
+
+/* Radio */
+class FigRadio extends FigCheckbox {
+    constructor() {
+        super()
+        this.input.setAttribute("type", "radio")
+    }
+}
+window.customElements.define('fig-radio', FigRadio);
 
 /* Switch */
 class FigSwitch extends FigCheckbox {

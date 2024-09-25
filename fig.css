@@ -1610,6 +1610,8 @@ fig-input-text[resizable] textarea {
 
 fig-checkbox,
 fig-radio {
+  align-items: center;
+
   & label span {
     vertical-align: middle;
   }
