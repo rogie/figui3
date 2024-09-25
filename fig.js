@@ -910,6 +910,7 @@ class FigCheckbox extends HTMLElement {
         super()
         this.input = document.createElement("input")
         this.input.setAttribute("id", uniqueId())
+        this.input.setAttribute("name", this.getAttribute("name") || "checkbox")
         this.input.setAttribute("type", "checkbox")
         this.labelElement = document.createElement("label")
         this.labelElement.setAttribute("for", this.input.id)
@@ -977,6 +978,7 @@ class FigRadio extends FigCheckbox {
     constructor() {
         super()
         this.input.setAttribute("type", "radio")
+        this.input.setAttribute("name", this.getAttribute("name") || "radio")
     }
 }
 window.customElements.define('fig-radio', FigRadio);
