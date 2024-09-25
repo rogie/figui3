@@ -1184,6 +1184,7 @@ fig-slider {
 
   display: inline-flex;
   align-items: center;
+  position: relative;
 
   .fig-slider-input-container {
     height: var(--slider-height);
