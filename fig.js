@@ -958,7 +958,7 @@ class FigCheckbox extends HTMLElement {
                 break;
             case "name":
             case "value":
-                this.input[name] = newValue
+                this.input.setAttribute(name, newValue)
                 break;
         }
     }
