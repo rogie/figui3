@@ -637,20 +637,12 @@ input[type=button] {
       background-color: var(--figma-color-bg-selected);
     }
 
-    &[selected=true] {
-      background-color: var(--figma-color-bg-selected);
-    }
-
     &:focus {
       outline: 0;
       background-color: transparent;
       box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     }
-  }
 
-  &[variant="ghost"][icon][selected=true],
-  &[variant="ghost"][icon][selected=true]>button {
-    color: var(--figma-color-icon-brand);
   }
 
   &[variant="ghost"][disabled=true],
@@ -733,6 +725,11 @@ input[type=button] {
 
   &[inline=false] {
     padding: 0;
+  }
+
+  &[selected]:not([selected=false]) {
+    color: var(--figma-color-icon-brand);
+    background-color: var(--figma-color-bg-selected);
   }
 }
 
