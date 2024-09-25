@@ -572,16 +572,16 @@ input[type=text][list] {
   }
 }
 
-input[list]:hover,
-input[list]:active,
-input[list]:focus,
+input[type=text][list]:hover,
+input[type=text][list]:active,
+input[type=text][list]:focus,
 select {
   background-image: var(--icon-chevron);
   background-position: calc(100% - 0.25rem) center;
   background-repeat: no-repeat;
 }
 
-input[list],
+input[type=text][list],
 select {
   padding-right: 1.5rem;
 }
@@ -1164,49 +1164,63 @@ details {
   */
 
 
+.fig-slider,
+fig-slider {
+  --slider-height: 1rem;
+  --slider-percent: calc(var(--slider-complete) * 100%);
+  --slider-handle-shadow: inset 0 0 0 4px var(--figma-color-icon-onbrand),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.1),
+    0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+    0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+    0px 3px 8px 0px rgba(0, 0, 0, 0.1),
+    0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+  --slider-handle-shadow-focus: inset 0 0 0 4px var(--figma-color-icon-onbrand),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.1),
+    0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+    0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+    0px 3px 8px 0px rgba(0, 0, 0, 0.1),
+    0px 0px 0.5px 0px rgba(0, 0, 0, 0.18),
+    0 0 0 1px var(--border-selected);
 
-@layer slider {
+  display: inline-flex;
+  align-items: center;
 
-  .slider {
-    --start: 1;
-    display: block;
+  .fig-slider-input-container {
+    height: var(--slider-height);
     position: relative;
-    padding: 0.25rem 5px !important;
-    overflow: hidden;
-    margin: 0 -5px !important;
-    --slider-percent: calc(var(--slider-complete) * (100% - 5px));
-    --color-percent: calc(var(--slider-complete) * (100%));
-    --slider-handle-shadow: inset 0 0 0 4px var(--figma-color-icon-onbrand),
-      inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-      0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-      0px 1px 3px 0px rgba(0, 0, 0, 0.1),
-      0px 3px 8px 0px rgba(0, 0, 0, 0.1),
-      0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
-    --slider-handle-shadow-focus: inset 0 0 0 4px var(--figma-color-icon-onbrand),
-      inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-      0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-      0px 1px 3px 0px rgba(0, 0, 0, 0.1),
-      0px 3px 8px 0px rgba(0, 0, 0, 0.1),
-      0px 0px 0.5px 0px rgba(0, 0, 0, 0.18),
-      0 0 0 1px var(--border-selected);
+    display: block;
+    width: 100%;
 
-    &.gradient {
-      padding-top: 2.5rem !important;
-    }
-
-    & input[type=color] {
+    /* Track */
+    &::before {
+      content: '';
+      background: var(--figma-color-bg-brand);
       position: absolute;
-      left: var(--color-percent);
-      transform: translate(-50%, calc(-100% - 0.5rem));
+      left: 0;
+      top: 0;
+      bottom: 0;
+      border-radius: 0.5rem;
+      min-width: var(--slider-height);
+      width: calc(var(--slider-percent) + (1 - var(--slider-complete)) * var(--slider-height));
+      max-width: 100%;
+    }
+  }
+
+  &[type=hue],
+  &[type=opacity] {
+    .fig-slider-input-container {
+      &::before {
+        display: none;
+      }
     }
   }
 
   /* Chromium */
-  .slider input[type=range] {
-    height: 1rem;
+  input[type=range] {
+    height: var(--slider-height);
     appearance: none;
     -webkit-appearance: none;
-    border-radius: 0.5rem;
+    border-radius: calc(var(--slider-height)/2);
     display: block;
     width: 100%;
     cursor: grab;
@@ -1220,18 +1234,14 @@ details {
 
     &:focus {
       outline: none;
-
-      &::-webkit-slider-thumb {
-        box-shadow: var(--slider-handle-shadow-focus);
-      }
     }
 
     &::-webkit-slider-thumb {
       appearance: none;
       -webkit-appearance: none;
       border-radius: 0.5rem;
-      height: 1rem;
-      width: 1rem;
+      height: var(--slider-height);
+      width: var(--slider-height);
       aspect-ratio: 1;
       border: none;
       position: relative;
@@ -1252,15 +1262,11 @@ details {
     }
 
     &::-webkit-slider-runnable-track {
-      height: 1rem;
+      height: var(--slider-height);
       background-color: transparent;
-      border-radius: 0.5rem;
+      border-radius: calc(var(--slider-height)/2);
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-      background: radial-gradient(.55rem .55rem at var(--slider-percent) 50%, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) .55rem, transparent .55rem, transparent 100%),
-        linear-gradient(to right, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) var(--slider-percent), var(--figma-color-bg-secondary) var(--slider-percent));
-      background-size: 100% 100%, 100% 100%;
-      background-position: 75% middle, left middle;
-      background-repeat: no-repeat;
+      background: var(--figma-color-bg-secondary);
     }
 
     &.hue::-webkit-slider-runnable-track {
@@ -1270,51 +1276,34 @@ details {
     &.opacity::-webkit-slider-runnable-track {
       background: linear-gradient(to right, transparent, var(--color)), var(--checkerboard);
     }
-
-    &.gradient {
-      border-radius: 0.125rem;
-
-      &::-webkit-slider-thumb {
-        transform: scale(1.5) translateY(-1.25rem);
-        opacity: 0.5;
-      }
-    }
-
-    &.gradient::-webkit-slider-runnable-track {
-      border-radius: 0.125rem;
-      background: var(--bg-hue);
-    }
   }
 
   /* Firefox */
-  .slider input[type=range] {
-    height: 1rem;
+  input[type=range] {
+    height: var(--slider-height);
     appearance: none;
     -webkit-appearance: none;
-    border-radius: 0.5rem;
+    border-radius: calc(var(--slider-height)/2);
     display: block;
     width: 100%;
+    cursor: grab;
     cursor: -moz-grab;
     background-color: transparent;
 
     &:active {
+      cursor: grabbing;
       cursor: -moz-grabbing;
     }
 
     &:focus {
       outline: none;
-
-      &::-moz-range-thumb {
-        box-shadow: var(--slider-handle-shadow-focus);
-      }
     }
 
     &::-moz-range-thumb {
       appearance: none;
-      -webkit-appearance: none;
       border-radius: 0.5rem;
-      height: 1rem;
-      width: 1rem;
+      height: var(--slider-height);
+      width: var(--slider-height);
       aspect-ratio: 1;
       border: none;
       position: relative;
@@ -1335,15 +1324,11 @@ details {
     }
 
     &::-moz-range-track {
-      height: 1rem;
+      height: var(--slider-height);
       background-color: transparent;
-      border-radius: 0.5rem;
+      border-radius: calc(var(--slider-height)/2);
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-      background: radial-gradient(.55rem .55rem at var(--slider-percent) 50%, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) .55rem, transparent .55rem, transparent 100%),
-        linear-gradient(to right, var(--figma-color-bg-brand) 0%, var(--figma-color-bg-brand) var(--slider-percent), var(--figma-color-bg-secondary) var(--slider-percent));
-      background-size: 100% 100%, 100% 100%;
-      background-position: 75% middle, left middle;
-      background-repeat: no-repeat;
+      background: var(--figma-color-bg-secondary);
     }
 
     &.hue::-moz-range-track {
@@ -1353,49 +1338,38 @@ details {
     &.opacity::-moz-range-track {
       background: linear-gradient(to right, transparent, var(--color)), var(--checkerboard);
     }
-
-    &.gradient {
-      border-radius: 0.125rem;
-
-      &::-webkit-slider-thumb {
-        transform: scale(1.5) translateY(-1.25rem);
-        opacity: 0.5;
-      }
-    }
-
-    &.gradient::-moz-range-track {
-      border-radius: 0.125rem;
-      background: var(--bg-hue);
-    }
   }
 
-  @supports (animation-timeline: scroll()) {
-    @property --slider-complete {
-      initial-value: 0;
-      syntax: '<number>';
-      inherits: true;
-    }
+  datalist {
+    --dot-size: calc(var(--slider-height)/4);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    background: transparent;
+    align-items: center;
+    margin: 0;
+    border: 0;
+    appearance: none;
+    padding: 0 calc((var(--slider-height)/2) - var(--dot-size)/2);
+    height: var(--slider-height);
+    pointer-events: none;
+    justify-content: space-between;
+    width: 100%;
 
-    @keyframes sync {
-      to {
-        --slider-complete: 1;
-      }
-    }
-
-    .slider {
-      timeline-scope: --thumb;
-      animation: sync both linear reverse;
-      animation-timeline: --thumb;
-      animation-range: contain;
-    }
-
-    .slider [type=range]::-webkit-slider-thumb {
-      view-timeline-name: --thumb;
-      view-timeline-axis: inline;
+    & option {
+      appearance: none;
+      width: var(--dot-size);
+      height: var(--dot-size);
+      aspect-ratio: 1;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 100%;
+      font-size: 0;
+      background: var(--figma-color-icon-tertiary);
+      display: block;
     }
   }
-
-
 }
 
 /* Popovers/Dialogs */

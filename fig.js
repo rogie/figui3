@@ -512,7 +512,7 @@ class FigSlider extends HTMLElement {
         }
 
         let html = ''
-        let slider = `<div class="slider">
+        let slider = `<div class="fig-slider-input-container">
                 <input 
                     type="range"
                     ${this.disabled ? "disabled" : ""}
@@ -521,6 +521,7 @@ class FigSlider extends HTMLElement {
                     step="${this.step}"
                     class="${this.type}"
                     value="${this.value}">
+                ${this.innerHTML}
             </div>`
         if (this.getAttribute("text")) {
             html = `${slider}
@@ -535,16 +536,23 @@ class FigSlider extends HTMLElement {
         } else {
             html = slider
         }
+
         this.innerHTML = html
 
         this.textInput = this.querySelector("input[type=number]")
-        this.slider = this.querySelector('.slider')
 
         this.input = this.querySelector('[type=range]')
-        this.input.addEventListener("input", this.handleChange.bind(this))
+        this.input.addEventListener("input", this.handleInput.bind(this))
+        this.handleInput()
+
+        this.datalist = this.querySelector('datalist')
+        if (this.datalist) {
+            this.datalist.setAttribute("id", this.datalist.getAttribute("id") || uniqueId())
+            this.input.setAttribute('list', this.datalist.getAttribute("id"))
+        }
 
         if (this.textInput) {
-            this.textInput.addEventListener("change", this.handleChange.bind(this))
+            this.textInput.addEventListener("input", this.handleTextInput.bind(this))
         }
     }
     static get observedAttributes() {
@@ -577,24 +585,28 @@ class FigSlider extends HTMLElement {
                     if (this.textInput) {
                         this.textInput[name] = newValue
                     }
+                    this.handleInput()
                     break;
             }
         }
     }
-
-    syncProps() {
-        if (!CSS.supports('animation-timeline: scroll()')) {
-            let complete = this.input.value / (this.input.max - this.input.min)
-            this.slider.style.setProperty('--slider-percent', `${complete * 100}%`)
+    handleTextInput() {
+        if (this.textInput) {
+            this.input.value = Number(this.textInput.value)
+            this.handleInput()
         }
     }
-    handleChange(event) {
-        this.value = event.target.value
-        this.input.value = this.value
+
+    handleInput() {
+        let min = Number(this.input.min)
+        let max = Number(this.input.max)
+        let val = Number(this.input.value)
+        this.value = val
+        let complete = (val - min) / (max - min)
+        this.style.setProperty("--slider-complete", complete)
         if (this.textInput) {
-            this.textInput.value = this.value
+            this.textInput.value = val
         }
-        this.syncProps()
     }
 }
 window.customElements.define('fig-slider', FigSlider);
