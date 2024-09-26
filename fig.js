@@ -21,11 +21,12 @@ class FigButton extends HTMLElement {
                 button, button:hover, button:active {
                     padding: 0;
                     appearance: none;
-                    display: block;
+                    display: flex;
                     border: 0;
                     font: inherit;
                     color: inherit;
                     outline: 0;
+                    place-items: center; 
                     background: transparent;
                 }
             </style>

@@ -616,6 +616,7 @@ input[type=button] {
   color: var(--figma-color-text-onbrand);
   border-radius: var(--radius-medium);
   font-weight: 500;
+  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 
   &:active {
     background-color: var(--figma-color-bg-brand-pressed);
@@ -1213,6 +1214,7 @@ fig-slider {
       bottom: 0;
       border-radius: 0.5rem;
       min-width: var(--slider-height);
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
       width: calc(var(--slider-percent) + (1 - var(--slider-complete)) * var(--slider-height));
       max-width: 100%;
     }
