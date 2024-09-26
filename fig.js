@@ -678,18 +678,18 @@ class FigField extends HTMLElement {
         super()
     }
     connectedCallback() {
-        this.label = this.querySelector('label')
-        this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-"))
-        console.log('input:', this.input)
-        if (this.input) {
-            this.label.addEventListener('click', this.focus.bind(this))
-        }
+        requestAnimationFrame(() => {
+            this.label = this.querySelector('label')
+            this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-"))
+            if (this.input) {
+                this.label.addEventListener('click', this.focus.bind(this))
+            }
+        })
     }
     focus() {
         if (!this.input) {
             this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-"))
         }
-        console.log('input:', this.input)
         this.input.focus()
     }
 }
