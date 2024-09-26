@@ -25,6 +25,7 @@ class FigButton extends HTMLElement {
                     border: 0;
                     font: inherit;
                     color: inherit;
+                    outline: 0;
                     background: transparent;
                 }
             </style>
@@ -490,6 +491,7 @@ class FigSlider extends HTMLElement {
     #typeDefaults = {
         range: { min: 0, max: 100, step: 1 },
         hue: { min: 0, max: 255, step: 1 },
+        delta: { min: -100, max: 100, step: 1 },
         opacity: { min: 0, max: 1, step: 0.01, color: "#FF0000" }
     }
     constructor() {
@@ -498,6 +500,7 @@ class FigSlider extends HTMLElement {
     connectedCallback() {
 
         this.value = this.getAttribute("value")
+        this.default = this.getAttribute("default") || null
         this.type = this.getAttribute("type") || "range"
 
         const defaults = this.#typeDefaults[this.type]
@@ -554,6 +557,10 @@ class FigSlider extends HTMLElement {
         if (this.textInput) {
             this.textInput.addEventListener("input", this.handleTextInput.bind(this))
         }
+
+        if (this.default) {
+            this.style.setProperty("--default", this.calculateNormal(this.default))
+        }
     }
     static get observedAttributes() {
         return ['value', 'step', 'min', 'max', 'type', 'disabled']
@@ -596,13 +603,17 @@ class FigSlider extends HTMLElement {
             this.handleInput()
         }
     }
-
-    handleInput() {
+    calculateNormal(value) {
         let min = Number(this.input.min)
         let max = Number(this.input.max)
+        let val = Number(value)
+        return (val - min) / (max - min)
+    }
+
+    handleInput() {
         let val = Number(this.input.value)
         this.value = val
-        let complete = (val - min) / (max - min)
+        let complete = this.calculateNormal(val)
         this.style.setProperty("--slider-complete", complete)
         if (this.textInput) {
             this.textInput.value = val
@@ -681,15 +692,15 @@ class FigField extends HTMLElement {
         requestAnimationFrame(() => {
             this.label = this.querySelector('label')
             this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-"))
-            if (this.input) {
+            if (this.input && this.label) {
                 this.label.addEventListener('click', this.focus.bind(this))
+                let inputId = this.input.getAttribute("id") || uniqueId()
+                this.input.setAttribute("id", inputId)
+                this.label.setAttribute("for", inputId)
             }
         })
     }
     focus() {
-        if (!this.input) {
-            this.input = Array.from(this.childNodes).find(node => node.nodeName.toLowerCase().startsWith("fig-"))
-        }
         this.input.focus()
     }
 }

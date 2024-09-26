@@ -361,7 +361,7 @@
   --bg-selected-active: #E5F4FF;
   --bg-tooltip: #1E1E1E;
   --body-medium-fontSize: 0.6875rem;
-  --border-selected: #0D99FF;
+  --figma-color-border-selected: #0D99FF;
   --spacer-1: .25rem;
   --spacer-2: .5rem;
   --spacer-3: 1rem;
@@ -498,7 +498,7 @@ input[type=number],
   color: inherit;
 
   &:focus {
-    box-shadow: inset 0 0 0 1px var(--border-selected);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     outline: 0;
   }
 
@@ -563,7 +563,7 @@ input[type=text][list] {
   accent-color: var(--figma-color-bg-brand);
 
   &:focus {
-    box-shadow: inset 0 0 0 1px var(--border-selected);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     outline: 0;
   }
 
@@ -636,13 +636,6 @@ input[type=button] {
       outline: 0;
       background-color: var(--figma-color-bg-selected);
     }
-
-    &:focus {
-      outline: 0;
-      background-color: transparent;
-      box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
-    }
-
   }
 
   &[variant="ghost"][disabled=true],
@@ -730,6 +723,11 @@ input[type=button] {
   &[selected]:not([selected=false]) {
     color: var(--figma-color-icon-brand);
     background-color: var(--figma-color-bg-selected);
+  }
+
+  &:focus {
+    outline: 0;
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
   }
 }
 
@@ -848,7 +846,7 @@ input[type=color] {
   background-color: var(--figma-color-bg-secondary);
 
   &:focus {
-    box-shadow: inset 0 0 0 1px var(--border-selected);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     outline: 0;
   }
 }
@@ -987,6 +985,11 @@ input[type=checkbox]:not(.switch) {
     background-color: var(--figma-color-bg-brand);
     background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
   }
+
+  &:focus {
+    outline: 0;
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+  }
 }
 
 .figma-light input[type=checkbox]:not(.switch):hover {
@@ -1023,8 +1026,15 @@ input[type=radio] {
   }
 
   &:focus {
-    box-shadow: inset 0 0 0 1px var(--border-selected);
     outline: 0;
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+  }
+
+  &:hover:not(:checked) {
+    &::after {
+      transform: scale(1);
+      opacity: 0.25;
+    }
   }
 
   &::after {
@@ -1034,7 +1044,6 @@ input[type=radio] {
     border-radius: 0.25rem;
     background-color: var(--figma-color-text-onbrand);
     transform: scale(0);
-    transition: var(--input-transition);
     box-shadow:
       0px 0 0 0.75px rgba(0, 0, 0, 0.1),
       0px 1px 3px 0px rgba(0, 0, 0, 0.1),
@@ -1168,6 +1177,8 @@ details {
 fig-slider {
   --slider-height: 1rem;
   --slider-percent: calc(var(--slider-complete) * 100%);
+  --start-percent: calc(var(--default, 0) * 100%);
+  --slider-tick-size: calc(var(--slider-height)/4);
   --slider-handle-shadow: inset 0 0 0 4px var(--figma-color-icon-onbrand),
     inset 0 0 0 5px rgba(0, 0, 0, 0.1),
     0px 0 0 0.75px rgba(0, 0, 0, 0.1),
@@ -1180,7 +1191,7 @@ fig-slider {
     0px 1px 3px 0px rgba(0, 0, 0, 0.1),
     0px 3px 8px 0px rgba(0, 0, 0, 0.1),
     0px 0px 0.5px 0px rgba(0, 0, 0, 0.18),
-    0 0 0 1px var(--border-selected);
+    0 0 0 1px var(--figma-color-border-selected);
 
   display: inline-flex;
   align-items: center;
@@ -1204,6 +1215,32 @@ fig-slider {
       min-width: var(--slider-height);
       width: calc(var(--slider-percent) + (1 - var(--slider-complete)) * var(--slider-height));
       max-width: 100%;
+    }
+  }
+
+  /* TODO: Delta sizing */
+  &[type=delta] {
+    .fig-slider-input-container {
+      &::before {
+        --left-start: calc(var(--start-percent) - var(--slider-height)/2);
+        left: min(var(--left-start), var(--slider-percent));
+        --width: calc(var(--slider-percent) - var(--start-percent));
+        --abs-width: max(var(--width) + var(--slider-height)/2, -1*var(--width) + var(--slider-height)/2);
+        width: var(--abs-width);
+      }
+
+      &::after {
+        content: '';
+        width: var(--slider-tick-size);
+        height: var(--slider-tick-size);
+        aspect-ratio: 1;
+        border-radius: 100%;
+        font-size: 0;
+        position: absolute;
+        left: calc(var(--start-percent) - var(--slider-tick-size)/2);
+        top: calc(50% - var(--slider-tick-size)/2);
+        background: var(--figma-color-icon-tertiary);
+      }
     }
   }
 
@@ -1342,7 +1379,6 @@ fig-slider {
   }
 
   datalist {
-    --dot-size: calc(var(--slider-height)/4);
     position: absolute;
     inset: 0;
     display: flex;
@@ -1351,7 +1387,7 @@ fig-slider {
     margin: 0;
     border: 0;
     appearance: none;
-    padding: 0 calc((var(--slider-height)/2) - var(--dot-size)/2);
+    padding: 0 calc((var(--slider-height)/2) - var(--slider-tick-size)/2);
     height: var(--slider-height);
     pointer-events: none;
     justify-content: space-between;
@@ -1359,8 +1395,8 @@ fig-slider {
 
     & option {
       appearance: none;
-      width: var(--dot-size);
-      height: var(--dot-size);
+      width: var(--slider-tick-size);
+      height: var(--slider-tick-size);
       aspect-ratio: 1;
       margin: 0;
       padding: 0;
@@ -1680,7 +1716,7 @@ fig-input-text {
   }
 
   &:has(input:focus) {
-    box-shadow: inset 0 0 0 1px var(--border-selected);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     outline: 0;
   }
 }
