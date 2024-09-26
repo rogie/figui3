@@ -8,6 +8,8 @@ function supportsPopover() {
 
 /* Button */
 class FigButton extends HTMLElement {
+    #type
+    #selected
     constructor() {
         super()
         this.attachShadow({ mode: 'open' })
@@ -34,7 +36,30 @@ class FigButton extends HTMLElement {
                 <slot></slot>
             </button>
             `;
+        this.#selected = this.hasAttribute("selected") && this.getAttribute("selected") !== "false"
+        this.#type = this.getAttribute("type")
         this.button = this.shadowRoot.querySelector('button')
+        this.addEventListener("click", this.handleClick.bind(this))
+    }
+    get type() {
+        return this.#type
+    }
+    set type(value) {
+        this.#type = value
+        this.setAttribute("type", value)
+    }
+    get selected() {
+        return this.#selected
+    }
+    set selected(value) {
+        this.#selected = value
+        this.setAttribute("selected", value)
+    }
+
+    handleClick() {
+        if (this.#type === "toggle") {
+            this.selected = !this.#selected
+        }
     }
     static get observedAttributes() {
         return ['disabled'];
