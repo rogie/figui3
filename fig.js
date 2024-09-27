@@ -12,14 +12,14 @@ class FigButton extends HTMLElement {
     #selected
     constructor() {
         super()
-        this.attachShadow({ mode: 'open' })
+        //this.attachShadow({ mode: 'open' })
     }
     connectedCallback() {
         this.render()
     }
     render() {
         this.#type = this.getAttribute("type")
-        this.shadowRoot.innerHTML = `
+        /*this.shadowRoot.innerHTML = `
             <style>
                 button, button:hover, button:active {
                     padding: 0;
@@ -36,10 +36,13 @@ class FigButton extends HTMLElement {
             <button type="${this.#type}">
                 <slot></slot>
             </button>
-            `;
+            `;*/
+        this.innerHTML = `<button type="${this.#type}">${this.innerHTML}</button>`
         this.#selected = this.hasAttribute("selected") && this.getAttribute("selected") !== "false"
-        this.button = this.shadowRoot.querySelector('button')
+        this.button = this.querySelector('button')
         this.addEventListener("click", this.handleClick.bind(this))
+
+
     }
     get type() {
         return this.#type
@@ -57,9 +60,12 @@ class FigButton extends HTMLElement {
         this.setAttribute("selected", value)
     }
 
-    handleClick() {
+    handleClick(event) {
         if (this.#type === "toggle") {
             this.selected = !this.#selected
+        }
+        if (this.#type === "submit") {
+            this.button.click()
         }
     }
     static get observedAttributes() {
