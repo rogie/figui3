@@ -574,12 +574,6 @@ class FigSlider extends HTMLElement {
         this.input.addEventListener("input", this.handleInput.bind(this))
         this.handleInput()
 
-        this.datalist = this.querySelector('datalist')
-        if (this.datalist) {
-            this.datalist.setAttribute("id", this.datalist.getAttribute("id") || uniqueId())
-            this.input.setAttribute('list', this.datalist.getAttribute("id"))
-        }
-
         if (this.textInput) {
             this.textInput.addEventListener("input", this.handleTextInput.bind(this))
         }
@@ -587,6 +581,14 @@ class FigSlider extends HTMLElement {
         if (this.default) {
             this.style.setProperty("--default", this.calculateNormal(this.default))
         }
+        //child nodes hack
+        requestAnimationFrame(() => {
+            this.datalist = this.querySelector('datalist')
+            if (this.datalist) {
+                this.datalist.setAttribute("id", this.datalist.getAttribute("id") || uniqueId())
+                this.input.setAttribute('list', this.datalist.getAttribute("id"))
+            }
+        })
     }
     static get observedAttributes() {
         return ['value', 'step', 'min', 'max', 'type', 'disabled']

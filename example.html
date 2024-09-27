@@ -33,6 +33,7 @@
             <fig-button variant="secondary">Secondary</fig-button>
             <fig-button variant="ghost">Ghost</fig-button>
             <fig-button variant="ghost"
+                        type="toggle"
                         icon="true">
                 <svg class="svg"
                      xmlns="http://www.w3.org/2000/svg"
@@ -49,8 +50,8 @@
             </fig-button>
             <fig-tooltip text="Toggle off/on">
                 <fig-button variant="ghost"
-                            icon="true"
                             type="toggle"
+                            icon="true"
                             selected="true">
                     <svg width="24"
                          height="24"
@@ -123,35 +124,59 @@
             <fig-input-text value=""
                             placeholder="Field placeholder"></fig-input-text>
         </fig-field>
-        <fig-slider></fig-slider>
-        <br />
-        <fig-slider text="true"
-                    value="50"></fig-slider>
-        <br />
-        <fig-slider type="opacity"
-                    value="0.75"
-                    color="#ff0000"></fig-slider>
-        <br />
-        <fig-slider type="hue"
-                    value="55"></fig-slider>
-        <br />
-        <fig-slider value="50"
-                    step="25">
-            <datalist id="markers">
-                <option value="0"></option>
-                <option value="25"></option>
-                <option value="50"></option>
-                <option value="75"></option>
-                <option value="100"></option>
-            </datalist>
-        </fig-slider>
-        <br />
-        <fig-slider type="delta"
-                    value="2"
-                    default="0"
-                    max="5"
-                    min="-5"></fig-slider>
-        <br />
+        <fig-field>
+            <label>Default slider</label>
+            <fig-slider></fig-slider>
+        </fig-field>
+
+        <fig-field>
+            <label>Number slider (with number input)</label>
+            <fig-slider text="true"
+                        value="50"></fig-slider>
+        </fig-field>
+
+        <fig-field>
+            <label>Opacity slider</label>
+            <fig-slider type="opacity"
+                        value="0.75"
+                        color="#ff0000"
+                        text="true"></fig-slider>
+        </fig-field>
+
+        <fig-field>
+            <label>Hue slider</label>
+            <fig-slider type="hue"
+                        value="55"></fig-slider>
+        </fig-field>
+
+        <fig-field>
+            <label>Stepper slider</label>
+            <fig-slider value="50"
+                        step="25">
+                <datalist id="markers">
+                    <option value="0"></option>
+                    <option value="25"></option>
+                    <option value="50"></option>
+                    <option value="75"></option>
+                    <option value="100"></option>
+                </datalist>
+            </fig-slider>
+        </fig-field>
+
+        <fig-field>
+            <label>Delta slider</label>
+            <fig-slider type="delta"
+                        value=".25"
+                        default="0"
+                        step="0.25"
+                        max="5"
+                        min="-5">
+                <datalist id="markers">
+                    <option value="0"></option>
+                </datalist>
+            </fig-slider>
+        </fig-field>
+
         <fig-spinner></fig-spinner>
     </fig-content>
 
