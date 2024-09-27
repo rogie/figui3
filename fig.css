@@ -602,26 +602,33 @@ fig-dropdown>option {
 /* Button */
 .fig-button,
 fig-button {
-  border-radius: var(--radius-medium);
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   color: var(--figma-color-text-onbrand);
-
-  &,
-  &>button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: var(--spacer-4);
-    padding: 0 var(--spacer-2);
-    appearance: none;
-    border: 0;
-    color: inherit;
-    background-color: var(--figma-color-bg-brand);
-    font-weight: 500;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--spacer-4);
+  padding: 0 var(--spacer-2);
+  appearance: none;
+  border: 0;
+  color: inherit;
+  outline: 0;
+  border-radius: var(--radius-medium);
+  background-color: var(--figma-color-bg-brand);
+  font-weight: 500;
 
   &>button {
     background: transparent;
+    box-shadow: none;
+    border: 0;
+    appearance: none;
+    outline: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-medium);
+    height: var(--spacer-4);
+    padding: 0 var(--spacer-2);
   }
 
   &:has(>button) {
@@ -633,8 +640,7 @@ fig-button {
   }
 
   /* Variant: Ghost */
-  &[variant="ghost"],
-  &[variant="ghost"]>button {
+  &[variant="ghost"] {
     box-shadow: none;
     background: none;
     color: var(--figma-color-text);
@@ -649,15 +655,13 @@ fig-button {
     }
   }
 
-  &[variant="ghost"][disabled=true],
-  &[variant="ghost"][disabled=true]>button {
+  &[variant="ghost"][disabled=true] {
     background-color: transparent;
   }
 
 
   /* Variant: Secondary */
-  &[variant="secondary"],
-  &[variant="secondary"]>button {
+  &[variant="secondary"] {
     box-shadow: inset 0 0 0 1px var(--figma-color-border);
     background: none;
     color: var(--figma-color-text);
@@ -736,7 +740,8 @@ fig-button {
     background-color: var(--figma-color-bg-selected);
   }
 
-  &:focus {
+  &:focus,
+  &:focus-within {
     outline: 0;
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
   }
