@@ -18,6 +18,7 @@ class FigButton extends HTMLElement {
         this.render()
     }
     render() {
+        this.#type = this.getAttribute("type")
         this.shadowRoot.innerHTML = `
             <style>
                 button, button:hover, button:active {
@@ -32,12 +33,11 @@ class FigButton extends HTMLElement {
                     background: transparent;
                 }
             </style>
-            <button>
+            <button type="${this.#type}">
                 <slot></slot>
             </button>
             `;
         this.#selected = this.hasAttribute("selected") && this.getAttribute("selected") !== "false"
-        this.#type = this.getAttribute("type")
         this.button = this.shadowRoot.querySelector('button')
         this.addEventListener("click", this.handleClick.bind(this))
     }
@@ -46,6 +46,7 @@ class FigButton extends HTMLElement {
     }
     set type(value) {
         this.#type = value
+        this.button.type = value
         this.setAttribute("type", value)
     }
     get selected() {
