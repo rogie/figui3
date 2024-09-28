@@ -629,6 +629,7 @@ fig-button {
     border-radius: var(--radius-medium);
     height: var(--spacer-4);
     padding: 0 var(--spacer-2);
+    color: inherit;
   }
 
   &:has(>button) {
@@ -736,8 +737,12 @@ fig-button {
   }
 
   &[selected]:not([selected=false]) {
-    color: var(--figma-color-icon-brand);
-    background-color: var(--figma-color-bg-selected);
+
+    &,
+    &:hover {
+      color: var(--figma-color-icon-brand);
+      background-color: var(--figma-color-bg-selected);
+    }
   }
 
   &:focus,
@@ -1000,12 +1005,16 @@ input[type=checkbox]:not(.switch) {
 
   &:checked {
     background-color: var(--figma-color-bg-brand);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected-strong);
     background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
   }
 
   &:focus {
     outline: 0;
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+
+    &:not(:checked) {
+      box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+    }
   }
 }
 
@@ -1036,6 +1045,7 @@ input[type=radio] {
 
   &:checked {
     background-color: var(--figma-color-bg-brand);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected-strong);
 
     &::after {
       transform: scale(1);
@@ -1044,7 +1054,10 @@ input[type=radio] {
 
   &:focus {
     outline: 0;
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+
+    &:not(:checked) {
+      box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+    }
   }
 
   &:hover:not(:checked) {
