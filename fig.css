@@ -611,7 +611,7 @@ fig-button {
   padding: 0 var(--spacer-2);
   appearance: none;
   border: 0;
-  color: inherit;
+  color: var(--figma-color-text-onbrand);
   outline: 0;
   border-radius: var(--radius-medium);
   background-color: var(--figma-color-bg-brand);
@@ -629,7 +629,7 @@ fig-button {
     border-radius: var(--radius-medium);
     height: var(--spacer-4);
     padding: 0 var(--spacer-2);
-    color: var(--figma-color-text-onbrand);
+    color: currentColor;
   }
 
   &:has(>button) {
