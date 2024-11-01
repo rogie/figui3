@@ -524,6 +524,30 @@ class FigSegment extends HTMLElement {
 }
 window.customElements.define("fig-segment", FigSegment);
 
+class FigSegmentedControl extends HTMLElement {
+  constructor() {
+    super();
+  }
+  connectedCallback() {
+    this.name = this.getAttribute("name") || "segmented-control";
+    this.addEventListener("click", this.handleClick.bind(this));
+  }
+  handleClick(event) {
+    const target = event.target;
+    if (target.nodeName.toLowerCase() === "fig-segment") {
+      const segments = this.querySelectorAll("fig-segment");
+      for (const segment of segments) {
+        if (segment === target) {
+          this.selectedSegment = segment;
+        } else {
+          segment.removeAttribute("selected");
+        }
+      }
+    }
+  }
+}
+window.customElements.define("fig-segmented-control", FigSegmentedControl);
+
 /* Slider */
 class FigSlider extends HTMLElement {
   #typeDefaults = {
