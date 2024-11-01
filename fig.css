@@ -1661,7 +1661,6 @@ fig-popover,
 fig-dialog,
 fig-content,
 fig-slider,
-fig-segmented-control,
 fig-switch,
 fig-input-color,
 fig-input-text,
@@ -1879,6 +1878,8 @@ fig-spinner {
 /* Segmented control */
 .segmented-control,
 fig-segmented-control {
+  display: inline-flex;
+  user-select: none;
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
