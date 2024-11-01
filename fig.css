@@ -560,6 +560,7 @@ fig-segmented-control {
   min-width: 6rem;
   height: 1.5rem;
   padding: 1px;
+  gap: 0;
   display: inline-flex;
   align-items: stretch;
 
@@ -773,6 +774,18 @@ fig-button {
     text-align: left;
     align-items: center;
     padding: var(--spacer-1) var(--spacer-2);
+  }
+
+  &[type="select"],
+  &[type="upload"] {
+    position: relative;
+    select,
+    input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      appearance: none;
+    }
   }
 
   &[inline="false"] {
