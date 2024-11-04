@@ -658,7 +658,7 @@ class FigSlider extends HTMLElement {
         default:
           this[name] = this.input[name] = newValue;
           if (this.textInput) {
-            this.textInput[name] = newValue;
+            this.textInput.setAttribute(name, newValue);
           }
           this.handleInput();
           break;

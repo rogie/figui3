@@ -1883,7 +1883,6 @@ fig-segmented-control {
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
-  min-width: 6rem;
   height: 1.5rem;
   padding: 1px;
   gap: 0;
@@ -1898,6 +1897,7 @@ fig-segmented-control {
     justify-content: center;
     position: relative;
     appearance: none;
+    min-width: 1.5rem;
     padding: 0 var(--spacer-2);
 
     &[selected]:not([selected="false"]),
