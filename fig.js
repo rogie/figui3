@@ -21,7 +21,7 @@ class FigButton extends HTMLElement {
     this.shadowRoot.innerHTML = `
             <style>
                 button, button:hover, button:active {
-                    padding: 0;
+                    padding: 0 var(--spacer-2);
                     appearance: none;
                     display: flex;
                     border: 0;
