@@ -11,44 +11,44 @@ class FigButton extends HTMLElement {
   #selected;
   constructor() {
     super();
-    //this.attachShadow({ mode: 'open' })
+    this.attachShadow({ mode: "open" });
   }
   connectedCallback() {
     this.render();
   }
   render() {
     this.#type = this.getAttribute("type") || "button";
-    /*this.shadowRoot.innerHTML = `
+    this.shadowRoot.innerHTML = `
             <style>
                 button, button:hover, button:active {
                     padding: 0;
                     appearance: none;
                     display: flex;
                     border: 0;
+                    flex: 1;
+                    text-align: center;
+                    align-items: stretch;
+                    justify-content: center;
                     font: inherit;
                     color: inherit;
                     outline: 0;
                     place-items: center; 
                     background: transparent;
+                    margin: calc(var(--spacer-2)*-1);
+                    height: var(--spacer-4);
                 }
             </style>
             <button type="${this.#type}">
                 <slot></slot>
             </button>
-            `;*/
+            `;
 
     this.#selected =
       this.hasAttribute("selected") &&
       this.getAttribute("selected") !== "false";
     this.addEventListener("click", this.handleClick.bind(this));
 
-    //child nodes hack
-    requestAnimationFrame(() => {
-      this.innerHTML = `<button type="${this.#type}">${
-        this.innerHTML
-      }</button>`;
-      this.button = this.querySelector("button");
-    });
+    this.button = this.querySelector("button");
   }
   get type() {
     return this.#type;
@@ -603,28 +603,30 @@ class FigSlider extends HTMLElement {
 
     this.innerHTML = html;
 
-    this.textInput = this.querySelector("input[type=number]");
-
-    this.input = this.querySelector("[type=range]");
-    this.input.addEventListener("input", this.handleInput.bind(this));
-    this.handleInput();
-
-    if (this.textInput) {
-      this.textInput.addEventListener("input", this.handleTextInput.bind(this));
-    }
-
-    if (this.default) {
-      this.style.setProperty("--default", this.calculateNormal(this.default));
-    }
     //child nodes hack
     requestAnimationFrame(() => {
+      this.input = this.querySelector("[type=range]");
+      this.input.addEventListener("input", this.handleInput.bind(this));
+      this.handleInput();
+
+      if (this.default) {
+        this.style.setProperty("--default", this.calculateNormal(this.default));
+      }
+
       this.datalist = this.querySelector("datalist");
+      this.textInput = this.querySelector("input[type=number]");
       if (this.datalist) {
         this.datalist.setAttribute(
           "id",
           this.datalist.getAttribute("id") || uniqueId()
         );
         this.input.setAttribute("list", this.datalist.getAttribute("id"));
+      }
+      if (this.textInput) {
+        this.textInput.addEventListener(
+          "input",
+          this.handleTextInput.bind(this)
+        );
       }
     });
   }
@@ -680,6 +682,7 @@ class FigSlider extends HTMLElement {
 
   handleInput() {
     let val = Number(this.input.value);
+    console.log(val);
     this.value = val;
     let complete = this.calculateNormal(val);
     this.style.setProperty("--slider-complete", complete);
@@ -712,9 +715,6 @@ class FigInputText extends HTMLElement {
     }
     this.innerHTML = html;
 
-    this.input = this.querySelector("input,textarea");
-    this.input.addEventListener("input", this.handleInput.bind(this));
-
     if (prepend) {
       prepend.addEventListener("click", this.focus.bind(this));
       this.prepend(prepend);
@@ -723,6 +723,22 @@ class FigInputText extends HTMLElement {
       append.addEventListener("click", this.focus.bind(this));
       this.append(append);
     }
+
+    //child nodes hack
+    requestAnimationFrame(() => {
+      this.input = this.querySelector("input,textarea");
+
+      if (this.getAttribute("min")) {
+        this.input.setAttribute("min", this.getAttribute("min"));
+      }
+      if (this.getAttribute("max")) {
+        this.input.setAttribute("max", this.getAttribute("max"));
+      }
+      if (this.getAttribute("step")) {
+        this.input.setAttribute("step", this.getAttribute("step"));
+      }
+      this.input.addEventListener("input", this.handleInput.bind(this));
+    });
   }
   focus() {
     this.input.focus();
@@ -732,7 +748,16 @@ class FigInputText extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "placeholder", "label", "disabled", "type"];
+    return [
+      "value",
+      "placeholder",
+      "label",
+      "disabled",
+      "type",
+      "step",
+      "min",
+      "max",
+    ];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -743,6 +768,7 @@ class FigInputText extends HTMLElement {
           break;
         default:
           this[name] = this.input[name] = newValue;
+          this.input.setAttribute(name, newValue);
           break;
       }
     }
@@ -1051,7 +1077,6 @@ class FigCheckbox extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    console.log(`Attribute ${name} change:`, oldValue, newValue);
     switch (name) {
       case "label":
         this.labelElement.innerText = newValue;
@@ -1096,31 +1121,3 @@ class FigSwitch extends FigCheckbox {
   }
 }
 window.customElements.define("fig-switch", FigSwitch);
-
-/* Template */
-class MyCustomElement extends HTMLElement {
-  static observedAttributes = ["color", "size"];
-
-  constructor() {
-    // Always call super first in constructor
-    super();
-  }
-
-  connectedCallback() {
-    console.log("Custom element added to page.");
-  }
-
-  disconnectedCallback() {
-    console.log("Custom element removed from page.");
-  }
-
-  adoptedCallback() {
-    console.log("Custom element moved to new page.");
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    console.log(`Attribute ${name} has changed.`);
-  }
-}
-
-customElements.define("my-custom-element", MyCustomElement);
