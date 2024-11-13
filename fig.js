@@ -640,7 +640,6 @@ class FigSlider extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (this.input) {
-      console.log("attributeChangedCallback:", name, oldValue, newValue);
       switch (name) {
         case "color":
           this.color = newValue;
@@ -685,7 +684,10 @@ class FigSlider extends HTMLElement {
     console.log(val);
     this.value = val;
     let complete = this.calculateNormal(val);
+    let defaultValue = this.calculateNormal(this.default);
     this.style.setProperty("--slider-complete", complete);
+    this.style.setProperty("--default", defaultValue);
+    this.style.setProperty("--unchanged", complete === defaultValue ? 1 : 0);
     if (this.textInput) {
       this.textInput.value = val;
     }
