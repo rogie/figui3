@@ -16,6 +16,9 @@
     <fig-header>
         <h3>UI3 Components</h3>
     </fig-header>
+    <fig-avatar src="https://avatars.githubusercontent.com/u/12345678?v=4"
+                name="John Doe"></fig-avatar>
+    <fig-avatar name="John Doe"></fig-avatar>
     <fig-content>
         <fig-tabs>
             <fig-tab selected>Tab #1</fig-tab>
@@ -114,6 +117,11 @@
         <fig-input-text type="number"
                         value="10"></fig-input-text>
         <br /><br />
+        <fig-input-text value=""
+                        placeholder="Number">
+            <span slot="prepend">X</span>
+        </fig-input-text>
+        <br /><br />
         <fig-field direction="horizontal">
             <label>Field label</label>
             <fig-input-text value=""
@@ -126,12 +134,15 @@
         </fig-field>
         <fig-field>
             <label>Default slider</label>
-            <fig-slider></fig-slider>
+            <fig-slider default="25"
+                        min="0"
+                        max="500"></fig-slider>
         </fig-field>
 
         <fig-field>
             <label>Number slider (with number input)</label>
             <fig-slider text="true"
+                        default="50"
                         value="50"></fig-slider>
         </fig-field>
 
@@ -151,7 +162,9 @@
 
         <fig-field>
             <label>Stepper slider</label>
-            <fig-slider value="50"
+            <fig-slider type="stepper"
+                        value="25"
+                        default="50"
                         step="25">
                 <datalist id="markers">
                     <option value="0"></option>

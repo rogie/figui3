@@ -554,6 +554,7 @@ class FigSlider extends HTMLElement {
     range: { min: 0, max: 100, step: 1 },
     hue: { min: 0, max: 255, step: 1 },
     delta: { min: -100, max: 100, step: 1 },
+    stepper: { min: 0, max: 100, step: 25 },
     opacity: { min: 0, max: 1, step: 0.01, color: "#FF0000" },
   };
   constructor() {
@@ -700,8 +701,6 @@ class FigInputText extends HTMLElement {
     super();
   }
   connectedCallback() {
-    const append = this.querySelector("[slot=append]");
-    const prepend = this.querySelector("[slot=prepend]");
     this.multiline = this.hasAttribute("multiline") || false;
     this.value = this.getAttribute("value");
     this.type = this.getAttribute("type") || "text";
@@ -717,17 +716,22 @@ class FigInputText extends HTMLElement {
     }
     this.innerHTML = html;
 
-    if (prepend) {
-      prepend.addEventListener("click", this.focus.bind(this));
-      this.prepend(prepend);
-    }
-    if (append) {
-      append.addEventListener("click", this.focus.bind(this));
-      this.append(append);
-    }
-
     //child nodes hack
     requestAnimationFrame(() => {
+      const append = this.querySelector("[slot=append]");
+      const prepend = this.querySelector("[slot=prepend]");
+
+      console.log(append, prepend);
+
+      if (prepend) {
+        prepend.addEventListener("click", this.focus.bind(this));
+        this.prepend(prepend);
+      }
+      if (append) {
+        append.addEventListener("click", this.focus.bind(this));
+        this.append(append);
+      }
+
       this.input = this.querySelector("input,textarea");
 
       if (this.getAttribute("min")) {
@@ -777,6 +781,55 @@ class FigInputText extends HTMLElement {
   }
 }
 window.customElements.define("fig-input-text", FigInputText);
+
+/* Avatar */
+class FigAvatar extends HTMLElement {
+  constructor() {
+    super();
+  }
+  connectedCallback() {
+    this.src = this.getAttribute("src");
+    this.name = this.getAttribute("name");
+    this.initials = this.getInitials(this.name);
+    this.setAttribute("initials", this.initials);
+    this.setSrc(this.src);
+    requestAnimationFrame(() => {
+      this.img = this.querySelector("img");
+    });
+  }
+  setSrc(src) {
+    this.src = src;
+    if (src) {
+      this.innerHTML = `<img src="${this.src}" ${
+        this.name ? `alt="${this.name}"` : ""
+      } />`;
+    }
+  }
+  getInitials(name) {
+    return name
+      ? name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+      : "";
+  }
+  static get observedAttributes() {
+    return ["src", "href", "name"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    this[name] = newValue;
+    if (name === "name") {
+      this.img.setAttribute("alt", newValue);
+      this.name = newValue;
+      this.initials = this.getInitials(this.name);
+      this.setAttribute("initials", this.initials);
+    } else if (name === "src") {
+      this.src = newValue;
+      this.setSrc(this.src);
+    }
+  }
+}
+window.customElements.define("fig-avatar", FigAvatar);
 
 /* Form Field */
 class FigField extends HTMLElement {
