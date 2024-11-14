@@ -684,6 +684,12 @@ fig-button {
     }
   }
 
+  /* Variant: Input */
+  &[variant="input"] {
+    background-color: var(--figma-color-bg-secondary);
+    box-shadow: none;
+  }
+
   /* Icon only */
   &[icon],
   &[icon] > button {
@@ -1808,16 +1814,17 @@ fig-input-text {
   & [slot] {
     user-select: none;
     width: 1.5rem;
-    margin-right: calc(var(--spacer-2) * -1);
     color: var(--figma-color-text-secondary);
   }
 
   & [slot="prepend"] {
     padding-right: 0;
+    margin-right: calc(var(--spacer-2) * -1);
   }
 
   & [slot="append"] {
     padding-left: 0;
+    margin-left: calc(var(--spacer-2) * -1);
   }
 
   & input {

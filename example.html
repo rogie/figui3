@@ -69,10 +69,18 @@
             </fig-tooltip>
         </hstack>
         <br />
-        <fig-dropdown>
-            <option>One</option>
-            <option>Two</option>
-        </fig-dropdown>
+        <fig-field direction="horizontal">
+            <label>Dropdown</label>
+            <fig-dropdown>
+                <option>One</option>
+                <option>Two</option>
+            </fig-dropdown>
+        </fig-field>
+        <br />
+        <fig-combo-input options="House, Apartment, Condo, Other"
+                         placeholder="Type of residence">
+
+        </fig-combo-input>
         <br />
         <fig-tooltip text="Tooltip text">
             <p>Tooltip</p>

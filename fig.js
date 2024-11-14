@@ -100,6 +100,7 @@ class FigDropdown extends HTMLElement {
   }
 
   render() {
+    this.type = this.getAttribute("type") || "select";
     this.select = document.createElement("select");
     this.optionsSlot = document.createElement("slot");
 
@@ -108,16 +109,32 @@ class FigDropdown extends HTMLElement {
 
     // Move slotted options into the select element
     this.optionsSlot.addEventListener("slotchange", this.slotChange.bind(this));
+
+    this.select.addEventListener("change", this.handleChange.bind(this));
   }
   slotChange() {
     while (this.select.firstChild) {
       this.select.firstChild.remove();
+    }
+    if (this.type === "dropdown") {
+      const hiddenOption = document.createElement("option");
+      hiddenOption.setAttribute("hidden", "true");
+      hiddenOption.setAttribute("selected", "true");
+      this.select.appendChild(hiddenOption);
     }
     this.optionsSlot.assignedNodes().forEach((node) => {
       if (node.nodeName === "OPTION") {
         this.select.appendChild(node.cloneNode(true));
       }
     });
+    if (this.type === "dropdown") {
+      this.select.selectedIndex = -1;
+    }
+  }
+  handleChange() {
+    if (this.type === "dropdown") {
+      this.select.selectedIndex = -1;
+    }
   }
 }
 
@@ -318,7 +335,6 @@ class FigDialog extends HTMLElement {
 
   /* Public methods */
   show() {
-    console.log("show dialog", this.dialog, this.dialog?.show);
     this.dialog.show();
   }
   close() {
@@ -682,7 +698,6 @@ class FigSlider extends HTMLElement {
 
   handleInput() {
     let val = Number(this.input.value);
-    console.log(val);
     this.value = val;
     let complete = this.calculateNormal(val);
     let defaultValue = this.calculateNormal(this.default);
@@ -702,7 +717,7 @@ class FigInputText extends HTMLElement {
   }
   connectedCallback() {
     this.multiline = this.hasAttribute("multiline") || false;
-    this.value = this.getAttribute("value");
+    this.value = this.getAttribute("value") || "";
     this.type = this.getAttribute("type") || "text";
     this.placeholder = this.getAttribute("placeholder");
 
@@ -714,14 +729,13 @@ class FigInputText extends HTMLElement {
       html = `<textarea  
       placeholder="${this.placeholder}">${this.value}</textarea>`;
     }
-    this.innerHTML = html;
 
     //child nodes hack
     requestAnimationFrame(() => {
       const append = this.querySelector("[slot=append]");
       const prepend = this.querySelector("[slot=prepend]");
 
-      console.log(append, prepend);
+      this.innerHTML = html;
 
       if (prepend) {
         prepend.addEventListener("click", this.focus.bind(this));
@@ -819,7 +833,7 @@ class FigAvatar extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     this[name] = newValue;
     if (name === "name") {
-      this.img.setAttribute("alt", newValue);
+      this.img?.setAttribute("alt", newValue);
       this.name = newValue;
       this.initials = this.getInitials(this.name);
       this.setAttribute("initials", this.initials);
@@ -904,26 +918,28 @@ class FigInputColor extends HTMLElement {
 
     this.style.setProperty("--alpha", this.#rgba.a);
 
-    this.#swatch = this.querySelector("[type=color]");
-    this.textInput = this.querySelector("[type=text]");
-    this.#alphaInput = this.querySelector("[type=number]");
+    requestAnimationFrame(() => {
+      this.#swatch = this.querySelector("[type=color]");
+      this.textInput = this.querySelector("[type=text]");
+      this.#alphaInput = this.querySelector("[type=number]");
 
-    this.#swatch.disabled = this.hasAttribute("disabled");
-    this.#swatch.addEventListener("input", this.handleInput.bind(this));
+      this.#swatch.disabled = this.hasAttribute("disabled");
+      this.#swatch.addEventListener("input", this.handleInput.bind(this));
 
-    if (this.textInput) {
-      this.textInput.value = this.#swatch.value = this.rgbAlphaToHex(
-        this.#rgba,
-        1
-      );
-    }
+      if (this.textInput) {
+        this.textInput.value = this.#swatch.value = this.rgbAlphaToHex(
+          this.#rgba,
+          1
+        );
+      }
 
-    if (this.#alphaInput) {
-      this.#alphaInput.addEventListener(
-        "input",
-        this.handleAlphaInput.bind(this)
-      );
-    }
+      if (this.#alphaInput) {
+        this.#alphaInput.addEventListener(
+          "input",
+          this.handleAlphaInput.bind(this)
+        );
+      }
+    });
   }
   handleAlphaInput(event) {
     //do not propagate to onInput handler for web component
@@ -1176,3 +1192,94 @@ class FigSwitch extends FigCheckbox {
   }
 }
 window.customElements.define("fig-switch", FigSwitch);
+
+/* Bell */
+class FigBell extends HTMLElement {
+  constructor() {
+    super();
+  }
+}
+window.customElements.define("fig-bell", FigBell);
+
+/* Badge */
+class FigBadge extends HTMLElement {
+  constructor() {
+    super();
+  }
+}
+window.customElements.define("fig-badge", FigBadge);
+
+/* Accordion */
+class FigAccordion extends HTMLElement {
+  constructor() {
+    super();
+  }
+}
+window.customElements.define("fig-accordion", FigAccordion);
+
+/* Combo Input */
+class FigComboInput extends HTMLElement {
+  constructor() {
+    super();
+  }
+  getOptionsFromAttribute() {
+    return (this.getAttribute("options") || "").split(",");
+  }
+  connectedCallback() {
+    this.options = this.getOptionsFromAttribute();
+    this.placeholder = this.getAttribute("placeholder") || "";
+    this.value = this.getAttribute("value") || "";
+    this.innerHTML = `<div class="input-combo">
+                        <fig-input-text placeholder="${this.placeholder}">
+                        </fig-input-text> 
+                        <fig-button type="select" variant="input" icon>
+                            <svg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'>
+  <path d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='currentColor' stroke-opacity="0.5" stroke-linecap='round'/>
+</svg>
+                            <fig-dropdown type="dropdown">
+                            ${this.options
+                              .map((option) => `<option>${option}</option>`)
+                              .join("")}
+                        </fig-dropdown>
+                        </fig-button>
+                    </div>`;
+    requestAnimationFrame(() => {
+      this.input = this.querySelector("fig-input-text");
+      this.dropdown = this.querySelector("fig-dropdown");
+
+      this.dropdown.addEventListener(
+        "input",
+        this.handleDropdownChange.bind(this)
+      );
+    });
+  }
+  handleDropdownChange(e) {
+    console.log(e.target.value);
+    this.value = e.target.value;
+    this.setAttribute("value", this.value);
+  }
+  handleInput(e) {
+    this.value = this.input.value;
+  }
+  static get observedAttributes() {
+    return ["options", "placeholder", "value"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "options") {
+      this.options = newValue.split(",");
+      if (this.dropdown) {
+        this.dropdown.innerHTML = this.options
+          .map((option) => `<option>${option}</option>`)
+          .join("");
+      }
+    }
+    if (name === "placeholder") {
+      this.placeholder = newValue;
+    }
+    if (name === "value") {
+      this.value = newValue;
+      this.input.setAttribute("value", newValue);
+    }
+  }
+}
+window.customElements.define("fig-combo-input", FigComboInput);
