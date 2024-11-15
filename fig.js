@@ -911,20 +911,20 @@ class FigInputColor extends HTMLElement {
                 </fig-tooltip>`;
       }
       html = `<div class="input-combo">
-                <input type="color" value="${this.value}" />
+                <fig-chit type="color" disabled="false" value="${this.value}"></fig-chit>
                 ${label}
             </div>`;
     } else {
-      html = `<input type="color" value="${this.value}" />`;
+      html = `<fig-chit type="color" disabled="false" value="${this.value}"></fig-chit>`;
     }
     this.innerHTML = html;
 
     this.style.setProperty("--alpha", this.#rgba.a);
 
     requestAnimationFrame(() => {
-      this.#swatch = this.querySelector("[type=color]");
-      this.textInput = this.querySelector("[type=text]");
-      this.#alphaInput = this.querySelector("[type=number]");
+      this.#swatch = this.querySelector("input[type=color]");
+      this.textInput = this.querySelector("input[type=text]");
+      this.#alphaInput = this.querySelector("input[type=number]");
 
       this.#swatch.disabled = this.hasAttribute("disabled");
       this.#swatch.addEventListener("input", this.handleInput.bind(this));
@@ -1293,7 +1293,7 @@ class FigChit extends HTMLElement {
     this.src = this.getAttribute("src") || "";
     this.value = this.getAttribute("value") || "";
     this.size = this.getAttribute("size") || "small";
-    this.disabled = this.hasAttribute("disabled") || true;
+    this.disabled = this.getAttribute("disabled") === "true" ? true : false;
     this.variant = this.getAttribute("variant") || "square";
     this.innerHTML = `<input type="color" value="${this.value}" />`;
 
@@ -1304,8 +1304,12 @@ class FigChit extends HTMLElement {
     });
   }
   updateSrc(src) {
-    this.src = src;
-    this.style.setProperty("--src", `url(${src})`);
+    if (src) {
+      this.src = src;
+      this.style.setProperty("--src", `url(${src})`);
+    } else {
+      this.style.removeProperty("--src");
+    }
   }
   static get observedAttributes() {
     return ["type", "src", "size", "variant", "value", "disabled"];
@@ -1313,6 +1317,10 @@ class FigChit extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "src") {
       this.updateSrc(newValue);
+    }
+    if (name === "disabled") {
+      this.disabled = newValue.toLowerCase() === "true";
+      this.input.disabled = this.disabled;
     }
   }
 }
