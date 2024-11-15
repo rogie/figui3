@@ -420,16 +420,19 @@
 
   color-scheme: light dark;
   /* Icons */
-  --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(0 0 0 / 50%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
+  --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(0 0 0 / 90%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
 
   /* Elevations */
   --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.3),
     0px 1px 3px 0px rgba(0, 0, 0, 0.15);
+
+  --figma-elevation-200: 0px 1px 3px 0px rgba(0, 0, 0, 0.102),
+    0px 3px 8px 0px rgba(0, 0, 0, 0.102), 0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(255 255 255 / 50%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
+    --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(255 255 255 / 100%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
     --handle-shadow: 0px 0 0 0.75px rgba(255, 255, 255, 0.1),
       0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
     --figma-color-bg-ghost-hover: rgba(255, 255, 255, 0.05);
@@ -882,15 +885,15 @@ fig-avatar::after,
 
 /* Color input */
 input[type="color"] {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   -webkit-appearance: none;
   appearance: none;
   border: 0;
   padding: 0;
   margin: 0;
   background: none;
-  padding: 5px;
+  padding: 0.3125rem;
   flex-shrink: 0;
   box-sizing: content-box;
   border-radius: var(--radius-medium);
@@ -932,6 +935,49 @@ input[type="color"]::-webkit-color-swatch {
     black 50%,
     rgba(0, 0, 0, var(--alpha)) 50%
   );
+}
+
+fig-chit {
+  display: inline-grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-medium);
+
+  &[size="large"] {
+    width: 1.75rem;
+    height: 1.75rem;
+
+    &[type="image"]::after,
+    input[type="color"] {
+      padding: 0;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: var(--radius-medium);
+    }
+  }
+
+  &[type="image"] {
+    &::after {
+      content: "";
+      width: 0.875rem;
+      height: 0.875rem;
+      background-image: var(--src);
+      border-radius: 0.125rem;
+      background-size: cover;
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+    &::after,
+    input {
+      grid-area: 1/1;
+      place-self: center;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      background: none;
+    }
+    input[type="color"]::-webkit-color-swatch {
+      opacity: 0;
+    }
+  }
 }
 
 /* Combo input */
@@ -1246,9 +1292,7 @@ fig-slider {
   --slider-tick-size: calc(var(--slider-height) / 4);
   --slider-handle-shadow: inset 0 0 0 calc(4px + 0.5rem * var(--unchanged))
       var(--figma-color-icon-onbrand),
-    inset 0 0 0 5px rgba(0, 0, 0, 0.1), 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-    0px 1px 3px 0px rgba(0, 0, 0, 0.1), 0px 3px 8px 0px rgba(0, 0, 0, 0.1),
-    0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+    inset 0 0 0 5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
   --slider-handle-shadow-focus: inset 0 0 0 4px var(--figma-color-icon-onbrand),
     inset 0 0 0 5px rgba(0, 0, 0, 0.1), 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
     0px 1px 3px 0px rgba(0, 0, 0, 0.1), 0px 3px 8px 0px rgba(0, 0, 0, 0.1),

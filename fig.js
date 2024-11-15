@@ -96,11 +96,8 @@ class FigDropdown extends HTMLElement {
   }
 
   connectedCallback() {
-    this.render();
-  }
-
-  render() {
     this.type = this.getAttribute("type") || "select";
+    this.value = this.getAttribute("value") || "";
     this.select = document.createElement("select");
     this.optionsSlot = document.createElement("slot");
 
@@ -110,8 +107,9 @@ class FigDropdown extends HTMLElement {
     // Move slotted options into the select element
     this.optionsSlot.addEventListener("slotchange", this.slotChange.bind(this));
 
-    this.select.addEventListener("change", this.handleChange.bind(this));
+    this.select.addEventListener("input", this.handleDropdownInput.bind(this));
   }
+
   slotChange() {
     while (this.select.firstChild) {
       this.select.firstChild.remove();
@@ -122,17 +120,22 @@ class FigDropdown extends HTMLElement {
       hiddenOption.setAttribute("selected", "true");
       this.select.appendChild(hiddenOption);
     }
-    this.optionsSlot.assignedNodes().forEach((node) => {
-      if (node.nodeName === "OPTION") {
-        this.select.appendChild(node.cloneNode(true));
+    this.optionsSlot.assignedNodes().forEach((option) => {
+      if (option.nodeName === "OPTION") {
+        if (option.hasAttribute("value") && option.hasAttribute("selected")) {
+          this.value = option.getAttribute("value");
+        }
+        this.select.appendChild(option.cloneNode(true));
       }
     });
     if (this.type === "dropdown") {
       this.select.selectedIndex = -1;
     }
   }
-  handleChange() {
+  handleDropdownInput() {
     if (this.type === "dropdown") {
+      this.value = this.select.value;
+      this.setAttribute("value", this.value);
       this.select.selectedIndex = -1;
     }
   }
@@ -1234,28 +1237,24 @@ class FigComboInput extends HTMLElement {
                         </fig-input-text> 
                         <fig-button type="select" variant="input" icon>
                             <svg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'>
-  <path d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='currentColor' stroke-opacity="0.5" stroke-linecap='round'/>
+  <path d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='currentColor' stroke-opacity="0.9" stroke-linecap='round'/>
 </svg>
                             <fig-dropdown type="dropdown">
-                            ${this.options
-                              .map((option) => `<option>${option}</option>`)
-                              .join("")}
-                        </fig-dropdown>
+                              ${this.options
+                                .map((option) => `<option>${option}</option>`)
+                                .join("")}
+                            </fig-dropdown>
                         </fig-button>
                     </div>`;
     requestAnimationFrame(() => {
       this.input = this.querySelector("fig-input-text");
-      this.dropdown = this.querySelector("fig-dropdown");
+      this.select = this.querySelector("fig-dropdown");
 
-      this.dropdown.addEventListener(
-        "input",
-        this.handleDropdownChange.bind(this)
-      );
+      this.select.addEventListener("input", this.handleSelectInput.bind(this));
     });
   }
-  handleDropdownChange(e) {
-    console.log(e.target.value);
-    this.value = e.target.value;
+  handleSelectInput(e) {
+    this.value = e.target.parentNode.value;
     this.setAttribute("value", this.value);
   }
   handleInput(e) {
@@ -1283,3 +1282,38 @@ class FigComboInput extends HTMLElement {
   }
 }
 window.customElements.define("fig-combo-input", FigComboInput);
+
+/* Chit */
+class FigChit extends HTMLElement {
+  constructor() {
+    super();
+  }
+  connectedCallback() {
+    this.type = this.getAttribute("type") || "color";
+    this.src = this.getAttribute("src") || "";
+    this.value = this.getAttribute("value") || "";
+    this.size = this.getAttribute("size") || "small";
+    this.disabled = this.hasAttribute("disabled") || true;
+    this.variant = this.getAttribute("variant") || "square";
+    this.innerHTML = `<input type="color" value="${this.value}" />`;
+
+    requestAnimationFrame(() => {
+      this.input = this.querySelector("input");
+      this.input.disabled = this.disabled;
+      this.updateSrc(this.src);
+    });
+  }
+  updateSrc(src) {
+    this.src = src;
+    this.style.setProperty("--src", `url(${src})`);
+  }
+  static get observedAttributes() {
+    return ["type", "src", "size", "variant", "value", "disabled"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "src") {
+      this.updateSrc(newValue);
+    }
+  }
+}
+window.customElements.define("fig-chit", FigChit);
