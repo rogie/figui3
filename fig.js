@@ -139,6 +139,9 @@ class FigDropdown extends HTMLElement {
       this.select.selectedIndex = -1;
     }
   }
+  focus() {
+    this.select.focus();
+  }
 }
 
 customElements.define("fig-dropdown", FigDropdown);
@@ -898,7 +901,7 @@ class FigInputColor extends HTMLElement {
       let label = `<fig-input-text placeholder="Text" value="${this.getAttribute(
         "value"
       )}"></fig-input-text>`;
-      if (this.getAttribute("alpha")) {
+      if (this.getAttribute("alpha") === "true") {
         label += `<fig-tooltip text="Opacity">
                     <fig-input-text 
                         placeholder="##" 
@@ -1320,7 +1323,9 @@ class FigChit extends HTMLElement {
     }
     if (name === "disabled") {
       this.disabled = newValue.toLowerCase() === "true";
-      this.input.disabled = this.disabled;
+      if (this.input) {
+        this.input.disabled = this.disabled;
+      }
     }
   }
 }

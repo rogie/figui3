@@ -947,6 +947,7 @@ fig-chit {
     width: 1.75rem;
     height: 1.75rem;
 
+    &[type="gradient"]::after,
     &[type="image"]::after,
     input[type="color"] {
       padding: 0;
@@ -955,7 +956,13 @@ fig-chit {
       border-radius: var(--radius-medium);
     }
   }
+  &[disabled="true"] {
+    input {
+      pointer-events: none;
+    }
+  }
 
+  &[type="gradient"],
   &[type="image"] {
     &::after {
       content: "";
@@ -976,6 +983,18 @@ fig-chit {
     }
     input[type="color"]::-webkit-color-swatch {
       opacity: 0;
+    }
+  }
+
+  &[type="gradient"] {
+    &[variant="linear"]::after {
+      background: linear-gradient(to right, red, blue);
+    }
+    &[variant="angular"]::after {
+      background: conic-gradient(red, orange, yellow, green, blue);
+    }
+    &[variant="radial"]::after {
+      background: radial-gradient(circle, red, blue);
     }
   }
 }
