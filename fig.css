@@ -956,6 +956,11 @@ fig-chit {
       border-radius: var(--radius-medium);
     }
   }
+  &[disabled="true"] {
+    input {
+      pointer-events: none;
+    }
+  }
 
   &[type="gradient"],
   &[type="image"] {

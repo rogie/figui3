@@ -1302,7 +1302,6 @@ class FigChit extends HTMLElement {
 
     requestAnimationFrame(() => {
       this.input = this.querySelector("input");
-      this.input.disabled = this.disabled;
       this.updateSrc(this.src);
     });
   }
@@ -1323,9 +1322,6 @@ class FigChit extends HTMLElement {
     }
     if (name === "disabled") {
       this.disabled = newValue.toLowerCase() === "true";
-      if (this.input) {
-        this.input.disabled = this.disabled;
-      }
     }
   }
 }
