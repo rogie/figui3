@@ -31,10 +31,24 @@
             <fig-segment>Three</fig-segment>
         </fig-segmented-control>
         <br /><br />
+        <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"
+                   upload="true"></fig-image>
+        <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"
+                   upload="true"
+                   size="medium"></fig-image>
+        <fig-image upload="true"
+                   label="Upload image"
+                   size="large"></fig-image>
+        <br /><br />
         <hstack>
             <fig-button>Primary</fig-button>
             <fig-button variant="secondary">Secondary</fig-button>
             <fig-button variant="ghost">Ghost</fig-button>
+            <fig-button variant="ghost"
+                        type="upload">
+                Upload
+                <input type="file" />
+            </fig-button>
             <fig-button variant="ghost"
                         type="toggle"
                         icon="true">

@@ -1326,3 +1326,64 @@ class FigChit extends HTMLElement {
   }
 }
 window.customElements.define("fig-chit", FigChit);
+
+/* Upload */
+class FigImage extends HTMLElement {
+  constructor() {
+    super();
+  }
+  #getInnerHTML() {
+    return `<fig-chit type="image" size="large" ${
+      this.src ? `src="${this.src}"` : ""
+    } disabled="true"></fig-chit>${
+      this.upload
+        ? `<fig-button variant="primary" type="upload">
+          ${this.label} 
+          <input type="file" accept="image/*" />
+        </fig-button>`
+        : ""
+    }`;
+  }
+  connectedCallback() {
+    this.src = this.getAttribute("src") || "";
+    this.upload = this.getAttribute("upload") === "true";
+    this.label = this.getAttribute("label") || "Upload";
+    this.size = this.getAttribute("size") || "small";
+    this.innerHTML = this.#getInnerHTML();
+    this.#updateRefs();
+  }
+  #updateRefs() {
+    requestAnimationFrame(() => {
+      this.chit = this.querySelector("fig-chit");
+      this.uploadButton = this.querySelector("fig-button");
+      this.fileInput = this.uploadButton?.querySelector("input");
+
+      this.fileInput.addEventListener(
+        "change",
+        this.handleFileInput.bind(this)
+      );
+    });
+  }
+  handleFileInput(e) {
+    this.src = URL.createObjectURL(e.target.files[0]);
+    this.setAttribute("src", this.src);
+    this.chit.setAttribute("src", this.src);
+  }
+  static get observedAttributes() {
+    return ["src", "upload"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "src") {
+      this.src = newValue;
+    }
+    if (name === "upload") {
+      this.upload = newValue.toLowerCase() === "true";
+      this.innerHTML = this.#getInnerHTML();
+      this.#updateRefs();
+    }
+    if (name === "size") {
+      this.size = newValue;
+    }
+  }
+}
+window.customElements.define("fig-image", FigImage);

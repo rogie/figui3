@@ -976,7 +976,19 @@ fig-chit {
       box-shadow: inset 0 0 0 1px var(--figma-color-border-selected),
         inset 0 0 0 3px var(--figma-color-bg);
     }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      border-radius: var(--radius-medium);
+    }
+
+    input[type="color"]::-moz-color-swatch {
+      border-radius: var(--radius-medium);
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border-radius: var(--radius-medium);
+    }
   }
+
   &[disabled="true"] {
     input {
       pointer-events: none;
@@ -1036,6 +1048,36 @@ fig-chit {
     &::after {
       background: var(--gradient);
     }
+  }
+}
+
+/* Fig Image */
+fig-image {
+  --image-size: 2rem;
+  display: inline-grid;
+  place-items: center;
+  width: var(--image-size);
+  height: var(--image-size);
+  > * {
+    grid-area: 1/1;
+  }
+  fig-chit {
+    --size: var(--image-size) !important;
+  }
+  fig-button {
+    opacity: 0;
+    pointer-events: none;
+  }
+  &:not([src]):not([src=""]) fig-button,
+  &:hover fig-button {
+    opacity: 1;
+    pointer-events: all;
+  }
+  &[size="medium"] {
+    --image-size: 4rem;
+  }
+  &[size="large"] {
+    --image-size: 8rem;
   }
 }
 
@@ -2041,7 +2083,6 @@ fig-segmented-control {
     justify-content: center;
     position: relative;
     appearance: none;
-    min-width: 1.5rem;
     padding: 0 var(--spacer-2);
 
     &[selected]:not([selected="false"]),
