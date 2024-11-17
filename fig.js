@@ -654,7 +654,7 @@ class FigSlider extends HTMLElement {
     });
   }
   static get observedAttributes() {
-    return ["value", "step", "min", "max", "type", "disabled"];
+    return ["value", "step", "min", "max", "type", "disabled", "color"];
   }
 
   focus() {
