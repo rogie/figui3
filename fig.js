@@ -1155,7 +1155,7 @@ class FigCheckbox extends HTMLElement {
     this.render();
   }
   static get observedAttributes() {
-    return ["on", "disabled", "label", "checked"];
+    return ["disabled", "label", "checked"];
   }
 
   render() {}
@@ -1207,9 +1207,6 @@ window.customElements.define("fig-radio", FigRadio);
 class FigSwitch extends FigCheckbox {
   render() {
     this.input.setAttribute("class", "switch");
-    this.on = this.input.checked = this.hasAttribute("on")
-      ? this.getAttribute("on").toLowerCase() === "true"
-      : false;
   }
 }
 window.customElements.define("fig-switch", FigSwitch);
