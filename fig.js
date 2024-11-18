@@ -592,6 +592,7 @@ class FigSlider extends HTMLElement {
     this.max = this.getAttribute("max") || defaults.max;
     this.step = this.getAttribute("step") || defaults.step;
     this.color = this.getAttribute("color") || defaults?.color;
+    this.units = this.getAttribute("units") || "";
     this.disabled = this.getAttribute("disabled") ? true : false;
 
     if (this.color) {
@@ -619,6 +620,11 @@ class FigSlider extends HTMLElement {
                         max="${this.max}"
                         step="${this.step}"
                         value="${this.value}">
+                        ${
+                          this.units
+                            ? `<span slot="append">${this.units}</span>`
+                            : ""
+                        }
                     </fig-input-text>`;
     } else {
       html = slider;
@@ -637,6 +643,7 @@ class FigSlider extends HTMLElement {
       }
 
       this.datalist = this.querySelector("datalist");
+      this.figInputText = this.querySelector("fig-input-text");
       this.textInput = this.querySelector("input[type=number]");
       if (this.datalist) {
         this.datalist.setAttribute(
@@ -645,8 +652,8 @@ class FigSlider extends HTMLElement {
         );
         this.input.setAttribute("list", this.datalist.getAttribute("id"));
       }
-      if (this.textInput) {
-        this.textInput.addEventListener(
+      if (this.figInputText) {
+        this.figInputText.addEventListener(
           "input",
           this.handleTextInput.bind(this)
         );
@@ -654,7 +661,16 @@ class FigSlider extends HTMLElement {
     });
   }
   static get observedAttributes() {
-    return ["value", "step", "min", "max", "type", "disabled", "color"];
+    return [
+      "value",
+      "step",
+      "min",
+      "max",
+      "type",
+      "disabled",
+      "color",
+      "units",
+    ];
   }
 
   focus() {
@@ -675,14 +691,15 @@ class FigSlider extends HTMLElement {
           this.disabled = this.input.disabled =
             newValue === "true" ||
             (newValue === undefined && newValue !== null);
-          if (this.textInput) {
-            this.textInput.disabled = this.disabled;
+          if (this.figInputText) {
+            this.figInputText.disabled = this.disabled;
+            this.figInputText.setAttribute("disabled", this.disabled);
           }
           break;
         default:
           this[name] = this.input[name] = newValue;
-          if (this.textInput) {
-            this.textInput.setAttribute(name, newValue);
+          if (this.figInputText) {
+            this.figInputText.setAttribute(name, newValue);
           }
           this.handleInput();
           break;
@@ -690,8 +707,8 @@ class FigSlider extends HTMLElement {
     }
   }
   handleTextInput() {
-    if (this.textInput) {
-      this.input.value = Number(this.textInput.value);
+    if (this.figInputText) {
+      this.input.value = Number(this.figInputText.value);
       this.handleInput();
     }
   }
@@ -725,7 +742,7 @@ class FigInputText extends HTMLElement {
     this.multiline = this.hasAttribute("multiline") || false;
     this.value = this.getAttribute("value") || "";
     this.type = this.getAttribute("type") || "text";
-    this.placeholder = this.getAttribute("placeholder");
+    this.placeholder = this.getAttribute("placeholder") || "";
 
     let html = `<input 
       type="${this.type}" 
@@ -792,9 +809,15 @@ class FigInputText extends HTMLElement {
         case "label":
           this.disabled = this.input.disabled = newValue;
           break;
+        case "value":
+          this.value = newValue;
+          this.handleInput();
+          break;
         default:
           this[name] = this.input[name] = newValue;
-          this.input.setAttribute(name, newValue);
+          if (this.input) {
+            this.input.setAttribute(name, newValue);
+          }
           break;
       }
     }
