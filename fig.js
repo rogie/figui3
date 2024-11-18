@@ -98,13 +98,12 @@ class FigDropdown extends HTMLElement {
   connectedCallback() {
     this.type = this.getAttribute("type") || "select";
     this.value = this.getAttribute("value") || "";
+
     this.select = document.createElement("select");
     this.optionsSlot = document.createElement("slot");
-
     this.appendChild(this.select);
     this.shadowRoot.appendChild(this.optionsSlot);
 
-    // Move slotted options into the select element
     this.optionsSlot.addEventListener("slotchange", this.slotChange.bind(this));
 
     this.select.addEventListener("input", this.handleDropdownInput.bind(this));
@@ -132,6 +131,7 @@ class FigDropdown extends HTMLElement {
       this.select.selectedIndex = -1;
     }
   }
+
   handleDropdownInput() {
     if (this.type === "dropdown") {
       this.value = this.select.value;

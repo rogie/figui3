@@ -611,7 +611,7 @@ fig-dropdown:has([trigger]) {
 }
 
 fig-dialog > *:not(dialog),
-fig-dropdown > option {
+fig-dropdown > *:not(select) {
   display: none !important;
 }
 
