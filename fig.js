@@ -577,7 +577,7 @@ class FigSlider extends HTMLElement {
     hue: { min: 0, max: 255, step: 1 },
     delta: { min: -100, max: 100, step: 1 },
     stepper: { min: 0, max: 100, step: 25 },
-    opacity: { min: 0, max: 1, step: 0.01, color: "#FF0000" },
+    opacity: { min: 0, max: 100, step: 0.01, color: "#FF0000" },
   };
   constructor() {
     super();
@@ -644,7 +644,6 @@ class FigSlider extends HTMLElement {
 
       this.datalist = this.querySelector("datalist");
       this.figInputText = this.querySelector("fig-input-text");
-      this.textInput = this.querySelector("input[type=number]");
       if (this.datalist) {
         this.datalist.setAttribute(
           "id",
@@ -698,9 +697,6 @@ class FigSlider extends HTMLElement {
           break;
         default:
           this[name] = this.input[name] = newValue;
-          if (this.figInputText) {
-            this.figInputText.setAttribute(name, newValue);
-          }
           this.handleInput();
           break;
       }
@@ -727,8 +723,8 @@ class FigSlider extends HTMLElement {
     this.style.setProperty("--slider-complete", complete);
     this.style.setProperty("--default", defaultValue);
     this.style.setProperty("--unchanged", complete === defaultValue ? 1 : 0);
-    if (this.textInput) {
-      this.textInput.value = val;
+    if (this.figInputText) {
+      this.figInputText.setAttribute("value", val);
     }
   }
 }
