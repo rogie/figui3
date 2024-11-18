@@ -1129,16 +1129,17 @@ class FigCheckbox extends HTMLElement {
   constructor() {
     super();
     this.input = document.createElement("input");
+    this.name = this.getAttribute("name") || "checkbox";
+    this.value = this.getAttribute("value") || "";
     this.input.setAttribute("id", uniqueId());
-    this.input.setAttribute("name", this.getAttribute("name") || "checkbox");
+    this.input.setAttribute("name", this.name);
     this.input.setAttribute("type", "checkbox");
     this.labelElement = document.createElement("label");
     this.labelElement.setAttribute("for", this.input.id);
   }
   connectedCallback() {
-    this.checked = this.input.checked = this.hasAttribute("checked")
-      ? this.getAttribute("checked").toLowerCase() === "true"
-      : false;
+    this.checked = this.input.checked =
+      this.hasAttribute("checked") && this.getAttribute("checked") !== "false";
     this.input.addEventListener("change", this.handleInput.bind(this));
 
     if (this.hasAttribute("disabled")) {
@@ -1155,7 +1156,7 @@ class FigCheckbox extends HTMLElement {
     this.render();
   }
   static get observedAttributes() {
-    return ["disabled", "label", "checked"];
+    return ["disabled", "label", "checked", "name", "value"];
   }
 
   render() {}
@@ -1174,12 +1175,13 @@ class FigCheckbox extends HTMLElement {
         this.labelElement.innerText = newValue;
         break;
       case "checked":
-        this.checked = this.input.checked = this.hasAttribute("checked")
-          ? true
-          : false;
+        this.checked = this.input.checked =
+          this.hasAttribute("checked") &&
+          this.getAttribute("checked") !== "false";
+
         break;
-      case "name":
-      case "value":
+      default:
+        this.input[name] = newValue;
         this.input.setAttribute(name, newValue);
         break;
     }

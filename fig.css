@@ -756,8 +756,9 @@ fig-button {
   &[type="select"],
   &[type="upload"] {
     position: relative;
-    select,
-    input {
+    > select,
+    > input,
+    > fig-dropdown {
       position: absolute;
       inset: 0;
       opacity: 0;
