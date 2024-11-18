@@ -121,7 +121,7 @@ class FigDropdown extends HTMLElement {
       this.select.appendChild(hiddenOption);
     }
     this.optionsSlot.assignedNodes().forEach((option) => {
-      if (option.nodeName === "OPTION") {
+      if (option.nodeName === "OPTION" || option.nodeName === "OPTGROUP") {
         if (option.hasAttribute("value") && option.hasAttribute("selected")) {
           this.value = option.getAttribute("value");
         }
