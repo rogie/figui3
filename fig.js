@@ -809,10 +809,6 @@ class FigInputText extends HTMLElement {
         case "label":
           this.disabled = this.input.disabled = newValue;
           break;
-        case "value":
-          this.value = newValue;
-          this.handleInput();
-          break;
         default:
           this[name] = this.input[name] = newValue;
           if (this.input) {
