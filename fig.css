@@ -657,7 +657,8 @@ fig-button {
   }
 
   /* Variant: Ghost */
-  &[variant="ghost"] {
+  &[variant="ghost"],
+  &[variant="link"] {
     box-shadow: none;
     background: none;
     color: var(--figma-color-text);
@@ -674,6 +675,10 @@ fig-button {
 
   &[variant="ghost"][disabled="true"] {
     background-color: transparent;
+  }
+
+  &[variant="link"] {
+    color: var(--figma-color-text-brand);
   }
 
   /* Variant: Secondary */
@@ -698,6 +703,8 @@ fig-button {
   &[icon] > button {
     width: var(--spacer-4);
     padding: 0;
+    flex-grow: 0
+    flex-shrink: 0;
 
     &:hover {
       background-color: var(--figma-color-bg-ghost-hover);
