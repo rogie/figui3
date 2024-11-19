@@ -16,6 +16,82 @@
     <fig-header>
         <h3>UI3 Components</h3>
     </fig-header>
+    <br />
+    <fig-field direction="horizontal">
+        <label>Opacity</label>
+        <fig-slider type="opacity"
+                    full
+                    value="0.75"
+                    color="#ff0000"
+                    units="%"
+                    text="true"></fig-slider>
+        <fig-button variant="ghost"
+                    type="toggle"
+                    icon="true">
+            <svg class="svg"
+                 xmlns="http://www.w3.org/2000/svg"
+                 width="16"
+                 height="16"
+                 viewBox="0 0 16 16">
+                <path fill="currentColor"
+                      fill-opacity="1"
+                      fill-rule="evenodd"
+                      stroke="none"
+                      d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z">
+                </path>
+            </svg>
+        </fig-button>
+    </fig-field>
+    <br />
+    <fig-field direction="horizontal">
+        <label>Blend mode</label>
+        <fig-dropdown full>
+            <option>One</option>
+            <option>Two</option>
+        </fig-dropdown>
+        <fig-button variant="ghost"
+                    type="toggle"
+                    icon="true">
+            <svg class="svg"
+                 xmlns="http://www.w3.org/2000/svg"
+                 width="16"
+                 height="16"
+                 viewBox="0 0 16 16">
+                <path fill="currentColor"
+                      fill-opacity="1"
+                      fill-rule="evenodd"
+                      stroke="none"
+                      d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z">
+                </path>
+            </svg>
+        </fig-button>
+    </fig-field>
+    <br />
+    <fig-field direction="horizontal">
+        <label>Description</label>
+        <fig-input-text multiline="true"
+                        value=""
+                        full
+                        autoresize="true"
+                        resizable="true"
+                        placeholder="Anthropic API key"></fig-input-text>
+        <fig-button variant="ghost"
+                    type="toggle"
+                    icon="true">
+            <svg class="svg"
+                 xmlns="http://www.w3.org/2000/svg"
+                 width="16"
+                 height="16"
+                 viewBox="0 0 16 16">
+                <path fill="currentColor"
+                      fill-opacity="1"
+                      fill-rule="evenodd"
+                      stroke="none"
+                      d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z">
+                </path>
+            </svg>
+        </fig-button>
+    </fig-field>
     <fig-avatar src="https://avatars.githubusercontent.com/u/12345678?v=4"
                 name="John Doe"></fig-avatar>
     <fig-avatar size="large"
@@ -47,6 +123,68 @@
             <fig-button>Primary</fig-button>
             <fig-button variant="secondary">Secondary</fig-button>
             <fig-button variant="ghost">Ghost</fig-button>
+
+            <fig-button-combo>
+                <fig-button>Primary</fig-button>
+                <fig-button icon="true"
+                            type="select">
+                    <svg width="24"
+                         height="24"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
+                              fill="currentColor"
+                              fill-opacity="0.9" />
+                    </svg>
+                    <fig-dropdown>
+                        <option>One</option>
+                        <option>Two</option>
+                    </fig-dropdown>
+                </fig-button>
+            </fig-button-combo>
+            <fig-button-combo>
+                <fig-button variant="secondary">Secondary</fig-button>
+                <fig-button variant="secondary"
+                            icon="true"
+                            type="select">
+                    <svg width="24"
+                         height="24"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
+                              fill="currentColor"
+                              fill-opacity="0.9" />
+                    </svg>
+                    <fig-dropdown>
+                        <option>One</option>
+                        <option>Two</option>
+                    </fig-dropdown>
+                </fig-button>
+            </fig-button-combo>
+            <fig-button icon="true"
+                        type="select">
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
+                          fill="currentColor"
+                          fill-opacity="0.9" />
+                </svg>
+                <fig-dropdown>
+                    <option>One</option>
+                    <option>Two</option>
+                </fig-dropdown>
+            </fig-button>
             <fig-button type="select">
                 Select
                 <fig-dropdown>

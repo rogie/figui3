@@ -602,17 +602,22 @@ select {
   padding-right: 1.5rem;
 }
 
-fig-dropdown:has([trigger]) {
-  & select {
-    opacity: 0;
-    position: absolute;
-    inset: 0;
-  }
+fig-dialog > *:not(dialog) {
+  display: none !important;
 }
 
-fig-dialog > *:not(dialog),
-fig-dropdown > *:not(select) {
-  display: none !important;
+/* Dropdown */
+fig-dropdown,
+.fig-dropdown {
+  display: inline-flex;
+  position: relative;
+
+  & > *:not(select) {
+    display: none !important;
+  }
+  > select {
+    display: block;
+  }
 }
 
 /* Button */
@@ -705,10 +710,7 @@ fig-button {
     padding: 0;
     flex-grow: 0;
     flex-shrink: 0;
-
-    &:hover {
-      background-color: var(--figma-color-bg-ghost-hover);
-    }
+    flex-basis: var(--spacer-4);
   }
 
   /* Upload */
@@ -1087,6 +1089,46 @@ fig-image {
   }
   &[size="large"] {
     --image-size: 8rem;
+  }
+}
+
+/* Combo button */
+.fig-button-combo,
+fig-button-combo,
+.fig-input-combo,
+fig-input-combo {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0px;
+  & > * {
+    &:first-child,
+    &:first-child > * {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &:last-child,
+    &:last-child > * {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &:not(:last-child):not(:first-child),
+    &:not(:last-child):not(:first-child) > * {
+      border-radius: 0;
+    }
+  }
+}
+.fig-button-combo,
+fig-button-combo {
+  > *:not(:first-child) {
+    border-left: 1px solid var(--figma-color-bg-brand-hover);
+    margin-left: -1px;
+  }
+  > *[variant="secondary"]:not(:first-child) {
+    border-left: transparent;
+    margin-left: -1px;
   }
 }
 
@@ -1857,7 +1899,6 @@ fig-content,
 fig-slider,
 fig-switch,
 fig-input-color,
-fig-input-text,
 fig-checkbox,
 fig-radio,
 fig-tab,
@@ -1872,22 +1913,29 @@ fig-tabs {
   }
 }
 
+/* Text input */
 fig-input-text {
+  display: inline-flex;
   user-select: all;
   gap: 0;
 
   &[multiline] {
     display: block;
   }
-}
-
-fig-input-text[autoresize] textarea,
-fig-input-text[autoresize] input {
-  field-sizing: content;
-}
-
-fig-input-text[resizable] textarea {
-  resize: both;
+  &[autoresize] input,
+  &[autoresize] textarea {
+    field-sizing: content;
+  }
+  &[resizable] input,
+  &[resizable] textarea {
+    resize: both;
+  }
+  &[resizable]:has(textarea[style*="width"]),
+  &[resizable]:has(textarea[style*="height"]),
+  &[resizable]:has(input[style*="width"]),
+  &[resizable]:has(input[style*="height"]) {
+    flex: unset;
+  }
 }
 
 fig-checkbox,
@@ -1936,15 +1984,17 @@ vstack,
 [vstack] {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacer-2);
+  flex-wrap: wrap;
 }
 
 hstack,
 .hstack,
 [hstack] {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacer-2);
   align-items: start;
+  flex-wrap: nowrap;
 }
 
 fig-input-text {
@@ -2035,7 +2085,7 @@ fig-field,
   flex-direction: column;
   gap: 0;
 
-  & > * {
+  & > [full] {
     flex: 1;
   }
 
