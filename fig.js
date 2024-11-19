@@ -153,7 +153,6 @@ class FigTooltip extends HTMLElement {
     this.action = this.getAttribute("action") || "hover";
     this.delay = parseInt(this.getAttribute("delay")) || 500;
     this.isOpen = false;
-    this.style.display = "contents";
   }
   connectedCallback() {
     this.setup();
@@ -164,7 +163,9 @@ class FigTooltip extends HTMLElement {
     this.destroy();
   }
 
-  setup() {}
+  setup() {
+    this.style.display = "contents";
+  }
 
   render() {
     this.destroy();
