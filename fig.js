@@ -1391,6 +1391,7 @@ class FigImage extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "src") {
       this.src = newValue;
+      this.chit.setAttribute("src", this.src);
     }
     if (name === "upload") {
       this.upload = newValue.toLowerCase() === "true";
