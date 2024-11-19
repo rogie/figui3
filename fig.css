@@ -703,7 +703,7 @@ fig-button {
   &[icon] > button {
     width: var(--spacer-4);
     padding: 0;
-    flex-grow: 0
+    flex-grow: 0;
     flex-shrink: 0;
 
     &:hover {
