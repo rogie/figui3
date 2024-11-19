@@ -887,6 +887,9 @@ fig-avatar,
   &::after {
     content: attr(initials);
   }
+  &[size="large"] {
+    --size: 3rem;
+  }
 }
 
 /* Color input */
