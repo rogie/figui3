@@ -153,6 +153,7 @@ class FigTooltip extends HTMLElement {
     this.action = this.getAttribute("action") || "hover";
     this.delay = parseInt(this.getAttribute("delay")) || 500;
     this.isOpen = false;
+    this.style.display = "contents";
   }
   connectedCallback() {
     this.setup();

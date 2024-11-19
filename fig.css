@@ -1859,8 +1859,7 @@ fig-input-text,
 fig-checkbox,
 fig-radio,
 fig-tab,
-fig-tabs,
-fig-tooltip {
+fig-tabs {
   display: inline-flex;
   gap: var(--spacer-2);
   user-select: none;
