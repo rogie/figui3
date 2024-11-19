@@ -860,10 +860,11 @@ fig-tabs,
 /* Avatar */
 fig-avatar,
 .fig-avatar {
-  width: 1.5rem;
+  --size: 1.5rem;
+  width: var(--size);
   display: inline-grid;
   place-items: center;
-  height: 1.5rem;
+  height: var(--size);
   border-radius: 100%;
   border: 0;
   background: var(--figma-color-bg-brand);
@@ -871,24 +872,21 @@ fig-avatar,
   color: var(--figma-color-icon-onbrand);
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 
+  img {
+    width: var(--size);
+    height: var(--size);
+    position: absolute;
+    background: var(--checkerboard);
+    border-radius: 100%;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+  }
+
   &:has(img[src]) {
     background: none;
   }
-}
-
-fig-avatar img,
-.fig-avatar img {
-  position: absolute;
-  background: var(--checkerboard);
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 100%;
-  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-}
-
-fig-avatar::after,
-.fig-avatar::after {
-  content: attr(initials);
+  &::after {
+    content: attr(initials);
+  }
 }
 
 /* Color input */
@@ -1768,6 +1766,7 @@ dialog {
 /* Tooltip */
 .fig-tooltip {
   inset: unset;
+  display: contents;
   color: var(--color-tooltip);
   background-color: var(--bg-tooltip);
   padding: var(--spacer-1) var(--spacer-2);
