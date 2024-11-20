@@ -1951,10 +1951,7 @@ fig-header {
   & h3 {
     padding-left: var(--spacer-1);
     font-weight: var(--body-medium-strong-fontWeight);
-  }
-
-  & > *:not(fig-button) {
-    margin-right: auto;
+    flex-grow: 1;
   }
 
   &[borderless] {
