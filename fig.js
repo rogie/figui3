@@ -1407,13 +1407,15 @@ class FigImage extends HTMLElement {
   #updateRefs() {
     requestAnimationFrame(() => {
       this.chit = this.querySelector("fig-chit");
-      this.uploadButton = this.querySelector("fig-button");
-      this.fileInput = this.uploadButton?.querySelector("input");
+      if (this.upload) {
+        this.uploadButton = this.querySelector("fig-button");
+        this.fileInput = this.uploadButton?.querySelector("input");
 
-      this.fileInput.addEventListener(
-        "change",
-        this.handleFileInput.bind(this)
-      );
+        this.fileInput.addEventListener(
+          "change",
+          this.handleFileInput.bind(this)
+        );
+      }
     });
   }
   handleFileInput(e) {
