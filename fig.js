@@ -5,20 +5,21 @@ function supportsPopover() {
   return HTMLElement.prototype.hasOwnProperty("popover");
 }
 
-/* Button */
-class FigButton extends HTMLElement {
-  #type;
-  #selected;
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-  }
-  connectedCallback() {
-    this.render();
-  }
-  render() {
-    this.#type = this.getAttribute("type") || "button";
-    this.shadowRoot.innerHTML = `
+if (window.customElements && !window.customElements.get("fig-button")) {
+  /* Button */
+  class FigButton extends HTMLElement {
+    #type;
+    #selected;
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+    }
+    connectedCallback() {
+      this.render();
+    }
+    render() {
+      this.#type = this.getAttribute("type") || "button";
+      this.shadowRoot.innerHTML = `
             <style>
                 button, button:hover, button:active {
                     padding: 0 var(--spacer-2);
@@ -43,108 +44,143 @@ class FigButton extends HTMLElement {
             </button>
             `;
 
-    this.#selected =
-      this.hasAttribute("selected") &&
-      this.getAttribute("selected") !== "false";
-    this.addEventListener("click", this.handleClick.bind(this));
+      this.#selected =
+        this.hasAttribute("selected") &&
+        this.getAttribute("selected") !== "false";
+      this.addEventListener("click", this.handleClick.bind(this));
 
-    this.button = this.querySelector("button");
-  }
-  get type() {
-    return this.#type;
-  }
-  set type(value) {
-    this.#type = value;
-    this.button.type = value;
-    this.setAttribute("type", value);
-  }
-  get selected() {
-    return this.#selected;
-  }
-  set selected(value) {
-    this.#selected = value;
-    this.setAttribute("selected", value);
-  }
+      this.button = this.querySelector("button");
+    }
+    get type() {
+      return this.#type;
+    }
+    set type(value) {
+      this.#type = value;
+      this.button.type = value;
+      this.setAttribute("type", value);
+    }
+    get selected() {
+      return this.#selected;
+    }
+    set selected(value) {
+      this.#selected = value;
+      this.setAttribute("selected", value);
+    }
 
-  handleClick(event) {
-    if (this.#type === "toggle") {
-      this.selected = !this.#selected;
-    }
-    if (this.#type === "submit") {
-      this.button.click();
-    }
-  }
-  static get observedAttributes() {
-    return ["disabled"];
-  }
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (this.button) {
-      this.button[name] = newValue;
-      if (newValue === "false") {
-        this.button.removeAttribute(name);
+    handleClick(event) {
+      if (this.#type === "toggle") {
+        this.selected = !this.#selected;
+      }
+      if (this.#type === "submit") {
+        this.button.click();
       }
     }
-  }
-}
-window.customElements.define("fig-button", FigButton);
-
-/* Dropdown */
-class FigDropdown extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-  }
-
-  connectedCallback() {
-    this.type = this.getAttribute("type") || "select";
-    this.value = this.getAttribute("value") || "";
-
-    this.select = document.createElement("select");
-    this.optionsSlot = document.createElement("slot");
-    this.appendChild(this.select);
-    this.shadowRoot.appendChild(this.optionsSlot);
-
-    this.optionsSlot.addEventListener("slotchange", this.slotChange.bind(this));
-
-    this.select.addEventListener("input", this.handleDropdownInput.bind(this));
-  }
-
-  slotChange() {
-    while (this.select.firstChild) {
-      this.select.firstChild.remove();
+    static get observedAttributes() {
+      return ["disabled"];
     }
-    if (this.type === "dropdown") {
-      const hiddenOption = document.createElement("option");
-      hiddenOption.setAttribute("hidden", "true");
-      hiddenOption.setAttribute("selected", "true");
-      this.select.appendChild(hiddenOption);
-    }
-    this.optionsSlot.assignedNodes().forEach((option) => {
-      if (option.nodeName === "OPTION" || option.nodeName === "OPTGROUP") {
-        if (option.hasAttribute("value") && option.hasAttribute("selected")) {
-          this.value = option.getAttribute("value");
+    attributeChangedCallback(name, oldValue, newValue) {
+      if (this.button) {
+        this.button[name] = newValue;
+        if (newValue === "false") {
+          this.button.removeAttribute(name);
         }
-        this.select.appendChild(option.cloneNode(true));
       }
-    });
-    if (this.type === "dropdown") {
-      this.select.selectedIndex = -1;
     }
   }
+  window.customElements.define("fig-button", FigButton);
+}
 
-  handleDropdownInput() {
-    if (this.type === "dropdown") {
+if (window.customElements && !window.customElements.get("fig-dropdown")) {
+  /* Dropdown */
+  class FigDropdown extends HTMLElement {
+    constructor() {
+      super();
+      this.select = document.createElement("select");
+      this.optionsSlot = document.createElement("slot");
+      this.attachShadow({ mode: "open" });
+    }
+
+    connectedCallback() {
+      this.type = this.getAttribute("type") || "select";
+      this.value = this.getAttribute("value") || "";
+
+      this.appendChild(this.select);
+      this.shadowRoot.appendChild(this.optionsSlot);
+
+      this.optionsSlot.addEventListener(
+        "slotchange",
+        this.slotChange.bind(this)
+      );
+
+      this.select.addEventListener(
+        "input",
+        this.handleDropdownInput.bind(this)
+      );
+      this.select.addEventListener(
+        "change",
+        this.handleDropdownChange.bind(this)
+      );
+    }
+
+    slotChange() {
+      while (this.select.firstChild) {
+        this.select.firstChild.remove();
+      }
+      if (this.type === "dropdown") {
+        const hiddenOption = document.createElement("option");
+        hiddenOption.setAttribute("hidden", "true");
+        hiddenOption.setAttribute("selected", "true");
+        this.select.appendChild(hiddenOption);
+      }
+      this.optionsSlot.assignedNodes().forEach((option) => {
+        if (option.nodeName === "OPTION" || option.nodeName === "OPTGROUP") {
+          if (option.hasAttribute("value") && option.hasAttribute("selected")) {
+            this.value = option.getAttribute("value");
+          }
+          this.select.appendChild(option.cloneNode(true));
+        }
+      });
+      if (this.type === "dropdown") {
+        this.select.selectedIndex = -1;
+      }
+    }
+
+    handleDropdownInput() {
       this.value = this.select.value;
       this.setAttribute("value", this.value);
-      this.select.selectedIndex = -1;
+    }
+    handleDropdownChange() {
+      if (this.type === "dropdown") {
+        this.select.selectedIndex = -1;
+      }
+    }
+    focus() {
+      this.select.focus();
+    }
+    blur() {
+      this.select.blur();
+    }
+    get value() {
+      return this.select?.value;
+    }
+    set value(value) {
+      this.setAttribute("value", value);
+    }
+    static get observedAttributes() {
+      return ["value", "type"];
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+      if (name === "value") {
+        this.select.value = newValue;
+      }
+      if (name === "type") {
+        this.type = newValue;
+      }
     }
   }
-  focus() {
-    this.select.focus();
-  }
-}
 
-customElements.define("fig-dropdown", FigDropdown);
+  customElements.define("fig-dropdown", FigDropdown);
+}
 
 /* Tooltip */
 class FigTooltip extends HTMLElement {
@@ -1391,7 +1427,9 @@ class FigImage extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "src") {
       this.src = newValue;
-      this.chit.setAttribute("src", this.src);
+      if (this.chit) {
+        this.chit.setAttribute("src", this.src);
+      }
     }
     if (name === "upload") {
       this.upload = newValue.toLowerCase() === "true";
