@@ -209,6 +209,7 @@ class FigTooltip extends HTMLElement {
     this.popup.setAttribute("class", "fig-tooltip");
     this.popup.style.position = "fixed";
     this.popup.style.visibility = "hidden";
+    this.popup.style.display = "inline-flex";
     this.popup.style.pointerEvents = "none";
     this.popup.innerText = this.getAttribute("text");
     document.body.append(this.popup);
@@ -216,7 +217,7 @@ class FigTooltip extends HTMLElement {
 
   destroy() {
     if (this.popup) {
-      this.popup.remove();
+      //this.popup.remove();
     }
     document.body.addEventListener("click", this.hidePopupOutsideClick);
   }
@@ -255,7 +256,7 @@ class FigTooltip extends HTMLElement {
   }
 
   showPopup() {
-    const rect = this.getBoundingClientRect();
+    const rect = this.firstElementChild.getBoundingClientRect();
     const popupRect = this.popup.getBoundingClientRect();
     const offset = this.getOffset();
 
@@ -339,17 +340,28 @@ class FigDialog extends HTMLElement {
   }
 
   connectedCallback() {
-    this.render();
+    this.modal =
+      this.hasAttribute("modal") && this.getAttribute("modal") !== "false";
+    this.appendChild(this.dialog);
+    this.shadowRoot.appendChild(this.contentSlot);
+    this.contentSlot.addEventListener("slotchange", this.slotChange.bind(this));
+
+    requestAnimationFrame(() => {
+      this.#addCloseListeners();
+    });
+  }
+
+  #addCloseListeners() {
+    this.dialog
+      .querySelectorAll("fig-button[close-dialog]")
+      .forEach((button) => {
+        button.removeEventListener("click", this.close);
+        button.addEventListener("click", this.close.bind(this));
+      });
   }
 
   disconnectedCallback() {
     this.contentSlot.removeEventListener("slotchange", this.slotChange);
-  }
-
-  render() {
-    this.appendChild(this.dialog);
-    this.shadowRoot.appendChild(this.contentSlot);
-    this.contentSlot.addEventListener("slotchange", this.slotChange.bind(this));
   }
 
   slotChange() {
@@ -361,25 +373,34 @@ class FigDialog extends HTMLElement {
         this.dialog.appendChild(node.cloneNode(true));
       }
     });
+    this.#addCloseListeners();
   }
 
   static get observedAttributes() {
-    return ["open"];
+    return ["open", "modal"];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
       case "open":
+        this.open = newValue === "true" && newValue !== "false";
         if (this?.show) {
-          this[newValue === "true" ? "show" : "close"]();
+          this[this.open ? "show" : "close"]();
         }
+        break;
+      case "modal":
+        this.modal = newValue === "true" && newValue !== "false";
         break;
     }
   }
 
   /* Public methods */
   show() {
-    this.dialog.show();
+    if (this.modal) {
+      this.dialog.showModal();
+    } else {
+      this.dialog.show();
+    }
   }
   close() {
     this.dialog.close();

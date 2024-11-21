@@ -418,6 +418,8 @@
   --elevation-500-modal-window: 0px 0px 0.5px rgba(0, 0, 0, 0.08),
     0px 10px 24px rgba(0, 0, 0, 0.18), 0px 2px 5px rgba(0, 0, 0, 0.15);
 
+  --figma-elevation-500-modal-window: box-shadow: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.08), 0px 10px 24px 0px rgba(0, 0, 0, 0.18), 0px 2px 5px 0px rgba(0, 0, 0, 0.15);
+
   color-scheme: light dark;
   /* Icons */
   --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(0 0 0 / 90%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
@@ -437,7 +439,7 @@
       0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
     --figma-color-bg-ghost-hover: rgba(255, 255, 255, 0.05);
     --figma-color-bordertranslucent: rgba(255, 255, 255, 0.1);
-    --elevation-500-modal-window: 0px 10px 24px rgba(0, 0, 0, 0.45),
+    --figma-elevation-500-modal-window: 0px 10px 24px rgba(0, 0, 0, 0.45),
       0px 3px 5px rgba(0, 0, 0, 0.35),
       inset 0px 0.75px 0px rgba(255, 255, 255, 0.1);
     --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
@@ -445,6 +447,7 @@
       0px 1px 3px 0px rgba(0, 0, 0, 0.4);
   }
 }
+
 
 html {
   width: 100%;
@@ -860,15 +863,19 @@ fig-avatar,
   background: var(--figma-color-bg-brand);
   overflow: hidden;
   color: var(--figma-color-icon-onbrand);
-  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 
   img {
     width: var(--size);
     height: var(--size);
     position: absolute;
-    background: var(--checkerboard);
     border-radius: 100%;
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    &:not([src]) {
+      background: var(--checkerboard);
+    }
+  }
+  &[borderless] {
+    box-shadow: none;
   }
 
   &:has(img[src]) {
@@ -902,39 +909,42 @@ input[type="color"] {
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     outline: 0;
   }
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border: 0;
+    border-radius: 0.125rem;
+    background: var(--checkerboard);
+    overflow: hidden;
+    outline: 1px solid var(--figma-color-bordertranslucent);
+    outline-offset: -1px;
+  }
+
+  &::-moz-color-swatch {
+    border-radius: 0.125rem;
+    padding: 0;
+    border: 0;
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 50%,
+      rgba(0, 0, 0, var(--alpha)) 50%
+    );
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+  }
+
+  &::-webkit-color-swatch {
+    padding: 0;
+    border: 0;
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 50%,
+      rgba(0, 0, 0, var(--alpha)) 50%
+    );
+  }
 }
 
-input[type="color"]::-webkit-color-swatch-wrapper {
-  padding: 0;
-  border: 0;
-  border-radius: 0.125rem;
-  background: var(--checkerboard);
-  overflow: hidden;
-  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-}
-
-input[type="color"]::-moz-color-swatch {
-  border-radius: 0.125rem;
-  padding: 0;
-  border: 0;
-  mask-image: linear-gradient(
-    to right,
-    black 0%,
-    black 50%,
-    rgba(0, 0, 0, var(--alpha)) 50%
-  );
-}
-
-input[type="color"]::-webkit-color-swatch {
-  padding: 0;
-  border: 0;
-  mask-image: linear-gradient(
-    to right,
-    black 0%,
-    black 50%,
-    rgba(0, 0, 0, var(--alpha)) 50%
-  );
-}
 
 fig-chit {
   --gradient-color-1: #ff90ff;
@@ -1718,7 +1728,17 @@ dialog,
   background: var(--figma-color-bg);
   min-width: var(--popover-min-width);
 
-  box-shadow: var(--figma-elevation-100);
+  box-shadow: var(--figma-elevation-500-modal-window);
+
+  footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--spacer-2);
+    gap: var(--spacer-2);
+  }
+  p {
+    padding: 0 var(--spacer-3);
+  }
 
   &:popover-open {
     display: block;
@@ -1781,25 +1801,59 @@ dialog,
     }
   }
 }
+fig-dialog,
+.fig-dialog {
+  display: contents;
+  --offset: 1rem;
+  --translate-x: -50%;
+  --translate-y: -50%;
 
-dialog {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  margin: 0;
-  transform: translate(-50%, -50%);
+  dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    z-index: 999999;
+    transform: translate(var(--translate-x), var(--translate-y));
+  }
 
   &[position*="bottom"] {
-    bottom: 0.5rem;
-    top: auto;
-    transform: translate(-50%, 0);
+    dialog {
+      bottom: var(--offset);
+      top: auto;
+      --translate-y: 0;
+    }
+  }
+  &[position*="top"] {
+    dialog {
+      top: var(--offset);
+      bottom: auto;
+      --translate-y: 0;
+    }
+  }
+  &[position*="right"] {
+    dialog {
+      right: var(--offset);
+      left: auto;
+      --translate-x: 0;
+    }
+  }
+  &[position*="left"] {
+    dialog {
+      left: var(--offset);
+      right: auto;
+      --translate-: 0;
+    }
   }
 }
 
 /* Tooltip */
+fig-tooltip{
+  display: contents;
+}
 .fig-tooltip {
   inset: unset;
-  display: contents;
+  display: block;
   color: var(--color-tooltip);
   background-color: var(--bg-tooltip);
   padding: var(--spacer-1) var(--spacer-2);
@@ -1882,7 +1936,6 @@ fig-icon.close {
 /* Web Components */
 fig-button,
 fig-popover,
-fig-dialog,
 fig-content,
 fig-slider,
 fig-switch,
@@ -1949,7 +2002,7 @@ fig-header {
   gap: 0.25rem;
 
   & h3 {
-    padding-left: var(--spacer-1);
+    padding-left: var(--spacer-2);
     font-weight: var(--body-medium-strong-fontWeight);
     flex-grow: 1;
   }
