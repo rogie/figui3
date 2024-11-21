@@ -1376,11 +1376,14 @@ details {
     color: var(--figma-color-text-secondary);
 
     &::before {
-      content: var(--icon-chevron);
+      content: "";
+      mask-image: var(--icon-chevron);
       display: inline-flex;
+      background: var(--figma-color-text-secondary);
       align-items: start;
       justify-content: center;
       width: 1rem;
+      height: 1rem;
       transform: rotate(-90deg);
       transition: transform var(--transition-duration)
         var(--transition-timing-function);

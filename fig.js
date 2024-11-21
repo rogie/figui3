@@ -217,15 +217,15 @@ class FigTooltip extends HTMLElement {
 
   destroy() {
     if (this.popup) {
-      //this.popup.remove();
+      this.popup.remove();
     }
     document.body.addEventListener("click", this.hidePopupOutsideClick);
   }
 
   setupEventListeners() {
     if (this.action === "hover") {
-      this.addEventListener("mouseenter", this.showDelayedPopup.bind(this));
-      this.addEventListener("mouseleave", this.hidePopup.bind(this));
+      this.addEventListener("pointerenter", this.showDelayedPopup.bind(this));
+      this.addEventListener("pointerleave", this.hidePopup.bind(this));
     } else if (this.action === "click") {
       this.addEventListener("click", this.showDelayedPopup.bind(this));
       document.body.addEventListener(
