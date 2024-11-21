@@ -398,6 +398,7 @@
   --bg-selected-active: #e5f4ff;
   --bg-tooltip: #1e1e1e;
   --body-medium-fontSize: 0.6875rem;
+  --body-large-fontSize: 0.8125rem;
   --figma-color-border-selected: #0d99ff;
   --spacer-1: 0.25rem;
   --spacer-2: 0.5rem;
@@ -408,7 +409,9 @@
   --color-tooltip: #ffffff;
   --radius-medium: 0.3125rem;
   --radius-large: 0.8125rem;
+  --body-letter-spacing: 0.055px;
   --body-medium-strong-fontWeight: 550;
+  --body-large-strong-fontWeight: 500;
   --handle-shadow: 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
     0px 1px 3px 0px rgba(0, 0, 0, 0.05), 0px 3px 8px 0px rgba(0, 0, 0, 0.05),
     0px 0px 0.5px 0px rgba(0, 0, 0, 0.1);
@@ -462,6 +465,7 @@ html {
     sans-serif;
   font-size: 16px;
   font-weight: 500;
+  letter-spacing: var(--body-letter-spacing);
   background-color: var(--figma-color-bg);
 }
 
@@ -472,6 +476,16 @@ html {
 }
 
 body {
+  font-size: var(--body-medium-fontSize);
+  letter-spacing: var(--body-letter-spacing);
+}
+
+h1,h2{
+  font-weight: var(--body-large-strong-fontWeight);
+  font-size: var(--body-large-fontSize);
+}
+h3{
+  font-weight: var(--body-medium-strong-fontWeight);
   font-size: var(--body-medium-fontSize);
 }
 
