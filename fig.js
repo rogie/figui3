@@ -682,6 +682,7 @@ class FigSlider extends HTMLElement {
     } else {
       html = slider;
     }
+    this.innerHTML = html;
     return html;
   }
   #setupBindings() {
