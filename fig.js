@@ -751,6 +751,7 @@ class FigSlider extends HTMLElement {
           this.style.setProperty("--color", this.color);
           break;
         case "type":
+          this.type = newValue;
           this.input.className = newValue;
           break;
         case "disabled":
