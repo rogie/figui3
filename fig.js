@@ -652,7 +652,7 @@ class FigSlider extends HTMLElement {
                     step="${this.step}"
                     class="${this.type}"
                     value="${this.value}">
-                ${this.innerHTML}
+                ${this.initialInnerHTML}
             </div>`;
     if (this.text) {
       html = `${slider}
@@ -721,7 +721,7 @@ class FigSlider extends HTMLElement {
     if (this.color) {
       this.style.setProperty("--color", this.color);
     }
-
+    this.initialInnerHTML = this.innerHTML;
     this.innerHTML = this.#getInnerHTML();
 
     this.#setupBindings();
