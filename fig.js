@@ -752,7 +752,8 @@ class FigSlider extends HTMLElement {
           break;
         case "type":
           this.type = newValue;
-          this.input.className = newValue;
+          this.innerHTML = this.#getInnerHTML();
+          this.#setupBindings();
           break;
         case "disabled":
           this.disabled = this.input.disabled =
