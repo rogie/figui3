@@ -641,23 +641,7 @@ class FigSlider extends HTMLElement {
   constructor() {
     super();
   }
-  connectedCallback() {
-    this.value = this.getAttribute("value");
-    this.default = this.getAttribute("default") || null;
-    this.type = this.getAttribute("type") || "range";
-
-    const defaults = this.#typeDefaults[this.type];
-    this.min = this.getAttribute("min") || defaults.min;
-    this.max = this.getAttribute("max") || defaults.max;
-    this.step = this.getAttribute("step") || defaults.step;
-    this.color = this.getAttribute("color") || defaults?.color;
-    this.units = this.getAttribute("units") || "";
-    this.disabled = this.getAttribute("disabled") ? true : false;
-
-    if (this.color) {
-      this.style.setProperty("--color", this.color);
-    }
-
+  #getInnerHTML() {
     let html = "";
     let slider = `<div class="fig-slider-input-container">
                 <input 
@@ -670,7 +654,7 @@ class FigSlider extends HTMLElement {
                     value="${this.value}">
                 ${this.innerHTML}
             </div>`;
-    if (this.getAttribute("text")) {
+    if (this.text) {
       html = `${slider}
                     <fig-input-text
                         placeholder="##"
@@ -688,12 +672,13 @@ class FigSlider extends HTMLElement {
     } else {
       html = slider;
     }
-
-    this.innerHTML = html;
-
+    return html;
+  }
+  #setupBindings() {
     //child nodes hack
     requestAnimationFrame(() => {
       this.input = this.querySelector("[type=range]");
+      this.input.removeEventListener("input", this.handleInput);
       this.input.addEventListener("input", this.handleInput.bind(this));
       this.handleInput();
 
@@ -711,12 +696,35 @@ class FigSlider extends HTMLElement {
         this.input.setAttribute("list", this.datalist.getAttribute("id"));
       }
       if (this.figInputText) {
+        this.figInputText.removeEventListener("input", this.handleTextInput);
         this.figInputText.addEventListener(
           "input",
           this.handleTextInput.bind(this)
         );
       }
     });
+  }
+  connectedCallback() {
+    this.value = this.getAttribute("value");
+    this.default = this.getAttribute("default") || null;
+    this.type = this.getAttribute("type") || "range";
+
+    const defaults = this.#typeDefaults[this.type];
+    this.min = this.getAttribute("min") || defaults.min;
+    this.max = this.getAttribute("max") || defaults.max;
+    this.step = this.getAttribute("step") || defaults.step;
+    this.color = this.getAttribute("color") || defaults?.color;
+    this.text = this.getAttribute("text") || false;
+    this.units = this.getAttribute("units") || "";
+    this.disabled = this.getAttribute("disabled") ? true : false;
+
+    if (this.color) {
+      this.style.setProperty("--color", this.color);
+    }
+
+    this.innerHTML = this.#getInnerHTML();
+
+    this.#setupBindings();
   }
   static get observedAttributes() {
     return [
@@ -753,6 +761,12 @@ class FigSlider extends HTMLElement {
             this.figInputText.disabled = this.disabled;
             this.figInputText.setAttribute("disabled", this.disabled);
           }
+          break;
+        case "text":
+        case "units":
+          this[name] = newValue;
+          this.innerHTML = this.#getInnerHTML();
+          this.#setupBindings();
           break;
         default:
           this[name] = this.input[name] = newValue;
