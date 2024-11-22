@@ -934,11 +934,13 @@ input[type="color"] {
     background: var(--checkerboard);
     overflow: hidden;
     grid-area: 1/1;
+    outline: 0;
   }
 
   &::-webkit-color-swatch {
     padding: 0;
     border: 0;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     border-radius: 0.125rem;
     mask-image: linear-gradient(
       to right,
@@ -1012,11 +1014,11 @@ fig-chit {
       border-radius: var(--radius-medium);
     }
 
-    input[type="color"]::-moz-color-swatch {
+    input[type="color"]::-webkit-color-swatch {
       border-radius: var(--radius-medium);
     }
 
-    input[type="color"]::-webkit-color-swatch {
+    input[type="color"]::-moz-color-swatch {
       border-radius: var(--radius-medium);
     }
   }
@@ -1050,17 +1052,7 @@ fig-chit {
       opacity: 0;
     }
   }
-  &[type="color"]{
-    &::after {
-      content: "";
-      width: 0.875rem;
-      height: 0.875rem;
-      grid-area: 1/1;
-      place-self: center;
-      border-radius: 0.125rem;
-      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-    }
-  }
+  
   &[type="image"] {
     &:not([src])::after {
       background: var(--checkerboard);
