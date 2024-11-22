@@ -642,6 +642,13 @@ class FigSlider extends HTMLElement {
     super();
   }
   #regenerateInnerHTML() {
+    this.value = this.getAttribute("value") || 0;
+    this.default = this.getAttribute("default") || null;
+    this.type = this.getAttribute("type") || "range";
+    this.text = this.getAttribute("text") || false;
+    this.units = this.getAttribute("units") || "";
+    this.disabled = this.getAttribute("disabled") ? true : false;
+
     const defaults = this.#typeDefaults[this.type];
     this.min = this.getAttribute("min") || defaults.min;
     this.max = this.getAttribute("max") || defaults.max;
@@ -683,18 +690,18 @@ class FigSlider extends HTMLElement {
       html = slider;
     }
     this.innerHTML = html;
-    return html;
-  }
-  #setupBindings() {
+
     //child nodes hack
     requestAnimationFrame(() => {
       this.input = this.querySelector("[type=range]");
       this.input.removeEventListener("input", this.handleInput);
       this.input.addEventListener("input", this.handleInput.bind(this));
-      this.handleInput();
 
       if (this.default) {
-        this.style.setProperty("--default", this.calculateNormal(this.default));
+        this.style.setProperty(
+          "--default",
+          this.#calculateNormal(this.default)
+        );
       }
 
       this.datalist = this.querySelector("datalist");
@@ -713,19 +720,15 @@ class FigSlider extends HTMLElement {
           this.handleTextInput.bind(this)
         );
       }
+
+      this.handleInput();
     });
   }
+
   connectedCallback() {
-    this.value = this.getAttribute("value");
-    this.default = this.getAttribute("default") || null;
-    this.type = this.getAttribute("type") || "range";
-    this.text = this.getAttribute("text") || false;
-    this.units = this.getAttribute("units") || "";
-    this.disabled = this.getAttribute("disabled") ? true : false;
     this.initialInnerHTML = this.innerHTML;
 
     this.#regenerateInnerHTML();
-    this.#setupBindings();
   }
   static get observedAttributes() {
     return [
@@ -760,22 +763,20 @@ class FigSlider extends HTMLElement {
             this.figInputText.setAttribute("disabled", this.disabled);
           }
           break;
+        case "value":
+          this.value = newValue;
+          if (this.figInputText) {
+            this.figInputText.setAttribute("value", newValue);
+          }
+          break;
         case "min":
         case "max":
         case "step":
-          this[name] = this.input[name] = newValue;
-          this.input.setAttribute(name, newValue);
-          if (this.figInputText) {
-            this.figInputText[name] = newValue;
-            this.figInputText.setAttribute(name, newValue);
-          }
-          break;
         case "type":
         case "text":
         case "units":
           this[name] = newValue;
           this.#regenerateInnerHTML();
-          this.#setupBindings();
           break;
         default:
           this[name] = this.input[name] = newValue;
@@ -790,7 +791,7 @@ class FigSlider extends HTMLElement {
       this.handleInput();
     }
   }
-  calculateNormal(value) {
+  #calculateNormal(value) {
     let min = Number(this.input.min);
     let max = Number(this.input.max);
     let val = Number(value);
@@ -800,8 +801,8 @@ class FigSlider extends HTMLElement {
   handleInput() {
     let val = Number(this.input.value);
     this.value = val;
-    let complete = this.calculateNormal(val);
-    let defaultValue = this.calculateNormal(this.default);
+    let complete = this.#calculateNormal(val);
+    let defaultValue = this.#calculateNormal(this.default);
     this.style.setProperty("--slider-complete", complete);
     this.style.setProperty("--default", defaultValue);
     this.style.setProperty("--unchanged", complete === defaultValue ? 1 : 0);
