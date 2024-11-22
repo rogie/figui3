@@ -641,6 +641,13 @@ class FigSlider extends HTMLElement {
   constructor() {
     super();
   }
+  #syncTypeDefaults() {
+    const defaults = this.#typeDefaults[this.type];
+    this.min = this.getAttribute("min") || defaults.min;
+    this.max = this.getAttribute("max") || defaults.max;
+    this.step = this.getAttribute("step") || defaults.step;
+    this.color = this.getAttribute("color") || defaults?.color;
+  }
   #getInnerHTML() {
     let html = "";
     let slider = `<div class="fig-slider-input-container">
@@ -708,15 +715,11 @@ class FigSlider extends HTMLElement {
     this.value = this.getAttribute("value");
     this.default = this.getAttribute("default") || null;
     this.type = this.getAttribute("type") || "range";
-
-    const defaults = this.#typeDefaults[this.type];
-    this.min = this.getAttribute("min") || defaults.min;
-    this.max = this.getAttribute("max") || defaults.max;
-    this.step = this.getAttribute("step") || defaults.step;
-    this.color = this.getAttribute("color") || defaults?.color;
     this.text = this.getAttribute("text") || false;
     this.units = this.getAttribute("units") || "";
     this.disabled = this.getAttribute("disabled") ? true : false;
+
+    this.#syncTypeDefaults();
 
     if (this.color) {
       this.style.setProperty("--color", this.color);
@@ -750,11 +753,6 @@ class FigSlider extends HTMLElement {
           this.color = newValue;
           this.style.setProperty("--color", this.color);
           break;
-        case "type":
-          this.type = newValue;
-          this.innerHTML = this.#getInnerHTML();
-          this.#setupBindings();
-          break;
         case "disabled":
           this.disabled = this.input.disabled =
             newValue === "true" ||
@@ -764,9 +762,11 @@ class FigSlider extends HTMLElement {
             this.figInputText.setAttribute("disabled", this.disabled);
           }
           break;
+        case "type":
         case "text":
         case "units":
           this[name] = newValue;
+          this.#syncTypeDefaults();
           this.innerHTML = this.#getInnerHTML();
           this.#setupBindings();
           break;
