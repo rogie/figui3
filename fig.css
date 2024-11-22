@@ -929,24 +929,11 @@ input[type="color"] {
   &::-webkit-color-swatch-wrapper {
     padding: 0;
     border: 0;
+    appearance: none;
     border-radius: 0.125rem;
     background: var(--checkerboard);
     overflow: hidden;
     grid-area: 1/1;
-  }
-
-  &::-moz-color-swatch {
-    border-radius: 0.125rem;
-    padding: 0;
-    border: 0;
-    mask-image: linear-gradient(
-      to right,
-      black 0%,
-      black 50%,
-      rgba(0, 0, 0, var(--alpha)) 50%
-    );
-    border-radius: 0.125rem;
-    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   }
 
   &::-webkit-color-swatch {
@@ -961,6 +948,23 @@ input[type="color"] {
     );
   }
   
+}
+
+input[type="color"] {
+  &::-moz-color-swatch {
+    border-radius: 0.125rem;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 50%,
+      rgba(0, 0, 0, var(--alpha)) 50%
+    );
+    border-radius: 0.125rem;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+  }
 }
 
 
