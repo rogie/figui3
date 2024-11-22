@@ -641,14 +641,17 @@ class FigSlider extends HTMLElement {
   constructor() {
     super();
   }
-  #syncTypeDefaults() {
+  #regenerateInnerHTML() {
     const defaults = this.#typeDefaults[this.type];
     this.min = this.getAttribute("min") || defaults.min;
     this.max = this.getAttribute("max") || defaults.max;
     this.step = this.getAttribute("step") || defaults.step;
     this.color = this.getAttribute("color") || defaults?.color;
-  }
-  #getInnerHTML() {
+
+    if (this.color) {
+      this.style.setProperty("--color", this.color);
+    }
+
     let html = "";
     let slider = `<div class="fig-slider-input-container">
                 <input 
@@ -718,15 +721,9 @@ class FigSlider extends HTMLElement {
     this.text = this.getAttribute("text") || false;
     this.units = this.getAttribute("units") || "";
     this.disabled = this.getAttribute("disabled") ? true : false;
-
-    this.#syncTypeDefaults();
-
-    if (this.color) {
-      this.style.setProperty("--color", this.color);
-    }
     this.initialInnerHTML = this.innerHTML;
-    this.innerHTML = this.#getInnerHTML();
 
+    this.#regenerateInnerHTML();
     this.#setupBindings();
   }
   static get observedAttributes() {
@@ -762,12 +759,21 @@ class FigSlider extends HTMLElement {
             this.figInputText.setAttribute("disabled", this.disabled);
           }
           break;
+        case "min":
+        case "max":
+        case "step":
+          this[name] = this.input[name] = newValue;
+          this.input.setAttribute(name, newValue);
+          if (this.figInputText) {
+            this.figInputText[name] = newValue;
+            this.figInputText.setAttribute(name, newValue);
+          }
+          break;
         case "type":
         case "text":
         case "units":
           this[name] = newValue;
-          this.#syncTypeDefaults();
-          this.innerHTML = this.#getInnerHTML();
+          this.#regenerateInnerHTML();
           this.#setupBindings();
           break;
         default:
@@ -877,7 +883,7 @@ class FigInputText extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (this.input) {
       switch (name) {
-        case "label":
+        case "disabled":
           this.disabled = this.input.disabled = newValue;
           break;
         default:
