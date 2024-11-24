@@ -636,23 +636,24 @@ class FigSlider extends HTMLElement {
     hue: { min: 0, max: 255, step: 1 },
     delta: { min: -100, max: 100, step: 1 },
     stepper: { min: 0, max: 100, step: 25 },
-    opacity: { min: 0, max: 100, step: 0.01, color: "#FF0000" },
+    opacity: { min: 0, max: 100, step: 0.1, color: "#FF0000" },
   };
   constructor() {
     super();
   }
   #regenerateInnerHTML() {
-    this.value = this.getAttribute("value") || 0;
+    this.value = Number(this.getAttribute("value") || 0);
     this.default = this.getAttribute("default") || null;
     this.type = this.getAttribute("type") || "range";
     this.text = this.getAttribute("text") || false;
     this.units = this.getAttribute("units") || "";
+    this.transform = Number(this.getAttribute("transform") || 1);
     this.disabled = this.getAttribute("disabled") ? true : false;
 
     const defaults = this.#typeDefaults[this.type];
-    this.min = this.getAttribute("min") || defaults.min;
-    this.max = this.getAttribute("max") || defaults.max;
-    this.step = this.getAttribute("step") || defaults.step;
+    this.min = Number(this.getAttribute("min") || defaults.min);
+    this.max = Number(this.getAttribute("max") || defaults.max);
+    this.step = Number(this.getAttribute("step") || defaults.step);
     this.color = this.getAttribute("color") || defaults?.color;
 
     if (this.color) {
@@ -678,6 +679,7 @@ class FigSlider extends HTMLElement {
                         type="number"
                         min="${this.min}"
                         max="${this.max}"
+                        transform="${this.transform}"
                         step="${this.step}"
                         value="${this.value}">
                         ${
@@ -727,7 +729,6 @@ class FigSlider extends HTMLElement {
 
   connectedCallback() {
     this.initialInnerHTML = this.innerHTML;
-
     this.#regenerateInnerHTML();
   }
   static get observedAttributes() {
@@ -740,6 +741,7 @@ class FigSlider extends HTMLElement {
       "disabled",
       "color",
       "units",
+      "transform",
     ];
   }
 
@@ -767,6 +769,12 @@ class FigSlider extends HTMLElement {
           this.value = newValue;
           if (this.figInputText) {
             this.figInputText.setAttribute("value", newValue);
+          }
+          break;
+        case "transform":
+          this.transform = Number(newValue) || 1;
+          if (this.figInputText) {
+            this.figInputText.setAttribute("transform", this.transform);
           }
           break;
         case "min":
@@ -821,12 +829,28 @@ class FigInputText extends HTMLElement {
     this.multiline = this.hasAttribute("multiline") || false;
     this.value = this.getAttribute("value") || "";
     this.type = this.getAttribute("type") || "text";
+    if (this.type === "number") {
+      if (this.getAttribute("step")) {
+        this.step = Number(this.getAttribute("step"));
+      }
+      if (this.getAttribute("min")) {
+        this.min = Number(this.getAttribute("min"));
+      }
+      if (this.getAttribute("max")) {
+        this.max = Number(this.getAttribute("max"));
+      }
+      this.transform = Number(this.getAttribute("transform") || 1);
+      if (this.getAttribute("value")) {
+        this.value = Number(this.value);
+      }
+    }
     this.placeholder = this.getAttribute("placeholder") || "";
-
     let html = `<input 
       type="${this.type}" 
       placeholder="${this.placeholder}"
-      value="${this.value}" />`;
+      value="${
+        this.type === "number" ? this.#transformNumber(this.value) : this.value
+      }" />`;
     if (this.multiline) {
       html = `<textarea  
       placeholder="${this.placeholder}">${this.value}</textarea>`;
@@ -850,23 +874,33 @@ class FigInputText extends HTMLElement {
 
       this.input = this.querySelector("input,textarea");
 
-      if (this.getAttribute("min")) {
-        this.input.setAttribute("min", this.getAttribute("min"));
+      if (this.type === "number") {
+        if (this.getAttribute("min")) {
+          this.input.setAttribute("min", this.#transformNumber(this.min));
+        }
+        if (this.getAttribute("max")) {
+          this.input.setAttribute("max", this.#transformNumber(this.max));
+        }
+        if (this.getAttribute("step")) {
+          this.input.setAttribute("step", this.#transformNumber(this.step));
+        }
       }
-      if (this.getAttribute("max")) {
-        this.input.setAttribute("max", this.getAttribute("max"));
-      }
-      if (this.getAttribute("step")) {
-        this.input.setAttribute("step", this.getAttribute("step"));
-      }
-      this.input.addEventListener("input", this.handleInput.bind(this));
+      this.input.addEventListener("input", this.#handleInput.bind(this));
     });
   }
   focus() {
     this.input.focus();
   }
-  handleInput() {
-    this.value = this.input.value;
+  #transformNumber(value) {
+    return Number(value) * (this.transform || 1);
+  }
+  #handleInput(e) {
+    let value = Number(e.target.value);
+    if (this.type === "number") {
+      this.value = value / (this.transform || 1);
+    } else {
+      this.value = value;
+    }
   }
 
   static get observedAttributes() {
@@ -879,6 +913,7 @@ class FigInputText extends HTMLElement {
       "step",
       "min",
       "max",
+      "transform",
     ];
   }
 
@@ -888,10 +923,23 @@ class FigInputText extends HTMLElement {
         case "disabled":
           this.disabled = this.input.disabled = newValue;
           break;
+        case "transform":
+          if (this.type === "number") {
+            this.transform = Number(newValue) || 1;
+            this.min = this.#transformNumber(this.min);
+            this.max = this.#transformNumber(this.max);
+            this.step = this.#transformNumber(this.step);
+            this.value = this.#transformNumber(this.value);
+          }
+          break;
         default:
-          this[name] = this.input[name] = newValue;
+          let value = newValue;
+          if (this.type === "number") {
+            value = this.#transformNumber(value);
+          }
+          this[name] = this.input[name] = value;
           if (this.input) {
-            this.input.setAttribute(name, newValue);
+            this.input.setAttribute(name, value);
           }
           break;
       }
@@ -1394,15 +1442,14 @@ class FigChit extends HTMLElement {
     this.value = this.getAttribute("value") || "";
     this.size = this.getAttribute("size") || "small";
     this.disabled = this.getAttribute("disabled") === "true" ? true : false;
-    this.variant = this.getAttribute("variant") || "square";
     this.innerHTML = `<input type="color" value="${this.value}" />`;
+    this.#updateSrc(this.src);
 
     requestAnimationFrame(() => {
       this.input = this.querySelector("input");
-      this.updateSrc(this.src);
     });
   }
-  updateSrc(src) {
+  #updateSrc(src) {
     if (src) {
       this.src = src;
       this.style.setProperty("--src", `url(${src})`);
@@ -1411,14 +1458,22 @@ class FigChit extends HTMLElement {
     }
   }
   static get observedAttributes() {
-    return ["type", "src", "size", "variant", "value", "disabled"];
+    return ["src", "value", "disabled"];
   }
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === "src") {
-      this.updateSrc(newValue);
-    }
-    if (name === "disabled") {
-      this.disabled = newValue.toLowerCase() === "true";
+    switch (name) {
+      case "src":
+        this.#updateSrc(newValue);
+        break;
+      case "disabled":
+        this.disabled = newValue.toLowerCase() === "true";
+        break;
+      default:
+        if (this.input) {
+          this.input[name] = newValue;
+        }
+        this.#updateSrc(this.src);
+        break;
     }
   }
 }

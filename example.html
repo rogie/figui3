@@ -19,13 +19,26 @@
     <h2>Heading 2</h2>
     <h3>Heading 3</h3>
     <br />
-    <fig-slider id="test"
-                type="range"
-                min="0"
-                max="256"
-                value="100"
-                units="px"
-                text="true"></fig-slider>
+
+    <fig-slider min="0"
+                max="1"
+                transform="100"
+                step="0.01"
+                text="true"
+                style="width:300px;"
+                value="0.5">
+    </fig-slider>
+    <br />
+    <fig-input-text min="0"
+                    max="1"
+                    step="0.1"
+                    transform="100"
+                    type="number"
+                    style="width: 100px;"
+                    value="0.5"
+                    text="true">
+        <span slot="append">%</span>
+    </fig-input-text>
     <br />
     <details>
         <summary>Details</summary>
@@ -36,7 +49,11 @@
         <label>Opacity</label>
         <fig-slider type="opacity"
                     full
-                    value="0.75"
+                    value="0.5"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    transform="100"
                     color="#ff0000"
                     units="%"
                     text="true"></fig-slider>
