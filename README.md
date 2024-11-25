@@ -1,6 +1,6 @@
-# Fig.js
+# FigUI3
 
-A lightweight, customizable web component library that provides Figma-inspired UI elements for modern web applications.
+A lightweight, customizable web component library that uses Figmas UI3 style for modern web applications, but specifically for Figma plugins.
 
 ## Features
 
@@ -16,13 +16,22 @@ A lightweight, customizable web component library that provides Figma-inspired U
 The library includes the following components:
 
 - `<fig-button>` - Versatile button component with multiple variants
-- `<fig-slider>` - Input slider with optional text input and units
-- `<fig-field>` - Form field wrapper with flexible layout options
-- `<fig-dropdown>` - Customizable dropdown select
-- `<fig-tooltip>` - Hover and click-triggered tooltips
+- `<fig-checkbox>` - Checkbox input with indeterminate state support
 - `<fig-dialog>` - Modal dialog component
+- `<fig-dropdown>` - Customizable dropdown select
+- `<fig-field>` - Form field wrapper with flexible layout options
+- `<fig-header>` - Section header component
 - `<fig-input-color>` - Color picker with hex/rgba support
-- And more...
+- `<fig-input-text>` - Text/Number input with optional prefix/suffix slots
+- `<fig-slider>` - Input slider with optional text input and units
+- `<fig-switch>` - Toggle switch component
+- `<fig-tooltip>` - Hover and click-triggered tooltips
+- `<fig-spinner>` - Loading spinner component
+- `<fig-combo-input>` - Combobox input
+- `<fig-chit>` - Color/Gradient/Pattern/Image/Icon/Text chit component
+- `<fig-tabs>` - Tabbed navigation component
+- `<fig-segmented-control>` - Segmented control component
+- `<fig-image>` - Image display or input component
 
 ## Installation
 
@@ -78,16 +87,50 @@ Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTIN
 <!-- Basic button -->
 <fig-button>Click me</fig-button>
 
+<!-- Primary variant -->
+<fig-button variant="primary">Primary Button</fig-button>
+
+<!-- Secondary variant -->
+<fig-button variant="secondary">Secondary Button</fig-button>
+
+<!-- Ghost variant -->
+<fig-button variant="ghost">Ghost Button</fig-button>
+
 <!-- Ghost variant with icon -->
 <fig-button variant="ghost" icon="true">
   <svg><!-- your icon svg --></svg>
 </fig-button>
+
+<!-- Link variant -->
+<fig-button variant="link">Link Button</fig-button>
 
 <!-- Disabled state -->
 <fig-button disabled>Disabled</fig-button>
 
 <!-- Toggle button -->
 <fig-button type="toggle">Toggle Me</fig-button>
+
+<!-- Submit button -->
+<fig-button type="submit">Submit</fig-button>
+
+<!-- Select list button -->
+<fig-button type="select">
+  Select Me
+  <fig-dropdown>
+    <option value="1">Option 1</option>
+    <option value="2">Option 2</option>
+    <option value="3">Option 3</option>
+  </fig-dropdown>
+</fig-button>
+
+<!-- Default button -->
+<fig-button type="button">Default</fig-button>
+
+<!-- Upload button -->
+<fig-button type="upload">
+  Upload
+  <input type="file" />
+</fig-button>
 ```
 
 ### Dropdown (`<fig-dropdown>`)
@@ -138,7 +181,7 @@ Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTIN
 ```html
 <!-- Basic dialog -->
 <fig-dialog>
-  <h2 slot="header">Dialog Title</h2>
+  <fig-header>Dialog Title</fig-header>
   <div slot="content">
     <p>Dialog content goes here.</p>
   </div>
@@ -172,14 +215,47 @@ Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTIN
 ### Slider (`<fig-slider>`)
 
 ```html
-<!-- Basic slider -->
+<!-- Basic range slider -->
 <fig-slider min="0" max="100" value="50"></fig-slider>
 
 <!-- Slider with text input and units -->
 <fig-slider min="0" max="100" value="75" text="true" units="%"> </fig-slider>
 
+<!-- Hue slider -->
+<fig-slider type="hue" value="55"></fig-slider>
+
+<!-- Stepper slider with discrete snapping values-->
+<fig-slider type="stepper" value="25" default="50" step="25">
+  <datalist id="markers">
+    <option value="0"></option>
+    <option value="25"></option>
+    <option value="50"></option>
+    <option value="75"></option>
+    <option value="100"></option>
+  </datalist>
+</fig-slider>
+
+<!-- Delta slider  -->
+<fig-slider type="delta" value=".25" default="0" step="0.25" min="-5" max="5">
+  <datalist id="markers">
+    <option value="0"></option>
+  </datalist>
+</fig-slider>
+
 <!-- Opacity slider with color -->
 <fig-slider type="opacity" value="0.75" color="#ff0000" units="%" text="true">
+</fig-slider>
+
+<!-- Number slider with number transform and percentage units -->
+<fig-slider
+  min="0"
+  max="1"
+  transform="100"
+  units="%"
+  step="0.01"
+  text="true"
+  value="0.5"
+>
 </fig-slider>
 ```
 
@@ -250,4 +326,54 @@ Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTIN
 
 <!-- Checked state -->
 <fig-switch checked>Active</fig-switch>
+```
+
+### Spinner (`<fig-spinner>`)
+
+```html
+<!-- Basic spinner -->
+<fig-spinner></fig-spinner>
+```
+
+### Combo Input (`<fig-combo-input>`)
+
+```html
+<!-- Basic combo input -->
+<fig-combo-input
+  options="House, Apartment, Condo, Other"
+  placeholder="Type of residence"
+></fig-combo-input>
+```
+
+### Chit (`<fig-chit>`)
+
+```html
+<!-- Basic chit -->
+<fig-chit type="color" value="#ff0000"></fig-chit>
+```
+
+### Image (`<fig-image>`)
+
+```html
+<!-- Basic image -->
+<fig-image src="https://via.placeholder.com/150"></fig-image>
+```
+
+### Header (`<fig-header>`)
+
+```html
+<!-- Basic header -->
+<fig-header>
+  <h3>Header</h3>
+</fig-header>
+```
+
+### fig-segmented-control (`<fig-segmented-control>`)
+
+```html
+<!-- Basic segmented control -->
+<fig-segmented-control>
+  <fig-segment value="1" selected="true">Option 1</fig-segment>
+  <fig-segment value="2">Option 2</fig-segment>
+</fig-segmented-control>
 ```
