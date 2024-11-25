@@ -100,6 +100,14 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
       this.attachShadow({ mode: "open" });
     }
 
+    #addEventListeners() {
+      this.select.addEventListener("input", this.#handleSelectInput.bind(this));
+      this.select.addEventListener(
+        "change",
+        this.#handleSelectChange.bind(this)
+      );
+    }
+
     connectedCallback() {
       this.type = this.getAttribute("type") || "select";
 
@@ -111,17 +119,14 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
         this.slotChange.bind(this)
       );
 
-      this.select.addEventListener("input", this.#handleSelectInput.bind(this));
-      this.select.addEventListener(
-        "change",
-        this.#handleSelectChange.bind(this)
-      );
+      this.#addEventListeners();
     }
 
     slotChange() {
       while (this.select.firstChild) {
         this.select.firstChild.remove();
       }
+
       if (this.type === "dropdown") {
         const hiddenOption = document.createElement("option");
         hiddenOption.setAttribute("hidden", "true");
@@ -133,6 +138,7 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
           this.select.appendChild(option.cloneNode(true));
         }
       });
+      this.#syncSelectedValue(this.value);
       if (this.type === "dropdown") {
         this.select.selectedIndex = -1;
       }
@@ -159,16 +165,23 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
     }
     set value(value) {
       this.setAttribute("value", value);
-      this.select.value = value;
-      this.select.setAttribute("value", value);
     }
     static get observedAttributes() {
       return ["value", "type"];
     }
+    #syncSelectedValue(value) {
+      if (this.select) {
+        this.select.querySelectorAll("option").forEach((o, i) => {
+          if (o.value === this.getAttribute("value")) {
+            this.select.selectedIndex = i;
+          }
+        });
+      }
+    }
     attributeChangedCallback(name, oldValue, newValue) {
       if (name === "value") {
-        this.select.value = newValue;
-        this.select.setAttribute("value", newValue);
+        this.#syncSelectedValue(newValue);
+        console.log("val:", this.value);
       }
       if (name === "type") {
         this.type = newValue;
