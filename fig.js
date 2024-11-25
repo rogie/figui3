@@ -159,6 +159,8 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
     }
     set value(value) {
       this.setAttribute("value", value);
+      this.select.value = value;
+      this.select.setAttribute("value", value);
     }
     static get observedAttributes() {
       return ["value", "type"];
@@ -166,6 +168,7 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
     attributeChangedCallback(name, oldValue, newValue) {
       if (name === "value") {
         this.select.value = newValue;
+        this.select.setAttribute("value", newValue);
       }
       if (name === "type") {
         this.type = newValue;
