@@ -39,10 +39,23 @@ The library includes the following components:
 npm install fig-js
 ```
 
+```jsx
+import "@rogieking/figui3/fig.css";
+import "@rogieking/figui3/fig.js";
+```
+
 Or include directly in your HTML:
 
 ```html
+<link rel="stylesheet" href="https://unpkg.com/fig-js@latest/dist/fig.css" />
 <script src="https://unpkg.com/fig-js@latest/dist/fig.js"></script>
+```
+
+or
+
+```html
+<link rel="stylesheet" href="https://esm.sh/@rogieking/figui3@latest/fig.css" />
+<script src="https://esm.sh/@rogieking/figui3@latest/fig.js"></script>
 ```
 
 ## Usage
