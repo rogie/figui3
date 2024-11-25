@@ -102,7 +102,6 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
 
     connectedCallback() {
       this.type = this.getAttribute("type") || "select";
-      this.value = this.getAttribute("value") || "";
 
       this.appendChild(this.select);
       this.shadowRoot.appendChild(this.optionsSlot);
@@ -112,13 +111,10 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
         this.slotChange.bind(this)
       );
 
-      this.select.addEventListener(
-        "input",
-        this.handleDropdownInput.bind(this)
-      );
+      this.select.addEventListener("input", this.#handleSelectInput.bind(this));
       this.select.addEventListener(
         "change",
-        this.handleDropdownChange.bind(this)
+        this.#handleSelectChange.bind(this)
       );
     }
 
@@ -134,9 +130,6 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
       }
       this.optionsSlot.assignedNodes().forEach((option) => {
         if (option.nodeName === "OPTION" || option.nodeName === "OPTGROUP") {
-          if (option.hasAttribute("value") && option.hasAttribute("selected")) {
-            this.value = option.getAttribute("value");
-          }
           this.select.appendChild(option.cloneNode(true));
         }
       });
@@ -145,11 +138,12 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
       }
     }
 
-    handleDropdownInput() {
-      this.value = this.select.value;
+    #handleSelectInput(e) {
+      console.log("FigDropdown #handleSelectInput:", e.target.value);
+      this.value = e.target.value;
       this.setAttribute("value", this.value);
     }
-    handleDropdownChange() {
+    #handleSelectChange() {
       if (this.type === "dropdown") {
         this.select.selectedIndex = -1;
       }
