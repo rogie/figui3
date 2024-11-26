@@ -696,7 +696,7 @@ fig-button {
     }
   }
 
-  &[variant="ghost"][disabled="true"] {
+  &[variant="ghost"][disabled]:not([disabled="false"]) {
     background-color: transparent;
   }
 
@@ -732,11 +732,18 @@ fig-button {
   }
 
   /* Disabled */
-  &[disabled="true"],
-  &[disabled="true"] > button {
+  &[disabled]:not([disabled="false"]){
     background-color: var(--figma-color-bg-disabled);
-    color: var(--figma-color-text-disabled);
+    
     pointer-events: none;
+    &:not([variant="secondary"]){
+      color: var(--figma-color-text-ondisabled);
+      box-shadow: none;
+    }
+    &[variant="secondary"]{
+      color: var(--figma-color-text-disabled);
+      background-color: transparent;
+    }
   }
 
   /* Size */
@@ -795,18 +802,62 @@ fig-button {
 
   &:focus,
   &:focus-within {
-    outline: 0;
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+    &:not(:active) {
+      outline: 0;
+      box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+    }
   }
 }
 
-fig-button > button {
-  width: 100%;
+/* Combo button */
+.fig-button-combo,
+fig-button-combo,
+.fig-input-combo,
+fig-input-combo {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0px;
+  & > * {
+    &:first-child,
+    &:first-child > * {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &:last-child,
+    &:last-child > * {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &:not(:last-child):not(:first-child),
+    &:not(:last-child):not(:first-child) > * {
+      border-radius: 0;
+    }
+  }
+}
+.fig-button-combo,
+fig-button-combo {
+  > *:not(:first-child) {
+    border-left: 1px solid var(--figma-color-bg-brand-hover);
+    margin-left: -1px;
+    &[disabled]:not([disabled="false"]) {
+      border-left: 1px solid var(--figma-color-border-disabled);
+    }
+  }
+  > *[variant="secondary"]:not(:first-child) {
+    border-left: transparent;
+    margin-left: -1px;
+    &[disabled]:not([disabled="false"]) {
+      border-left: transparent;
+    }
+  }
 }
 
 /* Tabs */
 fig-tab,
-.tab {
+.fig-tab {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -838,7 +889,7 @@ fig-tab,
   }
 
   &:has(:checked),
-  &[selected] {
+  &[selected]:not([selected="false"]) {
     background-color: var(--figma-color-bg-secondary);
     font-weight: var(--body-medium-strong-fontWeight);
     color: var(--figma-color-text);
@@ -1116,45 +1167,7 @@ fig-image {
   }
 }
 
-/* Combo button */
-.fig-button-combo,
-fig-button-combo,
-.fig-input-combo,
-fig-input-combo {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0px;
-  & > * {
-    &:first-child,
-    &:first-child > * {
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-    }
 
-    &:last-child,
-    &:last-child > * {
-      border-top-left-radius: 0;
-      border-bottom-left-radius: 0;
-    }
-
-    &:not(:last-child):not(:first-child),
-    &:not(:last-child):not(:first-child) > * {
-      border-radius: 0;
-    }
-  }
-}
-.fig-button-combo,
-fig-button-combo {
-  > *:not(:first-child) {
-    border-left: 1px solid var(--figma-color-bg-brand-hover);
-    margin-left: -1px;
-  }
-  > *[variant="secondary"]:not(:first-child) {
-    border-left: transparent;
-    margin-left: -1px;
-  }
-}
 
 /* Combo input */
 .input-combo {
