@@ -584,7 +584,7 @@ textarea {
 select,
 input[type="text"][list] {
   height: var(--spacer-4);
-  padding: 0 var(--spacer-2);
+  padding: 0 calc(var(--spacer-2) - 1px);
   appearance: none;
   border-radius: var(--radius-medium);
   display: flex;
@@ -641,7 +641,6 @@ fig-dropdown,
 /* Button */
 .fig-button,
 fig-button {
-  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   color: var(--figma-color-text-onbrand);
   display: flex;
   align-items: center;
@@ -655,25 +654,6 @@ fig-button {
   border-radius: var(--radius-medium);
   background-color: var(--figma-color-bg-brand);
   font-weight: 500;
-
-  & > button {
-    background: transparent;
-    box-shadow: none;
-    border: 0;
-    appearance: none;
-    outline: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-medium);
-    height: var(--spacer-4);
-    padding: 0 var(--spacer-2);
-    color: currentColor;
-  }
-
-  &:has(> button) {
-    padding: 0;
-  }
 
   &:active {
     background-color: var(--figma-color-bg-brand-pressed);
@@ -706,7 +686,8 @@ fig-button {
 
   /* Variant: Secondary */
   &[variant="secondary"] {
-    box-shadow: inset 0 0 0 1px var(--figma-color-border);
+    border: 1px solid var(--figma-color-border);
+    padding: 0 calc(var(--spacer-2) - 1px);
     background: none;
     color: var(--figma-color-text);
 
@@ -722,13 +703,16 @@ fig-button {
   }
 
   /* Icon only */
-  &[icon],
-  &[icon] > button {
+  &[icon]{
     width: var(--spacer-4);
     padding: 0;
     flex-grow: 0;
     flex-shrink: 0;
     flex-basis: var(--spacer-4);
+    &[size="compact"]{
+      width: var(--spacer-3);
+      flex-basis: var(--spacer-3);
+    }
   }
 
   /* Disabled */
@@ -839,18 +823,16 @@ fig-input-combo {
 }
 .fig-button-combo,
 fig-button-combo {
-  > *:not(:first-child) {
-    border-left: 1px solid var(--figma-color-bg-brand-hover);
-    margin-left: -1px;
+  > *:not([variant="secondary"]):not(:first-child) {
+    box-shadow: inset 1px 0 0 0 var(--figma-color-bg-brand-hover);
     &[disabled]:not([disabled="false"]) {
-      border-left: 1px solid var(--figma-color-border-disabled);
+       box-shadow: inset 1px 0 0 0 var(--figma-color-border-disabled);
     }
   }
   > *[variant="secondary"]:not(:first-child) {
-    border-left: transparent;
-    margin-left: -1px;
+    border-left-width: 0 !important;
     &[disabled]:not([disabled="false"]) {
-      border-left: transparent;
+      border-left-width: 0 !important;
     }
   }
 }
