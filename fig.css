@@ -595,6 +595,9 @@ input[type="text"][list] {
   background-color: var(--figma-color-bg);
   box-shadow: inset 0 0 0 1px var(--figma-color-border);
   accent-color: var(--figma-color-bg-brand);
+  overflow:hidden; 
+  white-space:nowrap; 
+  text-overflow:ellipsis;
 
   &:focus {
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
@@ -635,6 +638,7 @@ fig-dropdown,
   }
   > select {
     display: block;
+    width: 100%;
   }
 }
 
@@ -1420,44 +1424,8 @@ details {
   content: var(--icon-chevron);
 }
 
-/* Details 
 
-  details summary{
-    cursor: pointer;
-    user-select: none;
-    padding: 0 1rem;
-    min-height: 2rem;
-    list-style: none;
-    pointer-events: none;
-  }
-  details summary>*{
-    pointer-events: all;
-  }
-  details summary:before{
-    content: '▸';
-    display: inline-flex;
-    align-items: start;
-    justify-content: center;
-    width: 0.75rem;
-    margin-right: -0.75rem;
-    transform: translateX(-100%);
-    color: inherit;
-    visibility: hidden;
-  }
-  details summary:hover:before{
-    visibility: visible;
-  }
-  details[open] summary:before{
-     content: '▾';
-  }
-  details summary:first-child:last-child:before{
-    content: '';
-  }
-  details summary:first-child:last-child h3{
-    pointer-events: none;
-  }
-  */
-
+/* Sliders */
 .fig-slider,
 fig-slider {
   --slider-height: 1rem;
@@ -1490,6 +1458,7 @@ fig-slider {
       position: absolute;
       left: 0;
       top: 0;
+      pointer-events: none;
       bottom: 0;
       border-radius: 0.5rem;
       min-width: var(--slider-height);
@@ -1576,11 +1545,9 @@ fig-slider {
     border-radius: calc(var(--slider-height) / 2);
     display: block;
     width: 100%;
-    cursor: grab;
-    cursor: -webkit-grab;
     background-color: transparent;
 
-    &:active {
+    &:active::-webkit-slider-thumb {
       cursor: grabbing;
       cursor: -webkit-grabbing;
     }
@@ -1599,6 +1566,8 @@ fig-slider {
       border: none;
       position: relative;
       z-index: 1;
+      cursor: grab;
+      cursor: -webkit-grab;
       box-shadow: var(--slider-handle-shadow);
     }
 
@@ -1645,17 +1614,15 @@ fig-slider {
     border-radius: calc(var(--slider-height) / 2);
     display: block;
     width: 100%;
-    cursor: grab;
-    cursor: -moz-grab;
     background-color: transparent;
-
-    &:active {
-      cursor: grabbing;
-      cursor: -moz-grabbing;
-    }
 
     &:focus {
       outline: none;
+    }
+
+    &:active::-moz-range-thumb {
+      cursor: grabbing;
+      cursor: -webkit-grabbing;
     }
 
     &::-moz-range-thumb {
@@ -1667,6 +1634,8 @@ fig-slider {
       border: none;
       position: relative;
       z-index: 1;
+      cursor: grab;
+      cursor: -moz-grab;
       box-shadow: var(--slider-handle-shadow);
     }
 
