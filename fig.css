@@ -1983,30 +1983,6 @@ fig-tabs {
   }
 }
 
-/* Text input */
-fig-input-text {
-  display: inline-flex;
-  user-select: all;
-  gap: 0;
-
-  &[multiline] {
-    display: block;
-  }
-  &[autoresize] input,
-  &[autoresize] textarea {
-    field-sizing: content;
-  }
-  &[resizable] input,
-  &[resizable] textarea {
-    resize: both;
-  }
-  &[resizable]:has(textarea[style*="width"]),
-  &[resizable]:has(textarea[style*="height"]),
-  &[resizable]:has(input[style*="width"]),
-  &[resizable]:has(input[style*="height"]) {
-    flex: unset;
-  }
-}
 
 fig-checkbox,
 fig-radio {
@@ -2069,9 +2045,30 @@ fig-input-text {
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
-  display: flex;
+  display: inline-flex;
   flex-wrap: nowrap;
   justify-content: center;
+  user-select: all;
+  gap: 0;
+
+  &[multiline] {
+    display: block;
+    display: flex;
+  }
+  &[autoresize] input,
+  &[autoresize] textarea {
+    field-sizing: content;
+  }
+  &[resizable] input,
+  &[resizable] textarea {
+    resize: both;
+  }
+  &[resizable]:has(textarea[style*="width"]),
+  &[resizable]:has(textarea[style*="height"]),
+  &[resizable]:has(input[style*="width"]),
+  &[resizable]:has(input[style*="height"]) {
+    flex: unset;
+  }
 
   & label,
   & [slot] {

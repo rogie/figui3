@@ -805,25 +805,28 @@ class FigSlider extends HTMLElement {
   }
   handleTextInput() {
     if (this.figInputText) {
-      this.input.value = Number(this.figInputText.value);
-      this.handleInput();
+      this.value = this.input.value = this.figInputText.value;
+      this.#syncProperties();
     }
   }
   #calculateNormal(value) {
     let min = Number(this.input.min);
     let max = Number(this.input.max);
-    let val = Number(value);
+    let val = value;
     return (val - min) / (max - min);
   }
-
-  handleInput() {
-    let val = Number(this.input.value);
-    this.value = val;
-    let complete = this.#calculateNormal(val);
+  #syncProperties() {
+    let complete = this.#calculateNormal(this.value);
     let defaultValue = this.#calculateNormal(this.default);
     this.style.setProperty("--slider-complete", complete);
     this.style.setProperty("--default", defaultValue);
     this.style.setProperty("--unchanged", complete === defaultValue ? 1 : 0);
+  }
+
+  handleInput() {
+    let val = this.input.value;
+    this.value = val;
+    this.#syncProperties();
     if (this.figInputText) {
       this.figInputText.setAttribute("value", val);
     }
@@ -902,10 +905,10 @@ class FigInputText extends HTMLElement {
     this.input.focus();
   }
   #transformNumber(value) {
-    return Number(value) * (this.transform || 1);
+    return value * (this.transform || 1);
   }
   #handleInput(e) {
-    let value = Number(e.target.value);
+    let value = e.target.value;
     if (this.type === "number") {
       this.value = value / (this.transform || 1);
     } else {
