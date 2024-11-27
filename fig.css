@@ -722,13 +722,14 @@ fig-button {
   /* Disabled */
   &[disabled]:not([disabled="false"]){
     background-color: var(--figma-color-bg-disabled);
-    
     pointer-events: none;
+    cursor: not-allowed;
     &:not([variant="secondary"]){
       color: var(--figma-color-text-ondisabled);
       box-shadow: none;
     }
-    &[variant="secondary"]{
+    &[variant="secondary"],
+    &[variant="ghost"]{
       color: var(--figma-color-text-disabled);
       background-color: transparent;
     }
@@ -926,7 +927,7 @@ fig-avatar,
       background: var(--checkerboard);
     }
   }
-  &[borderless] {
+  &[borderless] img{
     box-shadow: none;
   }
 

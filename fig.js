@@ -15,9 +15,6 @@ if (window.customElements && !window.customElements.get("fig-button")) {
       this.attachShadow({ mode: "open" });
     }
     connectedCallback() {
-      this.render();
-    }
-    render() {
       this.#type = this.getAttribute("type") || "button";
       this.shadowRoot.innerHTML = `
             <style>
@@ -47,10 +44,13 @@ if (window.customElements && !window.customElements.get("fig-button")) {
       this.#selected =
         this.hasAttribute("selected") &&
         this.getAttribute("selected") !== "false";
-      this.addEventListener("click", this.handleClick.bind(this));
+      this.addEventListener("click", this.#handleClick.bind(this));
 
-      this.button = this.querySelector("button");
+      requestAnimationFrame(() => {
+        this.button = this.querySelector("button");
+      });
     }
+
     get type() {
       return this.#type;
     }
@@ -67,7 +67,7 @@ if (window.customElements && !window.customElements.get("fig-button")) {
       this.setAttribute("selected", value);
     }
 
-    handleClick(event) {
+    #handleClick(event) {
       if (this.#type === "toggle") {
         this.selected = !this.#selected;
       }
@@ -145,7 +145,6 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
     }
 
     #handleSelectInput(e) {
-      console.log("FigDropdown #handleSelectInput:", e.target.value);
       this.value = e.target.value;
       this.setAttribute("value", this.value);
     }
@@ -181,7 +180,6 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
     attributeChangedCallback(name, oldValue, newValue) {
       if (name === "value") {
         this.#syncSelectedValue(newValue);
-        console.log("val:", this.value);
       }
       if (name === "type") {
         this.type = newValue;
