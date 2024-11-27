@@ -8,14 +8,14 @@ function supportsPopover() {
 if (window.customElements && !window.customElements.get("fig-button")) {
   /* Button */
   class FigButton extends HTMLElement {
-    #type;
+    type;
     #selected;
     constructor() {
       super();
       this.attachShadow({ mode: "open" });
     }
     connectedCallback() {
-      this.#type = this.getAttribute("type") || "button";
+      this.type = this.getAttribute("type") || "button";
       this.shadowRoot.innerHTML = `
             <style>
                 button, button:hover, button:active {
@@ -36,7 +36,7 @@ if (window.customElements && !window.customElements.get("fig-button")) {
                     height: var(--spacer-4);
                 }
             </style>
-            <button type="${this.#type}">
+            <button type="${this.type}">
                 <slot></slot>
             </button>
             `;
@@ -44,45 +44,54 @@ if (window.customElements && !window.customElements.get("fig-button")) {
       this.#selected =
         this.hasAttribute("selected") &&
         this.getAttribute("selected") !== "false";
-      this.addEventListener("click", this.#handleClick.bind(this));
 
       requestAnimationFrame(() => {
-        this.button = this.querySelector("button");
+        this.button = this.shadowRoot.querySelector("button");
+        this.button.addEventListener("click", this.#handleClick.bind(this));
       });
     }
 
     get type() {
-      return this.#type;
+      return this.type;
     }
     set type(value) {
-      this.#type = value;
-      this.button.type = value;
       this.setAttribute("type", value);
     }
     get selected() {
       return this.#selected;
     }
     set selected(value) {
-      this.#selected = value;
       this.setAttribute("selected", value);
     }
 
-    #handleClick(event) {
-      if (this.#type === "toggle") {
-        this.selected = !this.#selected;
+    #handleClick() {
+      if (this.type === "toggle") {
+        this.toggleAttribute("selected", !this.hasAttribute("selected"));
       }
-      if (this.#type === "submit") {
-        this.button.click();
+      if (this.type === "submit") {
+        this.closest("form").dispatchEvent(new Event("submit"));
       }
     }
     static get observedAttributes() {
-      return ["disabled"];
+      return ["disabled", "selected"];
     }
     attributeChangedCallback(name, oldValue, newValue) {
       if (this.button) {
         this.button[name] = newValue;
-        if (newValue === "false") {
-          this.button.removeAttribute(name);
+        switch (name) {
+          case "disabled":
+            this.disabled = this.button.disabled =
+              newValue === "true" ||
+              (newValue === undefined && newValue !== null);
+            break;
+          case "type":
+            this.type = newValue;
+            this.button.type = this.type;
+            this.button.setAttribute("type", this.type);
+            break;
+          case "selected":
+            this.#selected = newValue === "true";
+            break;
         }
       }
     }
