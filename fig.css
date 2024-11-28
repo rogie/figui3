@@ -1430,6 +1430,7 @@ details {
 .fig-slider,
 fig-slider {
   --slider-height: 1rem;
+  --slider-thumb-size: var(--slider-height);
   --slider-percent: calc(var(--slider-complete) * 100%);
   --start-percent: calc(var(--default, 0) * 100%);
   --slider-tick-size: calc(var(--slider-height) / 4);
@@ -1560,9 +1561,10 @@ fig-slider {
     &::-webkit-slider-thumb {
       appearance: none;
       -webkit-appearance: none;
-      border-radius: 0.5rem;
-      height: var(--slider-height);
-      width: var(--slider-height);
+      border-radius: 100%;
+      height: var(--slider-thumb-size);
+      width: var(--slider-thumb-size);
+      margin-top: calc(var(--slider-height) / 2 - var(--slider-thumb-size) / 2);
       aspect-ratio: 1;
       border: none;
       position: relative;
@@ -1628,9 +1630,9 @@ fig-slider {
 
     &::-moz-range-thumb {
       appearance: none;
-      border-radius: 0.5rem;
-      height: var(--slider-height);
-      width: var(--slider-height);
+      border-radius: 100%;
+      height: var(--slider-thumb-size);
+      width: var(--slider-thumb-size);
       aspect-ratio: 1;
       border: none;
       position: relative;
@@ -1707,7 +1709,51 @@ fig-slider {
       }
     }
   }
+  &[variant="minimal"]{
+    transition: all 0.2s ease-in-out;
+  }
+  &[variant="minimal"] {
+    --slider-height: 0.25rem;
+    --slider-thumb-size: 0.5rem;
+    height: 1.5rem;
+    .fig-slider-input-container {
+      height: var(--slider-height);
+      position: relative;
+      display: block;
+      width: 100%;
+
+      /* Track */
+      &::before {
+        box-shadow: none;
+        background: var(--figma-color-text-onbrand-tertiary);
+      }
+
+      input[type="range"] {
+        &::-webkit-slider-runnable-track {
+          box-shadow: none;
+        }
+      }
+    }
+    fig-input-text {
+      height: calc(var(--slider-height) * 2);
+      background-color: transparent;
+    }
+    &:hover,
+    &:focus-within {
+      --slider-height: 1rem;
+      --slider-thumb-size: 1rem;
+      .fig-slider-input-container {
+      &::before {
+          background: var(--figma-color-bg-brand);
+        }
+      }
+      fig-input-text {
+        height: auto;
+      }
+    }
+  }
 }
+
 
 /* Popovers/Dialogs */
 .dialog,
