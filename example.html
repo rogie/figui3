@@ -64,15 +64,66 @@
         <option selected>Fourhundred sixty two</option>
     </fig-dropdown>
     <br /><br />
-    <fig-slider min="0"
-                max="1"
-                transform="100"
-                variant="minimal"
-                step="0.01"
-                text="true"
-                style="width:300px;"
-                value="0.5">
-    </fig-slider>
+    <fig-field style="width:300px;">
+        <label>Range slider</label>
+        <fig-slider min="0"
+                    max="1"
+                    transform="100"
+                    variant="minimal"
+                    step="0.01"
+                    text="true"
+                    style="width:300px;"
+                    value="0.5">
+        </fig-slider>
+    </fig-field>
+    <fig-field style="width:300px;">
+        <label>Opacity slider</label>
+        <fig-slider type="opacity"
+                    variant="minimal"
+                    value="0.75"
+                    color="#ff0000"
+                    units="%"
+                    text="true"></fig-slider>
+    </fig-field>
+
+    <fig-field style="width:300px;">
+        <label>Hue slider</label>
+        <fig-slider type="hue"
+                    variant="minimal"
+                    value="55"></fig-slider>
+    </fig-field>
+
+    <fig-field style="width:300px;">
+        <label>Stepper slider</label>
+        <fig-slider type="stepper"
+                    variant="minimal"
+                    value="25"
+                    default="50"
+                    step="25">
+            <datalist id="markers">
+                <option value="0"></option>
+                <option value="25"></option>
+                <option value="50"></option>
+                <option value="75"></option>
+                <option value="100"></option>
+            </datalist>
+        </fig-slider>
+    </fig-field>
+
+    <fig-field style="width:300px;">
+        <label>Delta slider</label>
+        <fig-slider type="delta"
+                    variant="minimal"
+                    value=".25"
+                    default="0"
+                    step="0.25"
+                    max="5"
+                    min="-5">
+            <datalist id="markers">
+                <option value="0"></option>
+            </datalist>
+        </fig-slider>
+    </fig-field>
     <br />
     <fig-input-text min="0"
                     max="1"
