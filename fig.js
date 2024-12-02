@@ -842,9 +842,18 @@ class FigSlider extends HTMLElement {
 window.customElements.define("fig-slider", FigSlider);
 
 class FigInputText extends HTMLElement {
+  #boundMouseMove;
+  #boundMouseUp;
+  #boundMouseDown;
+
   constructor() {
     super();
+    // Pre-bind the event handlers once
+    this.#boundMouseMove = this.#handleMouseMove.bind(this);
+    this.#boundMouseUp = this.#handleMouseUp.bind(this);
+    this.#boundMouseDown = this.#handleMouseDown.bind(this);
   }
+
   connectedCallback() {
     this.multiline = this.hasAttribute("multiline") || false;
     this.value = this.getAttribute("value") || "";
@@ -904,6 +913,7 @@ class FigInputText extends HTMLElement {
         if (this.getAttribute("step")) {
           this.input.setAttribute("step", this.#transformNumber(this.step));
         }
+        this.addEventListener("pointerdown", this.#boundMouseDown);
       }
       this.input.addEventListener("input", this.#handleInput.bind(this));
     });
@@ -912,15 +922,47 @@ class FigInputText extends HTMLElement {
     this.input.focus();
   }
   #transformNumber(value) {
-    return value * (this.transform || 1);
+    return Number(value) * (this.transform || 1);
   }
   #handleInput(e) {
     let value = e.target.value;
     if (this.type === "number") {
-      this.value = value / (this.transform || 1);
-    } else {
-      this.value = value;
+      if (this.min) {
+        value = Math.min(this.min, value);
+      }
+      if (this.max) {
+        value = Math.max(this.max, value);
+      }
+      value = value / (this.transform || 1);
     }
+    this.value = value;
+  }
+  #handleMouseMove(e) {
+    if (e.altKey) {
+      const step = (this.step || 1) * e.movementX;
+      const value = Number(this.input.value) + step;
+      this.setAttribute("value", value / this.transform);
+    }
+  }
+  #handleMouseDown(e) {
+    if (e.altKey) {
+      this.input.style.cursor =
+        this.style.cursor =
+        document.body.style.cursor =
+          "ew-resize";
+      // Use the pre-bound handlers
+      window.addEventListener("pointermove", this.#boundMouseMove);
+      window.addEventListener("pointerup", this.#boundMouseUp);
+    }
+  }
+  #handleMouseUp(e) {
+    this.input.style.cursor =
+      this.style.cursor =
+      document.body.style.cursor =
+        "";
+    // Remove the pre-bound handlers
+    window.removeEventListener("pointermove", this.#boundMouseMove);
+    window.removeEventListener("pointerup", this.#boundMouseUp);
   }
 
   static get observedAttributes() {
@@ -1461,7 +1503,7 @@ class FigChit extends HTMLElement {
     this.src = this.getAttribute("src") || "";
     this.value = this.getAttribute("value") || "";
     this.size = this.getAttribute("size") || "small";
-    this.disabled = this.getAttribute("disabled") === "true" ? true : false;
+    this.disabled = this.getAttribute("disabled") === "true";
     this.innerHTML = `<input type="color" value="${this.value}" />`;
     this.#updateSrc(this.src);
 
