@@ -927,21 +927,16 @@ class FigInputText extends HTMLElement {
   #handleInput(e) {
     let value = e.target.value;
     if (this.type === "number") {
-      if (this.min) {
-        value = Math.min(this.min, value);
-      }
-      if (this.max) {
-        value = Math.max(this.max, value);
-      }
+      value = this.#sanitizeInput(value);
       value = value / (this.transform || 1);
     }
-    this.value = value;
+    this.setAttribute("value", value);
   }
   #handleMouseMove(e) {
     if (e.altKey) {
       const step = (this.step || 1) * e.movementX;
-      const value = Number(this.input.value) + step;
-      this.setAttribute("value", value / this.transform);
+      const value = this.#sanitizeInput(Number(this.value) + step).toFixed(2);
+      this.setAttribute("value", value);
     }
   }
   #handleMouseDown(e) {
@@ -950,6 +945,7 @@ class FigInputText extends HTMLElement {
         this.style.cursor =
         document.body.style.cursor =
           "ew-resize";
+      this.style.userSelect = "none";
       // Use the pre-bound handlers
       window.addEventListener("pointermove", this.#boundMouseMove);
       window.addEventListener("pointerup", this.#boundMouseUp);
@@ -960,9 +956,23 @@ class FigInputText extends HTMLElement {
       this.style.cursor =
       document.body.style.cursor =
         "";
+    this.style.userSelect = "all";
     // Remove the pre-bound handlers
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
+  }
+  #sanitizeInput(value) {
+    let sanitized = value;
+    if (this.type === "number") {
+      sanitized = Number(sanitized);
+      if (typeof this.min === "number") {
+        sanitized = Math.max(this.min, sanitized);
+      }
+      if (typeof this.max === "number") {
+        sanitized = Math.min(this.max, sanitized);
+      }
+    }
+    return sanitized;
   }
 
   static get observedAttributes() {
@@ -983,7 +993,9 @@ class FigInputText extends HTMLElement {
     if (this.input) {
       switch (name) {
         case "disabled":
-          this.disabled = this.input.disabled = newValue;
+          this.disabled = this.input.disabled =
+            newValue === "true" ||
+            (newValue === undefined && newValue !== null);
           break;
         case "transform":
           if (this.type === "number") {
@@ -994,15 +1006,26 @@ class FigInputText extends HTMLElement {
             this.value = this.#transformNumber(this.value);
           }
           break;
-        default:
+        case "value":
           let value = newValue;
           if (this.type === "number") {
-            value = this.#transformNumber(value);
+            let sanitized = this.#sanitizeInput(value);
+            this.value = sanitized;
+            this.input.value = this.#transformNumber(sanitized);
           }
-          this[name] = this.input[name] = value;
+          this.value = value;
+          this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+          break;
+        case "min":
+        case "max":
+        case "step":
+          this[name] = this.input[name] = Number(newValue);
           if (this.input) {
-            this.input.setAttribute(name, value);
+            this.input.setAttribute(name, newValue);
           }
+          break;
+        default:
+          this[name] = this.input[name] = value;
           break;
       }
     }
@@ -1106,7 +1129,7 @@ class FigInputColor extends HTMLElement {
     );
     let html = ``;
     if (this.getAttribute("text")) {
-      let label = `<fig-input-text placeholder="Text" value="${this.getAttribute(
+      let label = `<fig-input-text type="text" placeholder="Text" value="${this.getAttribute(
         "value"
       )}"></fig-input-text>`;
       if (this.getAttribute("alpha") === "true") {
@@ -1134,8 +1157,8 @@ class FigInputColor extends HTMLElement {
 
     requestAnimationFrame(() => {
       this.#swatch = this.querySelector("input[type=color]");
-      this.textInput = this.querySelector("input[type=text]");
-      this.#alphaInput = this.querySelector("input[type=number]");
+      this.textInput = this.querySelector("fig-input-text:not([type=number])");
+      this.#alphaInput = this.querySelector("fig-input-text[type=number]");
 
       this.#swatch.disabled = this.hasAttribute("disabled");
       this.#swatch.addEventListener("input", this.handleInput.bind(this));
@@ -1144,6 +1167,10 @@ class FigInputColor extends HTMLElement {
         this.textInput.value = this.#swatch.value = this.rgbAlphaToHex(
           this.#rgba,
           1
+        );
+        this.textInput.addEventListener(
+          "input",
+          this.#handleTextInput.bind(this)
         );
       }
 
@@ -1154,6 +1181,12 @@ class FigInputColor extends HTMLElement {
         );
       }
     });
+  }
+  #handleTextInput(event) {
+    //do not propagate to onInput handler for web component
+    event.stopPropagation();
+    this.value = this.#swatch.value = this.textInput.value;
+    this.setAttribute("value", this.value);
   }
   handleAlphaInput(event) {
     //do not propagate to onInput handler for web component
@@ -1215,7 +1248,16 @@ class FigInputColor extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    //this[name] = newValue;
+    switch (name) {
+      case "value":
+        if (this.textInput) {
+          this.value = this.#swatch.value = this.textInput.value = newValue;
+        } else {
+          this.value = newValue;
+        }
+        this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+        break;
+    }
   }
 
   rgbAlphaToHex({ r, g, b }, a = 1) {

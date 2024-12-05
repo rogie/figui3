@@ -80,7 +80,7 @@
         <label>Opacity slider</label>
         <fig-slider type="opacity"
                     variant="minimal"
-                    value="0.75"
+                    value="75"
                     color="#ff0000"
                     units="%"
                     text="true"></fig-slider>
@@ -424,6 +424,8 @@
         </fig-combo-input>
         <br /><br />
         <fig-input-text type="number"
+                        min="0"
+                        max="360"
                         value="90">
             <span slot="append">°</span>
         </fig-input-text>
