@@ -2195,7 +2195,7 @@ fig-field,
 
   &[direction="horizontal"] {
     gap: var(--spacer-2);
-    align-items: flex-start;
+    align-items: center;
     flex-direction: row;
 
     & > label {

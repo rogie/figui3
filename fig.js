@@ -928,6 +928,7 @@ class FigInputText extends HTMLElement {
     let value = e.target.value;
     if (this.type === "number") {
       value = this.#sanitizeInput(value);
+      //value = Number(value);
       value = value / (this.transform || 1);
     }
     this.setAttribute("value", value);
@@ -966,10 +967,10 @@ class FigInputText extends HTMLElement {
     if (this.type === "number") {
       sanitized = Number(sanitized);
       if (typeof this.min === "number") {
-        sanitized = Math.max(this.min, sanitized);
+        sanitized = Math.max(this.#transformNumber(this.min), sanitized);
       }
       if (typeof this.max === "number") {
-        sanitized = Math.min(this.max, sanitized);
+        sanitized = Math.min(this.#transformNumber(this.max), sanitized);
       }
     }
     return sanitized;
@@ -1012,8 +1013,10 @@ class FigInputText extends HTMLElement {
             let sanitized = this.#sanitizeInput(value);
             this.value = sanitized;
             this.input.value = this.#transformNumber(sanitized);
+          } else {
+            this.value = value;
+            this.input.value = value;
           }
-          this.value = value;
           this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
           break;
         case "min":
@@ -1500,14 +1503,16 @@ class FigComboInput extends HTMLElement {
                     </div>`;
     requestAnimationFrame(() => {
       this.input = this.querySelector("fig-input-text");
-      this.select = this.querySelector("fig-dropdown");
+      this.dropdown = this.querySelector("fig-dropdown");
 
-      this.select.addEventListener("input", this.handleSelectInput.bind(this));
+      this.dropdown.addEventListener(
+        "input",
+        this.handleSelectInput.bind(this)
+      );
     });
   }
   handleSelectInput(e) {
-    this.value = e.target.parentNode.value;
-    this.setAttribute("value", this.value);
+    this.setAttribute("value", e.target.closest("fig-dropdown").value);
   }
   handleInput(e) {
     this.value = this.input.value;

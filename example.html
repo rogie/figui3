@@ -89,6 +89,7 @@
     <fig-field style="width:300px;">
         <label>Hue slider</label>
         <fig-slider type="hue"
+                    style="--bg-hue: linear-gradient(90deg in lch longer hue,#fc38ff, #abff57)"
                     variant="minimal"
                     value="55"></fig-slider>
     </fig-field>
@@ -131,10 +132,11 @@
                     transform="100"
                     type="number"
                     autoresize="true"
-                    value="0.5"
-                    text="true">
+                    value="0.5">
         <span slot="append">%</span>
     </fig-input-text>
+
+
     <br />
     <details>
         <summary>Details</summary>
