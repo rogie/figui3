@@ -36,7 +36,7 @@ The library includes the following components:
 ## Installation
 
 ```bash
-npm install fig-js
+npm install @rogieking/figui3
 ```
 
 ```jsx
@@ -74,7 +74,7 @@ or
 
 ## Documentation
 
-For detailed documentation and examples, visit our [documentation site](https://your-docs-site.com).
+For detailed documentation and examples, visit our [documentation site](https://github.com/rogie/figui3#readme).
 
 ## Browser Support
 
