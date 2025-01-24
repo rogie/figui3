@@ -422,7 +422,8 @@
   --elevation-500-modal-window: 0px 0px 0.5px rgba(0, 0, 0, 0.08),
     0px 10px 24px rgba(0, 0, 0, 0.18), 0px 2px 5px rgba(0, 0, 0, 0.15);
 
-  --figma-elevation-500-modal-window: box-shadow: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.08), 0px 10px 24px 0px rgba(0, 0, 0, 0.18), 0px 2px 5px 0px rgba(0, 0, 0, 0.15);
+  --figma-elevation-500-modal-window: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.08),
+    0px 10px 24px 0px rgba(0, 0, 0, 0.18), 0px 2px 5px 0px rgba(0, 0, 0, 0.15);
 
   color-scheme: light dark;
   /* Icons */
@@ -434,6 +435,10 @@
 
   --figma-elevation-200: 0px 1px 3px 0px rgba(0, 0, 0, 0.102),
     0px 3px 8px 0px rgba(0, 0, 0, 0.102), 0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+
+  --font-family: "Inter", AppleSystemUIFont, BlinkMacSystemFont, avenir next,
+    avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto,
+    arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -452,7 +457,6 @@
   }
 }
 
-
 html {
   width: 100%;
   height: 100%;
@@ -461,9 +465,7 @@ html {
   color: var(--figma-color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, avenir next, avenir,
-    segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial,
-    sans-serif;
+  font-family: var(--font-family);
   font-size: 16px;
   font-weight: var(--body-medium-fontWeight);
   letter-spacing: var(--body-letter-spacing);
@@ -481,11 +483,12 @@ body {
   letter-spacing: var(--body-letter-spacing);
 }
 
-h1,h2{
+h1,
+h2 {
   font-weight: var(--body-large-strong-fontWeight);
   font-size: var(--body-large-fontSize);
 }
-h3{
+h3 {
   font-weight: var(--body-medium-strong-fontWeight);
   font-size: var(--body-medium-fontSize);
 }
@@ -561,14 +564,16 @@ input[type="number"],
   font: inherit;
   display: flex;
   color: inherit;
+  -moz-appearance: textfield;
 
   &:focus {
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     outline: 0;
   }
-
+  &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
     display: none;
+    margin: 0;
   }
 }
 
@@ -595,9 +600,9 @@ input[type="text"][list] {
   background-color: var(--figma-color-bg);
   box-shadow: inset 0 0 0 1px var(--figma-color-border);
   accent-color: var(--figma-color-bg-brand);
-  overflow:hidden; 
-  white-space:nowrap; 
-  text-overflow:ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
   &:focus {
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
@@ -707,29 +712,29 @@ fig-button {
   }
 
   /* Icon only */
-  &[icon]{
+  &[icon] {
     width: var(--spacer-4);
     padding: 0;
     flex-grow: 0;
     flex-shrink: 0;
     flex-basis: var(--spacer-4);
-    &[size="compact"]{
+    &[size="compact"] {
       width: var(--spacer-3);
       flex-basis: var(--spacer-3);
     }
   }
 
   /* Disabled */
-  &[disabled]:not([disabled="false"]){
+  &[disabled]:not([disabled="false"]) {
     background-color: var(--figma-color-bg-disabled);
     pointer-events: none;
     cursor: not-allowed;
-    &:not([variant="secondary"]){
+    &:not([variant="secondary"]) {
       color: var(--figma-color-text-ondisabled);
       box-shadow: none;
     }
     &[variant="secondary"],
-    &[variant="ghost"]{
+    &[variant="ghost"] {
       color: var(--figma-color-text-disabled);
       background-color: transparent;
     }
@@ -831,7 +836,7 @@ fig-button-combo {
   > *:not([variant="secondary"]):not(:first-child) {
     box-shadow: inset 1px 0 0 0 var(--figma-color-bg-brand-hover);
     &[disabled]:not([disabled="false"]) {
-       box-shadow: inset 1px 0 0 0 var(--figma-color-border-disabled);
+      box-shadow: inset 1px 0 0 0 var(--figma-color-border-disabled);
     }
   }
   > *[variant="secondary"]:not(:first-child) {
@@ -927,7 +932,7 @@ fig-avatar,
       background: var(--checkerboard);
     }
   }
-  &[borderless] img{
+  &[borderless] img {
     box-shadow: none;
   }
 
@@ -987,7 +992,6 @@ input[type="color"] {
       rgba(0, 0, 0, var(--alpha)) 50%
     );
   }
-  
 }
 
 input[type="color"] {
@@ -1006,7 +1010,6 @@ input[type="color"] {
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   }
 }
-
 
 fig-chit {
   --gradient-color-1: #ff90ff;
@@ -1068,7 +1071,7 @@ fig-chit {
   }
 
   &[type="gradient"],
-  &[type="image"]{
+  &[type="image"] {
     &::after {
       content: "";
       width: 0.875rem;
@@ -1086,11 +1089,14 @@ fig-chit {
     input[type="color"]::-webkit-color-swatch-wrapper {
       background: none;
     }
+    input[type="color"]::-moz-color-swatch {
+      opacity: 0;
+    }
     input[type="color"]::-webkit-color-swatch {
       opacity: 0;
     }
   }
-  
+
   &[type="image"] {
     &:not([src])::after {
       background: var(--checkerboard);
@@ -1153,8 +1159,6 @@ fig-image {
     --image-size: 8rem;
   }
 }
-
-
 
 /* Combo input */
 .input-combo {
@@ -1399,7 +1403,9 @@ details {
       transition: transform var(--transition-duration)
         var(--transition-timing-function);
     }
-
+    &::-webkit-details-marker {
+      display: none;
+    }
     &::marker {
       content: "";
     }
@@ -1424,7 +1430,6 @@ details {
 .figma-light details > summary:before {
   content: var(--icon-chevron);
 }
-
 
 /* Sliders */
 .fig-slider,
@@ -1566,6 +1571,7 @@ fig-slider {
 
     &::-webkit-slider-thumb {
       appearance: none;
+      background: transparent;
       -webkit-appearance: none;
       transition: var(--slider-transition);
       border-radius: 100%;
@@ -1621,7 +1627,7 @@ fig-slider {
   input[type="range"] {
     height: var(--slider-height);
     appearance: none;
-    -webkit-appearance: none;
+    -moz-appearance: none;
     border-radius: calc(var(--slider-height) / 2);
     display: block;
     width: 100%;
@@ -1639,6 +1645,8 @@ fig-slider {
 
     &::-moz-range-thumb {
       appearance: none;
+      -moz-appearance: none;
+      background: transparent;
       border-radius: 100%;
       height: var(--slider-thumb-size);
       width: var(--slider-thumb-size);
@@ -1691,7 +1699,7 @@ fig-slider {
   datalist {
     position: absolute;
     inset: 0;
-    top: calc((var(--slider-field-height) - var(--slider-height))/2);
+    top: calc((var(--slider-field-height) - var(--slider-height)) / 2);
     display: flex;
     transition: var(--slider-transition);
     background: transparent;
@@ -1757,22 +1765,21 @@ fig-slider {
       --slider-tick-size: calc(var(--slider-height) / 4);
       .fig-slider-input-container {
         &::before {
-            box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-            background: var(--figma-color-bg-brand);
-          }
+          box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+          background: var(--figma-color-bg-brand);
         }
-        input[type="range"] {
-          &::-webkit-slider-runnable-track {
-            box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-          }
+      }
+      input[type="range"] {
+        &::-webkit-slider-runnable-track {
+          box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
         }
-        fig-input-text {
-          height: auto;
-        }
+      }
+      fig-input-text {
+        height: auto;
+      }
     }
   }
 }
-
 
 /* Popovers/Dialogs */
 .dialog,
@@ -1907,7 +1914,7 @@ fig-dialog,
 }
 
 /* Tooltip */
-fig-tooltip{
+fig-tooltip {
   display: contents;
 }
 .fig-tooltip {
@@ -2012,7 +2019,6 @@ fig-tabs {
     width: 100%;
   }
 }
-
 
 fig-checkbox,
 fig-radio {
@@ -2195,7 +2201,7 @@ fig-field,
 
   &[direction="horizontal"] {
     gap: var(--spacer-2);
-    align-items: center;
+    align-items: start;
     flex-direction: row;
 
     & > label {
