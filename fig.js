@@ -1132,9 +1132,7 @@ class FigInputColor extends HTMLElement {
     );
     let html = ``;
     if (this.getAttribute("text")) {
-      let label = `<fig-input-text type="text" placeholder="Text" value="${this.getAttribute(
-        "value"
-      )}"></fig-input-text>`;
+      let label = `<fig-input-text type="text" placeholder="Text" value="${this.value}"></fig-input-text>`;
       if (this.getAttribute("alpha") === "true") {
         label += `<fig-tooltip text="Opacity">
                     <fig-input-text 
@@ -1254,9 +1252,12 @@ class FigInputColor extends HTMLElement {
     switch (name) {
       case "value":
         if (this.textInput) {
-          this.value = this.#swatch.value = this.textInput.value = newValue;
+          this.value =
+            this.#swatch.value =
+            this.textInput.value =
+              newValue.toUpperCase();
         } else {
-          this.value = newValue;
+          this.value = newValue.toUpperCase();
         }
         this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
         break;
@@ -1279,13 +1280,13 @@ class FigInputColor extends HTMLElement {
 
     // If alpha is 1, return 6-digit hex
     if (a === 1) {
-      return `#${hexR}${hexG}${hexB}`;
+      return `#${hexR}${hexG}${hexB}`.toUpperCase();
     }
 
     // Otherwise, include alpha in 8-digit hex
     const alpha = Math.round(a * 255);
     const hexA = alpha.toString(16).padStart(2, "0");
-    return `#${hexR}${hexG}${hexB}${hexA}`;
+    return `#${hexR}${hexG}${hexB}${hexA}`.toUpperCase();
   }
 
   convertToRGBA(color) {
