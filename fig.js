@@ -1246,10 +1246,10 @@ class FigInputColor extends HTMLElement {
       case "value":
         this.#setValues(newValue);
         if (this.#textInput) {
-          this.#textInput.setAttribute("value", this.hex);
+          this.#textInput.setAttribute("value", this.value);
         }
         if (this.#swatch) {
-          this.#swatch.setAttribute("value", this.hex);
+          this.#swatch.setAttribute("value", this.hexOpaque);
         }
         if (this.#alphaInput) {
           this.#alphaInput.setAttribute("value", this.alpha);
