@@ -1114,7 +1114,7 @@ window.customElements.define("fig-field", FigField);
 class FigInputColor extends HTMLElement {
   rgba;
   hex;
-  alpha;
+  alpha = 100;
   #swatch;
   #textInput;
   #alphaInput;
@@ -1122,12 +1122,11 @@ class FigInputColor extends HTMLElement {
     super();
   }
   connectedCallback() {
-    this.#syncHex(this.getAttribute("value"));
-    this.value = this.hex;
+    this.#setValues(this.getAttribute("value"));
 
     let html = ``;
     if (this.getAttribute("text")) {
-      let label = `<fig-input-text type="text" placeholder="Text" value="${this.hex}"></fig-input-text>`;
+      let label = `<fig-input-text type="text" placeholder="Text" value="${this.value}"></fig-input-text>`;
       if (this.getAttribute("alpha") === "true") {
         label += `<fig-tooltip text="Opacity">
                     <fig-input-text 
@@ -1141,14 +1140,13 @@ class FigInputColor extends HTMLElement {
                 </fig-tooltip>`;
       }
       html = `<div class="input-combo">
-                <fig-chit type="color" disabled="false" value="${this.hex}"></fig-chit>
+                <fig-chit type="color" disabled="false" value="${this.hexOpaque}"></fig-chit>
                 ${label}
             </div>`;
     } else {
-      html = `<fig-chit type="color" disabled="false" value="${this.hex}"></fig-chit>`;
+      html = `<fig-chit type="color" disabled="false" value="${this.hexOpaque}"></fig-chit>`;
     }
     this.innerHTML = html;
-    this.style.setProperty("--alpha", this.rgba.a);
 
     requestAnimationFrame(() => {
       this.#swatch = this.querySelector("fig-chit[type=color]");
@@ -1156,7 +1154,7 @@ class FigInputColor extends HTMLElement {
       this.#alphaInput = this.querySelector("fig-input-text[type=number]");
 
       this.#swatch.disabled = this.hasAttribute("disabled");
-      this.#swatch.addEventListener("input", this.handleInput.bind(this));
+      this.#swatch.addEventListener("input", this.#handleInput.bind(this));
 
       if (this.#textInput) {
         this.#textInput.value = this.#swatch.value = this.rgbAlphaToHex(
@@ -1172,73 +1170,66 @@ class FigInputColor extends HTMLElement {
       if (this.#alphaInput) {
         this.#alphaInput.addEventListener(
           "input",
-          this.handleAlphaInput.bind(this)
+          this.#handleAlphaInput.bind(this)
         );
       }
     });
   }
-  #syncHex(hexValue) {
+  #setValues(hexValue) {
     this.rgba = this.convertToRGBA(hexValue);
-    this.hex = this.rgbAlphaToHex(
-      {
-        r: this.rgba.r,
-        g: this.rgba.g,
-        b: this.rgba.b,
-      },
-      1
-    );
-    this.alpha = (this.rgba.a * 100).toFixed(0);
-  }
-
-  #handleTextInput(event) {
-    //do not propagate to onInput handler for web component
-    event.stopPropagation();
-    this.#syncHex(event.target.value);
-    this.value = this.hex;
-    if (this.#alphaInput) {
-      this.#alphaInput.setAttribute("value", this.alpha);
-    }
-    if (this.#swatch) {
-      this.#swatch.setAttribute("value", this.hex);
-    }
-    this.style.setProperty("--alpha", this.rgba.a);
-  }
-
-  handleAlphaInput(event) {
-    //do not propagate to onInput handler for web component
-    event.stopPropagation();
-    this.rgba = this.convertToRGBA(this.#swatch.value);
-    this.rgba.a = Number(this.#alphaInput.value) / 100;
     this.value = this.rgbAlphaToHex(
       {
         r: this.rgba.r,
         g: this.rgba.g,
         b: this.rgba.b,
       },
-      1
+      this.rgba.a
     );
+    this.hexWithAlpha = this.value;
+    this.hexOpaque = this.hexWithAlpha.slice(0, 7);
+    if (hexValue.length > 7) {
+      this.alpha = (this.rgba.a * 100).toFixed(0);
+    }
     this.style.setProperty("--alpha", this.rgba.a);
-    const e = new CustomEvent("input", {
-      bubbles: true,
-      cancelable: true,
-    });
-    this.dispatchEvent(e);
+  }
+
+  #handleTextInput(event) {
+    //do not propagate to onInput handler for web component
+    event.stopPropagation();
+    this.#setValues(event.target.value);
+    if (this.#alphaInput) {
+      this.#alphaInput.setAttribute("value", this.alpha);
+    }
+    if (this.#swatch) {
+      this.#swatch.setAttribute("value", this.hexOpaque);
+    }
+    this.#emitInputEvent();
+  }
+
+  #handleAlphaInput(event) {
+    //do not propagate to onInput handler for web component
+    event.stopPropagation();
+    const alpha = Math.round((event.target.value / 100) * 255);
+    const alphaHex = alpha.toString(16).padStart(2, "0");
+    this.#setValues(this.hexOpaque + alphaHex);
+    this.#emitInputEvent();
   }
 
   focus() {
     this.#swatch.focus();
   }
 
-  handleInput(event) {
+  #handleInput(event) {
     //do not propagate to onInput handler for web component
     event.stopPropagation();
-    let alpha = this.alpha;
-    this.#syncHex(event.target.value);
-    this.alpha = alpha;
-    this.value = this.hex;
+    this.#setValues(event.target.value);
     if (this.#textInput) {
       this.#textInput.setAttribute("value", this.value);
     }
+    this.#emitInputEvent();
+  }
+
+  #emitInputEvent() {
     const e = new CustomEvent("input", {
       bubbles: true,
       cancelable: true,
@@ -1253,7 +1244,7 @@ class FigInputColor extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
       case "value":
-        this.#syncHex(newValue);
+        this.#setValues(newValue);
         if (this.#textInput) {
           this.#textInput.setAttribute("value", this.hex);
         }
@@ -1263,9 +1254,7 @@ class FigInputColor extends HTMLElement {
         if (this.#alphaInput) {
           this.#alphaInput.setAttribute("value", this.alpha);
         }
-        this.value = this.hex;
-        this.style.setProperty("--alpha", this.rgba.a);
-        this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+        this.#emitInputEvent();
         break;
     }
   }
