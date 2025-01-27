@@ -1462,6 +1462,9 @@ fig-slider {
     display: block;
     width: 100%;
     transition: var(--slider-transition);
+    background: var(--figma-color-bg-secondary);
+    border-radius: 0.5rem;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 
     /* Track */
     &::before {
@@ -1559,6 +1562,7 @@ fig-slider {
     width: 100%;
     background-color: transparent;
     transition: var(--slider-transition);
+    position: relative;
 
     &:active::-webkit-slider-thumb {
       cursor: grabbing;
@@ -1609,8 +1613,6 @@ fig-slider {
       background-color: transparent;
       transition: var(--slider-transition);
       border-radius: calc(var(--slider-height) / 2);
-      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-      background: var(--figma-color-bg-secondary);
     }
 
     &.hue::-webkit-slider-runnable-track {
@@ -1633,6 +1635,7 @@ fig-slider {
     width: 100%;
     background-color: transparent;
     transition: var(--slider-transition);
+    position: relative;
 
     &:focus {
       outline: none;
@@ -1681,8 +1684,6 @@ fig-slider {
       height: var(--slider-height);
       background-color: transparent;
       border-radius: calc(var(--slider-height) / 2);
-      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-      background: var(--figma-color-bg-secondary);
       transition: var(--slider-transition);
     }
 
