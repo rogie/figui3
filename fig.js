@@ -936,7 +936,11 @@ class FigInputText extends HTMLElement {
   #handleMouseMove(e) {
     if (e.altKey) {
       const step = (this.step || 1) * e.movementX;
-      const value = this.#sanitizeInput(Number(this.value) + step).toFixed(2);
+      const value = this.#sanitizeInput(
+        Number(this.value) + step,
+        false
+      ).toFixed(2);
+      console.log("MM:", value, this.max);
       this.setAttribute("value", value);
     }
   }
@@ -962,15 +966,21 @@ class FigInputText extends HTMLElement {
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
   }
-  #sanitizeInput(value) {
+  #sanitizeInput(value, transform = true) {
     let sanitized = value;
     if (this.type === "number") {
       sanitized = Number(sanitized);
       if (typeof this.min === "number") {
-        sanitized = Math.max(this.#transformNumber(this.min), sanitized);
+        sanitized = Math.max(
+          transform ? this.#transformNumber(this.min) : this.min,
+          sanitized
+        );
       }
       if (typeof this.max === "number") {
-        sanitized = Math.min(this.#transformNumber(this.max), sanitized);
+        sanitized = Math.min(
+          transform ? this.#transformNumber(this.max) : this.max,
+          sanitized
+        );
       }
     }
     return sanitized;
