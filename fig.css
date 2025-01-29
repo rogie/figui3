@@ -552,6 +552,7 @@ fieldset {
 textarea,
 input[type="text"],
 input[type="number"],
+input[type="password"],
 .input {
   background-color: var(--figma-color-bg-secondary);
   border: 0;
@@ -2024,10 +2025,18 @@ fig-tabs {
 fig-checkbox,
 fig-radio {
   align-items: center;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
 
   & label span {
     vertical-align: middle;
   }
+}
+
+fig-switch {
+  align-items: center;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
 }
 
 fig-input-color {
@@ -2186,6 +2195,7 @@ fig-field,
   margin: 0;
   flex-direction: column;
   gap: 0;
+  align-items: start;
 
   & > [full] {
     flex: 1;

@@ -858,6 +858,7 @@ class FigInputText extends HTMLElement {
     this.multiline = this.hasAttribute("multiline") || false;
     this.value = this.getAttribute("value") || "";
     this.type = this.getAttribute("type") || "text";
+    this.placeholder = this.getAttribute("placeholder") || "";
     if (this.type === "number") {
       if (this.getAttribute("step")) {
         this.step = Number(this.getAttribute("step"));
@@ -873,7 +874,7 @@ class FigInputText extends HTMLElement {
         this.value = Number(this.value);
       }
     }
-    this.placeholder = this.getAttribute("placeholder") || "";
+
     let html = `<input 
       type="${this.type}" 
       placeholder="${this.placeholder}"
@@ -922,7 +923,7 @@ class FigInputText extends HTMLElement {
     this.input.focus();
   }
   #transformNumber(value) {
-    return Number(value) * (this.transform || 1);
+    return value === "" ? "" : Number(value) * (this.transform || 1);
   }
   #handleInput(e) {
     let value = e.target.value;
@@ -1102,7 +1103,7 @@ class FigField extends HTMLElement {
   }
   connectedCallback() {
     requestAnimationFrame(() => {
-      this.label = this.querySelector("label");
+      this.label = this.querySelector(":scope>label");
       this.input = Array.from(this.childNodes).find((node) =>
         node.nodeName.toLowerCase().startsWith("fig-")
       );
@@ -1525,6 +1526,9 @@ class FigComboInput extends HTMLElement {
   }
   static get observedAttributes() {
     return ["options", "placeholder", "value"];
+  }
+  focus() {
+    this.input.focus();
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "options") {
