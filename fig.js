@@ -204,7 +204,8 @@ class FigTooltip extends HTMLElement {
   constructor() {
     super();
     this.action = this.getAttribute("action") || "hover";
-    this.delay = parseInt(this.getAttribute("delay")) || 500;
+    let delay = parseInt(this.getAttribute("delay"));
+    this.delay = !isNaN(delay) ? delay : 500;
     this.isOpen = false;
   }
   connectedCallback() {
@@ -316,6 +317,18 @@ class FigTooltip extends HTMLElement {
   hidePopupOutsideClick(event) {
     if (this.isOpen && !this.popup.contains(event.target)) {
       this.hidePopup();
+    }
+  }
+  static get observedAttributes() {
+    return ["action", "delay"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "action") {
+      this.action = newValue;
+    }
+    if (name === "delay") {
+      let delay = parseInt(newValue);
+      this.delay = !isNaN(delay) ? delay : 500;
     }
   }
 }
@@ -941,7 +954,6 @@ class FigInputText extends HTMLElement {
         Number(this.value) + step,
         false
       ).toFixed(2);
-      console.log("MM:", value, this.max);
       this.setAttribute("value", value);
     }
   }
