@@ -936,7 +936,9 @@ class FigInputText extends HTMLElement {
     this.input.focus();
   }
   #transformNumber(value) {
-    return value === "" ? "" : Number(value) * (this.transform || 1);
+    let transformed = value === "" ? "" : Number(value) * (this.transform || 1);
+    transformed = this.#formatNumber(transformed);
+    return transformed;
   }
   #handleInput(e) {
     let value = e.target.value;
