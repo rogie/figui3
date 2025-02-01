@@ -1087,6 +1087,9 @@ fig-chit {
       grid-area: 1/1;
       place-self: center;
     }
+    input[type="color"] {
+      opacity: 0;
+    }
     input[type="color"]::-webkit-color-swatch-wrapper {
       background: none;
     }
@@ -1743,6 +1746,7 @@ fig-slider {
       position: relative;
       display: block;
       width: 100%;
+      box-shadow: none;
 
       /* Track */
       &::before {
