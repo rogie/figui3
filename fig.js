@@ -996,7 +996,12 @@ class FigInputText extends HTMLElement {
         );
       }
     }
-    return sanitized;
+    return this.#formatNumber(sanitized);
+  }
+  #formatNumber(num, precision = 2) {
+    // Check if the number has any decimal places after rounding
+    const rounded = Math.round(num * 100) / 100;
+    return Number.isInteger(rounded) ? rounded : rounded.toFixed(precision);
   }
 
   static get observedAttributes() {
