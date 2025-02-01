@@ -995,8 +995,9 @@ class FigInputText extends HTMLElement {
           sanitized
         );
       }
+      sanitized = this.#formatNumber(sanitized);
     }
-    return this.#formatNumber(sanitized);
+    return sanitized;
   }
   #formatNumber(num, precision = 2) {
     // Check if the number has any decimal places after rounding
