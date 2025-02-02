@@ -1704,7 +1704,7 @@ fig-slider {
   datalist {
     position: absolute;
     inset: 0;
-    top: calc((var(--slider-field-height) - var(--slider-height)) / 2);
+    top: 0;
     display: flex;
     transition: var(--slider-transition);
     background: transparent;

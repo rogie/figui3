@@ -726,6 +726,7 @@ class FigSlider extends HTMLElement {
     //child nodes hack
     requestAnimationFrame(() => {
       this.input = this.querySelector("[type=range]");
+      this.inputContainer = this.querySelector(".fig-slider-input-container");
       this.input.removeEventListener("input", this.handleInput);
       this.input.addEventListener("input", this.handleInput.bind(this));
 
@@ -739,6 +740,7 @@ class FigSlider extends HTMLElement {
       this.datalist = this.querySelector("datalist");
       this.figInputText = this.querySelector("fig-input-text");
       if (this.datalist) {
+        this.inputContainer.append(this.datalist);
         this.datalist.setAttribute(
           "id",
           this.datalist.getAttribute("id") || figUniqueId()
@@ -753,7 +755,7 @@ class FigSlider extends HTMLElement {
           option.setAttribute("value", this.min + i * this.step);
           this.datalist.append(option);
         }
-        this.append(this.datalist);
+        this.inputContainer.append(this.datalist);
         this.input.setAttribute("list", this.datalist.getAttribute("id"));
       }
       if (this.figInputText) {
