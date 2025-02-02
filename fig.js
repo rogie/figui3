@@ -1,7 +1,7 @@
-function uniqueId() {
+function figUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
-function supportsPopover() {
+function figSupportsPopover() {
   return HTMLElement.prototype.hasOwnProperty("popover");
 }
 
@@ -502,7 +502,7 @@ class FigPopover2 extends HTMLElement {
     this.#trigger = this;
     this.#delay = Number(this.getAttribute("delay")) || 0;
     this.#action = this.getAttribute("trigger-action") || "click";
-    this.#id = `tooltip-${uniqueId()}`;
+    this.#id = `tooltip-${figUniqueId()}`;
     if (this.#popover) {
       this.#popover.setAttribute("id", this.#id);
       this.#popover.setAttribute("role", "tooltip");
@@ -741,8 +741,19 @@ class FigSlider extends HTMLElement {
       if (this.datalist) {
         this.datalist.setAttribute(
           "id",
-          this.datalist.getAttribute("id") || uniqueId()
+          this.datalist.getAttribute("id") || figUniqueId()
         );
+        this.input.setAttribute("list", this.datalist.getAttribute("id"));
+      } else if (this.type === "stepper") {
+        this.datalist = document.createElement("datalist");
+        this.datalist.setAttribute("id", figUniqueId());
+        let steps = (this.max - this.min) / this.step + 1;
+        for (let i = 0; i < steps; i++) {
+          let option = document.createElement("option");
+          option.setAttribute("value", this.min + i * this.step);
+          this.datalist.append(option);
+        }
+        this.append(this.datalist);
         this.input.setAttribute("list", this.datalist.getAttribute("id"));
       }
       if (this.figInputText) {
@@ -1129,7 +1140,7 @@ class FigField extends HTMLElement {
       );
       if (this.input && this.label) {
         this.label.addEventListener("click", this.focus.bind(this));
-        let inputId = this.input.getAttribute("id") || uniqueId();
+        let inputId = this.input.getAttribute("id") || figUniqueId();
         this.input.setAttribute("id", inputId);
         this.label.setAttribute("for", inputId);
       }
@@ -1396,7 +1407,7 @@ class FigCheckbox extends HTMLElement {
     this.input = document.createElement("input");
     this.name = this.getAttribute("name") || "checkbox";
     this.value = this.getAttribute("value") || "";
-    this.input.setAttribute("id", uniqueId());
+    this.input.setAttribute("id", figUniqueId());
     this.input.setAttribute("name", this.name);
     this.input.setAttribute("type", "checkbox");
     this.labelElement = document.createElement("label");
