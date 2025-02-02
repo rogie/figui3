@@ -1494,18 +1494,6 @@ fig-slider {
       &::before {
         display: none;
       }
-      /* Default tick */
-      &::after {
-        content: "";
-        display: block;
-        width: var(--slider-tick-size);
-        height: var(--slider-tick-size);
-        border-radius: 100%;
-        background: var(--figma-color-icon);
-        position: absolute;
-        left: calc(var(--default) * 100% - var(--slider-tick-size) / 2);
-        top: calc(50% - var(--slider-tick-size) / 2);
-      }
     }
   }
 
@@ -1729,6 +1717,9 @@ fig-slider {
       font-size: 0;
       background: var(--figma-color-icon-tertiary);
       display: block;
+      &[default] {
+        background: var(--figma-color-icon);
+      }
 
       &:first-child:last-child {
         margin: 0 auto;

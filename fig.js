@@ -673,7 +673,6 @@ class FigSlider extends HTMLElement {
   }
   #regenerateInnerHTML() {
     this.value = Number(this.getAttribute("value") || 0);
-    this.default = this.getAttribute("default") || null;
     this.type = this.getAttribute("type") || "range";
     this.text = this.getAttribute("text") || false;
     this.units = this.getAttribute("units") || "";
@@ -685,6 +684,7 @@ class FigSlider extends HTMLElement {
     this.max = Number(this.getAttribute("max") || defaults.max);
     this.step = Number(this.getAttribute("step") || defaults.step);
     this.color = this.getAttribute("color") || defaults?.color;
+    this.default = this.getAttribute("default") || this.min;
 
     if (this.color) {
       this.style.setProperty("--color", this.color);
@@ -757,6 +757,14 @@ class FigSlider extends HTMLElement {
         }
         this.inputContainer.append(this.datalist);
         this.input.setAttribute("list", this.datalist.getAttribute("id"));
+      }
+      if (this.datalist) {
+        let defaultOption = this.datalist.querySelector(
+          `option[value='${this.default}']`
+        );
+        if (defaultOption) {
+          defaultOption.setAttribute("default", "true");
+        }
       }
       if (this.figInputText) {
         this.figInputText.removeEventListener("input", this.handleTextInput);
@@ -843,15 +851,14 @@ class FigSlider extends HTMLElement {
     }
   }
   #calculateNormal(value) {
-    let min = Number(this.input.min);
-    let max = Number(this.input.max);
-    let val = value;
-    return (val - min) / (max - min);
+    let min = Number(this.min);
+    let max = Number(this.max);
+    return (Number(value) - min) / (max - min);
   }
   #syncProperties() {
     let complete = this.#calculateNormal(this.value);
-    let defaultValue = this.#calculateNormal(this.default);
     this.style.setProperty("--slider-complete", complete);
+    let defaultValue = this.#calculateNormal(this.default);
     this.style.setProperty("--default", defaultValue);
     this.style.setProperty("--unchanged", complete === defaultValue ? 1 : 0);
   }
