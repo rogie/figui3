@@ -1745,6 +1745,7 @@ class FigInputJoystick extends HTMLElement {
   render() {
     this.innerHTML = `        
           <div class="fig-input-joystick-plane-container">
+            <div class="fig-input-joystick-plane-style">
             <div class="fig-input-joystick-plane">
               <div class="fig-input-joystick-guides"></div>
               <div class="fig-input-joystick-handle"></div>
@@ -1792,13 +1793,19 @@ class FigInputJoystick extends HTMLElement {
   }
 
   handleXInput(e) {
+    e.stopPropagation();
     this.position.x = e.target.value;
     this.#syncHandlePosition();
+    this.#emitInputEvent();
+    this.#emitChangeEvent();
   }
 
   handleYInput(e) {
+    e.stopPropagation();
     this.position.y = e.target.value;
     this.#syncHandlePosition();
+    this.#emitInputEvent();
+    this.#emitChangeEvent();
   }
 
   snapToGuide(value) {
@@ -1817,7 +1824,7 @@ class FigInputJoystick extends HTMLElement {
     return { x, y };
   }
 
-  updatePosition(e) {
+  #updatePosition(e) {
     const rect = this.plane.getBoundingClientRect();
     let x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     let y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
@@ -1839,7 +1846,24 @@ class FigInputJoystick extends HTMLElement {
       this.yInput.setAttribute("value", snapped.y.toFixed(3));
     }
 
-    this.dispatchEvent(new CustomEvent("input", { detail: this.position }));
+    this.#emitInputEvent();
+  }
+  #emitInputEvent() {
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  }
+
+  #emitChangeEvent() {
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        cancelable: true,
+      })
+    );
   }
 
   #syncHandlePosition() {
@@ -1849,12 +1873,12 @@ class FigInputJoystick extends HTMLElement {
 
   handleMouseDown(e) {
     this.isDragging = true;
-    this.updatePosition(e);
+    this.#updatePosition(e);
 
     this.plane.style.cursor = "grabbing";
 
     const handleMouseMove = (e) => {
-      if (this.isDragging) this.updatePosition(e);
+      if (this.isDragging) this.#updatePosition(e);
     };
 
     const handleMouseUp = () => {
@@ -1862,7 +1886,7 @@ class FigInputJoystick extends HTMLElement {
       this.plane.style.cursor = "";
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
-      this.dispatchEvent(new CustomEvent("change", { detail: this.position }));
+      this.#emitChangeEvent();
     };
 
     window.addEventListener("mousemove", handleMouseMove);
