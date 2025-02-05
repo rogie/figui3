@@ -1793,7 +1793,8 @@ class FigInputJoystick extends HTMLElement {
 
   handleXInput(e) {
     e.stopPropagation();
-    this.position.x = e.target.value;
+    this.position.x = Number(e.target.value);
+    this.value = [this.position.x, this.position.y];
     this.#syncHandlePosition();
     this.#emitInputEvent();
     this.#emitChangeEvent();
@@ -1801,7 +1802,8 @@ class FigInputJoystick extends HTMLElement {
 
   handleYInput(e) {
     e.stopPropagation();
-    this.position.y = e.target.value;
+    this.position.y = Number(e.target.value);
+    this.value = [this.position.x, this.position.y];
     this.#syncHandlePosition();
     this.#emitInputEvent();
     this.#emitChangeEvent();
