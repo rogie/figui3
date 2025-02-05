@@ -2284,6 +2284,10 @@ fig-input-joystick {
     width: 1.5rem;
     height: 1.5rem;
     place-items: center;
+    flex-shrink: 0;
+    flex-grow: 0;
+    align-items: center;
+    justify-content: center;
   }
   .fig-input-joystick-plane {
     display: inline-grid;
@@ -2292,6 +2296,7 @@ fig-input-joystick {
     width: var(--size);
     height: var(--size);
     flex-shrink: 0;
+    &.dragging,
     &:hover {
       cursor: grab;
       --size: 3rem;
@@ -2330,6 +2335,7 @@ fig-input-joystick {
       pointer-events: none;
     }
   }
+  .fig-input-joystick-plane.dragging .fig-input-joystick-guides,
   .fig-input-joystick-plane:hover .fig-input-joystick-guides {
     background: linear-gradient(
         45deg,

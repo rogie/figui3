@@ -1729,12 +1729,11 @@ class FigInputJoystick extends HTMLElement {
       this.transform = Number(this.transform);
       this.text = this.getAttribute("text") === "true";
 
-      this.render();
+      this.#render();
 
-      this.setupListeners();
+      this.#setupListeners();
 
-      this.cursor.style.left = `${this.position.x * 100}%`;
-      this.cursor.style.top = `${this.position.y * 100}%`;
+      this.#syncHandlePosition();
       if (this.text) {
         this.xInput.value = this.position.x.toFixed(this.precision);
         this.yInput.value = this.position.y.toFixed(this.precision);
@@ -1742,8 +1741,11 @@ class FigInputJoystick extends HTMLElement {
     });
   }
 
-  render() {
-    this.innerHTML = `        
+  #render() {
+    this.innerHTML = this.#getInnerHTML();
+  }
+  #getInnerHTML() {
+    return `        
           <div class="fig-input-joystick-plane-container">
             <div class="fig-input-joystick-plane">
               <div class="fig-input-joystick-guides"></div>
@@ -1775,7 +1777,7 @@ class FigInputJoystick extends HTMLElement {
         `;
   }
 
-  setupListeners() {
+  #setupListeners() {
     this.plane = this.querySelector(".fig-input-joystick-plane");
     this.cursor = this.querySelector(".fig-input-joystick-handle");
     if (this.text) {
@@ -1783,15 +1785,15 @@ class FigInputJoystick extends HTMLElement {
       this.yInput = this.querySelector("fig-input-text[name='y']");
     }
 
-    this.plane.addEventListener("mousedown", this.handleMouseDown.bind(this));
-    window.addEventListener("keydown", this.handleKeyDown.bind(this));
-    window.addEventListener("keyup", this.handleKeyUp.bind(this));
+    this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
+    window.addEventListener("keydown", this.#handleKeyDown.bind(this));
+    window.addEventListener("keyup", this.#handleKeyUp.bind(this));
 
-    this.xInput.addEventListener("input", this.handleXInput.bind(this));
-    this.yInput.addEventListener("input", this.handleYInput.bind(this));
+    this.xInput.addEventListener("input", this.#handleXInput.bind(this));
+    this.yInput.addEventListener("input", this.#handleYInput.bind(this));
   }
 
-  handleXInput(e) {
+  #handleXInput(e) {
     e.stopPropagation();
     this.position.x = Number(e.target.value);
     this.value = [this.position.x, this.position.y];
@@ -1800,7 +1802,7 @@ class FigInputJoystick extends HTMLElement {
     this.#emitChangeEvent();
   }
 
-  handleYInput(e) {
+  #handleYInput(e) {
     e.stopPropagation();
     this.position.y = Number(e.target.value);
     this.value = [this.position.x, this.position.y];
@@ -1809,7 +1811,7 @@ class FigInputJoystick extends HTMLElement {
     this.#emitChangeEvent();
   }
 
-  snapToGuide(value) {
+  #snapToGuide(value) {
     if (!this.isShiftHeld) return value;
     if (value < 0.1) return 0;
     if (value > 0.9) return 1;
@@ -1817,7 +1819,7 @@ class FigInputJoystick extends HTMLElement {
     return value;
   }
 
-  snapToDiagonal(x, y) {
+  #snapToDiagonal(x, y) {
     if (!this.isShiftHeld) return { x, y };
     const diff = Math.abs(x - y);
     if (diff < 0.1) return { x: (x + y) / 2, y: (x + y) / 2 };
@@ -1830,13 +1832,10 @@ class FigInputJoystick extends HTMLElement {
     let x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     let y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
 
-    // Invert Y coordinate to match typical coordinate system
-    y = 1 - y;
+    x = this.#snapToGuide(x);
+    y = this.#snapToGuide(y);
 
-    x = this.snapToGuide(x);
-    y = this.snapToGuide(y);
-
-    const snapped = this.snapToDiagonal(x, y);
+    const snapped = this.#snapToDiagonal(x, y);
     this.position = snapped;
     this.value = [snapped.x, snapped.y];
 
@@ -1868,12 +1867,15 @@ class FigInputJoystick extends HTMLElement {
   }
 
   #syncHandlePosition() {
-    this.cursor.style.left = `${this.position.x * 100}%`;
-    this.cursor.style.top = `${(1 - this.position.y) * 100}%`;
+    if (this.cursor) {
+      this.cursor.style.left = `${this.position.x * 100}%`;
+      this.cursor.style.top = `${this.position.y * 100}%`;
+    }
   }
 
-  handleMouseDown(e) {
+  #handleMouseDown(e) {
     this.isDragging = true;
+    this.plane.classList.add("dragging");
     this.#updatePosition(e);
 
     this.plane.style.cursor = "grabbing";
@@ -1884,6 +1886,7 @@ class FigInputJoystick extends HTMLElement {
 
     const handleMouseUp = () => {
       this.isDragging = false;
+      this.plane.classList.remove("dragging");
       this.plane.style.cursor = "";
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
@@ -1894,12 +1897,34 @@ class FigInputJoystick extends HTMLElement {
     window.addEventListener("mouseup", handleMouseUp);
   }
 
-  handleKeyDown(e) {
+  #handleKeyDown(e) {
     if (e.key === "Shift") this.isShiftHeld = true;
   }
 
-  handleKeyUp(e) {
+  #handleKeyUp(e) {
     if (e.key === "Shift") this.isShiftHeld = false;
+  }
+  static get observedAttributes() {
+    return ["value", "precision", "transform", "text"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "value") {
+      this.value = newValue.split(",").map(Number);
+      this.position = { x: this.value[0], y: this.value[1] };
+      this.#syncHandlePosition();
+    }
+    if (name === "precision") {
+      this.precision = newValue;
+      this.precision = parseInt(this.precision);
+    }
+    if (name === "transform") {
+      this.transform = newValue;
+      this.transform = Number(this.transform);
+    }
+    if (name === "text") {
+      this.text = newValue.toLowerCase() === "true";
+      this.innerHTML = this.#getInnerHTML();
+    }
   }
 }
 
