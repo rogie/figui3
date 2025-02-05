@@ -1745,7 +1745,6 @@ class FigInputJoystick extends HTMLElement {
   render() {
     this.innerHTML = `        
           <div class="fig-input-joystick-plane-container">
-            <div class="fig-input-joystick-plane-style">
             <div class="fig-input-joystick-plane">
               <div class="fig-input-joystick-guides"></div>
               <div class="fig-input-joystick-handle"></div>
