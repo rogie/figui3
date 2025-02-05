@@ -23,14 +23,17 @@
         <h2>UI3 Components</h2>
     </fig-header>
     <fig-content>
-
-        <h2>Details</h2>
+        <fig-input-joystick text="true"></fig-input-joystick>
+        <fig-header>
+            <h2>Details</h2>
+        </fig-header>
         <details>
             <summary>Advanced settings</summary>
             <p>Some more content here</p>
         </details>
-
-        <h2>Avatar</h2>
+        <fig-header>
+            <h2>Avatar</h2>
+        </fig-header>
         <fig-field>
             <label>Default</label>
             <fig-avatar src="https://avatars.githubusercontent.com/u/12345678?v=4"
@@ -53,15 +56,18 @@
                         name="Rogie King"></fig-avatar>
         </fig-field>
 
-        <h2>Tabs</h2>
+        <fig-header>
+            <h2>Tabs</h2>
+        </fig-header>
         <fig-field>
             <fig-tabs>
                 <fig-tab selected>Tab #1</fig-tab>
                 <fig-tab>Tab #2</fig-tab>
             </fig-tabs>
         </fig-field>
-        <h2>Segmented control</h2>
-
+        <fig-header>
+            <h2>Segmented control</h2>
+        </fig-header>
         <fig-field>
             <fig-segmented-control>
                 <fig-segment selected>One</fig-segment>
@@ -69,7 +75,9 @@
                 <fig-segment>Three</fig-segment>
             </fig-segmented-control>
         </fig-field>
-        <h2>Image</h2>
+        <fig-header>
+            <h2>Image</h2>
+        </fig-header>
         <fig-field>
             <label>Default</label>
             <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"></fig-image>
@@ -86,7 +94,9 @@
                        size="large"></fig-image>
         </fig-field>
         <br /><br />
-        <h2>Button</h2>
+        <fig-header>
+            <h2>Button</h2>
+        </fig-header>
         <fig-field>
             <label>Primary Button</label>
             <fig-button>Primary</fig-button>
@@ -127,8 +137,9 @@
                           fill="currentColor"></path>
                 </svg></fig-button>
         </fig-field>
-
-        <h2>Combo button</h2>
+        <fig-header>
+            <h2>Combo button</h2>
+        </fig-header>
         <fig-field>
             <label>Primary (compact dropdown</label>
             <fig-button-combo>
@@ -315,8 +326,9 @@
                 <fig-button>Save</fig-button>
             </footer>
         </fig-dialog>
-
-        <h2>Dropdown</h2>
+        <fig-header>
+            <h2>Dropdown</h2>
+        </fig-header>
         <fig-field>
             <label>Dropdown</label>
             <fig-dropdown>
@@ -392,7 +404,9 @@
                 <span slot="prepend">X</span>
             </fig-input-text>
         </fig-field>
-        <h2>Color input</h2>
+        <fig-header>
+            <h2>Color input</h2>
+        </fig-header>
         <fig-field>
             <label>Color swatch</label>
             <fig-input-color value="#FF000066"></fig-input-color>
@@ -408,11 +422,15 @@
                              alpha="true"
                              text="true"></fig-input-color>
         </fig-field>
-        <h2>Checkbox</h2>
+        <fig-header>
+            <h2>Checkbox</h2>
+        </fig-header>
         <fig-field>
             <fig-checkbox label="Checkbox"></fig-checkbox>
         </fig-field>
-        <h2>Radio</h2>
+        <fig-header>
+            <h2>Radio</h2>
+        </fig-header>
         <fig-field>
             <label>Radio buttons</label>
             <fig-radio label="Radio #1"
@@ -420,7 +438,9 @@
             <fig-radio label="Radio #2"
                        name="r1"></fig-radio>
         </fig-field>
-        <h2>Switch</h2>
+        <fig-header>
+            <h2>Switch</h2>
+        </fig-header>
         <fig-field>
             <label>Switches</label>
             <fig-switch on="true"
@@ -430,7 +450,9 @@
             <fig-switch disabled
                         label="Disabled"></fig-switch>
         </fig-field>
-        <h2>Chit</h2>
+        <fig-header>
+            <h2>Chit</h2>
+        </fig-header>
         <fig-field>
             <label>Chit</label>
             <hstack>
@@ -473,13 +495,17 @@
             </hstack>
         </fig-field>
 
-        <h2>Tooltip</h2>
+        <fig-header>
+            <h2>Tooltip</h2>
+        </fig-header>
         <p>Some paragraph text here with a
             <fig-tooltip text="Tooltip text">
                 <em>Tooltip</em>
             </fig-tooltip> for more information.
         </p>
-        <h2>Field</h2>
+        <fig-header>
+            <h2>Field</h2>
+        </fig-header>
         <fig-field direction="horizontal">
             <label>Horizontal</label>
             <fig-input-text value=""
@@ -490,7 +516,9 @@
             <fig-input-text value=""
                             placeholder="Field placeholder"></fig-input-text>
         </fig-field>
-        <h2>Slider</h2>
+        <fig-header>
+            <h2>Slider</h2>
+        </fig-header>
         <fig-field>
             <label>Default slider</label>
             <fig-slider default="25"
@@ -559,10 +587,14 @@
                 </datalist>
             </fig-slider>
         </fig-field>
-        <h2>Spinner</h2>
+        <fig-header>
+            <h2>Spinner</h2>
+        </fig-header>
         <fig-spinner></fig-spinner>
 
-        <h2>Misc.</h2>
+        <fig-header>
+            <h2>Misc.</h2>
+        </fig-header>
         <hstack>
             <fig-tooltip text="Tooltip"
                          delay="0">

@@ -892,6 +892,8 @@ class FigInputText extends HTMLElement {
     this.value = this.getAttribute("value") || "";
     this.type = this.getAttribute("type") || "text";
     this.placeholder = this.getAttribute("placeholder") || "";
+    this.name = this.getAttribute("name") || null;
+
     if (this.type === "number") {
       if (this.getAttribute("step")) {
         this.step = Number(this.getAttribute("step"));
@@ -910,6 +912,7 @@ class FigInputText extends HTMLElement {
 
     let html = `<input 
       type="${this.type}" 
+      ${this.name ? `name="${this.name}"` : ""}
       placeholder="${this.placeholder}"
       value="${
         this.type === "number" ? this.#transformNumber(this.value) : this.value
@@ -1038,6 +1041,7 @@ class FigInputText extends HTMLElement {
       "min",
       "max",
       "transform",
+      "name",
     ];
   }
 
@@ -1078,8 +1082,12 @@ class FigInputText extends HTMLElement {
             this.input.setAttribute(name, newValue);
           }
           break;
+        case "name":
+          this[name] = this.input[name] = newValue;
+          this.input.setAttribute("name", newValue);
+          break;
         default:
-          this[name] = this.input[name] = value;
+          this[name] = this.input[name] = newValue;
           break;
       }
     }
@@ -1703,3 +1711,171 @@ class FigImage extends HTMLElement {
   }
 }
 window.customElements.define("fig-image", FigImage);
+
+class FigInputJoystick extends HTMLElement {
+  constructor() {
+    super();
+
+    this.position = { x: 0.5, y: 0.5 };
+    this.value = [0.5, 0.5];
+    this.isDragging = false;
+    this.isShiftHeld = false;
+
+    // Initialize position
+    requestAnimationFrame(() => {
+      this.precision = this.getAttribute("precision") || 3;
+      this.precision = parseInt(this.precision);
+      this.transform = this.getAttribute("transform") || 1;
+      this.transform = Number(this.transform);
+      this.text = this.getAttribute("text") === "true";
+
+      this.render();
+
+      this.setupListeners();
+
+      this.cursor.style.left = `${this.position.x * 100}%`;
+      this.cursor.style.top = `${this.position.y * 100}%`;
+      if (this.text) {
+        this.xInput.value = this.position.x.toFixed(this.precision);
+        this.yInput.value = this.position.y.toFixed(this.precision);
+      }
+    });
+  }
+
+  render() {
+    this.innerHTML = `        
+          <div class="fig-input-joystick-plane-container">
+            <div class="fig-input-joystick-plane">
+              <div class="fig-input-joystick-guides"></div>
+              <div class="fig-input-joystick-handle"></div>
+            </div>
+          </div>
+          ${
+            this.text
+              ? `<fig-input-text 
+                  type="number"
+                  name="x"
+                  step="0.01"
+                  value="${this.position.x}"
+                  min="0"
+                  max="1">
+                  <span slot="prepend">X</span>
+                </fig-input-text>
+                <fig-input-text 
+                  type="number" 
+                  name="y" 
+                  step="0.01" 
+                  min="0" 
+                  max="1"
+                  value="${this.position.y}"> 
+                  <span slot="prepend">Y</span>
+                </fig-input-text>`
+              : ""
+          }
+        `;
+  }
+
+  setupListeners() {
+    this.plane = this.querySelector(".fig-input-joystick-plane");
+    this.cursor = this.querySelector(".fig-input-joystick-handle");
+    if (this.text) {
+      this.xInput = this.querySelector("fig-input-text[name='x']");
+      this.yInput = this.querySelector("fig-input-text[name='y']");
+    }
+
+    this.plane.addEventListener("mousedown", this.handleMouseDown.bind(this));
+    window.addEventListener("keydown", this.handleKeyDown.bind(this));
+    window.addEventListener("keyup", this.handleKeyUp.bind(this));
+
+    this.xInput.addEventListener("input", this.handleXInput.bind(this));
+    this.yInput.addEventListener("input", this.handleYInput.bind(this));
+  }
+
+  handleXInput(e) {
+    this.position.x = e.target.value;
+    this.#syncHandlePosition();
+  }
+
+  handleYInput(e) {
+    this.position.y = e.target.value;
+    this.#syncHandlePosition();
+  }
+
+  snapToGuide(value) {
+    if (!this.isShiftHeld) return value;
+    if (value < 0.1) return 0;
+    if (value > 0.9) return 1;
+    if (value > 0.4 && value < 0.6) return 0.5;
+    return value;
+  }
+
+  snapToDiagonal(x, y) {
+    if (!this.isShiftHeld) return { x, y };
+    const diff = Math.abs(x - y);
+    if (diff < 0.1) return { x: (x + y) / 2, y: (x + y) / 2 };
+    if (Math.abs(1 - x - y) < 0.1) return { x, y: 1 - x };
+    return { x, y };
+  }
+
+  updatePosition(e) {
+    const rect = this.plane.getBoundingClientRect();
+    let x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    let y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+
+    // Invert Y coordinate to match typical coordinate system
+    y = 1 - y;
+
+    x = this.snapToGuide(x);
+    y = this.snapToGuide(y);
+
+    const snapped = this.snapToDiagonal(x, y);
+    this.position = snapped;
+    this.value = [snapped.x, snapped.y];
+
+    this.cursor.style.left = `${snapped.x * 100}%`;
+    this.cursor.style.top = `${(1 - snapped.y) * 100}%`; // Invert Y for display
+    if (this.text) {
+      this.xInput.setAttribute("value", snapped.x.toFixed(3));
+      this.yInput.setAttribute("value", snapped.y.toFixed(3));
+    }
+
+    this.dispatchEvent(new CustomEvent("input", { detail: this.position }));
+  }
+
+  #syncHandlePosition() {
+    this.cursor.style.left = `${this.position.x * 100}%`;
+    this.cursor.style.top = `${(1 - this.position.y) * 100}%`;
+  }
+
+  handleMouseDown(e) {
+    this.isDragging = true;
+    this.updatePosition(e);
+
+    this.plane.style.cursor = "grabbing";
+
+    const handleMouseMove = (e) => {
+      if (this.isDragging) this.updatePosition(e);
+    };
+
+    const handleMouseUp = () => {
+      this.isDragging = false;
+      this.plane.style.cursor = "";
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      this.dispatchEvent(new CustomEvent("change", { detail: this.position }));
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }
+
+  handleKeyDown(e) {
+    if (e.key === "Shift") this.isShiftHeld = true;
+  }
+
+  handleKeyUp(e) {
+    if (e.key === "Shift") this.isShiftHeld = false;
+  }
+}
+
+customElements.define("fig-input-joystick", FigInputJoystick);
