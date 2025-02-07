@@ -2263,18 +2263,6 @@ fig-segmented-control {
   }
 }
 
-/* Utilities */
-
-@keyframes fig-spinner-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 fig-input-joystick {
   --size: 1.5rem;
   display: inline-flex;
@@ -2296,10 +2284,10 @@ fig-input-joystick {
     width: var(--size);
     height: var(--size);
     flex-shrink: 0;
-    &.dragging,
-    &:hover {
+    &.dragging {
       cursor: grab;
       --size: 3rem;
+      z-index: 2;
     }
   }
   .fig-input-joystick-plane > * {
@@ -2335,8 +2323,7 @@ fig-input-joystick {
       pointer-events: none;
     }
   }
-  .fig-input-joystick-plane.dragging .fig-input-joystick-guides,
-  .fig-input-joystick-plane:hover .fig-input-joystick-guides {
+  .fig-input-joystick-plane.dragging .fig-input-joystick-guides {
     background: linear-gradient(
         45deg,
         transparent calc(50% - 0.5px),
@@ -2362,5 +2349,56 @@ fig-input-joystick {
     box-shadow: var(--handle-shadow);
     border-radius: 50%;
     transform: translate(-50%, -50%);
+  }
+}
+
+fig-input-angle {
+  --size: 1.5rem;
+  display: inline-flex;
+  gap: var(--spacer-2);
+
+  .fig-input-angle-plane {
+    display: inline-grid;
+    place-items: center;
+    width: var(--size);
+    height: var(--size);
+    aspect-ratio: 1/1;
+    flex-shrink: 0;
+    background-color: var(--figma-color-bg-secondary);
+    border-radius: 100%;
+    box-shadow: inset 0 0 0 1px var(--figma-color-border);
+    &.dragging {
+      cursor: grab;
+      --size: 3rem;
+      z-index: 2;
+    }
+  }
+  .fig-input-angle-handle {
+    display: inline-grid;
+    place-items: center;
+    grid-area: 1/1;
+    width: calc(0.5rem + 2px);
+    height: calc(0.5rem + 2px);
+    &:before {
+      content: "";
+      display: block;
+      width: 0.5rem;
+      height: 0.5rem;
+      background: var(--figma-color-icon-onbrand);
+      box-shadow: var(--handle-shadow);
+      border-radius: 50%;
+    }
+  }
+}
+
+/* Utilities */
+
+@keyframes fig-spinner-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }

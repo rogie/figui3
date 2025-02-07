@@ -23,6 +23,12 @@
         <h2>UI3 Components</h2>
     </fig-header>
     <fig-content>
+        <fig-input-angle text="true"
+                         value="0"
+                         onInput="console.log(event.target.value)"></fig-input-angle>
+        <br /><br />
+        <fig-input-joystick></fig-input-joystick>
+        <br /><br />
         <fig-input-joystick text="true"
                             value="0,0"
                             onInput="console.log(event.target.value)"></fig-input-joystick>
@@ -445,8 +451,11 @@
         </fig-header>
         <fig-field>
             <label>Switches</label>
-            <fig-switch on="true"
+            <fig-switch checked="true"
+                        onInput="console.log(event.target.checked)"
                         label="On"></fig-switch>
+            <fig-switch checked="false"
+                        label="Off"></fig-switch>
             <fig-switch indeterminate="true"
                         label="Indeterminate"></fig-switch>
             <fig-switch disabled

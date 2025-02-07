@@ -1671,6 +1671,7 @@ class FigImage extends HTMLElement {
     this.innerHTML = this.#getInnerHTML();
     this.#updateRefs();
   }
+
   #updateRefs() {
     requestAnimationFrame(() => {
       this.chit = this.querySelector("fig-chit");
@@ -1712,6 +1713,13 @@ class FigImage extends HTMLElement {
 }
 window.customElements.define("fig-image", FigImage);
 
+/**
+ * A custom joystick input element.
+ * @attr {string} value - The current position of the joystick (e.g., "0.5,0.5").
+ * @attr {number} precision - The number of decimal places for the output.
+ * @attr {number} transform - A scaling factor for the output.
+ * @attr {boolean} text - Whether to display text inputs for X and Y values.
+ */
 class FigInputJoystick extends HTMLElement {
   constructor() {
     super();
@@ -1720,6 +1728,10 @@ class FigInputJoystick extends HTMLElement {
     this.value = [0.5, 0.5];
     this.isDragging = false;
     this.isShiftHeld = false;
+    this.plane = null;
+    this.cursor = null;
+    this.xInput = null;
+    this.yInput = null;
 
     // Initialize position
     requestAnimationFrame(() => {
@@ -1734,11 +1746,20 @@ class FigInputJoystick extends HTMLElement {
       this.#setupListeners();
 
       this.#syncHandlePosition();
-      if (this.text) {
-        this.xInput.value = this.position.x.toFixed(this.precision);
-        this.yInput.value = this.position.y.toFixed(this.precision);
+      if (this.text && this.xInput && this.yInput) {
+        this.xInput.setAttribute(
+          "value",
+          this.position.x.toFixed(this.precision)
+        );
+        this.yInput.setAttribute(
+          "value",
+          this.position.y.toFixed(this.precision)
+        );
       }
     });
+  }
+  disconnectedCallback() {
+    this.#cleanupListeners();
   }
 
   #render() {
@@ -1780,23 +1801,32 @@ class FigInputJoystick extends HTMLElement {
   #setupListeners() {
     this.plane = this.querySelector(".fig-input-joystick-plane");
     this.cursor = this.querySelector(".fig-input-joystick-handle");
-    if (this.text) {
-      this.xInput = this.querySelector("fig-input-text[name='x']");
-      this.yInput = this.querySelector("fig-input-text[name='y']");
-    }
-
     this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
+    this.plane.addEventListener(
+      "touchstart",
+      this.#handleTouchStart.bind(this)
+    );
     window.addEventListener("keydown", this.#handleKeyDown.bind(this));
     window.addEventListener("keyup", this.#handleKeyUp.bind(this));
+    if (this.text && this.xInput && this.yInput) {
+      this.xInput.addEventListener("input", this.#handleXInput.bind(this));
+      this.yInput.addEventListener("input", this.#handleYInput.bind(this));
+    }
+  }
 
-    this.xInput.addEventListener("input", this.#handleXInput.bind(this));
-    this.yInput.addEventListener("input", this.#handleYInput.bind(this));
+  #cleanupListeners() {
+    this.plane.removeEventListener("mousedown", this.#handleMouseDown);
+    window.removeEventListener("keydown", this.#handleKeyDown);
+    window.removeEventListener("keyup", this.#handleKeyUp);
+    if (this.text && this.xInput && this.yInput) {
+      this.xInput.removeEventListener("input", this.#handleXInput);
+      this.yInput.removeEventListener("input", this.#handleYInput);
+    }
   }
 
   #handleXInput(e) {
     e.stopPropagation();
     this.position.x = Number(e.target.value);
-    this.value = [this.position.x, this.position.y];
     this.#syncHandlePosition();
     this.#emitInputEvent();
     this.#emitChangeEvent();
@@ -1805,7 +1835,6 @@ class FigInputJoystick extends HTMLElement {
   #handleYInput(e) {
     e.stopPropagation();
     this.position.y = Number(e.target.value);
-    this.value = [this.position.x, this.position.y];
     this.#syncHandlePosition();
     this.#emitInputEvent();
     this.#emitChangeEvent();
@@ -1837,17 +1866,17 @@ class FigInputJoystick extends HTMLElement {
 
     const snapped = this.#snapToDiagonal(x, y);
     this.position = snapped;
-    this.value = [snapped.x, snapped.y];
 
     this.cursor.style.left = `${snapped.x * 100}%`;
-    this.cursor.style.top = `${(1 - snapped.y) * 100}%`; // Invert Y for display
-    if (this.text) {
+    this.cursor.style.top = `${snapped.y * 100}%`; // Invert Y for display
+    if (this.text && this.xInput && this.yInput) {
       this.xInput.setAttribute("value", snapped.x.toFixed(3));
       this.yInput.setAttribute("value", snapped.y.toFixed(3));
     }
 
     this.#emitInputEvent();
   }
+
   #emitInputEvent() {
     this.dispatchEvent(
       new CustomEvent("input", {
@@ -1875,12 +1904,13 @@ class FigInputJoystick extends HTMLElement {
 
   #handleMouseDown(e) {
     this.isDragging = true;
-    this.plane.classList.add("dragging");
+
     this.#updatePosition(e);
 
     this.plane.style.cursor = "grabbing";
 
     const handleMouseMove = (e) => {
+      this.plane.classList.add("dragging");
       if (this.isDragging) this.#updatePosition(e);
     };
 
@@ -1897,6 +1927,26 @@ class FigInputJoystick extends HTMLElement {
     window.addEventListener("mouseup", handleMouseUp);
   }
 
+  #handleTouchStart(e) {
+    e.preventDefault();
+    this.isDragging = true;
+    this.#updatePosition(e.touches[0]);
+
+    const handleTouchMove = (e) => {
+      if (this.isDragging) this.#updatePosition(e.touches[0]);
+    };
+
+    const handleTouchEnd = () => {
+      this.isDragging = false;
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      this.#emitChangeEvent();
+    };
+
+    window.addEventListener("touchmove", handleTouchMove);
+    window.addEventListener("touchend", handleTouchEnd);
+  }
+
   #handleKeyDown(e) {
     if (e.key === "Shift") this.isShiftHeld = true;
   }
@@ -1907,25 +1957,266 @@ class FigInputJoystick extends HTMLElement {
   static get observedAttributes() {
     return ["value", "precision", "transform", "text"];
   }
+  get value() {
+    return [this.position.x, this.position.y];
+  }
+  set value(value) {
+    let v = value.toString().split(",").map(Number);
+    this.position = { x: v[0], y: v[1] };
+    this.#syncHandlePosition();
+  }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "value") {
-      this.value = newValue.split(",").map(Number);
-      this.position = { x: this.value[0], y: this.value[1] };
-      this.#syncHandlePosition();
+      this.value = newValue;
     }
     if (name === "precision") {
-      this.precision = newValue;
-      this.precision = parseInt(this.precision);
+      this.precision = parseInt(newValue);
     }
     if (name === "transform") {
-      this.transform = newValue;
-      this.transform = Number(this.transform);
+      this.transform = Number(newValue);
     }
-    if (name === "text") {
+    if (name === "text" && newValue !== oldValue) {
       this.text = newValue.toLowerCase() === "true";
-      this.innerHTML = this.#getInnerHTML();
+      this.#render();
     }
   }
 }
 
 customElements.define("fig-input-joystick", FigInputJoystick);
+
+/**
+ * A custom angle chooser input element.
+ * @attr {number} value - The current angle of the handle in degrees.
+ * @attr {number} precision - The number of decimal places for the output.
+ * @attr {boolean} text - Whether to display a text input for the angle value.
+ */
+class FigInputAngle extends HTMLElement {
+  constructor() {
+    super();
+
+    this.angle = 0; // Angle in degrees
+    this.isDragging = false;
+    this.isShiftHeld = false;
+    this.handle = null;
+    this.angleInput = null;
+    this.plane = null;
+
+    // Initialize position
+    requestAnimationFrame(() => {
+      this.precision = this.getAttribute("precision") || 1;
+      this.precision = parseInt(this.precision);
+      this.text = this.getAttribute("text") === "true";
+
+      this.#render();
+
+      this.#setupListeners();
+
+      this.#syncHandlePosition();
+      if (this.text && this.angleInput) {
+        this.angleInput.setAttribute(
+          "value",
+          this.angle.toFixed(this.precision)
+        );
+      }
+    });
+  }
+
+  disconnectedCallback() {
+    this.#cleanupListeners();
+  }
+
+  #render() {
+    this.innerHTML = this.#getInnerHTML();
+  }
+
+  #getInnerHTML() {
+    return `
+        <div class="fig-input-angle-plane">
+          <div class="fig-input-angle-handle"></div>
+        </div>
+        ${
+          this.text
+            ? `<fig-input-text 
+                type="number"
+                name="angle"
+                step="0.1"
+                value="${this.angle}"
+                min="0"
+                max="360">
+                <span slot="append">°</span>
+              </fig-input-text>`
+            : ""
+        }
+    `;
+  }
+
+  #setupListeners() {
+    this.handle = this.querySelector(".fig-input-angle-handle");
+    this.plane = this.querySelector(".fig-input-angle-plane");
+    this.angleInput = this.querySelector("fig-input-text[name='angle']");
+    this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
+    this.plane.addEventListener(
+      "touchstart",
+      this.#handleTouchStart.bind(this)
+    );
+    window.addEventListener("keydown", this.#handleKeyDown.bind(this));
+    window.addEventListener("keyup", this.#handleKeyUp.bind(this));
+    if (this.text && this.angleInput) {
+      this.angleInput = this.querySelector("fig-input-text");
+      this.angleInput.addEventListener(
+        "input",
+        this.#handleAngleInput.bind(this)
+      );
+    }
+  }
+
+  #cleanupListeners() {
+    this.plane.removeEventListener("mousedown", this.#handleMouseDown);
+    this.plane.removeEventListener("touchstart", this.#handleTouchStart);
+    window.removeEventListener("keydown", this.#handleKeyDown);
+    window.removeEventListener("keyup", this.#handleKeyUp);
+    if (this.text && this.angleInput) {
+      this.angleInput.removeEventListener("input", this.#handleAngleInput);
+    }
+  }
+
+  #handleAngleInput(e) {
+    e.stopPropagation();
+    this.angle = Number(e.target.value);
+    this.#syncHandlePosition();
+    this.#emitInputEvent();
+    this.#emitChangeEvent();
+  }
+
+  #snapToIncrement(angle) {
+    if (!this.isShiftHeld) return angle;
+    const increment = 45;
+    return Math.round(angle / increment) * increment;
+  }
+
+  #updateAngle(e) {
+    const rect = this.plane.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const deltaX = e.clientX - centerX;
+    const deltaY = e.clientY - centerY;
+    let angle = ((Math.atan2(deltaY, deltaX) * 180) / Math.PI + 360) % 360;
+
+    angle = this.#snapToIncrement(angle);
+    this.angle = angle;
+
+    this.#syncHandlePosition();
+    if (this.text && this.angleInput) {
+      this.angleInput.setAttribute("value", this.angle.toFixed(this.precision));
+    }
+
+    this.#emitInputEvent();
+  }
+
+  #emitInputEvent() {
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  }
+
+  #emitChangeEvent() {
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  }
+
+  #syncHandlePosition() {
+    if (this.handle) {
+      const radians = (this.angle * Math.PI) / 180;
+      const radius = this.plane.offsetWidth / 2 - this.handle.offsetWidth / 2;
+      const x = Math.cos(radians) * radius;
+      const y = Math.sin(radians) * radius;
+      this.handle.style.transform = `translate(${x}px, ${y}px)`;
+    }
+  }
+
+  #handleMouseDown(e) {
+    this.isDragging = true;
+    this.#updateAngle(e);
+
+    const handleMouseMove = (e) => {
+      if (this.isDragging) this.#updateAngle(e);
+    };
+
+    const handleMouseUp = () => {
+      this.isDragging = false;
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      this.#emitChangeEvent();
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }
+
+  #handleTouchStart(e) {
+    e.preventDefault();
+    this.isDragging = true;
+    this.#updateAngle(e.touches[0]);
+
+    const handleTouchMove = (e) => {
+      if (this.isDragging) this.#updateAngle(e.touches[0]);
+    };
+
+    const handleTouchEnd = () => {
+      this.isDragging = false;
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      this.#emitChangeEvent();
+    };
+
+    window.addEventListener("touchmove", handleTouchMove);
+    window.addEventListener("touchend", handleTouchEnd);
+  }
+
+  #handleKeyDown(e) {
+    if (e.key === "Shift") this.isShiftHeld = true;
+  }
+
+  #handleKeyUp(e) {
+    if (e.key === "Shift") this.isShiftHeld = false;
+  }
+
+  static get observedAttributes() {
+    return ["value", "precision", "text"];
+  }
+
+  get value() {
+    return this.angle;
+  }
+
+  set value(value) {
+    if (isNaN(value)) {
+      console.error("Invalid value: must be a number.");
+      return;
+    }
+    this.angle = value;
+    this.#syncHandlePosition();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "value") {
+      this.value = Number(newValue);
+    }
+    if (name === "precision") {
+      this.precision = parseInt(newValue);
+    }
+    if (name === "text" && newValue !== oldValue) {
+      this.text = newValue.toLowerCase() === "true";
+      this.#render();
+    }
+  }
+}
+
+customElements.define("fig-input-angle", FigInputAngle);
