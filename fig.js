@@ -1767,7 +1767,7 @@ class FigInputJoystick extends HTMLElement {
   }
   #getInnerHTML() {
     return `        
-          <div class="fig-input-joystick-plane-container">
+          <div class="fig-input-joystick-plane-container" tabindex="0">
             <div class="fig-input-joystick-plane">
               <div class="fig-input-joystick-guides"></div>
               <div class="fig-input-joystick-handle"></div>
@@ -1801,6 +1801,8 @@ class FigInputJoystick extends HTMLElement {
   #setupListeners() {
     this.plane = this.querySelector(".fig-input-joystick-plane");
     this.cursor = this.querySelector(".fig-input-joystick-handle");
+    this.xInput = this.querySelector("fig-input-text[name='x']");
+    this.yInput = this.querySelector("fig-input-text[name='y']");
     this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
     this.plane.addEventListener(
       "touchstart",
@@ -1938,6 +1940,7 @@ class FigInputJoystick extends HTMLElement {
 
     const handleTouchEnd = () => {
       this.isDragging = false;
+      this.plane.classList.remove("dragging");
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
       this.#emitChangeEvent();
@@ -1989,12 +1992,20 @@ customElements.define("fig-input-joystick", FigInputJoystick);
  * @attr {number} value - The current angle of the handle in degrees.
  * @attr {number} precision - The number of decimal places for the output.
  * @attr {boolean} text - Whether to display a text input for the angle value.
+ * @attr {number} adjacent - The adjacent value of the angle.
+ * @attr {number} opposite - The opposite value of the angle.
  */
 class FigInputAngle extends HTMLElement {
+  // Declare private fields first
+  #adjacent;
+  #opposite;
+
   constructor() {
     super();
 
     this.angle = 0; // Angle in degrees
+    this.#adjacent = 1;
+    this.#opposite = 0;
     this.isDragging = false;
     this.isShiftHeld = false;
     this.handle = null;
@@ -2031,7 +2042,7 @@ class FigInputAngle extends HTMLElement {
 
   #getInnerHTML() {
     return `
-        <div class="fig-input-angle-plane">
+        <div class="fig-input-angle-plane" tabindex="0">
           <div class="fig-input-angle-handle"></div>
         </div>
         ${
@@ -2083,9 +2094,16 @@ class FigInputAngle extends HTMLElement {
   #handleAngleInput(e) {
     e.stopPropagation();
     this.angle = Number(e.target.value);
+    this.#calculateAdjacentAndOpposite();
     this.#syncHandlePosition();
     this.#emitInputEvent();
     this.#emitChangeEvent();
+  }
+
+  #calculateAdjacentAndOpposite() {
+    const radians = (this.angle * Math.PI) / 180;
+    this.#adjacent = Math.cos(radians);
+    this.#opposite = Math.sin(radians);
   }
 
   #snapToIncrement(angle) {
@@ -2104,6 +2122,8 @@ class FigInputAngle extends HTMLElement {
 
     angle = this.#snapToIncrement(angle);
     this.angle = angle;
+
+    this.#calculateAdjacentAndOpposite();
 
     this.#syncHandlePosition();
     if (this.text && this.angleInput) {
@@ -2146,11 +2166,13 @@ class FigInputAngle extends HTMLElement {
     this.#updateAngle(e);
 
     const handleMouseMove = (e) => {
+      this.plane.classList.add("dragging");
       if (this.isDragging) this.#updateAngle(e);
     };
 
     const handleMouseUp = () => {
       this.isDragging = false;
+      this.plane.classList.remove("dragging");
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
       this.#emitChangeEvent();
@@ -2166,11 +2188,13 @@ class FigInputAngle extends HTMLElement {
     this.#updateAngle(e.touches[0]);
 
     const handleTouchMove = (e) => {
+      this.plane.classList.add("dragging");
       if (this.isDragging) this.#updateAngle(e.touches[0]);
     };
 
     const handleTouchEnd = () => {
       this.isDragging = false;
+      this.plane.classList.remove("dragging");
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
       this.#emitChangeEvent();
@@ -2196,12 +2220,21 @@ class FigInputAngle extends HTMLElement {
     return this.angle;
   }
 
+  get adjacent() {
+    return this.#adjacent;
+  }
+
+  get opposite() {
+    return this.#opposite;
+  }
+
   set value(value) {
     if (isNaN(value)) {
       console.error("Invalid value: must be a number.");
       return;
     }
     this.angle = value;
+    this.#calculateAdjacentAndOpposite();
     this.#syncHandlePosition();
   }
 
