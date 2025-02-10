@@ -2213,12 +2213,14 @@ fig-field,
     justify-content: space-between;
     min-height: calc(1rem + var(--spacer-1) * 2);
     align-items: center;
+    width: 100%;
   }
 
   &[direction="horizontal"] {
     gap: var(--spacer-2);
     align-items: start;
     flex-direction: row;
+    width: auto;
 
     & > label {
       min-width: 4rem;
@@ -2259,10 +2261,12 @@ fig-segmented-control {
     justify-content: center;
     position: relative;
     appearance: none;
+    color: var(--figma-color-text-secondary);
     padding: 0 var(--spacer-2);
 
     &[selected]:not([selected="false"]),
     &[selected="true"] {
+      color: var(--figma-color-text);
       background-color: var(--figma-color-bg);
       border-radius: calc(var(--radius-medium) - 1px);
       box-shadow: 0 0 0 1px var(--figma-color-border);

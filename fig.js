@@ -959,30 +959,42 @@ class FigInputText extends HTMLElement {
     this.input.focus();
   }
   #transformNumber(value) {
-    let transformed = value === "" ? "" : Number(value) * (this.transform || 1);
+    if (value === "") return "";
+    let transformed = Number(value) * (this.transform || 1);
     transformed = this.#formatNumber(transformed);
     return transformed;
   }
   #handleInput(e) {
+    console.log("handleInput", e.target.value);
+    e.stopPropagation();
     let value = e.target.value;
+    let valueTransformed = value;
     if (this.type === "number") {
-      value = this.#sanitizeInput(value);
-      //value = Number(value);
       value = value / (this.transform || 1);
+      value = this.#sanitizeInput(value, false);
+      valueTransformed = value * (this.transform || 1);
     }
-    this.setAttribute("value", value);
+    this.value = value;
+    this.input.value = valueTransformed;
+    this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
   }
   #handleMouseMove(e) {
+    if (this.type !== "number") return;
     if (e.altKey) {
-      const step = (this.step || 1) * e.movementX;
-      const value = this.#sanitizeInput(
-        Number(this.value) + step,
-        false
-      ).toFixed(2);
-      this.setAttribute("value", value);
+      let step = (this.step || 1) * e.movementX;
+      let value = Number(this.input.value);
+      value = value / (this.transform || 1) + step;
+      value = this.#sanitizeInput(value, false);
+      let valueTransformed = value * (this.transform || 1);
+      value = this.#formatNumber(value);
+      valueTransformed = this.#formatNumber(valueTransformed);
+      this.value = value;
+      this.input.value = valueTransformed;
+      this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
     }
   }
   #handleMouseDown(e) {
+    if (this.type !== "number") return;
     if (e.altKey) {
       this.input.style.cursor =
         this.style.cursor =
@@ -995,6 +1007,7 @@ class FigInputText extends HTMLElement {
     }
   }
   #handleMouseUp(e) {
+    if (this.type !== "number") return;
     this.input.style.cursor =
       this.style.cursor =
       document.body.style.cursor =
@@ -1020,6 +1033,7 @@ class FigInputText extends HTMLElement {
           sanitized
         );
       }
+
       sanitized = this.#formatNumber(sanitized);
     }
     return sanitized;
@@ -1056,18 +1070,15 @@ class FigInputText extends HTMLElement {
         case "transform":
           if (this.type === "number") {
             this.transform = Number(newValue) || 1;
-            this.min = this.#transformNumber(this.min);
-            this.max = this.#transformNumber(this.max);
-            this.step = this.#transformNumber(this.step);
-            this.value = this.#transformNumber(this.value);
+            this.input.value = this.#transformNumber(this.value);
           }
           break;
         case "value":
           let value = newValue;
           if (this.type === "number") {
-            let sanitized = this.#sanitizeInput(value);
-            this.value = sanitized;
-            this.input.value = this.#transformNumber(sanitized);
+            value = this.#sanitizeInput(value, false);
+            this.value = value;
+            this.input.value = this.#transformNumber(value);
           } else {
             this.value = value;
             this.input.value = value;
@@ -1935,6 +1946,7 @@ class FigInputJoystick extends HTMLElement {
     this.#updatePosition(e.touches[0]);
 
     const handleTouchMove = (e) => {
+      this.plane.classList.add("dragging");
       if (this.isDragging) this.#updatePosition(e.touches[0]);
     };
 
@@ -2251,5 +2263,3 @@ class FigInputAngle extends HTMLElement {
     }
   }
 }
-
-customElements.define("fig-input-angle", FigInputAngle);
