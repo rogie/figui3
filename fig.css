@@ -1,6 +1,7 @@
 :root {
   --figma-color-bg: #ffffff;
   --figma-color-bg-brand: #0d99ff;
+
   --figma-color-bg-brand-hover: #007be5;
   --figma-color-bg-brand-pressed: #007be5;
   --figma-color-bg-brand-secondary: #0768cf;
@@ -160,6 +161,7 @@
   --figma-color-text-onwarning-tertiary: #0000004d;
   --figma-color-text-secondary: #00000080;
   --figma-color-text-secondary-hover: #000000e5;
+  --figma-color-text-selection: rgba(13, 153, 255, 0.4);
   --figma-color-text-selected: #007be5;
   --figma-color-text-selected-secondary: #007be5;
   --figma-color-text-selected-tertiary: #007be5;
@@ -476,6 +478,14 @@ html {
 *:before,
 *:after {
   box-sizing: border-box;
+}
+
+::selection {
+  background-color: var(--figma-color-text-selection);
+}
+
+::-moz-selection {
+  background-color: var(--figma-color-text-selection);
 }
 
 body {
@@ -2261,7 +2271,7 @@ fig-segmented-control {
     justify-content: center;
     position: relative;
     appearance: none;
-    color: var(--figma-color-text-secondary);
+    color: var(--figma-color-text-se);
     padding: 0 var(--spacer-2);
 
     &[selected]:not([selected="false"]),

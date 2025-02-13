@@ -2023,8 +2023,9 @@ class FigInputAngle extends HTMLElement {
     this.handle = null;
     this.angleInput = null;
     this.plane = null;
+  }
 
-    // Initialize position
+  connectedCallback() {
     requestAnimationFrame(() => {
       this.precision = this.getAttribute("precision") || 1;
       this.precision = parseInt(this.precision);
@@ -2263,3 +2264,4 @@ class FigInputAngle extends HTMLElement {
     }
   }
 }
+customElements.define("fig-input-angle", FigInputAngle);
