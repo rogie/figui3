@@ -757,6 +757,14 @@ class FigSlider extends HTMLElement {
         }
         this.inputContainer.append(this.datalist);
         this.input.setAttribute("list", this.datalist.getAttribute("id"));
+      } else if (this.type === "delta") {
+        this.datalist = document.createElement("datalist");
+        this.datalist.setAttribute("id", figUniqueId());
+        let option = document.createElement("option");
+        option.setAttribute("value", this.default);
+        this.datalist.append(option);
+        this.inputContainer.append(this.datalist);
+        this.input.setAttribute("list", this.datalist.getAttribute("id"));
       }
       if (this.datalist) {
         let defaultOption = this.datalist.querySelector(

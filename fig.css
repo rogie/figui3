@@ -1514,6 +1514,12 @@ fig-slider {
   }
 
   &[type="delta"] {
+    datalist option {
+      position: absolute;
+      margin: 0;
+      left: calc(var(--start-percent) - var(--slider-tick-size) / 2);
+      top: calc(50% - var(--slider-tick-size) / 2);
+    }
     .fig-slider-input-container {
       &::before {
         --left-start: calc(var(--start-percent) - var(--slider-height) / 2);
@@ -1534,19 +1540,6 @@ fig-slider {
         --delta: calc(var(--slider-complete) - var(--default));
         --abs-delta: max(var(--delta), -1 * var(--delta));
         opacity: calc(var(--abs-delta) * 100);
-      }
-
-      &::after {
-        content: "";
-        width: var(--slider-tick-size);
-        height: var(--slider-tick-size);
-        aspect-ratio: 1;
-        border-radius: 100%;
-        font-size: 0;
-        position: absolute;
-        left: calc(var(--start-percent) - var(--slider-tick-size) / 2);
-        top: calc(50% - var(--slider-tick-size) / 2);
-        background: var(--figma-color-icon-onbrand);
       }
     }
   }
