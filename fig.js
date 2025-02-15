@@ -6,7 +6,12 @@ function figSupportsPopover() {
 }
 
 if (window.customElements && !window.customElements.get("fig-button")) {
-  /* Button */
+  /**
+   * A custom button element that supports different types and states.
+   * @attr {string} type - The button type: "button" (default), "toggle", or "submit"
+   * @attr {boolean} selected - Whether the button is in a selected state
+   * @attr {boolean} disabled - Whether the button is disabled
+   */
   class FigButton extends HTMLElement {
     type;
     #selected;
@@ -100,7 +105,11 @@ if (window.customElements && !window.customElements.get("fig-button")) {
 }
 
 if (window.customElements && !window.customElements.get("fig-dropdown")) {
-  /* Dropdown */
+  /**
+   * A custom dropdown/select element.
+   * @attr {string} type - The dropdown type: "select" (default) or "dropdown"
+   * @attr {string} value - The currently selected value
+   */
   class FigDropdown extends HTMLElement {
     constructor() {
       super();
@@ -200,13 +209,26 @@ if (window.customElements && !window.customElements.get("fig-dropdown")) {
 }
 
 /* Tooltip */
+/**
+ * A custom tooltip element that displays on hover or click.
+ * @attr {string} action - The trigger action: "hover" (default) or "click"
+ * @attr {number} delay - Delay in milliseconds before showing tooltip (default: 500)
+ * @attr {string} text - The tooltip text content
+ * @attr {string} offset - Comma-separated offset values: left,top,right,bottom
+ */
 class FigTooltip extends HTMLElement {
+  #boundHideOnChromeOpen;
+  #boundHideOnDragStart;
   constructor() {
     super();
     this.action = this.getAttribute("action") || "hover";
     let delay = parseInt(this.getAttribute("delay"));
     this.delay = !isNaN(delay) ? delay : 500;
     this.isOpen = false;
+
+    // Bind methods that will be used as event listeners
+    this.#boundHideOnChromeOpen = this.#hideOnChromeOpen.bind(this);
+    this.#boundHideOnDragStart = this.hidePopup.bind(this);
   }
   connectedCallback() {
     this.setup();
@@ -215,6 +237,14 @@ class FigTooltip extends HTMLElement {
 
   disconnectedCallback() {
     this.destroy();
+    // Remove global listeners
+    document.removeEventListener(
+      "mousedown",
+      this.#boundHideOnChromeOpen,
+      true
+    );
+    // Remove mousedown listener
+    this.removeEventListener("mousedown", this.#boundHideOnDragStart);
   }
 
   setup() {
@@ -244,6 +274,8 @@ class FigTooltip extends HTMLElement {
     if (this.action === "hover") {
       this.addEventListener("pointerenter", this.showDelayedPopup.bind(this));
       this.addEventListener("pointerleave", this.hidePopup.bind(this));
+      // Add mousedown listener instead of dragstart
+      this.addEventListener("mousedown", this.#boundHideOnDragStart);
     } else if (this.action === "click") {
       this.addEventListener("click", this.showDelayedPopup.bind(this));
       document.body.addEventListener(
@@ -251,6 +283,9 @@ class FigTooltip extends HTMLElement {
         this.hidePopupOutsideClick.bind(this)
       );
     }
+
+    // Add listener for chrome interactions
+    document.addEventListener("mousedown", this.#boundHideOnChromeOpen, true);
   }
 
   getOffset() {
@@ -331,11 +366,31 @@ class FigTooltip extends HTMLElement {
       this.delay = !isNaN(delay) ? delay : 500;
     }
   }
+
+  #hideOnChromeOpen(e) {
+    if (!this.isOpen) return;
+
+    // Check if the clicked element is a select or opens a dialog
+    const target = e.target;
+    if (
+      target.tagName === "SELECT" ||
+      target.hasAttribute("popover") ||
+      target.closest("dialog") ||
+      target.onclick?.toString().includes("alert")
+    ) {
+      this.hidePopup();
+    }
+  }
 }
 
 customElements.define("fig-tooltip", FigTooltip);
 
 /* Popover */
+/**
+ * A custom popover element extending FigTooltip.
+ * @attr {string} action - The trigger action: "click" (default) or "hover"
+ * @attr {string} size - The size of the popover
+ */
 class FigPopover extends FigTooltip {
   static observedAttributes = ["action", "size"];
 
@@ -361,6 +416,11 @@ class FigPopover extends FigTooltip {
 customElements.define("fig-popover", FigPopover);
 
 /* Dialog */
+/**
+ * A custom dialog element for modal and non-modal dialogs.
+ * @attr {boolean} open - Whether the dialog is visible
+ * @attr {boolean} modal - Whether the dialog should be modal
+ */
 class FigDialog extends HTMLElement {
   constructor() {
     super();
@@ -545,6 +605,11 @@ class FigPopover2 extends HTMLElement {
 window.customElements.define("fig-popover-2", FigPopover2);
 
 /* Tabs */
+/**
+ * A custom tab element for use within FigTabs.
+ * @attr {string} label - The text label of the tab
+ * @attr {boolean} selected - Whether the tab is currently selected
+ */
 class FigTab extends HTMLElement {
   constructor() {
     super();
@@ -562,6 +627,10 @@ class FigTab extends HTMLElement {
 }
 window.customElements.define("fig-tab", FigTab);
 
+/**
+ * A custom tabs container element.
+ * @attr {string} name - Identifier for the tabs group
+ */
 class FigTabs extends HTMLElement {
   constructor() {
     super();
@@ -590,6 +659,11 @@ class FigTabs extends HTMLElement {
 window.customElements.define("fig-tabs", FigTabs);
 
 /* Segmented Control */
+/**
+ * A custom segment element for use within FigSegmentedControl.
+ * @attr {string} value - The value associated with this segment
+ * @attr {boolean} selected - Whether the segment is currently selected
+ */
 class FigSegment extends HTMLElement {
   #value;
   #selected;
@@ -635,6 +709,10 @@ class FigSegment extends HTMLElement {
 }
 window.customElements.define("fig-segment", FigSegment);
 
+/**
+ * A custom segmented control container element.
+ * @attr {string} name - Identifier for the segmented control group
+ */
 class FigSegmentedControl extends HTMLElement {
   constructor() {
     super();
@@ -660,6 +738,19 @@ class FigSegmentedControl extends HTMLElement {
 window.customElements.define("fig-segmented-control", FigSegmentedControl);
 
 /* Slider */
+/**
+ * A custom slider input element.
+ * @attr {string} type - The slider type: "range", "hue", "delta", "stepper", or "opacity"
+ * @attr {number} value - The current value of the slider
+ * @attr {number} min - The minimum value
+ * @attr {number} max - The maximum value
+ * @attr {number} step - The step increment
+ * @attr {boolean} text - Whether to show a text input alongside the slider
+ * @attr {string} units - The units to display after the value
+ * @attr {number} transform - A multiplier for the displayed value
+ * @attr {boolean} disabled - Whether the slider is disabled
+ * @attr {string} color - The color for the slider track (for opacity type)
+ */
 class FigSlider extends HTMLElement {
   #typeDefaults = {
     range: { min: 0, max: 100, step: 1 },
@@ -882,6 +973,18 @@ class FigSlider extends HTMLElement {
 }
 window.customElements.define("fig-slider", FigSlider);
 
+/**
+ * A custom text input element.
+ * @attr {string} type - Input type: "text" (default) or "number"
+ * @attr {string} value - The current input value
+ * @attr {string} placeholder - Placeholder text
+ * @attr {boolean} disabled - Whether the input is disabled
+ * @attr {boolean} multiline - Whether to use a textarea instead of input
+ * @attr {number} min - Minimum value (for number type)
+ * @attr {number} max - Maximum value (for number type)
+ * @attr {number} step - Step increment (for number type)
+ * @attr {number} transform - A multiplier for displayed number values
+ */
 class FigInputText extends HTMLElement {
   #boundMouseMove;
   #boundMouseUp;
@@ -1437,6 +1540,14 @@ class FigInputColor extends HTMLElement {
 window.customElements.define("fig-input-color", FigInputColor);
 
 /* Checkbox */
+/**
+ * A custom checkbox input element.
+ * @attr {boolean} checked - Whether the checkbox is checked
+ * @attr {boolean} disabled - Whether the checkbox is disabled
+ * @attr {string} label - The label text
+ * @attr {string} name - The form field name
+ * @attr {string} value - The value when checked
+ */
 class FigCheckbox extends HTMLElement {
   constructor() {
     super();
@@ -1508,6 +1619,14 @@ class FigCheckbox extends HTMLElement {
 window.customElements.define("fig-checkbox", FigCheckbox);
 
 /* Radio */
+/**
+ * A custom radio input element extending FigCheckbox.
+ * @attr {boolean} checked - Whether the radio is selected
+ * @attr {boolean} disabled - Whether the radio is disabled
+ * @attr {string} label - The label text
+ * @attr {string} name - The radio group name
+ * @attr {string} value - The value when selected
+ */
 class FigRadio extends FigCheckbox {
   constructor() {
     super();
@@ -1518,6 +1637,14 @@ class FigRadio extends FigCheckbox {
 window.customElements.define("fig-radio", FigRadio);
 
 /* Switch */
+/**
+ * A custom switch/toggle input element extending FigCheckbox.
+ * @attr {boolean} checked - Whether the switch is on
+ * @attr {boolean} disabled - Whether the switch is disabled
+ * @attr {string} label - The label text
+ * @attr {string} name - The form field name
+ * @attr {string} value - The value when on
+ */
 class FigSwitch extends FigCheckbox {
   render() {
     this.input.setAttribute("class", "switch");
@@ -1550,6 +1677,12 @@ class FigAccordion extends HTMLElement {
 window.customElements.define("fig-accordion", FigAccordion);
 
 /* Combo Input */
+/**
+ * A custom combo input with text and dropdown.
+ * @attr {string} options - Comma-separated list of dropdown options
+ * @attr {string} placeholder - Placeholder text for the input
+ * @attr {string} value - The current input value
+ */
 class FigComboInput extends HTMLElement {
   constructor() {
     super();
@@ -1618,6 +1751,14 @@ class FigComboInput extends HTMLElement {
 window.customElements.define("fig-combo-input", FigComboInput);
 
 /* Chit */
+/**
+ * A custom color/image chip element.
+ * @attr {string} type - The chip type: "color" or "image"
+ * @attr {string} src - Image source URL (for image type)
+ * @attr {string} value - Color value (for color type)
+ * @attr {string} size - Size of the chip: "small" (default) or "large"
+ * @attr {boolean} disabled - Whether the chip is disabled
+ */
 class FigChit extends HTMLElement {
   constructor() {
     super();
@@ -1666,6 +1807,13 @@ class FigChit extends HTMLElement {
 window.customElements.define("fig-chit", FigChit);
 
 /* Upload */
+/**
+ * A custom image upload element.
+ * @attr {string} src - The current image source URL
+ * @attr {boolean} upload - Whether to show the upload button
+ * @attr {string} label - The upload button label
+ * @attr {string} size - Size of the image preview
+ */
 class FigImage extends HTMLElement {
   constructor() {
     super();
