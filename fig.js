@@ -5,23 +5,22 @@ function figSupportsPopover() {
   return HTMLElement.prototype.hasOwnProperty("popover");
 }
 
-if (window.customElements && !window.customElements.get("fig-button")) {
-  /**
-   * A custom button element that supports different types and states.
-   * @attr {string} type - The button type: "button" (default), "toggle", or "submit"
-   * @attr {boolean} selected - Whether the button is in a selected state
-   * @attr {boolean} disabled - Whether the button is disabled
-   */
-  class FigButton extends HTMLElement {
-    type;
-    #selected;
-    constructor() {
-      super();
-      this.attachShadow({ mode: "open" });
-    }
-    connectedCallback() {
-      this.type = this.getAttribute("type") || "button";
-      this.shadowRoot.innerHTML = `
+/**
+ * A custom button element that supports different types and states.
+ * @attr {string} type - The button type: "button" (default), "toggle", or "submit"
+ * @attr {boolean} selected - Whether the button is in a selected state
+ * @attr {boolean} disabled - Whether the button is disabled
+ */
+class FigButton extends HTMLElement {
+  type;
+  #selected;
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+  }
+  connectedCallback() {
+    this.type = this.getAttribute("type") || "button";
+    this.shadowRoot.innerHTML = `
             <style>
                 button, button:hover, button:active {
                     padding: 0 var(--spacer-2);
@@ -46,167 +45,158 @@ if (window.customElements && !window.customElements.get("fig-button")) {
             </button>
             `;
 
-      this.#selected =
-        this.hasAttribute("selected") &&
-        this.getAttribute("selected") !== "false";
+    this.#selected =
+      this.hasAttribute("selected") &&
+      this.getAttribute("selected") !== "false";
 
-      requestAnimationFrame(() => {
-        this.button = this.shadowRoot.querySelector("button");
-        this.button.addEventListener("click", this.#handleClick.bind(this));
-      });
-    }
+    requestAnimationFrame(() => {
+      this.button = this.shadowRoot.querySelector("button");
+      this.button.addEventListener("click", this.#handleClick.bind(this));
+    });
+  }
 
-    get type() {
-      return this.type;
-    }
-    set type(value) {
-      this.setAttribute("type", value);
-    }
-    get selected() {
-      return this.#selected;
-    }
-    set selected(value) {
-      this.setAttribute("selected", value);
-    }
+  get type() {
+    return this.type;
+  }
+  set type(value) {
+    this.setAttribute("type", value);
+  }
+  get selected() {
+    return this.#selected;
+  }
+  set selected(value) {
+    this.setAttribute("selected", value);
+  }
 
-    #handleClick() {
-      if (this.type === "toggle") {
-        this.toggleAttribute("selected", !this.hasAttribute("selected"));
-      }
-      if (this.type === "submit") {
-        this.closest("form").dispatchEvent(new Event("submit"));
-      }
+  #handleClick() {
+    if (this.type === "toggle") {
+      this.toggleAttribute("selected", !this.hasAttribute("selected"));
     }
-    static get observedAttributes() {
-      return ["disabled", "selected"];
+    if (this.type === "submit") {
+      this.closest("form").dispatchEvent(new Event("submit"));
     }
-    attributeChangedCallback(name, oldValue, newValue) {
-      if (this.button) {
-        this.button[name] = newValue;
-        switch (name) {
-          case "disabled":
-            this.disabled = this.button.disabled =
-              newValue === "true" ||
-              (newValue === undefined && newValue !== null);
-            break;
-          case "type":
-            this.type = newValue;
-            this.button.type = this.type;
-            this.button.setAttribute("type", this.type);
-            break;
-          case "selected":
-            this.#selected = newValue === "true";
-            break;
-        }
+  }
+  static get observedAttributes() {
+    return ["disabled", "selected"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (this.button) {
+      this.button[name] = newValue;
+      switch (name) {
+        case "disabled":
+          this.disabled = this.button.disabled =
+            newValue === "true" ||
+            (newValue === undefined && newValue !== null);
+          break;
+        case "type":
+          this.type = newValue;
+          this.button.type = this.type;
+          this.button.setAttribute("type", this.type);
+          break;
+        case "selected":
+          this.#selected = newValue === "true";
+          break;
       }
     }
   }
-  window.customElements.define("fig-button", FigButton);
 }
+window.customElements.define("fig-button", FigButton);
 
-if (window.customElements && !window.customElements.get("fig-dropdown")) {
-  /**
-   * A custom dropdown/select element.
-   * @attr {string} type - The dropdown type: "select" (default) or "dropdown"
-   * @attr {string} value - The currently selected value
-   */
-  class FigDropdown extends HTMLElement {
-    constructor() {
-      super();
-      this.select = document.createElement("select");
-      this.optionsSlot = document.createElement("slot");
-      this.attachShadow({ mode: "open" });
+/**
+ * A custom dropdown/select element.
+ * @attr {string} type - The dropdown type: "select" (default) or "dropdown"
+ * @attr {string} value - The currently selected value
+ */
+class FigDropdown extends HTMLElement {
+  constructor() {
+    super();
+    this.select = document.createElement("select");
+    this.optionsSlot = document.createElement("slot");
+    this.attachShadow({ mode: "open" });
+  }
+
+  #addEventListeners() {
+    this.select.addEventListener("input", this.#handleSelectInput.bind(this));
+    this.select.addEventListener("change", this.#handleSelectChange.bind(this));
+  }
+
+  connectedCallback() {
+    this.type = this.getAttribute("type") || "select";
+
+    this.appendChild(this.select);
+    this.shadowRoot.appendChild(this.optionsSlot);
+
+    this.optionsSlot.addEventListener("slotchange", this.slotChange.bind(this));
+
+    this.#addEventListeners();
+  }
+
+  slotChange() {
+    while (this.select.firstChild) {
+      this.select.firstChild.remove();
     }
 
-    #addEventListeners() {
-      this.select.addEventListener("input", this.#handleSelectInput.bind(this));
-      this.select.addEventListener(
-        "change",
-        this.#handleSelectChange.bind(this)
-      );
+    if (this.type === "dropdown") {
+      const hiddenOption = document.createElement("option");
+      hiddenOption.setAttribute("hidden", "true");
+      hiddenOption.setAttribute("selected", "true");
+      this.select.appendChild(hiddenOption);
     }
-
-    connectedCallback() {
-      this.type = this.getAttribute("type") || "select";
-
-      this.appendChild(this.select);
-      this.shadowRoot.appendChild(this.optionsSlot);
-
-      this.optionsSlot.addEventListener(
-        "slotchange",
-        this.slotChange.bind(this)
-      );
-
-      this.#addEventListeners();
-    }
-
-    slotChange() {
-      while (this.select.firstChild) {
-        this.select.firstChild.remove();
+    this.optionsSlot.assignedNodes().forEach((option) => {
+      if (option.nodeName === "OPTION" || option.nodeName === "OPTGROUP") {
+        this.select.appendChild(option.cloneNode(true));
       }
-
-      if (this.type === "dropdown") {
-        const hiddenOption = document.createElement("option");
-        hiddenOption.setAttribute("hidden", "true");
-        hiddenOption.setAttribute("selected", "true");
-        this.select.appendChild(hiddenOption);
-      }
-      this.optionsSlot.assignedNodes().forEach((option) => {
-        if (option.nodeName === "OPTION" || option.nodeName === "OPTGROUP") {
-          this.select.appendChild(option.cloneNode(true));
-        }
-      });
-      this.#syncSelectedValue(this.value);
-      if (this.type === "dropdown") {
-        this.select.selectedIndex = -1;
-      }
-    }
-
-    #handleSelectInput(e) {
-      this.value = e.target.value;
-      this.setAttribute("value", this.value);
-    }
-    #handleSelectChange() {
-      if (this.type === "dropdown") {
-        this.select.selectedIndex = -1;
-      }
-    }
-    focus() {
-      this.select.focus();
-    }
-    blur() {
-      this.select.blur();
-    }
-    get value() {
-      return this.select?.value;
-    }
-    set value(value) {
-      this.setAttribute("value", value);
-    }
-    static get observedAttributes() {
-      return ["value", "type"];
-    }
-    #syncSelectedValue(value) {
-      if (this.select) {
-        this.select.querySelectorAll("option").forEach((o, i) => {
-          if (o.value === this.getAttribute("value")) {
-            this.select.selectedIndex = i;
-          }
-        });
-      }
-    }
-    attributeChangedCallback(name, oldValue, newValue) {
-      if (name === "value") {
-        this.#syncSelectedValue(newValue);
-      }
-      if (name === "type") {
-        this.type = newValue;
-      }
+    });
+    this.#syncSelectedValue(this.value);
+    if (this.type === "dropdown") {
+      this.select.selectedIndex = -1;
     }
   }
 
-  customElements.define("fig-dropdown", FigDropdown);
+  #handleSelectInput(e) {
+    this.value = e.target.value;
+    this.setAttribute("value", this.value);
+  }
+  #handleSelectChange() {
+    if (this.type === "dropdown") {
+      this.select.selectedIndex = -1;
+    }
+  }
+  focus() {
+    this.select.focus();
+  }
+  blur() {
+    this.select.blur();
+  }
+  get value() {
+    return this.select?.value;
+  }
+  set value(value) {
+    this.setAttribute("value", value);
+  }
+  static get observedAttributes() {
+    return ["value", "type"];
+  }
+  #syncSelectedValue(value) {
+    if (this.select) {
+      this.select.querySelectorAll("option").forEach((o, i) => {
+        if (o.value === this.getAttribute("value")) {
+          this.select.selectedIndex = i;
+        }
+      });
+    }
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "value") {
+      this.#syncSelectedValue(newValue);
+    }
+    if (name === "type") {
+      this.type = newValue;
+    }
+  }
 }
+
+customElements.define("fig-dropdown", FigDropdown);
 
 /* Tooltip */
 /**
@@ -752,6 +742,7 @@ window.customElements.define("fig-segmented-control", FigSegmentedControl);
  * @attr {string} color - The color for the slider track (for opacity type)
  */
 class FigSlider extends HTMLElement {
+  // Private fields declarations
   #typeDefaults = {
     range: { min: 0, max: 100, step: 1 },
     hue: { min: 0, max: 255, step: 1 },
@@ -759,9 +750,25 @@ class FigSlider extends HTMLElement {
     stepper: { min: 0, max: 100, step: 25 },
     opacity: { min: 0, max: 100, step: 0.1, color: "#FF0000" },
   };
+
+  #boundHandleInput;
+  #boundHandleTextInput;
+
   constructor() {
     super();
+
+    // Bind the event handlers
+    this.#boundHandleInput = (e) => {
+      e.stopPropagation();
+      this.#handleInput();
+    };
+
+    this.#boundHandleTextInput = (e) => {
+      e.stopPropagation();
+      this.#handleTextInput();
+    };
   }
+
   #regenerateInnerHTML() {
     this.value = Number(this.getAttribute("value") || 0);
     this.type = this.getAttribute("type") || "range";
@@ -818,8 +825,8 @@ class FigSlider extends HTMLElement {
     requestAnimationFrame(() => {
       this.input = this.querySelector("[type=range]");
       this.inputContainer = this.querySelector(".fig-slider-input-container");
-      this.input.removeEventListener("input", this.handleInput);
-      this.input.addEventListener("input", this.handleInput.bind(this));
+      this.input.removeEventListener("input", this.#boundHandleInput);
+      this.input.addEventListener("input", this.#boundHandleInput);
 
       if (this.default) {
         this.style.setProperty(
@@ -866,14 +873,14 @@ class FigSlider extends HTMLElement {
         }
       }
       if (this.figInputText) {
-        this.figInputText.removeEventListener("input", this.handleTextInput);
-        this.figInputText.addEventListener(
+        this.figInputText.removeEventListener(
           "input",
-          this.handleTextInput.bind(this)
+          this.#boundHandleTextInput
         );
+        this.figInputText.addEventListener("input", this.#boundHandleTextInput);
       }
 
-      this.handleInput();
+      this.#syncValue();
     });
   }
 
@@ -881,6 +888,40 @@ class FigSlider extends HTMLElement {
     this.initialInnerHTML = this.innerHTML;
     this.#regenerateInnerHTML();
   }
+
+  #handleTextInput() {
+    if (this.figInputText) {
+      this.value = this.input.value = this.figInputText.value;
+      this.#syncProperties();
+      this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+    }
+  }
+  #calculateNormal(value) {
+    let min = Number(this.min);
+    let max = Number(this.max);
+    return (Number(value) - min) / (max - min);
+  }
+  #syncProperties() {
+    let complete = this.#calculateNormal(this.value);
+    this.style.setProperty("--slider-complete", complete);
+    let defaultValue = this.#calculateNormal(this.default);
+    this.style.setProperty("--default", defaultValue);
+    this.style.setProperty("--unchanged", complete === defaultValue ? 1 : 0);
+  }
+  #syncValue() {
+    let val = this.input.value;
+    this.value = val;
+    this.#syncProperties();
+    if (this.figInputText) {
+      this.figInputText.setAttribute("value", val);
+    }
+  }
+
+  #handleInput() {
+    this.#syncValue();
+    this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+  }
+
   static get observedAttributes() {
     return [
       "value",
@@ -938,36 +979,9 @@ class FigSlider extends HTMLElement {
           break;
         default:
           this[name] = this.input[name] = newValue;
-          this.handleInput();
+          this.#syncValue();
           break;
       }
-    }
-  }
-  handleTextInput() {
-    if (this.figInputText) {
-      this.value = this.input.value = this.figInputText.value;
-      this.#syncProperties();
-    }
-  }
-  #calculateNormal(value) {
-    let min = Number(this.min);
-    let max = Number(this.max);
-    return (Number(value) - min) / (max - min);
-  }
-  #syncProperties() {
-    let complete = this.#calculateNormal(this.value);
-    this.style.setProperty("--slider-complete", complete);
-    let defaultValue = this.#calculateNormal(this.default);
-    this.style.setProperty("--default", defaultValue);
-    this.style.setProperty("--unchanged", complete === defaultValue ? 1 : 0);
-  }
-
-  handleInput() {
-    let val = this.input.value;
-    this.value = val;
-    this.#syncProperties();
-    if (this.figInputText) {
-      this.figInputText.setAttribute("value", val);
     }
   }
 }
@@ -989,6 +1003,7 @@ class FigInputText extends HTMLElement {
   #boundMouseMove;
   #boundMouseUp;
   #boundMouseDown;
+  #boundInputChange;
 
   constructor() {
     super();
@@ -996,6 +1011,10 @@ class FigInputText extends HTMLElement {
     this.#boundMouseMove = this.#handleMouseMove.bind(this);
     this.#boundMouseUp = this.#handleMouseUp.bind(this);
     this.#boundMouseDown = this.#handleMouseDown.bind(this);
+    this.#boundInputChange = (e) => {
+      e.stopPropagation();
+      this.#handleInputChange(e);
+    };
   }
 
   connectedCallback() {
@@ -1063,7 +1082,8 @@ class FigInputText extends HTMLElement {
         }
         this.addEventListener("pointerdown", this.#boundMouseDown);
       }
-      this.input.addEventListener("input", this.#handleInput.bind(this));
+      this.input.removeEventListener("change", this.#boundInputChange);
+      this.input.addEventListener("change", this.#boundInputChange);
     });
   }
   focus() {
@@ -1075,14 +1095,14 @@ class FigInputText extends HTMLElement {
     transformed = this.#formatNumber(transformed);
     return transformed;
   }
-  #handleInput(e) {
-    console.log("handleInput", e.target.value);
+  #handleInputChange(e) {
     e.stopPropagation();
     let value = e.target.value;
     let valueTransformed = value;
     if (this.type === "number") {
       value = value / (this.transform || 1);
       value = this.#sanitizeInput(value, false);
+      console.log("sanitizeInput", value);
       valueTransformed = value * (this.transform || 1);
     }
     this.value = value;
@@ -1155,6 +1175,16 @@ class FigInputText extends HTMLElement {
     return Number.isInteger(rounded) ? rounded : rounded.toFixed(precision);
   }
 
+  /*
+  get value() {
+    return this.value;
+  }
+
+  set value(val) {
+    this.value = val;
+    this.setAttribute("value", val);
+  }*/
+
   static get observedAttributes() {
     return [
       "value",
@@ -1194,7 +1224,6 @@ class FigInputText extends HTMLElement {
             this.value = value;
             this.input.value = value;
           }
-          this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
           break;
         case "min":
         case "max":
