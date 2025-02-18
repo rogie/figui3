@@ -2255,8 +2255,7 @@ fig-segmented-control {
   display: inline-flex;
   align-items: stretch;
 
-  & > fig-segment,
-  & > label {
+  & fig-segment {
     flex: 1;
     display: flex;
     align-items: center;
