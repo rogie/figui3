@@ -233,6 +233,15 @@
                        size="large"></fig-image>
         </fig-field>
         <br /><br />
+        <fig-field>
+            <label>Large (with upload)</label>
+            <fig-image upload="true"
+                       label="Change image"
+                       aspect-ratio="auto"
+                       src="charli.jpeg"
+                       size="large"></fig-image>
+        </fig-field>
+        <br /><br />
         <fig-header>
             <h2>Button</h2>
         </fig-header>
@@ -435,8 +444,9 @@
             </fig-tooltip>
         </fig-field>
 
-        <fig-dialog open="true"
-                    position="bottom right">
+        <dialog open="true"
+                position="bottom right"
+                is="fig-dialog">
             <fig-header>
                 <h3>Dialog</h3>
                 <fig-button variant="ghost"
@@ -458,13 +468,25 @@
             </fig-header>
             <fig-content>
                 <p>Some content here</p>
+                <fig-field direction="horizontal">
+                    <label for="colorLevels">Color Levels</label>
+                    <fig-slider id="colorLevels"
+                                min="2"
+                                max="16"
+                                value="4"
+                                variant="minimal"
+                                step="1"
+                                text="true"
+                                style="flex: 1; max-width: 200px;">
+                    </fig-slider>
+                </fig-field>
             </fig-content>
             <footer>
                 <fig-button variant="secondary"
                             close-dialog>Cancel</fig-button>
                 <fig-button>Save</fig-button>
             </footer>
-        </fig-dialog>
+        </dialog>
         <fig-header>
             <h2>Dropdown</h2>
         </fig-header>

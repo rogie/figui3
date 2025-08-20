@@ -432,20 +432,10 @@ customElements.define("fig-popover", FigPopover);
  * @attr {boolean} open - Whether the dialog is visible
  * @attr {boolean} modal - Whether the dialog should be modal
  */
-class FigDialog extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-    this.dialog = document.createElement("dialog");
-    this.contentSlot = document.createElement("slot");
-  }
-
+class FigDialog extends HTMLDialogElement {
   connectedCallback() {
     this.modal =
       this.hasAttribute("modal") && this.getAttribute("modal") !== "false";
-    this.appendChild(this.dialog);
-    this.shadowRoot.appendChild(this.contentSlot);
-    this.contentSlot.addEventListener("slotchange", this.slotChange.bind(this));
 
     requestAnimationFrame(() => {
       this.#addCloseListeners();
@@ -453,61 +443,13 @@ class FigDialog extends HTMLElement {
   }
 
   #addCloseListeners() {
-    this.dialog
-      .querySelectorAll("fig-button[close-dialog]")
-      .forEach((button) => {
-        button.removeEventListener("click", this.close);
-        button.addEventListener("click", this.close.bind(this));
-      });
-  }
-
-  disconnectedCallback() {
-    this.contentSlot.removeEventListener("slotchange", this.slotChange);
-  }
-
-  slotChange() {
-    while (this.dialog.firstChild) {
-      this.dialog.firstChild.remove();
-    }
-    this.contentSlot.assignedNodes().forEach((node) => {
-      if (node !== this.dialog) {
-        this.dialog.appendChild(node.cloneNode(true));
-      }
+    this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
+      button.removeEventListener("click", this.close);
+      button.addEventListener("click", this.close.bind(this));
     });
-    this.#addCloseListeners();
-  }
-
-  static get observedAttributes() {
-    return ["open", "modal"];
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    switch (name) {
-      case "open":
-        this.open = newValue === "true" && newValue !== "false";
-        if (this?.show) {
-          this[this.open ? "show" : "close"]();
-        }
-        break;
-      case "modal":
-        this.modal = newValue === "true" && newValue !== "false";
-        break;
-    }
-  }
-
-  /* Public methods */
-  show() {
-    if (this.modal) {
-      this.dialog.showModal();
-    } else {
-      this.dialog.show();
-    }
-  }
-  close() {
-    this.dialog.close();
   }
 }
-customElements.define("fig-dialog", FigDialog);
+customElements.define("fig-dialog", FigDialog, { extends: "dialog" });
 
 class FigPopover2 extends HTMLElement {
   #popover;
@@ -1863,6 +1805,12 @@ class FigImage extends HTMLElement {
     this.innerHTML = this.#getInnerHTML();
     this.#updateRefs();
   }
+  disconnectedCallback() {
+    this.fileInput.removeEventListener(
+      "change",
+      this.#handleFileInput.bind(this)
+    );
+  }
 
   #updateRefs() {
     requestAnimationFrame(() => {
@@ -1873,12 +1821,47 @@ class FigImage extends HTMLElement {
 
         this.fileInput.addEventListener(
           "change",
-          this.handleFileInput.bind(this)
+          this.#handleFileInput.bind(this)
         );
+      }
+      if (this.src) {
+        this.#loadImage(this.src);
       }
     });
   }
-  async handleFileInput(e) {
+  async #loadImage(src) {
+    // Get blob from canvas
+    await new Promise((resolve) => {
+      this.image = new Image();
+      this.image.crossOrigin = "Anonymous";
+
+      this.image.onload = async () => {
+        this.aspectRatio = this.image.width / this.image.height;
+        this.style.setProperty(
+          "--aspect-ratio",
+          `${this.image.width}/${this.image.height}`
+        );
+        resolve();
+
+        // Create canvas to extract blob and base64 from image
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = this.image.width;
+        canvas.height = this.image.height;
+        ctx.drawImage(this.image, 0, 0);
+
+        // Get base64 from canvas
+        this.base64 = canvas.toDataURL();
+
+        // Get blob from canvas
+        canvas.toBlob((blob) => {
+          this.blob = URL.createObjectURL(blob);
+        });
+      };
+      this.image.src = src;
+    });
+  }
+  async #handleFileInput(e) {
     this.blob = URL.createObjectURL(e.target.files[0]);
     //set base64 url
     const reader = new FileReader();

@@ -664,10 +664,6 @@ select {
   padding-right: 1.5rem;
 }
 
-fig-dialog > *:not(dialog) {
-  display: none !important;
-}
-
 /* Dropdown */
 fig-dropdown,
 .fig-dropdown {
@@ -1194,6 +1190,7 @@ fig-image {
   place-items: center;
   width: var(--image-size);
   height: var(--image-size);
+  aspect-ratio: 1 / 1;
   > * {
     grid-area: 1/1;
   }
@@ -1214,6 +1211,16 @@ fig-image {
   }
   &[size="large"] {
     --image-size: 8rem;
+  }
+  &[aspect-ratio="auto"] {
+    aspect-ratio: var(--aspect-ratio);
+    height: auto;
+    fig-chit,
+    fig-chit::after,
+    input {
+      height: auto !important;
+      aspect-ratio: var(--aspect-ratio) !important;
+    }
   }
 }
 
@@ -1938,49 +1945,38 @@ dialog,
     }
   }
 }
-fig-dialog,
-.fig-dialog {
-  display: contents;
+dialog[is="fig-dialog"] {
   --offset: 1rem;
   --translate-x: -50%;
   --translate-y: -50%;
+  --z-index: 999999;
 
-  dialog {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin: 0;
-    z-index: 999999;
-    transform: translate(var(--translate-x), var(--translate-y));
-  }
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  z-index: var(--z-index);
+  transform: translate(var(--translate-x), var(--translate-y));
 
   &[position*="bottom"] {
-    dialog {
-      bottom: var(--offset);
-      top: auto;
-      --translate-y: 0;
-    }
+    bottom: var(--offset);
+    top: auto;
+    --translate-y: 0;
   }
   &[position*="top"] {
-    dialog {
-      top: var(--offset);
-      bottom: auto;
-      --translate-y: 0;
-    }
+    top: var(--offset);
+    bottom: auto;
+    --translate-y: 0;
   }
   &[position*="right"] {
-    dialog {
-      right: var(--offset);
-      left: auto;
-      --translate-x: 0;
-    }
+    right: var(--offset);
+    left: auto;
+    --translate-x: 0;
   }
   &[position*="left"] {
-    dialog {
-      left: var(--offset);
-      right: auto;
-      --translate-: 0;
-    }
+    left: var(--offset);
+    right: auto;
+    --translate-x: 0;
   }
 }
 
