@@ -75,6 +75,17 @@ class FigButton extends HTMLElement {
     if (this.type === "submit") {
       this.closest("form").dispatchEvent(new Event("submit"));
     }
+    if (this.type === "link") {
+      const href = this.getAttribute("href");
+      const target = this.getAttribute("target");
+      if (href) {
+        if (target) {
+          window.open(href, target);
+        } else {
+          window.location.href = href;
+        }
+      }
+    }
   }
   static get observedAttributes() {
     return ["disabled", "selected"];
@@ -243,14 +254,24 @@ class FigTooltip extends HTMLElement {
 
   render() {
     this.destroy();
+    let content = document.createElement("span");
     this.popup = document.createElement("span");
     this.popup.setAttribute("class", "fig-tooltip");
     this.popup.style.position = "fixed";
     this.popup.style.visibility = "hidden";
     this.popup.style.display = "inline-flex";
     this.popup.style.pointerEvents = "none";
-    this.popup.innerText = this.getAttribute("text");
+    this.popup.append(content);
+    content.innerText = this.getAttribute("text");
     document.body.append(this.popup);
+    const text = content.childNodes[0];
+    if (text) {
+      const range = document.createRange();
+      range.setStartBefore(text);
+      range.setEndAfter(text);
+      const clientRect = range.getBoundingClientRect();
+      content.style.width = `${clientRect.width}px`;
+    }
   }
 
   destroy() {
@@ -487,54 +508,6 @@ class FigDialog extends HTMLElement {
   }
 }
 customElements.define("fig-dialog", FigDialog);
-
-/*
-class FigDialog extends FigTooltip {
-
-    constructor() {
-        super()
-        this.action = this.getAttribute("action") || "click"
-        this.delay = parseInt(this.getAttribute("delay")) || 0
-        this.dialog = document.createElement("dialog")
-        this.header = document.createElement("fig-header")
-        this.header.innerHTML = `<span>${this.getAttribute("title") || "Title"}</span>`
-        if (this.getAttribute("closebutton") !== "false") {
-            this.closeButton = document.createElement("fig-button")
-            this.closeButton.setAttribute("icon", "true")
-            this.closeButton.setAttribute("variant", "ghost")
-            this.closeButton.setAttribute("fig-dialog-close", "true")
-            let closeIcon = document.createElement("fig-icon")
-            closeIcon.setAttribute("class", "close")
-            this.closeButton.append(closeIcon)
-            this.header.append(this.closeButton)
-        }
-        this.dialog.append(this.header)
-    }
-    render() {
-        this.popup = this.popup || this.dialog
-        document.body.append(this.popup)
-    }
-    setup() {
-        this.dialog.querySelectorAll("[fig-dialog-close]").forEach(e => e.addEventListener("click", this.hidePopup.bind(this)))
-        this.dialog.append(this.querySelector("fig-content") || "")
-    }
-    hidePopup() {
-        this.popup.close()
-    }
-    showPopup() {
-        this.popup.style.zIndex = parseInt((new Date()).getTime() / 1000)
-        if (this.getAttribute("modal") === "true") {
-            this.popup.showModal()
-        } else {
-            this.popup.show()
-        }
-    }
-    destroy() {
-
-    }
-}
-customElements.define("fig-dialog", FigDialog);
-*/
 
 class FigPopover2 extends HTMLElement {
   #popover;
@@ -1108,6 +1081,7 @@ class FigInputText extends HTMLElement {
     this.value = value;
     this.input.value = valueTransformed;
     this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+    this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
   }
   #handleMouseMove(e) {
     if (this.type !== "number") return;
@@ -1122,6 +1096,7 @@ class FigInputText extends HTMLElement {
       this.value = value;
       this.input.value = valueTransformed;
       this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+      this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
     }
   }
   #handleMouseDown(e) {
@@ -1336,7 +1311,11 @@ class FigInputColor extends HTMLElement {
 
     let html = ``;
     if (this.getAttribute("text")) {
-      let label = `<fig-input-text type="text" placeholder="Text" value="${this.value}"></fig-input-text>`;
+      let label = `<fig-input-text 
+        type="text"
+        placeholder="#000000"
+        value="${this.value}">
+      </fig-input-text>`;
       if (this.getAttribute("alpha") === "true") {
         label += `<fig-tooltip text="Opacity">
                     <fig-input-text 
@@ -1375,6 +1354,10 @@ class FigInputColor extends HTMLElement {
           "input",
           this.#handleTextInput.bind(this)
         );
+        this.#textInput.addEventListener(
+          "change",
+          this.#handleChange.bind(this)
+        );
       }
 
       if (this.#alphaInput) {
@@ -1389,13 +1372,13 @@ class FigInputColor extends HTMLElement {
     this.rgba = this.convertToRGBA(hexValue);
     this.value = this.rgbAlphaToHex(
       {
-        r: this.rgba.r,
-        g: this.rgba.g,
-        b: this.rgba.b,
+        r: isNaN(this.rgba.r) ? 0 : this.rgba.r,
+        g: isNaN(this.rgba.g) ? 0 : this.rgba.g,
+        b: isNaN(this.rgba.b) ? 0 : this.rgba.b,
       },
       this.rgba.a
     );
-    this.hexWithAlpha = this.value;
+    this.hexWithAlpha = this.value.toUpperCase();
     this.hexOpaque = this.hexWithAlpha.slice(0, 7);
     if (hexValue.length > 7) {
       this.alpha = (this.rgba.a * 100).toFixed(0);
@@ -1425,6 +1408,11 @@ class FigInputColor extends HTMLElement {
     this.#emitInputEvent();
   }
 
+  #handleChange(event) {
+    event.stopPropagation();
+    this.#emitChangeEvent();
+  }
+
   focus() {
     this.#swatch.focus();
   }
@@ -1441,6 +1429,13 @@ class FigInputColor extends HTMLElement {
 
   #emitInputEvent() {
     const e = new CustomEvent("input", {
+      bubbles: true,
+      cancelable: true,
+    });
+    this.dispatchEvent(e);
+  }
+  #emitChangeEvent() {
+    const e = new CustomEvent("change", {
       bubbles: true,
       cancelable: true,
     });
@@ -1643,6 +1638,7 @@ class FigCheckbox extends HTMLElement {
     this.input.indeterminate = false;
     this.input.removeAttribute("indeterminate");
     this.value = this.input.value;
+    this.checked = this.input.checked;
   }
 }
 window.customElements.define("fig-checkbox", FigCheckbox);
@@ -1882,8 +1878,37 @@ class FigImage extends HTMLElement {
       }
     });
   }
-  handleFileInput(e) {
-    this.src = URL.createObjectURL(e.target.files[0]);
+  async handleFileInput(e) {
+    this.blob = URL.createObjectURL(e.target.files[0]);
+    //set base64 url
+    const reader = new FileReader();
+    reader.readAsDataURL(e.target.files[0]);
+    //await this data url to be set
+    await new Promise((resolve) => {
+      reader.onload = (e) => {
+        this.base64 = e.target.result;
+        resolve();
+      };
+    });
+    //emit event for loaded
+    this.dispatchEvent(
+      new CustomEvent("loaded", {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+          blob: this.blob,
+          base64: this.base64,
+        },
+      })
+    );
+    //emit for change too
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+    this.src = this.blob;
     this.setAttribute("src", this.src);
     this.chit.setAttribute("src", this.src);
   }

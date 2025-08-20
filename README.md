@@ -47,8 +47,11 @@ import "@rogieking/figui3/fig.js";
 Or include directly in your HTML:
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/fig-js@latest/dist/fig.css" />
-<script src="https://unpkg.com/fig-js@latest/dist/fig.js"></script>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/@rogieking/figui3@latest/fig.css"
+/>
+<script src="https://unpkg.com/@rogieking/figui3@latest/fig.js"></script>
 ```
 
 or

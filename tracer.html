@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Figma UI3 Web Components</title>
+    <link rel="stylesheet"
+          type="text/css"
+          href="fig.css">
+    <script src="fig.js"></script>
+    <style>
+        body {
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        #svg {
+            width: 100%;
+            height: calc(100vh - 2rem);
+            border: 1px solid #000;
+            overflow: scroll;
+
+            svg {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+        }
+
+        .controls {
+            width: 16rem;
+            flex-shrink: 0;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 0.25rem;
+        }
+
+        .option {
+            margin-bottom: 0.75rem;
+        }
+
+        .option label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+            color: #666;
+        }
+
+        .option fig-slider {
+            width: 100%;
+            margin-bottom: 0.25rem;
+        }
+
+        .option fig-checkbox {
+            margin-right: 0.5rem;
+        }
+
+        .option fig-dropdown {
+            width: 100%;
+            margin-top: 0.25rem;
+        }
+
+        .value-display {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+        }
+
+        fig-image {
+            --image-size: 14rem !important;
+            width: 100%;
+            margin-bottom: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="controls">
+        <fig-image upload="true"
+                   label="Upload image"
+                   size="large"></fig-image>
+
+        <div class="section">
+            <h3>Presets</h3>
+            <div class="option">
+                <label for="preset">Select Preset:</label>
+                <fig-dropdown id="preset"
+                              name="preset"
+                              value="default">
+                    <option value="default">Default</option>
+                    <option value="posterized1">Posterized 1</option>
+                    <option value="posterized2">Posterized 2</option>
+                    <option value="posterized3">Posterized 3</option>
+                    <option value="curvy">Curvy</option>
+                    <option value="sharp">Sharp</option>
+                    <option value="detailed">Detailed</option>
+                    <option value="smoothed">Smoothed</option>
+                    <option value="grayscale">Grayscale</option>
+                    <option value="fixedpalette">Fixed Palette</option>
+                    <option value="randomsampling1">Random Sampling 1</option>
+                    <option value="randomsampling2">Random Sampling 2</option>
+                    <option value="artistic1">Artistic 1</option>
+                    <option value="artistic2">Artistic 2</option>
+                    <option value="artistic3">Artistic 3</option>
+                    <option value="artistic4">Artistic 4</option>
+                </fig-dropdown>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Tracing</h3>
+
+            <div class="option checkbox-option">
+                <fig-checkbox id="corsenabled"
+                              name="corsenabled"
+                              label="CORS Enabled"></fig-checkbox>
+            </div>
+
+            <div class="option">
+                <label for="ltres">Line Threshold (ltres): <span class="value-display"
+                          id="ltres-value">1</span></label>
+                <fig-slider min="0"
+                            max="10"
+                            value="1"
+                            step="0.01"
+                            id="ltres"
+                            name="ltres"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option">
+                <label for="qtres">Quadratic Threshold (qtres): <span class="value-display"
+                          id="qtres-value">1</span></label>
+                <fig-slider min="0"
+                            max="10"
+                            value="1"
+                            step="0.01"
+                            id="qtres"
+                            name="qtres"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option">
+                <label for="pathomit">Path Omit (pathomit): <span class="value-display"
+                          id="pathomit-value">8</span></label>
+                <fig-slider min="0"
+                            max="100"
+                            value="8"
+                            step="1"
+                            id="pathomit"
+                            name="pathomit"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option checkbox-option">
+                <fig-checkbox id="rightangleenhance"
+                              name="rightangleenhance"
+                              checked
+                              label="Right Angle Enhance"></fig-checkbox>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Color Quantization</h3>
+
+            <div class="option">
+                <label for="colorsampling">Color Sampling: <span class="value-display"
+                          id="colorsampling-value">2</span></label>
+                <fig-slider min="0"
+                            max="3"
+                            value="2"
+                            step="1"
+                            id="colorsampling"
+                            name="colorsampling"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option">
+                <label for="numberofcolors">Number of Colors: <span class="value-display"
+                          id="numberofcolors-value">16</span></label>
+                <fig-slider min="2"
+                            max="256"
+                            value="16"
+                            step="1"
+                            id="numberofcolors"
+                            name="numberofcolors"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option">
+                <label for="mincolorratio">Min Color Ratio: <span class="value-display"
+                          id="mincolorratio-value">0</span></label>
+                <fig-slider min="0"
+                            max="1"
+                            value="0"
+                            step="0.01"
+                            id="mincolorratio"
+                            name="mincolorratio"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option">
+                <label for="colorquantcycles">Color Quant Cycles: <span class="value-display"
+                          id="colorquantcycles-value">3</span></label>
+                <fig-slider min="1"
+                            max="10"
+                            value="3"
+                            step="1"
+                            id="colorquantcycles"
+                            name="colorquantcycles"
+                            variant="minimal"></fig-slider>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>SVG Rendering</h3>
+
+            <div class="option">
+                <label for="strokewidth">Stroke Width: <span class="value-display"
+                          id="strokewidth-value">1</span></label>
+                <fig-slider min="0"
+                            max="10"
+                            value="1"
+                            step="0.1"
+                            id="strokewidth"
+                            name="strokewidth"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option checkbox-option">
+                <fig-checkbox id="linefilter"
+                              name="linefilter"
+                              label="Line Filter"></fig-checkbox>
+            </div>
+
+            <div class="option">
+                <label for="scale">Scale: <span class="value-display"
+                          id="scale-value">1</span></label>
+                <fig-slider min="0.1"
+                            max="5"
+                            value="1"
+                            step="0.1"
+                            id="scale"
+                            name="scale"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option">
+                <label for="roundcoords">Round Coords: <span class="value-display"
+                          id="roundcoords-value">1</span></label>
+                <fig-slider min="0"
+                            max="3"
+                            value="1"
+                            step="1"
+                            id="roundcoords"
+                            name="roundcoords"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option checkbox-option">
+                <fig-checkbox id="viewbox"
+                              name="viewbox"
+                              checked
+                              label="Viewbox"></fig-checkbox>
+            </div>
+
+            <div class="option checkbox-option">
+                <fig-checkbox id="desc"
+                              name="desc"
+                              label="Description"></fig-checkbox>
+            </div>
+
+            <div class="option">
+                <label for="lcpr">LCPR: <span class="value-display"
+                          id="lcpr-value">0</span></label>
+                <fig-slider min="0"
+                            max="10"
+                            value="0"
+                            step="0.1"
+                            id="lcpr"
+                            name="lcpr"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option">
+                <label for="qcpr">QCPR: <span class="value-display"
+                          id="qcpr-value">0</span></label>
+                <fig-slider min="0"
+                            max="10"
+                            value="0"
+                            step="0.1"
+                            id="qcpr"
+                            name="qcpr"
+                            variant="minimal"></fig-slider>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Blur</h3>
+
+            <div class="option">
+                <label for="blurradius">Blur Radius: <span class="value-display"
+                          id="blurradius-value">0</span></label>
+                <fig-slider min="0"
+                            max="20"
+                            value="0"
+                            step="0.1"
+                            id="blurradius"
+                            name="blurradius"
+                            variant="minimal"></fig-slider>
+            </div>
+
+            <div class="option">
+                <label for="blurdelta">Blur Delta: <span class="value-display"
+                          id="blurdelta-value">20</span></label>
+                <fig-slider min="1"
+                            max="256"
+                            value="20"
+                            step="1"
+                            id="blurdelta"
+                            name="blurdelta"
+                            variant="minimal"></fig-slider>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Layering</h3>
+
+            <div class="option">
+                <label for="layering">Layering Method: <span class="value-display"
+                          id="layering-value">0</span></label>
+                <fig-slider min="0"
+                            max="2"
+                            value="0"
+                            step="1"
+                            id="layering"
+                            name="layering"
+                            variant="minimal"></fig-slider>
+            </div>
+        </div>
+    </div>
+
+    <div id="svg">
+        <fig-spinner></fig-spinner>
+    </div>
+
+    <script type="module">
+        let options = {
+            'default': {
+                // Tracing
+                corsenabled: false,
+                ltres: 1,
+                qtres: 1,
+                pathomit: 8,
+                rightangleenhance: true,
+
+                // Color quantization
+                colorsampling: 2,
+                numberofcolors: 16,
+                mincolorratio: 0,
+                colorquantcycles: 3,
+
+                // Layering method
+                layering: 0,
+
+                // SVG rendering
+                strokewidth: 1,
+                linefilter: false,
+                scale: 1,
+                roundcoords: 1,
+                viewbox: true,
+                desc: false,
+                lcpr: 0,
+                qcpr: 0,
+
+                // Blur
+                blurradius: 0,
+                blurdelta: 20
+            },
+            'posterized1': { colorsampling: 0, numberofcolors: 2 },
+            'posterized2': { numberofcolors: 4, blurradius: 5 },
+            'curvy': { ltres: 0.01, linefilter: true, rightangleenhance: false },
+            'sharp': { qtres: 0.01, linefilter: false },
+            'detailed': { pathomit: 0, roundcoords: 2, ltres: 0.5, qtres: 0.5, numberofcolors: 64 },
+            'smoothed': { blurradius: 5, blurdelta: 64 },
+            'grayscale': { colorsampling: 0, colorquantcycles: 1, numberofcolors: 7 },
+            'fixedpalette': { colorsampling: 0, colorquantcycles: 1, numberofcolors: 27 },
+            'randomsampling1': { colorsampling: 1, numberofcolors: 8 },
+            'randomsampling2': { colorsampling: 1, numberofcolors: 64 },
+            'artistic1': { colorsampling: 0, colorquantcycles: 1, pathomit: 0, blurradius: 5, blurdelta: 64, ltres: 0.01, linefilter: true, numberofcolors: 16, strokewidth: 2 },
+            'artistic2': { qtres: 0.01, colorsampling: 0, colorquantcycles: 1, numberofcolors: 4, strokewidth: 0 },
+            'artistic3': { qtres: 10, ltres: 10, numberofcolors: 8 },
+            'artistic4': { qtres: 10, ltres: 10, numberofcolors: 64, blurradius: 5, blurdelta: 256, strokewidth: 2 },
+            'posterized3': {
+                ltres: 1, qtres: 1, pathomit: 20, rightangleenhance: true, colorsampling: 0, numberofcolors: 3,
+                mincolorratio: 0, colorquantcycles: 3, blurradius: 3, blurdelta: 20, strokewidth: 0, linefilter: false,
+                roundcoords: 1, pal: [{ r: 0, g: 0, b: 100, a: 255 }, { r: 255, g: 255, b: 255, a: 255 }]
+            }
+        }
+
+        // Import imagetracerjs
+        import ImageTracer from "https://esm.sh/imagetracerjs";
+
+        let figImage = document.querySelector("fig-image");
+        let currentImageBlob = null;
+        let currentOptions = { ...options.default };
+
+        // Function to update current options from form controls
+        function updateCurrentOptions() {
+            // Get all form controls - now they are fig.js components
+            const sliders = document.querySelectorAll('fig-slider');
+            const checkboxes = document.querySelectorAll('fig-checkbox');
+
+            // Handle sliders
+            sliders.forEach(slider => {
+                const name = slider.getAttribute('name');
+                if (name && currentOptions.hasOwnProperty(name)) {
+                    currentOptions[name] = parseFloat(slider.value);
+                }
+            });
+
+            // Handle checkboxes
+            checkboxes.forEach(checkbox => {
+                const name = checkbox.getAttribute('name');
+                if (name && currentOptions.hasOwnProperty(name)) {
+                    currentOptions[name] = checkbox.input.checked;
+                }
+            });
+        }
+
+        // Function to update form controls from current options
+        function updateFormControlsFromOptions() {
+            const sliders = document.querySelectorAll('fig-slider');
+            const checkboxes = document.querySelectorAll('fig-checkbox');
+
+            // Handle sliders
+            sliders.forEach(slider => {
+                const name = slider.getAttribute('name');
+                if (name && currentOptions.hasOwnProperty(name)) {
+                    slider.setAttribute('value', currentOptions[name]);
+                }
+            });
+
+            // Handle checkboxes
+            checkboxes.forEach(checkbox => {
+                const name = checkbox.getAttribute('name');
+                if (name && currentOptions.hasOwnProperty(name)) {
+                    if (currentOptions[name]) {
+                        checkbox.setAttribute('checked', 'true');
+                    } else {
+                        checkbox.removeAttribute('checked');
+                    }
+                }
+            });
+
+            updateValueDisplays();
+        }
+
+        // Function to apply a preset
+        function applyPreset(presetName) {
+            if (!options[presetName]) return;
+
+            // Reset to default first
+            currentOptions = { ...options.default };
+
+            // Apply preset values
+            const preset = options[presetName];
+            Object.assign(currentOptions, preset);
+
+            // Update form controls to reflect new values
+            updateFormControlsFromOptions();
+
+            // Update the preset dropdown
+            document.getElementById('preset').setAttribute('value', presetName);
+
+            // Perform tracing with new options
+            performTracing();
+        }
+
+        // Function to update value displays
+        function updateValueDisplays() {
+            const sliders = document.querySelectorAll('fig-slider');
+            sliders.forEach(slider => {
+                const valueDisplay = document.getElementById(slider.id + '-value');
+                if (valueDisplay) {
+                    valueDisplay.textContent = slider.value;
+                }
+            });
+        }
+
+        // Function to perform tracing
+        function performTracing() {
+            if (!currentImageBlob) return;
+
+            // Clear existing SVG
+            document.getElementById('svg').innerHTML = '';
+
+            let appendImg = function (svgstr) {
+                console.log('SVG generated, updating display');
+                document.getElementById('svg').innerHTML = svgstr;
+            };
+
+            console.log('Tracing with options:', currentOptions);
+            ImageTracer.imageToSVG(currentImageBlob, appendImg, currentOptions);
+        }
+
+        // Set up event listeners for all controls
+        function setupControlListeners() {
+            const sliders = document.querySelectorAll('fig-slider');
+            const checkboxes = document.querySelectorAll('fig-checkbox');
+
+            // Handle slider events
+            sliders.forEach(slider => {
+                slider.addEventListener('input', (e) => {
+                    updateValueDisplays();
+                    updateCurrentOptions();
+
+                    // Debounce the tracing to avoid too many calls
+                    clearTimeout(slider.tracingTimeout);
+                    slider.tracingTimeout = setTimeout(performTracing, 300);
+                });
+            });
+
+            // Handle checkbox events
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    updateCurrentOptions();
+
+                    // Debounce the tracing to avoid too many calls
+                    clearTimeout(checkbox.tracingTimeout);
+                    checkbox.tracingTimeout = setTimeout(performTracing, 300);
+                });
+            });
+
+            // Set up preset dropdown listener
+            const presetSelect = document.getElementById('preset');
+            presetSelect.addEventListener('input', (e) => {
+                const selectedPreset = e.target.value;
+                applyPreset(selectedPreset);
+            });
+        }
+
+        // Initial setup
+        updateValueDisplays();
+        setupControlListeners();
+
+        // Handle image upload
+        figImage.addEventListener("change", e => {
+            console.log('Image uploaded:', figImage.blob);
+            currentImageBlob = figImage.blob;
+            updateCurrentOptions();
+            performTracing();
+        });
+    </script>
+</body>
+
+</html>

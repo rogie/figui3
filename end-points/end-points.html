@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Figma UI3 Web Components</title>
+    <link rel="stylesheet"
+          type="text/css"
+          href="https://unpkg.com/@rogieking/figui3@latest/fig.css">
+    <style>
+        /* Ignore these styles. They are mostly used to recreate the look of a dropdown */
+        body {
+            width: 480px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .dropdown {
+
+            height: var(--spacer-4);
+            padding: 0;
+            border-radius: var(--radius-medium);
+            display: inline-flex;
+            appearance: none;
+            align-items: center;
+            width: 40vw;
+            flex: 1 0 0;
+            border: 0;
+            color: var(--figma-color-text);
+            background-color: var(--figma-color-bg);
+            box-shadow: inset 0 0 0 1px var(--figma-color-border);
+            accent-color: var(--figma-color-bg-brand);
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            background-image: url(chevron.svg);
+            background-repeat: no-repeat;
+            background-position: right center;
+            background-size: 24px;
+            padding-right: 24px;
+            margin: 0.5rem 0;
+
+            label {
+                display: block;
+                flex-grow: 1;
+                flex-shrink: 1;
+                text-align: left;
+                overflow: hidden;
+                padding: 0;
+                color: var(--figma-color-text);
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        /* Style to reference */
+        .stretch-icon {
+            display: block;
+            flex-shrink: 0;
+            flex-basis: 24px;
+            width: 24px;
+            border: 12px solid black;
+            box-sizing: border-box;
+            /* top | right | bottom | left */
+            border-image-slice: 12;
+            border-image-repeat: repeat;
+
+            &.cap-diamond {
+                border-image-source: url(icon.24.stroke-diamond-arrow.svg);
+            }
+
+            &.cap-round {
+                border-image-source: url(icon.24.stroke.cap-round.svg);
+            }
+
+            &.grow {
+                flex-grow: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <fig-content>
+
+        <div class="dropdown">
+            <div class="stretch-icon cap-diamond"></div>
+            <label>Diamond arrow with a label</label>
+        </div>
+        <br />
+        <div class="dropdown">
+            <div class="stretch-icon cap-diamond grow"></div>
+        </div>
+        <br />
+        <div class="dropdown">
+            <div class="stretch-icon cap-round">
+            </div>
+            <label>Round with a label</label>
+        </div>
+        <br />
+        <div class="dropdown">
+            <div class="stretch-icon cap-round grow">
+            </div>
+        </div>
+
+    </fig-content>
+
+
+
+</body>
+
+</html>
