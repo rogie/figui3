@@ -225,7 +225,6 @@ class FigTooltip extends HTMLElement {
     this.action = this.getAttribute("action") || "hover";
     let delay = parseInt(this.getAttribute("delay"));
     this.delay = !isNaN(delay) ? delay : 500;
-    this.isOpen = false;
 
     // Bind methods that will be used as event listeners
     this.#boundHideOnChromeOpen = this.#hideOnChromeOpen.bind(this);
@@ -366,7 +365,13 @@ class FigTooltip extends HTMLElement {
     }
   }
   static get observedAttributes() {
-    return ["action", "delay"];
+    return ["action", "delay", "open"];
+  }
+  get open() {
+    return this.hasAttribute("open") && this.getAttribute("open") === "true";
+  }
+  set open(value) {
+    this.setAttribute("open", value);
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "action") {
@@ -376,6 +381,17 @@ class FigTooltip extends HTMLElement {
       let delay = parseInt(newValue);
       this.delay = !isNaN(delay) ? delay : 500;
     }
+    if (name === "open") {
+      if (newValue === "true") {
+        requestAnimationFrame(() => {
+          this.showDelayedPopup();
+        });
+      } else {
+        requestAnimationFrame(() => {
+          this.hidePopup();
+        });
+      }
+    }
   }
 
   #hideOnChromeOpen(e) {
@@ -383,11 +399,16 @@ class FigTooltip extends HTMLElement {
 
     // Check if the clicked element is a select or opens a dialog
     const target = e.target;
+
+    // If the target is a child of this.popup, return early
+    if (this.popup && this.popup.contains(target)) {
+      return;
+    }
+
     if (
       target.tagName === "SELECT" ||
       target.hasAttribute("popover") ||
-      target.closest("dialog") ||
-      target.onclick?.toString().includes("alert")
+      target.closest("dialog")
     ) {
       this.hidePopup();
     }
@@ -403,26 +424,19 @@ customElements.define("fig-tooltip", FigTooltip);
  * @attr {string} size - The size of the popover
  */
 class FigPopover extends FigTooltip {
-  static observedAttributes = ["action", "size"];
-
   constructor() {
     super();
     this.action = this.getAttribute("action") || "click";
     this.delay = parseInt(this.getAttribute("delay")) || 0;
   }
   render() {
-    //this.destroy()
-    //if (!this.popup) {
     this.popup = this.popup || this.querySelector("[popover]");
     this.popup.setAttribute("class", "fig-popover");
     this.popup.style.position = "fixed";
-    this.popup.style.display = "block";
-    this.popup.style.pointerEvents = "none";
+    this.popup.style.visibility = "hidden";
+    this.popup.style.display = "inline-flex";
     document.body.append(this.popup);
-    //}
   }
-
-  destroy() {}
 }
 customElements.define("fig-popover", FigPopover);
 
@@ -671,6 +685,7 @@ class FigSlider extends HTMLElement {
 
   constructor() {
     super();
+    this.initialInnerHTML = this.innerHTML;
 
     // Bind the event handlers
     this.#boundHandleInput = (e) => {
@@ -800,7 +815,6 @@ class FigSlider extends HTMLElement {
   }
 
   connectedCallback() {
-    this.initialInnerHTML = this.innerHTML;
     this.#regenerateInnerHTML();
   }
 

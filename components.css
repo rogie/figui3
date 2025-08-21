@@ -1867,6 +1867,7 @@ dialog,
   padding: 0;
   outline: 0;
   border: 0;
+  inset: auto;
   color: var(--figma-color-text);
   border-radius: var(--radius-large, 0.8125rem);
   background: var(--figma-color-bg);
@@ -1981,7 +1982,8 @@ dialog[is="fig-dialog"] {
 }
 
 /* Tooltip */
-fig-tooltip {
+fig-tooltip,
+fig-popover {
   display: contents;
 }
 .fig-tooltip {
