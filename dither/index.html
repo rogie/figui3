@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Dither!</title>
+    <link rel="stylesheet"
+          href="/components.css" />
+    <link rel="stylesheet"
+          href="http://127.0.0.1:5500/rog.ie.css">
+    <script src="http://127.0.0.1:5500/rog.ie.web-components.js"
+            type="module"></script>
+    <script src="/fig.js?"></script>
+    <style>
+        .dither-app {
+            width: 100%;
+            margin: 0 auto;
+
+            fig-image {
+                --image-size: 100% !important;
+                margin: 0 0 1rem 0;
+            }
+        }
+
+        .controls {
+            padding: 1rem 0;
+            width: 100%;
+
+
+
+            fig-field {
+                width: 100%;
+
+                label {
+                    min-width: 6rem !important;
+                }
+            }
+        }
+
+        .images {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .image-container {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+
+            &.output {
+                image-rendering: pixelated;
+            }
+
+            img {
+                width: 300px;
+                height: auto;
+            }
+
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-label {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .control-group.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Dither!</h1>
+    </header>
+    <main>
+        <figure class="dither-app">
+
+            <fig-popover>
+                <fig-image upload="true"
+                           label="Change image"
+                           aspect-ratio="auto"
+                           src="charli.jpeg"
+                           size="large">
+                </fig-image>
+                <script>
+                    let figImage = document.querySelector('fig-image');
+                    let figPopover = document.querySelector('fig-popover');
+                    figImage.addEventListener('loaded', (e) => {
+                        console.log('fig-image loaded:', e);
+                        figPopover.open = true;
+                    });
+                </script>
+                <div popover>
+
+                    <div class="controls">
+
+                        <fig-field direction="horizontal">
+                            <label for="ditheringAlgorithm">Algorithm</label>
+                            <fig-dropdown id="ditheringAlgorithm"
+                                          value="atkinson">
+                                <option value="atkinson">Atkinson</option>
+                                <option value="floydSteinberg">Floyd-Steinberg</option>
+                                <option value="sierra">Sierra</option>
+                                <option value="burkes">Burkes</option>
+                                <option value="blueNoise">Blue Noise</option>
+                            </fig-dropdown>
+                        </fig-field>
+
+                        <fig-field direction="horizontal">
+                            <label for="colorLevels">Color Levels</label>
+                            <fig-slider id="colorLevels"
+                                        min="2"
+                                        max="16"
+                                        value="4"
+                                        variant="minimal"
+                                        step="1"
+                                        text="true"
+                                        style="flex: 1; max-width: 200px;">
+                            </fig-slider>
+                        </fig-field>
+
+                        <fig-field direction="horizontal">
+                            <label for="imageScale">Image Scale</label>
+                            <fig-slider id="imageScale"
+                                        min="5"
+                                        max="50"
+                                        value="25"
+                                        variant="minimal"
+                                        step="1"
+                                        text="true"
+                                        style="flex: 1; max-width: 200px;">
+                            </fig-slider>
+                        </fig-field>
+
+                        <fig-field direction="horizontal">
+                            <label for="blackWhiteMode">Grayscale</label>
+                            <fig-checkbox id="blackWhiteMode"></fig-checkbox>
+                        </fig-field>
+
+                        <fig-field direction="horizontal"
+                                   id="thresholdGroup">
+                            <label for="threshold">Brightness Adjust</label>
+                            <fig-slider id="threshold"
+                                        min="-100"
+                                        max="100"
+                                        value="0"
+                                        variant="minimal"
+                                        step="1"
+                                        text="true"
+                                        style="flex: 1; max-width: 200px;">
+                            </fig-slider>
+                        </fig-field>
+
+                        <fig-field direction="horizontal">
+                            <label for="contrast">Contrast</label>
+                            <fig-slider id="contrast"
+                                        min="-100"
+                                        max="100"
+                                        value="0"
+                                        variant="minimal"
+                                        step="1"
+                                        text="true"
+                                        style="flex: 1; max-width: 200px;">
+                            </fig-slider>
+                        </fig-field>
+
+                        <fig-field direction="horizontal">
+                            <label for="invertColors">Invert Colors</label>
+                            <fig-checkbox id="invertColors"></fig-checkbox>
+                        </fig-field>
+                    </div>
+                </div>
+            </fig-popover>
+
+
+            <div class="images"></div>
+        </figure>
+
+
+    </main>
+    <rogie-footer></rogie-footer>
+</body>
+
+</html>

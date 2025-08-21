@@ -1031,7 +1031,6 @@ class FigInputText extends HTMLElement {
     if (this.type === "number") {
       value = value / (this.transform || 1);
       value = this.#sanitizeInput(value, false);
-      console.log("sanitizeInput", value);
       valueTransformed = value * (this.transform || 1);
     }
     this.value = value;
@@ -1796,6 +1795,7 @@ window.customElements.define("fig-chit", FigChit);
  * @attr {string} size - Size of the image preview
  */
 class FigImage extends HTMLElement {
+  #src = null;
   constructor() {
     super();
   }
@@ -1838,9 +1838,6 @@ class FigImage extends HTMLElement {
           this.#handleFileInput.bind(this)
         );
       }
-      if (this.src) {
-        this.#loadImage(this.src);
-      }
     });
   }
   async #loadImage(src) {
@@ -1848,12 +1845,22 @@ class FigImage extends HTMLElement {
     await new Promise((resolve) => {
       this.image = new Image();
       this.image.crossOrigin = "Anonymous";
-
+      console.log("loading image", this.src);
       this.image.onload = async () => {
         this.aspectRatio = this.image.width / this.image.height;
         this.style.setProperty(
           "--aspect-ratio",
           `${this.image.width}/${this.image.height}`
+        );
+        this.dispatchEvent(
+          new CustomEvent("loaded", {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              blob: this.blob,
+              base64: this.base64,
+            },
+          })
         );
         resolve();
 
@@ -1905,18 +1912,26 @@ class FigImage extends HTMLElement {
         cancelable: true,
       })
     );
-    this.src = this.blob;
-    this.setAttribute("src", this.src);
-    this.chit.setAttribute("src", this.src);
+    this.setAttribute("src", this.blob);
   }
   static get observedAttributes() {
     return ["src", "upload"];
   }
+  get src() {
+    return this.#src;
+  }
+  set src(value) {
+    this.#src = value;
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "src") {
       this.src = newValue;
       if (this.chit) {
-        this.chit.setAttribute("src", this.src);
+        this.chit.setAttribute("src", this.#src);
+      }
+      if (this.#src) {
+        this.#loadImage(this.#src);
       }
     }
     if (name === "upload") {
