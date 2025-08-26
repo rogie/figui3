@@ -2269,6 +2269,9 @@ fig-input-text {
     cursor: not-allowed;
     color: var(--figma-color-text-disabled);
     box-shadow: inset 0 0 0 1px var(--figma-color-border-disabled);
+    & [slot] {
+      color: var(--figma-color-text-disabled);
+    }
   }
 }
 
