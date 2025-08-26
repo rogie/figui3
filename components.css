@@ -2262,6 +2262,14 @@ fig-input-text {
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
     outline: 0;
   }
+  /* Disabled */
+  &[disabled]:not([disabled="false"]) {
+    background-color: var(--figma-color-bg);
+    pointer-events: none;
+    cursor: not-allowed;
+    color: var(--figma-color-text-disabled);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-disabled);
+  }
 }
 
 fig-input-color {
