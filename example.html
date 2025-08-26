@@ -272,15 +272,7 @@
                        label="Upload image"
                        size="large"></fig-image>
         </fig-field>
-        <br /><br />
-        <fig-field>
-            <label>Large (with upload)</label>
-            <fig-image upload="true"
-                       label="Change image"
-                       aspect-ratio="auto"
-                       src="charli.jpeg"
-                       size="large"></fig-image>
-        </fig-field>
+
         <br /><br />
         <fig-header>
             <h2>Button</h2>
@@ -575,7 +567,8 @@
         <fig-field>
             <label>Numeric input</label>
             <fig-input-text placeholder="###"
-                            type="number"></fig-input-text>
+                            type="number"
+                            steppers="true"></fig-input-text>
         </fig-field>
         <fig-field>
             <label>Password input</label>
@@ -920,15 +913,7 @@
             </fig-button>
         </fig-field>
     </fig-content>
-    <script>
-        let elements = Array.from(document.querySelectorAll('*'));
-        elements.filter(n => n.tagName.toLowerCase().indexOf("fig-slider") > -1).forEach(n => n.addEventListener('input', (e) => {
-            console.log('input:', n.tagName, e.target)
-        }))
-        document.querySelectorAll('fig-input-color').forEach(n => n.addEventListener('change', (e) => {
-            console.log('change:', n.tagName, e.target.value)
-        }))
-    </script>
+
 </body>
 
 </html>

@@ -450,7 +450,6 @@ class FigDialog extends HTMLDialogElement {
   connectedCallback() {
     this.modal =
       this.hasAttribute("modal") && this.getAttribute("modal") !== "false";
-
     requestAnimationFrame(() => {
       this.#addCloseListeners();
     });
@@ -983,8 +982,8 @@ class FigInputText extends HTMLElement {
 
     //child nodes hack
     requestAnimationFrame(() => {
-      const append = this.querySelector("[slot=append]");
-      const prepend = this.querySelector("[slot=prepend]");
+      let append = this.querySelector("[slot=append]");
+      let prepend = this.querySelector("[slot=prepend]");
 
       this.innerHTML = html;
 
@@ -1845,7 +1844,6 @@ class FigImage extends HTMLElement {
     await new Promise((resolve) => {
       this.image = new Image();
       this.image.crossOrigin = "Anonymous";
-      console.log("loading image", this.src);
       this.image.onload = async () => {
         this.aspectRatio = this.image.width / this.image.height;
         this.style.setProperty(
