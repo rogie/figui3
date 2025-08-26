@@ -240,9 +240,16 @@
         </fig-header>
         <fig-field>
             <fig-tabs>
-                <fig-tab selected>Tab #1</fig-tab>
-                <fig-tab>Tab #2</fig-tab>
+                <fig-tab selected
+                         content="#tab-1-content">Tab #1</fig-tab>
+                <fig-tab content="#tab-2-content">Tab #2</fig-tab>
             </fig-tabs>
+            <fig-tab-content id="tab-1-content">
+                Content for Tab #1
+            </fig-tab-content>
+            <fig-tab-content id="tab-2-content">
+                Content for Tab #2
+            </fig-tab-content>
         </fig-field>
         <fig-header>
             <h2>Segmented control</h2>

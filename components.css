@@ -982,6 +982,11 @@ fig-tabs,
   gap: var(--spacer-2);
 }
 
+fig-tab-content,
+.fig-tab-content {
+  display: none;
+}
+
 /* Avatar */
 fig-avatar,
 .fig-avatar {

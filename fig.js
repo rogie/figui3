@@ -529,18 +529,53 @@ window.customElements.define("fig-popover-2", FigPopover2);
  * @attr {boolean} selected - Whether the tab is currently selected
  */
 class FigTab extends HTMLElement {
+  #selected;
   constructor() {
     super();
+    this.content = null;
+    this.#selected = false;
   }
   connectedCallback() {
     this.setAttribute("label", this.innerText);
     this.addEventListener("click", this.handleClick.bind(this));
+
+    requestAnimationFrame(() => {
+      if (typeof this.getAttribute("content") === "string") {
+        this.content = document.querySelector(this.getAttribute("content"));
+        if (this.#selected) {
+          this.content.style.display = "block";
+        } else {
+          this.content.style.display = "none";
+        }
+      }
+    });
+  }
+  get selected() {
+    return this.#selected;
+  }
+  set selected(value) {
+    this.setAttribute("selected", value ? "true" : "false");
   }
   disconnectedCallback() {
     this.removeEventListener("click", this.handleClick);
   }
   handleClick() {
-    this.setAttribute("selected", "true");
+    this.selected = true;
+    if (this.content) {
+      this.content.style.display = "block";
+    }
+  }
+
+  static get observedAttributes() {
+    return ["selected"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "selected") {
+      this.#selected = newValue !== null && newValue !== "false";
+      if (this?.content) {
+        this.content.style.display = this.#selected ? "block" : "none";
+      }
+    }
   }
 }
 window.customElements.define("fig-tab", FigTab);
