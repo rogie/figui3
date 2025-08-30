@@ -421,6 +421,7 @@
   --handle-shadow: 0px 0 0 0.75px rgba(0, 0, 0, 0.05),
     0px 1px 3px 0px rgba(0, 0, 0, 0.05), 0px 3px 8px 0px rgba(0, 0, 0, 0.05),
     0px 0px 0.5px 0px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
+  --handle-color: #fff;
 
   --popover-min-width: 15rem;
   --figma-color-bg-ghost-hover: rgba(0, 0, 0, 0.05);
@@ -1311,7 +1312,7 @@ input[type="checkbox"].switch {
 
 input[type="checkbox"].switch:after {
   content: "";
-  background-color: var(--figma-color-icon-onbrand);
+  background-color: var(--handle-color);
   width: calc(1rem - 2px);
   height: calc(1rem - 2px);
   border-radius: 0.5rem;
@@ -1553,15 +1554,14 @@ details {
 fig-slider {
   --slider-field-height: 1.5rem;
   --slider-height: 1rem;
-  --slider-handle-color: #fff;
   --slider-thumb-size: var(--slider-height);
   --slider-percent: calc(var(--slider-complete) * 100%);
   --start-percent: calc(var(--default, 0) * 100%);
   --slider-tick-size: calc(var(--slider-height) / 4);
   --slider-handle-shadow: inset 0 0 0 calc(4px + 0.5rem * var(--unchanged))
-      var(--slider-handle-color),
+      var(--handle-color),
     inset 0 0 0 5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
-  --slider-handle-shadow-focus: inset 0 0 0 4px var(--slider-handle-color),
+  --slider-handle-shadow-focus: inset 0 0 0 4px var(--handle-color),
     inset 0 0 0 5px rgba(0, 0, 0, 0.1), 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
     0px 1px 3px 0px rgba(0, 0, 0, 0.1), 0px 3px 8px 0px rgba(0, 0, 0, 0.1),
     0px 0px 0.5px 0px rgba(0, 0, 0, 0.18),
@@ -1842,7 +1842,7 @@ fig-slider {
     --handle-transition: none;
     --slider-transition: none;
     --slider-handle-shadow: inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
-        var(--slider-handle-color),
+        var(--handle-color),
       0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
       var(--figma-elevation-200);
 
@@ -2391,7 +2391,6 @@ fig-segmented-control {
 
 fig-input-joystick {
   --size: 1.5rem;
-  --joystick-handle-color: #fff;
   display: inline-flex;
   gap: var(--spacer-2);
   user-select: none;
@@ -2481,7 +2480,7 @@ fig-input-joystick {
     z-index: 1;
     width: 0.5rem;
     height: 0.5rem;
-    background: var(--joystick-handle-color);
+    background: var(--handle-color);
     box-shadow: var(--handle-shadow);
     border-radius: 50%;
     transform: translate(-50%, -50%);
@@ -2490,7 +2489,6 @@ fig-input-joystick {
 
 fig-input-angle {
   --size: 1.5rem;
-  --handle-color: #fff;
   display: inline-flex;
   gap: var(--spacer-2);
   user-select: none;
