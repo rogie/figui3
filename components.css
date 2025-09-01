@@ -771,6 +771,17 @@ fig-button {
     color: var(--figma-color-text);
   }
 
+  /* Variant: Overlay (for on top of content) */
+  &[variant="overlay"] {
+    background-color: var(--figma-color-bg);
+    color: var(--figma-color-text);
+    box-shadow: 0 0 0 1px var(--figma-color-bordertranslucent);
+
+    &:active {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
+
   /* Icon only */
   &[icon] {
     width: var(--spacer-4);
@@ -1230,10 +1241,6 @@ fig-image {
   fig-chit {
     --size: var(--image-size) !important;
   }
-  fig-button {
-    opacity: 0;
-    pointer-events: none;
-  }
   &:not([src]):not([src=""]) fig-button,
   &:hover fig-button {
     opacity: 1;
@@ -1253,6 +1260,25 @@ fig-image {
     input {
       height: auto !important;
       aspect-ratio: var(--aspect-ratio) !important;
+    }
+  }
+  > div {
+    display: flex;
+    gap: var(--spacer-2);
+    opacity: 0;
+    pointer-events: none;
+  }
+  &:not([src]):not([src=""]) > div,
+  &:hover > div {
+    opacity: 1;
+    pointer-events: all;
+  }
+  fig-button[type="download"] {
+    display: none;
+  }
+  &[src]:not([src=""]) {
+    fig-button[type="download"] {
+      display: inline-flex;
     }
   }
 }

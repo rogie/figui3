@@ -220,6 +220,8 @@ customElements.define("fig-dropdown", FigDropdown);
 class FigTooltip extends HTMLElement {
   #boundHideOnChromeOpen;
   #boundHideOnDragStart;
+  #touchTimeout;
+  #isTouching = false;
   constructor() {
     super();
     this.action = this.getAttribute("action") || "hover";
@@ -245,6 +247,15 @@ class FigTooltip extends HTMLElement {
     );
     // Remove mousedown listener
     this.removeEventListener("mousedown", this.#boundHideOnDragStart);
+
+    // Clean up touch-related timers and listeners
+    clearTimeout(this.#touchTimeout);
+    if (this.action === "hover") {
+      this.removeEventListener("touchstart", this.#handleTouchStart);
+      this.removeEventListener("touchend", this.#handleTouchEnd);
+    } else if (this.action === "click") {
+      this.removeEventListener("touchstart", this.showDelayedPopup);
+    }
   }
 
   setup() {
@@ -286,12 +297,25 @@ class FigTooltip extends HTMLElement {
       this.addEventListener("pointerleave", this.hidePopup.bind(this));
       // Add mousedown listener instead of dragstart
       this.addEventListener("mousedown", this.#boundHideOnDragStart);
+
+      // Touch support for mobile hover simulation
+      this.addEventListener("touchstart", this.#handleTouchStart.bind(this), {
+        passive: true,
+      });
+      this.addEventListener("touchend", this.#handleTouchEnd.bind(this), {
+        passive: true,
+      });
     } else if (this.action === "click") {
       this.addEventListener("click", this.showDelayedPopup.bind(this));
       document.body.addEventListener(
         "click",
         this.hidePopupOutsideClick.bind(this)
       );
+
+      // Touch support for better mobile responsiveness
+      this.addEventListener("touchstart", this.showDelayedPopup.bind(this), {
+        passive: true,
+      });
     }
 
     // Add listener for chrome interactions
@@ -352,6 +376,7 @@ class FigTooltip extends HTMLElement {
 
   hidePopup() {
     clearTimeout(this.timeout);
+    clearTimeout(this.#touchTimeout);
     this.popup.style.opacity = "0";
     this.popup.style.display = "block";
     this.popup.style.pointerEvents = "none";
@@ -364,6 +389,27 @@ class FigTooltip extends HTMLElement {
       this.hidePopup();
     }
   }
+
+  // Touch event handlers for mobile support
+  #handleTouchStart(event) {
+    if (this.action === "hover") {
+      this.#isTouching = true;
+      // Show popup on touch start for hover action
+      this.showDelayedPopup();
+    }
+  }
+
+  #handleTouchEnd(event) {
+    if (this.action === "hover" && this.#isTouching) {
+      this.#isTouching = false;
+      // Hide popup after a short delay to allow for taps
+      clearTimeout(this.#touchTimeout);
+      this.#touchTimeout = setTimeout(() => {
+        this.hidePopup();
+      }, 100);
+    }
+  }
+
   static get observedAttributes() {
     return ["action", "delay", "open"];
   }
@@ -1836,22 +1882,29 @@ class FigImage extends HTMLElement {
   #getInnerHTML() {
     return `<fig-chit type="image" size="large" ${
       this.src ? `src="${this.src}"` : ""
-    } disabled="true"></fig-chit>${
+    } disabled="true"></fig-chit><div>${
       this.upload
-        ? `<fig-button variant="primary" type="upload">
+        ? `<fig-button variant="overlay" type="upload">
           ${this.label} 
           <input type="file" accept="image/*" />
         </fig-button>`
         : ""
-    }`;
+    } ${
+      this.download
+        ? `<fig-button variant="overlay" icon="true" type="download">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M17.5 13C17.7761 13 18 13.2239 18 13.5V16.5C18 17.3284 17.3284 18 16.5 18H7.5C6.67157 18 6 17.3284 6 16.5V13.5C6 13.2239 6.22386 13 6.5 13C6.77614 13 7 13.2239 7 13.5V16.5C7 16.7761 7.22386 17 7.5 17H16.5C16.7761 17 17 16.7761 17 16.5V13.5C17 13.2239 17.2239 13 17.5 13ZM12 6C12.2761 6 12.5 6.22386 12.5 6.5V12.293L14.6465 10.1465C14.8417 9.95122 15.1583 9.95122 15.3535 10.1465C15.5488 10.3417 15.5488 10.6583 15.3535 10.8535L12.3535 13.8535C12.2597 13.9473 12.1326 14 12 14C11.9006 14 11.8042 13.9704 11.7227 13.916L11.6465 13.8535L8.64648 10.8535C8.45122 10.6583 8.45122 10.3417 8.64648 10.1465C8.84175 9.95122 9.15825 9.95122 9.35352 10.1465L11.5 12.293V6.5C11.5 6.22386 11.7239 6 12 6Z" fill="black"/>
+</svg></fig-button>`
+        : ""
+    }</div>`;
   }
   connectedCallback() {
     this.src = this.getAttribute("src") || "";
     this.upload = this.getAttribute("upload") === "true";
+    this.download = this.getAttribute("download") === "true";
     this.label = this.getAttribute("label") || "Upload";
     this.size = this.getAttribute("size") || "small";
     this.innerHTML = this.#getInnerHTML();
-    this.#updateRefs();
   }
   disconnectedCallback() {
     this.fileInput.removeEventListener(
@@ -1864,15 +1917,37 @@ class FigImage extends HTMLElement {
     requestAnimationFrame(() => {
       this.chit = this.querySelector("fig-chit");
       if (this.upload) {
-        this.uploadButton = this.querySelector("fig-button");
+        this.uploadButton = this.querySelector("fig-button[type='upload']");
         this.fileInput = this.uploadButton?.querySelector("input");
-
+        this.fileInput.removeEventListener(
+          "change",
+          this.#handleFileInput.bind(this)
+        );
         this.fileInput.addEventListener(
           "change",
           this.#handleFileInput.bind(this)
         );
       }
+      if (this.download) {
+        console.log("binding download");
+        this.downloadButton = this.querySelector("fig-button[type='download']");
+        this.downloadButton.removeEventListener(
+          "click",
+          this.#handleDownload.bind(this)
+        );
+        this.downloadButton.addEventListener(
+          "click",
+          this.#handleDownload.bind(this)
+        );
+      }
     });
+  }
+  #handleDownload() {
+    //force blob download
+    const link = document.createElement("a");
+    link.href = this.blob;
+    link.download = "image.png";
+    link.click();
   }
   async #loadImage(src) {
     // Get blob from canvas
@@ -1967,8 +2042,9 @@ class FigImage extends HTMLElement {
         this.#loadImage(this.#src);
       }
     }
-    if (name === "upload") {
+    if (name === "upload" || name === "download") {
       this.upload = newValue.toLowerCase() === "true";
+      this.download = newValue.toLowerCase() === "true";
       this.innerHTML = this.#getInnerHTML();
       this.#updateRefs();
     }
