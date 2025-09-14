@@ -493,6 +493,7 @@
                 is="fig-dialog">
             <fig-header>
                 <h3>Dialog</h3>
+
                 <fig-button variant="ghost"
                             icon="true"
                             close-dialog>
@@ -511,6 +512,12 @@
                 </fig-button>
             </fig-header>
             <fig-content>
+                <fig-tooltip text="Close dialog">
+                    <fig-button variant="ghost"
+                                close-dialog>
+                        Close
+                    </fig-button>
+                </fig-tooltip>
                 <p>Some content here</p>
                 <fig-field direction="horizontal">
                     <label for="colorLevels">Color Levels</label>

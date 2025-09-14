@@ -252,7 +252,9 @@ class FigTooltip extends HTMLElement {
     clearTimeout(this.#touchTimeout);
     if (this.action === "hover") {
       this.removeEventListener("touchstart", this.#handleTouchStart);
+      this.removeEventListener("touchmove", this.#handleTouchMove);
       this.removeEventListener("touchend", this.#handleTouchEnd);
+      this.removeEventListener("touchcancel", this.#handleTouchCancel);
     } else if (this.action === "click") {
       this.removeEventListener("touchstart", this.showDelayedPopup);
     }
@@ -294,7 +296,10 @@ class FigTooltip extends HTMLElement {
   setupEventListeners() {
     if (this.action === "hover") {
       this.addEventListener("pointerenter", this.showDelayedPopup.bind(this));
-      this.addEventListener("pointerleave", this.hidePopup.bind(this));
+      this.addEventListener(
+        "pointerleave",
+        this.#handlePointerLeave.bind(this)
+      );
       // Add mousedown listener instead of dragstart
       this.addEventListener("mousedown", this.#boundHideOnDragStart);
 
@@ -302,7 +307,13 @@ class FigTooltip extends HTMLElement {
       this.addEventListener("touchstart", this.#handleTouchStart.bind(this), {
         passive: true,
       });
+      this.addEventListener("touchmove", this.#handleTouchMove.bind(this), {
+        passive: true,
+      });
       this.addEventListener("touchend", this.#handleTouchEnd.bind(this), {
+        passive: true,
+      });
+      this.addEventListener("touchcancel", this.#handleTouchCancel.bind(this), {
         passive: true,
       });
     } else if (this.action === "click") {
@@ -390,23 +401,52 @@ class FigTooltip extends HTMLElement {
     }
   }
 
+  // Pointer event handlers
+  #handlePointerLeave(event) {
+    // Don't hide immediately if we're in a touch interaction
+    if (!this.#isTouching) {
+      this.hidePopup();
+    }
+  }
+
   // Touch event handlers for mobile support
   #handleTouchStart(event) {
     if (this.action === "hover") {
       this.#isTouching = true;
+      // Clear any existing touch timeout
+      clearTimeout(this.#touchTimeout);
       // Show popup on touch start for hover action
       this.showDelayedPopup();
     }
   }
 
-  #handleTouchEnd(event) {
+  #handleTouchMove(event) {
     if (this.action === "hover" && this.#isTouching) {
-      this.#isTouching = false;
-      // Hide popup after a short delay to allow for taps
+      // If user is scrolling/moving, cancel the tooltip after a delay
       clearTimeout(this.#touchTimeout);
       this.#touchTimeout = setTimeout(() => {
+        this.#isTouching = false;
         this.hidePopup();
-      }, 100);
+      }, 150);
+    }
+  }
+
+  #handleTouchEnd(event) {
+    if (this.action === "hover" && this.#isTouching) {
+      // Delay setting isTouching to false to prevent pointerleave from hiding immediately
+      clearTimeout(this.#touchTimeout);
+      this.#touchTimeout = setTimeout(() => {
+        this.#isTouching = false;
+        this.hidePopup();
+      }, 300); // Increased delay for better mobile UX
+    }
+  }
+
+  #handleTouchCancel(event) {
+    if (this.action === "hover" && this.#isTouching) {
+      this.#isTouching = false;
+      clearTimeout(this.#touchTimeout);
+      this.hidePopup();
     }
   }
 
