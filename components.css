@@ -1877,20 +1877,6 @@ fig-slider {
       position: relative;
       display: block;
       width: 100%;
-      box-shadow: none;
-      background: var(--figma-color-bg-tertiary);
-
-      /* Track */
-      &::before {
-        box-shadow: none;
-        background: var(--figma-color-text-tertiary);
-      }
-
-      input[type="range"] {
-        &::-webkit-slider-runnable-track {
-          box-shadow: none;
-        }
-      }
     }
     fig-input-text {
       height: calc(var(--slider-height) * 2);
@@ -1899,18 +1885,6 @@ fig-slider {
 
     &:hover,
     &:focus-within {
-      .fig-slider-input-container {
-        background: var(--figma-color-bg-secondary);
-        &::before {
-          box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-          background: var(--figma-color-bg-brand);
-        }
-      }
-      input[type="range"] {
-        &::-webkit-slider-runnable-track {
-          box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-        }
-      }
       fig-input-text {
         height: auto;
       }

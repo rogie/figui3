@@ -292,14 +292,23 @@ class FigTooltip extends HTMLElement {
     }
     document.body.addEventListener("click", this.hidePopupOutsideClick);
   }
+  isTouchDevice() {
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0
+    );
+  }
 
   setupEventListeners() {
     if (this.action === "hover") {
-      this.addEventListener("pointerenter", this.showDelayedPopup.bind(this));
-      this.addEventListener(
-        "pointerleave",
-        this.#handlePointerLeave.bind(this)
-      );
+      if (!this.isTouchDevice()) {
+        this.addEventListener("pointerenter", this.showDelayedPopup.bind(this));
+        this.addEventListener(
+          "pointerleave",
+          this.#handlePointerLeave.bind(this)
+        );
+      }
       // Add mousedown listener instead of dragstart
       this.addEventListener("mousedown", this.#boundHideOnDragStart);
 
