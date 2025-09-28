@@ -1869,12 +1869,13 @@ window.customElements.define("fig-combo-input", FigComboInput);
  * @attr {boolean} disabled - Whether the chip is disabled
  */
 class FigChit extends HTMLElement {
+  #src = null;
   constructor() {
     super();
   }
   connectedCallback() {
     this.type = this.getAttribute("type") || "color";
-    this.src = this.getAttribute("src") || "";
+    this.#src = this.getAttribute("src") || "";
     this.value = this.getAttribute("value") || "#000000";
     this.size = this.getAttribute("size") || "small";
     this.disabled = this.getAttribute("disabled") === "true";
@@ -1887,14 +1888,22 @@ class FigChit extends HTMLElement {
   }
   #updateSrc(src) {
     if (src) {
-      this.src = src;
+      this.#src = src;
       this.style.setProperty("--src", `url(${src})`);
     } else {
       this.style.removeProperty("--src");
+      this.#src = null;
     }
   }
   static get observedAttributes() {
     return ["src", "value", "disabled"];
+  }
+  get src() {
+    return this.#src;
+  }
+  set src(value) {
+    this.#src = value;
+    this.setAttribute("src", value);
   }
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
@@ -1948,12 +1957,13 @@ class FigImage extends HTMLElement {
     }</div>`;
   }
   connectedCallback() {
-    this.src = this.getAttribute("src") || "";
+    this.#src = this.getAttribute("src") || "";
     this.upload = this.getAttribute("upload") === "true";
     this.download = this.getAttribute("download") === "true";
     this.label = this.getAttribute("label") || "Upload";
     this.size = this.getAttribute("size") || "small";
     this.innerHTML = this.#getInnerHTML();
+    this.#updateRefs();
   }
   disconnectedCallback() {
     this.fileInput.removeEventListener(
@@ -1978,7 +1988,6 @@ class FigImage extends HTMLElement {
         );
       }
       if (this.download) {
-        console.log("binding download");
         this.downloadButton = this.querySelector("fig-button[type='download']");
         this.downloadButton.removeEventListener(
           "click",
@@ -2079,11 +2088,12 @@ class FigImage extends HTMLElement {
   }
   set src(value) {
     this.#src = value;
+    this.setAttribute("src", value);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "src") {
-      this.src = newValue;
+      //this.src = newValue;
       if (this.chit) {
         this.chit.setAttribute("src", this.#src);
       }

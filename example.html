@@ -26,6 +26,8 @@
         <h2><label>Effects/</label>UI3 Components</h2>
     </fig-header>
 
+
+
     <fig-input-text disabled
                     value="Disabled"><span slot="append">%</span></fig-input-text>
 
@@ -71,7 +73,10 @@
 
     <fig-content>
 
+
         <br /><br /><br /><br /><br /><br /><br /><br /><br />
+
+
         <hstack>
             <fig-tooltip text="Tooltip"
                          delay="0">
@@ -112,6 +117,7 @@
 
         </hstack>
         <br /><br /><br /><br /><br /><br /><br /><br /><br />
+
         <fig-button type="link"
                     href="https://www.google.com">
             <svg width="24"
@@ -284,6 +290,17 @@
                        label="Upload image"
                        size="large"></fig-image>
         </fig-field>
+        <script>
+            function updateImages() {
+                const images = document.querySelectorAll('fig-image');
+                images.forEach(image => {
+                    //image.setAttribute("src", "https://picsum.photos/200?random=" + Math.random());
+                    image.src = "https://picsum.photos/200?random=" + Math.random();
+                });
+            }
+        </script>
+
+        <button onclick="updateImages()">Change src</button>
 
         <br /><br />
         <fig-header>
