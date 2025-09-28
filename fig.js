@@ -2042,13 +2042,21 @@ class FigImage extends HTMLElement {
 
         // Get blob from canvas
         canvas.toBlob((blob) => {
-          this.blob = URL.createObjectURL(blob);
+          if (this.blob) {
+            URL.revokeObjectURL(this.blob);
+          }
+          if (blob) {
+            this.blob = URL.createObjectURL(blob);
+          }
         });
       };
       this.image.src = src;
     });
   }
   async #handleFileInput(e) {
+    if (this.blob) {
+      URL.revokeObjectURL(this.blob);
+    }
     this.blob = URL.createObjectURL(e.target.files[0]);
     //set base64 url
     const reader = new FileReader();
@@ -2094,6 +2102,9 @@ class FigImage extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "src") {
       //this.src = newValue;
+      if (!this.chit) {
+        this.chit = this.querySelector("fig-chit");
+      }
       if (this.chit) {
         this.chit.setAttribute("src", this.#src);
       }
