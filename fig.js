@@ -2101,10 +2101,7 @@ class FigImage extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "src") {
-      //this.src = newValue;
-      if (!this.chit) {
-        this.chit = this.querySelector("fig-chit");
-      }
+      this.#src = newValue;
       if (this.chit) {
         this.chit.setAttribute("src", this.#src);
       }
