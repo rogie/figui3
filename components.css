@@ -875,7 +875,7 @@ fig-button {
     *[fill] {
       fill: currentColor;
     }
-    *[stroke][stroke!="none"] {
+    *[stroke]:not([stroke="none"]) {
       stroke: currentColor;
     }
   }
@@ -2085,7 +2085,7 @@ fig-popover {
     height: 6px;
     position: absolute;
     top: calc(100% - 1px);
-    left: 50%;
+    left: var(--beak-offset, 50%);
     z-index: 2;
     transform: translate(-50%);
   }
@@ -2093,6 +2093,7 @@ fig-popover {
   &[position="bottom"] {
     &:after {
       top: 1px;
+      left: var(--beak-offset, 50%);
       transform: translate(-50%, -100%) scaleY(-1);
     }
   }
@@ -2116,7 +2117,7 @@ fig-popover {
     height: 6px;
     position: absolute;
     top: calc(100% - 1px);
-    left: 50%;
+    left: var(--beak-offset, 50%);
     z-index: 2;
     transform: translate(-50%);
   }
@@ -2124,6 +2125,7 @@ fig-popover {
   &[position="bottom"] {
     &:after {
       top: 1px;
+      left: var(--beak-offset, 50%);
       transform: translate(-50%, -100%) scaleY(-1);
     }
   }

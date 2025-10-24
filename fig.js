@@ -383,6 +383,14 @@ class FigTooltip extends HTMLElement {
       left = window.innerWidth - popupRect.width - offset.right;
     }
 
+    // Calculate the center of the target element relative to the tooltip
+    const targetCenter = rect.left + rect.width / 2;
+    const tooltipLeft = left;
+    const beakOffset = targetCenter - tooltipLeft;
+
+    // Set the beak offset as a CSS custom property
+    this.popup.style.setProperty("--beak-offset", `${beakOffset}px`);
+
     this.popup.style.top = `${top}px`;
     this.popup.style.left = `${left}px`;
     this.popup.style.opacity = "1";
