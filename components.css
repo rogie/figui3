@@ -1899,7 +1899,11 @@ fig-slider {
 
     background-color: var(--figma-color-bg-secondary);
     border-radius: var(--radius-medium);
-    padding-left: 0.5rem;
+    padding-left: var(--spacer-2);
+
+    &:not([text="true"]) {
+      padding-right: var(--spacer-2);
+    }
 
     .fig-slider-input-container {
       height: var(--slider-height);
