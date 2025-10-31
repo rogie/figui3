@@ -456,7 +456,7 @@
   --handle-shadow: 0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
     0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
   --figma-color-bg-ghost-hover: rgba(255, 255, 255, 0.05);
-  --figma-color-bordertranslucent: rgba(255, 255, 255, 0.1);
+  --figma-color-bordertranslucent: rgba(255, 255, 255, 0.05);
   --figma-elevation-400-menu-panel: 0px 0.5px 0px 0px rgba(255, 255, 255, 0.08)
       inset,
     0px 10px 16px 0px rgba(0, 0, 0, 0.35),
