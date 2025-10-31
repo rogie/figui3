@@ -357,7 +357,7 @@
 
 :root {
   --font-size: 16px;
-  --figma-color-bordertranslucent: rgba(0, 0, 0, 0.1);
+  --figma-color-bordertranslucent: rgba(0, 0, 0, 0.05);
   --checkerboard: repeating-conic-gradient(
       rgba(0, 0, 0, 0.1) 0% 25%,
       rgba(255, 255, 255, 0.1) 0% 50%
