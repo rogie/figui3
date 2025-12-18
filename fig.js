@@ -73,7 +73,10 @@ class FigButton extends HTMLElement {
       this.toggleAttribute("selected", !this.hasAttribute("selected"));
     }
     if (this.type === "submit") {
-      this.closest("form").dispatchEvent(new Event("submit"));
+      let form = this.closest("form");
+      if (form) {
+        form.submit();
+      }
     }
     if (this.type === "link") {
       const href = this.getAttribute("href");
@@ -405,10 +408,13 @@ class FigTooltip extends HTMLElement {
   hidePopup() {
     clearTimeout(this.timeout);
     clearTimeout(this.#touchTimeout);
-    this.popup.style.opacity = "0";
-    this.popup.style.display = "block";
-    this.popup.style.pointerEvents = "none";
-    this.destroy();
+    if (this.popup) {
+      this.popup.style.opacity = "0";
+      this.popup.style.display = "block";
+      this.popup.style.pointerEvents = "none";
+      this.destroy();
+    }
+
     this.isOpen = false;
   }
 
