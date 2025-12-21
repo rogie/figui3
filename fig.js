@@ -979,7 +979,9 @@ class FigSlider extends HTMLElement {
     if (this.figInputText) {
       this.value = this.input.value = this.figInputText.value;
       this.#syncProperties();
-      this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+      this.dispatchEvent(
+        new CustomEvent("input", { detail: this.value, bubbles: true })
+      );
     }
   }
   #calculateNormal(value) {
@@ -1005,7 +1007,9 @@ class FigSlider extends HTMLElement {
 
   #handleInput() {
     this.#syncValue();
-    this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: this.value, bubbles: true })
+    );
   }
 
   static get observedAttributes() {
@@ -1192,8 +1196,12 @@ class FigInputText extends HTMLElement {
     }
     this.value = value;
     this.input.value = valueTransformed;
-    this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
-    this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: this.value, bubbles: true })
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: this.value, bubbles: true })
+    );
   }
   #handleMouseMove(e) {
     if (this.type !== "number") return;
