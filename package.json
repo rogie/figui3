@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rogie/figui3.git"
+    "url": "git+https://github.com/rogie/figui3.git"
   },
   "homepage": "https://github.com/rogie/figui3#readme",
   "bugs": {

@@ -28,6 +28,16 @@
     </fig-header>
 
 
+    <fig-field direction="horizontal">
+        <label>Position</label>
+        <fig-dropdown value="outside">
+            <option value="inside">Inside</option>
+            <option value="center">Center</option>
+            <option value="outside">Outside</option>
+        </fig-dropdown>
+    </fig-field>
+
+
 
 
 
@@ -980,6 +990,13 @@
             </fig-button>
         </fig-field>
     </fig-content>
+
+    <script>
+        document.addEventListener("input", (e) => {
+            console.log("input", e.target, e.target.value);
+        });
+
+    </script>
 
 </body>
 

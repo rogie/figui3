@@ -170,11 +170,25 @@ class FigDropdown extends HTMLElement {
   #handleSelectInput(e) {
     this.value = e.target.value;
     this.setAttribute("value", this.value);
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        detail: this.value,
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
-  #handleSelectChange() {
+  #handleSelectChange(e) {
     if (this.type === "dropdown") {
       this.select.selectedIndex = -1;
     }
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        detail: this.value,
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
   focus() {
     this.select.focus();
