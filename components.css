@@ -513,7 +513,8 @@ input[type="password"],
   }
 }
 
-fig-input-text {
+fig-input-text,
+fig-input-number {
   &:has([slot="append"]) input[type="number"] {
     &::-webkit-outer-spin-button,
     &::-webkit-inner-spin-button {
@@ -572,109 +573,170 @@ input[type="text"][list] {
   }
 }
 
-/* Not enough support for this yet 
 @supports (appearance: base-select) {
-  select {
-    appearance: base-select;
+  fig-dropdown[variant="neue"] {
+    select {
+      appearance: base-select;
+      --option-height: 1.5rem;
 
-    option::checkmark {
-      content: var(--icon-checkmark);
-      display: block;
-      width: 1rem;
-      height: 1rem;
-    }
-
-    option {
-      display: flex;
-      gap: var(--spacer-1);
-      padding: 0 var(--spacer-4) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
-      font-weight: var(--body-medium-fontWeight);
-      color: var(--figma-color-text-menu);
-      position: relative;
-      &[hidden] {
-        display: none;
-      }
-      &:not(:checked):before {
-        content: "";
+      option::checkmark {
+        content: var(--icon-checkmark);
         display: block;
-        position: absolute;
-        inset: 0 var(--spacer-2);
-        border-radius: var(--radius-medium);
-        z-index: -1;
-        background-color: transparent;
+        width: 1rem;
+        height: 1rem;
       }
-      &:not(:disabled) {
-        &:hover,
-        &:active,
-        &:focus {
-          background-color: transparent;
-          outline: 0;
-          &:before {
-            background-color: var(--figma-color-bg-menu-hover);
-          }
-        }
-      }
-    }
 
-    optgroup {
-      color: var(--figma-color-text-menu-secondary);
-      text-align: left;
-      position: relative;
-      padding: 0 var(--spacer-1) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
-      font-weight: var(--body-medium-fontWeight);
-      &::-internal-optgroup-label {
-        display: none;
-      }
-      legend {
-        padding: var(--spacer-1, 0.3rem) var(--spacer-1, 1rem);
-      }
       option {
-        margin: 0 calc(var(--spacer-1) * -1);
-        margin-left: calc((var(--spacer-1) * 2 + var(--spacer-1)) * -1);
-      }
-      &:not(:first-child) {
-        margin-top: var(--spacer-2);
-        padding-top: var(--spacer-2);
-
-        &:before {
+        display: flex;
+        gap: var(--spacer-1);
+        padding: 0 var(--spacer-4) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
+        font-weight: var(--body-medium-fontWeight);
+        color: var(--figma-color-text-menu);
+        position: relative;
+        &[hidden] {
+          display: none;
+        }
+        &:not(:checked):before {
           content: "";
           display: block;
           position: absolute;
-          left: 0;
-          right: 0;
-          top: 1px;
-          height: 1px;
-          background-color: var(--figma-color-border-menu);
-          margin-bottom: var(--spacer-2);
+          inset: 0 var(--spacer-2);
+          border-radius: var(--radius-medium);
+          z-index: -1;
+          background-color: transparent;
+        }
+        &:not(:disabled) {
+          &:hover,
+          &:active,
+          &:focus {
+            background-color: transparent;
+            outline: 0;
+            &:before {
+              background-color: var(--figma-color-bg-menu-hover);
+            }
+          }
+        }
+      }
+
+      optgroup {
+        color: var(--figma-color-text-menu-secondary);
+        text-align: left;
+        position: relative;
+        padding: 0 var(--spacer-1) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
+        font-weight: var(--body-medium-fontWeight);
+        &::-internal-optgroup-label {
+          display: none;
+        }
+        legend {
+          padding: var(--spacer-1, 0.3rem) var(--spacer-1, 1rem);
+        }
+        option {
+          margin: 0 calc(var(--spacer-1) * -1);
+          margin-left: calc((var(--spacer-1) * 2 + var(--spacer-1)) * -1);
+        }
+        &:not(:first-child) {
+          margin-top: var(--spacer-2);
+          padding-top: var(--spacer-2);
+
+          &:before {
+            content: "";
+            display: block;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 1px;
+            height: 1px;
+            background-color: var(--figma-color-border-menu);
+            margin-bottom: var(--spacer-2);
+          }
+        }
+      }
+      option[hidden="true"]:first-child + optgroup {
+        margin-top: 0;
+        padding-top: 0;
+        &:before {
+          display: none;
         }
       }
     }
-    option[hidden="true"]:first-child + optgroup {
-      margin-top: 0;
-      padding-top: 0;
-      &:before {
-        display: none;
+    ::picker-icon {
+      display: none;
+    }
+
+    ::picker(select) {
+      position-area: auto;
+      align-self: auto;
+      position-try-fallbacks: none;
+      max-block-size: 100vh;
+      appearance: base-select;
+      scrollbar-width: thin;
+      outline: 0;
+      scrollbar-color: var(--figma-color-text-menu-tertiary)
+        var(--figma-color-bg-menu);
+      border-radius: var(--radius-large);
+      border: 0;
+      background-color: var(--figma-color-bg-menu);
+      padding: var(--spacer-2) 0;
+      box-shadow: var(--figma-elevation-400-menu-panel);
+    }
+    select {
+      &:has(:nth-child(1):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -1 - var(--spacer-2));
+        }
+      }
+
+      &:has(:nth-child(2):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -2 - var(--spacer-2));
+        }
+      }
+
+      &:has(:nth-child(3):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -3 - var(--spacer-2));
+        }
+      }
+
+      &:has(:nth-child(4):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -4 - var(--spacer-2));
+        }
+      }
+      &:has(:nth-child(5):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -5 - var(--spacer-2));
+        }
+      }
+      &:has(:nth-child(6):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -6 - var(--spacer-2));
+        }
+      }
+      &:has(:nth-child(7):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -7 - var(--spacer-2));
+        }
+      }
+      &:has(:nth-child(8):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -8 - var(--spacer-2));
+        }
+      }
+      &:has(:nth-child(9):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -9 - var(--spacer-2));
+        }
+      }
+      &:has(:nth-child(10):checked) {
+        &::picker(select) {
+          top: calc(var(--option-height) * -10 - var(--spacer-2));
+        }
       }
     }
   }
-  ::picker-icon {
-    display: none;
-  }
-
-  ::picker(select) {
-    appearance: base-select;
-    scrollbar-width: thin;
-    outline: 0;
-    scrollbar-color: var(--figma-color-text-menu-tertiary)
-      var(--figma-color-bg-menu);
-    border-radius: var(--radius-large);
-    border: 0;
-    background-color: var(--figma-color-bg-menu);
-    padding: var(--spacer-2) 0;
-    box-shadow: var(--figma-elevation-400-menu-panel);
-  }
 }
-*/
+
 input[type="text"][list]:hover,
 input[type="text"][list]:active,
 input[type="text"][list]:focus,
@@ -1913,7 +1975,8 @@ fig-slider {
       box-shadow: none;
       background-color: var(--figma-color-bg-tertiary);
     }
-    fig-input-text {
+    fig-input-text,
+    fig-input-number {
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
       border-left: 1px solid var(--figma-color-bg);
@@ -1921,7 +1984,8 @@ fig-slider {
 
     &:hover,
     &:focus-within {
-      fig-input-text {
+      fig-input-text,
+      fig-input-number {
         height: auto;
       }
     }
@@ -2235,7 +2299,8 @@ hstack,
   flex-wrap: nowrap;
 }
 
-fig-input-text {
+fig-input-text,
+fig-input-number {
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
@@ -2322,8 +2387,9 @@ fig-input-text {
 
 fig-input-color {
   & fig-input-text:not([type]),
-  & fig-input-text[type="text"] {
-    min-width: 6em;
+  & fig-input-text[type="text"],
+  & fig-input-number {
+    flex-basis: 6em;
     display: inline-flex;
     flex-direction: column;
     align-items: stretch;
@@ -2334,7 +2400,8 @@ fig-input-color {
     }
   }
 
-  & fig-input-text[type="number"] {
+  & fig-input-text[type="number"],
+  & fig-input-number {
     width: 3.5rem;
     display: inline-flex;
   }
@@ -2347,7 +2414,8 @@ fig-slider {
     flex-grow: 1;
   }
 
-  & fig-input-text[type="number"] {
+  & fig-input-text[type="number"],
+  & fig-input-number {
     width: 3.5rem;
   }
 }

@@ -1,15 +1,25 @@
+/**
+ * Generates a unique ID string using timestamp and random values
+ * @returns {string} A unique identifier
+ */
 function figUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
+/**
+ * Checks if the browser supports the native popover API
+ * @returns {boolean} True if popover is supported
+ */
 function figSupportsPopover() {
   return HTMLElement.prototype.hasOwnProperty("popover");
 }
 
 /**
  * A custom button element that supports different types and states.
- * @attr {string} type - The button type: "button" (default), "toggle", or "submit"
+ * @attr {string} type - The button type: "button" (default), "toggle", "submit", or "link"
  * @attr {boolean} selected - Whether the button is in a selected state
  * @attr {boolean} disabled - Whether the button is disabled
+ * @attr {string} href - URL for link type buttons
+ * @attr {string} target - Target window for link type buttons (e.g., "_blank")
  */
 class FigButton extends HTMLElement {
   type;
@@ -56,7 +66,7 @@ class FigButton extends HTMLElement {
   }
 
   get type() {
-    return this.type;
+    return this.getAttribute("type") || "button";
   }
   set type(value) {
     this.setAttribute("type", value);
@@ -99,8 +109,7 @@ class FigButton extends HTMLElement {
       switch (name) {
         case "disabled":
           this.disabled = this.button.disabled =
-            newValue === "true" ||
-            (newValue === undefined && newValue !== null);
+            newValue !== null && newValue !== "false";
           break;
         case "type":
           this.type = newValue;
@@ -237,6 +246,7 @@ customElements.define("fig-dropdown", FigDropdown);
 class FigTooltip extends HTMLElement {
   #boundHideOnChromeOpen;
   #boundHideOnDragStart;
+  #boundHidePopupOutsideClick;
   #touchTimeout;
   #isTouching = false;
   constructor() {
@@ -248,6 +258,7 @@ class FigTooltip extends HTMLElement {
     // Bind methods that will be used as event listeners
     this.#boundHideOnChromeOpen = this.#hideOnChromeOpen.bind(this);
     this.#boundHideOnDragStart = this.hidePopup.bind(this);
+    this.#boundHidePopupOutsideClick = this.hidePopupOutsideClick.bind(this);
   }
   connectedCallback() {
     this.setup();
@@ -264,6 +275,14 @@ class FigTooltip extends HTMLElement {
     );
     // Remove mousedown listener
     this.removeEventListener("mousedown", this.#boundHideOnDragStart);
+
+    // Remove click outside listener for click action
+    if (this.action === "click") {
+      document.body.removeEventListener(
+        "click",
+        this.#boundHidePopupOutsideClick
+      );
+    }
 
     // Clean up touch-related timers and listeners
     clearTimeout(this.#touchTimeout);
@@ -307,7 +326,13 @@ class FigTooltip extends HTMLElement {
     if (this.popup) {
       this.popup.remove();
     }
-    document.body.addEventListener("click", this.hidePopupOutsideClick);
+    // Remove the click outside listener if it was added
+    if (this.action === "click") {
+      document.body.removeEventListener(
+        "click",
+        this.#boundHidePopupOutsideClick
+      );
+    }
   }
   isTouchDevice() {
     return (
@@ -344,10 +369,7 @@ class FigTooltip extends HTMLElement {
       });
     } else if (this.action === "click") {
       this.addEventListener("click", this.showDelayedPopup.bind(this));
-      document.body.addEventListener(
-        "click",
-        this.hidePopupOutsideClick.bind(this)
-      );
+      document.body.addEventListener("click", this.#boundHidePopupOutsideClick);
 
       // Touch support for better mobile responsiveness
       this.addEventListener("touchstart", this.showDelayedPopup.bind(this), {
@@ -665,10 +687,12 @@ class FigTab extends HTMLElement {
     requestAnimationFrame(() => {
       if (typeof this.getAttribute("content") === "string") {
         this.content = document.querySelector(this.getAttribute("content"));
-        if (this.#selected) {
-          this.content.style.display = "block";
-        } else {
-          this.content.style.display = "none";
+        if (this.content) {
+          if (this.#selected) {
+            this.content.style.display = "block";
+          } else {
+            this.content.style.display = "none";
+          }
         }
       }
     });
@@ -889,20 +913,15 @@ class FigSlider extends HTMLElement {
             </div>`;
     if (this.text) {
       html = `${slider}
-                    <fig-input-text
+                    <fig-input-number
                         placeholder="##"
-                        type="number"
                         min="${this.min}"
                         max="${this.max}"
                         transform="${this.transform}"
                         step="${this.step}"
-                        value="${this.value}">
-                        ${
-                          this.units
-                            ? `<span slot="append">${this.units}</span>`
-                            : ""
-                        }
-                    </fig-input-text>`;
+                        value="${this.value}"
+                        ${this.units ? `units="${this.units}"` : ""}>
+                    </fig-input-number>`;
     } else {
       html = slider;
     }
@@ -923,7 +942,7 @@ class FigSlider extends HTMLElement {
       }
 
       this.datalist = this.querySelector("datalist");
-      this.figInputText = this.querySelector("fig-input-text");
+      this.figInputNumber = this.querySelector("fig-input-number");
       if (this.datalist) {
         this.inputContainer.append(this.datalist);
         this.datalist.setAttribute(
@@ -959,12 +978,15 @@ class FigSlider extends HTMLElement {
           defaultOption.setAttribute("default", "true");
         }
       }
-      if (this.figInputText) {
-        this.figInputText.removeEventListener(
+      if (this.figInputNumber) {
+        this.figInputNumber.removeEventListener(
           "input",
           this.#boundHandleTextInput
         );
-        this.figInputText.addEventListener("input", this.#boundHandleTextInput);
+        this.figInputNumber.addEventListener(
+          "input",
+          this.#boundHandleTextInput
+        );
       }
 
       this.#syncValue();
@@ -976,8 +998,8 @@ class FigSlider extends HTMLElement {
   }
 
   #handleTextInput() {
-    if (this.figInputText) {
-      this.value = this.input.value = this.figInputText.value;
+    if (this.figInputNumber) {
+      this.value = this.input.value = this.figInputNumber.value;
       this.#syncProperties();
       this.dispatchEvent(
         new CustomEvent("input", { detail: this.value, bubbles: true })
@@ -1000,8 +1022,8 @@ class FigSlider extends HTMLElement {
     let val = this.input.value;
     this.value = val;
     this.#syncProperties();
-    if (this.figInputText) {
-      this.figInputText.setAttribute("value", val);
+    if (this.figInputNumber) {
+      this.figInputNumber.setAttribute("value", val);
     }
   }
 
@@ -1039,23 +1061,22 @@ class FigSlider extends HTMLElement {
           break;
         case "disabled":
           this.disabled = this.input.disabled =
-            newValue === "true" ||
-            (newValue === undefined && newValue !== null);
-          if (this.figInputText) {
-            this.figInputText.disabled = this.disabled;
-            this.figInputText.setAttribute("disabled", this.disabled);
+            newValue !== null && newValue !== "false";
+          if (this.figInputNumber) {
+            this.figInputNumber.disabled = this.disabled;
+            this.figInputNumber.setAttribute("disabled", this.disabled);
           }
           break;
         case "value":
           this.value = newValue;
-          if (this.figInputText) {
-            this.figInputText.setAttribute("value", newValue);
+          if (this.figInputNumber) {
+            this.figInputNumber.setAttribute("value", newValue);
           }
           break;
         case "transform":
           this.transform = Number(newValue) || 1;
-          if (this.figInputText) {
-            this.figInputText.setAttribute("transform", this.transform);
+          if (this.figInputNumber) {
+            this.figInputNumber.setAttribute("transform", this.transform);
           }
           break;
         case "min":
@@ -1300,8 +1321,7 @@ class FigInputText extends HTMLElement {
       switch (name) {
         case "disabled":
           this.disabled = this.input.disabled =
-            newValue === "true" ||
-            (newValue === undefined && newValue !== null);
+            newValue !== null && newValue !== "false";
           break;
         case "transform":
           if (this.type === "number") {
@@ -1340,6 +1360,362 @@ class FigInputText extends HTMLElement {
   }
 }
 window.customElements.define("fig-input-text", FigInputText);
+
+/**
+ * A custom numeric input element that uses type="text" with inputmode="decimal".
+ * Supports units display and all standard number input attributes.
+ * @attr {string} value - The current numeric value
+ * @attr {string} placeholder - Placeholder text
+ * @attr {boolean} disabled - Whether the input is disabled
+ * @attr {number} min - Minimum value
+ * @attr {number} max - Maximum value
+ * @attr {number} step - Step increment
+ * @attr {number} transform - A multiplier for displayed number values
+ * @attr {string} units - Unit string to append/prepend to displayed value (e.g., "%", "°", "$")
+ * @attr {string} unit-position - Position of unit: "suffix" (default) or "prefix"
+ * @attr {string} name - Form field name
+ */
+class FigInputNumber extends HTMLElement {
+  #boundMouseMove;
+  #boundMouseUp;
+  #boundMouseDown;
+  #boundInputChange;
+  #boundInput;
+  #boundFocus;
+  #boundBlur;
+  #units;
+  #unitPosition;
+
+  constructor() {
+    super();
+    // Pre-bind the event handlers once
+    this.#boundMouseMove = this.#handleMouseMove.bind(this);
+    this.#boundMouseUp = this.#handleMouseUp.bind(this);
+    this.#boundMouseDown = this.#handleMouseDown.bind(this);
+    this.#boundInputChange = (e) => {
+      e.stopPropagation();
+      this.#handleInputChange(e);
+    };
+    this.#boundInput = (e) => {
+      e.stopPropagation();
+      this.#handleInput(e);
+    };
+    this.#boundFocus = (e) => {
+      this.#handleFocus(e);
+    };
+    this.#boundBlur = (e) => {
+      this.#handleBlur(e);
+    };
+  }
+
+  connectedCallback() {
+    const valueAttr = this.getAttribute("value");
+    this.value =
+      valueAttr !== null && valueAttr !== "" ? Number(valueAttr) : "";
+    this.placeholder = this.getAttribute("placeholder") || "";
+    this.name = this.getAttribute("name") || null;
+    this.#units = this.getAttribute("units") || "";
+    this.#unitPosition = this.getAttribute("unit-position") || "suffix";
+
+    if (this.getAttribute("step")) {
+      this.step = Number(this.getAttribute("step"));
+    }
+    if (this.getAttribute("min")) {
+      this.min = Number(this.getAttribute("min"));
+    }
+    if (this.getAttribute("max")) {
+      this.max = Number(this.getAttribute("max"));
+    }
+    this.transform = Number(this.getAttribute("transform") || 1);
+
+    let html = `<input 
+      type="text"
+      inputmode="decimal"
+      ${this.name ? `name="${this.name}"` : ""}
+      placeholder="${this.placeholder}"
+      value="${this.#formatWithUnit(this.value)}" />`;
+
+    //child nodes hack
+    requestAnimationFrame(() => {
+      let append = this.querySelector("[slot=append]");
+      let prepend = this.querySelector("[slot=prepend]");
+
+      this.innerHTML = html;
+
+      if (prepend) {
+        prepend.addEventListener("click", this.focus.bind(this));
+        this.prepend(prepend);
+      }
+      if (append) {
+        append.addEventListener("click", this.focus.bind(this));
+        this.append(append);
+      }
+
+      this.input = this.querySelector("input");
+
+      if (this.getAttribute("min")) {
+        this.min = Number(this.getAttribute("min"));
+      }
+      if (this.getAttribute("max")) {
+        this.max = Number(this.getAttribute("max"));
+      }
+      if (this.getAttribute("step")) {
+        this.step = Number(this.getAttribute("step"));
+      }
+
+      // Set disabled state if present
+      if (this.hasAttribute("disabled")) {
+        const disabledAttr = this.getAttribute("disabled");
+        this.disabled = this.input.disabled = disabledAttr !== "false";
+      }
+
+      this.addEventListener("pointerdown", this.#boundMouseDown);
+      this.input.removeEventListener("change", this.#boundInputChange);
+      this.input.addEventListener("change", this.#boundInputChange);
+      this.input.removeEventListener("input", this.#boundInput);
+      this.input.addEventListener("input", this.#boundInput);
+      this.input.removeEventListener("focus", this.#boundFocus);
+      this.input.addEventListener("focus", this.#boundFocus);
+      this.input.removeEventListener("blur", this.#boundBlur);
+      this.input.addEventListener("blur", this.#boundBlur);
+    });
+  }
+
+  focus() {
+    this.input.focus();
+  }
+
+  #getNumericValue(str) {
+    if (!str) return "";
+    if (!this.#units) {
+      // No units, just extract numeric value
+      let value = str.replace(/[^\d.-]/g, "");
+      // Prevent multiple decimal points
+      const parts = value.split(".");
+      if (parts.length > 2) {
+        value = parts[0] + "." + parts.slice(1).join("");
+      }
+      return value;
+    }
+    let value = str.replace(this.#units, "").trim();
+    value = value.replace(/[^\d.-]/g, "");
+    // Prevent multiple decimal points
+    const parts = value.split(".");
+    if (parts.length > 2) {
+      value = parts[0] + "." + parts.slice(1).join("");
+    }
+    return value;
+  }
+
+  #formatWithUnit(numericValue) {
+    if (
+      numericValue === "" ||
+      numericValue === null ||
+      numericValue === undefined
+    )
+      return "";
+    // numericValue is the internal (non-transformed) value
+    // For display, we apply transform and format
+    let displayValue = Number(numericValue) * (this.transform || 1);
+    if (isNaN(displayValue)) return "";
+    displayValue = this.#formatNumber(displayValue);
+    if (!this.#units) return displayValue.toString();
+    if (this.#unitPosition === "prefix") {
+      return this.#units + displayValue;
+    } else {
+      return displayValue + this.#units;
+    }
+  }
+
+  #transformNumber(value) {
+    if (value === "" || value === null || value === undefined) return "";
+    let transformed = Number(value) * (this.transform || 1);
+    transformed = this.#formatNumber(transformed);
+    return transformed.toString();
+  }
+
+  #handleFocus(e) {
+    setTimeout(() => {
+      const value = e.target.value;
+      if (value && this.#units) {
+        if (this.#unitPosition === "prefix") {
+          e.target.setSelectionRange(this.#units.length, value.length);
+        } else {
+          const unitPos = value.indexOf(this.#units);
+          if (unitPos > -1) {
+            e.target.setSelectionRange(0, unitPos);
+          }
+        }
+      }
+    }, 0);
+  }
+
+  #handleBlur(e) {
+    let numericValue = this.#getNumericValue(e.target.value);
+    if (numericValue !== "") {
+      let val = Number(numericValue) / (this.transform || 1);
+      val = this.#sanitizeInput(val, false);
+      this.value = val;
+      e.target.value = this.#formatWithUnit(this.value);
+    } else {
+      this.value = "";
+      e.target.value = "";
+    }
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: this.value, bubbles: true })
+    );
+  }
+
+  #handleInput(e) {
+    let numericValue = this.#getNumericValue(e.target.value);
+    if (numericValue !== "") {
+      this.value = Number(numericValue) / (this.transform || 1);
+    } else {
+      this.value = "";
+    }
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: this.value, bubbles: true })
+    );
+  }
+
+  #handleInputChange(e) {
+    e.stopPropagation();
+    let numericValue = this.#getNumericValue(e.target.value);
+    if (numericValue !== "") {
+      let val = Number(numericValue) / (this.transform || 1);
+      val = this.#sanitizeInput(val, false);
+      this.value = val;
+      e.target.value = this.#formatWithUnit(this.value);
+    } else {
+      this.value = "";
+      e.target.value = "";
+    }
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: this.value, bubbles: true })
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: this.value, bubbles: true })
+    );
+  }
+
+  #handleMouseMove(e) {
+    if (this.disabled) return;
+    if (e.altKey) {
+      let step = (this.step || 1) * e.movementX;
+      let numericValue = this.#getNumericValue(this.input.value);
+      let value = Number(numericValue) / (this.transform || 1) + step;
+      value = this.#sanitizeInput(value, false);
+      this.value = value;
+      this.input.value = this.#formatWithUnit(this.value);
+      this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+      this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
+    }
+  }
+
+  #handleMouseDown(e) {
+    if (this.disabled) return;
+    if (e.altKey) {
+      this.input.style.cursor =
+        this.style.cursor =
+        document.body.style.cursor =
+          "ew-resize";
+      this.style.userSelect = "none";
+      // Use the pre-bound handlers
+      window.addEventListener("pointermove", this.#boundMouseMove);
+      window.addEventListener("pointerup", this.#boundMouseUp);
+    }
+  }
+
+  #handleMouseUp(e) {
+    this.input.style.cursor =
+      this.style.cursor =
+      document.body.style.cursor =
+        "";
+    this.style.userSelect = "all";
+    // Remove the pre-bound handlers
+    window.removeEventListener("pointermove", this.#boundMouseMove);
+    window.removeEventListener("pointerup", this.#boundMouseUp);
+  }
+
+  #sanitizeInput(value, transform = true) {
+    let sanitized = Number(value);
+    if (isNaN(sanitized)) return "";
+    if (typeof this.min === "number") {
+      sanitized = Math.max(this.min, sanitized);
+    }
+    if (typeof this.max === "number") {
+      sanitized = Math.min(this.max, sanitized);
+    }
+    sanitized = this.#formatNumber(sanitized);
+    return sanitized;
+  }
+
+  #formatNumber(num, precision = 2) {
+    // Check if the number has any decimal places after rounding
+    const rounded = Math.round(num * 100) / 100;
+    return Number.isInteger(rounded) ? rounded : rounded.toFixed(precision);
+  }
+
+  static get observedAttributes() {
+    return [
+      "value",
+      "placeholder",
+      "disabled",
+      "step",
+      "min",
+      "max",
+      "transform",
+      "name",
+      "units",
+      "unit-position",
+    ];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (this.input) {
+      switch (name) {
+        case "disabled":
+          this.disabled = this.input.disabled =
+            newValue !== null && newValue !== "false";
+          break;
+        case "units":
+          this.#units = newValue || "";
+          this.input.value = this.#formatWithUnit(this.value);
+          break;
+        case "unit-position":
+          this.#unitPosition = newValue || "suffix";
+          this.input.value = this.#formatWithUnit(this.value);
+          break;
+        case "transform":
+          this.transform = Number(newValue) || 1;
+          this.input.value = this.#formatWithUnit(this.value);
+          break;
+        case "value":
+          let value =
+            newValue !== null && newValue !== "" ? Number(newValue) : "";
+          if (value !== "") {
+            value = this.#sanitizeInput(value, false);
+          }
+          this.value = value;
+          this.input.value = this.#formatWithUnit(this.value);
+          break;
+        case "min":
+        case "max":
+        case "step":
+          this[name] = Number(newValue);
+          break;
+        case "name":
+          this[name] = this.input[name] = newValue;
+          this.input.setAttribute("name", newValue);
+          break;
+        default:
+          this[name] = this.input[name] = newValue;
+          break;
+      }
+    }
+  }
+}
+window.customElements.define("fig-input-number", FigInputNumber);
 
 /* Avatar */
 class FigAvatar extends HTMLElement {

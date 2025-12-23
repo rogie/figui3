@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {

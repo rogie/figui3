@@ -27,6 +27,18 @@
         <fig-spinner></fig-spinner>
     </fig-header>
 
+    <br /><br /><br /><br /><br /><br /><br /><br />
+
+
+    <fig-field direction="horizontal">
+        <label>Position</label>
+        <fig-dropdown value="outside"
+                      variant="neue">
+            <option value="inside">Inside</option>
+            <option value="center">Center</option>
+            <option value="outside">Outside</option>
+        </fig-dropdown>
+    </fig-field>
 
     <fig-field direction="horizontal">
         <label>Position</label>
@@ -674,6 +686,111 @@
                             placeholder="Number">
                 <span slot="prepend">X</span>
             </fig-input-text>
+        </fig-field>
+        <fig-header>
+            <h2>Number input</h2>
+        </fig-header>
+        <fig-field>
+            <label>Basic number input</label>
+            <fig-input-number value="100"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With units (percentage)</label>
+            <fig-input-number value="100"
+                              units="%"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With units (degrees)</label>
+            <fig-input-number value="45"
+                              units="°"
+                              min="0"
+                              max="360"
+                              step="1"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With prefix unit (currency)</label>
+            <fig-input-number value="50"
+                              units="$"
+                              unit-position="prefix"
+                              min="0"
+                              step="0.01"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With transform (like slider)</label>
+            <fig-input-number value="0.5"
+                              units="%"
+                              transform="100"
+                              min="0"
+                              max="1"
+                              step="0.01"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With min/max constraints</label>
+            <fig-input-number value="25"
+                              units="px"
+                              min="0"
+                              max="1000"
+                              step="1"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With placeholder</label>
+            <fig-input-number placeholder="Enter value"
+                              units="%"
+                              min="0"
+                              max="100"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>Disabled</label>
+            <fig-input-number value="75"
+                              units="%"
+                              disabled></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With name attribute</label>
+            <fig-input-number value="42"
+                              units="px"
+                              name="width"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>Small step (decimals)</label>
+            <fig-input-number value="1.5"
+                              units="rem"
+                              min="0"
+                              max="10"
+                              step="0.1"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>Large range with transform</label>
+            <fig-input-number value="0.75"
+                              units="%"
+                              transform="100"
+                              min="0"
+                              max="1"
+                              step="0.01"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>Negative values allowed</label>
+            <fig-input-number value="-10"
+                              units="px"
+                              min="-100"
+                              max="100"
+                              step="1"></fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With append slot</label>
+            <fig-input-number value="90"
+                              units="°"
+                              min="0"
+                              max="360">
+                <span slot="append">deg</span>
+            </fig-input-number>
+        </fig-field>
+        <fig-field>
+            <label>With prepend slot</label>
+            <fig-input-number value="50"
+                              units="%">
+                <span slot="prepend">O</span>
+            </fig-input-number>
         </fig-field>
         <fig-header>
             <h2>Color input</h2>
