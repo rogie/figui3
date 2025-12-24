@@ -666,7 +666,6 @@ input[type="text"][list] {
     ::picker(select) {
       position-area: auto;
       align-self: auto;
-      position-try-fallbacks: none;
       max-block-size: 100vh;
       appearance: base-select;
       scrollbar-width: thin;
