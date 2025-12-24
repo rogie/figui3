@@ -1814,14 +1814,13 @@ class FigInputColor extends HTMLElement {
       </fig-input-text>`;
       if (this.getAttribute("alpha") === "true") {
         label += `<fig-tooltip text="Opacity">
-                    <fig-input-text 
+                    <fig-input-number 
                         placeholder="##" 
-                        type="number"
                         min="0"
                         max="100"
-                        value="${this.alpha}">
-                        <span slot="append">%</slot>
-                    </fig-input-text>
+                        value="${this.alpha}"
+                        units="%">
+                    </fig-input-number>
                 </fig-tooltip>`;
       }
       html = `<div class="input-combo">
@@ -1836,7 +1835,7 @@ class FigInputColor extends HTMLElement {
     requestAnimationFrame(() => {
       this.#swatch = this.querySelector("fig-chit[type=color]");
       this.#textInput = this.querySelector("fig-input-text:not([type=number])");
-      this.#alphaInput = this.querySelector("fig-input-text[type=number]");
+      this.#alphaInput = this.querySelector("fig-input-number");
 
       this.#swatch.disabled = this.hasAttribute("disabled");
       this.#swatch.addEventListener("input", this.#handleInput.bind(this));
@@ -1898,7 +1897,9 @@ class FigInputColor extends HTMLElement {
   #handleAlphaInput(event) {
     //do not propagate to onInput handler for web component
     event.stopPropagation();
-    const alpha = Math.round((event.target.value / 100) * 255);
+    // fig-input-number stores numeric value internally, ensure it's a number
+    const alphaValue = Number(event.target.value) || 0;
+    const alpha = Math.round((alphaValue / 100) * 255);
     const alphaHex = alpha.toString(16).padStart(2, "0");
     this.#setValues(this.hexOpaque + alphaHex);
     this.#emitInputEvent();

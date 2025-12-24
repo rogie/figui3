@@ -2389,7 +2389,6 @@ fig-input-color {
   & fig-input-text:not([type]),
   & fig-input-text[type="text"],
   & fig-input-number {
-    flex-basis: 6em;
     display: inline-flex;
     flex-direction: column;
     align-items: stretch;
@@ -2402,8 +2401,14 @@ fig-input-color {
 
   & fig-input-text[type="number"],
   & fig-input-number {
-    width: 3.5rem;
+    width: 3rem;
     display: inline-flex;
+  }
+  & > * {
+    flex: 1;
+    fig-input-text {
+      flex: 1;
+    }
   }
 }
 
@@ -2416,7 +2421,7 @@ fig-slider {
 
   & fig-input-text[type="number"],
   & fig-input-number {
-    width: 3.5rem;
+    width: 3rem;
   }
 }
 
