@@ -592,12 +592,38 @@ customElements.define("fig-popover", FigPopover);
  * @attr {boolean} modal - Whether the dialog should be modal
  */
 class FigDialog extends HTMLDialogElement {
+  #isDragging = false;
+  #dragOffset = { x: 0, y: 0 };
+  #boundPointerDown;
+  #boundPointerMove;
+  #boundPointerUp;
+  #offset = 16; // 1rem in pixels
+  #positionInitialized = false;
+
+  constructor() {
+    super();
+    this.#boundPointerDown = this.#handlePointerDown.bind(this);
+    this.#boundPointerMove = this.#handlePointerMove.bind(this);
+    this.#boundPointerUp = this.#handlePointerUp.bind(this);
+  }
+
   connectedCallback() {
     this.modal =
       this.hasAttribute("modal") && this.getAttribute("modal") !== "false";
+
+    // Set up drag functionality
+    this.drag =
+      this.hasAttribute("drag") && this.getAttribute("drag") !== "false";
+
     requestAnimationFrame(() => {
       this.#addCloseListeners();
+      this.#setupDragListeners();
+      this.#applyPosition();
     });
+  }
+
+  disconnectedCallback() {
+    this.#removeDragListeners();
   }
 
   #addCloseListeners() {
@@ -605,6 +631,174 @@ class FigDialog extends HTMLDialogElement {
       button.removeEventListener("click", this.close);
       button.addEventListener("click", this.close.bind(this));
     });
+  }
+
+  #applyPosition() {
+    const position = this.getAttribute("position") || "";
+    const rect = this.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Default to centered
+    let top = (viewportHeight - rect.height) / 2;
+    let left = (viewportWidth - rect.width) / 2;
+
+    // Parse position attribute
+    const hasTop = position.includes("top");
+    const hasBottom = position.includes("bottom");
+    const hasLeft = position.includes("left");
+    const hasRight = position.includes("right");
+
+    // Vertical positioning
+    if (hasTop) {
+      top = this.#offset;
+    } else if (hasBottom) {
+      top = viewportHeight - rect.height - this.#offset;
+    }
+
+    // Horizontal positioning
+    if (hasLeft) {
+      left = this.#offset;
+    } else if (hasRight) {
+      left = viewportWidth - rect.width - this.#offset;
+    }
+
+    // Apply position using fixed positioning with pixels
+    this.style.position = "fixed";
+    this.style.top = `${top}px`;
+    this.style.left = `${left}px`;
+    this.style.transform = "none";
+    this.style.margin = "0";
+
+    this.#positionInitialized = true;
+  }
+
+  #setupDragListeners() {
+    if (this.drag) {
+      this.addEventListener("pointerdown", this.#boundPointerDown);
+      // Set move cursor only on fig-header elements
+      const header = this.querySelector("fig-header, header");
+      if (header) {
+        header.style.cursor = "move";
+      }
+    }
+  }
+
+  #removeDragListeners() {
+    this.removeEventListener("pointerdown", this.#boundPointerDown);
+    document.removeEventListener("pointermove", this.#boundPointerMove);
+    document.removeEventListener("pointerup", this.#boundPointerUp);
+  }
+
+  #isInteractiveElement(element) {
+    // List of interactive element types and attributes to avoid dragging on
+    const interactiveSelectors = [
+      "input",
+      "button",
+      "select",
+      "textarea",
+      "a",
+      "label",
+      '[contenteditable="true"]',
+      "[tabindex]",
+      "fig-button",
+      "fig-input-text",
+      "fig-input-number",
+      "fig-slider",
+      "fig-checkbox",
+      "fig-radio",
+      "fig-tab",
+      "fig-dropdown",
+      "fig-chit",
+    ];
+
+    // Check if the element itself is interactive
+    if (interactiveSelectors.some((selector) => element.matches?.(selector))) {
+      return true;
+    }
+
+    // Check if any parent element up to the dialog is interactive
+    let parent = element.parentElement;
+    while (parent && parent !== this) {
+      if (interactiveSelectors.some((selector) => parent.matches?.(selector))) {
+        return true;
+      }
+      parent = parent.parentElement;
+    }
+
+    return false;
+  }
+
+  #handlePointerDown(e) {
+    if (!this.drag || this.#isInteractiveElement(e.target)) {
+      return;
+    }
+
+    this.#isDragging = true;
+    this.setPointerCapture(e.pointerId);
+
+    // Get current position from computed style
+    const rect = this.getBoundingClientRect();
+
+    // Store offset from pointer to dialog top-left corner
+    this.#dragOffset.x = e.clientX - rect.left;
+    this.#dragOffset.y = e.clientY - rect.top;
+
+    document.addEventListener("pointermove", this.#boundPointerMove);
+    document.addEventListener("pointerup", this.#boundPointerUp);
+
+    e.preventDefault();
+  }
+
+  #handlePointerMove(e) {
+    if (!this.#isDragging) return;
+
+    // Calculate new position based on pointer position minus offset
+    const newLeft = e.clientX - this.#dragOffset.x;
+    const newTop = e.clientY - this.#dragOffset.y;
+
+    // Apply position directly with pixels
+    this.style.left = `${newLeft}px`;
+    this.style.top = `${newTop}px`;
+
+    e.preventDefault();
+  }
+
+  #handlePointerUp(e) {
+    if (!this.#isDragging) return;
+
+    this.#isDragging = false;
+    this.releasePointerCapture(e.pointerId);
+
+    document.removeEventListener("pointermove", this.#boundPointerMove);
+    document.removeEventListener("pointerup", this.#boundPointerUp);
+
+    e.preventDefault();
+  }
+
+  static get observedAttributes() {
+    return ["modal", "drag", "position"];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "drag") {
+      this.drag = newValue !== null && newValue !== "false";
+
+      if (this.drag) {
+        this.#setupDragListeners();
+      } else {
+        this.#removeDragListeners();
+        // Remove move cursor from header
+        const header = this.querySelector("fig-header, header");
+        if (header) {
+          header.style.cursor = "";
+        }
+      }
+    }
+
+    if (name === "position" && this.#positionInitialized) {
+      this.#applyPosition();
+    }
   }
 }
 customElements.define("fig-dialog", FigDialog, { extends: "dialog" });

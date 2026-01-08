@@ -2079,38 +2079,8 @@ dialog,
   }
 }
 dialog[is="fig-dialog"] {
-  --offset: 1rem;
-  --translate-x: -50%;
-  --translate-y: -50%;
   --z-index: 999999;
-
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  margin: 0;
   z-index: var(--z-index);
-  transform: translate(var(--translate-x), var(--translate-y));
-
-  &[position*="bottom"] {
-    bottom: var(--offset);
-    top: auto;
-    --translate-y: 0;
-  }
-  &[position*="top"] {
-    top: var(--offset);
-    bottom: auto;
-    --translate-y: 0;
-  }
-  &[position*="right"] {
-    right: var(--offset);
-    left: auto;
-    --translate-x: 0;
-  }
-  &[position*="left"] {
-    left: var(--offset);
-    right: auto;
-    --translate-x: 0;
-  }
 }
 
 /* Tooltip */
