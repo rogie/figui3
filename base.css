@@ -27,6 +27,19 @@ h3 {
   font-size: var(--body-medium-fontSize);
 }
 
+hr {
+  height: 1px;
+  border: none;
+  background-color: var(--figma-color-border);
+  margin: var(--spacer-2) 0;
+
+  &[vertical] {
+    height: 100%;
+    width: 1px;
+    margin: 0 var(--spacer-2);
+  }
+}
+
 *,
 *:before,
 *:after {

@@ -11,598 +11,1584 @@
           href="fig.css">
     <script src="fig.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            width: 480px;
-            margin: 0 auto;
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        nav {
+            position: fixed;
+            width: 180px;
+            height: 100vh;
+            overflow-y: auto;
+            background: var(--figma-color-bg-secondary);
+            border-right: 1px solid var(--figma-color-border);
+            padding: 16px 0 0 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav .nav-links {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        nav .theme-switch {
+            padding: 12px 16px;
+            border-top: 1px solid var(--figma-color-border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--figma-color-text-secondary);
+
+            &:has([checked="true"]) {
+                #theme-dark-btn {
+                    color: var(--figma-color-icon-selected);
+                }
+
+                #theme-light-btn {
+                    color: var(--figma-color-icon-secondary);
+                }
+            }
+
+            &:not(:has([checked="true"])) {
+                #theme-light-btn {
+                    color: var(--figma-color-icon-selected);
+                }
+
+                #theme-dark-btn {
+                    color: var(--figma-color-icon-secondary);
+                }
+            }
+        }
+
+        nav .theme-switch fig-button {
+            flex-shrink: 0;
+        }
+
+        nav .nav-links h1 {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--figma-color-text-secondary);
+            padding: 8px 20px;
+            margin: 0 0 8px 0;
+        }
+
+        nav .nav-links a {
+            display: block;
+            padding: 6px 12px;
+            margin: 0 8px;
+            color: var(--figma-color-text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            border-radius: var(--radius-medium);
+            transition: background 0.15s, color 0.15s;
+        }
+
+        nav .nav-links a:hover {
+            color: var(--figma-color-text);
+            background: var(--figma-color-bg-hover);
+        }
+
+        nav .nav-links a.active {
+            color: var(--figma-color-text-brand);
+            background: var(--figma-color-bg-selected);
+        }
+
+        main {
+            margin-left: 180px;
+            padding: 24px 32px;
+            overflow-y: auto;
+            max-width: 800px;
+        }
+
+        section {
+            scroll-margin-top: 24px;
+            padding-bottom: 32px;
+        }
+
+        main>hr {
+            border: none;
+            border-top: 1px solid var(--figma-color-border);
+            margin: 0 0 32px 0;
+        }
+
+        section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--figma-color-text);
+            margin: 0 0 8px 0;
+        }
+
+        section>p.description {
+            font-size: 13px;
+            color: var(--figma-color-text-secondary);
+            margin: 0 0 24px 0;
+        }
+
+        hstack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        vstack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .example-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .example-row>label {
+            min-width: 140px;
+            font-size: 12px;
+            color: var(--figma-color-text-secondary);
+        }
+
+        code {
+            font-family: "SF Mono", Monaco, Consolas, monospace;
+            font-size: 11px;
+            background: var(--figma-color-bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--figma-color-text);
         }
     </style>
 </head>
 
 <body>
-
-
-    <fig-header>
-
-        <h2><label>Effects/</label>UI3 Components</h2>
-        <fig-spinner></fig-spinner>
-
-        <fig-button icon="true"
-                    variant="ghost"
-                    type="select"
-                    style="position: absolute; right: 0;">
-            <svg width="24"
-                 height="24"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                      clip-rule="evenodd"
-                      d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
-                      fill="currentColor"
-                      fill-opacity="0.9" />
-            </svg>
-            <fig-dropdown variant="neue">
-                <option>One if by sea</option>
-                <option>Two if by land</option>
-            </fig-dropdown>
-        </fig-button>
-    </fig-header>
-
-    <br /><br /><br /><br /><br /><br /><br /><br />
-
-
-
-
-    <fig-field direction="horizontal">
-        <label>Position</label>
-        <fig-dropdown value="outside"
-                      variant="neue">
-            <option value="inside">Inside</option>
-            <option value="center">Center</option>
-            <option value="outside">Outside</option>
-        </fig-dropdown>
-    </fig-field>
-    <fig-field direction="horizontal"
-               style="width: 320px;">
-        <label>Color</label>
-        <fig-input-color alpha="true"
-                         full
-                         text="true"
-                         value="#000000"></fig-input-color>
-    </fig-field>
-    <fig-field direction="horizontal"
-               style="width: 320px;">
-        <label>Opacity</label>
-        <fig-slider alpha="true"
-                    text="true"
-                    value="50"
-                    full
-                    variant="neue"
-                    min="0"
-                    max="100"
-                    step="1"
-                    units="%"></fig-slider>
-    </fig-field>
-
-    <br /><br /><br /><br /><br /><br /><br /><br />
-
-
-
-
-
-    <fig-input-text disabled
-                    value="Disabled"><span slot="append">%</span></fig-input-text>
-
-
-    <fig-slider min="1"
-                max="100"
-                value="50"
-                step="1"
-                units="%"
-                variant="neue">
-    </fig-slider>
-    <fig-slider min="1"
-                max="100"
-                value="50"
-                step="1"
-                units="%"
-                text="true"
-                variant="neue">
-    </fig-slider>
-
-
-    <fig-popover action="manual"
-                 open="false"
-                 size="large">
-        <fig-button>
-            Hover me
-        </fig-button>
-        <div popover>
-            <fig-header>
-                <h2>Slider</h2>
-            </fig-header>
-            <fig-dropdown>
-                <option>One</option>
-                <option>Two</option>
-            </fig-dropdown>
-            <fig-field direction="horizontal">
-                <label>Slider</label>
-                <fig-slider min="1"
-                            max="100"
-                            value="50"
-                            step="1"
-                            units="%"
-                            transform="100">
-                </fig-slider>
-            </fig-field>
-            <br />
-            <fig-field direction="horizontal">
-                <label>Slider</label>
-                <fig-slider min="1"
-                            max="100"
-                            value="50"
-                            step="1"
-                            units="%"
-                            transform="100">
-                </fig-slider>
-
-            </fig-field>
+    <nav>
+        <div class="nav-links">
+            <h1>Components</h1>
+            <a href="#avatar">Avatar</a>
+            <a href="#button">Button</a>
+            <a href="#checkbox">Checkbox</a>
+            <a href="#chit">Chit</a>
+            <a href="#combo-input">Combo Input</a>
+            <a href="#dialog">Dialog</a>
+            <a href="#dropdown">Dropdown</a>
+            <a href="#field">Field</a>
+            <a href="#header">Header</a>
+            <a href="#image">Image</a>
+            <a href="#input-angle">Input Angle</a>
+            <a href="#input-color">Input Color</a>
+            <a href="#input-joystick">Input Joystick</a>
+            <a href="#input-number">Input Number</a>
+            <a href="#input-text">Input Text</a>
+            <a href="#popover">Popover</a>
+            <a href="#radio">Radio</a>
+            <a href="#segmented-control">Segmented Control</a>
+            <a href="#slider">Slider</a>
+            <a href="#spinner">Spinner</a>
+            <a href="#switch">Switch</a>
+            <a href="#tabs">Tabs</a>
+            <a href="#toast">Toast</a>
+            <a href="#tooltip">Tooltip</a>
+            <hr>
+            <h1>Basics</h1>
+            <a href="#hstack">HStack</a>
+            <a href="#vstack">VStack</a>
+            <a href="#hr">HR</a>
+            <a href="#code">Code</a>
         </div>
-    </fig-popover>
+        <div class="theme-switch">
+            <fig-button id="theme-light-btn"
+                        variant="ghost"
+                        icon>
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none">
+                    <path fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M12 5C12.2761 5 12.5 5.22386 12.5 5.5V6.5C12.5 6.77614 12.2761 7 12 7C11.7239 7 11.5 6.77614 11.5 6.5V5.5C11.5 5.22386 11.7239 5 12 5ZM16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12ZM12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15ZM7.75687 7.05026C7.56161 6.85499 7.24503 6.85499 7.04977 7.05026C6.8545 7.24552 6.8545 7.5621 7.04977 7.75736L7.75687 8.46447C7.95214 8.65973 8.26872 8.65973 8.46398 8.46447C8.65924 8.26921 8.65924 7.95262 8.46398 7.75736L7.75687 7.05026ZM19 12C19 12.2761 18.7761 12.5 18.5 12.5H17.5C17.2239 12.5 17 12.2761 17 12C17 11.7239 17.2239 11.5 17.5 11.5H18.5C18.7761 11.5 19 11.7239 19 12ZM16.9502 7.75736C17.1455 7.5621 17.1455 7.24552 16.9502 7.05026C16.755 6.85499 16.4384 6.85499 16.2431 7.05026L15.536 7.75736C15.3408 7.95262 15.3408 8.26921 15.536 8.46447C15.7313 8.65973 16.0479 8.65973 16.2431 8.46447L16.9502 7.75736ZM12 17C12.2761 17 12.5 17.2239 12.5 17.5V18.5C12.5 18.7761 12.2761 19 12 19C11.7239 19 11.5 18.7761 11.5 18.5V17.5C11.5 17.2239 11.7239 17 12 17ZM16.2422 15.5356C16.047 15.3403 15.7304 15.3403 15.5351 15.5356C15.3399 15.7309 15.3399 16.0475 15.5351 16.2427L16.2422 16.9498C16.4375 17.1451 16.7541 17.1451 16.9493 16.9498C17.1446 16.7546 17.1446 16.438 16.9493 16.2427L16.2422 15.5356ZM7 12C7 12.2761 6.77614 12.5 6.5 12.5H5.5C5.22386 12.5 5 12.2761 5 12C5 11.7239 5.22386 11.5 5.5 11.5H6.5C6.77614 11.5 7 11.7239 7 12ZM8.46488 16.2427C8.66014 16.0475 8.66014 15.7309 8.46488 15.5356C8.26962 15.3403 7.95304 15.3403 7.75777 15.5356L7.05067 16.2427C6.85541 16.438 6.85541 16.7546 7.05067 16.9498C7.24593 17.1451 7.56251 17.1451 7.75777 16.9498L8.46488 16.2427Z"
+                          fill="currentColor" />
+                </svg>
+            </fig-button>
+            <fig-switch id="theme-toggle"></fig-switch>
+            <fig-button id="theme-dark-btn"
+                        variant="ghost"
+                        icon>
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none">
+                    <path fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M15 14.9999C15.3647 14.9999 15.7224 14.9672 16.0703 14.9045C15.1624 16.1743 13.677 16.9997 12 16.9997C9.23858 16.9997 7 14.7611 7 11.9997C7 10.3226 7.82546 8.8371 9.09542 7.92923C9.03267 8.27722 9 8.63509 9 8.99986C9 12.3136 11.6863 14.9999 15 14.9999ZM17.3039 14.8075C17.6193 14.2129 16.8933 13.678 16.2412 13.8446C15.8443 13.946 15.4285 13.9999 15 13.9999C12.2386 13.9999 10 11.7613 10 8.99986C10 8.57132 10.0539 8.15537 10.1553 7.75842C10.3219 7.10631 9.78711 6.38032 9.19252 6.6957C7.29348 7.70298 6 9.70029 6 11.9997C6 15.3134 8.68629 17.9997 12 17.9997C14.2993 17.9997 16.2965 16.7064 17.3039 14.8075ZM16 7.49993C16 7.22379 15.7761 6.99993 15.5 6.99993C15.2239 6.99993 15 7.22379 15 7.49993V7.99993H14.5C14.2239 7.99993 14 8.22379 14 8.49993C14 8.77607 14.2239 8.99993 14.5 8.99993H15V9.49993C15 9.77607 15.2239 9.99993 15.5 9.99993C15.7761 9.99993 16 9.77607 16 9.49993V8.99993H16.5C16.7761 8.99993 17 8.77607 17 8.49993C17 8.22379 16.7761 7.99993 16.5 7.99993H16V7.49993Z"
+                          fill="currentColor" />
+                </svg>
+            </fig-button>
+        </div>
+    </nav>
 
-    <fig-content>
-
-
-        <br /><br /><br /><br /><br /><br /><br /><br /><br />
-
-
-        <hstack>
-            <fig-tooltip text="Tooltip that is very very long"
-                         delay="0">
-                <fig-button>
-                    T
-                </fig-button>
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip"
-                         delay="0">
-                <fig-button>
-                    Test
-                </fig-button>
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip that is a bit longer"
-                         delay="0">
-                <fig-button>
-                    Test
-                </fig-button>
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip that is a bit longer ish"
-                         delay="0">
-                <fig-button>
-                    Test
-                </fig-button>
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip that is a bit longer ish yet"
-                         delay="0">
-                <fig-button>
-                    Test
-                </fig-button>
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip that is a bit longer and has a lot of text and even more text"
-                         delay="0">
-                <fig-button>
-                    Test
-                </fig-button>
-            </fig-tooltip>
-            <fig-tooltip text="Super mega fuckin long ass tooltip that likely shouldn't even be possible to fit in the space"
-                         delay="0">
-                <fig-button>
-                    Test
-                </fig-button>
-            </fig-tooltip>
-
-        </hstack>
-        <br /><br /><br /><br /><br /><br /><br /><br /><br />
-
-        <fig-button type="link"
-                    href="https://www.google.com">
-            <svg width="24"
-                 height="24"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 5.5C15.3807 5.5 16.5 6.61929 16.5 8C16.5 8.81955 16.1034 9.54407 15.4941 10C16.1034 10.4559 16.5 11.1804 16.5 12C16.5 13.3807 15.3807 14.5 14 14.5C13.4363 14.5 12.9182 14.3108 12.5 13.9961V16C12.5 17.3807 11.3807 18.5 10 18.5C8.61929 18.5 7.5 17.3807 7.5 16C7.5 15.1807 7.89593 14.456 8.50488 14C7.89593 13.544 7.5 12.8193 7.5 12C7.5 11.1807 7.89593 10.456 8.50488 10C7.89593 9.54404 7.5 8.81927 7.5 8C7.5 6.61929 8.61929 5.5 10 5.5H14ZM10 14.5C9.17157 14.5 8.5 15.1716 8.5 16C8.5 16.8284 9.17157 17.5 10 17.5C10.8284 17.5 11.5 16.8284 11.5 16V14.5H10ZM14 10.5C13.1716 10.5 12.5 11.1716 12.5 12C12.5 12.8284 13.1716 13.5 14 13.5C14.8284 13.5 15.5 12.8284 15.5 12C15.5 11.1716 14.8284 10.5 14 10.5ZM10 10.5C9.17157 10.5 8.5 11.1716 8.5 12C8.5 12.8284 9.17157 13.5 10 13.5H11.5V10.5H10ZM10 6.5C9.17157 6.5 8.5 7.17157 8.5 8C8.5 8.82843 9.17157 9.5 10 9.5H11.5V6.5H10ZM12.5 9.5H14C14.8284 9.5 15.5 8.82843 15.5 8C15.5 7.17157 14.8284 6.5 14 6.5H12.5V9.5Z"
-                      fill="black"
-                      fill-opacity="0.9" />
-            </svg>
-
-            Install</fig-button>
-        <fig-button type="link"
-                    target="_blank"
-                    size="large"
-                    href="https://www.google.com">
-            <svg width="24"
-                 height="24"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 5.5C15.3807 5.5 16.5 6.61929 16.5 8C16.5 8.81955 16.1034 9.54407 15.4941 10C16.1034 10.4559 16.5 11.1804 16.5 12C16.5 13.3807 15.3807 14.5 14 14.5C13.4363 14.5 12.9182 14.3108 12.5 13.9961V16C12.5 17.3807 11.3807 18.5 10 18.5C8.61929 18.5 7.5 17.3807 7.5 16C7.5 15.1807 7.89593 14.456 8.50488 14C7.89593 13.544 7.5 12.8193 7.5 12C7.5 11.1807 7.89593 10.456 8.50488 10C7.89593 9.54404 7.5 8.81927 7.5 8C7.5 6.61929 8.61929 5.5 10 5.5H14ZM10 14.5C9.17157 14.5 8.5 15.1716 8.5 16C8.5 16.8284 9.17157 17.5 10 17.5C10.8284 17.5 11.5 16.8284 11.5 16V14.5H10ZM14 10.5C13.1716 10.5 12.5 11.1716 12.5 12C12.5 12.8284 13.1716 13.5 14 13.5C14.8284 13.5 15.5 12.8284 15.5 12C15.5 11.1716 14.8284 10.5 14 10.5ZM10 10.5C9.17157 10.5 8.5 11.1716 8.5 12C8.5 12.8284 9.17157 13.5 10 13.5H11.5V10.5H10ZM10 6.5C9.17157 6.5 8.5 7.17157 8.5 8C8.5 8.82843 9.17157 9.5 10 9.5H11.5V6.5H10ZM12.5 9.5H14C14.8284 9.5 15.5 8.82843 15.5 8C15.5 7.17157 14.8284 6.5 14 6.5H12.5V9.5Z"
-                      fill="black"
-                      fill-opacity="0.9" />
-            </svg>
-
-            Install</fig-button>
-
-        <select>
-            <optgroup label="Numbers">
-                <legend>Numbers</legend>
-                <option>One</option>
-                <option>Two</option>
-                <option>One</option>
-                <option>Two</option>
-                <option>One</option>
-                <option>Two</option>
-            </optgroup>
-            <optgroup label="Fruits">
-                <legend>Fruits</legend>
-                <option>Apple</option>
-                <option>Banana</option>
-                <option>Apple</option>
-                <option>Banana</option>
-                <option>Apple</option>
-                <option>Banana</option>
-                <option>Apple</option>
-                <option>Banana</option>
-                <option>Apple</option>
-                <option>Banana</option>
-            </optgroup>
-        </select>
-
-        <fig-slider min="-1"
-                    max="1"
-                    name="u_thickness"
-                    variant="minimal"
-                    step="0.01"
-                    value="0"
-                    text="true"
-                    type="range"
-                    units="%"
-                    transform="100">
-        </fig-slider>
-        <fig-input-text type="number"
-                        min="1"
-                        style="width: 100px;"
-                        max="2"
-                        step="0.01"
-                        value="1.5"
-                        type="range"
-                        units="%"
-                        onInput="console.log(event.target.value)"
-                        transform="100">
-        </fig-input-text>
-        <fig-slider min="1"
-                    max="2"
-                    step="0.01"
-                    value="1.5"
-                    type="range"
-                    units="%"
-                    text="true"
-                    onInput="console.log(event.target.value)"
-                    transform="100">
-        </fig-slider>
-        <fig-input-angle text="true"
-                         value="0"
-                         onInput="console.log(event.target.adjacent, event.target.opposite)"></fig-input-angle>
-        <br /><br />
-        <fig-input-joystick></fig-input-joystick>
-        <br /><br />
-        <fig-input-joystick text="true"
-                            value="0,0"
-                            onInput="console.log(event.target.value)"></fig-input-joystick>
-        <fig-header>
-            <h2>Details</h2>
-        </fig-header>
-        <details>
-            <summary>Advanced settings</summary>
-            <p>Some more content here</p>
-        </details>
-        <fig-header>
+    <main>
+        <!-- Avatar -->
+        <section id="avatar">
             <h2>Avatar</h2>
-        </fig-header>
-        <fig-field>
-            <label>Default</label>
-            <fig-avatar src="https://avatars.githubusercontent.com/u/12345678?v=4"
-                        name="John Doe"></fig-avatar>
-        </fig-field>
-        <fig-field>
-            <label>Large</label>
-            <fig-avatar size="large"
-                        src="https://avatars.githubusercontent.com/u/12345678?v=4"
-                        name="John Doe"></fig-avatar>
-        </fig-field>
-        <fig-field>
-            <label>No image (initials)</label>
-            <fig-avatar name="John Doe"></fig-avatar>
-        </fig-field>
-        <fig-field>
-            <label>Large</label>
-            <fig-avatar size="large"
-                        src="https://gravatar.com/avatar/b6a96b1e55e3771caab3225dd98c8633?size=256"
-                        name="Rogie King"></fig-avatar>
-        </fig-field>
+            <p class="description">Displays a user's profile image or initials.</p>
 
-        <fig-header>
-            <h2>Tabs</h2>
-        </fig-header>
-        <fig-field>
-            <fig-tabs>
-                <fig-tab selected
-                         content="#tab-1-content">Tab #1</fig-tab>
-                <fig-tab content="#tab-2-content">Tab #2</fig-tab>
-            </fig-tabs>
-            <fig-tab-content id="tab-1-content">
-                Content for Tab #1
-            </fig-tab-content>
-            <fig-tab-content id="tab-2-content">
-                Content for Tab #2
-            </fig-tab-content>
-        </fig-field>
-        <fig-header>
-            <h2>Segmented control</h2>
-        </fig-header>
-        <fig-field>
+            <h3>Sizes</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-avatar src="https://avatars.githubusercontent.com/u/12345678?v=4"
+                            name="John Doe"></fig-avatar>
+            </div>
+            <div class="example-row">
+                <label>Large</label>
+                <fig-avatar size="large"
+                            src="https://avatars.githubusercontent.com/u/12345678?v=4"
+                            name="John Doe"></fig-avatar>
+            </div>
+
+            <h3>Fallback (Initials)</h3>
+            <div class="example-row">
+                <label>No image</label>
+                <fig-avatar name="John Doe"></fig-avatar>
+            </div>
+            <div class="example-row">
+                <label>No image (large)</label>
+                <fig-avatar size="large"
+                            name="Jane Smith"></fig-avatar>
+            </div>
+        </section>
+        <hr>
+
+        <!-- Button -->
+        <section id="button">
+            <h2>Button</h2>
+            <p class="description">A custom button element supporting variants, types, sizes, and states.</p>
+
+            <h3>Variants</h3>
+            <div class="example-row">
+                <label>Primary (default)</label>
+                <fig-button>Primary</fig-button>
+            </div>
+            <div class="example-row">
+                <label>Secondary</label>
+                <fig-button variant="secondary">Secondary</fig-button>
+            </div>
+            <div class="example-row">
+                <label>Ghost</label>
+                <fig-button variant="ghost">Ghost</fig-button>
+            </div>
+            <div class="example-row">
+                <label>Link</label>
+                <fig-button variant="link">Link Button</fig-button>
+            </div>
+
+            <h3>Sizes</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-button>Default Size</fig-button>
+            </div>
+            <div class="example-row">
+                <label>Large</label>
+                <fig-button size="large">Large Size</fig-button>
+            </div>
+            <div class="example-row">
+                <label>Compact</label>
+                <fig-button size="compact">Compact</fig-button>
+            </div>
+
+            <h3>States</h3>
+            <div class="example-row">
+                <label>Disabled (primary)</label>
+                <fig-button disabled>Disabled</fig-button>
+            </div>
+            <div class="example-row">
+                <label>Disabled (secondary)</label>
+                <fig-button variant="secondary"
+                            disabled>Disabled</fig-button>
+            </div>
+            <div class="example-row">
+                <label>Disabled (ghost)</label>
+                <fig-button variant="ghost"
+                            disabled>Disabled</fig-button>
+            </div>
+            <div class="example-row">
+                <label>Disabled (link)</label>
+                <fig-button variant="link"
+                            disabled>Disabled</fig-button>
+            </div>
+
+            <h3>Icon Buttons</h3>
+            <div class="example-row">
+                <label>Icon only</label>
+                <fig-button icon="true">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M8 2.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zm7-3.5v3h3v1h-3v3h-1v-3h-3v-1h3v-3h1z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </div>
+            <div class="example-row">
+                <label>Icon (secondary)</label>
+                <fig-button variant="secondary"
+                            icon="true">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M6.5 6C7.32843 6 8 5.32843 8 4.5C8 3.67157 7.32843 3 6.5 3C5.67157 3 5 3.67157 5 4.5C5 5.32843 5.67157 6 6.5 6ZM6.5 7C7.70948 7 8.71836 6.14112 8.94999 5H14V4H8.94999C8.71836 2.85888 7.70948 2 6.5 2C5.29052 2 4.28164 2.85888 4.05001 4H2V5H4.05001C4.28164 6.14112 5.29052 7 6.5 7ZM9.5 13C8.67157 13 8 12.3284 8 11.5C8 10.6716 8.67157 10 9.5 10C10.3284 10 11 10.6716 11 11.5C11 12.3284 10.3284 13 9.5 13ZM9.5 14C8.29052 14 7.28164 13.1411 7.05001 12H2V11H7.05001C7.28164 9.85888 8.29052 9 9.5 9C10.7095 9 11.7184 9.85888 11.95 11H14V12H11.95C11.7184 13.1411 10.7095 14 9.5 14Z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </div>
+            <div class="example-row">
+                <label>Icon (ghost)</label>
+                <fig-button variant="ghost"
+                            icon="true">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M8 2.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zm7-3.5v3h3v1h-3v3h-1v-3h-3v-1h3v-3h1z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </div>
+            <div class="example-row">
+                <label>Icon (link)</label>
+                <fig-button variant="link"
+                            icon="true">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M8 2.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zm7-3.5v3h3v1h-3v3h-1v-3h-3v-1h3v-3h1z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </div>
+            <div class="example-row">
+                <label>Icon disabled</label>
+                <fig-button variant="secondary"
+                            icon="true"
+                            disabled>
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M6.5 6C7.32843 6 8 5.32843 8 4.5C8 3.67157 7.32843 3 6.5 3C5.67157 3 5 3.67157 5 4.5C5 5.32843 5.67157 6 6.5 6ZM6.5 7C7.70948 7 8.71836 6.14112 8.94999 5H14V4H8.94999C8.71836 2.85888 7.70948 2 6.5 2C5.29052 2 4.28164 2.85888 4.05001 4H2V5H4.05001C4.28164 6.14112 5.29052 7 6.5 7ZM9.5 13C8.67157 13 8 12.3284 8 11.5C8 10.6716 8.67157 10 9.5 10C10.3284 10 11 10.6716 11 11.5C11 12.3284 10.3284 13 9.5 13ZM9.5 14C8.29052 14 7.28164 13.1411 7.05001 12H2V11H7.05001C7.28164 9.85888 8.29052 9 9.5 9C10.7095 9 11.7184 9.85888 11.95 11H14V12H11.95C11.7184 13.1411 10.7095 14 9.5 14Z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </div>
+
+            <h3>Button Types</h3>
+            <div class="example-row">
+                <label>Select (with dropdown)</label>
+                <fig-button type="select">
+                    Select
+                    <fig-dropdown>
+                        <option>Option One</option>
+                        <option>Option Two</option>
+                        <option>Option Three</option>
+                    </fig-dropdown>
+                </fig-button>
+            </div>
+            <div class="example-row">
+                <label>Toggle</label>
+                <fig-button variant="ghost"
+                            type="toggle"
+                            icon="true">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16">
+                        <path fill="currentColor"
+                              fill-rule="evenodd"
+                              d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z" />
+                    </svg>
+                </fig-button>
+            </div>
+            <div class="example-row">
+                <label>Toggle (selected)</label>
+                <fig-button variant="ghost"
+                            type="toggle"
+                            icon="true"
+                            selected="true">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16">
+                        <path fill="currentColor"
+                              fill-rule="evenodd"
+                              d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z" />
+                    </svg>
+                </fig-button>
+            </div>
+            <div class="example-row">
+                <label>Upload</label>
+                <fig-button variant="secondary"
+                            type="upload">
+                    Upload
+                    <input type="file" />
+                </fig-button>
+            </div>
+            <div class="example-row">
+                <label>Link</label>
+                <fig-button type="link"
+                            href="https://www.figma.com"
+                            target="_blank">Visit Figma</fig-button>
+            </div>
+
+            <h3>Button Combo</h3>
+            <div class="example-row">
+                <label>Primary combo</label>
+                <fig-button-combo>
+                    <fig-button>Primary</fig-button>
+                    <fig-button icon="true"
+                                type="select"
+                                size="compact">
+                        <svg width="24"
+                             height="24"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  clip-rule="evenodd"
+                                  d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
+                                  fill="currentColor"
+                                  fill-opacity="0.9" />
+                        </svg>
+                        <fig-dropdown>
+                            <option>Option One</option>
+                            <option>Option Two</option>
+                        </fig-dropdown>
+                    </fig-button>
+                </fig-button-combo>
+            </div>
+            <div class="example-row">
+                <label>Secondary combo</label>
+                <fig-button-combo>
+                    <fig-button variant="secondary">Secondary</fig-button>
+                    <fig-button variant="secondary"
+                                icon="true"
+                                type="select">
+                        <svg width="24"
+                             height="24"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  clip-rule="evenodd"
+                                  d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
+                                  fill="currentColor"
+                                  fill-opacity="0.9" />
+                        </svg>
+                        <fig-dropdown>
+                            <option>Option One</option>
+                            <option>Option Two</option>
+                        </fig-dropdown>
+                    </fig-button>
+                </fig-button-combo>
+            </div>
+            <div class="example-row">
+                <label>Disabled combo</label>
+                <fig-button-combo>
+                    <fig-button disabled>Disabled</fig-button>
+                    <fig-button disabled>Action</fig-button>
+                </fig-button-combo>
+            </div>
+        </section>
+        <hr>
+
+        <!-- Checkbox -->
+        <section id="checkbox">
+            <h2>Checkbox</h2>
+            <p class="description">A checkbox input for boolean selections.</p>
+
+            <h3>States</h3>
+            <div class="example-row">
+                <label>Unchecked</label>
+                <fig-checkbox label="Unchecked"></fig-checkbox>
+            </div>
+            <div class="example-row">
+                <label>Checked</label>
+                <fig-checkbox label="Checked"
+                              checked="true"></fig-checkbox>
+            </div>
+            <div class="example-row">
+                <label>Disabled</label>
+                <fig-checkbox label="Disabled"
+                              disabled></fig-checkbox>
+            </div>
+            <div class="example-row">
+                <label>Disabled checked</label>
+                <fig-checkbox label="Disabled checked"
+                              checked="true"
+                              disabled></fig-checkbox>
+            </div>
+        </section>
+        <hr>
+
+        <!-- Chit -->
+        <section id="chit">
+            <h2>Chit</h2>
+            <p class="description">A small visual indicator for colors, gradients, or images.</p>
+
+            <h3>Types</h3>
+            <div class="example-row">
+                <label>Color</label>
+                <hstack>
+                    <fig-chit type="color"
+                              value="#FF0000"></fig-chit>
+                    <fig-chit type="color"
+                              value="#00FF00"></fig-chit>
+                    <fig-chit type="color"
+                              value="#0000FF"></fig-chit>
+                    <fig-chit type="color"
+                              value="#000000"></fig-chit>
+                </hstack>
+            </div>
+            <div class="example-row">
+                <label>Gradient (linear)</label>
+                <fig-chit type="gradient"
+                          variant="linear"></fig-chit>
+            </div>
+            <div class="example-row">
+                <label>Gradient (angular)</label>
+                <fig-chit type="gradient"
+                          variant="angular"></fig-chit>
+            </div>
+            <div class="example-row">
+                <label>Gradient (radial)</label>
+                <fig-chit type="gradient"
+                          variant="radial"></fig-chit>
+            </div>
+            <div class="example-row">
+                <label>Image</label>
+                <fig-chit type="image"
+                          src="https://avatars.githubusercontent.com/u/12345678?v=4"></fig-chit>
+            </div>
+
+            <h3>Sizes</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-chit type="color"
+                          value="#9747FF"></fig-chit>
+            </div>
+            <div class="example-row">
+                <label>Large</label>
+                <fig-chit type="color"
+                          value="#9747FF"
+                          size="large"></fig-chit>
+            </div>
+
+            <h3>States</h3>
+            <div class="example-row">
+                <label>Selected</label>
+                <fig-chit type="color"
+                          value="#0D99FF"
+                          selected="true"></fig-chit>
+            </div>
+            <div class="example-row">
+                <label>Disabled</label>
+                <fig-chit type="color"
+                          value="#0D99FF"
+                          disabled="true"></fig-chit>
+            </div>
+        </section>
+        <hr>
+
+        <!-- Combo Input -->
+        <section id="combo-input">
+            <h2>Combo Input</h2>
+            <p class="description">A text input with autocomplete suggestions from a predefined list.</p>
+
+            <h3>Default</h3>
+            <fig-combo-input options="House, Apartment, Condo, Townhouse, Other"
+                             placeholder="Type of residence"></fig-combo-input>
+
+            <h3>With Value</h3>
+            <fig-combo-input options="Red, Green, Blue, Yellow, Purple"
+                             value="Blue"
+                             placeholder="Select a color"></fig-combo-input>
+        </section>
+        <hr>
+
+        <!-- Dialog -->
+        <section id="dialog">
+            <h2>Dialog</h2>
+            <p class="description">A modal dialog window with optional dragging support.</p>
+
+            <h3>Open Dialog</h3>
+            <fig-button onclick="document.getElementById('example-dialog').showModal()">Open Dialog</fig-button>
+
+            <dialog id="example-dialog"
+                    is="fig-dialog"
+                    drag="true"
+                    position="center center">
+                <fig-header>
+                    <h3>Dialog Title</h3>
+                    <fig-button variant="ghost"
+                                icon="true"
+                                close-dialog>
+                        <svg width="24"
+                             height="24"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  clip-rule="evenodd"
+                                  d="M17.3536 6.64645C17.5488 6.84171 17.5488 7.15829 17.3536 7.35355L12.7071 12L17.3536 16.6464C17.5488 16.8417 17.5488 17.1583 17.3536 17.3536C17.1583 17.5488 16.8417 17.5488 16.6464 17.3536L12 12.7071L7.35355 17.3536C7.15829 17.5488 6.84171 17.5488 6.64645 17.3536C6.45118 17.1583 6.45118 16.8417 6.64645 16.6464L11.2929 12L6.64645 7.35365C6.45119 7.15839 6.45118 6.84181 6.64644 6.64654C6.84171 6.45128 7.15829 6.45128 7.35355 6.64654L12 11.2929L16.6464 6.64645C16.8417 6.45118 17.1583 6.45118 17.3536 6.64645Z"
+                                  fill="currentColor"
+                                  fill-opacity="0.9" />
+                        </svg>
+                    </fig-button>
+                </fig-header>
+                <fig-content>
+                    <p>This is a draggable dialog. You can drag it by the header.</p>
+                    <fig-field direction="horizontal">
+                        <label>Example Field</label>
+                        <fig-input-text placeholder="Enter text"></fig-input-text>
+                    </fig-field>
+                </fig-content>
+                <footer>
+                    <fig-button variant="secondary"
+                                close-dialog>Cancel</fig-button>
+                    <fig-button>Save</fig-button>
+                </footer>
+            </dialog>
+
+            <h3>Position Attribute</h3>
+            <p style="font-size: 12px; color: var(--figma-color-text-secondary); margin-bottom: 12px;">
+                Use <code>position</code> attribute: <code>center center</code>, <code>top left</code>,
+                <code>top right</code>, <code>bottom left</code>, <code>bottom right</code>, or combinations.
+            </p>
+            <hstack>
+                <fig-button variant="secondary"
+                            onclick="openPositionedDialog('center center')">Center</fig-button>
+                <fig-button variant="secondary"
+                            onclick="openPositionedDialog('top left')">Top Left</fig-button>
+                <fig-button variant="secondary"
+                            onclick="openPositionedDialog('top right')">Top Right</fig-button>
+                <fig-button variant="secondary"
+                            onclick="openPositionedDialog('bottom left')">Bottom Left</fig-button>
+                <fig-button variant="secondary"
+                            onclick="openPositionedDialog('bottom right')">Bottom Right</fig-button>
+            </hstack>
+
+            <dialog id="positioned-dialog"
+                    is="fig-dialog"
+                    drag="true">
+                <fig-header>
+                    <h3>Positioned Dialog</h3>
+                    <fig-button variant="ghost"
+                                icon="true"
+                                close-dialog>
+                        <svg width="24"
+                             height="24"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  clip-rule="evenodd"
+                                  d="M17.3536 6.64645C17.5488 6.84171 17.5488 7.15829 17.3536 7.35355L12.7071 12L17.3536 16.6464C17.5488 16.8417 17.5488 17.1583 17.3536 17.3536C17.1583 17.5488 16.8417 17.5488 16.6464 17.3536L12 12.7071L7.35355 17.3536C7.15829 17.5488 6.84171 17.5488 6.64645 17.3536C6.45118 17.1583 6.45118 16.8417 6.64645 16.6464L11.2929 12L6.64645 7.35365C6.45119 7.15839 6.45118 6.84181 6.64644 6.64654C6.84171 6.45128 7.15829 6.45128 7.35355 6.64654L12 11.2929L16.6464 6.64645C16.8417 6.45118 17.1583 6.45118 17.3536 6.64645Z"
+                                  fill="currentColor"
+                                  fill-opacity="0.9" />
+                        </svg>
+                    </fig-button>
+                </fig-header>
+                <fig-content>
+                    <p>This dialog is positioned at a specific corner.</p>
+                </fig-content>
+                <footer>
+                    <fig-button close-dialog>Close</fig-button>
+                </footer>
+            </dialog>
+        </section>
+        <hr>
+
+        <!-- Dropdown -->
+        <section id="dropdown">
+            <h2>Dropdown</h2>
+            <p class="description">A select dropdown menu with options.</p>
+
+            <h3>Default</h3>
+            <fig-dropdown>
+                <option>Option One</option>
+                <option>Option Two</option>
+                <option>Option Three</option>
+            </fig-dropdown>
+
+            <h3>With Selected Value</h3>
+            <fig-dropdown value="two">
+                <option value="one">Option One</option>
+                <option value="two">Option Two</option>
+                <option value="three">Option Three</option>
+            </fig-dropdown>
+
+            <h3>Grouped Options</h3>
+            <fig-dropdown>
+                <optgroup label="Numbers">
+                    <option>One</option>
+                    <option>Two</option>
+                    <option>Three</option>
+                </optgroup>
+                <optgroup label="Fruits">
+                    <option>Apple</option>
+                    <option>Banana</option>
+                    <option>Cherry</option>
+                </optgroup>
+            </fig-dropdown>
+
+            <h3>Variants</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-dropdown>
+                    <option>Default Style</option>
+                    <option>Option Two</option>
+                </fig-dropdown>
+            </div>
+            <div class="example-row">
+                <label>Neue</label>
+                <fig-dropdown variant="neue">
+                    <option>Neue Style</option>
+                    <option>Option Two</option>
+                </fig-dropdown>
+            </div>
+
+            <h3>Full Width</h3>
+            <fig-dropdown full>
+                <option>Full Width Dropdown</option>
+                <option>Option Two</option>
+                <option>Option Three</option>
+            </fig-dropdown>
+        </section>
+        <hr>
+
+        <!-- Field -->
+        <section id="field">
+            <h2>Field</h2>
+            <p class="description">A form field container with label support.</p>
+
+            <h3>Directions</h3>
+            <div class="example-row">
+                <label>Vertical (default)</label>
+            </div>
+            <fig-field>
+                <label>Field Label</label>
+                <fig-input-text placeholder="Enter text"></fig-input-text>
+            </fig-field>
+
+            <div class="example-row"
+                 style="margin-top: 24px;">
+                <label>Horizontal</label>
+            </div>
+            <fig-field direction="horizontal">
+                <label>Field Label</label>
+                <fig-input-text placeholder="Enter text"></fig-input-text>
+            </fig-field>
+
+            <h3>With Different Inputs</h3>
+            <fig-field direction="horizontal">
+                <label>Dropdown</label>
+                <fig-dropdown>
+                    <option>Option One</option>
+                    <option>Option Two</option>
+                </fig-dropdown>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Slider</label>
+                <fig-slider value="50"
+                            text="true"></fig-slider>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Color</label>
+                <fig-input-color value="#0D99FF"
+                                 text="true"></fig-input-color>
+            </fig-field>
+        </section>
+        <hr>
+
+        <!-- Header -->
+        <section id="header">
+            <h2>Header</h2>
+            <p class="description">A header component for sections or panels.</p>
+
+            <h3>Default</h3>
+            <fig-header>
+                <h2>Section Title</h2>
+            </fig-header>
+
+            <h3>With Subtitle</h3>
+            <fig-header>
+                <h2><label>Category/</label>Section Title</h2>
+            </fig-header>
+
+            <h3>With Actions</h3>
+            <fig-header>
+                <h2>Settings</h2>
+                <fig-button variant="ghost"
+                            icon="true"
+                            style="position: absolute; right: 0;">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M6.5 6C7.32843 6 8 5.32843 8 4.5C8 3.67157 7.32843 3 6.5 3C5.67157 3 5 3.67157 5 4.5C5 5.32843 5.67157 6 6.5 6ZM6.5 7C7.70948 7 8.71836 6.14112 8.94999 5H14V4H8.94999C8.71836 2.85888 7.70948 2 6.5 2C5.29052 2 4.28164 2.85888 4.05001 4H2V5H4.05001C4.28164 6.14112 5.29052 7 6.5 7ZM9.5 13C8.67157 13 8 12.3284 8 11.5C8 10.6716 8.67157 10 9.5 10C10.3284 10 11 10.6716 11 11.5C11 12.3284 10.3284 13 9.5 13ZM9.5 14C8.29052 14 7.28164 13.1411 7.05001 12H2V11H7.05001C7.28164 9.85888 8.29052 9 9.5 9C10.7095 9 11.7184 9.85888 11.95 11H14V12H11.95C11.7184 13.1411 10.7095 14 9.5 14Z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </fig-header>
+
+            <h3>With Spinner</h3>
+            <fig-header>
+                <h2>Loading...</h2>
+                <fig-spinner></fig-spinner>
+            </fig-header>
+        </section>
+        <hr>
+
+        <!-- Image -->
+        <section id="image">
+            <h2>Image</h2>
+            <p class="description">An image component with upload and download capabilities.</p>
+
+            <h3>Sizes</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"></fig-image>
+            </div>
+            <div class="example-row">
+                <label>Medium</label>
+                <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"
+                           size="medium"></fig-image>
+            </div>
+            <div class="example-row">
+                <label>Large</label>
+                <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"
+                           size="large"></fig-image>
+            </div>
+
+            <h3>With Upload</h3>
+            <fig-image upload="true"
+                       label="Upload image"
+                       size="large"></fig-image>
+
+            <h3>With Download</h3>
+            <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"
+                       download="true"
+                       size="large"></fig-image>
+        </section>
+        <hr>
+
+        <!-- Input Angle -->
+        <section id="input-angle">
+            <h2>Input Angle</h2>
+            <p class="description">An angle input with a circular dial interface.</p>
+
+            <h3>Default</h3>
+            <fig-input-angle value="0"></fig-input-angle>
+
+            <h3>With Text Display</h3>
+            <fig-input-angle text="true"
+                             value="45"></fig-input-angle>
+
+            <h3>Different Values</h3>
+            <hstack>
+                <fig-input-angle text="true"
+                                 value="0"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 value="90"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 value="180"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 value="270"></fig-input-angle>
+            </hstack>
+        </section>
+        <hr>
+
+        <!-- Input Color -->
+        <section id="input-color">
+            <h2>Input Color</h2>
+            <p class="description">A color picker input with optional text and alpha controls.</p>
+
+            <h3>Swatch Only</h3>
+            <fig-input-color value="#FF0000"></fig-input-color>
+
+            <h3>With Text</h3>
+            <fig-input-color value="#00FF00"
+                             text="true"></fig-input-color>
+
+            <h3>With Alpha</h3>
+            <fig-input-color value="#0000FF"
+                             alpha="true"
+                             text="true"></fig-input-color>
+
+            <h3>Full Width</h3>
+            <fig-input-color value="#9747FF"
+                             alpha="true"
+                             text="true"
+                             full></fig-input-color>
+
+            <h3>Various Colors</h3>
+            <hstack>
+                <fig-input-color value="#FF000066"></fig-input-color>
+                <fig-input-color value="#00FF0099"></fig-input-color>
+                <fig-input-color value="#0000FFCC"></fig-input-color>
+                <fig-input-color value="#FFFF00"></fig-input-color>
+                <fig-input-color value="#FF00FF"></fig-input-color>
+                <fig-input-color value="#00FFFF"></fig-input-color>
+            </hstack>
+        </section>
+        <hr>
+
+        <!-- Input Joystick -->
+        <section id="input-joystick">
+            <h2>Input Joystick</h2>
+            <p class="description">A 2D joystick input for X/Y coordinate values.</p>
+
+            <h3>Default</h3>
+            <fig-input-joystick></fig-input-joystick>
+
+            <h3>With Text Display</h3>
+            <fig-input-joystick text="true"
+                                value="0,0"></fig-input-joystick>
+
+            <h3>With Initial Value</h3>
+            <fig-input-joystick text="true"
+                                value="0.5,0.5"></fig-input-joystick>
+        </section>
+        <hr>
+
+        <!-- Input Number -->
+        <section id="input-number">
+            <h2>Input Number</h2>
+            <p class="description">A numeric input with optional units and constraints.</p>
+
+            <h3>Basic</h3>
+            <fig-input-number value="100"></fig-input-number>
+
+            <h3>With Units</h3>
+            <div class="example-row">
+                <label>Percentage</label>
+                <fig-input-number value="50"
+                                  units="%"></fig-input-number>
+            </div>
+            <div class="example-row">
+                <label>Degrees</label>
+                <fig-input-number value="45"
+                                  units="°"
+                                  min="0"
+                                  max="360"></fig-input-number>
+            </div>
+            <div class="example-row">
+                <label>Pixels</label>
+                <fig-input-number value="24"
+                                  units="px"
+                                  min="0"
+                                  max="1000"></fig-input-number>
+            </div>
+            <div class="example-row">
+                <label>Currency (prefix)</label>
+                <fig-input-number value="99.99"
+                                  units="$"
+                                  unit-position="prefix"
+                                  step="0.01"></fig-input-number>
+            </div>
+
+            <h3>With Transform</h3>
+            <fig-input-number value="0.5"
+                              units="%"
+                              transform="100"
+                              min="0"
+                              max="1"
+                              step="0.01"></fig-input-number>
+
+            <h3>With Constraints</h3>
+            <fig-input-number value="25"
+                              units="px"
+                              min="0"
+                              max="100"
+                              step="5"></fig-input-number>
+
+            <h3>States</h3>
+            <div class="example-row">
+                <label>Disabled</label>
+                <fig-input-number value="75"
+                                  units="%"
+                                  disabled></fig-input-number>
+            </div>
+            <div class="example-row">
+                <label>With placeholder</label>
+                <fig-input-number placeholder="Enter value"
+                                  units="%"></fig-input-number>
+            </div>
+
+            <h3>With Slots</h3>
+            <div class="example-row">
+                <label>Append slot</label>
+                <fig-input-number value="50"
+                                  min="0"
+                                  max="100">
+                    <span slot="append">%</span>
+                </fig-input-number>
+            </div>
+            <div class="example-row">
+                <label>Prepend slot</label>
+                <fig-input-number value="100">
+                    <span slot="prepend">X</span>
+                </fig-input-number>
+            </div>
+        </section>
+        <hr>
+
+        <!-- Input Text -->
+        <section id="input-text">
+            <h2>Input Text</h2>
+            <p class="description">A text input with various types and configurations.</p>
+
+            <h3>Basic</h3>
+            <fig-input-text placeholder="Enter text"></fig-input-text>
+
+            <h3>With Value</h3>
+            <fig-input-text value="Hello World"></fig-input-text>
+
+            <h3>Types</h3>
+            <div class="example-row">
+                <label>Text (default)</label>
+                <fig-input-text placeholder="Text input"></fig-input-text>
+            </div>
+            <div class="example-row">
+                <label>Password</label>
+                <fig-input-text type="password"
+                                placeholder="Password"></fig-input-text>
+            </div>
+            <div class="example-row">
+                <label>Number</label>
+                <fig-input-text type="number"
+                                placeholder="Number"
+                                steppers="true"></fig-input-text>
+            </div>
+
+            <h3>Multiline</h3>
+            <fig-input-text multiline="true"
+                            placeholder="Enter multiple lines..."
+                            autoresize="true"
+                            resizable="true"></fig-input-text>
+
+            <h3>States</h3>
+            <div class="example-row">
+                <label>Disabled</label>
+                <fig-input-text value="Disabled"
+                                disabled></fig-input-text>
+            </div>
+
+            <h3>With Slots</h3>
+            <div class="example-row">
+                <label>Append</label>
+                <fig-input-text value="90">
+                    <span slot="append">°</span>
+                </fig-input-text>
+            </div>
+            <div class="example-row">
+                <label>Prepend</label>
+                <fig-input-text placeholder="Search">
+                    <span slot="prepend">🔍</span>
+                </fig-input-text>
+            </div>
+
+            <h3>Full Width</h3>
+            <fig-input-text placeholder="Full width input"
+                            full></fig-input-text>
+        </section>
+        <hr>
+
+        <!-- Popover -->
+        <section id="popover">
+            <h2>Popover</h2>
+            <p class="description">A floating panel that appears on hover or click.</p>
+
+            <h3>Default (Hover)</h3>
+            <fig-popover>
+                <fig-button>Hover me</fig-button>
+                <div popover>
+                    <p style="margin: 0; padding: 8px;">This is popover content</p>
+                </div>
+            </fig-popover>
+
+            <h3>Manual Trigger</h3>
+            <fig-popover action="manual">
+                <fig-button>Click me</fig-button>
+                <div popover>
+                    <fig-header>
+                        <h3>Popover Title</h3>
+                    </fig-header>
+                    <fig-content>
+                        <p>Click the button again to close.</p>
+                    </fig-content>
+                </div>
+            </fig-popover>
+
+            <h3>With Form Content</h3>
+            <fig-popover action="manual"
+                         size="large">
+                <fig-button>Settings</fig-button>
+                <div popover>
+                    <fig-header>
+                        <h3>Settings</h3>
+                    </fig-header>
+                    <fig-content>
+                        <fig-field direction="horizontal">
+                            <label>Opacity</label>
+                            <fig-slider min="0"
+                                        max="100"
+                                        value="50"
+                                        text="true"
+                                        units="%"></fig-slider>
+                        </fig-field>
+                        <fig-field direction="horizontal">
+                            <label>Mode</label>
+                            <fig-dropdown>
+                                <option>Normal</option>
+                                <option>Multiply</option>
+                                <option>Screen</option>
+                            </fig-dropdown>
+                        </fig-field>
+                    </fig-content>
+                </div>
+            </fig-popover>
+        </section>
+        <hr>
+
+        <!-- Radio -->
+        <section id="radio">
+            <h2>Radio</h2>
+            <p class="description">Radio buttons for single selection from a group.</p>
+
+            <h3>Radio Group</h3>
+            <vstack>
+                <fig-radio label="Option One"
+                           name="radio-group-1"
+                           checked="true"></fig-radio>
+                <fig-radio label="Option Two"
+                           name="radio-group-1"></fig-radio>
+                <fig-radio label="Option Three"
+                           name="radio-group-1"></fig-radio>
+            </vstack>
+
+            <h3>Another Group</h3>
+            <vstack>
+                <fig-radio label="Small"
+                           name="size-group"></fig-radio>
+                <fig-radio label="Medium"
+                           name="size-group"
+                           checked="true"></fig-radio>
+                <fig-radio label="Large"
+                           name="size-group"></fig-radio>
+            </vstack>
+
+            <h3>Disabled</h3>
+            <vstack>
+                <fig-radio label="Disabled unchecked"
+                           name="disabled-group"
+                           disabled></fig-radio>
+                <fig-radio label="Disabled checked"
+                           name="disabled-group-2"
+                           checked="true"
+                           disabled></fig-radio>
+            </vstack>
+        </section>
+        <hr>
+
+        <!-- Segmented Control -->
+        <section id="segmented-control">
+            <h2>Segmented Control</h2>
+            <p class="description">A group of mutually exclusive options displayed as segments.</p>
+
+            <h3>Default</h3>
             <fig-segmented-control>
                 <fig-segment selected>One</fig-segment>
                 <fig-segment>Two</fig-segment>
                 <fig-segment>Three</fig-segment>
             </fig-segmented-control>
-        </fig-field>
-        <fig-header>
-            <h2>Image</h2>
-        </fig-header>
-        <fig-field>
-            <label>Default</label>
-            <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"></fig-image>
-        </fig-field>
-        <fig-field>
-            <label>Medium</label>
-            <fig-image src="https://avatars.githubusercontent.com/u/12345678?v=4"
-                       size="medium"></fig-image>
-        </fig-field>
-        <fig-field>
-            <label>Large (with upload)</label>
-            <fig-image upload="true"
-                       download="true"
-                       label="Upload image"
-                       size="large"></fig-image>
-        </fig-field>
-        <script>
-            function updateImages() {
-                const images = document.querySelectorAll('fig-image');
-                images.forEach(image => {
-                    image.setAttribute("src", "https://picsum.photos/200?random=" + Math.random());
-                    //image.src = "https://picsum.photos/200?random=" + Math.random();
-                });
-            }
-        </script>
 
-        <button onclick="updateImages()">Change src</button>
+            <h3>Two Options</h3>
+            <fig-segmented-control>
+                <fig-segment selected>Left</fig-segment>
+                <fig-segment>Right</fig-segment>
+            </fig-segmented-control>
 
-        <br /><br />
-        <fig-header>
-            <h2>Button</h2>
-        </fig-header>
-        <fig-field>
-            <label>Primary Button</label>
-            <fig-button>Primary</fig-button>
-        </fig-field>
-        <fig-field>
-            <label>Secondary Button</label>
-            <fig-button variant="secondary">Secondary</fig-button>
-        </fig-field>
-        <fig-field>
-            <label>Ghost Button</label>
-            <fig-button variant="ghost">Ghost</fig-button>
-        </fig-field>
-        <fig-field>
-            <label>Submit Button</label>
-            <form action="https://www.google.com/search?q=rogie"
-                  method="get">
-                <fig-button type="submit">Submit</fig-button>
-            </form>
-        </fig-field>
-        <fig-field>
-            <label>Disabled Button</label>
-            <fig-button disabled>Disabled</fig-button>
-        </fig-field>
-        <fig-field>
-            <label>Disabled Button (secondary)</label>
-            <fig-button variant="secondary"
-                        disabled>Disabled</fig-button>
-        </fig-field>
-        <fig-field>
-            <label>Disabled Button (icon)</label>
-            <fig-button variant="secondary"
-                        icon="true"
-                        disabled><svg width="16"
-                     height="16"
-                     viewBox="0 0 16 16"
-                     fill="none"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                          clip-rule="evenodd"
-                          d="M6.5 6C7.32843 6 8 5.32843 8 4.5C8 3.67157 7.32843 3 6.5 3C5.67157 3 5 3.67157 5 4.5C5 5.32843 5.67157 6 6.5 6ZM6.5 7C7.70948 7 8.71836 6.14112 8.94999 5H14V4H8.94999C8.71836 2.85888 7.70948 2 6.5 2C5.29052 2 4.28164 2.85888 4.05001 4H2V5H4.05001C4.28164 6.14112 5.29052 7 6.5 7ZM9.5 13C8.67157 13 8 12.3284 8 11.5C8 10.6716 8.67157 10 9.5 10C10.3284 10 11 10.6716 11 11.5C11 12.3284 10.3284 13 9.5 13ZM9.5 14C8.29052 14 7.28164 13.1411 7.05001 12H2V11H7.05001C7.28164 9.85888 8.29052 9 9.5 9C10.7095 9 11.7184 9.85888 11.95 11H14V12H11.95C11.7184 13.1411 10.7095 14 9.5 14Z"
-                          fill="currentColor"></path>
-                </svg></fig-button>
-        </fig-field>
-        <fig-header>
-            <h2>Combo button</h2>
-        </fig-header>
-        <fig-field>
-            <label>Primary (compact dropdown</label>
-            <fig-button-combo>
-                <fig-button>Primary</fig-button>
-                <fig-button icon="true"
-                            type="select"
-                            size="compact">
-                    <svg width="24"
-                         height="24"
-                         viewBox="0 0 24 24"
-                         fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd"
-                              clip-rule="evenodd"
-                              d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
-                              fill="currentColor"
-                              fill-opacity="0.9" />
-                    </svg>
-                    <fig-dropdown>
-                        <option>One</option>
-                        <option>Two</option>
-                    </fig-dropdown>
-                </fig-button>
-            </fig-button-combo>
-        </fig-field>
+            <h3>Many Options</h3>
+            <fig-segmented-control>
+                <fig-segment>XS</fig-segment>
+                <fig-segment>S</fig-segment>
+                <fig-segment selected>M</fig-segment>
+                <fig-segment>L</fig-segment>
+                <fig-segment>XL</fig-segment>
+            </fig-segmented-control>
+        </section>
+        <hr>
 
-        <fig-field>
-            <label>Secondary (with dropdown)</label>
-            <fig-button-combo>
-                <fig-button variant="secondary">Secondary</fig-button>
-                <fig-button variant="secondary"
-                            icon="true"
-                            type="select">
-                    <svg width="24"
-                         height="24"
-                         viewBox="0 0 24 24"
-                         fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd"
-                              clip-rule="evenodd"
-                              d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
-                              fill="currentColor"
-                              fill-opacity="0.9" />
-                    </svg>
-                    <fig-dropdown>
-                        <option>One</option>
-                        <option>Two</option>
-                    </fig-dropdown>
-                </fig-button>
-            </fig-button-combo>
-        </fig-field>
+        <!-- Slider -->
+        <section id="slider">
+            <h2>Slider</h2>
+            <p class="description">A range slider with various types and configurations.</p>
 
-        <fig-field>
-            <label>Primary (disabled)</label>
-            <fig-button-combo>
-                <fig-button disabled>Button 1</fig-button>
-                <fig-button disabled>Button 2</fig-button>
-                <fig-button disabled>Button 3</fig-button>
-            </fig-button-combo>
-        </fig-field>
+            <h3>Default</h3>
+            <fig-slider min="0"
+                        max="100"
+                        value="50"></fig-slider>
 
-        <fig-field>
-            <label>Secondary (disabled)</label>
-            <fig-button-combo>
-                <fig-button variant="secondary"
-                            disabled>Button 1</fig-button>
-                <fig-button variant="secondary"
-                            disabled>Button 2</fig-button>
-                <fig-button variant="secondary"
-                            disabled>Button 3</fig-button>
-            </fig-button-combo>
-        </fig-field>
+            <h3>With Text Input</h3>
+            <fig-slider min="0"
+                        max="100"
+                        value="50"
+                        text="true"></fig-slider>
 
+            <h3>With Units</h3>
+            <fig-slider min="0"
+                        max="100"
+                        value="75"
+                        text="true"
+                        units="%"></fig-slider>
 
-        <fig-field>
-            <label>Select button</label>
-            <fig-button type="select">
-                Select
-                <fig-dropdown>
-                    <option>One</option>
-                    <option>Two</option>
-                </fig-dropdown>
-            </fig-button>
-        </fig-field>
+            <h3>Variants</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-slider min="0"
+                            max="100"
+                            value="50"
+                            text="true"></fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Neue</label>
+                <fig-slider min="0"
+                            max="100"
+                            value="50"
+                            text="true"
+                            variant="neue"></fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Minimal</label>
+                <fig-slider min="0"
+                            max="100"
+                            value="50"
+                            text="true"
+                            variant="minimal"></fig-slider>
+            </div>
 
-        <fig-field>
-            <label>Select button (icon)</label>
-            <fig-button icon="true"
-                        type="select">
-                <svg width="24"
-                     height="24"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                          clip-rule="evenodd"
-                          d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
-                          fill="currentColor"
-                          fill-opacity="0.9" />
-                </svg>
-                <fig-dropdown>
-                    <option>One</option>
-                    <option>Two</option>
-                </fig-dropdown>
-            </fig-button>
-        </fig-field>
+            <h3>Opacity Type</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-slider type="opacity"
+                            value="0.75"
+                            color="#ff0000"
+                            units="%"
+                            text="true"></fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Neue</label>
+                <fig-slider type="opacity"
+                            value="0.75"
+                            color="#ff0000"
+                            units="%"
+                            text="true"
+                            variant="neue"></fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Minimal</label>
+                <fig-slider type="opacity"
+                            value="0.75"
+                            color="#ff0000"
+                            units="%"
+                            text="true"
+                            variant="minimal"></fig-slider>
+            </div>
 
-        <fig-field>
-            <label>Upload button</label>
-            <fig-button variant="secondary"
-                        type="upload">
-                Upload
-                <input type="file" />
-            </fig-button>
-        </fig-field>
+            <h3>Hue Type</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-slider type="hue"
+                            value="180"></fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Neue</label>
+                <fig-slider type="hue"
+                            value="180"
+                            variant="neue"></fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Minimal</label>
+                <fig-slider type="hue"
+                            value="180"
+                            variant="minimal"></fig-slider>
+            </div>
 
-        <fig-field>
-            <label>Toggle button</label>
-            <fig-button variant="ghost"
-                        type="toggle"
-                        icon="true">
-                <svg class="svg"
-                     xmlns="http://www.w3.org/2000/svg"
-                     width="16"
-                     height="16"
-                     viewBox="0 0 16 16">
-                    <path fill="currentColor"
-                          fill-opacity="1"
-                          fill-rule="evenodd"
-                          stroke="none"
-                          d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z">
-                    </path>
-                </svg>
-            </fig-button>
-        </fig-field>
+            <h3>Stepper Type</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-slider type="stepper"
+                            value="50"
+                            step="25"
+                            text="true">
+                    <datalist>
+                        <option value="0"></option>
+                        <option value="25"></option>
+                        <option value="50"></option>
+                        <option value="75"></option>
+                        <option value="100"></option>
+                    </datalist>
+                </fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Neue</label>
+                <fig-slider type="stepper"
+                            value="50"
+                            step="25"
+                            text="true"
+                            variant="neue">
+                    <datalist>
+                        <option value="0"></option>
+                        <option value="25"></option>
+                        <option value="50"></option>
+                        <option value="75"></option>
+                        <option value="100"></option>
+                    </datalist>
+                </fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Minimal</label>
+                <fig-slider type="stepper"
+                            value="50"
+                            step="25"
+                            text="true"
+                            variant="minimal">
+                    <datalist>
+                        <option value="0"></option>
+                        <option value="25"></option>
+                        <option value="50"></option>
+                        <option value="75"></option>
+                        <option value="100"></option>
+                    </datalist>
+                </fig-slider>
+            </div>
 
-        <fig-field>
-            <label>Toggle button (selected) with tooltip</label>
-            <fig-tooltip text="Toggle off/on">
+            <h3>Delta Type</h3>
+            <div class="example-row">
+                <label>Default</label>
+                <fig-slider type="delta"
+                            value="0"
+                            default="0"
+                            step="0.25"
+                            min="-5"
+                            max="5"
+                            text="true">
+                    <datalist>
+                        <option value="0"></option>
+                    </datalist>
+                </fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Neue</label>
+                <fig-slider type="delta"
+                            value="0"
+                            default="0"
+                            step="0.25"
+                            min="-5"
+                            max="5"
+                            text="true"
+                            variant="neue">
+                    <datalist>
+                        <option value="0"></option>
+                    </datalist>
+                </fig-slider>
+            </div>
+            <div class="example-row">
+                <label>Minimal</label>
+                <fig-slider type="delta"
+                            value="0"
+                            default="0"
+                            step="0.25"
+                            min="-5"
+                            max="5"
+                            text="true"
+                            variant="minimal">
+                    <datalist>
+                        <option value="0"></option>
+                    </datalist>
+                </fig-slider>
+            </div>
+
+            <h3>With Transform</h3>
+            <fig-slider min="0"
+                        max="1"
+                        value="0.5"
+                        step="0.01"
+                        transform="100"
+                        text="true"
+                        units="%"></fig-slider>
+
+            <h3>Full Width</h3>
+            <fig-slider min="0"
+                        max="100"
+                        value="50"
+                        text="true"
+                        full></fig-slider>
+        </section>
+        <hr>
+
+        <!-- Spinner -->
+        <section id="spinner">
+            <h2>Spinner</h2>
+            <p class="description">A loading spinner indicator.</p>
+
+            <h3>Default</h3>
+            <fig-spinner></fig-spinner>
+
+            <h3>In Context</h3>
+            <hstack>
+                <fig-spinner></fig-spinner>
+                <span style="font-size: 13px; color: var(--figma-color-text-secondary);">Loading...</span>
+            </hstack>
+        </section>
+        <hr>
+
+        <!-- Switch -->
+        <section id="switch">
+            <h2>Switch</h2>
+            <p class="description">A toggle switch for on/off states.</p>
+
+            <h3>States</h3>
+            <div class="example-row">
+                <label>Off</label>
+                <fig-switch label="Off"
+                            checked="false"></fig-switch>
+            </div>
+            <div class="example-row">
+                <label>On</label>
+                <fig-switch label="On"
+                            checked="true"></fig-switch>
+            </div>
+            <div class="example-row">
+                <label>Indeterminate</label>
+                <fig-switch label="Indeterminate"
+                            indeterminate="true"></fig-switch>
+            </div>
+            <div class="example-row">
+                <label>Disabled</label>
+                <fig-switch label="Disabled"
+                            disabled></fig-switch>
+            </div>
+            <div class="example-row">
+                <label>Disabled (on)</label>
+                <fig-switch label="Disabled On"
+                            checked="true"
+                            disabled></fig-switch>
+            </div>
+
+            <h3>Without Labels</h3>
+            <div class="example-row">
+                <label>Off</label>
+                <fig-switch checked="false"></fig-switch>
+            </div>
+            <div class="example-row">
+                <label>On</label>
+                <fig-switch checked="true"></fig-switch>
+            </div>
+            <div class="example-row">
+                <label>Disabled</label>
+                <fig-switch disabled></fig-switch>
+            </div>
+        </section>
+        <hr>
+
+        <!-- Tabs -->
+        <section id="tabs">
+            <h2>Tabs</h2>
+            <p class="description">A tabbed interface for organizing content.</p>
+
+            <h3>Default</h3>
+            <fig-tabs>
+                <fig-tab selected
+                         content="#tab-content-1">Tab One</fig-tab>
+                <fig-tab content="#tab-content-2">Tab Two</fig-tab>
+                <fig-tab content="#tab-content-3">Tab Three</fig-tab>
+            </fig-tabs>
+            <fig-tab-content id="tab-content-1">
+                <p>Content for Tab One. This is the default selected tab.</p>
+            </fig-tab-content>
+            <fig-tab-content id="tab-content-2">
+                <p>Content for Tab Two. Click the tab to see this content.</p>
+            </fig-tab-content>
+            <fig-tab-content id="tab-content-3">
+                <p>Content for Tab Three. Each tab can have different content.</p>
+            </fig-tab-content>
+
+            <h3>Two Tabs</h3>
+            <fig-tabs>
+                <fig-tab selected
+                         content="#two-tab-1">First</fig-tab>
+                <fig-tab content="#two-tab-2">Second</fig-tab>
+            </fig-tabs>
+            <fig-tab-content id="two-tab-1">First tab content</fig-tab-content>
+            <fig-tab-content id="two-tab-2">Second tab content</fig-tab-content>
+        </section>
+        <hr>
+
+        <!-- Toast -->
+        <section id="toast">
+            <h2>Toast</h2>
+            <p class="description">A non-modal, time-based notification that appears at the bottom center of the screen.
+            </p>
+
+            <h3>Basic Toast</h3>
+            <fig-button onclick="document.getElementById('basic-toast').showToast()">Show Toast</fig-button>
+            <dialog id="basic-toast"
+                    is="fig-toast">
+                <p>Your changes have been saved.</p>
+            </dialog>
+
+            <h3>With Dismiss Button</h3>
+            <fig-button onclick="document.getElementById('dismiss-toast').showToast()">Show Toast with
+                Dismiss</fig-button>
+            <dialog id="dismiss-toast"
+                    is="fig-toast">
+                <p>File uploaded successfully.</p>
+                <hr vertical />
                 <fig-button variant="ghost"
-                            type="toggle"
                             icon="true"
-                            selected="true">
-                    <svg width="24"
-                         height="24"
-                         fill="none"
-                         viewBox="0 0 24 24">
-                        <path fill="currentColor"
-                              fill-rule="evenodd"
-                              d="M9.5 7h-2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5m-2-1A1.5 1.5 0 0 0 6 7.5v9A1.5 1.5 0 0 0 7.5 18h2a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 9.5 6zm9 1h-2a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5m-2-1A1.5 1.5 0 0 0 13 7.5v2a1.5 1.5 0 0 0 1.5 1.5h2A1.5 1.5 0 0 0 18 9.5v-2A1.5 1.5 0 0 0 16.5 6zm3.384 8.32a.5.5 0 0 0-.768-.64l-2.15 2.58-1.112-1.114a.5.5 0 0 0-.708.708l1.5 1.5a.5.5 0 0 0 .738-.034z"
-                              clip-rule="evenodd"></path>
-                    </svg>
-                </fig-button>
-            </fig-tooltip>
-        </fig-field>
-
-        <dialog open="true"
-                drag="true"
-                position="bottom right"
-                is="fig-dialog">
-            <fig-header>
-                <h3>Dialog</h3>
-
-                <fig-button variant="ghost"
-                            icon="true"
-                            close-dialog>
+                            close-toast>
                     <svg width="24"
                          height="24"
                          viewBox="0 0 24 24"
@@ -614,545 +1600,413 @@
                               fill="currentColor"
                               fill-opacity="0.9" />
                     </svg>
-
                 </fig-button>
-            </fig-header>
-            <fig-content>
-                <fig-tooltip text="Close dialog">
+            </dialog>
+
+            <h3>With Action</h3>
+            <fig-button onclick="document.getElementById('action-toast').showToast()">Show Toast with
+                Action</fig-button>
+            <dialog id="action-toast"
+                    is="fig-toast">
+                <p>Item moved to trash.</p>
+                <fig-button variant="link"
+                            close-toast>Undo</fig-button>
+            </dialog>
+
+            <h3>No Auto-Dismiss</h3>
+            <fig-button onclick="document.getElementById('persistent-toast').showToast()">Show Persistent
+                Toast</fig-button>
+            <dialog id="persistent-toast"
+                    is="fig-toast"
+                    duration="0">
+                <p>This toast won't auto-dismiss.</p>
+                <fig-button variant="ghost"
+                            close-toast>Close</fig-button>
+            </dialog>
+
+            <h3>Custom Duration (2 seconds)</h3>
+            <fig-button onclick="document.getElementById('short-toast').showToast()">Show Short Toast</fig-button>
+            <dialog id="short-toast"
+                    is="fig-toast"
+                    duration="2000">
+                <p>This disappears quickly!</p>
+            </dialog>
+
+            <h3>Custom Offset (64px)</h3>
+            <fig-button onclick="document.getElementById('offset-toast').showToast()">Show Offset Toast</fig-button>
+            <dialog id="offset-toast"
+                    is="fig-toast"
+                    offset="64">
+                <p>This toast is 64px from the bottom.</p>
+            </dialog>
+
+            <h3>Themes</h3>
+            <hstack>
+                <fig-button onclick="document.getElementById('dark-toast').showToast()">Dark (default)</fig-button>
+                <fig-button onclick="document.getElementById('light-toast').showToast()">Light</fig-button>
+                <fig-button onclick="document.getElementById('danger-toast').showToast()">Danger</fig-button>
+                <fig-button onclick="document.getElementById('brand-toast').showToast()">Brand</fig-button>
+            </hstack>
+            <dialog id="dark-toast"
+                    is="fig-toast"
+                    theme="dark">
+                <p>Dark theme toast message.</p>
+            </dialog>
+            <dialog id="light-toast"
+                    is="fig-toast"
+                    theme="light">
+                <p>Light theme toast message.</p>
+            </dialog>
+            <dialog id="danger-toast"
+                    is="fig-toast"
+                    theme="danger">
+                <p>Danger theme toast message.</p>
+            </dialog>
+            <dialog id="brand-toast"
+                    is="fig-toast"
+                    theme="brand">
+                <p>Brand theme toast message.</p>
+            </dialog>
+        </section>
+        <hr>
+
+        <!-- Tooltip -->
+        <section id="tooltip">
+            <h2>Tooltip</h2>
+            <p class="description">A small popup that appears on hover to provide additional information.</p>
+
+            <h3>Default</h3>
+            <fig-tooltip text="This is a tooltip">
+                <fig-button>Hover me</fig-button>
+            </fig-tooltip>
+
+            <h3>On Different Elements</h3>
+            <hstack>
+                <fig-tooltip text="Button tooltip">
+                    <fig-button variant="secondary">Button</fig-button>
+                </fig-tooltip>
+                <fig-tooltip text="Icon tooltip">
                     <fig-button variant="ghost"
-                                close-dialog>
-                        Close
+                                icon="true">
+                        <svg width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  clip-rule="evenodd"
+                                  d="M8 2.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zm6-2.5v-1h1v1h-1zm0 1v4h1v-4h-1z"
+                                  fill="currentColor" />
+                        </svg>
                     </fig-button>
                 </fig-tooltip>
-                <fig-input-text placeholder="Enter text"
-                                value="Hello"></fig-input-text>
-                <p>Some content here</p>
-                <fig-field direction="horizontal">
-                    <label for="colorLevels">Color Levels</label>
-                    <fig-slider id="colorLevels"
-                                min="2"
-                                max="16"
-                                value="4"
-                                variant="minimal"
-                                step="1"
-                                text="true"
-                                style="flex: 1; max-width: 200px;">
-                    </fig-slider>
-                </fig-field>
-            </fig-content>
-            <footer>
+                <fig-tooltip text="Text tooltip">
+                    <em style="cursor: help;">Hover this text</em>
+                </fig-tooltip>
+            </hstack>
+
+            <h3>Instant (No Delay)</h3>
+            <fig-tooltip text="Instant tooltip"
+                         delay="0">
+                <fig-button>No delay</fig-button>
+            </fig-tooltip>
+
+            <h3>Long Text</h3>
+            <fig-tooltip text="This is a much longer tooltip that contains more detailed information about the element">
+                <fig-button variant="secondary">Long tooltip</fig-button>
+            </fig-tooltip>
+
+            <h3>Inline Usage</h3>
+            <p style="font-size: 13px;">
+                Some paragraph text with a
+                <fig-tooltip text="Additional context">
+                    <em style="cursor: help; text-decoration: underline dotted;">tooltip</em>
+                </fig-tooltip>
+                for more information.
+            </p>
+        </section>
+        <hr>
+
+        <!-- HStack -->
+        <section id="hstack">
+            <h2>HStack</h2>
+            <p class="description">A horizontal flex container for laying out elements in a row.</p>
+
+            <h3>Basic Usage</h3>
+            <hstack>
+                <fig-button>Button 1</fig-button>
+                <fig-button>Button 2</fig-button>
+                <fig-button>Button 3</fig-button>
+            </hstack>
+
+            <h3>Mixed Elements</h3>
+            <hstack>
+                <fig-avatar name="John Doe"></fig-avatar>
+                <span style="font-size: 13px; color: var(--figma-color-text);">John Doe</span>
                 <fig-button variant="secondary"
-                            close-dialog>Cancel</fig-button>
-                <fig-button>Save</fig-button>
-            </footer>
-        </dialog>
-        <fig-header>
-            <h2>Dropdown</h2>
-        </fig-header>
-        <fig-field>
-            <label>Dropdown</label>
-            <fig-dropdown>
-                <option>One</option>
-                <option>Two</option>
-                <option>Three</option>
-                <option selected>Fourhundred sixty two</option>
-            </fig-dropdown>
-        </fig-field>
-        <fig-field>
-            <label>Dropdown (with grouped options)</label>
-            <fig-dropdown>
-                <optgroup label="Numbers">
-                    <option>One</option>
-                    <option>Two</option>
-                </optgroup>
-                <optgroup label="Fruits">
-                    <option>Apple</option>
-                    <option>Banana</option>
-                </optgroup>
-            </fig-dropdown>
-        </fig-field>
-        <fig-field>
-            <label>Dropdown</label>
-            <fig-dropdown>
-                <option>One</option>
-                <option>Two</option>
-            </fig-dropdown>
-        </fig-field>
-        <h2>Text input</h2>
-        <fig-field>
-            <label>Text input</label>
-            <fig-input-text placeholder="Enter text"></fig-input-text>
-        </fig-field>
-        <fig-field>
-            <label>Multiline input</label>
-            <fig-input-text multiline="true"
-                            value=""
-                            autoresize="true"
-                            resizable="true"
-                            placeholder="Anthropic API key">
-        </fig-field>
-        <fig-field>
-            <label>Numeric input</label>
-            <fig-input-text placeholder="###"
-                            type="number"
-                            steppers="true"></fig-input-text>
-        </fig-field>
-        <fig-field>
-            <label>Password input</label>
-            <fig-input-text type="password"></fig-input-text>
-        </fig-field>
-        <fig-field>
-            <label>Combo input</label>
-            <fig-combo-input options="House, Apartment, Condo, Other"
-                             placeholder="Type of residence">
+                            size="small">Follow</fig-button>
+            </hstack>
 
-            </fig-combo-input>
-        </fig-field>
-        <fig-field>
-            <label>Appended input</label>
+            <h3>Form Controls</h3>
+            <hstack>
+                <fig-input-text placeholder="Enter value"
+                                style="width: 120px;"></fig-input-text>
+                <fig-dropdown style="width: 100px;">
+                    <option>px</option>
+                    <option>%</option>
+                    <option>em</option>
+                </fig-dropdown>
+                <fig-button variant="primary">Apply</fig-button>
+            </hstack>
 
-            <fig-input-text type="number"
-                            min="0"
-                            max="360"
-                            value="90">
-                <span slot="append">°</span>
-            </fig-input-text>
-        </fig-field>
-        <fig-field>
-            <label>Prepended input</label>
-            <fig-input-text value=""
-                            placeholder="Number">
-                <span slot="prepend">X</span>
-            </fig-input-text>
-        </fig-field>
-        <fig-header>
-            <h2>Number input</h2>
-        </fig-header>
-        <fig-field>
-            <label>Basic number input</label>
-            <fig-input-number value="100"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With units (percentage)</label>
-            <fig-input-number value="100"
-                              units="%"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With units (degrees)</label>
-            <fig-input-number value="45"
-                              units="°"
-                              min="0"
-                              max="360"
-                              step="1"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With prefix unit (currency)</label>
-            <fig-input-number value="50"
-                              units="$"
-                              unit-position="prefix"
-                              min="0"
-                              step="0.01"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With transform (like slider)</label>
-            <fig-input-number value="0.5"
-                              units="%"
-                              transform="100"
-                              min="0"
-                              max="1"
-                              step="0.01"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With min/max constraints</label>
-            <fig-input-number value="25"
-                              units="px"
-                              min="0"
-                              max="1000"
-                              step="1"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With placeholder</label>
-            <fig-input-number placeholder="Enter value"
-                              units="%"
-                              min="0"
-                              max="100"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>Disabled</label>
-            <fig-input-number value="75"
-                              units="%"
-                              disabled></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With name attribute</label>
-            <fig-input-number value="42"
-                              units="px"
-                              name="width"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>Small step (decimals)</label>
-            <fig-input-number value="1.5"
-                              units="rem"
-                              min="0"
-                              max="10"
-                              step="0.1"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>Large range with transform</label>
-            <fig-input-number value="0.75"
-                              units="%"
-                              transform="100"
-                              min="0"
-                              max="1"
-                              step="0.01"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>Negative values allowed</label>
-            <fig-input-number value="-10"
-                              units="px"
-                              min="-100"
-                              max="100"
-                              step="1"></fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With append slot</label>
-            <fig-input-number value="90"
-                              units="°"
-                              min="0"
-                              max="360">
-                <span slot="append">deg</span>
-            </fig-input-number>
-        </fig-field>
-        <fig-field>
-            <label>With prepend slot</label>
-            <fig-input-number value="50"
-                              units="%">
-                <span slot="prepend">O</span>
-            </fig-input-number>
-        </fig-field>
-        <fig-header>
-            <h2>Color input</h2>
-        </fig-header>
-        <fig-field>
-            <label>Color swatch</label>
-            <fig-input-color value="#FF000066"></fig-input-color>
-        </fig-field>
-        <fig-field>
-            <label>Color input (with text)</label>
-            <fig-input-color value="#00FFFF33"
-                             text="true"></fig-input-color>
-        </fig-field>
-        <fig-field>
-            <label>Color input (with text and alpha)</label>
-            <fig-input-color value="#00FF00"
-                             alpha="true"
-                             text="true"></fig-input-color>
-        </fig-field>
-        <fig-header>
-            <h2>Checkbox</h2>
-        </fig-header>
-        <fig-field>
-            <fig-checkbox label="Checkbox"></fig-checkbox>
-        </fig-field>
-        <fig-header>
-            <h2>Radio</h2>
-        </fig-header>
-        <fig-field>
-            <label>Radio buttons</label>
-            <fig-radio label="Radio #1"
-                       name="r1"></fig-radio>
-            <fig-radio label="Radio #2"
-                       name="r1"></fig-radio>
-        </fig-field>
-        <fig-header>
-            <h2>Switch</h2>
-        </fig-header>
-        <fig-field>
-            <label>Switches</label>
-            <fig-switch checked="true"
-                        onInput="console.log(event.target.checked)"
-                        label="On"></fig-switch>
-            <fig-switch checked="false"
-                        label="Off"></fig-switch>
-            <fig-switch indeterminate="true"
-                        label="Indeterminate"></fig-switch>
-            <fig-switch disabled
-                        label="Disabled"></fig-switch>
-        </fig-field>
-        <fig-header>
-            <h2>Chit</h2>
-        </fig-header>
-        <fig-field>
-            <label>Chit</label>
+            <h3>With Chips/Chits</h3>
             <hstack>
                 <fig-chit type="color"
-                          selected="true"
-                          disabled="true"
-                          value="#00FF00"></fig-chit>
+                          value="#FF5733"></fig-chit>
                 <fig-chit type="color"
-                          disabled="true"
-                          value="#000000"></fig-chit>
-                <fig-chit type="gradient"
-                          variant="linear"
-                          size="large"
-                          disabled="true"></fig-chit>
-                <fig-chit type="gradient"
-                          variant="angular"
-                          size="large"
-                          selected="true"
-                          disabled="true"></fig-chit>
-                <fig-chit type="gradient"
-                          variant="radial"
-                          size="large"
-                          disabled="true"></fig-chit>
-                <fig-chit type="image"
-                          disabled="true"
-                          src="https://img.freepik.com/free-vector/gradient-grainy-gradient-background_23-2149922133.jpg?semt=ais_hybrid"></fig-chit>
-                <fig-chit type="image"
-                          disabled="true"
-                          size="large"
-                          onclick="console.log('clicked')"
-                          src="https://avatars.githubusercontent.com/u/12345678?v=4"></fig-chit>
-                <fig-chit type="image"
-                          disabled="true"
-                          selected="true"
-                          size="large"
-                          src="https://img.freepik.com/free-vector/gradient-grainy-gradient-background_23-2149922133.jpg?semt=ais_hybrid"></fig-chit>
-                <fig-chit type="image"
-                          disabled="true"
-                          size="large"></fig-chit>
+                          value="#33FF57"></fig-chit>
+                <fig-chit type="color"
+                          value="#3357FF"></fig-chit>
+                <fig-chit type="color"
+                          value="#FF33F5"></fig-chit>
             </hstack>
-        </fig-field>
+        </section>
+        <hr>
 
-        <fig-header>
-            <h2>Tooltip</h2>
-        </fig-header>
-        <p>Some paragraph text here with a
-            <fig-tooltip text="Tooltip text">
-                <em>Tooltip</em>
-            </fig-tooltip> for more information.
-        </p>
-        <fig-header>
-            <h2>Field</h2>
-        </fig-header>
-        <fig-field direction="horizontal">
-            <label>Horizontal</label>
-            <fig-input-text value=""
-                            placeholder="Field placeholder"></fig-input-text>
-        </fig-field>
-        <fig-field>
-            <label>Vertical</label>
-            <fig-input-text value=""
-                            placeholder="Field placeholder"></fig-input-text>
-        </fig-field>
-        <fig-header>
-            <h2>Slider</h2>
-        </fig-header>
-        <fig-field>
-            <label>Default slider</label>
-            <fig-slider default="25"
-                        min="0"
-                        max="500"></fig-slider>
-        </fig-field>
+        <!-- VStack -->
+        <section id="vstack">
+            <h2>VStack</h2>
+            <p class="description">A vertical flex container for laying out elements in a column.</p>
 
-        <fig-field>
-            <label>Number slider (with number input)</label>
-            <fig-slider text="true"
-                        default="50"
-                        value="50"></fig-slider>
-        </fig-field>
+            <h3>Basic Usage</h3>
+            <vstack style="max-width: 200px;">
+                <fig-button>Button 1</fig-button>
+                <fig-button>Button 2</fig-button>
+                <fig-button>Button 3</fig-button>
+            </vstack>
 
-        <fig-field>
-            <label>Opacity slider</label>
-            <fig-slider type="opacity"
-                        value="0.75"
-                        color="#ff0000"
-                        units="%"
-                        text="true"></fig-slider>
-        </fig-field>
+            <h3>Form Layout</h3>
+            <vstack style="max-width: 280px;">
+                <fig-input-text label="Name"
+                                placeholder="Enter your name"></fig-input-text>
+                <fig-input-text label="Email"
+                                placeholder="Enter your email"></fig-input-text>
+                <fig-input-text label="Password"
+                                type="password"
+                                placeholder="Enter password"></fig-input-text>
+                <fig-button variant="primary"
+                            style="align-self: flex-end;">Submit</fig-button>
+            </vstack>
 
-        <fig-field>
-            <label>Hue slider</label>
-            <fig-slider type="hue"
-                        value="55"></fig-slider>
-        </fig-field>
+            <h3>Settings Panel</h3>
+            <vstack style="max-width: 280px;">
+                <fig-switch label="Enable notifications"></fig-switch>
+                <fig-switch label="Dark mode"></fig-switch>
+                <fig-switch label="Auto-save"></fig-switch>
+                <fig-checkbox label="Remember my preferences"></fig-checkbox>
+            </vstack>
 
-        <fig-field>
-            <label>Stepper slider</label>
-            <fig-slider type="stepper"
-                        value="25"
-                        default="75"
-                        step="25">
-                <datalist>
-                    <option value="0"></option>
-                    <option value="25"></option>
-                    <option value="50"></option>
-                    <option value="75"></option>
-                    <option value="100"></option>
-                </datalist>
-            </fig-slider>
-        </fig-field>
-        <fig-field direction="horizontal">
-            <label>Stepper slider (auto)</label>
-            <fig-slider type="stepper"
-                        value="3"
-                        min="1"
-                        max="10"
-                        step="1"
-                        text="true">
-            </fig-slider>
-        </fig-field>
+            <h3>Nested Stacks</h3>
+            <vstack style="max-width: 300px;">
+                <hstack>
+                    <fig-avatar name="Alice"></fig-avatar>
+                    <span style="font-size: 13px; color: var(--figma-color-text);">Alice Johnson</span>
+                </hstack>
+                <hstack>
+                    <fig-avatar name="Bob"></fig-avatar>
+                    <span style="font-size: 13px; color: var(--figma-color-text);">Bob Smith</span>
+                </hstack>
+                <hstack>
+                    <fig-avatar name="Carol"></fig-avatar>
+                    <span style="font-size: 13px; color: var(--figma-color-text);">Carol Williams</span>
+                </hstack>
+            </vstack>
+        </section>
+        <hr>
 
-        <fig-field>
-            <label>Delta slider</label>
-            <fig-slider type="delta"
-                        value=".25"
-                        default="0"
-                        step="0.25"
-                        max="5"
-                        min="-5">
-                <datalist id="markers">
-                    <option value="0"></option>
-                </datalist>
-            </fig-slider>
-        </fig-field>
-        <fig-header>
-            <h2>Spinner</h2>
-        </fig-header>
-        <fig-spinner></fig-spinner>
+        <!-- HR -->
+        <section id="hr">
+            <h2>HR</h2>
+            <p class="description">A horizontal rule for visual separation of content.</p>
 
-        <fig-header>
-            <h2>Misc.</h2>
-        </fig-header>
-        <hstack>
-            <fig-tooltip text="Tooltip"
-                         delay="0">
-                <fig-chit />
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip"
-                         delay="0">
-                <fig-chit />
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip"
-                         delay="0">
-                <fig-chit />
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip"
-                         delay="0">
-                <fig-chit />
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip"
-                         delay="0">
-                <fig-chit />
-            </fig-tooltip>
-            <fig-tooltip text="Tooltip"
-                         delay="0">
-                <fig-chit />
-            </fig-tooltip>
+            <h3>Default</h3>
+            <div style="padding: 16px 0;">
+                <p style="font-size: 13px; color: var(--figma-color-text); margin: 0 0 16px 0;">Content above the
+                    divider</p>
+                <hr style="border: none; border-top: 1px solid var(--figma-color-border); margin: 0;">
+                <p style="font-size: 13px; color: var(--figma-color-text); margin: 16px 0 0 0;">Content below the
+                    divider</p>
+            </div>
 
-        </hstack>
+            <h3>In a List</h3>
+            <vstack style="max-width: 280px;">
+                <hstack>
+                    <span style="font-size: 13px; color: var(--figma-color-text);">Item One</span>
+                </hstack>
+                <hr style="border: none; border-top: 1px solid var(--figma-color-border); margin: 0; width: 100%;">
+                <hstack>
+                    <span style="font-size: 13px; color: var(--figma-color-text);">Item Two</span>
+                </hstack>
+                <hr style="border: none; border-top: 1px solid var(--figma-color-border); margin: 0; width: 100%;">
+                <hstack>
+                    <span style="font-size: 13px; color: var(--figma-color-text);">Item Three</span>
+                </hstack>
+            </vstack>
 
-        <fig-field>
-            <label>Minimal ranges</label>
-            <fig-slider text="true"
-                        min="0"
-                        max="1"
-                        style="width: 100%;"
-                        step="0.01"
-                        transform="100"
-                        default="0.5"
-                        variant="minimal"
-                        value="0.5"></fig-slider>
-        </fig-field>
-        <fig-field direction="horizontal">
-            <label>Opacity</label>
-            <fig-slider type="opacity"
-                        full
-                        value="0.5"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        transform="100"
-                        color="#ff0000"
-                        units="%"
-                        text="true"></fig-slider>
-            <fig-button variant="ghost"
-                        type="toggle"
-                        icon="true">
-                <svg class="svg"
-                     xmlns="http://www.w3.org/2000/svg"
-                     width="16"
-                     height="16"
-                     viewBox="0 0 16 16">
-                    <path fill="currentColor"
-                          fill-opacity="1"
-                          fill-rule="evenodd"
-                          stroke="none"
-                          d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z">
-                    </path>
-                </svg>
-            </fig-button>
-        </fig-field>
-        <br />
-        <fig-field direction="horizontal">
-            <label>Blend mode</label>
-            <fig-dropdown full
-                          type="dropdown">
-                <option selected="selected">One</option>
-                <option>Two</option>
-            </fig-dropdown>
-            <fig-button variant="ghost"
-                        type="toggle"
-                        icon="true">
-                <svg class="svg"
-                     xmlns="http://www.w3.org/2000/svg"
-                     width="16"
-                     height="16"
-                     viewBox="0 0 16 16">
-                    <path fill="currentColor"
-                          fill-opacity="1"
-                          fill-rule="evenodd"
-                          stroke="none"
-                          d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z">
-                    </path>
-                </svg>
-            </fig-button>
-        </fig-field>
-        <br />
-        <fig-field direction="horizontal">
-            <label>Description</label>
-            <fig-input-text multiline="true"
-                            value=""
-                            full
-                            autoresize="true"
-                            resizable="true"
-                            placeholder="Anthropic API key"></fig-input-text>
-            <fig-button variant="ghost"
-                        type="toggle"
-                        icon="true">
-                <svg class="svg"
-                     xmlns="http://www.w3.org/2000/svg"
-                     width="16"
-                     height="16"
-                     viewBox="0 0 16 16">
-                    <path fill="currentColor"
-                          fill-opacity="1"
-                          fill-rule="evenodd"
-                          stroke="none"
-                          d="M8 3h2c1.933 0 3.5 1.567 3.5 3.5 0 1.933-1.567 3.5-3.5 3.5H4.707l2.147 2.146-.708.708-3-3-.353-.354.353-.354 3-3 .708.708L4.707 9H10c1.38 0 2.5-1.12 2.5-2.5C12.5 5.12 11.38 4 10 4H8z">
-                    </path>
-                </svg>
-            </fig-button>
-        </fig-field>
-    </fig-content>
+            <h3>Section Separator</h3>
+            <vstack style="max-width: 300px;">
+                <h4 style="font-size: 13px; font-weight: 600; color: var(--figma-color-text); margin: 0;">Section A</h4>
+                <p style="font-size: 12px; color: var(--figma-color-text-secondary); margin: 0;">Some content for
+                    section A.</p>
+                <hr style="border: none; border-top: 1px solid var(--figma-color-border); margin: 8px 0; width: 100%;">
+                <h4 style="font-size: 13px; font-weight: 600; color: var(--figma-color-text); margin: 0;">Section B</h4>
+                <p style="font-size: 12px; color: var(--figma-color-text-secondary); margin: 0;">Some content for
+                    section B.</p>
+            </vstack>
+        </section>
+        <hr>
+
+        <!-- Code -->
+        <section id="code">
+            <h2>Code</h2>
+            <p class="description">Inline and block code formatting for displaying code snippets.</p>
+
+            <h3>Inline Code</h3>
+            <p style="font-size: 13px; color: var(--figma-color-text);">
+                Use the <code
+                      style="background: var(--figma-color-bg-secondary); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px;">fig-button</code>
+                component for buttons.
+            </p>
+
+            <h3>Code Block</h3>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">&lt;fig-button variant="primary"&gt;
+  Click me
+&lt;/fig-button&gt;</code></pre>
+
+            <h3>Multiple Lines</h3>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">const button = document.querySelector('fig-button');
+button.addEventListener('click', () => {
+  console.log('Button clicked!');
+});</code></pre>
+
+            <h3>CSS Example</h3>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">fig-button {
+  --button-bg: var(--figma-color-bg-brand);
+  --button-color: white;
+  border-radius: 6px;
+}</code></pre>
+        </section>
+    </main>
 
     <script>
-        document.addEventListener("input", (e) => {
-            console.log("input", e.target, e.target.value);
+        // Highlight nav item based on hash
+        function updateActiveNav() {
+            const hash = location.hash || '#avatar';
+            document.querySelectorAll('nav .nav-links a').forEach(a => {
+                a.classList.toggle('active', a.getAttribute('href') === hash);
+            });
+        }
+
+        // Track if we're in a click-initiated scroll
+        let isClickScrolling = false;
+
+        // Update hash on scroll using IntersectionObserver
+        const observer = new IntersectionObserver(entries => {
+            if (isClickScrolling) return;
+
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    history.replaceState(null, '', '#' + entry.target.id);
+                    updateActiveNav();
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('section[id]').forEach(s => observer.observe(s));
+
+        // Handle nav clicks - disable observer during scroll
+        document.querySelectorAll('nav .nav-links a').forEach(a => {
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = a.getAttribute('href');
+                const target = document.querySelector(targetId);
+                if (target) {
+                    isClickScrolling = true;
+                    history.pushState(null, '', targetId);
+                    updateActiveNav();
+                    target.scrollIntoView({ behavior: 'smooth' });
+                    // Re-enable observer after scroll completes
+                    setTimeout(() => { isClickScrolling = false; }, 500);
+                }
+            });
         });
 
-    </script>
+        // Initial state
+        window.addEventListener('load', () => {
+            updateActiveNav();
+            if (location.hash) {
+                document.querySelector(location.hash)?.scrollIntoView();
+            }
+        });
 
+        window.addEventListener('hashchange', updateActiveNav);
+
+        // Dialog position helper
+        function openPositionedDialog(position) {
+            const dialog = document.getElementById('positioned-dialog');
+            dialog.setAttribute('position', position);
+            dialog.showModal();
+        }
+
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeLightBtn = document.getElementById('theme-light-btn');
+        const themeDarkBtn = document.getElementById('theme-dark-btn');
+
+        function setTheme(isDark) {
+            document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+            document.documentElement.classList.toggle('figma-dark', isDark);
+            document.documentElement.classList.toggle('figma-light', !isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            // Sync switch state
+            if (isDark) {
+                themeToggle.setAttribute('checked', 'true');
+            } else {
+                themeToggle.removeAttribute('checked');
+            }
+        }
+
+        // Initialize theme from localStorage or system preference
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+        setTheme(isDark);
+
+        // Listen for toggle changes
+        themeToggle.addEventListener('change', (e) => {
+            setTheme(e.target.checked);
+        });
+
+        // Light button clicks - set to light mode
+        themeLightBtn.addEventListener('click', () => {
+            setTheme(false);
+        });
+
+        // Dark button clicks - set to dark mode
+        themeDarkBtn.addEventListener('click', () => {
+            setTheme(true);
+        });
+
+        // Listen for system preference changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                setTheme(e.matches);
+            }
+        });
+    </script>
 </body>
 
 </html>

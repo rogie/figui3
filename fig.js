@@ -26,7 +26,7 @@ class FigButton extends HTMLElement {
   #selected;
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
+    this.attachShadow({ mode: "open", delegatesFocus: true });
   }
   connectedCallback() {
     this.type = this.getAttribute("type") || "button";
@@ -48,6 +48,11 @@ class FigButton extends HTMLElement {
                     background: transparent;
                     margin: calc(var(--spacer-2)*-1);
                     height: var(--spacer-4);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    width: 100%;
+                    min-width: 0;
                 }
             </style>
             <button type="${this.type}">
@@ -62,6 +67,16 @@ class FigButton extends HTMLElement {
     requestAnimationFrame(() => {
       this.button = this.shadowRoot.querySelector("button");
       this.button.addEventListener("click", this.#handleClick.bind(this));
+
+      // Forward focus-visible state to host element
+      this.button.addEventListener("focus", () => {
+        if (this.button.matches(":focus-visible")) {
+          this.setAttribute("data-focus-visible", "");
+        }
+      });
+      this.button.addEventListener("blur", () => {
+        this.removeAttribute("data-focus-visible");
+      });
     });
   }
 
@@ -635,40 +650,52 @@ class FigDialog extends HTMLDialogElement {
 
   #applyPosition() {
     const position = this.getAttribute("position") || "";
-    const rect = this.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
 
-    // Default to centered
-    let top = (viewportHeight - rect.height) / 2;
-    let left = (viewportWidth - rect.width) / 2;
+    // Apply common styles
+    this.style.position = "fixed";
+    this.style.margin = "0";
+
+    // Reset position properties
+    this.style.top = "auto";
+    this.style.bottom = "auto";
+    this.style.left = "auto";
+    this.style.right = "auto";
+    this.style.transform = "none";
 
     // Parse position attribute
     const hasTop = position.includes("top");
     const hasBottom = position.includes("bottom");
     const hasLeft = position.includes("left");
     const hasRight = position.includes("right");
+    const hasVCenter = position.includes("center") && !hasTop && !hasBottom;
+    const hasHCenter = position.includes("center") && !hasLeft && !hasRight;
 
     // Vertical positioning
     if (hasTop) {
-      top = this.#offset;
+      this.style.top = `${this.#offset}px`;
     } else if (hasBottom) {
-      top = viewportHeight - rect.height - this.#offset;
+      this.style.bottom = `${this.#offset}px`;
+    } else if (hasVCenter) {
+      this.style.top = "50%";
     }
 
     // Horizontal positioning
     if (hasLeft) {
-      left = this.#offset;
+      this.style.left = `${this.#offset}px`;
     } else if (hasRight) {
-      left = viewportWidth - rect.width - this.#offset;
+      this.style.right = `${this.#offset}px`;
+    } else if (hasHCenter) {
+      this.style.left = "50%";
     }
 
-    // Apply position using fixed positioning with pixels
-    this.style.position = "fixed";
-    this.style.top = `${top}px`;
-    this.style.left = `${left}px`;
-    this.style.transform = "none";
-    this.style.margin = "0";
+    // Apply transform for centering
+    if (hasVCenter && hasHCenter) {
+      this.style.transform = "translate(-50%, -50%)";
+    } else if (hasVCenter) {
+      this.style.transform = "translateY(-50%)";
+    } else if (hasHCenter) {
+      this.style.transform = "translateX(-50%)";
+    }
 
     this.#positionInitialized = true;
   }
@@ -739,6 +766,12 @@ class FigDialog extends HTMLDialogElement {
 
     // Get current position from computed style
     const rect = this.getBoundingClientRect();
+
+    // Ensure we are using top/left for dragging by converting current position
+    this.style.top = `${rect.top}px`;
+    this.style.left = `${rect.left}px`;
+    this.style.bottom = "auto";
+    this.style.right = "auto";
 
     // Store offset from pointer to dialog top-left corner
     this.#dragOffset.x = e.clientX - rect.left;
@@ -2272,8 +2305,7 @@ class FigCheckbox extends HTMLElement {
     this.input.setAttribute("id", figUniqueId());
     this.input.setAttribute("name", this.name);
     this.input.setAttribute("type", "checkbox");
-    this.labelElement = document.createElement("label");
-    this.labelElement.setAttribute("for", this.input.id);
+    this.labelElement = null;
   }
   connectedCallback() {
     this.checked = this.input.checked =
@@ -2289,12 +2321,25 @@ class FigCheckbox extends HTMLElement {
     }
 
     this.append(this.input);
-    this.append(this.labelElement);
+
+    // Only create label if label attribute is present
+    if (this.hasAttribute("label")) {
+      this.#createLabel();
+      this.labelElement.innerText = this.getAttribute("label");
+    }
 
     this.render();
   }
   static get observedAttributes() {
     return ["disabled", "label", "checked", "name", "value"];
+  }
+
+  #createLabel() {
+    if (!this.labelElement) {
+      this.labelElement = document.createElement("label");
+      this.labelElement.setAttribute("for", this.input.id);
+      this.append(this.labelElement);
+    }
   }
 
   render() {}
@@ -2310,7 +2355,13 @@ class FigCheckbox extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
       case "label":
-        this.labelElement.innerText = newValue;
+        if (newValue) {
+          this.#createLabel();
+          this.labelElement.innerText = newValue;
+        } else if (this.labelElement) {
+          this.labelElement.remove();
+          this.labelElement = null;
+        }
         break;
       case "checked":
         this.checked = this.input.checked =
@@ -2368,29 +2419,139 @@ class FigSwitch extends FigCheckbox {
 }
 window.customElements.define("fig-switch", FigSwitch);
 
-/* Bell */
-class FigBell extends HTMLElement {
-  constructor() {
-    super();
-  }
-}
-window.customElements.define("fig-bell", FigBell);
+/* Toast */
+/**
+ * A toast notification element for non-modal, time-based messages.
+ * Always positioned at bottom center of the screen.
+ * @attr {number} duration - Auto-dismiss duration in ms (0 = no auto-dismiss, default: 5000)
+ * @attr {number} offset - Distance from bottom edge in pixels (default: 16)
+ * @attr {string} theme - Visual theme: "dark" (default), "light", "danger", "brand"
+ * @attr {boolean} open - Whether the toast is visible
+ */
+class FigToast extends HTMLDialogElement {
+  #defaultOffset = 16; // 1rem in pixels
+  #autoCloseTimer = null;
 
-/* Badge */
-class FigBadge extends HTMLElement {
   constructor() {
     super();
   }
-}
-window.customElements.define("fig-badge", FigBadge);
 
-/* Accordion */
-class FigAccordion extends HTMLElement {
-  constructor() {
-    super();
+  get #offset() {
+    return parseInt(this.getAttribute("offset") ?? this.#defaultOffset);
+  }
+
+  connectedCallback() {
+    // Set default theme if not specified
+    if (!this.hasAttribute("theme")) {
+      this.setAttribute("theme", "dark");
+    }
+
+    // Ensure toast is closed by default
+    // Remove native open attribute if present and not explicitly "true"
+    const shouldOpen =
+      this.getAttribute("open") === "true" || this.getAttribute("open") === "";
+    if (this.hasAttribute("open") && !shouldOpen) {
+      this.removeAttribute("open");
+    }
+
+    // Close the dialog initially (override native behavior)
+    if (!shouldOpen) {
+      this.close();
+    }
+
+    requestAnimationFrame(() => {
+      this.#addCloseListeners();
+      this.#applyPosition();
+
+      // Auto-show if open attribute is explicitly true
+      if (shouldOpen) {
+        this.showToast();
+      }
+    });
+  }
+
+  disconnectedCallback() {
+    this.#clearAutoClose();
+  }
+
+  #addCloseListeners() {
+    this.querySelectorAll("[close-toast]").forEach((button) => {
+      button.removeEventListener("click", this.#handleClose);
+      button.addEventListener("click", this.#handleClose.bind(this));
+    });
+  }
+
+  #handleClose() {
+    this.hideToast();
+  }
+
+  #applyPosition() {
+    // Always bottom center
+    this.style.position = "fixed";
+    this.style.margin = "0";
+    this.style.top = "auto";
+    this.style.bottom = `${this.#offset}px`;
+    this.style.left = "50%";
+    this.style.right = "auto";
+    this.style.transform = "translateX(-50%)";
+  }
+
+  #startAutoClose() {
+    this.#clearAutoClose();
+
+    const duration = parseInt(this.getAttribute("duration") ?? "5000");
+    if (duration > 0) {
+      this.#autoCloseTimer = setTimeout(() => {
+        this.hideToast();
+      }, duration);
+    }
+  }
+
+  #clearAutoClose() {
+    if (this.#autoCloseTimer) {
+      clearTimeout(this.#autoCloseTimer);
+      this.#autoCloseTimer = null;
+    }
+  }
+
+  /**
+   * Show the toast notification (non-modal)
+   */
+  showToast() {
+    this.show(); // Non-modal show
+    this.#applyPosition();
+    this.#startAutoClose();
+    this.dispatchEvent(new CustomEvent("toast-show", { bubbles: true }));
+  }
+
+  /**
+   * Hide the toast notification
+   */
+  hideToast() {
+    this.#clearAutoClose();
+    this.close();
+    this.dispatchEvent(new CustomEvent("toast-hide", { bubbles: true }));
+  }
+
+  static get observedAttributes() {
+    return ["duration", "offset", "open", "theme"];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "offset") {
+      this.#applyPosition();
+    }
+
+    if (name === "open") {
+      if (newValue !== null && newValue !== "false") {
+        this.showToast();
+      } else {
+        this.hideToast();
+      }
+    }
   }
 }
-window.customElements.define("fig-accordion", FigAccordion);
+customElements.define("fig-toast", FigToast, { extends: "dialog" });
 
 /* Combo Input */
 /**
@@ -3065,15 +3226,14 @@ class FigInputAngle extends HTMLElement {
         </div>
         ${
           this.text
-            ? `<fig-input-text 
-                type="number"
+            ? `<fig-input-number 
                 name="angle"
                 step="0.1"
                 value="${this.angle}"
                 min="0"
-                max="360">
-                <span slot="append">°</span>
-              </fig-input-text>`
+                max="360"
+                units="°">
+              </fig-input-number>`
             : ""
         }
     `;
@@ -3082,7 +3242,7 @@ class FigInputAngle extends HTMLElement {
   #setupListeners() {
     this.handle = this.querySelector(".fig-input-angle-handle");
     this.plane = this.querySelector(".fig-input-angle-plane");
-    this.angleInput = this.querySelector("fig-input-text[name='angle']");
+    this.angleInput = this.querySelector("fig-input-number[name='angle']");
     this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
     this.plane.addEventListener(
       "touchstart",
@@ -3091,7 +3251,6 @@ class FigInputAngle extends HTMLElement {
     window.addEventListener("keydown", this.#handleKeyDown.bind(this));
     window.addEventListener("keyup", this.#handleKeyUp.bind(this));
     if (this.text && this.angleInput) {
-      this.angleInput = this.querySelector("fig-input-text");
       this.angleInput.addEventListener(
         "input",
         this.#handleAngleInput.bind(this)
