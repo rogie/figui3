@@ -2338,7 +2338,14 @@ class FigCheckbox extends HTMLElement {
     if (!this.labelElement) {
       this.labelElement = document.createElement("label");
       this.labelElement.setAttribute("for", this.input.id);
-      this.append(this.labelElement);
+    }
+    // Add to DOM if not already there and input is in the DOM
+    if (
+      this.labelElement &&
+      !this.labelElement.parentNode &&
+      this.input.parentNode
+    ) {
+      this.input.after(this.labelElement);
     }
   }
 
