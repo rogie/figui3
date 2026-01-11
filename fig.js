@@ -653,14 +653,14 @@ class FigDialog extends HTMLDialogElement {
 
     // Apply common styles
     this.style.position = "fixed";
-    this.style.margin = "0";
+    this.style.transform = "none";
 
     // Reset position properties
     this.style.top = "auto";
     this.style.bottom = "auto";
     this.style.left = "auto";
     this.style.right = "auto";
-    this.style.transform = "none";
+    this.style.margin = "0";
 
     // Parse position attribute
     const hasTop = position.includes("top");
@@ -676,7 +676,8 @@ class FigDialog extends HTMLDialogElement {
     } else if (hasBottom) {
       this.style.bottom = `${this.#offset}px`;
     } else if (hasVCenter) {
-      this.style.top = "50%";
+      this.style.top = "0";
+      this.style.bottom = "0";
     }
 
     // Horizontal positioning
@@ -685,16 +686,19 @@ class FigDialog extends HTMLDialogElement {
     } else if (hasRight) {
       this.style.right = `${this.#offset}px`;
     } else if (hasHCenter) {
-      this.style.left = "50%";
+      this.style.left = "0";
+      this.style.right = "0";
     }
 
-    // Apply transform for centering
+    // Apply margin auto for centering (works without knowing dimensions)
     if (hasVCenter && hasHCenter) {
-      this.style.transform = "translate(-50%, -50%)";
+      this.style.margin = "auto";
     } else if (hasVCenter) {
-      this.style.transform = "translateY(-50%)";
+      this.style.marginTop = "auto";
+      this.style.marginBottom = "auto";
     } else if (hasHCenter) {
-      this.style.transform = "translateX(-50%)";
+      this.style.marginLeft = "auto";
+      this.style.marginRight = "auto";
     }
 
     this.#positionInitialized = true;
@@ -718,7 +722,7 @@ class FigDialog extends HTMLDialogElement {
   }
 
   #isInteractiveElement(element) {
-    // List of interactive element types and attributes to avoid dragging on
+    // Standard HTML interactive elements
     const interactiveSelectors = [
       "input",
       "button",
@@ -728,26 +732,30 @@ class FigDialog extends HTMLDialogElement {
       "label",
       '[contenteditable="true"]',
       "[tabindex]",
-      "fig-button",
-      "fig-input-text",
-      "fig-input-number",
-      "fig-slider",
-      "fig-checkbox",
-      "fig-radio",
-      "fig-tab",
-      "fig-dropdown",
-      "fig-chit",
     ];
 
+    // Non-interactive fig-* container elements (should allow dragging)
+    const nonInteractiveFigElements = [
+      "FIG-HEADER",
+      "FIG-DIALOG",
+      "FIG-FIELD",
+      "FIG-TOOLTIP",
+    ];
+
+    const isInteractive = (el) =>
+      interactiveSelectors.some((selector) => el.matches?.(selector)) ||
+      (el.tagName?.startsWith("FIG-") &&
+        !nonInteractiveFigElements.includes(el.tagName));
+
     // Check if the element itself is interactive
-    if (interactiveSelectors.some((selector) => element.matches?.(selector))) {
+    if (isInteractive(element)) {
       return true;
     }
 
     // Check if any parent element up to the dialog is interactive
     let parent = element.parentElement;
     while (parent && parent !== this) {
-      if (interactiveSelectors.some((selector) => parent.matches?.(selector))) {
+      if (isInteractive(parent)) {
         return true;
       }
       parent = parent.parentElement;
@@ -767,11 +775,13 @@ class FigDialog extends HTMLDialogElement {
     // Get current position from computed style
     const rect = this.getBoundingClientRect();
 
-    // Ensure we are using top/left for dragging by converting current position
+    // Convert to pixel-based top/left positioning for dragging
+    // (clears margin: auto centering)
     this.style.top = `${rect.top}px`;
     this.style.left = `${rect.left}px`;
     this.style.bottom = "auto";
     this.style.right = "auto";
+    this.style.margin = "0";
 
     // Store offset from pointer to dialog top-left corner
     this.#dragOffset.x = e.clientX - rect.left;
