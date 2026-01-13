@@ -3556,3 +3556,101 @@ class FigShimmer extends HTMLElement {
   }
 }
 customElements.define("fig-shimmer", FigShimmer);
+
+// FigLayer
+class FigLayer extends HTMLElement {
+  static get observedAttributes() {
+    return ["open", "visible"];
+  }
+
+  connectedCallback() {
+    // Add click listener for chevron toggle
+    this.addEventListener("click", this.#handleClick.bind(this));
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("click", this.#handleClick.bind(this));
+  }
+
+  #handleClick(e) {
+    // Toggle when clicking on the row (but not on actions or interactive elements)
+    const row = e.target.closest(".fig-layer-row");
+    if (row && row.parentElement === this) {
+      // Don't toggle if clicking on actions or buttons
+      if (e.target.closest(".fig-layer-actions") || e.target.closest("fig-button")) {
+        return;
+      }
+      e.stopPropagation();
+      this.open = !this.open;
+    }
+  }
+
+  get open() {
+    const attr = this.getAttribute("open");
+    return attr !== null && attr !== "false";
+  }
+
+  set open(value) {
+    const oldValue = this.open;
+    if (value) {
+      this.setAttribute("open", "true");
+    } else {
+      this.setAttribute("open", "false");
+    }
+    if (oldValue !== value) {
+      this.dispatchEvent(
+        new CustomEvent("openchange", {
+          detail: { open: value },
+          bubbles: true,
+        })
+      );
+    }
+  }
+
+  get visible() {
+    const attr = this.getAttribute("visible");
+    return attr !== "false";
+  }
+
+  set visible(value) {
+    const oldValue = this.visible;
+    if (value) {
+      this.setAttribute("visible", "true");
+    } else {
+      this.setAttribute("visible", "false");
+    }
+    if (oldValue !== value) {
+      this.dispatchEvent(
+        new CustomEvent("visibilitychange", {
+          detail: { visible: value },
+          bubbles: true,
+        })
+      );
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    if (name === "open") {
+      const isOpen = newValue !== null && newValue !== "false";
+      this.dispatchEvent(
+        new CustomEvent("openchange", {
+          detail: { open: isOpen },
+          bubbles: true,
+        })
+      );
+    }
+
+    if (name === "visible") {
+      const isVisible = newValue !== "false";
+      this.dispatchEvent(
+        new CustomEvent("visibilitychange", {
+          detail: { visible: isVisible },
+          bubbles: true,
+        })
+      );
+    }
+  }
+}
+customElements.define("fig-layer", FigLayer);

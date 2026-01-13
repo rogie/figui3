@@ -2620,6 +2620,129 @@ fig-input-angle {
   }
 }
 
+/* Layer */
+fig-layer {
+  --indent: var(--spacer-4);
+  display: block;
+  color: var(--figma-color-text);
+  position: relative;
+  user-select: none;
+  border-radius: var(--radius-medium);
+
+  &:has(fig-layer)[open]:not([open="false"]),
+  &:has(fig-layer):hover {
+    & > .fig-layer-row::before {
+      visibility: visible;
+    }
+  }
+
+  &:not(:has(.fig-layer-icon)) {
+    & > .fig-layer-row {
+      padding-left: var(--spacer-3);
+    }
+  }
+
+  & > .fig-layer-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-1);
+    padding: var(--spacer-1) var(--spacer-2);
+    margin-left: var(--spacer-2);
+    border-radius: var(--radius-medium);
+    cursor: pointer;
+    position: relative;
+
+    /* Chevron using mask-image approach like details */
+    &::before {
+      content: "";
+      mask-image: var(--icon-chevron);
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
+      display: flex;
+      visibility: hidden;
+      margin-left: calc(-1 * (var(--spacer-3) + var(--spacer-1) + 2px));
+      margin-right: calc(-1 * (var(--spacer-1) + 2px));
+      background: var(--figma-color-text-tertiary);
+      width: var(--spacer-3);
+      height: var(--spacer-3);
+      flex-shrink: 0;
+      transform: rotate(-90deg);
+      transition: transform 0.15s;
+    }
+
+    &:hover {
+      background: var(--figma-color-bg-secondary);
+
+      .fig-layer-actions {
+        opacity: 1;
+      }
+    }
+
+    /* Layer icon */
+    .fig-layer-icon {
+      flex-shrink: 0;
+      width: var(--spacer-3);
+      height: var(--spacer-3);
+      color: var(--figma-color-icon);
+    }
+
+    > label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+      color: var(--figma-color-text);
+    }
+  }
+
+  .fig-layer-actions {
+    display: flex;
+    margin-right: calc(-1 * var(--spacer-1));
+    gap: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+
+    > * {
+      flex-shrink: 0;
+    }
+  }
+
+  /* Nested layers indentation */
+  > fig-layer {
+    padding-left: var(--indent);
+    margin-top: 1px;
+  }
+
+  /* Collapsed state - hide children */
+  &:not([open]) > fig-layer,
+  &[open="false"] > fig-layer {
+    display: none;
+  }
+
+  /* Rotate chevron when open */
+  &[open]:not([open="false"]) .fig-layer-row::before {
+    transform: rotate(0deg);
+  }
+
+  /* Dimmed when not visible */
+  &[visible="false"] > .fig-layer-row {
+    & > label {
+      color: var(--figma-color-text-tertiary);
+    }
+  }
+
+  /* Selected state */
+  &[selected]:not([selected="false"]) {
+    & > .fig-layer-row {
+      background: var(--figma-color-bg-selected);
+    }
+  }
+}
+
 /* Shimmer */
 fig-shimmer {
   display: contents;

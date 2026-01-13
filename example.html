@@ -178,6 +178,7 @@
             <a href="#input-joystick">Input Joystick</a>
             <a href="#input-number">Input Number</a>
             <a href="#input-text">Input Text</a>
+            <a href="#layer">Layer</a>
             <a href="#popover">Popover</a>
             <a href="#radio">Radio</a>
             <a href="#segmented-control">Segmented Control</a>
@@ -194,6 +195,7 @@
             <a href="#vstack">VStack</a>
             <a href="#hr">HR</a>
             <a href="#code">Code</a>
+            <a href="#details">Details</a>
         </div>
         <div class="theme-switch">
             <fig-button id="theme-light-btn"
@@ -1176,6 +1178,505 @@
         </section>
         <hr>
 
+        <!-- Layer -->
+        <section id="layer">
+            <h2>Layer</h2>
+            <p class="description">A hierarchical layer component for displaying nested content with expand/collapse and
+                visibility states.</p>
+
+            <h3>Single Layer</h3>
+            <fig-layer>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <rect x="4"
+                              y="4"
+                              width="8"
+                              height="8"
+                              rx="1"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Rectangle</label>
+                </div>
+            </fig-layer>
+
+            <h3>Without Icon</h3>
+            <fig-layer>
+                <div class="fig-layer-row">
+                    <label>Layer with no icon</label>
+                </div>
+            </fig-layer>
+
+            <h3>Nested Layers (Expanded)</h3>
+            <fig-layer open>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <path d="M2 5C2 3.89543 2.89543 3 4 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H4C2.89543 13 2 12.1046 2 11V5Z"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Frame</label>
+                </div>
+                <fig-layer>
+                    <div class="fig-layer-row">
+                        <svg class="fig-layer-icon"
+                             width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none">
+                            <rect x="4"
+                                  y="4"
+                                  width="8"
+                                  height="8"
+                                  rx="1"
+                                  stroke="currentColor"
+                                  stroke-width="1.25" />
+                        </svg>
+                        <label>Rectangle</label>
+                    </div>
+                </fig-layer>
+                <fig-layer>
+                    <div class="fig-layer-row">
+                        <svg class="fig-layer-icon"
+                             width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none">
+                            <circle cx="8"
+                                    cy="8"
+                                    r="4"
+                                    stroke="currentColor"
+                                    stroke-width="1.25" />
+                        </svg>
+                        <label>Ellipse</label>
+                    </div>
+                </fig-layer>
+            </fig-layer>
+
+            <h3>Collapsed Layers</h3>
+            <fig-layer open="false">
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <path d="M2 5C2 3.89543 2.89543 3 4 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H4C2.89543 13 2 12.1046 2 11V5Z"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Group (collapsed - click chevron to expand)</label>
+                </div>
+                <fig-layer>
+                    <div class="fig-layer-row">
+                        <svg class="fig-layer-icon"
+                             width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none">
+                            <rect x="4"
+                                  y="4"
+                                  width="8"
+                                  height="8"
+                                  rx="1"
+                                  stroke="currentColor"
+                                  stroke-width="1.25" />
+                        </svg>
+                        <label>Hidden Child</label>
+                    </div>
+                </fig-layer>
+            </fig-layer>
+
+            <h3>Hidden Layer (Dimmed)</h3>
+            <fig-layer visible="false">
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <rect x="4"
+                              y="4"
+                              width="8"
+                              height="8"
+                              rx="1"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Hidden Rectangle</label>
+                </div>
+            </fig-layer>
+
+            <h3>With Action Buttons</h3>
+            <fig-layer>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <rect x="4"
+                              y="4"
+                              width="8"
+                              height="8"
+                              rx="1"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Layer with actions (hover to see)</label>
+                    <div class="fig-layer-actions">
+                        <fig-button variant="ghost"
+                                    type="toggle"
+                                    icon>
+                            <svg width="16"
+                                 height="16"
+                                 viewBox="0 0 16 16"
+                                 fill="none">
+                                <path d="M8 3V8M8 8V13M8 8H13M8 8H3"
+                                      stroke="currentColor"
+                                      stroke-width="1.5"
+                                      stroke-linecap="round" />
+                            </svg>
+                        </fig-button>
+                        <fig-button variant="ghost"
+                                    type="toggle"
+                                    icon>
+                            <svg width="16"
+                                 height="16"
+                                 viewBox="0 0 16 16"
+                                 fill="none">
+                                <path d="M4 8H12"
+                                      stroke="currentColor"
+                                      stroke-width="1.5"
+                                      stroke-linecap="round" />
+                            </svg>
+                        </fig-button>
+                    </div>
+                </div>
+            </fig-layer>
+
+            <h3>Deep Nesting</h3>
+            <fig-layer open>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <path d="M2 5C2 3.89543 2.89543 3 4 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H4C2.89543 13 2 12.1046 2 11V5Z"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Page</label>
+                </div>
+                <fig-layer open>
+                    <div class="fig-layer-row">
+                        <svg class="fig-layer-icon"
+                             width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none">
+                            <path d="M2 5C2 3.89543 2.89543 3 4 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H4C2.89543 13 2 12.1046 2 11V5Z"
+                                  stroke="currentColor"
+                                  stroke-width="1.25" />
+                        </svg>
+                        <label>Frame</label>
+                    </div>
+                    <fig-layer>
+                        <div class="fig-layer-row">
+                            <svg class="fig-layer-icon"
+                                 width="16"
+                                 height="16"
+                                 viewBox="0 0 16 16"
+                                 fill="none">
+                                <rect x="4"
+                                      y="4"
+                                      width="8"
+                                      height="8"
+                                      rx="1"
+                                      stroke="currentColor"
+                                      stroke-width="1.25" />
+                            </svg>
+                            <label>Button</label>
+                        </div>
+                    </fig-layer>
+                    <fig-layer>
+                        <div class="fig-layer-row">
+                            <svg class="fig-layer-icon"
+                                 width="16"
+                                 height="16"
+                                 viewBox="0 0 16 16"
+                                 fill="none">
+                                <path d="M3 5H13M3 8H13M3 11H10"
+                                      stroke="currentColor"
+                                      stroke-width="1.25"
+                                      stroke-linecap="round" />
+                            </svg>
+                            <label>Text</label>
+                        </div>
+                    </fig-layer>
+                </fig-layer>
+            </fig-layer>
+
+            <h2>Selected Layers</h2>
+
+            <h3>Single Layer (Selected)</h3>
+            <fig-layer selected>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <rect x="4"
+                              y="4"
+                              width="8"
+                              height="8"
+                              rx="1"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Rectangle</label>
+                </div>
+            </fig-layer>
+
+            <h3>Without Icon (Selected)</h3>
+            <fig-layer selected>
+                <div class="fig-layer-row">
+                    <label>Layer with no icon</label>
+                </div>
+            </fig-layer>
+
+            <h3>Nested Layers (Selected Parent)</h3>
+            <fig-layer open
+                       selected>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <path d="M2 5C2 3.89543 2.89543 3 4 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H4C2.89543 13 2 12.1046 2 11V5Z"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Frame</label>
+                </div>
+                <fig-layer>
+                    <div class="fig-layer-row">
+                        <svg class="fig-layer-icon"
+                             width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none">
+                            <rect x="4"
+                                  y="4"
+                                  width="8"
+                                  height="8"
+                                  rx="1"
+                                  stroke="currentColor"
+                                  stroke-width="1.25" />
+                        </svg>
+                        <label>Rectangle</label>
+                    </div>
+                </fig-layer>
+                <fig-layer>
+                    <div class="fig-layer-row">
+                        <svg class="fig-layer-icon"
+                             width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none">
+                            <circle cx="8"
+                                    cy="8"
+                                    r="4"
+                                    stroke="currentColor"
+                                    stroke-width="1.25" />
+                        </svg>
+                        <label>Ellipse</label>
+                    </div>
+                </fig-layer>
+            </fig-layer>
+
+            <h3>Collapsed Layers (Selected)</h3>
+            <fig-layer open="false"
+                       selected>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <path d="M2 5C2 3.89543 2.89543 3 4 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H4C2.89543 13 2 12.1046 2 11V5Z"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Group (collapsed - click chevron to expand)</label>
+                </div>
+                <fig-layer>
+                    <div class="fig-layer-row">
+                        <svg class="fig-layer-icon"
+                             width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none">
+                            <rect x="4"
+                                  y="4"
+                                  width="8"
+                                  height="8"
+                                  rx="1"
+                                  stroke="currentColor"
+                                  stroke-width="1.25" />
+                        </svg>
+                        <label>Hidden Child</label>
+                    </div>
+                </fig-layer>
+            </fig-layer>
+
+            <h3>Hidden Layer (Selected)</h3>
+            <fig-layer visible="false"
+                       selected>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <rect x="4"
+                              y="4"
+                              width="8"
+                              height="8"
+                              rx="1"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Hidden Rectangle</label>
+                </div>
+            </fig-layer>
+
+            <h3>With Action Buttons (Selected)</h3>
+            <fig-layer selected>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <rect x="4"
+                              y="4"
+                              width="8"
+                              height="8"
+                              rx="1"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Layer with actions (hover to see)</label>
+                    <div class="fig-layer-actions">
+                        <fig-button variant="ghost"
+                                    type="toggle"
+                                    icon>
+                            <svg width="16"
+                                 height="16"
+                                 viewBox="0 0 16 16"
+                                 fill="none">
+                                <path d="M8 3V8M8 8V13M8 8H13M8 8H3"
+                                      stroke="currentColor"
+                                      stroke-width="1.5"
+                                      stroke-linecap="round" />
+                            </svg>
+                        </fig-button>
+                        <fig-button variant="ghost"
+                                    type="toggle"
+                                    icon>
+                            <svg width="16"
+                                 height="16"
+                                 viewBox="0 0 16 16"
+                                 fill="none">
+                                <path d="M4 8H12"
+                                      stroke="currentColor"
+                                      stroke-width="1.5"
+                                      stroke-linecap="round" />
+                            </svg>
+                        </fig-button>
+                    </div>
+                </div>
+            </fig-layer>
+
+            <h3>Deep Nesting (Selected Child)</h3>
+            <fig-layer open>
+                <div class="fig-layer-row">
+                    <svg class="fig-layer-icon"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none">
+                        <path d="M2 5C2 3.89543 2.89543 3 4 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H4C2.89543 13 2 12.1046 2 11V5Z"
+                              stroke="currentColor"
+                              stroke-width="1.25" />
+                    </svg>
+                    <label>Page</label>
+                </div>
+                <fig-layer open>
+                    <div class="fig-layer-row">
+                        <svg class="fig-layer-icon"
+                             width="16"
+                             height="16"
+                             viewBox="0 0 16 16"
+                             fill="none">
+                            <path d="M2 5C2 3.89543 2.89543 3 4 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H4C2.89543 13 2 12.1046 2 11V5Z"
+                                  stroke="currentColor"
+                                  stroke-width="1.25" />
+                        </svg>
+                        <label>Frame</label>
+                    </div>
+                    <fig-layer selected
+                               open>
+                        <div class="fig-layer-row">
+                            <svg class="fig-layer-icon"
+                                 width="16"
+                                 height="16"
+                                 viewBox="0 0 16 16"
+                                 fill="none">
+                                <rect x="4"
+                                      y="4"
+                                      width="8"
+                                      height="8"
+                                      rx="1"
+                                      stroke="currentColor"
+                                      stroke-width="1.25" />
+                            </svg>
+                            <label>Button</label>
+                        </div>
+                        <fig-layer>
+                            <div class="fig-layer-row">
+                                <svg class="fig-layer-icon"
+                                     width="16"
+                                     height="16"
+                                     viewBox="0 0 16 16"
+                                     fill="none">
+                                    <path d="M3 5H13M3 8H13M3 11H10"
+                                          stroke="currentColor"
+                                          stroke-width="1.25"
+                                          stroke-linecap="round" />
+                                </svg>
+                                <label>Text</label>
+                            </div>
+                        </fig-layer>
+                    </fig-layer>
+
+                </fig-layer>
+            </fig-layer>
+        </section>
+        <hr>
+
         <!-- Popover -->
         <section id="popover">
             <h2>Popover</h2>
@@ -1991,6 +2492,78 @@ button.addEventListener('click', () => {
   --button-color: white;
   border-radius: 6px;
 }</code></pre>
+        </section>
+        <hr>
+
+        <!-- Details -->
+        <section id="details">
+            <h2>Details</h2>
+            <p class="description">A disclosure widget for expandable/collapsible content.</p>
+
+            <h3>Default (Closed)</h3>
+            <details style="font-size: 13px; color: var(--figma-color-text);">
+                <summary style="cursor: pointer; padding: 8px 0;">Click to expand</summary>
+                <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                    This is the hidden content that appears when the details element is expanded.
+                </p>
+            </details>
+
+            <h3>Default Open</h3>
+            <details open
+                     style="font-size: 13px; color: var(--figma-color-text);">
+                <summary style="cursor: pointer; padding: 8px 0;">Already expanded</summary>
+                <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                    This content is visible by default because of the <code>open</code> attribute.
+                </p>
+            </details>
+
+            <h3>Multiple Sections</h3>
+            <vstack style="gap: 0;">
+                <details
+                         style="font-size: 13px; color: var(--figma-color-text); border-bottom: 1px solid var(--figma-color-border);">
+                    <summary style="cursor: pointer; padding: 8px 0;">Section One</summary>
+                    <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                        Content for section one.
+                    </p>
+                </details>
+                <details
+                         style="font-size: 13px; color: var(--figma-color-text); border-bottom: 1px solid var(--figma-color-border);">
+                    <summary style="cursor: pointer; padding: 8px 0;">Section Two</summary>
+                    <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                        Content for section two.
+                    </p>
+                </details>
+                <details style="font-size: 13px; color: var(--figma-color-text);">
+                    <summary style="cursor: pointer; padding: 8px 0;">Section Three</summary>
+                    <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                        Content for section three.
+                    </p>
+                </details>
+            </vstack>
+
+            <h3>With Rich Content</h3>
+            <details style="font-size: 13px; color: var(--figma-color-text);">
+                <summary style="cursor: pointer; padding: 8px 0;">Advanced Settings</summary>
+                <vstack style="padding: 8px 0 8px 16px;">
+                    <fig-field direction="horizontal"
+                               style="width: 240px;">
+                        <label>Opacity</label>
+                        <fig-slider value="100"
+                                    text="true"
+                                    units="%"></fig-slider>
+                    </fig-field>
+                    <fig-field direction="horizontal"
+                               style="width: 240px;">
+                        <label>Blend Mode</label>
+                        <fig-dropdown>
+                            <option>Normal</option>
+                            <option>Multiply</option>
+                            <option>Screen</option>
+                        </fig-dropdown>
+                    </fig-field>
+                    <fig-checkbox label="Enable effects"></fig-checkbox>
+                </vstack>
+            </details>
         </section>
     </main>
 
