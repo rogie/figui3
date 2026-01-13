@@ -2684,7 +2684,7 @@ fig-layer {
       flex-shrink: 0;
       width: var(--spacer-3);
       height: var(--spacer-3);
-      color: var(--figma-color-icon);
+      color: var(--figma-color-icon-tertiary);
     }
 
     > label {
@@ -2739,6 +2739,9 @@ fig-layer {
   &[selected]:not([selected="false"]) {
     & > .fig-layer-row {
       background: var(--figma-color-bg-selected);
+      & > .fig-layer-icon {
+        color: var(--figma-color-icon);
+      }
     }
   }
 }
