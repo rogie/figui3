@@ -290,8 +290,8 @@
     rgba(255, 0, 48, 1)
   );
 
-  /* Icons - light theme defaults */
-  --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(0 0 0 / 90%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
+  /* Icons - colorless shapes for use with mask-image */
+  --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='black' stroke-linecap='round'/%3E%3C/svg%3E%0A");
   --icon-checkmark: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.7773 4.08403C12.0071 4.2372 12.0692 4.54764 11.916 4.7774L7.91603 10.7774C7.83293 10.902 7.69834 10.9829 7.54927 10.9976C7.4002 11.0124 7.25237 10.9595 7.14645 10.8536L4.14645 7.85361C3.95118 7.65834 3.95118 7.34176 4.14645 7.1465C4.34171 6.95124 4.65829 6.95124 4.85355 7.1465L7.42229 9.71523L11.084 4.2227C11.2372 3.99294 11.5476 3.93085 11.7773 4.08403Z' fill='white'/%3E%3C/svg%3E%0A");
   --icon-steppers: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.7245 6.08191C11.9186 5.95386 12.1826 5.97562 12.3534 6.14637L14.3534 8.14637L14.4179 8.22449C14.546 8.41852 14.5242 8.68253 14.3534 8.8534C14.1826 9.02426 13.9186 9.04601 13.7245 8.91785L13.6464 8.8534L11.9999 7.20691L10.3534 8.8534C10.1582 9.04866 9.84166 9.04866 9.6464 8.8534C9.45123 8.65813 9.45117 8.3416 9.6464 8.14637L11.6464 6.14637L11.7245 6.08191Z' fill='black'/%3E%3Cpath d='M13.7248 15.0822C13.9189 14.9541 14.1829 14.9758 14.3537 15.1467C14.5246 15.3176 14.5463 15.5815 14.4182 15.7756L14.3537 15.8537L12.3537 17.8537C12.1829 18.0246 11.9189 18.0463 11.7248 17.9182L11.6467 17.8537L9.64669 15.8537L9.58224 15.7756C9.45407 15.5815 9.47583 15.3176 9.64669 15.1467C9.81756 14.9758 10.0815 14.9541 10.2756 15.0822L10.3537 15.1467L12.0002 16.7932L13.6467 15.1467L13.7248 15.0822Z' fill='black' /%3E%3C/svg%3E%0A");
 
@@ -309,11 +309,10 @@
   --handle-shadow: 0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
 }
 
-/* Dark theme overrides for non-color values (icons, shadows, elevations) */
-/* These cannot use light-dark() as they are not color values */
+/* Dark theme overrides for non-color values (shadows, elevations) */
+/* These cannot use light-dark() as they are complex values */
 @media (prefers-color-scheme: dark) {
   :root {
-    --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(255 255 255 / 100%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
     --handle-shadow: 0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
       0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
     --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
@@ -332,7 +331,6 @@
 
 /* Class-based dark theme override (for manual theme switching) */
 :root.figma-dark {
-  --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='rgb(255 255 255 / 100%)' stroke-linecap='round'/%3E%3C/svg%3E%0A");
   --handle-shadow: 0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
     0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
   --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
@@ -613,15 +611,6 @@ input[type="text"][list] {
   }
 }
 
-input[type="text"][list]:hover,
-input[type="text"][list]:active,
-input[type="text"][list]:focus,
-select {
-  background-image: var(--icon-chevron);
-  background-position: calc(100% - 0.25rem) center;
-  background-repeat: no-repeat;
-}
-
 input[type="text"][list],
 select {
   padding-right: 1.5rem;
@@ -639,6 +628,23 @@ fig-dropdown,
   > select {
     display: block;
     width: 100%;
+  }
+
+  /* Chevron icon using mask-image for light-dark support */
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    mask-image: var(--icon-chevron);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    background-color: var(--figma-color-icon);
+    pointer-events: none;
   }
 }
 
@@ -1546,7 +1552,7 @@ fig-slider {
   --slider-tick-size: calc(var(--slider-height) / 4);
   --slider-handle-shadow: inset 0 0 0 calc(4px + 0.5rem * var(--unchanged))
       var(--handle-color),
-    var(--handle-shadow);
+    0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
   --slider-handle-shadow-focus: inset 0 0 0 4px var(--handle-color),
     inset 0 0 0 5px rgba(0, 0, 0, 0.1), var(--handle-shadow),
     0 0 0 1px var(--figma-color-border-selected);
@@ -2241,11 +2247,23 @@ fig-input-number {
   justify-content: center;
   user-select: all;
   gap: 0;
+  min-width: 0;
+  width: 8rem; /* Default width */
+  flex-shrink: 1;
+  flex-grow: 0;
   color: var(--figma-color-text);
 
+  /* When inside a flex container (like fig-field), grow to fill */
+  fig-field &,
+  [style*="flex"] &,
+  [style*="display: flex"] & {
+    width: auto;
+    flex: 1 1 auto;
+  }
+
   &[multiline] {
-    display: block;
     display: flex;
+    width: 100%; /* Multiline defaults to full width */
   }
   &[autoresize] input,
   &[autoresize] textarea {
@@ -2442,6 +2460,17 @@ fig-input-joystick {
   display: inline-flex;
   gap: var(--spacer-2);
   user-select: none;
+
+  /* When inside horizontal fig-field, grow to fill and let inputs expand */
+  fig-field[direction="horizontal"] & {
+    flex: 1;
+    min-width: 0;
+
+    fig-input-number {
+      flex: 1;
+      width: auto;
+    }
+  }
   .fig-input-joystick-plane-container {
     display: flex;
     width: 1.5rem;
@@ -2540,6 +2569,17 @@ fig-input-angle {
   display: inline-flex;
   gap: var(--spacer-2);
   user-select: none;
+
+  /* When inside horizontal fig-field, grow to fill and let inputs expand */
+  fig-field[direction="horizontal"] & {
+    flex: 1;
+    min-width: 0;
+
+    fig-input-number {
+      flex: 1;
+      width: auto;
+    }
+  }
 
   .fig-input-angle-plane {
     display: inline-grid;

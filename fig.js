@@ -2635,10 +2635,15 @@ class FigComboInput extends HTMLElement {
     }
     if (name === "placeholder") {
       this.placeholder = newValue;
+      if (this.input) {
+        this.input.setAttribute("placeholder", newValue);
+      }
     }
     if (name === "value") {
       this.value = newValue;
-      this.input.setAttribute("value", newValue);
+      if (this.input) {
+        this.input.setAttribute("value", newValue);
+      }
     }
   }
 }
@@ -2918,15 +2923,20 @@ class FigInputJoystick extends HTMLElement {
   constructor() {
     super();
 
-    this.position = { x: 0.5, y: 0.5 };
-    this.value = [0.5, 0.5];
+    this.position = { x: 0.5, y: 0.5 }; // Internal position (0-1)
     this.isDragging = false;
     this.isShiftHeld = false;
     this.plane = null;
     this.cursor = null;
     this.xInput = null;
     this.yInput = null;
+    this.coordinates = "screen"; // "screen" (0,0 top-left) or "math" (0,0 bottom-left)
+    this.#initialized = false;
+  }
 
+  #initialized = false;
+
+  connectedCallback() {
     // Initialize position
     requestAnimationFrame(() => {
       this.precision = this.getAttribute("precision") || 3;
@@ -2934,23 +2944,18 @@ class FigInputJoystick extends HTMLElement {
       this.transform = this.getAttribute("transform") || 1;
       this.transform = Number(this.transform);
       this.text = this.getAttribute("text") === "true";
+      this.coordinates = this.getAttribute("coordinates") || "screen";
 
       this.#render();
-
       this.#setupListeners();
-
       this.#syncHandlePosition();
-      if (this.text && this.xInput && this.yInput) {
-        this.xInput.setAttribute(
-          "value",
-          this.position.x.toFixed(this.precision)
-        );
-        this.yInput.setAttribute(
-          "value",
-          this.position.y.toFixed(this.precision)
-        );
-      }
+      this.#initialized = true;
     });
+  }
+
+  // Convert Y for display (CSS uses top-down, math uses bottom-up)
+  #displayY(y) {
+    return this.coordinates === "math" ? 1 - y : y;
   }
   disconnectedCallback() {
     this.#cleanupListeners();
@@ -2969,24 +2974,24 @@ class FigInputJoystick extends HTMLElement {
           </div>
           ${
             this.text
-              ? `<fig-input-text 
-                  type="number"
+              ? `<fig-input-number
                   name="x"
-                  step="0.01"
-                  value="${this.position.x}"
+                  step="1"
+                  value="${this.position.x * 100}"
                   min="0"
-                  max="1">
+                  max="100"
+                  units="%">
                   <span slot="prepend">X</span>
-                </fig-input-text>
-                <fig-input-text 
-                  type="number" 
-                  name="y" 
-                  step="0.01" 
-                  min="0" 
-                  max="1"
-                  value="${this.position.y}"> 
+                </fig-input-number>
+                <fig-input-number
+                  name="y"
+                  step="1"
+                  min="0"
+                  max="100"
+                  value="${this.position.y * 100}"
+                  units="%">
                   <span slot="prepend">Y</span>
-                </fig-input-text>`
+                </fig-input-number>`
               : ""
           }
         `;
@@ -2995,8 +3000,8 @@ class FigInputJoystick extends HTMLElement {
   #setupListeners() {
     this.plane = this.querySelector(".fig-input-joystick-plane");
     this.cursor = this.querySelector(".fig-input-joystick-handle");
-    this.xInput = this.querySelector("fig-input-text[name='x']");
-    this.yInput = this.querySelector("fig-input-text[name='y']");
+    this.xInput = this.querySelector("fig-input-number[name='x']");
+    this.yInput = this.querySelector("fig-input-number[name='y']");
     this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
     this.plane.addEventListener(
       "touchstart",
@@ -3011,7 +3016,10 @@ class FigInputJoystick extends HTMLElement {
   }
 
   #cleanupListeners() {
-    this.plane.removeEventListener("mousedown", this.#handleMouseDown);
+    if (this.plane) {
+      this.plane.removeEventListener("mousedown", this.#handleMouseDown);
+      this.plane.removeEventListener("touchstart", this.#handleTouchStart);
+    }
     window.removeEventListener("keydown", this.#handleKeyDown);
     window.removeEventListener("keyup", this.#handleKeyUp);
     if (this.text && this.xInput && this.yInput) {
@@ -3022,7 +3030,7 @@ class FigInputJoystick extends HTMLElement {
 
   #handleXInput(e) {
     e.stopPropagation();
-    this.position.x = Number(e.target.value);
+    this.position.x = Number(e.target.value) / 100; // Convert from percentage to decimal
     this.#syncHandlePosition();
     this.#emitInputEvent();
     this.#emitChangeEvent();
@@ -3030,7 +3038,7 @@ class FigInputJoystick extends HTMLElement {
 
   #handleYInput(e) {
     e.stopPropagation();
-    this.position.y = Number(e.target.value);
+    this.position.y = Number(e.target.value) / 100; // Convert from percentage to decimal
     this.#syncHandlePosition();
     this.#emitInputEvent();
     this.#emitChangeEvent();
@@ -3055,7 +3063,13 @@ class FigInputJoystick extends HTMLElement {
   #updatePosition(e) {
     const rect = this.plane.getBoundingClientRect();
     let x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    let y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+    let screenY = Math.max(
+      0,
+      Math.min(1, (e.clientY - rect.top) / rect.height)
+    );
+
+    // Convert screen Y to internal Y (flip for math coordinates)
+    let y = this.coordinates === "math" ? 1 - screenY : screenY;
 
     x = this.#snapToGuide(x);
     y = this.#snapToGuide(y);
@@ -3063,11 +3077,12 @@ class FigInputJoystick extends HTMLElement {
     const snapped = this.#snapToDiagonal(x, y);
     this.position = snapped;
 
+    const displayY = this.#displayY(snapped.y);
     this.cursor.style.left = `${snapped.x * 100}%`;
-    this.cursor.style.top = `${snapped.y * 100}%`; // Invert Y for display
+    this.cursor.style.top = `${displayY * 100}%`;
     if (this.text && this.xInput && this.yInput) {
-      this.xInput.setAttribute("value", snapped.x.toFixed(3));
-      this.yInput.setAttribute("value", snapped.y.toFixed(3));
+      this.xInput.setAttribute("value", Math.round(snapped.x * 100));
+      this.yInput.setAttribute("value", Math.round(snapped.y * 100));
     }
 
     this.#emitInputEvent();
@@ -3092,9 +3107,15 @@ class FigInputJoystick extends HTMLElement {
   }
 
   #syncHandlePosition() {
+    const displayY = this.#displayY(this.position.y);
     if (this.cursor) {
       this.cursor.style.left = `${this.position.x * 100}%`;
-      this.cursor.style.top = `${this.position.y * 100}%`;
+      this.cursor.style.top = `${displayY * 100}%`;
+    }
+    // Also sync text inputs if they exist (convert to percentage 0-100)
+    if (this.text && this.xInput && this.yInput) {
+      this.xInput.setAttribute("value", Math.round(this.position.x * 100));
+      this.yInput.setAttribute("value", Math.round(this.position.y * 100));
     }
   }
 
@@ -3153,15 +3174,28 @@ class FigInputJoystick extends HTMLElement {
     if (e.key === "Shift") this.isShiftHeld = false;
   }
   static get observedAttributes() {
-    return ["value", "precision", "transform", "text"];
+    return ["value", "precision", "transform", "text", "coordinates"];
   }
   get value() {
-    return [this.position.x, this.position.y];
+    // Return as percentage values (0-100)
+    return [
+      Math.round(this.position.x * 100),
+      Math.round(this.position.y * 100),
+    ];
   }
   set value(value) {
-    let v = value.toString().split(",").map(Number);
-    this.position = { x: v[0], y: v[1] };
-    this.#syncHandlePosition();
+    // Parse value, strip % symbols if present, convert from 0-100 to 0-1
+    const v = value
+      .toString()
+      .split(",")
+      .map((s) => {
+        const num = parseFloat(s.replace(/%/g, "").trim());
+        return isNaN(num) ? 0.5 : num / 100; // Convert from percentage to decimal, default to 0.5 if invalid
+      });
+    this.position = { x: v[0] ?? 0.5, y: v[1] ?? 0.5 };
+    if (this.#initialized) {
+      this.#syncHandlePosition();
+    }
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "value") {
@@ -3176,6 +3210,10 @@ class FigInputJoystick extends HTMLElement {
     if (name === "text" && newValue !== oldValue) {
       this.text = newValue.toLowerCase() === "true";
       this.#render();
+    }
+    if (name === "coordinates") {
+      this.coordinates = newValue || "screen";
+      this.#syncHandlePosition();
     }
   }
 }

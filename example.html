@@ -768,22 +768,6 @@
                 </optgroup>
             </fig-dropdown>
 
-            <h3>Variants</h3>
-            <div class="example-row">
-                <label>Default</label>
-                <fig-dropdown>
-                    <option>Default Style</option>
-                    <option>Option Two</option>
-                </fig-dropdown>
-            </div>
-            <div class="example-row">
-                <label>Neue</label>
-                <fig-dropdown variant="neue">
-                    <option>Neue Style</option>
-                    <option>Option Two</option>
-                </fig-dropdown>
-            </div>
-
             <h3>Full Width</h3>
             <fig-dropdown full>
                 <option>Full Width Dropdown</option>
@@ -811,28 +795,64 @@
                  style="margin-top: 24px;">
                 <label>Horizontal</label>
             </div>
-            <fig-field direction="horizontal">
+            <fig-field direction="horizontal" style="width: 240px;">
                 <label>Field Label</label>
                 <fig-input-text placeholder="Enter text"></fig-input-text>
             </fig-field>
 
-            <h3>With Different Inputs</h3>
-            <fig-field direction="horizontal">
+            <h3>Horizontal Fields with Different Inputs</h3>
+            <fig-field direction="horizontal" style="width: 240px;">
+                <label>Text Input</label>
+                <fig-input-text placeholder="Enter text"></fig-input-text>
+            </fig-field>
+            <fig-field direction="horizontal" style="width: 240px;">
+                <label>Number Input</label>
+                <fig-input-number value="100"
+                                  units="px"></fig-input-number>
+            </fig-field>
+            <fig-field direction="horizontal" style="width: 240px;">
                 <label>Dropdown</label>
                 <fig-dropdown>
                     <option>Option One</option>
                     <option>Option Two</option>
+                    <option>Option Three</option>
                 </fig-dropdown>
             </fig-field>
-            <fig-field direction="horizontal">
+            <fig-field direction="horizontal" style="width: 240px;">
                 <label>Slider</label>
                 <fig-slider value="50"
                             text="true"></fig-slider>
             </fig-field>
-            <fig-field direction="horizontal">
+            <fig-field direction="horizontal" style="width: 240px;">
                 <label>Color</label>
                 <fig-input-color value="#0D99FF"
                                  text="true"></fig-input-color>
+            </fig-field>
+            <fig-field direction="horizontal" style="width: 240px;">
+                <label>Angle</label>
+                <fig-input-angle value="45"
+                                 text="true"></fig-input-angle>
+            </fig-field>
+            <fig-field direction="horizontal" style="width: 240px;">
+                <label>Joystick</label>
+                <fig-input-joystick text="true"
+                                    value="50,50"></fig-input-joystick>
+            </fig-field>
+            <fig-field direction="horizontal" style="width: 240px;">
+                <label>Switch</label>
+                <fig-switch></fig-switch>
+            </fig-field>
+            <fig-field direction="horizontal" style="width: 240px;">
+                <label>Checkbox</label>
+                <fig-checkbox></fig-checkbox>
+            </fig-field>
+            <fig-field direction="horizontal" style="width: 240px;">
+                <label>Segmented</label>
+                <fig-segmented-control>
+                    <fig-segment value="left">Left</fig-segment>
+                    <fig-segment value="center">Center</fig-segment>
+                    <fig-segment value="right">Right</fig-segment>
+                </fig-segmented-control>
             </fig-field>
         </section>
         <hr>
@@ -978,16 +998,34 @@
             <h2>Input Joystick</h2>
             <p class="description">A 2D joystick input for X/Y coordinate values.</p>
 
-            <h3>Default</h3>
-            <fig-input-joystick></fig-input-joystick>
+            <h3>Default (centered)</h3>
+            <fig-input-joystick value="50,50"></fig-input-joystick>
 
             <h3>With Text Display</h3>
             <fig-input-joystick text="true"
                                 value="0,0"></fig-input-joystick>
 
-            <h3>With Initial Value</h3>
+            <h3>With Initial Value (25%, 75%)</h3>
             <fig-input-joystick text="true"
-                                value="0.5,0.5"></fig-input-joystick>
+                                value="25,75"></fig-input-joystick>
+
+            <h3>Screen Coordinates (default: 0,0 = top-left)</h3>
+            <fig-input-joystick text="true"
+                                coordinates="screen"
+                                value="0,0"></fig-input-joystick>
+
+            <h3>Math Coordinates (0,0 = bottom-left)</h3>
+            <fig-input-joystick text="true"
+                                coordinates="math"
+                                value="0,0"></fig-input-joystick>
+
+            <h3>With Field Label</h3>
+            <fig-field direction="horizontal"
+                       style="width: 240px;">
+                <label>Origin</label>
+                <fig-input-joystick text="true"
+                                    value="50,50"></fig-input-joystick>
+            </fig-field>
         </section>
         <hr>
 
