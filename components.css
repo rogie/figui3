@@ -2629,11 +2629,9 @@ fig-layer {
   user-select: none;
   border-radius: var(--radius-medium);
 
-  &:has(fig-layer)[open]:not([open="false"]),
-  &:has(fig-layer):hover {
-    & > .fig-layer-row::before {
-      visibility: visible;
-    }
+  /* Show chevron when layer has children */
+  &:has(fig-layer) > .fig-layer-row > .fig-layer-chevron {
+    visibility: visible;
   }
 
   &:not(:has(.fig-layer-icon)) {
@@ -2649,12 +2647,10 @@ fig-layer {
     padding: var(--spacer-1) var(--spacer-2);
     margin-left: var(--spacer-2);
     border-radius: var(--radius-medium);
-    cursor: pointer;
     position: relative;
 
-    /* Chevron using mask-image approach like details */
-    &::before {
-      content: "";
+    /* Chevron element - injected by JS when layer has children */
+    .fig-layer-chevron {
       mask-image: var(--icon-chevron);
       mask-size: contain;
       mask-repeat: no-repeat;
@@ -2685,6 +2681,7 @@ fig-layer {
       width: var(--spacer-3);
       height: var(--spacer-3);
       color: var(--figma-color-icon-tertiary);
+      margin-left: var(--spacer-1);
     }
 
     > label {
@@ -2693,7 +2690,6 @@ fig-layer {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      cursor: pointer;
       color: var(--figma-color-text);
     }
   }
@@ -2724,7 +2720,7 @@ fig-layer {
   }
 
   /* Rotate chevron when open */
-  &[open]:not([open="false"]) .fig-layer-row::before {
+  &[open]:not([open="false"]) > .fig-layer-row > .fig-layer-chevron {
     transform: rotate(0deg);
   }
 

@@ -345,7 +345,7 @@ class FigTooltip extends HTMLElement {
     this.popup.style.pointerEvents = "none";
     this.popup.append(content);
     content.innerText = this.getAttribute("text");
-    
+
     // If tooltip is inside a dialog, append to dialog to stay in top layer
     const parentDialog = this.closest("dialog");
     if (parentDialog && parentDialog.open) {
@@ -353,7 +353,7 @@ class FigTooltip extends HTMLElement {
     } else {
       document.body.append(this.popup);
     }
-    
+
     const text = content.childNodes[0];
     if (text) {
       const range = document.createRange();
@@ -3563,26 +3563,42 @@ class FigLayer extends HTMLElement {
     return ["open", "visible"];
   }
 
+  #chevron = null;
+  #boundHandleChevronClick = null;
+
   connectedCallback() {
-    // Add click listener for chevron toggle
-    this.addEventListener("click", this.#handleClick.bind(this));
+    // Use requestAnimationFrame to ensure child elements have rendered
+    requestAnimationFrame(() => {
+      this.#injectChevron();
+    });
   }
 
   disconnectedCallback() {
-    this.removeEventListener("click", this.#handleClick.bind(this));
+    if (this.#chevron && this.#boundHandleChevronClick) {
+      this.#chevron.removeEventListener("click", this.#boundHandleChevronClick);
+    }
   }
 
-  #handleClick(e) {
-    // Toggle when clicking on the row (but not on actions or interactive elements)
-    const row = e.target.closest(".fig-layer-row");
-    if (row && row.parentElement === this) {
-      // Don't toggle if clicking on actions or buttons
-      if (e.target.closest(".fig-layer-actions") || e.target.closest("fig-button")) {
-        return;
-      }
-      e.stopPropagation();
-      this.open = !this.open;
-    }
+  #injectChevron() {
+    const row = this.querySelector(":scope > .fig-layer-row");
+    if (!row) return;
+
+    // Check if chevron already exists
+    if (row.querySelector(".fig-layer-chevron")) return;
+
+    // Always create chevron element - CSS handles visibility via :has(fig-layer)
+    this.#chevron = document.createElement("span");
+    this.#chevron.className = "fig-layer-chevron";
+    row.prepend(this.#chevron);
+
+    // Add click listener to chevron only
+    this.#boundHandleChevronClick = this.#handleChevronClick.bind(this);
+    this.#chevron.addEventListener("click", this.#boundHandleChevronClick);
+  }
+
+  #handleChevronClick(e) {
+    e.stopPropagation();
+    this.open = !this.open;
   }
 
   get open() {
