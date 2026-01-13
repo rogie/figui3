@@ -5,6 +5,25 @@
 function figUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
+
+/**
+ * Gets the highest z-index currently in use on the page
+ * @returns {number} The highest z-index found, minimum of 1000
+ */
+function figGetHighestZIndex() {
+  let highest = 1000; // Baseline minimum
+
+  // Check all elements with inline z-index or computed z-index
+  const elements = document.querySelectorAll("*");
+  for (const el of elements) {
+    const zIndex = parseInt(getComputedStyle(el).zIndex, 10);
+    if (!isNaN(zIndex) && zIndex > highest) {
+      highest = zIndex;
+    }
+  }
+
+  return highest;
+}
 /**
  * Checks if the browser supports the native popover API
  * @returns {boolean} True if popover is supported
@@ -326,7 +345,15 @@ class FigTooltip extends HTMLElement {
     this.popup.style.pointerEvents = "none";
     this.popup.append(content);
     content.innerText = this.getAttribute("text");
-    document.body.append(this.popup);
+    
+    // If tooltip is inside a dialog, append to dialog to stay in top layer
+    const parentDialog = this.closest("dialog");
+    if (parentDialog && parentDialog.open) {
+      parentDialog.append(this.popup);
+    } else {
+      document.body.append(this.popup);
+    }
+    
     const text = content.childNodes[0];
     if (text) {
       const range = document.createRange();
@@ -451,7 +478,7 @@ class FigTooltip extends HTMLElement {
     this.popup.style.visibility = "visible";
     this.popup.style.display = "block";
     this.popup.style.pointerEvents = "all";
-    this.popup.style.zIndex = parseInt(new Date().getTime() / 1000);
+    this.popup.style.zIndex = figGetHighestZIndex() + 1;
 
     this.isOpen = true;
   }
@@ -2695,6 +2722,9 @@ class FigChit extends HTMLElement {
     this.#src = value;
     this.setAttribute("src", value);
   }
+  focus() {
+    this.input?.focus();
+  }
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
       case "src":
@@ -3173,6 +3203,10 @@ class FigInputJoystick extends HTMLElement {
   #handleKeyUp(e) {
     if (e.key === "Shift") this.isShiftHeld = false;
   }
+  focus() {
+    const container = this.querySelector(".fig-input-joystick-plane-container");
+    container?.focus();
+  }
   static get observedAttributes() {
     return ["value", "precision", "transform", "text", "coordinates"];
   }
@@ -3444,6 +3478,10 @@ class FigInputAngle extends HTMLElement {
     if (e.key === "Shift") this.isShiftHeld = false;
   }
 
+  focus() {
+    this.plane?.focus();
+  }
+
   static get observedAttributes() {
     return ["value", "precision", "text"];
   }
@@ -3484,3 +3522,37 @@ class FigInputAngle extends HTMLElement {
   }
 }
 customElements.define("fig-input-angle", FigInputAngle);
+
+// FigShimmer
+class FigShimmer extends HTMLElement {
+  connectedCallback() {
+    const duration = this.getAttribute("duration");
+    if (duration) {
+      this.style.setProperty("--shimmer-duration", duration);
+    }
+  }
+
+  static get observedAttributes() {
+    return ["duration", "playing"];
+  }
+
+  get playing() {
+    return this.getAttribute("playing") !== "false";
+  }
+
+  set playing(value) {
+    if (value) {
+      this.removeAttribute("playing"); // Default is playing
+    } else {
+      this.setAttribute("playing", "false");
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "duration") {
+      this.style.setProperty("--shimmer-duration", newValue || "1.5s");
+    }
+    // playing is handled purely by CSS attribute selectors
+  }
+}
+customElements.define("fig-shimmer", FigShimmer);

@@ -2371,7 +2371,7 @@ fig-slider {
 
   & fig-input-text[type="number"],
   & fig-input-number {
-    width: 3rem;
+    width: 5rem;
   }
 }
 
@@ -2480,6 +2480,7 @@ fig-input-joystick {
     flex-grow: 0;
     align-items: center;
     justify-content: center;
+    position: relative;
     &:focus {
       outline: 0;
     }
@@ -2495,6 +2496,10 @@ fig-input-joystick {
       cursor: grab;
       --size: 3rem;
       z-index: 2;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
   }
   .fig-input-joystick-plane > * {
@@ -2615,6 +2620,49 @@ fig-input-angle {
   }
 }
 
+/* Shimmer */
+fig-shimmer {
+  display: contents;
+  --shimmer-angle: 90deg;
+  --shimmer-size: 250% 100%;
+  --shimmer-duration: 1.5s;
+
+  &[direction="vertical"] {
+    --shimmer-angle: 180deg;
+    --shimmer-size: 100% 250%;
+  }
+  &[direction="diagonal"] {
+    --shimmer-angle: 135deg;
+    --shimmer-size: 250% 250%;
+  }
+
+  /* When not playing, remove shimmer effect entirely */
+  &[playing="false"] > * {
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    -webkit-text-fill-color: unset;
+    animation: none;
+  }
+}
+
+/* Only apply shimmer when playing (default) or playing="true" */
+fig-shimmer:not([playing="false"]) > * {
+  background: linear-gradient(
+    var(--shimmer-angle),
+    var(--figma-color-text-tertiary) 0%,
+    var(--figma-color-text-tertiary) 40%,
+    var(--figma-color-text) 50%,
+    var(--figma-color-text-tertiary) 60%,
+    var(--figma-color-text-tertiary) 100%
+  );
+  background-size: var(--shimmer-size);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: fig-shimmer var(--shimmer-duration) linear infinite;
+}
+
 /* Utilities */
 
 @keyframes fig-spinner-spin {
@@ -2624,5 +2672,14 @@ fig-input-angle {
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes fig-shimmer {
+  0% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
   }
 }
