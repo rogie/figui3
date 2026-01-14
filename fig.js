@@ -4459,10 +4459,12 @@ class FigFillPicker extends HTMLElement {
           <option value="radial">Radial</option>
           <option value="angular">Angular</option>
         </fig-dropdown>
-        <fig-input-angle class="fig-fill-picker-gradient-angle" value="${
-          (this.#gradient.angle - 90 + 360) % 360
-        }"></fig-input-angle>
-        <div class="fig-fill-picker-gradient-center" style="display: none;">
+        <fig-tooltip text="Rotate gradient">
+          <fig-input-angle class="fig-fill-picker-gradient-angle" value="${
+            (this.#gradient.angle - 90 + 360) % 360
+          }"></fig-input-angle>
+        </fig-tooltip>
+        <div class="fig-fill-picker-gradient-center input-combo" style="display: none;">
           <fig-input-number min="0" max="100" value="${
             this.#gradient.centerX
           }" units="%" class="fig-fill-picker-gradient-cx"></fig-input-number>
@@ -4470,16 +4472,11 @@ class FigFillPicker extends HTMLElement {
             this.#gradient.centerY
           }" units="%" class="fig-fill-picker-gradient-cy"></fig-input-number>
         </div>
-        <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip" title="Flip gradient">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M4 6L2 8L4 10M12 6L14 8L12 10M2 8H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </fig-button>
-        <fig-button icon variant="ghost" class="fig-fill-picker-gradient-swap" title="Swap colors">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 5H13M13 5L10 2M13 5L10 8M13 11H3M3 11L6 8M3 11L6 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </fig-button>
+        <fig-tooltip text="Flip gradient">
+          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip">
+            <span class="fig-mask-icon" style="--icon: var(--icon-swap)"></span>
+          </fig-button>
+        </fig-tooltip>
       </div>
       <div class="fig-fill-picker-gradient-preview">
         <div class="fig-fill-picker-gradient-bar"></div>
@@ -4547,25 +4544,6 @@ class FigFillPicker extends HTMLElement {
         this.#gradient.stops.sort((a, b) => a.position - b.position);
         this.#updateGradientUI();
         this.#emitInput();
-      });
-
-    // Swap button
-    container
-      .querySelector(".fig-fill-picker-gradient-swap")
-      .addEventListener("click", () => {
-        if (this.#gradient.stops.length >= 2) {
-          const colors = this.#gradient.stops.map((s) => ({
-            color: s.color,
-            opacity: s.opacity,
-          }));
-          colors.reverse();
-          this.#gradient.stops.forEach((stop, i) => {
-            stop.color = colors[i].color;
-            stop.opacity = colors[i].opacity;
-          });
-          this.#updateGradientUI();
-          this.#emitInput();
-        }
       });
 
     // Add stop button
