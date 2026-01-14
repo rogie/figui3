@@ -171,6 +171,7 @@
             <a href="#dialog">Dialog</a>
             <a href="#dropdown">Dropdown</a>
             <a href="#field">Field</a>
+            <a href="#fill-picker">Fill Picker</a>
             <a href="#header">Header</a>
             <a href="#image">Image</a>
             <a href="#input-angle">Input Angle</a>
@@ -191,6 +192,7 @@
             <a href="#tooltip">Tooltip</a>
             <hr>
             <h1>Basics</h1>
+            <a href="#icons">Icons</a>
             <a href="#hstack">HStack</a>
             <a href="#vstack">VStack</a>
             <a href="#hr">HR</a>
@@ -557,62 +559,50 @@
             <fig-field direction="horizontal">
                 <label>Color</label>
                 <hstack>
-                    <fig-chit type="color"
-                              value="#FF0000"></fig-chit>
-                    <fig-chit type="color"
-                              value="#00FF00"></fig-chit>
-                    <fig-chit type="color"
-                              value="#0000FF"></fig-chit>
-                    <fig-chit type="color"
-                              value="#000000"></fig-chit>
+                    <fig-chit background="#FF0000"></fig-chit>
+                    <fig-chit background="#00FF00"></fig-chit>
+                    <fig-chit background="#0000FF"></fig-chit>
+                    <fig-chit background="#000000"></fig-chit>
                 </hstack>
             </fig-field>
             <fig-field direction="horizontal">
                 <label>Gradient (linear)</label>
-                <fig-chit type="gradient"
-                          variant="linear"></fig-chit>
+                <fig-chit background="linear-gradient(180deg, #ff90ff, #0000ff)"></fig-chit>
             </fig-field>
             <fig-field direction="horizontal">
                 <label>Gradient (angular)</label>
-                <fig-chit type="gradient"
-                          variant="angular"></fig-chit>
+                <fig-chit background="conic-gradient(from 180deg, #ff90ff, #0000ff)"></fig-chit>
             </fig-field>
             <fig-field direction="horizontal">
                 <label>Gradient (radial)</label>
-                <fig-chit type="gradient"
-                          variant="radial"></fig-chit>
+                <fig-chit background="radial-gradient(circle, #ff90ff, #0000ff)"></fig-chit>
             </fig-field>
             <fig-field direction="horizontal">
                 <label>Image</label>
-                <fig-chit type="image"
-                          src="https://avatars.githubusercontent.com/u/12345678?v=4"></fig-chit>
+                <fig-chit background="url(https://avatars.githubusercontent.com/u/12345678?v=4)"></fig-chit>
             </fig-field>
 
             <h3>Sizes</h3>
             <fig-field direction="horizontal">
                 <label>Default</label>
-                <fig-chit type="color"
-                          value="#9747FF"></fig-chit>
+                <fig-chit background="#9747FF"></fig-chit>
             </fig-field>
             <fig-field direction="horizontal">
                 <label>Large</label>
-                <fig-chit type="color"
-                          value="#9747FF"
+                <fig-chit background="#9747FF"
                           size="large"></fig-chit>
             </fig-field>
 
             <h3>States</h3>
             <fig-field direction="horizontal">
                 <label>Selected</label>
-                <fig-chit type="color"
-                          value="#0D99FF"
-                          selected="true"></fig-chit>
+                <fig-chit background="#0D99FF"
+                          selected></fig-chit>
             </fig-field>
             <fig-field direction="horizontal">
                 <label>Disabled</label>
-                <fig-chit type="color"
-                          value="#0D99FF"
-                          disabled="true"></fig-chit>
+                <fig-chit background="#0D99FF"
+                          disabled></fig-chit>
             </fig-field>
         </section>
         <hr>
@@ -648,20 +638,8 @@
                 <fig-header>
                     <h3>Dialog Title</h3>
                     <fig-tooltip text="Close">
-                        <fig-button variant="ghost"
-                                    icon="true"
-                                    close-dialog>
-                            <svg width="24"
-                                 height="24"
-                                 viewBox="0 0 24 24"
-                                 fill="none"
-                                 xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                      clip-rule="evenodd"
-                                      d="M17.3536 6.64645C17.5488 6.84171 17.5488 7.15829 17.3536 7.35355L12.7071 12L17.3536 16.6464C17.5488 16.8417 17.5488 17.1583 17.3536 17.3536C17.1583 17.5488 16.8417 17.5488 16.6464 17.3536L12 12.7071L7.35355 17.3536C7.15829 17.5488 6.84171 17.5488 6.64645 17.3536C6.45118 17.1583 6.45118 16.8417 6.64645 16.6464L11.2929 12L6.64645 7.35365C6.45119 7.15839 6.45118 6.84181 6.64644 6.64654C6.84171 6.45128 7.15829 6.45128 7.35355 6.64654L12 11.2929L16.6464 6.64645C16.8417 6.45118 17.1583 6.45118 17.3536 6.64645Z"
-                                      fill="currentColor"
-                                      fill-opacity="0.9" />
-                            </svg>
+                        <fig-button variant="ghost" icon="true" close-dialog>
+                            <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
                         </fig-button>
                     </fig-tooltip>
                 </fig-header>
@@ -703,25 +681,53 @@
                 <fig-header>
                     <h3>Positioned Dialog</h3>
                     <fig-tooltip text="Close">
-                        <fig-button variant="ghost"
-                                    icon="true"
-                                    close-dialog>
-                            <svg width="24"
-                                 height="24"
-                                 viewBox="0 0 24 24"
-                                 fill="none"
-                                 xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                      clip-rule="evenodd"
-                                      d="M17.3536 6.64645C17.5488 6.84171 17.5488 7.15829 17.3536 7.35355L12.7071 12L17.3536 16.6464C17.5488 16.8417 17.5488 17.1583 17.3536 17.3536C17.1583 17.5488 16.8417 17.5488 16.6464 17.3536L12 12.7071L7.35355 17.3536C7.15829 17.5488 6.84171 17.5488 6.64645 17.3536C6.45118 17.1583 6.45118 16.8417 6.64645 16.6464L11.2929 12L6.64645 7.35365C6.45119 7.15839 6.45118 6.84181 6.64644 6.64654C6.84171 6.45128 7.15829 6.45128 7.35355 6.64654L12 11.2929L16.6464 6.64645C16.8417 6.45118 17.1583 6.45118 17.3536 6.64645Z"
-                                      fill="currentColor"
-                                      fill-opacity="0.9" />
-                            </svg>
+                        <fig-button variant="ghost" icon="true" close-dialog>
+                            <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
                         </fig-button>
                     </fig-tooltip>
                 </fig-header>
                 <fig-content>
                     <p>This dialog is positioned at a specific corner.</p>
+                </fig-content>
+                <footer>
+                    <fig-button close-dialog>Close</fig-button>
+                </footer>
+            </dialog>
+
+            <h3>Handle Attribute</h3>
+            <p style="font-size: 12px; color: var(--figma-color-text-secondary); margin-bottom: 12px;">
+                Use the <code>handle</code> attribute to restrict dragging to a specific element.
+                Pass a CSS selector like <code>handle="fig-header"</code>. Dragging will only work
+                when initiated from within that element. Interactive elements (buttons, inputs) within
+                the handle are still excluded from triggering drag.
+            </p>
+            <pre><code>&lt;dialog is="fig-dialog" drag="true" handle="fig-header"&gt;
+  &lt;fig-header&gt;Drag only here&lt;/fig-header&gt;
+  &lt;fig-content&gt;Content won't trigger drag&lt;/fig-content&gt;
+&lt;/dialog&gt;</code></pre>
+            <fig-button onclick="document.getElementById('handle-demo-dialog').showModal()">Open Handle
+                Demo</fig-button>
+
+            <dialog id="handle-demo-dialog"
+                    is="fig-dialog"
+                    drag="true"
+                    handle="fig-header"
+                    position="center center">
+                <fig-header>
+                    <h3>Drag Handle Demo</h3>
+                    <fig-tooltip text="Close">
+                        <fig-button variant="ghost" icon="true" close-dialog>
+                            <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+                        </fig-button>
+                    </fig-tooltip>
+                </fig-header>
+                <fig-content>
+                    <p><strong>Try dragging from:</strong></p>
+                    <ul style="font-size: 12px; margin: 8px 0; padding-left: 20px;">
+                        <li>✓ The header area (works)</li>
+                        <li>✗ This content area (won't drag)</li>
+                        <li>✗ The footer below (won't drag)</li>
+                    </ul>
                 </fig-content>
                 <footer>
                     <fig-button close-dialog>Close</fig-button>
@@ -863,6 +869,65 @@
         </section>
         <hr>
 
+        <!-- Fill Picker -->
+        <section id="fill-picker">
+            <h2>Fill Picker</h2>
+            <p class="description">A comprehensive fill picker supporting solid colors, gradients, images, video, and
+                webcam.</p>
+
+            <h3>Default (Auto-creates fig-chit)</h3>
+            <fig-fill-picker></fig-fill-picker>
+
+            <h3>With Initial Color</h3>
+            <fig-fill-picker value='{"type":"solid","color":"#FF6B6B"}'></fig-fill-picker>
+
+            <h3>With Gradient</h3>
+            <fig-fill-picker
+                             value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}'></fig-fill-picker>
+
+            <h3>With fig-chit Child</h3>
+            <fig-fill-picker value='{"type":"solid","color":"#4ECDC4"}'>
+                <fig-chit background="#4ECDC4"></fig-chit>
+            </fig-fill-picker>
+
+            <h3>Custom Trigger</h3>
+            <fig-fill-picker value='{"type":"solid","color":"#95E1D3"}'>
+                <fig-button>Edit Fill</fig-button>
+            </fig-fill-picker>
+
+            <h3>Without Alpha</h3>
+            <fig-fill-picker alpha="false"
+                             value='{"type":"solid","color":"#F38181"}'></fig-fill-picker>
+
+            <h3>Disabled</h3>
+            <fig-fill-picker disabled
+                             value='{"type":"solid","color":"#AA96DA"}'></fig-fill-picker>
+
+            <h3>Mode Lockdown</h3>
+            <p class="description">Use the <code>mode</code> attribute to lock the picker to a single fill type. The dropdown is replaced with a label and tab switching is disabled.</p>
+            
+            <h4>Solid Only</h4>
+            <fig-fill-picker mode="solid"></fig-fill-picker>
+            
+            <h4>Gradient Only</h4>
+            <fig-fill-picker mode="gradient"></fig-fill-picker>
+            
+            <h4>Image Only</h4>
+            <fig-fill-picker mode="image"></fig-fill-picker>
+
+            <h3>Event Listening</h3>
+            <fig-fill-picker id="fill-picker-events"
+                             value='{"type":"solid","color":"#FCBAD3"}'></fig-fill-picker>
+            <p class="description"
+               id="fill-picker-output">Click the swatch above and change the color to see events.</p>
+            <script>
+                document.getElementById('fill-picker-events').addEventListener('input', (e) => {
+                    document.getElementById('fill-picker-output').textContent = 'Input: ' + JSON.stringify(e.detail);
+                });
+            </script>
+        </section>
+        <hr>
+
         <!-- Header -->
         <section id="header">
             <h2>Header</h2>
@@ -996,6 +1061,24 @@
                 <fig-input-color value="#FF00FF"></fig-input-color>
                 <fig-input-color value="#00FFFF"></fig-input-color>
             </hstack>
+
+            <h3>Picker Attribute</h3>
+            <p class="description">Use <code>picker="figma"</code> to use the FigFillPicker instead of the native color picker. Default is <code>picker="native"</code>.</p>
+            
+            <h4>Native Picker (default)</h4>
+            <fig-input-color value="#9747FF" text="true"></fig-input-color>
+            
+            <h4>Figma Picker</h4>
+            <fig-input-color value="#9747FF" text="true" picker="figma"></fig-input-color>
+            
+            <h4>Figma Picker with Alpha</h4>
+            <fig-input-color value="#9747FF" text="true" alpha="true" picker="figma"></fig-input-color>
+            
+            <h4>No Picker (text input only)</h4>
+            <fig-input-color value="#9747FF" text="true" picker="false"></fig-input-color>
+            
+            <h4>No Picker with Alpha</h4>
+            <fig-input-color value="#9747FF" text="true" alpha="true" picker="false"></fig-input-color>
         </section>
         <hr>
 
@@ -2180,20 +2263,8 @@
                     is="fig-toast">
                 <p>File uploaded successfully.</p>
                 <hr vertical />
-                <fig-button variant="ghost"
-                            icon="true"
-                            close-toast>
-                    <svg width="24"
-                         height="24"
-                         viewBox="0 0 24 24"
-                         fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd"
-                              clip-rule="evenodd"
-                              d="M17.3536 6.64645C17.5488 6.84171 17.5488 7.15829 17.3536 7.35355L12.7071 12L17.3536 16.6464C17.5488 16.8417 17.5488 17.1583 17.3536 17.3536C17.1583 17.5488 16.8417 17.5488 16.6464 17.3536L12 12.7071L7.35355 17.3536C7.15829 17.5488 6.84171 17.5488 6.64645 17.3536C6.45118 17.1583 6.45118 16.8417 6.64645 16.6464L11.2929 12L6.64645 7.35365C6.45119 7.15839 6.45118 6.84181 6.64644 6.64654C6.84171 6.45128 7.15829 6.45128 7.35355 6.64654L12 11.2929L16.6464 6.64645C16.8417 6.45118 17.1583 6.45118 17.3536 6.64645Z"
-                              fill="currentColor"
-                              fill-opacity="0.9" />
-                    </svg>
+                <fig-button variant="ghost" icon="true" close-toast>
+                    <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
                 </fig-button>
             </dialog>
 
@@ -2321,6 +2392,100 @@
         </section>
         <hr>
 
+        <!-- Icons -->
+        <section id="icons">
+            <h2>Icons</h2>
+            <p class="description">CSS mask-based icons using the <code>.fig-mask-icon</code> utility class. Icons inherit <code>currentColor</code> and can be sized with the <code>--size</code> variable.</p>
+
+            <h3>Usage</h3>
+            <p class="description">Set the <code>--icon</code> CSS variable to any icon variable. Icons use <code>currentColor</code> so they inherit text color.</p>
+            
+<pre><code>&lt;span class="fig-mask-icon" style="--icon: var(--icon-add)"&gt;&lt;/span&gt;</code></pre>
+
+            <h3>Available Icons</h3>
+            <hstack style="gap: 16px; flex-wrap: wrap;">
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+                    <code>--icon-add</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
+                    <code>--icon-minus</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-back)"></span>
+                    <code>--icon-back</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-forward)"></span>
+                    <code>--icon-forward</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+                    <code>--icon-close</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-checkmark)"></span>
+                    <code>--icon-checkmark</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-eyedropper); --size: 1.5rem"></span>
+                    <code>--icon-eyedropper</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-steppers); --size: 1.5rem"></span>
+                    <code>--icon-steppers</code>
+                </vstack>
+            </hstack>
+
+            <h3>Custom Size</h3>
+            <p class="description">Use the <code>--size</code> variable to adjust icon dimensions.</p>
+            <hstack style="gap: 16px; align-items: end;">
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-add); --size: 12px"></span>
+                    <code>12px</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-add); --size: 16px"></span>
+                    <code>16px</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-add); --size: 24px"></span>
+                    <code>24px</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-add); --size: 32px"></span>
+                    <code>32px</code>
+                </vstack>
+            </hstack>
+
+            <h3>Color Inheritance</h3>
+            <p class="description">Icons inherit <code>currentColor</code>, so they match the parent's text color.</p>
+            <hstack style="gap: 16px;">
+                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text)"></span>
+                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-secondary)"></span>
+                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-brand)"></span>
+                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-danger)"></span>
+                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-success)"></span>
+                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-warning)"></span>
+            </hstack>
+
+            <h3>Inside Buttons</h3>
+            <hstack>
+                <fig-button icon variant="ghost">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+                </fig-button>
+                <fig-button icon variant="ghost">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
+                </fig-button>
+                <fig-button>
+                    <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+                    Add Item
+                </fig-button>
+            </hstack>
+        </section>
+        <hr>
+
         <!-- HStack -->
         <section id="hstack">
             <h2>HStack</h2>
@@ -2355,14 +2520,10 @@
 
             <h3>With Chips/Chits</h3>
             <hstack>
-                <fig-chit type="color"
-                          value="#FF5733"></fig-chit>
-                <fig-chit type="color"
-                          value="#33FF57"></fig-chit>
-                <fig-chit type="color"
-                          value="#3357FF"></fig-chit>
-                <fig-chit type="color"
-                          value="#FF33F5"></fig-chit>
+                <fig-chit background="#FF5733"></fig-chit>
+                <fig-chit background="#33FF57"></fig-chit>
+                <fig-chit background="#3357FF"></fig-chit>
+                <fig-chit background="#FF33F5"></fig-chit>
             </hstack>
         </section>
         <hr>

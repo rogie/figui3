@@ -632,6 +632,9 @@ customElements.define("fig-popover", FigPopover);
  * A custom dialog element for modal and non-modal dialogs.
  * @attr {boolean} open - Whether the dialog is visible
  * @attr {boolean} modal - Whether the dialog should be modal
+ * @attr {boolean} drag - Whether the dialog is draggable
+ * @attr {string} handle - CSS selector for the drag handle element (e.g., "fig-header"). If not specified, the entire dialog is draggable when drag is enabled.
+ * @attr {string} position - Position of the dialog (e.g., "bottom right", "top left", "center center")
  */
 class FigDialog extends HTMLDialogElement {
   #isDragging = false;
@@ -734,10 +737,13 @@ class FigDialog extends HTMLDialogElement {
   #setupDragListeners() {
     if (this.drag) {
       this.addEventListener("pointerdown", this.#boundPointerDown);
-      // Set move cursor only on fig-header elements
-      const header = this.querySelector("fig-header, header");
-      if (header) {
-        header.style.cursor = "move";
+      // Set move cursor on handle element (or fig-header by default)
+      const handleSelector = this.getAttribute("handle");
+      const handleEl = handleSelector
+        ? this.querySelector(handleSelector)
+        : this.querySelector("fig-header, header");
+      if (handleEl) {
+        handleEl.style.cursor = "move";
       }
     }
   }
@@ -767,6 +773,13 @@ class FigDialog extends HTMLDialogElement {
       "FIG-DIALOG",
       "FIG-FIELD",
       "FIG-TOOLTIP",
+      "FIG-CONTENT",
+      "FIG-TABS",
+      "FIG-TAB",
+      "FIG-POPOVER",
+      "FIG-SHIMMER",
+      "FIG-LAYER",
+      "FIG-FILL-PICKER",
     ];
 
     const isInteractive = (el) =>
@@ -795,6 +808,17 @@ class FigDialog extends HTMLDialogElement {
     if (!this.drag || this.#isInteractiveElement(e.target)) {
       return;
     }
+
+    // If handle attribute is specified, only allow drag from within that element
+    // Otherwise, allow dragging from anywhere on the dialog (except interactive elements)
+    const handleSelector = this.getAttribute("handle");
+    if (handleSelector && handleSelector.trim()) {
+      const handleEl = this.querySelector(handleSelector);
+      if (!handleEl || !handleEl.contains(e.target)) {
+        return;
+      }
+    }
+    // No handle specified = drag from anywhere (original behavior)
 
     this.#isDragging = true;
     this.setPointerCapture(e.pointerId);
@@ -847,7 +871,7 @@ class FigDialog extends HTMLDialogElement {
   }
 
   static get observedAttributes() {
-    return ["modal", "drag", "position"];
+    return ["modal", "drag", "position", "handle"];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -2061,22 +2085,33 @@ class FigInputColor extends HTMLElement {
   hex;
   alpha = 100;
   #swatch;
+  #fillPicker;
   #textInput;
   #alphaInput;
   constructor() {
     super();
   }
+
+  get picker() {
+    return this.getAttribute("picker") || "native";
+  }
+
   connectedCallback() {
     this.#setValues(this.getAttribute("value"));
 
+    const useFigmaPicker = this.picker === "figma";
+    const hidePicker = this.picker === "false";
+    const showAlpha = this.getAttribute("alpha") === "true";
+
     let html = ``;
     if (this.getAttribute("text")) {
+      // Display without # prefix
       let label = `<fig-input-text 
         type="text"
-        placeholder="#000000"
-        value="${this.value}">
+        placeholder="000000"
+        value="${this.hexOpaque.slice(1).toUpperCase()}">
       </fig-input-text>`;
-      if (this.getAttribute("alpha") === "true") {
+      if (showAlpha) {
         label += `<fig-tooltip text="Opacity">
                     <fig-input-number 
                         placeholder="##" 
@@ -2087,28 +2122,58 @@ class FigInputColor extends HTMLElement {
                     </fig-input-number>
                 </fig-tooltip>`;
       }
+      
+      let swatchElement = "";
+      if (!hidePicker) {
+        swatchElement = useFigmaPicker
+          ? `<fig-fill-picker mode="solid" ${showAlpha ? "" : 'alpha="false"'} value='{"type":"solid","color":"${this.hexOpaque}"}'></fig-fill-picker>`
+          : `<fig-chit background="${this.hexOpaque}"></fig-chit>`;
+      }
+      
       html = `<div class="input-combo">
-                <fig-chit type="color" disabled="false" value="${this.hexOpaque}"></fig-chit>
+                ${swatchElement}
                 ${label}
             </div>`;
     } else {
-      html = `<fig-chit type="color" disabled="false" value="${this.hexOpaque}"></fig-chit>`;
+      // Without text, if picker is hidden, show nothing
+      if (hidePicker) {
+        html = ``;
+      } else {
+        html = useFigmaPicker
+          ? `<fig-fill-picker mode="solid" ${showAlpha ? "" : 'alpha="false"'} value='{"type":"solid","color":"${this.hexOpaque}"}'></fig-fill-picker>`
+          : `<fig-chit background="${this.hexOpaque}"></fig-chit>`;
+      }
     }
     this.innerHTML = html;
 
     requestAnimationFrame(() => {
-      this.#swatch = this.querySelector("fig-chit[type=color]");
+      this.#swatch = this.querySelector("fig-chit");
+      this.#fillPicker = this.querySelector("fig-fill-picker");
       this.#textInput = this.querySelector("fig-input-text:not([type=number])");
       this.#alphaInput = this.querySelector("fig-input-number");
 
-      this.#swatch.disabled = this.hasAttribute("disabled");
-      this.#swatch.addEventListener("input", this.#handleInput.bind(this));
+      // Setup swatch (native picker)
+      if (this.#swatch) {
+        this.#swatch.disabled = this.hasAttribute("disabled");
+        this.#swatch.addEventListener("input", this.#handleInput.bind(this));
+      }
+
+      // Setup fill picker (figma picker)
+      if (this.#fillPicker) {
+        if (this.hasAttribute("disabled")) {
+          this.#fillPicker.setAttribute("disabled", "");
+        }
+        this.#fillPicker.addEventListener("input", this.#handleFillPickerInput.bind(this));
+        this.#fillPicker.addEventListener("change", this.#handleChange.bind(this));
+      }
 
       if (this.#textInput) {
-        this.#textInput.value = this.#swatch.value = this.rgbAlphaToHex(
-          this.rgba,
-          1
-        );
+        const hex = this.rgbAlphaToHex(this.rgba, 1);
+        // Display without # prefix
+        this.#textInput.value = hex.slice(1).toUpperCase();
+        if (this.#swatch) {
+          this.#swatch.background = hex;
+        }
         this.#textInput.addEventListener(
           "input",
           this.#handleTextInput.bind(this)
@@ -2148,12 +2213,14 @@ class FigInputColor extends HTMLElement {
   #handleTextInput(event) {
     //do not propagate to onInput handler for web component
     event.stopPropagation();
-    this.#setValues(event.target.value);
+    // Add # prefix if not present for internal processing
+    let inputValue = event.target.value.replace("#", "");
+    this.#setValues("#" + inputValue);
     if (this.#alphaInput) {
       this.#alphaInput.setAttribute("value", this.alpha);
     }
     if (this.#swatch) {
-      this.#swatch.setAttribute("value", this.hexOpaque);
+      this.#swatch.setAttribute("background", this.hexOpaque);
     }
     this.#emitInputEvent();
   }
@@ -2183,9 +2250,31 @@ class FigInputColor extends HTMLElement {
     event.stopPropagation();
     this.#setValues(event.target.value);
     if (this.#textInput) {
-      this.#textInput.setAttribute("value", this.value);
+      // Display without # prefix
+      this.#textInput.setAttribute(
+        "value",
+        this.hexOpaque.slice(1).toUpperCase()
+      );
     }
     this.#emitInputEvent();
+  }
+
+  #handleFillPickerInput(event) {
+    event.stopPropagation();
+    const detail = event.detail;
+    if (detail && detail.color) {
+      this.#setValues(detail.color);
+      if (this.#textInput) {
+        this.#textInput.setAttribute(
+          "value",
+          this.hexOpaque.slice(1).toUpperCase()
+        );
+      }
+      if (this.#alphaInput && detail.alpha !== undefined) {
+        this.#alphaInput.setAttribute("value", Math.round(detail.alpha * 100));
+      }
+      this.#emitInputEvent();
+    }
   }
 
   #emitInputEvent() {
@@ -2204,7 +2293,11 @@ class FigInputColor extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "style"];
+    return ["value", "style", "mode", "picker"];
+  }
+
+  get mode() {
+    return this.getAttribute("mode");
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -2215,12 +2308,24 @@ class FigInputColor extends HTMLElement {
           this.#textInput.setAttribute("value", this.value);
         }
         if (this.#swatch) {
-          this.#swatch.setAttribute("value", this.hexOpaque);
+          this.#swatch.setAttribute("background", this.hexOpaque);
+        }
+        if (this.#fillPicker) {
+          this.#fillPicker.setAttribute("value", JSON.stringify({ type: "solid", color: this.hexOpaque }));
         }
         if (this.#alphaInput) {
           this.#alphaInput.setAttribute("value", this.alpha);
         }
         this.#emitInputEvent();
+        break;
+      case "mode":
+        // Mode attribute is passed through to fig-fill-picker when used
+        if (this.#fillPicker && newValue) {
+          this.#fillPicker.setAttribute("mode", newValue);
+        }
+        break;
+      case "picker":
+        // Picker type change requires re-render
         break;
     }
   }
@@ -2678,67 +2783,116 @@ window.customElements.define("fig-combo-input", FigComboInput);
 
 /* Chit */
 /**
- * A custom color/image chip element.
- * @attr {string} type - The chip type: "color" or "image"
- * @attr {string} src - Image source URL (for image type)
- * @attr {string} value - Color value (for color type)
+ * A color/gradient/image swatch element.
+ * @attr {string} background - Any CSS background value: color (#FF0000, rgba(...)), gradient (linear-gradient(...)), or image (url(...))
  * @attr {string} size - Size of the chip: "small" (default) or "large"
+ * @attr {boolean} selected - Whether the chip shows a selection ring
  * @attr {boolean} disabled - Whether the chip is disabled
  */
 class FigChit extends HTMLElement {
-  #src = null;
+  #type = "color"; // 'color', 'gradient', 'image'
+  #boundHandleInput = null;
+  #internalUpdate = false; // Flag to prevent re-render during internal input
+
   constructor() {
     super();
+    this.#boundHandleInput = this.#handleInput.bind(this);
   }
-  connectedCallback() {
-    this.type = this.getAttribute("type") || "color";
-    this.#src = this.getAttribute("src") || "";
-    this.value = this.getAttribute("value") || "#000000";
-    this.size = this.getAttribute("size") || "small";
-    this.disabled = this.getAttribute("disabled") === "true";
-    this.innerHTML = `<input type="color" value="${this.value}" />`;
-    this.#updateSrc(this.src);
 
-    requestAnimationFrame(() => {
-      this.input = this.querySelector("input");
-    });
+  static get observedAttributes() {
+    return ["background", "size", "selected", "disabled"];
   }
-  #updateSrc(src) {
-    if (src) {
-      this.#src = src;
-      this.style.setProperty("--src", `url(${src})`);
-    } else {
-      this.style.removeProperty("--src");
-      this.#src = null;
+
+  connectedCallback() {
+    this.#render();
+  }
+
+  #detectType(bg) {
+    if (!bg) return "color";
+    const lower = bg.toLowerCase();
+    if (lower.includes("gradient")) return "gradient";
+    if (lower.includes("url(")) return "image";
+    return "color";
+  }
+
+  #toHex(color) {
+    // Convert color to hex for the native input
+    if (!color) return "#D9D9D9";
+    if (color.startsWith("#")) return color.slice(0, 7);
+    // Use canvas to convert rgba/named colors to hex
+    try {
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.fillStyle = color;
+      return ctx.fillStyle;
+    } catch {
+      return "#D9D9D9";
     }
   }
-  static get observedAttributes() {
-    return ["src", "value", "disabled"];
+
+  #render() {
+    const bg = this.getAttribute("background") || "#D9D9D9";
+    const newType = this.#detectType(bg);
+
+    // Only rebuild DOM if type changes
+    if (newType !== this.#type || !this.input) {
+      this.#type = newType;
+      this.setAttribute("data-type", this.#type);
+
+      // Clean up old input listener if exists
+      if (this.input) {
+        this.input.removeEventListener("input", this.#boundHandleInput);
+      }
+
+      if (this.#type === "color") {
+        const hex = this.#toHex(bg);
+        this.innerHTML = `<input type="color" value="${hex}" />`;
+        this.input = this.querySelector("input");
+        this.input.addEventListener("input", this.#boundHandleInput);
+      } else {
+        this.innerHTML = "";
+        this.input = null;
+      }
+    } else if (this.#type === "color" && this.input) {
+      // Just update input value without rebuilding DOM
+      const hex = this.#toHex(bg);
+      if (this.input.value !== hex) {
+        this.input.value = hex;
+      }
+    }
+
+    // Always update CSS variable
+    this.style.setProperty("--chit-background", bg);
   }
-  get src() {
-    return this.#src;
+
+  #handleInput(e) {
+    // Update background attribute without triggering full re-render
+    this.#internalUpdate = true;
+    this.setAttribute("background", e.target.value);
+    this.#internalUpdate = false;
+    // The native input/change events bubble naturally
   }
-  set src(value) {
-    this.#src = value;
-    this.setAttribute("src", value);
+
+  get background() {
+    return this.getAttribute("background");
   }
+
+  set background(value) {
+    this.setAttribute("background", value);
+  }
+
   focus() {
     this.input?.focus();
   }
+
   attributeChangedCallback(name, oldValue, newValue) {
-    switch (name) {
-      case "src":
-        this.#updateSrc(newValue);
-        break;
-      case "disabled":
-        this.disabled = newValue.toLowerCase() === "true";
-        break;
-      default:
-        if (this.input) {
-          this.input[name] = newValue;
-        }
-        this.#updateSrc(this.src);
-        break;
+    if (oldValue === newValue) return;
+    if (name === "background") {
+      // Skip full re-render if this was triggered by internal input
+      if (this.#internalUpdate) {
+        this.style.setProperty("--chit-background", newValue);
+        return;
+      }
+      this.#render();
     }
   }
 }
@@ -2758,9 +2912,9 @@ class FigImage extends HTMLElement {
     super();
   }
   #getInnerHTML() {
-    return `<fig-chit type="image" size="large" ${
-      this.src ? `src="${this.src}"` : ""
-    } disabled="true"></fig-chit><div>${
+    return `<fig-chit size="large" background="${
+      this.src ? `url(${this.src})` : "url()"
+    }" disabled></fig-chit><div>${
       this.upload
         ? `<fig-button variant="overlay" type="upload">
           ${this.label} 
@@ -2923,7 +3077,10 @@ class FigImage extends HTMLElement {
     if (name === "src") {
       this.#src = newValue;
       if (this.chit) {
-        this.chit.setAttribute("src", this.#src);
+        this.chit.setAttribute(
+          "background",
+          this.#src ? `url(${this.#src})` : ""
+        );
       }
       if (this.#src) {
         this.#loadImage(this.#src);
@@ -3670,3 +3827,1563 @@ class FigLayer extends HTMLElement {
   }
 }
 customElements.define("fig-layer", FigLayer);
+
+// FigFillPicker
+/**
+ * A comprehensive fill picker component supporting solid colors, gradients, images, video, and webcam.
+ * Uses display: contents and wraps a trigger element that opens a dialog picker.
+ *
+ * @attr {string} value - JSON-encoded fill value
+ * @attr {boolean} disabled - Whether the picker is disabled
+ * @attr {boolean} alpha - Whether to show alpha/opacity controls (default: true)
+ * @attr {string} dialog-position - Position of the dialog (passed to fig-dialog)
+ */
+class FigFillPicker extends HTMLElement {
+  #trigger = null;
+  #chit = null;
+  #dialog = null;
+  #activeTab = "solid";
+
+  // Fill state
+  #fillType = "solid";
+  #color = { h: 0, s: 0, v: 85, a: 1 }; // Default gray #D9D9D9
+  #gradient = {
+    type: "linear",
+    angle: 0,
+    centerX: 50,
+    centerY: 50,
+    stops: [
+      { position: 0, color: "#D9D9D9", opacity: 100 },
+      { position: 100, color: "#737373", opacity: 100 },
+    ],
+  };
+  #image = { url: null, scaleMode: "fill", scale: 50 };
+  #video = { url: null, scaleMode: "fill", scale: 50 };
+  #webcam = { stream: null, snapshot: null };
+
+  // DOM references for solid tab
+  #colorArea = null;
+  #colorAreaHandle = null;
+  #hueSlider = null;
+  #opacitySlider = null;
+  #isDraggingColor = false;
+
+  constructor() {
+    super();
+  }
+
+  static get observedAttributes() {
+    return ["value", "disabled", "alpha", "mode"];
+  }
+
+  connectedCallback() {
+    // Use display: contents
+    this.style.display = "contents";
+
+    requestAnimationFrame(() => {
+      this.#setupTrigger();
+      this.#parseValue();
+      this.#updateChit();
+    });
+  }
+
+  disconnectedCallback() {
+    if (this.#dialog) {
+      this.#dialog.close();
+      this.#dialog.remove();
+    }
+  }
+
+  #setupTrigger() {
+    const child = this.firstElementChild;
+
+    if (!child) {
+      // Scenario 1: Empty - create fig-chit
+      this.#chit = document.createElement("fig-chit");
+      this.#chit.setAttribute("background", "#D9D9D9");
+      this.appendChild(this.#chit);
+      this.#trigger = this.#chit;
+    } else if (child.tagName === "FIG-CHIT") {
+      // Scenario 2: Has fig-chit - use and populate it
+      this.#chit = child;
+      this.#trigger = child;
+    } else {
+      // Scenario 3: Other element - trigger only, no populate
+      this.#trigger = child;
+      this.#chit = null;
+    }
+
+    this.#trigger.addEventListener("click", (e) => {
+      if (this.hasAttribute("disabled")) return;
+      e.stopPropagation();
+      e.preventDefault();
+      this.#openDialog();
+    });
+
+    // Prevent fig-chit's internal color input from opening system picker
+    if (this.#chit) {
+      requestAnimationFrame(() => {
+        const input = this.#chit.querySelector('input[type="color"]');
+        if (input) {
+          input.style.pointerEvents = "none";
+        }
+      });
+    }
+  }
+
+  #parseValue() {
+    const valueAttr = this.getAttribute("value");
+    if (!valueAttr) return;
+
+    try {
+      const parsed = JSON.parse(valueAttr);
+      if (parsed.type) this.#fillType = parsed.type;
+      if (parsed.color) {
+        // Handle both hex string and HSV object
+        if (typeof parsed.color === "string") {
+          this.#color = this.#hexToHSV(parsed.color);
+        } else if (
+          typeof parsed.color === "object" &&
+          parsed.color.h !== undefined
+        ) {
+          this.#color = parsed.color;
+        }
+      }
+      if (parsed.gradient)
+        this.#gradient = { ...this.#gradient, ...parsed.gradient };
+      if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
+      if (parsed.video) this.#video = { ...this.#video, ...parsed.video };
+    } catch (e) {
+      // If not JSON, treat as hex color
+      if (valueAttr.startsWith("#")) {
+        this.#fillType = "solid";
+        this.#color = this.#hexToHSV(valueAttr);
+      }
+    }
+  }
+
+  #updateChit() {
+    if (!this.#chit) return;
+
+    let bg;
+    let bgSize = "cover";
+    let bgPosition = "center";
+
+    switch (this.#fillType) {
+      case "solid":
+        bg = this.#hsvToHex(this.#color);
+        break;
+      case "gradient":
+        bg = this.#getGradientCSS();
+        break;
+      case "image":
+        if (this.#image.url) {
+          bg = `url(${this.#image.url})`;
+          const sizing = this.#getBackgroundSizing(
+            this.#image.scaleMode,
+            this.#image.scale
+          );
+          bgSize = sizing.size;
+          bgPosition = sizing.position;
+        } else {
+          bg = "";
+        }
+        break;
+      case "video":
+        if (this.#video.url) {
+          bg = `url(${this.#video.url})`;
+          const sizing = this.#getBackgroundSizing(
+            this.#video.scaleMode,
+            this.#video.scale
+          );
+          bgSize = sizing.size;
+          bgPosition = sizing.position;
+        } else {
+          bg = "";
+        }
+        break;
+      default:
+        bg = "#D9D9D9";
+    }
+
+    this.#chit.setAttribute("background", bg);
+    this.#chit.style.setProperty("--chit-bg-size", bgSize);
+    this.#chit.style.setProperty("--chit-bg-position", bgPosition);
+  }
+
+  #getBackgroundSizing(scaleMode, scale) {
+    switch (scaleMode) {
+      case "fill":
+        return { size: "cover", position: "center" };
+      case "fit":
+        return { size: "contain", position: "center" };
+      case "crop":
+        return { size: "cover", position: "center" };
+      case "tile":
+        return { size: `${scale}%`, position: "top left" };
+      default:
+        return { size: "cover", position: "center" };
+    }
+  }
+
+  #openDialog() {
+    if (!this.#dialog) {
+      this.#createDialog();
+    }
+
+    // Position off-screen first to prevent scroll jump
+    this.#dialog.style.position = "fixed";
+    this.#dialog.style.top = "-9999px";
+    this.#dialog.style.left = "-9999px";
+
+    this.#dialog.show();
+    this.#switchTab(this.#fillType);
+
+    // Position after dialog has rendered and has dimensions
+    // Use nested RAF to ensure canvas is fully ready for drawing
+    requestAnimationFrame(() => {
+      this.#positionDialog();
+      this.#dialog.setAttribute("closedby", "any");
+      
+      // Second RAF ensures the dialog is visible and canvas is ready
+      requestAnimationFrame(() => {
+        this.#drawColorArea();
+        this.#updateHandlePosition();
+      });
+    });
+  }
+
+  #positionDialog() {
+    const triggerRect = this.#trigger.getBoundingClientRect();
+    const dialogRect = this.#dialog.getBoundingClientRect();
+    const padding = 8; // Gap between trigger and dialog
+    const viewportPadding = 16; // Min distance from viewport edges
+
+    // Calculate available space in each direction
+    const spaceBelow =
+      window.innerHeight - triggerRect.bottom - viewportPadding;
+    const spaceAbove = triggerRect.top - viewportPadding;
+    const spaceRight = window.innerWidth - triggerRect.left - viewportPadding;
+    const spaceLeft = triggerRect.right - viewportPadding;
+
+    let top, left;
+
+    // Vertical positioning: prefer below, fallback to above
+    if (spaceBelow >= dialogRect.height || spaceBelow >= spaceAbove) {
+      // Position below trigger
+      top = triggerRect.bottom + padding;
+    } else {
+      // Position above trigger
+      top = triggerRect.top - dialogRect.height - padding;
+    }
+
+    // Horizontal positioning: align left edge with trigger, adjust if needed
+    left = triggerRect.left;
+
+    // Adjust if dialog would go off right edge
+    if (left + dialogRect.width > window.innerWidth - viewportPadding) {
+      left = window.innerWidth - dialogRect.width - viewportPadding;
+    }
+
+    // Adjust if dialog would go off left edge
+    if (left < viewportPadding) {
+      left = viewportPadding;
+    }
+
+    // Clamp vertical position to viewport
+    if (top < viewportPadding) {
+      top = viewportPadding;
+    }
+    if (top + dialogRect.height > window.innerHeight - viewportPadding) {
+      top = window.innerHeight - dialogRect.height - viewportPadding;
+    }
+
+    // Apply position (override fig-dialog's default positioning)
+    this.#dialog.style.position = "fixed";
+    this.#dialog.style.top = `${top}px`;
+    this.#dialog.style.left = `${left}px`;
+    this.#dialog.style.bottom = "auto";
+    this.#dialog.style.right = "auto";
+    this.#dialog.style.margin = "0";
+  }
+
+  #createDialog() {
+    this.#dialog = document.createElement("dialog", { is: "fig-dialog" });
+    this.#dialog.setAttribute("is", "fig-dialog");
+    this.#dialog.setAttribute("drag", "true");
+    this.#dialog.setAttribute("handle", "fig-header");
+    this.#dialog.classList.add("fig-fill-picker-dialog");
+
+    // Forward dialog attributes
+    const dialogPosition = this.getAttribute("dialog-position");
+    if (dialogPosition) {
+      this.#dialog.setAttribute("position", dialogPosition);
+    }
+
+    // Check for locked mode
+    const mode = this.getAttribute("mode");
+    const validModes = ["solid", "gradient", "image", "video", "webcam"];
+    const lockedMode = validModes.includes(mode) ? mode : null;
+
+    // If locked mode, force fillType
+    if (lockedMode) {
+      this.#fillType = lockedMode;
+      this.#activeTab = lockedMode;
+    }
+
+    // Build header content - dropdown or label
+    const headerContent = lockedMode
+      ? `<span class="fig-fill-picker-type-label">${lockedMode.charAt(0).toUpperCase() + lockedMode.slice(1)}</span>`
+      : `<fig-dropdown class="fig-fill-picker-type" value="${this.#fillType}">
+          <option value="solid">Solid</option>
+          <option value="gradient">Gradient</option>
+          <option value="image">Image</option>
+          <option value="video">Video</option>
+          <option value="webcam">Webcam</option>
+        </fig-dropdown>`;
+
+    this.#dialog.innerHTML = `
+      <fig-header>
+        ${headerContent}
+        <fig-button icon variant="ghost" close-dialog>
+          <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+        </fig-button>
+      </fig-header>
+      <div class="fig-fill-picker-content">
+        <div class="fig-fill-picker-tab" data-tab="solid"></div>
+        <div class="fig-fill-picker-tab" data-tab="gradient"></div>
+        <div class="fig-fill-picker-tab" data-tab="image"></div>
+        <div class="fig-fill-picker-tab" data-tab="video"></div>
+        <div class="fig-fill-picker-tab" data-tab="webcam"></div>
+      </div>
+    `;
+
+    document.body.appendChild(this.#dialog);
+
+    // Setup type dropdown switching (only if not locked)
+    const typeDropdown = this.#dialog.querySelector(".fig-fill-picker-type");
+    if (typeDropdown) {
+      typeDropdown.addEventListener("change", (e) => {
+        this.#switchTab(e.target.value);
+      });
+    }
+
+    // Close button
+    this.#dialog
+      .querySelector("fig-button[close-dialog]")
+      .addEventListener("click", () => {
+        this.#dialog.close();
+      });
+
+    // Emit change on close
+    this.#dialog.addEventListener("close", () => {
+      this.#emitChange();
+    });
+
+    // Initialize tabs
+    this.#initSolidTab();
+    this.#initGradientTab();
+    this.#initImageTab();
+    this.#initVideoTab();
+    this.#initWebcamTab();
+  }
+
+  #switchTab(tabName) {
+    // Check for locked mode - prevent switching if locked
+    const mode = this.getAttribute("mode");
+    const validModes = ["solid", "gradient", "image", "video", "webcam"];
+    const lockedMode = validModes.includes(mode) ? mode : null;
+    
+    if (lockedMode && tabName !== lockedMode) {
+      return; // Don't allow switching away from locked mode
+    }
+
+    this.#activeTab = tabName;
+    this.#fillType = tabName;
+
+    // Update dropdown selection (only exists if not locked)
+    const typeDropdown = this.#dialog.querySelector(".fig-fill-picker-type");
+    if (typeDropdown && typeDropdown.value !== tabName) {
+      typeDropdown.value = tabName;
+    }
+
+    // Show/hide tab content
+    const tabContents = this.#dialog.querySelectorAll(".fig-fill-picker-tab");
+    tabContents.forEach((content) => {
+      if (content.dataset.tab === tabName) {
+        content.style.display = "block";
+      } else {
+        content.style.display = "none";
+      }
+    });
+
+    // Update tab-specific UI after visibility change
+    if (tabName === "gradient") {
+      // Use RAF to ensure layout is complete before updating angle input
+      requestAnimationFrame(() => {
+        this.#updateGradientUI();
+      });
+    }
+
+    this.#updateChit();
+    this.#emitInput();
+  }
+
+  // ============ SOLID TAB ============
+  #initSolidTab() {
+    const container = this.#dialog.querySelector('[data-tab="solid"]');
+    const showAlpha = this.getAttribute("alpha") !== "false";
+
+    container.innerHTML = `
+      <div class="fig-fill-picker-color-area">
+        <canvas width="200" height="200"></canvas>
+        <div class="fig-fill-picker-handle"></div>
+      </div>
+      <div class="fig-fill-picker-sliders">
+        <fig-slider type="hue" variant="neue" min="0" max="360" value="${
+          this.#color.h
+        }"></fig-slider>
+        ${
+          showAlpha
+            ? `<fig-slider type="opacity" variant="neue" text="true" units="%" min="0" max="100" value="${
+                this.#color.a * 100
+              }" color="${this.#hsvToHex(this.#color)}"></fig-slider>`
+            : ""
+        }
+      </div>
+      <div class="fig-fill-picker-inputs">
+        <fig-button icon variant="ghost" class="fig-fill-picker-eyedropper" title="Pick color from screen"><span class="fig-mask-icon" style="--icon: var(--icon-eyedropper)"></span></fig-button>
+        <fig-input-color class="fig-fill-picker-color-input" text="true" picker="false" value="${this.#hsvToHex(
+          this.#color
+        )}"></fig-input-color>
+      </div>
+    `;
+
+    // Setup color area
+    this.#colorArea = container.querySelector("canvas");
+    this.#colorAreaHandle = container.querySelector(".fig-fill-picker-handle");
+    this.#drawColorArea();
+    this.#updateHandlePosition();
+    this.#setupColorAreaEvents();
+
+    // Setup hue slider
+    this.#hueSlider = container.querySelector('fig-slider[type="hue"]');
+    this.#hueSlider.addEventListener("input", (e) => {
+      this.#color.h = parseFloat(e.target.value);
+      this.#drawColorArea();
+      this.#updateColorInputs();
+      this.#emitInput();
+    });
+
+    // Setup opacity slider
+    if (showAlpha) {
+      this.#opacitySlider = container.querySelector(
+        'fig-slider[type="opacity"]'
+      );
+      this.#opacitySlider.addEventListener("input", (e) => {
+        this.#color.a = parseFloat(e.target.value) / 100;
+        this.#updateColorInputs();
+        this.#emitInput();
+      });
+    }
+
+    // Setup color input
+    const colorInput = container.querySelector(".fig-fill-picker-color-input");
+    colorInput.addEventListener("input", (e) => {
+      // Skip if we're dragging - prevents feedback loop that loses saturation for dark colors
+      if (this.#isDraggingColor) return;
+      
+      const hex = e.target.value;
+      this.#color = { ...this.#hexToHSV(hex), a: this.#color.a };
+      this.#drawColorArea();
+      this.#updateHandlePosition();
+      if (this.#hueSlider) {
+        this.#hueSlider.setAttribute("value", this.#color.h);
+      }
+      this.#emitInput();
+    });
+
+    // Setup eyedropper
+    const eyedropper = container.querySelector(".fig-fill-picker-eyedropper");
+    if ("EyeDropper" in window) {
+      eyedropper.addEventListener("click", async () => {
+        try {
+          const dropper = new EyeDropper();
+          const result = await dropper.open();
+          this.#color = { ...this.#hexToHSV(result.sRGBHex), a: this.#color.a };
+          this.#drawColorArea();
+          this.#updateHandlePosition();
+          this.#updateColorInputs();
+          this.#emitInput();
+        } catch (e) {
+          // User cancelled or error
+        }
+      });
+    } else {
+      eyedropper.setAttribute("disabled", "");
+      eyedropper.title = "EyeDropper not supported in this browser";
+    }
+  }
+
+  #drawColorArea() {
+    // Refresh canvas reference in case DOM changed
+    if (!this.#colorArea && this.#dialog) {
+      this.#colorArea = this.#dialog.querySelector('[data-tab="solid"] canvas');
+    }
+    if (!this.#colorArea) return;
+
+    const ctx = this.#colorArea.getContext("2d");
+    if (!ctx) return;
+    
+    const width = this.#colorArea.width;
+    const height = this.#colorArea.height;
+
+    // Clear canvas first
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw saturation-value gradient
+    const hue = this.#color.h;
+
+    // Create horizontal gradient (white to hue color)
+    const gradH = ctx.createLinearGradient(0, 0, width, 0);
+    gradH.addColorStop(0, "#FFFFFF");
+    gradH.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
+
+    ctx.fillStyle = gradH;
+    ctx.fillRect(0, 0, width, height);
+
+    // Create vertical gradient (transparent to black)
+    const gradV = ctx.createLinearGradient(0, 0, 0, height);
+    gradV.addColorStop(0, "rgba(0,0,0,0)");
+    gradV.addColorStop(1, "rgba(0,0,0,1)");
+
+    ctx.fillStyle = gradV;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  #updateHandlePosition() {
+    if (!this.#colorAreaHandle || !this.#colorArea) return;
+
+    const rect = this.#colorArea.getBoundingClientRect();
+    const x = (this.#color.s / 100) * rect.width;
+    const y = ((100 - this.#color.v) / 100) * rect.height;
+
+    this.#colorAreaHandle.style.left = `${x}px`;
+    this.#colorAreaHandle.style.top = `${y}px`;
+    this.#colorAreaHandle.style.setProperty(
+      "--picker-color",
+      this.#hsvToHex({ ...this.#color, a: 1 })
+    );
+  }
+
+  #setupColorAreaEvents() {
+    if (!this.#colorArea || !this.#colorAreaHandle) return;
+
+    const updateFromEvent = (e) => {
+      const rect = this.#colorArea.getBoundingClientRect();
+      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+
+      this.#color.s = (x / rect.width) * 100;
+      this.#color.v = 100 - (y / rect.height) * 100;
+
+      this.#updateHandlePosition();
+      this.#updateColorInputs();
+      this.#emitInput();
+    };
+
+    // Canvas click/drag
+    this.#colorArea.addEventListener("pointerdown", (e) => {
+      this.#isDraggingColor = true;
+      this.#colorArea.setPointerCapture(e.pointerId);
+      updateFromEvent(e);
+    });
+
+    this.#colorArea.addEventListener("pointermove", (e) => {
+      if (this.#isDraggingColor) {
+        updateFromEvent(e);
+      }
+    });
+
+    this.#colorArea.addEventListener("pointerup", () => {
+      this.#isDraggingColor = false;
+    });
+
+    // Handle drag (for when handle is at corners)
+    this.#colorAreaHandle.addEventListener("pointerdown", (e) => {
+      e.stopPropagation(); // Prevent canvas from also capturing
+      this.#isDraggingColor = true;
+      this.#colorAreaHandle.setPointerCapture(e.pointerId);
+    });
+
+    this.#colorAreaHandle.addEventListener("pointermove", (e) => {
+      if (this.#isDraggingColor) {
+        updateFromEvent(e);
+      }
+    });
+
+    this.#colorAreaHandle.addEventListener("pointerup", () => {
+      this.#isDraggingColor = false;
+    });
+  }
+
+  #updateColorInputs() {
+    if (!this.#dialog) return;
+
+    const hex = this.#hsvToHex(this.#color);
+
+    const colorInput = this.#dialog.querySelector(
+      ".fig-fill-picker-color-input"
+    );
+    if (colorInput) {
+      colorInput.setAttribute("value", hex);
+    }
+
+    if (this.#opacitySlider) {
+      this.#opacitySlider.setAttribute("color", hex);
+    }
+
+    this.#updateChit();
+  }
+
+  // ============ GRADIENT TAB ============
+  #initGradientTab() {
+    const container = this.#dialog.querySelector('[data-tab="gradient"]');
+
+    container.innerHTML = `
+      <div class="fig-fill-picker-gradient-header">
+        <fig-dropdown class="fig-fill-picker-gradient-type" value="${
+          this.#gradient.type
+        }">
+          <option value="linear" selected>Linear</option>
+          <option value="radial">Radial</option>
+          <option value="angular">Angular</option>
+        </fig-dropdown>
+        <fig-input-angle class="fig-fill-picker-gradient-angle" value="${
+          (this.#gradient.angle - 90 + 360) % 360
+        }"></fig-input-angle>
+        <div class="fig-fill-picker-gradient-center" style="display: none;">
+          <fig-input-number min="0" max="100" value="${
+            this.#gradient.centerX
+          }" units="%" class="fig-fill-picker-gradient-cx"></fig-input-number>
+          <fig-input-number min="0" max="100" value="${
+            this.#gradient.centerY
+          }" units="%" class="fig-fill-picker-gradient-cy"></fig-input-number>
+        </div>
+        <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip" title="Flip gradient">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M4 6L2 8L4 10M12 6L14 8L12 10M2 8H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </fig-button>
+        <fig-button icon variant="ghost" class="fig-fill-picker-gradient-swap" title="Swap colors">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 5H13M13 5L10 2M13 5L10 8M13 11H3M3 11L6 8M3 11L6 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </fig-button>
+      </div>
+      <div class="fig-fill-picker-gradient-preview">
+        <div class="fig-fill-picker-gradient-bar"></div>
+        <div class="fig-fill-picker-gradient-stops-handles"></div>
+      </div>
+      <div class="fig-fill-picker-gradient-stops">
+        <div class="fig-fill-picker-gradient-stops-header">
+          <span>Stops</span>
+          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-add" title="Add stop">
+            <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+          </fig-button>
+        </div>
+        <div class="fig-fill-picker-gradient-stops-list"></div>
+      </div>
+    `;
+
+    this.#updateGradientUI();
+    this.#setupGradientEvents(container);
+  }
+
+  #setupGradientEvents(container) {
+    // Type dropdown
+    const typeDropdown = container.querySelector(
+      ".fig-fill-picker-gradient-type"
+    );
+    typeDropdown.addEventListener("change", (e) => {
+      this.#gradient.type = e.target.value;
+      this.#updateGradientUI();
+      this.#emitInput();
+    });
+
+    // Angle input
+    // Convert from fig-input-angle coordinates (0° = right) to CSS coordinates (0° = up)
+    const angleInput = container.querySelector(
+      ".fig-fill-picker-gradient-angle"
+    );
+    angleInput.addEventListener("input", (e) => {
+      const pickerAngle = parseFloat(e.target.value) || 0;
+      this.#gradient.angle = (pickerAngle + 90) % 360;
+      this.#updateGradientPreview();
+      this.#emitInput();
+    });
+
+    // Center X/Y inputs
+    const cxInput = container.querySelector(".fig-fill-picker-gradient-cx");
+    const cyInput = container.querySelector(".fig-fill-picker-gradient-cy");
+    cxInput?.addEventListener("input", (e) => {
+      this.#gradient.centerX = parseFloat(e.target.value) || 50;
+      this.#updateGradientPreview();
+      this.#emitInput();
+    });
+    cyInput?.addEventListener("input", (e) => {
+      this.#gradient.centerY = parseFloat(e.target.value) || 50;
+      this.#updateGradientPreview();
+      this.#emitInput();
+    });
+
+    // Flip button
+    container
+      .querySelector(".fig-fill-picker-gradient-flip")
+      .addEventListener("click", () => {
+        this.#gradient.stops.forEach((stop) => {
+          stop.position = 100 - stop.position;
+        });
+        this.#gradient.stops.sort((a, b) => a.position - b.position);
+        this.#updateGradientUI();
+        this.#emitInput();
+      });
+
+    // Swap button
+    container
+      .querySelector(".fig-fill-picker-gradient-swap")
+      .addEventListener("click", () => {
+        if (this.#gradient.stops.length >= 2) {
+          const colors = this.#gradient.stops.map((s) => ({
+            color: s.color,
+            opacity: s.opacity,
+          }));
+          colors.reverse();
+          this.#gradient.stops.forEach((stop, i) => {
+            stop.color = colors[i].color;
+            stop.opacity = colors[i].opacity;
+          });
+          this.#updateGradientUI();
+          this.#emitInput();
+        }
+      });
+
+    // Add stop button
+    container
+      .querySelector(".fig-fill-picker-gradient-add")
+      .addEventListener("click", () => {
+        const midPosition = 50;
+        this.#gradient.stops.push({
+          position: midPosition,
+          color: "#888888",
+          opacity: 100,
+        });
+        this.#gradient.stops.sort((a, b) => a.position - b.position);
+        this.#updateGradientUI();
+        this.#emitInput();
+      });
+  }
+
+  #updateGradientUI() {
+    if (!this.#dialog) return;
+
+    const container = this.#dialog.querySelector('[data-tab="gradient"]');
+    if (!container) return;
+
+    // Show/hide angle vs center inputs
+    const angleInput = container.querySelector(
+      ".fig-fill-picker-gradient-angle"
+    );
+    const centerInputs = container.querySelector(
+      ".fig-fill-picker-gradient-center"
+    );
+
+    if (this.#gradient.type === "radial") {
+      angleInput.style.display = "none";
+      centerInputs.style.display = "flex";
+    } else {
+      angleInput.style.display = "block";
+      centerInputs.style.display = "none";
+      // Sync angle input value (convert CSS angle to picker angle)
+      const pickerAngle = (this.#gradient.angle - 90 + 360) % 360;
+      angleInput.setAttribute("value", pickerAngle);
+    }
+
+    this.#updateGradientPreview();
+    this.#updateGradientStopsList();
+  }
+
+  #updateGradientPreview() {
+    if (!this.#dialog) return;
+
+    const bar = this.#dialog.querySelector(".fig-fill-picker-gradient-bar");
+    if (bar) {
+      bar.style.background = this.#getGradientCSS();
+    }
+
+    this.#updateChit();
+  }
+
+  #updateGradientStopsList() {
+    if (!this.#dialog) return;
+
+    const list = this.#dialog.querySelector(
+      ".fig-fill-picker-gradient-stops-list"
+    );
+    if (!list) return;
+
+    list.innerHTML = this.#gradient.stops
+      .map(
+        (stop, index) => `
+      <div class="fig-fill-picker-gradient-stop-row" data-index="${index}">
+        <fig-input-number class="fig-fill-picker-stop-position" min="0" max="100" value="${
+          stop.position
+        }" units="%"></fig-input-number>
+        <fig-input-color class="fig-fill-picker-stop-color" text="true" alpha="true" picker="figma" value="${
+          stop.color
+        }"></fig-input-color>
+        <fig-button icon variant="ghost" class="fig-fill-picker-stop-remove" ${
+          this.#gradient.stops.length <= 2 ? "disabled" : ""
+        }>
+          <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
+        </fig-button>
+      </div>
+    `
+      )
+      .join("");
+
+    // Setup event listeners for each stop
+    list
+      .querySelectorAll(".fig-fill-picker-gradient-stop-row")
+      .forEach((row) => {
+        const index = parseInt(row.dataset.index);
+
+        row
+          .querySelector(".fig-fill-picker-stop-position")
+          .addEventListener("input", (e) => {
+            this.#gradient.stops[index].position =
+              parseFloat(e.target.value) || 0;
+            this.#updateGradientPreview();
+            this.#emitInput();
+          });
+
+        row
+          .querySelector(".fig-fill-picker-stop-color")
+          .addEventListener("input", (e) => {
+            this.#gradient.stops[index].color =
+              e.target.hexOpaque || e.target.value;
+            this.#gradient.stops[index].opacity =
+              parseFloat(e.target.alpha) || 100;
+            this.#updateGradientPreview();
+            this.#emitInput();
+          });
+
+        row
+          .querySelector(".fig-fill-picker-stop-remove")
+          .addEventListener("click", () => {
+            if (this.#gradient.stops.length > 2) {
+              this.#gradient.stops.splice(index, 1);
+              this.#updateGradientUI();
+              this.#emitInput();
+            }
+          });
+      });
+  }
+
+  #getGradientCSS() {
+    const stops = this.#gradient.stops
+      .map((s) => {
+        const rgba = this.#hexToRGBA(s.color, s.opacity / 100);
+        return `${rgba} ${s.position}%`;
+      })
+      .join(", ");
+
+    switch (this.#gradient.type) {
+      case "linear":
+        return `linear-gradient(${this.#gradient.angle}deg, ${stops})`;
+      case "radial":
+        return `radial-gradient(circle at ${this.#gradient.centerX}% ${
+          this.#gradient.centerY
+        }%, ${stops})`;
+      case "angular":
+        // Offset by 90° to align with fig-input-angle (0° = right) vs CSS conic (0° = top)
+        return `conic-gradient(from ${this.#gradient.angle + 90}deg, ${stops})`;
+      default:
+        return `linear-gradient(${this.#gradient.angle}deg, ${stops})`;
+    }
+  }
+
+  // ============ IMAGE TAB ============
+  #initImageTab() {
+    const container = this.#dialog.querySelector('[data-tab="image"]');
+
+    container.innerHTML = `
+      <div class="fig-fill-picker-media-header">
+        <fig-dropdown class="fig-fill-picker-scale-mode" value="${
+          this.#image.scaleMode
+        }">
+          <option value="fill" selected>Fill</option>
+          <option value="fit">Fit</option>
+          <option value="crop">Crop</option>
+          <option value="tile">Tile</option>
+        </fig-dropdown>
+        <fig-input-number class="fig-fill-picker-scale" min="1" max="200" value="${
+          this.#image.scale
+        }" units="%" style="display: none;"></fig-input-number>
+      </div>
+      <div class="fig-fill-picker-media-preview">
+        <div class="fig-fill-picker-checkerboard"></div>
+        <div class="fig-fill-picker-image-preview"></div>
+        <fig-button variant="overlay" class="fig-fill-picker-upload">
+          Upload from computer
+          <input type="file" accept="image/*" style="display: none;" />
+        </fig-button>
+      </div>
+    `;
+
+    this.#setupImageEvents(container);
+  }
+
+  #setupImageEvents(container) {
+    const scaleModeDropdown = container.querySelector(
+      ".fig-fill-picker-scale-mode"
+    );
+    const scaleInput = container.querySelector(".fig-fill-picker-scale");
+    const uploadBtn = container.querySelector(".fig-fill-picker-upload");
+    const fileInput = container.querySelector('input[type="file"]');
+    const preview = container.querySelector(".fig-fill-picker-image-preview");
+
+    scaleModeDropdown.addEventListener("change", (e) => {
+      this.#image.scaleMode = e.target.value;
+      scaleInput.style.display = e.target.value === "tile" ? "block" : "none";
+      this.#updateImagePreview(preview);
+      this.#updateChit();
+      this.#emitInput();
+    });
+
+    scaleInput.addEventListener("input", (e) => {
+      this.#image.scale = parseFloat(e.target.value) || 100;
+      this.#updateImagePreview(preview);
+      this.#updateChit();
+      this.#emitInput();
+    });
+
+    uploadBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.#image.url = e.target.result;
+          this.#updateImagePreview(preview);
+          this.#updateChit();
+          this.#emitInput();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Drag and drop
+    const previewArea = container.querySelector(
+      ".fig-fill-picker-media-preview"
+    );
+    previewArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      previewArea.classList.add("dragover");
+    });
+    previewArea.addEventListener("dragleave", () => {
+      previewArea.classList.remove("dragover");
+    });
+    previewArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      previewArea.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.#image.url = e.target.result;
+          this.#updateImagePreview(preview);
+          this.#updateChit();
+          this.#emitInput();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  #updateImagePreview(element) {
+    const container = element.closest(".fig-fill-picker-media-preview");
+    if (!this.#image.url) {
+      element.style.display = "none";
+      container?.classList.remove("has-media");
+      return;
+    }
+
+    element.style.display = "block";
+    container?.classList.add("has-media");
+    element.style.backgroundImage = `url(${this.#image.url})`;
+    element.style.backgroundPosition = "center";
+
+    switch (this.#image.scaleMode) {
+      case "fill":
+        element.style.backgroundSize = "cover";
+        element.style.backgroundRepeat = "no-repeat";
+        break;
+      case "fit":
+        element.style.backgroundSize = "contain";
+        element.style.backgroundRepeat = "no-repeat";
+        break;
+      case "crop":
+        element.style.backgroundSize = "cover";
+        element.style.backgroundRepeat = "no-repeat";
+        break;
+      case "tile":
+        element.style.backgroundSize = `${this.#image.scale}%`;
+        element.style.backgroundRepeat = "repeat";
+        element.style.backgroundPosition = "top left";
+        break;
+    }
+  }
+
+  // For video elements (still uses object-fit)
+  #updateVideoPreviewStyle(element) {
+    element.style.objectPosition = "center";
+    element.style.width = "100%";
+    element.style.height = "100%";
+
+    switch (this.#video.scaleMode) {
+      case "fill":
+      case "crop":
+        element.style.objectFit = "cover";
+        break;
+      case "fit":
+        element.style.objectFit = "contain";
+        break;
+    }
+  }
+
+  // ============ VIDEO TAB ============
+  #initVideoTab() {
+    const container = this.#dialog.querySelector('[data-tab="video"]');
+
+    container.innerHTML = `
+      <div class="fig-fill-picker-media-header">
+        <fig-dropdown class="fig-fill-picker-scale-mode" value="${
+          this.#video.scaleMode
+        }">
+          <option value="fill" selected>Fill</option>
+          <option value="fit">Fit</option>
+          <option value="crop">Crop</option>
+        </fig-dropdown>
+      </div>
+      <div class="fig-fill-picker-media-preview">
+        <div class="fig-fill-picker-checkerboard"></div>
+        <video class="fig-fill-picker-video-preview" style="display: none;" muted loop></video>
+        <fig-button variant="overlay" class="fig-fill-picker-upload">
+          Upload from computer
+          <input type="file" accept="video/*" style="display: none;" />
+        </fig-button>
+      </div>
+    `;
+
+    this.#setupVideoEvents(container);
+  }
+
+  #setupVideoEvents(container) {
+    const scaleModeDropdown = container.querySelector(
+      ".fig-fill-picker-scale-mode"
+    );
+    const uploadBtn = container.querySelector(".fig-fill-picker-upload");
+    const fileInput = container.querySelector('input[type="file"]');
+    const preview = container.querySelector(".fig-fill-picker-video-preview");
+
+    scaleModeDropdown.addEventListener("change", (e) => {
+      this.#video.scaleMode = e.target.value;
+      this.#updateVideoPreviewStyle(preview);
+      this.#updateChit();
+      this.#emitInput();
+    });
+
+    uploadBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    // Drag and drop
+    const previewArea = container.querySelector(
+      ".fig-fill-picker-media-preview"
+    );
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        this.#video.url = URL.createObjectURL(file);
+        preview.src = this.#video.url;
+        preview.style.display = "block";
+        preview.play();
+        previewArea.classList.add("has-media");
+        this.#updateVideoPreviewStyle(preview);
+        this.#updateChit();
+        this.#emitInput();
+      }
+    });
+
+    previewArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      previewArea.classList.add("dragover");
+    });
+    previewArea.addEventListener("dragleave", () => {
+      previewArea.classList.remove("dragover");
+    });
+    previewArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      previewArea.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith("video/")) {
+        this.#video.url = URL.createObjectURL(file);
+        preview.src = this.#video.url;
+        preview.style.display = "block";
+        preview.play();
+        previewArea.classList.add("has-media");
+        this.#updateVideoPreviewStyle(preview);
+        this.#updateChit();
+        this.#emitInput();
+      }
+    });
+  }
+
+  // ============ WEBCAM TAB ============
+  #initWebcamTab() {
+    const container = this.#dialog.querySelector('[data-tab="webcam"]');
+
+    container.innerHTML = `
+      <div class="fig-fill-picker-webcam-preview">
+        <div class="fig-fill-picker-checkerboard"></div>
+        <video class="fig-fill-picker-webcam-video" autoplay muted playsinline></video>
+        <div class="fig-fill-picker-webcam-status">
+          <span>Camera access required</span>
+        </div>
+      </div>
+      <div class="fig-fill-picker-webcam-controls">
+        <fig-dropdown class="fig-fill-picker-camera-select" style="display: none;">
+        </fig-dropdown>
+        <fig-button class="fig-fill-picker-webcam-capture" variant="primary">
+          Capture
+        </fig-button>
+      </div>
+    `;
+
+    this.#setupWebcamEvents(container);
+  }
+
+  #setupWebcamEvents(container) {
+    const video = container.querySelector(".fig-fill-picker-webcam-video");
+    const status = container.querySelector(".fig-fill-picker-webcam-status");
+    const captureBtn = container.querySelector(
+      ".fig-fill-picker-webcam-capture"
+    );
+    const cameraSelect = container.querySelector(
+      ".fig-fill-picker-camera-select"
+    );
+
+    const startWebcam = async (deviceId = null) => {
+      try {
+        const constraints = {
+          video: deviceId ? { deviceId: { exact: deviceId } } : true,
+        };
+
+        if (this.#webcam.stream) {
+          this.#webcam.stream.getTracks().forEach((track) => track.stop());
+        }
+
+        this.#webcam.stream = await navigator.mediaDevices.getUserMedia(
+          constraints
+        );
+        video.srcObject = this.#webcam.stream;
+        video.style.display = "block";
+        status.style.display = "none";
+
+        // Enumerate cameras
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter((d) => d.kind === "videoinput");
+
+        if (cameras.length > 1) {
+          cameraSelect.style.display = "block";
+          cameraSelect.innerHTML = cameras
+            .map(
+              (cam, i) =>
+                `<option value="${cam.deviceId}">${
+                  cam.label || `Camera ${i + 1}`
+                }</option>`
+            )
+            .join("");
+        }
+      } catch (err) {
+        console.error("Webcam error:", err.name, err.message);
+        let message = "Camera access denied";
+        if (err.name === "NotAllowedError") {
+          message = "Camera permission denied";
+        } else if (err.name === "NotFoundError") {
+          message = "No camera found";
+        } else if (err.name === "NotReadableError") {
+          message = "Camera in use by another app";
+        } else if (err.name === "OverconstrainedError") {
+          message = "Camera constraints not supported";
+        } else if (!window.isSecureContext) {
+          message = "Camera requires secure context";
+        }
+        status.innerHTML = `<span>${message}</span>`;
+        status.style.display = "flex";
+        video.style.display = "none";
+      }
+    };
+
+    // Start webcam when tab is shown
+    const observer = new MutationObserver(() => {
+      if (container.style.display !== "none" && !this.#webcam.stream) {
+        startWebcam();
+      }
+    });
+    observer.observe(container, {
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+
+    cameraSelect.addEventListener("change", (e) => {
+      startWebcam(e.target.value);
+    });
+
+    captureBtn.addEventListener("click", () => {
+      if (!this.#webcam.stream) return;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+
+      this.#webcam.snapshot = canvas.toDataURL("image/png");
+      this.#image.url = this.#webcam.snapshot;
+      this.#fillType = "image";
+      this.#updateChit();
+      this.#emitInput();
+
+      // Switch to image tab to show result
+      this.#switchTab("image");
+      const tabs = this.#dialog.querySelector("fig-tabs");
+      tabs.value = "image";
+    });
+  }
+
+  // ============ COLOR CONVERSION UTILITIES ============
+  #hsvToRGB(hsv) {
+    const h = hsv.h / 360;
+    const s = hsv.s / 100;
+    const v = hsv.v / 100;
+
+    let r, g, b;
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+
+    switch (i % 6) {
+      case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+      case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+      case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+      case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+      case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+      case 5:
+        r = v;
+        g = p;
+        b = q;
+        break;
+    }
+
+    return {
+      r: Math.round(r * 255),
+      g: Math.round(g * 255),
+      b: Math.round(b * 255),
+    };
+  }
+
+  #rgbToHSV(rgb) {
+    const r = rgb.r / 255;
+    const g = rgb.g / 255;
+    const b = rgb.b / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const d = max - min;
+
+    let h = 0;
+    const s = max === 0 ? 0 : d / max;
+    const v = max;
+
+    if (max !== min) {
+      switch (max) {
+        case r:
+          h = (g - b) / d + (g < b ? 6 : 0);
+          break;
+        case g:
+          h = (b - r) / d + 2;
+          break;
+        case b:
+          h = (r - g) / d + 4;
+          break;
+      }
+      h /= 6;
+    }
+
+    return {
+      h: h * 360,
+      s: s * 100,
+      v: v * 100,
+      a: 1,
+    };
+  }
+
+  #hsvToHex(hsv) {
+    // Safety check for valid HSV object
+    if (
+      !hsv ||
+      typeof hsv.h !== "number" ||
+      typeof hsv.s !== "number" ||
+      typeof hsv.v !== "number"
+    ) {
+      return "#D9D9D9"; // Default gray
+    }
+    const rgb = this.#hsvToRGB(hsv);
+    const toHex = (n) => {
+      const val = isNaN(n) ? 217 : Math.max(0, Math.min(255, Math.round(n)));
+      return val.toString(16).padStart(2, "0");
+    };
+    return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
+  }
+
+  #hexToHSV(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return this.#rgbToHSV({ r, g, b });
+  }
+
+  #hexToRGBA(hex, alpha = 1) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  #rgbToHSL(rgb) {
+    const r = rgb.r / 255;
+    const g = rgb.g / 255;
+    const b = rgb.b / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h, s;
+    const l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+      switch (max) {
+        case r:
+          h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+          break;
+        case g:
+          h = ((b - r) / d + 2) / 6;
+          break;
+        case b:
+          h = ((r - g) / d + 4) / 6;
+          break;
+      }
+    }
+
+    return { h: h * 360, s: s * 100, l: l * 100 };
+  }
+
+  #hslToRGB(hsl) {
+    const h = hsl.h / 360;
+    const s = hsl.s / 100;
+    const l = hsl.l / 100;
+
+    let r, g, b;
+
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+
+      r = hue2rgb(p, q, h + 1 / 3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    return {
+      r: Math.round(r * 255),
+      g: Math.round(g * 255),
+      b: Math.round(b * 255),
+    };
+  }
+
+  // OKLAB/OKLCH conversions (simplified)
+  #rgbToOKLAB(rgb) {
+    // Convert to linear sRGB
+    const toLinear = (c) => {
+      c = c / 255;
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+
+    const r = toLinear(rgb.r);
+    const g = toLinear(rgb.g);
+    const b = toLinear(rgb.b);
+
+    // Convert to LMS
+    const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+    const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+    const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+
+    // Convert to Oklab
+    const l_ = Math.cbrt(l);
+    const m_ = Math.cbrt(m);
+    const s_ = Math.cbrt(s);
+
+    return {
+      l: 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
+      a: 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
+      b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
+    };
+  }
+
+  #rgbToOKLCH(rgb) {
+    const lab = this.#rgbToOKLAB(rgb);
+    return {
+      l: lab.l,
+      c: Math.sqrt(lab.a * lab.a + lab.b * lab.b),
+      h: ((Math.atan2(lab.b, lab.a) * 180) / Math.PI + 360) % 360,
+    };
+  }
+
+  // ============ EVENT EMITTERS ============
+  #emitInput() {
+    this.#updateChit();
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        detail: this.value,
+      })
+    );
+  }
+
+  #emitChange() {
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        detail: this.value,
+      })
+    );
+  }
+
+  // ============ PUBLIC API ============
+  get value() {
+    const base = { type: this.#fillType };
+
+    switch (this.#fillType) {
+      case "solid":
+        return {
+          ...base,
+          color: this.#hsvToHex(this.#color),
+          alpha: this.#color.a,
+          hsv: { ...this.#color },
+        };
+      case "gradient":
+        return {
+          ...base,
+          gradient: { ...this.#gradient },
+          css: this.#getGradientCSS(),
+        };
+      case "image":
+        return {
+          ...base,
+          image: { ...this.#image },
+        };
+      case "video":
+        return {
+          ...base,
+          video: { ...this.#video },
+        };
+      case "webcam":
+        return {
+          ...base,
+          image: { url: this.#webcam.snapshot, scaleMode: "fill", scale: 50 },
+        };
+      default:
+        return base;
+    }
+  }
+
+  set value(val) {
+    if (typeof val === "string") {
+      this.setAttribute("value", val);
+    } else {
+      this.setAttribute("value", JSON.stringify(val));
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    switch (name) {
+      case "value":
+        this.#parseValue();
+        this.#updateChit();
+        if (this.#dialog) {
+          // Update dialog UI if open
+          this.#initSolidTab();
+          this.#initGradientTab();
+        }
+        break;
+      case "disabled":
+        // Handled in click listener
+        break;
+    }
+  }
+}
+customElements.define("fig-fill-picker", FigFillPicker);
