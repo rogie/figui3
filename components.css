@@ -2351,8 +2351,11 @@ fig-input-color {
       text-transform: uppercase;
     }
   }
-  & fig-chit:not(:only-child),
-  & fig-chit:not(:only-child) > input {
+  & > .input-combo > fig-chit:not(:only-child),
+  & > .input-combo > fig-chit:not(:only-child) > input,
+  & > .input-combo > fig-fill-picker:not(:only-child),
+  & > .input-combo > fig-fill-picker:not(:only-child) > fig-chit > input,
+  & fig-fill-picker:not(:only-child) {
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
   }
