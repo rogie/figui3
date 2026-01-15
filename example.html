@@ -566,6 +566,19 @@
                 </hstack>
             </fig-field>
             <fig-field direction="horizontal">
+                <label>Color (50% opacity)</label>
+                <hstack>
+                    <fig-chit background="#FF0000"
+                              alpha="0.5"></fig-chit>
+                    <fig-chit background="#00FF00"
+                              alpha="0.5"></fig-chit>
+                    <fig-chit background="#0000FF"
+                              alpha="0.5"></fig-chit>
+                    <fig-chit background="#000000"
+                              alpha="0.5"></fig-chit>
+                </hstack>
+            </fig-field>
+            <fig-field direction="horizontal">
                 <label>Gradient (linear)</label>
                 <fig-chit background="linear-gradient(180deg, #ff90ff, #0000ff)"></fig-chit>
             </fig-field>
@@ -638,8 +651,11 @@
                 <fig-header>
                     <h3>Dialog Title</h3>
                     <fig-tooltip text="Close">
-                        <fig-button variant="ghost" icon="true" close-dialog>
-                            <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+                        <fig-button variant="ghost"
+                                    icon="true"
+                                    close-dialog>
+                            <span class="fig-mask-icon"
+                                  style="--icon: var(--icon-close)"></span>
                         </fig-button>
                     </fig-tooltip>
                 </fig-header>
@@ -681,8 +697,11 @@
                 <fig-header>
                     <h3>Positioned Dialog</h3>
                     <fig-tooltip text="Close">
-                        <fig-button variant="ghost" icon="true" close-dialog>
-                            <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+                        <fig-button variant="ghost"
+                                    icon="true"
+                                    close-dialog>
+                            <span class="fig-mask-icon"
+                                  style="--icon: var(--icon-close)"></span>
                         </fig-button>
                     </fig-tooltip>
                 </fig-header>
@@ -716,8 +735,11 @@
                 <fig-header>
                     <h3>Drag Handle Demo</h3>
                     <fig-tooltip text="Close">
-                        <fig-button variant="ghost" icon="true" close-dialog>
-                            <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+                        <fig-button variant="ghost"
+                                    icon="true"
+                                    close-dialog>
+                            <span class="fig-mask-icon"
+                                  style="--icon: var(--icon-close)"></span>
                         </fig-button>
                     </fig-tooltip>
                 </fig-header>
@@ -904,14 +926,15 @@
                              value='{"type":"solid","color":"#AA96DA"}'></fig-fill-picker>
 
             <h3>Mode Lockdown</h3>
-            <p class="description">Use the <code>mode</code> attribute to lock the picker to a single fill type. The dropdown is replaced with a label and tab switching is disabled.</p>
-            
+            <p class="description">Use the <code>mode</code> attribute to lock the picker to a single fill type. The
+                dropdown is replaced with a label and tab switching is disabled.</p>
+
             <h4>Solid Only</h4>
             <fig-fill-picker mode="solid"></fig-fill-picker>
-            
+
             <h4>Gradient Only</h4>
             <fig-fill-picker mode="gradient"></fig-fill-picker>
-            
+
             <h4>Image Only</h4>
             <fig-fill-picker mode="image"></fig-fill-picker>
 
@@ -1063,26 +1086,38 @@
             </hstack>
 
             <h3>Picker Attribute</h3>
-            <p class="description">Use <code>picker="figma"</code> to use the FigFillPicker instead of the native color picker. Default is <code>picker="native"</code>.</p>
-            
+            <p class="description">Use <code>picker="figma"</code> to use the FigFillPicker instead of the native color
+                picker. Default is <code>picker="native"</code>.</p>
+
             <h4>Native Picker (default)</h4>
-            <fig-input-color value="#9747FF" text="true"></fig-input-color>
-            
+            <fig-input-color value="#9747FF"
+                             text="true"></fig-input-color>
+
             <h4>Figma Picker</h4>
-            <fig-input-color value="#9747FF" text="true" picker="figma"></fig-input-color>
-            
+            <fig-input-color value="#9747FF"
+                             text="true"
+                             picker="figma"></fig-input-color>
+
             <h4>Figma Picker with Alpha</h4>
-            <fig-input-color value="#9747FF" text="true" alpha="true" picker="figma"></fig-input-color>
-            
+            <fig-input-color value="#9747FF"
+                             text="true"
+                             alpha="true"
+                             picker="figma"></fig-input-color>
+
             <h4>No Picker (text input only)</h4>
-            <fig-input-color value="#9747FF" text="true" picker="false"></fig-input-color>
-            
+            <fig-input-color value="#9747FF"
+                             text="true"
+                             picker="false"></fig-input-color>
+
             <h4>No Picker with Alpha</h4>
-            <fig-input-color value="#9747FF" text="true" alpha="true" picker="false"></fig-input-color>
+            <fig-input-color value="#9747FF"
+                             text="true"
+                             alpha="true"
+                             picker="false"></fig-input-color>
 
             <h3>Width Test (Resizable)</h3>
             <p class="description">Drag the right edge of each container to test at different widths.</p>
-            
+
             <style>
                 .resize-test {
                     resize: horizontal;
@@ -1095,9 +1130,11 @@
                     width: 200px;
                     border-radius: 4px;
                 }
+
                 .resize-test fig-input-color {
                     width: 100%;
                 }
+
                 .resize-test-label {
                     font-size: 0.7rem;
                     color: var(--figma-color-text-tertiary);
@@ -1115,61 +1152,83 @@
             <h4>Text Only</h4>
             <div class="resize-test">
                 <div class="resize-test-label">text="true"</div>
-                <fig-input-color value="#33FF57" text="true"></fig-input-color>
+                <fig-input-color value="#33FF57"
+                                 text="true"></fig-input-color>
             </div>
 
             <h4>Text + Alpha</h4>
             <div class="resize-test">
                 <div class="resize-test-label">text="true" alpha="true"</div>
-                <fig-input-color value="#3357FF" text="true" alpha="true"></fig-input-color>
+                <fig-input-color value="#3357FF"
+                                 text="true"
+                                 alpha="true"></fig-input-color>
             </div>
 
             <h4>Picker="figma"</h4>
             <div class="resize-test">
                 <div class="resize-test-label">picker="figma"</div>
-                <fig-input-color value="#FF33A1" picker="figma"></fig-input-color>
+                <fig-input-color value="#FF33A1"
+                                 picker="figma"></fig-input-color>
             </div>
 
             <h4>Picker="figma" + Text</h4>
             <div class="resize-test">
                 <div class="resize-test-label">picker="figma" text="true"</div>
-                <fig-input-color value="#A133FF" picker="figma" text="true"></fig-input-color>
+                <fig-input-color value="#A133FF"
+                                 picker="figma"
+                                 text="true"></fig-input-color>
             </div>
 
             <h4>Picker="figma" + Text + Alpha</h4>
             <div class="resize-test">
                 <div class="resize-test-label">picker="figma" text="true" alpha="true"</div>
-                <fig-input-color value="#33FFA1" picker="figma" text="true" alpha="true"></fig-input-color>
+                <fig-input-color value="#33FFA1"
+                                 picker="figma"
+                                 text="true"
+                                 alpha="true"></fig-input-color>
             </div>
 
             <h4>Picker="false" + Text</h4>
             <div class="resize-test">
                 <div class="resize-test-label">picker="false" text="true"</div>
-                <fig-input-color value="#FFD700" picker="false" text="true"></fig-input-color>
+                <fig-input-color value="#FFD700"
+                                 picker="false"
+                                 text="true"></fig-input-color>
             </div>
 
             <h4>Picker="false" + Text + Alpha</h4>
             <div class="resize-test">
                 <div class="resize-test-label">picker="false" text="true" alpha="true"</div>
-                <fig-input-color value="#00CED1" picker="false" text="true" alpha="true"></fig-input-color>
+                <fig-input-color value="#00CED1"
+                                 picker="false"
+                                 text="true"
+                                 alpha="true"></fig-input-color>
             </div>
 
             <h4>Full Attribute</h4>
             <div class="resize-test">
                 <div class="resize-test-label">text="true" alpha="true" full</div>
-                <fig-input-color value="#DC143C" text="true" alpha="true" full></fig-input-color>
+                <fig-input-color value="#DC143C"
+                                 text="true"
+                                 alpha="true"
+                                 full></fig-input-color>
             </div>
 
             <h4>With Alpha in Value (#RRGGBBAA)</h4>
             <div class="resize-test">
                 <div class="resize-test-label">value="#8B008B80" text="true" alpha="true"</div>
-                <fig-input-color value="#8B008B80" text="true" alpha="true"></fig-input-color>
+                <fig-input-color value="#8B008B80"
+                                 text="true"
+                                 alpha="true"></fig-input-color>
             </div>
 
             <h4>Picker="native" + Text + Alpha</h4>
             <div class="resize-test">
                 <div class="resize-test-label">picker="native" text="true" alpha="true"</div>
-                <fig-input-color value="#20B2AA" picker="native" text="true" alpha="true"></fig-input-color>
+                <fig-input-color value="#20B2AA"
+                                 picker="native"
+                                 text="true"
+                                 alpha="true"></fig-input-color>
             </div>
         </section>
         <hr>
@@ -2355,8 +2414,11 @@
                     is="fig-toast">
                 <p>File uploaded successfully.</p>
                 <hr vertical />
-                <fig-button variant="ghost" icon="true" close-toast>
-                    <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+                <fig-button variant="ghost"
+                            icon="true"
+                            close-toast>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-close)"></span>
                 </fig-button>
             </dialog>
 
@@ -2487,53 +2549,66 @@
         <!-- Icons -->
         <section id="icons">
             <h2>Icons</h2>
-            <p class="description">CSS mask-based icons using the <code>.fig-mask-icon</code> utility class. Icons inherit <code>currentColor</code> and can be sized with the <code>--size</code> variable.</p>
+            <p class="description">CSS mask-based icons using the <code>.fig-mask-icon</code> utility class. Icons
+                inherit <code>currentColor</code> and can be sized with the <code>--size</code> variable.</p>
 
             <h3>Usage</h3>
-            <p class="description">Set the <code>--icon</code> CSS variable to any icon variable. Icons use <code>currentColor</code> so they inherit text color.</p>
-            
-<pre><code>&lt;span class="fig-mask-icon" style="--icon: var(--icon-add)"&gt;&lt;/span&gt;</code></pre>
+            <p class="description">Set the <code>--icon</code> CSS variable to any icon variable. Icons use
+                <code>currentColor</code> so they inherit text color.
+            </p>
+
+            <pre><code>&lt;span class="fig-mask-icon" style="--icon: var(--icon-add)"&gt;&lt;/span&gt;</code></pre>
 
             <h3>Available Icons</h3>
             <hstack style="gap: 16px; flex-wrap: wrap;">
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-add)"></span>
                     <code>--icon-add</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-minus)"></span>
                     <code>--icon-minus</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-back)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-back)"></span>
                     <code>--icon-back</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-forward)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-forward)"></span>
                     <code>--icon-forward</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-close)"></span>
                     <code>--icon-close</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-rotate)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-rotate)"></span>
                     <code>--icon-rotate</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-swap)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-swap)"></span>
                     <code>--icon-swap</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-checkmark)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-checkmark)"></span>
                     <code>--icon-checkmark</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-eyedropper); --size: 1.5rem"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-eyedropper); --size: 1.5rem"></span>
                     <code>--icon-eyedropper</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-steppers); --size: 1.5rem"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-steppers); --size: 1.5rem"></span>
                     <code>--icon-steppers</code>
                 </vstack>
             </hstack>
@@ -2542,19 +2617,23 @@
             <p class="description">Use the <code>--size</code> variable to adjust icon dimensions.</p>
             <hstack style="gap: 16px; align-items: end;">
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-add); --size: 12px"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-add); --size: 12px"></span>
                     <code>12px</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-add); --size: 16px"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-add); --size: 16px"></span>
                     <code>16px</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-add); --size: 24px"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-add); --size: 24px"></span>
                     <code>24px</code>
                 </vstack>
                 <vstack style="align-items: center; gap: 4px;">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-add); --size: 32px"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-add); --size: 32px"></span>
                     <code>32px</code>
                 </vstack>
             </hstack>
@@ -2562,24 +2641,35 @@
             <h3>Color Inheritance</h3>
             <p class="description">Icons inherit <code>currentColor</code>, so they match the parent's text color.</p>
             <hstack style="gap: 16px;">
-                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text)"></span>
-                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-secondary)"></span>
-                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-brand)"></span>
-                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-danger)"></span>
-                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-success)"></span>
-                <span class="fig-mask-icon" style="--icon: var(--icon-add); color: var(--figma-color-text-warning)"></span>
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-add); color: var(--figma-color-text)"></span>
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-add); color: var(--figma-color-text-secondary)"></span>
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-add); color: var(--figma-color-text-brand)"></span>
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-add); color: var(--figma-color-text-danger)"></span>
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-add); color: var(--figma-color-text-success)"></span>
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-add); color: var(--figma-color-text-warning)"></span>
             </hstack>
 
             <h3>Inside Buttons</h3>
             <hstack>
-                <fig-button icon variant="ghost">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+                <fig-button icon
+                            variant="ghost">
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-add)"></span>
                 </fig-button>
-                <fig-button icon variant="ghost">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
+                <fig-button icon
+                            variant="ghost">
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-minus)"></span>
                 </fig-button>
                 <fig-button>
-                    <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-add)"></span>
                     Add Item
                 </fig-button>
             </hstack>

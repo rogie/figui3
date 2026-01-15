@@ -2122,14 +2122,18 @@ class FigInputColor extends HTMLElement {
                     </fig-input-number>
                 </fig-tooltip>`;
       }
-      
+
       let swatchElement = "";
       if (!hidePicker) {
         swatchElement = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${showAlpha ? "" : 'alpha="false"'} value='{"type":"solid","color":"${this.hexOpaque}"}'></fig-fill-picker>`
-          : `<fig-chit background="${this.hexOpaque}"></fig-chit>`;
+          ? `<fig-fill-picker mode="solid" ${
+              showAlpha ? "" : 'alpha="false"'
+            } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
+              this.alpha
+            }}'></fig-fill-picker>`
+          : `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"></fig-chit>`;
       }
-      
+
       html = `<div class="input-combo">
                 ${swatchElement}
                 ${label}
@@ -2140,8 +2144,12 @@ class FigInputColor extends HTMLElement {
         html = ``;
       } else {
         html = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${showAlpha ? "" : 'alpha="false"'} value='{"type":"solid","color":"${this.hexOpaque}"}'></fig-fill-picker>`
-          : `<fig-chit background="${this.hexOpaque}"></fig-chit>`;
+          ? `<fig-fill-picker mode="solid" ${
+              showAlpha ? "" : 'alpha="false"'
+            } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
+              this.alpha
+            }}'></fig-fill-picker>`
+          : `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"></fig-chit>`;
       }
     }
     this.innerHTML = html;
@@ -2163,8 +2171,14 @@ class FigInputColor extends HTMLElement {
         if (this.hasAttribute("disabled")) {
           this.#fillPicker.setAttribute("disabled", "");
         }
-        this.#fillPicker.addEventListener("input", this.#handleFillPickerInput.bind(this));
-        this.#fillPicker.addEventListener("change", this.#handleChange.bind(this));
+        this.#fillPicker.addEventListener(
+          "input",
+          this.#handleFillPickerInput.bind(this)
+        );
+        this.#fillPicker.addEventListener(
+          "change",
+          this.#handleChange.bind(this)
+        );
       }
 
       if (this.#textInput) {
@@ -2233,6 +2247,19 @@ class FigInputColor extends HTMLElement {
     const alpha = Math.round((alphaValue / 100) * 255);
     const alphaHex = alpha.toString(16).padStart(2, "0");
     this.#setValues(this.hexOpaque + alphaHex);
+    if (this.#swatch) {
+      this.#swatch.setAttribute("alpha", this.rgba.a);
+    }
+    if (this.#fillPicker) {
+      this.#fillPicker.setAttribute(
+        "value",
+        JSON.stringify({
+          type: "solid",
+          color: this.hexOpaque,
+          opacity: this.alpha,
+        })
+      );
+    }
     this.#emitInputEvent();
   }
 
@@ -2309,9 +2336,17 @@ class FigInputColor extends HTMLElement {
         }
         if (this.#swatch) {
           this.#swatch.setAttribute("background", this.hexOpaque);
+          this.#swatch.setAttribute("alpha", this.rgba.a);
         }
         if (this.#fillPicker) {
-          this.#fillPicker.setAttribute("value", JSON.stringify({ type: "solid", color: this.hexOpaque }));
+          this.#fillPicker.setAttribute(
+            "value",
+            JSON.stringify({
+              type: "solid",
+              color: this.hexOpaque,
+              opacity: this.alpha,
+            })
+          );
         }
         if (this.#alphaInput) {
           this.#alphaInput.setAttribute("value", this.alpha);
@@ -2788,6 +2823,7 @@ window.customElements.define("fig-combo-input", FigComboInput);
  * @attr {string} size - Size of the chip: "small" (default) or "large"
  * @attr {boolean} selected - Whether the chip shows a selection ring
  * @attr {boolean} disabled - Whether the chip is disabled
+ * @attr {number} alpha - Opacity value (0-1) to display the color with transparency
  */
 class FigChit extends HTMLElement {
   #type = "color"; // 'color', 'gradient', 'image'
@@ -2800,11 +2836,21 @@ class FigChit extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["background", "size", "selected", "disabled"];
+    return ["background", "size", "selected", "disabled", "alpha"];
   }
 
   connectedCallback() {
     this.#render();
+    this.#updateAlpha();
+  }
+
+  #updateAlpha() {
+    const alpha = this.getAttribute("alpha");
+    if (alpha !== null) {
+      this.style.setProperty("--alpha", alpha);
+    } else {
+      this.style.removeProperty("--alpha");
+    }
   }
 
   #detectType(bg) {
@@ -2893,6 +2939,20 @@ class FigChit extends HTMLElement {
         return;
       }
       this.#render();
+    } else if (name === "alpha") {
+      this.#updateAlpha();
+    }
+  }
+
+  get alpha() {
+    return this.getAttribute("alpha");
+  }
+
+  set alpha(value) {
+    if (value === null || value === undefined) {
+      this.removeAttribute("alpha");
+    } else {
+      this.setAttribute("alpha", value);
     }
   }
 }
@@ -3949,6 +4009,10 @@ class FigFillPicker extends HTMLElement {
           this.#color = parsed.color;
         }
       }
+      // Parse opacity (0-100) and convert to alpha (0-1)
+      if (parsed.opacity !== undefined) {
+        this.#color.a = parsed.opacity / 100;
+      }
       if (parsed.gradient)
         this.#gradient = { ...this.#gradient, ...parsed.gradient };
       if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
@@ -4009,6 +4073,13 @@ class FigFillPicker extends HTMLElement {
     this.#chit.setAttribute("background", bg);
     this.#chit.style.setProperty("--chit-bg-size", bgSize);
     this.#chit.style.setProperty("--chit-bg-position", bgPosition);
+
+    // For solid colors, also update the alpha
+    if (this.#fillType === "solid") {
+      this.#chit.setAttribute("alpha", this.#color.a);
+    } else {
+      this.#chit.removeAttribute("alpha");
+    }
   }
 
   #getBackgroundSizing(scaleMode, scale) {
@@ -4044,7 +4115,7 @@ class FigFillPicker extends HTMLElement {
     requestAnimationFrame(() => {
       this.#positionDialog();
       this.#dialog.setAttribute("closedby", "any");
-      
+
       // Second RAF ensures the dialog is visible and canvas is ready
       requestAnimationFrame(() => {
         this.#drawColorArea();
@@ -4133,7 +4204,9 @@ class FigFillPicker extends HTMLElement {
 
     // Build header content - dropdown or label
     const headerContent = lockedMode
-      ? `<span class="fig-fill-picker-type-label">${lockedMode.charAt(0).toUpperCase() + lockedMode.slice(1)}</span>`
+      ? `<span class="fig-fill-picker-type-label">${
+          lockedMode.charAt(0).toUpperCase() + lockedMode.slice(1)
+        }</span>`
       : `<fig-dropdown class="fig-fill-picker-type" value="${this.#fillType}">
           <option value="solid">Solid</option>
           <option value="gradient">Gradient</option>
@@ -4193,7 +4266,7 @@ class FigFillPicker extends HTMLElement {
     const mode = this.getAttribute("mode");
     const validModes = ["solid", "gradient", "image", "video", "webcam"];
     const lockedMode = validModes.includes(mode) ? mode : null;
-    
+
     if (lockedMode && tabName !== lockedMode) {
       return; // Don't allow switching away from locked mode
     }
@@ -4292,7 +4365,7 @@ class FigFillPicker extends HTMLElement {
     colorInput.addEventListener("input", (e) => {
       // Skip if we're dragging - prevents feedback loop that loses saturation for dark colors
       if (this.#isDraggingColor) return;
-      
+
       const hex = e.target.value;
       this.#color = { ...this.#hexToHSV(hex), a: this.#color.a };
       this.#drawColorArea();
@@ -4334,7 +4407,7 @@ class FigFillPicker extends HTMLElement {
 
     const ctx = this.#colorArea.getContext("2d");
     if (!ctx) return;
-    
+
     const width = this.#colorArea.width;
     const height = this.#colorArea.height;
 
