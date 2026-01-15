@@ -1079,6 +1079,98 @@
             
             <h4>No Picker with Alpha</h4>
             <fig-input-color value="#9747FF" text="true" alpha="true" picker="false"></fig-input-color>
+
+            <h3>Width Test (Resizable)</h3>
+            <p class="description">Drag the right edge of each container to test at different widths.</p>
+            
+            <style>
+                .resize-test {
+                    resize: horizontal;
+                    overflow: hidden;
+                    border: 1px dashed var(--figma-color-border);
+                    padding: 0.5rem;
+                    margin-bottom: 0.75rem;
+                    min-width: 60px;
+                    max-width: 100%;
+                    width: 200px;
+                    border-radius: 4px;
+                }
+                .resize-test fig-input-color {
+                    width: 100%;
+                }
+                .resize-test-label {
+                    font-size: 0.7rem;
+                    color: var(--figma-color-text-tertiary);
+                    margin-bottom: 0.25rem;
+                    font-family: monospace;
+                }
+            </style>
+
+            <h4>Swatch Only</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">value="#FF5733"</div>
+                <fig-input-color value="#FF5733"></fig-input-color>
+            </div>
+
+            <h4>Text Only</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">text="true"</div>
+                <fig-input-color value="#33FF57" text="true"></fig-input-color>
+            </div>
+
+            <h4>Text + Alpha</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">text="true" alpha="true"</div>
+                <fig-input-color value="#3357FF" text="true" alpha="true"></fig-input-color>
+            </div>
+
+            <h4>Picker="figma"</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">picker="figma"</div>
+                <fig-input-color value="#FF33A1" picker="figma"></fig-input-color>
+            </div>
+
+            <h4>Picker="figma" + Text</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">picker="figma" text="true"</div>
+                <fig-input-color value="#A133FF" picker="figma" text="true"></fig-input-color>
+            </div>
+
+            <h4>Picker="figma" + Text + Alpha</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">picker="figma" text="true" alpha="true"</div>
+                <fig-input-color value="#33FFA1" picker="figma" text="true" alpha="true"></fig-input-color>
+            </div>
+
+            <h4>Picker="false" + Text</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">picker="false" text="true"</div>
+                <fig-input-color value="#FFD700" picker="false" text="true"></fig-input-color>
+            </div>
+
+            <h4>Picker="false" + Text + Alpha</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">picker="false" text="true" alpha="true"</div>
+                <fig-input-color value="#00CED1" picker="false" text="true" alpha="true"></fig-input-color>
+            </div>
+
+            <h4>Full Attribute</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">text="true" alpha="true" full</div>
+                <fig-input-color value="#DC143C" text="true" alpha="true" full></fig-input-color>
+            </div>
+
+            <h4>With Alpha in Value (#RRGGBBAA)</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">value="#8B008B80" text="true" alpha="true"</div>
+                <fig-input-color value="#8B008B80" text="true" alpha="true"></fig-input-color>
+            </div>
+
+            <h4>Picker="native" + Text + Alpha</h4>
+            <div class="resize-test">
+                <div class="resize-test-label">picker="native" text="true" alpha="true"</div>
+                <fig-input-color value="#20B2AA" picker="native" text="true" alpha="true"></fig-input-color>
+            </div>
         </section>
         <hr>
 

@@ -2351,6 +2351,11 @@ fig-input-color {
       text-transform: uppercase;
     }
   }
+  & fig-chit:not(:only-child),
+  & fig-chit:not(:only-child) > input {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+  }
 
   & fig-input-text[type="number"],
   & fig-input-number {
