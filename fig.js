@@ -2203,6 +2203,10 @@ class FigInputColor extends HTMLElement {
           "input",
           this.#handleAlphaInput.bind(this)
         );
+        this.#alphaInput.addEventListener(
+          "change",
+          this.#handleChange.bind(this)
+        );
       }
     });
   }
@@ -2290,7 +2294,15 @@ class FigInputColor extends HTMLElement {
     event.stopPropagation();
     const detail = event.detail;
     if (detail && detail.color) {
-      this.#setValues(detail.color);
+      // Build hex value with alpha included
+      let hexValue = detail.color;
+      if (detail.alpha !== undefined) {
+        const alphaHex = Math.round(detail.alpha * 255)
+          .toString(16)
+          .padStart(2, "0");
+        hexValue = detail.color + alphaHex;
+      }
+      this.#setValues(hexValue);
       if (this.#textInput) {
         this.#textInput.setAttribute(
           "value",
@@ -2299,6 +2311,10 @@ class FigInputColor extends HTMLElement {
       }
       if (this.#alphaInput && detail.alpha !== undefined) {
         this.#alphaInput.setAttribute("value", Math.round(detail.alpha * 100));
+      }
+      if (this.#swatch) {
+        this.#swatch.setAttribute("background", this.hexOpaque);
+        this.#swatch.setAttribute("alpha", this.rgba.a);
       }
       this.#emitInputEvent();
     }
@@ -4347,6 +4363,9 @@ class FigFillPicker extends HTMLElement {
       this.#updateColorInputs();
       this.#emitInput();
     });
+    this.#hueSlider.addEventListener("change", () => {
+      this.#emitChange();
+    });
 
     // Setup opacity slider
     if (showAlpha) {
@@ -4357,6 +4376,9 @@ class FigFillPicker extends HTMLElement {
         this.#color.a = parseFloat(e.target.value) / 100;
         this.#updateColorInputs();
         this.#emitInput();
+      });
+      this.#opacitySlider.addEventListener("change", () => {
+        this.#emitChange();
       });
     }
 
@@ -4374,6 +4396,9 @@ class FigFillPicker extends HTMLElement {
         this.#hueSlider.setAttribute("value", this.#color.h);
       }
       this.#emitInput();
+    });
+    colorInput.addEventListener("change", () => {
+      this.#emitChange();
     });
 
     // Setup eyedropper
@@ -4480,6 +4505,7 @@ class FigFillPicker extends HTMLElement {
 
     this.#colorArea.addEventListener("pointerup", () => {
       this.#isDraggingColor = false;
+      this.#emitChange();
     });
 
     // Handle drag (for when handle is at corners)
@@ -4497,6 +4523,7 @@ class FigFillPicker extends HTMLElement {
 
     this.#colorAreaHandle.addEventListener("pointerup", () => {
       this.#isDraggingColor = false;
+      this.#emitChange();
     });
   }
 

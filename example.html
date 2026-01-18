@@ -605,6 +605,26 @@
                 <fig-chit background="#9747FF"
                           size="large"></fig-chit>
             </fig-field>
+            <fig-field direction="horizontal">
+                <label>Large (Gradient)</label>
+                <fig-chit background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                          size="large"></fig-chit>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Large (Radial)</label>
+                <fig-chit background="radial-gradient(circle, #ff6b6b, #4ecdc4)"
+                          size="large"></fig-chit>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Large (Angular)</label>
+                <fig-chit background="conic-gradient(from 0deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff0000)"
+                          size="large"></fig-chit>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Large (Image)</label>
+                <fig-chit background="url(https://avatars.githubusercontent.com/u/12345678?v=4)"
+                          size="large"></fig-chit>
+            </fig-field>
 
             <h3>States</h3>
             <fig-field direction="horizontal">
@@ -947,6 +967,9 @@
                 document.getElementById('fill-picker-events').addEventListener('input', (e) => {
                     document.getElementById('fill-picker-output').textContent = 'Input: ' + JSON.stringify(e.detail);
                 });
+                document.getElementById('fill-picker-events').addEventListener('change', (e) => {
+                    document.getElementById('fill-picker-output').textContent = 'Change: ' + JSON.stringify(e.detail);
+                });
             </script>
         </section>
         <hr>
@@ -1230,6 +1253,27 @@
                                  text="true"
                                  alpha="true"></fig-input-color>
             </div>
+
+            <h3>Event Listening</h3>
+            <fig-input-color id="input-color-events"
+                             value="#FF6B6B"
+                             text="true"
+                             alpha="true"
+                             picker="figma"></fig-input-color>
+            <p class="description"
+               id="input-color-output">Change the color above to see events.</p>
+            <script>
+                document.getElementById('input-color-events').addEventListener('input', (e) => {
+                    const el = e.target;
+                    document.getElementById('input-color-output').textContent =
+                        `Input: ${el.value} | Hex: ${el.hexOpaque} | Alpha: ${el.alpha}%`;
+                });
+                document.getElementById('input-color-events').addEventListener('change', (e) => {
+                    const el = e.target;
+                    document.getElementById('input-color-output').textContent =
+                        `Change: ${el.value} | Hex: ${el.hexOpaque} | Alpha: ${el.alpha}%`;
+                });
+            </script>
         </section>
         <hr>
 
