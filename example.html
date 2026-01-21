@@ -176,6 +176,7 @@
             <a href="#image">Image</a>
             <a href="#input-angle">Input Angle</a>
             <a href="#input-color">Input Color</a>
+            <a href="#input-fill">Input Fill</a>
             <a href="#input-joystick">Input Joystick</a>
             <a href="#input-number">Input Number</a>
             <a href="#input-text">Input Text</a>
@@ -1272,6 +1273,67 @@
                     const el = e.target;
                     document.getElementById('input-color-output').textContent =
                         `Change: ${el.value} | Hex: ${el.hexOpaque} | Alpha: ${el.alpha}%`;
+                });
+            </script>
+        </section>
+        <hr>
+
+        <!-- Input Fill -->
+        <section id="input-fill">
+            <h2>Input Fill</h2>
+            <p class="description">A fill input that supports solid colors, gradients, images, and videos. The UI adapts
+                based on the fill type.</p>
+
+            <h3>Solid Color (default)</h3>
+            <fig-input-fill value='{"type":"solid","color":"#9747FF","alpha":1}'></fig-input-fill>
+
+            <h3>Solid Color with 50% Opacity</h3>
+            <fig-input-fill value='{"type":"solid","color":"#FF6B6B","alpha":0.5}'></fig-input-fill>
+
+            <h3>Linear Gradient</h3>
+            <fig-input-fill
+                            value='{"type":"gradient","gradient":{"type":"linear","angle":180,"stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}'></fig-input-fill>
+
+            <h3>Radial Gradient</h3>
+            <fig-input-fill
+                            value='{"type":"gradient","gradient":{"type":"radial","centerX":50,"centerY":50,"stops":[{"position":0,"color":"#ff6b6b","opacity":100},{"position":100,"color":"#4ecdc4","opacity":100}]}}'></fig-input-fill>
+
+            <h3>Angular Gradient</h3>
+            <fig-input-fill
+                            value='{"type":"gradient","gradient":{"type":"angular","stops":[{"position":0,"color":"#ff0000","opacity":100},{"position":50,"color":"#00ff00","opacity":100},{"position":100,"color":"#0000ff","opacity":100}]}}'></fig-input-fill>
+
+            <h3>Image Fill</h3>
+            <fig-input-fill
+                            value='{"type":"image","image":{"url":"https://avatars.githubusercontent.com/u/12345678?v=4","scaleMode":"fill","scale":50,"opacity":1}}'></fig-input-fill>
+
+            <h3>Image Fill (50% Opacity)</h3>
+            <fig-input-fill
+                            value='{"type":"image","image":{"url":"https://avatars.githubusercontent.com/u/12345678?v=4","scaleMode":"fill","scale":50,"opacity":0.5}}'></fig-input-fill>
+
+            <h3>Video Fill</h3>
+            <fig-input-fill
+                            value='{"type":"video","video":{"url":null,"scaleMode":"fill","opacity":1}}'></fig-input-fill>
+
+            <h3>Webcam Fill</h3>
+            <fig-input-fill value='{"type":"webcam","webcam":{"opacity":1}}'></fig-input-fill>
+
+            <h3>Disabled</h3>
+            <fig-input-fill disabled
+                            value='{"type":"solid","color":"#AA96DA","alpha":1}'></fig-input-fill>
+
+            <h3>Event Listening</h3>
+            <fig-input-fill id="input-fill-events"
+                            value='{"type":"solid","color":"#4ECDC4","alpha":1}'></fig-input-fill>
+            <p class="description"
+               id="input-fill-output">Change the fill above to see events.</p>
+            <script>
+                document.getElementById('input-fill-events').addEventListener('input', (e) => {
+                    document.getElementById('input-fill-output').textContent =
+                        `Input: ${JSON.stringify(e.detail)}`;
+                });
+                document.getElementById('input-fill-events').addEventListener('change', (e) => {
+                    document.getElementById('input-fill-output').textContent =
+                        `Change: ${JSON.stringify(e.detail)}`;
                 });
             </script>
         </section>

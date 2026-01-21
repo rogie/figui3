@@ -1089,6 +1089,7 @@ fig-chit {
   --chit-background: #d9d9d9;
   --chit-bg-size: cover;
   --chit-bg-position: center;
+  --alpha:1;
 
   display: inline-grid;
   width: var(--size);
@@ -1145,6 +1146,7 @@ fig-chit {
       width: var(--size);
       height: var(--size);
       border-radius: var(--radius-medium);
+      
     }
   }
 
@@ -1168,6 +1170,15 @@ fig-chit {
       background-repeat: repeat;
       border-radius: 0.125rem;
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+      
+    }
+    &[data-type="image"]::after {
+      mask-image: linear-gradient(
+        to right,
+        black 0%,
+        black 50%,
+        rgba(0, 0, 0, var(--alpha)) 50%
+      );
     }
 
     &::after,
@@ -1265,6 +1276,11 @@ fig-image {
   align-items: center;
   gap: 1px;
 
+  & > label{
+    align-self: stretch;
+    color: inherit;
+  }
+
   & > * {
     &:first-child:not(:last-child),
     &:first-child:not(:last-child) > * {
@@ -1283,6 +1299,21 @@ fig-image {
       border-radius: 0;
     }
   }
+}
+
+/* Input Fill label */
+.fig-input-fill-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--spacer-2) 0 var(--spacer-1);
+  height: var(--control-height);
+  font-size: var(--font-size-small);
+  color: var(--figma-color-text-secondary);
+  background: var(--figma-color-bg-secondary);
+  flex: 1;
+  min-width: 0;
+  user-select: none;
+  margin-left: -1px;
 }
 
 /* Switch */
@@ -2259,9 +2290,7 @@ fig-input-number {
   user-select: all;
   gap: 0;
   min-width: 0;
-  width: 8rem; /* Default width */
-  flex-shrink: 1;
-  flex-grow: 0;
+  flex: 1;
   color: var(--figma-color-text);
 
   /* When inside a flex container (like fig-field), grow to fill */
@@ -2346,19 +2375,9 @@ fig-input-number {
   }
 }
 
-fig-input-color {
-  & fig-input-text:not([type]),
-  & fig-input-text[type="text"],
-  & fig-input-number {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: stretch;
+fig-input-color, 
+fig-input-fill {
 
-    & input[type="text"] {
-      width: 100%;
-      text-transform: uppercase;
-    }
-  }
   & > .input-combo > fig-chit:not(:only-child),
   & > .input-combo > fig-chit:not(:only-child) > input,
   & > .input-combo > fig-fill-picker:not(:only-child),
@@ -2368,18 +2387,20 @@ fig-input-color {
     border-bottom-right-radius: 0 !important;
   }
 
-  & fig-input-text[type="number"],
-  & fig-input-number {
-    width: 3rem;
-    display: inline-flex;
-  }
-  fig-input-text {
-    width: auto;
-  }
-  & > * {
+  & > .input-combo{
     flex: 1;
-    fig-input-text {
-      flex: 1;
+    min-width: 0;
+  }
+
+  fig-input-number {
+    flex: 0;
+    flex-basis: 3.25rem;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    .input-combo {
+      gap: 0;
+
     }
   }
 }
@@ -2391,7 +2412,6 @@ fig-slider {
     flex-grow: 1;
   }
 
-  & fig-input-text[type="number"],
   & fig-input-number {
     width: 5rem;
   }
@@ -2967,9 +2987,11 @@ fig-fill-picker {
   gap: var(--spacer-1);
   align-items: center;
 
-  .fig-fill-picker-stop-position {
-    width: 48px;
-    flex-shrink: 0;
+  & > .fig-fill-picker-stop-position {
+    flex: 0;
+    flex-basis: 3rem;
+    min-width: 0;
+    width: 3rem;
   }
 
   .fig-fill-picker-stop-color {

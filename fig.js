@@ -2480,6 +2480,632 @@ class FigInputColor extends HTMLElement {
 }
 window.customElements.define("fig-input-color", FigInputColor);
 
+/* Input Fill */
+/**
+ * A fill input that supports solid colors, gradients, images, and videos.
+ * @attr {string} value - JSON string with fill data
+ * @attr {boolean} disabled - Whether the input is disabled
+ * @fires input - When the fill value changes
+ * @fires change - When the fill value is committed
+ */
+class FigInputFill extends HTMLElement {
+  #fillType = "solid";
+  #fillPicker;
+  #opacityInput;
+  #hexInput;
+
+  // Fill data storage
+  #solid = { color: "#D9D9D9", alpha: 1 };
+  #gradient = {
+    type: "linear",
+    angle: 180,
+    stops: [
+      { position: 0, color: "#D9D9D9", opacity: 100 },
+      { position: 100, color: "#737373", opacity: 100 },
+    ],
+  };
+  #image = { url: null, scaleMode: "fill", scale: 50, opacity: 1 };
+  #video = { url: null, scaleMode: "fill", opacity: 1 };
+  #webcam = { snapshot: null, opacity: 1 };
+
+  constructor() {
+    super();
+  }
+
+  static get observedAttributes() {
+    return ["value", "disabled"];
+  }
+
+  connectedCallback() {
+    this.#parseValue();
+    this.#render();
+  }
+
+  #parseValue() {
+    const valueAttr = this.getAttribute("value");
+    if (!valueAttr) return;
+
+    try {
+      const parsed = JSON.parse(valueAttr);
+      if (parsed.type) this.#fillType = parsed.type;
+
+      switch (this.#fillType) {
+        case "solid":
+          if (parsed.color) this.#solid.color = parsed.color;
+          if (parsed.alpha !== undefined) this.#solid.alpha = parsed.alpha;
+          if (parsed.opacity !== undefined)
+            this.#solid.alpha = parsed.opacity / 100;
+          break;
+        case "gradient":
+          if (parsed.gradient) this.#gradient = { ...this.#gradient, ...parsed.gradient };
+          break;
+        case "image":
+          if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
+          break;
+        case "video":
+          if (parsed.video) this.#video = { ...this.#video, ...parsed.video };
+          break;
+        case "webcam":
+          if (parsed.webcam) this.#webcam = { ...this.#webcam, ...parsed.webcam };
+          if (parsed.opacity !== undefined) this.#webcam.opacity = parsed.opacity;
+          break;
+      }
+    } catch (e) {
+      // If not JSON, treat as hex color
+      if (valueAttr.startsWith("#")) {
+        this.#fillType = "solid";
+        this.#solid.color = valueAttr.slice(0, 7);
+        if (valueAttr.length > 7) {
+          const alphaHex = valueAttr.slice(7, 9);
+          this.#solid.alpha = parseInt(alphaHex, 16) / 255;
+        }
+      }
+    }
+  }
+
+  #render() {
+    const disabled = this.hasAttribute("disabled");
+    const fillPickerValue = JSON.stringify(this.value);
+
+    let controlsHtml = "";
+
+    switch (this.#fillType) {
+      case "solid":
+        controlsHtml = `
+          <fig-input-text 
+            type="text"
+            class="fig-input-fill-hex"
+            placeholder="000000"
+            value="${this.#solid.color.slice(1).toUpperCase()}"
+            ${disabled ? "disabled" : ""}>
+          </fig-input-text>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${Math.round(this.#solid.alpha * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+
+      case "gradient":
+        const gradientLabel = this.#gradient.type.charAt(0).toUpperCase() + this.#gradient.type.slice(1);
+        controlsHtml = `
+          <label class="fig-input-fill-label">${gradientLabel}</label>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${this.#gradient.stops[0]?.opacity || 100}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+
+      case "image":
+        controlsHtml = `
+          <label class="fig-input-fill-label">Image</label>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${Math.round((this.#image.opacity ?? 1) * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+
+      case "video":
+        controlsHtml = `
+          <label class="fig-input-fill-label">Video</label>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${Math.round((this.#video.opacity ?? 1) * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+
+      case "webcam":
+        controlsHtml = `
+          <label class="fig-input-fill-label">Webcam</label>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${Math.round((this.#webcam.opacity ?? 1) * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+    }
+
+    this.innerHTML = `
+      <div class="input-combo">
+        <fig-fill-picker value='${fillPickerValue}' ${disabled ? "disabled" : ""}></fig-fill-picker>
+        ${controlsHtml}
+      </div>`;
+
+    this.#setupEventListeners();
+  }
+
+  #setupEventListeners() {
+    requestAnimationFrame(() => {
+      this.#fillPicker = this.querySelector("fig-fill-picker");
+      this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
+      this.#hexInput = this.querySelector(".fig-input-fill-hex");
+      const label = this.querySelector(".fig-input-fill-label");
+
+      // Label click triggers fill picker
+      if (label && this.#fillPicker) {
+        label.addEventListener("click", () => {
+          const chit = this.#fillPicker.querySelector("fig-chit");
+          if (chit) {
+            chit.click();
+          }
+        });
+      }
+
+      if (this.#fillPicker) {
+        this.#fillPicker.addEventListener("input", (e) => {
+          e.stopPropagation();
+          const detail = e.detail;
+          if (!detail) return;
+
+          const newType = detail.type;
+          const typeChanged = newType !== this.#fillType;
+
+          // Update internal state
+          this.#fillType = newType;
+          switch (newType) {
+            case "solid":
+              this.#solid.color = detail.color;
+              this.#solid.alpha = detail.alpha;
+              break;
+            case "gradient":
+              if (detail.gradient) this.#gradient = detail.gradient;
+              break;
+            case "image":
+              if (detail.image) this.#image = detail.image;
+              break;
+            case "video":
+              if (detail.video) this.#video = detail.video;
+              break;
+          }
+
+          // Update controls (don't re-render to keep dialog open)
+          if (typeChanged) {
+            this.#updateControlsForType();
+          } else {
+            this.#updateControls();
+          }
+
+          this.#emitInput();
+        });
+
+        this.#fillPicker.addEventListener("change", (e) => {
+          e.stopPropagation();
+          this.#emitChange();
+        });
+      }
+
+      // Hex input (solid only)
+      if (this.#hexInput) {
+        this.#hexInput.addEventListener("input", (e) => {
+          e.stopPropagation();
+          const hex = "#" + e.target.value.replace("#", "");
+          this.#solid.color = hex;
+          this.#updateFillPicker();
+          this.#emitInput();
+        });
+        this.#hexInput.addEventListener("change", (e) => {
+          e.stopPropagation();
+          this.#emitChange();
+        });
+      }
+
+      // Opacity input (all fill types)
+      if (this.#opacityInput) {
+        this.#opacityInput.addEventListener("input", (e) => {
+          e.stopPropagation();
+          const parsed = parseFloat(e.target.value);
+          const opacity = isNaN(parsed) ? 100 : parsed;
+          const alpha = opacity / 100;
+          switch (this.#fillType) {
+            case "solid":
+              this.#solid.alpha = alpha;
+              break;
+            case "gradient":
+              // Apply to all stops
+              this.#gradient.stops.forEach((stop) => {
+                stop.opacity = opacity;
+              });
+              break;
+            case "image":
+              this.#image.opacity = alpha;
+              break;
+            case "video":
+              this.#video.opacity = alpha;
+              break;
+            case "webcam":
+              this.#webcam.opacity = alpha;
+              break;
+          }
+          this.#updateFillPicker();
+          // Update the chit's alpha
+          this.#updateChitAlpha(alpha);
+          this.#emitInput();
+        });
+        this.#opacityInput.addEventListener("change", (e) => {
+          e.stopPropagation();
+          this.#emitChange();
+        });
+      }
+
+    });
+  }
+
+  #updateControls() {
+    // Update UI controls without full re-render
+    switch (this.#fillType) {
+      case "solid":
+        if (this.#hexInput) {
+          this.#hexInput.setAttribute(
+            "value",
+            this.#solid.color.slice(1).toUpperCase()
+          );
+        }
+        if (this.#opacityInput) {
+          this.#opacityInput.setAttribute(
+            "value",
+            Math.round(this.#solid.alpha * 100)
+          );
+        }
+        break;
+      case "gradient":
+        if (this.#opacityInput) {
+          this.#opacityInput.setAttribute(
+            "value",
+            this.#gradient.stops[0]?.opacity || 100
+          );
+        }
+        break;
+      case "image":
+        if (this.#opacityInput) {
+          this.#opacityInput.setAttribute(
+            "value",
+            Math.round((this.#image.opacity ?? 1) * 100)
+          );
+        }
+        break;
+      case "video":
+        if (this.#opacityInput) {
+          this.#opacityInput.setAttribute(
+            "value",
+            Math.round((this.#video.opacity ?? 1) * 100)
+          );
+        }
+        break;
+      case "webcam":
+        if (this.#opacityInput) {
+          this.#opacityInput.setAttribute(
+            "value",
+            Math.round((this.#webcam.opacity ?? 1) * 100)
+          );
+        }
+        break;
+    }
+  }
+
+  #updateControlsForType() {
+    // Update only the controls (not the fill picker) when type changes
+    const disabled = this.hasAttribute("disabled");
+    const combo = this.querySelector(".input-combo");
+    if (!combo) return;
+
+    // Remove old controls (keep the fill picker)
+    const oldLabel = combo.querySelector(".fig-input-fill-label");
+    const oldHex = combo.querySelector(".fig-input-fill-hex");
+    const oldOpacity = combo.querySelector(".fig-input-fill-opacity");
+    const oldTooltips = combo.querySelectorAll("fig-tooltip");
+    
+    oldLabel?.remove();
+    oldHex?.remove();
+    oldTooltips.forEach(t => t.remove());
+
+    // Generate new controls HTML
+    let controlsHtml = "";
+    switch (this.#fillType) {
+      case "solid":
+        controlsHtml = `
+          <fig-input-text 
+            type="text"
+            class="fig-input-fill-hex"
+            placeholder="000000"
+            value="${this.#solid.color.slice(1).toUpperCase()}"
+            ${disabled ? "disabled" : ""}>
+          </fig-input-text>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${Math.round(this.#solid.alpha * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+      case "gradient":
+        const gradientLabel = this.#gradient.type.charAt(0).toUpperCase() + this.#gradient.type.slice(1);
+        controlsHtml = `
+          <label class="fig-input-fill-label">${gradientLabel}</label>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${this.#gradient.stops[0]?.opacity || 100}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+      case "image":
+        controlsHtml = `
+          <label class="fig-input-fill-label">Image</label>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${Math.round((this.#image.opacity ?? 1) * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+      case "video":
+        controlsHtml = `
+          <label class="fig-input-fill-label">Video</label>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${Math.round((this.#video.opacity ?? 1) * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+      case "webcam":
+        controlsHtml = `
+          <label class="fig-input-fill-label">Webcam</label>
+          <fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${Math.round((this.#webcam.opacity ?? 1) * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`;
+        break;
+    }
+
+    // Append new controls after the fill picker
+    combo.insertAdjacentHTML("beforeend", controlsHtml);
+
+    // Re-setup event listeners for the new controls
+    requestAnimationFrame(() => {
+      this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
+      this.#hexInput = this.querySelector(".fig-input-fill-hex");
+      const label = this.querySelector(".fig-input-fill-label");
+
+      // Label click triggers fill picker
+      if (label && this.#fillPicker) {
+        label.addEventListener("click", () => {
+          const chit = this.#fillPicker.querySelector("fig-chit");
+          if (chit) {
+            chit.click();
+          }
+        });
+      }
+
+      // Hex input (solid only)
+      if (this.#hexInput) {
+        this.#hexInput.addEventListener("input", (e) => {
+          e.stopPropagation();
+          const hex = "#" + e.target.value.replace("#", "");
+          this.#solid.color = hex;
+          this.#updateFillPicker();
+          this.#emitInput();
+        });
+        this.#hexInput.addEventListener("change", (e) => {
+          e.stopPropagation();
+          this.#emitChange();
+        });
+      }
+
+      // Opacity input
+      if (this.#opacityInput) {
+        this.#opacityInput.addEventListener("input", (e) => {
+          e.stopPropagation();
+          const parsed = parseFloat(e.target.value);
+          const opacity = isNaN(parsed) ? 100 : parsed;
+          const alpha = opacity / 100;
+          switch (this.#fillType) {
+            case "solid":
+              this.#solid.alpha = alpha;
+              break;
+            case "gradient":
+              this.#gradient.stops.forEach((stop) => {
+                stop.opacity = opacity;
+              });
+              break;
+            case "image":
+              this.#image.opacity = alpha;
+              break;
+            case "video":
+              this.#video.opacity = alpha;
+              break;
+            case "webcam":
+              this.#webcam.opacity = alpha;
+              break;
+          }
+          this.#updateFillPicker();
+          this.#updateChitAlpha(alpha);
+          this.#emitInput();
+        });
+        this.#opacityInput.addEventListener("change", (e) => {
+          e.stopPropagation();
+          this.#emitChange();
+        });
+      }
+    });
+  }
+
+  #updateFillPicker() {
+    if (this.#fillPicker) {
+      this.#fillPicker.setAttribute("value", JSON.stringify(this.value));
+    }
+  }
+
+  #updateChitAlpha(alpha) {
+    if (this.#fillPicker) {
+      const chit = this.#fillPicker.querySelector("fig-chit");
+      if (chit) {
+        chit.setAttribute("alpha", alpha);
+      }
+    }
+  }
+
+  #emitInput() {
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        detail: this.value,
+      })
+    );
+  }
+
+  #emitChange() {
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        detail: this.value,
+      })
+    );
+  }
+
+  get value() {
+    switch (this.#fillType) {
+      case "solid":
+        return {
+          type: "solid",
+          color: this.#solid.color,
+          alpha: this.#solid.alpha,
+          opacity: Math.round(this.#solid.alpha * 100), // FigFillPicker expects opacity 0-100
+        };
+      case "gradient":
+        return {
+          type: "gradient",
+          gradient: { ...this.#gradient },
+        };
+      case "image":
+        return {
+          type: "image",
+          image: { ...this.#image },
+        };
+      case "video":
+        return {
+          type: "video",
+          video: { ...this.#video },
+        };
+      case "webcam":
+        return {
+          type: "webcam",
+          webcam: { ...this.#webcam },
+        };
+      default:
+        return { type: this.#fillType };
+    }
+  }
+
+  set value(val) {
+    if (typeof val === "string") {
+      this.setAttribute("value", val);
+    } else {
+      this.setAttribute("value", JSON.stringify(val));
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    switch (name) {
+      case "value":
+        this.#parseValue();
+        if (this.#fillPicker) {
+          this.#render();
+        }
+        break;
+      case "disabled":
+        // Re-render to update disabled state
+        if (this.#fillPicker) {
+          this.#render();
+        }
+        break;
+    }
+  }
+}
+window.customElements.define("fig-input-fill", FigInputFill);
+
 /* Checkbox */
 /**
  * A custom checkbox input element.
