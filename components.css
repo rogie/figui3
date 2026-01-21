@@ -2308,14 +2308,6 @@ fig-input-number {
   flex: 1;
   color: var(--figma-color-text);
 
-  /* When inside a flex container (like fig-field), grow to fill */
-  fig-field &,
-  [style*="flex"] &,
-  [style*="display: flex"] & {
-    width: auto;
-    flex: 1 1 auto;
-  }
-
   &[multiline] {
     display: flex;
     width: 100%; /* Multiline defaults to full width */
@@ -2451,6 +2443,7 @@ fig-field,
 
   & > [full] {
     flex: 1;
+    flex: 1 1 auto;
   }
 
   & > label {
