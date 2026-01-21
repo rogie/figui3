@@ -157,7 +157,7 @@ class FigButton extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-button", FigButton);
+customElements.define("fig-button", FigButton);
 
 /**
  * A custom dropdown/select element.
@@ -339,12 +339,19 @@ class FigTooltip extends HTMLElement {
     let content = document.createElement("span");
     this.popup = document.createElement("span");
     this.popup.setAttribute("class", "fig-tooltip");
+    this.popup.setAttribute("role", "tooltip");
+    const tooltipId = figUniqueId();
+    this.popup.setAttribute("id", tooltipId);
     this.popup.style.position = "fixed";
     this.popup.style.visibility = "hidden";
     this.popup.style.display = "inline-flex";
     this.popup.style.pointerEvents = "none";
     this.popup.append(content);
     content.innerText = this.getAttribute("text");
+    // Set aria-describedby on the trigger element
+    if (this.firstElementChild) {
+      this.firstElementChild.setAttribute("aria-describedby", tooltipId);
+    }
 
     // If tooltip is inside a dialog, append to dialog to stay in top layer
     const parentDialog = this.closest("dialog");
@@ -897,6 +904,11 @@ class FigDialog extends HTMLDialogElement {
 }
 customElements.define("fig-dialog", FigDialog, { extends: "dialog" });
 
+/**
+ * A popover element using the native Popover API.
+ * @attr {string} trigger-action - The trigger action: "click" (default) or "hover"
+ * @attr {number} delay - Delay in ms before showing on hover (default: 0)
+ */
 class FigPopover2 extends HTMLElement {
   #popover;
   #trigger;
@@ -953,7 +965,7 @@ class FigPopover2 extends HTMLElement {
     }, this.#delay);
   }
 }
-window.customElements.define("fig-popover-2", FigPopover2);
+customElements.define("fig-popover-2", FigPopover2);
 
 /* Tabs */
 /**
@@ -970,16 +982,21 @@ class FigTab extends HTMLElement {
   }
   connectedCallback() {
     this.setAttribute("label", this.innerText);
+    this.setAttribute("role", "tab");
+    this.setAttribute("tabindex", "0");
     this.addEventListener("click", this.handleClick.bind(this));
 
     requestAnimationFrame(() => {
       if (typeof this.getAttribute("content") === "string") {
         this.content = document.querySelector(this.getAttribute("content"));
         if (this.content) {
+          this.content.setAttribute("role", "tabpanel");
           if (this.#selected) {
             this.content.style.display = "block";
+            this.setAttribute("aria-selected", "true");
           } else {
             this.content.style.display = "none";
+            this.setAttribute("aria-selected", "false");
           }
         }
       }
@@ -1007,13 +1024,14 @@ class FigTab extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "selected") {
       this.#selected = newValue !== null && newValue !== "false";
+      this.setAttribute("aria-selected", this.#selected ? "true" : "false");
       if (this?.content) {
         this.content.style.display = this.#selected ? "block" : "none";
       }
     }
   }
 }
-window.customElements.define("fig-tab", FigTab);
+customElements.define("fig-tab", FigTab);
 
 /**
  * A custom tabs container element.
@@ -1023,20 +1041,125 @@ class FigTabs extends HTMLElement {
   constructor() {
     super();
   }
+
+  static get observedAttributes() {
+    return ["value", "name", "disabled"];
+  }
+
   connectedCallback() {
     this.name = this.getAttribute("name") || "tabs";
+    this.setAttribute("role", "tablist");
     this.addEventListener("click", this.handleClick.bind(this));
+    this.addEventListener("keydown", this.#handleKeyDown.bind(this));
+    // Set initial selected tab based on value
+    const value = this.getAttribute("value");
+    if (value) {
+      this.#selectByValue(value);
+    }
+    // Apply disabled state
+    if (this.hasAttribute("disabled")) {
+      this.#applyDisabled(true);
+    }
   }
+
+  #applyDisabled(disabled) {
+    const tabs = this.querySelectorAll("fig-tab");
+    tabs.forEach((tab) => {
+      if (disabled) {
+        tab.setAttribute("disabled", "");
+        tab.setAttribute("aria-disabled", "true");
+        tab.setAttribute("tabindex", "-1");
+      } else {
+        tab.removeAttribute("disabled");
+        tab.removeAttribute("aria-disabled");
+        tab.setAttribute("tabindex", "0");
+      }
+    });
+  }
+
   disconnectedCallback() {
     this.removeEventListener("click", this.handleClick);
+    this.removeEventListener("keydown", this.#handleKeyDown);
   }
+
+  #handleKeyDown(event) {
+    const tabs = Array.from(this.querySelectorAll("fig-tab"));
+    const currentIndex = tabs.findIndex((tab) => tab.hasAttribute("selected"));
+    let newIndex = currentIndex;
+
+    switch (event.key) {
+      case "ArrowLeft":
+      case "ArrowUp":
+        event.preventDefault();
+        newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+        break;
+      case "ArrowRight":
+      case "ArrowDown":
+        event.preventDefault();
+        newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+        break;
+      case "Home":
+        event.preventDefault();
+        newIndex = 0;
+        break;
+      case "End":
+        event.preventDefault();
+        newIndex = tabs.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    if (newIndex !== currentIndex && tabs[newIndex]) {
+      tabs.forEach((tab) => tab.removeAttribute("selected"));
+      this.selectedTab = tabs[newIndex];
+      this.setAttribute("value", tabs[newIndex].getAttribute("value") || "");
+      tabs[newIndex].focus();
+    }
+  }
+
+  get value() {
+    return this.selectedTab?.getAttribute("value") || "";
+  }
+
+  set value(val) {
+    this.setAttribute("value", val);
+  }
+
+  #selectByValue(value) {
+    const tabs = this.querySelectorAll("fig-tab");
+    for (const tab of tabs) {
+      if (tab.getAttribute("value") === value) {
+        this.selectedTab = tab;
+      } else {
+        tab.removeAttribute("selected");
+      }
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "value":
+        if (newValue !== oldValue) {
+          this.#selectByValue(newValue);
+        }
+        break;
+      case "disabled":
+        this.#applyDisabled(newValue !== null && newValue !== "false");
+        break;
+    }
+  }
+
   handleClick(event) {
+    // Ignore clicks when disabled
+    if (this.hasAttribute("disabled")) return;
     const target = event.target;
     if (target.nodeName.toLowerCase() === "fig-tab") {
       const tabs = this.querySelectorAll("fig-tab");
       for (const tab of tabs) {
         if (tab === target) {
           this.selectedTab = tab;
+          this.setAttribute("value", tab.getAttribute("value") || "");
         } else {
           tab.removeAttribute("selected");
         }
@@ -1044,7 +1167,7 @@ class FigTabs extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-tabs", FigTabs);
+customElements.define("fig-tabs", FigTabs);
 
 /* Segmented Control */
 /**
@@ -1095,20 +1218,51 @@ class FigSegment extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-segment", FigSegment);
+customElements.define("fig-segment", FigSegment);
 
 /**
  * A custom segmented control container element.
  * @attr {string} name - Identifier for the segmented control group
  */
 class FigSegmentedControl extends HTMLElement {
+  #selectedSegment = null;
+
   constructor() {
     super();
   }
+
   connectedCallback() {
     this.name = this.getAttribute("name") || "segmented-control";
     this.addEventListener("click", this.handleClick.bind(this));
+    
+    // Ensure at least one segment is selected (default to first)
+    requestAnimationFrame(() => {
+      const segments = this.querySelectorAll("fig-segment");
+      const hasSelected = Array.from(segments).some((s) =>
+        s.hasAttribute("selected")
+      );
+      if (!hasSelected && segments.length > 0) {
+        this.selectedSegment = segments[0];
+      }
+    });
   }
+
+  get selectedSegment() {
+    return this.#selectedSegment;
+  }
+
+  set selectedSegment(segment) {
+    // Deselect previous
+    if (this.#selectedSegment) {
+      this.#selectedSegment.removeAttribute("selected");
+    }
+    // Select new
+    this.#selectedSegment = segment;
+    if (segment) {
+      segment.setAttribute("selected", "true");
+    }
+  }
+
   handleClick(event) {
     const target = event.target;
     if (target.nodeName.toLowerCase() === "fig-segment") {
@@ -1123,7 +1277,7 @@ class FigSegmentedControl extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-segmented-control", FigSegmentedControl);
+customElements.define("fig-segmented-control", FigSegmentedControl);
 
 /* Slider */
 /**
@@ -1150,7 +1304,9 @@ class FigSlider extends HTMLElement {
   };
 
   #boundHandleInput;
+  #boundHandleChange;
   #boundHandleTextInput;
+  #boundHandleTextChange;
 
   constructor() {
     super();
@@ -1162,9 +1318,19 @@ class FigSlider extends HTMLElement {
       this.#handleInput();
     };
 
+    this.#boundHandleChange = (e) => {
+      e.stopPropagation();
+      this.#handleChange();
+    };
+
     this.#boundHandleTextInput = (e) => {
       e.stopPropagation();
       this.#handleTextInput();
+    };
+
+    this.#boundHandleTextChange = (e) => {
+      e.stopPropagation();
+      this.#handleTextChange();
     };
   }
 
@@ -1188,7 +1354,7 @@ class FigSlider extends HTMLElement {
     }
 
     let html = "";
-    let slider = `<div class="fig-slider-input-container">
+    let slider = `<div class="fig-slider-input-container" role="group">
                 <input 
                     type="range"
                     ${this.disabled ? "disabled" : ""}
@@ -1196,7 +1362,10 @@ class FigSlider extends HTMLElement {
                     max="${this.max}"
                     step="${this.step}"
                     class="${this.type}"
-                    value="${this.value}">
+                    value="${this.value}"
+                    aria-valuemin="${this.min}"
+                    aria-valuemax="${this.max}"
+                    aria-valuenow="${this.value}">
                 ${this.initialInnerHTML}
             </div>`;
     if (this.text) {
@@ -1221,6 +1390,8 @@ class FigSlider extends HTMLElement {
       this.inputContainer = this.querySelector(".fig-slider-input-container");
       this.input.removeEventListener("input", this.#boundHandleInput);
       this.input.addEventListener("input", this.#boundHandleInput);
+      this.input.removeEventListener("change", this.#boundHandleChange);
+      this.input.addEventListener("change", this.#boundHandleChange);
 
       if (this.default) {
         this.style.setProperty(
@@ -1275,6 +1446,14 @@ class FigSlider extends HTMLElement {
           "input",
           this.#boundHandleTextInput
         );
+        this.figInputNumber.removeEventListener(
+          "change",
+          this.#boundHandleTextChange
+        );
+        this.figInputNumber.addEventListener(
+          "change",
+          this.#boundHandleTextChange
+        );
       }
 
       this.#syncValue();
@@ -1283,6 +1462,17 @@ class FigSlider extends HTMLElement {
 
   connectedCallback() {
     this.#regenerateInnerHTML();
+  }
+
+  disconnectedCallback() {
+    if (this.input) {
+      this.input.removeEventListener("input", this.#boundHandleInput);
+      this.input.removeEventListener("change", this.#boundHandleChange);
+    }
+    if (this.figInputNumber) {
+      this.figInputNumber.removeEventListener("input", this.#boundHandleTextInput);
+      this.figInputNumber.removeEventListener("change", this.#boundHandleTextChange);
+    }
   }
 
   #handleTextInput() {
@@ -1310,6 +1500,8 @@ class FigSlider extends HTMLElement {
     let val = this.input.value;
     this.value = val;
     this.#syncProperties();
+    // Update ARIA value
+    this.input.setAttribute("aria-valuenow", val);
     if (this.figInputNumber) {
       this.figInputNumber.setAttribute("value", val);
     }
@@ -1320,6 +1512,23 @@ class FigSlider extends HTMLElement {
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true })
     );
+  }
+
+  #handleChange() {
+    this.#syncValue();
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: this.value, bubbles: true })
+    );
+  }
+
+  #handleTextChange() {
+    if (this.figInputNumber) {
+      this.value = this.input.value = this.figInputNumber.value;
+      this.#syncProperties();
+      this.dispatchEvent(
+        new CustomEvent("change", { detail: this.value, bubbles: true })
+      );
+    }
   }
 
   static get observedAttributes() {
@@ -1384,7 +1593,7 @@ class FigSlider extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-slider", FigSlider);
+customElements.define("fig-slider", FigSlider);
 
 /**
  * A custom text input element.
@@ -1485,6 +1694,16 @@ class FigInputText extends HTMLElement {
       this.input.addEventListener("change", this.#boundInputChange);
     });
   }
+
+  disconnectedCallback() {
+    if (this.input) {
+      this.input.removeEventListener("change", this.#boundInputChange);
+    }
+    this.removeEventListener("pointerdown", this.#boundMouseDown);
+    window.removeEventListener("pointermove", this.#boundMouseMove);
+    window.removeEventListener("pointerup", this.#boundMouseUp);
+  }
+
   focus() {
     this.input.focus();
   }
@@ -1647,7 +1866,7 @@ class FigInputText extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-input-text", FigInputText);
+customElements.define("fig-input-text", FigInputText);
 
 /**
  * A custom numeric input element that uses type="text" with inputmode="decimal".
@@ -1767,6 +1986,18 @@ class FigInputNumber extends HTMLElement {
       this.input.removeEventListener("blur", this.#boundBlur);
       this.input.addEventListener("blur", this.#boundBlur);
     });
+  }
+
+  disconnectedCallback() {
+    if (this.input) {
+      this.input.removeEventListener("change", this.#boundInputChange);
+      this.input.removeEventListener("input", this.#boundInput);
+      this.input.removeEventListener("focus", this.#boundFocus);
+      this.input.removeEventListener("blur", this.#boundBlur);
+    }
+    this.removeEventListener("pointerdown", this.#boundMouseDown);
+    window.removeEventListener("pointermove", this.#boundMouseMove);
+    window.removeEventListener("pointerup", this.#boundMouseUp);
   }
 
   focus() {
@@ -2003,7 +2234,7 @@ class FigInputNumber extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-input-number", FigInputNumber);
+customElements.define("fig-input-number", FigInputNumber);
 
 /* Avatar */
 class FigAvatar extends HTMLElement {
@@ -2052,13 +2283,18 @@ class FigAvatar extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-avatar", FigAvatar);
+customElements.define("fig-avatar", FigAvatar);
 
 /* Form Field */
 class FigField extends HTMLElement {
   constructor() {
     super();
   }
+
+  static get observedAttributes() {
+    return ["direction", "label"];
+  }
+
   connectedCallback() {
     requestAnimationFrame(() => {
       this.label = this.querySelector(":scope>label");
@@ -2071,13 +2307,32 @@ class FigField extends HTMLElement {
         this.input.setAttribute("id", inputId);
         this.label.setAttribute("for", inputId);
       }
+      // Apply direction
+      const direction = this.getAttribute("direction");
+      if (direction) {
+        this.style.flexDirection = direction === "row" ? "row" : "column";
+      }
     });
   }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "direction":
+        this.style.flexDirection = newValue === "row" ? "row" : "column";
+        break;
+      case "label":
+        if (this.label) {
+          this.label.textContent = newValue;
+        }
+        break;
+    }
+  }
+
   focus() {
     this.input.focus();
   }
 }
-window.customElements.define("fig-field", FigField);
+customElements.define("fig-field", FigField);
 
 /* Color swatch */
 class FigInputColor extends HTMLElement {
@@ -2478,7 +2733,7 @@ class FigInputColor extends HTMLElement {
     return { r, g, b, a };
   }
 }
-window.customElements.define("fig-input-color", FigInputColor);
+customElements.define("fig-input-color", FigInputColor);
 
 /* Input Fill */
 /**
@@ -3104,7 +3359,7 @@ class FigInputFill extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-input-fill", FigInputFill);
+customElements.define("fig-input-fill", FigInputFill);
 
 /* Checkbox */
 /**
@@ -3116,18 +3371,20 @@ window.customElements.define("fig-input-fill", FigInputFill);
  * @attr {string} value - The value when checked
  */
 class FigCheckbox extends HTMLElement {
+  #labelElement = null;
+  
   constructor() {
     super();
     this.input = document.createElement("input");
     this.name = this.getAttribute("name") || "checkbox";
-    this.value = this.getAttribute("value") || "";
+    this.input.value = this.getAttribute("value") || "";
     this.input.setAttribute("id", figUniqueId());
     this.input.setAttribute("name", this.name);
     this.input.setAttribute("type", "checkbox");
-    this.labelElement = null;
+    this.input.setAttribute("role", "checkbox");
   }
   connectedCallback() {
-    this.checked = this.input.checked =
+    this.input.checked =
       this.hasAttribute("checked") && this.getAttribute("checked") !== "false";
     this.input.addEventListener("change", this.handleInput.bind(this));
 
@@ -3144,7 +3401,7 @@ class FigCheckbox extends HTMLElement {
     // Only create label if label attribute is present
     if (this.hasAttribute("label")) {
       this.#createLabel();
-      this.labelElement.innerText = this.getAttribute("label");
+      this.#labelElement.innerText = this.getAttribute("label");
     }
 
     this.render();
@@ -3154,17 +3411,17 @@ class FigCheckbox extends HTMLElement {
   }
 
   #createLabel() {
-    if (!this.labelElement) {
-      this.labelElement = document.createElement("label");
-      this.labelElement.setAttribute("for", this.input.id);
+    if (!this.#labelElement) {
+      this.#labelElement = document.createElement("label");
+      this.#labelElement.setAttribute("for", this.input.id);
     }
     // Add to DOM if not already there and input is in the DOM
     if (
-      this.labelElement &&
-      !this.labelElement.parentNode &&
+      this.#labelElement &&
+      !this.#labelElement.parentNode &&
       this.input.parentNode
     ) {
-      this.input.after(this.labelElement);
+      this.input.after(this.#labelElement);
     }
   }
 
@@ -3172,6 +3429,28 @@ class FigCheckbox extends HTMLElement {
 
   focus() {
     this.input.focus();
+  }
+
+  get value() {
+    return this.input.value;
+  }
+
+  set value(val) {
+    this.input.value = val;
+    this.setAttribute("value", val);
+  }
+
+  get checked() {
+    return this.input.checked;
+  }
+
+  set checked(val) {
+    this.input.checked = val;
+    if (val) {
+      this.setAttribute("checked", "");
+    } else {
+      this.removeAttribute("checked");
+    }
   }
 
   disconnectedCallback() {
@@ -3183,17 +3462,19 @@ class FigCheckbox extends HTMLElement {
       case "label":
         if (newValue) {
           this.#createLabel();
-          this.labelElement.innerText = newValue;
-        } else if (this.labelElement) {
-          this.labelElement.remove();
-          this.labelElement = null;
+          this.#labelElement.innerText = newValue;
+        } else if (this.#labelElement) {
+          this.#labelElement.remove();
+          this.#labelElement = null;
         }
         break;
       case "checked":
-        this.checked = this.input.checked =
+        this.input.checked =
           this.hasAttribute("checked") &&
           this.getAttribute("checked") !== "false";
-
+        break;
+      case "value":
+        this.input.value = newValue;
         break;
       default:
         this.input[name] = newValue;
@@ -3203,13 +3484,35 @@ class FigCheckbox extends HTMLElement {
   }
 
   handleInput(e) {
+    e.stopPropagation();
     this.input.indeterminate = false;
     this.input.removeAttribute("indeterminate");
-    this.value = this.input.value;
-    this.checked = this.input.checked;
+    // Update ARIA state
+    this.input.setAttribute("aria-checked", this.input.checked);
+    // Sync attribute with input state (without triggering setter loop)
+    if (this.input.checked) {
+      this.setAttribute("checked", "");
+    } else {
+      this.removeAttribute("checked");
+    }
+    // Emit both input and change events
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        composed: true,
+        detail: { checked: this.input.checked, value: this.input.value },
+      })
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        composed: true,
+        detail: { checked: this.input.checked, value: this.input.value },
+      })
+    );
   }
 }
-window.customElements.define("fig-checkbox", FigCheckbox);
+customElements.define("fig-checkbox", FigCheckbox);
 
 /* Radio */
 /**
@@ -3227,7 +3530,7 @@ class FigRadio extends FigCheckbox {
     this.input.setAttribute("name", this.getAttribute("name") || "radio");
   }
 }
-window.customElements.define("fig-radio", FigRadio);
+customElements.define("fig-radio", FigRadio);
 
 /* Switch */
 /**
@@ -3241,9 +3544,10 @@ window.customElements.define("fig-radio", FigRadio);
 class FigSwitch extends FigCheckbox {
   render() {
     this.input.setAttribute("class", "switch");
+    this.input.setAttribute("role", "switch");
   }
 }
-window.customElements.define("fig-switch", FigSwitch);
+customElements.define("fig-switch", FigSwitch);
 
 /* Toast */
 /**
@@ -3419,6 +3723,11 @@ class FigComboInput extends HTMLElement {
         "input",
         this.handleSelectInput.bind(this)
       );
+      
+      // Apply initial disabled state
+      if (this.hasAttribute("disabled")) {
+        this.#applyDisabled(true);
+      }
     });
   }
   handleSelectInput(e) {
@@ -3428,35 +3737,57 @@ class FigComboInput extends HTMLElement {
     this.value = this.input.value;
   }
   static get observedAttributes() {
-    return ["options", "placeholder", "value"];
+    return ["options", "placeholder", "value", "disabled"];
   }
   focus() {
     this.input.focus();
   }
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (name === "options") {
-      this.options = newValue.split(",");
-      if (this.dropdown) {
-        this.dropdown.innerHTML = this.options
-          .map((option) => `<option>${option}</option>`)
-          .join("");
+  #applyDisabled(disabled) {
+    if (this.input) {
+      if (disabled) {
+        this.input.setAttribute("disabled", "");
+      } else {
+        this.input.removeAttribute("disabled");
       }
     }
-    if (name === "placeholder") {
-      this.placeholder = newValue;
-      if (this.input) {
-        this.input.setAttribute("placeholder", newValue);
-      }
-    }
-    if (name === "value") {
-      this.value = newValue;
-      if (this.input) {
-        this.input.setAttribute("value", newValue);
+    const button = this.querySelector("fig-button");
+    if (button) {
+      if (disabled) {
+        button.setAttribute("disabled", "");
+      } else {
+        button.removeAttribute("disabled");
       }
     }
   }
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "options":
+        this.options = newValue.split(",");
+        if (this.dropdown) {
+          this.dropdown.innerHTML = this.options
+            .map((option) => `<option>${option}</option>`)
+            .join("");
+        }
+        break;
+      case "placeholder":
+        this.placeholder = newValue;
+        if (this.input) {
+          this.input.setAttribute("placeholder", newValue);
+        }
+        break;
+      case "value":
+        this.value = newValue;
+        if (this.input) {
+          this.input.setAttribute("value", newValue);
+        }
+        break;
+      case "disabled":
+        this.#applyDisabled(newValue !== null && newValue !== "false");
+        break;
+    }
+  }
 }
-window.customElements.define("fig-combo-input", FigComboInput);
+customElements.define("fig-combo-input", FigComboInput);
 
 /* Chit */
 /**
@@ -3598,7 +3929,7 @@ class FigChit extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-chit", FigChit);
+customElements.define("fig-chit", FigChit);
 
 /* Upload */
 /**
@@ -3799,7 +4130,7 @@ class FigImage extends HTMLElement {
     }
   }
 }
-window.customElements.define("fig-image", FigImage);
+customElements.define("fig-image", FigImage);
 
 /**
  * A custom joystick input element.

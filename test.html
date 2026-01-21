@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FigUI Component Tests</title>
+  <link rel="stylesheet" href="fig.css">
+  <style>
+    :root {
+      --figma-color-bg: #1e1e1e;
+      --figma-color-bg-secondary: #2c2c2c;
+      --figma-color-bg-tertiary: #383838;
+      --figma-color-bg-hover: #444;
+      --figma-color-text: #fff;
+      --figma-color-text-secondary: #b3b3b3;
+      --figma-color-text-tertiary: #808080;
+      --figma-color-border: #444;
+      --figma-color-border-selected: #0d99ff;
+      --figma-color-bg-brand: #0d99ff;
+      --figma-color-text-onbrand: #fff;
+      --figma-color-bg-danger: #f24822;
+      --figma-color-text-danger: #f24822;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--figma-color-bg);
+      color: var(--figma-color-text);
+      padding: 2rem;
+      margin: 0;
+    }
+    
+    h1 {
+      margin: 0 0 1rem;
+      font-size: 1.5rem;
+    }
+    
+    .test-summary {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: var(--figma-color-bg-secondary);
+      border-radius: 8px;
+    }
+    
+    .test-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem 1rem;
+    }
+    
+    .test-stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    
+    .test-stat-label {
+      font-size: 0.75rem;
+      color: var(--figma-color-text-secondary);
+      text-transform: uppercase;
+    }
+    
+    .test-stat.passed .test-stat-value { color: #30d158; }
+    .test-stat.failed .test-stat-value { color: #f24822; }
+    .test-stat.skipped .test-stat-value { color: #ff9f0a; }
+    
+    .test-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .test-group-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      background: var(--figma-color-bg-tertiary);
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .test-group-header:hover {
+      background: var(--figma-color-bg-hover);
+    }
+    
+    .test-group-name {
+      flex: 1;
+      font-weight: 600;
+    }
+    
+    .test-group-count {
+      font-size: 0.875rem;
+      color: var(--figma-color-text-secondary);
+    }
+    
+    .test-group-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .test-group-status.passed { background: #30d158; }
+    .test-group-status.failed { background: #f24822; }
+    
+    .test-list {
+      margin-top: 0.5rem;
+      padding-left: 1rem;
+    }
+    
+    .test-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      font-size: 0.875rem;
+    }
+    
+    .test-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    .test-icon.passed { color: #30d158; }
+    .test-icon.failed { color: #f24822; }
+    .test-icon.skipped { color: #ff9f0a; }
+    
+    .test-name {
+      flex: 1;
+    }
+    
+    .test-error {
+      color: #f24822;
+      font-size: 0.75rem;
+      margin-left: 1.5rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(242, 72, 34, 0.1);
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    .test-duration {
+      color: var(--figma-color-text-tertiary);
+      font-size: 0.75rem;
+    }
+    
+    #test-container {
+      position: fixed;
+      top: -9999px;
+      left: -9999px;
+      visibility: hidden;
+    }
+    
+    .run-button {
+      background: var(--figma-color-bg-brand);
+      color: var(--figma-color-text-onbrand);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    
+    .run-button:hover {
+      filter: brightness(1.1);
+    }
+    
+    .run-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>FigUI Component Tests</h1>
+  
+  <button class="run-button" id="run-tests">Run Tests</button>
+  
+  <div class="test-summary" id="summary">
+    <div class="test-stat passed">
+      <span class="test-stat-value" id="passed-count">0</span>
+      <span class="test-stat-label">Passed</span>
+    </div>
+    <div class="test-stat failed">
+      <span class="test-stat-value" id="failed-count">0</span>
+      <span class="test-stat-label">Failed</span>
+    </div>
+    <div class="test-stat skipped">
+      <span class="test-stat-value" id="skipped-count">0</span>
+      <span class="test-stat-label">Skipped</span>
+    </div>
+    <div class="test-stat">
+      <span class="test-stat-value" id="total-count">0</span>
+      <span class="test-stat-label">Total</span>
+    </div>
+  </div>
+  
+  <div id="results"></div>
+  
+  <!-- Hidden container for test elements -->
+  <div id="test-container"></div>
+  
+  <script src="fig.js"></script>
+  <script>
+    // Simple Test Framework
+    class TestRunner {
+      constructor() {
+        this.groups = [];
+        this.currentGroup = null;
+        this.container = document.getElementById('test-container');
+        this.results = { passed: 0, failed: 0, skipped: 0, total: 0 };
+      }
+      
+      describe(name, fn) {
+        this.currentGroup = { name, tests: [] };
+        this.groups.push(this.currentGroup);
+        fn();
+        this.currentGroup = null;
+      }
+      
+      it(name, fn) {
+        if (this.currentGroup) {
+          this.currentGroup.tests.push({ name, fn });
+        }
+      }
+      
+      skip(name, fn) {
+        if (this.currentGroup) {
+          this.currentGroup.tests.push({ name, fn, skipped: true });
+        }
+      }
+      
+      createElement(tag, attrs = {}) {
+        const el = document.createElement(tag);
+        for (const [key, value] of Object.entries(attrs)) {
+          el.setAttribute(key, value);
+        }
+        this.container.appendChild(el);
+        return el;
+      }
+      
+      cleanup() {
+        this.container.innerHTML = '';
+      }
+      
+      async waitFrame() {
+        return new Promise(resolve => requestAnimationFrame(resolve));
+      }
+      
+      async waitFrames(n = 2) {
+        for (let i = 0; i < n; i++) {
+          await this.waitFrame();
+        }
+      }
+      
+      async run() {
+        this.results = { passed: 0, failed: 0, skipped: 0, total: 0 };
+        const resultsEl = document.getElementById('results');
+        resultsEl.innerHTML = '';
+        
+        for (const group of this.groups) {
+          const groupEl = document.createElement('div');
+          groupEl.className = 'test-group';
+          
+          const headerEl = document.createElement('div');
+          headerEl.className = 'test-group-header';
+          
+          const statusEl = document.createElement('div');
+          statusEl.className = 'test-group-status';
+          
+          const nameEl = document.createElement('span');
+          nameEl.className = 'test-group-name';
+          nameEl.textContent = group.name;
+          
+          const countEl = document.createElement('span');
+          countEl.className = 'test-group-count';
+          
+          headerEl.appendChild(statusEl);
+          headerEl.appendChild(nameEl);
+          headerEl.appendChild(countEl);
+          groupEl.appendChild(headerEl);
+          
+          const listEl = document.createElement('div');
+          listEl.className = 'test-list';
+          groupEl.appendChild(listEl);
+          
+          let groupPassed = 0;
+          let groupFailed = 0;
+          
+          for (const test of group.tests) {
+            this.results.total++;
+            const testEl = document.createElement('div');
+            
+            if (test.skipped) {
+              this.results.skipped++;
+              testEl.innerHTML = `
+                <div class="test-item">
+                  <span class="test-icon skipped">⊘</span>
+                  <span class="test-name">${test.name}</span>
+                </div>
+              `;
+            } else {
+              try {
+                this.cleanup();
+                await test.fn();
+                this.results.passed++;
+                groupPassed++;
+                testEl.innerHTML = `
+                  <div class="test-item">
+                    <span class="test-icon passed">✓</span>
+                    <span class="test-name">${test.name}</span>
+                  </div>
+                `;
+              } catch (error) {
+                this.results.failed++;
+                groupFailed++;
+                testEl.innerHTML = `
+                  <div class="test-item">
+                    <span class="test-icon failed">✗</span>
+                    <span class="test-name">${test.name}</span>
+                  </div>
+                  <div class="test-error">${error.message}</div>
+                `;
+                console.error(`Test failed: ${group.name} > ${test.name}`, error);
+              }
+            }
+            
+            listEl.appendChild(testEl);
+          }
+          
+          countEl.textContent = `${groupPassed}/${group.tests.length}`;
+          statusEl.className = `test-group-status ${groupFailed > 0 ? 'failed' : 'passed'}`;
+          
+          // Toggle visibility
+          headerEl.addEventListener('click', () => {
+            listEl.style.display = listEl.style.display === 'none' ? 'block' : 'none';
+          });
+          
+          resultsEl.appendChild(groupEl);
+        }
+        
+        // Update summary
+        document.getElementById('passed-count').textContent = this.results.passed;
+        document.getElementById('failed-count').textContent = this.results.failed;
+        document.getElementById('skipped-count').textContent = this.results.skipped;
+        document.getElementById('total-count').textContent = this.results.total;
+        
+        this.cleanup();
+      }
+    }
+    
+    // Assertion helpers
+    function assert(condition, message = 'Assertion failed') {
+      if (!condition) throw new Error(message);
+    }
+    
+    function assertEqual(actual, expected, message = '') {
+      if (actual !== expected) {
+        throw new Error(`${message} Expected "${expected}", got "${actual}"`);
+      }
+    }
+    
+    function assertExists(value, message = 'Value should exist') {
+      if (value === null || value === undefined) {
+        throw new Error(message);
+      }
+    }
+    
+    function assertHasAttribute(el, attr, message = '') {
+      if (!el.hasAttribute(attr)) {
+        throw new Error(message || `Element should have attribute "${attr}"`);
+      }
+    }
+    
+    function assertNotHasAttribute(el, attr, message = '') {
+      if (el.hasAttribute(attr)) {
+        throw new Error(message || `Element should not have attribute "${attr}"`);
+      }
+    }
+    
+    // Initialize test runner
+    const test = new TestRunner();
+    
+    // ============================================
+    // FIG-BUTTON TESTS
+    // ============================================
+    test.describe('fig-button', () => {
+      test.it('should render with shadow DOM', async () => {
+        const btn = test.createElement('fig-button');
+        btn.textContent = 'Test';
+        await test.waitFrames();
+        assertExists(btn.shadowRoot, 'Should have shadow root');
+      });
+      
+      test.it('should reflect disabled attribute', async () => {
+        const btn = test.createElement('fig-button', { disabled: '' });
+        btn.textContent = 'Disabled';
+        await test.waitFrames();
+        assert(btn.hasAttribute('disabled'), 'Should have disabled attribute');
+      });
+      
+      test.it('should handle type="toggle" and toggle selected', async () => {
+        const btn = test.createElement('fig-button', { type: 'toggle' });
+        btn.textContent = 'Toggle';
+        await test.waitFrames();
+        btn.click();
+        await test.waitFrames();
+        assertHasAttribute(btn, 'selected', 'Should be selected after click');
+      });
+    });
+    
+    // ============================================
+    // FIG-DROPDOWN TESTS
+    // ============================================
+    test.describe('fig-dropdown', () => {
+      test.it('should render with options', async () => {
+        const dd = test.createElement('fig-dropdown');
+        dd.innerHTML = '<option value="a">Option A</option><option value="b">Option B</option>';
+        await test.waitFrames();
+        assertEqual(dd.value, 'a', 'Should have first option as value');
+      });
+      
+      test.it('should have value getter/setter', async () => {
+        const dd = test.createElement('fig-dropdown');
+        dd.innerHTML = '<option value="a">A</option><option value="b">B</option>';
+        await test.waitFrames();
+        dd.value = 'b';
+        assertEqual(dd.value, 'b', 'Value should be updated');
+      });
+    });
+    
+    // ============================================
+    // FIG-TOOLTIP TESTS
+    // ============================================
+    test.describe('fig-tooltip', () => {
+      test.it('should have role="tooltip" on popup', async () => {
+        const tt = test.createElement('fig-tooltip', { text: 'Hello' });
+        tt.innerHTML = '<button>Hover me</button>';
+        await test.waitFrames();
+        tt.render();
+        assertExists(tt.popup, 'Should have popup');
+        assertEqual(tt.popup.getAttribute('role'), 'tooltip', 'Popup should have role="tooltip"');
+      });
+    });
+    
+    // ============================================
+    // FIG-TAB / FIG-TABS TESTS
+    // ============================================
+    test.describe('fig-tabs', () => {
+      test.it('should have role="tablist"', async () => {
+        const tabs = test.createElement('fig-tabs');
+        tabs.innerHTML = '<fig-tab value="1">Tab 1</fig-tab><fig-tab value="2">Tab 2</fig-tab>';
+        await test.waitFrames();
+        assertEqual(tabs.getAttribute('role'), 'tablist', 'Should have role="tablist"');
+      });
+      
+      test.it('child tabs should have role="tab"', async () => {
+        const tabs = test.createElement('fig-tabs');
+        tabs.innerHTML = '<fig-tab value="1">Tab 1</fig-tab>';
+        await test.waitFrames();
+        const tab = tabs.querySelector('fig-tab');
+        assertEqual(tab.getAttribute('role'), 'tab', 'Tab should have role="tab"');
+      });
+      
+      test.it('should have value getter/setter', async () => {
+        const tabs = test.createElement('fig-tabs');
+        tabs.innerHTML = '<fig-tab value="a">A</fig-tab><fig-tab value="b">B</fig-tab>';
+        await test.waitFrames();
+        tabs.value = 'b';
+        await test.waitFrames();
+        const selectedTab = tabs.querySelector('fig-tab[selected]');
+        assertEqual(selectedTab?.getAttribute('value'), 'b', 'Tab B should be selected');
+      });
+      
+      test.it('should support disabled attribute', async () => {
+        const tabs = test.createElement('fig-tabs', { disabled: '' });
+        tabs.innerHTML = '<fig-tab value="1">Tab 1</fig-tab>';
+        await test.waitFrames();
+        const tab = tabs.querySelector('fig-tab');
+        assertHasAttribute(tab, 'disabled', 'Child tabs should be disabled');
+      });
+    });
+    
+    // ============================================
+    // FIG-SEGMENT / FIG-SEGMENTED-CONTROL TESTS
+    // ============================================
+    test.describe('fig-segmented-control', () => {
+      test.it('should auto-select first segment if none selected', async () => {
+        const ctrl = test.createElement('fig-segmented-control');
+        ctrl.innerHTML = '<fig-segment value="a">A</fig-segment><fig-segment value="b">B</fig-segment>';
+        await test.waitFrames(3);
+        const firstSeg = ctrl.querySelector('fig-segment');
+        assertHasAttribute(firstSeg, 'selected', 'First segment should be auto-selected');
+      });
+      
+      test.it('should respect pre-selected segment', async () => {
+        const ctrl = test.createElement('fig-segmented-control');
+        ctrl.innerHTML = '<fig-segment value="a">A</fig-segment><fig-segment value="b" selected="true">B</fig-segment>';
+        await test.waitFrames(3);
+        const secondSeg = ctrl.querySelectorAll('fig-segment')[1];
+        assertHasAttribute(secondSeg, 'selected', 'Second segment should remain selected');
+      });
+      
+      test.it('should have selectedSegment getter', async () => {
+        const ctrl = test.createElement('fig-segmented-control');
+        ctrl.innerHTML = '<fig-segment value="a">A</fig-segment>';
+        await test.waitFrames(3);
+        assertExists(ctrl.selectedSegment, 'Should have selectedSegment');
+      });
+    });
+    
+    // ============================================
+    // FIG-SLIDER TESTS
+    // ============================================
+    test.describe('fig-slider', () => {
+      test.it('should render with correct ARIA attributes', async () => {
+        const slider = test.createElement('fig-slider', { min: '0', max: '100', value: '50' });
+        await test.waitFrames();
+        const input = slider.querySelector('input[type="range"]');
+        assertExists(input, 'Should have range input');
+        assertEqual(input.getAttribute('aria-valuemin'), '0', 'Should have aria-valuemin');
+        assertEqual(input.getAttribute('aria-valuemax'), '100', 'Should have aria-valuemax');
+        assertEqual(input.getAttribute('aria-valuenow'), '50', 'Should have aria-valuenow');
+      });
+      
+      test.it('should emit input and change events', async () => {
+        const slider = test.createElement('fig-slider', { value: '50' });
+        await test.waitFrames();
+        
+        let inputFired = false;
+        let changeFired = false;
+        slider.addEventListener('input', () => inputFired = true);
+        slider.addEventListener('change', () => changeFired = true);
+        
+        const input = slider.querySelector('input');
+        input.value = '75';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        assert(inputFired, 'Input event should fire');
+        assert(changeFired, 'Change event should fire');
+      });
+    });
+    
+    // ============================================
+    // FIG-INPUT-TEXT TESTS
+    // ============================================
+    test.describe('fig-input-text', () => {
+      test.it('should render input element', async () => {
+        const input = test.createElement('fig-input-text', { value: 'test', placeholder: 'Enter text' });
+        await test.waitFrames();
+        const inputEl = input.querySelector('input');
+        assertExists(inputEl, 'Should have input element');
+        assertEqual(inputEl.value, 'test', 'Should have correct value');
+      });
+      
+      test.it('should support disabled attribute', async () => {
+        const input = test.createElement('fig-input-text', { disabled: '' });
+        await test.waitFrames();
+        const inputEl = input.querySelector('input');
+        assert(inputEl.disabled, 'Input should be disabled');
+      });
+    });
+    
+    // ============================================
+    // FIG-INPUT-NUMBER TESTS
+    // ============================================
+    test.describe('fig-input-number', () => {
+      test.it('should render with units', async () => {
+        const input = test.createElement('fig-input-number', { value: '50', units: '%' });
+        await test.waitFrames();
+        const inputEl = input.querySelector('input');
+        assertExists(inputEl, 'Should have input element');
+        assert(inputEl.value.includes('50'), 'Should display value');
+        assert(inputEl.value.includes('%'), 'Should display units');
+      });
+      
+      test.it('should have min/max constraints', async () => {
+        const input = test.createElement('fig-input-number', { min: '0', max: '100', value: '50' });
+        await test.waitFrames();
+        assertEqual(input.min, 0, 'Should have min');
+        assertEqual(input.max, 100, 'Should have max');
+      });
+    });
+    
+    // ============================================
+    // FIG-CHECKBOX TESTS
+    // ============================================
+    test.describe('fig-checkbox', () => {
+      test.it('should render checkbox input', async () => {
+        const cb = test.createElement('fig-checkbox');
+        await test.waitFrames();
+        const input = cb.querySelector('input[type="checkbox"]');
+        assertExists(input, 'Should have checkbox input');
+        assertEqual(input.getAttribute('role'), 'checkbox', 'Should have role="checkbox"');
+      });
+      
+      test.it('should have checked getter/setter', async () => {
+        const cb = test.createElement('fig-checkbox');
+        await test.waitFrames();
+        cb.checked = true;
+        assert(cb.checked, 'Should be checked');
+        assertHasAttribute(cb, 'checked', 'Should have checked attribute');
+      });
+      
+      test.it('should have value getter/setter', async () => {
+        const cb = test.createElement('fig-checkbox', { value: 'test-value' });
+        await test.waitFrames();
+        assertEqual(cb.value, 'test-value', 'Should have correct value');
+      });
+      
+      test.it('should emit input and change events', async () => {
+        const cb = test.createElement('fig-checkbox');
+        await test.waitFrames();
+        
+        let inputFired = false;
+        let changeFired = false;
+        cb.addEventListener('input', () => inputFired = true);
+        cb.addEventListener('change', () => changeFired = true);
+        
+        const input = cb.querySelector('input');
+        input.click();
+        
+        assert(inputFired, 'Input event should fire');
+        assert(changeFired, 'Change event should fire');
+      });
+    });
+    
+    // ============================================
+    // FIG-SWITCH TESTS
+    // ============================================
+    test.describe('fig-switch', () => {
+      test.it('should have role="switch"', async () => {
+        const sw = test.createElement('fig-switch');
+        await test.waitFrames();
+        const input = sw.querySelector('input');
+        assertEqual(input.getAttribute('role'), 'switch', 'Should have role="switch"');
+      });
+    });
+    
+    // ============================================
+    // FIG-RADIO TESTS
+    // ============================================
+    test.describe('fig-radio', () => {
+      test.it('should render radio input', async () => {
+        const radio = test.createElement('fig-radio', { name: 'test-group' });
+        await test.waitFrames();
+        const input = radio.querySelector('input[type="radio"]');
+        assertExists(input, 'Should have radio input');
+        assertEqual(input.name, 'test-group', 'Should have correct name');
+      });
+    });
+    
+    // ============================================
+    // FIG-COMBO-INPUT TESTS
+    // ============================================
+    test.describe('fig-combo-input', () => {
+      test.it('should render with options', async () => {
+        const combo = test.createElement('fig-combo-input', { options: 'a,b,c', placeholder: 'Select' });
+        await test.waitFrames();
+        const input = combo.querySelector('fig-input-text');
+        const dropdown = combo.querySelector('fig-dropdown');
+        assertExists(input, 'Should have text input');
+        assertExists(dropdown, 'Should have dropdown');
+      });
+      
+      test.it('should support disabled attribute', async () => {
+        const combo = test.createElement('fig-combo-input', { options: 'a,b', disabled: '' });
+        await test.waitFrames(3);
+        const input = combo.querySelector('fig-input-text');
+        assertHasAttribute(input, 'disabled', 'Input should be disabled');
+      });
+    });
+    
+    // ============================================
+    // FIG-CHIT TESTS
+    // ============================================
+    test.describe('fig-chit', () => {
+      test.it('should render with background color', async () => {
+        const chit = test.createElement('fig-chit', { background: '#ff0000' });
+        await test.waitFrames();
+        assertEqual(chit.background, '#ff0000', 'Should have correct background');
+      });
+      
+      test.it('should support alpha attribute', async () => {
+        const chit = test.createElement('fig-chit', { background: '#ff0000', alpha: '0.5' });
+        await test.waitFrames();
+        const alphaStyle = chit.style.getPropertyValue('--alpha');
+        assertEqual(alphaStyle, '0.5', 'Should have alpha CSS variable');
+      });
+    });
+    
+    // ============================================
+    // FIG-INPUT-COLOR TESTS
+    // ============================================
+    test.describe('fig-input-color', () => {
+      test.it('should parse hex color', async () => {
+        const input = test.createElement('fig-input-color', { value: '#ff0000', text: 'true' });
+        await test.waitFrames();
+        assertEqual(input.hexOpaque, '#FF0000', 'Should have correct hex');
+      });
+      
+      test.it('should support alpha in hex', async () => {
+        const input = test.createElement('fig-input-color', { value: '#ff000080', text: 'true', alpha: 'true' });
+        await test.waitFrames();
+        assert(input.alpha < 100, 'Alpha should be less than 100');
+      });
+    });
+    
+    // ============================================
+    // FIG-INPUT-FILL TESTS
+    // ============================================
+    test.describe('fig-input-fill', () => {
+      test.it('should parse solid fill', async () => {
+        const fill = test.createElement('fig-input-fill', { 
+          value: '{"type":"solid","color":"#ff0000","opacity":100}' 
+        });
+        await test.waitFrames();
+        const value = fill.value;
+        assertEqual(value.type, 'solid', 'Should be solid type');
+        assertEqual(value.color, '#ff0000', 'Should have correct color');
+      });
+      
+      test.it('should parse gradient fill', async () => {
+        const fill = test.createElement('fig-input-fill', { 
+          value: '{"type":"linear","angle":90,"stops":[{"color":"#ff0000","position":0},{"color":"#0000ff","position":100}]}' 
+        });
+        await test.waitFrames();
+        const value = fill.value;
+        assertEqual(value.type, 'linear', 'Should be linear type');
+      });
+    });
+    
+    // ============================================
+    // FIG-INPUT-JOYSTICK TESTS
+    // ============================================
+    test.describe('fig-input-joystick', () => {
+      test.it('should initialize with default position', async () => {
+        const joy = test.createElement('fig-input-joystick');
+        await test.waitFrames();
+        const value = joy.value;
+        assertEqual(value[0], 50, 'X should be 50');
+        assertEqual(value[1], 50, 'Y should be 50');
+      });
+      
+      test.it('should have focusable plane', async () => {
+        const joy = test.createElement('fig-input-joystick');
+        await test.waitFrames();
+        const plane = joy.querySelector('.fig-input-joystick-plane-container');
+        assertEqual(plane.getAttribute('tabindex'), '0', 'Should be focusable');
+      });
+    });
+    
+    // ============================================
+    // FIG-INPUT-ANGLE TESTS
+    // ============================================
+    test.describe('fig-input-angle', () => {
+      test.it('should initialize with value', async () => {
+        const angle = test.createElement('fig-input-angle', { value: '45' });
+        await test.waitFrames();
+        assertEqual(angle.value, 45, 'Should have correct angle');
+      });
+      
+      test.it('should have value getter/setter', async () => {
+        const angle = test.createElement('fig-input-angle');
+        await test.waitFrames();
+        angle.value = 90;
+        assertEqual(angle.value, 90, 'Should update angle');
+      });
+    });
+    
+    // ============================================
+    // FIG-FIELD TESTS
+    // ============================================
+    test.describe('fig-field', () => {
+      test.it('should link label to input', async () => {
+        const field = test.createElement('fig-field');
+        field.innerHTML = '<label>Name</label><fig-input-text></fig-input-text>';
+        await test.waitFrames();
+        const label = field.querySelector('label');
+        const input = field.querySelector('fig-input-text');
+        assertEqual(label.getAttribute('for'), input.getAttribute('id'), 'Label should be linked to input');
+      });
+    });
+    
+    // ============================================
+    // FIG-TOAST TESTS
+    // ============================================
+    test.describe('fig-toast', () => {
+      test.it('should have duration attribute', async () => {
+        const toast = test.createElement('fig-toast', { duration: '3000' });
+        toast.textContent = 'Test toast';
+        await test.waitFrames();
+        assertEqual(toast.getAttribute('duration'), '3000', 'Should have duration');
+      });
+    });
+    
+    // ============================================
+    // FIG-FILL-PICKER TESTS
+    // ============================================
+    test.describe('fig-fill-picker', () => {
+      test.it('should initialize with solid fill', async () => {
+        const picker = test.createElement('fig-fill-picker', {
+          value: '{"type":"solid","color":"#ff0000","opacity":100}'
+        });
+        await test.waitFrames();
+        const value = picker.value;
+        assertEqual(value.type, 'solid', 'Should be solid type');
+      });
+      
+      test.it('should support mode attribute', async () => {
+        const picker = test.createElement('fig-fill-picker', { mode: 'solid' });
+        await test.waitFrames();
+        assertEqual(picker.getAttribute('mode'), 'solid', 'Should have mode attribute');
+      });
+    });
+    
+    // Run tests on button click
+    document.getElementById('run-tests').addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      e.target.textContent = 'Running...';
+      await test.run();
+      e.target.disabled = false;
+      e.target.textContent = 'Run Tests';
+    });
+    
+    // Auto-run on load
+    window.addEventListener('load', () => {
+      setTimeout(() => test.run(), 100);
+    });
+  </script>
+</body>
+</html>

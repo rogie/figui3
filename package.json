@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
@@ -24,7 +24,29 @@
     "figui",
     "figui3",
     "figma",
+    "figma-plugin",
+    "figma-widget",
     "ui3",
-    "plugin"
-  ]
+    "plugin",
+    "web-components",
+    "custom-elements",
+    "ui-components",
+    "design-system",
+    "dark-mode",
+    "light-dark",
+    "color-picker",
+    "fill-picker",
+    "gradient",
+    "slider",
+    "checkbox",
+    "tabs",
+    "tooltip",
+    "dialog",
+    "toast",
+    "vanilla-js",
+    "no-framework",
+    "accessible",
+    "a11y"
+  ],
+  "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel"
 }
