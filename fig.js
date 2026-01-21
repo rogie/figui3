@@ -2292,7 +2292,7 @@ class FigField extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["direction", "label"];
+    return ["label"];
   }
 
   connectedCallback() {
@@ -2307,19 +2307,11 @@ class FigField extends HTMLElement {
         this.input.setAttribute("id", inputId);
         this.label.setAttribute("for", inputId);
       }
-      // Apply direction
-      const direction = this.getAttribute("direction");
-      if (direction) {
-        this.style.flexDirection = direction === "row" ? "row" : "column";
-      }
     });
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
-      case "direction":
-        this.style.flexDirection = newValue === "row" ? "row" : "column";
-        break;
       case "label":
         if (this.label) {
           this.label.textContent = newValue;

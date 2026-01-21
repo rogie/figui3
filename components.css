@@ -2434,12 +2434,20 @@ fig-slider {
 
 fig-field,
 .fig-field {
+  --field-label-width: 4rem;
   display: flex;
   padding: var(--spacer-1) var(--spacer-3);
   margin: 0;
   flex-direction: column;
   gap: 0;
   align-items: start;
+
+  &[direction="row"],
+  &[direction="horizontal"] {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacer-2);
+  }
 
   & > [full] {
     flex: 1;
@@ -2453,6 +2461,12 @@ fig-field,
     min-height: calc(1rem + var(--spacer-1) * 2);
     align-items: center;
     width: 100%;
+  }
+
+  &[direction="row"] > label,
+  &[direction="horizontal"] > label {
+    width: auto;
+    min-width: var(--field-label-width);
   }
 
   &[direction="horizontal"] {
