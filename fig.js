@@ -2591,6 +2591,9 @@ class FigInputColor extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    // Skip if value hasn't actually changed
+    if (oldValue === newValue) return;
+    
     switch (name) {
       case "value":
         this.#setValues(newValue);
@@ -2614,7 +2617,9 @@ class FigInputColor extends HTMLElement {
         if (this.#alphaInput) {
           this.#alphaInput.setAttribute("value", this.alpha);
         }
-        this.#emitInputEvent();
+        // NOTE: Do NOT emit input events here!
+        // Input events should only fire from user interactions, not programmatic changes.
+        // Emitting here causes infinite loops with React and other frameworks.
         break;
       case "mode":
         // Mode attribute is passed through to fig-fill-picker when used
@@ -6402,9 +6407,21 @@ class FigFillPicker extends HTMLElement {
         this.#parseValue();
         this.#updateChit();
         if (this.#dialog) {
-          // Update dialog UI if open
-          this.#initSolidTab();
-          this.#initGradientTab();
+          // Update dialog UI if open - but don't rebuild if user is dragging
+          if (!this.#isDraggingColor) {
+            // Just update the handle position and color inputs without rebuilding
+            this.#updateHandlePosition();
+            this.#updateColorInputs();
+            // Update hue slider
+            if (this.#hueSlider) {
+              this.#hueSlider.setAttribute("value", this.#color.h);
+            }
+            // Update opacity slider
+            if (this.#opacitySlider) {
+              this.#opacitySlider.setAttribute("value", this.#color.a * 100);
+              this.#opacitySlider.setAttribute("color", this.#hsvToHex(this.#color));
+            }
+          }
         }
         break;
       case "disabled":
