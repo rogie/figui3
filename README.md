@@ -1,165 +1,151 @@
 # FigUI3
 
-A lightweight, customizable web component library that uses Figmas UI3 style for modern web applications, but specifically for Figma plugins.
+A lightweight, zero-dependency web components library for building Figma plugin and widget UIs with native look and feel.
+
+[![npm version](https://img.shields.io/npm/v/@rogieking/figui3.svg)](https://www.npmjs.com/package/@rogieking/figui3)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+## Live Demo
+
+View the interactive component documentation at **[rogie.github.io/figui3](https://rogie.github.io/figui3/)**
 
 ## Features
 
-- 🎨 Figma-inspired design system
+- 🎨 Figma UI3 design system
 - 📦 Zero dependencies
-- 🚀 Lightweight and performant
+- 🚀 Lightweight (~50kb unminified)
 - 🎯 Built with Web Components
-- 🔧 Highly customizable
-- 🌐 Framework agnostic
-
-## Components
-
-The library includes the following components:
-
-- `<fig-button>` - Versatile button component with multiple variants
-- `<fig-checkbox>` - Checkbox input with indeterminate state support
-- `<fig-dialog>` - Modal dialog component
-- `<fig-dropdown>` - Customizable dropdown select
-- `<fig-field>` - Form field wrapper with flexible layout options
-- `<fig-header>` - Section header component
-- `<fig-input-color>` - Color picker with hex/rgba support
-- `<fig-input-text>` - Text/Number input with optional prefix/suffix slots
-- `<fig-slider>` - Input slider with optional text input and units
-- `<fig-switch>` - Toggle switch component
-- `<fig-tooltip>` - Hover and click-triggered tooltips
-- `<fig-spinner>` - Loading spinner component
-- `<fig-combo-input>` - Combobox input
-- `<fig-chit>` - Color/Gradient/Pattern/Image/Icon/Text chit component
-- `<fig-tabs>` - Tabbed navigation component
-- `<fig-segmented-control>` - Segmented control component
-- `<fig-image>` - Image display or input component
+- 🌗 Automatic light/dark theme support
+- ♿ Accessible with ARIA attributes and keyboard navigation
+- 🔧 Framework agnostic (works with React, Vue, Svelte, or vanilla JS)
 
 ## Installation
 
+### npm / yarn / bun / pnpm
+
 ```bash
 npm install @rogieking/figui3
+# or
+yarn add @rogieking/figui3
+# or
+bun add @rogieking/figui3
+# or
+pnpm add @rogieking/figui3
 ```
 
-```jsx
+Then import in your JavaScript/TypeScript:
+
+```js
 import "@rogieking/figui3/fig.css";
 import "@rogieking/figui3/fig.js";
 ```
 
-Or include directly in your HTML:
+### CDN
 
 ```html
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/@rogieking/figui3@latest/fig.css"
-/>
+<link rel="stylesheet" href="https://unpkg.com/@rogieking/figui3@latest/fig.css" />
 <script src="https://unpkg.com/@rogieking/figui3@latest/fig.js"></script>
 ```
 
-or
+Or via esm.sh:
 
 ```html
 <link rel="stylesheet" href="https://esm.sh/@rogieking/figui3@latest/fig.css" />
 <script src="https://esm.sh/@rogieking/figui3@latest/fig.js"></script>
 ```
 
-## Usage
+### Development
 
-```html
-<!-- Basic button -->
-<fig-button>Click me</fig-button>
-
-<!-- Slider with text input -->
-<fig-field direction="horizontal">
-  <label>Opacity</label>
-  <fig-slider type="opacity" value="0.75" color="#ff0000" units="%" text="true">
-  </fig-slider>
-</fig-field>
+```bash
+git clone https://github.com/rogie/figui3.git
+cd figui3
+bun install
+bun dev  # Opens documentation at http://localhost:3000
 ```
 
-## Documentation
+## Quick Start
 
-For detailed documentation and examples, visit our [documentation site](https://github.com/rogie/figui3#readme).
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/@rogieking/figui3@latest/fig.css" />
+  <script src="https://unpkg.com/@rogieking/figui3@latest/fig.js"></script>
+</head>
+<body>
+  <fig-field>
+    <label>Color</label>
+    <fig-input-color value="#FF5733" text="true" alpha="true"></fig-input-color>
+  </fig-field>
+  
+  <fig-button variant="primary">Save</fig-button>
+</body>
+</html>
+```
 
-## Browser Support
+---
 
-Fig.js supports all modern browsers that implement the Web Components standard:
-
-- Chrome/Edge (Chromium) 67+
-- Firefox 63+
-- Safari 10.1+
-
-## Contributing
-
-Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) before submitting a pull request.
-
-## License
-
-[MIT License](LICENSE)
-
-## Component Examples
+## Components
 
 ### Button (`<fig-button>`)
 
+A versatile button component with multiple variants and types.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `variant` | string | `"primary"` | Visual style: `"primary"`, `"secondary"`, `"ghost"`, `"link"` |
+| `type` | string | `"button"` | Button type: `"button"`, `"toggle"`, `"submit"`, `"select"`, `"upload"` |
+| `size` | string | — | Size variant: `"large"`, `"compact"` |
+| `selected` | boolean | `false` | Whether button is in selected state (for toggle type) |
+| `disabled` | boolean | `false` | Whether button is disabled |
+| `icon` | boolean | `false` | Icon-only button styling |
+| `href` | string | — | URL for link-style buttons |
+| `target` | string | — | Target window for links (e.g., `"_blank"`) |
+
 ```html
-<!-- Basic button -->
-<fig-button>Click me</fig-button>
+<!-- Variants -->
+<fig-button>Primary</fig-button>
+<fig-button variant="secondary">Secondary</fig-button>
+<fig-button variant="ghost">Ghost</fig-button>
+<fig-button variant="link">Link</fig-button>
 
-<!-- Primary variant -->
-<fig-button variant="primary">Primary Button</fig-button>
-
-<!-- Secondary variant -->
-<fig-button variant="secondary">Secondary Button</fig-button>
-
-<!-- Ghost variant -->
-<fig-button variant="ghost">Ghost Button</fig-button>
-
-<!-- Ghost variant with icon -->
-<fig-button variant="ghost" icon="true">
-  <svg><!-- your icon svg --></svg>
-</fig-button>
-
-<!-- Link variant -->
-<fig-button variant="link">Link Button</fig-button>
-
-<!-- Disabled state -->
-<fig-button disabled>Disabled</fig-button>
-
-<!-- Toggle button -->
-<fig-button type="toggle">Toggle Me</fig-button>
-
-<!-- Submit button -->
+<!-- Types -->
+<fig-button type="toggle" selected="true">Toggle</fig-button>
 <fig-button type="submit">Submit</fig-button>
 
-<!-- Select list button -->
+<!-- Icon button -->
+<fig-button variant="ghost" icon>
+  <svg><!-- icon --></svg>
+</fig-button>
+
+<!-- Select button with dropdown -->
 <fig-button type="select">
-  Select Me
+  Select Option
   <fig-dropdown>
     <option value="1">Option 1</option>
     <option value="2">Option 2</option>
-    <option value="3">Option 3</option>
   </fig-dropdown>
 </fig-button>
 
-<!-- Default button -->
-<fig-button type="button">Default</fig-button>
-
 <!-- Upload button -->
 <fig-button type="upload">
-  Upload
+  Upload File
   <input type="file" />
 </fig-button>
 ```
 
+---
+
 ### Dropdown (`<fig-dropdown>`)
 
-```html
-<!-- Basic dropdown -->
-<fig-dropdown>
-  <option value="1">Option 1</option>
-  <option value="2">Option 2</option>
-  <option value="3">Option 3</option>
-</fig-dropdown>
+A native select wrapper with Figma styling.
 
-<!-- With default selection -->
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | Currently selected value |
+| `type` | string | `"select"` | Type: `"select"` or `"dropdown"` |
+
+```html
 <fig-dropdown value="2">
   <option value="1">Option 1</option>
   <option value="2">Option 2</option>
@@ -167,82 +153,158 @@ Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTIN
 </fig-dropdown>
 ```
 
+---
+
 ### Tooltip (`<fig-tooltip>`)
 
+Displays contextual information on hover or click.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `text` | string | — | Tooltip text content |
+| `action` | string | `"hover"` | Trigger: `"hover"` or `"click"` |
+| `delay` | number | `500` | Delay in ms before showing |
+| `offset` | string | — | Position offset: `"left,top,right,bottom"` |
+
 ```html
-<!-- Hover tooltip -->
-<fig-tooltip text="This is a tooltip" action="hover">
-  Hover over me
+<fig-tooltip text="This is helpful info" action="hover">
+  <fig-button>Hover me</fig-button>
 </fig-tooltip>
 
-<!-- Click tooltip -->
-<fig-tooltip text="Click tooltip" action="click"> Click me </fig-tooltip>
+<fig-tooltip text="Click triggered" action="click" delay="0">
+  <fig-button>Click me</fig-button>
+</fig-tooltip>
 ```
+
+---
 
 ### Popover (`<fig-popover>`)
 
+A popover container for rich content.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `action` | string | `"click"` | Trigger: `"click"` or `"hover"` |
+| `size` | string | — | Size of the popover |
+
 ```html
-<!-- Basic popover -->
-<fig-popover>
-  <button slot="trigger">Open Popover</button>
+<fig-popover action="click">
+  <fig-button slot="trigger">Open Popover</fig-button>
   <div slot="content">
     <h3>Popover Title</h3>
-    <p>This is the popover content.</p>
+    <p>Rich content goes here.</p>
   </div>
 </fig-popover>
 ```
 
+---
+
 ### Dialog (`<fig-dialog>`)
 
+A modal dialog component with drag support.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `open` | boolean | `false` | Whether dialog is visible |
+| `modal` | boolean | `false` | Whether dialog is modal |
+| `drag` | boolean | `false` | Whether dialog is draggable |
+| `handle` | string | — | CSS selector for drag handle |
+| `position` | string | — | Position: `"center center"`, `"top left"`, etc. |
+
 ```html
-<!-- Basic dialog -->
-<fig-dialog>
+<fig-dialog id="myDialog" modal drag handle="fig-header">
   <fig-header>Dialog Title</fig-header>
   <div slot="content">
     <p>Dialog content goes here.</p>
   </div>
   <div slot="footer">
-    <fig-button>Cancel</fig-button>
-    <fig-button variant="primary">Confirm</fig-button>
+    <fig-button variant="secondary">Cancel</fig-button>
+    <fig-button>Confirm</fig-button>
   </div>
 </fig-dialog>
+
+<script>
+  document.getElementById('myDialog').showModal();
+</script>
 ```
 
-### Tabs (`<fig-tabs>`)
+---
+
+### Tabs (`<fig-tabs>` / `<fig-tab>`)
+
+Tabbed navigation component.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | Currently selected tab value |
+| `name` | string | — | Tabs group identifier |
+| `disabled` | boolean | `false` | Disable all tabs |
 
 ```html
-<fig-tabs>
-  <fig-tab label="Tab 1">Content 1</fig-tab>
-  <fig-tab label="Tab 2">Content 2</fig-tab>
-  <fig-tab label="Tab 3">Content 3</fig-tab>
+<fig-tabs value="tab1">
+  <fig-tab value="tab1" label="General">
+    <p>General settings content</p>
+  </fig-tab>
+  <fig-tab value="tab2" label="Advanced">
+    <p>Advanced settings content</p>
+  </fig-tab>
 </fig-tabs>
 ```
 
-### Segmented Control (`<fig-segmented-control>`)
+---
+
+### Segmented Control (`<fig-segmented-control>` / `<fig-segment>`)
+
+A segmented button group for exclusive selection.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | string | — | Control group identifier |
+| `value` | string | — | Selected segment value |
 
 ```html
 <fig-segmented-control>
-  <button value="1">Option 1</button>
-  <button value="2">Option 2</button>
-  <button value="3">Option 3</button>
+  <fig-segment value="left" selected="true">Left</fig-segment>
+  <fig-segment value="center">Center</fig-segment>
+  <fig-segment value="right">Right</fig-segment>
 </fig-segmented-control>
 ```
 
+---
+
 ### Slider (`<fig-slider>`)
 
+A range slider with multiple types and optional text input.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `type` | string | `"range"` | Type: `"range"`, `"hue"`, `"opacity"`, `"delta"`, `"stepper"` |
+| `value` | number | — | Current value |
+| `min` | number | `0` | Minimum value |
+| `max` | number | `100` | Maximum value |
+| `step` | number | `1` | Step increment |
+| `text` | boolean | `false` | Show text input |
+| `units` | string | — | Unit label (e.g., `"%"`, `"px"`) |
+| `transform` | number | — | Multiplier for display value |
+| `color` | string | — | Track color (for opacity type) |
+| `disabled` | boolean | `false` | Disable slider |
+
 ```html
-<!-- Basic range slider -->
+<!-- Basic slider -->
 <fig-slider min="0" max="100" value="50"></fig-slider>
 
-<!-- Slider with text input and units -->
-<fig-slider min="0" max="100" value="75" text="true" units="%"> </fig-slider>
+<!-- With text input and units -->
+<fig-slider min="0" max="100" value="75" text="true" units="%"></fig-slider>
 
 <!-- Hue slider -->
-<fig-slider type="hue" value="55"></fig-slider>
+<fig-slider type="hue" value="180"></fig-slider>
 
-<!-- Stepper slider with discrete snapping values-->
-<fig-slider type="stepper" value="25" default="50" step="25">
-  <datalist id="markers">
+<!-- Opacity slider with color -->
+<fig-slider type="opacity" value="75" color="#FF5733" text="true" units="%"></fig-slider>
+
+<!-- Stepper with snap points -->
+<fig-slider type="stepper" value="50" step="25">
+  <datalist>
     <option value="0"></option>
     <option value="25"></option>
     <option value="50"></option>
@@ -251,145 +313,576 @@ Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTIN
   </datalist>
 </fig-slider>
 
-<!-- Delta slider  -->
-<fig-slider type="delta" value=".25" default="0" step="0.25" min="-5" max="5">
-  <datalist id="markers">
+<!-- Delta slider -->
+<fig-slider type="delta" value="0" min="-5" max="5" step="0.25">
+  <datalist>
     <option value="0"></option>
   </datalist>
 </fig-slider>
-
-<!-- Opacity slider with color -->
-<fig-slider type="opacity" value="0.75" color="#ff0000" units="%" text="true">
-</fig-slider>
-
-<!-- Number slider with number transform and percentage units -->
-<fig-slider
-  min="0"
-  max="1"
-  transform="100"
-  units="%"
-  step="0.01"
-  text="true"
-  value="0.5"
->
-</fig-slider>
 ```
+
+---
 
 ### Text Input (`<fig-input-text>`)
 
+A styled text input with optional slots.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | Input value |
+| `placeholder` | string | — | Placeholder text |
+| `type` | string | `"text"` | Input type: `"text"` or `"number"` |
+| `disabled` | boolean | `false` | Disable input |
+| `multiline` | boolean | `false` | Use textarea |
+| `min` | number | — | Min value (number type) |
+| `max` | number | — | Max value (number type) |
+| `step` | number | — | Step (number type) |
+| `transform` | number | — | Display multiplier |
+
 ```html
 <!-- Basic text input -->
-<fig-input-text value="Hello World"></fig-input-text>
+<fig-input-text value="Hello" placeholder="Enter text..."></fig-input-text>
 
-<!-- With placeholder -->
-<fig-input-text placeholder="Enter text..."></fig-input-text>
-
-<!-- With prepend and append slots -->
+<!-- With prepend/append slots -->
 <fig-input-text>
   <span slot="prepend">$</span>
   <span slot="append">.00</span>
 </fig-input-text>
+
+<!-- Multiline -->
+<fig-input-text multiline placeholder="Enter description..."></fig-input-text>
 ```
+
+---
+
+### Number Input (`<fig-input-number>`)
+
+A numeric input with units support.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | Numeric value |
+| `placeholder` | string | — | Placeholder text |
+| `min` | number | — | Minimum value |
+| `max` | number | — | Maximum value |
+| `step` | number | — | Step increment |
+| `units` | string | — | Unit string (e.g., `"px"`, `"%"`) |
+| `unit-position` | string | `"suffix"` | `"suffix"` or `"prefix"` |
+| `transform` | number | — | Display multiplier |
+| `disabled` | boolean | `false` | Disable input |
+
+```html
+<fig-input-number value="100" units="px"></fig-input-number>
+<fig-input-number value="50" units="%" min="0" max="100"></fig-input-number>
+<fig-input-number value="45" units="°" step="15"></fig-input-number>
+```
+
+---
+
+### Color Input (`<fig-input-color>`)
+
+A color picker with hex/alpha support.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | Hex color value (e.g., `"#FF5733"` or `"#FF573380"`) |
+| `text` | boolean | `false` | Show hex text input |
+| `alpha` | boolean | `false` | Show alpha slider |
+| `picker` | string | `"native"` | Picker type: `"native"`, `"figma"`, `"false"` |
+| `disabled` | boolean | `false` | Disable input |
+
+```html
+<!-- Basic color picker -->
+<fig-input-color value="#FF5733"></fig-input-color>
+
+<!-- With text and alpha -->
+<fig-input-color value="#FF5733" text="true" alpha="true"></fig-input-color>
+
+<!-- With Figma-style picker dialog -->
+<fig-input-color value="#FF5733" text="true" alpha="true" picker="figma"></fig-input-color>
+```
+
+---
+
+### Fill Input (`<fig-input-fill>`)
+
+A comprehensive fill input supporting colors, gradients, images, and video.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | JSON fill data |
+| `disabled` | boolean | `false` | Disable input |
+
+```html
+<!-- Solid color -->
+<fig-input-fill value='{"type":"solid","color":"#FF5733","opacity":100}'></fig-input-fill>
+
+<!-- Gradient -->
+<fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#FF0000"},{"position":100,"color":"#0000FF"}]}}'></fig-input-fill>
+
+<!-- Image -->
+<fig-input-fill value='{"type":"image","image":{"url":"path/to/image.jpg","scaleMode":"fill"}}'></fig-input-fill>
+```
+
+---
+
+### Fill Picker (`<fig-fill-picker>`)
+
+A comprehensive fill picker dialog supporting solid colors, gradients, images, video, and webcam.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | JSON fill value |
+| `disabled` | boolean | `false` | Disable picker |
+| `alpha` | boolean | `true` | Show alpha controls |
+| `mode` | string | — | Lock to mode: `"solid"`, `"gradient"`, `"image"`, `"video"`, `"webcam"` |
+
+```html
+<!-- Wraps a trigger element -->
+<fig-fill-picker value='{"type":"solid","color":"#FF5733"}'>
+  <fig-chit></fig-chit>
+</fig-fill-picker>
+
+<!-- Lock to solid color mode -->
+<fig-fill-picker mode="solid" alpha="true">
+  <fig-button>Pick Color</fig-button>
+</fig-fill-picker>
+```
+
+---
+
+### Chit (`<fig-chit>`)
+
+A color/gradient/image swatch element.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `background` | string | — | CSS background value |
+| `size` | string | `"small"` | Size: `"small"` or `"large"` |
+| `selected` | boolean | `false` | Show selection ring |
+| `disabled` | boolean | `false` | Disable interaction |
+| `alpha` | number | — | Opacity (0-1) |
+
+```html
+<fig-chit background="#FF5733"></fig-chit>
+<fig-chit background="linear-gradient(90deg, #FF0000, #0000FF)"></fig-chit>
+<fig-chit background="url(image.jpg)" size="large"></fig-chit>
+<fig-chit background="#FF5733" alpha="0.5"></fig-chit>
+```
+
+---
+
+### Checkbox (`<fig-checkbox>`)
+
+A checkbox input with indeterminate state support.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `checked` | boolean | `false` | Whether checked |
+| `indeterminate` | boolean | `false` | Indeterminate state |
+| `disabled` | boolean | `false` | Disable checkbox |
+| `name` | string | — | Form field name |
+| `value` | string | — | Value when checked |
+
+```html
+<fig-checkbox>Accept terms</fig-checkbox>
+<fig-checkbox checked>Selected option</fig-checkbox>
+<fig-checkbox indeterminate>Parent option</fig-checkbox>
+```
+
+---
+
+### Radio (`<fig-radio>`)
+
+A radio button input.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `checked` | boolean | `false` | Whether selected |
+| `disabled` | boolean | `false` | Disable radio |
+| `name` | string | — | Radio group name |
+| `value` | string | — | Value when selected |
+
+```html
+<fig-radio name="size" value="small">Small</fig-radio>
+<fig-radio name="size" value="medium" checked>Medium</fig-radio>
+<fig-radio name="size" value="large">Large</fig-radio>
+```
+
+---
+
+### Switch (`<fig-switch>`)
+
+A toggle switch component.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `checked` | boolean | `false` | Whether on |
+| `disabled` | boolean | `false` | Disable switch |
+| `name` | string | — | Form field name |
+| `value` | string | — | Value when on |
+
+```html
+<fig-switch>Enable notifications</fig-switch>
+<fig-switch checked>Active feature</fig-switch>
+```
+
+---
 
 ### Field (`<fig-field>`)
 
+A form field wrapper with flexible layout.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `direction` | string | `"column"` | Layout: `"column"`, `"row"`, `"horizontal"` |
+
 ```html
-<!-- Vertical layout -->
+<!-- Vertical (default) -->
 <fig-field>
   <label>Username</label>
   <fig-input-text></fig-input-text>
-  <span class="help">Enter your username</span>
 </fig-field>
 
-<!-- Horizontal layout -->
+<!-- Horizontal -->
 <fig-field direction="horizontal">
   <label>Volume</label>
   <fig-slider min="0" max="100" value="50"></fig-slider>
 </fig-field>
 ```
 
-### Color Input (`<fig-input-color>`)
-
-```html
-<!-- Basic color picker -->
-<fig-input-color value="#ff0000"></fig-input-color>
-
-<!-- With text input and alpha channel -->
-<fig-input-color value="#ff0000" text="true" alpha="true"> </fig-input-color>
-```
-
-### Checkbox (`<fig-checkbox>`)
-
-```html
-<!-- Basic checkbox -->
-<fig-checkbox>Accept terms</fig-checkbox>
-
-<!-- Checked state -->
-<fig-checkbox checked>Selected option</fig-checkbox>
-
-<!-- Indeterminate state -->
-<fig-checkbox indeterminate>Parent option</fig-checkbox>
-```
-
-### Switch (`<fig-switch>`)
-
-```html
-<!-- Basic switch -->
-<fig-switch></fig-switch>
-
-<!-- With label -->
-<fig-switch>Enable notifications</fig-switch>
-
-<!-- Checked state -->
-<fig-switch checked>Active</fig-switch>
-```
-
-### Spinner (`<fig-spinner>`)
-
-```html
-<!-- Basic spinner -->
-<fig-spinner></fig-spinner>
-```
+---
 
 ### Combo Input (`<fig-combo-input>`)
 
+A text input with dropdown suggestions.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `options` | string | — | Comma-separated options |
+| `placeholder` | string | — | Placeholder text |
+| `value` | string | — | Current value |
+| `disabled` | boolean | `false` | Disable input |
+
 ```html
-<!-- Basic combo input -->
-<fig-combo-input
-  options="House, Apartment, Condo, Other"
-  placeholder="Type of residence"
-></fig-combo-input>
+<fig-combo-input 
+  options="House, Apartment, Condo, Other" 
+  placeholder="Type of residence">
+</fig-combo-input>
 ```
 
-### Chit (`<fig-chit>`)
+---
+
+### Avatar (`<fig-avatar>`)
+
+Displays a user's profile image or initials.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `src` | string | — | Image URL |
+| `name` | string | — | Name for initials fallback |
+| `size` | string | — | Size: `"large"` |
 
 ```html
-<!-- Basic chit -->
-<fig-chit type="color" value="#ff0000"></fig-chit>
+<fig-avatar src="https://example.com/photo.jpg" name="John Doe"></fig-avatar>
+<fig-avatar name="Jane Smith" size="large"></fig-avatar>
 ```
+
+---
 
 ### Image (`<fig-image>`)
 
+An image display or upload component.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `src` | string | — | Image URL |
+| `upload` | boolean | `false` | Show upload button |
+| `label` | string | — | Upload button label |
+| `size` | string | — | Preview size |
+
 ```html
-<!-- Basic image -->
-<fig-image src="https://via.placeholder.com/150"></fig-image>
+<fig-image src="photo.jpg"></fig-image>
+<fig-image upload label="Upload Image"></fig-image>
 ```
+
+---
+
+### Input Joystick (`<fig-input-joystick>`)
+
+A 2D position input control.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | Position: `"x,y"` (0-1 range) |
+| `precision` | number | — | Decimal places |
+| `transform` | number | — | Output scaling |
+| `text` | boolean | `false` | Show X/Y inputs |
+
+```html
+<fig-input-joystick value="0.5,0.5"></fig-input-joystick>
+<fig-input-joystick value="0.5,0.5" text="true" precision="2"></fig-input-joystick>
+```
+
+---
+
+### Input Angle (`<fig-input-angle>`)
+
+An angle/rotation input control.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | number | — | Angle in degrees |
+| `precision` | number | — | Decimal places |
+| `text` | boolean | `false` | Show text input |
+
+```html
+<fig-input-angle value="45"></fig-input-angle>
+<fig-input-angle value="90" text="true"></fig-input-angle>
+```
+
+---
+
+### Toast (`<fig-toast>`)
+
+A toast notification component.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `duration` | number | `5000` | Auto-dismiss ms (0 = no dismiss) |
+| `offset` | number | `16` | Distance from bottom |
+| `theme` | string | `"dark"` | Theme: `"dark"`, `"light"`, `"danger"`, `"brand"` |
+| `open` | boolean | `false` | Whether visible |
+
+```html
+<fig-toast id="myToast" theme="brand" duration="3000">
+  Settings saved successfully!
+</fig-toast>
+
+<script>
+  document.getElementById('myToast').show();
+</script>
+```
+
+---
+
+### Spinner (`<fig-spinner>`)
+
+A loading spinner indicator.
+
+```html
+<fig-spinner></fig-spinner>
+```
+
+---
+
+### Shimmer (`<fig-shimmer>`)
+
+A loading placeholder with shimmer animation.
+
+```html
+<fig-shimmer style="width: 200px; height: 20px;"></fig-shimmer>
+```
+
+---
+
+### Layer (`<fig-layer>`)
+
+A layer list item component (for layer panels).
+
+```html
+<fig-layer name="Rectangle 1" type="rectangle" selected></fig-layer>
+<fig-layer name="Group 1" type="group" expanded>
+  <fig-layer name="Child 1" type="frame"></fig-layer>
+</fig-layer>
+```
+
+---
 
 ### Header (`<fig-header>`)
 
-```html
-<!-- Basic header -->
-<fig-header>
-  <h3>Header</h3>
-</fig-header>
-```
-
-### fig-segmented-control (`<fig-segmented-control>`)
+A section header component.
 
 ```html
-<!-- Basic segmented control -->
-<fig-segmented-control>
-  <fig-segment value="1" selected="true">Option 1</fig-segment>
-  <fig-segment value="2">Option 2</fig-segment>
-</fig-segmented-control>
+<fig-header>Section Title</fig-header>
 ```
+
+---
+
+## Events
+
+All form components emit standard `input` and `change` events:
+
+- **`input`** - Fires continuously during interaction (dragging, typing)
+- **`change`** - Fires when interaction completes (mouse up, blur)
+
+Events include a `detail` object with component-specific data:
+
+```js
+// Color input events
+colorInput.addEventListener('input', (e) => {
+  console.log(e.detail);
+  // { color: "#FF5733", alpha: 0.8, hsv: { h: 14, s: 80, v: 100, a: 0.8 } }
+});
+
+// Fill picker events
+fillPicker.addEventListener('change', (e) => {
+  console.log(e.detail);
+  // { type: "gradient", gradient: { type: "linear", angle: 90, stops: [...] }, css: "linear-gradient(...)" }
+});
+
+// Slider events
+slider.addEventListener('input', (e) => {
+  console.log(e.target.value); // "75"
+});
+```
+
+---
+
+## Framework Integration
+
+### React
+
+Web components work in React, but require some considerations:
+
+```jsx
+import { useRef, useEffect } from 'react';
+import '@rogieking/figui3/fig.css';
+import '@rogieking/figui3/fig.js';
+
+function ColorPicker({ value, onChange }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const handleChange = (e) => onChange(e.detail);
+    el.addEventListener('change', handleChange);
+    return () => el.removeEventListener('change', handleChange);
+  }, [onChange]);
+
+  // Set initial value via ref to avoid infinite loops
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.setAttribute('value', value);
+    }
+  }, [value]);
+
+  return (
+    <fig-input-color
+      ref={ref}
+      text="true"
+      alpha="true"
+      picker="figma"
+    />
+  );
+}
+```
+
+> **Note:** Avoid setting the `value` prop directly on web components in JSX during re-renders, as `attributeChangedCallback` may trigger events that cause infinite loops. Use refs to control updates.
+
+### Vue
+
+```vue
+<template>
+  <fig-input-color
+    :value="color"
+    text="true"
+    alpha="true"
+    @input="onInput"
+    @change="onChange"
+  />
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import '@rogieking/figui3/fig.css';
+import '@rogieking/figui3/fig.js';
+
+const color = ref('#FF5733');
+
+const onInput = (e) => {
+  color.value = e.detail.color;
+};
+
+const onChange = (e) => {
+  console.log('Final color:', e.detail);
+};
+</script>
+```
+
+### Svelte
+
+```svelte
+<script>
+  import '@rogieking/figui3/fig.css';
+  import '@rogieking/figui3/fig.js';
+  
+  let color = '#FF5733';
+  
+  function handleInput(e) {
+    color = e.detail.color;
+  }
+</script>
+
+<fig-input-color
+  value={color}
+  text="true"
+  alpha="true"
+  on:input={handleInput}
+  on:change={(e) => console.log('Saved:', e.detail)}
+/>
+```
+
+---
+
+## Theming
+
+FigUI3 automatically adapts to light and dark themes using CSS custom properties. The library uses Figma's color variable naming convention:
+
+```css
+/* Colors automatically switch based on color-scheme */
+--figma-color-bg
+--figma-color-bg-secondary
+--figma-color-bg-hover
+--figma-color-text
+--figma-color-text-secondary
+--figma-color-border
+--figma-color-icon
+/* ... and more */
+```
+
+### Using in Figma Plugins
+
+In Figma plugins, these variables are provided automatically. For standalone usage, the library includes fallback values that respond to `prefers-color-scheme`.
+
+### Manual Theme Control
+
+```html
+<body style="color-scheme: dark;">
+  <!-- Forces dark theme -->
+</body>
+```
+
+---
+
+## Browser Support
+
+FigUI3 supports all modern browsers with Web Components support:
+
+- Chrome/Edge 67+
+- Firefox 63+
+- Safari 10.1+
+
+---
+
+## Contributing
+
+Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) before submitting a pull request.
+
+---
+
+## License
+
+[MIT License](LICENSE) © Rogie King

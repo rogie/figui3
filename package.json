@@ -1,15 +1,33 @@
 {
   "name": "@rogieking/figui3",
   "version": "2.10.0",
-  "module": "index.ts",
+  "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
+  "author": "Rogie King",
+  "license": "MIT",
   "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
+  "main": "fig.js",
+  "module": "fig.js",
+  "exports": {
+    ".": "./fig.js",
+    "./fig.js": "./fig.js",
+    "./fig.css": "./fig.css",
+    "./base.css": "./base.css",
+    "./components.css": "./components.css"
   },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
+  "files": [
+    "fig.js",
+    "fig.css",
+    "base.css",
+    "components.css",
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
+    "dev": "bun --hot server.ts",
     "build": "bun build fig.js --minify --outdir dist"
   },
   "repository": {
@@ -48,5 +66,10 @@
     "accessible",
     "a11y"
   ],
-  "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel"
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
 }
