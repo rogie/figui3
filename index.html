@@ -785,21 +785,7 @@
             <p class="description">A select dropdown menu with options.</p>
 
             <h3>Default</h3>
-            <fig-dropdown>
-                <option>Option One</option>
-                <option>Option Two</option>
-                <option>Option Three</option>
-            </fig-dropdown>
-
-            <h3>With Selected Value</h3>
-            <fig-dropdown value="two">
-                <option value="one">Option One</option>
-                <option value="two">Option Two</option>
-                <option value="three">Option Three</option>
-            </fig-dropdown>
-
-            <h3>Grouped Options</h3>
-            <fig-dropdown>
+            <fig-dropdown variant="neue">
                 <optgroup label="Numbers">
                     <option>One</option>
                     <option>Two</option>
@@ -813,10 +799,274 @@
             </fig-dropdown>
 
             <h3>Full Width</h3>
-            <fig-dropdown full>
+            <fig-dropdown full
+                          variant="neue">
                 <option>Full Width Dropdown</option>
                 <option>Option Two</option>
                 <option>Option Three</option>
+            </fig-dropdown>
+
+            <h3>Dropdown Neue Variant (with many options)</h3>
+            <fig-dropdown variant="neue"
+                          type="dropdown"
+                          label="Choose">
+                <optgroup label="North America">
+                    <option value="us">United States</option>
+                    <option value="ca">Canada</option>
+                    <option value="mx">Mexico</option>
+                    <option value="gt">Guatemala</option>
+                    <option value="cu">Cuba</option>
+                    <option value="jm">Jamaica</option>
+                    <option value="ht">Haiti</option>
+                    <option value="do">Dominican Republic</option>
+                </optgroup>
+                <optgroup label="South America">
+                    <option value="br">Brazil</option>
+                    <option value="ar">Argentina</option>
+                    <option value="co">Colombia</option>
+                    <option value="pe">Peru</option>
+                    <option value="ve">Venezuela</option>
+                    <option value="cl">Chile</option>
+                    <option value="ec">Ecuador</option>
+                    <option value="bo">Bolivia</option>
+                    <option value="py">Paraguay</option>
+                    <option value="uy">Uruguay</option>
+                </optgroup>
+                <optgroup label="Europe">
+                    <option value="gb">United Kingdom</option>
+                    <option value="de">Germany</option>
+                    <option value="fr">France</option>
+                    <option value="it">Italy</option>
+                    <option value="es">Spain</option>
+                    <option value="pt">Portugal</option>
+                    <option value="nl">Netherlands</option>
+                    <option value="be">Belgium</option>
+                    <option value="se">Sweden</option>
+                    <option value="no">Norway</option>
+                    <option value="dk">Denmark</option>
+                    <option value="fi">Finland</option>
+                    <option value="pl">Poland</option>
+                    <option value="at">Austria</option>
+                    <option value="ch">Switzerland</option>
+                    <option value="ie">Ireland</option>
+                    <option value="gr">Greece</option>
+                    <option value="cz">Czech Republic</option>
+                </optgroup>
+                <optgroup label="Asia">
+                    <option value="cn">China</option>
+                    <option value="jp">Japan</option>
+                    <option value="kr">South Korea</option>
+                    <option value="in">India</option>
+                    <option value="id">Indonesia</option>
+                    <option value="th">Thailand</option>
+                    <option value="vn">Vietnam</option>
+                    <option value="ph">Philippines</option>
+                    <option value="my">Malaysia</option>
+                    <option value="sg">Singapore</option>
+                    <option value="pk">Pakistan</option>
+                    <option value="bd">Bangladesh</option>
+                    <option value="tw">Taiwan</option>
+                    <option value="hk">Hong Kong</option>
+                </optgroup>
+                <optgroup label="Middle East">
+                    <option value="ae">United Arab Emirates</option>
+                    <option value="sa">Saudi Arabia</option>
+                    <option value="il">Israel</option>
+                    <option value="tr">Turkey</option>
+                    <option value="eg">Egypt</option>
+                    <option value="ir">Iran</option>
+                    <option value="iq">Iraq</option>
+                    <option value="jo">Jordan</option>
+                    <option value="lb">Lebanon</option>
+                    <option value="qa">Qatar</option>
+                </optgroup>
+                <optgroup label="Africa">
+                    <option value="za">South Africa</option>
+                    <option value="ng">Nigeria</option>
+                    <option value="ke">Kenya</option>
+                    <option value="gh">Ghana</option>
+                    <option value="et">Ethiopia</option>
+                    <option value="tz">Tanzania</option>
+                    <option value="ug">Uganda</option>
+                    <option value="ma">Morocco</option>
+                    <option value="dz">Algeria</option>
+                    <option value="tn">Tunisia</option>
+                    <option value="sn">Senegal</option>
+                    <option value="ci">Ivory Coast</option>
+                </optgroup>
+                <optgroup label="Oceania">
+                    <option value="au">Australia</option>
+                    <option value="nz">New Zealand</option>
+                    <option value="fj">Fiji</option>
+                    <option value="pg">Papua New Guinea</option>
+                    <option value="ws">Samoa</option>
+                    <option value="to">Tonga</option>
+                    <option value="vu">Vanuatu</option>
+                    <option value="sb">Solomon Islands</option>
+                </optgroup>
+                <optgroup label="Programming Languages">
+                    <option value="js">JavaScript</option>
+                    <option value="ts">TypeScript</option>
+                    <option value="py">Python</option>
+                    <option value="rb">Ruby</option>
+                    <option value="go">Go</option>
+                    <option value="rs">Rust</option>
+                    <option value="java">Java</option>
+                    <option value="kt">Kotlin</option>
+                    <option value="swift">Swift</option>
+                    <option value="cpp">C++</option>
+                    <option value="cs">C#</option>
+                    <option value="php">PHP</option>
+                    <option value="r">R</option>
+                    <option value="scala">Scala</option>
+                    <option value="elixir">Elixir</option>
+                    <option value="clj">Clojure</option>
+                    <option value="hs">Haskell</option>
+                    <option value="lua">Lua</option>
+                </optgroup>
+                <optgroup label="Design Tools">
+                    <option value="figma">Figma</option>
+                    <option value="sketch">Sketch</option>
+                    <option value="xd">Adobe XD</option>
+                    <option value="ps">Photoshop</option>
+                    <option value="ai">Illustrator</option>
+                    <option value="ae">After Effects</option>
+                    <option value="framer">Framer</option>
+                    <option value="principle">Principle</option>
+                    <option value="invision">InVision</option>
+                    <option value="zeplin">Zeplin</option>
+                </optgroup>
+            </fig-dropdown>
+
+            <h3>Select Neue Variant (with many options)</h3>
+
+            <fig-dropdown variant="neue">
+                <optgroup label="North America">
+                    <option value="us">United States</option>
+                    <option value="ca">Canada</option>
+                    <option value="mx">Mexico</option>
+                    <option value="gt">Guatemala</option>
+                    <option value="cu">Cuba</option>
+                    <option value="jm">Jamaica</option>
+                    <option value="ht">Haiti</option>
+                    <option value="do">Dominican Republic</option>
+                </optgroup>
+                <optgroup label="South America">
+                    <option value="br">Brazil</option>
+                    <option value="ar">Argentina</option>
+                    <option value="co">Colombia</option>
+                    <option value="pe">Peru</option>
+                    <option value="ve">Venezuela</option>
+                    <option value="cl">Chile</option>
+                    <option value="ec">Ecuador</option>
+                    <option value="bo">Bolivia</option>
+                    <option value="py">Paraguay</option>
+                    <option value="uy">Uruguay</option>
+                </optgroup>
+                <optgroup label="Europe">
+                    <option value="gb">United Kingdom</option>
+                    <option value="de">Germany</option>
+                    <option value="fr">France</option>
+                    <option value="it">Italy</option>
+                    <option value="es">Spain</option>
+                    <option value="pt">Portugal</option>
+                    <option value="nl">Netherlands</option>
+                    <option value="be">Belgium</option>
+                    <option value="se">Sweden</option>
+                    <option value="no">Norway</option>
+                    <option value="dk">Denmark</option>
+                    <option value="fi">Finland</option>
+                    <option value="pl">Poland</option>
+                    <option value="at">Austria</option>
+                    <option value="ch">Switzerland</option>
+                    <option value="ie">Ireland</option>
+                    <option value="gr">Greece</option>
+                    <option value="cz">Czech Republic</option>
+                </optgroup>
+                <optgroup label="Asia">
+                    <option value="cn">China</option>
+                    <option value="jp">Japan</option>
+                    <option value="kr">South Korea</option>
+                    <option value="in">India</option>
+                    <option value="id">Indonesia</option>
+                    <option value="th">Thailand</option>
+                    <option value="vn">Vietnam</option>
+                    <option value="ph">Philippines</option>
+                    <option value="my">Malaysia</option>
+                    <option value="sg">Singapore</option>
+                    <option value="pk">Pakistan</option>
+                    <option value="bd">Bangladesh</option>
+                    <option value="tw">Taiwan</option>
+                    <option value="hk">Hong Kong</option>
+                </optgroup>
+                <optgroup label="Middle East">
+                    <option value="ae">United Arab Emirates</option>
+                    <option value="sa">Saudi Arabia</option>
+                    <option value="il">Israel</option>
+                    <option value="tr">Turkey</option>
+                    <option value="eg">Egypt</option>
+                    <option value="ir">Iran</option>
+                    <option value="iq">Iraq</option>
+                    <option value="jo">Jordan</option>
+                    <option value="lb">Lebanon</option>
+                    <option value="qa">Qatar</option>
+                </optgroup>
+                <optgroup label="Africa">
+                    <option value="za">South Africa</option>
+                    <option value="ng">Nigeria</option>
+                    <option value="ke">Kenya</option>
+                    <option value="gh">Ghana</option>
+                    <option value="et">Ethiopia</option>
+                    <option value="tz">Tanzania</option>
+                    <option value="ug">Uganda</option>
+                    <option value="ma">Morocco</option>
+                    <option value="dz">Algeria</option>
+                    <option value="tn">Tunisia</option>
+                    <option value="sn">Senegal</option>
+                    <option value="ci">Ivory Coast</option>
+                </optgroup>
+                <optgroup label="Oceania">
+                    <option value="au">Australia</option>
+                    <option value="nz">New Zealand</option>
+                    <option value="fj">Fiji</option>
+                    <option value="pg">Papua New Guinea</option>
+                    <option value="ws">Samoa</option>
+                    <option value="to">Tonga</option>
+                    <option value="vu">Vanuatu</option>
+                    <option value="sb">Solomon Islands</option>
+                </optgroup>
+                <optgroup label="Programming Languages">
+                    <option value="js">JavaScript</option>
+                    <option value="ts">TypeScript</option>
+                    <option value="py">Python</option>
+                    <option value="rb">Ruby</option>
+                    <option value="go">Go</option>
+                    <option value="rs">Rust</option>
+                    <option value="java">Java</option>
+                    <option value="kt">Kotlin</option>
+                    <option value="swift">Swift</option>
+                    <option value="cpp">C++</option>
+                    <option value="cs">C#</option>
+                    <option value="php">PHP</option>
+                    <option value="r">R</option>
+                    <option value="scala">Scala</option>
+                    <option value="elixir">Elixir</option>
+                    <option value="clj">Clojure</option>
+                    <option value="hs">Haskell</option>
+                    <option value="lua">Lua</option>
+                </optgroup>
+                <optgroup label="Design Tools">
+                    <option value="figma">Figma</option>
+                    <option value="sketch">Sketch</option>
+                    <option value="xd">Adobe XD</option>
+                    <option value="ps">Photoshop</option>
+                    <option value="ai">Illustrator</option>
+                    <option value="ae">After Effects</option>
+                    <option value="framer">Framer</option>
+                    <option value="principle">Principle</option>
+                    <option value="invision">InVision</option>
+                    <option value="zeplin">Zeplin</option>
+                </optgroup>
             </fig-dropdown>
         </section>
         <hr>
