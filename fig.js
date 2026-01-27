@@ -167,9 +167,6 @@ customElements.define("fig-button", FigButton);
 class FigDropdown extends HTMLElement {
   #label = "Menu";
   #selectedValue = null; // Stores last selected value for dropdown type
-  #optionHeight = 28; // Default option height in pixels
-  #pickerPadding = 8; // Padding inside picker (spacer-2)
-  #viewportMargin = 8; // Minimum margin from viewport edges
 
   get label() {
     return this.#label;
@@ -187,12 +184,6 @@ class FigDropdown extends HTMLElement {
   #addEventListeners() {
     this.select.addEventListener("input", this.#handleSelectInput.bind(this));
     this.select.addEventListener("change", this.#handleSelectChange.bind(this));
-    // Calculate picker position before it opens
-    this.select.addEventListener(
-      "mousedown",
-      this.#calculatePickerPosition.bind(this),
-    );
-    this.select.addEventListener("keydown", this.#handleKeyDown.bind(this));
   }
 
   connectedCallback() {
@@ -230,7 +221,6 @@ class FigDropdown extends HTMLElement {
     if (this.type === "dropdown") {
       this.select.selectedIndex = -1;
     }
-    this.#calculatePickerPosition();
   }
 
   #handleSelectInput(e) {
@@ -257,7 +247,6 @@ class FigDropdown extends HTMLElement {
     if (this.type === "dropdown") {
       this.select.selectedIndex = -1;
     }
-    this.#calculatePickerPosition();
     this.dispatchEvent(
       new CustomEvent("change", {
         detail: selectedValue,
@@ -265,64 +254,6 @@ class FigDropdown extends HTMLElement {
         composed: true,
       }),
     );
-  }
-
-  #handleKeyDown(e) {
-    // Recalculate on keyboard navigation that might open the picker
-    if (
-      e.key === " " ||
-      e.key === "Enter" ||
-      e.key === "ArrowDown" ||
-      e.key === "ArrowUp"
-    ) {
-      this.#calculatePickerPosition();
-    }
-  }
-
-  #calculatePickerPosition() {
-    // Only apply positioning for neue variant
-    if (this.getAttribute("variant") !== "neue") {
-      return;
-    }
-
-    // Get positions in viewport
-    const dropdownRect = this.getBoundingClientRect();
-    const selectRect = this.select.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-
-    // Get selected index (use 0 for dropdown type since nothing is visually selected)
-    let selectedIndex = this.select.selectedIndex;
-    if (this.type === "dropdown" || selectedIndex < 0) {
-      selectedIndex = 0;
-    }
-
-    // Calculate the top offset to align selected item with trigger
-    // This is relative to the anchor point (bottom of select by default)
-    const pickerTopOffset =
-      -1 * (selectedIndex + 1) * this.#optionHeight - this.#pickerPadding;
-
-    // The picker is anchored to the select, and top offset is relative to the anchor
-    // Anchor is typically at the bottom of the select element
-    // Actual picker top = select.bottom + topOffset (topOffset is negative)
-    const pickerActualTop = selectRect.bottom + pickerTopOffset;
-
-    // Ensure picker doesn't go above viewport
-    let adjustedTopOffset = pickerTopOffset;
-    if (pickerActualTop < this.#viewportMargin) {
-      adjustedTopOffset = this.#viewportMargin - selectRect.bottom;
-    }
-
-    // Recalculate actual top with adjusted offset
-    const adjustedActualTop = selectRect.bottom + adjustedTopOffset;
-
-    // Calculate max-height: from picker's actual top to 1rem (16px) from bottom of viewport
-    const bottomMargin = 16; // 1rem
-    const maxHeight = viewportHeight - adjustedActualTop - bottomMargin;
-
-    // Set CSS variables for the picker
-    this.select.style.setProperty("--selected-index", selectedIndex);
-    this.select.style.setProperty("--picker-top", `${adjustedTopOffset}px`);
-    this.select.style.setProperty("--picker-max-height", `${Math.max(0, maxHeight)}px`);
   }
 
   focus() {
@@ -346,7 +277,7 @@ class FigDropdown extends HTMLElement {
     this.setAttribute("value", value);
   }
   static get observedAttributes() {
-    return ["value", "type", "variant"];
+    return ["value", "type"];
   }
   #syncSelectedValue(value) {
     // For dropdown type, don't sync the visual selection - it should always show the hidden placeholder
@@ -359,7 +290,6 @@ class FigDropdown extends HTMLElement {
           this.select.selectedIndex = i;
         }
       });
-      this.#calculatePickerPosition();
     }
   }
   attributeChangedCallback(name, oldValue, newValue) {
@@ -372,9 +302,6 @@ class FigDropdown extends HTMLElement {
     if (name === "label") {
       this.#label = newValue;
       this.select.setAttribute("aria-label", this.#label);
-    }
-    if (name === "variant") {
-      this.#calculatePickerPosition();
     }
   }
 }
@@ -2008,6 +1935,7 @@ class FigInputNumber extends HTMLElement {
   #boundInput;
   #boundFocus;
   #boundBlur;
+  #boundKeyDown;
   #units;
   #unitPosition;
 
@@ -2030,6 +1958,9 @@ class FigInputNumber extends HTMLElement {
     };
     this.#boundBlur = (e) => {
       this.#handleBlur(e);
+    };
+    this.#boundKeyDown = (e) => {
+      this.#handleKeyDown(e);
     };
   }
 
@@ -2103,6 +2034,8 @@ class FigInputNumber extends HTMLElement {
       this.input.addEventListener("focus", this.#boundFocus);
       this.input.removeEventListener("blur", this.#boundBlur);
       this.input.addEventListener("blur", this.#boundBlur);
+      this.input.removeEventListener("keydown", this.#boundKeyDown);
+      this.input.addEventListener("keydown", this.#boundKeyDown);
     });
   }
 
@@ -2112,6 +2045,7 @@ class FigInputNumber extends HTMLElement {
       this.input.removeEventListener("input", this.#boundInput);
       this.input.removeEventListener("focus", this.#boundFocus);
       this.input.removeEventListener("blur", this.#boundBlur);
+      this.input.removeEventListener("keydown", this.#boundKeyDown);
     }
     this.removeEventListener("pointerdown", this.#boundMouseDown);
     window.removeEventListener("pointermove", this.#boundMouseMove);
@@ -2198,6 +2132,35 @@ class FigInputNumber extends HTMLElement {
       this.value = "";
       e.target.value = "";
     }
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: this.value, bubbles: true }),
+    );
+  }
+
+  #handleKeyDown(e) {
+    if (this.disabled) return;
+
+    // Only handle arrow up/down
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+
+    e.preventDefault();
+
+    const step = this.step || 1;
+    // Shift multiplies step by 10
+    const multiplier = e.shiftKey ? 10 : 1;
+    const delta = step * multiplier * (e.key === "ArrowUp" ? 1 : -1);
+
+    let numericValue = this.#getNumericValue(this.input.value);
+    let value =
+      (numericValue !== "" ? Number(numericValue) / (this.transform || 1) : 0) +
+      delta;
+    value = this.#sanitizeInput(value, false);
+    this.value = value;
+    this.input.value = this.#formatWithUnit(this.value);
+
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: this.value, bubbles: true }),
+    );
     this.dispatchEvent(
       new CustomEvent("change", { detail: this.value, bubbles: true }),
     );

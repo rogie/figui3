@@ -581,10 +581,8 @@ input[type="text"][list] {
     }
 
     ::picker(select) {
-      position-area: auto;
-      align-self: auto;
-      max-block-size: 100vh;
       appearance: base-select;
+
       scrollbar-width: thin;
       outline: 0;
       scrollbar-color: var(--figma-color-text-menu-tertiary)
@@ -594,14 +592,6 @@ input[type="text"][list] {
       background-color: var(--figma-color-bg-menu);
       padding: var(--spacer-2) 0;
       box-shadow: var(--figma-elevation-400-menu-panel);
-    }
-    select {
-      &::picker(select) {
-        /* --picker-top and --picker-max-height are calculated by JavaScript */
-        top: var(--picker-top, 0px);
-        max-height: var(--picker-max-height, 100vh);
-        overflow-y: auto;
-      }
     }
   }
 }
