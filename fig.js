@@ -1984,9 +1984,17 @@ class FigInputNumber extends HTMLElement {
     }
     this.transform = Number(this.getAttribute("transform") || 1);
 
+    const hasSteppers =
+      this.hasAttribute("steppers") &&
+      this.getAttribute("steppers") !== "false";
+
+    // Use type="number" when steppers are enabled (for native spin buttons)
+    const inputType = hasSteppers ? "number" : "text";
+    const inputMode = hasSteppers ? "" : 'inputmode="decimal"';
+
     let html = `<input 
-      type="text"
-      inputmode="decimal"
+      type="${inputType}"
+      ${inputMode}
       ${this.name ? `name="${this.name}"` : ""}
       placeholder="${this.placeholder}"
       value="${this.#formatWithUnit(this.value)}" />`;
@@ -2268,6 +2276,7 @@ class FigInputNumber extends HTMLElement {
       "name",
       "units",
       "unit-position",
+      "steppers",
     ];
   }
 
