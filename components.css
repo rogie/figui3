@@ -193,10 +193,9 @@
 :root {
   /* Typography & Sizing */
   --font-size: 16px;
-  --font-family:
-    "Inter", AppleSystemUIFont, BlinkMacSystemFont, avenir next, avenir,
-    segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial,
-    sans-serif;
+  --font-family: "Inter", AppleSystemUIFont, BlinkMacSystemFont, avenir next,
+    avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto,
+    arial, sans-serif;
   --body-medium-fontSize: 0.6875rem;
   --body-large-fontSize: 0.8125rem;
   --body-letter-spacing: 0.055px;
@@ -305,19 +304,15 @@
   --icon-swap: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.35355 6.35355C8.54882 6.15829 8.54882 5.84171 8.35355 5.64645C8.15829 5.45118 7.84171 5.45118 7.64645 5.64645L5.14645 8.14645C4.95118 8.34171 4.95118 8.65829 5.14645 8.85355L7.64645 11.3536C7.84171 11.5488 8.15829 11.5488 8.35355 11.3536C8.54882 11.1583 8.54882 10.8417 8.35355 10.6464L6.70711 9H18.5C18.7761 9 19 8.77614 19 8.5C19 8.22386 18.7761 8 18.5 8H6.70711L8.35355 6.35355ZM15.6464 13.3536C15.4512 13.1583 15.4512 12.8417 15.6464 12.6464C15.8417 12.4512 16.1583 12.4512 16.3536 12.6464L18.8536 15.1464C19.0488 15.3417 19.0488 15.6583 18.8536 15.8536L16.3536 18.3536C16.1583 18.5488 15.8417 18.5488 15.6464 18.3536C15.4512 18.1583 15.4512 17.8417 15.6464 17.6464L17.2929 16H5.5C5.22386 16 5 15.7761 5 15.5C5 15.2239 5.22386 15 5.5 15H17.2929L15.6464 13.3536Z' fill='currentColor'/%3E%3C/svg%3E");
 
   /* Elevations - light theme defaults */
-  --elevation-500-modal-window:
-    0px 0px 0.5px rgba(0, 0, 0, 0.08), 0px 10px 24px rgba(0, 0, 0, 0.18),
-    0px 2px 5px rgba(0, 0, 0, 0.15);
-  --figma-elevation-100:
-    0px 0px 0.5px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 0px rgba(0, 0, 0, 0.15);
-  --figma-elevation-200:
-    0px 1px 3px 0px rgba(0, 0, 0, 0.102), 0px 3px 8px 0px rgba(0, 0, 0, 0.102),
-    0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
-  --figma-elevation-400-menu-panel:
-    0px 0px 0.5px 0px rgba(0, 0, 0, 0.12),
+  --elevation-500-modal-window: 0px 0px 0.5px rgba(0, 0, 0, 0.08),
+    0px 10px 24px rgba(0, 0, 0, 0.18), 0px 2px 5px rgba(0, 0, 0, 0.15);
+  --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.3),
+    0px 1px 3px 0px rgba(0, 0, 0, 0.15);
+  --figma-elevation-200: 0px 1px 3px 0px rgba(0, 0, 0, 0.102),
+    0px 3px 8px 0px rgba(0, 0, 0, 0.102), 0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+  --figma-elevation-400-menu-panel: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.12),
     0px 10px 16px 0px rgba(0, 0, 0, 0.12), 0px 2px 5px 0px rgba(0, 0, 0, 0.15);
-  --figma-elevation-500-modal-window:
-    0px 0px 0.5px 0px rgba(0, 0, 0, 0.08),
+  --figma-elevation-500-modal-window: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.08),
     0px 10px 24px 0px rgba(0, 0, 0, 0.18), 0px 2px 5px 0px rgba(0, 0, 0, 0.15);
   --handle-shadow: 0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
 }
@@ -326,48 +321,44 @@
 /* These cannot use light-dark() as they are complex values */
 @media (prefers-color-scheme: dark) {
   :root {
-    --handle-shadow:
-      0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+    --handle-shadow: 0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
       0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
-    --figma-elevation-100:
-      0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
+    --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
       0px 0.75px 0px 0px rgba(255, 255, 255, 0.1) inset,
       0px 1px 3px 0px rgba(0, 0, 0, 0.4);
-    --figma-elevation-200:
-      0px 3px 8px rgba(0, 0, 0, 0.35), 0px 1px 3px rgba(0, 0, 0, 0.5),
+    --figma-elevation-200: 0px 3px 8px rgba(0, 0, 0, 0.35),
+      0px 1px 3px rgba(0, 0, 0, 0.5),
       inset 0px 0.5px 0px rgba(255, 255, 255, 0.08),
       inset 0px 0px 0.5px rgba(255, 255, 255, 0.3);
-    --figma-elevation-400-menu-panel:
-      0px 0.5px 0px 0px rgba(255, 255, 255, 0.08) inset,
+    --figma-elevation-400-menu-panel: 0px 0.5px 0px 0px
+        rgba(255, 255, 255, 0.08) inset,
       0px 10px 16px 0px rgba(0, 0, 0, 0.35),
       inset 0px 0.75px 0px rgba(255, 255, 255, 0.075),
       0px 2px 5px 0px rgba(0, 0, 0, 0.35);
-    --figma-elevation-500-modal-window:
-      0px 10px 24px rgba(0, 0, 0, 0.45), 0px 3px 5px rgba(0, 0, 0, 0.35),
+    --figma-elevation-500-modal-window: 0px 10px 24px rgba(0, 0, 0, 0.45),
+      0px 3px 5px rgba(0, 0, 0, 0.35),
       inset 0px 0.75px 0px rgba(255, 255, 255, 0.1);
   }
 }
 
 /* Class-based dark theme override (for manual theme switching) */
 :root.figma-dark {
-  --handle-shadow:
-    0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+  --handle-shadow: 0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
     0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
-  --figma-elevation-100:
-    0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
+  --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
     0px 0.75px 0px 0px rgba(255, 255, 255, 0.1) inset,
     0px 1px 3px 0px rgba(0, 0, 0, 0.4);
-  --figma-elevation-200:
-    0px 3px 8px rgba(0, 0, 0, 0.35), 0px 1px 3px rgba(0, 0, 0, 0.5),
+  --figma-elevation-200: 0px 3px 8px rgba(0, 0, 0, 0.35),
+    0px 1px 3px rgba(0, 0, 0, 0.5),
     inset 0px 0.5px 0px rgba(255, 255, 255, 0.08),
     inset 0px 0px 0.5px rgba(255, 255, 255, 0.3);
-  --figma-elevation-400-menu-panel:
-    0px 0.5px 0px 0px rgba(255, 255, 255, 0.08) inset,
+  --figma-elevation-400-menu-panel: 0px 0.5px 0px 0px rgba(255, 255, 255, 0.08)
+      inset,
     0px 10px 16px 0px rgba(0, 0, 0, 0.35),
     inset 0px 0.75px 0px rgba(255, 255, 255, 0.075),
     0px 2px 5px 0px rgba(0, 0, 0, 0.35);
-  --figma-elevation-500-modal-window:
-    0px 10px 24px rgba(0, 0, 0, 0.45), 0px 3px 5px rgba(0, 0, 0, 0.35),
+  --figma-elevation-500-modal-window: 0px 10px 24px rgba(0, 0, 0, 0.45),
+    0px 3px 5px rgba(0, 0, 0, 0.35),
     inset 0px 0.75px 0px rgba(255, 255, 255, 0.1);
 }
 
@@ -490,8 +481,22 @@ input[type="text"][list] {
       }
     }
     select {
-      appearance: base-select;
       --option-height: 1.5rem;
+      --max-width: 20rem;
+      @media (hover) and (pointer: fine) {
+        &,
+        &::picker(select) {
+          appearance: base-select;
+        }
+      }
+
+      max-inline-size: var(--max-width);
+      padding-block: 0;
+      will-change: scale;
+
+      @supports (-webkit-touch-callout: none) {
+        font-size: 16px;
+      }
 
       option::checkmark {
         content: var(--icon-checkmark);
@@ -580,9 +585,11 @@ input[type="text"][list] {
       display: none;
     }
 
+    /* https://codepen.io/editor/argyleink/pen/019c1f28-bbc2-7bac-ad4a-a7e41d3730f1 */
     ::picker(select) {
       appearance: base-select;
 
+      /* Appearance/style */
       scrollbar-width: thin;
       outline: 0;
       scrollbar-color: var(--figma-color-text-menu-tertiary)
@@ -598,7 +605,8 @@ input[type="text"][list] {
 
 input[type="text"][list],
 select {
-  padding-right: 1.5rem;
+  padding-right: var(--spacer-4);
+  padding-left: var(--spacer-2);
 }
 
 /* Dropdown */
@@ -1111,8 +1119,7 @@ fig-chit {
     }
 
     &[selected]:not([selected="false"])::before {
-      box-shadow:
-        inset 0 0 0 1px var(--figma-color-border-selected),
+      box-shadow: inset 0 0 0 1px var(--figma-color-border-selected),
         inset 0 0 0 3px var(--figma-color-bg);
     }
 
@@ -1468,10 +1475,8 @@ input[type="radio"] {
     border-radius: 100%;
     background-color: var(--figma-color-icon-onbrand);
     transform: scale(0);
-    box-shadow:
-      0px 0 0 0.75px rgba(0, 0, 0, 0.1),
-      0px 1px 3px 0px rgba(0, 0, 0, 0.1),
-      0px 3px 8px 0px rgba(0, 0, 0, 0.1),
+    box-shadow: 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+      0px 1px 3px 0px rgba(0, 0, 0, 0.1), 0px 3px 8px 0px rgba(0, 0, 0, 0.1),
       0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
   }
 }
@@ -1568,12 +1573,12 @@ fig-slider {
   --slider-percent: calc(var(--slider-complete) * 100%);
   --start-percent: calc(var(--default, 0) * 100%);
   --slider-tick-size: calc(var(--slider-height) / 4);
-  --slider-handle-shadow:
-    inset 0 0 0 calc(4px + 0.5rem * var(--unchanged)) var(--handle-color),
+  --slider-handle-shadow: inset 0 0 0 calc(4px + 0.5rem * var(--unchanged))
+      var(--handle-color),
     0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
-  --slider-handle-shadow-focus:
-    inset 0 0 0 4px var(--handle-color), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-    var(--handle-shadow), 0 0 0 1px var(--figma-color-border-selected);
+  --slider-handle-shadow-focus: inset 0 0 0 4px var(--handle-color),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.1), var(--handle-shadow),
+    0 0 0 1px var(--figma-color-border-selected);
   --slider-transition: all 0.1s ease-in-out;
   --handle-transition: var(--slider-transition);
 
@@ -1637,10 +1642,11 @@ fig-slider {
         );
         --width: calc(var(--slider-percent) - var(--start-percent));
         --abs-width: max(
-          var(--width) + var(--slider-height) / 2 +
-            (1 - var(--slider-complete)) * var(--slider-height),
-          -1 * var(--width) + var(--slider-height) / 2 +
-            (var(--slider-complete)) * var(--slider-height)
+          var(--width) + var(--slider-height) / 2 + (1 - var(--slider-complete)) *
+            var(--slider-height),
+          -1 * var(--width) + var(--slider-height) / 2 + (
+              var(--slider-complete)
+            ) * var(--slider-height)
         );
         width: var(--abs-width);
         --delta: calc(var(--slider-complete) - var(--default));
@@ -1730,8 +1736,7 @@ fig-slider {
     }
 
     &.opacity::-webkit-slider-runnable-track {
-      background:
-        linear-gradient(to right, transparent, var(--color)),
+      background: linear-gradient(to right, transparent, var(--color)),
         var(--checkerboard);
     }
   }
@@ -1805,8 +1810,7 @@ fig-slider {
     }
 
     &.opacity::-moz-range-track {
-      background:
-        linear-gradient(to right, transparent, var(--color)),
+      background: linear-gradient(to right, transparent, var(--color)),
         var(--checkerboard);
     }
   }
@@ -1855,8 +1859,8 @@ fig-slider {
     --slider-tick-size: calc(var(--slider-height) / 2);
     --handle-transition: none;
     --slider-transition: none;
-    --slider-handle-shadow:
-      inset 0 0 0 calc(6px + 0.5rem * var(--unchanged)) var(--handle-color),
+    --slider-handle-shadow: inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
+        var(--handle-color),
       0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
       var(--figma-elevation-200);
 
@@ -1884,8 +1888,8 @@ fig-slider {
     --slider-tick-size: calc(var(--slider-height) / 2);
     --handle-transition: none;
     --slider-transition: none;
-    --slider-handle-shadow:
-      inset 0 0 0 calc(6px + 0.5rem * var(--unchanged)) var(--handle-color),
+    --slider-handle-shadow: inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
+        var(--handle-color),
       0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
       var(--figma-elevation-200);
 
@@ -1989,10 +1993,8 @@ dialog,
     text-overflow: ellipsis;
 
     border-radius: var(--radius-medium, 0.3125rem);
-    box-shadow:
-      0px 0px 0.5px 0px rgba(0, 0, 0, 0.15),
-      0px 5px 12px 0px rgba(0, 0, 0, 0.13),
-      0px 1px 3px 0px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.15),
+      0px 5px 12px 0px rgba(0, 0, 0, 0.13), 0px 1px 3px 0px rgba(0, 0, 0, 0.1);
 
     @supports (-webkit-line-clamp: 2) {
       white-space: initial;
@@ -2568,8 +2570,7 @@ fig-input-joystick {
     }
   }
   .fig-input-joystick-plane.dragging .fig-input-joystick-guides {
-    background:
-      linear-gradient(
+    background: linear-gradient(
         45deg,
         transparent calc(50% - 0.5px),
         var(--figma-color-border) calc(50% - 0.5px),
@@ -2881,17 +2882,13 @@ fig-fill-picker {
   height: 1rem;
   border-radius: 50%;
   background: var(--picker-color);
-  box-shadow:
-    inset 0 0 0 0.125rem var(--handle-color),
-    0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-    var(--figma-elevation-200);
+  box-shadow: inset 0 0 0 0.125rem var(--handle-color),
+    0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
   transform: translate(-50%, -50%);
   z-index: 1;
   &:hover {
-    box-shadow:
-      inset 0 0 0 0.25rem var(--handle-color),
-      0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-      var(--figma-elevation-200);
+    box-shadow: inset 0 0 0 0.25rem var(--handle-color),
+      0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
     transform: translate(-50%, -50%);
   }
 }
@@ -3047,21 +3044,16 @@ fig-fill-picker {
 .fig-fill-picker-checkerboard {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(45deg, var(--figma-color-bg-tertiary) 25%, transparent 25%),
-    linear-gradient(
-      -45deg,
+  background-image: linear-gradient(
+      45deg,
       var(--figma-color-bg-tertiary) 25%,
       transparent 25%
     ),
+    linear-gradient(-45deg, var(--figma-color-bg-tertiary) 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, var(--figma-color-bg-tertiary) 75%),
     linear-gradient(-45deg, transparent 75%, var(--figma-color-bg-tertiary) 75%);
   background-size: 16px 16px;
-  background-position:
-    0 0,
-    0 8px,
-    8px -8px,
-    -8px 0px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
 }
 
 .fig-fill-picker-image-preview {
