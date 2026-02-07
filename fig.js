@@ -4945,6 +4945,9 @@ class FigInputAngle extends HTMLElement {
     this.angle = value;
     this.#calculateAdjacentAndOpposite();
     this.#syncHandlePosition();
+    if (this.angleInput) {
+      this.angleInput.setAttribute("value", this.angle.toFixed(this.precision));
+    }
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
