@@ -1323,6 +1323,58 @@
                 <fig-input-angle text="true"
                                  value="270"></fig-input-angle>
             </hstack>
+
+            <h3>Unbounded (no min/max — supports winding)</h3>
+            <hstack>
+                <fig-input-angle text="true"
+                                 value="0"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 value="720"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 value="-90"></fig-input-angle>
+            </hstack>
+
+            <h3>Clamped (min/max)</h3>
+            <hstack>
+                <fig-input-angle text="true"
+                                 value="90"
+                                 min="0"
+                                 max="180"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 value="45"
+                                 min="0"
+                                 max="360"></fig-input-angle>
+            </hstack>
+
+            <h3>Radians</h3>
+            <hstack>
+                <fig-input-angle text="true"
+                                 units="rad"
+                                 value="3.14159"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 units="rad"
+                                 value="1.5708"></fig-input-angle>
+            </hstack>
+
+            <h3>Turns</h3>
+            <hstack>
+                <fig-input-angle text="true"
+                                 units="turn"
+                                 value="0.5"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 units="turn"
+                                 value="2.5"></fig-input-angle>
+            </hstack>
+
+            <h3>Width Test (Resizable)</h3>
+            <p class="description">Drag the right edge to test at different widths.</p>
+            <div class="resize-test" style="width: 240px;">
+                <fig-field direction="horizontal">
+                    <label>Angle</label>
+                    <fig-input-angle text="true"
+                                     value="45"></fig-input-angle>
+                </fig-field>
+            </div>
         </section>
         <hr>
 

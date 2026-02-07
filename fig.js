@@ -4554,14 +4554,16 @@ customElements.define("fig-input-joystick", FigInputJoystick);
  * @attr {number} opposite - The opposite value of the angle.
  */
 class FigInputAngle extends HTMLElement {
-  // Declare private fields first
+  // Private fields
   #adjacent;
   #opposite;
+  #prevRawAngle = null;
+  #boundHandleRawChange;
 
   constructor() {
     super();
 
-    this.angle = 0; // Angle in degrees
+    this.angle = 0;
     this.#adjacent = 1;
     this.#opposite = 0;
     this.isDragging = false;
@@ -4569,6 +4571,11 @@ class FigInputAngle extends HTMLElement {
     this.handle = null;
     this.angleInput = null;
     this.plane = null;
+    this.units = "°";
+    this.min = null;
+    this.max = null;
+
+    this.#boundHandleRawChange = this.#handleRawChange.bind(this);
   }
 
   connectedCallback() {
@@ -4577,8 +4584,18 @@ class FigInputAngle extends HTMLElement {
       this.precision = parseInt(this.precision);
       this.text = this.getAttribute("text") === "true";
 
-      this.#render();
+      let rawUnits = this.getAttribute("units") || "°";
+      if (rawUnits === "deg") rawUnits = "°";
+      this.units = rawUnits;
 
+      this.min = this.hasAttribute("min")
+        ? Number(this.getAttribute("min"))
+        : null;
+      this.max = this.hasAttribute("max")
+        ? Number(this.getAttribute("max"))
+        : null;
+
+      this.#render();
       this.#setupListeners();
 
       this.#syncHandlePosition();
@@ -4600,24 +4617,88 @@ class FigInputAngle extends HTMLElement {
   }
 
   #getInnerHTML() {
+    const step = this.#getStepForUnit();
+    const minAttr = this.min !== null ? `min="${this.min}"` : "";
+    const maxAttr = this.max !== null ? `max="${this.max}"` : "";
     return `
         <div class="fig-input-angle-plane" tabindex="0">
           <div class="fig-input-angle-handle"></div>
         </div>
         ${
           this.text
-            ? `<fig-input-number 
+            ? `<fig-input-number
                 name="angle"
-                step="0.1"
+                step="${step}"
                 value="${this.angle}"
-                min="0"
-                max="360"
-                units="°">
+                ${minAttr}
+                ${maxAttr}
+                units="${this.units}">
               </fig-input-number>`
             : ""
         }
     `;
   }
+
+  #getStepForUnit() {
+    switch (this.units) {
+      case "rad":
+        return 0.01;
+      case "turn":
+        return 0.001;
+      default:
+        return 0.1;
+    }
+  }
+
+  // --- Unit conversion helpers ---
+
+  #toDegrees(value) {
+    switch (this.units) {
+      case "rad":
+        return (value * 180) / Math.PI;
+      case "turn":
+        return value * 360;
+      default:
+        return value;
+    }
+  }
+
+  #fromDegrees(degrees) {
+    switch (this.units) {
+      case "rad":
+        return (degrees * Math.PI) / 180;
+      case "turn":
+        return degrees / 360;
+      default:
+        return degrees;
+    }
+  }
+
+  #convertAngle(value, fromUnit, toUnit) {
+    // Convert to degrees first
+    let degrees;
+    switch (fromUnit) {
+      case "rad":
+        degrees = (value * 180) / Math.PI;
+        break;
+      case "turn":
+        degrees = value * 360;
+        break;
+      default:
+        degrees = value;
+    }
+    // Convert from degrees to target
+    switch (toUnit) {
+      case "rad":
+        return (degrees * Math.PI) / 180;
+      case "turn":
+        return degrees / 360;
+      default:
+        return degrees;
+    }
+  }
+
+  // --- Event listeners ---
 
   #setupListeners() {
     this.handle = this.querySelector(".fig-input-angle-handle");
@@ -4636,15 +4717,34 @@ class FigInputAngle extends HTMLElement {
         this.#handleAngleInput.bind(this),
       );
     }
+    // Capture-phase listener for unit suffix parsing
+    this.addEventListener("change", this.#boundHandleRawChange, true);
   }
 
   #cleanupListeners() {
-    this.plane.removeEventListener("mousedown", this.#handleMouseDown);
-    this.plane.removeEventListener("touchstart", this.#handleTouchStart);
+    this.plane?.removeEventListener("mousedown", this.#handleMouseDown);
+    this.plane?.removeEventListener("touchstart", this.#handleTouchStart);
     window.removeEventListener("keydown", this.#handleKeyDown);
     window.removeEventListener("keyup", this.#handleKeyUp);
     if (this.text && this.angleInput) {
       this.angleInput.removeEventListener("input", this.#handleAngleInput);
+    }
+    this.removeEventListener("change", this.#boundHandleRawChange, true);
+  }
+
+  #handleRawChange(e) {
+    // Only intercept native change events from the raw <input> element
+    if (!e.target?.matches?.("input")) return;
+    const raw = e.target.value;
+    const match = raw.match(/^(-?\d*\.?\d+)\s*(turn|rad|deg|°)$/i);
+    if (match) {
+      const num = parseFloat(match[1]);
+      let fromUnit = match[2].toLowerCase();
+      if (fromUnit === "deg") fromUnit = "°";
+      if (fromUnit !== this.units) {
+        const converted = this.#convertAngle(num, fromUnit, this.units);
+        e.target.value = String(converted);
+      }
     }
   }
 
@@ -4657,8 +4757,11 @@ class FigInputAngle extends HTMLElement {
     this.#emitChangeEvent();
   }
 
+  // --- Angle calculation ---
+
   #calculateAdjacentAndOpposite() {
-    const radians = (this.angle * Math.PI) / 180;
+    const degrees = this.#toDegrees(this.angle);
+    const radians = (degrees * Math.PI) / 180;
     this.#adjacent = Math.cos(radians);
     this.#opposite = Math.sin(radians);
   }
@@ -4669,16 +4772,46 @@ class FigInputAngle extends HTMLElement {
     return Math.round(angle / increment) * increment;
   }
 
-  #updateAngle(e) {
+  #getRawAngle(e) {
     const rect = this.plane.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const deltaX = e.clientX - centerX;
     const deltaY = e.clientY - centerY;
-    let angle = ((Math.atan2(deltaY, deltaX) * 180) / Math.PI + 360) % 360;
+    return (Math.atan2(deltaY, deltaX) * 180) / Math.PI;
+  }
 
-    angle = this.#snapToIncrement(angle);
-    this.angle = angle;
+  #updateAngle(e) {
+    let rawAngle = this.#getRawAngle(e);
+    // Normalize to 0-360 for snap and positioning
+    let normalizedAngle = ((rawAngle % 360) + 360) % 360;
+    normalizedAngle = this.#snapToIncrement(normalizedAngle);
+
+    const isBounded = this.min !== null || this.max !== null;
+
+    if (isBounded) {
+      // Bounded: absolute position
+      this.angle = this.#fromDegrees(normalizedAngle);
+    } else {
+      // Unbounded: cumulative winding
+      if (this.#prevRawAngle === null) {
+        // First event of this drag — snap to clicked position, preserving revolution
+        this.#prevRawAngle = normalizedAngle;
+        const currentDeg = this.#toDegrees(this.angle);
+        const currentMod = ((currentDeg % 360) + 360) % 360;
+        let delta = normalizedAngle - currentMod;
+        if (delta > 180) delta -= 360;
+        if (delta < -180) delta += 360;
+        this.angle += this.#fromDegrees(delta);
+      } else {
+        // Subsequent events — accumulate delta
+        let delta = normalizedAngle - this.#prevRawAngle;
+        if (delta > 180) delta -= 360;
+        if (delta < -180) delta += 360;
+        this.angle += this.#fromDegrees(delta);
+        this.#prevRawAngle = normalizedAngle;
+      }
+    }
 
     this.#calculateAdjacentAndOpposite();
 
@@ -4689,6 +4822,8 @@ class FigInputAngle extends HTMLElement {
 
     this.#emitInputEvent();
   }
+
+  // --- Event dispatching ---
 
   #emitInputEvent() {
     this.dispatchEvent(
@@ -4708,9 +4843,12 @@ class FigInputAngle extends HTMLElement {
     );
   }
 
+  // --- Handle position ---
+
   #syncHandlePosition() {
     if (this.handle) {
-      const radians = (this.angle * Math.PI) / 180;
+      const degrees = this.#toDegrees(this.angle);
+      const radians = (degrees * Math.PI) / 180;
       const radius = this.plane.offsetWidth / 2 - this.handle.offsetWidth / 2;
       const x = Math.cos(radians) * radius;
       const y = Math.sin(radians) * radius;
@@ -4718,8 +4856,11 @@ class FigInputAngle extends HTMLElement {
     }
   }
 
+  // --- Mouse/Touch handlers ---
+
   #handleMouseDown(e) {
     this.isDragging = true;
+    this.#prevRawAngle = null;
     this.#updateAngle(e);
 
     const handleMouseMove = (e) => {
@@ -4729,6 +4870,7 @@ class FigInputAngle extends HTMLElement {
 
     const handleMouseUp = () => {
       this.isDragging = false;
+      this.#prevRawAngle = null;
       this.plane.classList.remove("dragging");
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
@@ -4742,6 +4884,7 @@ class FigInputAngle extends HTMLElement {
   #handleTouchStart(e) {
     e.preventDefault();
     this.isDragging = true;
+    this.#prevRawAngle = null;
     this.#updateAngle(e.touches[0]);
 
     const handleTouchMove = (e) => {
@@ -4751,6 +4894,7 @@ class FigInputAngle extends HTMLElement {
 
     const handleTouchEnd = () => {
       this.isDragging = false;
+      this.#prevRawAngle = null;
       this.plane.classList.remove("dragging");
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
@@ -4760,6 +4904,8 @@ class FigInputAngle extends HTMLElement {
     window.addEventListener("touchmove", handleTouchMove);
     window.addEventListener("touchend", handleTouchEnd);
   }
+
+  // --- Keyboard handlers ---
 
   #handleKeyDown(e) {
     if (e.key === "Shift") this.isShiftHeld = true;
@@ -4773,8 +4919,10 @@ class FigInputAngle extends HTMLElement {
     this.plane?.focus();
   }
 
+  // --- Attributes ---
+
   static get observedAttributes() {
-    return ["value", "precision", "text"];
+    return ["value", "precision", "text", "min", "max", "units"];
   }
 
   get value() {
@@ -4800,15 +4948,50 @@ class FigInputAngle extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === "value") {
-      this.value = Number(newValue);
-    }
-    if (name === "precision") {
-      this.precision = parseInt(newValue);
-    }
-    if (name === "text" && newValue !== oldValue) {
-      this.text = newValue.toLowerCase() === "true";
-      this.#render();
+    switch (name) {
+      case "value":
+        this.value = Number(newValue);
+        break;
+      case "precision":
+        this.precision = parseInt(newValue);
+        break;
+      case "text":
+        if (newValue !== oldValue) {
+          this.text = newValue?.toLowerCase() === "true";
+          if (this.plane) {
+            this.#render();
+            this.#setupListeners();
+            this.#syncHandlePosition();
+          }
+        }
+        break;
+      case "units": {
+        let units = newValue || "°";
+        if (units === "deg") units = "°";
+        this.units = units;
+        if (this.plane) {
+          this.#render();
+          this.#setupListeners();
+          this.#syncHandlePosition();
+        }
+        break;
+      }
+      case "min":
+        this.min = newValue !== null ? Number(newValue) : null;
+        if (this.plane) {
+          this.#render();
+          this.#setupListeners();
+          this.#syncHandlePosition();
+        }
+        break;
+      case "max":
+        this.max = newValue !== null ? Number(newValue) : null;
+        if (this.plane) {
+          this.#render();
+          this.#setupListeners();
+          this.#syncHandlePosition();
+        }
+        break;
     }
   }
 }
