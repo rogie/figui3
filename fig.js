@@ -1587,6 +1587,8 @@ class FigSlider extends HTMLElement {
       "color",
       "units",
       "transform",
+      "text",
+      "default",
     ];
   }
 
@@ -1611,6 +1613,8 @@ class FigSlider extends HTMLElement {
           break;
         case "value":
           this.value = newValue;
+          this.input.value = newValue;
+          this.#syncProperties();
           if (this.figInputNumber) {
             this.figInputNumber.setAttribute("value", newValue);
           }
@@ -1620,6 +1624,10 @@ class FigSlider extends HTMLElement {
           if (this.figInputNumber) {
             this.figInputNumber.setAttribute("transform", this.transform);
           }
+          break;
+        case "default":
+          this.default = newValue;
+          this.#syncProperties();
           break;
         case "min":
         case "max":
