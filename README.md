@@ -9,6 +9,8 @@ A lightweight, zero-dependency web components library for building Figma plugin 
 
 View the interactive component documentation at **[rogie.github.io/figui3](https://rogie.github.io/figui3/)**
 
+The demo page (`index.html`) is included in the npm package, so you can also open it locally after installing.
+
 ## Features
 
 - 🎨 Figma UI3 design system
@@ -157,7 +159,7 @@ A native select wrapper with Figma styling.
 
 ### Tooltip (`<fig-tooltip>`)
 
-Displays contextual information on hover or click.
+Displays contextual information on hover or click. The tooltip automatically repositions itself when its child element moves (e.g. during drag), using a MutationObserver to track attribute changes on the child.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -165,6 +167,7 @@ Displays contextual information on hover or click.
 | `action` | string | `"hover"` | Trigger: `"hover"` or `"click"` |
 | `delay` | number | `500` | Delay in ms before showing |
 | `offset` | string | — | Position offset: `"left,top,right,bottom"` |
+| `open` | boolean | `false` | Programmatically show/hide the tooltip |
 
 ```html
 <fig-tooltip text="This is helpful info" action="hover">
@@ -173,6 +176,11 @@ Displays contextual information on hover or click.
 
 <fig-tooltip text="Click triggered" action="click" delay="0">
   <fig-button>Click me</fig-button>
+</fig-tooltip>
+
+<!-- Instant tooltip (no delay) -->
+<fig-tooltip text="Instant!" delay="0">
+  <fig-button>No delay</fig-button>
 </fig-tooltip>
 ```
 
@@ -283,6 +291,7 @@ A range slider with multiple types and optional text input.
 | `min` | number | `0` | Minimum value |
 | `max` | number | `100` | Maximum value |
 | `step` | number | `1` | Step increment |
+| `default` | number | — | Default/reset value (shown as a marker on the track) |
 | `text` | boolean | `false` | Show text input |
 | `units` | string | — | Unit label (e.g., `"%"`, `"px"`) |
 | `transform` | number | — | Multiplier for display value |
@@ -369,12 +378,16 @@ A numeric input with units support.
 | `units` | string | — | Unit string (e.g., `"px"`, `"%"`) |
 | `unit-position` | string | `"suffix"` | `"suffix"` or `"prefix"` |
 | `transform` | number | — | Display multiplier |
+| `steppers` | boolean | `false` | Show native spin buttons (up/down arrows) |
 | `disabled` | boolean | `false` | Disable input |
 
 ```html
 <fig-input-number value="100" units="px"></fig-input-number>
 <fig-input-number value="50" units="%" min="0" max="100"></fig-input-number>
 <fig-input-number value="45" units="°" step="15"></fig-input-number>
+
+<!-- With native stepper arrows -->
+<fig-input-number value="10" steppers="true" step="1"></fig-input-number>
 ```
 
 ---
@@ -389,6 +402,7 @@ A color picker with hex/alpha support.
 | `text` | boolean | `false` | Show hex text input |
 | `alpha` | boolean | `false` | Show alpha slider |
 | `picker` | string | `"native"` | Picker type: `"native"`, `"figma"`, `"false"` |
+| `mode` | string | — | Color mode (e.g., `"hex"`, `"rgb"`, `"hsl"`) |
 | `disabled` | boolean | `false` | Disable input |
 
 ```html
@@ -483,11 +497,13 @@ A checkbox input with indeterminate state support.
 | `disabled` | boolean | `false` | Disable checkbox |
 | `name` | string | — | Form field name |
 | `value` | string | — | Value when checked |
+| `label` | string | — | Programmatic label text (alternative to slotted content) |
 
 ```html
 <fig-checkbox>Accept terms</fig-checkbox>
 <fig-checkbox checked>Selected option</fig-checkbox>
 <fig-checkbox indeterminate>Parent option</fig-checkbox>
+<fig-checkbox label="Via attribute"></fig-checkbox>
 ```
 
 ---
@@ -531,11 +547,12 @@ A toggle switch component.
 
 ### Field (`<fig-field>`)
 
-A form field wrapper with flexible layout.
+A form field wrapper with flexible layout. Automatically links `<label>` elements to the first `fig-*` child for accessibility.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `direction` | string | `"column"` | Layout: `"column"`, `"row"`, `"horizontal"` |
+| `label` | string | — | Programmatically set the label text |
 
 ```html
 <!-- Vertical (default) -->
@@ -618,27 +635,55 @@ A 2D position input control.
 | `precision` | number | — | Decimal places |
 | `transform` | number | — | Output scaling |
 | `text` | boolean | `false` | Show X/Y inputs |
+| `coordinates` | string | `"screen"` | Coordinate system: `"screen"` (0,0 top-left) or `"math"` (0,0 bottom-left) |
 
 ```html
 <fig-input-joystick value="0.5,0.5"></fig-input-joystick>
 <fig-input-joystick value="0.5,0.5" text="true" precision="2"></fig-input-joystick>
+
+<!-- Math coordinates (Y-axis inverted: 0,0 at bottom-left) -->
+<fig-input-joystick value="0.5,0.5" coordinates="math" text="true"></fig-input-joystick>
 ```
 
 ---
 
 ### Input Angle (`<fig-input-angle>`)
 
-An angle/rotation input control.
+An angle/rotation input control with optional min/max clamping, multi-unit support, and unbounded winding (values beyond 360°).
+
+When `min` and `max` are omitted, the input is unbounded — dragging continuously winds the angle past full revolutions (e.g. 720°, 1080°, or negative values). The text input also accepts values with unit suffixes (`90deg`, `3.14rad`, `0.5turn`) and converts them to the component's `units` format.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `value` | number | — | Angle in degrees |
-| `precision` | number | — | Decimal places |
-| `text` | boolean | `false` | Show text input |
+| `value` | number | `0` | Angle value (in the unit specified by `units`) |
+| `precision` | number | `1` | Decimal places for display |
+| `text` | boolean | `false` | Show numeric text input alongside the dial |
+| `min` | number | — | Minimum angle (omit for unbounded) |
+| `max` | number | — | Maximum angle (omit for unbounded) |
+| `units` | string | `"°"` | Display unit: `"°"` (or `"deg"`), `"rad"`, `"turn"` |
+| `show-rotations` | boolean | `false` | Show a ×N rotation counter when angle exceeds 1 full rotation |
 
 ```html
+<!-- Basic dial -->
 <fig-input-angle value="45"></fig-input-angle>
+
+<!-- With text input -->
 <fig-input-angle value="90" text="true"></fig-input-angle>
+
+<!-- Unbounded (supports winding past 360°) -->
+<fig-input-angle text="true" value="720"></fig-input-angle>
+
+<!-- Clamped to a range -->
+<fig-input-angle text="true" value="90" min="0" max="180"></fig-input-angle>
+
+<!-- Radians -->
+<fig-input-angle text="true" units="rad" value="3.14159"></fig-input-angle>
+
+<!-- Turns -->
+<fig-input-angle text="true" units="turn" value="0.5"></fig-input-angle>
+
+<!-- Show rotation count (×2 at 720°, ×3 at 1080°, etc.) -->
+<fig-input-angle text="true" show-rotations="true" value="1080"></fig-input-angle>
 ```
 
 ---
@@ -680,20 +725,49 @@ A loading spinner indicator.
 
 A loading placeholder with shimmer animation.
 
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `duration` | string | `"1.5s"` | Animation cycle duration (CSS time value) |
+| `playing` | boolean | `true` | Whether the animation is running |
+
 ```html
 <fig-shimmer style="width: 200px; height: 20px;"></fig-shimmer>
+<fig-shimmer style="width: 100px; height: 14px;" duration="2s"></fig-shimmer>
 ```
 
 ---
 
 ### Layer (`<fig-layer>`)
 
-A layer list item component (for layer panels).
+A layer list item component (for layer panels). Supports nesting, expand/collapse via chevron, and visibility toggling.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `open` | boolean | `false` | Whether child layers are expanded |
+| `visible` | boolean | `true` | Whether the layer is visible |
+
+**Events:** `openchange` (detail: `{ open }`) and `visibilitychange` (detail: `{ visible }`)
 
 ```html
-<fig-layer name="Rectangle 1" type="rectangle" selected></fig-layer>
-<fig-layer name="Group 1" type="group" expanded>
-  <fig-layer name="Child 1" type="frame"></fig-layer>
+<fig-layer>
+  <div class="fig-layer-row">
+    <span class="fig-layer-icon"></span>
+    <span class="fig-layer-name">Rectangle 1</span>
+  </div>
+</fig-layer>
+
+<!-- Nested with children -->
+<fig-layer open="true">
+  <div class="fig-layer-row">
+    <span class="fig-layer-icon"></span>
+    <span class="fig-layer-name">Group 1</span>
+  </div>
+  <fig-layer>
+    <div class="fig-layer-row">
+      <span class="fig-layer-icon"></span>
+      <span class="fig-layer-name">Child 1</span>
+    </div>
+  </fig-layer>
 </fig-layer>
 ```
 
