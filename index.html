@@ -1334,6 +1334,19 @@
                                  value="-90"></fig-input-angle>
             </hstack>
 
+            <h3>Show Rotations (unbounded with rotation count)</h3>
+            <hstack>
+                <fig-input-angle text="true"
+                                 show-rotations="true"
+                                 value="0"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 show-rotations="true"
+                                 value="720"></fig-input-angle>
+                <fig-input-angle text="true"
+                                 show-rotations="true"
+                                 value="1080"></fig-input-angle>
+            </hstack>
+
             <h3>Clamped (min/max)</h3>
             <hstack>
                 <fig-input-angle text="true"
@@ -1368,7 +1381,8 @@
 
             <h3>Width Test (Resizable)</h3>
             <p class="description">Drag the right edge to test at different widths.</p>
-            <div class="resize-test" style="width: 240px;">
+            <div class="resize-test"
+                 style="width: 240px;">
                 <fig-field direction="horizontal">
                     <label>Angle</label>
                     <fig-input-angle text="true"
@@ -2970,6 +2984,64 @@
                 </fig-tooltip>
                 for more information.
             </p>
+
+            <h3>On a Draggable Element</h3>
+            <fig-tooltip text="Drag me around"
+                         delay="0">
+                <div style="
+                    width: 64px;
+                    height: 64px;
+                    border-radius: 8px;
+                    background: var(--figma-color-bg-brand);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: var(--figma-color-text-onbrand);
+                    font-size: 11px;
+                    font-weight: 600;
+                    cursor: grab;
+                    user-select: none;
+                    position: relative;
+                "
+                     draggable-box>
+                    Drag me
+                </div>
+            </fig-tooltip>
+
+            <script>
+                {
+                    const box = document.querySelector('[draggable-box]');
+                    let isDragging = false;
+                    let startX, startY, initialLeft, initialTop;
+
+                    // Ensure positioned
+                    box.style.position = 'relative';
+                    box.style.left = '0px';
+                    box.style.top = '0px';
+
+                    box.addEventListener('mousedown', (e) => {
+                        isDragging = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        initialLeft = parseInt(box.style.left) || 0;
+                        initialTop = parseInt(box.style.top) || 0;
+                        box.style.cursor = 'grabbing';
+                        e.preventDefault();
+                    });
+
+                    window.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+                        box.style.left = (initialLeft + e.clientX - startX) + 'px';
+                        box.style.top = (initialTop + e.clientY - startY) + 'px';
+                    });
+
+                    window.addEventListener('mouseup', () => {
+                        if (!isDragging) return;
+                        isDragging = false;
+                        box.style.cursor = 'grab';
+                    });
+                }
+            </script>
         </section>
         <hr>
 

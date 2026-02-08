@@ -308,20 +308,20 @@
     0px 10px 24px rgba(0, 0, 0, 0.18), 0px 2px 5px rgba(0, 0, 0, 0.15);
   --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.3),
     0px 1px 3px 0px rgba(0, 0, 0, 0.15);
-  --figma-elevation-200: 0px 1px 3px 0px rgba(0, 0, 0, 0.102),
-    0px 3px 8px 0px rgba(0, 0, 0, 0.102), 0px 0px 0.5px 0px rgba(0, 0, 0, 0.18);
+  --figma-elevation-200: 0 0 0.5px 0 rgba(0, 0, 0, 0.18),
+    0 3px 8px 0 rgba(0, 0, 0, 0.1), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   --figma-elevation-400-menu-panel: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.12),
     0px 10px 16px 0px rgba(0, 0, 0, 0.12), 0px 2px 5px 0px rgba(0, 0, 0, 0.15);
   --figma-elevation-500-modal-window: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.08),
     0px 10px 24px 0px rgba(0, 0, 0, 0.18), 0px 2px 5px 0px rgba(0, 0, 0, 0.15);
-  --handle-shadow: 0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
+  --handle-shadow: 0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-100);
 }
 
 /* Dark theme overrides for non-color values (shadows, elevations) */
 /* These cannot use light-dark() as they are complex values */
 @media (prefers-color-scheme: dark) {
   :root {
-    --handle-shadow: 0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+    --handle-shadow: 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
       0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
     --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
       0px 0.75px 0px 0px rgba(255, 255, 255, 0.1) inset,
@@ -343,7 +343,7 @@
 
 /* Class-based dark theme override (for manual theme switching) */
 :root.figma-dark {
-  --handle-shadow: 0px 0 0 0.75px 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
+  --handle-shadow: 0px 0 0 0.75px rgba(0, 0, 0, 0.1),
     0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
   --figma-elevation-100: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.5),
     0px 0.75px 0px 0px rgba(255, 255, 255, 0.1) inset,
@@ -1575,7 +1575,7 @@ fig-slider {
   --slider-tick-size: calc(var(--slider-height) / 4);
   --slider-handle-shadow: inset 0 0 0 calc(4px + 0.5rem * var(--unchanged))
       var(--handle-color),
-    0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-200);
+    0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-100);
   --slider-handle-shadow-focus: inset 0 0 0 4px var(--handle-color),
     inset 0 0 0 5px rgba(0, 0, 0, 0.1), var(--handle-shadow),
     0 0 0 1px var(--figma-color-border-selected);
@@ -1862,7 +1862,7 @@ fig-slider {
     --slider-handle-shadow: inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
         var(--handle-color),
       0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-      var(--figma-elevation-200);
+      var(--figma-elevation-100);
 
     .fig-slider-input-container {
       height: var(--slider-height);
@@ -1891,7 +1891,7 @@ fig-slider {
     --slider-handle-shadow: inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
         var(--handle-color),
       0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-      var(--figma-elevation-200);
+      var(--figma-elevation-100);
 
     background-color: var(--figma-color-bg-secondary);
     border-radius: var(--radius-medium);
@@ -2643,7 +2643,7 @@ fig-input-angle {
     grid-area: 1/1;
     width: calc(0.5rem + 2px);
     height: calc(0.5rem + 2px);
-    &:before {
+    &::before {
       content: "";
       display: block;
       width: 0.5rem;
