@@ -683,8 +683,20 @@
                 <fig-content>
                     <p>This is a draggable dialog. You can drag it by the header.</p>
                     <fig-field direction="horizontal">
-                        <label>Example Field</label>
+                        <label>Text</label>
                         <fig-input-text placeholder="Enter text"></fig-input-text>
+                    </fig-field>
+                    <fig-field direction="horizontal">
+                        <label>Number</label>
+                        <fig-input-number value="50" min="0" max="100" units="px"></fig-input-number>
+                    </fig-field>
+                    <fig-field direction="horizontal">
+                        <label>Slider</label>
+                        <fig-slider value="50" min="0" max="100"></fig-slider>
+                    </fig-field>
+                    <fig-field direction="horizontal">
+                        <label>Checkbox</label>
+                        <fig-checkbox checked="true">Enable feature</fig-checkbox>
                     </fig-field>
                     <details>
                         <summary>More options</summary>
@@ -735,6 +747,14 @@
                 </fig-header>
                 <fig-content>
                     <p>This dialog is positioned at a specific corner.</p>
+                    <fig-field direction="horizontal">
+                        <label>Number</label>
+                        <fig-input-number value="100" units="%"></fig-input-number>
+                    </fig-field>
+                    <fig-field direction="horizontal">
+                        <label>Slider</label>
+                        <fig-slider value="50" min="0" max="100"></fig-slider>
+                    </fig-field>
                 </fig-content>
                 <footer>
                     <fig-button close-dialog>Close</fig-button>
@@ -778,6 +798,14 @@
                         <li>✗ This content area (won't drag)</li>
                         <li>✗ The footer below (won't drag)</li>
                     </ul>
+                    <fig-field direction="horizontal">
+                        <label>Number</label>
+                        <fig-input-number value="45" units="°" min="0" max="360"></fig-input-number>
+                    </fig-field>
+                    <fig-field direction="horizontal">
+                        <label>Slider</label>
+                        <fig-slider value="50" min="0" max="100"></fig-slider>
+                    </fig-field>
                     <details>
                         <summary>More options</summary>
                         <fig-field direction="horizontal">

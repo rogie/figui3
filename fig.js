@@ -847,6 +847,8 @@ class FigDialog extends HTMLDialogElement {
       "textarea",
       "a",
       "label",
+      "details",
+      "summary",
       '[contenteditable="true"]',
       "[tabindex]",
     ];
@@ -893,6 +895,11 @@ class FigDialog extends HTMLDialogElement {
       return;
     }
 
+    // Don't interfere with interactive elements (inputs, sliders, buttons, etc.)
+    if (this.#isInteractiveElement(e.target)) {
+      return;
+    }
+
     // If handle attribute is specified, only allow drag from within that element
     // Otherwise, allow dragging from anywhere on the dialog (except interactive elements)
     const handleSelector = this.getAttribute("handle");
@@ -905,7 +912,7 @@ class FigDialog extends HTMLDialogElement {
     // No handle specified = drag from anywhere (original behavior)
 
     // Don't prevent default yet - just set up pending drag
-    // This allows clicks on interactive elements like <details> to work
+    // This allows clicks on non-interactive elements like <details> to work
     this.#dragPending = true;
     this.#dragStartPos.x = e.clientX;
     this.#dragStartPos.y = e.clientY;
