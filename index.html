@@ -686,6 +686,13 @@
                         <label>Example Field</label>
                         <fig-input-text placeholder="Enter text"></fig-input-text>
                     </fig-field>
+                    <details>
+                        <summary>More options</summary>
+                        <fig-field direction="horizontal">
+                            <label>Advanced</label>
+                            <fig-input-text placeholder="Advanced setting"></fig-input-text>
+                        </fig-field>
+                    </details>
                 </fig-content>
                 <footer>
                     <fig-button variant="secondary"
@@ -771,6 +778,13 @@
                         <li>✗ This content area (won't drag)</li>
                         <li>✗ The footer below (won't drag)</li>
                     </ul>
+                    <details>
+                        <summary>More options</summary>
+                        <fig-field direction="horizontal">
+                            <label>Advanced</label>
+                            <fig-input-text placeholder="Advanced setting"></fig-input-text>
+                        </fig-field>
+                    </details>
                 </fig-content>
                 <footer>
                     <fig-button close-dialog>Close</fig-button>
@@ -3351,48 +3365,45 @@ button.addEventListener('click', () => {
             <p class="description">A disclosure widget for expandable/collapsible content.</p>
 
             <h3>Default (Closed)</h3>
-            <details style="font-size: 13px; color: var(--figma-color-text);">
-                <summary style="cursor: pointer; padding: 8px 0;">Click to expand</summary>
-                <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+            <details>
+                <summary>Click to expand</summary>
+                <p>
                     This is the hidden content that appears when the details element is expanded.
                 </p>
             </details>
 
             <h3>Default Open</h3>
-            <details open
-                     style="font-size: 13px; color: var(--figma-color-text);">
+            <details open>
                 <summary style="cursor: pointer; padding: 8px 0;">Already expanded</summary>
-                <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                <p>
                     This content is visible by default because of the <code>open</code> attribute.
                 </p>
             </details>
 
             <h3>Multiple Sections</h3>
             <vstack style="gap: 0;">
-                <details
-                         style="font-size: 13px; color: var(--figma-color-text); border-bottom: 1px solid var(--figma-color-border);">
+                <details>
                     <summary style="cursor: pointer; padding: 8px 0;">Section One</summary>
-                    <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                    <p>
                         Content for section one.
                     </p>
                 </details>
-                <details
-                         style="font-size: 13px; color: var(--figma-color-text); border-bottom: 1px solid var(--figma-color-border);">
+                <details>
                     <summary style="cursor: pointer; padding: 8px 0;">Section Two</summary>
-                    <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                    <p>
                         Content for section two.
                     </p>
                 </details>
-                <details style="font-size: 13px; color: var(--figma-color-text);">
+                <details>
                     <summary style="cursor: pointer; padding: 8px 0;">Section Three</summary>
-                    <p style="padding: 8px 0 8px 16px; margin: 0; color: var(--figma-color-text-secondary);">
+                    <p>
                         Content for section three.
                     </p>
                 </details>
             </vstack>
 
             <h3>With Rich Content</h3>
-            <details style="font-size: 13px; color: var(--figma-color-text);">
+            <details>
                 <summary style="cursor: pointer; padding: 8px 0;">Advanced Settings</summary>
                 <vstack style="padding: 8px 0 8px 16px;">
                     <fig-field direction="horizontal"

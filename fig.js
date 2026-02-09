@@ -719,12 +719,15 @@ customElements.define("fig-popover", FigPopover);
  */
 class FigDialog extends HTMLDialogElement {
   #isDragging = false;
+  #dragPending = false;
+  #dragStartPos = { x: 0, y: 0 };
   #dragOffset = { x: 0, y: 0 };
   #boundPointerDown;
   #boundPointerMove;
   #boundPointerUp;
   #offset = 16; // 1rem in pixels
   #positionInitialized = false;
+  #dragThreshold = 3; // pixels before drag starts
 
   constructor() {
     super();
@@ -886,7 +889,7 @@ class FigDialog extends HTMLDialogElement {
   }
 
   #handlePointerDown(e) {
-    if (!this.drag || this.#isInteractiveElement(e.target)) {
+    if (!this.drag) {
       return;
     }
 
@@ -901,19 +904,14 @@ class FigDialog extends HTMLDialogElement {
     }
     // No handle specified = drag from anywhere (original behavior)
 
-    this.#isDragging = true;
-    this.setPointerCapture(e.pointerId);
+    // Don't prevent default yet - just set up pending drag
+    // This allows clicks on interactive elements like <details> to work
+    this.#dragPending = true;
+    this.#dragStartPos.x = e.clientX;
+    this.#dragStartPos.y = e.clientY;
 
     // Get current position from computed style
     const rect = this.getBoundingClientRect();
-
-    // Convert to pixel-based top/left positioning for dragging
-    // (clears margin: auto centering)
-    this.style.top = `${rect.top}px`;
-    this.style.left = `${rect.left}px`;
-    this.style.bottom = "auto";
-    this.style.right = "auto";
-    this.style.margin = "0";
 
     // Store offset from pointer to dialog top-left corner
     this.#dragOffset.x = e.clientX - rect.left;
@@ -921,11 +919,33 @@ class FigDialog extends HTMLDialogElement {
 
     document.addEventListener("pointermove", this.#boundPointerMove);
     document.addEventListener("pointerup", this.#boundPointerUp);
-
-    e.preventDefault();
   }
 
   #handlePointerMove(e) {
+    // Check if we should start dragging (threshold exceeded)
+    if (this.#dragPending && !this.#isDragging) {
+      const dx = Math.abs(e.clientX - this.#dragStartPos.x);
+      const dy = Math.abs(e.clientY - this.#dragStartPos.y);
+
+      if (dx > this.#dragThreshold || dy > this.#dragThreshold) {
+        // Start actual drag
+        this.#isDragging = true;
+        this.#dragPending = false;
+        this.setPointerCapture(e.pointerId);
+
+        // Get current position from computed style
+        const rect = this.getBoundingClientRect();
+
+        // Convert to pixel-based top/left positioning for dragging
+        // (clears margin: auto centering)
+        this.style.top = `${rect.top}px`;
+        this.style.left = `${rect.left}px`;
+        this.style.bottom = "auto";
+        this.style.right = "auto";
+        this.style.margin = "0";
+      }
+    }
+
     if (!this.#isDragging) return;
 
     // Calculate new position based on pointer position minus offset
@@ -940,10 +960,13 @@ class FigDialog extends HTMLDialogElement {
   }
 
   #handlePointerUp(e) {
-    if (!this.#isDragging) return;
+    // Clean up pending or active drag
+    if (this.#isDragging) {
+      this.releasePointerCapture(e.pointerId);
+    }
 
     this.#isDragging = false;
-    this.releasePointerCapture(e.pointerId);
+    this.#dragPending = false;
 
     document.removeEventListener("pointermove", this.#boundPointerMove);
     document.removeEventListener("pointerup", this.#boundPointerUp);

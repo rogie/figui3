@@ -1523,7 +1523,7 @@ details {
     display: flex;
     align-items: center;
     padding: 0 1rem 0 0;
-    height: var(--spacer-6);
+    height: var(--spacer-5);
     user-select: none;
     color: var(--figma-color-text-secondary);
 
