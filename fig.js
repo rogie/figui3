@@ -1368,14 +1368,14 @@ class FigSegmentedControl extends HTMLElement {
   }
 
   handleClick(event) {
-    const target = event.target;
-    if (target.nodeName.toLowerCase() === "fig-segment") {
+    const segment = event.target.closest("fig-segment");
+    if (segment) {
       const segments = this.querySelectorAll("fig-segment");
-      for (const segment of segments) {
-        if (segment === target) {
-          this.selectedSegment = segment;
+      for (const seg of segments) {
+        if (seg === segment) {
+          this.selectedSegment = seg;
         } else {
-          segment.removeAttribute("selected");
+          seg.removeAttribute("selected");
         }
       }
     }

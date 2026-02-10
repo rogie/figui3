@@ -2487,6 +2487,15 @@ fig-segmented-control {
       border-radius: calc(var(--radius-medium) - 1px);
       box-shadow: 0 0 0 1px var(--figma-color-border);
     }
+
+    svg {
+      *[fill] {
+        fill: currentColor;
+      }
+      *[stroke]:not([stroke="none"]) {
+        stroke: currentColor;
+      }
+    }
   }
 }
 
