@@ -861,6 +861,20 @@
                 <option>Option Three</option>
             </fig-dropdown>
 
+            <h3>Autoresize to Content</h3>
+            <p style="font-size: 12px; color: var(--figma-color-text-secondary); margin-bottom: 8px;">
+                Uses <code>field-sizing: content</code> to resize based on selected option.
+            </p>
+            <fig-dropdown autoresize
+                          variant="neue">
+                <option>XS</option>
+                <option>Small</option>
+                <option>Medium</option>
+                <option>Large</option>
+                <option>Extra Large with Long Text</option>
+                <option>XXL Super Extended Option</option>
+            </fig-dropdown>
+
             <h3>Dropdown Neue Variant (with many options)</h3>
             <fig-dropdown variant="neue"
                           type="dropdown"
@@ -1263,6 +1277,19 @@
 
             <h4>Image Only</h4>
             <fig-fill-picker mode="image"></fig-fill-picker>
+
+            <h3>Limited Mode Selection</h3>
+            <p class="description">Use comma-separated values in the <code>mode</code> attribute to limit available modes
+                while still allowing switching between them.</p>
+
+            <h4>Solid and Gradient Only</h4>
+            <fig-fill-picker mode="solid,gradient"></fig-fill-picker>
+
+            <h4>Solid, Gradient, and Image</h4>
+            <fig-fill-picker mode="solid,gradient,image"></fig-fill-picker>
+
+            <h4>With fig-input-fill (mode passed through)</h4>
+            <fig-input-fill mode="solid,gradient" value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
 
             <h3>Event Listening</h3>
             <fig-fill-picker id="fill-picker-events"

@@ -2928,7 +2928,7 @@ class FigInputFill extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled"];
+    return ["value", "disabled", "mode"];
   }
 
   connectedCallback() {
@@ -3078,11 +3078,12 @@ class FigInputFill extends HTMLElement {
         break;
     }
 
+    const modeAttr = this.getAttribute("mode");
     this.innerHTML = `
       <div class="input-combo">
         <fig-fill-picker value='${fillPickerValue}' ${
       disabled ? "disabled" : ""
-    }></fig-fill-picker>
+    } ${modeAttr ? `mode="${modeAttr}"` : ""}></fig-fill-picker>
         ${controlsHtml}
       </div>`;
 
@@ -5554,31 +5555,43 @@ class FigFillPicker extends HTMLElement {
       this.#dialog.setAttribute("position", dialogPosition);
     }
 
-    // Check for locked mode
+    // Check for allowed modes (supports comma-separated values like "solid,gradient")
     const mode = this.getAttribute("mode");
-    const validModes = ["solid", "gradient", "image", "video", "webcam"];
-    const lockedMode = validModes.includes(mode) ? mode : null;
+    const allModes = ["solid", "gradient", "image", "video", "webcam"];
+    const modeLabels = {
+      solid: "Solid",
+      gradient: "Gradient",
+      image: "Image",
+      video: "Video",
+      webcam: "Webcam",
+    };
 
-    // If locked mode, force fillType
-    if (lockedMode) {
-      this.#fillType = lockedMode;
-      this.#activeTab = lockedMode;
+    // Parse allowed modes
+    let allowedModes = allModes;
+    if (mode) {
+      const requestedModes = mode.split(",").map((m) => m.trim().toLowerCase());
+      allowedModes = requestedModes.filter((m) => allModes.includes(m));
+      if (allowedModes.length === 0) allowedModes = allModes;
     }
 
-    // Build header content - dropdown or label
-    const headerContent = lockedMode
-      ? `<span class="fig-fill-picker-type-label">${
-          lockedMode.charAt(0).toUpperCase() + lockedMode.slice(1)
-        }</span>`
-      : `<fig-dropdown class="fig-fill-picker-type" variant="neue" value="${
-          this.#fillType
-        }">
-          <option value="solid">Solid</option>
-          <option value="gradient">Gradient</option>
-          <option value="image">Image</option>
-          <option value="video">Video</option>
-          <option value="webcam">Webcam</option>
+    // If current fillType not in allowed modes, switch to first allowed
+    if (!allowedModes.includes(this.#fillType)) {
+      this.#fillType = allowedModes[0];
+      this.#activeTab = allowedModes[0];
+    }
+
+    // Build header content - label if single mode, dropdown if multiple
+    let headerContent;
+    if (allowedModes.length === 1) {
+      headerContent = `<span class="fig-fill-picker-type-label">${modeLabels[allowedModes[0]]}</span>`;
+    } else {
+      const options = allowedModes
+        .map((m) => `<option value="${m}">${modeLabels[m]}</option>`)
+        .join("\n          ");
+      headerContent = `<fig-dropdown class="fig-fill-picker-type" variant="neue" value="${this.#fillType}">
+          ${options}
         </fig-dropdown>`;
+    }
 
     this.#dialog.innerHTML = `
       <fig-header>
@@ -5627,13 +5640,19 @@ class FigFillPicker extends HTMLElement {
   }
 
   #switchTab(tabName) {
-    // Check for locked mode - prevent switching if locked
+    // Check for allowed modes - prevent switching to disallowed mode
     const mode = this.getAttribute("mode");
-    const validModes = ["solid", "gradient", "image", "video", "webcam"];
-    const lockedMode = validModes.includes(mode) ? mode : null;
+    const allModes = ["solid", "gradient", "image", "video", "webcam"];
 
-    if (lockedMode && tabName !== lockedMode) {
-      return; // Don't allow switching away from locked mode
+    let allowedModes = allModes;
+    if (mode) {
+      const requestedModes = mode.split(",").map((m) => m.trim().toLowerCase());
+      allowedModes = requestedModes.filter((m) => allModes.includes(m));
+      if (allowedModes.length === 0) allowedModes = allModes;
+    }
+
+    if (!allowedModes.includes(tabName)) {
+      return; // Don't allow switching to disallowed mode
     }
 
     this.#activeTab = tabName;
@@ -6133,8 +6152,9 @@ class FigFillPicker extends HTMLElement {
           this.#gradient.centerY
         }%, ${stops})`;
       case "angular":
-        // Offset by 90° to align with fig-input-angle (0° = right) vs CSS conic (0° = top)
-        return `conic-gradient(from ${this.#gradient.angle + 90}deg, ${stops})`;
+        // Internal gradient.angle is already in CSS coordinate system (0° = top)
+        // because it's converted when reading from fig-input-angle
+        return `conic-gradient(from ${this.#gradient.angle}deg, ${stops})`;
       default:
         return `linear-gradient(${this.#gradient.angle}deg, ${stops})`;
     }
