@@ -2412,7 +2412,7 @@ fig-slider {
   }
 
   & fig-input-number {
-    width: 5rem;
+    flex-basis: 5rem;
   }
 }
 

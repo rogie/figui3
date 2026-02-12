@@ -1840,6 +1840,31 @@
                                   steppers="true"></fig-input-number>
             </fig-field>
 
+            <h3>With Precision</h3>
+            <p class="description">Control decimal places with the <code>precision</code> attribute.</p>
+            <fig-field direction="horizontal">
+                <label>Default (2)</label>
+                <fig-input-number value="3.14159"
+                                  step="0.001"></fig-input-number>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Precision 0</label>
+                <fig-input-number value="3.14159"
+                                  precision="0"></fig-input-number>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Precision 1</label>
+                <fig-input-number value="3.14159"
+                                  precision="1"
+                                  step="0.1"></fig-input-number>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Precision 4</label>
+                <fig-input-number value="3.14159"
+                                  precision="4"
+                                  step="0.0001"></fig-input-number>
+            </fig-field>
+
             <h3>States</h3>
             <fig-field direction="horizontal">
                 <label>Disabled</label>
@@ -2644,6 +2669,64 @@
                         value="75"
                         text="true"
                         units="%"></fig-slider>
+
+            <h3>With Precision</h3>
+            <p class="description">Control decimal places in the text input with the <code>precision</code> attribute.</p>
+            <fig-field direction="horizontal">
+                <label>Precision 0</label>
+                <fig-slider min="0"
+                            max="100"
+                            value="33"
+                            text="true"
+                            precision="0"></fig-slider>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Precision 1</label>
+                <fig-slider min="0"
+                            max="10"
+                            value="3.5"
+                            step="0.1"
+                            text="true"
+                            precision="1"></fig-slider>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Precision 3</label>
+                <fig-slider min="0"
+                            max="1"
+                            value="0.333"
+                            step="0.001"
+                            text="true"
+                            precision="3"></fig-slider>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Neue - Precision 0</label>
+                <fig-slider min="0"
+                            max="100"
+                            value="33"
+                            text="true"
+                            precision="0"
+                            variant="neue"></fig-slider>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Neue - Precision 1</label>
+                <fig-slider min="0"
+                            max="10"
+                            value="3.5"
+                            step="0.1"
+                            text="true"
+                            precision="1"
+                            variant="neue"></fig-slider>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Neue - Precision 3</label>
+                <fig-slider min="0"
+                            max="1"
+                            value="0.333"
+                            step="0.001"
+                            text="true"
+                            precision="3"
+                            variant="neue"></fig-slider>
+            </fig-field>
 
             <h3>Variants</h3>
             <fig-field direction="horizontal">

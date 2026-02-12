@@ -1445,6 +1445,9 @@ class FigSlider extends HTMLElement {
     this.units = this.getAttribute("units") || "";
     this.transform = Number(this.getAttribute("transform") || 1);
     this.disabled = this.getAttribute("disabled") ? true : false;
+    this.precision = this.hasAttribute("precision")
+      ? Number(this.getAttribute("precision"))
+      : null;
 
     const defaults = this.#typeDefaults[this.type];
     this.min = Number(this.getAttribute("min") || defaults.min);
@@ -1481,7 +1484,8 @@ class FigSlider extends HTMLElement {
                         transform="${this.transform}"
                         step="${this.step}"
                         value="${this.value}"
-                        ${this.units ? `units="${this.units}"` : ""}>
+                        ${this.units ? `units="${this.units}"` : ""}
+                        ${this.precision !== null ? `precision="${this.precision}"` : ""}>
                     </fig-input-number>`;
     } else {
       html = slider;
@@ -1654,6 +1658,7 @@ class FigSlider extends HTMLElement {
       "transform",
       "text",
       "default",
+      "precision",
     ];
   }
 
@@ -1688,6 +1693,16 @@ class FigSlider extends HTMLElement {
           this.transform = Number(newValue) || 1;
           if (this.figInputNumber) {
             this.figInputNumber.setAttribute("transform", this.transform);
+          }
+          break;
+        case "precision":
+          this.precision = newValue !== null ? Number(newValue) : null;
+          if (this.figInputNumber) {
+            if (this.precision !== null) {
+              this.figInputNumber.setAttribute("precision", this.precision);
+            } else {
+              this.figInputNumber.removeAttribute("precision");
+            }
           }
           break;
         case "default":
@@ -2011,6 +2026,7 @@ class FigInputNumber extends HTMLElement {
   #boundKeyDown;
   #units;
   #unitPosition;
+  #precision;
 
   constructor() {
     super();
@@ -2045,6 +2061,9 @@ class FigInputNumber extends HTMLElement {
     this.name = this.getAttribute("name") || null;
     this.#units = this.getAttribute("units") || "";
     this.#unitPosition = this.getAttribute("unit-position") || "suffix";
+    this.#precision = this.hasAttribute("precision")
+      ? Number(this.getAttribute("precision"))
+      : 2;
 
     if (this.getAttribute("step")) {
       this.step = Number(this.getAttribute("step"));
@@ -2331,10 +2350,12 @@ class FigInputNumber extends HTMLElement {
     return sanitized;
   }
 
-  #formatNumber(num, precision = 2) {
-    // Check if the number has any decimal places after rounding
-    const rounded = Math.round(num * 100) / 100;
-    return Number.isInteger(rounded) ? rounded : rounded.toFixed(precision);
+  #formatNumber(num) {
+    const precision = this.#precision ?? 2;
+    const factor = Math.pow(10, precision);
+    const rounded = Math.round(num * factor) / factor;
+    // Only show decimals if needed and up to precision
+    return Number.isInteger(rounded) ? rounded : parseFloat(rounded.toFixed(precision));
   }
 
   static get observedAttributes() {
@@ -2350,6 +2371,7 @@ class FigInputNumber extends HTMLElement {
       "units",
       "unit-position",
       "steppers",
+      "precision",
     ];
   }
 
@@ -2385,6 +2407,10 @@ class FigInputNumber extends HTMLElement {
         case "max":
         case "step":
           this[name] = Number(newValue);
+          break;
+        case "precision":
+          this.#precision = newValue !== null ? Number(newValue) : 2;
+          this.input.value = this.#formatWithUnit(this.value);
           break;
         case "name":
           this[name] = this.input[name] = newValue;
@@ -5920,7 +5946,7 @@ class FigFillPicker extends HTMLElement {
 
     container.innerHTML = `
       <div class="fig-fill-picker-gradient-header">
-        <fig-dropdown class="fig-fill-picker-gradient-type" value="${
+        <fig-dropdown class="fig-fill-picker-gradient-type" variant="neue" value="${
           this.#gradient.type
         }">
           <option value="linear" selected>Linear</option>
