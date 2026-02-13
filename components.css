@@ -478,7 +478,7 @@ input[type="text"][list] {
 }
 
 @supports (appearance: base-select) {
-  fig-dropdown[variant="neue"] {
+  fig-dropdown[experimental~="modern"] {
     &[type="dropdown"] {
       select:before {
         content: attr(aria-label);
@@ -517,11 +517,14 @@ input[type="text"][list] {
 
       option {
         display: flex;
-        gap: var(--spacer-1);
+        gap: var(--spacer-2);
         padding: 0 var(--spacer-4) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
         font-weight: var(--body-medium-fontWeight);
         color: var(--figma-color-text-menu);
         position: relative;
+        & * {
+          color: inherit;
+        }
         &[hidden] {
           display: none;
         }
@@ -598,6 +601,7 @@ input[type="text"][list] {
     /* https://codepen.io/editor/argyleink/pen/019c1f28-bbc2-7bac-ad4a-a7e41d3730f1 */
     ::picker(select) {
       appearance: base-select;
+      color-scheme: dark;
 
       /* Appearance/style */
       scrollbar-width: thin;

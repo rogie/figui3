@@ -911,6 +911,36 @@ const onChange = (e) => {
 
 ---
 
+## Breaking Changes / Migration
+
+### v2.15.0: Experimental Features
+
+The `experimental` attribute now controls experimental CSS features instead of `variant="neue"`.
+
+**Before (deprecated):**
+```html
+<fig-dropdown variant="neue">
+  <option>Option 1</option>
+</fig-dropdown>
+```
+
+**After:**
+```html
+<fig-dropdown experimental="modern">
+  <option>Option 1</option>
+</fig-dropdown>
+```
+
+The `experimental` attribute uses space-separated feature names for granular control:
+- `experimental="modern"` - Enables the customizable select picker (`::picker(select)`, `appearance: base-select`)
+- Future features can be added: `experimental="modern popover"`
+
+Note: `variant="neue"` on `fig-slider` continues to work for visual styling.
+
+See [CHANGELOG.md](CHANGELOG.md) for full details.
+
+---
+
 ## Theming
 
 FigUI3 automatically adapts to light and dark themes using CSS custom properties. The library uses Figma's color variable naming convention:

@@ -2538,6 +2538,8 @@ class FigInputColor extends HTMLElement {
     const useFigmaPicker = this.picker === "figma";
     const hidePicker = this.picker === "false";
     const showAlpha = this.getAttribute("alpha") === "true";
+    const experimental = this.getAttribute("experimental");
+    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     let html = ``;
     if (this.getAttribute("text")) {
@@ -2562,7 +2564,7 @@ class FigInputColor extends HTMLElement {
       let swatchElement = "";
       if (!hidePicker) {
         swatchElement = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${
+          ? `<fig-fill-picker mode="solid" ${expAttr} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
               this.alpha
@@ -2580,7 +2582,7 @@ class FigInputColor extends HTMLElement {
         html = ``;
       } else {
         html = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${
+          ? `<fig-fill-picker mode="solid" ${expAttr} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
               this.alpha
@@ -2772,7 +2774,7 @@ class FigInputColor extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "style", "mode", "picker"];
+    return ["value", "style", "mode", "picker", "experimental"];
   }
 
   get mode() {
@@ -2954,7 +2956,7 @@ class FigInputFill extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled", "mode"];
+    return ["value", "disabled", "mode", "experimental"];
   }
 
   connectedCallback() {
@@ -3105,11 +3107,12 @@ class FigInputFill extends HTMLElement {
     }
 
     const modeAttr = this.getAttribute("mode");
+    const experimentalAttr = this.getAttribute("experimental");
     this.innerHTML = `
       <div class="input-combo">
         <fig-fill-picker value='${fillPickerValue}' ${
       disabled ? "disabled" : ""
-    } ${modeAttr ? `mode="${modeAttr}"` : ""}></fig-fill-picker>
+    } ${modeAttr ? `mode="${modeAttr}"` : ""} ${experimentalAttr ? `experimental="${experimentalAttr}"` : ""}></fig-fill-picker>
         ${controlsHtml}
       </div>`;
 
@@ -3551,6 +3554,17 @@ class FigInputFill extends HTMLElement {
           this.#render();
         }
         break;
+      case "mode":
+      case "experimental":
+        // Pass through to internal fill picker
+        if (this.#fillPicker) {
+          if (newValue) {
+            this.#fillPicker.setAttribute(name, newValue);
+          } else {
+            this.#fillPicker.removeAttribute(name);
+          }
+        }
+        break;
     }
   }
 }
@@ -3896,6 +3910,8 @@ class FigComboInput extends HTMLElement {
     this.options = this.getOptionsFromAttribute();
     this.placeholder = this.getAttribute("placeholder") || "";
     this.value = this.getAttribute("value") || "";
+    const experimental = this.getAttribute("experimental");
+    const expAttr = experimental ? `experimental="${experimental}"` : "";
     this.innerHTML = `<div class="input-combo">
                         <fig-input-text placeholder="${this.placeholder}">
                         </fig-input-text> 
@@ -3903,7 +3919,7 @@ class FigComboInput extends HTMLElement {
                             <svg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'>
   <path d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='currentColor' stroke-opacity="0.9" stroke-linecap='round'/>
 </svg>
-                            <fig-dropdown type="dropdown">
+                            <fig-dropdown type="dropdown" ${expAttr}>
                               ${this.options
                                 .map((option) => `<option>${option}</option>`)
                                 .join("")}
@@ -3932,7 +3948,7 @@ class FigComboInput extends HTMLElement {
     this.value = this.input.value;
   }
   static get observedAttributes() {
-    return ["options", "placeholder", "value", "disabled"];
+    return ["options", "placeholder", "value", "disabled", "experimental"];
   }
   focus() {
     this.input.focus();
@@ -3978,6 +3994,15 @@ class FigComboInput extends HTMLElement {
         break;
       case "disabled":
         this.#applyDisabled(newValue !== null && newValue !== "false");
+        break;
+      case "experimental":
+        if (this.dropdown) {
+          if (newValue) {
+            this.dropdown.setAttribute("experimental", newValue);
+          } else {
+            this.dropdown.removeAttribute("experimental");
+          }
+        }
         break;
     }
   }
@@ -5323,7 +5348,7 @@ class FigFillPicker extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled", "alpha", "mode"];
+    return ["value", "disabled", "alpha", "mode", "experimental"];
   }
 
   connectedCallback() {
@@ -5607,6 +5632,9 @@ class FigFillPicker extends HTMLElement {
     }
 
     // Build header content - label if single mode, dropdown if multiple
+    const experimental = this.getAttribute("experimental");
+    const expAttr = experimental ? `experimental="${experimental}"` : "";
+    
     let headerContent;
     if (allowedModes.length === 1) {
       headerContent = `<span class="fig-fill-picker-type-label">${modeLabels[allowedModes[0]]}</span>`;
@@ -5614,7 +5642,7 @@ class FigFillPicker extends HTMLElement {
       const options = allowedModes
         .map((m) => `<option value="${m}">${modeLabels[m]}</option>`)
         .join("\n          ");
-      headerContent = `<fig-dropdown class="fig-fill-picker-type" variant="neue" value="${this.#fillType}">
+      headerContent = `<fig-dropdown class="fig-fill-picker-type" ${expAttr} value="${this.#fillType}">
           ${options}
         </fig-dropdown>`;
     }
@@ -5853,10 +5881,17 @@ class FigFillPicker extends HTMLElement {
     ctx.fillRect(0, 0, width, height);
   }
 
-  #updateHandlePosition() {
+  #updateHandlePosition(retryCount = 0) {
     if (!this.#colorAreaHandle || !this.#colorArea) return;
 
     const rect = this.#colorArea.getBoundingClientRect();
+    
+    // If the canvas isn't visible yet (0 dimensions), schedule a retry (max 5 attempts)
+    if ((rect.width === 0 || rect.height === 0) && retryCount < 5) {
+      requestAnimationFrame(() => this.#updateHandlePosition(retryCount + 1));
+      return;
+    }
+    
     const x = (this.#color.s / 100) * rect.width;
     const y = ((100 - this.#color.v) / 100) * rect.height;
 
@@ -5943,10 +5978,12 @@ class FigFillPicker extends HTMLElement {
   // ============ GRADIENT TAB ============
   #initGradientTab() {
     const container = this.#dialog.querySelector('[data-tab="gradient"]');
+    const experimental = this.getAttribute("experimental");
+    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
       <div class="fig-fill-picker-gradient-header">
-        <fig-dropdown class="fig-fill-picker-gradient-type" variant="neue" value="${
+        <fig-dropdown class="fig-fill-picker-gradient-type" ${expAttr} value="${
           this.#gradient.type
         }">
           <option value="linear" selected>Linear</option>
