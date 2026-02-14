@@ -1292,6 +1292,14 @@ class FigSegment extends HTMLElement {
     this.removeEventListener("click", this.handleClick);
   }
   handleClick() {
+    const parentControl = this.closest("fig-segmented-control");
+    if (
+      parentControl &&
+      parentControl.hasAttribute("disabled") &&
+      parentControl.getAttribute("disabled") !== "false"
+    ) {
+      return;
+    }
     this.setAttribute("selected", "true");
   }
   get value() {
@@ -1335,9 +1343,16 @@ class FigSegmentedControl extends HTMLElement {
     super();
   }
 
+  static get observedAttributes() {
+    return ["disabled"];
+  }
+
   connectedCallback() {
     this.name = this.getAttribute("name") || "segmented-control";
     this.addEventListener("click", this.handleClick.bind(this));
+    this.#applyDisabled(
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false"
+    );
 
     // Ensure at least one segment is selected (default to first)
     requestAnimationFrame(() => {
@@ -1368,6 +1383,12 @@ class FigSegmentedControl extends HTMLElement {
   }
 
   handleClick(event) {
+    if (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    ) {
+      return;
+    }
     const segment = event.target.closest("fig-segment");
     if (segment) {
       const segments = this.querySelectorAll("fig-segment");
@@ -1378,6 +1399,25 @@ class FigSegmentedControl extends HTMLElement {
           seg.removeAttribute("selected");
         }
       }
+    }
+  }
+
+  #applyDisabled(disabled) {
+    this.setAttribute("aria-disabled", disabled ? "true" : "false");
+    this.querySelectorAll("fig-segment").forEach((segment) => {
+      if (disabled) {
+        segment.setAttribute("disabled", "");
+        segment.setAttribute("aria-disabled", "true");
+      } else {
+        segment.removeAttribute("disabled");
+        segment.removeAttribute("aria-disabled");
+      }
+    });
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "disabled" && oldValue !== newValue) {
+      this.#applyDisabled(newValue !== null && newValue !== "false");
     }
   }
 }

@@ -2522,6 +2522,16 @@ fig-segmented-control {
       }
     }
   }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
+    fig-segment {
+      color: var(--figma-color-text-disabled);
+      background-color: transparent;
+      box-shadow: none;
+    }
+  }
 }
 
 fig-input-joystick {
