@@ -167,6 +167,8 @@ customElements.define("fig-button", FigButton);
 class FigDropdown extends HTMLElement {
   #label = "Menu";
   #selectedValue = null; // Stores last selected value for dropdown type
+  #boundHandleSelectInput;
+  #boundHandleSelectChange;
 
   get label() {
     return this.#label;
@@ -179,11 +181,33 @@ class FigDropdown extends HTMLElement {
     this.select = document.createElement("select");
     this.optionsSlot = document.createElement("slot");
     this.attachShadow({ mode: "open" });
+    this.#boundHandleSelectInput = this.#handleSelectInput.bind(this);
+    this.#boundHandleSelectChange = this.#handleSelectChange.bind(this);
   }
 
   #addEventListeners() {
-    this.select.addEventListener("input", this.#handleSelectInput.bind(this));
-    this.select.addEventListener("change", this.#handleSelectChange.bind(this));
+    this.select.addEventListener("input", this.#boundHandleSelectInput);
+    this.select.addEventListener("change", this.#boundHandleSelectChange);
+  }
+
+  #hasPersistentControl(optionEl) {
+    if (!optionEl || !(optionEl instanceof Element)) return false;
+    return !!optionEl.querySelector(
+      'fig-checkbox, fig-switch, input[type="checkbox"]'
+    );
+  }
+
+  #keepPickerOpen() {
+    // Keep menu open for interactive controls inside option content.
+    if (typeof this.select.showPicker === "function") {
+      requestAnimationFrame(() => {
+        try {
+          this.select.showPicker();
+        } catch {
+          // Ignore if browser blocks reopening picker
+        }
+      });
+    }
   }
 
   connectedCallback() {
@@ -224,6 +248,15 @@ class FigDropdown extends HTMLElement {
   }
 
   #handleSelectInput(e) {
+    const selectedOption = e.target.selectedOptions?.[0];
+    if (this.#hasPersistentControl(selectedOption)) {
+      if (this.type === "dropdown") {
+        this.select.selectedIndex = -1;
+      }
+      this.#keepPickerOpen();
+      return;
+    }
+
     const selectedValue = e.target.value;
     // Store the selected value for dropdown type (before select gets reset)
     if (this.type === "dropdown") {
@@ -240,6 +273,15 @@ class FigDropdown extends HTMLElement {
   }
 
   #handleSelectChange(e) {
+    const selectedOption = e.target.selectedOptions?.[0];
+    if (this.#hasPersistentControl(selectedOption)) {
+      if (this.type === "dropdown") {
+        this.select.selectedIndex = -1;
+      }
+      this.#keepPickerOpen();
+      return;
+    }
+
     // Get the value before resetting (use stored value for dropdown type)
     const selectedValue =
       this.type === "dropdown" ? this.#selectedValue : this.select.value;
@@ -3621,6 +3663,7 @@ customElements.define("fig-input-fill", FigInputFill);
  */
 class FigCheckbox extends HTMLElement {
   #labelElement = null;
+  #boundHandleInput;
 
   constructor() {
     super();
@@ -3631,11 +3674,21 @@ class FigCheckbox extends HTMLElement {
     this.input.setAttribute("name", this.name);
     this.input.setAttribute("type", "checkbox");
     this.input.setAttribute("role", "checkbox");
+    this.#boundHandleInput = this.handleInput.bind(this);
   }
   connectedCallback() {
+    // Reuse cloned internals when this element is duplicated via option.cloneNode(true).
+    const existingInput = this.querySelector(":scope > input");
+    if (existingInput) {
+      this.input = existingInput;
+    } else if (!this.input.parentNode) {
+      this.append(this.input);
+    }
+
     this.input.checked =
       this.hasAttribute("checked") && this.getAttribute("checked") !== "false";
-    this.input.addEventListener("change", this.handleInput.bind(this));
+    this.input.removeEventListener("change", this.#boundHandleInput);
+    this.input.addEventListener("change", this.#boundHandleInput);
 
     if (this.hasAttribute("disabled")) {
       this.input.disabled = true;
@@ -3645,7 +3698,11 @@ class FigCheckbox extends HTMLElement {
       this.input.setAttribute("indeterminate", "true");
     }
 
-    this.append(this.input);
+    const existingLabel = this.querySelector(":scope > label");
+    if (existingLabel) {
+      this.#labelElement = existingLabel;
+      this.#labelElement.setAttribute("for", this.input.id);
+    }
 
     // Only create label if label attribute is present
     if (this.hasAttribute("label")) {
@@ -3703,6 +3760,7 @@ class FigCheckbox extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.input.removeEventListener("change", this.#boundHandleInput);
     this.input.remove();
   }
 
