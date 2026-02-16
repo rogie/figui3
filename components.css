@@ -2044,6 +2044,23 @@ dialog[is="fig-dialog"] {
   z-index: var(--z-index);
 }
 
+dialog[is="fig-popup"] {
+  --z-index: 999999;
+  z-index: var(--z-index);
+  position: fixed;
+  margin: 0;
+  min-width: 0;
+  width: max-content;
+  max-width: calc(100vw - var(--spacer-4));
+  max-height: calc(100vh - var(--spacer-4));
+  padding: var(--spacer-2);
+  overflow: auto;
+
+  &[open] {
+    display: block;
+  }
+}
+
 dialog[is="fig-toast"] {
   --z-index: 999999;
   z-index: var(--z-index);

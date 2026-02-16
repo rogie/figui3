@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.17.2]
+
+### Added
+
+- New `FigPopup` foundational floating component implemented as `<dialog is="fig-popup">`.
+- `FigPopup` supports:
+  - `anchor` selector binding (local-first lookup, then document fallback)
+  - `position` with two-value placement (`vertical horizontal`)
+  - single-value shorthand placement (`top`, `bottom`, `left`, `right`)
+  - `offset="x y"` with unitless values treated as pixels
+  - observer-driven repositioning on popup content changes and anchor resize
+- Added comprehensive Popup examples in `index.html`, including:
+  - default and explicit placements
+  - property API usage (`popup.open = true/false`)
+  - position matrix examples and single-value shorthand examples
+  - per-example code snippets
+
+### Changed
+
+- `FigPopup` outside-click behavior now closes by default (`closedby="any"` with fallback handling).
+- Popup open handling is idempotent (repeated open requests do not re-open/reinitialize when already open).
+- Default popup offsets are now `0 0` (both horizontal and vertical).
+- Popup demo anchors now bind directly to the corresponding open button (removed separate anchor-target buttons).
+
 ## [2.17.1]
 
 ### Changed

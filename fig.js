@@ -1050,6 +1050,478 @@ class FigDialog extends HTMLDialogElement {
 }
 customElements.define("fig-dialog", FigDialog, { extends: "dialog" });
 
+/* Popup */
+/**
+ * A floating popup foundation component based on <dialog>.
+ * @attr {string} anchor - CSS selector used to resolve the anchor element.
+ * @attr {string} position - Preferred placement as "vertical horizontal" (default: "top center").
+ * @attr {string} offset - Horizontal and vertical offset as "x y" (default: "0 0").
+ * @attr {boolean|string} open - Open when present and not "false".
+ */
+class FigPopup extends HTMLDialogElement {
+  #viewportPadding = 8;
+  #anchorObserver = null;
+  #contentObserver = null;
+  #mutationObserver = null;
+  #isPopupActive = false;
+  #boundReposition;
+  #boundScroll;
+  #boundOutsidePointerDown;
+  #rafId = null;
+
+  constructor() {
+    super();
+    this.#boundReposition = this.#queueReposition.bind(this);
+    this.#boundScroll = this.#queueReposition.bind(this);
+    this.#boundOutsidePointerDown = this.#handleOutsidePointerDown.bind(this);
+  }
+
+  static get observedAttributes() {
+    return ["open", "anchor", "position", "offset"];
+  }
+
+  get open() {
+    return this.hasAttribute("open") && this.getAttribute("open") !== "false";
+  }
+
+  set open(value) {
+    if (value === false || value === "false" || value === null) {
+      if (!this.open) return;
+      this.removeAttribute("open");
+      return;
+    }
+    if (this.open) return;
+    this.setAttribute("open", "true");
+  }
+
+  connectedCallback() {
+    if (!this.hasAttribute("position")) {
+      this.setAttribute("position", "top center");
+    }
+    if (!this.hasAttribute("role")) {
+      this.setAttribute("role", "dialog");
+    }
+    // Default dialog outside-close behavior.
+    if (!this.hasAttribute("closedby")) {
+      this.setAttribute("closedby", "any");
+    }
+
+    this.addEventListener("close", () => {
+      this.#teardownObservers();
+      if (this.hasAttribute("open")) {
+        this.removeAttribute("open");
+      }
+    });
+
+    if (this.open) {
+      this.#showPopup();
+    } else {
+      this.#hidePopup();
+    }
+  }
+
+  disconnectedCallback() {
+    this.#teardownObservers();
+    document.removeEventListener(
+      "pointerdown",
+      this.#boundOutsidePointerDown,
+      true
+    );
+    if (this.#rafId !== null) {
+      cancelAnimationFrame(this.#rafId);
+      this.#rafId = null;
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    if (name === "open") {
+      if (newValue === null || newValue === "false") {
+        this.#hidePopup();
+        return;
+      }
+      this.#showPopup();
+      return;
+    }
+
+    if (this.open) {
+      this.#queueReposition();
+      this.#setupObservers();
+    }
+  }
+
+  #showPopup() {
+    if (this.#isPopupActive) {
+      this.#queueReposition();
+      return;
+    }
+
+    this.style.position = "fixed";
+    this.style.inset = "auto";
+    this.style.margin = "0";
+    this.style.zIndex = String(figGetHighestZIndex() + 1);
+
+    if (!super.open) {
+      try {
+        this.show();
+      } catch (e) {
+        // Ignore when dialog cannot be shown yet.
+      }
+    }
+
+    this.#setupObservers();
+    document.addEventListener("pointerdown", this.#boundOutsidePointerDown, true);
+    this.#queueReposition();
+    this.#isPopupActive = true;
+  }
+
+  #hidePopup() {
+    this.#isPopupActive = false;
+    this.#teardownObservers();
+    document.removeEventListener(
+      "pointerdown",
+      this.#boundOutsidePointerDown,
+      true
+    );
+
+    if (super.open) {
+      try {
+        this.close();
+      } catch (e) {
+        // Ignore when dialog is not in an open state.
+      }
+    }
+  }
+
+  #setupObservers() {
+    this.#teardownObservers();
+
+    const anchor = this.#resolveAnchor();
+    if (anchor && "ResizeObserver" in window) {
+      this.#anchorObserver = new ResizeObserver(this.#boundReposition);
+      this.#anchorObserver.observe(anchor);
+    }
+
+    if ("ResizeObserver" in window) {
+      this.#contentObserver = new ResizeObserver(this.#boundReposition);
+      this.#contentObserver.observe(this);
+    }
+
+    this.#mutationObserver = new MutationObserver(this.#boundReposition);
+    this.#mutationObserver.observe(this, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    window.addEventListener("resize", this.#boundReposition);
+    window.addEventListener("scroll", this.#boundScroll, true);
+  }
+
+  #teardownObservers() {
+    if (this.#anchorObserver) {
+      this.#anchorObserver.disconnect();
+      this.#anchorObserver = null;
+    }
+    if (this.#contentObserver) {
+      this.#contentObserver.disconnect();
+      this.#contentObserver = null;
+    }
+    if (this.#mutationObserver) {
+      this.#mutationObserver.disconnect();
+      this.#mutationObserver = null;
+    }
+    window.removeEventListener("resize", this.#boundReposition);
+    window.removeEventListener("scroll", this.#boundScroll, true);
+  }
+
+  #handleOutsidePointerDown(event) {
+    if (!this.open || !super.open) return;
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+    if (this.contains(target)) return;
+
+    // Fallback for browsers that do not honor dialog closedby consistently.
+    this.open = false;
+  }
+
+  #resolveAnchor() {
+    const selector = this.getAttribute("anchor");
+    if (!selector) return null;
+
+    // Local-first: nearest parent subtree.
+    const localScope = this.parentElement;
+    if (localScope?.querySelector) {
+      const localMatch = localScope.querySelector(selector);
+      if (localMatch && !this.contains(localMatch)) return localMatch;
+    }
+
+    // Fallback: global document query.
+    return document.querySelector(selector);
+  }
+
+  #parsePosition() {
+    const raw = (this.getAttribute("position") || "top center")
+      .trim()
+      .toLowerCase();
+    const tokens = raw.split(/\s+/).filter(Boolean);
+    const verticalValues = new Set(["top", "center", "bottom"]);
+    const horizontalValues = new Set(["left", "center", "right"]);
+
+    let vertical = "top";
+    let horizontal = "center";
+    let shorthand = null;
+
+    // Treat position as "vertical horizontal" to avoid center ambiguity.
+    if (tokens.length >= 2) {
+      if (verticalValues.has(tokens[0])) {
+        vertical = tokens[0];
+      }
+      if (horizontalValues.has(tokens[1])) {
+        horizontal = tokens[1];
+      }
+      return { vertical, horizontal, shorthand };
+    }
+
+    // Single-token fallback: apply only if non-ambiguous.
+    if (tokens.length === 1) {
+      const token = tokens[0];
+      if (token === "top" || token === "bottom") {
+        vertical = token;
+        shorthand = token;
+      } else if (token === "left" || token === "right") {
+        horizontal = token;
+        shorthand = token;
+      } else if (token === "center") {
+        vertical = "center";
+        horizontal = "center";
+      }
+    }
+
+    return { vertical, horizontal, shorthand };
+  }
+
+  #normalizeOffsetToken(token, fallback = "0px") {
+    if (!token) return fallback;
+    const trimmed = token.trim();
+    if (!trimmed) return fallback;
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      return `${trimmed}px`;
+    }
+    return trimmed;
+  }
+
+  #measureLengthPx(value, axis = "x") {
+    if (!value) return 0;
+    const normalized = this.#normalizeOffsetToken(value, "0px");
+    if (normalized.endsWith("px")) {
+      const px = parseFloat(normalized);
+      return Number.isFinite(px) ? px : 0;
+    }
+
+    const probe = document.createElement("div");
+    probe.style.position = "fixed";
+    probe.style.visibility = "hidden";
+    probe.style.pointerEvents = "none";
+    probe.style.left = "0";
+    probe.style.top = "0";
+    probe.style.margin = "0";
+    probe.style.padding = "0";
+    probe.style.border = "0";
+    if (axis === "x") {
+      probe.style.width = normalized;
+      probe.style.height = "0";
+    } else {
+      probe.style.height = normalized;
+      probe.style.width = "0";
+    }
+    document.body.appendChild(probe);
+    const rect = probe.getBoundingClientRect();
+    probe.remove();
+    return axis === "x" ? rect.width : rect.height;
+  }
+
+  #parseOffset() {
+    const raw = (this.getAttribute("offset") || "0 0").trim();
+    const tokens = raw.split(/\s+/).filter(Boolean);
+
+    const xToken = this.#normalizeOffsetToken(tokens[0], "0px");
+    const yToken = this.#normalizeOffsetToken(tokens[1], "0px");
+
+    return {
+      xToken,
+      yToken,
+      xPx: this.#measureLengthPx(xToken, "x"),
+      yPx: this.#measureLengthPx(yToken, "y"),
+    };
+  }
+
+  #getOrder(preferred, axis) {
+    const verticalMap = {
+      top: ["top", "bottom", "center"],
+      center: ["center", "top", "bottom"],
+      bottom: ["bottom", "top", "center"],
+    };
+    const horizontalMap = {
+      left: ["left", "right", "center"],
+      center: ["center", "left", "right"],
+      right: ["right", "left", "center"],
+    };
+
+    return axis === "vertical"
+      ? verticalMap[preferred] || verticalMap.top
+      : horizontalMap[preferred] || horizontalMap.center;
+  }
+
+  #computeCoords(anchorRect, popupRect, vertical, horizontal, offset, shorthand) {
+    let top;
+    let left;
+
+    // Shorthand support:
+    // position="right" => top edges aligned, popup sits to the right of anchor.
+    // position="left"  => top edges aligned, popup sits to the left of anchor.
+    if (shorthand === "right") {
+      return {
+        top: anchorRect.top,
+        left: anchorRect.right + offset.xPx,
+      };
+    }
+    if (shorthand === "left") {
+      return {
+        top: anchorRect.top,
+        left: anchorRect.left - popupRect.width - offset.xPx,
+      };
+    }
+    if (shorthand === "top") {
+      return {
+        top: anchorRect.top - popupRect.height - offset.yPx,
+        left: anchorRect.left,
+      };
+    }
+    if (shorthand === "bottom") {
+      return {
+        top: anchorRect.bottom + offset.yPx,
+        left: anchorRect.left,
+      };
+    }
+
+    if (vertical === "top") {
+      top = anchorRect.top - popupRect.height - offset.yPx;
+    } else if (vertical === "bottom") {
+      top = anchorRect.bottom + offset.yPx;
+    } else {
+      top = anchorRect.top + (anchorRect.height - popupRect.height) / 2;
+    }
+
+    if (horizontal === "left") {
+      left = anchorRect.left - popupRect.width - offset.xPx;
+    } else if (horizontal === "right") {
+      left = anchorRect.right + offset.xPx;
+    } else {
+      left = anchorRect.left + (anchorRect.width - popupRect.width) / 2;
+    }
+
+    return { top, left };
+  }
+
+  #overflowScore(coords, popupRect) {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const right = coords.left + popupRect.width;
+    const bottom = coords.top + popupRect.height;
+    const pad = this.#viewportPadding;
+
+    const overflowLeft = Math.max(0, pad - coords.left);
+    const overflowTop = Math.max(0, pad - coords.top);
+    const overflowRight = Math.max(0, right - (vw - pad));
+    const overflowBottom = Math.max(0, bottom - (vh - pad));
+
+    return overflowLeft + overflowTop + overflowRight + overflowBottom;
+  }
+
+  #fits(coords, popupRect) {
+    return this.#overflowScore(coords, popupRect) === 0;
+  }
+
+  #clamp(coords, popupRect) {
+    const pad = this.#viewportPadding;
+    const minLeft = pad;
+    const minTop = pad;
+    const maxLeft = Math.max(pad, window.innerWidth - popupRect.width - pad);
+    const maxTop = Math.max(pad, window.innerHeight - popupRect.height - pad);
+
+    return {
+      left: Math.min(maxLeft, Math.max(minLeft, coords.left)),
+      top: Math.min(maxTop, Math.max(minTop, coords.top)),
+    };
+  }
+
+  #positionPopup() {
+    if (!this.open || !super.open) return;
+
+    const popupRect = this.getBoundingClientRect();
+    const offset = this.#parseOffset();
+    const { vertical, horizontal, shorthand } = this.#parsePosition();
+    const verticalOrder = this.#getOrder(vertical, "vertical");
+    const horizontalOrder = this.#getOrder(horizontal, "horizontal");
+    const anchor = this.#resolveAnchor();
+
+    if (!anchor) {
+      const centered = {
+        left: (window.innerWidth - popupRect.width) / 2,
+        top: (window.innerHeight - popupRect.height) / 2,
+      };
+      const clamped = this.#clamp(centered, popupRect);
+      this.style.left = `${clamped.left}px`;
+      this.style.top = `${clamped.top}px`;
+      return;
+    }
+
+    const anchorRect = anchor.getBoundingClientRect();
+    let best = null;
+    let bestScore = Number.POSITIVE_INFINITY;
+
+    for (const v of verticalOrder) {
+      for (const h of horizontalOrder) {
+        const coords = this.#computeCoords(
+          anchorRect,
+          popupRect,
+          v,
+          h,
+          offset,
+          shorthand
+        );
+        if (this.#fits(coords, popupRect)) {
+          this.style.left = `${coords.left}px`;
+          this.style.top = `${coords.top}px`;
+          return;
+        }
+        const score = this.#overflowScore(coords, popupRect);
+        if (score < bestScore) {
+          bestScore = score;
+          best = coords;
+        }
+      }
+    }
+
+    const clamped = this.#clamp(best || { left: 0, top: 0 }, popupRect);
+    this.style.left = `${clamped.left}px`;
+    this.style.top = `${clamped.top}px`;
+  }
+
+  #queueReposition() {
+    if (!this.open) return;
+    if (this.#rafId !== null) return;
+
+    this.#rafId = requestAnimationFrame(() => {
+      this.#rafId = null;
+      this.#positionPopup();
+    });
+  }
+}
+customElements.define("fig-popup", FigPopup, { extends: "dialog" });
+
 /**
  * A popover element using the native Popover API.
  * @attr {string} trigger-action - The trigger action: "click" (default) or "hover"

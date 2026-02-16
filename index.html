@@ -184,6 +184,7 @@
             <a href="#input-text">Input Text</a>
             <a href="#layer">Layer</a>
             <a href="#popover">Popover</a>
+            <a href="#popup">Popup</a>
             <a href="#radio">Radio</a>
             <a href="#segmented-control">Segmented Control</a>
             <a href="#shimmer">Shimmer</a>
@@ -2635,6 +2636,267 @@
         </section>
         <hr>
 
+        <!-- Popup -->
+        <section id="popup">
+            <h2>Popup</h2>
+            <p class="description">A floating foundation component built as <code>&lt;dialog is="fig-popup"&gt;</code>
+                with anchor-based positioning and viewport-aware fallback.</p>
+
+            <h3>Default Position (top center)</h3>
+            <hstack>
+                <fig-button id="popup-open-default">Open Popup</fig-button>
+                <fig-button id="popup-close-default"
+                            variant="secondary">Close Popup</fig-button>
+            </hstack>
+            <dialog id="popup-default"
+                    is="fig-popup"
+                    anchor="#popup-open-default">
+                <vstack style="min-width: 12rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Default Popup</strong>
+                    <fig-field direction="horizontal">
+                        <label>Opacity</label>
+                        <fig-slider value="50"
+                                    text="true"
+                                    units="%"></fig-slider>
+                    </fig-field>
+                </vstack>
+            </dialog>
+
+            <h3>Preferred Position (bottom right)</h3>
+            <hstack>
+                <fig-button id="popup-open-preferred">Open Bottom Right</fig-button>
+                <fig-button id="popup-close-preferred"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-preferred"
+                    is="fig-popup"
+                    anchor="#popup-open-preferred"
+                    position="bottom right">
+                <vstack style="min-width: 10rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Preferred Placement</strong>
+                    <fig-checkbox label="Apply to existing strokes"
+                                  checked></fig-checkbox>
+                    <fig-checkbox label="Apply to shapes with fills"></fig-checkbox>
+                </vstack>
+            </dialog>
+
+            <h3>Property API</h3>
+            <p class="description">Uses the popup <code>open</code> property setter/getter (attribute wrapper).</p>
+            <hstack>
+                <fig-button id="popup-open-prop">popup.open = true</fig-button>
+                <fig-button id="popup-close-prop"
+                            variant="secondary">popup.open = false</fig-button>
+            </hstack>
+            <dialog id="popup-prop"
+                    is="fig-popup"
+                    anchor="#popup-open-prop"
+                    position="top left">
+                <vstack style="min-width: 11rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Property Controlled</strong>
+                    <fig-input-text placeholder="Type here"></fig-input-text>
+                </vstack>
+            </dialog>
+
+            <h3>Position Examples</h3>
+            <p class="description">Each example uses a different popup position with a dedicated open button and code
+                snippet.</p>
+
+            <h4>Top Left</h4>
+            <hstack>
+                <fig-button id="popup-open-top-left">Open Top Left</fig-button>
+                <fig-button id="popup-close-top-left"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-top-left"
+                    is="fig-popup"
+                    anchor="#popup-open-top-left"
+                    position="top left">
+                <vstack style="min-width: 10rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Top Left</strong>
+                    <fig-input-number value="12"
+                                      units="px"></fig-input-number>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-top-left"&gt;Open Top Left&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-top-left" position="top left"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
+            <h4>Top Center</h4>
+            <hstack>
+                <fig-button id="popup-open-top-center">Open Top Center</fig-button>
+                <fig-button id="popup-close-top-center"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-top-center"
+                    is="fig-popup"
+                    anchor="#popup-open-top-center"
+                    position="top center">
+                <vstack style="min-width: 10rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Top Center</strong>
+                    <fig-switch label="Enabled"></fig-switch>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-top-center"&gt;Open Top Center&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-top-center" position="top center"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
+            <h4>Top Right</h4>
+            <hstack>
+                <fig-button id="popup-open-top-right">Open Top Right</fig-button>
+                <fig-button id="popup-close-top-right"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-top-right"
+                    is="fig-popup"
+                    anchor="#popup-open-top-right"
+                    position="top right">
+                <vstack style="min-width: 10rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Top Right</strong>
+                    <fig-input-number value="24"
+                                      units="px"></fig-input-number>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-top-right"&gt;Open Top Right&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-top-right" position="top right"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
+            <h4>Bottom Left</h4>
+            <hstack>
+                <fig-button id="popup-open-bottom-left">Open Bottom Left</fig-button>
+                <fig-button id="popup-close-bottom-left"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-bottom-left"
+                    is="fig-popup"
+                    anchor="#popup-open-bottom-left"
+                    position="bottom left">
+                <vstack style="min-width: 10rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Bottom Left</strong>
+                    <fig-checkbox label="Snap to pixel grid"></fig-checkbox>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-bottom-left"&gt;Open Bottom Left&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-bottom-left" position="bottom left"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
+            <h4>Bottom Right</h4>
+            <hstack>
+                <fig-button id="popup-open-bottom-right">Open Bottom Right</fig-button>
+                <fig-button id="popup-close-bottom-right"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-bottom-right"
+                    is="fig-popup"
+                    anchor="#popup-open-bottom-right"
+                    position="bottom right">
+                <vstack style="min-width: 10rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Bottom Right</strong>
+                    <fig-dropdown>
+                        <option>Normal</option>
+                        <option>Multiply</option>
+                        <option>Screen</option>
+                    </fig-dropdown>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-bottom-right"&gt;Open Bottom Right&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-bottom-right" position="bottom right"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
+            <h4>Center Right (Vertical Centering)</h4>
+            <hstack>
+                <fig-button id="popup-open-center-right">Open Center Right</fig-button>
+                <fig-button id="popup-close-center-right"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-center-right"
+                    is="fig-popup"
+                    anchor="#popup-open-center-right"
+                    position="center right"
+                    offset="12 8">
+                <vstack style="min-width: 11rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Center Right</strong>
+                    <fig-input-text placeholder="Vertically centered"></fig-input-text>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-center-right"&gt;Open Center Right&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-center-right" position="center right" offset="12 8"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
+            <h4>Center Left (Vertical Centering)</h4>
+            <hstack>
+                <fig-button id="popup-open-center-left">Open Center Left</fig-button>
+                <fig-button id="popup-close-center-left"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-center-left"
+                    is="fig-popup"
+                    anchor="#popup-open-center-left"
+                    position="center left"
+                    offset="12 8">
+                <vstack style="min-width: 11rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Center Left</strong>
+                    <fig-input-text placeholder="Vertically centered"></fig-input-text>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-center-left"&gt;Open Center Left&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-center-left" position="center left" offset="12 8"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
+            <h3>Single-Value Position Shorthand</h3>
+            <p class="description">Single values are supported for directional shorthand (for example:
+                <code>top</code>, <code>right</code>).</p>
+
+            <h4>Top (left edges aligned)</h4>
+            <hstack>
+                <fig-button id="popup-open-top-single">Open Top (single)</fig-button>
+                <fig-button id="popup-close-top-single"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-top-single"
+                    is="fig-popup"
+                    anchor="#popup-open-top-single"
+                    position="top"
+                    offset="12 8">
+                <vstack style="min-width: 11rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Top Shorthand</strong>
+                    <fig-input-text placeholder="position='top'"></fig-input-text>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-top-single"&gt;Open Top (single)&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-top-single" position="top" offset="12 8"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
+            <h4>Right (top edges aligned)</h4>
+            <hstack>
+                <fig-button id="popup-open-right-single">Open Right (single)</fig-button>
+                <fig-button id="popup-close-right-single"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-right-single"
+                    is="fig-popup"
+                    anchor="#popup-open-right-single"
+                    position="right"
+                    offset="12 8">
+                <vstack style="min-width: 11rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Right Shorthand</strong>
+                    <fig-input-text placeholder="position='right'"></fig-input-text>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-right-single"&gt;Open Right (single)&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-right-single" position="right" offset="12 8"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+        </section>
+        <hr>
+
         <!-- Radio -->
         <section id="radio">
             <h2>Radio</h2>
@@ -3869,6 +4131,54 @@ button.addEventListener('click', () => {
         // Dark button clicks - set to dark mode
         themeDarkBtn.addEventListener('click', () => {
             setTheme(true);
+        });
+
+        // FigPopup demos
+        const popupDefault = document.getElementById('popup-default');
+        const popupPreferred = document.getElementById('popup-preferred');
+        const popupProp = document.getElementById('popup-prop');
+
+        document.getElementById('popup-open-default')?.addEventListener('click', () => {
+            popupDefault?.setAttribute('open', 'true');
+        });
+        document.getElementById('popup-close-default')?.addEventListener('click', () => {
+            popupDefault?.removeAttribute('open');
+        });
+
+        document.getElementById('popup-open-preferred')?.addEventListener('click', () => {
+            popupPreferred?.setAttribute('open', 'true');
+        });
+        document.getElementById('popup-close-preferred')?.addEventListener('click', () => {
+            popupPreferred?.removeAttribute('open');
+        });
+
+        document.getElementById('popup-open-prop')?.addEventListener('click', () => {
+            if (popupProp) popupProp.open = true;
+        });
+        document.getElementById('popup-close-prop')?.addEventListener('click', () => {
+            if (popupProp) popupProp.open = false;
+        });
+
+        const popupExamples = [
+            ['popup-open-top-left', 'popup-close-top-left', 'popup-top-left'],
+            ['popup-open-top-center', 'popup-close-top-center', 'popup-top-center'],
+            ['popup-open-top-right', 'popup-close-top-right', 'popup-top-right'],
+            ['popup-open-bottom-left', 'popup-close-bottom-left', 'popup-bottom-left'],
+            ['popup-open-bottom-right', 'popup-close-bottom-right', 'popup-bottom-right'],
+            ['popup-open-center-right', 'popup-close-center-right', 'popup-center-right'],
+            ['popup-open-center-left', 'popup-close-center-left', 'popup-center-left'],
+            ['popup-open-top-single', 'popup-close-top-single', 'popup-top-single'],
+            ['popup-open-right-single', 'popup-close-right-single', 'popup-right-single'],
+        ];
+
+        popupExamples.forEach(([openId, closeId, popupId]) => {
+            const popup = document.getElementById(popupId);
+            document.getElementById(openId)?.addEventListener('click', () => {
+                popup?.setAttribute('open', 'true');
+            });
+            document.getElementById(closeId)?.addEventListener('click', () => {
+                popup?.removeAttribute('open');
+            });
         });
 
         // Listen for system preference changes
