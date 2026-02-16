@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.17.1]
+
+### Changed
+
+- Moved `fig-footer` styles from page-local `index.html` styles into `components.css` for reusable component-level styling.
+- Added component-level sticky support for `fig-footer[sticky]`, including bottom stickiness and theme-aware background treatment.
+- Kept demo markup clean by removing duplicated `fig-footer` style definitions from `index.html`.
+
 ## [2.17.0]
 
 ### Added

@@ -2268,6 +2268,36 @@ fig-header {
   }
 }
 
+fig-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacer-2);
+  height: var(--spacer-6);
+  padding: var(--spacer-1) var(--spacer-2) var(--spacer-1) var(--spacer-3);
+  box-shadow: inset 0 1px 0 0 var(--figma-color-border);
+
+  & h3 {
+    font-weight: var(--body-medium-strong-fontWeight);
+    flex-grow: 1;
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacer-half);
+  }
+
+  &[borderless] {
+    box-shadow: none;
+  }
+
+  &[sticky]:not([sticky="false"]) {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-top: auto;
+    background: var(--figma-color-bg);
+  }
+}
+
 fig-content {
   padding: var(--spacer-2) 0;
   display: block;
