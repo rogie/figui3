@@ -1056,6 +1056,8 @@ customElements.define("fig-dialog", FigDialog, { extends: "dialog" });
  * @attr {string} anchor - CSS selector used to resolve the anchor element.
  * @attr {string} position - Preferred placement as "vertical horizontal" (default: "top center").
  * @attr {string} offset - Horizontal and vertical offset as "x y" (default: "0 0").
+ * @attr {string} variant - Visual variant. Use variant="popover" to show an anchor beak.
+ * @attr {string} theme - Visual theme: "light", "dark", or "menu".
  * @attr {boolean|string} open - Open when present and not "false".
  */
 class FigPopup extends HTMLDialogElement {
@@ -1077,7 +1079,7 @@ class FigPopup extends HTMLDialogElement {
   }
 
   static get observedAttributes() {
-    return ["open", "anchor", "position", "offset"];
+    return ["open", "anchor", "position", "offset", "variant", "theme"];
   }
 
   get open() {
@@ -1425,6 +1427,56 @@ class FigPopup extends HTMLDialogElement {
     return { top, left };
   }
 
+  #oppositeSide(side) {
+    const map = {
+      top: "bottom",
+      bottom: "top",
+      left: "right",
+      right: "left",
+    };
+    return map[side] || "bottom";
+  }
+
+  #getPlacementSide(vertical, horizontal, shorthand) {
+    if (shorthand === "top") return "top";
+    if (shorthand === "bottom") return "bottom";
+    if (shorthand === "left") return "left";
+    if (shorthand === "right") return "right";
+
+    if (vertical !== "center") return vertical;
+    if (horizontal !== "center") return horizontal;
+    return "top";
+  }
+
+  #updatePopoverBeak(anchorRect, popupRect, left, top, placementSide) {
+    if (this.getAttribute("variant") !== "popover" || !anchorRect) {
+      this.style.removeProperty("--beak-offset");
+      this.removeAttribute("data-beak-side");
+      return;
+    }
+
+    const beakSide = this.#oppositeSide(placementSide);
+    this.setAttribute("data-beak-side", beakSide);
+
+    const anchorCenterX = anchorRect.left + anchorRect.width / 2;
+    const anchorCenterY = anchorRect.top + anchorRect.height / 2;
+
+    let beakOffset;
+    if (beakSide === "top" || beakSide === "bottom") {
+      beakOffset = anchorCenterX - left;
+      const min = 8;
+      const max = Math.max(min, popupRect.width - 8);
+      beakOffset = Math.min(max, Math.max(min, beakOffset));
+    } else {
+      beakOffset = anchorCenterY - top;
+      const min = 8;
+      const max = Math.max(min, popupRect.height - 8);
+      beakOffset = Math.min(max, Math.max(min, beakOffset));
+    }
+
+    this.style.setProperty("--beak-offset", `${beakOffset}px`);
+  }
+
   #overflowScore(coords, popupRect) {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -1468,6 +1520,7 @@ class FigPopup extends HTMLDialogElement {
     const anchor = this.#resolveAnchor();
 
     if (!anchor) {
+      this.#updatePopoverBeak(null, popupRect, 0, 0, "top");
       const centered = {
         left: (window.innerWidth - popupRect.width) / 2,
         top: (window.innerHeight - popupRect.height) / 2,
@@ -1480,6 +1533,7 @@ class FigPopup extends HTMLDialogElement {
 
     const anchorRect = anchor.getBoundingClientRect();
     let best = null;
+    let bestSide = "top";
     let bestScore = Number.POSITIVE_INFINITY;
 
     for (const v of verticalOrder) {
@@ -1492,15 +1546,24 @@ class FigPopup extends HTMLDialogElement {
           offset,
           shorthand
         );
+        const placementSide = this.#getPlacementSide(v, h, shorthand);
         if (this.#fits(coords, popupRect)) {
           this.style.left = `${coords.left}px`;
           this.style.top = `${coords.top}px`;
+          this.#updatePopoverBeak(
+            anchorRect,
+            popupRect,
+            coords.left,
+            coords.top,
+            placementSide
+          );
           return;
         }
         const score = this.#overflowScore(coords, popupRect);
         if (score < bestScore) {
           bestScore = score;
           best = coords;
+          bestSide = placementSide;
         }
       }
     }
@@ -1508,6 +1571,13 @@ class FigPopup extends HTMLDialogElement {
     const clamped = this.#clamp(best || { left: 0, top: 0 }, popupRect);
     this.style.left = `${clamped.left}px`;
     this.style.top = `${clamped.top}px`;
+    this.#updatePopoverBeak(
+      anchorRect,
+      popupRect,
+      clamped.left,
+      clamped.top,
+      bestSide
+    );
   }
 
   #queueReposition() {

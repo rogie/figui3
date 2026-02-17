@@ -2680,6 +2680,44 @@
                 </vstack>
             </dialog>
 
+            <h3>Popover Variant (with Arrow)</h3>
+            <p class="description">Use <code>variant="popover"</code> to show the beak and automatically point it at the
+                anchor. Use <code>theme="menu"</code> for menu-style dark surfaces.</p>
+            <fig-segmented-control id="popup-theme-control">
+                <fig-segment id="popup-theme-default">Default</fig-segment>
+                <fig-segment id="popup-theme-dark">Dark</fig-segment>
+                <fig-segment id="popup-theme-light">Light</fig-segment>
+                <fig-segment id="popup-theme-menu"
+                             selected>Menu</fig-segment>
+            </fig-segmented-control>
+            <hstack>
+                <fig-button id="popup-open-popover">Open Popover Variant</fig-button>
+                <fig-button id="popup-close-popover"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-popover"
+                    is="fig-popup"
+                    anchor="#popup-open-popover"
+                    position="top center"
+                    variant="popover"
+                    theme="menu">
+                <vstack style="min-width: 12rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Popover Beak</strong>
+                    <fig-field direction="horizontal">
+                        <label>Apply</label>
+                        <fig-switch checked></fig-switch>
+                    </fig-field>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-popover"&gt;Open Popover Variant&lt;/fig-button&gt;
+&lt;dialog is="fig-popup"
+        anchor="#popup-open-popover"
+        position="top center"
+        variant="popover"
+        theme="menu"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
             <h3>Property API</h3>
             <p class="description">Uses the popup <code>open</code> property setter/getter (attribute wrapper).</p>
             <hstack>
@@ -4137,6 +4175,8 @@ button.addEventListener('click', () => {
         const popupDefault = document.getElementById('popup-default');
         const popupPreferred = document.getElementById('popup-preferred');
         const popupProp = document.getElementById('popup-prop');
+        const popupPopover = document.getElementById('popup-popover');
+        const popupThemeControl = document.getElementById('popup-theme-control');
 
         document.getElementById('popup-open-default')?.addEventListener('click', () => {
             popupDefault?.setAttribute('open', 'true');
@@ -4159,7 +4199,25 @@ button.addEventListener('click', () => {
             if (popupProp) popupProp.open = false;
         });
 
+        popupThemeControl?.addEventListener('click', () => {
+            if (!popupPopover) return;
+            if (document.getElementById('popup-theme-default')?.hasAttribute('selected')) {
+                popupPopover.removeAttribute('theme');
+                return;
+            }
+            if (document.getElementById('popup-theme-dark')?.hasAttribute('selected')) {
+                popupPopover.setAttribute('theme', 'dark');
+                return;
+            }
+            if (document.getElementById('popup-theme-light')?.hasAttribute('selected')) {
+                popupPopover.setAttribute('theme', 'light');
+                return;
+            }
+            popupPopover.setAttribute('theme', 'menu');
+        });
+
         const popupExamples = [
+            ['popup-open-popover', 'popup-close-popover', 'popup-popover'],
             ['popup-open-top-left', 'popup-close-top-left', 'popup-top-left'],
             ['popup-open-top-center', 'popup-close-top-center', 'popup-top-center'],
             ['popup-open-top-right', 'popup-close-top-right', 'popup-top-right'],
