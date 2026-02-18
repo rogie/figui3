@@ -4540,18 +4540,37 @@ customElements.define("fig-toast", FigToast, { extends: "dialog" });
  * @attr {string} value - The current input value
  */
 class FigComboInput extends HTMLElement {
+  #usesCustomDropdown = false;
+  #boundHandleSelectInput = null;
+
   constructor() {
     super();
+    this.#boundHandleSelectInput = this.handleSelectInput.bind(this);
   }
   getOptionsFromAttribute() {
     return (this.getAttribute("options") || "").split(",");
   }
   connectedCallback() {
+    const customDropdown =
+      Array.from(this.children).find((child) => child.tagName === "FIG-DROPDOWN") ||
+      null;
+    this.#usesCustomDropdown = customDropdown !== null;
+    if (customDropdown) {
+      customDropdown.remove();
+    }
+
     this.options = this.getOptionsFromAttribute();
     this.placeholder = this.getAttribute("placeholder") || "";
     this.value = this.getAttribute("value") || "";
     const experimental = this.getAttribute("experimental");
     const expAttr = experimental ? `experimental="${experimental}"` : "";
+    const dropdownHTML = this.#usesCustomDropdown
+      ? ""
+      : `<fig-dropdown type="dropdown" ${expAttr}>
+                              ${this.options
+                                .map((option) => `<option>${option}</option>`)
+                                .join("")}
+                            </fig-dropdown>`;
     this.innerHTML = `<div class="input-combo">
                         <fig-input-text placeholder="${this.placeholder}">
                         </fig-input-text> 
@@ -4559,27 +4578,39 @@ class FigComboInput extends HTMLElement {
                             <svg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'>
   <path d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='currentColor' stroke-opacity="0.9" stroke-linecap='round'/>
 </svg>
-                            <fig-dropdown type="dropdown" ${expAttr}>
-                              ${this.options
-                                .map((option) => `<option>${option}</option>`)
-                                .join("")}
-                            </fig-dropdown>
+                            ${dropdownHTML}
                         </fig-button>
                     </div>`;
     requestAnimationFrame(() => {
       this.input = this.querySelector("fig-input-text");
+      const button = this.querySelector("fig-button");
+
+      if (this.#usesCustomDropdown && customDropdown && button) {
+        if (!customDropdown.hasAttribute("type")) {
+          customDropdown.setAttribute("type", "dropdown");
+        }
+        if (experimental) {
+          customDropdown.setAttribute("experimental", experimental);
+        }
+        button.append(customDropdown);
+      }
       this.dropdown = this.querySelector("fig-dropdown");
 
-      this.dropdown.addEventListener(
-        "input",
-        this.handleSelectInput.bind(this)
-      );
+      this.dropdown?.removeEventListener("input", this.#boundHandleSelectInput);
+      this.dropdown?.addEventListener("input", this.#boundHandleSelectInput);
+
+      if (this.input) {
+        this.input.setAttribute("value", this.value);
+      }
 
       // Apply initial disabled state
       if (this.hasAttribute("disabled")) {
         this.#applyDisabled(true);
       }
     });
+  }
+  disconnectedCallback() {
+    this.dropdown?.removeEventListener("input", this.#boundHandleSelectInput);
   }
   handleSelectInput(e) {
     this.setAttribute("value", e.target.closest("fig-dropdown").value);
@@ -4614,7 +4645,7 @@ class FigComboInput extends HTMLElement {
     switch (name) {
       case "options":
         this.options = newValue.split(",");
-        if (this.dropdown) {
+        if (this.dropdown && !this.#usesCustomDropdown) {
           this.dropdown.innerHTML = this.options
             .map((option) => `<option>${option}</option>`)
             .join("");
@@ -4639,7 +4670,7 @@ class FigComboInput extends HTMLElement {
         if (this.dropdown) {
           if (newValue) {
             this.dropdown.setAttribute("experimental", newValue);
-          } else {
+          } else if (!this.#usesCustomDropdown) {
             this.dropdown.removeAttribute("experimental");
           }
         }
