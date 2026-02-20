@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.18.1]
+
+### Added
+
+- Prepend/append slot elements on `fig-input-number` and `fig-input-text[type="number"]` now act as scrub handles — click and drag to scrub the value without holding alt/option.
+- `cursor: ew-resize` on slot elements in numeric inputs to indicate the drag affordance.
+- `react.html` test page for verifying web component behavior under React state-driven re-renders.
+
+### Changed
+
+- Alt-drag scrubbing no longer stops if the alt key is released mid-drag — once scrubbing starts, it continues until pointer release.
+
 ## [2.18.0]
 
 ### Fixed

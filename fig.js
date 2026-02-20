@@ -2497,30 +2497,27 @@ class FigInputText extends HTMLElement {
   }
   #handleMouseMove(e) {
     if (this.type !== "number") return;
-    if (e.altKey) {
-      let step = (this.step || 1) * e.movementX;
-      let value = Number(this.input.value);
-      value = value / (this.transform || 1) + step;
-      value = this.#sanitizeInput(value, false);
-      let valueTransformed = value * (this.transform || 1);
-      value = this.#formatNumber(value);
-      valueTransformed = this.#formatNumber(valueTransformed);
-      this.value = value;
-      this.input.value = valueTransformed;
-      this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
-      this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
-    }
+    let step = (this.step || 1) * e.movementX;
+    let value = Number(this.input.value);
+    value = value / (this.transform || 1) + step;
+    value = this.#sanitizeInput(value, false);
+    let valueTransformed = value * (this.transform || 1);
+    value = this.#formatNumber(value);
+    valueTransformed = this.#formatNumber(valueTransformed);
+    this.value = value;
+    this.input.value = valueTransformed;
+    this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+    this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
   }
   #handleMouseDown(e) {
     if (this.type !== "number") return;
-    if (e.altKey) {
+    if (e.altKey || e.target.closest("[slot]")) {
       this.#isInteracting = true;
       this.input.style.cursor =
         this.style.cursor =
         document.body.style.cursor =
           "ew-resize";
       this.style.userSelect = "none";
-      // Use the pre-bound handlers
       window.addEventListener("pointermove", this.#boundMouseMove);
       window.addEventListener("pointerup", this.#boundMouseUp);
     }
@@ -2533,7 +2530,6 @@ class FigInputText extends HTMLElement {
       document.body.style.cursor =
         "";
     this.style.userSelect = "all";
-    // Remove the pre-bound handlers
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
   }
@@ -2937,28 +2933,25 @@ class FigInputNumber extends HTMLElement {
 
   #handleMouseMove(e) {
     if (this.disabled) return;
-    if (e.altKey) {
-      let step = (this.step || 1) * e.movementX;
-      let numericValue = this.#getNumericValue(this.input.value);
-      let value = Number(numericValue) / (this.transform || 1) + step;
-      value = this.#sanitizeInput(value, false);
-      this.value = value;
-      this.input.value = this.#formatWithUnit(this.value);
-      this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
-      this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
-    }
+    let step = (this.step || 1) * e.movementX;
+    let numericValue = this.#getNumericValue(this.input.value);
+    let value = Number(numericValue) / (this.transform || 1) + step;
+    value = this.#sanitizeInput(value, false);
+    this.value = value;
+    this.input.value = this.#formatWithUnit(this.value);
+    this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+    this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
   }
 
   #handleMouseDown(e) {
     if (this.disabled) return;
-    if (e.altKey) {
+    if (e.altKey || e.target.closest("[slot]")) {
       this.#isInteracting = true;
       this.input.style.cursor =
         this.style.cursor =
         document.body.style.cursor =
           "ew-resize";
       this.style.userSelect = "none";
-      // Use the pre-bound handlers
       window.addEventListener("pointermove", this.#boundMouseMove);
       window.addEventListener("pointerup", this.#boundMouseUp);
     }
@@ -2971,7 +2964,6 @@ class FigInputNumber extends HTMLElement {
       document.body.style.cursor =
         "";
     this.style.userSelect = "all";
-    // Remove the pre-bound handlers
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
   }

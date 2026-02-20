@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FigUI React Integration Test</title>
+    <link rel="stylesheet" type="text/css" href="fig.css">
+    <script src="fig.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 2rem;
+        }
+        h1 { margin-top: 0; }
+        h2 { margin-top: 2rem; }
+        .test-panel {
+            max-width: 320px;
+            border: 1px solid var(--figma-color-border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .state-debug {
+            font-family: "SF Mono", SFMono-Regular, Menlo, monospace;
+            font-size: 11px;
+            background: var(--figma-color-bg-secondary);
+            border: 1px solid var(--figma-color-border);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            max-width: 320px;
+            color: var(--figma-color-text-secondary);
+            line-height: 1.6;
+        }
+        .state-debug strong {
+            color: var(--figma-color-text);
+        }
+        .description {
+            font-size: 12px;
+            color: var(--figma-color-text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        .event-log {
+            font-family: "SF Mono", SFMono-Regular, Menlo, monospace;
+            font-size: 10px;
+            background: var(--figma-color-bg-secondary);
+            border: 1px solid var(--figma-color-border);
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            max-width: 320px;
+            max-height: 120px;
+            overflow-y: auto;
+            color: var(--figma-color-text-tertiary);
+        }
+        .event-log div {
+            padding: 1px 0;
+        }
+        .event-log .event-input { color: var(--figma-color-border-selected); }
+        .event-log .event-change { color: var(--figma-color-bg-brand); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect, useCallback } = React;
+
+        function useWebComponentRef(value, attrName = "value") {
+            const ref = useRef(null);
+            useEffect(() => {
+                if (ref.current) {
+                    ref.current.setAttribute(attrName, value);
+                }
+            }, [value, attrName]);
+            return ref;
+        }
+
+        function FieldRow({ label, children }) {
+            return (
+                <fig-field direction="horizontal">
+                    <label>{label}</label>
+                    {children}
+                </fig-field>
+            );
+        }
+
+        // Test 1: Array of number fields all sharing state
+        function NumberFieldsTest() {
+            const [values, setValues] = useState({
+                width: 100,
+                height: 200,
+                x: 0,
+                y: 0,
+                rotation: 45,
+                opacity: 80,
+                blur: 4,
+                spread: 0,
+            });
+            const [log, setLog] = useState([]);
+
+            const addLog = useCallback((field, type, val) => {
+                setLog(prev => {
+                    const entry = { field, type, val, t: Date.now() };
+                    return [entry, ...prev].slice(0, 50);
+                });
+            }, []);
+
+            const handleInput = useCallback((field) => (e) => {
+                const val = Number(e.target.value);
+                addLog(field, "input", val);
+                setValues(prev => ({ ...prev, [field]: val }));
+            }, [addLog]);
+
+            const handleChange = useCallback((field) => (e) => {
+                addLog(field, "change", Number(e.target.value));
+            }, [addLog]);
+
+            const fields = [
+                { key: "width", label: "W", min: 0, max: 1000, step: 1, units: "px" },
+                { key: "height", label: "H", min: 0, max: 1000, step: 1, units: "px" },
+                { key: "x", label: "X", min: -500, max: 500, step: 1, units: "px" },
+                { key: "y", label: "Y", min: -500, max: 500, step: 1, units: "px" },
+                { key: "rotation", label: "Rotation", min: -360, max: 360, step: 0.1, units: "°" },
+                { key: "opacity", label: "Opacity", min: 0, max: 100, step: 1, units: "%" },
+                { key: "blur", label: "Blur", min: 0, max: 100, step: 0.5, units: "px" },
+                { key: "spread", label: "Spread", min: -50, max: 50, step: 1, units: "px" },
+            ];
+
+            return (
+                <div>
+                    <h2>Number Inputs (alt-drag to scrub)</h2>
+                    <p className="description">
+                        Each field's value is stored in React state and fed back via setAttribute.
+                        Alt-drag any field to scrub — it should not stutter or stop.
+                    </p>
+                    <div className="test-panel">
+                        {fields.map(f => (
+                            <NumberField
+                                key={f.key}
+                                field={f}
+                                value={values[f.key]}
+                                onInput={handleInput(f.key)}
+                                onChange={handleChange(f.key)}
+                            />
+                        ))}
+                    </div>
+                    <div className="state-debug">
+                        <strong>State:</strong><br/>
+                        {Object.entries(values).map(([k, v]) => (
+                            <span key={k}>{k}: {v} &nbsp; </span>
+                        ))}
+                    </div>
+                    <EventLog log={log} />
+                </div>
+            );
+        }
+
+        function NumberField({ field, value, onInput, onChange }) {
+            const ref = useWebComponentRef(value);
+            useEffect(() => {
+                const el = ref.current;
+                if (!el) return;
+                el.addEventListener("input", onInput);
+                el.addEventListener("change", onChange);
+                return () => {
+                    el.removeEventListener("input", onInput);
+                    el.removeEventListener("change", onChange);
+                };
+            }, [onInput, onChange]);
+
+            return (
+                <FieldRow label={field.label}>
+                    <fig-input-number
+                        ref={ref}
+                        value={value}
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
+                        units={field.units}
+                        full
+                    >
+                        <span slot="prepend">{field.label[0]}</span>
+                    </fig-input-number>
+                </FieldRow>
+            );
+        }
+
+        // Test 2: Sliders with text inputs
+        function SliderFieldsTest() {
+            const [values, setValues] = useState({
+                volume: 50,
+                brightness: 75,
+                contrast: 50,
+                saturation: 100,
+                hue: 180,
+            });
+            const [log, setLog] = useState([]);
+
+            const addLog = useCallback((field, type, val) => {
+                setLog(prev => {
+                    const entry = { field, type, val, t: Date.now() };
+                    return [entry, ...prev].slice(0, 50);
+                });
+            }, []);
+
+            const handleInput = useCallback((field) => (e) => {
+                const val = Number(e.detail ?? e.target.value);
+                addLog(field, "input", val);
+                setValues(prev => ({ ...prev, [field]: val }));
+            }, [addLog]);
+
+            const handleChange = useCallback((field) => (e) => {
+                addLog(field, "change", Number(e.detail ?? e.target.value));
+            }, [addLog]);
+
+            const fields = [
+                { key: "volume", label: "Volume", min: 0, max: 100, step: 1 },
+                { key: "brightness", label: "Brightness", min: 0, max: 100, step: 1 },
+                { key: "contrast", label: "Contrast", min: 0, max: 100, step: 1 },
+                { key: "saturation", label: "Saturation", min: 0, max: 200, step: 1 },
+                { key: "hue", label: "Hue", min: 0, max: 360, step: 1, type: "hue" },
+            ];
+
+            return (
+                <div>
+                    <h2>Sliders with Text (drag range + alt-drag number)</h2>
+                    <p className="description">
+                        Drag the slider or alt-drag the number input.
+                        State feeds back to both the slider and its text input.
+                    </p>
+                    <div className="test-panel">
+                        {fields.map(f => (
+                            <SliderField
+                                key={f.key}
+                                field={f}
+                                value={values[f.key]}
+                                onInput={handleInput(f.key)}
+                                onChange={handleChange(f.key)}
+                            />
+                        ))}
+                    </div>
+                    <div className="state-debug">
+                        <strong>State:</strong><br/>
+                        {Object.entries(values).map(([k, v]) => (
+                            <span key={k}>{k}: {v} &nbsp; </span>
+                        ))}
+                    </div>
+                    <EventLog log={log} />
+                </div>
+            );
+        }
+
+        function SliderField({ field, value, onInput, onChange }) {
+            const ref = useWebComponentRef(value);
+            useEffect(() => {
+                const el = ref.current;
+                if (!el) return;
+                el.addEventListener("input", onInput);
+                el.addEventListener("change", onChange);
+                return () => {
+                    el.removeEventListener("input", onInput);
+                    el.removeEventListener("change", onChange);
+                };
+            }, [onInput, onChange]);
+
+            return (
+                <FieldRow label={field.label}>
+                    <fig-slider
+                        ref={ref}
+                        value={value}
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
+                        text="true"
+                        full
+                    />
+                </FieldRow>
+            );
+        }
+
+        // Test 3: Mixed — sliders and numbers sharing the same values
+        function LinkedFieldsTest() {
+            const [values, setValues] = useState({
+                scale: 50,
+                offsetX: 0,
+                offsetY: 0,
+            });
+            const [log, setLog] = useState([]);
+
+            const addLog = useCallback((field, type, val) => {
+                setLog(prev => {
+                    const entry = { field, type, val, t: Date.now() };
+                    return [entry, ...prev].slice(0, 50);
+                });
+            }, []);
+
+            const makeHandler = useCallback((field, type) => (e) => {
+                const val = Number(e.detail ?? e.target.value);
+                addLog(field, type, val);
+                if (type === "input") {
+                    setValues(prev => ({ ...prev, [field]: val }));
+                }
+            }, [addLog]);
+
+            const scaleSliderRef = useWebComponentRef(values.scale);
+            const scaleNumberRef = useWebComponentRef(values.scale);
+            const offsetXRef = useWebComponentRef(values.offsetX);
+            const offsetYRef = useWebComponentRef(values.offsetY);
+
+            useEffect(() => {
+                const pairs = [
+                    [scaleSliderRef.current, "scale"],
+                    [scaleNumberRef.current, "scale"],
+                    [offsetXRef.current, "offsetX"],
+                    [offsetYRef.current, "offsetY"],
+                ];
+                const cleanups = pairs.map(([el, field]) => {
+                    if (!el) return () => {};
+                    const onInput = makeHandler(field, "input");
+                    const onChange = makeHandler(field, "change");
+                    el.addEventListener("input", onInput);
+                    el.addEventListener("change", onChange);
+                    return () => {
+                        el.removeEventListener("input", onInput);
+                        el.removeEventListener("change", onChange);
+                    };
+                });
+                return () => cleanups.forEach(fn => fn());
+            }, [makeHandler]);
+
+            return (
+                <div>
+                    <h2>Linked Fields (slider + number share state)</h2>
+                    <p className="description">
+                        The slider and standalone number input for "Scale" share the same
+                        state value. Dragging one should update the other in real time.
+                    </p>
+                    <div className="test-panel">
+                        <FieldRow label="Scale">
+                            <fig-slider
+                                ref={scaleSliderRef}
+                                value={values.scale}
+                                min="0" max="100" step="1"
+                                text="true"
+                                full
+                            />
+                        </FieldRow>
+                        <FieldRow label="Scale #">
+                            <fig-input-number
+                                ref={scaleNumberRef}
+                                value={values.scale}
+                                min="0" max="100" step="1"
+                                units="%"
+                                full
+                            >
+                                <span slot="prepend">S</span>
+                            </fig-input-number>
+                        </FieldRow>
+                        <FieldRow label="Offset X">
+                            <fig-input-number
+                                ref={offsetXRef}
+                                value={values.offsetX}
+                                min="-200" max="200" step="1"
+                                units="px"
+                                full
+                            >
+                                <span slot="prepend">X</span>
+                            </fig-input-number>
+                        </FieldRow>
+                        <FieldRow label="Offset Y">
+                            <fig-input-number
+                                ref={offsetYRef}
+                                value={values.offsetY}
+                                min="-200" max="200" step="1"
+                                units="px"
+                                full
+                            >
+                                <span slot="prepend">Y</span>
+                            </fig-input-number>
+                        </FieldRow>
+                    </div>
+                    <div className="state-debug">
+                        <strong>State:</strong><br/>
+                        {Object.entries(values).map(([k, v]) => (
+                            <span key={k}>{k}: {v} &nbsp; </span>
+                        ))}
+                    </div>
+                    <EventLog log={log} />
+                </div>
+            );
+        }
+
+        function EventLog({ log }) {
+            if (!log.length) return null;
+            return (
+                <div className="event-log">
+                    {log.map((e, i) => (
+                        <div key={i} className={`event-${e.type}`}>
+                            {e.field}.{e.type} → {e.val}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        function App() {
+            return (
+                <div>
+                    <h1>FigUI × React Integration Test</h1>
+                    <p className="description">
+                        Test that web components work correctly when React controls
+                        their value attributes. Alt-drag to scrub number fields,
+                        drag slider handles — nothing should stutter, stop, or jump.
+                    </p>
+                    <NumberFieldsTest />
+                    <SliderFieldsTest />
+                    <LinkedFieldsTest />
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<App />);
+    </script>
+</body>
+</html>

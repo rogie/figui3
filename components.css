@@ -2486,6 +2486,11 @@ fig-input-number {
   }
 }
 
+fig-input-number > [slot],
+fig-input-text[type="number"] > [slot] {
+  cursor: ew-resize !important;
+}
+
 fig-input-color,
 fig-input-fill {
   & > .input-combo > fig-chit:not(:only-child),
