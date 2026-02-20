@@ -2512,6 +2512,12 @@ fig-input-fill {
       gap: 0;
     }
   }
+
+  fig-field[direction="horizontal"] &,
+  fig-field[direction="row"] & {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 fig-slider {
@@ -2523,6 +2529,12 @@ fig-slider {
 
   & fig-input-number {
     flex-basis: 5rem;
+  }
+
+  fig-field[direction="horizontal"] &,
+  fig-field[direction="row"] & {
+    flex: 1;
+    min-width: 0;
   }
 }
 

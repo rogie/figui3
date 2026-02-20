@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.18.0]
+
+### Fixed
+
+- **Interaction guard for framework re-renders**: Components with drag/scrub interactions no longer get clobbered when React (or other frameworks) set the `value` attribute during an active user gesture. Follows the same `#isDraggingColor` pattern already used by `fig-fill-picker`.
+  - `fig-input-number`: Guards alt-drag scrubbing and keyboard editing (focus/blur)
+  - `fig-input-text`: Guards alt-drag scrubbing for number type
+  - `fig-slider`: Guards native range input drag via pointerdown/pointerup
+  - `fig-input-angle`: Guards handle drag
+  - `fig-input-joystick`: Guards handle drag
+- **`fig-input-fill` no longer destroys DOM mid-interaction**: `attributeChangedCallback` now updates children in-place instead of doing a full re-render when the fill type hasn't changed.
+
+### Changed
+
+- `fig-slider` with `text="true"` now skips the range input in tab order (`tabindex="-1"`), so Tab goes directly to the text input.
+- `fig-input-color`, `fig-input-fill`, and `fig-slider` now properly flex and shrink inside horizontal `fig-field` layouts (`flex: 1; min-width: 0`).
+- Updated horizontal fields demo section with a resizable container and `full` attribute on all inputs.
+
 ## [2.17.2]
 
 ### Added

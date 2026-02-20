@@ -1267,69 +1267,62 @@
             </fig-field>
 
             <h3>Horizontal Fields with Different Inputs</h3>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Text Input</label>
-                <fig-input-text placeholder="Enter text"></fig-input-text>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Number Input</label>
-                <fig-input-number value="100"
-                                  units="px"></fig-input-number>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Dropdown</label>
-                <fig-dropdown>
-                    <option>Option One</option>
-                    <option>Option Two</option>
-                    <option>Option Three</option>
-                </fig-dropdown>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Slider</label>
-                <fig-slider value="50"
-                            text="true"></fig-slider>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Color</label>
-                <fig-input-color value="#0D99FF"
-                                 text="true"></fig-input-color>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Angle</label>
-                <fig-input-angle value="45"
-                                 text="true"></fig-input-angle>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Joystick</label>
-                <fig-input-joystick text="true"
-                                    value="50,50"></fig-input-joystick>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Switch</label>
-                <fig-switch></fig-switch>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Checkbox</label>
-                <fig-checkbox></fig-checkbox>
-            </fig-field>
-            <fig-field direction="horizontal"
-                       style="width: 240px;">
-                <label>Segmented</label>
-                <fig-segmented-control>
-                    <fig-segment value="left">Left</fig-segment>
-                    <fig-segment value="center">Center</fig-segment>
-                    <fig-segment value="right">Right</fig-segment>
-                </fig-segmented-control>
-            </fig-field>
+            <p class="description">Drag the right edge to test at different widths.</p>
+            <div class="resize-test" style="width: 240px;">
+                <fig-field direction="horizontal">
+                    <label>Text Input</label>
+                    <fig-input-text placeholder="Enter text" full></fig-input-text>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Number Input</label>
+                    <fig-input-number value="100"
+                                      units="px" full></fig-input-number>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Dropdown</label>
+                    <fig-dropdown full>
+                        <option>Option One</option>
+                        <option>Option Two</option>
+                        <option>Option Three</option>
+                    </fig-dropdown>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Slider</label>
+                    <fig-slider value="50"
+                                text="true" full></fig-slider>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Color</label>
+                    <fig-input-color value="#0D99FF"
+                                     text="true" full></fig-input-color>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Angle</label>
+                    <fig-input-angle value="45"
+                                     text="true" full></fig-input-angle>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Joystick</label>
+                    <fig-input-joystick text="true"
+                                        value="50,50" full></fig-input-joystick>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Switch</label>
+                    <fig-switch></fig-switch>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Checkbox</label>
+                    <fig-checkbox></fig-checkbox>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Segmented</label>
+                    <fig-segmented-control full>
+                        <fig-segment value="left">Left</fig-segment>
+                        <fig-segment value="center">Center</fig-segment>
+                        <fig-segment value="right">Right</fig-segment>
+                    </fig-segmented-control>
+                </fig-field>
+            </div>
         </section>
         <hr>
 

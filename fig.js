@@ -2022,6 +2022,7 @@ customElements.define("fig-segmented-control", FigSegmentedControl);
  * @attr {string} color - The color for the slider track (for opacity type)
  */
 class FigSlider extends HTMLElement {
+  #isInteracting = false;
   // Private fields declarations
   #typeDefaults = {
     range: { min: 0, max: 100, step: 1 },
@@ -2088,6 +2089,7 @@ class FigSlider extends HTMLElement {
     let slider = `<div class="fig-slider-input-container" role="group">
                 <input 
                     type="range"
+                    ${this.text ? 'tabindex="-1"' : ""}
                     ${this.disabled ? "disabled" : ""}
                     min="${this.min}"
                     max="${this.max}"
@@ -2124,6 +2126,8 @@ class FigSlider extends HTMLElement {
       this.input.addEventListener("input", this.#boundHandleInput);
       this.input.removeEventListener("change", this.#boundHandleChange);
       this.input.addEventListener("change", this.#boundHandleChange);
+      this.input.addEventListener("pointerdown", () => { this.#isInteracting = true; });
+      this.input.addEventListener("pointerup", () => { this.#isInteracting = false; });
 
       if (this.default) {
         this.style.setProperty(
@@ -2253,6 +2257,7 @@ class FigSlider extends HTMLElement {
   }
 
   #handleChange() {
+    this.#isInteracting = false;
     this.#syncValue();
     this.dispatchEvent(
       new CustomEvent("change", { detail: this.value, bubbles: true })
@@ -2306,6 +2311,7 @@ class FigSlider extends HTMLElement {
           }
           break;
         case "value":
+          if (this.#isInteracting) break;
           this.value = newValue;
           this.input.value = newValue;
           this.#syncProperties();
@@ -2365,6 +2371,7 @@ customElements.define("fig-slider", FigSlider);
  * @attr {number} transform - A multiplier for displayed number values
  */
 class FigInputText extends HTMLElement {
+  #isInteracting = false;
   #boundMouseMove;
   #boundMouseUp;
   #boundMouseDown;
@@ -2507,6 +2514,7 @@ class FigInputText extends HTMLElement {
   #handleMouseDown(e) {
     if (this.type !== "number") return;
     if (e.altKey) {
+      this.#isInteracting = true;
       this.input.style.cursor =
         this.style.cursor =
         document.body.style.cursor =
@@ -2519,6 +2527,7 @@ class FigInputText extends HTMLElement {
   }
   #handleMouseUp(e) {
     if (this.type !== "number") return;
+    this.#isInteracting = false;
     this.input.style.cursor =
       this.style.cursor =
       document.body.style.cursor =
@@ -2594,6 +2603,7 @@ class FigInputText extends HTMLElement {
           }
           break;
         case "value":
+          if (this.#isInteracting) break;
           let value = newValue;
           if (this.type === "number") {
             value = this.#sanitizeInput(value, false);
@@ -2651,6 +2661,7 @@ class FigInputNumber extends HTMLElement {
   #units;
   #unitPosition;
   #precision;
+  #isInteracting = false;
 
   constructor() {
     super();
@@ -2830,6 +2841,7 @@ class FigInputNumber extends HTMLElement {
   }
 
   #handleFocus(e) {
+    this.#isInteracting = true;
     setTimeout(() => {
       const value = e.target.value;
       if (value && this.#units) {
@@ -2846,6 +2858,7 @@ class FigInputNumber extends HTMLElement {
   }
 
   #handleBlur(e) {
+    this.#isInteracting = false;
     let numericValue = this.#getNumericValue(e.target.value);
     if (numericValue !== "") {
       let val = Number(numericValue) / (this.transform || 1);
@@ -2939,6 +2952,7 @@ class FigInputNumber extends HTMLElement {
   #handleMouseDown(e) {
     if (this.disabled) return;
     if (e.altKey) {
+      this.#isInteracting = true;
       this.input.style.cursor =
         this.style.cursor =
         document.body.style.cursor =
@@ -2951,6 +2965,7 @@ class FigInputNumber extends HTMLElement {
   }
 
   #handleMouseUp(e) {
+    this.#isInteracting = false;
     this.input.style.cursor =
       this.style.cursor =
       document.body.style.cursor =
@@ -3019,6 +3034,7 @@ class FigInputNumber extends HTMLElement {
           this.input.value = this.#formatWithUnit(this.value);
           break;
         case "value":
+          if (this.#isInteracting) break;
           let value =
             newValue !== null && newValue !== "" ? Number(newValue) : "";
           if (value !== "") {
@@ -4167,9 +4183,15 @@ class FigInputFill extends HTMLElement {
 
     switch (name) {
       case "value":
+        const prevType = this.#fillType;
         this.#parseValue();
         if (this.#fillPicker) {
-          this.#render();
+          if (this.#fillType !== prevType) {
+            this.#render();
+          } else {
+            this.#updateFillPicker();
+            this.#updateControls();
+          }
         }
         break;
       case "disabled":
@@ -5314,6 +5336,7 @@ class FigInputJoystick extends HTMLElement {
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "value") {
+      if (this.isDragging) return;
       this.value = newValue;
     }
     if (name === "precision") {
@@ -5771,6 +5794,7 @@ class FigInputAngle extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
       case "value":
+        if (this.isDragging) break;
         this.value = Number(newValue);
         break;
       case "precision":
