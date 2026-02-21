@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.18.3]
+
+### Fixed
+
+- `fig-input-fill` gradient label now updates when changing gradient subtype (e.g., Radial → Linear) without switching fill types.
+- `experimental` attribute now passes through to `fig-dropdown` elements in the image, video, and webcam tabs of `fig-fill-picker`.
+
 ## [2.18.2]
 
 ### Fixed

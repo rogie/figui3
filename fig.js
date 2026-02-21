@@ -3883,14 +3883,22 @@ class FigInputFill extends HTMLElement {
           );
         }
         break;
-      case "gradient":
+      case "gradient": {
         if (this.#opacityInput) {
           this.#opacityInput.setAttribute(
             "value",
             this.#gradient.stops[0]?.opacity ?? 100
           );
         }
+        const label = this.querySelector(".fig-input-fill-label");
+        if (label) {
+          const newLabel =
+            this.#gradient.type.charAt(0).toUpperCase() +
+            this.#gradient.type.slice(1);
+          label.textContent = newLabel;
+        }
         break;
+      }
       case "image":
         if (this.#opacityInput) {
           this.#opacityInput.setAttribute(
@@ -6915,10 +6923,12 @@ class FigFillPicker extends HTMLElement {
   // ============ IMAGE TAB ============
   #initImageTab() {
     const container = this.#dialog.querySelector('[data-tab="image"]');
+    const experimental = this.getAttribute("experimental");
+    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
       <div class="fig-fill-picker-media-header">
-        <fig-dropdown class="fig-fill-picker-scale-mode" value="${
+        <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
           this.#image.scaleMode
         }">
           <option value="fill" selected>Fill</option>
@@ -7067,10 +7077,12 @@ class FigFillPicker extends HTMLElement {
   // ============ VIDEO TAB ============
   #initVideoTab() {
     const container = this.#dialog.querySelector('[data-tab="video"]');
+    const experimental = this.getAttribute("experimental");
+    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
       <div class="fig-fill-picker-media-header">
-        <fig-dropdown class="fig-fill-picker-scale-mode" value="${
+        <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
           this.#video.scaleMode
         }">
           <option value="fill" selected>Fill</option>
@@ -7156,6 +7168,8 @@ class FigFillPicker extends HTMLElement {
   // ============ WEBCAM TAB ============
   #initWebcamTab() {
     const container = this.#dialog.querySelector('[data-tab="webcam"]');
+    const experimental = this.getAttribute("experimental");
+    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
       <div class="fig-fill-picker-webcam-preview">
@@ -7166,7 +7180,7 @@ class FigFillPicker extends HTMLElement {
         </div>
       </div>
       <div class="fig-fill-picker-webcam-controls">
-        <fig-dropdown class="fig-fill-picker-camera-select" style="display: none;">
+        <fig-dropdown class="fig-fill-picker-camera-select" ${expAttr} style="display: none;">
         </fig-dropdown>
         <fig-button class="fig-fill-picker-webcam-capture" variant="primary">
           Capture
