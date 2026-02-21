@@ -3682,7 +3682,7 @@ class FigInputFill extends HTMLElement {
               placeholder="##" 
               min="0"
               max="100"
-              value="${this.#gradient.stops[0]?.opacity || 100}"
+              value="${this.#gradient.stops[0]?.opacity ?? 100}"
               units="%"
               ${disabled ? "disabled" : ""}>
             </fig-input-number>
@@ -3887,7 +3887,7 @@ class FigInputFill extends HTMLElement {
         if (this.#opacityInput) {
           this.#opacityInput.setAttribute(
             "value",
-            this.#gradient.stops[0]?.opacity || 100
+            this.#gradient.stops[0]?.opacity ?? 100
           );
         }
         break;
@@ -3970,7 +3970,7 @@ class FigInputFill extends HTMLElement {
               placeholder="##" 
               min="0"
               max="100"
-              value="${this.#gradient.stops[0]?.opacity || 100}"
+              value="${this.#gradient.stops[0]?.opacity ?? 100}"
               units="%"
               ${disabled ? "disabled" : ""}>
             </fig-input-number>
@@ -6469,6 +6469,7 @@ class FigFillPicker extends HTMLElement {
     this.#hueSlider.addEventListener("input", (e) => {
       this.#color.h = parseFloat(e.target.value);
       this.#drawColorArea();
+      this.#updateHandlePosition();
       this.#updateColorInputs();
       this.#emitInput();
     });
@@ -6868,8 +6869,9 @@ class FigFillPicker extends HTMLElement {
           .addEventListener("input", (e) => {
             this.#gradient.stops[index].color =
               e.target.hexOpaque || e.target.value;
+            const parsedAlpha = parseFloat(e.target.alpha);
             this.#gradient.stops[index].opacity =
-              parseFloat(e.target.alpha) || 100;
+              isNaN(parsedAlpha) ? 100 : parsedAlpha;
             this.#updateGradientPreview();
             this.#emitInput();
           });

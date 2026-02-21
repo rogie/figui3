@@ -1268,15 +1268,18 @@
 
             <h3>Horizontal Fields with Different Inputs</h3>
             <p class="description">Drag the right edge to test at different widths.</p>
-            <div class="resize-test" style="width: 240px;">
+            <div class="resize-test"
+                 style="width: 240px;">
                 <fig-field direction="horizontal">
                     <label>Text Input</label>
-                    <fig-input-text placeholder="Enter text" full></fig-input-text>
+                    <fig-input-text placeholder="Enter text"
+                                    full></fig-input-text>
                 </fig-field>
                 <fig-field direction="horizontal">
                     <label>Number Input</label>
                     <fig-input-number value="100"
-                                      units="px" full></fig-input-number>
+                                      units="px"
+                                      full></fig-input-number>
                 </fig-field>
                 <fig-field direction="horizontal">
                     <label>Dropdown</label>
@@ -1289,22 +1292,26 @@
                 <fig-field direction="horizontal">
                     <label>Slider</label>
                     <fig-slider value="50"
-                                text="true" full></fig-slider>
+                                text="true"
+                                full></fig-slider>
                 </fig-field>
                 <fig-field direction="horizontal">
                     <label>Color</label>
                     <fig-input-color value="#0D99FF"
-                                     text="true" full></fig-input-color>
+                                     text="true"
+                                     full></fig-input-color>
                 </fig-field>
                 <fig-field direction="horizontal">
                     <label>Angle</label>
                     <fig-input-angle value="45"
-                                     text="true" full></fig-input-angle>
+                                     text="true"
+                                     full></fig-input-angle>
                 </fig-field>
                 <fig-field direction="horizontal">
                     <label>Joystick</label>
                     <fig-input-joystick text="true"
-                                        value="50,50" full></fig-input-joystick>
+                                        value="50,50"
+                                        full></fig-input-joystick>
                 </fig-field>
                 <fig-field direction="horizontal">
                     <label>Switch</label>
@@ -1401,6 +1408,18 @@
                     document.getElementById('fill-picker-output').textContent = 'Change: ' + JSON.stringify(e.detail);
                 });
             </script>
+
+            <h3>Experimental</h3>
+            <p class="description">Use the <code>experimental</code> attribute to pass through experimental features to
+                internal <code>fig-dropdown</code> elements.</p>
+
+            <h4>fig-fill-picker</h4>
+            <fig-fill-picker experimental="modern"
+                             value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#f093fb","opacity":100},{"position":100,"color":"#f5576c","opacity":100}]}}'></fig-fill-picker>
+
+            <h4>fig-input-fill</h4>
+            <fig-input-fill experimental="modern"
+                            value='{"type":"gradient","gradient":{"type":"radial","centerX":50,"centerY":50,"stops":[{"position":0,"color":"#4facfe","opacity":100},{"position":100,"color":"#00f2fe","opacity":100}]}}'></fig-input-fill>
         </section>
         <hr>
 
@@ -2882,7 +2901,8 @@
 
             <h3>Single-Value Position Shorthand</h3>
             <p class="description">Single values are supported for directional shorthand (for example:
-                <code>top</code>, <code>right</code>).</p>
+                <code>top</code>, <code>right</code>).
+            </p>
 
             <h4>Top (left edges aligned)</h4>
             <hstack>
