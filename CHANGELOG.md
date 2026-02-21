@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.18.2]
+
+### Fixed
+
+- Gradient stop opacity at 0% no longer snaps back to 100% — replaced `|| 100` with `?? 100` (nullish coalescing) so zero is not treated as falsy.
+- Color picker handle now updates its color when the hue slider changes — added missing `#updateHandlePosition()` call.
+
+### Added
+
+- Experimental attribute examples for `fig-fill-picker` and `fig-input-fill` in the demo page.
+
 ## [2.18.1]
 
 ### Added
