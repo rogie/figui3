@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.19.1]
+
+### Fixed
+
+- `@media (prefers-color-scheme)` blocks no longer conflict with manual theme switching via `color-scheme`. Scoped with `:not(.figma-dark):not(.figma-light)` so they only apply as a no-JS fallback; class-based overrides are now the primary mechanism.
+
 ## [2.19.0]
 
 ### Added

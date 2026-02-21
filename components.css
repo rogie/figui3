@@ -306,9 +306,10 @@
   --icon-swap: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.35355 6.35355C8.54882 6.15829 8.54882 5.84171 8.35355 5.64645C8.15829 5.45118 7.84171 5.45118 7.64645 5.64645L5.14645 8.14645C4.95118 8.34171 4.95118 8.65829 5.14645 8.85355L7.64645 11.3536C7.84171 11.5488 8.15829 11.5488 8.35355 11.3536C8.54882 11.1583 8.54882 10.8417 8.35355 10.6464L6.70711 9H18.5C18.7761 9 19 8.77614 19 8.5C19 8.22386 18.7761 8 18.5 8H6.70711L8.35355 6.35355ZM15.6464 13.3536C15.4512 13.1583 15.4512 12.8417 15.6464 12.6464C15.8417 12.4512 16.1583 12.4512 16.3536 12.6464L18.8536 15.1464C19.0488 15.3417 19.0488 15.6583 18.8536 15.8536L16.3536 18.3536C16.1583 18.5488 15.8417 18.5488 15.6464 18.3536C15.4512 18.1583 15.4512 17.8417 15.6464 17.6464L17.2929 16H5.5C5.22386 16 5 15.7761 5 15.5C5 15.2239 5.22386 15 5.5 15H17.2929L15.6464 13.3536Z' fill='currentColor'/%3E%3C/svg%3E");
 
   /* Elevations - light theme defaults */
-  --elevation-500-modal-window:
-    0px 0px 0.5px rgba(0, 0, 0, 0.08), 0px 10px 24px rgba(0, 0, 0, 0.18),
-    0px 2px 5px rgba(0, 0, 0, 0.15);
+  --figma-elevation-500-modal-window:
+    0 0 0.5px 0 rgba(0, 0, 0, 0.08), 0 10px 24px 0 rgba(0, 0, 0, 0.18),
+    0 2px 5px 0 rgba(0, 0, 0, 0.15);
+
   --figma-elevation-100:
     0px 0px 0.5px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 0px rgba(0, 0, 0, 0.15);
   --figma-elevation-200:
@@ -324,9 +325,10 @@
 }
 
 /* Dark theme overrides for non-color values (shadows, elevations) */
-/* These cannot use light-dark() as they are complex values */
+/* light-dark() only works for colors, so these use class-based switching */
+/* The @media block is a no-JS fallback — ignored when setTheme() sets classes */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.figma-dark):not(.figma-light) {
     --handle-shadow:
       0px 0 0 0.75px rgba(0, 0, 0, 0.1),
       0px 0px 0.5px 0px rgba(255, 255, 255, 0.1);
@@ -349,7 +351,7 @@
   }
 }
 
-/* Class-based dark theme override (for manual theme switching) */
+/* Class-based dark theme override (primary mechanism via setTheme()) */
 :root.figma-dark {
   --handle-shadow:
     0px 0 0 0.75px rgba(0, 0, 0, 0.1),
@@ -1444,13 +1446,14 @@ input[type="checkbox"]:not(.switch) {
   }
 }
 /* Light theme checkbox hover (black checkmark preview) */
+/* @media is a no-JS fallback — ignored when setTheme() sets classes */
 @media (prefers-color-scheme: light) {
-  input[type="checkbox"]:not(.switch):not(:disabled):hover {
+  :root:not(.figma-dark):not(.figma-light) input[type="checkbox"]:not(.switch):not(:disabled):hover {
     background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='black' opacity='0.25' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
   }
 }
 
-/* Class-based light theme override (for manual theme switching) */
+/* Class-based light theme override (primary mechanism via setTheme()) */
 :root.figma-light input[type="checkbox"]:not(.switch):not(:disabled):hover {
   background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='black' opacity='0.25' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
 }

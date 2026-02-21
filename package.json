@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "2.19.0",
+  "version": "2.19.1",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "MIT",
