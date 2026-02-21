@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.19.0]
+
+### Added
+
+- New `variant="input"` for `fig-button` — styled to match input fields with matching hover, active, and focus-visible states.
+- `--icon-chevron` added to the icons demo page.
+- Button demo examples for the input variant: default, with chevron icon, icon-only, and disabled states.
+
+### Fixed
+
+- `fig-input-fill` gradient label now updates when changing gradient subtype (e.g., Radial → Linear) without switching fill types.
+- `experimental` attribute now passes through to `fig-dropdown` elements in the image, video, and webcam tabs of `fig-fill-picker`.
+
 ## [2.18.3]
 
 ### Fixed

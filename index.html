@@ -288,6 +288,17 @@
                 <label>Link</label>
                 <fig-button variant="link">Link Button</fig-button>
             </fig-field>
+            <fig-field direction="horizontal">
+                <label>Input</label>
+                <fig-button variant="input">Input Style</fig-button>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Input (with icon)</label>
+                <fig-button variant="input">
+                    Options
+                    <span class="fig-mask-icon" style="--icon: var(--icon-chevron); --size: 1rem"></span>
+                </fig-button>
+            </fig-field>
 
             <h3>Sizes</h3>
             <fig-field direction="horizontal">
@@ -321,6 +332,11 @@
             <fig-field direction="horizontal">
                 <label>Disabled (link)</label>
                 <fig-button variant="link"
+                            disabled>Disabled</fig-button>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Disabled (input)</label>
+                <fig-button variant="input"
                             disabled>Disabled</fig-button>
             </fig-field>
 
@@ -370,6 +386,13 @@
                               d="M8 2.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zm7-3.5v3h3v1h-3v3h-1v-3h-3v-1h3v-3h1z"
                               fill="currentColor" />
                     </svg>
+                </fig-button>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Icon (input)</label>
+                <fig-button variant="input"
+                            icon="true">
+                    <span class="fig-mask-icon" style="--icon: var(--icon-chevron); --size: 1rem"></span>
                 </fig-button>
             </fig-field>
             <fig-field direction="horizontal">
@@ -3750,6 +3773,11 @@
                     <span class="fig-mask-icon"
                           style="--icon: var(--icon-steppers); --size: 1.5rem"></span>
                     <code>--icon-steppers</code>
+                </vstack>
+                <vstack style="align-items: center; gap: 4px;">
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-chevron); --size: 1rem"></span>
+                    <code>--icon-chevron</code>
                 </vstack>
             </hstack>
 
