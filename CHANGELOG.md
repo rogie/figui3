@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.20.0]
+
+### Added
+
+- Toolbelt component at the bottom of the demo page with sectioned icon button groups.
+- Non-modal dialog example with code showing `.show()` vs `.showModal()`.
+- `closedby` attribute documentation and live demos (`any`, `closerequest`, `none`) in the dialog section.
+
+### Changed
+
+- Elevation shadow variables (`--figma-elevation-*`, `--handle-shadow`) now use `light-dark()` inline for theme switching, removing the need for separate `.figma-dark` and `@media (prefers-color-scheme: dark)` override blocks.
+
+### Fixed
+
+- Dialog `closedby="none"` and `closedby="closerequest"` now properly prevent outside-click dismissal in the JS fallback handler.
+
 ## [2.19.1]
 
 ### Fixed

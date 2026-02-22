@@ -158,6 +158,36 @@
             border-radius: 4px;
             color: var(--figma-color-text);
         }
+
+        .toolbelt {
+            position: fixed;
+            bottom: 0.75rem;
+            left: 0;
+            right: 0;
+            width: fit-content;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: var(--spacer-2);
+            padding: var(--spacer-2);
+            background-color: var(--figma-color-bg);
+            border-radius: var(--radius-large);
+            box-shadow: var(--figma-elevation-200);
+            z-index: 100;
+
+            &>section {
+                display: flex;
+                padding: 0;
+                align-items: center;
+                margin: 0;
+                gap: var(--spacer-2);
+
+                &:not(:first-child):not(:only-child) {
+                    border-left: 1px solid var(--figma-color-border);
+                    padding-left: var(--spacer-2);
+                }
+            }
+        }
     </style>
 </head>
 
@@ -296,7 +326,8 @@
                 <label>Input (with icon)</label>
                 <fig-button variant="input">
                     Options
-                    <span class="fig-mask-icon" style="--icon: var(--icon-chevron); --size: 1rem"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-chevron); --size: 1rem"></span>
                 </fig-button>
             </fig-field>
 
@@ -392,7 +423,8 @@
                 <label>Icon (input)</label>
                 <fig-button variant="input"
                             icon="true">
-                    <span class="fig-mask-icon" style="--icon: var(--icon-chevron); --size: 1rem"></span>
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-chevron); --size: 1rem"></span>
                 </fig-button>
             </fig-field>
             <fig-field direction="horizontal">
@@ -862,6 +894,115 @@
                 <footer>
                     <fig-button close-dialog>Close</fig-button>
                 </footer>
+            </dialog>
+
+            <h3>Non-Modal Dialog</h3>
+            <p style="font-size: 12px; color: var(--figma-color-text-secondary); margin-bottom: 12px;">
+                Use <code>.show()</code> instead of <code>.showModal()</code> to open a non-modal dialog.
+                It won't create a backdrop or trap focus, and the rest of the page remains interactive.
+            </p>
+            <pre><code>&lt;dialog id="my-dialog" is="fig-dialog" drag="true"&gt;
+  ...
+&lt;/dialog&gt;
+
+&lt;script&gt;
+  // Non-modal — no backdrop, page stays interactive
+  document.getElementById('my-dialog').show();
+
+  // Modal — backdrop + focus trap
+  document.getElementById('my-dialog').showModal();
+&lt;/script&gt;</code></pre>
+            <fig-button onclick="document.getElementById('non-modal-dialog').show()">Open Non-Modal Dialog</fig-button>
+
+            <dialog id="non-modal-dialog"
+                    is="fig-dialog"
+                    drag="true"
+                    position="center center">
+                <fig-header>
+                    <h3>Non-Modal Dialog</h3>
+                    <fig-tooltip text="Close">
+                        <fig-button variant="ghost"
+                                    icon="true"
+                                    close-dialog>
+                            <span class="fig-mask-icon"
+                                  style="--icon: var(--icon-close)"></span>
+                        </fig-button>
+                    </fig-tooltip>
+                </fig-header>
+                <fig-content>
+                    <p>This dialog is non-modal — you can still interact with the page behind it.</p>
+                    <fig-field direction="horizontal">
+                        <label>Opacity</label>
+                        <fig-slider value="75"
+                                    min="0"
+                                    max="100"></fig-slider>
+                    </fig-field>
+                </fig-content>
+                <footer>
+                    <fig-button close-dialog>Done</fig-button>
+                </footer>
+            </dialog>
+
+            <h3>closedby Attribute</h3>
+            <p style="font-size: 12px; color: var(--figma-color-text-secondary); margin-bottom: 12px;">
+                The <code>closedby</code> attribute controls how the dialog can be dismissed.
+                <code>fig-dialog</code> defaults to <code>closedby="any"</code> (light dismiss).
+            </p>
+            <pre><code>&lt;!-- Click outside, Esc key, or close button all dismiss --&gt;
+&lt;dialog is="fig-dialog" closedby="any"&gt;...&lt;/dialog&gt;
+
+&lt;!-- Only Esc key or close button dismiss (no click-outside) --&gt;
+&lt;dialog is="fig-dialog" closedby="closerequest"&gt;...&lt;/dialog&gt;
+
+&lt;!-- Only explicit close button dismisses --&gt;
+&lt;dialog is="fig-dialog" closedby="none"&gt;...&lt;/dialog&gt;</code></pre>
+            <hstack>
+                <fig-button variant="secondary"
+                            onclick="document.getElementById('closedby-any-dialog').show()">closedby="any"</fig-button>
+                <fig-button variant="secondary"
+                            onclick="document.getElementById('closedby-none-dialog').show()">closedby="none"</fig-button>
+            </hstack>
+
+            <dialog id="closedby-any-dialog"
+                    is="fig-dialog"
+                    drag="true"
+                    closedby="any"
+                    position="center center">
+                <fig-header>
+                    <h3>Light Dismiss</h3>
+                    <fig-tooltip text="Close">
+                        <fig-button variant="ghost"
+                                    icon="true"
+                                    close-dialog>
+                            <span class="fig-mask-icon"
+                                  style="--icon: var(--icon-close)"></span>
+                        </fig-button>
+                    </fig-tooltip>
+                </fig-header>
+                <fig-content>
+                    <p>Click anywhere outside this dialog to close it.</p>
+                </fig-content>
+            </dialog>
+
+            <dialog id="closedby-none-dialog"
+                    is="fig-dialog"
+                    drag="true"
+                    closedby="none"
+                    position="center center">
+                <fig-header>
+                    <h3>No Light Dismiss</h3>
+                    <fig-tooltip text="Close">
+                        <fig-button variant="ghost"
+                                    icon="true"
+                                    close-dialog>
+                            <span class="fig-mask-icon"
+                                  style="--icon: var(--icon-close)"></span>
+                        </fig-button>
+                    </fig-tooltip>
+                </fig-header>
+                <fig-content>
+                    <p>This dialog can only be closed with the close button.</p>
+                </fig-content>
             </dialog>
         </section>
         <hr>
@@ -4113,6 +4254,50 @@ button.addEventListener('click', () => {
         </fig-footer>
     </main>
 
+    <div class="toolbelt">
+        <section>
+            <fig-button variant="ghost"
+                        icon="true">
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-back)"></span>
+            </fig-button>
+            <fig-button variant="ghost"
+                        icon="true">
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-forward)"></span>
+            </fig-button>
+        </section>
+        <section>
+            <fig-button variant="ghost"
+                        icon="true">
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-add)"></span>
+            </fig-button>
+            <fig-button variant="ghost"
+                        icon="true">
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-minus)"></span>
+            </fig-button>
+        </section>
+        <section>
+            <fig-button variant="ghost"
+                        icon="true">
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-swap)"></span>
+            </fig-button>
+            <fig-button variant="ghost"
+                        icon="true">
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-rotate)"></span>
+            </fig-button>
+            <fig-button variant="ghost"
+                        icon="true">
+                <span class="fig-mask-icon"
+                      style="--icon: var(--icon-eyedropper)"></span>
+            </fig-button>
+        </section>
+    </div>
+
     <script>
         // Highlight nav item based on hash
         function updateActiveNav() {
@@ -4180,8 +4365,7 @@ button.addEventListener('click', () => {
 
         function setTheme(isDark) {
             document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-            document.documentElement.classList.toggle('figma-dark', isDark);
-            document.documentElement.classList.toggle('figma-light', !isDark);
+
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
             // Sync switch state
             if (isDark) {

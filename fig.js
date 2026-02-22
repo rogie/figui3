@@ -1240,11 +1240,12 @@ class FigPopup extends HTMLDialogElement {
 
   #handleOutsidePointerDown(event) {
     if (!this.open || !super.open) return;
+    const closedby = this.getAttribute("closedby");
+    if (closedby === "none" || closedby === "closerequest") return;
     const target = event.target;
     if (!(target instanceof Node)) return;
     if (this.contains(target)) return;
 
-    // Fallback for browsers that do not honor dialog closedby consistently.
     this.open = false;
   }
 
