@@ -1412,7 +1412,8 @@ input[type="checkbox"]:not(.switch) {
 /* Light theme checkbox hover (black checkmark preview) */
 /* @media is a no-JS fallback — ignored when setTheme() sets classes */
 @media (prefers-color-scheme: light) {
-  :root:not(.figma-dark):not(.figma-light) input[type="checkbox"]:not(.switch):not(:disabled):hover {
+  :root:not(.figma-dark):not(.figma-light)
+    input[type="checkbox"]:not(.switch):not(:disabled):hover {
     background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='black' opacity='0.25' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
   }
 }
@@ -2030,11 +2031,14 @@ dialog[is="fig-popup"] {
   position: fixed;
   margin: 0;
   min-width: 0;
-  width: max-content;
-  max-width: calc(100vw - var(--spacer-4));
-  max-height: calc(100vh - var(--spacer-4));
-  padding: var(--spacer-2);
+  padding: 0;
   overflow: auto;
+
+  &[autoresize]:not([autoresize="false"]) {
+    width: max-content;
+    max-width: calc(100vw - var(--spacer-4));
+    max-height: calc(100vh - var(--spacer-4));
+  }
 
   &[open] {
     display: block;

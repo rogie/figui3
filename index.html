@@ -24,7 +24,7 @@
 
         nav {
             position: fixed;
-            width: 180px;
+            width: 240px;
             height: 100vh;
             overflow-y: auto;
             background: var(--figma-color-bg-secondary);
@@ -105,7 +105,7 @@
         }
 
         main {
-            margin-left: 180px;
+            margin-left: 240px;
             padding: 24px 32px;
             max-width: 800px;
             min-height: 100vh;
@@ -3109,6 +3109,28 @@
 &lt;dialog is="fig-popup" anchor="#popup-open-right-single" position="right" offset="12 8"&gt;
   ...
 &lt;/dialog&gt;</code></pre>
+
+            <h4>Left (top edges aligned)</h4>
+            <hstack>
+                <fig-button id="popup-open-left-single">Open Left (single)</fig-button>
+                <fig-button id="popup-close-left-single"
+                            variant="secondary">Close</fig-button>
+            </hstack>
+            <dialog id="popup-left-single"
+                    is="fig-popup"
+                    anchor="#popup-open-left-single"
+                    position="left"
+                    offset="12 8">
+                <vstack style="min-width: 11rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Left Shorthand</strong>
+                    <fig-input-text placeholder="position='left'"></fig-input-text>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;fig-button id="popup-open-left-single"&gt;Open Left (single)&lt;/fig-button&gt;
+&lt;dialog is="fig-popup" anchor="#popup-open-left-single" position="left" offset="12 8"&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
         </section>
         <hr>
 
@@ -4452,6 +4474,7 @@ button.addEventListener('click', () => {
             ['popup-open-center-left', 'popup-close-center-left', 'popup-center-left'],
             ['popup-open-top-single', 'popup-close-top-single', 'popup-top-single'],
             ['popup-open-right-single', 'popup-close-right-single', 'popup-right-single'],
+            ['popup-open-left-single', 'popup-close-left-single', 'popup-left-single'],
         ];
 
         popupExamples.forEach(([openId, closeId, popupId]) => {

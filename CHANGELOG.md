@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.21.0]
+
+### Added
+
+- `autoresize` attribute for `fig-popup` (default: true). Set `autoresize="false"` to disable content-driven repositioning and auto-sizing CSS (`width: max-content`, `max-width`, `max-height`, `overflow`).
+- Drag cursor behavior for `fig-dialog` and `fig-popup`: `grab` on hover, `grabbing` while dragging (previously used `move`).
+- Left shorthand popup position example in the demo page.
+
+### Changed
+
+- Popup `position` semantics for two-word values: when vertical is `top` or `bottom`, horizontal `left`/`right` now means edge-alignment (e.g., `top left` = above anchor, left edges aligned) rather than side-placement. `center left`/`center right` retains side-placement behavior.
+- Fill picker popup (`fig-input-fill`, `fig-input-color`) now uses `position="left"` for correct side placement next to the trigger.
+- Nav width increased to 240px in the demo page.
+
+### Fixed
+
+- Fill picker popup anchoring: now anchors to the trigger element (`fig-chit` or button) instead of the `fig-fill-picker` wrapper, which uses `display: contents` and has no bounding box.
+- Fill picker popup sets `autoresize="false"` to prevent unwanted content-driven repositioning.
+
 ## [2.20.0]
 
 ### Added

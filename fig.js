@@ -863,13 +863,12 @@ class FigDialog extends HTMLDialogElement {
   #setupDragListeners() {
     if (this.drag) {
       this.addEventListener("pointerdown", this.#boundPointerDown);
-      // Set move cursor on handle element (or fig-header by default)
       const handleSelector = this.getAttribute("handle");
       const handleEl = handleSelector
         ? this.querySelector(handleSelector)
         : this.querySelector("fig-header, header");
       if (handleEl) {
-        handleEl.style.cursor = "move";
+        handleEl.style.cursor = "grab";
       }
     }
   }
@@ -977,16 +976,12 @@ class FigDialog extends HTMLDialogElement {
       const dy = Math.abs(e.clientY - this.#dragStartPos.y);
 
       if (dx > this.#dragThreshold || dy > this.#dragThreshold) {
-        // Start actual drag
         this.#isDragging = true;
         this.#dragPending = false;
         this.setPointerCapture(e.pointerId);
+        this.style.cursor = "grabbing";
 
-        // Get current position from computed style
         const rect = this.getBoundingClientRect();
-
-        // Convert to pixel-based top/left positioning for dragging
-        // (clears margin: auto centering)
         this.style.top = `${rect.top}px`;
         this.style.left = `${rect.left}px`;
         this.style.bottom = "auto";
@@ -997,21 +992,15 @@ class FigDialog extends HTMLDialogElement {
 
     if (!this.#isDragging) return;
 
-    // Calculate new position based on pointer position minus offset
-    const newLeft = e.clientX - this.#dragOffset.x;
-    const newTop = e.clientY - this.#dragOffset.y;
-
-    // Apply position directly with pixels
-    this.style.left = `${newLeft}px`;
-    this.style.top = `${newTop}px`;
-
+    this.style.left = `${e.clientX - this.#dragOffset.x}px`;
+    this.style.top = `${e.clientY - this.#dragOffset.y}px`;
     e.preventDefault();
   }
 
   #handlePointerUp(e) {
-    // Clean up pending or active drag
     if (this.#isDragging) {
       this.releasePointerCapture(e.pointerId);
+      this.style.cursor = "";
     }
 
     this.#isDragging = false;
@@ -1035,7 +1024,6 @@ class FigDialog extends HTMLDialogElement {
         this.#setupDragListeners();
       } else {
         this.#removeDragListeners();
-        // Remove move cursor from header
         const header = this.querySelector("fig-header, header");
         if (header) {
           header.style.cursor = "";
@@ -1070,16 +1058,29 @@ class FigPopup extends HTMLDialogElement {
   #boundScroll;
   #boundOutsidePointerDown;
   #rafId = null;
+  #anchorRef = null;
+
+  #isDragging = false;
+  #dragPending = false;
+  #dragStartPos = { x: 0, y: 0 };
+  #dragOffset = { x: 0, y: 0 };
+  #dragThreshold = 3;
+  #boundPointerDown;
+  #boundPointerMove;
+  #boundPointerUp;
 
   constructor() {
     super();
     this.#boundReposition = this.#queueReposition.bind(this);
     this.#boundScroll = this.#queueReposition.bind(this);
     this.#boundOutsidePointerDown = this.#handleOutsidePointerDown.bind(this);
+    this.#boundPointerDown = this.#handlePointerDown.bind(this);
+    this.#boundPointerMove = this.#handlePointerMove.bind(this);
+    this.#boundPointerUp = this.#handlePointerUp.bind(this);
   }
 
   static get observedAttributes() {
-    return ["open", "anchor", "position", "offset", "variant", "theme"];
+    return ["open", "anchor", "position", "offset", "variant", "theme", "drag", "handle", "autoresize"];
   }
 
   get open() {
@@ -1096,6 +1097,22 @@ class FigPopup extends HTMLDialogElement {
     this.setAttribute("open", "true");
   }
 
+  get anchor() {
+    return this.#anchorRef ?? this.getAttribute("anchor");
+  }
+
+  set anchor(value) {
+    if (value instanceof Element) {
+      this.#anchorRef = value;
+    } else if (typeof value === "string") {
+      this.#anchorRef = null;
+      this.setAttribute("anchor", value);
+    } else {
+      this.#anchorRef = null;
+    }
+    if (this.open) this.#queueReposition();
+  }
+
   connectedCallback() {
     if (!this.hasAttribute("position")) {
       this.setAttribute("position", "top center");
@@ -1103,16 +1120,22 @@ class FigPopup extends HTMLDialogElement {
     if (!this.hasAttribute("role")) {
       this.setAttribute("role", "dialog");
     }
-    // Default dialog outside-close behavior.
     if (!this.hasAttribute("closedby")) {
       this.setAttribute("closedby", "any");
     }
+
+    this.drag =
+      this.hasAttribute("drag") && this.getAttribute("drag") !== "false";
 
     this.addEventListener("close", () => {
       this.#teardownObservers();
       if (this.hasAttribute("open")) {
         this.removeAttribute("open");
       }
+    });
+
+    requestAnimationFrame(() => {
+      this.#setupDragListeners();
     });
 
     if (this.open) {
@@ -1124,6 +1147,7 @@ class FigPopup extends HTMLDialogElement {
 
   disconnectedCallback() {
     this.#teardownObservers();
+    this.#removeDragListeners();
     document.removeEventListener(
       "pointerdown",
       this.#boundOutsidePointerDown,
@@ -1144,6 +1168,18 @@ class FigPopup extends HTMLDialogElement {
         return;
       }
       this.#showPopup();
+      return;
+    }
+
+    if (name === "drag") {
+      this.drag = newValue !== null && newValue !== "false";
+      if (this.drag) {
+        this.#setupDragListeners();
+      } else {
+        this.#removeDragListeners();
+        const header = this.querySelector("fig-header, header");
+        if (header) header.style.cursor = "";
+      }
       return;
     }
 
@@ -1176,9 +1212,15 @@ class FigPopup extends HTMLDialogElement {
     document.addEventListener("pointerdown", this.#boundOutsidePointerDown, true);
     this.#queueReposition();
     this.#isPopupActive = true;
+
+    const anchor = this.#resolveAnchor();
+    if (anchor) anchor.classList.add("has-popup-open");
   }
 
   #hidePopup() {
+    const anchor = this.#resolveAnchor();
+    if (anchor) anchor.classList.remove("has-popup-open");
+
     this.#isPopupActive = false;
     this.#teardownObservers();
     document.removeEventListener(
@@ -1196,6 +1238,11 @@ class FigPopup extends HTMLDialogElement {
     }
   }
 
+  get autoresize() {
+    const val = this.getAttribute("autoresize");
+    return val === null || val !== "false";
+  }
+
   #setupObservers() {
     this.#teardownObservers();
 
@@ -1205,17 +1252,19 @@ class FigPopup extends HTMLDialogElement {
       this.#anchorObserver.observe(anchor);
     }
 
-    if ("ResizeObserver" in window) {
-      this.#contentObserver = new ResizeObserver(this.#boundReposition);
-      this.#contentObserver.observe(this);
-    }
+    if (this.autoresize) {
+      if ("ResizeObserver" in window) {
+        this.#contentObserver = new ResizeObserver(this.#boundReposition);
+        this.#contentObserver.observe(this);
+      }
 
-    this.#mutationObserver = new MutationObserver(this.#boundReposition);
-    this.#mutationObserver.observe(this, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
+      this.#mutationObserver = new MutationObserver(this.#boundReposition);
+      this.#mutationObserver.observe(this, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
 
     window.addEventListener("resize", this.#boundReposition);
     window.addEventListener("scroll", this.#boundScroll, true);
@@ -1246,10 +1295,128 @@ class FigPopup extends HTMLDialogElement {
     if (!(target instanceof Node)) return;
     if (this.contains(target)) return;
 
+    const anchor = this.#resolveAnchor();
+    if (anchor && anchor.contains(target)) return;
+
     this.open = false;
   }
 
+  // ---- Drag support ----
+
+  #setupDragListeners() {
+    if (this.drag) {
+      this.addEventListener("pointerdown", this.#boundPointerDown);
+      const handleSelector = this.getAttribute("handle");
+      const handleEl = handleSelector
+        ? this.querySelector(handleSelector)
+        : this.querySelector("fig-header, header");
+      if (handleEl) handleEl.style.cursor = "grab";
+    }
+  }
+
+  #removeDragListeners() {
+    this.removeEventListener("pointerdown", this.#boundPointerDown);
+    document.removeEventListener("pointermove", this.#boundPointerMove);
+    document.removeEventListener("pointerup", this.#boundPointerUp);
+  }
+
+  #isInteractiveElement(element) {
+    const interactiveSelectors = [
+      "input", "button", "select", "textarea", "a",
+      "label", "details", "summary",
+      '[contenteditable="true"]', "[tabindex]",
+    ];
+
+    const nonInteractiveFigElements = [
+      "FIG-HEADER", "FIG-DIALOG", "FIG-POPUP", "FIG-FIELD",
+      "FIG-TOOLTIP", "FIG-CONTENT", "FIG-TABS", "FIG-TAB",
+      "FIG-POPOVER", "FIG-SHIMMER", "FIG-LAYER", "FIG-FILL-PICKER",
+    ];
+
+    const isInteractive = (el) =>
+      interactiveSelectors.some((s) => el.matches?.(s)) ||
+      (el.tagName?.startsWith("FIG-") &&
+        !nonInteractiveFigElements.includes(el.tagName));
+
+    if (isInteractive(element)) return true;
+
+    let parent = element.parentElement;
+    while (parent && parent !== this) {
+      if (isInteractive(parent)) return true;
+      parent = parent.parentElement;
+    }
+
+    return false;
+  }
+
+  #handlePointerDown(e) {
+    if (!this.drag) return;
+    if (this.#isInteractiveElement(e.target)) return;
+
+    const handleSelector = this.getAttribute("handle");
+    if (handleSelector && handleSelector.trim()) {
+      const handleEl = this.querySelector(handleSelector);
+      if (!handleEl || !handleEl.contains(e.target)) return;
+    }
+
+    this.#dragPending = true;
+    this.#dragStartPos.x = e.clientX;
+    this.#dragStartPos.y = e.clientY;
+
+    const rect = this.getBoundingClientRect();
+    this.#dragOffset.x = e.clientX - rect.left;
+    this.#dragOffset.y = e.clientY - rect.top;
+
+    document.addEventListener("pointermove", this.#boundPointerMove);
+    document.addEventListener("pointerup", this.#boundPointerUp);
+  }
+
+  #handlePointerMove(e) {
+    if (this.#dragPending && !this.#isDragging) {
+      const dx = Math.abs(e.clientX - this.#dragStartPos.x);
+      const dy = Math.abs(e.clientY - this.#dragStartPos.y);
+
+      if (dx > this.#dragThreshold || dy > this.#dragThreshold) {
+        this.#isDragging = true;
+        this.#dragPending = false;
+        this.setPointerCapture(e.pointerId);
+        this.style.cursor = "grabbing";
+
+        const rect = this.getBoundingClientRect();
+        this.style.top = `${rect.top}px`;
+        this.style.left = `${rect.left}px`;
+        this.style.bottom = "auto";
+        this.style.right = "auto";
+        this.style.margin = "0";
+      }
+    }
+
+    if (!this.#isDragging) return;
+
+    this.style.left = `${e.clientX - this.#dragOffset.x}px`;
+    this.style.top = `${e.clientY - this.#dragOffset.y}px`;
+    e.preventDefault();
+  }
+
+  #handlePointerUp(e) {
+    if (this.#isDragging) {
+      this.releasePointerCapture(e.pointerId);
+      this.style.cursor = "";
+    }
+
+    this.#isDragging = false;
+    this.#dragPending = false;
+
+    document.removeEventListener("pointermove", this.#boundPointerMove);
+    document.removeEventListener("pointerup", this.#boundPointerUp);
+    e.preventDefault();
+  }
+
+  // ---- Anchor resolution ----
+
   #resolveAnchor() {
+    if (this.#anchorRef) return this.#anchorRef;
+
     const selector = this.getAttribute("anchor");
     if (!selector) return null;
 
@@ -1417,12 +1584,24 @@ class FigPopup extends HTMLDialogElement {
       top = anchorRect.top + (anchorRect.height - popupRect.height) / 2;
     }
 
-    if (horizontal === "left") {
-      left = anchorRect.left - popupRect.width - offset.xPx;
-    } else if (horizontal === "right") {
-      left = anchorRect.right + offset.xPx;
+    if (vertical === "center") {
+      // Side placement: popup beside the anchor
+      if (horizontal === "left") {
+        left = anchorRect.left - popupRect.width - offset.xPx;
+      } else if (horizontal === "right") {
+        left = anchorRect.right + offset.xPx;
+      } else {
+        left = anchorRect.left + (anchorRect.width - popupRect.width) / 2;
+      }
     } else {
-      left = anchorRect.left + (anchorRect.width - popupRect.width) / 2;
+      // Edge alignment: popup above/below, aligned to anchor edge
+      if (horizontal === "left") {
+        left = anchorRect.left + offset.xPx;
+      } else if (horizontal === "right") {
+        left = anchorRect.right - popupRect.width - offset.xPx;
+      } else {
+        left = anchorRect.left + (anchorRect.width - popupRect.width) / 2;
+      }
     }
 
     return { top, left };
@@ -3197,7 +3376,7 @@ class FigInputColor extends HTMLElement {
       let swatchElement = "";
       if (!hidePicker) {
         swatchElement = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${expAttr} ${
+          ? `<fig-fill-picker mode="solid" dialog-position="left" ${expAttr} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
               this.alpha
@@ -3215,7 +3394,7 @@ class FigInputColor extends HTMLElement {
         html = ``;
       } else {
         html = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${expAttr} ${
+          ? `<fig-fill-picker mode="solid" dialog-position="left" ${expAttr} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
               this.alpha
@@ -3743,7 +3922,7 @@ class FigInputFill extends HTMLElement {
     const experimentalAttr = this.getAttribute("experimental");
     this.innerHTML = `
       <div class="input-combo">
-        <fig-fill-picker value='${fillPickerValue}' ${
+        <fig-fill-picker dialog-position="left" value='${fillPickerValue}' ${
       disabled ? "disabled" : ""
     } ${modeAttr ? `mode="${modeAttr}"` : ""} ${experimentalAttr ? `experimental="${experimentalAttr}"` : ""}></fig-fill-picker>
         ${controlsHtml}
@@ -6007,7 +6186,7 @@ customElements.define("fig-layer", FigLayer);
  * @attr {string} value - JSON-encoded fill value
  * @attr {boolean} disabled - Whether the picker is disabled
  * @attr {boolean} alpha - Whether to show alpha/opacity controls (default: true)
- * @attr {string} dialog-position - Position of the dialog (passed to fig-dialog)
+ * @attr {string} dialog-position - Position of the popup (default: "left")
  */
 class FigFillPicker extends HTMLElement {
   #trigger = null;
@@ -6213,21 +6392,10 @@ class FigFillPicker extends HTMLElement {
       this.#createDialog();
     }
 
-    // Position off-screen first to prevent scroll jump
-    this.#dialog.style.position = "fixed";
-    this.#dialog.style.top = "-9999px";
-    this.#dialog.style.left = "-9999px";
-
-    this.#dialog.show();
     this.#switchTab(this.#fillType);
+    this.#dialog.open = true;
 
-    // Position after dialog has rendered and has dimensions
-    // Use nested RAF to ensure canvas is fully ready for drawing
     requestAnimationFrame(() => {
-      this.#positionDialog();
-      this.#dialog.setAttribute("closedby", "any");
-
-      // Second RAF ensures the dialog is visible and canvas is ready
       requestAnimationFrame(() => {
         this.#drawColorArea();
         this.#updateHandlePosition();
@@ -6235,72 +6403,17 @@ class FigFillPicker extends HTMLElement {
     });
   }
 
-  #positionDialog() {
-    const triggerRect = this.#trigger.getBoundingClientRect();
-    const dialogRect = this.#dialog.getBoundingClientRect();
-    const padding = 8; // Gap between trigger and dialog
-    const viewportPadding = 16; // Min distance from viewport edges
-
-    // Calculate available space in each direction
-    const spaceBelow =
-      window.innerHeight - triggerRect.bottom - viewportPadding;
-    const spaceAbove = triggerRect.top - viewportPadding;
-    const spaceRight = window.innerWidth - triggerRect.left - viewportPadding;
-    const spaceLeft = triggerRect.right - viewportPadding;
-
-    let top, left;
-
-    // Vertical positioning: prefer below, fallback to above
-    if (spaceBelow >= dialogRect.height || spaceBelow >= spaceAbove) {
-      // Position below trigger
-      top = triggerRect.bottom + padding;
-    } else {
-      // Position above trigger
-      top = triggerRect.top - dialogRect.height - padding;
-    }
-
-    // Horizontal positioning: align left edge with trigger, adjust if needed
-    left = triggerRect.left;
-
-    // Adjust if dialog would go off right edge
-    if (left + dialogRect.width > window.innerWidth - viewportPadding) {
-      left = window.innerWidth - dialogRect.width - viewportPadding;
-    }
-
-    // Adjust if dialog would go off left edge
-    if (left < viewportPadding) {
-      left = viewportPadding;
-    }
-
-    // Clamp vertical position to viewport
-    if (top < viewportPadding) {
-      top = viewportPadding;
-    }
-    if (top + dialogRect.height > window.innerHeight - viewportPadding) {
-      top = window.innerHeight - dialogRect.height - viewportPadding;
-    }
-
-    // Apply position (override fig-dialog's default positioning)
-    this.#dialog.style.position = "fixed";
-    this.#dialog.style.top = `${top}px`;
-    this.#dialog.style.left = `${left}px`;
-    this.#dialog.style.bottom = "auto";
-    this.#dialog.style.right = "auto";
-    this.#dialog.style.margin = "0";
-  }
-
   #createDialog() {
-    this.#dialog = document.createElement("dialog", { is: "fig-dialog" });
-    this.#dialog.setAttribute("is", "fig-dialog");
+    this.#dialog = document.createElement("dialog", { is: "fig-popup" });
+    this.#dialog.setAttribute("is", "fig-popup");
     this.#dialog.setAttribute("drag", "true");
     this.#dialog.setAttribute("handle", "fig-header");
+    this.#dialog.setAttribute("autoresize", "false");
     this.#dialog.classList.add("fig-fill-picker-dialog");
 
-    // Forward dialog attributes
-    const dialogPosition = this.getAttribute("dialog-position");
-    if (dialogPosition) {
-      this.#dialog.setAttribute("position", dialogPosition);
-    }
+    this.#dialog.anchor = this.#trigger;
+    const dialogPosition = this.getAttribute("dialog-position") || "left";
+    this.#dialog.setAttribute("position", dialogPosition);
 
     // Check for allowed modes (supports comma-separated values like "solid,gradient")
     const mode = this.getAttribute("mode");
@@ -6333,7 +6446,7 @@ class FigFillPicker extends HTMLElement {
     
     let headerContent;
     if (allowedModes.length === 1) {
-      headerContent = `<span class="fig-fill-picker-type-label">${modeLabels[allowedModes[0]]}</span>`;
+      headerContent = `<h3 class="fig-fill-picker-type-label">${modeLabels[allowedModes[0]]}</h3>`;
     } else {
       const options = allowedModes
         .map((m) => `<option value="${m}">${modeLabels[m]}</option>`)
@@ -6346,7 +6459,7 @@ class FigFillPicker extends HTMLElement {
     this.#dialog.innerHTML = `
       <fig-header>
         ${headerContent}
-        <fig-button icon variant="ghost" close-dialog>
+        <fig-button icon variant="ghost" class="fig-fill-picker-close">
           <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
         </fig-button>
       </fig-header>
@@ -6369,11 +6482,10 @@ class FigFillPicker extends HTMLElement {
       });
     }
 
-    // Close button
     this.#dialog
-      .querySelector("fig-button[close-dialog]")
+      .querySelector(".fig-fill-picker-close")
       .addEventListener("click", () => {
-        this.#dialog.close();
+        this.#dialog.open = false;
       });
 
     // Emit change on close
