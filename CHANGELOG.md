@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.22.1]
+
+### Changed
+
+- Popup shorthand positioning (`position="left"`, etc.) now smoothly slides the cross-axis to fit the viewport instead of snapping to discrete top/center/bottom alignments. Stays on the preferred side as long as the primary axis fits.
+- Popup scroll tracking is now synchronous (no RAF delay), eliminating 1-frame lag when scrolling. Scroll listener uses `{ passive: true }` to avoid blocking scroll performance.
+- Demo page sidebar width is now viewport-based (`15vw`, clamped between 180px–280px).
+
 ## [2.22.0]
 
 ### Added

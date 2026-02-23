@@ -1072,7 +1072,7 @@ class FigPopup extends HTMLDialogElement {
   constructor() {
     super();
     this.#boundReposition = this.#queueReposition.bind(this);
-    this.#boundScroll = this.#queueReposition.bind(this);
+    this.#boundScroll = () => { if (this.open) this.#positionPopup(); };
     this.#boundOutsidePointerDown = this.#handleOutsidePointerDown.bind(this);
     this.#boundPointerDown = this.#handlePointerDown.bind(this);
     this.#boundPointerMove = this.#handlePointerMove.bind(this);
@@ -1265,7 +1265,7 @@ class FigPopup extends HTMLDialogElement {
     }
 
     window.addEventListener("resize", this.#boundReposition);
-    window.addEventListener("scroll", this.#boundScroll, true);
+    window.addEventListener("scroll", this.#boundScroll, { capture: true, passive: true });
   }
 
   #teardownObservers() {
@@ -1282,7 +1282,7 @@ class FigPopup extends HTMLDialogElement {
       this.#mutationObserver = null;
     }
     window.removeEventListener("resize", this.#boundReposition);
-    window.removeEventListener("scroll", this.#boundScroll, true);
+    window.removeEventListener("scroll", this.#boundScroll, { capture: true, passive: true });
   }
 
   #handleOutsidePointerDown(event) {
@@ -1542,9 +1542,8 @@ class FigPopup extends HTMLDialogElement {
     const opp = { top: "bottom", bottom: "top", left: "right", right: "left", center: "center" };
 
     if (shorthand) {
-      const perp = (shorthand === "left" || shorthand === "right")
-        ? ["top", "bottom"]
-        : ["left", "right"];
+      const isHorizontal = shorthand === "left" || shorthand === "right";
+      const perp = isHorizontal ? ["top", "bottom"] : ["left", "right"];
       return [
         { v: vertical, h: horizontal, s: shorthand },
         { v: vertical, h: horizontal, s: opp[shorthand] },
@@ -1587,32 +1586,19 @@ class FigPopup extends HTMLDialogElement {
     let top;
     let left;
 
-    // Shorthand support:
-    // position="right" => top edges aligned, popup sits to the right of anchor.
-    // position="left"  => top edges aligned, popup sits to the left of anchor.
-    if (shorthand === "right") {
-      return {
-        top: anchorRect.top,
-        left: anchorRect.right + offset.xPx,
-      };
+    if (shorthand === "left" || shorthand === "right") {
+      left = shorthand === "left"
+        ? anchorRect.left - popupRect.width - offset.xPx
+        : anchorRect.right + offset.xPx;
+      top = anchorRect.top;
+      return { top, left };
     }
-    if (shorthand === "left") {
-      return {
-        top: anchorRect.top,
-        left: anchorRect.left - popupRect.width - offset.xPx,
-      };
-    }
-    if (shorthand === "top") {
-      return {
-        top: anchorRect.top - popupRect.height - offset.yPx,
-        left: anchorRect.left,
-      };
-    }
-    if (shorthand === "bottom") {
-      return {
-        top: anchorRect.bottom + offset.yPx,
-        left: anchorRect.left,
-      };
+    if (shorthand === "top" || shorthand === "bottom") {
+      top = shorthand === "top"
+        ? anchorRect.top - popupRect.height - offset.yPx
+        : anchorRect.bottom + offset.yPx;
+      left = anchorRect.left;
+      return { top, left };
     }
 
     if (vertical === "top") {
@@ -1757,17 +1743,38 @@ class FigPopup extends HTMLDialogElement {
     for (const { v, h, s } of candidates) {
       const coords = this.#computeCoords(anchorRect, popupRect, v, h, offset, s);
       const placementSide = this.#getPlacementSide(v, h, s);
-      if (this.#fits(coords, popupRect)) {
-        this.style.left = `${coords.left}px`;
-        this.style.top = `${coords.top}px`;
-        this.#updatePopoverBeak(anchorRect, popupRect, coords.left, coords.top, placementSide);
-        return;
-      }
-      const score = this.#overflowScore(coords, popupRect);
-      if (score < bestScore) {
-        bestScore = score;
-        best = coords;
-        bestSide = placementSide;
+
+      if (s) {
+        // Shorthand: clamp cross-axis to viewport, check primary axis fit
+        const clamped = this.#clamp(coords, popupRect);
+        const primaryFits = (s === "left" || s === "right")
+          ? (coords.left >= this.#viewportPadding && coords.left + popupRect.width <= window.innerWidth - this.#viewportPadding)
+          : (coords.top >= this.#viewportPadding && coords.top + popupRect.height <= window.innerHeight - this.#viewportPadding);
+        if (primaryFits) {
+          this.style.left = `${clamped.left}px`;
+          this.style.top = `${clamped.top}px`;
+          this.#updatePopoverBeak(anchorRect, popupRect, clamped.left, clamped.top, placementSide);
+          return;
+        }
+        const score = this.#overflowScore(coords, popupRect);
+        if (score < bestScore) {
+          bestScore = score;
+          best = clamped;
+          bestSide = placementSide;
+        }
+      } else {
+        if (this.#fits(coords, popupRect)) {
+          this.style.left = `${coords.left}px`;
+          this.style.top = `${coords.top}px`;
+          this.#updatePopoverBeak(anchorRect, popupRect, coords.left, coords.top, placementSide);
+          return;
+        }
+        const score = this.#overflowScore(coords, popupRect);
+        if (score < bestScore) {
+          bestScore = score;
+          best = coords;
+          bestSide = placementSide;
+        }
       }
     }
 
