@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.22.0]
+
+### Added
+
+- `dialog-position` attribute pass-through for `fig-input-color` — allows controlling the popup direction of nested color pickers (defaults to `"left"`).
+- `#isInsideDescendantPopup` method on `fig-popup` — walks the popup anchor chain to determine logical containment across sibling `<dialog>` elements.
+
+### Fixed
+
+- Nested popup dismissal: interacting with a child popup (e.g., a gradient stop's color picker) no longer closes the parent popup. The outside-click handler now recognizes popups whose anchor chain traces back into the current popup.
+- Gradient stop color pickers now open to the right (`dialog-position="right"`) to avoid viewport-edge fallback to top positioning.
+
+### Changed
+
+- Refined popup fallback positioning: single-word `position` values (e.g., `left`) now try opposite then perpendicular axes; two-word values use smarter ordered candidates instead of a 3x3 matrix.
+- Removed hover `grab` cursor on draggable `fig-popup` (only shows `grabbing` while actively dragging).
+
 ## [2.21.0]
 
 ### Added

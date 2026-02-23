@@ -1177,8 +1177,6 @@ class FigPopup extends HTMLDialogElement {
         this.#setupDragListeners();
       } else {
         this.#removeDragListeners();
-        const header = this.querySelector("fig-header, header");
-        if (header) header.style.cursor = "";
       }
       return;
     }
@@ -1298,7 +1296,25 @@ class FigPopup extends HTMLDialogElement {
     const anchor = this.#resolveAnchor();
     if (anchor && anchor.contains(target)) return;
 
+    if (this.#isInsideDescendantPopup(target)) return;
+
     this.open = false;
+  }
+
+  #isInsideDescendantPopup(target) {
+    const targetDialog = target.closest?.('dialog[is="fig-popup"]');
+    if (!targetDialog || targetDialog === this) return false;
+
+    let current = targetDialog;
+    const visited = new Set();
+    while (current && !visited.has(current)) {
+      visited.add(current);
+      const popupAnchor = current.anchor;
+      if (!(popupAnchor instanceof Element)) break;
+      if (this.contains(popupAnchor)) return true;
+      current = popupAnchor.closest?.('dialog[is="fig-popup"]');
+    }
+    return false;
   }
 
   // ---- Drag support ----
@@ -1306,11 +1322,6 @@ class FigPopup extends HTMLDialogElement {
   #setupDragListeners() {
     if (this.drag) {
       this.addEventListener("pointerdown", this.#boundPointerDown);
-      const handleSelector = this.getAttribute("handle");
-      const handleEl = handleSelector
-        ? this.querySelector(handleSelector)
-        : this.querySelector("fig-header, header");
-      if (handleEl) handleEl.style.cursor = "grab";
     }
   }
 
@@ -1527,21 +1538,49 @@ class FigPopup extends HTMLDialogElement {
     };
   }
 
-  #getOrder(preferred, axis) {
-    const verticalMap = {
-      top: ["top", "bottom", "center"],
-      center: ["center", "top", "bottom"],
-      bottom: ["bottom", "top", "center"],
-    };
-    const horizontalMap = {
-      left: ["left", "right", "center"],
-      center: ["center", "left", "right"],
-      right: ["right", "left", "center"],
-    };
+  #getPlacementCandidates(vertical, horizontal, shorthand) {
+    const opp = { top: "bottom", bottom: "top", left: "right", right: "left", center: "center" };
 
-    return axis === "vertical"
-      ? verticalMap[preferred] || verticalMap.top
-      : horizontalMap[preferred] || horizontalMap.center;
+    if (shorthand) {
+      const perp = (shorthand === "left" || shorthand === "right")
+        ? ["top", "bottom"]
+        : ["left", "right"];
+      return [
+        { v: vertical, h: horizontal, s: shorthand },
+        { v: vertical, h: horizontal, s: opp[shorthand] },
+        { v: vertical, h: horizontal, s: perp[0] },
+        { v: vertical, h: horizontal, s: perp[1] },
+      ];
+    }
+
+    if (vertical === "center") {
+      return [
+        { v: "center", h: horizontal, s: null },
+        { v: "center", h: opp[horizontal], s: null },
+        { v: "top", h: horizontal, s: null },
+        { v: "bottom", h: horizontal, s: null },
+        { v: "top", h: opp[horizontal], s: null },
+        { v: "bottom", h: opp[horizontal], s: null },
+      ];
+    }
+
+    if (horizontal === "center") {
+      return [
+        { v: vertical, h: "center", s: null },
+        { v: opp[vertical], h: "center", s: null },
+        { v: vertical, h: "left", s: null },
+        { v: vertical, h: "right", s: null },
+        { v: opp[vertical], h: "left", s: null },
+        { v: opp[vertical], h: "right", s: null },
+      ];
+    }
+
+    return [
+      { v: vertical, h: horizontal, s: null },
+      { v: opp[vertical], h: horizontal, s: null },
+      { v: vertical, h: opp[horizontal], s: null },
+      { v: opp[vertical], h: opp[horizontal], s: null },
+    ];
   }
 
   #computeCoords(anchorRect, popupRect, vertical, horizontal, offset, shorthand) {
@@ -1695,8 +1734,6 @@ class FigPopup extends HTMLDialogElement {
     const popupRect = this.getBoundingClientRect();
     const offset = this.#parseOffset();
     const { vertical, horizontal, shorthand } = this.#parsePosition();
-    const verticalOrder = this.#getOrder(vertical, "vertical");
-    const horizontalOrder = this.#getOrder(horizontal, "horizontal");
     const anchor = this.#resolveAnchor();
 
     if (!anchor) {
@@ -1712,52 +1749,32 @@ class FigPopup extends HTMLDialogElement {
     }
 
     const anchorRect = anchor.getBoundingClientRect();
+    const candidates = this.#getPlacementCandidates(vertical, horizontal, shorthand);
     let best = null;
     let bestSide = "top";
     let bestScore = Number.POSITIVE_INFINITY;
 
-    for (const v of verticalOrder) {
-      for (const h of horizontalOrder) {
-        const coords = this.#computeCoords(
-          anchorRect,
-          popupRect,
-          v,
-          h,
-          offset,
-          shorthand
-        );
-        const placementSide = this.#getPlacementSide(v, h, shorthand);
-        if (this.#fits(coords, popupRect)) {
-          this.style.left = `${coords.left}px`;
-          this.style.top = `${coords.top}px`;
-          this.#updatePopoverBeak(
-            anchorRect,
-            popupRect,
-            coords.left,
-            coords.top,
-            placementSide
-          );
-          return;
-        }
-        const score = this.#overflowScore(coords, popupRect);
-        if (score < bestScore) {
-          bestScore = score;
-          best = coords;
-          bestSide = placementSide;
-        }
+    for (const { v, h, s } of candidates) {
+      const coords = this.#computeCoords(anchorRect, popupRect, v, h, offset, s);
+      const placementSide = this.#getPlacementSide(v, h, s);
+      if (this.#fits(coords, popupRect)) {
+        this.style.left = `${coords.left}px`;
+        this.style.top = `${coords.top}px`;
+        this.#updatePopoverBeak(anchorRect, popupRect, coords.left, coords.top, placementSide);
+        return;
+      }
+      const score = this.#overflowScore(coords, popupRect);
+      if (score < bestScore) {
+        bestScore = score;
+        best = coords;
+        bestSide = placementSide;
       }
     }
 
     const clamped = this.#clamp(best || { left: 0, top: 0 }, popupRect);
     this.style.left = `${clamped.left}px`;
     this.style.top = `${clamped.top}px`;
-    this.#updatePopoverBeak(
-      anchorRect,
-      popupRect,
-      clamped.left,
-      clamped.top,
-      bestSide
-    );
+    this.#updatePopoverBeak(anchorRect, popupRect, clamped.left, clamped.top, bestSide);
   }
 
   #queueReposition() {
@@ -3352,6 +3369,8 @@ class FigInputColor extends HTMLElement {
     const showAlpha = this.getAttribute("alpha") === "true";
     const experimental = this.getAttribute("experimental");
     const expAttr = experimental ? `experimental="${experimental}"` : "";
+    const dialogPos = this.getAttribute("dialog-position") || "left";
+    const dialogPosAttr = `dialog-position="${dialogPos}"`;
 
     let html = ``;
     if (this.getAttribute("text")) {
@@ -3376,7 +3395,7 @@ class FigInputColor extends HTMLElement {
       let swatchElement = "";
       if (!hidePicker) {
         swatchElement = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" dialog-position="left" ${expAttr} ${
+          ? `<fig-fill-picker mode="solid" ${dialogPosAttr} ${expAttr} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
               this.alpha
@@ -3394,7 +3413,7 @@ class FigInputColor extends HTMLElement {
         html = ``;
       } else {
         html = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" dialog-position="left" ${expAttr} ${
+          ? `<fig-fill-picker mode="solid" ${dialogPosAttr} ${expAttr} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
               this.alpha
@@ -3586,7 +3605,7 @@ class FigInputColor extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "style", "mode", "picker", "experimental"];
+    return ["value", "style", "mode", "picker", "experimental", "dialog-position"];
   }
 
   get mode() {
@@ -6957,7 +6976,7 @@ class FigFillPicker extends HTMLElement {
         <fig-input-number class="fig-fill-picker-stop-position" min="0" max="100" value="${
           stop.position
         }" units="%"></fig-input-number>
-        <fig-input-color class="fig-fill-picker-stop-color" text="true" alpha="true" picker="figma" value="${
+        <fig-input-color class="fig-fill-picker-stop-color" text="true" alpha="true" picker="figma" dialog-position="right" value="${
           stop.color
         }"></fig-input-color>
         <fig-button icon variant="ghost" class="fig-fill-picker-stop-remove" ${
