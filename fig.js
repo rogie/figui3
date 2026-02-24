@@ -75,7 +75,6 @@ class FigButton extends HTMLElement {
                 }
                 :host([size="large"]) button {
                     height: var(--spacer-5);
-                    padding: 0 var(--spacer-3);
                 }
                 :host([size="large"][icon]) button {
                     padding: 0;

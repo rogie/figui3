@@ -2,17 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.22.3]
+
+### Fixed
+
+- Large icon buttons now correctly sized at 32px: added `flex-basis` override and `padding: 0` to prevent `[icon]` flex-basis (24px) and `[size="large"]` padding from shrinking/padding the icon area.
+- Removed doubled padding on large text buttons: shadow DOM `:host([size="large"])` rule no longer adds its own padding (host padding suffices).
+
 ## [2.22.2]
 
 ### Added
 
 - Button combo examples for `variant="input"` and `variant="ghost"` in the demo page.
-- `size="large"` support for segmented controls with corresponding CSS (`height: var(--spacer-5)`, wider segment padding).
-- `size="large"` examples for all icon button variants in the demo page.
+- `size="large"` support for segmented controls with corresponding CSS.
+- `size="large"` examples for all icon button variants with 24x24 icons.
 
 ### Fixed
 
-- Large buttons and icon buttons now render correctly: shadow DOM inner `<button>` uses `:host([size="large"])` selectors to properly respond to the host's size attribute, fixing icons not appearing in large icon buttons.
+- Large buttons: shadow DOM inner `<button>` uses `:host([size="large"])` selectors to properly respond to the host's size attribute.
 
 ## [2.22.1]
 
