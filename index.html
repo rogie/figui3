@@ -463,6 +463,84 @@
                 </fig-button>
             </fig-field>
 
+            <h3>Large Icon Buttons</h3>
+            <fig-field direction="horizontal">
+                <label>Large icon</label>
+                <fig-button icon="true"
+                            size="large">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M8 2.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zm7-3.5v3h3v1h-3v3h-1v-3h-3v-1h3v-3h1z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Large icon (secondary)</label>
+                <fig-button variant="secondary"
+                            icon="true"
+                            size="large">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M6.5 6C7.32843 6 8 5.32843 8 4.5C8 3.67157 7.32843 3 6.5 3C5.67157 3 5 3.67157 5 4.5C5 5.32843 5.67157 6 6.5 6ZM6.5 7C7.70948 7 8.71836 6.14112 8.94999 5H14V4H8.94999C8.71836 2.85888 7.70948 2 6.5 2C5.29052 2 4.28164 2.85888 4.05001 4H2V5H4.05001C4.28164 6.14112 5.29052 7 6.5 7ZM9.5 13C8.67157 13 8 12.3284 8 11.5C8 10.6716 8.67157 10 9.5 10C10.3284 10 11 10.6716 11 11.5C11 12.3284 10.3284 13 9.5 13ZM9.5 14C8.29052 14 7.28164 13.1411 7.05001 12H2V11H7.05001C7.28164 9.85888 8.29052 9 9.5 9C10.7095 9 11.7184 9.85888 11.95 11H14V12H11.95C11.7184 13.1411 10.7095 14 9.5 14Z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Large icon (ghost)</label>
+                <fig-button variant="ghost"
+                            icon="true"
+                            size="large">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M8 2.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zm7-3.5v3h3v1h-3v3h-1v-3h-3v-1h3v-3h1z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Large icon (input)</label>
+                <fig-button variant="input"
+                            icon="true"
+                            size="large">
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-chevron); --size: 1rem"></span>
+                </fig-button>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Large icon (link)</label>
+                <fig-button variant="link"
+                            icon="true"
+                            size="large">
+                    <svg width="16"
+                         height="16"
+                         viewBox="0 0 16 16"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M8 2.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zm7-3.5v3h3v1h-3v3h-1v-3h-3v-1h3v-3h1z"
+                              fill="currentColor" />
+                    </svg>
+                </fig-button>
+            </fig-field>
+
             <h3>Button Types</h3>
             <fig-field direction="horizontal">
                 <label>Select (with dropdown)</label>
@@ -552,6 +630,56 @@
                 <fig-button-combo>
                     <fig-button variant="secondary">Secondary</fig-button>
                     <fig-button variant="secondary"
+                                icon="true"
+                                type="select">
+                        <svg width="24"
+                             height="24"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  clip-rule="evenodd"
+                                  d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
+                                  fill="currentColor"
+                                  fill-opacity="0.9" />
+                        </svg>
+                        <fig-dropdown>
+                            <option>Option One</option>
+                            <option>Option Two</option>
+                        </fig-dropdown>
+                    </fig-button>
+                </fig-button-combo>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Input combo</label>
+                <fig-button-combo>
+                    <fig-button variant="input">Input</fig-button>
+                    <fig-button variant="input"
+                                icon="true"
+                                type="select">
+                        <svg width="24"
+                             height="24"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  clip-rule="evenodd"
+                                  d="M9.64645 11.1464C9.84171 10.9512 10.1583 10.9512 10.3536 11.1464L12 12.7929L13.6464 11.1464C13.8417 10.9512 14.1583 10.9512 14.3536 11.1464C14.5488 11.3417 14.5488 11.6583 14.3536 11.8536L12.3536 13.8536C12.1583 14.0488 11.8417 14.0488 11.6464 13.8536L9.64645 11.8536C9.45118 11.6583 9.45118 11.3417 9.64645 11.1464Z"
+                                  fill="currentColor"
+                                  fill-opacity="0.9" />
+                        </svg>
+                        <fig-dropdown>
+                            <option>Option One</option>
+                            <option>Option Two</option>
+                        </fig-dropdown>
+                    </fig-button>
+                </fig-button-combo>
+            </fig-field>
+            <fig-field direction="horizontal">
+                <label>Ghost combo</label>
+                <fig-button-combo>
+                    <fig-button variant="ghost">Ghost</fig-button>
+                    <fig-button variant="ghost"
                                 icon="true"
                                 type="select">
                         <svg width="24"
@@ -3249,6 +3377,87 @@
 
             <h3>Disabled (Icons)</h3>
             <fig-segmented-control disabled>
+                <fig-segment selected>
+                    <svg width="24"
+                         height="24"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8.5 5.59686C8.80936 5.41829 9.19064 5.41829 9.5 5.59686L15 8.77264C15.6185 9.12984 15.9998 9.78984 16 10.5041V16.8557C15.9999 17.2128 15.8093 17.5433 15.5 17.7219C15.1907 17.9003 14.8093 17.9003 14.5 17.7219L14.2988 17.6057L14.1025 17.4924L13.9111 17.381L13.7236 17.2736L13.541 17.1672L13.3613 17.0637L13.1846 16.9621L13.0117 16.8625L12.8418 16.7639L12.6738 16.6672L12.5078 16.5715L12.3438 16.4767L12.1816 16.383L12.0205 16.2902L11.8613 16.1974L11.7012 16.1057L11.543 16.0139L11.0654 15.7385L10.9053 15.6457L10.7432 15.5519L10.5801 15.4582L10.416 15.3635L10.249 15.2668L10.0801 15.1691L9.9082 15.0705L9.73438 14.9699L9.55664 14.8674L9.375 14.7619L9.18945 14.6555L9.00098 14.5461C8.38287 14.1892 8.00002 13.5289 8 12.8137V6.46307C8 6.10581 8.1906 5.7755 8.5 5.59686ZM9 12.8137C9.00001 13.1709 9.1916 13.5012 9.50098 13.6799C11.542 14.8584 12.8291 15.6022 15 16.8557V10.5051C15 10.1925 14.8541 9.89983 14.6104 9.7121L14.5 9.63885L9 6.46307V12.8137Z"
+                              fill="black"
+                              fill-opacity="0.9" />
+                    </svg>
+                </fig-segment>
+                <fig-segment>
+                    <svg width="24"
+                         height="24"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.4998 5.5968C14.8091 5.41823 15.1904 5.41823 15.4998 5.5968C15.8092 5.77543 15.9998 6.10575 15.9998 6.46301V12.8136C15.9997 13.5281 15.6185 14.1888 14.9998 14.546L9.49976 17.7218C9.19046 17.9003 8.80905 17.9003 8.49976 17.7218C8.19043 17.5432 7.99986 17.2127 7.99976 16.8556V10.504C7.99995 9.78978 8.38122 9.12978 8.99976 8.77258L14.4998 5.5968ZM9.49976 9.63879L9.3894 9.71204C9.14564 9.89977 8.99977 10.1924 8.99976 10.505V16.8556L14.4998 13.6798C14.7704 13.5235 14.9502 13.2513 14.991 12.9464L14.9998 12.8136V6.46301L9.49976 9.63879Z"
+                              fill="black"
+                              fill-opacity="0.9" />
+                    </svg>
+                </fig-segment>
+            </fig-segmented-control>
+
+            <h3>Large</h3>
+            <fig-segmented-control size="large">
+                <fig-segment selected>One</fig-segment>
+                <fig-segment>Two</fig-segment>
+                <fig-segment>Three</fig-segment>
+            </fig-segmented-control>
+
+            <h3>Large (Two Options)</h3>
+            <fig-segmented-control size="large">
+                <fig-segment selected>Left</fig-segment>
+                <fig-segment>Right</fig-segment>
+            </fig-segmented-control>
+
+            <h3>Large (With Icons)</h3>
+            <fig-segmented-control size="large">
+                <fig-segment selected>
+                    <svg width="24"
+                         height="24"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8.5 5.59686C8.80936 5.41829 9.19064 5.41829 9.5 5.59686L15 8.77264C15.6185 9.12984 15.9998 9.78984 16 10.5041V16.8557C15.9999 17.2128 15.8093 17.5433 15.5 17.7219C15.1907 17.9003 14.8093 17.9003 14.5 17.7219L14.2988 17.6057L14.1025 17.4924L13.9111 17.381L13.7236 17.2736L13.541 17.1672L13.3613 17.0637L13.1846 16.9621L13.0117 16.8625L12.8418 16.7639L12.6738 16.6672L12.5078 16.5715L12.3438 16.4767L12.1816 16.383L12.0205 16.2902L11.8613 16.1974L11.7012 16.1057L11.543 16.0139L11.0654 15.7385L10.9053 15.6457L10.7432 15.5519L10.5801 15.4582L10.416 15.3635L10.249 15.2668L10.0801 15.1691L9.9082 15.0705L9.73438 14.9699L9.55664 14.8674L9.375 14.7619L9.18945 14.6555L9.00098 14.5461C8.38287 14.1892 8.00002 13.5289 8 12.8137V6.46307C8 6.10581 8.1906 5.7755 8.5 5.59686ZM9 12.8137C9.00001 13.1709 9.1916 13.5012 9.50098 13.6799C11.542 14.8584 12.8291 15.6022 15 16.8557V10.5051C15 10.1925 14.8541 9.89983 14.6104 9.7121L14.5 9.63885L9 6.46307V12.8137Z"
+                              fill="black"
+                              fill-opacity="0.9" />
+                    </svg>
+                </fig-segment>
+                <fig-segment>
+                    <svg width="24"
+                         height="24"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.4998 5.5968C14.8091 5.41823 15.1904 5.41823 15.4998 5.5968C15.8092 5.77543 15.9998 6.10575 15.9998 6.46301V12.8136C15.9997 13.5281 15.6185 14.1888 14.9998 14.546L9.49976 17.7218C9.19046 17.9003 8.80905 17.9003 8.49976 17.7218C8.19043 17.5432 7.99986 17.2127 7.99976 16.8556V10.504C7.99995 9.78978 8.38122 9.12978 8.99976 8.77258L14.4998 5.5968ZM9.49976 9.63879L9.3894 9.71204C9.14564 9.89977 8.99977 10.1924 8.99976 10.505V16.8556L14.4998 13.6798C14.7704 13.5235 14.9502 13.2513 14.991 12.9464L14.9998 12.8136V6.46301L9.49976 9.63879Z"
+                              fill="black"
+                              fill-opacity="0.9" />
+                    </svg>
+                </fig-segment>
+            </fig-segmented-control>
+
+            <h3>Large (Many Options)</h3>
+            <fig-segmented-control size="large">
+                <fig-segment>XS</fig-segment>
+                <fig-segment>S</fig-segment>
+                <fig-segment selected>M</fig-segment>
+                <fig-segment>L</fig-segment>
+                <fig-segment>XL</fig-segment>
+            </fig-segmented-control>
+
+            <h3>Large Disabled (Text)</h3>
+            <fig-segmented-control size="large" disabled>
+                <fig-segment>List</fig-segment>
+                <fig-segment selected>Grid</fig-segment>
+                <fig-segment>Board</fig-segment>
+            </fig-segmented-control>
+
+            <h3>Large Disabled (Icons)</h3>
+            <fig-segmented-control size="large" disabled>
                 <fig-segment selected>
                     <svg width="24"
                          height="24"

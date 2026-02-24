@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.22.2]
+
+### Added
+
+- Button combo examples for `variant="input"` and `variant="ghost"` in the demo page.
+- `size="large"` support for segmented controls with corresponding CSS (`height: var(--spacer-5)`, wider segment padding).
+- `size="large"` examples for all icon button variants in the demo page.
+
+### Fixed
+
+- Large buttons and icon buttons now render correctly: shadow DOM inner `<button>` uses `:host([size="large"])` selectors to properly respond to the host's size attribute, fixing icons not appearing in large icon buttons.
+
 ## [2.22.1]
 
 ### Changed

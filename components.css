@@ -2630,6 +2630,14 @@ fig-segmented-control {
     }
   }
 
+  &[size="large"] {
+    height: var(--spacer-5);
+
+    & fig-segment {
+      padding: 0 var(--spacer-3);
+    }
+  }
+
   &[disabled]:not([disabled="false"]) {
     pointer-events: none;
 
