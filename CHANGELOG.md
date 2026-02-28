@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.23.0]
+
+### Added
+
+- `viewport-margin` attribute for `fig-popup` — defines per-edge safe areas (CSS margin shorthand: `top right bottom left`) that popups avoid during positioning. Useful for keeping popups clear of persistent UI like toolbars.
+- Viewport margin demo in the popup section showing a 64px bottom margin.
+
+### Fixed
+
+- Scroll events originating inside a popup no longer trigger repositioning.
+
 ## [2.22.3]
 
 ### Fixed

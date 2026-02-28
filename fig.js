@@ -1055,7 +1055,6 @@ customElements.define("fig-dialog", FigDialog, { extends: "dialog" });
  * @attr {boolean|string} open - Open when present and not "false".
  */
 class FigPopup extends HTMLDialogElement {
-  #viewportPadding = 8;
   #anchorObserver = null;
   #contentObserver = null;
   #mutationObserver = null;
@@ -1078,7 +1077,9 @@ class FigPopup extends HTMLDialogElement {
   constructor() {
     super();
     this.#boundReposition = this.#queueReposition.bind(this);
-    this.#boundScroll = () => { if (this.open) this.#positionPopup(); };
+    this.#boundScroll = (e) => {
+      if (this.open && !this.contains(e.target)) this.#positionPopup();
+    };
     this.#boundOutsidePointerDown = this.#handleOutsidePointerDown.bind(this);
     this.#boundPointerDown = this.#handlePointerDown.bind(this);
     this.#boundPointerMove = this.#handlePointerMove.bind(this);
@@ -1086,7 +1087,7 @@ class FigPopup extends HTMLDialogElement {
   }
 
   static get observedAttributes() {
-    return ["open", "anchor", "position", "offset", "variant", "theme", "drag", "handle", "autoresize"];
+    return ["open", "anchor", "position", "offset", "variant", "theme", "drag", "handle", "autoresize", "viewport-margin"];
   }
 
   get open() {
@@ -1544,6 +1545,17 @@ class FigPopup extends HTMLDialogElement {
     };
   }
 
+  #parseViewportMargins() {
+    const raw = (this.getAttribute("viewport-margin") || "8").trim();
+    const tokens = raw.split(/\s+/).map(Number).filter(n => !Number.isNaN(n));
+    const d = 8;
+    if (tokens.length === 0) return { top: d, right: d, bottom: d, left: d };
+    if (tokens.length === 1) return { top: tokens[0], right: tokens[0], bottom: tokens[0], left: tokens[0] };
+    if (tokens.length === 2) return { top: tokens[0], right: tokens[1], bottom: tokens[0], left: tokens[1] };
+    if (tokens.length === 3) return { top: tokens[0], right: tokens[1], bottom: tokens[2], left: tokens[1] };
+    return { top: tokens[0], right: tokens[1], bottom: tokens[2], left: tokens[3] };
+  }
+
   #getPlacementCandidates(vertical, horizontal, shorthand) {
     const opp = { top: "bottom", bottom: "top", left: "right", right: "left", center: "center" };
 
@@ -1688,31 +1700,29 @@ class FigPopup extends HTMLDialogElement {
     this.style.setProperty("--beak-offset", `${beakOffset}px`);
   }
 
-  #overflowScore(coords, popupRect) {
+  #overflowScore(coords, popupRect, m) {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const right = coords.left + popupRect.width;
     const bottom = coords.top + popupRect.height;
-    const pad = this.#viewportPadding;
 
-    const overflowLeft = Math.max(0, pad - coords.left);
-    const overflowTop = Math.max(0, pad - coords.top);
-    const overflowRight = Math.max(0, right - (vw - pad));
-    const overflowBottom = Math.max(0, bottom - (vh - pad));
+    const overflowLeft = Math.max(0, m.left - coords.left);
+    const overflowTop = Math.max(0, m.top - coords.top);
+    const overflowRight = Math.max(0, right - (vw - m.right));
+    const overflowBottom = Math.max(0, bottom - (vh - m.bottom));
 
     return overflowLeft + overflowTop + overflowRight + overflowBottom;
   }
 
-  #fits(coords, popupRect) {
-    return this.#overflowScore(coords, popupRect) === 0;
+  #fits(coords, popupRect, m) {
+    return this.#overflowScore(coords, popupRect, m) === 0;
   }
 
-  #clamp(coords, popupRect) {
-    const pad = this.#viewportPadding;
-    const minLeft = pad;
-    const minTop = pad;
-    const maxLeft = Math.max(pad, window.innerWidth - popupRect.width - pad);
-    const maxTop = Math.max(pad, window.innerHeight - popupRect.height - pad);
+  #clamp(coords, popupRect, m) {
+    const minLeft = m.left;
+    const minTop = m.top;
+    const maxLeft = Math.max(m.left, window.innerWidth - popupRect.width - m.right);
+    const maxTop = Math.max(m.top, window.innerHeight - popupRect.height - m.bottom);
 
     return {
       left: Math.min(maxLeft, Math.max(minLeft, coords.left)),
@@ -1727,14 +1737,15 @@ class FigPopup extends HTMLDialogElement {
     const offset = this.#parseOffset();
     const { vertical, horizontal, shorthand } = this.#parsePosition();
     const anchor = this.#resolveAnchor();
+    const m = this.#parseViewportMargins();
 
     if (!anchor) {
       this.#updatePopoverBeak(null, popupRect, 0, 0, "top");
       const centered = {
-        left: (window.innerWidth - popupRect.width) / 2,
-        top: (window.innerHeight - popupRect.height) / 2,
+        left: (m.left + (window.innerWidth - m.right - m.left - popupRect.width) / 2),
+        top: (m.top + (window.innerHeight - m.bottom - m.top - popupRect.height) / 2),
       };
-      const clamped = this.#clamp(centered, popupRect);
+      const clamped = this.#clamp(centered, popupRect, m);
       this.style.left = `${clamped.left}px`;
       this.style.top = `${clamped.top}px`;
       return;
@@ -1751,31 +1762,30 @@ class FigPopup extends HTMLDialogElement {
       const placementSide = this.#getPlacementSide(v, h, s);
 
       if (s) {
-        // Shorthand: clamp cross-axis to viewport, check primary axis fit
-        const clamped = this.#clamp(coords, popupRect);
+        const clamped = this.#clamp(coords, popupRect, m);
         const primaryFits = (s === "left" || s === "right")
-          ? (coords.left >= this.#viewportPadding && coords.left + popupRect.width <= window.innerWidth - this.#viewportPadding)
-          : (coords.top >= this.#viewportPadding && coords.top + popupRect.height <= window.innerHeight - this.#viewportPadding);
+          ? (coords.left >= m.left && coords.left + popupRect.width <= window.innerWidth - m.right)
+          : (coords.top >= m.top && coords.top + popupRect.height <= window.innerHeight - m.bottom);
         if (primaryFits) {
           this.style.left = `${clamped.left}px`;
           this.style.top = `${clamped.top}px`;
           this.#updatePopoverBeak(anchorRect, popupRect, clamped.left, clamped.top, placementSide);
           return;
         }
-        const score = this.#overflowScore(coords, popupRect);
+        const score = this.#overflowScore(coords, popupRect, m);
         if (score < bestScore) {
           bestScore = score;
           best = clamped;
           bestSide = placementSide;
         }
       } else {
-        if (this.#fits(coords, popupRect)) {
+        if (this.#fits(coords, popupRect, m)) {
           this.style.left = `${coords.left}px`;
           this.style.top = `${coords.top}px`;
           this.#updatePopoverBeak(anchorRect, popupRect, coords.left, coords.top, placementSide);
           return;
         }
-        const score = this.#overflowScore(coords, popupRect);
+        const score = this.#overflowScore(coords, popupRect, m);
         if (score < bestScore) {
           bestScore = score;
           best = coords;
@@ -1784,7 +1794,7 @@ class FigPopup extends HTMLDialogElement {
       }
     }
 
-    const clamped = this.#clamp(best || { left: 0, top: 0 }, popupRect);
+    const clamped = this.#clamp(best || { left: 0, top: 0 }, popupRect, m);
     this.style.left = `${clamped.left}px`;
     this.style.top = `${clamped.top}px`;
     this.#updatePopoverBeak(anchorRect, popupRect, clamped.left, clamped.top, bestSide);

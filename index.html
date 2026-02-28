@@ -3272,6 +3272,26 @@
   ...
 &lt;/dialog&gt;</code></pre>
 
+            <h3>Viewport Margin</h3>
+            <p class="description">Use <code>viewport-margin</code> to define safe areas the popup should avoid (e.g. a bottom toolbar). Uses CSS margin shorthand: <code>top right bottom left</code>.</p>
+            <fig-button id="popup-open-viewport-margin"
+                        onclick="document.getElementById('popup-viewport-margin').open = true">Open (64px bottom margin)</fig-button>
+            <dialog id="popup-viewport-margin"
+                    is="fig-popup"
+                    anchor="#popup-open-viewport-margin"
+                    position="bottom center"
+                    offset="8"
+                    viewport-margin="8 8 64 8">
+                <vstack style="min-width: 14rem;">
+                    <strong style="padding: 0 var(--spacer-1);">Viewport Margin</strong>
+                    <p style="padding: 0 var(--spacer-1); margin: 0; font-size: var(--font-size-small); color: var(--figma-color-text-secondary);">This popup won't overlap the bottom 64px of the viewport.</p>
+                    <fig-input-text placeholder="Try scrolling down"></fig-input-text>
+                </vstack>
+            </dialog>
+            <pre><code>&lt;dialog is="fig-popup" viewport-margin="8 8 64 8" position="bottom center" ...&gt;
+  ...
+&lt;/dialog&gt;</code></pre>
+
         </section>
         <hr>
 
