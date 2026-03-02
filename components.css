@@ -466,7 +466,6 @@ input[type="text"][list] {
         }
       }
 
-      max-inline-size: var(--max-width);
       padding-block: 0;
       will-change: scale;
 
@@ -599,8 +598,9 @@ fig-dropdown,
     display: none !important;
   }
   > select {
-    display: block;
-    width: 100%;
+    display: flex;
+    align-items: center;
+    flex: 1;
   }
 
   /* Chevron icon using mask-image for light-dark support */

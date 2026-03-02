@@ -5076,6 +5076,8 @@ customElements.define("fig-chit", FigChit);
  */
 class FigImage extends HTMLElement {
   #src = null;
+  #boundHandleFileInput = this.#handleFileInput.bind(this);
+  #boundHandleDownload = this.#handleDownload.bind(this);
   constructor() {
     super();
   }
@@ -5108,10 +5110,8 @@ class FigImage extends HTMLElement {
     this.#updateRefs();
   }
   disconnectedCallback() {
-    this.fileInput.removeEventListener(
-      "change",
-      this.#handleFileInput.bind(this)
-    );
+    this.fileInput?.removeEventListener("change", this.#boundHandleFileInput);
+    this.downloadButton?.removeEventListener("click", this.#boundHandleDownload);
   }
 
   #updateRefs() {
@@ -5120,25 +5120,13 @@ class FigImage extends HTMLElement {
       if (this.upload) {
         this.uploadButton = this.querySelector("fig-button[type='upload']");
         this.fileInput = this.uploadButton?.querySelector("input");
-        this.fileInput.removeEventListener(
-          "change",
-          this.#handleFileInput.bind(this)
-        );
-        this.fileInput.addEventListener(
-          "change",
-          this.#handleFileInput.bind(this)
-        );
+        this.fileInput?.removeEventListener("change", this.#boundHandleFileInput);
+        this.fileInput?.addEventListener("change", this.#boundHandleFileInput);
       }
       if (this.download) {
         this.downloadButton = this.querySelector("fig-button[type='download']");
-        this.downloadButton.removeEventListener(
-          "click",
-          this.#handleDownload.bind(this)
-        );
-        this.downloadButton.addEventListener(
-          "click",
-          this.#handleDownload.bind(this)
-        );
+        this.downloadButton?.removeEventListener("click", this.#boundHandleDownload);
+        this.downloadButton?.addEventListener("click", this.#boundHandleDownload);
       }
     });
   }
