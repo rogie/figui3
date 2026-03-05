@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.25.0]
+
+### Added
+
+- Custom mode slots for `fig-fill-picker` — add custom tabs via `slot="mode-*"` children (e.g., `<div slot="mode-shader" label="Shader">`). The mode name must also appear in the `mode` attribute.
+- `modeready` event on `fig-fill-picker` — fires per custom mode with `{ mode, container }` detail, giving frameworks like React a stable DOM target to render into without DOM reparenting.
+- `picker-*` attribute forwarding on `fig-input-color` and `fig-input-fill` — attributes like `picker-anchor` and `picker-dialog-position` are forwarded to the underlying `fig-fill-picker`.
+- `picker-anchor` attribute on `fig-input-color` and `fig-input-fill` — set to `"self"` to anchor the fill picker to the entire input, or pass a CSS selector for a custom anchor element.
+- Custom trigger support examples for `fig-fill-picker` — buttons, icon buttons, inline text, and custom divs as triggers.
+- Custom mode demos: Shader mode with `fig-input-text multiline`, built-in mode override with a palette, and a React mode using `modeready`.
+- Prism.js syntax highlighting for code examples in the demo page.
+
+### Changed
+
+- `fig-input-fill` fill picker now defaults its anchor to the component itself (not just the chit).
+- Custom mode tabs in `fig-fill-picker` automatically get zero padding on `.fig-fill-picker-content`, giving slot content full control over layout.
+- `dialog-position` removed from `FigInputColor.observedAttributes` — use `picker-dialog-position` instead.
+- `fig-fill-picker` trigger detection now skips `slot="mode-*"` children when identifying the trigger element.
+
+### Fixed
+
+- Dropdown inner content now has `width: 100%` for proper sizing.
+- Ghost button active state now uses correct text color (`--figma-color-text`).
+
+## [2.24.0]
+
+### Changed
+
+- Improved modern dropdown layout and FigImage teardown safety.
+
 ## [2.23.0]
 
 ### Added

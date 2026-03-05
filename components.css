@@ -601,6 +601,7 @@ fig-dropdown,
     display: flex;
     align-items: center;
     flex: 1;
+    width: 100%;
   }
 
   /* Chevron icon using mask-image for light-dark support */
@@ -721,6 +722,7 @@ fig-button {
 
     &:active {
       background-color: var(--figma-color-bg-secondary);
+      color: var(--figma-color-text);
     }
 
     &:focus-visible {
@@ -2985,6 +2987,10 @@ fig-shimmer:not([playing="false"]) > * {
 /* Fill Picker */
 fig-fill-picker {
   display: contents;
+
+  > [slot^="mode-"] {
+    display: none;
+  }
 }
 
 .fig-fill-picker-dialog {

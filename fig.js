@@ -3384,16 +3384,29 @@ class FigInputColor extends HTMLElement {
     return this.getAttribute("picker") || "native";
   }
 
+  #buildFillPickerAttrs() {
+    const attrs = {};
+    const experimental = this.getAttribute("experimental");
+    if (experimental) attrs["experimental"] = experimental;
+    // picker-* attributes forwarded to fill picker (except anchor, handled programmatically)
+    for (const { name, value } of this.attributes) {
+      if (name.startsWith("picker-") && name !== "picker-anchor") {
+        attrs[name.slice(7)] = value;
+      }
+    }
+    if (!attrs["dialog-position"]) attrs["dialog-position"] = "left";
+    return Object.entries(attrs)
+      .map(([k, v]) => `${k}="${v}"`)
+      .join(" ");
+  }
+
   connectedCallback() {
     this.#setValues(this.getAttribute("value"));
 
     const useFigmaPicker = this.picker === "figma";
     const hidePicker = this.picker === "false";
     const showAlpha = this.getAttribute("alpha") === "true";
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
-    const dialogPos = this.getAttribute("dialog-position") || "left";
-    const dialogPosAttr = `dialog-position="${dialogPos}"`;
+    const fpAttrs = this.#buildFillPickerAttrs();
 
     let html = ``;
     if (this.getAttribute("text")) {
@@ -3418,7 +3431,7 @@ class FigInputColor extends HTMLElement {
       let swatchElement = "";
       if (!hidePicker) {
         swatchElement = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${dialogPosAttr} ${expAttr} ${
+          ? `<fig-fill-picker mode="solid" ${fpAttrs} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
               this.alpha
@@ -3436,7 +3449,7 @@ class FigInputColor extends HTMLElement {
         html = ``;
       } else {
         html = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${dialogPosAttr} ${expAttr} ${
+          ? `<fig-fill-picker mode="solid" ${fpAttrs} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
               this.alpha
@@ -3460,6 +3473,13 @@ class FigInputColor extends HTMLElement {
 
       // Setup fill picker (figma picker)
       if (this.#fillPicker) {
+        const anchor = this.getAttribute("picker-anchor");
+        if (anchor === "self") {
+          this.#fillPicker.anchorElement = this;
+        } else if (anchor) {
+          const el = document.querySelector(anchor);
+          if (el) this.#fillPicker.anchorElement = el;
+        }
         if (this.hasAttribute("disabled")) {
           this.#fillPicker.setAttribute("disabled", "");
         }
@@ -3628,7 +3648,7 @@ class FigInputColor extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "style", "mode", "picker", "experimental", "dialog-position"];
+    return ["value", "style", "mode", "picker", "experimental"];
   }
 
   get mode() {
@@ -3863,6 +3883,25 @@ class FigInputFill extends HTMLElement {
     }
   }
 
+  #buildFillPickerAttrs() {
+    const attrs = {};
+    // Backward-compat: direct attributes forwarded to fill picker
+    const mode = this.getAttribute("mode");
+    if (mode) attrs["mode"] = mode;
+    const experimental = this.getAttribute("experimental");
+    if (experimental) attrs["experimental"] = experimental;
+    // picker-* overrides (except anchor, handled programmatically)
+    for (const { name, value } of this.attributes) {
+      if (name.startsWith("picker-") && name !== "picker-anchor") {
+        attrs[name.slice(7)] = value;
+      }
+    }
+    if (!attrs["dialog-position"]) attrs["dialog-position"] = "left";
+    return Object.entries(attrs)
+      .map(([k, v]) => `${k}="${v}"`)
+      .join(" ");
+  }
+
   #render() {
     const disabled = this.hasAttribute("disabled");
     const fillPickerValue = JSON.stringify(this.value);
@@ -3960,13 +3999,12 @@ class FigInputFill extends HTMLElement {
         break;
     }
 
-    const modeAttr = this.getAttribute("mode");
-    const experimentalAttr = this.getAttribute("experimental");
+    const fpAttrs = this.#buildFillPickerAttrs();
     this.innerHTML = `
       <div class="input-combo">
-        <fig-fill-picker dialog-position="left" value='${fillPickerValue}' ${
+        <fig-fill-picker ${fpAttrs} value='${fillPickerValue}' ${
       disabled ? "disabled" : ""
-    } ${modeAttr ? `mode="${modeAttr}"` : ""} ${experimentalAttr ? `experimental="${experimentalAttr}"` : ""}></fig-fill-picker>
+    }></fig-fill-picker>
         ${controlsHtml}
       </div>`;
 
@@ -3991,6 +4029,14 @@ class FigInputFill extends HTMLElement {
       }
 
       if (this.#fillPicker) {
+        const anchor = this.getAttribute("picker-anchor");
+        if (!anchor || anchor === "self") {
+          this.#fillPicker.anchorElement = this;
+        } else {
+          const el = document.querySelector(anchor);
+          if (el) this.#fillPicker.anchorElement = el;
+        }
+
         this.#fillPicker.addEventListener("input", (e) => {
           e.stopPropagation();
           const detail = e.detail;
@@ -6223,6 +6269,7 @@ class FigFillPicker extends HTMLElement {
   #chit = null;
   #dialog = null;
   #activeTab = "solid";
+  anchorElement = null;
 
   // Fill state
   #fillType = "solid";
@@ -6240,6 +6287,10 @@ class FigFillPicker extends HTMLElement {
   #image = { url: null, scaleMode: "fill", scale: 50 };
   #video = { url: null, scaleMode: "fill", scale: 50 };
   #webcam = { stream: null, snapshot: null };
+
+  // Custom mode slots and data
+  #customSlots = {};
+  #customData = {};
 
   // DOM references for solid tab
   #colorArea = null;
@@ -6275,7 +6326,9 @@ class FigFillPicker extends HTMLElement {
   }
 
   #setupTrigger() {
-    const child = this.firstElementChild;
+    const child = Array.from(this.children).find(
+      (el) => !el.getAttribute("slot")?.startsWith("mode-")
+    );
 
     if (!child) {
       // Scenario 1: Empty - create fig-chit
@@ -6315,6 +6368,8 @@ class FigFillPicker extends HTMLElement {
     const valueAttr = this.getAttribute("value");
     if (!valueAttr) return;
 
+    const builtinTypes = ["solid", "gradient", "image", "video", "webcam"];
+
     try {
       const parsed = JSON.parse(valueAttr);
       if (parsed.type) this.#fillType = parsed.type;
@@ -6337,6 +6392,12 @@ class FigFillPicker extends HTMLElement {
         this.#gradient = { ...this.#gradient, ...parsed.gradient };
       if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
       if (parsed.video) this.#video = { ...this.#video, ...parsed.video };
+
+      // Store full parsed data for custom (non-built-in) types
+      if (parsed.type && !builtinTypes.includes(parsed.type)) {
+        const { type, ...rest } = parsed;
+        this.#customData[parsed.type] = rest;
+      }
     } catch (e) {
       // If not JSON, treat as hex color
       if (valueAttr.startsWith("#")) {
@@ -6387,7 +6448,8 @@ class FigFillPicker extends HTMLElement {
         }
         break;
       default:
-        bg = "#D9D9D9";
+        const slot = this.#customSlots[this.#fillType];
+        bg = slot?.element?.getAttribute("chit-background") || "#D9D9D9";
     }
 
     this.#chit.setAttribute("background", bg);
@@ -6434,6 +6496,18 @@ class FigFillPicker extends HTMLElement {
   }
 
   #createDialog() {
+    // Collect slotted custom mode content before any DOM changes
+    this.#customSlots = {};
+    this.querySelectorAll('[slot^="mode-"]').forEach((el) => {
+      const modeName = el.getAttribute("slot").slice(5);
+      this.#customSlots[modeName] = {
+        element: el,
+        label:
+          el.getAttribute("label") ||
+          modeName.charAt(0).toUpperCase() + modeName.slice(1),
+      };
+    });
+
     this.#dialog = document.createElement("dialog", { is: "fig-popup" });
     this.#dialog.setAttribute("is", "fig-popup");
     this.#dialog.setAttribute("drag", "true");
@@ -6441,14 +6515,12 @@ class FigFillPicker extends HTMLElement {
     this.#dialog.setAttribute("autoresize", "false");
     this.#dialog.classList.add("fig-fill-picker-dialog");
 
-    this.#dialog.anchor = this.#trigger;
+    this.#dialog.anchor = this.anchorElement || this.#trigger;
     const dialogPosition = this.getAttribute("dialog-position") || "left";
     this.#dialog.setAttribute("position", dialogPosition);
 
-    // Check for allowed modes (supports comma-separated values like "solid,gradient")
-    const mode = this.getAttribute("mode");
-    const allModes = ["solid", "gradient", "image", "video", "webcam"];
-    const modeLabels = {
+    const builtinModes = ["solid", "gradient", "image", "video", "webcam"];
+    const builtinLabels = {
       solid: "Solid",
       gradient: "Gradient",
       image: "Image",
@@ -6456,24 +6528,33 @@ class FigFillPicker extends HTMLElement {
       webcam: "Webcam",
     };
 
-    // Parse allowed modes
-    let allowedModes = allModes;
+    // Build allowed modes: built-ins filtered normally, custom names accepted if slot exists
+    const mode = this.getAttribute("mode");
+    let allowedModes;
     if (mode) {
-      const requestedModes = mode.split(",").map((m) => m.trim().toLowerCase());
-      allowedModes = requestedModes.filter((m) => allModes.includes(m));
-      if (allowedModes.length === 0) allowedModes = allModes;
+      const requested = mode.split(",").map((m) => m.trim().toLowerCase());
+      allowedModes = requested.filter(
+        (m) => builtinModes.includes(m) || this.#customSlots[m]
+      );
+      if (allowedModes.length === 0) allowedModes = [...builtinModes];
+    } else {
+      allowedModes = [...builtinModes];
     }
 
-    // If current fillType not in allowed modes, switch to first allowed
+    // Build labels map: built-in labels + custom slot labels
+    const modeLabels = { ...builtinLabels };
+    for (const [name, { label }] of Object.entries(this.#customSlots)) {
+      modeLabels[name] = label;
+    }
+
     if (!allowedModes.includes(this.#fillType)) {
       this.#fillType = allowedModes[0];
       this.#activeTab = allowedModes[0];
     }
 
-    // Build header content - label if single mode, dropdown if multiple
     const experimental = this.getAttribute("experimental");
     const expAttr = experimental ? `experimental="${experimental}"` : "";
-    
+
     let headerContent;
     if (allowedModes.length === 1) {
       headerContent = `<h3 class="fig-fill-picker-type-label">${modeLabels[allowedModes[0]]}</h3>`;
@@ -6486,6 +6567,11 @@ class FigFillPicker extends HTMLElement {
         </fig-dropdown>`;
     }
 
+    // Generate tab containers for all allowed modes
+    const tabDivs = allowedModes
+      .map((m) => `<div class="fig-fill-picker-tab" data-tab="${m}"></div>`)
+      .join("\n        ");
+
     this.#dialog.innerHTML = `
       <fig-header>
         ${headerContent}
@@ -6494,15 +6580,32 @@ class FigFillPicker extends HTMLElement {
         </fig-button>
       </fig-header>
       <div class="fig-fill-picker-content">
-        <div class="fig-fill-picker-tab" data-tab="solid"></div>
-        <div class="fig-fill-picker-tab" data-tab="gradient"></div>
-        <div class="fig-fill-picker-tab" data-tab="image"></div>
-        <div class="fig-fill-picker-tab" data-tab="video"></div>
-        <div class="fig-fill-picker-tab" data-tab="webcam"></div>
+        ${tabDivs}
       </div>
     `;
 
     document.body.appendChild(this.#dialog);
+
+    // Populate custom tab containers and emit modeready
+    for (const [modeName, { element }] of Object.entries(this.#customSlots)) {
+      const container = this.#dialog.querySelector(
+        `[data-tab="${modeName}"]`
+      );
+      if (!container) continue;
+
+      // Move children (not the element itself) for vanilla HTML usage
+      while (element.firstChild) {
+        container.appendChild(element.firstChild);
+      }
+
+      // Emit modeready so frameworks can render into the container
+      this.dispatchEvent(
+        new CustomEvent("modeready", {
+          bubbles: true,
+          detail: { mode: modeName, container },
+        })
+      );
+    }
 
     // Setup type dropdown switching (only if not locked)
     const typeDropdown = this.#dialog.querySelector(".fig-fill-picker-type");
@@ -6518,34 +6621,50 @@ class FigFillPicker extends HTMLElement {
         this.#dialog.open = false;
       });
 
-    // Emit change on close
     this.#dialog.addEventListener("close", () => {
       this.#emitChange();
     });
 
-    // Initialize tabs
-    this.#initSolidTab();
-    this.#initGradientTab();
-    this.#initImageTab();
-    this.#initVideoTab();
-    this.#initWebcamTab();
+    // Initialize built-in tabs (skip any overridden by custom slots)
+    const builtinInits = {
+      solid: () => this.#initSolidTab(),
+      gradient: () => this.#initGradientTab(),
+      image: () => this.#initImageTab(),
+      video: () => this.#initVideoTab(),
+      webcam: () => this.#initWebcamTab(),
+    };
+    for (const [name, init] of Object.entries(builtinInits)) {
+      if (!this.#customSlots[name] && allowedModes.includes(name)) init();
+    }
+
+    // Listen for input/change from custom tab content
+    for (const modeName of Object.keys(this.#customSlots)) {
+      if (builtinModes.includes(modeName)) continue;
+      const container = this.#dialog.querySelector(
+        `[data-tab="${modeName}"]`
+      );
+      if (!container) continue;
+      container.addEventListener("input", (e) => {
+        if (e.target === this) return;
+        e.stopPropagation();
+        if (e.detail) this.#customData[modeName] = e.detail;
+        this.#emitInput();
+      });
+      container.addEventListener("change", (e) => {
+        if (e.target === this) return;
+        e.stopPropagation();
+        if (e.detail) this.#customData[modeName] = e.detail;
+        this.#emitChange();
+      });
+    }
   }
 
   #switchTab(tabName) {
-    // Check for allowed modes - prevent switching to disallowed mode
-    const mode = this.getAttribute("mode");
-    const allModes = ["solid", "gradient", "image", "video", "webcam"];
-
-    let allowedModes = allModes;
-    if (mode) {
-      const requestedModes = mode.split(",").map((m) => m.trim().toLowerCase());
-      allowedModes = requestedModes.filter((m) => allModes.includes(m));
-      if (allowedModes.length === 0) allowedModes = allModes;
-    }
-
-    if (!allowedModes.includes(tabName)) {
-      return; // Don't allow switching to disallowed mode
-    }
+    // Only allow switching to modes that have a tab container in the dialog
+    const tab = this.#dialog?.querySelector(
+      `.fig-fill-picker-tab[data-tab="${tabName}"]`
+    );
+    if (!tab) return;
 
     this.#activeTab = tabName;
     this.#fillType = tabName;
@@ -6565,6 +6684,12 @@ class FigFillPicker extends HTMLElement {
         content.style.display = "none";
       }
     });
+
+    // Zero out content padding for custom mode tabs
+    const contentEl = this.#dialog.querySelector(".fig-fill-picker-content");
+    if (contentEl) {
+      contentEl.style.padding = this.#customSlots[tabName] ? "0" : "";
+    }
 
     // Update tab-specific UI after visibility change
     if (tabName === "gradient") {
@@ -6987,7 +7112,7 @@ class FigFillPicker extends HTMLElement {
         <fig-input-number class="fig-fill-picker-stop-position" min="0" max="100" value="${
           stop.position
         }" units="%"></fig-input-number>
-        <fig-input-color class="fig-fill-picker-stop-color" text="true" alpha="true" picker="figma" dialog-position="right" value="${
+        <fig-input-color class="fig-fill-picker-stop-color" text="true" alpha="true" picker="figma" picker-dialog-position="right" value="${
           stop.color
         }"></fig-input-color>
         <fig-button icon variant="ghost" class="fig-fill-picker-stop-remove" ${
@@ -7015,9 +7140,18 @@ class FigFillPicker extends HTMLElement {
             this.#emitInput();
           });
 
-        row
-          .querySelector(".fig-fill-picker-stop-color")
-          .addEventListener("input", (e) => {
+        const stopColor = row.querySelector(".fig-fill-picker-stop-color");
+        const stopFillPicker = stopColor.querySelector("fig-fill-picker");
+        if (stopFillPicker) {
+          stopFillPicker.anchorElement = this.#dialog;
+        } else {
+          requestAnimationFrame(() => {
+            const fp = stopColor.querySelector("fig-fill-picker");
+            if (fp) fp.anchorElement = this.#dialog;
+          });
+        }
+
+        stopColor.addEventListener("input", (e) => {
             this.#gradient.stops[index].color =
               e.target.hexOpaque || e.target.value;
             const parsedAlpha = parseFloat(e.target.alpha);
@@ -7711,7 +7845,7 @@ class FigFillPicker extends HTMLElement {
           image: { url: this.#webcam.snapshot, scaleMode: "fill", scale: 50 },
         };
       default:
-        return base;
+        return { ...base, ...this.#customData[this.#fillType] };
     }
   }
 

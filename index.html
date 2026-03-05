@@ -9,6 +9,8 @@
     <link rel="stylesheet"
           type="text/css"
           href="fig.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
     <script src="fig.js"></script>
     <style>
         * {
@@ -159,6 +161,97 @@
             padding: 2px 6px;
             border-radius: 4px;
             color: var(--figma-color-text);
+        }
+
+        pre[class*="language-"] {
+            background: var(--figma-color-bg-secondary);
+            border: 1px solid var(--figma-color-border);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin: 0;
+            overflow-x: auto;
+        }
+
+        pre[class*="language-"]>code[class*="language-"] {
+            display: block;
+            background: transparent;
+            padding: 0;
+            font-family: "SF Mono", Monaco, Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--figma-color-text);
+            text-shadow: none;
+        }
+
+        :root {
+            --code-token-comment: #6b7280;
+            --code-token-punctuation: #374151;
+            --code-token-primary: #b42318;
+            --code-token-string: #0f766e;
+            --code-token-operator: #1d4ed8;
+            --code-token-keyword: #6d28d9;
+            --code-token-function: #9a3412;
+        }
+
+        html[style*="color-scheme: dark"] {
+            --code-token-comment: #8b93a7;
+            --code-token-punctuation: #c7cfdd;
+            --code-token-primary: #ff8f8f;
+            --code-token-string: #6dd3b6;
+            --code-token-operator: #7fb4ff;
+            --code-token-keyword: #b79bff;
+            --code-token-function: #ffc27a;
+        }
+
+        /* Keep token colors aligned with theme and improve contrast in light mode */
+        .token.comment,
+        .token.prolog,
+        .token.doctype,
+        .token.cdata {
+            color: var(--code-token-comment);
+        }
+
+        .token.punctuation {
+            color: var(--code-token-punctuation);
+        }
+
+        .token.property,
+        .token.tag,
+        .token.boolean,
+        .token.number,
+        .token.constant,
+        .token.symbol,
+        .token.deleted {
+            color: var(--code-token-primary);
+        }
+
+        .token.selector,
+        .token.attr-name,
+        .token.string,
+        .token.char,
+        .token.builtin,
+        .token.inserted {
+            color: var(--code-token-string);
+        }
+
+        .token.operator,
+        .token.entity,
+        .token.url,
+        .language-css .token.string,
+        .style .token.string {
+            color: var(--code-token-operator);
+            background: transparent;
+        }
+
+        .token.atrule,
+        .token.attr-value,
+        .token.keyword {
+            color: var(--code-token-keyword);
+        }
+
+        .token.function,
+        .token.class-name {
+            color: var(--code-token-function);
         }
 
         .toolbelt {
@@ -1650,9 +1743,208 @@
             </fig-fill-picker>
 
             <h3>Custom Trigger</h3>
+            <p class="description">Any child element can act as the trigger. If the child is not a
+                <code>fig-chit</code>, it becomes click-only — the fill picker won't update its appearance.
+            </p>
+
+            <h4>Button Trigger</h4>
             <fig-fill-picker value='{"type":"solid","color":"#95E1D3"}'>
                 <fig-button>Edit Fill</fig-button>
             </fig-fill-picker>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">&lt;fig-fill-picker value='{"type":"solid","color":"#95E1D3"}'&gt;
+  &lt;fig-button&gt;Edit Fill&lt;/fig-button&gt;
+&lt;/fig-fill-picker&gt;</code></pre>
+
+            <h4>Icon Button Trigger</h4>
+            <fig-fill-picker value='{"type":"solid","color":"#667eea"}'>
+                <fig-button icon
+                            variant="ghost"
+                            title="Pick a fill">
+                    <span class="fig-mask-icon"
+                          style="--icon: var(--icon-eyedropper)"></span>
+                </fig-button>
+            </fig-fill-picker>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">&lt;fig-fill-picker value='{"type":"solid","color":"#667eea"}'&gt;
+  &lt;fig-button icon variant="ghost" title="Pick a fill"&gt;
+    &lt;span class="fig-mask-icon" style="--icon: var(--icon-eyedropper)"&gt;&lt;/span&gt;
+  &lt;/fig-button&gt;
+&lt;/fig-fill-picker&gt;</code></pre>
+
+            <h4>Inline Text Trigger</h4>
+            <fig-fill-picker value='{"type":"solid","color":"#F38181"}'>
+                <span style="cursor: pointer; text-decoration: underline; color: var(--figma-color-text-brand)">Change
+                    background</span>
+            </fig-fill-picker>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">&lt;fig-fill-picker value='{"type":"solid","color":"#F38181"}'&gt;
+  &lt;span style="cursor: pointer"&gt;Change background&lt;/span&gt;
+&lt;/fig-fill-picker&gt;</code></pre>
+
+            <h4>Swatch with Custom Size</h4>
+            <fig-fill-picker id="fill-picker-custom-swatch"
+                             value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#f093fb","opacity":100},{"position":100,"color":"#f5576c","opacity":100}]}}'>
+                <div id="custom-swatch-preview"
+                     style="width: 3rem; height: 3rem; border-radius: 0.5rem; cursor: pointer; background: linear-gradient(135deg, #f093fb, #f5576c)">
+                </div>
+            </fig-fill-picker>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">&lt;fig-fill-picker value='{"type":"gradient",...}'&gt;
+  &lt;div style="width: 3rem; height: 3rem; border-radius: 0.5rem;
+              cursor: pointer; background: linear-gradient(...)"&gt;
+  &lt;/div&gt;
+&lt;/fig-fill-picker&gt;</code></pre>
+            <script>
+                (() => {
+                    const picker = document.getElementById('fill-picker-custom-swatch');
+                    const swatch = document.getElementById('custom-swatch-preview');
+                    if (!picker || !swatch) return;
+
+                    const getSizingForMedia = (scaleMode, scale) => {
+                        switch (scaleMode) {
+                            case 'fit':
+                                return { size: 'contain', position: 'center' };
+                            case 'tile':
+                                return { size: `${scale || 50}%`, position: 'top left' };
+                            case 'fill':
+                            case 'crop':
+                            default:
+                                return { size: 'cover', position: 'center' };
+                        }
+                    };
+
+                    const updateSwatchPreview = (fill) => {
+                        if (!fill) return;
+
+                        let background = 'transparent';
+                        let backgroundSize = 'cover';
+                        let backgroundPosition = 'center';
+
+                        if (fill.type === 'solid') {
+                            background = fill.color || '#D9D9D9';
+                        } else if (fill.type === 'gradient') {
+                            background = fill.css || background;
+                        } else if (fill.type === 'image' && fill.image?.url) {
+                            background = `url(${fill.image.url})`;
+                            const sizing = getSizingForMedia(fill.image.scaleMode, fill.image.scale);
+                            backgroundSize = sizing.size;
+                            backgroundPosition = sizing.position;
+                        } else if (fill.type === 'video' && fill.video?.url) {
+                            background = `url(${fill.video.url})`;
+                            const sizing = getSizingForMedia(fill.video.scaleMode, fill.video.scale);
+                            backgroundSize = sizing.size;
+                            backgroundPosition = sizing.position;
+                        } else if (fill.type === 'webcam' && fill.image?.url) {
+                            background = `url(${fill.image.url})`;
+                        }
+
+                        swatch.style.background = background;
+                        swatch.style.backgroundSize = backgroundSize;
+                        swatch.style.backgroundPosition = backgroundPosition;
+                    };
+
+                    picker.addEventListener('input', (e) => updateSwatchPreview(e.detail));
+                    picker.addEventListener('change', (e) => updateSwatchPreview(e.detail));
+                    updateSwatchPreview(picker.value);
+                })();
+            </script>
+
+            <h3>Custom Mode (Slots)</h3>
+            <p class="description">Add custom modes via <code>slot="mode-{name}"</code> children. The mode name must
+                also appear in the <code>mode</code> attribute. Custom slot content manages its own UI; dispatch
+                <code>input</code>/<code>change</code> events with a <code>detail</code> payload to relay values back.
+            </p>
+
+            <h4>Custom "Shader" Mode</h4>
+            <fig-fill-picker mode="solid,shader"
+                             value='{"type":"solid","color":"#95E1D3"}'
+                             experimental="modern">
+                <div slot="mode-shader"
+                     label="Shader">
+                    <fig-field label="Fragment Shader">
+                        <fig-input-text multiline
+                                        placeholder="void main() { ... }"
+                                        value="void main() {&#10;  gl_FragColor = vec4(1.0, 0.0, 0.5, 1.0);&#10;}"></fig-input-text>
+                    </fig-field>
+                </div>
+            </fig-fill-picker>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">&lt;fig-fill-picker mode="solid,shader"&gt;
+  &lt;div slot="mode-shader" label="Shader"&gt;
+    &lt;fig-field label="Fragment Shader"&gt;
+      &lt;fig-input-text multiline
+        placeholder="void main() { ... }"
+        value="..."&gt;&lt;/fig-input-text&gt;
+    &lt;/fig-field&gt;
+  &lt;/div&gt;
+&lt;/fig-fill-picker&gt;</code></pre>
+
+            <h4>React Custom Mode (via <code>modeready</code>)</h4>
+            <p class="description">Frameworks like React can listen for the <code>modeready</code> event and render
+                directly into the provided container. The DOM is never moved — React owns its tree from the start.</p>
+            <fig-fill-picker id="react-picker" mode="solid,react-demo">
+                <div slot="mode-react-demo" label="React"></div>
+            </fig-fill-picker>
+            <script type="module">
+                import React from 'https://esm.sh/react@18';
+                import { createRoot } from 'https://esm.sh/react-dom@18/client';
+
+                const h = React.createElement;
+                const picker = document.getElementById('react-picker');
+
+                picker.addEventListener('modeready', (e) => {
+                    if (e.detail.mode !== 'react-demo') return;
+
+                    function ColorButtons() {
+                        const [color, setColor] = React.useState('#667eea');
+                        const colors = ['#FF6B6B', '#4ECDC4', '#667eea', '#f093fb', '#95E1D3'];
+                        return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+                            h('p', {
+                                style: {
+                                    fontSize: 11,
+                                    color: 'var(--figma-color-text-secondary)',
+                                    margin: 0,
+                                }
+                            }, `Selected: ${color}`),
+                            h('div', { style: { display: 'flex', gap: 4, flexWrap: 'wrap' } },
+                                colors.map((c) =>
+                                    h('button', {
+                                        key: c,
+                                        onClick: () => setColor(c),
+                                        style: {
+                                            width: 28,
+                                            height: 28,
+                                            borderRadius: 4,
+                                            border: c === color ? '2px solid var(--figma-color-text)' : '1px solid var(--figma-color-border)',
+                                            background: c,
+                                            cursor: 'pointer',
+                                            padding: 0,
+                                        }
+                                    })
+                                )
+                            )
+                        );
+                    }
+
+                    createRoot(e.detail.container).render(h(ColorButtons));
+                });
+            </script>
+            <pre
+                 style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">&lt;fig-fill-picker id="react-picker" mode="solid,react-demo"&gt;
+  &lt;div slot="mode-react-demo" label="React"&gt;&lt;/div&gt;
+&lt;/fig-fill-picker&gt;
+
+&lt;script type="module"&gt;
+  import React from 'https://esm.sh/react@18';
+  import { createRoot } from 'https://esm.sh/react-dom@18/client';
+
+  const picker = document.getElementById('react-picker');
+  picker.addEventListener('modeready', (e) =&gt; {
+    if (e.detail.mode !== 'react-demo') return;
+    createRoot(e.detail.container).render(&lt;MyComponent /&gt;);
+  });
+&lt;/script&gt;</code></pre>
 
             <h3>Without Alpha</h3>
             <fig-fill-picker alpha="false"
@@ -3274,9 +3566,11 @@
 &lt;/dialog&gt;</code></pre>
 
             <h3>Viewport Margin</h3>
-            <p class="description">Use <code>viewport-margin</code> to define safe areas the popup should avoid (e.g. a bottom toolbar). Uses CSS margin shorthand: <code>top right bottom left</code>.</p>
+            <p class="description">Use <code>viewport-margin</code> to define safe areas the popup should avoid (e.g. a
+                bottom toolbar). Uses CSS margin shorthand: <code>top right bottom left</code>.</p>
             <fig-button id="popup-open-viewport-margin"
-                        onclick="document.getElementById('popup-viewport-margin').open = true">Open (64px bottom margin)</fig-button>
+                        onclick="document.getElementById('popup-viewport-margin').open = true">Open (64px bottom
+                margin)</fig-button>
             <dialog id="popup-viewport-margin"
                     is="fig-popup"
                     anchor="#popup-open-viewport-margin"
@@ -3285,7 +3579,9 @@
                     viewport-margin="8 8 64 8">
                 <vstack style="min-width: 14rem;">
                     <strong style="padding: 0 var(--spacer-1);">Viewport Margin</strong>
-                    <p style="padding: 0 var(--spacer-1); margin: 0; font-size: var(--font-size-small); color: var(--figma-color-text-secondary);">This popup won't overlap the bottom 64px of the viewport.</p>
+                    <p
+                       style="padding: 0 var(--spacer-1); margin: 0; font-size: var(--font-size-small); color: var(--figma-color-text-secondary);">
+                        This popup won't overlap the bottom 64px of the viewport.</p>
                     <fig-input-text placeholder="Try scrolling down"></fig-input-text>
                 </vstack>
             </dialog>
@@ -4565,7 +4861,50 @@ button.addEventListener('click', () => {
         </section>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
     <script>
+        function detectCodeLanguage(codeText) {
+            const source = codeText.trim();
+            if (!source) return 'javascript';
+
+            if (
+                source.startsWith('<') ||
+                source.startsWith('&lt;') ||
+                source.includes('&lt;/') ||
+                source.includes('</')
+            ) {
+                return 'markup';
+            }
+
+            if (
+                /(^|[\n\r])\s*[@.#a-zA-Z][\w\s.#:[\]-]*\{/.test(source) ||
+                /--[\w-]+\s*:/.test(source)
+            ) {
+                return 'css';
+            }
+
+            return 'javascript';
+        }
+
+        function highlightCodeBlocks() {
+            const blocks = document.querySelectorAll('pre > code');
+            blocks.forEach((code) => {
+                if (!code.className.includes('language-')) {
+                    const language = detectCodeLanguage(code.textContent || '');
+                    code.classList.add(`language-${language}`);
+                    code.parentElement?.classList.add(`language-${language}`);
+                }
+            });
+
+            if (window.Prism) {
+                window.Prism.highlightAll();
+            }
+        }
+
         // Highlight nav item based on hash
         function updateActiveNav() {
             const hash = location.hash || '#avatar';
@@ -4610,6 +4949,7 @@ button.addEventListener('click', () => {
 
         // Initial state
         window.addEventListener('load', () => {
+            highlightCodeBlocks();
             updateActiveNav();
             if (location.hash) {
                 document.querySelector(location.hash)?.scrollIntoView();
