@@ -1085,7 +1085,9 @@ class FigPopup extends HTMLDialogElement {
     super();
     this.#boundReposition = this.#queueReposition.bind(this);
     this.#boundScroll = (e) => {
-      if (this.open && !this.contains(e.target)) this.#positionPopup();
+      if (this.open && !this.contains(e.target) && this.#shouldAutoReposition()) {
+        this.#positionPopup();
+      }
     };
     this.#boundOutsidePointerDown = this.#handleOutsidePointerDown.bind(this);
     this.#boundPointerDown = this.#handlePointerDown.bind(this);
@@ -1222,6 +1224,7 @@ class FigPopup extends HTMLDialogElement {
 
     this.#setupObservers();
     document.addEventListener("pointerdown", this.#boundOutsidePointerDown, true);
+    this.#wasDragged = false;
     this.#queueReposition();
     this.#isPopupActive = true;
 
@@ -1234,6 +1237,7 @@ class FigPopup extends HTMLDialogElement {
     if (anchor) anchor.classList.remove("has-popup-open");
 
     this.#isPopupActive = false;
+    this.#wasDragged = false;
     this.#teardownObservers();
     document.removeEventListener(
       "pointerdown",
@@ -1404,6 +1408,7 @@ class FigPopup extends HTMLDialogElement {
       if (dx > this.#dragThreshold || dy > this.#dragThreshold) {
         this.#isDragging = true;
         this.#dragPending = false;
+        this.#wasDragged = true;
         this.setPointerCapture(e.pointerId);
         this.style.cursor = "grabbing";
 
@@ -1808,13 +1813,18 @@ class FigPopup extends HTMLDialogElement {
   }
 
   #queueReposition() {
-    if (!this.open) return;
+    if (!this.open || !this.#shouldAutoReposition()) return;
     if (this.#rafId !== null) return;
 
     this.#rafId = requestAnimationFrame(() => {
       this.#rafId = null;
       this.#positionPopup();
     });
+  }
+
+  #shouldAutoReposition() {
+    if (!(this.drag && this.#wasDragged)) return true;
+    return !this.#resolveAnchor();
   }
 }
 customElements.define("fig-popup", FigPopup, { extends: "dialog" });

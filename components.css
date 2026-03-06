@@ -1280,6 +1280,7 @@ fig-easing-curve {
   .fig-easing-curve-svg-container {
     border-radius: var(--radius-medium);
     background: var(--figma-color-bg-secondary);
+    padding: var(--spacer-2);
   }
   .fig-easing-curve-diagonal,
   .fig-easing-curve-bounds,
@@ -1291,6 +1292,8 @@ fig-easing-curve {
   .fig-easing-curve-diagonal {
     stroke: var(--figma-color-bordertranslucent);
     stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
   .fig-easing-curve-bounds {
     fill: transparent;
@@ -1298,15 +1301,21 @@ fig-easing-curve {
   .fig-easing-curve-arm {
     stroke: var(--figma-color-border-strong);
     stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
   .fig-easing-curve-path {
     fill: none;
     stroke: var(--figma-color-text);
     stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
   .fig-easing-curve-target {
     stroke: var(--figma-color-bordertranslucent);
     stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
   .fig-easing-curve-handle {
     fill: var(--figma-color-border-strong);

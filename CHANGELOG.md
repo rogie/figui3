@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.27.0]
+
+### Changed
+
+- Refined easing curve editor visuals with rounded stroke caps/joins and padded drawing container for clearer spring/bezier presentation.
+
+### Fixed
+
+- `fig-popup` now stops anchor-based auto-repositioning after the user manually drags an anchored, draggable popup, preserving manual placement.
+
 ## [2.26.0]
 
 ### Added
