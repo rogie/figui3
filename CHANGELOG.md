@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.28.0]
+
+### Fixed
+
+- Added missing `#wasDragged` private field declaration in `FigPopup` to prevent runtime syntax errors in popup drag/reposition logic.
+
 ## [2.27.0]
 
 ### Changed

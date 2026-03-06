@@ -1080,6 +1080,7 @@ class FigPopup extends HTMLDialogElement {
   #boundPointerDown;
   #boundPointerMove;
   #boundPointerUp;
+  #wasDragged = false;
 
   constructor() {
     super();
