@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>PropKit — Figma UI3 Property Fields</title>
+    <link rel="stylesheet"
+          type="text/css"
+          href="fig.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+    <script src="fig.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        nav {
+            position: fixed;
+            width: 180px;
+            height: 100vh;
+            overflow-y: auto;
+            background: var(--figma-color-bg-secondary);
+            border-right: 1px solid var(--figma-color-border);
+            padding: 16px 0 0 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav .nav-links {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        nav .nav-links h1 {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--figma-color-text-secondary);
+            padding: 8px 20px;
+            margin: 0 0 8px 0;
+        }
+
+        nav .nav-links a {
+            display: block;
+            padding: 6px 12px;
+            margin: 0 8px;
+            color: var(--figma-color-text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            border-radius: var(--radius-medium);
+            transition: background 0.15s, color 0.15s;
+        }
+
+        nav .nav-links a:hover {
+            color: var(--figma-color-text);
+            background: var(--figma-color-bg-hover);
+        }
+
+        nav .nav-links a.active {
+            color: var(--figma-color-text-brand);
+            background: var(--figma-color-bg-selected);
+        }
+
+        nav .theme-switch {
+            padding: 12px 16px;
+            border-top: 1px solid var(--figma-color-border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--figma-color-text-secondary);
+
+            &:has([checked="true"]) {
+                #theme-dark-btn {
+                    color: var(--figma-color-icon-selected);
+                }
+
+                #theme-light-btn {
+                    color: var(--figma-color-icon-secondary);
+                }
+            }
+
+            &:not(:has([checked="true"])) {
+                #theme-light-btn {
+                    color: var(--figma-color-icon-selected);
+                }
+
+                #theme-dark-btn {
+                    color: var(--figma-color-icon-secondary);
+                }
+            }
+        }
+
+        main {
+            margin-left: 180px;
+            padding: 24px 32px;
+            max-width: 600px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        section {
+            scroll-margin-top: 24px;
+            padding-bottom: 32px;
+        }
+
+        main>hr {
+            border: none;
+            border-top: 1px solid var(--figma-color-border);
+            margin: 0 0 32px 0;
+        }
+
+        section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--figma-color-text);
+            margin: 0 0 8px 0;
+        }
+
+        fig-header.propkit-subheader {
+            padding-left: 0;
+
+            h3 {
+                margin-right: var(--spacer-2);
+                flex-grow: 0;
+            }
+        }
+
+        section>p.description {
+            font-size: 13px;
+            color: var(--figma-color-text-secondary);
+            margin: 0 0 24px 0;
+        }
+
+        .prop-panel {
+            width: 240px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border: 1px solid var(--figma-color-border);
+            border-radius: var(--radius-large);
+            padding: var(--spacer-2) 0;
+            background: var(--figma-color-bg);
+            margin-bottom: 0.5rem;
+        }
+
+        .placeholder-field {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 32px;
+            border: 1px dashed var(--figma-color-border);
+            border-radius: var(--radius-medium);
+            font-size: 11px;
+            color: var(--figma-color-text-tertiary);
+        }
+
+        code {
+            font-family: "SF Mono", Monaco, Consolas, monospace;
+            font-size: 11px;
+            background: var(--figma-color-bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--figma-color-text);
+        }
+
+        pre.event-dump {
+            margin: 0;
+            padding: var(--spacer-2) var(--spacer-3);
+            background: var(--figma-color-bg-secondary);
+            border: 1px solid var(--figma-color-border);
+            border-radius: var(--radius-large);
+            margin-top: var(--spacer-2);
+            white-space: pre-wrap;
+            word-break: break-word;
+            width: 240px;
+        }
+
+        pre.event-dump code {
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="nav-links">
+            <h1>PropKit</h1>
+            <a href="#image">Image</a>
+            <a href="#color">Color</a>
+            <a href="#fill">Fill</a>
+            <a href="#slider">Slider</a>
+            <a href="#switch">Switch</a>
+            <a href="#dropdown">Dropdown</a>
+            <a href="#segment">Segment</a>
+            <a href="#dial">Dial</a>
+            <a href="#easing">Easing Curve</a>
+            <a href="#angle">Angle</a>
+            <hr>
+            <a href="#combined">Combined Panel</a>
+        </div>
+        <div class="theme-switch">
+            <fig-button id="theme-light-btn"
+                        variant="ghost"
+                        icon>
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none">
+                    <path fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M12 5C12.2761 5 12.5 5.22386 12.5 5.5V6.5C12.5 6.77614 12.2761 7 12 7C11.7239 7 11.5 6.77614 11.5 6.5V5.5C11.5 5.22386 11.7239 5 12 5ZM16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12ZM12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15ZM7.75687 7.05026C7.56161 6.85499 7.24503 6.85499 7.04977 7.05026C6.8545 7.24552 6.8545 7.5621 7.04977 7.75736L7.75687 8.46447C7.95214 8.65973 8.26872 8.65973 8.46398 8.46447C8.65924 8.26921 8.65924 7.95262 8.46398 7.75736L7.75687 7.05026ZM19 12C19 12.2761 18.7761 12.5 18.5 12.5H17.5C17.2239 12.5 17 12.2761 17 12C17 11.7239 17.2239 11.5 17.5 11.5H18.5C18.7761 11.5 19 11.7239 19 12ZM16.9502 7.75736C17.1455 7.5621 17.1455 7.24552 16.9502 7.05026C16.755 6.85499 16.4384 6.85499 16.2431 7.05026L15.536 7.75736C15.3408 7.95262 15.3408 8.26921 15.536 8.46447C15.7313 8.65973 16.0479 8.65973 16.2431 8.46447L16.9502 7.75736ZM12 17C12.2761 17 12.5 17.2239 12.5 17.5V18.5C12.5 18.7761 12.2761 19 12 19C11.7239 19 11.5 18.7761 11.5 18.5V17.5C11.5 17.2239 11.7239 17 12 17ZM16.2422 15.5356C16.047 15.3403 15.7304 15.3403 15.5351 15.5356C15.3399 15.7309 15.3399 16.0475 15.5351 16.2427L16.2422 16.9498C16.4375 17.1451 16.7541 17.1451 16.9493 16.9498C17.1446 16.7546 17.1446 16.438 16.9493 16.2427L16.2422 15.5356ZM7 12C7 12.2761 6.77614 12.5 6.5 12.5H5.5C5.22386 12.5 5 12.2761 5 12C5 11.7239 5.22386 11.5 5.5 11.5H6.5C6.77614 11.5 7 11.7239 7 12ZM8.46488 16.2427C8.66014 16.0475 8.66014 15.7309 8.46488 15.5356C8.26962 15.3403 7.95304 15.3403 7.75777 15.5356L7.05067 16.2427C6.85541 16.438 6.85541 16.7546 7.05067 16.9498C7.24593 17.1451 7.56251 17.1451 7.75777 16.9498L8.46488 16.2427Z"
+                          fill="currentColor" />
+                </svg>
+            </fig-button>
+            <fig-switch id="theme-toggle"></fig-switch>
+            <fig-button id="theme-dark-btn"
+                        variant="ghost"
+                        icon>
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none">
+                    <path fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M15 14.9999C15.3647 14.9999 15.7224 14.9672 16.0703 14.9045C15.1624 16.1743 13.677 16.9997 12 16.9997C9.23858 16.9997 7 14.7611 7 11.9997C7 10.3226 7.82546 8.8371 9.09542 7.92923C9.03267 8.27722 9 8.63509 9 8.99986C9 12.3136 11.6863 14.9999 15 14.9999ZM17.3039 14.8075C17.6193 14.2129 16.8933 13.678 16.2412 13.8446C15.8443 13.946 15.4285 13.9999 15 13.9999C12.2386 13.9999 10 11.7613 10 8.99986C10 8.57132 10.0539 8.15537 10.1553 7.75842C10.3219 7.10631 9.78711 6.38032 9.19252 6.6957C7.29348 7.70298 6 9.70029 6 11.9997C6 15.3134 8.68629 17.9997 12 17.9997C14.2993 17.9997 16.2965 16.7064 17.3039 14.8075ZM16 7.49993C16 7.22379 15.7761 6.99993 15.5 6.99993C15.2239 6.99993 15 7.22379 15 7.49993V7.99993H14.5C14.2239 7.99993 14 8.22379 14 8.49993C14 8.77607 14.2239 8.99993 14.5 8.99993H15V9.49993C15 9.77607 15.2239 9.99993 15.5 9.99993C15.7761 9.99993 16 9.77607 16 9.49993V8.99993H16.5C16.7761 8.99993 17 8.77607 17 8.49993C17 8.22379 16.7761 7.99993 16.5 7.99993H16V7.49993Z"
+                          fill="currentColor" />
+                </svg>
+            </fig-button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Image -->
+        <section id="image">
+            <h2>Image</h2>
+            <p class="description">An image upload field for selecting or previewing image assets.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Upload</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Image</label>
+                        <fig-image full="true"
+                                   upload="true"
+                                   label="Upload"
+                                   size="auto"></fig-image>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Image</label>
+                        <fig-image full="true"
+                                   upload="true"
+                                   src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=260&h=400&fit=crop"
+                                   size="auto"></fig-image>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Auto Aspect Ratio</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Image</label>
+                    <fig-image full="true"
+                               src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=260&h=400&fit=crop"
+                               aspect-ratio="auto"></fig-image>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>16:9</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Image</label>
+                    <fig-image full="true"
+                               src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=480&h=270&fit=crop"
+                               aspect-ratio="16/9"></fig-image>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>4:3</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Image</label>
+                    <fig-image full="true"
+                               src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop"
+                               aspect-ratio="4/3"></fig-image>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Cover</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Portrait</label>
+                        <fig-image full="true"
+                                   src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=260&h=400&fit=crop"
+                                   fit="cover"
+                                   size="auto"
+                                   aspect-ratio="4/3"></fig-image>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Landscape</label>
+                        <fig-image full="true"
+                                   src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=480&h=270&fit=crop"
+                                   fit="cover"
+                                   size="auto"
+                                   aspect-ratio="4/3"></fig-image>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Contain</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Portrait</label>
+                        <fig-image full="true"
+                                   src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=260&h=400&fit=crop"
+                                   fit="contain"
+                                   size="auto"
+                                   aspect-ratio="4/3"></fig-image>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Landscape</label>
+                        <fig-image full="true"
+                                   src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=480&h=270&fit=crop"
+                                   fit="contain"
+                                   size="auto"
+                                   aspect-ratio="4/3"></fig-image>
+                    </fig-field>
+                </div>
+            </hstack>
+        </section>
+
+        <hr>
+
+        <!-- Color -->
+        <section id="color">
+            <h2>Color</h2>
+            <p class="description">A solid color picker field with hex input and optional alpha.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Color</label>
+                        <fig-input-color value="#0D99FF80"
+                                         text="true"
+                                         alpha="true"
+                                         picker="figma"
+                                         picker-anchor="self"
+                                         full></fig-input-color>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Color</label>
+                        <fig-input-color value="#0D99FF"
+                                         text="true"
+                                         picker="figma"
+                                         picker-anchor="self"
+                                         full></fig-input-color>
+                    </fig-field>
+                </div>
+            </hstack>
+        </section>
+
+        <hr>
+
+        <!-- Fill -->
+        <section id="fill">
+            <h2>Fill</h2>
+            <p class="description">A multi-mode fill field supporting solid, gradient, and image fills.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"solid","color":"#667eea"}'
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"solid","color":"#667eea"}'
+                                        alpha="false"
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+            </hstack>
+        </section>
+
+        <hr>
+
+        <!-- Slider -->
+        <section id="slider">
+            <h2>Slider</h2>
+            <p class="description">A range slider with optional text input for precise numeric values.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Amount</label>
+                        <fig-slider value="50"
+                                    min="0"
+                                    max="100"
+                                    text="true"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Amount</label>
+                        <fig-slider value="50"
+                                    min="0"
+                                    max="100"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Units</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Opacity</label>
+                        <fig-slider value="75"
+                                    min="0"
+                                    max="100"
+                                    text="true"
+                                    units="%"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Opacity</label>
+                        <fig-slider value="75"
+                                    min="0"
+                                    max="100"
+                                    units="%"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Opacity</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Opacity</label>
+                        <fig-slider type="opacity"
+                                    value="0.75"
+                                    color="#ff0000"
+                                    units="%"
+                                    text="true"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Opacity</label>
+                        <fig-slider type="opacity"
+                                    value="0.75"
+                                    color="#ff0000"
+                                    units="%"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Hue</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Hue</label>
+                        <fig-slider type="hue"
+                                    value="180"
+                                    text="true"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Hue</label>
+                        <fig-slider type="hue"
+                                    value="180"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Stepper</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Steps</label>
+                        <fig-slider type="stepper"
+                                    value="50"
+                                    step="25"
+                                    text="true"
+                                    full>
+                            <datalist>
+                                <option value="0"></option>
+                                <option value="25"></option>
+                                <option value="50"></option>
+                                <option value="75"></option>
+                                <option value="100"></option>
+                            </datalist>
+                        </fig-slider>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Steps</label>
+                        <fig-slider type="stepper"
+                                    value="50"
+                                    step="25"
+                                    full>
+                            <datalist>
+                                <option value="0"></option>
+                                <option value="25"></option>
+                                <option value="50"></option>
+                                <option value="75"></option>
+                                <option value="100"></option>
+                            </datalist>
+                        </fig-slider>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Delta</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Offset</label>
+                        <fig-slider type="delta"
+                                    value="0"
+                                    default="0"
+                                    step="0.25"
+                                    min="-5"
+                                    max="5"
+                                    text="true"
+                                    full>
+                            <datalist>
+                                <option value="0"></option>
+                            </datalist>
+                        </fig-slider>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Offset</label>
+                        <fig-slider type="delta"
+                                    value="0"
+                                    default="0"
+                                    step="0.25"
+                                    min="-5"
+                                    max="5"
+                                    full>
+                            <datalist>
+                                <option value="0"></option>
+                            </datalist>
+                        </fig-slider>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Transform</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Scale</label>
+                        <fig-slider min="0"
+                                    max="1"
+                                    value="0.5"
+                                    step="0.01"
+                                    transform="100"
+                                    text="true"
+                                    units="%"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Scale</label>
+                        <fig-slider min="0"
+                                    max="1"
+                                    value="0.5"
+                                    step="0.01"
+                                    transform="100"
+                                    units="%"
+                                    full></fig-slider>
+                    </fig-field>
+                </div>
+            </hstack>
+        </section>
+
+        <hr>
+
+        <!-- Switch -->
+        <section id="switch">
+            <h2>Switch</h2>
+            <p class="description">A toggle switch for boolean on/off properties.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Visible</label>
+                    <fig-switch checked="true"></fig-switch>
+                </fig-field>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- Dropdown -->
+        <section id="dropdown">
+            <h2>Dropdown</h2>
+            <p class="description">A dropdown select field for choosing from a set of options.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Blend Mode</label>
+                    <fig-dropdown full
+                                  experimental="modern">
+                        <option selected>Normal</option>
+                        <option>Multiply</option>
+                        <option>Screen</option>
+                        <option>Overlay</option>
+                        <option>Darken</option>
+                        <option>Lighten</option>
+                    </fig-dropdown>
+                </fig-field>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- Segment -->
+        <section id="segment">
+            <h2>Segment</h2>
+            <p class="description">A segmented control for mutually exclusive choices.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Align</label>
+                    <fig-segmented-control full>
+                        <fig-segment value="left"
+                                     selected>Left</fig-segment>
+                        <fig-segment value="center">Center</fig-segment>
+                        <fig-segment value="right">Right</fig-segment>
+                    </fig-segmented-control>
+                </fig-field>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- Dial -->
+        <section id="dial">
+            <h2>Dial</h2>
+            <p class="description">A rotary dial for continuous value input. <em>Not yet built.</em></p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Amount</label>
+                    <div class="placeholder-field">fig-input-dial</div>
+                </fig-field>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- Easing Curve -->
+        <section id="easing">
+            <h2>Easing Curve</h2>
+            <p class="description">A bezier curve editor for animation easing with preset dropdown.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Easing</label>
+                    <fig-easing-curve value="0.42, 0, 0.58, 1"
+                                      id="easing-curve-observed"
+                                      dropdown="true"></fig-easing-curve>
+                </fig-field>
+            </div>
+            <pre class="event-dump language-json"><code id="easing-curve-dump"
+                      class="language-json">{
+  "event": "ready",
+  "value": "0.42, 0, 0.58, 1"
+}</code></pre>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>No Dropdown</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Easing</label>
+                    <fig-easing-curve value="0.25, 0.1, 0.25, 1"></fig-easing-curve>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>No Label</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <fig-easing-curve value="spring(250, 8, 1)"
+                                      dropdown="true"></fig-easing-curve>
+                </fig-field>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- Angle -->
+        <section id="angle">
+            <h2>Angle</h2>
+            <p class="description">An angle input with a visual dial and numeric text field.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-input-angle value="45"
+                                     text="true"
+                                     full></fig-input-angle>
+                </fig-field>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- Combined Panel -->
+        <section id="combined">
+            <h2>Combined Panel</h2>
+            <p class="description">A realistic property panel combining multiple field types.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Fill</label>
+                    <fig-input-fill value='{"type":"solid","color":"#667eea"}'
+                                    experimental="modern"></fig-input-fill>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Opacity</label>
+                    <fig-slider value="100"
+                                min="0"
+                                max="100"
+                                text="true"
+                                full></fig-slider>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Blend</label>
+                    <fig-dropdown full
+                                  experimental="modern">
+                        <option selected>Normal</option>
+                        <option>Multiply</option>
+                        <option>Screen</option>
+                        <option>Overlay</option>
+                    </fig-dropdown>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Visible</label>
+                    <fig-switch checked="true"></fig-switch>
+                </fig-field>
+
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-input-angle value="0"
+                                     text="true"
+                                     full></fig-input-angle>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Align</label>
+                    <fig-segmented-control full>
+                        <fig-segment value="left">Left</fig-segment>
+                        <fig-segment value="center"
+                                     selected>Center</fig-segment>
+                        <fig-segment value="right">Right</fig-segment>
+                    </fig-segmented-control>
+                </fig-field>
+
+                <fig-field direction="horizontal">
+                    <label>Image</label>
+                    <fig-image full="true"
+                               upload="true"
+                               label="Upload"
+                               size="medium"></fig-image>
+                </fig-field>
+                <fig-field direction="horizontal">
+                    <label>Tint</label>
+                    <fig-input-color value="#FFFFFF"
+                                     text="true"
+                                     picker="figma"
+                                     picker-anchor="self"
+                                     full></fig-input-color>
+                </fig-field>
+            </div>
+        </section>
+    </main>
+
+    <dialog is="fig-toast"
+            id="prompt-copy-toast"
+            duration="1500"
+            theme="dark">Prompt copied</dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+    <script>
+        // Nav highlighting
+        function updateActiveNav() {
+            const hash = location.hash || '#image';
+            document.querySelectorAll('nav .nav-links a').forEach(a => {
+                a.classList.toggle('active', a.getAttribute('href') === hash);
+            });
+        }
+
+        let isClickScrolling = false;
+
+        const observer = new IntersectionObserver(entries => {
+            if (isClickScrolling) return;
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    history.replaceState(null, '', '#' + entry.target.id);
+                    updateActiveNav();
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('section[id]').forEach(s => observer.observe(s));
+
+        document.querySelectorAll('nav .nav-links a').forEach(a => {
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = a.getAttribute('href');
+                const target = document.querySelector(targetId);
+                if (target) {
+                    isClickScrolling = true;
+                    history.pushState(null, '', targetId);
+                    updateActiveNav();
+                    target.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => { isClickScrolling = false; }, 500);
+                }
+            });
+        });
+
+        window.addEventListener('load', () => {
+            updateActiveNav();
+            if (location.hash) {
+                document.querySelector(location.hash)?.scrollIntoView();
+            }
+        });
+
+        window.addEventListener('hashchange', updateActiveNav);
+
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeLightBtn = document.getElementById('theme-light-btn');
+        const themeDarkBtn = document.getElementById('theme-dark-btn');
+        document.querySelectorAll('fig-slider').forEach((slider) => {
+            slider.setAttribute('variant', 'neue');
+        });
+
+        function setTheme(isDark) {
+            document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            if (isDark) {
+                themeToggle.setAttribute('checked', 'true');
+            } else {
+                themeToggle.removeAttribute('checked');
+            }
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(savedTheme ? savedTheme === 'dark' : prefersDark);
+
+        themeToggle.addEventListener('change', (e) => setTheme(e.target.checked));
+        themeLightBtn.addEventListener('click', () => setTheme(false));
+        themeDarkBtn.addEventListener('click', () => setTheme(true));
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) setTheme(e.matches);
+        });
+
+        // Easing curve event observer dump
+        const easingCurveObserved = document.getElementById('easing-curve-observed');
+        const easingCurveDump = document.getElementById('easing-curve-dump');
+        const promptCopyToast = document.getElementById('prompt-copy-toast');
+
+        function updateEasingDump(eventName, detail = null) {
+            if (!easingCurveDump || !easingCurveObserved) return;
+            const payload = {
+                event: eventName,
+                mode: detail?.mode ?? null,
+                preset: detail?.preset ?? null,
+                value: detail?.value ?? easingCurveObserved.value,
+                cssValue: detail?.cssValue ?? easingCurveObserved.cssValue,
+            };
+            easingCurveDump.textContent = JSON.stringify(payload, null, 2);
+            if (window.Prism) {
+                window.Prism.highlightElement(easingCurveDump);
+            }
+        }
+
+        if (easingCurveObserved) {
+            updateEasingDump('ready');
+            easingCurveObserved.addEventListener('input', (e) => updateEasingDump('input', e.detail));
+            easingCurveObserved.addEventListener('change', (e) => updateEasingDump('change', e.detail));
+        }
+
+        function collectComponentTargets(subheaderEl, maxTargets = 1) {
+            const targets = [];
+            let node = subheaderEl.nextElementSibling;
+            while (node) {
+                if (node.matches('fig-header.propkit-subheader') || node.tagName === 'H2' || node.tagName === 'HR') break;
+                node.querySelectorAll('fig-field').forEach((field) => {
+                    const component = Array.from(field.children).find((child) => child.tagName !== 'LABEL');
+                    const label = field.querySelector('label')?.textContent?.trim() || '';
+                    if (component && targets.length < maxTargets) targets.push({ component, label });
+                });
+                if (targets.length >= maxTargets) break;
+                node = node.nextElementSibling;
+            }
+            return targets;
+        }
+
+        function formatAttrs(el) {
+            return Array.from(el.attributes)
+                .filter((a) => !['id', 'class', 'src', 'style', 'label', 'value'].includes(a.name))
+                .map((a) => `${a.name}="${a.value}"`)
+                .join(' ');
+        }
+
+        function buildPropkitPrompt(subheaderEl) {
+            const targets = collectComponentTargets(subheaderEl);
+            if (!targets.length) {
+                return 'Use a horizontal fig-field. With a label of [Label name].';
+            }
+            const { component: el, label } = targets[0];
+            const labelText = label || '[Label name]';
+            const tag = el.tagName.toLowerCase();
+            if (tag === 'fig-image') {
+                const parts = [];
+                if (el.getAttribute('full') === 'true' || el.hasAttribute('full')) parts.push('full fig-image');
+                else parts.push('fig-image');
+                if (el.getAttribute('upload') === 'true' || el.hasAttribute('upload')) parts.push('upload');
+                if (el.getAttribute('size') === 'auto') parts.push('auto size');
+                if (el.hasAttribute('fit')) parts.push(`fit ${el.getAttribute('fit')}`);
+                if (el.hasAttribute('aspect-ratio')) parts.push(`aspect ratio ${el.getAttribute('aspect-ratio')}`);
+                return `Use a horizontal fig-field, with a ${parts.join(', ')}. With a label of ${labelText}.`;
+            }
+
+            const attrs = formatAttrs(el);
+            if (!attrs) return `Use a horizontal fig-field, with a ${tag}. With a label of ${labelText}.`;
+            return `Use a horizontal fig-field, with a ${tag}, ${attrs.replaceAll('"', '')}. With a label of ${labelText}.`;
+        }
+
+        async function copyText(text) {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+                return;
+            }
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+        }
+
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.copy-prompt-btn');
+            if (!btn) return;
+            try {
+                const subheaderEl = btn.closest('fig-header.propkit-subheader');
+                const prompt = buildPropkitPrompt(subheaderEl);
+                await copyText(prompt);
+                promptCopyToast?.showToast();
+            } catch (err) {
+                console.error('Failed to copy prompt', err);
+            }
+        });
+    </script>
+</body>
+
+</html>

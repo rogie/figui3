@@ -1152,7 +1152,7 @@ fig-chit {
       background: var(--chit-background);
       background-size: var(--chit-bg-size);
       background-position: var(--chit-bg-position);
-      background-repeat: repeat;
+      background-repeat: no-repeat;
       border-radius: 0.125rem;
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     }
@@ -1199,16 +1199,21 @@ fig-chit {
 /* Fig Image */
 fig-image {
   --image-size: 2rem;
+  --fit: cover;
+  --image-width: var(--image-size);
+  --image-height: var(--image-size);
+  --aspect-ratio: 1 / 1;
   display: inline-grid;
   place-items: center;
-  width: var(--image-size);
-  height: var(--image-size);
-  aspect-ratio: 1 / 1;
+  width: var(--image-width);
+  height: var(--image-height);
+  aspect-ratio: var(--aspect-ratio);
   > * {
     grid-area: 1/1;
   }
   fig-chit {
-    --size: var(--image-size) !important;
+    --size: 100% !important;
+    --chit-bg-size: var(--fit);
     &[disabled] {
       opacity: 1;
     }
@@ -1224,10 +1229,16 @@ fig-image {
   &[size="large"] {
     --image-size: 8rem;
   }
-  &[aspect-ratio="auto"] {
-    aspect-ratio: var(--aspect-ratio);
+  &[size="auto"] {
+    --image-size: 6rem;
+    &[full]:not([full="false"]) {
+      --image-width: 100%;
+    }
+  }
+  &[aspect-ratio] {
     height: auto;
     fig-chit {
+      --size: 100% !important;
       height: auto !important;
       aspect-ratio: var(--aspect-ratio) !important;
     }
@@ -1249,6 +1260,75 @@ fig-image {
   &[src]:not([src=""]) {
     fig-button[type="download"] {
       display: inline-flex;
+    }
+  }
+}
+
+/* Easing Curve */
+fig-easing-curve {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  --stroke-width: 1.25;
+
+  width: 100%;
+  .fig-easing-curve-svg {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: visible;
+  }
+  .fig-easing-curve-svg-container {
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg-secondary);
+  }
+  .fig-easing-curve-diagonal,
+  .fig-easing-curve-bounds,
+  .fig-easing-curve-arm,
+  .fig-easing-curve-path,
+  .fig-easing-curve-target {
+    pointer-events: none;
+  }
+  .fig-easing-curve-diagonal {
+    stroke: var(--figma-color-bordertranslucent);
+    stroke-width: var(--stroke-width);
+  }
+  .fig-easing-curve-bounds {
+    fill: transparent;
+  }
+  .fig-easing-curve-arm {
+    stroke: var(--figma-color-border-strong);
+    stroke-width: var(--stroke-width);
+  }
+  .fig-easing-curve-path {
+    fill: none;
+    stroke: var(--figma-color-text);
+    stroke-width: var(--stroke-width);
+  }
+  .fig-easing-curve-target {
+    stroke: var(--figma-color-bordertranslucent);
+    stroke-width: var(--stroke-width);
+  }
+  .fig-easing-curve-handle {
+    fill: var(--figma-color-border-strong);
+    cursor: grab;
+    pointer-events: all;
+    stroke: var(--figma-color-bg-secondary);
+    stroke-width: var(--stroke-width);
+    &:active {
+      cursor: grabbing;
+      fill: var(--figma-color-bg-brand);
+    }
+  }
+  .fig-easing-curve-duration-bar {
+    fill: var(--figma-color-border-strong);
+    stroke: var(--figma-color-bg-secondary);
+    stroke-width: var(--stroke-width);
+    cursor: ew-resize;
+    pointer-events: all;
+  }
+  .fig-easing-curve-dropdown {
+    option svg {
+      vertical-align: middle;
     }
   }
 }
@@ -2497,7 +2577,7 @@ fig-input-fill {
 
   fig-input-number {
     flex: 0;
-    flex-basis: 3.25rem;
+    flex-basis: 3rem;
   }
 
   &[disabled]:not([disabled="false"]) {

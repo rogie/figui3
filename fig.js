@@ -365,6 +365,9 @@ customElements.define("fig-dropdown", FigDropdown);
  * @attr {string} offset - Comma-separated offset values: left,top,right,bottom
  */
 class FigTooltip extends HTMLElement {
+  static #lastShownAt = 0;
+  static #warmupWindow = 500;
+
   #boundHideOnChromeOpen;
   #boundHidePopupOutsideClick;
   #touchTimeout;
@@ -532,7 +535,9 @@ class FigTooltip extends HTMLElement {
   showDelayedPopup() {
     this.render();
     clearTimeout(this.timeout);
-    this.timeout = setTimeout(this.showPopup.bind(this), this.delay);
+    const warm = Date.now() - FigTooltip.#lastShownAt < FigTooltip.#warmupWindow;
+    const effectiveDelay = warm ? 0 : this.delay;
+    this.timeout = setTimeout(this.showPopup.bind(this), effectiveDelay);
   }
 
   showPopup() {
@@ -544,6 +549,7 @@ class FigTooltip extends HTMLElement {
     this.popup.style.zIndex = figGetHighestZIndex() + 1;
 
     this.isOpen = true;
+    FigTooltip.#lastShownAt = Date.now();
     this.#startObserving();
   }
 
@@ -594,6 +600,7 @@ class FigTooltip extends HTMLElement {
     }
 
     this.isOpen = false;
+    FigTooltip.#lastShownAt = Date.now();
   }
 
   #startObserving() {
@@ -3830,7 +3837,7 @@ class FigInputFill extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled", "mode", "experimental"];
+    return ["value", "disabled", "mode", "experimental", "alpha"];
   }
 
   connectedCallback() {
@@ -3890,6 +3897,8 @@ class FigInputFill extends HTMLElement {
     if (mode) attrs["mode"] = mode;
     const experimental = this.getAttribute("experimental");
     if (experimental) attrs["experimental"] = experimental;
+    const alpha = this.getAttribute("alpha");
+    if (alpha) attrs["alpha"] = alpha;
     // picker-* overrides (except anchor, handled programmatically)
     for (const { name, value } of this.attributes) {
       if (name.startsWith("picker-") && name !== "picker-anchor") {
@@ -3905,6 +3914,22 @@ class FigInputFill extends HTMLElement {
   #render() {
     const disabled = this.hasAttribute("disabled");
     const fillPickerValue = JSON.stringify(this.value);
+    const showAlpha = this.getAttribute("alpha") !== "false";
+
+    const opacityHtml = (value) =>
+      showAlpha
+        ? `<fig-tooltip text="Opacity">
+            <fig-input-number 
+              class="fig-input-fill-opacity"
+              placeholder="##" 
+              min="0"
+              max="100"
+              value="${value}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>`
+        : "";
 
     let controlsHtml = "";
 
@@ -3918,17 +3943,7 @@ class FigInputFill extends HTMLElement {
             value="${this.#solid.color.slice(1).toUpperCase()}"
             ${disabled ? "disabled" : ""}>
           </fig-input-text>
-          <fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${Math.round(this.#solid.alpha * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>`;
+          ${opacityHtml(Math.round(this.#solid.alpha * 100))}`;
         break;
 
       case "gradient":
@@ -3937,65 +3952,25 @@ class FigInputFill extends HTMLElement {
           this.#gradient.type.slice(1);
         controlsHtml = `
           <label class="fig-input-fill-label">${gradientLabel}</label>
-          <fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${this.#gradient.stops[0]?.opacity ?? 100}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>`;
+          ${opacityHtml(this.#gradient.stops[0]?.opacity ?? 100)}`;
         break;
 
       case "image":
         controlsHtml = `
           <label class="fig-input-fill-label">Image</label>
-          <fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${Math.round((this.#image.opacity ?? 1) * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>`;
+          ${opacityHtml(Math.round((this.#image.opacity ?? 1) * 100))}`;
         break;
 
       case "video":
         controlsHtml = `
           <label class="fig-input-fill-label">Video</label>
-          <fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${Math.round((this.#video.opacity ?? 1) * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>`;
+          ${opacityHtml(Math.round((this.#video.opacity ?? 1) * 100))}`;
         break;
 
       case "webcam":
         controlsHtml = `
           <label class="fig-input-fill-label">Webcam</label>
-          <fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${Math.round((this.#webcam.opacity ?? 1) * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>`;
+          ${opacityHtml(Math.round((this.#webcam.opacity ?? 1) * 100))}`;
         break;
     }
 
@@ -5154,6 +5129,14 @@ class FigImage extends HTMLElement {
     this.size = this.getAttribute("size") || "small";
     this.innerHTML = this.#getInnerHTML();
     this.#updateRefs();
+    const ar = this.getAttribute("aspect-ratio");
+    if (ar && ar !== "auto") {
+      this.style.setProperty("--aspect-ratio", ar);
+    }
+    const fit = this.getAttribute("fit");
+    if (fit) {
+      this.style.setProperty("--fit", fit);
+    }
   }
   disconnectedCallback() {
     this.fileInput?.removeEventListener("change", this.#boundHandleFileInput);
@@ -5190,10 +5173,13 @@ class FigImage extends HTMLElement {
       this.image.crossOrigin = "Anonymous";
       this.image.onload = async () => {
         this.aspectRatio = this.image.width / this.image.height;
-        this.style.setProperty(
-          "--aspect-ratio",
-          `${this.image.width}/${this.image.height}`
-        );
+        const ar = this.getAttribute("aspect-ratio");
+        if (!ar || ar === "auto") {
+          this.style.setProperty(
+            "--aspect-ratio",
+            `${this.image.width}/${this.image.height}`
+          );
+        }
         this.dispatchEvent(
           new CustomEvent("loaded", {
             bubbles: true,
@@ -5265,7 +5251,7 @@ class FigImage extends HTMLElement {
     this.setAttribute("src", this.blob);
   }
   static get observedAttributes() {
-    return ["src", "upload"];
+    return ["src", "upload", "aspect-ratio", "fit"];
   }
   get src() {
     return this.#src;
@@ -5297,9 +5283,664 @@ class FigImage extends HTMLElement {
     if (name === "size") {
       this.size = newValue;
     }
+    if (name === "aspect-ratio") {
+      if (newValue && newValue !== "auto") {
+        this.style.setProperty("--aspect-ratio", newValue);
+      } else if (!newValue) {
+        this.style.removeProperty("--aspect-ratio");
+      }
+    }
+    if (name === "fit") {
+      if (newValue) {
+        this.style.setProperty("--fit", newValue);
+      } else {
+        this.style.removeProperty("--fit");
+      }
+    }
   }
 }
 customElements.define("fig-image", FigImage);
+
+/**
+ * A bezier / spring easing curve editor with draggable control points.
+ * @attr {string} value - Bezier: "0.42, 0, 0.58, 1" or Spring: "spring(200, 15, 1)"
+ * @attr {number} precision - Decimal places for output values (default 2)
+ * @attr {boolean} dropdown - Show a preset dropdown selector
+ */
+class FigEasingCurve extends HTMLElement {
+  #cp1 = { x: 0.42, y: 0 };
+  #cp2 = { x: 0.58, y: 1 };
+  #spring = { stiffness: 200, damping: 15, mass: 1 };
+  #mode = "bezier";
+  #precision = 2;
+  #isDragging = null;
+  #svg = null;
+  #curve = null;
+  #line1 = null;
+  #line2 = null;
+  #handle1 = null;
+  #handle2 = null;
+  #dropdown = null;
+  #presetName = null;
+  #targetLine = null;
+  #springDuration = 0.8;
+  #drawWidth = 200;
+  #drawHeight = 200;
+  #bounds = null;
+  #diagonal = null;
+  #resizeObserver = null;
+
+  static PRESETS = [
+    { group: null, name: "Linear", type: "bezier", value: [0, 0, 1, 1] },
+    { group: "Bezier", name: "Ease in", type: "bezier", value: [0.42, 0, 1, 1] },
+    { group: "Bezier", name: "Ease out", type: "bezier", value: [0, 0, 0.58, 1] },
+    { group: "Bezier", name: "Ease in and out", type: "bezier", value: [0.42, 0, 0.58, 1] },
+    { group: "Bezier", name: "Ease in back", type: "bezier", value: [0.6, -0.28, 0.735, 0.045] },
+    { group: "Bezier", name: "Ease out back", type: "bezier", value: [0.175, 0.885, 0.32, 1.275] },
+    { group: "Bezier", name: "Ease in and out back", type: "bezier", value: [0.68, -0.55, 0.265, 1.55] },
+    { group: "Bezier", name: "Custom bezier", type: "bezier", value: null },
+    { group: "Spring", name: "Gentle", type: "spring", spring: { stiffness: 120, damping: 14, mass: 1 } },
+    { group: "Spring", name: "Quick", type: "spring", spring: { stiffness: 380, damping: 20, mass: 1 } },
+    { group: "Spring", name: "Bouncy", type: "spring", spring: { stiffness: 250, damping: 8, mass: 1 } },
+    { group: "Spring", name: "Slow", type: "spring", spring: { stiffness: 60, damping: 11, mass: 1 } },
+    { group: "Spring", name: "Custom spring", type: "spring", spring: null },
+  ];
+
+  static get observedAttributes() {
+    return ["value", "precision"];
+  }
+
+  connectedCallback() {
+    this.#precision = parseInt(this.getAttribute("precision") || "2");
+    const val = this.getAttribute("value");
+    if (val) this.#parseValue(val);
+    this.#presetName = this.#matchPreset();
+    this.#render();
+    this.#setupResizeObserver();
+  }
+
+  disconnectedCallback() {
+    this.#isDragging = null;
+    if (this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+      this.#resizeObserver = null;
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (!this.#svg) return;
+    if (name === "value" && newValue) {
+      const prevMode = this.#mode;
+      this.#parseValue(newValue);
+      this.#presetName = this.#matchPreset();
+      if (prevMode !== this.#mode) {
+        this.#render();
+      } else {
+        this.#updatePaths();
+        this.#syncDropdown();
+      }
+    }
+    if (name === "precision") {
+      this.#precision = parseInt(newValue || "2");
+    }
+  }
+
+  get value() {
+    if (this.#mode === "spring") {
+      const { stiffness, damping, mass } = this.#spring;
+      return `spring(${stiffness}, ${damping}, ${mass})`;
+    }
+    const p = this.#precision;
+    return `${this.#cp1.x.toFixed(p)}, ${this.#cp1.y.toFixed(p)}, ${this.#cp2.x.toFixed(p)}, ${this.#cp2.y.toFixed(p)}`;
+  }
+
+  get cssValue() {
+    if (this.#mode === "spring") {
+      const points = this.#simulateSpring();
+      const samples = 20;
+      const step = Math.max(1, Math.floor(points.length / samples));
+      const vals = [];
+      for (let i = 0; i < points.length; i += step) {
+        vals.push(points[i].value.toFixed(3));
+      }
+      if (points.length > 0) vals.push(points[points.length - 1].value.toFixed(3));
+      return `linear(${vals.join(", ")})`;
+    }
+    const p = this.#precision;
+    return `cubic-bezier(${this.#cp1.x.toFixed(p)}, ${this.#cp1.y.toFixed(p)}, ${this.#cp2.x.toFixed(p)}, ${this.#cp2.y.toFixed(p)})`;
+  }
+
+  get preset() {
+    return this.#presetName;
+  }
+
+  set value(v) {
+    this.setAttribute("value", v);
+  }
+
+  #parseValue(str) {
+    const springMatch = str.match(/^spring\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/);
+    if (springMatch) {
+      this.#mode = "spring";
+      this.#spring.stiffness = parseFloat(springMatch[1]);
+      this.#spring.damping = parseFloat(springMatch[2]);
+      this.#spring.mass = parseFloat(springMatch[3]);
+      return;
+    }
+    const parts = str.split(",").map((s) => parseFloat(s.trim()));
+    if (parts.length >= 4 && parts.every((n) => !isNaN(n))) {
+      this.#mode = "bezier";
+      this.#cp1.x = parts[0];
+      this.#cp1.y = parts[1];
+      this.#cp2.x = parts[2];
+      this.#cp2.y = parts[3];
+    }
+  }
+
+  #matchPreset() {
+    const ep = 0.001;
+    if (this.#mode === "bezier") {
+      for (const p of FigEasingCurve.PRESETS) {
+        if (p.type !== "bezier" || !p.value) continue;
+        if (
+          Math.abs(this.#cp1.x - p.value[0]) < ep &&
+          Math.abs(this.#cp1.y - p.value[1]) < ep &&
+          Math.abs(this.#cp2.x - p.value[2]) < ep &&
+          Math.abs(this.#cp2.y - p.value[3]) < ep
+        ) return p.name;
+      }
+      return "Custom bezier";
+    }
+    for (const p of FigEasingCurve.PRESETS) {
+      if (p.type !== "spring" || !p.spring) continue;
+      if (
+        Math.abs(this.#spring.stiffness - p.spring.stiffness) < ep &&
+        Math.abs(this.#spring.damping - p.spring.damping) < ep &&
+        Math.abs(this.#spring.mass - p.spring.mass) < ep
+      ) return p.name;
+    }
+    return "Custom spring";
+  }
+
+  // --- Spring simulation ---
+
+  #simulateSpring() {
+    const { stiffness, damping, mass } = this.#spring;
+    const dt = 0.004;
+    const maxTime = 5;
+    const points = [];
+    let pos = 0, vel = 0;
+    for (let t = 0; t <= maxTime; t += dt) {
+      const force = -stiffness * (pos - 1) - damping * vel;
+      vel += (force / mass) * dt;
+      pos += vel * dt;
+      points.push({ t, value: pos });
+      if (t > 0.1 && Math.abs(pos - 1) < 0.0005 && Math.abs(vel) < 0.0005) break;
+    }
+    return points;
+  }
+
+  static #springIcon(spring, size = 24) {
+    const { stiffness, damping, mass } = spring;
+    const dt = 0.004;
+    const maxTime = 5;
+    const pts = [];
+    let pos = 0, vel = 0;
+    for (let t = 0; t <= maxTime; t += dt) {
+      const force = -stiffness * (pos - 1) - damping * vel;
+      vel += (force / mass) * dt;
+      pos += vel * dt;
+      pts.push({ t, value: pos });
+      if (t > 0.1 && Math.abs(pos - 1) < 0.001 && Math.abs(vel) < 0.001) break;
+    }
+    const totalTime = pts[pts.length - 1].t || 1;
+    let maxVal = 1;
+    for (const p of pts) if (p.value > maxVal) maxVal = p.value;
+    let minVal = 0;
+    for (const p of pts) if (p.value < minVal) minVal = p.value;
+    const range = Math.max(maxVal - minVal, 1);
+    const pad = 6;
+    const s = size - pad * 2;
+    const step = Math.max(1, Math.floor(pts.length / 30));
+    let d = "";
+    for (let i = 0; i < pts.length; i += step) {
+      const x = pad + (pts[i].t / totalTime) * s;
+      const y = pad + (1 - (pts[i].value - minVal) / range) * s;
+      d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`;
+  }
+
+  static curveIcon(cp1x, cp1y, cp2x, cp2y, size = 24) {
+    const pad = 6;
+    const s = size - pad * 2;
+    const x = (n) => pad + n * s;
+    const y = (n) => pad + (1 - n) * s;
+    const d = `M${x(0)},${y(0)} C${x(cp1x)},${y(cp1y)} ${x(cp2x)},${y(cp2y)} ${x(1)},${y(1)}`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+  }
+
+  // --- Rendering ---
+
+  #render() {
+    this.innerHTML = this.#getInnerHTML();
+    this.#cacheRefs();
+    this.#syncViewportSize();
+    this.#updatePaths();
+    this.#setupEvents();
+  }
+
+  #getDropdownHTML() {
+    if (this.getAttribute("dropdown") !== "true") return "";
+    let optionsHTML = "";
+    let currentGroup = undefined;
+    for (const p of FigEasingCurve.PRESETS) {
+      if (p.group !== currentGroup) {
+        if (currentGroup !== undefined) optionsHTML += `</optgroup>`;
+        if (p.group) optionsHTML += `<optgroup label="${p.group}">`;
+        currentGroup = p.group;
+      }
+      let icon;
+      if (p.type === "spring") {
+        const sp = p.spring || this.#spring;
+        icon = FigEasingCurve.#springIcon(sp);
+      } else {
+        const v = p.value || [this.#cp1.x, this.#cp1.y, this.#cp2.x, this.#cp2.y];
+        icon = FigEasingCurve.curveIcon(...v);
+      }
+      const selected = p.name === this.#presetName ? " selected" : "";
+      optionsHTML += `<option value="${p.name}"${selected}>${icon} ${p.name}</option>`;
+    }
+    if (currentGroup) optionsHTML += `</optgroup>`;
+    return `<fig-dropdown class="fig-easing-curve-dropdown" full experimental="modern">${optionsHTML}</fig-dropdown>`;
+  }
+
+  #getInnerHTML() {
+    const size = 200;
+    const dropdown = this.#getDropdownHTML();
+
+    if (this.#mode === "spring") {
+      const targetY = 40;
+      const startY = 180;
+      return `${dropdown}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
+        <rect class="fig-easing-curve-bounds" x="0" y="0" width="${size}" height="${size}"/>
+        <line class="fig-easing-curve-target" x1="0" y1="${targetY}" x2="${size}" y2="${targetY}"/>
+        <line class="fig-easing-curve-diagonal" x1="0" y1="${startY}" x2="0" y2="${startY}"/>
+        <path class="fig-easing-curve-path"/>
+        <circle class="fig-easing-curve-handle" data-handle="bounce" r="5.25"/>
+        <rect class="fig-easing-curve-duration-bar" data-handle="duration" width="6" height="16" rx="3" ry="3"/>
+      </svg></div>`;
+    }
+
+    return `${dropdown}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
+      <rect class="fig-easing-curve-bounds" x="0" y="0" width="${size}" height="${size}"/>
+      <line class="fig-easing-curve-diagonal" x1="0" y1="${size}" x2="${size}" y2="0"/>
+      <line class="fig-easing-curve-arm" data-arm="1"/>
+      <line class="fig-easing-curve-arm" data-arm="2"/>
+      <path class="fig-easing-curve-path"/>
+      <circle class="fig-easing-curve-handle" data-handle="1" r="5.25"/>
+      <circle class="fig-easing-curve-handle" data-handle="2" r="5.25"/>
+    </svg></div>`;
+  }
+
+  #cacheRefs() {
+    this.#svg = this.querySelector(".fig-easing-curve-svg");
+    this.#curve = this.querySelector(".fig-easing-curve-path");
+    this.#line1 = this.querySelector('[data-arm="1"]');
+    this.#line2 = this.querySelector('[data-arm="2"]');
+    this.#handle1 = this.querySelector('[data-handle="1"]') || this.querySelector('[data-handle="bounce"]');
+    this.#handle2 = this.querySelector('[data-handle="2"]') || this.querySelector('[data-handle="duration"]');
+    this.#dropdown = this.querySelector(".fig-easing-curve-dropdown");
+    this.#targetLine = this.querySelector(".fig-easing-curve-target");
+    this.#bounds = this.querySelector(".fig-easing-curve-bounds");
+    this.#diagonal = this.querySelector(".fig-easing-curve-diagonal");
+  }
+
+  #setupResizeObserver() {
+    if (this.#resizeObserver || !window.ResizeObserver) return;
+    this.#resizeObserver = new ResizeObserver(() => {
+      if (this.#syncViewportSize()) {
+        this.#updatePaths();
+      }
+    });
+    this.#resizeObserver.observe(this);
+  }
+
+  #syncViewportSize() {
+    if (!this.#svg) return false;
+    const rect = this.#svg.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width || 200));
+    const height = Math.max(1, Math.round(rect.height || 200));
+    const changed = width !== this.#drawWidth || height !== this.#drawHeight;
+    this.#drawWidth = width;
+    this.#drawHeight = height;
+    this.#svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    return changed;
+  }
+
+  // --- Coordinate helpers ---
+
+  #toSVG(nx, ny) {
+    return { x: nx * this.#drawWidth, y: (1 - ny) * this.#drawHeight };
+  }
+
+  #fromSVG(sx, sy) {
+    return { x: sx / this.#drawWidth, y: 1 - sy / this.#drawHeight };
+  }
+
+  #springScale = { minVal: 0, maxVal: 1.2, totalTime: 1 };
+
+  #springToSVG(nt, nv) {
+    const pad = 20;
+    const draw = this.#drawHeight - pad * 2;
+    const { minVal, maxVal } = this.#springScale;
+    const range = maxVal - minVal || 1;
+    return {
+      x: nt * this.#drawWidth,
+      y: pad + (1 - (nv - minVal) / range) * draw,
+    };
+  }
+
+  // --- Path updates ---
+
+  #updatePaths() {
+    this.#syncViewportSize();
+    if (this.#mode === "spring") {
+      this.#updateSpringPaths();
+    } else {
+      this.#updateBezierPaths();
+    }
+  }
+
+  #updateBezierPaths() {
+    if (this.#bounds) {
+      this.#bounds.setAttribute("x", "0");
+      this.#bounds.setAttribute("y", "0");
+      this.#bounds.setAttribute("width", this.#drawWidth);
+      this.#bounds.setAttribute("height", this.#drawHeight);
+    }
+    if (this.#diagonal) {
+      this.#diagonal.setAttribute("x1", "0");
+      this.#diagonal.setAttribute("y1", this.#drawHeight);
+      this.#diagonal.setAttribute("x2", this.#drawWidth);
+      this.#diagonal.setAttribute("y2", "0");
+    }
+
+    const p0 = this.#toSVG(0, 0);
+    const p1 = this.#toSVG(this.#cp1.x, this.#cp1.y);
+    const p2 = this.#toSVG(this.#cp2.x, this.#cp2.y);
+    const p3 = this.#toSVG(1, 1);
+
+    this.#curve.setAttribute("d", `M${p0.x},${p0.y} C${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
+    this.#line1.setAttribute("x1", p0.x);
+    this.#line1.setAttribute("y1", p0.y);
+    this.#line1.setAttribute("x2", p1.x);
+    this.#line1.setAttribute("y2", p1.y);
+    this.#line2.setAttribute("x1", p3.x);
+    this.#line2.setAttribute("y1", p3.y);
+    this.#line2.setAttribute("x2", p2.x);
+    this.#line2.setAttribute("y2", p2.y);
+    this.#handle1.setAttribute("cx", p1.x);
+    this.#handle1.setAttribute("cy", p1.y);
+    this.#handle2.setAttribute("cx", p2.x);
+    this.#handle2.setAttribute("cy", p2.y);
+  }
+
+  #updateSpringPaths() {
+    if (this.#bounds) {
+      this.#bounds.setAttribute("x", "0");
+      this.#bounds.setAttribute("y", "0");
+      this.#bounds.setAttribute("width", this.#drawWidth);
+      this.#bounds.setAttribute("height", this.#drawHeight);
+    }
+
+    const points = this.#simulateSpring();
+    if (!points.length) return;
+    const totalTime = points[points.length - 1].t || 1;
+
+    let minVal = 0, maxVal = 1;
+    for (const p of points) {
+      if (p.value < minVal) minVal = p.value;
+      if (p.value > maxVal) maxVal = p.value;
+    }
+    const maxDistFromCenter = Math.max(Math.abs(minVal - 1), Math.abs(maxVal - 1), 0.01);
+    const valPad = 0;
+    this.#springScale = {
+      minVal: 1 - maxDistFromCenter - valPad,
+      maxVal: 1 + maxDistFromCenter + valPad,
+      totalTime,
+    };
+
+    const durationNorm = Math.max(0.05, Math.min(0.95, this.#springDuration));
+    let d = "";
+    for (let i = 0; i < points.length; i++) {
+      const nt = (points[i].t / totalTime) * durationNorm;
+      const pt = this.#springToSVG(nt, points[i].value);
+      d += (i === 0 ? "M" : "L") + pt.x.toFixed(1) + "," + pt.y.toFixed(1);
+    }
+    const flatStart = this.#springToSVG(durationNorm, 1);
+    const flatEnd = this.#springToSVG(1, 1);
+    d += `L${flatStart.x.toFixed(1)},${flatStart.y.toFixed(1)} L${flatEnd.x.toFixed(1)},${flatEnd.y.toFixed(1)}`;
+    this.#curve.setAttribute("d", d);
+
+    // Update target line position at value=1
+    if (this.#targetLine) {
+      const tl = this.#springToSVG(0, 1);
+      const tr = this.#springToSVG(1, 1);
+      this.#targetLine.setAttribute("x1", tl.x);
+      this.#targetLine.setAttribute("y1", tl.y);
+      this.#targetLine.setAttribute("x2", tr.x);
+      this.#targetLine.setAttribute("y2", tr.y);
+    }
+
+    // Bounce handle: at first overshoot peak
+    const peak = this.#findPeakOvershoot(points);
+    const peakNorm = (peak.t / totalTime) * durationNorm;
+    const peakPt = this.#springToSVG(peakNorm, peak.value);
+    this.#handle1.setAttribute("cx", peakPt.x);
+    this.#handle1.setAttribute("cy", peakPt.y);
+
+    // Duration handle: on the target line
+    const targetPt = this.#springToSVG(durationNorm, 1);
+    this.#handle2.setAttribute("x", targetPt.x - 3);
+    this.#handle2.setAttribute("y", targetPt.y - 8);
+
+  }
+
+  #findPeakOvershoot(points) {
+    let peak = { t: 0, value: 1 };
+    let passedTarget = false;
+    for (const p of points) {
+      if (p.value >= 0.99) passedTarget = true;
+      if (passedTarget && p.value > peak.value) {
+        peak = { t: p.t, value: p.value };
+      }
+    }
+    return peak;
+  }
+
+  // --- Dropdown ---
+
+  #syncDropdown() {
+    if (!this.#dropdown) return;
+    this.#dropdown.value = this.#presetName;
+    this.#refreshCustomPresetIcons();
+  }
+
+  #setOptionIconByValue(root, optionValue, icon) {
+    if (!root) return;
+    for (const option of root.querySelectorAll("option")) {
+      if (option.value === optionValue) {
+        option.innerHTML = `${icon} ${optionValue}`;
+      }
+    }
+  }
+
+  #refreshCustomPresetIcons() {
+    if (!this.#dropdown) return;
+    const bezierIcon = FigEasingCurve.curveIcon(
+      this.#cp1.x,
+      this.#cp1.y,
+      this.#cp2.x,
+      this.#cp2.y
+    );
+    const springIcon = FigEasingCurve.#springIcon(this.#spring);
+
+    // Update both slotted options and the cloned native select options.
+    this.#setOptionIconByValue(this.#dropdown, "Custom bezier", bezierIcon);
+    this.#setOptionIconByValue(this.#dropdown, "Custom spring", springIcon);
+    this.#setOptionIconByValue(this.#dropdown.select, "Custom bezier", bezierIcon);
+    this.#setOptionIconByValue(this.#dropdown.select, "Custom spring", springIcon);
+  }
+
+  // --- Events ---
+
+  #emit(type) {
+    this.dispatchEvent(new CustomEvent(type, {
+      bubbles: true,
+      detail: {
+        mode: this.#mode,
+        value: this.value,
+        cssValue: this.cssValue,
+        preset: this.#presetName,
+      },
+    }));
+  }
+
+  #setupEvents() {
+    if (this.#mode === "bezier") {
+      this.#handle1.addEventListener("pointerdown", (e) => this.#startBezierDrag(e, 1));
+      this.#handle2.addEventListener("pointerdown", (e) => this.#startBezierDrag(e, 2));
+    } else {
+      this.#handle1.addEventListener("pointerdown", (e) => this.#startSpringDrag(e, "bounce"));
+      this.#handle2.addEventListener("pointerdown", (e) => this.#startSpringDrag(e, "duration"));
+    }
+
+    if (this.#dropdown) {
+      this.#dropdown.addEventListener("change", (e) => {
+        const name = e.detail;
+        const preset = FigEasingCurve.PRESETS.find((p) => p.name === name);
+        if (!preset) return;
+
+        if (preset.type === "bezier") {
+          if (preset.value) {
+            this.#cp1.x = preset.value[0];
+            this.#cp1.y = preset.value[1];
+            this.#cp2.x = preset.value[2];
+            this.#cp2.y = preset.value[3];
+          }
+          this.#presetName = name;
+          if (this.#mode !== "bezier") {
+            this.#mode = "bezier";
+            this.#render();
+          } else {
+            this.#updatePaths();
+          }
+        } else if (preset.type === "spring") {
+          if (preset.spring) {
+            this.#spring = { ...preset.spring };
+          }
+          this.#presetName = name;
+          if (this.#mode !== "spring") {
+            this.#mode = "spring";
+            this.#render();
+          } else {
+            this.#updatePaths();
+          }
+        }
+        this.#emit("input");
+        this.#emit("change");
+      });
+    }
+  }
+
+  #clientToSVG(e) {
+    const ctm = this.#svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const inv = ctm.inverse();
+    return {
+      x: inv.a * e.clientX + inv.c * e.clientY + inv.e,
+      y: inv.b * e.clientX + inv.d * e.clientY + inv.f,
+    };
+  }
+
+  #startBezierDrag(e, handle) {
+    e.preventDefault();
+    this.#isDragging = handle;
+
+    const onMove = (e) => {
+      if (!this.#isDragging) return;
+      const svgPt = this.#clientToSVG(e);
+      const norm = this.#fromSVG(svgPt.x, svgPt.y);
+
+      norm.x = Math.round(norm.x * 100) / 100;
+      norm.y = Math.round(norm.y * 100) / 100;
+      norm.x = Math.max(0, Math.min(1, norm.x));
+
+      if (this.#isDragging === 1) {
+        this.#cp1.x = norm.x;
+        this.#cp1.y = norm.y;
+      } else {
+        this.#cp2.x = norm.x;
+        this.#cp2.y = norm.y;
+      }
+      this.#updatePaths();
+      this.#presetName = this.#matchPreset();
+      this.#syncDropdown();
+      this.#emit("input");
+    };
+
+    const onUp = () => {
+      this.#isDragging = null;
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      this.#emit("change");
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+
+  #startSpringDrag(e, handleType) {
+    e.preventDefault();
+    this.#isDragging = handleType;
+
+    const startDamping = this.#spring.damping;
+    const startStiffness = this.#spring.stiffness;
+    const startDuration = this.#springDuration;
+    const startY = e.clientY;
+    const startX = e.clientX;
+
+    const onMove = (e) => {
+      if (!this.#isDragging) return;
+
+      if (handleType === "bounce") {
+        const dy = e.clientY - startY;
+        this.#spring.damping = Math.max(1, Math.round(startDamping + dy * 0.15));
+      } else {
+        const dx = e.clientX - startX;
+        this.#springDuration = Math.max(0.05, Math.min(0.95, startDuration + dx / 200));
+        this.#spring.stiffness = Math.max(10, Math.round(startStiffness - dx * 1.5));
+      }
+
+      this.#updatePaths();
+      this.#presetName = this.#matchPreset();
+      this.#syncDropdown();
+      this.#emit("input");
+    };
+
+    const onUp = () => {
+      this.#isDragging = null;
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      this.#emit("change");
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+}
+customElements.define("fig-easing-curve", FigEasingCurve);
 
 /**
  * A custom joystick input element.

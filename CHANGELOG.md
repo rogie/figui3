@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.26.0]
+
+### Added
+
+- New `fig-easing-curve` component with bezier and spring editing, preset dropdown support, and `input`/`change` events exposing `value`, `cssValue`, `mode`, and `preset`.
+- New `propkit.html` demo page with focused property-field examples, including image, color, fill, slider variants, switch, dropdown, segment, angle, and easing curve sections.
+- Copy-prompt helpers in `propkit.html` section subheaders, including one-click prompt copy and toast feedback.
+
+### Changed
+
+- `fig-easing-curve` spring editor now keeps duration marker behavior aligned to the rendered spring timeline and improves handle interaction/visual consistency.
+- Easing curve icon generation now uses 24x24 icons with 6px padding and dynamic custom preset icon refresh.
+- Sliders in `propkit.html` now use the Neue slider variant.
+- `fig-image` now supports `aspect-ratio` and `fit` mapping to internal CSS vars for richer image layout control.
+
+### Fixed
+
+- Tooltip warmup behavior: recently shown tooltips now open instantly during rapid hover transitions.
+- `fig-input-fill` now supports `alpha="false"` and hides opacity controls when alpha is disabled.
+- Easing curve bezier diagonal reference line visibility and spring duration marker rendering issues in demos.
+
 ## [2.25.0]
 
 ### Added

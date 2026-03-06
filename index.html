@@ -4339,6 +4339,32 @@
                 <fig-button>No delay</fig-button>
             </fig-tooltip>
 
+            <h3>Warmup (Rapid Hover)</h3>
+            <p class="description">After the first tooltip appears, moving quickly between these buttons shows
+                subsequent tooltips instantly — no repeated delay.</p>
+            <hstack>
+                <fig-tooltip text="Add" delay="500">
+                    <fig-button icon variant="ghost">
+                        <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+                    </fig-button>
+                </fig-tooltip>
+                <fig-tooltip text="Remove" delay="500">
+                    <fig-button icon variant="ghost">
+                        <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
+                    </fig-button>
+                </fig-tooltip>
+                <fig-tooltip text="Rotate" delay="500">
+                    <fig-button icon variant="ghost">
+                        <span class="fig-mask-icon" style="--icon: var(--icon-rotate)"></span>
+                    </fig-button>
+                </fig-tooltip>
+                <fig-tooltip text="Swap" delay="500">
+                    <fig-button icon variant="ghost">
+                        <span class="fig-mask-icon" style="--icon: var(--icon-swap)"></span>
+                    </fig-button>
+                </fig-tooltip>
+            </hstack>
+
             <h3>Long Text</h3>
             <fig-tooltip text="This is a much longer tooltip that contains more detailed information about the element">
                 <fig-button variant="secondary">Long tooltip</fig-button>
