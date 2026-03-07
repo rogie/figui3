@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "2.29.1",
+  "version": "2.29.2",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "MIT",
@@ -12,7 +12,8 @@
     "./fig.js": "./fig.js",
     "./fig.css": "./fig.css",
     "./base.css": "./base.css",
-    "./components.css": "./components.css"
+    "./components.css": "./components.css",
+    "./propkit.html": "./propkit.html"
   },
   "files": [
     "fig.js",
@@ -20,7 +21,9 @@
     "base.css",
     "components.css",
     "index.html",
+    "propkit.html",
     "dist/",
+    ".cursor/skills/",
     "README.md",
     "LICENSE"
   ],

@@ -15,6 +15,12 @@ All notable changes to this project will be documented in this file.
 - Expanded `figui3` skill guidance with React/Vite integration, tree-shaking-safe bootstrap patterns, overlay usage guidance, `experimental` attribute guidance, and color picker/custom mode (`modeready`) workflows.
 - Expanded `propkit` skill guidance with React/Vite usage, deterministic prompt rules, slider type/variant heuristics, control-selection heuristics, and delivery checklists.
 
+## [2.29.2]
+
+### Fixed
+
+- Include `propkit.html` and `.cursor/skills/` in published npm package.
+
 ## [2.29.1]
 
 ### Changed
