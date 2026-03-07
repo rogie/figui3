@@ -214,8 +214,14 @@
   --spacer-6: 2.5rem;
 
   /* Radii */
+  --radius-none: 0;
+  --radius-small: 0.125rem;
   --radius-medium: 0.3125rem;
   --radius-large: 0.8125rem;
+  --figma-radius-none: var(--radius-none);
+  --figma-radius-small: var(--radius-small);
+  --figma-radius-medium: var(--radius-medium);
+  --figma-radius-large: var(--radius-large);
 
   /* Transitions */
   --input-transition: all 0.08s ease-out;
@@ -599,6 +605,9 @@ input[type="text"][list] {
           align-items: center;
           gap: 0;
           min-width: 0;
+          &:not(:has(> svg)) {
+            padding-left: var(--spacer-2);
+          }
 
           & svg {
             flex-shrink: 0;
@@ -1315,18 +1324,35 @@ fig-easing-curve {
   display: flex;
   flex-direction: column;
   gap: var(--spacer-2);
-  --stroke-width: 1.25;
+  --stroke-width: 1;
+  --easing-bezier-handle-radius: 4.25;
+  --easing-spring-handle-radius: 4.25;
+  --easing-handle-fill: var(--figma-color-border-strong);
+  --easing-handle-fill-active: var(--figma-color-bg-brand);
+  --easing-handle-stroke: var(--figma-color-bg-secondary);
+  --easing-handle-stroke-width: var(--stroke-width);
+  --easing-duration-bar-width: 4.25;
+  --easing-duration-bar-height: 16;
+  --easing-duration-bar-radius: 3;
+  --aspect-ratio: 1 / 1;
+  --easing-duration-bar-fill: var(--figma-color-border-strong);
+  --easing-duration-bar-stroke: var(--figma-color-bg-secondary);
+  --easing-duration-bar-stroke-width: var(--stroke-width);
 
   width: 100%;
   .fig-easing-curve-svg {
     width: 100%;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: var(--aspect-ratio);
     overflow: visible;
   }
   .fig-easing-curve-svg-container {
     border-radius: var(--radius-medium);
     background: var(--figma-color-bg-secondary);
-    padding: var(--spacer-2);
+    padding: var(--spacer-3);
+    overflow: hidden;
+    &:is(:hover, :active, :focus, :focus-visible, :focus-within) {
+      overflow: visible;
+    }
   }
   &.spring-mode {
     .fig-easing-curve-svg-container,
@@ -1370,26 +1396,141 @@ fig-easing-curve {
     stroke-linecap: round;
   }
   .fig-easing-curve-handle {
-    fill: var(--figma-color-border-strong);
+    fill: var(--easing-handle-fill);
     cursor: grab;
     pointer-events: all;
-    stroke: var(--figma-color-bg-secondary);
-    stroke-width: var(--stroke-width);
+    stroke: var(--easing-handle-stroke);
+    stroke-width: var(--easing-handle-stroke-width);
     &:active {
       cursor: grabbing;
-      fill: var(--figma-color-bg-brand);
+      fill: var(--easing-handle-fill-active);
     }
   }
   .fig-easing-curve-duration-bar {
-    fill: var(--figma-color-border-strong);
-    stroke: var(--figma-color-bg-secondary);
-    stroke-width: var(--stroke-width);
+    fill: var(--easing-duration-bar-fill);
+    stroke: var(--easing-duration-bar-stroke);
+    stroke-width: var(--easing-duration-bar-stroke-width);
     cursor: ew-resize;
     pointer-events: all;
   }
   .fig-easing-curve-dropdown {
     option svg {
       vertical-align: middle;
+    }
+  }
+}
+
+/* 3D Rotate */
+fig-3d-rotate {
+  display: flex;
+  width: 100%;
+  --cube-size: 4rem;
+  --gradient-start-color: rgba(0, 0, 0, 0.05);
+  --gradient-end-color: transparent;
+
+  .fig-3d-rotate-container {
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg-secondary);
+    padding: var(--spacer-3);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    user-select: none;
+    overflow: hidden;
+
+    &.dragging,
+    &:active {
+      cursor: grabbing;
+    }
+    &:focus {
+      outline: 0;
+    }
+  }
+
+  .fig-3d-rotate-scene {
+    width: var(--cube-size);
+    height: var(--cube-size);
+    perspective: 20rem;
+    filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.15));
+  }
+
+  .fig-3d-rotate-cube {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+  }
+
+  .fig-3d-rotate-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: visible;
+    background: linear-gradient(
+      to bottom,
+      var(--gradient-start-color),
+      var(--gradient-end-color)
+    );
+
+    &.front {
+      transform: translateZ(calc(var(--cube-size) / 2));
+      background: var(--figma-color-bg);
+      border-radius: var(--radius-medium);
+
+      &::after {
+        content: "";
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--figma-color-border-strong);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
+    &.back {
+      transform: rotateY(180deg) translateZ(calc(var(--cube-size) / 2));
+      background: linear-gradient(
+        to bottom,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
+      border-radius: var(--radius-medium);
+    }
+    &.right {
+      transform: rotateY(90deg) translateZ(calc(var(--cube-size) / 2));
+      background: linear-gradient(
+        to right,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
+    }
+    &.left {
+      transform: rotateY(-90deg) translateZ(calc(var(--cube-size) / 2));
+      background: linear-gradient(
+        to left,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
+    }
+    &.top {
+      transform: rotateX(90deg) translateZ(calc(var(--cube-size) / 2));
+      background: linear-gradient(
+        to top,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
+    }
+    &.bottom {
+      transform: rotateX(-90deg) translateZ(calc(var(--cube-size) / 2));
+      background: linear-gradient(
+        to bottom,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
     }
   }
 }

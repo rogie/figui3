@@ -5446,6 +5446,8 @@ class FigEasingCurve extends HTMLElement {
   #line2 = null;
   #handle1 = null;
   #handle2 = null;
+  #bezierEndpointStart = null;
+  #bezierEndpointEnd = null;
   #dropdown = null;
   #presetName = null;
   #targetLine = null;
@@ -5455,6 +5457,12 @@ class FigEasingCurve extends HTMLElement {
   #bounds = null;
   #diagonal = null;
   #resizeObserver = null;
+  #bezierHandleRadius = 3.625;
+  #bezierEndpointRadius = 2;
+  #springHandleRadius = 3.625;
+  #durationBarWidth = 6;
+  #durationBarHeight = 16;
+  #durationBarRadius = 3;
 
   static PRESETS = [
     { group: null, name: "Linear", type: "bezier", value: [0, 0, 1, 1] },
@@ -5523,11 +5531,12 @@ class FigEasingCurve extends HTMLElement {
   ];
 
   static get observedAttributes() {
-    return ["value", "precision"];
+    return ["value", "precision", "aspect-ratio"];
   }
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "2");
+    this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
     const val = this.getAttribute("value");
     if (val) this.#parseValue(val);
     this.#presetName = this.#matchPreset();
@@ -5543,7 +5552,24 @@ class FigEasingCurve extends HTMLElement {
     }
   }
 
+  #syncAspectRatioVar(value) {
+    if (value && value.trim()) {
+      this.style.setProperty("--aspect-ratio", value.trim());
+    } else {
+      this.style.removeProperty("--aspect-ratio");
+    }
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "aspect-ratio") {
+      this.#syncAspectRatioVar(newValue);
+      if (this.#svg) {
+        this.#syncViewportSize();
+        this.#updatePaths();
+      }
+      return;
+    }
+
     if (!this.#svg) return;
     if (name === "value" && newValue) {
       const prevMode = this.#mode;
@@ -5749,6 +5775,7 @@ class FigEasingCurve extends HTMLElement {
   #render() {
     this.classList.toggle("spring-mode", this.#mode === "spring");
     this.classList.toggle("bezier-mode", this.#mode !== "spring");
+    this.#syncMetricsFromCSS();
     this.innerHTML = this.#getInnerHTML();
     this.#cacheRefs();
     this.#syncViewportSize();
@@ -5798,8 +5825,8 @@ class FigEasingCurve extends HTMLElement {
         <line class="fig-easing-curve-target" x1="0" y1="${targetY}" x2="${size}" y2="${targetY}"/>
         <line class="fig-easing-curve-diagonal" x1="0" y1="${startY}" x2="0" y2="${startY}"/>
         <path class="fig-easing-curve-path"/>
-        <circle class="fig-easing-curve-handle" data-handle="bounce" r="5.25"/>
-        <rect class="fig-easing-curve-duration-bar" data-handle="duration" width="6" height="16" rx="3" ry="3"/>
+        <circle class="fig-easing-curve-handle" data-handle="bounce" r="${this.#springHandleRadius}"/>
+        <rect class="fig-easing-curve-duration-bar" data-handle="duration" width="${this.#durationBarWidth}" height="${this.#durationBarHeight}" rx="${this.#durationBarRadius}" ry="${this.#durationBarRadius}"/>
       </svg></div>`;
     }
 
@@ -5809,9 +5836,45 @@ class FigEasingCurve extends HTMLElement {
       <line class="fig-easing-curve-arm" data-arm="1"/>
       <line class="fig-easing-curve-arm" data-arm="2"/>
       <path class="fig-easing-curve-path"/>
-      <circle class="fig-easing-curve-handle" data-handle="1" r="5.25"/>
-      <circle class="fig-easing-curve-handle" data-handle="2" r="5.25"/>
+      <circle class="fig-easing-curve-endpoint" data-endpoint="start" r="${this.#bezierEndpointRadius}"/>
+      <circle class="fig-easing-curve-endpoint" data-endpoint="end" r="${this.#bezierEndpointRadius}"/>
+      <circle class="fig-easing-curve-handle" data-handle="1" r="${this.#bezierHandleRadius}"/>
+      <circle class="fig-easing-curve-handle" data-handle="2" r="${this.#bezierHandleRadius}"/>
     </svg></div>`;
+  }
+
+  #readCssNumber(name, fallback) {
+    const raw = getComputedStyle(this).getPropertyValue(name).trim();
+    if (!raw) return fallback;
+    const value = Number.parseFloat(raw);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  #syncMetricsFromCSS() {
+    this.#bezierHandleRadius = this.#readCssNumber(
+      "--easing-bezier-handle-radius",
+      this.#bezierHandleRadius,
+    );
+    this.#bezierEndpointRadius = this.#readCssNumber(
+      "--easing-bezier-endpoint-radius",
+      this.#bezierEndpointRadius,
+    );
+    this.#springHandleRadius = this.#readCssNumber(
+      "--easing-spring-handle-radius",
+      this.#springHandleRadius,
+    );
+    this.#durationBarWidth = this.#readCssNumber(
+      "--easing-duration-bar-width",
+      this.#durationBarWidth,
+    );
+    this.#durationBarHeight = this.#readCssNumber(
+      "--easing-duration-bar-height",
+      this.#durationBarHeight,
+    );
+    this.#durationBarRadius = this.#readCssNumber(
+      "--easing-duration-bar-radius",
+      this.#durationBarRadius,
+    );
   }
 
   #cacheRefs() {
@@ -5825,6 +5888,8 @@ class FigEasingCurve extends HTMLElement {
     this.#handle2 =
       this.querySelector('[data-handle="2"]') ||
       this.querySelector('[data-handle="duration"]');
+    this.#bezierEndpointStart = this.querySelector('[data-endpoint="start"]');
+    this.#bezierEndpointEnd = this.querySelector('[data-endpoint="end"]');
     this.#dropdown = this.querySelector(".fig-easing-curve-dropdown");
     this.#targetLine = this.querySelector(".fig-easing-curve-target");
     this.#bounds = this.querySelector(".fig-easing-curve-bounds");
@@ -5922,6 +5987,14 @@ class FigEasingCurve extends HTMLElement {
     this.#handle1.setAttribute("cy", p1.y);
     this.#handle2.setAttribute("cx", p2.x);
     this.#handle2.setAttribute("cy", p2.y);
+    if (this.#bezierEndpointStart) {
+      this.#bezierEndpointStart.setAttribute("cx", p0.x);
+      this.#bezierEndpointStart.setAttribute("cy", p0.y);
+    }
+    if (this.#bezierEndpointEnd) {
+      this.#bezierEndpointEnd.setAttribute("cx", p3.x);
+      this.#bezierEndpointEnd.setAttribute("cy", p3.y);
+    }
   }
 
   #updateSpringPaths() {
@@ -5985,8 +6058,8 @@ class FigEasingCurve extends HTMLElement {
 
     // Duration handle: on the target line
     const targetPt = this.#springToSVG(durationNorm, 1);
-    this.#handle2.setAttribute("x", targetPt.x - 3);
-    this.#handle2.setAttribute("y", targetPt.y - 8);
+    this.#handle2.setAttribute("x", targetPt.x - this.#durationBarWidth / 2);
+    this.#handle2.setAttribute("y", targetPt.y - this.#durationBarHeight / 2);
   }
 
   #findPeakOvershoot(points) {
@@ -6067,6 +6140,15 @@ class FigEasingCurve extends HTMLElement {
       this.#handle2.addEventListener("pointerdown", (e) =>
         this.#startBezierDrag(e, 2),
       );
+
+      const bezierSurface = this.querySelector(".fig-easing-curve-svg-container");
+      if (bezierSurface) {
+        bezierSurface.addEventListener("pointerdown", (e) => {
+          // Handles keep their own direct drag behavior.
+          if (e.target?.closest?.(".fig-easing-curve-handle")) return;
+          this.#startBezierDrag(e, this.#bezierHandleForClientHalf(e));
+        });
+      }
     } else {
       this.#handle1.addEventListener("pointerdown", (e) => {
         e.stopPropagation();
@@ -6133,6 +6215,11 @@ class FigEasingCurve extends HTMLElement {
       x: inv.a * e.clientX + inv.c * e.clientY + inv.e,
       y: inv.b * e.clientX + inv.d * e.clientY + inv.f,
     };
+  }
+
+  #bezierHandleForClientHalf(e) {
+    const svgPt = this.#clientToSVG(e);
+    return svgPt.x <= this.#drawWidth / 2 ? 1 : 2;
   }
 
   #startBezierDrag(e, handle) {
@@ -6221,6 +6308,172 @@ class FigEasingCurve extends HTMLElement {
   }
 }
 customElements.define("fig-easing-curve", FigEasingCurve);
+
+/**
+ * A 3D rotation control with an interactive cube preview.
+ * @attr {string} value - CSS transform string, e.g. "rotateX(20deg) rotateY(-35deg) rotateZ(0deg)".
+ * @attr {number} precision - Decimal places for angle output (default 1).
+ */
+class Fig3DRotate extends HTMLElement {
+  #rx = 0;
+  #ry = 0;
+  #rz = 0;
+  #precision = 1;
+  #isDragging = false;
+  #isShiftHeld = false;
+  #cube = null;
+  #container = null;
+  #boundKeyDown = null;
+  #boundKeyUp = null;
+
+  static get observedAttributes() {
+    return ["value", "precision"];
+  }
+
+  connectedCallback() {
+    this.#precision = parseInt(this.getAttribute("precision") || "1");
+    const val = this.getAttribute("value");
+    if (val) this.#parseValue(val);
+    this.#render();
+  }
+
+  disconnectedCallback() {
+    this.#isDragging = false;
+    if (this.#boundKeyDown) {
+      window.removeEventListener("keydown", this.#boundKeyDown);
+      window.removeEventListener("keyup", this.#boundKeyUp);
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (!this.#cube) return;
+    if (name === "value" && newValue) {
+      if (this.#isDragging) return;
+      this.#parseValue(newValue);
+      this.#updateCube();
+    }
+    if (name === "precision") {
+      this.#precision = parseInt(newValue || "1");
+    }
+  }
+
+  get value() {
+    const p = this.#precision;
+    return `rotateX(${this.#rx.toFixed(p)}deg) rotateY(${this.#ry.toFixed(p)}deg) rotateZ(${this.#rz.toFixed(p)}deg)`;
+  }
+
+  set value(v) {
+    this.setAttribute("value", v);
+  }
+
+  get rotateX() {
+    return this.#rx;
+  }
+  get rotateY() {
+    return this.#ry;
+  }
+  get rotateZ() {
+    return this.#rz;
+  }
+
+  #parseValue(str) {
+    const rxMatch = str.match(/rotateX\(\s*(-?[\d.]+)\s*deg\s*\)/);
+    const ryMatch = str.match(/rotateY\(\s*(-?[\d.]+)\s*deg\s*\)/);
+    const rzMatch = str.match(/rotateZ\(\s*(-?[\d.]+)\s*deg\s*\)/);
+    if (rxMatch) this.#rx = parseFloat(rxMatch[1]);
+    if (ryMatch) this.#ry = parseFloat(ryMatch[1]);
+    if (rzMatch) this.#rz = parseFloat(rzMatch[1]);
+  }
+
+  #render() {
+    this.innerHTML = `<div class="fig-3d-rotate-container" tabindex="0">
+      <div class="fig-3d-rotate-scene">
+        <div class="fig-3d-rotate-cube">
+          <div class="fig-3d-rotate-face front"></div>
+          <div class="fig-3d-rotate-face back"></div>
+          <div class="fig-3d-rotate-face right"></div>
+          <div class="fig-3d-rotate-face left"></div>
+          <div class="fig-3d-rotate-face top"></div>
+          <div class="fig-3d-rotate-face bottom"></div>
+        </div>
+      </div>
+    </div>`;
+    this.#container = this.querySelector(".fig-3d-rotate-container");
+    this.#cube = this.querySelector(".fig-3d-rotate-cube");
+    this.#updateCube();
+    this.#setupEvents();
+  }
+
+  #updateCube() {
+    if (!this.#cube) return;
+    this.#cube.style.transform =
+      `rotateX(${this.#rx}deg) rotateY(${this.#ry}deg) rotateZ(${this.#rz}deg)`;
+  }
+
+  #emit(type) {
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        bubbles: true,
+        detail: {
+          value: this.value,
+          rotateX: this.#rx,
+          rotateY: this.#ry,
+          rotateZ: this.#rz,
+        },
+      }),
+    );
+  }
+
+  #snapToIncrement(angle) {
+    if (!this.#isShiftHeld) return angle;
+    return Math.round(angle / 15) * 15;
+  }
+
+  #setupEvents() {
+    this.#container.addEventListener("pointerdown", (e) => this.#startDrag(e));
+    this.#boundKeyDown = (e) => {
+      if (e.key === "Shift") this.#isShiftHeld = true;
+    };
+    this.#boundKeyUp = (e) => {
+      if (e.key === "Shift") this.#isShiftHeld = false;
+    };
+    window.addEventListener("keydown", this.#boundKeyDown);
+    window.addEventListener("keyup", this.#boundKeyUp);
+  }
+
+  #startDrag(e) {
+    e.preventDefault();
+    this.#isDragging = true;
+    this.#container.classList.add("dragging");
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startRx = this.#rx;
+    const startRy = this.#ry;
+
+    const onMove = (e) => {
+      if (!this.#isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      this.#ry = this.#snapToIncrement(startRy + dx * 0.5);
+      this.#rx = this.#snapToIncrement(startRx - dy * 0.5);
+      this.#updateCube();
+      this.#emit("input");
+    };
+
+    const onUp = () => {
+      this.#isDragging = false;
+      this.#container.classList.remove("dragging");
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      this.#emit("change");
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+}
+customElements.define("fig-3d-rotate", Fig3DRotate);
 
 /**
  * A custom joystick input element.

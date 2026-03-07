@@ -215,6 +215,7 @@
             <a href="#segment">Segment</a>
             <a href="#dial">Dial</a>
             <a href="#easing">Easing Curve</a>
+            <a href="#3d-rotate">3D Rotate</a>
             <a href="#angle">Angle</a>
             <hr>
             <a href="#combined">Combined Panel</a>
@@ -434,7 +435,7 @@
 
             <fig-header borderless
                         class="propkit-subheader">
-                <h3>Default</h3>
+                <h3>Solid</h3>
                 <fig-button variant="secondary"
                             class="copy-prompt-btn">Copy prompt</fig-button>
             </fig-header>
@@ -451,6 +452,98 @@
                         <label>Fill</label>
                         <fig-input-fill value='{"type":"solid","color":"#667eea"}'
                                         alpha="false"
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Linear Gradient</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}'
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#f093fb","opacity":100},{"position":50,"color":"#f5576c","opacity":100},{"position":100,"color":"#ffd868","opacity":100}]}}'
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Radial Gradient</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"gradient","gradient":{"type":"radial","centerX":50,"centerY":50,"stops":[{"position":0,"color":"#ff6b6b","opacity":100},{"position":100,"color":"#4ecdc4","opacity":100}]}}'
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"gradient","gradient":{"type":"radial","centerX":50,"centerY":50,"stops":[{"position":0,"color":"#ffffff","opacity":100},{"position":100,"color":"#0D99FF","opacity":100}]}}'
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Angular Gradient</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"gradient","gradient":{"type":"angular","stops":[{"position":0,"color":"#ff0000","opacity":100},{"position":33,"color":"#00ff00","opacity":100},{"position":66,"color":"#0000ff","opacity":100},{"position":100,"color":"#ff0000","opacity":100}]}}'
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"gradient","gradient":{"type":"angular","stops":[{"position":0,"color":"#f7971e","opacity":100},{"position":100,"color":"#ffd200","opacity":100}]}}'
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+            </hstack>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Image</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <hstack>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"image","image":{"url":"https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200&h=200&fit=crop","scaleMode":"fill","scale":50,"opacity":1}}'
+                                        experimental="modern"></fig-input-fill>
+                    </fig-field>
+                </div>
+                <div class="prop-panel">
+                    <fig-field direction="horizontal">
+                        <label>Fill</label>
+                        <fig-input-fill value='{"type":"image","image":{"url":"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop","scaleMode":"fill","scale":50,"opacity":0.5}}'
                                         experimental="modern"></fig-input-fill>
                     </fig-field>
                 </div>
@@ -838,6 +931,20 @@
 
             <fig-header borderless
                         class="propkit-subheader">
+                <h3>16:9 Horizontal</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Easing</label>
+                    <fig-easing-curve value="0.25, 0.1, 0.25, 1"
+                                      aspect-ratio="16/9"></fig-easing-curve>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
                 <h3>No Label</h3>
                 <fig-button variant="secondary"
                             class="copy-prompt-btn">Copy prompt</fig-button>
@@ -848,6 +955,33 @@
                                       dropdown="true"></fig-easing-curve>
                 </fig-field>
             </div>
+        </section>
+
+        <hr>
+
+        <!-- 3D Rotate -->
+        <section id="3d-rotate">
+            <h2>3D Rotate</h2>
+            <p class="description">An interactive 3D rotation control with a draggable cube preview.</p>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Default</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-3d-rotate value="rotateX(20deg) rotateY(-35deg) rotateZ(0deg)"
+                                   id="3d-rotate-observed"></fig-3d-rotate>
+                </fig-field>
+            </div>
+            <pre class="event-dump language-json"><code id="3d-rotate-dump"
+                      class="language-json">{
+  "event": "ready",
+  "value": "rotateX(20.0deg) rotateY(-35.0deg) rotateZ(0.0deg)"
+}</code></pre>
         </section>
 
         <hr>
@@ -1062,6 +1196,31 @@
             easingCurveObserved.addEventListener('change', (e) => updateEasingDump('change', e.detail));
         }
 
+        // 3D rotate event observer dump
+        const rotate3dObserved = document.getElementById('3d-rotate-observed');
+        const rotate3dDump = document.getElementById('3d-rotate-dump');
+
+        function updateRotate3dDump(eventName, detail = null) {
+            if (!rotate3dDump || !rotate3dObserved) return;
+            const payload = {
+                event: eventName,
+                value: detail?.value ?? rotate3dObserved.value,
+                rotateX: detail?.rotateX ?? rotate3dObserved.rotateX,
+                rotateY: detail?.rotateY ?? rotate3dObserved.rotateY,
+                rotateZ: detail?.rotateZ ?? rotate3dObserved.rotateZ,
+            };
+            rotate3dDump.textContent = JSON.stringify(payload, null, 2);
+            if (window.Prism) {
+                window.Prism.highlightElement(rotate3dDump);
+            }
+        }
+
+        if (rotate3dObserved) {
+            updateRotate3dDump('ready');
+            rotate3dObserved.addEventListener('input', (e) => updateRotate3dDump('input', e.detail));
+            rotate3dObserved.addEventListener('change', (e) => updateRotate3dDump('change', e.detail));
+        }
+
         function collectComponentTargets(subheaderEl, maxTargets = 1) {
             const targets = [];
             let node = subheaderEl.nextElementSibling;
@@ -1102,6 +1261,28 @@
                 if (el.hasAttribute('fit')) parts.push(`fit ${el.getAttribute('fit')}`);
                 if (el.hasAttribute('aspect-ratio')) parts.push(`aspect ratio ${el.getAttribute('aspect-ratio')}`);
                 return `Use a horizontal fig-field, with a ${parts.join(', ')}. With a label of ${labelText}.`;
+            }
+
+            if (tag === 'fig-input-fill') {
+                try {
+                    const val = JSON.parse(el.getAttribute('value') || '{}');
+                    const parts = ['fig-input-fill'];
+                    if (val.type === 'solid') {
+                        parts.push(`solid fill, color=${val.color}`);
+                    } else if (val.type === 'gradient' && val.gradient) {
+                        const g = val.gradient;
+                        parts.push(`${g.type} gradient`);
+                        if (g.angle !== undefined) parts.push(`angle=${g.angle}`);
+                        const colors = (g.stops || []).map(s => s.color).join(' → ');
+                        if (colors) parts.push(`stops=${colors}`);
+                    } else if (val.type === 'image') {
+                        parts.push('image fill');
+                        if (val.image?.scaleMode) parts.push(`scaleMode=${val.image.scaleMode}`);
+                        if (val.image?.opacity !== undefined && val.image.opacity < 1) parts.push(`opacity=${val.image.opacity}`);
+                    }
+                    if (el.hasAttribute('alpha') && el.getAttribute('alpha') === 'false') parts.push('alpha=false');
+                    return `Use a horizontal fig-field, with a ${parts.join(', ')}. With a label of ${labelText}.`;
+                } catch (e) { /* fall through */ }
             }
 
             const attrs = formatAttrs(el);
