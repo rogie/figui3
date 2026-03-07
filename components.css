@@ -1447,7 +1447,7 @@ fig-3d-rotate {
   }
 
   > fig-input-number {
-    flex: 1 0 4rem;
+    flex: 1 0 3rem;
   }
 
   .fig-3d-rotate-container {

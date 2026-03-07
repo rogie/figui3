@@ -15,6 +15,12 @@ All notable changes to this project will be documented in this file.
 - Expanded `figui3` skill guidance with React/Vite integration, tree-shaking-safe bootstrap patterns, overlay usage guidance, `experimental` attribute guidance, and color picker/custom mode (`modeready`) workflows.
 - Expanded `propkit` skill guidance with React/Vite usage, deterministic prompt rules, slider type/variant heuristics, control-selection heuristics, and delivery checklists.
 
+## [2.29.1]
+
+### Changed
+
+- Reduced `fig-3d-rotate` field input flex-basis from `4rem` to `3rem` for tighter layouts.
+
 ## [2.29.0]
 
 ### Added

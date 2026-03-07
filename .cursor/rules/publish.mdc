@@ -1,5 +1,5 @@
 ---
-description: Publish workflow — bump version, update changelog, commit, and push
+description: Publish workflow — bump version, update changelog, commit, push, and npm publish
 alwaysApply: true
 ---
 
@@ -7,8 +7,9 @@ alwaysApply: true
 
 When the user says "publish", follow this exact sequence:
 
-1. **Bump version** in `package.json` — patch by default, minor if new features, major if breaking. Ask only if ambiguous.
+1. **Bump version** in `package.json` — patch for bug fixes, minor for new features/enhancements, major for breaking changes. Ask only if ambiguous.
 2. **Update `CHANGELOG.md`** — add a new version section at the top with all changes since the last publish, following the existing format (### Fixed, ### Changed, ### Added).
 3. **Git add, commit, push** — stage all changed files, commit with message `v{version}: {short summary}`, and push to origin.
+4. **npm publish** — after a successful git push, run `npm publish --access public` to publish to the npm registry.
 
 Keep changelog entries concise but descriptive. Group by Fixed/Changed/Added as appropriate.
