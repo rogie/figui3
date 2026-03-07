@@ -1231,7 +1231,7 @@
             a.addEventListener('click', (e) => {
                 e.preventDefault();
                 const targetId = a.getAttribute('href');
-                const target = document.querySelector(targetId);
+                const target = document.getElementById(targetId.slice(1));
                 if (target) {
                     isClickScrolling = true;
                     history.pushState(null, '', targetId);
@@ -1245,7 +1245,7 @@
         window.addEventListener('load', () => {
             updateActiveNav();
             if (location.hash) {
-                document.querySelector(location.hash)?.scrollIntoView();
+                document.getElementById(location.hash.slice(1))?.scrollIntoView();
             }
         });
 

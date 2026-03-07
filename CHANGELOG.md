@@ -15,6 +15,12 @@ All notable changes to this project will be documented in this file.
 - Expanded `figui3` skill guidance with React/Vite integration, tree-shaking-safe bootstrap patterns, overlay usage guidance, `experimental` attribute guidance, and color picker/custom mode (`modeready`) workflows.
 - Expanded `propkit` skill guidance with React/Vite usage, deterministic prompt rules, slider type/variant heuristics, control-selection heuristics, and delivery checklists.
 
+## [2.29.3]
+
+### Fixed
+
+- Fix `querySelector` crash in propkit when navigating to `#3d-rotate` (IDs starting with a digit are invalid CSS selectors); switched to `getElementById`.
+
 ## [2.29.2]
 
 ### Fixed

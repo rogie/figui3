@@ -1409,6 +1409,9 @@ fig-easing-curve {
       fill: var(--easing-handle-fill-active);
     }
   }
+  .fig-easing-curve-endpoint {
+    fill: var(--easing-handle-fill);
+  }
   .fig-easing-curve-duration-bar {
     fill: var(--easing-duration-bar-fill);
     stroke: var(--easing-duration-bar-stroke);
@@ -1437,9 +1440,13 @@ fig-3d-rotate {
   gap: var(--spacer-2);
   width: 100%;
   --aspect-ratio: 1 / 1;
-  --gradient-start-color: rgba(0, 0, 0, 0.05);
+  --gradient-start-color: light-dark(
+    rgba(0, 0, 0, 0.05),
+    rgba(255, 255, 255, 0.05)
+  );
   --gradient-end-color: transparent;
   --figma-3d-rotate-handle-size: 6px;
+  --front-face-bg: light-dark(var(--figma-color-bg), #555);
 
   fig-field[direction="horizontal"] & {
     flex: 1;
@@ -1500,7 +1507,7 @@ fig-3d-rotate {
     );
 
     &.front {
-      background: var(--figma-color-bg);
+      background: var(--front-face-bg);
       border-radius: var(--radius-medium);
       transform-style: preserve-3d;
       box-shadow: var(--figma-elevation-100);
