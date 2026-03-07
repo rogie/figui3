@@ -183,6 +183,13 @@
             text-shadow: none;
         }
 
+        /* Prism theme reset: remove glow/shadow from highlighted code */
+        pre[class*="language-"],
+        code[class*="language-"],
+        .token {
+            text-shadow: none !important;
+        }
+
         :root {
             --code-token-comment: #6b7280;
             --code-token-punctuation: #374151;
@@ -4654,7 +4661,7 @@
             <pre
                  style="background: var(--figma-color-bg-secondary); padding: 12px 16px; border-radius: 6px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; font-size: 12px; color: var(--figma-color-text);">const button = document.querySelector('fig-button');
 button.addEventListener('click', () => {
-  console.log('Button clicked!');
+  // handle click
 });</code></pre>
 
             <h3>CSS Example</h3>

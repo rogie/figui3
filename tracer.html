@@ -523,11 +523,9 @@
             document.getElementById('svg').innerHTML = '';
 
             let appendImg = function (svgstr) {
-                console.log('SVG generated, updating display');
                 document.getElementById('svg').innerHTML = svgstr;
             };
 
-            console.log('Tracing with options:', currentOptions);
             ImageTracer.imageToSVG(currentImageBlob, appendImg, currentOptions);
         }
 
@@ -573,7 +571,6 @@
 
         // Handle image upload
         figImage.addEventListener("change", e => {
-            console.log('Image uploaded:', figImage.blob);
             currentImageBlob = figImage.blob;
             updateCurrentOptions();
             performTracing();

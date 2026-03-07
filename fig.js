@@ -175,6 +175,8 @@ class FigDropdown extends HTMLElement {
   #selectedValue = null; // Stores last selected value for dropdown type
   #boundHandleSelectInput;
   #boundHandleSelectChange;
+  #selectedContentEnabled = false;
+  #selectedContentEl = null;
 
   get label() {
     return this.#label;
@@ -191,6 +193,52 @@ class FigDropdown extends HTMLElement {
     this.#boundHandleSelectChange = this.#handleSelectChange.bind(this);
   }
 
+  #supportsSelectedContent() {
+    if (typeof CSS === "undefined" || typeof CSS.supports !== "function")
+      return false;
+    try {
+      return (
+        CSS.supports("appearance: base-select") &&
+        CSS.supports("selector(::picker(select))")
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  #enableSelectedContentIfNeeded() {
+    const experimental = this.getAttribute("experimental") || "";
+    const wantsModern = experimental
+      .split(/\s+/)
+      .filter(Boolean)
+      .includes("modern");
+
+    if (!wantsModern || !this.#supportsSelectedContent()) {
+      this.#selectedContentEnabled = false;
+      return;
+    }
+
+    const button = document.createElement("button");
+    button.setAttribute("type", "button");
+    button.setAttribute("aria-hidden", "true");
+    const selected = document.createElement("selectedcontent");
+    button.appendChild(selected);
+    this.select.appendChild(button);
+    this.#selectedContentEnabled = true;
+    this.#selectedContentEl = selected;
+  }
+
+  #syncSelectedContent() {
+    if (!this.#selectedContentEl) return;
+    const selectedOption = this.select.selectedOptions?.[0];
+    if (!selectedOption) {
+      this.#selectedContentEl.textContent = "";
+      return;
+    }
+    // Fallback mirror for browsers that don't auto-project selectedcontent reliably.
+    this.#selectedContentEl.innerHTML = selectedOption.innerHTML;
+  }
+
   #addEventListeners() {
     this.select.addEventListener("input", this.#boundHandleSelectInput);
     this.select.addEventListener("change", this.#boundHandleSelectChange);
@@ -199,7 +247,7 @@ class FigDropdown extends HTMLElement {
   #hasPersistentControl(optionEl) {
     if (!optionEl || !(optionEl instanceof Element)) return false;
     return !!optionEl.querySelector(
-      'fig-checkbox, fig-switch, input[type="checkbox"]'
+      'fig-checkbox, fig-switch, input[type="checkbox"]',
     );
   }
 
@@ -235,6 +283,8 @@ class FigDropdown extends HTMLElement {
       this.select.firstChild.remove();
     }
 
+    this.#enableSelectedContentIfNeeded();
+
     if (this.type === "dropdown") {
       const hiddenOption = document.createElement("option");
       hiddenOption.setAttribute("hidden", "true");
@@ -248,6 +298,7 @@ class FigDropdown extends HTMLElement {
       }
     });
     this.#syncSelectedValue(this.value);
+    this.#syncSelectedContent();
     if (this.type === "dropdown") {
       this.select.selectedIndex = -1;
     }
@@ -269,12 +320,13 @@ class FigDropdown extends HTMLElement {
       this.#selectedValue = selectedValue;
     }
     this.setAttribute("value", selectedValue);
+    this.#syncSelectedContent();
     this.dispatchEvent(
       new CustomEvent("input", {
         detail: selectedValue,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -295,12 +347,13 @@ class FigDropdown extends HTMLElement {
     if (this.type === "dropdown") {
       this.select.selectedIndex = -1;
     }
+    this.#syncSelectedContent();
     this.dispatchEvent(
       new CustomEvent("change", {
         detail: selectedValue,
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -325,7 +378,7 @@ class FigDropdown extends HTMLElement {
     this.setAttribute("value", value);
   }
   static get observedAttributes() {
-    return ["value", "type"];
+    return ["value", "type", "experimental"];
   }
   #syncSelectedValue(value) {
     // For dropdown type, don't sync the visual selection - it should always show the hidden placeholder
@@ -339,6 +392,7 @@ class FigDropdown extends HTMLElement {
         }
       });
     }
+    this.#syncSelectedContent();
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "value") {
@@ -346,6 +400,9 @@ class FigDropdown extends HTMLElement {
     }
     if (name === "type") {
       this.type = newValue;
+    }
+    if (name === "experimental") {
+      this.slotChange();
     }
     if (name === "label") {
       this.#label = newValue;
@@ -395,7 +452,7 @@ class FigTooltip extends HTMLElement {
     document.removeEventListener(
       "mousedown",
       this.#boundHideOnChromeOpen,
-      true
+      true,
     );
     // Disconnect mutation observer
     this.#stopObserving();
@@ -404,7 +461,7 @@ class FigTooltip extends HTMLElement {
     if (this.action === "click") {
       document.body.removeEventListener(
         "click",
-        this.#boundHidePopupOutsideClick
+        this.#boundHidePopupOutsideClick,
       );
     }
 
@@ -470,7 +527,7 @@ class FigTooltip extends HTMLElement {
     if (this.action === "click") {
       document.body.removeEventListener(
         "click",
-        this.#boundHidePopupOutsideClick
+        this.#boundHidePopupOutsideClick,
       );
     }
   }
@@ -488,7 +545,7 @@ class FigTooltip extends HTMLElement {
         this.addEventListener("pointerenter", this.showDelayedPopup.bind(this));
         this.addEventListener(
           "pointerleave",
-          this.#handlePointerLeave.bind(this)
+          this.#handlePointerLeave.bind(this),
         );
       }
       // Touch support for mobile hover simulation
@@ -535,7 +592,8 @@ class FigTooltip extends HTMLElement {
   showDelayedPopup() {
     this.render();
     clearTimeout(this.timeout);
-    const warm = Date.now() - FigTooltip.#lastShownAt < FigTooltip.#warmupWindow;
+    const warm =
+      Date.now() - FigTooltip.#lastShownAt < FigTooltip.#warmupWindow;
     const effectiveDelay = warm ? 0 : this.delay;
     this.timeout = setTimeout(this.showPopup.bind(this), effectiveDelay);
   }
@@ -1063,7 +1121,11 @@ class FigPopup extends HTMLDialogElement {
     super();
     this.#boundReposition = this.#queueReposition.bind(this);
     this.#boundScroll = (e) => {
-      if (this.open && !this.contains(e.target) && this.#shouldAutoReposition()) {
+      if (
+        this.open &&
+        !this.contains(e.target) &&
+        this.#shouldAutoReposition()
+      ) {
         this.#positionPopup();
       }
     };
@@ -1074,7 +1136,18 @@ class FigPopup extends HTMLDialogElement {
   }
 
   static get observedAttributes() {
-    return ["open", "anchor", "position", "offset", "variant", "theme", "drag", "handle", "autoresize", "viewport-margin"];
+    return [
+      "open",
+      "anchor",
+      "position",
+      "offset",
+      "variant",
+      "theme",
+      "drag",
+      "handle",
+      "autoresize",
+      "viewport-margin",
+    ];
   }
 
   get open() {
@@ -1145,7 +1218,7 @@ class FigPopup extends HTMLDialogElement {
     document.removeEventListener(
       "pointerdown",
       this.#boundOutsidePointerDown,
-      true
+      true,
     );
     if (this.#rafId !== null) {
       cancelAnimationFrame(this.#rafId);
@@ -1201,7 +1274,11 @@ class FigPopup extends HTMLDialogElement {
     }
 
     this.#setupObservers();
-    document.addEventListener("pointerdown", this.#boundOutsidePointerDown, true);
+    document.addEventListener(
+      "pointerdown",
+      this.#boundOutsidePointerDown,
+      true,
+    );
     this.#wasDragged = false;
     this.#queueReposition();
     this.#isPopupActive = true;
@@ -1220,7 +1297,7 @@ class FigPopup extends HTMLDialogElement {
     document.removeEventListener(
       "pointerdown",
       this.#boundOutsidePointerDown,
-      true
+      true,
     );
 
     if (super.open) {
@@ -1261,7 +1338,10 @@ class FigPopup extends HTMLDialogElement {
     }
 
     window.addEventListener("resize", this.#boundReposition);
-    window.addEventListener("scroll", this.#boundScroll, { capture: true, passive: true });
+    window.addEventListener("scroll", this.#boundScroll, {
+      capture: true,
+      passive: true,
+    });
   }
 
   #teardownObservers() {
@@ -1278,7 +1358,10 @@ class FigPopup extends HTMLDialogElement {
       this.#mutationObserver = null;
     }
     window.removeEventListener("resize", this.#boundReposition);
-    window.removeEventListener("scroll", this.#boundScroll, { capture: true, passive: true });
+    window.removeEventListener("scroll", this.#boundScroll, {
+      capture: true,
+      passive: true,
+    });
   }
 
   #handleOutsidePointerDown(event) {
@@ -1329,15 +1412,31 @@ class FigPopup extends HTMLDialogElement {
 
   #isInteractiveElement(element) {
     const interactiveSelectors = [
-      "input", "button", "select", "textarea", "a",
-      "label", "details", "summary",
-      '[contenteditable="true"]', "[tabindex]",
+      "input",
+      "button",
+      "select",
+      "textarea",
+      "a",
+      "label",
+      "details",
+      "summary",
+      '[contenteditable="true"]',
+      "[tabindex]",
     ];
 
     const nonInteractiveFigElements = [
-      "FIG-HEADER", "FIG-DIALOG", "FIG-POPUP", "FIG-FIELD",
-      "FIG-TOOLTIP", "FIG-CONTENT", "FIG-TABS", "FIG-TAB",
-      "FIG-POPOVER", "FIG-SHIMMER", "FIG-LAYER", "FIG-FILL-PICKER",
+      "FIG-HEADER",
+      "FIG-DIALOG",
+      "FIG-POPUP",
+      "FIG-FIELD",
+      "FIG-TOOLTIP",
+      "FIG-CONTENT",
+      "FIG-TABS",
+      "FIG-TAB",
+      "FIG-POPOVER",
+      "FIG-SHIMMER",
+      "FIG-LAYER",
+      "FIG-FILL-PICKER",
     ];
 
     const isInteractive = (el) =>
@@ -1537,17 +1636,49 @@ class FigPopup extends HTMLDialogElement {
 
   #parseViewportMargins() {
     const raw = (this.getAttribute("viewport-margin") || "8").trim();
-    const tokens = raw.split(/\s+/).map(Number).filter(n => !Number.isNaN(n));
+    const tokens = raw
+      .split(/\s+/)
+      .map(Number)
+      .filter((n) => !Number.isNaN(n));
     const d = 8;
     if (tokens.length === 0) return { top: d, right: d, bottom: d, left: d };
-    if (tokens.length === 1) return { top: tokens[0], right: tokens[0], bottom: tokens[0], left: tokens[0] };
-    if (tokens.length === 2) return { top: tokens[0], right: tokens[1], bottom: tokens[0], left: tokens[1] };
-    if (tokens.length === 3) return { top: tokens[0], right: tokens[1], bottom: tokens[2], left: tokens[1] };
-    return { top: tokens[0], right: tokens[1], bottom: tokens[2], left: tokens[3] };
+    if (tokens.length === 1)
+      return {
+        top: tokens[0],
+        right: tokens[0],
+        bottom: tokens[0],
+        left: tokens[0],
+      };
+    if (tokens.length === 2)
+      return {
+        top: tokens[0],
+        right: tokens[1],
+        bottom: tokens[0],
+        left: tokens[1],
+      };
+    if (tokens.length === 3)
+      return {
+        top: tokens[0],
+        right: tokens[1],
+        bottom: tokens[2],
+        left: tokens[1],
+      };
+    return {
+      top: tokens[0],
+      right: tokens[1],
+      bottom: tokens[2],
+      left: tokens[3],
+    };
   }
 
   #getPlacementCandidates(vertical, horizontal, shorthand) {
-    const opp = { top: "bottom", bottom: "top", left: "right", right: "left", center: "center" };
+    const opp = {
+      top: "bottom",
+      bottom: "top",
+      left: "right",
+      right: "left",
+      center: "center",
+    };
 
     if (shorthand) {
       const isHorizontal = shorthand === "left" || shorthand === "right";
@@ -1590,21 +1721,30 @@ class FigPopup extends HTMLDialogElement {
     ];
   }
 
-  #computeCoords(anchorRect, popupRect, vertical, horizontal, offset, shorthand) {
+  #computeCoords(
+    anchorRect,
+    popupRect,
+    vertical,
+    horizontal,
+    offset,
+    shorthand,
+  ) {
     let top;
     let left;
 
     if (shorthand === "left" || shorthand === "right") {
-      left = shorthand === "left"
-        ? anchorRect.left - popupRect.width - offset.xPx
-        : anchorRect.right + offset.xPx;
+      left =
+        shorthand === "left"
+          ? anchorRect.left - popupRect.width - offset.xPx
+          : anchorRect.right + offset.xPx;
       top = anchorRect.top;
       return { top, left };
     }
     if (shorthand === "top" || shorthand === "bottom") {
-      top = shorthand === "top"
-        ? anchorRect.top - popupRect.height - offset.yPx
-        : anchorRect.bottom + offset.yPx;
+      top =
+        shorthand === "top"
+          ? anchorRect.top - popupRect.height - offset.yPx
+          : anchorRect.bottom + offset.yPx;
       left = anchorRect.left;
       return { top, left };
     }
@@ -1711,8 +1851,14 @@ class FigPopup extends HTMLDialogElement {
   #clamp(coords, popupRect, m) {
     const minLeft = m.left;
     const minTop = m.top;
-    const maxLeft = Math.max(m.left, window.innerWidth - popupRect.width - m.right);
-    const maxTop = Math.max(m.top, window.innerHeight - popupRect.height - m.bottom);
+    const maxLeft = Math.max(
+      m.left,
+      window.innerWidth - popupRect.width - m.right,
+    );
+    const maxTop = Math.max(
+      m.top,
+      window.innerHeight - popupRect.height - m.bottom,
+    );
 
     return {
       left: Math.min(maxLeft, Math.max(minLeft, coords.left)),
@@ -1732,8 +1878,11 @@ class FigPopup extends HTMLDialogElement {
     if (!anchor) {
       this.#updatePopoverBeak(null, popupRect, 0, 0, "top");
       const centered = {
-        left: (m.left + (window.innerWidth - m.right - m.left - popupRect.width) / 2),
-        top: (m.top + (window.innerHeight - m.bottom - m.top - popupRect.height) / 2),
+        left:
+          m.left + (window.innerWidth - m.right - m.left - popupRect.width) / 2,
+        top:
+          m.top +
+          (window.innerHeight - m.bottom - m.top - popupRect.height) / 2,
       };
       const clamped = this.#clamp(centered, popupRect, m);
       this.style.left = `${clamped.left}px`;
@@ -1742,24 +1891,44 @@ class FigPopup extends HTMLDialogElement {
     }
 
     const anchorRect = anchor.getBoundingClientRect();
-    const candidates = this.#getPlacementCandidates(vertical, horizontal, shorthand);
+    const candidates = this.#getPlacementCandidates(
+      vertical,
+      horizontal,
+      shorthand,
+    );
     let best = null;
     let bestSide = "top";
     let bestScore = Number.POSITIVE_INFINITY;
 
     for (const { v, h, s } of candidates) {
-      const coords = this.#computeCoords(anchorRect, popupRect, v, h, offset, s);
+      const coords = this.#computeCoords(
+        anchorRect,
+        popupRect,
+        v,
+        h,
+        offset,
+        s,
+      );
       const placementSide = this.#getPlacementSide(v, h, s);
 
       if (s) {
         const clamped = this.#clamp(coords, popupRect, m);
-        const primaryFits = (s === "left" || s === "right")
-          ? (coords.left >= m.left && coords.left + popupRect.width <= window.innerWidth - m.right)
-          : (coords.top >= m.top && coords.top + popupRect.height <= window.innerHeight - m.bottom);
+        const primaryFits =
+          s === "left" || s === "right"
+            ? coords.left >= m.left &&
+              coords.left + popupRect.width <= window.innerWidth - m.right
+            : coords.top >= m.top &&
+              coords.top + popupRect.height <= window.innerHeight - m.bottom;
         if (primaryFits) {
           this.style.left = `${clamped.left}px`;
           this.style.top = `${clamped.top}px`;
-          this.#updatePopoverBeak(anchorRect, popupRect, clamped.left, clamped.top, placementSide);
+          this.#updatePopoverBeak(
+            anchorRect,
+            popupRect,
+            clamped.left,
+            clamped.top,
+            placementSide,
+          );
           return;
         }
         const score = this.#overflowScore(coords, popupRect, m);
@@ -1772,7 +1941,13 @@ class FigPopup extends HTMLDialogElement {
         if (this.#fits(coords, popupRect, m)) {
           this.style.left = `${coords.left}px`;
           this.style.top = `${coords.top}px`;
-          this.#updatePopoverBeak(anchorRect, popupRect, coords.left, coords.top, placementSide);
+          this.#updatePopoverBeak(
+            anchorRect,
+            popupRect,
+            coords.left,
+            coords.top,
+            placementSide,
+          );
           return;
         }
         const score = this.#overflowScore(coords, popupRect, m);
@@ -1787,7 +1962,13 @@ class FigPopup extends HTMLDialogElement {
     const clamped = this.#clamp(best || { left: 0, top: 0 }, popupRect, m);
     this.style.left = `${clamped.left}px`;
     this.style.top = `${clamped.top}px`;
-    this.#updatePopoverBeak(anchorRect, popupRect, clamped.left, clamped.top, bestSide);
+    this.#updatePopoverBeak(
+      anchorRect,
+      popupRect,
+      clamped.left,
+      clamped.top,
+      bestSide,
+    );
   }
 
   #queueReposition() {
@@ -2087,14 +2268,15 @@ class FigSegmentedControl extends HTMLElement {
     this.name = this.getAttribute("name") || "segmented-control";
     this.addEventListener("click", this.handleClick.bind(this));
     this.#applyDisabled(
-      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false"
+      this.hasAttribute("disabled") &&
+        this.getAttribute("disabled") !== "false",
     );
 
     // Ensure at least one segment is selected (default to first)
     requestAnimationFrame(() => {
       const segments = this.querySelectorAll("fig-segment");
       const hasSelected = Array.from(segments).some((s) =>
-        s.hasAttribute("selected")
+        s.hasAttribute("selected"),
       );
       if (!hasSelected && segments.length > 0) {
         this.selectedSegment = segments[0];
@@ -2278,13 +2460,17 @@ class FigSlider extends HTMLElement {
       this.input.addEventListener("input", this.#boundHandleInput);
       this.input.removeEventListener("change", this.#boundHandleChange);
       this.input.addEventListener("change", this.#boundHandleChange);
-      this.input.addEventListener("pointerdown", () => { this.#isInteracting = true; });
-      this.input.addEventListener("pointerup", () => { this.#isInteracting = false; });
+      this.input.addEventListener("pointerdown", () => {
+        this.#isInteracting = true;
+      });
+      this.input.addEventListener("pointerup", () => {
+        this.#isInteracting = false;
+      });
 
       if (this.default) {
         this.style.setProperty(
           "--default",
-          this.#calculateNormal(this.default)
+          this.#calculateNormal(this.default),
         );
       }
 
@@ -2294,7 +2480,7 @@ class FigSlider extends HTMLElement {
         this.inputContainer.append(this.datalist);
         this.datalist.setAttribute(
           "id",
-          this.datalist.getAttribute("id") || figUniqueId()
+          this.datalist.getAttribute("id") || figUniqueId(),
         );
         this.input.setAttribute("list", this.datalist.getAttribute("id"));
       } else if (this.type === "stepper") {
@@ -2319,7 +2505,7 @@ class FigSlider extends HTMLElement {
       }
       if (this.datalist) {
         let defaultOption = this.datalist.querySelector(
-          `option[value='${this.default}']`
+          `option[value='${this.default}']`,
         );
         if (defaultOption) {
           defaultOption.setAttribute("default", "true");
@@ -2328,19 +2514,19 @@ class FigSlider extends HTMLElement {
       if (this.figInputNumber) {
         this.figInputNumber.removeEventListener(
           "input",
-          this.#boundHandleTextInput
+          this.#boundHandleTextInput,
         );
         this.figInputNumber.addEventListener(
           "input",
-          this.#boundHandleTextInput
+          this.#boundHandleTextInput,
         );
         this.figInputNumber.removeEventListener(
           "change",
-          this.#boundHandleTextChange
+          this.#boundHandleTextChange,
         );
         this.figInputNumber.addEventListener(
           "change",
-          this.#boundHandleTextChange
+          this.#boundHandleTextChange,
         );
       }
 
@@ -2360,11 +2546,11 @@ class FigSlider extends HTMLElement {
     if (this.figInputNumber) {
       this.figInputNumber.removeEventListener(
         "input",
-        this.#boundHandleTextInput
+        this.#boundHandleTextInput,
       );
       this.figInputNumber.removeEventListener(
         "change",
-        this.#boundHandleTextChange
+        this.#boundHandleTextChange,
       );
     }
   }
@@ -2374,7 +2560,7 @@ class FigSlider extends HTMLElement {
       this.value = this.input.value = this.figInputNumber.value;
       this.#syncProperties();
       this.dispatchEvent(
-        new CustomEvent("input", { detail: this.value, bubbles: true })
+        new CustomEvent("input", { detail: this.value, bubbles: true }),
       );
     }
   }
@@ -2404,7 +2590,7 @@ class FigSlider extends HTMLElement {
   #handleInput() {
     this.#syncValue();
     this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true })
+      new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
   }
 
@@ -2412,7 +2598,7 @@ class FigSlider extends HTMLElement {
     this.#isInteracting = false;
     this.#syncValue();
     this.dispatchEvent(
-      new CustomEvent("change", { detail: this.value, bubbles: true })
+      new CustomEvent("change", { detail: this.value, bubbles: true }),
     );
   }
 
@@ -2421,7 +2607,7 @@ class FigSlider extends HTMLElement {
       this.value = this.input.value = this.figInputNumber.value;
       this.#syncProperties();
       this.dispatchEvent(
-        new CustomEvent("change", { detail: this.value, bubbles: true })
+        new CustomEvent("change", { detail: this.value, bubbles: true }),
       );
     }
   }
@@ -2641,10 +2827,10 @@ class FigInputText extends HTMLElement {
     this.value = value;
     this.input.value = valueTransformed;
     this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true })
+      new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
     this.dispatchEvent(
-      new CustomEvent("change", { detail: this.value, bubbles: true })
+      new CustomEvent("change", { detail: this.value, bubbles: true }),
     );
   }
   #handleMouseMove(e) {
@@ -2692,13 +2878,13 @@ class FigInputText extends HTMLElement {
       if (typeof this.min === "number") {
         sanitized = Math.max(
           transform ? this.#transformNumber(this.min) : this.min,
-          sanitized
+          sanitized,
         );
       }
       if (typeof this.max === "number") {
         sanitized = Math.min(
           transform ? this.#transformNumber(this.max) : this.max,
-          sanitized
+          sanitized,
         );
       }
 
@@ -3018,7 +3204,7 @@ class FigInputNumber extends HTMLElement {
       e.target.value = "";
     }
     this.dispatchEvent(
-      new CustomEvent("change", { detail: this.value, bubbles: true })
+      new CustomEvent("change", { detail: this.value, bubbles: true }),
     );
   }
 
@@ -3044,10 +3230,10 @@ class FigInputNumber extends HTMLElement {
     this.input.value = this.#formatWithUnit(this.value);
 
     this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true })
+      new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
     this.dispatchEvent(
-      new CustomEvent("change", { detail: this.value, bubbles: true })
+      new CustomEvent("change", { detail: this.value, bubbles: true }),
     );
   }
 
@@ -3059,7 +3245,7 @@ class FigInputNumber extends HTMLElement {
       this.value = "";
     }
     this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true })
+      new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
   }
 
@@ -3076,10 +3262,10 @@ class FigInputNumber extends HTMLElement {
       e.target.value = "";
     }
     this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true })
+      new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
     this.dispatchEvent(
-      new CustomEvent("change", { detail: this.value, bubbles: true })
+      new CustomEvent("change", { detail: this.value, bubbles: true }),
     );
   }
 
@@ -3138,7 +3324,9 @@ class FigInputNumber extends HTMLElement {
     const factor = Math.pow(10, precision);
     const rounded = Math.round(num * factor) / factor;
     // Only show decimals if needed and up to precision
-    return Number.isInteger(rounded) ? rounded : parseFloat(rounded.toFixed(precision));
+    return Number.isInteger(rounded)
+      ? rounded
+      : parseFloat(rounded.toFixed(precision));
   }
 
   static get observedAttributes() {
@@ -3272,7 +3460,7 @@ class FigField extends HTMLElement {
     requestAnimationFrame(() => {
       this.label = this.querySelector(":scope>label");
       this.input = Array.from(this.childNodes).find((node) =>
-        node.nodeName.toLowerCase().startsWith("fig-")
+        node.nodeName.toLowerCase().startsWith("fig-"),
       );
       if (this.input && this.label) {
         this.label.addEventListener("click", this.focus.bind(this));
@@ -3417,11 +3605,11 @@ class FigInputColor extends HTMLElement {
         }
         this.#fillPicker.addEventListener(
           "input",
-          this.#handleFillPickerInput.bind(this)
+          this.#handleFillPickerInput.bind(this),
         );
         this.#fillPicker.addEventListener(
           "change",
-          this.#handleChange.bind(this)
+          this.#handleChange.bind(this),
         );
       }
 
@@ -3434,22 +3622,22 @@ class FigInputColor extends HTMLElement {
         }
         this.#textInput.addEventListener(
           "input",
-          this.#handleTextInput.bind(this)
+          this.#handleTextInput.bind(this),
         );
         this.#textInput.addEventListener(
           "change",
-          this.#handleChange.bind(this)
+          this.#handleChange.bind(this),
         );
       }
 
       if (this.#alphaInput) {
         this.#alphaInput.addEventListener(
           "input",
-          this.#handleAlphaInput.bind(this)
+          this.#handleAlphaInput.bind(this),
         );
         this.#alphaInput.addEventListener(
           "change",
-          this.#handleChange.bind(this)
+          this.#handleChange.bind(this),
         );
       }
     });
@@ -3462,7 +3650,7 @@ class FigInputColor extends HTMLElement {
         g: isNaN(this.rgba.g) ? 0 : this.rgba.g,
         b: isNaN(this.rgba.b) ? 0 : this.rgba.b,
       },
-      this.rgba.a
+      this.rgba.a,
     );
     this.hexWithAlpha = this.value.toUpperCase();
     this.hexOpaque = this.hexWithAlpha.slice(0, 7);
@@ -3505,7 +3693,7 @@ class FigInputColor extends HTMLElement {
           type: "solid",
           color: this.hexOpaque,
           opacity: this.alpha,
-        })
+        }),
       );
     }
     this.#emitInputEvent();
@@ -3528,7 +3716,7 @@ class FigInputColor extends HTMLElement {
       // Display without # prefix
       this.#textInput.setAttribute(
         "value",
-        this.hexOpaque.slice(1).toUpperCase()
+        this.hexOpaque.slice(1).toUpperCase(),
       );
     }
     this.#emitInputEvent();
@@ -3550,7 +3738,7 @@ class FigInputColor extends HTMLElement {
       if (this.#textInput) {
         this.#textInput.setAttribute(
           "value",
-          this.hexOpaque.slice(1).toUpperCase()
+          this.hexOpaque.slice(1).toUpperCase(),
         );
       }
       if (this.#alphaInput && detail.alpha !== undefined) {
@@ -3608,7 +3796,7 @@ class FigInputColor extends HTMLElement {
               type: "solid",
               color: this.hexOpaque,
               opacity: this.alpha,
-            })
+            }),
           );
         }
         if (this.#alphaInput) {
@@ -3675,7 +3863,7 @@ class FigInputColor extends HTMLElement {
     // Handle rgba colors
     else if (color.startsWith("rgba") || color.startsWith("rgb")) {
       let matches = color.match(
-        /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)/
+        /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)/,
       );
       if (matches) {
         r = parseInt(matches[1]);
@@ -3687,7 +3875,7 @@ class FigInputColor extends HTMLElement {
     // Handle hsla colors
     else if (color.startsWith("hsla") || color.startsWith("hsl")) {
       let matches = color.match(
-        /hsla?\((\d+),\s*(\d+)%,\s*(\d+)%(?:,\s*(\d+(?:\.\d+)?))?\)/
+        /hsla?\((\d+),\s*(\d+)%,\s*(\d+)%(?:,\s*(\d+(?:\.\d+)?))?\)/,
       );
       if (matches) {
         let h = parseInt(matches[1]) / 360;
@@ -3903,8 +4091,8 @@ class FigInputFill extends HTMLElement {
     this.innerHTML = `
       <div class="input-combo">
         <fig-fill-picker ${fpAttrs} value='${fillPickerValue}' ${
-      disabled ? "disabled" : ""
-    }></fig-fill-picker>
+          disabled ? "disabled" : ""
+        }></fig-fill-picker>
         ${controlsHtml}
       </div>`;
 
@@ -4041,13 +4229,13 @@ class FigInputFill extends HTMLElement {
         if (this.#hexInput) {
           this.#hexInput.setAttribute(
             "value",
-            this.#solid.color.slice(1).toUpperCase()
+            this.#solid.color.slice(1).toUpperCase(),
           );
         }
         if (this.#opacityInput) {
           this.#opacityInput.setAttribute(
             "value",
-            Math.round(this.#solid.alpha * 100)
+            Math.round(this.#solid.alpha * 100),
           );
         }
         break;
@@ -4055,7 +4243,7 @@ class FigInputFill extends HTMLElement {
         if (this.#opacityInput) {
           this.#opacityInput.setAttribute(
             "value",
-            this.#gradient.stops[0]?.opacity ?? 100
+            this.#gradient.stops[0]?.opacity ?? 100,
           );
         }
         const label = this.querySelector(".fig-input-fill-label");
@@ -4071,7 +4259,7 @@ class FigInputFill extends HTMLElement {
         if (this.#opacityInput) {
           this.#opacityInput.setAttribute(
             "value",
-            Math.round((this.#image.opacity ?? 1) * 100)
+            Math.round((this.#image.opacity ?? 1) * 100),
           );
         }
         break;
@@ -4079,7 +4267,7 @@ class FigInputFill extends HTMLElement {
         if (this.#opacityInput) {
           this.#opacityInput.setAttribute(
             "value",
-            Math.round((this.#video.opacity ?? 1) * 100)
+            Math.round((this.#video.opacity ?? 1) * 100),
           );
         }
         break;
@@ -4087,7 +4275,7 @@ class FigInputFill extends HTMLElement {
         if (this.#opacityInput) {
           this.#opacityInput.setAttribute(
             "value",
-            Math.round((this.#webcam.opacity ?? 1) * 100)
+            Math.round((this.#webcam.opacity ?? 1) * 100),
           );
         }
         break;
@@ -4291,7 +4479,7 @@ class FigInputFill extends HTMLElement {
       new CustomEvent("input", {
         bubbles: true,
         detail: this.value,
-      })
+      }),
     );
   }
 
@@ -4300,7 +4488,7 @@ class FigInputFill extends HTMLElement {
       new CustomEvent("change", {
         bubbles: true,
         detail: this.value,
-      })
+      }),
     );
   }
 
@@ -4540,14 +4728,14 @@ class FigCheckbox extends HTMLElement {
         bubbles: true,
         composed: true,
         detail: { checked: this.input.checked, value: this.input.value },
-      })
+      }),
     );
     this.dispatchEvent(
       new CustomEvent("change", {
         bubbles: true,
         composed: true,
         detail: { checked: this.input.checked, value: this.input.value },
-      })
+      }),
     );
   }
 }
@@ -4742,8 +4930,9 @@ class FigComboInput extends HTMLElement {
   }
   connectedCallback() {
     const customDropdown =
-      Array.from(this.children).find((child) => child.tagName === "FIG-DROPDOWN") ||
-      null;
+      Array.from(this.children).find(
+        (child) => child.tagName === "FIG-DROPDOWN",
+      ) || null;
     this.#usesCustomDropdown = customDropdown !== null;
     if (customDropdown) {
       customDropdown.remove();
@@ -5065,7 +5254,10 @@ class FigImage extends HTMLElement {
   }
   disconnectedCallback() {
     this.fileInput?.removeEventListener("change", this.#boundHandleFileInput);
-    this.downloadButton?.removeEventListener("click", this.#boundHandleDownload);
+    this.downloadButton?.removeEventListener(
+      "click",
+      this.#boundHandleDownload,
+    );
   }
 
   #updateRefs() {
@@ -5074,13 +5266,22 @@ class FigImage extends HTMLElement {
       if (this.upload) {
         this.uploadButton = this.querySelector("fig-button[type='upload']");
         this.fileInput = this.uploadButton?.querySelector("input");
-        this.fileInput?.removeEventListener("change", this.#boundHandleFileInput);
+        this.fileInput?.removeEventListener(
+          "change",
+          this.#boundHandleFileInput,
+        );
         this.fileInput?.addEventListener("change", this.#boundHandleFileInput);
       }
       if (this.download) {
         this.downloadButton = this.querySelector("fig-button[type='download']");
-        this.downloadButton?.removeEventListener("click", this.#boundHandleDownload);
-        this.downloadButton?.addEventListener("click", this.#boundHandleDownload);
+        this.downloadButton?.removeEventListener(
+          "click",
+          this.#boundHandleDownload,
+        );
+        this.downloadButton?.addEventListener(
+          "click",
+          this.#boundHandleDownload,
+        );
       }
     });
   }
@@ -5102,7 +5303,7 @@ class FigImage extends HTMLElement {
         if (!ar || ar === "auto") {
           this.style.setProperty(
             "--aspect-ratio",
-            `${this.image.width}/${this.image.height}`
+            `${this.image.width}/${this.image.height}`,
           );
         }
         this.dispatchEvent(
@@ -5113,7 +5314,7 @@ class FigImage extends HTMLElement {
               blob: this.blob,
               base64: this.base64,
             },
-          })
+          }),
         );
         resolve();
 
@@ -5164,14 +5365,14 @@ class FigImage extends HTMLElement {
           blob: this.blob,
           base64: this.base64,
         },
-      })
+      }),
     );
     //emit for change too
     this.dispatchEvent(
       new CustomEvent("change", {
         bubbles: true,
         cancelable: true,
-      })
+      }),
     );
     this.setAttribute("src", this.blob);
   }
@@ -5192,7 +5393,7 @@ class FigImage extends HTMLElement {
       if (this.chit) {
         this.chit.setAttribute(
           "background",
-          this.#src ? `url(${this.#src})` : ""
+          this.#src ? `url(${this.#src})` : "",
         );
       }
       if (this.#src) {
@@ -5257,17 +5458,67 @@ class FigEasingCurve extends HTMLElement {
 
   static PRESETS = [
     { group: null, name: "Linear", type: "bezier", value: [0, 0, 1, 1] },
-    { group: "Bezier", name: "Ease in", type: "bezier", value: [0.42, 0, 1, 1] },
-    { group: "Bezier", name: "Ease out", type: "bezier", value: [0, 0, 0.58, 1] },
-    { group: "Bezier", name: "Ease in and out", type: "bezier", value: [0.42, 0, 0.58, 1] },
-    { group: "Bezier", name: "Ease in back", type: "bezier", value: [0.6, -0.28, 0.735, 0.045] },
-    { group: "Bezier", name: "Ease out back", type: "bezier", value: [0.175, 0.885, 0.32, 1.275] },
-    { group: "Bezier", name: "Ease in and out back", type: "bezier", value: [0.68, -0.55, 0.265, 1.55] },
+    {
+      group: "Bezier",
+      name: "Ease in",
+      type: "bezier",
+      value: [0.42, 0, 1, 1],
+    },
+    {
+      group: "Bezier",
+      name: "Ease out",
+      type: "bezier",
+      value: [0, 0, 0.58, 1],
+    },
+    {
+      group: "Bezier",
+      name: "Ease in and out",
+      type: "bezier",
+      value: [0.42, 0, 0.58, 1],
+    },
+    {
+      group: "Bezier",
+      name: "Ease in back",
+      type: "bezier",
+      value: [0.6, -0.28, 0.735, 0.045],
+    },
+    {
+      group: "Bezier",
+      name: "Ease out back",
+      type: "bezier",
+      value: [0.175, 0.885, 0.32, 1.275],
+    },
+    {
+      group: "Bezier",
+      name: "Ease in and out back",
+      type: "bezier",
+      value: [0.68, -0.55, 0.265, 1.55],
+    },
     { group: "Bezier", name: "Custom bezier", type: "bezier", value: null },
-    { group: "Spring", name: "Gentle", type: "spring", spring: { stiffness: 120, damping: 14, mass: 1 } },
-    { group: "Spring", name: "Quick", type: "spring", spring: { stiffness: 380, damping: 20, mass: 1 } },
-    { group: "Spring", name: "Bouncy", type: "spring", spring: { stiffness: 250, damping: 8, mass: 1 } },
-    { group: "Spring", name: "Slow", type: "spring", spring: { stiffness: 60, damping: 11, mass: 1 } },
+    {
+      group: "Spring",
+      name: "Gentle",
+      type: "spring",
+      spring: { stiffness: 120, damping: 14, mass: 1 },
+    },
+    {
+      group: "Spring",
+      name: "Quick",
+      type: "spring",
+      spring: { stiffness: 380, damping: 20, mass: 1 },
+    },
+    {
+      group: "Spring",
+      name: "Bouncy",
+      type: "spring",
+      spring: { stiffness: 250, damping: 8, mass: 1 },
+    },
+    {
+      group: "Spring",
+      name: "Slow",
+      type: "spring",
+      spring: { stiffness: 60, damping: 11, mass: 1 },
+    },
     { group: "Spring", name: "Custom spring", type: "spring", spring: null },
   ];
 
@@ -5328,7 +5579,8 @@ class FigEasingCurve extends HTMLElement {
       for (let i = 0; i < points.length; i += step) {
         vals.push(points[i].value.toFixed(3));
       }
-      if (points.length > 0) vals.push(points[points.length - 1].value.toFixed(3));
+      if (points.length > 0)
+        vals.push(points[points.length - 1].value.toFixed(3));
       return `linear(${vals.join(", ")})`;
     }
     const p = this.#precision;
@@ -5344,7 +5596,9 @@ class FigEasingCurve extends HTMLElement {
   }
 
   #parseValue(str) {
-    const springMatch = str.match(/^spring\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/);
+    const springMatch = str.match(
+      /^spring\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/,
+    );
     if (springMatch) {
       this.#mode = "spring";
       this.#spring.stiffness = parseFloat(springMatch[1]);
@@ -5372,7 +5626,8 @@ class FigEasingCurve extends HTMLElement {
           Math.abs(this.#cp1.y - p.value[1]) < ep &&
           Math.abs(this.#cp2.x - p.value[2]) < ep &&
           Math.abs(this.#cp2.y - p.value[3]) < ep
-        ) return p.name;
+        )
+          return p.name;
       }
       return "Custom bezier";
     }
@@ -5382,7 +5637,8 @@ class FigEasingCurve extends HTMLElement {
         Math.abs(this.#spring.stiffness - p.spring.stiffness) < ep &&
         Math.abs(this.#spring.damping - p.spring.damping) < ep &&
         Math.abs(this.#spring.mass - p.spring.mass) < ep
-      ) return p.name;
+      )
+        return p.name;
     }
     return "Custom spring";
   }
@@ -5394,13 +5650,15 @@ class FigEasingCurve extends HTMLElement {
     const dt = 0.004;
     const maxTime = 5;
     const points = [];
-    let pos = 0, vel = 0;
+    let pos = 0,
+      vel = 0;
     for (let t = 0; t <= maxTime; t += dt) {
       const force = -stiffness * (pos - 1) - damping * vel;
       vel += (force / mass) * dt;
       pos += vel * dt;
       points.push({ t, value: pos });
-      if (t > 0.1 && Math.abs(pos - 1) < 0.0005 && Math.abs(vel) < 0.0005) break;
+      if (t > 0.1 && Math.abs(pos - 1) < 0.0005 && Math.abs(vel) < 0.0005)
+        break;
     }
     return points;
   }
@@ -5410,7 +5668,8 @@ class FigEasingCurve extends HTMLElement {
     const dt = 0.004;
     const maxTime = 5;
     const pts = [];
-    let pos = 0, vel = 0;
+    let pos = 0,
+      vel = 0;
     for (let t = 0; t <= maxTime; t += dt) {
       const force = -stiffness * (pos - 1) - damping * vel;
       vel += (force / mass) * dt;
@@ -5433,21 +5692,63 @@ class FigEasingCurve extends HTMLElement {
       const y = pad + (1 - (pts[i].value - minVal) / range) * s;
       d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
     }
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1" stroke-linecap="round" fill="none"/></svg>`;
   }
 
   static curveIcon(cp1x, cp1y, cp2x, cp2y, size = 24) {
-    const pad = 6;
-    const s = size - pad * 2;
-    const x = (n) => pad + n * s;
-    const y = (n) => pad + (1 - n) * s;
-    const d = `M${x(0)},${y(0)} C${x(cp1x)},${y(cp1y)} ${x(cp2x)},${y(cp2y)} ${x(1)},${y(1)}`;
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+    const draw = 12;
+    const pad = (size - draw) / 2;
+    const samples = 48;
+    const points = [];
+
+    const cubic = (p0, p1, p2, p3, t) => {
+      const mt = 1 - t;
+      return (
+        mt * mt * mt * p0 +
+        3 * mt * mt * t * p1 +
+        3 * mt * t * t * p2 +
+        t * t * t * p3
+      );
+    };
+
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      points.push({
+        x: cubic(0, cp1x, cp2x, 1, t),
+        y: cubic(0, cp1y, cp2y, 1, t),
+      });
+    }
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const p of points) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+
+    const rangeX = Math.max(maxX - minX, 1e-6);
+    const rangeY = Math.max(maxY - minY, 1e-6);
+    const toX = (x) => pad + ((x - minX) / rangeX) * draw;
+    const toY = (y) => pad + (1 - (y - minY) / rangeY) * draw;
+
+    let d = "";
+    for (let i = 0; i < points.length; i++) {
+      const px = toX(points[i].x);
+      const py = toY(points[i].y);
+      d += `${i === 0 ? "M" : "L"}${px.toFixed(1)},${py.toFixed(1)}`;
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`;
   }
 
   // --- Rendering ---
 
   #render() {
+    this.classList.toggle("spring-mode", this.#mode === "spring");
+    this.classList.toggle("bezier-mode", this.#mode !== "spring");
     this.innerHTML = this.#getInnerHTML();
     this.#cacheRefs();
     this.#syncViewportSize();
@@ -5470,7 +5771,12 @@ class FigEasingCurve extends HTMLElement {
         const sp = p.spring || this.#spring;
         icon = FigEasingCurve.#springIcon(sp);
       } else {
-        const v = p.value || [this.#cp1.x, this.#cp1.y, this.#cp2.x, this.#cp2.y];
+        const v = p.value || [
+          this.#cp1.x,
+          this.#cp1.y,
+          this.#cp2.x,
+          this.#cp2.y,
+        ];
         icon = FigEasingCurve.curveIcon(...v);
       }
       const selected = p.name === this.#presetName ? " selected" : "";
@@ -5513,8 +5819,12 @@ class FigEasingCurve extends HTMLElement {
     this.#curve = this.querySelector(".fig-easing-curve-path");
     this.#line1 = this.querySelector('[data-arm="1"]');
     this.#line2 = this.querySelector('[data-arm="2"]');
-    this.#handle1 = this.querySelector('[data-handle="1"]') || this.querySelector('[data-handle="bounce"]');
-    this.#handle2 = this.querySelector('[data-handle="2"]') || this.querySelector('[data-handle="duration"]');
+    this.#handle1 =
+      this.querySelector('[data-handle="1"]') ||
+      this.querySelector('[data-handle="bounce"]');
+    this.#handle2 =
+      this.querySelector('[data-handle="2"]') ||
+      this.querySelector('[data-handle="duration"]');
     this.#dropdown = this.querySelector(".fig-easing-curve-dropdown");
     this.#targetLine = this.querySelector(".fig-easing-curve-target");
     this.#bounds = this.querySelector(".fig-easing-curve-bounds");
@@ -5596,7 +5906,10 @@ class FigEasingCurve extends HTMLElement {
     const p2 = this.#toSVG(this.#cp2.x, this.#cp2.y);
     const p3 = this.#toSVG(1, 1);
 
-    this.#curve.setAttribute("d", `M${p0.x},${p0.y} C${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
+    this.#curve.setAttribute(
+      "d",
+      `M${p0.x},${p0.y} C${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`,
+    );
     this.#line1.setAttribute("x1", p0.x);
     this.#line1.setAttribute("y1", p0.y);
     this.#line1.setAttribute("x2", p1.x);
@@ -5623,12 +5936,17 @@ class FigEasingCurve extends HTMLElement {
     if (!points.length) return;
     const totalTime = points[points.length - 1].t || 1;
 
-    let minVal = 0, maxVal = 1;
+    let minVal = 0,
+      maxVal = 1;
     for (const p of points) {
       if (p.value < minVal) minVal = p.value;
       if (p.value > maxVal) maxVal = p.value;
     }
-    const maxDistFromCenter = Math.max(Math.abs(minVal - 1), Math.abs(maxVal - 1), 0.01);
+    const maxDistFromCenter = Math.max(
+      Math.abs(minVal - 1),
+      Math.abs(maxVal - 1),
+      0.01,
+    );
     const valPad = 0;
     this.#springScale = {
       minVal: 1 - maxDistFromCenter - valPad,
@@ -5669,7 +5987,6 @@ class FigEasingCurve extends HTMLElement {
     const targetPt = this.#springToSVG(durationNorm, 1);
     this.#handle2.setAttribute("x", targetPt.x - 3);
     this.#handle2.setAttribute("y", targetPt.y - 8);
-
   }
 
   #findPeakOvershoot(points) {
@@ -5707,38 +6024,67 @@ class FigEasingCurve extends HTMLElement {
       this.#cp1.x,
       this.#cp1.y,
       this.#cp2.x,
-      this.#cp2.y
+      this.#cp2.y,
     );
     const springIcon = FigEasingCurve.#springIcon(this.#spring);
 
     // Update both slotted options and the cloned native select options.
     this.#setOptionIconByValue(this.#dropdown, "Custom bezier", bezierIcon);
     this.#setOptionIconByValue(this.#dropdown, "Custom spring", springIcon);
-    this.#setOptionIconByValue(this.#dropdown.select, "Custom bezier", bezierIcon);
-    this.#setOptionIconByValue(this.#dropdown.select, "Custom spring", springIcon);
+    this.#setOptionIconByValue(
+      this.#dropdown.select,
+      "Custom bezier",
+      bezierIcon,
+    );
+    this.#setOptionIconByValue(
+      this.#dropdown.select,
+      "Custom spring",
+      springIcon,
+    );
   }
 
   // --- Events ---
 
   #emit(type) {
-    this.dispatchEvent(new CustomEvent(type, {
-      bubbles: true,
-      detail: {
-        mode: this.#mode,
-        value: this.value,
-        cssValue: this.cssValue,
-        preset: this.#presetName,
-      },
-    }));
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        bubbles: true,
+        detail: {
+          mode: this.#mode,
+          value: this.value,
+          cssValue: this.cssValue,
+          preset: this.#presetName,
+        },
+      }),
+    );
   }
 
   #setupEvents() {
     if (this.#mode === "bezier") {
-      this.#handle1.addEventListener("pointerdown", (e) => this.#startBezierDrag(e, 1));
-      this.#handle2.addEventListener("pointerdown", (e) => this.#startBezierDrag(e, 2));
+      this.#handle1.addEventListener("pointerdown", (e) =>
+        this.#startBezierDrag(e, 1),
+      );
+      this.#handle2.addEventListener("pointerdown", (e) =>
+        this.#startBezierDrag(e, 2),
+      );
     } else {
-      this.#handle1.addEventListener("pointerdown", (e) => this.#startSpringDrag(e, "bounce"));
-      this.#handle2.addEventListener("pointerdown", (e) => this.#startSpringDrag(e, "duration"));
+      this.#handle1.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        this.#startSpringDrag(e, "bounce");
+      });
+      this.#handle2.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        this.#startSpringDrag(e, "duration");
+      });
+
+      const springSurface = this.querySelector(".fig-easing-curve-svg-container");
+      if (springSurface) {
+        springSurface.addEventListener("pointerdown", (e) => {
+          // Bounce handle keeps its own drag mode/cursor.
+          if (e.target?.closest?.(".fig-easing-curve-handle")) return;
+          this.#startSpringDrag(e, "duration");
+        });
+      }
     }
 
     if (this.#dropdown) {
@@ -5841,11 +6187,20 @@ class FigEasingCurve extends HTMLElement {
 
       if (handleType === "bounce") {
         const dy = e.clientY - startY;
-        this.#spring.damping = Math.max(1, Math.round(startDamping + dy * 0.15));
+        this.#spring.damping = Math.max(
+          1,
+          Math.round(startDamping + dy * 0.15),
+        );
       } else {
         const dx = e.clientX - startX;
-        this.#springDuration = Math.max(0.05, Math.min(0.95, startDuration + dx / 200));
-        this.#spring.stiffness = Math.max(10, Math.round(startStiffness - dx * 1.5));
+        this.#springDuration = Math.max(
+          0.05,
+          Math.min(0.95, startDuration + dx / 200),
+        );
+        this.#spring.stiffness = Math.max(
+          10,
+          Math.round(startStiffness - dx * 1.5),
+        );
       }
 
       this.#updatePaths();
@@ -5960,7 +6315,7 @@ class FigInputJoystick extends HTMLElement {
     this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
     this.plane.addEventListener(
       "touchstart",
-      this.#handleTouchStart.bind(this)
+      this.#handleTouchStart.bind(this),
     );
     window.addEventListener("keydown", this.#handleKeyDown.bind(this));
     window.addEventListener("keyup", this.#handleKeyUp.bind(this));
@@ -6020,7 +6375,7 @@ class FigInputJoystick extends HTMLElement {
     let x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     let screenY = Math.max(
       0,
-      Math.min(1, (e.clientY - rect.top) / rect.height)
+      Math.min(1, (e.clientY - rect.top) / rect.height),
     );
 
     // Convert screen Y to internal Y (flip for math coordinates)
@@ -6048,7 +6403,7 @@ class FigInputJoystick extends HTMLElement {
       new CustomEvent("input", {
         bubbles: true,
         cancelable: true,
-      })
+      }),
     );
   }
 
@@ -6057,7 +6412,7 @@ class FigInputJoystick extends HTMLElement {
       new CustomEvent("change", {
         bubbles: true,
         cancelable: true,
-      })
+      }),
     );
   }
 
@@ -6232,8 +6587,7 @@ class FigInputAngle extends HTMLElement {
       this.max = this.hasAttribute("max")
         ? Number(this.getAttribute("max"))
         : null;
-      this.showRotations =
-        this.getAttribute("show-rotations") === "true";
+      this.showRotations = this.getAttribute("show-rotations") === "true";
 
       this.#render();
       this.#setupListeners();
@@ -6242,7 +6596,7 @@ class FigInputAngle extends HTMLElement {
       if (this.text && this.angleInput) {
         this.angleInput.setAttribute(
           "value",
-          this.angle.toFixed(this.precision)
+          this.angle.toFixed(this.precision),
         );
       }
     });
@@ -6367,14 +6721,14 @@ class FigInputAngle extends HTMLElement {
     this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
     this.plane.addEventListener(
       "touchstart",
-      this.#handleTouchStart.bind(this)
+      this.#handleTouchStart.bind(this),
     );
     window.addEventListener("keydown", this.#handleKeyDown.bind(this));
     window.addEventListener("keyup", this.#handleKeyUp.bind(this));
     if (this.text && this.angleInput) {
       this.angleInput.addEventListener(
         "input",
-        this.#handleAngleInput.bind(this)
+        this.#handleAngleInput.bind(this),
       );
     }
     // Capture-phase listener for unit suffix parsing
@@ -6492,7 +6846,7 @@ class FigInputAngle extends HTMLElement {
       new CustomEvent("input", {
         bubbles: true,
         cancelable: true,
-      })
+      }),
     );
   }
 
@@ -6501,7 +6855,7 @@ class FigInputAngle extends HTMLElement {
       new CustomEvent("change", {
         bubbles: true,
         cancelable: true,
-      })
+      }),
     );
   }
 
@@ -6584,7 +6938,15 @@ class FigInputAngle extends HTMLElement {
   // --- Attributes ---
 
   static get observedAttributes() {
-    return ["value", "precision", "text", "min", "max", "units", "show-rotations"];
+    return [
+      "value",
+      "precision",
+      "text",
+      "min",
+      "max",
+      "units",
+      "show-rotations",
+    ];
   }
 
   get value() {
@@ -6767,7 +7129,7 @@ class FigLayer extends HTMLElement {
         new CustomEvent("openchange", {
           detail: { open: value },
           bubbles: true,
-        })
+        }),
       );
     }
   }
@@ -6789,7 +7151,7 @@ class FigLayer extends HTMLElement {
         new CustomEvent("visibilitychange", {
           detail: { visible: value },
           bubbles: true,
-        })
+        }),
       );
     }
   }
@@ -6803,7 +7165,7 @@ class FigLayer extends HTMLElement {
         new CustomEvent("openchange", {
           detail: { open: isOpen },
           bubbles: true,
-        })
+        }),
       );
     }
 
@@ -6813,7 +7175,7 @@ class FigLayer extends HTMLElement {
         new CustomEvent("visibilitychange", {
           detail: { visible: isVisible },
           bubbles: true,
-        })
+        }),
       );
     }
   }
@@ -6893,7 +7255,7 @@ class FigFillPicker extends HTMLElement {
 
   #setupTrigger() {
     const child = Array.from(this.children).find(
-      (el) => !el.getAttribute("slot")?.startsWith("mode-")
+      (el) => !el.getAttribute("slot")?.startsWith("mode-"),
     );
 
     if (!child) {
@@ -6992,7 +7354,7 @@ class FigFillPicker extends HTMLElement {
           bg = `url(${this.#image.url})`;
           const sizing = this.#getBackgroundSizing(
             this.#image.scaleMode,
-            this.#image.scale
+            this.#image.scale,
           );
           bgSize = sizing.size;
           bgPosition = sizing.position;
@@ -7005,7 +7367,7 @@ class FigFillPicker extends HTMLElement {
           bg = `url(${this.#video.url})`;
           const sizing = this.#getBackgroundSizing(
             this.#video.scaleMode,
-            this.#video.scale
+            this.#video.scale,
           );
           bgSize = sizing.size;
           bgPosition = sizing.position;
@@ -7100,7 +7462,7 @@ class FigFillPicker extends HTMLElement {
     if (mode) {
       const requested = mode.split(",").map((m) => m.trim().toLowerCase());
       allowedModes = requested.filter(
-        (m) => builtinModes.includes(m) || this.#customSlots[m]
+        (m) => builtinModes.includes(m) || this.#customSlots[m],
       );
       if (allowedModes.length === 0) allowedModes = [...builtinModes];
     } else {
@@ -7154,9 +7516,7 @@ class FigFillPicker extends HTMLElement {
 
     // Populate custom tab containers and emit modeready
     for (const [modeName, { element }] of Object.entries(this.#customSlots)) {
-      const container = this.#dialog.querySelector(
-        `[data-tab="${modeName}"]`
-      );
+      const container = this.#dialog.querySelector(`[data-tab="${modeName}"]`);
       if (!container) continue;
 
       // Move children (not the element itself) for vanilla HTML usage
@@ -7169,7 +7529,7 @@ class FigFillPicker extends HTMLElement {
         new CustomEvent("modeready", {
           bubbles: true,
           detail: { mode: modeName, container },
-        })
+        }),
       );
     }
 
@@ -7206,9 +7566,7 @@ class FigFillPicker extends HTMLElement {
     // Listen for input/change from custom tab content
     for (const modeName of Object.keys(this.#customSlots)) {
       if (builtinModes.includes(modeName)) continue;
-      const container = this.#dialog.querySelector(
-        `[data-tab="${modeName}"]`
-      );
+      const container = this.#dialog.querySelector(`[data-tab="${modeName}"]`);
       if (!container) continue;
       container.addEventListener("input", (e) => {
         if (e.target === this) return;
@@ -7228,7 +7586,7 @@ class FigFillPicker extends HTMLElement {
   #switchTab(tabName) {
     // Only allow switching to modes that have a tab container in the dialog
     const tab = this.#dialog?.querySelector(
-      `.fig-fill-picker-tab[data-tab="${tabName}"]`
+      `.fig-fill-picker-tab[data-tab="${tabName}"]`,
     );
     if (!tab) return;
 
@@ -7294,7 +7652,7 @@ class FigFillPicker extends HTMLElement {
       <div class="fig-fill-picker-inputs">
         <fig-button icon variant="ghost" class="fig-fill-picker-eyedropper" title="Pick color from screen"><span class="fig-mask-icon" style="--icon: var(--icon-eyedropper)"></span></fig-button>
         <fig-input-color class="fig-fill-picker-color-input" text="true" picker="false" value="${this.#hsvToHex(
-          this.#color
+          this.#color,
         )}"></fig-input-color>
       </div>
     `;
@@ -7322,7 +7680,7 @@ class FigFillPicker extends HTMLElement {
     // Setup opacity slider
     if (showAlpha) {
       this.#opacitySlider = container.querySelector(
-        'fig-slider[type="opacity"]'
+        'fig-slider[type="opacity"]',
       );
       this.#opacitySlider.addEventListener("input", (e) => {
         this.#color.a = parseFloat(e.target.value) / 100;
@@ -7415,13 +7773,13 @@ class FigFillPicker extends HTMLElement {
     if (!this.#colorAreaHandle || !this.#colorArea) return;
 
     const rect = this.#colorArea.getBoundingClientRect();
-    
+
     // If the canvas isn't visible yet (0 dimensions), schedule a retry (max 5 attempts)
     if ((rect.width === 0 || rect.height === 0) && retryCount < 5) {
       requestAnimationFrame(() => this.#updateHandlePosition(retryCount + 1));
       return;
     }
-    
+
     const x = (this.#color.s / 100) * rect.width;
     const y = ((100 - this.#color.v) / 100) * rect.height;
 
@@ -7429,7 +7787,7 @@ class FigFillPicker extends HTMLElement {
     this.#colorAreaHandle.style.top = `${y}px`;
     this.#colorAreaHandle.style.setProperty(
       "--picker-color",
-      this.#hsvToHex({ ...this.#color, a: 1 })
+      this.#hsvToHex({ ...this.#color, a: 1 }),
     );
   }
 
@@ -7492,7 +7850,7 @@ class FigFillPicker extends HTMLElement {
     const hex = this.#hsvToHex(this.#color);
 
     const colorInput = this.#dialog.querySelector(
-      ".fig-fill-picker-color-input"
+      ".fig-fill-picker-color-input",
     );
     if (colorInput) {
       colorInput.setAttribute("value", hex);
@@ -7561,7 +7919,7 @@ class FigFillPicker extends HTMLElement {
   #setupGradientEvents(container) {
     // Type dropdown
     const typeDropdown = container.querySelector(
-      ".fig-fill-picker-gradient-type"
+      ".fig-fill-picker-gradient-type",
     );
     typeDropdown.addEventListener("change", (e) => {
       this.#gradient.type = e.target.value;
@@ -7572,7 +7930,7 @@ class FigFillPicker extends HTMLElement {
     // Angle input
     // Convert from fig-input-angle coordinates (0° = right) to CSS coordinates (0° = up)
     const angleInput = container.querySelector(
-      ".fig-fill-picker-gradient-angle"
+      ".fig-fill-picker-gradient-angle",
     );
     angleInput.addEventListener("input", (e) => {
       const pickerAngle = parseFloat(e.target.value) || 0;
@@ -7631,10 +7989,10 @@ class FigFillPicker extends HTMLElement {
 
     // Show/hide angle vs center inputs
     const angleInput = container.querySelector(
-      ".fig-fill-picker-gradient-angle"
+      ".fig-fill-picker-gradient-angle",
     );
     const centerInputs = container.querySelector(
-      ".fig-fill-picker-gradient-center"
+      ".fig-fill-picker-gradient-center",
     );
 
     if (this.#gradient.type === "radial") {
@@ -7667,7 +8025,7 @@ class FigFillPicker extends HTMLElement {
     if (!this.#dialog) return;
 
     const list = this.#dialog.querySelector(
-      ".fig-fill-picker-gradient-stops-list"
+      ".fig-fill-picker-gradient-stops-list",
     );
     if (!list) return;
 
@@ -7687,7 +8045,7 @@ class FigFillPicker extends HTMLElement {
           <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
         </fig-button>
       </div>
-    `
+    `,
       )
       .join("");
 
@@ -7718,14 +8076,15 @@ class FigFillPicker extends HTMLElement {
         }
 
         stopColor.addEventListener("input", (e) => {
-            this.#gradient.stops[index].color =
-              e.target.hexOpaque || e.target.value;
-            const parsedAlpha = parseFloat(e.target.alpha);
-            this.#gradient.stops[index].opacity =
-              isNaN(parsedAlpha) ? 100 : parsedAlpha;
-            this.#updateGradientPreview();
-            this.#emitInput();
-          });
+          this.#gradient.stops[index].color =
+            e.target.hexOpaque || e.target.value;
+          const parsedAlpha = parseFloat(e.target.alpha);
+          this.#gradient.stops[index].opacity = isNaN(parsedAlpha)
+            ? 100
+            : parsedAlpha;
+          this.#updateGradientPreview();
+          this.#emitInput();
+        });
 
         row
           .querySelector(".fig-fill-picker-stop-remove")
@@ -7798,7 +8157,7 @@ class FigFillPicker extends HTMLElement {
 
   #setupImageEvents(container) {
     const scaleModeDropdown = container.querySelector(
-      ".fig-fill-picker-scale-mode"
+      ".fig-fill-picker-scale-mode",
     );
     const scaleInput = container.querySelector(".fig-fill-picker-scale");
     const uploadBtn = container.querySelector(".fig-fill-picker-upload");
@@ -7840,7 +8199,7 @@ class FigFillPicker extends HTMLElement {
 
     // Drag and drop
     const previewArea = container.querySelector(
-      ".fig-fill-picker-media-preview"
+      ".fig-fill-picker-media-preview",
     );
     previewArea.addEventListener("dragover", (e) => {
       e.preventDefault();
@@ -7948,7 +8307,7 @@ class FigFillPicker extends HTMLElement {
 
   #setupVideoEvents(container) {
     const scaleModeDropdown = container.querySelector(
-      ".fig-fill-picker-scale-mode"
+      ".fig-fill-picker-scale-mode",
     );
     const uploadBtn = container.querySelector(".fig-fill-picker-upload");
     const fileInput = container.querySelector('input[type="file"]');
@@ -7967,7 +8326,7 @@ class FigFillPicker extends HTMLElement {
 
     // Drag and drop
     const previewArea = container.querySelector(
-      ".fig-fill-picker-media-preview"
+      ".fig-fill-picker-media-preview",
     );
 
     fileInput.addEventListener("change", (e) => {
@@ -8038,10 +8397,10 @@ class FigFillPicker extends HTMLElement {
     const video = container.querySelector(".fig-fill-picker-webcam-video");
     const status = container.querySelector(".fig-fill-picker-webcam-status");
     const captureBtn = container.querySelector(
-      ".fig-fill-picker-webcam-capture"
+      ".fig-fill-picker-webcam-capture",
     );
     const cameraSelect = container.querySelector(
-      ".fig-fill-picker-camera-select"
+      ".fig-fill-picker-camera-select",
     );
 
     const startWebcam = async (deviceId = null) => {
@@ -8054,9 +8413,8 @@ class FigFillPicker extends HTMLElement {
           this.#webcam.stream.getTracks().forEach((track) => track.stop());
         }
 
-        this.#webcam.stream = await navigator.mediaDevices.getUserMedia(
-          constraints
-        );
+        this.#webcam.stream =
+          await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = this.#webcam.stream;
         video.style.display = "block";
         status.style.display = "none";
@@ -8072,7 +8430,7 @@ class FigFillPicker extends HTMLElement {
               (cam, i) =>
                 `<option value="${cam.deviceId}">${
                   cam.label || `Camera ${i + 1}`
-                }</option>`
+                }</option>`,
             )
             .join("");
         }
@@ -8364,7 +8722,7 @@ class FigFillPicker extends HTMLElement {
       new CustomEvent("input", {
         bubbles: true,
         detail: this.value,
-      })
+      }),
     );
   }
 
@@ -8373,7 +8731,7 @@ class FigFillPicker extends HTMLElement {
       new CustomEvent("change", {
         bubbles: true,
         detail: this.value,
-      })
+      }),
     );
   }
 
@@ -8445,7 +8803,7 @@ class FigFillPicker extends HTMLElement {
               this.#opacitySlider.setAttribute("value", this.#color.a * 100);
               this.#opacitySlider.setAttribute(
                 "color",
-                this.#hsvToHex(this.#color)
+                this.#hsvToHex(this.#color),
               );
             }
           }
