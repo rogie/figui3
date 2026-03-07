@@ -184,29 +184,6 @@ Displays contextual information on hover or click. The tooltip automatically rep
 </fig-tooltip>
 ```
 
----
-
-### Popover (`<fig-popover>`)
-
-A popover container for rich content.
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `action` | string | `"click"` | Trigger: `"click"` or `"hover"` |
-| `size` | string | — | Size of the popover |
-
-```html
-<fig-popover action="click">
-  <fig-button slot="trigger">Open Popover</fig-button>
-  <div slot="content">
-    <h3>Popover Title</h3>
-    <p>Rich content goes here.</p>
-  </div>
-</fig-popover>
-```
-
----
-
 ### Dialog (`<fig-dialog>`)
 
 A modal dialog component with drag support.

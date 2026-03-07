@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- Removed `fig-popover` and `fig-popover-2` component implementations and all associated demo/docs usage; popup guidance now centers on `fig-popup`.
+- Updated `glitch.html` to use a `fig-popup` example instead of `fig-popover`.
+
+### Added
+
+- Added project-level Cursor skills for `figui3` and `propkit` in `.cursor/skills/`.
+- Expanded `figui3` skill guidance with React/Vite integration, tree-shaking-safe bootstrap patterns, overlay usage guidance, `experimental` attribute guidance, and color picker/custom mode (`modeready`) workflows.
+- Expanded `propkit` skill guidance with React/Vite usage, deterministic prompt rules, slider type/variant heuristics, control-selection heuristics, and delivery checklists.
+
 ## [2.28.0]
 
 ### Fixed

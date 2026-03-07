@@ -308,7 +308,6 @@
             <a href="#input-number">Input Number</a>
             <a href="#input-text">Input Text</a>
             <a href="#layer">Layer</a>
-            <a href="#popover">Popover</a>
             <a href="#popup">Popup</a>
             <a href="#radio">Radio</a>
             <a href="#segmented-control">Segmented Control</a>
@@ -3167,82 +3166,6 @@
 
                 </fig-layer>
             </fig-layer>
-        </section>
-        <hr>
-
-        <!-- Popover -->
-        <section id="popover">
-            <h2>Popover</h2>
-            <p class="description">A floating panel that appears on hover or click.</p>
-
-            <h3>Hover Trigger</h3>
-            <fig-popover action="hover">
-                <fig-button>Hover me</fig-button>
-                <div popover>
-                    <fig-header>
-                        <h3>Quick Info</h3>
-                    </fig-header>
-                    <fig-content>
-                        <fig-field direction="horizontal">
-                            <label>Status</label>
-                            <span style="color: var(--figma-color-text-success)">Active</span>
-                        </fig-field>
-                        <fig-field direction="horizontal">
-                            <label>Type</label>
-                            <span>Component</span>
-                        </fig-field>
-                    </fig-content>
-                </div>
-            </fig-popover>
-
-            <h3>Click Trigger</h3>
-            <fig-popover action="click">
-                <fig-button>Click me</fig-button>
-                <div popover>
-                    <fig-header>
-                        <h3>Popover Title</h3>
-                    </fig-header>
-                    <fig-content>
-                        <fig-field direction="horizontal">
-                            <label>Name</label>
-                            <fig-input-text placeholder="Enter name"></fig-input-text>
-                        </fig-field>
-                        <fig-field direction="horizontal">
-                            <label>Enabled</label>
-                            <fig-switch></fig-switch>
-                        </fig-field>
-                    </fig-content>
-                </div>
-            </fig-popover>
-
-            <h3>With Form Content</h3>
-            <fig-popover action="manual"
-                         size="large">
-                <fig-button>Settings</fig-button>
-                <div popover>
-                    <fig-header>
-                        <h3>Settings</h3>
-                    </fig-header>
-                    <fig-content>
-                        <fig-field direction="horizontal">
-                            <label>Opacity</label>
-                            <fig-slider min="0"
-                                        max="100"
-                                        value="50"
-                                        text="true"
-                                        units="%"></fig-slider>
-                        </fig-field>
-                        <fig-field direction="horizontal">
-                            <label>Mode</label>
-                            <fig-dropdown>
-                                <option>Normal</option>
-                                <option>Multiply</option>
-                                <option>Screen</option>
-                            </fig-dropdown>
-                        </fig-field>
-                    </fig-content>
-                </div>
-            </fig-popover>
         </section>
         <hr>
 

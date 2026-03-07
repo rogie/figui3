@@ -2260,8 +2260,7 @@ dialog[is="fig-toast"] {
 }
 
 /* Tooltip */
-fig-tooltip,
-fig-popover {
+fig-tooltip {
   display: contents;
 }
 .fig-tooltip {
@@ -2312,8 +2311,7 @@ fig-popover {
   }
 }
 
-.fig-tooltip,
-.fig-popover {
+.fig-tooltip {
   overflow: visible;
   box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
   filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
@@ -2360,7 +2358,6 @@ fig-icon.close {
 
 /* Web Components */
 fig-button,
-fig-popover,
 fig-content,
 fig-slider,
 fig-switch,

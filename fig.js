@@ -740,29 +740,6 @@ class FigTooltip extends HTMLElement {
 
 customElements.define("fig-tooltip", FigTooltip);
 
-/* Popover */
-/**
- * A custom popover element extending FigTooltip.
- * @attr {string} action - The trigger action: "click" (default) or "hover"
- * @attr {string} size - The size of the popover
- */
-class FigPopover extends FigTooltip {
-  constructor() {
-    super();
-    this.action = this.getAttribute("action") || "click";
-    this.delay = parseInt(this.getAttribute("delay")) || 0;
-  }
-  render() {
-    this.popup = this.popup || this.querySelector("[popover]");
-    this.popup.setAttribute("class", "fig-popover");
-    this.popup.style.position = "fixed";
-    this.popup.style.visibility = "hidden";
-    this.popup.style.display = "inline-flex";
-    document.body.append(this.popup);
-  }
-}
-customElements.define("fig-popover", FigPopover);
-
 /* Dialog */
 /**
  * A custom dialog element for modal and non-modal dialogs.
@@ -1829,69 +1806,6 @@ class FigPopup extends HTMLDialogElement {
   }
 }
 customElements.define("fig-popup", FigPopup, { extends: "dialog" });
-
-/**
- * A popover element using the native Popover API.
- * @attr {string} trigger-action - The trigger action: "click" (default) or "hover"
- * @attr {number} delay - Delay in ms before showing on hover (default: 0)
- */
-class FigPopover2 extends HTMLElement {
-  #popover;
-  #trigger;
-  #id;
-  #delay;
-  #timeout;
-  #action;
-
-  constructor() {
-    super();
-  }
-  connectedCallback() {
-    this.#popover = this.querySelector("[popover]");
-    this.#trigger = this;
-    this.#delay = Number(this.getAttribute("delay")) || 0;
-    this.#action = this.getAttribute("trigger-action") || "click";
-    this.#id = `tooltip-${figUniqueId()}`;
-    if (this.#popover) {
-      this.#popover.setAttribute("id", this.#id);
-      this.#popover.setAttribute("role", "tooltip");
-      this.#popover.setAttribute("popover", "manual");
-      this.#popover.style["position-anchor"] = `--${this.#id}`;
-
-      this.#trigger.setAttribute("popovertarget", this.#id);
-      this.#trigger.setAttribute("popovertargetaction", "toggle");
-      this.#trigger.style["anchor-name"] = `--${this.#id}`;
-
-      if (this.#action === "hover") {
-        this.#trigger.addEventListener("mouseover", this.handleOpen.bind(this));
-        this.#trigger.addEventListener("mouseout", this.handleClose.bind(this));
-      } else {
-        this.#trigger.addEventListener("click", this.handleToggle.bind(this));
-      }
-
-      document.body.append(this.#popover);
-    }
-  }
-
-  handleClose() {
-    clearTimeout(this.#timeout);
-    this.#popover.hidePopover();
-  }
-  handleToggle() {
-    if (this.#popover.matches(":popover-open")) {
-      this.handleClose();
-    } else {
-      this.handleOpen();
-    }
-  }
-  handleOpen() {
-    clearTimeout(this.#timeout);
-    this.#timeout = setTimeout(() => {
-      this.#popover.showPopover();
-    }, this.#delay);
-  }
-}
-customElements.define("fig-popover-2", FigPopover2);
 
 /* Tabs */
 /**
