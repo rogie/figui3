@@ -15,6 +15,23 @@ All notable changes to this project will be documented in this file.
 - Expanded `figui3` skill guidance with React/Vite integration, tree-shaking-safe bootstrap patterns, overlay usage guidance, `experimental` attribute guidance, and color picker/custom mode (`modeready`) workflows.
 - Expanded `propkit` skill guidance with React/Vite usage, deterministic prompt rules, slider type/variant heuristics, control-selection heuristics, and delivery checklists.
 
+## [2.29.0]
+
+### Added
+
+- `fig-3d-rotate` now supports a `fields` attribute to render `fig-input-number` inputs for specified axes (e.g. `fields="rotateX,rotateY,rotateZ"`), with two-way sync between the cube preview and number fields.
+- Number fields use degree units, `precision="1"`, and flex-wrap responsively with a `4rem` min-width per field.
+- Added propkit examples for fields: all axes, Y only, X & Y, fields with 16:9 aspect ratio and preset values, and fields without a label.
+
+### Changed
+
+- `fig-3d-rotate` layout updated to `flex-wrap: wrap` with gap for proper field stacking below the cube container.
+- `fig-3d-rotate` now constrains properly inside horizontal `fig-field` via `min-width: 0`.
+
+### Fixed
+
+- `fig-3d-rotate` field inputs now intercept both `input` and `change` events from child `fig-input-number` elements, preventing mismatched event detail leaking to consumers.
+
 ## [2.28.0]
 
 ### Fixed

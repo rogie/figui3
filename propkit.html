@@ -973,15 +973,126 @@
             <div class="prop-panel">
                 <fig-field direction="horizontal">
                     <label>Rotation</label>
-                    <fig-3d-rotate value="rotateX(20deg) rotateY(-35deg) rotateZ(0deg)"
+                    <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
                                    id="3d-rotate-observed"></fig-3d-rotate>
                 </fig-field>
             </div>
             <pre class="event-dump language-json"><code id="3d-rotate-dump"
                       class="language-json">{
   "event": "ready",
-  "value": "rotateX(20.0deg) rotateY(-35.0deg) rotateZ(0.0deg)"
+  "value": "rotateX(0.0deg) rotateY(0.0deg) rotateZ(0.0deg)"
 }</code></pre>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>16:9 Horizontal</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+                                   aspect-ratio="16/9"></fig-3d-rotate>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>4:3</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+                                   aspect-ratio="4/3"></fig-3d-rotate>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>No Label</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+                                   aspect-ratio="16/9"></fig-3d-rotate>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>With Fields (All Axes)</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+                                   fields="rotateX,rotateY,rotateZ"></fig-3d-rotate>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>With Fields (Y Only)</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+                                   fields="rotateY"></fig-3d-rotate>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>With Fields (X &amp; Y)</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+                                   fields="rotateX,rotateY"></fig-3d-rotate>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Fields + 16:9 + Preset Values</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <label>Rotation</label>
+                    <fig-3d-rotate value="rotateX(25deg) rotateY(-35deg) rotateZ(10deg)"
+                                   fields="rotateX,rotateY,rotateZ"
+                                   aspect-ratio="16/9"></fig-3d-rotate>
+                </fig-field>
+            </div>
+
+            <fig-header borderless
+                        class="propkit-subheader">
+                <h3>Fields, No Label</h3>
+                <fig-button variant="secondary"
+                            class="copy-prompt-btn">Copy prompt</fig-button>
+            </fig-header>
+            <div class="prop-panel">
+                <fig-field direction="horizontal">
+                    <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+                                   fields="rotateX,rotateY,rotateZ"></fig-3d-rotate>
+                </fig-field>
+            </div>
         </section>
 
         <hr>

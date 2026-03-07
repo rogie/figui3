@@ -6325,13 +6325,17 @@ class Fig3DRotate extends HTMLElement {
   #container = null;
   #boundKeyDown = null;
   #boundKeyUp = null;
+  #fields = [];
+  #fieldInputs = {};
 
   static get observedAttributes() {
-    return ["value", "precision"];
+    return ["value", "precision", "aspect-ratio", "fields"];
   }
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "1");
+    this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
+    this.#parseFields(this.getAttribute("fields"));
     const val = this.getAttribute("value");
     if (val) this.#parseValue(val);
     this.#render();
@@ -6345,12 +6349,42 @@ class Fig3DRotate extends HTMLElement {
     }
   }
 
+  #syncAspectRatioVar(value) {
+    if (value && value.trim()) {
+      this.style.setProperty("--aspect-ratio", value.trim());
+    } else {
+      this.style.removeProperty("--aspect-ratio");
+    }
+  }
+
+  #parseFields(str) {
+    if (!str || !str.trim()) {
+      this.#fields = [];
+      return;
+    }
+    const valid = ["rotateX", "rotateY", "rotateZ"];
+    this.#fields = str
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => valid.includes(s));
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "aspect-ratio") {
+      this.#syncAspectRatioVar(newValue);
+      return;
+    }
+    if (name === "fields") {
+      this.#parseFields(newValue);
+      if (this.#cube) this.#render();
+      return;
+    }
     if (!this.#cube) return;
     if (name === "value" && newValue) {
       if (this.#isDragging) return;
       this.#parseValue(newValue);
       this.#updateCube();
+      this.#syncFieldInputs();
     }
     if (name === "precision") {
       this.#precision = parseInt(newValue || "1");
@@ -6386,6 +6420,22 @@ class Fig3DRotate extends HTMLElement {
   }
 
   #render() {
+    const axisLabels = { rotateX: "X", rotateY: "Y", rotateZ: "Z" };
+    const axisValues = { rotateX: this.#rx, rotateY: this.#ry, rotateZ: this.#rz };
+    const fieldsHTML = this.#fields
+      .map(
+        (axis) =>
+          `<fig-input-number
+            name="${axis}"
+            step="1"
+            precision="1"
+            value="${axisValues[axis]}"
+            units="°">
+            <span slot="prepend">${axisLabels[axis]}</span>
+          </fig-input-number>`,
+      )
+      .join("");
+
     this.innerHTML = `<div class="fig-3d-rotate-container" tabindex="0">
       <div class="fig-3d-rotate-scene">
         <div class="fig-3d-rotate-cube">
@@ -6397,11 +6447,38 @@ class Fig3DRotate extends HTMLElement {
           <div class="fig-3d-rotate-face bottom"></div>
         </div>
       </div>
-    </div>`;
+    </div>${fieldsHTML}`;
     this.#container = this.querySelector(".fig-3d-rotate-container");
     this.#cube = this.querySelector(".fig-3d-rotate-cube");
+    this.#fieldInputs = {};
+    for (const axis of this.#fields) {
+      const input = this.querySelector(`fig-input-number[name="${axis}"]`);
+      if (input) {
+        this.#fieldInputs[axis] = input;
+        const handleFieldValue = (e) => {
+          e.stopPropagation();
+          const val = parseFloat(e.target.value);
+          if (isNaN(val)) return;
+          if (axis === "rotateX") this.#rx = val;
+          else if (axis === "rotateY") this.#ry = val;
+          else if (axis === "rotateZ") this.#rz = val;
+          this.#updateCube();
+          this.#emit(e.type);
+        };
+        input.addEventListener("input", handleFieldValue);
+        input.addEventListener("change", handleFieldValue);
+      }
+    }
     this.#updateCube();
     this.#setupEvents();
+  }
+
+  #syncFieldInputs() {
+    const axisValues = { rotateX: this.#rx, rotateY: this.#ry, rotateZ: this.#rz };
+    for (const axis of this.#fields) {
+      const input = this.#fieldInputs[axis];
+      if (input) input.setAttribute("value", axisValues[axis].toFixed(this.#precision));
+    }
   }
 
   #updateCube() {
@@ -6458,6 +6535,7 @@ class Fig3DRotate extends HTMLElement {
       this.#ry = this.#snapToIncrement(startRy + dx * 0.5);
       this.#rx = this.#snapToIncrement(startRx - dy * 0.5);
       this.#updateCube();
+      this.#syncFieldInputs();
       this.#emit("input");
     };
 

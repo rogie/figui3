@@ -1397,10 +1397,13 @@ fig-easing-curve {
   }
   .fig-easing-curve-handle {
     fill: var(--easing-handle-fill);
-    cursor: grab;
+    cursor: default;
     pointer-events: all;
     stroke: var(--easing-handle-stroke);
     stroke-width: var(--easing-handle-stroke-width);
+    &:hover {
+      fill: var(--easing-handle-fill-active);
+    }
     &:active {
       cursor: grabbing;
       fill: var(--easing-handle-fill-active);
@@ -1410,8 +1413,15 @@ fig-easing-curve {
     fill: var(--easing-duration-bar-fill);
     stroke: var(--easing-duration-bar-stroke);
     stroke-width: var(--easing-duration-bar-stroke-width);
-    cursor: ew-resize;
+    cursor: default;
     pointer-events: all;
+    &:hover {
+      fill: var(--easing-handle-fill-active);
+    }
+    &:active {
+      cursor: grabbing;
+      fill: var(--easing-handle-fill-active);
+    }
   }
   .fig-easing-curve-dropdown {
     option svg {
@@ -1423,17 +1433,30 @@ fig-easing-curve {
 /* 3D Rotate */
 fig-3d-rotate {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacer-2);
   width: 100%;
-  --cube-size: 4rem;
+  --aspect-ratio: 1 / 1;
   --gradient-start-color: rgba(0, 0, 0, 0.05);
   --gradient-end-color: transparent;
+  --figma-3d-rotate-handle-size: 6px;
+
+  fig-field[direction="horizontal"] & {
+    flex: 1;
+    min-width: 0;
+  }
+
+  > fig-input-number {
+    flex: 1 0 4rem;
+  }
 
   .fig-3d-rotate-container {
+    flex: 1 1 100%;
     border-radius: var(--radius-medium);
     background: var(--figma-color-bg-secondary);
-    padding: var(--spacer-3);
+    padding: 0 2.5rem;
     width: 100%;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: var(--aspect-ratio);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1451,16 +1474,18 @@ fig-3d-rotate {
   }
 
   .fig-3d-rotate-scene {
-    width: var(--cube-size);
-    height: var(--cube-size);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: max(3.5rem, 50%);
+    max-width: max(3.5rem, 50%);
     perspective: 20rem;
-    filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.15));
   }
 
   .fig-3d-rotate-cube {
     width: 100%;
     height: 100%;
     position: relative;
+    aspect-ratio: 1 / 1;
     transform-style: preserve-3d;
   }
 
@@ -1475,33 +1500,39 @@ fig-3d-rotate {
     );
 
     &.front {
-      transform: translateZ(calc(var(--cube-size) / 2));
       background: var(--figma-color-bg);
       border-radius: var(--radius-medium);
+      transform-style: preserve-3d;
+      box-shadow: var(--figma-elevation-100);
+      inset: -1px;
 
       &::after {
         content: "";
         position: absolute;
-        width: 6px;
-        height: 6px;
+        width: var(--figma-3d-rotate-handle-size);
+        height: var(--figma-3d-rotate-handle-size);
         border-radius: 50%;
         background: var(--figma-color-border-strong);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        backface-visibility: hidden;
       }
     }
     &.back {
-      transform: rotateY(180deg) translateZ(calc(var(--cube-size) / 2));
+      transform-origin: 100% 50%;
+      transform: translateX(-100%) rotateY(-0.25turn) translateX(-100%)
+        rotateY(-0.25turn);
       background: linear-gradient(
         to bottom,
         var(--gradient-start-color),
-        var(--gradient-end-color)
+        var(--gradient-start-color)
       );
       border-radius: var(--radius-medium);
     }
     &.right {
-      transform: rotateY(90deg) translateZ(calc(var(--cube-size) / 2));
+      transform-origin: 0% 50%;
+      transform: translateX(100%) rotateY(0.25turn);
       background: linear-gradient(
         to right,
         var(--gradient-start-color),
@@ -1509,7 +1540,8 @@ fig-3d-rotate {
       );
     }
     &.left {
-      transform: rotateY(-90deg) translateZ(calc(var(--cube-size) / 2));
+      transform-origin: 100% 50%;
+      transform: translateX(-100%) rotateY(-0.25turn);
       background: linear-gradient(
         to left,
         var(--gradient-start-color),
@@ -1517,7 +1549,9 @@ fig-3d-rotate {
       );
     }
     &.top {
-      transform: rotateX(90deg) translateZ(calc(var(--cube-size) / 2));
+      translate: 0 -100%;
+      transform-origin: 50% 100%;
+      transform: rotateX(0.25turn);
       background: linear-gradient(
         to top,
         var(--gradient-start-color),
@@ -1525,7 +1559,10 @@ fig-3d-rotate {
       );
     }
     &.bottom {
-      transform: rotateX(-90deg) translateZ(calc(var(--cube-size) / 2));
+      top: 100%;
+      bottom: auto;
+      transform-origin: 50% 0%;
+      transform: rotateX(-0.25turn);
       background: linear-gradient(
         to bottom,
         var(--gradient-start-color),
