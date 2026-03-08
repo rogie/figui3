@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.32.0]
+
+### Added
+
+- Added a PropKit nav footer install helper with a readonly `fig-input-text` command field plus copy buttons for both command and install prompt.
+- Added contextual nav copy toasts (`Command copied` / `Prompt copied`) to match existing PropKit copy feedback patterns.
+- Added SVG-focused CodeMirror folding behavior in PropKit code view, with subtle fold placeholder styling.
+- Added an icon-only `Icons` example to the segmented control section.
+
+### Changed
+
+- Renamed the segment section to `Segmented control` and updated the text example label to `Text`.
+- Updated attributes input panel titles to use section-aware names (for example `Segmented control` instead of `Input`).
+- Hid empty attributes input panels when there are no visible controls to render.
+- Constrained PropKit code view/editor height with internal scrolling so long markup does not overflow the viewport.
+
+### Fixed
+
+- Fixed PropKit image upload persistence by writing uploaded image sources into editable markup so subsequent attribute edits keep the uploaded image.
+- Fixed image fit attribute controls by removing `50%` from fit options and treating `fit=auto` as attribute removal for better sync.
+- Added `readonly` support to `fig-input-text` so readonly fields are truly non-editable and reactive to attribute changes.
+
 ## [2.31.2]
 
 ### Changed

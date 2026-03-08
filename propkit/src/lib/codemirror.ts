@@ -9,7 +9,12 @@ import {
 import { EditorState } from "@codemirror/state";
 import { html as htmlLang } from "@codemirror/lang-html";
 import { json as jsonLang } from "@codemirror/lang-json";
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import {
+  HighlightStyle,
+  syntaxHighlighting,
+  codeFolding,
+  foldEffect,
+} from "@codemirror/language";
 import { closeBrackets } from "@codemirror/autocomplete";
 import { history, defaultKeymap, historyKeymap } from "@codemirror/commands";
 import { tags } from "@lezer/highlight";
@@ -38,6 +43,14 @@ const figmaTheme = EditorView.theme({
   },
   ".cm-selectionMatch": {
     backgroundColor: "var(--figma-color-bg-brand-tertiary)",
+  },
+  ".cm-foldPlaceholder": {
+    backgroundColor:
+      "color-mix(in srgb, var(--figma-color-bg-selected) 55%, transparent)",
+    border: "1px solid var(--figma-color-border-selected)",
+    color: "var(--figma-color-text-secondary)",
+    borderRadius: "var(--radius-small)",
+    padding: "0 4px",
   },
 });
 
@@ -70,11 +83,50 @@ const codeSetup = [
   highlightSpecialChars(),
   history(),
   drawSelection(),
+  codeFolding(),
   syntaxHighlighting(figmaHighlight),
   closeBrackets(),
   highlightActiveLine(),
   keymap.of([...defaultKeymap, ...historyKeymap]),
 ];
+
+function getSvgFoldRanges(doc: string): Array<{ from: number; to: number }> {
+  const tagRegex = /<\/?svg\b[^>]*>/gi;
+  const stack: number[] = [];
+  const ranges: Array<{ from: number; to: number }> = [];
+
+  let match: RegExpExecArray | null = null;
+  while ((match = tagRegex.exec(doc))) {
+    const tag = match[0];
+    const index = match.index;
+    const isClosing = tag.startsWith("</");
+    const isSelfClosing = /\/>$/.test(tag);
+
+    if (isClosing) {
+      const openTagEnd = stack.pop();
+      const closeTagStart = index;
+      if (
+        typeof openTagEnd === "number" &&
+        openTagEnd < closeTagStart
+      ) {
+        ranges.push({ from: openTagEnd, to: closeTagStart });
+      }
+    } else if (!isSelfClosing) {
+      stack.push(index + tag.length);
+    }
+  }
+
+  return ranges;
+}
+
+function foldSvgTags(view: EditorView) {
+  const doc = view.state.doc.toString();
+  const ranges = getSvgFoldRanges(doc);
+  if (!ranges.length) return;
+  view.dispatch({
+    effects: ranges.map((range) => foldEffect.of(range)),
+  });
+}
 
 export function createEditor(
   parent: HTMLElement,
@@ -117,10 +169,12 @@ export function createEditor(
     );
   }
 
-  return new EditorView({
+  const view = new EditorView({
     state: EditorState.create({ doc, extensions }),
     parent,
   });
+  foldSvgTags(view);
+  return view;
 }
 
 export function replaceDoc(view: EditorView | null, newDoc: string) {
@@ -128,4 +182,5 @@ export function replaceDoc(view: EditorView | null, newDoc: string) {
   view.dispatch({
     changes: { from: 0, to: view.state.doc.length, insert: newDoc },
   });
+  foldSvgTags(view);
 }

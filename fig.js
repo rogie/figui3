@@ -2740,6 +2740,8 @@ class FigInputText extends HTMLElement {
     this.type = this.getAttribute("type") || "text";
     this.placeholder = this.getAttribute("placeholder") || "";
     this.name = this.getAttribute("name") || null;
+    this.readonly =
+      this.hasAttribute("readonly") && this.getAttribute("readonly") !== "false";
 
     if (this.type === "number") {
       if (this.getAttribute("step")) {
@@ -2796,6 +2798,7 @@ class FigInputText extends HTMLElement {
       }
 
       this.input = this.querySelector("input,textarea");
+      this.input.readOnly = this.readonly;
 
       if (this.type === "number") {
         if (this.getAttribute("min")) {
@@ -2931,6 +2934,7 @@ class FigInputText extends HTMLElement {
       "placeholder",
       "label",
       "disabled",
+      "readonly",
       "type",
       "step",
       "min",
@@ -2946,6 +2950,10 @@ class FigInputText extends HTMLElement {
         case "disabled":
           this.disabled = this.input.disabled =
             newValue !== null && newValue !== "false";
+          break;
+        case "readonly":
+          this.readonly = newValue !== null && newValue !== "false";
+          this.input.readOnly = this.readonly;
           break;
         case "transform":
           if (this.type === "number") {

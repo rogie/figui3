@@ -51,6 +51,23 @@ nav {
     padding: 8px;
   }
 
+  .nav-footer {
+    border-top: 1px solid var(--figma-color-border);
+    padding: var(--spacer-2);
+    flex-shrink: 0;
+  }
+
+  .nav-install-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-1);
+
+    fig-input-text {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
   fig-header {
     justify-content: space-between;
   }
@@ -141,13 +158,23 @@ code {
   margin-top: var(--spacer-2);
   border: 1px solid var(--figma-color-border);
   border-radius: var(--radius-large);
+  display: flex;
+  flex-direction: column;
+  max-height: min(45vh, 28rem);
+  overflow: hidden;
 
   fig-header {
     justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  > div {
+    min-height: 0;
+    overflow: auto;
   }
 
   .cm-editor {
-    overflow: hidden;
+    min-height: 100%;
     max-width: 100%;
     background-color: transparent;
     &.cm-focused {

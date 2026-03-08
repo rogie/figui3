@@ -56,6 +56,23 @@ function toFieldsLabel(value: string): string {
     .join(", ");
 }
 
+function getInputPanelTitle(controlTag: string): string {
+  const titles: Record<string, string> = {
+    "fig-image": "Image",
+    "fig-input-color": "Color",
+    "fig-input-fill": "Fill",
+    "fig-slider": "Slider",
+    "fig-input-number": "Number",
+    "fig-switch": "Switch",
+    "fig-dropdown": "Dropdown",
+    "fig-segmented-control": "Segmented control",
+    "fig-easing-curve": "Easing Curve",
+    "fig-3d-rotate": "3D Rotate",
+    "fig-input-angle": "Angle",
+  };
+  return titles[controlTag] ?? toTitle(controlTag.replace(/^fig-/, ""));
+}
+
 function getNumberAttrDefault(
   controlTag: string,
   attrName: string,
@@ -138,6 +155,14 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
           const sliderTextEnabled =
             target.controlTag === "fig-slider" &&
             (target.controlAttributes.text ?? "").toLowerCase() === "true";
+          const visibleControlEntries = controlEntries.filter(
+            (entry) =>
+              !(
+                entry.name === "units" &&
+                target.controlTag === "fig-slider" &&
+                !sliderTextEnabled
+              ),
+          );
 
           const renderControl = (
             entry: RuleEntry,
@@ -279,6 +304,14 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
                     const host = e.currentTarget as HTMLElement & { value?: string };
                     const nextValue = host.value ?? (e as CustomEvent).detail?.value;
                     if (typeof nextValue !== "string") return;
+                    if (
+                      target.controlTag === "fig-image" &&
+                      name === "fit" &&
+                      nextValue === "auto"
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
                     applyChange(target.fieldIndex, scope, name, nextValue);
                   }}
                 >
@@ -364,25 +397,23 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
               </section>
             </div>
 
-            <div className="propkit-attributes-view">
-              <fig-header>
-                <h3>Input</h3>
-              </fig-header>
-              <section className="propkit-attributes-content">
-                <div className="propkit-attributes-group">
-                  {controlEntries.map((entry) =>
-                    entry.name === "units" &&
-                    target.controlTag === "fig-slider" &&
-                    !sliderTextEnabled ? null : (
+            {visibleControlEntries.length > 0 && (
+              <div className="propkit-attributes-view">
+                <fig-header>
+                  <h3>{getInputPanelTitle(target.controlTag)}</h3>
+                </fig-header>
+                <section className="propkit-attributes-content">
+                  <div className="propkit-attributes-group">
+                    {visibleControlEntries.map((entry) => (
                       <fig-field direction="horizontal" key={`control-${entry.name}`}>
                         <label>{entry.rule.label}</label>
                         {renderControl(entry, "control")}
                       </fig-field>
-                    ),
-                  )}
-                </div>
-              </section>
-            </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            )}
           </div>
         );
       })}

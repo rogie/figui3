@@ -59,7 +59,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     fit: {
       label: "Fit",
       type: "enum",
-      options: ["auto", "cover", "contain", "50%"],
+      options: ["auto", "cover", "contain"],
     },
     "aspect-ratio": aspectRatioRule,
   },

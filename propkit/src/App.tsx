@@ -6,6 +6,7 @@ import CodeView from "./components/CodeView";
 import { useTheme } from "./hooks/useTheme";
 import { useNavigation } from "./hooks/useNavigation";
 import { getExampleSourceMarkup } from "./lib/exampleMarkup";
+import { applyAttributeMutation } from "./lib/attributeParser";
 
 function toSentenceCase(text: string): string {
   const trimmed = text.trim();
@@ -50,6 +51,21 @@ export default function App() {
     setEditableMarkup(nextMarkup);
   }, []);
 
+  const handlePersistImageSource = useCallback(
+    (fieldIndex: number, src: string) => {
+      if (!src) return;
+      setEditableMarkup((currentMarkup) =>
+        applyAttributeMutation(currentMarkup, {
+          fieldIndex,
+          target: "control",
+          name: "src",
+          value: src,
+        }),
+      );
+    },
+    [],
+  );
+
   const activeTitle =
     activeSection && activeExample
       ? buildExampleTitle(activeSection.name, activeExample.name)
@@ -88,6 +104,7 @@ export default function App() {
               key={`${activeSectionId}/${activeExampleId}`}
               example={activeExample}
               markup={editableMarkup}
+              onPersistImageSource={handlePersistImageSource}
             />
           </div>
         )}

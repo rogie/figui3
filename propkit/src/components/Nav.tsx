@@ -1,6 +1,9 @@
 import { useRef, useEffect, useCallback } from "react";
 import { sections } from "../data/sections";
 import ThemeToggle from "./ThemeToggle";
+import { copyText } from "../lib/prompt";
+import ClipboardIcon from "../icons/icon.24.clipboard.svg?react";
+import ChatIcon from "../icons/icon.24.cursor-chat.svg?react";
 
 interface Props {
   activeSectionId: string;
@@ -16,6 +19,9 @@ const orderedExamples = sections.flatMap((section) =>
     exampleId: example.id,
   })),
 );
+const INSTALL_COMMAND = "npm i @rogieking/figui3";
+const INSTALL_PROMPT =
+  "Install the npm package @rogieking/figui3. Then use the included .cursor/skills files (figui3 and propkit) for implementation guidance.";
 
 function toSentenceCase(text: string): string {
   const trimmed = text.trim();
@@ -31,6 +37,30 @@ export default function Nav({
   navigateTo,
 }: Props) {
   const navRef = useRef<HTMLDivElement>(null);
+  const toastRef = useRef<HTMLElement>(null);
+
+  const showToast = useCallback((message: string) => {
+    const el = toastRef.current as HTMLElement & { showToast?: () => void };
+    const colorScheme =
+      document.documentElement.style.colorScheme ||
+      window.getComputedStyle(document.documentElement).colorScheme;
+    const isDark = colorScheme.includes("dark");
+    el?.setAttribute("theme", isDark ? "light" : "dark");
+    if (el) {
+      el.textContent = message;
+    }
+    el?.showToast?.();
+  }, []);
+
+  const handleCopyInstallCommand = useCallback(async () => {
+    await copyText(INSTALL_COMMAND);
+    showToast("Command copied");
+  }, [showToast]);
+
+  const handleCopyInstallPrompt = useCallback(async () => {
+    await copyText(INSTALL_PROMPT);
+    showToast("Prompt copied");
+  }, [showToast]);
 
   const handleLayerClick = useCallback(
     (e: Event) => {
@@ -172,6 +202,39 @@ export default function Nav({
           );
         })}
       </div>
+      <footer className="nav-footer">
+        <div className="nav-install-row">
+          <fig-input-text value={INSTALL_COMMAND} readonly></fig-input-text>
+          <fig-tooltip text="Copy command">
+            <fig-button
+              variant="ghost"
+              icon
+              onClick={handleCopyInstallCommand}
+              aria-label="Copy install command"
+            >
+              <ClipboardIcon />
+            </fig-button>
+          </fig-tooltip>
+          <fig-tooltip text="Copy prompt">
+            <fig-button
+              variant="ghost"
+              icon
+              onClick={handleCopyInstallPrompt}
+              aria-label="Copy install prompt"
+            >
+              <ChatIcon />
+            </fig-button>
+          </fig-tooltip>
+        </div>
+      </footer>
+      <dialog
+        is="fig-toast"
+        ref={toastRef as React.RefObject<HTMLDialogElement>}
+        duration="1500"
+        theme="dark"
+      >
+        Command copied
+      </dialog>
     </nav>
   );
 }
