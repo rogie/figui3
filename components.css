@@ -1590,7 +1590,7 @@ fig-3d-rotate {
 
   & > label {
     align-self: stretch;
-    color: inherit;
+    color: var(--figma-color-text);
   }
 
   & > * {

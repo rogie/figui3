@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.30.1]
+
+### Fixed
+
+- Ensure `.input-combo > label` uses explicit text-color token resolution so `fig-input-fill` labels render with the correct scheme-driven text color.
+
 ## [2.30.0]
 
 ### Added
