@@ -246,7 +246,7 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
               const current =
                 value ??
                 (name === "variant" && target.controlTag === "fig-slider"
-                  ? "neue"
+                  ? "default"
                   : options[0] ?? "");
               if (
                 name === "direction" &&

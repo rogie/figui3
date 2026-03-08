@@ -73,7 +73,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     units: {
       label: "Units",
       type: "enum",
-      options: ["", "%", "px", "°", "turn", "rem"],
+      options: ["", "%", "px", "°"],
     },
   },
   "fig-input-fill": {
@@ -130,7 +130,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     units: {
       label: "Units",
       type: "enum",
-      options: ["", "%", "px", "°", "turn", "rem"],
+      options: ["", "%", "px", "°"],
     },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
   },

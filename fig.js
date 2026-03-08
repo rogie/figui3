@@ -2400,6 +2400,7 @@ class FigSlider extends HTMLElement {
   #regenerateInnerHTML() {
     this.value = Number(this.getAttribute("value") || 0);
     this.type = this.getAttribute("type") || "range";
+    this.variant = this.getAttribute("variant") || "default";
     this.text =
       this.hasAttribute("text") && this.getAttribute("text") !== "false";
     this.units = this.getAttribute("units") || "";
@@ -2620,6 +2621,7 @@ class FigSlider extends HTMLElement {
       "min",
       "max",
       "type",
+      "variant",
       "disabled",
       "color",
       "units",
@@ -2682,6 +2684,7 @@ class FigSlider extends HTMLElement {
         case "max":
         case "step":
         case "type":
+        case "variant":
         case "units":
           this[name] = newValue;
           this.#regenerateInnerHTML();

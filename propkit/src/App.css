@@ -81,15 +81,15 @@ main {
 }
 
 .propkit-example {
-  --dash-inset: -2rem;
+  --dash-inset: -3rem;
   width: 240px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
   border: none;
-  margin-top: calc(var(--dash-inset) * -1);
-  margin-bottom: calc(var(--dash-inset) * -1);
+  margin-top: calc(var(--dash-inset) * -0.5);
+  margin-bottom: calc(var(--dash-inset) * -0.5);
   border-radius: var(--radius-large);
   padding: var(--spacer-2) 0;
   background: var(--figma-color-bg);

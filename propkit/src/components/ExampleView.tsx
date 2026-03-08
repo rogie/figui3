@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import type { Example } from "../data/sections";
 import { getInjectedExampleMarkup } from "../lib/exampleMarkup";
 
@@ -9,14 +9,6 @@ interface Props {
 
 export default function ExampleView({ example, markup }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    el.querySelectorAll("fig-slider").forEach((s) =>
-      s.setAttribute("variant", "neue"),
-    );
-  }, [example, markup]);
 
   return (
     <div>

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.31.2]
+
+### Changed
+
+- Tuned PropKit `.propkit-example` dash-inset spacing for cleaner vertical rhythm in preview blocks.
+- Updated units dropdown options in PropKit attributes by removing `turn` and `rem`.
+
+### Fixed
+
+- Fixed PropKit slider variant controls by removing forced `variant="neue"` in preview rendering and defaulting variant selection to `default` when no variant attribute is set.
+- Fixed `fig-slider` variant reactivity by observing `variant` attribute changes and regenerating internals when variant updates.
+
 ## [2.31.1]
 
 ### Changed
