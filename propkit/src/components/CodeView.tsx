@@ -34,20 +34,23 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
     replaceDoc(view, markup);
   }, [markup]);
 
-  const showToast = useCallback(() => {
+  const showToast = useCallback((message: string) => {
     const el = toastRef.current as HTMLElement & { showToast?: () => void };
     const colorScheme =
       document.documentElement.style.colorScheme ||
       window.getComputedStyle(document.documentElement).colorScheme;
     const isDark = colorScheme.includes("dark");
     el?.setAttribute("theme", isDark ? "light" : "dark");
+    if (el) {
+      el.textContent = message;
+    }
     el?.showToast?.();
   }, []);
 
   const handleCopyCode = useCallback(async () => {
     if (!markup) return;
     await copyText(markup);
-    showToast();
+    showToast("HTML copied");
   }, [markup, showToast]);
 
   const handleCopyPrompt = useCallback(async () => {
@@ -55,7 +58,7 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
     if (!container) return;
     const prompt = buildPropkitPrompt(container);
     await copyText(prompt);
-    showToast();
+    showToast("Prompt copied");
   }, [showToast]);
 
   return (
@@ -87,7 +90,7 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
         duration="1500"
         theme="dark"
       >
-        Copied
+        HTML copied
       </dialog>
     </div>
   );

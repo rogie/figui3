@@ -2400,7 +2400,8 @@ class FigSlider extends HTMLElement {
   #regenerateInnerHTML() {
     this.value = Number(this.getAttribute("value") || 0);
     this.type = this.getAttribute("type") || "range";
-    this.text = this.getAttribute("text") || false;
+    this.text =
+      this.hasAttribute("text") && this.getAttribute("text") !== "false";
     this.units = this.getAttribute("units") || "";
     this.transform = Number(this.getAttribute("transform") || 1);
     this.disabled = this.getAttribute("disabled") ? true : false;
@@ -2681,9 +2682,12 @@ class FigSlider extends HTMLElement {
         case "max":
         case "step":
         case "type":
-        case "text":
         case "units":
           this[name] = newValue;
+          this.#regenerateInnerHTML();
+          break;
+        case "text":
+          this.text = newValue !== null && newValue !== "false";
           this.#regenerateInnerHTML();
           break;
         default:
@@ -2737,6 +2741,16 @@ class FigInputText extends HTMLElement {
     if (this.type === "number") {
       if (this.getAttribute("step")) {
         this.step = Number(this.getAttribute("step"));
+      }
+
+      if (this.getAttribute("min")) {
+        this.input.setAttribute("min", String(this.min));
+      }
+      if (this.getAttribute("max")) {
+        this.input.setAttribute("max", String(this.max));
+      }
+      if (this.getAttribute("step")) {
+        this.input.setAttribute("step", String(this.step));
       }
       if (this.getAttribute("min")) {
         this.min = Number(this.getAttribute("min"));
@@ -2997,6 +3011,21 @@ class FigInputNumber extends HTMLElement {
   #precision;
   #isInteracting = false;
 
+  #syncNativeNumberAttributes() {
+    if (!this.input || this.input.type !== "number") return;
+
+    ["min", "max", "step"].forEach((name) => {
+      const attrValue = this.getAttribute(name);
+      if (attrValue === null || attrValue === "") {
+        this.input.removeAttribute(name);
+        this.input[name] = "";
+        return;
+      }
+      this.input.setAttribute(name, attrValue);
+      this.input[name] = attrValue;
+    });
+  }
+
   constructor() {
     super();
     // Pre-bind the event handlers once
@@ -3052,13 +3081,16 @@ class FigInputNumber extends HTMLElement {
     // Use type="number" when steppers are enabled (for native spin buttons)
     const inputType = hasSteppers ? "number" : "text";
     const inputMode = hasSteppers ? "" : 'inputmode="decimal"';
+    const inputValue = hasSteppers
+      ? this.#transformNumber(this.value)
+      : this.#formatWithUnit(this.value);
 
     let html = `<input 
       type="${inputType}"
       ${inputMode}
       ${this.name ? `name="${this.name}"` : ""}
       placeholder="${this.placeholder}"
-      value="${this.#formatWithUnit(this.value)}" />`;
+      value="${inputValue}" />`;
 
     //child nodes hack
     requestAnimationFrame(() => {
@@ -3087,6 +3119,7 @@ class FigInputNumber extends HTMLElement {
       if (this.getAttribute("step")) {
         this.step = Number(this.getAttribute("step"));
       }
+      this.#syncNativeNumberAttributes();
 
       // Set disabled state if present
       if (this.hasAttribute("disabled")) {
@@ -3355,15 +3388,24 @@ class FigInputNumber extends HTMLElement {
           break;
         case "units":
           this.#units = newValue || "";
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value =
+            this.input.type === "number"
+              ? this.#transformNumber(this.value)
+              : this.#formatWithUnit(this.value);
           break;
         case "unit-position":
           this.#unitPosition = newValue || "suffix";
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value =
+            this.input.type === "number"
+              ? this.#transformNumber(this.value)
+              : this.#formatWithUnit(this.value);
           break;
         case "transform":
           this.transform = Number(newValue) || 1;
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value =
+            this.input.type === "number"
+              ? this.#transformNumber(this.value)
+              : this.#formatWithUnit(this.value);
           break;
         case "value":
           if (this.#isInteracting) break;
@@ -3373,16 +3415,41 @@ class FigInputNumber extends HTMLElement {
             value = this.#sanitizeInput(value, false);
           }
           this.value = value;
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value =
+            this.input.type === "number"
+              ? this.#transformNumber(this.value)
+              : this.#formatWithUnit(this.value);
           break;
         case "min":
         case "max":
         case "step":
+          if (newValue === null || newValue === "") {
+            this[name] = undefined;
+            this.#syncNativeNumberAttributes();
+            break;
+          }
           this[name] = Number(newValue);
+          this.#syncNativeNumberAttributes();
           break;
+        case "steppers": {
+          const hasSteppers = newValue !== null && newValue !== "false";
+          this.input.type = hasSteppers ? "number" : "text";
+          if (hasSteppers) {
+            this.input.removeAttribute("inputmode");
+            this.#syncNativeNumberAttributes();
+            this.input.value = this.#transformNumber(this.value);
+          } else {
+            this.input.setAttribute("inputmode", "decimal");
+            this.input.value = this.#formatWithUnit(this.value);
+          }
+          break;
+        }
         case "precision":
           this.#precision = newValue !== null ? Number(newValue) : 2;
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value =
+            this.input.type === "number"
+              ? this.#transformNumber(this.value)
+              : this.#formatWithUnit(this.value);
           break;
         case "name":
           this[name] = this.input[name] = newValue;
@@ -4633,7 +4700,7 @@ class FigCheckbox extends HTMLElement {
     this.render();
   }
   static get observedAttributes() {
-    return ["disabled", "label", "checked", "name", "value"];
+    return ["disabled", "label", "checked", "name", "value", "indeterminate"];
   }
 
   #createLabel() {
@@ -4699,6 +4766,29 @@ class FigCheckbox extends HTMLElement {
         this.input.checked =
           this.hasAttribute("checked") &&
           this.getAttribute("checked") !== "false";
+        if (this.input.checked && this.hasAttribute("indeterminate")) {
+          this.removeAttribute("indeterminate");
+        }
+        this.input.indeterminate =
+          this.hasAttribute("indeterminate") &&
+          this.getAttribute("indeterminate") !== "false" &&
+          !this.input.checked;
+        if (this.input.indeterminate) {
+          this.input.setAttribute("indeterminate", "true");
+        } else {
+          this.input.removeAttribute("indeterminate");
+        }
+        break;
+      case "indeterminate":
+        this.input.indeterminate =
+          this.hasAttribute("indeterminate") &&
+          this.getAttribute("indeterminate") !== "false" &&
+          !this.input.checked;
+        if (this.input.indeterminate) {
+          this.input.setAttribute("indeterminate", "true");
+        } else {
+          this.input.removeAttribute("indeterminate");
+        }
         break;
       case "value":
         this.input.value = newValue;

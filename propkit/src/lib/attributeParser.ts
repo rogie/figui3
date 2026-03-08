@@ -3,6 +3,7 @@ import { getExampleSourceMarkup } from "./exampleMarkup";
 export interface ParsedAttributeTarget {
   fieldIndex: number;
   label: string;
+  hasLabel: boolean;
   controlTag: string;
   fieldAttributes: Record<string, string>;
   controlAttributes: Record<string, string>;
@@ -13,6 +14,12 @@ export interface AttributeMutation {
   target: "field" | "control";
   name: string;
   value: string | null;
+}
+
+export interface LabelMutation {
+  fieldIndex: number;
+  enabled: boolean;
+  text?: string;
 }
 
 function parseSourceRoot(markup: string): HTMLElement {
@@ -117,9 +124,11 @@ export function parseAttributeTargets(markup: string): ParsedAttributeTarget[] {
       if (!control) return null;
 
       const label = field.querySelector("label")?.textContent?.trim() ?? "";
+      const hasLabel = Boolean(field.querySelector(":scope > label"));
       return {
         fieldIndex,
         label,
+        hasLabel,
         controlTag: control.tagName.toLowerCase(),
         fieldAttributes: attrsToRecord(field),
         controlAttributes: attrsToRecord(control),
@@ -144,6 +153,39 @@ export function applyAttributeMutation(
     element.removeAttribute(mutation.name);
   } else {
     element.setAttribute(mutation.name, mutation.value);
+  }
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
+export function applyFieldLabelMutation(
+  markup: string,
+  mutation: LabelMutation,
+): string {
+  const root = parseSourceRoot(markup);
+  const field = root.querySelectorAll("fig-field")[mutation.fieldIndex];
+  if (!field) return markup;
+
+  const existingLabel = field.querySelector(":scope > label");
+
+  if (mutation.enabled) {
+    const labelText = mutation.text?.trim() || "Label";
+    if (existingLabel) {
+      existingLabel.textContent = labelText;
+    } else {
+      const label = document.createElement("label");
+      label.textContent = labelText;
+      const firstControl = Array.from(field.children).find((child) =>
+        isFigTag(child),
+      );
+      if (firstControl) {
+        field.insertBefore(label, firstControl);
+      } else {
+        field.prepend(label);
+      }
+    }
+  } else if (existingLabel) {
+    existingLabel.remove();
   }
 
   return getExampleSourceMarkup(serializeSourceMarkup(root));

@@ -1,6 +1,7 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect, useRef } from "react";
 import {
   applyAttributeMutation,
+  applyFieldLabelMutation,
   parseAttributeTargets,
 } from "../lib/attributeParser";
 import {
@@ -20,7 +21,12 @@ interface RuleEntry {
   rule: AttributeRule;
 }
 
-function readBooleanValue(value: string | undefined, mode: BoolMode): boolean {
+function readBooleanValue(
+  value: string | undefined,
+  mode: BoolMode,
+  defaultChecked = false,
+): boolean {
+  if (value === undefined) return defaultChecked;
   if (mode === "presence") return value !== undefined;
   if (mode === "custom") return value !== undefined;
   return value?.toLowerCase() === "true";
@@ -50,8 +56,21 @@ function toFieldsLabel(value: string): string {
     .join(", ");
 }
 
+function getNumberAttrDefault(
+  controlTag: string,
+  attrName: string,
+): number | undefined {
+  if (controlTag === "fig-input-number") {
+    if (attrName === "min") return 0;
+    if (attrName === "max") return 100;
+    if (attrName === "step") return 0.5;
+  }
+  return undefined;
+}
+
 export default function AttributesView({ markup, onMarkupChange }: Props) {
   const targets = useMemo(() => parseAttributeTargets(markup), [markup]);
+  const labelMemoryRef = useRef<Record<number, string>>({});
 
   const applyChange = useCallback(
     (
@@ -72,15 +91,32 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
     [markup, onMarkupChange],
   );
 
+  const applyLabelChange = useCallback(
+    (fieldIndex: number, enabled: boolean, text?: string) => {
+      onMarkupChange(
+        applyFieldLabelMutation(markup, {
+          fieldIndex,
+          enabled,
+          text,
+        }),
+      );
+    },
+    [markup, onMarkupChange],
+  );
+
+  useEffect(() => {
+    targets.forEach((target) => {
+      if (target.hasLabel && target.label.trim()) {
+        labelMemoryRef.current[target.fieldIndex] = target.label.trim();
+      }
+    });
+  }, [targets]);
+
   if (!targets.length) return null;
 
   return (
-    <div className="propkit-attributes-view">
-      <fig-header>
-        <h3>Attributes</h3>
-      </fig-header>
-      <section className="propkit-attributes-content">
-        {targets.map((target) => {
+    <>
+      {targets.map((target) => {
           const fieldRules = getRuleSetForTarget("field", target.controlTag);
           const controlRules = getRuleSetForTarget("control", target.controlTag);
 
@@ -99,6 +135,9 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
               rule,
             }),
           );
+          const sliderTextEnabled =
+            target.controlTag === "fig-slider" &&
+            (target.controlAttributes.text ?? "").toLowerCase() === "true";
 
           const renderControl = (
             entry: RuleEntry,
@@ -108,7 +147,11 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
 
             if (rule.type === "boolean") {
               const mode = rule.boolMode ?? "presence";
-              const checked = readBooleanValue(value, mode);
+              const checked = readBooleanValue(
+                value,
+                mode,
+                rule.defaultChecked ?? false,
+              );
               return (
                 <fig-switch
                   checked={checked ? "true" : undefined}
@@ -150,8 +193,27 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
             }
 
             if (rule.type === "number") {
-              const fallback = rule.min ?? 0;
+              const fallback =
+                getNumberAttrDefault(target.controlTag, name) ?? rule.min ?? 0;
               const numberValue = toNumberValue(value, fallback);
+              const useNumberInputControl =
+                target.controlTag === "fig-input-number" &&
+                (name === "min" || name === "max" || name === "step");
+              if (useNumberInputControl) {
+                return (
+                  <fig-input-number
+                    value={String(numberValue)}
+                    step={name === "step" ? "0.1" : "1"}
+                    full
+                    onInput={(e: any) => {
+                      const host = e.currentTarget as HTMLElement & { value?: string };
+                      const nextValue = host.value ?? (e as CustomEvent).detail?.value;
+                      if (nextValue === undefined || nextValue === null) return;
+                      applyChange(target.fieldIndex, scope, name, String(nextValue));
+                    }}
+                  ></fig-input-number>
+                );
+              }
               return (
                 <fig-slider
                   value={String(numberValue)}
@@ -171,15 +233,29 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
             }
 
             if (rule.type === "enum") {
-              const current = value ?? rule.options[0] ?? "";
+              const hasImageSource = Boolean(
+                target.controlTag === "fig-image" &&
+                  target.controlAttributes.src?.trim(),
+              );
+              const options =
+                name === "aspect-ratio" && target.controlTag === "fig-image"
+                  ? hasImageSource
+                    ? [...rule.options, "auto"]
+                    : rule.options.filter((option) => option !== "auto")
+                  : rule.options;
+              const current =
+                value ??
+                (name === "variant" && target.controlTag === "fig-slider"
+                  ? "neue"
+                  : options[0] ?? "");
               if (
                 name === "direction" &&
-                rule.options.includes("horizontal") &&
-                rule.options.includes("vertical")
+                options.includes("horizontal") &&
+                options.includes("vertical")
               ) {
                 return (
                   <fig-segmented-control full>
-                    {rule.options.map((option) => (
+                    {options.map((option) => (
                       <fig-segment
                         key={option}
                         value={option}
@@ -206,7 +282,7 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
                     applyChange(target.fieldIndex, scope, name, nextValue);
                   }}
                 >
-                  {rule.options.map((option) => (
+                  {options.map((option) => (
                     <option
                       key={option}
                       value={option}
@@ -214,6 +290,8 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
                     >
                       {option === ""
                         ? "None"
+                        : name === "units"
+                        ? option
                         : name === "fields"
                         ? toFieldsLabel(option)
                         : toSentenceCaseLabel(option)}
@@ -237,24 +315,77 @@ export default function AttributesView({ markup, onMarkupChange }: Props) {
             );
           };
 
-          return (
-            <div className="propkit-attributes-group" key={target.fieldIndex}>
-              {fieldEntries.map((entry) => (
-                <fig-field direction="horizontal" key={`field-${entry.name}`}>
-                  <label>{entry.rule.label}</label>
-                  {renderControl(entry, "field")}
-                </fig-field>
-              ))}
-              {controlEntries.map((entry) => (
-                <fig-field direction="horizontal" key={`control-${entry.name}`}>
-                  <label>{entry.rule.label}</label>
-                  {renderControl(entry, "control")}
-                </fig-field>
-              ))}
+        return (
+          <div key={target.fieldIndex}>
+            <div className="propkit-attributes-view">
+              <fig-header>
+                <h3>Field</h3>
+              </fig-header>
+              <section className="propkit-attributes-content">
+                <div className="propkit-attributes-group">
+                  {fieldEntries.map((entry) => (
+                    <fig-field direction="horizontal" key={`field-${entry.name}`}>
+                      <label>{entry.rule.label}</label>
+                      {renderControl(entry, "field")}
+                    </fig-field>
+                  ))}
+                  <fig-field direction="horizontal" key={`field-label-${target.fieldIndex}`}>
+                    <label>Label</label>
+                    <fig-switch
+                      checked={target.hasLabel ? "true" : undefined}
+                      onInput={(e: any) => {
+                        const customEvent = e as CustomEvent<{ checked?: boolean }>;
+                        const host = e.currentTarget as HTMLElement & {
+                          checked?: boolean;
+                        };
+                        const next =
+                          typeof customEvent.detail?.checked === "boolean"
+                            ? customEvent.detail.checked
+                            : Boolean(host.checked ?? host.hasAttribute("checked"));
+                        if (!next) {
+                          applyLabelChange(target.fieldIndex, false);
+                          return;
+                        }
+
+                        const rememberedLabel =
+                          labelMemoryRef.current[target.fieldIndex] ??
+                          target.label.trim() ??
+                          "";
+                        applyLabelChange(
+                          target.fieldIndex,
+                          true,
+                          rememberedLabel ||
+                            toTitle(target.controlTag.replace(/^fig-/, "")),
+                        );
+                      }}
+                    ></fig-switch>
+                  </fig-field>
+                </div>
+              </section>
             </div>
-          );
-        })}
-      </section>
-    </div>
+
+            <div className="propkit-attributes-view">
+              <fig-header>
+                <h3>Input</h3>
+              </fig-header>
+              <section className="propkit-attributes-content">
+                <div className="propkit-attributes-group">
+                  {controlEntries.map((entry) =>
+                    entry.name === "units" &&
+                    target.controlTag === "fig-slider" &&
+                    !sliderTextEnabled ? null : (
+                      <fig-field direction="horizontal" key={`control-${entry.name}`}>
+                        <label>{entry.rule.label}</label>
+                        {renderControl(entry, "control")}
+                      </fig-field>
+                    ),
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+        );
+      })}
+    </>
   );
 }

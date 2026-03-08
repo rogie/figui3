@@ -17,6 +17,12 @@ const orderedExamples = sections.flatMap((section) =>
   })),
 );
 
+function toSentenceCase(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
 export default function Nav({
   activeSectionId,
   activeExampleId,
@@ -137,24 +143,34 @@ export default function Nav({
         <ThemeToggle isDark={isDark} setTheme={setTheme} />
       </fig-header>
       <div className="nav-links" ref={navRef}>
-        {sections.map((section) => (
-          <fig-layer key={section.id} data-section={section.id}>
-            <div className="fig-layer-row">
-              <label>{section.name}</label>
-            </div>
-            {section.examples.map((example) => (
-              <fig-layer
-                key={example.id}
-                data-section={section.id}
-                data-example={example.id}
-              >
-                <div className="fig-layer-row">
-                  <label>{example.name}</label>
-                </div>
-              </fig-layer>
-            ))}
-          </fig-layer>
-        ))}
+        {sections.map((section) => {
+          const isSingleExample = section.examples.length === 1;
+          const onlyExample = section.examples[0];
+
+          return (
+            <fig-layer
+              key={section.id}
+              data-section={section.id}
+              data-example={isSingleExample ? onlyExample.id : undefined}
+            >
+              <div className="fig-layer-row">
+                <label>{toSentenceCase(section.name)}</label>
+              </div>
+              {!isSingleExample &&
+                section.examples.map((example) => (
+                  <fig-layer
+                    key={example.id}
+                    data-section={section.id}
+                    data-example={example.id}
+                  >
+                    <div className="fig-layer-row">
+                      <label>{toSentenceCase(example.name)}</label>
+                    </div>
+                  </fig-layer>
+                ))}
+            </fig-layer>
+          );
+        })}
       </div>
     </nav>
   );

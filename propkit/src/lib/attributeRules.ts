@@ -10,6 +10,7 @@ export interface BaseAttributeRule {
 export interface BooleanAttributeRule extends BaseAttributeRule {
   type: "boolean";
   boolMode?: BoolMode;
+  defaultChecked?: boolean;
   trueValue?: string;
   falseValue?: string | null;
 }
@@ -58,21 +59,30 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     fit: {
       label: "Fit",
       type: "enum",
-      options: ["fill", "contain", "cover", "none", "scale-down"],
+      options: ["auto", "cover", "contain", "50%"],
     },
     "aspect-ratio": aspectRatioRule,
   },
   "fig-slider": {
-    type: {
-      label: "Type",
+    variant: {
+      label: "Variant",
       type: "enum",
-      options: ["range", "opacity", "hue", "stepper", "delta"],
+      options: ["default", "minimal", "neue"],
     },
-    text: { label: "Number Input", type: "boolean", boolMode: "string" },
-    units: { label: "Units", type: "string" },
+    text: { label: "Text", type: "boolean", boolMode: "string" },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["", "%", "px", "°", "turn", "rem"],
+    },
   },
   "fig-input-fill": {
-    alpha: { label: "Alpha", type: "boolean", boolMode: "string" },
+    alpha: {
+      label: "Alpha",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
   },
   "fig-input-color": {
     alpha: { label: "Alpha", type: "boolean", boolMode: "string" },
@@ -120,7 +130,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     units: {
       label: "Units",
       type: "enum",
-      options: ["", "%", "px", "turn", "rem"],
+      options: ["", "%", "px", "°", "turn", "rem"],
     },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
   },

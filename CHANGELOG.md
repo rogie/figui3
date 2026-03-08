@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.31.0]
+
+### Added
+
+- Added context-aware copy toasts in PropKit code actions (`HTML copied` / `Prompt copied`).
+- Added new PropKit examples for dropdown optgroups (`Groups`, `Labelled groups`) and switch `Indeterminate`.
+- Added per-field `Label` toggle controls in PropKit attributes to add/remove the `label` element from each `fig-field`.
+
+### Changed
+
+- Refined PropKit attributes UI into two stacked panels: `Field` controls (`Direction`, `Label`) and `Input` controls.
+- Updated PropKit nav behavior for single-example sections so the parent row is directly selectable without rendering a nested child row.
+- Curated PropKit examples by removing the Dial section and trimming extra Easing Curve and 3D Rotate variants.
+
+### Fixed
+
+- Fixed `fig-input-number` native steppers to honor decimal `step` values (e.g. `0.5`) and keep native `min`/`max`/`step` attributes synchronized.
+- Fixed switch/checkbox indeterminate state syncing so setting `checked` clears indeterminate visuals correctly.
+
 ## [2.30.1]
 
 ### Fixed

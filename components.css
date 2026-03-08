@@ -542,7 +542,7 @@ input[type="text"][list] {
         position: relative;
         padding: 0 var(--spacer-1) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
         font-weight: var(--body-medium-fontWeight);
-        &[label] {
+        &[label]:not([label=""]) {
           padding-top: var(--spacer-2);
           option:first-child {
             margin-top: var(--spacer-2);
@@ -3149,14 +3149,23 @@ fig-layer {
   user-select: none;
   border-radius: var(--radius-medium);
 
-  /* Show chevron when layer has children */
-  &:has(fig-layer) > .fig-layer-row > .fig-layer-chevron {
-    visibility: visible;
+  /* When layer has children */
+  &:has(fig-layer) {
+    & > .fig-layer-row {
+      & > .fig-layer-chevron {
+        visibility: visible;
+      }
+    }
+  }
+  &:not(:has(fig-layer)):not(:has(.fig-layer-icon)) {
+    & > .fig-layer-row {
+      padding-left: var(--spacer-3);
+    }
   }
 
   &:not(:has(.fig-layer-icon)) {
     & > .fig-layer-row {
-      padding-left: var(--spacer-3);
+      padding-left: var(--spacer-4);
     }
   }
 
@@ -3165,7 +3174,7 @@ fig-layer {
     align-items: center;
     gap: var(--spacer-1);
     padding: var(--spacer-1) var(--spacer-2);
-    margin-left: var(--spacer-2);
+    margin-left: 0;
     border-radius: var(--radius-medium);
     position: relative;
 

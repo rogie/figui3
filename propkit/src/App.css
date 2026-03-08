@@ -68,7 +68,7 @@ main {
   max-width: var(--example-width);
   min-width: var(--example-min-width);
   max-height: calc(100vh - var(--spacer-4));
-  overflow-y: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 
@@ -87,6 +87,7 @@ main {
 }
 
 .propkit-example {
+  --dash-inset: -2rem;
   width: 240px;
   flex-shrink: 0;
   display: flex;
@@ -97,14 +98,28 @@ main {
   padding: var(--spacer-2) 0;
   background: var(--figma-color-bg);
   margin-bottom: 0.5rem;
-}
-
-:root[data-theme="light"] .propkit-example {
-  color-scheme: dark;
-}
-
-:root[data-theme="dark"] .propkit-example {
-  color-scheme: light;
+  position: relative;
+  &:before,
+  &:after {
+    content: "";
+    position: absolute;
+    left: var(--dash-inset);
+    right: var(--dash-inset);
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+    border-top: 1px dashed var(--figma-color-border);
+    border-bottom: 1px dashed var(--figma-color-border);
+  }
+  &:after {
+    border: 0;
+    left: calc(var(--dash-inset) / 2);
+    right: calc(var(--dash-inset) / 2);
+    top: calc(var(--dash-inset) / 2);
+    bottom: calc(var(--dash-inset) / 2);
+    border-left: 1px dashed var(--figma-color-border);
+    border-right: 1px dashed var(--figma-color-border);
+  }
 }
 
 .placeholder-field {
