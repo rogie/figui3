@@ -792,8 +792,10 @@ fig-button {
     color: var(--figma-color-text);
     box-shadow: 0 0 0 1px var(--figma-color-bordertranslucent);
 
-    &:active {
+    &:active,
+    &:has(:active) {
       background-color: var(--figma-color-bg-secondary);
+      color: var(--figma-color-text);
     }
   }
 
@@ -2030,8 +2032,7 @@ fig-slider {
       border: none;
       position: relative;
       z-index: 1;
-      cursor: grab;
-      cursor: -webkit-grab;
+      cursor: default;
       box-shadow: var(--slider-handle-shadow);
     }
 
@@ -2105,8 +2106,7 @@ fig-slider {
       border: none;
       position: relative;
       z-index: 1;
-      cursor: grab;
-      cursor: -moz-grab;
+      cursor: default;
       box-shadow: var(--slider-handle-shadow);
       transition: var(--handle-transition);
     }

@@ -5237,8 +5237,11 @@ class FigImage extends HTMLElement {
   }
   connectedCallback() {
     this.#src = this.getAttribute("src") || "";
-    this.upload = this.getAttribute("upload") === "true";
-    this.download = this.getAttribute("download") === "true";
+    this.upload =
+      this.hasAttribute("upload") && this.getAttribute("upload") !== "false";
+    this.download =
+      this.hasAttribute("download") &&
+      this.getAttribute("download") !== "false";
     this.label = this.getAttribute("label") || "Upload";
     this.size = this.getAttribute("size") || "small";
     this.innerHTML = this.#getInnerHTML();
@@ -5377,7 +5380,7 @@ class FigImage extends HTMLElement {
     this.setAttribute("src", this.blob);
   }
   static get observedAttributes() {
-    return ["src", "upload", "aspect-ratio", "fit"];
+    return ["src", "upload", "download", "aspect-ratio", "fit"];
   }
   get src() {
     return this.#src;
@@ -5400,9 +5403,13 @@ class FigImage extends HTMLElement {
         this.#loadImage(this.#src);
       }
     }
-    if (name === "upload" || name === "download") {
-      this.upload = newValue.toLowerCase() === "true";
-      this.download = newValue.toLowerCase() === "true";
+    if (name === "upload") {
+      this.upload = newValue !== null && newValue !== "false";
+      this.innerHTML = this.#getInnerHTML();
+      this.#updateRefs();
+    }
+    if (name === "download") {
+      this.download = newValue !== null && newValue !== "false";
       this.innerHTML = this.#getInnerHTML();
       this.#updateRefs();
     }

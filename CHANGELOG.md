@@ -4,16 +4,31 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Changed
-
-- Removed `fig-popover` and `fig-popover-2` component implementations and all associated demo/docs usage; popup guidance now centers on `fig-popup`.
-- Updated `glitch.html` to use a `fig-popup` example instead of `fig-popover`.
+## [2.30.0]
 
 ### Added
 
-- Added project-level Cursor skills for `figui3` and `propkit` in `.cursor/skills/`.
-- Expanded `figui3` skill guidance with React/Vite integration, tree-shaking-safe bootstrap patterns, overlay usage guidance, `experimental` attribute guidance, and color picker/custom mode (`modeready`) workflows.
-- Expanded `propkit` skill guidance with React/Vite usage, deterministic prompt rules, slider type/variant heuristics, control-selection heuristics, and delivery checklists.
+- Added a full `propkit/` React + Vite app for interactive PropKit exploration, including section/example navigation and live preview composition.
+- Added live CodeMirror-to-preview syncing so editing example markup re-renders the active example immediately.
+- Added a dynamic `Attributes` panel in PropKit that parses `fig-field` + primary `fig-*` controls and maps attributes to native FigUI controls.
+- Added a new `Number` section with `fig-input-number` examples and attribute mappings.
+- Added a new project skill: `.cursor/skills/nested-css-selectors/`.
+
+### Changed
+
+- Updated PropKit layout and styles, including nested CSS refactors, top-aligned centered main content, and refined code/attributes panel headers.
+- Updated PropKit example metadata and curation (removed redundant gradient/image/slider variants, removed combined panel, and refined example naming).
+- Renamed example wrapper usage from `.prop-panel` to `.propkit-example`, with backward-compatible unwrap handling and standardized re-wrap behavior.
+- Updated `.propkit-example` styling to remove the border and use opposite `color-scheme` for stronger visual contrast.
+- Updated `Attributes` panel behavior with targeted control rules (dropdowns using `experimental=\"modern\"`, segmented control for `direction`, constrained aspect-ratio options, and specialized 3D rotate field labels/options).
+- Removed `fig-popover` and `fig-popover-2` component implementations and associated demo/docs usage; popup guidance now centers on `fig-popup`.
+- Updated `glitch.html` to use a `fig-popup` example instead of `fig-popover`.
+
+### Fixed
+
+- Fixed `fig-image` attribute reactivity for `upload`/`download` by supporting presence-style booleans, observing `download`, and handling each attribute independently in `attributeChangedCallback`.
+- Fixed enum dropdown value handling in PropKit attributes so displayed sentence-case labels no longer corrupt raw attribute values (notably `fig-3d-rotate` fields).
+
 
 ## [2.29.3]
 
