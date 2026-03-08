@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.31.1]
+
+### Changed
+
+- Refined PropKit layout spacing by tightening `main` description spacing and updating `.propkit-example` vertical dash-inset margins.
+
 ## [2.31.0]
 
 ### Added

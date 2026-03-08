@@ -78,12 +78,6 @@ main {
     color: var(--figma-color-text);
     margin: 0 0 8px 0;
   }
-
-  p.description {
-    font-size: 13px;
-    color: var(--figma-color-text-secondary);
-    margin: 0 0 24px 0;
-  }
 }
 
 .propkit-example {
@@ -94,10 +88,11 @@ main {
   flex-direction: column;
   gap: 2px;
   border: none;
+  margin-top: calc(var(--dash-inset) * -1);
+  margin-bottom: calc(var(--dash-inset) * -1);
   border-radius: var(--radius-large);
   padding: var(--spacer-2) 0;
   background: var(--figma-color-bg);
-  margin-bottom: 0.5rem;
   position: relative;
   &:before,
   &:after {
