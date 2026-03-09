@@ -49,6 +49,21 @@ nav {
     flex: 1;
     overflow-y: auto;
     padding: var(--spacer-2) var(--spacer-3);
+    scrollbar-width: thin;
+    scrollbar-color: var(--figma-color-border) transparent;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--figma-color-border);
+      border-radius: 999px;
+    }
   }
 
   .nav-footer {

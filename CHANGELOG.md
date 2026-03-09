@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.33.4]
+
+### Changed
+
+- Improved playground nav wheel behavior to be overflow-aware: nav lists now scroll naturally first, then advance examples at scroll boundaries.
+- Updated `.nav-links` overflow styling with thin, low-profile scrollbars for a cleaner navigation panel appearance.
+
+### Fixed
+
+- Fixed fill-picker color handle drag state to reliably end on pointer cancel/lost capture and when pointer buttons are released outside the picker/window.
+- Fixed numeric alt-drag scrubbing (`fig-input-text[type="number"]`, `fig-input-number`) so drag state and cursor reset correctly when release happens outside the window.
+
 ## [2.33.3]
 
 ### Changed

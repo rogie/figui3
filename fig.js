@@ -2726,6 +2726,7 @@ class FigInputText extends HTMLElement {
   #isInteracting = false;
   #boundMouseMove;
   #boundMouseUp;
+  #boundWindowBlur;
   #boundMouseDown;
   #boundInputChange;
 
@@ -2734,6 +2735,7 @@ class FigInputText extends HTMLElement {
     // Pre-bind the event handlers once
     this.#boundMouseMove = this.#handleMouseMove.bind(this);
     this.#boundMouseUp = this.#handleMouseUp.bind(this);
+    this.#boundWindowBlur = this.#handleMouseUp.bind(this);
     this.#boundMouseDown = this.#handleMouseDown.bind(this);
     this.#boundInputChange = (e) => {
       e.stopPropagation();
@@ -2831,6 +2833,7 @@ class FigInputText extends HTMLElement {
     this.removeEventListener("pointerdown", this.#boundMouseDown);
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
+    window.removeEventListener("blur", this.#boundWindowBlur);
   }
 
   focus() {
@@ -2862,6 +2865,10 @@ class FigInputText extends HTMLElement {
   }
   #handleMouseMove(e) {
     if (this.type !== "number") return;
+    if (e.buttons === 0) {
+      this.#handleMouseUp();
+      return;
+    }
     let step = (this.step || 1) * e.movementX;
     let value = Number(this.input.value);
     value = value / (this.transform || 1) + step;
@@ -2885,6 +2892,7 @@ class FigInputText extends HTMLElement {
       this.style.userSelect = "none";
       window.addEventListener("pointermove", this.#boundMouseMove);
       window.addEventListener("pointerup", this.#boundMouseUp);
+      window.addEventListener("blur", this.#boundWindowBlur);
     }
   }
   #handleMouseUp(e) {
@@ -2897,6 +2905,7 @@ class FigInputText extends HTMLElement {
     this.style.userSelect = "all";
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
+    window.removeEventListener("blur", this.#boundWindowBlur);
   }
   #sanitizeInput(value, transform = true) {
     let sanitized = value;
@@ -3018,6 +3027,7 @@ customElements.define("fig-input-text", FigInputText);
 class FigInputNumber extends HTMLElement {
   #boundMouseMove;
   #boundMouseUp;
+  #boundWindowBlur;
   #boundMouseDown;
   #boundInputChange;
   #boundInput;
@@ -3049,6 +3059,7 @@ class FigInputNumber extends HTMLElement {
     // Pre-bind the event handlers once
     this.#boundMouseMove = this.#handleMouseMove.bind(this);
     this.#boundMouseUp = this.#handleMouseUp.bind(this);
+    this.#boundWindowBlur = this.#handleMouseUp.bind(this);
     this.#boundMouseDown = this.#handleMouseDown.bind(this);
     this.#boundInputChange = (e) => {
       e.stopPropagation();
@@ -3170,6 +3181,7 @@ class FigInputNumber extends HTMLElement {
     this.removeEventListener("pointerdown", this.#boundMouseDown);
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
+    window.removeEventListener("blur", this.#boundWindowBlur);
   }
 
   focus() {
@@ -3322,6 +3334,10 @@ class FigInputNumber extends HTMLElement {
 
   #handleMouseMove(e) {
     if (this.disabled) return;
+    if (e.buttons === 0) {
+      this.#handleMouseUp();
+      return;
+    }
     let step = (this.step || 1) * e.movementX;
     let numericValue = this.#getNumericValue(this.input.value);
     let value = Number(numericValue) / (this.transform || 1) + step;
@@ -3343,6 +3359,7 @@ class FigInputNumber extends HTMLElement {
       this.style.userSelect = "none";
       window.addEventListener("pointermove", this.#boundMouseMove);
       window.addEventListener("pointerup", this.#boundMouseUp);
+      window.addEventListener("blur", this.#boundWindowBlur);
     }
   }
 
@@ -3355,6 +3372,7 @@ class FigInputNumber extends HTMLElement {
     this.style.userSelect = "all";
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
+    window.removeEventListener("blur", this.#boundWindowBlur);
   }
 
   #sanitizeInput(value, transform = true) {
@@ -8240,6 +8258,12 @@ class FigFillPicker extends HTMLElement {
   #setupColorAreaEvents() {
     if (!this.#colorArea || !this.#colorAreaHandle) return;
 
+    const endColorDrag = () => {
+      if (!this.#isDraggingColor) return;
+      this.#isDraggingColor = false;
+      this.#emitChange();
+    };
+
     const updateFromEvent = (e) => {
       const rect = this.#colorArea.getBoundingClientRect();
       const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
@@ -8261,15 +8285,17 @@ class FigFillPicker extends HTMLElement {
     });
 
     this.#colorArea.addEventListener("pointermove", (e) => {
-      if (this.#isDraggingColor) {
-        updateFromEvent(e);
+      if (!this.#isDraggingColor) return;
+      if (e.buttons === 0) {
+        endColorDrag();
+        return;
       }
+      updateFromEvent(e);
     });
 
-    this.#colorArea.addEventListener("pointerup", () => {
-      this.#isDraggingColor = false;
-      this.#emitChange();
-    });
+    this.#colorArea.addEventListener("pointerup", endColorDrag);
+    this.#colorArea.addEventListener("pointercancel", endColorDrag);
+    this.#colorArea.addEventListener("lostpointercapture", endColorDrag);
 
     // Handle drag (for when handle is at corners)
     this.#colorAreaHandle.addEventListener("pointerdown", (e) => {
@@ -8279,15 +8305,17 @@ class FigFillPicker extends HTMLElement {
     });
 
     this.#colorAreaHandle.addEventListener("pointermove", (e) => {
-      if (this.#isDraggingColor) {
-        updateFromEvent(e);
+      if (!this.#isDraggingColor) return;
+      if (e.buttons === 0) {
+        endColorDrag();
+        return;
       }
+      updateFromEvent(e);
     });
 
-    this.#colorAreaHandle.addEventListener("pointerup", () => {
-      this.#isDraggingColor = false;
-      this.#emitChange();
-    });
+    this.#colorAreaHandle.addEventListener("pointerup", endColorDrag);
+    this.#colorAreaHandle.addEventListener("pointercancel", endColorDrag);
+    this.#colorAreaHandle.addEventListener("lostpointercapture", endColorDrag);
   }
 
   #updateColorInputs() {
