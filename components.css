@@ -484,7 +484,6 @@ input[type="text"][list] {
         display: block;
         width: 1rem;
         height: 1rem;
-        margin-right: calc(var(--spacer-1) * -1);
         background-color: currentColor;
         -webkit-mask-image: var(--icon-checkmark);
         mask-image: var(--icon-checkmark);
@@ -3171,6 +3170,7 @@ fig-layer {
   color: var(--figma-color-text);
   position: relative;
   user-select: none;
+  width: 100%;
   border-radius: var(--radius-medium);
 
   /* When layer has children */
@@ -3178,15 +3178,7 @@ fig-layer {
     & > .fig-layer-row {
       & > .fig-layer-chevron {
         visibility: visible;
-        margin-left: calc(-1 * (var(--spacer-3) + var(--spacer-3) + 6px));
-        margin-right: 0;
       }
-    }
-  }
-
-  &:not(:has(.fig-layer-icon)) {
-    & > .fig-layer-row {
-      padding-left: var(--spacer-4);
     }
   }
 
@@ -3196,6 +3188,7 @@ fig-layer {
     gap: var(--spacer-1);
     padding: var(--spacer-1) var(--spacer-2);
     margin-left: 0;
+    height: var(--spacer-4);
     border-radius: var(--radius-medium);
     position: relative;
 
@@ -3207,14 +3200,15 @@ fig-layer {
       mask-position: center;
       display: flex;
       visibility: hidden;
-      margin-left: calc(-1 * (var(--spacer-3) + var(--spacer-3)));
-      margin-right: calc(-1 * (var(--spacer-1) + 2px));
       background: var(--figma-color-text-tertiary);
       width: var(--spacer-3);
       height: var(--spacer-3);
       flex-shrink: 0;
-      transform: rotate(-90deg);
       transition: transform 0.15s;
+      position: absolute;
+      left: calc(var(--spacer-3) * -1);
+      top: var(--spacer-1);
+      rotate: -90deg;
     }
 
     &:hover {
@@ -3231,7 +3225,7 @@ fig-layer {
       width: var(--spacer-3);
       height: var(--spacer-3);
       color: var(--figma-color-icon-tertiary);
-      margin-left: var(--spacer-1);
+      margin-left: calc(var(--spacer-1) * -1);
     }
 
     > label {
@@ -3271,7 +3265,7 @@ fig-layer {
 
   /* Rotate chevron when open */
   &[open]:not([open="false"]) > .fig-layer-row > .fig-layer-chevron {
-    transform: rotate(0deg);
+    rotate: 0deg;
   }
 
   /* Dimmed when not visible */

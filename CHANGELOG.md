@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.33.2]
+
+### Added
+
+- Added a `Layer` section back to the `/figui3` playground with examples for icon and no-icon rows, including nested child layers.
+
+### Changed
+
+- Updated the icon-based layer example to default to `open` and `selected` on the parent with a selected nested child for clearer selection-state demos.
+- Refined playground panel spacing and related component styling polish for the latest `/figui3` examples.
+
+### Fixed
+
+- Simplified shimmer direction empty-state labeling in attributes view from `Default (horizontal)` to `Default`.
+
 ## [2.33.1]
 
 ### Changed

@@ -378,6 +378,48 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
+    id: "layer",
+    name: "Layer",
+    description: "Layer row examples with and without leading layer icons.",
+    examples: [
+      {
+        id: "with-icon",
+        name: "With icon",
+        markup: `<div class="prop-panel">
+  <fig-layer open selected>
+    <div class="fig-layer-row">
+      <svg class="fig-layer-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="4" y="4" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.25"></rect>
+      </svg>
+      <label>Rectangle</label>
+    </div>
+    <fig-layer selected>
+      <div class="fig-layer-row">
+        <label>Nested rectangle</label>
+      </div>
+    </fig-layer>
+  </fig-layer>
+</div>`,
+      },
+      {
+        id: "without-icon",
+        name: "Without icon",
+        markup: `<div class="prop-panel">
+  <fig-layer>
+    <div class="fig-layer-row">
+      <label>Layer with no icon</label>
+    </div>
+    <fig-layer selected>
+      <div class="fig-layer-row">
+        <label>Nested layer with no icon</label>
+      </div>
+    </fig-layer>
+  </fig-layer>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "header",
     name: "Header",
     description: "Section header with title and optional actions.",
