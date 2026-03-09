@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.33.3]
+
+### Changed
+
+- Centered the playground example container within the main layout for more consistent `/figui3` presentation.
+- Updated `.propkit-example` spacing to use horizontal zero padding while preserving vertical padding.
+
 ## [2.33.2]
 
 ### Added

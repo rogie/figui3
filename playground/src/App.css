@@ -98,6 +98,10 @@ main {
   }
 }
 
+.example-view-container {
+  align-self: center;
+}
+
 .propkit-example {
   --dash-inset: -3rem;
   width: var(--example-width);
@@ -109,7 +113,7 @@ main {
   margin-top: calc(var(--dash-inset) * -0.5);
   margin-bottom: calc(var(--dash-inset) * -0.5);
   border-radius: var(--radius-large);
-  padding: var(--spacer-4);
+  padding: var(--spacer-4) 0;
   background: var(--figma-color-bg);
   position: relative;
   &:before,
