@@ -198,7 +198,6 @@ code {
 
 .propkit-attributes-view {
   margin-top: var(--spacer-2);
-  margin-bottom: var(--spacer-2);
   border: 1px solid var(--figma-color-border);
   border-radius: var(--radius-large);
 

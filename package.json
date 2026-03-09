@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "2.33.0",
+  "version": "2.33.1",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "MIT",
@@ -19,7 +19,6 @@
     "fig.css",
     "base.css",
     "components.css",
-    "index.html",
     "dist/",
     ".cursor/skills/",
     "README.md",

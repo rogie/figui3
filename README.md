@@ -9,7 +9,7 @@ A lightweight, zero-dependency web components library for building Figma plugin 
 
 View the interactive component documentation at **[rogie.github.io/figui3](https://rogie.github.io/figui3/)**
 
-The demo page (`index.html`) is included in the npm package, so you can also open it locally after installing.
+The docs page source is kept in this repo as `old.html` for reference and local testing.
 
 ## Features
 
@@ -64,6 +64,24 @@ cd figui3
 bun install
 bun dev             # Core component docs at http://localhost:3000
 npm run dev:playground  # Interactive playground app (routes: /figui3, /propkit)
+npm run build:playground # Build playground app
+bun build            # Build dist/fig.js
+```
+
+### Playground (`/figui3` and `/propkit`)
+
+The playground app is the fastest way to author and validate component markup.
+
+- **`/figui3`**: component-focused examples and attribute controls for FigUI3 primitives.
+- **`/propkit`**: property-panel patterns composed from FigUI3 controls.
+- Live preview, attributes editing, and code view stay synchronized.
+- Attribute controls write real component markup and preserve internal-only playground metadata where needed.
+
+Open locally:
+
+```bash
+npm run dev:playground
+# then visit http://localhost:5173/figui3 or http://localhost:5173/propkit
 ```
 
 ## Quick Start
@@ -212,6 +230,42 @@ A modal dialog component with drag support.
 <script>
   document.getElementById('myDialog').showModal();
 </script>
+```
+
+---
+
+### Popup (`<fig-popup>`)
+
+An anchored floating surface built on `<dialog>`, with collision-aware positioning and optional popover beak styling.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `anchor` | string | — | CSS selector for the anchor element |
+| `position` | string | `"top center"` | Placement (`"top"`, `"left"`, `"center right"`, etc.) |
+| `offset` | string | `"0 0"` | X/Y offset in px-like tokens (`"8 8"`) |
+| `viewport-margin` | string | `"8"` | Viewport safety margin (CSS shorthand style) |
+| `variant` | string | — | Use `"popover"` to render a beak |
+| `theme` | string | — | `"light"`, `"dark"`, or `"menu"` |
+| `closedby` | string | `"any"` | Dismiss behavior: `"any"`, `"closerequest"`, `"none"` |
+| `open` | boolean/string | `false` | Open when present and not `"false"` |
+
+```html
+<fig-button id="popup-anchor" onclick="const p=document.getElementById('demo-popup'); p.toggleAttribute('open');">
+  Toggle popup
+</fig-button>
+
+<dialog
+  id="demo-popup"
+  is="fig-popup"
+  anchor="#popup-anchor"
+  position="center right"
+  offset="8 8"
+  viewport-margin="8"
+  variant="popover"
+  closedby="none"
+>
+  <fig-header><h3>Popup</h3></fig-header>
+</dialog>
 ```
 
 ---
@@ -530,6 +584,7 @@ A form field wrapper with flexible layout. Automatically links `<label>` element
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `direction` | string | `"column"` | Layout: `"column"`, `"row"`, `"horizontal"` |
+| `columns` | string | — | Optional horizontal split preset: `"thirds"` or `"half"` |
 | `label` | string | — | Programmatically set the label text |
 
 ```html
@@ -543,6 +598,12 @@ A form field wrapper with flexible layout. Automatically links `<label>` element
 <fig-field direction="horizontal">
   <label>Volume</label>
   <fig-slider min="0" max="100" value="50"></fig-slider>
+</fig-field>
+
+<!-- Horizontal with 1/3 + 2/3 split -->
+<fig-field direction="horizontal" columns="thirds">
+  <label>Opacity</label>
+  <fig-slider value="50"></fig-slider>
 </fig-field>
 ```
 
@@ -675,16 +736,13 @@ A toast notification component.
 | `duration` | number | `5000` | Auto-dismiss ms (0 = no dismiss) |
 | `offset` | number | `16` | Distance from bottom |
 | `theme` | string | `"dark"` | Theme: `"dark"`, `"light"`, `"danger"`, `"brand"` |
-| `open` | boolean | `false` | Whether visible |
 
 ```html
+<fig-button onclick="document.getElementById('myToast').showToast()">Show toast</fig-button>
+
 <fig-toast id="myToast" theme="brand" duration="3000">
   Settings saved successfully!
 </fig-toast>
-
-<script>
-  document.getElementById('myToast').show();
-</script>
 ```
 
 ---

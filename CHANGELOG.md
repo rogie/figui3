@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.33.1]
+
+### Changed
+
+- Updated `README.md` to reflect current FigUI3 workflows, including a dedicated playground usage section and refreshed popup/field/toast docs.
+- Updated playground attributes panel spacing by increasing `.propkit-attributes-content` bottom padding to `var(--spacer-2-5)`.
+
+### Fixed
+
+- Removed `index.html` from published package files and retained the docs source in-repo as `old.html`.
+
 ## [2.33.0]
 
 ### Added
