@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.33.0]
+
+### Added
+
+- Added a new `/playground` app flow for both FigUI3 and PropKit examples, including interactive preview, attribute editing, and code view tooling.
+- Added richer FigUI3 field and popup authoring controls in the playground (field input presets, columns presets, popup theme/viewport margin/expanded position options).
+
+### Changed
+
+- Replaced legacy standalone PropKit pages/app files with the unified playground implementation and refreshed related skills/docs references.
+- Updated FigUI3 examples for header, popup, and toast to use more realistic trigger/icon patterns and current component structure.
+
+### Fixed
+
+- Fixed playground code view sanitization to hide internal-only field attributes while preserving them during code-edit roundtrips.
+- Fixed enum/dropdown value syncing in attributes view (including popup theme selection) and improved fig-popup beak alignment calculations on horizontal placements.
+
 ## [2.32.0]
 
 ### Added

@@ -62,7 +62,8 @@ Or via esm.sh:
 git clone https://github.com/rogie/figui3.git
 cd figui3
 bun install
-bun dev  # Opens documentation at http://localhost:3000
+bun dev             # Core component docs at http://localhost:3000
+npm run dev:playground  # Interactive playground app (routes: /figui3, /propkit)
 ```
 
 ## Quick Start

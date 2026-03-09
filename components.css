@@ -1212,8 +1212,6 @@ fig-chit {
       background-repeat: no-repeat;
       border-radius: 0.125rem;
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-    }
-    &[data-type="image"]::after {
       mask-image: linear-gradient(
         to right,
         black 0%,
@@ -2355,6 +2353,7 @@ dialog[is="fig-dialog"] {
 
 dialog[is="fig-popup"] {
   --z-index: 999999;
+  --beak-offset: 1px;
   z-index: var(--z-index);
   position: fixed;
   margin: 0;
@@ -2419,13 +2418,13 @@ dialog[is="fig-popup"] {
     }
 
     &[data-beak-side="left"]:after {
-      left: 1px;
+      left: 6px;
       top: var(--beak-offset, 50%);
       transform: translate(-100%, -50%) rotate(90deg);
     }
 
     &[data-beak-side="right"]:after {
-      left: calc(100% - 1px);
+      left: calc(100% - 6px);
       top: var(--beak-offset, 50%);
       transform: translate(0, -50%) rotate(-90deg);
     }
@@ -2894,10 +2893,35 @@ fig-field,
     gap: var(--spacer-2);
     align-items: start;
     flex-direction: row;
-    width: auto;
 
     & > label {
       min-width: 4rem;
+    }
+    &[columns="thirds"] {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacer-2);
+
+      & > label {
+        grid-column: 1;
+      }
+
+      & > label ~ * {
+        grid-column: 2 / span 2;
+      }
+    }
+    &[columns="half"] {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacer-2);
+
+      & > label {
+        grid-column: 1;
+      }
+
+      & > label ~ * {
+        grid-column: 2 / span 2;
+      }
     }
   }
 }
@@ -3142,7 +3166,7 @@ fig-input-angle {
 
 /* Layer */
 fig-layer {
-  --indent: var(--spacer-4);
+  --indent: var(--spacer-2);
   display: block;
   color: var(--figma-color-text);
   position: relative;
@@ -3154,12 +3178,9 @@ fig-layer {
     & > .fig-layer-row {
       & > .fig-layer-chevron {
         visibility: visible;
+        margin-left: calc(-1 * (var(--spacer-3) + var(--spacer-3) + 6px));
+        margin-right: 0;
       }
-    }
-  }
-  &:not(:has(fig-layer)):not(:has(.fig-layer-icon)) {
-    & > .fig-layer-row {
-      padding-left: var(--spacer-3);
     }
   }
 
@@ -3186,7 +3207,7 @@ fig-layer {
       mask-position: center;
       display: flex;
       visibility: hidden;
-      margin-left: calc(-1 * (var(--spacer-3) + var(--spacer-1) + 2px));
+      margin-left: calc(-1 * (var(--spacer-3) + var(--spacer-3)));
       margin-right: calc(-1 * (var(--spacer-1) + 2px));
       background: var(--figma-color-text-tertiary);
       width: var(--spacer-3);

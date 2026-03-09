@@ -1813,17 +1813,24 @@ class FigPopup extends HTMLDialogElement {
 
     const anchorCenterX = anchorRect.left + anchorRect.width / 2;
     const anchorCenterY = anchorRect.top + anchorRect.height / 2;
+    const measuredRect = this.getBoundingClientRect();
+    const rect =
+      measuredRect.width > 0 && measuredRect.height > 0 ? measuredRect : popupRect;
+    // Always use the rendered popup rect so beak alignment matches real final placement.
+    const resolvedLeft = rect.left;
+    const resolvedTop = rect.top;
+    const edgeInset = 10;
 
     let beakOffset;
     if (beakSide === "top" || beakSide === "bottom") {
-      beakOffset = anchorCenterX - left;
-      const min = 8;
-      const max = Math.max(min, popupRect.width - 8);
+      beakOffset = anchorCenterX - resolvedLeft;
+      const min = edgeInset;
+      const max = Math.max(min, rect.width - edgeInset);
       beakOffset = Math.min(max, Math.max(min, beakOffset));
     } else {
-      beakOffset = anchorCenterY - top;
-      const min = 8;
-      const max = Math.max(min, popupRect.height - 8);
+      beakOffset = anchorCenterY - resolvedTop;
+      const min = edgeInset;
+      const max = Math.max(min, rect.height - edgeInset);
       beakOffset = Math.min(max, Math.max(min, beakOffset));
     }
 

@@ -143,7 +143,7 @@ export default defineConfig({
 ### Documentation and Demos
 
 - Update `README.md` component docs when public API or behavior changes.
-- Update demo pages (`index.html` and `propkit.html` where relevant) for visible behavior changes.
+- Update demo surfaces (`index.html` and `playground/` routes where relevant) for visible behavior changes.
 - Prefer realistic examples that mirror plugin/property panel usage.
 - If introducing an experimental feature, document activation and fallback behavior clearly.
 

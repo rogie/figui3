@@ -1,6 +1,6 @@
 ---
 name: propkit
-description: Guides creation and refinement of Figma-style property panel patterns ("PropKit") using FigUI3 components. Applies when building or modifying property fields in `propkit.html`, generating consistent field prompts, composing horizontal `fig-field` rows, or tuning panel UX for controls like image, color, fill, slider, switch, dropdown, segmented control, easing, and angle.
+description: Guides creation and refinement of Figma-style property panel patterns ("PropKit") using FigUI3 components. Applies when building or modifying property fields in the playground app (`/propkit` route), generating consistent field prompts, composing horizontal `fig-field` rows, or tuning panel UX for controls like image, color, fill, slider, switch, dropdown, segmented control, easing, and angle.
 user-invocable: false
 ---
 
@@ -13,7 +13,7 @@ Patterns for composing clean, production-ready Figma property panels with FigUI3
 ## Current Project Context
 
 ```json
-!`node -e "const fs=require('fs'); const ok=fs.existsSync('propkit.html'); console.log(JSON.stringify({propkit:ok, example:'horizontal fig-field + label + fig-* control'},null,2))" 2>/dev/null || echo '{"error":"context unavailable"}'`
+!`node -e "const fs=require('fs'); const ok=fs.existsSync('playground/src/main.tsx'); console.log(JSON.stringify({playground:ok, route:'/propkit', example:'horizontal fig-field + label + fig-* control'},null,2))" 2>/dev/null || echo '{"error":"context unavailable"}'`
 ```
 
 ## Principles
@@ -199,7 +199,7 @@ Use a horizontal fig-field, with a fig-slider, min=0 max=100 text=true units=%. 
 - Confirm control choice matches intent (continuous vs discrete vs boolean vs exact numeric entry).
 - Verify row density and panel width feel consistent with existing PropKit sections.
 - Verify keyboard navigation and label association for every field row.
-- Verify changes in `propkit.html` still mirror recommended patterns in this skill.
+- Verify changes in `playground/src/data/sections.ts` still mirror recommended patterns in this skill.
 
 ## Quick Reference
 
@@ -218,7 +218,7 @@ Common PropKit controls:
 
 ## Primary Files
 
-- `propkit.html` - canonical PropKit examples and prompt-copy behavior
+- `playground/src/data/sections.ts` - canonical PropKit examples and prompt-copy behavior
 - `fig.js` - control behavior and emitted events
 - `components.css` - visual treatment and layout constraints
 - `README.md` - component API details and usage
