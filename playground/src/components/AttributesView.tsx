@@ -288,7 +288,10 @@ export default function AttributesView({
             ? []
             : Object.entries(mergedControlRules).map(([name, rule]) => ({
                 name,
-                value: target.controlAttributes[name],
+                value:
+                  name === "perspective-distance"
+                    ? target.controlAttributes.perspective
+                    : target.controlAttributes[name],
                 rule,
               }));
           const sliderTextEnabled =
@@ -298,6 +301,9 @@ export default function AttributesView({
             target.controlTag === "fig-dialog" &&
             target.controlAttributes.drag !== undefined &&
             target.controlAttributes.drag.toLowerCase() !== "false";
+          const perspectiveEnabled =
+            target.controlTag === "fig-3d-rotate" &&
+            (target.controlAttributes.perspective ?? "") !== "none";
           const visibleControlEntries = controlEntries.filter(
             (entry) =>
               !(
@@ -309,6 +315,11 @@ export default function AttributesView({
                 entry.name === "handle" &&
                 target.controlTag === "fig-dialog" &&
                 !dialogDragEnabled
+              ) &&
+              !(
+                entry.name === "perspective-distance" &&
+                target.controlTag === "fig-3d-rotate" &&
+                !perspectiveEnabled
               ),
           );
 
@@ -327,6 +338,8 @@ export default function AttributesView({
                     ? markup.includes("<fig-tooltip text=\"Close\">")
                     : target.controlTag === "fig-dialog" && name === "footer"
                       ? markup.includes("<footer>")
+                  : target.controlTag === "fig-3d-rotate" && name === "perspective"
+                    ? (value ?? "") !== "none"
                   : readBooleanValue(value, mode, rule.defaultChecked ?? false);
               return (
                 <fig-switch
@@ -438,12 +451,18 @@ export default function AttributesView({
             }
 
             if (rule.type === "number") {
+              const isPerspectiveDistance =
+                target.controlTag === "fig-3d-rotate" && name === "perspective-distance";
               const fallback =
-                getNumberAttrDefault(target.controlTag, name) ?? rule.min ?? 0;
+                isPerspectiveDistance
+                  ? 500
+                  : getNumberAttrDefault(target.controlTag, name) ?? rule.min ?? 0;
               const numberValue =
                 target.controlTag === "fig-shimmer" && name === "duration"
                   ? toNumberValue((value ?? "").replace(/s$/i, ""), fallback)
-                  : toNumberValue(value, fallback);
+                  : isPerspectiveDistance
+                    ? toNumberValue((value ?? "").replace(/[a-z]+$/i, ""), fallback)
+                    : toNumberValue(value, fallback);
               const useNumberInputControl =
                 target.controlTag === "fig-input-number" &&
                 (name === "min" || name === "max" || name === "step");
@@ -471,6 +490,7 @@ export default function AttributesView({
                   min={String(rule.min ?? 0)}
                   max={String(rule.max ?? 100)}
                   step={String(rule.step ?? 1)}
+                  units={undefined}
                   variant="neue"
                   text="true"
                   full
@@ -484,6 +504,15 @@ export default function AttributesView({
                         scope,
                         name,
                         `${String(nextValue)}s`,
+                      );
+                      return;
+                    }
+                    if (isPerspectiveDistance) {
+                      applyChange(
+                        target.fieldIndex,
+                        scope,
+                        "perspective",
+                        `${String(nextValue)}px`,
                       );
                       return;
                     }
@@ -590,6 +619,14 @@ export default function AttributesView({
                       target.controlTag === "fig-image" &&
                       name === "fit" &&
                       resolvedValue === "auto"
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-3d-rotate" &&
+                      name === "fields" &&
+                      resolvedValue === ""
                     ) {
                       applyChange(target.fieldIndex, scope, name, null);
                       return;

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.34.0]
+
+### Added
+
+- Added configurable `perspective` attribute to `fig-3d-rotate` for controlling the 3D depth effect, with a `--perspective` CSS custom property.
+- Added gradient edge borders on each side face of the `fig-3d-rotate` cube that fade from the front face backward, using per-face `border-image` gradients with `--border-start-color` / `--border-end-color` tokens.
+- Added `perspective` toggle and `perspective-distance` slider controls to the playground attributes panel for `fig-3d-rotate`.
+- Added value persistence for `fig-3d-rotate` in the playground so drag interactions survive markup re-renders.
+- Added empty-string option to `fig-3d-rotate` `fields` enum for clearing visible input fields.
+
+### Changed
+
+- Improved `fig-3d-rotate` cube centering with `container-type: inline-size` and `transform-origin: 50% 50% -50cqi` for more accurate 3D rotation.
+- Updated `fig-3d-rotate` to sync the `value` attribute on both `input` and `change` events during drag interactions.
+
 ## [2.33.4]
 
 ### Changed

@@ -8,6 +8,7 @@ interface Props {
   onPersistImageSource?: (fieldIndex: number, src: string) => void;
   onPersistDialogOpenState?: (fieldIndex: number, isOpen: boolean) => void;
   onPersistSwitchCheckedState?: (fieldIndex: number, isChecked: boolean) => void;
+  onPersistControlValue?: (fieldIndex: number, value: string) => void;
 }
 
 export default function ExampleView({
@@ -16,6 +17,7 @@ export default function ExampleView({
   onPersistImageSource,
   onPersistDialogOpenState,
   onPersistSwitchCheckedState,
+  onPersistControlValue,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -175,6 +177,71 @@ export default function ExampleView({
       container.removeEventListener("input", handleInput as EventListener);
     };
   }, [onPersistSwitchCheckedState, markup]);
+
+  const controlValueCacheRef = useRef<Map<number, string>>(new Map());
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const VALUE_SYNC_TAGS = new Set(["fig-3d-rotate"]);
+
+    const resolveFieldIndex = (target: HTMLElement): number => {
+      const field = target.closest("fig-field");
+      if (field) {
+        const fields = Array.from(container.querySelectorAll("fig-field"));
+        return fields.indexOf(field);
+      }
+      return getPrimaryControls(container).indexOf(target);
+    };
+
+    const handleInput = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (!target || !VALUE_SYNC_TAGS.has(target.tagName.toLowerCase())) return;
+      const value = target.getAttribute("value");
+      if (value === null) return;
+      const fieldIndex = resolveFieldIndex(target);
+      if (fieldIndex < 0) return;
+      controlValueCacheRef.current.set(fieldIndex, value);
+    };
+
+    const handleChange = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (!target || !VALUE_SYNC_TAGS.has(target.tagName.toLowerCase())) return;
+      const value = target.getAttribute("value");
+      if (value === null) return;
+      const fieldIndex = resolveFieldIndex(target);
+      if (fieldIndex < 0) return;
+      controlValueCacheRef.current.delete(fieldIndex);
+      onPersistControlValue?.(fieldIndex, value);
+    };
+
+    container.addEventListener("input", handleInput as EventListener);
+    container.addEventListener("change", handleChange as EventListener);
+    return () => {
+      container.removeEventListener("input", handleInput as EventListener);
+      container.removeEventListener("change", handleChange as EventListener);
+    };
+  }, [onPersistControlValue, markup]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const cache = controlValueCacheRef.current;
+    if (!container || !cache.size) return;
+
+    const fields = Array.from(container.querySelectorAll("fig-field"));
+    const controls = fields.length ? null : getPrimaryControls(container);
+
+    for (const [fieldIndex, value] of cache) {
+      let target: Element | null = null;
+      if (fields.length && fields[fieldIndex]) {
+        target = fields[fieldIndex].querySelector("fig-3d-rotate");
+      } else if (controls) {
+        target = controls[fieldIndex] ?? null;
+      }
+      target?.setAttribute("value", value);
+    }
+  }, [markup]);
 
   return (
     <div>

@@ -111,6 +111,20 @@ export default function App({ mode }: Props) {
     [],
   );
 
+  const handlePersistControlValue = useCallback(
+    (fieldIndex: number, value: string) => {
+      setEditableMarkup((currentMarkup) =>
+        applyAttributeMutation(currentMarkup, {
+          fieldIndex,
+          target: "control",
+          name: "value",
+          value,
+        }),
+      );
+    },
+    [],
+  );
+
   const activeTitle =
     activeSection && activeExample
       ? buildExampleTitle(activeSection.name, activeExample.name)
@@ -154,6 +168,7 @@ export default function App({ mode }: Props) {
               onPersistImageSource={handlePersistImageSource}
               onPersistDialogOpenState={handlePersistDialogOpenState}
               onPersistSwitchCheckedState={handlePersistSwitchCheckedState}
+              onPersistControlValue={handlePersistControlValue}
             />
           </div>
         )}

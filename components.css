@@ -1439,10 +1439,18 @@ fig-3d-rotate {
   gap: var(--spacer-2);
   width: 100%;
   --aspect-ratio: 1 / 1;
+  --perspective: 20rem;
   --gradient-start-color: light-dark(
     rgba(0, 0, 0, 0.05),
     rgba(255, 255, 255, 0.05)
   );
+  --border-width: 1px;
+  --border-start-color: light-dark(
+    rgba(0, 0, 0, 0.15),
+    rgba(255, 255, 255, 0.15)
+  );
+  --border-end-color: transparent;
+  --border-end-color: transparent;
   --gradient-end-color: transparent;
   --figma-3d-rotate-handle-size: 6px;
   --front-face-bg: light-dark(var(--figma-color-bg), #555);
@@ -1484,7 +1492,8 @@ fig-3d-rotate {
     aspect-ratio: 1 / 1;
     max-height: max(3.5rem, 50%);
     max-width: max(3.5rem, 50%);
-    perspective: 20rem;
+    perspective: var(--perspective, 20rem);
+    container-type: inline-size;
   }
 
   .fig-3d-rotate-cube {
@@ -1493,6 +1502,7 @@ fig-3d-rotate {
     position: relative;
     aspect-ratio: 1 / 1;
     transform-style: preserve-3d;
+    transform-origin: 50% 50% -50cqi;
   }
 
   .fig-3d-rotate-face {
@@ -1531,8 +1541,8 @@ fig-3d-rotate {
         rotateY(-0.25turn);
       background: linear-gradient(
         to bottom,
-        var(--gradient-start-color),
-        var(--gradient-start-color)
+        var(--border-start-color),
+        var(--border-end-color)
       );
       border-radius: var(--radius-medium);
     }
@@ -1544,6 +1554,14 @@ fig-3d-rotate {
         var(--gradient-start-color),
         var(--gradient-end-color)
       );
+      border-width: var(--border-width) 0;
+      border-style: solid;
+      border-image: linear-gradient(
+          to right,
+          var(--border-start-color),
+          var(--border-end-color)
+        )
+        1;
     }
     &.left {
       transform-origin: 100% 50%;
@@ -1553,6 +1571,14 @@ fig-3d-rotate {
         var(--gradient-start-color),
         var(--gradient-end-color)
       );
+      border-width: var(--border-width) 0;
+      border-style: solid;
+      border-image: linear-gradient(
+          to left,
+          var(--border-start-color),
+          var(--border-end-color)
+        )
+        1;
     }
     &.top {
       translate: 0 -100%;
@@ -1563,6 +1589,14 @@ fig-3d-rotate {
         var(--gradient-start-color),
         var(--gradient-end-color)
       );
+      border-width: 0 var(--border-width);
+      border-style: solid;
+      border-image: linear-gradient(
+          to top,
+          var(--border-start-color),
+          var(--border-end-color)
+        )
+        1;
     }
     &.bottom {
       top: 100%;
@@ -1574,6 +1608,14 @@ fig-3d-rotate {
         var(--gradient-start-color),
         var(--gradient-end-color)
       );
+      border-width: 0 var(--border-width);
+      border-style: solid;
+      border-image: linear-gradient(
+          to bottom,
+          var(--border-start-color),
+          var(--border-end-color)
+        )
+        1;
     }
   }
 }

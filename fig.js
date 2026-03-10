@@ -6462,12 +6462,13 @@ class Fig3DRotate extends HTMLElement {
   #fieldInputs = {};
 
   static get observedAttributes() {
-    return ["value", "precision", "aspect-ratio", "fields"];
+    return ["value", "precision", "aspect-ratio", "fields", "perspective"];
   }
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "1");
     this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
+    this.#syncPerspectiveVar(this.getAttribute("perspective"));
     this.#parseFields(this.getAttribute("fields"));
     const val = this.getAttribute("value");
     if (val) this.#parseValue(val);
@@ -6490,6 +6491,14 @@ class Fig3DRotate extends HTMLElement {
     }
   }
 
+  #syncPerspectiveVar(value) {
+    if (value && value.trim()) {
+      this.style.setProperty("--perspective", value.trim());
+    } else {
+      this.style.removeProperty("--perspective");
+    }
+  }
+
   #parseFields(str) {
     if (!str || !str.trim()) {
       this.#fields = [];
@@ -6505,6 +6514,10 @@ class Fig3DRotate extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "aspect-ratio") {
       this.#syncAspectRatioVar(newValue);
+      return;
+    }
+    if (name === "perspective") {
+      this.#syncPerspectiveVar(newValue);
       return;
     }
     if (name === "fields") {
@@ -6669,10 +6682,12 @@ class Fig3DRotate extends HTMLElement {
       this.#rx = this.#snapToIncrement(startRx - dy * 0.5);
       this.#updateCube();
       this.#syncFieldInputs();
+      this.setAttribute("value", this.value);
       this.#emit("input");
     };
 
     const onUp = () => {
+      this.setAttribute("value", this.value);
       this.#isDragging = false;
       this.#container.classList.remove("dragging");
       document.removeEventListener("pointermove", onMove);

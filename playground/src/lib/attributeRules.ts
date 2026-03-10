@@ -255,10 +255,26 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-3d-rotate": {
     "aspect-ratio": aspectRatioRule,
+    perspective: {
+      label: "Perspective",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: null,
+      falseValue: "none",
+      defaultChecked: true,
+    },
+    "perspective-distance": {
+      label: "Distance",
+      type: "number",
+      min: 0,
+      max: 1000,
+      step: 1,
+    },
     fields: {
       label: "Fields",
       type: "enum",
       options: [
+        "",
         "rotateX,rotateY,rotateZ",
         "rotateX,rotateY",
         "rotateX,rotateZ",
