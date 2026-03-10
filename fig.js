@@ -6462,7 +6462,7 @@ class Fig3DRotate extends HTMLElement {
   #fieldInputs = {};
 
   static get observedAttributes() {
-    return ["value", "precision", "aspect-ratio", "fields", "perspective", "perspective-origin", "transform-origin"];
+    return ["value", "precision", "aspect-ratio", "fields", "perspective", "perspective-origin", "transform-origin", "selected", "drag"];
   }
 
   connectedCallback() {
@@ -6475,6 +6475,8 @@ class Fig3DRotate extends HTMLElement {
     const val = this.getAttribute("value");
     if (val) this.#parseValue(val);
     this.#render();
+    this.#syncSelected(this.getAttribute("selected"));
+    this.#syncDragState();
   }
 
   disconnectedCallback() {
@@ -6522,6 +6524,20 @@ class Fig3DRotate extends HTMLElement {
     }
   }
 
+  #syncDragState() {
+    if (!this.#container) return;
+    this.#container.style.cursor = this.#dragEnabled ? "" : "default";
+  }
+
+  #syncSelected(value) {
+    if (!this.#cube) return;
+    const faces = this.#cube.querySelectorAll(".fig-3d-rotate-face");
+    const name = value ? value.trim().toLowerCase() : "";
+    for (const face of faces) {
+      face.classList.toggle("selected", name !== "" && face.classList.contains(name));
+    }
+  }
+
   #parseFields(str) {
     if (!str || !str.trim()) {
       this.#fields = [];
@@ -6549,6 +6565,14 @@ class Fig3DRotate extends HTMLElement {
     }
     if (name === "transform-origin") {
       this.#syncTransformOrigin(newValue);
+      return;
+    }
+    if (name === "selected") {
+      this.#syncSelected(newValue);
+      return;
+    }
+    if (name === "drag") {
+      this.#syncDragState();
       return;
     }
     if (name === "fields") {
@@ -6695,7 +6719,13 @@ class Fig3DRotate extends HTMLElement {
     window.addEventListener("keyup", this.#boundKeyUp);
   }
 
+  get #dragEnabled() {
+    const attr = this.getAttribute("drag");
+    return attr === null || attr.toLowerCase() !== "false";
+  }
+
   #startDrag(e) {
+    if (!this.#dragEnabled) return;
     e.preventDefault();
     this.#isDragging = true;
     this.#container.classList.add("dragging");

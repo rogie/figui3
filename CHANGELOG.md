@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.36.0]
+
+### Added
+
+- Added `selected` attribute to `fig-3d-rotate` that applies a `selected` class to the named face (e.g. `selected="front"`).
+- Added `drag` boolean attribute to `fig-3d-rotate` (default true). Setting `drag="false"` disables cube drag rotation and switches the cursor to default.
+- Added `.selected` face styling with `--figma-color-border-strong` background and border radius.
+
 ## [2.35.0]
 
 ### Added

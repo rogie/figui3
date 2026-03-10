@@ -1517,6 +1517,11 @@ fig-3d-rotate {
       var(--gradient-start-color),
       var(--gradient-end-color)
     );
+    &.selected {
+      background: var(--figma-color-border-strong) !important;
+      inset: -1px;
+      border-radius: var(--radius-medium);
+    }
 
     &.front {
       background: var(--front-face-bg);
