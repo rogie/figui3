@@ -319,12 +319,13 @@ A range slider with multiple types and optional text input.
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `type` | string | `"range"` | Type: `"range"`, `"hue"`, `"opacity"`, `"delta"`, `"stepper"` |
-| `value` | number | — | Current value |
+| `value` | number | — | Current value; missing/invalid values fall back to `min` (or `default` for `type="delta"`, then `0`) |
 | `min` | number | `0` | Minimum value |
 | `max` | number | `100` | Maximum value |
 | `step` | number | `1` | Step increment |
 | `default` | number | — | Default/reset value (shown as a marker on the track) |
 | `text` | boolean | `false` | Show text input |
+| `placeholder` | string | `"##"` | Placeholder for text input mode (`text="true"`) |
 | `units` | string | — | Unit label (e.g., `"%"`, `"px"`) |
 | `transform` | number | — | Multiplier for display value |
 | `color` | string | — | Track color (for opacity type) |

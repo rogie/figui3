@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.37.0]
+
+### Added
+
+- Added `placeholder` passthrough support on `fig-slider` so `text="true"` forwards placeholder text to its internal `fig-input-number`.
+
+### Changed
+
+- `fig-slider` now normalizes missing/empty/invalid `value` inputs with type-aware fallbacks (`min` for standard sliders, `default` then `0` for delta) while keeping drag interaction available.
+- In slider text mode, clearing the value now keeps the numeric field visually blank (showing placeholder when present) while preserving an internal fallback thumb position.
+- Playground attributes now only shows `fig-slider` `placeholder` when `text` is enabled.
+
 ## [2.36.0]
 
 ### Added

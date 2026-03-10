@@ -26,8 +26,25 @@ body {
   place-items: start center;
   width: 100vw;
   height: 100vh;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--figma-color-border) transparent;
   padding: calc(var(--spacer-4) + var(--spacer-2))
     calc(var(--spacer-4) + var(--nav-width) + var(--spacer-4));
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--figma-color-border);
+    border-radius: 999px;
+  }
 }
 
 nav {

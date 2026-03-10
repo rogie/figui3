@@ -174,13 +174,69 @@ export const figui3Sections: Section[] = [
   {
     id: "slider",
     name: "Slider",
-    description: "Range controls with optional text entry and variants.",
+    description:
+      "Range controls with PropKit-style examples across slider types.",
     examples: [
       {
-        id: "default",
-        name: "Default",
+        id: "range",
+        name: "Range",
         markup: `<div class="prop-panel">
-  <fig-slider value="50" min="0" max="100" text="true" units="%"></fig-slider>
+  <fig-field direction="horizontal">
+    <label>Amount</label>
+    <fig-slider value="50" min="0" max="100" text="false" full></fig-slider>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "opacity-with-text",
+        name: "Opacity",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Opacity</label>
+    <fig-slider type="opacity" value="0.75" color="#ff0000" units="%" text="false" full></fig-slider>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "hue-with-text",
+        name: "Hue",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Hue</label>
+    <fig-slider type="hue" value="180" text="false" full></fig-slider>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "stepper-with-text",
+        name: "Stepper",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Steps</label>
+    <fig-slider type="stepper" value="50" step="25" text="false" full>
+      <datalist>
+        <option value="0"></option>
+        <option value="25"></option>
+        <option value="50"></option>
+        <option value="75"></option>
+        <option value="100"></option>
+      </datalist>
+    </fig-slider>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "delta-with-text",
+        name: "Delta",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Offset</label>
+    <fig-slider type="delta" value="0" default="0" step="0.25" min="-5" max="5" text="false" full>
+      <datalist>
+        <option value="0"></option>
+      </datalist>
+    </fig-slider>
+  </fig-field>
 </div>`,
       },
     ],

@@ -307,6 +307,11 @@ export default function AttributesView({
           const visibleControlEntries = controlEntries.filter(
             (entry) =>
               !(
+                entry.name === "placeholder" &&
+                target.controlTag === "fig-slider" &&
+                !sliderTextEnabled
+              ) &&
+              !(
                 entry.name === "units" &&
                 target.controlTag === "fig-slider" &&
                 !sliderTextEnabled

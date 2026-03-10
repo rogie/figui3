@@ -1959,7 +1959,7 @@ fig-slider {
   --slider-handle-shadow-focus:
     inset 0 0 0 4px var(--handle-color), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
     var(--handle-shadow), 0 0 0 1px var(--figma-color-border-selected);
-  --slider-transition: all 0.1s ease-in-out;
+  --slider-transition: none;
   --handle-transition: var(--slider-transition);
 
   display: inline-flex;

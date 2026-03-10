@@ -212,6 +212,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["default", "minimal", "neue"],
     },
     text: { label: "Text", type: "boolean", boolMode: "string" },
+    placeholder: { label: "Placeholder", type: "string" },
     units: {
       label: "Units",
       type: "enum",

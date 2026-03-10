@@ -2357,6 +2357,7 @@ customElements.define("fig-segmented-control", FigSegmentedControl);
  * @attr {number} max - The maximum value
  * @attr {number} step - The step increment
  * @attr {boolean} text - Whether to show a text input alongside the slider
+ * @attr {string} placeholder - Placeholder for the number input when text is enabled
  * @attr {string} units - The units to display after the value
  * @attr {number} transform - A multiplier for the displayed value
  * @attr {boolean} disabled - Whether the slider is disabled
@@ -2364,6 +2365,7 @@ customElements.define("fig-segmented-control", FigSegmentedControl);
  */
 class FigSlider extends HTMLElement {
   #isInteracting = false;
+  #showEmptyTextValue = false;
   // Private fields declarations
   #typeDefaults = {
     range: { min: 0, max: 100, step: 1 },
@@ -2405,7 +2407,7 @@ class FigSlider extends HTMLElement {
   }
 
   #regenerateInnerHTML() {
-    this.value = Number(this.getAttribute("value") || 0);
+    const rawValue = this.getAttribute("value");
     this.type = this.getAttribute("type") || "range";
     this.variant = this.getAttribute("variant") || "default";
     this.text =
@@ -2416,13 +2418,25 @@ class FigSlider extends HTMLElement {
     this.precision = this.hasAttribute("precision")
       ? Number(this.getAttribute("precision"))
       : null;
+    this.placeholder =
+      this.getAttribute("placeholder") !== null
+        ? this.getAttribute("placeholder")
+        : "##";
 
     const defaults = this.#typeDefaults[this.type];
     this.min = Number(this.getAttribute("min") || defaults.min);
     this.max = Number(this.getAttribute("max") || defaults.max);
     this.step = Number(this.getAttribute("step") || defaults.step);
     this.color = this.getAttribute("color") || defaults?.color;
-    this.default = this.getAttribute("default") || this.min;
+    this.default = this.hasAttribute("default")
+      ? this.getAttribute("default")
+      : this.type === "delta"
+        ? 0
+        : this.min;
+    this.#showEmptyTextValue =
+      rawValue === null ||
+      (typeof rawValue === "string" && rawValue.trim() === "");
+    this.value = this.#normalizeSliderValue(rawValue);
 
     if (this.color) {
       this.style.setProperty("--color", this.color);
@@ -2447,12 +2461,12 @@ class FigSlider extends HTMLElement {
     if (this.text) {
       html = `${slider}
                     <fig-input-number
-                        placeholder="##"
+                        placeholder="${this.placeholder}"
                         min="${this.min}"
                         max="${this.max}"
                         transform="${this.transform}"
                         step="${this.step}"
-                        value="${this.value}"
+                        value="${this.#showEmptyTextValue ? "" : this.value}"
                         ${this.units ? `units="${this.units}"` : ""}
                         ${this.precision !== null ? `precision="${this.precision}"` : ""}>
                     </fig-input-number>`;
@@ -2566,17 +2580,59 @@ class FigSlider extends HTMLElement {
 
   #handleTextInput() {
     if (this.figInputNumber) {
-      this.value = this.input.value = this.figInputNumber.value;
-      this.#syncProperties();
+      const rawTextValue = this.figInputNumber.value;
+      this.#showEmptyTextValue =
+        rawTextValue === null ||
+        rawTextValue === undefined ||
+        (typeof rawTextValue === "string" && rawTextValue.trim() === "");
+      const normalized = this.#normalizeSliderValue(rawTextValue);
+      this.value = normalized;
+      this.input.value = String(normalized);
+      this.#syncValue();
       this.dispatchEvent(
         new CustomEvent("input", { detail: this.value, bubbles: true }),
       );
     }
   }
   #calculateNormal(value) {
-    let min = Number(this.min);
-    let max = Number(this.max);
-    return (Number(value) - min) / (max - min);
+    const { min, max } = this.#getBounds();
+    const range = max - min;
+    if (range === 0) return 0;
+    return (Number(value) - min) / range;
+  }
+  #toFiniteNumber(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === "string" && value.trim() === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  #getBounds() {
+    let min = this.#toFiniteNumber(this.min);
+    let max = this.#toFiniteNumber(this.max);
+    if (min === null) min = 0;
+    if (max === null) max = min;
+    if (min > max) {
+      [min, max] = [max, min];
+    }
+    return { min, max };
+  }
+  #clampToBounds(value) {
+    const { min, max } = this.#getBounds();
+    return Math.min(max, Math.max(min, value));
+  }
+  #getFallbackValue() {
+    if (this.type === "delta") {
+      const deltaDefault = this.#toFiniteNumber(this.default);
+      if (deltaDefault !== null) return this.#clampToBounds(deltaDefault);
+      return this.#clampToBounds(0);
+    }
+    const { min } = this.#getBounds();
+    return min;
+  }
+  #normalizeSliderValue(rawValue) {
+    const parsed = this.#toFiniteNumber(rawValue);
+    if (parsed === null) return this.#getFallbackValue();
+    return this.#clampToBounds(parsed);
   }
   #syncProperties() {
     let complete = this.#calculateNormal(this.value);
@@ -2592,11 +2648,15 @@ class FigSlider extends HTMLElement {
     // Update ARIA value
     this.input.setAttribute("aria-valuenow", val);
     if (this.figInputNumber) {
-      this.figInputNumber.setAttribute("value", val);
+      this.figInputNumber.setAttribute(
+        "value",
+        this.#showEmptyTextValue ? "" : val,
+      );
     }
   }
 
   #handleInput() {
+    this.#showEmptyTextValue = false;
     this.#syncValue();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
@@ -2605,6 +2665,7 @@ class FigSlider extends HTMLElement {
 
   #handleChange() {
     this.#isInteracting = false;
+    this.#showEmptyTextValue = false;
     this.#syncValue();
     this.dispatchEvent(
       new CustomEvent("change", { detail: this.value, bubbles: true }),
@@ -2613,8 +2674,15 @@ class FigSlider extends HTMLElement {
 
   #handleTextChange() {
     if (this.figInputNumber) {
-      this.value = this.input.value = this.figInputNumber.value;
-      this.#syncProperties();
+      const rawTextValue = this.figInputNumber.value;
+      this.#showEmptyTextValue =
+        rawTextValue === null ||
+        rawTextValue === undefined ||
+        (typeof rawTextValue === "string" && rawTextValue.trim() === "");
+      const normalized = this.#normalizeSliderValue(rawTextValue);
+      this.value = normalized;
+      this.input.value = String(normalized);
+      this.#syncValue();
       this.dispatchEvent(
         new CustomEvent("change", { detail: this.value, bubbles: true }),
       );
@@ -2634,6 +2702,7 @@ class FigSlider extends HTMLElement {
       "units",
       "transform",
       "text",
+      "placeholder",
       "default",
       "precision",
     ];
@@ -2660,11 +2729,17 @@ class FigSlider extends HTMLElement {
           break;
         case "value":
           if (this.#isInteracting) break;
-          this.value = newValue;
-          this.input.value = newValue;
-          this.#syncProperties();
+          this.#showEmptyTextValue =
+            newValue === null ||
+            (typeof newValue === "string" && newValue.trim() === "");
+          this.value = this.#normalizeSliderValue(newValue);
+          this.input.value = String(this.value);
+          this.#syncValue();
           if (this.figInputNumber) {
-            this.figInputNumber.setAttribute("value", newValue);
+            this.figInputNumber.setAttribute(
+              "value",
+              this.#showEmptyTextValue ? "" : this.value,
+            );
           }
           break;
         case "transform":
@@ -2683,8 +2758,19 @@ class FigSlider extends HTMLElement {
             }
           }
           break;
+        case "placeholder":
+          this.placeholder = newValue !== null ? newValue : "##";
+          if (this.figInputNumber) {
+            this.figInputNumber.setAttribute("placeholder", this.placeholder);
+          }
+          break;
         case "default":
-          this.default = newValue;
+          this.default =
+            newValue !== null
+              ? newValue
+              : this.type === "delta"
+                ? 0
+                : this.min;
           this.#syncProperties();
           break;
         case "min":
