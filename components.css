@@ -1440,6 +1440,8 @@ fig-3d-rotate {
   width: 100%;
   --aspect-ratio: 1 / 1;
   --perspective: 20rem;
+  --perspective-origin: 50% 50%;
+  --transform-origin: 50% 50% -50cqi;
   --gradient-start-color: light-dark(
     rgba(0, 0, 0, 0.05),
     rgba(255, 255, 255, 0.05)
@@ -1493,6 +1495,7 @@ fig-3d-rotate {
     max-height: max(3.5rem, 50%);
     max-width: max(3.5rem, 50%);
     perspective: var(--perspective, 20rem);
+    perspective-origin: var(--perspective-origin, 50% 50%);
     container-type: inline-size;
   }
 
@@ -1502,7 +1505,7 @@ fig-3d-rotate {
     position: relative;
     aspect-ratio: 1 / 1;
     transform-style: preserve-3d;
-    transform-origin: 50% 50% -50cqi;
+    transform-origin: var(--transform-origin, 50% 50% -50cqi);
   }
 
   .fig-3d-rotate-face {

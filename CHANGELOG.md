@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.35.0]
+
+### Added
+
+- Added `perspective-origin` and `transform-origin` attributes to `fig-3d-rotate`, synced to CSS custom properties `--perspective-origin` and `--transform-origin`.
+- `transform-origin` auto-preserves the default `-50cqi` Z depth when only two values (X Y) are provided.
+
+### Fixed
+
+- Fixed `fig-3d-rotate` drag release outside the window by using `setPointerCapture` with `pointercancel` and `lostpointercapture` listeners, matching the color picker fix.
+
 ## [2.34.0]
 
 ### Added

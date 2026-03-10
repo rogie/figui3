@@ -6462,13 +6462,15 @@ class Fig3DRotate extends HTMLElement {
   #fieldInputs = {};
 
   static get observedAttributes() {
-    return ["value", "precision", "aspect-ratio", "fields", "perspective"];
+    return ["value", "precision", "aspect-ratio", "fields", "perspective", "perspective-origin", "transform-origin"];
   }
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "1");
     this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
     this.#syncPerspectiveVar(this.getAttribute("perspective"));
+    this.#syncCSSVar("--perspective-origin", this.getAttribute("perspective-origin"));
+    this.#syncTransformOrigin(this.getAttribute("transform-origin"));
     this.#parseFields(this.getAttribute("fields"));
     const val = this.getAttribute("value");
     if (val) this.#parseValue(val);
@@ -6499,6 +6501,27 @@ class Fig3DRotate extends HTMLElement {
     }
   }
 
+  #syncCSSVar(prop, value) {
+    if (value && value.trim()) {
+      this.style.setProperty(prop, value.trim());
+    } else {
+      this.style.removeProperty(prop);
+    }
+  }
+
+  #syncTransformOrigin(value) {
+    if (!value || !value.trim()) {
+      this.style.removeProperty("--transform-origin");
+      return;
+    }
+    const parts = value.trim().split(/\s+/);
+    if (parts.length === 2) {
+      this.style.setProperty("--transform-origin", `${parts[0]} ${parts[1]} -50cqi`);
+    } else {
+      this.style.setProperty("--transform-origin", value.trim());
+    }
+  }
+
   #parseFields(str) {
     if (!str || !str.trim()) {
       this.#fields = [];
@@ -6518,6 +6541,14 @@ class Fig3DRotate extends HTMLElement {
     }
     if (name === "perspective") {
       this.#syncPerspectiveVar(newValue);
+      return;
+    }
+    if (name === "perspective-origin") {
+      this.#syncCSSVar("--perspective-origin", newValue);
+      return;
+    }
+    if (name === "transform-origin") {
+      this.#syncTransformOrigin(newValue);
       return;
     }
     if (name === "fields") {
@@ -6668,6 +6699,7 @@ class Fig3DRotate extends HTMLElement {
     e.preventDefault();
     this.#isDragging = true;
     this.#container.classList.add("dragging");
+    this.#container.setPointerCapture(e.pointerId);
 
     const startX = e.clientX;
     const startY = e.clientY;
@@ -6676,6 +6708,10 @@ class Fig3DRotate extends HTMLElement {
 
     const onMove = (e) => {
       if (!this.#isDragging) return;
+      if (e.buttons === 0) {
+        onEnd();
+        return;
+      }
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       this.#ry = this.#snapToIncrement(startRy + dx * 0.5);
@@ -6686,17 +6722,22 @@ class Fig3DRotate extends HTMLElement {
       this.#emit("input");
     };
 
-    const onUp = () => {
+    const onEnd = () => {
+      if (!this.#isDragging) return;
       this.setAttribute("value", this.value);
       this.#isDragging = false;
       this.#container.classList.remove("dragging");
-      document.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerup", onUp);
+      this.#container.removeEventListener("pointermove", onMove);
+      this.#container.removeEventListener("pointerup", onEnd);
+      this.#container.removeEventListener("pointercancel", onEnd);
+      this.#container.removeEventListener("lostpointercapture", onEnd);
       this.#emit("change");
     };
 
-    document.addEventListener("pointermove", onMove);
-    document.addEventListener("pointerup", onUp);
+    this.#container.addEventListener("pointermove", onMove);
+    this.#container.addEventListener("pointerup", onEnd);
+    this.#container.addEventListener("pointercancel", onEnd);
+    this.#container.addEventListener("lostpointercapture", onEnd);
   }
 }
 customElements.define("fig-3d-rotate", Fig3DRotate);
