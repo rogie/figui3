@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.0.0]
+
+### Added
+
+- Added new `fig-joystick` component tag with percentage-first value handling (`50% 50%` default), `fields`, `aspect-ratio`, and `axis-labels` support.
+- Added joystick axis label rendering around the control plane with top/left/right/bottom placement rules and PropKit attributes integration.
+- Added live joystick value persistence in the playground code/preview flow, matching origin-grid behavior to avoid scrub interruption re-renders.
+
+### Changed
+
+- **Breaking:** Renamed joystick tag from `fig-input-joystick` to `fig-joystick` and updated docs/playground/type mappings to use the new element name.
+- Updated joystick handle visuals to match the color picker handle treatment and refined axis label typography styling.
+
+### Fixed
+
+- Fixed joystick X/Y field scrubbing in playground scenarios by aligning commit semantics with origin-grid (`input` during interaction, `change` on focus-out/release).
+
 ## [2.39.0]
 
 ### Added

@@ -407,6 +407,24 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "joystick",
+    name: "Joystick",
+    description:
+      "A 2D position control with optional coordinate modes.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Position</label>
+    <fig-joystick value="50% 50%"></fig-joystick>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "angle",
     name: "Angle",
     description: "An angle input with a visual dial and numeric text field.",

@@ -138,7 +138,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-3d-rotate": "3D Rotate",
     "fig-origin-grid": "Origin Grid",
     "fig-input-angle": "Angle",
-    "fig-input-joystick": "Input Joystick",
+    "fig-joystick": "Joystick",
     "fig-toast": "Toast",
     "fig-spinner": "Spinner",
     "fig-shimmer": "Shimmer",
@@ -243,7 +243,7 @@ export default function AttributesView({
             "fig-origin-grid",
             "fig-input-angle",
             "fig-combo-input",
-            "fig-input-joystick",
+            "fig-joystick",
             "fig-radio",
           ]);
           const mergedControlRules = { ...controlRules };

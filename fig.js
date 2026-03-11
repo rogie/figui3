@@ -7495,12 +7495,24 @@ customElements.define("fig-origin-grid", FigOriginGrid);
 
 /**
  * A custom joystick input element.
- * @attr {string} value - The current position of the joystick (e.g., "0.5,0.5").
+ * @attr {string} value - The current position of the joystick (e.g., "50% 50%").
  * @attr {number} precision - The number of decimal places for the output.
  * @attr {number} transform - A scaling factor for the output.
- * @attr {boolean} text - Whether to display text inputs for X and Y values.
+ * @attr {boolean} fields - Whether to display X and Y inputs.
+ * @attr {string} aspect-ratio - Aspect ratio for the joystick plane container.
+ * @attr {string} axis-labels - Space-delimited labels. 1 token: top. 2 tokens: x y. 4 tokens: left right top bottom.
  */
 class FigInputJoystick extends HTMLElement {
+  #boundMouseDown = null;
+  #boundTouchStart = null;
+  #boundKeyDown = null;
+  #boundKeyUp = null;
+  #boundXInput = null;
+  #boundYInput = null;
+  #boundXFocusOut = null;
+  #boundYFocusOut = null;
+  #isSyncingValueAttr = false;
+
   constructor() {
     super();
 
@@ -7513,6 +7525,14 @@ class FigInputJoystick extends HTMLElement {
     this.yInput = null;
     this.coordinates = "screen"; // "screen" (0,0 top-left) or "math" (0,0 bottom-left)
     this.#initialized = false;
+    this.#boundMouseDown = (e) => this.#handleMouseDown(e);
+    this.#boundTouchStart = (e) => this.#handleTouchStart(e);
+    this.#boundKeyDown = (e) => this.#handleKeyDown(e);
+    this.#boundKeyUp = (e) => this.#handleKeyUp(e);
+    this.#boundXInput = (e) => this.#handleXInput(e);
+    this.#boundYInput = (e) => this.#handleYInput(e);
+    this.#boundXFocusOut = () => this.#handleFieldFocusOut();
+    this.#boundYFocusOut = () => this.#handleFieldFocusOut();
   }
 
   #initialized = false;
@@ -7524,12 +7544,16 @@ class FigInputJoystick extends HTMLElement {
       this.precision = parseInt(this.precision);
       this.transform = this.getAttribute("transform") || 1;
       this.transform = Number(this.transform);
-      this.text = this.getAttribute("text") === "true";
       this.coordinates = this.getAttribute("coordinates") || "screen";
+      this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
+      if (!this.hasAttribute("value")) {
+        this.setAttribute("value", "50% 50%");
+      }
 
       this.#render();
       this.#setupListeners();
       this.#syncHandlePosition();
+      this.#syncValueAttribute();
       this.#initialized = true;
     });
   }
@@ -7538,41 +7562,102 @@ class FigInputJoystick extends HTMLElement {
   #displayY(y) {
     return this.coordinates === "math" ? 1 - y : y;
   }
+
+  #syncAspectRatioVar(value) {
+    if (value && value.trim()) {
+      this.style.setProperty("--aspect-ratio", value.trim());
+    } else {
+      this.style.removeProperty("--aspect-ratio");
+    }
+  }
+
   disconnectedCallback() {
     this.#cleanupListeners();
+  }
+
+  get #fieldsEnabled() {
+    const fields = this.getAttribute("fields");
+    if (fields === null) return false;
+    return fields.toLowerCase() !== "false";
   }
 
   #render() {
     this.innerHTML = this.#getInnerHTML();
   }
+
+  #getAxisLabels() {
+    const raw = (this.getAttribute("axis-labels") || "").trim();
+    if (!raw) {
+      return { left: "", right: "", top: "", bottom: "", leftNoRotate: false };
+    }
+    const tokens = raw.split(/\s+/).filter(Boolean);
+    if (tokens.length === 1) {
+      return {
+        left: "",
+        right: "",
+        top: tokens[0],
+        bottom: "",
+        leftNoRotate: false,
+      };
+    }
+    if (tokens.length === 2) {
+      const [x, y] = tokens;
+      return { left: x, right: "", top: "", bottom: y, leftNoRotate: true };
+    }
+    if (tokens.length === 4) {
+      const [left, right, top, bottom] = tokens;
+      return { left, right, top, bottom, leftNoRotate: false };
+    }
+    return { left: "", right: "", top: "", bottom: "", leftNoRotate: false };
+  }
+
   #getInnerHTML() {
+    const axisLabels = this.#getAxisLabels();
+    const labelsMarkup = [
+      axisLabels.left
+        ? `<label class="fig-joystick-axis-label left${axisLabels.leftNoRotate ? " no-rotate" : ""}" aria-hidden="true">${axisLabels.left}</label>`
+        : "",
+      axisLabels.right
+        ? `<label class="fig-joystick-axis-label right" aria-hidden="true">${axisLabels.right}</label>`
+        : "",
+      axisLabels.top
+        ? `<label class="fig-joystick-axis-label top" aria-hidden="true">${axisLabels.top}</label>`
+        : "",
+      axisLabels.bottom
+        ? `<label class="fig-joystick-axis-label bottom" aria-hidden="true">${axisLabels.bottom}</label>`
+        : "",
+    ].join("");
+
     return `        
           <div class="fig-input-joystick-plane-container" tabindex="0">
+            ${labelsMarkup}
             <div class="fig-input-joystick-plane">
               <div class="fig-input-joystick-guides"></div>
               <div class="fig-input-joystick-handle"></div>
             </div>
           </div>
           ${
-            this.text
-              ? `<fig-input-number
-                  name="x"
-                  step="1"
-                  value="${this.position.x * 100}"
-                  min="0"
-                  max="100"
-                  units="%">
-                  <span slot="prepend">X</span>
-                </fig-input-number>
-                <fig-input-number
-                  name="y"
-                  step="1"
-                  min="0"
-                  max="100"
-                  value="${this.position.y * 100}"
-                  units="%">
-                  <span slot="prepend">Y</span>
-                </fig-input-number>`
+            this.#fieldsEnabled
+              ? `<div class="joystick-values">
+                  <fig-input-number
+                    name="x"
+                    step="1"
+                    value="${(this.position.x * 100).toFixed(this.precision)}"
+                    min="0"
+                    max="100"
+                    units="%">
+                    <span slot="prepend">X</span>
+                  </fig-input-number>
+                  <fig-input-number
+                    name="y"
+                    step="1"
+                    min="0"
+                    max="100"
+                    value="${(this.position.y * 100).toFixed(this.precision)}"
+                    units="%">
+                    <span slot="prepend">Y</span>
+                  </fig-input-number>
+                </div>`
               : ""
           }
         `;
@@ -7583,45 +7668,57 @@ class FigInputJoystick extends HTMLElement {
     this.cursor = this.querySelector(".fig-input-joystick-handle");
     this.xInput = this.querySelector("fig-input-number[name='x']");
     this.yInput = this.querySelector("fig-input-number[name='y']");
-    this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
-    this.plane.addEventListener(
-      "touchstart",
-      this.#handleTouchStart.bind(this),
-    );
-    window.addEventListener("keydown", this.#handleKeyDown.bind(this));
-    window.addEventListener("keyup", this.#handleKeyUp.bind(this));
-    if (this.text && this.xInput && this.yInput) {
-      this.xInput.addEventListener("input", this.#handleXInput.bind(this));
-      this.yInput.addEventListener("input", this.#handleYInput.bind(this));
+    this.plane.addEventListener("mousedown", this.#boundMouseDown);
+    this.plane.addEventListener("touchstart", this.#boundTouchStart);
+    window.addEventListener("keydown", this.#boundKeyDown);
+    window.addEventListener("keyup", this.#boundKeyUp);
+    if (this.#fieldsEnabled && this.xInput && this.yInput) {
+      this.xInput.addEventListener("input", this.#boundXInput);
+      this.xInput.addEventListener("change", this.#boundXInput);
+      this.xInput.addEventListener("focusout", this.#boundXFocusOut);
+      this.yInput.addEventListener("input", this.#boundYInput);
+      this.yInput.addEventListener("change", this.#boundYInput);
+      this.yInput.addEventListener("focusout", this.#boundYFocusOut);
     }
   }
 
   #cleanupListeners() {
     if (this.plane) {
-      this.plane.removeEventListener("mousedown", this.#handleMouseDown);
-      this.plane.removeEventListener("touchstart", this.#handleTouchStart);
+      this.plane.removeEventListener("mousedown", this.#boundMouseDown);
+      this.plane.removeEventListener("touchstart", this.#boundTouchStart);
     }
-    window.removeEventListener("keydown", this.#handleKeyDown);
-    window.removeEventListener("keyup", this.#handleKeyUp);
-    if (this.text && this.xInput && this.yInput) {
-      this.xInput.removeEventListener("input", this.#handleXInput);
-      this.yInput.removeEventListener("input", this.#handleYInput);
+    window.removeEventListener("keydown", this.#boundKeyDown);
+    window.removeEventListener("keyup", this.#boundKeyUp);
+    if (this.#fieldsEnabled && this.xInput && this.yInput) {
+      this.xInput.removeEventListener("input", this.#boundXInput);
+      this.xInput.removeEventListener("change", this.#boundXInput);
+      this.xInput.removeEventListener("focusout", this.#boundXFocusOut);
+      this.yInput.removeEventListener("input", this.#boundYInput);
+      this.yInput.removeEventListener("change", this.#boundYInput);
+      this.yInput.removeEventListener("focusout", this.#boundYFocusOut);
     }
   }
 
   #handleXInput(e) {
-    e.stopPropagation();
-    this.position.x = Number(e.target.value) / 100; // Convert from percentage to decimal
+    const next = Number.parseFloat(e.target.value);
+    if (!Number.isFinite(next)) return;
+    this.position.x = Math.max(0, Math.min(1, next / 100));
     this.#syncHandlePosition();
+    this.#syncValueAttribute();
     this.#emitInputEvent();
-    this.#emitChangeEvent();
   }
 
   #handleYInput(e) {
-    e.stopPropagation();
-    this.position.y = Number(e.target.value) / 100; // Convert from percentage to decimal
+    const next = Number.parseFloat(e.target.value);
+    if (!Number.isFinite(next)) return;
+    this.position.y = Math.max(0, Math.min(1, next / 100));
     this.#syncHandlePosition();
+    this.#syncValueAttribute();
     this.#emitInputEvent();
+  }
+
+  #handleFieldFocusOut() {
+    this.#syncValueAttribute();
     this.#emitChangeEvent();
   }
 
@@ -7661,11 +7758,12 @@ class FigInputJoystick extends HTMLElement {
     const displayY = this.#displayY(snapped.y);
     this.cursor.style.left = `${snapped.x * 100}%`;
     this.cursor.style.top = `${displayY * 100}%`;
-    if (this.text && this.xInput && this.yInput) {
+    if (this.#fieldsEnabled && this.xInput && this.yInput) {
       this.xInput.setAttribute("value", Math.round(snapped.x * 100));
       this.yInput.setAttribute("value", Math.round(snapped.y * 100));
     }
 
+    this.#syncValueAttribute();
     this.#emitInputEvent();
   }
 
@@ -7694,10 +7792,18 @@ class FigInputJoystick extends HTMLElement {
       this.cursor.style.top = `${displayY * 100}%`;
     }
     // Also sync text inputs if they exist (convert to percentage 0-100)
-    if (this.text && this.xInput && this.yInput) {
+    if (this.#fieldsEnabled && this.xInput && this.yInput) {
       this.xInput.setAttribute("value", Math.round(this.position.x * 100));
       this.yInput.setAttribute("value", Math.round(this.position.y * 100));
     }
+  }
+
+  #syncValueAttribute() {
+    const next = this.value;
+    if (this.getAttribute("value") === next) return;
+    this.#isSyncingValueAttr = true;
+    this.setAttribute("value", next);
+    this.#isSyncingValueAttr = false;
   }
 
   #handleMouseDown(e) {
@@ -7718,6 +7824,7 @@ class FigInputJoystick extends HTMLElement {
       this.plane.style.cursor = "";
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      this.#syncValueAttribute();
       this.#emitChangeEvent();
     };
 
@@ -7740,6 +7847,7 @@ class FigInputJoystick extends HTMLElement {
       this.plane.classList.remove("dragging");
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
+      this.#syncValueAttribute();
       this.#emitChangeEvent();
     };
 
@@ -7759,32 +7867,48 @@ class FigInputJoystick extends HTMLElement {
     container?.focus();
   }
   static get observedAttributes() {
-    return ["value", "precision", "transform", "text", "coordinates"];
-  }
-  get value() {
-    // Return as percentage values (0-100)
     return [
-      Math.round(this.position.x * 100),
-      Math.round(this.position.y * 100),
+      "value",
+      "precision",
+      "transform",
+      "fields",
+      "coordinates",
+      "aspect-ratio",
+      "axis-labels",
     ];
   }
+  get value() {
+    return `${Math.round(this.position.x * 100)}% ${Math.round(this.position.y * 100)}%`;
+  }
   set value(value) {
-    // Parse value, strip % symbols if present, convert from 0-100 to 0-1
-    const v = value
-      .toString()
-      .split(",")
-      .map((s) => {
-        const num = parseFloat(s.replace(/%/g, "").trim());
-        return isNaN(num) ? 0.5 : num / 100; // Convert from percentage to decimal, default to 0.5 if invalid
-      });
-    this.position = { x: v[0] ?? 0.5, y: v[1] ?? 0.5 };
+    const normalized = value == null ? "" : String(value).trim();
+    if (!normalized) {
+      this.position = { x: 0.5, y: 0.5 };
+    } else {
+      const parts = normalized.split(/[\s,]+/).filter(Boolean);
+      const parseAxis = (token) => {
+        if (!token) return 0.5;
+        const isPercent = token.includes("%");
+        const numeric = Number.parseFloat(token.replace(/%/g, "").trim());
+        if (!Number.isFinite(numeric)) return 0.5;
+        const decimal = isPercent || Math.abs(numeric) > 1 ? numeric / 100 : numeric;
+        return Math.max(0, Math.min(1, decimal));
+      };
+      const x = parseAxis(parts[0]);
+      const y = parseAxis(parts[1] ?? parts[0]);
+      this.position = { x, y };
+    }
     if (this.#initialized) {
       this.#syncHandlePosition();
     }
   }
   attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "aspect-ratio") {
+      this.#syncAspectRatioVar(newValue);
+      return;
+    }
     if (name === "value") {
-      if (this.isDragging) return;
+      if (this.#isSyncingValueAttr || this.isDragging) return;
       this.value = newValue;
     }
     if (name === "precision") {
@@ -7793,9 +7917,17 @@ class FigInputJoystick extends HTMLElement {
     if (name === "transform") {
       this.transform = Number(newValue);
     }
-    if (name === "text" && newValue !== oldValue) {
-      this.text = newValue.toLowerCase() === "true";
+    if (name === "fields" && newValue !== oldValue) {
+      this.#cleanupListeners();
       this.#render();
+      this.#setupListeners();
+      this.#syncHandlePosition();
+    }
+    if (name === "axis-labels" && newValue !== oldValue) {
+      this.#cleanupListeners();
+      this.#render();
+      this.#setupListeners();
+      this.#syncHandlePosition();
     }
     if (name === "coordinates") {
       this.coordinates = newValue || "screen";
@@ -7804,7 +7936,7 @@ class FigInputJoystick extends HTMLElement {
   }
 }
 
-customElements.define("fig-input-joystick", FigInputJoystick);
+customElements.define("fig-joystick", FigInputJoystick);
 
 /**
  * A custom angle chooser input element.

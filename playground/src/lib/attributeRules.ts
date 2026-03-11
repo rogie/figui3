@@ -294,22 +294,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-input-angle": {
     text: { label: "Text", type: "boolean", boolMode: "string" },
   },
-  "fig-input-joystick": {
-    value: { label: "Value", type: "string" },
-    precision: { label: "Precision", type: "number", min: 0, max: 4, step: 1 },
-    transform: {
-      label: "Transform",
-      type: "number",
-      min: 1,
-      max: 1000,
-      step: 1,
-    },
-    text: { label: "Text", type: "boolean", boolMode: "string" },
-    coordinates: {
-      label: "Coordinates",
-      type: "enum",
-      options: ["screen", "math"],
-    },
+  "fig-joystick": {
+    "aspect-ratio": aspectRatioRule,
+    "axis-labels": { label: "Axis Labels", type: "string" },
+    fields: { label: "Fields", type: "boolean", boolMode: "string" },
   },
   "fig-input-text": {
     type: {

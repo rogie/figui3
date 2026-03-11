@@ -31,7 +31,7 @@ declare module "react" {
       "fig-avatar": FigAttrs;
       "fig-shimmer": FigAttrs;
       "fig-input-text": FigAttrs;
-      "fig-input-joystick": FigAttrs;
+      "fig-joystick": FigAttrs;
       "fig-header": FigAttrs;
       "fig-toast": FigAttrs;
       "fig-tooltip": FigAttrs;

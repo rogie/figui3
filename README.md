@@ -665,24 +665,25 @@ An image display or upload component.
 
 ---
 
-### Input Joystick (`<fig-input-joystick>`)
+### Joystick (`<fig-joystick>`)
 
 A 2D position input control.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `value` | string | — | Position: `"x,y"` (0-1 range) |
+| `value` | string | `"50% 50%"` | Position as percentages (for example `"50% 50%"` or `"25% 80%"`) |
 | `precision` | number | — | Decimal places |
 | `transform` | number | — | Output scaling |
-| `text` | boolean | `false` | Show X/Y inputs |
+| `fields` | boolean | `false` | Show X/Y inputs |
 | `coordinates` | string | `"screen"` | Coordinate system: `"screen"` (0,0 top-left) or `"math"` (0,0 bottom-left) |
+| `aspect-ratio` | string | `"1 / 1"` | Plane container ratio (for example `16 / 9`) |
 
 ```html
-<fig-input-joystick value="0.5,0.5"></fig-input-joystick>
-<fig-input-joystick value="0.5,0.5" text="true" precision="2"></fig-input-joystick>
+<fig-joystick value="50% 50%"></fig-joystick>
+<fig-joystick value="50% 50%" fields="true" precision="2"></fig-joystick>
 
 <!-- Math coordinates (Y-axis inverted: 0,0 at bottom-left) -->
-<fig-input-joystick value="0.5,0.5" coordinates="math" text="true"></fig-input-joystick>
+<fig-joystick value="50% 50%" coordinates="math" fields="true"></fig-joystick>
 ```
 
 ---
