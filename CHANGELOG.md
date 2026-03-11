@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.38.0]
+
+### Added
+
+- Added new `fig-origin-grid` component for transform-origin editing with optional `fields`, draggable handle interaction, and click-to-cell-center placement.
+- Added PropKit integration for `fig-origin-grid` including section example, JSX typing, and attributes panel support.
+- Added overflow-aware handle states for out-of-bounds values, including directional classes and masked arrow indicator styling.
+
+### Changed
+
+- Updated `fig-origin-grid` drag and click behavior to separate click vs drag intent, enable freeform out-of-bounds dragging, and support Shift snapping.
+- Updated `fig-origin-grid` value parsing/sync so single-value origins mirror to both axes and X/Y fields stay synchronized with component value changes.
+- Updated origin handle overflow nudge behavior with aspect-ratio-aware offset scaling.
+
+### Fixed
+
+- Fixed playground scrub interruptions for `fig-origin-grid` X/Y number fields by emitting commit `change` on field focus-out instead of every scrub tick.
+- Fixed `fig-origin-grid` drag cursor behavior so grabbing only appears after actual drag threshold crossing.
+
 ## [2.37.0]
 
 ### Added

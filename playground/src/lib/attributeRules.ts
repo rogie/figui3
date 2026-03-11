@@ -286,6 +286,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       ],
     },
   },
+  "fig-origin-grid": {
+    "aspect-ratio": aspectRatioRule,
+    drag: { label: "Drag", type: "boolean", boolMode: "string" },
+    fields: { label: "Fields", type: "boolean", boolMode: "string" },
+  },
   "fig-input-angle": {
     text: { label: "Text", type: "boolean", boolMode: "string" },
   },

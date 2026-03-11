@@ -184,7 +184,7 @@ export default function ExampleView({
     const container = containerRef.current;
     if (!container) return;
 
-    const VALUE_SYNC_TAGS = new Set(["fig-3d-rotate"]);
+    const VALUE_SYNC_TAGS = new Set(["fig-3d-rotate", "fig-origin-grid"]);
 
     const resolveFieldIndex = (target: HTMLElement): number => {
       const field = target.closest("fig-field");
@@ -235,7 +235,7 @@ export default function ExampleView({
     for (const [fieldIndex, value] of cache) {
       let target: Element | null = null;
       if (fields.length && fields[fieldIndex]) {
-        target = fields[fieldIndex].querySelector("fig-3d-rotate");
+        target = fields[fieldIndex].querySelector("fig-3d-rotate, fig-origin-grid");
       } else if (controls) {
         target = controls[fieldIndex] ?? null;
       }

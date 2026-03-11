@@ -389,6 +389,24 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "origin-grid",
+    name: "Origin Grid",
+    description:
+      "A 3x3 transform-origin selector with draggable point selection and XY values.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Origin</label>
+    <fig-origin-grid value="50% 50%" drag="true" fields="true"></fig-origin-grid>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "angle",
     name: "Angle",
     description: "An angle input with a visual dial and numeric text field.",

@@ -27,6 +27,7 @@ declare module "react" {
       "fig-input-number": FigAttrs;
       "fig-easing-curve": FigAttrs;
       "fig-3d-rotate": FigAttrs;
+      "fig-origin-grid": FigAttrs;
       "fig-avatar": FigAttrs;
       "fig-shimmer": FigAttrs;
       "fig-input-text": FigAttrs;
