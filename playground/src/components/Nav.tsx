@@ -3,7 +3,6 @@ import {
   useEffect,
   useCallback,
   useMemo,
-  type WheelEvent as ReactWheelEvent,
 } from "react";
 import type { Section } from "../data/sections";
 import ThemeToggle from "./ThemeToggle";
@@ -42,7 +41,6 @@ export default function Nav({
 }: Props) {
   const navRef = useRef<HTMLDivElement>(null);
   const toastRef = useRef<HTMLElement>(null);
-  const lastWheelNavigationAtRef = useRef(0);
   const orderedExamples = useMemo(
     () =>
       sections.flatMap((section) =>
@@ -176,56 +174,6 @@ export default function Nav({
     [activeSectionId, activeExampleId, navigateTo, orderedExamples],
   );
 
-  const handleWheelNavigation = useCallback(
-    (e: ReactWheelEvent<HTMLDivElement>) => {
-      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (Math.abs(e.deltaY) < 4) return;
-      const navEl = navRef.current;
-      if (!navEl) return;
-
-      const hasOverflow = navEl.scrollHeight > navEl.clientHeight + 1;
-      if (hasOverflow) {
-        const atTop = navEl.scrollTop <= 0;
-        const atBottom =
-          navEl.scrollTop + navEl.clientHeight >= navEl.scrollHeight - 1;
-
-        // Prefer native nav scrolling when there is still room to scroll.
-        if ((e.deltaY > 0 && !atBottom) || (e.deltaY < 0 && !atTop)) {
-          return;
-        }
-      }
-
-      const now = performance.now();
-      // Prevent trackpad/mouse-wheel bursts from skipping too many examples.
-      if (now - lastWheelNavigationAtRef.current < 120) {
-        e.preventDefault();
-        return;
-      }
-      lastWheelNavigationAtRef.current = now;
-
-      const currentIndex = orderedExamples.findIndex(
-        ({ sectionId, exampleId }) =>
-          sectionId === activeSectionId && exampleId === activeExampleId,
-      );
-      if (currentIndex === -1) return;
-
-      const offset = e.deltaY > 0 ? 1 : -1;
-      const nextIndex = Math.min(
-        orderedExamples.length - 1,
-        Math.max(0, currentIndex + offset),
-      );
-      if (nextIndex === currentIndex) {
-        e.preventDefault();
-        return;
-      }
-
-      const next = orderedExamples[nextIndex];
-      navigateTo(next.sectionId, next.exampleId);
-      e.preventDefault();
-    },
-    [activeSectionId, activeExampleId, navigateTo, orderedExamples],
-  );
-
   useEffect(() => {
     window.addEventListener("keydown", handleArrowKeyNavigation);
     return () => window.removeEventListener("keydown", handleArrowKeyNavigation);
@@ -237,7 +185,7 @@ export default function Nav({
         <h1>{appTitle}</h1>
         <ThemeToggle isDark={isDark} setTheme={setTheme} />
       </fig-header>
-      <div className="nav-links" ref={navRef} onWheel={handleWheelNavigation}>
+      <div className="nav-links" ref={navRef}>
         {sections.map((section) => {
           const isSingleExample = section.examples.length === 1;
           const onlyExample = section.examples[0];

@@ -576,6 +576,7 @@ export default function AttributesView({
                 <fig-dropdown
                   full
                   experimental="modern"
+                  value={current}
                   onChange={(e: any) => {
                     const host = e.currentTarget as HTMLElement & { value?: string };
                     const nextValue = host.value ?? (e as CustomEvent).detail?.value;
@@ -642,11 +643,7 @@ export default function AttributesView({
                   }}
                 >
                   {options.map((option) => (
-                    <option
-                      key={option}
-                      value={option}
-                      selected={option === current}
-                    >
+                    <option key={option} value={option}>
                       {option === ""
                         ? target.controlTag === "fig-shimmer" && name === "direction"
                           ? "Default"
@@ -836,11 +833,7 @@ export default function AttributesView({
                           }}
                         >
                           {FIELD_INPUT_OPTIONS.map((option) => (
-                            <option
-                              key={option.tag}
-                              value={option.tag}
-                              selected={option.tag === currentFieldInputTag ? true : undefined}
-                            >
+                            <option key={option.tag} value={option.tag}>
                               {option.label}
                             </option>
                           ))}

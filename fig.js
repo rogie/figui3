@@ -2,6 +2,76 @@
  * Generates a unique ID string using timestamp and random values
  * @returns {string} A unique identifier
  */
+function figIsWebKitOrIOSBrowser() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  const userAgent = navigator.userAgent || "";
+  const isIOSBrowser =
+    /\b(iPad|iPhone|iPod)\b/.test(userAgent) ||
+    /\bMacintosh\b/.test(userAgent) && /\bMobile\b/.test(userAgent);
+  const isDesktopWebKit =
+    /\bAppleWebKit\b/.test(userAgent) &&
+    !/\b(Chrome|Chromium|Edg|OPR|SamsungBrowser)\b/.test(userAgent);
+  return isIOSBrowser || isDesktopWebKit;
+}
+
+function figSupportsCustomizedBuiltIns() {
+  if (
+    typeof window === "undefined" ||
+    !window.customElements ||
+    typeof HTMLButtonElement === "undefined"
+  ) {
+    return false;
+  }
+
+  const testName = `fig-builtin-probe-${Math.random().toString(36).slice(2)}`;
+  class FigCustomizedBuiltInProbe extends HTMLButtonElement {}
+
+  try {
+    customElements.define(testName, FigCustomizedBuiltInProbe, {
+      extends: "button",
+    });
+    const probe = document.createElement("button", { is: testName });
+    return probe instanceof FigCustomizedBuiltInProbe;
+  } catch (_error) {
+    return false;
+  }
+}
+
+const figNeedsBuiltInPolyfill =
+  figIsWebKitOrIOSBrowser() && !figSupportsCustomizedBuiltIns();
+const figBuiltInPolyfillReady = (figNeedsBuiltInPolyfill
+  ? import("./polyfills/custom-elements-webkit.js")
+  : Promise.resolve()
+)
+  .then(() => {})
+  .catch((error) => {
+    throw error;
+  });
+
+function figDefineCustomizedBuiltIn(name, constructor, options) {
+  const define = () => {
+    if (!customElements.get(name)) {
+      customElements.define(name, constructor, options);
+    }
+  };
+
+  if (!figNeedsBuiltInPolyfill) {
+    define();
+    return;
+  }
+
+  figBuiltInPolyfillReady
+    .then(define)
+    .catch((error) => {
+      console.error(
+        `[figui3] Failed to load customized built-in polyfill for "${name}".`,
+        error,
+      );
+    });
+}
+
 function figUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
@@ -1084,7 +1154,7 @@ class FigDialog extends HTMLDialogElement {
     }
   }
 }
-customElements.define("fig-dialog", FigDialog, { extends: "dialog" });
+figDefineCustomizedBuiltIn("fig-dialog", FigDialog, { extends: "dialog" });
 
 /* Popup */
 /**
@@ -1097,44 +1167,84 @@ customElements.define("fig-dialog", FigDialog, { extends: "dialog" });
  * @attr {boolean|string} open - Open when present and not "false".
  */
 class FigPopup extends HTMLDialogElement {
-  #anchorObserver = null;
-  #contentObserver = null;
-  #mutationObserver = null;
-  #anchorTrackRAF = null;
-  #lastAnchorRect = null;
-  #isPopupActive = false;
-  #boundReposition;
-  #boundScroll;
-  #boundOutsidePointerDown;
-  #rafId = null;
-  #anchorRef = null;
+  _anchorObserver = null;
+  _contentObserver = null;
+  _mutationObserver = null;
+  _anchorTrackRAF = null;
+  _lastAnchorRect = null;
+  _isPopupActive = false;
+  _boundReposition;
+  _boundScroll;
+  _boundOutsidePointerDown;
+  _rafId = null;
+  _anchorRef = null;
 
-  #isDragging = false;
-  #dragPending = false;
-  #dragStartPos = { x: 0, y: 0 };
-  #dragOffset = { x: 0, y: 0 };
-  #dragThreshold = 3;
-  #boundPointerDown;
-  #boundPointerMove;
-  #boundPointerUp;
-  #wasDragged = false;
+  _isDragging = false;
+  _dragPending = false;
+  _dragStartPos = { x: 0, y: 0 };
+  _dragOffset = { x: 0, y: 0 };
+  _dragThreshold = 3;
+  _boundPointerDown;
+  _boundPointerMove;
+  _boundPointerUp;
+  _wasDragged = false;
 
   constructor() {
     super();
-    this.#boundReposition = this.#queueReposition.bind(this);
-    this.#boundScroll = (e) => {
+    this._boundReposition = this.queueReposition.bind(this);
+    this._boundScroll = (e) => {
       if (
         this.open &&
         !this.contains(e.target) &&
-        this.#shouldAutoReposition()
+        this.shouldAutoReposition()
       ) {
-        this.#queueReposition();
+        this.queueReposition();
       }
     };
-    this.#boundOutsidePointerDown = this.#handleOutsidePointerDown.bind(this);
-    this.#boundPointerDown = this.#handlePointerDown.bind(this);
-    this.#boundPointerMove = this.#handlePointerMove.bind(this);
-    this.#boundPointerUp = this.#handlePointerUp.bind(this);
+    this._boundOutsidePointerDown = this.handleOutsidePointerDown.bind(this);
+    this._boundPointerDown = this.handlePointerDown.bind(this);
+    this._boundPointerMove = this.handlePointerMove.bind(this);
+    this._boundPointerUp = this.handlePointerUp.bind(this);
+  }
+
+  ensureInitialized() {
+    if (typeof this._anchorObserver === "undefined") this._anchorObserver = null;
+    if (typeof this._contentObserver === "undefined") this._contentObserver = null;
+    if (typeof this._mutationObserver === "undefined") this._mutationObserver = null;
+    if (typeof this._anchorTrackRAF === "undefined") this._anchorTrackRAF = null;
+    if (typeof this._lastAnchorRect === "undefined") this._lastAnchorRect = null;
+    if (typeof this._isPopupActive === "undefined") this._isPopupActive = false;
+    if (typeof this._rafId === "undefined") this._rafId = null;
+    if (typeof this._anchorRef === "undefined") this._anchorRef = null;
+    if (typeof this._isDragging === "undefined") this._isDragging = false;
+    if (typeof this._dragPending === "undefined") this._dragPending = false;
+    if (typeof this._dragStartPos === "undefined") this._dragStartPos = { x: 0, y: 0 };
+    if (typeof this._dragOffset === "undefined") this._dragOffset = { x: 0, y: 0 };
+    if (typeof this._dragThreshold !== "number") this._dragThreshold = 3;
+    if (typeof this._wasDragged === "undefined") this._wasDragged = false;
+
+    if (typeof this._boundReposition !== "function") {
+      this._boundReposition = this.queueReposition.bind(this);
+    }
+    if (typeof this._boundScroll !== "function") {
+      this._boundScroll = (e) => {
+        if (this.open && !this.contains(e.target) && this.shouldAutoReposition()) {
+          this.queueReposition();
+        }
+      };
+    }
+    if (typeof this._boundOutsidePointerDown !== "function") {
+      this._boundOutsidePointerDown = this.handleOutsidePointerDown.bind(this);
+    }
+    if (typeof this._boundPointerDown !== "function") {
+      this._boundPointerDown = this.handlePointerDown.bind(this);
+    }
+    if (typeof this._boundPointerMove !== "function") {
+      this._boundPointerMove = this.handlePointerMove.bind(this);
+    }
+    if (typeof this._boundPointerUp !== "function") {
+      this._boundPointerUp = this.handlePointerUp.bind(this);
+    }
   }
 
   static get observedAttributes() {
@@ -1167,22 +1277,23 @@ class FigPopup extends HTMLDialogElement {
   }
 
   get anchor() {
-    return this.#anchorRef ?? this.getAttribute("anchor");
+    return this._anchorRef ?? this.getAttribute("anchor");
   }
 
   set anchor(value) {
     if (value instanceof Element) {
-      this.#anchorRef = value;
+      this._anchorRef = value;
     } else if (typeof value === "string") {
-      this.#anchorRef = null;
+      this._anchorRef = null;
       this.setAttribute("anchor", value);
     } else {
-      this.#anchorRef = null;
+      this._anchorRef = null;
     }
-    if (this.open) this.#queueReposition();
+    if (this.open) this.queueReposition();
   }
 
   connectedCallback() {
+    this.ensureInitialized();
     if (!this.hasAttribute("position")) {
       this.setAttribute("position", "top center");
     }
@@ -1197,68 +1308,70 @@ class FigPopup extends HTMLDialogElement {
       this.hasAttribute("drag") && this.getAttribute("drag") !== "false";
 
     this.addEventListener("close", () => {
-      this.#teardownObservers();
+      this.teardownObservers();
       if (this.hasAttribute("open")) {
         this.removeAttribute("open");
       }
     });
 
     requestAnimationFrame(() => {
-      this.#setupDragListeners();
+      this.setupDragListeners();
     });
 
     if (this.open) {
-      this.#showPopup();
+      this.showPopup();
     } else {
-      this.#hidePopup();
+      this.hidePopup();
     }
   }
 
   disconnectedCallback() {
-    this.#teardownObservers();
-    this.#removeDragListeners();
+    this.ensureInitialized();
+    this.teardownObservers();
+    this.removeDragListeners();
     document.removeEventListener(
       "pointerdown",
-      this.#boundOutsidePointerDown,
+      this._boundOutsidePointerDown,
       true,
     );
-    if (this.#rafId !== null) {
-      cancelAnimationFrame(this.#rafId);
-      this.#rafId = null;
+    if (this._rafId !== null) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
     }
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    this.ensureInitialized();
     if (oldValue === newValue) return;
 
     if (name === "open") {
       if (newValue === null || newValue === "false") {
-        this.#hidePopup();
+        this.hidePopup();
         return;
       }
-      this.#showPopup();
+      this.showPopup();
       return;
     }
 
     if (name === "drag") {
       this.drag = newValue !== null && newValue !== "false";
       if (this.drag) {
-        this.#setupDragListeners();
+        this.setupDragListeners();
       } else {
-        this.#removeDragListeners();
+        this.removeDragListeners();
       }
       return;
     }
 
     if (this.open) {
-      this.#queueReposition();
-      this.#setupObservers();
+      this.queueReposition();
+      this.setupObservers();
     }
   }
 
-  #showPopup() {
-    if (this.#isPopupActive) {
-      this.#queueReposition();
+  showPopup() {
+    if (this._isPopupActive) {
+      this.queueReposition();
       return;
     }
 
@@ -1275,30 +1388,30 @@ class FigPopup extends HTMLDialogElement {
       }
     }
 
-    this.#setupObservers();
+    this.setupObservers();
     document.addEventListener(
       "pointerdown",
-      this.#boundOutsidePointerDown,
+      this._boundOutsidePointerDown,
       true,
     );
-    this.#wasDragged = false;
-    this.#queueReposition();
-    this.#isPopupActive = true;
+    this._wasDragged = false;
+    this.queueReposition();
+    this._isPopupActive = true;
 
-    const anchor = this.#resolveAnchor();
+    const anchor = this.resolveAnchor();
     if (anchor) anchor.classList.add("has-popup-open");
   }
 
-  #hidePopup() {
-    const anchor = this.#resolveAnchor();
+  hidePopup() {
+    const anchor = this.resolveAnchor();
     if (anchor) anchor.classList.remove("has-popup-open");
 
-    this.#isPopupActive = false;
-    this.#wasDragged = false;
-    this.#teardownObservers();
+    this._isPopupActive = false;
+    this._wasDragged = false;
+    this.teardownObservers();
     document.removeEventListener(
       "pointerdown",
-      this.#boundOutsidePointerDown,
+      this._boundOutsidePointerDown,
       true,
     );
 
@@ -1316,59 +1429,59 @@ class FigPopup extends HTMLDialogElement {
     return val === null || val !== "false";
   }
 
-  #setupObservers() {
-    this.#teardownObservers();
+  setupObservers() {
+    this.teardownObservers();
 
-    const anchor = this.#resolveAnchor();
+    const anchor = this.resolveAnchor();
     if (anchor && "ResizeObserver" in window) {
-      this.#anchorObserver = new ResizeObserver(this.#boundReposition);
-      this.#anchorObserver.observe(anchor);
+      this._anchorObserver = new ResizeObserver(this._boundReposition);
+      this._anchorObserver.observe(anchor);
     }
 
     if (this.autoresize) {
       if ("ResizeObserver" in window) {
-        this.#contentObserver = new ResizeObserver(this.#boundReposition);
-        this.#contentObserver.observe(this);
+        this._contentObserver = new ResizeObserver(this._boundReposition);
+        this._contentObserver.observe(this);
       }
 
-      this.#mutationObserver = new MutationObserver(this.#boundReposition);
-      this.#mutationObserver.observe(this, {
+      this._mutationObserver = new MutationObserver(this._boundReposition);
+      this._mutationObserver.observe(this, {
         childList: true,
         subtree: true,
         characterData: true,
       });
     }
 
-    window.addEventListener("resize", this.#boundReposition);
-    window.addEventListener("scroll", this.#boundScroll, {
+    window.addEventListener("resize", this._boundReposition);
+    window.addEventListener("scroll", this._boundScroll, {
       capture: true,
       passive: true,
     });
-    this.#startAnchorTracking();
+    this.startAnchorTracking();
   }
 
-  #teardownObservers() {
-    if (this.#anchorObserver) {
-      this.#anchorObserver.disconnect();
-      this.#anchorObserver = null;
+  teardownObservers() {
+    if (this._anchorObserver) {
+      this._anchorObserver.disconnect();
+      this._anchorObserver = null;
     }
-    if (this.#contentObserver) {
-      this.#contentObserver.disconnect();
-      this.#contentObserver = null;
+    if (this._contentObserver) {
+      this._contentObserver.disconnect();
+      this._contentObserver = null;
     }
-    if (this.#mutationObserver) {
-      this.#mutationObserver.disconnect();
-      this.#mutationObserver = null;
+    if (this._mutationObserver) {
+      this._mutationObserver.disconnect();
+      this._mutationObserver = null;
     }
-    window.removeEventListener("resize", this.#boundReposition);
-    window.removeEventListener("scroll", this.#boundScroll, {
+    window.removeEventListener("resize", this._boundReposition);
+    window.removeEventListener("scroll", this._boundScroll, {
       capture: true,
       passive: true,
     });
-    this.#stopAnchorTracking();
+    this.stopAnchorTracking();
   }
 
-  #readRectSnapshot(element) {
+  readRectSnapshot(element) {
     if (!element) return null;
     const rect = element.getBoundingClientRect();
     return {
@@ -1379,7 +1492,7 @@ class FigPopup extends HTMLDialogElement {
     };
   }
 
-  #hasRectChanged(prev, next, epsilon = 0.25) {
+  hasRectChanged(prev, next, epsilon = 0.25) {
     if (!prev && !next) return false;
     if (!prev || !next) return true;
     return (
@@ -1390,42 +1503,42 @@ class FigPopup extends HTMLDialogElement {
     );
   }
 
-  #startAnchorTracking() {
-    this.#stopAnchorTracking();
+  startAnchorTracking() {
+    this.stopAnchorTracking();
     if (!this.open) return;
 
     const tick = () => {
       if (!this.open) {
-        this.#anchorTrackRAF = null;
+        this._anchorTrackRAF = null;
         return;
       }
 
-      const anchor = this.#resolveAnchor();
-      const nextRect = this.#readRectSnapshot(anchor);
-      const canAutoReposition = this.#shouldAutoReposition();
-      if (canAutoReposition && this.#hasRectChanged(this.#lastAnchorRect, nextRect)) {
-        this.#lastAnchorRect = nextRect;
-        this.#queueReposition();
+      const anchor = this.resolveAnchor();
+      const nextRect = this.readRectSnapshot(anchor);
+      const canAutoReposition = this.shouldAutoReposition();
+      if (canAutoReposition && this.hasRectChanged(this._lastAnchorRect, nextRect)) {
+        this._lastAnchorRect = nextRect;
+        this.queueReposition();
       } else if (!canAutoReposition) {
         // Keep anchor geometry fresh without forcing reposition when user has dragged away.
-        this.#lastAnchorRect = nextRect;
+        this._lastAnchorRect = nextRect;
       }
-      this.#anchorTrackRAF = requestAnimationFrame(tick);
+      this._anchorTrackRAF = requestAnimationFrame(tick);
     };
 
-    this.#lastAnchorRect = this.#readRectSnapshot(this.#resolveAnchor());
-    this.#anchorTrackRAF = requestAnimationFrame(tick);
+    this._lastAnchorRect = this.readRectSnapshot(this.resolveAnchor());
+    this._anchorTrackRAF = requestAnimationFrame(tick);
   }
 
-  #stopAnchorTracking() {
-    if (this.#anchorTrackRAF !== null) {
-      cancelAnimationFrame(this.#anchorTrackRAF);
-      this.#anchorTrackRAF = null;
+  stopAnchorTracking() {
+    if (this._anchorTrackRAF !== null) {
+      cancelAnimationFrame(this._anchorTrackRAF);
+      this._anchorTrackRAF = null;
     }
-    this.#lastAnchorRect = null;
+    this._lastAnchorRect = null;
   }
 
-  #handleOutsidePointerDown(event) {
+  handleOutsidePointerDown(event) {
     if (!this.open || !super.open) return;
     const closedby = this.getAttribute("closedby");
     if (closedby === "none" || closedby === "closerequest") return;
@@ -1433,15 +1546,15 @@ class FigPopup extends HTMLDialogElement {
     if (!(target instanceof Node)) return;
     if (this.contains(target)) return;
 
-    const anchor = this.#resolveAnchor();
+    const anchor = this.resolveAnchor();
     if (anchor && anchor.contains(target)) return;
 
-    if (this.#isInsideDescendantPopup(target)) return;
+    if (this.isInsideDescendantPopup(target)) return;
 
     this.open = false;
   }
 
-  #isInsideDescendantPopup(target) {
+  isInsideDescendantPopup(target) {
     const targetDialog = target.closest?.('dialog[is="fig-popup"]');
     if (!targetDialog || targetDialog === this) return false;
 
@@ -1459,19 +1572,19 @@ class FigPopup extends HTMLDialogElement {
 
   // ---- Drag support ----
 
-  #setupDragListeners() {
+  setupDragListeners() {
     if (this.drag) {
-      this.addEventListener("pointerdown", this.#boundPointerDown);
+      this.addEventListener("pointerdown", this._boundPointerDown);
     }
   }
 
-  #removeDragListeners() {
-    this.removeEventListener("pointerdown", this.#boundPointerDown);
-    document.removeEventListener("pointermove", this.#boundPointerMove);
-    document.removeEventListener("pointerup", this.#boundPointerUp);
+  removeDragListeners() {
+    this.removeEventListener("pointerdown", this._boundPointerDown);
+    document.removeEventListener("pointermove", this._boundPointerMove);
+    document.removeEventListener("pointerup", this._boundPointerUp);
   }
 
-  #isInteractiveElement(element) {
+  isInteractiveElement(element) {
     const interactiveSelectors = [
       "input",
       "button",
@@ -1516,9 +1629,9 @@ class FigPopup extends HTMLDialogElement {
     return false;
   }
 
-  #handlePointerDown(e) {
+  handlePointerDown(e) {
     if (!this.drag) return;
-    if (this.#isInteractiveElement(e.target)) return;
+    if (this.isInteractiveElement(e.target)) return;
 
     const handleSelector = this.getAttribute("handle");
     if (handleSelector && handleSelector.trim()) {
@@ -1526,27 +1639,27 @@ class FigPopup extends HTMLDialogElement {
       if (!handleEl || !handleEl.contains(e.target)) return;
     }
 
-    this.#dragPending = true;
-    this.#dragStartPos.x = e.clientX;
-    this.#dragStartPos.y = e.clientY;
+    this._dragPending = true;
+    this._dragStartPos.x = e.clientX;
+    this._dragStartPos.y = e.clientY;
 
     const rect = this.getBoundingClientRect();
-    this.#dragOffset.x = e.clientX - rect.left;
-    this.#dragOffset.y = e.clientY - rect.top;
+    this._dragOffset.x = e.clientX - rect.left;
+    this._dragOffset.y = e.clientY - rect.top;
 
-    document.addEventListener("pointermove", this.#boundPointerMove);
-    document.addEventListener("pointerup", this.#boundPointerUp);
+    document.addEventListener("pointermove", this._boundPointerMove);
+    document.addEventListener("pointerup", this._boundPointerUp);
   }
 
-  #handlePointerMove(e) {
-    if (this.#dragPending && !this.#isDragging) {
-      const dx = Math.abs(e.clientX - this.#dragStartPos.x);
-      const dy = Math.abs(e.clientY - this.#dragStartPos.y);
+  handlePointerMove(e) {
+    if (this._dragPending && !this._isDragging) {
+      const dx = Math.abs(e.clientX - this._dragStartPos.x);
+      const dy = Math.abs(e.clientY - this._dragStartPos.y);
 
-      if (dx > this.#dragThreshold || dy > this.#dragThreshold) {
-        this.#isDragging = true;
-        this.#dragPending = false;
-        this.#wasDragged = true;
+      if (dx > this._dragThreshold || dy > this._dragThreshold) {
+        this._isDragging = true;
+        this._dragPending = false;
+        this._wasDragged = true;
         this.setPointerCapture(e.pointerId);
         this.style.cursor = "grabbing";
 
@@ -1559,31 +1672,31 @@ class FigPopup extends HTMLDialogElement {
       }
     }
 
-    if (!this.#isDragging) return;
+    if (!this._isDragging) return;
 
-    this.style.left = `${e.clientX - this.#dragOffset.x}px`;
-    this.style.top = `${e.clientY - this.#dragOffset.y}px`;
+    this.style.left = `${e.clientX - this._dragOffset.x}px`;
+    this.style.top = `${e.clientY - this._dragOffset.y}px`;
     e.preventDefault();
   }
 
-  #handlePointerUp(e) {
-    if (this.#isDragging) {
+  handlePointerUp(e) {
+    if (this._isDragging) {
       this.releasePointerCapture(e.pointerId);
       this.style.cursor = "";
     }
 
-    this.#isDragging = false;
-    this.#dragPending = false;
+    this._isDragging = false;
+    this._dragPending = false;
 
-    document.removeEventListener("pointermove", this.#boundPointerMove);
-    document.removeEventListener("pointerup", this.#boundPointerUp);
+    document.removeEventListener("pointermove", this._boundPointerMove);
+    document.removeEventListener("pointerup", this._boundPointerUp);
     e.preventDefault();
   }
 
   // ---- Anchor resolution ----
 
-  #resolveAnchor() {
-    if (this.#anchorRef) return this.#anchorRef;
+  resolveAnchor() {
+    if (this._anchorRef) return this._anchorRef;
 
     const selector = this.getAttribute("anchor");
     if (!selector) return null;
@@ -1599,7 +1712,7 @@ class FigPopup extends HTMLDialogElement {
     return document.querySelector(selector);
   }
 
-  #parsePosition() {
+  parsePosition() {
     const raw = (this.getAttribute("position") || "top center")
       .trim()
       .toLowerCase();
@@ -1640,7 +1753,7 @@ class FigPopup extends HTMLDialogElement {
     return { vertical, horizontal, shorthand };
   }
 
-  #normalizeOffsetToken(token, fallback = "0px") {
+  normalizeOffsetToken(token, fallback = "0px") {
     if (!token) return fallback;
     const trimmed = token.trim();
     if (!trimmed) return fallback;
@@ -1650,9 +1763,9 @@ class FigPopup extends HTMLDialogElement {
     return trimmed;
   }
 
-  #measureLengthPx(value, axis = "x") {
+  measureLengthPx(value, axis = "x") {
     if (!value) return 0;
-    const normalized = this.#normalizeOffsetToken(value, "0px");
+    const normalized = this.normalizeOffsetToken(value, "0px");
     if (normalized.endsWith("px")) {
       const px = parseFloat(normalized);
       return Number.isFinite(px) ? px : 0;
@@ -1680,22 +1793,22 @@ class FigPopup extends HTMLDialogElement {
     return axis === "x" ? rect.width : rect.height;
   }
 
-  #parseOffset() {
+  parseOffset() {
     const raw = (this.getAttribute("offset") || "0 0").trim();
     const tokens = raw.split(/\s+/).filter(Boolean);
 
-    const xToken = this.#normalizeOffsetToken(tokens[0], "0px");
-    const yToken = this.#normalizeOffsetToken(tokens[1], "0px");
+    const xToken = this.normalizeOffsetToken(tokens[0], "0px");
+    const yToken = this.normalizeOffsetToken(tokens[1], "0px");
 
     return {
       xToken,
       yToken,
-      xPx: this.#measureLengthPx(xToken, "x"),
-      yPx: this.#measureLengthPx(yToken, "y"),
+      xPx: this.measureLengthPx(xToken, "x"),
+      yPx: this.measureLengthPx(yToken, "y"),
     };
   }
 
-  #parseViewportMargins() {
+  parseViewportMargins() {
     const raw = (this.getAttribute("viewport-margin") || "8").trim();
     const tokens = raw
       .split(/\s+/)
@@ -1732,7 +1845,7 @@ class FigPopup extends HTMLDialogElement {
     };
   }
 
-  #getPlacementCandidates(vertical, horizontal, shorthand) {
+  getPlacementCandidates(vertical, horizontal, shorthand) {
     const opp = {
       top: "bottom",
       bottom: "top",
@@ -1782,7 +1895,7 @@ class FigPopup extends HTMLDialogElement {
     ];
   }
 
-  #computeCoords(
+  computeCoords(
     anchorRect,
     popupRect,
     vertical,
@@ -1841,7 +1954,7 @@ class FigPopup extends HTMLDialogElement {
     return { top, left };
   }
 
-  #oppositeSide(side) {
+  oppositeSide(side) {
     const map = {
       top: "bottom",
       bottom: "top",
@@ -1851,7 +1964,7 @@ class FigPopup extends HTMLDialogElement {
     return map[side] || "bottom";
   }
 
-  #getPlacementSide(vertical, horizontal, shorthand) {
+  getPlacementSide(vertical, horizontal, shorthand) {
     if (shorthand === "top") return "top";
     if (shorthand === "bottom") return "bottom";
     if (shorthand === "left") return "left";
@@ -1862,14 +1975,14 @@ class FigPopup extends HTMLDialogElement {
     return "top";
   }
 
-  #updatePopoverBeak(anchorRect, popupRect, left, top, placementSide) {
+  updatePopoverBeak(anchorRect, popupRect, left, top, placementSide) {
     if (this.getAttribute("variant") !== "popover" || !anchorRect) {
       this.style.removeProperty("--beak-offset");
       this.removeAttribute("data-beak-side");
       return;
     }
 
-    const beakSide = this.#oppositeSide(placementSide);
+    const beakSide = this.oppositeSide(placementSide);
     this.setAttribute("data-beak-side", beakSide);
 
     const anchorCenterX = anchorRect.left + anchorRect.width / 2;
@@ -1898,7 +2011,7 @@ class FigPopup extends HTMLDialogElement {
     this.style.setProperty("--beak-offset", `${beakOffset}px`);
   }
 
-  #overflowScore(coords, popupRect, m) {
+  overflowScore(coords, popupRect, m) {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const right = coords.left + popupRect.width;
@@ -1912,11 +2025,11 @@ class FigPopup extends HTMLDialogElement {
     return overflowLeft + overflowTop + overflowRight + overflowBottom;
   }
 
-  #fits(coords, popupRect, m) {
-    return this.#overflowScore(coords, popupRect, m) === 0;
+  fits(coords, popupRect, m) {
+    return this.overflowScore(coords, popupRect, m) === 0;
   }
 
-  #clamp(coords, popupRect, m) {
+  clamp(coords, popupRect, m) {
     const minLeft = m.left;
     const minTop = m.top;
     const maxLeft = Math.max(
@@ -1934,17 +2047,17 @@ class FigPopup extends HTMLDialogElement {
     };
   }
 
-  #positionPopup() {
+  positionPopup() {
     if (!this.open || !super.open) return;
 
     const popupRect = this.getBoundingClientRect();
-    const offset = this.#parseOffset();
-    const { vertical, horizontal, shorthand } = this.#parsePosition();
-    const anchor = this.#resolveAnchor();
-    const m = this.#parseViewportMargins();
+    const offset = this.parseOffset();
+    const { vertical, horizontal, shorthand } = this.parsePosition();
+    const anchor = this.resolveAnchor();
+    const m = this.parseViewportMargins();
 
     if (!anchor) {
-      this.#updatePopoverBeak(null, popupRect, 0, 0, "top");
+      this.updatePopoverBeak(null, popupRect, 0, 0, "top");
       const centered = {
         left:
           m.left + (window.innerWidth - m.right - m.left - popupRect.width) / 2,
@@ -1952,14 +2065,14 @@ class FigPopup extends HTMLDialogElement {
           m.top +
           (window.innerHeight - m.bottom - m.top - popupRect.height) / 2,
       };
-      const clamped = this.#clamp(centered, popupRect, m);
+      const clamped = this.clamp(centered, popupRect, m);
       this.style.left = `${clamped.left}px`;
       this.style.top = `${clamped.top}px`;
       return;
     }
 
     const anchorRect = anchor.getBoundingClientRect();
-    const candidates = this.#getPlacementCandidates(
+    const candidates = this.getPlacementCandidates(
       vertical,
       horizontal,
       shorthand,
@@ -1969,7 +2082,7 @@ class FigPopup extends HTMLDialogElement {
     let bestScore = Number.POSITIVE_INFINITY;
 
     for (const { v, h, s } of candidates) {
-      const coords = this.#computeCoords(
+      const coords = this.computeCoords(
         anchorRect,
         popupRect,
         v,
@@ -1977,10 +2090,10 @@ class FigPopup extends HTMLDialogElement {
         offset,
         s,
       );
-      const placementSide = this.#getPlacementSide(v, h, s);
+      const placementSide = this.getPlacementSide(v, h, s);
 
       if (s) {
-        const clamped = this.#clamp(coords, popupRect, m);
+        const clamped = this.clamp(coords, popupRect, m);
         const primaryFits =
           s === "left" || s === "right"
             ? coords.left >= m.left &&
@@ -1990,7 +2103,7 @@ class FigPopup extends HTMLDialogElement {
         if (primaryFits) {
           this.style.left = `${clamped.left}px`;
           this.style.top = `${clamped.top}px`;
-          this.#updatePopoverBeak(
+          this.updatePopoverBeak(
             anchorRect,
             popupRect,
             clamped.left,
@@ -1999,17 +2112,17 @@ class FigPopup extends HTMLDialogElement {
           );
           return;
         }
-        const score = this.#overflowScore(coords, popupRect, m);
+        const score = this.overflowScore(coords, popupRect, m);
         if (score < bestScore) {
           bestScore = score;
           best = clamped;
           bestSide = placementSide;
         }
       } else {
-        if (this.#fits(coords, popupRect, m)) {
+        if (this.fits(coords, popupRect, m)) {
           this.style.left = `${coords.left}px`;
           this.style.top = `${coords.top}px`;
-          this.#updatePopoverBeak(
+          this.updatePopoverBeak(
             anchorRect,
             popupRect,
             coords.left,
@@ -2018,7 +2131,7 @@ class FigPopup extends HTMLDialogElement {
           );
           return;
         }
-        const score = this.#overflowScore(coords, popupRect, m);
+        const score = this.overflowScore(coords, popupRect, m);
         if (score < bestScore) {
           bestScore = score;
           best = coords;
@@ -2027,10 +2140,10 @@ class FigPopup extends HTMLDialogElement {
       }
     }
 
-    const clamped = this.#clamp(best || { left: 0, top: 0 }, popupRect, m);
+    const clamped = this.clamp(best || { left: 0, top: 0 }, popupRect, m);
     this.style.left = `${clamped.left}px`;
     this.style.top = `${clamped.top}px`;
-    this.#updatePopoverBeak(
+    this.updatePopoverBeak(
       anchorRect,
       popupRect,
       clamped.left,
@@ -2039,22 +2152,22 @@ class FigPopup extends HTMLDialogElement {
     );
   }
 
-  #queueReposition() {
-    if (!this.open || !this.#shouldAutoReposition()) return;
-    if (this.#rafId !== null) return;
+  queueReposition() {
+    if (!this.open || !this.shouldAutoReposition()) return;
+    if (this._rafId !== null) return;
 
-    this.#rafId = requestAnimationFrame(() => {
-      this.#rafId = null;
-      this.#positionPopup();
+    this._rafId = requestAnimationFrame(() => {
+      this._rafId = null;
+      this.positionPopup();
     });
   }
 
-  #shouldAutoReposition() {
-    if (!(this.drag && this.#wasDragged)) return true;
-    return !this.#resolveAnchor();
+  shouldAutoReposition() {
+    if (!(this.drag && this._wasDragged)) return true;
+    return !this.resolveAnchor();
   }
 }
-customElements.define("fig-popup", FigPopup, { extends: "dialog" });
+figDefineCustomizedBuiltIn("fig-popup", FigPopup, { extends: "dialog" });
 
 /* Tabs */
 /**
@@ -5059,18 +5172,25 @@ customElements.define("fig-switch", FigSwitch);
  * @attr {boolean} open - Whether the toast is visible
  */
 class FigToast extends HTMLDialogElement {
-  #defaultOffset = 16; // 1rem in pixels
-  #autoCloseTimer = null;
+  _defaultOffset = 16; // 1rem in pixels
+  _autoCloseTimer = null;
 
   constructor() {
     super();
   }
 
-  get #offset() {
-    return parseInt(this.getAttribute("offset") ?? this.#defaultOffset);
+  getOffset() {
+    return parseInt(this.getAttribute("offset") ?? this._defaultOffset);
   }
 
   connectedCallback() {
+    if (typeof this._defaultOffset !== "number") {
+      this._defaultOffset = 16;
+    }
+    if (typeof this._autoCloseTimer === "undefined") {
+      this._autoCloseTimer = null;
+    }
+
     // Set default theme if not specified
     if (!this.hasAttribute("theme")) {
       this.setAttribute("theme", "dark");
@@ -5090,8 +5210,8 @@ class FigToast extends HTMLDialogElement {
     }
 
     requestAnimationFrame(() => {
-      this.#addCloseListeners();
-      this.#applyPosition();
+      this.addCloseListeners();
+      this.applyPosition();
 
       // Auto-show if open attribute is explicitly true
       if (shouldOpen) {
@@ -5101,46 +5221,46 @@ class FigToast extends HTMLDialogElement {
   }
 
   disconnectedCallback() {
-    this.#clearAutoClose();
+    this.clearAutoClose();
   }
 
-  #addCloseListeners() {
+  addCloseListeners() {
     this.querySelectorAll("[close-toast]").forEach((button) => {
-      button.removeEventListener("click", this.#handleClose);
-      button.addEventListener("click", this.#handleClose.bind(this));
+      button.removeEventListener("click", this.handleClose);
+      button.addEventListener("click", this.handleClose.bind(this));
     });
   }
 
-  #handleClose() {
+  handleClose() {
     this.hideToast();
   }
 
-  #applyPosition() {
+  applyPosition() {
     // Always bottom center
     this.style.position = "fixed";
     this.style.margin = "0";
     this.style.top = "auto";
-    this.style.bottom = `${this.#offset}px`;
+    this.style.bottom = `${this.getOffset()}px`;
     this.style.left = "50%";
     this.style.right = "auto";
     this.style.transform = "translateX(-50%)";
   }
 
-  #startAutoClose() {
-    this.#clearAutoClose();
+  startAutoClose() {
+    this.clearAutoClose();
 
     const duration = parseInt(this.getAttribute("duration") ?? "5000");
     if (duration > 0) {
-      this.#autoCloseTimer = setTimeout(() => {
+      this._autoCloseTimer = setTimeout(() => {
         this.hideToast();
       }, duration);
     }
   }
 
-  #clearAutoClose() {
-    if (this.#autoCloseTimer) {
-      clearTimeout(this.#autoCloseTimer);
-      this.#autoCloseTimer = null;
+  clearAutoClose() {
+    if (this._autoCloseTimer) {
+      clearTimeout(this._autoCloseTimer);
+      this._autoCloseTimer = null;
     }
   }
 
@@ -5149,8 +5269,8 @@ class FigToast extends HTMLDialogElement {
    */
   showToast() {
     this.show(); // Non-modal show
-    this.#applyPosition();
-    this.#startAutoClose();
+    this.applyPosition();
+    this.startAutoClose();
     this.dispatchEvent(new CustomEvent("toast-show", { bubbles: true }));
   }
 
@@ -5158,7 +5278,7 @@ class FigToast extends HTMLDialogElement {
    * Hide the toast notification
    */
   hideToast() {
-    this.#clearAutoClose();
+    this.clearAutoClose();
     this.close();
     this.dispatchEvent(new CustomEvent("toast-hide", { bubbles: true }));
   }
@@ -5169,7 +5289,7 @@ class FigToast extends HTMLDialogElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "offset") {
-      this.#applyPosition();
+      this.applyPosition();
     }
 
     if (name === "open") {
@@ -5181,7 +5301,7 @@ class FigToast extends HTMLDialogElement {
     }
   }
 }
-customElements.define("fig-toast", FigToast, { extends: "dialog" });
+figDefineCustomizedBuiltIn("fig-toast", FigToast, { extends: "dialog" });
 
 /* Combo Input */
 /**

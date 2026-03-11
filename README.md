@@ -46,14 +46,14 @@ import "@rogieking/figui3/fig.js";
 
 ```html
 <link rel="stylesheet" href="https://unpkg.com/@rogieking/figui3@latest/fig.css" />
-<script src="https://unpkg.com/@rogieking/figui3@latest/fig.js"></script>
+<script type="module" src="https://unpkg.com/@rogieking/figui3@latest/fig.js"></script>
 ```
 
 Or via esm.sh:
 
 ```html
 <link rel="stylesheet" href="https://esm.sh/@rogieking/figui3@latest/fig.css" />
-<script src="https://esm.sh/@rogieking/figui3@latest/fig.js"></script>
+<script type="module" src="https://esm.sh/@rogieking/figui3@latest/fig.js"></script>
 ```
 
 ### Development
@@ -892,6 +892,8 @@ function ColorPicker({ value, onChange }) {
 ```
 
 > **Note:** Avoid setting the `value` prop directly on web components in JSX during re-renders, as `attributeChangedCallback` may trigger events that cause infinite loops. Use refs to control updates.
+>
+> **SSR note (Next.js/Remix/Astro):** import `@rogieking/figui3/fig.js` only on the client (for example in a client-only entry/module). This keeps server rendering safe while still allowing FigUI3 to auto-load its WebKit/iOS customized built-in polyfill when needed.
 
 ### Vue
 

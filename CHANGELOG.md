@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.39.0]
+
+### Added
+
+- Added WebKit/iOS customized built-in support by loading a vendored `@ungap/custom-elements-builtin` polyfill when native support is unavailable.
+- Added `polyfills/` to published package files so runtime polyfill imports resolve correctly for consumers.
+
+### Changed
+
+- Updated customized built-in registrations (`fig-dialog`, `fig-popup`, `fig-toast`) to use a polyfill-aware define helper and avoid duplicate element definitions.
+- Updated README CDN script examples to use `type="module"` and documented SSR guidance for client-only `fig.js` imports.
+- Refined playground nav list styling with vertical spacing and scroll-edge gradient fades.
+
+### Fixed
+
+- Fixed playground nav behavior by removing wheel-based auto-advance between examples so wheel/trackpad scrolling stays native.
+- Fixed playground dropdown value syncing by binding `<fig-dropdown value>` directly and removing per-option `selected` attributes.
+- Fixed attribute rules typing to allow nullable `trueValue` for boolean controls.
+
 ## [2.38.3]
 
 ### Changed

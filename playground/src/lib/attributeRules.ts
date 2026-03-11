@@ -11,7 +11,7 @@ export interface BooleanAttributeRule extends BaseAttributeRule {
   type: "boolean";
   boolMode?: BoolMode;
   defaultChecked?: boolean;
-  trueValue?: string;
+  trueValue?: string | null;
   falseValue?: string | null;
 }
 
