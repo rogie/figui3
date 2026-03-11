@@ -210,6 +210,7 @@ code {
   border-radius: var(--radius-large);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   max-height: min(45vh, 28rem);
   overflow: hidden;
 

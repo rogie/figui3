@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.38.1]
+
+### Fixed
+
+- Fixed playground layout so `.propkit-code-view` no longer shrinks in flex containers.
+
 ## [2.38.0]
 
 ### Added
