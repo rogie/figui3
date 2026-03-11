@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.38.2]
+
+### Changed
+
+- Updated playground `/figui3` popup attributes controls so `offset` edits use split X/Y numeric inputs (`fig-input-number` with prepend labels) and serialize back to the single `offset="x y"` attribute.
+- Updated playground `/figui3` popup `viewport-margin` control to use `fig-input-number` for numeric editing.
+
+### Fixed
+
+- Fixed popup `offset` attribute syncing in playground attributes when using numeric inputs by accepting both number and string event payloads.
+
 ## [2.38.1]
 
 ### Fixed

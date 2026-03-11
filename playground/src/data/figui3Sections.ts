@@ -497,13 +497,14 @@ export const figui3Sections: Section[] = [
   {
     id: "popup",
     name: "Popup",
-    description: "Anchored popup surface for contextual floating content.",
+    description:
+      "Anchored popup surface for contextual floating content. Try clicking then dragging the anchor.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-button id="anchor-btn" data-playground-ignore-controls="true" onclick="const p=this.nextElementSibling; p && (p.hasAttribute('open') ? p.removeAttribute('open') : p.setAttribute('open','')); ">Anchor button</fig-button>
+  <fig-button id="anchor-btn" data-playground-ignore-controls="true" style="position: relative; cursor: grab;" onpointerdown="if(event.button!==0)return; this.style.cursor='grabbing'; this.dataset.moved='0'; this.dataset.startX=String(event.clientX); this.dataset.startY=String(event.clientY); const t=this; const onMove=(e)=>{const dx=e.clientX-Number(t.dataset.startX||e.clientX); const dy=e.clientY-Number(t.dataset.startY||e.clientY); if(Math.abs(dx)+Math.abs(dy)<2)return; t.dataset.moved='1'; const tx=Number(t.dataset.tx||0)+dx; const ty=Number(t.dataset.ty||0)+dy; t.dataset.tx=String(tx); t.dataset.ty=String(ty); t.style.transform='translate('+tx+'px, '+ty+'px)'; t.dataset.startX=String(e.clientX); t.dataset.startY=String(e.clientY);}; const onEnd=()=>{t.style.cursor='grab'; window.removeEventListener('pointermove',onMove); window.removeEventListener('pointerup',onEnd); window.removeEventListener('pointercancel',onEnd);}; window.addEventListener('pointermove',onMove); window.addEventListener('pointerup',onEnd); window.addEventListener('pointercancel',onEnd);" onclick="if(this.dataset.moved==='1'){this.dataset.moved='0'; return;} const p=this.nextElementSibling; p && (p.hasAttribute('open') ? p.removeAttribute('open') : p.setAttribute('open','')); ">Anchor</fig-button>
   <dialog is="fig-popup" open closedby="none" anchor="#anchor-btn" position="center right" offset="8 8" viewport-margin="8" theme="light">
     <fig-header>
       <h3>Popup</h3>

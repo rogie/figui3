@@ -1100,6 +1100,8 @@ class FigPopup extends HTMLDialogElement {
   #anchorObserver = null;
   #contentObserver = null;
   #mutationObserver = null;
+  #anchorTrackRAF = null;
+  #lastAnchorRect = null;
   #isPopupActive = false;
   #boundReposition;
   #boundScroll;
@@ -1126,7 +1128,7 @@ class FigPopup extends HTMLDialogElement {
         !this.contains(e.target) &&
         this.#shouldAutoReposition()
       ) {
-        this.#positionPopup();
+        this.#queueReposition();
       }
     };
     this.#boundOutsidePointerDown = this.#handleOutsidePointerDown.bind(this);
@@ -1342,6 +1344,7 @@ class FigPopup extends HTMLDialogElement {
       capture: true,
       passive: true,
     });
+    this.#startAnchorTracking();
   }
 
   #teardownObservers() {
@@ -1362,6 +1365,64 @@ class FigPopup extends HTMLDialogElement {
       capture: true,
       passive: true,
     });
+    this.#stopAnchorTracking();
+  }
+
+  #readRectSnapshot(element) {
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    };
+  }
+
+  #hasRectChanged(prev, next, epsilon = 0.25) {
+    if (!prev && !next) return false;
+    if (!prev || !next) return true;
+    return (
+      Math.abs(prev.x - next.x) > epsilon ||
+      Math.abs(prev.y - next.y) > epsilon ||
+      Math.abs(prev.width - next.width) > epsilon ||
+      Math.abs(prev.height - next.height) > epsilon
+    );
+  }
+
+  #startAnchorTracking() {
+    this.#stopAnchorTracking();
+    if (!this.open) return;
+
+    const tick = () => {
+      if (!this.open) {
+        this.#anchorTrackRAF = null;
+        return;
+      }
+
+      const anchor = this.#resolveAnchor();
+      const nextRect = this.#readRectSnapshot(anchor);
+      const canAutoReposition = this.#shouldAutoReposition();
+      if (canAutoReposition && this.#hasRectChanged(this.#lastAnchorRect, nextRect)) {
+        this.#lastAnchorRect = nextRect;
+        this.#queueReposition();
+      } else if (!canAutoReposition) {
+        // Keep anchor geometry fresh without forcing reposition when user has dragged away.
+        this.#lastAnchorRect = nextRect;
+      }
+      this.#anchorTrackRAF = requestAnimationFrame(tick);
+    };
+
+    this.#lastAnchorRect = this.#readRectSnapshot(this.#resolveAnchor());
+    this.#anchorTrackRAF = requestAnimationFrame(tick);
+  }
+
+  #stopAnchorTracking() {
+    if (this.#anchorTrackRAF !== null) {
+      cancelAnimationFrame(this.#anchorTrackRAF);
+      this.#anchorTrackRAF = null;
+    }
+    this.#lastAnchorRect = null;
   }
 
   #handleOutsidePointerDown(event) {

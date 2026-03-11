@@ -670,6 +670,93 @@ export default function AttributesView({
               );
             }
 
+            if (
+              target.controlTag === "fig-popup" &&
+              scope === "control" &&
+              name === "offset"
+            ) {
+              const rawOffset = (value ?? "0 0").trim();
+              const offsetParts = rawOffset.split(/\s+/).filter(Boolean);
+              const currentX = offsetParts[0] ?? "0";
+              const currentY = offsetParts[1] ?? offsetParts[0] ?? "0";
+
+              const applyOffsetPart = (axis: "x" | "y", nextPart: string) => {
+                const nextX = axis === "x" ? nextPart : currentX;
+                const nextY = axis === "y" ? nextPart : currentY;
+                applyChange(target.fieldIndex, scope, name, `${nextX} ${nextY}`);
+              };
+
+              const handleOffsetInput = (axis: "x" | "y") => (e: any) => {
+                const host = e.currentTarget as HTMLElement & { value?: string };
+                const nextValue = host.value ?? (e as CustomEvent).detail?.value;
+                if (typeof nextValue === "number") {
+                  applyOffsetPart(axis, String(nextValue));
+                  return;
+                }
+                if (typeof nextValue === "string") {
+                  applyOffsetPart(axis, nextValue.trim() || "0");
+                }
+              };
+
+              return (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "var(--spacer-2)",
+                    width: "100%",
+                  }}
+                >
+                  <fig-input-number
+                    value={currentX}
+                    step="1"
+                    full
+                    onInput={handleOffsetInput("x")}
+                    onChange={handleOffsetInput("x")}
+                  >
+                    <span slot="prepend">X</span>
+                  </fig-input-number>
+                  <fig-input-number
+                    value={currentY}
+                    step="1"
+                    full
+                    onInput={handleOffsetInput("y")}
+                    onChange={handleOffsetInput("y")}
+                  >
+                    <span slot="prepend">Y</span>
+                  </fig-input-number>
+                </div>
+              );
+            }
+
+            if (
+              target.controlTag === "fig-popup" &&
+              scope === "control" &&
+              name === "viewport-margin"
+            ) {
+              const currentMargin = (value ?? "8").trim() || "8";
+              const handleMarginInput = (e: any) => {
+                const host = e.currentTarget as HTMLElement & { value?: string };
+                const nextValue = host.value ?? (e as CustomEvent).detail?.value;
+                if (typeof nextValue === "number") {
+                  applyChange(target.fieldIndex, scope, name, String(nextValue));
+                  return;
+                }
+                if (typeof nextValue === "string") {
+                  applyChange(target.fieldIndex, scope, name, nextValue.trim() || "0");
+                }
+              };
+              return (
+                <fig-input-number
+                  value={currentMargin}
+                  step="1"
+                  full
+                  onInput={handleMarginInput}
+                  onChange={handleMarginInput}
+                ></fig-input-number>
+              );
+            }
+
             const handleTextInput = (e: any) => {
               const host = e.currentTarget as HTMLElement & { value?: string };
               const nextValue = host.value ?? (e as CustomEvent).detail?.value;
