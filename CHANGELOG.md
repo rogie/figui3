@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.38.3]
+
+### Changed
+
+- Published a patch release with no runtime code changes to keep package and changelog versions aligned.
+
 ## [2.38.2]
 
 ### Changed
