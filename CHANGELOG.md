@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.0.3]
+
+### Changed
+
+- Updated segmented control playground examples in `/figui3` and `/propkit` to hide `value` and `name` in the Attributes panel.
+- Added per-example `data-playground-hide-attrs` support so demo controls can suppress specific attribute fields without changing global rules.
+
 ## [3.0.2]
 
 ### Changed

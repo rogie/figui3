@@ -285,6 +285,12 @@ export default function AttributesView({
           )
             ? (target.controlTag as FieldInputTag)
             : "fig-slider";
+          const hiddenControlAttrs = new Set(
+            (target.controlAttributes["data-playground-hide-attrs"] ?? "")
+              .split(",")
+              .map((value) => value.trim())
+              .filter(Boolean),
+          );
 
           const controlEntries: RuleEntry[] = suppressControlAttributes
             ? []
@@ -308,6 +314,7 @@ export default function AttributesView({
             (target.controlAttributes.perspective ?? "") !== "none";
           const visibleControlEntries = controlEntries.filter(
             (entry) =>
+              !hiddenControlAttrs.has(entry.name) &&
               !(
                 entry.name === "placeholder" &&
                 target.controlTag === "fig-slider" &&

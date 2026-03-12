@@ -379,7 +379,7 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-segmented-control>
+  <fig-segmented-control data-playground-hide-attrs="value,name">
     <fig-segment value="left" selected>Left</fig-segment>
     <fig-segment value="center">Center</fig-segment>
     <fig-segment value="right">Right</fig-segment>
