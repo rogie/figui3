@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.0.1]
+
+### Fixed
+
+- Fixed `fig-joystick` layering so axis labels render below the handle by adjusting z-index order.
+
 ## [3.0.0]
 
 ### Added
