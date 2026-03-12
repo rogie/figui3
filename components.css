@@ -3400,16 +3400,10 @@ fig-joystick {
     box-shadow:
       inset 0 0 0 0.125rem var(--handle-color),
       0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-      var(--figma-elevation-200);
+      var(--elevation-100-canvas);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     transition: box-shadow var(--slider-transition);
-    &:hover {
-      box-shadow:
-        inset 0 0 0 0.25rem var(--handle-color),
-        0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-        var(--figma-elevation-200);
-    }
   }
 }
 
@@ -3564,9 +3558,11 @@ fig-layer {
     display: none;
   }
 
-  /* Rotate chevron when open */
-  &[open]:not([open="false"]) > .fig-layer-row > .fig-layer-chevron {
-    rotate: 0deg;
+  &[open]:not([open="false"]) {
+    /* Rotate chevron when open */
+    & > .fig-layer-row > .fig-layer-chevron {
+      rotate: 0deg;
+    }
   }
 
   /* Dimmed when not visible */
@@ -3578,6 +3574,10 @@ fig-layer {
 
   /* Selected state */
   &[selected]:not([selected="false"]) {
+    /* Open with children */
+    /*&:has(fig-layer) {
+      background: var(--figma-color-bg-selected-secondary);
+    }*/
     & > .fig-layer-row {
       background: var(--figma-color-bg-selected);
       & > .fig-layer-icon {
@@ -3700,14 +3700,10 @@ fig-fill-picker {
   box-shadow:
     inset 0 0 0 0.125rem var(--handle-color),
     0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-    var(--figma-elevation-200);
+    var(--elevation-100-canvas);
   transform: translate(-50%, -50%);
   z-index: 1;
   &:hover {
-    box-shadow:
-      inset 0 0 0 0.25rem var(--handle-color),
-      0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-      var(--figma-elevation-200);
     transform: translate(-50%, -50%);
   }
 }

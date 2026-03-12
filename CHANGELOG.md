@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.0.2]
+
+### Changed
+
+- Updated joystick and fill picker handle elevation styling to use `--elevation-100-canvas` for consistent control depth.
+- Simplified related hover-shadow behavior for joystick/fill picker handles and cleaned up nested `fig-layer` open-state selector structure.
+
 ## [3.0.1]
 
 ### Fixed
