@@ -177,7 +177,6 @@ export default function App({ mode }: Props) {
           onMarkupChange={handleMarkupChange}
           showFieldControls={mode !== "figui3" || activeSectionId === "field"}
           includeFullControl={mode === "figui3"}
-          mode={mode}
         />
         <CodeView markup={editableMarkup} onMarkupChange={handleMarkupChange} />
       </main>

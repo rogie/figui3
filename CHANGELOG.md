@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.2.0]
+
+### Added
+
+- Added a new `Icons` segmented control example to the `/figui3` playground, reusing the same icon set as `/propkit` for consistency.
+
+### Changed
+
+- Updated `/figui3` segmented control attributes to hide `value` and `name` fields in the Attributes panel, matching `/propkit`.
+- Renamed the default `/figui3` segmented control example label from `Default` to `Text`.
+
 ## [3.1.0]
 
 ### Added
