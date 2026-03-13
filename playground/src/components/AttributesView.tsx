@@ -20,6 +20,7 @@ interface Props {
   onMarkupChange: (markup: string) => void;
   showFieldControls?: boolean;
   includeFullControl?: boolean;
+  mode?: "propkit" | "figui3";
 }
 
 interface RuleEntry {
@@ -166,6 +167,7 @@ export default function AttributesView({
   onMarkupChange,
   showFieldControls = true,
   includeFullControl = false,
+  mode = "propkit",
 }: Props) {
   const targets = useMemo(() => parseAttributeTargets(markup), [markup]);
   const labelMemoryRef = useRef<Record<number, string>>({});
@@ -291,6 +293,13 @@ export default function AttributesView({
               .map((value) => value.trim())
               .filter(Boolean),
           );
+          if (
+            mode === "propkit" &&
+            target.controlTag === "fig-segmented-control"
+          ) {
+            hiddenControlAttrs.add("value");
+            hiddenControlAttrs.add("name");
+          }
 
           const controlEntries: RuleEntry[] = suppressControlAttributes
             ? []

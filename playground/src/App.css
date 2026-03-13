@@ -188,6 +188,7 @@ main {
   max-width: calc(var(--example-width) + var(--spacer-4) * 2);
   min-width: calc(var(--example-min-width) + var(--spacer-4) * 2);
   padding: 0 var(--spacer-4);
+  padding-bottom: var(--spacer-4);
   max-height: calc(100vh - var(--spacer-4));
   overflow: visible;
   display: flex;

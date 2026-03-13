@@ -2436,33 +2436,36 @@ customElements.define("fig-segment", FigSegment);
  */
 class FigSegmentedControl extends HTMLElement {
   #selectedSegment = null;
+  #boundHandleClick = this.handleClick.bind(this);
+  #mutationObserver = null;
 
   constructor() {
     super();
   }
 
   static get observedAttributes() {
-    return ["disabled"];
+    return ["disabled", "value"];
   }
 
   connectedCallback() {
     this.name = this.getAttribute("name") || "segmented-control";
-    this.addEventListener("click", this.handleClick.bind(this));
+    this.addEventListener("click", this.#boundHandleClick);
     this.#applyDisabled(
       this.hasAttribute("disabled") &&
         this.getAttribute("disabled") !== "false",
     );
+    this.#startSegmentObserver();
 
-    // Ensure at least one segment is selected (default to first)
+    // Defer initial selection so child segments are available.
     requestAnimationFrame(() => {
-      const segments = this.querySelectorAll("fig-segment");
-      const hasSelected = Array.from(segments).some((s) =>
-        s.hasAttribute("selected"),
-      );
-      if (!hasSelected && segments.length > 0) {
-        this.selectedSegment = segments[0];
-      }
+      this.#syncSelectionFromAttributes({ enforceFallback: true });
     });
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = null;
   }
 
   get selectedSegment() {
@@ -2470,15 +2473,158 @@ class FigSegmentedControl extends HTMLElement {
   }
 
   set selectedSegment(segment) {
-    // Deselect previous
-    if (this.#selectedSegment) {
-      this.#selectedSegment.removeAttribute("selected");
+    const segments = this.querySelectorAll("fig-segment");
+    for (const seg of segments) {
+      const shouldBeSelected = seg === segment;
+      const isSelected = seg.hasAttribute("selected");
+      if (shouldBeSelected && !isSelected) {
+        seg.setAttribute("selected", "true");
+      } else if (!shouldBeSelected && isSelected) {
+        seg.removeAttribute("selected");
+      }
     }
-    // Select new
     this.#selectedSegment = segment;
-    if (segment) {
-      segment.setAttribute("selected", "true");
+  }
+
+  get value() {
+    return this.getAttribute("value") || "";
+  }
+
+  set value(val) {
+    if (val === null || val === undefined) {
+      this.removeAttribute("value");
+      return;
     }
+    this.setAttribute("value", String(val));
+  }
+
+  #emitSelectionEvents(value) {
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        detail: value,
+        bubbles: true,
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        detail: value,
+        bubbles: true,
+      }),
+    );
+  }
+
+  #resolveSegmentValue(segment) {
+    const explicitValue = segment.getAttribute("value");
+    if (explicitValue !== null) {
+      const trimmedExplicitValue = explicitValue.trim();
+      if (trimmedExplicitValue.length > 0) {
+        return trimmedExplicitValue;
+      }
+    }
+
+    return segment.textContent?.trim() || "";
+  }
+
+  #getFirstSelectedSegment() {
+    const segments = this.querySelectorAll("fig-segment");
+    for (const segment of segments) {
+      if (segment.hasAttribute("selected")) return segment;
+    }
+    return null;
+  }
+
+  #selectByValue(value) {
+    const normalizedValue = String(value ?? "").trim();
+    if (!normalizedValue) return false;
+
+    const segments = this.querySelectorAll("fig-segment");
+    for (const segment of segments) {
+      const segmentValue = this.#resolveSegmentValue(segment);
+      if (!segmentValue) continue;
+      if (segmentValue === normalizedValue) {
+        this.selectedSegment = segment;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  #syncSelectionFromAttributes({ enforceFallback = false } = {}) {
+    const segments = this.querySelectorAll("fig-segment");
+    if (segments.length === 0) {
+      this.#selectedSegment = null;
+      return;
+    }
+
+    const rawValue = this.getAttribute("value");
+    const normalizedValue = rawValue?.trim() ?? "";
+    if (rawValue !== null) {
+      if (normalizedValue !== rawValue) {
+        this.setAttribute("value", normalizedValue);
+        return;
+      }
+
+      if (normalizedValue && this.#selectByValue(normalizedValue)) {
+        return;
+      }
+    }
+
+    const selected = this.#getFirstSelectedSegment();
+    if (selected) {
+      this.selectedSegment = selected;
+      return;
+    }
+
+    if (enforceFallback) {
+      this.selectedSegment = segments[0];
+    }
+  }
+
+  #startSegmentObserver() {
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = new MutationObserver((mutations) => {
+      let shouldResync = false;
+
+      for (const mutation of mutations) {
+        if (mutation.type === "childList") {
+          shouldResync = true;
+          break;
+        }
+
+        if (
+          mutation.type === "attributes" &&
+          mutation.target instanceof HTMLElement &&
+          mutation.target.tagName.toLowerCase() === "fig-segment" &&
+          (mutation.attributeName === "value" ||
+            mutation.attributeName === "selected")
+        ) {
+          shouldResync = true;
+          break;
+        }
+
+        if (mutation.type === "characterData") {
+          shouldResync = true;
+          break;
+        }
+      }
+
+      if (shouldResync) {
+        this.#applyDisabled(
+          this.hasAttribute("disabled") &&
+            this.getAttribute("disabled") !== "false",
+        );
+        this.#syncSelectionFromAttributes({ enforceFallback: true });
+      }
+    });
+
+    this.#mutationObserver.observe(this, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["value", "selected"],
+    });
   }
 
   handleClick(event) {
@@ -2489,15 +2635,23 @@ class FigSegmentedControl extends HTMLElement {
       return;
     }
     const segment = event.target.closest("fig-segment");
-    if (segment) {
-      const segments = this.querySelectorAll("fig-segment");
-      for (const seg of segments) {
-        if (seg === segment) {
-          this.selectedSegment = seg;
-        } else {
-          seg.removeAttribute("selected");
-        }
-      }
+    if (!segment || !this.contains(segment)) return;
+
+    const previousSegment = this.selectedSegment;
+    const previousValue = this.value;
+
+    this.selectedSegment = segment;
+    const resolvedValue = this.#resolveSegmentValue(segment);
+
+    if (resolvedValue) {
+      this.setAttribute("value", resolvedValue);
+    } else {
+      this.removeAttribute("value");
+    }
+
+    const nextValue = this.value;
+    if (previousSegment !== segment || previousValue !== nextValue) {
+      this.#emitSelectionEvents(nextValue);
     }
   }
 
@@ -2515,8 +2669,15 @@ class FigSegmentedControl extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === "disabled" && oldValue !== newValue) {
+    if (oldValue === newValue) return;
+
+    if (name === "disabled") {
       this.#applyDisabled(newValue !== null && newValue !== "false");
+      return;
+    }
+
+    if (name === "value") {
+      this.#syncSelectionFromAttributes({ enforceFallback: false });
     }
   }
 }

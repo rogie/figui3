@@ -46,7 +46,7 @@ export default function App({ mode }: Props) {
   const sections: Section[] =
     mode === "figui3" ? figui3Sections : propkitSections;
   const basePath = mode === "figui3" ? "/figui3" : "/propkit";
-  const appTitle = mode === "figui3" ? "FigUI3" : "PropKit";
+  const appTitle = mode === "figui3" ? "FigUI3" : "Propkit";
   const {
     activeSectionId,
     activeExampleId,
@@ -177,6 +177,7 @@ export default function App({ mode }: Props) {
           onMarkupChange={handleMarkupChange}
           showFieldControls={mode !== "figui3" || activeSectionId === "field"}
           includeFullControl={mode === "figui3"}
+          mode={mode}
         />
         <CodeView markup={editableMarkup} onMarkupChange={handleMarkupChange} />
       </main>

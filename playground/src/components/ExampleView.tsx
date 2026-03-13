@@ -188,6 +188,7 @@ export default function ExampleView({
       "fig-3d-rotate",
       "fig-origin-grid",
       "fig-joystick",
+      "fig-segmented-control",
     ]);
 
     const resolveFieldIndex = (target: HTMLElement): number => {

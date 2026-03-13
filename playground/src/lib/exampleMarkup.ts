@@ -66,14 +66,30 @@ function stripInternalFieldAttributes(markup: string): string {
   return doc.body.firstElementChild?.innerHTML?.trim() ?? markup;
 }
 
+function stripPlaygroundAttributes(markup: string): string {
+  if (!markup.includes("data-playground-")) return markup;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${markup}</div>`, "text/html");
+  doc.querySelectorAll("*").forEach((el) => {
+    for (const attr of Array.from(el.attributes)) {
+      if (attr.name.startsWith("data-playground-")) {
+        el.removeAttribute(attr.name);
+      }
+    }
+  });
+  return doc.body.firstElementChild?.innerHTML?.trim() ?? markup;
+}
+
 export function getExampleSourceMarkup(markup: string): string {
   return dedentMarkup(unwrapPropPanel(markup) ?? normalizeMarkup(markup));
 }
 
 export function getCodeSourceMarkup(markup: string): string {
   return dedentMarkup(
-    stripInternalFieldAttributes(
-      stripPreviewOnlyElements(unwrapPropPanel(markup) ?? normalizeMarkup(markup)),
+    stripPlaygroundAttributes(
+      stripInternalFieldAttributes(
+        stripPreviewOnlyElements(unwrapPropPanel(markup) ?? normalizeMarkup(markup)),
+      ),
     ),
   );
 }

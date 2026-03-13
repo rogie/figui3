@@ -300,13 +300,31 @@ A segmented button group for exclusive selection.
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `name` | string | — | Control group identifier |
-| `value` | string | — | Selected segment value |
+| `value` | string | — | Selected segment value (trimmed, case-sensitive match) |
+
+Selection behavior:
+- If `fig-segmented-control[value]` is set, it takes precedence and selects the first matching segment.
+- Segment match value resolves from `fig-segment[value]` when present and non-empty; otherwise it falls back to `fig-segment` text content (`textContent.trim()`).
+- If no segment matches the control `value`, current selection is preserved.
+
+Events:
+- Emits bubbling `input` and `change` events when user interaction changes selection.
+- Event `detail` contains the resolved selected value.
 
 ```html
 <fig-segmented-control>
   <fig-segment value="left" selected="true">Left</fig-segment>
   <fig-segment value="center">Center</fig-segment>
   <fig-segment value="right">Right</fig-segment>
+</fig-segmented-control>
+```
+
+```html
+<!-- Text fallback: no value attrs, value resolves from text -->
+<fig-segmented-control value="Center">
+  <fig-segment>Left</fig-segment>
+  <fig-segment>Center</fig-segment>
+  <fig-segment>Right</fig-segment>
 </fig-segmented-control>
 ```
 

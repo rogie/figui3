@@ -1,7 +1,9 @@
 export function formatAttrs(el: Element): string {
   return Array.from(el.attributes)
     .filter(
-      (a) => !["id", "class", "src", "style", "label", "value"].includes(a.name),
+      (a) =>
+        !["id", "class", "src", "style", "label", "value"].includes(a.name) &&
+        !a.name.startsWith("data-playground-"),
     )
     .map((a) => `${a.name}="${a.value}"`)
     .join(" ");

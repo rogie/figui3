@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.1.0]
+
+### Added
+
+- Added value-driven segmented control behavior so setting `fig-segmented-control[value]` selects the matching segment, with fallback matching from `fig-segment` text content when segment `value` is omitted.
+- Added bubbling `input` and `change` events for `fig-segmented-control` with the resolved selected value in `event.detail`.
+
+### Changed
+
+- Updated playground page titles for `/figui3` and `/propkit` routes with framework-agnostic descriptions.
+- Updated Propkit segmented control attributes UI to hide `value` and `name` controls.
+- Updated code/prompt export sanitization to strip `data-playground-*` attributes from generated snippets.
+- Documented segmented control matching rules, precedence, and event behavior in `README.md`.
+
+### Fixed
+
+- Fixed a segmented control mutation-resync feedback loop that could cause the playground to hang on load.
+
 ## [3.0.3]
 
 ### Changed
