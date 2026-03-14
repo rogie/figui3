@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.3.0]
+
+### Fixed
+
+- Fixed `fig-tabs` not selecting the initial tab when `value` attribute is set — `#selectByValue` and `handleClick` now properly set the `selected` attribute on the matching `fig-tab`.
+- Deferred initial tab selection in `fig-tabs` to `requestAnimationFrame` to ensure child elements are upgraded before selection runs.
+
+### Added
+
+- Added `[full]` attribute support for `fig-input-angle` (CSS and playground toggle).
+- Added `theme="auto"` for `fig-toast` — automatically resolves to the opposite of the page's current `color-scheme` at show time.
+- Added `theme="success"` option for `fig-toast`.
+- Added "Icon" toggle and "Borderless" toggle to the `fig-header` playground attributes view.
+- Added "Prepend" field steppers to popup offset inputs in the playground.
+
+### Changed
+
+- Renamed "Input Angle" section to "Angle input" and moved it below "Number input" in the `/figui3` playground nav.
+- Renamed tabs attributes view header to "Tabs" and removed unused `value`, `name`, and `disabled` fields.
+- Refactored copy prompt to derive from the code markup string instead of querying the live DOM, making it work for both `/figui3` and `/propkit` examples.
+- Applied sentence case to all playground attributes view labels and headings.
+- Set `columns="thirds"` on all attributes view fields for consistent layout.
+
 ## [3.2.0]
 
 ### Added

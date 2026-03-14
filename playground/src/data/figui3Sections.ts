@@ -86,7 +86,7 @@ export const figui3Sections: Section[] = [
     examples: [
       {
         id: "flat-options",
-        name: "Flat options",
+        name: "Default",
         markup: `<div class="prop-panel">
   <fig-dropdown>
     <option value="default" selected>Default</option>
@@ -181,62 +181,47 @@ export const figui3Sections: Section[] = [
         id: "range",
         name: "Range",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
-    <label>Amount</label>
-    <fig-slider value="50" min="0" max="100" text="false" full></fig-slider>
-  </fig-field>
+  <fig-slider value="50" min="0" max="100" text="false" full></fig-slider>
 </div>`,
       },
       {
         id: "opacity-with-text",
         name: "Opacity",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
-    <label>Opacity</label>
-    <fig-slider type="opacity" value="0.75" color="#ff0000" units="%" text="false" full></fig-slider>
-  </fig-field>
+  <fig-slider type="opacity" value="0.75" color="#ff0000" units="%" text="false" full></fig-slider>
 </div>`,
       },
       {
         id: "hue-with-text",
         name: "Hue",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
-    <label>Hue</label>
-    <fig-slider type="hue" value="180" text="false" full></fig-slider>
-  </fig-field>
+  <fig-slider type="hue" value="180" text="false" full></fig-slider>
 </div>`,
       },
       {
         id: "stepper-with-text",
         name: "Stepper",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
-    <label>Steps</label>
-    <fig-slider type="stepper" value="50" step="25" text="false" full>
-      <datalist>
-        <option value="0"></option>
-        <option value="25"></option>
-        <option value="50"></option>
-        <option value="75"></option>
-        <option value="100"></option>
-      </datalist>
-    </fig-slider>
-  </fig-field>
+  <fig-slider type="stepper" value="50" step="25" text="false" full>
+    <datalist>
+      <option value="0"></option>
+      <option value="25"></option>
+      <option value="50"></option>
+      <option value="75"></option>
+      <option value="100"></option>
+    </datalist>
+  </fig-slider>
 </div>`,
       },
       {
         id: "delta-with-text",
         name: "Delta",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
-    <label>Offset</label>
-    <fig-slider type="delta" value="0" default="0" step="0.25" min="-5" max="5" text="false" full>
-      <datalist>
-        <option value="0"></option>
-      </datalist>
-    </fig-slider>
-  </fig-field>
+  <fig-slider type="delta" value="0" default="0" step="0.25" min="-5" max="5" text="false" full>
+    <datalist>
+      <option value="0"></option>
+    </datalist>
+  </fig-slider>
 </div>`,
       },
     ],
@@ -258,13 +243,20 @@ export const figui3Sections: Section[] = [
   {
     id: "text-input",
     name: "Text Input",
-    description: "Single-line and numeric text inputs for direct entry.",
+    description: "Single-line and multiline text inputs for direct entry.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-input-text value="Text here" placeholder="Placeholder text"></fig-input-text>
+</div>`,
+      },
+      {
+        id: "multiline",
+        name: "Multiline",
+        markup: `<div class="prop-panel">
+  <fig-input-text multiline value="Multiline text here" placeholder="Type here..." data-playground-hide-attrs="prepend"></fig-input-text>
 </div>`,
       },
     ],
@@ -279,6 +271,20 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-input-number value="16" min="0" max="512" step="1" units="px"></fig-input-number>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "angle-input",
+    name: "Angle Input",
+    description: "Angle editor with dial interaction and optional text value.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-input-angle value="45" text="true"></fig-input-angle>
 </div>`,
       },
     ],
@@ -348,7 +354,7 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-radio name="size" value="medium" checked>Medium</fig-radio>
+  <fig-radio name="size" value="medium" checked></fig-radio>
 </div>`,
       },
     ],
@@ -433,20 +439,6 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-image upload="true" size="auto"></fig-image>
-</div>`,
-      },
-    ],
-  },
-  {
-    id: "input-angle",
-    name: "Input Angle",
-    description: "Angle editor with dial interaction and optional text value.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <fig-input-angle value="45" text="true"></fig-input-angle>
 </div>`,
       },
     ],
@@ -543,7 +535,7 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="document.getElementById('demo-toast').showToast()">Show Toast</fig-button>
-  <dialog id="demo-toast" is="fig-toast" theme="dark" duration="3000" offset="16">Saved</dialog>
+  <dialog id="demo-toast" is="fig-toast" theme="auto" duration="3000" offset="16">Saved</dialog>
 </div>`,
       },
     ],

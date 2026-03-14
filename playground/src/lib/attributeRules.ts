@@ -40,7 +40,7 @@ export type AttributeRule =
 export type AttributeRuleSet = Record<string, AttributeRule>;
 
 const aspectRatioRule: AttributeRule = {
-  label: "Aspect Ratio",
+  label: "Aspect ratio",
   type: "enum",
   options: ["1/1", "4/3", "16/9"],
 };
@@ -63,7 +63,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     variant: {
       label: "Variant",
       type: "enum",
-      options: ["", "secondary", "ghost", "link", "input"],
+      options: ["", "secondary", "ghost", "link", "input", "overlay"],
     },
     type: {
       label: "Type",
@@ -158,7 +158,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     variant: { label: "Variant", type: "enum", options: ["", "popover"] },
   },
   "fig-fill-picker": {
-    alpha: { label: "Alpha", type: "boolean", boolMode: "string" },
+    alpha: {
+      label: "Alpha",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     mode: {
       label: "Mode",
@@ -173,13 +178,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     alpha: { label: "Alpha", type: "number", min: 0, max: 1, step: 0.05 },
   },
   "fig-checkbox": {
-    checked: { label: "Checked", type: "boolean", boolMode: "presence" },
+    label: { label: "Label", type: "enum", options: ["none", "label"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
-    name: { label: "Name", type: "string" },
-    value: { label: "Value", type: "string" },
-    label: { label: "Label", type: "string" },
   },
   "fig-radio": {
+    label: { label: "Label", type: "enum", options: ["none", "label"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-field": {
@@ -197,13 +200,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-image": {
-    upload: { label: "Upload", type: "boolean", boolMode: "presence" },
+    "aspect-ratio": aspectRatioRule,
     fit: {
       label: "Fit",
       type: "enum",
       options: ["auto", "cover", "contain"],
     },
-    "aspect-ratio": aspectRatioRule,
+    upload: { label: "Upload", type: "boolean", boolMode: "presence" },
   },
   "fig-slider": {
     variant: {
@@ -296,16 +299,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-joystick": {
     "aspect-ratio": aspectRatioRule,
-    "axis-labels": { label: "Axis Labels", type: "string" },
+    "axis-labels": { label: "Axis labels", type: "string" },
     fields: { label: "Fields", type: "boolean", boolMode: "string" },
   },
   "fig-input-text": {
     type: {
       label: "Type",
       type: "enum",
-      options: ["text", "number", "email", "password", "search", "url"],
+      options: ["text", "email", "password", "search", "url"],
     },
     multiline: { label: "Multiline", type: "boolean", boolMode: "presence" },
+    autoresize: { label: "Auto resize", type: "boolean", boolMode: "presence" },
+    resizable: { label: "Resizable", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     readonly: { label: "Readonly", type: "boolean", boolMode: "presence" },
   },
@@ -332,7 +337,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     theme: {
       label: "Theme",
       type: "enum",
-      options: ["dark", "light", "danger", "brand"],
+      options: ["auto", "dark", "light", "danger", "brand", "success"],
     },
   },
   "fig-spinner": {},
@@ -360,12 +365,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     open: { label: "Open", type: "boolean", boolMode: "presence" },
     visible: { label: "Visible", type: "boolean", boolMode: "string" },
   },
-  "fig-tabs": {
-    value: { label: "Value", type: "string" },
-    name: { label: "Name", type: "string" },
-    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  "fig-tabs": {},
+  "fig-header": {
+    borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
   },
-  "fig-header": {},
 };
 
 export function getRuleSetForTarget(

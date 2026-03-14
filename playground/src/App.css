@@ -4,8 +4,9 @@
 
 :root {
   --nav-width: 240px;
-  --example-width: 240px;
-  --example-min-width: 240px;
+  --playground-width: 260px;
+  --playground-min-width: 260px;
+  --playground-example-width: 240px;
 }
 
 body {
@@ -185,8 +186,8 @@ nav {
 
 main {
   width: 100%;
-  max-width: calc(var(--example-width) + var(--spacer-4) * 2);
-  min-width: calc(var(--example-min-width) + var(--spacer-4) * 2);
+  max-width: calc(var(--playground-width) + var(--spacer-4) * 2);
+  min-width: calc(var(--playground-min-width) + var(--spacer-4) * 2);
   padding: 0 var(--spacer-4);
   padding-bottom: var(--spacer-4);
   max-height: calc(100vh - var(--spacer-4));
@@ -208,7 +209,7 @@ main {
 
 .propkit-example {
   --dash-inset: -3rem;
-  width: var(--example-width);
+  width: var(--playground-example-width);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;

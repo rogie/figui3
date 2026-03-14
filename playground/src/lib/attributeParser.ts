@@ -1,4 +1,5 @@
 import { getExampleSourceMarkup } from "./exampleMarkup";
+import sunSvgRaw from "../icons/sun.svg?raw";
 
 export interface ParsedAttributeTarget {
   fieldIndex: number;
@@ -511,6 +512,84 @@ export function applyFieldLabelMutation(
     }
   } else if (existingLabel) {
     existingLabel.remove();
+  }
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
+export type PrependSlotMode = "none" | "label" | "icon";
+
+export function getPrependSlotMode(
+  markup: string,
+  fieldIndex: number,
+): PrependSlotMode {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return "none";
+  const prepend = element.querySelector('[slot="prepend"]');
+  if (!prepend) return "none";
+  if (prepend.querySelector("svg")) return "icon";
+  return "label";
+}
+
+export function applyPrependSlotMutation(
+  markup: string,
+  fieldIndex: number,
+  mode: PrependSlotMode,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return markup;
+
+  const existing = element.querySelector('[slot="prepend"]');
+  if (existing) existing.remove();
+
+  if (mode === "label") {
+    const span = root.ownerDocument.createElement("span");
+    span.setAttribute("slot", "prepend");
+    span.textContent = "X";
+    element.prepend(span);
+  } else if (mode === "icon") {
+    const span = root.ownerDocument.createElement("span");
+    span.setAttribute("slot", "prepend");
+    span.innerHTML = sunSvgRaw;
+    element.prepend(span);
+  }
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
+export function getHeaderIconEnabled(
+  markup: string,
+  fieldIndex: number,
+): boolean {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return false;
+  return element.querySelector("fig-button") !== null;
+}
+
+export function applyHeaderIconMutation(
+  markup: string,
+  fieldIndex: number,
+  enabled: boolean,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return markup;
+
+  const existing = element.querySelector("fig-button");
+  if (existing) existing.remove();
+
+  if (enabled) {
+    const btn = root.ownerDocument.createElement("fig-button");
+    btn.setAttribute("variant", "ghost");
+    btn.setAttribute("icon", "true");
+    const icon = root.ownerDocument.createElement("span");
+    icon.setAttribute("class", "fig-mask-icon");
+    icon.setAttribute("style", "--icon: var(--icon-close)");
+    btn.appendChild(icon);
+    element.appendChild(btn);
   }
 
   return getExampleSourceMarkup(serializeSourceMarkup(root));

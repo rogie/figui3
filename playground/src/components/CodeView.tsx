@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from "react";
 import { createEditor, replaceDoc } from "../lib/codemirror";
-import { buildPropkitPrompt, copyText } from "../lib/prompt";
+import { buildPrompt, copyText } from "../lib/prompt";
 import type { EditorView } from "@codemirror/view";
 import ClipboardIcon from "../icons/icon.24.clipboard.svg?react";
 import ChatIcon from "../icons/icon.24.cursor-chat.svg?react";
@@ -63,12 +63,11 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
   }, [codeMarkup, showToast]);
 
   const handleCopyPrompt = useCallback(async () => {
-    const container = document.querySelector(".example-view-container");
-    if (!container) return;
-    const prompt = buildPropkitPrompt(container);
+    if (!codeMarkup) return;
+    const prompt = buildPrompt(codeMarkup);
     await copyText(prompt);
     showToast("Prompt copied");
-  }, [showToast]);
+  }, [codeMarkup, showToast]);
 
   return (
     <div className="propkit-code-view">

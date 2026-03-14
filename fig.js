@@ -2253,15 +2253,15 @@ class FigTabs extends HTMLElement {
     this.setAttribute("role", "tablist");
     this.addEventListener("click", this.handleClick.bind(this));
     this.addEventListener("keydown", this.#handleKeyDown.bind(this));
-    // Set initial selected tab based on value
-    const value = this.getAttribute("value");
-    if (value) {
-      this.#selectByValue(value);
-    }
-    // Apply disabled state
-    if (this.hasAttribute("disabled")) {
-      this.#applyDisabled(true);
-    }
+    requestAnimationFrame(() => {
+      const value = this.getAttribute("value");
+      if (value) {
+        this.#selectByValue(value);
+      }
+      if (this.hasAttribute("disabled")) {
+        this.#applyDisabled(true);
+      }
+    });
   }
 
   #applyDisabled(disabled) {
@@ -2333,6 +2333,7 @@ class FigTabs extends HTMLElement {
     for (const tab of tabs) {
       if (tab.getAttribute("value") === value) {
         this.selectedTab = tab;
+        tab.setAttribute("selected", "true");
       } else {
         tab.removeAttribute("selected");
       }
@@ -2353,7 +2354,6 @@ class FigTabs extends HTMLElement {
   }
 
   handleClick(event) {
-    // Ignore clicks when disabled
     if (this.hasAttribute("disabled")) return;
     const target = event.target;
     if (target.nodeName.toLowerCase() === "fig-tab") {
@@ -2361,6 +2361,7 @@ class FigTabs extends HTMLElement {
       for (const tab of tabs) {
         if (tab === target) {
           this.selectedTab = tab;
+          tab.setAttribute("selected", "true");
           this.setAttribute("value", tab.getAttribute("value") || "");
         } else {
           tab.removeAttribute("selected");
@@ -3459,20 +3460,46 @@ class FigInputNumber extends HTMLElement {
   #unitPosition;
   #precision;
   #isInteracting = false;
+  #stepperEl = null;
 
-  #syncNativeNumberAttributes() {
-    if (!this.input || this.input.type !== "number") return;
+  #syncSteppers(hasSteppers) {
+    if (hasSteppers && !this.#stepperEl) {
+      this.#stepperEl = document.createElement("span");
+      this.#stepperEl.className = "fig-steppers";
+      this.#stepperEl.innerHTML =
+        `<button class="fig-stepper-up" tabindex="-1" aria-label="Increase"></button>` +
+        `<button class="fig-stepper-down" tabindex="-1" aria-label="Decrease"></button>`;
+      this.#stepperEl.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = e.target.closest("button");
+        if (!btn || this.disabled) return;
+        const dir = btn.classList.contains("fig-stepper-up") ? 1 : -1;
+        this.#stepValue(dir);
+        this.input.focus();
+      });
+      this.append(this.#stepperEl);
+    } else if (!hasSteppers && this.#stepperEl) {
+      this.#stepperEl.remove();
+      this.#stepperEl = null;
+    }
+  }
 
-    ["min", "max", "step"].forEach((name) => {
-      const attrValue = this.getAttribute(name);
-      if (attrValue === null || attrValue === "") {
-        this.input.removeAttribute(name);
-        this.input[name] = "";
-        return;
-      }
-      this.input.setAttribute(name, attrValue);
-      this.input[name] = attrValue;
-    });
+  #stepValue(direction) {
+    const step = this.step || 1;
+    let numericValue = this.#getNumericValue(this.input.value);
+    let value =
+      (numericValue !== "" ? Number(numericValue) / (this.transform || 1) : 0) +
+      step * direction;
+    value = this.#sanitizeInput(value, false);
+    this.value = value;
+    this.input.value = this.#formatWithUnit(this.value);
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: this.value, bubbles: true }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: this.value, bubbles: true }),
+    );
   }
 
   constructor() {
@@ -3528,19 +3555,12 @@ class FigInputNumber extends HTMLElement {
       this.hasAttribute("steppers") &&
       this.getAttribute("steppers") !== "false";
 
-    // Use type="number" when steppers are enabled (for native spin buttons)
-    const inputType = hasSteppers ? "number" : "text";
-    const inputMode = hasSteppers ? "" : 'inputmode="decimal"';
-    const inputValue = hasSteppers
-      ? this.#transformNumber(this.value)
-      : this.#formatWithUnit(this.value);
-
     let html = `<input 
-      type="${inputType}"
-      ${inputMode}
+      type="text"
+      inputmode="decimal"
       ${this.name ? `name="${this.name}"` : ""}
       placeholder="${this.placeholder}"
-      value="${inputValue}" />`;
+      value="${this.#formatWithUnit(this.value)}" />`;
 
     //child nodes hack
     requestAnimationFrame(() => {
@@ -3569,7 +3589,8 @@ class FigInputNumber extends HTMLElement {
       if (this.getAttribute("step")) {
         this.step = Number(this.getAttribute("step"));
       }
-      this.#syncNativeNumberAttributes();
+
+      this.#syncSteppers(hasSteppers);
 
       // Set disabled state if present
       if (this.hasAttribute("disabled")) {
@@ -3845,24 +3866,15 @@ class FigInputNumber extends HTMLElement {
           break;
         case "units":
           this.#units = newValue || "";
-          this.input.value =
-            this.input.type === "number"
-              ? this.#transformNumber(this.value)
-              : this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.value);
           break;
         case "unit-position":
           this.#unitPosition = newValue || "suffix";
-          this.input.value =
-            this.input.type === "number"
-              ? this.#transformNumber(this.value)
-              : this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.value);
           break;
         case "transform":
           this.transform = Number(newValue) || 1;
-          this.input.value =
-            this.input.type === "number"
-              ? this.#transformNumber(this.value)
-              : this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.value);
           break;
         case "value":
           if (this.#isInteracting) break;
@@ -3872,41 +3884,25 @@ class FigInputNumber extends HTMLElement {
             value = this.#sanitizeInput(value, false);
           }
           this.value = value;
-          this.input.value =
-            this.input.type === "number"
-              ? this.#transformNumber(this.value)
-              : this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.value);
           break;
         case "min":
         case "max":
         case "step":
           if (newValue === null || newValue === "") {
             this[name] = undefined;
-            this.#syncNativeNumberAttributes();
             break;
           }
           this[name] = Number(newValue);
-          this.#syncNativeNumberAttributes();
           break;
         case "steppers": {
           const hasSteppers = newValue !== null && newValue !== "false";
-          this.input.type = hasSteppers ? "number" : "text";
-          if (hasSteppers) {
-            this.input.removeAttribute("inputmode");
-            this.#syncNativeNumberAttributes();
-            this.input.value = this.#transformNumber(this.value);
-          } else {
-            this.input.setAttribute("inputmode", "decimal");
-            this.input.value = this.#formatWithUnit(this.value);
-          }
+          this.#syncSteppers(hasSteppers);
           break;
         }
         case "precision":
           this.#precision = newValue !== null ? Number(newValue) : 2;
-          this.input.value =
-            this.input.type === "number"
-              ? this.#transformNumber(this.value)
-              : this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.value);
           break;
         case "name":
           this[name] = this.input[name] = newValue;
@@ -5425,10 +5421,18 @@ class FigToast extends HTMLDialogElement {
     }
   }
 
+  #resolveAutoTheme() {
+    if (this.getAttribute("theme") !== "auto") return;
+    const cs = getComputedStyle(document.documentElement).colorScheme || "";
+    const isDark = cs.includes("dark");
+    this.style.colorScheme = isDark ? "light" : "dark";
+  }
+
   /**
    * Show the toast notification (non-modal)
    */
   showToast() {
+    this.#resolveAutoTheme();
     this.show(); // Non-modal show
     this.applyPosition();
     this.startAutoClose();
@@ -5458,6 +5462,14 @@ class FigToast extends HTMLDialogElement {
         this.showToast();
       } else {
         this.hideToast();
+      }
+    }
+
+    if (name === "theme") {
+      if (newValue === "auto") {
+        this.#resolveAutoTheme();
+      } else {
+        this.style.removeProperty("color-scheme");
       }
     }
   }

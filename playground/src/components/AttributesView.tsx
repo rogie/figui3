@@ -7,7 +7,12 @@ import {
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
+  applyHeaderIconMutation,
+  applyPrependSlotMutation,
+  getHeaderIconEnabled,
+  getPrependSlotMode,
   parseAttributeTargets,
+  type PrependSlotMode,
 } from "../lib/attributeParser";
 import {
   getRuleSetForTarget,
@@ -114,6 +119,11 @@ function resolveEnumOption(options: string[], rawValue: string): string {
   return labelMatch ?? rawValue;
 }
 
+function sentenceCase(text: string): string {
+  if (!text) return text;
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function getInputPanelTitle(controlTag: string): string {
   const titles: Record<string, string> = {
     "fig-button": "Button",
@@ -121,31 +131,34 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-tooltip": "Tooltip",
     "fig-dialog": "Dialog",
     "fig-popup": "Popup",
-    "fig-fill-picker": "Fill Picker",
+    "fig-fill-picker": "Fill picker",
+    "fig-checkbox": "Checkbox",
     "fig-chit": "Chit",
     "fig-radio": "Radio",
     "fig-field": "Field",
-    "fig-combo-input": "Combo Input",
+    "fig-combo-input": "Combo input",
     "fig-image": "Image",
     "fig-input-color": "Color",
     "fig-input-fill": "Fill",
     "fig-slider": "Slider",
     "fig-input-number": "Number",
+    "fig-input-text": "Text input",
     "fig-switch": "Switch",
     "fig-dropdown": "Dropdown",
     "fig-segmented-control": "Segmented control",
-    "fig-easing-curve": "Easing Curve",
-    "fig-3d-rotate": "3D Rotate",
-    "fig-origin-grid": "Origin Grid",
-    "fig-input-angle": "Angle",
+    "fig-easing-curve": "Easing curve",
+    "fig-3d-rotate": "3D rotate",
+    "fig-origin-grid": "Origin grid",
+    "fig-input-angle": "Angle input",
     "fig-joystick": "Joystick",
     "fig-toast": "Toast",
     "fig-spinner": "Spinner",
     "fig-shimmer": "Shimmer",
     "fig-layer": "Layer",
     "fig-header": "Header",
+    "fig-tabs": "Tabs",
   };
-  return titles[controlTag] ?? toTitle(controlTag.replace(/^fig-/, ""));
+  return titles[controlTag] ?? sentenceCase(toTitle(controlTag.replace(/^fig-/, "")));
 }
 
 function getNumberAttrDefault(
@@ -230,6 +243,8 @@ export default function AttributesView({
           const fieldRules = getRuleSetForTarget("field", target.controlTag);
           const controlRules = getRuleSetForTarget("control", target.controlTag);
           const fullSupportedTags = new Set([
+            "fig-button",
+            "fig-checkbox",
             "fig-image",
             "fig-dropdown",
             "fig-slider",
@@ -245,6 +260,7 @@ export default function AttributesView({
             "fig-combo-input",
             "fig-joystick",
             "fig-radio",
+            "fig-input-angle",
           ]);
           const mergedControlRules = { ...controlRules };
           if (
@@ -316,6 +332,9 @@ export default function AttributesView({
           const perspectiveEnabled =
             target.controlTag === "fig-3d-rotate" &&
             (target.controlAttributes.perspective ?? "") !== "none";
+          const textInputMultiline =
+            target.controlTag === "fig-input-text" &&
+            target.controlAttributes.multiline !== undefined;
           const visibleControlEntries = controlEntries.filter(
             (entry) =>
               !hiddenControlAttrs.has(entry.name) &&
@@ -338,6 +357,21 @@ export default function AttributesView({
                 entry.name === "perspective-distance" &&
                 target.controlTag === "fig-3d-rotate" &&
                 !perspectiveEnabled
+              ) &&
+              !(
+                entry.name === "multiline" &&
+                target.controlTag === "fig-input-text"
+              ) &&
+              !(
+                (entry.name === "autoresize" ||
+                  entry.name === "resizable") &&
+                target.controlTag === "fig-input-text" &&
+                !textInputMultiline
+              ) &&
+              !(
+                entry.name === "type" &&
+                target.controlTag === "fig-input-text" &&
+                textInputMultiline
               ),
           );
 
@@ -548,14 +582,19 @@ export default function AttributesView({
               const options =
                 name === "aspect-ratio" && target.controlTag === "fig-image"
                   ? hasImageSource
-                    ? [...rule.options, "auto"]
-                    : rule.options.filter((option) => option !== "auto")
+                    ? ["", ...rule.options, "auto"]
+                    : ["", ...rule.options.filter((option) => option !== "auto")]
                   : rule.options;
-              const current =
-                value ??
-                (name === "variant" && target.controlTag === "fig-slider"
-                  ? "default"
-                  : options[0] ?? "");
+              const isCheckRadioLabel =
+                name === "label" &&
+                (target.controlTag === "fig-checkbox" ||
+                  target.controlTag === "fig-radio");
+              const current = isCheckRadioLabel
+                ? (value !== undefined && value !== null ? "label" : "none")
+                : value ??
+                  (name === "variant" && target.controlTag === "fig-slider"
+                    ? "default"
+                    : options[0] ?? "");
               const useSegmentedControl =
                 (name === "direction" &&
                   options.includes("horizontal") &&
@@ -563,7 +602,8 @@ export default function AttributesView({
                 (scope === "field" &&
                   name === "columns" &&
                   options.includes("thirds") &&
-                  options.includes("half"));
+                  options.includes("half")) ||
+                isCheckRadioLabel;
               if (useSegmentedControl) {
                 return (
                   <fig-segmented-control full>
@@ -572,9 +612,18 @@ export default function AttributesView({
                         key={option}
                         value={option}
                         selected={option === current ? "true" : "false"}
-                        onClick={() =>
-                          applyChange(target.fieldIndex, scope, name, option)
-                        }
+                        onClick={() => {
+                          if (isCheckRadioLabel) {
+                            applyChange(
+                              target.fieldIndex,
+                              scope,
+                              name,
+                              option === "none" ? null : "Label",
+                            );
+                            return;
+                          }
+                          applyChange(target.fieldIndex, scope, name, option);
+                        }}
                       >
                         {toSentenceCaseLabel(option)}
                       </fig-segment>
@@ -629,6 +678,14 @@ export default function AttributesView({
                     if (
                       target.controlTag === "fig-shimmer" &&
                       name === "direction" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-image" &&
+                      name === "aspect-ratio" &&
                       resolvedValue === ""
                     ) {
                       applyChange(target.fieldIndex, scope, name, null);
@@ -718,6 +775,7 @@ export default function AttributesView({
                   <fig-input-number
                     value={currentX}
                     step="1"
+                    steppers
                     full
                     onInput={handleOffsetInput("x")}
                     onChange={handleOffsetInput("x")}
@@ -727,6 +785,7 @@ export default function AttributesView({
                   <fig-input-number
                     value={currentY}
                     step="1"
+                    steppers
                     full
                     onInput={handleOffsetInput("y")}
                     onChange={handleOffsetInput("y")}
@@ -790,7 +849,7 @@ export default function AttributesView({
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
-                    <fig-field direction="horizontal" key={`field-label-${target.fieldIndex}`}>
+                    <fig-field direction="horizontal" columns="thirds" key={`field-label-${target.fieldIndex}`}>
                       <label>Label</label>
                       <fig-switch
                         checked={target.hasLabel ? "true" : undefined}
@@ -821,13 +880,13 @@ export default function AttributesView({
                       ></fig-switch>
                     </fig-field>
                     {fieldEntries.map((entry) => (
-                      <fig-field direction="horizontal" key={`field-${entry.name}`}>
-                        <label>{entry.rule.label}</label>
-                        {renderControl(entry, "field")}
-                      </fig-field>
+                      <fig-field direction="horizontal" columns="thirds" key={`field-${entry.name}`}>
+                        <label>{sentenceCase(entry.rule.label)}</label>
+                          {renderControl(entry, "field")}
+                        </fig-field>
                     ))}
                     {showFieldInputSelector && (
-                      <fig-field direction="horizontal" key={`field-input-${target.fieldIndex}`}>
+                      <fig-field direction="horizontal" columns="thirds" key={`field-input-${target.fieldIndex}`}>
                         <label>Input</label>
                         <fig-dropdown
                           key={`field-input-select-${target.fieldIndex}-${currentFieldInputTag}`}
@@ -863,12 +922,68 @@ export default function AttributesView({
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
-                    {visibleControlEntries.map((entry) => (
-                      <fig-field direction="horizontal" key={`control-${entry.name}`}>
-                        <label>{entry.rule.label}</label>
-                        {renderControl(entry, "control")}
-                      </fig-field>
-                    ))}
+                    {target.controlTag === "fig-header" && (() => {
+                      const iconEnabled = getHeaderIconEnabled(markup, target.fieldIndex);
+                      return (
+                        <fig-field direction="horizontal" columns="thirds" key={`control-header-icon-${target.fieldIndex}`}>
+                          <label>Icon</label>
+                          <fig-switch
+                            checked={iconEnabled ? "true" : undefined}
+                            onChange={() =>
+                              onMarkupChange(
+                                applyHeaderIconMutation(markup, target.fieldIndex, !iconEnabled),
+                              )
+                            }
+                          />
+                        </fig-field>
+                      );
+                    })()}
+                    {visibleControlEntries.flatMap((entry, entryIndex) => {
+                      const field = (
+                        <fig-field direction="horizontal" columns="thirds" key={`control-${entry.name}`}>
+                          <label>{sentenceCase(entry.rule.label)}</label>
+                          {renderControl(entry, "control")}
+                        </fig-field>
+                      );
+                      const prependBefore =
+                        target.controlTag === "fig-input-number" && entryIndex === 0;
+                      const prependAfter =
+                        target.controlTag === "fig-input-text" && entry.name === "type";
+                      const showPrepend =
+                        (prependBefore || prependAfter) &&
+                        !hiddenControlAttrs.has("prepend");
+                      if (!showPrepend) return [field];
+                      const prependMode = getPrependSlotMode(markup, target.fieldIndex);
+                      const prependOptions: { value: PrependSlotMode; label: string }[] = [
+                        { value: "none", label: "None" },
+                        { value: "label", label: "Label" },
+                        { value: "icon", label: "Icon" },
+                      ];
+                      const prependField = (
+                        <fig-field direction="horizontal" columns="thirds" key={`control-prepend-${target.fieldIndex}`}>
+                          <label>Prepend</label>
+                          <fig-segmented-control full>
+                            {prependOptions.map((opt) => (
+                              <fig-segment
+                                key={opt.value}
+                                value={opt.value}
+                                selected={opt.value === prependMode ? "true" : "false"}
+                                onClick={() =>
+                                  onMarkupChange(
+                                    applyPrependSlotMutation(markup, target.fieldIndex, opt.value),
+                                  )
+                                }
+                              >
+                                {opt.label}
+                              </fig-segment>
+                            ))}
+                          </fig-segmented-control>
+                        </fig-field>
+                      );
+                      return prependBefore
+                        ? [prependField, field]
+                        : [field, prependField];
+                    })}
                   </div>
                 </section>
               </div>

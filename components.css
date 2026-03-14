@@ -367,6 +367,10 @@ textarea,
 input[type="text"],
 input[type="number"],
 input[type="password"],
+input[type="url"],
+input[type="email"],
+input[type="search"],
+input[type="tel"],
 .input {
   background-color: var(--figma-color-bg-secondary);
   border: 0;
@@ -395,27 +399,46 @@ input[type="password"],
   }
 }
 
-fig-input-text,
-fig-input-number {
-  &:has([slot="append"]) input[type="number"] {
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-      display: none;
-      color-scheme: inherit;
-      margin: 0;
-      opacity: 0;
+fig-input-number .fig-steppers {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  overflow: hidden;
+
+  & button {
+    display: block;
+    appearance: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    width: 1.5rem;
+    flex: 1;
+    background-color: var(--figma-color-text-secondary);
+    cursor: pointer;
+    mask-size: 1rem;
+    mask-repeat: no-repeat;
+    mask-position: center -3.5px;
+
+    &:hover {
+      background-color: var(--figma-color-text);
+    }
+    &:active {
+      background-color: var(--figma-color-text-tertiary);
     }
   }
-  &[steppers="true"] {
-    input[type="number"]::-webkit-inner-spin-button {
-      display: block;
-      opacity: 1;
-      height: 1.5rem;
-      width: 1.5rem;
-      margin-right: calc(var(--spacer-2) * -1);
-      background-color: var(--figma-color-text-secondary);
-      mask-image: var(--icon-steppers);
-    }
+
+  fig-input-number[disabled]:not([disabled="false"]) & button {
+    pointer-events: none;
+    background-color: var(--figma-color-text-disabled);
+  }
+
+  & .fig-stepper-up {
+    mask-image: var(--icon-chevron);
+    rotate: 180deg;
+  }
+  & .fig-stepper-down {
+    mask-image: var(--icon-chevron);
   }
 }
 
@@ -2681,6 +2704,7 @@ dialog[is="fig-toast"] {
   justify-content: center;
   min-width: 0;
   color: var(--figma-color-text);
+  background-color: var(--figma-color-bg);
 
   &[open] {
     display: flex;
@@ -2703,31 +2727,33 @@ dialog[is="fig-toast"] {
 
   /* Theme: Dark (default) - hardcoded to ensure consistency regardless of global theme */
   &[theme="dark"] {
-    background-color: #2c2c2c;
-    color: rgba(255, 255, 255, 0.9);
     color-scheme: dark;
   }
 
   /* Theme: Light - hardcoded to ensure consistency regardless of global theme */
   &[theme="light"] {
-    background-color: #ffffff;
-    color: rgba(0, 0, 0, 0.9);
-    box-shadow: var(--figma-elevation-500-modal-window);
     color-scheme: light;
   }
 
   /* Theme: Danger - hardcoded to ensure consistency regardless of global theme */
   &[theme="danger"] {
-    background-color: #f24822;
-    color: #ffffff;
+    background-color: var(--figma-color-bg-danger);
     color-scheme: dark;
   }
 
   /* Theme: Brand - hardcoded to ensure consistency regardless of global theme */
   &[theme="brand"] {
-    background-color: #0d99ff;
-    color: #ffffff;
+    background-color: var(--figma-color-bg-brand);
     color-scheme: dark;
+  }
+
+  &[theme="success"] {
+    background-color: var(--figma-color-bg-success);
+    color-scheme: dark;
+  }
+
+  &[theme="auto"] {
+    /* color-scheme is resolved at runtime by FigToast JS */
   }
 }
 
@@ -2958,9 +2984,13 @@ fig-input-number {
   flex: 1;
   color: var(--figma-color-text);
 
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
   &[multiline] {
     display: flex;
-    width: 100%; /* Multiline defaults to full width */
+    width: 100%;
   }
   &[autoresize] input,
   &[autoresize] textarea {
@@ -3064,8 +3094,7 @@ fig-input-fill {
     }
   }
 
-  fig-field[direction="horizontal"] &,
-  fig-field[direction="row"] & {
+  fig-field[direction="horizontal"] & {
     flex: 1;
     min-width: 0;
   }
@@ -3082,8 +3111,7 @@ fig-slider {
     flex-basis: 5rem;
   }
 
-  fig-field[direction="horizontal"] &,
-  fig-field[direction="row"] & {
+  fig-field[direction="horizontal"] & {
     flex: 1;
     min-width: 0;
   }
@@ -3099,7 +3127,6 @@ fig-field,
   gap: 0;
   align-items: start;
 
-  &[direction="row"],
   &[direction="horizontal"] {
     flex-direction: row;
     align-items: center;
@@ -3121,10 +3148,13 @@ fig-field,
     width: 100%;
   }
 
-  &[direction="row"] > label,
   &[direction="horizontal"] > label {
     width: auto;
     min-width: var(--field-label-width);
+    max-width: var(--field-label-width);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &[direction="horizontal"] {
