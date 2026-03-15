@@ -246,8 +246,7 @@ export const propkitSections: Section[] = [
   {
     id: "dropdown",
     name: "Dropdown",
-    description:
-      "A dropdown select field for choosing from a set of options.",
+    description: "A dropdown select field for choosing from a set of options.",
     examples: [
       {
         id: "default",
@@ -409,8 +408,7 @@ export const propkitSections: Section[] = [
   {
     id: "joystick",
     name: "Joystick",
-    description:
-      "A 2D position control with optional coordinate modes.",
+    description: "A 2D position control with optional coordinate modes.",
     examples: [
       {
         id: "default",
@@ -436,6 +434,31 @@ export const propkitSections: Section[] = [
   <fig-field direction="horizontal">
     <label>Rotation</label>
     <fig-input-angle value="45" text="true" full></fig-input-angle>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "chooser",
+    name: "Chooser",
+    description:
+      "A selection list for picking from a set of rich choice options.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field direction="vertical">
+    <label>Style</label>
+    <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
+      <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-d"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-e"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-f"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
+    </fig-chooser>
   </fig-field>
 </div>`,
       },

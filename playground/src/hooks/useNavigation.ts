@@ -26,7 +26,8 @@ export function useNavigation(sections: Section[], basePath: string) {
     (sectionId: string, exampleId: string) => {
       setActiveSectionId(sectionId);
       setActiveExampleId(exampleId);
-      history.replaceState(null, "", `${basePath}#${sectionId}/${exampleId}`);
+      const search = location.search;
+      history.replaceState(null, "", `${basePath}${search}#${sectionId}/${exampleId}`);
     },
     [basePath],
   );

@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.4.0]
+
+### Added
+
+- Added `fig-chooser` component with keyboard navigation, selection management, and scroll overflow detection.
+- Added `overflow` attribute for `fig-chooser` — `overflow="buttons"` (default) uses custom nav buttons with easing gradients, `overflow="scrollbar"` shows native scrollbars.
+- Added `drag` attribute for `fig-chooser` — enables drag-to-scroll (on by default, set `drag="false"` to disable).
+- Added `loop` attribute for `fig-chooser` — when present, arrow key navigation wraps around; when absent, stops at edges.
+- Added `fig-choice` element with selected, hover, and disabled states.
+- Added `--eased-fade-stops` CSS variable to `:root` for reusable easing gradients.
+- Added chooser example to `/propkit` playground with image grid, layout/overflow/max-size/drag/loop controls.
+- Added URL-based state sharing in the playground — attribute changes are reflected in the URL for shareable links.
+- Added right-pinned attributes sidebar to the playground layout.
+
+### Changed
+
+- Moved `AttributesView` panels to a fixed right sidebar with separated sections.
+- Switched playground placeholder images to `picsum.photos` for reliability.
+- Removed `focus-visible` outline from `fig-choice` in favor of selected style for keyboard navigation.
+- Suppressed hover style on selected `fig-choice` elements.
+
+### Fixed
+
+- Fixed `fig-chooser` layout change not syncing max-size style — moved handler from dead code path to dropdown onChange.
+- Fixed playground URL parameters being lost on page refresh.
+- Fixed `fig-field` label toggle state not persisting via URL parameters.
+- Added missing `*.svg?raw` module declaration to fix TypeScript build.
+
 ## [3.3.0]
 
 ### Fixed

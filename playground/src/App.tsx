@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Nav from "./components/Nav";
 import ExampleView from "./components/ExampleView";
 import AttributesView from "./components/AttributesView";
@@ -7,6 +7,14 @@ import { useTheme } from "./hooks/useTheme";
 import { useNavigation } from "./hooks/useNavigation";
 import { getExampleSourceMarkup } from "./lib/exampleMarkup";
 import { applyAttributeMutation } from "./lib/attributeParser";
+import {
+  diffFromDefault,
+  serializeToURL,
+  readFromURL,
+  clearURLParams,
+  hasURLParams,
+  applyParamsToMarkup,
+} from "./lib/urlState";
 import { propkitSections } from "./data/sections";
 import { figui3Sections } from "./data/figui3Sections";
 import type { Section } from "./data/sections";
@@ -55,74 +63,117 @@ export default function App({ mode }: Props) {
     navigateTo,
   } = useNavigation(sections, basePath);
   const [editableMarkup, setEditableMarkup] = useState("");
+  const defaultMarkupRef = useRef("");
+  const initialParamsRef = useRef<Record<string, string> | null>(
+    hasURLParams() ? readFromURL() : null,
+  );
 
   useEffect(() => {
     if (!activeExample) {
       setEditableMarkup("");
+      defaultMarkupRef.current = "";
       return;
     }
-    setEditableMarkup(getExampleSourceMarkup(activeExample.markup));
+    const defaultMarkup = getExampleSourceMarkup(activeExample.markup);
+    defaultMarkupRef.current = defaultMarkup;
+
+    const initialParams = initialParamsRef.current;
+    if (initialParams) {
+      initialParamsRef.current = null;
+      setEditableMarkup(applyParamsToMarkup(defaultMarkup, initialParams));
+    } else {
+      setEditableMarkup(defaultMarkup);
+      clearURLParams();
+    }
   }, [activeExample]);
 
   const handleMarkupChange = useCallback((nextMarkup: string) => {
     setEditableMarkup(nextMarkup);
+    const defaultMarkup = defaultMarkupRef.current;
+    if (defaultMarkup) {
+      const diffs = diffFromDefault(nextMarkup, defaultMarkup);
+      if (Object.keys(diffs).length > 0) {
+        serializeToURL(diffs);
+      } else {
+        clearURLParams();
+      }
+    }
+  }, []);
+
+  const syncURL = useCallback((nextMarkup: string) => {
+    const defaultMarkup = defaultMarkupRef.current;
+    if (!defaultMarkup) return;
+    const diffs = diffFromDefault(nextMarkup, defaultMarkup);
+    if (Object.keys(diffs).length > 0) {
+      serializeToURL(diffs);
+    } else {
+      clearURLParams();
+    }
   }, []);
 
   const handlePersistImageSource = useCallback(
     (fieldIndex: number, src: string) => {
       if (!src) return;
-      setEditableMarkup((currentMarkup) =>
-        applyAttributeMutation(currentMarkup, {
+      setEditableMarkup((currentMarkup) => {
+        const next = applyAttributeMutation(currentMarkup, {
           fieldIndex,
           target: "control",
           name: "src",
           value: src,
-        }),
-      );
+        });
+        syncURL(next);
+        return next;
+      });
     },
-    [],
+    [syncURL],
   );
 
   const handlePersistDialogOpenState = useCallback(
     (fieldIndex: number, isOpen: boolean) => {
-      setEditableMarkup((currentMarkup) =>
-        applyAttributeMutation(currentMarkup, {
+      setEditableMarkup((currentMarkup) => {
+        const next = applyAttributeMutation(currentMarkup, {
           fieldIndex,
           target: "control",
           name: "open",
           value: isOpen ? "" : null,
-        }),
-      );
+        });
+        syncURL(next);
+        return next;
+      });
     },
-    [],
+    [syncURL],
   );
 
   const handlePersistSwitchCheckedState = useCallback(
     (fieldIndex: number, isChecked: boolean) => {
-      setEditableMarkup((currentMarkup) =>
-        applyAttributeMutation(currentMarkup, {
+      setEditableMarkup((currentMarkup) => {
+        const next = applyAttributeMutation(currentMarkup, {
           fieldIndex,
           target: "control",
           name: "checked",
           value: isChecked ? "" : null,
-        }),
-      );
+        });
+        syncURL(next);
+        return next;
+      });
     },
-    [],
+    [syncURL],
   );
 
   const handlePersistControlValue = useCallback(
     (fieldIndex: number, value: string) => {
-      setEditableMarkup((currentMarkup) =>
-        applyAttributeMutation(currentMarkup, {
+      setEditableMarkup((currentMarkup) => {
+        const next = applyAttributeMutation(currentMarkup, {
           fieldIndex,
           target: "control",
           name: "value",
           value,
-        }),
-      );
+        });
+        syncURL(next);
+        return next;
+      });
     },
-    [],
+    [syncURL],
   );
 
   const activeTitle =
@@ -172,14 +223,16 @@ export default function App({ mode }: Props) {
             />
           </div>
         )}
+        <CodeView markup={editableMarkup} onMarkupChange={handleMarkupChange} />
+      </main>
+      <aside className="attributes-sidebar">
         <AttributesView
           markup={editableMarkup}
           onMarkupChange={handleMarkupChange}
           showFieldControls={mode !== "figui3" || activeSectionId === "field"}
           includeFullControl={mode === "figui3"}
         />
-        <CodeView markup={editableMarkup} onMarkupChange={handleMarkupChange} />
-      </main>
+      </aside>
     </>
   );
 }

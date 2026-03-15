@@ -4,6 +4,7 @@
 
 :root {
   --nav-width: 240px;
+  --sidebar-width: 260px;
   --playground-width: 260px;
   --playground-min-width: 260px;
   --playground-example-width: 240px;
@@ -31,6 +32,8 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--figma-color-border) transparent;
   padding: calc(var(--spacer-4) + var(--spacer-2))
+    calc(var(--spacer-4) + var(--sidebar-width) + var(--spacer-4))
+    calc(var(--spacer-4) + var(--spacer-2))
     calc(var(--spacer-4) + var(--nav-width) + var(--spacer-4));
 
   &::-webkit-scrollbar {
@@ -45,6 +48,13 @@ body {
   &::-webkit-scrollbar-thumb {
     background: var(--figma-color-border);
     border-radius: 999px;
+  }
+
+  .propkit-attributes-view {
+
+    & + .propkit-attributes-view {
+      border-top: 1px solid var(--figma-color-border);
+    }
   }
 }
 
@@ -154,6 +164,40 @@ nav {
 
   fig-header {
     justify-content: space-between;
+  }
+}
+
+.attributes-sidebar {
+  width: var(--sidebar-width);
+  max-height: calc(100vh - calc(var(--spacer-4) * 2));
+  position: fixed;
+  right: var(--spacer-4);
+  top: var(--spacer-4);
+  overflow-y: auto;
+  background: var(--figma-color-bg);
+  border: 1px solid var(--figma-color-border);
+  border-radius: var(--radius-large);
+  z-index: 1000;
+  scrollbar-width: thin;
+  scrollbar-color: var(--figma-color-border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--figma-color-border);
+    border-radius: 999px;
+  }
+
+  .propkit-attributes-view {
+    margin-top: 0;
+    border: none;
+    border-radius: 0;
   }
 }
 
@@ -324,7 +368,7 @@ code {
   display: flex;
   flex-direction: column;
   gap: var(--spacer-2);
-  padding: var(--spacer-2) 0 var(--spacer-2-5);
+  padding: 0 0 var(--spacer-2-5);
 }
 
 .propkit-attributes-group {

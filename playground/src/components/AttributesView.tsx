@@ -7,11 +7,15 @@ import {
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
+  applyChooserContentMutation,
+  applyChooserMaxSizeMutation,
   applyHeaderIconMutation,
   applyPrependSlotMutation,
+  getChooserContentMode,
   getHeaderIconEnabled,
   getPrependSlotMode,
   parseAttributeTargets,
+  type ChooserContentMode,
   type PrependSlotMode,
 } from "../lib/attributeParser";
 import {
@@ -157,6 +161,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-layer": "Layer",
     "fig-header": "Header",
     "fig-tabs": "Tabs",
+    "fig-chooser": "Chooser",
   };
   return titles[controlTag] ?? sentenceCase(toTitle(controlTag.replace(/^fig-/, "")));
 }
@@ -261,6 +266,7 @@ export default function AttributesView({
             "fig-joystick",
             "fig-radio",
             "fig-input-angle",
+            "fig-chooser",
           ]);
           const mergedControlRules = { ...controlRules };
           if (
@@ -611,7 +617,7 @@ export default function AttributesView({
                       <fig-segment
                         key={option}
                         value={option}
-                        selected={option === current ? "true" : "false"}
+                        selected={option === current ? "true" : undefined}
                         onClick={() => {
                           if (isCheckRadioLabel) {
                             applyChange(
@@ -705,6 +711,23 @@ export default function AttributesView({
                       resolvedValue === ""
                     ) {
                       applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-chooser" &&
+                      name === "layout"
+                    ) {
+                      const nextIsHorizontal = resolvedValue === "horizontal";
+                      const nextProp = nextIsHorizontal ? "max-width" : "max-height";
+                      const nextDefault = nextIsHorizontal ? "100%" : "240px";
+                      let updated = applyAttributeMutation(markup, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "layout",
+                        value: resolvedValue,
+                      });
+                      updated = applyChooserMaxSizeMutation(updated, target.fieldIndex, `${nextProp}: ${nextDefault}`);
+                      onMarkupChange(updated);
                       return;
                     }
                     applyChange(target.fieldIndex, scope, name, resolvedValue);
@@ -844,7 +867,7 @@ export default function AttributesView({
           <div key={target.fieldIndex}>
             {showFieldControls && (
               <div className="propkit-attributes-view">
-                <fig-header>
+                <fig-header borderless>
                   <h3>Field</h3>
                 </fig-header>
                 <section className="propkit-attributes-content">
@@ -917,11 +940,43 @@ export default function AttributesView({
 
             {visibleControlEntries.length > 0 && (
               <div className="propkit-attributes-view">
-                <fig-header>
+                <fig-header borderless>
                   <h3>{getInputPanelTitle(target.controlTag)}</h3>
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
+                    {target.controlTag === "fig-chooser" && (() => {
+                      const contentMode = getChooserContentMode(markup, target.fieldIndex);
+                      const contentOptions: { value: ChooserContentMode; label: string }[] = [
+                        { value: "text", label: "Text" },
+                        { value: "image", label: "Image" },
+                        { value: "image-label", label: "Image + label" },
+                        { value: "colors", label: "Colors" },
+                      ];
+                      return (
+                        <fig-field direction="horizontal" columns="thirds" key={`control-chooser-content-${target.fieldIndex}`}>
+                          <label>{sentenceCase("Content")}</label>
+                          <fig-dropdown
+                            full
+                            value={contentMode}
+                            onInput={(e: any) => {
+                              const next = (e.target?.value ?? e.detail) as ChooserContentMode;
+                              if (next && next !== contentMode) {
+                                onMarkupChange(
+                                  applyChooserContentMutation(markup, target.fieldIndex, next),
+                                );
+                              }
+                            }}
+                          >
+                            {contentOptions.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {sentenceCase(opt.label)}
+                              </option>
+                            ))}
+                          </fig-dropdown>
+                        </fig-field>
+                      );
+                    })()}
                     {target.controlTag === "fig-header" && (() => {
                       const iconEnabled = getHeaderIconEnabled(markup, target.fieldIndex);
                       return (
@@ -945,6 +1000,71 @@ export default function AttributesView({
                           {renderControl(entry, "control")}
                         </fig-field>
                       );
+
+                      const maxSizeAfterLayout =
+                        target.controlTag === "fig-chooser" && entry.name === "layout";
+                      if (maxSizeAfterLayout) {
+                        const currentLayout = target.controlAttributes.layout ?? "vertical";
+                        const isHorizontal = currentLayout === "horizontal";
+
+                        const currentOverflow = target.controlAttributes.overflow ?? "buttons";
+                        const overflowOptions = ["buttons", "scrollbar"];
+                        const overflowField = (
+                          <fig-field direction="horizontal" columns="thirds" key={`control-chooser-overflow-${target.fieldIndex}`}>
+                            <label>{sentenceCase("Overflow")}</label>
+                            <fig-segmented-control
+                              full
+                              value={currentOverflow}
+                              onInput={(e: any) => {
+                                const val = e.detail ?? e.target?.value;
+                                if (!val) return;
+                                applyChange(target.fieldIndex, "control", "overflow", val === "buttons" ? null : val);
+                              }}
+                            >
+                              {overflowOptions.map((opt) => (
+                                <fig-segment
+                                  key={opt}
+                                  value={opt}
+                                  selected={opt === currentOverflow ? "true" : undefined}
+                                >
+                                  {sentenceCase(opt)}
+                                </fig-segment>
+                              ))}
+                            </fig-segmented-control>
+                          </fig-field>
+                        );
+
+                        const maxSizeUnits = isHorizontal ? "%" : "px";
+                        const maxSizeDefault = isHorizontal ? 100 : 240;
+                        const styleProp = isHorizontal ? "max-width" : "max-height";
+                        const styleStr = target.controlAttributes.style ?? "";
+                        const match = styleStr.match(/max-(?:width|height):\s*([\d.]+)/);
+                        const maxSizeNum = match ? parseFloat(match[1]) : maxSizeDefault;
+                        const maxSizeField = (
+                          <fig-field direction="horizontal" columns="thirds" key={`control-chooser-maxsize-${target.fieldIndex}-${currentLayout}`}>
+                            <label>{sentenceCase("Max size")}</label>
+                            <fig-slider
+                              full
+                              variant="neue"
+                              text="true"
+                              value={maxSizeNum}
+                              min={isHorizontal ? 10 : 60}
+                              max={isHorizontal ? 100 : 600}
+                              step={isHorizontal ? 5 : 10}
+                              units={maxSizeUnits}
+                              onInput={(e: any) => {
+                                const val = parseFloat(e.target?.value ?? e.detail);
+                                if (isNaN(val)) return;
+                                onMarkupChange(
+                                  applyChooserMaxSizeMutation(markup, target.fieldIndex, `${styleProp}: ${val}${maxSizeUnits}`),
+                                );
+                              }}
+                            />
+                          </fig-field>
+                        );
+                        return [field, overflowField, maxSizeField];
+                      }
+
                       const prependBefore =
                         target.controlTag === "fig-input-number" && entryIndex === 0;
                       const prependAfter =
@@ -967,7 +1087,7 @@ export default function AttributesView({
                               <fig-segment
                                 key={opt.value}
                                 value={opt.value}
-                                selected={opt.value === prependMode ? "true" : "false"}
+                                selected={opt.value === prependMode ? "true" : undefined}
                                 onClick={() =>
                                   onMarkupChange(
                                     applyPrependSlotMutation(markup, target.fieldIndex, opt.value),

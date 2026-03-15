@@ -10402,3 +10402,554 @@ class FigFillPicker extends HTMLElement {
   }
 }
 customElements.define("fig-fill-picker", FigFillPicker);
+
+/* Choice */
+/**
+ * A generic choice container for use within FigChooser.
+ * @attr {string} value - Identifier for this choice
+ * @attr {boolean} selected - Whether this choice is currently selected
+ * @attr {boolean} disabled - Whether this choice is disabled
+ */
+class FigChoice extends HTMLElement {
+  static get observedAttributes() {
+    return ["selected", "disabled"];
+  }
+
+  connectedCallback() {
+    this.setAttribute("role", "option");
+    if (!this.hasAttribute("tabindex")) {
+      this.setAttribute("tabindex", "0");
+    }
+    this.setAttribute(
+      "aria-selected",
+      this.hasAttribute("selected") ? "true" : "false",
+    );
+    if (this.hasAttribute("disabled")) {
+      this.setAttribute("aria-disabled", "true");
+    }
+  }
+
+  attributeChangedCallback(name) {
+    if (name === "selected") {
+      this.setAttribute(
+        "aria-selected",
+        this.hasAttribute("selected") ? "true" : "false",
+      );
+    }
+    if (name === "disabled") {
+      const isDisabled =
+        this.hasAttribute("disabled") &&
+        this.getAttribute("disabled") !== "false";
+      if (isDisabled) {
+        this.setAttribute("aria-disabled", "true");
+        this.setAttribute("tabindex", "-1");
+      } else {
+        this.removeAttribute("aria-disabled");
+        this.setAttribute("tabindex", "0");
+      }
+    }
+  }
+}
+customElements.define("fig-choice", FigChoice);
+
+/* Chooser */
+/**
+ * A selection controller for a list of choice elements.
+ * @attr {string} choice-element - CSS selector for child choices (default: "fig-choice")
+ * @attr {string} layout - Layout mode: "vertical" (default), "horizontal", "grid"
+ * @attr {string} value - Value of the currently selected choice
+ * @attr {boolean} disabled - Whether the chooser is disabled
+ */
+class FigChooser extends HTMLElement {
+  #selectedChoice = null;
+  #boundHandleClick = this.#handleClick.bind(this);
+  #boundHandleKeyDown = this.#handleKeyDown.bind(this);
+  #boundSyncOverflow = this.#syncOverflow.bind(this);
+  #mutationObserver = null;
+  #resizeObserver = null;
+  #navStart = null;
+  #navEnd = null;
+  #dragState = null;
+
+  constructor() {
+    super();
+  }
+
+  static get observedAttributes() {
+    return ["value", "disabled", "choice-element", "drag", "overflow", "loop"];
+  }
+
+  get #overflowMode() {
+    return this.getAttribute("overflow") === "scrollbar" ? "scrollbar" : "buttons";
+  }
+
+  get #dragEnabled() {
+    const attr = this.getAttribute("drag");
+    return attr === null || attr !== "false";
+  }
+
+  get #choiceSelector() {
+    return this.getAttribute("choice-element") || "fig-choice";
+  }
+
+  get choices() {
+    return Array.from(this.querySelectorAll(this.#choiceSelector));
+  }
+
+  get selectedChoice() {
+    return this.#selectedChoice;
+  }
+
+  set selectedChoice(element) {
+    if (element && !this.contains(element)) return;
+    const choices = this.choices;
+    for (const choice of choices) {
+      const shouldSelect = choice === element;
+      const isSelected = choice.hasAttribute("selected");
+      if (shouldSelect && !isSelected) {
+        choice.setAttribute("selected", "");
+      } else if (!shouldSelect && isSelected) {
+        choice.removeAttribute("selected");
+      }
+    }
+    this.#selectedChoice = element;
+    const val = element?.getAttribute("value") ?? "";
+    if (this.getAttribute("value") !== val) {
+      if (val) {
+        this.setAttribute("value", val);
+      }
+    }
+    this.#scrollToChoice(element);
+  }
+
+  get value() {
+    return this.#selectedChoice?.getAttribute("value") ?? "";
+  }
+
+  set value(val) {
+    if (val === null || val === undefined || val === "") return;
+    this.setAttribute("value", String(val));
+  }
+
+  connectedCallback() {
+    this.setAttribute("role", "listbox");
+    this.addEventListener("click", this.#boundHandleClick);
+    this.addEventListener("keydown", this.#boundHandleKeyDown);
+    this.addEventListener("scroll", this.#boundSyncOverflow);
+    this.#applyOverflowMode();
+    this.#setupDrag();
+    this.#startObserver();
+    this.#startResizeObserver();
+
+    requestAnimationFrame(() => {
+      this.#syncSelection();
+      this.#syncOverflow();
+    });
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.removeEventListener("keydown", this.#boundHandleKeyDown);
+    this.removeEventListener("scroll", this.#boundSyncOverflow);
+    this.#teardownDrag();
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = null;
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+    this.#removeNavButtons();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "value" && newValue !== oldValue && newValue) {
+      this.#selectByValue(newValue);
+    }
+    if (name === "disabled") {
+      const isDisabled = newValue !== null && newValue !== "false";
+      const choices = this.choices;
+      for (const choice of choices) {
+        if (isDisabled) {
+          choice.setAttribute("aria-disabled", "true");
+          choice.setAttribute("tabindex", "-1");
+        } else {
+          choice.removeAttribute("aria-disabled");
+          choice.setAttribute("tabindex", "0");
+        }
+      }
+    }
+    if (name === "choice-element") {
+      requestAnimationFrame(() => this.#syncSelection());
+    }
+    if (name === "drag") {
+      if (this.#dragEnabled) {
+        this.#setupDrag();
+      } else {
+        this.#teardownDrag();
+      }
+    }
+    if (name === "overflow") {
+      this.#applyOverflowMode();
+    }
+  }
+
+  #syncSelection() {
+    const choices = this.choices;
+    if (!choices.length) {
+      this.#selectedChoice = null;
+      return;
+    }
+
+    const valueAttr = this.getAttribute("value");
+    if (valueAttr && this.#selectByValue(valueAttr)) return;
+
+    const alreadySelected = choices.find((c) => c.hasAttribute("selected"));
+    if (alreadySelected) {
+      this.selectedChoice = alreadySelected;
+      return;
+    }
+
+    this.selectedChoice = choices[0];
+  }
+
+  #selectByValue(value) {
+    const choices = this.choices;
+    for (const choice of choices) {
+      if (choice.getAttribute("value") === value) {
+        this.selectedChoice = choice;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  #findChoiceFromTarget(target) {
+    const selector = this.#choiceSelector;
+    let el = target;
+    while (el && el !== this) {
+      if (el.matches(selector)) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  #handleClick(event) {
+    if (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    )
+      return;
+    const choice = this.#findChoiceFromTarget(event.target);
+    if (!choice) return;
+    if (
+      choice.hasAttribute("disabled") &&
+      choice.getAttribute("disabled") !== "false"
+    )
+      return;
+    this.selectedChoice = choice;
+    this.#emitEvents();
+  }
+
+  #handleKeyDown(event) {
+    if (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    )
+      return;
+    const choices = this.choices.filter(
+      (c) =>
+        !c.hasAttribute("disabled") || c.getAttribute("disabled") === "false",
+    );
+    if (!choices.length) return;
+    const currentIndex = choices.indexOf(this.#selectedChoice);
+    let nextIndex = currentIndex;
+
+    const loop = this.hasAttribute("loop");
+
+    switch (event.key) {
+      case "ArrowDown":
+      case "ArrowRight":
+        event.preventDefault();
+        if (currentIndex < choices.length - 1) {
+          nextIndex = currentIndex + 1;
+        } else if (loop) {
+          nextIndex = 0;
+        }
+        break;
+      case "ArrowUp":
+      case "ArrowLeft":
+        event.preventDefault();
+        if (currentIndex > 0) {
+          nextIndex = currentIndex - 1;
+        } else if (loop) {
+          nextIndex = choices.length - 1;
+        }
+        break;
+      case "Home":
+        event.preventDefault();
+        nextIndex = 0;
+        break;
+      case "End":
+        event.preventDefault();
+        nextIndex = choices.length - 1;
+        break;
+      case "Enter":
+      case " ":
+        event.preventDefault();
+        if (document.activeElement?.matches(this.#choiceSelector)) {
+          const focused = this.#findChoiceFromTarget(document.activeElement);
+          if (focused && focused !== this.#selectedChoice) {
+            this.selectedChoice = focused;
+            this.#emitEvents();
+          }
+        }
+        return;
+      default:
+        return;
+    }
+
+    if (nextIndex !== currentIndex && choices[nextIndex]) {
+      this.selectedChoice = choices[nextIndex];
+      choices[nextIndex].focus();
+      this.#emitEvents();
+    }
+  }
+
+  #emitEvents() {
+    const val = this.value;
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: val, bubbles: true }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: val, bubbles: true }),
+    );
+  }
+
+  #syncOverflow() {
+    if (this.#overflowMode === "scrollbar") return;
+    const isHorizontal = this.getAttribute("layout") === "horizontal";
+    const threshold = 2;
+
+    if (isHorizontal) {
+      const atStart = this.scrollLeft <= threshold;
+      const atEnd = this.scrollLeft + this.clientWidth >= this.scrollWidth - threshold;
+      this.classList.toggle("overflow-start", !atStart);
+      this.classList.toggle("overflow-end", !atEnd);
+    } else {
+      const atStart = this.scrollTop <= threshold;
+      const atEnd = this.scrollTop + this.clientHeight >= this.scrollHeight - threshold;
+      this.classList.toggle("overflow-start", !atStart);
+      this.classList.toggle("overflow-end", !atEnd);
+    }
+  }
+
+  #startResizeObserver() {
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = new ResizeObserver(() => {
+      this.#syncOverflow();
+    });
+    this.#resizeObserver.observe(this);
+  }
+
+  #setupDrag() {
+    if (this.#dragState?.bound) return;
+    if (!this.#dragEnabled) return;
+
+    const onPointerDown = (e) => {
+      if (e.button !== 0) return;
+      const isHorizontal = this.getAttribute("layout") === "horizontal";
+      const hasOverflow = isHorizontal
+        ? this.scrollWidth > this.clientWidth
+        : this.scrollHeight > this.clientHeight;
+      if (!hasOverflow) return;
+
+      this.#dragState.active = true;
+      this.#dragState.didDrag = false;
+      this.#dragState.startX = e.clientX;
+      this.#dragState.startY = e.clientY;
+      this.#dragState.scrollLeft = this.scrollLeft;
+      this.#dragState.scrollTop = this.scrollTop;
+      this.style.cursor = "grab";
+      this.style.userSelect = "none";
+    };
+
+    const onPointerMove = (e) => {
+      if (!this.#dragState.active) return;
+      const isHorizontal = this.getAttribute("layout") === "horizontal";
+      const dx = e.clientX - this.#dragState.startX;
+      const dy = e.clientY - this.#dragState.startY;
+
+      if (!this.#dragState.didDrag && Math.abs(isHorizontal ? dx : dy) > 3) {
+        this.#dragState.didDrag = true;
+        this.style.cursor = "grabbing";
+        this.setPointerCapture(e.pointerId);
+      }
+
+      if (!this.#dragState.didDrag) return;
+
+      if (isHorizontal) {
+        this.scrollLeft = this.#dragState.scrollLeft - dx;
+      } else {
+        this.scrollTop = this.#dragState.scrollTop - dy;
+      }
+    };
+
+    const onPointerUp = (e) => {
+      if (!this.#dragState.active) return;
+      const wasDrag = this.#dragState.didDrag;
+      this.#dragState.active = false;
+      this.#dragState.didDrag = false;
+      this.style.cursor = "";
+      this.style.userSelect = "";
+      if (e.pointerId !== undefined) {
+        try { this.releasePointerCapture(e.pointerId); } catch {}
+      }
+      if (wasDrag) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    const onClick = (e) => {
+      if (this.#dragState?.suppressClick) {
+        e.stopPropagation();
+        e.preventDefault();
+        this.#dragState.suppressClick = false;
+      }
+    };
+
+    const onPointerUpCapture = (e) => {
+      if (this.#dragState?.didDrag) {
+        this.#dragState.suppressClick = true;
+        setTimeout(() => {
+          if (this.#dragState) this.#dragState.suppressClick = false;
+        }, 0);
+      }
+    };
+
+    this.#dragState = {
+      active: false,
+      didDrag: false,
+      suppressClick: false,
+      startX: 0,
+      startY: 0,
+      scrollLeft: 0,
+      scrollTop: 0,
+      bound: true,
+      onPointerDown,
+      onPointerMove,
+      onPointerUp,
+      onClick,
+      onPointerUpCapture,
+    };
+
+    this.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    this.addEventListener("pointerup", onPointerUpCapture, true);
+    this.addEventListener("click", onClick, true);
+  }
+
+  #teardownDrag() {
+    if (!this.#dragState?.bound) return;
+    this.removeEventListener("pointerdown", this.#dragState.onPointerDown);
+    window.removeEventListener("pointermove", this.#dragState.onPointerMove);
+    window.removeEventListener("pointerup", this.#dragState.onPointerUp);
+    this.removeEventListener("pointerup", this.#dragState.onPointerUpCapture, true);
+    this.removeEventListener("click", this.#dragState.onClick, true);
+    this.style.cursor = "";
+    this.style.userSelect = "";
+    this.#dragState = null;
+  }
+
+  #applyOverflowMode() {
+    if (this.#overflowMode === "scrollbar") {
+      this.#removeNavButtons();
+    } else {
+      this.#createNavButtons();
+    }
+  }
+
+  #removeNavButtons() {
+    this.#navStart?.remove();
+    this.#navEnd?.remove();
+    this.#navStart = null;
+    this.#navEnd = null;
+    this.classList.remove("overflow-start", "overflow-end");
+  }
+
+  #createNavButtons() {
+    if (this.#navStart) return;
+
+    this.#navStart = document.createElement("button");
+    this.#navStart.className = "fig-chooser-nav-start";
+    this.#navStart.setAttribute("tabindex", "-1");
+    this.#navStart.setAttribute("aria-label", "Scroll back");
+
+    this.#navEnd = document.createElement("button");
+    this.#navEnd.className = "fig-chooser-nav-end";
+    this.#navEnd.setAttribute("tabindex", "-1");
+    this.#navEnd.setAttribute("aria-label", "Scroll forward");
+
+    this.#navStart.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      this.#scrollByPage(-1);
+    });
+
+    this.#navEnd.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      this.#scrollByPage(1);
+    });
+
+    this.prepend(this.#navStart);
+    this.append(this.#navEnd);
+  }
+
+  #scrollByPage(direction) {
+    const isHorizontal =
+      this.getAttribute("layout") === "horizontal";
+    const pageSize = isHorizontal ? this.clientWidth : this.clientHeight;
+    const scrollAmount = pageSize * 0.8 * direction;
+
+    this.scrollBy({
+      [isHorizontal ? "left" : "top"]: scrollAmount,
+      behavior: "smooth",
+    });
+  }
+
+  #scrollToChoice(el) {
+    if (!el) return;
+    requestAnimationFrame(() => {
+      const overflowY = this.scrollHeight > this.clientHeight;
+      const overflowX = this.scrollWidth > this.clientWidth;
+      if (!overflowX && !overflowY) return;
+
+      const options = { behavior: "smooth" };
+
+      if (overflowY) {
+        const target = el.offsetTop - this.clientHeight / 2 + el.offsetHeight / 2;
+        options.top = target;
+      }
+
+      if (overflowX) {
+        const target = el.offsetLeft - this.clientWidth / 2 + el.offsetWidth / 2;
+        options.left = target;
+      }
+
+      this.scrollTo(options);
+    });
+  }
+
+  #startObserver() {
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = new MutationObserver(() => {
+      const choices = this.choices;
+      if (this.#selectedChoice && !choices.includes(this.#selectedChoice)) {
+        this.#selectedChoice = null;
+        this.#syncSelection();
+      } else if (!this.#selectedChoice && choices.length) {
+        this.#syncSelection();
+      }
+    });
+    this.#mutationObserver.observe(this, { childList: true, subtree: true });
+  }
+}
+customElements.define("fig-chooser", FigChooser);

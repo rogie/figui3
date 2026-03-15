@@ -257,6 +257,19 @@
   );
 
   /* Gradients */
+  --eased-fade-stops:
+    var(--figma-color-bg) 0%,
+    color-mix(in oklch, var(--figma-color-bg) 99.9%, transparent) 10%,
+    color-mix(in oklch, var(--figma-color-bg) 99.2%, transparent) 20%,
+    color-mix(in oklch, var(--figma-color-bg) 97.3%, transparent) 30%,
+    color-mix(in oklch, var(--figma-color-bg) 93.6%, transparent) 40%,
+    color-mix(in oklch, var(--figma-color-bg) 87.5%, transparent) 50%,
+    color-mix(in oklch, var(--figma-color-bg) 78.4%, transparent) 60%,
+    color-mix(in oklch, var(--figma-color-bg) 65.7%, transparent) 70%,
+    color-mix(in oklch, var(--figma-color-bg) 48.8%, transparent) 80%,
+    color-mix(in oklch, var(--figma-color-bg) 27.1%, transparent) 90%,
+    transparent 100%;
+
   --checkerboard: repeating-conic-gradient(
       rgba(0, 0, 0, 0.1) 0% 25%,
       rgba(255, 255, 255, 0.1) 0% 50%
@@ -1167,6 +1180,7 @@ fig-chit {
   width: var(--size);
   height: var(--size);
   border-radius: var(--radius-medium);
+  cursor: default;
 
   &::before,
   &::after,
@@ -3995,6 +4009,207 @@ fig-fill-picker {
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Chooser */
+fig-chooser {
+  --chooser-fade-size: var(--spacer-4);
+
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden auto;
+  scrollbar-width: none;
+
+  &[overflow="scrollbar"] {
+    scrollbar-width: thin;
+    scrollbar-color: var(--figma-color-border) transparent;
+  }
+
+  &[layout="horizontal"] {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow: auto hidden;
+    scrollbar-width: none;
+
+    &[overflow="scrollbar"] {
+      scrollbar-width: thin;
+      scrollbar-color: var(--figma-color-border) transparent;
+    }
+
+    > :not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
+      flex: 1 1 0%;
+    }
+    fig-image[full] {
+      min-width: 3rem;
+    }
+  }
+
+  &[layout="grid"] {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    > * {
+      min-width: 0;
+      width: 100%;
+    }
+
+    > .fig-chooser-nav-start,
+    > .fig-chooser-nav-end {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  .fig-chooser-nav-start,
+  .fig-chooser-nav-end {
+    all: unset;
+    position: sticky;
+    z-index: 3;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    color: var(--figma-color-icon);
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      background: var(--figma-color-bg) !important;
+    }
+
+    &::after {
+      content: "";
+      display: block;
+      width: 1rem;
+      height: 1rem;
+      mask-image: var(--icon-chevron);
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
+      background: currentColor;
+    }
+  }
+
+  .fig-chooser-nav-start {
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--chooser-fade-size);
+    margin-bottom: calc(var(--chooser-fade-size) * -1);
+    background: linear-gradient(to bottom, var(--eased-fade-stops));
+
+    &:hover {
+      box-shadow: 0 1px 0 0 var(--figma-color-border) !important;
+    }
+
+    &::after {
+      rotate: 180deg;
+    }
+  }
+
+  .fig-chooser-nav-end {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--chooser-fade-size);
+    margin-top: calc(var(--chooser-fade-size) * -1);
+    background: linear-gradient(to top, var(--eased-fade-stops));
+
+    &:hover {
+      box-shadow: 0 -1px 0 0 var(--figma-color-border) !important;
+    }
+  }
+
+  &[layout="horizontal"] {
+    .fig-chooser-nav-start,
+    .fig-chooser-nav-end {
+      top: 0;
+      bottom: 0;
+      height: auto;
+      width: var(--chooser-fade-size);
+      align-self: stretch;
+      margin: 0;
+    }
+
+    .fig-chooser-nav-start {
+      left: 0;
+      right: auto;
+      margin-right: calc(var(--chooser-fade-size) * -1);
+      background: linear-gradient(to right, var(--eased-fade-stops));
+
+      &:hover {
+        box-shadow: 1px 0 0 0 var(--figma-color-border) !important;
+      }
+
+      &::after {
+        rotate: 90deg;
+      }
+    }
+
+    .fig-chooser-nav-end {
+      right: 0;
+      left: auto;
+      margin-left: calc(var(--chooser-fade-size) * -1);
+      background: linear-gradient(to left, var(--eased-fade-stops));
+
+      &:hover {
+        box-shadow: -1px 0 0 0 var(--figma-color-border) !important;
+      }
+
+      &::after {
+        rotate: -90deg;
+      }
+    }
+  }
+
+  &.overflow-start > .fig-chooser-nav-start {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.overflow-end > .fig-chooser-nav-end {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+fig-choice {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  border-radius: var(--radius-large);
+  padding: var(--spacer-2);
+  gap: var(--spacer-2);
+  outline: none;
+  border: 1px solid transparent;
+
+  &:hover:not([selected]):not([disabled]):not([aria-disabled="true"]) {
+    background-color: var(--figma-color-bg-secondary);
+  }
+
+  &[selected] {
+    background-color: var(--figma-color-bg-selected);
+  }
+
+  &[disabled]:not([disabled="false"]),
+  &[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.4;
+    cursor: default;
   }
 }
 

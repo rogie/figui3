@@ -1,5 +1,6 @@
 import { getExampleSourceMarkup } from "./exampleMarkup";
 import sunSvgRaw from "../icons/sun.svg?raw";
+import { landscapeUrl } from "./images";
 
 export interface ParsedAttributeTarget {
   fieldIndex: number;
@@ -57,7 +58,8 @@ function getButtonDefaultText(type: string | null): string {
 
 function ensureButtonText(button: Element, text: string) {
   const hasText = Array.from(button.childNodes).some(
-    (node) => node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim()),
+    (node) =>
+      node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim()),
   );
   if (!hasText) button.prepend(document.createTextNode(text));
 }
@@ -344,7 +346,10 @@ export function applyButtonTypeMutation(
   // Remove type-specific nested children before applying the next template.
   Array.from(element.children).forEach((child) => {
     const tag = child.tagName.toLowerCase();
-    if (tag === "fig-dropdown" || (tag === "input" && child.getAttribute("type") === "file")) {
+    if (
+      tag === "fig-dropdown" ||
+      (tag === "input" && child.getAttribute("type") === "file")
+    ) {
       child.remove();
     }
   });
@@ -399,7 +404,8 @@ export function applyButtonIconMutation(
   if (enabled) {
     element.setAttribute("icon", "");
     Array.from(element.childNodes).forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) node.remove();
+      if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim())
+        node.remove();
       if (
         node.nodeType === Node.ELEMENT_NODE &&
         (node as Element).tagName.toLowerCase() === "svg"
@@ -413,7 +419,10 @@ export function applyButtonIconMutation(
     Array.from(element.children).forEach((child) => {
       if (child.tagName.toLowerCase() === "svg") child.remove();
     });
-    ensureButtonText(element, getButtonDefaultText(element.getAttribute("type")));
+    ensureButtonText(
+      element,
+      getButtonDefaultText(element.getAttribute("type")),
+    );
   }
 
   return getExampleSourceMarkup(serializeSourceMarkup(root));
@@ -595,6 +604,118 @@ export function applyHeaderIconMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export type ChooserContentMode = "text" | "image" | "image-label" | "colors";
+
+export function getChooserContentMode(
+  markup: string,
+  fieldIndex: number,
+): ChooserContentMode {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return "text";
+  const firstChoice = element.querySelector("fig-choice");
+  if (!firstChoice) return "text";
+  if (firstChoice.querySelector("fig-chit")) return "colors";
+  if (firstChoice.querySelector("fig-image")) {
+    const hasLabel =
+      firstChoice.querySelector("label") ||
+      firstChoice.querySelector("span") ||
+      Array.from(firstChoice.childNodes).some(
+        (n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim(),
+      );
+    return hasLabel ? "image-label" : "image";
+  }
+  return "text";
+}
+
+const CHOOSER_PRESETS: Record<ChooserContentMode, string[]> = {
+  text: [
+    '<fig-choice value="option-a" selected>Option A</fig-choice>',
+    '<fig-choice value="option-b">Option B</fig-choice>',
+    '<fig-choice value="option-c">Option C</fig-choice>',
+    '<fig-choice value="option-d">Option D</fig-choice>',
+    '<fig-choice value="option-e">Option E</fig-choice>',
+    '<fig-choice value="option-f">Option F</fig-choice>',
+  ],
+  image: [
+    `<fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>`,
+    `<fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>`,
+    `<fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>`,
+    `<fig-choice value="img-d"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>`,
+    `<fig-choice value="img-e"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>`,
+    `<fig-choice value="img-f"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>`,
+  ],
+  "image-label": [
+    `<fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label A</label></fig-choice>`,
+    `<fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label B</label></fig-choice>`,
+    `<fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label C</label></fig-choice>`,
+    `<fig-choice value="img-d"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label D</label></fig-choice>`,
+    `<fig-choice value="img-e"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label E</label></fig-choice>`,
+    `<fig-choice value="img-f"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label F</label></fig-choice>`,
+  ],
+  colors: [
+    '<fig-choice value="red" selected><fig-chit background="#FF0000" size="large" disabled></fig-chit></fig-choice>',
+    '<fig-choice value="blue"><fig-chit background="#0D99FF" size="large" disabled></fig-chit></fig-choice>',
+    '<fig-choice value="green"><fig-chit background="#14AE5C" size="large" disabled></fig-chit></fig-choice>',
+    '<fig-choice value="orange"><fig-chit background="#FF8C00" size="large" disabled></fig-chit></fig-choice>',
+    '<fig-choice value="purple"><fig-chit background="#9747FF" size="large" disabled></fig-chit></fig-choice>',
+    '<fig-choice value="pink"><fig-chit background="#E84BA5" size="large" disabled></fig-chit></fig-choice>',
+    '<fig-choice value="teal"><fig-chit background="#24B5A8" size="large" disabled></fig-chit></fig-choice>',
+    '<fig-choice value="yellow"><fig-chit background="#FFCD29" size="large" disabled></fig-chit></fig-choice>',
+  ],
+};
+
+export function applyChooserContentMutation(
+  markup: string,
+  fieldIndex: number,
+  mode: ChooserContentMode,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return markup;
+
+  const layout = element.getAttribute("layout");
+  const full = element.hasAttribute("full");
+  const value = element.getAttribute("value");
+
+  element.innerHTML = "";
+  const preset = CHOOSER_PRESETS[mode];
+  const parser = new DOMParser();
+  for (const html of preset) {
+    const frag = parser.parseFromString(html, "text/html");
+    const child = frag.body.firstElementChild;
+    if (child) element.appendChild(root.ownerDocument.importNode(child, true));
+  }
+
+  if (layout) element.setAttribute("layout", layout);
+  if (full) element.setAttribute("full", "");
+  if (value) element.setAttribute("value", value);
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
+export function applyChooserMaxSizeMutation(
+  markup: string,
+  fieldIndex: number,
+  styleDeclaration: string,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return markup;
+
+  const existing = element.getAttribute("style") ?? "";
+  const cleaned = existing
+    .replace(/max-width:\s*[^;]+;?/g, "")
+    .replace(/max-height:\s*[^;]+;?/g, "")
+    .trim();
+  const next = cleaned
+    ? `${cleaned}; ${styleDeclaration}`
+    : styleDeclaration;
+  element.setAttribute("style", next);
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export function applyFieldControlMutation(
   markup: string,
   mutation: FieldControlMutation,
@@ -607,7 +728,10 @@ export function applyFieldControlMutation(
     if (isFigTag(child)) child.remove();
   });
 
-  const nextControl = createDefaultFieldControl(root.ownerDocument, mutation.controlTag);
+  const nextControl = createDefaultFieldControl(
+    root.ownerDocument,
+    mutation.controlTag,
+  );
   field.append(nextControl);
 
   return getExampleSourceMarkup(serializeSourceMarkup(root));
