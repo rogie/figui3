@@ -2884,7 +2884,14 @@ fig-segmented-control {
   gap: var(--spacer-2);
   user-select: none;
 
-  &[full] {
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+}
+
+fig-dropdown {
+  &[full]:not([full="false"]) {
     display: flex;
     width: 100%;
   }

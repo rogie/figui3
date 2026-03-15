@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.4.2]
+
+### Fixed
+
+- Fixed `fig-segmented-control[full]` and `fig-dropdown[full]` to respect `full="false"` via `:not([full="false"])` guard.
+- Added missing `full` attribute support for `fig-dropdown`.
+
 ## [3.4.1]
 
 ### Fixed
