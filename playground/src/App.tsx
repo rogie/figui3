@@ -53,7 +53,10 @@ export default function App({ mode }: Props) {
   const { isDark, setTheme } = useTheme();
   const sections: Section[] =
     mode === "figui3" ? figui3Sections : propkitSections;
-  const basePath = mode === "figui3" ? "/figui3" : "/propkit";
+  const canonicalBase = mode === "figui3" ? "/figui3" : "/propkit";
+  const basePath = window.location.pathname.startsWith(`${canonicalBase}/`)
+    ? `${canonicalBase}/`
+    : canonicalBase;
   const appTitle = mode === "figui3" ? "FigUI3" : "Propkit";
   const {
     activeSectionId,

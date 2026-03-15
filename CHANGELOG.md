@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.4.1]
+
+### Fixed
+
+- Fixed playground URL path handling to preserve trailing slash style, preventing routing issues when embedded in external sites.
+- Prevented no-op `replaceState` calls in playground navigation that could interfere with host routing.
+
+### Changed
+
+- Removed chooser example from `/figui3` playground (still available in `/propkit`).
+
 ## [3.4.0]
 
 ### Added

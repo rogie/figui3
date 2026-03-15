@@ -27,7 +27,11 @@ export function useNavigation(sections: Section[], basePath: string) {
       setActiveSectionId(sectionId);
       setActiveExampleId(exampleId);
       const search = location.search;
-      history.replaceState(null, "", `${basePath}${search}#${sectionId}/${exampleId}`);
+      const next = `${basePath}${search}#${sectionId}/${exampleId}`;
+      const current = `${location.pathname}${location.search}${location.hash}`;
+      if (next !== current) {
+        history.replaceState(null, "", next);
+      }
     },
     [basePath],
   );

@@ -541,24 +541,6 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
-    id: "chooser",
-    name: "Chooser",
-    description: "Selection list for picking from a set of choices.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <fig-chooser layout="vertical" value="option-a" style="max-height: 240px">
-    <fig-choice value="option-a" selected>Option A</fig-choice>
-    <fig-choice value="option-b">Option B</fig-choice>
-    <fig-choice value="option-c">Option C</fig-choice>
-  </fig-chooser>
-</div>`,
-      },
-    ],
-  },
-  {
     id: "spinner",
     name: "Spinner",
     description: "Loading spinner indicator for async operations.",
