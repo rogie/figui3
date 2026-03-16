@@ -207,6 +207,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["auto", "cover", "contain"],
     },
     upload: { label: "Upload", type: "boolean", boolMode: "presence" },
+    checkerboard: { label: "Checker", type: "boolean", boolMode: "string" },
   },
   "fig-slider": {
     variant: {

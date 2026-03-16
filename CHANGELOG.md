@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.5.0]
+
+### Added
+
+- Added `checkerboard` attribute for `fig-image` — shows a checkerboard pattern behind the image, passed through to the inner `fig-chit`.
+- Added `checkerboard` attribute for `fig-chit` — displays a checkerboard background via CSS.
+- Added `--chit-bg-repeat` CSS variable to `fig-chit` for controllable background repeat behavior.
+- Added "Checker" toggle to image attributes view in playground.
+
+### Fixed
+
+- Fixed `fig-chit` not resolving CSS variable backgrounds — added `#resolveBackground` that computes actual values from `var()` references.
+- Fixed `fig-chit` `#detectType` treating empty `url()` as an image type — now checks for a non-empty URL source.
+- Fixed `fig-chit` `::after` background shorthand resetting longhand properties (size, position, repeat) — switched to `background-image` with individual longhands.
+- Fixed `fig-image` defaulting to `background="url()"` when no source is set — now uses `var(--figma-color-bg-secondary)` or empty `url()` when checkerboard is active.
+- Fixed `fig-image` always forcing `data-type="image"` on its inner `fig-chit` for consistent thumbnail rendering.
+
 ## [3.4.3]
 
 ### Fixed

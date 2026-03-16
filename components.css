@@ -1229,7 +1229,9 @@ fig-chit {
 
     /* Large gradient/image: also fill the area */
     &[data-type="gradient"]::after,
-    &[data-type="image"]::after {
+    &[data-type="image"]::after,
+    &[data-type="gradient"]::before,
+    &[data-type="image"]::before {
       width: var(--size);
       height: var(--size);
       border-radius: var(--radius-medium);
@@ -1241,6 +1243,20 @@ fig-chit {
     opacity: 0.5;
   }
 
+  &::before {
+    content: "";
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 0.125rem;
+    grid-area: 1/1;
+    place-self: center;
+  }
+  &[size="large"]::before {
+    width: var(--size);
+    height: var(--size);
+    border-radius: var(--radius-medium);
+  }
+
   /* Gradient/Image types - inset thumbnail with hidden input */
   &[data-type="gradient"],
   &[data-type="image"] {
@@ -1250,6 +1266,7 @@ fig-chit {
       content: "";
       width: 0.875rem;
       height: 0.875rem;
+
       background: var(--chit-background);
       background-size: var(--chit-bg-size);
       background-position: var(--chit-bg-position);
@@ -1288,9 +1305,10 @@ fig-chit {
   }
 
   /* Checkerboard for empty/missing images */
-  &[data-type="image"]:not([background])::after,
-  &[data-type="image"][background=""]::after,
-  &[data-type="image"][background="url()"]::after {
+  &[data-type="image"]:not([background])::before,
+  &[data-type="image"][background=""]::before,
+  &[data-type="image"][background="url()"]::before,
+  &[checkerboard]:not([checkerboard="false"])::before {
     background: var(--checkerboard);
   }
 }

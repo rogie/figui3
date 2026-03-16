@@ -9,7 +9,7 @@ function figIsWebKitOrIOSBrowser() {
   const userAgent = navigator.userAgent || "";
   const isIOSBrowser =
     /\b(iPad|iPhone|iPod)\b/.test(userAgent) ||
-    /\bMacintosh\b/.test(userAgent) && /\bMobile\b/.test(userAgent);
+    (/\bMacintosh\b/.test(userAgent) && /\bMobile\b/.test(userAgent));
   const isDesktopWebKit =
     /\bAppleWebKit\b/.test(userAgent) &&
     !/\b(Chrome|Chromium|Edg|OPR|SamsungBrowser)\b/.test(userAgent);
@@ -41,9 +41,10 @@ function figSupportsCustomizedBuiltIns() {
 
 const figNeedsBuiltInPolyfill =
   figIsWebKitOrIOSBrowser() && !figSupportsCustomizedBuiltIns();
-const figBuiltInPolyfillReady = (figNeedsBuiltInPolyfill
-  ? import("./polyfills/custom-elements-webkit.js")
-  : Promise.resolve()
+const figBuiltInPolyfillReady = (
+  figNeedsBuiltInPolyfill
+    ? import("./polyfills/custom-elements-webkit.js")
+    : Promise.resolve()
 )
   .then(() => {})
   .catch((error) => {
@@ -62,14 +63,12 @@ function figDefineCustomizedBuiltIn(name, constructor, options) {
     return;
   }
 
-  figBuiltInPolyfillReady
-    .then(define)
-    .catch((error) => {
-      console.error(
-        `[figui3] Failed to load customized built-in polyfill for "${name}".`,
-        error,
-      );
-    });
+  figBuiltInPolyfillReady.then(define).catch((error) => {
+    console.error(
+      `[figui3] Failed to load customized built-in polyfill for "${name}".`,
+      error,
+    );
+  });
 }
 
 function figUniqueId() {
@@ -1208,18 +1207,25 @@ class FigPopup extends HTMLDialogElement {
   }
 
   ensureInitialized() {
-    if (typeof this._anchorObserver === "undefined") this._anchorObserver = null;
-    if (typeof this._contentObserver === "undefined") this._contentObserver = null;
-    if (typeof this._mutationObserver === "undefined") this._mutationObserver = null;
-    if (typeof this._anchorTrackRAF === "undefined") this._anchorTrackRAF = null;
-    if (typeof this._lastAnchorRect === "undefined") this._lastAnchorRect = null;
+    if (typeof this._anchorObserver === "undefined")
+      this._anchorObserver = null;
+    if (typeof this._contentObserver === "undefined")
+      this._contentObserver = null;
+    if (typeof this._mutationObserver === "undefined")
+      this._mutationObserver = null;
+    if (typeof this._anchorTrackRAF === "undefined")
+      this._anchorTrackRAF = null;
+    if (typeof this._lastAnchorRect === "undefined")
+      this._lastAnchorRect = null;
     if (typeof this._isPopupActive === "undefined") this._isPopupActive = false;
     if (typeof this._rafId === "undefined") this._rafId = null;
     if (typeof this._anchorRef === "undefined") this._anchorRef = null;
     if (typeof this._isDragging === "undefined") this._isDragging = false;
     if (typeof this._dragPending === "undefined") this._dragPending = false;
-    if (typeof this._dragStartPos === "undefined") this._dragStartPos = { x: 0, y: 0 };
-    if (typeof this._dragOffset === "undefined") this._dragOffset = { x: 0, y: 0 };
+    if (typeof this._dragStartPos === "undefined")
+      this._dragStartPos = { x: 0, y: 0 };
+    if (typeof this._dragOffset === "undefined")
+      this._dragOffset = { x: 0, y: 0 };
     if (typeof this._dragThreshold !== "number") this._dragThreshold = 3;
     if (typeof this._wasDragged === "undefined") this._wasDragged = false;
 
@@ -1228,7 +1234,11 @@ class FigPopup extends HTMLDialogElement {
     }
     if (typeof this._boundScroll !== "function") {
       this._boundScroll = (e) => {
-        if (this.open && !this.contains(e.target) && this.shouldAutoReposition()) {
+        if (
+          this.open &&
+          !this.contains(e.target) &&
+          this.shouldAutoReposition()
+        ) {
           this.queueReposition();
         }
       };
@@ -1516,7 +1526,10 @@ class FigPopup extends HTMLDialogElement {
       const anchor = this.resolveAnchor();
       const nextRect = this.readRectSnapshot(anchor);
       const canAutoReposition = this.shouldAutoReposition();
-      if (canAutoReposition && this.hasRectChanged(this._lastAnchorRect, nextRect)) {
+      if (
+        canAutoReposition &&
+        this.hasRectChanged(this._lastAnchorRect, nextRect)
+      ) {
         this._lastAnchorRect = nextRect;
         this.queueReposition();
       } else if (!canAutoReposition) {
@@ -1989,7 +2002,9 @@ class FigPopup extends HTMLDialogElement {
     const anchorCenterY = anchorRect.top + anchorRect.height / 2;
     const measuredRect = this.getBoundingClientRect();
     const rect =
-      measuredRect.width > 0 && measuredRect.height > 0 ? measuredRect : popupRect;
+      measuredRect.width > 0 && measuredRect.height > 0
+        ? measuredRect
+        : popupRect;
     // Always use the rendered popup rect so beak alignment matches real final placement.
     const resolvedLeft = rect.left;
     const resolvedTop = rect.top;
@@ -2082,14 +2097,7 @@ class FigPopup extends HTMLDialogElement {
     let bestScore = Number.POSITIVE_INFINITY;
 
     for (const { v, h, s } of candidates) {
-      const coords = this.computeCoords(
-        anchorRect,
-        popupRect,
-        v,
-        h,
-        offset,
-        s,
-      );
+      const coords = this.computeCoords(anchorRect, popupRect, v, h, offset, s);
       const placementSide = this.getPlacementSide(v, h, s);
 
       if (s) {
@@ -3102,11 +3110,7 @@ class FigSlider extends HTMLElement {
           break;
         case "default":
           this.default =
-            newValue !== null
-              ? newValue
-              : this.type === "delta"
-                ? 0
-                : this.min;
+            newValue !== null ? newValue : this.type === "delta" ? 0 : this.min;
           this.#syncProperties();
           break;
         case "min":
@@ -3172,7 +3176,8 @@ class FigInputText extends HTMLElement {
     this.placeholder = this.getAttribute("placeholder") || "";
     this.name = this.getAttribute("name") || null;
     this.readonly =
-      this.hasAttribute("readonly") && this.getAttribute("readonly") !== "false";
+      this.hasAttribute("readonly") &&
+      this.getAttribute("readonly") !== "false";
 
     if (this.type === "number") {
       if (this.getAttribute("step")) {
@@ -5684,8 +5689,22 @@ class FigChit extends HTMLElement {
     }
   }
 
+  #resolveBackground(bg) {
+    if (!bg || !bg.includes("var(")) return bg;
+    const prev = this.style.background;
+    this.style.background = bg;
+    const cs = getComputedStyle(this);
+    const bgImage = cs.backgroundImage;
+    const bgColor = cs.backgroundColor;
+    this.style.background = prev;
+    if (bgImage && bgImage !== "none") return bgImage;
+    return bgColor || bg;
+  }
+
   #render() {
-    const bg = this.getAttribute("background") || "#D9D9D9";
+    const rawBg = this.getAttribute("background") || "#D9D9D9";
+    const isVar = rawBg.includes("var(");
+    const bg = isVar ? this.#resolveBackground(rawBg) : rawBg;
     const newType = this.#detectType(bg);
 
     // Only rebuild DOM if type changes
@@ -5702,21 +5721,22 @@ class FigChit extends HTMLElement {
         const hex = this.#toHex(bg);
         this.innerHTML = `<input type="color" value="${hex}" />`;
         this.input = this.querySelector("input");
-        this.input.addEventListener("input", this.#boundHandleInput);
+        if (!isVar) {
+          this.input.addEventListener("input", this.#boundHandleInput);
+        }
       } else {
         this.innerHTML = "";
         this.input = null;
       }
     } else if (this.#type === "color" && this.input) {
-      // Just update input value without rebuilding DOM
       const hex = this.#toHex(bg);
       if (this.input.value !== hex) {
         this.input.value = hex;
       }
     }
 
-    // Always update CSS variable
-    this.style.setProperty("--chit-background", bg);
+    // Always update CSS variable with raw value so vars stay reactive
+    this.style.setProperty("--chit-background", rawBg);
   }
 
   #handleInput(e) {
@@ -5783,9 +5803,9 @@ class FigImage extends HTMLElement {
     super();
   }
   #getInnerHTML() {
-    return `<fig-chit size="large" background="${
-      this.src ? `url(${this.src})` : "url()"
-    }" disabled></fig-chit><div>${
+    const cb = this.hasAttribute("checkerboard") && this.getAttribute("checkerboard") !== "false";
+    const bg = this.src ? `url(${this.src})` : (cb ? "url()" : "var(--figma-color-bg-secondary)");
+    return `<fig-chit size="large" data-type="image" background="${bg}" disabled${cb ? ' checkerboard' : ''}></fig-chit><div>${
       this.upload
         ? `<fig-button variant="overlay" type="upload">
           ${this.label} 
@@ -5946,7 +5966,7 @@ class FigImage extends HTMLElement {
     this.setAttribute("src", this.blob);
   }
   static get observedAttributes() {
-    return ["src", "upload", "download", "aspect-ratio", "fit"];
+    return ["src", "upload", "download", "aspect-ratio", "fit", "checkerboard"];
   }
   get src() {
     return this.#src;
@@ -5960,10 +5980,12 @@ class FigImage extends HTMLElement {
     if (name === "src") {
       this.#src = newValue;
       if (this.chit) {
-        this.chit.setAttribute(
-          "background",
-          this.#src ? `url(${this.#src})` : "",
-        );
+        const hasCb = this.hasAttribute("checkerboard") && this.getAttribute("checkerboard") !== "false";
+        if (this.#src) {
+          this.chit.setAttribute("background", `url(${this.#src})`);
+        } else {
+          this.chit.setAttribute("background", hasCb ? "url()" : "var(--figma-color-bg-secondary)");
+        }
       }
       if (this.#src) {
         this.#loadImage(this.#src);
@@ -5994,6 +6016,15 @@ class FigImage extends HTMLElement {
         this.style.setProperty("--fit", newValue);
       } else {
         this.style.removeProperty("--fit");
+      }
+    }
+    if (name === "checkerboard") {
+      if (this.chit) {
+        if (newValue !== null && newValue !== "false") {
+          this.chit.setAttribute("checkerboard", "");
+        } else {
+          this.chit.removeAttribute("checkerboard");
+        }
       }
     }
   }
@@ -6714,7 +6745,9 @@ class FigEasingCurve extends HTMLElement {
         this.#startBezierDrag(e, 2),
       );
 
-      const bezierSurface = this.querySelector(".fig-easing-curve-svg-container");
+      const bezierSurface = this.querySelector(
+        ".fig-easing-curve-svg-container",
+      );
       if (bezierSurface) {
         bezierSurface.addEventListener("pointerdown", (e) => {
           // Handles keep their own direct drag behavior.
@@ -6732,7 +6765,9 @@ class FigEasingCurve extends HTMLElement {
         this.#startSpringDrag(e, "duration");
       });
 
-      const springSurface = this.querySelector(".fig-easing-curve-svg-container");
+      const springSurface = this.querySelector(
+        ".fig-easing-curve-svg-container",
+      );
       if (springSurface) {
         springSurface.addEventListener("pointerdown", (e) => {
           // Bounce handle keeps its own drag mode/cursor.
@@ -6902,14 +6937,27 @@ class Fig3DRotate extends HTMLElement {
   #fieldInputs = {};
 
   static get observedAttributes() {
-    return ["value", "precision", "aspect-ratio", "fields", "perspective", "perspective-origin", "transform-origin", "selected", "drag"];
+    return [
+      "value",
+      "precision",
+      "aspect-ratio",
+      "fields",
+      "perspective",
+      "perspective-origin",
+      "transform-origin",
+      "selected",
+      "drag",
+    ];
   }
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "1");
     this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
     this.#syncPerspectiveVar(this.getAttribute("perspective"));
-    this.#syncCSSVar("--perspective-origin", this.getAttribute("perspective-origin"));
+    this.#syncCSSVar(
+      "--perspective-origin",
+      this.getAttribute("perspective-origin"),
+    );
     this.#syncTransformOrigin(this.getAttribute("transform-origin"));
     this.#parseFields(this.getAttribute("fields"));
     const val = this.getAttribute("value");
@@ -6958,7 +7006,10 @@ class Fig3DRotate extends HTMLElement {
     }
     const parts = value.trim().split(/\s+/);
     if (parts.length === 2) {
-      this.style.setProperty("--transform-origin", `${parts[0]} ${parts[1]} -50cqi`);
+      this.style.setProperty(
+        "--transform-origin",
+        `${parts[0]} ${parts[1]} -50cqi`,
+      );
     } else {
       this.style.setProperty("--transform-origin", value.trim());
     }
@@ -6974,7 +7025,10 @@ class Fig3DRotate extends HTMLElement {
     const faces = this.#cube.querySelectorAll(".fig-3d-rotate-face");
     const name = value ? value.trim().toLowerCase() : "";
     for (const face of faces) {
-      face.classList.toggle("selected", name !== "" && face.classList.contains(name));
+      face.classList.toggle(
+        "selected",
+        name !== "" && face.classList.contains(name),
+      );
     }
   }
 
@@ -7062,7 +7116,11 @@ class Fig3DRotate extends HTMLElement {
 
   #render() {
     const axisLabels = { rotateX: "X", rotateY: "Y", rotateZ: "Z" };
-    const axisValues = { rotateX: this.#rx, rotateY: this.#ry, rotateZ: this.#rz };
+    const axisValues = {
+      rotateX: this.#rx,
+      rotateY: this.#ry,
+      rotateZ: this.#rz,
+    };
     const fieldsHTML = this.#fields
       .map(
         (axis) =>
@@ -7115,17 +7173,21 @@ class Fig3DRotate extends HTMLElement {
   }
 
   #syncFieldInputs() {
-    const axisValues = { rotateX: this.#rx, rotateY: this.#ry, rotateZ: this.#rz };
+    const axisValues = {
+      rotateX: this.#rx,
+      rotateY: this.#ry,
+      rotateZ: this.#rz,
+    };
     for (const axis of this.#fields) {
       const input = this.#fieldInputs[axis];
-      if (input) input.setAttribute("value", axisValues[axis].toFixed(this.#precision));
+      if (input)
+        input.setAttribute("value", axisValues[axis].toFixed(this.#precision));
     }
   }
 
   #updateCube() {
     if (!this.#cube) return;
-    this.#cube.style.transform =
-      `rotateX(${this.#rx}deg) rotateY(${this.#ry}deg) rotateZ(${this.#rz}deg)`;
+    this.#cube.style.transform = `rotateX(${this.#rx}deg) rotateY(${this.#ry}deg) rotateZ(${this.#rz}deg)`;
   }
 
   #emit(type) {
@@ -7339,11 +7401,7 @@ class FigOriginGrid extends HTMLElement {
   }
 
   #parseValue(value) {
-    const parts = value
-      .trim()
-      .replace(/,/g, " ")
-      .split(/\s+/)
-      .filter(Boolean);
+    const parts = value.trim().replace(/,/g, " ").split(/\s+/).filter(Boolean);
     if (parts.length < 1) return;
 
     if (parts.length === 1) {
@@ -7439,7 +7497,8 @@ class FigOriginGrid extends HTMLElement {
   #syncHandlePosition() {
     if (!this.#handle) return;
     // Constrain draggable visual bounds to the 3x3 dot centers.
-    const toVisual = (value) => 16.6667 + (this.#clampPercentage(value) / 100) * 66.6667;
+    const toVisual = (value) =>
+      16.6667 + (this.#clampPercentage(value) / 100) * 66.6667;
     this.#handle.style.left = `${toVisual(this.#x)}%`;
     this.#handle.style.top = `${toVisual(this.#y)}%`;
   }
@@ -7553,10 +7612,18 @@ class FigOriginGrid extends HTMLElement {
   }
 
   #detachHandleDragListeners() {
-    if (!this.#grid || !this.#boundHandlePointerMove || !this.#boundHandlePointerEnd) return;
+    if (
+      !this.#grid ||
+      !this.#boundHandlePointerMove ||
+      !this.#boundHandlePointerEnd
+    )
+      return;
     this.#grid.removeEventListener("pointermove", this.#boundHandlePointerMove);
     this.#grid.removeEventListener("pointerup", this.#boundHandlePointerEnd);
-    this.#grid.removeEventListener("pointercancel", this.#boundHandlePointerEnd);
+    this.#grid.removeEventListener(
+      "pointercancel",
+      this.#boundHandlePointerEnd,
+    );
     this.#grid.removeEventListener(
       "lostpointercapture",
       this.#boundHandlePointerEnd,
@@ -7577,7 +7644,8 @@ class FigOriginGrid extends HTMLElement {
     this.#grid.setPointerCapture(e.pointerId);
 
     this.#boundHandlePointerMove = (moveEvent) => {
-      if (!this.#isDragging || moveEvent.pointerId !== this.#activePointerId) return;
+      if (!this.#isDragging || moveEvent.pointerId !== this.#activePointerId)
+        return;
       const dx = moveEvent.clientX - startClientX;
       const dy = moveEvent.clientY - startClientY;
       const distance = Math.hypot(dx, dy);
@@ -7595,7 +7663,8 @@ class FigOriginGrid extends HTMLElement {
     };
 
     this.#boundHandlePointerEnd = (endEvent) => {
-      if (!this.#isDragging || endEvent.pointerId !== this.#activePointerId) return;
+      if (!this.#isDragging || endEvent.pointerId !== this.#activePointerId)
+        return;
       this.#isDragging = false;
       this.#activePointerId = null;
       this.#grid.classList.remove("is-dragging");
@@ -7612,7 +7681,10 @@ class FigOriginGrid extends HTMLElement {
     this.#grid.addEventListener("pointermove", this.#boundHandlePointerMove);
     this.#grid.addEventListener("pointerup", this.#boundHandlePointerEnd);
     this.#grid.addEventListener("pointercancel", this.#boundHandlePointerEnd);
-    this.#grid.addEventListener("lostpointercapture", this.#boundHandlePointerEnd);
+    this.#grid.addEventListener(
+      "lostpointercapture",
+      this.#boundHandlePointerEnd,
+    );
   }
 
   #setupEvents() {
@@ -8064,7 +8136,8 @@ class FigInputJoystick extends HTMLElement {
         const isPercent = token.includes("%");
         const numeric = Number.parseFloat(token.replace(/%/g, "").trim());
         if (!Number.isFinite(numeric)) return 0.5;
-        const decimal = isPercent || Math.abs(numeric) > 1 ? numeric / 100 : numeric;
+        const decimal =
+          isPercent || Math.abs(numeric) > 1 ? numeric / 100 : numeric;
         return Math.max(0, Math.min(1, decimal));
       };
       const x = parseAxis(parts[0]);
@@ -10480,7 +10553,9 @@ class FigChooser extends HTMLElement {
   }
 
   get #overflowMode() {
-    return this.getAttribute("overflow") === "scrollbar" ? "scrollbar" : "buttons";
+    return this.getAttribute("overflow") === "scrollbar"
+      ? "scrollbar"
+      : "buttons";
   }
 
   get #dragEnabled() {
@@ -10730,12 +10805,14 @@ class FigChooser extends HTMLElement {
 
     if (isHorizontal) {
       const atStart = this.scrollLeft <= threshold;
-      const atEnd = this.scrollLeft + this.clientWidth >= this.scrollWidth - threshold;
+      const atEnd =
+        this.scrollLeft + this.clientWidth >= this.scrollWidth - threshold;
       this.classList.toggle("overflow-start", !atStart);
       this.classList.toggle("overflow-end", !atEnd);
     } else {
       const atStart = this.scrollTop <= threshold;
-      const atEnd = this.scrollTop + this.clientHeight >= this.scrollHeight - threshold;
+      const atEnd =
+        this.scrollTop + this.clientHeight >= this.scrollHeight - threshold;
       this.classList.toggle("overflow-start", !atStart);
       this.classList.toggle("overflow-end", !atEnd);
     }
@@ -10800,7 +10877,9 @@ class FigChooser extends HTMLElement {
       this.style.cursor = "";
       this.style.userSelect = "";
       if (e.pointerId !== undefined) {
-        try { this.releasePointerCapture(e.pointerId); } catch {}
+        try {
+          this.releasePointerCapture(e.pointerId);
+        } catch {}
       }
       if (wasDrag) {
         e.preventDefault();
@@ -10853,7 +10932,11 @@ class FigChooser extends HTMLElement {
     this.removeEventListener("pointerdown", this.#dragState.onPointerDown);
     window.removeEventListener("pointermove", this.#dragState.onPointerMove);
     window.removeEventListener("pointerup", this.#dragState.onPointerUp);
-    this.removeEventListener("pointerup", this.#dragState.onPointerUpCapture, true);
+    this.removeEventListener(
+      "pointerup",
+      this.#dragState.onPointerUpCapture,
+      true,
+    );
     this.removeEventListener("click", this.#dragState.onClick, true);
     this.style.cursor = "";
     this.style.userSelect = "";
@@ -10904,8 +10987,7 @@ class FigChooser extends HTMLElement {
   }
 
   #scrollByPage(direction) {
-    const isHorizontal =
-      this.getAttribute("layout") === "horizontal";
+    const isHorizontal = this.getAttribute("layout") === "horizontal";
     const pageSize = isHorizontal ? this.clientWidth : this.clientHeight;
     const scrollAmount = pageSize * 0.8 * direction;
 
@@ -10925,12 +11007,14 @@ class FigChooser extends HTMLElement {
       const options = { behavior: "smooth" };
 
       if (overflowY) {
-        const target = el.offsetTop - this.clientHeight / 2 + el.offsetHeight / 2;
+        const target =
+          el.offsetTop - this.clientHeight / 2 + el.offsetHeight / 2;
         options.top = target;
       }
 
       if (overflowX) {
-        const target = el.offsetLeft - this.clientWidth / 2 + el.offsetWidth / 2;
+        const target =
+          el.offsetLeft - this.clientWidth / 2 + el.offsetWidth / 2;
         options.left = target;
       }
 
