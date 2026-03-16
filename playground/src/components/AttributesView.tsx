@@ -83,8 +83,9 @@ function readBooleanValue(
   defaultChecked = false,
 ): boolean {
   if (value === undefined) return defaultChecked;
-  if (mode === "presence") return value !== undefined;
-  if (mode === "custom") return value !== undefined;
+  if (mode === "presence") return true;
+  if (mode === "custom") return true;
+  if (value === "") return true;
   return value?.toLowerCase() === "true";
 }
 

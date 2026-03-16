@@ -26,7 +26,13 @@ body {
 #app {
   display: grid;
   place-items: start center;
+  position: relative;
   width: 100vw;
+  min-width: calc(
+    var(--spacer-4) + var(--nav-width) + var(--spacer-4) +
+    var(--playground-min-width) + var(--spacer-4) * 2 +
+    var(--spacer-4) + var(--sidebar-width) + var(--spacer-4)
+  );
   height: 100vh;
   overflow: auto;
   scrollbar-width: thin;
@@ -174,6 +180,11 @@ nav {
   right: var(--spacer-4);
   top: var(--spacer-4);
   overflow-y: auto;
+
+  /* 8rem + 760px = spacer-4 × 6 + nav + playground-min + sidebar */
+  @media (max-width: 904px) {
+    position: absolute;
+  }
   background: var(--figma-color-bg);
   border: 1px solid var(--figma-color-border);
   border-radius: var(--radius-large);

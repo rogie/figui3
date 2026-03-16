@@ -416,7 +416,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Position</label>
-    <fig-joystick value="50% 50%"></fig-joystick>
+    <fig-joystick value="50% 50%" axis-labels="X Y"></fig-joystick>
   </fig-field>
 </div>`,
       },

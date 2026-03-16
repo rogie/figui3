@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.4.3]
+
+### Fixed
+
+- Fixed drag toggle not syncing correctly in chooser attributes view — bare boolean attributes now read as `true` in string bool mode.
+- Fixed playground `#app` min-width to account for main content padding.
+- Fixed attributes sidebar switching to `absolute` positioning at narrow viewports to prevent overlap when horizontally scrolling.
+
+### Changed
+
+- Added default `axis-labels="X Y"` to joystick example in `/propkit`.
+- Removed stale verification screenshots and reports.
+
 ## [3.4.2]
 
 ### Fixed
