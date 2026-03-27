@@ -141,6 +141,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-chit": "Chit",
     "fig-radio": "Radio",
     "fig-field": "Field",
+    "fig-field-slider": "Field slider",
     "fig-combo-input": "Combo input",
     "fig-image": "Image",
     "fig-input-color": "Color",
@@ -731,6 +732,34 @@ export default function AttributesView({
                       onMarkupChange(updated);
                       return;
                     }
+                    if (
+                      target.controlTag === "fig-field-slider" &&
+                      name === "type"
+                    ) {
+                      let updated = applyAttributeMutation(markup, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "type",
+                        value: resolvedValue,
+                      });
+                      updated = applyAttributeMutation(updated, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "default",
+                        value:
+                          resolvedValue === "delta" || resolvedValue === "stepper"
+                            ? "50"
+                            : null,
+                      });
+                      updated = applyAttributeMutation(updated, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "step",
+                        value: resolvedValue === "stepper" ? "10" : null,
+                      });
+                      onMarkupChange(updated);
+                      return;
+                    }
                     applyChange(target.fieldIndex, scope, name, resolvedValue);
                   }}
                 >
@@ -866,7 +895,7 @@ export default function AttributesView({
 
         return (
           <div key={target.fieldIndex}>
-            {showFieldControls && (
+            {showFieldControls && target.controlTag !== "fig-field-slider" && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
                   <h3>Field</h3>

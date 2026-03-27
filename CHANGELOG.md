@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.6.0]
+
+### Added
+
+- Added `fig-field-slider` component that composes `fig-field` + `fig-slider`, defaults to `label="Label"`, `direction="horizontal"`, and `text="true"`, and re-emits `input`/`change` events.
+- Added a top-level **Field Slider** section to `/propkit` playground with a dedicated example.
+- Added slider styling tokens: `--slider-thumb-color`, `--slider-thumb-radius`, `--slider-tick-width`, `--slider-tick-height`, `--slider-tick-radius`, `--slider-tick-opacity`, and `--slider-stepper-padding`.
+
+### Changed
+
+- Refined `fig-field-slider` visuals to a full-surface style with custom thumb/tick sizing, opacity, radius, and masking behavior.
+- Updated `/propkit` field-slider attributes view ordering and visibility (type-first; removed direction/value/min/max/step/placeholder/default/precision controls).
+
+### Fixed
+
+- Fixed `fig-field-slider` slider type updates not always reflecting visually by improving initial attribute sync timing.
+- Fixed field-slider type defaults so `type="delta"` and `type="stepper"` enforce `default="50"`, and stepper enforces `step="10"` when not explicitly provided.
+- Fixed blank label handling in `fig-field-slider` so `label=""` removes the rendered label element.
+
 ## [3.5.0]
 
 ### Added

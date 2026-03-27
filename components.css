@@ -2194,15 +2194,28 @@ fig-slider {
   --slider-field-height: 1.5rem;
   --slider-height: 1rem;
   --slider-thumb-size: var(--slider-height);
+  --slider-thumb-width: var(--slider-thumb-size);
+  --slider-thumb-height: var(--slider-thumb-size);
+  --slider-thumb-color: var(--handle-color);
+  --slider-thumb-radius: calc(var(--slider-thumb-width) / 2);
+  --slider-thumb-opacity: 1;
+  --slider-tick-opacity: 1;
+  --slider-tick-radius: 100%;
+  --slider-border-radius: calc(var(--slider-height) / 2);
+  --slider-stepper-padding: calc(
+    (var(--slider-height) / 2) - var(--slider-tick-width) / 2
+  );
   --slider-percent: calc(var(--slider-complete) * 100%);
   --start-percent: calc(var(--default, 0) * 100%);
-  --slider-tick-size: calc(var(--slider-height) / 4);
+  --slider-tick-width: calc(var(--slider-height) / 4);
+  --slider-tick-height: calc(var(--slider-height) / 4);
   --slider-handle-shadow:
-    inset 0 0 0 calc(4px + 0.5rem * var(--unchanged)) var(--handle-color),
+    inset 0 0 0 calc(4px + 0.5rem * var(--unchanged)) var(--slider-thumb-color),
     0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-100);
   --slider-handle-shadow-focus:
-    inset 0 0 0 4px var(--handle-color), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-    var(--handle-shadow), 0 0 0 1px var(--figma-color-border-selected);
+    inset 0 0 0 4px var(--slider-thumb-color),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.1), var(--handle-shadow),
+    0 0 0 1px var(--figma-color-border-selected);
   --slider-transition: none;
   --handle-transition: var(--slider-transition);
 
@@ -2219,7 +2232,7 @@ fig-slider {
     width: 100%;
     transition: var(--slider-transition);
     background: var(--figma-color-bg-secondary);
-    border-radius: 0.5rem;
+    border-radius: var(--slider-border-radius);
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 
     /* Track */
@@ -2231,7 +2244,7 @@ fig-slider {
       top: 0;
       pointer-events: none;
       bottom: 0;
-      border-radius: 0.5rem;
+      border-radius: var(--slider-border-radius);
       min-width: var(--slider-height);
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
       width: calc(
@@ -2253,8 +2266,8 @@ fig-slider {
     datalist option {
       position: absolute;
       margin: 0;
-      left: calc(var(--start-percent) - var(--slider-tick-size) / 2);
-      top: calc(50% - var(--slider-tick-size) / 2);
+      left: calc(var(--start-percent) - var(--slider-tick-width) / 2);
+      top: calc(50% - var(--slider-tick-height) / 2);
     }
     .fig-slider-input-container {
       &::before {
@@ -2293,7 +2306,7 @@ fig-slider {
     height: var(--slider-height);
     appearance: none;
     -webkit-appearance: none;
-    border-radius: calc(var(--slider-height) / 2);
+    border-radius: var(--slider-border-radius);
     display: block;
     width: 100%;
     background-color: transparent;
@@ -2315,16 +2328,19 @@ fig-slider {
       -webkit-appearance: none;
       color-scheme: inherit;
       transition: var(--handle-transition);
-      border-radius: 100%;
-      height: var(--slider-thumb-size);
-      width: var(--slider-thumb-size);
-      margin-top: calc(var(--slider-height) / 2 - var(--slider-thumb-size) / 2);
+      border-radius: var(--slider-thumb-radius);
+      height: var(--slider-thumb-height);
+      width: var(--slider-thumb-width);
+      margin-top: calc(
+        var(--slider-height) / 2 - var(--slider-thumb-height) / 2
+      );
       aspect-ratio: 1;
       border: none;
       position: relative;
       z-index: 1;
       cursor: default;
       box-shadow: var(--slider-handle-shadow);
+      opacity: var(--slider-thumb-opacity);
     }
 
     &:disabled {
@@ -2350,7 +2366,7 @@ fig-slider {
       height: var(--slider-height);
       background-color: transparent;
       transition: var(--slider-transition);
-      border-radius: calc(var(--slider-height) / 2);
+      border-radius: var(--slider-border-radius);
     }
 
     &.hue::-webkit-slider-runnable-track {
@@ -2369,7 +2385,7 @@ fig-slider {
     height: var(--slider-height);
     appearance: none;
     -moz-appearance: none;
-    border-radius: calc(var(--slider-height) / 2);
+    border-radius: var(--slider-border-radius);
     display: block;
     width: 100%;
     background-color: transparent;
@@ -2390,9 +2406,9 @@ fig-slider {
       appearance: none;
       -moz-appearance: none;
       background: transparent;
-      border-radius: 100%;
-      height: var(--slider-thumb-size);
-      width: var(--slider-thumb-size);
+      border-radius: var(--slider-thumb-radius);
+      height: var(--slider-thumb-height);
+      width: var(--slider-thumb-width);
       aspect-ratio: 1;
       border: none;
       position: relative;
@@ -2400,6 +2416,7 @@ fig-slider {
       cursor: default;
       box-shadow: var(--slider-handle-shadow);
       transition: var(--handle-transition);
+      opacity: var(--slider-thumb-opacity);
     }
 
     &:disabled {
@@ -2423,7 +2440,7 @@ fig-slider {
     &::-moz-range-track {
       height: var(--slider-height);
       background-color: transparent;
-      border-radius: calc(var(--slider-height) / 2);
+      border-radius: var(--slider-border-radius);
       transition: var(--slider-transition);
     }
 
@@ -2449,7 +2466,7 @@ fig-slider {
     margin: 0;
     border: 0;
     appearance: none;
-    padding: 0 calc((var(--slider-height) / 2) - var(--slider-tick-size) / 2);
+    padding: 0 var(--slider-stepper-padding);
     height: var(--slider-height);
     pointer-events: none;
     justify-content: space-between;
@@ -2457,14 +2474,14 @@ fig-slider {
 
     & option {
       appearance: none;
-      width: var(--slider-tick-size);
-      height: var(--slider-tick-size);
-      aspect-ratio: 1;
+      width: var(--slider-tick-width);
+      height: var(--slider-tick-height);
       padding: 0;
       border: 0;
-      border-radius: 100%;
+      border-radius: var(--slider-tick-radius);
       font-size: 0;
       background: var(--figma-color-icon-tertiary);
+      opacity: var(--slider-tick-opacity);
       display: block;
       &[default] {
         background: var(--figma-color-icon);
@@ -2479,11 +2496,13 @@ fig-slider {
   &[variant="minimal"] {
     --slider-height: 0.375rem;
     --slider-thumb-size: 0.75rem;
-    --slider-tick-size: calc(var(--slider-height) / 2);
+    --slider-tick-width: calc(var(--slider-height) / 2);
+    --slider-tick-height: calc(var(--slider-height) / 2);
     --handle-transition: none;
     --slider-transition: none;
     --slider-handle-shadow:
-      inset 0 0 0 calc(6px + 0.5rem * var(--unchanged)) var(--handle-color),
+      inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
+        var(--slider-thumb-color),
       0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
       var(--figma-elevation-100);
 
@@ -2508,11 +2527,13 @@ fig-slider {
   &[variant="neue"] {
     --slider-height: 0.375rem;
     --slider-thumb-size: 0.75rem;
-    --slider-tick-size: calc(var(--slider-height) / 2);
+    --slider-tick-width: calc(var(--slider-height) / 2);
+    --slider-tick-height: calc(var(--slider-height) / 2);
     --handle-transition: none;
     --slider-transition: none;
     --slider-handle-shadow:
-      inset 0 0 0 calc(6px + 0.5rem * var(--unchanged)) var(--handle-color),
+      inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
+        var(--slider-thumb-color),
       0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
       var(--figma-elevation-100);
 
@@ -3177,6 +3198,11 @@ fig-field,
     flex: 1 1 auto;
   }
 
+  &:not(:has(> label)) > [full]:not([full="false"]) {
+    width: 100%;
+    align-self: stretch;
+  }
+
   & > label {
     flex: 0;
     padding: var(--spacer-1) 0;
@@ -3216,6 +3242,10 @@ fig-field,
       & > label ~ * {
         grid-column: 2 / span 2;
       }
+
+      &:not(:has(> label)) > * {
+        grid-column: 1 / -1;
+      }
     }
     &[columns="half"] {
       display: grid;
@@ -3228,6 +3258,163 @@ fig-field,
 
       & > label ~ * {
         grid-column: 2 / span 2;
+      }
+
+      &:not(:has(> label)) > * {
+        grid-column: 1 / -1;
+      }
+    }
+  }
+}
+
+fig-field-slider {
+  display: block;
+  position: relative;
+  width: 100%;
+  --field-text-shadow: 0 1px 1.5px
+    light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
+
+  label {
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    label,
+    input {
+      color: var(--figma-color-text-disabled);
+    }
+    fig-slider {
+      filter: grayscale(100%) opacity(0.5);
+    }
+  }
+  &[type="hue"] {
+    label,
+    input {
+      text-shadow: var(--field-text-shadow);
+      color: white;
+    }
+  }
+
+  fig-field {
+    position: relative;
+    padding-left: var(--spacer-2-5);
+
+    &[direction="horizontal"] > label {
+      min-width: 0;
+      max-width: none;
+      width: 100%;
+      flex: 1 1 auto;
+    }
+
+    fig-slider {
+      position: absolute;
+      inset: 0;
+      --slider-height: 2rem;
+      --slider-field-height: 2rem;
+      --slider-thumb-width: var(--spacer-1);
+      --slider-thumb-color: light-dark(
+        var(--figma-color-text-secondary),
+        var(--figma-color-text)
+      );
+      --slider-thumb-height: calc(
+        var(--spacer-2) + (var(--spacer-3) - var(--spacer-2)) *
+          min(var(--slider-complete), calc(1 - var(--slider-complete))) * 2
+      );
+      --slider-border-radius: var(--radius-medium);
+      --slider-tick-width: 0.125rem;
+      --slider-tick-height: var(--spacer-2);
+      --slider-tick-radius: var(--radius-medium);
+      --slider-stepper-padding: 0;
+      --slider-thumb-opacity: calc(
+        min(var(--slider-complete), calc(1 - var(--slider-complete))) * 2
+      );
+      --slider-tick-opacity: 1;
+      .fig-slider-input-container {
+        box-shadow: none !important;
+        &:hover,
+        &:focus-within {
+          &::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border-radius: var(--slider-border-radius);
+            box-shadow: inset 0 0 0 1px var(--figma-color-border) !important;
+          }
+        }
+        &::before {
+          background: var(--figma-color-bg-tertiary) !important;
+          min-width: 0 !important;
+          box-shadow: none !important;
+        }
+        input[type="range"] {
+          border-radius: 0 !important;
+        }
+      }
+
+      &:not([type="delta"]) .fig-slider-input-container::before {
+        width: var(--slider-percent) !important;
+      }
+
+      &[type="delta"] .fig-slider-input-container::before {
+        --left-start: calc(
+          var(--start-percent) - var(--slider-thumb-width) / 2
+        ) !important;
+        left: min(
+          var(--left-start),
+          calc(
+            var(--slider-percent) - var(--slider-complete) *
+              var(--slider-thumb-width)
+          )
+        ) !important;
+        --width: calc(var(--slider-percent) - var(--start-percent)) !important;
+        --abs-width: max(
+          calc(
+            var(--width) + var(--slider-thumb-width) / 2 +
+              (1 - var(--slider-complete)) * var(--slider-thumb-width)
+          ),
+          calc(
+            -1 * var(--width) + var(--slider-thumb-width) / 2 +
+              var(--slider-complete) * var(--slider-thumb-width)
+          )
+        ) !important;
+        width: var(--abs-width) !important;
+      }
+    }
+    datalist {
+      mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        transparent var(--spacer-4),
+        white,
+        transparent calc(100% - var(--spacer-4)),
+        transparent 100%
+      );
+    }
+    fig-input-number {
+      background-color: transparent;
+      box-shadow: none !important;
+      position: absolute;
+      right: var(--spacer-1);
+      width: fit-content;
+      min-width: fit-content;
+      max-width: max-content;
+      flex: 0 0 auto;
+
+      &:hover,
+      &:has(input:focus) {
+        box-shadow: none !important;
+      }
+      &:has(input:focus) {
+        box-shadow: inset 0 0 0 1px var(--figma-color-border-selected) !important;
+      }
+      input {
+        field-sizing: content;
+        width: auto;
+        flex: 0 0 auto;
+        text-align: right;
+        color: var(--field-text-color);
       }
     }
   }

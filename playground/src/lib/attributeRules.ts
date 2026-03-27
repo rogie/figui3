@@ -223,6 +223,20 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "%", "px", "°"],
     },
   },
+  "fig-field-slider": {
+    type: {
+      label: "Type",
+      type: "enum",
+      options: ["range", "hue", "delta", "stepper", "opacity"],
+    },
+    label: { label: "Label", type: "string" },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["", "%", "px", "°"],
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-input-fill": {
     alpha: {
       label: "Alpha",
