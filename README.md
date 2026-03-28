@@ -63,17 +63,18 @@ git clone https://github.com/rogie/figui3.git
 cd figui3
 bun install
 bun dev             # Core component docs at http://localhost:3000
-npm run dev:playground  # Interactive playground app (routes: /figui3, /propkit)
+npm run dev:playground  # Interactive playground app (routes: /figui3, /propkit, /sandbox)
 npm run build:playground # Build playground app
 bun build            # Build dist/fig.js
 ```
 
-### Playground (`/figui3` and `/propkit`)
+### Playground (`/figui3`, `/propkit`, and `/sandbox`)
 
 The playground app is the fastest way to author and validate component markup.
 
 - **`/figui3`**: component-focused examples and attribute controls for FigUI3 primitives.
 - **`/propkit`**: property-panel patterns composed from FigUI3 controls.
+- **`/sandbox`**: a styled React sample app for quick layout and interaction prototyping.
 - Live preview, attributes editing, and code view stay synchronized.
 - Attribute controls write real component markup and preserve internal-only playground metadata where needed.
 
@@ -81,7 +82,7 @@ Open locally:
 
 ```bash
 npm run dev:playground
-# then visit http://localhost:5173/figui3 or http://localhost:5173/propkit
+# then visit http://localhost:5173/figui3, /propkit, or /sandbox
 ```
 
 ## Quick Start

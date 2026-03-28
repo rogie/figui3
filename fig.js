@@ -6694,6 +6694,8 @@ class FigEasingCurve extends HTMLElement {
     const size = 200;
     const dropdown = this.#getDropdownHTML();
 
+    const hs = this.#bezierHandleRadius * 2;
+
     if (this.#mode === "spring") {
       const targetY = 40;
       const startY = 180;
@@ -6702,8 +6704,8 @@ class FigEasingCurve extends HTMLElement {
         <line class="fig-easing-curve-target" x1="0" y1="${targetY}" x2="${size}" y2="${targetY}"/>
         <line class="fig-easing-curve-diagonal" x1="0" y1="${startY}" x2="0" y2="${startY}"/>
         <path class="fig-easing-curve-path"/>
-        <circle class="fig-easing-curve-handle" data-handle="bounce" r="${this.#springHandleRadius}"/>
-        <rect class="fig-easing-curve-duration-bar" data-handle="duration" width="${this.#durationBarWidth}" height="${this.#durationBarHeight}" rx="${this.#durationBarRadius}" ry="${this.#durationBarRadius}"/>
+        <foreignObject class="fig-easing-curve-handle" data-handle="bounce" width="${hs}" height="${hs}"><fig-handle></fig-handle></foreignObject>
+        <foreignObject class="fig-easing-curve-handle fig-easing-curve-duration-bar" data-handle="duration" width="${this.#durationBarWidth}" height="${this.#durationBarHeight}"><fig-handle></fig-handle></foreignObject>
       </svg></div>`;
     }
 
@@ -6715,8 +6717,8 @@ class FigEasingCurve extends HTMLElement {
       <path class="fig-easing-curve-path"/>
       <circle class="fig-easing-curve-endpoint" data-endpoint="start" r="${this.#bezierEndpointRadius}"/>
       <circle class="fig-easing-curve-endpoint" data-endpoint="end" r="${this.#bezierEndpointRadius}"/>
-      <circle class="fig-easing-curve-handle" data-handle="1" r="${this.#bezierHandleRadius}"/>
-      <circle class="fig-easing-curve-handle" data-handle="2" r="${this.#bezierHandleRadius}"/>
+      <foreignObject class="fig-easing-curve-handle" data-handle="1" width="${hs}" height="${hs}"><fig-handle></fig-handle></foreignObject>
+      <foreignObject class="fig-easing-curve-handle" data-handle="2" width="${hs}" height="${hs}"><fig-handle></fig-handle></foreignObject>
     </svg></div>`;
   }
 
@@ -6860,10 +6862,11 @@ class FigEasingCurve extends HTMLElement {
     this.#line2.setAttribute("y1", p3.y);
     this.#line2.setAttribute("x2", p2.x);
     this.#line2.setAttribute("y2", p2.y);
-    this.#handle1.setAttribute("cx", p1.x);
-    this.#handle1.setAttribute("cy", p1.y);
-    this.#handle2.setAttribute("cx", p2.x);
-    this.#handle2.setAttribute("cy", p2.y);
+    const hr = this.#bezierHandleRadius;
+    this.#handle1.setAttribute("x", p1.x - hr);
+    this.#handle1.setAttribute("y", p1.y - hr);
+    this.#handle2.setAttribute("x", p2.x - hr);
+    this.#handle2.setAttribute("y", p2.y - hr);
     if (this.#bezierEndpointStart) {
       this.#bezierEndpointStart.setAttribute("cx", p0.x);
       this.#bezierEndpointStart.setAttribute("cy", p0.y);
@@ -6930,8 +6933,9 @@ class FigEasingCurve extends HTMLElement {
     const peak = this.#findPeakOvershoot(points);
     const peakNorm = (peak.t / totalTime) * durationNorm;
     const peakPt = this.#springToSVG(peakNorm, peak.value);
-    this.#handle1.setAttribute("cx", peakPt.x);
-    this.#handle1.setAttribute("cy", peakPt.y);
+    const hr = this.#bezierHandleRadius;
+    this.#handle1.setAttribute("x", peakPt.x - hr);
+    this.#handle1.setAttribute("y", peakPt.y - hr);
 
     // Duration handle: on the target line
     const targetPt = this.#springToSVG(durationNorm, 1);
@@ -7023,8 +7027,7 @@ class FigEasingCurve extends HTMLElement {
       );
       if (bezierSurface) {
         bezierSurface.addEventListener("pointerdown", (e) => {
-          // Handles keep their own direct drag behavior.
-          if (e.target?.closest?.(".fig-easing-curve-handle")) return;
+          if (e.target?.closest?.(".fig-easing-curve-handle, fig-handle")) return;
           this.#startBezierDrag(e, this.#bezierHandleForClientHalf(e));
         });
       }
@@ -7043,8 +7046,7 @@ class FigEasingCurve extends HTMLElement {
       );
       if (springSurface) {
         springSurface.addEventListener("pointerdown", (e) => {
-          // Bounce handle keeps its own drag mode/cursor.
-          if (e.target?.closest?.(".fig-easing-curve-handle")) return;
+          if (e.target?.closest?.(".fig-easing-curve-handle, fig-handle")) return;
           this.#startSpringDrag(e, "duration");
         });
       }
@@ -7719,14 +7721,14 @@ class FigOriginGrid extends HTMLElement {
     this.innerHTML = `<div class="fig-origin-grid-surface">
       <div class="origin-grid" aria-label="Transform origin grid">
         <div class="origin-grid-cells">${cells}</div>
-        <span class="origin-grid-handle"></span>
+        <fig-handle></fig-handle>
       </div>
     </div>
     ${fieldsMarkup}`;
 
     this.#grid = this.querySelector(".origin-grid");
     this.#cells = Array.from(this.querySelectorAll(".origin-grid-cell"));
-    this.#handle = this.querySelector(".origin-grid-handle");
+    this.#handle = this.querySelector("fig-handle");
     this.#xInput = this.querySelector('fig-input-number[name="x"]');
     this.#yInput = this.querySelector('fig-input-number[name="y"]');
     this.#syncHandlePosition();
@@ -8030,18 +8032,19 @@ class FigInputJoystick extends HTMLElement {
   #boundXFocusOut = null;
   #boundYFocusOut = null;
   #isSyncingValueAttr = false;
+  #defaultPosition = { x: 0.5, y: 0.5 };
 
   constructor() {
     super();
 
-    this.position = { x: 0.5, y: 0.5 }; // Internal position (0-1)
+    this.position = { x: 0.5, y: 0.5 };
     this.isDragging = false;
     this.isShiftHeld = false;
     this.plane = null;
     this.cursor = null;
     this.xInput = null;
     this.yInput = null;
-    this.coordinates = "screen"; // "screen" (0,0 top-left) or "math" (0,0 bottom-left)
+    this.coordinates = "screen";
     this.#initialized = false;
     this.#boundMouseDown = (e) => this.#handleMouseDown(e);
     this.#boundTouchStart = (e) => this.#handleTouchStart(e);
@@ -8072,6 +8075,7 @@ class FigInputJoystick extends HTMLElement {
       this.#setupListeners();
       this.#syncHandlePosition();
       this.#syncValueAttribute();
+      this.#syncResetButton();
       this.#initialized = true;
     });
   }
@@ -8151,8 +8155,13 @@ class FigInputJoystick extends HTMLElement {
             ${labelsMarkup}
             <div class="fig-input-joystick-plane">
               <div class="fig-input-joystick-guides"></div>
-              <div class="fig-input-joystick-handle"></div>
+              <fig-handle></fig-handle>
             </div>
+            <fig-tooltip text="Reset">
+              <fig-button variant="ghost" icon="true" class="fig-joystick-reset" aria-label="Reset to default">
+                <span class="fig-mask-icon" style="--icon: var(--icon-reset)"></span>
+              </fig-button>
+            </fig-tooltip>
           </div>
           ${
             this.#fieldsEnabled
@@ -8183,13 +8192,17 @@ class FigInputJoystick extends HTMLElement {
 
   #setupListeners() {
     this.plane = this.querySelector(".fig-input-joystick-plane");
-    this.cursor = this.querySelector(".fig-input-joystick-handle");
+    this.cursor = this.querySelector("fig-handle");
     this.xInput = this.querySelector("fig-input-number[name='x']");
     this.yInput = this.querySelector("fig-input-number[name='y']");
     this.plane.addEventListener("mousedown", this.#boundMouseDown);
     this.plane.addEventListener("touchstart", this.#boundTouchStart);
     window.addEventListener("keydown", this.#boundKeyDown);
     window.addEventListener("keyup", this.#boundKeyUp);
+    const resetBtn = this.querySelector(".fig-joystick-reset");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => this.#resetToDefault());
+    }
     if (this.#fieldsEnabled && this.xInput && this.yInput) {
       this.xInput.addEventListener("input", this.#boundXInput);
       this.xInput.addEventListener("change", this.#boundXInput);
@@ -8318,13 +8331,33 @@ class FigInputJoystick extends HTMLElement {
 
   #syncValueAttribute() {
     const next = this.value;
-    if (this.getAttribute("value") === next) return;
-    this.#isSyncingValueAttr = true;
-    this.setAttribute("value", next);
-    this.#isSyncingValueAttr = false;
+    if (this.getAttribute("value") !== next) {
+      this.#isSyncingValueAttr = true;
+      this.setAttribute("value", next);
+      this.#isSyncingValueAttr = false;
+    }
+    this.#syncResetButton();
+  }
+
+  #syncResetButton() {
+    const d = this.#defaultPosition;
+    const isDefault =
+      Math.round(this.position.x * 100) === Math.round(d.x * 100) &&
+      Math.round(this.position.y * 100) === Math.round(d.y * 100);
+    this.toggleAttribute("default", isDefault);
+    this.style.setProperty("--is-not-default", isDefault ? "0" : "1");
+  }
+
+  #resetToDefault() {
+    this.position = { ...this.#defaultPosition };
+    this.#syncHandlePosition();
+    this.#syncValueAttribute();
+    this.#emitInputEvent();
+    this.#emitChangeEvent();
   }
 
   #handleMouseDown(e) {
+    if (e.target.closest(".fig-joystick-reset, fig-tooltip")) return;
     this.isDragging = true;
 
     this.#updatePosition(e);
@@ -8351,6 +8384,7 @@ class FigInputJoystick extends HTMLElement {
   }
 
   #handleTouchStart(e) {
+    if (e.target.closest(".fig-joystick-reset, fig-tooltip")) return;
     e.preventDefault();
     this.isDragging = true;
     this.#updatePosition(e.touches[0]);
@@ -8419,6 +8453,7 @@ class FigInputJoystick extends HTMLElement {
     }
     if (this.#initialized) {
       this.#syncHandlePosition();
+      this.#syncResetButton();
     }
   }
   attributeChangedCallback(name, oldValue, newValue) {
@@ -11310,3 +11345,11 @@ class FigChooser extends HTMLElement {
   }
 }
 customElements.define("fig-chooser", FigChooser);
+
+/* Handle */
+class FigHandle extends HTMLElement {
+  constructor() {
+    super();
+  }
+}
+customElements.define("fig-handle", FigHandle);

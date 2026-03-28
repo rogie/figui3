@@ -213,6 +213,34 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "text",
+    name: "Text",
+    description:
+      "A text input field for entering and editing string values with optional slots.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Name</label>
+    <fig-input-text value="Layer 1" placeholder="Enter name…" full></fig-input-text>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "multiline",
+        name: "Multiline",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Description</label>
+    <fig-input-text multiline placeholder="Enter description…" full></fig-input-text>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "number",
     name: "Number",
     description:

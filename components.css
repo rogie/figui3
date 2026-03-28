@@ -1,4 +1,5 @@
-:root {
+:root,
+:host {
   color-scheme: light dark;
 
   /* Background Colors */
@@ -190,7 +191,8 @@
   --figma-color-text-menu-tertiary: rgba(255, 255, 255, 0.4);
 }
 
-:root {
+:root,
+:host {
   /* Typography & Sizing */
   --font-size: 16px;
   --font-family:
@@ -314,6 +316,7 @@
   /* Icons - colorless shapes for use with mask-image */
   --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='black' stroke-linecap='round'/%3E%3C/svg%3E%0A");
   --icon-checkmark: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.084 4.22266C11.2372 3.99292 11.5476 3.93084 11.7773 4.08398C12.0071 4.23716 12.0692 4.54758 11.916 4.77734L7.91602 10.7773C7.83292 10.902 7.6979 10.9833 7.54883 10.998C7.39993 11.0126 7.25229 10.9593 7.14648 10.8535L4.14648 7.85352C3.95126 7.65825 3.95123 7.34173 4.14648 7.14648C4.34174 6.95124 4.65825 6.95126 4.85352 7.14648L7.42188 9.71484L11.084 4.22266Z' fill='white'/%3E%3C/svg%3E%0A");
+  --icon-reset: url("data:image/svg+xml,%3Csvg width='16' height='16' fill='none' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='black' fill-rule='evenodd' d='M6.354 2.146a.5.5 0 0 1 0 .708L5.207 4H8.5a5 5 0 1 1-5 5 .5.5 0 0 1 1 0 4 4 0 1 0 4-4H5.207l1.147 1.146a.5.5 0 1 1-.708.708l-2-2a.5.5 0 0 1 0-.708l2-2a.5.5 0 0 1 .708 0' clip-rule='evenodd'/%3E%3C/svg%3E");
   --icon-steppers: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.7245 6.08191C11.9186 5.95386 12.1826 5.97562 12.3534 6.14637L14.3534 8.14637L14.4179 8.22449C14.546 8.41852 14.5242 8.68253 14.3534 8.8534C14.1826 9.02426 13.9186 9.04601 13.7245 8.91785L13.6464 8.8534L11.9999 7.20691L10.3534 8.8534C10.1582 9.04866 9.84166 9.04866 9.6464 8.8534C9.45123 8.65813 9.45117 8.3416 9.6464 8.14637L11.6464 6.14637L11.7245 6.08191Z' fill='black'/%3E%3Cpath d='M13.7248 15.0822C13.9189 14.9541 14.1829 14.9758 14.3537 15.1467C14.5246 15.3176 14.5463 15.5815 14.4182 15.7756L14.3537 15.8537L12.3537 17.8537C12.1829 18.0246 11.9189 18.0463 11.7248 17.9182L11.6467 17.8537L9.64669 15.8537L9.58224 15.7756C9.45407 15.5815 9.47583 15.3176 9.64669 15.1467C9.81756 14.9758 10.0815 14.9541 10.2756 15.0822L10.3537 15.1467L12.0002 16.7932L13.6467 15.1467L13.7248 15.0822Z' fill='black' /%3E%3C/svg%3E%0A");
   --icon-eyedropper: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M15.1592 5.65801C16.0376 4.78045 17.4621 4.78055 18.3408 5.65899L18.4951 5.82989C19.1671 6.65442 19.168 7.84476 18.4951 8.66973L18.3408 8.84063L16.6455 10.533C17.1104 11.083 17.1181 11.889 16.6641 12.4461L16.5605 12.5604C16.0111 13.1097 15.1425 13.1428 14.5537 12.6629L14.5342 12.6453L10.0908 17.0916C9.6188 17.5633 8.98876 17.7764 8.375 17.742L7.56055 18.5574C6.97441 19.1432 6.02451 19.1422 5.43945 18.5584V18.5574C4.8538 17.9718 4.85405 17.0221 5.43945 16.4363L6.25586 15.618C6.22412 15.0058 6.44026 14.3794 6.90918 13.91L11.3516 9.46367C10.856 8.87434 10.885 7.99381 11.4395 7.43926L11.5537 7.33574C12.1094 6.88283 12.9136 6.88854 13.4639 7.35137L15.1592 5.65801ZM7.61621 14.617C7.33755 14.8961 7.21782 15.2747 7.25781 15.6385C7.27925 15.8351 7.24419 16.0445 7.10449 16.1844L6.14648 17.1434C5.9516 17.3387 5.95135 17.6553 6.14648 17.8504C6.34167 18.0449 6.65842 18.0451 6.85352 17.8504L7.80859 16.8943C7.94931 16.7536 8.16065 16.7184 8.3584 16.741C8.72329 16.7828 9.10374 16.6643 9.38379 16.3846L13.8223 11.9432L12.0547 10.1756L7.61621 14.617ZM17.6338 6.36602C17.1458 5.87828 16.3544 5.8783 15.8662 6.36602L14.084 8.14629L14.0186 8.20586C13.6767 8.48476 13.1722 8.46484 12.8535 8.14629C12.6583 7.95131 12.3417 7.95119 12.1465 8.14629C11.9514 8.34148 11.9515 8.65808 12.1465 8.85332L15.1465 11.8533C15.3175 12.024 15.5814 12.0451 15.7754 11.9168L15.8535 11.8533C16.0486 11.6582 16.0484 11.3416 15.8535 11.1463V11.1453C15.8524 11.1443 15.8507 11.1434 15.8496 11.1424C15.5128 10.8013 15.514 10.2513 15.8535 9.91192L17.6338 8.1336C18.1216 7.6457 18.1213 6.85425 17.6338 6.36602Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
   --icon-add: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12 6C12.2761 6 12.5 6.22386 12.5 6.5V11.5H17.5C17.7761 11.5 18 11.7239 18 12C18 12.2761 17.7761 12.5 17.5 12.5H12.5V17.5C12.5 17.7761 12.2761 18 12 18C11.7239 18 11.5 17.7761 11.5 17.5V12.5H6.5C6.22386 12.5 6 12.2761 6 12C6 11.7239 6.22386 11.5 6.5 11.5H11.5V6.5C11.5 6.22386 11.7239 6 12 6Z' fill='currentColor'/%3E%3C/svg%3E");
@@ -1387,19 +1390,13 @@ fig-easing-curve {
   flex-direction: column;
   gap: var(--spacer-2);
   --stroke-width: 1;
-  --easing-bezier-handle-radius: 4.25;
-  --easing-spring-handle-radius: 4.25;
+  --easing-bezier-handle-radius: 6;
+  --easing-spring-handle-radius: 6;
   --easing-handle-fill: var(--figma-color-border-strong);
-  --easing-handle-fill-active: var(--figma-color-bg-brand);
-  --easing-handle-stroke: var(--figma-color-bg-secondary);
-  --easing-handle-stroke-width: var(--stroke-width);
   --easing-duration-bar-width: 4.25;
   --easing-duration-bar-height: 16;
   --easing-duration-bar-radius: 3;
   --aspect-ratio: 1 / 1;
-  --easing-duration-bar-fill: var(--figma-color-border-strong);
-  --easing-duration-bar-stroke: var(--figma-color-bg-secondary);
-  --easing-duration-bar-stroke-width: var(--stroke-width);
 
   width: 100%;
   .fig-easing-curve-svg {
@@ -1458,35 +1455,28 @@ fig-easing-curve {
     stroke-linecap: round;
   }
   .fig-easing-curve-handle {
-    fill: var(--easing-handle-fill);
-    cursor: default;
+    overflow: visible;
     pointer-events: all;
-    stroke: var(--easing-handle-stroke);
-    stroke-width: var(--easing-handle-stroke-width);
-    &:hover {
-      fill: var(--easing-handle-fill-active);
+    cursor: default;
+
+    fig-handle {
+      width: 100%;
+      height: 100%;
+      pointer-events: all;
+      cursor: default;
     }
-    &:active {
+
+    &:active fig-handle {
       cursor: grabbing;
-      fill: var(--easing-handle-fill-active);
     }
   }
   .fig-easing-curve-endpoint {
     fill: var(--easing-handle-fill);
   }
-  .fig-easing-curve-duration-bar {
-    fill: var(--easing-duration-bar-fill);
-    stroke: var(--easing-duration-bar-stroke);
-    stroke-width: var(--easing-duration-bar-stroke-width);
-    cursor: default;
-    pointer-events: all;
-    &:hover {
-      fill: var(--easing-handle-fill-active);
-    }
-    &:active {
-      cursor: grabbing;
-      fill: var(--easing-handle-fill-active);
-    }
+  .fig-easing-curve-duration-bar fig-handle {
+    --border-radius: calc(var(--easing-duration-bar-radius) * 1px);
+    --width: calc(var(--easing-duration-bar-width) * 1px);
+    --height: calc(var(--easing-duration-bar-height) * 1px);
   }
   .fig-easing-curve-dropdown {
     option svg {
@@ -1727,13 +1717,13 @@ fig-origin-grid {
     &.is-dragging {
       cursor: grabbing !important;
 
-      .origin-grid-handle {
+      fig-handle {
         cursor: grabbing !important;
       }
     }
 
     &.drag-disabled {
-      .origin-grid-handle {
+      fig-handle {
         cursor: default;
       }
     }
@@ -1772,25 +1762,19 @@ fig-origin-grid {
     }
   }
 
-  .origin-grid-handle {
+  fig-handle {
     --origin-overflow-rotation: 0deg;
     --origin-overflow-nudge-base: var(--spacer-2-5);
     --origin-overflow-nudge-x: 0px;
     --origin-overflow-nudge-y: 0px;
-    --origin-grid-handle-radius: var(--radius-small);
     --origin-overflow-nudge-x-scale: calc((100cqb / 100cqi) * -1);
     --origin-overflow-nudge-y-scale: calc((100cqb / 100cqi) * -1);
+    --width: var(--origin-grid-handle-size);
+    --height: var(--origin-grid-handle-size);
+    --border-radius: var(--radius-small);
     position: absolute;
     left: 50%;
     top: 50%;
-    width: var(--origin-grid-handle-size);
-    height: var(--origin-grid-handle-size);
-    border-radius: var(--origin-grid-handle-radius);
-    background: var(--figma-color-bg-brand);
-    box-shadow:
-      inset 0 0 0 0.09375rem var(--handle-color),
-      0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-      var(--elevation-100-canvas);
     transform: translate(
         calc(-50% + var(--origin-overflow-nudge-x)),
         calc(-50% + var(--origin-overflow-nudge-y))
@@ -1809,8 +1793,8 @@ fig-origin-grid {
       mask-position: center;
       -webkit-mask-size: 24px 24px;
       mask-size: 24px 24px;
-      border-radius: 0;
-      box-shadow: none;
+      --border-radius: 0;
+      --box-shadow: none;
     }
 
     &.beyond-bounds-x.overflow-right {
@@ -3290,6 +3274,8 @@ fig-field-slider {
   }
 
   &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
     label,
     input {
       color: var(--figma-color-text-disabled);
@@ -3515,6 +3501,7 @@ fig-segmented-control {
 fig-joystick {
   --size: 100%;
   --aspect-ratio: 1 / 1;
+  --is-not-default: 0;
   display: flex;
   flex-direction: column;
   gap: var(--spacer-2);
@@ -3555,6 +3542,34 @@ fig-joystick {
     &:focus {
       outline: 0;
     }
+  }
+
+  .fig-joystick-reset {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    z-index: 3;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background-color: var(--figma-color-bg-secondary) !important;
+    &:hover {
+      .fig-mask-icon {
+        color: var(--figma-color-text);
+      }
+    }
+
+    .fig-mask-icon {
+      --size: var(--spacer-3);
+      color: var(--figma-color-text-tertiary);
+    }
+  }
+
+  &:not([default]) .fig-joystick-reset {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .fig-joystick-axis-label {
@@ -3667,19 +3682,10 @@ fig-joystick {
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
   }
 
-  .fig-input-joystick-handle {
+  fig-handle {
     position: absolute;
-    z-index: 2;
-    width: 0.75rem;
-    height: 0.75rem;
-    background: var(--figma-color-bg-brand);
-    box-shadow:
-      inset 0 0 0 0.09375rem var(--handle-color),
-      0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-      var(--elevation-100-canvas);
-    border-radius: 50%;
+    z-index: 4;
     transform: translate(-50%, -50%);
-    transition: box-shadow var(--slider-transition);
   }
 }
 
@@ -4443,6 +4449,27 @@ fig-choice {
     opacity: 0.4;
     cursor: default;
   }
+}
+
+fig-handle {
+  --width: 0.75rem;
+  --height: 0.75rem;
+  --fill: var(--figma-color-bg-brand);
+  --border-radius: 50%;
+  --box-shadow:
+    inset 0 0 0 0.09375rem var(--handle-color),
+    0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--elevation-100-canvas);
+  --outline: none;
+  --border: none;
+
+  display: inline-block;
+  width: var(--width);
+  height: var(--height);
+  background: var(--fill);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  outline: var(--outline);
+  border: var(--border);
 }
 
 @keyframes fig-shimmer {

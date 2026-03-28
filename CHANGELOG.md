@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.8.0]
+
+### Added
+
+- Added `fig-handle` component — a reusable, style-customizable handle element with CSS vars for `--width`, `--height`, `--fill`, `--border-radius`, `--box-shadow`, `--outline`, and `--border`.
+- Added `--icon-reset` icon token.
+- Added reset button to `fig-joystick` that appears when the value differs from the default (50% 50%) and resets on click. Exposes `default` attribute and `--is-not-default` CSS var.
+- Added `:host` selectors to `base.css` and `components.css` root rules for shadow DOM compatibility.
+
+### Changed
+
+- Refactored `fig-joystick` to use `fig-handle` instead of a styled div.
+- Refactored `fig-origin-grid` to use `fig-handle` instead of a styled span, setting `--border-radius` to match the original rounded-square shape.
+- Refactored `fig-easing-curve` handles to use `foreignObject` + `fig-handle` instead of SVG circles, and the duration bar to use `foreignObject` + `fig-handle` instead of an SVG rect.
+- Increased easing curve handle size from 8.5 to 12 SVG units.
+- Removed unused easing curve CSS variables (`--easing-duration-bar-fill`, `--easing-duration-bar-stroke`, `--easing-duration-bar-stroke-width`).
+- Added `/sandbox` route documentation to README.
+
 ## [3.7.0]
 
 ### Added
