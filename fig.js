@@ -4019,6 +4019,7 @@ class FigFieldSlider extends HTMLElement {
   #slider = null;
   #observer = null;
   #managedSliderAttrs = new Set();
+  #steppersSyncFrame = 0;
   #boundHandleSliderInput = null;
   #boundHandleSliderChange = null;
   #ignoredSliderAttrs = new Set(["variant", "color", "text", "full"]);
@@ -4070,6 +4071,10 @@ class FigFieldSlider extends HTMLElement {
 
   disconnectedCallback() {
     this.#observer?.disconnect();
+    if (this.#steppersSyncFrame) {
+      cancelAnimationFrame(this.#steppersSyncFrame);
+      this.#steppersSyncFrame = 0;
+    }
     this.#unbindSliderEvents();
   }
 
@@ -4180,13 +4185,47 @@ class FigFieldSlider extends HTMLElement {
     }
 
     this.#managedSliderAttrs = nextManaged;
+    this.#queueSteppersSync();
   }
 
   #getForwardedSliderAttrNames() {
-    const reserved = new Set(["label", "direction", "oninput", "onchange"]);
+    const reserved = new Set([
+      "label",
+      "direction",
+      "oninput",
+      "onchange",
+      "steppers",
+    ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !this.#ignoredSliderAttrs.has(name),
     );
+  }
+
+  #queueSteppersSync() {
+    if (this.#steppersSyncFrame) {
+      cancelAnimationFrame(this.#steppersSyncFrame);
+    }
+    this.#steppersSyncFrame = requestAnimationFrame(() => {
+      this.#steppersSyncFrame = 0;
+      this.#syncSteppersToNumberInput();
+    });
+  }
+
+  #syncSteppersToNumberInput() {
+    if (!this.#slider) return;
+    const numberInput = this.#slider.querySelector("fig-input-number");
+    if (!numberInput) return;
+
+    const hasSteppers =
+      this.hasAttribute("steppers") &&
+      this.getAttribute("steppers") !== "false";
+    if (!hasSteppers) {
+      numberInput.removeAttribute("steppers");
+      return;
+    }
+
+    const steppersValue = this.getAttribute("steppers");
+    numberInput.setAttribute("steppers", steppersValue ?? "");
   }
 
   #bindSliderEvents() {

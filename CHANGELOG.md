@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.7.0]
+
+### Added
+
+- Added `steppers` passthrough support to `fig-field-slider`, forwarding to its internal `fig-input-number`.
+- Added a `Steppers` toggle to the `/propkit` field-slider attributes controls.
+
+### Changed
+
+- Updated `fig-origin-grid` and `fig-joystick` handle visuals for a more consistent compact handle treatment.
+- Added configurable slider thumb outline tokens and applied focus-outline styling for `fig-field-slider` thumbs.
+- Refined `fig-field-slider` number-input pill styling with explicit border radius.
+
+### Fixed
+
+- Fixed `fig-field-slider` steppers sync so the internal number input stays in sync after slider re-renders.
+- Fixed overflowed `fig-origin-grid` handles to suppress regular handle box-shadow in arrow-mask overflow states.
+
 ## [3.6.0]
 
 ### Added

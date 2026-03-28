@@ -235,6 +235,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "%", "px", "°"],
     },
+    steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-fill": {
