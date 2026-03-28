@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.8.2]
+
+### Changed
+
+- Changed easing curve arm stroke from `--figma-color-border-strong` to `--figma-color-bordertranslucent` for a softer appearance.
+
 ## [3.8.1]
 
 ### Changed

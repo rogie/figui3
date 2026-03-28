@@ -1436,7 +1436,7 @@ fig-easing-curve {
     fill: transparent;
   }
   .fig-easing-curve-arm {
-    stroke: var(--figma-color-border-strong);
+    stroke: var(--figma-color-bordertranslucent);
     stroke-width: var(--stroke-width);
     stroke-linejoin: round;
     stroke-linecap: round;
