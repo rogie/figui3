@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.8.1]
+
+### Changed
+
+- Reduced easing curve handle radius from 6 to 5 for bezier and spring handles.
+- Updated duration bar width from 4.25 to 5.
+- Switched `fig-handle` inside easing curve handles to use explicit `--width`/`--height` CSS vars instead of `width: 100%; height: 100%`.
+
 ## [3.8.0]
 
 ### Added
