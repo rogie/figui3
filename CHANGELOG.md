@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.9.1]
+
+### Fixed
+
+- Synced segmented-control playground examples to explicitly use `sizing="equal"` so Attributes View and code markup stay aligned by default on `/figui3` and `/propkit`.
+
 ## [3.9.0]
 
 ### Added
