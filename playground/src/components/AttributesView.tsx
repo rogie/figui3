@@ -343,45 +343,53 @@ export default function AttributesView({
           const textInputMultiline =
             target.controlTag === "fig-input-text" &&
             target.controlAttributes.multiline !== undefined;
-          const visibleControlEntries = controlEntries.filter(
-            (entry) =>
-              !hiddenControlAttrs.has(entry.name) &&
-              !(
-                entry.name === "placeholder" &&
-                target.controlTag === "fig-slider" &&
-                !sliderTextEnabled
-              ) &&
-              !(
-                entry.name === "units" &&
-                target.controlTag === "fig-slider" &&
-                !sliderTextEnabled
-              ) &&
-              !(
-                entry.name === "handle" &&
-                target.controlTag === "fig-dialog" &&
-                !dialogDragEnabled
-              ) &&
-              !(
-                entry.name === "perspective-distance" &&
-                target.controlTag === "fig-3d-rotate" &&
-                !perspectiveEnabled
-              ) &&
-              !(
-                entry.name === "multiline" &&
-                target.controlTag === "fig-input-text"
-              ) &&
-              !(
-                (entry.name === "autoresize" ||
-                  entry.name === "resizable") &&
-                target.controlTag === "fig-input-text" &&
-                !textInputMultiline
-              ) &&
-              !(
-                entry.name === "type" &&
-                target.controlTag === "fig-input-text" &&
-                textInputMultiline
-              ),
-          );
+          const visibleControlEntries = controlEntries
+            .filter(
+              (entry) =>
+                !hiddenControlAttrs.has(entry.name) &&
+                !(
+                  entry.name === "placeholder" &&
+                  target.controlTag === "fig-slider" &&
+                  !sliderTextEnabled
+                ) &&
+                !(
+                  entry.name === "units" &&
+                  target.controlTag === "fig-slider" &&
+                  !sliderTextEnabled
+                ) &&
+                !(
+                  entry.name === "handle" &&
+                  target.controlTag === "fig-dialog" &&
+                  !dialogDragEnabled
+                ) &&
+                !(
+                  entry.name === "perspective-distance" &&
+                  target.controlTag === "fig-3d-rotate" &&
+                  !perspectiveEnabled
+                ) &&
+                !(
+                  entry.name === "multiline" &&
+                  target.controlTag === "fig-input-text"
+                ) &&
+                !(
+                  (entry.name === "autoresize" ||
+                    entry.name === "resizable") &&
+                  target.controlTag === "fig-input-text" &&
+                  !textInputMultiline
+                ) &&
+                !(
+                  entry.name === "type" &&
+                  target.controlTag === "fig-input-text" &&
+                  textInputMultiline
+                ),
+            )
+            .sort((a, b) => {
+              // Keep segmented-control animation toggle at the bottom of the panel.
+              if (target.controlTag !== "fig-segmented-control") return 0;
+              if (a.name === "animated" && b.name !== "animated") return 1;
+              if (b.name === "animated" && a.name !== "animated") return -1;
+              return 0;
+            });
 
           const renderControl = (
             entry: RuleEntry,
@@ -607,6 +615,11 @@ export default function AttributesView({
                 (name === "direction" &&
                   options.includes("horizontal") &&
                   options.includes("vertical")) ||
+                (target.controlTag === "fig-segmented-control" &&
+                  scope === "control" &&
+                  name === "sizing" &&
+                  options.includes("equal") &&
+                  options.includes("auto")) ||
                 (scope === "field" &&
                   name === "columns" &&
                   options.includes("thirds") &&

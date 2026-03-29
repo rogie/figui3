@@ -302,11 +302,14 @@ A segmented button group for exclusive selection.
 |-----------|------|---------|-------------|
 | `name` | string | — | Control group identifier |
 | `value` | string | — | Selected segment value (trimmed, case-sensitive match) |
+| `animated` | boolean | `false` | Enables animated segment indicator (`animated` or `animated="true"`); omit or set `animated="false"` to disable |
+| `sizing` | `"equal"` \| `"auto"` | `"equal"` | Segment width mode (`equal` = evenly distributed, `auto` = content width) |
 
 Selection behavior:
 - If `fig-segmented-control[value]` is set, it takes precedence and selects the first matching segment.
 - Segment match value resolves from `fig-segment[value]` when present and non-empty; otherwise it falls back to `fig-segment` text content (`textContent.trim()`).
 - If no segment matches the control `value`, current selection is preserved.
+- Animated indicator does not run on initial paint; it only animates subsequent selection changes when `animated` is enabled.
 
 Events:
 - Emits bubbling `input` and `change` events when user interaction changes selection.

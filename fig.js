@@ -2442,18 +2442,25 @@ customElements.define("fig-segment", FigSegment);
 /**
  * A custom segmented control container element.
  * @attr {string} name - Identifier for the segmented control group
+ * @attr {string} value - Selected segment value
+ * @attr {boolean} animated - Enables animated selection indicator
+ * @attr {"equal"|"auto"} sizing - Segment sizing mode
  */
 class FigSegmentedControl extends HTMLElement {
   #selectedSegment = null;
   #boundHandleClick = this.handleClick.bind(this);
   #mutationObserver = null;
+  #resizeObserver = null;
+  #indicatorFrame = 0;
+  #indicatorSyncInstant = false;
+  #hasRenderedIndicator = false;
 
   constructor() {
     super();
   }
 
   static get observedAttributes() {
-    return ["disabled", "value"];
+    return ["disabled", "value", "animated", "sizing"];
   }
 
   connectedCallback() {
@@ -2464,10 +2471,13 @@ class FigSegmentedControl extends HTMLElement {
         this.getAttribute("disabled") !== "false",
     );
     this.#startSegmentObserver();
+    this.#startResizeObserver();
 
     // Defer initial selection so child segments are available.
     requestAnimationFrame(() => {
       this.#syncSelectionFromAttributes({ enforceFallback: true });
+      this.#refreshResizeObserverTargets();
+      this.#queueIndicatorSync({ forceInstant: true });
     });
   }
 
@@ -2475,6 +2485,14 @@ class FigSegmentedControl extends HTMLElement {
     this.removeEventListener("click", this.#boundHandleClick);
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = null;
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+    if (this.#indicatorFrame) {
+      cancelAnimationFrame(this.#indicatorFrame);
+      this.#indicatorFrame = 0;
+    }
+    this.#indicatorSyncInstant = false;
+    this.#hasRenderedIndicator = false;
   }
 
   get selectedSegment() {
@@ -2492,7 +2510,9 @@ class FigSegmentedControl extends HTMLElement {
         seg.removeAttribute("selected");
       }
     }
-    this.#selectedSegment = segment;
+    this.#selectedSegment =
+      segment instanceof HTMLElement && this.contains(segment) ? segment : null;
+    this.#queueIndicatorSync();
   }
 
   get value() {
@@ -2559,10 +2579,98 @@ class FigSegmentedControl extends HTMLElement {
     return false;
   }
 
+  #isAnimatedEnabled() {
+    const rawAnimated = this.getAttribute("animated");
+    if (rawAnimated === null) return false;
+    if (rawAnimated === "") return true;
+    return rawAnimated.trim().toLowerCase() === "true";
+  }
+
+  #queueIndicatorSync({ forceInstant = false } = {}) {
+    this.#indicatorSyncInstant = this.#indicatorSyncInstant || forceInstant;
+    if (this.#indicatorFrame) return;
+
+    this.#indicatorFrame = requestAnimationFrame(() => {
+      this.#indicatorFrame = 0;
+      const nextForceInstant = this.#indicatorSyncInstant;
+      this.#indicatorSyncInstant = false;
+      this.#syncIndicator({ forceInstant: nextForceInstant });
+    });
+  }
+
+  #syncIndicator({ forceInstant = false } = {}) {
+    const isDisabled =
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    const isAnimated = this.#isAnimatedEnabled();
+    const activeSegment =
+      this.#selectedSegment && this.contains(this.#selectedSegment)
+        ? this.#selectedSegment
+        : this.#getFirstSelectedSegment();
+
+    if (isDisabled || !isAnimated) {
+      this.style.setProperty("--seg-indicator-opacity", "0");
+      this.style.setProperty("--seg-indicator-transition-duration", "0ms");
+      this.removeAttribute("data-indicator-ready");
+      if (!isAnimated || isDisabled) {
+        this.#hasRenderedIndicator = false;
+      }
+      return;
+    }
+
+    if (!activeSegment) {
+      // During transient mutation/paint windows, keep the previous indicator
+      // state to avoid flicker while the next selected segment resolves.
+      if (this.#hasRenderedIndicator) return;
+      this.style.setProperty("--seg-indicator-opacity", "0");
+      this.style.setProperty("--seg-indicator-transition-duration", "0ms");
+      this.removeAttribute("data-indicator-ready");
+      return;
+    }
+
+    const hostRect = this.getBoundingClientRect();
+    const segmentRect = activeSegment.getBoundingClientRect();
+    if (hostRect.width <= 0 || segmentRect.width <= 0) {
+      if (this.#hasRenderedIndicator) return;
+      this.style.setProperty("--seg-indicator-opacity", "0");
+      this.style.setProperty("--seg-indicator-transition-duration", "0ms");
+      this.removeAttribute("data-indicator-ready");
+      return;
+    }
+
+    const x = Math.max(0, segmentRect.left - hostRect.left);
+    this.style.setProperty("--seg-indicator-x", `${x}px`);
+    this.style.setProperty("--seg-indicator-w", `${segmentRect.width}px`);
+    this.style.setProperty("--seg-indicator-opacity", "1");
+    this.style.setProperty(
+      "--seg-indicator-transition-duration",
+      !this.#hasRenderedIndicator || forceInstant ? "0ms" : "150ms",
+    );
+    this.setAttribute("data-indicator-ready", "true");
+    this.#hasRenderedIndicator = true;
+  }
+
+  #startResizeObserver() {
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = new ResizeObserver(() => {
+      this.#queueIndicatorSync();
+    });
+    this.#refreshResizeObserverTargets();
+  }
+
+  #refreshResizeObserverTargets() {
+    if (!this.#resizeObserver) return;
+    this.#resizeObserver.disconnect();
+    this.#resizeObserver.observe(this);
+    this.querySelectorAll("fig-segment").forEach((segment) => {
+      this.#resizeObserver?.observe(segment);
+    });
+  }
+
   #syncSelectionFromAttributes({ enforceFallback = false } = {}) {
     const segments = this.querySelectorAll("fig-segment");
     if (segments.length === 0) {
       this.#selectedSegment = null;
+      this.#queueIndicatorSync({ forceInstant: true });
       return;
     }
 
@@ -2623,6 +2731,7 @@ class FigSegmentedControl extends HTMLElement {
           this.hasAttribute("disabled") &&
             this.getAttribute("disabled") !== "false",
         );
+        this.#refreshResizeObserverTargets();
         this.#syncSelectionFromAttributes({ enforceFallback: true });
       }
     });
@@ -2682,11 +2791,25 @@ class FigSegmentedControl extends HTMLElement {
 
     if (name === "disabled") {
       this.#applyDisabled(newValue !== null && newValue !== "false");
+      this.#queueIndicatorSync({ forceInstant: true });
       return;
     }
 
     if (name === "value") {
       this.#syncSelectionFromAttributes({ enforceFallback: false });
+      return;
+    }
+
+    if (name === "animated") {
+      if (!this.#isAnimatedEnabled()) {
+        this.#hasRenderedIndicator = false;
+      }
+      this.#queueIndicatorSync({ forceInstant: true });
+      return;
+    }
+
+    if (name === "sizing") {
+      this.#queueIndicatorSync({ forceInstant: true });
     }
   }
 }

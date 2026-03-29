@@ -212,12 +212,22 @@ export default function ExampleView({
 
     const handleChange = (event: Event) => {
       const target = event.target as HTMLElement | null;
-      if (!target || !VALUE_SYNC_TAGS.has(target.tagName.toLowerCase())) return;
+      const tagName = target?.tagName.toLowerCase();
+      if (!target || !tagName || !VALUE_SYNC_TAGS.has(tagName)) return;
       const value = target.getAttribute("value");
       if (value === null) return;
       const fieldIndex = resolveFieldIndex(target);
       if (fieldIndex < 0) return;
       controlValueCacheRef.current.delete(fieldIndex);
+      const shouldSkipPersistForAnimatedSegmentedControl =
+        tagName === "fig-segmented-control" &&
+        target.hasAttribute("animated") &&
+        target.getAttribute("animated") !== "false";
+      if (shouldSkipPersistForAnimatedSegmentedControl) {
+        // Avoid full example markup refresh after click; preserving DOM state
+        // prevents segmented indicator/text flicker in animated mode.
+        return;
+      }
       onPersistControlValue?.(fieldIndex, value);
     };
 
@@ -241,7 +251,7 @@ export default function ExampleView({
       let target: Element | null = null;
       if (fields.length && fields[fieldIndex]) {
         target = fields[fieldIndex].querySelector(
-          "fig-3d-rotate, fig-origin-grid, fig-joystick",
+          "fig-3d-rotate, fig-origin-grid, fig-joystick, fig-segmented-control",
         );
       } else if (controls) {
         target = controls[fieldIndex] ?? null;

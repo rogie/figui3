@@ -3450,16 +3450,44 @@ fig-segmented-control {
   gap: 0;
   display: inline-flex;
   align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  --seg-indicator-x: 0px;
+  --seg-indicator-w: 0px;
+  --seg-indicator-opacity: 0;
+  --seg-indicator-transition-duration: 0ms;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 0;
+    width: var(--seg-indicator-w);
+    height: calc(100% - 2px);
+    transform: translateX(var(--seg-indicator-x));
+    border-radius: calc(var(--radius-medium) - 1px);
+    background-color: var(--figma-color-bg);
+    box-shadow: 0 0 0 1px var(--figma-color-border);
+    opacity: var(--seg-indicator-opacity);
+    pointer-events: none;
+    z-index: 0;
+    transition:
+      transform var(--seg-indicator-transition-duration) ease,
+      width var(--seg-indicator-transition-duration) ease,
+      opacity 0.12s ease;
+  }
 
   & fig-segment {
-    flex: 1;
+    flex: 1 1 0;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    z-index: 1;
     appearance: none;
     color: var(--figma-color-text-secondary);
     padding: 0 var(--spacer-2);
+    transition: none;
 
     &[selected]:not([selected="false"]),
     &[selected="true"] {
@@ -3479,6 +3507,42 @@ fig-segmented-control {
     }
   }
 
+  &:not([sizing]),
+  &[sizing=""],
+  &[sizing="equal"] {
+    & fig-segment {
+      flex: 1 1 0;
+    }
+  }
+
+  &[sizing="auto"] {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    flex: 0 0 auto;
+
+    &[full]:not([full="false"]) {
+      display: inline-flex;
+      width: fit-content;
+      flex: 0 0 auto;
+      align-self: auto;
+    }
+
+    & fig-segment {
+      flex: 0 0 auto;
+    }
+  }
+
+  &[animated]:not([animated="false"]) {
+    & fig-segment {
+      &[selected]:not([selected="false"]),
+      &[selected="true"] {
+        background-color: transparent;
+        box-shadow: none;
+      }
+    }
+  }
+
   &[size="large"] {
     height: var(--spacer-5);
 
@@ -3489,12 +3553,20 @@ fig-segmented-control {
 
   &[disabled]:not([disabled="false"]) {
     pointer-events: none;
+    --seg-indicator-opacity: 0;
 
     fig-segment {
       color: var(--figma-color-text-disabled);
       background-color: transparent;
       box-shadow: none;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmented-control::before,
+  fig-segmented-control::before {
+    transition: none !important;
   }
 }
 

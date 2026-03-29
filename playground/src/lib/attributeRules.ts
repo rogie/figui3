@@ -268,6 +268,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-segmented-control": {
     value: { label: "Value", type: "string" },
     name: { label: "Name", type: "string" },
+    animated: { label: "Animated", type: "boolean", boolMode: "presence" },
+    sizing: {
+      label: "Sizing",
+      type: "enum",
+      options: ["equal", "auto"],
+    },
   },
   "fig-easing-curve": {
     dropdown: { label: "Dropdown", type: "boolean", boolMode: "string" },
@@ -297,11 +303,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "",
         "rotateX,rotateY,rotateZ",
         "rotateX,rotateY",
-        "rotateX,rotateZ",
-        "rotateY,rotateZ",
-        "rotateX",
-        "rotateY",
-        "rotateZ",
       ],
     },
   },

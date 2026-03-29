@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.9.0]
+
+### Added
+
+- Added `animated` and `sizing` attributes to `fig-segmented-control`.
+- Added a sliding selected-segment indicator for `fig-segmented-control` when `animated` is enabled.
+- Added `Animated` and `Sizing` controls for segmented controls in playground Attributes View.
+
+### Changed
+
+- Updated segmented-control sizing so `sizing="auto"` keeps intrinsic width, including when `full` is present.
+- Updated playground segmented-control examples on `/figui3` and `/propkit` so `Animated` defaults to off in Attributes View.
+- Updated 3D Rotate `fields` options in playground Attributes View to `None`, `X, Y, Z`, and `X, Y`.
+- Updated segmented-control docs in `README.md` to include `animated` and `sizing`.
+
+### Fixed
+
+- Fixed animated segmented-control flicker by stabilizing indicator sync during transient layout/mutation frames.
+- Fixed playground animated segmented-control flashing by avoiding value persistence re-renders for animated controls.
+
 ## [3.8.2]
 
 ### Changed
