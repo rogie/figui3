@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.9.2]
+
+### Changed
+
+- Updated `fig-choice` styling with reusable tokens for padding and selection-ring width, and adjusted selected-state visuals to use a secondary background plus an image outline ring.
+
+### Fixed
+
+- Removed disabled-state opacity dimming from `fig-chit` so disabled chips keep consistent text/icon contrast.
+
 ## [3.9.1]
 
 ### Fixed

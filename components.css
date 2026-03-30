@@ -1243,7 +1243,6 @@ fig-chit {
 
   &[disabled] {
     pointer-events: none;
-    opacity: 0.5;
   }
 
   &::before {
@@ -4498,21 +4497,31 @@ fig-chooser {
 }
 
 fig-choice {
+  --fig-choice-selection-ring-width: 1px;
+  --fig-choice-padding: var(--spacer-2);
   display: flex;
   align-items: center;
   flex-direction: column;
   border-radius: var(--radius-large);
-  padding: var(--spacer-2);
   gap: var(--spacer-2);
   outline: none;
   border: 1px solid transparent;
+  cursor: default;
+
+  padding: var(--fig-choice-padding);
 
   &:hover:not([selected]):not([disabled]):not([aria-disabled="true"]) {
     background-color: var(--figma-color-bg-secondary);
   }
 
   &[selected] {
-    background-color: var(--figma-color-bg-selected);
+    background-color: var(--figma-color-bg-secondary);
+    & > fig-image {
+      border-radius: var(--radius-medium);
+      outline: var(--fig-choice-selection-ring-width) solid
+        var(--figma-color-border-selected);
+      outline-offset: 0;
+    }
   }
 
   &[disabled]:not([disabled="false"]),
