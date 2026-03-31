@@ -313,6 +313,17 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-input-angle": {
     text: { label: "Text", type: "boolean", boolMode: "string" },
+    dial: {
+      label: "Dial",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    rotations: {
+      label: "Rotations",
+      type: "boolean",
+      boolMode: "presence",
+    },
   },
   "fig-joystick": {
     "aspect-ratio": aspectRatioRule,

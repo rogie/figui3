@@ -8620,9 +8620,10 @@ customElements.define("fig-joystick", FigInputJoystick);
  * @attr {number} value - The current angle of the handle in degrees.
  * @attr {number} precision - The number of decimal places for the output.
  * @attr {boolean} text - Whether to display a text input for the angle value.
+ * @attr {boolean} dial - Whether to display the circular dial control. Defaults to true.
  * @attr {number} adjacent - The adjacent value of the angle.
  * @attr {number} opposite - The opposite value of the angle.
- * @attr {boolean} show-rotations - Whether to display a rotation count (×N) when rotations > 1. Defaults to false.
+ * @attr {boolean} rotations - Whether to display a rotation count (×N) when rotations > 1. Defaults to false.
  */
 class FigInputAngle extends HTMLElement {
   // Private fields
@@ -8645,6 +8646,7 @@ class FigInputAngle extends HTMLElement {
     this.units = "°";
     this.min = null;
     this.max = null;
+    this.dial = true;
     this.showRotations = false;
     this.rotationSpan = null;
 
@@ -8667,7 +8669,8 @@ class FigInputAngle extends HTMLElement {
       this.max = this.hasAttribute("max")
         ? Number(this.getAttribute("max"))
         : null;
-      this.showRotations = this.getAttribute("show-rotations") === "true";
+      this.dial = this.#readBooleanAttribute("dial", true);
+      this.showRotations = this.#readRotationsEnabled();
 
       this.#render();
       this.#setupListeners();
@@ -8690,14 +8693,38 @@ class FigInputAngle extends HTMLElement {
     this.innerHTML = this.#getInnerHTML();
   }
 
+  #readBooleanAttribute(name, defaultValue = false) {
+    const value = this.getAttribute(name);
+    if (value === null) return defaultValue;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "" || normalized === "true") return true;
+    if (normalized === "false") return false;
+    return true;
+  }
+
+  #readRotationsEnabled() {
+    if (this.hasAttribute("rotations")) {
+      return this.#readBooleanAttribute("rotations", false);
+    }
+    // Backward-compat alias
+    if (this.hasAttribute("show-rotations")) {
+      return this.#readBooleanAttribute("show-rotations", false);
+    }
+    return false;
+  }
+
   #getInnerHTML() {
     const step = this.#getStepForUnit();
     const minAttr = this.min !== null ? `min="${this.min}"` : "";
     const maxAttr = this.max !== null ? `max="${this.max}"` : "";
     return `
-        <div class="fig-input-angle-plane" tabindex="0">
+        ${
+          this.dial
+            ? `<div class="fig-input-angle-plane" tabindex="0">
           <div class="fig-input-angle-handle"></div>
-        </div>
+        </div>`
+            : ""
+        }
         ${
           this.text
             ? `<fig-input-number
@@ -8798,8 +8825,8 @@ class FigInputAngle extends HTMLElement {
     this.angleInput = this.querySelector("fig-input-number[name='angle']");
     this.rotationSpan = this.querySelector(".fig-input-angle-rotations");
     this.#updateRotationDisplay();
-    this.plane.addEventListener("mousedown", this.#handleMouseDown.bind(this));
-    this.plane.addEventListener(
+    this.plane?.addEventListener("mousedown", this.#handleMouseDown.bind(this));
+    this.plane?.addEventListener(
       "touchstart",
       this.#handleTouchStart.bind(this),
     );
@@ -9025,6 +9052,8 @@ class FigInputAngle extends HTMLElement {
       "min",
       "max",
       "units",
+      "dial",
+      "rotations",
       "show-rotations",
     ];
   }
@@ -9067,18 +9096,26 @@ class FigInputAngle extends HTMLElement {
       case "text":
         if (newValue !== oldValue) {
           this.text = newValue?.toLowerCase() === "true";
-          if (this.plane) {
+          if (this.isConnected) {
             this.#render();
             this.#setupListeners();
             this.#syncHandlePosition();
           }
         }
         break;
+      case "dial":
+        this.dial = this.#readBooleanAttribute("dial", true);
+        if (this.isConnected) {
+          this.#render();
+          this.#setupListeners();
+          this.#syncHandlePosition();
+        }
+        break;
       case "units": {
         let units = newValue || "°";
         if (units === "deg") units = "°";
         this.units = units;
-        if (this.plane) {
+        if (this.isConnected) {
           this.#render();
           this.#setupListeners();
           this.#syncHandlePosition();
@@ -9087,7 +9124,7 @@ class FigInputAngle extends HTMLElement {
       }
       case "min":
         this.min = newValue !== null ? Number(newValue) : null;
-        if (this.plane) {
+        if (this.isConnected) {
           this.#render();
           this.#setupListeners();
           this.#syncHandlePosition();
@@ -9095,15 +9132,16 @@ class FigInputAngle extends HTMLElement {
         break;
       case "max":
         this.max = newValue !== null ? Number(newValue) : null;
-        if (this.plane) {
+        if (this.isConnected) {
           this.#render();
           this.#setupListeners();
           this.#syncHandlePosition();
         }
         break;
+      case "rotations":
       case "show-rotations":
-        this.showRotations = newValue === "true";
-        if (this.plane) {
+        this.showRotations = this.#readRotationsEnabled();
+        if (this.isConnected) {
           this.#render();
           this.#setupListeners();
           this.#syncHandlePosition();

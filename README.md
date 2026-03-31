@@ -721,10 +721,11 @@ When `min` and `max` are omitted, the input is unbounded — dragging continuous
 | `value` | number | `0` | Angle value (in the unit specified by `units`) |
 | `precision` | number | `1` | Decimal places for display |
 | `text` | boolean | `false` | Show numeric text input alongside the dial |
+| `dial` | boolean | `true` | Show circular dial control (`dial="false"` hides it) |
 | `min` | number | — | Minimum angle (omit for unbounded) |
 | `max` | number | — | Maximum angle (omit for unbounded) |
 | `units` | string | `"°"` | Display unit: `"°"` (or `"deg"`), `"rad"`, `"turn"` |
-| `show-rotations` | boolean | `false` | Show a ×N rotation counter when angle exceeds 1 full rotation |
+| `rotations` | boolean | `false` | Show a ×N rotation counter when angle exceeds 1 full rotation (`rotations` or `rotations="true"`) |
 
 ```html
 <!-- Basic dial -->
@@ -746,7 +747,10 @@ When `min` and `max` are omitted, the input is unbounded — dragging continuous
 <fig-input-angle text="true" units="turn" value="0.5"></fig-input-angle>
 
 <!-- Show rotation count (×2 at 720°, ×3 at 1080°, etc.) -->
-<fig-input-angle text="true" show-rotations="true" value="1080"></fig-input-angle>
+<fig-input-angle text="true" rotations value="1080"></fig-input-angle>
+
+<!-- Text-only mode (hide dial) -->
+<fig-input-angle text="true" dial="false" value="90"></fig-input-angle>
 ```
 
 ---

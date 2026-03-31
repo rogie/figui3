@@ -3763,8 +3763,25 @@ fig-joystick {
 fig-input-angle {
   --size: 1.5rem;
   display: inline-flex;
+  align-items: center;
   gap: var(--spacer-2);
   user-select: none;
+
+  > fig-input-number {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+
+    > fig-input-number {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto;
+    }
+  }
 
   /* When inside horizontal fig-field, grow to fill and let inputs expand */
   fig-field[direction="horizontal"] & {
@@ -3772,7 +3789,7 @@ fig-input-angle {
     min-width: 0;
 
     fig-input-number {
-      flex: 1;
+      flex: 0 0 auto;
       width: auto;
     }
   }

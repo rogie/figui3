@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.9.3]
+
+### Changed
+
+- Added `dial` attribute support to `fig-input-angle` (defaults to `true`; `dial="false"` hides the circular dial).
+- Renamed `show-rotations` usage to `rotations` for `fig-input-angle` while keeping backward-compatible alias support.
+- Added `Dial` and `Rotations` controls to playground Attributes View for `fig-input-angle`.
+- Updated `fig-input-angle` layout so its number input keeps intrinsic width by default, while `full` mode still expands as expected.
+- Updated `README` docs for `fig-input-angle` to cover `dial` and `rotations`.
+
 ## [3.9.2]
 
 ### Changed
