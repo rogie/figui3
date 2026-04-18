@@ -30,6 +30,7 @@ declare module "react" {
       "fig-origin-grid": FigAttrs;
       "fig-avatar": FigAttrs;
       "fig-shimmer": FigAttrs;
+      "fig-skeleton": FigAttrs;
       "fig-input-text": FigAttrs;
       "fig-joystick": FigAttrs;
       "fig-header": FigAttrs;

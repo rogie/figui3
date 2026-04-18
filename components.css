@@ -3122,13 +3122,34 @@ fig-input-text[type="number"] > [slot] {
 
 fig-input-color,
 fig-input-fill {
+  background-color: var(--figma-color-bg-secondary);
+  border-radius: var(--radius-medium);
+  box-shadow: none !important;
+  &:focus,
+  &:focus-within {
+    outline: 1px solid var(--figma-color-border-selected) !important;
+    outline-offset: -1px !important;
+  }
+
   & > .input-combo > fig-chit:not(:only-child),
-  & > .input-combo > fig-chit:not(:only-child) > input,
+  & > .input-combo > fig-chit:not(:only-child) input,
   & > .input-combo > fig-fill-picker:not(:only-child),
   & > .input-combo > fig-fill-picker:not(:only-child) > fig-chit > input,
-  & fig-fill-picker:not(:only-child) {
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
+  & > .input-combo > label,
+  & fig-fill-picker:not(:only-child),
+  fig-input-text,
+  fig-chit {
+    &,
+    &:focus,
+    &:hover {
+      background-color: transparent !important;
+      box-shadow: none !important;
+      border: 0 !important;
+    }
+  }
+  fig-input-text > input,
+  label {
+    padding-left: 0 !important;
   }
 
   & > .input-combo {
@@ -3139,6 +3160,8 @@ fig-input-fill {
   fig-input-number {
     flex: 0;
     flex-basis: 3rem;
+    box-shadow: inset 1px 0 0 0 var(--figma-color-bg) !important;
+    background-color: transparent !important;
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -3956,17 +3979,42 @@ fig-layer {
     }
   }
 }
-
+@keyframes fig-shimmer-text {
+  from {
+    background-position: var(--shimmer-text-from, 100% 0%);
+  }
+  to {
+    background-position: var(--shimmer-text-to, 0% 0%);
+  }
+}
+@keyframes fig-shimmer-mask {
+  from {
+    mask-position: var(--shimmer-mask-from, 100% 0%);
+  }
+  to {
+    mask-position: var(--shimmer-mask-to, 0% 0%);
+  }
+}
 /* Shimmer */
 fig-shimmer {
   display: contents;
   --shimmer-angle: 90deg;
   --shimmer-size: 250% 100%;
   --shimmer-duration: 1.5s;
+  --shimmer-mask-from: 100% 0%;
+  --shimmer-mask-to: 0% 0%;
+  --shimmer-text-from: 100% 0%;
+  --shimmer-text-to: 0% 0%;
+  --shimmer-subtle-fill-color: var(--figma-color-bg-transparent);
+  --shimmer-bright-fill-color: var(--figma-color-bg-tertiary);
+  --shimmer-subtle-text-color: var(--figma-color-text-tertiary);
+  --shimmer-bright-text-color: var(--figma-color-text);
 
   &[direction="vertical"] {
     --shimmer-angle: 180deg;
     --shimmer-size: 100% 250%;
+    --shimmer-mask-from: 0% 100%;
+    --shimmer-text-from: 0% 100%;
   }
   &[direction="diagonal"] {
     --shimmer-angle: 135deg;
@@ -3974,30 +4022,116 @@ fig-shimmer {
   }
 
   /* When not playing, remove shimmer effect entirely */
-  &[playing="false"] > * {
+  &[playing="false"] * {
     background: none;
+    background-size: unset;
+    animation: none;
+  }
+  &[playing="false"] :where(*:not(:has(*)):not(:empty)) {
     -webkit-background-clip: unset;
     background-clip: unset;
     -webkit-text-fill-color: unset;
-    animation: none;
+  }
+  /* Only apply shimmer when playing (default) or playing="true" */
+  &:not([playing="false"]) :where(*:has(*), *:empty) {
+    mask: linear-gradient(
+      var(--shimmer-angle),
+      var(--shimmer-subtle-fill-color) 0%,
+      var(--shimmer-subtle-fill-color) 40%,
+      var(--shimmer-bright-fill-color) 50%,
+      var(--shimmer-subtle-fill-color) 60%,
+      var(--shimmer-subtle-fill-color) 100%
+    );
+    mask-size: var(--shimmer-size);
+    animation: fig-shimmer-mask var(--shimmer-duration) linear infinite;
+  }
+  &:not([playing="false"]) :where(*:not(:has(*)):not(:empty)) {
+    mask: none;
+    background: linear-gradient(
+      var(--shimmer-angle),
+      var(--shimmer-subtle-text-color) 0%,
+      var(--shimmer-subtle-text-color) 40%,
+      var(--shimmer-bright-text-color) 50%,
+      var(--shimmer-subtle-text-color) 60%,
+      var(--shimmer-subtle-text-color) 100%
+    );
+    background-size: var(--shimmer-size);
+    animation: fig-shimmer-text var(--shimmer-duration) linear infinite;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
   }
 }
+/* Skeleton */
+fig-skeleton {
+  display: contents;
+  --shimmer-angle: 90deg;
+  --shimmer-size: 250% 100%;
+  --shimmer-duration: 1.5s;
+  --shimmer-mask-from: 100% 0%;
+  --shimmer-mask-to: 0% 0%;
+  --shimmer-subtle-mask-color: rgba(0, 0, 0, 0.75);
+  --shimmer-bright-mask-color: rgba(0, 0, 0, 1);
 
-/* Only apply shimmer when playing (default) or playing="true" */
-fig-shimmer:not([playing="false"]) > * {
-  background: linear-gradient(
-    var(--shimmer-angle),
-    var(--figma-color-text-tertiary) 0%,
-    var(--figma-color-text-tertiary) 40%,
-    var(--figma-color-text) 50%,
-    var(--figma-color-text-tertiary) 60%,
-    var(--figma-color-text-tertiary) 100%
-  );
-  background-size: var(--shimmer-size);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: fig-shimmer var(--shimmer-duration) linear infinite;
+  &[direction="vertical"] {
+    --shimmer-angle: 180deg;
+    --shimmer-size: 100% 400%;
+    --shimmer-mask-from: 0% 100%;
+  }
+  &[direction="diagonal"] {
+    --shimmer-angle: 135deg;
+    --shimmer-size: 250% 250%;
+  }
+
+  &:not([playing="false"]) * {
+    mask: linear-gradient(
+      var(--shimmer-angle),
+      var(--shimmer-subtle-mask-color) 0%,
+      var(--shimmer-subtle-mask-color) 40%,
+      var(--shimmer-bright-mask-color) 50%,
+      var(--shimmer-subtle-mask-color) 60%,
+      var(--shimmer-subtle-mask-color) 100%
+    );
+    mask-size: var(--shimmer-size);
+    animation: fig-shimmer-mask var(--shimmer-duration) linear infinite;
+    * {
+      color: transparent;
+    }
+  }
+  label,
+  h3,
+  h2,
+  p,
+  span {
+    background: var(--figma-color-bg-secondary);
+    border-radius: var(--radius-medium);
+  }
+
+  *:not(fig-field, fig-header) {
+    background: var(--figma-color-bg-secondary) !important;
+    box-shadow: none !important;
+    border-radius: var(--radius-medium);
+    color: var(--figma-color-bg-secondary) !important;
+    pointer-events: none;
+    user-select: none;
+  }
+  *::placeholder {
+    color: transparent !important;
+  }
+  *::after,
+  *::before,
+  *::marker,
+  *::picker-icon,
+  *::-webkit-slider-thumb,
+  *::-webkit-slider-runnable-track,
+  *::-webkit-color-swatch,
+  *::-webkit-color-swatch-wrapper,
+  *::-webkit-details-marker,
+  *::-webkit-inner-spin-button,
+  *::-webkit-outer-spin-button,
+  *::-webkit-calendar-picker-indicator {
+    display: none !important;
+  }
 }
 
 /* Fill Picker */
@@ -4568,13 +4702,4 @@ fig-handle {
   box-shadow: var(--box-shadow);
   outline: var(--outline);
   border: var(--border);
-}
-
-@keyframes fig-shimmer {
-  0% {
-    background-position: 100% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
 }

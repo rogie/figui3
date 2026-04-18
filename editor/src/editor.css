@@ -1,0 +1,12 @@
+:host {
+  --figma-editor-width: 240px;
+  display: block;
+  width: var(--figma-editor-width);
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  height: auto;
+  z-index: 1000;
+  overflow: auto;
+  border-radius: var(--radius-large);
+}

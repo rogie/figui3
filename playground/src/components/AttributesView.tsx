@@ -160,6 +160,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-toast": "Toast",
     "fig-spinner": "Spinner",
     "fig-shimmer": "Shimmer",
+    "fig-skeleton": "Skeleton",
     "fig-layer": "Layer",
     "fig-header": "Header",
     "fig-tabs": "Tabs",
@@ -333,6 +334,9 @@ export default function AttributesView({
           const sliderTextEnabled =
             target.controlTag === "fig-slider" &&
             (target.controlAttributes.text ?? "").toLowerCase() === "true";
+          const isShimmerLikeControl =
+            target.controlTag === "fig-shimmer" ||
+            target.controlTag === "fig-skeleton";
           const dialogDragEnabled =
             target.controlTag === "fig-dialog" &&
             target.controlAttributes.drag !== undefined &&
@@ -526,7 +530,7 @@ export default function AttributesView({
                   ? 500
                   : getNumberAttrDefault(target.controlTag, name) ?? rule.min ?? 0;
               const numberValue =
-                target.controlTag === "fig-shimmer" && name === "duration"
+                isShimmerLikeControl && name === "duration"
                   ? toNumberValue((value ?? "").replace(/s$/i, ""), fallback)
                   : isPerspectiveDistance
                     ? toNumberValue((value ?? "").replace(/[a-z]+$/i, ""), fallback)
@@ -566,7 +570,7 @@ export default function AttributesView({
                     const host = e.currentTarget as HTMLElement & { value?: string };
                     const nextValue = host.value ?? (e as CustomEvent).detail?.value;
                     if (nextValue === undefined || nextValue === null) return;
-                    if (target.controlTag === "fig-shimmer" && name === "duration") {
+                    if (isShimmerLikeControl && name === "duration") {
                       applyChange(
                         target.fieldIndex,
                         scope,
@@ -697,7 +701,7 @@ export default function AttributesView({
                       return;
                     }
                     if (
-                      target.controlTag === "fig-shimmer" &&
+                      isShimmerLikeControl &&
                       name === "direction" &&
                       resolvedValue === ""
                     ) {
@@ -779,7 +783,7 @@ export default function AttributesView({
                   {options.map((option) => (
                     <option key={option} value={option}>
                       {option === ""
-                        ? target.controlTag === "fig-shimmer" && name === "direction"
+                        ? isShimmerLikeControl && name === "direction"
                           ? "Default"
                           : target.controlTag === "fig-button" && name === "variant"
                             ? "Default (primary)"

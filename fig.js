@@ -9186,6 +9186,10 @@ class FigShimmer extends HTMLElement {
 }
 customElements.define("fig-shimmer", FigShimmer);
 
+// FigSkeleton
+class FigSkeleton extends FigShimmer {}
+customElements.define("fig-skeleton", FigSkeleton);
+
 // FigLayer
 class FigLayer extends HTMLElement {
   static get observedAttributes() {

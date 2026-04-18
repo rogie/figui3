@@ -389,6 +389,26 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
   },
+  "fig-skeleton": {
+    duration: {
+      label: "Duration",
+      type: "number",
+      min: 0.2,
+      max: 8,
+      step: 0.1,
+    },
+    direction: {
+      label: "Direction",
+      type: "enum",
+      options: ["", "vertical", "diagonal"],
+    },
+    playing: {
+      label: "Playing",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+  },
   "fig-layer": {
     open: { label: "Open", type: "boolean", boolMode: "presence" },
     visible: { label: "Visible", type: "boolean", boolMode: "string" },

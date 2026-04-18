@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FigUI Editor — Dev</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans text-slate-800 antialiased">
+
+  <!-- Top nav -->
+  <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+      <div class="flex items-center gap-3">
+        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">F</div>
+        <span class="text-sm font-semibold tracking-tight">FigUI Editor Demo</span>
+      </div>
+      <nav class="flex items-center gap-4 text-sm text-slate-500">
+        <a href="#" class="hover:text-slate-800 transition-colors">Docs</a>
+        <a href="#" class="hover:text-slate-800 transition-colors">GitHub</a>
+        <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">v3.7</span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-6 py-10 pr-[280px]">
+
+    <!-- Hero -->
+    <section class="mb-12">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-widest text-indigo-500">Sandbox</p>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900">Editor integration test</h1>
+      <p class="mt-3 max-w-2xl text-base leading-relaxed text-slate-500">
+        This page uses Tailwind CSS and a variety of standard HTML/React-style components.
+        The FigUI Editor panel on the right lives in Shadow DOM and should be completely isolated from these styles.
+      </p>
+    </section>
+
+    <!-- Stats row -->
+    <section class="mb-10 grid grid-cols-4 gap-4">
+      <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-medium text-slate-400">Components</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">34</p>
+        <p class="mt-1 text-xs text-emerald-600 font-medium">+3 this week</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-medium text-slate-400">Bundle size</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">94 KB</p>
+        <p class="mt-1 text-xs text-slate-400">gzipped</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-medium text-slate-400">Shadow DOM</p>
+        <p class="mt-1 text-2xl font-bold text-emerald-600">Isolated</p>
+        <p class="mt-1 text-xs text-slate-400">no style leaks</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-medium text-slate-400">Framework</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">Any</p>
+        <p class="mt-1 text-xs text-slate-400">host-agnostic</p>
+      </div>
+    </section>
+
+    <!-- Two-column content -->
+    <div class="grid grid-cols-2 gap-6 mb-10">
+
+      <!-- Card: Form elements -->
+      <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-900">Host form controls</h2>
+        <form class="space-y-4">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Name</label>
+            <input type="text" value="Rogie King" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Email</label>
+            <input type="email" value="rogie@example.com" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Role</label>
+            <select class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition">
+              <option>Designer</option>
+              <option selected>Engineer</option>
+              <option>Product</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+            <label class="text-xs text-slate-600">Receive notifications</label>
+          </div>
+          <button type="button" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition">Save changes</button>
+        </form>
+      </div>
+
+      <!-- Card: Table -->
+      <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-900">Recent activity</h2>
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 text-xs font-medium text-slate-400">
+              <th class="pb-2">Event</th>
+              <th class="pb-2">User</th>
+              <th class="pb-2 text-right">Time</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            <tr><td class="py-2.5">Published v3.7</td><td class="py-2.5 text-slate-500">Rogie</td><td class="py-2.5 text-right text-slate-400">2m ago</td></tr>
+            <tr><td class="py-2.5">Added fig-joystick</td><td class="py-2.5 text-slate-500">Avery</td><td class="py-2.5 text-right text-slate-400">1h ago</td></tr>
+            <tr><td class="py-2.5">Fixed slider a11y</td><td class="py-2.5 text-slate-500">Jules</td><td class="py-2.5 text-right text-slate-400">3h ago</td></tr>
+            <tr><td class="py-2.5">Refactored tokens</td><td class="py-2.5 text-slate-500">Sam</td><td class="py-2.5 text-right text-slate-400">5h ago</td></tr>
+            <tr><td class="py-2.5">Shipped sandbox</td><td class="py-2.5 text-slate-500">Rogie</td><td class="py-2.5 text-right text-slate-400">1d ago</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Card: Color swatches -->
+    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm mb-10">
+      <h2 class="mb-4 text-sm font-semibold text-slate-900">Host color palette</h2>
+      <div class="flex gap-3">
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="h-12 w-12 rounded-lg bg-indigo-500 shadow-inner"></div>
+          <span class="text-[10px] text-slate-400">Indigo</span>
+        </div>
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="h-12 w-12 rounded-lg bg-emerald-500 shadow-inner"></div>
+          <span class="text-[10px] text-slate-400">Emerald</span>
+        </div>
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="h-12 w-12 rounded-lg bg-amber-400 shadow-inner"></div>
+          <span class="text-[10px] text-slate-400">Amber</span>
+        </div>
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="h-12 w-12 rounded-lg bg-rose-500 shadow-inner"></div>
+          <span class="text-[10px] text-slate-400">Rose</span>
+        </div>
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="h-12 w-12 rounded-lg bg-sky-500 shadow-inner"></div>
+          <span class="text-[10px] text-slate-400">Sky</span>
+        </div>
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="h-12 w-12 rounded-lg bg-violet-500 shadow-inner"></div>
+          <span class="text-[10px] text-slate-400">Violet</span>
+        </div>
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="h-12 w-12 rounded-lg bg-slate-800 shadow-inner"></div>
+          <span class="text-[10px] text-slate-400">Slate</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Badges & tags -->
+    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm mb-10">
+      <h2 class="mb-4 text-sm font-semibold text-slate-900">Tags &amp; badges</h2>
+      <div class="flex flex-wrap gap-2">
+        <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">web-components</span>
+        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">shadow-dom</span>
+        <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">figma-ui3</span>
+        <span class="rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700">react</span>
+        <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">css-tokens</span>
+        <span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">a11y</span>
+        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">dark-mode</span>
+        <span class="rounded-full bg-pink-50 px-3 py-1 text-xs font-medium text-pink-700">design-system</span>
+      </div>
+    </div>
+
+    <!-- Card: Progress bars -->
+    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm mb-10">
+      <h2 class="mb-4 text-sm font-semibold text-slate-900">Build progress</h2>
+      <div class="space-y-3">
+        <div>
+          <div class="mb-1 flex justify-between text-xs"><span class="text-slate-500">Components</span><span class="font-medium text-slate-700">85%</span></div>
+          <div class="h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full bg-indigo-500" style="width:85%"></div></div>
+        </div>
+        <div>
+          <div class="mb-1 flex justify-between text-xs"><span class="text-slate-500">Documentation</span><span class="font-medium text-slate-700">62%</span></div>
+          <div class="h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full bg-emerald-500" style="width:62%"></div></div>
+        </div>
+        <div>
+          <div class="mb-1 flex justify-between text-xs"><span class="text-slate-500">Tests</span><span class="font-medium text-slate-700">40%</span></div>
+          <div class="h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full bg-amber-400" style="width:40%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API controls -->
+    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="mb-3 text-sm font-semibold text-slate-900">Editor API controls</h2>
+      <p class="mb-4 text-xs text-slate-400">Test the global <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px]">window.FigUIEditor</code> API.</p>
+      <div class="flex gap-2">
+        <button onclick="window.FigUIEditor.unmount()" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 transition">Unmount</button>
+        <button onclick="window.FigUIEditor.mount()" class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-medium text-indigo-700 shadow-sm hover:bg-indigo-100 transition">Re-mount</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Editor mount point -->
+  <div id="figui-editor"></div>
+
+  <script type="module" src="/src/standalone.tsx"></script>
+</body>
+</html>

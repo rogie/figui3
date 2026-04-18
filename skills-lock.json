@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "caveman": {
+      "source": "rolottr/caveman-skill",
+      "sourceType": "github",
+      "computedHash": "f52e9c1e64fe99752d1fdf6dd0c9d71e5ac19a08a7d9d0b018fa3c5e71538d2a"
+    }
+  }
+}

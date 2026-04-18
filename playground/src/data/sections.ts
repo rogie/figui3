@@ -117,12 +117,12 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
-        id: "image-opaque",
+        id: "image",
         name: "Image",
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Fill</label>
-    <fig-input-fill value='{"type":"image","image":{"url":"${squareUrl()}","scaleMode":"fill","scale":50,"opacity":1}}' alpha="false" experimental="modern"></fig-input-fill>
+    <fig-input-fill value='{"type":"image","image":{"url":"${squareUrl()}","scaleMode":"fill","scale":50,"opacity":1}}' experimental="modern"></fig-input-fill>
   </fig-field>
 </div>`,
       },

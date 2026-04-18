@@ -219,7 +219,9 @@ export default function App({ mode }: Props) {
               key={`${activeSectionId}/${activeExampleId}`}
               example={activeExample}
               markup={editableMarkup}
-              onPersistImageSource={handlePersistImageSource}
+              onPersistImageSource={
+                mode === "figui3" ? handlePersistImageSource : undefined
+              }
               onPersistDialogOpenState={handlePersistDialogOpenState}
               onPersistSwitchCheckedState={handlePersistSwitchCheckedState}
               onPersistControlValue={handlePersistControlValue}

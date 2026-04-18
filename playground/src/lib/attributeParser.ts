@@ -145,6 +145,13 @@ function getTargetElement(
   root: HTMLElement,
   mutation: Pick<AttributeMutation, "fieldIndex" | "target">,
 ): Element | null {
+  if (mutation.target === "control") {
+    const skeletonControls = getPrimarySkeletonControls(root);
+    if (skeletonControls.length) {
+      return skeletonControls[mutation.fieldIndex] ?? null;
+    }
+  }
+
   const fields = root.querySelectorAll("fig-field");
   if (fields.length) {
     const field = fields[mutation.fieldIndex];
@@ -227,6 +234,12 @@ function getPrimaryControls(root: HTMLElement): Element[] {
   );
 }
 
+function getPrimarySkeletonControls(root: HTMLElement): Element[] {
+  return getPrimaryControls(root).filter(
+    (control) => getControlTag(control) === "fig-skeleton",
+  );
+}
+
 function formatAttributes(element: Element): string {
   const attrs = Array.from(element.attributes);
   if (!attrs.length) return "";
@@ -283,6 +296,22 @@ function serializeSourceMarkup(root: HTMLElement): string {
 
 export function parseAttributeTargets(markup: string): ParsedAttributeTarget[] {
   const root = parseSourceRoot(markup);
+  const primaryControls = getPrimaryControls(root);
+  const skeletonControls = getPrimarySkeletonControls(root);
+
+  // Keep skeleton examples focused on top-level skeleton controls,
+  // even when the markup contains nested fig-field/fig-input content.
+  if (skeletonControls.length) {
+    return skeletonControls.map((control, fieldIndex) => ({
+      fieldIndex,
+      label: "",
+      hasLabel: false,
+      controlTag: getControlTag(control),
+      fieldAttributes: {},
+      controlAttributes: attrsToRecord(control),
+    }));
+  }
+
   const fields = Array.from(root.querySelectorAll("fig-field"));
 
   if (fields.length) {
@@ -305,7 +334,7 @@ export function parseAttributeTargets(markup: string): ParsedAttributeTarget[] {
       .filter((target): target is ParsedAttributeTarget => Boolean(target));
   }
 
-  return getPrimaryControls(root).map((control, fieldIndex) => ({
+  return primaryControls.map((control, fieldIndex) => ({
     fieldIndex,
     label: "",
     hasLabel: false,
