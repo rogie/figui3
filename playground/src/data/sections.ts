@@ -92,7 +92,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Fill</label>
-    <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}' experimental="modern"></fig-input-fill>
+    <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}' experimental="modern"></fig-input-fill>
   </fig-field>
 </div>`,
       },
@@ -123,6 +123,23 @@ export const propkitSections: Section[] = [
   <fig-field direction="horizontal">
     <label>Fill</label>
     <fig-input-fill value='{"type":"image","image":{"url":"${squareUrl()}","scaleMode":"fill","scale":50,"opacity":1}}' experimental="modern"></fig-input-fill>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "gradient",
+    name: "Gradient",
+    description: "A gradient-only fill field with the FigUI fill picker.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Gradient</label>
+    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}' experimental="modern"></fig-input-gradient>
   </fig-field>
 </div>`,
       },

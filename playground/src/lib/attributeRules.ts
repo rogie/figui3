@@ -246,6 +246,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
   },
+  "fig-input-gradient": {},
   "fig-input-color": {
     alpha: { label: "Alpha", type: "boolean", boolMode: "string" },
   },

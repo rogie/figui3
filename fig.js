@@ -4828,6 +4828,57 @@ class FigInputColor extends HTMLElement {
 customElements.define("fig-input-color", FigInputColor);
 
 /* Input Fill */
+const GRADIENT_INTERPOLATION_SPACES = [
+  "srgb",
+  "srgb-linear",
+  "display-p3",
+  "oklab",
+  "oklch",
+];
+const GRADIENT_HUE_INTERPOLATIONS = [
+  "shorter",
+  "longer",
+  "increasing",
+  "decreasing",
+];
+
+function normalizeGradientConfig(gradient) {
+  const next = { ...(gradient ?? {}) };
+  const interpolationSpace = String(
+    next.interpolationSpace ?? "srgb",
+  ).toLowerCase();
+  next.interpolationSpace = GRADIENT_INTERPOLATION_SPACES.includes(
+    interpolationSpace,
+  )
+    ? interpolationSpace
+    : "srgb";
+
+  const hueInterpolation = String(next.hueInterpolation ?? "shorter").toLowerCase();
+  next.hueInterpolation = GRADIENT_HUE_INTERPOLATIONS.includes(hueInterpolation)
+    ? hueInterpolation
+    : "shorter";
+  return next;
+}
+
+function gradientToValueShape(gradient) {
+  const normalized = normalizeGradientConfig(gradient);
+  const output = { ...normalized, interpolationSpace: normalized.interpolationSpace };
+  if (normalized.interpolationSpace === "oklch") {
+    output.hueInterpolation = normalized.hueInterpolation;
+  } else {
+    delete output.hueInterpolation;
+  }
+  return output;
+}
+
+function gradientInterpolationClause(gradient) {
+  const normalized = normalizeGradientConfig(gradient);
+  if (normalized.interpolationSpace === "oklch") {
+    return `in oklch ${normalized.hueInterpolation} hue`;
+  }
+  return `in ${normalized.interpolationSpace}`;
+}
+
 /**
  * A fill input that supports solid colors, gradients, images, and videos.
  * @attr {string} value - JSON string with fill data
@@ -4846,6 +4897,8 @@ class FigInputFill extends HTMLElement {
   #gradient = {
     type: "linear",
     angle: 180,
+    interpolationSpace: "srgb",
+    hueInterpolation: "shorter",
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
       { position: 100, color: "#737373", opacity: 100 },
@@ -4884,8 +4937,12 @@ class FigInputFill extends HTMLElement {
             this.#solid.alpha = parsed.opacity / 100;
           break;
         case "gradient":
-          if (parsed.gradient)
-            this.#gradient = { ...this.#gradient, ...parsed.gradient };
+          if (parsed.gradient) {
+            this.#gradient = normalizeGradientConfig({
+              ...this.#gradient,
+              ...parsed.gradient,
+            });
+          }
           break;
         case "image":
           if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
@@ -5051,7 +5108,12 @@ class FigInputFill extends HTMLElement {
               this.#solid.alpha = detail.alpha;
               break;
             case "gradient":
-              if (detail.gradient) this.#gradient = detail.gradient;
+              if (detail.gradient) {
+                this.#gradient = normalizeGradientConfig({
+                  ...this.#gradient,
+                  ...detail.gradient,
+                });
+              }
               break;
             case "image":
               if (detail.image) this.#image = detail.image;
@@ -5414,7 +5476,7 @@ class FigInputFill extends HTMLElement {
       case "gradient":
         return {
           type: "gradient",
-          gradient: { ...this.#gradient },
+          gradient: gradientToValueShape(this.#gradient),
         };
       case "image":
         return {
@@ -5481,6 +5543,173 @@ class FigInputFill extends HTMLElement {
   }
 }
 customElements.define("fig-input-fill", FigInputFill);
+
+/* Input Gradient */
+/**
+ * A gradient-only fill input built on top of fig-fill-picker.
+ * @attr {string} value - JSON string with gradient fill data
+ * @attr {boolean} disabled - Whether the input is disabled
+ * @fires input - When the gradient value changes
+ * @fires change - When the gradient value is committed
+ */
+class FigInputGradient extends HTMLElement {
+  #fillPicker;
+  #gradient = {
+    type: "linear",
+    angle: 180,
+    interpolationSpace: "srgb",
+    hueInterpolation: "shorter",
+    stops: [
+      { position: 0, color: "#D9D9D9", opacity: 100 },
+      { position: 100, color: "#737373", opacity: 100 },
+    ],
+  };
+
+  constructor() {
+    super();
+  }
+
+  static get observedAttributes() {
+    return ["value", "disabled", "experimental", "picker-anchor"];
+  }
+
+  connectedCallback() {
+    this.#parseValue();
+    this.#render();
+  }
+
+  #parseValue() {
+    const valueAttr = this.getAttribute("value");
+    if (!valueAttr) return;
+    try {
+      const parsed = JSON.parse(valueAttr);
+      if (parsed?.type === "gradient" && parsed.gradient) {
+        this.#gradient = normalizeGradientConfig({
+          ...this.#gradient,
+          ...parsed.gradient,
+        });
+        return;
+      }
+      if (parsed?.gradient) {
+        this.#gradient = normalizeGradientConfig({
+          ...this.#gradient,
+          ...parsed.gradient,
+        });
+      }
+    } catch (e) {
+      // Ignore invalid JSON and keep current/default gradient.
+    }
+  }
+
+  #buildFillPickerAttrs() {
+    const attrs = {};
+    const experimental = this.getAttribute("experimental");
+    if (experimental) attrs["experimental"] = experimental;
+    for (const { name, value } of this.attributes) {
+      if (name.startsWith("picker-") && name !== "picker-anchor") {
+        attrs[name.slice(7)] = value;
+      }
+    }
+    if (!attrs["dialog-position"]) attrs["dialog-position"] = "left";
+    return Object.entries(attrs)
+      .map(([k, v]) => `${k}="${v}"`)
+      .join(" ");
+  }
+
+  #render() {
+    const disabled = this.hasAttribute("disabled");
+    const fillPickerValue = JSON.stringify(this.value);
+    const fpAttrs = this.#buildFillPickerAttrs();
+    this.innerHTML = `
+      <fig-fill-picker mode="gradient" ${fpAttrs} value='${fillPickerValue}' ${
+        disabled ? "disabled" : ""
+      }></fig-fill-picker>`;
+    this.#setupEventListeners();
+  }
+
+  #setupEventListeners() {
+    requestAnimationFrame(() => {
+      this.#fillPicker = this.querySelector("fig-fill-picker");
+      if (!this.#fillPicker) return;
+
+      const anchor = this.getAttribute("picker-anchor");
+      if (!anchor || anchor === "self") {
+        this.#fillPicker.anchorElement = this;
+      } else {
+        const el = document.querySelector(anchor);
+        if (el) this.#fillPicker.anchorElement = el;
+      }
+
+      this.#fillPicker.addEventListener("input", (e) => {
+        e.stopPropagation();
+        const detail = e.detail;
+        if (detail?.gradient) {
+          this.#gradient = normalizeGradientConfig({
+            ...this.#gradient,
+            ...detail.gradient,
+          });
+          this.#emitInput();
+        }
+      });
+
+      this.#fillPicker.addEventListener("change", (e) => {
+        e.stopPropagation();
+        this.#emitChange();
+      });
+    });
+  }
+
+  #emitInput() {
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        detail: this.value,
+      }),
+    );
+  }
+
+  #emitChange() {
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        detail: this.value,
+      }),
+    );
+  }
+
+  get value() {
+    return {
+      type: "gradient",
+      gradient: gradientToValueShape(this.#gradient),
+    };
+  }
+
+  set value(val) {
+    if (typeof val === "string") {
+      this.setAttribute("value", val);
+    } else {
+      this.setAttribute("value", JSON.stringify(val));
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    switch (name) {
+      case "value":
+        this.#parseValue();
+        if (this.#fillPicker) {
+          this.#fillPicker.setAttribute("value", JSON.stringify(this.value));
+        }
+        break;
+      case "disabled":
+      case "experimental":
+      case "picker-anchor":
+        if (this.#fillPicker) this.#render();
+        break;
+    }
+  }
+}
+customElements.define("fig-input-gradient", FigInputGradient);
 
 /* Checkbox */
 /**
@@ -9329,6 +9558,8 @@ class FigFillPicker extends HTMLElement {
     angle: 0,
     centerX: 50,
     centerY: 50,
+    interpolationSpace: "srgb",
+    hueInterpolation: "shorter",
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
       { position: 100, color: "#737373", opacity: 100 },
@@ -9438,8 +9669,12 @@ class FigFillPicker extends HTMLElement {
       if (parsed.opacity !== undefined) {
         this.#color.a = parsed.opacity / 100;
       }
-      if (parsed.gradient)
-        this.#gradient = { ...this.#gradient, ...parsed.gradient };
+      if (parsed.gradient) {
+        this.#gradient = normalizeGradientConfig({
+          ...this.#gradient,
+          ...parsed.gradient,
+        });
+      }
       if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
       if (parsed.video) this.#video = { ...this.#video, ...parsed.video };
 
@@ -9629,9 +9864,9 @@ class FigFillPicker extends HTMLElement {
           <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
         </fig-button>
       </fig-header>
-      <div class="fig-fill-picker-content">
+      <fig-content>
         ${tabDivs}
-      </div>
+      </fig-content>
     `;
 
     document.body.appendChild(this.#dialog);
@@ -9732,7 +9967,7 @@ class FigFillPicker extends HTMLElement {
     });
 
     // Zero out content padding for custom mode tabs
-    const contentEl = this.#dialog.querySelector(".fig-fill-picker-content");
+    const contentEl = this.#dialog.querySelector("fig-content");
     if (contentEl) {
       contentEl.style.padding = this.#customSlots[tabName] ? "0" : "";
     }
@@ -9755,28 +9990,32 @@ class FigFillPicker extends HTMLElement {
     const showAlpha = this.getAttribute("alpha") !== "false";
 
     container.innerHTML = `
-      <div class="fig-fill-picker-color-area">
+      <fig-preview class="fig-fill-picker-color-area">
         <canvas width="200" height="200"></canvas>
         <div class="fig-fill-picker-handle"></div>
-      </div>
+      </fig-preview>
       <div class="fig-fill-picker-sliders">
-        <fig-slider type="hue" variant="neue" min="0" max="360" value="${
-          this.#color.h
-        }"></fig-slider>
+        <fig-field direction="horizontal">
+          <fig-slider type="hue" variant="neue" min="0" max="360" value="${
+            this.#color.h
+          }"></fig-slider>
+        </fig-field>
         ${
           showAlpha
-            ? `<fig-slider type="opacity" variant="neue" text="true" units="%" min="0" max="100" value="${
-                this.#color.a * 100
-              }" color="${this.#hsvToHex(this.#color)}"></fig-slider>`
+            ? `<fig-field direction="horizontal">
+                <fig-slider type="opacity" variant="neue" text="true" units="%" min="0" max="100" value="${
+                  this.#color.a * 100
+                }" color="${this.#hsvToHex(this.#color)}"></fig-slider>
+              </fig-field>`
             : ""
         }
       </div>
-      <div class="fig-fill-picker-inputs">
+      <fig-field class="fig-fill-picker-inputs" direction="horizontal">
         <fig-button icon variant="ghost" class="fig-fill-picker-eyedropper" title="Pick color from screen"><span class="fig-mask-icon" style="--icon: var(--icon-eyedropper)"></span></fig-button>
         <fig-input-color class="fig-fill-picker-color-input" text="true" picker="false" value="${this.#hsvToHex(
           this.#color,
         )}"></fig-input-color>
-      </div>
+      </fig-field>
     `;
 
     // Setup color area
@@ -10002,7 +10241,7 @@ class FigFillPicker extends HTMLElement {
     const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
-      <div class="fig-fill-picker-gradient-header">
+      <fig-field class="fig-fill-picker-gradient-header" direction="horizontal">
         <fig-dropdown class="fig-fill-picker-gradient-type" ${expAttr} value="${
           this.#gradient.type
         }">
@@ -10028,18 +10267,37 @@ class FigFillPicker extends HTMLElement {
             <span class="fig-mask-icon" style="--icon: var(--icon-swap)"></span>
           </fig-button>
         </fig-tooltip>
-      </div>
-      <div class="fig-fill-picker-gradient-preview">
+      </fig-field>
+      <fig-field class="fig-fill-picker-gradient-interpolation" direction="horizontal">
+        <fig-dropdown class="fig-fill-picker-gradient-space" ${expAttr} value="${
+          this.#gradient.interpolationSpace
+        }">
+          <option value="srgb">sRGB</option>
+          <option value="srgb-linear">sRGB Linear</option>
+          <option value="display-p3">Display P3</option>
+          <option value="oklab">OKLab</option>
+          <option value="oklch">OKLCH</option>
+        </fig-dropdown>
+        <fig-dropdown class="fig-fill-picker-gradient-hue" ${expAttr} style="display: none;" value="${
+          this.#gradient.hueInterpolation
+        }">
+          <option value="shorter">Shorter hue</option>
+          <option value="longer">Longer hue</option>
+          <option value="increasing">Increasing hue</option>
+          <option value="decreasing">Decreasing hue</option>
+        </fig-dropdown>
+      </fig-field>
+      <fig-preview class="fig-fill-picker-gradient-preview">
         <div class="fig-fill-picker-gradient-bar"></div>
         <div class="fig-fill-picker-gradient-stops-handles"></div>
-      </div>
+      </fig-preview>
       <div class="fig-fill-picker-gradient-stops">
-        <div class="fig-fill-picker-gradient-stops-header">
+        <fig-header class="fig-fill-picker-gradient-stops-header" borderless>
           <span>Stops</span>
           <fig-button icon variant="ghost" class="fig-fill-picker-gradient-add" title="Add stop">
             <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
           </fig-button>
-        </div>
+        </fig-header>
         <div class="fig-fill-picker-gradient-stops-list"></div>
       </div>
     `;
@@ -10053,11 +10311,56 @@ class FigFillPicker extends HTMLElement {
     const typeDropdown = container.querySelector(
       ".fig-fill-picker-gradient-type",
     );
-    typeDropdown.addEventListener("change", (e) => {
-      this.#gradient.type = e.target.value;
+    const getDropdownValue = (event) =>
+      event.currentTarget?.value ?? event.target?.value ?? event.detail;
+
+    const handleTypeChange = (e) => {
+      this.#gradient.type = getDropdownValue(e);
       this.#updateGradientUI();
       this.#emitInput();
-    });
+    };
+    typeDropdown.addEventListener("input", handleTypeChange);
+    typeDropdown.addEventListener("change", handleTypeChange);
+
+    const interpolationSpaceDropdown = container.querySelector(
+      ".fig-fill-picker-gradient-space",
+    );
+    const handleInterpolationSpaceChange = (e) => {
+      this.#gradient = normalizeGradientConfig({
+        ...this.#gradient,
+        interpolationSpace: getDropdownValue(e),
+      });
+      this.#updateGradientUI();
+      this.#emitInput();
+    };
+    interpolationSpaceDropdown?.addEventListener(
+      "input",
+      handleInterpolationSpaceChange,
+    );
+    interpolationSpaceDropdown?.addEventListener(
+      "change",
+      handleInterpolationSpaceChange,
+    );
+
+    const hueInterpolationDropdown = container.querySelector(
+      ".fig-fill-picker-gradient-hue",
+    );
+    const handleHueInterpolationChange = (e) => {
+      this.#gradient = normalizeGradientConfig({
+        ...this.#gradient,
+        hueInterpolation: getDropdownValue(e),
+      });
+      this.#updateGradientUI();
+      this.#emitInput();
+    };
+    hueInterpolationDropdown?.addEventListener(
+      "input",
+      handleHueInterpolationChange,
+    );
+    hueInterpolationDropdown?.addEventListener(
+      "change",
+      handleHueInterpolationChange,
+    );
 
     // Angle input
     // Convert from fig-input-angle coordinates (0° = right) to CSS coordinates (0° = up)
@@ -10118,6 +10421,7 @@ class FigFillPicker extends HTMLElement {
 
     const container = this.#dialog.querySelector('[data-tab="gradient"]');
     if (!container) return;
+    this.#gradient = normalizeGradientConfig(this.#gradient);
 
     // Show/hide angle vs center inputs
     const angleInput = container.querySelector(
@@ -10138,6 +10442,21 @@ class FigFillPicker extends HTMLElement {
       angleInput.setAttribute("value", pickerAngle);
     }
 
+    const interpolationSpaceDropdown = container.querySelector(
+      ".fig-fill-picker-gradient-space",
+    );
+    const hueInterpolationDropdown = container.querySelector(
+      ".fig-fill-picker-gradient-hue",
+    );
+    if (interpolationSpaceDropdown) {
+      interpolationSpaceDropdown.value = this.#gradient.interpolationSpace;
+    }
+    if (hueInterpolationDropdown) {
+      const showHueMode = this.#gradient.interpolationSpace === "oklch";
+      hueInterpolationDropdown.style.display = showHueMode ? "block" : "none";
+      hueInterpolationDropdown.value = this.#gradient.hueInterpolation;
+    }
+
     this.#updateGradientPreview();
     this.#updateGradientStopsList();
   }
@@ -10145,9 +10464,12 @@ class FigFillPicker extends HTMLElement {
   #updateGradientPreview() {
     if (!this.#dialog) return;
 
+    const preview = this.#dialog.querySelector(".fig-fill-picker-gradient-preview");
     const bar = this.#dialog.querySelector(".fig-fill-picker-gradient-bar");
-    if (bar) {
-      bar.style.background = this.#getGradientCSS();
+    if (preview || bar) {
+      const css = this.#getGradientCSS();
+      if (bar) bar.style.background = css;
+      if (preview) preview.style.background = css;
     }
 
     this.#updateChit();
@@ -10164,7 +10486,7 @@ class FigFillPicker extends HTMLElement {
     list.innerHTML = this.#gradient.stops
       .map(
         (stop, index) => `
-      <div class="fig-fill-picker-gradient-stop-row" data-index="${index}">
+      <fig-field class="fig-fill-picker-gradient-stop-row" direction="horizontal" data-index="${index}">
         <fig-input-number class="fig-fill-picker-stop-position" min="0" max="100" value="${
           stop.position
         }" units="%"></fig-input-number>
@@ -10176,7 +10498,7 @@ class FigFillPicker extends HTMLElement {
         }>
           <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
         </fig-button>
-      </div>
+      </fig-field>
     `,
       )
       .join("");
@@ -10230,28 +10552,44 @@ class FigFillPicker extends HTMLElement {
       });
   }
 
-  #getGradientCSS() {
-    const stops = this.#gradient.stops
+  #buildGradientCSS(interpolationSpaceOverride, includeInterpolation = true) {
+    const gradient = normalizeGradientConfig({
+      ...this.#gradient,
+      interpolationSpace: interpolationSpaceOverride ?? this.#gradient.interpolationSpace,
+    });
+    const stops = gradient.stops
       .map((s) => {
         const rgba = this.#hexToRGBA(s.color, s.opacity / 100);
         return `${rgba} ${s.position}%`;
       })
       .join(", ");
-
-    switch (this.#gradient.type) {
+    const interpolation = includeInterpolation ? ` ${gradientInterpolationClause(gradient)}` : "";
+    switch (gradient.type) {
       case "linear":
-        return `linear-gradient(${this.#gradient.angle}deg, ${stops})`;
+        return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
       case "radial":
-        return `radial-gradient(circle at ${this.#gradient.centerX}% ${
-          this.#gradient.centerY
-        }%, ${stops})`;
+        return `radial-gradient(circle at ${gradient.centerX}% ${gradient.centerY}%${interpolation}, ${stops})`;
       case "angular":
-        // Internal gradient.angle is already in CSS coordinate system (0° = top)
-        // because it's converted when reading from fig-input-angle
-        return `conic-gradient(from ${this.#gradient.angle}deg, ${stops})`;
+        return `conic-gradient(from ${gradient.angle}deg${interpolation}, ${stops})`;
       default:
-        return `linear-gradient(${this.#gradient.angle}deg, ${stops})`;
+        return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
     }
+  }
+
+  #testGradientSupport(css) {
+    const el = document.createElement("div");
+    el.style.background = css;
+    return !!el.style.background;
+  }
+
+  #getGradientCSS() {
+    const preferred = this.#buildGradientCSS(undefined, true);
+    if (this.#testGradientSupport(preferred)) return preferred;
+
+    const srgbInterp = this.#buildGradientCSS("srgb", true);
+    if (this.#testGradientSupport(srgbInterp)) return srgbInterp;
+
+    return this.#buildGradientCSS("srgb", false);
   }
 
   // ============ IMAGE TAB ============
@@ -10261,7 +10599,7 @@ class FigFillPicker extends HTMLElement {
     const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
-      <div class="fig-fill-picker-media-header">
+      <fig-field class="fig-fill-picker-media-header" direction="horizontal">
         <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
           this.#image.scaleMode
         }">
@@ -10273,7 +10611,7 @@ class FigFillPicker extends HTMLElement {
         <fig-input-number class="fig-fill-picker-scale" min="1" max="200" value="${
           this.#image.scale
         }" units="%" style="display: none;"></fig-input-number>
-      </div>
+      </fig-field>
       <div class="fig-fill-picker-media-preview">
         <div class="fig-fill-picker-checkerboard"></div>
         <div class="fig-fill-picker-image-preview"></div>
@@ -10415,7 +10753,7 @@ class FigFillPicker extends HTMLElement {
     const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
-      <div class="fig-fill-picker-media-header">
+      <fig-field class="fig-fill-picker-media-header" direction="horizontal">
         <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
           this.#video.scaleMode
         }">
@@ -10423,7 +10761,7 @@ class FigFillPicker extends HTMLElement {
           <option value="fit">Fit</option>
           <option value="crop">Crop</option>
         </fig-dropdown>
-      </div>
+      </fig-field>
       <div class="fig-fill-picker-media-preview">
         <div class="fig-fill-picker-checkerboard"></div>
         <video class="fig-fill-picker-video-preview" style="display: none;" muted loop></video>
@@ -10513,13 +10851,13 @@ class FigFillPicker extends HTMLElement {
           <span>Camera access required</span>
         </div>
       </div>
-      <div class="fig-fill-picker-webcam-controls">
+      <fig-field class="fig-fill-picker-webcam-controls" direction="horizontal">
         <fig-dropdown class="fig-fill-picker-camera-select" ${expAttr} style="display: none;">
         </fig-dropdown>
         <fig-button class="fig-fill-picker-webcam-capture" variant="primary">
           Capture
         </fig-button>
-      </div>
+      </fig-field>
     `;
 
     this.#setupWebcamEvents(container);
@@ -10882,7 +11220,7 @@ class FigFillPicker extends HTMLElement {
       case "gradient":
         return {
           ...base,
-          gradient: { ...this.#gradient },
+          gradient: gradientToValueShape(this.#gradient),
           css: this.#getGradientCSS(),
         };
       case "image":

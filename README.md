@@ -487,11 +487,40 @@ A comprehensive fill input supporting colors, gradients, images, and video.
 <fig-input-fill value='{"type":"solid","color":"#FF5733","opacity":100}'></fig-input-fill>
 
 <!-- Gradient -->
-<fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#FF0000"},{"position":100,"color":"#0000FF"}]}}'></fig-input-fill>
+<fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#FF0000"},{"position":100,"color":"#0000FF"}]}}'></fig-input-fill>
 
 <!-- Image -->
 <fig-input-fill value='{"type":"image","image":{"url":"path/to/image.jpg","scaleMode":"fill"}}'></fig-input-fill>
 ```
+
+---
+
+### Gradient Input (`<fig-input-gradient>`)
+
+A gradient-only fill input that opens the `fig-fill-picker` locked to gradient mode.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `value` | string | — | JSON gradient fill data (`{ "type": "gradient", "gradient": ... }`) |
+| `disabled` | boolean | `false` | Disable input |
+| `experimental` | string | — | Optional picker feature flags (e.g. `"modern"`) |
+| `picker-*` | string | — | Optional passthrough picker attributes (except `picker-anchor`) |
+| `picker-anchor` | string | `"self"` | Anchor target selector or `"self"` |
+
+```html
+<fig-input-gradient
+  value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklch","hueInterpolation":"shorter","stops":[{"position":0,"color":"#FF0000","opacity":100},{"position":100,"color":"#0000FF","opacity":100}]}}'
+></fig-input-gradient>
+```
+
+Supported gradient interpolation spaces:
+- `srgb`
+- `srgb-linear`
+- `display-p3`
+- `oklab`
+- `oklch` (supports `hueInterpolation`: `shorter`, `longer`, `increasing`, `decreasing`)
+
+Note: stop colors are currently authored/stored as hex (sRGB-origin). `display-p3` interpolation syntax is supported, but fully wide-gamut editing requires P3 stop-color storage.
 
 ---
 

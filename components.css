@@ -2906,6 +2906,7 @@ fig-content,
 fig-slider,
 fig-switch,
 fig-input-color,
+fig-input-gradient,
 fig-input-fill,
 fig-checkbox,
 fig-radio,
@@ -3121,12 +3122,14 @@ fig-input-text[type="number"] > [slot] {
 }
 
 fig-input-color,
+fig-input-gradient,
 fig-input-fill {
   background-color: var(--figma-color-bg-secondary);
   border-radius: var(--radius-medium);
   box-shadow: none !important;
   &:focus,
-  &:focus-within {
+  &:focus-within,
+  &.has-popup-open {
     outline: 1px solid var(--figma-color-border-selected) !important;
     outline-offset: -1px !important;
   }
@@ -3147,8 +3150,8 @@ fig-input-fill {
       border: 0 !important;
     }
   }
-  fig-input-text > input,
-  label {
+  fig-fill-picker ~ fig-input-text > input,
+  fig-fill-picker ~ label {
     padding-left: 0 !important;
   }
 
@@ -3173,6 +3176,31 @@ fig-input-fill {
   fig-field[direction="horizontal"] & {
     flex: 1;
     min-width: 0;
+  }
+}
+fig-input-gradient {
+  &:focus,
+  &:active,
+  &:focus-within {
+    outline: 1px solid var(--figma-color-border-selected) !important;
+    outline-offset: -1px !important;
+  }
+  fig-chit {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    &::before,
+    &::after {
+      width: auto;
+      height: auto;
+      place-self: stretch;
+    }
+    &[data-type="gradient"]::after {
+      width: calc(100% - 0.625rem);
+      height: 0.875rem;
+      justify-self: center;
+      align-self: center;
+    }
   }
 }
 
@@ -4143,11 +4171,38 @@ fig-fill-picker {
   }
 }
 
+fig-preview {
+  display: inline-grid;
+  place-items: center;
+  aspect-ratio: 1;
+  width: calc(100% - var(--spacer-3) * 2);
+  margin: 0 var(--spacer-3);
+  margin-top: var(--spacer-2);
+  margin-bottom: var(--spacer-2);
+  border-radius: var(--radius-medium);
+  position: relative;
+  &::before,
+  &::after,
+  > * {
+    grid-area: 1/1;
+    place-self: center;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+  }
+  &::after {
+    content: "";
+    grid-area: 1/1;
+    place-self: center;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+  }
+}
+
 .fig-fill-picker-dialog {
   width: 240px;
   padding: 0;
 
-  fig-header {
+  & > fig-header {
     padding: var(--spacer-2);
     display: flex;
     justify-content: space-between;
@@ -4158,288 +4213,268 @@ fig-fill-picker {
     font-size: 0.6875rem;
     padding: var(--spacer-1) var(--spacer-1);
   }
-}
-
-.fig-fill-picker-type-label {
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-medium);
-  color: var(--figma-color-text);
-  padding: var(--spacer-1) var(--spacer-2);
-}
-
-.fig-fill-picker-content {
-  padding: var(--spacer-3);
-}
-
-.fig-fill-picker-tab {
-  display: none;
-
-  &:first-child {
-    display: block;
+  & > fig-content {
+    padding-bottom: var(--spacer-2-5);
   }
-}
-
-/* Solid Tab */
-.fig-fill-picker-color-area {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: var(--radius-medium);
-  overflow: visible;
-  margin-bottom: var(--spacer-2);
-
-  canvas {
-    width: 100%;
-    height: 100%;
-    border-radius: var(--radius-medium);
-  }
-}
-
-.fig-fill-picker-handle {
-  position: absolute;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-  background: var(--picker-color);
-  box-shadow:
-    inset 0 0 0 0.125rem var(--handle-color),
-    0px 0 0 0.5px rgba(0, 0, 0, 0.1),
-    var(--elevation-100-canvas);
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  &:hover {
-    transform: translate(-50%, -50%);
-  }
-}
-
-.fig-fill-picker-sliders {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacer-2);
-  margin-bottom: var(--spacer-2);
-
-  fig-slider {
-    width: 100%;
-  }
-}
-
-.fig-fill-picker-inputs {
-  display: flex;
-  gap: var(--spacer-1);
-  align-items: center;
-
-  .fig-fill-picker-color-input {
-    flex: 1;
-  }
-}
-
-/* Gradient Tab */
-.fig-fill-picker-gradient-header {
-  display: flex;
-  gap: var(--spacer-2);
-  align-items: center;
-  margin-bottom: var(--spacer-2);
-
-  & > *:last-child fig-button {
-    margin-left: auto;
+  .fig-fill-picker-type-label {
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-medium);
+    color: var(--figma-color-text);
+    padding: var(--spacer-1) var(--spacer-2);
   }
 
-  .fig-fill-picker-gradient-center {
-    fig-input-number {
-      width: 48px;
+  .fig-fill-picker-tab {
+    display: none;
+
+    &:first-child {
+      display: block;
     }
   }
-}
 
-.fig-fill-picker-gradient-preview {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: var(--radius-medium);
-  overflow: hidden;
-  margin-bottom: var(--spacer-2);
-}
+  .fig-fill-picker-color-area {
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius-medium);
+    }
+  }
 
-.fig-fill-picker-gradient-bar {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-medium);
-  background: linear-gradient(90deg, #d9d9d9 0%, #737373 100%);
-}
+  .fig-fill-picker-handle {
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--picker-color);
+    box-shadow:
+      inset 0 0 0 0.125rem var(--handle-color),
+      0px 0 0 0.5px rgba(0, 0, 0, 0.1),
+      var(--elevation-100-canvas);
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    &:hover {
+      transform: translate(-50%, -50%);
+    }
+  }
 
-.fig-fill-picker-gradient-stops-handles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-}
+  .fig-fill-picker-sliders {
+    fig-field {
+      width: 100%;
+    }
 
-.fig-fill-picker-gradient-stops {
-  .fig-fill-picker-gradient-stops-header {
+    fig-slider {
+      width: 100%;
+    }
+  }
+
+  .fig-fill-picker-inputs {
     display: flex;
-    justify-content: space-between;
+    gap: var(--spacer-1);
     align-items: center;
-    margin-bottom: var(--spacer-1);
-    font-size: 0.75rem;
-    color: var(--figma-color-text-secondary);
-  }
-}
 
-.fig-fill-picker-gradient-stops-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacer-1);
-}
-
-.fig-fill-picker-gradient-stop-row {
-  display: flex;
-  gap: var(--spacer-1);
-  align-items: center;
-
-  & > .fig-fill-picker-stop-position {
-    flex: 0;
-    flex-basis: 3rem;
-    min-width: 0;
-    width: 3rem;
+    .fig-fill-picker-color-input {
+      flex: 1;
+    }
   }
 
-  .fig-fill-picker-stop-color {
-    flex: 1;
-    min-width: 0;
-    fig-input-text {
+  /* Gradient Tab */
+  .fig-fill-picker-gradient-header {
+    .fig-fill-picker-gradient-type {
+      flex: 1;
       min-width: 0;
     }
-  }
 
-  .fig-fill-picker-stop-remove {
-    flex-shrink: 0;
-  }
-}
-
-/* Media Tabs (Image/Video/Webcam) */
-.fig-fill-picker-media-header {
-  display: flex;
-  gap: var(--spacer-1);
-  align-items: center;
-  margin-bottom: var(--spacer-2);
-
-  .fig-fill-picker-scale-mode {
-    flex: 1;
-  }
-
-  .fig-fill-picker-scale {
-    width: 56px;
-  }
-}
-
-.fig-fill-picker-media-preview {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: var(--radius-medium);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &.dragover {
-    outline: 2px dashed var(--figma-color-border-brand);
-    outline-offset: -2px;
-  }
-
-  &.has-media {
-    fig-button {
-      visibility: hidden;
+    & > *:last-child fig-button {
+      margin-left: auto;
     }
-    &:hover {
-      fig-button {
-        visibility: visible;
+
+    .fig-fill-picker-gradient-center {
+      fig-input-number {
+        width: 48px;
       }
     }
   }
-}
 
-.fig-fill-picker-checkerboard {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(45deg, var(--figma-color-bg-tertiary) 25%, transparent 25%),
-    linear-gradient(
-      -45deg,
-      var(--figma-color-bg-tertiary) 25%,
-      transparent 25%
-    ),
-    linear-gradient(45deg, transparent 75%, var(--figma-color-bg-tertiary) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--figma-color-bg-tertiary) 75%);
-  background-size: 16px 16px;
-  background-position:
-    0 0,
-    0 8px,
-    8px -8px,
-    -8px 0px;
-}
-
-.fig-fill-picker-image-preview {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: none;
-}
-
-.fig-fill-picker-video-preview {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: none;
-}
-
-.fig-fill-picker-upload {
-  position: relative;
-  z-index: 1;
-}
-
-/* Webcam Tab */
-.fig-fill-picker-webcam-preview {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: var(--radius-medium);
-  overflow: hidden;
-  margin-bottom: var(--spacer-2);
-}
-
-.fig-fill-picker-webcam-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.fig-fill-picker-webcam-status {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--figma-color-bg-secondary);
-  color: var(--figma-color-text-secondary);
-  font-size: 0.75rem;
-}
-
-.fig-fill-picker-webcam-controls {
-  display: flex;
-  gap: var(--spacer-1);
-
-  .fig-fill-picker-camera-select {
-    flex: 1;
+  .fig-fill-picker-gradient-bar {
+    background: linear-gradient(90deg, #d9d9d9 0%, #737373 100%);
   }
 
-  .fig-fill-picker-webcam-capture {
-    flex-shrink: 0;
+  .fig-fill-picker-gradient-stops-handles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+  }
+
+  .fig-fill-picker-gradient-stops {
+    .fig-fill-picker-gradient-stops-header {
+      > span {
+        flex: 1;
+      }
+    }
+  }
+
+  .fig-fill-picker-gradient-stops-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacer-1);
+  }
+
+  .fig-fill-picker-gradient-stop-row {
+    padding-right: var(--spacer-2);
+    & > .fig-fill-picker-stop-position {
+      flex: 0;
+      flex-basis: 3rem;
+      min-width: 0;
+      width: 3rem;
+    }
+
+    .fig-fill-picker-stop-color {
+      flex: 1;
+      min-width: 0;
+      fig-input-text {
+        min-width: 0;
+      }
+    }
+
+    .fig-fill-picker-stop-remove {
+      flex-shrink: 0;
+    }
+  }
+
+  /* Media Tabs (Image/Video/Webcam) */
+  .fig-fill-picker-media-header {
+    .fig-fill-picker-scale-mode {
+      flex: 1;
+    }
+
+    .fig-fill-picker-scale {
+      width: 56px;
+    }
+  }
+
+  .fig-fill-picker-media-preview {
+    position: relative;
+    aspect-ratio: 1;
+    margin: var(--spacer-1) var(--spacer-3);
+    border-radius: var(--radius-medium);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.dragover {
+      outline: 2px dashed var(--figma-color-border-brand);
+      outline-offset: -2px;
+    }
+
+    &.has-media {
+      fig-button {
+        visibility: hidden;
+      }
+      &:hover {
+        fig-button {
+          visibility: visible;
+        }
+      }
+    }
+  }
+
+  .fig-fill-picker-checkerboard {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(
+        45deg,
+        var(--figma-color-bg-tertiary) 25%,
+        transparent 25%
+      ),
+      linear-gradient(
+        -45deg,
+        var(--figma-color-bg-tertiary) 25%,
+        transparent 25%
+      ),
+      linear-gradient(
+        45deg,
+        transparent 75%,
+        var(--figma-color-bg-tertiary) 75%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent 75%,
+        var(--figma-color-bg-tertiary) 75%
+      );
+    background-size: 16px 16px;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0px;
+  }
+
+  .fig-fill-picker-image-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+  }
+
+  .fig-fill-picker-video-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .fig-fill-picker-upload {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Webcam Tab */
+  .fig-fill-picker-webcam-preview {
+    position: relative;
+    aspect-ratio: 1;
+    margin: 0 var(--spacer-3);
+    border-radius: var(--radius-medium);
+    overflow: hidden;
+    margin-bottom: var(--spacer-2);
+  }
+
+  .fig-fill-picker-webcam-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .fig-fill-picker-webcam-status {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--figma-color-bg-secondary);
+    color: var(--figma-color-text-secondary);
+    font-size: 0.75rem;
+  }
+
+  .fig-fill-picker-webcam-controls {
+    display: flex;
+    gap: var(--spacer-1);
+
+    .fig-fill-picker-camera-select {
+      flex: 1;
+    }
+
+    .fig-fill-picker-webcam-capture {
+      flex-shrink: 0;
+    }
   }
 }
 

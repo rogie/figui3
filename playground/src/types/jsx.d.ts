@@ -22,6 +22,7 @@ declare module "react" {
       "fig-segment": FigAttrs;
       "fig-image": FigAttrs;
       "fig-input-color": FigAttrs;
+      "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-input-angle": FigAttrs;
       "fig-input-number": FigAttrs;

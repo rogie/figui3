@@ -145,6 +145,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-combo-input": "Combo input",
     "fig-image": "Image",
     "fig-input-color": "Color",
+    "fig-input-gradient": "Gradient",
     "fig-input-fill": "Fill",
     "fig-slider": "Slider",
     "fig-input-number": "Number",

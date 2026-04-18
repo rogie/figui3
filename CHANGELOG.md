@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.11.0]
+
+### Added
+
+- New `fig-input-gradient` component — a gradient-only fill input that opens `fig-fill-picker` locked to gradient mode.
+- Gradient color interpolation support: `interpolationSpace` (`srgb`, `srgb-linear`, `display-p3`, `oklab`, `oklch`) and `hueInterpolation` (`shorter`, `longer`, `increasing`, `decreasing`) for OKLCH.
+- `fig-preview` component for displaying gradient bar previews with stop handles.
+- Gradient interpolation UI in `fig-fill-picker`: space dropdown and hue interpolation dropdown (shown for OKLCH).
+- Playground section and Attributes View support for `fig-input-gradient`.
+- README documentation for `fig-input-gradient` and gradient interpolation spaces.
+
+### Fixed
+
+- Fixed gradient CSS interpolation syntax — the `in <color-space>` clause was incorrectly placed as a separate comma-delimited argument instead of within the same argument group as the direction/angle (e.g. `conic-gradient(from 180deg in oklch shorter hue, ...)` instead of the invalid `conic-gradient(in oklch shorter hue, from 180deg, ...)`). This caused browsers to reject the interpolation and silently fall back to sRGB.
+
+### Changed
+
+- `fig-input-fill` and `fig-fill-picker` gradient value shape now includes `interpolationSpace` (and `hueInterpolation` for OKLCH).
+- Updated `fig-input-fill` and `fig-input-color` focus/popup-open outline styling with `.has-popup-open` class.
+- Refined `fig-input-fill` internal CSS selectors for label/input padding to avoid conflicts with `fig-input-gradient`.
+
+## [3.10.0]
+
+### Added
+
+- `fig-skeleton` component and editor scaffold.
+
 ## [3.9.3]
 
 ### Changed
