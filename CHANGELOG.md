@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.12.0]
+
+### Added
+
+- Color input mode switcher in solid fill picker — dropdown to choose between Hex, RGB, HSL, HSB, LAB (OKLab), and LCH (OKLCH) input modes.
+- OKLab/OKLCH reverse conversion utilities (`#oklabToRGB`, `#oklchToRGB`) for bidirectional color editing in perceptual color spaces.
+- Tooltips on each color component input (e.g. "Red", "Hue", "Lightness", "Chroma").
+- Gamut selector (sRGB / Display P3) in fill picker dialog header, affecting both solid canvas rendering and gradient stop color format.
+- Eyedropper button repositioned into `.fig-fill-picker-sliders` grid with "Sample color" tooltip.
+- Color input mode preference persisted via localStorage.
+
+### Changed
+
+- Solid fill picker inputs area now uses a `fig-dropdown` + dynamic `input-combo` fields instead of a single `fig-input-color`.
+- `.fig-fill-picker-sliders` uses CSS grid layout with eyedropper spanning the left column.
+- Sliders no longer wrapped in `fig-field` elements inside `.fig-fill-picker-sliders`.
+- Gradient interpolation dropdown trimmed to sRGB Linear, OKLab, and OKLCH (gamut selection moved to top-level header).
+- Default gradient `interpolationSpace` changed from `srgb` to `oklab`.
+- `experimental` attribute passed through to color input mode dropdown.
+
 ## [3.11.0]
 
 ### Added

@@ -4842,16 +4842,20 @@ const GRADIENT_HUE_INTERPOLATIONS = [
   "decreasing",
 ];
 
+const GRADIENT_PICKER_SPACES = ["srgb-linear", "oklab", "oklch"];
+
 function normalizeGradientConfig(gradient) {
   const next = { ...(gradient ?? {}) };
-  const interpolationSpace = String(
-    next.interpolationSpace ?? "srgb",
+  let interpolationSpace = String(
+    next.interpolationSpace ?? "oklab",
   ).toLowerCase();
-  next.interpolationSpace = GRADIENT_INTERPOLATION_SPACES.includes(
-    interpolationSpace,
-  )
-    ? interpolationSpace
-    : "srgb";
+  if (!GRADIENT_INTERPOLATION_SPACES.includes(interpolationSpace)) {
+    interpolationSpace = "oklab";
+  }
+  if (interpolationSpace === "srgb" || interpolationSpace === "display-p3") {
+    interpolationSpace = "oklab";
+  }
+  next.interpolationSpace = interpolationSpace;
 
   const hueInterpolation = String(next.hueInterpolation ?? "shorter").toLowerCase();
   next.hueInterpolation = GRADIENT_HUE_INTERPOLATIONS.includes(hueInterpolation)
@@ -4879,6 +4883,27 @@ function gradientInterpolationClause(gradient) {
   return `in ${normalized.interpolationSpace}`;
 }
 
+function hslToP3(h, s, l) {
+  const sRGB = hslToSRGB(h, s, l);
+  return sRGB.map((c) => +(c / 255).toFixed(4));
+}
+
+function hslToSRGB(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r, g, b;
+  if (h < 60) { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else { r = c; g = 0; b = x; }
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+
 /**
  * A fill input that supports solid colors, gradients, images, and videos.
  * @attr {string} value - JSON string with fill data
@@ -4897,7 +4922,7 @@ class FigInputFill extends HTMLElement {
   #gradient = {
     type: "linear",
     angle: 180,
-    interpolationSpace: "srgb",
+    interpolationSpace: "oklab",
     hueInterpolation: "shorter",
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
@@ -5557,7 +5582,7 @@ class FigInputGradient extends HTMLElement {
   #gradient = {
     type: "linear",
     angle: 180,
-    interpolationSpace: "srgb",
+    interpolationSpace: "oklab",
     hueInterpolation: "shorter",
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
@@ -9552,13 +9577,15 @@ class FigFillPicker extends HTMLElement {
 
   // Fill state
   #fillType = "solid";
+  #gamut = "srgb"; // "srgb" or "display-p3"
   #color = { h: 0, s: 0, v: 85, a: 1 }; // Default gray #D9D9D9
+  #colorInputMode = "hex";
   #gradient = {
     type: "linear",
     angle: 0,
     centerX: 50,
     centerY: 50,
-    interpolationSpace: "srgb",
+    interpolationSpace: "oklab",
     hueInterpolation: "shorter",
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
@@ -9669,6 +9696,9 @@ class FigFillPicker extends HTMLElement {
       if (parsed.opacity !== undefined) {
         this.#color.a = parsed.opacity / 100;
       }
+      if (parsed.colorSpace === "display-p3" || parsed.colorSpace === "srgb") {
+        this.#gamut = parsed.colorSpace;
+      }
       if (parsed.gradient) {
         this.#gradient = normalizeGradientConfig({
           ...this.#gradient,
@@ -9770,6 +9800,10 @@ class FigFillPicker extends HTMLElement {
     }
 
     this.#switchTab(this.#fillType);
+
+    const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
+    if (gamutEl) gamutEl.value = this.#gamut;
+
     this.#dialog.open = true;
 
     requestAnimationFrame(() => {
@@ -9857,9 +9891,15 @@ class FigFillPicker extends HTMLElement {
       .map((m) => `<div class="fig-fill-picker-tab" data-tab="${m}"></div>`)
       .join("\n        ");
 
+    const gamutDropdown = `<fig-dropdown class="fig-fill-picker-gamut" ${expAttr} value="${this.#gamut}">
+          <option value="srgb">sRGB</option>
+          <option value="display-p3">Display P3</option>
+        </fig-dropdown>`;
+
     this.#dialog.innerHTML = `
       <fig-header>
         ${headerContent}
+        ${gamutDropdown}
         <fig-button icon variant="ghost" class="fig-fill-picker-close">
           <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
         </fig-button>
@@ -9896,6 +9936,20 @@ class FigFillPicker extends HTMLElement {
       typeDropdown.addEventListener("change", (e) => {
         this.#switchTab(e.target.value);
       });
+    }
+
+    // Setup gamut dropdown
+    const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
+    if (gamutEl) {
+      const handleGamutChange = (e) => {
+        const val = e.currentTarget?.value ?? e.target?.value ?? e.detail;
+        if (val && val !== this.#gamut) {
+          this.#gamut = val;
+          this.#onGamutChange();
+        }
+      };
+      gamutEl.addEventListener("input", handleGamutChange);
+      gamutEl.addEventListener("change", handleGamutChange);
     }
 
     this.#dialog
@@ -9988,6 +10042,12 @@ class FigFillPicker extends HTMLElement {
   #initSolidTab() {
     const container = this.#dialog.querySelector('[data-tab="solid"]');
     const showAlpha = this.getAttribute("alpha") !== "false";
+    const experimental = this.getAttribute("experimental");
+    const expAttr = experimental ? `experimental="${experimental}"` : "";
+    const savedMode = localStorage.getItem("figui-color-input-mode");
+    if (savedMode && ["hex", "rgb", "hsl", "hsb", "lab", "lch"].includes(savedMode)) {
+      this.#colorInputMode = savedMode;
+    }
 
     container.innerHTML = `
       <fig-preview class="fig-fill-picker-color-area">
@@ -9995,26 +10055,28 @@ class FigFillPicker extends HTMLElement {
         <div class="fig-fill-picker-handle"></div>
       </fig-preview>
       <div class="fig-fill-picker-sliders">
-        <fig-field direction="horizontal">
-          <fig-slider type="hue" variant="neue" min="0" max="360" value="${
-            this.#color.h
-          }"></fig-slider>
-        </fig-field>
+        <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper"><span class="fig-mask-icon" style="--icon: var(--icon-eyedropper)"></span></fig-button></fig-tooltip>
+        <fig-slider type="hue" variant="neue" min="0" max="360" value="${
+          this.#color.h
+        }"></fig-slider>
         ${
           showAlpha
-            ? `<fig-field direction="horizontal">
-                <fig-slider type="opacity" variant="neue" text="true" units="%" min="0" max="100" value="${
-                  this.#color.a * 100
-                }" color="${this.#hsvToHex(this.#color)}"></fig-slider>
-              </fig-field>`
+            ? `<fig-slider type="opacity" variant="neue" text="true" units="%" min="0" max="100" value="${
+                this.#color.a * 100
+              }" color="${this.#hsvToHex(this.#color)}"></fig-slider>`
             : ""
         }
       </div>
       <fig-field class="fig-fill-picker-inputs" direction="horizontal">
-        <fig-button icon variant="ghost" class="fig-fill-picker-eyedropper" title="Pick color from screen"><span class="fig-mask-icon" style="--icon: var(--icon-eyedropper)"></span></fig-button>
-        <fig-input-color class="fig-fill-picker-color-input" text="true" picker="false" value="${this.#hsvToHex(
-          this.#color,
-        )}"></fig-input-color>
+        <fig-dropdown class="fig-fill-picker-input-mode" ${expAttr} value="${this.#colorInputMode}">
+          <option value="hex">Hex</option>
+          <option value="rgb">RGB</option>
+          <option value="hsl">HSL</option>
+          <option value="hsb">HSB</option>
+          <option value="lab">LAB</option>
+          <option value="lch">LCH</option>
+        </fig-dropdown>
+        <span class="fig-fill-picker-input-fields"></span>
       </fig-field>
     `;
 
@@ -10053,24 +10115,16 @@ class FigFillPicker extends HTMLElement {
       });
     }
 
-    // Setup color input
-    const colorInput = container.querySelector(".fig-fill-picker-color-input");
-    colorInput.addEventListener("input", (e) => {
-      // Skip if we're dragging - prevents feedback loop that loses saturation for dark colors
-      if (this.#isDraggingColor) return;
+    // Setup color input mode dropdown
+    const modeDropdown = container.querySelector(".fig-fill-picker-input-mode");
+    modeDropdown.addEventListener("input", (e) => {
+      this.#colorInputMode = e.target.value;
+      localStorage.setItem("figui-color-input-mode", this.#colorInputMode);
+      this.#rebuildColorInputFields();
+    });
 
-      const hex = e.target.value;
-      this.#color = { ...this.#hexToHSV(hex), a: this.#color.a };
-      this.#drawColorArea();
-      this.#updateHandlePosition();
-      if (this.#hueSlider) {
-        this.#hueSlider.setAttribute("value", this.#color.h);
-      }
-      this.#emitInput();
-    });
-    colorInput.addEventListener("change", () => {
-      this.#emitChange();
-    });
+    // Build initial color input fields
+    this.#rebuildColorInputFields();
 
     // Setup eyedropper
     const eyedropper = container.querySelector(".fig-fill-picker-eyedropper");
@@ -10094,6 +10148,27 @@ class FigFillPicker extends HTMLElement {
     }
   }
 
+  #onGamutChange() {
+    // Recreate the solid canvas with the new color space
+    const solidContainer = this.#dialog?.querySelector('[data-tab="solid"]');
+    if (solidContainer) {
+      const oldCanvas = solidContainer.querySelector("canvas");
+      if (oldCanvas) {
+        const newCanvas = document.createElement("canvas");
+        newCanvas.width = oldCanvas.width;
+        newCanvas.height = oldCanvas.height;
+        oldCanvas.replaceWith(newCanvas);
+        this.#colorArea = newCanvas;
+        this.#setupColorAreaEvents();
+      }
+      this.#drawColorArea();
+      this.#updateHandlePosition();
+    }
+    // Refresh gradient preview if gradient tab exists
+    this.#updateGradientPreview();
+    this.#emitInput();
+  }
+
   #drawColorArea() {
     // Refresh canvas reference in case DOM changed
     if (!this.#colorArea && this.#dialog) {
@@ -10101,27 +10176,31 @@ class FigFillPicker extends HTMLElement {
     }
     if (!this.#colorArea) return;
 
-    const ctx = this.#colorArea.getContext("2d");
+    const colorSpace = this.#gamut === "display-p3" ? "display-p3" : "srgb";
+    const ctx = this.#colorArea.getContext("2d", { colorSpace });
     if (!ctx) return;
 
     const width = this.#colorArea.width;
     const height = this.#colorArea.height;
 
-    // Clear canvas first
     ctx.clearRect(0, 0, width, height);
 
-    // Draw saturation-value gradient
     const hue = this.#color.h;
+    const isP3 = this.#gamut === "display-p3";
 
-    // Create horizontal gradient (white to hue color)
     const gradH = ctx.createLinearGradient(0, 0, width, 0);
-    gradH.addColorStop(0, "#FFFFFF");
-    gradH.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
+    if (isP3) {
+      gradH.addColorStop(0, "color(display-p3 1 1 1)");
+      const [r, g, b] = hslToP3(hue, 100, 50);
+      gradH.addColorStop(1, `color(display-p3 ${r} ${g} ${b})`);
+    } else {
+      gradH.addColorStop(0, "#FFFFFF");
+      gradH.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
+    }
 
     ctx.fillStyle = gradH;
     ctx.fillRect(0, 0, width, height);
 
-    // Create vertical gradient (transparent to black)
     const gradV = ctx.createLinearGradient(0, 0, 0, height);
     gradV.addColorStop(0, "rgba(0,0,0,0)");
     gradV.addColorStop(1, "rgba(0,0,0,1)");
@@ -10215,16 +10294,164 @@ class FigFillPicker extends HTMLElement {
     this.#colorAreaHandle.addEventListener("lostpointercapture", endColorDrag);
   }
 
+  #rebuildColorInputFields() {
+    const container = this.#dialog?.querySelector(".fig-fill-picker-input-fields");
+    if (!container) return;
+
+    const wrap = (tooltip, html) =>
+      `<fig-tooltip text="${tooltip}">${html}</fig-tooltip>`;
+
+    const num = (cls, min, max, step) =>
+      `<fig-input-number class="${cls}" min="${min}" max="${max}"${step != null ? ` step="${step}"` : ""}></fig-input-number>`;
+
+    let html;
+    switch (this.#colorInputMode) {
+      case "rgb":
+        html = `<div class="input-combo">
+          ${wrap("Red", num("fig-fill-picker-ci-r", 0, 255))}
+          ${wrap("Green", num("fig-fill-picker-ci-g", 0, 255))}
+          ${wrap("Blue", num("fig-fill-picker-ci-b", 0, 255))}
+        </div>`;
+        break;
+      case "hsl":
+        html = `<div class="input-combo">
+          ${wrap("Hue", num("fig-fill-picker-ci-h", 0, 360))}
+          ${wrap("Saturation", num("fig-fill-picker-ci-s", 0, 100))}
+          ${wrap("Lightness", num("fig-fill-picker-ci-l", 0, 100))}
+        </div>`;
+        break;
+      case "hsb":
+        html = `<div class="input-combo">
+          ${wrap("Hue", num("fig-fill-picker-ci-h", 0, 360))}
+          ${wrap("Saturation", num("fig-fill-picker-ci-s", 0, 100))}
+          ${wrap("Brightness", num("fig-fill-picker-ci-v", 0, 100))}
+        </div>`;
+        break;
+      case "lab":
+        html = `<div class="input-combo">
+          ${wrap("Lightness", num("fig-fill-picker-ci-okl", 0, 100))}
+          ${wrap("Green-Red axis", num("fig-fill-picker-ci-oka", -0.4, 0.4, 0.001))}
+          ${wrap("Blue-Yellow axis", num("fig-fill-picker-ci-okb", -0.4, 0.4, 0.001))}
+        </div>`;
+        break;
+      case "lch":
+        html = `<div class="input-combo">
+          ${wrap("Lightness", num("fig-fill-picker-ci-okl", 0, 100))}
+          ${wrap("Chroma", num("fig-fill-picker-ci-okc", 0, 0.4, 0.001))}
+          ${wrap("Hue", num("fig-fill-picker-ci-okh", 0, 360))}
+        </div>`;
+        break;
+      default: // hex
+        html = `<fig-input-text class="fig-fill-picker-ci-hex" placeholder="FFFFFF"></fig-input-text>`;
+        break;
+    }
+
+    container.innerHTML = html;
+    this.#wireColorInputEvents();
+    requestAnimationFrame(() => this.#updateColorInputs());
+  }
+
+  #wireColorInputEvents() {
+    const container = this.#dialog?.querySelector(".fig-fill-picker-input-fields");
+    if (!container) return;
+
+    const onInput = () => {
+      if (this.#isDraggingColor) return;
+      const color = this.#readColorFromInputs();
+      if (!color) return;
+      this.#color = { ...color, a: this.#color.a };
+      this.#drawColorArea();
+      this.#updateHandlePosition();
+      if (this.#hueSlider) {
+        this.#hueSlider.setAttribute("value", this.#color.h);
+      }
+      this.#emitInput();
+    };
+
+    const onChange = () => this.#emitChange();
+
+    const inputs = container.querySelectorAll("fig-input-number, fig-input-text");
+    inputs.forEach((el) => {
+      el.addEventListener("input", onInput);
+      el.addEventListener("change", onChange);
+    });
+  }
+
+  #readColorFromInputs() {
+    const q = (cls) => this.#dialog?.querySelector(`.${cls}`);
+    const val = (cls) => parseFloat(q(cls)?.value ?? 0);
+
+    switch (this.#colorInputMode) {
+      case "rgb":
+        return this.#rgbToHSV({ r: val("fig-fill-picker-ci-r"), g: val("fig-fill-picker-ci-g"), b: val("fig-fill-picker-ci-b") });
+      case "hsl": {
+        const rgb = this.#hslToRGB({ h: val("fig-fill-picker-ci-h"), s: val("fig-fill-picker-ci-s"), l: val("fig-fill-picker-ci-l") });
+        return this.#rgbToHSV(rgb);
+      }
+      case "hsb":
+        return { h: val("fig-fill-picker-ci-h"), s: val("fig-fill-picker-ci-s"), v: val("fig-fill-picker-ci-v"), a: 1 };
+      case "lab": {
+        const rgb = this.#oklabToRGB({ l: val("fig-fill-picker-ci-okl") / 100, a: val("fig-fill-picker-ci-oka"), b: val("fig-fill-picker-ci-okb") });
+        return this.#rgbToHSV(rgb);
+      }
+      case "lch": {
+        const rgb = this.#oklchToRGB({ l: val("fig-fill-picker-ci-okl") / 100, c: val("fig-fill-picker-ci-okc"), h: val("fig-fill-picker-ci-okh") });
+        return this.#rgbToHSV(rgb);
+      }
+      default: { // hex
+        const hexEl = q("fig-fill-picker-ci-hex");
+        if (!hexEl) return null;
+        let hex = hexEl.value.replace(/^#/, "");
+        if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        if (hex.length !== 6 || !/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+        return this.#hexToHSV(`#${hex}`);
+      }
+    }
+  }
+
   #updateColorInputs() {
     if (!this.#dialog) return;
 
     const hex = this.#hsvToHex(this.#color);
+    const rgb = this.#hsvToRGB(this.#color);
+    const q = (cls) => this.#dialog.querySelector(`.${cls}`);
+    const set = (cls, v) => { const el = q(cls); if (el) el.setAttribute("value", v); };
 
-    const colorInput = this.#dialog.querySelector(
-      ".fig-fill-picker-color-input",
-    );
-    if (colorInput) {
-      colorInput.setAttribute("value", hex);
+    switch (this.#colorInputMode) {
+      case "rgb":
+        set("fig-fill-picker-ci-r", rgb.r);
+        set("fig-fill-picker-ci-g", rgb.g);
+        set("fig-fill-picker-ci-b", rgb.b);
+        break;
+      case "hsl": {
+        const hsl = this.#rgbToHSL(rgb);
+        set("fig-fill-picker-ci-h", Math.round(hsl.h));
+        set("fig-fill-picker-ci-s", Math.round(hsl.s));
+        set("fig-fill-picker-ci-l", Math.round(hsl.l));
+        break;
+      }
+      case "hsb":
+        set("fig-fill-picker-ci-h", Math.round(this.#color.h));
+        set("fig-fill-picker-ci-s", Math.round(this.#color.s));
+        set("fig-fill-picker-ci-v", Math.round(this.#color.v));
+        break;
+      case "lab": {
+        const lab = this.#rgbToOKLAB(rgb);
+        set("fig-fill-picker-ci-okl", Math.round(lab.l * 100));
+        set("fig-fill-picker-ci-oka", +lab.a.toFixed(3));
+        set("fig-fill-picker-ci-okb", +lab.b.toFixed(3));
+        break;
+      }
+      case "lch": {
+        const lch = this.#rgbToOKLCH(rgb);
+        set("fig-fill-picker-ci-okl", Math.round(lch.l * 100));
+        set("fig-fill-picker-ci-okc", +lch.c.toFixed(3));
+        set("fig-fill-picker-ci-okh", Math.round(lch.h));
+        break;
+      }
+      default: // hex
+        set("fig-fill-picker-ci-hex", hex.replace(/^#/, "").toUpperCase());
+        break;
     }
 
     if (this.#opacitySlider) {
@@ -10272,9 +10499,7 @@ class FigFillPicker extends HTMLElement {
         <fig-dropdown class="fig-fill-picker-gradient-space" ${expAttr} value="${
           this.#gradient.interpolationSpace
         }">
-          <option value="srgb">sRGB</option>
           <option value="srgb-linear">sRGB Linear</option>
-          <option value="display-p3">Display P3</option>
           <option value="oklab">OKLab</option>
           <option value="oklch">OKLCH</option>
         </fig-dropdown>
@@ -10557,10 +10782,13 @@ class FigFillPicker extends HTMLElement {
       ...this.#gradient,
       interpolationSpace: interpolationSpaceOverride ?? this.#gradient.interpolationSpace,
     });
+    const isP3 = this.#gamut === "display-p3";
     const stops = gradient.stops
       .map((s) => {
-        const rgba = this.#hexToRGBA(s.color, s.opacity / 100);
-        return `${rgba} ${s.position}%`;
+        const color = isP3
+          ? this.#hexToP3(s.color, s.opacity / 100)
+          : this.#hexToRGBA(s.color, s.opacity / 100);
+        return `${color} ${s.position}%`;
       })
       .join(", ");
     const interpolation = includeInterpolation ? ` ${gradientInterpolationClause(gradient)}` : "";
@@ -10586,10 +10814,10 @@ class FigFillPicker extends HTMLElement {
     const preferred = this.#buildGradientCSS(undefined, true);
     if (this.#testGradientSupport(preferred)) return preferred;
 
-    const srgbInterp = this.#buildGradientCSS("srgb", true);
-    if (this.#testGradientSupport(srgbInterp)) return srgbInterp;
+    const oklabFallback = this.#buildGradientCSS("oklab", true);
+    if (this.#testGradientSupport(oklabFallback)) return oklabFallback;
 
-    return this.#buildGradientCSS("srgb", false);
+    return this.#buildGradientCSS("oklab", false);
   }
 
   // ============ IMAGE TAB ============
@@ -11081,6 +11309,13 @@ class FigFillPicker extends HTMLElement {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
+  #hexToP3(hex, alpha = 1) {
+    const r = +(parseInt(hex.slice(1, 3), 16) / 255).toFixed(4);
+    const g = +(parseInt(hex.slice(3, 5), 16) / 255).toFixed(4);
+    const b = +(parseInt(hex.slice(5, 7), 16) / 255).toFixed(4);
+    return `color(display-p3 ${r} ${g} ${b} / ${alpha})`;
+  }
+
   #rgbToHSL(rgb) {
     const r = rgb.r / 255;
     const g = rgb.g / 255;
@@ -11185,6 +11420,36 @@ class FigFillPicker extends HTMLElement {
     };
   }
 
+  #oklabToRGB(lab) {
+    const l_ = lab.l + 0.3963377774 * lab.a + 0.2158037573 * lab.b;
+    const m_ = lab.l - 0.1055613458 * lab.a - 0.0638541728 * lab.b;
+    const s_ = lab.l - 0.0894841775 * lab.a - 1.291485548 * lab.b;
+
+    const l = l_ * l_ * l_;
+    const m = m_ * m_ * m_;
+    const s = s_ * s_ * s_;
+
+    const toSRGB = (c) => {
+      const v = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+      return Math.round(Math.max(0, Math.min(1, v)) * 255);
+    };
+
+    return {
+      r: toSRGB(+4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+      g: toSRGB(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+      b: toSRGB(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+    };
+  }
+
+  #oklchToRGB(lch) {
+    const hRad = (lch.h * Math.PI) / 180;
+    return this.#oklabToRGB({
+      l: lch.l,
+      a: lch.c * Math.cos(hRad),
+      b: lch.c * Math.sin(hRad),
+    });
+  }
+
   // ============ EVENT EMITTERS ============
   #emitInput() {
     this.#updateChit();
@@ -11207,7 +11472,7 @@ class FigFillPicker extends HTMLElement {
 
   // ============ PUBLIC API ============
   get value() {
-    const base = { type: this.#fillType };
+    const base = { type: this.#fillType, colorSpace: this.#gamut };
 
     switch (this.#fillType) {
       case "solid":
