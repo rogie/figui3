@@ -171,6 +171,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "solid", "gradient", "image", "video", "webcam"],
     },
   },
+  "fig-color-tip": {
+    value: { label: "Value", type: "string" },
+    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-chit": {
     size: { label: "Size", type: "enum", options: ["small", "large"] },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
@@ -248,6 +253,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-input-gradient": {},
   "fig-input-color": {
+    picker: {
+      label: "Picker",
+      type: "enum",
+      options: ["native", "figma"],
+    },
     alpha: { label: "Alpha", type: "boolean", boolMode: "string" },
   },
   "fig-dropdown": {
@@ -300,11 +310,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     fields: {
       label: "Fields",
       type: "enum",
-      options: [
-        "",
-        "rotateX,rotateY,rotateZ",
-        "rotateX,rotateY",
-      ],
+      options: ["", "rotateX,rotateY,rotateZ", "rotateX,rotateY"],
     },
   },
   "fig-origin-grid": {
@@ -418,7 +424,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-header": {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
   },
-  "fig-handle": {},
+  "fig-handle": {
+    color: { label: "Color", type: "string" },
+    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+    drag: { label: "Drag", type: "boolean", boolMode: "presence" },
+    "drag-axes": { label: "Axes", type: "enum", options: ["x,y", "x", "y"] },
+    "drag-snapping": {
+      label: "Snapping",
+      type: "enum",
+      options: ["false", "modifier", "true"],
+    },
+  },
   "fig-chooser": {
     layout: {
       label: "Layout",

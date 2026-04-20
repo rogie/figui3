@@ -499,19 +499,6 @@ export const propkitSections: Section[] = [
     ],
   },
   {
-    id: "handle",
-    name: "Handle",
-    description:
-      "A draggable handle element used as a visual affordance in interactive controls like sliders, easing curves, and origin grids.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<fig-handle></fig-handle>`,
-      },
-    ],
-  },
-  {
     id: "chooser",
     name: "Chooser",
     description:

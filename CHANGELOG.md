@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `fig-handle` now supports `drag-snapping` with `false` (default), `modifier` (hold Shift), and `true` (always) modes to snap drag position to edges, center, and diagonals.
+- New `fig-color-tip` component for compact solid-color picking, built on `fig-fill-picker` and supporting `value`, `selected`, and `disabled`.
+- New `/figui3` Color Tip playground section with default and state examples.
+
+### Changed
+
+- `/figui3` Attributes View now exposes `fig-color-tip` `value` using `fig-input-color` (Figma picker) with alpha enabled, plus `selected`/`disabled` toggles.
+
+### Fixed
+
+- `fig-input-color` now reacts to `alpha` attribute changes so alpha controls appear/disappear reliably during live attribute updates.
+
 ## [3.12.1]
 
 ### Added

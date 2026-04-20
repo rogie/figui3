@@ -158,6 +158,28 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
+    id: "color-tip",
+    name: "Color Tip",
+    description: "Solid color tip built on the fill picker interaction model.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-color-tip value="#0D99FF"></fig-color-tip>
+</div>`,
+      },
+      {
+        id: "states",
+        name: "Selected + Disabled",
+        markup: `<div class="prop-panel" style="display:flex; gap: var(--spacer-2); align-items:center;">
+  <fig-color-tip value="#14AE5C" selected></fig-color-tip>
+  <fig-color-tip value="#F24822" disabled></fig-color-tip>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "chit",
     name: "Chit",
     description: "Color and gradient swatch display for fill previews.",
@@ -550,6 +572,23 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-spinner></fig-spinner>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "handle",
+    name: "Handle",
+    description:
+      "A draggable handle element used as a visual affordance in interactive controls like sliders, easing curves, and origin grids.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
+    <fig-handle drag drag-snapping="modifier"></fig-handle>
+  </div>
 </div>`,
       },
     ],

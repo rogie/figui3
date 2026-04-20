@@ -66,6 +66,16 @@ function stripInternalFieldAttributes(markup: string): string {
   return doc.body.firstElementChild?.innerHTML?.trim() ?? markup;
 }
 
+function unwrapPreviewWrappers(markup: string): string {
+  if (!markup.includes("data-playground-unwrap")) return markup;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${markup}</div>`, "text/html");
+  doc.querySelectorAll('[data-playground-unwrap="true"]').forEach((el) => {
+    el.replaceWith(...Array.from(el.childNodes));
+  });
+  return doc.body.firstElementChild?.innerHTML?.trim() ?? markup;
+}
+
 function stripPlaygroundAttributes(markup: string): string {
   if (!markup.includes("data-playground-")) return markup;
   const parser = new DOMParser();
@@ -84,11 +94,19 @@ export function getExampleSourceMarkup(markup: string): string {
   return dedentMarkup(unwrapPropPanel(markup) ?? normalizeMarkup(markup));
 }
 
+function cleanPresenceAttributes(markup: string): string {
+  return markup.replace(/ ([a-z][a-z0-9-]*)=""/gi, " $1");
+}
+
 export function getCodeSourceMarkup(markup: string): string {
-  return dedentMarkup(
-    stripPlaygroundAttributes(
-      stripInternalFieldAttributes(
-        stripPreviewOnlyElements(unwrapPropPanel(markup) ?? normalizeMarkup(markup)),
+  return cleanPresenceAttributes(
+    dedentMarkup(
+      stripPlaygroundAttributes(
+        unwrapPreviewWrappers(
+          stripInternalFieldAttributes(
+            stripPreviewOnlyElements(unwrapPropPanel(markup) ?? normalizeMarkup(markup)),
+          ),
+        ),
       ),
     ),
   );
@@ -123,7 +141,8 @@ export function mergePreviewOnlyElements(
   const hasInternalFieldAttributes = originalMarkup.includes(
     INTERNAL_FIELD_ONLY_CONTROLS_ATTR,
   );
-  if (!hasPreviewOnlyElements && !hasInternalFieldAttributes) return editedMarkup;
+  const hasUnwrapWrappers = originalMarkup.includes("data-playground-unwrap");
+  if (!hasPreviewOnlyElements && !hasInternalFieldAttributes && !hasUnwrapWrappers) return editedMarkup;
 
   const parser = new DOMParser();
   const originalDoc = parser.parseFromString(`<div>${originalMarkup}</div>`, "text/html");
@@ -143,6 +162,20 @@ export function mergePreviewOnlyElements(
 
   if (hasInternalFieldAttributes) {
     mergeInternalFieldAttributes(originalRoot, editedRoot);
+  }
+
+  if (hasUnwrapWrappers) {
+    const wrappers = Array.from(
+      originalRoot.querySelectorAll('[data-playground-unwrap="true"]'),
+    );
+    for (const wrapper of wrappers) {
+      const clone = wrapper.cloneNode(false) as HTMLElement;
+      clone.innerHTML = "";
+      while (editedRoot.firstChild) {
+        clone.appendChild(editedRoot.firstChild);
+      }
+      editedRoot.appendChild(clone);
+    }
   }
 
   return dedentMarkup(editedRoot.innerHTML);

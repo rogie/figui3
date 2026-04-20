@@ -1438,6 +1438,13 @@ class FigPopup extends HTMLDialogElement {
     const val = this.getAttribute("autoresize");
     return val === null || val !== "false";
   }
+  set autoresize(value) {
+    if (value || value === "") {
+      this.setAttribute("autoresize", value === true ? "" : value);
+    } else {
+      this.removeAttribute("autoresize");
+    }
+  }
 
   setupObservers() {
     this.teardownObservers();
@@ -2600,7 +2607,8 @@ class FigSegmentedControl extends HTMLElement {
 
   #syncIndicator({ forceInstant = false } = {}) {
     const isDisabled =
-      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false";
     const isAnimated = this.#isAnimatedEnabled();
     const activeSegment =
       this.#selectedSegment && this.contains(this.#selectedSegment)
@@ -4248,7 +4256,7 @@ class FigFieldSlider extends HTMLElement {
         this.#label.remove();
       }
     } else {
-      this.#label.textContent = hasLabelAttr ? rawLabel ?? "" : "Label";
+      this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
       if (this.#label.parentElement !== this.#field) {
         this.#field.prepend(this.#label);
       }
@@ -4412,6 +4420,9 @@ class FigInputColor extends HTMLElement {
 
   get picker() {
     return this.getAttribute("picker") || "native";
+  }
+  set picker(value) {
+    this.setAttribute("picker", value);
   }
 
   #buildFillPickerAttrs() {
@@ -4678,11 +4689,14 @@ class FigInputColor extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "style", "mode", "picker", "experimental"];
+    return ["value", "style", "mode", "picker", "experimental", "alpha"];
   }
 
   get mode() {
     return this.getAttribute("mode");
+  }
+  set mode(value) {
+    this.setAttribute("mode", value);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -4724,6 +4738,11 @@ class FigInputColor extends HTMLElement {
         break;
       case "picker":
         // Picker type change requires re-render
+        break;
+      case "alpha":
+        // Alpha visibility is rendered conditionally in connectedCallback markup.
+        // Re-render so toggling alpha updates the internal controls.
+        this.connectedCallback();
         break;
     }
   }
@@ -4857,7 +4876,9 @@ function normalizeGradientConfig(gradient) {
   }
   next.interpolationSpace = interpolationSpace;
 
-  const hueInterpolation = String(next.hueInterpolation ?? "shorter").toLowerCase();
+  const hueInterpolation = String(
+    next.hueInterpolation ?? "shorter",
+  ).toLowerCase();
   next.hueInterpolation = GRADIENT_HUE_INTERPOLATIONS.includes(hueInterpolation)
     ? hueInterpolation
     : "shorter";
@@ -4866,7 +4887,10 @@ function normalizeGradientConfig(gradient) {
 
 function gradientToValueShape(gradient) {
   const normalized = normalizeGradientConfig(gradient);
-  const output = { ...normalized, interpolationSpace: normalized.interpolationSpace };
+  const output = {
+    ...normalized,
+    interpolationSpace: normalized.interpolationSpace,
+  };
   if (normalized.interpolationSpace === "oklch") {
     output.hueInterpolation = normalized.hueInterpolation;
   } else {
@@ -4895,13 +4919,36 @@ function hslToSRGB(h, s, l) {
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = l - c / 2;
   let r, g, b;
-  if (h < 60) { r = c; g = x; b = 0; }
-  else if (h < 120) { r = x; g = c; b = 0; }
-  else if (h < 180) { r = 0; g = c; b = x; }
-  else if (h < 240) { r = 0; g = x; b = c; }
-  else if (h < 300) { r = x; g = 0; b = c; }
-  else { r = c; g = 0; b = x; }
-  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+  if (h < 60) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (h < 120) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (h < 180) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (h < 240) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (h < 300) {
+    r = x;
+    g = 0;
+    b = c;
+  } else {
+    r = c;
+    g = 0;
+    b = x;
+  }
+  return [
+    Math.round((r + m) * 255),
+    Math.round((g + m) * 255),
+    Math.round((b + m) * 255),
+  ];
 }
 
 /**
@@ -7404,7 +7451,8 @@ class FigEasingCurve extends HTMLElement {
       );
       if (bezierSurface) {
         bezierSurface.addEventListener("pointerdown", (e) => {
-          if (e.target?.closest?.(".fig-easing-curve-handle, fig-handle")) return;
+          if (e.target?.closest?.(".fig-easing-curve-handle, fig-handle"))
+            return;
           this.#startBezierDrag(e, this.#bezierHandleForClientHalf(e));
         });
       }
@@ -7423,7 +7471,8 @@ class FigEasingCurve extends HTMLElement {
       );
       if (springSurface) {
         springSurface.addEventListener("pointerdown", (e) => {
-          if (e.target?.closest?.(".fig-easing-curve-handle, fig-handle")) return;
+          if (e.target?.closest?.(".fig-easing-curve-handle, fig-handle"))
+            return;
           this.#startSpringDrag(e, "duration");
         });
       }
@@ -8400,10 +8449,10 @@ customElements.define("fig-origin-grid", FigOriginGrid);
  * @attr {string} axis-labels - Space-delimited labels. 1 token: top. 2 tokens: x y. 4 tokens: left right top bottom.
  */
 class FigInputJoystick extends HTMLElement {
-  #boundMouseDown = null;
-  #boundTouchStart = null;
-  #boundKeyDown = null;
-  #boundKeyUp = null;
+  #boundPlanePointerDown = null;
+  #boundHandlePointerDown = null;
+  #boundHandleInput = null;
+  #boundHandleChange = null;
   #boundXInput = null;
   #boundYInput = null;
   #boundXFocusOut = null;
@@ -8416,17 +8465,19 @@ class FigInputJoystick extends HTMLElement {
 
     this.position = { x: 0.5, y: 0.5 };
     this.isDragging = false;
-    this.isShiftHeld = false;
     this.plane = null;
     this.cursor = null;
     this.xInput = null;
     this.yInput = null;
     this.coordinates = "screen";
     this.#initialized = false;
-    this.#boundMouseDown = (e) => this.#handleMouseDown(e);
-    this.#boundTouchStart = (e) => this.#handleTouchStart(e);
-    this.#boundKeyDown = (e) => this.#handleKeyDown(e);
-    this.#boundKeyUp = (e) => this.#handleKeyUp(e);
+    this.#boundPlanePointerDown = (e) => this.#handlePlanePointerDown(e);
+    this.#boundHandlePointerDown = () => {
+      this.isDragging = true;
+      this.plane?.classList.add("dragging");
+    };
+    this.#boundHandleInput = (e) => this.#handleHandleInput(e);
+    this.#boundHandleChange = () => this.#handleHandleChange();
     this.#boundXInput = (e) => this.#handleXInput(e);
     this.#boundYInput = (e) => this.#handleYInput(e);
     this.#boundXFocusOut = () => this.#handleFieldFocusOut();
@@ -8532,7 +8583,7 @@ class FigInputJoystick extends HTMLElement {
             ${labelsMarkup}
             <div class="fig-input-joystick-plane">
               <div class="fig-input-joystick-guides"></div>
-              <fig-handle></fig-handle>
+              <fig-handle drag drag-surface=".fig-input-joystick-plane" drag-axes="x,y" drag-snapping="modifier"></fig-handle>
             </div>
             <fig-tooltip text="Reset">
               <fig-button variant="ghost" icon="true" class="fig-joystick-reset" aria-label="Reset to default">
@@ -8572,10 +8623,10 @@ class FigInputJoystick extends HTMLElement {
     this.cursor = this.querySelector("fig-handle");
     this.xInput = this.querySelector("fig-input-number[name='x']");
     this.yInput = this.querySelector("fig-input-number[name='y']");
-    this.plane.addEventListener("mousedown", this.#boundMouseDown);
-    this.plane.addEventListener("touchstart", this.#boundTouchStart);
-    window.addEventListener("keydown", this.#boundKeyDown);
-    window.addEventListener("keyup", this.#boundKeyUp);
+    this.plane?.addEventListener("pointerdown", this.#boundPlanePointerDown);
+    this.cursor?.addEventListener("pointerdown", this.#boundHandlePointerDown);
+    this.cursor?.addEventListener("input", this.#boundHandleInput);
+    this.cursor?.addEventListener("change", this.#boundHandleChange);
     const resetBtn = this.querySelector(".fig-joystick-reset");
     if (resetBtn) {
       resetBtn.addEventListener("click", () => this.#resetToDefault());
@@ -8591,12 +8642,12 @@ class FigInputJoystick extends HTMLElement {
   }
 
   #cleanupListeners() {
-    if (this.plane) {
-      this.plane.removeEventListener("mousedown", this.#boundMouseDown);
-      this.plane.removeEventListener("touchstart", this.#boundTouchStart);
-    }
-    window.removeEventListener("keydown", this.#boundKeyDown);
-    window.removeEventListener("keyup", this.#boundKeyUp);
+    this.plane?.removeEventListener("pointerdown", this.#boundPlanePointerDown);
+    this.cursor?.removeEventListener("pointerdown", this.#boundHandlePointerDown);
+    this.cursor?.removeEventListener("input", this.#boundHandleInput);
+    this.cursor?.removeEventListener("change", this.#boundHandleChange);
+    this.plane?.classList.remove("dragging");
+    this.isDragging = false;
     if (this.#fieldsEnabled && this.xInput && this.yInput) {
       this.xInput.removeEventListener("input", this.#boundXInput);
       this.xInput.removeEventListener("change", this.#boundXInput);
@@ -8630,49 +8681,39 @@ class FigInputJoystick extends HTMLElement {
     this.#emitChangeEvent();
   }
 
-  #snapToGuide(value) {
-    if (!this.isShiftHeld) return value;
-    if (value < 0.1) return 0;
-    if (value > 0.9) return 1;
-    if (value > 0.4 && value < 0.6) return 0.5;
-    return value;
-  }
-
-  #snapToDiagonal(x, y) {
-    if (!this.isShiftHeld) return { x, y };
-    const diff = Math.abs(x - y);
-    if (diff < 0.1) return { x: (x + y) / 2, y: (x + y) / 2 };
-    if (Math.abs(1 - x - y) < 0.1) return { x, y: 1 - x };
-    return { x, y };
-  }
-
-  #updatePosition(e) {
-    const rect = this.plane.getBoundingClientRect();
-    let x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    let screenY = Math.max(
-      0,
-      Math.min(1, (e.clientY - rect.top) / rect.height),
-    );
-
-    // Convert screen Y to internal Y (flip for math coordinates)
-    let y = this.coordinates === "math" ? 1 - screenY : screenY;
-
-    x = this.#snapToGuide(x);
-    y = this.#snapToGuide(y);
-
-    const snapped = this.#snapToDiagonal(x, y);
-    this.position = snapped;
-
-    const displayY = this.#displayY(snapped.y);
-    this.cursor.style.left = `${snapped.x * 100}%`;
-    this.cursor.style.top = `${displayY * 100}%`;
-    if (this.#fieldsEnabled && this.xInput && this.yInput) {
-      this.xInput.setAttribute("value", Math.round(snapped.x * 100));
-      this.yInput.setAttribute("value", Math.round(snapped.y * 100));
-    }
-
+  #applyScreenPosition(screenX, screenY, { syncHandle = true } = {}) {
+    const x = Math.max(0, Math.min(1, screenX));
+    const yScreen = Math.max(0, Math.min(1, screenY));
+    const y = this.coordinates === "math" ? 1 - yScreen : yScreen;
+    this.position = { x, y };
+    if (syncHandle) this.#syncHandlePosition();
     this.#syncValueAttribute();
+  }
+
+  #handlePlanePointerDown(e) {
+    if (!this.plane || !this.cursor) return;
+    if (e.target?.closest?.(".fig-joystick-reset, fig-tooltip, fig-handle")) return;
+    const rect = this.plane.getBoundingClientRect();
+    const screenX = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0.5;
+    const screenY = rect.height > 0 ? (e.clientY - rect.top) / rect.height : 0.5;
+    this.cursor.value = `${Math.round(screenX * 100)}% ${Math.round(screenY * 100)}%`;
+    this.#applyScreenPosition(screenX, screenY, { syncHandle: false });
     this.#emitInputEvent();
+    this.#emitChangeEvent();
+  }
+
+  #handleHandleInput(e) {
+    const detail = e.detail ?? {};
+    if (typeof detail.px !== "number" || typeof detail.py !== "number") return;
+    this.#applyScreenPosition(detail.px, detail.py, { syncHandle: false });
+    this.#emitInputEvent();
+  }
+
+  #handleHandleChange() {
+    this.isDragging = false;
+    this.plane?.classList.remove("dragging");
+    this.#syncValueAttribute();
+    this.#emitChangeEvent();
   }
 
   #emitInputEvent() {
@@ -8696,8 +8737,7 @@ class FigInputJoystick extends HTMLElement {
   #syncHandlePosition() {
     const displayY = this.#displayY(this.position.y);
     if (this.cursor) {
-      this.cursor.style.left = `${this.position.x * 100}%`;
-      this.cursor.style.top = `${displayY * 100}%`;
+      this.cursor.value = `${this.position.x * 100}% ${displayY * 100}%`;
     }
     // Also sync text inputs if they exist (convert to percentage 0-100)
     if (this.#fieldsEnabled && this.xInput && this.yInput) {
@@ -8733,64 +8773,6 @@ class FigInputJoystick extends HTMLElement {
     this.#emitChangeEvent();
   }
 
-  #handleMouseDown(e) {
-    if (e.target.closest(".fig-joystick-reset, fig-tooltip")) return;
-    this.isDragging = true;
-
-    this.#updatePosition(e);
-
-    this.plane.style.cursor = "grabbing";
-
-    const handleMouseMove = (e) => {
-      this.plane.classList.add("dragging");
-      if (this.isDragging) this.#updatePosition(e);
-    };
-
-    const handleMouseUp = () => {
-      this.isDragging = false;
-      this.plane.classList.remove("dragging");
-      this.plane.style.cursor = "";
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      this.#syncValueAttribute();
-      this.#emitChangeEvent();
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-  }
-
-  #handleTouchStart(e) {
-    if (e.target.closest(".fig-joystick-reset, fig-tooltip")) return;
-    e.preventDefault();
-    this.isDragging = true;
-    this.#updatePosition(e.touches[0]);
-
-    const handleTouchMove = (e) => {
-      this.plane.classList.add("dragging");
-      if (this.isDragging) this.#updatePosition(e.touches[0]);
-    };
-
-    const handleTouchEnd = () => {
-      this.isDragging = false;
-      this.plane.classList.remove("dragging");
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
-      this.#syncValueAttribute();
-      this.#emitChangeEvent();
-    };
-
-    window.addEventListener("touchmove", handleTouchMove);
-    window.addEventListener("touchend", handleTouchEnd);
-  }
-
-  #handleKeyDown(e) {
-    if (e.key === "Shift") this.isShiftHeld = true;
-  }
-
-  #handleKeyUp(e) {
-    if (e.key === "Shift") this.isShiftHeld = false;
-  }
   focus() {
     const container = this.querySelector(".fig-input-joystick-plane-container");
     container?.focus();
@@ -9606,6 +9588,7 @@ class FigFillPicker extends HTMLElement {
   #hueSlider = null;
   #opacitySlider = null;
   #isDraggingColor = false;
+  #teardownColorAreaEvents = null;
 
   constructor() {
     super();
@@ -9627,6 +9610,10 @@ class FigFillPicker extends HTMLElement {
   }
 
   disconnectedCallback() {
+    if (this.#teardownColorAreaEvents) {
+      this.#teardownColorAreaEvents();
+      this.#teardownColorAreaEvents = null;
+    }
     if (this.#dialog) {
       this.#dialog.close();
       this.#dialog.remove();
@@ -10045,14 +10032,21 @@ class FigFillPicker extends HTMLElement {
     const experimental = this.getAttribute("experimental");
     const expAttr = experimental ? `experimental="${experimental}"` : "";
     const savedMode = localStorage.getItem("figui-color-input-mode");
-    if (savedMode && ["hex", "rgb", "hsl", "hsb", "lab", "lch"].includes(savedMode)) {
+    if (
+      savedMode &&
+      ["hex", "rgb", "hsl", "hsb", "lab", "lch"].includes(savedMode)
+    ) {
       this.#colorInputMode = savedMode;
     }
 
     container.innerHTML = `
       <fig-preview class="fig-fill-picker-color-area">
         <canvas width="200" height="200"></canvas>
-        <div class="fig-fill-picker-handle"></div>
+        <fig-handle
+          drag
+          drag-surface=".fig-fill-picker-color-area"
+          drag-axes="x,y"
+        ></fig-handle>
       </fig-preview>
       <div class="fig-fill-picker-sliders">
         <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper"><span class="fig-mask-icon" style="--icon: var(--icon-eyedropper)"></span></fig-button></fig-tooltip>
@@ -10082,7 +10076,7 @@ class FigFillPicker extends HTMLElement {
 
     // Setup color area
     this.#colorArea = container.querySelector("canvas");
-    this.#colorAreaHandle = container.querySelector(".fig-fill-picker-handle");
+    this.#colorAreaHandle = container.querySelector("fig-handle");
     this.#drawColorArea();
     this.#updateHandlePosition();
     this.#setupColorAreaEvents();
@@ -10220,82 +10214,130 @@ class FigFillPicker extends HTMLElement {
       return;
     }
 
-    const x = (this.#color.s / 100) * rect.width;
-    const y = ((100 - this.#color.v) / 100) * rect.height;
+    const xPct = Math.max(0, Math.min(100, this.#color.s));
+    const yPct = Math.max(0, Math.min(100, 100 - this.#color.v));
 
-    this.#colorAreaHandle.style.left = `${x}px`;
-    this.#colorAreaHandle.style.top = `${y}px`;
-    this.#colorAreaHandle.style.setProperty(
-      "--picker-color",
+    this.#colorAreaHandle.setAttribute("value", `${xPct}% ${yPct}%`);
+    this.#colorAreaHandle.setAttribute(
+      "color",
       this.#hsvToHex({ ...this.#color, a: 1 }),
     );
   }
 
+  #updateColorFromAreaPosition(x, y, opts = {}) {
+    const { updateHandle = true, emitInput = true, emitChange = false } = opts;
+    this.#color.s = Math.max(0, Math.min(100, x * 100));
+    this.#color.v = Math.max(0, Math.min(100, (1 - y) * 100));
+    if (this.#colorAreaHandle) {
+      this.#colorAreaHandle.setAttribute(
+        "color",
+        this.#hsvToHex({ ...this.#color, a: 1 }),
+      );
+    }
+    if (updateHandle) this.#updateHandlePosition();
+    this.#updateColorInputs();
+    if (emitInput) this.#emitInput();
+    if (emitChange) this.#emitChange();
+  }
+
   #setupColorAreaEvents() {
+    if (this.#teardownColorAreaEvents) {
+      this.#teardownColorAreaEvents();
+      this.#teardownColorAreaEvents = null;
+    }
     if (!this.#colorArea || !this.#colorAreaHandle) return;
 
-    const endColorDrag = () => {
-      if (!this.#isDraggingColor) return;
+    const colorAreaEl = this.#colorArea.parentElement || this.#colorArea;
+    const colorAreaHandleEl = this.#colorAreaHandle;
+
+    let isPlaneDragging = false;
+
+    const updatePlaneFromEvent = (e, opts = {}) => {
+      const rect = colorAreaEl.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+      this.#updateColorFromAreaPosition(x / rect.width, y / rect.height, opts);
+    };
+
+    const onPlanePointerDown = (e) => {
+      if (e.button !== 0) return;
+      if (e.target === colorAreaHandleEl || colorAreaHandleEl.contains(e.target))
+        return;
+      isPlaneDragging = true;
+      this.#isDraggingColor = true;
+      colorAreaEl.setPointerCapture(e.pointerId);
+      updatePlaneFromEvent(e, { updateHandle: true, emitInput: true });
+    };
+
+    const onPlanePointerMove = (e) => {
+      if (!isPlaneDragging) return;
+      if (e.buttons === 0) {
+        onPlaneDragEnd();
+        return;
+      }
+      updatePlaneFromEvent(e, { updateHandle: true, emitInput: true });
+    };
+
+    const onPlaneDragEnd = () => {
+      if (!isPlaneDragging) return;
+      isPlaneDragging = false;
       this.#isDraggingColor = false;
       this.#emitChange();
     };
 
-    const updateFromEvent = (e) => {
-      const rect = this.#colorArea.getBoundingClientRect();
-      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-      const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
-
-      this.#color.s = (x / rect.width) * 100;
-      this.#color.v = 100 - (y / rect.height) * 100;
-
-      this.#updateHandlePosition();
-      this.#updateColorInputs();
-      this.#emitInput();
+    const onHandleInput = (e) => {
+      this.#isDraggingColor = true;
+      const px = e.detail?.px;
+      const py = e.detail?.py;
+      if (!Number.isFinite(px) || !Number.isFinite(py)) return;
+      colorAreaHandleEl.setAttribute("value", `${px * 100}% ${py * 100}%`);
+      this.#updateColorFromAreaPosition(px, py, {
+        updateHandle: false,
+        emitInput: true,
+      });
     };
 
-    // Canvas click/drag
-    this.#colorArea.addEventListener("pointerdown", (e) => {
-      this.#isDraggingColor = true;
-      this.#colorArea.setPointerCapture(e.pointerId);
-      updateFromEvent(e);
-    });
-
-    this.#colorArea.addEventListener("pointermove", (e) => {
-      if (!this.#isDraggingColor) return;
-      if (e.buttons === 0) {
-        endColorDrag();
-        return;
+    const onHandleChange = (e) => {
+      const px = e.detail?.px;
+      const py = e.detail?.py;
+      if (Number.isFinite(px) && Number.isFinite(py)) {
+        colorAreaHandleEl.setAttribute("value", `${px * 100}% ${py * 100}%`);
+        this.#updateColorFromAreaPosition(px, py, {
+          updateHandle: false,
+          emitInput: false,
+        });
       }
-      updateFromEvent(e);
-    });
+      this.#isDraggingColor = false;
+      this.#emitChange();
+    };
 
-    this.#colorArea.addEventListener("pointerup", endColorDrag);
-    this.#colorArea.addEventListener("pointercancel", endColorDrag);
-    this.#colorArea.addEventListener("lostpointercapture", endColorDrag);
+    colorAreaEl.addEventListener("pointerdown", onPlanePointerDown);
+    colorAreaEl.addEventListener("pointermove", onPlanePointerMove);
+    colorAreaEl.addEventListener("pointerup", onPlaneDragEnd);
+    colorAreaEl.addEventListener("pointercancel", onPlaneDragEnd);
+    colorAreaEl.addEventListener("lostpointercapture", onPlaneDragEnd);
 
-    // Handle drag (for when handle is at corners)
-    this.#colorAreaHandle.addEventListener("pointerdown", (e) => {
-      e.stopPropagation(); // Prevent canvas from also capturing
-      this.#isDraggingColor = true;
-      this.#colorAreaHandle.setPointerCapture(e.pointerId);
-    });
+    colorAreaHandleEl.addEventListener("input", onHandleInput);
+    colorAreaHandleEl.addEventListener("change", onHandleChange);
 
-    this.#colorAreaHandle.addEventListener("pointermove", (e) => {
-      if (!this.#isDraggingColor) return;
-      if (e.buttons === 0) {
-        endColorDrag();
-        return;
-      }
-      updateFromEvent(e);
-    });
+    this.#teardownColorAreaEvents = () => {
+      colorAreaEl.removeEventListener("pointerdown", onPlanePointerDown);
+      colorAreaEl.removeEventListener("pointermove", onPlanePointerMove);
+      colorAreaEl.removeEventListener("pointerup", onPlaneDragEnd);
+      colorAreaEl.removeEventListener("pointercancel", onPlaneDragEnd);
+      colorAreaEl.removeEventListener("lostpointercapture", onPlaneDragEnd);
 
-    this.#colorAreaHandle.addEventListener("pointerup", endColorDrag);
-    this.#colorAreaHandle.addEventListener("pointercancel", endColorDrag);
-    this.#colorAreaHandle.addEventListener("lostpointercapture", endColorDrag);
+      colorAreaHandleEl.removeEventListener("input", onHandleInput);
+      colorAreaHandleEl.removeEventListener("change", onHandleChange);
+      this.#isDraggingColor = false;
+    };
   }
 
   #rebuildColorInputFields() {
-    const container = this.#dialog?.querySelector(".fig-fill-picker-input-fields");
+    const container = this.#dialog?.querySelector(
+      ".fig-fill-picker-input-fields",
+    );
     if (!container) return;
 
     const wrap = (tooltip, html) =>
@@ -10352,7 +10394,9 @@ class FigFillPicker extends HTMLElement {
   }
 
   #wireColorInputEvents() {
-    const container = this.#dialog?.querySelector(".fig-fill-picker-input-fields");
+    const container = this.#dialog?.querySelector(
+      ".fig-fill-picker-input-fields",
+    );
     if (!container) return;
 
     const onInput = () => {
@@ -10370,7 +10414,9 @@ class FigFillPicker extends HTMLElement {
 
     const onChange = () => this.#emitChange();
 
-    const inputs = container.querySelectorAll("fig-input-number, fig-input-text");
+    const inputs = container.querySelectorAll(
+      "fig-input-number, fig-input-text",
+    );
     inputs.forEach((el) => {
       el.addEventListener("input", onInput);
       el.addEventListener("change", onChange);
@@ -10383,26 +10429,49 @@ class FigFillPicker extends HTMLElement {
 
     switch (this.#colorInputMode) {
       case "rgb":
-        return this.#rgbToHSV({ r: val("fig-fill-picker-ci-r"), g: val("fig-fill-picker-ci-g"), b: val("fig-fill-picker-ci-b") });
+        return this.#rgbToHSV({
+          r: val("fig-fill-picker-ci-r"),
+          g: val("fig-fill-picker-ci-g"),
+          b: val("fig-fill-picker-ci-b"),
+        });
       case "hsl": {
-        const rgb = this.#hslToRGB({ h: val("fig-fill-picker-ci-h"), s: val("fig-fill-picker-ci-s"), l: val("fig-fill-picker-ci-l") });
+        const rgb = this.#hslToRGB({
+          h: val("fig-fill-picker-ci-h"),
+          s: val("fig-fill-picker-ci-s"),
+          l: val("fig-fill-picker-ci-l"),
+        });
         return this.#rgbToHSV(rgb);
       }
       case "hsb":
-        return { h: val("fig-fill-picker-ci-h"), s: val("fig-fill-picker-ci-s"), v: val("fig-fill-picker-ci-v"), a: 1 };
+        return {
+          h: val("fig-fill-picker-ci-h"),
+          s: val("fig-fill-picker-ci-s"),
+          v: val("fig-fill-picker-ci-v"),
+          a: 1,
+        };
       case "lab": {
-        const rgb = this.#oklabToRGB({ l: val("fig-fill-picker-ci-okl") / 100, a: val("fig-fill-picker-ci-oka"), b: val("fig-fill-picker-ci-okb") });
+        const rgb = this.#oklabToRGB({
+          l: val("fig-fill-picker-ci-okl") / 100,
+          a: val("fig-fill-picker-ci-oka"),
+          b: val("fig-fill-picker-ci-okb"),
+        });
         return this.#rgbToHSV(rgb);
       }
       case "lch": {
-        const rgb = this.#oklchToRGB({ l: val("fig-fill-picker-ci-okl") / 100, c: val("fig-fill-picker-ci-okc"), h: val("fig-fill-picker-ci-okh") });
+        const rgb = this.#oklchToRGB({
+          l: val("fig-fill-picker-ci-okl") / 100,
+          c: val("fig-fill-picker-ci-okc"),
+          h: val("fig-fill-picker-ci-okh"),
+        });
         return this.#rgbToHSV(rgb);
       }
-      default: { // hex
+      default: {
+        // hex
         const hexEl = q("fig-fill-picker-ci-hex");
         if (!hexEl) return null;
         let hex = hexEl.value.replace(/^#/, "");
-        if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        if (hex.length === 3)
+          hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
         if (hex.length !== 6 || !/^[0-9a-fA-F]{6}$/.test(hex)) return null;
         return this.#hexToHSV(`#${hex}`);
       }
@@ -10415,7 +10484,10 @@ class FigFillPicker extends HTMLElement {
     const hex = this.#hsvToHex(this.#color);
     const rgb = this.#hsvToRGB(this.#color);
     const q = (cls) => this.#dialog.querySelector(`.${cls}`);
-    const set = (cls, v) => { const el = q(cls); if (el) el.setAttribute("value", v); };
+    const set = (cls, v) => {
+      const el = q(cls);
+      if (el) el.setAttribute("value", v);
+    };
 
     switch (this.#colorInputMode) {
       case "rgb":
@@ -10571,7 +10643,10 @@ class FigFillPicker extends HTMLElement {
       this.#emitInput();
     };
     interpolationDropdown?.addEventListener("input", handleInterpolationChange);
-    interpolationDropdown?.addEventListener("change", handleInterpolationChange);
+    interpolationDropdown?.addEventListener(
+      "change",
+      handleInterpolationChange,
+    );
 
     // Angle input
     // Convert from fig-input-angle coordinates (0° = right) to CSS coordinates (0° = up)
@@ -10657,9 +10732,10 @@ class FigFillPicker extends HTMLElement {
       ".fig-fill-picker-gradient-space",
     );
     if (interpolationDropdown) {
-      interpolationDropdown.value = this.#gradient.interpolationSpace === "oklch"
-        ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
-        : this.#gradient.interpolationSpace;
+      interpolationDropdown.value =
+        this.#gradient.interpolationSpace === "oklch"
+          ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
+          : this.#gradient.interpolationSpace;
     }
 
     this.#updateGradientPreview();
@@ -10669,7 +10745,9 @@ class FigFillPicker extends HTMLElement {
   #updateGradientPreview() {
     if (!this.#dialog) return;
 
-    const preview = this.#dialog.querySelector(".fig-fill-picker-gradient-preview");
+    const preview = this.#dialog.querySelector(
+      ".fig-fill-picker-gradient-preview",
+    );
     const bar = this.#dialog.querySelector(".fig-fill-picker-gradient-bar");
     if (preview || bar) {
       const css = this.#getGradientCSS();
@@ -10760,7 +10838,8 @@ class FigFillPicker extends HTMLElement {
   #buildGradientCSS(interpolationSpaceOverride, includeInterpolation = true) {
     const gradient = normalizeGradientConfig({
       ...this.#gradient,
-      interpolationSpace: interpolationSpaceOverride ?? this.#gradient.interpolationSpace,
+      interpolationSpace:
+        interpolationSpaceOverride ?? this.#gradient.interpolationSpace,
     });
     const isP3 = this.#gamut === "display-p3";
     const stops = gradient.stops
@@ -10771,7 +10850,9 @@ class FigFillPicker extends HTMLElement {
         return `${color} ${s.position}%`;
       })
       .join(", ");
-    const interpolation = includeInterpolation ? ` ${gradientInterpolationClause(gradient)}` : "";
+    const interpolation = includeInterpolation
+      ? ` ${gradientInterpolationClause(gradient)}`
+      : "";
     switch (gradient.type) {
       case "linear":
         return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
@@ -11410,7 +11491,8 @@ class FigFillPicker extends HTMLElement {
     const s = s_ * s_ * s_;
 
     const toSRGB = (c) => {
-      const v = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+      const v =
+        c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
       return Math.round(Math.max(0, Math.min(1, v)) * 255);
     };
 
@@ -11531,6 +11613,214 @@ class FigFillPicker extends HTMLElement {
   }
 }
 customElements.define("fig-fill-picker", FigFillPicker);
+
+/* Color Tip */
+/**
+ * A compact solid-color tip that wraps fig-fill-picker.
+ * @attr {string} value - Solid color string (hex/rgb/hsl/named)
+ * @attr {boolean} selected - Whether the tip is selected
+ * @attr {boolean} disabled - Whether the tip is disabled
+ * @fires input - While color changes
+ * @fires change - When color is committed
+ */
+class FigColorTip extends HTMLElement {
+  #fillPicker = null;
+  #chit = null;
+  #boundHandleInput = this.#handlePickerInput.bind(this);
+  #boundHandleChange = this.#handlePickerChange.bind(this);
+
+  static get observedAttributes() {
+    return ["value", "selected", "disabled"];
+  }
+
+  connectedCallback() {
+    this.#render();
+    this.#syncFromAttributes();
+  }
+
+  disconnectedCallback() {
+    this.#teardownListeners();
+  }
+
+  #teardownListeners() {
+    if (!this.#fillPicker) return;
+    this.#fillPicker.removeEventListener("input", this.#boundHandleInput);
+    this.#fillPicker.removeEventListener("change", this.#boundHandleChange);
+  }
+
+  #render() {
+    const color = this.#normalizeColor(this.getAttribute("value"));
+    this.innerHTML = `
+      <fig-fill-picker mode="solid" alpha="false" value='${JSON.stringify({ type: "solid", color })}'>
+        <fig-chit background="${color}"></fig-chit>
+      </fig-fill-picker>`;
+
+    this.#fillPicker = this.querySelector("fig-fill-picker");
+    this.#chit = this.querySelector("fig-chit");
+    this.#teardownListeners();
+    this.#fillPicker?.addEventListener("input", this.#boundHandleInput);
+    this.#fillPicker?.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #normalizeHex(hex) {
+    if (!hex) return "#D9D9D9";
+    const raw = hex.replace("#", "").trim();
+    if (raw.length === 3 || raw.length === 4) {
+      const [r, g, b] = raw;
+      return `#${r}${r}${g}${g}${b}${b}`.toUpperCase();
+    }
+    if (raw.length === 6 || raw.length === 8) {
+      return `#${raw.slice(0, 6)}`.toUpperCase();
+    }
+    return "#D9D9D9";
+  }
+
+  #normalizeColor(colorValue) {
+    if (!colorValue) return "#D9D9D9";
+    const value = String(colorValue).trim();
+
+    if (value.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(value);
+        if (parsed?.color) {
+          return this.#normalizeColor(parsed.color);
+        }
+      } catch {
+        // Ignore parse errors and continue.
+      }
+    }
+
+    if (value.startsWith("#")) {
+      return this.#normalizeHex(value);
+    }
+
+    try {
+      const ctx = document.createElement("canvas").getContext("2d");
+      if (!ctx) return "#D9D9D9";
+      ctx.fillStyle = value;
+      const resolved = ctx.fillStyle;
+      if (resolved.startsWith("#")) {
+        return this.#normalizeHex(resolved);
+      }
+      const rgb = resolved.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (rgb) {
+        const toHex = (v) =>
+          Math.max(0, Math.min(255, Number(v)))
+            .toString(16)
+            .padStart(2, "0");
+        return `#${toHex(rgb[1])}${toHex(rgb[2])}${toHex(rgb[3])}`.toUpperCase();
+      }
+    } catch {
+      // Fall through to default.
+    }
+
+    return "#D9D9D9";
+  }
+
+  #syncFromAttributes() {
+    const color = this.#normalizeColor(this.getAttribute("value"));
+    if (this.getAttribute("value") !== color) {
+      this.setAttribute("value", color);
+      return;
+    }
+
+    if (this.#fillPicker) {
+      this.#fillPicker.setAttribute(
+        "value",
+        JSON.stringify({ type: "solid", color }),
+      );
+      if (this.hasAttribute("disabled")) {
+        this.#fillPicker.setAttribute("disabled", "");
+      } else {
+        this.#fillPicker.removeAttribute("disabled");
+      }
+    }
+
+    if (this.#chit) {
+      this.#chit.setAttribute("background", color);
+      if (this.hasAttribute("selected")) {
+        this.#chit.setAttribute("selected", "");
+      } else {
+        this.#chit.removeAttribute("selected");
+      }
+      if (this.hasAttribute("disabled")) {
+        this.#chit.setAttribute("disabled", "");
+      } else {
+        this.#chit.removeAttribute("disabled");
+      }
+    }
+  }
+
+  #updateColorFromPicker(detail, type) {
+    const nextColor = this.#normalizeColor(detail?.color);
+    const prevColor = this.#normalizeColor(this.getAttribute("value"));
+    if (nextColor !== prevColor) {
+      this.setAttribute("value", nextColor);
+    } else {
+      this.#syncFromAttributes();
+    }
+
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        detail: {
+          color: this.value,
+        },
+      }),
+    );
+  }
+
+  #handlePickerInput(event) {
+    event.stopPropagation();
+    this.#updateColorFromPicker(event.detail, "input");
+  }
+
+  #handlePickerChange(event) {
+    event.stopPropagation();
+    this.#updateColorFromPicker(event.detail, "change");
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (!this.isConnected) return;
+
+    switch (name) {
+      case "value":
+      case "selected":
+      case "disabled":
+        this.#syncFromAttributes();
+        break;
+    }
+  }
+
+  get value() {
+    return this.#normalizeColor(this.getAttribute("value"));
+  }
+  set value(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("value");
+      return;
+    }
+    this.setAttribute("value", this.#normalizeColor(value));
+  }
+
+  get selected() {
+    return this.hasAttribute("selected");
+  }
+  set selected(value) {
+    this.toggleAttribute("selected", Boolean(value));
+  }
+
+  get disabled() {
+    return this.hasAttribute("disabled");
+  }
+  set disabled(value) {
+    this.toggleAttribute("disabled", Boolean(value));
+  }
+}
+customElements.define("fig-color-tip", FigColorTip);
 
 /* Choice */
 /**
@@ -12096,8 +12386,301 @@ customElements.define("fig-chooser", FigChooser);
 
 /* Handle */
 class FigHandle extends HTMLElement {
-  constructor() {
-    super();
+  static observedAttributes = [
+    "color",
+    "selected",
+    "disabled",
+    "drag",
+    "drag-surface",
+    "drag-axes",
+    "drag-snapping",
+    "value",
+  ];
+
+  #isDragging = false;
+  #boundPointerDown = null;
+  #applyingValue = false;
+
+  get #dragEnabled() {
+    const v = this.getAttribute("drag");
+    return v !== null && v !== "false";
+  }
+
+  get #axes() {
+    const v = (this.getAttribute("drag-axes") || "x,y").toLowerCase();
+    return { x: v.includes("x"), y: v.includes("y") };
+  }
+
+  get #dragSnappingMode() {
+    const raw = this.getAttribute("drag-snapping");
+    if (raw === null) return "false";
+    const normalized = raw.trim().toLowerCase();
+    if (normalized === "modifier") return "modifier";
+    if (normalized === "" || normalized === "true") return "true";
+    return "false";
+  }
+
+  #shouldSnap(shiftKey) {
+    const mode = this.#dragSnappingMode;
+    if (mode === "true") return true;
+    if (mode === "modifier") return !!shiftKey;
+    return false;
+  }
+
+  #snapGuide(value) {
+    if (value < 0.1) return 0;
+    if (value > 0.9) return 1;
+    if (value > 0.4 && value < 0.6) return 0.5;
+    return value;
+  }
+
+  #snapDiagonal(x, y) {
+    const diff = Math.abs(x - y);
+    if (diff < 0.1) {
+      const avg = (x + y) / 2;
+      return { x: avg, y: avg };
+    }
+    if (Math.abs(1 - x - y) < 0.1) return { x, y: 1 - x };
+    return { x, y };
+  }
+
+  #getContainer() {
+    const attr = this.getAttribute("drag-surface");
+    if (!attr || attr === "parent") return this.parentElement;
+    return this.closest(attr);
+  }
+
+  get value() {
+    const container = this.#getContainer();
+    if (!container) return "0% 0%";
+    const rect = container.getBoundingClientRect();
+    const hw = this.offsetWidth / 2;
+    const hh = this.offsetHeight / 2;
+    const x = parseFloat(this.style.left) || 0;
+    const y = parseFloat(this.style.top) || 0;
+    const px = rect.width > 0 ? ((x + hw) / rect.width) * 100 : 0;
+    const py = rect.height > 0 ? ((y + hh) / rect.height) * 100 : 0;
+    return `${Math.round(px)}% ${Math.round(py)}%`;
+  }
+
+  set value(v) {
+    this.setAttribute("value", v ?? "0% 0%");
+  }
+
+  #parseValue(str) {
+    const normalized = str == null ? "" : String(str).trim();
+    if (!normalized) return { xPct: 0, yPct: 0 };
+
+    const parts = normalized.split(/[\s,]+/).filter(Boolean);
+
+    const parseToken = (token) => {
+      if (!token) return 0;
+      const hasPx = token.includes("px");
+      const hasPct = token.includes("%");
+      const numeric = parseFloat(token.replace(/[%px]/g, ""));
+      if (!Number.isFinite(numeric)) return 0;
+      if (hasPx) return { px: numeric };
+      if (hasPct || Math.abs(numeric) > 1)
+        return Math.max(0, Math.min(100, numeric));
+      return Math.max(0, Math.min(100, numeric * 100));
+    };
+
+    const xToken = parseToken(parts[0]);
+    const yToken = parseToken(parts[1] ?? parts[0]);
+    return { xToken, yToken };
+  }
+
+  #applyValue(str) {
+    const container = this.#getContainer();
+    if (!container) return;
+
+    const { xToken, yToken } = this.#parseValue(str);
+    const rect = container.getBoundingClientRect();
+    const hw = this.offsetWidth / 2;
+    const hh = this.offsetHeight / 2;
+
+    const resolve = (token, containerDim, halfHandle) => {
+      if (token && typeof token === "object" && "px" in token) {
+        return Math.max(
+          -halfHandle,
+          Math.min(containerDim - halfHandle, token.px - halfHandle),
+        );
+      }
+      const pct = typeof token === "number" ? token : 0;
+      const center = (pct / 100) * containerDim;
+      return Math.max(
+        -halfHandle,
+        Math.min(containerDim - halfHandle, center - halfHandle),
+      );
+    };
+
+    const axes = this.#axes;
+    if (axes.x) this.style.left = `${resolve(xToken, rect.width, hw)}px`;
+    if (axes.y) this.style.top = `${resolve(yToken, rect.height, hh)}px`;
+  }
+
+  #syncValueAttribute() {
+    this.#applyingValue = true;
+    this.setAttribute("value", this.value);
+    this.#applyingValue = false;
+  }
+
+  connectedCallback() {
+    this.#syncDrag();
+    this.addEventListener("pointerdown", this.#handleSelect);
+    document.addEventListener("pointerdown", this.#handleDeselect);
+    const initial = this.getAttribute("value");
+    if (initial) this.#applyValue(initial);
+  }
+
+  disconnectedCallback() {
+    this.#teardownDrag();
+    this.removeEventListener("pointerdown", this.#handleSelect);
+    document.removeEventListener("pointerdown", this.#handleDeselect);
+  }
+
+  #handleSelect = (e) => {
+    e.stopPropagation();
+    if (this.hasAttribute("disabled")) return;
+    this.setAttribute("selected", "");
+  };
+
+  #handleDeselect = () => {
+    this.removeAttribute("selected");
+  };
+
+  attributeChangedCallback(name, _old, value) {
+    if (name === "color") {
+      if (!value || value === "false") {
+        this.style.removeProperty("--fill");
+      } else {
+        this.style.setProperty("--fill", value);
+      }
+    }
+    if (name === "drag") this.#syncDrag();
+    if (name === "value" && !this.#applyingValue && !this.#isDragging) {
+      this.#applyValue(value);
+    }
+  }
+
+  #syncDrag() {
+    if (this.#dragEnabled && !this.#boundPointerDown) {
+      this.#boundPointerDown = (e) => this.#onPointerDown(e);
+      this.addEventListener("pointerdown", this.#boundPointerDown);
+    } else if (!this.#dragEnabled && this.#boundPointerDown) {
+      this.#teardownDrag();
+    }
+  }
+
+  #teardownDrag() {
+    if (this.#boundPointerDown) {
+      this.removeEventListener("pointerdown", this.#boundPointerDown);
+      this.#boundPointerDown = null;
+    }
+    this.#isDragging = false;
+  }
+
+  #onPointerDown(e) {
+    if (!this.#dragEnabled || this.hasAttribute("disabled")) return;
+    e.preventDefault();
+    const container = this.#getContainer();
+    if (!container) return;
+
+    this.#isDragging = true;
+    const axes = this.#axes;
+    const containerRect = container.getBoundingClientRect();
+    const handleW = this.offsetWidth;
+    const handleH = this.offsetHeight;
+
+    const clampAndApply = (clientX, clientY, shiftKey = false) => {
+      const rect = container.getBoundingClientRect();
+      const currentLeft = parseFloat(this.style.left) || 0;
+      const currentTop = parseFloat(this.style.top) || 0;
+      const rawX = clientX - rect.left - handleW / 2;
+      const rawY = clientY - rect.top - handleH / 2;
+
+      const clampedX = Math.max(-handleW / 2, Math.min(rect.width - handleW / 2, rawX));
+      const clampedY = Math.max(
+        -handleH / 2,
+        Math.min(rect.height - handleH / 2, rawY),
+      );
+
+      let centerX =
+        rect.width > 0
+          ? ((axes.x ? clampedX : currentLeft) + handleW / 2) / rect.width
+          : 0.5;
+      let centerY =
+        rect.height > 0
+          ? ((axes.y ? clampedY : currentTop) + handleH / 2) / rect.height
+          : 0.5;
+
+      if (this.#shouldSnap(shiftKey)) {
+        if (axes.x) centerX = this.#snapGuide(centerX);
+        if (axes.y) centerY = this.#snapGuide(centerY);
+        if (axes.x && axes.y) {
+          const diagonal = this.#snapDiagonal(centerX, centerY);
+          centerX = diagonal.x;
+          centerY = diagonal.y;
+        }
+      }
+
+      if (axes.x) {
+        const left = centerX * rect.width - handleW / 2;
+        this.style.left = `${Math.max(-handleW / 2, Math.min(rect.width - handleW / 2, left))}px`;
+      }
+      if (axes.y) {
+        const top = centerY * rect.height - handleH / 2;
+        this.style.top = `${Math.max(-handleH / 2, Math.min(rect.height - handleH / 2, top))}px`;
+      }
+    };
+
+    clampAndApply(e.clientX, e.clientY, e.shiftKey);
+    this.style.cursor = "grabbing";
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        detail: this.#positionDetail(containerRect),
+      }),
+    );
+
+    const onMove = (e) => {
+      if (!this.#isDragging) return;
+      clampAndApply(e.clientX, e.clientY, e.shiftKey);
+      this.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: this.#positionDetail(container.getBoundingClientRect()),
+        }),
+      );
+    };
+
+    const onUp = (e) => {
+      this.#isDragging = false;
+      this.style.cursor = "";
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      clampAndApply(e.clientX, e.clientY, e.shiftKey);
+      this.#syncValueAttribute();
+      this.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: this.#positionDetail(container.getBoundingClientRect()),
+        }),
+      );
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  #positionDetail(containerRect) {
+    const hw = this.offsetWidth / 2;
+    const hh = this.offsetHeight / 2;
+    const x = parseFloat(this.style.left) || 0;
+    const y = parseFloat(this.style.top) || 0;
+    const px = containerRect.width > 0 ? (x + hw) / containerRect.width : 0;
+    const py = containerRect.height > 0 ? (y + hh) / containerRect.height : 0;
+    return { x, y, px, py };
   }
 }
 customElements.define("fig-handle", FigHandle);
