@@ -425,7 +425,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
   },
   "fig-handle": {
-    color: { label: "Color", type: "string" },
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["", "small"],
+    },
+    type: {
+      label: "Color",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: "color",
+      falseValue: null,
+    },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     drag: { label: "Drag", type: "boolean", boolMode: "presence" },

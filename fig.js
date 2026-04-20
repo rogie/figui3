@@ -609,6 +609,7 @@ class FigTooltip extends HTMLElement {
   }
 
   setupEventListeners() {
+    if (this.action === "manual") return;
     if (this.action === "hover") {
       if (!this.isTouchDevice()) {
         this.addEventListener("pointerenter", this.showDelayedPopup.bind(this));
@@ -687,26 +688,34 @@ class FigTooltip extends HTMLElement {
     const popupRect = this.popup.getBoundingClientRect();
     const offset = this.getOffset();
 
+    const container = this.popup.parentElement;
+    const containerRect =
+      container && container !== document.body
+        ? container.getBoundingClientRect()
+        : { left: 0, top: 0 };
+
     // Position the tooltip above the element
-    let top = rect.top - popupRect.height - offset.top;
-    let left = rect.left + (rect.width - popupRect.width) / 2;
+    let top = rect.top - popupRect.height - offset.top - containerRect.top;
+    let left =
+      rect.left + (rect.width - popupRect.width) / 2 - containerRect.left;
     this.popup.setAttribute("position", "top");
 
     // Adjust if tooltip would go off-screen
-    if (top < 0) {
+    if (top + containerRect.top < 0) {
       this.popup.setAttribute("position", "bottom");
-      top = rect.bottom + offset.bottom; // Position below instead
+      top = rect.bottom + offset.bottom - containerRect.top;
     }
-    if (left < offset.left) {
-      left = offset.left;
-    } else if (left + popupRect.width > window.innerWidth - offset.right) {
-      left = window.innerWidth - popupRect.width - offset.right;
+    const absLeft = left + containerRect.left;
+    if (absLeft < offset.left) {
+      left = offset.left - containerRect.left;
+    } else if (absLeft + popupRect.width > window.innerWidth - offset.right) {
+      left =
+        window.innerWidth - popupRect.width - offset.right - containerRect.left;
     }
 
     // Calculate the center of the target element relative to the tooltip
-    const targetCenter = rect.left + rect.width / 2;
-    const tooltipLeft = left;
-    const beakOffset = targetCenter - tooltipLeft;
+    const targetCenter = rect.left - containerRect.left + rect.width / 2;
+    const beakOffset = targetCenter - left;
 
     // Set the beak offset as a CSS custom property
     this.popup.style.setProperty("--beak-offset", `${beakOffset}px`);
@@ -4409,7 +4418,7 @@ customElements.define("fig-field-slider", FigFieldSlider);
 class FigInputColor extends HTMLElement {
   rgba;
   hex;
-  alpha = 100;
+  #alphaPercent = 100;
   #swatch;
   #fillPicker;
   #textInput;
@@ -4423,6 +4432,17 @@ class FigInputColor extends HTMLElement {
   }
   set picker(value) {
     this.setAttribute("picker", value);
+  }
+
+  get alpha() {
+    return this.getAttribute("alpha");
+  }
+  set alpha(value) {
+    if (value === null || value === undefined || value === false) {
+      this.removeAttribute("alpha");
+    } else {
+      this.setAttribute("alpha", String(value));
+    }
   }
 
   #buildFillPickerAttrs() {
@@ -4442,6 +4462,16 @@ class FigInputColor extends HTMLElement {
   }
 
   connectedCallback() {
+    if (this.#renderRAF) cancelAnimationFrame(this.#renderRAF);
+    this.#renderRAF = requestAnimationFrame(() => {
+      this.#renderRAF = null;
+      this.#buildUI();
+    });
+  }
+
+  #renderRAF = null;
+
+  #buildUI() {
     this.#setValues(this.getAttribute("value"));
 
     const useFigmaPicker = this.picker === "figma";
@@ -4451,7 +4481,6 @@ class FigInputColor extends HTMLElement {
 
     let html = ``;
     if (this.getAttribute("text")) {
-      // Display without # prefix
       let label = `<fig-input-text 
         type="text"
         placeholder="000000"
@@ -4463,7 +4492,7 @@ class FigInputColor extends HTMLElement {
                         placeholder="##" 
                         min="0"
                         max="100"
-                        value="${this.alpha}"
+                        value="${this.#alphaPercent}"
                         units="%">
                     </fig-input-number>
                 </fig-tooltip>`;
@@ -4475,7 +4504,7 @@ class FigInputColor extends HTMLElement {
           ? `<fig-fill-picker mode="solid" ${fpAttrs} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
-              this.alpha
+              this.#alphaPercent
             }}'></fig-fill-picker>`
           : `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"></fig-chit>`;
       }
@@ -4485,7 +4514,6 @@ class FigInputColor extends HTMLElement {
                 ${label}
             </div>`;
     } else {
-      // Without text, if picker is hidden, show nothing
       if (hidePicker) {
         html = ``;
       } else {
@@ -4493,7 +4521,7 @@ class FigInputColor extends HTMLElement {
           ? `<fig-fill-picker mode="solid" ${fpAttrs} ${
               showAlpha ? "" : 'alpha="false"'
             } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
-              this.alpha
+              this.#alphaPercent
             }}'></fig-fill-picker>`
           : `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"></fig-chit>`;
       }
@@ -4576,7 +4604,7 @@ class FigInputColor extends HTMLElement {
     this.hexWithAlpha = this.value.toUpperCase();
     this.hexOpaque = this.hexWithAlpha.slice(0, 7);
     if (hexValue.length > 7) {
-      this.alpha = (this.rgba.a * 100).toFixed(0);
+      this.#alphaPercent = (this.rgba.a * 100).toFixed(0);
     }
     this.style.setProperty("--alpha", this.rgba.a);
   }
@@ -4588,7 +4616,7 @@ class FigInputColor extends HTMLElement {
     let inputValue = event.target.value.replace("#", "");
     this.#setValues("#" + inputValue);
     if (this.#alphaInput) {
-      this.#alphaInput.setAttribute("value", this.alpha);
+      this.#alphaInput.setAttribute("value", this.#alphaPercent);
     }
     if (this.#swatch) {
       this.#swatch.setAttribute("background", this.hexOpaque);
@@ -4613,7 +4641,7 @@ class FigInputColor extends HTMLElement {
         JSON.stringify({
           type: "solid",
           color: this.hexOpaque,
-          opacity: this.alpha,
+          opacity: this.#alphaPercent,
         }),
       );
     }
@@ -4719,12 +4747,12 @@ class FigInputColor extends HTMLElement {
             JSON.stringify({
               type: "solid",
               color: this.hexOpaque,
-              opacity: this.alpha,
+              opacity: this.#alphaPercent,
             }),
           );
         }
         if (this.#alphaInput) {
-          this.#alphaInput.setAttribute("value", this.alpha);
+          this.#alphaInput.setAttribute("value", this.#alphaPercent);
         }
         // NOTE: Do NOT emit input events here!
         // Input events should only fire from user interactions, not programmatic changes.
@@ -4740,9 +4768,7 @@ class FigInputColor extends HTMLElement {
         // Picker type change requires re-render
         break;
       case "alpha":
-        // Alpha visibility is rendered conditionally in connectedCallback markup.
-        // Re-render so toggling alpha updates the internal controls.
-        this.connectedCallback();
+        if (this.isConnected) this.#buildUI();
         break;
     }
   }
@@ -5626,6 +5652,8 @@ customElements.define("fig-input-fill", FigInputFill);
  */
 class FigInputGradient extends HTMLElement {
   #fillPicker;
+  #track;
+  #colorObserver = null;
   #gradient = {
     type: "linear",
     angle: 180,
@@ -5688,6 +5716,19 @@ class FigInputGradient extends HTMLElement {
       .join(" ");
   }
 
+  #buildStopHandles() {
+    const disabled = this.hasAttribute("disabled");
+    return this.#gradient.stops
+      .map(
+        (stop, i) =>
+          `<fig-handle drag drag-axes="x" type="color" color="${stop.color}" value="${stop.position}% 50%" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle>`,
+      )
+      .join("");
+  }
+
+  #ghostHandle = null;
+  #ghostTooltip = null;
+
   #render() {
     const disabled = this.hasAttribute("disabled");
     const fillPickerValue = JSON.stringify(this.value);
@@ -5695,8 +5736,156 @@ class FigInputGradient extends HTMLElement {
     this.innerHTML = `
       <fig-fill-picker mode="gradient" ${fpAttrs} value='${fillPickerValue}' ${
         disabled ? "disabled" : ""
-      }></fig-fill-picker>`;
+      }></fig-fill-picker>
+      <div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>`;
+    this.#track = this.querySelector(".fig-input-gradient-track");
+    this.#setupGhostHandle();
     this.#setupEventListeners();
+  }
+
+  #sampleGradientColor(position) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 1;
+    const ctx = canvas.getContext("2d");
+    const grad = ctx.createLinearGradient(0, 0, 256, 0);
+    for (const stop of this.#gradient.stops) {
+      try {
+        grad.addColorStop(stop.position / 100, stop.color);
+      } catch {
+        /* skip invalid */
+      }
+    }
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 1);
+    const px = Math.round(Math.max(0, Math.min(255, position * 255)));
+    const [r, g, b] = ctx.getImageData(px, 0, 1, 1).data;
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase();
+  }
+
+  #setupGhostHandle() {
+    if (!this.#track || this.hasAttribute("disabled")) return;
+    const tooltip = document.createElement("fig-tooltip");
+    tooltip.setAttribute("text", "Add color stop");
+    tooltip.setAttribute("action", "manual");
+
+    const ghost = document.createElement("fig-handle");
+    ghost.classList.add("fig-input-gradient-ghost");
+    ghost.style.position = "absolute";
+    ghost.style.top = "50%";
+    ghost.style.transform = "translate(-50%, -50%)";
+    ghost.style.pointerEvents = "none";
+    ghost.style.opacity = "0";
+    ghost.style.transition = "opacity 0.15s";
+
+    tooltip.appendChild(ghost);
+    this.#track.appendChild(tooltip);
+    this.#ghostHandle = ghost;
+    this.#ghostTooltip = tooltip;
+
+    this.addEventListener("pointerenter", this.#onTrackEnter);
+    this.addEventListener("pointermove", this.#onTrackMove);
+    this.addEventListener("pointerleave", this.#onTrackLeave);
+    this.addEventListener("click", this.#onTrackClick);
+  }
+
+  #showGhost() {
+    if (!this.#ghostHandle) return;
+    this.#ghostHandle.style.opacity = "0.5";
+    if (this.#ghostTooltip) {
+      this.#ghostTooltip.render();
+      this.#ghostTooltip.showPopup();
+    }
+  }
+
+  #hideGhost() {
+    if (!this.#ghostHandle) return;
+    this.#ghostHandle.style.opacity = "0";
+    if (this.#ghostTooltip) this.#ghostTooltip.hidePopup();
+  }
+
+  #onTrackEnter = () => {
+    this.#showGhost();
+  };
+
+  #onTrackLeave = () => {
+    this.#hideGhost();
+  };
+
+  #onTrackMove = (e) => {
+    if (!this.#ghostHandle || !this.#track) return;
+    if (e.target.closest("fig-handle:not(.fig-input-gradient-ghost)")) {
+      this.#hideGhost();
+      return;
+    }
+    const trackRect = this.#track.getBoundingClientRect();
+    const pct = Math.max(
+      0,
+      Math.min(1, (e.clientX - trackRect.left) / trackRect.width),
+    );
+    this.#ghostHandle.style.left = `${pct * 100}%`;
+    const color = this.#sampleGradientColor(pct);
+    this.#ghostHandle.setAttribute("color", color);
+    this.#showGhost();
+  };
+
+  #onTrackClick = (e) => {
+    if (!this.#track) return;
+    if (e.target.closest("fig-handle:not(.fig-input-gradient-ghost)")) return;
+    const trackRect = this.#track.getBoundingClientRect();
+    const pct = Math.max(
+      0,
+      Math.min(1, (e.clientX - trackRect.left) / trackRect.width),
+    );
+    const position = Math.round(pct * 100);
+    const color = this.#sampleGradientColor(pct);
+    this.#gradient.stops.push({ position, color, opacity: 100 });
+    this.#gradient.stops.sort((a, b) => a.position - b.position);
+    this.#syncHandles();
+    this.#syncFillPicker();
+    this.#emitInput();
+    this.#emitChange();
+  };
+
+  #syncHandles() {
+    if (!this.#track) return;
+    const handles = this.#track.querySelectorAll(
+      "fig-handle:not(.fig-input-gradient-ghost)",
+    );
+    const stops = this.#gradient.stops;
+
+    if (handles.length !== stops.length) {
+      const wrapper = this.#ghostTooltip;
+      this.#track.innerHTML = this.#buildStopHandles();
+      if (wrapper) this.#track.appendChild(wrapper);
+      this.#reobserveHandleColors();
+      return;
+    }
+
+    for (let i = 0; i < stops.length; i++) {
+      const h = handles[i];
+      const stop = stops[i];
+      h.setAttribute("value", `${stop.position}% 50%`);
+      h.setAttribute("color", stop.color);
+    }
+  }
+
+  #reobserveHandleColors() {
+    if (!this.#colorObserver || !this.#track) return;
+    this.#colorObserver.disconnect();
+    this.#track
+      .querySelectorAll("fig-handle:not(.fig-input-gradient-ghost)")
+      .forEach((h) => {
+        this.#colorObserver.observe(h, {
+          attributes: true,
+          attributeFilter: ["color"],
+        });
+      });
+  }
+
+  #syncFillPicker() {
+    if (!this.#fillPicker) return;
+    this.#fillPicker.setAttribute("value", JSON.stringify(this.value));
   }
 
   #setupEventListeners() {
@@ -5720,6 +5909,7 @@ class FigInputGradient extends HTMLElement {
             ...this.#gradient,
             ...detail.gradient,
           });
+          this.#syncHandles();
           this.#emitInput();
         }
       });
@@ -5728,6 +5918,56 @@ class FigInputGradient extends HTMLElement {
         e.stopPropagation();
         this.#emitChange();
       });
+
+      if (this.#track) {
+        this.#track.addEventListener("input", (e) => {
+          const handle = e.target.closest("fig-handle");
+          if (!handle) return;
+          e.stopPropagation();
+          const idx = parseInt(handle.dataset.stopIndex, 10);
+          if (isNaN(idx) || !this.#gradient.stops[idx]) return;
+          const px = e.detail?.px ?? 0;
+          this.#gradient.stops[idx].position = Math.round(px * 100);
+          this.#syncFillPicker();
+          this.#emitInput();
+        });
+
+        this.#track.addEventListener("change", (e) => {
+          const handle = e.target.closest("fig-handle");
+          if (!handle) return;
+          e.stopPropagation();
+          const idx = parseInt(handle.dataset.stopIndex, 10);
+          if (isNaN(idx) || !this.#gradient.stops[idx]) return;
+          const px = e.detail?.px ?? 0;
+          this.#gradient.stops[idx].position = Math.round(px * 100);
+          this.#syncFillPicker();
+          this.#emitChange();
+        });
+
+        this.#colorObserver = new MutationObserver((mutations) => {
+          for (const m of mutations) {
+            if (m.attributeName !== "color") continue;
+            const handle = m.target;
+            if (handle.classList.contains("fig-input-gradient-ghost")) continue;
+            const idx = parseInt(handle.dataset.stopIndex, 10);
+            if (isNaN(idx) || !this.#gradient.stops[idx]) continue;
+            const newColor = handle.getAttribute("color");
+            if (newColor && newColor !== this.#gradient.stops[idx].color) {
+              this.#gradient.stops[idx].color = newColor;
+              this.#syncFillPicker();
+              this.#emitInput();
+            }
+          }
+        });
+        this.#track
+          .querySelectorAll("fig-handle:not(.fig-input-gradient-ghost)")
+          .forEach((h) => {
+            this.#colorObserver.observe(h, {
+              attributes: true,
+              attributeFilter: ["color"],
+            });
+          });
+      }
     });
   }
 
@@ -5770,8 +6010,9 @@ class FigInputGradient extends HTMLElement {
       case "value":
         this.#parseValue();
         if (this.#fillPicker) {
-          this.#fillPicker.setAttribute("value", JSON.stringify(this.value));
+          this.#syncFillPicker();
         }
+        this.#syncHandles();
         break;
       case "disabled":
       case "experimental":
@@ -8643,7 +8884,10 @@ class FigInputJoystick extends HTMLElement {
 
   #cleanupListeners() {
     this.plane?.removeEventListener("pointerdown", this.#boundPlanePointerDown);
-    this.cursor?.removeEventListener("pointerdown", this.#boundHandlePointerDown);
+    this.cursor?.removeEventListener(
+      "pointerdown",
+      this.#boundHandlePointerDown,
+    );
     this.cursor?.removeEventListener("input", this.#boundHandleInput);
     this.cursor?.removeEventListener("change", this.#boundHandleChange);
     this.plane?.classList.remove("dragging");
@@ -8692,10 +8936,12 @@ class FigInputJoystick extends HTMLElement {
 
   #handlePlanePointerDown(e) {
     if (!this.plane || !this.cursor) return;
-    if (e.target?.closest?.(".fig-joystick-reset, fig-tooltip, fig-handle")) return;
+    if (e.target?.closest?.(".fig-joystick-reset, fig-tooltip, fig-handle"))
+      return;
     const rect = this.plane.getBoundingClientRect();
     const screenX = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0.5;
-    const screenY = rect.height > 0 ? (e.clientY - rect.top) / rect.height : 0.5;
+    const screenY =
+      rect.height > 0 ? (e.clientY - rect.top) / rect.height : 0.5;
     this.cursor.value = `${Math.round(screenX * 100)}% ${Math.round(screenY * 100)}%`;
     this.#applyScreenPosition(screenX, screenY, { syncHandle: false });
     this.#emitInputEvent();
@@ -10262,7 +10508,10 @@ class FigFillPicker extends HTMLElement {
 
     const onPlanePointerDown = (e) => {
       if (e.button !== 0) return;
-      if (e.target === colorAreaHandleEl || colorAreaHandleEl.contains(e.target))
+      if (
+        e.target === colorAreaHandleEl ||
+        colorAreaHandleEl.contains(e.target)
+      )
         return;
       isPlaneDragging = true;
       this.#isDraggingColor = true;
@@ -11630,7 +11879,7 @@ class FigColorTip extends HTMLElement {
   #boundHandleChange = this.#handlePickerChange.bind(this);
 
   static get observedAttributes() {
-    return ["value", "selected", "disabled"];
+    return ["value", "selected", "disabled", "alpha"];
   }
 
   connectedCallback() {
@@ -11648,10 +11897,26 @@ class FigColorTip extends HTMLElement {
     this.#fillPicker.removeEventListener("change", this.#boundHandleChange);
   }
 
+  #watchPickerDialog = () => {
+    requestAnimationFrame(() => {
+      const dialog = document.querySelector(".fig-fill-picker-dialog[open]");
+      if (!dialog) return;
+      dialog.addEventListener("close", () => this.removeAttribute("selected"), {
+        once: true,
+      });
+    });
+  };
+
+  get #alphaEnabled() {
+    const v = this.getAttribute("alpha");
+    return v === null || v !== "false";
+  }
+
   #render() {
     const color = this.#normalizeColor(this.getAttribute("value"));
+    const alphaAttr = this.#alphaEnabled ? "" : 'alpha="false"';
     this.innerHTML = `
-      <fig-fill-picker mode="solid" alpha="false" value='${JSON.stringify({ type: "solid", color })}'>
+      <fig-fill-picker mode="solid" ${alphaAttr} value='${JSON.stringify({ type: "solid", color })}'>
         <fig-chit background="${color}"></fig-chit>
       </fig-fill-picker>`;
 
@@ -11660,6 +11925,10 @@ class FigColorTip extends HTMLElement {
     this.#teardownListeners();
     this.#fillPicker?.addEventListener("input", this.#boundHandleInput);
     this.#fillPicker?.addEventListener("change", this.#boundHandleChange);
+    this.#chit?.addEventListener("click", () => {
+      this.setAttribute("selected", "");
+      this.#watchPickerDialog();
+    });
   }
 
   #normalizeHex(hex) {
@@ -11729,6 +11998,11 @@ class FigColorTip extends HTMLElement {
         "value",
         JSON.stringify({ type: "solid", color }),
       );
+      if (this.#alphaEnabled) {
+        this.#fillPicker.removeAttribute("alpha");
+      } else {
+        this.#fillPicker.setAttribute("alpha", "false");
+      }
       if (this.hasAttribute("disabled")) {
         this.#fillPicker.setAttribute("disabled", "");
       } else {
@@ -11738,11 +12012,6 @@ class FigColorTip extends HTMLElement {
 
     if (this.#chit) {
       this.#chit.setAttribute("background", color);
-      if (this.hasAttribute("selected")) {
-        this.#chit.setAttribute("selected", "");
-      } else {
-        this.#chit.removeAttribute("selected");
-      }
       if (this.hasAttribute("disabled")) {
         this.#chit.setAttribute("disabled", "");
       } else {
@@ -11760,14 +12029,17 @@ class FigColorTip extends HTMLElement {
       this.#syncFromAttributes();
     }
 
+    const eventDetail = { color: this.value };
+    if (this.#alphaEnabled && detail?.opacity !== undefined) {
+      eventDetail.opacity = detail.opacity;
+    }
+
     this.dispatchEvent(
       new CustomEvent(type, {
         bubbles: true,
         cancelable: true,
         composed: true,
-        detail: {
-          color: this.value,
-        },
+        detail: eventDetail,
       }),
     );
   }
@@ -12395,11 +12667,14 @@ class FigHandle extends HTMLElement {
     "drag-axes",
     "drag-snapping",
     "value",
+    "type",
   ];
 
   #isDragging = false;
+  #didDrag = false;
   #boundPointerDown = null;
   #applyingValue = false;
+  #colorTip = null;
 
   get #dragEnabled() {
     const v = this.getAttribute("drag");
@@ -12527,7 +12802,7 @@ class FigHandle extends HTMLElement {
 
   connectedCallback() {
     this.#syncDrag();
-    this.addEventListener("pointerdown", this.#handleSelect);
+    this.addEventListener("click", this.#handleSelect);
     document.addEventListener("pointerdown", this.#handleDeselect);
     const initial = this.getAttribute("value");
     if (initial) this.#applyValue(initial);
@@ -12535,18 +12810,26 @@ class FigHandle extends HTMLElement {
 
   disconnectedCallback() {
     this.#teardownDrag();
-    this.removeEventListener("pointerdown", this.#handleSelect);
+    this.#hideColorTip();
+    this.removeEventListener("click", this.#handleSelect);
     document.removeEventListener("pointerdown", this.#handleDeselect);
   }
 
   #handleSelect = (e) => {
-    e.stopPropagation();
     if (this.hasAttribute("disabled")) return;
+    if (this.#didDrag) {
+      this.#didDrag = false;
+      return;
+    }
     this.setAttribute("selected", "");
+    if (this.getAttribute("type") === "color") this.#showColorTip();
   };
 
-  #handleDeselect = () => {
+  #handleDeselect = (e) => {
+    if (this.contains(e.target)) return;
+    if (this.#colorTip && e.target.closest?.("dialog, [popover]")) return;
     this.removeAttribute("selected");
+    this.#hideColorTip();
   };
 
   attributeChangedCallback(name, _old, value) {
@@ -12599,7 +12882,10 @@ class FigHandle extends HTMLElement {
       const rawX = clientX - rect.left - handleW / 2;
       const rawY = clientY - rect.top - handleH / 2;
 
-      const clampedX = Math.max(-handleW / 2, Math.min(rect.width - handleW / 2, rawX));
+      const clampedX = Math.max(
+        -handleW / 2,
+        Math.min(rect.width - handleW / 2, rawX),
+      );
       const clampedY = Math.max(
         -handleH / 2,
         Math.min(rect.height - handleH / 2, rawY),
@@ -12634,17 +12920,23 @@ class FigHandle extends HTMLElement {
       }
     };
 
-    clampAndApply(e.clientX, e.clientY, e.shiftKey);
+    const isColorType = this.getAttribute("type") === "color";
+    if (!isColorType) {
+      clampAndApply(e.clientX, e.clientY, e.shiftKey);
+    }
     this.style.cursor = "grabbing";
-    this.dispatchEvent(
-      new CustomEvent("input", {
-        bubbles: true,
-        detail: this.#positionDetail(containerRect),
-      }),
-    );
+    if (!isColorType) {
+      this.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: this.#positionDetail(containerRect),
+        }),
+      );
+    }
 
     const onMove = (e) => {
       if (!this.#isDragging) return;
+      this.#didDrag = true;
       clampAndApply(e.clientX, e.clientY, e.shiftKey);
       this.dispatchEvent(
         new CustomEvent("input", {
@@ -12659,7 +12951,9 @@ class FigHandle extends HTMLElement {
       this.style.cursor = "";
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      clampAndApply(e.clientX, e.clientY, e.shiftKey);
+      if (this.#didDrag || !isColorType) {
+        clampAndApply(e.clientX, e.clientY, e.shiftKey);
+      }
       this.#syncValueAttribute();
       this.dispatchEvent(
         new CustomEvent("change", {
@@ -12672,6 +12966,37 @@ class FigHandle extends HTMLElement {
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   }
+
+  #showColorTip() {
+    if (this.#colorTip) return;
+    const tip = document.createElement("fig-color-tip");
+    tip.setAttribute("value", this.getAttribute("color") || "#D9D9D9");
+    tip.setAttribute("selected", "");
+    tip.setAttribute("alpha", "true");
+    tip.addEventListener("pointerdown", (e) => e.stopPropagation());
+    tip.addEventListener("input", this.#handleColorTipInput);
+    tip.addEventListener("change", this.#handleColorTipChange);
+    this.appendChild(tip);
+    this.#colorTip = tip;
+  }
+
+  #hideColorTip() {
+    if (!this.#colorTip) return;
+    this.#colorTip.removeEventListener("input", this.#handleColorTipInput);
+    this.#colorTip.removeEventListener("change", this.#handleColorTipChange);
+    this.#colorTip.remove();
+    this.#colorTip = null;
+  }
+
+  #handleColorTipInput = (e) => {
+    e.stopPropagation();
+    if (e.detail?.color) this.setAttribute("color", e.detail.color);
+  };
+
+  #handleColorTipChange = (e) => {
+    e.stopPropagation();
+    if (e.detail?.color) this.setAttribute("color", e.detail.color);
+  };
 
   #positionDetail(containerRect) {
     const hw = this.offsetWidth / 2;

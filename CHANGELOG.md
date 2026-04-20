@@ -4,18 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.13.0]
+
 ### Added
 
+- `fig-handle` `type="color"` attribute — clicking a color-type handle opens a `fig-color-tip` positioned above it; deselecting closes it. Color changes from the tip update the handle's fill.
+- `fig-handle` `size="small"` support for compact handles.
+- `fig-handle` selection now uses `click` instead of `pointerdown`, so dragging no longer selects.
+- `fig-color-tip` `alpha` attribute — defaults to `true`, enabling opacity control in the fill picker. Set `alpha="false"` to disable.
+- `fig-color-tip` auto-selects when its picker opens and deselects when the picker dialog closes.
+- `fig-input-gradient` stop handles now use `type="color"` with `size="small"`, allowing inline color editing per stop.
+- `fig-input-gradient` ghost handle — hovering empty track space shows a preview handle at the cursor position with the interpolated gradient color and an "Add color stop" tooltip. Clicking adds a new stop.
+- `fig-tooltip` `action="manual"` mode — skips auto-binding event listeners so `render()`/`showPopup()`/`hidePopup()` can be called programmatically.
 - `fig-handle` now supports `drag-snapping` with `false` (default), `modifier` (hold Shift), and `true` (always) modes to snap drag position to edges, center, and diagonals.
 - New `fig-color-tip` component for compact solid-color picking, built on `fig-fill-picker` and supporting `value`, `selected`, and `disabled`.
 - New `/figui3` Color Tip playground section with default and state examples.
 
 ### Changed
 
+- `/figui3` Handle playground example defaults to `type="color"` with a Color toggle in the attributes panel.
 - `/figui3` Attributes View now exposes `fig-color-tip` `value` using `fig-input-color` (Figma picker) with alpha enabled, plus `selected`/`disabled` toggles.
+- Handle attributes panel shows Size segmented control (Default / Small) and hides Color row when type is not "color".
 
 ### Fixed
 
+- `fig-tooltip` positioning inside dialogs with `contain: layout` — tooltip popup now offsets by the container's position so tooltips render correctly inside fill picker dialogs.
+- `fig-handle` with `type="color"` no longer repositions on click — only drags move the handle.
+- Clicking inside a `fig-color-tip` picker dialog no longer deselects the parent `fig-handle`.
 - `fig-input-color` now reacts to `alpha` attribute changes so alpha controls appear/disappear reliably during live attribute updates.
 
 ## [3.12.1]

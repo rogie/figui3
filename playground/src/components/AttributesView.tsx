@@ -508,6 +508,27 @@ export default function AttributesView({
                   }
 
                   if (
+                    target.controlTag === "fig-handle" &&
+                    scope === "control" &&
+                    name === "type"
+                  ) {
+                    let nextMarkup = applyAttributeMutation(markup, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "type",
+                      value: next ? "color" : null,
+                    });
+                    nextMarkup = applyAttributeMutation(nextMarkup, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "color",
+                      value: next ? "#0D99FF" : null,
+                    });
+                    onMarkupChange(nextMarkup);
+                    return;
+                  }
+
+                  if (
                     target.controlTag === "fig-switch" &&
                     scope === "control" &&
                     name === "indeterminate"
@@ -695,7 +716,9 @@ export default function AttributesView({
               isColorPickerMode ||
               (target.controlTag === "fig-handle" &&
                 scope === "control" &&
-                (name === "drag-axes" || name === "drag-snapping"));
+                (name === "drag-axes" ||
+                  name === "drag-snapping" ||
+                  name === "size"));
             if (useSegmentedControl) {
               return (
                 <fig-segmented-control full>
@@ -714,10 +737,27 @@ export default function AttributesView({
                           );
                           return;
                         }
+                        if (
+                          target.controlTag === "fig-handle" &&
+                          name === "size"
+                        ) {
+                          applyChange(
+                            target.fieldIndex,
+                            scope,
+                            name,
+                            option === "" ? null : option,
+                          );
+                          return;
+                        }
                         applyChange(target.fieldIndex, scope, name, option);
                       }}
                     >
                       {target.controlTag === "fig-handle" &&
+                      name === "size"
+                        ? option === ""
+                          ? "Default"
+                          : "Small"
+                        : target.controlTag === "fig-handle" &&
                       name === "drag-axes"
                         ? option === "x,y"
                           ? "X & Y"
@@ -992,31 +1032,6 @@ export default function AttributesView({
             );
           }
 
-          if (
-            target.controlTag === "fig-handle" &&
-            scope === "control" &&
-            name === "color"
-          ) {
-            const colorValue = value || "#0D99FF";
-            const handleColorChange = (e: any) => {
-              const host = e.currentTarget as HTMLElement & { value?: string };
-              const nextValue = host.value ?? (e as CustomEvent).detail?.value;
-              if (typeof nextValue !== "string") return;
-              applyChange(target.fieldIndex, scope, name, nextValue || null);
-            };
-            return (
-              <fig-input-color
-                value={colorValue}
-                text="true"
-                alpha="true"
-                picker="figma"
-                picker-anchor="self"
-                full
-                onInput={handleColorChange}
-                onChange={handleColorChange}
-              ></fig-input-color>
-            );
-          }
 
           if (
             target.controlTag === "fig-color-tip" &&
