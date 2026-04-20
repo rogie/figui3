@@ -37,6 +37,7 @@ declare module "react" {
       "fig-header": FigAttrs;
       "fig-toast": FigAttrs;
       "fig-tooltip": FigAttrs;
+      "fig-handle": FigAttrs;
       dialog: React.DetailedHTMLProps<
         React.DialogHTMLAttributes<HTMLDialogElement>,
         HTMLDialogElement

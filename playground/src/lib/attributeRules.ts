@@ -418,6 +418,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-header": {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
   },
+  "fig-handle": {},
   "fig-chooser": {
     layout: {
       label: "Layout",

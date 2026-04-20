@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.12.1]
+
+### Added
+
+- CSS `contain` properties across components for reduced layout thrashing and paint invalidation:
+  - `contain: strict` on fixed-size controls (switch, checkbox, radio, mask-icon, handle, close icon).
+  - `contain: layout paint` on toast, slider track container, segmented control, avatar, and chit.
+  - `contain: layout` on dialog/popup/tooltip surfaces and fill picker dialog.
+- `fig-handle` example in Propkit playground.
+
+### Changed
+
+- Gradient interpolation UI merged into a single dropdown with optgroups (sRGB / OKLab / OKLCH) and a "Mixing" label, moved below the gradient preview.
+- Default gradient example updated to `#7AEA66` → `#FF00BF` at 90°.
+
 ## [3.12.0]
 
 ### Added

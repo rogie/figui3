@@ -166,6 +166,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-header": "Header",
     "fig-tabs": "Tabs",
     "fig-chooser": "Chooser",
+    "fig-handle": "Handle",
   };
   return titles[controlTag] ?? sentenceCase(toTitle(controlTag.replace(/^fig-/, "")));
 }
@@ -271,6 +272,7 @@ export default function AttributesView({
             "fig-radio",
             "fig-input-angle",
             "fig-chooser",
+            "fig-handle",
           ]);
           const mergedControlRules = { ...controlRules };
           if (

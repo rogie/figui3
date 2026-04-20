@@ -1066,6 +1066,7 @@ fig-tab-content,
 /* Avatar */
 fig-avatar,
 .fig-avatar {
+  contain: layout paint;
   --size: 1.5rem;
   width: var(--size);
   display: inline-grid;
@@ -1173,6 +1174,7 @@ input[type="color"] {
 }
 
 fig-chit {
+  contain: layout paint;
   --size: 1.5rem;
   --chit-background: #d9d9d9;
   --chit-bg-size: cover;
@@ -1907,6 +1909,7 @@ fig-origin-grid {
 
 /* Switch */
 input[type="checkbox"].switch {
+  contain: strict;
   display: inline-flex;
   margin: 0;
   vertical-align: middle;
@@ -1976,6 +1979,7 @@ input[type="checkbox"].switch:checked:focus {
 
 /* Checkbox */
 input[type="checkbox"]:not(.switch) {
+  contain: strict;
   --size: 1rem;
   appearance: none;
   border-radius: var(--radius-medium);
@@ -2040,6 +2044,7 @@ label.checkbox:has([type="checkbox"]) {
 
 /* Radio */
 input[type="radio"] {
+  contain: strict;
   appearance: none;
   border-radius: 0.5rem;
   width: 1rem;
@@ -2214,6 +2219,7 @@ fig-slider {
   transition: var(--slider-transition);
 
   .fig-slider-input-container {
+    contain: layout paint;
     height: var(--slider-height);
     position: relative;
     display: block;
@@ -2569,6 +2575,7 @@ fig-slider {
 dialog,
 .popover,
 [popover] {
+  contain: layout;
   padding: 0;
   outline: 0;
   border: 0;
@@ -2659,6 +2666,7 @@ dialog[is="fig-dialog"] {
 }
 
 dialog[is="fig-popup"] {
+  contain: layout;
   --z-index: 999999;
   --beak-offset: 1px;
   z-index: var(--z-index);
@@ -2739,6 +2747,7 @@ dialog[is="fig-popup"] {
 }
 
 dialog[is="fig-toast"] {
+  contain: layout paint;
   --z-index: 999999;
   z-index: var(--z-index);
   box-shadow: var(--figma-elevation-100);
@@ -2808,6 +2817,7 @@ fig-tooltip {
   display: contents;
 }
 .fig-tooltip {
+  contain: layout;
   inset: unset;
   display: inline-block;
   color: var(--color-tooltip);
@@ -2892,6 +2902,7 @@ fig-icon {
 }
 
 fig-icon.close {
+  contain: strict;
   width: 1rem;
   height: 1rem;
   background-color: var(--figma-color-text);
@@ -3490,6 +3501,7 @@ fig-spinner {
 /* Segmented control */
 .segmented-control,
 fig-segmented-control {
+  contain: layout paint;
   display: inline-flex;
   user-select: none;
   background-color: var(--figma-color-bg-secondary);
@@ -4199,6 +4211,7 @@ fig-preview {
 }
 
 .fig-fill-picker-dialog {
+  contain: layout;
   width: 240px;
   padding: 0;
 
@@ -4511,6 +4524,7 @@ fig-preview {
 /* Utilities */
 
 .fig-mask-icon {
+  contain: strict;
   --size: var(--spacer-4);
   --icon: var(--icon-add);
   display: inline-flex;
@@ -4749,6 +4763,7 @@ fig-choice {
 }
 
 fig-handle {
+  contain: strict;
   --width: 0.75rem;
   --height: 0.75rem;
   --fill: var(--figma-color-bg-brand);

@@ -139,7 +139,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Gradient</label>
-    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}' experimental="modern"></fig-input-gradient>
+    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":100,"color":"#FF00BF","opacity":100}]}}' experimental="modern"></fig-input-gradient>
   </fig-field>
 </div>`,
       },
@@ -495,6 +495,19 @@ export const propkitSections: Section[] = [
     <fig-input-angle value="45" text="true" full></fig-input-angle>
   </fig-field>
 </div>`,
+      },
+    ],
+  },
+  {
+    id: "handle",
+    name: "Handle",
+    description:
+      "A draggable handle element used as a visual affordance in interactive controls like sliders, easing curves, and origin grids.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<fig-handle></fig-handle>`,
       },
     ],
   },

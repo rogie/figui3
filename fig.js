@@ -10495,27 +10495,31 @@ class FigFillPicker extends HTMLElement {
           </fig-button>
         </fig-tooltip>
       </fig-field>
-      <fig-field class="fig-fill-picker-gradient-interpolation" direction="horizontal">
-        <fig-dropdown class="fig-fill-picker-gradient-space" ${expAttr} value="${
-          this.#gradient.interpolationSpace
-        }">
-          <option value="srgb-linear">sRGB Linear</option>
-          <option value="oklab">OKLab</option>
-          <option value="oklch">OKLCH</option>
-        </fig-dropdown>
-        <fig-dropdown class="fig-fill-picker-gradient-hue" ${expAttr} style="display: none;" value="${
-          this.#gradient.hueInterpolation
-        }">
-          <option value="shorter">Shorter hue</option>
-          <option value="longer">Longer hue</option>
-          <option value="increasing">Increasing hue</option>
-          <option value="decreasing">Decreasing hue</option>
-        </fig-dropdown>
-      </fig-field>
       <fig-preview class="fig-fill-picker-gradient-preview">
         <div class="fig-fill-picker-gradient-bar"></div>
         <div class="fig-fill-picker-gradient-stops-handles"></div>
       </fig-preview>
+      <fig-field class="fig-fill-picker-gradient-interpolation" direction="horizontal">
+        <label>Mixing</label>
+        <fig-dropdown class="fig-fill-picker-gradient-space" full ${expAttr} value="${
+          this.#gradient.interpolationSpace === "oklch"
+            ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
+            : this.#gradient.interpolationSpace
+        }">
+          <optgroup label="sRGB">
+            <option value="srgb-linear">Linear</option>
+          </optgroup>
+          <optgroup label="OKLab">
+            <option value="oklab">Perceptual</option>
+          </optgroup>
+          <optgroup label="OKLCH">
+            <option value="oklch-shorter">Shorter hue</option>
+            <option value="oklch-longer">Longer hue</option>
+            <option value="oklch-increasing">Increasing hue</option>
+            <option value="oklch-decreasing">Decreasing hue</option>
+          </optgroup>
+        </fig-dropdown>
+      </fig-field>
       <div class="fig-fill-picker-gradient-stops">
         <fig-header class="fig-fill-picker-gradient-stops-header" borderless>
           <span>Stops</span>
@@ -10547,45 +10551,27 @@ class FigFillPicker extends HTMLElement {
     typeDropdown.addEventListener("input", handleTypeChange);
     typeDropdown.addEventListener("change", handleTypeChange);
 
-    const interpolationSpaceDropdown = container.querySelector(
+    const interpolationDropdown = container.querySelector(
       ".fig-fill-picker-gradient-space",
     );
-    const handleInterpolationSpaceChange = (e) => {
+    const handleInterpolationChange = (e) => {
+      const val = getDropdownValue(e);
+      let space = val;
+      let hue = "shorter";
+      if (val.startsWith("oklch-")) {
+        space = "oklch";
+        hue = val.slice(6);
+      }
       this.#gradient = normalizeGradientConfig({
         ...this.#gradient,
-        interpolationSpace: getDropdownValue(e),
+        interpolationSpace: space,
+        hueInterpolation: hue,
       });
       this.#updateGradientUI();
       this.#emitInput();
     };
-    interpolationSpaceDropdown?.addEventListener(
-      "input",
-      handleInterpolationSpaceChange,
-    );
-    interpolationSpaceDropdown?.addEventListener(
-      "change",
-      handleInterpolationSpaceChange,
-    );
-
-    const hueInterpolationDropdown = container.querySelector(
-      ".fig-fill-picker-gradient-hue",
-    );
-    const handleHueInterpolationChange = (e) => {
-      this.#gradient = normalizeGradientConfig({
-        ...this.#gradient,
-        hueInterpolation: getDropdownValue(e),
-      });
-      this.#updateGradientUI();
-      this.#emitInput();
-    };
-    hueInterpolationDropdown?.addEventListener(
-      "input",
-      handleHueInterpolationChange,
-    );
-    hueInterpolationDropdown?.addEventListener(
-      "change",
-      handleHueInterpolationChange,
-    );
+    interpolationDropdown?.addEventListener("input", handleInterpolationChange);
+    interpolationDropdown?.addEventListener("change", handleInterpolationChange);
 
     // Angle input
     // Convert from fig-input-angle coordinates (0° = right) to CSS coordinates (0° = up)
@@ -10667,19 +10653,13 @@ class FigFillPicker extends HTMLElement {
       angleInput.setAttribute("value", pickerAngle);
     }
 
-    const interpolationSpaceDropdown = container.querySelector(
+    const interpolationDropdown = container.querySelector(
       ".fig-fill-picker-gradient-space",
     );
-    const hueInterpolationDropdown = container.querySelector(
-      ".fig-fill-picker-gradient-hue",
-    );
-    if (interpolationSpaceDropdown) {
-      interpolationSpaceDropdown.value = this.#gradient.interpolationSpace;
-    }
-    if (hueInterpolationDropdown) {
-      const showHueMode = this.#gradient.interpolationSpace === "oklch";
-      hueInterpolationDropdown.style.display = showHueMode ? "block" : "none";
-      hueInterpolationDropdown.value = this.#gradient.hueInterpolation;
+    if (interpolationDropdown) {
+      interpolationDropdown.value = this.#gradient.interpolationSpace === "oklch"
+        ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
+        : this.#gradient.interpolationSpace;
     }
 
     this.#updateGradientPreview();
