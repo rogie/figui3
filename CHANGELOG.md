@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.13.1]
+
+### Added
+
+- `fig-color-tip` `add` attribute — replaces the internal chit with an add icon and emits an `add` event on click.
+- `fig-handle` `add` attribute — shows a `fig-color-tip` in add mode, always visible and not tied to select/deselect.
+- `fig-input-gradient` ghost handle now uses `add` mode instead of a tooltip, showing the add icon above the handle on hover.
+- Clicking empty gradient track space to add a stop now auto-selects and opens the color tip on the new handle.
+
+### Changed
+
+- `/figui3` Color Tip attributes panel now shows Add toggle at the top; value/color field is hidden when Add is on.
+- `/figui3` Handle attributes panel now shows Add toggle; type and color fields are hidden when Add is on.
+- `/propkit` Gradient description updated to explain interaction model.
+
+### Fixed
+
+- Removed `contain: layout style` from `fig-handle` color/add mode to prevent drag positioning issues.
+
 ## [3.13.0]
 
 ### Added

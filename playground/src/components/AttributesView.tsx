@@ -364,6 +364,14 @@ export default function AttributesView({
         const textInputMultiline =
           target.controlTag === "fig-input-text" &&
           target.controlAttributes.multiline !== undefined;
+        const colorTipAddMode =
+          target.controlTag === "fig-color-tip" &&
+          target.controlAttributes.add !== undefined &&
+          target.controlAttributes.add !== "false";
+        const handleAddMode =
+          target.controlTag === "fig-handle" &&
+          target.controlAttributes.add !== undefined &&
+          target.controlAttributes.add !== "false";
         const visibleControlEntries = controlEntries
           .filter(
             (entry) =>
@@ -407,6 +415,16 @@ export default function AttributesView({
                 entry.name === "type" &&
                 target.controlTag === "fig-input-text" &&
                 textInputMultiline
+              ) &&
+              !(
+                entry.name === "value" &&
+                target.controlTag === "fig-color-tip" &&
+                colorTipAddMode
+              ) &&
+              !(
+                (entry.name === "type" || entry.name === "color") &&
+                target.controlTag === "fig-handle" &&
+                handleAddMode
               ),
           )
           .sort((a, b) => {
@@ -504,6 +522,35 @@ export default function AttributesView({
                     onMarkupChange(
                       applyButtonIconMutation(markup, target.fieldIndex, next),
                     );
+                    return;
+                  }
+
+                  if (
+                    target.controlTag === "fig-handle" &&
+                    scope === "control" &&
+                    name === "add"
+                  ) {
+                    let nextMarkup = applyAttributeMutation(markup, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "add",
+                      value: next ? "" : null,
+                    });
+                    if (next) {
+                      nextMarkup = applyAttributeMutation(nextMarkup, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "type",
+                        value: null,
+                      });
+                      nextMarkup = applyAttributeMutation(nextMarkup, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "color",
+                        value: null,
+                      });
+                    }
+                    onMarkupChange(nextMarkup);
                     return;
                   }
 

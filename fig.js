@@ -5765,12 +5765,10 @@ class FigInputGradient extends HTMLElement {
 
   #setupGhostHandle() {
     if (!this.#track || this.hasAttribute("disabled")) return;
-    const tooltip = document.createElement("fig-tooltip");
-    tooltip.setAttribute("text", "Add color stop");
-    tooltip.setAttribute("action", "manual");
 
     const ghost = document.createElement("fig-handle");
     ghost.classList.add("fig-input-gradient-ghost");
+    ghost.setAttribute("add", "");
     ghost.style.position = "absolute";
     ghost.style.top = "50%";
     ghost.style.transform = "translate(-50%, -50%)";
@@ -5778,10 +5776,9 @@ class FigInputGradient extends HTMLElement {
     ghost.style.opacity = "0";
     ghost.style.transition = "opacity 0.15s";
 
-    tooltip.appendChild(ghost);
-    this.#track.appendChild(tooltip);
+    this.#track.appendChild(ghost);
     this.#ghostHandle = ghost;
-    this.#ghostTooltip = tooltip;
+    this.#ghostTooltip = null;
 
     this.addEventListener("pointerenter", this.#onTrackEnter);
     this.addEventListener("pointermove", this.#onTrackMove);
@@ -5791,17 +5788,12 @@ class FigInputGradient extends HTMLElement {
 
   #showGhost() {
     if (!this.#ghostHandle) return;
-    this.#ghostHandle.style.opacity = "0.5";
-    if (this.#ghostTooltip) {
-      this.#ghostTooltip.render();
-      this.#ghostTooltip.showPopup();
-    }
+    this.#ghostHandle.style.opacity = "1";
   }
 
   #hideGhost() {
     if (!this.#ghostHandle) return;
     this.#ghostHandle.style.opacity = "0";
-    if (this.#ghostTooltip) this.#ghostTooltip.hidePopup();
   }
 
   #onTrackEnter = () => {
@@ -5841,10 +5833,21 @@ class FigInputGradient extends HTMLElement {
     const color = this.#sampleGradientColor(pct);
     this.#gradient.stops.push({ position, color, opacity: 100 });
     this.#gradient.stops.sort((a, b) => a.position - b.position);
+    const newIndex = this.#gradient.stops.findIndex(
+      (s) => s.position === position && s.color === color,
+    );
     this.#syncHandles();
     this.#syncFillPicker();
     this.#emitInput();
     this.#emitChange();
+
+    requestAnimationFrame(() => {
+      const handles = this.#track.querySelectorAll(
+        "fig-handle:not(.fig-input-gradient-ghost)",
+      );
+      const newHandle = handles[newIndex];
+      if (newHandle) newHandle.click();
+    });
   };
 
   #syncHandles() {
@@ -5855,9 +5858,9 @@ class FigInputGradient extends HTMLElement {
     const stops = this.#gradient.stops;
 
     if (handles.length !== stops.length) {
-      const wrapper = this.#ghostTooltip;
+      const ghost = this.#ghostHandle;
       this.#track.innerHTML = this.#buildStopHandles();
-      if (wrapper) this.#track.appendChild(wrapper);
+      if (ghost) this.#track.appendChild(ghost);
       this.#reobserveHandleColors();
       return;
     }
@@ -11879,7 +11882,12 @@ class FigColorTip extends HTMLElement {
   #boundHandleChange = this.#handlePickerChange.bind(this);
 
   static get observedAttributes() {
-    return ["value", "selected", "disabled", "alpha"];
+    return ["value", "selected", "disabled", "alpha", "add"];
+  }
+
+  get #isAddMode() {
+    const v = this.getAttribute("add");
+    return v !== null && v !== "false";
   }
 
   connectedCallback() {
@@ -11889,6 +11897,7 @@ class FigColorTip extends HTMLElement {
 
   disconnectedCallback() {
     this.#teardownListeners();
+    this.removeEventListener("click", this.#handleAddClick);
   }
 
   #teardownListeners() {
@@ -11913,6 +11922,15 @@ class FigColorTip extends HTMLElement {
   }
 
   #render() {
+    if (this.#isAddMode) {
+      this.innerHTML = `<span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>`;
+      this.#fillPicker = null;
+      this.#chit = null;
+      this.addEventListener("click", this.#handleAddClick);
+      return;
+    }
+    this.removeEventListener("click", this.#handleAddClick);
+
     const color = this.#normalizeColor(this.getAttribute("value"));
     const alphaAttr = this.#alphaEnabled ? "" : 'alpha="false"';
     this.innerHTML = `
@@ -11930,6 +11948,12 @@ class FigColorTip extends HTMLElement {
       this.#watchPickerDialog();
     });
   }
+
+  #handleAddClick = () => {
+    this.dispatchEvent(
+      new CustomEvent("add", { bubbles: true, composed: true }),
+    );
+  };
 
   #normalizeHex(hex) {
     if (!hex) return "#D9D9D9";
@@ -12059,6 +12083,9 @@ class FigColorTip extends HTMLElement {
     if (!this.isConnected) return;
 
     switch (name) {
+      case "add":
+        this.#render();
+        break;
       case "value":
       case "selected":
       case "disabled":
@@ -12668,6 +12695,7 @@ class FigHandle extends HTMLElement {
     "drag-snapping",
     "value",
     "type",
+    "add",
   ];
 
   #isDragging = false;
@@ -12675,6 +12703,10 @@ class FigHandle extends HTMLElement {
   #boundPointerDown = null;
   #applyingValue = false;
   #colorTip = null;
+
+  get #isAddMode() {
+    return this.hasAttribute("add") && this.getAttribute("add") !== "false";
+  }
 
   get #dragEnabled() {
     const v = this.getAttribute("drag");
@@ -12806,6 +12838,7 @@ class FigHandle extends HTMLElement {
     document.addEventListener("pointerdown", this.#handleDeselect);
     const initial = this.getAttribute("value");
     if (initial) this.#applyValue(initial);
+    if (this.#isAddMode) this.#showColorTip();
   }
 
   disconnectedCallback() {
@@ -12817,6 +12850,7 @@ class FigHandle extends HTMLElement {
 
   #handleSelect = (e) => {
     if (this.hasAttribute("disabled")) return;
+    if (this.#isAddMode) return;
     if (this.#didDrag) {
       this.#didDrag = false;
       return;
@@ -12826,6 +12860,7 @@ class FigHandle extends HTMLElement {
   };
 
   #handleDeselect = (e) => {
+    if (this.#isAddMode) return;
     if (this.contains(e.target)) return;
     if (this.#colorTip && e.target.closest?.("dialog, [popover]")) return;
     this.removeAttribute("selected");
@@ -12843,6 +12878,13 @@ class FigHandle extends HTMLElement {
     if (name === "drag") this.#syncDrag();
     if (name === "value" && !this.#applyingValue && !this.#isDragging) {
       this.#applyValue(value);
+    }
+    if (name === "add") {
+      if (this.#isAddMode) {
+        this.#showColorTip();
+      } else {
+        this.#hideColorTip();
+      }
     }
   }
 
@@ -12970,12 +13012,17 @@ class FigHandle extends HTMLElement {
   #showColorTip() {
     if (this.#colorTip) return;
     const tip = document.createElement("fig-color-tip");
-    tip.setAttribute("value", this.getAttribute("color") || "#D9D9D9");
-    tip.setAttribute("selected", "");
-    tip.setAttribute("alpha", "true");
+    if (this.#isAddMode) {
+      tip.setAttribute("add", "");
+    } else {
+      tip.setAttribute("value", this.getAttribute("color") || "#D9D9D9");
+      tip.setAttribute("alpha", "true");
+      tip.setAttribute("selected", "");
+    }
     tip.addEventListener("pointerdown", (e) => e.stopPropagation());
     tip.addEventListener("input", this.#handleColorTipInput);
     tip.addEventListener("change", this.#handleColorTipChange);
+    tip.addEventListener("add", this.#handleColorTipAdd);
     this.appendChild(tip);
     this.#colorTip = tip;
   }
@@ -12984,6 +13031,7 @@ class FigHandle extends HTMLElement {
     if (!this.#colorTip) return;
     this.#colorTip.removeEventListener("input", this.#handleColorTipInput);
     this.#colorTip.removeEventListener("change", this.#handleColorTipChange);
+    this.#colorTip.removeEventListener("add", this.#handleColorTipAdd);
     this.#colorTip.remove();
     this.#colorTip = null;
   }
@@ -12996,6 +13044,13 @@ class FigHandle extends HTMLElement {
   #handleColorTipChange = (e) => {
     e.stopPropagation();
     if (e.detail?.color) this.setAttribute("color", e.detail.color);
+  };
+
+  #handleColorTipAdd = (e) => {
+    e.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent("add", { bubbles: true, composed: true }),
+    );
   };
 
   #positionDetail(containerRect) {

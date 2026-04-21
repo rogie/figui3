@@ -131,7 +131,8 @@ export const propkitSections: Section[] = [
   {
     id: "gradient",
     name: "Gradient",
-    description: "A gradient-only fill field with the FigUI fill picker.",
+    description:
+      "A gradient stop editor with draggable color handles. Click empty space to add a stop, click a handle to edit its color.",
     examples: [
       {
         id: "default",

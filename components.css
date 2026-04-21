@@ -4743,7 +4743,6 @@ fig-choice {
 }
 
 fig-handle {
-  contain: strict;
   --width: 0.75rem;
   --height: 0.75rem;
   --fill: var(--figma-color-bg-brand);
@@ -4786,10 +4785,9 @@ fig-handle {
     cursor: default;
   }
 
-  &[type="color"] {
-    contain: layout style;
+  &[type="color"],
+  &[add]:not([add="false"]) {
     overflow: visible;
-    position: relative;
 
     fig-color-tip {
       position: absolute;
@@ -4812,7 +4810,7 @@ fig-color-tip {
   place-items: center;
   overflow: visible;
   position: relative;
-  color: var(--text-primary);
+  color: var(--figma-color-text);
   color-scheme: light only;
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
