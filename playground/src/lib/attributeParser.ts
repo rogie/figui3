@@ -361,6 +361,35 @@ export function applyAttributeMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export function applyTooltipActionMutation(
+  markup: string,
+  fieldIndex: number,
+  action: string,
+): string {
+  const root = parseSourceRoot(markup);
+  const tooltip = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!tooltip || getControlTag(tooltip) !== "fig-tooltip") return markup;
+
+  tooltip.setAttribute("action", action);
+
+  const btn = tooltip.querySelector("fig-button");
+  if (btn) {
+    const textMap: Record<string, string> = {
+      hover: "Hover me",
+      click: "Click me",
+      manual: "Manual",
+    };
+    const textNode = Array.from(btn.childNodes).find(
+      (n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim(),
+    );
+    if (textNode) {
+      textNode.textContent = textMap[action] ?? "Hover me";
+    }
+  }
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export function applyButtonTypeMutation(
   markup: string,
   fieldIndex: number,

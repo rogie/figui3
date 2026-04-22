@@ -579,7 +579,7 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
-    <fig-handle drag drag-snapping="modifier" type="color" color="#0D99FF"></fig-handle>
+    <fig-handle drag drag-snapping="modifier" type="color" color="#FF00BF"></fig-handle>
   </div>
 </div>`,
       },

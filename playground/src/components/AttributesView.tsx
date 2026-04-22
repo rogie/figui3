@@ -11,6 +11,7 @@ import {
   applyChooserMaxSizeMutation,
   applyHeaderIconMutation,
   applyPrependSlotMutation,
+  applyTooltipActionMutation,
   getChooserContentMode,
   getHeaderIconEnabled,
   getPrependSlotMode,
@@ -203,6 +204,7 @@ export default function AttributesView({
   const targets = useMemo(() => parseAttributeTargets(markup), [markup]);
   const labelMemoryRef = useRef<Record<number, string>>({});
 
+
   const applyChange = useCallback(
     (
       fieldIndex: number,
@@ -364,14 +366,10 @@ export default function AttributesView({
         const textInputMultiline =
           target.controlTag === "fig-input-text" &&
           target.controlAttributes.multiline !== undefined;
-        const colorTipAddMode =
-          target.controlTag === "fig-color-tip" &&
-          target.controlAttributes.add !== undefined &&
-          target.controlAttributes.add !== "false";
-        const handleAddMode =
-          target.controlTag === "fig-handle" &&
-          target.controlAttributes.add !== undefined &&
-          target.controlAttributes.add !== "false";
+        const colorTipControlMode =
+          target.controlTag === "fig-color-tip"
+            ? (target.controlAttributes.control || "color")
+            : null;
         const visibleControlEntries = controlEntries
           .filter(
             (entry) =>
@@ -419,12 +417,7 @@ export default function AttributesView({
               !(
                 entry.name === "value" &&
                 target.controlTag === "fig-color-tip" &&
-                colorTipAddMode
-              ) &&
-              !(
-                (entry.name === "type" || entry.name === "color") &&
-                target.controlTag === "fig-handle" &&
-                handleAddMode
+                colorTipControlMode !== "color"
               ),
           )
           .sort((a, b) => {
@@ -444,7 +437,9 @@ export default function AttributesView({
           if (rule.type === "boolean") {
             const mode = rule.boolMode ?? "presence";
             const checked =
-              target.controlTag === "fig-avatar" && name === "image"
+              target.controlTag === "fig-handle" && name === "color"
+                ? value !== undefined && value !== null
+                : target.controlTag === "fig-avatar" && name === "image"
                 ? Boolean(target.controlAttributes.src?.trim())
                 : target.controlTag === "fig-dialog" && name === "close-button"
                   ? markup.includes('<fig-tooltip text="Close">')
@@ -528,48 +523,19 @@ export default function AttributesView({
                   if (
                     target.controlTag === "fig-handle" &&
                     scope === "control" &&
-                    name === "add"
+                    name === "color"
                   ) {
                     let nextMarkup = applyAttributeMutation(markup, {
                       fieldIndex: target.fieldIndex,
                       target: "control",
-                      name: "add",
-                      value: next ? "" : null,
-                    });
-                    if (next) {
-                      nextMarkup = applyAttributeMutation(nextMarkup, {
-                        fieldIndex: target.fieldIndex,
-                        target: "control",
-                        name: "type",
-                        value: null,
-                      });
-                      nextMarkup = applyAttributeMutation(nextMarkup, {
-                        fieldIndex: target.fieldIndex,
-                        target: "control",
-                        name: "color",
-                        value: null,
-                      });
-                    }
-                    onMarkupChange(nextMarkup);
-                    return;
-                  }
-
-                  if (
-                    target.controlTag === "fig-handle" &&
-                    scope === "control" &&
-                    name === "type"
-                  ) {
-                    let nextMarkup = applyAttributeMutation(markup, {
-                      fieldIndex: target.fieldIndex,
-                      target: "control",
-                      name: "type",
-                      value: next ? "color" : null,
+                      name: "color",
+                      value: next ? "#FF00BF" : null,
                     });
                     nextMarkup = applyAttributeMutation(nextMarkup, {
                       fieldIndex: target.fieldIndex,
                       target: "control",
-                      name: "color",
-                      value: next ? "#0D99FF" : null,
+                      name: "type",
+                      value: next ? "color" : null,
                     });
                     onMarkupChange(nextMarkup);
                     return;
@@ -765,7 +731,14 @@ export default function AttributesView({
                 scope === "control" &&
                 (name === "drag-axes" ||
                   name === "drag-snapping" ||
-                  name === "size"));
+                  name === "size" ||
+                  name === "control")) ||
+              (target.controlTag === "fig-color-tip" &&
+                scope === "control" &&
+                name === "control") ||
+              (target.controlTag === "fig-tooltip" &&
+                scope === "control" &&
+                name === "action");
             if (useSegmentedControl) {
               return (
                 <fig-segmented-control full>
@@ -786,6 +759,27 @@ export default function AttributesView({
                         }
                         if (
                           target.controlTag === "fig-handle" &&
+                          name === "control"
+                        ) {
+                          let updated = applyAttributeMutation(markup, {
+                            fieldIndex: target.fieldIndex,
+                            target: "control",
+                            name: "control",
+                            value: option || null,
+                          });
+                          if (option === "add" || option === "remove") {
+                            updated = applyAttributeMutation(updated, {
+                              fieldIndex: target.fieldIndex,
+                              target: "control",
+                              name: "type",
+                              value: null,
+                            });
+                          }
+                          onMarkupChange(updated);
+                          return;
+                        }
+                        if (
+                          target.controlTag === "fig-handle" &&
                           name === "size"
                         ) {
                           applyChange(
@@ -796,10 +790,45 @@ export default function AttributesView({
                           );
                           return;
                         }
+                        if (
+                          target.controlTag === "fig-color-tip" &&
+                          name === "control"
+                        ) {
+                          applyChange(
+                            target.fieldIndex,
+                            scope,
+                            name,
+                            option === "color" ? null : option,
+                          );
+                          return;
+                        }
+                        if (
+                          target.controlTag === "fig-tooltip" &&
+                          name === "action"
+                        ) {
+                          if (option !== "manual") {
+                            const el = document.querySelector(
+                              `fig-tooltip[action="manual"]`,
+                            ) as any;
+                            el?.hidePopup?.();
+                          }
+                          onMarkupChange(
+                            applyTooltipActionMutation(
+                              markup,
+                              target.fieldIndex,
+                              option,
+                            ),
+                          );
+                          return;
+                        }
                         applyChange(target.fieldIndex, scope, name, option);
                       }}
                     >
-                      {target.controlTag === "fig-handle" &&
+                      {(target.controlTag === "fig-handle" ||
+                        target.controlTag === "fig-color-tip") &&
+                      name === "control"
+                        ? toSentenceCaseLabel(option || "None")
+                        : target.controlTag === "fig-handle" &&
                       name === "size"
                         ? option === ""
                           ? "Default"
@@ -951,6 +980,39 @@ export default function AttributesView({
                       value: resolvedValue === "stepper" ? "10" : null,
                     });
                     onMarkupChange(updated);
+                    return;
+                  }
+                  if (
+                    target.controlTag === "fig-handle" &&
+                    name === "control"
+                  ) {
+                    let updated = applyAttributeMutation(markup, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "control",
+                      value: resolvedValue || null,
+                    });
+                    if (resolvedValue === "add" || resolvedValue === "remove") {
+                      updated = applyAttributeMutation(updated, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "type",
+                        value: null,
+                      });
+                    }
+                    onMarkupChange(updated);
+                    return;
+                  }
+                  if (
+                    target.controlTag === "fig-color-tip" &&
+                    name === "control"
+                  ) {
+                    applyChange(
+                      target.fieldIndex,
+                      scope,
+                      name,
+                      resolvedValue === "color" ? null : resolvedValue,
+                    );
                     return;
                   }
                   applyChange(target.fieldIndex, scope, name, resolvedValue);
@@ -1403,6 +1465,40 @@ export default function AttributesView({
                           </fig-field>
                         );
                         return [field, overflowField, maxSizeField];
+                      }
+
+                      if (
+                        target.controlTag === "fig-handle" &&
+                        entry.name === "color" &&
+                        target.controlAttributes.color
+                      ) {
+                        const colorValue = target.controlAttributes.color || "#0D99FF";
+                        const handleColorInput = (e: any) => {
+                          const host = e.currentTarget as HTMLElement & { value?: string };
+                          const nextValue = host.value ?? (e as CustomEvent).detail?.value;
+                          if (typeof nextValue !== "string") return;
+                          applyChange(target.fieldIndex, "control", "color", nextValue || null);
+                        };
+                        const colorPickerField = (
+                          <fig-field
+                            direction="horizontal"
+                            columns="thirds"
+                            key={`control-handle-color-picker-${target.fieldIndex}`}
+                          >
+                            <label></label>
+                            <fig-input-color
+                              value={colorValue}
+                              text="true"
+                              alpha="true"
+                              picker="figma"
+                              picker-anchor="self"
+                              full
+                              onInput={handleColorInput}
+                              onChange={handleColorInput}
+                            ></fig-input-color>
+                          </fig-field>
+                        );
+                        return [field, colorPickerField];
                       }
 
                       const prependBefore =

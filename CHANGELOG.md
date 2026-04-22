@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.14.0]
+
+### Added
+
+- `fig-tooltip` `show` attribute — persists the tooltip when present/true, ignoring hover and click interactions. Removing the attribute allows normal hide behavior.
+- `fig-tooltip` `text` getter/setter — updates tooltip content in-place without re-rendering the popup. Repositions automatically if open.
+- `fig-tooltip` `text` observed attribute — setting via `setAttribute("text", ...)` also updates content without re-render.
+- `fig-input-gradient` drag tooltips — each stop handle is wrapped in a `fig-tooltip` that shows the percentage position during drag.
+- `fig-handle` `.dragging` class — added during actual drag, removed on pointer up. Not applied on simple click.
+- `fig-chit` `medium` size (1.5rem) with full-area swatch style.
+- `/figui3` Tooltip playground: action segmented control (hover/click/manual), show switch, and button text updates per action mode.
+
+### Changed
+
+- `fig-tooltip` `show` attribute callback now fires synchronously instead of via `requestAnimationFrame` for immediate persistence.
+- `fig-tooltip` `showPopup()` lazily creates the popup if not yet rendered, fixing manual action mode.
+- `fig-tooltip` `showPopup()` sets `display: block` before repositioning for accurate dimensions.
+- `fig-handle` cursor and `.dragging` class only apply on actual drag movement, not on click.
+- `fig-input-gradient` uses `fig-chit size="medium"` instead of `fig-fill-picker` for gradient preview.
+- `fig-input-gradient` stop handles use `drag-surface` to target the track container through tooltip wrappers.
+- `fig-chit` large size increased to 2rem.
+- `/figui3` Handle playground: merged Color and Color tip toggles into single Color toggle.
+
+### Fixed
+
+- `fig-tooltip` crash when calling `showPopup()` on `action="manual"` tooltip (popup was never created).
+- `fig-input-gradient` drag tooltip not appearing due to `requestAnimationFrame` race in `show` attribute handler.
+- `fig-input-gradient` handle stacking/positioning when wrapped in `fig-tooltip` (`display: contents`).
+
 ## [3.13.1]
 
 ### Added

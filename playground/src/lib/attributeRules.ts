@@ -91,7 +91,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-tooltip": {
     text: { label: "Text", type: "string" },
-    action: { label: "Action", type: "enum", options: ["hover", "click"] },
+    action: { label: "Action", type: "enum", options: ["hover", "click", "manual"] },
+    show: { label: "Show", type: "boolean", boolMode: "custom", trueValue: "true", falseValue: null },
     delay: { label: "Delay", type: "number", min: 0, max: 5000, step: 50 },
   },
   "fig-dialog": {
@@ -172,13 +173,17 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
   },
   "fig-color-tip": {
-    add: { label: "Add", type: "boolean", boolMode: "presence" },
+    control: {
+      label: "Control",
+      type: "enum",
+      options: ["color", "add", "remove"],
+    },
     value: { label: "Value", type: "string" },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-chit": {
-    size: { label: "Size", type: "enum", options: ["small", "large"] },
+    size: { label: "Size", type: "enum", options: ["small", "medium", "large"] },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     alpha: { label: "Alpha", type: "number", min: 0, max: 1, step: 0.05 },
@@ -426,19 +431,17 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
   },
   "fig-handle": {
-    add: { label: "Add", type: "boolean", boolMode: "presence" },
+    control: {
+      label: "Control",
+      type: "enum",
+      options: ["", "add", "remove"],
+    },
     size: {
       label: "Size",
       type: "enum",
       options: ["", "small"],
     },
-    type: {
-      label: "Color",
-      type: "boolean",
-      boolMode: "custom",
-      trueValue: "color",
-      falseValue: null,
-    },
+    color: { label: "Color", type: "boolean", boolMode: "presence" },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     drag: { label: "Drag", type: "boolean", boolMode: "presence" },
