@@ -591,6 +591,7 @@ class FigTooltip extends HTMLElement {
     this.#stopObserving();
     if (this.popup) {
       this.popup.remove();
+      this.popup = null;
     }
     // Remove the click outside listener if it was added
     if (this.action === "click") {
@@ -5694,6 +5695,7 @@ class FigInputGradient extends HTMLElement {
   #chit;
   #track;
   #handleDragging = false;
+  #arrowTooltipTimer = null;
   #colorObserver = null;
   #gradient = {
     type: "linear",
@@ -5725,17 +5727,67 @@ class FigInputGradient extends HTMLElement {
   }
 
   #onKeyDown = (e) => {
-    if (e.key !== "Delete" && e.key !== "Backspace") return;
     const active = document.activeElement;
-    if (
+    const isTyping =
       active &&
       (active.tagName === "INPUT" ||
         active.tagName === "TEXTAREA" ||
-        active.isContentEditable)
-    )
-      return;
-    if (this.#gradient.stops.length <= 2) return;
+        active.isContentEditable);
     if (!this.#track) return;
+
+    if (e.key === "Tab" && !isTyping) {
+      const selected = this.#track.querySelector(
+        "fig-handle[selected]:not(.fig-input-gradient-ghost)",
+      );
+      if (!selected) return;
+      e.preventDefault();
+      const handles = [
+        ...this.#track.querySelectorAll(
+          "fig-handle:not(.fig-input-gradient-ghost)",
+        ),
+      ];
+      const curIdx = handles.indexOf(selected);
+      const next = e.shiftKey
+        ? (curIdx - 1 + handles.length) % handles.length
+        : (curIdx + 1) % handles.length;
+      selected.deselect();
+      handles[next].select();
+      return;
+    }
+
+    if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !isTyping) {
+      const selected = this.#track.querySelector(
+        "fig-handle[selected]:not(.fig-input-gradient-ghost)",
+      );
+      if (!selected) return;
+      const idx = parseInt(selected.dataset.stopIndex, 10);
+      if (isNaN(idx) || !this.#gradient.stops[idx]) return;
+      e.preventDefault();
+      const delta = (e.key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 10 : 1);
+      const stop = this.#gradient.stops[idx];
+      stop.position = Math.max(0, Math.min(100, stop.position + delta));
+      selected.setAttribute("value", `${stop.position}% 50%`);
+      const tip = selected.closest("fig-tooltip");
+      if (tip) {
+        tip.text = `${Math.round(stop.position)}%`;
+        tip.setAttribute("show", "true");
+        tip.showPopup();
+        selected.hideColorTip();
+        clearTimeout(this.#arrowTooltipTimer);
+        this.#arrowTooltipTimer = setTimeout(() => {
+          tip.removeAttribute("show");
+          selected.showColorTip();
+        }, 600);
+      }
+      this.#syncChit();
+      this.#emitInput();
+      this.#emitChange();
+      return;
+    }
+
+    if (e.key !== "Delete" && e.key !== "Backspace") return;
+    if (isTyping) return;
+    if (this.#gradient.stops.length <= 2) return;
     const selected = this.#track.querySelector(
       "fig-handle[selected]:not(.fig-input-gradient-ghost)",
     );
@@ -6072,7 +6124,10 @@ class FigInputGradient extends HTMLElement {
       const tooltip = handle.closest("fig-tooltip");
       if (tooltip) {
         tooltip.text = `${Math.round(position)}%`;
-        if (!tooltip.hasAttribute("show")) tooltip.setAttribute("show", "true");
+        if (!tooltip.hasAttribute("show")) {
+          tooltip.setAttribute("show", "true");
+          handle.hideColorTip();
+        }
       }
       this.#syncChit();
       this.#emitInput();
@@ -6085,6 +6140,7 @@ class FigInputGradient extends HTMLElement {
       handle.style.zIndex = "";
       const tooltip = handle.closest("fig-tooltip");
       if (tooltip) tooltip.removeAttribute("show");
+      handle.showColorTip();
       const idx = parseInt(handle.dataset.stopIndex, 10);
       if (isNaN(idx) || !this.#gradient.stops[idx]) return;
       const px = e.detail?.px ?? 0;
@@ -6104,17 +6160,8 @@ class FigInputGradient extends HTMLElement {
       this.#syncStopIndices();
       this.#syncChit();
       this.#emitChange();
-      const swallow = (evt) => {
-        evt.stopPropagation();
-        evt.preventDefault();
-      };
-      this.#track.addEventListener("click", swallow, {
-        capture: true,
-        once: true,
-      });
       requestAnimationFrame(() => {
         this.#handleDragging = false;
-        this.#track.removeEventListener("click", swallow, { capture: true });
       });
     });
 
@@ -13024,23 +13071,31 @@ class FigHandle extends HTMLElement {
     document.removeEventListener("pointerdown", this.#handleDeselect);
   }
 
-  #handleSelect = (e) => {
+  select() {
     if (this.hasAttribute("disabled")) return;
+    this.setAttribute("selected", "");
+    if (this.getAttribute("type") === "color") this.#showColorTip();
+  }
+
+  deselect() {
+    this.removeAttribute("selected");
+    this.#hideColorTip();
+  }
+
+  #handleSelect = (e) => {
     if (this.#hasControlMode) return;
     if (this.#didDrag) {
       this.#didDrag = false;
       return;
     }
-    this.setAttribute("selected", "");
-    if (this.getAttribute("type") === "color") this.#showColorTip();
+    this.select();
   };
 
   #handleDeselect = (e) => {
     if (this.#hasControlMode) return;
     if (this.contains(e.target)) return;
     if (this.#colorTip && e.target.closest?.("dialog, [popover]")) return;
-    this.removeAttribute("selected");
-    this.#hideColorTip();
+    this.deselect();
   };
 
   attributeChangedCallback(name, _old, value) {
@@ -13144,6 +13199,7 @@ class FigHandle extends HTMLElement {
       if (!this.#didDrag) {
         this.classList.add("dragging");
         this.style.cursor = "grabbing";
+        if (!this.hasAttribute("selected")) this.select();
       }
       this.#didDrag = true;
       clampAndApply(e.clientX, e.clientY, e.shiftKey);
@@ -13189,6 +13245,19 @@ class FigHandle extends HTMLElement {
 
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+  }
+
+  showColorTip() {
+    if (this.#colorTip) {
+      this.#colorTip.style.display = "";
+      return;
+    }
+    this.#showColorTip();
+  }
+
+  hideColorTip() {
+    if (!this.#colorTip) return;
+    this.#colorTip.style.display = "none";
   }
 
   #showColorTip() {

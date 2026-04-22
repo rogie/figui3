@@ -3205,12 +3205,6 @@ fig-input-gradient {
       pointer-events: auto;
       cursor: default;
 
-      &.dragging {
-        fig-color-tip {
-          display: none;
-        }
-      }
-
       &:hover {
         z-index: 5;
       }

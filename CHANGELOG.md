@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.14.1]
+
+### Added
+
+- `fig-handle` `select()` and `deselect()` public API methods for programmatic selection with color tip management.
+- `fig-handle` `showColorTip()` and `hideColorTip()` public API methods to toggle color tip visibility without destroy/recreate.
+- `fig-input-gradient` Tab/Shift+Tab cycles selection through stop handles with wraparound.
+- `fig-input-gradient` Left/Right arrow keys nudge selected stop by 1% (Shift for 10%), with tooltip showing position.
+- `fig-handle` auto-selects on drag start if not already selected.
+
+### Fixed
+
+- `fig-tooltip` `destroy()` now nulls `this.popup` reference, fixing tooltip not reappearing on subsequent show/hide cycles.
+- `fig-input-gradient` track-level click swallower after drag no longer eats clicks on other handles, fixing intermittent selection failures.
+- `fig-input-gradient` hides color tip during drag and arrow key nudge, restoring it when done.
+
 ## [3.14.0]
 
 ### Added
