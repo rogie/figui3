@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- `fig-chit` reworked selection ring: moved from `::before` box-shadow to element-level `box-shadow` for correct stacking.
+- `fig-chit` swapped `::before` / `::after` roles: `::before` now renders the color/gradient fill, `::after` renders the border overlay with `z-index: 1`.
+- `fig-chit` `::before`/`::after` sizing now respects `--padding` for inset thumbnails at all sizes.
+- `fig-input-gradient` scoped chit selector to direct child (`> fig-chit`).
+
+### Fixed
+
+- `fig-chit` selected ring was invisible due to overlapping box-shadow spreads on `::before`.
+- `fig-chit` checkerboard background now targets `::after` to match the reworked pseudo-element roles.
+
 ## [3.14.1]
 
 ### Added
