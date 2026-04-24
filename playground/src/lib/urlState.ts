@@ -14,6 +14,7 @@ import {
 const FIELD_PREFIX = "f.";
 const SPECIAL_PREFIX = "_";
 const REMOVE_SENTINEL = "!";
+const URL_EXCLUDED_ATTRS = new Set(["src"]);
 
 export function diffFromDefault(
   currentMarkup: string,
@@ -31,12 +32,12 @@ export function diffFromDefault(
     const idx = currentTargets.length > 1 ? `${i}.` : "";
 
     for (const [key, val] of Object.entries(cur.controlAttributes)) {
-      if (def.controlAttributes[key] !== val) {
+      if (!URL_EXCLUDED_ATTRS.has(key) && def.controlAttributes[key] !== val) {
         params[`${idx}${key}`] = val;
       }
     }
     for (const key of Object.keys(def.controlAttributes)) {
-      if (!(key in cur.controlAttributes)) {
+      if (!URL_EXCLUDED_ATTRS.has(key) && !(key in cur.controlAttributes)) {
         params[`${idx}${key}`] = REMOVE_SENTINEL;
       }
     }

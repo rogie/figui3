@@ -1175,18 +1175,22 @@ input[type="color"] {
 }
 
 fig-chit {
-  contain: layout paint;
   --size: 1.5rem;
+  --padding: 5px;
+  --width: var(--size);
+  --height: var(--size);
+  --border-radius: var(--radius-medium);
   --chit-background: #d9d9d9;
   --chit-bg-size: cover;
   --chit-bg-position: center;
+  --selected: 0;
   --alpha: 1;
 
   display: inline-grid;
   width: var(--size);
   height: var(--size);
-  border-radius: var(--radius-medium);
-  cursor: default;
+  border-radius: var(--border-radius);
+  background-color: var(--figma-color-bg-secondary);
 
   &::before,
   &::after,
@@ -1195,122 +1199,87 @@ fig-chit {
   }
 
   /* Selection ring */
-  &[selected]:not([selected="false"])::before {
-    content: "";
-    width: var(--size);
-    height: var(--size);
-    z-index: 1;
-    border-radius: var(--radius-medium);
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+  &[selected]:not([selected="false"]) {
+    --selected: 1;
+    background-color: transparent;
   }
 
   &[size="medium"],
   &[size="large"] {
-    input[type="color"] {
-      padding: 0;
-      width: var(--size);
-      height: var(--size);
-      border-radius: var(--radius-medium);
-    }
-
-    input[type="color"]::-webkit-color-swatch-wrapper {
-      border-radius: var(--radius-medium);
-    }
-
-    input[type="color"]::-webkit-color-swatch {
-      border-radius: var(--radius-medium);
-    }
-
-    input[type="color"]::-moz-color-swatch {
-      border-radius: var(--radius-medium);
-    }
-
-    &[selected]:not([selected="false"])::before {
-      box-shadow:
-        inset 0 0 0 1px var(--figma-color-border-selected),
-        inset 0 0 0 3px var(--figma-color-bg);
-    }
-
-    &[data-type="gradient"]::after,
-    &[data-type="image"]::after,
-    &[data-type="gradient"]::before,
-    &[data-type="image"]::before {
-      width: var(--size);
-      height: var(--size);
-      border-radius: var(--radius-medium);
+    --padding: 0px;
+    &[selected]:not([selected="false"]) {
+      --padding: 3px;
     }
   }
 
   &[size="medium"] {
     --size: 1.5rem;
+    --padding: 0px;
   }
 
   &[size="large"] {
     --size: 2rem;
+    --padding: 0px;
   }
 
   &[disabled] {
     pointer-events: none;
   }
 
-  &::before {
+  &::before,
+  &::after {
     content: "";
-    width: 0.875rem;
-    height: 0.875rem;
-    border-radius: 0.125rem;
+    width: var(--width);
+    height: var(--height);
+    border-radius: var(--border-radius);
     grid-area: 1/1;
     place-self: center;
   }
-  &[size="large"]::before {
-    width: var(--size);
-    height: var(--size);
-    border-radius: var(--radius-medium);
+  &::before {
+    box-shadow:
+      inset 0 0 0 calc(var(--selected) * 1px) var(--figma-color-border-selected),
+      inset 0 0 0 calc(var(--selected) * 1px) var(--figma-color-bg);
+  }
+  &::after {
+    content: "";
+    width: calc(var(--width) - var(--padding) * 2);
+    height: calc(var(--height) - var(--padding) * 2);
+    background: var(--chit-background);
+    background-size: var(--chit-bg-size);
+    background-position: var(--chit-bg-position);
+    background-repeat: no-repeat;
+    border-radius: calc(var(--border-radius) - (var(--padding) / 2));
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 50%,
+      rgba(0, 0, 0, var(--alpha)) 50%
+    );
+    grid-area: 1/1;
+    place-self: center;
+  }
+  &[size="medium"]::after,
+  &[size="large"]::after {
+    border-radius: calc(var(--border-radius) - var(--padding));
+  }
+  input[type="color"] {
+    background: none;
+    width: var(--width);
+    height: var(--height);
+    background: none;
+    grid-area: 1/1;
+    place-self: center;
+    box-sizing: border-box;
+    opacity: 0;
   }
 
   /* Gradient/Image types - inset thumbnail with hidden input */
   &[data-type="gradient"],
   &[data-type="image"] {
     background-color: var(--figma-color-bg-secondary);
-
-    &::after {
-      content: "";
-      width: 0.875rem;
-      height: 0.875rem;
-
-      background: var(--chit-background);
-      background-size: var(--chit-bg-size);
-      background-position: var(--chit-bg-position);
-      background-repeat: no-repeat;
-      border-radius: 0.125rem;
-      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-      mask-image: linear-gradient(
-        to right,
-        black 0%,
-        black 50%,
-        rgba(0, 0, 0, var(--alpha)) 50%
-      );
-    }
-
-    &::after,
-    input {
-      grid-area: 1/1;
-      place-self: center;
-    }
-
     input[type="color"] {
-      opacity: 0;
-    }
-
-    input[type="color"]::-webkit-color-swatch-wrapper {
-      background: none;
-    }
-
-    input[type="color"]::-moz-color-swatch {
-      opacity: 0;
-    }
-
-    input[type="color"]::-webkit-color-swatch {
-      opacity: 0;
+      display: none;
     }
   }
 
@@ -1338,8 +1307,11 @@ fig-image {
   > * {
     grid-area: 1/1;
   }
-  fig-chit {
+  fig-chit[size="large"] {
     --size: 100% !important;
+    --width: 100% !important;
+    --height: 100% !important;
+    --padding: 0px;
     --chit-bg-size: var(--fit);
     &[disabled] {
       opacity: 1;
@@ -2900,7 +2872,8 @@ fig-checkbox,
 fig-radio,
 fig-tab,
 fig-tabs,
-fig-segmented-control {
+fig-segmented-control,
+fig-input-palette {
   display: inline-flex;
   gap: var(--spacer-2);
   user-select: none;
@@ -3136,6 +3109,7 @@ fig-input-fill {
       background-color: transparent !important;
       box-shadow: none !important;
       border: 0 !important;
+      --selected: 0;
     }
   }
   fig-chit ~ fig-input-text > input,
@@ -3178,20 +3152,11 @@ fig-input-gradient {
     outline-offset: -1px !important;
   }
   fig-chit {
+    --padding: 0;
+    --width: 100%;
     flex: 1 1 auto;
     width: 100% !important;
     min-width: 0 !important;
-    &::before,
-    &::after {
-      width: 100% !important;
-      place-self: stretch;
-    }
-    &[data-type="gradient"]::after {
-      width: calc(100% - 0.625rem);
-      height: 0.875rem;
-      justify-self: center;
-      align-self: center;
-    }
   }
 
   .fig-input-gradient-track {
@@ -3208,6 +3173,67 @@ fig-input-gradient {
       &:hover {
         z-index: 5;
       }
+    }
+  }
+}
+
+fig-input-palette {
+  gap: 0;
+  align-items: center;
+  flex-wrap: nowrap;
+  border-radius: var(--radius-medium);
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  background-color: var(--figma-color-bg-secondary);
+
+  &:not([expanded]),
+  &[expanded="false"] {
+    fig-chit {
+      --padding: 0px;
+      --border-radius: 0px;
+      --width: 100%;
+      flex: 1;
+      min-width: 0;
+      width: 100% !important;
+      height: var(--size);
+      border-radius: 0 !important;
+      input,
+      &::before,
+      &::after {
+        padding: 0 !important;
+        border-radius: 0 !important;
+      }
+    }
+  }
+
+  .palette-add-btn {
+    --button-size: 1.5rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  &[expanded]:not([expanded="false"]) {
+    flex-direction: column;
+    overflow: visible;
+    border-radius: 0;
+    gap: var(--spacer-2);
+    background-color: transparent;
+
+    > fig-input-color {
+      display: flex;
+    }
+
+    fig-chit {
+      --border-radius: var(--radius-medium);
+      width: auto !important;
+      height: var(--size);
+      border-radius: var(--radius-medium) !important;
+    }
+
+    .palette-add-btn {
+      border-radius: var(--radius-medium);
     }
   }
 }
@@ -4849,10 +4875,6 @@ fig-color-tip {
     }
   }
 
-  &[selected]:not([selected="false"]) {
-    outline: var(--tip-selection-width) solid var(--figma-color-border-selected);
-  }
-
   &[selected]:not([selected="false"]):before {
     content: "";
     background: var(--figma-color-border-selected);
@@ -4860,7 +4882,7 @@ fig-color-tip {
     width: 6px;
     height: 3px;
     position: absolute;
-    top: calc(100% + 1px);
+    top: 100%;
     left: var(--beak-offset, 50%);
     z-index: 1;
     pointer-events: none;
@@ -4875,9 +4897,9 @@ fig-color-tip {
     width: 6px;
     height: 3px;
     position: absolute;
-    top: 100%;
+    top: calc(100% - 1px);
     left: var(--beak-offset, 50%);
-    z-index: 2;
+    z-index: 3;
     transform: translate(-50%);
   }
 

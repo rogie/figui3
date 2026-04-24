@@ -4521,7 +4521,8 @@ class FigInputColor extends HTMLElement {
     const fpAttrs = this.#buildFillPickerAttrs();
 
     let html = ``;
-    if (this.getAttribute("text")) {
+    const showText = this.getAttribute("text") === "true";
+    if (showText) {
       let label = `<fig-input-text 
         type="text"
         placeholder="000000"
@@ -4758,7 +4759,7 @@ class FigInputColor extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "style", "mode", "picker", "experimental", "alpha"];
+    return ["value", "style", "mode", "picker", "experimental", "alpha", "text"];
   }
 
   get mode() {
@@ -4809,6 +4810,7 @@ class FigInputColor extends HTMLElement {
         // Picker type change requires re-render
         break;
       case "alpha":
+      case "text":
         if (this.isConnected) this.#buildUI();
         break;
     }
@@ -5682,6 +5684,291 @@ class FigInputFill extends HTMLElement {
   }
 }
 customElements.define("fig-input-fill", FigInputFill);
+
+/* Input Palette */
+/**
+ * A palette of solid colors, each rendered as a fig-input-color swatch.
+ * Manages an internal array of colors with add support.
+ * @attr {string} value - JSON array of hex strings or {color,alpha} objects, or comma-separated hex
+ * @attr {boolean} disabled - Whether the palette is disabled
+ * @attr {number} min - Minimum number of colors (default: 2)
+ * @attr {number} max - Maximum number of colors (default: 8); add button hidden at max
+ * @fires input - During color editing (detail: full color array)
+ * @fires change - On committed color edits or add (detail: full color array)
+ */
+class FigInputPalette extends HTMLElement {
+  #colors = [];
+  #pickers = [];
+  #renderRAF = null;
+
+  static get observedAttributes() {
+    return ["value", "disabled", "min", "max", "expanded"];
+  }
+
+  get #expanded() {
+    return this.hasAttribute("expanded") && this.getAttribute("expanded") !== "false";
+  }
+
+  get #min() {
+    const v = parseInt(this.getAttribute("min"));
+    return isNaN(v) ? 2 : v;
+  }
+
+  get #max() {
+    const v = parseInt(this.getAttribute("max"));
+    return isNaN(v) ? 8 : v;
+  }
+
+  connectedCallback() {
+    if (this.#renderRAF) cancelAnimationFrame(this.#renderRAF);
+    this.#renderRAF = requestAnimationFrame(() => {
+      this.#renderRAF = null;
+      this.#parseValue();
+      this.#render();
+    });
+  }
+
+  disconnectedCallback() {
+    if (this.#renderRAF) {
+      cancelAnimationFrame(this.#renderRAF);
+      this.#renderRAF = null;
+    }
+    this.#pickers = [];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    switch (name) {
+      case "value":
+        this.#parseValue();
+        this.#syncPickers();
+        break;
+      case "disabled":
+        this.#syncDisabled();
+        break;
+      case "min":
+      case "max":
+      case "expanded":
+        this.#render();
+        break;
+    }
+  }
+
+  #parseValue() {
+    const raw = this.getAttribute("value");
+    if (!raw) {
+      this.#colors = [];
+      return;
+    }
+
+    const trimmed = raw.trim();
+
+    // Try JSON first
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        this.#colors = parsed.map((entry) => {
+          if (typeof entry === "string") {
+            return { color: entry.slice(0, 7), alpha: entry.length > 7 ? parseInt(entry.slice(7, 9), 16) / 255 : 1 };
+          }
+          if (entry && typeof entry === "object") {
+            return {
+              color: entry.color || "#D9D9D9",
+              alpha: entry.alpha !== undefined ? entry.alpha : (entry.opacity !== undefined ? entry.opacity / 100 : 1),
+            };
+          }
+          return { color: "#D9D9D9", alpha: 1 };
+        });
+        return;
+      }
+    } catch (e) {
+      // Not JSON — try comma-separated hex
+    }
+
+    // Comma-separated hex
+    if (trimmed.includes(",")) {
+      this.#colors = trimmed.split(",").map((s) => {
+        const hex = s.trim();
+        return {
+          color: hex.slice(0, 7),
+          alpha: hex.length > 7 ? parseInt(hex.slice(7, 9), 16) / 255 : 1,
+        };
+      });
+      return;
+    }
+
+    // Single hex
+    if (trimmed.startsWith("#")) {
+      this.#colors = [{
+        color: trimmed.slice(0, 7),
+        alpha: trimmed.length > 7 ? parseInt(trimmed.slice(7, 9), 16) / 255 : 1,
+      }];
+      return;
+    }
+
+    this.#colors = [];
+  }
+
+  get value() {
+    return this.#colors.map((c) => ({ ...c }));
+  }
+
+  set value(val) {
+    if (typeof val === "string") {
+      this.setAttribute("value", val);
+    } else {
+      this.setAttribute("value", JSON.stringify(val));
+    }
+  }
+
+  #render() {
+    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+
+    this.innerHTML = "";
+    this.#pickers = [];
+
+    this.#colors.forEach((entry, i) => {
+      this.appendChild(this.#createPicker(entry, i, disabled));
+    });
+
+    this.#createAddButton(disabled);
+  }
+
+  #createPicker(entry, index, disabled) {
+    const hexAlpha = entry.alpha < 1
+      ? entry.color + Math.round(entry.alpha * 255).toString(16).padStart(2, "0")
+      : entry.color;
+    const expanded = this.#expanded;
+    const ic = document.createElement("fig-input-color");
+    ic.setAttribute("value", hexAlpha);
+    ic.setAttribute("text", expanded ? "true" : "false");
+    ic.setAttribute("picker", "figma");
+    ic.setAttribute("alpha", "true");
+    ic.setAttribute("picker-anchor", "self");
+    if (expanded) ic.setAttribute("full", "");
+    if (disabled) ic.setAttribute("disabled", "");
+
+    const updateFromPicker = (e) => {
+      e.stopPropagation();
+      const el = e.currentTarget;
+      this.#colors[index] = {
+        color: el.hexOpaque || this.#colors[index].color,
+        alpha: el.rgba ? el.rgba.a : this.#colors[index].alpha,
+      };
+    };
+
+    ic.addEventListener("input", (e) => {
+      updateFromPicker(e);
+      this.#emitInput();
+    });
+
+    ic.addEventListener("change", (e) => {
+      updateFromPicker(e);
+      this.#emitChange();
+    });
+
+    this.#pickers.push(ic);
+    return ic;
+  }
+
+  #createAddButton(disabled) {
+    const expanded = this.#expanded;
+    const atMax = this.#colors.length >= this.#max;
+    const addBtn = document.createElement("fig-button");
+    addBtn.setAttribute("variant", "secondary");
+    if (expanded) {
+      addBtn.setAttribute("full", "");
+    } else {
+      addBtn.setAttribute("icon", "true");
+    }
+    addBtn.setAttribute("aria-label", "Add color");
+    addBtn.className = "palette-add-btn";
+    if (disabled || atMax) addBtn.setAttribute("disabled", "");
+    addBtn.innerHTML = expanded
+      ? `<span class="fig-mask-icon" style="--icon: var(--icon-add)"></span> Add color`
+      : `<span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>`;
+    addBtn.addEventListener("click", () => {
+      if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+      if (this.#colors.length >= this.#max) return;
+      this.#addColor({ color: "#D9D9D9", alpha: 1 });
+    });
+    if (expanded) {
+      this.appendChild(addBtn);
+    } else {
+      const tooltip = document.createElement("fig-tooltip");
+      tooltip.setAttribute("text", "Add color");
+      tooltip.appendChild(addBtn);
+      this.appendChild(tooltip);
+    }
+  }
+
+  #addColor(entry) {
+    this.#colors.push(entry);
+    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    const ic = this.#createPicker(entry, this.#colors.length - 1, disabled);
+    const addBtn = this.querySelector(".palette-add-btn");
+    const addContainer = addBtn?.closest("fig-tooltip") || addBtn;
+    this.insertBefore(ic, addContainer);
+
+    if (this.#colors.length >= this.#max && addBtn) {
+      addBtn.setAttribute("disabled", "");
+    }
+    this.#emitChange();
+  }
+
+  #updateChit(index) {
+    const ic = this.#pickers[index];
+    if (!ic) return;
+    const entry = this.#colors[index];
+    const hexAlpha = entry.alpha < 1
+      ? entry.color + Math.round(entry.alpha * 255).toString(16).padStart(2, "0")
+      : entry.color;
+    ic.setAttribute("value", hexAlpha);
+  }
+
+  #syncPickers() {
+    if (this.#pickers.length !== this.#colors.length) {
+      this.#render();
+      return;
+    }
+    this.#colors.forEach((_, i) => {
+      this.#updateChit(i);
+    });
+  }
+
+  #syncDisabled() {
+    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    this.#pickers.forEach((fp) => {
+      if (disabled) fp.setAttribute("disabled", "");
+      else fp.removeAttribute("disabled");
+    });
+    const addBtn = this.querySelector(".palette-add-btn");
+    if (addBtn) {
+      if (disabled) addBtn.setAttribute("disabled", "");
+      else addBtn.removeAttribute("disabled");
+    }
+  }
+
+  #emitInput() {
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        detail: this.value,
+      }),
+    );
+  }
+
+  #emitChange() {
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        detail: this.value,
+      }),
+    );
+  }
+}
+customElements.define("fig-input-palette", FigInputPalette);
 
 /* Input Gradient */
 /**
@@ -10075,6 +10362,7 @@ class FigFillPicker extends HTMLElement {
       this.#teardownColorAreaEvents();
       this.#teardownColorAreaEvents = null;
     }
+    if (this.#chit) this.#chit.removeAttribute("selected");
     if (this.#dialog) {
       this.#dialog.close();
       this.#dialog.remove();
@@ -10252,6 +10540,8 @@ class FigFillPicker extends HTMLElement {
     const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
     if (gamutEl) gamutEl.value = this.#gamut;
 
+    if (this.#chit) this.#chit.setAttribute("selected", "true");
+
     this.#dialog.open = true;
 
     requestAnimationFrame(() => {
@@ -10406,9 +10696,17 @@ class FigFillPicker extends HTMLElement {
         this.#dialog.open = false;
       });
 
-    this.#dialog.addEventListener("close", () => {
+    const onDialogClose = () => {
+      if (this.#chit) this.#chit.removeAttribute("selected");
       this.#emitChange();
+    };
+    this.#dialog.addEventListener("close", onDialogClose);
+
+    const observer = new MutationObserver(() => {
+      const isOpen = this.#dialog.hasAttribute("open") && this.#dialog.getAttribute("open") !== "false";
+      if (!isOpen) onDialogClose();
     });
+    observer.observe(this.#dialog, { attributes: true, attributeFilter: ["open"] });
 
     // Initialize built-in tabs (skip any overridden by custom slots)
     const builtinInits = {
@@ -13059,6 +13357,7 @@ class FigHandle extends HTMLElement {
     this.#syncDrag();
     this.addEventListener("click", this.#handleSelect);
     document.addEventListener("pointerdown", this.#handleDeselect);
+    document.addEventListener("keydown", this.#handleKeyDown);
     const initial = this.getAttribute("value");
     if (initial) this.#applyValue(initial);
     if (this.#hasControlMode && !this.#isGhost) this.#showColorTip();
@@ -13069,6 +13368,7 @@ class FigHandle extends HTMLElement {
     this.#hideColorTip();
     this.removeEventListener("click", this.#handleSelect);
     document.removeEventListener("pointerdown", this.#handleDeselect);
+    document.removeEventListener("keydown", this.#handleKeyDown);
   }
 
   select() {
@@ -13096,6 +13396,15 @@ class FigHandle extends HTMLElement {
     if (this.contains(e.target)) return;
     if (this.#colorTip && e.target.closest?.("dialog, [popover]")) return;
     this.deselect();
+  };
+
+  #handleKeyDown = (e) => {
+    if (e.key !== "Enter") return;
+    if (!this.hasAttribute("selected")) return;
+    if (this.getAttribute("type") !== "color") return;
+    if (this.#colorTip) return;
+    e.preventDefault();
+    this.#showColorTip();
   };
 
   attributeChangedCallback(name, _old, value) {

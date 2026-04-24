@@ -257,6 +257,9 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
   },
+  "fig-input-palette": {
+    expanded: { label: "Expanded", type: "boolean", boolMode: "presence" },
+  },
   "fig-input-gradient": {},
   "fig-input-color": {
     picker: {
@@ -265,6 +268,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["native", "figma"],
     },
     alpha: { label: "Alpha", type: "boolean", boolMode: "string" },
+    text: { label: "Text", type: "boolean", boolMode: "string" },
   },
   "fig-dropdown": {
     experimental: {

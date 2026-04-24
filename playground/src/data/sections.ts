@@ -524,6 +524,94 @@ export const propkitSections: Section[] = [
       },
     ],
   },
+  {
+    id: "palette",
+    name: "Palette",
+    description:
+      "A color palette field for managing a list of solid colors.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Palette</label>
+    <fig-input-palette value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "with-alpha",
+        name: "With Alpha",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Palette</label>
+    <fig-input-palette value='[{"color":"#0D99FF","alpha":1},{"color":"#0D99FF","alpha":0.6},{"color":"#0D99FF","alpha":0.3},{"color":"#0D99FF","alpha":0.1}]' full></fig-input-palette>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "skeleton",
+    name: "Skeleton",
+    description:
+      "A skeleton loading placeholder that wraps property fields with a shimmer effect.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-skeleton duration="1.5s">
+    <fig-field direction="horizontal">
+      <label>Name</label>
+      <fig-input-text value="Loading..." readonly></fig-input-text>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Description</label>
+      <fig-input-text multiline placeholder="Enter description…" full></fig-input-text>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Color</label>
+      <fig-input-color value="#0D99FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Email</label>
+      <fig-input-text value="loading@example.com" readonly></fig-input-text>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Visible</label>
+      <fig-switch checked="true"></fig-switch>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Role</label>
+      <fig-dropdown value="designer">
+        <option value="designer">Designer</option>
+        <option value="developer">Developer</option>
+        <option value="manager">Manager</option>
+      </fig-dropdown>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Align</label>
+      <fig-segmented-control sizing="equal" full>
+        <fig-segment value="left" selected>Left</fig-segment>
+        <fig-segment value="center">Center</fig-segment>
+        <fig-segment value="right">Right</fig-segment>
+      </fig-segmented-control>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Opacity</label>
+      <fig-slider value="75" min="0" max="100" text="false"></fig-slider>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Position</label>
+      <fig-joystick value="50% 50%" axis-labels="X Y"></fig-joystick>
+    </fig-field>
+  </fig-skeleton>
+</div>`,
+      },
+    ],
+  },
 ];
 
 export const sections = propkitSections;

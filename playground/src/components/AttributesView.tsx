@@ -1361,6 +1361,41 @@ export default function AttributesView({
                           </fig-field>
                         );
                       })()}
+                    {target.controlTag === "fig-chit" &&
+                      (() => {
+                        const bg = (target.controlAttributes.background ?? "").toLowerCase();
+                        const currentFill = bg.includes("gradient") ? "gradient" : "solid";
+                        return (
+                          <fig-field
+                            direction="horizontal"
+                            columns="thirds"
+                            key={`control-chit-fill-${target.fieldIndex}`}
+                          >
+                            <label>Fill</label>
+                            <fig-segmented-control full>
+                              {(["solid", "gradient"] as const).map((opt) => (
+                                <fig-segment
+                                  key={opt}
+                                  value={opt}
+                                  selected={opt === currentFill ? "true" : undefined}
+                                  onClick={() =>
+                                    applyChange(
+                                      target.fieldIndex,
+                                      "control",
+                                      "background",
+                                      opt === "gradient"
+                                        ? "linear-gradient(135deg, #667eea, #764ba2)"
+                                        : "#0D99FF",
+                                    )
+                                  }
+                                >
+                                  {sentenceCase(opt)}
+                                </fig-segment>
+                              ))}
+                            </fig-segmented-control>
+                          </fig-field>
+                        );
+                      })()}
                     {visibleControlEntries.flatMap((entry, entryIndex) => {
                       const field = (
                         <fig-field
