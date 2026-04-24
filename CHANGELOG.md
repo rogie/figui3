@@ -4,17 +4,38 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.15.0]
+
+### Added
+
+- `fig-input-color` `text` attribute is now observed and triggers UI rebuild, enabling runtime toggle of hex input visibility.
+- `fig-input-palette` `expanded` attribute for vertical layout with text and alpha inputs per color.
+- `fig-input-palette` incremental add — clicking "Add color" appends without re-rendering existing pickers.
+- `fig-input-palette` wraps color pickers in a `.palette-colors` div, separating them from the add button.
+- `/propkit` Expanded toggle for palette attributes panel.
+- `/propkit` Minimal palette example with two colors.
+- `/propkit` Skeleton example (moved from `/figui3`).
+- `/figui3` Fill segmented control (Solid/Gradient) for chit example.
+- `/figui3` Text toggle for `fig-input-color` attributes panel.
+- `fig-field[direction="horizontal"]:has(> fig-input-palette)` padding rule for proper field alignment.
+
 ### Changed
 
+- `fig-input-palette` uses `fig-input-color` instead of `fig-fill-picker` for each color swatch.
+- `fig-input-palette` add button is now a ghost icon button with tooltip in all states.
+- `fig-input-palette` layout uses CSS grid (`inputs` + `button` areas) instead of inline-flex.
 - `fig-chit` reworked selection ring: moved from `::before` box-shadow to element-level `box-shadow` for correct stacking.
 - `fig-chit` swapped `::before` / `::after` roles: `::before` now renders the color/gradient fill, `::after` renders the border overlay with `z-index: 1`.
 - `fig-chit` `::before`/`::after` sizing now respects `--padding` for inset thumbnails at all sizes.
 - `fig-input-gradient` scoped chit selector to direct child (`> fig-chit`).
+- `/propkit` Palette attributes panel header renamed from "Input-palette" to "Palette".
+- Exclude `src` attribute from playground URL parameter serialization.
 
 ### Fixed
 
 - `fig-chit` selected ring was invisible due to overlapping box-shadow spreads on `::before`.
 - `fig-chit` checkerboard background now targets `::after` to match the reworked pseudo-element roles.
+- `fig-input-color` `text="false"` now properly hides hex input (strict `=== "true"` check).
 
 ## [3.14.1]
 

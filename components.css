@@ -3179,64 +3179,80 @@ fig-input-gradient {
 }
 
 fig-input-palette {
-  gap: 0;
-  align-items: center;
-  flex-wrap: nowrap;
-  border-radius: var(--radius-medium);
-  overflow: hidden;
+  display: inline-grid !important;
+  grid-template-columns: 1fr 24px;
+  grid-template-areas: "inputs button";
+  gap: var(--spacer-1);
   width: 100%;
-  min-width: 0;
-  flex: 1;
-  background-color: var(--figma-color-bg-secondary);
+
+  .palette-colors {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0;
+    border-radius: var(--radius-medium);
+    overflow: hidden;
+    grid-area: inputs;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .palette-add-btn {
+    grid-area: button;
+  }
 
   &:not([expanded]),
   &[expanded="false"] {
-    fig-chit {
-      --padding: 0px;
-      --border-radius: 0px;
-      --width: 100%;
-      flex: 1;
-      min-width: 0;
-      width: 100% !important;
-      height: var(--size);
-      border-radius: 0 !important;
-      input,
-      &::before,
-      &::after {
-        padding: 0 !important;
+    .palette-colors {
+      display: flex;
+      background-color: var(--figma-color-bg-secondary);
+
+      > fig-input-color {
+        display: contents;
+      }
+
+      fig-chit {
+        --padding: 0px;
+        --border-radius: 0px;
+        --width: 100%;
+        flex: 1;
+        min-width: 0;
+        width: 100% !important;
+        height: var(--size);
         border-radius: 0 !important;
+        input,
+        &::before,
+        &::after {
+          padding: 0 !important;
+          border-radius: 0 !important;
+        }
       }
     }
   }
 
-  .palette-add-btn {
-    --button-size: 1.5rem;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-  }
-
   &[expanded]:not([expanded="false"]) {
-    flex-direction: column;
-    overflow: visible;
-    border-radius: 0;
-    gap: var(--spacer-2);
-    background-color: transparent;
+    .palette-colors {
+      flex-direction: column;
+      overflow: visible;
+      border-radius: 0;
+      gap: var(--spacer-2);
+      background-color: transparent;
 
-    > fig-input-color {
-      display: flex;
-    }
+      > fig-input-color {
+        min-width: 0;
+      }
 
-    fig-chit {
-      --border-radius: var(--radius-medium);
-      width: auto !important;
-      height: var(--size);
-      border-radius: var(--radius-medium) !important;
-    }
-
-    .palette-add-btn {
-      border-radius: var(--radius-medium);
+      fig-chit {
+        --border-radius: var(--radius-medium);
+        width: auto !important;
+        height: var(--size);
+        border-radius: var(--radius-medium) !important;
+      }
     }
   }
+}
+
+fig-field[direction="horizontal"]:has(> fig-input-palette) {
+  padding-right: var(--spacer-2);
 }
 
 fig-slider {

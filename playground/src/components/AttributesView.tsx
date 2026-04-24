@@ -176,6 +176,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-tabs": "Tabs",
     "fig-chooser": "Chooser",
     "fig-handle": "Handle",
+    "fig-input-palette": "Palette",
   };
   return (
     titles[controlTag] ?? sentenceCase(toTitle(controlTag.replace(/^fig-/, "")))

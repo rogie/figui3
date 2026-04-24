@@ -541,6 +541,16 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
+        id: "minimal",
+        name: "Minimal",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Palette</label>
+    <fig-input-palette value='["#0D99FF","#FF7262"]' full></fig-input-palette>
+  </fig-field>
+</div>`,
+      },
+      {
         id: "with-alpha",
         name: "With Alpha",
         markup: `<div class="prop-panel">

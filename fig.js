@@ -5828,9 +5828,12 @@ class FigInputPalette extends HTMLElement {
     this.innerHTML = "";
     this.#pickers = [];
 
+    const wrap = document.createElement("div");
+    wrap.className = "palette-colors";
     this.#colors.forEach((entry, i) => {
-      this.appendChild(this.#createPicker(entry, i, disabled));
+      wrap.appendChild(this.#createPicker(entry, i, disabled));
     });
+    this.appendChild(wrap);
 
     this.#createAddButton(disabled);
   }
@@ -5873,46 +5876,39 @@ class FigInputPalette extends HTMLElement {
   }
 
   #createAddButton(disabled) {
-    const expanded = this.#expanded;
     const atMax = this.#colors.length >= this.#max;
     const addBtn = document.createElement("fig-button");
-    addBtn.setAttribute("variant", "secondary");
-    if (expanded) {
-      addBtn.setAttribute("full", "");
-    } else {
-      addBtn.setAttribute("icon", "true");
-    }
+    addBtn.setAttribute("variant", "ghost");
+    addBtn.setAttribute("icon", "true");
     addBtn.setAttribute("aria-label", "Add color");
     addBtn.className = "palette-add-btn";
     if (disabled || atMax) addBtn.setAttribute("disabled", "");
-    addBtn.innerHTML = expanded
-      ? `<span class="fig-mask-icon" style="--icon: var(--icon-add)"></span> Add color`
-      : `<span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>`;
+    addBtn.innerHTML = `<span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>`;
     addBtn.addEventListener("click", () => {
       if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
       if (this.#colors.length >= this.#max) return;
       this.#addColor({ color: "#D9D9D9", alpha: 1 });
     });
-    if (expanded) {
-      this.appendChild(addBtn);
-    } else {
-      const tooltip = document.createElement("fig-tooltip");
-      tooltip.setAttribute("text", "Add color");
-      tooltip.appendChild(addBtn);
-      this.appendChild(tooltip);
-    }
+    const tooltip = document.createElement("fig-tooltip");
+    tooltip.setAttribute("text", "Add color");
+    tooltip.appendChild(addBtn);
+    this.appendChild(tooltip);
   }
 
   #addColor(entry) {
     this.#colors.push(entry);
     const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
     const ic = this.#createPicker(entry, this.#colors.length - 1, disabled);
-    const addBtn = this.querySelector(".palette-add-btn");
-    const addContainer = addBtn?.closest("fig-tooltip") || addBtn;
-    this.insertBefore(ic, addContainer);
+    const wrap = this.querySelector(".palette-colors");
+    if (wrap) {
+      wrap.appendChild(ic);
+    } else {
+      this.appendChild(ic);
+    }
 
-    if (this.#colors.length >= this.#max && addBtn) {
-      addBtn.setAttribute("disabled", "");
+    if (this.#colors.length >= this.#max) {
+      const addBtn = this.querySelector(".palette-add-btn");
+      if (addBtn) addBtn.setAttribute("disabled", "");
     }
     this.#emitChange();
   }
