@@ -1,18 +1,22 @@
 {
   "name": "@rogieking/figui3",
-  "version": "3.16.0",
+  "version": "3.17.0",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "MIT",
   "type": "module",
-  "main": "fig.js",
-  "module": "fig.js",
+  "main": "dist/fig.js",
+  "module": "dist/fig.js",
   "exports": {
-    ".": "./fig.js",
-    "./fig.js": "./fig.js",
-    "./fig.css": "./fig.css",
-    "./base.css": "./base.css",
-    "./components.css": "./components.css"
+    ".": "./dist/fig.js",
+    "./fig.js": "./dist/fig.js",
+    "./fig.css": "./dist/fig.css",
+    "./base.css": "./dist/base.css",
+    "./components.css": "./dist/components.css",
+    "./src/fig.js": "./fig.js",
+    "./src/fig.css": "./fig.css",
+    "./src/base.css": "./base.css",
+    "./src/components.css": "./components.css"
   },
   "files": [
     "fig.js",
@@ -30,7 +34,8 @@
   ],
   "scripts": {
     "dev": "bun --hot server.ts",
-    "build": "bun build fig.js --minify --outdir dist",
+    "build": "bun build fig.js --minify --outdir dist && npm run build:css",
+    "build:css": "lightningcss --minify --nesting --bundle fig.css -o dist/fig.css && lightningcss --minify --nesting --bundle components.css -o dist/components.css && lightningcss --minify --nesting base.css -o dist/base.css",
     "dev:playground": "cd playground && npm run dev",
     "build:playground": "cd playground && npm run build"
   },

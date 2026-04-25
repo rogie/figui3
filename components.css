@@ -741,7 +741,6 @@ fig-button {
   appearance: none;
   border: 0;
   min-width: 0;
-  color: var(--figma-color-text-onbrand);
   outline: 0;
   border-radius: var(--radius-medium);
   background-color: var(--figma-color-bg-brand);
@@ -753,9 +752,6 @@ fig-button {
 
   &:hover {
     background-color: var(--figma-color-bg-brand-hover);
-    &:active {
-      background-color: var(--figma-color-bg-brand-pressed);
-    }
     &:active {
       background-color: var(--figma-color-bg-brand-pressed);
       color: var(--figma-color-text-onbrand-secondary);
@@ -1020,7 +1016,6 @@ fig-tab,
     &::after {
       content: attr(label);
       color: var(--figma-color-text-secondary);
-      content: attr(label);
       height: 0 !important;
       width: auto !important;
       visibility: hidden;
@@ -1159,7 +1154,6 @@ input[type="color"] {
   &::-moz-color-swatch {
     color-scheme: inherit;
     border-radius: 0.125rem;
-    color-scheme: inherit;
     padding: 0;
     border: 0;
     appearance: none;
@@ -1169,7 +1163,6 @@ input[type="color"] {
       black 50%,
       rgba(0, 0, 0, var(--alpha)) 50%
     );
-    border-radius: 0.125rem;
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   }
 }
@@ -1231,11 +1224,9 @@ fig-chit {
   &::before,
   &::after {
     content: "";
-    width: var(--width);
-    height: var(--height);
-    border-radius: calc(var(--border-radius) - (var(--padding) / 2));
     width: calc(var(--width) - var(--padding) * 2);
     height: calc(var(--height) - var(--padding) * 2);
+    border-radius: calc(var(--border-radius) - (var(--padding) / 2));
     grid-area: 1/1;
     place-self: center;
     pointer-events: none;
@@ -1268,7 +1259,6 @@ fig-chit {
     background: none;
     width: var(--width);
     height: var(--height);
-    background: none;
     grid-area: 1/1;
     place-self: center;
     box-sizing: border-box;
@@ -1473,7 +1463,6 @@ fig-3d-rotate {
     rgba(0, 0, 0, 0.1),
     rgba(255, 255, 255, 0.1)
   );
-  --border-end-color: transparent;
   --border-end-color: transparent;
   --gradient-end-color: transparent;
   --figma-3d-rotate-handle-size: 6px;
@@ -1886,7 +1875,6 @@ input[type="checkbox"].switch {
   height: 1rem;
   left: 0;
   top: 0;
-  margin: 0;
   background: transparent;
   appearance: none;
   -moz-appearance: none;
@@ -3255,8 +3243,6 @@ fig-input-palette {
     }
   }
 
-  &[expanded]:not([expanded="false"]) {
-  }
 }
 
 fig-field[direction="horizontal"]:has(> fig-input-palette) {
@@ -3297,7 +3283,6 @@ fig-field,
   }
 
   & > [full] {
-    flex: 1;
     flex: 1 1 auto;
   }
 
@@ -3558,7 +3543,6 @@ fig-segmented-control {
   height: 1.5rem;
   padding: 1px;
   gap: 0;
-  display: inline-flex;
   align-items: stretch;
   position: relative;
   overflow: hidden;
@@ -3718,8 +3702,6 @@ fig-joystick {
     place-items: center;
     flex-shrink: 0;
     flex-grow: 0;
-    align-items: center;
-    justify-content: center;
     position: relative;
     &:focus {
       outline: 0;
@@ -3823,7 +3805,6 @@ fig-joystick {
     &:before {
       content: "";
       position: absolute;
-      height: 0;
       border-left: 1px solid var(--figma-color-border);
       height: calc(100% - 2px);
       top: 1px;
@@ -3833,7 +3814,6 @@ fig-joystick {
     &:after {
       content: "";
       position: absolute;
-      height: 0;
       border-top: 1px solid var(--figma-color-border);
       width: calc(100% - 2px);
       top: calc(50% - 0.5px);

@@ -2,7 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [3.17.0]
+
+### Added
+
+- `fig-input-gradient` drag-to-add — pointerdown on empty track space creates a new stop and immediately begins dragging it.
+- CSS minification via lightningcss — `npm run build` now produces minified CSS alongside minified JS in `dist/`.
+- `npm run build:css` script for standalone CSS minification.
+- Unminified source exports via `@rogieking/figui3/src/*` for debugging.
+- README restructured with component index table, domain-grouped sections, per-component event documentation, and playground links.
+- 10 previously undocumented components added to README: field-slider, input-palette, easing-curve, 3d-rotate, origin-grid, skeleton, color-tip, choice, chooser, handle.
+
+### Changed
+
+- Default package exports (`main`, `module`, `exports`) now point to minified `dist/` files instead of unminified source.
+- CDN URLs updated to reference `dist/` paths.
+- `figGetHighestZIndex` replaced with a monotonic counter — eliminates O(n) full DOM scan on every tooltip/popup open.
+- Shared reusable canvas for color normalization — `FigInputGradient`, `FigChit`, and `FigColorTip` no longer create throwaway canvases.
+- Gradient CSS support test results are now cached across `FigFillPicker` instances.
+- `FigHandle` drag path reduces redundant `getBoundingClientRect` calls by reusing the rect from clamp computation.
+- Deduplicated `#syncAspectRatioVar`, `#syncPerspectiveVar`, and `#syncCSSVar` into shared `figSyncCssVar` helper across `FigEasingCurve`, `Fig3DRotate`, `FigOriginGrid`, and `FigInputJoystick`.
+
+### Fixed
+
+- Event listener leaks — `FigTooltip`, `FigTab`, `FigTabs`, `FigSegment`, `FigDialog`, `FigToast`, `FigDropdown`, and `FigInputAngle` now store bound listener references and correctly remove them in `disconnectedCallback`.
+- `FigDropdown` was missing `disconnectedCallback` entirely — added cleanup for slotchange, input, and change listeners.
+- `FigFillPicker` resource leaks — MutationObservers (`#dialogOpenObserver`, `#webcamTabObserver`) are now disconnected, webcam MediaStream tracks are stopped, and video blob URLs are revoked on disconnect.
+- `FigInputGradient` resource leaks — `#colorObserver` is disconnected, tooltip timer is cleared, and track event listeners are removed on disconnect.
+- Duplicate CSS declarations removed: button `color`, tab `content`, color swatch `color-scheme`/`border-radius`, chit pseudo-element sizing, segmented control `display`, switch `margin`, field `flex`, joystick crosshair `height`, 3D rotate `--border-end-color`.
+- Merged duplicate `&:active` blocks inside button `&:hover`.
+- Removed empty `&[expanded]` ruleset.
 
 ## [3.16.0]
 

@@ -75,24 +75,31 @@ function figUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-/**
- * Gets the highest z-index currently in use on the page
- * @returns {number} The highest z-index found, minimum of 1000
- */
+let _figZCounter = 10000;
 function figGetHighestZIndex() {
-  let highest = 1000; // Baseline minimum
-
-  // Check all elements with inline z-index or computed z-index
-  const elements = document.querySelectorAll("*");
-  for (const el of elements) {
-    const zIndex = parseInt(getComputedStyle(el).zIndex, 10);
-    if (!isNaN(zIndex) && zIndex > highest) {
-      highest = zIndex;
-    }
-  }
-
-  return highest;
+  return _figZCounter++;
 }
+
+function figSyncCssVar(el, prop, value) {
+  if (value && value.trim()) {
+    el.style.setProperty(prop, value.trim());
+  } else {
+    el.style.removeProperty(prop);
+  }
+}
+
+let _figSharedCanvas = null;
+let _figSharedCtx = null;
+function figGetSharedCanvas(width = 1, height = 1) {
+  if (!_figSharedCanvas) {
+    _figSharedCanvas = document.createElement("canvas");
+    _figSharedCtx = _figSharedCanvas.getContext("2d");
+  }
+  if (_figSharedCanvas.width !== width) _figSharedCanvas.width = width;
+  if (_figSharedCanvas.height !== height) _figSharedCanvas.height = height;
+  return { canvas: _figSharedCanvas, ctx: _figSharedCtx };
+}
+
 /**
  * Checks if the browser supports the native popover API
  * @returns {boolean} True if popover is supported
@@ -253,6 +260,7 @@ class FigDropdown extends HTMLElement {
   set label(value) {
     this.#label = value;
   }
+  #boundSlotChange;
   constructor() {
     super();
     this.select = document.createElement("select");
@@ -260,6 +268,7 @@ class FigDropdown extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.#boundHandleSelectInput = this.#handleSelectInput.bind(this);
     this.#boundHandleSelectChange = this.#handleSelectChange.bind(this);
+    this.#boundSlotChange = this.slotChange.bind(this);
   }
 
   #supportsSelectedContent() {
@@ -342,7 +351,7 @@ class FigDropdown extends HTMLElement {
     this.appendChild(this.select);
     this.shadowRoot.appendChild(this.optionsSlot);
 
-    this.optionsSlot.addEventListener("slotchange", this.slotChange.bind(this));
+    this.optionsSlot.addEventListener("slotchange", this.#boundSlotChange);
 
     this.#addEventListeners();
   }
@@ -478,6 +487,12 @@ class FigDropdown extends HTMLElement {
       this.select.setAttribute("aria-label", this.#label);
     }
   }
+
+  disconnectedCallback() {
+    this.optionsSlot.removeEventListener("slotchange", this.#boundSlotChange);
+    this.select.removeEventListener("input", this.#boundHandleSelectInput);
+    this.select.removeEventListener("change", this.#boundHandleSelectChange);
+  }
 }
 
 customElements.define("fig-dropdown", FigDropdown);
@@ -496,6 +511,12 @@ class FigTooltip extends HTMLElement {
 
   #boundHideOnChromeOpen;
   #boundHidePopupOutsideClick;
+  #boundShowDelayedPopup;
+  #boundHandlePointerLeave;
+  #boundHandleTouchStart;
+  #boundHandleTouchMove;
+  #boundHandleTouchEnd;
+  #boundHandleTouchCancel;
   #touchTimeout;
   #isTouching = false;
   #observer = null;
@@ -506,9 +527,14 @@ class FigTooltip extends HTMLElement {
     let delay = parseInt(this.getAttribute("delay"));
     this.delay = !isNaN(delay) ? delay : 500;
 
-    // Bind methods that will be used as event listeners
     this.#boundHideOnChromeOpen = this.#hideOnChromeOpen.bind(this);
     this.#boundHidePopupOutsideClick = this.hidePopupOutsideClick.bind(this);
+    this.#boundShowDelayedPopup = this.showDelayedPopup.bind(this);
+    this.#boundHandlePointerLeave = this.#handlePointerLeave.bind(this);
+    this.#boundHandleTouchStart = this.#handleTouchStart.bind(this);
+    this.#boundHandleTouchMove = this.#handleTouchMove.bind(this);
+    this.#boundHandleTouchEnd = this.#handleTouchEnd.bind(this);
+    this.#boundHandleTouchCancel = this.#handleTouchCancel.bind(this);
   }
   connectedCallback() {
     this.setup();
@@ -517,16 +543,13 @@ class FigTooltip extends HTMLElement {
 
   disconnectedCallback() {
     this.destroy();
-    // Remove global listeners
     document.removeEventListener(
       "mousedown",
       this.#boundHideOnChromeOpen,
       true,
     );
-    // Disconnect mutation observer
     this.#stopObserving();
 
-    // Remove click outside listener for click action
     if (this.action === "click") {
       document.body.removeEventListener(
         "click",
@@ -534,15 +557,17 @@ class FigTooltip extends HTMLElement {
       );
     }
 
-    // Clean up touch-related timers and listeners
     clearTimeout(this.#touchTimeout);
     if (this.action === "hover") {
-      this.removeEventListener("touchstart", this.#handleTouchStart);
-      this.removeEventListener("touchmove", this.#handleTouchMove);
-      this.removeEventListener("touchend", this.#handleTouchEnd);
-      this.removeEventListener("touchcancel", this.#handleTouchCancel);
+      this.removeEventListener("pointerenter", this.#boundShowDelayedPopup);
+      this.removeEventListener("pointerleave", this.#boundHandlePointerLeave);
+      this.removeEventListener("touchstart", this.#boundHandleTouchStart);
+      this.removeEventListener("touchmove", this.#boundHandleTouchMove);
+      this.removeEventListener("touchend", this.#boundHandleTouchEnd);
+      this.removeEventListener("touchcancel", this.#boundHandleTouchCancel);
     } else if (this.action === "click") {
-      this.removeEventListener("touchstart", this.showDelayedPopup);
+      this.removeEventListener("click", this.#boundShowDelayedPopup);
+      this.removeEventListener("touchstart", this.#boundShowDelayedPopup);
     }
   }
 
@@ -613,36 +638,29 @@ class FigTooltip extends HTMLElement {
     if (this.action === "manual") return;
     if (this.action === "hover") {
       if (!this.isTouchDevice()) {
-        this.addEventListener("pointerenter", this.showDelayedPopup.bind(this));
-        this.addEventListener(
-          "pointerleave",
-          this.#handlePointerLeave.bind(this),
-        );
+        this.addEventListener("pointerenter", this.#boundShowDelayedPopup);
+        this.addEventListener("pointerleave", this.#boundHandlePointerLeave);
       }
-      // Touch support for mobile hover simulation
-      this.addEventListener("touchstart", this.#handleTouchStart.bind(this), {
+      this.addEventListener("touchstart", this.#boundHandleTouchStart, {
         passive: true,
       });
-      this.addEventListener("touchmove", this.#handleTouchMove.bind(this), {
+      this.addEventListener("touchmove", this.#boundHandleTouchMove, {
         passive: true,
       });
-      this.addEventListener("touchend", this.#handleTouchEnd.bind(this), {
+      this.addEventListener("touchend", this.#boundHandleTouchEnd, {
         passive: true,
       });
-      this.addEventListener("touchcancel", this.#handleTouchCancel.bind(this), {
+      this.addEventListener("touchcancel", this.#boundHandleTouchCancel, {
         passive: true,
       });
     } else if (this.action === "click") {
-      this.addEventListener("click", this.showDelayedPopup.bind(this));
+      this.addEventListener("click", this.#boundShowDelayedPopup);
       document.body.addEventListener("click", this.#boundHidePopupOutsideClick);
-
-      // Touch support for better mobile responsiveness
-      this.addEventListener("touchstart", this.showDelayedPopup.bind(this), {
+      this.addEventListener("touchstart", this.#boundShowDelayedPopup, {
         passive: true,
       });
     }
 
-    // Add listener for chrome interactions
     document.addEventListener("mousedown", this.#boundHideOnChromeOpen, true);
   }
 
@@ -934,6 +952,7 @@ class FigDialog extends HTMLDialogElement {
   #boundPointerDown;
   #boundPointerMove;
   #boundPointerUp;
+  #boundClose;
   #offset = 16; // 1rem in pixels
   #positionInitialized = false;
   #dragThreshold = 3; // pixels before drag starts
@@ -943,6 +962,7 @@ class FigDialog extends HTMLDialogElement {
     this.#boundPointerDown = this.#handlePointerDown.bind(this);
     this.#boundPointerMove = this.#handlePointerMove.bind(this);
     this.#boundPointerUp = this.#handlePointerUp.bind(this);
+    this.#boundClose = this.close.bind(this);
   }
 
   connectedCallback() {
@@ -962,12 +982,15 @@ class FigDialog extends HTMLDialogElement {
 
   disconnectedCallback() {
     this.#removeDragListeners();
+    this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
+      button.removeEventListener("click", this.#boundClose);
+    });
   }
 
   #addCloseListeners() {
     this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
-      button.removeEventListener("click", this.close);
-      button.addEventListener("click", this.close.bind(this));
+      button.removeEventListener("click", this.#boundClose);
+      button.addEventListener("click", this.#boundClose);
     });
   }
 
@@ -2242,16 +2265,18 @@ figDefineCustomizedBuiltIn("fig-popup", FigPopup, { extends: "dialog" });
  */
 class FigTab extends HTMLElement {
   #selected;
+  #boundHandleClick;
   constructor() {
     super();
     this.content = null;
     this.#selected = false;
+    this.#boundHandleClick = this.handleClick.bind(this);
   }
   connectedCallback() {
     this.setAttribute("label", this.innerText);
     this.setAttribute("role", "tab");
     this.setAttribute("tabindex", "0");
-    this.addEventListener("click", this.handleClick.bind(this));
+    this.addEventListener("click", this.#boundHandleClick);
 
     requestAnimationFrame(() => {
       if (typeof this.getAttribute("content") === "string") {
@@ -2276,7 +2301,7 @@ class FigTab extends HTMLElement {
     this.setAttribute("selected", value ? "true" : "false");
   }
   disconnectedCallback() {
-    this.removeEventListener("click", this.handleClick);
+    this.removeEventListener("click", this.#boundHandleClick);
   }
   handleClick() {
     this.selected = true;
@@ -2305,8 +2330,12 @@ customElements.define("fig-tab", FigTab);
  * @attr {string} name - Identifier for the tabs group
  */
 class FigTabs extends HTMLElement {
+  #boundHandleClick;
+  #boundHandleKeyDown;
   constructor() {
     super();
+    this.#boundHandleClick = this.handleClick.bind(this);
+    this.#boundHandleKeyDown = this.#handleKeyDown.bind(this);
   }
 
   static get observedAttributes() {
@@ -2316,8 +2345,8 @@ class FigTabs extends HTMLElement {
   connectedCallback() {
     this.name = this.getAttribute("name") || "tabs";
     this.setAttribute("role", "tablist");
-    this.addEventListener("click", this.handleClick.bind(this));
-    this.addEventListener("keydown", this.#handleKeyDown.bind(this));
+    this.addEventListener("click", this.#boundHandleClick);
+    this.addEventListener("keydown", this.#boundHandleKeyDown);
     requestAnimationFrame(() => {
       const value = this.getAttribute("value");
       if (value) {
@@ -2345,8 +2374,8 @@ class FigTabs extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.removeEventListener("click", this.handleClick);
-    this.removeEventListener("keydown", this.#handleKeyDown);
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.removeEventListener("keydown", this.#boundHandleKeyDown);
   }
 
   #handleKeyDown(event) {
@@ -2446,14 +2475,16 @@ customElements.define("fig-tabs", FigTabs);
 class FigSegment extends HTMLElement {
   #value;
   #selected;
+  #boundHandleClick;
   constructor() {
     super();
+    this.#boundHandleClick = this.handleClick.bind(this);
   }
   connectedCallback() {
-    this.addEventListener("click", this.handleClick.bind(this));
+    this.addEventListener("click", this.#boundHandleClick);
   }
   disconnectedCallback() {
-    this.removeEventListener("click", this.handleClick);
+    this.removeEventListener("click", this.#boundHandleClick);
   }
   handleClick() {
     const parentControl = this.closest("fig-segmented-control");
@@ -5084,6 +5115,12 @@ class FigInputFill extends HTMLElement {
     this.#render();
   }
 
+  disconnectedCallback() {
+    this.#fillPicker = null;
+    this.#opacityInput = null;
+    this.#hexInput = null;
+  }
+
   #parseValue() {
     const valueAttr = this.getAttribute("value");
     if (!valueAttr) return;
@@ -6074,6 +6111,16 @@ class FigInputGradient extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener("keydown", this.#onKeyDown);
+    if (this.#colorObserver) {
+      this.#colorObserver.disconnect();
+      this.#colorObserver = null;
+    }
+    clearTimeout(this.#arrowTooltipTimer);
+    this.removeEventListener("pointerenter", this.#onTrackEnter);
+    this.removeEventListener("pointermove", this.#onTrackMove);
+    this.removeEventListener("pointerleave", this.#onTrackLeave);
+    this.removeEventListener("click", this.#onTrackClick);
+    this.removeEventListener("dblclick", this.#onTrackDblClick);
   }
 
   #onKeyDown = (e) => {
@@ -6208,10 +6255,8 @@ class FigInputGradient extends HTMLElement {
   }
 
   #sampleGradientColor(position) {
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 1;
-    const ctx = canvas.getContext("2d");
+    const { ctx } = figGetSharedCanvas(256, 1);
+    ctx.clearRect(0, 0, 256, 1);
     const grad = ctx.createLinearGradient(0, 0, 256, 0);
     for (const stop of this.#gradient.stops) {
       try {
@@ -6449,6 +6494,44 @@ class FigInputGradient extends HTMLElement {
 
   #setupEventListeners() {
     if (!this.#track) return;
+
+    this.#track.addEventListener("pointerdown", (e) => {
+      if (this.hasAttribute("disabled")) return;
+      if (e.target.closest("fig-handle:not(.fig-input-gradient-ghost)")) return;
+      if (e.button !== 0) return;
+      e.preventDefault();
+
+      const trackRect = this.#track.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - trackRect.left) / trackRect.width));
+      const position = Math.round(pct * 100);
+      const color = this.#sampleGradientColor(pct);
+      this.#gradient.stops.push({ position, color, opacity: 100 });
+      this.#gradient.stops.sort((a, b) => a.position - b.position);
+      const newIndex = this.#gradient.stops.findIndex(
+        (s) => s.position === position && s.color === color,
+      );
+      this.#syncHandles();
+      this.#syncChit();
+      this.#emitInput();
+      this.#hideGhost();
+
+      const handles = this.#track.querySelectorAll(
+        "fig-handle:not(.fig-input-gradient-ghost)",
+      );
+      const newHandle = handles[newIndex];
+      if (newHandle) {
+        newHandle.select();
+        newHandle.dispatchEvent(new PointerEvent("pointerdown", {
+          bubbles: true,
+          clientX: e.clientX,
+          clientY: e.clientY,
+          pointerId: e.pointerId,
+          pointerType: e.pointerType,
+          button: e.button,
+          buttons: e.buttons,
+        }));
+      }
+    });
 
     this.#track.addEventListener("input", (e) => {
       const handle = e.target.closest("fig-handle");
@@ -6851,9 +6934,11 @@ customElements.define("fig-switch", FigSwitch);
 class FigToast extends HTMLDialogElement {
   _defaultOffset = 16; // 1rem in pixels
   _autoCloseTimer = null;
+  #boundHandleClose;
 
   constructor() {
     super();
+    this.#boundHandleClose = this.handleClose.bind(this);
   }
 
   getOffset() {
@@ -6903,8 +6988,8 @@ class FigToast extends HTMLDialogElement {
 
   addCloseListeners() {
     this.querySelectorAll("[close-toast]").forEach((button) => {
-      button.removeEventListener("click", this.handleClose);
-      button.addEventListener("click", this.handleClose.bind(this));
+      button.removeEventListener("click", this.#boundHandleClose);
+      button.addEventListener("click", this.#boundHandleClose);
     });
   }
 
@@ -7191,12 +7276,10 @@ class FigChit extends HTMLElement {
   }
 
   #toHex(color) {
-    // Convert color to hex for the native input
     if (!color) return "#D9D9D9";
     if (color.startsWith("#")) return color.slice(0, 7);
-    // Use canvas to convert rgba/named colors to hex
     try {
-      const ctx = document.createElement("canvas").getContext("2d");
+      const { ctx } = figGetSharedCanvas(1, 1);
       ctx.fillStyle = color;
       return ctx.fillStyle;
     } catch {
@@ -7665,7 +7748,7 @@ class FigEasingCurve extends HTMLElement {
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "2");
-    this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
+    figSyncCssVar(this, "--aspect-ratio", this.getAttribute("aspect-ratio"));
     const val = this.getAttribute("value");
     if (val) this.#parseValue(val);
     this.#presetName = this.#matchPreset();
@@ -7681,17 +7764,9 @@ class FigEasingCurve extends HTMLElement {
     }
   }
 
-  #syncAspectRatioVar(value) {
-    if (value && value.trim()) {
-      this.style.setProperty("--aspect-ratio", value.trim());
-    } else {
-      this.style.removeProperty("--aspect-ratio");
-    }
-  }
-
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "aspect-ratio") {
-      this.#syncAspectRatioVar(newValue);
+      figSyncCssVar(this, "--aspect-ratio", newValue);
       if (this.#svg) {
         this.#syncViewportSize();
         this.#updatePaths();
@@ -8486,12 +8561,9 @@ class Fig3DRotate extends HTMLElement {
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "1");
-    this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
-    this.#syncPerspectiveVar(this.getAttribute("perspective"));
-    this.#syncCSSVar(
-      "--perspective-origin",
-      this.getAttribute("perspective-origin"),
-    );
+    figSyncCssVar(this, "--aspect-ratio", this.getAttribute("aspect-ratio"));
+    figSyncCssVar(this, "--perspective", this.getAttribute("perspective"));
+    figSyncCssVar(this, "--perspective-origin", this.getAttribute("perspective-origin"));
     this.#syncTransformOrigin(this.getAttribute("transform-origin"));
     this.#parseFields(this.getAttribute("fields"));
     const val = this.getAttribute("value");
@@ -8509,29 +8581,7 @@ class Fig3DRotate extends HTMLElement {
     }
   }
 
-  #syncAspectRatioVar(value) {
-    if (value && value.trim()) {
-      this.style.setProperty("--aspect-ratio", value.trim());
-    } else {
-      this.style.removeProperty("--aspect-ratio");
-    }
-  }
-
-  #syncPerspectiveVar(value) {
-    if (value && value.trim()) {
-      this.style.setProperty("--perspective", value.trim());
-    } else {
-      this.style.removeProperty("--perspective");
-    }
-  }
-
-  #syncCSSVar(prop, value) {
-    if (value && value.trim()) {
-      this.style.setProperty(prop, value.trim());
-    } else {
-      this.style.removeProperty(prop);
-    }
-  }
+  
 
   #syncTransformOrigin(value) {
     if (!value || !value.trim()) {
@@ -8580,15 +8630,15 @@ class Fig3DRotate extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "aspect-ratio") {
-      this.#syncAspectRatioVar(newValue);
+      figSyncCssVar(this, "--aspect-ratio", newValue);
       return;
     }
     if (name === "perspective") {
-      this.#syncPerspectiveVar(newValue);
+      figSyncCssVar(this, "--perspective", newValue);
       return;
     }
     if (name === "perspective-origin") {
-      this.#syncCSSVar("--perspective-origin", newValue);
+      figSyncCssVar(this, "--perspective-origin", newValue);
       return;
     }
     if (name === "transform-origin") {
@@ -8838,7 +8888,7 @@ class FigOriginGrid extends HTMLElement {
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "0");
-    this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
+    figSyncCssVar(this, "--aspect-ratio", this.getAttribute("aspect-ratio"));
     this.#applyIncomingValue(this.getAttribute("value"));
 
     this.#render();
@@ -8862,7 +8912,7 @@ class FigOriginGrid extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "aspect-ratio") {
-      this.#syncAspectRatioVar(newValue);
+      figSyncCssVar(this, "--aspect-ratio", newValue);
       return;
     }
     if (name === "drag") {
@@ -8899,14 +8949,6 @@ class FigOriginGrid extends HTMLElement {
     const attr = this.getAttribute("fields");
     if (attr === null) return false;
     return attr.toLowerCase() !== "false";
-  }
-
-  #syncAspectRatioVar(value) {
-    if (value && value.trim()) {
-      this.style.setProperty("--aspect-ratio", value.trim());
-    } else {
-      this.style.removeProperty("--aspect-ratio");
-    }
   }
 
   #syncDragState() {
@@ -9292,6 +9334,7 @@ class FigInputJoystick extends HTMLElement {
   #boundYFocusOut = null;
   #isSyncingValueAttr = false;
   #defaultPosition = { x: 0.5, y: 0.5 };
+  #initialized = false;
 
   constructor() {
     super();
@@ -9303,7 +9346,6 @@ class FigInputJoystick extends HTMLElement {
     this.xInput = null;
     this.yInput = null;
     this.coordinates = "screen";
-    this.#initialized = false;
     this.#boundPlanePointerDown = (e) => this.#handlePlanePointerDown(e);
     this.#boundHandlePointerDown = () => {
       this.isDragging = true;
@@ -9317,8 +9359,6 @@ class FigInputJoystick extends HTMLElement {
     this.#boundYFocusOut = () => this.#handleFieldFocusOut();
   }
 
-  #initialized = false;
-
   connectedCallback() {
     // Initialize position
     requestAnimationFrame(() => {
@@ -9327,7 +9367,7 @@ class FigInputJoystick extends HTMLElement {
       this.transform = this.getAttribute("transform") || 1;
       this.transform = Number(this.transform);
       this.coordinates = this.getAttribute("coordinates") || "screen";
-      this.#syncAspectRatioVar(this.getAttribute("aspect-ratio"));
+      figSyncCssVar(this, "--aspect-ratio", this.getAttribute("aspect-ratio"));
       if (!this.hasAttribute("value")) {
         this.setAttribute("value", "50% 50%");
       }
@@ -9344,14 +9384,6 @@ class FigInputJoystick extends HTMLElement {
   // Convert Y for display (CSS uses top-down, math uses bottom-up)
   #displayY(y) {
     return this.coordinates === "math" ? 1 - y : y;
-  }
-
-  #syncAspectRatioVar(value) {
-    if (value && value.trim()) {
-      this.style.setProperty("--aspect-ratio", value.trim());
-    } else {
-      this.style.removeProperty("--aspect-ratio");
-    }
   }
 
   disconnectedCallback() {
@@ -9655,7 +9687,7 @@ class FigInputJoystick extends HTMLElement {
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "aspect-ratio") {
-      this.#syncAspectRatioVar(newValue);
+      figSyncCssVar(this, "--aspect-ratio", newValue);
       return;
     }
     if (name === "value") {
@@ -9705,6 +9737,11 @@ class FigInputAngle extends HTMLElement {
   #opposite;
   #prevRawAngle = null;
   #boundHandleRawChange;
+  #boundHandleMouseDown;
+  #boundHandleTouchStart;
+  #boundHandleKeyDown;
+  #boundHandleKeyUp;
+  #boundHandleAngleInput;
 
   constructor() {
     super();
@@ -9725,6 +9762,11 @@ class FigInputAngle extends HTMLElement {
     this.rotationSpan = null;
 
     this.#boundHandleRawChange = this.#handleRawChange.bind(this);
+    this.#boundHandleMouseDown = this.#handleMouseDown.bind(this);
+    this.#boundHandleTouchStart = this.#handleTouchStart.bind(this);
+    this.#boundHandleKeyDown = this.#handleKeyDown.bind(this);
+    this.#boundHandleKeyUp = this.#handleKeyUp.bind(this);
+    this.#boundHandleAngleInput = this.#handleAngleInput.bind(this);
   }
 
   connectedCallback() {
@@ -9899,30 +9941,23 @@ class FigInputAngle extends HTMLElement {
     this.angleInput = this.querySelector("fig-input-number[name='angle']");
     this.rotationSpan = this.querySelector(".fig-input-angle-rotations");
     this.#updateRotationDisplay();
-    this.plane?.addEventListener("mousedown", this.#handleMouseDown.bind(this));
-    this.plane?.addEventListener(
-      "touchstart",
-      this.#handleTouchStart.bind(this),
-    );
-    window.addEventListener("keydown", this.#handleKeyDown.bind(this));
-    window.addEventListener("keyup", this.#handleKeyUp.bind(this));
+    this.plane?.addEventListener("mousedown", this.#boundHandleMouseDown);
+    this.plane?.addEventListener("touchstart", this.#boundHandleTouchStart);
+    window.addEventListener("keydown", this.#boundHandleKeyDown);
+    window.addEventListener("keyup", this.#boundHandleKeyUp);
     if (this.text && this.angleInput) {
-      this.angleInput.addEventListener(
-        "input",
-        this.#handleAngleInput.bind(this),
-      );
+      this.angleInput.addEventListener("input", this.#boundHandleAngleInput);
     }
-    // Capture-phase listener for unit suffix parsing
     this.addEventListener("change", this.#boundHandleRawChange, true);
   }
 
   #cleanupListeners() {
-    this.plane?.removeEventListener("mousedown", this.#handleMouseDown);
-    this.plane?.removeEventListener("touchstart", this.#handleTouchStart);
-    window.removeEventListener("keydown", this.#handleKeyDown);
-    window.removeEventListener("keyup", this.#handleKeyUp);
+    this.plane?.removeEventListener("mousedown", this.#boundHandleMouseDown);
+    this.plane?.removeEventListener("touchstart", this.#boundHandleTouchStart);
+    window.removeEventListener("keydown", this.#boundHandleKeyDown);
+    window.removeEventListener("keyup", this.#boundHandleKeyUp);
     if (this.text && this.angleInput) {
-      this.angleInput.removeEventListener("input", this.#handleAngleInput);
+      this.angleInput.removeEventListener("input", this.#boundHandleAngleInput);
     }
     this.removeEventListener("change", this.#boundHandleRawChange, true);
   }
@@ -10427,6 +10462,8 @@ class FigFillPicker extends HTMLElement {
   #opacitySlider = null;
   #isDraggingColor = false;
   #teardownColorAreaEvents = null;
+  #dialogOpenObserver = null;
+  #webcamTabObserver = null;
 
   constructor() {
     super();
@@ -10452,10 +10489,26 @@ class FigFillPicker extends HTMLElement {
       this.#teardownColorAreaEvents();
       this.#teardownColorAreaEvents = null;
     }
+    if (this.#dialogOpenObserver) {
+      this.#dialogOpenObserver.disconnect();
+      this.#dialogOpenObserver = null;
+    }
+    if (this.#webcamTabObserver) {
+      this.#webcamTabObserver.disconnect();
+      this.#webcamTabObserver = null;
+    }
+    if (this.#webcam.stream) {
+      this.#webcam.stream.getTracks().forEach((track) => track.stop());
+      this.#webcam.stream = null;
+    }
+    if (this.#video.url && this.#video.url.startsWith("blob:")) {
+      URL.revokeObjectURL(this.#video.url);
+    }
     if (this.#chit) this.#chit.removeAttribute("selected");
     if (this.#dialog) {
       this.#dialog.close();
       this.#dialog.remove();
+      this.#dialog = null;
     }
   }
 
@@ -10792,11 +10845,11 @@ class FigFillPicker extends HTMLElement {
     };
     this.#dialog.addEventListener("close", onDialogClose);
 
-    const observer = new MutationObserver(() => {
+    this.#dialogOpenObserver = new MutationObserver(() => {
       const isOpen = this.#dialog.hasAttribute("open") && this.#dialog.getAttribute("open") !== "false";
       if (!isOpen) onDialogClose();
     });
-    observer.observe(this.#dialog, { attributes: true, attributeFilter: ["open"] });
+    this.#dialogOpenObserver.observe(this.#dialog, { attributes: true, attributeFilter: ["open"] });
 
     // Initialize built-in tabs (skip any overridden by custom slots)
     const builtinInits = {
@@ -11718,10 +11771,15 @@ class FigFillPicker extends HTMLElement {
     }
   }
 
+  static #gradientSupportCache = new Map();
   #testGradientSupport(css) {
+    const cached = FigFillPicker.#gradientSupportCache.get(css);
+    if (cached !== undefined) return cached;
     const el = document.createElement("div");
     el.style.background = css;
-    return !!el.style.background;
+    const result = !!el.style.background;
+    FigFillPicker.#gradientSupportCache.set(css, result);
+    return result;
   }
 
   #getGradientCSS() {
@@ -12066,13 +12124,12 @@ class FigFillPicker extends HTMLElement {
       }
     };
 
-    // Start webcam when tab is shown
-    const observer = new MutationObserver(() => {
+    this.#webcamTabObserver = new MutationObserver(() => {
       if (container.style.display !== "none" && !this.#webcam.stream) {
         startWebcam();
       }
     });
-    observer.observe(container, {
+    this.#webcamTabObserver.observe(container, {
       attributes: true,
       attributeFilter: ["style"],
     });
@@ -12591,8 +12648,8 @@ class FigColorTip extends HTMLElement {
     }
 
     try {
-      const ctx = document.createElement("canvas").getContext("2d");
-      if (!ctx) return "#D9D9D9";
+      const { ctx } = figGetSharedCanvas(1, 1);
+      ctx.fillStyle = "#000000";
       ctx.fillStyle = value;
       const resolved = ctx.fillStyle;
       if (resolved.startsWith("#")) {
@@ -13547,12 +13604,13 @@ class FigHandle extends HTMLElement {
 
     this.#isDragging = true;
     const axes = this.#axes;
-    const containerRect = container.getBoundingClientRect();
     const handleW = this.offsetWidth;
     const handleH = this.offsetHeight;
+    let lastRect = null;
 
     const clampAndApply = (clientX, clientY, shiftKey = false) => {
       const rect = container.getBoundingClientRect();
+      lastRect = rect;
       const currentLeft = parseFloat(this.style.left) || 0;
       const currentTop = parseFloat(this.style.top) || 0;
       const rawX = clientX - rect.left - handleW / 2;
@@ -13609,7 +13667,7 @@ class FigHandle extends HTMLElement {
         new CustomEvent("input", {
           bubbles: true,
           detail: {
-            ...this.#positionDetail(container.getBoundingClientRect()),
+            ...this.#positionDetail(lastRect),
             shiftKey: e.shiftKey,
           },
         }),
@@ -13628,7 +13686,7 @@ class FigHandle extends HTMLElement {
         this.dispatchEvent(
           new CustomEvent("change", {
             bubbles: true,
-            detail: this.#positionDetail(container.getBoundingClientRect()),
+            detail: this.#positionDetail(lastRect),
           }),
         );
         const swallowClick = (evt) => {
