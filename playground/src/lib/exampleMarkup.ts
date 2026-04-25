@@ -178,6 +178,22 @@ export function mergePreviewOnlyElements(
     }
   }
 
+  if (originalMarkup.includes("data-playground-")) {
+    const originalEls = Array.from(originalRoot.querySelectorAll("*"));
+    const editedEls = Array.from(editedRoot.querySelectorAll("*"));
+    for (const origEl of originalEls) {
+      for (const attr of Array.from(origEl.attributes)) {
+        if (!attr.name.startsWith("data-playground-")) continue;
+        if (attr.name === "data-playground-unwrap") continue;
+        if (attr.name === "data-playground-ignore-controls") continue;
+        if (attr.name === INTERNAL_FIELD_ONLY_CONTROLS_ATTR) continue;
+        const tag = origEl.tagName.toLowerCase();
+        const match = editedEls.find((el) => el.tagName.toLowerCase() === tag);
+        if (match) match.setAttribute(attr.name, attr.value);
+      }
+    }
+  }
+
   return dedentMarkup(editedRoot.innerHTML);
 }
 

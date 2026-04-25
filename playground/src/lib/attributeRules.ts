@@ -256,11 +256,16 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-palette": {
+    add: { label: "Add", type: "boolean", boolMode: "string", defaultChecked: true },
     expanded: { label: "Expanded", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
-  "fig-input-gradient": {},
+  "fig-input-gradient": {
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-input-color": {
     picker: {
       label: "Picker",
@@ -269,6 +274,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     alpha: { label: "Alpha", type: "boolean", boolMode: "string" },
     text: { label: "Text", type: "boolean", boolMode: "string" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-dropdown": {
     experimental: {
@@ -472,6 +478,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Loop",
       type: "boolean",
       boolMode: "presence",
+    },
+    padding: {
+      label: "Padding",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
     },
   },
 };

@@ -7,16 +7,13 @@ import {
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
-  applyChooserContentMutation,
   applyChooserMaxSizeMutation,
   applyHeaderIconMutation,
   applyPrependSlotMutation,
   applyTooltipActionMutation,
-  getChooserContentMode,
   getHeaderIconEnabled,
   getPrependSlotMode,
   parseAttributeTargets,
-  type ChooserContentMode,
   type PrependSlotMode,
 } from "../lib/attributeParser";
 import {
@@ -1187,7 +1184,7 @@ export default function AttributesView({
 
         return (
           <div key={target.fieldIndex}>
-            {showFieldControls && target.controlTag !== "fig-field-slider" && (
+            {showFieldControls && target.controlTag !== "fig-field-slider" && !("data-playground-hide-field" in target.controlAttributes) && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
                   <h3>Field</h3>
@@ -1286,54 +1283,6 @@ export default function AttributesView({
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
-                    {target.controlTag === "fig-chooser" &&
-                      (() => {
-                        const contentMode = getChooserContentMode(
-                          markup,
-                          target.fieldIndex,
-                        );
-                        const contentOptions: {
-                          value: ChooserContentMode;
-                          label: string;
-                        }[] = [
-                          { value: "text", label: "Text" },
-                          { value: "image", label: "Image" },
-                          { value: "image-label", label: "Image + label" },
-                          { value: "colors", label: "Colors" },
-                        ];
-                        return (
-                          <fig-field
-                            direction="horizontal"
-                            columns="thirds"
-                            key={`control-chooser-content-${target.fieldIndex}`}
-                          >
-                            <label>{sentenceCase("Content")}</label>
-                            <fig-dropdown
-                              full
-                              value={contentMode}
-                              onInput={(e: any) => {
-                                const next = (e.target?.value ??
-                                  e.detail) as ChooserContentMode;
-                                if (next && next !== contentMode) {
-                                  onMarkupChange(
-                                    applyChooserContentMutation(
-                                      markup,
-                                      target.fieldIndex,
-                                      next,
-                                    ),
-                                  );
-                                }
-                              }}
-                            >
-                              {contentOptions.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {sentenceCase(opt.label)}
-                                </option>
-                              ))}
-                            </fig-dropdown>
-                          </fig-field>
-                        );
-                      })()}
                     {target.controlTag === "fig-header" &&
                       (() => {
                         const iconEnabled = getHeaderIconEnabled(

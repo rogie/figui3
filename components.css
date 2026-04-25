@@ -1224,7 +1224,7 @@ fig-chit {
     --padding: 0px;
   }
 
-  &[disabled] {
+  &[disabled]:not([disabled="false"]) {
     pointer-events: none;
   }
 
@@ -1373,9 +1373,9 @@ fig-easing-curve {
   --easing-bezier-handle-radius: 5;
   --easing-spring-handle-radius: 5;
   --easing-handle-fill: var(--figma-color-border-strong);
-  --easing-duration-bar-width: 5;
+  --easing-duration-bar-width: 7;
   --easing-duration-bar-height: 16;
-  --easing-duration-bar-radius: 3;
+  --easing-duration-bar-radius: 4;
   --aspect-ratio: 1 / 1;
 
   width: 100%;
@@ -1438,17 +1438,6 @@ fig-easing-curve {
     overflow: visible;
     pointer-events: all;
     cursor: default;
-
-    fig-handle {
-      --width: calc(var(--easing-bezier-handle-radius) * 2px);
-      --height: calc(var(--easing-bezier-handle-radius) * 2px);
-      pointer-events: all;
-      cursor: default;
-    }
-
-    &:active fig-handle {
-      cursor: grabbing;
-    }
   }
   .fig-easing-curve-endpoint {
     fill: var(--easing-handle-fill);
@@ -3095,6 +3084,10 @@ fig-input-fill {
     outline: 1px solid var(--figma-color-border-selected) !important;
     outline-offset: -1px !important;
   }
+  &:hover {
+    outline: 1px solid var(--figma-color-border);
+    outline-offset: -1px !important;
+  }
 
   & > .input-combo > fig-chit:not(:only-child),
   & > .input-combo > fig-chit:not(:only-child) input,
@@ -3179,11 +3172,10 @@ fig-input-gradient {
 }
 
 fig-input-palette {
-  display: inline-grid !important;
-  grid-template-columns: 1fr 24px;
-  grid-template-areas: "inputs button";
-  gap: var(--spacer-1);
-  width: 100%;
+  display: inline-flex !important;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  min-width: 0;
 
   .palette-colors {
     display: flex;
@@ -3199,15 +3191,19 @@ fig-input-palette {
   .palette-add-btn {
     grid-area: button;
   }
+  .palette-colors-inline {
+    display: inline-grid !important;
+    grid-template-columns: 1fr 24px;
+    grid-template-areas: "inputs button";
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+    width: 100%;
 
-  &:not([expanded]),
-  &[expanded="false"] {
     .palette-colors {
       display: flex;
       background-color: var(--figma-color-bg-secondary);
-
-      > fig-input-color {
-        display: contents;
+      fig-input-color {
+        width: 100%;
       }
 
       fig-chit {
@@ -3228,26 +3224,38 @@ fig-input-palette {
       }
     }
   }
+  &[expanded]:not([expanded="false"]):not([edit="false"]) {
+    .palette-colors-expanded {
+      display: flex;
+    }
+  }
+  &[add="false"] {
+    .palette-colors-expanded,
+    .palette-colors-inline {
+      grid-template-areas: "inputs inputs";
+    }
+  }
+  .palette-colors-expanded {
+    display: none;
+    flex-direction: column;
+    overflow: visible;
+    border-radius: 0;
+    gap: var(--spacer-2);
+    width: 100%;
+
+    > fig-input-color {
+      min-width: 0;
+    }
+
+    fig-chit {
+      --border-radius: var(--radius-medium);
+      width: auto !important;
+      height: var(--size);
+      border-radius: var(--radius-medium) !important;
+    }
+  }
 
   &[expanded]:not([expanded="false"]) {
-    .palette-colors {
-      flex-direction: column;
-      overflow: visible;
-      border-radius: 0;
-      gap: var(--spacer-2);
-      background-color: transparent;
-
-      > fig-input-color {
-        min-width: 0;
-      }
-
-      fig-chit {
-        --border-radius: var(--radius-medium);
-        width: auto !important;
-        height: var(--size);
-        border-radius: var(--radius-medium) !important;
-      }
-    }
   }
 }
 
@@ -4584,8 +4592,20 @@ fig-chooser {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  overflow: hidden auto;
+  overflow: visible auto;
   scrollbar-width: none;
+  scroll-snap-type: y mandatory;
+
+  > * {
+    scroll-snap-align: start;
+  }
+
+  &[padding="false"] {
+    gap: var(--spacer-2);
+    fig-choice {
+      --fig-choice-padding: 0px;
+    }
+  }
 
   &[overflow="scrollbar"] {
     scrollbar-width: thin;
@@ -4753,12 +4773,15 @@ fig-chooser {
 }
 
 fig-choice {
-  --fig-choice-selection-ring-width: 1px;
+  --fig-choice-selection-ring-width: 1.25px;
   --fig-choice-padding: var(--spacer-2);
+  --fig-choice-border-radius: calc(
+    var(--radius-medium) + var(--fig-choice-padding)
+  );
   display: flex;
   align-items: center;
   flex-direction: column;
-  border-radius: var(--radius-large);
+  border-radius: var(--fig-choice-border-radius);
   gap: var(--spacer-2);
   outline: none;
   border: 1px solid transparent;
@@ -4770,14 +4793,25 @@ fig-choice {
     background-color: var(--figma-color-bg-secondary);
   }
 
+  &[padding="false"] {
+    --fig-choice-padding: 0px;
+  }
+
   &[selected] {
-    background-color: var(--figma-color-bg-secondary);
-    & > fig-image {
-      border-radius: var(--radius-medium);
+    position: relative;
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: var(--fig-choice-border-radius);
+      pointer-events: none;
+      z-index: 1;
+      box-shadow: inset 0 0 0 4px var(--figma-color-bg);
       outline: var(--fig-choice-selection-ring-width) solid
         var(--figma-color-border-selected);
-      outline-offset: 0;
+      outline-offset: calc(var(--fig-choice-selection-ring-width) * -1);
     }
+    background-color: var(--figma-color-bg-secondary);
   }
 
   &[disabled]:not([disabled="false"]),
@@ -4793,14 +4827,14 @@ fig-handle {
   --height: 0.875rem;
   --fill: var(--figma-color-bg-brand);
   --border-radius: 50%;
-  --ring-width: 1.25px;
-  --box-shadow:
-    inset 0 0 0 var(--ring-width) var(--handle-color),
-    0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--elevation-100-canvas);
+  --ring-width: 0.125rem;
+  --box-shadow: 0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--elevation-100-canvas);
   --outline: none;
   --border: none;
 
-  display: inline-grid;
+  display: grid;
+  margin: 0;
+  padding: 0;
   place-items: center;
   width: var(--width);
   height: var(--height);
@@ -4813,8 +4847,8 @@ fig-handle {
   &::before {
     content: "";
     color-scheme: light only;
-    width: calc(var(--width) - 4px);
-    height: calc(var(--height) - 4px);
+    width: calc(var(--width) - var(--ring-width) * 2);
+    height: calc(var(--height) - var(--ring-width) * 2);
     background: var(--fill);
     border-radius: var(--border-radius);
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
@@ -4822,8 +4856,8 @@ fig-handle {
   }
 
   &[size="small"] {
-    --width: 0.5625rem;
-    --height: 0.5625rem;
+    --width: 11px;
+    --height: 11px;
   }
 
   &[drag]:not([drag="false"]) {
@@ -4832,14 +4866,13 @@ fig-handle {
   }
   &:hover,
   &[selected]:not([selected="false"]) {
-    outline: var(--ring-width) solid var(--figma-color-border-selected);
+    outline: 1px solid var(--figma-color-border-selected);
     outline-offset: 0;
   }
 
   &[disabled]:not([disabled="false"]),
   &[aria-disabled="true"] {
     pointer-events: none;
-    opacity: 0.4;
     cursor: default;
   }
 
@@ -4849,7 +4882,7 @@ fig-handle {
 
     fig-color-tip {
       position: absolute;
-      bottom: calc(100% + 6px);
+      bottom: calc(100% + 2px);
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;

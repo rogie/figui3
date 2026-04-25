@@ -30,8 +30,8 @@ body {
   width: 100vw;
   min-width: calc(
     var(--spacer-4) + var(--nav-width) + var(--spacer-4) +
-    var(--playground-min-width) + var(--spacer-4) * 2 +
-    var(--spacer-4) + var(--sidebar-width) + var(--spacer-4)
+      var(--playground-min-width) + var(--spacer-4) * 2 + var(--spacer-4) +
+      var(--sidebar-width) + var(--spacer-4)
   );
   height: 100vh;
   overflow: auto;
@@ -57,7 +57,6 @@ body {
   }
 
   .propkit-attributes-view {
-
     & + .propkit-attributes-view {
       border-top: 1px solid var(--figma-color-border);
     }
@@ -85,6 +84,19 @@ nav {
     flex: 1;
     margin-block: var(--spacer-2);
     position: relative;
+
+    .nav-group-header {
+      margin-inline: calc(-1 * var(--spacer-3));
+      position: relative;
+      top: calc(var(--spacer-3) * -1);
+      margin-bottom: calc(var(--spacer-3) * -1);
+      color: var(--figma-color-text-secondary);
+      &:not(:first-child) {
+        margin-top: var(--spacer-4);
+        box-shadow: none;
+        border-top: 1px solid var(--figma-color-border);
+      }
+    }
     overflow-y: auto;
     padding: var(--spacer-2) var(--spacer-3);
     scrollbar-width: thin;
@@ -413,7 +425,11 @@ code {
   --sandbox-done: #1e63dc;
   color: var(--sandbox-text);
   min-height: calc(100vh - clamp(32px, 6vw, 72px));
-  background: radial-gradient(circle at 10% 0%, #eef2ff 0%, var(--sandbox-bg) 42%);
+  background: radial-gradient(
+    circle at 10% 0%,
+    #eef2ff 0%,
+    var(--sandbox-bg) 42%
+  );
   border: 1px solid var(--sandbox-border);
   border-radius: 20px;
   padding: clamp(20px, 4vw, 40px);
@@ -512,7 +528,8 @@ code {
     font-size: 14px;
 
     &:focus {
-      outline: 2px solid color-mix(in srgb, var(--sandbox-brand) 35%, transparent);
+      outline: 2px solid
+        color-mix(in srgb, var(--sandbox-brand) 35%, transparent);
       outline-offset: 1px;
       border-color: var(--sandbox-brand);
     }
@@ -623,7 +640,11 @@ code {
     --sandbox-good: #69dfa8;
     --sandbox-warn: #ffca7c;
     --sandbox-done: #8fb2ff;
-    background: radial-gradient(circle at 10% 0%, #1b2140 0%, var(--sandbox-bg) 45%);
+    background: radial-gradient(
+      circle at 10% 0%,
+      #1b2140 0%,
+      var(--sandbox-bg) 45%
+    );
   }
 
   .sandbox-filter-row button {

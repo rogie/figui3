@@ -1,9 +1,4 @@
-import {
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useRef, useEffect, useCallback, useMemo } from "react";
 import type { Section } from "../data/sections";
 import ThemeToggle from "./ThemeToggle";
 import { copyText } from "../lib/prompt";
@@ -93,7 +88,9 @@ export default function Nav({
         navigateTo(sectionId, exampleId);
       } else if (sectionId && !exampleId) {
         layer.setAttribute("open", "true");
-        const firstChild = layer.querySelector("fig-layer[data-example]") as HTMLElement | null;
+        const firstChild = layer.querySelector(
+          "fig-layer[data-example]",
+        ) as HTMLElement | null;
         if (firstChild) {
           navigateTo(firstChild.dataset.section!, firstChild.dataset.example!);
         }
@@ -121,7 +118,9 @@ export default function Nav({
       else htmlLayer.removeAttribute("selected");
     });
 
-    el.querySelectorAll<HTMLElement>(":scope > fig-layer[data-section]").forEach((parent) => {
+    el.querySelectorAll<HTMLElement>(
+      ":scope > fig-layer[data-section]",
+    ).forEach((parent) => {
       if (parent.dataset.section === activeSectionId) {
         parent.setAttribute("open", "true");
       }
@@ -176,7 +175,8 @@ export default function Nav({
 
   useEffect(() => {
     window.addEventListener("keydown", handleArrowKeyNavigation);
-    return () => window.removeEventListener("keydown", handleArrowKeyNavigation);
+    return () =>
+      window.removeEventListener("keydown", handleArrowKeyNavigation);
   }, [handleArrowKeyNavigation]);
 
   return (
@@ -186,32 +186,40 @@ export default function Nav({
         <ThemeToggle isDark={isDark} setTheme={setTheme} />
       </fig-header>
       <div className="nav-links" ref={navRef}>
-        {sections.map((section) => {
+        {sections.map((section, i) => {
           const isSingleExample = section.examples.length === 1;
           const onlyExample = section.examples[0];
+          const prevGroup = i > 0 ? sections[i - 1].group : undefined;
+          const showGroupHeader = section.group && section.group !== prevGroup;
 
           return (
-            <fig-layer
-              key={section.id}
-              data-section={section.id}
-              data-example={isSingleExample ? onlyExample.id : undefined}
-            >
-              <div className="fig-layer-row">
-                <label>{toSentenceCase(section.name)}</label>
-              </div>
-              {!isSingleExample &&
-                section.examples.map((example) => (
-                  <fig-layer
-                    key={example.id}
-                    data-section={section.id}
-                    data-example={example.id}
-                  >
-                    <div className="fig-layer-row">
-                      <label>{toSentenceCase(example.name)}</label>
-                    </div>
-                  </fig-layer>
-                ))}
-            </fig-layer>
+            <React.Fragment key={section.id}>
+              {showGroupHeader && (
+                <fig-header class="nav-group-header" borderless>
+                  <h3>{section.group}</h3>
+                </fig-header>
+              )}
+              <fig-layer
+                data-section={section.id}
+                data-example={isSingleExample ? onlyExample.id : undefined}
+              >
+                <div className="fig-layer-row">
+                  <label>{toSentenceCase(section.name)}</label>
+                </div>
+                {!isSingleExample &&
+                  section.examples.map((example) => (
+                    <fig-layer
+                      key={example.id}
+                      data-section={section.id}
+                      data-example={example.id}
+                    >
+                      <div className="fig-layer-row">
+                        <label>{toSentenceCase(example.name)}</label>
+                      </div>
+                    </fig-layer>
+                  ))}
+              </fig-layer>
+            </React.Fragment>
           );
         })}
       </div>
@@ -240,7 +248,10 @@ export default function Nav({
           </fig-tooltip>
         </div>
       </footer>
-      <dialog is="fig-toast" ref={toastRef as React.RefObject<HTMLDialogElement>}>
+      <dialog
+        is="fig-toast"
+        ref={toastRef as React.RefObject<HTMLDialogElement>}
+      >
         Command copied
       </dialog>
     </nav>

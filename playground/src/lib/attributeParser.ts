@@ -244,11 +244,12 @@ function formatAttributes(element: Element): string {
   const attrs = Array.from(element.attributes);
   if (!attrs.length) return "";
   return attrs
-    .map((attr) =>
-      attr.value === ""
-        ? attr.name
-        : `${attr.name}="${attr.value.replace(/"/g, "&quot;")}"`,
-    )
+    .map((attr) => {
+      if (attr.value === "") return attr.name;
+      if (attr.value.includes('"') && !attr.value.includes("'"))
+        return `${attr.name}='${attr.value}'`;
+      return `${attr.name}="${attr.value.replace(/"/g, "&quot;")}"`;
+    })
     .join(" ");
 }
 

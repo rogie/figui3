@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.16.0]
+
+### Added
+
+- `fig-input-color` `disabled` attribute support — propagates disabled state to hex input, alpha input, fill picker, and chit.
+- `fig-input-fill` `#syncDisabled()` — updates child controls in-place instead of full re-render on disabled change.
+- `fig-input-palette` `add` attribute — set `add="false"` to hide the add-color button.
+- `fig-input-palette` dual-render layout with inline chit strip and expanded color rows always present in DOM, toggled via CSS.
+- `fig-chooser` scroll-snap support (`scroll-snap-type: y mandatory`) for smooth item alignment.
+- `fig-chooser` `padding="false"` attribute — removes internal padding and widens gap for edge-to-edge choice layouts.
+- `fig-choice` `padding="false"` attribute — zeroes choice padding via `--fig-choice-padding` CSS var.
+- `fig-choice` border-radius now derives from `--fig-choice-padding` for consistent inset ring appearance.
+- Disabled toggle in playground attributes for `fig-input-color`, `fig-input-gradient`, and `fig-input-palette`.
+- Padding toggle in playground attributes for `fig-chooser`.
+- `/propkit` nav group headers — sections are now grouped under labelled categories (Field controls, Composite controls, etc.).
+- `/propkit` overhauled sections with new Chooser examples (text, images, images + labels, colors) and consolidated field control catalog.
+- `data-playground-hide-field` attribute — hides the Field controls panel in the attributes sidebar for specific examples.
+- Playground `data-playground-*` attribute preservation during markup merge for roundtrip editing fidelity.
+
+### Changed
+
+- `fig-chit` disabled selector tightened to `:not([disabled="false"])` to support explicit opt-out.
+- `fig-input-palette` layout switched from CSS grid to flex column with separate `.palette-colors-inline` and `.palette-colors-expanded` containers.
+- `fig-input-color` hover state now shows a subtle border outline.
+- `fig-easing-curve` duration bar width increased from 5 to 7 with radius from 3 to 4.
+- `fig-easing-curve` removed nested `fig-handle` sizing rules from `.fig-easing-curve-handle` (handled by component defaults).
+- `fig-choice` selection ring width increased from 1px to 1.25px.
+- `fig-chooser` overflow changed from `hidden auto` to `visible auto`.
+- `/propkit` sections reorganized alphabetically with group labels; removed standalone Handle section from `/figui3`.
+- Removed chooser content mode switcher from attributes sidebar (replaced by separate per-content-type examples).
+- Playground CSS formatting cleanup (whitespace normalization in App.css).
+
+### Fixed
+
+- `fig-input-fill` disabled attribute change no longer triggers a full re-render — uses targeted `#syncDisabled()` instead.
+- `fig-input-palette` expanded state CSS scoping now correctly targets `.palette-colors-expanded` container.
+
 ## [3.15.0]
 
 ### Added
