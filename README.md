@@ -82,7 +82,7 @@ Minimal example:
 | [Easing Curve](#easing-curve) | `<fig-easing-curve>` | Bezier/spring curve editor |
 | [3D Rotate](#3d-rotate) | `<fig-3d-rotate>` | 3D cube rotation control |
 | [Handle](#handle) | `<fig-handle>` | Draggable handle on a surface |
-| [Canvas Point](#canvas-point) | `<fig-canvas-point>` | Point with optional radius & angle |
+| [Canvas Control](#canvas-control) | `<fig-canvas-control>` | Point with optional radius, angle, or second point |
 | [Dialog](#dialog) | `<fig-dialog>` | Modal/non-modal dialog |
 | [Popup](#popup) | `<fig-popup>` | Anchored floating surface |
 | [Toast](#toast) | `<fig-toast>` | Toast notification |
@@ -784,36 +784,49 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
 
 ---
 
-#### Canvas Point
+#### Canvas Control
 
-`<fig-canvas-point>` — [demo](https://rog.ie/figui3/#canvas-point)
+`<fig-canvas-control>` — [demo](https://rog.ie/figui3/#canvas-control)
 
-A composite point control with optional radius circle and angle handle. Place inside a positioned container; the component uses `display: contents` and does not create its own box.
+A composite point control with optional radius circle, angle handle, or second point. Place inside a positioned container; the component uses `display: contents` and does not create its own box.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `type` | string | `"point"` | `"point"`, `"color"`, `"point-radius"`, `"point-radius-angle"` |
-| `value` | JSON string | — | `{ "x": 50, "y": 50, "radius"?: 30, "angle"?: 45 }` — radius accepts unitless (px) or `"25%"` |
+| `type` | string | `"point"` | `"point"`, `"color"`, `"point-radius"`, `"point-radius-angle"`, `"point-point"` |
+| `value` | JSON string | — | `{ "x": 50, "y": 50 }` — see type-specific shapes below |
+| `name` | string | — | Tooltip label(s). Comma-separated for two handles: `"Start, End"` |
 | `color` | string | — | Passthrough color for `type="color"` handle |
 | `tooltips` | string | `"true"` | Show value tooltips on interaction |
 | `disabled` | boolean | `false` | Disable all interaction |
 | `drag-surface` | string | `"parent"` | Forwarded to inner `fig-handle`s |
-| `snapping` | string | `"false"` | `"false"`, `"true"`, `"modifier"` — applies to point, radius, and angle |
+| `snapping` | string | `"false"` | `"false"`, `"true"`, `"modifier"` — applies to all handles |
+
+**Value shapes by type:**
+
+| Type | Value shape |
+|---|---|
+| `point`, `color` | `{ x, y }` |
+| `point-radius` | `{ x, y, radius }` — radius: number (px) or `"25%"` |
+| `point-radius-angle` | `{ x, y, radius, angle }` — angle in degrees |
+| `point-point` | `{ x, y, x2, y2 }` — angle and length inferred |
 
 **Events:**
 
 | Event | Detail |
 |---|---|
-| `input` | `{ x, y, radius?, angle? }` — while dragging |
-| `change` | `{ x, y, radius?, angle? }` — on release |
+| `input` | Value object (shape depends on type) — while dragging |
+| `change` | Value object (shape depends on type) — on release |
+
+For `point-point`, both handles support direct drag (with a dynamic directional resize cursor) and rotation via their hit area (dragging from the hit area rotates around the opposite handle at fixed distance, with a rotate cursor).
 
 ```html
 <div style="position: relative; width: 200px; height: 200px; background: #eee;">
-  <fig-canvas-point
-    type="point-radius-angle"
-    value='{"x":50,"y":50,"radius":"25%","angle":45}'
+  <fig-canvas-control
+    type="point-point"
+    name="Start, End"
+    value='{"x":25,"y":25,"x2":75,"y2":75}'
     snapping="modifier"
-  ></fig-canvas-point>
+  ></fig-canvas-control>
 </div>
 ```
 

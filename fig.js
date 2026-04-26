@@ -13343,8 +13343,8 @@ class FigChooser extends HTMLElement {
 }
 customElements.define("fig-chooser", FigChooser);
 
-/* Canvas Point */
-class FigCanvasPoint extends HTMLElement {
+/* Canvas Control */
+class FigCanvasControl extends HTMLElement {
   static observedAttributes = [
     "type",
     "value",
@@ -13358,19 +13358,25 @@ class FigCanvasPoint extends HTMLElement {
 
   #x = 50;
   #y = 50;
+  #x2 = 75;
+  #y2 = 75;
   #radius = 0;
   #radiusIsPercent = false;
   #angle = 0;
   #pointHandle = null;
+  #secondHandle = null;
   #angleHandle = null;
   #radiusSvg = null;
   #angleSvg = null;
   #pointTooltip = null;
+  #secondTooltip = null;
   #radiusTooltip = null;
   #angleTooltip = null;
   #isDragging = false;
+  #isSecondDragging = false;
   #isRadiusDragging = false;
   #isAngleDragging = false;
+  #prevBodyCursor = "";
 
   get #type() {
     return this.getAttribute("type") || "point";
@@ -13382,6 +13388,14 @@ class FigCanvasPoint extends HTMLElement {
 
   get #hasAngle() {
     return this.#type === "point-radius-angle";
+  }
+
+  get #hasSecondPoint() {
+    return this.#type === "point-point";
+  }
+
+  get #hasLine() {
+    return this.#type === "point-radius-angle" || this.#type === "point-point";
   }
 
   get #tooltipsEnabled() {
@@ -13407,8 +13421,20 @@ class FigCanvasPoint extends HTMLElement {
 
   get #pointTipText() {
     const name = this.getAttribute("name");
-    if (name) return name;
+    if (name) {
+      const parts = name.split(",");
+      return parts[0].trim();
+    }
     return `${Math.round(this.#x)}%, ${Math.round(this.#y)}%`;
+  }
+
+  get #secondTipText() {
+    const name = this.getAttribute("name");
+    if (name) {
+      const parts = name.split(",");
+      if (parts.length > 1) return parts[1].trim();
+    }
+    return `${Math.round(this.#x2)}%, ${Math.round(this.#y2)}%`;
   }
 
   get #dragSurface() {
@@ -13426,8 +13452,8 @@ class FigCanvasPoint extends HTMLElement {
     if (surface === "parent") {
       const container = this.parentElement;
       if (container) {
-        container.setAttribute("data-fig-canvas-point-surface", "");
-        return "[data-fig-canvas-point-surface]";
+        container.setAttribute("data-fig-canvas-control-surface", "");
+        return "[data-fig-canvas-control-surface]";
       }
     }
     return surface;
@@ -13454,7 +13480,7 @@ class FigCanvasPoint extends HTMLElement {
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (oldVal === newVal) return;
-    if (name === "value" && !this.#isDragging && !this.#isRadiusDragging && !this.#isAngleDragging) {
+    if (name === "value" && !this.#isDragging && !this.#isSecondDragging && !this.#isRadiusDragging && !this.#isAngleDragging) {
       this.#parseValue();
       if (this.#pointHandle) this.#syncPositions();
       else this.#render();
@@ -13475,9 +13501,11 @@ class FigCanvasPoint extends HTMLElement {
     }
     if (name === "snapping" && this.#pointHandle) {
       this.#pointHandle.setAttribute("drag-snapping", newVal || "false");
+      if (this.#secondHandle) this.#secondHandle.setAttribute("drag-snapping", newVal || "false");
     }
-    if (name === "name" && this.#pointTooltip) {
-      this.#pointTooltip.setAttribute("text", this.#pointTipText);
+    if (name === "name") {
+      if (this.#pointTooltip) this.#pointTooltip.setAttribute("text", this.#pointTipText);
+      if (this.#secondTooltip) this.#secondTooltip.setAttribute("text", this.#secondTipText);
     }
   }
 
@@ -13500,6 +13528,8 @@ class FigCanvasPoint extends HTMLElement {
         if (!Number.isFinite(this.#radius)) this.#radius = 0;
       }
       if (typeof v.angle === "number") this.#angle = v.angle;
+      if (typeof v.x2 === "number") this.#x2 = v.x2;
+      if (typeof v.y2 === "number") this.#y2 = v.y2;
     } catch { /* ignore */ }
   }
 
@@ -13509,6 +13539,10 @@ class FigCanvasPoint extends HTMLElement {
       v.radius = this.#radiusIsPercent ? `${this.#radius}%` : this.#radius;
     }
     if (this.#hasAngle) v.angle = this.#angle;
+    if (this.#hasSecondPoint) {
+      v.x2 = this.#x2;
+      v.y2 = this.#y2;
+    }
     return v;
   }
 
@@ -13523,10 +13557,12 @@ class FigCanvasPoint extends HTMLElement {
   #render() {
     this.innerHTML = "";
     this.#pointHandle = null;
+    this.#secondHandle = null;
     this.#angleHandle = null;
     this.#radiusSvg = null;
     this.#angleSvg = null;
     this.#pointTooltip = null;
+    this.#secondTooltip = null;
     this.#radiusTooltip = null;
     this.#angleTooltip = null;
 
@@ -13548,13 +13584,17 @@ class FigCanvasPoint extends HTMLElement {
       const color = this.getAttribute("color");
       if (color) handle.setAttribute("color", color);
     }
+    if (this.#hasSecondPoint) {
+      handle.setAttribute("hit-area", "12 circle");
+      handle.setAttribute("hit-area-mode", "delegate");
+    }
     this.#pointHandle = handle;
 
     if (this.#hasRadius) {
       this.#createRadiusSvg();
     }
 
-    if (this.#hasAngle) {
+    if (this.#hasLine) {
       this.#createAngleSvg();
     }
 
@@ -13573,6 +13613,10 @@ class FigCanvasPoint extends HTMLElement {
       this.#createAngleHandle(disabled, tooltips, handleSurface);
     }
 
+    if (this.#hasSecondPoint) {
+      this.#createSecondHandle(disabled, tooltips, handleSurface);
+    }
+
     this.#setupEventListeners();
     requestAnimationFrame(() => this.#syncPositions());
   }
@@ -13580,10 +13624,10 @@ class FigCanvasPoint extends HTMLElement {
   #createRadiusSvg() {
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
-    svg.classList.add("fig-canvas-point-radius");
+    svg.classList.add("fig-canvas-control-radius");
     svg.setAttribute("overflow", "visible");
     const hitCircle = document.createElementNS(ns, "circle");
-    hitCircle.classList.add("fig-canvas-point-radius-hit");
+    hitCircle.classList.add("fig-canvas-control-radius-hit");
     svg.appendChild(hitCircle);
     const circle = document.createElementNS(ns, "circle");
     svg.appendChild(circle);
@@ -13606,12 +13650,12 @@ class FigCanvasPoint extends HTMLElement {
   #createAngleSvg() {
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
-    svg.classList.add("fig-canvas-point-angle-svg");
+    svg.classList.add("fig-canvas-control-angle-svg");
     svg.setAttribute("overflow", "visible");
     svg.style.position = "absolute";
     svg.style.pointerEvents = "none";
     const line = document.createElementNS(ns, "line");
-    line.classList.add("fig-canvas-point-angle-line");
+    line.classList.add("fig-canvas-control-angle-line");
     svg.appendChild(line);
     this.#angleSvg = svg;
     this.appendChild(svg);
@@ -13640,6 +13684,30 @@ class FigCanvasPoint extends HTMLElement {
     }
   }
 
+  #createSecondHandle(disabled, tooltips, handleSurface) {
+    const handle = document.createElement("fig-handle");
+    handle.setAttribute("drag", "true");
+    handle.setAttribute("drag-surface", handleSurface);
+    handle.setAttribute("drag-axes", "x,y");
+    handle.setAttribute("drag-snapping", this.#snappingMode);
+    handle.setAttribute("hit-area", "12 circle");
+    handle.setAttribute("hit-area-mode", "delegate");
+    handle.setAttribute("value", `${this.#x2}% ${this.#y2}%`);
+    if (disabled) handle.setAttribute("disabled", "");
+    this.#secondHandle = handle;
+
+    if (tooltips) {
+      const tip = document.createElement("fig-tooltip");
+      tip.setAttribute("action", "manual");
+      tip.setAttribute("text", this.#secondTipText);
+      tip.appendChild(handle);
+      this.appendChild(tip);
+      this.#secondTooltip = tip;
+    } else {
+      this.appendChild(handle);
+    }
+  }
+
   #resizeCursorSvg(deg) {
     const r = Math.round(deg);
     return `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='rotate(${r} 16 16)'%3E%3Cg filter='url(%23f)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.1212 16.9998L11.5607 17.4394C12.1465 18.0252 12.1464 18.975 11.5606 19.5607C10.9748 20.1465 10.0251 20.1465 9.4393 19.5606L6.4393 16.5604C5.85354 15.9746 5.85357 15.0249 6.43938 14.4391L9.43938 11.4393C10.0252 10.8535 10.9749 10.8536 11.5607 11.4394C12.1465 12.0252 12.1464 12.9749 11.5606 13.5607L11.1215 13.9998L20.8786 13.9999L20.4394 13.5607C19.8536 12.9749 19.8535 12.0252 20.4393 11.4394C21.0251 10.8536 21.9749 10.8536 22.5606 11.4394L25.5606 14.4393C25.842 14.7206 26 15.1021 26 15.4999C26 15.8978 25.842 16.2793 25.5607 16.5606L22.5607 19.5607C21.9749 20.1465 21.0251 20.1465 20.4393 19.5607C19.8536 18.9749 19.8535 18.0252 20.4393 17.4394L20.8788 16.9999L11.1212 16.9998Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.8536 12.1465C11.0488 12.3417 11.0488 12.6583 10.8535 12.8536L8.70715 14.9998L23.2929 14.9999L21.1465 12.8536C20.9512 12.6583 20.9512 12.3417 21.1464 12.1465C21.3417 11.9512 21.6583 11.9512 21.8535 12.1465L24.8535 15.1464C24.9473 15.2402 25 15.3673 25 15.4999C25 15.6326 24.9473 15.7597 24.8536 15.8535L21.8536 18.8536C21.6583 19.0488 21.3417 19.0488 21.1465 18.8536C20.9512 18.6583 20.9512 18.3417 21.1464 18.1465L23.2929 15.9999L8.70705 15.9998L10.8536 18.1465C11.0488 18.3417 11.0488 18.6583 10.8535 18.8536C10.6583 19.0488 10.3417 19.0488 10.1464 18.8535L7.14643 15.8533C6.95118 15.658 6.95119 15.3415 7.14646 15.1462L10.1465 12.1464C10.3417 11.9512 10.6583 11.9512 10.8536 12.1465Z' fill='black'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='f' x='3' y='9' width='26' height='15' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='a'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='b'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0'/%3E%3CfeBlend in2='a' result='c'/%3E%3CfeBlend in='SourceGraphic' in2='c'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E") 16 16, nwse-resize`;
@@ -13655,6 +13723,22 @@ class FigCanvasPoint extends HTMLElement {
     const hitArea = this.#angleHandle.querySelector(".fig-handle-hit-area");
     if (!hitArea) return;
     hitArea.style.cursor = this.#rotateCursorSvg(this.#angle);
+  }
+
+  #pointPointLineDeg() {
+    return (Math.atan2(this.#y2 - this.#y, this.#x2 - this.#x) * 180) / Math.PI;
+  }
+
+  #syncPointPointCursors() {
+    if (!this.#hasSecondPoint) return;
+    const deg = this.#pointPointLineDeg();
+    const setHitCursor = (handle, rotateDeg) => {
+      if (!handle) return;
+      const hitArea = handle.querySelector(".fig-handle-hit-area");
+      if (hitArea) hitArea.style.cursor = this.#rotateCursorSvg(rotateDeg);
+    };
+    setHitCursor(this.#pointHandle, deg + 180);
+    setHitCursor(this.#secondHandle, deg);
   }
 
   #syncPositions() {
@@ -13687,13 +13771,19 @@ class FigCanvasPoint extends HTMLElement {
       }
     }
 
-    if (this.#angleSvg && this.#hasAngle) {
+    if (this.#angleSvg && this.#hasLine) {
       const cx = (this.#x / 100) * rect.width;
       const cy = (this.#y / 100) * rect.height;
-      const r = this.#resolveRadius(rect.width);
-      const angleRad = (this.#angle * Math.PI) / 180;
-      const ax = cx + r * Math.cos(angleRad);
-      const ay = cy + r * Math.sin(angleRad);
+      let lx2, ly2;
+      if (this.#hasSecondPoint) {
+        lx2 = (this.#x2 / 100) * rect.width;
+        ly2 = (this.#y2 / 100) * rect.height;
+      } else {
+        const r = this.#resolveRadius(rect.width);
+        const angleRad = (this.#angle * Math.PI) / 180;
+        lx2 = cx + r * Math.cos(angleRad);
+        ly2 = cy + r * Math.sin(angleRad);
+      }
 
       const svg = this.#angleSvg;
       svg.style.width = `${rect.width}px`;
@@ -13705,8 +13795,8 @@ class FigCanvasPoint extends HTMLElement {
       if (line) {
         line.setAttribute("x1", String(cx));
         line.setAttribute("y1", String(cy));
-        line.setAttribute("x2", String(ax));
-        line.setAttribute("y2", String(ay));
+        line.setAttribute("x2", String(lx2));
+        line.setAttribute("y2", String(ly2));
       }
     }
 
@@ -13726,7 +13816,15 @@ class FigCanvasPoint extends HTMLElement {
       }
     }
 
+    if (this.#secondHandle && this.#hasSecondPoint) {
+      this.#secondHandle.setAttribute("value", `${this.#x2}% ${this.#y2}%`);
+      if (this.#secondTooltip) {
+        this.#secondTooltip.setAttribute("text", this.#secondTipText);
+      }
+    }
+
     this.#syncAngleCursor();
+    this.#syncPointPointCursors();
   }
 
   #emitInput() {
@@ -13746,6 +13844,9 @@ class FigCanvasPoint extends HTMLElement {
 
     this.#pointHandle.addEventListener("input", (e) => {
       e.stopPropagation();
+      if (!this.#isDragging && this.#hasSecondPoint) {
+        this.#prevBodyCursor = document.body.style.cursor;
+      }
       this.#isDragging = true;
       const px = e.detail?.px ?? this.#x / 100;
       const py = e.detail?.py ?? this.#y / 100;
@@ -13757,6 +13858,9 @@ class FigCanvasPoint extends HTMLElement {
         this.#pointTooltip.showPopup?.();
       }
       this.#syncPositions();
+      if (this.#hasSecondPoint) {
+        document.body.style.cursor = this.#resizeCursorSvg(this.#pointPointLineDeg());
+      }
       this.#emitInput();
     });
 
@@ -13767,6 +13871,9 @@ class FigCanvasPoint extends HTMLElement {
       this.#x = Math.round(Math.max(0, Math.min(100, px * 100)));
       this.#y = Math.round(Math.max(0, Math.min(100, py * 100)));
       if (this.#pointTooltip) this.#pointTooltip.removeAttribute("show");
+      if (this.#hasSecondPoint) {
+        document.body.style.cursor = this.#prevBodyCursor ?? "";
+      }
       this.#syncPositions();
       this.#syncValueAttribute();
       this.#emitChange();
@@ -13777,7 +13884,7 @@ class FigCanvasPoint extends HTMLElement {
       this.#angleHandle.addEventListener("input", (e) => {
         e.stopPropagation();
         this.#isAngleDragging = true;
-        this.classList.add("fig-canvas-point-ring-active");
+        this.classList.add("fig-canvas-control-ring-active");
         const container = this.#container;
         if (!container) return;
         const rect = container.getBoundingClientRect();
@@ -13826,7 +13933,7 @@ class FigCanvasPoint extends HTMLElement {
 
       this.#angleHandle.addEventListener("change", (e) => {
         e.stopPropagation();
-        this.classList.remove("fig-canvas-point-ring-active");
+        this.classList.remove("fig-canvas-control-ring-active");
         if (this.#angleTooltip) this.#angleTooltip.removeAttribute("show");
         this.#syncPositions();
         this.#syncValueAttribute();
@@ -13840,7 +13947,7 @@ class FigCanvasPoint extends HTMLElement {
         if (!origEvent) return;
         origEvent.preventDefault();
         this.#isAngleDragging = true;
-        this.classList.add("fig-canvas-point-ring-active");
+        this.classList.add("fig-canvas-control-ring-active");
         const container = this.#container;
         if (!container) return;
 
@@ -13873,7 +13980,7 @@ class FigCanvasPoint extends HTMLElement {
 
         const onUp = () => {
           this.#isAngleDragging = false;
-          this.classList.remove("fig-canvas-point-ring-active");
+          this.classList.remove("fig-canvas-control-ring-active");
           document.body.style.cursor = prevBodyCursor;
           if (this.#angleTooltip) this.#angleTooltip.removeAttribute("show");
           this.#syncValueAttribute();
@@ -13886,6 +13993,116 @@ class FigCanvasPoint extends HTMLElement {
         window.addEventListener("pointerup", onUp);
       });
     }
+
+    if (this.#secondHandle) {
+      this.#secondHandle.addEventListener("input", (e) => {
+        e.stopPropagation();
+        if (!this.#isSecondDragging) {
+          this.#prevBodyCursor = document.body.style.cursor;
+        }
+        this.#isSecondDragging = true;
+        const px = e.detail?.px ?? this.#x2 / 100;
+        const py = e.detail?.py ?? this.#y2 / 100;
+        this.#x2 = Math.round(Math.max(0, Math.min(100, px * 100)));
+        this.#y2 = Math.round(Math.max(0, Math.min(100, py * 100)));
+        if (this.#secondTooltip) {
+          this.#secondTooltip.setAttribute("text", this.#secondTipText);
+          this.#secondTooltip.setAttribute("show", "true");
+          this.#secondTooltip.showPopup?.();
+        }
+        this.#syncPositions();
+        document.body.style.cursor = this.#resizeCursorSvg(this.#pointPointLineDeg());
+        this.#emitInput();
+      });
+
+      this.#secondHandle.addEventListener("change", (e) => {
+        e.stopPropagation();
+        document.body.style.cursor = this.#prevBodyCursor ?? "";
+        if (this.#secondTooltip) this.#secondTooltip.removeAttribute("show");
+        this.#syncPositions();
+        this.#syncValueAttribute();
+        this.#emitChange();
+        requestAnimationFrame(() => { this.#isSecondDragging = false; });
+      });
+
+      this.#setupPointPointHitArea(this.#pointHandle, true);
+      this.#setupPointPointHitArea(this.#secondHandle, false);
+    }
+  }
+
+  #setupPointPointHitArea(handle, isFirst) {
+    if (!handle) return;
+    handle.addEventListener("hitareadown", (e) => {
+      e.stopPropagation();
+      const origEvent = e.detail?.originalEvent;
+      if (!origEvent) return;
+      origEvent.preventDefault();
+      this.#isDragging = true;
+      const container = this.#container;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+
+      const pivotX = isFirst ? this.#x2 : this.#x;
+      const pivotY = isFirst ? this.#y2 : this.#y;
+      const movingX = isFirst ? this.#x : this.#x2;
+      const movingY = isFirst ? this.#y : this.#y2;
+      const pcx = (pivotX / 100) * rect.width;
+      const pcy = (pivotY / 100) * rect.height;
+      const mcx = (movingX / 100) * rect.width;
+      const mcy = (movingY / 100) * rect.height;
+      const fixedLen = Math.sqrt((mcx - pcx) ** 2 + (mcy - pcy) ** 2);
+
+      const tooltip = isFirst ? this.#pointTooltip : this.#secondTooltip;
+      if (tooltip) {
+        tooltip.setAttribute("show", "true");
+        tooltip.showPopup?.();
+      }
+
+      const prevBodyCursor = document.body.style.cursor;
+      const initDeg = this.#pointPointLineDeg();
+      document.body.style.cursor = this.#rotateCursorSvg(isFirst ? initDeg + 180 : initDeg);
+
+      const onMove = (ev) => {
+        const r = container.getBoundingClientRect();
+        const px = (pivotX / 100) * r.width;
+        const py = (pivotY / 100) * r.height;
+        const dx = ev.clientX - r.left - px;
+        const dy = ev.clientY - r.top - py;
+        let angle = Math.atan2(dy, dx);
+        if (this.#shouldSnap(ev.shiftKey)) {
+          const snapDeg = Math.round((angle * 180) / Math.PI / 15) * 15;
+          angle = (snapDeg * Math.PI) / 180;
+        }
+        const nx = px + fixedLen * Math.cos(angle);
+        const ny = py + fixedLen * Math.sin(angle);
+        const newPctX = Math.round(Math.max(0, Math.min(100, (nx / r.width) * 100)));
+        const newPctY = Math.round(Math.max(0, Math.min(100, (ny / r.height) * 100)));
+        if (isFirst) {
+          this.#x = newPctX;
+          this.#y = newPctY;
+        } else {
+          this.#x2 = newPctX;
+          this.#y2 = newPctY;
+        }
+        this.#syncPositions();
+        const curDeg = this.#pointPointLineDeg();
+        document.body.style.cursor = this.#rotateCursorSvg(isFirst ? curDeg + 180 : curDeg);
+        this.#emitInput();
+      };
+
+      const onUp = () => {
+        this.#isDragging = false;
+        document.body.style.cursor = prevBodyCursor;
+        if (tooltip) tooltip.removeAttribute("show");
+        this.#syncValueAttribute();
+        this.#emitChange();
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
   }
 
   #setupRadiusDrag(circle) {
@@ -13905,7 +14122,7 @@ class FigCanvasPoint extends HTMLElement {
       e.preventDefault();
       e.stopPropagation();
       this.#isRadiusDragging = true;
-      this.classList.add("fig-canvas-point-ring-active");
+      this.classList.add("fig-canvas-control-ring-active");
       const container = this.#container;
       if (!container) return;
 
@@ -13951,7 +14168,7 @@ class FigCanvasPoint extends HTMLElement {
 
       const onUp = () => {
         this.#isRadiusDragging = false;
-        this.classList.remove("fig-canvas-point-ring-active");
+        this.classList.remove("fig-canvas-control-ring-active");
         circle.style.pointerEvents = "";
         document.body.style.cursor = prevBodyCursor;
         if (this.#radiusTooltip) this.#radiusTooltip.removeAttribute("show");
@@ -13975,7 +14192,7 @@ class FigCanvasPoint extends HTMLElement {
     }
   }
 }
-customElements.define("fig-canvas-point", FigCanvasPoint);
+customElements.define("fig-canvas-control", FigCanvasControl);
 
 /* Handle */
 class FigHandle extends HTMLElement {

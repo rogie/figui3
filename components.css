@@ -4978,63 +4978,63 @@ fig-color-tip {
   }
 }
 
-/* Canvas Point */
-fig-canvas-point {
+/* Canvas Control */
+fig-canvas-control {
   display: contents;
-  --fig-canvas-point-line-stroke: rgba(255, 255, 255, 0.5);
-  --fig-canvas-point-line-stroke-hover: var(--figma-color-bg-brand);
-  --fig-canvas-point-line-stroke-active: var(--figma-color-bg-brand);
-  --fig-canvas-point-line-stroke-width: 1.5px;
+  --fig-canvas-control-line-stroke: rgba(255, 255, 255, 0.5);
+  --fig-canvas-control-line-stroke-hover: var(--figma-color-bg-brand);
+  --fig-canvas-control-line-stroke-active: var(--figma-color-bg-brand);
+  --fig-canvas-control-line-stroke-width: 1.5px;
 
   & > fig-handle,
   & > fig-tooltip:has(fig-handle:not([size="small"])) {
     z-index: 1;
   }
 
-  .fig-canvas-point-radius {
+  .fig-canvas-control-radius {
     position: absolute;
     pointer-events: none;
     overflow: visible;
 
     circle {
       fill: none;
-      stroke: var(--fig-canvas-point-line-stroke);
-      stroke-width: var(--fig-canvas-point-line-stroke-width);
+      stroke: var(--fig-canvas-control-line-stroke);
+      stroke-width: var(--fig-canvas-control-line-stroke-width);
       paint-order: stroke fill;
       filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3))
         drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.12));
     }
 
-    .fig-canvas-point-radius-hit {
+    .fig-canvas-control-radius-hit {
       stroke: transparent;
       stroke-width: 12px;
       pointer-events: stroke;
       filter: none;
 
       &:hover ~ circle {
-        stroke: var(--fig-canvas-point-line-stroke-hover);
+        stroke: var(--fig-canvas-control-line-stroke-hover);
       }
     }
   }
 
-  &:has(.fig-canvas-point-radius-hit:hover) .fig-canvas-point-angle-line,
-  &.fig-canvas-point-ring-active .fig-canvas-point-angle-line {
-    stroke: var(--fig-canvas-point-line-stroke-active);
+  &:has(.fig-canvas-control-radius-hit:hover) .fig-canvas-control-angle-line,
+  &.fig-canvas-control-ring-active .fig-canvas-control-angle-line {
+    stroke: var(--fig-canvas-control-line-stroke-active);
   }
 
-  &.fig-canvas-point-ring-active
-    .fig-canvas-point-radius
-    circle:not(.fig-canvas-point-radius-hit) {
-    stroke: var(--fig-canvas-point-line-stroke-active);
+  &.fig-canvas-control-ring-active
+    .fig-canvas-control-radius
+    circle:not(.fig-canvas-control-radius-hit) {
+    stroke: var(--fig-canvas-control-line-stroke-active);
   }
 
-  .fig-canvas-point-angle-svg {
+  .fig-canvas-control-angle-svg {
     pointer-events: none;
   }
 
-  .fig-canvas-point-angle-line {
-    stroke: var(--fig-canvas-point-line-stroke);
-    stroke-width: var(--fig-canvas-point-line-stroke-width);
+  .fig-canvas-control-angle-line {
+    stroke: var(--fig-canvas-control-line-stroke);
+    stroke-width: var(--fig-canvas-control-line-stroke-width);
     paint-order: stroke fill;
     filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3))
       drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.12));

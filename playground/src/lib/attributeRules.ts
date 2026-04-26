@@ -486,11 +486,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
   },
-  "fig-canvas-point": {
+  "fig-canvas-control": {
     type: {
       label: "Type",
       type: "enum",
-      options: ["point", "color", "point-radius", "point-radius-angle"],
+      options: ["point", "color", "point-radius", "point-radius-angle", "point-point"],
     },
     name: { label: "Name", type: "string" },
     tooltips: {

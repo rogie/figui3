@@ -2,20 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.19.0]
+
+### Added
+
+- `fig-canvas-control` `type="point-point"` — two full-size handles connected by a styled line, with angle and length inferred from the endpoints. Value shape: `{ x, y, x2, y2 }`.
+- `fig-canvas-control` `name` attribute supports comma-separated labels (e.g. `"Start, End"`) for dual-handle types.
+- `fig-canvas-control` point-point handles support direct drag (dynamic directional resize cursor) and rotation via hit area (dragging from hit area rotates around the opposite handle at fixed distance, with rotate cursor and 15-degree snapping).
+
+### Changed
+
+- **BREAKING:** Renamed `fig-canvas-point` to `fig-canvas-control` (and class `FigCanvasPoint` to `FigCanvasControl`).
+
 ## [3.18.0]
 
 ### Added
 
-- `fig-canvas-point` component — a spatial control for interactive point, radius, and angle editing on a user-provided canvas surface. Supports `type` variants: default (point only), `color` (color handle), `point-radius` (resizable circle), and `point-radius-angle` (circle + rotatable angle handle). Value is a JSON object (`{ x, y, radius?, angle? }`). Includes `name`, `tooltips`, `disabled`, `snapping`, `drag-surface`, and `color` attributes.
+- `fig-canvas-control` component — a spatial control for interactive point, radius, and angle editing on a user-provided canvas surface. Supports `type` variants: default (point only), `color` (color handle), `point-radius` (resizable circle), and `point-radius-angle` (circle + rotatable angle handle). Value is a JSON object (`{ x, y, radius?, angle? }`). Includes `name`, `tooltips`, `disabled`, `snapping`, `drag-surface`, and `color` attributes.
 - `fig-handle` `hit-area` attribute — expands the interactive zone around a handle without changing its visual size. Accepts a unitless px padding value, optionally with `circle` keyword (e.g., `hit-area="16"`, `hit-area="16 circle"`).
 - `fig-handle` `hit-area-mode` attribute — controls hit area behavior: `"handle"` (default) proxies interactions to the handle, `"delegate"` emits a `hitareadown` CustomEvent for parent components to define custom behavior.
 - `--fig-handle-hit-area-opacity` CSS custom property for debugging hit area bounds (red overlay, default `0`).
-- `fig-canvas-point` dynamic cursors — radius ring shows a directional resize cursor that rotates to point radially from center on hover and during drag; angle handle hit area shows a rotating cursor reflecting the current angle.
-- `fig-canvas-point` brand color highlight — radius ring, angle line, and angle handle turn `--figma-color-bg-brand` on hover and during drag.
-- `fig-canvas-point` radius ring hit area — invisible 12px-wide stroke for forgiving drag interaction without changing visual size.
-- Playground `/propkit` canvas controls: four `fig-canvas-point` examples (Point, Color, Point + Radius, Point + Radius + Angle) replacing the old standalone Point example.
+- `fig-canvas-control` dynamic cursors — radius ring shows a directional resize cursor that rotates to point radially from center on hover and during drag; angle handle hit area shows a rotating cursor reflecting the current angle.
+- `fig-canvas-control` brand color highlight — radius ring, angle line, and angle handle turn `--figma-color-bg-brand` on hover and during drag.
+- `fig-canvas-control` radius ring hit area — invisible 12px-wide stroke for forgiving drag interaction without changing visual size.
+- Playground `/propkit` canvas controls: four `fig-canvas-control` examples (Point, Color, Point + Radius, Point + Radius + Angle) replacing the old standalone Point example.
 - Playground `fig-handle` hit area controls: size slider, shape segmented control, mode segmented control, and debug opacity slider.
-- `fig-canvas-point` and `fig-handle` hit area documented in README.
+- `fig-canvas-control` and `fig-handle` hit area documented in README.
 
 ### Changed
 
