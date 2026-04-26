@@ -82,6 +82,7 @@ Minimal example:
 | [Easing Curve](#easing-curve) | `<fig-easing-curve>` | Bezier/spring curve editor |
 | [3D Rotate](#3d-rotate) | `<fig-3d-rotate>` | 3D cube rotation control |
 | [Handle](#handle) | `<fig-handle>` | Draggable handle on a surface |
+| [Canvas Point](#canvas-point) | `<fig-canvas-point>` | Point with optional radius & angle |
 | [Dialog](#dialog) | `<fig-dialog>` | Modal/non-modal dialog |
 | [Popup](#popup) | `<fig-popup>` | Anchored floating surface |
 | [Toast](#toast) | `<fig-toast>` | Toast notification |
@@ -762,6 +763,8 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
 | `drag-snapping` | string | — | Snapping behavior |
 | `type` | string | — | `"color"` for color handle with `fig-color-tip` |
 | `control` | string | — | `"add"` or `"remove"` delegated to color tip |
+| `hit-area` | string | — | Expanded interaction zone (unitless px). `"8"`, `"8 12"` (v h), or `"8 circle"` |
+| `hit-area-mode` | string | `"handle"` | `"handle"` proxies to handle drag/select; `"delegate"` emits `hitareadown` event |
 
 **Events:**
 
@@ -771,10 +774,46 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
 | `change` | `{ x, y, px, py }` — on release |
 | `add` | — (when control="add") |
 | `remove` | — (when control="remove") |
+| `hitareadown` | `{ originalEvent }` — when `hit-area-mode="delegate"` and the hit area is clicked |
 
 ```html
 <div style="position: relative; width: 200px; height: 200px; background: #eee;">
   <fig-handle drag="true" value="50% 50%"></fig-handle>
+</div>
+```
+
+---
+
+#### Canvas Point
+
+`<fig-canvas-point>` — [demo](https://rog.ie/figui3/#canvas-point)
+
+A composite point control with optional radius circle and angle handle. Place inside a positioned container; the component uses `display: contents` and does not create its own box.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `type` | string | `"point"` | `"point"`, `"color"`, `"point-radius"`, `"point-radius-angle"` |
+| `value` | JSON string | — | `{ "x": 50, "y": 50, "radius"?: 30, "angle"?: 45 }` — radius accepts unitless (px) or `"25%"` |
+| `color` | string | — | Passthrough color for `type="color"` handle |
+| `tooltips` | string | `"true"` | Show value tooltips on interaction |
+| `disabled` | boolean | `false` | Disable all interaction |
+| `drag-surface` | string | `"parent"` | Forwarded to inner `fig-handle`s |
+| `snapping` | string | `"false"` | `"false"`, `"true"`, `"modifier"` — applies to point, radius, and angle |
+
+**Events:**
+
+| Event | Detail |
+|---|---|
+| `input` | `{ x, y, radius?, angle? }` — while dragging |
+| `change` | `{ x, y, radius?, angle? }` — on release |
+
+```html
+<div style="position: relative; width: 200px; height: 200px; background: #eee;">
+  <fig-canvas-point
+    type="point-radius-angle"
+    value='{"x":50,"y":50,"radius":"25%","angle":45}'
+    snapping="modifier"
+  ></fig-canvas-point>
 </div>
 ```
 

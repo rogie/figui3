@@ -13343,6 +13343,640 @@ class FigChooser extends HTMLElement {
 }
 customElements.define("fig-chooser", FigChooser);
 
+/* Canvas Point */
+class FigCanvasPoint extends HTMLElement {
+  static observedAttributes = [
+    "type",
+    "value",
+    "color",
+    "name",
+    "tooltips",
+    "disabled",
+    "drag-surface",
+    "snapping",
+  ];
+
+  #x = 50;
+  #y = 50;
+  #radius = 0;
+  #radiusIsPercent = false;
+  #angle = 0;
+  #pointHandle = null;
+  #angleHandle = null;
+  #radiusSvg = null;
+  #angleSvg = null;
+  #pointTooltip = null;
+  #radiusTooltip = null;
+  #angleTooltip = null;
+  #isDragging = false;
+  #isRadiusDragging = false;
+  #isAngleDragging = false;
+
+  get #type() {
+    return this.getAttribute("type") || "point";
+  }
+
+  get #hasRadius() {
+    return this.#type === "point-radius" || this.#type === "point-radius-angle";
+  }
+
+  get #hasAngle() {
+    return this.#type === "point-radius-angle";
+  }
+
+  get #tooltipsEnabled() {
+    const v = this.getAttribute("tooltips");
+    return v === null || v !== "false";
+  }
+
+  get #snappingMode() {
+    const raw = this.getAttribute("snapping");
+    if (raw === null) return "false";
+    const n = raw.trim().toLowerCase();
+    if (n === "modifier") return "modifier";
+    if (n === "" || n === "true") return "true";
+    return "false";
+  }
+
+  #shouldSnap(shiftKey) {
+    const mode = this.#snappingMode;
+    if (mode === "true") return true;
+    if (mode === "modifier") return !!shiftKey;
+    return false;
+  }
+
+  get #pointTipText() {
+    const name = this.getAttribute("name");
+    if (name) return name;
+    return `${Math.round(this.#x)}%, ${Math.round(this.#y)}%`;
+  }
+
+  get #dragSurface() {
+    return this.getAttribute("drag-surface") || "parent";
+  }
+
+  get #container() {
+    const surface = this.#dragSurface;
+    if (surface === "parent") return this.parentElement;
+    return this.closest(surface);
+  }
+
+  get #handleDragSurface() {
+    const surface = this.#dragSurface;
+    if (surface === "parent") {
+      const container = this.parentElement;
+      if (container) {
+        container.setAttribute("data-fig-canvas-point-surface", "");
+        return "[data-fig-canvas-point-surface]";
+      }
+    }
+    return surface;
+  }
+
+  #resolveRadius(containerWidth) {
+    if (this.#radiusIsPercent) return (this.#radius / 100) * containerWidth;
+    return this.#radius;
+  }
+
+  #formatRadius() {
+    if (this.#radiusIsPercent) return `${Math.round(this.#radius)}%`;
+    return `${Math.round(this.#radius)}px`;
+  }
+
+  connectedCallback() {
+    this.#parseValue();
+    this.#render();
+  }
+
+  disconnectedCallback() {
+    this.#teardownRadiusDrag();
+  }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    if (oldVal === newVal) return;
+    if (name === "value" && !this.#isDragging && !this.#isRadiusDragging && !this.#isAngleDragging) {
+      this.#parseValue();
+      if (this.#pointHandle) this.#syncPositions();
+      else this.#render();
+    }
+    if (name === "type") {
+      this.#parseValue();
+      this.#render();
+    }
+    if (name === "color" && this.#pointHandle) {
+      if (newVal) this.#pointHandle.setAttribute("color", newVal);
+      else this.#pointHandle.removeAttribute("color");
+    }
+    if (name === "disabled") {
+      this.#render();
+    }
+    if (name === "tooltips") {
+      this.#render();
+    }
+    if (name === "snapping" && this.#pointHandle) {
+      this.#pointHandle.setAttribute("drag-snapping", newVal || "false");
+    }
+    if (name === "name" && this.#pointTooltip) {
+      this.#pointTooltip.setAttribute("text", this.#pointTipText);
+    }
+  }
+
+  #parseValue() {
+    const raw = this.getAttribute("value");
+    if (!raw) return;
+    try {
+      const v = JSON.parse(raw);
+      if (typeof v.x === "number") this.#x = v.x;
+      if (typeof v.y === "number") this.#y = v.y;
+      if (v.radius !== undefined) {
+        const rs = String(v.radius);
+        if (rs.endsWith("%")) {
+          this.#radiusIsPercent = true;
+          this.#radius = parseFloat(rs);
+        } else {
+          this.#radiusIsPercent = false;
+          this.#radius = parseFloat(rs);
+        }
+        if (!Number.isFinite(this.#radius)) this.#radius = 0;
+      }
+      if (typeof v.angle === "number") this.#angle = v.angle;
+    } catch { /* ignore */ }
+  }
+
+  get value() {
+    const v = { x: this.#x, y: this.#y };
+    if (this.#hasRadius) {
+      v.radius = this.#radiusIsPercent ? `${this.#radius}%` : this.#radius;
+    }
+    if (this.#hasAngle) v.angle = this.#angle;
+    return v;
+  }
+
+  set value(val) {
+    if (typeof val === "object") {
+      this.setAttribute("value", JSON.stringify(val));
+    } else if (typeof val === "string") {
+      this.setAttribute("value", val);
+    }
+  }
+
+  #render() {
+    this.innerHTML = "";
+    this.#pointHandle = null;
+    this.#angleHandle = null;
+    this.#radiusSvg = null;
+    this.#angleSvg = null;
+    this.#pointTooltip = null;
+    this.#radiusTooltip = null;
+    this.#angleTooltip = null;
+
+    const disabled = this.hasAttribute("disabled");
+    const type = this.#type;
+    const tooltips = this.#tooltipsEnabled;
+
+    const handleSurface = this.#handleDragSurface;
+
+    const handle = document.createElement("fig-handle");
+    handle.setAttribute("drag", "true");
+    handle.setAttribute("drag-surface", handleSurface);
+    handle.setAttribute("drag-axes", "x,y");
+    handle.setAttribute("drag-snapping", this.#snappingMode);
+    handle.setAttribute("value", `${this.#x}% ${this.#y}%`);
+    if (disabled) handle.setAttribute("disabled", "");
+    if (type === "color") {
+      handle.setAttribute("type", "color");
+      const color = this.getAttribute("color");
+      if (color) handle.setAttribute("color", color);
+    }
+    this.#pointHandle = handle;
+
+    if (this.#hasRadius) {
+      this.#createRadiusSvg();
+    }
+
+    if (this.#hasAngle) {
+      this.#createAngleSvg();
+    }
+
+    if (tooltips) {
+      const tip = document.createElement("fig-tooltip");
+      tip.setAttribute("action", "manual");
+      tip.setAttribute("text", this.#pointTipText);
+      tip.appendChild(handle);
+      this.appendChild(tip);
+      this.#pointTooltip = tip;
+    } else {
+      this.appendChild(handle);
+    }
+
+    if (this.#hasAngle) {
+      this.#createAngleHandle(disabled, tooltips, handleSurface);
+    }
+
+    this.#setupEventListeners();
+    requestAnimationFrame(() => this.#syncPositions());
+  }
+
+  #createRadiusSvg() {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.classList.add("fig-canvas-point-radius");
+    svg.setAttribute("overflow", "visible");
+    const hitCircle = document.createElementNS(ns, "circle");
+    hitCircle.classList.add("fig-canvas-point-radius-hit");
+    svg.appendChild(hitCircle);
+    const circle = document.createElementNS(ns, "circle");
+    svg.appendChild(circle);
+    this.#radiusSvg = svg;
+
+    if (this.#tooltipsEnabled) {
+      const tip = document.createElement("fig-tooltip");
+      tip.setAttribute("action", "manual");
+      tip.setAttribute("text", this.#formatRadius());
+      tip.appendChild(svg);
+      this.appendChild(tip);
+      this.#radiusTooltip = tip;
+    } else {
+      this.appendChild(svg);
+    }
+
+    this.#setupRadiusDrag(hitCircle);
+  }
+
+  #createAngleSvg() {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.classList.add("fig-canvas-point-angle-svg");
+    svg.setAttribute("overflow", "visible");
+    svg.style.position = "absolute";
+    svg.style.pointerEvents = "none";
+    const line = document.createElementNS(ns, "line");
+    line.classList.add("fig-canvas-point-angle-line");
+    svg.appendChild(line);
+    this.#angleSvg = svg;
+    this.appendChild(svg);
+  }
+
+  #createAngleHandle(disabled, tooltips, handleSurface) {
+    const handle = document.createElement("fig-handle");
+    handle.setAttribute("drag", "true");
+    handle.setAttribute("drag-surface", handleSurface);
+    handle.setAttribute("drag-axes", "x,y");
+    handle.setAttribute("size", "small");
+    handle.setAttribute("hit-area", "12 circle");
+    handle.setAttribute("hit-area-mode", "delegate");
+    if (disabled) handle.setAttribute("disabled", "");
+    this.#angleHandle = handle;
+
+    if (tooltips) {
+      const tip = document.createElement("fig-tooltip");
+      tip.setAttribute("action", "manual");
+      tip.setAttribute("text", `${Math.round(this.#angle)}°`);
+      tip.appendChild(handle);
+      this.appendChild(tip);
+      this.#angleTooltip = tip;
+    } else {
+      this.appendChild(handle);
+    }
+  }
+
+  #resizeCursorSvg(deg) {
+    const r = Math.round(deg);
+    return `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='rotate(${r} 16 16)'%3E%3Cg filter='url(%23f)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.1212 16.9998L11.5607 17.4394C12.1465 18.0252 12.1464 18.975 11.5606 19.5607C10.9748 20.1465 10.0251 20.1465 9.4393 19.5606L6.4393 16.5604C5.85354 15.9746 5.85357 15.0249 6.43938 14.4391L9.43938 11.4393C10.0252 10.8535 10.9749 10.8536 11.5607 11.4394C12.1465 12.0252 12.1464 12.9749 11.5606 13.5607L11.1215 13.9998L20.8786 13.9999L20.4394 13.5607C19.8536 12.9749 19.8535 12.0252 20.4393 11.4394C21.0251 10.8536 21.9749 10.8536 22.5606 11.4394L25.5606 14.4393C25.842 14.7206 26 15.1021 26 15.4999C26 15.8978 25.842 16.2793 25.5607 16.5606L22.5607 19.5607C21.9749 20.1465 21.0251 20.1465 20.4393 19.5607C19.8536 18.9749 19.8535 18.0252 20.4393 17.4394L20.8788 16.9999L11.1212 16.9998Z' fill='white'/%3E%3C/g%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.8536 12.1465C11.0488 12.3417 11.0488 12.6583 10.8535 12.8536L8.70715 14.9998L23.2929 14.9999L21.1465 12.8536C20.9512 12.6583 20.9512 12.3417 21.1464 12.1465C21.3417 11.9512 21.6583 11.9512 21.8535 12.1465L24.8535 15.1464C24.9473 15.2402 25 15.3673 25 15.4999C25 15.6326 24.9473 15.7597 24.8536 15.8535L21.8536 18.8536C21.6583 19.0488 21.3417 19.0488 21.1465 18.8536C20.9512 18.6583 20.9512 18.3417 21.1464 18.1465L23.2929 15.9999L8.70705 15.9998L10.8536 18.1465C11.0488 18.3417 11.0488 18.6583 10.8535 18.8536C10.6583 19.0488 10.3417 19.0488 10.1464 18.8535L7.14643 15.8533C6.95118 15.658 6.95119 15.3415 7.14646 15.1462L10.1465 12.1464C10.3417 11.9512 10.6583 11.9512 10.8536 12.1465Z' fill='black'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='f' x='3' y='9' width='26' height='15' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='a'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='b'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0'/%3E%3CfeBlend in2='a' result='c'/%3E%3CfeBlend in='SourceGraphic' in2='c'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E") 16 16, nwse-resize`;
+  }
+
+  #rotateCursorSvg(deg) {
+    const r = Math.round(deg - 45);
+    return `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='rotate(${r} 16 16)'%3E%3Cg filter='url(%23f)'%3E%3Cpath d='M12.5607 22.4393L12.0216 21.9002C17.1558 21.2216 21.2216 17.1558 21.9002 12.0216L22.4393 12.5607C23.0251 13.1464 23.9749 13.1464 24.5607 12.5607C25.1464 11.9749 25.1464 11.0251 24.5607 10.4393L21.5607 7.43934C20.9749 6.85355 20.0251 6.85355 19.4393 7.43934L16.4393 10.4393C15.8536 11.0251 15.8536 11.9749 16.4393 12.5607C17.0251 13.1464 17.9749 13.1464 18.5607 12.5607L18.8056 12.3157C18.1013 15.5527 15.5527 18.1013 12.3157 18.8056L12.5607 18.5607C13.1464 17.9749 13.1464 17.0251 12.5607 16.4393C11.9749 15.8536 11.0251 15.8536 10.4393 16.4393L7.43934 19.4393C6.85356 20.0251 6.85356 20.9749 7.43934 21.5607L10.4393 24.5607C11.0251 25.1464 11.9749 25.1464 12.5607 24.5607C13.1464 23.9749 13.1464 23.0251 12.5607 22.4393Z' fill='white'/%3E%3C/g%3E%3Cpath d='M23.8536 11.8536C23.6583 12.0488 23.3417 12.0488 23.1464 11.8536L21 9.70711V10.5C21 16.299 16.299 21 10.5 21H9.70711L11.8536 23.1464C12.0488 23.3417 12.0488 23.6583 11.8536 23.8536C11.6583 24.0488 11.3417 24.0488 11.1464 23.8536L8.14645 20.8536C7.95119 20.6583 7.95119 20.3417 8.14645 20.1464L11.1464 17.1464C11.3417 16.9512 11.6583 16.9512 11.8536 17.1464C12.0488 17.3417 12.0488 17.6583 11.8536 17.8536L9.70711 20H10.5C15.7467 20 20 15.7467 20 10.5V9.70711L17.8536 11.8536C17.6583 12.0488 17.3417 12.0488 17.1464 11.8536C16.9512 11.6583 16.9512 11.3417 17.1464 11.1464L20.1464 8.14645C20.3417 7.95119 20.6583 7.95119 20.8536 8.14645L23.8536 11.1464C24.0488 11.3417 24.0488 11.6583 23.8536 11.8536Z' fill='black'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='f' x='4' y='5' width='24' height='24' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='a'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='b'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0'/%3E%3CfeBlend in2='a' result='c'/%3E%3CfeBlend in='SourceGraphic' in2='c'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E") 16 16, pointer`;
+  }
+
+  #syncAngleCursor() {
+    if (!this.#angleHandle || !this.#hasAngle) return;
+    const hitArea = this.#angleHandle.querySelector(".fig-handle-hit-area");
+    if (!hitArea) return;
+    hitArea.style.cursor = this.#rotateCursorSvg(this.#angle);
+  }
+
+  #syncPositions() {
+    const container = this.#container;
+    if (!container || !this.#pointHandle) return;
+    const rect = container.getBoundingClientRect();
+
+    this.#pointHandle.setAttribute("value", `${this.#x}% ${this.#y}%`);
+
+    if (this.#radiusSvg) {
+      const cx = (this.#x / 100) * rect.width;
+      const cy = (this.#y / 100) * rect.height;
+      const r = this.#resolveRadius(rect.width);
+      const svg = this.#radiusSvg;
+      const d = Math.max(r * 2, 1);
+      svg.style.position = "absolute";
+      svg.style.width = `${d}px`;
+      svg.style.height = `${d}px`;
+      svg.style.left = `${cx - r}px`;
+      svg.style.top = `${cy - r}px`;
+      svg.setAttribute("viewBox", `0 0 ${d} ${d}`);
+      const circles = svg.querySelectorAll("circle");
+      for (const c of circles) {
+        c.setAttribute("cx", String(r));
+        c.setAttribute("cy", String(r));
+        c.setAttribute("r", String(Math.max(r - 1, 0)));
+      }
+      if (this.#radiusTooltip) {
+        this.#radiusTooltip.setAttribute("text", this.#formatRadius());
+      }
+    }
+
+    if (this.#angleSvg && this.#hasAngle) {
+      const cx = (this.#x / 100) * rect.width;
+      const cy = (this.#y / 100) * rect.height;
+      const r = this.#resolveRadius(rect.width);
+      const angleRad = (this.#angle * Math.PI) / 180;
+      const ax = cx + r * Math.cos(angleRad);
+      const ay = cy + r * Math.sin(angleRad);
+
+      const svg = this.#angleSvg;
+      svg.style.width = `${rect.width}px`;
+      svg.style.height = `${rect.height}px`;
+      svg.style.left = "0";
+      svg.style.top = "0";
+      svg.setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`);
+      const line = svg.querySelector("line");
+      if (line) {
+        line.setAttribute("x1", String(cx));
+        line.setAttribute("y1", String(cy));
+        line.setAttribute("x2", String(ax));
+        line.setAttribute("y2", String(ay));
+      }
+    }
+
+    if (this.#angleHandle && this.#hasAngle) {
+      const cx = (this.#x / 100) * rect.width;
+      const cy = (this.#y / 100) * rect.height;
+      const r = this.#resolveRadius(rect.width);
+      const angleRad = (this.#angle * Math.PI) / 180;
+      const ax = cx + r * Math.cos(angleRad);
+      const ay = cy + r * Math.sin(angleRad);
+      const pxPct = rect.width > 0 ? (ax / rect.width) * 100 : 0;
+      const pyPct = rect.height > 0 ? (ay / rect.height) * 100 : 0;
+      this.#angleHandle.setAttribute("value", `${pxPct}% ${pyPct}%`);
+
+      if (this.#angleTooltip) {
+        this.#angleTooltip.setAttribute("text", `${Math.round(this.#angle)}°`);
+      }
+    }
+
+    this.#syncAngleCursor();
+  }
+
+  #emitInput() {
+    this.dispatchEvent(new CustomEvent("input", { bubbles: true, detail: this.value }));
+  }
+
+  #emitChange() {
+    this.dispatchEvent(new CustomEvent("change", { bubbles: true, detail: this.value }));
+  }
+
+  #syncValueAttribute() {
+    this.setAttribute("value", JSON.stringify(this.value));
+  }
+
+  #setupEventListeners() {
+    if (!this.#pointHandle) return;
+
+    this.#pointHandle.addEventListener("input", (e) => {
+      e.stopPropagation();
+      this.#isDragging = true;
+      const px = e.detail?.px ?? this.#x / 100;
+      const py = e.detail?.py ?? this.#y / 100;
+      this.#x = Math.round(Math.max(0, Math.min(100, px * 100)));
+      this.#y = Math.round(Math.max(0, Math.min(100, py * 100)));
+      if (this.#pointTooltip) {
+        this.#pointTooltip.setAttribute("text", this.#pointTipText);
+        this.#pointTooltip.setAttribute("show", "true");
+        this.#pointTooltip.showPopup?.();
+      }
+      this.#syncPositions();
+      this.#emitInput();
+    });
+
+    this.#pointHandle.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const px = e.detail?.px ?? this.#x / 100;
+      const py = e.detail?.py ?? this.#y / 100;
+      this.#x = Math.round(Math.max(0, Math.min(100, px * 100)));
+      this.#y = Math.round(Math.max(0, Math.min(100, py * 100)));
+      if (this.#pointTooltip) this.#pointTooltip.removeAttribute("show");
+      this.#syncPositions();
+      this.#syncValueAttribute();
+      this.#emitChange();
+      requestAnimationFrame(() => { this.#isDragging = false; });
+    });
+
+    if (this.#angleHandle) {
+      this.#angleHandle.addEventListener("input", (e) => {
+        e.stopPropagation();
+        this.#isAngleDragging = true;
+        this.classList.add("fig-canvas-point-ring-active");
+        const container = this.#container;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const cx = (this.#x / 100) * rect.width;
+        const cy = (this.#y / 100) * rect.height;
+        const hx = e.detail?.x ?? 0;
+        const hy = e.detail?.y ?? 0;
+        const hw = this.#angleHandle.offsetWidth / 2;
+        const hh = this.#angleHandle.offsetHeight / 2;
+        const dx = (hx + hw) - cx;
+        const dy = (hy + hh) - cy;
+        let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+        if (this.#shouldSnap(e.detail?.shiftKey)) {
+          angle = Math.round(angle / 15) * 15;
+        }
+        this.#angle = angle;
+
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (this.#shouldSnap(e.detail?.shiftKey)) {
+          const step = this.#radiusIsPercent ? 5 : 10;
+          if (this.#radiusIsPercent) {
+            let pct = (dist / rect.width) * 100;
+            pct = Math.round(pct / step) * step;
+            dist = (pct / 100) * rect.width;
+          } else {
+            dist = Math.round(dist / step) * step;
+          }
+        }
+        if (this.#radiusIsPercent) {
+          this.#radius = Math.max(0, (dist / rect.width) * 100);
+        } else {
+          this.#radius = Math.max(0, dist);
+        }
+
+        this.#syncPositions();
+        if (this.#angleTooltip) {
+          this.#angleTooltip.setAttribute("text", `${Math.round(this.#angle)}°`);
+          this.#angleTooltip.setAttribute("show", "true");
+          this.#angleTooltip.showPopup?.();
+        }
+        if (this.#radiusTooltip) {
+          this.#radiusTooltip.setAttribute("text", this.#formatRadius());
+        }
+        this.#emitInput();
+      });
+
+      this.#angleHandle.addEventListener("change", (e) => {
+        e.stopPropagation();
+        this.classList.remove("fig-canvas-point-ring-active");
+        if (this.#angleTooltip) this.#angleTooltip.removeAttribute("show");
+        this.#syncPositions();
+        this.#syncValueAttribute();
+        this.#emitChange();
+        requestAnimationFrame(() => { this.#isAngleDragging = false; });
+      });
+
+      this.#angleHandle.addEventListener("hitareadown", (e) => {
+        e.stopPropagation();
+        const origEvent = e.detail?.originalEvent;
+        if (!origEvent) return;
+        origEvent.preventDefault();
+        this.#isAngleDragging = true;
+        this.classList.add("fig-canvas-point-ring-active");
+        const container = this.#container;
+        if (!container) return;
+
+        if (this.#angleTooltip) {
+          this.#angleTooltip.setAttribute("show", "true");
+          this.#angleTooltip.showPopup?.();
+        }
+
+        const prevBodyCursor = document.body.style.cursor;
+        document.body.style.cursor = this.#rotateCursorSvg(this.#angle);
+
+        const onMove = (ev) => {
+          const rect = container.getBoundingClientRect();
+          const cx = (this.#x / 100) * rect.width;
+          const cy = (this.#y / 100) * rect.height;
+          const dx = ev.clientX - rect.left - cx;
+          const dy = ev.clientY - rect.top - cy;
+          let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+          if (this.#shouldSnap(ev.shiftKey)) {
+            angle = Math.round(angle / 15) * 15;
+          }
+          this.#angle = angle;
+          this.#syncPositions();
+          document.body.style.cursor = this.#rotateCursorSvg(this.#angle);
+          if (this.#angleTooltip) {
+            this.#angleTooltip.setAttribute("text", `${Math.round(this.#angle)}°`);
+          }
+          this.#emitInput();
+        };
+
+        const onUp = () => {
+          this.#isAngleDragging = false;
+          this.classList.remove("fig-canvas-point-ring-active");
+          document.body.style.cursor = prevBodyCursor;
+          if (this.#angleTooltip) this.#angleTooltip.removeAttribute("show");
+          this.#syncValueAttribute();
+          this.#emitChange();
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+        };
+
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+      });
+    }
+  }
+
+  #setupRadiusDrag(circle) {
+    if (!circle) return;
+    circle.addEventListener("pointermove", (e) => {
+      if (this.#isRadiusDragging) return;
+      const container = this.#container;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const cx = (this.#x / 100) * rect.width;
+      const cy = (this.#y / 100) * rect.height;
+      const deg = (Math.atan2(e.clientY - rect.top - cy, e.clientX - rect.left - cx) * 180) / Math.PI;
+      circle.style.cursor = this.#resizeCursorSvg(deg);
+    });
+    const onDown = (e) => {
+      if (this.hasAttribute("disabled")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.#isRadiusDragging = true;
+      this.classList.add("fig-canvas-point-ring-active");
+      const container = this.#container;
+      if (!container) return;
+
+      if (this.#radiusTooltip) {
+        this.#radiusTooltip.setAttribute("show", "true");
+        this.#radiusTooltip.showPopup?.();
+      }
+
+      const prevBodyCursor = document.body.style.cursor;
+      circle.style.pointerEvents = "none";
+      const rect0 = container.getBoundingClientRect();
+      const cx0 = (this.#x / 100) * rect0.width;
+      const cy0 = (this.#y / 100) * rect0.height;
+      const initDeg = (Math.atan2(e.clientY - rect0.top - cy0, e.clientX - rect0.left - cx0) * 180) / Math.PI;
+      document.body.style.cursor = this.#resizeCursorSvg(initDeg);
+
+      const onMove = (ev) => {
+        const rect = container.getBoundingClientRect();
+        const cx = (this.#x / 100) * rect.width;
+        const cy = (this.#y / 100) * rect.height;
+        const dx = ev.clientX - rect.left - cx;
+        const dy = ev.clientY - rect.top - cy;
+        document.body.style.cursor = this.#resizeCursorSvg((Math.atan2(dy, dx) * 180) / Math.PI);
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (this.#shouldSnap(ev.shiftKey)) {
+          const step = this.#radiusIsPercent ? 5 : 10;
+          if (this.#radiusIsPercent) {
+            let pct = (dist / rect.width) * 100;
+            pct = Math.round(pct / step) * step;
+            dist = (pct / 100) * rect.width;
+          } else {
+            dist = Math.round(dist / step) * step;
+          }
+        }
+        if (this.#radiusIsPercent) {
+          this.#radius = Math.max(0, (dist / rect.width) * 100);
+        } else {
+          this.#radius = Math.max(0, dist);
+        }
+        this.#syncPositions();
+        this.#emitInput();
+      };
+
+      const onUp = () => {
+        this.#isRadiusDragging = false;
+        this.classList.remove("fig-canvas-point-ring-active");
+        circle.style.pointerEvents = "";
+        document.body.style.cursor = prevBodyCursor;
+        if (this.#radiusTooltip) this.#radiusTooltip.removeAttribute("show");
+        this.#syncValueAttribute();
+        this.#emitChange();
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    };
+    circle.addEventListener("pointerdown", onDown);
+    this._radiusDragCleanup = () => circle.removeEventListener("pointerdown", onDown);
+  }
+
+  #teardownRadiusDrag() {
+    if (this._radiusDragCleanup) {
+      this._radiusDragCleanup();
+      this._radiusDragCleanup = null;
+    }
+  }
+}
+customElements.define("fig-canvas-point", FigCanvasPoint);
+
 /* Handle */
 class FigHandle extends HTMLElement {
   static observedAttributes = [
@@ -13356,6 +13990,8 @@ class FigHandle extends HTMLElement {
     "value",
     "type",
     "control",
+    "hit-area",
+    "hit-area-mode",
   ];
 
   #isDragging = false;
@@ -13363,6 +13999,7 @@ class FigHandle extends HTMLElement {
   #boundPointerDown = null;
   #applyingValue = false;
   #colorTip = null;
+  #hitAreaEl = null;
 
   get #controlMode() {
     return this.getAttribute("control") || null;
@@ -13500,8 +14137,70 @@ class FigHandle extends HTMLElement {
     this.#applyingValue = false;
   }
 
+  get #hitAreaMode() {
+    return this.getAttribute("hit-area-mode") || "handle";
+  }
+
+  #parseHitArea() {
+    const raw = this.getAttribute("hit-area");
+    if (!raw) return null;
+    const tokens = raw.trim().split(/\s+/);
+    let vPad = 0, hPad = 0, circle = false;
+    const nums = [];
+    for (const t of tokens) {
+      if (t === "circle") { circle = true; continue; }
+      const n = parseFloat(t);
+      if (Number.isFinite(n)) nums.push(n);
+    }
+    if (nums.length >= 2) { vPad = nums[0]; hPad = nums[1]; }
+    else if (nums.length === 1) { vPad = nums[0]; hPad = nums[0]; }
+    else return null;
+    return { vPad, hPad, circle };
+  }
+
+  #syncHitArea() {
+    const parsed = this.#parseHitArea();
+    if (!parsed) {
+      if (this.#hitAreaEl) {
+        this.#hitAreaEl.remove();
+        this.#hitAreaEl = null;
+      }
+      this.style.removeProperty("--fig-handle-hit-area-size");
+      return;
+    }
+    if (!this.#hitAreaEl) {
+      const el = document.createElement("div");
+      el.classList.add("fig-handle-hit-area");
+      el.addEventListener("pointerdown", (e) => this.#onHitAreaPointerDown(e));
+      this.prepend(el);
+      this.#hitAreaEl = el;
+    }
+    this.style.setProperty("--fig-handle-hit-area-size", String(parsed.hPad * 2));
+    if (parsed.circle) {
+      this.#hitAreaEl.style.borderRadius = "50%";
+    } else {
+      this.#hitAreaEl.style.borderRadius = "inherit";
+    }
+  }
+
+  #onHitAreaPointerDown(e) {
+    if (this.hasAttribute("disabled")) return;
+    if (e.target !== this.#hitAreaEl) return;
+    if (this.#hitAreaMode === "delegate") {
+      e.preventDefault();
+      e.stopPropagation();
+      this.dispatchEvent(new CustomEvent("hitareadown", {
+        bubbles: true,
+        detail: { originalEvent: e },
+      }));
+    } else {
+      this.#onPointerDown(e);
+    }
+  }
+
   connectedCallback() {
     this.#syncDrag();
+    this.#syncHitArea();
     this.addEventListener("click", this.#handleSelect);
     document.addEventListener("pointerdown", this.#handleDeselect);
     document.addEventListener("keydown", this.#handleKeyDown);
@@ -13513,6 +14212,7 @@ class FigHandle extends HTMLElement {
   disconnectedCallback() {
     this.#teardownDrag();
     this.#hideColorTip();
+    if (this.#hitAreaEl) { this.#hitAreaEl.remove(); this.#hitAreaEl = null; }
     this.removeEventListener("click", this.#handleSelect);
     document.removeEventListener("pointerdown", this.#handleDeselect);
     document.removeEventListener("keydown", this.#handleKeyDown);
@@ -13566,6 +14266,7 @@ class FigHandle extends HTMLElement {
       }
     }
     if (name === "drag") this.#syncDrag();
+    if (name === "hit-area") this.#syncHitArea();
     if (name === "value" && !this.#applyingValue && !this.#isDragging) {
       this.#applyValue(value);
     }
@@ -13608,13 +14309,19 @@ class FigHandle extends HTMLElement {
     const handleH = this.offsetHeight;
     let lastRect = null;
 
+    const handleRect = this.getBoundingClientRect();
+    const handleCenterX = handleRect.left + handleRect.width / 2;
+    const handleCenterY = handleRect.top + handleRect.height / 2;
+    const offsetX = e.clientX - handleCenterX;
+    const offsetY = e.clientY - handleCenterY;
+
     const clampAndApply = (clientX, clientY, shiftKey = false) => {
       const rect = container.getBoundingClientRect();
       lastRect = rect;
       const currentLeft = parseFloat(this.style.left) || 0;
       const currentTop = parseFloat(this.style.top) || 0;
-      const rawX = clientX - rect.left - handleW / 2;
-      const rawY = clientY - rect.top - handleH / 2;
+      const rawX = (clientX - offsetX) - rect.left - handleW / 2;
+      const rawY = (clientY - offsetY) - rect.top - handleH / 2;
 
       const clampedX = Math.max(
         -handleW / 2,

@@ -701,27 +701,45 @@ export const propkitSections: Section[] = [
     ],
   },
   {
-    id: "point",
-    name: "Point",
+    id: "canvas-point",
+    name: "Canvas Point",
     group: "Canvas controls",
     description:
-      "A point handle for marking positions on the canvas without drag or selection behavior.",
+      "A point control with optional radius circle and angle handle for spatial interactions on a canvas.",
     examples: [
       {
         id: "default",
-        name: "Default",
+        name: "Point",
         markup: `<div class="prop-panel">
-  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
-    <fig-handle drag drag-snapping="modifier" data-playground-hide-field data-playground-hide-attrs="control,size,color,selected,disabled,drag,drag-axes,drag-snapping"></fig-handle>
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
+    <fig-canvas-point name="Position" value='{"x":50,"y":50}' snapping="modifier" data-playground-hide-field></fig-canvas-point>
   </div>
 </div>`,
       },
       {
-        id: "color-point",
-        name: "Color point",
+        id: "color",
+        name: "Color",
         markup: `<div class="prop-panel">
-  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
-    <fig-handle drag drag-snapping="modifier" type="color" color="#FF00BF" data-playground-hide-field data-playground-hide-attrs="control,size,color,selected,disabled,drag,drag-axes,drag-snapping"></fig-handle>
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
+    <fig-canvas-point type="color" color="#FF00BF" name="Position" value='{"x":50,"y":50}' snapping="modifier" data-playground-hide-field></fig-canvas-point>
+  </div>
+</div>`,
+      },
+      {
+        id: "point-radius",
+        name: "Point + Radius",
+        markup: `<div class="prop-panel">
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
+    <fig-canvas-point type="point-radius" name="Position" value='{"x":50,"y":50,"radius":"25%"}' snapping="modifier" data-playground-hide-field></fig-canvas-point>
+  </div>
+</div>`,
+      },
+      {
+        id: "point-radius-angle",
+        name: "Point + Radius + Angle",
+        markup: `<div class="prop-panel">
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
+    <fig-canvas-point type="point-radius-angle" name="Position" value='{"x":50,"y":50,"radius":"25%","angle":45}' snapping="modifier" data-playground-hide-field></fig-canvas-point>
   </div>
 </div>`,
       },

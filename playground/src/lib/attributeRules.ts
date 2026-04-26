@@ -486,6 +486,26 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
   },
+  "fig-canvas-point": {
+    type: {
+      label: "Type",
+      type: "enum",
+      options: ["point", "color", "point-radius", "point-radius-angle"],
+    },
+    name: { label: "Name", type: "string" },
+    tooltips: {
+      label: "Tooltips",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    snapping: {
+      label: "Snapping",
+      type: "enum",
+      options: ["false", "modifier", "true"],
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
 };
 
 export function getRuleSetForTarget(

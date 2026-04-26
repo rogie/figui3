@@ -5,6 +5,12 @@ function normalizeMarkup(markup: string): string {
   return markup.trim();
 }
 
+function singleQuoteAttrs(html: string): string {
+  return html.replace(/(\s[a-z][a-z0-9-]*)="([^"]*&quot;[^"]*)"/gi, (_m, name, val) =>
+    `${name}='${val.replace(/&quot;/g, '"')}'`,
+  );
+}
+
 function dedentMarkup(markup: string): string {
   const lines = markup
     .split("\n")
@@ -53,7 +59,7 @@ function stripPreviewOnlyElements(markup: string): string {
   doc
     .querySelectorAll('[data-playground-ignore-controls="true"]')
     .forEach((el) => el.remove());
-  return doc.body.firstElementChild?.innerHTML?.trim() ?? markup;
+  return singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
 }
 
 function stripInternalFieldAttributes(markup: string): string {
@@ -63,7 +69,7 @@ function stripInternalFieldAttributes(markup: string): string {
   doc
     .querySelectorAll(`[${INTERNAL_FIELD_ONLY_CONTROLS_ATTR}]`)
     .forEach((el) => el.removeAttribute(INTERNAL_FIELD_ONLY_CONTROLS_ATTR));
-  return doc.body.firstElementChild?.innerHTML?.trim() ?? markup;
+  return singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
 }
 
 function unwrapPreviewWrappers(markup: string): string {
@@ -73,7 +79,7 @@ function unwrapPreviewWrappers(markup: string): string {
   doc.querySelectorAll('[data-playground-unwrap="true"]').forEach((el) => {
     el.replaceWith(...Array.from(el.childNodes));
   });
-  return doc.body.firstElementChild?.innerHTML?.trim() ?? markup;
+  return singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
 }
 
 function stripPlaygroundAttributes(markup: string): string {
@@ -87,7 +93,7 @@ function stripPlaygroundAttributes(markup: string): string {
       }
     }
   });
-  return doc.body.firstElementChild?.innerHTML?.trim() ?? markup;
+  return singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
 }
 
 export function getExampleSourceMarkup(markup: string): string {
@@ -194,7 +200,7 @@ export function mergePreviewOnlyElements(
     }
   }
 
-  return dedentMarkup(editedRoot.innerHTML);
+  return dedentMarkup(singleQuoteAttrs(editedRoot.innerHTML));
 }
 
 export function getInjectedExampleMarkup(markup: string): string {

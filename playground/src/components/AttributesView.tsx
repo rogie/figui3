@@ -8,9 +8,15 @@ import {
   applyFieldControlMutation,
   applyFieldLabelMutation,
   applyChooserMaxSizeMutation,
+  applyChooserPaletteLabelsMutation,
+  applyHandleHitAreaDebugMutation,
+  applyHandleHitAreaMutation,
   applyHeaderIconMutation,
   applyPrependSlotMutation,
   applyTooltipActionMutation,
+  getChooserPaletteLabelsEnabled,
+  getHandleHitArea,
+  getHandleHitAreaDebug,
   getHeaderIconEnabled,
   getPrependSlotMode,
   parseAttributeTargets,
@@ -174,6 +180,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-chooser": "Chooser",
     "fig-handle": "Handle",
     "fig-input-palette": "Palette",
+    "fig-canvas-point": "Canvas point",
   };
   return (
     titles[controlTag] ?? sentenceCase(toTitle(controlTag.replace(/^fig-/, "")))
@@ -1449,7 +1456,36 @@ export default function AttributesView({
                             />
                           </fig-field>
                         );
-                        return [field, overflowField, maxSizeField];
+                        const hasPalettes = markup.includes("fig-input-palette");
+                        if (!hasPalettes) {
+                          return [field, overflowField, maxSizeField];
+                        }
+
+                        const paletteLabelsEnabled = getChooserPaletteLabelsEnabled(markup, target.fieldIndex);
+                        const paletteLabelsField = (
+                          <fig-field
+                            direction="horizontal"
+                            columns="thirds"
+                            key={`control-chooser-palette-labels-${target.fieldIndex}`}
+                          >
+                            <label>Labels</label>
+                            <fig-switch
+                              checked={paletteLabelsEnabled ? "true" : undefined}
+                              onInput={(e: any) => {
+                                const customEvent = e as CustomEvent<{ checked?: boolean }>;
+                                const host = e.currentTarget as HTMLElement & { checked?: boolean };
+                                const next =
+                                  typeof customEvent.detail?.checked === "boolean"
+                                    ? customEvent.detail.checked
+                                    : Boolean(host.checked ?? host.hasAttribute("checked"));
+                                onMarkupChange(
+                                  applyChooserPaletteLabelsMutation(markup, target.fieldIndex, next),
+                                );
+                              }}
+                            />
+                          </fig-field>
+                        );
+                        return [field, overflowField, maxSizeField, paletteLabelsField];
                       }
 
                       if (
@@ -1484,6 +1520,138 @@ export default function AttributesView({
                           </fig-field>
                         );
                         return [field, colorPickerField];
+                      }
+
+                      if (
+                        target.controlTag === "fig-handle" &&
+                        entry.name === "drag-snapping"
+                      ) {
+                        const hitArea = getHandleHitArea(markup, target.fieldIndex);
+                        const hitAreaMode = (() => {
+                          const root = document.createElement("div");
+                          root.innerHTML = markup;
+                          const ctrl = root.querySelector("fig-handle");
+                          return ctrl?.getAttribute("hit-area-mode") || "handle";
+                        })();
+                        const hitAreaSeparator = (
+                          <hr
+                            key={`control-handle-hit-area-sep-${target.fieldIndex}`}
+                            style={{
+                              border: "none",
+                              borderTop: "1px solid var(--figma-color-border)",
+                              margin: "4px 0",
+                            }}
+                          />
+                        );
+                        const hitAreaLabel = (
+                          <fig-field
+                            direction="horizontal"
+                            key={`control-handle-hit-area-label-${target.fieldIndex}`}
+                          >
+                            <label style={{ fontWeight: 600, fontSize: "11px" }}>Hit area</label>
+                          </fig-field>
+                        );
+                        const hitAreaSizeField = (
+                          <fig-field
+                            direction="horizontal"
+                            columns="thirds"
+                            key={`control-handle-hit-area-size-${target.fieldIndex}`}
+                          >
+                            <label>Size</label>
+                            <fig-slider
+                              value={String(hitArea.size)}
+                              min="0"
+                              max="48"
+                              units="px"
+                              text="true"
+                              onInput={(e: any) => {
+                                const val = parseFloat(e.currentTarget?.value ?? "0") || 0;
+                                onMarkupChange(
+                                  applyHandleHitAreaMutation(markup, target.fieldIndex, val, hitArea.circle),
+                                );
+                              }}
+                            />
+                          </fig-field>
+                        );
+                        const hitAreaShapeField = (
+                          <fig-field
+                            direction="horizontal"
+                            columns="thirds"
+                            key={`control-handle-hit-area-shape-${target.fieldIndex}`}
+                          >
+                            <label>Shape</label>
+                            <fig-segmented-control full>
+                              {(["rect", "circle"] as const).map((shape) => (
+                                <fig-segment
+                                  key={shape}
+                                  value={shape}
+                                  selected={
+                                    (shape === "circle") === hitArea.circle ? "true" : undefined
+                                  }
+                                  onClick={() =>
+                                    onMarkupChange(
+                                      applyHandleHitAreaMutation(
+                                        markup,
+                                        target.fieldIndex,
+                                        hitArea.size || 8,
+                                        shape === "circle",
+                                      ),
+                                    )
+                                  }
+                                >
+                                  {shape.charAt(0).toUpperCase() + shape.slice(1)}
+                                </fig-segment>
+                              ))}
+                            </fig-segmented-control>
+                          </fig-field>
+                        );
+                        const hitAreaDebugValue = getHandleHitAreaDebug(markup, target.fieldIndex);
+                        const hitAreaDebugField = (
+                          <fig-field
+                            direction="horizontal"
+                            columns="thirds"
+                            key={`control-handle-hit-area-debug-${target.fieldIndex}`}
+                          >
+                            <label>Debug</label>
+                            <fig-slider
+                              value={String(Math.round(hitAreaDebugValue))}
+                              min="0"
+                              max="100"
+                              units="%"
+                              text="true"
+                              onInput={(e: any) => {
+                                const pct = parseFloat(e.currentTarget?.value ?? "0") || 0;
+                                onMarkupChange(
+                                  applyHandleHitAreaDebugMutation(markup, target.fieldIndex, pct),
+                                );
+                              }}
+                            />
+                          </fig-field>
+                        );
+                        const hitAreaModeField = (
+                          <fig-field
+                            direction="horizontal"
+                            columns="thirds"
+                            key={`control-handle-hit-area-mode-${target.fieldIndex}`}
+                          >
+                            <label>Mode</label>
+                            <fig-segmented-control full>
+                              {(["handle", "delegate"] as const).map((mode) => (
+                                <fig-segment
+                                  key={mode}
+                                  value={mode}
+                                  selected={hitAreaMode === mode ? "true" : undefined}
+                                  onClick={() => {
+                                    applyChange(target.fieldIndex, "control", "hit-area-mode", mode);
+                                  }}
+                                >
+                                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                                </fig-segment>
+                              ))}
+                            </fig-segmented-control>
+                          </fig-field>
+                        );
+                        return [field, hitAreaSeparator, hitAreaLabel, hitAreaModeField, hitAreaSizeField, hitAreaShapeField, hitAreaDebugField];
                       }
 
                       const prependBefore =

@@ -753,6 +753,42 @@ export function applyChooserContentMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export function getChooserPaletteLabelsEnabled(
+  markup: string,
+  fieldIndex: number,
+): boolean {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return false;
+  const firstChoice = element.querySelector("fig-choice");
+  if (!firstChoice) return false;
+  return firstChoice.querySelector("label") !== null;
+}
+
+export function applyChooserPaletteLabelsMutation(
+  markup: string,
+  fieldIndex: number,
+  enabled: boolean,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return markup;
+
+  const choices = element.querySelectorAll("fig-choice");
+  choices.forEach((choice) => {
+    const existing = choice.querySelector("label");
+    if (existing) existing.remove();
+    if (enabled) {
+      const val = choice.getAttribute("value") || "";
+      const label = root.ownerDocument.createElement("label");
+      label.textContent = val.charAt(0).toUpperCase() + val.slice(1);
+      choice.appendChild(label);
+    }
+  });
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export function applyChooserMaxSizeMutation(
   markup: string,
   fieldIndex: number,
@@ -794,4 +830,72 @@ export function applyFieldControlMutation(
   field.append(nextControl);
 
   return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
+export function getHandleHitAreaDebug(markup: string, fieldIndex: number): number {
+  const root = parseSourceRoot(markup);
+  const controls = getPrimaryControls(root);
+  const handle = controls[fieldIndex];
+  if (!handle) return 0;
+  const style = handle.getAttribute("style") || "";
+  const match = style.match(/--fig-handle-hit-area-opacity:\s*([0-9.]+)/);
+  return match ? parseFloat(match[1]) * 100 : 0;
+}
+
+export function applyHandleHitAreaDebugMutation(
+  markup: string,
+  fieldIndex: number,
+  percent: number,
+): string {
+  const root = parseSourceRoot(markup);
+  const controls = getPrimaryControls(root);
+  const handle = controls[fieldIndex];
+  if (!handle) return markup;
+  const existing = handle.getAttribute("style") || "";
+  const cleaned = existing.replace(/--fig-handle-hit-area-opacity:\s*[0-9.]+;?\s*/g, "").trim();
+  if (percent > 0) {
+    const val = (percent / 100).toFixed(2);
+    const next = cleaned ? `${cleaned}; --fig-handle-hit-area-opacity: ${val}` : `--fig-handle-hit-area-opacity: ${val}`;
+    handle.setAttribute("style", next);
+  } else {
+    if (cleaned) handle.setAttribute("style", cleaned);
+    else handle.removeAttribute("style");
+  }
+  return serializeSourceMarkup(root);
+}
+
+export function getHandleHitArea(markup: string, fieldIndex: number): { size: number; circle: boolean } {
+  const root = parseSourceRoot(markup);
+  const controls = getPrimaryControls(root);
+  const handle = controls[fieldIndex];
+  if (!handle) return { size: 0, circle: false };
+  const raw = handle.getAttribute("hit-area") || "";
+  const tokens = raw.trim().split(/\s+/);
+  let size = 0;
+  let circle = false;
+  for (const t of tokens) {
+    if (t === "circle") { circle = true; continue; }
+    const n = parseFloat(t);
+    if (Number.isFinite(n)) size = n;
+  }
+  return { size, circle };
+}
+
+export function applyHandleHitAreaMutation(
+  markup: string,
+  fieldIndex: number,
+  size: number,
+  circle: boolean,
+): string {
+  const root = parseSourceRoot(markup);
+  const controls = getPrimaryControls(root);
+  const handle = controls[fieldIndex];
+  if (!handle) return markup;
+  if (size <= 0) {
+    handle.removeAttribute("hit-area");
+  } else {
+    const val = circle ? `${size} circle` : `${size}`;
+    handle.setAttribute("hit-area", val);
+  }
+  return serializeSourceMarkup(root);
 }
