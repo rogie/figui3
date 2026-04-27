@@ -403,7 +403,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Amount</label>
-    <fig-input-number value="50" min="0" max="100" step="0.5"></fig-input-number>
+    <fig-input-number value="50" min="0" max="100" step="0.5" steppers></fig-input-number>
   </fig-field>
 </div>`,
       },
@@ -676,7 +676,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Description</label>
-    <fig-input-text multiline placeholder="Enter description…" full></fig-input-text>
+    <fig-input-text multiline autoresize placeholder="Enter description…" full></fig-input-text>
   </fig-field>
 </div>`,
       },

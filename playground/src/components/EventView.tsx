@@ -14,11 +14,15 @@ export default function EventView() {
     let rafId = 0;
     const handler = (e: Event) => {
       const ce = e as CustomEvent;
-      if (!ce.detail || typeof ce.detail !== "object") return;
+      if (ce.detail === undefined || ce.detail === null) return;
       const target = e.target as HTMLElement | null;
       if (!target?.tagName.toLowerCase().startsWith("fig-")) return;
+      const detail =
+        ce.detail !== null && typeof ce.detail === "object"
+          ? ce.detail
+          : { value: ce.detail };
       cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => setLatest(ce.detail));
+      rafId = requestAnimationFrame(() => setLatest(detail));
     };
 
     container.addEventListener("input", handler);

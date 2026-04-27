@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.20.2]
+
+### Fixed
+
+- `fig-input-color` events now include `{ value, hex, rgba }` detail.
+- `fig-input-angle` events now include `{ value, angle }` detail.
+- `fig-joystick` events now include `{ value, x, y }` detail.
+- `fig-input-text` and `fig-input-number` mouse-drag events now include `{ detail: value }` (previously missing).
+- Playground event output panel now handles primitive event details (strings, numbers) by wrapping them in `{ value }`.
+
+### Changed
+
+- Playground: number example defaults to steppers on, multiline text example defaults to autoresize on.
+- Playground: event output hidden for skeleton example (no interactive controls).
+
 ## [3.20.1]
 
 ### Fixed

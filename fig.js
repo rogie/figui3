@@ -3533,8 +3533,8 @@ class FigInputText extends HTMLElement {
     valueTransformed = this.#formatNumber(valueTransformed);
     this.value = value;
     this.input.value = valueTransformed;
-    this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
-    this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
+    this.dispatchEvent(new CustomEvent("input", { detail: this.value, bubbles: true }));
+    this.dispatchEvent(new CustomEvent("change", { detail: this.value, bubbles: true }));
   }
   #handleMouseDown(e) {
     if (this.type !== "number") return;
@@ -4023,8 +4023,8 @@ class FigInputNumber extends HTMLElement {
     value = this.#sanitizeInput(value, false);
     this.value = value;
     this.input.value = this.#formatWithUnit(this.value);
-    this.dispatchEvent(new CustomEvent("input", { bubbles: true }));
-    this.dispatchEvent(new CustomEvent("change", { bubbles: true }));
+    this.dispatchEvent(new CustomEvent("input", { detail: this.value, bubbles: true }));
+    this.dispatchEvent(new CustomEvent("change", { detail: this.value, bubbles: true }));
   }
 
   #handleMouseDown(e) {
@@ -4801,18 +4801,18 @@ class FigInputColor extends HTMLElement {
   }
 
   #emitInputEvent() {
-    const e = new CustomEvent("input", {
+    this.dispatchEvent(new CustomEvent("input", {
       bubbles: true,
       cancelable: true,
-    });
-    this.dispatchEvent(e);
+      detail: { value: this.value, hex: this.hex, rgba: this.rgba },
+    }));
   }
   #emitChangeEvent() {
-    const e = new CustomEvent("change", {
+    this.dispatchEvent(new CustomEvent("change", {
       bubbles: true,
       cancelable: true,
-    });
-    this.dispatchEvent(e);
+      detail: { value: this.value, hex: this.hex, rgba: this.rgba },
+    }));
   }
 
   static get observedAttributes() {
@@ -9615,6 +9615,7 @@ class FigInputJoystick extends HTMLElement {
       new CustomEvent("input", {
         bubbles: true,
         cancelable: true,
+        detail: { value: this.value, x: this.position.x, y: this.position.y },
       }),
     );
   }
@@ -9624,6 +9625,7 @@ class FigInputJoystick extends HTMLElement {
       new CustomEvent("change", {
         bubbles: true,
         cancelable: true,
+        detail: { value: this.value, x: this.position.x, y: this.position.y },
       }),
     );
   }
@@ -10086,6 +10088,7 @@ class FigInputAngle extends HTMLElement {
       new CustomEvent("input", {
         bubbles: true,
         cancelable: true,
+        detail: { value: this.value, angle: this.angle },
       }),
     );
   }
@@ -10095,6 +10098,7 @@ class FigInputAngle extends HTMLElement {
       new CustomEvent("change", {
         bubbles: true,
         cancelable: true,
+        detail: { value: this.value, angle: this.angle },
       }),
     );
   }
