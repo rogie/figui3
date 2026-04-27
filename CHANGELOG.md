@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.20.3]
+
+### Fixed
+
+- `fig-input-gradient` click-to-add no longer creates duplicate stops — the pointerdown handler now stops propagation to prevent the click handler from firing a second add.
+- `fig-input-gradient` click-to-add now correctly selects the new stop — the original pointerdown event no longer bubbles to document where the new handle's deselect listener would immediately undo the selection.
+- `fig-input-gradient` color-tip input/change events no longer trigger the drag tooltip — color events are now handled separately from position drag events on the track.
+
+### Changed
+
+- `fig-input-gradient` stop handles now have `hit-area="4"` for easier interaction.
+- `fig-input-gradient` ghost handle uses native `control="add"` and `type="color"` on `fig-handle` instead of manually creating a `fig-color-tip` element.
+- `fig-handle` `control` attribute and color tip rendering now works on gradient ghost handles (removed `#isGhost` exclusion).
+
 ## [3.20.2]
 
 ### Fixed

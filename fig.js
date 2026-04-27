@@ -6260,12 +6260,13 @@ class FigInputGradient extends HTMLElement {
     return this.#gradient.stops
       .map(
         (stop, i) =>
-          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color" color="${stop.color}" value="${stop.position}% 50%" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
+          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color" color="${stop.color}" value="${stop.position}% 50%" hit-area="4" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
       )
       .join("");
   }
 
   #ghostHandle = null;
+  #addedOnPointerDown = false;
 
   #render() {
     const disabled = this.hasAttribute("disabled");
@@ -6301,22 +6302,14 @@ class FigInputGradient extends HTMLElement {
 
     const ghost = document.createElement("fig-handle");
     ghost.classList.add("fig-input-gradient-ghost");
+    ghost.setAttribute("type", "color");
+    ghost.setAttribute("control", "add");
     ghost.style.position = "absolute";
     ghost.style.top = "50%";
     ghost.style.transform = "translate(-50%, -50%)";
     ghost.style.pointerEvents = "none";
     ghost.style.opacity = "0";
     ghost.style.transition = "opacity 0.15s";
-    ghost.style.overflow = "visible";
-
-    const tip = document.createElement("fig-color-tip");
-    tip.setAttribute("control", "add");
-    tip.style.position = "absolute";
-    tip.style.bottom = "calc(100% + 6px)";
-    tip.style.left = "50%";
-    tip.style.transform = "translateX(-50%)";
-    tip.style.zIndex = "10";
-    ghost.appendChild(tip);
 
     this.#track.appendChild(ghost);
     this.#ghostHandle = ghost;
@@ -6392,6 +6385,10 @@ class FigInputGradient extends HTMLElement {
   #onTrackClick = (e) => {
     if (!this.#track) return;
     if (this.#handleDragging) return;
+    if (this.#addedOnPointerDown) {
+      this.#addedOnPointerDown = false;
+      return;
+    }
     if (e.target.closest("fig-handle:not(.fig-input-gradient-ghost)")) {
       if (e.shiftKey) {
         const clickedHandle = e.target.closest("fig-handle");
@@ -6524,6 +6521,7 @@ class FigInputGradient extends HTMLElement {
       if (e.target.closest("fig-handle:not(.fig-input-gradient-ghost)")) return;
       if (e.button !== 0) return;
       e.preventDefault();
+      e.stopPropagation();
 
       const trackRect = this.#track.getBoundingClientRect();
       const pct = Math.max(0, Math.min(1, (e.clientX - trackRect.left) / trackRect.width));
@@ -6534,6 +6532,7 @@ class FigInputGradient extends HTMLElement {
       const newIndex = this.#gradient.stops.findIndex(
         (s) => s.position === position && s.color === color,
       );
+      this.#addedOnPointerDown = true;
       this.#syncHandles();
       this.#syncChit();
       this.#emitInput();
@@ -6544,6 +6543,9 @@ class FigInputGradient extends HTMLElement {
       );
       const newHandle = handles[newIndex];
       if (newHandle) {
+        this.#track.querySelectorAll("fig-handle:not(.fig-input-gradient-ghost)").forEach((h) => {
+          if (h !== newHandle) h.deselect();
+        });
         newHandle.select();
         newHandle.dispatchEvent(new PointerEvent("pointerdown", {
           bubbles: true,
@@ -6561,6 +6563,15 @@ class FigInputGradient extends HTMLElement {
       const handle = e.target.closest("fig-handle");
       if (!handle) return;
       e.stopPropagation();
+      if (e.detail?.color) {
+        const idx = parseInt(handle.dataset.stopIndex, 10);
+        if (!isNaN(idx) && this.#gradient.stops[idx]) {
+          this.#gradient.stops[idx].color = e.detail.color;
+          this.#syncChit();
+          this.#emitInput();
+        }
+        return;
+      }
       if (!this.#handleDragging) handle.style.zIndex = "5";
       this.#handleDragging = true;
       const idx = parseInt(handle.dataset.stopIndex, 10);
@@ -6603,6 +6614,15 @@ class FigInputGradient extends HTMLElement {
       const handle = e.target.closest("fig-handle");
       if (!handle) return;
       e.stopPropagation();
+      if (e.detail?.color) {
+        const idx = parseInt(handle.dataset.stopIndex, 10);
+        if (!isNaN(idx) && this.#gradient.stops[idx]) {
+          this.#gradient.stops[idx].color = e.detail.color;
+          this.#syncChit();
+          this.#emitChange();
+        }
+        return;
+      }
       handle.style.zIndex = "";
       const tooltip = handle.closest("fig-tooltip");
       if (tooltip) tooltip.removeAttribute("show");
@@ -14480,7 +14500,7 @@ class FigHandle extends HTMLElement {
     document.addEventListener("keydown", this.#handleKeyDown);
     const initial = this.getAttribute("value");
     if (initial) this.#applyValue(initial);
-    if (this.#hasControlMode && !this.#isGhost) this.#showColorTip();
+    if (this.#hasControlMode) this.#showColorTip();
   }
 
   disconnectedCallback() {
@@ -14544,7 +14564,7 @@ class FigHandle extends HTMLElement {
     if (name === "value" && !this.#applyingValue && !this.#isDragging) {
       this.#applyValue(value);
     }
-    if (name === "control" && !this.#isGhost) {
+    if (name === "control") {
       if (this.#hasControlMode) {
         this.#hideColorTip();
         this.#showColorTip();
