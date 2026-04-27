@@ -3656,6 +3656,10 @@ class FigInputText extends HTMLElement {
           this[name] = this.input[name] = newValue;
           this.input.setAttribute("name", newValue);
           break;
+        case "placeholder":
+          this.placeholder = newValue ?? "";
+          this.input.placeholder = this.placeholder;
+          break;
         default:
           this[name] = this.input[name] = newValue;
           break;
@@ -4140,6 +4144,10 @@ class FigInputNumber extends HTMLElement {
         case "name":
           this[name] = this.input[name] = newValue;
           this.input.setAttribute("name", newValue);
+          break;
+        case "placeholder":
+          this.placeholder = newValue ?? "";
+          this.input.placeholder = this.placeholder;
           break;
         default:
           this[name] = this.input[name] = newValue;

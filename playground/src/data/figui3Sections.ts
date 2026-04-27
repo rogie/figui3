@@ -270,7 +270,7 @@ export const figui3Sections: Section[] = [
         id: "multiline",
         name: "Multiline",
         markup: `<div class="prop-panel">
-  <fig-input-text multiline value="Multiline text here" placeholder="Type here..." data-playground-hide-attrs="prepend"></fig-input-text>
+  <fig-input-text multiline placeholder="Type here..." data-playground-hide-attrs="prepend"></fig-input-text>
 </div>`,
       },
     ],

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.20.1]
+
+### Fixed
+
+- `fig-input-text` and `fig-input-number` now correctly update the inner element's placeholder when the `placeholder` attribute changes, and no longer show literal `"null"` when the attribute is removed.
+
+### Changed
+
+- Multiline text input example in `/figui3` now starts empty with placeholder only.
+
 ## [3.20.0]
 
 ### Added
