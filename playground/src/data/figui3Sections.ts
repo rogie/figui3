@@ -323,10 +323,24 @@ export const figui3Sections: Section[] = [
     description: "Fill controls for solid, gradient, and image fills.",
     examples: [
       {
-        id: "default",
-        name: "Default",
+        id: "solid",
+        name: "Solid",
         markup: `<div class="prop-panel">
   <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "gradient",
+        name: "Gradient",
+        markup: `<div class="prop-panel">
+  <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":180,"stops":[{"color":"#667eea","position":0,"opacity":100},{"color":"#764ba2","position":100,"opacity":100}]}}'></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "image",
+        name: "Image",
+        markup: `<div class="prop-panel">
+  <fig-input-fill value='{"type":"image","image":{"url":"https://picsum.photos/id/10/200/200","scaleMode":"fill","scale":100}}'></fig-input-fill>
 </div>`,
       },
     ],

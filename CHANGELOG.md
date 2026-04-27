@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.21.0]
+
+### Added
+
+- `fig-input-gradient` `edit` attribute with three modes: `"true"` (default, full inline editing), `"false"` (display-only chit), and `"picker"` (opens fill picker dialog locked to gradient tab).
+- `fig-input-gradient` now supports color interpolation spaces — `#buildGradientCSS` includes the interpolation clause (`in oklab`, `in oklch shorter hue`, etc.) for correct gradient rendering.
+- `fig-input-gradient` color sampling (`#sampleGradientColor`) now uses the correct interpolation space and hue mode when adding stops, instead of basic sRGB canvas sampling.
+- Shared color math utilities: `figSampleGradientAt`, `figRGBToOklab`, `figOklabToRGB`, `figOklabToOklch`, `figOklchToOklab`, `figInterpolateHue` for accurate color interpolation across OKLab, OKLCH, and sRGB-linear spaces.
+- `fig-input-palette` `color-strip` toggle in playground attributes view.
+
+### Changed
+
+- Fill picker gradient tab now uses an embedded `fig-input-gradient edit="true" size="large"` for visual stop editing, replacing the static gradient bar div.
+- Fill picker gradient stops list updates in-place when stop count is unchanged, preventing flash/flicker during drag interactions.
+- `fig-fill-picker` `#buildGradientCSS` now defaults gradient stop opacity to 100 when undefined, preventing invisible gradients.
+- Playground gradient example in `/figui3` now includes `opacity` and `angle` in the gradient value for correct rendering.
+
 ## [3.20.3]
 
 ### Fixed

@@ -272,11 +272,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-palette": {
+    "color-strip": { label: "Color strip", type: "boolean", boolMode: "custom", trueValue: null, falseValue: "false", defaultChecked: true },
     add: { label: "Add", type: "boolean", boolMode: "string", defaultChecked: true },
     expanded: { label: "Expanded", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-gradient": {
+    edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-color": {

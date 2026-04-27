@@ -5053,6 +5053,136 @@ function gradientInterpolationClause(gradient) {
   return `in ${normalized.interpolationSpace}`;
 }
 
+function figHexToRGB(hex) {
+  const h = hex.replace(/^#/, "");
+  return {
+    r: parseInt(h.substring(0, 2), 16),
+    g: parseInt(h.substring(2, 4), 16),
+    b: parseInt(h.substring(4, 6), 16),
+  };
+}
+
+function figRGBToLinear(c) {
+  const s = c / 255;
+  return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+}
+
+function figLinearToSRGB(c) {
+  const v = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+  return Math.round(Math.max(0, Math.min(1, v)) * 255);
+}
+
+function figRGBToOklab(r, g, b) {
+  const lr = figRGBToLinear(r);
+  const lg = figRGBToLinear(g);
+  const lb = figRGBToLinear(b);
+  const l_ = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
+  const m_ = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
+  const s_ = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
+  return {
+    l: 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
+    a: 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
+    b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
+  };
+}
+
+function figOklabToRGB(L, a, b) {
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+  const l = l_ * l_ * l_;
+  const m = m_ * m_ * m_;
+  const s = s_ * s_ * s_;
+  return {
+    r: figLinearToSRGB(+4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+    g: figLinearToSRGB(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+    b: figLinearToSRGB(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+  };
+}
+
+function figOklabToOklch(L, a, b) {
+  return { l: L, c: Math.sqrt(a * a + b * b), h: (Math.atan2(b, a) * 180) / Math.PI };
+}
+
+function figOklchToOklab(l, c, h) {
+  const hRad = (h * Math.PI) / 180;
+  return { l, a: c * Math.cos(hRad), b: c * Math.sin(hRad) };
+}
+
+function figInterpolateHue(h1, h2, t, mode) {
+  let a = ((h1 % 360) + 360) % 360;
+  let b = ((h2 % 360) + 360) % 360;
+  let diff = b - a;
+  switch (mode) {
+    case "longer":
+      if (diff > 0 && diff < 180) diff -= 360;
+      else if (diff < 0 && diff > -180) diff += 360;
+      else if (diff === 0) diff = 0;
+      break;
+    case "increasing":
+      if (diff < 0) diff += 360;
+      break;
+    case "decreasing":
+      if (diff > 0) diff -= 360;
+      break;
+    default:
+      if (diff > 180) diff -= 360;
+      else if (diff < -180) diff += 360;
+      break;
+  }
+  return ((a + diff * t) % 360 + 360) % 360;
+}
+
+function figSampleGradientAt(stops, position, interpolationSpace, hueInterpolation) {
+  const sorted = [...stops].sort((a, b) => a.position - b.position);
+  const pos = position * 100;
+  if (sorted.length === 0) return "#888888";
+  if (pos <= sorted[0].position) return sorted[0].color;
+  if (pos >= sorted[sorted.length - 1].position) return sorted[sorted.length - 1].color;
+
+  let i = 0;
+  while (i < sorted.length - 1 && sorted[i + 1].position < pos) i++;
+  const s1 = sorted[i];
+  const s2 = sorted[i + 1];
+  const range = s2.position - s1.position;
+  const t = range > 0 ? (pos - s1.position) / range : 0;
+
+  const c1 = figHexToRGB(s1.color);
+  const c2 = figHexToRGB(s2.color);
+
+  let r, g, b;
+  const space = interpolationSpace || "oklab";
+
+  if (space === "srgb-linear") {
+    const lr1 = figRGBToLinear(c1.r), lg1 = figRGBToLinear(c1.g), lb1 = figRGBToLinear(c1.b);
+    const lr2 = figRGBToLinear(c2.r), lg2 = figRGBToLinear(c2.g), lb2 = figRGBToLinear(c2.b);
+    r = figLinearToSRGB(lr1 + (lr2 - lr1) * t);
+    g = figLinearToSRGB(lg1 + (lg2 - lg1) * t);
+    b = figLinearToSRGB(lb1 + (lb2 - lb1) * t);
+  } else if (space === "oklch") {
+    const lab1 = figRGBToOklab(c1.r, c1.g, c1.b);
+    const lab2 = figRGBToOklab(c2.r, c2.g, c2.b);
+    const lch1 = figOklabToOklch(lab1.l, lab1.a, lab1.b);
+    const lch2 = figOklabToOklch(lab2.l, lab2.a, lab2.b);
+    const L = lch1.l + (lch2.l - lch1.l) * t;
+    const C = lch1.c + (lch2.c - lch1.c) * t;
+    const H = figInterpolateHue(lch1.h, lch2.h, t, hueInterpolation || "shorter");
+    const lab = figOklchToOklab(L, C, H);
+    const rgb = figOklabToRGB(lab.l, lab.a, lab.b);
+    r = rgb.r; g = rgb.g; b = rgb.b;
+  } else {
+    const lab1 = figRGBToOklab(c1.r, c1.g, c1.b);
+    const lab2 = figRGBToOklab(c2.r, c2.g, c2.b);
+    const L = lab1.l + (lab2.l - lab1.l) * t;
+    const a = lab1.a + (lab2.a - lab1.a) * t;
+    const bv = lab1.b + (lab2.b - lab1.b) * t;
+    const rgb = figOklabToRGB(L, a, bv);
+    r = rgb.r; g = rgb.g; b = rgb.b;
+  }
+
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase();
+}
+
 function hslToP3(h, s, l) {
   const sRGB = hslToSRGB(h, s, l);
   return sRGB.map((c) => +(c / 255).toFixed(4));
@@ -6124,13 +6254,24 @@ class FigInputGradient extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled"];
+    return ["value", "disabled", "edit"];
+  }
+
+  get #editMode() {
+    const attr = this.getAttribute("edit");
+    if (attr === "false") return "false";
+    if (attr === "picker") return "picker";
+    return "true";
+  }
+
+  get #isEditable() {
+    return this.#editMode === "true";
   }
 
   connectedCallback() {
     this.#parseValue();
     this.#render();
-    document.addEventListener("keydown", this.#onKeyDown);
+    if (this.#isEditable) document.addEventListener("keydown", this.#onKeyDown);
   }
 
   disconnectedCallback() {
@@ -6252,7 +6393,8 @@ class FigInputGradient extends HTMLElement {
       (a, b) => a.position - b.position,
     );
     const stops = sorted.map((s) => `${s.color} ${s.position}%`).join(", ");
-    return `linear-gradient(${this.#gradient.angle}deg, ${stops})`;
+    const interp = gradientInterpolationClause(this.#gradient);
+    return `linear-gradient(${this.#gradient.angle}deg ${interp}, ${stops})`;
   }
 
   #buildStopHandles() {
@@ -6270,31 +6412,69 @@ class FigInputGradient extends HTMLElement {
 
   #render() {
     const disabled = this.hasAttribute("disabled");
+    const mode = this.#editMode;
+
+    if (mode === "picker") {
+      const experimental = this.getAttribute("experimental");
+      const expAttr = experimental ? ` experimental="${experimental}"` : "";
+      const gradientValue = JSON.stringify(this.value);
+      this.innerHTML = `
+        <fig-fill-picker mode="gradient"${expAttr} value='${gradientValue}'${disabled ? " disabled" : ""}>
+          <fig-chit size="medium" background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
+        </fig-fill-picker>`;
+      this.#chit = this.querySelector("fig-chit");
+      this.#track = null;
+      this.#setupPickerEvents();
+      return;
+    }
+
     this.innerHTML = `
       <fig-chit size="medium" background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
-      <div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>`;
+      ${mode === "true" ? `<div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>` : ""}`;
     this.#chit = this.querySelector("fig-chit");
     this.#track = this.querySelector(".fig-input-gradient-track");
-    this.#setupGhostHandle();
-    this.#setupEventListeners();
+
+    if (mode === "true") {
+      this.#setupGhostHandle();
+      this.#setupEventListeners();
+      requestAnimationFrame(() => this.#repositionHandles());
+    }
+  }
+
+  #setupPickerEvents() {
+    const picker = this.querySelector("fig-fill-picker");
+    if (!picker) return;
+    picker.anchorElement = this;
+
+    const syncFromPicker = (e) => {
+      e.stopPropagation();
+      const detail = e.detail;
+      if (!detail?.gradient) return;
+      this.#gradient = normalizeGradientConfig({
+        ...this.#gradient,
+        ...detail.gradient,
+      });
+      this.#syncChit();
+    };
+
+    picker.addEventListener("input", (e) => {
+      syncFromPicker(e);
+      this.#emitInput();
+    });
+
+    picker.addEventListener("change", (e) => {
+      syncFromPicker(e);
+      this.#emitChange();
+    });
   }
 
   #sampleGradientColor(position) {
-    const { ctx } = figGetSharedCanvas(256, 1);
-    ctx.clearRect(0, 0, 256, 1);
-    const grad = ctx.createLinearGradient(0, 0, 256, 0);
-    for (const stop of this.#gradient.stops) {
-      try {
-        grad.addColorStop(stop.position / 100, stop.color);
-      } catch {
-        /* skip invalid */
-      }
-    }
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 256, 1);
-    const px = Math.round(Math.max(0, Math.min(255, position * 255)));
-    const [r, g, b] = ctx.getImageData(px, 0, 1, 1).data;
-    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase();
+    return figSampleGradientAt(
+      this.#gradient.stops,
+      position,
+      this.#gradient.interpolationSpace,
+      this.#gradient.hueInterpolation,
+    );
   }
 
   #setupGhostHandle() {
@@ -6430,6 +6610,18 @@ class FigInputGradient extends HTMLElement {
     });
   };
 
+  #repositionHandles() {
+    if (!this.#track) return;
+    const stops = this.#gradient.stops;
+    this.#track
+      .querySelectorAll("fig-handle:not(.fig-input-gradient-ghost)")
+      .forEach((h, i) => {
+        if (i >= stops.length) return;
+        h.removeAttribute("value");
+        h.setAttribute("value", `${stops[i].position}% 50%`);
+      });
+  }
+
   #syncHandles() {
     if (!this.#track) return;
     const handles = this.#track.querySelectorAll(
@@ -6442,6 +6634,7 @@ class FigInputGradient extends HTMLElement {
       this.#track.innerHTML = this.#buildStopHandles();
       if (ghost) this.#track.appendChild(ghost);
       this.#reobserveHandleColors();
+      requestAnimationFrame(() => this.#repositionHandles());
       return;
     }
 
@@ -6719,6 +6912,14 @@ class FigInputGradient extends HTMLElement {
         break;
       case "disabled":
         this.#syncDisabled();
+        break;
+      case "edit":
+        this.#render();
+        if (this.#isEditable) {
+          document.addEventListener("keydown", this.#onKeyDown);
+        } else {
+          document.removeEventListener("keydown", this.#onKeyDown);
+        }
         break;
     }
   }
@@ -11522,8 +11723,7 @@ class FigFillPicker extends HTMLElement {
         </fig-tooltip>
       </fig-field>
       <fig-preview class="fig-fill-picker-gradient-preview">
-        <div class="fig-fill-picker-gradient-bar"></div>
-        <div class="fig-fill-picker-gradient-stops-handles"></div>
+        <fig-input-gradient class="fig-fill-picker-gradient-bar-input" edit="true" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
       </fig-preview>
       <fig-field class="fig-fill-picker-gradient-interpolation" direction="horizontal">
         <label>Mixing</label>
@@ -11654,6 +11854,30 @@ class FigFillPicker extends HTMLElement {
         this.#updateGradientUI();
         this.#emitInput();
       });
+
+    // Embedded gradient bar input
+    const gradientBarInput = container.querySelector(".fig-fill-picker-gradient-bar-input");
+    if (gradientBarInput) {
+      const syncFromBarInput = (e) => {
+        e.stopPropagation();
+        const detail = e.detail;
+        if (!detail?.gradient) return;
+        this.#gradient = normalizeGradientConfig({
+          ...this.#gradient,
+          ...detail.gradient,
+        });
+        this.#updateChit();
+        this.#updateGradientStopsList();
+      };
+      gradientBarInput.addEventListener("input", (e) => {
+        syncFromBarInput(e);
+        this.#emitInput();
+      });
+      gradientBarInput.addEventListener("change", (e) => {
+        syncFromBarInput(e);
+        this.#emitChange();
+      });
+    }
   }
 
   #updateGradientUI() {
@@ -11699,14 +11923,14 @@ class FigFillPicker extends HTMLElement {
   #updateGradientPreview() {
     if (!this.#dialog) return;
 
-    const preview = this.#dialog.querySelector(
-      ".fig-fill-picker-gradient-preview",
+    const barInput = this.#dialog.querySelector(
+      ".fig-fill-picker-gradient-bar-input",
     );
-    const bar = this.#dialog.querySelector(".fig-fill-picker-gradient-bar");
-    if (preview || bar) {
-      const css = this.#getGradientCSS();
-      if (bar) bar.style.background = css;
-      if (preview) preview.style.background = css;
+    if (barInput) {
+      barInput.setAttribute(
+        "value",
+        JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) }),
+      );
     }
 
     this.#updateChit();
@@ -11720,6 +11944,31 @@ class FigFillPicker extends HTMLElement {
     );
     if (!list) return;
 
+    const existingRows = list.querySelectorAll(
+      ".fig-fill-picker-gradient-stop-row",
+    );
+
+    if (existingRows.length === this.#gradient.stops.length) {
+      this.#gradient.stops.forEach((stop, index) => {
+        const row = existingRows[index];
+        row.dataset.index = index;
+        const posInput = row.querySelector(".fig-fill-picker-stop-position");
+        if (posInput) posInput.setAttribute("value", stop.position);
+        const colorInput = row.querySelector(".fig-fill-picker-stop-color");
+        if (colorInput) colorInput.setAttribute("value", stop.color);
+        const removeBtn = row.querySelector(".fig-fill-picker-stop-remove");
+        if (removeBtn) {
+          if (this.#gradient.stops.length <= 2) removeBtn.setAttribute("disabled", "");
+          else removeBtn.removeAttribute("disabled");
+        }
+      });
+      return;
+    }
+
+    this.#rebuildGradientStopsList(list);
+  }
+
+  #rebuildGradientStopsList(list) {
     list.innerHTML = this.#gradient.stops
       .map(
         (stop, index) => `
@@ -11740,7 +11989,6 @@ class FigFillPicker extends HTMLElement {
       )
       .join("");
 
-    // Setup event listeners for each stop
     list
       .querySelectorAll(".fig-fill-picker-gradient-stop-row")
       .forEach((row) => {
@@ -11798,9 +12046,10 @@ class FigFillPicker extends HTMLElement {
     const isP3 = this.#gamut === "display-p3";
     const stops = gradient.stops
       .map((s) => {
+        const alpha = (s.opacity ?? 100) / 100;
         const color = isP3
-          ? this.#hexToP3(s.color, s.opacity / 100)
-          : this.#hexToRGBA(s.color, s.opacity / 100);
+          ? this.#hexToP3(s.color, alpha)
+          : this.#hexToRGBA(s.color, alpha);
         return `${color} ${s.position}%`;
       })
       .join(", ");

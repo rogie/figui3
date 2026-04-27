@@ -3146,6 +3146,7 @@ fig-input-fill {
 }
 fig-input-gradient {
   --height: 1.5rem;
+  --chit-height: var(--height);
   position: relative;
   height: var(--height);
   width: 100%;
@@ -3157,12 +3158,34 @@ fig-input-gradient {
     outline: 1px solid var(--figma-color-border-selected) !important;
     outline-offset: -1px !important;
   }
-  & > fig-chit {
+
+  &[edit="false"] {
+    pointer-events: none;
+
+    &:focus,
+    &:active,
+    &:focus-within {
+      outline: none !important;
+    }
+  }
+
+  &[edit="picker"] {
+    & > fig-fill-picker {
+      display: contents;
+    }
+  }
+  & > fig-chit,
+  & > fig-fill-picker > fig-chit {
     --padding: 0;
     --width: 100%;
+    --height: var(--chit-height);
     flex: 1 1 auto;
     width: 100% !important;
     min-width: 0 !important;
+    min-height: var(--chit-height) !important;
+  }
+  &[size="large"] {
+    --height: 3rem;
   }
 
   .fig-input-gradient-track {
@@ -3194,7 +3217,7 @@ fig-input-palette {
     display: flex;
     flex-wrap: nowrap;
     gap: 0;
-    border-radius: var(--radius-medium);
+    border-radius: var(--radius-small);
     overflow: hidden;
     grid-area: inputs;
     min-width: 0;
@@ -3211,9 +3234,15 @@ fig-input-palette {
     border-radius: var(--radius-medium);
     background-color: var(--figma-color-bg-secondary);
     width: 100%;
+    gap: var(--spacer-1);
+    place-items: center;
 
     .palette-colors {
       display: flex;
+      --palette-colors-height: calc(1.5rem - var(--spacer-1));
+      height: var(--palette-colors-height);
+      margin-left: var(--spacer-1);
+
       background-color: var(--figma-color-bg-secondary);
       fig-input-color {
         width: 100%;
@@ -3223,10 +3252,11 @@ fig-input-palette {
         --padding: 0px;
         --border-radius: 0px;
         --width: 100%;
+        --height: var(--palette-colors-height);
+        --size: var(--palette-colors-height);
         flex: 1;
         min-width: 0;
         width: 100% !important;
-        height: var(--size);
         border-radius: 0 !important;
         input,
         &::before,
@@ -3246,6 +3276,11 @@ fig-input-palette {
     .palette-colors-expanded,
     .palette-colors-inline {
       grid-template-areas: "inputs inputs";
+    }
+  }
+  &[color-strip="false"] {
+    .palette-colors-inline {
+      display: none !important;
     }
   }
   .palette-colors-expanded {
@@ -4375,17 +4410,13 @@ fig-preview {
     }
   }
 
-  .fig-fill-picker-gradient-bar {
-    background: linear-gradient(90deg, #d9d9d9 0%, #737373 100%);
-  }
-
-  .fig-fill-picker-gradient-stops-handles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
+  .fig-fill-picker-gradient-preview {
+    display: block;
+    .fig-fill-picker-gradient-bar-input {
+      --width: 100%;
+      --height: 100%;
+      aspect-ratio: 1/1;
+    }
   }
 
   .fig-fill-picker-gradient-stops {
