@@ -233,8 +233,8 @@
   --handle-color: #fff;
   --bg-selected: #f5f5f5;
   --bg-selected-active: #e5f4ff;
-  --bg-tooltip: #1e1e1e;
-  --color-tooltip: #ffffff;
+  --bg-tooltip: light-dark(#ffffff, #1e1e1e);
+  --color-tooltip: var(--figma-color-text);
 
   /* Transparent Backgrounds - use light-dark() */
   --figma-color-bordertranslucent: light-dark(
@@ -2776,7 +2776,8 @@ fig-tooltip {
   inset: unset;
   display: inline-block;
   overflow: visible;
-  color: var(--color-tooltip);
+  color-scheme: dark;
+  color: var(--figma-color-text);
   background-color: var(--bg-tooltip);
   padding: var(--spacer-1) var(--spacer-2);
   line-height: 1rem !important;
@@ -2784,7 +2785,8 @@ fig-tooltip {
   border-radius: var(--radius-medium, 0.3125rem);
   max-width: 180px;
   width: max-content;
-  box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0.5px 0 0
+    light-dark(rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.06));
   filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
     drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13))
     drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
@@ -2814,12 +2816,30 @@ fig-tooltip {
     transform: translate(-50%);
   }
 
+  &[pointer="false"] {
+    &:after {
+      display: none !important;
+    }
+  }
+
   &[position="bottom"] {
     &:after {
       top: 0px;
       left: var(--beak-offset, 50%);
       transform: translate(-50%, -100%) scaleY(-1);
     }
+  }
+  &[theme="dark"] {
+    color-scheme: dark;
+  }
+
+  &[theme="light"] {
+    color-scheme: light;
+  }
+
+  &[theme="brand"] {
+    background-color: var(--figma-color-bg-brand);
+    color-scheme: dark;
   }
 }
 
@@ -4981,10 +5001,13 @@ fig-color-tip {
 /* Canvas Control */
 fig-canvas-control {
   display: contents;
-  --fig-canvas-control-line-stroke: rgba(255, 255, 255, 0.5);
+  --fig-canvas-control-line-stroke: light-dark(
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0.5)
+  );
   --fig-canvas-control-line-stroke-hover: var(--figma-color-bg-brand);
   --fig-canvas-control-line-stroke-active: var(--figma-color-bg-brand);
-  --fig-canvas-control-line-stroke-width: 1.5px;
+  --fig-canvas-control-line-stroke-width: 1.25px;
 
   & > fig-handle,
   & > fig-tooltip:has(fig-handle:not([size="small"])) {

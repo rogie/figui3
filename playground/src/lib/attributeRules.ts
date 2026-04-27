@@ -92,8 +92,21 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-tooltip": {
     text: { label: "Text", type: "string" },
     action: { label: "Action", type: "enum", options: ["hover", "click", "manual"] },
+    pointer: {
+      label: "Pointer",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: null,
+      falseValue: "false",
+      defaultChecked: true,
+    },
     show: { label: "Show", type: "boolean", boolMode: "custom", trueValue: "true", falseValue: null },
     delay: { label: "Delay", type: "number", min: 0, max: 5000, step: 50 },
+    theme: {
+      label: "Theme",
+      type: "enum",
+      options: ["", "dark", "light", "brand"],
+    },
   },
   "fig-dialog": {
     modal: { label: "Modal", type: "boolean", boolMode: "presence" },

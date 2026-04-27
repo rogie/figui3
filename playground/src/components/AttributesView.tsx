@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect, useRef } from "react";
+import { Fragment, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   applyAttributeMutation,
   applyButtonIconMutation,
@@ -85,10 +85,14 @@ function readBooleanValue(
   value: string | undefined,
   mode: BoolMode,
   defaultChecked = false,
+  falseValue?: string | null,
 ): boolean {
   if (value === undefined) return defaultChecked;
   if (mode === "presence") return true;
-  if (mode === "custom") return true;
+  if (mode === "custom") {
+    if (falseValue !== undefined && falseValue !== null && value === falseValue) return false;
+    return true;
+  }
   if (value === "") return true;
   return value?.toLowerCase() === "true";
 }
@@ -457,6 +461,7 @@ export default function AttributesView({
                           value,
                           mode,
                           rule.defaultChecked ?? false,
+                          rule.falseValue,
                         );
             return (
               <fig-switch
@@ -1190,7 +1195,7 @@ export default function AttributesView({
         };
 
         return (
-          <div key={target.fieldIndex}>
+          <Fragment key={target.fieldIndex}>
             {showFieldControls && target.controlTag !== "fig-field-slider" && !("data-playground-hide-field" in target.controlAttributes) && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
@@ -1715,7 +1720,7 @@ export default function AttributesView({
                 </section>
               </div>
             )}
-          </div>
+          </Fragment>
         );
       })}
     </>

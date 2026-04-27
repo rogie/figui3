@@ -400,6 +400,57 @@ code {
   gap: 2px;
 }
 
+.event-view-content {
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  gap: 0;
+  padding: 0;
+}
+
+.event-view-entry,
+.event-view-empty {
+  margin-bottom: var(--spacer-2-5);
+}
+.event-view-editor {
+  .cm-editor {
+    background-color: var(--figma-color-bg);
+  }
+}
+
+.event-view-type {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--figma-color-text-secondary);
+
+  &.event-view-type--change {
+    color: var(--figma-color-text-brand);
+  }
+}
+
+.event-view-detail {
+  margin: 0;
+  font-size: 11px;
+  font-family: var(--font-family-code, monospace);
+  line-height: 1.4;
+  color: var(--figma-color-text);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.event-clear-btn {
+  all: unset;
+  font-size: var(--font-size-small);
+  color: var(--figma-color-text-tertiary);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--figma-color-text);
+  }
+}
+
 .propkit-code-view-actions {
   display: flex;
   gap: var(--spacer-2);

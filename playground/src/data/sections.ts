@@ -694,7 +694,7 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
-    <fig-handle drag drag-snapping="modifier" type="color" color="#FF00BF"></fig-handle>
+    <fig-handle drag drag-snapping="modifier" type="color" color="#FF00BF" data-playground-hide-field></fig-handle>
   </div>
 </div>`,
       },
@@ -730,7 +730,7 @@ export const propkitSections: Section[] = [
         name: "Point + Radius",
         markup: `<div class="prop-panel">
   <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
-    <fig-canvas-control type="point-radius" name="Position" value='{"x":50,"y":50,"radius":"25%"}' snapping="modifier" data-playground-hide-field></fig-canvas-control>
+    <fig-canvas-control type="point-radius" name="Position" value='{"x":50,"y":50,"radius":60}' snapping="modifier" data-playground-hide-field></fig-canvas-control>
   </div>
 </div>`,
       },
@@ -739,7 +739,7 @@ export const propkitSections: Section[] = [
         name: "Point + Radius + Angle",
         markup: `<div class="prop-panel">
   <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
-    <fig-canvas-control type="point-radius-angle" name="Position" value='{"x":50,"y":50,"radius":"25%","angle":45}' snapping="modifier" data-playground-hide-field></fig-canvas-control>
+    <fig-canvas-control type="point-radius-angle" name="Position" value='{"x":50,"y":50,"radius":60,"angle":45}' snapping="modifier" data-playground-hide-field></fig-canvas-control>
   </div>
 </div>`,
       },

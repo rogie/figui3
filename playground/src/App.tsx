@@ -3,6 +3,7 @@ import Nav from "./components/Nav";
 import ExampleView from "./components/ExampleView";
 import AttributesView from "./components/AttributesView";
 import CodeView from "./components/CodeView";
+import EventView from "./components/EventView";
 import { useTheme } from "./hooks/useTheme";
 import { useNavigation } from "./hooks/useNavigation";
 import { getExampleSourceMarkup } from "./lib/exampleMarkup";
@@ -237,6 +238,9 @@ export default function App({ mode }: Props) {
           showFieldControls={mode !== "figui3" || activeSectionId === "field"}
           includeFullControl={mode === "figui3"}
         />
+        {mode === "propkit" && (
+          <EventView key={`${activeSectionId}/${activeExampleId}`} />
+        )}
       </aside>
     </>
   );

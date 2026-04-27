@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.20.0]
+
+### Added
+
+- `fig-tooltip` `theme` attribute — applies a color scheme to the tooltip popup (`"dark"`, `"light"`, or `"brand"`). Brand theme uses `--figma-color-bg-brand` background.
+- `fig-tooltip` `pointer` attribute — set `pointer="false"` to hide the tooltip arrow/caret.
+- `fig-handle` drag threshold — a 3px movement threshold before a drag begins, preventing accidental drags on click.
+- `fig-handle` color change events — color handle `input` and `change` events now bubble with `{ color }` detail, so parent components (like `fig-canvas-control`) can react to color edits.
+- `fig-canvas-control` color value — `value` getter now includes `color` for `type="color"` controls.
+- `fig-canvas-control` brand-themed tooltips with hidden pointers for a cleaner look during drag.
+- `fig-canvas-control` tooltip text now prefixed with labels ("Radius", "Angle") for clarity.
+- Playground event output panel — `/propkit` examples now show a live event output view in the attributes sidebar.
+- Playground `fig-tooltip` attribute controls for `theme` and `pointer`.
+
+### Changed
+
+- `fig-tooltip` default colors now use `light-dark()` for proper light/dark mode support and `color-scheme: dark` base.
+- `fig-tooltip` box-shadow inner highlight adapts to light/dark mode via `light-dark()`.
+- `fig-canvas-control` line stroke color uses `light-dark()` for better light-mode visibility.
+- `fig-canvas-control` line stroke width reduced from 1.5px to 1.25px.
+- `fig-canvas-control` handle positioning switched from `value` attribute to direct `left`/`top` pixel placement for smoother updates.
+- `fig-canvas-control` dynamic cursor updates throttled to avoid redundant re-renders (only updates when rounded degree changes).
+- `fig-canvas-control` point-radius default changed from percentage to pixel radius in playground examples.
+- `readBooleanValue` in playground now respects `falseValue` for custom bool modes.
+- Playground uses `Fragment` instead of wrapper `div` around attribute panels.
+
 ## [3.19.0]
 
 ### Added
