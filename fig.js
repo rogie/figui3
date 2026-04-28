@@ -5389,14 +5389,15 @@ class FigInputFill extends HTMLElement {
           ${opacityHtml(Math.round(this.#solid.alpha * 100))}`;
         break;
 
-      case "gradient":
+      case "gradient": {
         const gradientLabel =
           this.#gradient.type.charAt(0).toUpperCase() +
           this.#gradient.type.slice(1);
         controlsHtml = `
           <label class="fig-input-fill-label">${gradientLabel}</label>
-          ${opacityHtml(this.#gradient.stops[0]?.opacity ?? 100)}`;
+          ${opacityHtml(100)}`;
         break;
+      }
 
       case "image":
         controlsHtml = `
@@ -5529,10 +5530,6 @@ class FigInputFill extends HTMLElement {
               this.#solid.alpha = alpha;
               break;
             case "gradient":
-              // Apply to all stops
-              this.#gradient.stops.forEach((stop) => {
-                stop.opacity = opacity;
-              });
               break;
             case "image":
               this.#image.opacity = alpha;
@@ -5575,12 +5572,6 @@ class FigInputFill extends HTMLElement {
         }
         break;
       case "gradient": {
-        if (this.#opacityInput) {
-          this.#opacityInput.setAttribute(
-            "value",
-            this.#gradient.stops[0]?.opacity ?? 100,
-          );
-        }
         const label = this.querySelector(".fig-input-fill-label");
         if (label) {
           const newLabel =
@@ -5657,7 +5648,7 @@ class FigInputFill extends HTMLElement {
             </fig-input-number>
           </fig-tooltip>`;
         break;
-      case "gradient":
+      case "gradient": {
         const gradientLabel =
           this.#gradient.type.charAt(0).toUpperCase() +
           this.#gradient.type.slice(1);
@@ -5669,12 +5660,13 @@ class FigInputFill extends HTMLElement {
               placeholder="##" 
               min="0"
               max="100"
-              value="${this.#gradient.stops[0]?.opacity ?? 100}"
+              value="100"
               units="%"
               ${disabled ? "disabled" : ""}>
             </fig-input-number>
           </fig-tooltip>`;
         break;
+      }
       case "image":
         controlsHtml = `
           <label class="fig-input-fill-label">Image</label>
@@ -5768,9 +5760,6 @@ class FigInputFill extends HTMLElement {
               this.#solid.alpha = alpha;
               break;
             case "gradient":
-              this.#gradient.stops.forEach((stop) => {
-                stop.opacity = opacity;
-              });
               break;
             case "image":
               this.#image.opacity = alpha;
@@ -6392,9 +6381,23 @@ class FigInputGradient extends HTMLElement {
     const sorted = [...this.#gradient.stops].sort(
       (a, b) => a.position - b.position,
     );
-    const stops = sorted.map((s) => `${s.color} ${s.position}%`).join(", ");
+    const stops = sorted
+      .map((s) => {
+        const alpha = (s.opacity ?? 100) / 100;
+        if (alpha >= 1) return `${s.color} ${s.position}%`;
+        const { r, g, b } = figHexToRGB(s.color);
+        return `rgba(${r}, ${g}, ${b}, ${alpha}) ${s.position}%`;
+      })
+      .join(", ");
     const interp = gradientInterpolationClause(this.#gradient);
     return `linear-gradient(${this.#gradient.angle}deg ${interp}, ${stops})`;
+  }
+
+  #stopColorCSS(stop) {
+    const alpha = (stop.opacity ?? 100) / 100;
+    if (alpha >= 1) return stop.color;
+    const { r, g, b } = figHexToRGB(stop.color);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   #buildStopHandles() {
@@ -6402,7 +6405,7 @@ class FigInputGradient extends HTMLElement {
     return this.#gradient.stops
       .map(
         (stop, i) =>
-          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color" color="${stop.color}" value="${stop.position}% 50%" hit-area="4" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
+          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color" color="${this.#stopColorCSS(stop)}" value="${stop.position}% 50%" hit-area="4" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
       )
       .join("");
   }
@@ -6643,7 +6646,7 @@ class FigInputGradient extends HTMLElement {
       const stop = stops[i];
       h.dataset.stopIndex = i;
       h.setAttribute("value", `${stop.position}% 50%`);
-      h.setAttribute("color", stop.color);
+      h.setAttribute("color", this.#stopColorCSS(stop));
       const tip = h.closest("fig-tooltip");
       if (tip) tip.setAttribute("text", `${Math.round(stop.position)}%`);
     }
@@ -6760,6 +6763,10 @@ class FigInputGradient extends HTMLElement {
         const idx = parseInt(handle.dataset.stopIndex, 10);
         if (!isNaN(idx) && this.#gradient.stops[idx]) {
           this.#gradient.stops[idx].color = e.detail.color;
+          if (e.detail.opacity !== undefined) {
+            this.#gradient.stops[idx].opacity = e.detail.opacity;
+          }
+          handle.setAttribute("color", this.#stopColorCSS(this.#gradient.stops[idx]));
           this.#syncChit();
           this.#emitInput();
         }
@@ -6811,6 +6818,10 @@ class FigInputGradient extends HTMLElement {
         const idx = parseInt(handle.dataset.stopIndex, 10);
         if (!isNaN(idx) && this.#gradient.stops[idx]) {
           this.#gradient.stops[idx].color = e.detail.color;
+          if (e.detail.opacity !== undefined) {
+            this.#gradient.stops[idx].opacity = e.detail.opacity;
+          }
+          handle.setAttribute("color", this.#stopColorCSS(this.#gradient.stops[idx]));
           this.#syncChit();
           this.#emitChange();
         }
@@ -6852,7 +6863,8 @@ class FigInputGradient extends HTMLElement {
         const idx = parseInt(handle.dataset.stopIndex, 10);
         if (isNaN(idx) || !this.#gradient.stops[idx]) continue;
         const newColor = handle.getAttribute("color");
-        if (newColor && newColor !== this.#gradient.stops[idx].color) {
+        if (!newColor || !newColor.startsWith("#")) continue;
+        if (newColor !== this.#gradient.stops[idx].color) {
           this.#gradient.stops[idx].color = newColor;
           this.#syncChit();
           this.#emitInput();
@@ -7578,8 +7590,8 @@ class FigChit extends HTMLElement {
       }
     }
 
-    // Always update CSS variable with raw value so vars stay reactive
-    this.style.setProperty("--chit-background", rawBg);
+    const isImage = /^(linear-gradient|radial-gradient|conic-gradient|repeating-|url)\s*\(/i.test(rawBg);
+    this.style.setProperty("--chit-background", isImage ? rawBg : `linear-gradient(${rawBg}, ${rawBg})`);
   }
 
   #handleInput(e) {
@@ -7605,9 +7617,9 @@ class FigChit extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     if (name === "background") {
-      // Skip full re-render if this was triggered by internal input
       if (this.#internalUpdate) {
-        this.style.setProperty("--chit-background", newValue);
+        const isImg = /^(linear-gradient|radial-gradient|conic-gradient|repeating-|url)\s*\(/i.test(newValue);
+        this.style.setProperty("--chit-background", isImg ? newValue : `linear-gradient(${newValue}, ${newValue})`);
         return;
       }
       this.#render();
@@ -7629,6 +7641,10 @@ class FigChit extends HTMLElement {
   }
 }
 customElements.define("fig-chit", FigChit);
+class FigSwatch extends FigChit{
+
+}
+customElements.define("fig-swatch", FigSwatch);
 
 /* Upload */
 /**
@@ -10899,7 +10915,6 @@ class FigFillPicker extends HTMLElement {
     this.#chit.style.setProperty("--chit-bg-size", bgSize);
     this.#chit.style.setProperty("--chit-bg-position", bgPosition);
 
-    // For solid colors, also update the alpha
     if (this.#fillType === "solid") {
       this.#chit.setAttribute("alpha", this.#color.a);
     } else {
@@ -12017,10 +12032,10 @@ class FigFillPicker extends HTMLElement {
         stopColor.addEventListener("input", (e) => {
           this.#gradient.stops[index].color =
             e.target.hexOpaque || e.target.value;
-          const parsedAlpha = parseFloat(e.target.alpha);
-          this.#gradient.stops[index].opacity = isNaN(parsedAlpha)
-            ? 100
-            : parsedAlpha;
+          const a = e.detail?.rgba?.a;
+          if (a !== undefined) {
+            this.#gradient.stops[index].opacity = Math.round(a * 100);
+          }
           this.#updateGradientPreview();
           this.#emitInput();
         });
@@ -13011,8 +13026,12 @@ class FigColorTip extends HTMLElement {
     }
 
     const eventDetail = { color: this.value };
-    if (this.#alphaEnabled && detail?.opacity !== undefined) {
-      eventDetail.opacity = detail.opacity;
+    if (this.#alphaEnabled) {
+      if (detail?.opacity !== undefined) {
+        eventDetail.opacity = detail.opacity;
+      } else if (detail?.alpha !== undefined) {
+        eventDetail.opacity = Math.round(detail.alpha * 100);
+      }
     }
 
     this.dispatchEvent(
@@ -15005,19 +15024,25 @@ class FigHandle extends HTMLElement {
     this.#colorTip = null;
   }
 
+  #colorWithOpacity(hex, opacity) {
+    if (opacity === undefined || opacity >= 100) return hex;
+    const { r, g, b } = figHexToRGB(hex);
+    return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+  }
+
   #handleColorTipInput = (e) => {
     e.stopPropagation();
     if (e.detail?.color) {
-      this.setAttribute("color", e.detail.color);
-      this.dispatchEvent(new CustomEvent("input", { bubbles: true, detail: { color: e.detail.color } }));
+      this.setAttribute("color", this.#colorWithOpacity(e.detail.color, e.detail.opacity));
+      this.dispatchEvent(new CustomEvent("input", { bubbles: true, detail: { color: e.detail.color, opacity: e.detail.opacity } }));
     }
   };
 
   #handleColorTipChange = (e) => {
     e.stopPropagation();
     if (e.detail?.color) {
-      this.setAttribute("color", e.detail.color);
-      this.dispatchEvent(new CustomEvent("change", { bubbles: true, detail: { color: e.detail.color } }));
+      this.setAttribute("color", this.#colorWithOpacity(e.detail.color, e.detail.opacity));
+      this.dispatchEvent(new CustomEvent("change", { bubbles: true, detail: { color: e.detail.color, opacity: e.detail.opacity } }));
     }
   };
 

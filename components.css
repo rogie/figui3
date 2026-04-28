@@ -277,6 +277,11 @@
       rgba(255, 255, 255, 0.1) 0% 50%
     )
     0 0 / 0.66666rem 0.66666rem;
+  --checkerboard-small: repeating-conic-gradient(
+      rgba(0, 0, 0, 0.2) 0% 25%,
+      rgba(255, 255, 255, 0.2) 0% 50%
+    )
+    0 0 / 0.5rem 0.5rem;
   --bg-hue: linear-gradient(
     90deg,
     rgba(255, 0, 0, 1),
@@ -1237,10 +1242,12 @@ fig-chit {
   }
   &::before {
     content: "";
-    background: var(--chit-background);
-    background-size: var(--chit-bg-size);
+    background: var(--chit-background), var(--checkerboard-small);
+    background-size:
+      var(--chit-bg-size),
+      0.5rem 0.5rem;
     background-position: var(--chit-bg-position);
-    background-repeat: no-repeat;
+    background-repeat: no-repeat, repeat;
     border-radius: calc(var(--border-radius) - (var(--padding) / 2));
     mask-image: linear-gradient(
       to right,
@@ -4897,7 +4904,8 @@ fig-handle {
     color-scheme: light only;
     width: calc(var(--width) - var(--ring-width) * 2);
     height: calc(var(--height) - var(--ring-width) * 2);
-    background: var(--fill);
+    background:
+      linear-gradient(var(--fill), var(--fill)), var(--checkerboard-small);
     border-radius: var(--border-radius);
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     place-self: center;

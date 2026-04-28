@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.21.1]
+
+### Fixed
+
+- `fig-handle` type="color" now renders transparent colors — `#colorWithOpacity` converts hex + opacity to rgba for `--fill`, and events forward opacity from `fig-color-tip`.
+- `fig-color-tip` now derives opacity from `detail.alpha` when `detail.opacity` is absent, fixing the disconnect between `fig-fill-picker` (which emits alpha 0-1) and the color tip (which expected opacity 0-100).
+- `fig-handle` checkerboard behind color swatch — `::after` uses `linear-gradient(var(--fill), var(--fill)), var(--checkerboard)` so transparency is visible.
+- `fig-chit` solid color backgrounds now wrapped as `linear-gradient(color, color)` internally, enabling correct CSS layering with checkerboard for transparent colors.
+- `fig-input-gradient` MutationObserver no longer stores rgba strings back into stop data — skips non-hex color attribute values, preventing `figHexToRGB` NaN errors.
+- `fig-input-gradient` stop handles now display opacity via rgba color strings (`#stopColorCSS`) instead of a separate alpha attribute.
+- `fig-input-fill` gradient opacity input no longer overrides individual stop opacities — each gradient stop manages its own opacity independently.
+- `fig-fill-picker` gradient stops list color input now reads `e.detail.rgba.a` for opacity instead of the `alpha` HTML attribute, which returned `"true"` instead of a numeric value.
+
+### Added
+
+- `fig-swatch` element as an alias for `fig-chit`.
+
 ## [3.21.0]
 
 ### Added
