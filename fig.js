@@ -6364,6 +6364,8 @@ class FigInputGradient extends HTMLElement {
           ...this.#gradient,
           ...parsed.gradient,
         });
+        this.#gradient.type = "linear";
+        this.#gradient.angle = 90;
         return;
       }
       if (parsed?.gradient) {
@@ -6371,6 +6373,8 @@ class FigInputGradient extends HTMLElement {
           ...this.#gradient,
           ...parsed.gradient,
         });
+        this.#gradient.type = "linear";
+        this.#gradient.angle = 90;
       }
     } catch (e) {
       // Ignore invalid JSON and keep current/default gradient.
@@ -12902,10 +12906,15 @@ class FigColorTip extends HTMLElement {
     }
     this.removeEventListener("click", this.#handleControlClick);
 
-    const color = this.#normalizeColor(this.getAttribute("value"));
+    const rawValue = (this.getAttribute("value") || "").trim();
+    const color = this.#normalizeColor(rawValue);
+    const alpha = this.#extractAlpha(rawValue);
     const alphaAttr = this.#alphaEnabled ? "" : 'alpha="false"';
+    const pickerValue = alpha < 1
+      ? JSON.stringify({ type: "solid", color, opacity: Math.round(alpha * 100) })
+      : JSON.stringify({ type: "solid", color });
     this.innerHTML = `
-      <fig-fill-picker mode="solid" ${alphaAttr} value='${JSON.stringify({ type: "solid", color })}'>
+      <fig-fill-picker mode="solid" ${alphaAttr} value='${pickerValue}'>
         <fig-chit background="${color}"></fig-chit>
       </fig-fill-picker>`;
 
@@ -12938,6 +12947,17 @@ class FigColorTip extends HTMLElement {
       return `#${raw.slice(0, 6)}`.toUpperCase();
     }
     return "#D9D9D9";
+  }
+
+  #extractAlpha(colorValue) {
+    if (!colorValue) return 1;
+    const v = String(colorValue).trim();
+    if (v.startsWith("#") && v.length === 9) {
+      return parseInt(v.slice(7, 9), 16) / 255;
+    }
+    const rgbaMatch = v.match(/rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/i);
+    if (rgbaMatch) return parseFloat(rgbaMatch[1]);
+    return 1;
   }
 
   #normalizeColor(colorValue) {
@@ -12983,17 +13003,19 @@ class FigColorTip extends HTMLElement {
   }
 
   #syncFromAttributes() {
-    const color = this.#normalizeColor(this.getAttribute("value"));
-    if (this.getAttribute("value") !== color) {
+    const rawAttr = this.getAttribute("value");
+    const color = this.#normalizeColor(rawAttr);
+    const alpha = this.#extractAlpha(rawAttr);
+    if (rawAttr !== color && alpha >= 1) {
       this.setAttribute("value", color);
       return;
     }
 
     if (this.#fillPicker) {
-      this.#fillPicker.setAttribute(
-        "value",
-        JSON.stringify({ type: "solid", color }),
-      );
+      const pickerVal = alpha < 1
+        ? { type: "solid", color, opacity: Math.round(alpha * 100) }
+        : { type: "solid", color };
+      this.#fillPicker.setAttribute("value", JSON.stringify(pickerVal));
       if (this.#alphaEnabled) {
         this.#fillPicker.removeAttribute("alpha");
       } else {

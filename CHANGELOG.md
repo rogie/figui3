@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.21.2]
+
+### Fixed
+
+- `fig-input-gradient` now always renders as a horizontal linear gradient at 90 degrees, regardless of the incoming gradient type (angular, radial, etc.) — preserves interpolationSpace, hueInterpolation, and stops.
+- `fig-color-tip` now preserves alpha when opening — extracts alpha from 8-char hex (`#RRGGBBAA`) and rgba strings, passing opacity to the fill picker's initial value.
+- `fig-color-tip` `#syncFromAttributes` no longer strips alpha when re-setting the fill picker value.
+- `fig-fill-picker` gradient stops list color input reads opacity from `e.detail.rgba.a` instead of the `alpha` HTML attribute.
+- `fig-input-fill` gradient opacity input no longer overrides individual stop opacities.
+
+### Changed
+
+- Playground: `fig-switch` attributes view now includes Checked, Indeterminate, and Disabled toggles.
+- Playground: `fig-input-gradient` default example updated to 3 stops with a semi-transparent middle stop.
+
 ## [3.21.1]
 
 ### Fixed

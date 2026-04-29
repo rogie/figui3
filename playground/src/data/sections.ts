@@ -340,7 +340,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Gradient</label>
-    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":100,"color":"#FF00BF","opacity":100}]}}' experimental="modern"></fig-input-gradient>
+    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}' experimental="modern"></fig-input-gradient>
   </fig-field>
 </div>`,
       },

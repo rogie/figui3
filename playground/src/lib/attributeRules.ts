@@ -301,8 +301,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
   },
   "fig-switch": {
+    checked: {
+      label: "Checked",
+      type: "boolean",
+      boolMode: "presence",
+    },
     indeterminate: {
       label: "Indeterminate",
+      type: "boolean",
+      boolMode: "presence",
+    },
+    disabled: {
+      label: "Disabled",
       type: "boolean",
       boolMode: "presence",
     },

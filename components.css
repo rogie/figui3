@@ -368,7 +368,7 @@
     inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
 
   --handle-shadow:
-    0px 0px 0px 0.5px rgba(0, 0, 0, 0.1),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.2),
     0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.1)),
     0px 1px 3px 0px light-dark(rgba(0, 0, 0, 0.15), transparent);
 }
@@ -1873,13 +1873,17 @@ fig-origin-grid {
 
 /* Switch */
 input[type="checkbox"].switch {
+  --knob-width: 0.75rem;
+  --knob-height: 0.5rem;
+  --width: 2rem;
+  --height: 1rem;
   contain: strict;
   display: inline-flex;
   margin: 0;
   vertical-align: middle;
   padding: 0;
-  width: 2rem;
-  height: 1rem;
+  width: var(--width);
+  height: var(--height);
   left: 0;
   top: 0;
   background: transparent;
@@ -1895,22 +1899,26 @@ input[type="checkbox"].switch {
   transition: var(--input-transition);
   box-sizing: border-box;
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
-}
-
-input[type="checkbox"].switch:after {
-  content: "";
-  background-color: var(--handle-color);
-  width: calc(1rem - 2px);
-  height: calc(1rem - 2px);
-  border-radius: 0.5rem;
-  margin: 1px;
-  transform: translate(calc(-0.5rem));
-  transition: var(--input-transition);
-  box-shadow: var(--handle-shadow);
+  &:after {
+    content: "";
+    background-color: var(--handle-color);
+    width: var(--knob-width);
+    height: var(--knob-height);
+    border-radius: 0.5rem;
+    margin: 0.25rem;
+    transform: translate(
+      calc(
+        (var(--width) - var(--knob-width)) * -0.5 +
+          (var(--height) - var(--knob-height)) * 0.5
+      )
+    );
+    transition: var(--input-transition);
+    box-shadow: var(--handle-shadow);
+  }
 }
 
 input[type="checkbox"].switch[indeterminate="true"]:after {
-  width: 0.5rem;
+  width: 0.625rem;
   height: 0.125rem;
   transform: none;
 }
@@ -1921,14 +1929,29 @@ input[type="checkbox"].switch:checked {
 }
 
 input[type="checkbox"].switch:checked:after {
-  transform: translate(0.5rem);
+  transform: translate(
+    calc(
+      (var(--width) - var(--knob-width)) * 0.5 +
+        (var(--height) - var(--knob-height)) * -0.5
+    )
+  );
 }
 
 input[type="checkbox"].switch:disabled {
-  background-color: var(--figma-color-bg-secondary);
+  background-color: transparent;
   cursor: not-allowed;
   &:after {
-    background-color: var(--figma-color-bg);
+    background-color: var(--figma-color-icon-disabled);
+    box-shadow: none;
+  }
+
+  &:checked,
+  &[indeterminate="true"] {
+    background-color: var(--figma-color-bg-disabled);
+    box-shadow: none;
+    &:after {
+      background-color: var(--figma-color-bg);
+    }
   }
 }
 
@@ -2797,6 +2820,7 @@ fig-tooltip {
   filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
     drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13))
     drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
+  pointer-events: none;
 
   & > span {
     text-wrap: balance;
@@ -4911,6 +4935,7 @@ fig-handle {
     place-self: center;
     grid-area: 1 / 1;
     z-index: 2;
+    display: none;
   }
 
   &[size="small"] {
@@ -4932,6 +4957,11 @@ fig-handle {
   &[aria-disabled="true"] {
     pointer-events: none;
     cursor: default;
+  }
+  &[type="color"] {
+    &::after {
+      display: block;
+    }
   }
 
   &[type="color"],
