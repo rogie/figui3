@@ -1178,7 +1178,7 @@ fig-chit {
   --width: var(--size);
   --height: var(--size);
   --border-radius: var(--radius-medium);
-  --chit-background: #d9d9d9;
+  --chit-background: linear-gradient(#d9d9d9, #d9d9d9);
   --chit-bg-size: cover;
   --chit-bg-position: center;
   --selected: 0;
@@ -1194,8 +1194,13 @@ fig-chit {
 
   &::before,
   &::after,
+  div,
   input {
     grid-area: 1/1;
+  }
+  & > div {
+    background: var(--checkerboard-small);
+    border-radius: var(--border-radius);
   }
 
   /* Selection ring */
@@ -1227,7 +1232,8 @@ fig-chit {
   }
 
   &::before,
-  &::after {
+  &::after,
+  & > div {
     content: "";
     width: calc(var(--width) - var(--padding) * 2);
     height: calc(var(--height) - var(--padding) * 2);
@@ -1242,12 +1248,10 @@ fig-chit {
   }
   &::before {
     content: "";
-    background: var(--chit-background), var(--checkerboard-small);
-    background-size:
-      var(--chit-bg-size),
-      0.5rem 0.5rem;
+    background: var(--chit-background);
+    background-size: var(--chit-bg-size);
     background-position: var(--chit-bg-position);
-    background-repeat: no-repeat, repeat;
+    background-repeat: no-repeat;
     border-radius: calc(var(--border-radius) - (var(--padding) / 2));
     mask-image: linear-gradient(
       to right,
@@ -2477,37 +2481,6 @@ fig-slider {
     }
   }
 
-  &[variant="minimal"] {
-    --slider-height: 0.375rem;
-    --slider-thumb-size: 0.75rem;
-    --slider-tick-width: calc(var(--slider-height) / 2);
-    --slider-tick-height: calc(var(--slider-height) / 2);
-    --handle-transition: none;
-    --slider-transition: none;
-    --slider-handle-shadow:
-      inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
-        var(--slider-thumb-color),
-      0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
-      var(--figma-elevation-100);
-
-    .fig-slider-input-container {
-      height: var(--slider-height);
-      position: relative;
-      display: block;
-      width: 100%;
-    }
-    fig-input-text {
-      height: calc(var(--slider-height) * 2);
-      background-color: transparent;
-    }
-
-    &:hover,
-    &:focus-within {
-      fig-input-text {
-        height: auto;
-      }
-    }
-  }
   &[variant="neue"] {
     --slider-height: 0.375rem;
     --slider-thumb-size: 0.75rem;
@@ -3384,30 +3357,29 @@ fig-field,
   & > label {
     flex: 0;
     padding: var(--spacer-1) 0;
-    display: flex;
-    justify-content: space-between;
     min-height: calc(1rem + var(--spacer-1) * 2);
+    display: flex;
     align-items: center;
     width: 100%;
+    user-select: none;
   }
 
   &[direction="horizontal"] > label {
+    display: block;
     width: auto;
     min-width: var(--field-label-width);
     max-width: var(--field-label-width);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    padding: 0;
+    line-height: 1.5rem;
   }
 
   &[direction="horizontal"] {
     gap: var(--spacer-2);
     align-items: start;
     flex-direction: row;
-
-    & > label {
-      min-width: 4rem;
-    }
     &[columns="thirds"] {
       display: grid;
       grid-template-columns: repeat(3, 1fr);

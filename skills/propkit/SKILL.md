@@ -111,8 +111,7 @@ bootstrap();
 - Use `transform` when internal value scale differs from UI display (example: internal `0..1`, display `0..100%`).
 - Variants:
   - Default variant for most property panels.
-  - `variant="minimal"` for visually quieter contexts.
-  - `variant="neue"` only where explicitly requested for that panel's style.
+  - `variant="neue"` for a compact, visually quieter style.
 - Always set explicit `min`, `max`, and `step` (and `units` where applicable) to keep behavior predictable.
 
 ### Control Selection Heuristics
@@ -176,7 +175,7 @@ Use a horizontal fig-field, with a fig-slider, min=0 max=100 text=true units=%. 
 </fig-field>
 <fig-field direction="horizontal">
   <label>Hue</label>
-  <fig-slider type="hue" value="180" text="true" variant="minimal" full></fig-slider>
+  <fig-slider type="hue" value="180" text="true" variant="neue" full></fig-slider>
 </fig-field>
 <fig-field direction="horizontal">
   <label>Offset</label>

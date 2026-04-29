@@ -237,7 +237,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     variant: {
       label: "Variant",
       type: "enum",
-      options: ["default", "minimal", "neue"],
+      options: ["default", "neue"],
     },
     text: { label: "Text", type: "boolean", boolMode: "string" },
     placeholder: { label: "Placeholder", type: "string" },

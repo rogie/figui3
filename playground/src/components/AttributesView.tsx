@@ -748,7 +748,13 @@ export default function AttributesView({
                 name === "control") ||
               (target.controlTag === "fig-tooltip" &&
                 scope === "control" &&
-                name === "action");
+                name === "action") ||
+              (target.controlTag === "fig-slider" &&
+                scope === "control" &&
+                name === "variant") ||
+              (target.controlTag === "fig-chit" &&
+                scope === "control" &&
+                name === "size");
             if (useSegmentedControl) {
               return (
                 <fig-segmented-control full>
