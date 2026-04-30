@@ -10,6 +10,7 @@ export const figui3Sections: Section[] = [
   {
     id: "button",
     name: "Button",
+    group: "Core components",
     description:
       "Buttons with variants and advanced behaviors like select menus.",
     examples: [
@@ -25,6 +26,7 @@ export const figui3Sections: Section[] = [
   {
     id: "avatar",
     name: "Avatar",
+    group: "Core components",
     description: "Profile avatar with image source and initials fallback.",
     examples: [
       {
@@ -39,6 +41,7 @@ export const figui3Sections: Section[] = [
   {
     id: "tooltip",
     name: "Tooltip",
+    group: "Core components",
     description: "Contextual tooltip with hover or click trigger behavior.",
     examples: [
       {
@@ -55,6 +58,7 @@ export const figui3Sections: Section[] = [
   {
     id: "dialog",
     name: "Dialog",
+    group: "Core components",
     description: "Modal dialog surface with optional drag and positioning.",
     examples: [
       {
@@ -82,6 +86,7 @@ export const figui3Sections: Section[] = [
   {
     id: "dropdown",
     name: "Dropdown",
+    group: "Core components",
     description: "Select controls with native and modern dropdown behavior.",
     examples: [
       {
@@ -143,6 +148,7 @@ export const figui3Sections: Section[] = [
   {
     id: "fill-picker",
     name: "Fill Picker",
+    group: "Core components",
     description:
       "Comprehensive fill editor for solid, gradient, and image fills.",
     examples: [
@@ -160,6 +166,7 @@ export const figui3Sections: Section[] = [
   {
     id: "color-tip",
     name: "Color Tip",
+    group: "Core components",
     description: "Solid color tip built on the fill picker interaction model.",
     examples: [
       {
@@ -174,6 +181,7 @@ export const figui3Sections: Section[] = [
   {
     id: "chit",
     name: "Chit",
+    group: "Core components",
     description: "Color and gradient swatch display for fill previews.",
     examples: [
       {
@@ -188,6 +196,7 @@ export const figui3Sections: Section[] = [
   {
     id: "slider",
     name: "Slider",
+    group: "Core components",
     description:
       "Range controls with PropKit-style examples across slider types.",
     examples: [
@@ -243,6 +252,7 @@ export const figui3Sections: Section[] = [
   {
     id: "combo-input",
     name: "Combo Input",
+    group: "Core components",
     description: "Input with suggestion dropdown from a fixed options list.",
     examples: [
       {
@@ -257,6 +267,7 @@ export const figui3Sections: Section[] = [
   {
     id: "text-input",
     name: "Text Input",
+    group: "Core components",
     description: "Single-line and multiline text inputs for direct entry.",
     examples: [
       {
@@ -278,6 +289,7 @@ export const figui3Sections: Section[] = [
   {
     id: "number-input",
     name: "Number Input",
+    group: "Core components",
     description: "Precise numeric inputs with steppers, units, and bounds.",
     examples: [
       {
@@ -292,6 +304,7 @@ export const figui3Sections: Section[] = [
   {
     id: "angle-input",
     name: "Angle Input",
+    group: "Core components",
     description: "Angle editor with dial interaction and optional text value.",
     examples: [
       {
@@ -306,6 +319,7 @@ export const figui3Sections: Section[] = [
   {
     id: "color-input",
     name: "Color Input",
+    group: "Core components",
     description: "Color fields with text, alpha, and picker integration.",
     examples: [
       {
@@ -320,6 +334,7 @@ export const figui3Sections: Section[] = [
   {
     id: "fill-input",
     name: "Fill Input",
+    group: "Core components",
     description: "Fill controls for solid, gradient, and image fills.",
     examples: [
       {
@@ -348,6 +363,7 @@ export const figui3Sections: Section[] = [
   {
     id: "switch",
     name: "Switch",
+    group: "Core components",
     description: "Boolean toggle controls for on/off states.",
     examples: [
       {
@@ -362,6 +378,7 @@ export const figui3Sections: Section[] = [
   {
     id: "checkbox",
     name: "Checkbox",
+    group: "Core components",
     description: "Checkbox controls with checked and indeterminate states.",
     examples: [
       {
@@ -376,6 +393,7 @@ export const figui3Sections: Section[] = [
   {
     id: "radio",
     name: "Radio",
+    group: "Core components",
     description: "Radio input for mutually exclusive option selection.",
     examples: [
       {
@@ -390,6 +408,7 @@ export const figui3Sections: Section[] = [
   {
     id: "field",
     name: "Field",
+    group: "Core components",
     description: "Field wrapper for label + control layout and accessibility.",
     examples: [
       {
@@ -407,6 +426,7 @@ export const figui3Sections: Section[] = [
   {
     id: "segmented-control",
     name: "Segmented Control",
+    group: "Core components",
     description: "Segmented options for mutually exclusive selections.",
     examples: [
       {
@@ -443,6 +463,7 @@ export const figui3Sections: Section[] = [
   {
     id: "tabs",
     name: "Tabs",
+    group: "Core components",
     description: "Tab interfaces for organizing grouped content panes.",
     examples: [
       {
@@ -460,6 +481,7 @@ export const figui3Sections: Section[] = [
   {
     id: "image",
     name: "Image",
+    group: "Core components",
     description: "Image previews with upload and download overlays.",
     examples: [
       {
@@ -474,6 +496,7 @@ export const figui3Sections: Section[] = [
   {
     id: "layer",
     name: "Layer",
+    group: "Core components",
     description: "Layer row examples with and without leading layer icons.",
     examples: [
       {
@@ -516,6 +539,7 @@ export const figui3Sections: Section[] = [
   {
     id: "header",
     name: "Header",
+    group: "Core components",
     description: "Section header with title and optional actions.",
     examples: [
       {
@@ -535,6 +559,7 @@ export const figui3Sections: Section[] = [
   {
     id: "popup",
     name: "Popup",
+    group: "Core components",
     description:
       "Anchored popup surface for contextual floating content. Try clicking then dragging the anchor.",
     examples: [
@@ -556,6 +581,7 @@ export const figui3Sections: Section[] = [
   {
     id: "toast",
     name: "Toast",
+    group: "Core components",
     description: "Toast notifications for temporary feedback messages.",
     examples: [
       {
@@ -571,6 +597,7 @@ export const figui3Sections: Section[] = [
   {
     id: "spinner",
     name: "Spinner",
+    group: "Core components",
     description: "Loading spinner indicator for async operations.",
     examples: [
       {
@@ -585,6 +612,7 @@ export const figui3Sections: Section[] = [
   {
     id: "shimmer",
     name: "Shimmer",
+    group: "Core components",
     description: "Animated loading placeholder skeleton.",
     examples: [
       {
@@ -592,6 +620,36 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-shimmer duration="1.5s"><span>Testing...</span></fig-shimmer>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "truncate",
+    name: "Truncate",
+    group: "Utilities",
+    description:
+      "A text truncation utility supporting right, left, and middle ellipsis with optional tooltip on overflow.",
+    examples: [
+      {
+        id: "right",
+        name: "Right",
+        markup: `<div class="prop-panel">
+  <fig-truncate tooltip style="max-width: 50%;">This is a very long piece of text that should be truncated on the right side</fig-truncate>
+</div>`,
+      },
+      {
+        id: "left",
+        name: "Left",
+        markup: `<div class="prop-panel">
+  <fig-truncate position="left" tooltip style="max-width: 50%;">/Users/rogie/Documents/Projects/design-system/components</fig-truncate>
+</div>`,
+      },
+      {
+        id: "middle",
+        name: "Middle",
+        markup: `<div class="prop-panel">
+  <fig-truncate position="middle" tail=".mp3" tooltip style="max-width: 50%;">Stateside_feat_Bladee_and_Mechatok.mp3</fig-truncate>
 </div>`,
       },
     ],

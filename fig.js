@@ -1023,6 +1023,79 @@ class FigTooltip extends HTMLElement {
 
 customElements.define("fig-tooltip", FigTooltip);
 
+/* Text Truncation */
+class FigTruncate extends HTMLElement {
+  static observedAttributes = ["position", "tail"];
+
+  #originalText = null;
+  #boundEnter = null;
+  #boundLeave = null;
+
+  connectedCallback() {
+    this.#originalText = this.textContent;
+    requestAnimationFrame(() => {
+      this.#render();
+      this.#setupTooltip();
+    });
+  }
+
+  disconnectedCallback() {
+    this.#teardownTooltip();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (this.#originalText === null) return;
+    this.#render();
+  }
+
+  #render() {
+    const position = this.getAttribute("position") || "right";
+    const text = this.#originalText || "";
+    if (position === "middle") {
+      const tail = this.getAttribute("tail");
+      let splitIndex;
+      if (tail) {
+        const idx = text.lastIndexOf(tail);
+        splitIndex = idx > 0 ? idx : Math.ceil(text.length / 2);
+      } else {
+        splitIndex = Math.ceil(text.length / 2);
+      }
+      this.innerHTML = "";
+      const startSpan = document.createElement("span");
+      startSpan.className = "start";
+      startSpan.textContent = text.slice(0, splitIndex);
+      const endSpan = document.createElement("span");
+      endSpan.className = "end";
+      endSpan.textContent = text.slice(splitIndex);
+      this.appendChild(startSpan);
+      this.appendChild(endSpan);
+    } else {
+      this.textContent = text;
+    }
+  }
+
+  #setupTooltip() {
+    if (!this.hasAttribute("tooltip") || this.getAttribute("tooltip") === "false") return;
+    this.#boundEnter = () => {
+      if (this.scrollWidth <= this.clientWidth) return;
+      FigTooltip.show(this, this.#originalText);
+    };
+    this.#boundLeave = () => {
+      FigTooltip.hide(this);
+    };
+    this.addEventListener("pointerenter", this.#boundEnter);
+    this.addEventListener("pointerleave", this.#boundLeave);
+  }
+
+  #teardownTooltip() {
+    if (this.#boundEnter) this.removeEventListener("pointerenter", this.#boundEnter);
+    if (this.#boundLeave) this.removeEventListener("pointerleave", this.#boundLeave);
+    FigTooltip.hide(this);
+  }
+}
+customElements.define("fig-truncate", FigTruncate);
+
 /* Dialog */
 /**
  * A custom dialog element for modal and non-modal dialogs.
@@ -8182,6 +8255,199 @@ class FigImage extends HTMLElement {
   }
 }
 customElements.define("fig-image", FigImage);
+
+/* File Upload Input */
+class FigInputFile extends HTMLElement {
+  static observedAttributes = ["accepts", "label", "disabled", "multiple"];
+
+  #fileInput = null;
+  #filenameEl = null;
+  #clearBtn = null;
+  #tooltipEl = null;
+  #uploadBtn = null;
+  #files = null;
+
+  get files() {
+    return this.#files;
+  }
+
+  get value() {
+    if (!this.#files || this.#files.length === 0) return "";
+    if (this.#files.length === 1) return this.#files[0].name;
+    return `${this.#files.length} files`;
+  }
+
+  connectedCallback() {
+    this.#render();
+    this.addEventListener("dragover", this.#onDragOver);
+    this.addEventListener("dragleave", this.#onDragLeave);
+    this.addEventListener("drop", this.#onDrop);
+  }
+
+  disconnectedCallback() {
+    this.#fileInput?.removeEventListener("change", this.#onFileChange);
+    this.#clearBtn?.removeEventListener("click", this.#onClear);
+    this.removeEventListener("dragover", this.#onDragOver);
+    this.removeEventListener("dragleave", this.#onDragLeave);
+    this.removeEventListener("drop", this.#onDrop);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    this.#render();
+  }
+
+  clear() {
+    this.#files = null;
+    if (this.#fileInput) this.#fileInput.value = "";
+    this.#render();
+    this.#emitEvents();
+  }
+
+  #emitEvents() {
+    const detail = { files: this.#files };
+    this.dispatchEvent(new CustomEvent("input", { detail, bubbles: true }));
+    this.dispatchEvent(new CustomEvent("change", { detail, bubbles: true }));
+  }
+
+  #onFileChange = () => {
+    if (this.#fileInput.files.length > 0) {
+      this.#files = this.#fileInput.files;
+      this.#render();
+      this.#emitEvents();
+    }
+  };
+
+  #onClear = (e) => {
+    e.stopPropagation();
+    this.clear();
+  };
+
+  #onDragOver = (e) => {
+    e.preventDefault();
+    this.setAttribute("dragover", "");
+  };
+
+  #onDragLeave = () => {
+    this.removeAttribute("dragover");
+  };
+
+  #onDrop = (e) => {
+    e.preventDefault();
+    this.removeAttribute("dragover");
+    if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+
+    const accepts = this.getAttribute("accepts");
+    let dropped = Array.from(e.dataTransfer.files);
+    if (accepts) {
+      const allowed = accepts.split(",").map((s) => s.trim().toLowerCase());
+      dropped = dropped.filter((file) => {
+        const ext = "." + file.name.split(".").pop().toLowerCase();
+        const mime = file.type.toLowerCase();
+        return allowed.some((a) => a === ext || a === mime || (a.endsWith("/*") && mime.startsWith(a.slice(0, -1))));
+      });
+    }
+    if (!this.hasAttribute("multiple")) {
+      dropped = dropped.slice(0, 1);
+    }
+    if (dropped.length === 0) return;
+
+    const dt = new DataTransfer();
+    dropped.forEach((f) => dt.items.add(f));
+    this.#files = dt.files;
+    if (this.#fileInput) {
+      this.#fileInput.files = dt.files;
+    }
+    this.#render();
+    this.#emitEvents();
+  };
+
+  #render() {
+    const accepts = this.getAttribute("accepts") || "";
+    const label = this.getAttribute("label") || "Upload";
+    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    const multiple = this.hasAttribute("multiple");
+    const hasFile = this.#files && this.#files.length > 0;
+
+    this.innerHTML = "";
+
+    if (hasFile) {
+      const tooltipText = accepts ? `Accepts ${accepts.split(",").map((s) => s.trim()).join(", ")}` : "";
+
+      this.#uploadBtn = document.createElement("fig-button");
+      this.#uploadBtn.setAttribute("variant", "input");
+      this.#uploadBtn.setAttribute("type", "upload");
+      this.#uploadBtn.className = "fig-input-file-filename";
+      if (disabled) this.#uploadBtn.setAttribute("disabled", "");
+      const truncEl = document.createElement("fig-truncate");
+      truncEl.setAttribute("position", "middle");
+      truncEl.setAttribute("tooltip", "");
+      const filename = this.value;
+      const dotIdx = filename.lastIndexOf(".");
+      if (dotIdx > 0) truncEl.setAttribute("tail", filename.slice(dotIdx));
+      truncEl.textContent = filename;
+      this.#uploadBtn.appendChild(truncEl);
+
+      this.#fileInput = document.createElement("input");
+      this.#fileInput.type = "file";
+      this.#fileInput.title = "";
+      if (accepts) this.#fileInput.setAttribute("accept", accepts);
+      if (multiple) this.#fileInput.setAttribute("multiple", "");
+      this.#fileInput.addEventListener("change", this.#onFileChange);
+      this.#uploadBtn.appendChild(this.#fileInput);
+
+      if (tooltipText) {
+        this.#tooltipEl = document.createElement("fig-tooltip");
+        this.#tooltipEl.setAttribute("text", tooltipText);
+        this.#tooltipEl.appendChild(this.#uploadBtn);
+        this.appendChild(this.#tooltipEl);
+      } else {
+        this.appendChild(this.#uploadBtn);
+      }
+
+      const clearTooltip = document.createElement("fig-tooltip");
+      clearTooltip.setAttribute("text", "Remove");
+      this.#clearBtn = document.createElement("fig-button");
+      this.#clearBtn.setAttribute("variant", "ghost");
+      this.#clearBtn.setAttribute("icon", "true");
+      this.#clearBtn.className = "fig-input-file-clear";
+      if (disabled) this.#clearBtn.setAttribute("disabled", "");
+      this.#clearBtn.innerHTML = `<span class="fig-mask-icon" style="--icon: var(--icon-minus);"></span>`;
+      this.#clearBtn.addEventListener("click", this.#onClear);
+      clearTooltip.appendChild(this.#clearBtn);
+      this.appendChild(clearTooltip);
+    } else {
+      const tooltipText = accepts ? `Accepts ${accepts.split(",").map((s) => s.trim()).join(", ")}` : "";
+
+      if (tooltipText) {
+        this.#tooltipEl = document.createElement("fig-tooltip");
+        this.#tooltipEl.setAttribute("text", tooltipText);
+      }
+
+      this.#uploadBtn = document.createElement("fig-button");
+      this.#uploadBtn.setAttribute("variant", "input");
+      this.#uploadBtn.setAttribute("type", "upload");
+      this.#uploadBtn.textContent = label;
+      if (disabled) this.#uploadBtn.setAttribute("disabled", "");
+
+      this.#fileInput = document.createElement("input");
+      this.#fileInput.type = "file";
+      this.#fileInput.title = "";
+      if (accepts) this.#fileInput.setAttribute("accept", accepts);
+      if (multiple) this.#fileInput.setAttribute("multiple", "");
+      this.#fileInput.addEventListener("change", this.#onFileChange);
+      this.#uploadBtn.appendChild(this.#fileInput);
+
+      if (this.#tooltipEl) {
+        this.#tooltipEl.appendChild(this.#uploadBtn);
+        this.appendChild(this.#tooltipEl);
+      } else {
+        this.appendChild(this.#uploadBtn);
+      }
+    }
+  }
+}
+customElements.define("fig-input-file", FigInputFile);
 
 /**
  * A bezier / spring easing curve editor with draggable control points.

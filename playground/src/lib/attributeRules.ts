@@ -20,6 +20,7 @@ export interface NumberAttributeRule extends BaseAttributeRule {
   min?: number;
   max?: number;
   step?: number;
+  units?: string;
 }
 
 export interface EnumAttributeRule extends BaseAttributeRule {
@@ -534,6 +535,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["false", "modifier", "true"],
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "fig-truncate": {
+    position: { label: "Position", type: "enum", options: ["right", "left", "middle"] },
+    tail: { label: "Tail", type: "string" },
+    tooltip: { label: "Tooltip", type: "boolean", boolMode: "presence" },
   },
 };
 

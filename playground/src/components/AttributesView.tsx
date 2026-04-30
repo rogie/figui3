@@ -658,7 +658,7 @@ export default function AttributesView({
                 min={String(rule.min ?? 0)}
                 max={String(rule.max ?? 100)}
                 step={String(rule.step ?? 1)}
-                units={undefined}
+                units={rule.units ?? undefined}
                 variant="neue"
                 text="true"
                 full
@@ -1197,6 +1197,7 @@ export default function AttributesView({
           };
           return (
             <fig-input-text
+              key={`${name}-${value ?? ""}`}
               value={value ?? ""}
               full
               onInput={handleTextInput}
@@ -1727,6 +1728,37 @@ export default function AttributesView({
                         ? [prependField, field]
                         : [field, prependField];
                     })}
+                    {target.controlTag === "fig-truncate" && (() => {
+                      const styleAttr = target.controlAttributes.style || "";
+                      const match = styleAttr.match(/max-width:\s*([\d.]+)%/);
+                      const currentPct = match ? parseFloat(match[1]) : 50;
+                      return (
+                        <fig-field
+                          direction="horizontal"
+                          columns="thirds"
+                          key={`control-truncate-maxwidth-${target.fieldIndex}`}
+                        >
+                          <label>Max width</label>
+                          <fig-slider
+                            value={String(currentPct)}
+                            min="10"
+                            max="100"
+                            step="1"
+                            units="%"
+                            variant="neue"
+                            text="true"
+                            full
+                            onInput={(e: any) => {
+                              const host = e.currentTarget as HTMLElement & { value?: string };
+                              const nextValue = host.value ?? (e as CustomEvent).detail?.value;
+                              if (nextValue === undefined || nextValue === null) return;
+                              const newStyle = `max-width: ${nextValue}%;`;
+                              applyChange(target.fieldIndex, "control", "style", newStyle);
+                            }}
+                          ></fig-slider>
+                        </fig-field>
+                      );
+                    })()}
                   </div>
                 </section>
               </div>

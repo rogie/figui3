@@ -796,6 +796,64 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "file",
+    name: "File",
+    description:
+      "A file upload input with filename display, clear button, accepted types tooltip, and drag-and-drop support.",
+    examples: [
+      {
+        id: "any-file",
+        name: "Any",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>File</label>
+    <fig-input-file label="Upload file" full></fig-input-file>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "audio",
+        name: "Audio",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Audio</label>
+    <fig-input-file label="Upload audio" accepts=".wav,.mp3,.aac" full></fig-input-file>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "image",
+        name: "Image",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Image</label>
+    <fig-input-file label="Upload image" accepts="image/*" full></fig-input-file>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "video",
+        name: "Video",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Video</label>
+    <fig-input-file label="Upload video" accepts="video/*" full></fig-input-file>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "spreadsheet",
+        name: "Spreadsheet",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Spreadsheet</label>
+    <fig-input-file label="Upload spreadsheet" accepts=".xls,.xlsx,.csv" full></fig-input-file>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "handle",
     name: "Handle",
     group: "Canvas controls",

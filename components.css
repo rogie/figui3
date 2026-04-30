@@ -1290,6 +1290,85 @@ fig-chit {
 }
 
 /* Fig Image */
+fig-truncate {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: bottom;
+
+  &[position="left"] {
+    display: block;
+    direction: rtl;
+    text-align: left;
+  }
+
+  &[position="middle"] {
+    display: inline-flex;
+    text-overflow: clip;
+    gap: 0;
+
+    & > .start,
+    & > .end {
+      flex: 0 1 auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    & > .end {
+      direction: rtl; /* technique #2 on right half */
+      text-align: left;
+      text-overflow: ellipsis;
+    }
+    &[tail] {
+      & > .end {
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+fig-input-file {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-2);
+  min-width: 0;
+
+  &[full]:not([full="false"]) {
+    flex: 1 1 auto;
+    width: 100%;
+
+    & > fig-tooltip,
+    & > fig-button {
+      flex: 1;
+      min-width: 0;
+    }
+
+    & > fig-tooltip > fig-button {
+      width: 100%;
+    }
+  }
+
+  .fig-input-file-filename {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .fig-input-file-clear {
+    flex-shrink: 0;
+  }
+
+  &[dragover] {
+    outline: 2px dashed var(--figma-color-border-brand);
+    outline-offset: -2px;
+    border-radius: var(--radius-small);
+  }
+}
+
 fig-image {
   --image-size: 2rem;
   --fit: cover;

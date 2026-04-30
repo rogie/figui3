@@ -48,7 +48,20 @@ export default function EventView() {
 
   useEffect(() => {
     if (!editorRef.current || latest === null) return;
-    replaceDoc(editorRef.current, JSON.stringify(latest, null, 2));
+    const serializable = JSON.parse(JSON.stringify(latest, (key, value) => {
+      if (value instanceof FileList) {
+        return Array.from(value).map((f) => ({
+          name: f.name,
+          size: f.size,
+          type: f.type,
+        }));
+      }
+      if (value instanceof File) {
+        return { name: value.name, size: value.size, type: value.type };
+      }
+      return value;
+    }));
+    replaceDoc(editorRef.current, JSON.stringify(serializable, null, 2));
   }, [latest]);
 
   return (
