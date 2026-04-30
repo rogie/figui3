@@ -639,7 +639,7 @@ input[type="text"][list] {
         padding-left: 0;
       }
       & > button {
-        display: flex;
+        display: inline-block;
         align-items: center;
         gap: var(--spacer-1);
         width: 100%;
@@ -944,7 +944,7 @@ fig-button {
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
   }
   svg {
-    *[fill] {
+    *[fill]:not([fill="none"]) {
       fill: currentColor;
     }
     *[stroke]:not([stroke="none"]) {
@@ -3916,7 +3916,6 @@ fig-layer {
     align-items: center;
     gap: var(--spacer-1);
     padding: var(--spacer-1) var(--spacer-2);
-    margin-left: var(--spacer-1);
     height: var(--spacer-4);
     border-radius: var(--radius-medium);
     position: relative;
