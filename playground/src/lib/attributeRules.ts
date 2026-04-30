@@ -541,6 +541,16 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     tail: { label: "Tail", type: "string" },
     tooltip: { label: "Tooltip", type: "boolean", boolMode: "presence" },
   },
+  "fig-input-file": {
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["input", "primary", "secondary", "ghost", "link", "overlay"],
+    },
+    accepts: { label: "Accepts", type: "string" },
+    multiple: { label: "Multiple", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
 };
 
 export function getRuleSetForTarget(

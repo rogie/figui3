@@ -370,20 +370,6 @@ export const propkitSections: Section[] = [
     ],
   },
   {
-    id: "field-slider",
-    name: "Field Slider",
-    description: "A modern, full surface slider",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <fig-field-slider label="Amount" direction="horizontal" value="50" min="0" max="100"></fig-field-slider>
-</div>`,
-      },
-    ],
-  },
-  {
     id: "fill",
     name: "Fill",
     description:

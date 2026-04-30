@@ -18,6 +18,7 @@ import {
 } from "./lib/urlState";
 import { propkitSections } from "./data/sections";
 import { figui3Sections } from "./data/figui3Sections";
+import { labSections } from "./data/labSections";
 import type { Section } from "./data/sections";
 
 function toSentenceCase(text: string): string {
@@ -47,18 +48,29 @@ function buildExampleDescription(
 }
 
 interface Props {
-  mode: "propkit" | "figui3";
+  mode: "propkit" | "figui3" | "lab";
+}
+
+function sectionsForMode(mode: Props["mode"]): Section[] {
+  if (mode === "lab") return labSections;
+  if (mode === "figui3") return figui3Sections;
+  return propkitSections;
+}
+
+function titleForMode(mode: Props["mode"]): string {
+  if (mode === "lab") return "Lab";
+  if (mode === "figui3") return "FigUI3";
+  return "Propkit";
 }
 
 export default function App({ mode }: Props) {
   const { isDark, setTheme } = useTheme();
-  const sections: Section[] =
-    mode === "figui3" ? figui3Sections : propkitSections;
-  const canonicalBase = mode === "figui3" ? "/figui3" : "/propkit";
+  const sections: Section[] = sectionsForMode(mode);
+  const canonicalBase = `/${mode === "figui3" ? "figui3" : mode === "lab" ? "lab" : "propkit"}`;
   const basePath = window.location.pathname.startsWith(`${canonicalBase}/`)
     ? `${canonicalBase}/`
     : canonicalBase;
-  const appTitle = mode === "figui3" ? "FigUI3" : "Propkit";
+  const appTitle = titleForMode(mode);
   const {
     activeSectionId,
     activeExampleId,
@@ -223,7 +235,7 @@ export default function App({ mode }: Props) {
               example={activeExample}
               markup={editableMarkup}
               onPersistImageSource={
-                mode === "figui3" ? handlePersistImageSource : undefined
+                mode === "figui3" || mode === "lab" ? handlePersistImageSource : undefined
               }
               onPersistDialogOpenState={handlePersistDialogOpenState}
               onPersistSwitchCheckedState={handlePersistSwitchCheckedState}
@@ -237,10 +249,10 @@ export default function App({ mode }: Props) {
         <AttributesView
           markup={editableMarkup}
           onMarkupChange={handleMarkupChange}
-          showFieldControls={mode !== "figui3" || activeSectionId === "field"}
-          includeFullControl={mode === "figui3"}
+          showFieldControls={mode === "propkit" || mode === "lab" || activeSectionId === "field"}
+          includeFullControl={mode === "figui3" || mode === "lab"}
         />
-        {mode === "propkit" && activeSectionId !== "skeleton" && (
+        {(mode === "propkit" || mode === "lab") && activeSectionId !== "skeleton" && (
           <EventView key={`${activeSectionId}/${activeExampleId}`} />
         )}
       </aside>
