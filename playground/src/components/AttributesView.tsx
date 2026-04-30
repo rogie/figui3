@@ -1202,7 +1202,7 @@ export default function AttributesView({
 
         return (
           <Fragment key={target.fieldIndex}>
-            {showFieldControls && target.controlTag !== "fig-field-slider" && !("data-playground-hide-field" in target.controlAttributes) && (
+            {showFieldControls && target.controlTag !== "fig-field-slider" && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
                   <h3>Field</h3>

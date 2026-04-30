@@ -152,6 +152,14 @@ function getTargetElement(
     }
   }
 
+  const primaryControls = getPrimaryControls(root);
+  const groupControls = primaryControls.filter(
+    (el) => getControlTag(el) === "fig-group",
+  );
+  if (groupControls.length) {
+    return groupControls[mutation.fieldIndex] ?? null;
+  }
+
   const fields = root.querySelectorAll("fig-field");
   if (fields.length) {
     const field = fields[mutation.fieldIndex];
@@ -160,7 +168,7 @@ function getTargetElement(
   }
 
   if (mutation.target === "control") {
-    return getPrimaryControls(root)[mutation.fieldIndex] ?? null;
+    return primaryControls[mutation.fieldIndex] ?? null;
   }
 
   return null;
@@ -304,6 +312,21 @@ export function parseAttributeTargets(markup: string): ParsedAttributeTarget[] {
   // even when the markup contains nested fig-field/fig-input content.
   if (skeletonControls.length) {
     return skeletonControls.map((control, fieldIndex) => ({
+      fieldIndex,
+      label: "",
+      hasLabel: false,
+      controlTag: getControlTag(control),
+      fieldAttributes: {},
+      controlAttributes: attrsToRecord(control),
+    }));
+  }
+
+  // When top-level controls are fig-group, show only the groups (not nested fields)
+  const groupControls = primaryControls.filter(
+    (el) => getControlTag(el) === "fig-group",
+  );
+  if (groupControls.length) {
+    return groupControls.map((control, fieldIndex) => ({
       fieldIndex,
       label: "",
       hasLabel: false,
