@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.23.0]
+
+### Added
+
+- `fig-input-file`: file upload input with filename display, clear button, accepts tooltip, drag-and-drop, and multiple file support.
+- `fig-truncate`: text truncation utility with `position` (right/left/middle), `tail` preservation, and overflow `tooltip`.
+- `fig-field`: auto-detects toggleable children (elements with `open` property) and injects an expand/collapse chevron.
+- Playground: File examples in /propkit, Truncate examples under Utilities group in /figui3.
+
+### Changed
+
+- Playground EventView now serializes File objects (name, size, type) instead of empty objects.
+- Playground text input fields re-sync correctly when navigating between examples.
+
 ## [3.22.0]
 
 ### Changed
