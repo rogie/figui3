@@ -1076,7 +1076,11 @@ class FigTruncate extends HTMLElement {
   }
 
   #setupTooltip() {
-    if (!this.hasAttribute("tooltip") || this.getAttribute("tooltip") === "false") return;
+    if (
+      !this.hasAttribute("tooltip") ||
+      this.getAttribute("tooltip") === "false"
+    )
+      return;
     this.#boundEnter = () => {
       if (this.scrollWidth <= this.clientWidth) return;
       FigTooltip.show(this, this.#originalText);
@@ -1089,8 +1093,10 @@ class FigTruncate extends HTMLElement {
   }
 
   #teardownTooltip() {
-    if (this.#boundEnter) this.removeEventListener("pointerenter", this.#boundEnter);
-    if (this.#boundLeave) this.removeEventListener("pointerleave", this.#boundLeave);
+    if (this.#boundEnter)
+      this.removeEventListener("pointerenter", this.#boundEnter);
+    if (this.#boundLeave)
+      this.removeEventListener("pointerleave", this.#boundLeave);
     FigTooltip.hide(this);
   }
 }
@@ -8335,7 +8341,11 @@ class FigInputFile extends HTMLElement {
   #onDrop = (e) => {
     e.preventDefault();
     this.removeAttribute("dragover");
-    if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+    if (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    )
+      return;
 
     const accepts = this.getAttribute("accepts");
     let dropped = Array.from(e.dataTransfer.files);
@@ -8344,7 +8354,12 @@ class FigInputFile extends HTMLElement {
       dropped = dropped.filter((file) => {
         const ext = "." + file.name.split(".").pop().toLowerCase();
         const mime = file.type.toLowerCase();
-        return allowed.some((a) => a === ext || a === mime || (a.endsWith("/*") && mime.startsWith(a.slice(0, -1))));
+        return allowed.some(
+          (a) =>
+            a === ext ||
+            a === mime ||
+            (a.endsWith("/*") && mime.startsWith(a.slice(0, -1))),
+        );
       });
     }
     if (!this.hasAttribute("multiple")) {
@@ -8365,14 +8380,21 @@ class FigInputFile extends HTMLElement {
   #render() {
     const accepts = this.getAttribute("accepts") || "";
     const label = this.getAttribute("label") || "Upload";
-    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    const disabled =
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false";
     const multiple = this.hasAttribute("multiple");
     const hasFile = this.#files && this.#files.length > 0;
 
     this.innerHTML = "";
 
     if (hasFile) {
-      const tooltipText = accepts ? `Accepts ${accepts.split(",").map((s) => s.trim()).join(", ")}` : "";
+      const tooltipText = accepts
+        ? `Accepts ${accepts
+            .split(",")
+            .map((s) => s.trim())
+            .join(", ")}`
+        : "";
 
       this.#uploadBtn = document.createElement("fig-button");
       this.#uploadBtn.setAttribute("variant", "input");
@@ -8417,7 +8439,12 @@ class FigInputFile extends HTMLElement {
       clearTooltip.appendChild(this.#clearBtn);
       this.appendChild(clearTooltip);
     } else {
-      const tooltipText = accepts ? `Accepts ${accepts.split(",").map((s) => s.trim()).join(", ")}` : "";
+      const tooltipText = accepts
+        ? `Accepts ${accepts
+            .split(",")
+            .map((s) => s.trim())
+            .join(", ")}`
+        : "";
 
       if (tooltipText) {
         this.#tooltipEl = document.createElement("fig-tooltip");

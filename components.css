@@ -1326,6 +1326,8 @@ fig-truncate {
     }
     &[tail] {
       & > .end {
+        direction: ltr;
+        text-align: right;
         flex-shrink: 0;
       }
     }
