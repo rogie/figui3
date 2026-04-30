@@ -403,6 +403,25 @@ export const figui3Sections: Section[] = [
   <fig-radio name="size" value="medium" checked></fig-radio>
 </div>`,
       },
+      {
+        id: "group",
+        name: "Group",
+        markup: `<div class="prop-panel">
+  <fig-field direction="vertical">
+    <label>Size</label>
+    <fig-radio name="size-group" value="small" label="Small"></fig-radio>
+    <fig-radio name="size-group" value="medium" label="Medium" checked></fig-radio>
+    <fig-radio name="size-group" value="large" label="Large"></fig-radio>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "disabled",
+        name: "Disabled",
+        markup: `<div class="prop-panel">
+  <fig-radio name="disabled-demo" value="off" disabled checked label="Disabled"></fig-radio>
+</div>`,
+      },
     ],
   },
   {
@@ -650,6 +669,24 @@ export const figui3Sections: Section[] = [
         name: "Middle",
         markup: `<div class="prop-panel">
   <fig-truncate position="middle" tail=".mp3" tooltip style="max-width: 50%;">Stateside_feat_Bladee_and_Mechatok.mp3</fig-truncate>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "handle",
+    name: "Handle",
+    group: "Utilities",
+    description:
+      "A draggable handle element used as a visual affordance in interactive controls like sliders, easing curves, and origin grids.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
+    <fig-handle drag drag-snapping="modifier" type="color" color="#FF00BF" data-playground-hide-field></fig-handle>
+  </div>
 </div>`,
       },
     ],

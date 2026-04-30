@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.1.0]
+
+### Fixed
+
+- `fig-combo-input`: rewrote to meet component standards — now emits `input`/`change` events, wires text input changes, uses private methods, synchronous render, proper cleanup in `disconnectedCallback`.
+
+### Changed
+
+- `fig-input-fill`: gradient angle picker replaced with `fig-input-number` (removed internal dependency on `fig-input-angle`).
+- `fig-combo-input`: added `fig-combo-input` CSS display rule for proper flex layout participation.
+- Playground: moved `fig-canvas-control` and `fig-input-angle` to experimental `/lab` route (`fig-lab.js`/`fig-lab.css`).
+- Playground: moved `fig-handle` example from `/propkit` to `/figui3` under Utilities group.
+- Playground: added Radio "Group" and "Disabled" examples in `/figui3`.
+
 ## [4.0.0]
 
 ### Breaking Changes
