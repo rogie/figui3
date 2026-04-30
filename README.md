@@ -1001,10 +1001,9 @@ An image display component with optional upload, aspect ratio, and object-fit co
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `src` | string | — | Image URL |
-| `upload` | boolean | `false` | Show upload button |
-| `download` | boolean | `false` | Show download button |
-| `label` | string | — | Upload button label |
-| `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`) |
+| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `label` | string | `"Upload"` | Upload button label |
+| `aspect-ratio` | string | — | CSS aspect-ratio, or `"auto"` for lazy dimension detection |
 | `fit` | string | — | CSS object-fit (`"cover"`, `"contain"`, etc.) |
 | `checkerboard` | boolean | `false` | Show checkerboard behind transparent images |
 

@@ -485,6 +485,28 @@ export const propkitSections: Section[] = [
   </fig-field>
 </div>`,
       },
+      {
+        id: "plain-image",
+        name: "Plain",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Image</label>
+    <fig-image full="true" src="${portraitUrl()}" size="auto"></fig-image>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "custom-buttons",
+        name: "Custom Buttons",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Image</label>
+    <fig-image full="true" src="${portraitUrl()}" size="auto">
+      <fig-input-file accepts="image/*" label="Change" variant="overlay"></fig-input-file>
+    </fig-image>
+  </fig-field>
+</div>`,
+      },
     ],
   },
   {

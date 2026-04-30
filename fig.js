@@ -8007,193 +8007,28 @@ customElements.define("fig-chit", FigChit);
 class FigSwatch extends FigChit {}
 customElements.define("fig-swatch", FigSwatch);
 
-/* Upload */
+/* Image */
 /**
- * A custom image upload element.
- * @attr {string} src - The current image source URL
- * @attr {boolean} upload - Whether to show the upload button
- * @attr {string} label - The upload button label
- * @attr {string} size - Size of the image preview
+ * @attr {string} src - Image source URL
+ * @attr {boolean} upload - Show upload overlay (generates fig-input-file)
+ * @attr {string} label - Upload button label (default "Upload")
+ * @attr {string} size - small | medium | large | auto
+ * @attr {string} aspect-ratio - CSS aspect-ratio or "auto" (lazy dimension sniff)
+ * @attr {string} fit - CSS object-fit value
+ * @attr {boolean} checkerboard - Show checkerboard behind transparent images
  */
 class FigImage extends HTMLElement {
   #src = null;
+  #chit = null;
+  #fileInput = null;
+  #blobUrl = null;
+  #file = null;
   #boundHandleFileInput = this.#handleFileInput.bind(this);
-  #boundHandleDownload = this.#handleDownload.bind(this);
-  constructor() {
-    super();
-  }
-  #getInnerHTML() {
-    const cb =
-      this.hasAttribute("checkerboard") &&
-      this.getAttribute("checkerboard") !== "false";
-    const bg = this.src
-      ? `url(${this.src})`
-      : cb
-        ? "url()"
-        : "var(--figma-color-bg-secondary)";
-    return `<fig-chit size="large" data-type="image" background="${bg}" disabled${cb ? " checkerboard" : ""}></fig-chit><div>${
-      this.upload
-        ? `<fig-button variant="overlay" type="upload">
-          ${this.label} 
-          <input type="file" accept="image/*" />
-        </fig-button>`
-        : ""
-    } ${
-      this.download
-        ? `<fig-button variant="overlay" icon="true" type="download">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M17.5 13C17.7761 13 18 13.2239 18 13.5V16.5C18 17.3284 17.3284 18 16.5 18H7.5C6.67157 18 6 17.3284 6 16.5V13.5C6 13.2239 6.22386 13 6.5 13C6.77614 13 7 13.2239 7 13.5V16.5C7 16.7761 7.22386 17 7.5 17H16.5C16.7761 17 17 16.7761 17 16.5V13.5C17 13.2239 17.2239 13 17.5 13ZM12 6C12.2761 6 12.5 6.22386 12.5 6.5V12.293L14.6465 10.1465C14.8417 9.95122 15.1583 9.95122 15.3535 10.1465C15.5488 10.3417 15.5488 10.6583 15.3535 10.8535L12.3535 13.8535C12.2597 13.9473 12.1326 14 12 14C11.9006 14 11.8042 13.9704 11.7227 13.916L11.6465 13.8535L8.64648 10.8535C8.45122 10.6583 8.45122 10.3417 8.64648 10.1465C8.84175 9.95122 9.15825 9.95122 9.35352 10.1465L11.5 12.293V6.5C11.5 6.22386 11.7239 6 12 6Z" fill="black"/>
-</svg></fig-button>`
-        : ""
-    }</div>`;
-  }
-  connectedCallback() {
-    this.#src = this.getAttribute("src") || "";
-    this.upload =
-      this.hasAttribute("upload") && this.getAttribute("upload") !== "false";
-    this.download =
-      this.hasAttribute("download") &&
-      this.getAttribute("download") !== "false";
-    this.label = this.getAttribute("label") || "Upload";
-    this.size = this.getAttribute("size") || "small";
-    this.innerHTML = this.#getInnerHTML();
-    this.#updateRefs();
-    const ar = this.getAttribute("aspect-ratio");
-    if (ar && ar !== "auto") {
-      this.style.setProperty("--aspect-ratio", ar);
-    }
-    const fit = this.getAttribute("fit");
-    if (fit) {
-      this.style.setProperty("--fit", fit);
-    }
-  }
-  disconnectedCallback() {
-    this.fileInput?.removeEventListener("change", this.#boundHandleFileInput);
-    this.downloadButton?.removeEventListener(
-      "click",
-      this.#boundHandleDownload,
-    );
-  }
 
-  #updateRefs() {
-    requestAnimationFrame(() => {
-      this.chit = this.querySelector("fig-chit");
-      if (this.upload) {
-        this.uploadButton = this.querySelector("fig-button[type='upload']");
-        this.fileInput = this.uploadButton?.querySelector("input");
-        this.fileInput?.removeEventListener(
-          "change",
-          this.#boundHandleFileInput,
-        );
-        this.fileInput?.addEventListener("change", this.#boundHandleFileInput);
-      }
-      if (this.download) {
-        this.downloadButton = this.querySelector("fig-button[type='download']");
-        this.downloadButton?.removeEventListener(
-          "click",
-          this.#boundHandleDownload,
-        );
-        this.downloadButton?.addEventListener(
-          "click",
-          this.#boundHandleDownload,
-        );
-      }
-    });
-  }
-  #handleDownload() {
-    //force blob download
-    const link = document.createElement("a");
-    link.href = this.blob;
-    link.download = "image.png";
-    link.click();
-  }
-  async #loadImage(src) {
-    // Get blob from canvas
-    await new Promise((resolve) => {
-      this.image = new Image();
-      this.image.crossOrigin = "Anonymous";
-      this.image.onload = async () => {
-        this.aspectRatio = this.image.width / this.image.height;
-        const ar = this.getAttribute("aspect-ratio");
-        if (!ar || ar === "auto") {
-          this.style.setProperty(
-            "--aspect-ratio",
-            `${this.image.width}/${this.image.height}`,
-          );
-        }
-        this.dispatchEvent(
-          new CustomEvent("loaded", {
-            bubbles: true,
-            cancelable: true,
-            detail: {
-              blob: this.blob,
-              base64: this.base64,
-            },
-          }),
-        );
-        resolve();
-
-        // Create canvas to extract blob and base64 from image
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = this.image.width;
-        canvas.height = this.image.height;
-        ctx.drawImage(this.image, 0, 0);
-
-        // Get base64 from canvas
-        this.base64 = canvas.toDataURL();
-
-        // Get blob from canvas
-        canvas.toBlob((blob) => {
-          if (this.blob) {
-            URL.revokeObjectURL(this.blob);
-          }
-          if (blob) {
-            this.blob = URL.createObjectURL(blob);
-          }
-        });
-      };
-      this.image.src = src;
-    });
-  }
-  async #handleFileInput(e) {
-    if (this.blob) {
-      URL.revokeObjectURL(this.blob);
-    }
-    this.blob = URL.createObjectURL(e.target.files[0]);
-    //set base64 url
-    const reader = new FileReader();
-    reader.readAsDataURL(e.target.files[0]);
-    //await this data url to be set
-    await new Promise((resolve) => {
-      reader.onload = (e) => {
-        this.base64 = e.target.result;
-        resolve();
-      };
-    });
-    //emit event for loaded
-    this.dispatchEvent(
-      new CustomEvent("loaded", {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          blob: this.blob,
-          base64: this.base64,
-        },
-      }),
-    );
-    //emit for change too
-    this.dispatchEvent(
-      new CustomEvent("change", {
-        bubbles: true,
-        cancelable: true,
-      }),
-    );
-    this.setAttribute("src", this.blob);
-  }
   static get observedAttributes() {
-    return ["src", "upload", "download", "aspect-ratio", "fit", "checkerboard"];
+    return ["src", "upload", "aspect-ratio", "fit", "checkerboard"];
   }
+
   get src() {
     return this.#src;
   }
@@ -8202,46 +8037,199 @@ class FigImage extends HTMLElement {
     this.setAttribute("src", value);
   }
 
+  get file() {
+    return this.#file;
+  }
+
+  async getBase64() {
+    const src = this.#src;
+    if (!src) return null;
+    const res = await fetch(src);
+    const blob = await res.blob();
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const dataUrl = canvas.toDataURL();
+    return dataUrl;
+  }
+
+  connectedCallback() {
+    this.#src = this.getAttribute("src") || "";
+
+    const ar = this.getAttribute("aspect-ratio");
+    if (ar && ar !== "auto") {
+      this.style.setProperty("--aspect-ratio", ar);
+    }
+    const fit = this.getAttribute("fit");
+    if (fit) {
+      this.style.setProperty("--fit", fit);
+    }
+
+    if (!this.querySelector("fig-chit")) {
+      const chit = document.createElement("fig-chit");
+      chit.setAttribute("data-generated", "");
+      chit.setAttribute("size", "large");
+      chit.setAttribute("data-type", "image");
+      chit.setAttribute("disabled", "");
+      this.#applyChitBackground(chit);
+      if (this.hasAttribute("checkerboard") && this.getAttribute("checkerboard") !== "false") {
+        chit.setAttribute("checkerboard", "");
+      }
+      this.prepend(chit);
+    }
+    this.#chit = this.querySelector("fig-chit");
+
+    const isUpload = this.hasAttribute("upload") && this.getAttribute("upload") !== "false";
+    if (isUpload && !this.querySelector("fig-input-file[data-generated]")) {
+      this.#createFileInput();
+    }
+
+    if (this.#src && this.getAttribute("aspect-ratio") === "auto") {
+      this.#sniffDimensions(this.#src);
+    }
+  }
+
+  disconnectedCallback() {
+    this.#fileInput?.removeEventListener("change", this.#boundHandleFileInput);
+    if (this.#blobUrl) {
+      URL.revokeObjectURL(this.#blobUrl);
+      this.#blobUrl = null;
+    }
+  }
+
+  #applyChitBackground(chit) {
+    const cb = this.hasAttribute("checkerboard") && this.getAttribute("checkerboard") !== "false";
+    if (this.#src) {
+      chit.setAttribute("background", `url(${this.#src})`);
+    } else {
+      chit.setAttribute("background", cb ? "url()" : "var(--figma-color-bg-secondary)");
+    }
+  }
+
+  #createFileInput() {
+    const fi = document.createElement("fig-input-file");
+    fi.setAttribute("data-generated", "");
+    fi.setAttribute("accepts", "image/*");
+    fi.setAttribute("variant", "overlay");
+    const defaultLabel = this.getAttribute("label") || "Upload";
+    fi.setAttribute("label", this.#src ? "Replace" : defaultLabel);
+    if (this.#src) fi.setAttribute("url", this.#src);
+    fi.addEventListener("change", this.#boundHandleFileInput);
+    this.append(fi);
+    this.#fileInput = fi;
+  }
+
+  #removeFileInput() {
+    if (this.#fileInput) {
+      this.#fileInput.removeEventListener("change", this.#boundHandleFileInput);
+      this.#fileInput.remove();
+      this.#fileInput = null;
+    }
+  }
+
+  #handleFileInput(e) {
+    const file = e.detail?.files?.[0];
+
+    if (!file) {
+      if (this.#blobUrl) {
+        URL.revokeObjectURL(this.#blobUrl);
+        this.#blobUrl = null;
+      }
+      this.#file = null;
+      this.removeAttribute("src");
+      this.dispatchEvent(
+        new CustomEvent("change", { bubbles: true, cancelable: true }),
+      );
+      return;
+    }
+
+    if (this.#blobUrl) {
+      URL.revokeObjectURL(this.#blobUrl);
+    }
+    this.#file = file;
+    this.#blobUrl = URL.createObjectURL(file);
+
+    this.setAttribute("src", this.#blobUrl);
+
+    this.dispatchEvent(
+      new CustomEvent("loaded", {
+        bubbles: true,
+        cancelable: true,
+        detail: { file, src: this.#blobUrl },
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", { bubbles: true, cancelable: true }),
+    );
+
+    if (this.#fileInput) {
+      this.#fileInput.clear();
+      this.#fileInput.setAttribute("label", "Replace");
+    }
+  }
+
+  async #sniffDimensions(src) {
+    try {
+      let blob;
+      if (src.startsWith("blob:")) {
+        const res = await fetch(src);
+        blob = await res.blob();
+      } else {
+        const res = await fetch(src, { mode: "cors" });
+        blob = await res.blob();
+      }
+      const bitmap = await createImageBitmap(blob);
+      this.style.setProperty("--aspect-ratio", `${bitmap.width}/${bitmap.height}`);
+      bitmap.close();
+    } catch {
+      // Non-critical — CSS aspect-ratio fallback handles it
+    }
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
     if (name === "src") {
       this.#src = newValue;
-      if (this.chit) {
-        const hasCb =
-          this.hasAttribute("checkerboard") &&
-          this.getAttribute("checkerboard") !== "false";
+      if (this.#chit) {
+        this.#applyChitBackground(this.#chit);
+      }
+      if (this.#fileInput) {
+        const defaultLabel = this.getAttribute("label") || "Upload";
+        this.#fileInput.setAttribute("label", this.#src ? "Replace" : defaultLabel);
         if (this.#src) {
-          this.chit.setAttribute("background", `url(${this.#src})`);
+          this.#fileInput.setAttribute("url", this.#src);
         } else {
-          this.chit.setAttribute(
-            "background",
-            hasCb ? "url()" : "var(--figma-color-bg-secondary)",
-          );
+          this.#fileInput.removeAttribute("url");
         }
       }
-      if (this.#src) {
-        this.#loadImage(this.#src);
+      if (this.#src && this.getAttribute("aspect-ratio") === "auto") {
+        this.#sniffDimensions(this.#src);
       }
     }
+
     if (name === "upload") {
-      this.upload = newValue !== null && newValue !== "false";
-      this.innerHTML = this.#getInnerHTML();
-      this.#updateRefs();
+      const on = newValue !== null && newValue !== "false";
+      if (on && !this.#fileInput) {
+        this.#createFileInput();
+      } else if (!on) {
+        this.#removeFileInput();
+      }
     }
-    if (name === "download") {
-      this.download = newValue !== null && newValue !== "false";
-      this.innerHTML = this.#getInnerHTML();
-      this.#updateRefs();
-    }
-    if (name === "size") {
-      this.size = newValue;
-    }
+
     if (name === "aspect-ratio") {
       if (newValue && newValue !== "auto") {
         this.style.setProperty("--aspect-ratio", newValue);
       } else if (!newValue) {
         this.style.removeProperty("--aspect-ratio");
+      } else if (newValue === "auto" && this.#src) {
+        this.#sniffDimensions(this.#src);
       }
     }
+
     if (name === "fit") {
       if (newValue) {
         this.style.setProperty("--fit", newValue);
@@ -8249,12 +8237,13 @@ class FigImage extends HTMLElement {
         this.style.removeProperty("--fit");
       }
     }
+
     if (name === "checkerboard") {
-      if (this.chit) {
+      if (this.#chit) {
         if (newValue !== null && newValue !== "false") {
-          this.chit.setAttribute("checkerboard", "");
+          this.#chit.setAttribute("checkerboard", "");
         } else {
-          this.chit.removeAttribute("checkerboard");
+          this.#chit.removeAttribute("checkerboard");
         }
       }
     }
@@ -8264,7 +8253,7 @@ customElements.define("fig-image", FigImage);
 
 /* File Upload Input */
 class FigInputFile extends HTMLElement {
-  static observedAttributes = ["accepts", "label", "disabled", "multiple"];
+  static observedAttributes = ["accepts", "label", "disabled", "multiple", "variant", "url"];
 
   #fileInput = null;
   #filenameEl = null;
@@ -8277,10 +8266,24 @@ class FigInputFile extends HTMLElement {
     return this.#files;
   }
 
+  get #urlFilename() {
+    const url = this.getAttribute("url");
+    if (!url) return "";
+    try {
+      const path = new URL(url, location.href).pathname;
+      const name = path.split("/").pop();
+      return name ? decodeURIComponent(name) : url;
+    } catch {
+      return url;
+    }
+  }
+
   get value() {
-    if (!this.#files || this.#files.length === 0) return "";
-    if (this.#files.length === 1) return this.#files[0].name;
-    return `${this.#files.length} files`;
+    if (this.#files && this.#files.length > 0) {
+      if (this.#files.length === 1) return this.#files[0].name;
+      return `${this.#files.length} files`;
+    }
+    return this.#urlFilename;
   }
 
   connectedCallback() {
@@ -8306,6 +8309,7 @@ class FigInputFile extends HTMLElement {
   clear() {
     this.#files = null;
     if (this.#fileInput) this.#fileInput.value = "";
+    this.removeAttribute("url");
     this.#render();
     this.#emitEvents();
   }
@@ -8319,6 +8323,7 @@ class FigInputFile extends HTMLElement {
   #onFileChange = () => {
     if (this.#fileInput.files.length > 0) {
       this.#files = this.#fileInput.files;
+      this.removeAttribute("url");
       this.#render();
       this.#emitEvents();
     }
@@ -8373,6 +8378,7 @@ class FigInputFile extends HTMLElement {
     if (this.#fileInput) {
       this.#fileInput.files = dt.files;
     }
+    this.removeAttribute("url");
     this.#render();
     this.#emitEvents();
   };
@@ -8384,7 +8390,8 @@ class FigInputFile extends HTMLElement {
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false";
     const multiple = this.hasAttribute("multiple");
-    const hasFile = this.#files && this.#files.length > 0;
+    const variant = this.getAttribute("variant") || "input";
+    const hasFile = (this.#files && this.#files.length > 0) || !!this.getAttribute("url");
 
     this.innerHTML = "";
 
@@ -8397,7 +8404,7 @@ class FigInputFile extends HTMLElement {
         : "";
 
       this.#uploadBtn = document.createElement("fig-button");
-      this.#uploadBtn.setAttribute("variant", "input");
+      this.#uploadBtn.setAttribute("variant", variant);
       this.#uploadBtn.setAttribute("type", "upload");
       this.#uploadBtn.className = "fig-input-file-filename";
       if (disabled) this.#uploadBtn.setAttribute("disabled", "");
@@ -8452,7 +8459,7 @@ class FigInputFile extends HTMLElement {
       }
 
       this.#uploadBtn = document.createElement("fig-button");
-      this.#uploadBtn.setAttribute("variant", "input");
+      this.#uploadBtn.setAttribute("variant", variant);
       this.#uploadBtn.setAttribute("type", "upload");
       this.#uploadBtn.textContent = label;
       if (disabled) this.#uploadBtn.setAttribute("disabled", "");

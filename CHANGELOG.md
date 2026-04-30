@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.0]
+
+### Breaking Changes
+
+- `fig-image`: removed `download` attribute and internal `<div>` wrapper. Upload overlay now uses `fig-input-file` instead of native `<input>` inside `fig-button`.
+- `fig-image`: `loaded` event detail changed from `{ blob, base64 }` to `{ file, src }`. Use the new `async getBase64()` method if base64 is needed.
+- `fig-image`: no longer auto-generates blob URLs or base64 on every load. Component is now synchronous on connect.
+
+### Added
+
+- `fig-image`: `async getBase64()` method for on-demand base64 conversion.
+- `fig-image`: `file` getter to access the raw uploaded File object.
+- `fig-image`: preserves user-provided children (no more innerHTML wipe). Supports composable overlays.
+- `fig-image`: `aspect-ratio="auto"` uses `createImageBitmap` for fast, lazy dimension detection.
+- `fig-image`: auto-generated `fig-input-file` shows "Replace" label when an image is already set.
+- `fig-input-file`: `variant` attribute passthrough to internal `fig-button` (default "input").
+- `fig-input-file`: `url` attribute for display-only file state (extracts filename from URL, no network request).
+- Playground: "Plain" and "Custom Buttons" image examples in /propkit.
+
+### Changed
+
+- `fig-image` CSS: hover-reveal now targets `fig-input-file[data-generated]` instead of `> div`.
+
 ## [3.23.0]
 
 ### Added

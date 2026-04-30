@@ -482,7 +482,7 @@ export const figui3Sections: Section[] = [
     id: "image",
     name: "Image",
     group: "Core components",
-    description: "Image previews with upload and download overlays.",
+    description: "Image previews with optional upload overlay.",
     examples: [
       {
         id: "default",

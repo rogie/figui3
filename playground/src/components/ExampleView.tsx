@@ -38,15 +38,12 @@ export default function ExampleView({
     if (!container || !onPersistImageSource) return;
 
     const handleLoaded = (event: Event) => {
-      const customEvent = event as CustomEvent<{ base64?: string }>;
+      const customEvent = event as CustomEvent<{ src?: string; file?: File }>;
       const imageEl = event.target as HTMLElement | null;
       if (!imageEl || imageEl.tagName.toLowerCase() !== "fig-image") return;
 
-      const srcAttr = imageEl.getAttribute("src") ?? "";
-      if (!srcAttr.startsWith("blob:")) return;
-
-      const base64 = customEvent.detail?.base64;
-      if (!base64) return;
+      const src = customEvent.detail?.src;
+      if (!src) return;
 
       const field = imageEl.closest("fig-field");
       let fieldIndex = -1;
@@ -59,7 +56,7 @@ export default function ExampleView({
       }
       if (fieldIndex < 0) return;
 
-      onPersistImageSource(fieldIndex, base64);
+      onPersistImageSource(fieldIndex, src);
     };
 
     container.addEventListener("loaded", handleLoaded as EventListener);
