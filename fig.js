@@ -4289,6 +4289,10 @@ customElements.define("fig-avatar", FigAvatar);
 
 /* Form Field */
 class FigField extends HTMLElement {
+  #toggleable = false;
+  #chevron = null;
+  #boundToggle = null;
+
   constructor() {
     super();
   }
@@ -4303,12 +4307,33 @@ class FigField extends HTMLElement {
       this.input = Array.from(this.childNodes).find((node) =>
         node.nodeName.toLowerCase().startsWith("fig-"),
       );
-      if (this.input && this.label) {
+
+      this.#toggleable = !!(this.input && "open" in this.input);
+
+      if (this.#toggleable && this.label) {
+        this.#chevron = document.createElement("span");
+        this.#chevron.className = "fig-mask-icon fig-field-chevron";
+        this.insertBefore(this.#chevron, this.label);
+
+        this.#boundToggle = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (this.input && typeof this.input.open !== "undefined") {
+            this.input.open = !this.input.open;
+          }
+        };
+        this.#chevron.addEventListener("click", this.#boundToggle);
+        this.label.addEventListener("click", this.#boundToggle);
+      } else if (this.input && this.label) {
         this.label.addEventListener("click", this.focus.bind(this));
+      }
+
+      if (this.input && this.label && !this.#toggleable) {
         let inputId = this.input.getAttribute("id") || figUniqueId();
         this.input.setAttribute("id", inputId);
         this.label.setAttribute("for", inputId);
       }
+
       if (this.label) {
         this.label.addEventListener(
           "pointerenter",
@@ -4324,6 +4349,12 @@ class FigField extends HTMLElement {
 
   disconnectedCallback() {
     if (this.label) FigTooltip.hide(this.label);
+    if (this.label && this.#boundToggle) {
+      this.label.removeEventListener("click", this.#boundToggle);
+    }
+    if (this.#chevron && this.#boundToggle) {
+      this.#chevron.removeEventListener("click", this.#boundToggle);
+    }
   }
 
   #onLabelEnter() {
@@ -4347,13 +4378,16 @@ class FigField extends HTMLElement {
 
   focus() {
     if (!this.input) return;
-    const nativeInput = this.input.querySelector("input, select, textarea");
-    if (nativeInput) {
-      nativeInput.focus();
-      nativeInput.click();
+    if (this.input.contains(document.activeElement)) return;
+    const nativeInputs = this.input.querySelectorAll("input, select, textarea");
+    if (nativeInputs.length === 1) {
+      nativeInputs[0].focus();
+      nativeInputs[0].click();
     } else {
       this.input.focus();
-      this.input.click();
+      if (nativeInputs.length === 0) {
+        this.input.click();
+      }
     }
   }
 }
@@ -6070,13 +6104,28 @@ class FigInputPalette extends HTMLElement {
   #renderRAF = null;
 
   static get observedAttributes() {
-    return ["value", "disabled", "min", "max", "expanded", "add"];
+    return ["value", "disabled", "min", "max", "open", "add"];
   }
 
-  get #expanded() {
-    return (
-      this.hasAttribute("expanded") && this.getAttribute("expanded") !== "false"
-    );
+  get open() {
+    return this.hasAttribute("open") && this.getAttribute("open") !== "false";
+  }
+
+  set open(value) {
+    const was = this.open;
+    if (value) {
+      this.setAttribute("open", "");
+    } else {
+      this.removeAttribute("open");
+    }
+    if (was !== !!value) {
+      this.dispatchEvent(
+        new CustomEvent("openchange", {
+          detail: { open: !!value },
+          bubbles: true,
+        }),
+      );
+    }
   }
 
   get #showAdd() {
@@ -6094,6 +6143,7 @@ class FigInputPalette extends HTMLElement {
   }
 
   connectedCallback() {
+    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "0");
     if (this.#renderRAF) cancelAnimationFrame(this.#renderRAF);
     this.#renderRAF = requestAnimationFrame(() => {
       this.#renderRAF = null;
@@ -6124,7 +6174,7 @@ class FigInputPalette extends HTMLElement {
         break;
       case "min":
       case "max":
-      case "expanded":
+      case "open":
       case "add":
         this.#render();
         break;
@@ -6305,7 +6355,7 @@ class FigInputPalette extends HTMLElement {
   #createAddButton(disabled, parent = this) {
     const atMax = this.#colors.length >= this.#max;
     const addBtn = document.createElement("fig-button");
-    addBtn.setAttribute("variant", "ghost");
+    addBtn.setAttribute("variant", "input");
     addBtn.setAttribute("icon", "true");
     addBtn.setAttribute("aria-label", "Add color");
     addBtn.className = "palette-add-btn";
@@ -10914,7 +10964,7 @@ customElements.define("fig-layer", FigLayer);
 
 // FigGroup
 class FigGroup extends HTMLElement {
-  static observedAttributes = ["name", "collapse"];
+  static observedAttributes = ["name", "collapsible"];
 
   #header = null;
   #chevron = null;
@@ -10951,7 +11001,10 @@ class FigGroup extends HTMLElement {
     }
     if (was !== !!value) {
       this.dispatchEvent(
-        new CustomEvent("openchange", { detail: { open: !!value }, bubbles: true }),
+        new CustomEvent("openchange", {
+          detail: { open: !!value },
+          bubbles: true,
+        }),
       );
     }
   }
@@ -10962,9 +11015,7 @@ class FigGroup extends HTMLElement {
   };
 
   #render() {
-    const collapseAttr = this.getAttribute("collapse");
-    const isCollapsible =
-      collapseAttr !== null && collapseAttr !== "false";
+    const isCollapsible = this.hasAttribute("collapsible");
     const nameAttr = this.getAttribute("name");
     const label = nameAttr || (isCollapsible ? "Group" : null);
 
@@ -11009,8 +11060,7 @@ class FigGroup extends HTMLElement {
       h3.addEventListener("click", this.#handleToggle);
 
       if (!this.hasAttribute("open")) {
-        const startOpen = collapseAttr === "open";
-        this.setAttribute("open", startOpen ? "true" : "false");
+        this.setAttribute("open", "false");
       }
     } else {
       if (this.#chevron) {

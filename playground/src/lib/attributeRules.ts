@@ -272,9 +272,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-palette": {
-    "color-strip": { label: "Color strip", type: "boolean", boolMode: "custom", trueValue: null, falseValue: "false", defaultChecked: true },
     add: { label: "Add", type: "boolean", boolMode: "string", defaultChecked: true },
-    expanded: { label: "Expanded", type: "boolean", boolMode: "presence" },
+    open: { label: "Open", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-gradient": {
@@ -467,11 +466,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-group": {
     name: { label: "Name", type: "string" },
-    collapse: {
-      label: "Collapse",
-      type: "enum",
-      options: ["false", "true", "open"],
-    },
+    collapsible: { label: "Collapsible", type: "boolean", boolMode: "presence" },
+    open: { label: "Open", type: "boolean", boolMode: "presence" },
   },
   "fig-handle": {
     control: {

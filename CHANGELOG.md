@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.22.0]
+
+### Changed
+
+- Standardized collapse/expand pattern across `fig-layer`, `fig-group`, and `fig-input-palette`: all use `open` attribute and emit `openchange` event.
+- `fig-group`: replaced `collapse` attribute with `collapsible` (presence boolean) + `open` for state.
+- `fig-input-palette`: replaced `expanded` attribute with `open`; added public `open` getter/setter and `openchange` event.
+- `fig-input-color` and `fig-input-fill`: text input now shown by default (unless `text="false"`).
+- Removed `color-strip` attribute from `fig-input-palette`.
+
+### Added
+
+- `fig-field`: auto-detects toggleable children (elements with an `open` property) and injects a chevron for expand/collapse toggle via label click.
+- Playground: palette field added to collapsible group example.
+
 ## [3.21.2]
 
 ### Fixed

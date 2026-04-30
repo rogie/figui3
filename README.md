@@ -451,7 +451,7 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 
 ```html
 <fig-input-palette value='["#FF0000","#00FF00","#0000FF"]'></fig-input-palette>
-<fig-input-palette value='[{"color":"#FF0000","alpha":0.5},{"color":"#00FF00","alpha":1}]' expanded="true"></fig-input-palette>
+<fig-input-palette value='[{"color":"#FF0000","alpha":0.5},{"color":"#00FF00","alpha":1}]' open></fig-input-palette>
 ```
 
 ---

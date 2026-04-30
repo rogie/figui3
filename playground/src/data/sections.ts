@@ -81,7 +81,7 @@ export const propkitSections: Section[] = [
         id: "collapsible",
         name: "Collapsible",
         markup: `<div class="prop-panel">
-  <fig-group name="Appearance" collapse="open">
+  <fig-group name="Appearance" collapsible open>
     <fig-field direction="horizontal">
       <label>Color</label>
       <fig-input-color value="#0D99FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
@@ -103,8 +103,12 @@ export const propkitSections: Section[] = [
       <label>Opacity</label>
       <fig-slider variant="neue" value="100" min="0" max="100" text="true" units="%"></fig-slider>
     </fig-field>
+    <fig-field direction="horizontal">
+      <label>Palette</label>
+      <fig-input-palette value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full add="true"></fig-input-palette>
+    </fig-field>
   </fig-group>
-  <fig-group name="Advanced" collapse="true">
+  <fig-group name="Advanced" collapsible>
     <fig-field direction="horizontal">
       <label>Noise</label>
       <fig-switch checked></fig-switch>
@@ -114,7 +118,7 @@ export const propkitSections: Section[] = [
       <fig-switch checked></fig-switch>
     </fig-field>
   </fig-group>
-  <fig-group name="Misc" collapse="true">
+  <fig-group name="Misc" collapsible>
     <fig-field direction="horizontal">
       <label>Visible</label>
       <fig-switch></fig-switch>

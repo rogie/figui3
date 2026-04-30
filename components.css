@@ -2962,12 +2962,12 @@ fig-group {
     }
   }
 
-  &[collapse]:not([collapse="false"]) > fig-header h3 {
-    cursor: pointer;
+  &[collapsible] > fig-header h3 {
     user-select: none;
   }
 
-  &[collapse]:not([collapse="false"])[open="false"] {
+  &[collapsible]:not([open]):not([open="true"]),
+  &[collapsible][open="false"] {
     padding-bottom: 0;
     fig-header {
       color: var(--figma-color-text-secondary);
@@ -2984,9 +2984,8 @@ fig-group {
     transform: rotate(0deg);
   }
 
-  &[collapse]:not([collapse="false"]):not([open]):not([open="true"])
-    > :not(fig-header),
-  &[collapse]:not([collapse="false"])[open="false"] > :not(fig-header) {
+  &[collapsible]:not([open]):not([open="true"]) > :not(fig-header),
+  &[collapsible][open="false"] > :not(fig-header) {
     display: none;
   }
 }
@@ -3274,12 +3273,18 @@ fig-input-palette {
   flex-direction: column;
   gap: var(--spacer-2);
   min-width: 0;
+  border-radius: var(--radius-medium);
+
+  &:focus {
+    outline: 1px solid var(--figma-color-border-selected) !important;
+    outline-offset: -1px !important;
+  }
 
   .palette-colors {
     display: flex;
     flex-wrap: nowrap;
     gap: 0;
-    border-radius: var(--radius-small);
+    border-radius: var(--radius-medium);
     overflow: hidden;
     grid-area: inputs;
     min-width: 0;
@@ -3294,18 +3299,14 @@ fig-input-palette {
     grid-template-columns: 1fr 24px;
     grid-template-areas: "inputs button";
     border-radius: var(--radius-medium);
-    background-color: var(--figma-color-bg-secondary);
     width: 100%;
-    gap: var(--spacer-1);
+    gap: var(--spacer-2);
     place-items: center;
 
     .palette-colors {
       display: flex;
-      --palette-colors-height: calc(1.5rem - var(--spacer-1));
+      --palette-colors-height: 1.5rem;
       height: var(--palette-colors-height);
-      margin-left: var(--spacer-1);
-
-      background-color: var(--figma-color-bg-secondary);
       fig-input-color {
         width: 100%;
       }
@@ -3329,7 +3330,7 @@ fig-input-palette {
       }
     }
   }
-  &[expanded]:not([expanded="false"]):not([edit="false"]) {
+  &[open]:not([open="false"]):not([edit="false"]) {
     .palette-colors-expanded {
       display: flex;
     }
@@ -3338,11 +3339,6 @@ fig-input-palette {
     .palette-colors-expanded,
     .palette-colors-inline {
       grid-template-areas: "inputs inputs";
-    }
-  }
-  &[color-strip="false"] {
-    .palette-colors-inline {
-      display: none !important;
     }
   }
   .palette-colors-expanded {
@@ -3364,10 +3360,6 @@ fig-input-palette {
       border-radius: var(--radius-medium) !important;
     }
   }
-}
-
-fig-field[direction="horizontal"]:has(> fig-input-palette) {
-  padding-right: var(--spacer-2);
 }
 
 fig-slider {
@@ -3420,6 +3412,23 @@ fig-field,
     align-items: center;
     width: 100%;
     user-select: none;
+  }
+
+  & > .fig-field-chevron {
+    --icon: var(--icon-chevron);
+    --size: 1rem;
+    color: var(--figma-color-text-tertiary);
+    transform: rotate(-90deg);
+    transition: transform var(--transition-duration)
+      var(--transition-timing-function);
+    flex-shrink: 0;
+    margin: var(--spacer-1) 0;
+    margin-left: calc(var(--spacer-3) * -1);
+    margin-right: calc(var(--spacer-2) * -1);
+  }
+
+  &:has(> [open]:not([open="false"])) > .fig-field-chevron {
+    transform: rotate(0deg);
   }
 
   &[direction="horizontal"] > label {

@@ -427,6 +427,11 @@ export default function AttributesView({
                 entry.name === "value" &&
                 target.controlTag === "fig-color-tip" &&
                 colorTipControlMode !== "color"
+              ) &&
+              !(
+                entry.name === "open" &&
+                target.controlTag === "fig-group" &&
+                target.controlAttributes.collapsible === undefined
               ),
           )
           .sort((a, b) => {
