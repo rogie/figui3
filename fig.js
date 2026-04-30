@@ -10987,23 +10987,26 @@ class FigGroup extends HTMLElement {
       this.#header.setAttribute("borderless", "");
       this.#header.dataset.generated = "true";
       this.prepend(this.#header);
+    }
 
-      let html = "";
-      if (isCollapsible) {
-        html += `<span class="fig-mask-icon fig-group-chevron"></span>`;
-      }
-      html += `<h3>${label}</h3>`;
-      this.#header.innerHTML = html;
+    // Ensure h3 exists inside header
+    let h3 = this.#header.querySelector("h3");
+    if (!h3) {
+      h3 = document.createElement("h3");
+      this.#header.prepend(h3);
+    }
+    if (this.#header.dataset.generated) {
+      h3.textContent = label;
     }
 
     if (isCollapsible) {
-      if (!this.#header.querySelector(".fig-group-chevron")) {
+      if (!h3.querySelector(".fig-group-chevron")) {
         const chevron = document.createElement("span");
         chevron.className = "fig-mask-icon fig-group-chevron";
-        this.#header.prepend(chevron);
+        h3.prepend(chevron);
       }
-      this.#chevron = this.#header.querySelector(".fig-group-chevron");
-      this.#header.addEventListener("click", this.#handleToggle);
+      this.#chevron = h3.querySelector(".fig-group-chevron");
+      h3.addEventListener("click", this.#handleToggle);
 
       if (!this.hasAttribute("open")) {
         const startOpen = collapseAttr === "open";

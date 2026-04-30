@@ -24,7 +24,32 @@ export const propkitSections: Section[] = [
     examples: [
       {
         id: "default",
-        name: "Default (Collapsible)",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-group name="Layout">
+    <fig-field direction="horizontal">
+      <label>Direction</label>
+      <fig-dropdown full experimental="modern">
+        <option selected>Horizontal</option>
+        <option>Vertical</option>
+      </fig-dropdown>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Spacing</label>
+      <fig-slider value="8" min="0" max="64" text="true" units="px"></fig-slider>
+    </fig-field>
+  </fig-group>
+  <fig-group name="Fill">
+    <fig-field direction="horizontal">
+      <label>Background</label>
+      <fig-input-color value="#FFFFFF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+    </fig-field>
+  </fig-group>
+</div>`,
+      },
+      {
+        id: "collapsible",
+        name: "Collapsible",
         markup: `<div class="prop-panel">
   <fig-group name="Appearance" collapse="open">
     <fig-field direction="horizontal">
@@ -63,31 +88,6 @@ export const propkitSections: Section[] = [
     <fig-field direction="horizontal">
       <label>Visible</label>
       <fig-switch></fig-switch>
-    </fig-field>
-  </fig-group>
-</div>`,
-      },
-      {
-        id: "no-collapse",
-        name: "Static (No Collapse)",
-        markup: `<div class="prop-panel">
-  <fig-group name="Layout">
-    <fig-field direction="horizontal">
-      <label>Direction</label>
-      <fig-dropdown full experimental="modern">
-        <option selected>Horizontal</option>
-        <option>Vertical</option>
-      </fig-dropdown>
-    </fig-field>
-    <fig-field direction="horizontal">
-      <label>Spacing</label>
-      <fig-slider value="8" min="0" max="64" text="true" units="px"></fig-slider>
-    </fig-field>
-  </fig-group>
-  <fig-group name="Fill">
-    <fig-field direction="horizontal">
-      <label>Background</label>
-      <fig-input-color value="#FFFFFF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
     </fig-field>
   </fig-group>
 </div>`,
