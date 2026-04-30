@@ -3899,7 +3899,7 @@ fig-layer {
   position: relative;
   user-select: none;
   width: 100%;
-  padding: 0 var(--spacer-2);
+  padding: 0 var(--spacer-3);
   border-radius: var(--radius-medium);
 
   /* When layer has children */
@@ -3934,7 +3934,7 @@ fig-layer {
       flex-shrink: 0;
       transition: transform 0.15s;
       position: absolute;
-      left: calc(var(--spacer-2-5) * -1);
+      left: calc(var(--spacer-3) * -1);
       top: var(--spacer-1);
       rotate: -90deg;
     }
@@ -4540,10 +4540,11 @@ fig-preview {
 /* Chooser */
 fig-chooser {
   --chooser-fade-size: var(--spacer-4);
+  --fig-chooser-gap: var(--spacer-2);
 
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--fig-chooser-gap);
   overflow: visible auto;
   scrollbar-width: none;
   scroll-snap-type: y mandatory;
@@ -4553,7 +4554,7 @@ fig-chooser {
   }
 
   &[padding="false"] {
-    gap: var(--spacer-2);
+    gap: var(--fig-chooser-gap);
     fig-choice {
       --fig-choice-padding: 0px;
     }
@@ -4725,8 +4726,8 @@ fig-chooser {
 }
 
 fig-choice {
-  --fig-choice-selection-ring-width: 1.25px;
-  --fig-choice-padding: var(--spacer-2);
+  --fig-choice-selection-ring-width: 1.5px;
+  --fig-choice-padding: 0px;
   --fig-choice-border-radius: calc(
     var(--radius-medium) + var(--fig-choice-padding)
   );
@@ -4736,7 +4737,6 @@ fig-choice {
   border-radius: var(--fig-choice-border-radius);
   gap: var(--spacer-2);
   outline: none;
-  border: 1px solid transparent;
   cursor: default;
 
   padding: var(--fig-choice-padding);
