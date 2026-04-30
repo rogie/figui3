@@ -2176,11 +2176,7 @@ fieldset {
   padding: var(--spacer-2) 0;
 
   & > legend {
-    margin-top: 0.125rem;
-    font-weight: 500;
-    font-size: 0.625rem;
-    line-height: 0.875rem;
-    color: var(--figma-color-text-secondary);
+    padding: 0;
   }
 
   & > label {

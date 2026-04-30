@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.1.1]
+
+### Changed
+
+- Playground: added "Native elements" group to `/figui3` with 12 styled HTML element examples (button, select, inputs, textarea, checkbox, switch, radio, color, fieldset, details, hr).
+- Playground: refactored nav to use collapsible `fig-group` wrappers instead of `.nav-group-header` elements.
+- `details`: improved styling with padding, full width, and adjusted summary alignment.
+
 ## [4.1.0]
 
 ### Fixed
