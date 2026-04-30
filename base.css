@@ -32,6 +32,7 @@ h3 {
 hr {
   height: 1px;
   border: none;
+  width: 100%;
   background-color: var(--figma-color-border);
   margin: var(--spacer-2) 0;
 

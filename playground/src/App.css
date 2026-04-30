@@ -82,23 +82,9 @@ nav {
     --nav-fade-size: var(--spacer-3);
     --nav-fade-surface: var(--figma-color-bg);
     flex: 1;
-    margin-block: var(--spacer-2);
     position: relative;
-
-    .nav-group-header {
-      margin-inline: calc(-1 * var(--spacer-3));
-      position: relative;
-      top: calc(var(--spacer-3) * -1);
-      margin-bottom: calc(var(--spacer-3) * -1);
-      color: var(--figma-color-text-secondary);
-      &:not(:first-child) {
-        margin-top: var(--spacer-4);
-        box-shadow: none;
-        border-top: 1px solid var(--figma-color-border);
-      }
-    }
     overflow-y: auto;
-    padding: var(--spacer-2) var(--spacer-3);
+    padding: 0;
     scrollbar-width: thin;
     scrollbar-color: var(--figma-color-border) transparent;
 

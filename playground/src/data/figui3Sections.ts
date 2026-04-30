@@ -691,4 +691,201 @@ export const figui3Sections: Section[] = [
       },
     ],
   },
+  {
+    id: "native-button",
+    name: "<button>",
+    group: "Native elements",
+    description: "Plain HTML button with inherited reset and alignment.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <button>My button</button>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-select",
+    name: "<select>",
+    group: "Native elements",
+    description: "Native select element with border, radius, and height styling.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <select>
+    <option value="one" selected>Option one</option>
+    <option value="two">Option two</option>
+    <option value="three">Option three</option>
+  </select>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-text-input",
+    name: "<input type=\"text\">",
+    group: "Native elements",
+    description: "Native text input with background, radius, and focus ring.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <input type="text" placeholder="Enter text..." value="Hello world">
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-number-input",
+    name: "<input type=\"number\">",
+    group: "Native elements",
+    description: "Native number input with textfield appearance and hidden spinners.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <input type="number" value="16" min="0" max="100" step="1">
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-textarea",
+    name: "<textarea>",
+    group: "Native elements",
+    description: "Native textarea with full-width block display and focus ring.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <textarea rows="3" placeholder="Write something...">Some multiline content here</textarea>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-checkbox",
+    name: "<input type=\"checkbox\">",
+    group: "Native elements",
+    description: "Native checkbox with custom appearance and brand color when checked.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <input type="checkbox" checked>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-switch",
+    name: "<input class=\"switch\">",
+    group: "Native elements",
+    description:
+      "Native checkbox with .switch class for toggle pill appearance.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <input type="checkbox" class="switch" checked>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-radio",
+    name: "<input type=\"radio\">",
+    group: "Native elements",
+    description: "Native radio input with custom dot and brand background.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <label class="radio"><input type="radio" name="native-demo" value="a" checked> Option A</label>
+  <label class="radio"><input type="radio" name="native-demo" value="b"> Option B</label>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-color-input",
+    name: "<input type=\"color\">",
+    group: "Native elements",
+    description: "Native color input with compact swatch and rounded corners.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <input type="color" value="#0D99FF">
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-fieldset",
+    name: "<fieldset>",
+    group: "Native elements",
+    description:
+      "Native fieldset with flex column layout and grid-based labels.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fieldset>
+    <legend>Settings</legend>
+    <label><span>Name</span><input type="text" value="Rogie"></label>
+    <label><span>Size</span><input type="number" value="24"></label>
+  </fieldset>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-details",
+    name: "<details>",
+    group: "Native elements",
+    description:
+      "Native details/summary with animated chevron and collapse behavior.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <details open>
+    <summary>Advanced options</summary>
+    <p>Hidden content revealed on toggle.</p>
+  </details>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-hr",
+    name: "<hr>",
+    group: "Native elements",
+    description: "Native horizontal rule styled as a 1px border divider.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <p>Content above</p>
+  <hr>
+  <p>Content below</p>
+</div>`,
+      },
+    ],
+  },
 ];

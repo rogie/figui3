@@ -319,7 +319,7 @@
   );
 
   /* Icons - colorless shapes for use with mask-image */
-  --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='black' stroke-linecap='round'/%3E%3C/svg%3E%0A");
+  --icon-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='grey' stroke-linecap='round'/%3E%3C/svg%3E%0A");
   --icon-checkmark: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.084 4.22266C11.2372 3.99292 11.5476 3.93084 11.7773 4.08398C12.0071 4.23716 12.0692 4.54758 11.916 4.77734L7.91602 10.7773C7.83292 10.902 7.6979 10.9833 7.54883 10.998C7.39993 11.0126 7.25229 10.9593 7.14648 10.8535L4.14648 7.85352C3.95126 7.65825 3.95123 7.34173 4.14648 7.14648C4.34174 6.95124 4.65825 6.95126 4.85352 7.14648L7.42188 9.71484L11.084 4.22266Z' fill='white'/%3E%3C/svg%3E%0A");
   --icon-reset: url("data:image/svg+xml,%3Csvg width='16' height='16' fill='none' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='black' fill-rule='evenodd' d='M6.354 2.146a.5.5 0 0 1 0 .708L5.207 4H8.5a5 5 0 1 1-5 5 .5.5 0 0 1 1 0 4 4 0 1 0 4-4H5.207l1.147 1.146a.5.5 0 1 1-.708.708l-2-2a.5.5 0 0 1 0-.708l2-2a.5.5 0 0 1 .708 0' clip-rule='evenodd'/%3E%3C/svg%3E");
   --icon-steppers: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.7245 6.08191C11.9186 5.95386 12.1826 5.97562 12.3534 6.14637L14.3534 8.14637L14.4179 8.22449C14.546 8.41852 14.5242 8.68253 14.3534 8.8534C14.1826 9.02426 13.9186 9.04601 13.7245 8.91785L13.6464 8.8534L11.9999 7.20691L10.3534 8.8534C10.1582 9.04866 9.84166 9.04866 9.6464 8.8534C9.45123 8.65813 9.45117 8.3416 9.6464 8.14637L11.6464 6.14637L11.7245 6.08191Z' fill='black'/%3E%3Cpath d='M13.7248 15.0822C13.9189 14.9541 14.1829 14.9758 14.3537 15.1467C14.5246 15.3176 14.5463 15.5815 14.4182 15.7756L14.3537 15.8537L12.3537 17.8537C12.1829 18.0246 11.9189 18.0463 11.7248 17.9182L11.6467 17.8537L9.64669 15.8537L9.58224 15.7756C9.45407 15.5815 9.47583 15.3176 9.64669 15.1467C9.81756 14.9758 10.0815 14.9541 10.2756 15.0822L10.3537 15.1467L12.0002 16.7932L13.6467 15.1467L13.7248 15.0822Z' fill='black' /%3E%3C/svg%3E%0A");
@@ -481,10 +481,12 @@ input[type="text"][list] {
   display: flex;
   appearance: none;
   align-items: center;
-  flex: 1 0 0;
   border: 0;
   color: var(--figma-color-text);
   background-color: var(--figma-color-bg);
+  background: calc(100% - var(--spacer-1)) 50% / 1rem no-repeat
+    var(--icon-chevron);
+
   box-shadow: inset 0 0 0 1px var(--figma-color-border);
   accent-color: var(--figma-color-bg-brand);
   overflow: hidden;
@@ -696,14 +698,16 @@ select {
 }
 
 /* Dropdown */
-fig-dropdown,
-.fig-dropdown {
-  display: inline-flex;
-  position: relative;
-
+fig-dropdown {
   & > *:not(select) {
     display: none !important;
   }
+}
+fig-dropdown,
+select,
+.fig-dropdown {
+  display: inline-flex;
+  position: relative;
   > select {
     display: flex;
     align-items: center;
@@ -736,6 +740,7 @@ fig-dropdown,
 
 /* Button */
 .fig-button,
+button,
 fig-button {
   color: var(--figma-color-text-onbrand);
   display: flex;
@@ -2036,6 +2041,7 @@ input[type="checkbox"].switch:checked:focus {
 /* Checkbox */
 input[type="checkbox"]:not(.switch) {
   contain: strict;
+  vertical-align: middle;
   --size: 1rem;
   appearance: none;
   border-radius: var(--radius-medium);
@@ -3887,12 +3893,13 @@ fig-joystick {
 
 /* Layer */
 fig-layer {
-  --indent: var(--spacer-2);
+  --indent: var(--spacer-3);
   display: block;
   color: var(--figma-color-text);
   position: relative;
   user-select: none;
   width: 100%;
+  padding: 0 var(--spacer-2);
   border-radius: var(--radius-medium);
 
   /* When layer has children */
@@ -3909,7 +3916,7 @@ fig-layer {
     align-items: center;
     gap: var(--spacer-1);
     padding: var(--spacer-1) var(--spacer-2);
-    margin-left: 0;
+    margin-left: var(--spacer-1);
     height: var(--spacer-4);
     border-radius: var(--radius-medium);
     position: relative;
@@ -3928,7 +3935,7 @@ fig-layer {
       flex-shrink: 0;
       transition: transform 0.15s;
       position: absolute;
-      left: calc(var(--spacer-3) * -1);
+      left: calc(var(--spacer-2-5) * -1);
       top: var(--spacer-1);
       rotate: -90deg;
     }
@@ -3975,8 +3982,11 @@ fig-layer {
 
   /* Nested layers indentation */
   > fig-layer {
-    padding-left: var(--indent);
+    padding: 0;
     margin-top: 1px;
+    .fig-layer-row {
+      padding-left: var(--indent);
+    }
   }
 
   /* Collapsed state - hide children */
@@ -4943,4 +4953,3 @@ fig-color-tip {
     }
   }
 }
-

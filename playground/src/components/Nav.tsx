@@ -119,7 +119,7 @@ export default function Nav({
     });
 
     el.querySelectorAll<HTMLElement>(
-      ":scope > fig-layer[data-section]",
+      "fig-layer[data-section]:not(fig-layer fig-layer)",
     ).forEach((parent) => {
       if (parent.dataset.section === activeSectionId) {
         parent.setAttribute("open", "true");
@@ -186,42 +186,68 @@ export default function Nav({
         <ThemeToggle isDark={isDark} setTheme={setTheme} />
       </fig-header>
       <div className="nav-links" ref={navRef}>
-        {sections.map((section, i) => {
-          const isSingleExample = section.examples.length === 1;
-          const onlyExample = section.examples[0];
-          const prevGroup = i > 0 ? sections[i - 1].group : undefined;
-          const showGroupHeader = section.group && section.group !== prevGroup;
+        {(() => {
+          const groups: { group: string | undefined; sections: Section[] }[] =
+            [];
+          for (const section of sections) {
+            const last = groups[groups.length - 1];
+            if (last && last.group === section.group) {
+              last.sections.push(section);
+            } else {
+              groups.push({ group: section.group, sections: [section] });
+            }
+          }
 
-          return (
-            <React.Fragment key={section.id}>
-              {showGroupHeader && (
-                <fig-header class="nav-group-header" borderless>
-                  <h3>{section.group}</h3>
-                </fig-header>
-              )}
-              <fig-layer
-                data-section={section.id}
-                data-example={isSingleExample ? onlyExample.id : undefined}
-              >
-                <div className="fig-layer-row">
-                  <label>{toSentenceCase(section.name)}</label>
-                </div>
-                {!isSingleExample &&
-                  section.examples.map((example) => (
-                    <fig-layer
-                      key={example.id}
-                      data-section={section.id}
-                      data-example={example.id}
-                    >
-                      <div className="fig-layer-row">
-                        <label>{toSentenceCase(example.name)}</label>
-                      </div>
-                    </fig-layer>
-                  ))}
-              </fig-layer>
-            </React.Fragment>
-          );
-        })}
+          return groups.map((g, gi) => {
+            const layers = g.sections.map((section) => {
+              const isSingleExample = section.examples.length === 1;
+              const onlyExample = section.examples[0];
+              return (
+                <fig-layer
+                  key={section.id}
+                  data-section={section.id}
+                  data-example={isSingleExample ? onlyExample.id : undefined}
+                >
+                  <div className="fig-layer-row">
+                    <label>{toSentenceCase(section.name)}</label>
+                  </div>
+                  {!isSingleExample &&
+                    section.examples.map((example) => (
+                      <fig-layer
+                        key={example.id}
+                        data-section={section.id}
+                        data-example={example.id}
+                      >
+                        <div className="fig-layer-row">
+                          <label>{toSentenceCase(example.name)}</label>
+                        </div>
+                      </fig-layer>
+                    ))}
+                </fig-layer>
+              );
+            });
+
+            if (g.group) {
+              const collapsed =
+                g.group === "Utilities" || g.group === "Native elements";
+              return (
+                <fig-group
+                  key={g.group}
+                  name={g.group}
+                  collapsible
+                  open={collapsed ? undefined : true}
+                >
+                  {layers}
+                </fig-group>
+              );
+            }
+            return (
+              <React.Fragment key={`ungrouped-${gi}`}>
+                {layers}
+              </React.Fragment>
+            );
+          });
+        })()}
       </div>
       <footer className="nav-footer">
         <div className="nav-install-row">
