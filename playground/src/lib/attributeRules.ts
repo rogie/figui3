@@ -465,6 +465,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-header": {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
   },
+  "fig-group": {
+    name: { label: "Name", type: "string" },
+    collapse: {
+      label: "Collapse",
+      type: "enum",
+      options: ["false", "true", "open"],
+    },
+  },
   "fig-handle": {
     control: {
       label: "Control",

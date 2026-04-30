@@ -10912,6 +10912,114 @@ class FigLayer extends HTMLElement {
 }
 customElements.define("fig-layer", FigLayer);
 
+// FigGroup
+class FigGroup extends HTMLElement {
+  static observedAttributes = ["name", "collapse"];
+
+  #header = null;
+  #chevron = null;
+
+  connectedCallback() {
+    requestAnimationFrame(() => this.#render());
+  }
+
+  disconnectedCallback() {
+    if (this.#chevron) {
+      this.#chevron.removeEventListener("click", this.#handleToggle);
+    }
+    if (this.#header) {
+      this.#header.removeEventListener("click", this.#handleToggle);
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    this.#render();
+  }
+
+  get open() {
+    const attr = this.getAttribute("open");
+    return attr !== null && attr !== "false";
+  }
+
+  set open(value) {
+    const was = this.open;
+    if (value) {
+      this.setAttribute("open", "true");
+    } else {
+      this.setAttribute("open", "false");
+    }
+    if (was !== !!value) {
+      this.dispatchEvent(
+        new CustomEvent("openchange", { detail: { open: !!value }, bubbles: true }),
+      );
+    }
+  }
+
+  #handleToggle = (e) => {
+    e.stopPropagation();
+    this.open = !this.open;
+  };
+
+  #render() {
+    const collapseAttr = this.getAttribute("collapse");
+    const isCollapsible =
+      collapseAttr !== null && collapseAttr !== "false";
+    const nameAttr = this.getAttribute("name");
+    const label = nameAttr || (isCollapsible ? "Group" : null);
+
+    // Check if user supplied their own fig-header
+    const userHeader = this.querySelector(":scope > fig-header");
+
+    if (!label && !isCollapsible && !userHeader) {
+      if (this.#header && this.#header.dataset.generated) {
+        this.#header.remove();
+        this.#header = null;
+        this.#chevron = null;
+      }
+      return;
+    }
+
+    if (userHeader) {
+      this.#header = userHeader;
+    } else if (!this.#header || !this.#header.dataset.generated) {
+      this.#header = document.createElement("fig-header");
+      this.#header.setAttribute("borderless", "");
+      this.#header.dataset.generated = "true";
+      this.prepend(this.#header);
+
+      let html = "";
+      if (isCollapsible) {
+        html += `<span class="fig-mask-icon fig-group-chevron"></span>`;
+      }
+      html += `<h3>${label}</h3>`;
+      this.#header.innerHTML = html;
+    }
+
+    if (isCollapsible) {
+      if (!this.#header.querySelector(".fig-group-chevron")) {
+        const chevron = document.createElement("span");
+        chevron.className = "fig-mask-icon fig-group-chevron";
+        this.#header.prepend(chevron);
+      }
+      this.#chevron = this.#header.querySelector(".fig-group-chevron");
+      this.#header.addEventListener("click", this.#handleToggle);
+
+      if (!this.hasAttribute("open")) {
+        const startOpen = collapseAttr === "open";
+        this.setAttribute("open", startOpen ? "true" : "false");
+      }
+    } else {
+      if (this.#chevron) {
+        this.#chevron.remove();
+        this.#chevron = null;
+      }
+      this.removeAttribute("open");
+    }
+  }
+}
+customElements.define("fig-group", FigGroup);
+
 // FigFillPicker
 /**
  * A comprehensive fill picker component supporting solid colors, gradients, images, video, and webcam.
@@ -11448,6 +11556,8 @@ class FigFillPicker extends HTMLElement {
       <fig-preview class="fig-fill-picker-color-area">
         <canvas width="200" height="200"></canvas>
         <fig-handle
+          type="color"
+          color="${this.#hsvToHex({ ...this.#color, a: 1 })}"
           drag
           drag-surface=".fig-fill-picker-color-area"
           drag-axes="x,y"

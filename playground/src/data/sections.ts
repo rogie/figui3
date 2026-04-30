@@ -16,6 +16,85 @@ export interface Section {
 
 export const propkitSections: Section[] = [
   {
+    id: "group",
+    name: "Group",
+    group: "Containers",
+    description:
+      "A collapsible group container with an optional named header and sibling border separators.",
+    examples: [
+      {
+        id: "default",
+        name: "Default (Collapsible)",
+        markup: `<div class="prop-panel">
+  <fig-group name="Appearance" collapse="open">
+    <fig-field direction="horizontal">
+      <label>Color</label>
+      <fig-input-color value="#0D99FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Image</label>
+      <fig-image full="true" upload="true" label="Upload" size="auto"></fig-image>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Blend Mode</label>
+      <fig-dropdown full experimental="modern">
+        <option selected>Normal</option>
+        <option>Multiply</option>
+        <option>Screen</option>
+        <option>Overlay</option>
+      </fig-dropdown>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Opacity</label>
+      <fig-slider value="100" min="0" max="100" text="true" units="%"></fig-slider>
+    </fig-field>
+  </fig-group>
+  <fig-group name="Advanced" collapse="true">
+    <fig-field direction="horizontal">
+      <label>Noise</label>
+      <fig-switch checked></fig-switch>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Clip alpha</label>
+      <fig-switch checked></fig-switch>
+    </fig-field>
+  </fig-group>
+  <fig-group name="Misc" collapse="true">
+    <fig-field direction="horizontal">
+      <label>Visible</label>
+      <fig-switch></fig-switch>
+    </fig-field>
+  </fig-group>
+</div>`,
+      },
+      {
+        id: "no-collapse",
+        name: "Static (No Collapse)",
+        markup: `<div class="prop-panel">
+  <fig-group name="Layout">
+    <fig-field direction="horizontal">
+      <label>Direction</label>
+      <fig-dropdown full experimental="modern">
+        <option selected>Horizontal</option>
+        <option>Vertical</option>
+      </fig-dropdown>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Spacing</label>
+      <fig-slider value="8" min="0" max="64" text="true" units="px"></fig-slider>
+    </fig-field>
+  </fig-group>
+  <fig-group name="Fill">
+    <fig-field direction="horizontal">
+      <label>Background</label>
+      <fig-input-color value="#FFFFFF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+    </fig-field>
+  </fig-group>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "3d-rotate",
     name: "3D Rotate",
     group: "Field controls",

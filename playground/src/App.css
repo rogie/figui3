@@ -280,7 +280,7 @@ main {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   border: none;
   margin-top: calc(var(--dash-inset) * -0.5);
   margin-bottom: calc(var(--dash-inset) * -0.5);

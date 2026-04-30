@@ -1215,6 +1215,9 @@ fig-chit {
     &[selected]:not([selected="false"]) {
       --padding: 3px;
     }
+    & > div {
+      background: var(--checkerboard);
+    }
   }
 
   &[size="medium"] {
@@ -1283,14 +1286,6 @@ fig-chit {
     input[type="color"] {
       display: none;
     }
-  }
-
-  /* Checkerboard for empty/missing images */
-  &[data-type="image"]:not([background])::after,
-  &[data-type="image"][background=""]::after,
-  &[data-type="image"][background="url()"]::after,
-  &[checkerboard]:not([checkerboard="false"])::after {
-    background: var(--checkerboard);
   }
 }
 
@@ -2789,7 +2784,7 @@ fig-tooltip {
   max-width: 180px;
   width: max-content;
   box-shadow: inset 0 0.5px 0 0
-    light-dark(rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.06));
+    light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
   filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
     drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13))
     drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
@@ -2930,6 +2925,58 @@ fig-header {
 
   &[borderless] {
     box-shadow: none;
+  }
+}
+
+fig-group {
+  display: block;
+  padding-bottom: var(--spacer-2-5);
+
+  & + fig-group {
+    box-shadow: inset 0 1px 0 0 var(--figma-color-border);
+  }
+
+  & > fig-header {
+    cursor: default;
+    padding-left: var(--spacer-3);
+    .fig-group-chevron {
+      --icon: var(--icon-chevron);
+      --size: 1rem;
+      color: var(--figma-color-text-tertiary);
+      transform: rotate(-90deg);
+      transition: transform var(--transition-duration)
+        var(--transition-timing-function);
+      margin-left: calc(var(--spacer-3) * -1);
+      margin-right: calc(var(--spacer-1) * -1);
+    }
+  }
+
+  &[collapse]:not([collapse="false"]) > fig-header {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &[collapse]:not([collapse="false"])[open="false"] {
+    padding-bottom: 0;
+    fig-header {
+      color: var(--figma-color-text-secondary);
+      &:hover {
+        color: var(--figma-color-text);
+        .fig-group-chevron {
+          color: inherit;
+        }
+      }
+    }
+  }
+
+  &[open]:not([open="false"]) > fig-header .fig-group-chevron {
+    transform: rotate(0deg);
+  }
+
+  &[collapse]:not([collapse="false"]):not([open]):not([open="true"])
+    > :not(fig-header),
+  &[collapse]:not([collapse="false"])[open="false"] > :not(fig-header) {
+    display: none;
   }
 }
 
