@@ -2935,8 +2935,15 @@ fig-group {
   display: block;
   padding-bottom: var(--spacer-2-5);
 
+  /* Sibling groups  */
   & + fig-group {
     box-shadow: inset 0 1px 0 0 var(--figma-color-border);
+    &:not([name]) {
+      padding-top: var(--spacer-2-5);
+    }
+    &:last-of-type {
+      padding-bottom: 0;
+    }
   }
 
   & > fig-header {

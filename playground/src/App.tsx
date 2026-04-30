@@ -182,15 +182,17 @@ export default function App({ mode }: Props) {
 
   const activeTitle =
     activeSection && activeExample
-      ? buildExampleTitle(activeSection.name, activeExample.name)
+      ? (activeExample.title ??
+          buildExampleTitle(activeSection.name, activeExample.name))
       : (activeSection?.name ?? "");
   const activeDescription =
     activeSection && activeExample
-      ? buildExampleDescription(
-          activeSection.description,
-          activeSection.name,
-          activeExample.name,
-        )
+      ? (activeExample.description ??
+          buildExampleDescription(
+            activeSection.description,
+            activeSection.name,
+            activeExample.name,
+          ))
       : (activeSection?.description ?? "");
 
   return (

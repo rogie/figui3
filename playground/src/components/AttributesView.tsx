@@ -757,7 +757,7 @@ export default function AttributesView({
                 name === "size");
             if (useSegmentedControl) {
               return (
-                <fig-segmented-control full>
+                <fig-segmented-control full value={current}>
                   {options.map((option) => (
                     <fig-segment
                       key={option}

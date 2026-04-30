@@ -4689,7 +4689,7 @@ class FigInputColor extends HTMLElement {
     const disabledAttr = disabled ? " disabled" : "";
 
     let html = ``;
-    const showText = this.getAttribute("text") === "true";
+    const showText = this.getAttribute("text") !== "false";
     if (showText) {
       let label = `<fig-input-text 
         type="text"

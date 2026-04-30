@@ -4,6 +4,8 @@ export interface Example {
   id: string;
   name: string;
   markup: string;
+  title?: string;
+  description?: string;
 }
 
 export interface Section {
@@ -36,13 +38,41 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field direction="horizontal">
       <label>Spacing</label>
-      <fig-slider value="8" min="0" max="64" text="true" units="px"></fig-slider>
+      <fig-slider variant="neue" value="8" min="0" max="64" text="true" units="px"></fig-slider>
     </fig-field>
   </fig-group>
   <fig-group name="Fill">
     <fig-field direction="horizontal">
       <label>Background</label>
       <fig-input-color value="#FFFFFF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+    </fig-field>
+  </fig-group>
+</div>`,
+      },
+      {
+        id: "no-names",
+        name: "No names",
+        title: "Groups without names",
+        description:
+          "Groups can omit the name attribute entirely. They provide visual separation between groups without a header.",
+        markup: `<div class="prop-panel">
+  <fig-group>
+    <fig-field direction="horizontal">
+      <label>Direction</label>
+      <fig-dropdown full>
+        <option selected>Horizontal</option>
+        <option>Vertical</option>
+      </fig-dropdown>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Spacing</label>
+      <fig-slider variant="neue" value="8" min="0" max="64" text="true"></fig-slider>
+    </fig-field>
+  </fig-group>
+  <fig-group>
+    <fig-field direction="horizontal">
+      <label>Background</label>
+      <fig-input-color value="#FFFFFF"></fig-input-color>
     </fig-field>
   </fig-group>
 </div>`,
@@ -71,7 +101,7 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field direction="horizontal">
       <label>Opacity</label>
-      <fig-slider value="100" min="0" max="100" text="true" units="%"></fig-slider>
+      <fig-slider variant="neue" value="100" min="0" max="100" text="true" units="%"></fig-slider>
     </fig-field>
   </fig-group>
   <fig-group name="Advanced" collapse="true">
@@ -140,7 +170,7 @@ export const propkitSections: Section[] = [
         id: "text",
         name: "Text",
         markup: `<div class="prop-panel">
-  <fig-field direction="vertical">
+  <fig-field direction="horizontal">
     <label>Style</label>
     <fig-chooser layout="vertical" value="option-a" full drag style="max-height: 240px">
       <fig-choice value="option-a" selected>Option A</fig-choice>
@@ -157,7 +187,7 @@ export const propkitSections: Section[] = [
         id: "images",
         name: "Images",
         markup: `<div class="prop-panel">
-  <fig-field direction="vertical">
+  <fig-field direction="horizontal">
     <label>Style</label>
     <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
       <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
@@ -174,7 +204,7 @@ export const propkitSections: Section[] = [
         id: "images-labels",
         name: "Images + Labels",
         markup: `<div class="prop-panel">
-  <fig-field direction="vertical">
+  <fig-field direction="horizontal">
     <label>Style</label>
     <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
       <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label A</label></fig-choice>
@@ -191,7 +221,7 @@ export const propkitSections: Section[] = [
         id: "colors",
         name: "Colors",
         markup: `<div class="prop-panel">
-  <fig-field direction="vertical">
+  <fig-field direction="horizontal">
     <label>Color</label>
     <fig-chooser layout="horizontal" value="red" full drag style="max-width: 100%">
       <fig-choice value="red" selected><fig-chit background="#FF0000" size="large" disabled></fig-chit></fig-choice>
@@ -210,7 +240,7 @@ export const propkitSections: Section[] = [
         id: "palettes",
         name: "Palettes",
         markup: `<div class="prop-panel">
-  <fig-field direction="vertical">
+  <fig-field direction="horizontal">
     <label>Palettes</label>
     <fig-chooser layout="vertical" value="sunset" full drag data-playground-hide-attrs="layout,drag,loop" style="max-height: 240px">
       <fig-choice value="sunset" selected><fig-input-palette value="#FF6B6B,#FFA07A,#FFD700,#FF4500" add="false" disabled full></fig-input-palette></fig-choice>
