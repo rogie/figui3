@@ -269,3 +269,4 @@ class FigFieldSlider extends HTMLElement {
   }
 }
 customElements.define("fig-field-slider", FigFieldSlider);
+

@@ -10320,6 +10320,9 @@ class FigInputJoystick extends HTMLElement {
 
 customElements.define("fig-joystick", FigInputJoystick);
 
+
+
+/* Angle Input */
 /**
  * A custom angle chooser input element.
  * @attr {number} value - The current angle of the handle in degrees.
@@ -10421,7 +10424,6 @@ class FigInputAngle extends HTMLElement {
     if (this.hasAttribute("rotations")) {
       return this.#readBooleanAttribute("rotations", false);
     }
-    // Backward-compat alias
     if (this.hasAttribute("show-rotations")) {
       return this.#readBooleanAttribute("show-rotations", false);
     }
@@ -10484,8 +10486,6 @@ class FigInputAngle extends HTMLElement {
     }
   }
 
-  // --- Unit conversion helpers ---
-
   #toDegrees(value) {
     switch (this.units) {
       case "rad":
@@ -10509,7 +10509,6 @@ class FigInputAngle extends HTMLElement {
   }
 
   #convertAngle(value, fromUnit, toUnit) {
-    // Convert to degrees first
     let degrees;
     switch (fromUnit) {
       case "rad":
@@ -10521,7 +10520,6 @@ class FigInputAngle extends HTMLElement {
       default:
         degrees = value;
     }
-    // Convert from degrees to target
     switch (toUnit) {
       case "rad":
         return (degrees * Math.PI) / 180;
@@ -10531,8 +10529,6 @@ class FigInputAngle extends HTMLElement {
         return degrees;
     }
   }
-
-  // --- Event listeners ---
 
   #setupListeners() {
     this.handle = this.querySelector(".fig-input-angle-handle");
@@ -10562,7 +10558,6 @@ class FigInputAngle extends HTMLElement {
   }
 
   #handleRawChange(e) {
-    // Only intercept native change events from the raw <input> element
     if (!e.target?.matches?.("input")) return;
     const raw = e.target.value;
     const match = raw.match(/^(-?\d*\.?\d+)\s*(turn|rad|deg|°)$/i);
@@ -10586,8 +10581,6 @@ class FigInputAngle extends HTMLElement {
     this.#emitInputEvent();
     this.#emitChangeEvent();
   }
-
-  // --- Angle calculation ---
 
   #calculateAdjacentAndOpposite() {
     const degrees = this.#toDegrees(this.angle);
@@ -10613,19 +10606,15 @@ class FigInputAngle extends HTMLElement {
 
   #updateAngle(e) {
     let rawAngle = this.#getRawAngle(e);
-    // Normalize to 0-360 for snap and positioning
     let normalizedAngle = ((rawAngle % 360) + 360) % 360;
     normalizedAngle = this.#snapToIncrement(normalizedAngle);
 
     const isBounded = this.min !== null || this.max !== null;
 
     if (isBounded) {
-      // Bounded: absolute position
       this.angle = this.#fromDegrees(normalizedAngle);
     } else {
-      // Unbounded: cumulative winding
       if (this.#prevRawAngle === null) {
-        // First event of this drag — snap to clicked position, preserving revolution
         this.#prevRawAngle = normalizedAngle;
         const currentDeg = this.#toDegrees(this.angle);
         const currentMod = ((currentDeg % 360) + 360) % 360;
@@ -10634,7 +10623,6 @@ class FigInputAngle extends HTMLElement {
         if (delta < -180) delta += 360;
         this.angle += this.#fromDegrees(delta);
       } else {
-        // Subsequent events — accumulate delta
         let delta = normalizedAngle - this.#prevRawAngle;
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
@@ -10653,8 +10641,6 @@ class FigInputAngle extends HTMLElement {
 
     this.#emitInputEvent();
   }
-
-  // --- Event dispatching ---
 
   #emitInputEvent() {
     this.dispatchEvent(
@@ -10676,8 +10662,6 @@ class FigInputAngle extends HTMLElement {
     );
   }
 
-  // --- Handle position ---
-
   #syncHandlePosition() {
     if (this.handle) {
       const degrees = this.#toDegrees(this.angle);
@@ -10688,8 +10672,6 @@ class FigInputAngle extends HTMLElement {
       this.handle.style.transform = `translate(${x}px, ${y}px)`;
     }
   }
-
-  // --- Mouse/Touch handlers ---
 
   #handleMouseDown(e) {
     this.isDragging = true;
@@ -10738,8 +10720,6 @@ class FigInputAngle extends HTMLElement {
     window.addEventListener("touchend", handleTouchEnd);
   }
 
-  // --- Keyboard handlers ---
-
   #handleKeyDown(e) {
     if (e.key === "Shift") this.isShiftHeld = true;
   }
@@ -10751,8 +10731,6 @@ class FigInputAngle extends HTMLElement {
   focus() {
     this.plane?.focus();
   }
-
-  // --- Attributes ---
 
   static get observedAttributes() {
     return [
@@ -10861,6 +10839,7 @@ class FigInputAngle extends HTMLElement {
   }
 }
 customElements.define("fig-input-angle", FigInputAngle);
+
 
 // FigShimmer
 class FigShimmer extends HTMLElement {

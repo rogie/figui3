@@ -3902,7 +3902,6 @@ fig-input-angle {
     }
   }
 
-  /* When inside horizontal fig-field, grow to fill and let inputs expand */
   fig-field[direction="horizontal"] & {
     flex: 1;
     min-width: 0;
