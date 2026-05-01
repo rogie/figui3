@@ -2728,6 +2728,8 @@ dialog[is="fig-popup"] {
     background-color: var(--figma-color-bg-menu);
     color: var(--figma-color-text-menu);
     color-scheme: dark;
+    padding: var(--spacer-2) 0;
+    min-width: 6rem;
   }
 
   &[variant="popover"] {
@@ -4951,4 +4953,53 @@ fig-color-tip {
       transform: translate(-50%, -100%) scaleY(-1);
     }
   }
+}
+
+/* Menu */
+fig-menu {
+  display: contents;
+}
+
+fig-menu-item {
+  --fig-menu-item-padding: var(--spacer-3);
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-2);
+  padding: 0 var(--fig-menu-item-padding);
+  height: var(--spacer-4);
+  cursor: default;
+  border-radius: var(--radius-medium);
+  color: var(--figma-color-text-menu);
+  font-weight: var(--body-medium-fontWeight);
+  position: relative;
+
+  &::before {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0 var(--spacer-2);
+    border-radius: var(--radius-medium);
+    z-index: -1;
+    background-color: transparent;
+  }
+
+  &:hover,
+  &:focus-visible {
+    outline: none;
+    &::before {
+      background-color: var(--figma-color-bg-menu-hover);
+    }
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+}
+
+fig-menu-separator {
+  display: block;
+  height: 1px;
+  background: var(--figma-color-border);
+  margin: var(--spacer-2) 0;
 }

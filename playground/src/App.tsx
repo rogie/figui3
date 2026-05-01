@@ -252,7 +252,7 @@ export default function App({ mode }: Props) {
           showFieldControls={mode === "propkit" || mode === "lab" || activeSectionId === "field"}
           includeFullControl={mode === "figui3" || mode === "lab"}
         />
-        {(mode === "propkit" || mode === "lab") && activeSectionId !== "skeleton" && (
+        {((mode === "propkit" || mode === "lab") && activeSectionId !== "skeleton" || (mode === "figui3" && activeSectionId === "menu")) && (
           <EventView key={`${activeSectionId}/${activeExampleId}`} />
         )}
       </aside>

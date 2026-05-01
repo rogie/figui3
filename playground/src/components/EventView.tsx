@@ -49,6 +49,14 @@ export default function EventView() {
   useEffect(() => {
     if (!editorRef.current || latest === null) return;
     const serializable = JSON.parse(JSON.stringify(latest, (key, value) => {
+      if (value instanceof HTMLElement) {
+        const tag = value.tagName.toLowerCase();
+        const attrs = Array.from(value.attributes)
+          .map((a) => `${a.name}="${a.value}"`)
+          .join(" ");
+        const text = value.textContent?.trim() || "";
+        return `<${tag}${attrs ? " " + attrs : ""}>${text}</${tag}>`;
+      }
       if (value instanceof FileList) {
         return Array.from(value).map((f) => ({
           name: f.name,

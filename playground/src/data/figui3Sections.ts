@@ -644,6 +644,43 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
+    id: "menu",
+    name: "Menu",
+    group: "Core components",
+    description:
+      "Context menu triggered by a button with keyboard navigation and item selection.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left">
+    <fig-button variant="secondary" fig-menu-trigger>Actions</fig-button>
+    <fig-menu-item value="cut">Cut</fig-menu-item>
+    <fig-menu-item value="copy">Copy</fig-menu-item>
+    <fig-menu-item value="paste">Paste</fig-menu-item>
+    <fig-menu-separator></fig-menu-separator>
+    <fig-menu-item value="delete">Delete</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
+      {
+        id: "disabled-items",
+        name: "Disabled items",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left">
+    <fig-button variant="secondary" fig-menu-trigger>Edit</fig-button>
+    <fig-menu-item value="undo">Undo</fig-menu-item>
+    <fig-menu-item value="redo" disabled>Redo</fig-menu-item>
+    <fig-menu-separator></fig-menu-separator>
+    <fig-menu-item value="cut">Cut</fig-menu-item>
+    <fig-menu-item value="copy">Copy</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "truncate",
     name: "Truncate",
     group: "Utilities",

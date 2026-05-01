@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.1.2]
+
+### Added
+
+- `fig-menu`: new context menu component with trigger detection, keyboard navigation (arrow keys, Home/End, Enter/Space), ARIA roles, `position`/`offset`/`closedby` forwarding, `open` attribute, and `change` event with `{ value, item }` detail.
+- `fig-menu-item`: menu item element with `value` attribute and `disabled` support.
+- `fig-menu-separator`: visual divider between menu item groups.
+- Playground: added Menu examples (default + disabled items) to `/figui3` Core components.
+- Playground: EventView now serializes DOM elements in event output instead of showing `{}`.
+
+### Fixed
+
+- `fig-button`: SVG fill selector now excludes `fill="none"` to prevent overriding transparent fills.
+- `fig-chooser`: fixed spacing with CSS custom property `--fig-chooser-gap`, updated choice padding and selection ring width.
+- `fig-layer`: removed extra margin-left on layer rows, adjusted padding and chevron position.
+- Playground: EventView now shown for Menu section in `/figui3`.
+
 ## [4.1.1]
 
 ### Changed

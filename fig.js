@@ -14237,3 +14237,312 @@ class FigHandle extends HTMLElement {
   }
 }
 customElements.define("fig-handle", FigHandle);
+
+// ─── Menu ────────────────────────────────────────────────────────────────────
+
+class FigMenuItem extends HTMLElement {
+  static get observedAttributes() {
+    return ["value", "disabled"];
+  }
+
+  get value() {
+    return this.getAttribute("value") || "";
+  }
+
+  set value(val) {
+    this.setAttribute("value", val ?? "");
+  }
+
+  connectedCallback() {
+    if (!this.hasAttribute("role")) {
+      this.setAttribute("role", "menuitem");
+    }
+    if (!this.hasAttribute("tabindex")) {
+      this.setAttribute("tabindex", "-1");
+    }
+  }
+
+  attributeChangedCallback() {}
+}
+customElements.define("fig-menu-item", FigMenuItem);
+
+class FigMenuSeparator extends HTMLElement {
+  connectedCallback() {
+    if (!this.hasAttribute("role")) {
+      this.setAttribute("role", "separator");
+    }
+  }
+}
+customElements.define("fig-menu-separator", FigMenuSeparator);
+
+class FigMenu extends HTMLElement {
+  #popup = null;
+  #trigger = null;
+  #observer = null;
+  #boundTriggerClick;
+  #boundPopupClick;
+  #boundPopupKeydown;
+  #boundPopupClose;
+  #focusedIndex = -1;
+
+  static get observedAttributes() {
+    return ["position", "offset", "closedby", "disabled", "open"];
+  }
+
+  constructor() {
+    super();
+    this.#boundTriggerClick = this.#handleTriggerClick.bind(this);
+    this.#boundPopupClick = this.#handlePopupClick.bind(this);
+    this.#boundPopupKeydown = this.#handlePopupKeydown.bind(this);
+    this.#boundPopupClose = this.#handlePopupClose.bind(this);
+  }
+
+  get value() {
+    return this.getAttribute("value") || "";
+  }
+
+  set value(val) {
+    this.setAttribute("value", val ?? "");
+  }
+
+  get open() {
+    return this.hasAttribute("open") && this.getAttribute("open") !== "false";
+  }
+
+  set open(val) {
+    if (val) {
+      this.setAttribute("open", "");
+    } else {
+      this.removeAttribute("open");
+    }
+  }
+
+  connectedCallback() {
+    this.style.display = "contents";
+
+    this.#detectTrigger();
+    this.#createPopup();
+    this.#moveItemsToPopup();
+    this.#setupListeners();
+    this.#setupObserver();
+
+    if (this.open) {
+      this.#openMenu();
+    }
+  }
+
+  disconnectedCallback() {
+    this.#teardownListeners();
+    if (this.#observer) {
+      this.#observer.disconnect();
+      this.#observer = null;
+    }
+    if (this.#popup) {
+      this.#popup.removeEventListener("close", this.#boundPopupClose);
+      this.#popup.remove();
+      this.#popup = null;
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    if (name === "open") {
+      if (newValue === null || newValue === "false") {
+        this.#closeMenu();
+      } else {
+        this.#openMenu();
+      }
+      return;
+    }
+
+    if (this.#popup && (name === "position" || name === "offset" || name === "closedby")) {
+      if (newValue !== null) {
+        this.#popup.setAttribute(name, newValue);
+      } else {
+        this.#popup.removeAttribute(name);
+      }
+    }
+  }
+
+  #detectTrigger() {
+    this.#trigger =
+      this.querySelector("[fig-menu-trigger]") ||
+      this.querySelector(":scope > :not(fig-menu-item):not(fig-menu-separator)");
+  }
+
+  #createPopup() {
+    this.#popup = document.createElement("dialog", { is: "fig-popup" });
+    this.#popup.setAttribute("is", "fig-popup");
+    this.#popup.setAttribute("theme", "menu");
+    this.#popup.setAttribute("role", "menu");
+
+    const position = this.getAttribute("position") || "bottom left";
+    this.#popup.setAttribute("position", position);
+
+    const offset = this.getAttribute("offset");
+    if (offset) this.#popup.setAttribute("offset", offset);
+
+    const closedby = this.getAttribute("closedby");
+    if (closedby) this.#popup.setAttribute("closedby", closedby);
+
+    if (this.#trigger) {
+      this.#popup.anchor = this.#trigger;
+    }
+
+    this.#popup.addEventListener("close", this.#boundPopupClose);
+    this.appendChild(this.#popup);
+  }
+
+  #moveItemsToPopup() {
+    const items = Array.from(this.querySelectorAll(
+      ":scope > fig-menu-item, :scope > fig-menu-separator"
+    ));
+    for (const item of items) {
+      this.#popup.appendChild(item);
+    }
+  }
+
+  #setupListeners() {
+    if (this.#trigger) {
+      this.#trigger.addEventListener("click", this.#boundTriggerClick);
+      this.#trigger.setAttribute("aria-haspopup", "menu");
+      this.#trigger.setAttribute("aria-expanded", "false");
+    }
+    if (this.#popup) {
+      this.#popup.addEventListener("click", this.#boundPopupClick);
+      this.#popup.addEventListener("keydown", this.#boundPopupKeydown);
+    }
+  }
+
+  #teardownListeners() {
+    if (this.#trigger) {
+      this.#trigger.removeEventListener("click", this.#boundTriggerClick);
+    }
+    if (this.#popup) {
+      this.#popup.removeEventListener("click", this.#boundPopupClick);
+      this.#popup.removeEventListener("keydown", this.#boundPopupKeydown);
+    }
+  }
+
+  #setupObserver() {
+    this.#observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (
+            node.nodeType === 1 &&
+            (node.tagName === "FIG-MENU-ITEM" || node.tagName === "FIG-MENU-SEPARATOR") &&
+            node.parentElement === this
+          ) {
+            this.#popup.appendChild(node);
+          }
+        }
+      }
+    });
+    this.#observer.observe(this, { childList: true });
+  }
+
+  #getItems() {
+    if (!this.#popup) return [];
+    return Array.from(this.#popup.querySelectorAll("fig-menu-item:not([disabled]):not([disabled='true'])"));
+  }
+
+  #handleTriggerClick(e) {
+    if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+    e.stopPropagation();
+    if (this.open) {
+      this.open = false;
+    } else {
+      this.open = true;
+    }
+  }
+
+  #handlePopupClick(e) {
+    const item = e.target.closest("fig-menu-item");
+    if (!item) return;
+    if (item.hasAttribute("disabled") && item.getAttribute("disabled") !== "false") return;
+
+    this.#selectItem(item);
+  }
+
+  #handlePopupKeydown(e) {
+    const items = this.#getItems();
+    if (!items.length) return;
+
+    switch (e.key) {
+      case "ArrowDown": {
+        e.preventDefault();
+        this.#focusedIndex = Math.min(this.#focusedIndex + 1, items.length - 1);
+        items[this.#focusedIndex]?.focus();
+        break;
+      }
+      case "ArrowUp": {
+        e.preventDefault();
+        this.#focusedIndex = Math.max(this.#focusedIndex - 1, 0);
+        items[this.#focusedIndex]?.focus();
+        break;
+      }
+      case "Home": {
+        e.preventDefault();
+        this.#focusedIndex = 0;
+        items[0]?.focus();
+        break;
+      }
+      case "End": {
+        e.preventDefault();
+        this.#focusedIndex = items.length - 1;
+        items[this.#focusedIndex]?.focus();
+        break;
+      }
+      case "Enter":
+      case " ": {
+        e.preventDefault();
+        const focused = items[this.#focusedIndex];
+        if (focused) this.#selectItem(focused);
+        break;
+      }
+    }
+  }
+
+  #handlePopupClose() {
+    if (this.hasAttribute("open")) {
+      this.removeAttribute("open");
+    }
+    if (this.#trigger) {
+      this.#trigger.setAttribute("aria-expanded", "false");
+      this.#trigger.focus();
+    }
+    this.#focusedIndex = -1;
+  }
+
+  #selectItem(item) {
+    const value = item.getAttribute("value") || item.textContent.trim();
+    this.setAttribute("value", value);
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        detail: { value, item },
+        bubbles: true,
+      })
+    );
+    this.open = false;
+  }
+
+  #openMenu() {
+    if (!this.#popup) return;
+    this.#popup.open = true;
+    if (this.#trigger) {
+      this.#trigger.setAttribute("aria-expanded", "true");
+    }
+    this.#focusedIndex = 0;
+    requestAnimationFrame(() => {
+      const items = this.#getItems();
+      if (items.length) items[0].focus();
+    });
+  }
+
+  #closeMenu() {
+    if (!this.#popup) return;
+    this.#popup.open = false;
+  }
+}
+customElements.define("fig-menu", FigMenu);
