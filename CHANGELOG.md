@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.2.0]
+
+### Added
+
+- `fig-footer`: new component mirroring `fig-header` with top border, `borderless` and `sticky` attribute support.
+- `fig-dialog`: `resizable` attribute allows user-resizable dialogs (off by default).
+- `fig-dialog`: auto-generates `fig-header` with title and close button when `title` attribute is set and no header exists.
+- `fig-segmented-control`: label truncation with ellipsis when segments overflow available space.
+- `fig-field`: refactored to CSS grid layout for more consistent label/input alignment.
+
+### Fixed
+
+- `fig-slider`: no longer forces parent dialogs wider than other controls; intrinsic width now matches `fig-input-number` and `fig-input-color` in grid layouts.
+- `fig-slider`: consolidated duplicated range input styles and orphaned CSS blocks.
+- `fig-tab`: removed dead `:has(:checked)` and `[type="radio"]` CSS rules.
+- `input[type="checkbox"].switch`: nested pseudo-class rules for cleaner stylesheet structure.
+
+### Changed
+
+- Dialog footer elements in propkit examples converted from `<footer>` to `<fig-footer>`.
+- Radio group example in `/figui3` now wraps each radio in its own `fig-field` with label passed via attribute.
+
 ## [4.1.4]
 
 ### Fixed

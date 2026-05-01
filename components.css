@@ -1050,7 +1050,8 @@ fig-tab,
 fig-tabs,
 .tabs {
   display: flex;
-  gap: var(--spacer-2);
+  gap: var(--spacer-1);
+  padding: var(--spacer-1) var(--spacer-2);
 }
 
 fig-tab-content,
@@ -2954,7 +2955,6 @@ fig-input-fill,
 fig-checkbox,
 fig-radio,
 fig-tab,
-fig-tabs,
 fig-segmented-control,
 fig-input-palette {
   display: inline-flex;
