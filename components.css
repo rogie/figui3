@@ -2730,6 +2730,7 @@ dialog[is="fig-popup"] {
     color-scheme: dark;
     padding: var(--spacer-2) 0;
     min-width: 6rem;
+    box-shadow: var(--figma-elevation-100);
   }
 
   &[variant="popover"] {

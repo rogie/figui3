@@ -536,6 +536,30 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  "fig-menu": {
+    position: {
+      label: "Position",
+      type: "enum",
+      options: [
+        "top",
+        "right",
+        "bottom",
+        "left",
+        "top left",
+        "top right",
+        "bottom left",
+        "bottom right",
+      ],
+    },
+    offset: { label: "Offset", type: "string" },
+    closedby: {
+      label: "Closed by",
+      type: "enum",
+      options: ["auto", "any", "none"],
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+    open: { label: "Open", type: "boolean", boolMode: "presence" },
+  },
   "fig-truncate": {
     position: { label: "Position", type: "enum", options: ["right", "left", "middle"] },
     tail: { label: "Tail", type: "string" },

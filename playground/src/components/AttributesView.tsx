@@ -183,6 +183,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-tabs": "Tabs",
     "fig-chooser": "Chooser",
     "fig-handle": "Handle",
+    "fig-menu": "Menu",
     "fig-input-palette": "Palette",
     "fig-canvas-control": "Canvas control",
   };

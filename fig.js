@@ -14325,6 +14325,7 @@ class FigMenu extends HTMLElement {
     this.#moveItemsToPopup();
     this.#setupListeners();
     this.#setupObserver();
+    this.#syncDisabled();
 
     if (this.open) {
       this.#openMenu();
@@ -14352,6 +14353,17 @@ class FigMenu extends HTMLElement {
         this.#closeMenu();
       } else {
         this.#openMenu();
+      }
+      return;
+    }
+
+    if (name === "disabled") {
+      if (this.#trigger) {
+        if (newValue !== null && newValue !== "false") {
+          this.#trigger.setAttribute("disabled", "");
+        } else {
+          this.#trigger.removeAttribute("disabled");
+        }
       }
       return;
     }
@@ -14445,6 +14457,16 @@ class FigMenu extends HTMLElement {
   #getItems() {
     if (!this.#popup) return [];
     return Array.from(this.#popup.querySelectorAll("fig-menu-item:not([disabled]):not([disabled='true'])"));
+  }
+
+  #syncDisabled() {
+    if (!this.#trigger) return;
+    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    if (disabled) {
+      this.#trigger.setAttribute("disabled", "");
+    } else {
+      this.#trigger.removeAttribute("disabled");
+    }
   }
 
   #handleTriggerClick(e) {

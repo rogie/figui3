@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.1.3]
+
+### Added
+
+- `fig-menu`: playground attribute controls for position, offset, closed-by, disabled, and open.
+- `fig-menu`: `disabled` attribute now forwards to the trigger element.
+
 ## [4.1.2]
 
 ### Added
