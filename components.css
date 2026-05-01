@@ -1036,7 +1036,6 @@ fig-tab,
     }
   }
 
-  &:has(:checked),
   &[selected]:not([selected="false"]) {
     background-color: var(--figma-color-bg-secondary);
     font-weight: var(--body-medium-strong-fontWeight);
@@ -1045,16 +1044,6 @@ fig-tab,
 
   &:hover {
     background-color: var(--figma-color-bg-secondary);
-  }
-
-  & [type="radio"] {
-    position: absolute;
-    inset: 0;
-    border-radius: 0;
-    opacity: 0;
-    z-index: 1;
-    width: 100%;
-    height: 100%;
   }
 }
 
@@ -1990,52 +1979,52 @@ input[type="checkbox"].switch {
     transition: var(--input-transition);
     box-shadow: var(--handle-shadow);
   }
-}
 
-input[type="checkbox"].switch[indeterminate="true"]:after {
-  width: 0.625rem;
-  height: 0.125rem;
-  transform: none;
-}
-
-input[type="checkbox"].switch[indeterminate="true"],
-input[type="checkbox"].switch:checked {
-  background-color: var(--figma-color-bg-brand);
-}
-
-input[type="checkbox"].switch:checked:after {
-  transform: translate(
-    calc(
-      (var(--width) - var(--knob-width)) * 0.5 +
-        (var(--height) - var(--knob-height)) * -0.5
-    )
-  );
-}
-
-input[type="checkbox"].switch:disabled {
-  background-color: transparent;
-  cursor: not-allowed;
-  &:after {
-    background-color: var(--figma-color-icon-disabled);
-    box-shadow: none;
+  &[indeterminate="true"]:after {
+    width: 0.625rem;
+    height: 0.125rem;
+    transform: none;
   }
 
-  &:checked,
-  &[indeterminate="true"] {
-    background-color: var(--figma-color-bg-disabled);
-    box-shadow: none;
+  &[indeterminate="true"],
+  &:checked {
+    background-color: var(--figma-color-bg-brand);
+  }
+
+  &:checked:after {
+    transform: translate(
+      calc(
+        (var(--width) - var(--knob-width)) * 0.5 +
+          (var(--height) - var(--knob-height)) * -0.5
+      )
+    );
+  }
+
+  &:disabled {
+    background-color: transparent;
+    cursor: not-allowed;
     &:after {
-      background-color: var(--figma-color-bg);
+      background-color: var(--figma-color-icon-disabled);
+      box-shadow: none;
+    }
+
+    &:checked,
+    &[indeterminate="true"] {
+      background-color: var(--figma-color-bg-disabled);
+      box-shadow: none;
+      &:after {
+        background-color: var(--figma-color-bg);
+      }
     }
   }
-}
 
-input[type="checkbox"].switch:focus {
-  outline: 0;
-}
+  &:focus {
+    outline: 0;
+  }
 
-input[type="checkbox"].switch:checked:focus {
-  outline: 0;
+  &:checked:focus {
+    outline: 0;
+  }
 }
 
 /* Checkbox */
@@ -2140,6 +2129,22 @@ input[type="radio"] {
       transform: scale(1);
       opacity: 0.25;
       background-color: var(--figma-color-icon);
+    }
+  }
+
+  &:disabled {
+    background-color: transparent;
+    cursor: not-allowed;
+    &:after {
+      background-color: var(--figma-color-icon-disabled);
+      box-shadow: none;
+    }
+    &:checked {
+      background-color: var(--figma-color-bg-disabled);
+      box-shadow: none;
+      &:after {
+        background-color: var(--figma-color-icon-disabled);
+      }
     }
   }
 
@@ -3539,6 +3544,11 @@ fig-field {
       white-space: nowrap;
       padding-right: var(--fig-field-gap);
       min-width: 0;
+    }
+    /* If the field has no label, set the input ratio to 1fr */
+    &:not(:has(> label)) {
+      --fig-field-input-ratio: 1fr;
+      --fig-field-label-ratio: 0fr;
     }
   }
 }

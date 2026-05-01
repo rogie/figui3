@@ -399,12 +399,17 @@ export const figui3Sections: Section[] = [
         id: "group",
         name: "Group",
         markup: `<div class="prop-panel">
-  <fig-field direction="vertical">
-    <label>Size</label>
-    <fig-radio name="size-group" value="small" label="Small"></fig-radio>
-    <fig-radio name="size-group" value="medium" label="Medium" checked></fig-radio>
-    <fig-radio name="size-group" value="large" label="Large"></fig-radio>
-  </fig-field>
+  <fig-group name="Size">
+    <fig-field>
+      <fig-radio name="size-group" value="small" label="Small"></fig-radio>
+    </fig-field>
+    <fig-field>
+      <fig-radio name="size-group" value="medium" label="Medium" checked></fig-radio>
+    </fig-field>
+    <fig-field>
+      <fig-radio name="size-group" value="large" label="Large"></fig-radio>
+    </fig-field>
+  </fig-group>
 </div>`,
       },
       {
