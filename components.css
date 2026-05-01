@@ -2286,19 +2286,20 @@ fig-slider {
   transition: var(--slider-transition);
 
   & .slider {
-    flex-grow: 1;
+    flex: 1 1 0;
     min-width: 0;
   }
 
   & fig-input-number {
-    flex-basis: 5rem;
+    flex: 0 0 3rem;
   }
 
   .fig-slider-input-container {
     height: var(--slider-height);
     position: relative;
     display: block;
-    width: 100%;
+    flex: 1 1 0;
+    min-width: 0;
     transition: var(--slider-transition);
     background: var(--figma-color-bg-secondary);
     border-radius: var(--slider-border-radius);
@@ -2378,6 +2379,7 @@ fig-slider {
     border-radius: var(--slider-border-radius);
     display: block;
     width: 100%;
+    min-width: 0;
     background-color: transparent;
     transition: var(--slider-transition);
     position: relative;
@@ -2574,7 +2576,7 @@ fig-slider {
     }
     fig-input-text,
     fig-input-number {
-      flex-basis: 5rem;
+      flex-basis: 3rem;
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
       border-left: 1px solid var(--figma-color-bg);
@@ -2607,7 +2609,8 @@ dialog,
 
   box-shadow: var(--figma-elevation-500-modal-window);
 
-  footer {
+  footer,
+  fig-footer {
     display: flex;
     justify-content: flex-end;
     padding: var(--spacer-2);
@@ -2689,6 +2692,12 @@ dialog[is="fig-dialog"] {
     overflow: auto;
     min-width: 12rem;
     min-height: 6rem;
+  }
+  & > fig-header[dialog-header]:not([borderless]):not([borderless="false"]) {
+    margin-bottom: var(--spacer-2-5);
+  }
+  & > fig-footer:not([borderless]):not([borderless="false"]) {
+    margin-top: var(--spacer-2-5);
   }
 }
 
@@ -3010,7 +3019,7 @@ fig-header {
 
 fig-group {
   display: block;
-  padding-bottom: var(--spacer-2-5);
+  margin-bottom: var(--spacer-2-5);
 
   /* Sibling groups  */
   & + fig-group {
@@ -3042,7 +3051,7 @@ fig-group {
 
   &[collapsible]:not([open]):not([open="true"]),
   &[collapsible][open="false"] {
-    padding-bottom: 0;
+    margin-bottom: 0;
     fig-header {
       color: var(--figma-color-text-secondary);
       &:hover {

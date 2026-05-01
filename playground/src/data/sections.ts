@@ -878,10 +878,10 @@ export const propkitSections: Section[] = [
       <label>Name</label>
       <fig-input-text value="Frame 1" full></fig-input-text>
     </fig-field>
-    <footer>
+    <fig-footer>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
       <fig-button>Rename</fig-button>
-    </footer>
+    </fig-footer>
   </dialog>
 </div>`,
       },
@@ -901,28 +901,28 @@ export const propkitSections: Section[] = [
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Shadow</fig-button>
   <dialog is="fig-dialog" title="Shadow" open handle="fig-header" position="center center" data-playground-hide-field>
     <fig-field direction="horizontal">
-      <label>Color</label>
-      <fig-input-color value="#000000" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
-    </fig-field>
-    <fig-field direction="horizontal">
       <label>X</label>
-      <fig-input-number value="0" full></fig-input-number>
+      <fig-input-number value="0" steppers="true" full></fig-input-number>
     </fig-field>
     <fig-field direction="horizontal">
       <label>Y</label>
-      <fig-input-number value="4" full></fig-input-number>
+      <fig-input-number value="4" steppers="true" full></fig-input-number>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Color</label>
+      <fig-input-color value="#000000" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
     </fig-field>
     <fig-field direction="horizontal">
       <label>Blur</label>
-      <fig-input-number value="8" min="0" full></fig-input-number>
+      <fig-slider variant="neue" value="8" min="0" max="64" text="true" units="px" full></fig-slider>
     </fig-field>
     <fig-field direction="horizontal">
       <label>Spread</label>
-      <fig-input-number value="0" full></fig-input-number>
+      <fig-slider variant="neue" value="0" min="-32" max="32" text="true" units="px" full></fig-slider>
     </fig-field>
-    <footer>
+    <fig-footer>
       <fig-button>Apply</fig-button>
-    </footer>
+    </fig-footer>
   </dialog>
 </div>`,
       },
@@ -962,10 +962,10 @@ export const propkitSections: Section[] = [
         <option>Right to left</option>
       </fig-dropdown>
     </fig-field>
-    <footer>
+    <fig-footer>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
       <fig-button>Apply</fig-button>
-    </footer>
+    </fig-footer>
   </dialog>
 </div>`,
       },
@@ -1063,9 +1063,9 @@ export const propkitSections: Section[] = [
       <label>Dark Mode</label>
       <fig-switch checked></fig-switch>
     </fig-field>
-    <footer>
+    <fig-footer>
       <fig-button>Next</fig-button>
-    </footer>
+    </fig-footer>
   </dialog>
 </div>`,
       },
@@ -1121,10 +1121,10 @@ export const propkitSections: Section[] = [
         <fig-switch></fig-switch>
       </fig-field>
     </fig-group>
-    <footer>
+    <fig-footer>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
       <fig-button>Export</fig-button>
-    </footer>
+    </fig-footer>
   </dialog>
 </div>`,
       },
@@ -1203,10 +1203,10 @@ export const propkitSections: Section[] = [
         <fig-switch></fig-switch>
       </fig-field>
     </fig-group>
-    <footer>
+    <fig-footer>
       <fig-button variant="secondary" close-dialog>Discard</fig-button>
       <fig-button>Save Token</fig-button>
-    </footer>
+    </fig-footer>
   </dialog>
 </div>`,
       },
@@ -1280,10 +1280,10 @@ export const propkitSections: Section[] = [
           </fig-segmented-control>
         </fig-field>
       </fig-group>
-      <footer>
+      <fig-footer>
         <fig-button variant="secondary">Create Frame</fig-button>
         <fig-button>Apply Setup</fig-button>
-      </footer>
+      </fig-footer>
     </fig-tab-content>
     <fig-tab-content id="prepress-guides">
       <fig-group name="Guide Style">
@@ -1332,10 +1332,10 @@ export const propkitSections: Section[] = [
           <fig-input-number value="0.1667" min="0" step="0.0625" suffix="in" full></fig-input-number>
         </fig-field>
       </fig-group>
-      <footer>
+      <fig-footer>
         <fig-button variant="secondary">Clear Guides</fig-button>
         <fig-button>Apply Guides</fig-button>
-      </footer>
+      </fig-footer>
     </fig-tab-content>
     <fig-tab-content id="prepress-cmyk">
       <fig-group name="Color Profile">
@@ -1378,10 +1378,10 @@ export const propkitSections: Section[] = [
           <fig-switch checked></fig-switch>
         </fig-field>
       </fig-group>
-      <footer>
+      <fig-footer>
         <fig-button variant="secondary">Reset</fig-button>
         <fig-button>Apply Profile</fig-button>
-      </footer>
+      </fig-footer>
     </fig-tab-content>
     <fig-tab-content id="prepress-preflight">
       <fig-group name="Checks">
@@ -1420,10 +1420,10 @@ export const propkitSections: Section[] = [
           <fig-switch checked></fig-switch>
         </fig-field>
       </fig-group>
-      <footer>
+      <fig-footer>
         <fig-button variant="secondary">Skip</fig-button>
         <fig-button>Run Preflight</fig-button>
-      </footer>
+      </fig-footer>
     </fig-tab-content>
     <fig-tab-content id="prepress-export">
       <fig-group name="Format">
@@ -1478,10 +1478,10 @@ export const propkitSections: Section[] = [
           <fig-switch></fig-switch>
         </fig-field>
       </fig-group>
-      <footer>
+      <fig-footer>
         <fig-button variant="secondary" close-dialog>Cancel</fig-button>
         <fig-button>Export PDF</fig-button>
-      </footer>
+      </fig-footer>
     </fig-tab-content>
   </dialog>
 </div>`,
@@ -1555,11 +1555,11 @@ export const propkitSections: Section[] = [
         <fig-slider variant="neue" value="0.5" min="0" max="5" step="0.1" text="true" units="px" full></fig-slider>
       </fig-field>
     </fig-group>
-    <footer>
+    <fig-footer>
       <fig-button>Place in Figma</fig-button>
       <fig-button variant="secondary">Download</fig-button>
       <fig-button variant="secondary">Reset</fig-button>
-    </footer>
+    </fig-footer>
   </dialog>
 </div>`,
       },
