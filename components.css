@@ -1377,7 +1377,7 @@ fig-input-file {
 
 fig-image {
   --image-size: 2rem;
-  --fit: cover;
+  --fit: contain;
   --image-width: var(--image-size);
   --image-height: var(--image-size);
   --aspect-ratio: 1 / 1;

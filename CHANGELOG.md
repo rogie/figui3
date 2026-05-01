@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.1.4]
+
+### Fixed
+
+- `fig-image`: upload preview now works correctly by ignoring bubbled native input change events.
+- `fig-image`: prevent re-entrant clear event from wiping uploaded image source.
+
+### Changed
+
+- `fig-image`: default `--fit` changed from `cover` to `contain`.
+
 ## [4.1.3]
 
 ### Added

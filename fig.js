@@ -7933,6 +7933,7 @@ class FigImage extends HTMLElement {
   }
 
   #handleFileInput(e) {
+    if (e.target !== this.#fileInput) return;
     const file = e.detail?.files?.[0];
 
     if (!file) {
@@ -7968,7 +7969,9 @@ class FigImage extends HTMLElement {
     );
 
     if (this.#fileInput) {
+      this.#fileInput.removeEventListener("change", this.#boundHandleFileInput);
       this.#fileInput.clear();
+      this.#fileInput.addEventListener("change", this.#boundHandleFileInput);
       this.#fileInput.setAttribute("label", "Replace");
     }
   }
