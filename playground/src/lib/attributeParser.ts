@@ -160,7 +160,7 @@ function getTargetElement(
     return groupControls[mutation.fieldIndex] ?? null;
   }
 
-  const fields = root.querySelectorAll("fig-field");
+  const fields = getTopLevelFields(root);
   if (fields.length) {
     const field = fields[mutation.fieldIndex];
     if (!field) return null;
@@ -234,6 +234,14 @@ function hasFigAncestor(element: Element): boolean {
 
 function shouldIgnoreControl(element: Element): boolean {
   return element.getAttribute("data-playground-ignore-controls") === "true";
+}
+
+const DIALOG_SCOPE = 'dialog[is="fig-dialog"], dialog[is="fig-popup"]';
+
+function getTopLevelFields(root: HTMLElement): Element[] {
+  return Array.from(root.querySelectorAll("fig-field")).filter(
+    (field) => !field.closest(DIALOG_SCOPE),
+  );
 }
 
 function getPrimaryControls(root: HTMLElement): Element[] {
@@ -336,7 +344,7 @@ export function parseAttributeTargets(markup: string): ParsedAttributeTarget[] {
     }));
   }
 
-  const fields = Array.from(root.querySelectorAll("fig-field"));
+  const fields = getTopLevelFields(root);
 
   if (fields.length) {
     return fields
@@ -580,7 +588,7 @@ export function applyFieldLabelMutation(
   mutation: LabelMutation,
 ): string {
   const root = parseSourceRoot(markup);
-  const field = root.querySelectorAll("fig-field")[mutation.fieldIndex];
+  const field = getTopLevelFields(root)[mutation.fieldIndex];
   if (!field) return markup;
 
   const existingLabel = field.querySelector(":scope > label");
@@ -839,7 +847,7 @@ export function applyFieldControlMutation(
   mutation: FieldControlMutation,
 ): string {
   const root = parseSourceRoot(markup);
-  const field = root.querySelectorAll("fig-field")[mutation.fieldIndex];
+  const field = getTopLevelFields(root)[mutation.fieldIndex];
   if (!field) return markup;
 
   Array.from(field.children).forEach((child) => {

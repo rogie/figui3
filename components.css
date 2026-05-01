@@ -3021,9 +3021,6 @@ fig-group {
     &:not([name]) {
       padding-top: var(--spacer-2-5);
     }
-    &:last-of-type {
-      padding-bottom: 0;
-    }
   }
 
   & > fig-header {
@@ -3459,21 +3456,26 @@ fig-slider {
   }
 }
 
-fig-field,
-.fig-field {
-  --field-label-width: 4rem;
-  display: flex;
-  padding: var(--spacer-1) var(--spacer-3);
+fig-field {
+  --fig-field-gap: var(--spacer-2);
+  --fig-field-left-padding: var(--spacer-3);
+  --fig-field-right-padding: var(--spacer-3);
+  --fig-field-top-padding: var(--spacer-1);
+  --fig-field-bottom-padding: var(--spacer-1);
+  --fig-field-label-ratio: 1fr;
+  --fig-field-input-ratio: 2fr;
+  display: grid;
+  grid-template-columns: var(--fig-field-left-padding) 1fr var(
+      --fig-field-right-padding
+    );
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "chevron label pad"
+    ".       input pad";
   margin: 0;
-  flex-direction: column;
+  padding: var(--fig-field-top-padding) 0 var(--fig-field-bottom-padding) 0;
   gap: 0;
   align-items: start;
-
-  &[direction="horizontal"] {
-    flex-direction: row;
-    align-items: center;
-    gap: var(--spacer-2);
-  }
 
   & > [full] {
     flex: 1 1 auto;
@@ -3485,13 +3487,15 @@ fig-field,
   }
 
   & > label {
-    flex: 0;
+    grid-area: label;
+    display: block;
     padding: var(--spacer-1) 0;
-    min-height: calc(1rem + var(--spacer-1) * 2);
-    display: flex;
-    align-items: center;
-    width: 100%;
+    line-height: 1rem;
     user-select: none;
+  }
+
+  & > *:not(.fig-field-chevron):not(label) {
+    grid-area: input;
   }
 
   & > .fig-field-chevron {
@@ -3502,64 +3506,32 @@ fig-field,
     transition: transform var(--transition-duration)
       var(--transition-timing-function);
     flex-shrink: 0;
-    margin: var(--spacer-1) 0;
-    margin-left: calc(var(--spacer-3) * -1);
-    margin-right: calc(var(--spacer-2) * -1);
+    grid-area: chevron;
+    margin-top: var(--spacer-1);
   }
 
   &:has(> [open]:not([open="false"])) > .fig-field-chevron {
     transform: rotate(0deg);
   }
 
-  &[direction="horizontal"] > label {
-    display: block;
-    width: auto;
-    min-width: var(--field-label-width);
-    max-width: var(--field-label-width);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    padding: 0;
-    line-height: 1.5rem;
-  }
-
   &[direction="horizontal"] {
-    gap: var(--spacer-2);
+    display: grid;
+    grid-template-columns:
+      var(--fig-field-left-padding) minmax(0, var(--fig-field-label-ratio))
+      var(--fig-field-input-ratio) var(--fig-field-right-padding);
+    grid-template-areas: "chevron label input pad";
+    gap: 0;
     align-items: start;
-    flex-direction: row;
-    &[columns="thirds"] {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--spacer-2);
 
-      & > label {
-        grid-column: 1;
-      }
-
-      & > label ~ * {
-        grid-column: 2 / span 2;
-      }
-
-      &:not(:has(> label)) > * {
-        grid-column: 1 / -1;
-      }
-    }
     &[columns="half"] {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--spacer-2);
-
-      & > label {
-        grid-column: 1;
-      }
-
-      & > label ~ * {
-        grid-column: 2 / span 2;
-      }
-
-      &:not(:has(> label)) > * {
-        grid-column: 1 / -1;
-      }
+      --fig-field-label-ratio: 2fr;
+    }
+    & > label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: var(--fig-field-gap);
+      min-width: 0;
     }
   }
 }
@@ -4547,13 +4519,16 @@ fig-chooser {
 
   display: flex;
   flex-direction: column;
-  gap: var(--fig-chooser-gap);
+  gap: 0;
   overflow: visible auto;
   scrollbar-width: none;
   scroll-snap-type: y mandatory;
 
   > * {
     scroll-snap-align: start;
+    &:not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
+      margin-block-end: var(--fig-chooser-gap);
+    }
   }
 
   &[padding="false"] {
@@ -4584,6 +4559,12 @@ fig-chooser {
     }
     fig-image[full] {
       min-width: 3rem;
+    }
+    > * {
+      &:not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
+        margin-inline-end: var(--fig-chooser-gap);
+        margin-block-end: 0;
+      }
     }
   }
 

@@ -16,6 +16,8 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
   const editorRef = useRef<EditorView | null>(null);
   const toastRef = useRef<HTMLElement>(null);
   const markupRef = useRef(markup);
+  const editorOriginRef = useRef(false);
+  const suppressOnChangeRef = useRef(false);
   const codeMarkup = getCodeSourceMarkup(markup);
 
   useEffect(() => {
@@ -28,6 +30,8 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
       lang: "html",
       doc: "",
       onChange: (nextCodeMarkup) => {
+        if (suppressOnChangeRef.current) return;
+        editorOriginRef.current = true;
         onMarkupChange(mergePreviewOnlyElements(markupRef.current, nextCodeMarkup));
       },
     });
@@ -38,9 +42,13 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
   useEffect(() => {
     const view = editorRef.current;
     if (!view) return;
+    const fromEditor = editorOriginRef.current;
+    editorOriginRef.current = false;
     const currentDoc = view.state.doc.toString();
-    if (currentDoc === codeMarkup) return;
+    if (fromEditor || currentDoc === codeMarkup) return;
+    suppressOnChangeRef.current = true;
     replaceDoc(view, codeMarkup);
+    suppressOnChangeRef.current = false;
   }, [codeMarkup]);
 
   const showToast = useCallback((message: string) => {

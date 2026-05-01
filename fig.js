@@ -1110,6 +1110,7 @@ customElements.define("fig-truncate", FigTruncate);
  * @attr {boolean} drag - Whether the dialog is draggable
  * @attr {string} handle - CSS selector for the drag handle element (e.g., "fig-header"). If not specified, the entire dialog is draggable when drag is enabled.
  * @attr {string} position - Position of the dialog (e.g., "bottom right", "top left", "center center")
+ * @attr {string} title - Title text for the auto-generated header. If no fig-header[dialog-header] exists, one is prepended with this title and a close button.
  */
 class FigDialog extends HTMLDialogElement {
   #isDragging = false;
@@ -1140,6 +1141,8 @@ class FigDialog extends HTMLDialogElement {
     this.drag =
       this.hasAttribute("drag") && this.getAttribute("drag") !== "false";
 
+    this.#ensureHeader();
+
     requestAnimationFrame(() => {
       this.#addCloseListeners();
       this.#setupDragListeners();
@@ -1152,6 +1155,29 @@ class FigDialog extends HTMLDialogElement {
     this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
       button.removeEventListener("click", this.#boundClose);
     });
+  }
+
+  #ensureHeader() {
+    if (this.querySelector("fig-header[dialog-header]")) return;
+    const header = document.createElement("fig-header");
+    header.setAttribute("dialog-header", "");
+    header.setAttribute("data-auto", "");
+    const h3 = document.createElement("h3");
+    h3.textContent = this.getAttribute("title") || "Dialog";
+    const tooltip = document.createElement("fig-tooltip");
+    tooltip.setAttribute("text", "Close");
+    const btn = document.createElement("fig-button");
+    btn.setAttribute("variant", "ghost");
+    btn.setAttribute("icon", "");
+    btn.setAttribute("close-dialog", "");
+    const icon = document.createElement("span");
+    icon.className = "fig-mask-icon";
+    icon.style.setProperty("--icon", "var(--icon-close)");
+    btn.appendChild(icon);
+    tooltip.appendChild(btn);
+    header.appendChild(h3);
+    header.appendChild(tooltip);
+    this.prepend(header);
   }
 
   #addCloseListeners() {
@@ -1370,7 +1396,7 @@ class FigDialog extends HTMLDialogElement {
   }
 
   static get observedAttributes() {
-    return ["modal", "drag", "position", "handle"];
+    return ["modal", "drag", "position", "handle", "title"];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -1390,6 +1416,13 @@ class FigDialog extends HTMLDialogElement {
 
     if (name === "position" && this.#positionInitialized) {
       this.#applyPosition();
+    }
+
+    if (name === "title") {
+      const autoHeader = this.querySelector("fig-header[data-auto] h3");
+      if (autoHeader) {
+        autoHeader.textContent = newValue || "Dialog";
+      }
     }
   }
 }

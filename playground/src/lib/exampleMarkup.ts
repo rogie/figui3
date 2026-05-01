@@ -1,6 +1,22 @@
 const PROP_PANEL_CLASS = "propkit-example";
 const INTERNAL_FIELD_ONLY_CONTROLS_ATTR = "data-playground-field-only-controls";
 
+function preserveIsAttributes(input: string, output: string): string {
+  const isValues: string[] = [];
+  input.replace(/<[a-z][a-z0-9]*[^>]*\sis="([^"]*)"/gi, (_m, val) => {
+    isValues.push(val);
+    return "";
+  });
+  if (!isValues.length) return output;
+  let idx = 0;
+  return output.replace(/<([a-z][a-z0-9]*)[^>]*\sis="([^"]*)"/gi, (full, _tag, _val) => {
+    if (idx < isValues.length) {
+      return full.replace(/\sis="[^"]*"/, ` is="${isValues[idx++]}"`);
+    }
+    return full;
+  });
+}
+
 function normalizeMarkup(markup: string): string {
   return markup.trim();
 }
@@ -59,7 +75,8 @@ function stripPreviewOnlyElements(markup: string): string {
   doc
     .querySelectorAll('[data-playground-ignore-controls="true"]')
     .forEach((el) => el.remove());
-  return singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  const raw = singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  return preserveIsAttributes(markup, raw);
 }
 
 function stripInternalFieldAttributes(markup: string): string {
@@ -69,7 +86,8 @@ function stripInternalFieldAttributes(markup: string): string {
   doc
     .querySelectorAll(`[${INTERNAL_FIELD_ONLY_CONTROLS_ATTR}]`)
     .forEach((el) => el.removeAttribute(INTERNAL_FIELD_ONLY_CONTROLS_ATTR));
-  return singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  const raw = singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  return preserveIsAttributes(markup, raw);
 }
 
 function unwrapPreviewWrappers(markup: string): string {
@@ -79,7 +97,8 @@ function unwrapPreviewWrappers(markup: string): string {
   doc.querySelectorAll('[data-playground-unwrap="true"]').forEach((el) => {
     el.replaceWith(...Array.from(el.childNodes));
   });
-  return singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  const raw = singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  return preserveIsAttributes(markup, raw);
 }
 
 function stripPlaygroundAttributes(markup: string): string {
@@ -93,7 +112,8 @@ function stripPlaygroundAttributes(markup: string): string {
       }
     }
   });
-  return singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  const raw = singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  return preserveIsAttributes(markup, raw);
 }
 
 export function getExampleSourceMarkup(markup: string): string {
@@ -200,7 +220,8 @@ export function mergePreviewOnlyElements(
     }
   }
 
-  return dedentMarkup(singleQuoteAttrs(editedRoot.innerHTML));
+  const raw = dedentMarkup(singleQuoteAttrs(editedRoot.innerHTML));
+  return preserveIsAttributes(originalMarkup, raw);
 }
 
 export function getInjectedExampleMarkup(markup: string): string {

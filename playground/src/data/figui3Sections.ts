@@ -66,15 +66,7 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Dialog</fig-button>
-  <dialog is="fig-dialog" handle="fig-header" position="center center">
-    <fig-header>
-      <h3>Dialog Title</h3>
-      <fig-tooltip text="Close">
-        <fig-button variant="ghost" icon="true" close-dialog>
-          <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
-        </fig-button>
-      </fig-tooltip>
-    </fig-header>
+  <dialog is="fig-dialog" title="Dialog Title" handle="fig-header" position="center center">
     <fig-content>
       <p>Dialog content</p>
     </fig-content>

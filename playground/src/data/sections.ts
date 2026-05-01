@@ -150,6 +150,7 @@ export const propkitSections: Section[] = [
   {
     id: "chooser",
     name: "Chooser",
+    group: "Field controls",
     description:
       "A selection list for picking from a set of rich choice options.",
     examples: [
@@ -243,6 +244,7 @@ export const propkitSections: Section[] = [
   {
     id: "color",
     name: "Color",
+    group: "Field controls",
     description:
       "A solid color picker field with hex input and optional alpha.",
     examples: [
@@ -271,6 +273,7 @@ export const propkitSections: Section[] = [
   {
     id: "dropdown",
     name: "Dropdown",
+    group: "Field controls",
     description: "A dropdown select field for choosing from a set of options.",
     examples: [
       {
@@ -337,6 +340,7 @@ export const propkitSections: Section[] = [
   {
     id: "easing",
     name: "Easing Curve",
+    group: "Field controls",
     description:
       "A bezier curve editor for animation easing with preset dropdown.",
     examples: [
@@ -355,6 +359,7 @@ export const propkitSections: Section[] = [
   {
     id: "fill",
     name: "Fill",
+    group: "Field controls",
     description:
       "A multi-mode fill field supporting solid, gradient, and image fills.",
     examples: [
@@ -413,6 +418,7 @@ export const propkitSections: Section[] = [
   {
     id: "gradient",
     name: "Gradient",
+    group: "Field controls",
     description:
       "A gradient stop editor with draggable color handles. Click empty space to add a stop, click a handle to edit its color.",
     examples: [
@@ -431,6 +437,7 @@ export const propkitSections: Section[] = [
   {
     id: "image",
     name: "Image",
+    group: "Field controls",
     description:
       "An image upload field for selecting or previewing image assets.",
     examples: [
@@ -481,6 +488,7 @@ export const propkitSections: Section[] = [
   {
     id: "joystick",
     name: "Joystick",
+    group: "Field controls",
     description: "A 2D position control with optional coordinate modes.",
     examples: [
       {
@@ -498,6 +506,7 @@ export const propkitSections: Section[] = [
   {
     id: "number",
     name: "Number",
+    group: "Field controls",
     description:
       "A numeric input field for precise typed values with optional units and bounds.",
     examples: [
@@ -516,6 +525,7 @@ export const propkitSections: Section[] = [
   {
     id: "origin-grid",
     name: "Origin Grid",
+    group: "Field controls",
     description:
       "A 3x3 transform-origin selector with draggable point selection and XY values.",
     examples: [
@@ -534,6 +544,7 @@ export const propkitSections: Section[] = [
   {
     id: "palette",
     name: "Palette",
+    group: "Field controls",
     description:
       "A color palette field for managing a list of solid colors.",
     examples: [
@@ -562,6 +573,7 @@ export const propkitSections: Section[] = [
   {
     id: "segment",
     name: "Segmented control",
+    group: "Field controls",
     description: "A segmented control for mutually exclusive choices.",
     examples: [
       {
@@ -604,6 +616,7 @@ export const propkitSections: Section[] = [
   {
     id: "skeleton",
     name: "Skeleton",
+    group: "Field controls",
     description:
       "A skeleton loading placeholder that wraps property fields with a shimmer effect.",
     examples: [
@@ -664,6 +677,7 @@ export const propkitSections: Section[] = [
   {
     id: "slider",
     name: "Slider",
+    group: "Field controls",
     description:
       "A range slider with optional text input for precise numeric values.",
     examples: [
@@ -734,6 +748,7 @@ export const propkitSections: Section[] = [
   {
     id: "switch",
     name: "Switch",
+    group: "Field controls",
     description: "A toggle switch for boolean on/off properties.",
     examples: [
       {
@@ -761,6 +776,7 @@ export const propkitSections: Section[] = [
   {
     id: "text",
     name: "Text",
+    group: "Field controls",
     description:
       "A text input field for entering and editing string values with optional slots.",
     examples: [
@@ -789,6 +805,7 @@ export const propkitSections: Section[] = [
   {
     id: "file",
     name: "File",
+    group: "Field controls",
     description:
       "A file upload input with filename display, clear button, accepted types tooltip, and drag-and-drop support.",
     examples: [
@@ -840,6 +857,357 @@ export const propkitSections: Section[] = [
     <label>Spreadsheet</label>
     <fig-input-file label="Upload spreadsheet" accepts=".xls,.xlsx,.csv" full></fig-input-file>
   </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-rename",
+    name: "Rename Layer",
+    group: "Controls in dialogs",
+    description:
+      "A minimal rename dialog with a single text input and confirm action.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Rename</fig-button>
+  <dialog is="fig-dialog" title="Rename Layer" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-field direction="horizontal">
+      <label>Name</label>
+      <fig-input-text value="Frame 1" full></fig-input-text>
+    </fig-field>
+    <footer>
+      <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+      <fig-button>Rename</fig-button>
+    </footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-shadow",
+    name: "Shadow",
+    group: "Controls in dialogs",
+    description:
+      "A drop shadow editor with color, offset, blur, and spread controls.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Shadow</fig-button>
+  <dialog is="fig-dialog" title="Shadow" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-field direction="horizontal">
+      <label>Color</label>
+      <fig-input-color value="#000000" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>X</label>
+      <fig-input-number value="0" full></fig-input-number>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Y</label>
+      <fig-input-number value="4" full></fig-input-number>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Blur</label>
+      <fig-input-number value="8" min="0" full></fig-input-number>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Spread</label>
+      <fig-input-number value="0" full></fig-input-number>
+    </fig-field>
+    <footer>
+      <fig-button>Apply</fig-button>
+    </footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-blur",
+    name: "Progressive Blur",
+    group: "Controls in dialogs",
+    description:
+      "A progressive blur settings dialog with amount, fade range, and direction controls.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Blur</fig-button>
+  <dialog is="fig-dialog" title="Progressive Blur" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-field direction="horizontal">
+      <label>Amount</label>
+      <fig-slider variant="neue" value="12" min="0" max="64" text="true" units="px" full></fig-slider>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Fade start</label>
+      <fig-slider variant="neue" value="20" min="0" max="100" text="true" units="%" full></fig-slider>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Fade end</label>
+      <fig-slider variant="neue" value="80" min="0" max="100" text="true" units="%" full></fig-slider>
+    </fig-field>
+    <fig-field direction="horizontal">
+      <label>Direction</label>
+      <fig-dropdown full>
+        <option selected>Top to bottom</option>
+        <option>Bottom to top</option>
+        <option>Left to right</option>
+        <option>Right to left</option>
+      </fig-dropdown>
+    </fig-field>
+    <footer>
+      <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+      <fig-button>Apply</fig-button>
+    </footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-photo-stack",
+    name: "Photo Stack",
+    group: "Controls in dialogs",
+    description:
+      "A photo composition plugin dialog with text, color, shape, offset, transition, and dark mode controls across multiple collapsible groups.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Photo Stack</fig-button>
+  <dialog is="fig-dialog" title="Photo Stack" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-group>
+      <fig-field direction="horizontal">
+        <label>Title</label>
+        <fig-input-text value="Japan" full></fig-input-text>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Subtitle</label>
+        <fig-input-text value="December 2025" full></fig-input-text>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Shadow Tint</label>
+        <fig-input-color value="#000000" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Photo Shape</label>
+        <fig-dropdown full>
+          <option selected>Portrait</option>
+          <option>Landscape</option>
+          <option>Square</option>
+        </fig-dropdown>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Back Photo" collapsible open>
+      <fig-field direction="horizontal">
+        <label>Offset X</label>
+        <fig-slider variant="neue" type="delta" value="239" default="0" min="-500" max="500" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Offset Y</label>
+        <fig-slider variant="neue" type="delta" value="0" default="0" min="-500" max="500" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Scale</label>
+        <fig-slider variant="neue" value="0.70" step="0.01" min="0" max="2" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Overlay Opacity</label>
+        <fig-slider variant="neue" type="opacity" value="0.60" color="#000000" text="true" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Shadow" collapsible open>
+      <fig-field direction="horizontal">
+        <label>Scale</label>
+        <fig-slider variant="neue" value="1.03" step="0.01" min="0" max="2" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Opacity</label>
+        <fig-slider variant="neue" type="opacity" value="0.25" color="#000000" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Blur</label>
+        <fig-slider variant="neue" value="14" min="0" max="64" text="true" units="px" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Y Offset</label>
+        <fig-slider variant="neue" type="delta" value="8" default="0" min="-50" max="50" text="true" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Transition Spring" collapsible open>
+      <fig-field direction="horizontal">
+        <label>Type</label>
+        <fig-segmented-control full>
+          <fig-segment value="time" selected>Time</fig-segment>
+          <fig-segment value="physics">Physics</fig-segment>
+        </fig-segmented-control>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Duration</label>
+        <fig-slider variant="neue" value="0.50" step="0.01" min="0" max="2" text="true" units="s" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Bounce</label>
+        <fig-slider variant="neue" value="0.04" step="0.01" min="0" max="1" text="true" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <fig-field direction="horizontal">
+      <label>Dark Mode</label>
+      <fig-switch checked></fig-switch>
+    </fig-field>
+    <footer>
+      <fig-button>Next</fig-button>
+    </footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-export",
+    name: "Export Settings",
+    group: "Controls in dialogs",
+    description:
+      "An export dialog with format, quality, scale, filename, and metadata controls across grouped sections.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Export</fig-button>
+  <dialog is="fig-dialog" title="Export Settings" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-group name="Format">
+      <fig-field direction="horizontal">
+        <label>Format</label>
+        <fig-segmented-control full>
+          <fig-segment value="png" selected>PNG</fig-segment>
+          <fig-segment value="svg">SVG</fig-segment>
+          <fig-segment value="pdf">PDF</fig-segment>
+        </fig-segmented-control>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Quality</label>
+        <fig-dropdown full>
+          <option>Low</option>
+          <option selected>Medium</option>
+          <option>High</option>
+          <option>Maximum</option>
+        </fig-dropdown>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Scale</label>
+        <fig-slider variant="neue" value="2" min="1" max="4" step="0.5" text="true" units="x" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Output">
+      <fig-field direction="horizontal">
+        <label>Filename</label>
+        <fig-input-text value="design-export" full></fig-input-text>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Metadata</label>
+        <fig-switch checked></fig-switch>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Flatten layers</label>
+        <fig-switch></fig-switch>
+      </fig-field>
+    </fig-group>
+    <footer>
+      <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+      <fig-button>Export</fig-button>
+    </footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-token-editor",
+    name: "Design Token Editor",
+    group: "Controls in dialogs",
+    description:
+      "A complex multi-group dialog for editing design tokens with identity, value, variant, and usage sections.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Token Editor</fig-button>
+  <dialog is="fig-dialog" title="Design Token Editor" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-group name="Token">
+      <fig-field direction="horizontal">
+        <label>Name</label>
+        <fig-input-text value="color-primary" full></fig-input-text>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Description</label>
+        <fig-input-text value="Primary brand color" full></fig-input-text>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Type</label>
+        <fig-dropdown full>
+          <option selected>Color</option>
+          <option>Spacing</option>
+          <option>Typography</option>
+          <option>Border radius</option>
+        </fig-dropdown>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Value">
+      <fig-field direction="horizontal">
+        <label>Color</label>
+        <fig-input-color value="#0D99FF" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Opacity</label>
+        <fig-slider variant="neue" type="opacity" value="1" color="#0D99FF" units="%" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>CSS variable</label>
+        <fig-input-text value="--color-primary" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Variants" collapsible open>
+      <fig-field direction="horizontal">
+        <label>Palette</label>
+        <fig-input-palette value='["#0D99FF","#0B7FD4","#0966AA","#074D80"]' full></fig-input-palette>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Mode</label>
+        <fig-segmented-control full>
+          <fig-segment value="light" selected>Light</fig-segment>
+          <fig-segment value="dark">Dark</fig-segment>
+        </fig-segmented-control>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Auto-generate</label>
+        <fig-switch checked></fig-switch>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Usage" collapsible open>
+      <fig-field direction="horizontal">
+        <label>Preview</label>
+        <fig-image full upload="true" size="auto"></fig-image>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Publish</label>
+        <fig-switch></fig-switch>
+      </fig-field>
+    </fig-group>
+    <footer>
+      <fig-button variant="secondary" close-dialog>Discard</fig-button>
+      <fig-button>Save Token</fig-button>
+    </footer>
+  </dialog>
 </div>`,
       },
     ],
