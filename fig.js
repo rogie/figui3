@@ -1111,6 +1111,7 @@ customElements.define("fig-truncate", FigTruncate);
  * @attr {string} handle - CSS selector for the drag handle element (e.g., "fig-header"). If not specified, the entire dialog is draggable when drag is enabled.
  * @attr {string} position - Position of the dialog (e.g., "bottom right", "top left", "center center")
  * @attr {string} title - Title text for the auto-generated header. If no fig-header[dialog-header] exists, one is prepended with this title and a close button.
+ * @attr {boolean} resizable - Whether the dialog can be manually resized by the user (default: false)
  */
 class FigDialog extends HTMLDialogElement {
   #isDragging = false;
@@ -1396,7 +1397,7 @@ class FigDialog extends HTMLDialogElement {
   }
 
   static get observedAttributes() {
-    return ["modal", "drag", "position", "handle", "title"];
+    return ["modal", "drag", "position", "handle", "title", "resizable"];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {

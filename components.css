@@ -2693,6 +2693,13 @@ dialog,
 dialog[is="fig-dialog"] {
   --z-index: 999999;
   z-index: var(--z-index);
+
+  &[resizable]:not([resizable="false"]) {
+    resize: both;
+    overflow: auto;
+    min-width: 12rem;
+    min-height: 6rem;
+  }
 }
 
 dialog[is="fig-popup"] {
@@ -3589,14 +3596,18 @@ fig-segmented-control {
 
   & fig-segment {
     flex: 1 1 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    min-width: 0;
+    display: block;
+    text-align: center;
+    line-height: calc(1.5rem - 2px);
     position: relative;
     z-index: 1;
     appearance: none;
     color: var(--figma-color-text-secondary);
     padding: 0 var(--spacer-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     transition: none;
 
     &[selected]:not([selected="false"]),

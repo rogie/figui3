@@ -112,6 +112,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-dialog": {
     modal: { label: "Modal", type: "boolean", boolMode: "presence" },
     drag: { label: "Drag", type: "boolean", boolMode: "presence" },
+    resizable: { label: "Resizable", type: "boolean", boolMode: "presence" },
     handle: { label: "Drag handle", type: "string" },
     "close-button": {
       label: "Close button",

@@ -1212,6 +1212,359 @@ export const propkitSections: Section[] = [
       },
     ],
   },
+  {
+    id: "dialog-prepress",
+    name: "Prepress",
+    group: "Controls in dialogs",
+    description:
+      "A print production tools dialog with tabbed sections for setup, guides, CMYK, preflight, and export settings.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Prepress</fig-button>
+  <dialog is="fig-dialog" title="Prepress" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-tabs>
+      <fig-tab selected content="#prepress-setup">Setup</fig-tab>
+      <fig-tab content="#prepress-guides">Guides</fig-tab>
+      <fig-tab content="#prepress-cmyk">CMYK</fig-tab>
+      <fig-tab content="#prepress-preflight">Preflight</fig-tab>
+      <fig-tab content="#prepress-export">Export</fig-tab>
+    </fig-tabs>
+    <fig-tab-content id="prepress-setup">
+      <fig-group name="Project Type">
+        <fig-field direction="horizontal">
+          <fig-segmented-control full>
+            <fig-segment value="editorial" selected>Editorial</fig-segment>
+            <fig-segment value="packaging">Packaging</fig-segment>
+            <fig-segment value="general">General</fig-segment>
+          </fig-segmented-control>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Trim Size">
+        <fig-field>
+          <fig-dropdown full>
+            <option selected>US Letter (8.5×11in)</option>
+            <option>A4 (210×297mm)</option>
+            <option>A5 (148×210mm)</option>
+            <option>Tabloid (11×17in)</option>
+            <option>Custom</option>
+          </fig-dropdown>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Width</label>
+          <fig-input-number value="8.5" min="0" step="0.25" suffix="in" full></fig-input-number>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Height</label>
+          <fig-input-number value="11" min="0" step="0.25" suffix="in" full></fig-input-number>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Print Margins">
+        <fig-field direction="horizontal">
+          <label>Bleed</label>
+          <fig-input-number value="0.125" min="0" step="0.0625" suffix="in" full></fig-input-number>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Safe Area</label>
+          <fig-input-number value="0.25" min="0" step="0.0625" suffix="in" full></fig-input-number>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Apply To">
+        <fig-field direction="horizontal">
+          <fig-segmented-control full>
+            <fig-segment value="current" selected>Current Frame</fig-segment>
+            <fig-segment value="selection">Selection</fig-segment>
+            <fig-segment value="all">All Frames</fig-segment>
+          </fig-segmented-control>
+        </fig-field>
+      </fig-group>
+      <footer>
+        <fig-button variant="secondary">Create Frame</fig-button>
+        <fig-button>Apply Setup</fig-button>
+      </footer>
+    </fig-tab-content>
+    <fig-tab-content id="prepress-guides">
+      <fig-group name="Guide Style">
+        <fig-field direction="horizontal">
+          <label>Color</label>
+          <fig-input-color value="#FF00FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Opacity</label>
+          <fig-slider variant="neue" type="opacity" value="0.5" color="#FF00FF" units="%" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Stroke</label>
+          <fig-dropdown full>
+            <option selected>Dashed</option>
+            <option>Solid</option>
+            <option>Dotted</option>
+          </fig-dropdown>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Margins">
+        <fig-field direction="horizontal">
+          <label>Top</label>
+          <fig-input-number value="0.5" min="0" step="0.125" suffix="in" full></fig-input-number>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Bottom</label>
+          <fig-input-number value="0.5" min="0" step="0.125" suffix="in" full></fig-input-number>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Left</label>
+          <fig-input-number value="0.75" min="0" step="0.125" suffix="in" full></fig-input-number>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Right</label>
+          <fig-input-number value="0.75" min="0" step="0.125" suffix="in" full></fig-input-number>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Columns">
+        <fig-field direction="horizontal">
+          <label>Count</label>
+          <fig-input-number value="1" min="1" max="12" step="1" full></fig-input-number>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Gutter</label>
+          <fig-input-number value="0.1667" min="0" step="0.0625" suffix="in" full></fig-input-number>
+        </fig-field>
+      </fig-group>
+      <footer>
+        <fig-button variant="secondary">Clear Guides</fig-button>
+        <fig-button>Apply Guides</fig-button>
+      </footer>
+    </fig-tab-content>
+    <fig-tab-content id="prepress-cmyk">
+      <fig-group name="Color Profile">
+        <fig-field direction="horizontal">
+          <label>Profile</label>
+          <fig-dropdown full>
+            <option selected>SWOP (Coated)</option>
+            <option>GRACoL 2006</option>
+            <option>Fogra39</option>
+            <option>Japan Color 2001</option>
+          </fig-dropdown>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Intent</label>
+          <fig-dropdown full>
+            <option>Perceptual</option>
+            <option selected>Relative</option>
+            <option>Saturation</option>
+            <option>Absolute</option>
+          </fig-dropdown>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Ink Limits">
+        <fig-field direction="horizontal">
+          <label>Total ink</label>
+          <fig-slider variant="neue" value="300" min="200" max="400" step="5" text="true" units="%" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Black limit</label>
+          <fig-slider variant="neue" value="100" min="0" max="100" step="5" text="true" units="%" full></fig-slider>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Overprint">
+        <fig-field direction="horizontal">
+          <label>Simulate</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Black overprint</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+      </fig-group>
+      <footer>
+        <fig-button variant="secondary">Reset</fig-button>
+        <fig-button>Apply Profile</fig-button>
+      </footer>
+    </fig-tab-content>
+    <fig-tab-content id="prepress-preflight">
+      <fig-group name="Checks">
+        <fig-field direction="horizontal">
+          <label>Resolution</label>
+          <fig-segmented-control full>
+            <fig-segment value="150">150 dpi</fig-segment>
+            <fig-segment value="300" selected>300 dpi</fig-segment>
+            <fig-segment value="600">600 dpi</fig-segment>
+          </fig-segmented-control>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Bleed check</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Trim marks</label>
+          <fig-switch></fig-switch>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Overprint preview</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Text">
+        <fig-field direction="horizontal">
+          <label>Min font size</label>
+          <fig-input-number value="6" min="1" max="72" step="1" suffix="pt" full></fig-input-number>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Outline text</label>
+          <fig-switch></fig-switch>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Embed fonts</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+      </fig-group>
+      <footer>
+        <fig-button variant="secondary">Skip</fig-button>
+        <fig-button>Run Preflight</fig-button>
+      </footer>
+    </fig-tab-content>
+    <fig-tab-content id="prepress-export">
+      <fig-group name="Format">
+        <fig-field direction="horizontal">
+          <label>Output</label>
+          <fig-dropdown full>
+            <option selected>PDF/X-1a</option>
+            <option>PDF/X-3</option>
+            <option>PDF/X-4</option>
+            <option>High Quality Print</option>
+          </fig-dropdown>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Compression</label>
+          <fig-dropdown full>
+            <option>None</option>
+            <option selected>JPEG (Medium)</option>
+            <option>JPEG (Maximum)</option>
+            <option>ZIP</option>
+          </fig-dropdown>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Marks">
+        <fig-field direction="horizontal">
+          <label>Crop marks</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Bleed marks</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Registration</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Color bars</label>
+          <fig-switch></fig-switch>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Pages">
+        <fig-field direction="horizontal">
+          <label>Range</label>
+          <fig-segmented-control full>
+            <fig-segment value="all" selected>All</fig-segment>
+            <fig-segment value="current">Current</fig-segment>
+            <fig-segment value="custom">Custom</fig-segment>
+          </fig-segmented-control>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Spreads</label>
+          <fig-switch></fig-switch>
+        </fig-field>
+      </fig-group>
+      <footer>
+        <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+        <fig-button>Export PDF</fig-button>
+      </footer>
+    </fig-tab-content>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-melty-gif",
+    name: "Animated Melty Gif",
+    group: "Controls in dialogs",
+    description:
+      "An animated melty gif generator dialog with image preview, animation controls, and turbulence effect parameters.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Melty Gif</fig-button>
+  <dialog is="fig-dialog" title="Animated Melty Gif" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-field>
+      <fig-image full upload="true" size="auto" aspect-ratio="16/10"></fig-image>
+    </fig-field>
+    <fig-group>
+      <fig-field direction="horizontal">
+        <label>Frames</label>
+        <fig-slider variant="neue" value="6" min="1" max="24" step="1" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Frame rate</label>
+        <fig-slider variant="neue" value="5" min="1" max="30" step="1" text="true" units="fps" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Loop style</label>
+        <fig-dropdown full>
+          <option selected>Forward</option>
+          <option>Reverse</option>
+          <option>Ping-pong</option>
+          <option>None</option>
+        </fig-dropdown>
+      </fig-field>
+    </fig-group>
+    <fig-group>
+      <fig-field direction="horizontal">
+        <label>Scale (displacement)</label>
+        <fig-slider variant="neue" value="14" min="0" max="100" step="0.5" text="true" units="px" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Base freq. X</label>
+        <fig-slider variant="neue" value="0.02" min="0.001" max="0.1" step="0.001" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Base freq. Y</label>
+        <fig-slider variant="neue" value="0.02" min="0.001" max="0.1" step="0.001" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Octaves</label>
+        <fig-slider variant="neue" value="2" min="1" max="8" step="1" text="true" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <fig-group>
+      <fig-field direction="horizontal">
+        <label>Fill holes</label>
+        <fig-slider variant="neue" value="2" min="0" max="10" step="0.5" text="true" units="px" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Solidify edges</label>
+        <fig-slider variant="neue" value="1" min="0" max="2" step="0.01" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Smoothing</label>
+        <fig-slider variant="neue" value="0.5" min="0" max="5" step="0.1" text="true" units="px" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <footer>
+      <fig-button>Place in Figma</fig-button>
+      <fig-button variant="secondary">Download</fig-button>
+      <fig-button variant="secondary">Reset</fig-button>
+    </footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
 ];
 
 export const sections = propkitSections;
