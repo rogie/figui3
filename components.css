@@ -3415,7 +3415,7 @@ fig-input-palette {
   }
   &[open]:not([open="false"]):not([edit="false"]) {
     .palette-colors-expanded {
-      display: flex;
+      display: grid;
     }
   }
   &[add="false"] {
@@ -3426,7 +3426,7 @@ fig-input-palette {
   }
   .palette-colors-expanded {
     display: none;
-    flex-direction: column;
+    grid-template-columns: [input] 1fr [button] 1.5rem;
     overflow: visible;
     border-radius: 0;
     gap: var(--spacer-2);
@@ -3434,6 +3434,16 @@ fig-input-palette {
 
     > fig-input-color {
       min-width: 0;
+      grid-column: input / -1;
+
+      &:has(+ fig-button) {
+        grid-column: input;
+      }
+    }
+
+    > fig-button,
+    > button {
+      grid-column: button;
     }
 
     fig-chit {
@@ -3675,6 +3685,21 @@ fig-segmented-control {
   .segmented-control::before,
   fig-segmented-control::before {
     transition: none !important;
+  }
+}
+
+/* Options */
+fig-options {
+  display: flex;
+  width: 100%;
+
+  & > fig-segmented-control {
+    flex: 1;
+    min-width: 0;
+  }
+
+  & > fig-dropdown {
+    flex: 1;
   }
 }
 

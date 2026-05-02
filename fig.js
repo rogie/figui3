@@ -517,6 +517,8 @@ class FigTooltip extends HTMLElement {
   #boundHandleTouchMove;
   #boundHandleTouchEnd;
   #boundHandleTouchCancel;
+  #boundHandleDialogClose;
+  #parentDialog = null;
   #touchTimeout;
   #isTouching = false;
   #observer = null;
@@ -535,10 +537,15 @@ class FigTooltip extends HTMLElement {
     this.#boundHandleTouchMove = this.#handleTouchMove.bind(this);
     this.#boundHandleTouchEnd = this.#handleTouchEnd.bind(this);
     this.#boundHandleTouchCancel = this.#handleTouchCancel.bind(this);
+    this.#boundHandleDialogClose = () => this.hidePopup();
   }
   connectedCallback() {
     this.setup();
     this.setupEventListeners();
+    this.#parentDialog = this.closest("dialog");
+    if (this.#parentDialog) {
+      this.#parentDialog.addEventListener("close", this.#boundHandleDialogClose);
+    }
   }
 
   disconnectedCallback() {
@@ -549,6 +556,10 @@ class FigTooltip extends HTMLElement {
       true,
     );
     this.#stopObserving();
+    if (this.#parentDialog) {
+      this.#parentDialog.removeEventListener("close", this.#boundHandleDialogClose);
+      this.#parentDialog = null;
+    }
 
     if (this.action === "click") {
       document.body.removeEventListener(
@@ -1112,6 +1123,7 @@ customElements.define("fig-truncate", FigTruncate);
  * @attr {string} position - Position of the dialog (e.g., "bottom right", "top left", "center center")
  * @attr {string} title - Title text for the auto-generated header. If no fig-header[dialog-header] exists, one is prepended with this title and a close button.
  * @attr {boolean} resizable - Whether the dialog can be manually resized by the user (default: false)
+ * @attr {string} closedby - Controls how the dialog can be dismissed: "any" (default, Escape + light dismiss), "closerequest" (Escape only), "none" (programmatic only)
  */
 class FigDialog extends HTMLDialogElement {
   #isDragging = false;
@@ -1397,7 +1409,7 @@ class FigDialog extends HTMLDialogElement {
   }
 
   static get observedAttributes() {
-    return ["modal", "drag", "position", "handle", "title", "resizable"];
+    return ["modal", "drag", "position", "handle", "title", "resizable", "closedby"];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -1417,6 +1429,20 @@ class FigDialog extends HTMLDialogElement {
 
     if (name === "position" && this.#positionInitialized) {
       this.#applyPosition();
+    }
+
+    if (name === "modal") {
+      const wasModal = this.modal;
+      this.modal = newValue !== null && newValue !== "false";
+      if (this.open && wasModal !== this.modal) {
+        this.close();
+        if (this.modal) this.showModal();
+        else this.show();
+      }
+    }
+
+    if (name === "closedby") {
+      this.closedby = newValue || "any";
     }
 
     if (name === "title") {
@@ -3104,6 +3130,277 @@ class FigSegmentedControl extends HTMLElement {
   }
 }
 customElements.define("fig-segmented-control", FigSegmentedControl);
+
+/* Options */
+/**
+ * A responsive option picker that renders as a segmented control by default,
+ * automatically swapping to a dropdown when any label overflows.
+ * @attr {string} options - Comma-separated list of option labels
+ * @attr {string} value - Currently selected value
+ * @attr {boolean} disabled - Disables the control
+ * @attr {boolean} full - Full-width segmented control
+ * @attr {string} sizing - Segment sizing mode: "equal" (default) or "auto"
+ */
+class FigOptions extends HTMLElement {
+  static get observedAttributes() {
+    return ["options", "value", "disabled", "full", "sizing"];
+  }
+
+  #currentMode = "segments"; // "segments" | "dropdown"
+  #naturalWidth = 0;
+  #resizeObserver = null;
+  #parsedOptions = [];
+  #childControl = null;
+  #suppressEvents = false;
+
+  connectedCallback() {
+    this.#parseOptions();
+    this.#renderSegments();
+    this.#startResizeObserver();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => this.#checkOverflow());
+    });
+  }
+
+  disconnectedCallback() {
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+  }
+
+  get value() {
+    return this.getAttribute("value") || "";
+  }
+
+  set value(val) {
+    if (val === null || val === undefined) {
+      this.removeAttribute("value");
+    } else {
+      this.setAttribute("value", String(val));
+    }
+  }
+
+  get options() {
+    return this.#parsedOptions.slice();
+  }
+
+  set options(val) {
+    if (Array.isArray(val)) {
+      const hasComma = val.some((v) => String(v).includes(","));
+      const str = hasComma ? JSON.stringify(val) : val.join(",");
+      this.setAttribute("options", str);
+    } else {
+      this.setAttribute("options", String(val || ""));
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    if (name === "options") {
+      this.#parseOptions();
+      this.#rebuildCurrentControl();
+      return;
+    }
+
+    if (name === "value") {
+      this.#syncValueToChild();
+      return;
+    }
+
+    if (name === "disabled") {
+      this.#syncAttrToChild("disabled");
+      return;
+    }
+
+    if (name === "full") {
+      this.#syncAttrToChild("full");
+      return;
+    }
+
+    if (name === "sizing") {
+      this.#syncAttrToChild("sizing");
+      this.#rebuildCurrentControl();
+    }
+  }
+
+  #parseOptions() {
+    const raw = this.getAttribute("options") || "";
+    if (raw.startsWith("[")) {
+      try { this.#parsedOptions = JSON.parse(raw); return; } catch {}
+    }
+    const delimiter = raw.includes("\n") ? "\n" : ",";
+    this.#parsedOptions = raw.split(delimiter).map((s) => s.trim()).filter(Boolean);
+  }
+
+  #renderSegments() {
+    this.innerHTML = "";
+    if (this.#parsedOptions.length === 0) return;
+
+    const sc = document.createElement("fig-segmented-control");
+    sc.setAttribute("sizing", this.getAttribute("sizing") || "equal");
+
+    if (this.hasAttribute("disabled")) sc.setAttribute("disabled", "");
+    if (this.hasAttribute("full")) sc.setAttribute("full", "");
+
+    const currentValue = this.getAttribute("value");
+    let hasSelection = false;
+
+    for (const opt of this.#parsedOptions) {
+      const seg = document.createElement("fig-segment");
+      seg.setAttribute("value", opt);
+      seg.textContent = opt;
+      if (currentValue === opt) {
+        seg.setAttribute("selected", "true");
+        hasSelection = true;
+      }
+      sc.appendChild(seg);
+    }
+
+    if (currentValue) sc.setAttribute("value", currentValue);
+
+    sc.addEventListener("input", (e) => {
+      if (this.#suppressEvents) return;
+      this.#suppressEvents = true;
+      this.setAttribute("value", e.detail);
+      this.#suppressEvents = false;
+      this.dispatchEvent(
+        new CustomEvent("input", { detail: e.detail, bubbles: true }),
+      );
+    });
+    sc.addEventListener("change", (e) => {
+      if (this.#suppressEvents) return;
+      this.dispatchEvent(
+        new CustomEvent("change", { detail: e.detail, bubbles: true }),
+      );
+    });
+
+    this.appendChild(sc);
+    this.#childControl = sc;
+    this.#currentMode = "segments";
+  }
+
+  #renderDropdown() {
+    this.innerHTML = "";
+    if (this.#parsedOptions.length === 0) return;
+
+    const dd = document.createElement("fig-dropdown");
+    if (this.hasAttribute("disabled")) dd.setAttribute("disabled", "");
+
+    const currentValue = this.getAttribute("value");
+
+    for (const opt of this.#parsedOptions) {
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt;
+      if (currentValue === opt) option.selected = true;
+      dd.appendChild(option);
+    }
+
+    if (currentValue) dd.setAttribute("value", currentValue);
+
+    dd.addEventListener("input", (e) => {
+      if (this.#suppressEvents) return;
+      this.#suppressEvents = true;
+      this.setAttribute("value", e.detail);
+      this.#suppressEvents = false;
+      this.dispatchEvent(
+        new CustomEvent("input", { detail: e.detail, bubbles: true }),
+      );
+    });
+    dd.addEventListener("change", (e) => {
+      if (this.#suppressEvents) return;
+      this.dispatchEvent(
+        new CustomEvent("change", { detail: e.detail, bubbles: true }),
+      );
+    });
+
+    this.appendChild(dd);
+    this.#childControl = dd;
+    this.#currentMode = "dropdown";
+  }
+
+  #rebuildCurrentControl() {
+    if (this.#currentMode === "segments") {
+      this.#renderSegments();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => this.#checkOverflow());
+      });
+    } else {
+      this.#renderDropdown();
+    }
+  }
+
+  #syncValueToChild() {
+    if (!this.#childControl || this.#suppressEvents) return;
+    const val = this.getAttribute("value") || "";
+    this.#childControl.value = val;
+  }
+
+  #syncAttrToChild(attr) {
+    if (!this.#childControl) return;
+    if (this.hasAttribute(attr)) {
+      this.#childControl.setAttribute(attr, this.getAttribute(attr) || "");
+    } else {
+      this.#childControl.removeAttribute(attr);
+    }
+  }
+
+  #startResizeObserver() {
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = new ResizeObserver(() => {
+      this.#checkOverflow();
+    });
+    this.#resizeObserver.observe(this);
+  }
+
+  #isSegmentTruncated(seg) {
+    const range = document.createRange();
+    range.selectNodeContents(seg);
+    const textWidth = range.getBoundingClientRect().width;
+    const segRect = seg.getBoundingClientRect();
+    const segWidth = segRect.width;
+    const cs = getComputedStyle(seg);
+    const padL = parseFloat(cs.paddingLeft) || 0;
+    const padR = parseFloat(cs.paddingRight) || 0;
+    const contentWidth = segWidth - padL - padR;
+    return textWidth > contentWidth + 0.5;
+  }
+
+  #anySegmentTruncated() {
+    const segments = this.querySelectorAll("fig-segment");
+    for (const seg of segments) {
+      if (this.#isSegmentTruncated(seg)) return true;
+    }
+    return false;
+  }
+
+  #checkOverflow() {
+    if (this.#parsedOptions.length <= 1) return;
+
+    if (this.#currentMode === "segments") {
+      const sc = this.#childControl;
+      const containerOverflow = sc && sc.scrollWidth > sc.clientWidth + 1;
+      if (containerOverflow || this.#anySegmentTruncated()) {
+        this.#naturalWidth = this.clientWidth;
+        this.#renderDropdown();
+      }
+    } else {
+      if (this.#naturalWidth > 0 && this.clientWidth >= this.#naturalWidth) {
+        this.#renderSegments();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const sc = this.#childControl;
+            const containerOverflow = sc && sc.scrollWidth > sc.clientWidth + 1;
+            if (containerOverflow || this.#anySegmentTruncated()) {
+              this.#renderDropdown();
+            }
+          });
+        });
+      }
+    }
+  }
+}
+customElements.define("fig-options", FigOptions);
 
 /* Slider */
 /**
@@ -6139,6 +6436,7 @@ class FigInputPalette extends HTMLElement {
     expandedWrap.className = "palette-colors-expanded";
     this.#colors.forEach((entry, i) => {
       expandedWrap.appendChild(this.#createPicker(entry, i, disabled));
+      expandedWrap.appendChild(this.#createRemoveButton(i, disabled));
     });
     this.appendChild(expandedWrap);
   }
@@ -6203,6 +6501,31 @@ class FigInputPalette extends HTMLElement {
     return ic;
   }
 
+  #createRemoveButton(index, disabled) {
+    const btn = document.createElement("fig-button");
+    btn.setAttribute("variant", "ghost");
+    btn.setAttribute("icon", "true");
+    btn.setAttribute("aria-label", "Remove color");
+    btn.className = "palette-remove-btn";
+    if (disabled || this.#colors.length <= this.#min) btn.setAttribute("disabled", "");
+    btn.innerHTML = `<span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>`;
+    btn.addEventListener("click", () => {
+      if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+      this.#removeColor(index);
+    });
+    return btn;
+  }
+
+  #removeColor(index) {
+    if (index < 0 || index >= this.#colors.length) return;
+    if (this.#colors.length <= this.#min) return;
+    this.#colors.splice(index, 1);
+    this.#inlinePickers = [];
+    this.#expandedPickers = [];
+    this.#render();
+    this.#emitChange();
+  }
+
   #createAddButton(disabled, parent = this) {
     const atMax = this.#colors.length >= this.#max;
     const addBtn = document.createElement("fig-button");
@@ -6242,7 +6565,10 @@ class FigInputPalette extends HTMLElement {
 
     const expandedIc = this.#createPicker(entry, index, disabled);
     const expandedWrap = this.querySelector(".palette-colors-expanded");
-    if (expandedWrap) expandedWrap.appendChild(expandedIc);
+    if (expandedWrap) {
+      expandedWrap.appendChild(expandedIc);
+      expandedWrap.appendChild(this.#createRemoveButton(index, disabled));
+    }
 
     if (this.#colors.length >= this.#max) {
       const addBtn = this.querySelector(".palette-add-btn");

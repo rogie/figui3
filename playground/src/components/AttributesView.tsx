@@ -3,7 +3,6 @@ import {
   applyAttributeMutation,
   applyButtonIconMutation,
   applyButtonTypeMutation,
-  applyDialogCloseButtonMutation,
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
@@ -456,10 +455,8 @@ export default function AttributesView({
                 ? value !== undefined && value !== null
                 : target.controlTag === "fig-avatar" && name === "image"
                 ? Boolean(target.controlAttributes.src?.trim())
-                : target.controlTag === "fig-dialog" && name === "close-button"
-                  ? markup.includes('<fig-tooltip text="Close">')
-                  : target.controlTag === "fig-dialog" && name === "footer"
-                    ? markup.includes("<footer>")
+                : target.controlTag === "fig-dialog" && name === "footer"
+                    ? markup.includes("<footer>") || markup.includes("<fig-footer>")
                     : target.controlTag === "fig-3d-rotate" &&
                         name === "perspective"
                       ? (value ?? "") !== "none"
@@ -496,20 +493,6 @@ export default function AttributesView({
                     return;
                   }
 
-                  if (
-                    target.controlTag === "fig-dialog" &&
-                    scope === "control" &&
-                    name === "close-button"
-                  ) {
-                    onMarkupChange(
-                      applyDialogCloseButtonMutation(
-                        markup,
-                        target.fieldIndex,
-                        next,
-                      ),
-                    );
-                    return;
-                  }
                   if (
                     target.controlTag === "fig-dialog" &&
                     scope === "control" &&
@@ -729,18 +712,6 @@ export default function AttributesView({
                     ? "default"
                     : (options[0] ?? "")));
             const useSegmentedControl =
-              (name === "direction" &&
-                options.includes("horizontal") &&
-                options.includes("vertical")) ||
-              (target.controlTag === "fig-segmented-control" &&
-                scope === "control" &&
-                name === "sizing" &&
-                options.includes("equal") &&
-                options.includes("auto")) ||
-              (scope === "field" &&
-                name === "columns" &&
-                options.includes("thirds") &&
-                options.includes("half")) ||
               isCheckRadioLabel ||
               isColorPickerMode ||
               (target.controlTag === "fig-handle" &&
@@ -754,13 +725,7 @@ export default function AttributesView({
                 name === "control") ||
               (target.controlTag === "fig-tooltip" &&
                 scope === "control" &&
-                name === "action") ||
-              (target.controlTag === "fig-slider" &&
-                scope === "control" &&
-                name === "variant") ||
-              (target.controlTag === "fig-chit" &&
-                scope === "control" &&
-                name === "size");
+                name === "action");
             if (useSegmentedControl) {
               return (
                 <fig-segmented-control full value={current}>
@@ -874,198 +839,230 @@ export default function AttributesView({
               );
             }
 
-            return (
-              <fig-dropdown
-                full
-                experimental="modern"
-                value={current}
-                onChange={(e: any) => {
-                  const host = e.currentTarget as HTMLElement & {
-                    value?: string;
-                  };
-                  const nextValue =
-                    host.value ?? (e as CustomEvent).detail?.value;
-                  if (typeof nextValue !== "string") return;
-                  const resolvedValue = resolveEnumOption(options, nextValue);
-                  if (target.controlTag === "fig-button" && name === "type") {
-                    onMarkupChange(
-                      applyButtonTypeMutation(
-                        markup,
+            const needsCustomHandler =
+              (target.controlTag === "fig-button" && name === "type") ||
+              (target.controlTag === "fig-chooser" && name === "layout") ||
+              (target.controlTag === "fig-field-slider" && name === "type") ||
+              (target.controlTag === "fig-handle" && name === "control") ||
+              (target.controlTag === "fig-color-tip" && name === "control") ||
+              options.includes("");
+
+            if (needsCustomHandler) {
+              return (
+                <fig-dropdown
+                  full
+                  experimental="modern"
+                  value={current}
+                  onChange={(e: any) => {
+                    const host = e.currentTarget as HTMLElement & {
+                      value?: string;
+                    };
+                    const nextValue =
+                      host.value ?? (e as CustomEvent).detail?.value;
+                    if (typeof nextValue !== "string") return;
+                    const resolvedValue = resolveEnumOption(options, nextValue);
+                    if (target.controlTag === "fig-button" && name === "type") {
+                      onMarkupChange(
+                        applyButtonTypeMutation(
+                          markup,
+                          target.fieldIndex,
+                          resolvedValue,
+                        ),
+                      );
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-dialog" &&
+                      name === "position" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-button" &&
+                      name === "variant" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-button" &&
+                      name === "size" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      isShimmerLikeControl &&
+                      name === "direction" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-image" &&
+                      name === "aspect-ratio" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-image" &&
+                      name === "fit" &&
+                      resolvedValue === "auto"
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-3d-rotate" &&
+                      name === "fields" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-chooser" &&
+                      name === "layout"
+                    ) {
+                      const nextIsHorizontal = resolvedValue === "horizontal";
+                      const nextProp = nextIsHorizontal
+                        ? "max-width"
+                        : "max-height";
+                      const nextDefault = nextIsHorizontal ? "100%" : "240px";
+                      let updated = applyAttributeMutation(markup, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "layout",
+                        value: resolvedValue,
+                      });
+                      updated = applyChooserMaxSizeMutation(
+                        updated,
                         target.fieldIndex,
-                        resolvedValue,
-                      ),
-                    );
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-dialog" &&
-                    name === "position" &&
-                    resolvedValue === ""
-                  ) {
-                    applyChange(target.fieldIndex, scope, name, null);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-button" &&
-                    name === "variant" &&
-                    resolvedValue === ""
-                  ) {
-                    applyChange(target.fieldIndex, scope, name, null);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-button" &&
-                    name === "size" &&
-                    resolvedValue === ""
-                  ) {
-                    applyChange(target.fieldIndex, scope, name, null);
-                    return;
-                  }
-                  if (
-                    isShimmerLikeControl &&
-                    name === "direction" &&
-                    resolvedValue === ""
-                  ) {
-                    applyChange(target.fieldIndex, scope, name, null);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-image" &&
-                    name === "aspect-ratio" &&
-                    resolvedValue === ""
-                  ) {
-                    applyChange(target.fieldIndex, scope, name, null);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-image" &&
-                    name === "fit" &&
-                    resolvedValue === "auto"
-                  ) {
-                    applyChange(target.fieldIndex, scope, name, null);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-3d-rotate" &&
-                    name === "fields" &&
-                    resolvedValue === ""
-                  ) {
-                    applyChange(target.fieldIndex, scope, name, null);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-chooser" &&
-                    name === "layout"
-                  ) {
-                    const nextIsHorizontal = resolvedValue === "horizontal";
-                    const nextProp = nextIsHorizontal
-                      ? "max-width"
-                      : "max-height";
-                    const nextDefault = nextIsHorizontal ? "100%" : "240px";
-                    let updated = applyAttributeMutation(markup, {
-                      fieldIndex: target.fieldIndex,
-                      target: "control",
-                      name: "layout",
-                      value: resolvedValue,
-                    });
-                    updated = applyChooserMaxSizeMutation(
-                      updated,
-                      target.fieldIndex,
-                      `${nextProp}: ${nextDefault}`,
-                    );
-                    onMarkupChange(updated);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-field-slider" &&
-                    name === "type"
-                  ) {
-                    let updated = applyAttributeMutation(markup, {
-                      fieldIndex: target.fieldIndex,
-                      target: "control",
-                      name: "type",
-                      value: resolvedValue,
-                    });
-                    updated = applyAttributeMutation(updated, {
-                      fieldIndex: target.fieldIndex,
-                      target: "control",
-                      name: "default",
-                      value:
-                        resolvedValue === "delta" || resolvedValue === "stepper"
-                          ? "50"
-                          : null,
-                    });
-                    updated = applyAttributeMutation(updated, {
-                      fieldIndex: target.fieldIndex,
-                      target: "control",
-                      name: "step",
-                      value: resolvedValue === "stepper" ? "10" : null,
-                    });
-                    onMarkupChange(updated);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-handle" &&
-                    name === "control"
-                  ) {
-                    let updated = applyAttributeMutation(markup, {
-                      fieldIndex: target.fieldIndex,
-                      target: "control",
-                      name: "control",
-                      value: resolvedValue || null,
-                    });
-                    if (resolvedValue === "add" || resolvedValue === "remove") {
-                      updated = applyAttributeMutation(updated, {
+                        `${nextProp}: ${nextDefault}`,
+                      );
+                      onMarkupChange(updated);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-field-slider" &&
+                      name === "type"
+                    ) {
+                      let updated = applyAttributeMutation(markup, {
                         fieldIndex: target.fieldIndex,
                         target: "control",
                         name: "type",
-                        value: null,
+                        value: resolvedValue,
                       });
+                      updated = applyAttributeMutation(updated, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "default",
+                        value:
+                          resolvedValue === "delta" || resolvedValue === "stepper"
+                            ? "50"
+                            : null,
+                      });
+                      updated = applyAttributeMutation(updated, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "step",
+                        value: resolvedValue === "stepper" ? "10" : null,
+                      });
+                      onMarkupChange(updated);
+                      return;
                     }
-                    onMarkupChange(updated);
-                    return;
-                  }
-                  if (
-                    target.controlTag === "fig-color-tip" &&
-                    name === "control"
-                  ) {
-                    applyChange(
-                      target.fieldIndex,
-                      scope,
-                      name,
-                      resolvedValue === "color" ? null : resolvedValue,
-                    );
-                    return;
-                  }
-                  applyChange(target.fieldIndex, scope, name, resolvedValue);
-                }}
-              >
-                {options.map((option) => (
-                  <option key={option} value={option}>
-                    {option === ""
-                      ? isShimmerLikeControl && name === "direction"
-                        ? "Default"
-                        : target.controlTag === "fig-button" &&
-                            name === "variant"
-                          ? "Default (primary)"
+                    if (
+                      target.controlTag === "fig-handle" &&
+                      name === "control"
+                    ) {
+                      let updated = applyAttributeMutation(markup, {
+                        fieldIndex: target.fieldIndex,
+                        target: "control",
+                        name: "control",
+                        value: resolvedValue || null,
+                      });
+                      if (resolvedValue === "add" || resolvedValue === "remove") {
+                        updated = applyAttributeMutation(updated, {
+                          fieldIndex: target.fieldIndex,
+                          target: "control",
+                          name: "type",
+                          value: null,
+                        });
+                      }
+                      onMarkupChange(updated);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-color-tip" &&
+                      name === "control"
+                    ) {
+                      applyChange(
+                        target.fieldIndex,
+                        scope,
+                        name,
+                        resolvedValue === "color" ? null : resolvedValue,
+                      );
+                      return;
+                    }
+                    applyChange(target.fieldIndex, scope, name, resolvedValue);
+                  }}
+                >
+                  {options.map((option) => (
+                    <option key={option} value={option}>
+                      {option === ""
+                        ? isShimmerLikeControl && name === "direction"
+                          ? "Default"
                           : target.controlTag === "fig-button" &&
-                              name === "size"
-                            ? "Default"
-                            : target.controlTag === "fig-avatar" &&
+                              name === "variant"
+                            ? "Default (primary)"
+                            : target.controlTag === "fig-button" &&
                                 name === "size"
                               ? "Default"
-                              : target.controlTag === "fig-dialog" &&
-                                  name === "position"
+                              : target.controlTag === "fig-avatar" &&
+                                  name === "size"
                                 ? "Default"
-                                : "None"
-                      : name === "units"
-                        ? option
-                        : name === "fields"
-                          ? toFieldsLabel(option)
-                          : toSentenceCaseLabel(option)}
-                  </option>
-                ))}
-              </fig-dropdown>
+                                : target.controlTag === "fig-dialog" &&
+                                    name === "position"
+                                  ? "Default"
+                                  : "None"
+                        : name === "units"
+                          ? option
+                          : name === "fields"
+                            ? toFieldsLabel(option)
+                            : toSentenceCaseLabel(option)}
+                    </option>
+                  ))}
+                </fig-dropdown>
+              );
+            }
+
+            const optionsStr = options.map((o) => toSentenceCaseLabel(o)).join(",");
+            return (
+              <fig-options
+                full
+                options={optionsStr}
+                value={toSentenceCaseLabel(current)}
+                onChange={(e: any) => {
+                  const nextLabel = (e as CustomEvent).detail ?? e.target?.value;
+                  if (typeof nextLabel !== "string") return;
+                  const match = options.find(
+                    (o) => toSentenceCaseLabel(o) === nextLabel,
+                  );
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    match ?? nextLabel,
+                  );
+                }}
+              ></fig-options>
             );
           }
 
@@ -1347,27 +1344,22 @@ export default function AttributesView({
                             key={`control-chit-fill-${target.fieldIndex}`}
                           >
                             <label>Fill</label>
-                            <fig-segmented-control full>
-                              {(["solid", "gradient"] as const).map((opt) => (
-                                <fig-segment
-                                  key={opt}
-                                  value={opt}
-                                  selected={opt === currentFill ? "true" : undefined}
-                                  onClick={() =>
-                                    applyChange(
-                                      target.fieldIndex,
-                                      "control",
-                                      "background",
-                                      opt === "gradient"
-                                        ? "linear-gradient(135deg, #667eea, #764ba2)"
-                                        : "#0D99FF",
-                                    )
-                                  }
-                                >
-                                  {sentenceCase(opt)}
-                                </fig-segment>
-                              ))}
-                            </fig-segmented-control>
+                            <fig-options
+                              full
+                              options="Solid,Gradient"
+                              value={currentFill === "gradient" ? "Gradient" : "Solid"}
+                              onChange={(e: any) => {
+                                const val = (e as CustomEvent).detail ?? e.target?.value;
+                                applyChange(
+                                  target.fieldIndex,
+                                  "control",
+                                  "background",
+                                  val === "Gradient"
+                                    ? "linear-gradient(135deg, #667eea, #764ba2)"
+                                    : "#0D99FF",
+                                );
+                              }}
+                            ></fig-options>
                           </fig-field>
                         );
                       })()}
@@ -1401,32 +1393,21 @@ export default function AttributesView({
                             key={`control-chooser-overflow-${target.fieldIndex}`}
                           >
                             <label>{sentenceCase("Overflow")}</label>
-                            <fig-segmented-control
+                            <fig-options
                               full
-                              value={currentOverflow}
-                              onInput={(e: any) => {
-                                const val = e.detail ?? e.target?.value;
+                              options="Buttons,Scrollbar"
+                              value={sentenceCase(currentOverflow)}
+                              onChange={(e: any) => {
+                                const val = (e as CustomEvent).detail ?? e.target?.value;
                                 if (!val) return;
                                 applyChange(
                                   target.fieldIndex,
                                   "control",
                                   "overflow",
-                                  val === "buttons" ? null : val,
+                                  val === "Buttons" ? null : val.toLowerCase(),
                                 );
                               }}
-                            >
-                              {overflowOptions.map((opt) => (
-                                <fig-segment
-                                  key={opt}
-                                  value={opt}
-                                  selected={
-                                    opt === currentOverflow ? "true" : undefined
-                                  }
-                                >
-                                  {sentenceCase(opt)}
-                                </fig-segment>
-                              ))}
-                            </fig-segmented-control>
+                            ></fig-options>
                           </fig-field>
                         );
 
@@ -1598,29 +1579,22 @@ export default function AttributesView({
                             key={`control-handle-hit-area-shape-${target.fieldIndex}`}
                           >
                             <label>Shape</label>
-                            <fig-segmented-control full>
-                              {(["rect", "circle"] as const).map((shape) => (
-                                <fig-segment
-                                  key={shape}
-                                  value={shape}
-                                  selected={
-                                    (shape === "circle") === hitArea.circle ? "true" : undefined
-                                  }
-                                  onClick={() =>
-                                    onMarkupChange(
-                                      applyHandleHitAreaMutation(
-                                        markup,
-                                        target.fieldIndex,
-                                        hitArea.size || 8,
-                                        shape === "circle",
-                                      ),
-                                    )
-                                  }
-                                >
-                                  {shape.charAt(0).toUpperCase() + shape.slice(1)}
-                                </fig-segment>
-                              ))}
-                            </fig-segmented-control>
+                            <fig-options
+                              full
+                              options="Rect,Circle"
+                              value={hitArea.circle ? "Circle" : "Rect"}
+                              onChange={(e: any) => {
+                                const val = (e as CustomEvent).detail ?? e.target?.value;
+                                onMarkupChange(
+                                  applyHandleHitAreaMutation(
+                                    markup,
+                                    target.fieldIndex,
+                                    hitArea.size || 8,
+                                    val === "Circle",
+                                  ),
+                                );
+                              }}
+                            ></fig-options>
                           </fig-field>
                         );
                         const hitAreaDebugValue = getHandleHitAreaDebug(markup, target.fieldIndex);
@@ -1653,20 +1627,15 @@ export default function AttributesView({
                             key={`control-handle-hit-area-mode-${target.fieldIndex}`}
                           >
                             <label>Mode</label>
-                            <fig-segmented-control full>
-                              {(["handle", "delegate"] as const).map((mode) => (
-                                <fig-segment
-                                  key={mode}
-                                  value={mode}
-                                  selected={hitAreaMode === mode ? "true" : undefined}
-                                  onClick={() => {
-                                    applyChange(target.fieldIndex, "control", "hit-area-mode", mode);
-                                  }}
-                                >
-                                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                                </fig-segment>
-                              ))}
-                            </fig-segmented-control>
+                            <fig-options
+                              full
+                              options="Handle,Delegate"
+                              value={hitAreaMode === "delegate" ? "Delegate" : "Handle"}
+                              onChange={(e: any) => {
+                                const val = (e as CustomEvent).detail ?? e.target?.value;
+                                applyChange(target.fieldIndex, "control", "hit-area-mode", val.toLowerCase());
+                              }}
+                            ></fig-options>
                           </fig-field>
                         );
                         return [field, hitAreaSeparator, hitAreaLabel, hitAreaModeField, hitAreaSizeField, hitAreaShapeField, hitAreaDebugField];
@@ -1701,28 +1670,24 @@ export default function AttributesView({
                           key={`control-prepend-${target.fieldIndex}`}
                         >
                           <label>Prepend</label>
-                          <fig-segmented-control full>
-                            {prependOptions.map((opt) => (
-                              <fig-segment
-                                key={opt.value}
-                                value={opt.value}
-                                selected={
-                                  opt.value === prependMode ? "true" : undefined
-                                }
-                                onClick={() =>
-                                  onMarkupChange(
-                                    applyPrependSlotMutation(
-                                      markup,
-                                      target.fieldIndex,
-                                      opt.value,
-                                    ),
-                                  )
-                                }
-                              >
-                                {opt.label}
-                              </fig-segment>
-                            ))}
-                          </fig-segmented-control>
+                          <fig-options
+                            full
+                            options={prependOptions.map((o) => o.label).join(",")}
+                            value={prependOptions.find((o) => o.value === prependMode)?.label ?? "None"}
+                            onChange={(e: any) => {
+                              const label = (e as CustomEvent).detail ?? e.target?.value;
+                              const match = prependOptions.find((o) => o.label === label);
+                              if (match) {
+                                onMarkupChange(
+                                  applyPrependSlotMutation(
+                                    markup,
+                                    target.fieldIndex,
+                                    match.value,
+                                  ),
+                                );
+                              }
+                            }}
+                          ></fig-options>
                         </fig-field>
                       );
                       return prependBefore

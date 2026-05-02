@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.3.0]
+
+### Added
+
+- `fig-options`: supports newline-delimited and JSON array formats for the `options` attribute, enabling values that contain commas.
+- `fig-palette`: remove button (ghost variant, minus icon) on each color in expanded view; respects `min` attribute to prevent removal below minimum count.
+
 ## [4.2.0]
 
 ### Added

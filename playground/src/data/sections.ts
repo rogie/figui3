@@ -614,6 +614,45 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "options",
+    name: "Options",
+    group: "Field controls",
+    description:
+      "A responsive option picker that shows a segmented control by default, swapping to a dropdown when labels overflow.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Size</label>
+    <fig-options options="Small,Large" value="Small"></fig-options>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "many-options",
+        name: "Many options",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Size</label>
+    <fig-options options="Extra Small,Small,Medium,Large,Extra Large" value="Medium"></fig-options>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "narrow",
+        name: "Narrow container",
+        markup: `<div class="prop-panel" style="max-width: 140px;">
+  <fig-field direction="horizontal">
+    <label>Align</label>
+    <fig-options options="Left,Center,Right" value="Left"></fig-options>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "skeleton",
     name: "Skeleton",
     group: "Field controls",

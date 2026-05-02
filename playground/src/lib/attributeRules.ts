@@ -114,17 +114,16 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     drag: { label: "Drag", type: "boolean", boolMode: "presence" },
     resizable: { label: "Resizable", type: "boolean", boolMode: "presence" },
     handle: { label: "Drag handle", type: "string" },
-    "close-button": {
-      label: "Close button",
-      type: "boolean",
-      boolMode: "presence",
-      defaultChecked: true,
-    },
     footer: {
       label: "Footer",
       type: "boolean",
       boolMode: "presence",
       defaultChecked: false,
+    },
+    closedby: {
+      label: "Closed by",
+      type: "enum",
+      options: ["any", "closerequest", "none"],
     },
     position: {
       label: "Position",
@@ -327,6 +326,17 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["equal", "auto"],
     },
+  },
+  "fig-options": {
+    options: { label: "Options", type: "string" },
+    value: { label: "Value", type: "string" },
+    sizing: {
+      label: "Sizing",
+      type: "enum",
+      options: ["equal", "auto"],
+    },
+    disabled: { label: "Disabled", type: "boolean" },
+    full: { label: "Full width", type: "boolean" },
   },
   "fig-easing-curve": {
     dropdown: { label: "Dropdown", type: "boolean", boolMode: "string" },
