@@ -11039,6 +11039,25 @@ customElements.define("fig-header", FigHeader);
 class FigFooter extends HTMLElement {}
 customElements.define("fig-footer", FigFooter);
 
+/* Presentational elements (CSS-only, no behavior) */
+class FigSpinner extends HTMLElement {}
+customElements.define("fig-spinner", FigSpinner);
+
+class FigIcon extends HTMLElement {}
+customElements.define("fig-icon", FigIcon);
+
+class FigContent extends HTMLElement {}
+customElements.define("fig-content", FigContent);
+
+class FigTabContent extends HTMLElement {}
+customElements.define("fig-tab-content", FigTabContent);
+
+class FigButtonCombo extends HTMLElement {}
+customElements.define("fig-button-combo", FigButtonCombo);
+
+class FigInputCombo extends HTMLElement {}
+customElements.define("fig-input-combo", FigInputCombo);
+
 // FigFillPicker
 /**
  * A comprehensive fill picker component supporting solid colors, gradients, images, video, and webcam.
