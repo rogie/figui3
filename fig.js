@@ -14727,8 +14727,6 @@ class FigMenu extends HTMLElement {
   }
 
   connectedCallback() {
-    this.style.display = "contents";
-
     this.#detectTrigger();
     this.#createPopup();
     this.#moveItemsToPopup();
@@ -14850,12 +14848,21 @@ class FigMenu extends HTMLElement {
     this.#observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
+          if (node.nodeType !== 1 || node === this.#popup) continue;
           if (
-            node.nodeType === 1 &&
             (node.tagName === "FIG-MENU-ITEM" || node.tagName === "FIG-MENU-SEPARATOR") &&
             node.parentElement === this
           ) {
             this.#popup.appendChild(node);
+          } else if (!this.#trigger && node.parentElement === this) {
+            this.#detectTrigger();
+            if (this.#trigger) {
+              this.#trigger.addEventListener("click", this.#boundTriggerClick);
+              this.#trigger.setAttribute("aria-haspopup", "menu");
+              this.#trigger.setAttribute("aria-expanded", "false");
+              this.#popup.anchor = this.#trigger;
+              this.#syncDisabled();
+            }
           }
         }
       }

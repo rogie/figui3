@@ -4971,6 +4971,11 @@ fig-color-tip {
 /* Menu */
 fig-menu {
   display: contents;
+
+  & > fig-menu-item,
+  & > fig-menu-separator {
+    display: none;
+  }
 }
 
 fig-menu-item {

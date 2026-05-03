@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.4.2]
+
+### Fixed
+
+- `fig-menu`: Hide direct `fig-menu-item` and `fig-menu-separator` children via CSS so items don't flash before JS moves them into the popup.
+- `fig-menu`: Detect late-arriving trigger elements (e.g. React rendering children after `connectedCallback`) via MutationObserver, wiring up click listener and popup anchor when the trigger appears.
+
 ## [4.4.1]
 
 ### Fixed
