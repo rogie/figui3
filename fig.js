@@ -537,7 +537,11 @@ class FigTooltip extends HTMLElement {
     this.#boundHandleTouchMove = this.#handleTouchMove.bind(this);
     this.#boundHandleTouchEnd = this.#handleTouchEnd.bind(this);
     this.#boundHandleTouchCancel = this.#handleTouchCancel.bind(this);
-    this.#boundHandleDialogClose = () => this.hidePopup();
+    this.#boundHandleDialogClose = () => {
+      clearTimeout(this.timeout);
+      this.destroy();
+      this.isOpen = false;
+    };
   }
   connectedCallback() {
     this.setup();
@@ -549,6 +553,7 @@ class FigTooltip extends HTMLElement {
   }
 
   disconnectedCallback() {
+    clearTimeout(this.timeout);
     this.destroy();
     document.removeEventListener(
       "mousedown",
@@ -708,6 +713,7 @@ class FigTooltip extends HTMLElement {
   }
 
   showPopup() {
+    if (this.#parentDialog && !this.#parentDialog.open) return;
     if (!this.popup) this.render();
     this.popup.style.display = "block";
     this.popup.style.visibility = "hidden";
