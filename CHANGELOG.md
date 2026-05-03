@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.4.1]
+
+### Fixed
+
+- Rebuild dist bundle — `dist/fig.css` and `dist/fig.js` now include all recent component additions (fig-menu, presentational elements, etc.).
+
 ## [4.4.0]
 
 ### Fixed
