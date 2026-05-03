@@ -1045,11 +1045,18 @@ fig-tab,
   &:hover {
     background-color: var(--figma-color-bg-secondary);
   }
+
+  &[disabled]:not([disabled="false"]) {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: default;
+  }
 }
 
 fig-tabs,
 .tabs {
   display: flex;
+  width: 100%;
   gap: var(--spacer-1);
   padding: var(--spacer-1) var(--spacer-2);
 }
@@ -1057,6 +1064,7 @@ fig-tabs,
 fig-tab-content,
 .fig-tab-content {
   display: none;
+  width: 100%;
 }
 
 /* Avatar */

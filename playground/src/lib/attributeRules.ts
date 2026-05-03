@@ -472,7 +472,9 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     open: { label: "Open", type: "boolean", boolMode: "presence" },
     visible: { label: "Visible", type: "boolean", boolMode: "string" },
   },
-  "fig-tabs": {},
+  "fig-tabs": {
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-header": {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
   },

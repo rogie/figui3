@@ -1312,11 +1312,7 @@ export const propkitSections: Section[] = [
       </fig-group>
       <fig-group name="Apply To">
         <fig-field direction="horizontal">
-          <fig-segmented-control full>
-            <fig-segment value="current" selected>Current Frame</fig-segment>
-            <fig-segment value="selection">Selection</fig-segment>
-            <fig-segment value="all">All Frames</fig-segment>
-          </fig-segmented-control>
+          <fig-options options="Current Frame,Selection,All Frames" value="Current Frame" full></fig-options>
         </fig-field>
       </fig-group>
       <fig-footer>

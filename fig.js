@@ -2537,6 +2537,7 @@ class FigTab extends HTMLElement {
     this.removeEventListener("click", this.#boundHandleClick);
   }
   handleClick() {
+    if (this.hasAttribute("disabled")) return;
     this.selected = true;
     if (this.content) {
       this.content.style.display = "block";
@@ -2642,7 +2643,9 @@ class FigTabs extends HTMLElement {
     if (newIndex !== currentIndex && tabs[newIndex]) {
       tabs.forEach((tab) => tab.removeAttribute("selected"));
       this.selectedTab = tabs[newIndex];
-      this.setAttribute("value", tabs[newIndex].getAttribute("value") || "");
+      tabs[newIndex].setAttribute("selected", "true");
+      const val = tabs[newIndex].getAttribute("value");
+      if (val) this.setAttribute("value", val);
       tabs[newIndex].focus();
     }
   }
@@ -2682,19 +2685,19 @@ class FigTabs extends HTMLElement {
 
   handleClick(event) {
     if (this.hasAttribute("disabled")) return;
-    const target = event.target;
-    if (target.nodeName.toLowerCase() === "fig-tab") {
-      const tabs = this.querySelectorAll("fig-tab");
-      for (const tab of tabs) {
-        if (tab === target) {
-          this.selectedTab = tab;
-          tab.setAttribute("selected", "true");
-          this.setAttribute("value", tab.getAttribute("value") || "");
-        } else {
-          tab.removeAttribute("selected");
-        }
+    const target = event.target.closest("fig-tab");
+    if (!target || !this.contains(target)) return;
+    const tabs = this.querySelectorAll("fig-tab");
+    for (const tab of tabs) {
+      if (tab === target) {
+        this.selectedTab = tab;
+        tab.setAttribute("selected", "true");
+      } else {
+        tab.removeAttribute("selected");
       }
     }
+    const val = target.getAttribute("value");
+    if (val) this.setAttribute("value", val);
   }
 }
 customElements.define("fig-tabs", FigTabs);

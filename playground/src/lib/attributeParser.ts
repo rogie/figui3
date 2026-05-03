@@ -240,7 +240,7 @@ const DIALOG_SCOPE = 'dialog[is="fig-dialog"], dialog[is="fig-popup"]';
 
 function getTopLevelFields(root: HTMLElement): Element[] {
   return Array.from(root.querySelectorAll("fig-field")).filter(
-    (field) => !field.closest(DIALOG_SCOPE),
+    (field) => !field.closest(DIALOG_SCOPE) && !field.closest("[data-playground-hide-field]") && !field.closest("[data-playground-ignore-controls]"),
   );
 }
 

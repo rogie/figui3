@@ -484,10 +484,56 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-tabs value="general">
-    <fig-tab value="general" label="General">General content</fig-tab>
-    <fig-tab value="advanced" label="Advanced">Advanced content</fig-tab>
+  <fig-tabs data-playground-hide-field>
+    <fig-tab selected content="#tabs-general">General</fig-tab>
+    <fig-tab content="#tabs-advanced">Advanced</fig-tab>
+    <fig-tab content="#tabs-export">Export</fig-tab>
   </fig-tabs>
+  <fig-tab-content id="tabs-general" data-playground-ignore-controls="true">
+    <fig-group>
+      <fig-field direction="horizontal">
+        <label>Name</label>
+        <fig-input-text value="My Component" full></fig-input-text>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Visible</label>
+        <input type="checkbox" class="switch" checked>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Opacity</label>
+        <fig-slider value="100" min="0" max="100" text="true" units="%" full></fig-slider>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="tabs-advanced" data-playground-ignore-controls="true">
+    <fig-group>
+      <fig-field direction="horizontal">
+        <label>Clip content</label>
+        <input type="checkbox" class="switch">
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Blend mode</label>
+        <fig-dropdown full>
+          <option selected>Pass through</option>
+          <option>Normal</option>
+          <option>Multiply</option>
+          <option>Screen</option>
+        </fig-dropdown>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="tabs-export" data-playground-ignore-controls="true">
+    <fig-group>
+      <fig-field direction="horizontal">
+        <label>Format</label>
+        <fig-options options="PNG,SVG,PDF" value="PNG" full></fig-options>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Scale</label>
+        <fig-options options="1x,2x,3x" value="2x" full></fig-options>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
 </div>`,
       },
     ],

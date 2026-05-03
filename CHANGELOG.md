@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.4.0]
+
+### Fixed
+
+- `fig-tooltip`: no longer lingers after dialog close; clears pending show timeout in `disconnectedCallback` and bails from `showPopup` when parent dialog is closed.
+- `fig-tabs`: single-click tab activation now works correctly; fixed `#selectByValue("")` deselecting all tabs when tabs use `content` attribute instead of `value`.
+- `fig-tabs`: click targeting uses `closest("fig-tab")` for reliable hit detection on child elements.
+- `fig-tabs`: keyboard navigation now properly sets `selected` attribute on the new tab.
+
+### Added
+
+- `fig-tabs`: `disabled` attribute fully disables all tab interaction with visual feedback.
+- `fig-tabs` / `fig-tab-content`: full-width by default (`width: 100%`).
+- `fig-palette`: expanded view uses named grid columns with `:has()` for flexible layout with/without remove buttons.
+
+### Changed
+
+- Playground: Tabs example expanded with tabbed content panels; Prepress "Apply To" uses `fig-options`.
+
 ## [4.3.0]
 
 ### Added
