@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.4.3]
+
+### Fixed
+
+- `fig-field`: only-child grid spanning now correctly covers `input1 + gap + input2` columns in label-less horizontal fields.
+
+### Changed
+
+- Playground: added File Input example to FigUI3 tab, removed standalone Angle Input example, set default dev port to 6600.
+
 ## [4.4.2]
 
 ### Fixed

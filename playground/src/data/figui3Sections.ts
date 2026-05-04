@@ -292,21 +292,6 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
-    id: "angle-input",
-    name: "Angle Input",
-    group: "Core components",
-    description: "Angle editor with dial interaction and optional text value.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <fig-input-angle value="45" text="true"></fig-input-angle>
-</div>`,
-      },
-    ],
-  },
-  {
     id: "color-input",
     name: "Color Input",
     group: "Core components",
@@ -346,6 +331,36 @@ export const figui3Sections: Section[] = [
         name: "Image",
         markup: `<div class="prop-panel">
   <fig-input-fill value='{"type":"image","image":{"url":"https://picsum.photos/id/10/200/200","scaleMode":"fill","scale":100}}'></fig-input-fill>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "file-input",
+    name: "File Input",
+    group: "Core components",
+    description:
+      "File upload input with filename display, clear button, and drag-and-drop support.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-input-file label="Upload file"></fig-input-file>
+</div>`,
+      },
+      {
+        id: "accepts",
+        name: "Accepts filter",
+        markup: `<div class="prop-panel">
+  <fig-input-file label="Upload image" accepts="image/*"></fig-input-file>
+</div>`,
+      },
+      {
+        id: "multiple",
+        name: "Multiple",
+        markup: `<div class="prop-panel">
+  <fig-input-file label="Upload files" multiple></fig-input-file>
 </div>`,
       },
     ],

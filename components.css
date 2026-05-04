@@ -3196,6 +3196,17 @@ fig-input-number {
     padding-left: 0;
     margin-left: calc(var(--spacer-2) * -1);
   }
+  & [slot="prepend"],
+  & [slot="append"] {
+    svg {
+      *[fill]:not([fill="none"]) {
+        fill: currentColor;
+      }
+      *[stroke]:not([stroke="none"]) {
+        stroke: currentColor;
+      }
+    }
+  }
 
   & input {
     background-color: transparent !important;
@@ -3542,8 +3553,25 @@ fig-field {
     }
     /* If the field has no label, set the input ratio to 1fr */
     &:not(:has(> label)) {
-      --fig-field-input-ratio: 1fr;
-      --fig-field-label-ratio: 0fr;
+      /*--fig-field-input-ratio: 1fr;
+      --fig-field-label-ratio: 0fr;*/
+    }
+    /* labelless fields can have a few inputs */
+    &:not(:has(> label)) {
+      grid-template-columns:
+        var(--fig-field-left-padding) minmax(0, var(--fig-field-label-ratio))
+        var(--spacer-2)
+        minmax(0, var(--fig-field-input-ratio)) var(--fig-field-right-padding);
+      grid-template-areas: "chevron input1 gap input2 pad";
+      & > *:first-child {
+        grid-area: input1;
+      }
+      & > *:last-child {
+        grid-area: input2;
+      }
+      & > *:only-child {
+        grid-column: input1 / -2;
+      }
     }
   }
 }
@@ -4295,9 +4323,6 @@ fig-preview {
   }
 
   .fig-fill-picker-inputs {
-    .fig-fill-picker-input-mode {
-      width: 3.5rem;
-    }
     .fig-fill-picker-input-fields {
       flex: 1;
       min-width: 0;
@@ -4317,6 +4342,10 @@ fig-preview {
 
   /* Gradient Tab */
   .fig-fill-picker-gradient-header {
+    padding-right: var(--spacer-2);
+    display: flex;
+    padding-left: var(--spacer-3);
+    gap: var(--spacer-2);
     .fig-fill-picker-gradient-type {
       flex: 1;
       min-width: 0;
@@ -4358,6 +4387,9 @@ fig-preview {
 
   .fig-fill-picker-gradient-stop-row {
     padding-right: var(--spacer-2);
+    display: flex;
+    padding-left: var(--spacer-3);
+    gap: var(--spacer-2);
     & > .fig-fill-picker-stop-position {
       flex: 0;
       flex-basis: 3rem;
