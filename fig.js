@@ -6331,9 +6331,11 @@ class FigInputPalette extends HTMLElement {
         break;
       case "min":
       case "max":
-      case "open":
       case "add":
         this.#render();
+        break;
+      case "open":
+        // CSS handles visibility; no re-render needed
         break;
     }
   }

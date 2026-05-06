@@ -3548,7 +3548,7 @@ fig-field {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      padding-right: var(--fig-field-gap);
+      margin-right: var(--fig-field-gap);
       min-width: 0;
     }
     /* If the field has no label, set the input ratio to 1fr */

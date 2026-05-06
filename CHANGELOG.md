@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.4.4]
+
+### Fixed
+
+- `fig-input-palette`: expand/collapse no longer causes a flash — toggling `open` now skips unnecessary DOM re-render since CSS handles visibility.
+
+### Changed
+
+- `fig-field`: label gap uses margin instead of padding for more consistent spacing behavior.
+
 ## [4.4.3]
 
 ### Fixed
