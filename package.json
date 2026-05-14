@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "4.4.4",
+  "version": "4.5.0",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "MIT",
@@ -36,7 +36,7 @@
     "dev": "bun --hot server.ts",
     "build": "bun build fig.js --minify --outdir dist && npm run build:css",
     "build:css": "lightningcss --minify --nesting --bundle fig.css -o dist/fig.css && lightningcss --minify --nesting --bundle components.css -o dist/components.css && lightningcss --minify --nesting base.css -o dist/base.css",
-    "dev:playground": "cd playground && npm run dev",
+    "dev:playground": "node playground/dev.mjs",
     "build:playground": "cd playground && npm run build"
   },
   "repository": {

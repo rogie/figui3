@@ -4175,6 +4175,7 @@ customElements.define("fig-input-text", FigInputText);
  * @attr {number} step - Step increment
  * @attr {number} transform - A multiplier for displayed number values
  * @attr {string} units - Unit string to append/prepend to displayed value (e.g., "%", "°", "$")
+ * @attr {string} units-disallow - Comma-separated units to disallow (defaults to "px")
  * @attr {string} unit-position - Position of unit: "suffix" (default) or "prefix"
  * @attr {string} name - Form field name
  */
@@ -4189,10 +4190,31 @@ class FigInputNumber extends HTMLElement {
   #boundBlur;
   #boundKeyDown;
   #units;
+  #rawUnits;
+  #unitsDisallow;
   #unitPosition;
   #precision;
   #isInteracting = false;
   #stepperEl = null;
+  static #DEFAULT_UNITS_DISALLOW = "px";
+
+  #parseUnitsDisallowList(value) {
+    return (value || "")
+      .split(",")
+      .map((unit) => unit.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  #resolveUnits(rawUnits) {
+    const unit = (rawUnits || "").trim();
+    if (!unit) return "";
+    const disallowList = this.#unitsDisallow ?? [];
+    return disallowList.includes(unit.toLowerCase()) ? "" : unit;
+  }
+
+  #setUnitsFromAttributes() {
+    this.#units = this.#resolveUnits(this.#rawUnits);
+  }
 
   #syncSteppers(hasSteppers) {
     if (hasSteppers && !this.#stepperEl) {
@@ -4266,7 +4288,14 @@ class FigInputNumber extends HTMLElement {
       valueAttr !== null && valueAttr !== "" ? Number(valueAttr) : "";
     this.placeholder = this.getAttribute("placeholder") || "";
     this.name = this.getAttribute("name") || null;
-    this.#units = this.getAttribute("units") || "";
+    this.#rawUnits = this.getAttribute("units") || "";
+    const unitsDisallowAttr = this.getAttribute("units-disallow");
+    this.#unitsDisallow = this.#parseUnitsDisallowList(
+      unitsDisallowAttr === null
+        ? FigInputNumber.#DEFAULT_UNITS_DISALLOW
+        : unitsDisallowAttr,
+    );
+    this.#setUnitsFromAttributes();
     this.#unitPosition = this.getAttribute("unit-position") || "suffix";
     this.#precision = this.hasAttribute("precision")
       ? Number(this.getAttribute("precision"))
@@ -4587,6 +4616,7 @@ class FigInputNumber extends HTMLElement {
       "transform",
       "name",
       "units",
+      "units-disallow",
       "unit-position",
       "steppers",
       "precision",
@@ -4601,7 +4631,17 @@ class FigInputNumber extends HTMLElement {
             newValue !== null && newValue !== "false";
           break;
         case "units":
-          this.#units = newValue || "";
+          this.#rawUnits = newValue || "";
+          this.#setUnitsFromAttributes();
+          this.input.value = this.#formatWithUnit(this.value);
+          break;
+        case "units-disallow":
+          this.#unitsDisallow = this.#parseUnitsDisallowList(
+            newValue === null
+              ? FigInputNumber.#DEFAULT_UNITS_DISALLOW
+              : newValue,
+          );
+          this.#setUnitsFromAttributes();
           this.input.value = this.#formatWithUnit(this.value);
           break;
         case "unit-position":

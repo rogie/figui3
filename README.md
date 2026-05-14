@@ -307,6 +307,7 @@ Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slid
 | `max` | number | — | Maximum |
 | `step` | number | — | Step increment |
 | `units` | string | — | Unit string (e.g. `"px"`, `"%"`) |
+| `units-disallow` | string | `"px"` | Comma-separated unit disallow list (e.g. `"px,rem"`) |
 | `unit-position` | string | `"suffix"` | `"suffix"` or `"prefix"` |
 | `transform` | number | — | Display multiplier |
 | `steppers` | boolean | `false` | Show spin buttons |

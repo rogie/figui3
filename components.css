@@ -428,7 +428,7 @@ fig-input-number .fig-steppers {
   border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
   overflow: hidden;
 
-  & button {
+  button {
     display: block;
     appearance: none;
     border: 0;
@@ -437,16 +437,13 @@ fig-input-number .fig-steppers {
     width: 1.5rem;
     flex: 1;
     background-color: var(--figma-color-text-secondary);
-    cursor: pointer;
     mask-size: 1rem;
     mask-repeat: no-repeat;
     mask-position: center -3.5px;
 
-    &:hover {
-      background-color: var(--figma-color-text);
-    }
-    &:active {
-      background-color: var(--figma-color-text-tertiary);
+    &:hover,
+    &:active{
+      background-color: var(--figma-color-text) !important;
     }
   }
 
@@ -458,9 +455,15 @@ fig-input-number .fig-steppers {
   & .fig-stepper-up {
     mask-image: var(--icon-chevron);
     rotate: 180deg;
+    &:active{
+      transform: translateY(1px);
+    }
   }
   & .fig-stepper-down {
     mask-image: var(--icon-chevron);
+    &:active{
+      transform: translateY(-1px);
+    }
   }
 }
 
@@ -3376,11 +3379,6 @@ fig-input-palette {
   gap: var(--spacer-2);
   min-width: 0;
   border-radius: var(--radius-medium);
-
-  &:focus {
-    outline: 1px solid var(--figma-color-border-selected) !important;
-    outline-offset: -1px !important;
-  }
 
   .palette-colors {
     display: flex;

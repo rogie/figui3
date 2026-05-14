@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.5.0]
+
+### Fixed
+
+- `fig-input-number`: `units="px"` no longer renders disallowed units by default.
+
+### Added
+
+- `fig-input-number`: new `units-disallow` attribute with comma-separated unit filtering support in component docs and playground attribute controls.
+
+### Changed
+
+- `fig-input-number`: disallowed units are now ignored even when explicitly provided via `units`; default disallow list now includes `"px"`.
+- Playground/dev setup: refreshed dependency lockfiles and launcher wiring for local playground dev startup.
+
 ## [4.4.4]
 
 ### Fixed

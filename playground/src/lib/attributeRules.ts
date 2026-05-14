@@ -410,6 +410,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "%", "px", "°"],
     },
+    "units-disallow": {
+      label: "Units disallow",
+      type: "string",
+    },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
   },
   "fig-toast": {
