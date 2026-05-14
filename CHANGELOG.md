@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.5.1]
+
+### Fixed
+
+- `fig-options`: now captures internal `fig-segmented-control` / `fig-dropdown` events and re-emits normalized `input` and `change` events from `fig-options`.
+- `fig-options`: dropdown mode no longer propagates undefined event detail values; emitted event payloads now keep consistent string value shape.
+
+### Changed
+
+- `fig-input-color`: removed `localStorage` persistence for color input mode from `fig.js`.
+
+### Added
+
+- Playground `/propkit` Event output now shows both control `value` and raw `event.detail` (plus detail type) for easier event-shape debugging.
+
 ## [4.5.0]
 
 ### Fixed

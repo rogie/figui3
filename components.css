@@ -462,7 +462,7 @@ fig-input-number .fig-steppers {
   & .fig-stepper-down {
     mask-image: var(--icon-chevron);
     &:active{
-      transform: translateY(-1px);
+      transform: translateY(1px);
     }
   }
 }

@@ -14,15 +14,24 @@ export default function EventView() {
     let rafId = 0;
     const handler = (e: Event) => {
       const ce = e as CustomEvent;
-      if (ce.detail === undefined || ce.detail === null) return;
       const target = e.target as HTMLElement | null;
       if (!target?.tagName.toLowerCase().startsWith("fig-")) return;
-      const detail =
-        ce.detail !== null && typeof ce.detail === "object"
-          ? ce.detail
-          : { value: ce.detail };
+      const value =
+        "value" in target
+          ? (target as unknown as { value?: unknown }).value ?? null
+          : null;
+      const detail = ce.detail ?? null;
+      const detailType =
+        ce.detail === null ? "null" : ce.detail === undefined ? "undefined" : typeof ce.detail;
+      const payload = {
+        eventType: e.type,
+        controlTag: target.tagName.toLowerCase(),
+        value,
+        detail,
+        detailType,
+      };
       cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => setLatest(detail));
+      rafId = requestAnimationFrame(() => setLatest(payload));
     };
 
     container.addEventListener("input", handler);

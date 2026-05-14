@@ -3162,6 +3162,15 @@ class FigOptions extends HTMLElement {
   #childControl = null;
   #suppressEvents = false;
 
+  #normalizeChildEventValue(e) {
+    const detailValue = e?.detail;
+    if (typeof detailValue === "string") return detailValue;
+    const fallbackValue =
+      e?.currentTarget?.value ?? e?.target?.value ?? this.getAttribute("value");
+    if (fallbackValue === null || fallbackValue === undefined) return null;
+    return String(fallbackValue);
+  }
+
   connectedCallback() {
     this.#parseOptions();
     this.#renderSegments();
@@ -3252,7 +3261,6 @@ class FigOptions extends HTMLElement {
     if (this.hasAttribute("full")) sc.setAttribute("full", "");
 
     const currentValue = this.getAttribute("value");
-    let hasSelection = false;
 
     for (const opt of this.#parsedOptions) {
       const seg = document.createElement("fig-segment");
@@ -3260,7 +3268,6 @@ class FigOptions extends HTMLElement {
       seg.textContent = opt;
       if (currentValue === opt) {
         seg.setAttribute("selected", "true");
-        hasSelection = true;
       }
       sc.appendChild(seg);
     }
@@ -3268,18 +3275,32 @@ class FigOptions extends HTMLElement {
     if (currentValue) sc.setAttribute("value", currentValue);
 
     sc.addEventListener("input", (e) => {
+      e.stopPropagation();
       if (this.#suppressEvents) return;
+      const nextValue = this.#normalizeChildEventValue(e);
+      if (nextValue === null) return;
       this.#suppressEvents = true;
-      this.setAttribute("value", e.detail);
+      this.setAttribute("value", nextValue);
       this.#suppressEvents = false;
       this.dispatchEvent(
-        new CustomEvent("input", { detail: e.detail, bubbles: true }),
+        new CustomEvent("input", {
+          detail: nextValue,
+          bubbles: true,
+          composed: true,
+        }),
       );
     });
     sc.addEventListener("change", (e) => {
+      e.stopPropagation();
       if (this.#suppressEvents) return;
+      const nextValue = this.#normalizeChildEventValue(e);
+      if (nextValue === null) return;
       this.dispatchEvent(
-        new CustomEvent("change", { detail: e.detail, bubbles: true }),
+        new CustomEvent("change", {
+          detail: nextValue,
+          bubbles: true,
+          composed: true,
+        }),
       );
     });
 
@@ -3308,18 +3329,32 @@ class FigOptions extends HTMLElement {
     if (currentValue) dd.setAttribute("value", currentValue);
 
     dd.addEventListener("input", (e) => {
+      e.stopPropagation();
       if (this.#suppressEvents) return;
+      const nextValue = this.#normalizeChildEventValue(e);
+      if (!nextValue) return;
       this.#suppressEvents = true;
-      this.setAttribute("value", e.detail);
+      this.setAttribute("value", nextValue);
       this.#suppressEvents = false;
       this.dispatchEvent(
-        new CustomEvent("input", { detail: e.detail, bubbles: true }),
+        new CustomEvent("input", {
+          detail: nextValue,
+          bubbles: true,
+          composed: true,
+        }),
       );
     });
     dd.addEventListener("change", (e) => {
+      e.stopPropagation();
       if (this.#suppressEvents) return;
+      const nextValue = this.#normalizeChildEventValue(e);
+      if (!nextValue) return;
       this.dispatchEvent(
-        new CustomEvent("change", { detail: e.detail, bubbles: true }),
+        new CustomEvent("change", {
+          detail: nextValue,
+          bubbles: true,
+          composed: true,
+        }),
       );
     });
 
@@ -11624,13 +11659,6 @@ class FigFillPicker extends HTMLElement {
     const showAlpha = this.getAttribute("alpha") !== "false";
     const experimental = this.getAttribute("experimental");
     const expAttr = experimental ? `experimental="${experimental}"` : "";
-    const savedMode = localStorage.getItem("figui-color-input-mode");
-    if (
-      savedMode &&
-      ["hex", "rgb", "hsl", "hsb", "lab", "lch"].includes(savedMode)
-    ) {
-      this.#colorInputMode = savedMode;
-    }
 
     container.innerHTML = `
       <fig-preview class="fig-fill-picker-color-area">
@@ -11709,7 +11737,6 @@ class FigFillPicker extends HTMLElement {
     const modeDropdown = container.querySelector(".fig-fill-picker-input-mode");
     modeDropdown.addEventListener("input", (e) => {
       this.#colorInputMode = e.target.value;
-      localStorage.setItem("figui-color-input-mode", this.#colorInputMode);
       this.#rebuildColorInputFields();
     });
 
