@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.5.3]
+
+### Fixed
+
+- Playground routing: `/propkit/lab` is now the canonical Lab route, with automatic migration from legacy `/lab` URLs.
+
+### Changed
+
+- `fig-field-slider` lab styling now applies horizontal layout styles to `fig-field[direction="horizontal"]` and adds focus-visible container treatment.
+
 ## [4.5.2]
 
 ### Changed

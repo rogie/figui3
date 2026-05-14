@@ -12,8 +12,14 @@ fig-field-slider {
   display: block;
   position: relative;
   width: 100%;
+  border-radius: var(--radius-medium);
   --field-text-shadow: 0 1px 1.5px
     light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
+
+
+  &:focus-within {
+    outline: 1px solid var(--figma-color-border-selected);
+  }
 
   label {
     pointer-events: none;
@@ -39,11 +45,12 @@ fig-field-slider {
     }
   }
 
-  fig-field {
+  fig-field[direction="horizontal"] {
     position: relative;
     padding-left: var(--spacer-2-5);
+    display: flex;
 
-    &[direction="horizontal"] > label {
+    & > label {
       min-width: 0;
       max-width: none;
       width: 100%;

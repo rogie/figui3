@@ -6,11 +6,11 @@ import "./App.css";
 type PlaygroundMode = "propkit" | "figui3" | "lab" | "sandbox";
 
 function resolveModeFromPath(pathname: string): PlaygroundMode {
+  if (pathname === "/propkit/lab" || pathname.startsWith("/propkit/lab/")) {
+    return "lab";
+  }
   if (pathname === "/propkit" || pathname.startsWith("/propkit/")) {
     return "propkit";
-  }
-  if (pathname === "/lab" || pathname.startsWith("/lab/")) {
-    return "lab";
   }
   if (pathname === "/sandbox" || pathname.startsWith("/sandbox/")) {
     return "sandbox";
@@ -37,18 +37,25 @@ function applyTitleForMode(mode: PlaygroundMode) {
 
 function ensureSupportedRoute() {
   const pathname = window.location.pathname;
+  const search = window.location.search;
+  const hash = window.location.hash;
   if (pathname === "/" || pathname === "") {
-    window.history.replaceState(null, "", `/figui3${window.location.hash}`);
+    window.history.replaceState(null, "", `/figui3${search}${hash}`);
+    return;
+  }
+
+  if (pathname === "/lab" || pathname.startsWith("/lab/")) {
+    const migratedPath = pathname.replace(/^\/lab(?=\/|$)/, "/propkit/lab");
+    window.history.replaceState(null, "", `${migratedPath}${search}${hash}`);
     return;
   }
 
   const supported =
     pathname.startsWith("/figui3") ||
     pathname.startsWith("/propkit") ||
-    pathname.startsWith("/lab") ||
     pathname.startsWith("/sandbox");
   if (!supported) {
-    window.history.replaceState(null, "", `/figui3${window.location.hash}`);
+    window.history.replaceState(null, "", `/figui3${search}${hash}`);
   }
 }
 

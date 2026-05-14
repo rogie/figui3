@@ -66,7 +66,12 @@ function titleForMode(mode: Props["mode"]): string {
 export default function App({ mode }: Props) {
   const { isDark, setTheme } = useTheme();
   const sections: Section[] = sectionsForMode(mode);
-  const canonicalBase = `/${mode === "figui3" ? "figui3" : mode === "lab" ? "lab" : "propkit"}`;
+  const canonicalBase =
+    mode === "figui3"
+      ? "/figui3"
+      : mode === "lab"
+        ? "/propkit/lab"
+        : "/propkit";
   const basePath = window.location.pathname.startsWith(`${canonicalBase}/`)
     ? `${canonicalBase}/`
     : canonicalBase;
