@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.5.2]
+
+### Changed
+
+- Playground: section list now has vertical padding only for ungrouped lists, while grouped (`fig-group`) lists remain flush.
+
 ## [4.5.1]
 
 ### Fixed
