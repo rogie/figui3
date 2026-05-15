@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.7.0]
+
+### Added
+
+- `fig-dialog`: listens for `{ type: "figui:iframe-resize", height, width }` `postMessage` events from a descendant iframe and resizes itself to fit the broadcasted content, accounting for header/footer/padding chrome. Pairs with the new `dialog` `max-height: calc(100vh - var(--spacer-4))` so dialogs grow up to the viewport and stop there.
+- Playground `/propkit` "Plugin" example: iframe page broadcasts its natural content size (`scrollHeight` of scrollable regions + rendered footer height) on load, on DOM mutations, on font readiness, and on any descendant `ResizeObserver` change so dialog stays in sync.
+
+### Changed
+
+- `dialog` base styles: added `max-height: calc(100vh - var(--spacer-4))` so dialogs never overflow the viewport.
+- `fig-dialog`: cleans up the iframe `message` listener on disconnect.
+- Playground "Plugin" example: iframe `src` is now relative (`/propkit/iframe.html`) so the example always loads the locally deployed version of the iframe page.
+
 ## [4.6.1]
 
 ### Changed

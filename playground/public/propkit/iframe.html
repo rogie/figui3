@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/@rogieking/figui3/dist/fig.css" />
     <script type="module" src="https://unpkg.com/@rogieking/figui3/dist/fig.js"></script>
     <style>
-      html,
+     html,
       body {
         margin: 0;
         padding: 0;
@@ -32,8 +32,11 @@
       }
       body > fig-footer{
         flex: 0 0 auto;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        margin-top: auto;
         background-color: var(--figma-color-bg);
-        box-shadow: inset 0 1px 0 0 var(--figma-color-border);
         border-radius: 0 0 var(--radius-large) var(--radius-large);
       }
     </style>
@@ -47,27 +50,53 @@
       })();
 
       let lastHeight = 0;
+      let lastWidth = 0;
       let rafId = 0;
 
       const measure = () => {
-        const doc = document.documentElement;
         const body = document.body;
-        return Math.max(
-          doc.scrollHeight,
-          doc.offsetHeight,
-          body ? body.scrollHeight : 0,
-          body ? body.offsetHeight : 0,
-        );
+        if (!body) return { height: 0, width: 0 };
+        // Sum the natural content height of each body child. For scrollable
+        // children we read `scrollHeight` (true content size, even when the
+        // child is internally clipped); for everything else we read the
+        // rendered bounding rect. Then add body's own padding/border so the
+        // reported value equals the natural body height regardless of any
+        // `height: 100%` or `overflow: hidden` on body itself.
+        const bodyCS = getComputedStyle(body);
+        const bodyV =
+          parseFloat(bodyCS.paddingTop || "0") +
+          parseFloat(bodyCS.paddingBottom || "0") +
+          parseFloat(bodyCS.borderTopWidth || "0") +
+          parseFloat(bodyCS.borderBottomWidth || "0");
+        const bodyH =
+          parseFloat(bodyCS.paddingLeft || "0") +
+          parseFloat(bodyCS.paddingRight || "0") +
+          parseFloat(bodyCS.borderLeftWidth || "0") +
+          parseFloat(bodyCS.borderRightWidth || "0");
+        let contentH = 0;
+        let contentW = 0;
+        for (const child of body.children) {
+          const cs = getComputedStyle(child);
+          const overflowY = cs.overflowY;
+          const isScrollY = overflowY === "auto" || overflowY === "scroll";
+          const rect = child.getBoundingClientRect();
+          contentH += isScrollY ? Math.max(rect.height, child.scrollHeight) : rect.height;
+          const overflowX = cs.overflowX;
+          const isScrollX = overflowX === "auto" || overflowX === "scroll";
+          contentW += isScrollX ? Math.max(rect.width, child.scrollWidth) : rect.width;
+        }
+        return { height: contentH + bodyV, width: contentW + bodyH };
       };
 
       const send = () => {
         rafId = 0;
-        const height = measure();
-        if (height === lastHeight) return;
+        const { width, height } = measure();
+        if (height === lastHeight && width === lastWidth) return;
         lastHeight = height;
+        lastWidth = width;
         if (window.parent && window.parent !== window) {
           window.parent.postMessage(
-            { type: "figui:iframe-resize", frameId: FRAME_ID, height },
+            { type: "figui:iframe-resize", frameId: FRAME_ID, width, height },
             "*",
           );
         }
@@ -78,11 +107,33 @@
         rafId = requestAnimationFrame(send);
       };
 
+      const observed = new WeakSet();
       const ro = new ResizeObserver(scheduleSend);
-      ro.observe(document.documentElement);
-      if (document.body) ro.observe(document.body);
+      const observeElement = (el) => {
+        if (!(el instanceof Element) || observed.has(el)) return;
+        observed.add(el);
+        try {
+          ro.observe(el);
+        } catch {}
+      };
 
-      const mo = new MutationObserver(scheduleSend);
+      observeElement(document.documentElement);
+      if (document.body) {
+        observeElement(document.body);
+        document.body.querySelectorAll("*").forEach(observeElement);
+      }
+
+      const mo = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          m.addedNodes?.forEach((node) => {
+            if (node instanceof Element) {
+              observeElement(node);
+              node.querySelectorAll?.("*").forEach(observeElement);
+            }
+          });
+        }
+        scheduleSend();
+      });
       mo.observe(document.documentElement, {
         subtree: true,
         childList: true,
@@ -101,8 +152,7 @@
       scheduleSend();
     </script>
   </head>
-  <body>
-    <div class="plugin-body">
+  <body class="plugin-body">
     <fig-group>
       <fig-field>
         <label>Title</label>

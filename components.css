@@ -2655,6 +2655,7 @@ dialog,
   background: var(--figma-color-bg);
   min-width: var(--popover-min-width);
   box-shadow: var(--figma-elevation-500-modal-window);
+  max-height: calc(60vh - var(--spacer-4));
 
   footer,
   fig-footer {
@@ -2663,7 +2664,7 @@ dialog,
     padding: var(--spacer-2);
     gap: var(--spacer-2);
   }
-  
+
   p {
     padding: 0 var(--spacer-3);
   }

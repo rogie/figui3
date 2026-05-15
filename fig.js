@@ -1140,6 +1140,7 @@ class FigDialog extends HTMLDialogElement {
   #boundPointerMove;
   #boundPointerUp;
   #boundClose;
+  #boundIframeMessage;
   #offset = 16; // 1rem in pixels
   #positionInitialized = false;
   #dragThreshold = 3; // pixels before drag starts
@@ -1150,6 +1151,7 @@ class FigDialog extends HTMLDialogElement {
     this.#boundPointerMove = this.#handlePointerMove.bind(this);
     this.#boundPointerUp = this.#handlePointerUp.bind(this);
     this.#boundClose = this.close.bind(this);
+    this.#boundIframeMessage = this.#handleIframeMessage.bind(this);
   }
 
   connectedCallback() {
@@ -1167,6 +1169,8 @@ class FigDialog extends HTMLDialogElement {
       this.#setupDragListeners();
       this.#applyPosition();
     });
+
+    window.addEventListener("message", this.#boundIframeMessage);
   }
 
   disconnectedCallback() {
@@ -1174,6 +1178,51 @@ class FigDialog extends HTMLDialogElement {
     this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
       button.removeEventListener("click", this.#boundClose);
     });
+    window.removeEventListener("message", this.#boundIframeMessage);
+  }
+
+  #handleIframeMessage(event) {
+    const data = event?.data;
+    if (!data || data.type !== "figui:iframe-resize") return;
+    const source = event.source;
+    if (!source) return;
+    const iframe = Array.from(this.querySelectorAll("iframe")).find(
+      (el) => el.contentWindow === source,
+    );
+    if (!iframe) return;
+    this.#resizeForIframe(iframe, data);
+  }
+
+  #resizeForIframe(iframe, data) {
+    if (typeof data.height !== "number" || !(data.height > 0)) return;
+
+    // Compute the dialog's non-iframe vertical chrome: dialog padding/border
+    // plus the laid-out height of every direct child that isn't the iframe
+    // (header, footer, gaps between flex children, etc.). We avoid using the
+    // iframe's own rect because it may be 0 or stale before/after the resize.
+    const cs = window.getComputedStyle(this);
+    const verticalBoxExtras =
+      parseFloat(cs.paddingTop || "0") +
+      parseFloat(cs.paddingBottom || "0") +
+      parseFloat(cs.borderTopWidth || "0") +
+      parseFloat(cs.borderBottomWidth || "0");
+
+    let siblingsHeight = 0;
+    const gap = parseFloat(cs.rowGap || cs.gap || "0") || 0;
+    let visibleChildren = 0;
+    for (const child of this.children) {
+      const rect = child.getBoundingClientRect();
+      if (rect.height === 0) continue;
+      visibleChildren += 1;
+      if (child === iframe) continue;
+      siblingsHeight += rect.height;
+    }
+    if (gap && visibleChildren > 1) {
+      siblingsHeight += gap * (visibleChildren - 1);
+    }
+
+    const chrome = verticalBoxExtras + siblingsHeight;
+    this.style.height = `${Math.ceil(data.height + chrome)}px`;
   }
 
   #ensureHeader() {
