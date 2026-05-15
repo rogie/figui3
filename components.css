@@ -368,7 +368,7 @@
     inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
 
   --handle-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.2),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.1),
     0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.1)),
     0px 1px 3px 0px light-dark(rgba(0, 0, 0, 0.15), transparent);
 }
@@ -1376,17 +1376,16 @@ fig-input-file {
   }
 }
 
-fig-image {
+fig-media,
+fig-image,
+fig-video {
   --image-size: 2rem;
+  --media-size: var(--image-size);
   --fit: contain;
-  --image-width: var(--image-size);
-  --image-height: var(--image-size);
   --aspect-ratio: 1 / 1;
   display: inline-grid;
   place-items: center;
-  width: var(--image-width);
-  height: var(--image-height);
-  aspect-ratio: var(--aspect-ratio);
+  max-width: 100%;
   > * {
     grid-area: 1/1;
   }
@@ -1396,18 +1395,49 @@ fig-image {
     --height: 100% !important;
     --padding: 0px;
     --chit-bg-size: var(--fit);
+    z-index: 0;
     &[disabled] {
       opacity: 1;
     }
   }
-  > fig-input-file[data-generated] {
+  > .fig-media-element[data-generated] {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    object-fit: var(--fit);
+    border-radius: var(--radius-medium);
+    z-index: 1;
+  }
+  &:has(> .fig-media-element[data-generated][src]:not([src=""])) > fig-chit[data-generated],
+  &:has(> video.fig-media-element[data-generated][poster]:not([poster=""])) > fig-chit[data-generated] {
+    display: none;
+  }
+  &:is(:not([src]), [src=""]):is(:not([poster]), [poster=""])
+    > video.fig-media-element[data-generated] {
     opacity: 0;
     pointer-events: none;
   }
-  &:not([src]):not([src=""]) > fig-input-file[data-generated],
+  &:is(:not([src]), [src=""]) > img.fig-media-element[data-generated] {
+    opacity: 0;
+    pointer-events: none;
+  }
+  > fig-input-file[data-generated] {
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  &:is(:not([src]), [src=""]) > fig-input-file[data-generated],
   &:hover > fig-input-file[data-generated] {
     opacity: 1;
     pointer-events: all;
+  }
+  &[size] {
+    width: var(--media-size);
+    height: var(--media-size);
+    > .fig-media-element[data-generated] {
+      width: 100%;
+      height: 100%;
+    }
   }
   &[size="medium"] {
     --image-size: 4rem;
@@ -1418,11 +1448,17 @@ fig-image {
   &[size="auto"] {
     --image-size: 6rem;
     &[full]:not([full="false"]) {
-      --image-width: 100%;
+      width: 100%;
     }
   }
   &[aspect-ratio] {
+    width: 100%;
     height: auto;
+    aspect-ratio: var(--aspect-ratio);
+    > .fig-media-element[data-generated] {
+      width: 100%;
+      height: 100%;
+    }
     fig-chit {
       --size: 100% !important;
       height: auto !important;
@@ -2618,7 +2654,6 @@ dialog,
   border-radius: var(--radius-large, 0.8125rem);
   background: var(--figma-color-bg);
   min-width: var(--popover-min-width);
-
   box-shadow: var(--figma-elevation-500-modal-window);
 
   footer,
@@ -2628,6 +2663,7 @@ dialog,
     padding: var(--spacer-2);
     gap: var(--spacer-2);
   }
+  
   p {
     padding: 0 var(--spacer-3);
   }
@@ -2635,6 +2671,11 @@ dialog,
   &:popover-open {
     display: block;
     outline: none !important;
+  }
+
+  &[open]{
+    display: flex;
+    flex-direction: column;
   }
 
   & header {
@@ -2704,12 +2745,6 @@ dialog[is="fig-dialog"] {
     overflow: auto;
     min-width: 12rem;
     min-height: 6rem;
-  }
-  & > fig-header[dialog-header]:not([borderless]):not([borderless="false"]) {
-    margin-bottom: var(--spacer-2-5);
-  }
-  & > fig-footer:not([borderless]):not([borderless="false"]) {
-    margin-top: var(--spacer-2-5);
   }
 }
 
@@ -2862,6 +2897,8 @@ dialog[is="fig-toast"] {
     /* color-scheme is resolved at runtime by FigToast JS */
   }
 }
+
+
 
 /* Tooltip */
 fig-tooltip {
@@ -3640,6 +3677,7 @@ fig-segmented-control {
     text-overflow: ellipsis;
     white-space: nowrap;
     transition: none;
+    text-transform: capitalize;
 
     &[selected]:not([selected="false"]),
     &[selected="true"] {
@@ -4618,7 +4656,9 @@ fig-chooser {
     > :not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
       flex: 1 1 0%;
     }
-    fig-image[full] {
+    fig-media[full],
+    fig-image[full],
+    fig-video[full] {
       min-width: 3rem;
     }
     > * {

@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.6.0]
+
+### Added
+
+- `fig-media`: new unified media host component supporting `type="image"` and `type="video"` with shared sizing (`size`, `aspect-ratio`, `fit`), `upload` overlay, and video attributes (`controls`, `autoplay`, `loop`, `muted`, `poster`).
+- `fig-video`: new video component built on the media host with playback attributes and optional upload overlay.
+- `fig-image`: added `alt` attribute, `size` token sizing, and updated default sizing model (host shrinkwraps to intrinsic image size).
+- Base styles: added default `iframe` rules so iframes flex naturally inside dialogs and other flex containers.
+- Playground (`/propkit`): new "Plugin" example under "Controls in dialogs" hosting plugin UI inside an iframe (`/propkit/iframe.html`) with parent/child resize broadcasting.
+- Playground (`/propkit`): new "Media" field example demonstrating `fig-media` inside a `fig-field` row.
+- Playground (`/figui3`): added Image, Media, and Video sections with examples covering image, video, poster, and upload modes.
+- Playground attributes panel: added rules for `fig-media` and `fig-video` (type, fit, upload, checkerboard, controls, autoplay, loop, muted, poster).
+
+### Changed
+
+- `fig-image`: rewritten as a thin wrapper over the new media host. Renders a real `<img>` inside the element; `getBase64()` now uses the inner `<img>` element directly (requires CORS-clean source).
+- `dialog`: `dialog[open]` now uses `display: flex; flex-direction: column;` so dialog contents (including iframes) can flex correctly. Removed the old `fig-header` / `fig-footer` margin rules in `fig-dialog` in favor of in-dialog layout.
+- `fig-segment`: option labels are now `text-transform: capitalize` for consistency with segmented control styling.
+- Playground routing: trailing slashes in `/figui3`, `/propkit`, `/propkit/lab`, and `/sandbox` paths are normalized so `mode` resolution and base path matching no longer break for `/propkit/` style URLs.
+- Playground attribute resolver: enum option matching now normalizes whitespace and `/` separators so values like `16 / 9` resolve correctly against `16/9`-style options.
+
+### Fixed
+
+- `fig-image` / `fig-media` / `fig-video`: chit placeholder is now properly hidden when a real media source (or video poster) is present, and shown when the source is empty.
+- Playground: `fig-image` upload overlay defaults are no longer accidentally toggled when controlling other attributes.
+
 ## [4.5.3]
 
 ### Fixed

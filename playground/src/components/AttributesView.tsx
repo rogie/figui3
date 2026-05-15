@@ -126,14 +126,20 @@ function toFieldsLabel(value: string): string {
 }
 
 function resolveEnumOption(options: string[], rawValue: string): string {
+  const normalize = (input: string) =>
+    input
+      .trim()
+      .replace(/\s*\/\s*/g, "/")
+      .replace(/\s+/g, " ")
+      .toLowerCase();
   if (options.includes(rawValue)) return rawValue;
-  const normalized = rawValue.trim().toLowerCase();
+  const normalized = normalize(rawValue);
   const directMatch = options.find(
-    (option) => option.toLowerCase() === normalized,
+    (option) => normalize(option) === normalized,
   );
   if (directMatch !== undefined) return directMatch;
   const labelMatch = options.find(
-    (option) => toSentenceCaseLabel(option).toLowerCase() === normalized,
+    (option) => normalize(toSentenceCaseLabel(option)) === normalized,
   );
   return labelMatch ?? rawValue;
 }
@@ -158,7 +164,9 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-field": "Field",
     "fig-field-slider": "Field slider",
     "fig-combo-input": "Combo input",
+    "fig-media": "Media",
     "fig-image": "Image",
+    "fig-video": "Video",
     "fig-input-color": "Color",
     "fig-input-gradient": "Gradient",
     "fig-input-fill": "Fill",
@@ -683,13 +691,16 @@ export default function AttributesView({
           }
 
           if (rule.type === "enum") {
-            const hasImageSource = Boolean(
-              target.controlTag === "fig-image" &&
-              target.controlAttributes.src?.trim(),
+            const isMediaLikeControl =
+              target.controlTag === "fig-image" ||
+              target.controlTag === "fig-media" ||
+              target.controlTag === "fig-video";
+            const hasMediaSource = Boolean(
+              isMediaLikeControl && target.controlAttributes.src?.trim(),
             );
             const options =
-              name === "aspect-ratio" && target.controlTag === "fig-image"
-                ? hasImageSource
+              name === "aspect-ratio" && isMediaLikeControl
+                ? hasMediaSource
                   ? ["", ...rule.options, "auto"]
                   : ["", ...rule.options.filter((option) => option !== "auto")]
                 : rule.options;
@@ -701,7 +712,7 @@ export default function AttributesView({
               target.controlTag === "fig-input-color" &&
               scope === "control" &&
               name === "picker";
-            const current = isCheckRadioLabel
+            const currentRaw = isCheckRadioLabel
               ? value !== undefined && value !== null
                 ? "label"
                 : "none"
@@ -711,6 +722,10 @@ export default function AttributesView({
                   (name === "variant" && target.controlTag === "fig-slider"
                     ? "default"
                     : (options[0] ?? "")));
+            const current =
+              typeof currentRaw === "string"
+                ? resolveEnumOption(options, currentRaw)
+                : currentRaw;
             const useSegmentedControl =
               isCheckRadioLabel ||
               isColorPickerMode ||
@@ -903,19 +918,11 @@ export default function AttributesView({
                       applyChange(target.fieldIndex, scope, name, null);
                       return;
                     }
-                    if (
-                      target.controlTag === "fig-image" &&
-                      name === "aspect-ratio" &&
-                      resolvedValue === ""
-                    ) {
+                    if (isMediaLikeControl && name === "aspect-ratio" && resolvedValue === "") {
                       applyChange(target.fieldIndex, scope, name, null);
                       return;
                     }
-                    if (
-                      target.controlTag === "fig-image" &&
-                      name === "fit" &&
-                      resolvedValue === "auto"
-                    ) {
+                    if (isMediaLikeControl && name === "fit" && resolvedValue === "auto") {
                       applyChange(target.fieldIndex, scope, name, null);
                       return;
                     }

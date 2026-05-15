@@ -72,9 +72,7 @@ export default function App({ mode }: Props) {
       : mode === "lab"
         ? "/propkit/lab"
         : "/propkit";
-  const basePath = window.location.pathname.startsWith(`${canonicalBase}/`)
-    ? `${canonicalBase}/`
-    : canonicalBase;
+  const basePath = canonicalBase;
   const appTitle = titleForMode(mode);
   const {
     activeSectionId,

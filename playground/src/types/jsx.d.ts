@@ -18,9 +18,13 @@ declare module "react" {
       "fig-field": FigAttrs;
       "fig-slider": FigAttrs;
       "fig-dropdown": FigAttrs;
+      "fig-options": FigAttrs;
       "fig-segmented-control": FigAttrs;
       "fig-segment": FigAttrs;
+      "fig-group": FigAttrs;
+      "fig-media": FigAttrs;
       "fig-image": FigAttrs;
+      "fig-video": FigAttrs;
       "fig-input-color": FigAttrs;
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;

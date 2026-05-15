@@ -89,7 +89,9 @@ Minimal example:
 | [Tooltip](#tooltip) | `<fig-tooltip>` | Hover/click tooltip |
 | [Header](#header) | `<fig-header>` | Section header |
 | [Layer](#layer) | `<fig-layer>` | Collapsible layer list item |
+| [Media](#media) | `<fig-media>` | Shared media host for image/video |
 | [Image](#image) | `<fig-image>` | Image display/upload |
+| [Video](#video) | `<fig-video>` | Video display/upload with playback controls |
 | [Avatar](#avatar) | `<fig-avatar>` | Profile image or initials |
 | [Spinner](#spinner) | `<fig-spinner>` | Loading spinner |
 | [Shimmer](#shimmer) | `<fig-shimmer>` | Shimmer loading placeholder |
@@ -993,24 +995,86 @@ A collapsible layer list item with expand/collapse and visibility toggling. Supp
 
 ---
 
+#### Media
+
+`<fig-media>`
+
+Unified media component that supports image/video modes and shared sizing/upload behavior. Renders a real `<img>` or `<video>` inside the host. By default the host shrinkwraps to the inner media's intrinsic size; set `size` for a token-sized square, or `aspect-ratio` to fill the container width with a fixed ratio.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `type` | string | `"image"` | `"image"` or `"video"` |
+| `src` | string | — | Media URL |
+| `alt` | string | `""` | Alt text forwarded to the generated `<img>` (image mode) |
+| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `label` | string | `"Upload"` | Upload button label |
+| `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
+| `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
+| `fit` | string | `"contain"` | CSS object-fit (`"cover"`, `"contain"`, etc.) |
+| `checkerboard` | boolean | `false` | Show checkerboard behind transparent media |
+| `controls` | boolean | `false` | Show playback controls for video |
+| `autoplay` | boolean | `false` | Video autoplay |
+| `loop` | boolean | `false` | Video loop |
+| `muted` | boolean | `false` | Video muted |
+| `poster` | string | — | Video poster URL |
+
+```html
+<fig-media type="image" src="photo.jpg"></fig-media>
+<fig-media type="image" src="photo.jpg" aspect-ratio="16 / 9" fit="cover"></fig-media>
+<fig-media type="video" src="clip.mp4" controls muted></fig-media>
+```
+
+---
+
 #### Image
 
 `<fig-image>` — [demo](https://rog.ie/figui3/#image)
 
-An image display component with optional upload, aspect ratio, and object-fit control.
+An image display component with optional upload, aspect ratio, and object-fit control. Renders a real `<img>` inside the host; by default the host shrinkwraps to the image's intrinsic size.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `src` | string | — | Image URL |
+| `alt` | string | `""` | Alt text forwarded to the generated `<img>` |
 | `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
 | `label` | string | `"Upload"` | Upload button label |
-| `aspect-ratio` | string | — | CSS aspect-ratio, or `"auto"` for lazy dimension detection |
-| `fit` | string | — | CSS object-fit (`"cover"`, `"contain"`, etc.) |
+| `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
+| `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
+| `fit` | string | `"contain"` | CSS object-fit (`"cover"`, `"contain"`, etc.) |
 | `checkerboard` | boolean | `false` | Show checkerboard behind transparent images |
 
 ```html
+<fig-image src="photo.jpg"></fig-image>
 <fig-image src="photo.jpg" aspect-ratio="16 / 9" fit="cover"></fig-image>
 <fig-image upload label="Upload Image"></fig-image>
+```
+
+---
+
+#### Video
+
+`<fig-video>`
+
+Video display/upload component with the same host styling model as `fig-image`. Renders a real `<video>` inside the host; by default the host shrinkwraps to the video's intrinsic size.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `src` | string | — | Video URL |
+| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `label` | string | `"Upload"` | Upload button label |
+| `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
+| `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
+| `fit` | string | `"contain"` | CSS object-fit (`"cover"`, `"contain"`, etc.) |
+| `controls` | boolean | `false` | Show playback controls |
+| `autoplay` | boolean | `false` | Autoplay video |
+| `loop` | boolean | `false` | Loop video |
+| `muted` | boolean | `false` | Mute video |
+| `poster` | string | — | Poster image URL (forwarded to inner `<video>`) |
+
+```html
+<fig-video src="clip.mp4"></fig-video>
+<fig-video src="clip.mp4" aspect-ratio="16 / 9" controls></fig-video>
+<fig-video upload label="Upload Video" controls muted></fig-video>
 ```
 
 ---

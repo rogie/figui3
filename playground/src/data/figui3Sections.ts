@@ -560,10 +560,68 @@ export const figui3Sections: Section[] = [
     description: "Image previews with optional upload overlay.",
     examples: [
       {
+        id: "with-src",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-image src="https://picsum.photos/640/360" upload="true" size="auto" aspect-ratio="16 / 9" fit="cover" full></fig-image>
+</div>`,
+      },
+      {
+        id: "upload",
+        name: "Upload",
+        markup: `<div class="prop-panel">
+  <fig-image upload="true" label="Upload" size="auto" full></fig-image>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "media",
+    name: "Media",
+    group: "Core components",
+    description: "Shared media host supporting image or video content.",
+    examples: [
+      {
+        id: "image",
+        name: "Image type",
+        markup: `<div class="prop-panel">
+  <fig-media type="image" src="https://picsum.photos/640/360" fit="cover" size="auto" full></fig-media>
+</div>`,
+      },
+      {
+        id: "video",
+        name: "Video type",
+        markup: `<div class="prop-panel">
+  <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" autoplay="true" muted size="auto" full></fig-media>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "video",
+    name: "Video",
+    group: "Core components",
+    description: "Video previews with playback controls and optional upload overlay.",
+    examples: [
+      {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-image upload="true" size="auto"></fig-image>
+  <fig-video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" autoplay="true" muted size="auto" full></fig-video>
+</div>`,
+      },
+      {
+        id: "poster-only",
+        name: "Poster",
+        markup: `<div class="prop-panel">
+  <fig-video poster="https://picsum.photos/640/360?random=29" muted size="auto" full></fig-video>
+</div>`,
+      },
+      {
+        id: "upload",
+        name: "Upload",
+        markup: `<div class="prop-panel">
+  <fig-video upload="true" muted size="auto" full></fig-video>
 </div>`,
       },
     ],

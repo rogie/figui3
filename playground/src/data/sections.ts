@@ -486,6 +486,25 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "media",
+    name: "Media",
+    group: "Field controls",
+    description:
+      "A media field using the PropKit row pattern with image/video support and upload overlay.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Preview</label>
+    <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/320.webp?random=29" autoplay="true" muted="true" upload="true" fit="contain" size="auto" full></fig-media>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "joystick",
     name: "Joystick",
     group: "Field controls",
@@ -1105,6 +1124,25 @@ export const propkitSections: Section[] = [
     <fig-footer>
       <fig-button>Next</fig-button>
     </fig-footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-iframe",
+    name: "Plugin",
+    group: "Controls in dialogs",
+    description:
+      "A plugin dialog hosting its contents inside an iframe that broadcasts height changes to the parent.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Plugin</fig-button>
+  <dialog is="fig-dialog" title="Plugin" open handle="fig-header" position="center center" data-playground-hide-field style="width: 240px; height: 480px;">
+    <iframe src="/propkit/iframe.html"></iframe>
   </dialog>
 </div>`,
       },

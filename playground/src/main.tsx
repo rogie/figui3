@@ -5,14 +5,22 @@ import "./App.css";
 
 type PlaygroundMode = "propkit" | "figui3" | "lab" | "sandbox";
 
+function normalizePathname(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
+
 function resolveModeFromPath(pathname: string): PlaygroundMode {
-  if (pathname === "/propkit/lab" || pathname.startsWith("/propkit/lab/")) {
+  const normalized = normalizePathname(pathname);
+  if (normalized === "/propkit/lab") {
     return "lab";
   }
-  if (pathname === "/propkit" || pathname.startsWith("/propkit/")) {
+  if (normalized === "/propkit" || normalized.startsWith("/propkit/")) {
     return "propkit";
   }
-  if (pathname === "/sandbox" || pathname.startsWith("/sandbox/")) {
+  if (normalized === "/sandbox" || normalized.startsWith("/sandbox/")) {
     return "sandbox";
   }
   return "figui3";
@@ -37,23 +45,27 @@ function applyTitleForMode(mode: PlaygroundMode) {
 
 function ensureSupportedRoute() {
   const pathname = window.location.pathname;
+  const normalized = normalizePathname(pathname);
   const search = window.location.search;
   const hash = window.location.hash;
-  if (pathname === "/" || pathname === "") {
+  if (normalized === "/" || normalized === "") {
     window.history.replaceState(null, "", `/figui3${search}${hash}`);
     return;
   }
 
-  if (pathname === "/lab" || pathname.startsWith("/lab/")) {
-    const migratedPath = pathname.replace(/^\/lab(?=\/|$)/, "/propkit/lab");
+  if (normalized === "/lab" || normalized.startsWith("/lab/")) {
+    const migratedPath = normalized.replace(/^\/lab(?=\/|$)/, "/propkit/lab");
     window.history.replaceState(null, "", `${migratedPath}${search}${hash}`);
     return;
   }
 
   const supported =
-    pathname.startsWith("/figui3") ||
-    pathname.startsWith("/propkit") ||
-    pathname.startsWith("/sandbox");
+    normalized === "/figui3" ||
+    normalized.startsWith("/figui3/") ||
+    normalized === "/propkit" ||
+    normalized.startsWith("/propkit/") ||
+    normalized === "/sandbox" ||
+    normalized.startsWith("/sandbox/");
   if (!supported) {
     window.history.replaceState(null, "", `/figui3${search}${hash}`);
   }

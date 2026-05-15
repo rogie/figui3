@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iFrame</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/@rogieking/figui3/dist/fig.css" />
+    <script type="module" src="https://unpkg.com/@rogieking/figui3/dist/fig.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        height: 100%;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: transparent;
+      }
+      .plugin-body{
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding: var(--spacer-2-5) 0;
+      }
+      body > fig-footer{
+        flex: 0 0 auto;
+        background-color: var(--figma-color-bg);
+        box-shadow: inset 0 1px 0 0 var(--figma-color-border);
+        border-radius: 0 0 var(--radius-large) var(--radius-large);
+      }
+    </style>
+    <script type="module">
+      const FRAME_ID = (() => {
+        try {
+          return new URLSearchParams(location.search).get("frameId") || "";
+        } catch {
+          return "";
+        }
+      })();
+
+      let lastHeight = 0;
+      let rafId = 0;
+
+      const measure = () => {
+        const doc = document.documentElement;
+        const body = document.body;
+        return Math.max(
+          doc.scrollHeight,
+          doc.offsetHeight,
+          body ? body.scrollHeight : 0,
+          body ? body.offsetHeight : 0,
+        );
+      };
+
+      const send = () => {
+        rafId = 0;
+        const height = measure();
+        if (height === lastHeight) return;
+        lastHeight = height;
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            { type: "figui:iframe-resize", frameId: FRAME_ID, height },
+            "*",
+          );
+        }
+      };
+
+      const scheduleSend = () => {
+        if (rafId) return;
+        rafId = requestAnimationFrame(send);
+      };
+
+      const ro = new ResizeObserver(scheduleSend);
+      ro.observe(document.documentElement);
+      if (document.body) ro.observe(document.body);
+
+      const mo = new MutationObserver(scheduleSend);
+      mo.observe(document.documentElement, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        characterData: true,
+      });
+
+      window.addEventListener("load", scheduleSend);
+      window.addEventListener("resize", scheduleSend);
+      document.addEventListener("transitionend", scheduleSend, true);
+      document.addEventListener("animationend", scheduleSend, true);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(scheduleSend).catch(() => {});
+      }
+
+      scheduleSend();
+    </script>
+  </head>
+  <body>
+    <div class="plugin-body">
+    <fig-group>
+      <fig-field>
+        <label>Title</label>
+        <fig-input-text value="Japan" full></fig-input-text>
+      </fig-field>
+      <fig-field>
+        <label>Subtitle</label>
+        <fig-input-text value="December 2025" full></fig-input-text>
+      </fig-field>
+      <fig-field>
+        <label>Shadow Tint</label>
+        <fig-input-color value="#000000" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+      </fig-field>
+      <fig-field>
+        <label>Photo Shape</label>
+        <fig-dropdown full>
+          <option selected>Portrait</option>
+          <option>Landscape</option>
+          <option>Square</option>
+        </fig-dropdown>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Back Photo" collapsible open>
+      <fig-field>
+        <label>Offset X</label>
+        <fig-slider variant="neue" type="delta" value="239" default="0" min="-500" max="500" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field>
+        <label>Offset Y</label>
+        <fig-slider variant="neue" type="delta" value="0" default="0" min="-500" max="500" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field>
+        <label>Scale</label>
+        <fig-slider variant="neue" value="0.70" step="0.01" min="0" max="2" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field>
+        <label>Overlay Opacity</label>
+        <fig-slider variant="neue" type="opacity" value="0.60" color="#000000" text="true" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Shadow" collapsible open>
+      <fig-field>
+        <label>Scale</label>
+        <fig-slider variant="neue" value="1.03" step="0.01" min="0" max="2" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field>
+        <label>Opacity</label>
+        <fig-slider variant="neue" type="opacity" value="0.25" color="#000000" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field>
+        <label>Blur</label>
+        <fig-slider variant="neue" value="14" min="0" max="64" text="true" units="px" full></fig-slider>
+      </fig-field>
+      <fig-field>
+        <label>Y Offset</label>
+        <fig-slider variant="neue" type="delta" value="8" default="0" min="-50" max="50" text="true" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <fig-group name="Transition Spring" collapsible open>
+      <fig-field>
+        <label>Type</label>
+        <fig-segmented-control full>
+          <fig-segment value="time" selected>Time</fig-segment>
+          <fig-segment value="physics">Physics</fig-segment>
+        </fig-segmented-control>
+      </fig-field>
+      <fig-field>
+        <label>Duration</label>
+        <fig-slider variant="neue" value="0.50" step="0.01" min="0" max="2" text="true" units="s" full></fig-slider>
+      </fig-field>
+      <fig-field>
+        <label>Bounce</label>
+        <fig-slider variant="neue" value="0.04" step="0.01" min="0" max="1" text="true" full></fig-slider>
+      </fig-field>
+    </fig-group>
+    <fig-field>
+      <label>Dark Mode</label>
+      <fig-switch checked></fig-switch>
+    </fig-field>
+    </div>
+    <fig-footer>
+      <fig-button>Next</fig-button>
+    </fig-footer>
+  </body>
+</html>

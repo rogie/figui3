@@ -8255,60 +8255,115 @@ customElements.define("fig-chit", FigChit);
 class FigSwatch extends FigChit {}
 customElements.define("fig-swatch", FigSwatch);
 
-/* Image */
+/* Media */
 /**
- * @attr {string} src - Image source URL
+ * @attr {string} src - Media source URL
+ * @attr {string} type - "image" (default) or "video" (for fig-media)
+ * @attr {string} alt - Alt text for the generated image (default "")
  * @attr {boolean} upload - Show upload overlay (generates fig-input-file)
  * @attr {string} label - Upload button label (default "Upload")
- * @attr {string} size - small | medium | large | auto
- * @attr {string} aspect-ratio - CSS aspect-ratio or "auto" (lazy dimension sniff)
+ * @attr {string} size - small | medium | large | auto (token-sized square)
+ * @attr {string} aspect-ratio - CSS aspect-ratio value
  * @attr {string} fit - CSS object-fit value
- * @attr {boolean} checkerboard - Show checkerboard behind transparent images
+ * @attr {boolean} checkerboard - Show checkerboard behind transparent media
+ * @attr {boolean} controls - Video controls visibility (default false)
+ * @attr {boolean} autoplay - Video autoplay
+ * @attr {boolean} loop - Video loop
+ * @attr {boolean} muted - Video muted
+ * @attr {string} poster - Video poster image URL
+ *
+ * Sizing model:
+ *   - Default: host shrinkwraps to its inner <img>/<video> intrinsic size.
+ *   - `size` attribute applies a token-sized square.
+ *   - `aspect-ratio` attribute fills container width and applies the ratio.
  */
-class FigImage extends HTMLElement {
+class FigMedia extends HTMLElement {
   #src = null;
   #chit = null;
+  #mediaEl = null;
   #fileInput = null;
   #blobUrl = null;
   #file = null;
   #boundHandleFileInput = this.#handleFileInput.bind(this);
+  #boundHandleMediaPlay = this.#handleMediaPlay.bind(this);
+  #boundHandleMediaPause = this.#handleMediaPause.bind(this);
+  #boundHandleMediaEnded = this.#handleMediaEnded.bind(this);
 
   static get observedAttributes() {
-    return ["src", "upload", "aspect-ratio", "fit", "checkerboard"];
+    return [
+      "src",
+      "type",
+      "alt",
+      "upload",
+      "label",
+      "aspect-ratio",
+      "fit",
+      "checkerboard",
+      "controls",
+      "autoplay",
+      "loop",
+      "muted",
+      "poster",
+    ];
+  }
+
+  get mediaKind() {
+    const type = (this.getAttribute("type") || "image").toLowerCase();
+    return type === "video" ? "video" : "image";
   }
 
   get src() {
     return this.#src;
   }
   set src(value) {
-    this.#src = value;
-    this.setAttribute("src", value);
+    this.#src = value || "";
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("src");
+    } else {
+      this.setAttribute("src", value);
+    }
   }
 
   get file() {
     return this.#file;
   }
 
+  /**
+   * Returns a base64 data URL for the loaded image.
+   * Requires a CORS-clean image (same-origin or with appropriate Access-Control headers);
+   * cross-origin images without proper headers will throw a tainted-canvas error.
+   */
   async getBase64() {
-    const src = this.#src;
-    if (!src) return null;
-    const res = await fetch(src);
-    const blob = await res.blob();
-    const bitmap = await createImageBitmap(blob);
+    if (this.mediaKind !== "image") return null;
+    if (!this.#src) return null;
+    if (!this.#mediaEl) return null;
+    try {
+      if (typeof this.#mediaEl.decode === "function") {
+        await this.#mediaEl.decode();
+      } else if (!this.#mediaEl.complete) {
+        await new Promise((resolve, reject) => {
+          this.#mediaEl.addEventListener("load", resolve, { once: true });
+          this.#mediaEl.addEventListener("error", reject, { once: true });
+        });
+      }
+    } catch {
+      // continue; canvas draw will throw if image truly unusable
+    }
+    const w = this.#mediaEl.naturalWidth;
+    const h = this.#mediaEl.naturalHeight;
+    if (!(w > 0) || !(h > 0)) return null;
     const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    canvas.getContext("2d").drawImage(bitmap, 0, 0);
-    bitmap.close();
-    const dataUrl = canvas.toDataURL();
-    return dataUrl;
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d").drawImage(this.#mediaEl, 0, 0);
+    return canvas.toDataURL();
   }
 
   connectedCallback() {
     this.#src = this.getAttribute("src") || "";
 
     const ar = this.getAttribute("aspect-ratio");
-    if (ar && ar !== "auto") {
+    if (ar) {
       this.style.setProperty("--aspect-ratio", ar);
     }
     const fit = this.getAttribute("fit");
@@ -8320,7 +8375,7 @@ class FigImage extends HTMLElement {
       const chit = document.createElement("fig-chit");
       chit.setAttribute("data-generated", "");
       chit.setAttribute("size", "large");
-      chit.setAttribute("data-type", "image");
+      chit.setAttribute("data-type", this.mediaKind);
       chit.setAttribute("disabled", "");
       this.#applyChitBackground(chit);
       if (this.hasAttribute("checkerboard") && this.getAttribute("checkerboard") !== "false") {
@@ -8329,19 +8384,19 @@ class FigImage extends HTMLElement {
       this.prepend(chit);
     }
     this.#chit = this.querySelector("fig-chit");
+    this.#syncChitType();
+    this.#ensureMediaElement();
+    this.#syncGeneratedMediaElement();
 
     const isUpload = this.hasAttribute("upload") && this.getAttribute("upload") !== "false";
     if (isUpload && !this.querySelector("fig-input-file[data-generated]")) {
       this.#createFileInput();
     }
-
-    if (this.#src && this.getAttribute("aspect-ratio") === "auto") {
-      this.#sniffDimensions(this.#src);
-    }
   }
 
   disconnectedCallback() {
     this.#fileInput?.removeEventListener("change", this.#boundHandleFileInput);
+    this.#removeMediaElementListeners();
     if (this.#blobUrl) {
       URL.revokeObjectURL(this.#blobUrl);
       this.#blobUrl = null;
@@ -8350,17 +8405,112 @@ class FigImage extends HTMLElement {
 
   #applyChitBackground(chit) {
     const cb = this.hasAttribute("checkerboard") && this.getAttribute("checkerboard") !== "false";
-    if (this.#src) {
-      chit.setAttribute("background", `url(${this.#src})`);
-    } else {
-      chit.setAttribute("background", cb ? "url()" : "var(--figma-color-bg-secondary)");
+    chit.setAttribute("background", cb ? "url()" : "var(--figma-color-bg-secondary)");
+  }
+
+  #syncChitType() {
+    if (!this.#chit) return;
+    this.#chit.setAttribute("data-type", this.mediaKind);
+  }
+
+  #removeMediaElementListeners() {
+    if (!this.#mediaEl) return;
+    if (this.#mediaEl.tagName === "VIDEO") {
+      this.#mediaEl.removeEventListener("play", this.#boundHandleMediaPlay);
+      this.#mediaEl.removeEventListener("pause", this.#boundHandleMediaPause);
+      this.#mediaEl.removeEventListener("ended", this.#boundHandleMediaEnded);
     }
+  }
+
+  #userProvidedMediaEl() {
+    const tag = this.mediaKind === "video" ? "video" : "img";
+    return this.querySelector(`${tag}:not([data-generated])`);
+  }
+
+  #ensureMediaElement() {
+    const userEl = this.#userProvidedMediaEl();
+    if (userEl) {
+      if (this.#mediaEl && this.#mediaEl !== userEl) {
+        this.#removeMediaElementListeners();
+        if (this.#mediaEl.hasAttribute("data-generated")) {
+          this.#mediaEl.remove();
+        }
+      }
+      this.#mediaEl = userEl;
+      return;
+    }
+
+    const expectedTag = this.mediaKind === "video" ? "VIDEO" : "IMG";
+    if (this.#mediaEl && this.#mediaEl.tagName !== expectedTag) {
+      this.#removeMediaElementListeners();
+      if (this.#mediaEl.hasAttribute("data-generated")) {
+        this.#mediaEl.remove();
+      }
+      this.#mediaEl = null;
+    }
+    if (this.#mediaEl) return;
+
+    if (this.mediaKind === "video") {
+      const video = document.createElement("video");
+      video.setAttribute("data-generated", "");
+      video.className = "fig-media-element";
+      video.setAttribute("playsinline", "");
+      video.preload = "metadata";
+      this.prepend(video);
+      this.#mediaEl = video;
+      this.#mediaEl.addEventListener("play", this.#boundHandleMediaPlay);
+      this.#mediaEl.addEventListener("pause", this.#boundHandleMediaPause);
+      this.#mediaEl.addEventListener("ended", this.#boundHandleMediaEnded);
+    } else {
+      const img = document.createElement("img");
+      img.setAttribute("data-generated", "");
+      img.className = "fig-media-element";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.alt = this.getAttribute("alt") || "";
+      this.prepend(img);
+      this.#mediaEl = img;
+    }
+  }
+
+  #isEnabledAttr(name, defaultEnabled = false) {
+    if (!this.hasAttribute(name)) return defaultEnabled;
+    return this.getAttribute(name) !== "false";
+  }
+
+  #syncGeneratedMediaElement() {
+    if (!this.#mediaEl) return;
+    if (!this.#mediaEl.hasAttribute("data-generated")) return;
+    const src = this.#src || "";
+    if (this.#mediaEl.getAttribute("src") !== src) {
+      if (src) {
+        this.#mediaEl.setAttribute("src", src);
+      } else {
+        this.#mediaEl.removeAttribute("src");
+        if (this.#mediaEl.tagName === "VIDEO") this.#mediaEl.load();
+      }
+    }
+    if (this.#mediaEl.tagName === "IMG") {
+      this.#mediaEl.alt = this.getAttribute("alt") || "";
+      return;
+    }
+    const poster = this.getAttribute("poster");
+    if (poster) {
+      this.#mediaEl.setAttribute("poster", poster);
+    } else {
+      this.#mediaEl.removeAttribute("poster");
+    }
+    this.#mediaEl.controls = this.#isEnabledAttr("controls", false);
+    this.#mediaEl.autoplay = this.#isEnabledAttr("autoplay", false);
+    this.#mediaEl.loop = this.#isEnabledAttr("loop", false);
+    this.#mediaEl.muted = this.#isEnabledAttr("muted", false);
+    this.#mediaEl.playsInline = true;
   }
 
   #createFileInput() {
     const fi = document.createElement("fig-input-file");
     fi.setAttribute("data-generated", "");
-    fi.setAttribute("accepts", "image/*");
+    fi.setAttribute("accepts", this.mediaKind === "video" ? "video/*" : "image/*");
     fi.setAttribute("variant", "overlay");
     const defaultLabel = this.getAttribute("label") || "Upload";
     fi.setAttribute("label", this.#src ? "Replace" : defaultLabel);
@@ -8422,32 +8572,45 @@ class FigImage extends HTMLElement {
     }
   }
 
-  async #sniffDimensions(src) {
-    try {
-      let blob;
-      if (src.startsWith("blob:")) {
-        const res = await fetch(src);
-        blob = await res.blob();
-      } else {
-        const res = await fetch(src, { mode: "cors" });
-        blob = await res.blob();
-      }
-      const bitmap = await createImageBitmap(blob);
-      this.style.setProperty("--aspect-ratio", `${bitmap.width}/${bitmap.height}`);
-      bitmap.close();
-    } catch {
-      // Non-critical — CSS aspect-ratio fallback handles it
-    }
+  #emitPlaybackEvent(type) {
+    if (!this.#mediaEl) return;
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        bubbles: true,
+        cancelable: false,
+        composed: true,
+        detail: {
+          src: this.#src || "",
+          currentTime: this.#mediaEl.currentTime,
+          duration: this.#mediaEl.duration,
+        },
+      }),
+    );
+  }
+
+  #handleMediaPlay() {
+    this.#emitPlaybackEvent("play");
+  }
+
+  #handleMediaPause() {
+    this.#emitPlaybackEvent("pause");
+  }
+
+  #handleMediaEnded() {
+    this.#emitPlaybackEvent("ended");
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
 
     if (name === "src") {
-      this.#src = newValue;
-      if (this.#chit) {
-        this.#applyChitBackground(this.#chit);
+      this.#src = newValue || "";
+      if (this.#blobUrl && this.#src !== this.#blobUrl) {
+        URL.revokeObjectURL(this.#blobUrl);
+        this.#blobUrl = null;
+        this.#file = null;
       }
+      this.#syncGeneratedMediaElement();
       if (this.#fileInput) {
         const defaultLabel = this.getAttribute("label") || "Upload";
         this.#fileInput.setAttribute("label", this.#src ? "Replace" : defaultLabel);
@@ -8457,9 +8620,22 @@ class FigImage extends HTMLElement {
           this.#fileInput.removeAttribute("url");
         }
       }
-      if (this.#src && this.getAttribute("aspect-ratio") === "auto") {
-        this.#sniffDimensions(this.#src);
+    }
+
+    if (name === "type") {
+      this.#syncChitType();
+      this.#ensureMediaElement();
+      this.#syncGeneratedMediaElement();
+      if (this.#fileInput) {
+        this.#fileInput.setAttribute(
+          "accepts",
+          this.mediaKind === "video" ? "video/*" : "image/*",
+        );
       }
+    }
+
+    if (name === "alt" && this.#mediaEl && this.#mediaEl.tagName === "IMG") {
+      this.#mediaEl.alt = newValue || "";
     }
 
     if (name === "upload") {
@@ -8472,12 +8648,10 @@ class FigImage extends HTMLElement {
     }
 
     if (name === "aspect-ratio") {
-      if (newValue && newValue !== "auto") {
+      if (newValue) {
         this.style.setProperty("--aspect-ratio", newValue);
-      } else if (!newValue) {
+      } else {
         this.style.removeProperty("--aspect-ratio");
-      } else if (newValue === "auto" && this.#src) {
-        this.#sniffDimensions(this.#src);
       }
     }
 
@@ -8496,11 +8670,36 @@ class FigImage extends HTMLElement {
         } else {
           this.#chit.removeAttribute("checkerboard");
         }
+        this.#applyChitBackground(this.#chit);
       }
+    }
+
+    if (name === "label" && this.#fileInput) {
+      const defaultLabel = this.getAttribute("label") || "Upload";
+      this.#fileInput.setAttribute("label", this.#src ? "Replace" : defaultLabel);
+    }
+
+    if (["controls", "autoplay", "loop", "muted", "poster"].includes(name)) {
+      this.#syncGeneratedMediaElement();
     }
   }
 }
+
+customElements.define("fig-media", FigMedia);
+
+class FigImage extends FigMedia {
+  get mediaKind() {
+    return "image";
+  }
+}
 customElements.define("fig-image", FigImage);
+
+class FigVideo extends FigMedia {
+  get mediaKind() {
+    return "video";
+  }
+}
+customElements.define("fig-video", FigVideo);
 
 /* File Upload Input */
 class FigInputFile extends HTMLElement {
