@@ -1027,37 +1027,34 @@ customElements.define("fig-truncate", FigTruncate);
  * @attr {string} closedby - Controls how the dialog can be dismissed: "any" (default, Escape + light dismiss), "closerequest" (Escape only), "none" (programmatic only)
  */
 class FigDialog extends HTMLDialogElement {
-  #isDragging = false;
-  #dragPending = false;
-  #dragStartPos = { x: 0, y: 0 };
-  #dragOffset = { x: 0, y: 0 };
-  #boundPointerDown;
-  #boundPointerMove;
-  #boundPointerUp;
-  #boundClose;
-  #boundIframeMessage;
-  #boundContentMutation;
-  #boundContentResize;
-  #resizeObserver = null;
-  #mutationObserver = null;
-  #autoResizeRafId = 0;
-  #offset = 16; // 1rem in pixels
-  #positionInitialized = false;
-  #dragThreshold = 3; // pixels before drag starts
-
-  static get observedAttributes() {
-    return ["autoresize"];
-  }
-
   constructor() {
     super();
-    this.#boundPointerDown = this.#handlePointerDown.bind(this);
-    this.#boundPointerMove = this.#handlePointerMove.bind(this);
-    this.#boundPointerUp = this.#handlePointerUp.bind(this);
-    this.#boundClose = this.close.bind(this);
-    this.#boundIframeMessage = this.#handleIframeMessage.bind(this);
-    this.#boundContentMutation = this.#scheduleAutoResize.bind(this);
-    this.#boundContentResize = this.#scheduleAutoResize.bind(this);
+    this._figInit();
+  }
+
+  // Lazy initializer used by both the native constructor path and the
+  // Safari `is="..."` polyfill (which prototype-swaps existing nodes
+  // without invoking the constructor, so class fields are never set).
+  _figInit() {
+    if (this._figInitialized) return;
+    this._figInitialized = true;
+    this._isDragging = false;
+    this._dragPending = false;
+    this._dragStartPos = { x: 0, y: 0 };
+    this._dragOffset = { x: 0, y: 0 };
+    this._resizeObserver = null;
+    this._mutationObserver = null;
+    this._autoResizeRafId = 0;
+    this._offset = 16;
+    this._positionInitialized = false;
+    this._dragThreshold = 3;
+    this._boundPointerDown = this._handlePointerDown.bind(this);
+    this._boundPointerMove = this._handlePointerMove.bind(this);
+    this._boundPointerUp = this._handlePointerUp.bind(this);
+    this._boundClose = this.close.bind(this);
+    this._boundIframeMessage = this._handleIframeMessage.bind(this);
+    this._boundContentMutation = this._scheduleAutoResize.bind(this);
+    this._boundContentResize = this._scheduleAutoResize.bind(this);
   }
 
   get autoresize() {
@@ -1068,6 +1065,7 @@ class FigDialog extends HTMLDialogElement {
   }
 
   connectedCallback() {
+    this._figInit();
     this.modal =
       this.hasAttribute("modal") && this.getAttribute("modal") !== "false";
 
@@ -1075,34 +1073,29 @@ class FigDialog extends HTMLDialogElement {
     this.drag =
       this.hasAttribute("drag") && this.getAttribute("drag") !== "false";
 
-    this.#ensureHeader();
+    this._ensureHeader();
 
     requestAnimationFrame(() => {
-      this.#addCloseListeners();
-      this.#setupDragListeners();
-      this.#applyPosition();
-      this.#syncAutoResize();
+      this._addCloseListeners();
+      this._setupDragListeners();
+      this._applyPosition();
+      this._syncAutoResize();
     });
 
-    window.addEventListener("message", this.#boundIframeMessage);
+    window.addEventListener("message", this._boundIframeMessage);
   }
 
   disconnectedCallback() {
-    this.#removeDragListeners();
+    this._figInit();
+    this._removeDragListeners();
     this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
-      button.removeEventListener("click", this.#boundClose);
+      button.removeEventListener("click", this._boundClose);
     });
-    window.removeEventListener("message", this.#boundIframeMessage);
-    this.#teardownAutoResize();
+    window.removeEventListener("message", this._boundIframeMessage);
+    this._teardownAutoResize();
   }
 
-  attributeChangedCallback(name) {
-    if (name === "autoresize" && this.isConnected) {
-      this.#syncAutoResize();
-    }
-  }
-
-  #handleIframeMessage(event) {
+  _handleIframeMessage(event) {
     if (!this.autoresize) return;
     const data = event?.data;
     if (!data || data.type !== "figui:iframe-resize") return;
@@ -1112,41 +1105,41 @@ class FigDialog extends HTMLDialogElement {
       (el) => el.contentWindow === source,
     );
     if (!iframe) return;
-    this.#resizeForIframe(iframe, data);
+    this._resizeForIframe(iframe, data);
   }
 
-  #syncAutoResize() {
+  _syncAutoResize() {
     if (this.autoresize) {
-      this.#setupAutoResize();
-      this.#scheduleAutoResize();
+      this._setupAutoResize();
+      this._scheduleAutoResize();
     } else {
-      this.#teardownAutoResize();
+      this._teardownAutoResize();
     }
   }
 
-  #setupAutoResize() {
-    if (!this.#resizeObserver) {
-      this.#resizeObserver = new ResizeObserver(this.#boundContentResize);
+  _setupAutoResize() {
+    if (!this._resizeObserver) {
+      this._resizeObserver = new ResizeObserver(this._boundContentResize);
       for (const child of this.children) {
         try {
-          this.#resizeObserver.observe(child);
+          this._resizeObserver.observe(child);
         } catch {}
       }
     }
-    if (!this.#mutationObserver) {
-      this.#mutationObserver = new MutationObserver((mutations) => {
+    if (!this._mutationObserver) {
+      this._mutationObserver = new MutationObserver((mutations) => {
         for (const m of mutations) {
           m.addedNodes?.forEach((node) => {
             if (node instanceof Element && node.parentElement === this) {
               try {
-                this.#resizeObserver?.observe(node);
+                this._resizeObserver?.observe(node);
               } catch {}
             }
           });
         }
-        this.#scheduleAutoResize();
+        this._scheduleAutoResize();
       });
-      this.#mutationObserver.observe(this, {
+      this._mutationObserver.observe(this, {
         childList: true,
         subtree: true,
         attributes: true,
@@ -1155,39 +1148,39 @@ class FigDialog extends HTMLDialogElement {
     }
   }
 
-  #teardownAutoResize() {
-    if (this.#resizeObserver) {
-      this.#resizeObserver.disconnect();
-      this.#resizeObserver = null;
+  _teardownAutoResize() {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
     }
-    if (this.#mutationObserver) {
-      this.#mutationObserver.disconnect();
-      this.#mutationObserver = null;
+    if (this._mutationObserver) {
+      this._mutationObserver.disconnect();
+      this._mutationObserver = null;
     }
-    if (this.#autoResizeRafId) {
-      cancelAnimationFrame(this.#autoResizeRafId);
-      this.#autoResizeRafId = 0;
+    if (this._autoResizeRafId) {
+      cancelAnimationFrame(this._autoResizeRafId);
+      this._autoResizeRafId = 0;
     }
   }
 
-  #scheduleAutoResize() {
+  _scheduleAutoResize() {
     if (!this.autoresize) return;
-    if (this.#autoResizeRafId) return;
-    this.#autoResizeRafId = requestAnimationFrame(() => {
-      this.#autoResizeRafId = 0;
-      this.#applyAutoResize();
+    if (this._autoResizeRafId) return;
+    this._autoResizeRafId = requestAnimationFrame(() => {
+      this._autoResizeRafId = 0;
+      this._applyAutoResize();
     });
   }
 
-  #applyAutoResize() {
+  _applyAutoResize() {
     if (!this.autoresize) return;
     // When an iframe child is present, defer to the iframe's postMessage
     // broadcast (the only reliable source of its content height).
     if (this.querySelector(":scope > iframe")) return;
-    this.#resizeToContent(null);
+    this._resizeToContent(null);
   }
 
-  #computeChrome(skipChild) {
+  _computeChrome(skipChild) {
     const cs = window.getComputedStyle(this);
     const verticalBoxExtras =
       parseFloat(cs.paddingTop || "0") +
@@ -1215,20 +1208,20 @@ class FigDialog extends HTMLDialogElement {
     return verticalBoxExtras + siblingsHeight;
   }
 
-  #resizeForIframe(iframe, data) {
+  _resizeForIframe(iframe, data) {
     if (typeof data.height !== "number" || !(data.height > 0)) return;
-    const chrome = this.#computeChrome(iframe);
+    const chrome = this._computeChrome(iframe);
     this.style.height = `${Math.ceil(data.height + chrome)}px`;
   }
 
-  #resizeToContent() {
+  _resizeToContent() {
     // Let CSS handle the sizing via `height: max-content` (applied by the
     // [autoresize] rule). Just clear any previously applied inline height
     // (e.g. from drag/resize) so the CSS rule wins.
     if (this.style.height) this.style.height = "";
   }
 
-  #ensureHeader() {
+  _ensureHeader() {
     if (this.querySelector("fig-header[dialog-header]")) return;
     const header = document.createElement("fig-header");
     header.setAttribute("dialog-header", "");
@@ -1251,14 +1244,14 @@ class FigDialog extends HTMLDialogElement {
     this.prepend(header);
   }
 
-  #addCloseListeners() {
+  _addCloseListeners() {
     this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
-      button.removeEventListener("click", this.#boundClose);
-      button.addEventListener("click", this.#boundClose);
+      button.removeEventListener("click", this._boundClose);
+      button.addEventListener("click", this._boundClose);
     });
   }
 
-  #applyPosition() {
+  _applyPosition() {
     const position = this.getAttribute("position") || "";
 
     // Apply common styles
@@ -1282,9 +1275,9 @@ class FigDialog extends HTMLDialogElement {
 
     // Vertical positioning
     if (hasTop) {
-      this.style.top = `${this.#offset}px`;
+      this.style.top = `${this._offset}px`;
     } else if (hasBottom) {
-      this.style.bottom = `${this.#offset}px`;
+      this.style.bottom = `${this._offset}px`;
     } else if (hasVCenter) {
       this.style.top = "0";
       this.style.bottom = "0";
@@ -1292,9 +1285,9 @@ class FigDialog extends HTMLDialogElement {
 
     // Horizontal positioning
     if (hasLeft) {
-      this.style.left = `${this.#offset}px`;
+      this.style.left = `${this._offset}px`;
     } else if (hasRight) {
-      this.style.right = `${this.#offset}px`;
+      this.style.right = `${this._offset}px`;
     } else if (hasHCenter) {
       this.style.left = "0";
       this.style.right = "0";
@@ -1311,12 +1304,12 @@ class FigDialog extends HTMLDialogElement {
       this.style.marginRight = "auto";
     }
 
-    this.#positionInitialized = true;
+    this._positionInitialized = true;
   }
 
-  #setupDragListeners() {
+  _setupDragListeners() {
     if (this.drag) {
-      this.addEventListener("pointerdown", this.#boundPointerDown);
+      this.addEventListener("pointerdown", this._boundPointerDown);
       const handleSelector = this.getAttribute("handle");
       const handleEl = handleSelector
         ? this.querySelector(handleSelector)
@@ -1327,13 +1320,13 @@ class FigDialog extends HTMLDialogElement {
     }
   }
 
-  #removeDragListeners() {
-    this.removeEventListener("pointerdown", this.#boundPointerDown);
-    document.removeEventListener("pointermove", this.#boundPointerMove);
-    document.removeEventListener("pointerup", this.#boundPointerUp);
+  _removeDragListeners() {
+    this.removeEventListener("pointerdown", this._boundPointerDown);
+    document.removeEventListener("pointermove", this._boundPointerMove);
+    document.removeEventListener("pointerup", this._boundPointerUp);
   }
 
-  #isInteractiveElement(element) {
+  _isInteractiveElement(element) {
     // Standard HTML interactive elements
     const interactiveSelectors = [
       "input",
@@ -1385,13 +1378,13 @@ class FigDialog extends HTMLDialogElement {
     return false;
   }
 
-  #handlePointerDown(e) {
+  _handlePointerDown(e) {
     if (!this.drag) {
       return;
     }
 
     // Don't interfere with interactive elements (inputs, sliders, buttons, etc.)
-    if (this.#isInteractiveElement(e.target)) {
+    if (this._isInteractiveElement(e.target)) {
       return;
     }
 
@@ -1408,30 +1401,30 @@ class FigDialog extends HTMLDialogElement {
 
     // Don't prevent default yet - just set up pending drag
     // This allows clicks on non-interactive elements like <details> to work
-    this.#dragPending = true;
-    this.#dragStartPos.x = e.clientX;
-    this.#dragStartPos.y = e.clientY;
+    this._dragPending = true;
+    this._dragStartPos.x = e.clientX;
+    this._dragStartPos.y = e.clientY;
 
     // Get current position from computed style
     const rect = this.getBoundingClientRect();
 
     // Store offset from pointer to dialog top-left corner
-    this.#dragOffset.x = e.clientX - rect.left;
-    this.#dragOffset.y = e.clientY - rect.top;
+    this._dragOffset.x = e.clientX - rect.left;
+    this._dragOffset.y = e.clientY - rect.top;
 
-    document.addEventListener("pointermove", this.#boundPointerMove);
-    document.addEventListener("pointerup", this.#boundPointerUp);
+    document.addEventListener("pointermove", this._boundPointerMove);
+    document.addEventListener("pointerup", this._boundPointerUp);
   }
 
-  #handlePointerMove(e) {
+  _handlePointerMove(e) {
     // Check if we should start dragging (threshold exceeded)
-    if (this.#dragPending && !this.#isDragging) {
-      const dx = Math.abs(e.clientX - this.#dragStartPos.x);
-      const dy = Math.abs(e.clientY - this.#dragStartPos.y);
+    if (this._dragPending && !this._isDragging) {
+      const dx = Math.abs(e.clientX - this._dragStartPos.x);
+      const dy = Math.abs(e.clientY - this._dragStartPos.y);
 
-      if (dx > this.#dragThreshold || dy > this.#dragThreshold) {
-        this.#isDragging = true;
-        this.#dragPending = false;
+      if (dx > this._dragThreshold || dy > this._dragThreshold) {
+        this._isDragging = true;
+        this._dragPending = false;
         this.setPointerCapture(e.pointerId);
         this.style.cursor = "grabbing";
 
@@ -1444,40 +1437,54 @@ class FigDialog extends HTMLDialogElement {
       }
     }
 
-    if (!this.#isDragging) return;
+    if (!this._isDragging) return;
 
-    this.style.left = `${e.clientX - this.#dragOffset.x}px`;
-    this.style.top = `${e.clientY - this.#dragOffset.y}px`;
+    this.style.left = `${e.clientX - this._dragOffset.x}px`;
+    this.style.top = `${e.clientY - this._dragOffset.y}px`;
     e.preventDefault();
   }
 
-  #handlePointerUp(e) {
-    if (this.#isDragging) {
+  _handlePointerUp(e) {
+    if (this._isDragging) {
       this.releasePointerCapture(e.pointerId);
       this.style.cursor = "";
     }
 
-    this.#isDragging = false;
-    this.#dragPending = false;
+    this._isDragging = false;
+    this._dragPending = false;
 
-    document.removeEventListener("pointermove", this.#boundPointerMove);
-    document.removeEventListener("pointerup", this.#boundPointerUp);
+    document.removeEventListener("pointermove", this._boundPointerMove);
+    document.removeEventListener("pointerup", this._boundPointerUp);
 
     e.preventDefault();
   }
 
   static get observedAttributes() {
-    return ["modal", "drag", "position", "handle", "title", "resizable", "closedby"];
+    return [
+      "modal",
+      "drag",
+      "position",
+      "handle",
+      "title",
+      "resizable",
+      "closedby",
+      "autoresize",
+    ];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    this._figInit();
+    if (name === "autoresize" && this.isConnected) {
+      this._syncAutoResize();
+    }
+
     if (name === "drag") {
       this.drag = newValue !== null && newValue !== "false";
 
       if (this.drag) {
-        this.#setupDragListeners();
+        this._setupDragListeners();
       } else {
-        this.#removeDragListeners();
+        this._removeDragListeners();
         const header = this.querySelector("fig-header, header");
         if (header) {
           header.style.cursor = "";
@@ -1485,8 +1492,8 @@ class FigDialog extends HTMLDialogElement {
       }
     }
 
-    if (name === "position" && this.#positionInitialized) {
-      this.#applyPosition();
+    if (name === "position" && this._positionInitialized) {
+      this._applyPosition();
     }
 
     if (name === "modal") {
@@ -7817,13 +7824,17 @@ customElements.define("fig-switch", FigSwitch);
  * @attr {boolean} open - Whether the toast is visible
  */
 class FigToast extends HTMLDialogElement {
-  _defaultOffset = 16; // 1rem in pixels
-  _autoCloseTimer = null;
-  #boundHandleClose;
-
   constructor() {
     super();
-    this.#boundHandleClose = this.handleClose.bind(this);
+    this._figInit();
+  }
+
+  _figInit() {
+    if (this._figInitialized) return;
+    this._figInitialized = true;
+    this._defaultOffset = 16;
+    this._autoCloseTimer = null;
+    this._boundHandleClose = this.handleClose.bind(this);
   }
 
   getOffset() {
@@ -7831,12 +7842,7 @@ class FigToast extends HTMLDialogElement {
   }
 
   connectedCallback() {
-    if (typeof this._defaultOffset !== "number") {
-      this._defaultOffset = 16;
-    }
-    if (typeof this._autoCloseTimer === "undefined") {
-      this._autoCloseTimer = null;
-    }
+    this._figInit();
 
     // Set default theme if not specified
     if (!this.hasAttribute("theme")) {
@@ -7868,13 +7874,14 @@ class FigToast extends HTMLDialogElement {
   }
 
   disconnectedCallback() {
+    this._figInit();
     this.clearAutoClose();
   }
 
   addCloseListeners() {
     this.querySelectorAll("[close-toast]").forEach((button) => {
-      button.removeEventListener("click", this.#boundHandleClose);
-      button.addEventListener("click", this.#boundHandleClose);
+      button.removeEventListener("click", this._boundHandleClose);
+      button.addEventListener("click", this._boundHandleClose);
     });
   }
 
@@ -7911,7 +7918,7 @@ class FigToast extends HTMLDialogElement {
     }
   }
 
-  #resolveAutoTheme() {
+  _resolveAutoTheme() {
     if (this.getAttribute("theme") !== "auto") return;
     const cs = getComputedStyle(document.documentElement).colorScheme || "";
     const isDark = cs.includes("dark");
@@ -7922,7 +7929,7 @@ class FigToast extends HTMLDialogElement {
    * Show the toast notification (non-modal)
    */
   showToast() {
-    this.#resolveAutoTheme();
+    this._resolveAutoTheme();
     this.show(); // Non-modal show
     this.applyPosition();
     this.startAutoClose();
@@ -7943,6 +7950,7 @@ class FigToast extends HTMLDialogElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    this._figInit();
     if (name === "offset") {
       this.applyPosition();
     }
@@ -7957,7 +7965,7 @@ class FigToast extends HTMLDialogElement {
 
     if (name === "theme") {
       if (newValue === "auto") {
-        this.#resolveAutoTheme();
+        this._resolveAutoTheme();
       } else {
         this.style.removeProperty("color-scheme");
       }

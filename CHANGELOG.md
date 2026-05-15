@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.8.3]
+
+### Fixed
+
+- Safari: `fig-dialog` and `fig-toast` no longer throw `Cannot access invalid private field` / `Cannot access private method` errors when running through the customized built-in polyfill. The polyfill prototype-swaps existing nodes without invoking the constructor, so all `#privateField` members in `FigDialog` and `FigToast` were converted to underscore-prefixed (`_name`) members and initialized via an idempotent `_figInit()` that runs from both the constructor and lifecycle callbacks.
+- `fig-dialog`: merged duplicate `static get observedAttributes()` and `attributeChangedCallback()` declarations. The second pair was overriding the first, so `autoresize` was never actually observed.
+
+### Changed
+
+- Playground `/propkit` "Plugin" iframe page: load the Inter font from Google Fonts so the iframe content matches the figui3 system font.
+
 ## [4.8.2]
 
 ### Fixed
