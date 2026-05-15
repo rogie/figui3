@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.8.1]
+
+### Changed
+
+- Playground `/propkit` "Plugin" iframe page: removed unused IBM Plex Mono Google Fonts stylesheet and a redundant `flex: 1 1 auto` on `body > fig-content`.
+
 ## [4.8.0]
 
 ### Added
