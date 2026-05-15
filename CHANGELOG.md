@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.6.1]
+
+### Changed
+
+- Playground "Plugin" dialog example: iframe now points to the absolute `https://rog.ie/propkit/iframe.html` URL so the example works outside the dev playground.
+
 ## [4.6.0]
 
 ### Added

@@ -1142,7 +1142,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Plugin</fig-button>
   <dialog is="fig-dialog" title="Plugin" open handle="fig-header" position="center center" data-playground-hide-field style="width: 240px; height: 480px;">
-    <iframe src="/propkit/iframe.html"></iframe>
+    <iframe src="https://rog.ie/propkit/iframe.html"></iframe>
   </dialog>
 </div>`,
       },
