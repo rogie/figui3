@@ -13601,6 +13601,7 @@ customElements.define("fig-fill-picker", FigFillPicker);
 class FigColorTip extends HTMLElement {
   #fillPicker = null;
   #chit = null;
+  #chitSelectedObserver = null;
   #boundHandleInput = this.#handlePickerInput.bind(this);
   #boundHandleChange = this.#handlePickerChange.bind(this);
 
@@ -13623,20 +13624,37 @@ class FigColorTip extends HTMLElement {
   }
 
   #teardownListeners() {
-    if (!this.#fillPicker) return;
-    this.#fillPicker.removeEventListener("input", this.#boundHandleInput);
-    this.#fillPicker.removeEventListener("change", this.#boundHandleChange);
+    if (this.#fillPicker) {
+      this.#fillPicker.removeEventListener("input", this.#boundHandleInput);
+      this.#fillPicker.removeEventListener("change", this.#boundHandleChange);
+    }
+    if (this.#chitSelectedObserver) {
+      this.#chitSelectedObserver.disconnect();
+      this.#chitSelectedObserver = null;
+    }
   }
 
-  #watchPickerDialog = () => {
-    requestAnimationFrame(() => {
-      const dialog = document.querySelector(".fig-fill-picker-dialog[open]");
-      if (!dialog) return;
-      dialog.addEventListener("close", () => this.removeAttribute("selected"), {
-        once: true,
-      });
+  #observeChitSelected() {
+    if (this.#chitSelectedObserver) {
+      this.#chitSelectedObserver.disconnect();
+      this.#chitSelectedObserver = null;
+    }
+    if (!this.#chit) return;
+    this.#chitSelectedObserver = new MutationObserver(() => {
+      const chitSelected =
+        this.#chit?.hasAttribute("selected") &&
+        this.#chit.getAttribute("selected") !== "false";
+      if (chitSelected) {
+        if (!this.hasAttribute("selected")) this.setAttribute("selected", "");
+      } else if (this.hasAttribute("selected")) {
+        this.removeAttribute("selected");
+      }
     });
-  };
+    this.#chitSelectedObserver.observe(this.#chit, {
+      attributes: true,
+      attributeFilter: ["selected"],
+    });
+  }
 
   get #alphaEnabled() {
     const v = this.getAttribute("alpha");
@@ -13677,10 +13695,7 @@ class FigColorTip extends HTMLElement {
     this.#teardownListeners();
     this.#fillPicker?.addEventListener("input", this.#boundHandleInput);
     this.#fillPicker?.addEventListener("change", this.#boundHandleChange);
-    this.#chit?.addEventListener("click", () => {
-      this.setAttribute("selected", "");
-      this.#watchPickerDialog();
-    });
+    this.#observeChitSelected();
   }
 
   #handleControlClick = () => {

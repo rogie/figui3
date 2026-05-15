@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.8.2]
+
+### Fixed
+
+- `fig-color-tip`: `selected` attribute now correctly toggles off when the fill picker dialog closes. Replaced the brittle `document.querySelector(".fig-fill-picker-dialog[open]")` watcher with a `MutationObserver` on the inner `fig-chit`'s `selected` attribute, mirroring its state to the host.
+
 ## [4.8.1]
 
 ### Changed
