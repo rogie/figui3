@@ -6614,9 +6614,9 @@ class FigInputPalette extends HTMLElement {
       );
     });
     inlineWrap.appendChild(wrap);
-
-    if (this.#showAdd) this.#createAddButton(disabled, inlineWrap);
     this.appendChild(inlineWrap);
+
+    if (this.#showAdd) this.#createAddButton(disabled, this);
 
     const expandedWrap = document.createElement("div");
     expandedWrap.className = "palette-colors-expanded";
@@ -6644,7 +6644,7 @@ class FigInputPalette extends HTMLElement {
       ic.setAttribute("alpha", "true");
     } else {
       ic.setAttribute("text", "true");
-      ic.setAttribute("alpha", "true");
+      ic.setAttribute("alpha", "false");
       ic.setAttribute("full", "");
     }
     if (disabled) ic.setAttribute("disabled", "");
@@ -6715,7 +6715,7 @@ class FigInputPalette extends HTMLElement {
   #createAddButton(disabled, parent = this) {
     const atMax = this.#colors.length >= this.#max;
     const addBtn = document.createElement("fig-button");
-    addBtn.setAttribute("variant", "input");
+    addBtn.setAttribute("variant", "ghost");
     addBtn.setAttribute("icon", "true");
     addBtn.setAttribute("aria-label", "Add color");
     addBtn.className = "palette-add-btn";
@@ -7041,7 +7041,7 @@ class FigInputGradient extends HTMLElement {
       const gradientValue = JSON.stringify(this.value);
       this.innerHTML = `
         <fig-fill-picker mode="gradient"${expAttr} value='${gradientValue}'${disabled ? " disabled" : ""}>
-          <fig-chit size="medium" background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
+          <fig-chit background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
         </fig-fill-picker>`;
       this.#chit = this.querySelector("fig-chit");
       this.#track = null;
@@ -7050,7 +7050,7 @@ class FigInputGradient extends HTMLElement {
     }
 
     this.innerHTML = `
-      <fig-chit size="medium" background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
+      <fig-chit background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
       ${mode === "true" ? `<div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>` : ""}`;
     this.#chit = this.querySelector("fig-chit");
     this.#track = this.querySelector(".fig-input-gradient-track");

@@ -3301,10 +3301,10 @@ fig-input-fill {
   }
 }
 fig-input-gradient {
-  --height: 1.5rem;
-  --chit-height: var(--height);
+  --fig-input-gradient-height: 1.5rem;
+  --fig-input-gradient-padding: var(--spacer-1);
   position: relative;
-  height: var(--height);
+  height: var(--fig-input-gradient-height);
   width: 100%;
   min-width: 0;
 
@@ -3332,23 +3332,29 @@ fig-input-gradient {
   }
   & > fig-chit,
   & > fig-fill-picker > fig-chit {
-    --padding: 0;
     --width: 100%;
-    --height: var(--chit-height);
-    flex: 1 1 auto;
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: var(--chit-height) !important;
+    width: var(--width);
+    --border-radius: var(--radius-large);
   }
   &[size="large"] {
-    --height: 3rem;
+    --fig-input-gradient-height: 2rem;
+    height: var(--fig-input-gradient-height) !important;
+    & > fig-chit,
+    & > fig-fill-picker > fig-chit {
+      --padding:0px;
+      --height: var(--fig-input-gradient-height);
+      --border-radius: var(--radius-medium);
+    }
+    .fig-input-gradient-track {
+      inset: 0;
+    }
   }
 
   .fig-input-gradient-track {
     position: absolute;
     display: flex;
     align-items: center;
-    inset: 0;
+    inset: 0 var(--spacer-2-5);
     pointer-events: auto;
     z-index: 1;
 
@@ -3364,11 +3370,20 @@ fig-input-gradient {
 }
 
 fig-input-palette {
-  display: inline-flex !important;
-  flex-direction: column;
+  --fig-input-palette-padding: var(--spacer-1);
+  --fig-input-palette-height: 1.5rem;
+  display: inline-grid !important;
+  grid-template-columns: 1fr 24px;
+  grid-template-areas:
+    "inline    button"
+    "expanded  expanded";
   gap: var(--spacer-2);
   min-width: 0;
   border-radius: var(--radius-medium);
+
+  > .palette-colors-inline {
+    grid-area: inline;
+  }
 
   .palette-colors {
     display: flex;
@@ -3385,26 +3400,29 @@ fig-input-palette {
     grid-area: button;
   }
   .palette-colors-inline {
-    display: inline-grid !important;
-    grid-template-columns: 1fr 24px;
-    grid-template-areas: "inputs button";
+    display: flex !important;
     border-radius: var(--radius-medium);
     width: 100%;
     gap: var(--spacer-2);
     place-items: center;
+    height: var(--fig-input-palette-height);
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+    padding: 0 var(--fig-input-palette-padding);
 
     .palette-colors {
       display: flex;
-      --palette-colors-height: 1.5rem;
+      border-radius: var(--radius-small);
+      --palette-colors-height: calc(var(--fig-input-palette-height) - var(--fig-input-palette-padding)*2);
       height: var(--palette-colors-height);
       fig-input-color {
         width: 100%;
       }
 
       fig-chit {
-        --padding: 0px;
         --border-radius: 0px;
         --width: 100%;
+        --padding: 0px;
         --height: var(--palette-colors-height);
         --size: var(--palette-colors-height);
         flex: 1;
@@ -3425,14 +3443,12 @@ fig-input-palette {
       display: grid;
     }
   }
-  &[add="false"] {
-    .palette-colors-expanded,
-    .palette-colors-inline {
-      grid-template-areas: "inputs inputs";
-    }
+  &[add="false"] > .palette-colors-inline {
+    grid-column: 1 / -1;
   }
   .palette-colors-expanded {
     display: none;
+    grid-area: expanded;
     grid-template-columns: [input] 1fr [button] 1.5rem;
     overflow: visible;
     border-radius: 0;
@@ -4352,12 +4368,9 @@ fig-preview {
   }
 
   .fig-fill-picker-gradient-preview {
-    display: block;
-    .fig-fill-picker-gradient-bar-input {
-      --width: 100%;
-      --height: 100%;
-      aspect-ratio: 1/1;
-    }
+    aspect-ratio: auto;
+    padding: var(--spacer-2-5) 0 0 0;
+
   }
 
   .fig-fill-picker-gradient-stops {

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.9.0]
+
+### Changed
+
+- `fig-input-palette`: layout reworked to a 2-row grid. Row 1: inline palette + add button (right-aligned). Row 2: expanded color list spans the full width. When `add="false"`, the inline palette spans both columns.
+- `fig-input-palette`: expanded `fig-input-color` rows no longer expose alpha (`alpha="false"`) — alpha editing is still available in the inline pickers.
+- `fig-input-gradient`: dropped hardcoded `size="medium"` on the chit so it inherits the default chit sizing.
+- `fig-input-gradient`: stop and ghost handles now use `size="small"` to match Figma's compact gradient affordances.
+
 ## [4.8.3]
 
 ### Fixed
