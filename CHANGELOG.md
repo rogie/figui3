@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.7.1]
+
+### Changed
+
+- Playground `/propkit` "Plugin" iframe page: merged the `.plugin-body` flex/scroll rules into the `body` element directly, eliminating the wrapper div so the footer stays pinned via `margin-top: auto` and content scrolls within body.
+
 ## [4.7.0]
 
 ### Added
