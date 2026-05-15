@@ -742,115 +742,125 @@ export default function AttributesView({
                 scope === "control" &&
                 name === "action");
             if (useSegmentedControl) {
+              const labelForOption = (option: string): string => {
+                if (
+                  (target.controlTag === "fig-handle" ||
+                    target.controlTag === "fig-color-tip") &&
+                  name === "control"
+                ) {
+                  return toSentenceCaseLabel(option || "None");
+                }
+                if (target.controlTag === "fig-handle" && name === "size") {
+                  return option === "" ? "Default" : "Small";
+                }
+                if (target.controlTag === "fig-handle" && name === "drag-axes") {
+                  return option === "x,y" ? "X & Y" : option.toUpperCase();
+                }
+                if (
+                  target.controlTag === "fig-handle" &&
+                  name === "drag-snapping"
+                ) {
+                  return option === "modifier"
+                    ? "Shift"
+                    : option === "true"
+                      ? "On"
+                      : "Off";
+                }
+                return toSentenceCaseLabel(option);
+              };
+              const handleOptionSelect = (option: string) => {
+                if (isCheckRadioLabel) {
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    option === "none" ? null : "Label",
+                  );
+                  return;
+                }
+                if (
+                  target.controlTag === "fig-handle" &&
+                  name === "control"
+                ) {
+                  let updated = applyAttributeMutation(markup, {
+                    fieldIndex: target.fieldIndex,
+                    target: "control",
+                    name: "control",
+                    value: option || null,
+                  });
+                  if (option === "add" || option === "remove") {
+                    updated = applyAttributeMutation(updated, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "type",
+                      value: null,
+                    });
+                  }
+                  onMarkupChange(updated);
+                  return;
+                }
+                if (target.controlTag === "fig-handle" && name === "size") {
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    option === "" ? null : option,
+                  );
+                  return;
+                }
+                if (
+                  target.controlTag === "fig-color-tip" &&
+                  name === "control"
+                ) {
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    option === "color" ? null : option,
+                  );
+                  return;
+                }
+                if (
+                  target.controlTag === "fig-tooltip" &&
+                  name === "action"
+                ) {
+                  if (option !== "manual") {
+                    const el = document.querySelector(
+                      `fig-tooltip[action="manual"]`,
+                    ) as any;
+                    el?.hidePopup?.();
+                  }
+                  onMarkupChange(
+                    applyTooltipActionMutation(
+                      markup,
+                      target.fieldIndex,
+                      option,
+                    ),
+                  );
+                  return;
+                }
+                applyChange(target.fieldIndex, scope, name, option);
+              };
+              const optionsStr = options
+                .map((o) => labelForOption(o))
+                .join(",");
+              const currentLabel = labelForOption(current);
               return (
-                <fig-segmented-control full value={current}>
-                  {options.map((option) => (
-                    <fig-segment
-                      key={option}
-                      value={option}
-                      selected={option === current ? "true" : undefined}
-                      onClick={() => {
-                        if (isCheckRadioLabel) {
-                          applyChange(
-                            target.fieldIndex,
-                            scope,
-                            name,
-                            option === "none" ? null : "Label",
-                          );
-                          return;
-                        }
-                        if (
-                          target.controlTag === "fig-handle" &&
-                          name === "control"
-                        ) {
-                          let updated = applyAttributeMutation(markup, {
-                            fieldIndex: target.fieldIndex,
-                            target: "control",
-                            name: "control",
-                            value: option || null,
-                          });
-                          if (option === "add" || option === "remove") {
-                            updated = applyAttributeMutation(updated, {
-                              fieldIndex: target.fieldIndex,
-                              target: "control",
-                              name: "type",
-                              value: null,
-                            });
-                          }
-                          onMarkupChange(updated);
-                          return;
-                        }
-                        if (
-                          target.controlTag === "fig-handle" &&
-                          name === "size"
-                        ) {
-                          applyChange(
-                            target.fieldIndex,
-                            scope,
-                            name,
-                            option === "" ? null : option,
-                          );
-                          return;
-                        }
-                        if (
-                          target.controlTag === "fig-color-tip" &&
-                          name === "control"
-                        ) {
-                          applyChange(
-                            target.fieldIndex,
-                            scope,
-                            name,
-                            option === "color" ? null : option,
-                          );
-                          return;
-                        }
-                        if (
-                          target.controlTag === "fig-tooltip" &&
-                          name === "action"
-                        ) {
-                          if (option !== "manual") {
-                            const el = document.querySelector(
-                              `fig-tooltip[action="manual"]`,
-                            ) as any;
-                            el?.hidePopup?.();
-                          }
-                          onMarkupChange(
-                            applyTooltipActionMutation(
-                              markup,
-                              target.fieldIndex,
-                              option,
-                            ),
-                          );
-                          return;
-                        }
-                        applyChange(target.fieldIndex, scope, name, option);
-                      }}
-                    >
-                      {(target.controlTag === "fig-handle" ||
-                        target.controlTag === "fig-color-tip") &&
-                      name === "control"
-                        ? toSentenceCaseLabel(option || "None")
-                        : target.controlTag === "fig-handle" &&
-                      name === "size"
-                        ? option === ""
-                          ? "Default"
-                          : "Small"
-                        : target.controlTag === "fig-handle" &&
-                      name === "drag-axes"
-                        ? option === "x,y"
-                          ? "X & Y"
-                          : option.toUpperCase()
-                        : target.controlTag === "fig-handle" &&
-                            name === "drag-snapping"
-                          ? option === "modifier"
-                            ? "Shift"
-                            : option === "true"
-                              ? "On"
-                              : "Off"
-                          : toSentenceCaseLabel(option)}
-                    </fig-segment>
-                  ))}
-                </fig-segmented-control>
+                <fig-options
+                  full
+                  options={optionsStr}
+                  value={currentLabel}
+                  onChange={(e: any) => {
+                    const nextLabel =
+                      (e as CustomEvent).detail ?? e.target?.value;
+                    if (typeof nextLabel !== "string") return;
+                    const match = options.find(
+                      (o) => labelForOption(o) === nextLabel,
+                    );
+                    if (match === undefined) return;
+                    handleOptionSelect(match);
+                  }}
+                ></fig-options>
               );
             }
 
@@ -1222,7 +1232,7 @@ export default function AttributesView({
                   <div className="propkit-attributes-group">
                     <fig-field
                       direction="horizontal"
-                      columns="half"
+                      columns="thirds"
                       key={`field-label-${target.fieldIndex}`}
                     >
                       <label>Label</label>
@@ -1261,7 +1271,7 @@ export default function AttributesView({
                     {fieldEntries.map((entry) => (
                       <fig-field
                         direction="horizontal"
-                        columns="half"
+                        columns="thirds"
                         key={`field-${entry.name}`}
                       >
                         <label>{sentenceCase(entry.rule.label)}</label>
@@ -1271,7 +1281,7 @@ export default function AttributesView({
                     {showFieldInputSelector && (
                       <fig-field
                         direction="horizontal"
-                        columns="half"
+                        columns="thirds"
                         key={`field-input-${target.fieldIndex}`}
                       >
                         <label>Input</label>
@@ -1321,7 +1331,7 @@ export default function AttributesView({
                         return (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-header-icon-${target.fieldIndex}`}
                           >
                             <label>Icon</label>
@@ -1347,7 +1357,7 @@ export default function AttributesView({
                         return (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-chit-fill-${target.fieldIndex}`}
                           >
                             <label>Fill</label>
@@ -1374,7 +1384,7 @@ export default function AttributesView({
                       const field = (
                         <fig-field
                           direction="horizontal"
-                          columns="half"
+                          columns="thirds"
                           key={`control-${entry.name}`}
                         >
                           <label>{sentenceCase(entry.rule.label)}</label>
@@ -1396,7 +1406,7 @@ export default function AttributesView({
                         const overflowField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-chooser-overflow-${target.fieldIndex}`}
                           >
                             <label>{sentenceCase("Overflow")}</label>
@@ -1433,7 +1443,7 @@ export default function AttributesView({
                         const maxSizeField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-chooser-maxsize-${target.fieldIndex}-${currentLayout}`}
                           >
                             <label>{sentenceCase("Max size")}</label>
@@ -1471,7 +1481,7 @@ export default function AttributesView({
                         const paletteLabelsField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-chooser-palette-labels-${target.fieldIndex}`}
                           >
                             <label>Labels</label>
@@ -1509,7 +1519,7 @@ export default function AttributesView({
                         const colorPickerField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-handle-color-picker-${target.fieldIndex}`}
                           >
                             <label></label>
@@ -1560,7 +1570,7 @@ export default function AttributesView({
                         const hitAreaSizeField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-handle-hit-area-size-${target.fieldIndex}`}
                           >
                             <label>Size</label>
@@ -1582,7 +1592,7 @@ export default function AttributesView({
                         const hitAreaShapeField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-handle-hit-area-shape-${target.fieldIndex}`}
                           >
                             <label>Shape</label>
@@ -1608,7 +1618,7 @@ export default function AttributesView({
                         const hitAreaDebugField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-handle-hit-area-debug-${target.fieldIndex}`}
                           >
                             <label>Debug</label>
@@ -1630,7 +1640,7 @@ export default function AttributesView({
                         const hitAreaModeField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="thirds"
                             key={`control-handle-hit-area-mode-${target.fieldIndex}`}
                           >
                             <label>Mode</label>
@@ -1673,7 +1683,7 @@ export default function AttributesView({
                       const prependField = (
                         <fig-field
                           direction="horizontal"
-                          columns="half"
+                          columns="thirds"
                           key={`control-prepend-${target.fieldIndex}`}
                         >
                           <label>Prepend</label>
@@ -1708,7 +1718,7 @@ export default function AttributesView({
                       return (
                         <fig-field
                           direction="horizontal"
-                          columns="half"
+                          columns="thirds"
                           key={`control-truncate-maxwidth-${target.fieldIndex}`}
                         >
                           <label>Max width</label>

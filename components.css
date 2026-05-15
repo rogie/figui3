@@ -5,7 +5,7 @@
   /* Background Colors */
   --figma-color-bg: light-dark(#ffffff, #2c2c2c);
   --figma-color-bg-brand: light-dark(#0d99ff, #0c8ce9);
-  --figma-color-bg-menu: #1e1e1e;
+  --figma-color-bg-menu: light-dark(#ffffff, #1e1e1e);
   --figma-color-bg-menu-hover: #0c8ce9;
   --figma-color-bg-brand-hover: light-dark(#007be5, #0a6dc2);
   --figma-color-bg-brand-pressed: light-dark(#0768cf, #105cad);
@@ -233,7 +233,7 @@
   --handle-color: #fff;
   --bg-selected: #f5f5f5;
   --bg-selected-active: #e5f4ff;
-  --bg-tooltip: light-dark(#ffffff, #1e1e1e);
+  --bg-tooltip: var(--figma-color-bg-menu);
   --color-tooltip: var(--figma-color-text);
 
   /* Transparent Backgrounds - use light-dark() */
@@ -332,7 +332,8 @@
   --icon-close: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16.2242 7.08154C16.4182 6.95348 16.6823 6.97551 16.8531 7.146C17.024 7.31683 17.0457 7.58084 16.9176 7.7749L16.8531 7.85303L12.7067 11.9995L16.8531 16.146L16.9176 16.2241C17.0457 16.4182 17.024 16.6822 16.8531 16.853C16.6823 17.0239 16.4183 17.0456 16.2242 16.9175L16.1461 16.853L11.9996 12.7065L7.85315 16.853C7.65789 17.0483 7.34138 17.0483 7.14612 16.853C6.95128 16.6577 6.95101 16.3411 7.14612 16.146L11.2926 11.9995L7.14612 7.85303L7.08167 7.7749C6.95389 7.58087 6.97541 7.3167 7.14612 7.146C7.31683 6.97532 7.58101 6.95376 7.77502 7.08154L7.85315 7.146L11.9996 11.2925L16.1461 7.146L16.2242 7.08154Z' fill='currentColor'/%3E%3C/svg%3E");
   --icon-rotate: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.2325 6.47442C11.2088 5.49811 12.7917 5.49811 13.768 6.47442L15.2931 7.99955H14.0002C13.7241 7.99955 13.5002 8.2234 13.5002 8.49955C13.5002 8.77569 13.7241 8.99955 14.0002 8.99955H16.5002C16.7764 8.99955 17.0002 8.77569 17.0002 8.49955V5.99955C17.0002 5.7234 16.7764 5.49955 16.5002 5.49955C16.2241 5.49955 16.0002 5.7234 16.0002 5.99955V7.29244L14.4751 5.76731C13.1083 4.40048 10.8922 4.40048 9.52537 5.76731L7.14669 8.14599C6.95143 8.34126 6.95143 8.65784 7.14669 8.8531C7.34195 9.04836 7.65854 9.04836 7.8538 8.8531L10.2325 6.47442ZM13.0609 9.64599C12.4751 9.06021 11.5254 9.06021 10.9396 9.64599L7.64669 12.9389C7.06091 13.5247 7.0609 14.4744 7.64669 15.0602L10.9396 18.3531C11.5254 18.9389 12.4751 18.9389 13.0609 18.3531L16.3538 15.0602C16.9396 14.4744 16.9396 13.5247 16.3538 12.9389L13.0609 9.64599ZM11.6467 10.3531C11.842 10.1578 12.1585 10.1578 12.3538 10.3531L15.6467 13.646C15.842 13.8413 15.842 14.1578 15.6467 14.3531L12.3538 17.646C12.1585 17.8413 11.842 17.8413 11.6467 17.646L8.3538 14.3531C8.15854 14.1578 8.15854 13.8413 8.3538 13.646L11.6467 10.3531Z' fill='currentColor'/%3E%3C/svg%3E");
   --icon-swap: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.35355 6.35355C8.54882 6.15829 8.54882 5.84171 8.35355 5.64645C8.15829 5.45118 7.84171 5.45118 7.64645 5.64645L5.14645 8.14645C4.95118 8.34171 4.95118 8.65829 5.14645 8.85355L7.64645 11.3536C7.84171 11.5488 8.15829 11.5488 8.35355 11.3536C8.54882 11.1583 8.54882 10.8417 8.35355 10.6464L6.70711 9H18.5C18.7761 9 19 8.77614 19 8.5C19 8.22386 18.7761 8 18.5 8H6.70711L8.35355 6.35355ZM15.6464 13.3536C15.4512 13.1583 15.4512 12.8417 15.6464 12.6464C15.8417 12.4512 16.1583 12.4512 16.3536 12.6464L18.8536 15.1464C19.0488 15.3417 19.0488 15.6583 18.8536 15.8536L16.3536 18.3536C16.1583 18.5488 15.8417 18.5488 15.6464 18.3536C15.4512 18.1583 15.4512 17.8417 15.6464 17.6464L17.2929 16H5.5C5.22386 16 5 15.7761 5 15.5C5 15.2239 5.22386 15 5.5 15H17.2929L15.6464 13.3536Z' fill='currentColor'/%3E%3C/svg%3E");
-  --tip-pointer: path("M3 3L0 0H6L3 3Z");
+  --tip-pointer: path("M8 6L2 0H14L8 6Z");
+
 
   /* Elevations — light-dark() handles theme switching inline */
   --figma-elevation-100:
@@ -2645,17 +2646,28 @@ fig-slider {
 dialog,
 .popover,
 [popover] {
-  contain: layout;
   padding: 0;
   outline: 0;
   border: 0;
   inset: auto;
+  
   color: var(--figma-color-text);
   border-radius: var(--radius-large, 0.8125rem);
   background: var(--figma-color-bg);
   min-width: var(--popover-min-width);
   box-shadow: var(--figma-elevation-500-modal-window);
   max-height: calc(60vh - var(--spacer-4));
+  max-width: 50vw;
+  height: max-content;
+
+  & > fig-content,
+  &> .fig-content,
+  &> main {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
 
   footer,
   fig-footer {
@@ -2697,49 +2709,14 @@ dialog,
     }
   }
 
-  &[tooltip] {
-    color: var(--color-tooltip);
-    background-color: var(--bg-tooltip);
-    padding: var(--spacer-1) var(--spacer-2);
-    line-height: 1rem !important;
-    box-sizing: content-box;
-    min-width: var(--popover-min-width);
-    max-width: var(--popover-min-width);
-    /*top: calc(anchor(top) - 1ch - (var(--spacer-1) * 2 + 1rem));*/
-    top: anchor(top);
-    left: anchor(center);
-    /*transform: translate(-50%,-100%);*/
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    border-radius: var(--radius-medium, 0.3125rem);
-    box-shadow:
-      0px 0px 0.5px 0px rgba(0, 0, 0, 0.15),
-      0px 5px 12px 0px rgba(0, 0, 0, 0.13),
-      0px 1px 3px 0px rgba(0, 0, 0, 0.1);
-
-    @supports (-webkit-line-clamp: 2) {
-      white-space: initial;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    &:popover-open {
-      display: inline-block;
-
-      @supports (-webkit-line-clamp: 2) {
-        display: -webkit-box;
-      }
-
-      min-width: 0;
-    }
-  }
 }
 dialog[is="fig-dialog"] {
   --z-index: 999999;
   z-index: var(--z-index);
+
+  &[autoresize]:not([autoresize="false"]) {
+    height: max-content;
+  }
 
   &[resizable]:not([resizable="false"]) {
     resize: both;
@@ -2750,15 +2727,24 @@ dialog[is="fig-dialog"] {
 }
 
 dialog[is="fig-popup"] {
-  contain: layout;
   --z-index: 999999;
-  --beak-offset: 1px;
+  --fig-popup-beak-offset: 50%;
+  --fig-popup-beak-width: 1rem;
+  --fig-popup-beak-height: 6px;
+  --fig-popup-radius: var(--radius-large);
+  --fig-popup-bg-color: var(--figma-color-bg);
+  --fig-popup-tip-clip-path: path(
+    "M16 0H0L0 1H0.757359C1.55301 1 2.31607 1.31607 2.87868 1.87868L6.29587 5.29587C7.23704 6.23704 8.76296 6.23704 9.70413 5.29587L13.1213 1.87868C13.6839 1.31607 14.447 1 15.2426 1H16V0Z"
+  );
+
   z-index: var(--z-index);
   position: fixed;
   margin: 0;
   min-width: 0;
   padding: 0;
   overflow: auto;
+  border-radius: var(--fig-popup-radius);
+  background-color: var(--fig-popup-bg-color);
 
   &[autoresize]:not([autoresize="false"]) {
     width: max-content;
@@ -2772,14 +2758,20 @@ dialog[is="fig-popup"] {
 
   &[theme="dark"] {
     color-scheme: dark;
+    --fig-popup-bg-color: var(--figma-color-bg);
   }
 
   &[theme="light"] {
     color-scheme: light;
   }
 
+  &[theme="brand"] {
+    --fig-popup-bg-color: var(--figma-color-bg-brand);
+    color-scheme: dark;
+  }
+
   &[theme="menu"] {
-    background-color: var(--figma-color-bg-menu);
+    --fig-popup-bg-color: var(--figma-color-bg-menu);
     color: var(--figma-color-text-menu);
     color-scheme: dark;
     padding: var(--spacer-2) 0;
@@ -2787,6 +2779,7 @@ dialog[is="fig-popup"] {
     box-shadow: var(--figma-elevation-100);
   }
 
+  &[variant="tooltip"],
   &[variant="popover"] {
     overflow: visible;
     box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
@@ -2797,38 +2790,70 @@ dialog[is="fig-popup"] {
     &:after {
       content: "";
       background-color: inherit;
-      clip-path: path(
-        "M16 0H0L0 1H0.757359C1.55301 1 2.31607 1.31607 2.87868 1.87868L6.29587 5.29587C7.23704 6.23704 8.76296 6.23704 9.70413 5.29587L13.1213 1.87868C13.6839 1.31607 14.447 1 15.2426 1H16V0Z"
-      );
+      clip-path: var(--fig-popup-tip-clip-path);
       position: absolute;
-      width: 1rem;
-      height: 6px;
+      width: var(--fig-popup-beak-width);
+      height: var(--fig-popup-beak-height);
       z-index: 2;
       pointer-events: none;
     }
 
     &[data-beak-side="bottom"]:after {
       top: calc(100% - 1px);
-      left: var(--beak-offset, 50%);
+      left: var(--fig-popup-beak-offset, 50%);
       transform: translateX(-50%);
     }
 
     &[data-beak-side="top"]:after {
       top: 1px;
-      left: var(--beak-offset, 50%);
+      left: var(--fig-popup-beak-offset, 50%);
       transform: translate(-50%, -100%) scaleY(-1);
     }
 
     &[data-beak-side="left"]:after {
-      left: 6px;
-      top: var(--beak-offset, 50%);
+      left: var(--fig-popup-beak-height);
+      top: var(--fig-popup-beak-offset, 50%);
       transform: translate(-100%, -50%) rotate(90deg);
     }
 
     &[data-beak-side="right"]:after {
-      left: calc(100% - 6px);
-      top: var(--beak-offset, 50%);
+      left: calc(100% - var(--fig-popup-beak-height));
+      top: var(--fig-popup-beak-offset, 50%);
       transform: translate(0, -50%) rotate(-90deg);
+    }
+  }
+  &[variant="tooltip"] {
+    --fig-popup-radius: var(--radius-medium, 0.3125rem);
+    --fig-popup-tip-clip-path: var(--tip-pointer);
+
+    color: var(--figma-color-text);
+    line-height: 1rem !important;
+    max-width: 180px;
+    width: max-content;
+    padding: 0;
+    min-width: 0;
+    box-shadow: inset 0 0.5px 0 0
+    light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
+    filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
+      drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13))
+      drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
+    pointer-events: none;
+
+    & > span {
+      text-wrap: balance;
+      max-height: 2.5rem;
+      overflow-y: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-clamp: 2;
+      text-overflow: ellipsis;
+      width: auto;
+      padding: var(--spacer-1) var(--spacer-2);
+    }
+
+    &[pointer="false"]::after {
+      display: none !important;
     }
   }
 }
@@ -2905,79 +2930,6 @@ dialog[is="fig-toast"] {
 fig-tooltip {
   display: contents;
 }
-.fig-tooltip {
-  contain: layout;
-  inset: unset;
-  display: inline-block;
-  overflow: visible;
-  color-scheme: dark;
-  color: var(--figma-color-text);
-  background-color: var(--bg-tooltip);
-  padding: var(--spacer-1) var(--spacer-2);
-  line-height: 1rem !important;
-  font-weight: inherit;
-  border-radius: var(--radius-medium, 0.3125rem);
-  max-width: 180px;
-  width: max-content;
-  box-shadow: inset 0 0.5px 0 0
-    light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
-  filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
-    drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13))
-    drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
-  pointer-events: none;
-
-  & > span {
-    text-wrap: balance;
-    max-height: 2.5rem;
-    overflow-y: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-clamp: 2;
-    text-overflow: ellipsis;
-    width: auto;
-  }
-
-  &:after {
-    content: "";
-    background-color: inherit;
-    clip-path: var(--tip-pointer);
-    width: 6px;
-    height: 3px;
-    position: absolute;
-    top: 100%;
-    left: var(--beak-offset, 50%);
-    z-index: 2;
-    transform: translate(-50%);
-  }
-
-  &[pointer="false"] {
-    &:after {
-      display: none !important;
-    }
-  }
-
-  &[position="bottom"] {
-    &:after {
-      top: 0px;
-      left: var(--beak-offset, 50%);
-      transform: translate(-50%, -100%) scaleY(-1);
-    }
-  }
-  &[theme="dark"] {
-    color-scheme: dark;
-  }
-
-  &[theme="light"] {
-    color-scheme: light;
-  }
-
-  &[theme="brand"] {
-    background-color: var(--figma-color-bg-brand);
-    color-scheme: dark;
-  }
-}
-
 /* UI Icons */
 fig-icon {
   display: block;

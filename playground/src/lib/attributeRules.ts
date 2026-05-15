@@ -113,6 +113,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     modal: { label: "Modal", type: "boolean", boolMode: "presence" },
     drag: { label: "Drag", type: "boolean", boolMode: "presence" },
     resizable: { label: "Resizable", type: "boolean", boolMode: "presence" },
+    autoresize: { label: "Auto resize", type: "boolean", boolMode: "presence" },
     handle: { label: "Drag handle", type: "string" },
     footer: {
       label: "Footer",
@@ -170,7 +171,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["light", "dark", "menu"],
     },
-    variant: { label: "Variant", type: "enum", options: ["", "popover"] },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["", "popover", "tooltip"],
+    },
   },
   "fig-fill-picker": {
     alpha: {

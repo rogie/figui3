@@ -23,19 +23,14 @@
         flex-direction: column;
         overflow: hidden;
         background: transparent;
+      }
+      body > fig-content {
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
-        padding: var(--spacer-2-5) 0;
       }
-      body > fig-footer{
+      body > fig-footer {
         flex: 0 0 auto;
-        position: sticky;
-        bottom: 0;
-        z-index: 10;
-        margin-top: auto;
-        background-color: var(--figma-color-bg);
-        border-radius: 0 0 var(--radius-large) var(--radius-large);
       }
     </style>
     <script type="module">
@@ -151,6 +146,7 @@
     </script>
   </head>
   <body>
+    <fig-content>
     <fig-group>
       <fig-field>
         <label>Title</label>
@@ -173,7 +169,7 @@
         </fig-dropdown>
       </fig-field>
     </fig-group>
-    <fig-group name="Back Photo" collapsible open>
+    <fig-group name="Back Photo" collapsible>
       <fig-field>
         <label>Offset X</label>
         <fig-slider variant="neue" type="delta" value="239" default="0" min="-500" max="500" text="true" full></fig-slider>
@@ -191,7 +187,7 @@
         <fig-slider variant="neue" type="opacity" value="0.60" color="#000000" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
-    <fig-group name="Shadow" collapsible open>
+    <fig-group name="Shadow" collapsible>
       <fig-field>
         <label>Scale</label>
         <fig-slider variant="neue" value="1.03" step="0.01" min="0" max="2" text="true" full></fig-slider>
@@ -209,7 +205,7 @@
         <fig-slider variant="neue" type="delta" value="8" default="0" min="-50" max="50" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
-    <fig-group name="Transition Spring" collapsible open>
+    <fig-group name="Transition Spring" collapsible>
       <fig-field>
         <label>Type</label>
         <fig-segmented-control full>
@@ -230,7 +226,7 @@
       <label>Dark Mode</label>
       <fig-switch checked></fig-switch>
     </fig-field>
-    </div>
+  </fig-content>
     <fig-footer>
       <fig-button>Next</fig-button>
     </fig-footer>

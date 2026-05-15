@@ -503,7 +503,9 @@ customElements.define("fig-dropdown", FigDropdown);
  * @attr {string} action - The trigger action: "hover" (default) or "click"
  * @attr {number} delay - Delay in milliseconds before showing tooltip (default: 500)
  * @attr {string} text - The tooltip text content
- * @attr {string} offset - Comma-separated offset values: left,top,right,bottom
+ * @attr {string} theme - Optional theme passed to the underlying popup (e.g. "brand").
+ * @attr {string} pointer - "false" to hide the beak.
+ * @attr {boolean} show - When set, force-show the tooltip (ignores hide).
  */
 class FigTooltip extends HTMLElement {
   static #lastShownAt = 0;
@@ -521,8 +523,6 @@ class FigTooltip extends HTMLElement {
   #parentDialog = null;
   #touchTimeout;
   #isTouching = false;
-  #observer = null;
-  #repositionRAF = null;
   constructor() {
     super();
     this.action = this.getAttribute("action") || "hover";
@@ -560,7 +560,6 @@ class FigTooltip extends HTMLElement {
       this.#boundHideOnChromeOpen,
       true,
     );
-    this.#stopObserving();
     if (this.#parentDialog) {
       this.#parentDialog.removeEventListener("close", this.#boundHandleDialogClose);
       this.#parentDialog = null;
@@ -593,47 +592,61 @@ class FigTooltip extends HTMLElement {
 
   render() {
     this.destroy();
-    let content = document.createElement("span");
-    this.popup = document.createElement("span");
-    this.popup.setAttribute("class", "fig-tooltip");
+    const supportsPopover =
+      typeof HTMLElement !== "undefined" &&
+      "popover" in HTMLElement.prototype;
+
+    const content = document.createElement("span");
+    // Customized built-in: `is` MUST be passed via createElement options;
+    // setAttribute("is", ...) after the fact is a no-op per the HTML spec.
+    this.popup = document.createElement("dialog", { is: "fig-popup" });
+    // Also set the `is` attribute explicitly so CSS selectors like
+    // `dialog[is="fig-popup"]` match. createElement's `is` option upgrades
+    // the element but doesn't reflect to the attribute in all engines.
+    this.popup.setAttribute("is", "fig-popup");
+    this.popup.setAttribute("variant", "tooltip");
+    this.popup.setAttribute("data-tooltip-managed", "");
     this.popup.setAttribute("role", "tooltip");
+    this.popup.setAttribute("closedby", "none");
+    if (supportsPopover) this.popup.setAttribute("popover", "manual");
+
     const tooltipId = figUniqueId();
     this.popup.setAttribute("id", tooltipId);
-    this.popup.style.position = "fixed";
-    this.popup.style.visibility = "hidden";
-    this.popup.style.display = "inline-flex";
-    this.popup.style.pointerEvents = "none";
     const theme = this.getAttribute("theme");
     if (theme) this.popup.setAttribute("theme", theme);
     const pointer = this.getAttribute("pointer");
     if (pointer !== null) this.popup.setAttribute("pointer", pointer);
+
     this.popup.append(content);
-    content.innerText = this.getAttribute("text");
+    content.innerText = this.getAttribute("text") ?? "";
+
     // Set aria-describedby on the trigger element
     if (this.firstElementChild) {
       this.firstElementChild.setAttribute("aria-describedby", tooltipId);
     }
 
-    // If tooltip is inside a dialog, append to dialog to stay in top layer
-    const parentDialog = this.closest("dialog");
-    if (parentDialog && parentDialog.open) {
-      parentDialog.append(this.popup);
-    } else {
+    // Attach to DOM.
+    // - With popover support, body is fine because top-layer promotion handles
+    //   stacking above any open <dialog> (including modal).
+    // - Without popover support, fall back to today's behavior: nearest open
+    //   <dialog> ancestor if present, else document.body.
+    if (supportsPopover) {
       document.body.append(this.popup);
+    } else {
+      const parentDialog = this.closest("dialog");
+      if (parentDialog && parentDialog.open) {
+        parentDialog.append(this.popup);
+      } else {
+        document.body.append(this.popup);
+      }
     }
 
-    const text = content.childNodes[0];
-    if (text) {
-      const range = document.createRange();
-      range.setStartBefore(text);
-      range.setEndAfter(text);
-      const clientRect = range.getBoundingClientRect();
-      content.style.width = `${clientRect.width}px`;
-    }
+    // Bind the popup's anchor to this tooltip's trigger child so fig-popup
+    // can position itself and update its beak via data-beak-side.
+    this.popup.anchor = this.firstElementChild;
   }
 
   destroy() {
-    this.#stopObserving();
     if (this.popup) {
       this.popup.remove();
       this.popup = null;
@@ -684,20 +697,6 @@ class FigTooltip extends HTMLElement {
     document.addEventListener("mousedown", this.#boundHideOnChromeOpen, true);
   }
 
-  getOffset() {
-    const defaultOffset = { left: 8, top: 4, right: 8, bottom: 4 };
-    const offsetAttr = this.getAttribute("offset");
-    if (!offsetAttr) return defaultOffset;
-
-    const [left, top, right, bottom] = offsetAttr.split(",").map(Number);
-    return {
-      left: isNaN(left) ? defaultOffset.left : left,
-      top: isNaN(top) ? defaultOffset.top : top,
-      right: isNaN(right) ? defaultOffset.right : right,
-      bottom: isNaN(bottom) ? defaultOffset.bottom : bottom,
-    };
-  }
-
   get #showPersisted() {
     return this.hasAttribute("show") && this.getAttribute("show") !== "false";
   }
@@ -714,106 +713,27 @@ class FigTooltip extends HTMLElement {
 
   showPopup() {
     if (this.#parentDialog && !this.#parentDialog.open) return;
+    if (!this.firstElementChild) return;
     if (!this.popup) this.render();
-    this.popup.style.display = "block";
-    this.popup.style.visibility = "hidden";
-    this.#repositionPopup();
-    this.popup.style.opacity = "1";
-    this.popup.style.visibility = "visible";
-    this.popup.style.pointerEvents = "all";
-    this.popup.style.zIndex = figGetHighestZIndex() + 1;
+    // Keep anchor in sync in case the trigger child was swapped between
+    // creation and show.
+    this.popup.anchor = this.firstElementChild;
+    this.popup.open = true;
 
     this.isOpen = true;
     FigTooltip.#lastShownAt = Date.now();
-    this.#startObserving();
-  }
-
-  #repositionPopup() {
-    if (!this.popup || !this.firstElementChild) return;
-
-    const rect = this.firstElementChild.getBoundingClientRect();
-    const popupRect = this.popup.getBoundingClientRect();
-    const offset = this.getOffset();
-
-    const container = this.popup.parentElement;
-    const containerRect =
-      container && container !== document.body
-        ? container.getBoundingClientRect()
-        : { left: 0, top: 0 };
-
-    // Position the tooltip above the element
-    let top = rect.top - popupRect.height - offset.top - containerRect.top;
-    let left =
-      rect.left + (rect.width - popupRect.width) / 2 - containerRect.left;
-    this.popup.setAttribute("position", "top");
-
-    // Adjust if tooltip would go off-screen
-    if (top + containerRect.top < 0) {
-      this.popup.setAttribute("position", "bottom");
-      top = rect.bottom + offset.bottom - containerRect.top;
-    }
-    const absLeft = left + containerRect.left;
-    if (absLeft < offset.left) {
-      left = offset.left - containerRect.left;
-    } else if (absLeft + popupRect.width > window.innerWidth - offset.right) {
-      left =
-        window.innerWidth - popupRect.width - offset.right - containerRect.left;
-    }
-
-    // Calculate the center of the target element relative to the tooltip
-    const targetCenter = rect.left - containerRect.left + rect.width / 2;
-    const beakOffset = targetCenter - left;
-
-    // Set the beak offset as a CSS custom property
-    this.popup.style.setProperty("--beak-offset", `${beakOffset}px`);
-
-    this.popup.style.top = `${top}px`;
-    this.popup.style.left = `${left}px`;
   }
 
   hidePopup() {
     if (this.#showPersisted) return;
     clearTimeout(this.timeout);
     clearTimeout(this.#touchTimeout);
-    this.#stopObserving();
     if (this.popup) {
-      this.popup.style.opacity = "0";
-      this.popup.style.display = "block";
-      this.popup.style.pointerEvents = "none";
       this.destroy();
     }
 
     this.isOpen = false;
     FigTooltip.#lastShownAt = Date.now();
-  }
-
-  #startObserving() {
-    this.#stopObserving();
-    const target = this.firstElementChild;
-    if (!target) return;
-
-    this.#observer = new MutationObserver(() => {
-      if (this.#repositionRAF) cancelAnimationFrame(this.#repositionRAF);
-      this.#repositionRAF = requestAnimationFrame(() => {
-        this.#repositionPopup();
-      });
-    });
-
-    this.#observer.observe(target, {
-      attributes: true,
-      attributeFilter: ["style", "class", "transform"],
-    });
-  }
-
-  #stopObserving() {
-    if (this.#repositionRAF) {
-      cancelAnimationFrame(this.#repositionRAF);
-      this.#repositionRAF = null;
-    }
-    if (this.#observer) {
-      this.#observer.disconnect();
-      this.#observer = null;
-    }
   }
 
   hidePopupOutsideClick(event) {
@@ -885,15 +805,7 @@ class FigTooltip extends HTMLElement {
     const content = this.popup.firstElementChild ?? this.popup.firstChild;
     if (!content) return;
     content.innerText = value;
-    content.style.width = "";
-    const textNode = content.childNodes[0];
-    if (textNode) {
-      const range = document.createRange();
-      range.setStartBefore(textNode);
-      range.setEndAfter(textNode);
-      content.style.width = `${range.getBoundingClientRect().width}px`;
-    }
-    if (this.isOpen) this.#repositionPopup();
+    // fig-popup observes content size changes and will reposition itself.
   }
   get open() {
     return this.hasAttribute("open") && this.getAttribute("open") === "true";
@@ -978,51 +890,34 @@ class FigTooltip extends HTMLElement {
     FigTooltip.#programmatic.set(anchor, state);
 
     state.timeout = setTimeout(() => {
-      const popup = document.createElement("span");
-      popup.setAttribute("class", "fig-tooltip");
+      const supportsPopover =
+        typeof HTMLElement !== "undefined" &&
+        "popover" in HTMLElement.prototype;
+
+      const popup = document.createElement("dialog", { is: "fig-popup" });
+      popup.setAttribute("is", "fig-popup");
+      popup.setAttribute("variant", "tooltip");
+      popup.setAttribute("data-tooltip-managed", "");
       popup.setAttribute("role", "tooltip");
-      popup.style.position = "fixed";
-      popup.style.pointerEvents = "none";
+      popup.setAttribute("closedby", "none");
+      if (supportsPopover) popup.setAttribute("popover", "manual");
       const content = document.createElement("span");
       content.innerText = text;
       popup.append(content);
 
-      const parentDialog = anchor.closest("dialog");
-      if (parentDialog && parentDialog.open) {
-        parentDialog.append(popup);
-      } else {
+      if (supportsPopover) {
         document.body.append(popup);
+      } else {
+        const parentDialog = anchor.closest?.("dialog");
+        if (parentDialog && parentDialog.open) {
+          parentDialog.append(popup);
+        } else {
+          document.body.append(popup);
+        }
       }
 
-      const rect = anchor.getBoundingClientRect();
-      const popupRect = popup.getBoundingClientRect();
-      const container = popup.parentElement;
-      const containerRect =
-        container && container !== document.body
-          ? container.getBoundingClientRect()
-          : { left: 0, top: 0 };
-
-      let top = rect.top - popupRect.height - 4 - containerRect.top;
-      let left =
-        rect.left + (rect.width - popupRect.width) / 2 - containerRect.left;
-      popup.setAttribute("position", "top");
-
-      if (top + containerRect.top < 0) {
-        popup.setAttribute("position", "bottom");
-        top = rect.bottom + 4 - containerRect.top;
-      }
-      if (left + containerRect.left < 8) {
-        left = 8 - containerRect.left;
-      }
-      if (left + popupRect.width + containerRect.left > window.innerWidth - 8) {
-        left = window.innerWidth - popupRect.width - 8 - containerRect.left;
-      }
-
-      const targetCenter = rect.left - containerRect.left + rect.width / 2;
-      popup.style.setProperty("--beak-offset", `${targetCenter - left}px`);
-      popup.style.top = `${top}px`;
-      popup.style.left = `${left}px`;
-      popup.style.zIndex = figGetHighestZIndex() + 1;
+      popup.anchor = anchor;
+      popup.open = true;
 
       state.popup = popup;
       FigTooltip.#lastShownAt = Date.now();
@@ -1141,9 +1036,18 @@ class FigDialog extends HTMLDialogElement {
   #boundPointerUp;
   #boundClose;
   #boundIframeMessage;
+  #boundContentMutation;
+  #boundContentResize;
+  #resizeObserver = null;
+  #mutationObserver = null;
+  #autoResizeRafId = 0;
   #offset = 16; // 1rem in pixels
   #positionInitialized = false;
   #dragThreshold = 3; // pixels before drag starts
+
+  static get observedAttributes() {
+    return ["autoresize"];
+  }
 
   constructor() {
     super();
@@ -1152,6 +1056,15 @@ class FigDialog extends HTMLDialogElement {
     this.#boundPointerUp = this.#handlePointerUp.bind(this);
     this.#boundClose = this.close.bind(this);
     this.#boundIframeMessage = this.#handleIframeMessage.bind(this);
+    this.#boundContentMutation = this.#scheduleAutoResize.bind(this);
+    this.#boundContentResize = this.#scheduleAutoResize.bind(this);
+  }
+
+  get autoresize() {
+    return (
+      this.hasAttribute("autoresize") &&
+      this.getAttribute("autoresize") !== "false"
+    );
   }
 
   connectedCallback() {
@@ -1168,6 +1081,7 @@ class FigDialog extends HTMLDialogElement {
       this.#addCloseListeners();
       this.#setupDragListeners();
       this.#applyPosition();
+      this.#syncAutoResize();
     });
 
     window.addEventListener("message", this.#boundIframeMessage);
@@ -1179,9 +1093,17 @@ class FigDialog extends HTMLDialogElement {
       button.removeEventListener("click", this.#boundClose);
     });
     window.removeEventListener("message", this.#boundIframeMessage);
+    this.#teardownAutoResize();
+  }
+
+  attributeChangedCallback(name) {
+    if (name === "autoresize" && this.isConnected) {
+      this.#syncAutoResize();
+    }
   }
 
   #handleIframeMessage(event) {
+    if (!this.autoresize) return;
     const data = event?.data;
     if (!data || data.type !== "figui:iframe-resize") return;
     const source = event.source;
@@ -1193,13 +1115,79 @@ class FigDialog extends HTMLDialogElement {
     this.#resizeForIframe(iframe, data);
   }
 
-  #resizeForIframe(iframe, data) {
-    if (typeof data.height !== "number" || !(data.height > 0)) return;
+  #syncAutoResize() {
+    if (this.autoresize) {
+      this.#setupAutoResize();
+      this.#scheduleAutoResize();
+    } else {
+      this.#teardownAutoResize();
+    }
+  }
 
-    // Compute the dialog's non-iframe vertical chrome: dialog padding/border
-    // plus the laid-out height of every direct child that isn't the iframe
-    // (header, footer, gaps between flex children, etc.). We avoid using the
-    // iframe's own rect because it may be 0 or stale before/after the resize.
+  #setupAutoResize() {
+    if (!this.#resizeObserver) {
+      this.#resizeObserver = new ResizeObserver(this.#boundContentResize);
+      for (const child of this.children) {
+        try {
+          this.#resizeObserver.observe(child);
+        } catch {}
+      }
+    }
+    if (!this.#mutationObserver) {
+      this.#mutationObserver = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          m.addedNodes?.forEach((node) => {
+            if (node instanceof Element && node.parentElement === this) {
+              try {
+                this.#resizeObserver?.observe(node);
+              } catch {}
+            }
+          });
+        }
+        this.#scheduleAutoResize();
+      });
+      this.#mutationObserver.observe(this, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true,
+      });
+    }
+  }
+
+  #teardownAutoResize() {
+    if (this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+      this.#resizeObserver = null;
+    }
+    if (this.#mutationObserver) {
+      this.#mutationObserver.disconnect();
+      this.#mutationObserver = null;
+    }
+    if (this.#autoResizeRafId) {
+      cancelAnimationFrame(this.#autoResizeRafId);
+      this.#autoResizeRafId = 0;
+    }
+  }
+
+  #scheduleAutoResize() {
+    if (!this.autoresize) return;
+    if (this.#autoResizeRafId) return;
+    this.#autoResizeRafId = requestAnimationFrame(() => {
+      this.#autoResizeRafId = 0;
+      this.#applyAutoResize();
+    });
+  }
+
+  #applyAutoResize() {
+    if (!this.autoresize) return;
+    // When an iframe child is present, defer to the iframe's postMessage
+    // broadcast (the only reliable source of its content height).
+    if (this.querySelector(":scope > iframe")) return;
+    this.#resizeToContent(null);
+  }
+
+  #computeChrome(skipChild) {
     const cs = window.getComputedStyle(this);
     const verticalBoxExtras =
       parseFloat(cs.paddingTop || "0") +
@@ -1214,15 +1202,30 @@ class FigDialog extends HTMLDialogElement {
       const rect = child.getBoundingClientRect();
       if (rect.height === 0) continue;
       visibleChildren += 1;
-      if (child === iframe) continue;
-      siblingsHeight += rect.height;
+      if (child === skipChild) continue;
+      const childCS = window.getComputedStyle(child);
+      const marginY =
+        parseFloat(childCS.marginTop || "0") +
+        parseFloat(childCS.marginBottom || "0");
+      siblingsHeight += rect.height + marginY;
     }
     if (gap && visibleChildren > 1) {
       siblingsHeight += gap * (visibleChildren - 1);
     }
+    return verticalBoxExtras + siblingsHeight;
+  }
 
-    const chrome = verticalBoxExtras + siblingsHeight;
+  #resizeForIframe(iframe, data) {
+    if (typeof data.height !== "number" || !(data.height > 0)) return;
+    const chrome = this.#computeChrome(iframe);
     this.style.height = `${Math.ceil(data.height + chrome)}px`;
+  }
+
+  #resizeToContent() {
+    // Let CSS handle the sizing via `height: max-content` (applied by the
+    // [autoresize] rule). Just clear any previously applied inline height
+    // (e.g. from drag/resize) so the CSS rule wins.
+    if (this.style.height) this.style.height = "";
   }
 
   #ensureHeader() {
@@ -1659,6 +1662,20 @@ class FigPopup extends HTMLDialogElement {
 
   connectedCallback() {
     this.ensureInitialized();
+    if (this.getAttribute("variant") === "tooltip") {
+      if (!this.hasAttribute("position")) {
+        this.setAttribute("position", "top center");
+      }
+      if (!this.hasAttribute("offset")) {
+        this.setAttribute("offset", "8 8");
+      }
+      if (!this.hasAttribute("viewport-margin")) {
+        this.setAttribute("viewport-margin", "8");
+      }
+      if (!this.hasAttribute("theme")) {
+        this.setAttribute("theme", "menu");
+      }
+    }
     if (!this.hasAttribute("position")) {
       this.setAttribute("position", "top center");
     }
@@ -1745,7 +1762,21 @@ class FigPopup extends HTMLDialogElement {
     this.style.margin = "0";
     this.style.zIndex = String(figGetHighestZIndex() + 1);
 
-    if (!super.open) {
+    // When the popup opts into the native popover API, prefer showPopover()
+    // so the element is promoted into the browser's top layer (above any
+    // modal dialogs) without needing showModal().
+    const usePopover =
+      this.hasAttribute("popover") &&
+      typeof this.showPopover === "function" &&
+      !this.matches?.(":popover-open");
+    if (usePopover) {
+      try {
+        this.showPopover();
+      } catch (e) {
+        // Fall back to non-modal dialog show below.
+      }
+    }
+    if (!usePopover && !super.open) {
       try {
         this.show();
       } catch (e) {
@@ -1780,6 +1811,17 @@ class FigPopup extends HTMLDialogElement {
       true,
     );
 
+    if (
+      this.hasAttribute("popover") &&
+      typeof this.hidePopover === "function" &&
+      this.matches?.(":popover-open")
+    ) {
+      try {
+        this.hidePopover();
+      } catch (e) {
+        // Ignore.
+      }
+    }
     if (super.open) {
       try {
         this.close();
@@ -2351,8 +2393,10 @@ class FigPopup extends HTMLDialogElement {
   }
 
   updatePopoverBeak(anchorRect, popupRect, left, top, placementSide) {
-    if (this.getAttribute("variant") !== "popover" || !anchorRect) {
-      this.style.removeProperty("--beak-offset");
+    const variant = this.getAttribute("variant");
+    const beakVariants = variant === "popover" || variant === "tooltip";
+    if (!beakVariants || !anchorRect) {
+      this.style.removeProperty("--fig-popup-beak-offset");
       this.removeAttribute("data-beak-side");
       return;
     }
@@ -2385,7 +2429,7 @@ class FigPopup extends HTMLDialogElement {
       beakOffset = Math.min(max, Math.max(min, beakOffset));
     }
 
-    this.style.setProperty("--beak-offset", `${beakOffset}px`);
+    this.style.setProperty("--fig-popup-beak-offset", `${beakOffset}px`);
   }
 
   overflowScore(coords, popupRect, m) {

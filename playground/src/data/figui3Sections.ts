@@ -53,6 +53,15 @@ export const figui3Sections: Section[] = [
   </fig-tooltip>
 </div>`,
       },
+      {
+        id: "long-content",
+        name: "Long content",
+        markup: `<div class="prop-panel">
+  <fig-tooltip text="Fear is the path to the dark side. Fear leads to anger, anger leads to hate, hate leads to suffering. I sense much fear in you, young Skywalker." action="hover">
+    <fig-button>Hover me</fig-button>
+  </fig-tooltip>
+</div>`,
+      },
     ],
   },
   {
@@ -66,8 +75,18 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Dialog</fig-button>
-  <dialog is="fig-dialog" title="Dialog Title" handle="fig-header" position="center center">
-    <p>Dialog content</p>
+  <dialog is="fig-dialog" title="A long time ago..." handle="fig-header" position="center center">
+    <fig-content>
+      <p>"I find your lack of faith disturbing." Vader's gloved hand tightened around the Admiral's throat from across the room, the Force crushing his windpipe as the bridge officers studiously avoided looking at the dying man.</p>
+      <p>"The Force is strong with this one," Vader murmured, watching the X-wing skim along the trench. The targeting computer chirped uselessly. He had felt the boy's presence before, on Tatooine, in dreams that smelled of sand and engine grease. The past had a long reach.</p>
+      <p>"You don't know the power of the Dark Side. I must obey my master." The Emperor's lightning arced between his fingers, and Luke convulsed on the metal grating. Somewhere beneath the black mask, beneath thirty years of regret, a father remembered a son.</p>
+      <p>"No. I am your father." The words hung in the cold reactor shaft long after they were spoken, and Luke's scream traveled out into the storm of Bespin, into every quiet moment of every life he had left to live.</p>
+      <p>"Help me, Obi-Wan Kenobi. You're my only hope." The little blue projection flickered in the dust of the Lars homestead, and a farm boy who had never been further than Anchorhead felt the galaxy tilt beneath his boots.</p>
+    </fig-content>
+    <fig-footer>
+      <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+      <fig-button>Confirm</fig-button>
+    </fig-footer>
   </dialog>
 </div>`,
       },

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.8.0]
+
+### Added
+
+- `fig-dialog[autoresize]`: when a `<fig-content>` is a direct child, it becomes the scroll region (`flex: 1 1 auto; overflow: auto; overscroll-behavior: contain`). The dialog itself sizes to content via `height: max-content` and is capped by the base `dialog` `max-height`. `fig-header` and `fig-footer` siblings remain pinned naturally without `position: sticky` (no rubber-band bounce).
+
+### Changed
+
+- `fig-dialog` autoresize: replaced JS-driven content-height measurement with pure CSS (`height: max-content`). JS only clears stale inline heights now; iframe `postMessage` sizing path is unchanged.
+- `dialog` base styles: removed the unused `&[tooltip]` block (legacy attribute-style tooltip styling that was superseded by `dialog[is="fig-popup"][variant="tooltip"]`).
+- Playground `/propkit` "Plugin" iframe page: scroll moved from `body` to `body > fig-content`; `fig-footer` is no longer `position: sticky` (flex layout pins it naturally).
+- Playground `figui3` Dialog example: wraps content in `<fig-content>` with longer prose so scroll behavior is visible.
+
 ## [4.7.1]
 
 ### Changed
