@@ -239,6 +239,21 @@ export const propkitSections: Section[] = [
   </fig-field>
 </div>`,
       },
+      {
+        id: "gradients",
+        name: "Gradients",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Gradients</label>
+    <fig-chooser layout="vertical" value="sunset-glow" full drag data-playground-hide-attrs="layout,drag,loop" style="max-height: 240px">
+      <fig-choice value="sunset-glow" selected><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#FFB347","opacity":100},{"position":50,"color":"#FF5E78","opacity":100},{"position":100,"color":"#7A2BD9","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="aurora"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="bubblegum"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":45,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#FFC2E2","opacity":100},{"position":48,"color":"#FF4FA2","opacity":100},{"position":52,"color":"#7DF3D4","opacity":100},{"position":100,"color":"#2EB39A","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="holographic"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#FF6EC7","opacity":100},{"position":25,"color":"#FFD86E","opacity":100},{"position":50,"color":"#6EE7FF","opacity":100},{"position":75,"color":"#A06EFF","opacity":100},{"position":100,"color":"#FF6E9A","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+    </fig-chooser>
+  </fig-field>
+</div>`,
+      },
     ],
   },
   {

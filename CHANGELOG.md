@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.10.2]
+
+### Added
+
+- `/propkit` Chooser: new "Gradients" example showcasing four distinct gradient styles (Sunset Glow, Aurora, Bubblegum hard-stops, Holographic 5-stop iridescence) using `fig-input-gradient` with `edit="false"` and `disabled`.
+
 ## [4.10.1]
 
 ### Added

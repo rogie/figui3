@@ -3423,8 +3423,7 @@ fig-input-palette {
   display: inline-grid !important;
   grid-template-columns: 1fr 24px;
   grid-template-areas:
-    "inline    button"
-    "expanded  expanded";
+    "inline    button";
   gap: var(--spacer-2);
   min-width: 0;
   border-radius: var(--radius-medium);
@@ -3487,6 +3486,9 @@ fig-input-palette {
     }
   }
   &[open]:not([open="false"]):not([edit="false"]) {
+    grid-template-areas:
+    "inline    button"
+    "expanded  expanded";
     .palette-colors-expanded {
       display: grid;
     }
