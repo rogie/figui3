@@ -165,6 +165,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-field-slider": "Field slider",
     "fig-combo-input": "Combo input",
     "fig-media": "Media",
+    "fig-media-controls": "Media controls",
     "fig-image": "Image",
     "fig-video": "Video",
     "fig-input-color": "Color",

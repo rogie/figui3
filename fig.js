@@ -8388,6 +8388,13 @@ class FigMedia extends HTMLElement {
   #boundHandleMediaPlay = this.#handleMediaPlay.bind(this);
   #boundHandleMediaPause = this.#handleMediaPause.bind(this);
   #boundHandleMediaEnded = this.#handleMediaEnded.bind(this);
+  #controlsEl = null;
+  #controlsWiredFor = null;
+  #controlsWiredControls = null;
+  #controlsSync = null;
+  #controlsOnPlay = null;
+  #controlsOnPause = null;
+  #controlsOnSeek = null;
 
   static get observedAttributes() {
     return [
@@ -8486,6 +8493,7 @@ class FigMedia extends HTMLElement {
   disconnectedCallback() {
     this.#fileInput?.removeEventListener("change", this.#boundHandleFileInput);
     this.#removeMediaElementListeners();
+    this.#removeControls();
     if (this.#blobUrl) {
       URL.revokeObjectURL(this.#blobUrl);
       this.#blobUrl = null;
@@ -8586,11 +8594,163 @@ class FigMedia extends HTMLElement {
     } else {
       this.#mediaEl.removeAttribute("poster");
     }
-    this.#mediaEl.controls = this.#isEnabledAttr("controls", false);
+    this.#mediaEl.controls = false;
+    this.#mediaEl.removeAttribute("controls");
     this.#mediaEl.autoplay = this.#isEnabledAttr("autoplay", false);
     this.#mediaEl.loop = this.#isEnabledAttr("loop", false);
     this.#mediaEl.muted = this.#isEnabledAttr("muted", false);
     this.#mediaEl.playsInline = true;
+    this.#syncControlsVisibility();
+  }
+
+  get mediaEl() {
+    return this.#mediaEl;
+  }
+
+  #syncControlsVisibility() {
+    if (this.mediaKind !== "video") {
+      this.#removeControls();
+      return;
+    }
+    const userControls = this.querySelector(
+      ":scope > fig-media-controls:not([data-generated])",
+    );
+    if (userControls) {
+      if (this.#controlsEl !== userControls) {
+        this.#removeControls();
+        this.#controlsEl = userControls;
+      }
+      this.#wireControlsToMedia();
+      return;
+    }
+    if (this.#isEnabledAttr("controls", false)) {
+      this.#ensureControls();
+    } else {
+      this.#removeControls();
+    }
+  }
+
+  #ensureControls() {
+    if (this.#controlsEl && this.#controlsEl.isConnected) {
+      this.#wireControlsToMedia();
+      return;
+    }
+    const controls = document.createElement("fig-media-controls");
+    controls.setAttribute("data-generated", "");
+    controls.setAttribute("overlay", "");
+    this.append(controls);
+    this.#controlsEl = controls;
+    this.#wireControlsToMedia();
+  }
+
+  #wireControlsToMedia() {
+    if (!this.#controlsEl || !this.#mediaEl) return;
+    if (
+      this.#controlsWiredFor === this.#mediaEl &&
+      this.#controlsWiredControls === this.#controlsEl
+    ) {
+      return;
+    }
+    this.#unwireControls();
+
+    const controls = this.#controlsEl;
+    const video = this.#mediaEl;
+    this.#controlsWiredFor = video;
+    this.#controlsWiredControls = controls;
+
+    let pendingSeekTime = null;
+    const syncFromVideo = () => {
+      controls.playing = !video.paused && !video.ended;
+      if (Number.isFinite(video.duration)) controls.duration = video.duration;
+      if (pendingSeekTime !== null) {
+        if (Math.abs(video.currentTime - pendingSeekTime) < 0.25) {
+          pendingSeekTime = null;
+        } else {
+          return;
+        }
+      }
+      controls.time = video.currentTime || 0;
+    };
+    const onPlay = () => {
+      const p = video.play?.();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    };
+    const onPause = () => video.pause?.();
+    const onSeek = (e) => {
+      const next = Number(e?.detail?.time);
+      if (!Number.isFinite(next)) return;
+      pendingSeekTime = next;
+      try { video.currentTime = next; } catch {}
+    };
+
+    this.#controlsSync = syncFromVideo;
+    this.#controlsOnPlay = onPlay;
+    this.#controlsOnPause = onPause;
+    this.#controlsOnSeek = onSeek;
+
+    video.addEventListener("play", syncFromVideo);
+    video.addEventListener("pause", syncFromVideo);
+    video.addEventListener("ended", syncFromVideo);
+    video.addEventListener("timeupdate", syncFromVideo);
+    video.addEventListener("loadedmetadata", syncFromVideo);
+    video.addEventListener("durationchange", syncFromVideo);
+    video.addEventListener("seeked", syncFromVideo);
+    controls.addEventListener("play", onPlay);
+    controls.addEventListener("pause", onPause);
+    controls.addEventListener("seek", onSeek);
+
+    syncFromVideo();
+  }
+
+  #unwireControls() {
+    const video = this.#controlsWiredFor;
+    const controls = this.#controlsWiredControls;
+    if (video && this.#controlsSync) {
+      video.removeEventListener("play", this.#controlsSync);
+      video.removeEventListener("pause", this.#controlsSync);
+      video.removeEventListener("ended", this.#controlsSync);
+      video.removeEventListener("timeupdate", this.#controlsSync);
+      video.removeEventListener("loadedmetadata", this.#controlsSync);
+      video.removeEventListener("durationchange", this.#controlsSync);
+      video.removeEventListener("seeked", this.#controlsSync);
+    }
+    if (controls) {
+      if (this.#controlsOnPlay) controls.removeEventListener("play", this.#controlsOnPlay);
+      if (this.#controlsOnPause) controls.removeEventListener("pause", this.#controlsOnPause);
+      if (this.#controlsOnSeek) controls.removeEventListener("seek", this.#controlsOnSeek);
+    }
+    this.#controlsWiredFor = null;
+    this.#controlsWiredControls = null;
+    this.#controlsSync = null;
+    this.#controlsOnPlay = null;
+    this.#controlsOnPause = null;
+    this.#controlsOnSeek = null;
+  }
+
+  #removeControls() {
+    this.#unwireControls();
+    if (!this.#controlsEl) return;
+    if (this.#controlsEl.hasAttribute("data-generated")) {
+      this.#controlsEl.remove();
+    }
+    this.#controlsEl = null;
+  }
+
+  toggle() {
+    if (!this.#mediaEl || this.mediaKind !== "video") return;
+    if (this.#mediaEl.paused || this.#mediaEl.ended) this.play();
+    else this.pause();
+  }
+
+  play() {
+    if (this.mediaKind !== "video" || !this.#mediaEl) return;
+    const p = this.#mediaEl.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  }
+
+  pause() {
+    if (this.mediaKind !== "video" || !this.#mediaEl) return;
+    this.#mediaEl.pause();
   }
 
   #createFileInput() {
@@ -8774,6 +8934,203 @@ class FigVideo extends FigMedia {
   }
 }
 customElements.define("fig-video", FigVideo);
+
+/**
+ * <fig-media-controls> — Standalone playback controls UI.
+ *
+ * Renders a play/pause button, a scrubber slider, and a MM:SS time display.
+ * Holds its own state via attributes — no media element required.
+ *
+ * Attributes:
+ *   - `playing` (boolean presence) — current play/pause state
+ *   - `duration` (number, seconds) — total track length
+ *   - `time` (number, seconds) — current playhead position
+ *
+ * Events:
+ *   - `play` — emitted when the user toggles playback on (detail: { playing: true })
+ *   - `pause` — emitted when the user toggles playback off (detail: { playing: false })
+ *   - `seek` — emitted when the user drags the scrubber (detail: { time })
+ *
+ * Properties: `playing`, `duration`, `time` mirror the attributes.
+ */
+class FigMediaControls extends HTMLElement {
+  #playBtn = null;
+  #playTooltip = null;
+  #timeSlider = null;
+  #timeEl = null;
+  #userSeeking = false;
+  #rendered = false;
+
+  static get observedAttributes() {
+    return ["playing", "duration", "time"];
+  }
+
+  connectedCallback() {
+    this.#render();
+    this.#syncPlayingUi();
+    this.#syncTimeUi();
+  }
+
+  get playing() {
+    return this.hasAttribute("playing") && this.getAttribute("playing") !== "false";
+  }
+  set playing(value) {
+    if (value) this.setAttribute("playing", "");
+    else this.removeAttribute("playing");
+  }
+
+  get duration() {
+    const n = Number(this.getAttribute("duration"));
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  }
+  set duration(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) {
+      this.removeAttribute("duration");
+      return;
+    }
+    this.setAttribute("duration", String(n));
+  }
+
+  get time() {
+    const n = Number(this.getAttribute("time"));
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  }
+  set time(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) {
+      this.removeAttribute("time");
+      return;
+    }
+    this.setAttribute("time", String(n));
+  }
+
+  attributeChangedCallback(name) {
+    if (!this.#rendered) return;
+    if (name === "playing") this.#syncPlayingUi();
+    if (name === "duration" || name === "time") this.#syncTimeUi();
+  }
+
+  #render() {
+    if (this.#rendered) return;
+    this.#rendered = true;
+
+    const tooltip = document.createElement("fig-tooltip");
+    tooltip.setAttribute("text", "Play");
+    const btn = document.createElement("fig-button");
+    btn.setAttribute("variant", "ghost");
+    btn.setAttribute("size", "small");
+    btn.setAttribute("icon", "true");
+    btn.setAttribute("aria-label", "Play");
+    const icon = document.createElement("span");
+    icon.className = "fig-mask-icon fig-media-controls-play-icon";
+    icon.style.setProperty("--icon", "var(--icon-play)");
+    icon.style.setProperty("--size", "1.5rem");
+    btn.append(icon);
+    tooltip.append(btn);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.toggle();
+    });
+
+    const slider = document.createElement("fig-slider");
+    slider.setAttribute("variant", "neue");
+    slider.setAttribute("min", "0");
+    slider.setAttribute("max", String(this.duration));
+    slider.setAttribute("step", "0.1");
+    slider.setAttribute("value", String(this.time));
+    slider.setAttribute("full", "");
+    const timeEl = document.createElement("label");
+    timeEl.className = "fig-media-controls-time";
+    timeEl.textContent = this.#formatTime(this.time);
+
+    const handleSeek = (e) => {
+      const host = e.currentTarget;
+      const next = Number(host?.value);
+      if (!Number.isFinite(next)) return;
+      this.#userSeeking = true;
+      this.setAttribute("time", String(next));
+      this.dispatchEvent(
+        new CustomEvent("seek", {
+          bubbles: true,
+          composed: true,
+          detail: { time: next },
+        }),
+      );
+      requestAnimationFrame(() => {
+        this.#userSeeking = false;
+      });
+    };
+    slider.addEventListener("input", handleSeek);
+    slider.addEventListener("change", handleSeek);
+
+    this.append(tooltip, slider, timeEl);
+
+    this.#playBtn = btn;
+    this.#playTooltip = tooltip;
+    this.#timeSlider = slider;
+    this.#timeEl = timeEl;
+  }
+
+  #formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
+    const total = Math.floor(seconds);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  #syncPlayingUi() {
+    if (!this.#playBtn) return;
+    const playing = this.playing;
+    this.#playBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
+    this.#playTooltip?.setAttribute("text", playing ? "Pause" : "Play");
+    const icon = this.#playBtn.querySelector(".fig-media-controls-play-icon");
+    if (icon) {
+      icon.style.setProperty(
+        "--icon",
+        playing ? "var(--icon-pause)" : "var(--icon-play)",
+      );
+    }
+  }
+
+  #syncTimeUi() {
+    if (!this.#timeSlider) return;
+    const duration = this.duration;
+    if (Number(this.#timeSlider.getAttribute("max")) !== duration) {
+      this.#timeSlider.setAttribute("max", String(duration));
+    }
+    const t = this.time;
+    if (!this.#userSeeking) {
+      this.#timeSlider.setAttribute("value", String(t));
+    }
+    if (this.#timeEl) this.#timeEl.textContent = this.#formatTime(t);
+  }
+
+  toggle() {
+    const next = !this.playing;
+    this.playing = next;
+    this.dispatchEvent(
+      new CustomEvent(next ? "play" : "pause", {
+        bubbles: true,
+        composed: true,
+        detail: { playing: next },
+      }),
+    );
+  }
+
+  play() {
+    if (this.playing) return;
+    this.toggle();
+  }
+
+  pause() {
+    if (!this.playing) return;
+    this.toggle();
+  }
+}
+customElements.define("fig-media-controls", FigMediaControls);
 
 /* File Upload Input */
 class FigInputFile extends HTMLElement {

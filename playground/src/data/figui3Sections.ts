@@ -628,6 +628,28 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
+    id: "media-controls",
+    name: "Media controls",
+    group: "Core components",
+    description: "Standalone playback controls UI (play/pause, scrubber, time) with self-contained state via `playing`, `duration`, and `time` attributes.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-media-controls duration="125" time="42"></fig-media-controls>
+</div>`,
+      },
+      {
+        id: "playing",
+        name: "Playing",
+        markup: `<div class="prop-panel">
+  <fig-media-controls duration="125" time="42" playing></fig-media-controls>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "video",
     name: "Video",
     group: "Core components",

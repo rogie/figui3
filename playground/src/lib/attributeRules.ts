@@ -294,6 +294,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     muted: { label: "Muted", type: "boolean", boolMode: "string" },
     poster: { label: "Poster", type: "string" },
   },
+  "fig-media-controls": {
+    playing: { label: "Playing", type: "boolean", boolMode: "presence" },
+    overlay: { label: "Overlay", type: "boolean", boolMode: "presence" },
+    duration: { label: "Duration", type: "number", min: 0, max: 600, step: 1 },
+    time: { label: "Time", type: "number", min: 0, max: 600, step: 1 },
+  },
   "fig-slider": {
     variant: {
       label: "Variant",

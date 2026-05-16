@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.10.0]
+
+### Added
+
+- `<fig-media-controls>`: new standalone playback controls element. Renders a play/pause button (with `--icon-play`/`--icon-pause` mask icons), a `fig-slider` scrubber, and a `MM:SS` time display. Holds its own state via `playing` (boolean presence), `duration`, and `time` (number, seconds) attributes/properties. Emits `play`, `pause`, and `seek` events. Supports an `overlay` attribute to render as a bottom overlay over media.
+- `--icon-play` and `--icon-pause` design tokens (matching the `data:image/svg+xml` URL format used by the other `--icon-*` tokens).
+
+### Changed
+
+- `fig-media`/`fig-video`: native `<video controls>` chrome is now always suppressed. When the host's `controls` attribute is enabled (or a user places a `<fig-media-controls>` child), the host wires it up bidirectionally — video → controls for `playing`/`duration`/`time`/`seeked`/loop reset, controls → video for `play`/`pause`/`seek`. Auto-generated controls get `overlay` by default.
+- `fig-media` now exposes a `mediaEl` getter and `play()`/`pause()`/`toggle()` methods.
+
+### Fixed
+
+- `fig-input-palette`: restored the `disabled !== "false"` guard in the add-button click handler that had been accidentally removed (the dangling `&&` was throwing a SyntaxError and breaking the whole class).
+- `--icon-play` / `--icon-pause` tokens: replaced raw inline `<svg>` values with proper `url("data:image/svg+xml,...")` strings so they actually work as mask images.
+
 ## [4.9.1]
 
 ### Fixed
