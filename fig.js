@@ -8380,7 +8380,6 @@ customElements.define("fig-swatch", FigSwatch);
  */
 class FigMedia extends HTMLElement {
   #src = null;
-  #chit = null;
   #mediaEl = null;
   #fileInput = null;
   #blobUrl = null;
@@ -8465,27 +8464,16 @@ class FigMedia extends HTMLElement {
 
     const ar = this.getAttribute("aspect-ratio");
     if (ar) {
-      this.style.setProperty("--aspect-ratio", ar);
+      this.style.setProperty("--fig-media-aspect-ratio", ar);
+    } else {
+      this.style.setProperty("--fig-media-aspect-ratio", "4/3");
     }
     const fit = this.getAttribute("fit");
     if (fit) {
-      this.style.setProperty("--fit", fit);
+      this.style.setProperty("--fig-media-fit", fit);
     }
 
-    if (!this.querySelector("fig-chit")) {
-      const chit = document.createElement("fig-chit");
-      chit.setAttribute("data-generated", "");
-      chit.setAttribute("size", "large");
-      chit.setAttribute("data-type", this.mediaKind);
-      chit.setAttribute("disabled", "");
-      this.#applyChitBackground(chit);
-      if (this.hasAttribute("checkerboard") && this.getAttribute("checkerboard") !== "false") {
-        chit.setAttribute("checkerboard", "");
-      }
-      this.prepend(chit);
-    }
-    this.#chit = this.querySelector("fig-chit");
-    this.#syncChitType();
+    this.querySelectorAll("fig-chit[data-generated]").forEach((el) => el.remove());
     this.#ensureMediaElement();
     this.#syncGeneratedMediaElement();
 
@@ -8502,16 +8490,6 @@ class FigMedia extends HTMLElement {
       URL.revokeObjectURL(this.#blobUrl);
       this.#blobUrl = null;
     }
-  }
-
-  #applyChitBackground(chit) {
-    const cb = this.hasAttribute("checkerboard") && this.getAttribute("checkerboard") !== "false";
-    chit.setAttribute("background", cb ? "url()" : "var(--figma-color-bg-secondary)");
-  }
-
-  #syncChitType() {
-    if (!this.#chit) return;
-    this.#chit.setAttribute("data-type", this.mediaKind);
   }
 
   #removeMediaElementListeners() {
@@ -8556,12 +8534,19 @@ class FigMedia extends HTMLElement {
       video.setAttribute("data-generated", "");
       video.className = "fig-media-element";
       video.setAttribute("playsinline", "");
-      video.preload = "metadata";
+      video.preload = "auto";
       this.prepend(video);
       this.#mediaEl = video;
       this.#mediaEl.addEventListener("play", this.#boundHandleMediaPlay);
       this.#mediaEl.addEventListener("pause", this.#boundHandleMediaPause);
       this.#mediaEl.addEventListener("ended", this.#boundHandleMediaEnded);
+      const seekToFirstFrame = () => {
+        if (this.#mediaEl?.autoplay) return;
+        try {
+          this.#mediaEl.currentTime = 0.001;
+        } catch {}
+      };
+      this.#mediaEl.addEventListener("loadedmetadata", seekToFirstFrame, { once: true });
     } else {
       const img = document.createElement("img");
       img.setAttribute("data-generated", "");
@@ -8724,7 +8709,6 @@ class FigMedia extends HTMLElement {
     }
 
     if (name === "type") {
-      this.#syncChitType();
       this.#ensureMediaElement();
       this.#syncGeneratedMediaElement();
       if (this.#fileInput) {
@@ -8750,28 +8734,17 @@ class FigMedia extends HTMLElement {
 
     if (name === "aspect-ratio") {
       if (newValue) {
-        this.style.setProperty("--aspect-ratio", newValue);
+        this.style.setProperty("--fig-media-aspect-ratio", newValue);
       } else {
-        this.style.removeProperty("--aspect-ratio");
+        this.style.removeProperty("--fig-media-aspect-ratio");
       }
     }
 
     if (name === "fit") {
       if (newValue) {
-        this.style.setProperty("--fit", newValue);
+        this.style.setProperty("--fig-media-fit", newValue);
       } else {
-        this.style.removeProperty("--fit");
-      }
-    }
-
-    if (name === "checkerboard") {
-      if (this.#chit) {
-        if (newValue !== null && newValue !== "false") {
-          this.#chit.setAttribute("checkerboard", "");
-        } else {
-          this.#chit.removeAttribute("checkerboard");
-        }
-        this.#applyChitBackground(this.#chit);
+        this.style.removeProperty("--fig-media-fit");
       }
     }
 

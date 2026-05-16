@@ -447,7 +447,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Image</label>
-    <fig-image full="true" upload="true" label="Upload" size="auto"></fig-image>
+    <fig-image full="true" upload="true" label="Upload" size="auto" checkerboard="true"></fig-image>
   </fig-field>
 </div>`,
       },
@@ -457,7 +457,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Image</label>
-    <fig-image full="true" upload="true" src="${portraitUrl()}" size="auto"></fig-image>
+    <fig-image full="true" upload="true" src="${portraitUrl()}" size="auto" checkerboard="true"></fig-image>
   </fig-field>
 </div>`,
       },
@@ -467,7 +467,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Image</label>
-    <fig-image full="true" src="${portraitUrl()}" size="auto"></fig-image>
+    <fig-image full="true" src="${portraitUrl()}" size="auto" checkerboard="true"></fig-image>
   </fig-field>
 </div>`,
       },
@@ -477,7 +477,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Image</label>
-    <fig-image full="true" src="${portraitUrl()}" size="auto">
+    <fig-image full="true" src="${portraitUrl()}" size="auto" checkerboard="true">
       <fig-input-file accepts="image/*" label="Change" variant="overlay"></fig-input-file>
     </fig-image>
   </fig-field>
@@ -498,7 +498,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Preview</label>
-    <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/320.webp?random=29" autoplay="true" muted="true" upload="true" fit="contain" size="auto" full></fig-media>
+    <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/320.webp?random=29" autoplay="true" muted="true" upload="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
   </fig-field>
 </div>`,
       },

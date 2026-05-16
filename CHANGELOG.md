@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.9.1]
+
+### Fixed
+
+- `fig-media`, `fig-image`, `fig-video`: `fit="cover"` and other `object-fit` values now correctly apply to the inner `<video>`/`<img>` elements. The cover selector was missing the `>` child combinator and only targeted the generated class, so the rule never matched `<video>`. Inner media now sizes via `width/height: 100%` instead of `min-*` + `auto`, so `cover`, `fill`, and friends all render as expected.
+
+### Changed
+
+- `fig-media`, `fig-image`, `fig-video`: default `aspect-ratio` is now `4/3` (both in CSS and in the connectedCallback) so media elements have a sensible aspect ratio out of the box when no `aspect-ratio` attribute is set.
+- `fig-media`: removed the `type` attribute from the playground attributes panel (type is determined by the example markup, not toggled at runtime).
+
 ## [4.9.0]
 
 ### Changed

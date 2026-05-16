@@ -234,7 +234,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     fit: {
       label: "Fit",
       type: "enum",
-      options: ["auto", "cover", "contain"],
+      options: ["contain", "cover", "fill", "none", "scale-down"],
     },
     upload: {
       label: "Upload",
@@ -245,16 +245,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     checkerboard: { label: "Checker board", type: "boolean", boolMode: "string" },
   },
   "fig-media": {
-    type: {
-      label: "Type",
-      type: "enum",
-      options: ["image", "video"],
-    },
     "aspect-ratio": aspectRatioRule,
     fit: {
       label: "Fit",
       type: "enum",
-      options: ["auto", "cover", "contain"],
+      options: ["contain", "cover", "fill", "none", "scale-down"],
     },
     upload: {
       label: "Upload",
@@ -279,7 +274,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     fit: {
       label: "Fit",
       type: "enum",
-      options: ["auto", "cover", "contain"],
+      options: ["contain", "cover", "fill", "none", "scale-down"],
     },
     upload: {
       label: "Upload",

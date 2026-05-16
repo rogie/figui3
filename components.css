@@ -1380,39 +1380,48 @@ fig-input-file {
 fig-media,
 fig-image,
 fig-video {
-  --image-size: 2rem;
-  --media-size: var(--image-size);
-  --fit: contain;
-  --aspect-ratio: 1 / 1;
-  display: inline-grid;
-  place-items: center;
+  --fig-media-fit: contain;
+  --fig-media-aspect-ratio: 4/3;
+  display: inline-flex;
   max-width: 100%;
-  > * {
-    grid-area: 1/1;
-  }
-  fig-chit[size="large"] {
-    --size: 100% !important;
-    --width: 100% !important;
-    --height: 100% !important;
-    --padding: 0px;
-    --chit-bg-size: var(--fit);
-    z-index: 0;
-    &[disabled] {
-      opacity: 1;
-    }
-  }
-  > .fig-media-element[data-generated] {
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    object-fit: var(--fit);
-    border-radius: var(--radius-medium);
+  background-color: var(--figma-color-bg-secondary);
+  border-radius: var(--radius-medium);
+  overflow: hidden;
+  aspect-ratio: var(--fig-media-aspect-ratio);
+  align-items: center;
+  min-height: 4rem;
+  justify-content: center;
+  position: relative;
+
+  & > *{
+    position: absolute;
     z-index: 1;
   }
-  &:has(> .fig-media-element[data-generated][src]:not([src=""])) > fig-chit[data-generated],
-  &:has(> video.fig-media-element[data-generated][poster]:not([poster=""])) > fig-chit[data-generated] {
-    display: none;
+
+  &[checkerboard]:not([checkerboard="false"]) {
+    background: var(--checkerboard);
   }
+  &::after{
+    content: "";
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--figma-color-bordertranslucent);
+  }
+  > video, 
+  > img,
+  > .fig-media-element[data-generated] {
+    display: block;
+    width: stretch;
+    height: stretch;
+    position: static;
+    object-fit: var(--fig-media-fit);
+    object-position: center;
+    z-index: 0;
+  }
+
   &:is(:not([src]), [src=""]):is(:not([poster]), [poster=""])
     > video.fig-media-element[data-generated] {
     opacity: 0;
@@ -1431,40 +1440,6 @@ fig-video {
   &:hover > fig-input-file[data-generated] {
     opacity: 1;
     pointer-events: all;
-  }
-  &[size] {
-    width: var(--media-size);
-    height: var(--media-size);
-    > .fig-media-element[data-generated] {
-      width: 100%;
-      height: 100%;
-    }
-  }
-  &[size="medium"] {
-    --image-size: 4rem;
-  }
-  &[size="large"] {
-    --image-size: 8rem;
-  }
-  &[size="auto"] {
-    --image-size: 6rem;
-    &[full]:not([full="false"]) {
-      width: 100%;
-    }
-  }
-  &[aspect-ratio] {
-    width: 100%;
-    height: auto;
-    aspect-ratio: var(--aspect-ratio);
-    > .fig-media-element[data-generated] {
-      width: 100%;
-      height: 100%;
-    }
-    fig-chit {
-      --size: 100% !important;
-      height: auto !important;
-      aspect-ratio: var(--aspect-ratio) !important;
-    }
   }
 }
 
