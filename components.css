@@ -481,17 +481,39 @@ textarea {
 /* Dropdown */
 select,
 input[type="text"][list] {
-  height: var(--spacer-4);
-  padding: 0 calc(var(--spacer-2) - 1px);
+  padding: var(--spacer-2);
+  background-color: var(--figma-color-bg);
+  
+
+  &:not([multiple]) {
+    height: var(--spacer-4);
+    padding: 0 calc(var(--spacer-2) - 1px);
+    background: calc(100% - var(--spacer-1)) 50% / 1rem no-repeat
+    var(--icon-chevron);
+  }
+  &[multiple] {
+    overflow: auto;
+    option{
+      padding: var(--spacer-1) var(--spacer-2);
+      border-radius: var(--radius-medium);
+      &:checked {
+        background-color: var(--figma-color-bg-selected-strong) !important; 
+      }
+      &:active{
+        background-color: var(--figma-color-bg-active);
+      }
+      &:hover{
+        background-color: var(--figma-color-bg-hover);
+      }
+    }
+  }
   border-radius: var(--radius-medium);
   display: flex;
   appearance: none;
   align-items: center;
   border: 0;
   color: var(--figma-color-text);
-  background-color: var(--figma-color-bg);
-  background: calc(100% - var(--spacer-1)) 50% / 1rem no-repeat
-    var(--icon-chevron);
+
 
   box-shadow: inset 0 0 0 1px var(--figma-color-border);
   accent-color: var(--figma-color-bg-brand);
@@ -698,7 +720,7 @@ input[type="text"][list] {
 }
 
 input[type="text"][list],
-select {
+select:not([multiple]) {
   padding-right: var(--spacer-4);
   padding-left: var(--spacer-2);
 }
@@ -722,7 +744,7 @@ select,
   }
 
   /* Chevron icon using mask-image for light-dark support */
-  &::after {
+  &:not([multiple])::after {
     content: "";
     position: absolute;
     right: 0.25rem;
@@ -1459,13 +1481,14 @@ fig-media-controls {
   align-items: center;
   gap: var(--spacer-2);
   width: 100%;
-  padding: var(--spacer-1);
+  
 
   &[overlay]:not([overlay="false"]) {
     border-radius: var(--radius-medium);
     background-color: var(--figma-color-bg);
     color: var(--figma-color-text);
     color-scheme: light;
+    padding: var(--spacer-1);
     box-shadow: 0 0 0 1px var(--figma-color-bordertranslucent);
   }
 
@@ -2130,6 +2153,18 @@ input[type="checkbox"]:not(.switch) {
 
     &:not(:checked) {
       box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+    }
+  }
+  &:disabled{
+    background-color: var(--figma-color-bg-disabled);
+    box-shadow: none;
+    &::after {
+      background-color: transparent;
+    }
+  }
+  &:disabled:checked{
+    &::after {
+      background-color: var(--figma-color-icon-disabled);
     }
   }
 }

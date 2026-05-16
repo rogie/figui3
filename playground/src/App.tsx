@@ -36,15 +36,24 @@ function buildExampleTitle(sectionName: string, exampleName: string): string {
   return toSentenceCase(`${base} ${sectionWord}`);
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function buildExampleDescription(
   sectionDescription: string,
   sectionName: string,
   exampleName: string,
 ): string {
-  const sectionWord = sectionName.trim().toLowerCase();
+  const sectionWord = escapeHtml(sectionName.trim().toLowerCase());
   const base = exampleName.trim();
   if (!base || base.toLowerCase() === "default") return sectionDescription;
-  return `${toSentenceCase(base)} ${sectionWord} example. ${sectionDescription}`;
+  return `${escapeHtml(toSentenceCase(base))} ${sectionWord} example. ${sectionDescription}`;
 }
 
 interface Props {

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.10.1]
+
+### Added
+
+- `fig-media-controls`: bidirectional sync with parent `fig-media`/`fig-video` is now robust during scrubbing — uses a pending-seek guard so the slider doesn't snap back while the browser settles on a seek target. Adds a `seeked` listener so loop restarts immediately reset the scrubber to 0.
+- Native `<select multiple>` example in the `/figui3` Native elements group.
+- Checkbox group + disabled checkbox examples in `/figui3`.
+- Attribute rules: `checked` switch added to the Attributes panel for `fig-checkbox` and `fig-radio`.
+
+### Changed
+
+- `fig-media-controls`: slider updates are now applied via `setAttribute("value", …)` so `FigSlider`'s interacting-guard keeps the user's drag stable.
+
+### Fixed
+
+- Playground description rendering: section/example names containing HTML-like tokens (e.g. `<select>`) are now escaped before being injected via `dangerouslySetInnerHTML`, preventing a stray native `<select>` from appearing inside the description paragraph.
+
 ## [4.10.0]
 
 ### Added

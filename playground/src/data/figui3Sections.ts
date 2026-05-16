@@ -412,6 +412,33 @@ export const figui3Sections: Section[] = [
   <fig-checkbox checked="true"></fig-checkbox>
 </div>`,
       },
+      {
+        id: "group",
+        name: "Group",
+        markup: `<div class="prop-panel">
+  <fig-group name="Toppings">
+    <fig-field>
+      <fig-checkbox name="toppings" value="cheese" label="Cheese" checked></fig-checkbox>
+    </fig-field>
+    <fig-field>
+      <fig-checkbox name="toppings" value="pepperoni" label="Pepperoni" checked></fig-checkbox>
+    </fig-field>
+    <fig-field>
+      <fig-checkbox name="toppings" value="mushrooms" label="Mushrooms"></fig-checkbox>
+    </fig-field>
+    <fig-field>
+      <fig-checkbox name="toppings" value="olives" label="Olives"></fig-checkbox>
+    </fig-field>
+  </fig-group>
+</div>`,
+      },
+      {
+        id: "disabled",
+        name: "Disabled",
+        markup: `<div class="prop-panel">
+  <fig-checkbox disabled checked label="Disabled"></fig-checkbox>
+</div>`,
+      },
     ],
   },
   {
@@ -923,6 +950,19 @@ export const figui3Sections: Section[] = [
     <option value="one" selected>Option one</option>
     <option value="two">Option two</option>
     <option value="three">Option three</option>
+  </select>
+</div>`,
+      },
+      {
+        id: "multiple",
+        name: "Multiple",
+        markup: `<div class="prop-panel">
+  <select multiple size="5">
+    <option value="one" selected>Option one</option>
+    <option value="two" selected>Option two</option>
+    <option value="three">Option three</option>
+    <option value="four">Option four</option>
+    <option value="five">Option five</option>
   </select>
 </div>`,
       },

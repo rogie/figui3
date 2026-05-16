@@ -209,10 +209,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-checkbox": {
     label: { label: "Label", type: "enum", options: ["none", "label"] },
+    checked: { label: "Checked", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-radio": {
     label: { label: "Label", type: "enum", options: ["none", "label"] },
+    checked: { label: "Checked", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-field": {
