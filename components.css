@@ -662,13 +662,10 @@ input[type="text"][list] {
         }
       }
 
-      /* Customizable select button content (closed state) */
-      &:has(> button) {
-        padding-left: 0;
-      }
       & > button {
-        display: inline-block;
+        display: inline-flex;
         align-items: center;
+        justify-content: flex-start;
         gap: var(--spacer-1, 0.25rem);
         width: 100%;
         border: 0;

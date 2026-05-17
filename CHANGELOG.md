@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.12.1]
+
+### Fixed
+
+- `select > button` (customized select closed-state button): switched from `display: inline-block` (which silently ignored `align-items`/`justify-content`) to `display: inline-flex` with `justify-content: flex-start` so children align left and vertically center as intended.
+- `select`: removed the now-unneeded `&:has(> button) { padding-left: 0 }` override since the flex button already controls its own inner padding.
+
 ## [4.12.0]
 
 ### Added
