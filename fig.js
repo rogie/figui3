@@ -14380,6 +14380,35 @@ class FigChooser extends HTMLElement {
     requestAnimationFrame(() => {
       this.#syncSelection();
       this.#syncOverflow();
+      this.#scheduleInitialScrollSettle();
+    });
+  }
+
+  #scheduleInitialScrollSettle() {
+    const resettle = () => {
+      if (!this.isConnected) return;
+      if (this.#selectedChoice) {
+        this.#scrollToChoice(this.#selectedChoice, "auto");
+      }
+    };
+    const wireImages = () => {
+      const imgs = this.querySelectorAll("img, video");
+      for (const m of imgs) {
+        if (m.tagName === "IMG" ? m.complete : m.readyState >= 1) continue;
+        const done = () => {
+          m.removeEventListener("load", done);
+          m.removeEventListener("loadedmetadata", done);
+          m.removeEventListener("error", done);
+          resettle();
+        };
+        m.addEventListener("load", done);
+        m.addEventListener("loadedmetadata", done);
+        m.addEventListener("error", done);
+      }
+    };
+    requestAnimationFrame(() => {
+      wireImages();
+      resettle();
     });
   }
 
@@ -14758,25 +14787,31 @@ class FigChooser extends HTMLElement {
     });
   }
 
-  #scrollToChoice(el) {
+  #scrollToChoice(el, behavior = "smooth") {
     if (!el) return;
     requestAnimationFrame(() => {
+      if (!el.isConnected) return;
       const overflowY = this.scrollHeight > this.clientHeight;
       const overflowX = this.scrollWidth > this.clientWidth;
       if (!overflowX && !overflowY) return;
 
-      const options = { behavior: "smooth" };
+      const choiceRect = el.getBoundingClientRect();
+      const hostRect = this.getBoundingClientRect();
+      const options = { behavior };
 
       if (overflowY) {
-        const target =
-          el.offsetTop - this.clientHeight / 2 + el.offsetHeight / 2;
-        options.top = target;
+        const choiceCenter =
+          choiceRect.top - hostRect.top + this.scrollTop + choiceRect.height / 2;
+        options.top = choiceCenter - this.clientHeight / 2;
       }
 
       if (overflowX) {
-        const target =
-          el.offsetLeft - this.clientWidth / 2 + el.offsetWidth / 2;
-        options.left = target;
+        const choiceCenter =
+          choiceRect.left -
+          hostRect.left +
+          this.scrollLeft +
+          choiceRect.width / 2;
+        options.left = choiceCenter - this.clientWidth / 2;
       }
 
       this.scrollTo(options);
@@ -15037,6 +15072,7 @@ class FigHandle extends HTMLElement {
   }
 
   connectedCallback() {
+    if (!this.hasAttribute("type")) this.setAttribute("type", "canvas");
     this.#syncDrag();
     this.#syncHitArea();
     this.addEventListener("click", this.#handleSelect);

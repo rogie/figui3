@@ -556,6 +556,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     open: { label: "Open", type: "boolean", boolMode: "presence" },
   },
   "fig-handle": {
+    type: {
+      label: "Type",
+      type: "enum",
+      options: ["default", "color", "canvas"],
+    },
     control: {
       label: "Control",
       type: "enum",

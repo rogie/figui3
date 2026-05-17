@@ -526,6 +526,8 @@ class FigCanvasControl extends HTMLElement {
       handle.setAttribute("type", "color");
       const color = this.getAttribute("color");
       if (color) handle.setAttribute("color", color);
+    } else {
+      handle.setAttribute("type", "canvas");
     }
     if (this.#hasSecondPoint) {
       handle.setAttribute("hit-area", "12 circle");
@@ -610,6 +612,7 @@ class FigCanvasControl extends HTMLElement {
 
   #createAngleHandle(disabled, tooltips, handleSurface) {
     const handle = document.createElement("fig-handle");
+    handle.setAttribute("type", "canvas");
     handle.setAttribute("drag", "true");
     handle.setAttribute("drag-surface", handleSurface);
     handle.setAttribute("drag-axes", "x,y");
@@ -635,6 +638,7 @@ class FigCanvasControl extends HTMLElement {
 
   #createSecondHandle(disabled, tooltips, handleSurface) {
     const handle = document.createElement("fig-handle");
+    handle.setAttribute("type", "canvas");
     handle.setAttribute("drag", "true");
     handle.setAttribute("drag-surface", handleSurface);
     handle.setAttribute("drag-axes", "x,y");

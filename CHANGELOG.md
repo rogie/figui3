@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.11.0]
+
+### Added
+
+- `fig-media`, `fig-image`, `fig-video`: new `size` attribute (`small` = 2rem, `medium` = 4rem, `large` = 6rem) for quick fixed-size media tiles. Exposes a `--fig-media-size` CSS var that drives both `max-width` and `max-height`.
+- `fig-handle`: new `type="canvas"` variant (used by `fig-canvas-control` for angle/second/non-color handles). Handles now default to `type="canvas"` when no type is set, and the canvas variant renders the `::after` indicator like `type="color"`.
+- Playground attributes panel: `type` enum (default/color/canvas) added for `fig-handle`.
+
+### Changed
+
+- `fig-chooser`: initial scroll-to-selected is now reliable. After connect, the chooser waits for any child `<img>`/`<video>` media to load (or error) and then re-centers the selected choice without animation, so the first paint already lands on the right item. `#scrollToChoice` now measures via `getBoundingClientRect` instead of `offsetTop/Left`, so nested transforms and shadow layouts no longer offset the math.
+- `fig-chooser` nav buttons: replaced the linear-gradient fades with solid `var(--figma-color-bg)` backgrounds + a 1px `box-shadow` border on the leading/trailing edge (top/bottom for vertical, left/right for horizontal). No more hover-only border flash.
+- `fig-lab` `fig-canvas-control`: angle, second-point, and non-color handles now explicitly set `type="canvas"` so they pick up the new shared styling.
+- Propkit Chooser "Style" example: switched the inline `fig-image` tiles from `size="auto"` to `size="small"` for a tighter, consistent thumbnail row.
+
+### Fixed
+
+- `components.css`: invalid `gap: var(--spacer-1),0.25rem;` on `fig-select > button` (stray comma + extra value) reverted to `gap: var(--spacer-1);`.
+- `fig-select`: closed-state padding now reserves room for the chevron (`0 var(--spacer-4) 0 var(--spacer-2)`) so long values no longer collide with the icon.
+- `fig-select` customized-button with a leading `<svg>`: icon now hangs into the left padding via negative `margin-left` instead of removing the padding, keeping text alignment consistent across icon/no-icon buttons.
+
 ## [4.10.2]
 
 ### Added

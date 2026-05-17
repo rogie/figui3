@@ -487,7 +487,7 @@ input[type="text"][list] {
 
   &:not([multiple]) {
     height: var(--spacer-4);
-    padding: 0 calc(var(--spacer-2) - 1px);
+    padding: 0 var(--spacer-4) 0 var(--spacer-2);
     background: calc(100% - var(--spacer-1)) 50% / 1rem no-repeat
     var(--icon-chevron);
   }
@@ -687,8 +687,8 @@ input[type="text"][list] {
           align-items: center;
           gap: 0;
           min-width: 0;
-          &:not(:has(> svg)) {
-            padding-left: var(--spacer-2);
+          &:has(> svg) {
+            margin-left: calc(var(--spacer-2) * -1);
           }
 
           & svg {
@@ -1406,8 +1406,10 @@ fig-image,
 fig-video {
   --fig-media-fit: contain;
   --fig-media-aspect-ratio: 4/3;
+  --fig-media-size: 100%; 
   display: inline-flex;
-  max-width: 100%;
+  max-width:var(--fig-media-size); 
+  max-height:var(--fig-media-size); 
   background-color: var(--figma-color-bg-secondary);
   border-radius: var(--radius-medium);
   overflow: hidden;
@@ -1416,6 +1418,22 @@ fig-video {
   min-height: 4rem;
   justify-content: center;
   position: relative;
+
+  &[size="small"] {
+    --fig-media-size: 2rem;
+    min-height: auto;
+    width: var(--fig-media-size);
+  }
+  &[size="medium"] {
+    --fig-media-size: 4rem;
+    min-height: auto;
+    width: var(--fig-media-size);
+  }
+  &[size="large"] {
+    --fig-media-size: 6rem;
+    min-height: auto;
+    width: var(--fig-media-size);
+  }
 
   & > *{
     position: absolute;
@@ -4673,11 +4691,7 @@ fig-chooser {
     > :not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
       flex: 1 1 0%;
     }
-    fig-media[full],
-    fig-image[full],
-    fig-video[full] {
-      min-width: 3rem;
-    }
+
     > * {
       &:not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
         margin-inline-end: var(--fig-chooser-gap);
@@ -4719,15 +4733,16 @@ fig-chooser {
     display: flex;
     align-items: center;
     justify-content: center;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--chooser-fade-size);
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
     color: var(--figma-color-icon);
-    transition: opacity 0.2s ease;
+    background: var(--figma-color-bg) !important;
 
-    &:hover {
-      background: var(--figma-color-bg) !important;
-    }
 
     &::after {
       content: "";
@@ -4744,17 +4759,8 @@ fig-chooser {
 
   .fig-chooser-nav-start {
     top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: var(--chooser-fade-size);
     margin-bottom: calc(var(--chooser-fade-size) * -1);
-    background: linear-gradient(to bottom, var(--eased-fade-stops));
-
-    &:hover {
-      box-shadow: 0 1px 0 0 var(--figma-color-border) !important;
-    }
-
+    box-shadow: 0 1px 0 0 var(--figma-color-border);
     &::after {
       rotate: 180deg;
     }
@@ -4762,16 +4768,8 @@ fig-chooser {
 
   .fig-chooser-nav-end {
     bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: var(--chooser-fade-size);
     margin-top: calc(var(--chooser-fade-size) * -1);
-    background: linear-gradient(to top, var(--eased-fade-stops));
-
-    &:hover {
-      box-shadow: 0 -1px 0 0 var(--figma-color-border) !important;
-    }
+    box-shadow: 0 -1px 0 0 var(--figma-color-border);
   }
 
   &[layout="horizontal"] {
@@ -4789,11 +4787,8 @@ fig-chooser {
       left: 0;
       right: auto;
       margin-right: calc(var(--chooser-fade-size) * -1);
-      background: linear-gradient(to right, var(--eased-fade-stops));
+      box-shadow: 1px 0 0 0 var(--figma-color-border);
 
-      &:hover {
-        box-shadow: 1px 0 0 0 var(--figma-color-border) !important;
-      }
 
       &::after {
         rotate: 90deg;
@@ -4804,11 +4799,8 @@ fig-chooser {
       right: 0;
       left: auto;
       margin-left: calc(var(--chooser-fade-size) * -1);
-      background: linear-gradient(to left, var(--eased-fade-stops));
+      box-shadow: -1px 0 0 0 var(--figma-color-border);
 
-      &:hover {
-        box-shadow: -1px 0 0 0 var(--figma-color-border) !important;
-      }
 
       &::after {
         rotate: -90deg;
@@ -4946,7 +4938,8 @@ fig-handle {
     pointer-events: none;
     cursor: default;
   }
-  &[type="color"] {
+  &[type="color"],
+  &[type="canvas"] {
     &::after {
       display: block;
     }

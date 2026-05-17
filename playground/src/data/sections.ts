@@ -178,12 +178,12 @@ export const propkitSections: Section[] = [
   <fig-field direction="horizontal">
     <label>Style</label>
     <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
-      <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-d"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-e"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-f"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-d"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-e"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-f"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,

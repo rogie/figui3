@@ -744,6 +744,7 @@ export default function AttributesView({
                 (name === "drag-axes" ||
                   name === "drag-snapping" ||
                   name === "size" ||
+                  name === "type" ||
                   name === "control")) ||
               (target.controlTag === "fig-color-tip" &&
                 scope === "control" &&
@@ -815,6 +816,15 @@ export default function AttributesView({
                     scope,
                     name,
                     option === "" ? null : option,
+                  );
+                  return;
+                }
+                if (target.controlTag === "fig-handle" && name === "type") {
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    option === "default" ? null : option,
                   );
                   return;
                 }
