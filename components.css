@@ -669,7 +669,7 @@ input[type="text"][list] {
       & > button {
         display: inline-block;
         align-items: center;
-        gap: var(--spacer-1);
+        gap: var(--spacer-1, 0.25rem);
         width: 100%;
         border: 0;
         background: transparent;
@@ -4665,13 +4665,6 @@ fig-chooser {
     }
   }
 
-  &[padding="false"] {
-    gap: var(--fig-chooser-gap);
-    fig-choice {
-      --fig-choice-padding: 0px;
-    }
-  }
-
   &[overflow="scrollbar"] {
     scrollbar-width: thin;
     scrollbar-color: var(--figma-color-border) transparent;
@@ -4743,25 +4736,21 @@ fig-chooser {
     color: var(--figma-color-icon);
     background: var(--figma-color-bg) !important;
 
+    .fig-chooser-nav-chevron{
+      position: relative;
+    }
 
-    &::after {
-      content: "";
-      display: block;
-      width: 1rem;
-      height: 1rem;
-      mask-image: var(--icon-chevron);
-      mask-size: contain;
-      mask-repeat: no-repeat;
-      mask-position: center;
-      background: currentColor;
+    &:active .fig-chooser-nav-chevron {
+      transform: translateY(1px);
     }
   }
 
   .fig-chooser-nav-start {
     top: 0;
     margin-bottom: calc(var(--chooser-fade-size) * -1);
-    box-shadow: 0 1px 0 0 var(--figma-color-border);
-    &::after {
+    box-shadow: 0 1px 0 0 var(--figma-color-bordertranslucent);
+
+    .fig-chooser-nav-chevron {
       rotate: 180deg;
     }
   }
@@ -4769,7 +4758,7 @@ fig-chooser {
   .fig-chooser-nav-end {
     bottom: 0;
     margin-top: calc(var(--chooser-fade-size) * -1);
-    box-shadow: 0 -1px 0 0 var(--figma-color-border);
+    box-shadow: 0 -1px 0 0 var(--figma-color-bordertranslucent);
   }
 
   &[layout="horizontal"] {
@@ -4787,10 +4776,9 @@ fig-chooser {
       left: 0;
       right: auto;
       margin-right: calc(var(--chooser-fade-size) * -1);
-      box-shadow: 1px 0 0 0 var(--figma-color-border);
+      box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
 
-
-      &::after {
+      .fig-chooser-nav-chevron {
         rotate: 90deg;
       }
     }
@@ -4799,10 +4787,9 @@ fig-chooser {
       right: 0;
       left: auto;
       margin-left: calc(var(--chooser-fade-size) * -1);
-      box-shadow: -1px 0 0 0 var(--figma-color-border);
+      box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
 
-
-      &::after {
+      .fig-chooser-nav-chevron {
         rotate: -90deg;
       }
     }
@@ -4832,15 +4819,14 @@ fig-choice {
   gap: var(--spacer-2);
   outline: none;
   cursor: default;
-
   padding: var(--fig-choice-padding);
 
   &:hover:not([selected]):not([disabled]):not([aria-disabled="true"]) {
     background-color: var(--figma-color-bg-secondary);
   }
 
-  &[padding="false"] {
-    --fig-choice-padding: 0px;
+  &[padding]:not([padding="false"]) {
+    --fig-choice-padding: var(--spacer-2);
   }
 
   &[selected] {
@@ -4852,7 +4838,7 @@ fig-choice {
       border-radius: var(--fig-choice-border-radius);
       pointer-events: none;
       z-index: 1;
-      box-shadow: inset 0 0 0 4px var(--figma-color-bg);
+      box-shadow: inset 0 0 0 calc(var(--fig-choice-selection-ring-width)*2) var(--figma-color-bg);
       outline: var(--fig-choice-selection-ring-width) solid
         var(--figma-color-border-selected);
       outline-offset: calc(var(--fig-choice-selection-ring-width) * -1);

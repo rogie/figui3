@@ -609,7 +609,6 @@ A selection list controller. `<fig-choice>` elements are selectable options with
 | `drag` | boolean | `false` | Enable drag-to-scroll |
 | `overflow` | string | — | Overflow behavior |
 | `loop` | boolean | `false` | Loop keyboard navigation |
-| `padding` | boolean | `true` | Internal padding (`padding="false"` removes it) |
 
 **fig-choice attributes:**
 

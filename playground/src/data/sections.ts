@@ -158,15 +158,15 @@ export const propkitSections: Section[] = [
         id: "text",
         name: "Text",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
+  <fig-field direction="vertical">
     <label>Style</label>
     <fig-chooser layout="vertical" value="option-a" full drag style="max-height: 240px">
-      <fig-choice value="option-a" selected>Option A</fig-choice>
-      <fig-choice value="option-b">Option B</fig-choice>
-      <fig-choice value="option-c">Option C</fig-choice>
-      <fig-choice value="option-d">Option D</fig-choice>
-      <fig-choice value="option-e">Option E</fig-choice>
-      <fig-choice value="option-f">Option F</fig-choice>
+      <fig-choice value="option-a" padding selected>Option A</fig-choice>
+      <fig-choice value="option-b" padding>Option B</fig-choice>
+      <fig-choice value="option-c" padding>Option C</fig-choice>
+      <fig-choice value="option-d" padding>Option D</fig-choice>
+      <fig-choice value="option-e" padding>Option E</fig-choice>
+      <fig-choice value="option-f" padding>Option F</fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -175,7 +175,7 @@ export const propkitSections: Section[] = [
         id: "images",
         name: "Images",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
+  <fig-field direction="vertical">
     <label>Style</label>
     <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
       <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
@@ -192,15 +192,15 @@ export const propkitSections: Section[] = [
         id: "images-labels",
         name: "Images + Labels",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
+  <fig-field direction="vertical">
     <label>Style</label>
     <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
-      <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label A</label></fig-choice>
-      <fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label B</label></fig-choice>
-      <fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label C</label></fig-choice>
-      <fig-choice value="img-d"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label D</label></fig-choice>
-      <fig-choice value="img-e"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label E</label></fig-choice>
-      <fig-choice value="img-f"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label F</label></fig-choice>
+      <fig-choice value="img-a" padding selected><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label A</label></fig-choice>
+      <fig-choice value="img-b" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label B</label></fig-choice>
+      <fig-choice value="img-c" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label C</label></fig-choice>
+      <fig-choice value="img-d" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label D</label></fig-choice>
+      <fig-choice value="img-e" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label E</label></fig-choice>
+      <fig-choice value="img-f" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label F</label></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -209,7 +209,7 @@ export const propkitSections: Section[] = [
         id: "colors",
         name: "Colors",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
+  <fig-field direction="vertical">
     <label>Color</label>
     <fig-chooser layout="horizontal" value="red" full drag style="max-width: 100%">
       <fig-choice value="red" selected><fig-chit background="#FF0000" size="large" disabled></fig-chit></fig-choice>
@@ -228,7 +228,7 @@ export const propkitSections: Section[] = [
         id: "palettes",
         name: "Palettes",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
+  <fig-field direction="vertical">
     <label>Palettes</label>
     <fig-chooser layout="vertical" value="sunset" full drag data-playground-hide-attrs="layout,drag,loop" style="max-height: 240px">
       <fig-choice value="sunset" selected><fig-input-palette value="#FF6B6B,#FFA07A,#FFD700,#FF4500" add="false" disabled full></fig-input-palette></fig-choice>
@@ -243,7 +243,7 @@ export const propkitSections: Section[] = [
         id: "gradients",
         name: "Gradients",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
+  <fig-field direction="vertical">
     <label>Gradients</label>
     <fig-chooser layout="vertical" value="sunset-glow" full drag data-playground-hide-attrs="layout,drag,loop" style="max-height: 240px">
       <fig-choice value="sunset-glow" selected><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#FFB347","opacity":100},{"position":50,"color":"#FF5E78","opacity":100},{"position":100,"color":"#7A2BD9","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>

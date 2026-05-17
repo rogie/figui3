@@ -599,12 +599,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "boolean",
       boolMode: "presence",
     },
-    padding: {
-      label: "Padding",
-      type: "boolean",
-      boolMode: "string",
-      defaultChecked: true,
-    },
   },
   "fig-canvas-control": {
     type: {

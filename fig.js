@@ -14309,7 +14309,6 @@ class FigChooser extends HTMLElement {
       "drag",
       "overflow",
       "loop",
-      "padding",
     ];
   }
 
@@ -14752,22 +14751,32 @@ class FigChooser extends HTMLElement {
   #createNavButtons() {
     if (this.#navStart) return;
 
+    const makeChevron = () => {
+      const icon = document.createElement("span");
+      icon.className = "fig-mask-icon fig-chooser-nav-chevron";
+      icon.style.setProperty("--icon", "var(--icon-chevron)");
+      icon.style.setProperty("--size", "1rem");
+      return icon;
+    };
+
     this.#navStart = document.createElement("button");
     this.#navStart.className = "fig-chooser-nav-start";
     this.#navStart.setAttribute("tabindex", "-1");
     this.#navStart.setAttribute("aria-label", "Scroll back");
+    this.#navStart.appendChild(makeChevron());
 
     this.#navEnd = document.createElement("button");
     this.#navEnd.className = "fig-chooser-nav-end";
     this.#navEnd.setAttribute("tabindex", "-1");
     this.#navEnd.setAttribute("aria-label", "Scroll forward");
+    this.#navEnd.appendChild(makeChevron());
 
-    this.#navStart.addEventListener("pointerdown", (e) => {
+    this.#navStart.addEventListener("pointerup", (e) => {
       e.stopPropagation();
       this.#scrollByPage(-1);
     });
 
-    this.#navEnd.addEventListener("pointerdown", (e) => {
+    this.#navEnd.addEventListener("pointerup", (e) => {
       e.stopPropagation();
       this.#scrollByPage(1);
     });

@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.11.0]
+## [4.12.0]
+
+### Added
+
+- `fig-chooser` nav buttons now render an explicit `.fig-mask-icon.fig-chooser-nav-chevron` span (using `--icon: var(--icon-chevron)` and `--size: 1rem`) instead of a CSS `::after` pseudo-element. Rotation is still handled by class-scoped CSS (180° for nav-start, ±90° for horizontal layout).
+- `fig-chooser` nav buttons: `box-shadow` border edge switched from `--figma-color-border` to `--figma-color-bordertranslucent` for a softer divider.
+
+### Changed
+
+- `fig-chooser`: removed the `padding` attribute entirely (was `padding="false"` to drop internal padding). The chooser no longer reads or styles a `padding` attribute; use `--fig-chooser-gap` and `fig-choice` padding controls instead. `fig-choice`'s own `padding` attribute is unchanged.
+- Propkit Chooser examples (Text, Images, Images + Labels, Colors, Palettes, Gradients): the wrapping `fig-field` now defaults to `direction="vertical"` so the chooser gets full panel width.
+- Propkit Chooser Text + Images + Labels examples: every `fig-choice` now has `padding` set so the selection ring frames the content with breathing room.
+
+### Removed
+
+- `fig-chooser` `padding` from `observedAttributes`, the `&[padding="false"]` CSS block, the playground attributes rule, and the README attributes table row.
 
 ### Added
 
