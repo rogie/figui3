@@ -14593,14 +14593,18 @@ class FigChooser extends HTMLElement {
     const threshold = 2;
 
     if (isHorizontal) {
-      const atStart = this.scrollLeft <= threshold;
+      const scrollable = this.scrollWidth - this.clientWidth > threshold;
+      const atStart = !scrollable || this.scrollLeft <= threshold;
       const atEnd =
+        !scrollable ||
         this.scrollLeft + this.clientWidth >= this.scrollWidth - threshold;
       this.classList.toggle("overflow-start", !atStart);
       this.classList.toggle("overflow-end", !atEnd);
     } else {
-      const atStart = this.scrollTop <= threshold;
+      const scrollable = this.scrollHeight - this.clientHeight > threshold;
+      const atStart = !scrollable || this.scrollTop <= threshold;
       const atEnd =
+        !scrollable ||
         this.scrollTop + this.clientHeight >= this.scrollHeight - threshold;
       this.classList.toggle("overflow-start", !atStart);
       this.classList.toggle("overflow-end", !atEnd);
@@ -14771,12 +14775,12 @@ class FigChooser extends HTMLElement {
     this.#navEnd.setAttribute("aria-label", "Scroll forward");
     this.#navEnd.appendChild(makeChevron());
 
-    this.#navStart.addEventListener("pointerup", (e) => {
+    this.#navStart.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       this.#scrollByPage(-1);
     });
 
-    this.#navEnd.addEventListener("pointerup", (e) => {
+    this.#navEnd.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       this.#scrollByPage(1);
     });

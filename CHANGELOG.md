@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.12.1]
+## [4.12.2]
+
+### Fixed
+
+- `fig-chooser` `layout="grid"`: the start nav button no longer shows up at the top when scrolled to the start. In grid mode the sticky `position: sticky` + negative-margin chevron trick used by flex layouts didn't collapse, so the nav buttons took real grid rows and pushed `scrollTop` to a non-zero value at "start". Grid mode now skips creating nav buttons entirely (and CSS hides them as a safety belt); use `overflow="scrollbar"` for native scrolling when grid content overflows.
+- `fig-chooser` `#syncOverflow`: added a `scrollable` guard so `overflow-start` / `overflow-end` classes are only applied when the chooser actually has overflow beyond a 2px threshold. Prevents spurious nav buttons when content fits exactly.
+- `fig-chooser`: `layout` is now an observed attribute; switching layout at runtime re-applies overflow mode and re-syncs nav button visibility immediately.
+
+### Changed
+
+- `fig-chooser` `layout="grid"`: now uses `column-gap` + `row-gap` (both `--fig-chooser-gap`) with `fig-choice { margin: 0 !important }` so choices flow naturally into a 2-column grid without doubled spacing from the base flex `margin-block-end`.
 
 ### Fixed
 
