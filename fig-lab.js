@@ -565,7 +565,114 @@ class FigCanvasControl extends HTMLElement {
     }
 
     this.#setupEventListeners();
+    this.#wireHoverTooltips();
     requestAnimationFrame(() => this.#syncPositions());
+  }
+
+  #wireHoverTooltip(target, getTooltip, getText, isDraggingRef) {
+    if (!target) return;
+    const show = () => {
+      if (isDraggingRef && isDraggingRef()) return;
+      const tip = getTooltip();
+      if (!tip) return;
+      if (getText) tip.setAttribute("text", getText());
+      tip.setAttribute("show", "true");
+      tip.showPopup?.();
+    };
+    const hide = () => {
+      if (isDraggingRef && isDraggingRef()) return;
+      const tip = getTooltip();
+      if (!tip) return;
+      tip.removeAttribute("show");
+    };
+    target.addEventListener("pointerenter", show);
+    target.addEventListener("pointerleave", hide);
+  }
+
+  #wireHoverTooltips() {
+    if (this.#pointHandle) {
+      this.#wireHoverTooltip(
+        this.#pointHandle,
+        () => this.#pointTooltip,
+        () => this.#pointTipText,
+        () =>
+          this.#isDragging ||
+          !!this.#pointHandle?.querySelector("fig-color-tip"),
+      );
+    }
+    if (this.#angleHandle) {
+      this.#wireHoverTooltip(
+        this.#angleHandle,
+        () => this.#angleTooltip,
+        () => `Angle ${Math.round(this.#angle)}°`,
+        () => this.#isAngleDragging,
+      );
+    }
+    if (this.#secondHandle) {
+      this.#wireHoverTooltip(
+        this.#secondHandle,
+        () => this.#secondTooltip,
+        () => this.#secondTipText,
+        () => this.#isSecondDragging,
+      );
+    }
+    if (this.#radiusSvg) {
+      const hit = this.#radiusSvg.querySelector(
+        ".fig-canvas-control-radius-hit",
+      );
+      this.#wireRadiusHoverTooltip(hit || this.#radiusSvg);
+    }
+
+    if (this.#type === "color" && this.#pointHandle && this.#pointTooltip) {
+      const obs = new MutationObserver(() => {
+        if (this.#pointHandle?.querySelector("fig-color-tip")) {
+          this.#pointTooltip?.removeAttribute("show");
+          this.#pointTooltip?.hidePopup?.();
+        }
+      });
+      obs.observe(this.#pointHandle, { childList: true, subtree: true });
+    }
+  }
+
+  #setRadiusTooltipAnchorAt(clientX, clientY) {
+    const tip = this.#radiusTooltip;
+    if (!tip?.popup) return;
+    const y = clientY - 8;
+    tip.popup.anchor = {
+      getBoundingClientRect: () => ({
+        left: clientX,
+        top: y,
+        right: clientX,
+        bottom: y,
+        width: 0,
+        height: 0,
+        x: clientX,
+        y,
+      }),
+    };
+    tip.popup.queueReposition?.();
+  }
+
+  #wireRadiusHoverTooltip(target) {
+    if (!target) return;
+    target.addEventListener("pointerenter", (e) => {
+      const tip = this.#radiusTooltip;
+      if (!tip) return;
+      tip.setAttribute("text", this.#formatRadius());
+      tip.setAttribute("show", "true");
+      tip.showPopup?.();
+      this.#setRadiusTooltipAnchorAt(e.clientX, e.clientY);
+    });
+    target.addEventListener("pointermove", (e) => {
+      if (this.#isRadiusDragging) return;
+      this.#setRadiusTooltipAnchorAt(e.clientX, e.clientY);
+    });
+    target.addEventListener("pointerleave", () => {
+      if (this.#isRadiusDragging) return;
+      const tip = this.#radiusTooltip;
+      if (!tip) return;
+      tip.removeAttribute("show");
+    });
   }
 
   #createRadiusSvg() {
@@ -603,11 +710,80 @@ class FigCanvasControl extends HTMLElement {
     svg.setAttribute("overflow", "visible");
     svg.style.position = "absolute";
     svg.style.pointerEvents = "none";
+    if (this.#hasSecondPoint) {
+      const hitLine = document.createElementNS(ns, "line");
+      hitLine.classList.add("fig-canvas-control-angle-line-hit");
+      hitLine.setAttribute("stroke", "transparent");
+      hitLine.setAttribute("stroke-width", "12");
+      hitLine.setAttribute("stroke-linecap", "round");
+      hitLine.style.pointerEvents = "stroke";
+      hitLine.style.cursor = "move";
+      svg.appendChild(hitLine);
+      this.#setupLineDrag(hitLine);
+    }
     const line = document.createElementNS(ns, "line");
     line.classList.add("fig-canvas-control-angle-line");
     svg.appendChild(line);
     this.#angleSvg = svg;
     this.appendChild(svg);
+  }
+
+  #setupLineDrag(hitLine) {
+    hitLine.addEventListener("pointerdown", (e) => {
+      if (this.hasAttribute("disabled")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const container = this.#container;
+      if (!container) return;
+      const rect0 = container.getBoundingClientRect();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const x0 = this.#x;
+      const y0 = this.#y;
+      const x20 = this.#x2;
+      const y20 = this.#y2;
+      this.#isDragging = true;
+      this.#isSecondDragging = true;
+      const prevBodyCursor = document.body.style.cursor;
+      document.body.style.cursor = "move";
+      hitLine.style.pointerEvents = "none";
+
+      const onMove = (ev) => {
+        const rect = container.getBoundingClientRect();
+        const dxPctRaw =
+          rect.width > 0 ? ((ev.clientX - startX) / rect.width) * 100 : 0;
+        const dyPctRaw =
+          rect.height > 0 ? ((ev.clientY - startY) / rect.height) * 100 : 0;
+        const minDx = -Math.min(x0, x20);
+        const maxDx = 100 - Math.max(x0, x20);
+        const minDy = -Math.min(y0, y20);
+        const maxDy = 100 - Math.max(y0, y20);
+        const dxPct = Math.max(minDx, Math.min(maxDx, dxPctRaw));
+        const dyPct = Math.max(minDy, Math.min(maxDy, dyPctRaw));
+        this.#x = x0 + dxPct;
+        this.#y = y0 + dyPct;
+        this.#x2 = x20 + dxPct;
+        this.#y2 = y20 + dyPct;
+        this.#syncPositions();
+        this.#emitInput();
+      };
+
+      const onUp = () => {
+        document.body.style.cursor = prevBodyCursor;
+        hitLine.style.pointerEvents = "stroke";
+        this.#syncValueAttribute();
+        this.#emitChange();
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        requestAnimationFrame(() => {
+          this.#isDragging = false;
+          this.#isSecondDragging = false;
+        });
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
   }
 
   #createAngleHandle(disabled, tooltips, handleSurface) {
@@ -750,8 +926,8 @@ class FigCanvasControl extends HTMLElement {
       svg.style.left = "0";
       svg.style.top = "0";
       svg.setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`);
-      const line = svg.querySelector("line");
-      if (line) {
+      const lines = svg.querySelectorAll("line");
+      for (const line of lines) {
         line.setAttribute("x1", String(cx));
         line.setAttribute("y1", String(cy));
         line.setAttribute("x2", String(lx2));
@@ -813,10 +989,9 @@ class FigCanvasControl extends HTMLElement {
       const py = e.detail?.py ?? this.#y / 100;
       this.#x = Math.round(Math.max(0, Math.min(100, px * 100)));
       this.#y = Math.round(Math.max(0, Math.min(100, py * 100)));
-      if (this.#pointTooltip && this.#type !== "color") {
-        this.#pointTooltip.setAttribute("text", this.#pointTipText);
-        this.#pointTooltip.setAttribute("show", "true");
-        this.#pointTooltip.showPopup?.();
+      if (this.#pointTooltip) {
+        this.#pointTooltip.removeAttribute("show");
+        this.#pointTooltip.hidePopup?.();
       }
       this.#syncPositions();
       if (this.#hasSecondPoint) {
@@ -838,8 +1013,7 @@ class FigCanvasControl extends HTMLElement {
       const py = e.detail?.py ?? this.#y / 100;
       this.#x = Math.round(Math.max(0, Math.min(100, px * 100)));
       this.#y = Math.round(Math.max(0, Math.min(100, py * 100)));
-      if (this.#pointTooltip && this.#type !== "color")
-        this.#pointTooltip.removeAttribute("show");
+      if (this.#pointTooltip) this.#pointTooltip.removeAttribute("show");
       if (this.#hasSecondPoint) {
         document.body.style.cursor = this.#prevBodyCursor ?? "";
       }
@@ -986,9 +1160,8 @@ class FigCanvasControl extends HTMLElement {
         this.#x2 = Math.round(Math.max(0, Math.min(100, px * 100)));
         this.#y2 = Math.round(Math.max(0, Math.min(100, py * 100)));
         if (this.#secondTooltip) {
-          this.#secondTooltip.setAttribute("text", this.#secondTipText);
-          this.#secondTooltip.setAttribute("show", "true");
-          this.#secondTooltip.showPopup?.();
+          this.#secondTooltip.removeAttribute("show");
+          this.#secondTooltip.hidePopup?.();
         }
         this.#syncPositions();
         document.body.style.cursor = this.#resizeCursorSvg(
@@ -1038,8 +1211,8 @@ class FigCanvasControl extends HTMLElement {
 
       const tooltip = isFirst ? this.#pointTooltip : this.#secondTooltip;
       if (tooltip) {
-        tooltip.setAttribute("show", "true");
-        tooltip.showPopup?.();
+        tooltip.removeAttribute("show");
+        tooltip.hidePopup?.();
       }
 
       const prevBodyCursor = document.body.style.cursor;
@@ -1122,6 +1295,7 @@ class FigCanvasControl extends HTMLElement {
       if (this.#radiusTooltip) {
         this.#radiusTooltip.setAttribute("show", "true");
         this.#radiusTooltip.showPopup?.();
+        this.#setRadiusTooltipAnchorAt(e.clientX, e.clientY);
       }
 
       const prevBodyCursor = document.body.style.cursor;
@@ -1163,8 +1337,10 @@ class FigCanvasControl extends HTMLElement {
         } else {
           this.#radius = Math.max(0, dist);
         }
-        if (this.#radiusTooltip)
+        if (this.#radiusTooltip) {
           this.#radiusTooltip.setAttribute("text", this.#formatRadius());
+          this.#setRadiusTooltipAnchorAt(ev.clientX, ev.clientY);
+        }
         this.#syncPositions();
         this.#emitInput();
       };

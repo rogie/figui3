@@ -1661,6 +1661,8 @@ class FigPopup extends HTMLDialogElement {
     } else if (typeof value === "string") {
       this._anchorRef = null;
       this.setAttribute("anchor", value);
+    } else if (value && typeof value.getBoundingClientRect === "function") {
+      this._anchorRef = value;
     } else {
       this._anchorRef = null;
     }
@@ -1802,12 +1804,12 @@ class FigPopup extends HTMLDialogElement {
     this._isPopupActive = true;
 
     const anchor = this.resolveAnchor();
-    if (anchor) anchor.classList.add("has-popup-open");
+    if (anchor?.classList) anchor.classList.add("has-popup-open");
   }
 
   hidePopup() {
     const anchor = this.resolveAnchor();
-    if (anchor) anchor.classList.remove("has-popup-open");
+    if (anchor?.classList) anchor.classList.remove("has-popup-open");
 
     this._isPopupActive = false;
     this._wasDragged = false;
@@ -1854,7 +1856,7 @@ class FigPopup extends HTMLDialogElement {
     this.teardownObservers();
 
     const anchor = this.resolveAnchor();
-    if (anchor && "ResizeObserver" in window) {
+    if (anchor instanceof Element && "ResizeObserver" in window) {
       this._anchorObserver = new ResizeObserver(this._boundReposition);
       this._anchorObserver.observe(anchor);
     }
@@ -1971,7 +1973,7 @@ class FigPopup extends HTMLDialogElement {
     if (this.contains(target)) return;
 
     const anchor = this.resolveAnchor();
-    if (anchor && anchor.contains(target)) return;
+    if (anchor?.contains && anchor.contains(target)) return;
 
     if (this.isInsideDescendantPopup(target)) return;
 

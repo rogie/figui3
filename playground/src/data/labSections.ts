@@ -63,7 +63,7 @@ export const labSections: Section[] = [
         name: "Color",
         markup: `<div class="prop-panel">
   <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
-    <fig-canvas-control type="color" color="#FF00BF" name="Position" value='{"x":50,"y":50}' snapping="modifier" data-playground-hide-field></fig-canvas-control>
+    <fig-canvas-control type="color" color="#FF00BF" name="Click to edit color" value='{"x":50,"y":50}' snapping="modifier" data-playground-hide-field></fig-canvas-control>
   </div>
 </div>`,
       },

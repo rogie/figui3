@@ -947,10 +947,12 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Rename</fig-button>
   <dialog is="fig-dialog" title="Rename Layer" open handle="fig-header" position="center center" data-playground-hide-field>
-    <fig-field direction="horizontal">
-      <label>Name</label>
-      <fig-input-text value="Frame 1" full></fig-input-text>
-    </fig-field>
+    <fig-content>
+      <fig-field direction="horizontal">
+        <label>Name</label>
+        <fig-input-text value="Frame 1" full></fig-input-text>
+      </fig-field>
+    </fig-content>
     <fig-footer>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
       <fig-button>Rename</fig-button>
@@ -973,26 +975,28 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Shadow</fig-button>
   <dialog is="fig-dialog" title="Shadow" open handle="fig-header" position="center center" data-playground-hide-field>
-    <fig-field direction="horizontal">
-      <label>X</label>
-      <fig-input-number value="0" steppers="true" full></fig-input-number>
-    </fig-field>
-    <fig-field direction="horizontal">
-      <label>Y</label>
-      <fig-input-number value="4" steppers="true" full></fig-input-number>
-    </fig-field>
-    <fig-field direction="horizontal">
-      <label>Color</label>
-      <fig-input-color value="#000000" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
-    </fig-field>
-    <fig-field direction="horizontal">
-      <label>Blur</label>
-      <fig-slider variant="neue" value="8" min="0" max="64" text="true" units="px" full></fig-slider>
-    </fig-field>
-    <fig-field direction="horizontal">
-      <label>Spread</label>
-      <fig-slider variant="neue" value="0" min="-32" max="32" text="true" units="px" full></fig-slider>
-    </fig-field>
+    <fig-content>
+      <fig-field direction="horizontal">
+        <label>X</label>
+        <fig-input-number value="0" steppers="true" full></fig-input-number>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Y</label>
+        <fig-input-number value="4" steppers="true" full></fig-input-number>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Color</label>
+        <fig-input-color value="#000000" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Blur</label>
+        <fig-slider variant="neue" value="8" min="0" max="64" text="true" units="px" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Spread</label>
+        <fig-slider variant="neue" value="0" min="-32" max="32" text="true" units="px" full></fig-slider>
+      </fig-field>
+    </fig-content>
     <fig-footer>
       <fig-button>Apply</fig-button>
     </fig-footer>
@@ -1014,27 +1018,29 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Blur</fig-button>
   <dialog is="fig-dialog" title="Progressive Blur" open handle="fig-header" position="center center" data-playground-hide-field>
-    <fig-field direction="horizontal">
-      <label>Amount</label>
-      <fig-slider variant="neue" value="12" min="0" max="64" text="true" units="px" full></fig-slider>
-    </fig-field>
-    <fig-field direction="horizontal">
-      <label>Fade start</label>
-      <fig-slider variant="neue" value="20" min="0" max="100" text="true" units="%" full></fig-slider>
-    </fig-field>
-    <fig-field direction="horizontal">
-      <label>Fade end</label>
-      <fig-slider variant="neue" value="80" min="0" max="100" text="true" units="%" full></fig-slider>
-    </fig-field>
-    <fig-field direction="horizontal">
-      <label>Direction</label>
-      <fig-dropdown full>
-        <option selected>Top to bottom</option>
-        <option>Bottom to top</option>
-        <option>Left to right</option>
-        <option>Right to left</option>
-      </fig-dropdown>
-    </fig-field>
+    <fig-content>
+      <fig-field direction="horizontal">
+        <label>Amount</label>
+        <fig-slider variant="neue" value="12" min="0" max="64" text="true" units="px" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Fade start</label>
+        <fig-slider variant="neue" value="20" min="0" max="100" text="true" units="%" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Fade end</label>
+        <fig-slider variant="neue" value="80" min="0" max="100" text="true" units="%" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Direction</label>
+        <fig-dropdown full>
+          <option selected>Top to bottom</option>
+          <option>Bottom to top</option>
+          <option>Left to right</option>
+          <option>Right to left</option>
+        </fig-dropdown>
+      </fig-field>
+    </fig-content>
     <fig-footer>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
       <fig-button>Apply</fig-button>
@@ -1057,7 +1063,8 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Photo Stack</fig-button>
   <dialog is="fig-dialog" title="Photo Stack" open handle="fig-header" position="center center" data-playground-hide-field>
-    <fig-group>
+    <fig-content>
+      <fig-group>
       <fig-field direction="horizontal">
         <label>Title</label>
         <fig-input-text value="Japan" full></fig-input-text>
@@ -1136,6 +1143,7 @@ export const propkitSections: Section[] = [
       <label>Dark Mode</label>
       <fig-switch checked></fig-switch>
     </fig-field>
+    </fig-content>
     <fig-footer>
       <fig-button>Next</fig-button>
     </fig-footer>
@@ -1176,6 +1184,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Export</fig-button>
   <dialog is="fig-dialog" title="Export Settings" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-content>
     <fig-group name="Format">
       <fig-field direction="horizontal">
         <label>Format</label>
@@ -1213,6 +1222,7 @@ export const propkitSections: Section[] = [
         <fig-switch></fig-switch>
       </fig-field>
     </fig-group>
+    </fig-content>
     <fig-footer>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
       <fig-button>Export</fig-button>
@@ -1235,6 +1245,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Token Editor</fig-button>
   <dialog is="fig-dialog" title="Design Token Editor" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-content>
     <fig-group name="Token">
       <fig-field direction="horizontal">
         <label>Name</label>
@@ -1295,6 +1306,7 @@ export const propkitSections: Section[] = [
         <fig-switch></fig-switch>
       </fig-field>
     </fig-group>
+    </fig-content>
     <fig-footer>
       <fig-button variant="secondary" close-dialog>Discard</fig-button>
       <fig-button>Save Token</fig-button>
@@ -1317,6 +1329,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Prepress</fig-button>
   <dialog is="fig-dialog" title="Prepress" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-content>
     <fig-tabs>
       <fig-tab selected content="#prepress-setup">Setup</fig-tab>
       <fig-tab content="#prepress-guides">Guides</fig-tab>
@@ -1571,6 +1584,7 @@ export const propkitSections: Section[] = [
         <fig-button>Export PDF</fig-button>
       </fig-footer>
     </fig-tab-content>
+    </fig-content>
   </dialog>
 </div>`,
       },
@@ -1589,6 +1603,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Melty Gif</fig-button>
   <dialog is="fig-dialog" title="Animated Melty Gif" open handle="fig-header" position="center center" data-playground-hide-field>
+    <fig-content>
     <fig-field>
       <fig-image full upload="true" size="auto" aspect-ratio="16/10"></fig-image>
     </fig-field>
@@ -1643,6 +1658,7 @@ export const propkitSections: Section[] = [
         <fig-slider variant="neue" value="0.5" min="0" max="5" step="0.1" text="true" units="px" full></fig-slider>
       </fig-field>
     </fig-group>
+    </fig-content>
     <fig-footer>
       <fig-button>Place in Figma</fig-button>
       <fig-button variant="secondary">Download</fig-button>

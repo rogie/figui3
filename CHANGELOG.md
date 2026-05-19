@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.12.2]
+## [4.13.0]
+
+### Added
+
+- `fig-canvas-control`: hover tooltips for all handles (point, angle, second, radius). Tooltip appears on `pointerenter` and hides on `pointerleave`, gated by drag state so it never flickers during interaction.
+- `fig-canvas-control` radius: the radius tooltip now follows the cursor via a virtual anchor (during both hover and drag) and is nudged 8px above the cursor.
+- `fig-canvas-control` `type="point-point"`: the connecting line is now draggable. A 12px transparent hit-line under the visible line uses `cursor: move` and translates both points by the same delta, clamped so both endpoints stay within `[0%, 100%]`. Emits a single `input`/`change` cycle.
+- `fig-canvas-control` `type="color"`: hover tooltip now shown (previously suppressed). Auto-hides when the color picker (`fig-color-tip`) opens via a MutationObserver on the handle, and re-enables when it closes.
+- `fig-popup` `set anchor`: now accepts any object with a `getBoundingClientRect()` method (virtual anchor), not just `Element` instances. Anchor-dependent code paths (`classList`, `contains`, ResizeObserver) are guarded so virtual anchors work safely.
+
+### Changed
+
+- `fig-canvas-control`: all handle tooltips (point, angle, second, point-point line drag) are now hidden during drag rather than shown. Hover guards also check drag state so tooltips can't be re-shown mid-drag from a stray `pointerenter`.
+- `fig-handle[type="color"]` `fig-color-tip`: nudged the picker popover up by 4px (from `bottom: calc(100% + 2px)` to `+ 6px`).
+- Propkit dialogs (Rename, Shadow, Progressive Blur, Photo Stack, Export Settings, Design Token Editor, Prepress, Animated Melty Gif): dialog body content is now wrapped in `<fig-content>` so the scroll region and `fig-footer` placement matches the recommended structure. The Plugin dialog (which hosts an iframe) is intentionally left alone.
+- Lab Color canvas example: `name` changed from "Position" to "Click to edit color".
 
 ### Fixed
 
