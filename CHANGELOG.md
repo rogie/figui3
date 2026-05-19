@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.13.0]
+## [4.13.1]
+
+### Added
+
+- `fig-canvas-control` radius ring: new white halo outer circle painted behind the brand-colored radius circle (sandwiched between `.fig-canvas-control-radius-hit` and the brand circle). Both halo and brand strokes thicken to `--fig-canvas-control-line-stroke-width-hover` on hover/active so hover and active drag look identical.
+- `--fig-canvas-control-radius-stroke` / `--fig-canvas-control-radius-stroke-halo` CSS vars to override radius ring colors.
+
+### Changed
+
+- `fig-canvas-control` radius ring default stroke now `--figma-color-border-brand` (was a translucent white).
+- `fig-canvas-control` `type="point-radius-angle"` during radius drag: the angle handle (and its hit-area) is now `pointer-events: none` so the body's rotation/resize cursor wins and the angle tooltip cannot show. Restored on pointer up.
+- `fig-color-tip` popup nudged up another 2px (from `bottom: calc(100% + 6px)` to `+ 8px`) for breathing room above the handle.
+
+### Fixed
+
+- `fig-canvas-control` radius drag: angle tooltip no longer leaks in if the cursor passes over the angle handle mid-drag. Hover guard now also returns early when `#isRadiusDragging` is true, and the tooltip is force-hidden at the start of radius drag.
 
 ### Added
 

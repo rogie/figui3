@@ -546,7 +546,7 @@ class FigCanvasControl extends HTMLElement {
     if (tooltips) {
       const tip = document.createElement("fig-tooltip");
       tip.setAttribute("action", "manual");
-      tip.setAttribute("theme", "brand");
+      tip.setAttribute("theme", "canvas");
       tip.setAttribute("pointer", "false");
       tip.setAttribute("text", this.#pointTipText);
       tip.appendChild(handle);
@@ -605,7 +605,7 @@ class FigCanvasControl extends HTMLElement {
         this.#angleHandle,
         () => this.#angleTooltip,
         () => `Angle ${Math.round(this.#angle)}°`,
-        () => this.#isAngleDragging,
+        () => this.#isAngleDragging || this.#isRadiusDragging,
       );
     }
     if (this.#secondHandle) {
@@ -683,6 +683,9 @@ class FigCanvasControl extends HTMLElement {
     const hitCircle = document.createElementNS(ns, "circle");
     hitCircle.classList.add("fig-canvas-control-radius-hit");
     svg.appendChild(hitCircle);
+    const haloCircle = document.createElementNS(ns, "circle");
+    haloCircle.classList.add("fig-canvas-control-radius-halo");
+    svg.appendChild(haloCircle);
     const circle = document.createElementNS(ns, "circle");
     svg.appendChild(circle);
     this.#radiusSvg = svg;
@@ -690,7 +693,7 @@ class FigCanvasControl extends HTMLElement {
     if (this.#tooltipsEnabled) {
       const tip = document.createElement("fig-tooltip");
       tip.setAttribute("action", "manual");
-      tip.setAttribute("theme", "brand");
+      tip.setAttribute("theme", "canvas");
       tip.setAttribute("pointer", "false");
       tip.setAttribute("text", this.#formatRadius());
       tip.appendChild(svg);
@@ -801,7 +804,7 @@ class FigCanvasControl extends HTMLElement {
     if (tooltips) {
       const tip = document.createElement("fig-tooltip");
       tip.setAttribute("action", "manual");
-      tip.setAttribute("theme", "brand");
+      tip.setAttribute("theme", "canvas");
       tip.setAttribute("pointer", "false");
       tip.setAttribute("text", `${Math.round(this.#angle)}°`);
       tip.appendChild(handle);
@@ -828,7 +831,7 @@ class FigCanvasControl extends HTMLElement {
     if (tooltips) {
       const tip = document.createElement("fig-tooltip");
       tip.setAttribute("action", "manual");
-      tip.setAttribute("theme", "brand");
+      tip.setAttribute("theme", "canvas");
       tip.setAttribute("pointer", "false");
       tip.setAttribute("text", this.#secondTipText);
       tip.appendChild(handle);
@@ -1297,6 +1300,21 @@ class FigCanvasControl extends HTMLElement {
         this.#radiusTooltip.showPopup?.();
         this.#setRadiusTooltipAnchorAt(e.clientX, e.clientY);
       }
+      if (this.#angleTooltip) {
+        this.#angleTooltip.removeAttribute("show");
+        this.#angleTooltip.hidePopup?.();
+      }
+      const prevAnglePointerEvents = this.#angleHandle?.style.pointerEvents;
+      const angleHitArea = this.#angleHandle?.querySelector(
+        ".fig-handle-hit-area",
+      );
+      const prevAngleHitPointerEvents = angleHitArea?.style.pointerEvents;
+      if (this.#angleHandle) {
+        this.#angleHandle.style.pointerEvents = "none";
+      }
+      if (angleHitArea) {
+        angleHitArea.style.pointerEvents = "none";
+      }
 
       const prevBodyCursor = document.body.style.cursor;
       circle.style.pointerEvents = "none";
@@ -1349,6 +1367,12 @@ class FigCanvasControl extends HTMLElement {
         this.#isRadiusDragging = false;
         this.classList.remove("fig-canvas-control-ring-active");
         circle.style.pointerEvents = "";
+        if (this.#angleHandle) {
+          this.#angleHandle.style.pointerEvents = prevAnglePointerEvents ?? "";
+        }
+        if (angleHitArea) {
+          angleHitArea.style.pointerEvents = prevAngleHitPointerEvents ?? "";
+        }
         document.body.style.cursor = prevBodyCursor;
         if (this.#radiusTooltip) this.#radiusTooltip.removeAttribute("show");
         this.#syncValueAttribute();

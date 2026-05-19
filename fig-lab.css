@@ -187,9 +187,12 @@ fig-canvas-control {
     rgba(255, 255, 255, 1),
     rgba(255, 255, 255, 0.5)
   );
-  --fig-canvas-control-line-stroke-hover: var(--figma-color-bg-brand);
-  --fig-canvas-control-line-stroke-active: var(--figma-color-bg-brand);
-  --fig-canvas-control-line-stroke-width: 1.25px;
+  --fig-canvas-control-radius-stroke: #0D99FF;
+  --fig-canvas-control-radius-stroke-halo: #FFFFFF;
+  --fig-canvas-control-line-stroke-hover: #0D99FF;
+  --fig-canvas-control-line-stroke-active: #0D99FF;
+  --fig-canvas-control-line-stroke-width: 1.5px;
+  --fig-canvas-control-line-stroke-width-hover: 2.25px;
 
   & > fig-handle,
   & > fig-tooltip:has(fig-handle:not([size="small"])) {
@@ -203,11 +206,15 @@ fig-canvas-control {
 
     circle {
       fill: none;
-      stroke: var(--fig-canvas-control-line-stroke);
+      stroke: var(--fig-canvas-control-radius-stroke);
       stroke-width: var(--fig-canvas-control-line-stroke-width);
       paint-order: stroke fill;
-      filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3))
-        drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.12));
+    }
+
+    .fig-canvas-control-radius-halo {
+      stroke: var(--fig-canvas-control-radius-stroke-halo);
+      stroke-width: calc(var(--fig-canvas-control-line-stroke-width) * 2);
+      filter: none;
     }
 
     .fig-canvas-control-radius-hit {
@@ -216,21 +223,17 @@ fig-canvas-control {
       pointer-events: stroke;
       filter: none;
 
-      &:hover ~ circle {
-        stroke: var(--fig-canvas-control-line-stroke-hover);
+      &:hover ~ circle:not(.fig-canvas-control-radius-halo) {
+        stroke-width: var(--fig-canvas-control-line-stroke-width-hover);
       }
     }
   }
 
-  &:has(.fig-canvas-control-radius-hit:hover) .fig-canvas-control-angle-line,
-  &.fig-canvas-control-ring-active .fig-canvas-control-angle-line {
-    stroke: var(--fig-canvas-control-line-stroke-active);
-  }
-
   &.fig-canvas-control-ring-active
     .fig-canvas-control-radius
-    circle:not(.fig-canvas-control-radius-hit) {
+    circle:not(.fig-canvas-control-radius-hit):not(.fig-canvas-control-radius-halo) {
     stroke: var(--fig-canvas-control-line-stroke-active);
+    stroke-width: var(--fig-canvas-control-line-stroke-width-hover);
   }
 
   .fig-canvas-control-angle-svg {
