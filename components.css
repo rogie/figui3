@@ -282,6 +282,11 @@
       rgba(255, 255, 255, 0.2) 0% 50%
     )
     0 0 / 0.5rem 0.5rem;
+    --checkerboard-chit: repeating-conic-gradient(
+      rgba(0, 0, 0, 0.2) 0% 25%,
+      rgba(255, 255, 255, 0.2) 0% 50%
+    )
+    0 0 / 14px 14px;
   --bg-hue: linear-gradient(
     90deg,
     rgba(255, 0, 0, 1),
@@ -1227,7 +1232,7 @@ fig-chit {
     grid-area: 1/1;
   }
   & > div {
-    background: var(--checkerboard-small);
+    background: var(--checkerboard-chit);
     border-radius: var(--border-radius);
   }
 
@@ -4950,7 +4955,7 @@ fig-handle {
     width: calc(var(--width) - var(--ring-width) * 2);
     height: calc(var(--height) - var(--ring-width) * 2);
     background:
-      linear-gradient(var(--fill), var(--fill)), var(--checkerboard-small);
+      linear-gradient(var(--fill), var(--fill)), var(--checkerboard-chit);
     border-radius: var(--border-radius);
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     place-self: center;

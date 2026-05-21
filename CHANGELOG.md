@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.14.0]
+
+### Added
+
+- `fig-input-palette` `fixed` attribute — when present or `fixed="true"`, palette length is locked (no add or remove buttons). Expanded rows show alpha controls when fixed.
+
+### Changed
+
+- `fig-input-palette`: replaced `add` with `fixed` (breaking: use `fixed` instead of `add="false"` for preset palettes).
+- `fig-input-palette`: color swatches use the native color picker instead of `fig-fill-picker`.
+- `fig-chit`: checkerboard layer uses new `--checkerboard-chit` token (14px tiles); `fig-handle` color swatch checkerboard matches.
+
+### Fixed
+
+- `fig-input-palette`: inline chit strip layout — nested `fig-chit` styles, swatch dividers, and full-width strip when `fixed`.
+- `fig-combo-input`: joined-border radius rules no longer apply to nested `fig-chit`.
+
 ## [4.13.1]
 
 ### Added
