@@ -2000,7 +2000,7 @@ fig-combo-input {
     color: var(--figma-color-text);
   }
 
-  & > * {
+  & > *:not(fig-chit){
     &:first-child:not(:last-child),
     &:first-child:not(:last-child) > * {
       border-top-right-radius: 0;
@@ -3490,25 +3490,33 @@ fig-input-palette {
       height: var(--palette-colors-height);
       fig-input-color {
         width: 100%;
-      }
-
-      fig-chit {
-        --border-radius: 0px;
-        --width: 100%;
-        --padding: 0px;
-        --height: var(--palette-colors-height);
-        --size: var(--palette-colors-height);
-        flex: 1;
-        min-width: 0;
-        width: 100% !important;
-        border-radius: 0 !important;
-        input,
-        &::before,
-        &::after {
-          padding: 0 !important;
+        fig-chit {
+          --border-radius: 0px;
+          --width: 100%;
+          --padding: 0px;
+          --height: var(--palette-colors-height);
+          --size: var(--palette-colors-height);
+          flex: 1;
+          min-width: 0;
+          width: 100% !important;
           border-radius: 0 !important;
+          input,
+          &::before,
+          &::after {
+            padding: 0 !important;
+            border-radius: 0 !important;
+          }
+          &::after{
+            box-shadow: inset 1px 0 0 0 var(--figma-color-bordertranslucent);
+          }
+        }
+        &:first-child{
+          & fig-chit::after{
+            box-shadow: none;
+          }
         }
       }
+      
     }
   }
   &[open]:not([open="false"]):not([edit="false"]) {
@@ -3519,7 +3527,7 @@ fig-input-palette {
       display: grid;
     }
   }
-  &[add="false"] > .palette-colors-inline {
+  &[fixed]:not([fixed="false"]) > .palette-colors-inline {
     grid-column: 1 / -1;
   }
   .palette-colors-expanded {

@@ -6423,9 +6423,10 @@ customElements.define("fig-input-fill", FigInputFill);
 /* Input Palette */
 /**
  * A palette of solid colors, each rendered as a fig-input-color swatch.
- * Manages an internal array of colors with add support.
+ * Manages an internal array of colors with optional add/remove support.
  * @attr {string} value - JSON array of hex strings or {color,alpha} objects, or comma-separated hex
  * @attr {boolean} disabled - Whether the palette is disabled
+ * @attr {boolean} fixed - When set (or `fixed="true"`), palette length is locked — no add or remove
  * @attr {number} min - Minimum number of colors (default: 2)
  * @attr {number} max - Maximum number of colors (default: 8); add button hidden at max
  * @fires input - During color editing (detail: full color array)
@@ -6438,7 +6439,7 @@ class FigInputPalette extends HTMLElement {
   #renderRAF = null;
 
   static get observedAttributes() {
-    return ["value", "disabled", "min", "max", "open", "add"];
+    return ["value", "disabled", "min", "max", "open", "fixed"];
   }
 
   get open() {
@@ -6462,8 +6463,10 @@ class FigInputPalette extends HTMLElement {
     }
   }
 
-  get #showAdd() {
-    return !this.hasAttribute("add") || this.getAttribute("add") !== "false";
+  get #isFixed() {
+    return (
+      this.hasAttribute("fixed") && this.getAttribute("fixed") !== "false"
+    );
   }
 
   get #min() {
@@ -6508,7 +6511,7 @@ class FigInputPalette extends HTMLElement {
         break;
       case "min":
       case "max":
-      case "add":
+      case "fixed":
         this.#render();
         break;
       case "open":
@@ -6618,13 +6621,15 @@ class FigInputPalette extends HTMLElement {
     inlineWrap.appendChild(wrap);
     this.appendChild(inlineWrap);
 
-    if (this.#showAdd) this.#createAddButton(disabled, this);
+    if (!this.#isFixed) this.#createAddButton(disabled, this);
 
     const expandedWrap = document.createElement("div");
     expandedWrap.className = "palette-colors-expanded";
     this.#colors.forEach((entry, i) => {
       expandedWrap.appendChild(this.#createPicker(entry, i, disabled));
-      expandedWrap.appendChild(this.#createRemoveButton(i, disabled));
+      if (!this.#isFixed) {
+        expandedWrap.appendChild(this.#createRemoveButton(i, disabled));
+      }
     });
     this.appendChild(expandedWrap);
   }
@@ -6639,14 +6644,12 @@ class FigInputPalette extends HTMLElement {
         : entry.color;
     const ic = document.createElement("fig-input-color");
     ic.setAttribute("value", hexAlpha);
-    ic.setAttribute("picker", "figma");
-    ic.setAttribute("picker-anchor", "self");
     if (inline) {
       ic.setAttribute("text", "false");
       ic.setAttribute("alpha", "true");
     } else {
       ic.setAttribute("text", "true");
-      ic.setAttribute("alpha", "false");
+      ic.setAttribute("alpha", this.#isFixed ? "true" : "false");
       ic.setAttribute("full", "");
     }
     if (disabled) ic.setAttribute("disabled", "");
@@ -6705,6 +6708,7 @@ class FigInputPalette extends HTMLElement {
   }
 
   #removeColor(index) {
+    if (this.#isFixed) return;
     if (index < 0 || index >= this.#colors.length) return;
     if (this.#colors.length <= this.#min) return;
     this.#colors.splice(index, 1);
@@ -6739,6 +6743,7 @@ class FigInputPalette extends HTMLElement {
   }
 
   #addColor(entry) {
+    if (this.#isFixed) return;
     this.#colors.push(entry);
     const disabled =
       this.hasAttribute("disabled") &&

@@ -105,7 +105,7 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field direction="horizontal">
       <label>Palette</label>
-      <fig-input-palette value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full add="true"></fig-input-palette>
+      <fig-input-palette value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
     </fig-field>
   </fig-group>
   <fig-group name="Advanced" collapsible>
@@ -231,10 +231,10 @@ export const propkitSections: Section[] = [
   <fig-field direction="vertical">
     <label>Palettes</label>
     <fig-chooser layout="vertical" value="sunset" full drag data-playground-hide-attrs="layout,drag,loop" style="max-height: 240px">
-      <fig-choice value="sunset" selected><fig-input-palette value="#FF6B6B,#FFA07A,#FFD700,#FF4500" add="false" disabled full></fig-input-palette></fig-choice>
-      <fig-choice value="ocean"><fig-input-palette value="#0D99FF,#00CEC9,#6C5CE7,#0984E3" add="false" disabled full></fig-input-palette></fig-choice>
-      <fig-choice value="forest"><fig-input-palette value="#00B894,#55E6C1,#2D6A4F,#95D5B2" add="false" disabled full></fig-input-palette></fig-choice>
-      <fig-choice value="berry"><fig-input-palette value="#E84393,#A855F7,#6D28D9,#FD79A8" add="false" disabled full></fig-input-palette></fig-choice>
+      <fig-choice value="sunset" selected><fig-input-palette value="#FF6B6B,#FFA07A,#FFD700,#FF4500" fixed disabled full></fig-input-palette></fig-choice>
+      <fig-choice value="ocean"><fig-input-palette value="#0D99FF,#00CEC9,#6C5CE7,#0984E3" fixed disabled full></fig-input-palette></fig-choice>
+      <fig-choice value="forest"><fig-input-palette value="#00B894,#55E6C1,#2D6A4F,#95D5B2" fixed disabled full></fig-input-palette></fig-choice>
+      <fig-choice value="berry"><fig-input-palette value="#E84393,#A855F7,#6D28D9,#FD79A8" fixed disabled full></fig-input-palette></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,

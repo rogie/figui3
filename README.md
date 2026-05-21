@@ -442,8 +442,8 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 | `disabled` | boolean | `false` | Disabled state |
 | `min` | number | `2` | Minimum number of colors |
 | `max` | number | `8` | Maximum (add button hidden at max) |
-| `expanded` | boolean | `false` | Show text + alpha inputs per color |
-| `add` | boolean | `true` | Show add-color button (`add="false"` hides it) |
+| `open` | boolean | `false` | Expanded rows with text inputs per color |
+| `fixed` | boolean | `false` | Lock palette length — no add or remove (`fixed` or `fixed="true"`) |
 
 **Events:**
 

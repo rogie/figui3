@@ -341,7 +341,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-palette": {
-    add: { label: "Add", type: "boolean", boolMode: "string", defaultChecked: true },
+    fixed: { label: "Fixed", type: "boolean", boolMode: "presence" },
     open: { label: "Open", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
