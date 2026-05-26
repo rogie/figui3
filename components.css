@@ -3550,12 +3550,14 @@ fig-input-palette {
       min-width: 0;
       grid-column: input / -1;
 
-      &:has(+ fig-button) {
+      &:has(+ fig-button),
+      &:has(+ fig-tooltip) {
         grid-column: input;
       }
     }
 
     > fig-button,
+    > fig-tooltip,
     > button {
       grid-column: button;
     }

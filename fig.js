@@ -1784,6 +1784,10 @@ class FigPopup extends HTMLDialogElement {
       this.hasAttribute("popover") &&
       typeof this.showPopover === "function" &&
       !this.matches?.(":popover-open");
+    const positionBeforeReveal = this.shouldAutoReposition();
+    if (positionBeforeReveal) {
+      this.style.visibility = "hidden";
+    }
     if (usePopover) {
       try {
         this.showPopover();
@@ -1797,6 +1801,10 @@ class FigPopup extends HTMLDialogElement {
       } catch (e) {
         // Ignore when dialog cannot be shown yet.
       }
+    }
+    if (positionBeforeReveal && (this.matches?.(":open") || this.matches?.(":popover-open"))) {
+      this.positionPopup();
+      this.style.visibility = "";
     }
 
     this.setupObservers();
@@ -1817,6 +1825,7 @@ class FigPopup extends HTMLDialogElement {
     const anchor = this.resolveAnchor();
     if (anchor?.classList) anchor.classList.remove("has-popup-open");
 
+    this.style.visibility = "";
     this._isPopupActive = false;
     this._wasDragged = false;
     this.teardownObservers();
@@ -2487,7 +2496,7 @@ class FigPopup extends HTMLDialogElement {
   }
 
   positionPopup() {
-    if (!this.open || !super.open) return;
+    if (!this.open || !this.matches?.(":open")) return;
 
     const popupRect = this.getBoundingClientRect();
     const offset = this.parseOffset();
@@ -5126,6 +5135,14 @@ class FigInputColor extends HTMLElement {
       // Setup swatch (native picker)
       if (this.#swatch) {
         this.#swatch.disabled = this.hasAttribute("disabled");
+        const swatchInput = this.#swatch.querySelector('input[type="color"]');
+        if (this.#textInput || this.hasAttribute("swatch-disabled")) {
+          swatchInput?.setAttribute("tabindex", "-1");
+        }
+        if (this.hasAttribute("swatch-disabled")) {
+          swatchInput?.setAttribute("disabled", "");
+          if (swatchInput) swatchInput.style.pointerEvents = "none";
+        }
         this.#swatch.addEventListener("input", this.#handleInput.bind(this));
       }
 
@@ -5243,7 +5260,11 @@ class FigInputColor extends HTMLElement {
   }
 
   focus() {
-    this.#swatch.focus();
+    if (this.#textInput) {
+      this.#textInput.focus();
+      return;
+    }
+    this.#swatch?.focus();
   }
 
   #handleInput(event) {
@@ -6621,6 +6642,14 @@ class FigInputPalette extends HTMLElement {
 
     const inlineWrap = document.createElement("div");
     inlineWrap.className = "palette-colors-inline";
+    inlineWrap.addEventListener("click", () => {
+      if (
+        this.hasAttribute("disabled") &&
+        this.getAttribute("disabled") !== "false"
+      )
+        return;
+      this.open = true;
+    });
 
     const wrap = document.createElement("div");
     wrap.className = "palette-colors";
@@ -6658,6 +6687,7 @@ class FigInputPalette extends HTMLElement {
     if (inline) {
       ic.setAttribute("text", "false");
       ic.setAttribute("alpha", "true");
+      ic.setAttribute("swatch-disabled", "");
     } else {
       ic.setAttribute("text", "true");
       ic.setAttribute("alpha", this.#isFixed ? "true" : "false");
@@ -6715,7 +6745,10 @@ class FigInputPalette extends HTMLElement {
       if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
       this.#removeColor(index);
     });
-    return btn;
+    const tooltip = document.createElement("fig-tooltip");
+    tooltip.setAttribute("text", "Remove color");
+    tooltip.appendChild(btn);
+    return tooltip;
   }
 
   #removeColor(index) {
@@ -6745,6 +6778,7 @@ class FigInputPalette extends HTMLElement {
       )
         return;
       if (this.#colors.length >= this.#max) return;
+      this.open = true;
       this.#addColor({ color: "#D9D9D9", alpha: 1 });
     });
     const tooltip = document.createElement("fig-tooltip");
@@ -6778,6 +6812,7 @@ class FigInputPalette extends HTMLElement {
       const addBtn = this.querySelector(".palette-add-btn");
       if (addBtn) addBtn.setAttribute("disabled", "");
     }
+    this.#syncRemoveButtons(disabled);
     this.#emitChange();
   }
 
@@ -6817,9 +6852,18 @@ class FigInputPalette extends HTMLElement {
     });
     const addBtn = this.querySelector(".palette-add-btn");
     if (addBtn) {
-      if (disabled) addBtn.setAttribute("disabled", "");
+      if (disabled || this.#colors.length >= this.#max) addBtn.setAttribute("disabled", "");
       else addBtn.removeAttribute("disabled");
     }
+    this.#syncRemoveButtons(disabled);
+  }
+
+  #syncRemoveButtons(disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") {
+    const shouldDisable = disabled || this.#colors.length <= this.#min;
+    this.querySelectorAll(".palette-remove-btn").forEach((btn) => {
+      if (shouldDisable) btn.setAttribute("disabled", "");
+      else btn.removeAttribute("disabled");
+    });
   }
 
   #emitInput() {
@@ -15531,7 +15575,7 @@ class FigMenu extends HTMLElement {
   #observer = null;
   #boundTriggerClick;
   #boundPopupClick;
-  #boundPopupKeydown;
+  #boundMenuKeydown;
   #boundPopupClose;
   #focusedIndex = -1;
 
@@ -15543,7 +15587,7 @@ class FigMenu extends HTMLElement {
     super();
     this.#boundTriggerClick = this.#handleTriggerClick.bind(this);
     this.#boundPopupClick = this.#handlePopupClick.bind(this);
-    this.#boundPopupKeydown = this.#handlePopupKeydown.bind(this);
+    this.#boundMenuKeydown = this.#handleMenuKeydown.bind(this);
     this.#boundPopupClose = this.#handlePopupClose.bind(this);
   }
 
@@ -15664,6 +15708,7 @@ class FigMenu extends HTMLElement {
   }
 
   #setupListeners() {
+    this.addEventListener("keydown", this.#boundMenuKeydown);
     if (this.#trigger) {
       this.#trigger.addEventListener("click", this.#boundTriggerClick);
       this.#trigger.setAttribute("aria-haspopup", "menu");
@@ -15671,17 +15716,16 @@ class FigMenu extends HTMLElement {
     }
     if (this.#popup) {
       this.#popup.addEventListener("click", this.#boundPopupClick);
-      this.#popup.addEventListener("keydown", this.#boundPopupKeydown);
     }
   }
 
   #teardownListeners() {
+    this.removeEventListener("keydown", this.#boundMenuKeydown);
     if (this.#trigger) {
       this.#trigger.removeEventListener("click", this.#boundTriggerClick);
     }
     if (this.#popup) {
       this.#popup.removeEventListener("click", this.#boundPopupClick);
-      this.#popup.removeEventListener("keydown", this.#boundPopupKeydown);
     }
   }
 
@@ -15714,6 +15758,27 @@ class FigMenu extends HTMLElement {
   #getItems() {
     if (!this.#popup) return [];
     return Array.from(this.#popup.querySelectorAll("fig-menu-item:not([disabled]):not([disabled='true'])"));
+  }
+
+  #syncFocusedIndex() {
+    const items = this.#getItems();
+    if (!items.length) {
+      this.#focusedIndex = -1;
+      return;
+    }
+    const active = document.activeElement;
+    const idx = items.findIndex(
+      (item) => item === active || item.contains(active),
+    );
+    this.#focusedIndex = idx >= 0 ? idx : -1;
+  }
+
+  #focusItemAt(index) {
+    const items = this.#getItems();
+    if (!items.length) return;
+    const clamped = Math.max(0, Math.min(index, items.length - 1));
+    this.#focusedIndex = clamped;
+    items[clamped].focus();
   }
 
   #syncDisabled() {
@@ -15749,40 +15814,42 @@ class FigMenu extends HTMLElement {
     this.#selectItem(item);
   }
 
-  #handlePopupKeydown(e) {
+  #handleMenuKeydown(e) {
+    if (!this.open || !this.#popup?.matches?.(":open")) return;
+
     const items = this.#getItems();
     if (!items.length) return;
 
     switch (e.key) {
       case "ArrowDown": {
         e.preventDefault();
-        this.#focusedIndex = Math.min(this.#focusedIndex + 1, items.length - 1);
-        items[this.#focusedIndex]?.focus();
+        this.#syncFocusedIndex();
+        this.#focusItemAt(this.#focusedIndex + 1);
         break;
       }
       case "ArrowUp": {
         e.preventDefault();
-        this.#focusedIndex = Math.max(this.#focusedIndex - 1, 0);
-        items[this.#focusedIndex]?.focus();
+        this.#syncFocusedIndex();
+        this.#focusItemAt(this.#focusedIndex - 1);
         break;
       }
       case "Home": {
         e.preventDefault();
-        this.#focusedIndex = 0;
-        items[0]?.focus();
+        this.#focusItemAt(0);
         break;
       }
       case "End": {
         e.preventDefault();
-        this.#focusedIndex = items.length - 1;
-        items[this.#focusedIndex]?.focus();
+        this.#focusItemAt(items.length - 1);
         break;
       }
       case "Enter":
       case " ": {
-        e.preventDefault();
+        this.#syncFocusedIndex();
         const focused = items[this.#focusedIndex];
-        if (focused) this.#selectItem(focused);
+        if (!focused) return;
+        e.preventDefault();
+        this.#selectItem(focused);
         break;
       }
     }
@@ -15817,10 +15884,10 @@ class FigMenu extends HTMLElement {
     if (this.#trigger) {
       this.#trigger.setAttribute("aria-expanded", "true");
     }
-    this.#focusedIndex = 0;
+    this.#focusedIndex = -1;
     requestAnimationFrame(() => {
-      const items = this.#getItems();
-      if (items.length) items[0].focus();
+      if (!this.#trigger?.matches?.(":focus-visible")) return;
+      this.#focusItemAt(0);
     });
   }
 
