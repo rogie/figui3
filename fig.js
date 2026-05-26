@@ -1837,7 +1837,10 @@ class FigPopup extends HTMLDialogElement {
         // Ignore.
       }
     }
-    if (super.open) {
+  // Use :open, not super.open — the custom open getter reads the attribute
+  // removed just before hidePopup(), so super.open can be false while the
+  // native dialog is still open and no "close" event fires.
+    if (this.matches?.(":open")) {
       try {
         this.close();
       } catch (e) {
@@ -15726,7 +15729,12 @@ class FigMenu extends HTMLElement {
   #handleTriggerClick(e) {
     if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
     e.stopPropagation();
-    if (this.open) {
+    const popupShowing = this.#popup?.matches?.(":open") ?? false;
+    if (this.open && !popupShowing) {
+      this.removeAttribute("open");
+    }
+    const effectiveOpen = this.open && popupShowing;
+    if (effectiveOpen) {
       this.open = false;
     } else {
       this.open = true;

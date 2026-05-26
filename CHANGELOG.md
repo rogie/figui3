@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.2]
+
+### Fixed
+
+- `fig-menu`: reopening after dismiss (outside click, Escape) works again — `fig-popup` now calls native `dialog.close()` via `:open` so the menu `open` state stays in sync; trigger ignores stale `open` when the popup is not showing.
+
 ## [4.15.1]
 
 ### Changed
