@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.14.1]
+
+### Changed
+
+- `:root.figma-light` / `:root.figma-dark`: set `color-scheme` and `background-color` from `--figma-color-bg`.
+- `fig-dialog`: `--dialog-radius` token; child `iframe` uses matching bottom corner radius.
+
 ## [4.14.0]
 
 ### Added
