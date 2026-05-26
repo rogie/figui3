@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.1]
+
+### Changed
+
+- Propkit plugin iframe demo loads FigUI from `unpkg.com/@rogieking/figui3@latest` again (was local `/fig.css` and `/fig.js`).
+
 ## [4.15.0]
 
 ### Added
