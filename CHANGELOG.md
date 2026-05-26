@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.0]
+
+### Added
+
+- `fig-icon` component — masked icons via `name`; `size="small"` (1rem) or `medium` (1.5rem, default); `color` sets fill via `background-color` (Figma icon tokens).
+
+### Changed
+
+- **Breaking:** Icon design tokens renamed by artboard size: `--icon-16-*` (16×16) and `--icon-24-*` (24×24). Update custom CSS from e.g. `var(--icon-close)` to `var(--icon-24-close)`.
+- Library internals: `fig-mask-icon` spans replaced with `<fig-icon>` (dialog close, palette add/remove, fill picker, easing curve, chooser nav, media controls, etc.). Legacy `.fig-mask-icon` CSS still supported.
+- `fig-handle`: no longer auto-sets `type="canvas"` when `type` is omitted (default is the base brand dot handle).
+
 ## [4.14.1]
 
 ### Changed

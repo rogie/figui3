@@ -93,6 +93,7 @@ Minimal example:
 | [Image](#image) | `<fig-image>` | Image display/upload |
 | [Video](#video) | `<fig-video>` | Video display/upload with playback controls |
 | [Avatar](#avatar) | `<fig-avatar>` | Profile image or initials |
+| [Icon](#icon) | `<fig-icon>` | Masked icon from design tokens |
 | [Spinner](#spinner) | `<fig-spinner>` | Loading spinner |
 | [Shimmer](#shimmer) | `<fig-shimmer>` | Shimmer loading placeholder |
 | [Skeleton](#skeleton) | `<fig-skeleton>` | Skeleton loading placeholder |
@@ -1094,6 +1095,27 @@ Profile image or initials fallback.
 <fig-avatar src="https://example.com/photo.jpg" name="John Doe"></fig-avatar>
 <fig-avatar name="Jane Smith" size="large"></fig-avatar>
 ```
+
+---
+
+#### Icon
+
+`<fig-icon>` — [demo](https://rog.ie/figui3/#icon)
+
+Masked icon using `--icon-16-*` and `--icon-24-*` design tokens (SVG artboard size). Display size is controlled separately via the `size` attribute.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `name` | string | — | Icon name: `add`, `close`, `chevron`, `arrow-left`, etc. |
+| `size` | string | `medium` | `medium` (1.5rem) or `small` (1rem) |
+| `color` | string | — | Icon fill (`background-color`), e.g. `var(--figma-color-icon)` |
+
+```html
+<fig-icon name="close"></fig-icon>
+<fig-icon name="chevron" size="small"></fig-icon>
+```
+
+Legacy: `<span class="fig-mask-icon" style="--icon: var(--icon-24-add)"></span>` still works.
 
 ---
 

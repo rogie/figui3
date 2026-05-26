@@ -14,11 +14,15 @@ import {
   applyPrependSlotMutation,
   applyTooltipActionMutation,
   getChooserPaletteLabelsEnabled,
+  FIG_ICON_COLOR_OPTIONS,
+  getFigIconColorOptionLabel,
+  getFigIconPlaygroundNames,
   getHandleHitArea,
   getHandleHitAreaDebug,
   getHeaderIconEnabled,
   getPrependSlotMode,
   parseAttributeTargets,
+  type FigIconPlaygroundSet,
   type PrependSlotMode,
 } from "../lib/attributeParser";
 import {
@@ -149,6 +153,17 @@ function sentenceCase(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+function readColorInputEventValue(event: unknown): string | undefined {
+  const customEvent = event as CustomEvent<{ value?: string }>;
+  if (typeof customEvent.detail?.value === "string") {
+    return customEvent.detail.value;
+  }
+  const host = (event as { currentTarget?: HTMLElement & { value?: string } })
+    .currentTarget;
+  if (typeof host?.value === "string") return host.value;
+  return undefined;
+}
+
 function getInputPanelTitle(controlTag: string): string {
   const titles: Record<string, string> = {
     "fig-button": "Button",
@@ -183,6 +198,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-input-angle": "Angle input",
     "fig-joystick": "Joystick",
     "fig-toast": "Toast",
+    "fig-icon": "Icon",
     "fig-spinner": "Spinner",
     "fig-shimmer": "Shimmer",
     "fig-skeleton": "Skeleton",
@@ -1205,8 +1221,7 @@ export default function AttributesView({
           ) {
             const colorValue = value || "#0D99FF";
             const handleColorChange = (e: any) => {
-              const host = e.currentTarget as HTMLElement & { value?: string };
-              const nextValue = host.value ?? (e as CustomEvent).detail?.value;
+              const nextValue = readColorInputEventValue(e);
               if (typeof nextValue !== "string") return;
               applyChange(target.fieldIndex, scope, name, nextValue || null);
             };
@@ -1335,13 +1350,94 @@ export default function AttributesView({
               </div>
             )}
 
-            {visibleControlEntries.length > 0 && (
+            {(visibleControlEntries.length > 0 ||
+              (target.controlTag === "fig-icon" &&
+                (target.controlAttributes["data-playground-icon-set"] === "16" ||
+                  target.controlAttributes["data-playground-icon-set"] === "24"))) && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
                   <h3>{getInputPanelTitle(target.controlTag)}</h3>
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
+                    {target.controlTag === "fig-icon" &&
+                      (() => {
+                        const set = target.controlAttributes[
+                          "data-playground-icon-set"
+                        ] as FigIconPlaygroundSet | undefined;
+                        if (set !== "16" && set !== "24") return null;
+                        const names = getFigIconPlaygroundNames(set);
+                        const currentName =
+                          target.controlAttributes.name ?? names[0];
+                        const currentColorLabel = getFigIconColorOptionLabel(
+                          target.controlAttributes.color,
+                        );
+                        const nameOptionsStr = names
+                          .map((name) => toSentenceCaseLabel(name))
+                          .join(",");
+                        const colorOptionsStr = FIG_ICON_COLOR_OPTIONS.map(
+                          (option) => option.label,
+                        ).join(",");
+                        return (
+                          <>
+                            <fig-field
+                              direction="horizontal"
+                              columns="half"
+                              key={`control-icon-name-${target.fieldIndex}`}
+                            >
+                              <label>Name</label>
+                              <fig-options
+                                full
+                                options={nameOptionsStr}
+                                value={toSentenceCaseLabel(currentName)}
+                                onChange={(e: any) => {
+                                  const nextLabel =
+                                    (e as CustomEvent).detail ?? e.target?.value;
+                                  if (typeof nextLabel !== "string") return;
+                                  const match = names.find(
+                                    (name) =>
+                                      toSentenceCaseLabel(name) === nextLabel,
+                                  );
+                                  if (!match) return;
+                                  applyChange(
+                                    target.fieldIndex,
+                                    "control",
+                                    "name",
+                                    match,
+                                  );
+                                }}
+                              ></fig-options>
+                            </fig-field>
+                            <fig-field
+                              direction="horizontal"
+                              columns="half"
+                              key={`control-icon-color-${target.fieldIndex}`}
+                            >
+                              <label>Color</label>
+                              <fig-options
+                                full
+                                options={colorOptionsStr}
+                                value={currentColorLabel}
+                                onChange={(e: any) => {
+                                  const nextLabel =
+                                    (e as CustomEvent).detail ?? e.target?.value;
+                                  if (typeof nextLabel !== "string") return;
+                                  const match = FIG_ICON_COLOR_OPTIONS.find(
+                                    (option) => option.label === nextLabel,
+                                  );
+                                  if (!match) return;
+                                  applyChange(
+                                    target.fieldIndex,
+                                    "control",
+                                    "color",
+                                    match.value,
+                                  );
+                                }}
+                              ></fig-options>
+                            </fig-field>
+                          </>
+                        );
+                      })()}
                     {target.controlTag === "fig-header" &&
                       (() => {
                         const iconEnabled = getHeaderIconEnabled(
@@ -1530,11 +1626,10 @@ export default function AttributesView({
                         target.controlAttributes.color
                       ) {
                         const colorValue = target.controlAttributes.color || "#0D99FF";
-                        const handleColorInput = (e: any) => {
-                          const host = e.currentTarget as HTMLElement & { value?: string };
-                          const nextValue = host.value ?? (e as CustomEvent).detail?.value;
-                          if (typeof nextValue !== "string") return;
-                          applyChange(target.fieldIndex, "control", "color", nextValue || null);
+                        const handleColorInput = (e: unknown) => {
+                          const nextValue = readColorInputEventValue(e);
+                          if (!nextValue) return;
+                          applyChange(target.fieldIndex, "control", "color", nextValue);
                         };
                         const colorPickerField = (
                           <fig-field

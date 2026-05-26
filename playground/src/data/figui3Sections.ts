@@ -761,7 +761,7 @@ export const figui3Sections: Section[] = [
   <fig-header>
     <h3>Section title</h3>
     <fig-button variant="ghost" icon="true">
-      <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+      <fig-icon name="close"></fig-icon>
     </fig-button>
   </fig-header>
 </div>`,
@@ -803,6 +803,29 @@ export const figui3Sections: Section[] = [
   <fig-button data-playground-ignore-controls="true" onclick="document.getElementById('demo-toast').showToast()">Show Toast</fig-button>
   <dialog id="demo-toast" is="fig-toast" theme="auto" duration="3000" offset="16">Saved</dialog>
 </div>`,
+      },
+    ],
+  },
+  {
+    id: "icon",
+    name: "Icon",
+    group: "Core components",
+    description:
+      "Masked icons from design tokens (--icon-24-* at medium display size, --icon-16-* at small).",
+    examples: [
+      {
+        id: "medium",
+        name: "Medium",
+        description:
+          "Masked icons from --icon-24-* design tokens at 1.5rem display size (medium, the default).<br><br>The color attribute sets the masked fill via background-color. Use Figma icon tokens, e.g. color=\"var(--figma-color-icon)\" or color=\"var(--figma-color-icon-brand)\".",
+        markup: `<fig-icon name="add" data-playground-hide-field data-playground-hide-attrs="name,size,color" data-playground-icon-set="24"></fig-icon>`,
+      },
+      {
+        id: "small",
+        name: "Small",
+        description:
+          "Masked icons from --icon-16-* design tokens at 1rem display size. Set size=\"small\" on &lt;fig-icon&gt; for the compact 1rem size.<br><br>The color attribute sets the masked fill via background-color. Use Figma icon tokens, e.g. color=\"var(--figma-color-icon)\" or color=\"var(--figma-color-icon-secondary)\".",
+        markup: `<fig-icon name="chevron" size="small" data-playground-hide-field data-playground-hide-attrs="name,size,color" data-playground-icon-set="16"></fig-icon>`,
       },
     ],
   },
@@ -915,7 +938,7 @@ export const figui3Sections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
-    <fig-handle drag drag-snapping="modifier" type="color" color="#FF00BF" data-playground-hide-field></fig-handle>
+    <fig-handle drag drag-snapping="modifier" data-playground-hide-field></fig-handle>
   </div>
 </div>`,
       },

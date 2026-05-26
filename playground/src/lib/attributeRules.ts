@@ -499,6 +499,45 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["auto", "dark", "light", "danger", "brand", "success"],
     },
   },
+  "fig-icon": {
+    name: {
+      label: "Name",
+      type: "enum",
+      options: [
+        "add",
+        "minus",
+        "close",
+        "back",
+        "forward",
+        "chevron",
+        "checkmark",
+        "reset",
+        "arrow-left",
+        "rotate",
+        "swap",
+        "play",
+        "pause",
+        "eyedropper",
+        "steppers",
+      ],
+    },
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["medium", "small"],
+    },
+    color: {
+      label: "Color",
+      type: "enum",
+      options: [
+        "var(--figma-color-icon)",
+        "var(--figma-color-icon-secondary)",
+        "var(--figma-color-icon-tertiary)",
+        "var(--figma-color-icon-disabled)",
+        "var(--figma-color-icon-brand)",
+      ],
+    },
+  },
   "fig-spinner": {},
   "fig-shimmer": {
     duration: {

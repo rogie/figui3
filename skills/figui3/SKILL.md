@@ -169,7 +169,7 @@ export default defineConfig({
   <fig-header>
     Dialog Title
     <fig-button variant="ghost" icon close-dialog aria-label="Close dialog">
-      <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+      <fig-icon name="close"></fig-icon>
     </fig-button>
   </fig-header>
   <div>Dialog body</div>

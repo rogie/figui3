@@ -16,6 +16,15 @@ function figIsWebKitOrIOSBrowser() {
   return isIOSBrowser || isDesktopWebKit;
 }
 
+/** @param {string} name @param {{ size?: string, className?: string }} [options] */
+function createFigIcon(name, options = {}) {
+  const icon = document.createElement("fig-icon");
+  if (name) icon.setAttribute("name", name);
+  if (options.size) icon.setAttribute("size", options.size);
+  if (options.className) icon.className = options.className;
+  return icon;
+}
+
 function figSupportsCustomizedBuiltIns() {
   if (
     typeof window === "undefined" ||
@@ -1234,10 +1243,7 @@ class FigDialog extends HTMLDialogElement {
     btn.setAttribute("variant", "ghost");
     btn.setAttribute("icon", "");
     btn.setAttribute("close-dialog", "");
-    const icon = document.createElement("span");
-    icon.className = "fig-mask-icon";
-    icon.style.setProperty("--icon", "var(--icon-close)");
-    btn.appendChild(icon);
+    btn.appendChild(createFigIcon("close"));
     tooltip.appendChild(btn);
     header.appendChild(h3);
     header.appendChild(tooltip);
@@ -4907,8 +4913,10 @@ class FigField extends HTMLElement {
       this.#toggleable = !!(this.input && "open" in this.input);
 
       if (this.#toggleable && this.label) {
-        this.#chevron = document.createElement("span");
-        this.#chevron.className = "fig-mask-icon fig-field-chevron";
+        this.#chevron = createFigIcon("chevron", {
+          size: "small",
+          className: "fig-field-chevron",
+        });
         this.insertBefore(this.#chevron, this.label);
 
         this.#boundToggle = (e) => {
@@ -6699,7 +6707,7 @@ class FigInputPalette extends HTMLElement {
     btn.setAttribute("aria-label", "Remove color");
     btn.className = "palette-remove-btn";
     if (disabled || this.#colors.length <= this.#min) btn.setAttribute("disabled", "");
-    btn.innerHTML = `<span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>`;
+    btn.appendChild(createFigIcon("minus"));
     btn.addEventListener("click", () => {
       if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
       this.#removeColor(index);
@@ -6726,7 +6734,7 @@ class FigInputPalette extends HTMLElement {
     addBtn.setAttribute("aria-label", "Add color");
     addBtn.className = "palette-add-btn";
     if (disabled || atMax) addBtn.setAttribute("disabled", "");
-    addBtn.innerHTML = `<span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>`;
+    addBtn.appendChild(createFigIcon("add"));
     addBtn.addEventListener("click", () => {
       if (
         this.hasAttribute("disabled") &&
@@ -9029,10 +9037,9 @@ class FigMediaControls extends HTMLElement {
     btn.setAttribute("size", "small");
     btn.setAttribute("icon", "true");
     btn.setAttribute("aria-label", "Play");
-    const icon = document.createElement("span");
-    icon.className = "fig-mask-icon fig-media-controls-play-icon";
-    icon.style.setProperty("--icon", "var(--icon-play)");
-    icon.style.setProperty("--size", "1.5rem");
+    const icon = createFigIcon("play", {
+      className: "fig-media-controls-play-icon",
+    });
     btn.append(icon);
     tooltip.append(btn);
     btn.addEventListener("click", (e) => {
@@ -9095,10 +9102,7 @@ class FigMediaControls extends HTMLElement {
     this.#playTooltip?.setAttribute("text", playing ? "Pause" : "Play");
     const icon = this.#playBtn.querySelector(".fig-media-controls-play-icon");
     if (icon) {
-      icon.style.setProperty(
-        "--icon",
-        playing ? "var(--icon-pause)" : "var(--icon-play)",
-      );
+      icon.setAttribute("name", playing ? "pause" : "play");
     }
   }
 
@@ -9343,7 +9347,7 @@ class FigInputFile extends HTMLElement {
       this.#clearBtn.setAttribute("icon", "true");
       this.#clearBtn.className = "fig-input-file-clear";
       if (disabled) this.#clearBtn.setAttribute("disabled", "");
-      this.#clearBtn.innerHTML = `<span class="fig-mask-icon" style="--icon: var(--icon-minus);"></span>`;
+      this.#clearBtn.replaceChildren(createFigIcon("minus"));
       this.#clearBtn.addEventListener("click", this.#onClear);
       clearTooltip.appendChild(this.#clearBtn);
       this.appendChild(clearTooltip);
@@ -11199,7 +11203,7 @@ class FigInputJoystick extends HTMLElement {
             </div>
             <fig-tooltip text="Reset">
               <fig-button variant="ghost" icon="true" class="fig-joystick-reset" aria-label="Reset to default">
-                <span class="fig-mask-icon" style="--icon: var(--icon-reset)"></span>
+                <fig-icon name="reset" size="small"></fig-icon>
               </fig-button>
             </fig-tooltip>
           </div>
@@ -11714,8 +11718,10 @@ class FigGroup extends HTMLElement {
 
     if (isCollapsible) {
       if (!h3.querySelector(".fig-group-chevron")) {
-        const chevron = document.createElement("span");
-        chevron.className = "fig-mask-icon fig-group-chevron";
+        const chevron = createFigIcon("chevron", {
+          size: "small",
+          className: "fig-group-chevron",
+        });
         h3.prepend(chevron);
       }
       this.#chevron = h3.querySelector(".fig-group-chevron");
@@ -11757,7 +11763,71 @@ customElements.define("fig-footer", FigFooter);
 class FigSpinner extends HTMLElement {}
 customElements.define("fig-spinner", FigSpinner);
 
-class FigIcon extends HTMLElement {}
+/** @type {Record<string, string>} */
+const FIG_ICON_TOKENS = {
+  chevron: "--icon-16-chevron",
+  checkmark: "--icon-16-checkmark",
+  reset: "--icon-16-reset",
+  "arrow-left": "--icon-16-arrow-left",
+  steppers: "--icon-24-steppers",
+  eyedropper: "--icon-24-eyedropper",
+  add: "--icon-24-add",
+  minus: "--icon-24-minus",
+  back: "--icon-24-back",
+  forward: "--icon-24-forward",
+  close: "--icon-24-close",
+  rotate: "--icon-24-rotate",
+  swap: "--icon-24-swap",
+  play: "--icon-24-play",
+  pause: "--icon-24-pause",
+};
+
+function figIconCssVar(name) {
+  const token = name && FIG_ICON_TOKENS[name];
+  return token ? `var(${token})` : "";
+}
+
+/**
+ * Masked icon using design-token SVGs from :root.
+ * @attr {string} name - Icon name (chevron, add, close, …)
+ * @attr {'small'|'medium'} size - Display size; medium (default) uses --spacer-4, small uses --spacer-3
+ * @attr {string} color - Icon fill color (applied as background-color for the mask)
+ */
+class FigIcon extends HTMLElement {
+  static get observedAttributes() {
+    return ["name", "size", "color"];
+  }
+
+  connectedCallback() {
+    this.#sync();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue !== newValue) this.#sync();
+  }
+
+  #sync() {
+    const iconName = this.getAttribute("name");
+    const cssVar = figIconCssVar(iconName);
+    if (cssVar) this.style.setProperty("--icon", cssVar);
+    else this.style.removeProperty("--icon");
+
+    const size = this.getAttribute("size") || "medium";
+    if (size === "small") {
+      this.style.setProperty("--size", "var(--spacer-3)");
+    } else {
+      this.style.removeProperty("--size");
+    }
+
+    const color = this.getAttribute("color");
+    if (color) this.style.backgroundColor = color;
+    else this.style.removeProperty("background-color");
+
+    if (!this.hasAttribute("aria-hidden")) {
+      this.setAttribute("aria-hidden", "true");
+    }
+  }
+}
 customElements.define("fig-icon", FigIcon);
 
 class FigContent extends HTMLElement {}
@@ -12140,7 +12210,7 @@ class FigFillPicker extends HTMLElement {
         ${headerContent}
         ${gamutDropdown}
         <fig-button icon variant="ghost" class="fig-fill-picker-close">
-          <span class="fig-mask-icon" style="--icon: var(--icon-close)"></span>
+          <fig-icon name="close"></fig-icon>
         </fig-button>
       </fig-header>
       <fig-content>
@@ -12310,7 +12380,7 @@ class FigFillPicker extends HTMLElement {
         ></fig-handle>
       </fig-preview>
       <div class="fig-fill-picker-sliders">
-        <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper"><span class="fig-mask-icon" style="--icon: var(--icon-eyedropper)"></span></fig-button></fig-tooltip>
+        <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper"><fig-icon name="eyedropper"></fig-icon></fig-button></fig-tooltip>
         <fig-slider type="hue" variant="neue" min="0" max="360" value="${
           this.#color.h
         }"></fig-slider>
@@ -12826,7 +12896,7 @@ class FigFillPicker extends HTMLElement {
         </div>
         <fig-tooltip text="Flip gradient">
           <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip">
-            <span class="fig-mask-icon" style="--icon: var(--icon-swap)"></span>
+            <fig-icon name="swap"></fig-icon>
           </fig-button>
         </fig-tooltip>
       </fig-field>
@@ -12858,7 +12928,7 @@ class FigFillPicker extends HTMLElement {
         <fig-header class="fig-fill-picker-gradient-stops-header" borderless>
           <span>Stops</span>
           <fig-button icon variant="ghost" class="fig-fill-picker-gradient-add" title="Add stop">
-            <span class="fig-mask-icon" style="--icon: var(--icon-add)"></span>
+            <fig-icon name="add"></fig-icon>
           </fig-button>
         </fig-header>
         <div class="fig-fill-picker-gradient-stops-list"></div>
@@ -13095,7 +13165,7 @@ class FigFillPicker extends HTMLElement {
         <fig-button icon variant="ghost" class="fig-fill-picker-stop-remove" ${
           this.#gradient.stops.length <= 2 ? "disabled" : ""
         }>
-          <span class="fig-mask-icon" style="--icon: var(--icon-minus)"></span>
+          <fig-icon name="minus"></fig-icon>
         </fig-button>
       </fig-field>
     `,
@@ -14009,8 +14079,8 @@ class FigColorTip extends HTMLElement {
   #render() {
     const mode = this.#controlMode;
     if (mode === "add" || mode === "remove") {
-      const icon = mode === "add" ? "var(--icon-add)" : "var(--icon-minus)";
-      this.innerHTML = `<fig-button icon variant="ghost"><span class="fig-mask-icon" style="--icon: ${icon}"></span></fig-button>`;
+      const iconName = mode === "add" ? "add" : "minus";
+      this.innerHTML = `<fig-button icon variant="ghost"><fig-icon name="${iconName}"></fig-icon></fig-button>`;
       this.#fillPicker = null;
       this.#chit = null;
       this.addEventListener("click", this.#handleControlClick);
@@ -14763,11 +14833,10 @@ class FigChooser extends HTMLElement {
     if (this.#navStart) return;
 
     const makeChevron = () => {
-      const icon = document.createElement("span");
-      icon.className = "fig-mask-icon fig-chooser-nav-chevron";
-      icon.style.setProperty("--icon", "var(--icon-chevron)");
-      icon.style.setProperty("--size", "1rem");
-      return icon;
+      return createFigIcon("chevron", {
+        size: "small",
+        className: "fig-chooser-nav-chevron",
+      });
     };
 
     this.#navStart = document.createElement("button");
@@ -15092,7 +15161,6 @@ class FigHandle extends HTMLElement {
   }
 
   connectedCallback() {
-    if (!this.hasAttribute("type")) this.setAttribute("type", "canvas");
     this.#syncDrag();
     this.#syncHitArea();
     this.addEventListener("click", this.#handleSelect);

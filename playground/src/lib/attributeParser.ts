@@ -540,10 +540,9 @@ export function applyDialogCloseButtonMutation(
       button.setAttribute("variant", "ghost");
       button.setAttribute("icon", "true");
       button.setAttribute("close-dialog", "");
-      const span = root.ownerDocument.createElement("span");
-      span.setAttribute("class", "fig-mask-icon");
-      span.setAttribute("style", "--icon: var(--icon-close)");
-      button.append(span);
+      const icon = root.ownerDocument.createElement("fig-icon");
+      icon.setAttribute("name", "close");
+      button.append(icon);
       tooltip.append(button);
       header.append(tooltip);
     }
@@ -684,9 +683,8 @@ export function applyHeaderIconMutation(
     const btn = root.ownerDocument.createElement("fig-button");
     btn.setAttribute("variant", "ghost");
     btn.setAttribute("icon", "true");
-    const icon = root.ownerDocument.createElement("span");
-    icon.setAttribute("class", "fig-mask-icon");
-    icon.setAttribute("style", "--icon: var(--icon-close)");
+    const icon = root.ownerDocument.createElement("fig-icon");
+    icon.setAttribute("name", "close");
     btn.appendChild(icon);
     element.appendChild(btn);
   }
@@ -930,3 +928,47 @@ export function applyHandleHitAreaMutation(
   }
   return serializeSourceMarkup(root);
 }
+
+export const FIG_ICON_SET_24 = [
+  "add",
+  "minus",
+  "close",
+  "back",
+  "forward",
+  "rotate",
+  "swap",
+  "play",
+  "pause",
+  "eyedropper",
+  "steppers",
+] as const;
+
+export const FIG_ICON_SET_16 = [
+  "chevron",
+  "checkmark",
+  "reset",
+  "arrow-left",
+] as const;
+
+export type FigIconPlaygroundSet = "16" | "24";
+
+export function getFigIconPlaygroundNames(set: FigIconPlaygroundSet): string[] {
+  return set === "16" ? [...FIG_ICON_SET_16] : [...FIG_ICON_SET_24];
+}
+
+export const FIG_ICON_COLOR_OPTIONS = [
+  { label: "Primary", value: "var(--figma-color-icon)" },
+  { label: "Secondary", value: "var(--figma-color-icon-secondary)" },
+  { label: "Tertiary", value: "var(--figma-color-icon-tertiary)" },
+  { label: "Disabled", value: "var(--figma-color-icon-disabled)" },
+  { label: "Brand", value: "var(--figma-color-icon-brand)" },
+] as const;
+
+export function getFigIconColorOptionLabel(colorAttr: string | undefined): string {
+  if (!colorAttr) return FIG_ICON_COLOR_OPTIONS[0].label;
+  return (
+    FIG_ICON_COLOR_OPTIONS.find((option) => option.value === colorAttr)?.label ??
+    FIG_ICON_COLOR_OPTIONS[0].label
+  );
+}
+
