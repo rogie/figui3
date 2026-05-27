@@ -7085,7 +7085,7 @@ class FigInputGradient extends HTMLElement {
     return this.#gradient.stops
       .map(
         (stop, i) =>
-          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color" color="${this.#stopColorCSS(stop)}" value="${stop.position}% 50%" hit-area="4" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
+          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color" color-tip color="${this.#stopColorCSS(stop)}" value="${stop.position}% 50%" hit-area="4" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
       )
       .join("");
   }
@@ -7166,6 +7166,7 @@ class FigInputGradient extends HTMLElement {
     const ghost = document.createElement("fig-handle");
     ghost.classList.add("fig-input-gradient-ghost");
     ghost.setAttribute("type", "color");
+    ghost.setAttribute("color-tip", "");
     ghost.setAttribute("control", "add");
     ghost.style.position = "absolute";
     ghost.style.top = "50%";
@@ -12170,6 +12171,14 @@ class FigFillPicker extends HTMLElement {
     });
   }
 
+  open() {
+    this.#openDialog();
+  }
+
+  close() {
+    if (this.#dialog) this.#dialog.open = false;
+  }
+
   #createDialog() {
     // Collect slotted custom mode content before any DOM changes
     this.#customSlots = {};
@@ -12317,6 +12326,7 @@ class FigFillPicker extends HTMLElement {
     const onDialogClose = () => {
       if (this.#chit) this.#chit.removeAttribute("selected");
       this.#emitChange();
+      this.dispatchEvent(new CustomEvent("close"));
     };
     this.#dialog.addEventListener("close", onDialogClose);
 
@@ -14983,6 +14993,7 @@ class FigHandle extends HTMLElement {
     "value",
     "type",
     "control",
+    "color-tip",
     "hit-area",
     "hit-area-mode",
   ];
@@ -14992,6 +15003,7 @@ class FigHandle extends HTMLElement {
   #boundPointerDown = null;
   #applyingValue = false;
   #colorTip = null;
+  #directColorPicker = null;
   #hitAreaEl = null;
 
   get #controlMode() {
@@ -15000,6 +15012,14 @@ class FigHandle extends HTMLElement {
 
   get #hasControlMode() {
     return this.#controlMode === "add" || this.#controlMode === "remove";
+  }
+
+  get #usesColorTip() {
+    return (
+      this.#hasControlMode ||
+      (this.hasAttribute("color-tip") &&
+        this.getAttribute("color-tip") !== "false")
+    );
   }
 
   get #isGhost() {
@@ -15221,6 +15241,7 @@ class FigHandle extends HTMLElement {
   disconnectedCallback() {
     this.#teardownDrag();
     this.#hideColorTip();
+    this.#removeDirectColorPicker();
     if (this.#hitAreaEl) {
       this.#hitAreaEl.remove();
       this.#hitAreaEl = null;
@@ -15233,7 +15254,7 @@ class FigHandle extends HTMLElement {
   select() {
     if (this.hasAttribute("disabled")) return;
     this.setAttribute("selected", "");
-    if (this.getAttribute("type") === "color" && !this.#isDragging)
+    if (this.getAttribute("type") === "color" && !this.#isDragging && this.#usesColorTip)
       this.#showColorTip();
   }
 
@@ -15248,23 +15269,30 @@ class FigHandle extends HTMLElement {
       this.#didDrag = false;
       return;
     }
+    if (this.getAttribute("type") === "color" && !this.#usesColorTip) {
+      this.#openDirectColorPicker();
+      return;
+    }
     this.select();
   };
 
   #handleDeselect = (e) => {
     if (this.#hasControlMode) return;
     if (this.contains(e.target)) return;
-    if (this.#colorTip && e.target.closest?.("dialog, [popover]")) return;
+    if ((this.#colorTip || this.#directColorPicker) && e.target.closest?.("dialog, [popover]")) return;
     this.deselect();
   };
 
   #handleKeyDown = (e) => {
-    if (e.key !== "Enter") return;
+    if (e.key !== "Enter" && e.key !== " ") return;
     if (!this.hasAttribute("selected")) return;
     if (this.getAttribute("type") !== "color") return;
-    if (this.#colorTip) return;
     e.preventDefault();
-    this.#showColorTip();
+    if (this.#usesColorTip) {
+      if (!this.#colorTip) this.#showColorTip();
+    } else {
+      this.#openDirectColorPicker();
+    }
   };
 
   attributeChangedCallback(name, _old, value) {
@@ -15277,6 +15305,7 @@ class FigHandle extends HTMLElement {
       if (this.#colorTip && value) {
         this.#colorTip.setAttribute("value", value);
       }
+      this.#syncDirectColorPickerValue();
     }
     if (name === "drag") this.#syncDrag();
     if (name === "hit-area") this.#syncHitArea();
@@ -15285,8 +15314,16 @@ class FigHandle extends HTMLElement {
     }
     if (name === "control") {
       if (this.#hasControlMode) {
+        this.#removeDirectColorPicker();
         this.#hideColorTip();
         this.#showColorTip();
+      } else {
+        this.#hideColorTip();
+      }
+    }
+    if (name === "color-tip") {
+      if (this.#usesColorTip) {
+        this.#removeDirectColorPicker();
       } else {
         this.#hideColorTip();
       }
@@ -15447,6 +15484,117 @@ class FigHandle extends HTMLElement {
     this.#colorTip.style.display = "none";
   }
 
+  #normalizeColorForPicker(rawValue = this.getAttribute("color")) {
+    const fallback = { color: "#D9D9D9", opacity: 100 };
+    const value = String(rawValue || "").trim();
+    if (!value) return fallback;
+
+    const normalizeHex = (hex) => {
+      const raw = hex.replace("#", "").trim();
+      if (raw.length === 3 || raw.length === 4) {
+        const [r, g, b, a] = raw;
+        return {
+          color: `#${r}${r}${g}${g}${b}${b}`.toUpperCase(),
+          opacity: a ? Math.round((parseInt(`${a}${a}`, 16) / 255) * 100) : 100,
+        };
+      }
+      if (raw.length === 6 || raw.length === 8) {
+        return {
+          color: `#${raw.slice(0, 6)}`.toUpperCase(),
+          opacity:
+            raw.length === 8
+              ? Math.round((parseInt(raw.slice(6, 8), 16) / 255) * 100)
+              : 100,
+        };
+      }
+      return fallback;
+    };
+
+    const rgbToHex = (r, g, b) => {
+      const toHex = (v) =>
+        Math.max(0, Math.min(255, Math.round(Number(v))))
+          .toString(16)
+          .padStart(2, "0");
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+    };
+
+    if (value.startsWith("#")) return normalizeHex(value);
+
+    try {
+      const { ctx } = figGetSharedCanvas(1, 1);
+      ctx.fillStyle = "#000000";
+      ctx.fillStyle = value;
+      const resolved = ctx.fillStyle;
+      if (resolved.startsWith("#")) return normalizeHex(resolved);
+      const rgb = resolved.match(
+        /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?/i,
+      );
+      if (rgb) {
+        return {
+          color: rgbToHex(rgb[1], rgb[2], rgb[3]),
+          opacity: rgb[4] !== undefined ? Math.round(parseFloat(rgb[4]) * 100) : 100,
+        };
+      }
+    } catch {
+      // Fall through to fallback.
+    }
+
+    return fallback;
+  }
+
+  #directColorPickerValue() {
+    const { color, opacity } = this.#normalizeColorForPicker();
+    return JSON.stringify(
+      opacity < 100 ? { type: "solid", color, opacity } : { type: "solid", color },
+    );
+  }
+
+  #syncDirectColorPickerValue() {
+    if (!this.#directColorPicker) return;
+    this.#directColorPicker.setAttribute("value", this.#directColorPickerValue());
+  }
+
+  #ensureDirectColorPicker() {
+    if (this.#directColorPicker) return this.#directColorPicker;
+
+    const picker = document.createElement("fig-fill-picker");
+    picker.setAttribute("mode", "solid");
+    picker.setAttribute("alpha", "true");
+    picker.setAttribute("value", this.#directColorPickerValue());
+    picker.anchorElement = this;
+
+    const trigger = document.createElement("span");
+    trigger.hidden = true;
+    picker.appendChild(trigger);
+
+    picker.addEventListener("input", this.#handleDirectColorPickerInput);
+    picker.addEventListener("change", this.#handleDirectColorPickerChange);
+    picker.addEventListener("close", this.#handleDirectColorPickerClose);
+    this.appendChild(picker);
+    this.#directColorPicker = picker;
+    return picker;
+  }
+
+  #openDirectColorPicker() {
+    if (this.hasAttribute("disabled")) return;
+    this.#hideColorTip();
+    const picker = this.#ensureDirectColorPicker();
+    this.setAttribute("selected", "");
+    this.#syncDirectColorPickerValue();
+    picker.open();
+  }
+
+  #removeDirectColorPicker() {
+    if (!this.#directColorPicker) return;
+    this.#directColorPicker.removeEventListener("input", this.#handleDirectColorPickerInput);
+    this.#directColorPicker.removeEventListener("change", this.#handleDirectColorPickerChange);
+    this.#directColorPicker.removeEventListener("close", this.#handleDirectColorPickerClose);
+    this.#directColorPicker.close();
+    this.#directColorPicker.remove();
+    this.#directColorPicker = null;
+    this.removeAttribute("selected");
+  }
+
   #showColorTip() {
     if (this.#colorTip) return;
     const tip = document.createElement("fig-color-tip");
@@ -15480,6 +15628,47 @@ class FigHandle extends HTMLElement {
     const { r, g, b } = figHexToRGB(hex);
     return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
   }
+
+  #detailFromPicker(detail) {
+    if (!detail?.color) return null;
+    const opacity =
+      detail.opacity !== undefined
+        ? detail.opacity
+        : detail.alpha !== undefined
+          ? Math.round(detail.alpha * 100)
+          : undefined;
+    return { color: detail.color, opacity };
+  }
+
+  #handleDirectColorPickerInput = (e) => {
+    e.stopPropagation();
+    const detail = this.#detailFromPicker(e.detail);
+    if (!detail) return;
+    this.setAttribute("color", this.#colorWithOpacity(detail.color, detail.opacity));
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        detail,
+      }),
+    );
+  };
+
+  #handleDirectColorPickerChange = (e) => {
+    e.stopPropagation();
+    const detail = this.#detailFromPicker(e.detail);
+    if (!detail) return;
+    this.setAttribute("color", this.#colorWithOpacity(detail.color, detail.opacity));
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        detail,
+      }),
+    );
+  };
+
+  #handleDirectColorPickerClose = () => {
+    this.removeAttribute("selected");
+  };
 
   #handleColorTipInput = (e) => {
     e.stopPropagation();

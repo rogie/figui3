@@ -611,6 +611,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "small"],
     },
     color: { label: "Color", type: "boolean", boolMode: "presence" },
+    "color-tip": { label: "Color tip", type: "boolean", boolMode: "presence" },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     drag: { label: "Drag", type: "boolean", boolMode: "presence" },

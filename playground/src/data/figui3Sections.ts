@@ -942,6 +942,24 @@ export const figui3Sections: Section[] = [
   </div>
 </div>`,
       },
+      {
+        id: "color",
+        name: "Color",
+        markup: `<div class="prop-panel">
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
+    <fig-handle type="color" color="#0D99FF" drag data-playground-hide-field></fig-handle>
+  </div>
+</div>`,
+      },
+      {
+        id: "color-tip",
+        name: "Color tip",
+        markup: `<div class="prop-panel">
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
+    <fig-handle type="color" color-tip color="#0D99FF" data-playground-hide-field></fig-handle>
+  </div>
+</div>`,
+      },
     ],
   },
   {

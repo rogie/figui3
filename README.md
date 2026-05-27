@@ -764,7 +764,8 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
 | `drag-surface` | string | — | CSS selector for drag container (defaults to parent) |
 | `drag-axes` | string | `"xy"` | Constrain axes: `"x"`, `"y"`, `"xy"` |
 | `drag-snapping` | string | — | Snapping behavior |
-| `type` | string | — | `"color"` for color handle with `fig-color-tip` |
+| `type` | string | — | `"color"` for color handle with direct solid color picker |
+| `color-tip` | boolean | `false` | For `type="color"`, use the compact `fig-color-tip` interaction instead of opening the picker directly |
 | `control` | string | — | `"add"` or `"remove"` delegated to color tip |
 | `hit-area` | string | — | Expanded interaction zone (unitless px). `"8"`, `"8 12"` (v h), or `"8 circle"` |
 | `hit-area-mode` | string | `"handle"` | `"handle"` proxies to handle drag/select; `"delegate"` emits `hitareadown` event |
@@ -775,6 +776,8 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
 |---|---|
 | `input` | `{ x, y, px, py, shiftKey }` — while dragging |
 | `change` | `{ x, y, px, py }` — on release |
+| `input` | `{ color, opacity }` — while editing a `type="color"` handle |
+| `change` | `{ color, opacity }` — when committing a `type="color"` handle |
 | `add` | — (when control="add") |
 | `remove` | — (when control="remove") |
 | `hitareadown` | `{ originalEvent }` — when `hit-area-mode="delegate"` and the hit area is clicked |
