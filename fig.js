@@ -7308,6 +7308,10 @@ class FigInputGradient extends HTMLElement {
       });
   }
 
+  refreshLayout() {
+    this.#repositionHandles();
+  }
+
   #syncHandles() {
     if (!this.#track) return;
     const handles = this.#track.querySelectorAll(
@@ -11811,6 +11815,13 @@ customElements.define("fig-footer", FigFooter);
 class FigSpinner extends HTMLElement {}
 customElements.define("fig-spinner", FigSpinner);
 
+/**
+ * A styled visual preview layer for arbitrary content such as images, canvas,
+ * video, SVG, or custom rendered surfaces.
+ */
+class FigPreview extends HTMLElement {}
+customElements.define("fig-preview", FigPreview);
+
 /** @type {Record<string, string>} */
 const FIG_ICON_TOKENS = {
   chevron: "--icon-16-chevron",
@@ -12410,6 +12421,11 @@ class FigFillPicker extends HTMLElement {
       // Use RAF to ensure layout is complete before updating angle input
       requestAnimationFrame(() => {
         this.#updateGradientUI();
+        const barInput = tab.querySelector(".fig-fill-picker-gradient-bar-input");
+        barInput?.refreshLayout?.();
+        requestAnimationFrame(() => {
+          barInput?.refreshLayout?.();
+        });
       });
     }
 
@@ -13347,16 +13363,11 @@ class FigFillPicker extends HTMLElement {
         </fig-dropdown>
         <fig-input-number class="fig-fill-picker-scale" min="1" max="200" value="${
           this.#image.scale
-        }" units="%" style="display: none;"></fig-input-number>
+        }" units="%" ${
+          this.#image.scaleMode === "tile" ? "" : 'style="display: none;"'
+        }></fig-input-number>
       </fig-field>
-      <div class="fig-fill-picker-media-preview">
-        <div class="fig-fill-picker-checkerboard"></div>
-        <div class="fig-fill-picker-image-preview"></div>
-        <fig-button variant="overlay" class="fig-fill-picker-upload">
-          Upload from computer
-          <input type="file" accept="image/*" style="display: none;" />
-        </fig-button>
-      </div>
+      <fig-image class="fig-fill-picker-media-preview fig-fill-picker-image-preview" upload="true" label="Upload from computer" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true"></fig-image>
     `;
 
     this.#setupImageEvents(container);
@@ -13367,8 +13378,6 @@ class FigFillPicker extends HTMLElement {
       ".fig-fill-picker-scale-mode",
     );
     const scaleInput = container.querySelector(".fig-fill-picker-scale");
-    const uploadBtn = container.querySelector(".fig-fill-picker-upload");
-    const fileInput = container.querySelector('input[type="file"]');
     const preview = container.querySelector(".fig-fill-picker-image-preview");
 
     scaleModeDropdown.addEventListener("change", (e) => {
@@ -13386,88 +13395,106 @@ class FigFillPicker extends HTMLElement {
       this.#emitInput();
     });
 
-    uploadBtn.addEventListener("click", () => {
-      fileInput.click();
+    preview.addEventListener("loaded", (e) => {
+      const src = e.detail?.src || preview.src;
+      if (!src) return;
+      this.#image.url = src;
+      this.#updateImagePreview(preview);
+      this.#updateChit();
+      this.#emitInput();
     });
 
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.#image.url = e.target.result;
-          this.#updateImagePreview(preview);
-          this.#updateChit();
-          this.#emitInput();
-        };
-        reader.readAsDataURL(file);
-      }
+    preview.addEventListener("change", () => {
+      if (preview.src) return;
+      this.#image.url = null;
+      this.#updateImagePreview(preview);
+      this.#updateChit();
+      this.#emitInput();
     });
 
-    // Drag and drop
-    const previewArea = container.querySelector(
-      ".fig-fill-picker-media-preview",
-    );
-    previewArea.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      previewArea.classList.add("dragover");
-    });
-    previewArea.addEventListener("dragleave", () => {
-      previewArea.classList.remove("dragover");
-    });
-    previewArea.addEventListener("drop", (e) => {
-      e.preventDefault();
-      previewArea.classList.remove("dragover");
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.#image.url = e.target.result;
-          this.#updateImagePreview(preview);
-          this.#updateChit();
-          this.#emitInput();
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    this.#updateImagePreview(preview);
   }
 
   #updateImagePreview(element) {
-    const container = element.closest(".fig-fill-picker-media-preview");
     if (!this.#image.url) {
-      element.style.display = "none";
-      container?.classList.remove("has-media");
+      element.removeAttribute("src");
+      element.classList.remove("has-media", "is-tiled");
+      element.style.backgroundImage = "";
+      element.style.backgroundPosition = "";
+      element.style.backgroundRepeat = "";
+      element.style.backgroundSize = "";
       return;
     }
 
-    element.style.display = "block";
-    container?.classList.add("has-media");
-    element.style.backgroundImage = `url(${this.#image.url})`;
-    element.style.backgroundPosition = "center";
+    element.setAttribute("src", this.#image.url);
+    element.classList.add("has-media");
+    element.style.backgroundImage = "";
+    element.style.backgroundPosition = "";
+    element.style.backgroundRepeat = "";
+    element.style.backgroundSize = "";
+    element.mediaEl?.style.removeProperty("opacity");
+
+    const fileInput = element.querySelector("fig-input-file[data-generated]");
+    if (fileInput) {
+      fileInput.setAttribute("label", "Replace");
+      fileInput.removeAttribute("url");
+    }
 
     switch (this.#image.scaleMode) {
       case "fill":
-        element.style.backgroundSize = "cover";
-        element.style.backgroundRepeat = "no-repeat";
-        break;
-      case "fit":
-        element.style.backgroundSize = "contain";
-        element.style.backgroundRepeat = "no-repeat";
+        element.classList.remove("is-tiled");
+        element.setAttribute("fit", "cover");
         break;
       case "crop":
-        element.style.backgroundSize = "cover";
-        element.style.backgroundRepeat = "no-repeat";
+        element.classList.remove("is-tiled");
+        element.setAttribute("fit", "cover");
+        break;
+      case "fit":
+        element.classList.remove("is-tiled");
+        element.setAttribute("fit", "contain");
         break;
       case "tile":
+        element.classList.add("is-tiled");
+        element.setAttribute("fit", "none");
+        element.style.backgroundImage = `url(${this.#image.url})`;
+        element.style.backgroundPosition = "top left";
         element.style.backgroundSize = `${this.#image.scale}%`;
         element.style.backgroundRepeat = "repeat";
-        element.style.backgroundPosition = "top left";
+        if (element.mediaEl) element.mediaEl.style.opacity = "0";
         break;
     }
   }
 
   // For video elements (still uses object-fit)
   #updateVideoPreviewStyle(element) {
+    if (element.tagName === "FIG-MEDIA") {
+      if (!this.#video.url) {
+        element.removeAttribute("src");
+        element.classList.remove("has-media");
+        return;
+      }
+
+      element.setAttribute("src", this.#video.url);
+      element.classList.add("has-media");
+
+      const fileInput = element.querySelector("fig-input-file[data-generated]");
+      if (fileInput) {
+        fileInput.setAttribute("label", "Replace");
+        fileInput.removeAttribute("url");
+      }
+
+      switch (this.#video.scaleMode) {
+        case "fill":
+        case "crop":
+          element.setAttribute("fit", "cover");
+          break;
+        case "fit":
+          element.setAttribute("fit", "contain");
+          break;
+      }
+      return;
+    }
+
     element.style.objectPosition = "center";
     element.style.width = "100%";
     element.style.height = "100%";
@@ -13499,14 +13526,7 @@ class FigFillPicker extends HTMLElement {
           <option value="crop">Crop</option>
         </fig-dropdown>
       </fig-field>
-      <div class="fig-fill-picker-media-preview">
-        <div class="fig-fill-picker-checkerboard"></div>
-        <video class="fig-fill-picker-video-preview" style="display: none;" muted loop></video>
-        <fig-button variant="overlay" class="fig-fill-picker-upload">
-          Upload from computer
-          <input type="file" accept="video/*" style="display: none;" />
-        </fig-button>
-      </div>
+      <fig-media class="fig-fill-picker-media-preview fig-fill-picker-video-preview" type="video" upload="true" label="Upload from computer" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true" loop="true"></fig-media>
     `;
 
     this.#setupVideoEvents(container);
@@ -13516,8 +13536,6 @@ class FigFillPicker extends HTMLElement {
     const scaleModeDropdown = container.querySelector(
       ".fig-fill-picker-scale-mode",
     );
-    const uploadBtn = container.querySelector(".fig-fill-picker-upload");
-    const fileInput = container.querySelector('input[type="file"]');
     const preview = container.querySelector(".fig-fill-picker-video-preview");
 
     scaleModeDropdown.addEventListener("change", (e) => {
@@ -13527,51 +13545,25 @@ class FigFillPicker extends HTMLElement {
       this.#emitInput();
     });
 
-    uploadBtn.addEventListener("click", () => {
-      fileInput.click();
+    preview.addEventListener("loaded", (e) => {
+      const src = e.detail?.src || preview.src;
+      if (!src) return;
+      this.#video.url = src;
+      this.#updateVideoPreviewStyle(preview);
+      preview.play?.();
+      this.#updateChit();
+      this.#emitInput();
     });
 
-    // Drag and drop
-    const previewArea = container.querySelector(
-      ".fig-fill-picker-media-preview",
-    );
-
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        this.#video.url = URL.createObjectURL(file);
-        preview.src = this.#video.url;
-        preview.style.display = "block";
-        preview.play();
-        previewArea.classList.add("has-media");
-        this.#updateVideoPreviewStyle(preview);
-        this.#updateChit();
-        this.#emitInput();
-      }
+    preview.addEventListener("change", () => {
+      if (preview.src) return;
+      this.#video.url = null;
+      this.#updateVideoPreviewStyle(preview);
+      this.#updateChit();
+      this.#emitInput();
     });
 
-    previewArea.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      previewArea.classList.add("dragover");
-    });
-    previewArea.addEventListener("dragleave", () => {
-      previewArea.classList.remove("dragover");
-    });
-    previewArea.addEventListener("drop", (e) => {
-      e.preventDefault();
-      previewArea.classList.remove("dragover");
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith("video/")) {
-        this.#video.url = URL.createObjectURL(file);
-        preview.src = this.#video.url;
-        preview.style.display = "block";
-        preview.play();
-        previewArea.classList.add("has-media");
-        this.#updateVideoPreviewStyle(preview);
-        this.#updateChit();
-        this.#emitInput();
-      }
-    });
+    this.#updateVideoPreviewStyle(preview);
   }
 
   // ============ WEBCAM TAB ============
@@ -15078,14 +15070,8 @@ class FigHandle extends HTMLElement {
   get value() {
     const container = this.#getContainer();
     if (!container) return "0% 0%";
-    const rect = container.getBoundingClientRect();
-    const hw = this.offsetWidth / 2;
-    const hh = this.offsetHeight / 2;
-    const x = parseFloat(this.style.left) || 0;
-    const y = parseFloat(this.style.top) || 0;
-    const px = rect.width > 0 ? ((x + hw) / rect.width) * 100 : 0;
-    const py = rect.height > 0 ? ((y + hh) / rect.height) * 100 : 0;
-    return `${Math.round(px)}% ${Math.round(py)}%`;
+    const { px, py } = this.#positionDetail(container.getBoundingClientRect());
+    return `${Math.round(px * 100)}% ${Math.round(py * 100)}%`;
   }
 
   set value(v) {
@@ -15124,26 +15110,32 @@ class FigHandle extends HTMLElement {
     const hw = this.offsetWidth / 2;
     const hh = this.offsetHeight / 2;
 
-    const resolve = (token, containerDim, halfHandle) => {
+    const resolvePx = (token, containerDim, halfHandle) => {
       if (token && typeof token === "object" && "px" in token) {
         return Math.max(
           -halfHandle,
           Math.min(containerDim - halfHandle, token.px - halfHandle),
         );
       }
+      return null;
+    };
+
+    const resolveResponsive = (token, halfHandle) => {
       const pct = typeof token === "number" ? token : 0;
-      const center = (pct / 100) * containerDim;
-      return Math.max(
-        -halfHandle,
-        Math.min(containerDim - halfHandle, center - halfHandle),
-      );
+      return `calc(${pct}% - ${halfHandle}px)`;
     };
 
     const axes = this.#axes;
-    if (axes.x)
-      this.style.left = `${Math.round(resolve(xToken, rect.width, hw))}px`;
-    if (axes.y)
-      this.style.top = `${Math.round(resolve(yToken, rect.height, hh))}px`;
+    if (axes.x) {
+      const xPx = resolvePx(xToken, rect.width, hw);
+      this.style.left =
+        xPx === null ? resolveResponsive(xToken, hw) : `${Math.round(xPx)}px`;
+    }
+    if (axes.y) {
+      const yPx = resolvePx(yToken, rect.height, hh);
+      this.style.top =
+        yPx === null ? resolveResponsive(yToken, hh) : `${Math.round(yPx)}px`;
+    }
   }
 
   #syncValueAttribute() {
@@ -15372,8 +15364,9 @@ class FigHandle extends HTMLElement {
     const clampAndApply = (clientX, clientY, shiftKey = false) => {
       const rect = container.getBoundingClientRect();
       lastRect = rect;
-      const currentLeft = parseFloat(this.style.left) || 0;
-      const currentTop = parseFloat(this.style.top) || 0;
+      const currentPosition = this.#positionDetail(rect);
+      const currentLeft = currentPosition.x;
+      const currentTop = currentPosition.y;
       const rawX = clientX - offsetX - rect.left - handleW / 2;
       const rawY = clientY - offsetY - rect.top - handleH / 2;
 
@@ -15447,6 +15440,7 @@ class FigHandle extends HTMLElement {
       if (this.#didDrag) {
         clampAndApply(e.clientX, e.clientY, e.shiftKey);
         this.#syncValueAttribute();
+        this.#applyValue(this.getAttribute("value"));
         this.dispatchEvent(
           new CustomEvent("change", {
             bubbles: true,
@@ -15710,12 +15704,17 @@ class FigHandle extends HTMLElement {
   };
 
   #positionDetail(containerRect) {
+    const rect = containerRect || this.#getContainer()?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0, px: 0, py: 0 };
+    const handleRect = this.getBoundingClientRect();
     const hw = this.offsetWidth / 2;
     const hh = this.offsetHeight / 2;
-    const x = parseFloat(this.style.left) || 0;
-    const y = parseFloat(this.style.top) || 0;
-    const px = containerRect.width > 0 ? (x + hw) / containerRect.width : 0;
-    const py = containerRect.height > 0 ? (y + hh) / containerRect.height : 0;
+    const x = handleRect.left - rect.left;
+    const y = handleRect.top - rect.top;
+    const centerX = x + hw;
+    const centerY = y + hh;
+    const px = rect.width > 0 ? centerX / rect.width : 0;
+    const py = rect.height > 0 ? centerY / rect.height : 0;
     return { x, y, px, py };
   }
 }

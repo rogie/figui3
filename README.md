@@ -89,6 +89,7 @@ Minimal example:
 | [Tooltip](#tooltip) | `<fig-tooltip>` | Hover/click tooltip |
 | [Header](#header) | `<fig-header>` | Section header |
 | [Layer](#layer) | `<fig-layer>` | Collapsible layer list item |
+| [Preview](#preview) | `<fig-preview>` | Thin visual preview layer |
 | [Media](#media) | `<fig-media>` | Shared media host for image/video |
 | [Image](#image) | `<fig-image>` | Image display/upload |
 | [Video](#video) | `<fig-video>` | Video display/upload with playback controls |
@@ -994,6 +995,29 @@ A collapsible layer list item with expand/collapse and visibility toggling. Supp
     </div>
   </fig-layer>
 </fig-layer>
+```
+
+---
+
+#### Preview
+
+`<fig-preview>`
+
+A thin styled layer for arbitrary visual content. Use it for generated previews, canvas output, SVG, images, or other custom rendered surfaces when you do not need media upload behavior.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `full` | boolean | `false` | Stretch to the available width |
+| `checkerboard` | boolean | `false` | Show checkerboard behind transparent content |
+
+```html
+<fig-preview full style="height: 96px">
+  <canvas width="320" height="180"></canvas>
+</fig-preview>
+
+<fig-preview checkerboard>
+  <img src="photo.png" alt="Preview">
+</fig-preview>
 ```
 
 ---

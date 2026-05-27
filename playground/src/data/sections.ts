@@ -129,6 +129,97 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "content",
+    name: "Content",
+    group: "Containers",
+    description:
+      "A scrollable content container for dialog and panel bodies.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel" style="height: 220px; display: flex; flex-direction: column;">
+  <fig-header>
+    <h3>Content</h3>
+  </fig-header>
+  <fig-content>
+    <p>Use fig-content for the primary body region of a dialog or panel.</p>
+    <fig-group name="Settings">
+      <fig-field direction="horizontal">
+        <label>Density</label>
+        <fig-slider variant="neue" value="60" min="0" max="100" text="true" full></fig-slider>
+      </fig-field>
+      <fig-field direction="horizontal">
+        <label>Preview</label>
+        <fig-switch checked></fig-switch>
+      </fig-field>
+    </fig-group>
+  </fig-content>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "header",
+    name: "Header",
+    group: "Containers",
+    description:
+      "A top bar container for titles, actions, and dialog drag handles.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <h3>Layer options</h3>
+    <fig-button variant="ghost" icon="true" aria-label="Close">
+      <fig-icon name="close"></fig-icon>
+    </fig-button>
+  </fig-header>
+</div>`,
+      },
+      {
+        id: "borderless",
+        name: "Borderless",
+        markup: `<div class="prop-panel">
+  <fig-header borderless>
+    <h3>Borderless header</h3>
+    <fig-button variant="ghost">Done</fig-button>
+  </fig-header>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "footer",
+    name: "Footer",
+    group: "Containers",
+    description:
+      "A bottom action bar container for secondary and primary actions.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-footer>
+    <fig-button variant="secondary">Cancel</fig-button>
+    <fig-button>Apply</fig-button>
+  </fig-footer>
+</div>`,
+      },
+      {
+        id: "borderless",
+        name: "Borderless",
+        markup: `<div class="prop-panel">
+  <fig-footer borderless>
+    <fig-button variant="secondary">Reset</fig-button>
+    <fig-button>Save</fig-button>
+  </fig-footer>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "3d-rotate",
     name: "3D Rotate",
     group: "Field controls",
@@ -552,6 +643,39 @@ export const propkitSections: Section[] = [
   <fig-field direction="horizontal">
     <label>Preview</label>
     <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/320.webp?random=29" autoplay="true" muted="true" upload="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "preview",
+    name: "Preview",
+    group: "Field controls",
+    description:
+      "A thin visual surface for showing arbitrary rendered content like images, canvas, SVG, or generated previews.",
+    examples: [
+      {
+        id: "image",
+        name: "Image",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Preview</label>
+    <fig-preview full checkerboard style="height: 96px">
+      <img src="${landscapeUrl()}" alt="Landscape preview">
+    </fig-preview>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "canvas",
+        name: "Canvas",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Shader</label>
+    <fig-preview full style="height: 96px">
+      <canvas width="320" height="180" aria-label="Generated shader preview" style="width: 100%; height: 100%; background: radial-gradient(circle at 20% 25%, #FFFFFFAA 0 8%, transparent 20%), radial-gradient(circle at 78% 35%, #7AEA66 0 12%, transparent 32%), radial-gradient(circle at 42% 72%, #FFCD29 0 10%, transparent 30%), conic-gradient(from 210deg at 52% 48%, #0D99FF, #9747FF, #FF00BF, #FF7262, #7AEA66, #0D99FF); filter: saturate(1.35) contrast(1.1);"></canvas>
+    </fig-preview>
   </fig-field>
 </div>`,
       },
@@ -1696,11 +1820,21 @@ export const propkitSections: Section[] = [
         <fig-slider variant="neue" value="0.5" min="0" max="5" step="0.1" text="true" units="px" full></fig-slider>
       </fig-field>
     </fig-group>
+    <fig-group name="About this tool" collapsible>
+      <p>Animated Melty GIF is a tiny goo machine for turning perfectly respectable artwork into wobbly little puddles. Drop in a frame from <a href="https://www.figma.com/" target="_blank" rel="noreferrer">Figma</a>, crank the wobble, and watch it drip like it just heard a really good bass line.</p>
+      <p>It is best for reaction stickers, fake loading states, and sending your design system on a quick vacation to <a href="https://giphy.com/" target="_blank" rel="noreferrer">GIPHY</a>. For maximum scientific accuracy, adjust the slime until it feels like warm cheese but still respects the grid.</p>
+      <p>
+        <hstack>
+          <fig-avatar name="Mina Melt"></fig-avatar>
+          <span>Made by Mina Melt</span>
+        </hstack>
+      </p>
+    </fig-group>
     </fig-content>
     <fig-footer>
-      <fig-button>Place in Figma</fig-button>
       <fig-button variant="secondary">Download</fig-button>
       <fig-button variant="secondary">Reset</fig-button>
+      <fig-button>Place in Figma</fig-button>
     </fig-footer>
   </dialog>
 </div>`,
