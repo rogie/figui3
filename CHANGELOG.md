@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.3]
+
+### Added
+
+- `fig-handle`: `color-tip` attribute restores the compact color-tip interaction when needed.
+
+### Changed
+
+- `fig-handle type="color"` now opens the solid fill picker directly by default while preserving `{ color, opacity }` input/change events.
+- `fig-input-gradient`: color stop handles opt into `color-tip` to keep the compact gradient-stop editing workflow.
+- `fig-menu`: popup placement happens before reveal and arrow-key navigation works from the trigger.
+- `fig-input-color`: tab flow skips nested swatch color inputs when a text input is present.
+- `fig-input-palette`: inline swatches are passive previews; clicking the inline strip or add button expands the palette; remove buttons include "Remove color" tooltips.
+
+### Fixed
+
+- `fig-input-palette`: remove buttons re-enable after adding colors back above the minimum.
+- `fig-color-tip`: compact tip positioning is anchored correctly for non-drag color handles.
+
 ## [4.15.2]
 
 ### Fixed
