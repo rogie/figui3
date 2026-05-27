@@ -2762,14 +2762,6 @@ dialog,
     overscroll-behavior: contain;
   }
 
-  footer,
-  fig-footer {
-    display: flex;
-    justify-content: flex-end;
-    padding: var(--spacer-2);
-    gap: var(--spacer-2);
-  }
-
   p {
     padding: 0 var(--spacer-3);
   }
@@ -3028,10 +3020,6 @@ dialog[is="fig-toast"] {
     background-color: var(--figma-color-bg-success);
     color-scheme: dark;
   }
-
-  &[theme="auto"] {
-    /* color-scheme is resolved at runtime by FigToast JS */
-  }
 }
 
 
@@ -3223,7 +3211,7 @@ fig-footer {
   align-items: flex-start;
   justify-content: flex-end;
   gap: var(--spacer-2);
-  padding: var(--spacer-2) var(--spacer-2) var(--spacer-2) var(--spacer-3);
+  padding: var(--spacer-3) var(--spacer-3);
   box-shadow: inset 0 1px 0 0 var(--figma-color-border);
 
   & h3 {
@@ -3748,11 +3736,6 @@ fig-field {
       white-space: nowrap;
       margin-right: var(--fig-field-gap);
       min-width: 0;
-    }
-    /* If the field has no label, set the input ratio to 1fr */
-    &:not(:has(> label)) {
-      /*--fig-field-input-ratio: 1fr;
-      --fig-field-label-ratio: 0fr;*/
     }
     /* labelless fields can have a few inputs */
     &:not(:has(> label)) {

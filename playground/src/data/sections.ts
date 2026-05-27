@@ -1832,9 +1832,8 @@ export const propkitSections: Section[] = [
     </fig-group>
     </fig-content>
     <fig-footer>
-      <fig-button variant="secondary">Download</fig-button>
-      <fig-button variant="secondary">Reset</fig-button>
-      <fig-button>Place in Figma</fig-button>
+      <label>Upload an image</label>
+      <fig-button disabled>Place in Figma</fig-button>
     </fig-footer>
   </dialog>
 </div>`,

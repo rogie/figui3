@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.7]
+
+### Changed
+
+- PropKit Animated Melty Gif dialog footer now uses the waiting-for-selection layout with an upload prompt before enabling placement.
+- `fig-footer` spacing now better supports label-driven action bars.
+
 ## [4.15.6]
 
 ### Changed
