@@ -589,6 +589,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-header": {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
   },
+  "fig-footer": {
+    borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
+    sticky: { label: "Sticky", type: "boolean", boolMode: "presence" },
+  },
   "fig-group": {
     name: { label: "Name", type: "string" },
     collapsible: { label: "Collapsible", type: "boolean", boolMode: "presence" },

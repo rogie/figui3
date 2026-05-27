@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.6]
+
+### Changed
+
+- PropKit header and footer container examples now focus on default usage, with footer states for waiting on selection and applying to a selection.
+- PropKit footer labels and actions now lay out cleanly with primary buttons pinned to the right.
+
+### Fixed
+
+- PropKit Attributes view now shows `fig-footer` attributes directly instead of field attributes when editing standalone footers.
+- PropKit header attribute control now labels the header action toggle as "Button".
+
 ## [4.15.5]
 
 ### Added

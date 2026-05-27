@@ -178,16 +178,6 @@ export const propkitSections: Section[] = [
   </fig-header>
 </div>`,
       },
-      {
-        id: "borderless",
-        name: "Borderless",
-        markup: `<div class="prop-panel">
-  <fig-header borderless>
-    <h3>Borderless header</h3>
-    <fig-button variant="ghost">Done</fig-button>
-  </fig-header>
-</div>`,
-      },
     ],
   },
   {
@@ -208,12 +198,22 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
-        id: "borderless",
-        name: "Borderless",
+        id: "label-button",
+        name: "Waiting for selection",
         markup: `<div class="prop-panel">
-  <fig-footer borderless>
-    <fig-button variant="secondary">Reset</fig-button>
-    <fig-button>Save</fig-button>
+  <fig-footer>
+    <label>Select a layer</label>
+    <fig-button disabled>Apply</fig-button>
+  </fig-footer>
+</div>`,
+      },
+      {
+        id: "selected-layer",
+        name: "Has selection",
+        markup: `<div class="prop-panel">
+  <fig-footer>
+    <label>3 selected</label>
+    <fig-button>Apply</fig-button>
   </fig-footer>
 </div>`,
       },

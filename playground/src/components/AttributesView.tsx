@@ -6,6 +6,7 @@ import {
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
+  applyFooterLongLabelMutation,
   applyChooserMaxSizeMutation,
   applyChooserPaletteLabelsMutation,
   applyHandleHitAreaDebugMutation,
@@ -17,6 +18,8 @@ import {
   FIG_ICON_COLOR_OPTIONS,
   getFigIconColorOptionLabel,
   getFigIconPlaygroundNames,
+  getFooterLongLabelEnabled,
+  getFooterLongLabelToggleEnabled,
   getHandleHitArea,
   getHandleHitAreaDebug,
   getHeaderIconEnabled,
@@ -204,6 +207,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-skeleton": "Skeleton",
     "fig-layer": "Layer",
     "fig-header": "Header",
+    "fig-footer": "Footer",
     "fig-tabs": "Tabs",
     "fig-chooser": "Chooser",
     "fig-handle": "Handle",
@@ -1258,7 +1262,7 @@ export default function AttributesView({
 
         return (
           <Fragment key={target.fieldIndex}>
-            {showFieldControls && target.controlTag !== "fig-field-slider" && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
+            {showFieldControls && target.hasField && target.controlTag !== "fig-field-slider" && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
                   <h3>Field</h3>
@@ -1450,7 +1454,7 @@ export default function AttributesView({
                             columns="half"
                             key={`control-header-icon-${target.fieldIndex}`}
                           >
-                            <label>Icon</label>
+                            <label>Button</label>
                             <fig-switch
                               checked={iconEnabled ? "true" : undefined}
                               onChange={() =>
@@ -1459,6 +1463,35 @@ export default function AttributesView({
                                     markup,
                                     target.fieldIndex,
                                     !iconEnabled,
+                                  ),
+                                )
+                              }
+                            />
+                          </fig-field>
+                        );
+                      })()}
+                    {target.controlTag === "fig-footer" &&
+                      getFooterLongLabelToggleEnabled(markup, target.fieldIndex) &&
+                      (() => {
+                        const longLabelEnabled = getFooterLongLabelEnabled(
+                          markup,
+                          target.fieldIndex,
+                        );
+                        return (
+                          <fig-field
+                            direction="horizontal"
+                            columns="half"
+                            key={`control-footer-long-label-${target.fieldIndex}`}
+                          >
+                            <label>Long label</label>
+                            <fig-switch
+                              checked={longLabelEnabled ? "true" : undefined}
+                              onChange={() =>
+                                onMarkupChange(
+                                  applyFooterLongLabelMutation(
+                                    markup,
+                                    target.fieldIndex,
+                                    !longLabelEnabled,
                                   ),
                                 )
                               }

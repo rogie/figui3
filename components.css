@@ -3084,6 +3084,9 @@ fig-preview {
     object-position: center;
     border-radius: 0;
   }
+  > canvas{
+    border-radius: inherit;
+  }
 }
 
 /* Web Components */
@@ -3217,11 +3220,10 @@ fig-group {
 
 fig-footer {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
   gap: var(--spacer-2);
-  height: var(--spacer-6);
-  padding: var(--spacer-1) var(--spacer-2) var(--spacer-1) var(--spacer-3);
+  padding: var(--spacer-2) var(--spacer-2) var(--spacer-2) var(--spacer-3);
   box-shadow: inset 0 1px 0 0 var(--figma-color-border);
 
   & h3 {
@@ -3230,6 +3232,19 @@ fig-footer {
     display: flex;
     align-items: baseline;
     gap: var(--spacer-half);
+  }
+
+  & > label {
+    flex-grow: 1;
+    align-items: baseline;
+    gap: var(--spacer-half);
+    min-height: var(--spacer-4);
+    display: flex;
+    align-items: center;
+  }
+
+  & > fig-button{
+    flex-shrink: 0;
   }
 
   &[borderless] {
