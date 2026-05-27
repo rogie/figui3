@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.5]
+
+### Added
+
+- `fig-preview`: styled visual preview layer for arbitrary content such as images, canvas, SVG, and generated previews.
+- PropKit container examples for `fig-content`, `fig-header`, and `fig-footer`.
+- PropKit Animated Melty Gif dialog includes a collapsible "About this tool" section.
+
+### Changed
+
+- `fig-fill-picker`: image and video tabs now use `fig-image` and `fig-media` upload components, keeping preview behavior consistent with the rest of FigUI.
+- `hstack`: vertically centers items by default and supports `align` overrides.
+- PropKit Preview canvas example now shows a shader-style preview.
+- PropKit plugin iframe More Info group is collapsed by default.
+
+### Fixed
+
+- `fig-handle`: percentage values now remain responsive instead of being converted to fixed pixels, keeping gradient handles aligned when containers resize.
+- `fig-fill-picker`: gradient stop handles refresh correctly when switching into the Gradient tab from another fill type.
+
 ## [4.15.4]
 
 ### Added
