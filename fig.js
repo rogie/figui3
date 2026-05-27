@@ -12213,6 +12213,7 @@ class FigFillPicker extends HTMLElement {
     this.#dialog.anchor = this.anchorElement || this.#trigger;
     const dialogPosition = this.getAttribute("dialog-position") || "left";
     this.#dialog.setAttribute("position", dialogPosition);
+    this.#dialog.setAttribute("offset", this.getAttribute("dialog-offset") || "8 8");
 
     const builtinModes = ["solid", "gradient", "image", "video", "webcam"];
     const builtinLabels = {
@@ -12446,6 +12447,7 @@ class FigFillPicker extends HTMLElement {
         <fig-handle
           type="color"
           color="${this.#hsvToHex({ ...this.#color, a: 1 })}"
+          data-no-color-picker
           drag
           drag-surface=".fig-fill-picker-color-area"
           drag-axes="x,y"
@@ -15018,6 +15020,10 @@ class FigHandle extends HTMLElement {
     return this.classList.contains("fig-input-gradient-ghost");
   }
 
+  get #canOpenColorPicker() {
+    return !this.hasAttribute("data-no-color-picker");
+  }
+
   get #dragEnabled() {
     const v = this.getAttribute("drag");
     return v !== null && v !== "false";
@@ -15246,7 +15252,12 @@ class FigHandle extends HTMLElement {
   select() {
     if (this.hasAttribute("disabled")) return;
     this.setAttribute("selected", "");
-    if (this.getAttribute("type") === "color" && !this.#isDragging && this.#usesColorTip)
+    if (
+      this.getAttribute("type") === "color" &&
+      this.#canOpenColorPicker &&
+      !this.#isDragging &&
+      this.#usesColorTip
+    )
       this.#showColorTip();
   }
 
@@ -15261,7 +15272,11 @@ class FigHandle extends HTMLElement {
       this.#didDrag = false;
       return;
     }
-    if (this.getAttribute("type") === "color" && !this.#usesColorTip) {
+    if (
+      this.getAttribute("type") === "color" &&
+      this.#canOpenColorPicker &&
+      !this.#usesColorTip
+    ) {
       this.#openDirectColorPicker();
       return;
     }
@@ -15279,6 +15294,7 @@ class FigHandle extends HTMLElement {
     if (e.key !== "Enter" && e.key !== " ") return;
     if (!this.hasAttribute("selected")) return;
     if (this.getAttribute("type") !== "color") return;
+    if (!this.#canOpenColorPicker) return;
     e.preventDefault();
     if (this.#usesColorTip) {
       if (!this.#colorTip) this.#showColorTip();
@@ -15414,6 +15430,7 @@ class FigHandle extends HTMLElement {
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
         if (dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return;
+        this.#closeColorPickerForDrag();
         this.classList.add("dragging");
         this.style.cursor = "grabbing";
         if (!this.hasAttribute("selected")) this.select();
@@ -15554,6 +15571,7 @@ class FigHandle extends HTMLElement {
     const picker = document.createElement("fig-fill-picker");
     picker.setAttribute("mode", "solid");
     picker.setAttribute("alpha", "true");
+    picker.setAttribute("dialog-offset", "8 8");
     picker.setAttribute("value", this.#directColorPickerValue());
     picker.anchorElement = this;
 
@@ -15587,6 +15605,12 @@ class FigHandle extends HTMLElement {
     this.#directColorPicker.remove();
     this.#directColorPicker = null;
     this.removeAttribute("selected");
+  }
+
+  #closeColorPickerForDrag() {
+    if (this.getAttribute("type") !== "color") return;
+    this.#hideColorTip();
+    this.#directColorPicker?.close();
   }
 
   #showColorTip() {

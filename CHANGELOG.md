@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.9]
+
+### Changed
+
+- `fig-handle type="color"` closes its color picker when dragging starts and uses an 8px popup offset.
+
+### Fixed
+
+- `fig-fill-picker`: internal color-area handles no longer open nested color pickers.
+
 ## [4.15.8]
 
 ### Changed
