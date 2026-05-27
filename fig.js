@@ -6690,7 +6690,7 @@ class FigInputPalette extends HTMLElement {
       ic.setAttribute("swatch-disabled", "");
     } else {
       ic.setAttribute("text", "true");
-      ic.setAttribute("alpha", this.#isFixed ? "true" : "false");
+      ic.setAttribute("alpha", "true");
       ic.setAttribute("full", "");
     }
     if (disabled) ic.setAttribute("disabled", "");

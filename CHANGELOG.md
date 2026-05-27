@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.4]
+
+### Added
+
+- PropKit button examples with labeled and unlabeled action rows.
+- `fig-field`: `columns="2/5"` layout ratio for compact dialog rows.
+- Checkerboard sizing tokens for chits, sliders, and handles.
+
+### Changed
+
+- PropKit dialog examples use 300px dialogs and half-column internal fields, with the design token editor using `columns="2/5"`.
+- `fig-input-palette`: expanded color rows always show alpha controls, and palette fields get tighter layout behavior inside `fig-field`.
+- Attribute panel label for `checkerboard` is now "Checkered".
+- PropKit plugin iframe More Info copy now uses short instructional paragraphs.
+- Opacity slider and handle checkerboards use component-specific checkerboard sizing.
+
 ## [4.15.3]
 
 ### Added

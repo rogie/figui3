@@ -244,7 +244,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "presence",
       defaultChecked: false,
     },
-    checkerboard: { label: "Checker board", type: "boolean", boolMode: "string" },
+    checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
   },
   "fig-media": {
     "aspect-ratio": aspectRatioRule,
@@ -259,7 +259,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "presence",
       defaultChecked: false,
     },
-    checkerboard: { label: "Checker board", type: "boolean", boolMode: "string" },
+    checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
     controls: {
       label: "Controls",
       type: "boolean",
@@ -284,7 +284,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "presence",
       defaultChecked: false,
     },
-    checkerboard: { label: "Checker board", type: "boolean", boolMode: "string" },
+    checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
     controls: {
       label: "Controls",
       type: "boolean",

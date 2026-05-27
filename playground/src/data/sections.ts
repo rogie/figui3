@@ -257,6 +257,44 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "button",
+    name: "Button",
+    group: "Field controls",
+    description:
+      "A property row action button for applying, resetting, or opening a related workflow.",
+    examples: [
+      {
+        id: "primary",
+        name: "Primary",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Action</label>
+    <fig-button full>Apply Changes</fig-button>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "secondary",
+        name: "Secondary",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <label>Reset</label>
+    <fig-button variant="secondary" full>Reset Settings</fig-button>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "no-label",
+        name: "No label",
+        markup: `<div class="prop-panel">
+  <fig-field direction="horizontal">
+    <fig-button full>Generate Preview</fig-button>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "color",
     name: "Color",
     group: "Field controls",
@@ -946,9 +984,9 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Rename</fig-button>
-  <dialog is="fig-dialog" title="Rename Layer" open handle="fig-header" position="center center" data-playground-hide-field>
+  <dialog is="fig-dialog" title="Rename Layer" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Name</label>
         <fig-input-text value="Frame 1" full></fig-input-text>
       </fig-field>
@@ -974,25 +1012,25 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Shadow</fig-button>
-  <dialog is="fig-dialog" title="Shadow" open handle="fig-header" position="center center" data-playground-hide-field>
+  <dialog is="fig-dialog" title="Shadow" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>X</label>
         <fig-input-number value="0" steppers="true" full></fig-input-number>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Y</label>
         <fig-input-number value="4" steppers="true" full></fig-input-number>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Color</label>
         <fig-input-color value="#000000" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Blur</label>
         <fig-slider variant="neue" value="8" min="0" max="64" text="true" units="px" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Spread</label>
         <fig-slider variant="neue" value="0" min="-32" max="32" text="true" units="px" full></fig-slider>
       </fig-field>
@@ -1017,21 +1055,21 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Blur</fig-button>
-  <dialog is="fig-dialog" title="Progressive Blur" open handle="fig-header" position="center center" data-playground-hide-field>
+  <dialog is="fig-dialog" title="Progressive Blur" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Amount</label>
         <fig-slider variant="neue" value="12" min="0" max="64" text="true" units="px" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Fade start</label>
         <fig-slider variant="neue" value="20" min="0" max="100" text="true" units="%" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Fade end</label>
         <fig-slider variant="neue" value="80" min="0" max="100" text="true" units="%" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Direction</label>
         <fig-dropdown full>
           <option selected>Top to bottom</option>
@@ -1062,22 +1100,22 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Photo Stack</fig-button>
-  <dialog is="fig-dialog" title="Photo Stack" open handle="fig-header" position="center center" data-playground-hide-field>
+  <dialog is="fig-dialog" title="Photo Stack" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
       <fig-group>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Title</label>
         <fig-input-text value="Japan" full></fig-input-text>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Subtitle</label>
         <fig-input-text value="December 2025" full></fig-input-text>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Shadow Tint</label>
         <fig-input-color value="#000000" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Photo Shape</label>
         <fig-dropdown full>
           <option selected>Portrait</option>
@@ -1087,59 +1125,59 @@ export const propkitSections: Section[] = [
       </fig-field>
     </fig-group>
     <fig-group name="Back Photo" collapsible open>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Offset X</label>
         <fig-slider variant="neue" type="delta" value="239" default="0" min="-500" max="500" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Offset Y</label>
         <fig-slider variant="neue" type="delta" value="0" default="0" min="-500" max="500" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Scale</label>
         <fig-slider variant="neue" value="0.70" step="0.01" min="0" max="2" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Overlay Opacity</label>
         <fig-slider variant="neue" type="opacity" value="0.60" color="#000000" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group name="Shadow" collapsible open>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Scale</label>
         <fig-slider variant="neue" value="1.03" step="0.01" min="0" max="2" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Opacity</label>
         <fig-slider variant="neue" type="opacity" value="0.25" color="#000000" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Blur</label>
         <fig-slider variant="neue" value="14" min="0" max="64" text="true" units="px" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Y Offset</label>
         <fig-slider variant="neue" type="delta" value="8" default="0" min="-50" max="50" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group name="Transition Spring" collapsible open>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Type</label>
         <fig-segmented-control full>
           <fig-segment value="time" selected>Time</fig-segment>
           <fig-segment value="physics">Physics</fig-segment>
         </fig-segmented-control>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Duration</label>
         <fig-slider variant="neue" value="0.50" step="0.01" min="0" max="2" text="true" units="s" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Bounce</label>
         <fig-slider variant="neue" value="0.04" step="0.01" min="0" max="1" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
-    <fig-field direction="horizontal">
+    <fig-field columns="half" direction="horizontal">
       <label>Dark Mode</label>
       <fig-switch checked></fig-switch>
     </fig-field>
@@ -1164,7 +1202,7 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Plugin</fig-button>
-  <dialog is="fig-dialog" title="Plugin" open handle="fig-header" position="center center" autoresize data-playground-hide-field style="width: 280px;">
+  <dialog is="fig-dialog" title="Plugin" open handle="fig-header" position="center center" autoresize data-playground-hide-field style="width: 300px;">
     <iframe src="/propkit/iframe.html"></iframe>
   </dialog>
 </div>`,
@@ -1183,10 +1221,10 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Export</fig-button>
-  <dialog is="fig-dialog" title="Export Settings" open handle="fig-header" position="center center" data-playground-hide-field>
+  <dialog is="fig-dialog" title="Export Settings" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
     <fig-group name="Format">
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Format</label>
         <fig-segmented-control full>
           <fig-segment value="png" selected>PNG</fig-segment>
@@ -1194,7 +1232,7 @@ export const propkitSections: Section[] = [
           <fig-segment value="pdf">PDF</fig-segment>
         </fig-segmented-control>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Quality</label>
         <fig-dropdown full>
           <option>Low</option>
@@ -1203,21 +1241,21 @@ export const propkitSections: Section[] = [
           <option>Maximum</option>
         </fig-dropdown>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Scale</label>
         <fig-slider variant="neue" value="2" min="1" max="4" step="0.5" text="true" units="x" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group name="Output">
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Filename</label>
         <fig-input-text value="design-export" full></fig-input-text>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Metadata</label>
         <fig-switch checked></fig-switch>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Flatten layers</label>
         <fig-switch></fig-switch>
       </fig-field>
@@ -1244,18 +1282,18 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Token Editor</fig-button>
-  <dialog is="fig-dialog" title="Design Token Editor" open handle="fig-header" position="center center" data-playground-hide-field>
+  <dialog is="fig-dialog" title="Design Token Editor" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
     <fig-group name="Token">
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Name</label>
         <fig-input-text value="color-primary" full></fig-input-text>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Description</label>
         <fig-input-text value="Primary brand color" full></fig-input-text>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Type</label>
         <fig-dropdown full>
           <option selected>Color</option>
@@ -1266,42 +1304,42 @@ export const propkitSections: Section[] = [
       </fig-field>
     </fig-group>
     <fig-group name="Value">
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Color</label>
         <fig-input-color value="#0D99FF" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Opacity</label>
         <fig-slider variant="neue" type="opacity" value="1" color="#0D99FF" units="%" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>CSS variable</label>
         <fig-input-text value="--color-primary" full></fig-input-text>
       </fig-field>
     </fig-group>
     <fig-group name="Variants" collapsible open>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Palette</label>
         <fig-input-palette value='["#0D99FF","#0B7FD4","#0966AA","#074D80"]' full></fig-input-palette>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Mode</label>
         <fig-segmented-control full>
           <fig-segment value="light" selected>Light</fig-segment>
           <fig-segment value="dark">Dark</fig-segment>
         </fig-segmented-control>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Auto-generate</label>
         <fig-switch checked></fig-switch>
       </fig-field>
     </fig-group>
     <fig-group name="Usage" collapsible open>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Preview</label>
         <fig-image full upload="true" size="auto"></fig-image>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="2/5" direction="horizontal">
         <label>Publish</label>
         <fig-switch></fig-switch>
       </fig-field>
@@ -1328,7 +1366,7 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Prepress</fig-button>
-  <dialog is="fig-dialog" title="Prepress" open handle="fig-header" position="center center" data-playground-hide-field>
+  <dialog is="fig-dialog" title="Prepress" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
     <fig-tabs>
       <fig-tab selected content="#prepress-setup">Setup</fig-tab>
@@ -1339,7 +1377,7 @@ export const propkitSections: Section[] = [
     </fig-tabs>
     <fig-tab-content id="prepress-setup">
       <fig-group name="Project Type">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <fig-segmented-control full>
             <fig-segment value="editorial" selected>Editorial</fig-segment>
             <fig-segment value="packaging">Packaging</fig-segment>
@@ -1348,7 +1386,7 @@ export const propkitSections: Section[] = [
         </fig-field>
       </fig-group>
       <fig-group name="Trim Size">
-        <fig-field>
+        <fig-field columns="half">
           <fig-dropdown full>
             <option selected>US Letter (8.5×11in)</option>
             <option>A4 (210×297mm)</option>
@@ -1357,27 +1395,27 @@ export const propkitSections: Section[] = [
             <option>Custom</option>
           </fig-dropdown>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Width</label>
           <fig-input-number value="8.5" min="0" step="0.25" suffix="in" full></fig-input-number>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Height</label>
           <fig-input-number value="11" min="0" step="0.25" suffix="in" full></fig-input-number>
         </fig-field>
       </fig-group>
       <fig-group name="Print Margins">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Bleed</label>
           <fig-input-number value="0.125" min="0" step="0.0625" suffix="in" full></fig-input-number>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Safe Area</label>
           <fig-input-number value="0.25" min="0" step="0.0625" suffix="in" full></fig-input-number>
         </fig-field>
       </fig-group>
       <fig-group name="Apply To">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <fig-options options="Current Frame,Selection,All Frames" value="Current Frame" full></fig-options>
         </fig-field>
       </fig-group>
@@ -1388,15 +1426,15 @@ export const propkitSections: Section[] = [
     </fig-tab-content>
     <fig-tab-content id="prepress-guides">
       <fig-group name="Guide Style">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Color</label>
           <fig-input-color value="#FF00FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Opacity</label>
           <fig-slider variant="neue" type="opacity" value="0.5" color="#FF00FF" units="%" text="true" full></fig-slider>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Stroke</label>
           <fig-dropdown full>
             <option selected>Dashed</option>
@@ -1406,29 +1444,29 @@ export const propkitSections: Section[] = [
         </fig-field>
       </fig-group>
       <fig-group name="Margins">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Top</label>
           <fig-input-number value="0.5" min="0" step="0.125" suffix="in" full></fig-input-number>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Bottom</label>
           <fig-input-number value="0.5" min="0" step="0.125" suffix="in" full></fig-input-number>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Left</label>
           <fig-input-number value="0.75" min="0" step="0.125" suffix="in" full></fig-input-number>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Right</label>
           <fig-input-number value="0.75" min="0" step="0.125" suffix="in" full></fig-input-number>
         </fig-field>
       </fig-group>
       <fig-group name="Columns">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Count</label>
           <fig-input-number value="1" min="1" max="12" step="1" full></fig-input-number>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Gutter</label>
           <fig-input-number value="0.1667" min="0" step="0.0625" suffix="in" full></fig-input-number>
         </fig-field>
@@ -1440,7 +1478,7 @@ export const propkitSections: Section[] = [
     </fig-tab-content>
     <fig-tab-content id="prepress-cmyk">
       <fig-group name="Color Profile">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Profile</label>
           <fig-dropdown full>
             <option selected>SWOP (Coated)</option>
@@ -1449,7 +1487,7 @@ export const propkitSections: Section[] = [
             <option>Japan Color 2001</option>
           </fig-dropdown>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Intent</label>
           <fig-dropdown full>
             <option>Perceptual</option>
@@ -1460,21 +1498,21 @@ export const propkitSections: Section[] = [
         </fig-field>
       </fig-group>
       <fig-group name="Ink Limits">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Total ink</label>
           <fig-slider variant="neue" value="300" min="200" max="400" step="5" text="true" units="%" full></fig-slider>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Black limit</label>
           <fig-slider variant="neue" value="100" min="0" max="100" step="5" text="true" units="%" full></fig-slider>
         </fig-field>
       </fig-group>
       <fig-group name="Overprint">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Simulate</label>
           <fig-switch checked></fig-switch>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Black overprint</label>
           <fig-switch checked></fig-switch>
         </fig-field>
@@ -1486,7 +1524,7 @@ export const propkitSections: Section[] = [
     </fig-tab-content>
     <fig-tab-content id="prepress-preflight">
       <fig-group name="Checks">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Resolution</label>
           <fig-segmented-control full>
             <fig-segment value="150">150 dpi</fig-segment>
@@ -1494,29 +1532,29 @@ export const propkitSections: Section[] = [
             <fig-segment value="600">600 dpi</fig-segment>
           </fig-segmented-control>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Bleed check</label>
           <fig-switch checked></fig-switch>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Trim marks</label>
           <fig-switch></fig-switch>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Overprint preview</label>
           <fig-switch checked></fig-switch>
         </fig-field>
       </fig-group>
       <fig-group name="Text">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Min font size</label>
           <fig-input-number value="6" min="1" max="72" step="1" suffix="pt" full></fig-input-number>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Outline text</label>
           <fig-switch></fig-switch>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Embed fonts</label>
           <fig-switch checked></fig-switch>
         </fig-field>
@@ -1528,7 +1566,7 @@ export const propkitSections: Section[] = [
     </fig-tab-content>
     <fig-tab-content id="prepress-export">
       <fig-group name="Format">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Output</label>
           <fig-dropdown full>
             <option selected>PDF/X-1a</option>
@@ -1537,7 +1575,7 @@ export const propkitSections: Section[] = [
             <option>High Quality Print</option>
           </fig-dropdown>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Compression</label>
           <fig-dropdown full>
             <option>None</option>
@@ -1548,25 +1586,25 @@ export const propkitSections: Section[] = [
         </fig-field>
       </fig-group>
       <fig-group name="Marks">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Crop marks</label>
           <fig-switch checked></fig-switch>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Bleed marks</label>
           <fig-switch checked></fig-switch>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Registration</label>
           <fig-switch checked></fig-switch>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Color bars</label>
           <fig-switch></fig-switch>
         </fig-field>
       </fig-group>
       <fig-group name="Pages">
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Range</label>
           <fig-segmented-control full>
             <fig-segment value="all" selected>All</fig-segment>
@@ -1574,7 +1612,7 @@ export const propkitSections: Section[] = [
             <fig-segment value="custom">Custom</fig-segment>
           </fig-segmented-control>
         </fig-field>
-        <fig-field direction="horizontal">
+        <fig-field columns="half" direction="horizontal">
           <label>Spreads</label>
           <fig-switch></fig-switch>
         </fig-field>
@@ -1602,21 +1640,21 @@ export const propkitSections: Section[] = [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Melty Gif</fig-button>
-  <dialog is="fig-dialog" title="Animated Melty Gif" open handle="fig-header" position="center center" data-playground-hide-field>
+  <dialog is="fig-dialog" title="Animated Melty Gif" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
-    <fig-field>
+    <fig-field columns="half">
       <fig-image full upload="true" size="auto" aspect-ratio="16/10"></fig-image>
     </fig-field>
     <fig-group>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Frames</label>
         <fig-slider variant="neue" value="6" min="1" max="24" step="1" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Frame rate</label>
         <fig-slider variant="neue" value="5" min="1" max="30" step="1" text="true" units="fps" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Loop style</label>
         <fig-dropdown full>
           <option selected>Forward</option>
@@ -1627,33 +1665,33 @@ export const propkitSections: Section[] = [
       </fig-field>
     </fig-group>
     <fig-group>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Scale (displacement)</label>
         <fig-slider variant="neue" value="14" min="0" max="100" step="0.5" text="true" units="px" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Base freq. X</label>
         <fig-slider variant="neue" value="0.02" min="0.001" max="0.1" step="0.001" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Base freq. Y</label>
         <fig-slider variant="neue" value="0.02" min="0.001" max="0.1" step="0.001" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Octaves</label>
         <fig-slider variant="neue" value="2" min="1" max="8" step="1" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Fill holes</label>
         <fig-slider variant="neue" value="2" min="0" max="10" step="0.5" text="true" units="px" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Solidify edges</label>
         <fig-slider variant="neue" value="1" min="0" max="2" step="0.01" text="true" full></fig-slider>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field columns="half" direction="horizontal">
         <label>Smoothing</label>
         <fig-slider variant="neue" value="0.5" min="0" max="5" step="0.1" text="true" units="px" full></fig-slider>
       </fig-field>
