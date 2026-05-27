@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.8]
+
+### Changed
+
+- PropKit Design Token Editor keeps the standard 300px dialog width while using default horizontal field columns.
+- `fig-footer` vertical padding now uses `--spacer-2-5`.
+
 ## [4.15.7]
 
 ### Changed

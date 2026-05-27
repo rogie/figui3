@@ -1409,15 +1409,15 @@ export const propkitSections: Section[] = [
   <dialog is="fig-dialog" title="Design Token Editor" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
     <fig-group name="Token">
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Name</label>
         <fig-input-text value="color-primary" full></fig-input-text>
       </fig-field>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Description</label>
         <fig-input-text value="Primary brand color" full></fig-input-text>
       </fig-field>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Type</label>
         <fig-dropdown full>
           <option selected>Color</option>
@@ -1428,42 +1428,42 @@ export const propkitSections: Section[] = [
       </fig-field>
     </fig-group>
     <fig-group name="Value">
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Color</label>
         <fig-input-color value="#0D99FF" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
       </fig-field>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Opacity</label>
         <fig-slider variant="neue" type="opacity" value="1" color="#0D99FF" units="%" text="true" full></fig-slider>
       </fig-field>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>CSS variable</label>
         <fig-input-text value="--color-primary" full></fig-input-text>
       </fig-field>
     </fig-group>
     <fig-group name="Variants" collapsible open>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Palette</label>
         <fig-input-palette value='["#0D99FF","#0B7FD4","#0966AA","#074D80"]' full></fig-input-palette>
       </fig-field>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Mode</label>
         <fig-segmented-control full>
           <fig-segment value="light" selected>Light</fig-segment>
           <fig-segment value="dark">Dark</fig-segment>
         </fig-segmented-control>
       </fig-field>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Auto-generate</label>
         <fig-switch checked></fig-switch>
       </fig-field>
     </fig-group>
     <fig-group name="Usage" collapsible open>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Preview</label>
         <fig-image full upload="true" size="auto"></fig-image>
       </fig-field>
-      <fig-field columns="2/5" direction="horizontal">
+      <fig-field direction="horizontal">
         <label>Publish</label>
         <fig-switch></fig-switch>
       </fig-field>
