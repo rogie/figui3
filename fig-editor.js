@@ -555,12 +555,12 @@ class FigFillPicker extends HTMLElement {
       </fig-preview>
       <div class="fig-fill-picker-sliders">
         <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper"><fig-icon name="eyedropper"></fig-icon></fig-button></fig-tooltip>
-        <fig-slider type="hue" variant="neue" min="0" max="360" value="${
+        <fig-slider type="hue" text="false" min="0" max="360" value="${
           this.#color.h
         }"></fig-slider>
         ${
           showAlpha
-            ? `<fig-slider type="opacity" variant="neue" text="true" units="%" min="0" max="100" value="${
+            ? `<fig-slider type="opacity" text="true" units="%" min="0" max="100" value="${
                 this.#color.a * 100
               }" color="${this.#hsvToHex(this.#color)}"></fig-slider>`
             : ""

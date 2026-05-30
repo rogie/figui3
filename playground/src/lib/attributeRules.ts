@@ -302,13 +302,31 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     duration: { label: "Duration", type: "number", min: 0, max: 600, step: 1 },
     time: { label: "Time", type: "number", min: 0, max: 600, step: 1 },
   },
+  "fig-preview": {
+    fit: {
+      label: "Fit",
+      type: "enum",
+      options: ["contain", "cover", "fill", "none", "scale-down"],
+    },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
+    checkerboard: {
+      label: "Checkered",
+      type: "boolean",
+      boolMode: "presence",
+    },
+  },
   "fig-slider": {
     variant: {
       label: "Variant",
       type: "enum",
-      options: ["default", "neue"],
+      options: ["default", "classic"],
     },
-    text: { label: "Text", type: "boolean", boolMode: "string" },
+    text: {
+      label: "Text",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     placeholder: { label: "Placeholder", type: "string" },
     units: {
       label: "Units",

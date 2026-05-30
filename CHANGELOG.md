@@ -6,18 +6,20 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking
 
-- `fig-fill-picker` is now optional. Import `fig-fill-picker.js` and `fig-fill-picker.css` to register and style the full picker dialog.
+- `fig-fill-picker` is now optional. Import `fig-editor.js` and `fig-editor.css` to register and style the full picker dialog.
 - `fig-input-color` no longer supports the `picker` attribute. It opens `fig-fill-picker` automatically when registered, otherwise it uses the native color input.
 - `picker-anchor` was removed. Picker popups anchor to the component that opens them.
 
 ### Added
 
-- New package exports: `@rogieking/figui3/fig-fill-picker.js` and `@rogieking/figui3/fig-fill-picker.css`.
+- New package exports: `@rogieking/figui3/fig-editor.js` and `@rogieking/figui3/fig-editor.css`.
 - `fig-input-color`, `fig-input-fill`, `fig-input-gradient`, `fig-handle type="color"`, and `fig-color-tip` now check for `fig-fill-picker` at interaction time.
 
 ### Changed
 
 - `fig.js` and `components.css` no longer include the full fill picker by default.
+- `fig-slider` now uses the compact modern appearance by default; use `variant="classic"` for the previous appearance.
+- `fig-slider` now shows its text input by default; use `text="false"` for compact slider-only controls.
 - `picker-*` attributes are still forwarded to `fig-fill-picker` when the optional picker is registered.
 - `fig-input-gradient edit="picker"` falls back to inline gradient editing when `fig-fill-picker` is unavailable.
 - `fig-handle type="color"` falls back to the native color picker when `fig-fill-picker` is unavailable.
@@ -1298,7 +1300,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Updated joystick and fill picker handle elevation styling to use `--elevation-100-canvas` for consistent control depth.
+- Updated joystick and fill picker handle elevation styling to use `--figma-elevation-100-canvas` for consistent control depth.
 - Simplified related hover-shadow behavior for joystick/fill picker handles and cleaned up nested `fig-layer` open-state selector structure.
 
 ## [3.0.1]
@@ -1524,7 +1526,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed PropKit slider variant controls by removing forced `variant="neue"` in preview rendering and defaulting variant selection to `default` when no variant attribute is set.
+- Fixed PropKit slider variant controls by removing forced slider variant overrides in preview rendering and defaulting variant selection to `default` when no variant attribute is set.
 - Fixed `fig-slider` variant reactivity by observing `variant` attribute changes and regenerating internals when variant updates.
 
 ## [2.31.1]
@@ -1647,7 +1649,7 @@ All notable changes to this project will be documented in this file.
 
 - `fig-easing-curve` spring editor now keeps duration marker behavior aligned to the rendered spring timeline and improves handle interaction/visual consistency.
 - Easing curve icon generation now uses 24x24 icons with 6px padding and dynamic custom preset icon refresh.
-- Sliders in `propkit.html` now use the Neue slider variant.
+- Sliders in `propkit.html` now use the modern compact slider appearance.
 - `fig-image` now supports `aspect-ratio` and `fit` mapping to internal CSS vars for richer image layout control.
 
 ### Fixed
@@ -1907,10 +1909,10 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- **BREAKING**: Experimental CSS features (customizable select picker) now require `experimental="modern"` instead of `variant="neue"`
-  - Before: `<fig-dropdown variant="neue">`
+- **BREAKING**: Experimental CSS features (customizable select picker) now require `experimental="modern"` instead of the old `neue` variant name.
+  - Before: old dropdown variant attribute
   - After: `<fig-dropdown experimental="modern">`
-- The `variant` attribute is now reserved for visual styling only (e.g., `fig-slider variant="neue"` for visual appearance)
+- The `variant` attribute is now reserved for visual styling only.
 
 ### Added
 
@@ -1919,18 +1921,11 @@ All notable changes to this project will be documented in this file.
 
 ### Migration Guide
 
-If you were using `variant="neue"` on `fig-dropdown` to enable the customizable select picker:
+If you were using the old `neue` variant on `fig-dropdown` to enable the customizable select picker:
 
 ```html
-<!-- Before -->
-<fig-dropdown variant="neue">
-  <option>Option 1</option>
-</fig-dropdown>
-
 <!-- After -->
 <fig-dropdown experimental="modern">
   <option>Option 1</option>
 </fig-dropdown>
 ```
-
-Note: `fig-slider variant="neue"` continues to work as before for visual styling.

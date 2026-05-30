@@ -198,28 +198,28 @@ export const figui3Sections: Section[] = [
         id: "range",
         name: "Range",
         markup: `<div class="prop-panel">
-  <fig-slider value="50" min="0" max="100" text="false" full></fig-slider>
+  <fig-slider value="50" min="0" max="100" full></fig-slider>
 </div>`,
       },
       {
         id: "opacity-with-text",
         name: "Opacity",
         markup: `<div class="prop-panel">
-  <fig-slider type="opacity" value="0.75" color="#ff0000" units="%" text="false" full></fig-slider>
+  <fig-slider type="opacity" value="75" color="#ff0000" units="%" full></fig-slider>
 </div>`,
       },
       {
         id: "hue-with-text",
         name: "Hue",
         markup: `<div class="prop-panel">
-  <fig-slider type="hue" value="180" text="false" full></fig-slider>
+  <fig-slider type="hue" value="180" full></fig-slider>
 </div>`,
       },
       {
         id: "stepper-with-text",
         name: "Stepper",
         markup: `<div class="prop-panel">
-  <fig-slider type="stepper" value="50" step="25" text="false" full>
+  <fig-slider type="stepper" value="50" step="25" full>
     <datalist>
       <option value="0"></option>
       <option value="25"></option>
@@ -234,7 +234,7 @@ export const figui3Sections: Section[] = [
         id: "delta-with-text",
         name: "Delta",
         markup: `<div class="prop-panel">
-  <fig-slider type="delta" value="0" default="0" step="0.25" min="-5" max="5" text="false" full>
+  <fig-slider type="delta" value="0" default="0" step="0.25" min="-5" max="5" full>
     <datalist>
       <option value="0"></option>
     </datalist>
@@ -305,7 +305,7 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-input-color value="#0D99FF" text="true"></fig-input-color>
+  <fig-input-color value="#0D99FF"></fig-input-color>
 </div>`,
       },
     ],
@@ -547,7 +547,7 @@ export const figui3Sections: Section[] = [
       </fig-field>
       <fig-field direction="horizontal">
         <label>Opacity</label>
-        <fig-slider value="100" min="0" max="100" text="true" units="%" full></fig-slider>
+        <fig-slider value="100" min="0" max="100" units="%" full></fig-slider>
       </fig-field>
     </fig-group>
   </fig-tab-content>

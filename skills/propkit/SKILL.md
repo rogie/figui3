@@ -107,11 +107,11 @@ bootstrap();
 - Use `type="hue"` only for hue selection workflows.
 - Use `type="stepper"` for discrete snap points (include a `datalist` with valid stops).
 - Use `type="delta"` for offset/relative adjustments around a neutral point (typically include `default`, and often symmetric min/max).
-- Prefer `text="true"` for precision-critical properties; omit it for compact/simplified rows.
+- Text input is shown by default; use `text="false"` only for compact/simplified rows.
 - Use `transform` when internal value scale differs from UI display (example: internal `0..1`, display `0..100%`).
 - Variants:
   - Default variant for most property panels.
-  - `variant="neue"` for a compact, visually quieter style.
+  - `variant="classic"` only when the previous slider appearance is needed.
 - Always set explicit `min`, `max`, and `step` (and `units` where applicable) to keep behavior predictable.
 
 ### Control Selection Heuristics
@@ -175,7 +175,7 @@ Use a horizontal fig-field, with a fig-slider, min=0 max=100 text=true units=%. 
 </fig-field>
 <fig-field direction="horizontal">
   <label>Hue</label>
-  <fig-slider type="hue" value="180" text="true" variant="neue" full></fig-slider>
+  <fig-slider type="hue" value="180" text="true" full></fig-slider>
 </fig-field>
 <fig-field direction="horizontal">
   <label>Offset</label>

@@ -35,8 +35,8 @@ import "@rogieking/figui3/fig.js";
 Opt into the full Figma-style fill picker when you need it:
 
 ```js
-import "@rogieking/figui3/fig-fill-picker.css";
-import "@rogieking/figui3/fig-fill-picker.js";
+import "@rogieking/figui3/fig-editor.css";
+import "@rogieking/figui3/fig-editor.js";
 ```
 
 Or use a CDN:
@@ -244,21 +244,21 @@ Minimal example:
 | `max` | number | `100` | Maximum |
 | `step` | number | `1` | Step increment |
 | `default` | number | — | Default/reset value (shown as marker) |
-| `text` | boolean | `false` | Show text input |
+| `text` | boolean | `true` | Show text input; set `text="false"` to hide |
 | `placeholder` | string | `"##"` | Text input placeholder |
 | `units` | string | — | Unit label (e.g. `"%"`, `"px"`) |
 | `transform` | number | — | Display value multiplier |
 | `color` | string | — | Track color (opacity type) |
-| `variant` | string | — | Visual variant (e.g. `"neue"`) |
+| `variant` | string | — | Use `"classic"` to opt into the previous slider appearance |
 | `precision` | number | — | Decimal places for output |
 | `disabled` | boolean | `false` | Disabled state |
 
 **Events:** `input` (continuous), `change` (on release).
 
 ```html
-<fig-slider min="0" max="100" value="50" text="true" units="%"></fig-slider>
-<fig-slider type="hue" value="180"></fig-slider>
-<fig-slider type="opacity" value="75" color="#FF5733" text="true" units="%"></fig-slider>
+<fig-slider min="0" max="100" value="50" units="%"></fig-slider>
+<fig-slider type="hue" value="180" text="false"></fig-slider>
+<fig-slider type="opacity" value="75" color="#FF5733" units="%"></fig-slider>
 ```
 
 ---
@@ -278,7 +278,7 @@ Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slid
 **Events:** `input`, `change` — forwarded from the inner slider.
 
 ```html
-<fig-field-slider label="Opacity" min="0" max="100" value="75" text="true" units="%"></fig-field-slider>
+<fig-field-slider label="Opacity" min="0" max="100" value="75" units="%"></fig-field-slider>
 ```
 
 ---
@@ -436,7 +436,7 @@ A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker 
 <fig-input-color value="#FF5733" text="true"></fig-input-color>
 ```
 
-When `fig-fill-picker.js` is imported, swatch activation opens `<fig-fill-picker>`. Without it, the native color input is used.
+When `fig-editor.js` is imported, swatch activation opens `<fig-fill-picker>`. Without it, the native color input is used.
 
 ---
 
@@ -532,7 +532,7 @@ A comprehensive fill input supporting solid, gradient, image, and video fills. W
 
 `<fig-fill-picker>` — [demo](https://rog.ie/figui3/#fill-picker)
 
-Optional full fill picker dialog supporting solid, gradient, image, video, and webcam. Import `fig-fill-picker.js` and `fig-fill-picker.css` to register and style it.
+Optional full fill picker dialog supporting solid, gradient, image, video, and webcam. Import `fig-editor.js` and `fig-editor.css` to register and style it.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -865,7 +865,7 @@ A form field wrapper with flexible layout. Automatically links `<label>` to the 
 ```html
 <fig-field direction="horizontal" columns="thirds">
   <label>Opacity</label>
-  <fig-slider value="50" text="true" units="%"></fig-slider>
+  <fig-slider value="50" units="%"></fig-slider>
 </fig-field>
 ```
 
@@ -1016,6 +1016,7 @@ A thin styled layer for arbitrary visual content. Use it for generated previews,
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
+| `fit` | string | `contain` | Object fit for direct media children |
 | `full` | boolean | `false` | Stretch to the available width |
 | `checkerboard` | boolean | `false` | Show checkerboard behind transparent content |
 
@@ -1308,10 +1309,10 @@ npm run build:css      # Build minified CSS only
 | Source | Minified | Tool |
 |---|---|---|
 | `fig.js` (413 KB) | `dist/fig.js` (223 KB) | Bun `--minify` |
-| `fig-fill-picker.js` (67 KB) | `dist/fig-fill-picker.js` (37 KB) | Bun `--minify` |
+| `fig-editor.js` (67 KB) | `dist/fig-editor.js` (37 KB) | Bun `--minify` |
 | `fig.css` | `dist/fig.css` (102 KB) | lightningcss `--minify --nesting --bundle` |
 | `components.css` (130 KB) | `dist/components.css` (100 KB) | lightningcss |
-| `fig-fill-picker.css` (6 KB) | `dist/fig-fill-picker.css` (4 KB) | lightningcss |
+| `fig-editor.css` (6 KB) | `dist/fig-editor.css` (4 KB) | lightningcss |
 | `base.css` (2 KB) | `dist/base.css` (2 KB) | lightningcss |
 
 Default imports resolve to minified `dist/` files. Unminified source is available via `@rogieking/figui3/src/*`:

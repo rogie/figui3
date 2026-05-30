@@ -38,7 +38,7 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field direction="horizontal">
       <label>Spacing</label>
-      <fig-slider variant="neue" value="8" min="0" max="64" text="true" units="px"></fig-slider>
+      <fig-slider value="8" min="0" max="64" text="true" units="px"></fig-slider>
     </fig-field>
   </fig-group>
   <fig-group name="Fill">
@@ -66,7 +66,7 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field direction="horizontal">
       <label>Spacing</label>
-      <fig-slider variant="neue" value="8" min="0" max="64" text="true"></fig-slider>
+      <fig-slider value="8" min="0" max="64" text="true"></fig-slider>
     </fig-field>
   </fig-group>
   <fig-group>
@@ -101,7 +101,7 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field direction="horizontal">
       <label>Opacity</label>
-      <fig-slider variant="neue" value="100" min="0" max="100" text="true" units="%"></fig-slider>
+      <fig-slider value="100" min="0" max="100" text="true" units="%"></fig-slider>
     </fig-field>
     <fig-field direction="horizontal">
       <label>Palette</label>
@@ -147,7 +147,7 @@ export const propkitSections: Section[] = [
     <fig-group name="Settings">
       <fig-field direction="horizontal">
         <label>Density</label>
-        <fig-slider variant="neue" value="60" min="0" max="100" text="true" full></fig-slider>
+        <fig-slider value="60" min="0" max="100" text="true" full></fig-slider>
       </fig-field>
       <fig-field direction="horizontal">
         <label>Preview</label>
@@ -661,7 +661,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Preview</label>
-    <fig-preview full checkerboard style="height: 96px">
+    <fig-preview full checkerboard>
       <img src="${landscapeUrl()}" alt="Landscape preview">
     </fig-preview>
   </fig-field>
@@ -898,7 +898,7 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field direction="horizontal">
       <label>Opacity</label>
-      <fig-slider value="75" min="0" max="100" text="false"></fig-slider>
+      <fig-slider value="75" min="0" max="100"></fig-slider>
     </fig-field>
     <fig-field direction="horizontal">
       <label>Position</label>
@@ -922,7 +922,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Amount</label>
-    <fig-slider value="50" min="0" max="100" text="false" full></fig-slider>
+    <fig-slider value="50" min="0" max="100" full></fig-slider>
   </fig-field>
 </div>`,
       },
@@ -932,7 +932,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Opacity</label>
-    <fig-slider type="opacity" value="0.75" color="#ff0000" units="%" text="false" full></fig-slider>
+    <fig-slider type="opacity" value="75" color="#ff0000" units="%" full></fig-slider>
   </fig-field>
 </div>`,
       },
@@ -942,7 +942,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Hue</label>
-    <fig-slider type="hue" value="180" text="false" full></fig-slider>
+    <fig-slider type="hue" value="180" units="°" full></fig-slider>
   </fig-field>
 </div>`,
       },
@@ -952,7 +952,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Steps</label>
-    <fig-slider type="stepper" value="50" step="25" text="false" full>
+    <fig-slider type="stepper" value="50" step="25" full>
       <datalist>
         <option value="0"></option>
         <option value="25"></option>
@@ -970,7 +970,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Offset</label>
-    <fig-slider type="delta" value="0" default="0" step="0.25" min="-5" max="5" text="false" full>
+    <fig-slider type="delta" value="0" default="0" step="0.25" min="-5" max="5" full>
       <datalist>
         <option value="0"></option>
       </datalist>
@@ -1234,7 +1234,7 @@ export const propkitSections: Section[] = [
       <fig-group name="Spatial" collapsible open>
         <fig-field>
           <label>Slider</label>
-          <fig-slider value="50" min="0" max="100" text="false" full></fig-slider>
+          <fig-slider value="50" min="0" max="100" full></fig-slider>
         </fig-field>
         <fig-field>
           <label>Easing</label>
@@ -1291,11 +1291,11 @@ export const propkitSections: Section[] = [
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Blur</label>
-        <fig-slider variant="neue" value="8" min="0" max="64" text="true" units="px" full></fig-slider>
+        <fig-slider value="8" min="0" max="64" text="true" units="px" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Spread</label>
-        <fig-slider variant="neue" value="0" min="-32" max="32" text="true" units="px" full></fig-slider>
+        <fig-slider value="0" min="-32" max="32" text="true" units="px" full></fig-slider>
       </fig-field>
     </fig-content>
     <fig-footer>
@@ -1322,15 +1322,15 @@ export const propkitSections: Section[] = [
     <fig-content>
       <fig-field columns="half" direction="horizontal">
         <label>Amount</label>
-        <fig-slider variant="neue" value="12" min="0" max="64" text="true" units="px" full></fig-slider>
+        <fig-slider value="12" min="0" max="64" text="true" units="px" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Fade start</label>
-        <fig-slider variant="neue" value="20" min="0" max="100" text="true" units="%" full></fig-slider>
+        <fig-slider value="20" min="0" max="100" text="true" units="%" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Fade end</label>
-        <fig-slider variant="neue" value="80" min="0" max="100" text="true" units="%" full></fig-slider>
+        <fig-slider value="80" min="0" max="100" text="true" units="%" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Direction</label>
@@ -1390,37 +1390,37 @@ export const propkitSections: Section[] = [
     <fig-group name="Back Photo" collapsible open>
       <fig-field columns="half" direction="horizontal">
         <label>Offset X</label>
-        <fig-slider variant="neue" type="delta" value="239" default="0" min="-500" max="500" text="true" full></fig-slider>
+        <fig-slider type="delta" value="239" default="0" min="-500" max="500" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Offset Y</label>
-        <fig-slider variant="neue" type="delta" value="0" default="0" min="-500" max="500" text="true" full></fig-slider>
+        <fig-slider type="delta" value="0" default="0" min="-500" max="500" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Scale</label>
-        <fig-slider variant="neue" value="0.70" step="0.01" min="0" max="2" text="true" full></fig-slider>
+        <fig-slider value="0.70" step="0.01" min="0" max="2" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Overlay Opacity</label>
-        <fig-slider variant="neue" type="opacity" value="0.60" color="#000000" text="true" full></fig-slider>
+        <fig-slider type="opacity" value="0.60" color="#000000" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group name="Shadow" collapsible open>
       <fig-field columns="half" direction="horizontal">
         <label>Scale</label>
-        <fig-slider variant="neue" value="1.03" step="0.01" min="0" max="2" text="true" full></fig-slider>
+        <fig-slider value="1.03" step="0.01" min="0" max="2" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Opacity</label>
-        <fig-slider variant="neue" type="opacity" value="0.25" color="#000000" text="true" full></fig-slider>
+        <fig-slider type="opacity" value="0.25" color="#000000" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Blur</label>
-        <fig-slider variant="neue" value="14" min="0" max="64" text="true" units="px" full></fig-slider>
+        <fig-slider value="14" min="0" max="64" text="true" units="px" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Y Offset</label>
-        <fig-slider variant="neue" type="delta" value="8" default="0" min="-50" max="50" text="true" full></fig-slider>
+        <fig-slider type="delta" value="8" default="0" min="-50" max="50" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group name="Transition Spring" collapsible open>
@@ -1433,11 +1433,11 @@ export const propkitSections: Section[] = [
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Duration</label>
-        <fig-slider variant="neue" value="0.50" step="0.01" min="0" max="2" text="true" units="s" full></fig-slider>
+        <fig-slider value="0.50" step="0.01" min="0" max="2" text="true" units="s" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Bounce</label>
-        <fig-slider variant="neue" value="0.04" step="0.01" min="0" max="1" text="true" full></fig-slider>
+        <fig-slider value="0.04" step="0.01" min="0" max="1" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-field columns="half" direction="horizontal">
@@ -1506,7 +1506,7 @@ export const propkitSections: Section[] = [
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Scale</label>
-        <fig-slider variant="neue" value="2" min="1" max="4" step="0.5" text="true" units="x" full></fig-slider>
+        <fig-slider value="2" min="1" max="4" step="0.5" text="true" units="x" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group name="Output">
@@ -1573,7 +1573,7 @@ export const propkitSections: Section[] = [
       </fig-field>
       <fig-field direction="horizontal">
         <label>Opacity</label>
-        <fig-slider variant="neue" type="opacity" value="1" color="#0D99FF" units="%" text="true" full></fig-slider>
+        <fig-slider type="opacity" value="1" color="#0D99FF" units="%" text="true" full></fig-slider>
       </fig-field>
       <fig-field direction="horizontal">
         <label>CSS variable</label>
@@ -1695,7 +1695,7 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field columns="half" direction="horizontal">
           <label>Opacity</label>
-          <fig-slider variant="neue" type="opacity" value="0.5" color="#FF00FF" units="%" text="true" full></fig-slider>
+          <fig-slider type="opacity" value="0.5" color="#FF00FF" units="%" text="true" full></fig-slider>
         </fig-field>
         <fig-field columns="half" direction="horizontal">
           <label>Stroke</label>
@@ -1763,11 +1763,11 @@ export const propkitSections: Section[] = [
       <fig-group name="Ink Limits">
         <fig-field columns="half" direction="horizontal">
           <label>Total ink</label>
-          <fig-slider variant="neue" value="300" min="200" max="400" step="5" text="true" units="%" full></fig-slider>
+          <fig-slider value="300" min="200" max="400" step="5" text="true" units="%" full></fig-slider>
         </fig-field>
         <fig-field columns="half" direction="horizontal">
           <label>Black limit</label>
-          <fig-slider variant="neue" value="100" min="0" max="100" step="5" text="true" units="%" full></fig-slider>
+          <fig-slider value="100" min="0" max="100" step="5" text="true" units="%" full></fig-slider>
         </fig-field>
       </fig-group>
       <fig-group name="Overprint">
@@ -1911,11 +1911,11 @@ export const propkitSections: Section[] = [
     <fig-group>
       <fig-field columns="half" direction="horizontal">
         <label>Frames</label>
-        <fig-slider variant="neue" value="6" min="1" max="24" step="1" text="true" full></fig-slider>
+        <fig-slider value="6" min="1" max="24" step="1" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Frame rate</label>
-        <fig-slider variant="neue" value="5" min="1" max="30" step="1" text="true" units="fps" full></fig-slider>
+        <fig-slider value="5" min="1" max="30" step="1" text="true" units="fps" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Loop style</label>
@@ -1930,33 +1930,33 @@ export const propkitSections: Section[] = [
     <fig-group>
       <fig-field columns="half" direction="horizontal">
         <label>Scale (displacement)</label>
-        <fig-slider variant="neue" value="14" min="0" max="100" step="0.5" text="true" units="px" full></fig-slider>
+        <fig-slider value="14" min="0" max="100" step="0.5" text="true" units="px" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Base freq. X</label>
-        <fig-slider variant="neue" value="0.02" min="0.001" max="0.1" step="0.001" text="true" full></fig-slider>
+        <fig-slider value="0.02" min="0.001" max="0.1" step="0.001" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Base freq. Y</label>
-        <fig-slider variant="neue" value="0.02" min="0.001" max="0.1" step="0.001" text="true" full></fig-slider>
+        <fig-slider value="0.02" min="0.001" max="0.1" step="0.001" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Octaves</label>
-        <fig-slider variant="neue" value="2" min="1" max="8" step="1" text="true" full></fig-slider>
+        <fig-slider value="2" min="1" max="8" step="1" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group>
       <fig-field columns="half" direction="horizontal">
         <label>Fill holes</label>
-        <fig-slider variant="neue" value="2" min="0" max="10" step="0.5" text="true" units="px" full></fig-slider>
+        <fig-slider value="2" min="0" max="10" step="0.5" text="true" units="px" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Solidify edges</label>
-        <fig-slider variant="neue" value="1" min="0" max="2" step="0.01" text="true" full></fig-slider>
+        <fig-slider value="1" min="0" max="2" step="0.01" text="true" full></fig-slider>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Smoothing</label>
-        <fig-slider variant="neue" value="0.5" min="0" max="5" step="0.1" text="true" units="px" full></fig-slider>
+        <fig-slider value="0.5" min="0" max="5" step="0.1" text="true" units="px" full></fig-slider>
       </fig-field>
     </fig-group>
     <fig-group name="About this tool" collapsible>

@@ -70,7 +70,7 @@ export default defineConfig({
 
 ### React + color picker modes (`fig-input-color` / `fig-fill-picker`)
 
-- `fig-fill-picker` is optional. Import `fig-fill-picker.js` and `fig-fill-picker.css` when full picker behavior is needed.
+- `fig-fill-picker` is optional. Import `fig-editor.js` and `fig-editor.css` when full picker behavior is needed.
 - Do not use `picker` or `picker-anchor` on `fig-input-color`; components auto-detect `fig-fill-picker` at interaction time.
 - `picker-*` attrs on `fig-input-color` are forwarded to `fig-fill-picker` only when the optional picker is registered.
   - Example: `picker-dialog-position`, `picker-experimental`, etc.
@@ -97,8 +97,8 @@ export default defineConfig({
   - `fig-input-color` and `fig-input-fill` forward experimental-related picker settings into internal `fig-fill-picker` usage.
   - Avoid adding hidden implicit defaults that enable experimental behavior globally.
 - Backward-compat rule:
-  - Do not reintroduce `variant="neue"` for dropdown experimental behavior.
-  - Keep `variant="neue"` handling only where it is still intentionally supported (for example slider visuals).
+  - Do not reintroduce the old `neue` variant name for dropdown experimental behavior.
+  - Use `variant="classic"` only when a slider needs the previous visual style.
 - Documentation rule: any new experimental token must be documented with activation syntax, intended scope, and fallback behavior in demos + README + changelog.
 
 ## Critical Rules

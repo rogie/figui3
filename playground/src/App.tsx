@@ -143,6 +143,7 @@ export default function App({ mode }: Props) {
   const handlePersistImageSource = useCallback(
     (fieldIndex: number, src: string) => {
       if (!src) return;
+      if (src.startsWith("blob:")) return;
       setEditableMarkup((currentMarkup) => {
         const next = applyAttributeMutation(currentMarkup, {
           fieldIndex,
@@ -267,7 +268,7 @@ export default function App({ mode }: Props) {
           showFieldControls={mode === "propkit" || mode === "lab" || activeSectionId === "field"}
           includeFullControl={mode === "figui3" || mode === "lab"}
         />
-        {((mode === "propkit" || mode === "lab") && activeSectionId !== "skeleton" || (mode === "figui3" && activeSectionId === "menu")) && (
+        {((mode === "propkit" || mode === "lab" || mode === "figui3") && activeSectionId !== "skeleton") && (
           <EventView key={`${activeSectionId}/${activeExampleId}`} />
         )}
       </aside>

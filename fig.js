@@ -3622,7 +3622,7 @@ customElements.define("fig-options", FigOptions);
  * @attr {number} min - The minimum value
  * @attr {number} max - The maximum value
  * @attr {number} step - The step increment
- * @attr {boolean} text - Whether to show a text input alongside the slider
+ * @attr {boolean} text - Whether to show a text input alongside the slider (default true)
  * @attr {string} placeholder - Placeholder for the number input when text is enabled
  * @attr {string} units - The units to display after the value
  * @attr {number} transform - A multiplier for the displayed value
@@ -3676,8 +3676,7 @@ class FigSlider extends HTMLElement {
     const rawValue = this.getAttribute("value");
     this.type = this.getAttribute("type") || "range";
     this.variant = this.getAttribute("variant") || "default";
-    this.text =
-      this.hasAttribute("text") && this.getAttribute("text") !== "false";
+    this.text = this.getAttribute("text") !== "false";
     this.units = this.getAttribute("units") || "";
     this.transform = Number(this.getAttribute("transform") || 1);
     this.disabled = this.getAttribute("disabled") ? true : false;
@@ -4045,7 +4044,7 @@ class FigSlider extends HTMLElement {
           this.#regenerateInnerHTML();
           break;
         case "text":
-          this.text = newValue !== null && newValue !== "false";
+          this.text = newValue !== "false";
           this.#regenerateInnerHTML();
           break;
         default:
@@ -4430,7 +4429,7 @@ class FigInputNumber extends HTMLElement {
         e.preventDefault();
         e.stopPropagation();
         const btn = e.target.closest("button");
-        if (!btn || this.disabled) return;
+        if (!btn || this.disabled || btn.disabled) return;
         const dir = btn.classList.contains("fig-stepper-up") ? 1 : -1;
         this.#stepValue(dir);
         this.input.focus();
@@ -4440,6 +4439,31 @@ class FigInputNumber extends HTMLElement {
       this.#stepperEl.remove();
       this.#stepperEl = null;
     }
+    this.#syncStepperState();
+  }
+
+  #syncStepperState() {
+    if (!this.#stepperEl) return;
+    const up = this.#stepperEl.querySelector(".fig-stepper-up");
+    const down = this.#stepperEl.querySelector(".fig-stepper-down");
+    if (!up || !down) return;
+
+    const numericValue = this.input
+      ? this.#getNumericValue(this.input.value)
+      : this.value;
+    const current =
+      numericValue !== "" && numericValue !== null && numericValue !== undefined
+        ? Number(numericValue) / (this.transform || 1)
+        : Number(this.value);
+    const hasCurrent = Number.isFinite(current);
+    const disabled = Boolean(this.disabled);
+    const atMin =
+      hasCurrent && typeof this.min === "number" && current <= this.min;
+    const atMax =
+      hasCurrent && typeof this.max === "number" && current >= this.max;
+
+    up.disabled = disabled || atMax;
+    down.disabled = disabled || atMin;
   }
 
   #stepValue(direction) {
@@ -4451,6 +4475,7 @@ class FigInputNumber extends HTMLElement {
     value = this.#sanitizeInput(value, false);
     this.value = value;
     this.input.value = this.#formatWithUnit(this.value);
+    this.#syncStepperState();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -4561,6 +4586,7 @@ class FigInputNumber extends HTMLElement {
         const disabledAttr = this.getAttribute("disabled");
         this.disabled = this.input.disabled = disabledAttr !== "false";
       }
+      this.#syncStepperState();
 
       this.addEventListener("pointerdown", this.#boundMouseDown);
       this.input.removeEventListener("change", this.#boundInputChange);
@@ -4672,6 +4698,7 @@ class FigInputNumber extends HTMLElement {
       this.value = "";
       e.target.value = "";
     }
+    this.#syncStepperState();
     this.dispatchEvent(
       new CustomEvent("change", { detail: this.value, bubbles: true }),
     );
@@ -4697,6 +4724,7 @@ class FigInputNumber extends HTMLElement {
     value = this.#sanitizeInput(value, false);
     this.value = value;
     this.input.value = this.#formatWithUnit(this.value);
+    this.#syncStepperState();
 
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
@@ -4713,6 +4741,7 @@ class FigInputNumber extends HTMLElement {
     } else {
       this.value = "";
     }
+    this.#syncStepperState();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -4730,6 +4759,7 @@ class FigInputNumber extends HTMLElement {
       this.value = "";
       e.target.value = "";
     }
+    this.#syncStepperState();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -4750,6 +4780,7 @@ class FigInputNumber extends HTMLElement {
     value = this.#sanitizeInput(value, false);
     this.value = value;
     this.input.value = this.#formatWithUnit(this.value);
+    this.#syncStepperState();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -4832,6 +4863,7 @@ class FigInputNumber extends HTMLElement {
         case "disabled":
           this.disabled = this.input.disabled =
             newValue !== null && newValue !== "false";
+          this.#syncStepperState();
           break;
         case "units":
           this.#rawUnits = newValue || "";
@@ -4864,15 +4896,18 @@ class FigInputNumber extends HTMLElement {
           }
           this.value = value;
           this.input.value = this.#formatWithUnit(this.value);
+          this.#syncStepperState();
           break;
         case "min":
         case "max":
         case "step":
           if (newValue === null || newValue === "") {
             this[name] = undefined;
+            this.#syncStepperState();
             break;
           }
           this[name] = Number(newValue);
+          this.#syncStepperState();
           break;
         case "steppers": {
           const hasSteppers = newValue !== null && newValue !== "false";
@@ -8589,6 +8624,7 @@ class FigMedia extends HTMLElement {
   #mediaEl = null;
   #fileInput = null;
   #blobUrl = null;
+  #previewSrc = null;
   #file = null;
   #boundHandleFileInput = this.#handleFileInput.bind(this);
   #boundHandleMediaPlay = this.#handleMediaPlay.bind(this);
@@ -8641,6 +8677,10 @@ class FigMedia extends HTMLElement {
     return this.#file;
   }
 
+  #currentMediaSrc() {
+    return this.#previewSrc || this.#src || "";
+  }
+
   /**
    * Returns a base64 data URL for the loaded image.
    * Requires a CORS-clean image (same-origin or with appropriate Access-Control headers);
@@ -8648,7 +8688,7 @@ class FigMedia extends HTMLElement {
    */
   async getBase64() {
     if (this.mediaKind !== "image") return null;
-    if (!this.#src) return null;
+    if (!this.#currentMediaSrc()) return null;
     if (!this.#mediaEl) return null;
     try {
       if (typeof this.#mediaEl.decode === "function") {
@@ -8704,6 +8744,7 @@ class FigMedia extends HTMLElement {
       URL.revokeObjectURL(this.#blobUrl);
       this.#blobUrl = null;
     }
+    this.#previewSrc = null;
   }
 
   #removeMediaElementListeners() {
@@ -8781,7 +8822,7 @@ class FigMedia extends HTMLElement {
   #syncGeneratedMediaElement() {
     if (!this.#mediaEl) return;
     if (!this.#mediaEl.hasAttribute("data-generated")) return;
-    const src = this.#src || "";
+    const src = this.#currentMediaSrc();
     if (this.#mediaEl.getAttribute("src") !== src) {
       if (src) {
         this.#mediaEl.setAttribute("src", src);
@@ -8966,7 +9007,11 @@ class FigMedia extends HTMLElement {
     fi.setAttribute("variant", "overlay");
     const defaultLabel = this.getAttribute("label") || "Upload";
     fi.setAttribute("label", this.#src ? "Replace" : defaultLabel);
-    if (this.#src) fi.setAttribute("url", this.#src);
+    if (this.#file?.name) {
+      fi.setAttribute("filename", this.#file.name);
+    } else if (this.#src) {
+      fi.setAttribute("url", this.#src);
+    }
     fi.addEventListener("change", this.#boundHandleFileInput);
     this.append(fi);
     this.#fileInput = fi;
@@ -8990,7 +9035,18 @@ class FigMedia extends HTMLElement {
         this.#blobUrl = null;
       }
       this.#file = null;
-      this.removeAttribute("src");
+      this.#previewSrc = null;
+      this.#syncGeneratedMediaElement();
+      if (this.#fileInput) {
+        const defaultLabel = this.getAttribute("label") || "Upload";
+        this.#fileInput.setAttribute("label", this.#src ? "Replace" : defaultLabel);
+        this.#fileInput.removeAttribute("filename");
+        if (this.#src) {
+          this.#fileInput.setAttribute("url", this.#src);
+        } else {
+          this.#fileInput.removeAttribute("url");
+        }
+      }
       this.dispatchEvent(
         new CustomEvent("change", { bubbles: true, cancelable: true }),
       );
@@ -9002,8 +9058,9 @@ class FigMedia extends HTMLElement {
     }
     this.#file = file;
     this.#blobUrl = URL.createObjectURL(file);
+    this.#previewSrc = this.#blobUrl;
 
-    this.setAttribute("src", this.#blobUrl);
+    this.#syncGeneratedMediaElement();
 
     this.dispatchEvent(
       new CustomEvent("loaded", {
@@ -9017,9 +9074,8 @@ class FigMedia extends HTMLElement {
     );
 
     if (this.#fileInput) {
-      this.#fileInput.removeEventListener("change", this.#boundHandleFileInput);
-      this.#fileInput.clear();
-      this.#fileInput.addEventListener("change", this.#boundHandleFileInput);
+      this.#fileInput.removeAttribute("url");
+      this.#fileInput.setAttribute("filename", file.name);
       this.#fileInput.setAttribute("label", "Replace");
     }
   }
@@ -9057,9 +9113,10 @@ class FigMedia extends HTMLElement {
 
     if (name === "src") {
       this.#src = newValue || "";
-      if (this.#blobUrl && this.#src !== this.#blobUrl) {
+      if (this.#blobUrl) {
         URL.revokeObjectURL(this.#blobUrl);
         this.#blobUrl = null;
+        this.#previewSrc = null;
         this.#file = null;
       }
       this.#syncGeneratedMediaElement();
@@ -9067,9 +9124,16 @@ class FigMedia extends HTMLElement {
         const defaultLabel = this.getAttribute("label") || "Upload";
         this.#fileInput.setAttribute("label", this.#src ? "Replace" : defaultLabel);
         if (this.#src) {
-          this.#fileInput.setAttribute("url", this.#src);
+          if (this.#file?.name) {
+            this.#fileInput.removeAttribute("url");
+            this.#fileInput.setAttribute("filename", this.#file.name);
+          } else {
+            this.#fileInput.setAttribute("url", this.#src);
+            this.#fileInput.removeAttribute("filename");
+          }
         } else {
           this.#fileInput.removeAttribute("url");
+          this.#fileInput.removeAttribute("filename");
         }
       }
     }
@@ -9240,7 +9304,7 @@ class FigMediaControls extends HTMLElement {
     });
 
     const slider = document.createElement("fig-slider");
-    slider.setAttribute("variant", "neue");
+    slider.setAttribute("text", "false");
     slider.setAttribute("min", "0");
     slider.setAttribute("max", String(this.duration));
     slider.setAttribute("step", "0.1");
@@ -9336,7 +9400,7 @@ customElements.define("fig-media-controls", FigMediaControls);
 
 /* File Upload Input */
 class FigInputFile extends HTMLElement {
-  static observedAttributes = ["accepts", "label", "disabled", "multiple", "variant", "url"];
+  static observedAttributes = ["accepts", "label", "disabled", "multiple", "variant", "url", "filename"];
 
   #fileInput = null;
   #filenameEl = null;
@@ -9350,6 +9414,8 @@ class FigInputFile extends HTMLElement {
   }
 
   get #urlFilename() {
+    const filename = this.getAttribute("filename");
+    if (filename) return filename;
     const url = this.getAttribute("url");
     if (!url) return "";
     try {
@@ -9393,6 +9459,7 @@ class FigInputFile extends HTMLElement {
     this.#files = null;
     if (this.#fileInput) this.#fileInput.value = "";
     this.removeAttribute("url");
+    this.removeAttribute("filename");
     this.#render();
     this.#emitEvents();
   }
@@ -9488,7 +9555,10 @@ class FigInputFile extends HTMLElement {
       this.getAttribute("disabled") !== "false";
     const multiple = this.hasAttribute("multiple");
     const variant = this.getAttribute("variant") || "input";
-    const hasFile = (this.#files && this.#files.length > 0) || !!this.getAttribute("url");
+    const hasFile =
+      (this.#files && this.#files.length > 0) ||
+      !!this.getAttribute("url") ||
+      !!this.getAttribute("filename");
 
     this.innerHTML = "";
 
@@ -9534,7 +9604,7 @@ class FigInputFile extends HTMLElement {
       const clearTooltip = document.createElement("fig-tooltip");
       clearTooltip.setAttribute("text", "Remove");
       this.#clearBtn = document.createElement("fig-button");
-      this.#clearBtn.setAttribute("variant", "ghost");
+      this.#clearBtn.setAttribute("variant", variant === "overlay" ? "overlay" : "ghost");
       this.#clearBtn.setAttribute("icon", "true");
       this.#clearBtn.className = "fig-input-file-clear";
       if (disabled) this.#clearBtn.setAttribute("disabled", "");
@@ -11957,8 +12027,31 @@ customElements.define("fig-spinner", FigSpinner);
 /**
  * A styled visual preview layer for arbitrary content such as images, canvas,
  * video, SVG, or custom rendered surfaces.
+ * @attr {string} fit - CSS object-fit value for direct media children
  */
-class FigPreview extends HTMLElement {}
+class FigPreview extends HTMLElement {
+  static get observedAttributes() {
+    return ["fit"];
+  }
+
+  connectedCallback() {
+    this.#syncFit();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name === "fit") this.#syncFit();
+  }
+
+  #syncFit() {
+    const fit = this.getAttribute("fit");
+    if (fit) {
+      this.style.setProperty("--fig-preview-fit", fit);
+    } else {
+      this.style.removeProperty("--fig-preview-fit");
+    }
+  }
+}
 customElements.define("fig-preview", FigPreview);
 
 /** @type {Record<string, string>} */

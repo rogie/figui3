@@ -365,11 +365,19 @@
     inset 0px 0.5px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.08)),
     inset 0px 0px 0.5px 0px light-dark(transparent, rgba(255, 255, 255, 0.3));
 
-  --elevation-100-canvas:
+  --figma-elevation-100-canvas:
     0 0 0.5px 0 light-dark(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
     0 0.5px 0 0 light-dark(transparent, rgba(255, 255, 255, 0.1)) inset,
     0 0 0.5px 0 light-dark(transparent, rgba(255, 255, 255, 0.3)) inset,
     0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4));
+
+
+  --figma-elevation-200-canvas:
+    0 0 0.5px 0 light-dark(rgba(0, 0, 0, 0.18), transparent),
+    0 0.5px 0 0 light-dark(transparent, rgba(255, 255, 255, 0.08)) inset, 
+    0 3px 8px 0 light-dark(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.35)), 
+    0 0 0.5px 0 light-dark(transparent, rgba(255, 255, 255, 0.30)) inset, 
+    0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.50));
 
   --figma-elevation-400-menu-panel:
     0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.12), transparent),
@@ -472,6 +480,11 @@ fig-input-number .fig-steppers {
     &:hover,
     &:active{
       background-color: var(--figma-color-text) !important;
+    }
+
+    &:disabled {
+      pointer-events: none;
+      background-color: var(--figma-color-text-disabled);
     }
   }
 
@@ -1392,6 +1405,7 @@ fig-input-file {
   align-items: center;
   gap: var(--spacer-2);
   min-width: 0;
+  max-width: 100%;
 
   &[full]:not([full="false"]) {
     flex: 1 1 auto;
@@ -1491,7 +1505,7 @@ fig-video {
     opacity: 0;
     pointer-events: none;
   }
-  &:is(:not([src]), [src=""]) > img.fig-media-element[data-generated] {
+  &:not(:has(> img.fig-media-element[data-generated][src]:not([src=""]))) > img.fig-media-element[data-generated] {
     opacity: 0;
     pointer-events: none;
   }
@@ -1501,7 +1515,7 @@ fig-video {
     z-index: 2;
     max-width:calc(100% - var(--spacer-4));
   }
-  &:is(:not([src]), [src=""]) > fig-input-file[data-generated],
+  &:not(:has(> img.fig-media-element[data-generated][src]:not([src=""]))) > fig-input-file[data-generated],
   &:hover > fig-input-file[data-generated] {
     opacity: 1;
     pointer-events: all;
@@ -1520,7 +1534,7 @@ fig-video {
 fig-media-controls {
   display: flex;
   align-items: center;
-  gap: var(--spacer-2);
+  gap: var(--spacer-1);
   width: 100%;
   
 
@@ -1542,6 +1556,7 @@ fig-media-controls {
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     padding-right: var(--spacer-2);
+    padding-left: var(--spacer-1);
   }
 }
 
@@ -1723,14 +1738,14 @@ fig-3d-rotate {
       background: var(--figma-color-border-strong) !important;
       inset: -1px;
       border-radius: var(--radius-medium);
-      box-shadow: var(--elevation-100-canvas);
+      box-shadow: var(--figma-elevation-100-canvas);
     }
 
     &.front {
       background: var(--front-face-bg);
       border-radius: var(--radius-medium);
       transform-style: preserve-3d;
-      box-shadow: var(--elevation-100-canvas);
+      box-shadow: var(--figma-elevation-100-canvas);
       inset: -1px;
 
       &::after {
@@ -2685,7 +2700,7 @@ fig-slider {
     }
   }
 
-  &[variant="neue"] {
+  &:not([variant="classic"]) {
     --slider-height: 0.375rem;
     --slider-thumb-size: 0.75rem;
     --slider-tick-width: calc(var(--slider-height) / 2);
@@ -2703,7 +2718,7 @@ fig-slider {
     border-radius: var(--radius-medium);
     padding-left: var(--spacer-2);
 
-    &:not([text="true"]) {
+    &[text="false"] {
       padding-right: var(--spacer-2);
     }
 
@@ -3033,13 +3048,14 @@ fig-tooltip {
 fig-preview {
   --fig-preview-fit: contain;
 
-  display: inline-grid;
+  display: block;
   place-items: center;
   min-width: 0;
   max-width: 100%;
   background-color: var(--figma-color-bg-secondary);
   border-radius: var(--radius-medium);
   position: relative;
+  overflow: hidden;
 
   &[full]:not([full="false"]) {
     width: 100%;
@@ -3051,30 +3067,20 @@ fig-preview {
 
   &::after {
     content: "";
-    grid-area: 1/1;
-    place-self: stretch;
+    position: absolute;
+    inset: 0;
     border-radius: inherit;
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     pointer-events: none;
     z-index: 2;
   }
 
-  > * {
-    grid-area: 1/1;
-    min-width: 0;
-    min-height: 0;
-  }
-
   > :is(img, video, canvas, svg) {
     display: block;
-    max-width: 100%;
-    max-height: 100%;
+    width: stretch;
+    height: stretch;
     object-fit: var(--fig-preview-fit);
     object-position: center;
-    border-radius: 0;
-  }
-  > canvas{
-    border-radius: inherit;
   }
 }
 
@@ -3391,6 +3397,10 @@ fig-input-number {
       color: var(--figma-color-text-disabled);
     }
   }
+  &[readonly]{
+    background-color: var(--figma-color-bg);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-disabled);
+  }
 }
 
 fig-input-number > [slot],
@@ -3449,12 +3459,6 @@ fig-input-fill {
     flex-basis: 3rem;
     box-shadow: inset 1px 0 0 0 var(--figma-color-bg) !important;
     background-color: transparent !important;
-  }
-
-  &[disabled]:not([disabled="false"]) {
-    .input-combo {
-      gap: 0;
-    }
   }
 
   fig-field[direction="horizontal"] & {
@@ -4678,8 +4682,8 @@ fig-choice {
 }
 
 fig-handle {
-  --width: 0.875rem;
-  --height: 0.875rem;
+  --width: 1rem;
+  --height: 1rem;
   --fill: transparent;
   --border-radius: 50%;
   --fig-handle-hit-area-opacity: 0;
@@ -4691,17 +4695,17 @@ fig-handle {
   --fig-handle-outline-offset: 1px;
   --fig-handle-inner-bg: var(--fill);
   --fig-handle-inner-outline: 1px solid var(--figma-color-bg-brand);
-  --fig-handle-height: 0.875rem;
-  --fig-handle-width: 0.875rem;
-  --fig-handle-padding: 0.0625rem;
-  --fig-handle-shadow: 0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--elevation-100-canvas);
+  --fig-handle-height: var(--width);
+  --fig-handle-width: var(--width);
+  --fig-handle-padding: 0.25rem;
+  --fig-handle-shadow: var(--figma-elevation-200-canvas);
   --fig-handle-inner-shadow: none;
 
   margin: 0;
   padding: var(--fig-handle-padding);
   place-items: center;
-  width: var(--width);
-  height: var(--height);
+  width: var(--fig-handle-width);
+  height: var(--fig-handle-height);
   border-radius: var(--border-radius);
   display: grid;
   background: var(--fig-handle-bg);
@@ -4717,7 +4721,7 @@ fig-handle {
     height: 100%;
     background: var(--fig-handle-inner-bg);
     background-position: 0 0;
-    background-size: 0.625rem 0.625rem;
+    background-size: calc(var(--fig-handle-width) - var(--fig-handle-padding) * 2) calc(var(--fig-handle-height) - var(--fig-handle-padding) * 2);
     border-radius: var(--border-radius);
     box-shadow: var(--fig-handle-inner-shadow);
     outline: var(--fig-handle-inner-outline);
@@ -4765,6 +4769,9 @@ fig-handle {
    &::after{
     box-shadow: none;
    }
+  }
+  &[type="color"]{
+    --fig-handle-padding: 0.125rem;
   }
 
   &[type="color"],

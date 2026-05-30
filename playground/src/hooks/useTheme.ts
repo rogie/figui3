@@ -3,9 +3,9 @@ import { useState, useEffect, useCallback } from "react";
 const INCLUDE_FILL_PICKER_KEY = "includeFillPicker";
 
 async function loadFillPicker() {
-  await import("../../../fig-fill-picker.css");
+  await import("../../../fig-editor.css");
   // @ts-expect-error runtime side-effect import for optional fill picker registration
-  await import("../../../fig-fill-picker.js");
+  await import("../../../fig-editor.js");
 }
 
 export function useTheme() {

@@ -184,6 +184,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-combo-input": "Combo input",
     "fig-media": "Media",
     "fig-media-controls": "Media controls",
+    "fig-preview": "Preview",
     "fig-image": "Image",
     "fig-video": "Video",
     "fig-input-color": "Color",
@@ -386,7 +387,7 @@ export default function AttributesView({
             }));
         const sliderTextEnabled =
           target.controlTag === "fig-slider" &&
-          (target.controlAttributes.text ?? "").toLowerCase() === "true";
+          (target.controlAttributes.text ?? "true").toLowerCase() !== "false";
         const isShimmerLikeControl =
           target.controlTag === "fig-shimmer" ||
           target.controlTag === "fig-skeleton";
@@ -415,10 +416,21 @@ export default function AttributesView({
           target.controlAttributes["aspect-ratio"] !== undefined &&
           target.controlAttributes["aspect-ratio"].toLowerCase() !== "none" &&
           target.controlAttributes["aspect-ratio"].trim() !== "";
+        const mediaImageType =
+          target.controlTag === "fig-media" &&
+          (target.controlAttributes.type || "image").toLowerCase() !== "video";
+        const mediaVideoOnlyAttrs = new Set([
+          "controls",
+          "autoplay",
+          "muted",
+          "loop",
+          "poster",
+        ]);
         const visibleControlEntries = controlEntries
           .filter(
             (entry) =>
               !hiddenControlAttrs.has(entry.name) &&
+              !(mediaImageType && mediaVideoOnlyAttrs.has(entry.name)) &&
               !(
                 entry.name === "placeholder" &&
                 target.controlTag === "fig-slider" &&
@@ -608,6 +620,20 @@ export default function AttributesView({
                     return;
                   }
 
+                  if (
+                    target.controlTag === "fig-slider" &&
+                    scope === "control" &&
+                    name === "text"
+                  ) {
+                    applyChange(
+                      target.fieldIndex,
+                      scope,
+                      name,
+                      next ? null : "false",
+                    );
+                    return;
+                  }
+
                   if (mode === "presence") {
                     applyChange(
                       target.fieldIndex,
@@ -686,7 +712,6 @@ export default function AttributesView({
                 max={String(rule.max ?? 100)}
                 step={String(rule.step ?? 1)}
                 units={rule.units ?? undefined}
-                variant="neue"
                 text="true"
                 full
                 onInput={(e: any) => {
@@ -1116,7 +1141,11 @@ export default function AttributesView({
                     target.fieldIndex,
                     scope,
                     name,
-                    match ?? nextLabel,
+                    target.controlTag === "fig-slider" &&
+                      name === "variant" &&
+                      (match ?? nextLabel) === "default"
+                      ? null
+                      : match ?? nextLabel,
                   );
                 }}
               ></fig-options>
@@ -1598,7 +1627,6 @@ export default function AttributesView({
                             <label>{sentenceCase("Max size")}</label>
                             <fig-slider
                               full
-                              variant="neue"
                               text="true"
                               value={maxSizeNum}
                               min={isHorizontal ? 10 : 60}
@@ -1876,7 +1904,6 @@ export default function AttributesView({
                             max="100"
                             step="1"
                             units="%"
-                            variant="neue"
                             text="true"
                             full
                             onInput={(e: any) => {
