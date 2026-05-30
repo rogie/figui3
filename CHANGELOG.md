@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.15.10]
+
+### Added
+
+- PropKit Controls in dialogs: added an All Fields example with every field control using default `fig-field` layout.
+
+### Changed
+
+- PropKit Attributes view uses `columns="2/5"` for attribute rows.
+- Playground sidebars use narrower nav and attributes widths.
+- `fig-handle`: default and color handles use clearer custom-property-driven styling.
+- `fig-media`/`fig-image` upload overlays are constrained to the preview width.
+
 ## [4.15.9]
 
 ### Changed

@@ -3,8 +3,8 @@
 }
 
 :root {
-  --nav-width: 240px;
-  --sidebar-width: 260px;
+  --nav-width: 180px;
+  --sidebar-width: 240px;
   --playground-width: 260px;
   --playground-min-width: 260px;
   --playground-example-width: 240px;

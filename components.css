@@ -1499,6 +1499,7 @@ fig-video {
     opacity: 0;
     pointer-events: none;
     z-index: 2;
+    max-width:calc(100% - var(--spacer-4));
   }
   &:is(:not([src]), [src=""]) > fig-input-file[data-generated],
   &:hover > fig-input-file[data-generated] {
@@ -5008,54 +5009,50 @@ fig-choice {
 fig-handle {
   --width: 0.875rem;
   --height: 0.875rem;
-  --fill: var(--figma-color-bg-brand);
+  --fill: transparent;
   --border-radius: 50%;
-  --ring-width: 0.125rem;
-  --box-shadow: 0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--elevation-100-canvas);
-  --outline: none;
-  --border: none;
   --fig-handle-hit-area-opacity: 0;
   --fig-handle-hit-area-size: 0;
   --fig-handle-checkerboard: var(--checkerboard);
+  --fig-handle-bg: var(--handle-color);
+  --fig-handle-outline-color: transparent;
+  --fig-handle-outline: 1px solid var(--fig-handle-outline-color);
+  --fig-handle-outline-offset: 1px;
+  --fig-handle-inner-bg: var(--fill);
+  --fig-handle-inner-outline: 1px solid var(--figma-color-bg-brand);
+  --fig-handle-height: 0.875rem;
+  --fig-handle-width: 0.875rem;
+  --fig-handle-padding: 0.0625rem;
+  --fig-handle-shadow: 0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--elevation-100-canvas);
+  --fig-handle-inner-shadow: none;
 
   margin: 0;
-  padding: 0;
+  padding: var(--fig-handle-padding);
   place-items: center;
   width: var(--width);
   height: var(--height);
   border-radius: var(--border-radius);
   display: grid;
+  background: var(--fig-handle-bg);
+  outline: var(--fig-handle-outline);
+  outline-offset: var(--fig-handle-outline-offset);
+  box-shadow: var(--fig-handle-shadow);
 
-  &::before {
-    content: "";
-    color-scheme: light only;
-    width: var(--width);
-    height: var(--height);
-    background: var(--handle-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    outline: var(--outline);
-    border: var(--border);
-    place-self: center;
-    grid-area: 1 / 1;
-    z-index: 1;
-  }
-
+  /* Used for active state/color handles */
   &::after {
     content: "";
     color-scheme: light only;
-    width: calc(var(--width) - var(--ring-width) * 2);
-    height: calc(var(--height) - var(--ring-width) * 2);
-    background:
-      linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
+    width: 100%;
+    height: 100%;
+    background: var(--fig-handle-inner-bg);
     background-position: 0 0;
     background-size: 0.625rem 0.625rem;
     border-radius: var(--border-radius);
-    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    box-shadow: var(--fig-handle-inner-shadow);
+    outline: var(--fig-handle-inner-outline);
     place-self: center;
     grid-area: 1 / 1;
     z-index: 2;
-    display: none;
   }
 
   &[size="small"] {
@@ -5069,8 +5066,14 @@ fig-handle {
   }
   &:hover,
   &[selected]:not([selected="false"]) {
-    outline: 1px solid var(--figma-color-border-selected);
-    outline-offset: 0;
+    --fig-handle-outline-color: var(--figma-color-border-selected);
+  }
+
+  /* Default handle (no type) hover/selected */
+  &:hover:not([type]),
+  &[selected]:not([selected="false"]):not([type]) {
+   --fig-handle-inner-bg:  var(--figma-color-bg-brand);
+   --fig-handle-outline-color: var(--figma-color-border-selected);
   }
 
   &[disabled]:not([disabled="false"]),
@@ -5095,6 +5098,9 @@ fig-handle {
 
   &[type="color"],
   &[control] {
+    --fig-handle-inner-bg: linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
+    --fig-handle-inner-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    --fig-handle-inner-outline: none;
     position: relative;
     overflow: visible;
 

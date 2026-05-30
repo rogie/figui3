@@ -1271,7 +1271,7 @@ export default function AttributesView({
                   <div className="propkit-attributes-group">
                     <fig-field
                       direction="horizontal"
-                      columns="half"
+                      columns="2/5"
                       key={`field-label-${target.fieldIndex}`}
                     >
                       <label>Label</label>
@@ -1310,7 +1310,7 @@ export default function AttributesView({
                     {fieldEntries.map((entry) => (
                       <fig-field
                         direction="horizontal"
-                        columns="half"
+                        columns="2/5"
                         key={`field-${entry.name}`}
                       >
                         <label>{sentenceCase(entry.rule.label)}</label>
@@ -1320,7 +1320,7 @@ export default function AttributesView({
                     {showFieldInputSelector && (
                       <fig-field
                         direction="horizontal"
-                        columns="half"
+                        columns="2/5"
                         key={`field-input-${target.fieldIndex}`}
                       >
                         <label>Input</label>
@@ -1386,7 +1386,7 @@ export default function AttributesView({
                           <>
                             <fig-field
                               direction="horizontal"
-                              columns="half"
+                              columns="2/5"
                               key={`control-icon-name-${target.fieldIndex}`}
                             >
                               <label>Name</label>
@@ -1414,7 +1414,7 @@ export default function AttributesView({
                             </fig-field>
                             <fig-field
                               direction="horizontal"
-                              columns="half"
+                              columns="2/5"
                               key={`control-icon-color-${target.fieldIndex}`}
                             >
                               <label>Color</label>
@@ -1451,7 +1451,7 @@ export default function AttributesView({
                         return (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-header-icon-${target.fieldIndex}`}
                           >
                             <label>Button</label>
@@ -1480,7 +1480,7 @@ export default function AttributesView({
                         return (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-footer-long-label-${target.fieldIndex}`}
                           >
                             <label>Long label</label>
@@ -1506,7 +1506,7 @@ export default function AttributesView({
                         return (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-chit-fill-${target.fieldIndex}`}
                           >
                             <label>Fill</label>
@@ -1533,7 +1533,7 @@ export default function AttributesView({
                       const field = (
                         <fig-field
                           direction="horizontal"
-                          columns="half"
+                          columns="2/5"
                           key={`control-${entry.name}`}
                         >
                           <label>{sentenceCase(entry.rule.label)}</label>
@@ -1555,7 +1555,7 @@ export default function AttributesView({
                         const overflowField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-chooser-overflow-${target.fieldIndex}`}
                           >
                             <label>{sentenceCase("Overflow")}</label>
@@ -1592,7 +1592,7 @@ export default function AttributesView({
                         const maxSizeField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-chooser-maxsize-${target.fieldIndex}-${currentLayout}`}
                           >
                             <label>{sentenceCase("Max size")}</label>
@@ -1630,7 +1630,7 @@ export default function AttributesView({
                         const paletteLabelsField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-chooser-palette-labels-${target.fieldIndex}`}
                           >
                             <label>Labels</label>
@@ -1667,7 +1667,7 @@ export default function AttributesView({
                         const colorPickerField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-handle-color-picker-${target.fieldIndex}`}
                           >
                             <label></label>
@@ -1718,7 +1718,7 @@ export default function AttributesView({
                         const hitAreaSizeField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-handle-hit-area-size-${target.fieldIndex}`}
                           >
                             <label>Size</label>
@@ -1740,7 +1740,7 @@ export default function AttributesView({
                         const hitAreaShapeField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-handle-hit-area-shape-${target.fieldIndex}`}
                           >
                             <label>Shape</label>
@@ -1766,7 +1766,7 @@ export default function AttributesView({
                         const hitAreaDebugField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-handle-hit-area-debug-${target.fieldIndex}`}
                           >
                             <label>Debug</label>
@@ -1788,7 +1788,7 @@ export default function AttributesView({
                         const hitAreaModeField = (
                           <fig-field
                             direction="horizontal"
-                            columns="half"
+                            columns="2/5"
                             key={`control-handle-hit-area-mode-${target.fieldIndex}`}
                           >
                             <label>Mode</label>
@@ -1831,7 +1831,7 @@ export default function AttributesView({
                       const prependField = (
                         <fig-field
                           direction="horizontal"
-                          columns="half"
+                          columns="2/5"
                           key={`control-prepend-${target.fieldIndex}`}
                         >
                           <label>Prepend</label>
@@ -1866,7 +1866,7 @@ export default function AttributesView({
                       return (
                         <fig-field
                           direction="horizontal"
-                          columns="half"
+                          columns="2/5"
                           key={`control-truncate-maxwidth-${target.fieldIndex}`}
                         >
                           <label>Max width</label>
