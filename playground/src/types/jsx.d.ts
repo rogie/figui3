@@ -22,6 +22,7 @@ declare module "react" {
       "fig-segmented-control": FigAttrs;
       "fig-segment": FigAttrs;
       "fig-group": FigAttrs;
+      "fig-content": FigAttrs;
       "fig-media": FigAttrs;
       "fig-image": FigAttrs;
       "fig-video": FigAttrs;

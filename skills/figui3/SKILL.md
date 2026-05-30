@@ -70,9 +70,9 @@ export default defineConfig({
 
 ### React + color picker modes (`fig-input-color` / `fig-fill-picker`)
 
-- `fig-input-color` supports custom mode workflows only through `picker="figma"` (internally uses `fig-fill-picker`).
-- The `mode` attribute on `fig-input-color` is pass-through to inner `fig-fill-picker`; mode logic lives in `fig-fill-picker`.
-- `picker-*` attrs on `fig-input-color` are forwarded to `fig-fill-picker` (except `picker-anchor`, which is handled separately).
+- `fig-fill-picker` is optional. Import `fig-fill-picker.js` and `fig-fill-picker.css` when full picker behavior is needed.
+- Do not use `picker` or `picker-anchor` on `fig-input-color`; components auto-detect `fig-fill-picker` at interaction time.
+- `picker-*` attrs on `fig-input-color` are forwarded to `fig-fill-picker` only when the optional picker is registered.
   - Example: `picker-dialog-position`, `picker-experimental`, etc.
 - For React custom modes, use `fig-fill-picker` + slot API:
   - Add a child with `slot="mode-<name>"` (and optional `label`).
@@ -87,9 +87,6 @@ export default defineConfig({
 - Preserve value shape expectations:
   - `fig-input-color` expects solid color data (`detail.color`, optional `detail.alpha`) from the picker.
   - `fig-fill-picker` custom modes use JSON with `type` set to mode name and remaining data in payload.
-- Keep `picker-anchor` behavior explicit in React:
-  - `picker-anchor="self"` anchors to the color input element itself.
-  - Selector values anchor to another DOM element (resolved via `document.querySelector`).
 
 ## Experimental Attribute Guidance
 

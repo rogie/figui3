@@ -246,6 +246,15 @@ nav {
   gap: 8px;
 }
 
+.preferences-popup {
+  width: 200px;
+  padding: var(--spacer-2);
+
+  fig-field {
+    width: 100%;
+  }
+}
+
 main {
   width: 100%;
   max-width: calc(var(--playground-width) + var(--spacer-4) * 2);

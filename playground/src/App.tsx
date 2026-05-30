@@ -73,7 +73,8 @@ function titleForMode(mode: Props["mode"]): string {
 }
 
 export default function App({ mode }: Props) {
-  const { isDark, setTheme } = useTheme();
+  const { isDark, setTheme, includeFillPicker, setIncludeFillPicker } =
+    useTheme();
   const sections: Section[] = sectionsForMode(mode);
   const canonicalBase =
     mode === "figui3"
@@ -226,6 +227,8 @@ export default function App({ mode }: Props) {
         activeExampleId={activeExampleId}
         isDark={isDark}
         setTheme={setTheme}
+        includeFillPicker={includeFillPicker}
+        setIncludeFillPicker={setIncludeFillPicker}
         navigateTo={navigateTo}
         sections={sections}
         appTitle={appTitle}

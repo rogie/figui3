@@ -80,6 +80,11 @@ const bootstrap = async () => {
     await import("../../fig.css");
     // @ts-expect-error runtime side-effect import for custom element registration
     await import("../../fig.js");
+    if (localStorage.getItem("includeFillPicker") === "true") {
+      await import("../../fig-fill-picker.css");
+      // @ts-expect-error runtime side-effect import for optional fill picker registration
+      await import("../../fig-fill-picker.js");
+    }
     if (mode === "lab") {
       await import("../../fig-lab.css");
       // @ts-expect-error runtime side-effect import for lab component registration

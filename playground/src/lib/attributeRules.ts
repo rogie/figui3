@@ -350,12 +350,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-color": {
-    picker: {
-      label: "Picker",
-      type: "enum",
-      options: ["native", "figma"],
+    alpha: {
+      label: "Alpha",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
     },
-    alpha: { label: "Alpha", type: "boolean", boolMode: "string" },
     text: { label: "Text", type: "boolean", boolMode: "string" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },

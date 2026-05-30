@@ -1,0 +1,328 @@
+/* Fill Picker */
+fig-fill-picker {
+  display: contents;
+
+  > [slot^="mode-"] {
+    display: none;
+  }
+}
+
+.fig-fill-picker-dialog {
+  contain: layout;
+  width: 240px;
+  padding: 0;
+
+  & > fig-header {
+    padding: var(--spacer-2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  fig-tab {
+    font-size: 0.6875rem;
+    padding: var(--spacer-1) var(--spacer-1);
+  }
+  & > fig-content {
+    padding-bottom: var(--spacer-2-5);
+  }
+  .fig-fill-picker-type-label {
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-medium);
+    color: var(--figma-color-text);
+    padding: var(--spacer-1) var(--spacer-2);
+  }
+
+  .fig-fill-picker-gamut {
+    margin-left: auto;
+  }
+
+  .fig-fill-picker-tab {
+    display: none;
+
+    &:first-child {
+      display: block;
+    }
+  }
+
+  .fig-fill-picker-color-area {
+    aspect-ratio: 1;
+    width: calc(100% - var(--spacer-3) * 2);
+    margin: var(--spacer-2) var(--spacer-3);
+
+    > *:not(fig-handle) {
+      place-self: center;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius-medium);
+    }
+  }
+
+  .fig-fill-picker-color-area fig-handle {
+    z-index: 1;
+  }
+
+  .fig-fill-picker-sliders {
+    display: grid;
+    grid-template-columns: calc(3.5rem + var(--spacer-3)) 1fr;
+    grid-template-rows: 1fr 1fr;
+    align-items: center;
+    padding-right: var(--spacer-3);
+    gap: var(--spacer-2);
+    padding-bottom: var(--spacer-1);
+
+    .fig-fill-picker-eyedropper {
+      grid-column: 1;
+      grid-row: 1 / 3;
+      place-self: center;
+      margin-right: calc(var(--spacer-3) * -1);
+      width: 3.5rem;
+      aspect-ratio: 1 / 1;
+      height: 3.5rem;
+    }
+
+    fig-slider {
+      grid-column: 2;
+      min-width: 0;
+    }
+  }
+
+  .fig-fill-picker-inputs {
+    .fig-fill-picker-input-fields {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+
+      .input-combo {
+        flex: 1;
+        min-width: 0;
+      }
+
+      fig-input-text {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+  }
+
+  /* Gradient Tab */
+  .fig-fill-picker-gradient-preview {
+    aspect-ratio: auto;
+    width: calc(100% - var(--spacer-3) * 2);
+    margin: var(--spacer-2) var(--spacer-3);
+    margin-top: var(--spacer-4);
+    background: transparent;
+  }
+
+  .fig-fill-picker-gradient-header {
+    padding-right: var(--spacer-2);
+    display: flex;
+    padding-left: var(--spacer-3);
+    gap: var(--spacer-2);
+    .fig-fill-picker-gradient-type {
+      flex: 1;
+      min-width: 0;
+    }
+
+    & > *:last-child fig-button {
+      margin-left: auto;
+    }
+
+    .fig-fill-picker-gradient-center {
+      fig-input-number {
+        width: 48px;
+      }
+    }
+  }
+
+  .fig-fill-picker-gradient-stops {
+    .fig-fill-picker-gradient-stops-header {
+      > span {
+        flex: 1;
+      }
+    }
+  }
+
+  .fig-fill-picker-gradient-stops-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacer-1);
+  }
+
+  .fig-fill-picker-gradient-stop-row {
+    padding-right: var(--spacer-2);
+    display: flex;
+    padding-left: var(--spacer-3);
+    gap: var(--spacer-2);
+    & > .fig-fill-picker-stop-position {
+      flex: 0;
+      flex-basis: 3rem;
+      min-width: 0;
+      width: 3rem;
+    }
+
+    .fig-fill-picker-stop-color {
+      flex: 1;
+      min-width: 0;
+      fig-input-text {
+        min-width: 0;
+      }
+    }
+
+    .fig-fill-picker-stop-remove {
+      flex-shrink: 0;
+    }
+  }
+
+  /* Media Tabs (Image/Video/Webcam) */
+  .fig-fill-picker-media-header {
+    .fig-fill-picker-scale-mode {
+      flex: 1;
+    }
+
+    .fig-fill-picker-scale {
+      width: 56px;
+    }
+  }
+
+  .fig-fill-picker-media-preview {
+    position: relative;
+    aspect-ratio: 1;
+    margin: var(--spacer-1) var(--spacer-3);
+    border-radius: var(--radius-medium);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.dragover {
+      outline: 2px dashed var(--figma-color-border-brand);
+      outline-offset: -2px;
+    }
+
+    &.has-media {
+      fig-button {
+        visibility: hidden;
+      }
+      &:hover {
+        fig-button {
+          visibility: visible;
+        }
+      }
+    }
+  }
+
+  .fig-fill-picker-checkerboard {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(
+        45deg,
+        var(--figma-color-bg-tertiary) 25%,
+        transparent 25%
+      ),
+      linear-gradient(
+        -45deg,
+        var(--figma-color-bg-tertiary) 25%,
+        transparent 25%
+      ),
+      linear-gradient(
+        45deg,
+        transparent 75%,
+        var(--figma-color-bg-tertiary) 75%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent 75%,
+        var(--figma-color-bg-tertiary) 75%
+      );
+    background-size: 16px 16px;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0px;
+  }
+
+  div.fig-fill-picker-image-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+  }
+
+  fig-image.fig-fill-picker-image-preview {
+    max-width: none;
+    max-height: none;
+    width: auto;
+  }
+
+  video.fig-fill-picker-video-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  fig-media.fig-fill-picker-video-preview {
+    max-width: none;
+    max-height: none;
+    width: auto;
+  }
+
+  .fig-fill-picker-upload {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Webcam Tab */
+  .fig-fill-picker-webcam-preview {
+    position: relative;
+    aspect-ratio: 1;
+    margin: 0 var(--spacer-3);
+    border-radius: var(--radius-medium);
+    overflow: hidden;
+    margin-bottom: var(--spacer-2);
+  }
+
+  .fig-fill-picker-webcam-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .fig-fill-picker-webcam-status {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--figma-color-bg-secondary);
+    color: var(--figma-color-text-secondary);
+    font-size: 0.75rem;
+  }
+
+  .fig-fill-picker-webcam-controls {
+    display: flex;
+    gap: var(--spacer-1);
+
+    .fig-fill-picker-camera-select {
+      flex: 1;
+    }
+
+    .fig-fill-picker-webcam-capture {
+      flex-shrink: 0;
+    }
+  }
+}

@@ -25,6 +25,10 @@ function createFigIcon(name, options = {}) {
   return icon;
 }
 
+function hasFigFillPicker() {
+  return typeof customElements !== "undefined" && !!customElements.get("fig-fill-picker");
+}
+
 function figSupportsCustomizedBuiltIns() {
   if (
     typeof window === "undefined" ||
@@ -2441,7 +2445,51 @@ class FigPopup extends HTMLDialogElement {
     // Always use the rendered popup rect so beak alignment matches real final placement.
     const resolvedLeft = rect.left;
     const resolvedTop = rect.top;
-    const edgeInset = 10;
+    const styles = getComputedStyle(this);
+    const toPx = (value, fallback = 0) => {
+      const raw = String(value || "").trim();
+      const n = parseFloat(raw);
+      if (!Number.isFinite(n)) return fallback;
+      if (raw.endsWith("rem")) {
+        return n * parseFloat(getComputedStyle(document.documentElement).fontSize);
+      }
+      if (raw.endsWith("em")) {
+        return n * parseFloat(styles.fontSize);
+      }
+      return n;
+    };
+    const radiusForSide = (side) => {
+      if (side === "top") {
+        return Math.max(
+          toPx(styles.borderTopLeftRadius),
+          toPx(styles.borderTopRightRadius),
+        );
+      }
+      if (side === "bottom") {
+        return Math.max(
+          toPx(styles.borderBottomLeftRadius),
+          toPx(styles.borderBottomRightRadius),
+        );
+      }
+      if (side === "left") {
+        return Math.max(
+          toPx(styles.borderTopLeftRadius),
+          toPx(styles.borderBottomLeftRadius),
+        );
+      }
+      if (side === "right") {
+        return Math.max(
+          toPx(styles.borderTopRightRadius),
+          toPx(styles.borderBottomRightRadius),
+        );
+      }
+      return 0;
+    };
+    const beakWidth = toPx(
+      styles.getPropertyValue("--fig-popup-beak-width"),
+      16,
+    );
+    const edgeInset = Math.max(10, radiusForSide(beakSide) + beakWidth / 2);
 
     let beakOffset;
     if (beakSide === "top" || beakSide === "bottom") {
@@ -5018,15 +5066,11 @@ class FigInputColor extends HTMLElement {
   #fillPicker;
   #textInput;
   #alphaInput;
+  #suppressNativeColorClick = false;
+  #pendingFillPickerPointerOpen = false;
+  #nativeColorClickTimer = null;
   constructor() {
     super();
-  }
-
-  get picker() {
-    return this.getAttribute("picker") || "native";
-  }
-  set picker(value) {
-    this.setAttribute("picker", value);
   }
 
   get alpha() {
@@ -5040,17 +5084,21 @@ class FigInputColor extends HTMLElement {
     }
   }
 
-  #buildFillPickerAttrs() {
+  #fillPickerAttrs() {
     const attrs = {};
     const experimental = this.getAttribute("experimental");
     if (experimental) attrs["experimental"] = experimental;
-    // picker-* attributes forwarded to fill picker (except anchor, handled programmatically)
     for (const { name, value } of this.attributes) {
       if (name.startsWith("picker-") && name !== "picker-anchor") {
         attrs[name.slice(7)] = value;
       }
     }
     if (!attrs["dialog-position"]) attrs["dialog-position"] = "left";
+    return attrs;
+  }
+
+  #buildFillPickerAttrs() {
+    const attrs = this.#fillPickerAttrs();
     return Object.entries(attrs)
       .map(([k, v]) => `${k}="${v}"`)
       .join(" ");
@@ -5069,10 +5117,7 @@ class FigInputColor extends HTMLElement {
   #buildUI() {
     this.#setValues(this.getAttribute("value"));
 
-    const useFigmaPicker = this.picker === "figma";
-    const hidePicker = this.picker === "false";
-    const showAlpha = this.getAttribute("alpha") === "true";
-    const fpAttrs = this.#buildFillPickerAttrs();
+    const showAlpha = this.getAttribute("alpha") !== "false";
     const disabled = this.#disabled;
     const disabledAttr = disabled ? " disabled" : "";
 
@@ -5097,32 +5142,14 @@ class FigInputColor extends HTMLElement {
       }
 
       let swatchElement = "";
-      if (!hidePicker) {
-        swatchElement = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${fpAttrs} ${
-              showAlpha ? "" : 'alpha="false"'
-            } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
-              this.#alphaPercent
-            }}'${disabledAttr}></fig-fill-picker>`
-          : `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-chit>`;
-      }
+      swatchElement = `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-chit>`;
 
       html = `<div class="input-combo">
                 ${swatchElement}
                 ${label}
             </div>`;
     } else {
-      if (hidePicker) {
-        html = ``;
-      } else {
-        html = useFigmaPicker
-          ? `<fig-fill-picker mode="solid" ${fpAttrs} ${
-              showAlpha ? "" : 'alpha="false"'
-            } value='{"type":"solid","color":"${this.hexOpaque}","opacity":${
-              this.#alphaPercent
-            }}'${disabledAttr}></fig-fill-picker>`
-          : `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-chit>`;
-      }
+      html = `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-chit>`;
     }
     this.innerHTML = html;
 
@@ -5143,29 +5170,14 @@ class FigInputColor extends HTMLElement {
           swatchInput?.setAttribute("disabled", "");
           if (swatchInput) swatchInput.style.pointerEvents = "none";
         }
+        this.#swatch.addEventListener("pointerdown", this.#handleSwatchPointerDown.bind(this), {
+          capture: true,
+        });
+        this.#swatch.addEventListener("click", this.#handleSwatchClick.bind(this), {
+          capture: true,
+        });
+        swatchInput?.addEventListener("keydown", this.#handleSwatchKeyDown.bind(this));
         this.#swatch.addEventListener("input", this.#handleInput.bind(this));
-      }
-
-      // Setup fill picker (figma picker)
-      if (this.#fillPicker) {
-        const anchor = this.getAttribute("picker-anchor");
-        if (anchor === "self") {
-          this.#fillPicker.anchorElement = this;
-        } else if (anchor) {
-          const el = document.querySelector(anchor);
-          if (el) this.#fillPicker.anchorElement = el;
-        }
-        if (this.hasAttribute("disabled")) {
-          this.#fillPicker.setAttribute("disabled", "");
-        }
-        this.#fillPicker.addEventListener(
-          "input",
-          this.#handleFillPickerInput.bind(this),
-        );
-        this.#fillPicker.addEventListener(
-          "change",
-          this.#handleChange.bind(this),
-        );
       }
 
       if (this.#textInput) {
@@ -5197,8 +5209,103 @@ class FigInputColor extends HTMLElement {
       }
     });
   }
+
+  #syncFillPicker() {
+    if (!this.#fillPicker) return;
+    for (const [name, value] of Object.entries(this.#fillPickerAttrs())) {
+      this.#fillPicker.setAttribute(name, value);
+    }
+    this.#fillPicker.setAttribute("mode", "solid");
+    if (this.getAttribute("alpha") !== "false") {
+      this.#fillPicker.removeAttribute("alpha");
+    } else {
+      this.#fillPicker.setAttribute("alpha", "false");
+    }
+    if (this.hasAttribute("disabled")) {
+      this.#fillPicker.setAttribute("disabled", "");
+    } else {
+      this.#fillPicker.removeAttribute("disabled");
+    }
+    this.#fillPicker.anchorElement = this;
+    this.#fillPicker.setAttribute(
+      "value",
+      JSON.stringify({
+        type: "solid",
+        color: this.hexOpaque,
+        opacity: this.#alphaPercent,
+      }),
+    );
+  }
+
+  #ensureFillPicker() {
+    if (!hasFigFillPicker()) return null;
+    if (this.#fillPicker?.isConnected) {
+      this.#syncFillPicker();
+      return this.#fillPicker;
+    }
+
+    const picker = document.createElement("fig-fill-picker");
+    picker.innerHTML = "<span hidden></span>";
+    picker.addEventListener("input", this.#handleFillPickerInput.bind(this));
+    picker.addEventListener("change", this.#handleChange.bind(this));
+    this.appendChild(picker);
+    this.#fillPicker = picker;
+    this.#syncFillPicker();
+    return picker;
+  }
+
+  #openFillPicker() {
+    if (this.hasAttribute("disabled") || this.hasAttribute("swatch-disabled")) return false;
+    const picker = this.#ensureFillPicker();
+    if (!picker) return false;
+    requestAnimationFrame(() => picker.open?.());
+    return true;
+  }
+
+  #cancelNativeColorEvent(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+  }
+
+  #handleSwatchPointerDown(event) {
+    if (!hasFigFillPicker()) return;
+    if (this.hasAttribute("disabled") || this.hasAttribute("swatch-disabled")) return;
+    this.#pendingFillPickerPointerOpen = true;
+    this.#suppressNativeColorClick = true;
+    if (this.#nativeColorClickTimer) clearTimeout(this.#nativeColorClickTimer);
+    this.#nativeColorClickTimer = setTimeout(() => {
+      this.#suppressNativeColorClick = false;
+      this.#pendingFillPickerPointerOpen = false;
+      this.#nativeColorClickTimer = null;
+    }, 500);
+    this.#cancelNativeColorEvent(event);
+  }
+
+  #handleSwatchClick(event) {
+    if (!this.#suppressNativeColorClick) return;
+    this.#suppressNativeColorClick = false;
+    if (this.#nativeColorClickTimer) {
+      clearTimeout(this.#nativeColorClickTimer);
+      this.#nativeColorClickTimer = null;
+    }
+    this.#cancelNativeColorEvent(event);
+    if (this.#pendingFillPickerPointerOpen) {
+      this.#pendingFillPickerPointerOpen = false;
+      this.#openFillPicker();
+    }
+  }
+
+  #handleSwatchKeyDown(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    if (!hasFigFillPicker()) return;
+    if (!this.#openFillPicker()) return;
+    this.#cancelNativeColorEvent(event);
+  }
+
   #setValues(hexValue) {
-    this.rgba = this.convertToRGBA(hexValue);
+    const colorValue = hexValue || "#D9D9D9";
+    this.rgba = this.convertToRGBA(colorValue);
     this.value = this.rgbAlphaToHex(
       {
         r: isNaN(this.rgba.r) ? 0 : this.rgba.r,
@@ -5209,9 +5316,7 @@ class FigInputColor extends HTMLElement {
     );
     this.hexWithAlpha = this.value.toUpperCase();
     this.hexOpaque = this.hexWithAlpha.slice(0, 7);
-    if (hexValue.length > 7) {
-      this.#alphaPercent = (this.rgba.a * 100).toFixed(0);
-    }
+    this.#alphaPercent = colorValue.length > 7 ? (this.rgba.a * 100).toFixed(0) : 100;
     this.style.setProperty("--alpha", this.rgba.a);
   }
 
@@ -5335,7 +5440,6 @@ class FigInputColor extends HTMLElement {
       "value",
       "style",
       "mode",
-      "picker",
       "experimental",
       "alpha",
       "text",
@@ -5382,13 +5486,7 @@ class FigInputColor extends HTMLElement {
         // Emitting here causes infinite loops with React and other frameworks.
         break;
       case "mode":
-        // Mode attribute is passed through to fig-fill-picker when used
-        if (this.#fillPicker && newValue) {
-          this.#fillPicker.setAttribute("mode", newValue);
-        }
-        break;
-      case "picker":
-        // Picker type change requires re-render
+        this.#syncFillPicker();
         break;
       case "alpha":
       case "text":
@@ -5414,8 +5512,7 @@ class FigInputColor extends HTMLElement {
       else child.removeAttribute("disabled");
     }
     if (this.#fillPicker) {
-      if (disabled) this.#fillPicker.setAttribute("disabled", "");
-      else this.#fillPicker.removeAttribute("disabled");
+      this.#syncFillPicker();
     }
   }
 
@@ -5535,7 +5632,7 @@ const GRADIENT_HUE_INTERPOLATIONS = [
 
 const GRADIENT_PICKER_SPACES = ["srgb-linear", "oklab", "oklch"];
 
-function normalizeGradientConfig(gradient) {
+export function normalizeGradientConfig(gradient) {
   const next = { ...(gradient ?? {}) };
   let interpolationSpace = String(
     next.interpolationSpace ?? "oklab",
@@ -5557,7 +5654,7 @@ function normalizeGradientConfig(gradient) {
   return next;
 }
 
-function gradientToValueShape(gradient) {
+export function gradientToValueShape(gradient) {
   const normalized = normalizeGradientConfig(gradient);
   const output = {
     ...normalized,
@@ -5571,7 +5668,7 @@ function gradientToValueShape(gradient) {
   return output;
 }
 
-function gradientInterpolationClause(gradient) {
+export function gradientInterpolationClause(gradient) {
   const normalized = normalizeGradientConfig(gradient);
   if (normalized.interpolationSpace === "oklch") {
     return `in oklch ${normalized.hueInterpolation} hue`;
@@ -5900,6 +5997,46 @@ class FigInputFill extends HTMLElement {
       .join(" ");
   }
 
+  #fillPickerChitBackground() {
+    switch (this.#fillType) {
+      case "solid":
+        return this.#solid.color;
+      case "gradient": {
+        const sorted = [...this.#gradient.stops].sort(
+          (a, b) => a.position - b.position,
+        );
+        const stops = sorted
+          .map((stop) => {
+            const alpha = (stop.opacity ?? 100) / 100;
+            if (alpha >= 1) return `${stop.color} ${stop.position}%`;
+            const { r, g, b } = figHexToRGB(stop.color);
+            return `rgba(${r}, ${g}, ${b}, ${alpha}) ${stop.position}%`;
+          })
+          .join(", ");
+        return `linear-gradient(${this.#gradient.angle}deg ${gradientInterpolationClause(this.#gradient)}, ${stops})`;
+      }
+      case "image":
+        return this.#image.url ? `url(${this.#image.url})` : "#D9D9D9";
+      default:
+        return "#D9D9D9";
+    }
+  }
+
+  #fillPickerChitAlpha() {
+    switch (this.#fillType) {
+      case "solid":
+        return this.#solid.alpha;
+      case "image":
+        return this.#image.opacity ?? 1;
+      case "video":
+        return this.#video.opacity ?? 1;
+      case "webcam":
+        return this.#webcam.opacity ?? 1;
+      default:
+        return 1;
+    }
+  }
+
   #syncDisabled() {
     const disabled = this.hasAttribute("disabled");
     for (const child of [
@@ -5982,7 +6119,9 @@ class FigInputFill extends HTMLElement {
       <div class="input-combo">
         <fig-fill-picker ${fpAttrs} value='${fillPickerValue}' ${
           disabled ? "disabled" : ""
-        }></fig-fill-picker>
+        }>
+          <fig-chit background="${this.#fillPickerChitBackground()}" alpha="${this.#fillPickerChitAlpha()}"${disabled ? " disabled" : ""}></fig-chit>
+        </fig-fill-picker>
         ${controlsHtml}
       </div>`;
 
@@ -7097,7 +7236,7 @@ class FigInputGradient extends HTMLElement {
     const disabled = this.hasAttribute("disabled");
     const mode = this.#editMode;
 
-    if (mode === "picker") {
+    if (mode === "picker" && hasFigFillPicker()) {
       const experimental = this.getAttribute("experimental");
       const expAttr = experimental ? ` experimental="${experimental}"` : "";
       const gradientValue = JSON.stringify(this.value);
@@ -7113,11 +7252,11 @@ class FigInputGradient extends HTMLElement {
 
     this.innerHTML = `
       <fig-chit background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
-      ${mode === "true" ? `<div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>` : ""}`;
+      ${mode === "true" || mode === "picker" ? `<div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>` : ""}`;
     this.#chit = this.querySelector("fig-chit");
     this.#track = this.querySelector(".fig-input-gradient-track");
 
-    if (mode === "true") {
+    if (mode === "true" || mode === "picker") {
       this.#setupGhostHandle();
       this.#setupEventListeners();
       requestAnimationFrame(() => this.#repositionHandles());
@@ -11901,2159 +12040,7 @@ customElements.define("fig-button-combo", FigButtonCombo);
 class FigInputCombo extends HTMLElement {}
 customElements.define("fig-input-combo", FigInputCombo);
 
-// FigFillPicker
-/**
- * A comprehensive fill picker component supporting solid colors, gradients, images, video, and webcam.
- * Uses display: contents and wraps a trigger element that opens a dialog picker.
- *
- * @attr {string} value - JSON-encoded fill value
- * @attr {boolean} disabled - Whether the picker is disabled
- * @attr {boolean} alpha - Whether to show alpha/opacity controls (default: true)
- * @attr {string} dialog-position - Position of the popup (default: "left")
- */
-class FigFillPicker extends HTMLElement {
-  #trigger = null;
-  #chit = null;
-  #dialog = null;
-  #activeTab = "solid";
-  anchorElement = null;
 
-  // Fill state
-  #fillType = "solid";
-  #gamut = "srgb"; // "srgb" or "display-p3"
-  #color = { h: 0, s: 0, v: 85, a: 1 }; // Default gray #D9D9D9
-  #colorInputMode = "hex";
-  #gradient = {
-    type: "linear",
-    angle: 0,
-    centerX: 50,
-    centerY: 50,
-    interpolationSpace: "oklab",
-    hueInterpolation: "shorter",
-    stops: [
-      { position: 0, color: "#D9D9D9", opacity: 100 },
-      { position: 100, color: "#737373", opacity: 100 },
-    ],
-  };
-  #image = { url: null, scaleMode: "fill", scale: 50 };
-  #video = { url: null, scaleMode: "fill", scale: 50 };
-  #webcam = { stream: null, snapshot: null };
-
-  // Custom mode slots and data
-  #customSlots = {};
-  #customData = {};
-
-  // DOM references for solid tab
-  #colorArea = null;
-  #colorAreaHandle = null;
-  #hueSlider = null;
-  #opacitySlider = null;
-  #isDraggingColor = false;
-  #teardownColorAreaEvents = null;
-  #dialogOpenObserver = null;
-  #webcamTabObserver = null;
-
-  constructor() {
-    super();
-  }
-
-  static get observedAttributes() {
-    return ["value", "disabled", "alpha", "mode", "experimental"];
-  }
-
-  connectedCallback() {
-    // Use display: contents
-    this.style.display = "contents";
-
-    requestAnimationFrame(() => {
-      this.#setupTrigger();
-      this.#parseValue();
-      this.#updateChit();
-    });
-  }
-
-  disconnectedCallback() {
-    if (this.#teardownColorAreaEvents) {
-      this.#teardownColorAreaEvents();
-      this.#teardownColorAreaEvents = null;
-    }
-    if (this.#dialogOpenObserver) {
-      this.#dialogOpenObserver.disconnect();
-      this.#dialogOpenObserver = null;
-    }
-    if (this.#webcamTabObserver) {
-      this.#webcamTabObserver.disconnect();
-      this.#webcamTabObserver = null;
-    }
-    if (this.#webcam.stream) {
-      this.#webcam.stream.getTracks().forEach((track) => track.stop());
-      this.#webcam.stream = null;
-    }
-    if (this.#video.url && this.#video.url.startsWith("blob:")) {
-      URL.revokeObjectURL(this.#video.url);
-    }
-    if (this.#chit) this.#chit.removeAttribute("selected");
-    if (this.#dialog) {
-      this.#dialog.close();
-      this.#dialog.remove();
-      this.#dialog = null;
-    }
-  }
-
-  #setupTrigger() {
-    const child = Array.from(this.children).find(
-      (el) => !el.getAttribute("slot")?.startsWith("mode-"),
-    );
-
-    if (!child) {
-      // Scenario 1: Empty - create fig-chit
-      this.#chit = document.createElement("fig-chit");
-      this.#chit.setAttribute("background", "#D9D9D9");
-      this.appendChild(this.#chit);
-      this.#trigger = this.#chit;
-    } else if (child.tagName === "FIG-CHIT") {
-      // Scenario 2: Has fig-chit - use and populate it
-      this.#chit = child;
-      this.#trigger = child;
-    } else {
-      // Scenario 3: Other element - trigger only, no populate
-      this.#trigger = child;
-      this.#chit = null;
-    }
-
-    this.#trigger.addEventListener("click", (e) => {
-      if (this.hasAttribute("disabled")) return;
-      e.stopPropagation();
-      e.preventDefault();
-      this.#openDialog();
-    });
-
-    // Prevent fig-chit's internal color input from opening system picker
-    if (this.#chit) {
-      requestAnimationFrame(() => {
-        const input = this.#chit.querySelector('input[type="color"]');
-        if (input) {
-          input.style.pointerEvents = "none";
-        }
-      });
-    }
-  }
-
-  #parseValue() {
-    const valueAttr = this.getAttribute("value");
-    if (!valueAttr) return;
-
-    const builtinTypes = ["solid", "gradient", "image", "video", "webcam"];
-
-    try {
-      const parsed = JSON.parse(valueAttr);
-      if (parsed.type) this.#fillType = parsed.type;
-      if (parsed.color) {
-        // Handle both hex string and HSV object
-        if (typeof parsed.color === "string") {
-          this.#color = this.#hexToHSV(parsed.color);
-        } else if (
-          typeof parsed.color === "object" &&
-          parsed.color.h !== undefined
-        ) {
-          this.#color = parsed.color;
-        }
-      }
-      // Parse opacity (0-100) and convert to alpha (0-1)
-      if (parsed.opacity !== undefined) {
-        this.#color.a = parsed.opacity / 100;
-      }
-      if (parsed.colorSpace === "display-p3" || parsed.colorSpace === "srgb") {
-        this.#gamut = parsed.colorSpace;
-      }
-      if (parsed.gradient) {
-        this.#gradient = normalizeGradientConfig({
-          ...this.#gradient,
-          ...parsed.gradient,
-        });
-      }
-      if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
-      if (parsed.video) this.#video = { ...this.#video, ...parsed.video };
-
-      // Store full parsed data for custom (non-built-in) types
-      if (parsed.type && !builtinTypes.includes(parsed.type)) {
-        const { type, ...rest } = parsed;
-        this.#customData[parsed.type] = rest;
-      }
-    } catch (e) {
-      // If not JSON, treat as hex color
-      if (valueAttr.startsWith("#")) {
-        this.#fillType = "solid";
-        this.#color = this.#hexToHSV(valueAttr);
-      }
-    }
-  }
-
-  #updateChit() {
-    if (!this.#chit) return;
-
-    let bg;
-    let bgSize = "cover";
-    let bgPosition = "center";
-
-    switch (this.#fillType) {
-      case "solid":
-        bg = this.#hsvToHex(this.#color);
-        break;
-      case "gradient":
-        bg = this.#getGradientCSS();
-        break;
-      case "image":
-        if (this.#image.url) {
-          bg = `url(${this.#image.url})`;
-          const sizing = this.#getBackgroundSizing(
-            this.#image.scaleMode,
-            this.#image.scale,
-          );
-          bgSize = sizing.size;
-          bgPosition = sizing.position;
-        } else {
-          bg = "";
-        }
-        break;
-      case "video":
-        if (this.#video.url) {
-          bg = `url(${this.#video.url})`;
-          const sizing = this.#getBackgroundSizing(
-            this.#video.scaleMode,
-            this.#video.scale,
-          );
-          bgSize = sizing.size;
-          bgPosition = sizing.position;
-        } else {
-          bg = "";
-        }
-        break;
-      default:
-        const slot = this.#customSlots[this.#fillType];
-        bg = slot?.element?.getAttribute("chit-background") || "#D9D9D9";
-    }
-
-    this.#chit.setAttribute("background", bg);
-    this.#chit.style.setProperty("--chit-bg-size", bgSize);
-    this.#chit.style.setProperty("--chit-bg-position", bgPosition);
-
-    if (this.#fillType === "solid") {
-      this.#chit.setAttribute("alpha", this.#color.a);
-    } else {
-      this.#chit.removeAttribute("alpha");
-    }
-  }
-
-  #getBackgroundSizing(scaleMode, scale) {
-    switch (scaleMode) {
-      case "fill":
-        return { size: "cover", position: "center" };
-      case "fit":
-        return { size: "contain", position: "center" };
-      case "crop":
-        return { size: "cover", position: "center" };
-      case "tile":
-        return { size: `${scale}%`, position: "top left" };
-      default:
-        return { size: "cover", position: "center" };
-    }
-  }
-
-  #openDialog() {
-    if (!this.#dialog) {
-      this.#createDialog();
-    }
-
-    this.#switchTab(this.#fillType);
-
-    const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
-    if (gamutEl) gamutEl.value = this.#gamut;
-
-    if (this.#chit) this.#chit.setAttribute("selected", "true");
-
-    this.#dialog.open = true;
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.#drawColorArea();
-        this.#updateHandlePosition();
-      });
-    });
-  }
-
-  open() {
-    this.#openDialog();
-  }
-
-  close() {
-    if (this.#dialog) this.#dialog.open = false;
-  }
-
-  #createDialog() {
-    // Collect slotted custom mode content before any DOM changes
-    this.#customSlots = {};
-    this.querySelectorAll('[slot^="mode-"]').forEach((el) => {
-      const modeName = el.getAttribute("slot").slice(5);
-      this.#customSlots[modeName] = {
-        element: el,
-        label:
-          el.getAttribute("label") ||
-          modeName.charAt(0).toUpperCase() + modeName.slice(1),
-      };
-    });
-
-    this.#dialog = document.createElement("dialog", { is: "fig-popup" });
-    this.#dialog.setAttribute("is", "fig-popup");
-    this.#dialog.setAttribute("drag", "true");
-    this.#dialog.setAttribute("handle", "fig-header");
-    this.#dialog.setAttribute("autoresize", "false");
-    this.#dialog.classList.add("fig-fill-picker-dialog");
-
-    this.#dialog.anchor = this.anchorElement || this.#trigger;
-    const dialogPosition = this.getAttribute("dialog-position") || "left";
-    this.#dialog.setAttribute("position", dialogPosition);
-    this.#dialog.setAttribute("offset", this.getAttribute("dialog-offset") || "8 8");
-
-    const builtinModes = ["solid", "gradient", "image", "video", "webcam"];
-    const builtinLabels = {
-      solid: "Solid",
-      gradient: "Gradient",
-      image: "Image",
-      video: "Video",
-      webcam: "Webcam",
-    };
-
-    // Build allowed modes: built-ins filtered normally, custom names accepted if slot exists
-    const mode = this.getAttribute("mode");
-    let allowedModes;
-    if (mode) {
-      const requested = mode.split(",").map((m) => m.trim().toLowerCase());
-      allowedModes = requested.filter(
-        (m) => builtinModes.includes(m) || this.#customSlots[m],
-      );
-      if (allowedModes.length === 0) allowedModes = [...builtinModes];
-    } else {
-      allowedModes = [...builtinModes];
-    }
-
-    // Build labels map: built-in labels + custom slot labels
-    const modeLabels = { ...builtinLabels };
-    for (const [name, { label }] of Object.entries(this.#customSlots)) {
-      modeLabels[name] = label;
-    }
-
-    if (!allowedModes.includes(this.#fillType)) {
-      this.#fillType = allowedModes[0];
-      this.#activeTab = allowedModes[0];
-    }
-
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
-
-    let headerContent;
-    if (allowedModes.length === 1) {
-      headerContent = `<h3 class="fig-fill-picker-type-label">${modeLabels[allowedModes[0]]}</h3>`;
-    } else {
-      const options = allowedModes
-        .map((m) => `<option value="${m}">${modeLabels[m]}</option>`)
-        .join("\n          ");
-      headerContent = `<fig-dropdown class="fig-fill-picker-type" ${expAttr} value="${this.#fillType}">
-          ${options}
-        </fig-dropdown>`;
-    }
-
-    // Generate tab containers for all allowed modes
-    const tabDivs = allowedModes
-      .map((m) => `<div class="fig-fill-picker-tab" data-tab="${m}"></div>`)
-      .join("\n        ");
-
-    const gamutDropdown = `<fig-dropdown class="fig-fill-picker-gamut" ${expAttr} value="${this.#gamut}">
-          <option value="srgb">sRGB</option>
-          <option value="display-p3">Display P3</option>
-        </fig-dropdown>`;
-
-    this.#dialog.innerHTML = `
-      <fig-header>
-        ${headerContent}
-        ${gamutDropdown}
-        <fig-button icon variant="ghost" class="fig-fill-picker-close">
-          <fig-icon name="close"></fig-icon>
-        </fig-button>
-      </fig-header>
-      <fig-content>
-        ${tabDivs}
-      </fig-content>
-    `;
-
-    document.body.appendChild(this.#dialog);
-
-    // Populate custom tab containers and emit modeready
-    for (const [modeName, { element }] of Object.entries(this.#customSlots)) {
-      const container = this.#dialog.querySelector(`[data-tab="${modeName}"]`);
-      if (!container) continue;
-
-      // Move children (not the element itself) for vanilla HTML usage
-      while (element.firstChild) {
-        container.appendChild(element.firstChild);
-      }
-
-      // Emit modeready so frameworks can render into the container
-      this.dispatchEvent(
-        new CustomEvent("modeready", {
-          bubbles: true,
-          detail: { mode: modeName, container },
-        }),
-      );
-    }
-
-    // Setup type dropdown switching (only if not locked)
-    const typeDropdown = this.#dialog.querySelector(".fig-fill-picker-type");
-    if (typeDropdown) {
-      typeDropdown.addEventListener("change", (e) => {
-        this.#switchTab(e.target.value);
-      });
-    }
-
-    // Setup gamut dropdown
-    const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
-    if (gamutEl) {
-      const handleGamutChange = (e) => {
-        const val = e.currentTarget?.value ?? e.target?.value ?? e.detail;
-        if (val && val !== this.#gamut) {
-          this.#gamut = val;
-          this.#onGamutChange();
-        }
-      };
-      gamutEl.addEventListener("input", handleGamutChange);
-      gamutEl.addEventListener("change", handleGamutChange);
-    }
-
-    this.#dialog
-      .querySelector(".fig-fill-picker-close")
-      .addEventListener("click", () => {
-        this.#dialog.open = false;
-      });
-
-    const onDialogClose = () => {
-      if (this.#chit) this.#chit.removeAttribute("selected");
-      this.#emitChange();
-      this.dispatchEvent(new CustomEvent("close"));
-    };
-    this.#dialog.addEventListener("close", onDialogClose);
-
-    this.#dialogOpenObserver = new MutationObserver(() => {
-      const isOpen =
-        this.#dialog.hasAttribute("open") &&
-        this.#dialog.getAttribute("open") !== "false";
-      if (!isOpen) onDialogClose();
-    });
-    this.#dialogOpenObserver.observe(this.#dialog, {
-      attributes: true,
-      attributeFilter: ["open"],
-    });
-
-    // Initialize built-in tabs (skip any overridden by custom slots)
-    const builtinInits = {
-      solid: () => this.#initSolidTab(),
-      gradient: () => this.#initGradientTab(),
-      image: () => this.#initImageTab(),
-      video: () => this.#initVideoTab(),
-      webcam: () => this.#initWebcamTab(),
-    };
-    for (const [name, init] of Object.entries(builtinInits)) {
-      if (!this.#customSlots[name] && allowedModes.includes(name)) init();
-    }
-
-    // Listen for input/change from custom tab content
-    for (const modeName of Object.keys(this.#customSlots)) {
-      if (builtinModes.includes(modeName)) continue;
-      const container = this.#dialog.querySelector(`[data-tab="${modeName}"]`);
-      if (!container) continue;
-      container.addEventListener("input", (e) => {
-        if (e.target === this) return;
-        e.stopPropagation();
-        if (e.detail) this.#customData[modeName] = e.detail;
-        this.#emitInput();
-      });
-      container.addEventListener("change", (e) => {
-        if (e.target === this) return;
-        e.stopPropagation();
-        if (e.detail) this.#customData[modeName] = e.detail;
-        this.#emitChange();
-      });
-    }
-  }
-
-  #switchTab(tabName) {
-    // Only allow switching to modes that have a tab container in the dialog
-    const tab = this.#dialog?.querySelector(
-      `.fig-fill-picker-tab[data-tab="${tabName}"]`,
-    );
-    if (!tab) return;
-
-    this.#activeTab = tabName;
-    this.#fillType = tabName;
-
-    // Update dropdown selection (only exists if not locked)
-    const typeDropdown = this.#dialog.querySelector(".fig-fill-picker-type");
-    if (typeDropdown && typeDropdown.value !== tabName) {
-      typeDropdown.value = tabName;
-    }
-
-    // Show/hide tab content
-    const tabContents = this.#dialog.querySelectorAll(".fig-fill-picker-tab");
-    tabContents.forEach((content) => {
-      if (content.dataset.tab === tabName) {
-        content.style.display = "block";
-      } else {
-        content.style.display = "none";
-      }
-    });
-
-    // Zero out content padding for custom mode tabs
-    const contentEl = this.#dialog.querySelector("fig-content");
-    if (contentEl) {
-      contentEl.style.padding = this.#customSlots[tabName] ? "0" : "";
-    }
-
-    // Update tab-specific UI after visibility change
-    if (tabName === "gradient") {
-      // Use RAF to ensure layout is complete before updating angle input
-      requestAnimationFrame(() => {
-        this.#updateGradientUI();
-        const barInput = tab.querySelector(".fig-fill-picker-gradient-bar-input");
-        barInput?.refreshLayout?.();
-        requestAnimationFrame(() => {
-          barInput?.refreshLayout?.();
-        });
-      });
-    }
-
-    this.#updateChit();
-    this.#emitInput();
-  }
-
-  // ============ SOLID TAB ============
-  #initSolidTab() {
-    const container = this.#dialog.querySelector('[data-tab="solid"]');
-    const showAlpha = this.getAttribute("alpha") !== "false";
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
-
-    container.innerHTML = `
-      <fig-preview class="fig-fill-picker-color-area">
-        <canvas width="200" height="200"></canvas>
-        <fig-handle
-          type="color"
-          color="${this.#hsvToHex({ ...this.#color, a: 1 })}"
-          data-no-color-picker
-          drag
-          drag-surface=".fig-fill-picker-color-area"
-          drag-axes="x,y"
-          drag-snapping="modifier"
-        ></fig-handle>
-      </fig-preview>
-      <div class="fig-fill-picker-sliders">
-        <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper"><fig-icon name="eyedropper"></fig-icon></fig-button></fig-tooltip>
-        <fig-slider type="hue" variant="neue" min="0" max="360" value="${
-          this.#color.h
-        }"></fig-slider>
-        ${
-          showAlpha
-            ? `<fig-slider type="opacity" variant="neue" text="true" units="%" min="0" max="100" value="${
-                this.#color.a * 100
-              }" color="${this.#hsvToHex(this.#color)}"></fig-slider>`
-            : ""
-        }
-      </div>
-      <fig-field class="fig-fill-picker-inputs" direction="horizontal">
-        <fig-dropdown class="fig-fill-picker-input-mode" ${expAttr} value="${this.#colorInputMode}">
-          <option value="hex">Hex</option>
-          <option value="rgb">RGB</option>
-          <option value="hsl">HSL</option>
-          <option value="hsb">HSB</option>
-          <option value="lab">LAB</option>
-          <option value="lch">LCH</option>
-        </fig-dropdown>
-        <span class="fig-fill-picker-input-fields"></span>
-      </fig-field>
-    `;
-
-    // Setup color area
-    this.#colorArea = container.querySelector("canvas");
-    this.#colorAreaHandle = container.querySelector("fig-handle");
-    this.#drawColorArea();
-    this.#updateHandlePosition();
-    this.#setupColorAreaEvents();
-
-    // Setup hue slider
-    this.#hueSlider = container.querySelector('fig-slider[type="hue"]');
-    this.#hueSlider.addEventListener("input", (e) => {
-      this.#color.h = parseFloat(e.target.value);
-      this.#drawColorArea();
-      this.#updateHandlePosition();
-      this.#updateColorInputs();
-      this.#emitInput();
-    });
-    this.#hueSlider.addEventListener("change", () => {
-      this.#emitChange();
-    });
-
-    // Setup opacity slider
-    if (showAlpha) {
-      this.#opacitySlider = container.querySelector(
-        'fig-slider[type="opacity"]',
-      );
-      this.#opacitySlider.addEventListener("input", (e) => {
-        this.#color.a = parseFloat(e.target.value) / 100;
-        this.#updateColorInputs();
-        this.#emitInput();
-      });
-      this.#opacitySlider.addEventListener("change", () => {
-        this.#emitChange();
-      });
-    }
-
-    // Setup color input mode dropdown
-    const modeDropdown = container.querySelector(".fig-fill-picker-input-mode");
-    modeDropdown.addEventListener("input", (e) => {
-      this.#colorInputMode = e.target.value;
-      this.#rebuildColorInputFields();
-    });
-
-    // Build initial color input fields
-    this.#rebuildColorInputFields();
-
-    // Setup eyedropper
-    const eyedropper = container.querySelector(".fig-fill-picker-eyedropper");
-    if ("EyeDropper" in window) {
-      eyedropper.addEventListener("click", async () => {
-        try {
-          const dropper = new EyeDropper();
-          const result = await dropper.open();
-          this.#color = { ...this.#hexToHSV(result.sRGBHex), a: this.#color.a };
-          this.#drawColorArea();
-          this.#updateHandlePosition();
-          this.#updateColorInputs();
-          this.#emitInput();
-        } catch (e) {
-          // User cancelled or error
-        }
-      });
-    } else {
-      eyedropper.setAttribute("disabled", "");
-      eyedropper.title = "EyeDropper not supported in this browser";
-    }
-  }
-
-  #onGamutChange() {
-    // Recreate the solid canvas with the new color space
-    const solidContainer = this.#dialog?.querySelector('[data-tab="solid"]');
-    if (solidContainer) {
-      const oldCanvas = solidContainer.querySelector("canvas");
-      if (oldCanvas) {
-        const newCanvas = document.createElement("canvas");
-        newCanvas.width = oldCanvas.width;
-        newCanvas.height = oldCanvas.height;
-        oldCanvas.replaceWith(newCanvas);
-        this.#colorArea = newCanvas;
-        this.#setupColorAreaEvents();
-      }
-      this.#drawColorArea();
-      this.#updateHandlePosition();
-    }
-    // Refresh gradient preview if gradient tab exists
-    this.#updateGradientPreview();
-    this.#emitInput();
-  }
-
-  #drawColorArea() {
-    // Refresh canvas reference in case DOM changed
-    if (!this.#colorArea && this.#dialog) {
-      this.#colorArea = this.#dialog.querySelector('[data-tab="solid"] canvas');
-    }
-    if (!this.#colorArea) return;
-
-    const colorSpace = this.#gamut === "display-p3" ? "display-p3" : "srgb";
-    const ctx = this.#colorArea.getContext("2d", { colorSpace });
-    if (!ctx) return;
-
-    const width = this.#colorArea.width;
-    const height = this.#colorArea.height;
-
-    ctx.clearRect(0, 0, width, height);
-
-    const hue = this.#color.h;
-    const isP3 = this.#gamut === "display-p3";
-
-    const gradH = ctx.createLinearGradient(0, 0, width, 0);
-    if (isP3) {
-      gradH.addColorStop(0, "color(display-p3 1 1 1)");
-      const [r, g, b] = hslToP3(hue, 100, 50);
-      gradH.addColorStop(1, `color(display-p3 ${r} ${g} ${b})`);
-    } else {
-      gradH.addColorStop(0, "#FFFFFF");
-      gradH.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
-    }
-
-    ctx.fillStyle = gradH;
-    ctx.fillRect(0, 0, width, height);
-
-    const gradV = ctx.createLinearGradient(0, 0, 0, height);
-    gradV.addColorStop(0, "rgba(0,0,0,0)");
-    gradV.addColorStop(1, "rgba(0,0,0,1)");
-
-    ctx.fillStyle = gradV;
-    ctx.fillRect(0, 0, width, height);
-  }
-
-  #updateHandlePosition(retryCount = 0) {
-    if (!this.#colorAreaHandle || !this.#colorArea) return;
-
-    const rect = this.#colorArea.getBoundingClientRect();
-
-    // If the canvas isn't visible yet (0 dimensions), schedule a retry (max 5 attempts)
-    if ((rect.width === 0 || rect.height === 0) && retryCount < 5) {
-      requestAnimationFrame(() => this.#updateHandlePosition(retryCount + 1));
-      return;
-    }
-
-    const xPct = Math.max(0, Math.min(100, this.#color.s));
-    const yPct = Math.max(0, Math.min(100, 100 - this.#color.v));
-
-    this.#colorAreaHandle.setAttribute("value", `${xPct}% ${yPct}%`);
-    this.#colorAreaHandle.setAttribute(
-      "color",
-      this.#hsvToHex({ ...this.#color, a: 1 }),
-    );
-  }
-
-  #updateColorFromAreaPosition(x, y, opts = {}) {
-    const { updateHandle = true, emitInput = true, emitChange = false } = opts;
-    this.#color.s = Math.max(0, Math.min(100, x * 100));
-    this.#color.v = Math.max(0, Math.min(100, (1 - y) * 100));
-    if (this.#colorAreaHandle) {
-      this.#colorAreaHandle.setAttribute(
-        "color",
-        this.#hsvToHex({ ...this.#color, a: 1 }),
-      );
-    }
-    if (updateHandle) this.#updateHandlePosition();
-    this.#updateColorInputs();
-    if (emitInput) this.#emitInput();
-    if (emitChange) this.#emitChange();
-  }
-
-  #setupColorAreaEvents() {
-    if (this.#teardownColorAreaEvents) {
-      this.#teardownColorAreaEvents();
-      this.#teardownColorAreaEvents = null;
-    }
-    if (!this.#colorArea || !this.#colorAreaHandle) return;
-
-    const colorAreaEl = this.#colorArea.parentElement || this.#colorArea;
-    const colorAreaHandleEl = this.#colorAreaHandle;
-
-    let isPlaneDragging = false;
-
-    const updatePlaneFromEvent = (e, opts = {}) => {
-      const rect = colorAreaEl.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-      const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
-      this.#updateColorFromAreaPosition(x / rect.width, y / rect.height, opts);
-    };
-
-    const onPlanePointerDown = (e) => {
-      if (e.button !== 0) return;
-      if (
-        e.target === colorAreaHandleEl ||
-        colorAreaHandleEl.contains(e.target)
-      )
-        return;
-      isPlaneDragging = true;
-      this.#isDraggingColor = true;
-      colorAreaEl.setPointerCapture(e.pointerId);
-      updatePlaneFromEvent(e, { updateHandle: true, emitInput: true });
-    };
-
-    const onPlanePointerMove = (e) => {
-      if (!isPlaneDragging) return;
-      if (e.buttons === 0) {
-        onPlaneDragEnd();
-        return;
-      }
-      updatePlaneFromEvent(e, { updateHandle: true, emitInput: true });
-    };
-
-    const onPlaneDragEnd = () => {
-      if (!isPlaneDragging) return;
-      isPlaneDragging = false;
-      this.#isDraggingColor = false;
-      this.#emitChange();
-    };
-
-    const onHandleInput = (e) => {
-      this.#isDraggingColor = true;
-      const px = e.detail?.px;
-      const py = e.detail?.py;
-      if (!Number.isFinite(px) || !Number.isFinite(py)) return;
-      colorAreaHandleEl.setAttribute("value", `${px * 100}% ${py * 100}%`);
-      this.#updateColorFromAreaPosition(px, py, {
-        updateHandle: false,
-        emitInput: true,
-      });
-    };
-
-    const onHandleChange = (e) => {
-      const px = e.detail?.px;
-      const py = e.detail?.py;
-      if (Number.isFinite(px) && Number.isFinite(py)) {
-        colorAreaHandleEl.setAttribute("value", `${px * 100}% ${py * 100}%`);
-        this.#updateColorFromAreaPosition(px, py, {
-          updateHandle: false,
-          emitInput: false,
-        });
-      }
-      this.#isDraggingColor = false;
-      this.#emitChange();
-    };
-
-    colorAreaEl.addEventListener("pointerdown", onPlanePointerDown);
-    colorAreaEl.addEventListener("pointermove", onPlanePointerMove);
-    colorAreaEl.addEventListener("pointerup", onPlaneDragEnd);
-    colorAreaEl.addEventListener("pointercancel", onPlaneDragEnd);
-    colorAreaEl.addEventListener("lostpointercapture", onPlaneDragEnd);
-
-    colorAreaHandleEl.addEventListener("input", onHandleInput);
-    colorAreaHandleEl.addEventListener("change", onHandleChange);
-
-    this.#teardownColorAreaEvents = () => {
-      colorAreaEl.removeEventListener("pointerdown", onPlanePointerDown);
-      colorAreaEl.removeEventListener("pointermove", onPlanePointerMove);
-      colorAreaEl.removeEventListener("pointerup", onPlaneDragEnd);
-      colorAreaEl.removeEventListener("pointercancel", onPlaneDragEnd);
-      colorAreaEl.removeEventListener("lostpointercapture", onPlaneDragEnd);
-
-      colorAreaHandleEl.removeEventListener("input", onHandleInput);
-      colorAreaHandleEl.removeEventListener("change", onHandleChange);
-      this.#isDraggingColor = false;
-    };
-  }
-
-  #rebuildColorInputFields() {
-    const container = this.#dialog?.querySelector(
-      ".fig-fill-picker-input-fields",
-    );
-    if (!container) return;
-
-    const wrap = (tooltip, html) =>
-      `<fig-tooltip text="${tooltip}">${html}</fig-tooltip>`;
-
-    const num = (cls, min, max, step) =>
-      `<fig-input-number class="${cls}" min="${min}" max="${max}"${step != null ? ` step="${step}"` : ""}></fig-input-number>`;
-
-    let html;
-    switch (this.#colorInputMode) {
-      case "rgb":
-        html = `<div class="input-combo">
-          ${wrap("Red", num("fig-fill-picker-ci-r", 0, 255))}
-          ${wrap("Green", num("fig-fill-picker-ci-g", 0, 255))}
-          ${wrap("Blue", num("fig-fill-picker-ci-b", 0, 255))}
-        </div>`;
-        break;
-      case "hsl":
-        html = `<div class="input-combo">
-          ${wrap("Hue", num("fig-fill-picker-ci-h", 0, 360))}
-          ${wrap("Saturation", num("fig-fill-picker-ci-s", 0, 100))}
-          ${wrap("Lightness", num("fig-fill-picker-ci-l", 0, 100))}
-        </div>`;
-        break;
-      case "hsb":
-        html = `<div class="input-combo">
-          ${wrap("Hue", num("fig-fill-picker-ci-h", 0, 360))}
-          ${wrap("Saturation", num("fig-fill-picker-ci-s", 0, 100))}
-          ${wrap("Brightness", num("fig-fill-picker-ci-v", 0, 100))}
-        </div>`;
-        break;
-      case "lab":
-        html = `<div class="input-combo">
-          ${wrap("Lightness", num("fig-fill-picker-ci-okl", 0, 100))}
-          ${wrap("Green-Red axis", num("fig-fill-picker-ci-oka", -0.4, 0.4, 0.001))}
-          ${wrap("Blue-Yellow axis", num("fig-fill-picker-ci-okb", -0.4, 0.4, 0.001))}
-        </div>`;
-        break;
-      case "lch":
-        html = `<div class="input-combo">
-          ${wrap("Lightness", num("fig-fill-picker-ci-okl", 0, 100))}
-          ${wrap("Chroma", num("fig-fill-picker-ci-okc", 0, 0.4, 0.001))}
-          ${wrap("Hue", num("fig-fill-picker-ci-okh", 0, 360))}
-        </div>`;
-        break;
-      default: // hex
-        html = `<fig-input-text class="fig-fill-picker-ci-hex" placeholder="FFFFFF"></fig-input-text>`;
-        break;
-    }
-
-    container.innerHTML = html;
-    this.#wireColorInputEvents();
-    requestAnimationFrame(() => this.#updateColorInputs());
-  }
-
-  #wireColorInputEvents() {
-    const container = this.#dialog?.querySelector(
-      ".fig-fill-picker-input-fields",
-    );
-    if (!container) return;
-
-    const onInput = () => {
-      if (this.#isDraggingColor) return;
-      const color = this.#readColorFromInputs();
-      if (!color) return;
-      this.#color = { ...color, a: this.#color.a };
-      this.#drawColorArea();
-      this.#updateHandlePosition();
-      if (this.#hueSlider) {
-        this.#hueSlider.setAttribute("value", this.#color.h);
-      }
-      this.#emitInput();
-    };
-
-    const onChange = () => this.#emitChange();
-
-    const inputs = container.querySelectorAll(
-      "fig-input-number, fig-input-text",
-    );
-    inputs.forEach((el) => {
-      el.addEventListener("input", onInput);
-      el.addEventListener("change", onChange);
-    });
-  }
-
-  #readColorFromInputs() {
-    const q = (cls) => this.#dialog?.querySelector(`.${cls}`);
-    const val = (cls) => parseFloat(q(cls)?.value ?? 0);
-
-    switch (this.#colorInputMode) {
-      case "rgb":
-        return this.#rgbToHSV({
-          r: val("fig-fill-picker-ci-r"),
-          g: val("fig-fill-picker-ci-g"),
-          b: val("fig-fill-picker-ci-b"),
-        });
-      case "hsl": {
-        const rgb = this.#hslToRGB({
-          h: val("fig-fill-picker-ci-h"),
-          s: val("fig-fill-picker-ci-s"),
-          l: val("fig-fill-picker-ci-l"),
-        });
-        return this.#rgbToHSV(rgb);
-      }
-      case "hsb":
-        return {
-          h: val("fig-fill-picker-ci-h"),
-          s: val("fig-fill-picker-ci-s"),
-          v: val("fig-fill-picker-ci-v"),
-          a: 1,
-        };
-      case "lab": {
-        const rgb = this.#oklabToRGB({
-          l: val("fig-fill-picker-ci-okl") / 100,
-          a: val("fig-fill-picker-ci-oka"),
-          b: val("fig-fill-picker-ci-okb"),
-        });
-        return this.#rgbToHSV(rgb);
-      }
-      case "lch": {
-        const rgb = this.#oklchToRGB({
-          l: val("fig-fill-picker-ci-okl") / 100,
-          c: val("fig-fill-picker-ci-okc"),
-          h: val("fig-fill-picker-ci-okh"),
-        });
-        return this.#rgbToHSV(rgb);
-      }
-      default: {
-        // hex
-        const hexEl = q("fig-fill-picker-ci-hex");
-        if (!hexEl) return null;
-        let hex = hexEl.value.replace(/^#/, "");
-        if (hex.length === 3)
-          hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-        if (hex.length !== 6 || !/^[0-9a-fA-F]{6}$/.test(hex)) return null;
-        return this.#hexToHSV(`#${hex}`);
-      }
-    }
-  }
-
-  #updateColorInputs() {
-    if (!this.#dialog) return;
-
-    const hex = this.#hsvToHex(this.#color);
-    const rgb = this.#hsvToRGB(this.#color);
-    const q = (cls) => this.#dialog.querySelector(`.${cls}`);
-    const set = (cls, v) => {
-      const el = q(cls);
-      if (el) el.setAttribute("value", v);
-    };
-
-    switch (this.#colorInputMode) {
-      case "rgb":
-        set("fig-fill-picker-ci-r", rgb.r);
-        set("fig-fill-picker-ci-g", rgb.g);
-        set("fig-fill-picker-ci-b", rgb.b);
-        break;
-      case "hsl": {
-        const hsl = this.#rgbToHSL(rgb);
-        set("fig-fill-picker-ci-h", Math.round(hsl.h));
-        set("fig-fill-picker-ci-s", Math.round(hsl.s));
-        set("fig-fill-picker-ci-l", Math.round(hsl.l));
-        break;
-      }
-      case "hsb":
-        set("fig-fill-picker-ci-h", Math.round(this.#color.h));
-        set("fig-fill-picker-ci-s", Math.round(this.#color.s));
-        set("fig-fill-picker-ci-v", Math.round(this.#color.v));
-        break;
-      case "lab": {
-        const lab = this.#rgbToOKLAB(rgb);
-        set("fig-fill-picker-ci-okl", Math.round(lab.l * 100));
-        set("fig-fill-picker-ci-oka", +lab.a.toFixed(3));
-        set("fig-fill-picker-ci-okb", +lab.b.toFixed(3));
-        break;
-      }
-      case "lch": {
-        const lch = this.#rgbToOKLCH(rgb);
-        set("fig-fill-picker-ci-okl", Math.round(lch.l * 100));
-        set("fig-fill-picker-ci-okc", +lch.c.toFixed(3));
-        set("fig-fill-picker-ci-okh", Math.round(lch.h));
-        break;
-      }
-      default: // hex
-        set("fig-fill-picker-ci-hex", hex.replace(/^#/, "").toUpperCase());
-        break;
-    }
-
-    if (this.#opacitySlider) {
-      this.#opacitySlider.setAttribute("color", hex);
-    }
-
-    this.#updateChit();
-  }
-
-  // ============ GRADIENT TAB ============
-  #initGradientTab() {
-    const container = this.#dialog.querySelector('[data-tab="gradient"]');
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
-
-    container.innerHTML = `
-      <fig-field class="fig-fill-picker-gradient-header" direction="horizontal">
-        <fig-dropdown class="fig-fill-picker-gradient-type" ${expAttr} value="${
-          this.#gradient.type
-        }">
-          <option value="linear" selected>Linear</option>
-          <option value="radial">Radial</option>
-          <option value="angular">Angular</option>
-        </fig-dropdown>
-        <fig-tooltip text="Rotate gradient">
-          <fig-input-number class="fig-fill-picker-gradient-angle" value="${
-            (this.#gradient.angle - 90 + 360) % 360
-          }" min="0" max="360" units="°" wrap></fig-input-number>
-        </fig-tooltip>
-        <div class="fig-fill-picker-gradient-center input-combo" style="display: none;">
-          <fig-input-number min="0" max="100" value="${
-            this.#gradient.centerX
-          }" units="%" class="fig-fill-picker-gradient-cx"></fig-input-number>
-          <fig-input-number min="0" max="100" value="${
-            this.#gradient.centerY
-          }" units="%" class="fig-fill-picker-gradient-cy"></fig-input-number>
-        </div>
-        <fig-tooltip text="Flip gradient">
-          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip">
-            <fig-icon name="swap"></fig-icon>
-          </fig-button>
-        </fig-tooltip>
-      </fig-field>
-      <fig-preview class="fig-fill-picker-gradient-preview">
-        <fig-input-gradient class="fig-fill-picker-gradient-bar-input" edit="true" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
-      </fig-preview>
-      <fig-field class="fig-fill-picker-gradient-interpolation" direction="horizontal">
-        <label>Mixing</label>
-        <fig-dropdown class="fig-fill-picker-gradient-space" full ${expAttr} value="${
-          this.#gradient.interpolationSpace === "oklch"
-            ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
-            : this.#gradient.interpolationSpace
-        }">
-          <optgroup label="sRGB">
-            <option value="srgb-linear">Linear</option>
-          </optgroup>
-          <optgroup label="OKLab">
-            <option value="oklab">Perceptual</option>
-          </optgroup>
-          <optgroup label="OKLCH">
-            <option value="oklch-shorter">Shorter hue</option>
-            <option value="oklch-longer">Longer hue</option>
-            <option value="oklch-increasing">Increasing hue</option>
-            <option value="oklch-decreasing">Decreasing hue</option>
-          </optgroup>
-        </fig-dropdown>
-      </fig-field>
-      <div class="fig-fill-picker-gradient-stops">
-        <fig-header class="fig-fill-picker-gradient-stops-header" borderless>
-          <span>Stops</span>
-          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-add" title="Add stop">
-            <fig-icon name="add"></fig-icon>
-          </fig-button>
-        </fig-header>
-        <div class="fig-fill-picker-gradient-stops-list"></div>
-      </div>
-    `;
-
-    this.#updateGradientUI();
-    this.#setupGradientEvents(container);
-  }
-
-  #setupGradientEvents(container) {
-    // Type dropdown
-    const typeDropdown = container.querySelector(
-      ".fig-fill-picker-gradient-type",
-    );
-    const getDropdownValue = (event) =>
-      event.currentTarget?.value ?? event.target?.value ?? event.detail;
-
-    const handleTypeChange = (e) => {
-      this.#gradient.type = getDropdownValue(e);
-      this.#updateGradientUI();
-      this.#emitInput();
-    };
-    typeDropdown.addEventListener("input", handleTypeChange);
-    typeDropdown.addEventListener("change", handleTypeChange);
-
-    const interpolationDropdown = container.querySelector(
-      ".fig-fill-picker-gradient-space",
-    );
-    const handleInterpolationChange = (e) => {
-      const val = getDropdownValue(e);
-      let space = val;
-      let hue = "shorter";
-      if (val.startsWith("oklch-")) {
-        space = "oklch";
-        hue = val.slice(6);
-      }
-      this.#gradient = normalizeGradientConfig({
-        ...this.#gradient,
-        interpolationSpace: space,
-        hueInterpolation: hue,
-      });
-      this.#updateGradientUI();
-      this.#emitInput();
-    };
-    interpolationDropdown?.addEventListener("input", handleInterpolationChange);
-    interpolationDropdown?.addEventListener(
-      "change",
-      handleInterpolationChange,
-    );
-
-    // Angle input
-    const angleInput = container.querySelector(
-      ".fig-fill-picker-gradient-angle",
-    );
-    angleInput.addEventListener("input", (e) => {
-      const pickerAngle = parseFloat(e.target.value) || 0;
-      this.#gradient.angle = (pickerAngle + 90) % 360;
-      this.#updateGradientPreview();
-      this.#emitInput();
-    });
-
-    // Center X/Y inputs
-    const cxInput = container.querySelector(".fig-fill-picker-gradient-cx");
-    const cyInput = container.querySelector(".fig-fill-picker-gradient-cy");
-    cxInput?.addEventListener("input", (e) => {
-      this.#gradient.centerX = parseFloat(e.target.value) || 50;
-      this.#updateGradientPreview();
-      this.#emitInput();
-    });
-    cyInput?.addEventListener("input", (e) => {
-      this.#gradient.centerY = parseFloat(e.target.value) || 50;
-      this.#updateGradientPreview();
-      this.#emitInput();
-    });
-
-    // Flip button
-    container
-      .querySelector(".fig-fill-picker-gradient-flip")
-      .addEventListener("click", () => {
-        this.#gradient.stops.forEach((stop) => {
-          stop.position = 100 - stop.position;
-        });
-        this.#gradient.stops.sort((a, b) => a.position - b.position);
-        this.#updateGradientUI();
-        this.#emitInput();
-      });
-
-    // Add stop button
-    container
-      .querySelector(".fig-fill-picker-gradient-add")
-      .addEventListener("click", () => {
-        const midPosition = 50;
-        this.#gradient.stops.push({
-          position: midPosition,
-          color: "#888888",
-          opacity: 100,
-        });
-        this.#gradient.stops.sort((a, b) => a.position - b.position);
-        this.#updateGradientUI();
-        this.#emitInput();
-      });
-
-    // Embedded gradient bar input
-    const gradientBarInput = container.querySelector(
-      ".fig-fill-picker-gradient-bar-input",
-    );
-    if (gradientBarInput) {
-      const syncFromBarInput = (e) => {
-        e.stopPropagation();
-        const detail = e.detail;
-        if (!detail?.gradient) return;
-        this.#gradient = normalizeGradientConfig({
-          ...this.#gradient,
-          ...detail.gradient,
-        });
-        this.#updateChit();
-        this.#updateGradientStopsList();
-      };
-      gradientBarInput.addEventListener("input", (e) => {
-        syncFromBarInput(e);
-        this.#emitInput();
-      });
-      gradientBarInput.addEventListener("change", (e) => {
-        syncFromBarInput(e);
-        this.#emitChange();
-      });
-    }
-  }
-
-  #updateGradientUI() {
-    if (!this.#dialog) return;
-
-    const container = this.#dialog.querySelector('[data-tab="gradient"]');
-    if (!container) return;
-    this.#gradient = normalizeGradientConfig(this.#gradient);
-
-    // Show/hide angle vs center inputs
-    const angleInput = container.querySelector(
-      ".fig-fill-picker-gradient-angle",
-    );
-    const centerInputs = container.querySelector(
-      ".fig-fill-picker-gradient-center",
-    );
-
-    if (this.#gradient.type === "radial") {
-      angleInput.style.display = "none";
-      centerInputs.style.display = "flex";
-    } else {
-      angleInput.style.display = "block";
-      centerInputs.style.display = "none";
-      // Sync angle input value (convert CSS angle to picker angle)
-      const pickerAngle = (this.#gradient.angle - 90 + 360) % 360;
-      angleInput.setAttribute("value", pickerAngle);
-    }
-
-    const interpolationDropdown = container.querySelector(
-      ".fig-fill-picker-gradient-space",
-    );
-    if (interpolationDropdown) {
-      interpolationDropdown.value =
-        this.#gradient.interpolationSpace === "oklch"
-          ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
-          : this.#gradient.interpolationSpace;
-    }
-
-    this.#updateGradientPreview();
-    this.#updateGradientStopsList();
-  }
-
-  #updateGradientPreview() {
-    if (!this.#dialog) return;
-
-    const barInput = this.#dialog.querySelector(
-      ".fig-fill-picker-gradient-bar-input",
-    );
-    if (barInput) {
-      barInput.setAttribute(
-        "value",
-        JSON.stringify({
-          type: "gradient",
-          gradient: gradientToValueShape(this.#gradient),
-        }),
-      );
-    }
-
-    this.#updateChit();
-  }
-
-  #updateGradientStopsList() {
-    if (!this.#dialog) return;
-
-    const list = this.#dialog.querySelector(
-      ".fig-fill-picker-gradient-stops-list",
-    );
-    if (!list) return;
-
-    const existingRows = list.querySelectorAll(
-      ".fig-fill-picker-gradient-stop-row",
-    );
-
-    if (existingRows.length === this.#gradient.stops.length) {
-      this.#gradient.stops.forEach((stop, index) => {
-        const row = existingRows[index];
-        row.dataset.index = index;
-        const posInput = row.querySelector(".fig-fill-picker-stop-position");
-        if (posInput) posInput.setAttribute("value", stop.position);
-        const colorInput = row.querySelector(".fig-fill-picker-stop-color");
-        if (colorInput) colorInput.setAttribute("value", stop.color);
-        const removeBtn = row.querySelector(".fig-fill-picker-stop-remove");
-        if (removeBtn) {
-          if (this.#gradient.stops.length <= 2)
-            removeBtn.setAttribute("disabled", "");
-          else removeBtn.removeAttribute("disabled");
-        }
-      });
-      return;
-    }
-
-    this.#rebuildGradientStopsList(list);
-  }
-
-  #rebuildGradientStopsList(list) {
-    list.innerHTML = this.#gradient.stops
-      .map(
-        (stop, index) => `
-      <fig-field class="fig-fill-picker-gradient-stop-row" direction="horizontal" data-index="${index}">
-        <fig-input-number class="fig-fill-picker-stop-position" min="0" max="100" value="${
-          stop.position
-        }" units="%"></fig-input-number>
-        <fig-input-color class="fig-fill-picker-stop-color" text="true" alpha="true" picker="figma" picker-dialog-position="right" value="${
-          stop.color
-        }"></fig-input-color>
-        <fig-button icon variant="ghost" class="fig-fill-picker-stop-remove" ${
-          this.#gradient.stops.length <= 2 ? "disabled" : ""
-        }>
-          <fig-icon name="minus"></fig-icon>
-        </fig-button>
-      </fig-field>
-    `,
-      )
-      .join("");
-
-    list
-      .querySelectorAll(".fig-fill-picker-gradient-stop-row")
-      .forEach((row) => {
-        const index = parseInt(row.dataset.index);
-
-        row
-          .querySelector(".fig-fill-picker-stop-position")
-          .addEventListener("input", (e) => {
-            this.#gradient.stops[index].position =
-              parseFloat(e.target.value) || 0;
-            this.#updateGradientPreview();
-            this.#emitInput();
-          });
-
-        const stopColor = row.querySelector(".fig-fill-picker-stop-color");
-        const stopFillPicker = stopColor.querySelector("fig-fill-picker");
-        if (stopFillPicker) {
-          stopFillPicker.anchorElement = this.#dialog;
-        } else {
-          requestAnimationFrame(() => {
-            const fp = stopColor.querySelector("fig-fill-picker");
-            if (fp) fp.anchorElement = this.#dialog;
-          });
-        }
-
-        stopColor.addEventListener("input", (e) => {
-          this.#gradient.stops[index].color =
-            e.target.hexOpaque || e.target.value;
-          const a = e.detail?.rgba?.a;
-          if (a !== undefined) {
-            this.#gradient.stops[index].opacity = Math.round(a * 100);
-          }
-          this.#updateGradientPreview();
-          this.#emitInput();
-        });
-
-        row
-          .querySelector(".fig-fill-picker-stop-remove")
-          .addEventListener("click", () => {
-            if (this.#gradient.stops.length > 2) {
-              this.#gradient.stops.splice(index, 1);
-              this.#updateGradientUI();
-              this.#emitInput();
-            }
-          });
-      });
-  }
-
-  #buildGradientCSS(interpolationSpaceOverride, includeInterpolation = true) {
-    const gradient = normalizeGradientConfig({
-      ...this.#gradient,
-      interpolationSpace:
-        interpolationSpaceOverride ?? this.#gradient.interpolationSpace,
-    });
-    const isP3 = this.#gamut === "display-p3";
-    const stops = gradient.stops
-      .map((s) => {
-        const alpha = (s.opacity ?? 100) / 100;
-        const color = isP3
-          ? this.#hexToP3(s.color, alpha)
-          : this.#hexToRGBA(s.color, alpha);
-        return `${color} ${s.position}%`;
-      })
-      .join(", ");
-    const interpolation = includeInterpolation
-      ? ` ${gradientInterpolationClause(gradient)}`
-      : "";
-    switch (gradient.type) {
-      case "linear":
-        return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
-      case "radial":
-        return `radial-gradient(circle at ${gradient.centerX}% ${gradient.centerY}%${interpolation}, ${stops})`;
-      case "angular":
-        return `conic-gradient(from ${gradient.angle}deg${interpolation}, ${stops})`;
-      default:
-        return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
-    }
-  }
-
-  static #gradientSupportCache = new Map();
-  #testGradientSupport(css) {
-    const cached = FigFillPicker.#gradientSupportCache.get(css);
-    if (cached !== undefined) return cached;
-    const el = document.createElement("div");
-    el.style.background = css;
-    const result = !!el.style.background;
-    FigFillPicker.#gradientSupportCache.set(css, result);
-    return result;
-  }
-
-  #getGradientCSS() {
-    const preferred = this.#buildGradientCSS(undefined, true);
-    if (this.#testGradientSupport(preferred)) return preferred;
-
-    const oklabFallback = this.#buildGradientCSS("oklab", true);
-    if (this.#testGradientSupport(oklabFallback)) return oklabFallback;
-
-    return this.#buildGradientCSS("oklab", false);
-  }
-
-  // ============ IMAGE TAB ============
-  #initImageTab() {
-    const container = this.#dialog.querySelector('[data-tab="image"]');
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
-
-    container.innerHTML = `
-      <fig-field class="fig-fill-picker-media-header" direction="horizontal">
-        <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
-          this.#image.scaleMode
-        }">
-          <option value="fill" selected>Fill</option>
-          <option value="fit">Fit</option>
-          <option value="crop">Crop</option>
-          <option value="tile">Tile</option>
-        </fig-dropdown>
-        <fig-input-number class="fig-fill-picker-scale" min="1" max="200" value="${
-          this.#image.scale
-        }" units="%" ${
-          this.#image.scaleMode === "tile" ? "" : 'style="display: none;"'
-        }></fig-input-number>
-      </fig-field>
-      <fig-image class="fig-fill-picker-media-preview fig-fill-picker-image-preview" upload="true" label="Upload from computer" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true"></fig-image>
-    `;
-
-    this.#setupImageEvents(container);
-  }
-
-  #setupImageEvents(container) {
-    const scaleModeDropdown = container.querySelector(
-      ".fig-fill-picker-scale-mode",
-    );
-    const scaleInput = container.querySelector(".fig-fill-picker-scale");
-    const preview = container.querySelector(".fig-fill-picker-image-preview");
-
-    scaleModeDropdown.addEventListener("change", (e) => {
-      this.#image.scaleMode = e.target.value;
-      scaleInput.style.display = e.target.value === "tile" ? "block" : "none";
-      this.#updateImagePreview(preview);
-      this.#updateChit();
-      this.#emitInput();
-    });
-
-    scaleInput.addEventListener("input", (e) => {
-      this.#image.scale = parseFloat(e.target.value) || 100;
-      this.#updateImagePreview(preview);
-      this.#updateChit();
-      this.#emitInput();
-    });
-
-    preview.addEventListener("loaded", (e) => {
-      const src = e.detail?.src || preview.src;
-      if (!src) return;
-      this.#image.url = src;
-      this.#updateImagePreview(preview);
-      this.#updateChit();
-      this.#emitInput();
-    });
-
-    preview.addEventListener("change", () => {
-      if (preview.src) return;
-      this.#image.url = null;
-      this.#updateImagePreview(preview);
-      this.#updateChit();
-      this.#emitInput();
-    });
-
-    this.#updateImagePreview(preview);
-  }
-
-  #updateImagePreview(element) {
-    if (!this.#image.url) {
-      element.removeAttribute("src");
-      element.classList.remove("has-media", "is-tiled");
-      element.style.backgroundImage = "";
-      element.style.backgroundPosition = "";
-      element.style.backgroundRepeat = "";
-      element.style.backgroundSize = "";
-      return;
-    }
-
-    element.setAttribute("src", this.#image.url);
-    element.classList.add("has-media");
-    element.style.backgroundImage = "";
-    element.style.backgroundPosition = "";
-    element.style.backgroundRepeat = "";
-    element.style.backgroundSize = "";
-    element.mediaEl?.style.removeProperty("opacity");
-
-    const fileInput = element.querySelector("fig-input-file[data-generated]");
-    if (fileInput) {
-      fileInput.setAttribute("label", "Replace");
-      fileInput.removeAttribute("url");
-    }
-
-    switch (this.#image.scaleMode) {
-      case "fill":
-        element.classList.remove("is-tiled");
-        element.setAttribute("fit", "cover");
-        break;
-      case "crop":
-        element.classList.remove("is-tiled");
-        element.setAttribute("fit", "cover");
-        break;
-      case "fit":
-        element.classList.remove("is-tiled");
-        element.setAttribute("fit", "contain");
-        break;
-      case "tile":
-        element.classList.add("is-tiled");
-        element.setAttribute("fit", "none");
-        element.style.backgroundImage = `url(${this.#image.url})`;
-        element.style.backgroundPosition = "top left";
-        element.style.backgroundSize = `${this.#image.scale}%`;
-        element.style.backgroundRepeat = "repeat";
-        if (element.mediaEl) element.mediaEl.style.opacity = "0";
-        break;
-    }
-  }
-
-  // For video elements (still uses object-fit)
-  #updateVideoPreviewStyle(element) {
-    if (element.tagName === "FIG-MEDIA") {
-      if (!this.#video.url) {
-        element.removeAttribute("src");
-        element.classList.remove("has-media");
-        return;
-      }
-
-      element.setAttribute("src", this.#video.url);
-      element.classList.add("has-media");
-
-      const fileInput = element.querySelector("fig-input-file[data-generated]");
-      if (fileInput) {
-        fileInput.setAttribute("label", "Replace");
-        fileInput.removeAttribute("url");
-      }
-
-      switch (this.#video.scaleMode) {
-        case "fill":
-        case "crop":
-          element.setAttribute("fit", "cover");
-          break;
-        case "fit":
-          element.setAttribute("fit", "contain");
-          break;
-      }
-      return;
-    }
-
-    element.style.objectPosition = "center";
-    element.style.width = "100%";
-    element.style.height = "100%";
-
-    switch (this.#video.scaleMode) {
-      case "fill":
-      case "crop":
-        element.style.objectFit = "cover";
-        break;
-      case "fit":
-        element.style.objectFit = "contain";
-        break;
-    }
-  }
-
-  // ============ VIDEO TAB ============
-  #initVideoTab() {
-    const container = this.#dialog.querySelector('[data-tab="video"]');
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
-
-    container.innerHTML = `
-      <fig-field class="fig-fill-picker-media-header" direction="horizontal">
-        <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
-          this.#video.scaleMode
-        }">
-          <option value="fill" selected>Fill</option>
-          <option value="fit">Fit</option>
-          <option value="crop">Crop</option>
-        </fig-dropdown>
-      </fig-field>
-      <fig-media class="fig-fill-picker-media-preview fig-fill-picker-video-preview" type="video" upload="true" label="Upload from computer" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true" loop="true"></fig-media>
-    `;
-
-    this.#setupVideoEvents(container);
-  }
-
-  #setupVideoEvents(container) {
-    const scaleModeDropdown = container.querySelector(
-      ".fig-fill-picker-scale-mode",
-    );
-    const preview = container.querySelector(".fig-fill-picker-video-preview");
-
-    scaleModeDropdown.addEventListener("change", (e) => {
-      this.#video.scaleMode = e.target.value;
-      this.#updateVideoPreviewStyle(preview);
-      this.#updateChit();
-      this.#emitInput();
-    });
-
-    preview.addEventListener("loaded", (e) => {
-      const src = e.detail?.src || preview.src;
-      if (!src) return;
-      this.#video.url = src;
-      this.#updateVideoPreviewStyle(preview);
-      preview.play?.();
-      this.#updateChit();
-      this.#emitInput();
-    });
-
-    preview.addEventListener("change", () => {
-      if (preview.src) return;
-      this.#video.url = null;
-      this.#updateVideoPreviewStyle(preview);
-      this.#updateChit();
-      this.#emitInput();
-    });
-
-    this.#updateVideoPreviewStyle(preview);
-  }
-
-  // ============ WEBCAM TAB ============
-  #initWebcamTab() {
-    const container = this.#dialog.querySelector('[data-tab="webcam"]');
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
-
-    container.innerHTML = `
-      <div class="fig-fill-picker-webcam-preview">
-        <div class="fig-fill-picker-checkerboard"></div>
-        <video class="fig-fill-picker-webcam-video" autoplay muted playsinline></video>
-        <div class="fig-fill-picker-webcam-status">
-          <span>Camera access required</span>
-        </div>
-      </div>
-      <fig-field class="fig-fill-picker-webcam-controls" direction="horizontal">
-        <fig-dropdown class="fig-fill-picker-camera-select" ${expAttr} style="display: none;">
-        </fig-dropdown>
-        <fig-button class="fig-fill-picker-webcam-capture" variant="primary">
-          Capture
-        </fig-button>
-      </fig-field>
-    `;
-
-    this.#setupWebcamEvents(container);
-  }
-
-  #setupWebcamEvents(container) {
-    const video = container.querySelector(".fig-fill-picker-webcam-video");
-    const status = container.querySelector(".fig-fill-picker-webcam-status");
-    const captureBtn = container.querySelector(
-      ".fig-fill-picker-webcam-capture",
-    );
-    const cameraSelect = container.querySelector(
-      ".fig-fill-picker-camera-select",
-    );
-
-    const startWebcam = async (deviceId = null) => {
-      try {
-        const constraints = {
-          video: deviceId ? { deviceId: { exact: deviceId } } : true,
-        };
-
-        if (this.#webcam.stream) {
-          this.#webcam.stream.getTracks().forEach((track) => track.stop());
-        }
-
-        this.#webcam.stream =
-          await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = this.#webcam.stream;
-        video.style.display = "block";
-        status.style.display = "none";
-
-        // Enumerate cameras
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const cameras = devices.filter((d) => d.kind === "videoinput");
-
-        if (cameras.length > 1) {
-          cameraSelect.style.display = "block";
-          cameraSelect.innerHTML = cameras
-            .map(
-              (cam, i) =>
-                `<option value="${cam.deviceId}">${
-                  cam.label || `Camera ${i + 1}`
-                }</option>`,
-            )
-            .join("");
-        }
-      } catch (err) {
-        console.error("Webcam error:", err.name, err.message);
-        let message = "Camera access denied";
-        if (err.name === "NotAllowedError") {
-          message = "Camera permission denied";
-        } else if (err.name === "NotFoundError") {
-          message = "No camera found";
-        } else if (err.name === "NotReadableError") {
-          message = "Camera in use by another app";
-        } else if (err.name === "OverconstrainedError") {
-          message = "Camera constraints not supported";
-        } else if (!window.isSecureContext) {
-          message = "Camera requires secure context";
-        }
-        status.innerHTML = `<span>${message}</span>`;
-        status.style.display = "flex";
-        video.style.display = "none";
-      }
-    };
-
-    this.#webcamTabObserver = new MutationObserver(() => {
-      if (container.style.display !== "none" && !this.#webcam.stream) {
-        startWebcam();
-      }
-    });
-    this.#webcamTabObserver.observe(container, {
-      attributes: true,
-      attributeFilter: ["style"],
-    });
-
-    cameraSelect.addEventListener("change", (e) => {
-      startWebcam(e.target.value);
-    });
-
-    captureBtn.addEventListener("click", () => {
-      if (!this.#webcam.stream) return;
-
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-
-      this.#webcam.snapshot = canvas.toDataURL("image/png");
-      this.#image.url = this.#webcam.snapshot;
-      this.#fillType = "image";
-      this.#updateChit();
-      this.#emitInput();
-
-      // Switch to image tab to show result
-      this.#switchTab("image");
-      const tabs = this.#dialog.querySelector("fig-tabs");
-      tabs.value = "image";
-    });
-  }
-
-  // ============ COLOR CONVERSION UTILITIES ============
-  #hsvToRGB(hsv) {
-    const h = hsv.h / 360;
-    const s = hsv.s / 100;
-    const v = hsv.v / 100;
-
-    let r, g, b;
-    const i = Math.floor(h * 6);
-    const f = h * 6 - i;
-    const p = v * (1 - s);
-    const q = v * (1 - f * s);
-    const t = v * (1 - (1 - f) * s);
-
-    switch (i % 6) {
-      case 0:
-        r = v;
-        g = t;
-        b = p;
-        break;
-      case 1:
-        r = q;
-        g = v;
-        b = p;
-        break;
-      case 2:
-        r = p;
-        g = v;
-        b = t;
-        break;
-      case 3:
-        r = p;
-        g = q;
-        b = v;
-        break;
-      case 4:
-        r = t;
-        g = p;
-        b = v;
-        break;
-      case 5:
-        r = v;
-        g = p;
-        b = q;
-        break;
-    }
-
-    return {
-      r: Math.round(r * 255),
-      g: Math.round(g * 255),
-      b: Math.round(b * 255),
-    };
-  }
-
-  #rgbToHSV(rgb) {
-    const r = rgb.r / 255;
-    const g = rgb.g / 255;
-    const b = rgb.b / 255;
-
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const d = max - min;
-
-    let h = 0;
-    const s = max === 0 ? 0 : d / max;
-    const v = max;
-
-    if (max !== min) {
-      switch (max) {
-        case r:
-          h = (g - b) / d + (g < b ? 6 : 0);
-          break;
-        case g:
-          h = (b - r) / d + 2;
-          break;
-        case b:
-          h = (r - g) / d + 4;
-          break;
-      }
-      h /= 6;
-    }
-
-    return {
-      h: h * 360,
-      s: s * 100,
-      v: v * 100,
-      a: 1,
-    };
-  }
-
-  #hsvToHex(hsv) {
-    // Safety check for valid HSV object
-    if (
-      !hsv ||
-      typeof hsv.h !== "number" ||
-      typeof hsv.s !== "number" ||
-      typeof hsv.v !== "number"
-    ) {
-      return "#D9D9D9"; // Default gray
-    }
-    const rgb = this.#hsvToRGB(hsv);
-    const toHex = (n) => {
-      const val = isNaN(n) ? 217 : Math.max(0, Math.min(255, Math.round(n)));
-      return val.toString(16).padStart(2, "0");
-    };
-    return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
-  }
-
-  #hexToHSV(hex) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return this.#rgbToHSV({ r, g, b });
-  }
-
-  #hexToRGBA(hex, alpha = 1) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-
-  #hexToP3(hex, alpha = 1) {
-    const r = +(parseInt(hex.slice(1, 3), 16) / 255).toFixed(4);
-    const g = +(parseInt(hex.slice(3, 5), 16) / 255).toFixed(4);
-    const b = +(parseInt(hex.slice(5, 7), 16) / 255).toFixed(4);
-    return `color(display-p3 ${r} ${g} ${b} / ${alpha})`;
-  }
-
-  #rgbToHSL(rgb) {
-    const r = rgb.r / 255;
-    const g = rgb.g / 255;
-    const b = rgb.b / 255;
-
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h, s;
-    const l = (max + min) / 2;
-
-    if (max === min) {
-      h = s = 0;
-    } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-      switch (max) {
-        case r:
-          h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-          break;
-        case g:
-          h = ((b - r) / d + 2) / 6;
-          break;
-        case b:
-          h = ((r - g) / d + 4) / 6;
-          break;
-      }
-    }
-
-    return { h: h * 360, s: s * 100, l: l * 100 };
-  }
-
-  #hslToRGB(hsl) {
-    const h = hsl.h / 360;
-    const s = hsl.s / 100;
-    const l = hsl.l / 100;
-
-    let r, g, b;
-
-    if (s === 0) {
-      r = g = b = l;
-    } else {
-      const hue2rgb = (p, q, t) => {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1 / 6) return p + (q - p) * 6 * t;
-        if (t < 1 / 2) return q;
-        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-        return p;
-      };
-
-      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-      const p = 2 * l - q;
-
-      r = hue2rgb(p, q, h + 1 / 3);
-      g = hue2rgb(p, q, h);
-      b = hue2rgb(p, q, h - 1 / 3);
-    }
-
-    return {
-      r: Math.round(r * 255),
-      g: Math.round(g * 255),
-      b: Math.round(b * 255),
-    };
-  }
-
-  // OKLAB/OKLCH conversions (simplified)
-  #rgbToOKLAB(rgb) {
-    // Convert to linear sRGB
-    const toLinear = (c) => {
-      c = c / 255;
-      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-    };
-
-    const r = toLinear(rgb.r);
-    const g = toLinear(rgb.g);
-    const b = toLinear(rgb.b);
-
-    // Convert to LMS
-    const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
-    const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
-    const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
-
-    // Convert to Oklab
-    const l_ = Math.cbrt(l);
-    const m_ = Math.cbrt(m);
-    const s_ = Math.cbrt(s);
-
-    return {
-      l: 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
-      a: 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
-      b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
-    };
-  }
-
-  #rgbToOKLCH(rgb) {
-    const lab = this.#rgbToOKLAB(rgb);
-    return {
-      l: lab.l,
-      c: Math.sqrt(lab.a * lab.a + lab.b * lab.b),
-      h: ((Math.atan2(lab.b, lab.a) * 180) / Math.PI + 360) % 360,
-    };
-  }
-
-  #oklabToRGB(lab) {
-    const l_ = lab.l + 0.3963377774 * lab.a + 0.2158037573 * lab.b;
-    const m_ = lab.l - 0.1055613458 * lab.a - 0.0638541728 * lab.b;
-    const s_ = lab.l - 0.0894841775 * lab.a - 1.291485548 * lab.b;
-
-    const l = l_ * l_ * l_;
-    const m = m_ * m_ * m_;
-    const s = s_ * s_ * s_;
-
-    const toSRGB = (c) => {
-      const v =
-        c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
-      return Math.round(Math.max(0, Math.min(1, v)) * 255);
-    };
-
-    return {
-      r: toSRGB(+4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
-      g: toSRGB(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
-      b: toSRGB(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
-    };
-  }
-
-  #oklchToRGB(lch) {
-    const hRad = (lch.h * Math.PI) / 180;
-    return this.#oklabToRGB({
-      l: lch.l,
-      a: lch.c * Math.cos(hRad),
-      b: lch.c * Math.sin(hRad),
-    });
-  }
-
-  // ============ EVENT EMITTERS ============
-  #emitInput() {
-    this.#updateChit();
-    this.dispatchEvent(
-      new CustomEvent("input", {
-        bubbles: true,
-        detail: this.value,
-      }),
-    );
-  }
-
-  #emitChange() {
-    this.dispatchEvent(
-      new CustomEvent("change", {
-        bubbles: true,
-        detail: this.value,
-      }),
-    );
-  }
-
-  // ============ PUBLIC API ============
-  get value() {
-    const base = { type: this.#fillType, colorSpace: this.#gamut };
-
-    switch (this.#fillType) {
-      case "solid":
-        return {
-          ...base,
-          color: this.#hsvToHex(this.#color),
-          alpha: this.#color.a,
-          hsv: { ...this.#color },
-        };
-      case "gradient":
-        return {
-          ...base,
-          gradient: gradientToValueShape(this.#gradient),
-          css: this.#getGradientCSS(),
-        };
-      case "image":
-        return {
-          ...base,
-          image: { ...this.#image },
-        };
-      case "video":
-        return {
-          ...base,
-          video: { ...this.#video },
-        };
-      case "webcam":
-        return {
-          ...base,
-          image: { url: this.#webcam.snapshot, scaleMode: "fill", scale: 50 },
-        };
-      default:
-        return { ...base, ...this.#customData[this.#fillType] };
-    }
-  }
-
-  set value(val) {
-    if (typeof val === "string") {
-      this.setAttribute("value", val);
-    } else {
-      this.setAttribute("value", JSON.stringify(val));
-    }
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue) return;
-
-    switch (name) {
-      case "value":
-        this.#parseValue();
-        this.#updateChit();
-        if (this.#dialog) {
-          // Update dialog UI if open - but don't rebuild if user is dragging
-          if (!this.#isDraggingColor) {
-            // Just update the handle position and color inputs without rebuilding
-            this.#updateHandlePosition();
-            this.#updateColorInputs();
-            // Update hue slider
-            if (this.#hueSlider) {
-              this.#hueSlider.setAttribute("value", this.#color.h);
-            }
-            // Update opacity slider
-            if (this.#opacitySlider) {
-              this.#opacitySlider.setAttribute("value", this.#color.a * 100);
-              this.#opacitySlider.setAttribute(
-                "color",
-                this.#hsvToHex(this.#color),
-              );
-            }
-          }
-        }
-        break;
-      case "disabled":
-        // Handled in click listener
-        break;
-    }
-  }
-}
-customElements.define("fig-fill-picker", FigFillPicker);
 
 /* Color Tip */
 /**
@@ -14093,6 +12080,10 @@ class FigColorTip extends HTMLElement {
     if (this.#fillPicker) {
       this.#fillPicker.removeEventListener("input", this.#boundHandleInput);
       this.#fillPicker.removeEventListener("change", this.#boundHandleChange);
+    }
+    if (this.#chit) {
+      this.#chit.removeEventListener("input", this.#boundHandleInput);
+      this.#chit.removeEventListener("change", this.#boundHandleChange);
     }
     if (this.#chitSelectedObserver) {
       this.#chitSelectedObserver.disconnect();
@@ -14151,16 +12142,22 @@ class FigColorTip extends HTMLElement {
             opacity: Math.round(alpha * 100),
           })
         : JSON.stringify({ type: "solid", color });
-    this.innerHTML = `
-      <fig-fill-picker mode="solid" ${alphaAttr} value='${pickerValue}'>
-        <fig-chit background="${color}"></fig-chit>
-      </fig-fill-picker>`;
+    const chitAlphaAttr = alpha < 1 ? ` alpha="${alpha}"` : "";
+    this.innerHTML = hasFigFillPicker()
+      ? `<fig-fill-picker mode="solid" ${alphaAttr} value='${pickerValue}'>
+          <fig-chit background="${color}"${chitAlphaAttr}></fig-chit>
+        </fig-fill-picker>`
+      : `<fig-chit background="${color}"${chitAlphaAttr}></fig-chit>`;
 
     this.#fillPicker = this.querySelector("fig-fill-picker");
     this.#chit = this.querySelector("fig-chit");
     this.#teardownListeners();
     this.#fillPicker?.addEventListener("input", this.#boundHandleInput);
     this.#fillPicker?.addEventListener("change", this.#boundHandleChange);
+    if (!this.#fillPicker) {
+      this.#chit?.addEventListener("input", this.#boundHandleInput);
+      this.#chit?.addEventListener("change", this.#boundHandleChange);
+    }
     this.#observeChitSelected();
   }
 
@@ -14187,8 +12184,13 @@ class FigColorTip extends HTMLElement {
   #extractAlpha(colorValue) {
     if (!colorValue) return 1;
     const v = String(colorValue).trim();
-    if (v.startsWith("#") && v.length === 9) {
-      return parseInt(v.slice(7, 9), 16) / 255;
+    const hex = v.replace(/^#/, "");
+    if (/^[0-9a-f]{4}$/i.test(hex)) {
+      const a = hex[3];
+      return parseInt(`${a}${a}`, 16) / 255;
+    }
+    if (/^[0-9a-f]{8}$/i.test(hex)) {
+      return parseInt(hex.slice(6, 8), 16) / 255;
     }
     const rgbaMatch = v.match(
       /rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/i,
@@ -14213,6 +12215,9 @@ class FigColorTip extends HTMLElement {
     }
 
     if (value.startsWith("#")) {
+      return this.#normalizeHex(value);
+    }
+    if (/^[0-9a-f]{3,4}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/i.test(value)) {
       return this.#normalizeHex(value);
     }
 
@@ -14268,6 +12273,11 @@ class FigColorTip extends HTMLElement {
 
     if (this.#chit) {
       this.#chit.setAttribute("background", color);
+      if (alpha < 1) {
+        this.#chit.setAttribute("alpha", String(alpha));
+      } else {
+        this.#chit.removeAttribute("alpha");
+      }
       if (this.hasAttribute("disabled")) {
         this.#chit.setAttribute("disabled", "");
       } else {
@@ -14306,12 +12316,12 @@ class FigColorTip extends HTMLElement {
 
   #handlePickerInput(event) {
     event.stopPropagation();
-    this.#updateColorFromPicker(event.detail, "input");
+    this.#updateColorFromPicker(event.detail || { color: event.target?.value }, "input");
   }
 
   #handlePickerChange(event) {
     event.stopPropagation();
-    this.#updateColorFromPicker(event.detail, "change");
+    this.#updateColorFromPicker(event.detail || { color: event.target?.value }, "change");
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -14998,6 +13008,7 @@ class FigHandle extends HTMLElement {
   #applyingValue = false;
   #colorTip = null;
   #directColorPicker = null;
+  #nativeColorInput = null;
   #hitAreaEl = null;
 
   get #controlMode() {
@@ -15240,6 +13251,7 @@ class FigHandle extends HTMLElement {
     this.#teardownDrag();
     this.#hideColorTip();
     this.#removeDirectColorPicker();
+    this.#removeNativeColorInput();
     if (this.#hitAreaEl) {
       this.#hitAreaEl.remove();
       this.#hitAreaEl = null;
@@ -15566,6 +13578,7 @@ class FigHandle extends HTMLElement {
   }
 
   #ensureDirectColorPicker() {
+    if (!hasFigFillPicker()) return null;
     if (this.#directColorPicker) return this.#directColorPicker;
 
     const picker = document.createElement("fig-fill-picker");
@@ -15591,6 +13604,10 @@ class FigHandle extends HTMLElement {
     if (this.hasAttribute("disabled")) return;
     this.#hideColorTip();
     const picker = this.#ensureDirectColorPicker();
+    if (!picker) {
+      this.#openNativeColorPicker();
+      return;
+    }
     this.setAttribute("selected", "");
     this.#syncDirectColorPickerValue();
     picker.open();
@@ -15605,6 +13622,40 @@ class FigHandle extends HTMLElement {
     this.#directColorPicker.remove();
     this.#directColorPicker = null;
     this.removeAttribute("selected");
+  }
+
+  #ensureNativeColorInput() {
+    if (this.#nativeColorInput) return this.#nativeColorInput;
+    const input = document.createElement("input");
+    input.type = "color";
+    input.tabIndex = -1;
+    input.setAttribute("aria-hidden", "true");
+    input.style.position = "fixed";
+    input.style.inlineSize = "1px";
+    input.style.blockSize = "1px";
+    input.style.opacity = "0";
+    input.style.pointerEvents = "none";
+    input.addEventListener("input", this.#handleNativeColorInput);
+    input.addEventListener("change", this.#handleNativeColorChange);
+    this.appendChild(input);
+    this.#nativeColorInput = input;
+    return input;
+  }
+
+  #openNativeColorPicker() {
+    const input = this.#ensureNativeColorInput();
+    const { color } = this.#normalizeColorForPicker();
+    input.value = color;
+    this.setAttribute("selected", "");
+    input.click();
+  }
+
+  #removeNativeColorInput() {
+    if (!this.#nativeColorInput) return;
+    this.#nativeColorInput.removeEventListener("input", this.#handleNativeColorInput);
+    this.#nativeColorInput.removeEventListener("change", this.#handleNativeColorChange);
+    this.#nativeColorInput.remove();
+    this.#nativeColorInput = null;
   }
 
   #closeColorPickerForDrag() {
@@ -15676,6 +13727,36 @@ class FigHandle extends HTMLElement {
     const detail = this.#detailFromPicker(e.detail);
     if (!detail) return;
     this.setAttribute("color", this.#colorWithOpacity(detail.color, detail.opacity));
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        detail,
+      }),
+    );
+  };
+
+  #detailFromNativeColor(value) {
+    const { opacity } = this.#normalizeColorForPicker();
+    return opacity < 100 ? { color: value, opacity } : { color: value };
+  }
+
+  #handleNativeColorInput = (e) => {
+    e.stopPropagation();
+    const detail = this.#detailFromNativeColor(e.target.value);
+    this.setAttribute("color", this.#colorWithOpacity(detail.color, detail.opacity));
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        bubbles: true,
+        detail,
+      }),
+    );
+  };
+
+  #handleNativeColorChange = (e) => {
+    e.stopPropagation();
+    const detail = this.#detailFromNativeColor(e.target.value);
+    this.setAttribute("color", this.#colorWithOpacity(detail.color, detail.opacity));
+    this.removeAttribute("selected");
     this.dispatchEvent(
       new CustomEvent("change", {
         bubbles: true,

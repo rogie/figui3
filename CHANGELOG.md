@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.0.0]
+
+### Breaking
+
+- `fig-fill-picker` is now optional. Import `fig-fill-picker.js` and `fig-fill-picker.css` to register and style the full picker dialog.
+- `fig-input-color` no longer supports the `picker` attribute. It opens `fig-fill-picker` automatically when registered, otherwise it uses the native color input.
+- `picker-anchor` was removed. Picker popups anchor to the component that opens them.
+
+### Added
+
+- New package exports: `@rogieking/figui3/fig-fill-picker.js` and `@rogieking/figui3/fig-fill-picker.css`.
+- `fig-input-color`, `fig-input-fill`, `fig-input-gradient`, `fig-handle type="color"`, and `fig-color-tip` now check for `fig-fill-picker` at interaction time.
+
+### Changed
+
+- `fig.js` and `components.css` no longer include the full fill picker by default.
+- `picker-*` attributes are still forwarded to `fig-fill-picker` when the optional picker is registered.
+- `fig-input-gradient edit="picker"` falls back to inline gradient editing when `fig-fill-picker` is unavailable.
+- `fig-handle type="color"` falls back to the native color picker when `fig-fill-picker` is unavailable.
+- `fig-input-color` now shows alpha/opacity controls by default; use `alpha="false"` to hide them.
+- `fig-color-tip` now preserves opacity from bare 4- and 8-digit hex values such as `CB0FFF5E`.
+- Playground imports the optional picker files explicitly and no longer uses removed `picker` or `picker-anchor` attributes.
+
 ## [4.15.10]
 
 ### Added

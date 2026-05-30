@@ -44,7 +44,7 @@ export const propkitSections: Section[] = [
   <fig-group name="Fill">
     <fig-field direction="horizontal">
       <label>Background</label>
-      <fig-input-color value="#FFFFFF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+      <fig-input-color value="#FFFFFF" text="true" full></fig-input-color>
     </fig-field>
   </fig-group>
 </div>`,
@@ -84,7 +84,7 @@ export const propkitSections: Section[] = [
   <fig-group name="Appearance" collapsible open>
     <fig-field direction="horizontal">
       <label>Color</label>
-      <fig-input-color value="#0D99FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+      <fig-input-color value="#0D99FF" text="true" full></fig-input-color>
     </fig-field>
     <fig-field direction="horizontal">
       <label>Image</label>
@@ -398,7 +398,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Color</label>
-    <fig-input-color value="#0D99FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+    <fig-input-color value="#0D99FF" text="true" full></fig-input-color>
   </fig-field>
 </div>`,
       },
@@ -408,7 +408,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="horizontal">
     <label>Color</label>
-    <fig-input-color value="#0D99FF80" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
+    <fig-input-color value="#0D99FF80" text="true" alpha="true" full></fig-input-color>
   </fig-field>
 </div>`,
       },
@@ -870,7 +870,7 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field direction="horizontal">
       <label>Color</label>
-      <fig-input-color value="#0D99FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+      <fig-input-color value="#0D99FF" text="true" full></fig-input-color>
     </fig-field>
     <fig-field direction="horizontal">
       <label>Email</label>
@@ -1153,7 +1153,7 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field>
           <label>Color</label>
-          <fig-input-color value="#0D99FF" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
+          <fig-input-color value="#0D99FF" text="true" alpha="true" full></fig-input-color>
         </fig-field>
         <fig-field>
           <label>Fill</label>
@@ -1287,7 +1287,7 @@ export const propkitSections: Section[] = [
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Color</label>
-        <fig-input-color value="#000000" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
+        <fig-input-color value="#000000" text="true" alpha="true" full></fig-input-color>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Blur</label>
@@ -1376,7 +1376,7 @@ export const propkitSections: Section[] = [
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Shadow Tint</label>
-        <fig-input-color value="#000000" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+        <fig-input-color value="#000000" text="true" full></fig-input-color>
       </fig-field>
       <fig-field columns="half" direction="horizontal">
         <label>Photo Shape</label>
@@ -1569,7 +1569,7 @@ export const propkitSections: Section[] = [
     <fig-group name="Value">
       <fig-field direction="horizontal">
         <label>Color</label>
-        <fig-input-color value="#0D99FF" text="true" alpha="true" picker="figma" picker-anchor="self" full></fig-input-color>
+        <fig-input-color value="#0D99FF" text="true" alpha="true" full></fig-input-color>
       </fig-field>
       <fig-field direction="horizontal">
         <label>Opacity</label>
@@ -1691,7 +1691,7 @@ export const propkitSections: Section[] = [
       <fig-group name="Guide Style">
         <fig-field columns="half" direction="horizontal">
           <label>Color</label>
-          <fig-input-color value="#FF00FF" text="true" picker="figma" picker-anchor="self" full></fig-input-color>
+          <fig-input-color value="#FF00FF" text="true" full></fig-input-color>
         </fig-field>
         <fig-field columns="half" direction="horizontal">
           <label>Opacity</label>

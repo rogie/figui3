@@ -1234,8 +1234,8 @@ export default function AttributesView({
                 value={colorValue}
                 text="true"
                 alpha="true"
-                picker="figma"
-                picker-anchor="self"
+               
+               
                 full
                 onInput={handleColorChange}
                 onChange={handleColorChange}
@@ -1675,8 +1675,8 @@ export default function AttributesView({
                               value={colorValue}
                               text="true"
                               alpha="true"
-                              picker="figma"
-                              picker-anchor="self"
+                             
+                             
                               full
                               onInput={handleColorInput}
                               onChange={handleColorInput}

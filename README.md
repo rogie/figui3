@@ -32,6 +32,13 @@ import "@rogieking/figui3/fig.css";
 import "@rogieking/figui3/fig.js";
 ```
 
+Opt into the full Figma-style fill picker when you need it:
+
+```js
+import "@rogieking/figui3/fig-fill-picker.css";
+import "@rogieking/figui3/fig-fill-picker.js";
+```
+
 Or use a CDN:
 
 ```html
@@ -44,7 +51,7 @@ Minimal example:
 ```html
 <fig-field direction="horizontal">
   <label>Color</label>
-  <fig-input-color value="#FF5733" text="true" alpha="true"></fig-input-color>
+  <fig-input-color value="#FF5733" text="true"></fig-input-color>
 </fig-field>
 <fig-button variant="primary">Save</fig-button>
 ```
@@ -378,7 +385,7 @@ A color/gradient/image swatch element with checkerboard background for alpha.
 
 `<fig-color-tip>` — [demo](https://rog.ie/figui3/#color-tip)
 
-A compact solid-color swatch that wraps `<fig-fill-picker>`. Used inside gradient handles and other controls.
+A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker is registered, otherwise falls back to the native color input.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -412,10 +419,10 @@ A compact solid-color swatch that wraps `<fig-fill-picker>`. Used inside gradien
 |---|---|---|---|
 | `value` | string | — | Hex color (e.g. `"#FF5733"` or `"#FF573380"`) |
 | `text` | boolean | `false` | Show hex text input |
-| `alpha` | boolean | `false` | Show alpha slider |
-| `picker` | string | `"native"` | `"native"`, `"figma"`, `"false"` |
+| `alpha` | boolean | `true` | Show alpha slider; set `alpha="false"` to hide opacity controls |
 | `mode` | string | — | Color mode (`"hex"`, `"rgb"`, `"hsl"`) |
 | `experimental` | string | — | Feature flags |
+| `picker-*` | string | — | Forwarded to `<fig-fill-picker>` when the optional picker is registered |
 | `disabled` | boolean | `false` | Disabled state |
 
 **Events:**
@@ -426,9 +433,10 @@ A compact solid-color swatch that wraps `<fig-fill-picker>`. Used inside gradien
 | `change` | `{ color, alpha, hsv: { h, s, v, a } }` |
 
 ```html
-<fig-input-color value="#FF5733" text="true" alpha="true"></fig-input-color>
-<fig-input-color value="#FF5733" text="true" alpha="true" picker="figma"></fig-input-color>
+<fig-input-color value="#FF5733" text="true"></fig-input-color>
 ```
+
+When `fig-fill-picker.js` is imported, swatch activation opens `<fig-fill-picker>`. Without it, the native color input is used.
 
 ---
 
@@ -465,15 +473,15 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 
 `<fig-input-gradient>`
 
-A gradient editor with draggable stops. Opens `<fig-fill-picker>` locked to gradient mode.
+A gradient editor with draggable stops. With `edit="picker"` and the optional picker registered, it opens `<fig-fill-picker>` locked to gradient mode; otherwise it falls back to inline stop editing.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | string | — | JSON gradient fill data |
+| `edit` | boolean/string | `true` | `true`, `false`, or `"picker"` |
 | `disabled` | boolean | `false` | Disabled state |
 | `experimental` | string | — | Picker feature flags |
 | `picker-*` | string | — | Passthrough picker attributes |
-| `picker-anchor` | string | `"self"` | Anchor selector or `"self"` |
 
 Supported interpolation spaces: `srgb`, `srgb-linear`, `display-p3`, `oklab`, `oklch` (with `hueInterpolation`: `shorter`, `longer`, `increasing`, `decreasing`).
 
@@ -496,7 +504,7 @@ Supported interpolation spaces: `srgb`, `srgb-linear`, `display-p3`, `oklab`, `o
 
 `<fig-input-fill>` — [demo](https://rog.ie/figui3/#fill-input)
 
-A comprehensive fill input supporting solid, gradient, image, and video fills.
+A comprehensive fill input supporting solid, gradient, image, and video fills. Without the optional picker, it renders a passive preview.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -505,6 +513,7 @@ A comprehensive fill input supporting solid, gradient, image, and video fills.
 | `mode` | string | — | Lock to a fill mode |
 | `experimental` | string | — | Feature flags |
 | `alpha` | boolean | `true` | Show alpha controls |
+| `picker-*` | string | — | Forwarded to `<fig-fill-picker>` when the optional picker is registered |
 
 **Events:**
 
@@ -523,7 +532,7 @@ A comprehensive fill input supporting solid, gradient, image, and video fills.
 
 `<fig-fill-picker>` — [demo](https://rog.ie/figui3/#fill-picker)
 
-Full fill picker dialog supporting solid, gradient, image, video, and webcam. Wraps a trigger element (e.g. `<fig-chit>`).
+Optional full fill picker dialog supporting solid, gradient, image, video, and webcam. Import `fig-fill-picker.js` and `fig-fill-picker.css` to register and style it.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -765,8 +774,8 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
 | `drag-surface` | string | — | CSS selector for drag container (defaults to parent) |
 | `drag-axes` | string | `"xy"` | Constrain axes: `"x"`, `"y"`, `"xy"` |
 | `drag-snapping` | string | — | Snapping behavior |
-| `type` | string | — | `"color"` for color handle with direct solid color picker |
-| `color-tip` | boolean | `false` | For `type="color"`, use the compact `fig-color-tip` interaction instead of opening the picker directly |
+| `type` | string | — | `"color"` for a color handle with direct picker activation |
+| `color-tip` | boolean | `false` | For `type="color"`, use the compact `fig-color-tip` interaction instead of direct activation |
 | `control` | string | — | `"add"` or `"remove"` delegated to color tip |
 | `hit-area` | string | — | Expanded interaction zone (unitless px). `"8"`, `"8 12"` (v h), or `"8 circle"` |
 | `hit-area-mode` | string | `"handle"` | `"handle"` proxies to handle drag/select; `"delegate"` emits `hitareadown` event |
@@ -1238,7 +1247,7 @@ function ColorPicker({ value, onChange }) {
     if (ref.current) ref.current.setAttribute('value', value);
   }, [value]);
 
-  return <fig-input-color ref={ref} text="true" alpha="true" picker="figma" />;
+  return <fig-input-color ref={ref} text="true" alpha="true" />;
 }
 ```
 
@@ -1298,10 +1307,12 @@ npm run build:css      # Build minified CSS only
 
 | Source | Minified | Tool |
 |---|---|---|
-| `fig.js` (416 KB) | `dist/fig.js` (228 KB) | Bun `--minify` |
-| `fig.css` (133 KB) | `dist/fig.css` (102 KB) | lightningcss `--minify --nesting --bundle` |
-| `base.css` (1.9 KB) | `dist/base.css` (1.5 KB) | lightningcss |
-| `components.css` (131 KB) | `dist/components.css` (100 KB) | lightningcss |
+| `fig.js` (413 KB) | `dist/fig.js` (223 KB) | Bun `--minify` |
+| `fig-fill-picker.js` (67 KB) | `dist/fig-fill-picker.js` (37 KB) | Bun `--minify` |
+| `fig.css` | `dist/fig.css` (102 KB) | lightningcss `--minify --nesting --bundle` |
+| `components.css` (130 KB) | `dist/components.css` (100 KB) | lightningcss |
+| `fig-fill-picker.css` (6 KB) | `dist/fig-fill-picker.css` (4 KB) | lightningcss |
+| `base.css` (2 KB) | `dist/base.css` (2 KB) | lightningcss |
 
 Default imports resolve to minified `dist/` files. Unminified source is available via `@rogieking/figui3/src/*`:
 

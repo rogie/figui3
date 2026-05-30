@@ -10,6 +10,8 @@ interface Props {
   activeExampleId: string;
   isDark: boolean;
   setTheme: (dark: boolean) => void;
+  includeFillPicker: boolean;
+  setIncludeFillPicker: (include: boolean) => void;
   navigateTo: (sectionId: string, exampleId: string) => void;
   sections: Section[];
   appTitle: string;
@@ -30,6 +32,8 @@ export default function Nav({
   activeExampleId,
   isDark,
   setTheme,
+  includeFillPicker,
+  setIncludeFillPicker,
   navigateTo,
   sections,
   appTitle,
@@ -183,7 +187,12 @@ export default function Nav({
     <nav>
       <fig-header>
         <h1>{appTitle}</h1>
-        <ThemeToggle isDark={isDark} setTheme={setTheme} />
+        <ThemeToggle
+          isDark={isDark}
+          setTheme={setTheme}
+          includeFillPicker={includeFillPicker}
+          setIncludeFillPicker={setIncludeFillPicker}
+        />
       </fig-header>
       <div className="nav-links" ref={navRef}>
         {(() => {

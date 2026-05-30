@@ -173,21 +173,6 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
-    id: "color-tip",
-    name: "Color Tip",
-    group: "Core components",
-    description: "Solid color tip built on the fill picker interaction model.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <fig-color-tip value="#0D99FF"></fig-color-tip>
-</div>`,
-      },
-    ],
-  },
-  {
     id: "chit",
     name: "Chit",
     group: "Core components",
@@ -320,7 +305,7 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-input-color value="#0D99FF" text="true" alpha="true"></fig-input-color>
+  <fig-input-color value="#0D99FF" text="true"></fig-input-color>
 </div>`,
       },
     ],
@@ -784,7 +769,9 @@ export const figui3Sections: Section[] = [
     <fig-header>
       <h3>Popup</h3>
     </fig-header>
-    <p>Popup content</p>
+    <fig-content>
+      <p>Popup content</p>
+    </fig-content>
   </dialog>
 </div>`,
       },
@@ -892,6 +879,21 @@ export const figui3Sections: Section[] = [
     <fig-menu-item value="cut">Cut</fig-menu-item>
     <fig-menu-item value="copy">Copy</fig-menu-item>
   </fig-menu>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "color-tip",
+    name: "Color Tip",
+    group: "Utilities",
+    description: "Solid color tip built on the fill picker interaction model.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-color-tip value="#0D99FF"></fig-color-tip>
 </div>`,
       },
     ],
