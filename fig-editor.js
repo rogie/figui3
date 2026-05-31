@@ -1,6 +1,62 @@
-import { gradientToValueShape, gradientInterpolationClause, normalizeGradientConfig } from "./fig.js";
-
 // FigFillPicker
+const GRADIENT_INTERPOLATION_SPACES = [
+  "srgb",
+  "srgb-linear",
+  "display-p3",
+  "oklab",
+  "oklch",
+];
+const GRADIENT_HUE_INTERPOLATIONS = [
+  "shorter",
+  "longer",
+  "increasing",
+  "decreasing",
+];
+
+function normalizeGradientConfig(gradient) {
+  const next = { ...(gradient ?? {}) };
+  let interpolationSpace = String(
+    next.interpolationSpace ?? "oklab",
+  ).toLowerCase();
+  if (!GRADIENT_INTERPOLATION_SPACES.includes(interpolationSpace)) {
+    interpolationSpace = "oklab";
+  }
+  if (interpolationSpace === "srgb" || interpolationSpace === "display-p3") {
+    interpolationSpace = "oklab";
+  }
+  next.interpolationSpace = interpolationSpace;
+
+  const hueInterpolation = String(
+    next.hueInterpolation ?? "shorter",
+  ).toLowerCase();
+  next.hueInterpolation = GRADIENT_HUE_INTERPOLATIONS.includes(hueInterpolation)
+    ? hueInterpolation
+    : "shorter";
+  return next;
+}
+
+function gradientToValueShape(gradient) {
+  const normalized = normalizeGradientConfig(gradient);
+  const output = {
+    ...normalized,
+    interpolationSpace: normalized.interpolationSpace,
+  };
+  if (normalized.interpolationSpace === "oklch") {
+    output.hueInterpolation = normalized.hueInterpolation;
+  } else {
+    delete output.hueInterpolation;
+  }
+  return output;
+}
+
+function gradientInterpolationClause(gradient) {
+  const normalized = normalizeGradientConfig(gradient);
+  if (normalized.interpolationSpace === "oklch") {
+    return `in oklch ${normalized.hueInterpolation} hue`;
+  }
+  return `in ${normalized.interpolationSpace}`;
+}
+
 /**
  * A comprehensive fill picker component supporting solid colors, gradients, images, video, and webcam.
  * Uses display: contents and wraps a trigger element that opens a dialog picker.

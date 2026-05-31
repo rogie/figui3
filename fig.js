@@ -3632,6 +3632,7 @@ customElements.define("fig-options", FigOptions);
 class FigSlider extends HTMLElement {
   #isInteracting = false;
   #showEmptyTextValue = false;
+  #value = "";
   // Private fields declarations
   #typeDefaults = {
     range: { min: 0, max: 100, step: 1 },
@@ -3824,6 +3825,29 @@ class FigSlider extends HTMLElement {
 
   connectedCallback() {
     this.#regenerateInnerHTML();
+  }
+
+  get value() {
+    if (this.#value !== "") return this.#value;
+    const rawValue = this.getAttribute("value");
+    if (rawValue !== null) return String(this.#normalizeSliderValue(rawValue));
+    return "";
+  }
+
+  set value(value) {
+    const normalized = String(this.#normalizeSliderValue(value));
+    this.#value = normalized;
+    if (this.input && this.input.value !== normalized) {
+      this.input.value = normalized;
+      this.input.setAttribute("aria-valuenow", normalized);
+    }
+    if (this.figInputNumber) {
+      this.figInputNumber.setAttribute(
+        "value",
+        this.#showEmptyTextValue ? "" : normalized,
+      );
+    }
+    if (this.input) this.#syncProperties();
   }
 
   disconnectedCallback() {
@@ -5815,7 +5839,7 @@ const GRADIENT_HUE_INTERPOLATIONS = [
 
 const GRADIENT_PICKER_SPACES = ["srgb-linear", "oklab", "oklch"];
 
-export function normalizeGradientConfig(gradient) {
+function normalizeGradientConfig(gradient) {
   const next = { ...(gradient ?? {}) };
   let interpolationSpace = String(
     next.interpolationSpace ?? "oklab",
@@ -5837,7 +5861,7 @@ export function normalizeGradientConfig(gradient) {
   return next;
 }
 
-export function gradientToValueShape(gradient) {
+function gradientToValueShape(gradient) {
   const normalized = normalizeGradientConfig(gradient);
   const output = {
     ...normalized,
@@ -5851,7 +5875,7 @@ export function gradientToValueShape(gradient) {
   return output;
 }
 
-export function gradientInterpolationClause(gradient) {
+function gradientInterpolationClause(gradient) {
   const normalized = normalizeGradientConfig(gradient);
   if (normalized.interpolationSpace === "oklch") {
     return `in oklch ${normalized.hueInterpolation} hue`;

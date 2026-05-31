@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.1.1]
+
+### Fixed
+
+- Restored classic script compatibility by removing module syntax from the built `fig.js` output.
+- Restored direct `fig-slider.value` reads for consumers using the host element property.
+
 ## [5.1.0]
 
 ### Added
