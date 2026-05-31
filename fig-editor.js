@@ -88,6 +88,10 @@ class FigFillPicker extends HTMLElement {
       this.#webcam.stream.getTracks().forEach((track) => track.stop());
       this.#webcam.stream = null;
     }
+    if (this.#webcam.snapshot?.startsWith("blob:")) {
+      URL.revokeObjectURL(this.#webcam.snapshot);
+      this.#webcam.snapshot = null;
+    }
     if (this.#video.url && this.#video.url.startsWith("blob:")) {
       URL.revokeObjectURL(this.#video.url);
     }
@@ -1685,7 +1689,7 @@ class FigFillPicker extends HTMLElement {
         </div>
       </fig-video>
       <div class="fig-fill-picker-webcam-controls">
-        <fig-button class="fig-fill-picker-webcam-capture" variant="primary" full>
+        <fig-button class="fig-fill-picker-webcam-capture" variant="secondary" full>
           Capture
         </fig-button>
       </div>
@@ -1789,7 +1793,7 @@ class FigFillPicker extends HTMLElement {
       startWebcam(e.target.value);
     });
 
-    captureBtn.addEventListener("click", () => {
+    captureBtn.addEventListener("click", async () => {
       if (!this.#webcam.stream) return;
       if (!video.videoWidth || !video.videoHeight) return;
 
@@ -1798,7 +1802,15 @@ class FigFillPicker extends HTMLElement {
       canvas.height = video.videoHeight;
       canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      this.#webcam.snapshot = canvas.toDataURL("image/png");
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/png"),
+      );
+      if (!blob) return;
+
+      if (this.#webcam.snapshot?.startsWith("blob:")) {
+        URL.revokeObjectURL(this.#webcam.snapshot);
+      }
+      this.#webcam.snapshot = URL.createObjectURL(blob);
       this.#image.url = this.#webcam.snapshot;
 
       const imagePreview = this.#dialog.querySelector(
