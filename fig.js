@@ -9654,7 +9654,7 @@ customElements.define("fig-input-file", FigInputFile);
  * A bezier / spring easing curve editor with draggable control points.
  * @attr {string} value - Bezier: "0.42, 0, 0.58, 1" or Spring: "spring(200, 15, 1)"
  * @attr {number} precision - Decimal places for output values (default 2)
- * @attr {boolean} dropdown - Show a preset dropdown selector
+ * @attr {boolean} edit - Show the editor and custom preset options (default true; set "false" for presets only)
  */
 class FigEasingCurve extends HTMLElement {
   #cp1 = { x: 0.42, y: 0 };
@@ -9672,6 +9672,7 @@ class FigEasingCurve extends HTMLElement {
   #bezierEndpointStart = null;
   #bezierEndpointEnd = null;
   #dropdown = null;
+  #valueInput = null;
   #presetName = null;
   #targetLine = null;
   #springDuration = 0.8;
@@ -9753,7 +9754,7 @@ class FigEasingCurve extends HTMLElement {
   ];
 
   static get observedAttributes() {
-    return ["value", "precision", "aspect-ratio"];
+    return ["value", "precision", "aspect-ratio", "edit"];
   }
 
   connectedCallback() {
@@ -9775,6 +9776,8 @@ class FigEasingCurve extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
     if (name === "aspect-ratio") {
       figSyncCssVar(this, "--aspect-ratio", newValue);
       if (this.#svg) {
@@ -9784,16 +9787,21 @@ class FigEasingCurve extends HTMLElement {
       return;
     }
 
-    if (!this.#svg) return;
+    if (name === "edit") {
+      if (this.isConnected) this.#render();
+      return;
+    }
+
     if (name === "value" && newValue) {
       const prevMode = this.#mode;
       this.#parseValue(newValue);
       this.#presetName = this.#matchPreset();
-      if (prevMode !== this.#mode) {
+      if (prevMode !== this.#mode && this.#isEditEnabled()) {
         this.#render();
       } else {
-        this.#updatePaths();
+        if (this.#svg) this.#updatePaths();
         this.#syncDropdown();
+        this.#syncValueInput();
       }
     }
     if (name === "precision") {
@@ -9844,7 +9852,7 @@ class FigEasingCurve extends HTMLElement {
       this.#spring.stiffness = parseFloat(springMatch[1]);
       this.#spring.damping = parseFloat(springMatch[2]);
       this.#spring.mass = parseFloat(springMatch[3]);
-      return;
+      return true;
     }
     const parts = str.split(",").map((s) => parseFloat(s.trim()));
     if (parts.length >= 4 && parts.every((n) => !isNaN(n))) {
@@ -9853,7 +9861,9 @@ class FigEasingCurve extends HTMLElement {
       this.#cp1.y = parts[1];
       this.#cp2.x = parts[2];
       this.#cp2.y = parts[3];
+      return true;
     }
+    return false;
   }
 
   #matchPreset() {
@@ -9986,23 +9996,38 @@ class FigEasingCurve extends HTMLElement {
 
   // --- Rendering ---
 
+  #isEditEnabled() {
+    return this.getAttribute("edit") !== "false";
+  }
+
   #render() {
     this.classList.toggle("spring-mode", this.#mode === "spring");
     this.classList.toggle("bezier-mode", this.#mode !== "spring");
     this.#syncMetricsFromCSS();
     this.innerHTML = this.#getInnerHTML();
     this.#cacheRefs();
-    this.#syncHandleSizes();
-    this.#syncViewportSize();
-    this.#updatePaths();
+    if (this.#svg) {
+      this.#syncHandleSizes();
+      this.#syncViewportSize();
+      this.#updatePaths();
+    }
+    this.#syncValueInput();
     this.#setupEvents();
   }
 
+  static #escapeAttribute(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   #getDropdownHTML() {
-    if (this.getAttribute("dropdown") !== "true") return "";
     let optionsHTML = "";
     let currentGroup = undefined;
     for (const p of FigEasingCurve.PRESETS) {
+      if (!this.#isEditEnabled() && !p.value && !p.spring) continue;
       if (p.group !== currentGroup) {
         if (currentGroup !== undefined) optionsHTML += `</optgroup>`;
         if (p.group) optionsHTML += `<optgroup label="${p.group}">`;
@@ -10031,6 +10056,8 @@ class FigEasingCurve extends HTMLElement {
   #getInnerHTML() {
     const size = 200;
     const dropdown = this.#getDropdownHTML();
+    if (!this.#isEditEnabled()) return dropdown;
+    const valueInput = `<fig-input-text class="fig-easing-curve-value-input" value="${FigEasingCurve.#escapeAttribute(this.value)}" full></fig-input-text>`;
 
     if (this.#mode === "spring") {
       const targetY = 40;
@@ -10042,7 +10069,7 @@ class FigEasingCurve extends HTMLElement {
         <path class="fig-easing-curve-path"/>
         <foreignObject class="fig-easing-curve-handle" data-handle="bounce" width="20" height="20"><fig-handle size="small"></fig-handle></foreignObject>
         <foreignObject class="fig-easing-curve-handle fig-easing-curve-duration-bar" data-handle="duration" width="20" height="20"><fig-handle size="small"></fig-handle></foreignObject>
-      </svg></div>`;
+      </svg></div>${valueInput}`;
     }
 
     return `${dropdown}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
@@ -10055,7 +10082,7 @@ class FigEasingCurve extends HTMLElement {
       <circle class="fig-easing-curve-endpoint" data-endpoint="end" r="${this.#bezierEndpointRadius}"/>
       <foreignObject class="fig-easing-curve-handle" data-handle="1" width="20" height="20"><fig-handle size="small"></fig-handle></foreignObject>
       <foreignObject class="fig-easing-curve-handle" data-handle="2" width="20" height="20"><fig-handle size="small"></fig-handle></foreignObject>
-    </svg></div>`;
+    </svg></div>${valueInput}`;
   }
 
   #readCssNumber(name, fallback) {
@@ -10090,6 +10117,7 @@ class FigEasingCurve extends HTMLElement {
     this.#bezierEndpointStart = this.querySelector('[data-endpoint="start"]');
     this.#bezierEndpointEnd = this.querySelector('[data-endpoint="end"]');
     this.#dropdown = this.querySelector(".fig-easing-curve-dropdown");
+    this.#valueInput = this.querySelector(".fig-easing-curve-value-input");
     this.#targetLine = this.querySelector(".fig-easing-curve-target");
     this.#bounds = this.querySelector(".fig-easing-curve-bounds");
     this.#diagonal = this.querySelector(".fig-easing-curve-diagonal");
@@ -10171,6 +10199,17 @@ class FigEasingCurve extends HTMLElement {
     } else {
       this.#updateBezierPaths();
     }
+  }
+
+  #syncActiveBezierArm() {
+    this.#line1?.classList.toggle(
+      "is-active",
+      this.#mode === "bezier" && this.#isDragging === 1,
+    );
+    this.#line2?.classList.toggle(
+      "is-active",
+      this.#mode === "bezier" && this.#isDragging === 2,
+    );
   }
 
   #updateBezierPaths() {
@@ -10305,6 +10344,47 @@ class FigEasingCurve extends HTMLElement {
     this.#refreshCustomPresetIcons();
   }
 
+  #syncValueInput() {
+    if (!this.#valueInput) return;
+    this.#valueInput.setAttribute("value", this.value);
+  }
+
+  #parseManualBezierValue(value) {
+    const parts = value.split(",").map((part) => Number.parseFloat(part.trim()));
+    if (parts.length !== 4 || parts.some((part) => !Number.isFinite(part))) {
+      return null;
+    }
+    if (parts[0] < 0 || parts[0] > 1 || parts[2] < 0 || parts[2] > 1) {
+      return null;
+    }
+    return parts;
+  }
+
+  #applyManualValue(value, eventType) {
+    const parts = this.#parseManualBezierValue(value);
+    if (!parts) {
+      if (eventType === "change") this.#syncValueInput();
+      return;
+    }
+
+    const prevMode = this.#mode;
+    this.#mode = "bezier";
+    this.#cp1.x = parts[0];
+    this.#cp1.y = parts[1];
+    this.#cp2.x = parts[2];
+    this.#cp2.y = parts[3];
+
+    this.#presetName = this.#matchPreset();
+    if (prevMode !== this.#mode) {
+      this.#render();
+    } else {
+      this.#updatePaths();
+      this.#syncDropdown();
+      if (eventType === "change") this.#syncValueInput();
+    }
+    this.#emit(eventType);
+  }
+
   #setOptionIconByValue(root, optionValue, icon) {
     if (!root) return;
     for (const option of root.querySelectorAll("option")) {
@@ -10316,6 +10396,7 @@ class FigEasingCurve extends HTMLElement {
 
   #refreshCustomPresetIcons() {
     if (!this.#dropdown) return;
+    if (!this.#isEditEnabled()) return;
     const bezierIcon = FigEasingCurve.curveIcon(
       this.#cp1.x,
       this.#cp1.y,
@@ -10356,7 +10437,7 @@ class FigEasingCurve extends HTMLElement {
   }
 
   #setupEvents() {
-    if (this.#mode === "bezier") {
+    if (this.#svg && this.#mode === "bezier") {
       this.#handle1.addEventListener("pointerdown", (e) =>
         this.#startBezierDrag(e, 1),
       );
@@ -10374,7 +10455,7 @@ class FigEasingCurve extends HTMLElement {
           this.#startBezierDrag(e, this.#bezierHandleForClientHalf(e));
         });
       }
-    } else {
+    } else if (this.#svg) {
       this.#handle1.addEventListener("pointerdown", (e) => {
         e.stopPropagation();
         this.#startSpringDrag(e, "bounce");
@@ -10413,8 +10494,9 @@ class FigEasingCurve extends HTMLElement {
           if (this.#mode !== "bezier") {
             this.#mode = "bezier";
             this.#render();
-          } else {
+          } else if (this.#svg) {
             this.#updatePaths();
+            this.#syncValueInput();
           }
         } else if (preset.type === "spring") {
           if (preset.spring) {
@@ -10424,12 +10506,28 @@ class FigEasingCurve extends HTMLElement {
           if (this.#mode !== "spring") {
             this.#mode = "spring";
             this.#render();
-          } else {
+          } else if (this.#svg) {
             this.#updatePaths();
+            this.#syncValueInput();
           }
         }
         this.#emit("input");
         this.#emit("change");
+      });
+    }
+
+    if (this.#valueInput) {
+      this.#valueInput.addEventListener("input", (e) => {
+        e.stopPropagation();
+        const value = e.detail ?? e.target?.value;
+        if (typeof value !== "string") return;
+        this.#applyManualValue(value, "input");
+      });
+      this.#valueInput.addEventListener("change", (e) => {
+        e.stopPropagation();
+        const value = e.detail ?? e.target?.value;
+        if (typeof value !== "string") return;
+        this.#applyManualValue(value, "change");
       });
     }
   }
@@ -10452,6 +10550,7 @@ class FigEasingCurve extends HTMLElement {
   #startBezierDrag(e, handle) {
     e.preventDefault();
     this.#isDragging = handle;
+    this.#syncActiveBezierArm();
 
     const onMove = (e) => {
       if (!this.#isDragging) return;
@@ -10472,11 +10571,13 @@ class FigEasingCurve extends HTMLElement {
       this.#updatePaths();
       this.#presetName = this.#matchPreset();
       this.#syncDropdown();
+      this.#syncValueInput();
       this.#emit("input");
     };
 
     const onUp = () => {
       this.#isDragging = null;
+      this.#syncActiveBezierArm();
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
       this.#emit("change");
@@ -10520,6 +10621,7 @@ class FigEasingCurve extends HTMLElement {
       this.#updatePaths();
       this.#presetName = this.#matchPreset();
       this.#syncDropdown();
+      this.#syncValueInput();
       this.#emit("input");
     };
 

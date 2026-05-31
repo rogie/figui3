@@ -702,14 +702,14 @@ A transform-origin grid control with a draggable handle and optional X/Y percent
 
 `<fig-easing-curve>`
 
-An interactive bezier or spring easing curve editor with draggable control points and an optional preset dropdown.
+An interactive bezier or spring easing curve editor with a preset dropdown and manual value input.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | string | — | Bezier: `"0.42, 0, 0.58, 1"` or Spring: `"spring(200, 15, 1)"` |
 | `precision` | number | `2` | Decimal places |
 | `aspect-ratio` | string | — | Editor aspect ratio |
-| `dropdown` | boolean | `false` | Show preset dropdown |
+| `edit` | boolean | `true` | Show the editor and custom bezier/spring options; set to `"false"` for preset-only |
 
 **Static:** `FigEasingCurve.PRESETS` — built-in preset array. `FigEasingCurve.curveIcon(value)` — SVG icon helper.
 
@@ -721,8 +721,8 @@ An interactive bezier or spring easing curve editor with draggable control point
 | `change` | `{ mode, value, cssValue, preset }` — on release |
 
 ```html
-<fig-easing-curve value="0.42, 0, 0.58, 1" dropdown="true"></fig-easing-curve>
-<fig-easing-curve value="spring(200, 15, 1)"></fig-easing-curve>
+<fig-easing-curve value="0.42, 0, 0.58, 1"></fig-easing-curve>
+<fig-easing-curve value="spring(200, 15, 1)" edit="false"></fig-easing-curve>
 ```
 
 ---

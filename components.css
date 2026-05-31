@@ -1616,6 +1616,10 @@ fig-easing-curve {
     stroke-width: var(--stroke-width);
     stroke-linejoin: round;
     stroke-linecap: round;
+
+    &.is-active {
+      stroke: var(--figma-color-bg-brand);
+    }
   }
   .fig-easing-curve-path {
     fill: none;
@@ -1674,7 +1678,7 @@ fig-3d-rotate {
   --figma-3d-rotate-handle-size: 6px;
   --front-face-bg: light-dark(var(--figma-color-bg), #555);
 
-  fig-field[direction="horizontal"] & {
+  fig-field:not([direction="vertical"]) & {
     flex: 1;
     min-width: 0;
   }
@@ -1857,7 +1861,7 @@ fig-origin-grid {
   --origin-grid-handle-size: 0.75rem;
   --origin-grid-height: var(--spacer-4);
 
-  fig-field[direction="horizontal"] & {
+  fig-field:not([direction="vertical"]) & {
     flex: 1;
     min-width: 0;
   }
@@ -3461,7 +3465,7 @@ fig-input-fill {
     background-color: transparent !important;
   }
 
-  fig-field[direction="horizontal"] & {
+  fig-field:not([direction="vertical"]) & {
     flex: 1;
     min-width: 0;
   }
@@ -3479,6 +3483,12 @@ fig-input-gradient {
   &:focus-within {
     outline: 1px solid var(--figma-color-border-selected) !important;
     outline-offset: -1px !important;
+  }
+
+  fig-handle{
+    --height: 14px;
+    --width: 14px;
+
   }
 
   &[edit="false"] {
@@ -3670,17 +3680,23 @@ fig-field {
   --fig-field-label-ratio: 1fr;
   --fig-field-input-ratio: 2fr;
   display: grid;
-  grid-template-columns: var(--fig-field-left-padding) 1fr var(
-      --fig-field-right-padding
-    );
-  grid-template-rows: auto auto;
-  grid-template-areas:
-    "chevron label pad"
-    ".       input pad";
+  grid-template-columns:
+    var(--fig-field-left-padding) minmax(0, var(--fig-field-label-ratio))
+    minmax(0, var(--fig-field-input-ratio)) var(--fig-field-right-padding);
+  grid-template-areas: "chevron label input pad";
   margin: 0;
   padding: var(--fig-field-top-padding) 0 var(--fig-field-bottom-padding) 0;
   gap: 0;
   align-items: start;
+
+  &[columns="half"] {
+    --fig-field-label-ratio: 2fr;
+  }
+
+  &[columns="2/5"] {
+    --fig-field-label-ratio: 2fr;
+    --fig-field-input-ratio: 3fr;
+  }
 
   & > [full] {
     flex: 1 1 auto;
@@ -3697,6 +3713,11 @@ fig-field {
     padding: var(--spacer-1) 0;
     line-height: 1rem;
     user-select: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: var(--fig-field-gap);
+    min-width: 0;
   }
 
   & > *:not(.fig-field-chevron):not(label) {
@@ -3719,45 +3740,42 @@ fig-field {
     transform: rotate(0deg);
   }
 
-  &[direction="horizontal"] {
-    display: grid;
+  /* labelless fields can have a few inputs */
+  &:not([direction="vertical"]):not(:has(> label)) {
     grid-template-columns:
       var(--fig-field-left-padding) minmax(0, var(--fig-field-label-ratio))
+      var(--spacer-2)
       minmax(0, var(--fig-field-input-ratio)) var(--fig-field-right-padding);
-    grid-template-areas: "chevron label input pad";
-    gap: 0;
-    align-items: start;
+    grid-template-areas: "chevron input1 gap input2 pad";
 
-    &[columns="half"] {
-      --fig-field-label-ratio: 2fr;
+    & > *:first-child {
+      grid-area: input1;
     }
-    &[columns="2/5"] {
-      --fig-field-label-ratio: 2fr;
-      --fig-field-input-ratio: 3fr;
+
+    & > *:last-child {
+      grid-area: input2;
     }
+
+    & > *:only-child {
+      grid-column: input1 / -2;
+    }
+  }
+
+  &[direction="vertical"] {
+    grid-template-columns: var(--fig-field-left-padding) 1fr var(
+        --fig-field-right-padding
+      );
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "chevron label pad"
+      ".       input pad";
+
     & > label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      margin-right: var(--fig-field-gap);
-      min-width: 0;
-    }
-    /* labelless fields can have a few inputs */
-    &:not(:has(> label)) {
-      grid-template-columns:
-        var(--fig-field-left-padding) minmax(0, var(--fig-field-label-ratio))
-        var(--spacer-2)
-        minmax(0, var(--fig-field-input-ratio)) var(--fig-field-right-padding);
-      grid-template-areas: "chevron input1 gap input2 pad";
-      & > *:first-child {
-        grid-area: input1;
-      }
-      & > *:last-child {
-        grid-area: input2;
-      }
-      & > *:only-child {
-        grid-column: input1 / -2;
-      }
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      margin-right: 0;
+      min-width: auto;
     }
   }
 }
@@ -3937,7 +3955,7 @@ fig-joystick {
   width: var(--size);
 
   /* When inside horizontal fig-field, grow to fill and let inputs expand */
-  fig-field[direction="horizontal"] & {
+  fig-field:not([direction="vertical"]) & {
     flex: 1;
     min-width: 0;
 
@@ -4691,9 +4709,9 @@ fig-handle {
   --fig-handle-checkerboard: var(--checkerboard);
   --fig-handle-bg: var(--handle-color);
   --fig-handle-outline-color: transparent;
-  --fig-handle-outline: 1px solid var(--fig-handle-outline-color);
-  --fig-handle-outline-offset: 1px;
-  --fig-handle-inner-bg: var(--fill);
+  --fig-handle-outline: 1.5px solid var(--fig-handle-outline-color);
+  --fig-handle-outline-offset: 0px;
+  --fig-handle-inner-bg:  var(--figma-color-bg-brand);
   --fig-handle-inner-outline: 1px solid var(--figma-color-bg-brand);
   --fig-handle-height: var(--width);
   --fig-handle-width: var(--width);
@@ -4731,8 +4749,9 @@ fig-handle {
   }
 
   &[size="small"] {
-    --width: 11px;
-    --height: 11px;
+    --width: 0.75rem;
+    --height: 0.75rem;
+    --fig-handle-padding: 3px;
   }
 
   &[drag]:not([drag="false"]) {
@@ -4751,33 +4770,14 @@ fig-handle {
    --fig-handle-outline-color: var(--figma-color-border-selected);
   }
 
-  &[disabled]:not([disabled="false"]),
-  &[aria-disabled="true"] {
-    pointer-events: none;
-    cursor: default;
+  &[type="canvas"]{
+    --fig-handle-inner-bg: transparent;
+    --fig-handle-inner-outline: none;
   }
-  &[type="color"],
-  &[type="canvas"] {
-    &::after {
-      display: block;
-    }
-  }
-  &[type="canvas"] {
-   --fill: #FFFFFF;
-   --handle-color: var(--figma-color-bg-brand);
-   --ring-width: 1.5px;
-   &::after{
-    box-shadow: none;
-   }
-  }
-  &[type="color"]{
-    --fig-handle-padding: 0.125rem;
-  }
-
   &[type="color"],
   &[control] {
     --fig-handle-inner-bg: linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
-    --fig-handle-inner-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    --fig-handle-padding: 0.125rem;
     --fig-handle-inner-outline: none;
     position: relative;
     overflow: visible;
@@ -4788,6 +4788,16 @@ fig-handle {
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
+    }
+  }
+
+  &[disabled]:not([disabled="false"]),
+  &[aria-disabled="true"] {
+    cursor: not-allowed;
+    --fig-handle-outline-color: transparent;
+    background-color: var(--figma-color-bg-disabled);
+    &::after{
+      --fig-handle-inner-bg: var(--figma-color-icon-disabled);
     }
   }
 

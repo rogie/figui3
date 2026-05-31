@@ -221,7 +221,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     direction: {
       label: "Direction",
       type: "enum",
-      options: ["column", "row", "horizontal"],
+      options: ["horizontal", "vertical"],
     },
     label: { label: "Label", type: "string" },
   },
@@ -425,7 +425,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     full: { label: "Full width", type: "boolean" },
   },
   "fig-easing-curve": {
-    dropdown: { label: "Dropdown", type: "boolean", boolMode: "string" },
+    edit: {
+      label: "Edit",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     "aspect-ratio": aspectRatioRule,
   },
   "fig-3d-rotate": {

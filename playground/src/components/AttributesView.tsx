@@ -251,16 +251,26 @@ export default function AttributesView({
       name: string,
       value: string | null,
     ) => {
+      const currentTarget = targets.find(
+        (entry) => entry.fieldIndex === fieldIndex,
+      );
+      const nextValue =
+        name === "direction" &&
+        value?.toLowerCase() === "horizontal" &&
+        (target === "field" ||
+          (target === "control" && currentTarget?.controlTag === "fig-field"))
+          ? null
+          : value;
       onMarkupChange(
         applyAttributeMutation(markup, {
           fieldIndex,
           target,
           name,
-          value,
+          value: nextValue,
         }),
       );
     },
-    [markup, onMarkupChange],
+    [markup, onMarkupChange, targets],
   );
 
   const applyLabelChange = useCallback(
@@ -447,6 +457,10 @@ export default function AttributesView({
                 !dialogDragEnabled
               ) &&
               !(
+                entry.name === "color" &&
+                target.controlTag === "fig-handle"
+              ) &&
+              !(
                 (entry.name === "drag-axes" ||
                   entry.name === "drag-snapping") &&
                 target.controlTag === "fig-handle" &&
@@ -506,9 +520,7 @@ export default function AttributesView({
           if (rule.type === "boolean") {
             const mode = rule.boolMode ?? "presence";
             const checked =
-              target.controlTag === "fig-handle" && name === "color"
-                ? value !== undefined && value !== null
-                : target.controlTag === "fig-avatar" && name === "image"
+              target.controlTag === "fig-avatar" && name === "image"
                 ? Boolean(target.controlAttributes.src?.trim())
                 : target.controlTag === "fig-dialog" && name === "footer"
                     ? markup.includes("<footer>") || markup.includes("<fig-footer>")
@@ -571,27 +583,6 @@ export default function AttributesView({
                     onMarkupChange(
                       applyButtonIconMutation(markup, target.fieldIndex, next),
                     );
-                    return;
-                  }
-
-                  if (
-                    target.controlTag === "fig-handle" &&
-                    scope === "control" &&
-                    name === "color"
-                  ) {
-                    let nextMarkup = applyAttributeMutation(markup, {
-                      fieldIndex: target.fieldIndex,
-                      target: "control",
-                      name: "color",
-                      value: next ? "#FF00BF" : null,
-                    });
-                    nextMarkup = applyAttributeMutation(nextMarkup, {
-                      fieldIndex: target.fieldIndex,
-                      target: "control",
-                      name: "type",
-                      value: next ? "color" : null,
-                    });
-                    onMarkupChange(nextMarkup);
                     return;
                   }
 
@@ -865,12 +856,22 @@ export default function AttributesView({
                   return;
                 }
                 if (target.controlTag === "fig-handle" && name === "type") {
-                  applyChange(
-                    target.fieldIndex,
-                    scope,
-                    name,
-                    option === "default" ? null : option,
-                  );
+                  let updated = applyAttributeMutation(markup, {
+                    fieldIndex: target.fieldIndex,
+                    target: "control",
+                    name: "type",
+                    value: option === "default" ? null : option,
+                  });
+                  updated = applyAttributeMutation(updated, {
+                    fieldIndex: target.fieldIndex,
+                    target: "control",
+                    name: "color",
+                    value:
+                      option === "color"
+                        ? target.controlAttributes.color || "#FF0FDF"
+                        : null,
+                  });
+                  onMarkupChange(updated);
                   return;
                 }
                 if (
@@ -1299,7 +1300,6 @@ export default function AttributesView({
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
                     <fig-field
-                      direction="horizontal"
                       columns="2/5"
                       key={`field-label-${target.fieldIndex}`}
                     >
@@ -1338,7 +1338,6 @@ export default function AttributesView({
                     </fig-field>
                     {fieldEntries.map((entry) => (
                       <fig-field
-                        direction="horizontal"
                         columns="2/5"
                         key={`field-${entry.name}`}
                       >
@@ -1348,7 +1347,6 @@ export default function AttributesView({
                     ))}
                     {showFieldInputSelector && (
                       <fig-field
-                        direction="horizontal"
                         columns="2/5"
                         key={`field-input-${target.fieldIndex}`}
                       >
@@ -1414,7 +1412,6 @@ export default function AttributesView({
                         return (
                           <>
                             <fig-field
-                              direction="horizontal"
                               columns="2/5"
                               key={`control-icon-name-${target.fieldIndex}`}
                             >
@@ -1442,7 +1439,6 @@ export default function AttributesView({
                               ></fig-options>
                             </fig-field>
                             <fig-field
-                              direction="horizontal"
                               columns="2/5"
                               key={`control-icon-color-${target.fieldIndex}`}
                             >
@@ -1479,7 +1475,6 @@ export default function AttributesView({
                         );
                         return (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-header-icon-${target.fieldIndex}`}
                           >
@@ -1508,7 +1503,6 @@ export default function AttributesView({
                         );
                         return (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-footer-long-label-${target.fieldIndex}`}
                           >
@@ -1534,7 +1528,6 @@ export default function AttributesView({
                         const currentFill = bg.includes("gradient") ? "gradient" : "solid";
                         return (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-chit-fill-${target.fieldIndex}`}
                           >
@@ -1561,7 +1554,6 @@ export default function AttributesView({
                     {visibleControlEntries.flatMap((entry, entryIndex) => {
                       const field = (
                         <fig-field
-                          direction="horizontal"
                           columns="2/5"
                           key={`control-${entry.name}`}
                         >
@@ -1583,7 +1575,6 @@ export default function AttributesView({
                         const overflowOptions = ["buttons", "scrollbar"];
                         const overflowField = (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-chooser-overflow-${target.fieldIndex}`}
                           >
@@ -1620,7 +1611,6 @@ export default function AttributesView({
                           : maxSizeDefault;
                         const maxSizeField = (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-chooser-maxsize-${target.fieldIndex}-${currentLayout}`}
                           >
@@ -1657,7 +1647,6 @@ export default function AttributesView({
                         const paletteLabelsEnabled = getChooserPaletteLabelsEnabled(markup, target.fieldIndex);
                         const paletteLabelsField = (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-chooser-palette-labels-${target.fieldIndex}`}
                           >
@@ -1683,10 +1672,10 @@ export default function AttributesView({
 
                       if (
                         target.controlTag === "fig-handle" &&
-                        entry.name === "color" &&
-                        target.controlAttributes.color
+                        entry.name === "type" &&
+                        (target.controlAttributes.type ?? "default") === "color"
                       ) {
-                        const colorValue = target.controlAttributes.color || "#0D99FF";
+                        const colorValue = target.controlAttributes.color || "#FF0FDF";
                         const handleColorInput = (e: unknown) => {
                           const nextValue = readColorInputEventValue(e);
                           if (!nextValue) return;
@@ -1694,17 +1683,14 @@ export default function AttributesView({
                         };
                         const colorPickerField = (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-handle-color-picker-${target.fieldIndex}`}
                           >
-                            <label></label>
+                            <label>Color</label>
                             <fig-input-color
                               value={colorValue}
                               text="true"
                               alpha="true"
-                             
-                             
                               full
                               onInput={handleColorInput}
                               onChange={handleColorInput}
@@ -1737,7 +1723,6 @@ export default function AttributesView({
                         );
                         const hitAreaLabel = (
                           <fig-field
-                            direction="horizontal"
                             key={`control-handle-hit-area-label-${target.fieldIndex}`}
                           >
                             <label style={{ fontWeight: 600, fontSize: "11px" }}>Hit area</label>
@@ -1745,7 +1730,6 @@ export default function AttributesView({
                         );
                         const hitAreaSizeField = (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-handle-hit-area-size-${target.fieldIndex}`}
                           >
@@ -1767,7 +1751,6 @@ export default function AttributesView({
                         );
                         const hitAreaShapeField = (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-handle-hit-area-shape-${target.fieldIndex}`}
                           >
@@ -1793,7 +1776,6 @@ export default function AttributesView({
                         const hitAreaDebugValue = getHandleHitAreaDebug(markup, target.fieldIndex);
                         const hitAreaDebugField = (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-handle-hit-area-debug-${target.fieldIndex}`}
                           >
@@ -1815,7 +1797,6 @@ export default function AttributesView({
                         );
                         const hitAreaModeField = (
                           <fig-field
-                            direction="horizontal"
                             columns="2/5"
                             key={`control-handle-hit-area-mode-${target.fieldIndex}`}
                           >
@@ -1858,7 +1839,6 @@ export default function AttributesView({
                       ];
                       const prependField = (
                         <fig-field
-                          direction="horizontal"
                           columns="2/5"
                           key={`control-prepend-${target.fieldIndex}`}
                         >
@@ -1893,7 +1873,6 @@ export default function AttributesView({
                       const currentPct = match ? parseFloat(match[1]) : 50;
                       return (
                         <fig-field
-                          direction="horizontal"
                           columns="2/5"
                           key={`control-truncate-maxwidth-${target.fieldIndex}`}
                         >
