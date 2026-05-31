@@ -4071,6 +4071,7 @@ customElements.define("fig-slider", FigSlider);
  */
 class FigInputText extends HTMLElement {
   #isInteracting = false;
+  #passwordVisible = false;
   #boundMouseMove;
   #boundMouseUp;
   #boundWindowBlur;
@@ -4163,6 +4164,7 @@ class FigInputText extends HTMLElement {
       this.#syncSearchPrefix();
       this.#syncSearchClear();
       this.#syncSearchClearVisibility();
+      this.#syncPasswordToggle();
 
       if (this.type === "number") {
         if (this.getAttribute("min")) {
@@ -4269,6 +4271,59 @@ class FigInputText extends HTMLElement {
       return;
     }
     this.toggleAttribute("data-search-has-value", !!this.input?.value);
+  }
+  #syncPasswordToggle() {
+    const generated = this.querySelector(
+      '[slot="append"][data-generated="password-toggle"]',
+    );
+    if (this.type !== "password") {
+      generated?.remove();
+      this.#passwordVisible = false;
+      return;
+    }
+    const append = this.querySelector('[slot="append"]');
+    if (append && append !== generated) return;
+    if (generated) {
+      this.#updatePasswordToggle(generated);
+      return;
+    }
+
+    const wrapper = document.createElement("span");
+    wrapper.setAttribute("slot", "append");
+    wrapper.setAttribute("data-generated", "password-toggle");
+
+    const tooltip = document.createElement("fig-tooltip");
+    const button = document.createElement("fig-button");
+    button.setAttribute("variant", "ghost");
+    button.setAttribute("icon", "");
+
+    const icon = createFigIcon("visible", { size: "small" });
+    icon.setAttribute("color", "var(--figma-color-icon-secondary)");
+    button.append(icon);
+    tooltip.append(button);
+    wrapper.append(tooltip);
+    this.append(wrapper);
+    this.#updatePasswordToggle(wrapper);
+
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.#passwordVisible = !this.#passwordVisible;
+      if (this.input) {
+        this.input.type = this.#passwordVisible ? "text" : "password";
+      }
+      this.#updatePasswordToggle(wrapper);
+      this.focus();
+    });
+  }
+  #updatePasswordToggle(wrapper) {
+    const tooltip = wrapper.querySelector("fig-tooltip");
+    const button = wrapper.querySelector("fig-button");
+    const icon = wrapper.querySelector("fig-icon");
+    const label = this.#passwordVisible ? "Hide password" : "Show password";
+    tooltip?.setAttribute("text", label);
+    button?.setAttribute("aria-label", label);
+    icon?.setAttribute("name", this.#passwordVisible ? "visible" : "hidden");
   }
   #transformNumber(value) {
     if (value === "") return "";
@@ -4448,6 +4503,7 @@ class FigInputText extends HTMLElement {
           this.#syncSearchPrefix();
           this.#syncSearchClear();
           this.#syncSearchClearVisibility();
+          this.#syncPasswordToggle();
           break;
         default:
           this[name] = this.input[name] = newValue;
@@ -12248,7 +12304,7 @@ class FigPreview extends HTMLElement {
 }
 customElements.define("fig-preview", FigPreview);
 
-/** @type {Record<string, string>} */
+/** @type {Record<string, string | { medium: string, small: string }>} */
 const FIG_ICON_TOKENS = {
   chevron: "--icon-16-chevron",
   checkmark: "--icon-16-checkmark",
@@ -12260,17 +12316,25 @@ const FIG_ICON_TOKENS = {
   minus: "--icon-24-minus",
   back: "--icon-24-back",
   forward: "--icon-24-forward",
-  close: "--icon-24-close",
+  close: { medium: "--icon-24-close", small: "--icon-16-close" },
   rotate: "--icon-24-rotate",
   swap: "--icon-24-swap",
   play: "--icon-24-play",
   pause: "--icon-24-pause",
   search: "--icon-24-search",
+  visible: { medium: "--icon-24-visible", small: "--icon-16-visible" },
+  hidden: { medium: "--icon-24-hidden", small: "--icon-16-hidden" },
 };
 
-function figIconCssVar(name) {
+function figIconCssVar(name, size = "medium") {
   const token = name && FIG_ICON_TOKENS[name];
-  return token ? `var(${token})` : "";
+  if (!token) return "";
+
+  const tokenName =
+    typeof token === "string"
+      ? token
+      : token[size === "small" ? "small" : "medium"];
+  return tokenName ? `var(${tokenName})` : "";
 }
 
 /**
@@ -12294,11 +12358,11 @@ class FigIcon extends HTMLElement {
 
   #sync() {
     const iconName = this.getAttribute("name");
-    const cssVar = figIconCssVar(iconName);
+    const size = this.getAttribute("size") || "medium";
+    const cssVar = figIconCssVar(iconName, size);
     if (cssVar) this.style.setProperty("--icon", cssVar);
     else this.style.removeProperty("--icon");
 
-    const size = this.getAttribute("size") || "medium";
     if (size === "small") {
       this.style.setProperty("--size", "var(--spacer-3)");
     } else {

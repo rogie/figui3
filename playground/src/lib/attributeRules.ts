@@ -541,6 +541,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "play",
         "pause",
         "search",
+        "visible",
+        "hidden",
         "eyedropper",
         "steppers",
       ],
