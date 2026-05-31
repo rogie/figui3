@@ -288,15 +288,17 @@ fig-fill-picker {
   .fig-fill-picker-webcam-preview {
     position: relative;
     aspect-ratio: 1;
+    display: flex;
+    width: calc(100% - var(--spacer-3) * 2);
+    max-width: none;
+    max-height: none;
     margin: 0 var(--spacer-3);
     border-radius: var(--radius-medium);
     overflow: hidden;
-    margin-bottom: var(--spacer-2);
+    margin: var(--spacer-2) var(--spacer-3);
   }
 
   .fig-fill-picker-webcam-video {
-    position: absolute;
-    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -315,14 +317,11 @@ fig-fill-picker {
 
   .fig-fill-picker-webcam-controls {
     display: flex;
+    padding: 0 var(--spacer-3);
     gap: var(--spacer-1);
 
-    .fig-fill-picker-camera-select {
-      flex: 1;
-    }
-
     .fig-fill-picker-webcam-capture {
-      flex-shrink: 0;
+      width: 100%;
     }
   }
 }

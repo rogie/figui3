@@ -1674,20 +1674,21 @@ class FigFillPicker extends HTMLElement {
     const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
-      <div class="fig-fill-picker-webcam-preview">
-        <div class="fig-fill-picker-checkerboard"></div>
+      <fig-field class="fig-fill-picker-webcam-camera" style="display: none;">
+        <fig-dropdown class="fig-fill-picker-camera-select" full ${expAttr}>
+        </fig-dropdown>
+      </fig-field>
+      <fig-video class="fig-fill-picker-webcam-preview" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true">
         <video class="fig-fill-picker-webcam-video" autoplay muted playsinline></video>
         <div class="fig-fill-picker-webcam-status">
           <span>Camera access required</span>
         </div>
-      </div>
-      <fig-field class="fig-fill-picker-webcam-controls" direction="horizontal">
-        <fig-dropdown class="fig-fill-picker-camera-select" ${expAttr} style="display: none;">
-        </fig-dropdown>
-        <fig-button class="fig-fill-picker-webcam-capture" variant="primary">
+      </fig-video>
+      <div class="fig-fill-picker-webcam-controls">
+        <fig-button class="fig-fill-picker-webcam-capture" variant="primary" full>
           Capture
         </fig-button>
-      </fig-field>
+      </div>
     `;
 
     this.#setupWebcamEvents(container);
@@ -1698,6 +1699,9 @@ class FigFillPicker extends HTMLElement {
     const status = container.querySelector(".fig-fill-picker-webcam-status");
     const captureBtn = container.querySelector(
       ".fig-fill-picker-webcam-capture",
+    );
+    const cameraField = container.querySelector(
+      ".fig-fill-picker-webcam-camera",
     );
     const cameraSelect = container.querySelector(
       ".fig-fill-picker-camera-select",
@@ -1724,15 +1728,32 @@ class FigFillPicker extends HTMLElement {
         const cameras = devices.filter((d) => d.kind === "videoinput");
 
         if (cameras.length > 1) {
-          cameraSelect.style.display = "block";
-          cameraSelect.innerHTML = cameras
-            .map(
-              (cam, i) =>
-                `<option value="${cam.deviceId}">${
-                  cam.label || `Camera ${i + 1}`
-                }</option>`,
-            )
-            .join("");
+          cameraField.style.display = "";
+          cameraSelect
+            .querySelectorAll(":scope > option, :scope > optgroup")
+            .forEach((option) => option.remove());
+          cameras.forEach((cam, i) => {
+            const option = document.createElement("option");
+            option.value = cam.deviceId;
+            const label =
+              cam.label || (cameras.length > 1 ? `Camera ${i + 1}` : "Camera");
+            option.textContent = label.replace(
+              /\s*\((?:[0-9a-f]{4}:)*([0-9a-f]{4})\)$/i,
+              (_, id) => {
+                const displayId = /^\d+$/.test(id)
+                  ? Number.parseInt(id, 10).toString()
+                  : id.replace(/^0+/, "") || "0";
+                return ` ${displayId}`;
+              },
+            );
+            cameraSelect.append(option);
+          });
+          if (deviceId) cameraSelect.value = deviceId;
+        } else {
+          cameraField.style.display = "none";
+          cameraSelect
+            .querySelectorAll(":scope > option, :scope > optgroup")
+            .forEach((option) => option.remove());
         }
       } catch (err) {
         console.error("Webcam error:", err.name, err.message);
@@ -1770,22 +1791,23 @@ class FigFillPicker extends HTMLElement {
 
     captureBtn.addEventListener("click", () => {
       if (!this.#webcam.stream) return;
+      if (!video.videoWidth || !video.videoHeight) return;
 
       const canvas = document.createElement("canvas");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
 
       this.#webcam.snapshot = canvas.toDataURL("image/png");
       this.#image.url = this.#webcam.snapshot;
-      this.#fillType = "image";
-      this.#updateChit();
-      this.#emitInput();
+
+      const imagePreview = this.#dialog.querySelector(
+        ".fig-fill-picker-image-preview",
+      );
+      if (imagePreview) this.#updateImagePreview(imagePreview);
 
       // Switch to image tab to show result
       this.#switchTab("image");
-      const tabs = this.#dialog.querySelector("fig-tabs");
-      tabs.value = "image";
     });
   }
 
