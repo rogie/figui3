@@ -44,6 +44,9 @@ fig-fill-picker {
       display: block;
     }
   }
+  fig-preview{
+    overflow: visible;
+  }
 
   .fig-fill-picker-color-area {
     aspect-ratio: 1;
@@ -116,8 +119,11 @@ fig-fill-picker {
     aspect-ratio: auto;
     width: calc(100% - var(--spacer-3) * 2);
     margin: var(--spacer-2) var(--spacer-3);
-    margin-top: var(--spacer-4);
+    margin-top: calc(var(--spacer-4) + var(--spacer-1));
     background: transparent;
+    &::after{
+      display: none;
+    }
   }
 
   .fig-fill-picker-gradient-header {
@@ -183,7 +189,7 @@ fig-fill-picker {
   /* Media Tabs (Image/Video/Webcam) */
   .fig-fill-picker-media-header {
     .fig-fill-picker-scale-mode {
-      flex: 1;
+      flex: 0 0 auto;
     }
 
     .fig-fill-picker-scale {
@@ -194,7 +200,7 @@ fig-fill-picker {
   .fig-fill-picker-media-preview {
     position: relative;
     aspect-ratio: 1;
-    margin: var(--spacer-1) var(--spacer-3);
+    margin: var(--spacer-2) var(--spacer-3) var(--spacer-1)  var(--spacer-3);
     border-radius: var(--radius-medium);
     overflow: hidden;
     display: flex;

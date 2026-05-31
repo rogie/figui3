@@ -45,7 +45,7 @@ fig-field-slider {
     }
   }
 
-  fig-field[direction="horizontal"] {
+  fig-field:not([direction="vertical"]) {
     position: relative;
     padding-left: var(--spacer-2-5);
     display: flex;
@@ -281,7 +281,7 @@ fig-input-angle {
     }
   }
 
-  fig-field[direction="horizontal"] & {
+  fig-field:not([direction="vertical"]) & {
     flex: 1;
     min-width: 0;
 

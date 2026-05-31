@@ -105,7 +105,7 @@ export const labSections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal">
+  <fig-field>
     <label>Rotation</label>
     <fig-input-angle value="45" text="true" full></fig-input-angle>
   </fig-field>

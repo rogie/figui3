@@ -9176,6 +9176,7 @@ class FigMedia extends HTMLElement {
   #handleFileInput(e) {
     if (e.target !== this.#fileInput) return;
     const file = e.detail?.files?.[0];
+    const cleared = e.detail?.cleared === true;
 
     if (!file) {
       if (this.#blobUrl) {
@@ -9184,6 +9185,7 @@ class FigMedia extends HTMLElement {
       }
       this.#file = null;
       this.#previewSrc = null;
+      if (cleared) this.src = "";
       this.#syncGeneratedMediaElement();
       if (this.#fileInput) {
         const defaultLabel = this.getAttribute("label") || "Upload";
@@ -9260,8 +9262,11 @@ class FigMedia extends HTMLElement {
     if (oldValue === newValue) return;
 
     if (name === "src") {
-      this.#src = newValue || "";
-      if (this.#blobUrl) {
+      const nextSrc = newValue || "";
+      const isCurrentPreviewBlob =
+        nextSrc && (nextSrc === this.#previewSrc || nextSrc === this.#blobUrl);
+      this.#src = nextSrc;
+      if (this.#blobUrl && !isCurrentPreviewBlob) {
         URL.revokeObjectURL(this.#blobUrl);
         this.#blobUrl = null;
         this.#previewSrc = null;
@@ -9609,11 +9614,11 @@ class FigInputFile extends HTMLElement {
     this.removeAttribute("url");
     this.removeAttribute("filename");
     this.#render();
-    this.#emitEvents();
+    this.#emitEvents({ cleared: true });
   }
 
-  #emitEvents() {
-    const detail = { files: this.#files };
+  #emitEvents(extraDetail = {}) {
+    const detail = { files: this.#files, ...extraDetail };
     this.dispatchEvent(new CustomEvent("input", { detail, bubbles: true }));
     this.dispatchEvent(new CustomEvent("change", { detail, bubbles: true }));
   }

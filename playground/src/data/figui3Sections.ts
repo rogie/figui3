@@ -475,7 +475,7 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-field direction="horizontal" data-playground-field-only-controls="true">
+  <fig-field data-playground-field-only-controls="true">
     <label>Label</label>
     <fig-slider></fig-slider>
   </fig-field>
@@ -537,15 +537,15 @@ export const figui3Sections: Section[] = [
   </fig-tabs>
   <fig-tab-content id="tabs-general" data-playground-ignore-controls="true">
     <fig-group>
-      <fig-field direction="horizontal">
+      <fig-field>
         <label>Name</label>
         <fig-input-text value="My Component" full></fig-input-text>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field>
         <label>Visible</label>
         <input type="checkbox" class="switch" checked>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field>
         <label>Opacity</label>
         <fig-slider value="100" min="0" max="100" units="%" full></fig-slider>
       </fig-field>
@@ -553,11 +553,11 @@ export const figui3Sections: Section[] = [
   </fig-tab-content>
   <fig-tab-content id="tabs-advanced" data-playground-ignore-controls="true">
     <fig-group>
-      <fig-field direction="horizontal">
+      <fig-field>
         <label>Clip content</label>
         <input type="checkbox" class="switch">
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field>
         <label>Blend mode</label>
         <fig-dropdown full>
           <option selected>Pass through</option>
@@ -570,11 +570,11 @@ export const figui3Sections: Section[] = [
   </fig-tab-content>
   <fig-tab-content id="tabs-export" data-playground-ignore-controls="true">
     <fig-group>
-      <fig-field direction="horizontal">
+      <fig-field>
         <label>Format</label>
         <fig-options options="PNG,SVG,PDF" value="PNG" full></fig-options>
       </fig-field>
-      <fig-field direction="horizontal">
+      <fig-field>
         <label>Scale</label>
         <fig-options options="1x,2x,3x" value="2x" full></fig-options>
       </fig-field>

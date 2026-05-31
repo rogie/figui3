@@ -89,14 +89,14 @@ export default function ThemeToggle({
           <h3>Preferences</h3>
         </fig-header>
         <fig-content>
-          <fig-field direction="horizontal" columns="half">
+          <fig-field columns="half">
             <label>Fill picker</label>
             <fig-switch
               checked={includeFillPicker ? "true" : undefined}
               onInput={handleFillPickerInput}
             ></fig-switch>
           </fig-field>
-          <fig-field direction="horizontal" columns="half">
+          <fig-field columns="half">
             <label>Mode</label>
             <fig-options
               options="Light,Dark"

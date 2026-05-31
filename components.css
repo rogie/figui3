@@ -729,6 +729,9 @@ input[type="text"][list] {
           align-items: center;
           gap: 0;
           min-width: 0;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          width: 100%;
           &:has(> svg) {
             margin-left: calc(var(--spacer-2) * -1);
           }
@@ -876,14 +879,18 @@ fig-button {
   }
   /* Variant: Secondary */
   &[variant="secondary"] {
-    box-shadow: inset 0 0 0 1px var(--figma-color-border);
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     padding: 0 calc(var(--spacer-2) - 1px);
     background: none;
     color: var(--figma-color-text);
 
-    &:active {
-      background-color: var(--figma-color-bg-secondary);
+    &:active,
+    &:active:hover {
+      background-color: var(--figma-color-bg-transparent-pressed);
       color: var(--figma-color-text);
+    }
+    &:hover {
+      background-color: var(--figma-color-bg-secondary);
     }
   }
 
@@ -894,12 +901,13 @@ fig-button {
     color: var(--figma-color-text);
 
     &:hover {
-      box-shadow: inset 0 0 0 1px var(--figma-color-border);
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
       background-color: var(--figma-color-bg-transparent);
     }
 
-    &:active {
-      background-color: var(--figma-color-bg-secondary);
+    &:active,
+    &:active:hover {
+      background-color: var(--figma-color-bg-transparent-pressed);
       color: var(--figma-color-text);
     }
 
@@ -4797,6 +4805,11 @@ fig-handle {
   &[type="canvas"]{
     --fig-handle-inner-bg: transparent;
     --fig-handle-inner-outline: none;
+    --fig-handle-outline-color: var(--figma-color-border-selected);
+    &:hover,
+    &[selected]:not([selected="false"]){
+      --fig-handle-outline: 3px solid var(--figma-color-border-selected);
+    }
   }
   &[type="color"],
   &[control] {

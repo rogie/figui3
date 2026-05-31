@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.1.0]
+
+### Added
+
+- `fig-input-text type="search"` now adds a search icon and clear action.
+- `fig-input-text type="password"` now adds a show/hide password toggle.
+- Added visible and hidden icon tokens for medium and small `fig-icon` sizes.
+- `fig-fill-picker` image and video tabs now include rotate actions.
+
+### Changed
+
+- Refined `fig-fill-picker` media preview spacing and webcam capture layout.
+- Updated `fig-field` examples and lab styles to use the default horizontal layout.
+- Improved secondary and input button hover/pressed states.
+- Refined easing editor, slider defaults, canvas handles, and layer label styling.
+
+### Fixed
+
+- `fig-fill-picker` webcam captures now preview correctly and use blob URLs.
+- `fig-media` now clears uploaded file previews cleanly.
+
 ## [5.0.0]
 
 ### Breaking

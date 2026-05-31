@@ -95,6 +95,11 @@ nav {
       padding-bottom: 0;
     }
 
+    fig-layer:not([selected="true"]) {
+      > .fig-layer-row > label{
+        color: var(--figma-color-text-secondary);
+      }
+    }
 
 
     &::-webkit-scrollbar {

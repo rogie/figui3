@@ -570,7 +570,7 @@ class FigFillPicker extends HTMLElement {
             : ""
         }
       </div>
-      <fig-field class="fig-fill-picker-inputs" direction="horizontal">
+      <fig-field class="fig-fill-picker-inputs">
         <fig-dropdown class="fig-fill-picker-input-mode" ${expAttr} value="${this.#colorInputMode}">
           <option value="hex">Hex</option>
           <option value="rgb">RGB</option>
@@ -1051,7 +1051,7 @@ class FigFillPicker extends HTMLElement {
     const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
-      <fig-field class="fig-fill-picker-gradient-header" direction="horizontal">
+      <fig-field class="fig-fill-picker-gradient-header">
         <fig-dropdown class="fig-fill-picker-gradient-type" ${expAttr} value="${
           this.#gradient.type
         }">
@@ -1081,7 +1081,7 @@ class FigFillPicker extends HTMLElement {
       <fig-preview class="fig-fill-picker-gradient-preview">
         <fig-input-gradient class="fig-fill-picker-gradient-bar-input" edit="true" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
       </fig-preview>
-      <fig-field class="fig-fill-picker-gradient-interpolation" direction="horizontal">
+      <fig-field class="fig-fill-picker-gradient-interpolation">
         <label>Mixing</label>
         <fig-dropdown class="fig-fill-picker-gradient-space" full ${expAttr} value="${
           this.#gradient.interpolationSpace === "oklch"
@@ -1333,7 +1333,7 @@ class FigFillPicker extends HTMLElement {
     list.innerHTML = this.#gradient.stops
       .map(
         (stop, index) => `
-      <fig-field class="fig-fill-picker-gradient-stop-row" direction="horizontal" data-index="${index}">
+      <fig-field class="fig-fill-picker-gradient-stop-row" data-index="${index}">
         <fig-input-number class="fig-fill-picker-stop-position" min="0" max="100" value="${
           stop.position
         }" units="%"></fig-input-number>
@@ -1457,7 +1457,7 @@ class FigFillPicker extends HTMLElement {
     const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
-      <fig-field class="fig-fill-picker-media-header" direction="horizontal">
+      <fig-field class="fig-fill-picker-media-header">
         <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
           this.#image.scaleMode
         }">
@@ -1471,6 +1471,9 @@ class FigFillPicker extends HTMLElement {
         }" units="%" ${
           this.#image.scaleMode === "tile" ? "" : 'style="display: none;"'
         }></fig-input-number>
+        <fig-button class="fig-fill-picker-media-rotate" icon variant="ghost" aria-label="Rotate">
+          <fig-icon name="rotate"></fig-icon>
+        </fig-button>
       </fig-field>
       <fig-image class="fig-fill-picker-media-preview fig-fill-picker-image-preview" upload="true" label="Upload from computer" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true"></fig-image>
     `;
@@ -1622,7 +1625,7 @@ class FigFillPicker extends HTMLElement {
     const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
-      <fig-field class="fig-fill-picker-media-header" direction="horizontal">
+      <fig-field class="fig-fill-picker-media-header">
         <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
           this.#video.scaleMode
         }">
@@ -1630,6 +1633,9 @@ class FigFillPicker extends HTMLElement {
           <option value="fit">Fit</option>
           <option value="crop">Crop</option>
         </fig-dropdown>
+        <fig-button class="fig-fill-picker-media-rotate" icon variant="ghost" aria-label="Rotate">
+          <fig-icon name="rotate"></fig-icon>
+        </fig-button>
       </fig-field>
       <fig-media class="fig-fill-picker-media-preview fig-fill-picker-video-preview" type="video" upload="true" label="Upload from computer" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true" loop="true"></fig-media>
     `;
