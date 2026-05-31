@@ -4076,6 +4076,7 @@ class FigInputText extends HTMLElement {
   #boundWindowBlur;
   #boundMouseDown;
   #boundInputChange;
+  #boundNativeInput;
 
   constructor() {
     super();
@@ -4087,6 +4088,9 @@ class FigInputText extends HTMLElement {
     this.#boundInputChange = (e) => {
       e.stopPropagation();
       this.#handleInputChange(e);
+    };
+    this.#boundNativeInput = () => {
+      this.#syncSearchClearVisibility();
     };
   }
 
@@ -4156,6 +4160,9 @@ class FigInputText extends HTMLElement {
 
       this.input = this.querySelector("input,textarea");
       this.input.readOnly = this.readonly;
+      this.#syncSearchPrefix();
+      this.#syncSearchClear();
+      this.#syncSearchClearVisibility();
 
       if (this.type === "number") {
         if (this.getAttribute("min")) {
@@ -4171,12 +4178,15 @@ class FigInputText extends HTMLElement {
       }
       this.input.removeEventListener("change", this.#boundInputChange);
       this.input.addEventListener("change", this.#boundInputChange);
+      this.input.removeEventListener("input", this.#boundNativeInput);
+      this.input.addEventListener("input", this.#boundNativeInput);
     });
   }
 
   disconnectedCallback() {
     if (this.input) {
       this.input.removeEventListener("change", this.#boundInputChange);
+      this.input.removeEventListener("input", this.#boundNativeInput);
     }
     this.removeEventListener("pointerdown", this.#boundMouseDown);
     window.removeEventListener("pointermove", this.#boundMouseMove);
@@ -4186,6 +4196,79 @@ class FigInputText extends HTMLElement {
 
   focus() {
     this.input.focus();
+  }
+  #syncSearchPrefix() {
+    const generated = this.querySelector(
+      '[slot="prepend"][data-generated="search-prefix"]',
+    );
+    if (this.type !== "search") {
+      generated?.remove();
+      return;
+    }
+    const prepend = this.querySelector('[slot="prepend"]');
+    if (prepend && prepend !== generated) return;
+    if (generated) return;
+
+    const icon = createFigIcon("search");
+    icon.setAttribute("slot", "prepend");
+    icon.setAttribute("data-generated", "search-prefix");
+    icon.setAttribute("color", "var(--figma-color-icon)");
+    icon.addEventListener("click", this.focus.bind(this));
+    this.prepend(icon);
+  }
+  #syncSearchClear() {
+    const generated = this.querySelector(
+      '[slot="append"][data-generated="search-clear"]',
+    );
+    if (this.type !== "search") {
+      generated?.remove();
+      return;
+    }
+    const append = this.querySelector('[slot="append"]');
+    if (append && append !== generated) return;
+    if (generated) return;
+
+    const wrapper = document.createElement("span");
+    wrapper.setAttribute("slot", "append");
+    wrapper.setAttribute("data-generated", "search-clear");
+
+    const tooltip = document.createElement("fig-tooltip");
+    tooltip.setAttribute("text", "Clear search");
+
+    const button = document.createElement("fig-button");
+    button.setAttribute("variant", "ghost");
+    button.setAttribute("icon", "");
+    button.setAttribute("aria-label", "Clear search");
+
+    const icon = createFigIcon("", { size: "small" });
+    icon.setAttribute("color", "var(--figma-color-icon-secondary)");
+    button.append(icon);
+    tooltip.append(button);
+    wrapper.append(tooltip);
+    this.append(wrapper);
+    icon.style.setProperty("--icon", "var(--icon-16-close)");
+
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!this.input || this.input.value === "") {
+        this.focus();
+        return;
+      }
+      this.value = "";
+      this.input.value = "";
+      this.dispatchEvent(new CustomEvent("input", { detail: "", bubbles: true }));
+      this.dispatchEvent(new CustomEvent("change", { detail: "", bubbles: true }));
+      this.#syncSearchClearVisibility();
+      this.focus();
+    });
+  }
+  #syncSearchClearVisibility() {
+    if (this.type !== "search") {
+      this.removeAttribute("data-search-has-value");
+      return;
+    }
+    this.toggleAttribute("data-search-has-value", !!this.input?.value);
   }
   #transformNumber(value) {
     if (value === "") return "";
@@ -4204,6 +4287,7 @@ class FigInputText extends HTMLElement {
     }
     this.value = value;
     this.input.value = valueTransformed;
+    this.#syncSearchClearVisibility();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -4340,6 +4424,7 @@ class FigInputText extends HTMLElement {
             this.value = value;
             this.input.value = value;
           }
+          this.#syncSearchClearVisibility();
           break;
         case "min":
         case "max":
@@ -4356,6 +4441,13 @@ class FigInputText extends HTMLElement {
         case "placeholder":
           this.placeholder = newValue ?? "";
           this.input.placeholder = this.placeholder;
+          break;
+        case "type":
+          this.type = newValue || "text";
+          this.input.type = this.type;
+          this.#syncSearchPrefix();
+          this.#syncSearchClear();
+          this.#syncSearchClearVisibility();
           break;
         default:
           this[name] = this.input[name] = newValue;
@@ -12173,6 +12265,7 @@ const FIG_ICON_TOKENS = {
   swap: "--icon-24-swap",
   play: "--icon-24-play",
   pause: "--icon-24-pause",
+  search: "--icon-24-search",
 };
 
 function figIconCssVar(name) {

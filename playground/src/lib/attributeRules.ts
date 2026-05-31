@@ -540,6 +540,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "swap",
         "play",
         "pause",
+        "search",
         "eyedropper",
         "steppers",
       ],

@@ -988,6 +988,7 @@ export const FIG_ICON_SET_24 = [
   "swap",
   "play",
   "pause",
+  "search",
   "eyedropper",
   "steppers",
 ] as const;
