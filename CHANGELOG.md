@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [6.0.0]
 
 ### Breaking
 
@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - `fig-input-gradient` now defaults to `mode="handle"`; use `mode="tip"` for persistent color tips on gradient stops.
+- Refined `fig-input-gradient` handle sizing, border radius, and ghost handle stacking.
+- Disabled `fig-handle`s now render without elevation.
 
 ## [5.1.1]
 

@@ -3548,12 +3548,14 @@ fig-input-gradient {
 
   &[edit="false"] {
     pointer-events: none;
+    --fig-input-gradient-chit-border-radius: var(--radius-medium);
 
     &:focus,
     &:active,
     &:focus-within {
       outline: none !important;
     }
+
   }
 
   &[edit="picker"] {
@@ -3592,6 +3594,10 @@ fig-input-gradient {
       &:hover {
         z-index: 5;
       }
+    }
+
+    fig-handle.fig-input-gradient-ghost {
+      z-index: 10;
     }
   }
 }
@@ -4865,8 +4871,9 @@ fig-handle {
 
   &[disabled]:not([disabled="false"]),
   &[aria-disabled="true"] {
-    cursor: not-allowed;
     --fig-handle-outline-color: transparent;
+    --fig-handle-shadow: none;
+    cursor: not-allowed;
     background-color: var(--figma-color-bg-disabled);
     &::after{
       --fig-handle-inner-bg: var(--figma-color-icon-disabled);
