@@ -7274,7 +7274,7 @@ class FigInputGradient extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled", "edit"];
+    return ["value", "disabled", "edit", "mode"];
   }
 
   get #editMode() {
@@ -7286,6 +7286,10 @@ class FigInputGradient extends HTMLElement {
 
   get #isEditable() {
     return this.#editMode === "true";
+  }
+
+  get #stopHandleMode() {
+    return this.getAttribute("mode") === "tip" ? "tip" : "handle";
   }
 
   connectedCallback() {
@@ -7439,10 +7443,11 @@ class FigInputGradient extends HTMLElement {
 
   #buildStopHandles() {
     const disabled = this.hasAttribute("disabled");
+    const tipAttr = this.#stopHandleMode === "tip" ? ' tip="color"' : "";
     return this.#gradient.stops
       .map(
         (stop, i) =>
-          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color" tip="color" color="${this.#stopColorCSS(stop)}" value="${stop.position}% 50%" hit-area="4" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
+          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color"${tipAttr} color="${this.#stopColorCSS(stop)}" value="${stop.position}% 50%" hit-area="4" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
       )
       .join("");
   }
@@ -7523,7 +7528,7 @@ class FigInputGradient extends HTMLElement {
     const ghost = document.createElement("fig-handle");
     ghost.classList.add("fig-input-gradient-ghost");
     ghost.setAttribute("type", "color");
-    ghost.setAttribute("tip", "add");
+    if (this.#stopHandleMode === "tip") ghost.setAttribute("tip", "add");
     ghost.style.position = "absolute";
     ghost.style.top = "50%";
     ghost.style.transform = "translate(-50%, -50%)";
@@ -7679,6 +7684,7 @@ class FigInputGradient extends HTMLElement {
       const ghost = this.#ghostHandle;
       this.#track.innerHTML = this.#buildStopHandles();
       if (ghost) this.#track.appendChild(ghost);
+      this.#syncHandleMode();
       this.#reobserveHandleColors();
       requestAnimationFrame(() => this.#repositionHandles());
       return;
@@ -7690,8 +7696,29 @@ class FigInputGradient extends HTMLElement {
       h.dataset.stopIndex = i;
       h.setAttribute("value", `${stop.position}% 50%`);
       h.setAttribute("color", this.#stopColorCSS(stop));
+      if (this.#stopHandleMode === "tip") {
+        h.setAttribute("tip", "color");
+      } else {
+        h.removeAttribute("tip");
+      }
       const tip = h.closest("fig-tooltip");
       if (tip) tip.setAttribute("text", `${Math.round(stop.position)}%`);
+    }
+    this.#syncHandleMode();
+  }
+
+  #syncHandleMode() {
+    if (!this.#track) return;
+    const useTip = this.#stopHandleMode === "tip";
+    this.#track
+      .querySelectorAll("fig-handle:not(.fig-input-gradient-ghost)")
+      .forEach((handle) => {
+        if (useTip) handle.setAttribute("tip", "color");
+        else handle.removeAttribute("tip");
+      });
+    if (this.#ghostHandle) {
+      if (useTip) this.#ghostHandle.setAttribute("tip", "add");
+      else this.#ghostHandle.removeAttribute("tip");
     }
   }
 
@@ -7990,6 +8017,9 @@ class FigInputGradient extends HTMLElement {
         } else {
           document.removeEventListener("keydown", this.#onKeyDown);
         }
+        break;
+      case "mode":
+        this.#syncHandleMode();
         break;
     }
   }

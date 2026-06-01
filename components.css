@@ -3510,10 +3510,17 @@ fig-input-fill {
 fig-input-gradient {
   --fig-input-gradient-height: 1.5rem;
   --fig-input-gradient-padding: var(--spacer-1);
+  --fig-input-gradient-handle-size: 14px;
+  --fig-input-gradient-chit-border-radius: var(--radius-large);
   position: relative;
   height: var(--fig-input-gradient-height);
   width: 100%;
   min-width: 0;
+
+  fig-handle[type="color"]{
+    --height: var(--fig-input-gradient-handle-size);
+    --width: var(--fig-input-gradient-handle-size);
+  }
 
   &:focus,
   &:active,
@@ -3521,19 +3528,22 @@ fig-input-gradient {
     outline: 1px solid var(--figma-color-border-selected) !important;
     outline-offset: -1px !important;
   }
-
-  fig-handle[type="color"]{
-    --height: 14px;
-    --width: 14px;
-    --fig-handle-bg: transparent;
-    --fig-handle-inner-bg: transparent;
-    --fig-handle-outline: none;
-    --fig-handle-outline-color: transparent;
-    --fig-handle-shadow: none;
-    --fig-handle-inner-outline: none;
-    fig-color-tip{
-      bottom: calc(100%);
+  &[mode="tip"]{
+    fig-handle[type="color"]{
+      --fig-handle-bg: transparent;
+      --fig-handle-inner-bg: transparent;
+      --fig-handle-outline: none;
+      --fig-handle-outline-color: transparent;
+      --fig-handle-shadow: none;
+      --fig-handle-inner-outline: none;
+      fig-color-tip{
+        bottom: calc(100%);
+      }
     }
+    .fig-input-gradient-track {
+      inset: 0 calc(var(--fig-input-gradient-padding) + 2px);
+    }
+    --fig-input-gradient-chit-border-radius: var(--radius-medium);
   }
 
   &[edit="false"] {
@@ -3555,17 +3565,13 @@ fig-input-gradient {
   & > fig-fill-picker > fig-chit {
     --width: 100%;
     width: var(--width);
-    --border-radius: var(--radius-medium);
+    --border-radius: var(--fig-input-gradient-chit-border-radius);
   }
   &[size="large"] {
     --fig-input-gradient-height: 2rem;
+    --fig-input-gradient-chit-border-radius: var(--radius-medium);
     height: var(--fig-input-gradient-height) !important;
-    & > fig-chit,
-    & > fig-fill-picker > fig-chit {
-      --padding:0px;
-      --height: var(--fig-input-gradient-height);
-      --border-radius: var(--radius-medium);
-    }
+    
     .fig-input-gradient-track {
       inset: 0;
     }
@@ -3575,7 +3581,7 @@ fig-input-gradient {
     position: absolute;
     display: flex;
     align-items: center;
-    inset: 0 calc(var(--fig-input-gradient-padding) + 2px);
+    inset: 0 calc(var(--fig-input-gradient-padding) + var(--fig-input-gradient-handle-size)/2);
     pointer-events: auto;
     z-index: 1;
 

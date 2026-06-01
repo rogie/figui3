@@ -479,6 +479,7 @@ A gradient editor with draggable stops. With `edit="picker"` and the optional pi
 |---|---|---|---|
 | `value` | string | — | JSON gradient fill data |
 | `edit` | boolean/string | `true` | `true`, `false`, or `"picker"` |
+| `mode` | string | `"handle"` | `"handle"` renders color stop handles without tips; `"tip"` renders persistent color tips |
 | `disabled` | boolean | `false` | Disabled state |
 | `experimental` | string | — | Picker feature flags |
 | `picker-*` | string | — | Passthrough picker attributes |

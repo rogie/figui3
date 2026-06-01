@@ -8,6 +8,14 @@ All notable changes to this project will be documented in this file.
 
 - `fig-handle` now uses `tip="color"`, `tip="add"`, or `tip="remove"` for persistent color tips. The old handle `color-tip` and `control` attributes were removed.
 
+### Added
+
+- `fig-input-gradient` now supports `mode="handle"` and `mode="tip"` for color stop handle presentation.
+
+### Changed
+
+- `fig-input-gradient` now defaults to `mode="handle"`; use `mode="tip"` for persistent color tips on gradient stops.
+
 ## [5.1.1]
 
 ### Fixed

@@ -365,6 +365,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-input-gradient": {
     edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
+    mode: { label: "Mode", type: "enum", options: ["handle", "tip"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-color": {

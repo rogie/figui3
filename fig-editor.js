@@ -1135,7 +1135,7 @@ class FigFillPicker extends HTMLElement {
         </fig-tooltip>
       </fig-field>
       <fig-preview class="fig-fill-picker-gradient-preview">
-        <fig-input-gradient class="fig-fill-picker-gradient-bar-input" edit="true" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
+        <fig-input-gradient class="fig-fill-picker-gradient-bar-input" edit="true" mode="tip" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
       </fig-preview>
       <fig-field class="fig-fill-picker-gradient-interpolation">
         <label>Mixing</label>
