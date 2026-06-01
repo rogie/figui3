@@ -3522,10 +3522,18 @@ fig-input-gradient {
     outline-offset: -1px !important;
   }
 
-  fig-handle{
+  fig-handle[type="color"]{
     --height: 14px;
     --width: 14px;
-
+    --fig-handle-bg: transparent;
+    --fig-handle-inner-bg: transparent;
+    --fig-handle-outline: none;
+    --fig-handle-outline-color: transparent;
+    --fig-handle-shadow: none;
+    --fig-handle-inner-outline: none;
+    fig-color-tip{
+      bottom: calc(100%);
+    }
   }
 
   &[edit="false"] {
@@ -3547,7 +3555,7 @@ fig-input-gradient {
   & > fig-fill-picker > fig-chit {
     --width: 100%;
     width: var(--width);
-    --border-radius: var(--radius-large);
+    --border-radius: var(--radius-medium);
   }
   &[size="large"] {
     --fig-input-gradient-height: 2rem;
@@ -3567,7 +3575,7 @@ fig-input-gradient {
     position: absolute;
     display: flex;
     align-items: center;
-    inset: 0 var(--spacer-2-5);
+    inset: 0 calc(var(--fig-input-gradient-padding) + 2px);
     pointer-events: auto;
     z-index: 1;
 
@@ -4383,7 +4391,7 @@ fig-shimmer {
 /* Skeleton */
 fig-skeleton {
   display: contents;
-  pointer-events: all;
+  pointer-events: none;
   user-select: none;
   --fig-skeleton-angle: 90deg;
   --fig-skeleton-bg-color: var(--figma-color-bg-secondary);
@@ -4831,7 +4839,9 @@ fig-handle {
     }
   }
   &[type="color"],
-  &[control] {
+  &[tip="color"],
+  &[tip="add"],
+  &[tip="remove"] {
     --fig-handle-inner-bg: linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
     --fig-handle-padding: 0.125rem;
     --fig-handle-inner-outline: none;

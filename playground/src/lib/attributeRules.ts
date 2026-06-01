@@ -632,10 +632,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["default", "color", "canvas"],
     },
-    control: {
-      label: "Control",
+    tip: {
+      label: "Tip",
       type: "enum",
-      options: ["", "add", "remove"],
+      options: ["", "color", "add", "remove"],
     },
     size: {
       label: "Size",
@@ -643,7 +643,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "small"],
     },
     color: { label: "Color", type: "boolean", boolMode: "presence" },
-    "color-tip": { label: "Color tip", type: "boolean", boolMode: "presence" },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     drag: { label: "Drag", type: "boolean", boolMode: "presence" },

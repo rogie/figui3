@@ -786,7 +786,7 @@ export default function AttributesView({
                   name === "drag-snapping" ||
                   name === "size" ||
                   name === "type" ||
-                  name === "control")) ||
+                  name === "tip")) ||
               (target.controlTag === "fig-color-tip" &&
                 scope === "control" &&
                 name === "control") ||
@@ -798,7 +798,7 @@ export default function AttributesView({
                 if (
                   (target.controlTag === "fig-handle" ||
                     target.controlTag === "fig-color-tip") &&
-                  name === "control"
+                  (name === "tip" || name === "control")
                 ) {
                   return toSentenceCaseLabel(option || "None");
                 }
@@ -832,19 +832,38 @@ export default function AttributesView({
                 }
                 if (
                   target.controlTag === "fig-handle" &&
-                  name === "control"
+                  name === "tip"
                 ) {
                   let updated = applyAttributeMutation(markup, {
                     fieldIndex: target.fieldIndex,
                     target: "control",
-                    name: "control",
+                    name: "tip",
                     value: option || null,
                   });
-                  if (option === "add" || option === "remove") {
+                  if (option === "color") {
                     updated = applyAttributeMutation(updated, {
                       fieldIndex: target.fieldIndex,
                       target: "control",
                       name: "type",
+                      value: "color",
+                    });
+                    updated = applyAttributeMutation(updated, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "color",
+                      value: target.controlAttributes.color || "#FF0FDF",
+                    });
+                  } else if (option === "add" || option === "remove") {
+                    updated = applyAttributeMutation(updated, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "type",
+                      value: null,
+                    });
+                    updated = applyAttributeMutation(updated, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "color",
                       value: null,
                     });
                   }
@@ -939,7 +958,7 @@ export default function AttributesView({
               (target.controlTag === "fig-button" && name === "type") ||
               (target.controlTag === "fig-chooser" && name === "layout") ||
               (target.controlTag === "fig-field-slider" && name === "type") ||
-              (target.controlTag === "fig-handle" && name === "control") ||
+              (target.controlTag === "fig-handle" && name === "tip") ||
               (target.controlTag === "fig-color-tip" && name === "control") ||
               options.includes("");
 
@@ -1068,19 +1087,38 @@ export default function AttributesView({
                     }
                     if (
                       target.controlTag === "fig-handle" &&
-                      name === "control"
+                      name === "tip"
                     ) {
                       let updated = applyAttributeMutation(markup, {
                         fieldIndex: target.fieldIndex,
                         target: "control",
-                        name: "control",
+                        name: "tip",
                         value: resolvedValue || null,
                       });
-                      if (resolvedValue === "add" || resolvedValue === "remove") {
+                      if (resolvedValue === "color") {
                         updated = applyAttributeMutation(updated, {
                           fieldIndex: target.fieldIndex,
                           target: "control",
                           name: "type",
+                          value: "color",
+                        });
+                        updated = applyAttributeMutation(updated, {
+                          fieldIndex: target.fieldIndex,
+                          target: "control",
+                          name: "color",
+                          value: target.controlAttributes.color || "#FF0FDF",
+                        });
+                      } else if (resolvedValue === "add" || resolvedValue === "remove") {
+                        updated = applyAttributeMutation(updated, {
+                          fieldIndex: target.fieldIndex,
+                          target: "control",
+                          name: "type",
+                          value: null,
+                        });
+                        updated = applyAttributeMutation(updated, {
+                          fieldIndex: target.fieldIndex,
+                          target: "control",
+                          name: "color",
                           value: null,
                         });
                       }

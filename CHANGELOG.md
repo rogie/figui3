@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Breaking
+
+- `fig-handle` now uses `tip="color"`, `tip="add"`, or `tip="remove"` for persistent color tips. The old handle `color-tip` and `control` attributes were removed.
+
 ## [5.1.1]
 
 ### Fixed
