@@ -1,9 +1,10 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import SandboxApp from "./SandboxApp";
+import TestApp from "./TestApp";
 import "./App.css";
 
-type PlaygroundMode = "propkit" | "figui3" | "lab" | "sandbox";
+type PlaygroundMode = "propkit" | "figui3" | "lab" | "sandbox" | "tests";
 
 function normalizePathname(pathname: string): string {
   if (pathname.length > 1 && pathname.endsWith("/")) {
@@ -28,6 +29,9 @@ function resolveModeFromPath(pathname: string): PlaygroundMode {
   if (normalized === "/sandbox" || normalized.startsWith("/sandbox/")) {
     return "sandbox";
   }
+  if (normalized === "/tests" || normalized.startsWith("/tests/")) {
+    return "tests";
+  }
   return "figui3";
 }
 
@@ -43,6 +47,10 @@ function applyTitleForMode(mode: PlaygroundMode) {
   }
   if (mode === "sandbox") {
     document.title = "Sandbox playground: Styled React sample app";
+    return;
+  }
+  if (mode === "tests") {
+    document.title = "FigUI3 component tests";
     return;
   }
   document.title = "FigUI3 playground: A framework-agnostic set of Figma web components";
@@ -76,7 +84,9 @@ function ensureSupportedRoute() {
     normalized === "/propskit" ||
     normalized.startsWith("/propskit/") ||
     normalized === "/sandbox" ||
-    normalized.startsWith("/sandbox/");
+    normalized.startsWith("/sandbox/") ||
+    normalized === "/tests" ||
+    normalized.startsWith("/tests/");
   if (!supported) {
     window.history.replaceState(null, "", `/figui3${search}${hash}`);
   }
@@ -104,7 +114,13 @@ const bootstrap = async () => {
   }
   applyTitleForMode(mode);
   createRoot(appRoot).render(
-    mode === "sandbox" ? <SandboxApp /> : <App mode={mode} />,
+    mode === "sandbox" ? (
+      <SandboxApp />
+    ) : mode === "tests" ? (
+      <TestApp />
+    ) : (
+      <App mode={mode} />
+    ),
   );
 };
 

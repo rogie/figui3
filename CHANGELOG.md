@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.3.0]
+
+### Added
+
+- Added Playwright component contract tests covering every `fig.js` web component.
+- Added a playground `/tests` route with visual fixtures generated from the shared component manifest.
+- Added project testing skills for web component and CSS validation.
+
 ## [6.2.0]
 
 ### Added

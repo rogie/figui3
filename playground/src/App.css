@@ -714,3 +714,134 @@ code {
     background: #1a2338;
   }
 }
+
+#app[data-mode="tests"] {
+  display: block;
+  min-width: 0;
+  padding: var(--spacer-6);
+}
+
+.tests-app {
+  width: min(1200px, calc(100vw - var(--spacer-6) * 2));
+  margin: 0 auto;
+  display: grid;
+  gap: var(--spacer-6);
+}
+
+.tests-hero {
+  display: grid;
+  gap: var(--spacer-2);
+
+  h1,
+  p {
+    margin: 0;
+  }
+
+  h1 {
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    color: var(--figma-color-text-secondary);
+    max-width: 640px;
+  }
+}
+
+.tests-kicker {
+  color: var(--figma-color-text-brand) !important;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tests-group {
+  display: grid;
+  gap: var(--spacer-3);
+
+  > fig-header {
+    h2 {
+      margin: 0;
+      font-size: 16px;
+      text-transform: capitalize;
+    }
+
+    span {
+      color: var(--figma-color-text-secondary);
+      font-size: 12px;
+      margin-left: auto;
+    }
+  }
+}
+
+.tests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--spacer-3);
+}
+
+.tests-card {
+  min-width: 0;
+  display: grid;
+  gap: var(--spacer-3);
+  align-content: start;
+  border: 1px solid var(--figma-color-border);
+  border-radius: var(--radius-large);
+  background: var(--figma-color-bg);
+  padding: var(--spacer-3);
+
+  h3 {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  code {
+    color: var(--figma-color-text-secondary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+  }
+
+  pre {
+    overflow: auto;
+    margin: var(--spacer-2) 0 0;
+    padding: var(--spacer-2);
+    border-radius: var(--radius-small);
+    background: var(--figma-color-bg-secondary);
+    color: var(--figma-color-text-secondary);
+    font-size: 11px;
+    white-space: pre-wrap;
+  }
+
+  summary {
+    color: var(--figma-color-text-secondary);
+    cursor: pointer;
+    font-size: 11px;
+  }
+}
+
+.tests-status-dot {
+  width: var(--spacer-3);
+  height: var(--spacer-3);
+  border-radius: 999px;
+  margin-left: auto;
+
+  &[data-state="registered"] {
+    background: #14ae5c;
+  }
+
+  &[data-state="missing"] {
+    background: #f24822;
+  }
+}
+
+.tests-fixture {
+  min-height: 96px;
+  display: grid;
+  align-content: center;
+  gap: var(--spacer-2);
+  padding: var(--spacer-3);
+  border-radius: var(--radius-medium);
+  background: var(--figma-color-bg-secondary);
+  overflow: hidden;
+}
