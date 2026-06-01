@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.1.1]
+
+### Fixed
+
+- Origin grid overflow handles now keep their icon-only treatment.
+
 ## [6.1.0]
 
 ### Added

@@ -1958,6 +1958,7 @@ fig-origin-grid {
     --border-radius: var(--radius-small);
     --fig-handle-padding: 2.5px;
     --fig-handle-inner-radius: 0;
+
     position: absolute;
     left: 50%;
     top: 50%;
@@ -1979,8 +1980,8 @@ fig-origin-grid {
       mask-position: center;
       -webkit-mask-size: 24px 24px;
       mask-size: 24px 24px;
-      --fig-handle-inner-bg: transparent;
-      --fig-handle-outline-color: transparent;
+      --fig-handle-inner-bg: transparent !important;
+      --fig-handle-outline-color: transparent !important;
       --fig-handle-inner-outline: none;
       --border-radius: 0;
       --box-shadow: none;
