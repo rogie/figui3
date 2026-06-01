@@ -343,6 +343,7 @@
   --icon-24-minus: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18 12C18 12.2761 17.7761 12.5 17.5 12.5H6.5C6.22386 12.5 6 12.2761 6 12C6 11.7239 6.22386 11.5 6.5 11.5H17.5C17.7761 11.5 18 11.7239 18 12Z' fill='currentColor'/%3E%3C/svg%3E");
   --icon-24-back: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.8536 7.14645C14.0488 7.34171 14.0488 7.65829 13.8536 7.85355L9.70711 12L13.8536 16.1464C14.0488 16.3417 14.0488 16.6583 13.8536 16.8536C13.6583 17.0488 13.3417 17.0488 13.1464 16.8536L8.64645 12.3535C8.55268 12.2598 8.5 12.1326 8.5 12C8.5 11.8674 8.55268 11.7402 8.64645 11.6464L13.1464 7.14645C13.3417 6.95118 13.6583 6.95118 13.8536 7.14645Z' fill='currentColor'/%3E%3C/svg%3E");
   --icon-16-arrow-left: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9.5 4.5L5.5 8L9.5 11.5' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --icon-24-arrow-left: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.1464 7.64645C13.3417 7.45118 13.6582 7.45118 13.8535 7.64645C14.0487 7.84171 14.0487 8.15822 13.8535 8.35348L10.207 12L13.8535 15.6464C14.0487 15.8417 14.0487 16.1582 13.8535 16.3535C13.6582 16.5487 13.3417 16.5487 13.1464 16.3535L9.14645 12.3535C8.95118 12.1582 8.95118 11.8417 9.14645 11.6464L13.1464 7.64645Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
   --icon-24-forward: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.1464 16.8536C9.95118 16.6583 9.95118 16.3417 10.1464 16.1464L14.2929 12L10.1464 7.85355C9.95118 7.65829 9.95118 7.34171 10.1464 7.14645C10.3417 6.95118 10.6583 6.95118 10.8536 7.14645L15.3536 11.6464C15.5488 11.8417 15.5488 12.1583 15.3536 12.3536L10.8536 16.8536C10.6583 17.0488 10.3417 17.0488 10.1464 16.8536Z' fill='currentColor'/%3E%3C/svg%3E");
   --icon-24-close: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16.2242 7.08154C16.4182 6.95348 16.6823 6.97551 16.8531 7.146C17.024 7.31683 17.0457 7.58084 16.9176 7.7749L16.8531 7.85303L12.7067 11.9995L16.8531 16.146L16.9176 16.2241C17.0457 16.4182 17.024 16.6822 16.8531 16.853C16.6823 17.0239 16.4183 17.0456 16.2242 16.9175L16.1461 16.853L11.9996 12.7065L7.85315 16.853C7.65789 17.0483 7.34138 17.0483 7.14612 16.853C6.95128 16.6577 6.95101 16.3411 7.14612 16.146L11.2926 11.9995L7.14612 7.85303L7.08167 7.7749C6.95389 7.58087 6.97541 7.3167 7.14612 7.146C7.31683 6.97532 7.58101 6.95376 7.77502 7.08154L7.85315 7.146L11.9996 11.2925L16.1461 7.146L16.2242 7.08154Z' fill='currentColor'/%3E%3C/svg%3E");
   --icon-24-rotate: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.2325 6.47442C11.2088 5.49811 12.7917 5.49811 13.768 6.47442L15.2931 7.99955H14.0002C13.7241 7.99955 13.5002 8.2234 13.5002 8.49955C13.5002 8.77569 13.7241 8.99955 14.0002 8.99955H16.5002C16.7764 8.99955 17.0002 8.77569 17.0002 8.49955V5.99955C17.0002 5.7234 16.7764 5.49955 16.5002 5.49955C16.2241 5.49955 16.0002 5.7234 16.0002 5.99955V7.29244L14.4751 5.76731C13.1083 4.40048 10.8922 4.40048 9.52537 5.76731L7.14669 8.14599C6.95143 8.34126 6.95143 8.65784 7.14669 8.8531C7.34195 9.04836 7.65854 9.04836 7.8538 8.8531L10.2325 6.47442ZM13.0609 9.64599C12.4751 9.06021 11.5254 9.06021 10.9396 9.64599L7.64669 12.9389C7.06091 13.5247 7.0609 14.4744 7.64669 15.0602L10.9396 18.3531C11.5254 18.9389 12.4751 18.9389 13.0609 18.3531L16.3538 15.0602C16.9396 14.4744 16.9396 13.5247 16.3538 12.9389L13.0609 9.64599ZM11.6467 10.3531C11.842 10.1578 12.1585 10.1578 12.3538 10.3531L15.6467 13.646C15.842 13.8413 15.842 14.1578 15.6467 14.3531L12.3538 17.646C12.1585 17.8413 11.842 17.8413 11.6467 17.646L8.3538 14.3531C8.15854 14.1578 8.15854 13.8413 8.3538 13.646L11.6467 10.3531Z' fill='currentColor'/%3E%3C/svg%3E");
@@ -380,10 +381,10 @@
 
 
   --figma-elevation-200-canvas:
-    0 0 0.5px 0 light-dark(rgba(0, 0, 0, 0.18), transparent),
-    0 0.5px 0 0 light-dark(transparent, rgba(255, 255, 255, 0.08)) inset, 
-    0 3px 8px 0 light-dark(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.35)), 
-    0 0 0.5px 0 light-dark(transparent, rgba(255, 255, 255, 0.30)) inset, 
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.10), transparent),
+    0 0.5px 0 0 light-dark(transparent, rgba(255, 255, 255, 0.08)) inset,
+    0 3px 8px 0 light-dark(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.35)),
+    0 0 0.5px 0 light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.30)) inset,
     0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.50));
 
   --figma-elevation-400-menu-panel:
@@ -1936,7 +1937,7 @@ fig-origin-grid {
     }
 
     &.is-hovered {
-      color: var(--figma-color-bg-brand-secondary);
+      color: var(--figma-color-bg-onselected);
 
       .origin-grid-dot {
         width: var(--origin-grid-handle-size);
@@ -1955,7 +1956,8 @@ fig-origin-grid {
     --width: var(--origin-grid-handle-size);
     --height: var(--origin-grid-handle-size);
     --border-radius: var(--radius-small);
-    
+    --fig-handle-padding: 2.5px;
+    --fig-handle-inner-radius: 0;
     position: absolute;
     left: 50%;
     top: 50%;
@@ -1969,14 +1971,17 @@ fig-origin-grid {
 
     &.beyond-bounds-x,
     &.beyond-bounds-y {
-      -webkit-mask-image: var(--icon-16-arrow-left);
-      mask-image: var(--icon-16-arrow-left);
+      -webkit-mask-image: var(--icon-24-arrow-left);
+      mask-image: var(--icon-24-arrow-left);
       -webkit-mask-repeat: no-repeat;
       mask-repeat: no-repeat;
       -webkit-mask-position: center;
       mask-position: center;
       -webkit-mask-size: 24px 24px;
       mask-size: 24px 24px;
+      --fig-handle-inner-bg: transparent;
+      --fig-handle-outline-color: transparent;
+      --fig-handle-inner-outline: none;
       --border-radius: 0;
       --box-shadow: none;
     }
@@ -4294,44 +4299,44 @@ fig-layer {
 }
 @keyframes fig-shimmer-text {
   from {
-    background-position: var(--shimmer-text-from, 100% 0%);
+    background-position: var(--fig-shimmer-text-from, 100% 0%);
   }
   to {
-    background-position: var(--shimmer-text-to, 0% 0%);
+    background-position: var(--fig-shimmer-text-to, 0% 0%);
   }
 }
 @keyframes fig-shimmer-mask {
   from {
-    mask-position: var(--shimmer-mask-from, 100% 0%);
+    mask-position: var(--fig-skeleton-mask-from, var(--fig-shimmer-mask-from, 100% 0%));
   }
   to {
-    mask-position: var(--shimmer-mask-to, 0% 0%);
+    mask-position: var(--fig-skeleton-mask-to, var(--fig-shimmer-mask-to, 0% 0%));
   }
 }
 /* Shimmer */
 fig-shimmer {
   display: contents;
-  --shimmer-angle: 90deg;
-  --shimmer-size: 250% 100%;
-  --shimmer-duration: 1.5s;
-  --shimmer-mask-from: 100% 0%;
-  --shimmer-mask-to: 0% 0%;
-  --shimmer-text-from: 100% 0%;
-  --shimmer-text-to: 0% 0%;
-  --shimmer-subtle-fill-color: var(--figma-color-bg-transparent);
-  --shimmer-bright-fill-color: var(--figma-color-bg-tertiary);
-  --shimmer-subtle-text-color: var(--figma-color-text-tertiary);
-  --shimmer-bright-text-color: var(--figma-color-text);
+  --fig-shimmer-angle: 90deg;
+  --fig-shimmer-bright-fill-color: var(--figma-color-bg-tertiary);
+  --fig-shimmer-bright-text-color: var(--figma-color-text);
+  --fig-shimmer-duration: 1.5s;
+  --fig-shimmer-mask-from: 100% 0%;
+  --fig-shimmer-mask-to: 0% 0%;
+  --fig-shimmer-size: 250% 100%;
+  --fig-shimmer-subtle-fill-color: var(--figma-color-bg-transparent);
+  --fig-shimmer-subtle-text-color: var(--figma-color-text-tertiary);
+  --fig-shimmer-text-from: 100% 0%;
+  --fig-shimmer-text-to: 0% 0%;
 
   &[direction="vertical"] {
-    --shimmer-angle: 180deg;
-    --shimmer-size: 100% 250%;
-    --shimmer-mask-from: 0% 100%;
-    --shimmer-text-from: 0% 100%;
+    --fig-shimmer-angle: 180deg;
+    --fig-shimmer-size: 100% 250%;
+    --fig-shimmer-mask-from: 0% 100%;
+    --fig-shimmer-text-from: 0% 100%;
   }
   &[direction="diagonal"] {
-    --shimmer-angle: 135deg;
-    --shimmer-size: 250% 250%;
+    --fig-shimmer-angle: 135deg;
+    --fig-shimmer-size: 250% 250%;
   }
 
   /* When not playing, remove shimmer effect entirely */
@@ -4348,28 +4353,28 @@ fig-shimmer {
   /* Only apply shimmer when playing (default) or playing="true" */
   &:not([playing="false"]) :where(*:has(*), *:empty) {
     mask: linear-gradient(
-      var(--shimmer-angle),
-      var(--shimmer-subtle-fill-color) 0%,
-      var(--shimmer-subtle-fill-color) 40%,
-      var(--shimmer-bright-fill-color) 50%,
-      var(--shimmer-subtle-fill-color) 60%,
-      var(--shimmer-subtle-fill-color) 100%
+      var(--fig-shimmer-angle),
+      var(--fig-shimmer-subtle-fill-color) 0%,
+      var(--fig-shimmer-subtle-fill-color) 40%,
+      var(--fig-shimmer-bright-fill-color) 50%,
+      var(--fig-shimmer-subtle-fill-color) 60%,
+      var(--fig-shimmer-subtle-fill-color) 100%
     );
-    mask-size: var(--shimmer-size);
-    animation: fig-shimmer-mask var(--shimmer-duration) linear infinite;
+    mask-size: var(--fig-shimmer-size);
+    animation: fig-shimmer-mask var(--fig-shimmer-duration) linear infinite;
   }
   &:not([playing="false"]) :where(*:not(:has(*)):not(:empty)) {
     mask: none;
     background: linear-gradient(
-      var(--shimmer-angle),
-      var(--shimmer-subtle-text-color) 0%,
-      var(--shimmer-subtle-text-color) 40%,
-      var(--shimmer-bright-text-color) 50%,
-      var(--shimmer-subtle-text-color) 60%,
-      var(--shimmer-subtle-text-color) 100%
+      var(--fig-shimmer-angle),
+      var(--fig-shimmer-subtle-text-color) 0%,
+      var(--fig-shimmer-subtle-text-color) 40%,
+      var(--fig-shimmer-bright-text-color) 50%,
+      var(--fig-shimmer-subtle-text-color) 60%,
+      var(--fig-shimmer-subtle-text-color) 100%
     );
-    background-size: var(--shimmer-size);
-    animation: fig-shimmer-text var(--shimmer-duration) linear infinite;
+    background-size: var(--fig-shimmer-size);
+    animation: fig-shimmer-text var(--fig-shimmer-duration) linear infinite;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
@@ -4378,35 +4383,38 @@ fig-shimmer {
 /* Skeleton */
 fig-skeleton {
   display: contents;
-  --shimmer-angle: 90deg;
-  --shimmer-size: 250% 100%;
-  --shimmer-duration: 1.5s;
-  --shimmer-mask-from: 100% 0%;
-  --shimmer-mask-to: 0% 0%;
-  --shimmer-subtle-mask-color: rgba(0, 0, 0, 0.75);
-  --shimmer-bright-mask-color: rgba(0, 0, 0, 1);
+  pointer-events: all;
+  user-select: none;
+  --fig-skeleton-angle: 90deg;
+  --fig-skeleton-bg-color: var(--figma-color-bg-secondary);
+  --fig-skeleton-bright-mask-color: rgba(0, 0, 0, 1);
+  --fig-skeleton-duration: 1.5s;
+  --fig-skeleton-mask-from: 100% 0%;
+  --fig-skeleton-mask-to: 0% 0%;
+  --fig-skeleton-size: 250% 100%;
+  --fig-skeleton-subtle-mask-color: rgba(0, 0, 0, 0.75);
 
   &[direction="vertical"] {
-    --shimmer-angle: 180deg;
-    --shimmer-size: 100% 400%;
-    --shimmer-mask-from: 0% 100%;
+    --fig-skeleton-angle: 180deg;
+    --fig-skeleton-size: 100% 400%;
+    --fig-skeleton-mask-from: 0% 100%;
   }
   &[direction="diagonal"] {
-    --shimmer-angle: 135deg;
-    --shimmer-size: 250% 250%;
+    --fig-skeleton-angle: 135deg;
+    --fig-skeleton-size: 250% 250%;
   }
 
   &:not([playing="false"]) * {
     mask: linear-gradient(
-      var(--shimmer-angle),
-      var(--shimmer-subtle-mask-color) 0%,
-      var(--shimmer-subtle-mask-color) 40%,
-      var(--shimmer-bright-mask-color) 50%,
-      var(--shimmer-subtle-mask-color) 60%,
-      var(--shimmer-subtle-mask-color) 100%
+      var(--fig-skeleton-angle),
+      var(--fig-skeleton-subtle-mask-color) 0%,
+      var(--fig-skeleton-subtle-mask-color) 40%,
+      var(--fig-skeleton-bright-mask-color) 50%,
+      var(--fig-skeleton-subtle-mask-color) 60%,
+      var(--fig-skeleton-subtle-mask-color) 100%
     );
-    mask-size: var(--shimmer-size);
-    animation: fig-shimmer-mask var(--shimmer-duration) linear infinite;
+    mask-size: var(--fig-skeleton-size);
+    animation: fig-shimmer-mask var(--fig-skeleton-duration) linear infinite;
     * {
       color: transparent;
     }
@@ -4416,15 +4424,25 @@ fig-skeleton {
   h2,
   p,
   span {
-    background: var(--figma-color-bg-secondary);
+    background: var(--fig-skeleton-bg-color);
     border-radius: var(--radius-medium);
+  }
+  img,video{
+    opacity: 0
+  }
+  fig-field{
+    & > label{
+      padding-top:0;
+      padding-bottom:0;
+      border-radius: 0.5rem;
+    }
   }
 
   *:not(fig-field, fig-header) {
-    background: var(--figma-color-bg-secondary) !important;
+    background: var(--fig-skeleton-bg-color) !important;
     box-shadow: none !important;
     border-radius: var(--radius-medium);
-    color: var(--figma-color-bg-secondary) !important;
+    color: var(--fig-skeleton-bg-color) !important;
     pointer-events: none;
     user-select: none;
   }
@@ -4736,20 +4754,21 @@ fig-handle {
   --height: 1rem;
   --fill: transparent;
   --border-radius: 50%;
+  --fig-handle-bg: var(--handle-color);
+  --fig-handle-checkerboard: var(--checkerboard);
+  --fig-handle-height: var(--width);
   --fig-handle-hit-area-opacity: 0;
   --fig-handle-hit-area-size: 0;
-  --fig-handle-checkerboard: var(--checkerboard);
-  --fig-handle-bg: var(--handle-color);
-  --fig-handle-outline-color: transparent;
-  --fig-handle-outline: 1.5px solid var(--fig-handle-outline-color);
-  --fig-handle-outline-offset: 0px;
-  --fig-handle-inner-bg:  var(--figma-color-bg-brand);
+  --fig-handle-inner-bg: var(--figma-color-bg-brand);
   --fig-handle-inner-outline: 1px solid var(--figma-color-bg-brand);
-  --fig-handle-height: var(--width);
-  --fig-handle-width: var(--width);
+  --fig-handle-inner-shadow: none;
+  --fig-handle-inner-radius: 50%;
+  --fig-handle-outline: 1.5px solid var(--fig-handle-outline-color);
+  --fig-handle-outline-color: transparent;
+  --fig-handle-outline-offset: 0px;
   --fig-handle-padding: 0.25rem;
   --fig-handle-shadow: var(--figma-elevation-200-canvas);
-  --fig-handle-inner-shadow: none;
+  --fig-handle-width: var(--width);
 
   margin: 0;
   padding: var(--fig-handle-padding);
@@ -4772,7 +4791,7 @@ fig-handle {
     background: var(--fig-handle-inner-bg);
     background-position: 0 0;
     background-size: calc(var(--fig-handle-width) - var(--fig-handle-padding) * 2) calc(var(--fig-handle-height) - var(--fig-handle-padding) * 2);
-    border-radius: var(--border-radius);
+    border-radius: var(--fig-handle-inner-radius);
     box-shadow: var(--fig-handle-inner-shadow);
     outline: var(--fig-handle-inner-outline);
     place-self: center;

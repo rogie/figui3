@@ -572,6 +572,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       min: 0.2,
       max: 8,
       step: 0.1,
+      units: "s",
     },
     direction: {
       label: "Direction",
@@ -592,6 +593,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       min: 0.2,
       max: 8,
       step: 0.1,
+      units: "s",
     },
     direction: {
       label: "Direction",

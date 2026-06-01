@@ -3632,6 +3632,7 @@ customElements.define("fig-options", FigOptions);
 class FigSlider extends HTMLElement {
   #isInteracting = false;
   #showEmptyTextValue = false;
+  #isSyncingValueAttribute = false;
   #value = "";
   // Private fields declarations
   #typeDefaults = {
@@ -3835,8 +3836,17 @@ class FigSlider extends HTMLElement {
   }
 
   set value(value) {
-    const normalized = String(this.#normalizeSliderValue(value));
+    const rawValue = value === null || value === undefined ? "" : String(value);
+    const hasParsedBounds = this.min !== undefined || this.max !== undefined;
+    const normalized = hasParsedBounds
+      ? String(this.#normalizeSliderValue(rawValue))
+      : rawValue;
     this.#value = normalized;
+    if (this.getAttribute("value") !== normalized) {
+      this.#isSyncingValueAttribute = true;
+      this.setAttribute("value", normalized);
+      this.#isSyncingValueAttribute = false;
+    }
     if (this.input && this.input.value !== normalized) {
       this.input.value = normalized;
       this.input.setAttribute("aria-valuenow", normalized);
@@ -4002,6 +4012,7 @@ class FigSlider extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "value" && this.#isSyncingValueAttribute) return;
     if (this.input) {
       switch (name) {
         case "color":
@@ -12018,10 +12029,16 @@ customElements.define("fig-joystick", FigInputJoystick);
 // FigInputAngle moved to fig-lab.js
 // FigShimmer
 class FigShimmer extends HTMLElement {
+  get durationPropertyName() {
+    return this.localName === "fig-skeleton"
+      ? "--fig-skeleton-duration"
+      : "--fig-shimmer-duration";
+  }
+
   connectedCallback() {
     const duration = this.getAttribute("duration");
     if (duration) {
-      this.style.setProperty("--shimmer-duration", duration);
+      this.style.setProperty(this.durationPropertyName, duration);
     }
   }
 
@@ -12043,7 +12060,7 @@ class FigShimmer extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "duration") {
-      this.style.setProperty("--shimmer-duration", newValue || "1.5s");
+      this.style.setProperty(this.durationPropertyName, newValue || "1.5s");
     }
     // playing is handled purely by CSS attribute selectors
   }

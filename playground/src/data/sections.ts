@@ -871,6 +871,11 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-skeleton duration="1.5s">
     <fig-field>
+      <fig-preview full checkerboard style="height: 96px">
+        <img src="${landscapeUrl()}" alt="Landscape preview">
+      </fig-preview>
+    </fig-field>
+    <fig-field>
       <label>Name</label>
       <fig-input-text value="Loading..." readonly></fig-input-text>
     </fig-field>
@@ -883,8 +888,8 @@ export const propkitSections: Section[] = [
       <fig-input-color value="#0D99FF" text="true" full></fig-input-color>
     </fig-field>
     <fig-field>
-      <label>Email</label>
-      <fig-input-text value="loading@example.com" readonly></fig-input-text>
+      <label>Published</label>
+      <fig-switch checked="true"></fig-switch>
     </fig-field>
     <fig-field>
       <label>Visible</label>

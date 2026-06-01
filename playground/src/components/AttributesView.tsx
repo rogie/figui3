@@ -226,6 +226,11 @@ function getNumberAttrDefault(
   attrName: string,
 ): number | undefined {
   if (controlTag === "fig-tooltip" && attrName === "delay") return 500;
+  if (
+    (controlTag === "fig-shimmer" || controlTag === "fig-skeleton") &&
+    attrName === "duration"
+  )
+    return 1.5;
   if (controlTag === "fig-input-number") {
     if (attrName === "min") return 0;
     if (attrName === "max") return 100;
