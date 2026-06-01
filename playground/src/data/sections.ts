@@ -1,4 +1,9 @@
-import { portraitUrl, landscapeUrl, squareUrl } from "../lib/images";
+import {
+  portraitUrl,
+  landscapeUrl,
+  squareUrl,
+  variedAspectRatioUrl,
+} from "../lib/images";
 
 export interface Example {
   id: string;
@@ -596,12 +601,22 @@ export const propkitSections: Section[] = [
       "An image upload field for selecting or previewing image assets.",
     examples: [
       {
+        id: "plain-image",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Image</label>
+    <fig-image full="true" src="${portraitUrl()}" fit="cover" size="auto" checkerboard="true"></fig-image>
+  </fig-field>
+</div>`,
+      },
+      {
         id: "upload-empty",
         name: "Upload (Empty)",
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Image</label>
-    <fig-image full="true" upload="true" label="Upload" size="auto" checkerboard="true"></fig-image>
+    <fig-image full="true" upload="true" label="Upload" fit="cover" size="auto" checkerboard="true"></fig-image>
   </fig-field>
 </div>`,
       },
@@ -611,17 +626,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Image</label>
-    <fig-image full="true" upload="true" src="${portraitUrl()}" size="auto" checkerboard="true"></fig-image>
-  </fig-field>
-</div>`,
-      },
-      {
-        id: "plain-image",
-        name: "Plain",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <label>Image</label>
-    <fig-image full="true" src="${portraitUrl()}" size="auto" checkerboard="true"></fig-image>
+    <fig-image full="true" upload="true" src="${portraitUrl()}" fit="cover" size="auto" checkerboard="true"></fig-image>
   </fig-field>
 </div>`,
       },
@@ -631,9 +636,48 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Image</label>
-    <fig-image full="true" src="${portraitUrl()}" size="auto" checkerboard="true">
+    <fig-image full="true" src="${portraitUrl()}" fit="cover" size="auto" checkerboard="true">
       <fig-input-file accepts="image/*" label="Change" variant="overlay"></fig-input-file>
     </fig-image>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "video",
+    name: "Video",
+    group: "Field controls",
+    description:
+      "A video field for previewing, poster-only states, or uploading video assets.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Video</label>
+    <fig-video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/640/360?random=29" autoplay="true" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "poster-only",
+        name: "Poster",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Video</label>
+    <fig-video poster="https://picsum.photos/640/360?random=29" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "upload",
+        name: "Upload",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Video</label>
+    <fig-video upload="true" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
   </fig-field>
 </div>`,
       },
@@ -670,9 +714,8 @@ export const propkitSections: Section[] = [
         name: "Image",
         markup: `<div class="prop-panel">
   <fig-field>
-    <label>Preview</label>
     <fig-preview full checkerboard>
-      <img src="${landscapeUrl()}" alt="Landscape preview">
+      <img src="${variedAspectRatioUrl()}" alt="Landscape preview">
     </fig-preview>
   </fig-field>
 </div>`,
@@ -682,7 +725,6 @@ export const propkitSections: Section[] = [
         name: "Canvas",
         markup: `<div class="prop-panel">
   <fig-field>
-    <label>Shader</label>
     <fig-preview full style="height: 96px">
       <canvas width="320" height="180" aria-label="Generated shader preview" style="width: 100%; height: 100%; background: radial-gradient(circle at 20% 25%, #FFFFFFAA 0 8%, transparent 20%), radial-gradient(circle at 78% 35%, #7AEA66 0 12%, transparent 32%), radial-gradient(circle at 42% 72%, #FFCD29 0 10%, transparent 30%), conic-gradient(from 210deg at 52% 48%, #0D99FF, #9747FF, #FF00BF, #FF7262, #7AEA66, #0D99FF); filter: saturate(1.35) contrast(1.1);"></canvas>
     </fig-preview>

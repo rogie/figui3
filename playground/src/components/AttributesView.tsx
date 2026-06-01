@@ -424,13 +424,6 @@ export default function AttributesView({
           target.controlTag === "fig-color-tip"
             ? (target.controlAttributes.control || "color")
             : null;
-        const mediaAspectRatioSet =
-          (target.controlTag === "fig-image" ||
-            target.controlTag === "fig-media" ||
-            target.controlTag === "fig-video") &&
-          target.controlAttributes["aspect-ratio"] !== undefined &&
-          target.controlAttributes["aspect-ratio"].toLowerCase() !== "none" &&
-          target.controlAttributes["aspect-ratio"].trim() !== "";
         const mediaImageType =
           target.controlTag === "fig-media" &&
           (target.controlAttributes.type || "image").toLowerCase() !== "video";
@@ -499,13 +492,6 @@ export default function AttributesView({
                 entry.name === "open" &&
                 target.controlTag === "fig-group" &&
                 target.controlAttributes.collapsible === undefined
-              ) &&
-              !(
-                entry.name === "fit" &&
-                (target.controlTag === "fig-image" ||
-                  target.controlTag === "fig-media" ||
-                  target.controlTag === "fig-video") &&
-                !mediaAspectRatioSet
               ),
           )
           .sort((a, b) => {

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.2.0]
+
+### Added
+
+- Added PropsKit video examples after the image examples.
+
+### Changed
+
+- PropsKit image examples now start with a default image example and include explicit fit settings.
+- PropsKit preview examples now hide field labels by default, and the image preview uses varied aspect ratio images.
+
+### Fixed
+
+- PropsKit attributes now always expose `fit` for image, video, and media controls.
+
 ## [6.1.1]
 
 ### Fixed
