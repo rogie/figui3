@@ -14,10 +14,15 @@ function normalizePathname(pathname: string): string {
 
 function resolveModeFromPath(pathname: string): PlaygroundMode {
   const normalized = normalizePathname(pathname);
-  if (normalized === "/propkit/lab") {
+  if (normalized === "/propkit/lab" || normalized === "/propskit/lab") {
     return "lab";
   }
-  if (normalized === "/propkit" || normalized.startsWith("/propkit/")) {
+  if (
+    normalized === "/propkit" ||
+    normalized.startsWith("/propkit/") ||
+    normalized === "/propskit" ||
+    normalized.startsWith("/propskit/")
+  ) {
     return "propkit";
   }
   if (normalized === "/sandbox" || normalized.startsWith("/sandbox/")) {
@@ -29,7 +34,7 @@ function resolveModeFromPath(pathname: string): PlaygroundMode {
 function applyTitleForMode(mode: PlaygroundMode) {
   if (mode === "propkit") {
     document.title =
-      "Propkit playground: A framework-agnostic, opinionated set of property controls for Figma plugins";
+      "PropsKit playground: A framework-agnostic, opinionated set of property controls for Figma plugins";
     return;
   }
   if (mode === "lab") {
@@ -54,7 +59,13 @@ function ensureSupportedRoute() {
   }
 
   if (normalized === "/lab" || normalized.startsWith("/lab/")) {
-    const migratedPath = normalized.replace(/^\/lab(?=\/|$)/, "/propkit/lab");
+    const migratedPath = normalized.replace(/^\/lab(?=\/|$)/, "/propskit/lab");
+    window.history.replaceState(null, "", `${migratedPath}${search}${hash}`);
+    return;
+  }
+
+  if (normalized === "/propkit" || normalized.startsWith("/propkit/")) {
+    const migratedPath = normalized.replace(/^\/propkit(?=\/|$)/, "/propskit");
     window.history.replaceState(null, "", `${migratedPath}${search}${hash}`);
     return;
   }
@@ -62,8 +73,8 @@ function ensureSupportedRoute() {
   const supported =
     normalized === "/figui3" ||
     normalized.startsWith("/figui3/") ||
-    normalized === "/propkit" ||
-    normalized.startsWith("/propkit/") ||
+    normalized === "/propskit" ||
+    normalized.startsWith("/propskit/") ||
     normalized === "/sandbox" ||
     normalized.startsWith("/sandbox/");
   if (!supported) {

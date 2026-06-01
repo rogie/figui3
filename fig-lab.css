@@ -60,6 +60,8 @@ fig-field-slider {
     fig-slider {
       position: absolute;
       inset: 0;
+      padding: 0;
+      background-color: transparent;
       --slider-height: 2rem;
       --slider-field-height: 2rem;
       --slider-thumb-width: var(--spacer-1);
@@ -90,6 +92,7 @@ fig-field-slider {
 
       .fig-slider-input-container {
         box-shadow: none !important;
+        background-color: var(--figma-color-bg-secondary) !important;
         &:hover,
         &:focus-within {
           &::after {
@@ -159,6 +162,7 @@ fig-field-slider {
       min-width: fit-content;
       max-width: max-content;
       flex: 0 0 auto;
+      border-left: 0;
       border-radius: var(--radius-small);
 
       &:hover,

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.1.0]
+
+### Added
+
+- Added `/propskit` as the canonical PropsKit playground route, with `/propkit` redirecting to it.
+
+### Changed
+
+- Renamed the playground header and document title from Propkit to PropsKit.
+- Refined lab field slider styling.
+
 ## [6.0.0]
 
 ### Breaking

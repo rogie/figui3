@@ -69,20 +69,20 @@ function sectionsForMode(mode: Props["mode"]): Section[] {
 function titleForMode(mode: Props["mode"]): string {
   if (mode === "lab") return "Lab";
   if (mode === "figui3") return "FigUI3";
-  return "Propkit";
+  return "PropsKit";
+}
+
+function basePathForMode(mode: Props["mode"]): string {
+  if (mode === "figui3") return "/figui3";
+  if (mode === "lab") return "/propskit/lab";
+  return "/propskit";
 }
 
 export default function App({ mode }: Props) {
   const { isDark, setTheme, includeFillPicker, setIncludeFillPicker } =
     useTheme();
   const sections: Section[] = sectionsForMode(mode);
-  const canonicalBase =
-    mode === "figui3"
-      ? "/figui3"
-      : mode === "lab"
-        ? "/propkit/lab"
-        : "/propkit";
-  const basePath = canonicalBase;
+  const basePath = basePathForMode(mode);
   const appTitle = titleForMode(mode);
   const {
     activeSectionId,
