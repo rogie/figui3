@@ -2728,8 +2728,8 @@ fig-slider {
   &:not([variant="classic"]) {
     --slider-height: 0.375rem;
     --slider-thumb-size: 0.75rem;
-    --slider-tick-width: calc(var(--slider-height) / 2);
-    --slider-tick-height: calc(var(--slider-height) / 2);
+    --slider-tick-width: calc(var(--slider-height) / 3);
+    --slider-tick-height: calc(var(--slider-height) / 3);
     --handle-transition: none;
     --slider-transition: none;
     --slider-handle-shadow:

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.4.0]
+
+### Added
+
+- Added a PropsKit horizontal fields stress test dialog with generated property labels and multiple slider types.
+
+### Changed
+
+- Refined default slider tick sizing.
+
 ## [6.3.0]
 
 ### Added

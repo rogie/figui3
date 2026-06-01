@@ -1318,6 +1318,178 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "dialog-horizontal-fields-stress-test",
+    name: "Horizontal fields stress test",
+    group: "Controls in dialogs",
+    description:
+      "A stress test dialog based on All Fields, with every PropKit field rendered as a horizontal row with realistic property labels.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Stress Test</fig-button>
+  <dialog is="fig-dialog" title="Horizontal Fields" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
+    <fig-content>
+      <fig-group name="Inputs" collapsible open>
+        <fig-field direction="horizontal">
+          <label>Layer Name</label>
+          <fig-input-text value="Hero Card" placeholder="Enter name…" full></fig-input-text>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Width</label>
+          <fig-input-number value="240" min="0" max="1920" step="1" steppers full></fig-input-number>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Corner Radius</label>
+          <fig-slider type="range" value="12" min="0" max="64" step="1" units="px" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Stroke Weight</label>
+          <fig-slider type="range" value="2" min="0" max="12" step="0.5" units="px" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Glow Opacity</label>
+          <fig-slider type="opacity" value="75" min="0" max="100" step="1" units="%" color="#0D99FF" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Brand Hue</label>
+          <fig-slider type="hue" value="210" min="0" max="360" step="1" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>X Offset</label>
+          <fig-slider type="delta" value="0" default="0" min="-100" max="100" step="1" units="px" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Letter Spacing</label>
+          <fig-slider type="delta" value="0" default="0" min="-5" max="20" step="0.25" units="%" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Grid Size</label>
+          <fig-slider type="stepper" value="16" min="4" max="64" step="4" units="px" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Motion Speed</label>
+          <fig-slider type="stepper" value="300" min="100" max="1000" step="100" units="ms" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Blur Amount</label>
+          <fig-slider type="range" value="8" min="0" max="40" step="1" units="px" variant="classic" text="true" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Source File</label>
+          <fig-input-file label="Upload file" full></fig-input-file>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Accent Color</label>
+          <fig-input-color value="#0D99FF" text="true" alpha="true" full></fig-input-color>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Background</label>
+          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}' experimental="modern"></fig-input-fill>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Brand Fade</label>
+          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}' experimental="modern"></fig-input-gradient>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Swatches</label>
+          <fig-input-palette value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Choices" collapsible open>
+        <fig-field direction="horizontal">
+          <label>Theme</label>
+          <fig-dropdown full experimental="modern">
+            <option selected>Auto</option>
+            <option>Light</option>
+            <option>Dark</option>
+          </fig-dropdown>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Alignment</label>
+          <fig-segmented-control sizing="equal" full>
+            <fig-segment value="left" selected>Left</fig-segment>
+            <fig-segment value="center">Center</fig-segment>
+            <fig-segment value="right">Right</fig-segment>
+          </fig-segmented-control>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Density</label>
+          <fig-options options="Compact,Regular,Spacious" value="Regular"></fig-options>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Visible</label>
+          <fig-switch checked="true"></fig-switch>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Quick Action</label>
+          <fig-button full>Generate</fig-button>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Cover Image</label>
+          <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
+            <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+            <fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+            <fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+          </fig-chooser>
+        </fig-field>
+      </fig-group>
+      <fig-group name="Visuals" collapsible open>
+        <fig-field direction="horizontal">
+          <label>Avatar</label>
+          <fig-image full="true" src="${portraitUrl()}" size="auto" checkerboard="true"></fig-image>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Demo Video</label>
+          <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/320.webp?random=29" autoplay="true" muted="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Card Preview</label>
+          <fig-preview full checkerboard style="height: 96px">
+            <img src="${landscapeUrl()}" alt="Card preview">
+          </fig-preview>
+        </fig-field>
+        <fig-skeleton duration="1.5s">
+          <fig-field direction="horizontal">
+            <label>Loading State</label>
+            <fig-input-text value="Loading..." readonly full></fig-input-text>
+          </fig-field>
+        </fig-skeleton>
+      </fig-group>
+      <fig-group name="Spatial" collapsible open>
+        <fig-field direction="horizontal">
+          <label>Opacity</label>
+          <fig-slider value="50" min="0" max="100" units="%" full></fig-slider>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Motion</label>
+          <fig-easing-curve value="0, 0, 0.58, 1"></fig-easing-curve>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Anchor Point</label>
+          <fig-joystick value="50% 50%" axis-labels="X Y"></fig-joystick>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Transform Origin</label>
+          <fig-origin-grid value="50% 50%" drag="true" fields="true"></fig-origin-grid>
+        </fig-field>
+        <fig-field direction="horizontal">
+          <label>Tilt</label>
+          <fig-3d-rotate value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"></fig-3d-rotate>
+        </fig-field>
+      </fig-group>
+    </fig-content>
+    <fig-footer>
+      <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+      <fig-button>Apply</fig-button>
+    </fig-footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "dialog-shadow",
     name: "Shadow",
     group: "Controls in dialogs",
