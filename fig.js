@@ -7878,7 +7878,7 @@ class FigInputGradient extends HTMLElement {
       }
       this.#gradient.stops[idx].position = position;
       if (position !== rawPosition) {
-        handle.style.left = `${(position / 100) * trackW - handle.offsetWidth / 2}px`;
+        handle.style.left = `${(position / 100) * trackW}px`;
       }
       const tooltip = handle.closest("fig-tooltip");
       if (tooltip) {
@@ -7930,7 +7930,7 @@ class FigInputGradient extends HTMLElement {
         }
       }
       this.#gradient.stops[idx].position = position;
-      handle.style.left = `${(position / 100) * trackW - handle.offsetWidth / 2}px`;
+      handle.style.left = `${(position / 100) * trackW}px`;
       this.#gradient.stops.sort((a, b) => a.position - b.position);
       this.#syncStopIndices();
       this.#syncChit();
@@ -13537,35 +13537,38 @@ class FigHandle extends HTMLElement {
 
     const { xToken, yToken } = this.#parseValue(str);
     const rect = container.getBoundingClientRect();
-    const hw = this.offsetWidth / 2;
-    const hh = this.offsetHeight / 2;
 
-    const resolvePx = (token, containerDim, halfHandle) => {
+    const resolvePx = (token, containerDim) => {
       if (token && typeof token === "object" && "px" in token) {
-        return Math.max(
-          -halfHandle,
-          Math.min(containerDim - halfHandle, token.px - halfHandle),
-        );
+        return Math.max(0, Math.min(containerDim, token.px));
       }
       return null;
     };
 
-    const resolveResponsive = (token, halfHandle) => {
+    const resolveResponsive = (token) => {
       const pct = typeof token === "number" ? token : 0;
-      return `calc(${pct}% - ${halfHandle}px)`;
+      return `${pct}%`;
     };
 
     const axes = this.#axes;
+    this.#syncPositionTranslate(axes);
     if (axes.x) {
-      const xPx = resolvePx(xToken, rect.width, hw);
+      const xPx = resolvePx(xToken, rect.width);
       this.style.left =
-        xPx === null ? resolveResponsive(xToken, hw) : `${Math.round(xPx)}px`;
+        xPx === null ? resolveResponsive(xToken) : `${Math.round(xPx)}px`;
     }
     if (axes.y) {
-      const yPx = resolvePx(yToken, rect.height, hh);
+      const yPx = resolvePx(yToken, rect.height);
       this.style.top =
-        yPx === null ? resolveResponsive(yToken, hh) : `${Math.round(yPx)}px`;
+        yPx === null ? resolveResponsive(yToken) : `${Math.round(yPx)}px`;
     }
+  }
+
+  #syncPositionTranslate(axes = this.#axes) {
+    this.style.setProperty(
+      "--fig-handle-position-translate",
+      `${axes.x ? "-50%" : "0"} ${axes.y ? "-50%" : "0"}`,
+    );
   }
 
   #syncValueAttribute() {
@@ -13768,8 +13771,6 @@ class FigHandle extends HTMLElement {
 
     this.#isDragging = true;
     const axes = this.#axes;
-    const handleW = this.offsetWidth;
-    const handleH = this.offsetHeight;
     let lastRect = null;
 
     const handleRect = this.getBoundingClientRect();
@@ -13786,27 +13787,19 @@ class FigHandle extends HTMLElement {
       const rect = container.getBoundingClientRect();
       lastRect = rect;
       const currentPosition = this.#positionDetail(rect);
-      const currentLeft = currentPosition.x;
-      const currentTop = currentPosition.y;
-      const rawX = clientX - offsetX - rect.left - handleW / 2;
-      const rawY = clientY - offsetY - rect.top - handleH / 2;
+      const rawCenterX = clientX - offsetX - rect.left;
+      const rawCenterY = clientY - offsetY - rect.top;
 
-      const clampedX = Math.max(
-        -handleW / 2,
-        Math.min(rect.width - handleW / 2, rawX),
-      );
-      const clampedY = Math.max(
-        -handleH / 2,
-        Math.min(rect.height - handleH / 2, rawY),
-      );
+      const clampedCenterX = Math.max(0, Math.min(rect.width, rawCenterX));
+      const clampedCenterY = Math.max(0, Math.min(rect.height, rawCenterY));
 
       let centerX =
         rect.width > 0
-          ? ((axes.x ? clampedX : currentLeft) + handleW / 2) / rect.width
+          ? (axes.x ? clampedCenterX / rect.width : currentPosition.px)
           : 0.5;
       let centerY =
         rect.height > 0
-          ? ((axes.y ? clampedY : currentTop) + handleH / 2) / rect.height
+          ? (axes.y ? clampedCenterY / rect.height : currentPosition.py)
           : 0.5;
 
       if (this.#shouldSnap(shiftKey)) {
@@ -13819,13 +13812,12 @@ class FigHandle extends HTMLElement {
         }
       }
 
+      this.#syncPositionTranslate(axes);
       if (axes.x) {
-        const left = centerX * rect.width - handleW / 2;
-        this.style.left = `${Math.round(Math.max(-handleW / 2, Math.min(rect.width - handleW / 2, left)))}px`;
+        this.style.left = `${Math.round(Math.max(0, Math.min(rect.width, centerX * rect.width)))}px`;
       }
       if (axes.y) {
-        const top = centerY * rect.height - handleH / 2;
-        this.style.top = `${Math.round(Math.max(-handleH / 2, Math.min(rect.height - handleH / 2, top)))}px`;
+        this.style.top = `${Math.round(Math.max(0, Math.min(rect.height, centerY * rect.height)))}px`;
       }
     };
 

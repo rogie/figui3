@@ -4785,6 +4785,7 @@ fig-handle {
   --fig-handle-inner-shadow: none;
   --fig-handle-inner-radius: 50%;
   --fig-handle-outline: 1.5px solid var(--fig-handle-outline-color);
+  --fig-handle-inner-outline-offset: 0px;
   --fig-handle-outline-color: transparent;
   --fig-handle-outline-offset: 0px;
   --fig-handle-padding: 0.25rem;
@@ -4815,6 +4816,7 @@ fig-handle {
     border-radius: var(--fig-handle-inner-radius);
     box-shadow: var(--fig-handle-inner-shadow);
     outline: var(--fig-handle-inner-outline);
+    outline-offset: var(--fig-handle-inner-outline-offset);
     place-self: center;
     grid-area: 1 / 1;
     z-index: 2;
@@ -4828,6 +4830,8 @@ fig-handle {
 
   &[drag]:not([drag="false"]) {
     position: absolute;
+    translate: var(--fig-handle-position-translate, none);
+    transform-origin: center;
     touch-action: none;
   }
   &:hover,
@@ -4843,12 +4847,26 @@ fig-handle {
   }
 
   &[type="canvas"]{
+    --width: 0.5rem;
+    --height: 0.5rem;
     --fig-handle-inner-bg: transparent;
-    --fig-handle-inner-outline: none;
-    --fig-handle-outline-color: var(--figma-color-border-selected);
+    --fig-handle-outline-color: transparent;
+    --fig-handle-shadow: none;
+    --fig-handle-inner-outline: 1px solid var(--figma-color-border-selected);
+    --fig-handle-padding: 1px;
+    --fig-handle-inner-outline-offset: -1px;
     &:hover,
     &[selected]:not([selected="false"]){
-      --fig-handle-outline: 3px solid var(--figma-color-border-selected);
+      --width: 0.75rem;
+      --height: 0.75rem;
+      --fig-handle-outline-color: transparent;
+      --fig-handle-inner-outline: 2px solid var(--figma-color-border-selected);
+      --fig-handle-inner-outline-offset: -2px;
+      --fig-handle-shadow: var(--figma-elevation-200-canvas);
+    }
+    &[selected]:not([selected="false"]){
+      --fig-handle-padding: 2px;
+      --fig-handle-inner-bg: var(--figma-color-bg-brand);
     }
   }
   &[type="color"],
