@@ -571,8 +571,18 @@ class FigCanvasControl extends HTMLElement {
 
   #wireHoverTooltip(target, getTooltip, getText, isDraggingRef) {
     if (!target) return;
+    const shouldSuppress = () => !!isDraggingRef?.();
+    const hideTooltip = () => {
+      const tip = getTooltip();
+      if (!tip) return;
+      tip.removeAttribute("show");
+      tip.hidePopup?.();
+    };
     const show = () => {
-      if (isDraggingRef && isDraggingRef()) return;
+      if (shouldSuppress()) {
+        hideTooltip();
+        return;
+      }
       const tip = getTooltip();
       if (!tip) return;
       if (getText) tip.setAttribute("text", getText());
@@ -580,13 +590,19 @@ class FigCanvasControl extends HTMLElement {
       tip.showPopup?.();
     };
     const hide = () => {
-      if (isDraggingRef && isDraggingRef()) return;
-      const tip = getTooltip();
-      if (!tip) return;
-      tip.removeAttribute("show");
+      hideTooltip();
     };
     target.addEventListener("pointerenter", show);
     target.addEventListener("pointerleave", hide);
+  }
+
+  #hasActiveInteraction() {
+    return (
+      this.#isDragging ||
+      this.#isSecondDragging ||
+      this.#isRadiusDragging ||
+      this.#isAngleDragging
+    );
   }
 
   #wireHoverTooltips() {
@@ -596,7 +612,7 @@ class FigCanvasControl extends HTMLElement {
         () => this.#pointTooltip,
         () => this.#pointTipText,
         () =>
-          this.#isDragging ||
+          this.#hasActiveInteraction() ||
           !!this.#pointHandle?.querySelector("fig-color-tip"),
       );
     }
@@ -605,7 +621,7 @@ class FigCanvasControl extends HTMLElement {
         this.#angleHandle,
         () => this.#angleTooltip,
         () => `Angle ${Math.round(this.#angle)}°`,
-        () => this.#isAngleDragging || this.#isRadiusDragging,
+        () => this.#hasActiveInteraction(),
       );
     }
     if (this.#secondHandle) {
@@ -613,7 +629,7 @@ class FigCanvasControl extends HTMLElement {
         this.#secondHandle,
         () => this.#secondTooltip,
         () => this.#secondTipText,
-        () => this.#isSecondDragging,
+        () => this.#hasActiveInteraction(),
       );
     }
     if (this.#radiusSvg) {
@@ -1102,6 +1118,7 @@ class FigCanvasControl extends HTMLElement {
         origEvent.preventDefault();
         this.#isAngleDragging = true;
         this.classList.add("fig-canvas-control-ring-active");
+        this.#angleHandle.setAttribute("selected", "");
         const container = this.#container;
         if (!container) return;
 
@@ -1142,6 +1159,7 @@ class FigCanvasControl extends HTMLElement {
         const onUp = () => {
           this.#isAngleDragging = false;
           this.classList.remove("fig-canvas-control-ring-active");
+          this.#angleHandle.removeAttribute("selected");
           document.body.style.cursor = prevBodyCursor;
           if (this.#angleTooltip) this.#angleTooltip.removeAttribute("show");
           this.#syncValueAttribute();

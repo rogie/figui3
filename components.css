@@ -4847,8 +4847,8 @@ fig-handle {
   }
 
   &[type="canvas"]{
-    --width: 0.5rem;
-    --height: 0.5rem;
+    --width: 0.75rem;
+    --height: 0.75rem;
     --fig-handle-inner-bg: transparent;
     --fig-handle-outline-color: transparent;
     --fig-handle-shadow: none;
@@ -4857,8 +4857,8 @@ fig-handle {
     --fig-handle-inner-outline-offset: -1px;
     &:hover,
     &[selected]:not([selected="false"]){
-      --width: 0.75rem;
-      --height: 0.75rem;
+      --width: 1rem;
+      --height: 1rem;
       --fig-handle-outline-color: transparent;
       --fig-handle-inner-outline: 2px solid var(--figma-color-border-selected);
       --fig-handle-inner-outline-offset: -2px;
@@ -4874,7 +4874,7 @@ fig-handle {
   &[tip="add"],
   &[tip="remove"] {
     --fig-handle-inner-bg: linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
-    --fig-handle-padding: 0.125rem;
+    --fig-handle-padding: 1px;
     --fig-handle-inner-outline: none;
     position: relative;
     overflow: visible;
@@ -4885,6 +4885,19 @@ fig-handle {
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
+    }
+  }
+  &[type="color"]{
+    --width: 0.75rem;
+    --height: 0.75rem;
+    &:hover,
+    &[selected]:not([selected="false"]){
+      --width: 1rem;
+      --height: 1rem;
+      --fig-handle-outline-color: transparent;
+    }
+    &[selected]:not([selected="false"]){
+      --fig-handle-padding: 2px;
     }
   }
 

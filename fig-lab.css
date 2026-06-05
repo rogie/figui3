@@ -195,8 +195,12 @@ fig-canvas-control {
   --fig-canvas-control-radius-stroke-halo: #FFFFFF;
   --fig-canvas-control-line-stroke-hover: #0D99FF;
   --fig-canvas-control-line-stroke-active: #0D99FF;
-  --fig-canvas-control-line-stroke-width: 1.5px;
-  --fig-canvas-control-line-stroke-width-hover: 2.25px;
+  --fig-canvas-control-line-stroke-width: 1px;
+  --fig-canvas-control-line-stroke-width-hover: 2px;
+
+  &:has(.fig-canvas-control-radius-hit:hover) {
+     --fig-canvas-control-line-stroke-width: var(--fig-canvas-control-line-stroke-width-hover);
+  }
 
   & > fig-handle,
   & > fig-tooltip:has(fig-handle:not([size="small"])) {
@@ -217,7 +221,7 @@ fig-canvas-control {
 
     .fig-canvas-control-radius-halo {
       stroke: var(--fig-canvas-control-radius-stroke-halo);
-      stroke-width: calc(var(--fig-canvas-control-line-stroke-width) * 2);
+      stroke-width: calc(var(--fig-canvas-control-line-stroke-width) + 2px);
       filter: none;
     }
 
@@ -226,18 +230,12 @@ fig-canvas-control {
       stroke-width: 12px;
       pointer-events: stroke;
       filter: none;
-
-      &:hover ~ circle:not(.fig-canvas-control-radius-halo) {
-        stroke-width: var(--fig-canvas-control-line-stroke-width-hover);
-      }
+ 
     }
   }
 
-  &.fig-canvas-control-ring-active
-    .fig-canvas-control-radius
-    circle:not(.fig-canvas-control-radius-hit):not(.fig-canvas-control-radius-halo) {
-    stroke: var(--fig-canvas-control-line-stroke-active);
-    stroke-width: var(--fig-canvas-control-line-stroke-width-hover);
+  &.fig-canvas-control-ring-active{
+    --fig-canvas-control-line-stroke-width: var(--fig-canvas-control-line-stroke-width-hover);
   }
 
   .fig-canvas-control-angle-svg {
@@ -254,7 +252,7 @@ fig-canvas-control {
 
   .fig-canvas-control-angle-line-halo {
     stroke: var(--fig-canvas-control-radius-stroke-halo);
-    stroke-width: calc(var(--fig-canvas-control-line-stroke-width) * 2);
+    stroke-width: calc(var(--fig-canvas-control-line-stroke-width) + 2px);
     stroke-linecap: butt;
     filter: none;
   }
