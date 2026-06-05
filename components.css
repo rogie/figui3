@@ -4863,9 +4863,12 @@ fig-handle {
       --fig-handle-inner-outline-offset: -2px;
       --fig-handle-shadow: var(--figma-elevation-200-canvas);
     }
-    &:active,
-    &[selected]:not([selected="false"]){
+    &:active{
       --fig-handle-padding: 2px;
+      --fig-handle-inner-bg: var(--figma-color-bg-brand);
+    }
+    &[selected]:not([selected="false"]){
+      --fig-handle-padding: 1px;
       --fig-handle-inner-bg: var(--figma-color-bg-brand);
     }
   }
@@ -4875,6 +4878,7 @@ fig-handle {
   &[tip="remove"] {
     --fig-handle-inner-bg: linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
     --fig-handle-padding: 1px;
+    --fig-handle-shadow: none;
     --fig-handle-inner-outline: none;
     position: relative;
     overflow: visible;
@@ -4897,9 +4901,11 @@ fig-handle {
       --height: 1rem;
       --fig-handle-outline-color: transparent;
     }
-    &:active,
-    &[selected]:not([selected="false"]){
+    &:active{
       --fig-handle-padding: 2px;
+    }
+    &[selected]:not([selected="false"]){
+      --fig-handle-padding: 1px;
     }
   }
 
