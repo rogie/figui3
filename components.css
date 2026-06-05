@@ -4863,8 +4863,9 @@ fig-handle {
       --fig-handle-inner-outline-offset: -2px;
       --fig-handle-shadow: var(--figma-elevation-200-canvas);
     }
+    &.dragging,
     &:active{
-      --fig-handle-padding: 2px;
+      --fig-handle-padding: 2px !important;
       --fig-handle-inner-bg: var(--figma-color-bg-brand);
     }
     &[selected]:not([selected="false"]){
@@ -4901,8 +4902,9 @@ fig-handle {
       --height: 1rem;
       --fig-handle-outline-color: transparent;
     }
+    &.dragging,
     &:active{
-      --fig-handle-padding: 2px;
+      --fig-handle-padding: 2px !important;
     }
     &[selected]:not([selected="false"]){
       --fig-handle-padding: 1px;
