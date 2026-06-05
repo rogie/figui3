@@ -724,6 +724,9 @@ class FigCanvasControl extends HTMLElement {
       svg.appendChild(hitLine);
       this.#setupLineDrag(hitLine);
     }
+    const haloLine = document.createElementNS(ns, "line");
+    haloLine.classList.add("fig-canvas-control-angle-line-halo");
+    svg.appendChild(haloLine);
     const line = document.createElementNS(ns, "line");
     line.classList.add("fig-canvas-control-angle-line");
     svg.appendChild(line);
@@ -876,10 +879,9 @@ class FigCanvasControl extends HTMLElement {
   }
 
   #positionHandle(handle, xPct, yPct, rect) {
-    const hw = handle.offsetWidth / 2;
-    const hh = handle.offsetHeight / 2;
-    handle.style.left = `${(xPct / 100) * rect.width - hw}px`;
-    handle.style.top = `${(yPct / 100) * rect.height - hh}px`;
+    handle.style.setProperty("--fig-handle-position-translate", "-50% -50%");
+    handle.style.left = `${(xPct / 100) * rect.width}px`;
+    handle.style.top = `${(yPct / 100) * rect.height}px`;
   }
 
   #syncPositions() {
@@ -929,7 +931,9 @@ class FigCanvasControl extends HTMLElement {
       svg.style.left = "0";
       svg.style.top = "0";
       svg.setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`);
-      const lines = svg.querySelectorAll("line");
+      const lines = svg.querySelectorAll(
+        ".fig-canvas-control-angle-line, .fig-canvas-control-angle-line-halo",
+      );
       for (const line of lines) {
         line.setAttribute("x1", String(cx));
         line.setAttribute("y1", String(cy));

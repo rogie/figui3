@@ -245,11 +245,18 @@ fig-canvas-control {
   }
 
   .fig-canvas-control-angle-line {
-    stroke: var(--fig-canvas-control-line-stroke);
+    stroke: var(--fig-canvas-control-radius-stroke);
     stroke-width: var(--fig-canvas-control-line-stroke-width);
     paint-order: stroke fill;
     filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3))
       drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.12));
+  }
+
+  .fig-canvas-control-angle-line-halo {
+    stroke: var(--fig-canvas-control-radius-stroke-halo);
+    stroke-width: calc(var(--fig-canvas-control-line-stroke-width) * 2);
+    stroke-linecap: butt;
+    filter: none;
   }
 
   fig-handle[size="small"] {
