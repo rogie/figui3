@@ -6,7 +6,14 @@ const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-const assetNames = ["fig.css", "fig.js", "base.css", "components.css"];
+const assetNames = [
+  "fig.css",
+  "fig.js",
+  "fig-layer.css",
+  "fig-layer.js",
+  "base.css",
+  "components.css",
+];
 
 const mimeTypes = {
   ".css": "text/css",

@@ -6,15 +6,15 @@ import AdjustIcon from "../icons/icon.24.adjust.svg?react";
 interface Props {
   isDark: boolean;
   setTheme: (dark: boolean) => void;
-  includeFillPicker: boolean;
-  setIncludeFillPicker: (include: boolean) => void;
+  includeEditorControls: boolean;
+  setIncludeEditorControls: (include: boolean) => void;
 }
 
 export default function ThemeToggle({
   isDark,
   setTheme,
-  includeFillPicker,
-  setIncludeFillPicker,
+  includeEditorControls,
+  setIncludeEditorControls,
 }: Props) {
   const tooltip = isDark ? "Switch to light mode" : "Switch to dark mode";
   const toggleTheme = () => setTheme(!isDark);
@@ -43,17 +43,17 @@ export default function ThemeToggle({
     (popupRef.current as any).anchor = settingsButtonRef.current;
   }, [preferencesOpen]);
 
-  const handleFillPickerInput = (event: any) => {
-    const customEvent = event as CustomEvent<{ checked?: boolean }>;
-    const checked =
-      customEvent.detail?.checked ?? Boolean((event.target as any)?.checked);
-    setIncludeFillPicker(checked);
-  };
-
   const handleModeChange = (event: any) => {
     const nextMode = (event as CustomEvent).detail ?? event.target?.value;
     if (typeof nextMode !== "string") return;
     setTheme(nextMode.toLowerCase() === "dark");
+  };
+
+  const handleEditorControlsInput = (event: any) => {
+    const customEvent = event as CustomEvent<{ checked?: boolean }>;
+    const checked =
+      customEvent.detail?.checked ?? Boolean((event.target as any)?.checked);
+    setIncludeEditorControls(checked);
   };
 
   return (
@@ -90,10 +90,10 @@ export default function ThemeToggle({
         </fig-header>
         <fig-content>
           <fig-field columns="half">
-            <label>Fill picker</label>
+            <label>Full editor</label>
             <fig-switch
-              checked={includeFillPicker ? "true" : undefined}
-              onInput={handleFillPickerInput}
+              checked={includeEditorControls ? "true" : undefined}
+              onInput={handleEditorControlsInput}
             ></fig-switch>
           </fig-field>
           <fig-field columns="half">

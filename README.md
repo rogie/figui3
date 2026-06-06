@@ -17,6 +17,17 @@ A lightweight, zero-dependency web components library for building Figma plugin 
 - Accessible with ARIA attributes and keyboard navigation
 - Framework agnostic (React, Vue, Svelte, or vanilla JS)
 
+## Accessibility Coverage
+
+FigUI3 components are built to preserve native semantics where possible and add ARIA only where custom elements need extra state or naming.
+
+- Form primitives forward accessible names and state to their native controls, including text, number, slider, checkbox, radio, switch, color, and fill inputs.
+- Selection components use standard keyboard patterns: tabs use roving focus and `aria-controls`, segmented controls expose a radio-group pattern, choosers expose listbox/options, and menus support trigger state, item focus, Escape close, and disabled items.
+- Dialog, popup, tooltip, and toast surfaces expose names, close affordances, live-region behavior, and focus return behavior appropriate to their role.
+- Media components render their visual surface inside `fig-preview`; image/video semantics stay on the native media element, upload controls remain keyboard reachable, and generated video controls render below the preview instead of as an overlay.
+- Display and pointer components expose useful semantics when interactive or informative: handles, chits, color tips, layers, spinners, shimmers, and skeletons sync names, busy states, disabled states, or hidden states as appropriate.
+- Focus styling uses shared `--figma-focus-outline` and `--figma-focus-outline-offset` tokens so visible focus treatment stays consistent across components.
+
 ## Quick Start
 
 Install:
@@ -32,7 +43,14 @@ import "@rogieking/figui3/fig.css";
 import "@rogieking/figui3/fig.js";
 ```
 
-Opt into the full Figma-style fill picker when you need it:
+Opt into `<fig-layer>` when you need collapsible layer lists:
+
+```js
+import "@rogieking/figui3/fig-layer.css";
+import "@rogieking/figui3/fig-layer.js";
+```
+
+Opt into editor components like the full Figma-style fill picker when you need them:
 
 ```js
 import "@rogieking/figui3/fig-editor.css";
@@ -94,8 +112,9 @@ Minimal example:
 | [Popup](#popup) | `<fig-popup>` | Anchored floating surface |
 | [Toast](#toast) | `<fig-toast>` | Toast notification |
 | [Tooltip](#tooltip) | `<fig-tooltip>` | Hover/click tooltip |
+| [Menu](#menu) | `<fig-menu>` | Triggered menu with keyboard navigation |
 | [Header](#header) | `<fig-header>` | Section header |
-| [Layer](#layer) | `<fig-layer>` | Collapsible layer list item |
+| [Layer](#layer) | `<fig-layer>` | Collapsible layer list item from `fig-layer.js` |
 | [Preview](#preview) | `<fig-preview>` | Thin visual preview layer |
 | [Media](#media) | `<fig-media>` | Shared media host for image/video |
 | [Image](#image) | `<fig-image>` | Image display/upload |
@@ -516,6 +535,8 @@ A comprehensive fill input supporting solid, gradient, image, and video fills. W
 | `alpha` | boolean | `true` | Show alpha controls |
 | `picker-*` | string | — | Forwarded to `<fig-fill-picker>` when the optional picker is registered |
 
+Add `aria-label` to name the generated picker, hex field, and opacity field as one fill control group.
+
 **Events:**
 
 | Event | Detail |
@@ -572,6 +593,8 @@ Optional full fill picker dialog supporting solid, gradient, image, video, and w
 
 **Events:** `input`, `change` with selected tab value.
 
+Tabs use `role="tablist"` / `role="tab"` and roving focus. Use `content="#panel-id"` on each `<fig-tab>` to associate generated tab panels.
+
 ```html
 <fig-tabs value="tab1">
   <fig-tab value="tab1">General</fig-tab>
@@ -593,6 +616,8 @@ Optional full fill picker dialog supporting solid, gradient, image, video, and w
 | `sizing` | string | `"equal"` | `"equal"` or `"auto"` width mode |
 
 **Events:** `input`, `change` — detail contains the selected value.
+
+Segmented controls expose a radio-group pattern. Arrow keys, Home, and End move selection between enabled segments.
 
 ```html
 <fig-segmented-control>
@@ -658,6 +683,7 @@ A 2D position input control with optional X/Y fields.
 | `fields` | boolean | `false` | Show X/Y inputs |
 | `coordinates` | string | `"screen"` | `"screen"` (0,0 top-left) or `"math"` (0,0 bottom-left) |
 | `aspect-ratio` | string | `"1 / 1"` | Plane ratio |
+| `axis-labels` | string | — | Comma- or space-delimited labels. 1 value: top. 2 values: x y. 4 values: left right top bottom |
 
 **Events:**
 
@@ -927,12 +953,14 @@ An anchored floating surface built on `<dialog>` with collision-aware positionin
 `<fig-toast>` — [demo](https://rog.ie/figui3/#toast)
 
 A toast notification. Uses `is="fig-toast"` on a native `<dialog>`.
+Defaults to `role="status"`, `aria-live="polite"`, and `aria-atomic="true"`. Use `live="assertive"` or `theme="danger"` for assertive announcements.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `duration` | number | `5000` | Auto-dismiss ms (0 = no dismiss) |
 | `offset` | number | `16` | Distance from bottom |
 | `theme` | string | `"dark"` | `"dark"`, `"light"`, `"danger"`, `"brand"`, `"auto"` |
+| `live` | string | — | `"assertive"` for urgent announcements |
 
 ```html
 <dialog is="fig-toast" id="myToast" theme="brand" duration="3000">
@@ -966,6 +994,34 @@ Contextual tooltip on hover or click. Auto-repositions when the child element mo
 
 ---
 
+#### Menu
+
+`<fig-menu>` / `<fig-menu-item>` / `<fig-menu-separator>` — [demo](https://rog.ie/figui3/#menu)
+
+Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="menu"`, `aria-expanded`, and `aria-controls`; menu items use `role="menuitem"` and disabled items are skipped by keyboard navigation.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `open` | boolean | `false` | Open state |
+| `disabled` | boolean | `false` | Disable trigger/menu |
+| `position` | string | `"bottom left"` | Popup placement |
+| `offset` | string | — | Popup offset |
+| `closedby` | string | — | Popup close behavior |
+
+**Keyboard:** Arrow keys move between enabled items, Home/End jump to edges, Enter/Space selects, Escape closes and returns focus to the trigger.
+
+```html
+<fig-menu position="bottom left">
+  <fig-button fig-menu-trigger>Actions</fig-button>
+  <fig-menu-item value="copy">Copy</fig-menu-item>
+  <fig-menu-item value="paste">Paste</fig-menu-item>
+  <fig-menu-separator></fig-menu-separator>
+  <fig-menu-item value="delete" disabled>Delete</fig-menu-item>
+</fig-menu>
+```
+
+---
+
 #### Header
 
 `<fig-header>` — [demo](https://rog.ie/figui3/#header)
@@ -982,7 +1038,8 @@ A section header component.
 
 `<fig-layer>` — [demo](https://rog.ie/figui3/#layer)
 
-A collapsible layer list item with expand/collapse and visibility toggling. Supports nesting.
+A collapsible layer list item with expand/collapse and visibility toggling. Supports nesting and exposes `role="treeitem"`, `aria-expanded`, `aria-hidden`, `aria-disabled`, and a keyboard-toggleable chevron button.
+Import `fig-layer.js` and `fig-layer.css` to register and style it. `fig-editor.js` also includes the layer registration.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1036,7 +1093,7 @@ A thin styled layer for arbitrary visual content. Use it for generated previews,
 
 `<fig-media>`
 
-Unified media component that supports image/video modes and shared sizing/upload behavior. Renders a real `<img>` or `<video>` inside the host. By default the host shrinkwraps to the inner media's intrinsic size; set `size` for a token-sized square, or `aspect-ratio` to fill the container width with a fixed ratio.
+Unified media component that supports image/video modes and shared sizing/upload behavior. The media surface is rendered inside a `fig-preview`; generated video controls render below that preview rather than as an overlay. Set `size` for a token-sized square, or `aspect-ratio` to fill the container width with a fixed ratio.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1054,11 +1111,14 @@ Unified media component that supports image/video modes and shared sizing/upload
 | `loop` | boolean | `false` | Video loop |
 | `muted` | boolean | `false` | Video muted |
 | `poster` | string | — | Video poster URL |
+| `aria-label` | string | — | Accessible label forwarded to generated videos |
+
+Use meaningful `alt` text for informative images. Use `alt=""` only when the image is decorative or already described by nearby text.
 
 ```html
-<fig-media type="image" src="photo.jpg"></fig-media>
-<fig-media type="image" src="photo.jpg" aspect-ratio="16 / 9" fit="cover"></fig-media>
-<fig-media type="video" src="clip.mp4" controls muted></fig-media>
+<fig-media type="image" src="photo.jpg" alt="Selected image"></fig-media>
+<fig-media type="image" src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover"></fig-media>
+<fig-media type="video" src="clip.mp4" aria-label="Product demo video" controls muted></fig-media>
 ```
 
 ---
@@ -1067,7 +1127,7 @@ Unified media component that supports image/video modes and shared sizing/upload
 
 `<fig-image>` — [demo](https://rog.ie/figui3/#image)
 
-An image display component with optional upload, aspect ratio, and object-fit control. Renders a real `<img>` inside the host; by default the host shrinkwraps to the image's intrinsic size.
+An image display component with optional upload, aspect ratio, and object-fit control. Renders a real `<img>` inside a `fig-preview`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1080,10 +1140,12 @@ An image display component with optional upload, aspect ratio, and object-fit co
 | `fit` | string | `"contain"` | CSS object-fit (`"cover"`, `"contain"`, etc.) |
 | `checkerboard` | boolean | `false` | Show checkerboard behind transparent images |
 
+Use meaningful `alt` text for informative images. Use `alt=""` for decorative previews, thumbnails with visible labels, or upload placeholders.
+
 ```html
-<fig-image src="photo.jpg"></fig-image>
-<fig-image src="photo.jpg" aspect-ratio="16 / 9" fit="cover"></fig-image>
-<fig-image upload label="Upload Image"></fig-image>
+<fig-image src="photo.jpg" alt="Selected image"></fig-image>
+<fig-image src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover"></fig-image>
+<fig-image upload label="Upload Image" alt=""></fig-image>
 ```
 
 ---
@@ -1092,7 +1154,7 @@ An image display component with optional upload, aspect ratio, and object-fit co
 
 `<fig-video>`
 
-Video display/upload component with the same host styling model as `fig-image`. Renders a real `<video>` inside the host; by default the host shrinkwraps to the video's intrinsic size.
+Video display/upload component with the same preview styling model as `fig-image`. Renders a real `<video>` inside a `fig-preview`; generated playback controls tack onto the bottom.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1107,11 +1169,14 @@ Video display/upload component with the same host styling model as `fig-image`. 
 | `loop` | boolean | `false` | Loop video |
 | `muted` | boolean | `false` | Mute video |
 | `poster` | string | — | Poster image URL (forwarded to inner `<video>`) |
+| `aria-label` | string | — | Accessible label forwarded to the generated `<video>` |
+
+Prefer `controls` for videos that play motion. Add captions with a slotted `<track>` when the video includes speech or essential audio.
 
 ```html
-<fig-video src="clip.mp4"></fig-video>
-<fig-video src="clip.mp4" aspect-ratio="16 / 9" controls></fig-video>
-<fig-video upload label="Upload Video" controls muted></fig-video>
+<fig-video src="clip.mp4" aria-label="Product demo video" controls></fig-video>
+<fig-video src="clip.mp4" aria-label="Product demo video" aspect-ratio="16 / 9" controls></fig-video>
+<fig-video upload label="Upload Video" aria-label="Uploaded video preview" controls muted></fig-video>
 ```
 
 ---
@@ -1162,6 +1227,8 @@ Legacy: `<span class="fig-mask-icon" style="--icon: var(--icon-24-add)"></span>`
 
 A loading spinner.
 
+Defaults to `role="status"` and `aria-label="Loading"`; override the label when the loading target needs a more specific name.
+
 ```html
 <fig-spinner></fig-spinner>
 ```
@@ -1178,6 +1245,8 @@ A shimmer loading placeholder.
 |---|---|---|---|
 | `duration` | string | `"1.5s"` | Animation cycle duration |
 | `playing` | boolean | `true` | Whether animating |
+
+Shimmer and skeleton placeholders are hidden from assistive tech unless you add `aria-label` or `aria-labelledby`; named placeholders expose `role="status"` and `aria-busy`.
 
 ```html
 <fig-shimmer style="width: 200px; height: 20px;"></fig-shimmer>

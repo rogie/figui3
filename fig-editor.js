@@ -1,3 +1,244 @@
+import "./fig-layer.js";
+
+function figEditorIsWebKitOrIOSBrowser() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  const userAgent = navigator.userAgent || "";
+  const isIOSBrowser =
+    /\b(iPad|iPhone|iPod)\b/.test(userAgent) ||
+    (/\bMacintosh\b/.test(userAgent) && /\bMobile\b/.test(userAgent));
+  const isDesktopWebKit =
+    /\bAppleWebKit\b/.test(userAgent) &&
+    !/\b(Chrome|Chromium|Edg|OPR|SamsungBrowser)\b/.test(userAgent);
+  return isIOSBrowser || isDesktopWebKit;
+}
+
+function figEditorSupportsCustomizedBuiltIns() {
+  if (
+    typeof window === "undefined" ||
+    !window.customElements ||
+    typeof HTMLButtonElement === "undefined"
+  ) {
+    return false;
+  }
+
+  const testName = `fig-editor-builtin-probe-${Math.random().toString(36).slice(2)}`;
+  class FigEditorCustomizedBuiltInProbe extends HTMLButtonElement {}
+
+  try {
+    customElements.define(testName, FigEditorCustomizedBuiltInProbe, {
+      extends: "button",
+    });
+    const probe = document.createElement("button", { is: testName });
+    return probe instanceof FigEditorCustomizedBuiltInProbe;
+  } catch (_error) {
+    return false;
+  }
+}
+
+const figEditorNeedsBuiltInPolyfill =
+  figEditorIsWebKitOrIOSBrowser() && !figEditorSupportsCustomizedBuiltIns();
+const figEditorBuiltInPolyfillReady = (
+  figEditorNeedsBuiltInPolyfill
+    ? import("./polyfills/custom-elements-webkit.js")
+    : Promise.resolve()
+)
+  .then(() => {})
+  .catch((error) => {
+    throw error;
+  });
+
+function figEditorDefineCustomizedBuiltIn(name, constructor, options) {
+  const define = () => {
+    if (!customElements.get(name)) {
+      customElements.define(name, constructor, options);
+    }
+  };
+
+  if (!figEditorNeedsBuiltInPolyfill) {
+    define();
+    return;
+  }
+
+  figEditorBuiltInPolyfillReady.then(define).catch((error) => {
+    console.error(
+      `[figui3] Failed to load customized built-in polyfill for "${name}".`,
+      error,
+    );
+  });
+}
+
+/* Toast */
+/**
+ * A toast notification element for non-modal, time-based messages.
+ * Always positioned at bottom center of the screen.
+ * @attr {number} duration - Auto-dismiss duration in ms (0 = no auto-dismiss, default: 5000)
+ * @attr {number} offset - Distance from bottom edge in pixels (default: 16)
+ * @attr {string} theme - Visual theme: "dark" (default), "light", "danger", "brand"
+ * @attr {boolean} open - Whether the toast is visible
+ */
+class FigToast extends HTMLDialogElement {
+  constructor() {
+    super();
+    this._figInit();
+  }
+
+  _figInit() {
+    if (this._figInitialized) return;
+    this._figInitialized = true;
+    this._defaultOffset = 16;
+    this._autoCloseTimer = null;
+    this._boundHandleClose = this.handleClose.bind(this);
+  }
+
+  getOffset() {
+    return parseInt(this.getAttribute("offset") ?? this._defaultOffset);
+  }
+
+  connectedCallback() {
+    this._figInit();
+
+    if (!this.hasAttribute("theme")) {
+      this.setAttribute("theme", "dark");
+    }
+
+    this.syncLiveRegion();
+
+    const shouldOpen =
+      this.getAttribute("open") === "true" || this.getAttribute("open") === "";
+    if (this.hasAttribute("open") && !shouldOpen) {
+      this.removeAttribute("open");
+    }
+
+    if (!shouldOpen) {
+      this.close();
+    }
+
+    requestAnimationFrame(() => {
+      this.addCloseListeners();
+      this.applyPosition();
+
+      if (shouldOpen) {
+        this.showToast();
+      }
+    });
+  }
+
+  disconnectedCallback() {
+    this._figInit();
+    this.clearAutoClose();
+  }
+
+  addCloseListeners() {
+    this.querySelectorAll("[close-toast]").forEach((button) => {
+      button.removeEventListener("click", this._boundHandleClose);
+      button.addEventListener("click", this._boundHandleClose);
+    });
+  }
+
+  handleClose() {
+    this.hideToast();
+  }
+
+  applyPosition() {
+    this.style.position = "fixed";
+    this.style.margin = "0";
+    this.style.top = "auto";
+    this.style.bottom = `${this.getOffset()}px`;
+    this.style.left = "50%";
+    this.style.right = "auto";
+    this.style.transform = "translateX(-50%)";
+  }
+
+  startAutoClose() {
+    this.clearAutoClose();
+
+    const duration = parseInt(this.getAttribute("duration") ?? "5000");
+    if (duration > 0) {
+      this._autoCloseTimer = setTimeout(() => {
+        this.hideToast();
+      }, duration);
+    }
+  }
+
+  syncLiveRegion() {
+    const assertive =
+      this.getAttribute("live") === "assertive" ||
+      this.getAttribute("theme") === "danger";
+    if (!this.hasAttribute("role")) {
+      this.setAttribute("role", assertive ? "alert" : "status");
+    }
+    if (!this.hasAttribute("aria-live")) {
+      this.setAttribute("aria-live", assertive ? "assertive" : "polite");
+    }
+    if (!this.hasAttribute("aria-atomic")) {
+      this.setAttribute("aria-atomic", "true");
+    }
+  }
+
+  clearAutoClose() {
+    if (this._autoCloseTimer) {
+      clearTimeout(this._autoCloseTimer);
+      this._autoCloseTimer = null;
+    }
+  }
+
+  _resolveAutoTheme() {
+    if (this.getAttribute("theme") !== "auto") return;
+    const cs = getComputedStyle(document.documentElement).colorScheme || "";
+    const isDark = cs.includes("dark");
+    this.style.colorScheme = isDark ? "light" : "dark";
+  }
+
+  showToast() {
+    this._resolveAutoTheme();
+    if (!this.open) this.show();
+    this.applyPosition();
+    this.startAutoClose();
+    this.dispatchEvent(new CustomEvent("toast-show", { bubbles: true }));
+  }
+
+  hideToast() {
+    this.clearAutoClose();
+    this.close();
+    this.dispatchEvent(new CustomEvent("toast-hide", { bubbles: true }));
+  }
+
+  static get observedAttributes() {
+    return ["duration", "offset", "open", "theme", "live"];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    this._figInit();
+    if (!this.isConnected) return;
+    if (name === "offset") {
+      this.applyPosition();
+    }
+
+    if (name === "open") {
+      if (newValue !== null && newValue !== "false") {
+        this.showToast();
+      } else {
+        this.hideToast();
+      }
+    }
+
+    if (name === "theme") {
+      if (newValue === "auto") {
+        this._resolveAutoTheme();
+      } else {
+        this.style.removeProperty("color-scheme");
+      }
+    }
+
+    if (name === "theme" || name === "live") {
+      this.syncLiveRegion();
+    }
+  }
+}
+figEditorDefineCustomizedBuiltIn("fig-toast", FigToast, { extends: "dialog" });
+
 // FigFillPicker
 const GRADIENT_INTERPOLATION_SPACES = [
   "srgb",
@@ -1531,7 +1772,7 @@ class FigFillPicker extends HTMLElement {
           <fig-icon name="rotate"></fig-icon>
         </fig-button>
       </fig-field>
-      <fig-image class="fig-fill-picker-media-preview fig-fill-picker-image-preview" upload="true" label="Upload from computer" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true"></fig-image>
+      <fig-image class="fig-fill-picker-media-preview fig-fill-picker-image-preview" upload="true" label="Upload from computer" alt="Image fill preview" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true"></fig-image>
     `;
 
     this.#setupImageEvents(container);
@@ -1693,7 +1934,7 @@ class FigFillPicker extends HTMLElement {
           <fig-icon name="rotate"></fig-icon>
         </fig-button>
       </fig-field>
-      <fig-media class="fig-fill-picker-media-preview fig-fill-picker-video-preview" type="video" upload="true" label="Upload from computer" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true" loop="true"></fig-media>
+      <fig-media class="fig-fill-picker-media-preview fig-fill-picker-video-preview" type="video" upload="true" label="Upload from computer" aria-label="Video fill preview" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" controls muted="true" loop="true"></fig-media>
     `;
 
     this.#setupVideoEvents(container);
@@ -1744,7 +1985,7 @@ class FigFillPicker extends HTMLElement {
         <fig-dropdown class="fig-fill-picker-camera-select" full ${expAttr}>
         </fig-dropdown>
       </fig-field>
-      <fig-video class="fig-fill-picker-webcam-preview" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true">
+      <fig-video class="fig-fill-picker-webcam-preview" aria-label="Webcam preview" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true">
         <video class="fig-fill-picker-webcam-video" autoplay muted playsinline></video>
         <div class="fig-fill-picker-webcam-status">
           <span>Camera access required</span>

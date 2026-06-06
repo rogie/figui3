@@ -15,7 +15,7 @@ export default function TestApp() {
         <p className="tests-kicker">FigUI3 Tests</p>
         <h1>Component Contracts</h1>
         <p>
-          Visual fixtures for every component registered by <code>fig.js</code>.
+          Visual fixtures for every registered FigUI component.
           Automated Playwright tests use the same manifest.
         </p>
       </header>

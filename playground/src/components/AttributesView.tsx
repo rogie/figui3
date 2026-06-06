@@ -952,7 +952,6 @@ export default function AttributesView({
               return (
                 <fig-dropdown
                   full
-                  experimental="modern"
                   value={current}
                   onChange={(e: any) => {
                     const host = e.currentTarget as HTMLElement & {
@@ -1383,7 +1382,6 @@ export default function AttributesView({
                         <fig-dropdown
                           key={`field-input-select-${target.fieldIndex}-${currentFieldInputTag}`}
                           full
-                          experimental="modern"
                           value={currentFieldInputTag}
                           onChange={(e: any) => {
                             const host = e.currentTarget as HTMLElement & {

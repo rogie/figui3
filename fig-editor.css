@@ -1,6 +1,67 @@
+@import url("fig-layer.css");
+
 :root,
 :host {
   --icon-24-eyedropper: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M15.1592 5.65801C16.0376 4.78045 17.4621 4.78055 18.3408 5.65899L18.4951 5.82989C19.1671 6.65442 19.168 7.84476 18.4951 8.66973L18.3408 8.84063L16.6455 10.533C17.1104 11.083 17.1181 11.889 16.6641 12.4461L16.5605 12.5604C16.0111 13.1097 15.1425 13.1428 14.5537 12.6629L14.5342 12.6453L10.0908 17.0916C9.6188 17.5633 8.98876 17.7764 8.375 17.742L7.56055 18.5574C6.97441 19.1432 6.02451 19.1422 5.43945 18.5584V18.5574C4.8538 17.9718 4.85405 17.0221 5.43945 16.4363L6.25586 15.618C6.22412 15.0058 6.44026 14.3794 6.90918 13.91L11.3516 9.46367C10.856 8.87434 10.885 7.99381 11.4395 7.43926L11.5537 7.33574C12.1094 6.88283 12.9136 6.88854 13.4639 7.35137L15.1592 5.65801ZM7.61621 14.617C7.33755 14.8961 7.21782 15.2747 7.25781 15.6385C7.27925 15.8351 7.24419 16.0445 7.10449 16.1844L6.14648 17.1434C5.9516 17.3387 5.95135 17.6553 6.14648 17.8504C6.34167 18.0449 6.65842 18.0451 6.85352 17.8504L7.80859 16.8943C7.94931 16.7536 8.16065 16.7184 8.3584 16.741C8.72329 16.7828 9.10374 16.6643 9.38379 16.3846L13.8223 11.9432L12.0547 10.1756L7.61621 14.617ZM17.6338 6.36602C17.1458 5.87828 16.3544 5.8783 15.8662 6.36602L14.084 8.14629L14.0186 8.20586C13.6767 8.48476 13.1722 8.46484 12.8535 8.14629C12.6583 7.95131 12.3417 7.95119 12.1465 8.14629C11.9514 8.34148 11.9515 8.65808 12.1465 8.85332L15.1465 11.8533C15.3175 12.024 15.5814 12.0451 15.7754 11.9168L15.8535 11.8533C16.0486 11.6582 16.0484 11.3416 15.8535 11.1463V11.1453C15.8524 11.1443 15.8507 11.1434 15.8496 11.1424C15.5128 10.8013 15.514 10.2513 15.8535 9.91192L17.6338 8.1336C18.1216 7.6457 18.1213 6.85425 17.6338 6.36602Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
+}
+
+/* Toast */
+dialog[is="fig-toast"] {
+  contain: layout paint;
+  --z-index: 999999;
+  z-index: var(--z-index);
+  box-shadow: var(--figma-elevation-100);
+  border-radius: var(--radius-large);
+  padding: var(--spacer-2) var(--spacer-3);
+  align-items: center;
+  gap: var(--spacer-2);
+  height: 2.5rem;
+  justify-content: center;
+  min-width: 0;
+  color: var(--figma-color-text);
+  background-color: var(--figma-color-bg);
+
+  &[open] {
+    display: flex;
+  }
+
+  & p {
+    margin: 0;
+    padding: 0;
+    color: inherit;
+    font-weight: var(--body-medium-strong-fontWeight);
+  }
+
+  hr[vertical] {
+    margin: 0;
+  }
+
+  & fig-button:last-child {
+    margin-right: calc(var(--spacer-2) * -1);
+  }
+
+  &[theme="dark"] {
+    color-scheme: dark;
+  }
+
+  &[theme="light"] {
+    color-scheme: light;
+  }
+
+  &[theme="danger"] {
+    background-color: var(--figma-color-bg-danger);
+    color-scheme: dark;
+  }
+
+  &[theme="brand"] {
+    background-color: var(--figma-color-bg-brand);
+    color-scheme: dark;
+  }
+
+  &[theme="success"] {
+    background-color: var(--figma-color-bg-success);
+    color-scheme: dark;
+  }
 }
 
 /* Fill Picker */

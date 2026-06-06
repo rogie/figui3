@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 
-const INCLUDE_FILL_PICKER_KEY = "includeFillPicker";
+const INCLUDE_EDITOR_CONTROLS_KEY = "includeEditorControls";
 
-async function loadFillPicker() {
+async function loadEditorControls() {
   await import("../../../fig-editor.css");
-  // @ts-expect-error runtime side-effect import for optional fill picker registration
+  // @ts-expect-error runtime side-effect import for optional editor control registration
   await import("../../../fig-editor.js");
 }
 
@@ -14,9 +14,10 @@ export function useTheme() {
     if (saved) return saved === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-  const [includeFillPicker, setIncludeFillPickerState] = useState(
-    () => localStorage.getItem(INCLUDE_FILL_PICKER_KEY) === "true",
+  const [includeEditorControls, setIncludeEditorControlsState] = useState(
+    () => localStorage.getItem(INCLUDE_EDITOR_CONTROLS_KEY) === "true",
   );
+  const [editorComponentsVersion, setEditorComponentsVersion] = useState(0);
 
   const applyTheme = useCallback((dark: boolean) => {
     document.documentElement.style.colorScheme = dark ? "dark" : "light";
@@ -29,17 +30,24 @@ export function useTheme() {
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [applyTheme]);
 
-  const setIncludeFillPicker = useCallback((include: boolean) => {
-    setIncludeFillPickerState(include);
-    localStorage.setItem(INCLUDE_FILL_PICKER_KEY, include ? "true" : "false");
-    if (include) {
-      loadFillPicker();
-      return;
-    }
-    if (customElements.get("fig-fill-picker")) {
+  const setIncludeEditorControls = useCallback((include: boolean) => {
+    setIncludeEditorControlsState(include);
+    localStorage.setItem(INCLUDE_EDITOR_CONTROLS_KEY, include ? "true" : "false");
+    if (!include && customElements.get("fig-fill-picker")) {
       window.location.reload();
     }
   }, []);
+
+  useEffect(() => {
+    if (!includeEditorControls) return;
+    if (customElements.get("fig-fill-picker")) {
+      setEditorComponentsVersion((version) => version + 1);
+      return;
+    }
+    loadEditorControls().then(() => {
+      setEditorComponentsVersion((version) => version + 1);
+    });
+  }, [includeEditorControls]);
 
   useEffect(() => {
     applyTheme(isDark);
@@ -54,5 +62,11 @@ export function useTheme() {
     return () => mq.removeEventListener("change", handler);
   }, [setTheme]);
 
-  return { isDark, setTheme, includeFillPicker, setIncludeFillPicker };
+  return {
+    isDark,
+    setTheme,
+    includeEditorControls,
+    setIncludeEditorControls,
+    editorComponentsVersion,
+  };
 }

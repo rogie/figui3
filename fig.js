@@ -1,3 +1,5 @@
+import "./fig-layer.js";
+
 /**
  * Generates a unique ID string using timestamp and random values
  * @returns {string} A unique identifier
@@ -132,6 +134,7 @@ function figSupportsPopover() {
 class FigButton extends HTMLElement {
   type;
   #selected;
+  #a11yAttributes = ["aria-label", "aria-labelledby", "aria-describedby", "title"];
   constructor() {
     super();
     this.attachShadow({ mode: "open", delegatesFocus: true });
@@ -180,6 +183,7 @@ class FigButton extends HTMLElement {
 
     requestAnimationFrame(() => {
       this.button = this.shadowRoot.querySelector("button");
+      this.#syncButtonAttributes();
       this.button.addEventListener("click", this.#handleClick.bind(this));
 
       // Forward focus-visible state to host element
@@ -207,7 +211,12 @@ class FigButton extends HTMLElement {
     this.setAttribute("selected", value);
   }
 
+  #isDisabled() {
+    return this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+  }
+
   #handleClick() {
+    if (this.#isDisabled()) return;
     if (this.type === "toggle") {
       this.toggleAttribute("selected", !this.hasAttribute("selected"));
     }
@@ -229,26 +238,63 @@ class FigButton extends HTMLElement {
       }
     }
   }
+  #syncPressedState() {
+    if (!this.button) return;
+    if (this.type !== "toggle") {
+      this.removeAttribute("aria-pressed");
+      this.button.removeAttribute("aria-pressed");
+      return;
+    }
+    const pressed = this.hasAttribute("selected") && this.getAttribute("selected") !== "false";
+    this.setAttribute("aria-pressed", pressed ? "true" : "false");
+    this.button.setAttribute("aria-pressed", pressed ? "true" : "false");
+  }
+  #syncA11yAttributes() {
+    if (!this.button) return;
+    this.#a11yAttributes.forEach((name) => {
+      const value = this.getAttribute(name);
+      if (value === null) {
+        this.button.removeAttribute(name);
+      } else {
+        this.button.setAttribute(name, value);
+      }
+    });
+  }
+  #syncButtonAttributes() {
+    if (!this.button) return;
+    const disabled =
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    this.disabled = this.button.disabled = disabled;
+    this.button.type = this.type;
+    this.button.setAttribute("type", this.type);
+    this.#syncA11yAttributes();
+    this.#syncPressedState();
+  }
   static get observedAttributes() {
-    return ["disabled", "selected"];
+    return [
+      "disabled",
+      "selected",
+      "type",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "title",
+    ];
   }
   attributeChangedCallback(name, oldValue, newValue) {
-    if (this.button) {
-      this.button[name] = newValue;
-      switch (name) {
-        case "disabled":
-          this.disabled = this.button.disabled =
-            newValue !== null && newValue !== "false";
-          break;
-        case "type":
-          this.type = newValue;
-          this.button.type = this.type;
-          this.button.setAttribute("type", this.type);
-          break;
-        case "selected":
-          this.#selected = newValue === "true";
-          break;
-      }
+    if (oldValue === newValue) return;
+    switch (name) {
+      case "disabled":
+      case "type":
+        this.#syncButtonAttributes();
+        break;
+      case "selected":
+        this.#selected = newValue !== null && newValue !== "false";
+        this.#syncPressedState();
+        break;
+      default:
+        this.#syncA11yAttributes();
+        break;
     }
   }
 }
@@ -1093,6 +1139,7 @@ class FigDialog extends HTMLDialogElement {
       this._setupDragListeners();
       this._applyPosition();
       this._syncAutoResize();
+      this._syncA11y();
     });
 
     window.addEventListener("message", this._boundIframeMessage);
@@ -1246,6 +1293,7 @@ class FigDialog extends HTMLDialogElement {
     const btn = document.createElement("fig-button");
     btn.setAttribute("variant", "ghost");
     btn.setAttribute("icon", "");
+    btn.setAttribute("aria-label", "Close dialog");
     btn.setAttribute("close-dialog", "");
     btn.appendChild(createFigIcon("close"));
     tooltip.appendChild(btn);
@@ -1256,9 +1304,23 @@ class FigDialog extends HTMLDialogElement {
 
   _addCloseListeners() {
     this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
+      if (!button.hasAttribute("aria-label")) {
+        button.setAttribute("aria-label", "Close dialog");
+      }
       button.removeEventListener("click", this._boundClose);
       button.addEventListener("click", this._boundClose);
     });
+  }
+
+  _syncA11y() {
+    if (!this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby")) {
+      const heading = this.querySelector("fig-header[dialog-header] h1, fig-header[dialog-header] h2, fig-header[dialog-header] h3, fig-header[dialog-header] h4, fig-header[dialog-header] h5, fig-header[dialog-header] h6");
+      if (heading) {
+        const id = heading.getAttribute("id") || figUniqueId();
+        heading.setAttribute("id", id);
+        this.setAttribute("aria-labelledby", id);
+      }
+    }
   }
 
   _applyPosition() {
@@ -1479,6 +1541,8 @@ class FigDialog extends HTMLDialogElement {
       "resizable",
       "closedby",
       "autoresize",
+      "aria-label",
+      "aria-labelledby",
     ];
   }
 
@@ -1525,10 +1589,124 @@ class FigDialog extends HTMLDialogElement {
       if (autoHeader) {
         autoHeader.textContent = newValue || "Dialog";
       }
+      this._syncA11y();
+    }
+
+    if (name === "aria-label" || name === "aria-labelledby") {
+      this._syncA11y();
     }
   }
 }
 figDefineCustomizedBuiltIn("fig-dialog", FigDialog, { extends: "dialog" });
+
+/* Toast */
+class FigToast extends HTMLDialogElement {
+  constructor() {
+    super();
+    this._figInit();
+  }
+
+  _figInit() {
+    if (this._figInitialized) return;
+    this._figInitialized = true;
+    this._defaultOffset = 16;
+    this._autoCloseTimer = null;
+    this._boundHandleClose = this.handleClose.bind(this);
+  }
+
+  connectedCallback() {
+    this._figInit();
+    if (!this.hasAttribute("theme")) this.setAttribute("theme", "dark");
+    this.syncLiveRegion();
+    this.addCloseListeners();
+    this.applyPosition();
+    if (this.hasAttribute("open") && this.getAttribute("open") !== "false") {
+      this.showToast();
+    }
+  }
+
+  disconnectedCallback() {
+    this._figInit();
+    this.clearAutoClose();
+  }
+
+  addCloseListeners() {
+    this.querySelectorAll("[close-toast]").forEach((button) => {
+      if (!button.hasAttribute("aria-label")) button.setAttribute("aria-label", "Close notification");
+      button.removeEventListener("click", this._boundHandleClose);
+      button.addEventListener("click", this._boundHandleClose);
+    });
+  }
+
+  handleClose() {
+    this.hideToast();
+  }
+
+  applyPosition() {
+    this.style.position = "fixed";
+    this.style.margin = "0";
+    this.style.top = "auto";
+    this.style.bottom = `${parseInt(this.getAttribute("offset") ?? this._defaultOffset)}px`;
+    this.style.left = "50%";
+    this.style.right = "auto";
+    this.style.transform = "translateX(-50%)";
+  }
+
+  syncLiveRegion() {
+    const assertive =
+      this.getAttribute("live") === "assertive" ||
+      this.getAttribute("theme") === "danger";
+    if (!this.hasAttribute("role")) this.setAttribute("role", assertive ? "alert" : "status");
+    if (!this.hasAttribute("aria-live")) this.setAttribute("aria-live", assertive ? "assertive" : "polite");
+    if (!this.hasAttribute("aria-atomic")) this.setAttribute("aria-atomic", "true");
+  }
+
+  startAutoClose() {
+    this.clearAutoClose();
+    const duration = parseInt(this.getAttribute("duration") ?? "5000");
+    if (duration > 0) {
+      this._autoCloseTimer = setTimeout(() => this.hideToast(), duration);
+    }
+  }
+
+  clearAutoClose() {
+    if (this._autoCloseTimer) {
+      clearTimeout(this._autoCloseTimer);
+      this._autoCloseTimer = null;
+    }
+  }
+
+  showToast() {
+    this.syncLiveRegion();
+    if (!this.open) this.show();
+    this.applyPosition();
+    this.startAutoClose();
+    this.dispatchEvent(new CustomEvent("toast-show", { bubbles: true }));
+  }
+
+  hideToast() {
+    this.clearAutoClose();
+    if (this.open) this.close();
+    this.dispatchEvent(new CustomEvent("toast-hide", { bubbles: true }));
+  }
+
+  static get observedAttributes() {
+    return ["duration", "offset", "open", "theme", "live"];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    this._figInit();
+    if (oldValue === newValue) return;
+    if (!this.isConnected) return;
+    if (name === "offset") this.applyPosition();
+    if (name === "open") {
+      if (newValue !== null && newValue !== "false") this.showToast();
+      else this.hideToast();
+    }
+    if (name === "theme" || name === "live") this.syncLiveRegion();
+  }
+}
+figDefineCustomizedBuiltIn("fig-toast", FigToast, { extends: "dialog" });
 
 /* Popup */
 /**
@@ -1699,7 +1877,10 @@ class FigPopup extends HTMLDialogElement {
       this.setAttribute("position", "top center");
     }
     if (!this.hasAttribute("role")) {
-      this.setAttribute("role", "dialog");
+      this.setAttribute(
+        "role",
+        this.getAttribute("variant") === "tooltip" ? "tooltip" : "dialog",
+      );
     }
     if (!this.hasAttribute("closedby")) {
       this.setAttribute("closedby", "any");
@@ -2676,14 +2857,20 @@ class FigTab extends HTMLElement {
   connectedCallback() {
     this.setAttribute("label", this.innerText);
     this.setAttribute("role", "tab");
-    this.setAttribute("tabindex", "0");
+    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
     this.addEventListener("click", this.#boundHandleClick);
 
     requestAnimationFrame(() => {
       if (typeof this.getAttribute("content") === "string") {
         this.content = document.querySelector(this.getAttribute("content"));
         if (this.content) {
+          const tabId = this.getAttribute("id") || figUniqueId();
+          const panelId = this.content.getAttribute("id") || figUniqueId();
+          this.setAttribute("id", tabId);
+          this.content.setAttribute("id", panelId);
+          this.setAttribute("aria-controls", panelId);
           this.content.setAttribute("role", "tabpanel");
+          this.content.setAttribute("aria-labelledby", tabId);
           if (this.#selected) {
             this.content.style.display = "block";
             this.setAttribute("aria-selected", "true");
@@ -2713,14 +2900,25 @@ class FigTab extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["selected"];
+    return ["selected", "disabled"];
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "selected") {
       this.#selected = newValue !== null && newValue !== "false";
       this.setAttribute("aria-selected", this.#selected ? "true" : "false");
+      this.setAttribute("tabindex", this.#selected ? "0" : "-1");
       if (this?.content) {
         this.content.style.display = this.#selected ? "block" : "none";
+      }
+    }
+    if (name === "disabled") {
+      const disabled = newValue !== null && newValue !== "false";
+      if (disabled) {
+        this.setAttribute("aria-disabled", "true");
+        this.setAttribute("tabindex", "-1");
+      } else {
+        this.removeAttribute("aria-disabled");
+        this.setAttribute("tabindex", this.#selected ? "0" : "-1");
       }
     }
   }
@@ -2770,8 +2968,23 @@ class FigTabs extends HTMLElement {
       } else {
         tab.removeAttribute("disabled");
         tab.removeAttribute("aria-disabled");
-        tab.setAttribute("tabindex", "0");
       }
+    });
+    this.#syncTabIndexes();
+  }
+
+  #availableTabs() {
+    return Array.from(this.querySelectorAll("fig-tab")).filter(
+      (tab) => !tab.hasAttribute("disabled") || tab.getAttribute("disabled") === "false",
+    );
+  }
+
+  #syncTabIndexes() {
+    const tabs = Array.from(this.querySelectorAll("fig-tab"));
+    const selected = tabs.find((tab) => tab.hasAttribute("selected")) || this.#availableTabs()[0];
+    tabs.forEach((tab) => {
+      const disabled = tab.hasAttribute("disabled") && tab.getAttribute("disabled") !== "false";
+      tab.setAttribute("tabindex", !disabled && tab === selected ? "0" : "-1");
     });
   }
 
@@ -2781,9 +2994,10 @@ class FigTabs extends HTMLElement {
   }
 
   #handleKeyDown(event) {
-    const tabs = Array.from(this.querySelectorAll("fig-tab"));
+    const tabs = this.#availableTabs();
+    if (!tabs.length) return;
     const currentIndex = tabs.findIndex((tab) => tab.hasAttribute("selected"));
-    let newIndex = currentIndex;
+    let newIndex = currentIndex >= 0 ? currentIndex : 0;
 
     switch (event.key) {
       case "ArrowLeft":
@@ -2809,12 +3023,13 @@ class FigTabs extends HTMLElement {
     }
 
     if (newIndex !== currentIndex && tabs[newIndex]) {
-      tabs.forEach((tab) => tab.removeAttribute("selected"));
+      this.querySelectorAll("fig-tab").forEach((tab) => tab.removeAttribute("selected"));
       this.selectedTab = tabs[newIndex];
       tabs[newIndex].setAttribute("selected", "true");
       const val = tabs[newIndex].getAttribute("value");
       if (val) this.setAttribute("value", val);
       tabs[newIndex].focus();
+      this.#syncTabIndexes();
     }
   }
 
@@ -2836,6 +3051,7 @@ class FigTabs extends HTMLElement {
         tab.removeAttribute("selected");
       }
     }
+    this.#syncTabIndexes();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -2866,6 +3082,7 @@ class FigTabs extends HTMLElement {
     }
     const val = target.getAttribute("value");
     if (val) this.setAttribute("value", val);
+    this.#syncTabIndexes();
   }
 }
 customElements.define("fig-tabs", FigTabs);
@@ -2885,6 +3102,9 @@ class FigSegment extends HTMLElement {
     this.#boundHandleClick = this.handleClick.bind(this);
   }
   connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "radio");
+    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
+    this.#syncA11yState();
     this.addEventListener("click", this.#boundHandleClick);
   }
   disconnectedCallback() {
@@ -2916,7 +3136,21 @@ class FigSegment extends HTMLElement {
     this.setAttribute("selected", value);
   }
   static get observedAttributes() {
-    return ["selected", "value"];
+    return ["selected", "value", "disabled"];
+  }
+  #syncA11yState() {
+    const selected =
+      this.hasAttribute("selected") && this.getAttribute("selected") !== "false";
+    const disabled =
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    this.setAttribute("aria-checked", selected ? "true" : "false");
+    if (disabled) {
+      this.setAttribute("aria-disabled", "true");
+      this.setAttribute("tabindex", "-1");
+    } else {
+      this.removeAttribute("aria-disabled");
+      this.setAttribute("tabindex", selected ? "0" : "-1");
+    }
   }
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
@@ -2925,6 +3159,10 @@ class FigSegment extends HTMLElement {
         break;
       case "selected":
         this.#selected = newValue;
+        this.#syncA11yState();
+        break;
+      case "disabled":
+        this.#syncA11yState();
         break;
     }
   }
@@ -2941,6 +3179,7 @@ customElements.define("fig-segment", FigSegment);
 class FigSegmentedControl extends HTMLElement {
   #selectedSegment = null;
   #boundHandleClick = this.handleClick.bind(this);
+  #boundHandleKeyDown = this.#handleKeyDown.bind(this);
   #mutationObserver = null;
   #resizeObserver = null;
   #indicatorFrame = 0;
@@ -2957,7 +3196,9 @@ class FigSegmentedControl extends HTMLElement {
 
   connectedCallback() {
     this.name = this.getAttribute("name") || "segmented-control";
+    if (!this.hasAttribute("role")) this.setAttribute("role", "radiogroup");
     this.addEventListener("click", this.#boundHandleClick);
+    this.addEventListener("keydown", this.#boundHandleKeyDown);
     this.#applyDisabled(
       this.hasAttribute("disabled") &&
         this.getAttribute("disabled") !== "false",
@@ -2975,6 +3216,7 @@ class FigSegmentedControl extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListener("click", this.#boundHandleClick);
+    this.removeEventListener("keydown", this.#boundHandleKeyDown);
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = null;
     this.#resizeObserver?.disconnect();
@@ -3004,6 +3246,7 @@ class FigSegmentedControl extends HTMLElement {
     }
     this.#selectedSegment =
       segment instanceof HTMLElement && this.contains(segment) ? segment : null;
+    this.#syncSegmentA11y();
     this.#queueIndicatorSync();
   }
 
@@ -3052,6 +3295,97 @@ class FigSegmentedControl extends HTMLElement {
       if (segment.hasAttribute("selected")) return segment;
     }
     return null;
+  }
+
+  #availableSegments() {
+    return Array.from(this.querySelectorAll("fig-segment")).filter(
+      (segment) =>
+        !segment.hasAttribute("disabled") ||
+        segment.getAttribute("disabled") === "false",
+    );
+  }
+
+  #syncSegmentA11y() {
+    const segments = Array.from(this.querySelectorAll("fig-segment"));
+    const selected = segments.find((segment) => segment.hasAttribute("selected"));
+    segments.forEach((segment) => {
+      const disabled =
+        segment.hasAttribute("disabled") &&
+        segment.getAttribute("disabled") !== "false";
+      const isSelected = segment === selected;
+      segment.setAttribute("aria-checked", isSelected ? "true" : "false");
+      segment.setAttribute("tabindex", !disabled && isSelected ? "0" : "-1");
+    });
+  }
+
+  #selectSegment(segment) {
+    if (!segment) return;
+    const previousSegment = this.selectedSegment;
+    const previousValue = this.value;
+    this.selectedSegment = segment;
+    const resolvedValue = this.#resolveSegmentValue(segment);
+
+    if (resolvedValue) {
+      this.setAttribute("value", resolvedValue);
+    } else {
+      this.removeAttribute("value");
+    }
+
+    const nextValue = this.value;
+    if (previousSegment !== segment || previousValue !== nextValue) {
+      this.#emitSelectionEvents(nextValue);
+    }
+  }
+
+  #handleKeyDown(event) {
+    if (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    ) {
+      return;
+    }
+    const segments = this.#availableSegments();
+    if (!segments.length) return;
+    const currentIndex = segments.findIndex((segment) =>
+      segment.hasAttribute("selected"),
+    );
+    let nextIndex = currentIndex >= 0 ? currentIndex : 0;
+
+    switch (event.key) {
+      case "ArrowLeft":
+      case "ArrowUp":
+        event.preventDefault();
+        nextIndex = nextIndex > 0 ? nextIndex - 1 : segments.length - 1;
+        break;
+      case "ArrowRight":
+      case "ArrowDown":
+        event.preventDefault();
+        nextIndex = nextIndex < segments.length - 1 ? nextIndex + 1 : 0;
+        break;
+      case "Home":
+        event.preventDefault();
+        nextIndex = 0;
+        break;
+      case "End":
+        event.preventDefault();
+        nextIndex = segments.length - 1;
+        break;
+      case " ":
+      case "Enter": {
+        const active = event.target.closest("fig-segment");
+        if (active && this.contains(active)) {
+          event.preventDefault();
+          this.#selectSegment(active);
+        }
+        return;
+      }
+      default:
+        return;
+    }
+
+    const next = segments[nextIndex];
+    this.#selectSegment(next);
+    next.focus();
   }
 
   #selectByValue(value) {
@@ -3226,6 +3560,7 @@ class FigSegmentedControl extends HTMLElement {
         );
         this.#refreshResizeObserverTargets();
         this.#syncSelectionFromAttributes({ enforceFallback: true });
+        this.#syncSegmentA11y();
       }
     });
 
@@ -3248,22 +3583,7 @@ class FigSegmentedControl extends HTMLElement {
     const segment = event.target.closest("fig-segment");
     if (!segment || !this.contains(segment)) return;
 
-    const previousSegment = this.selectedSegment;
-    const previousValue = this.value;
-
-    this.selectedSegment = segment;
-    const resolvedValue = this.#resolveSegmentValue(segment);
-
-    if (resolvedValue) {
-      this.setAttribute("value", resolvedValue);
-    } else {
-      this.removeAttribute("value");
-    }
-
-    const nextValue = this.value;
-    if (previousSegment !== segment || previousValue !== nextValue) {
-      this.#emitSelectionEvents(nextValue);
-    }
+    this.#selectSegment(segment);
   }
 
   #applyDisabled(disabled) {
@@ -3277,6 +3597,7 @@ class FigSegmentedControl extends HTMLElement {
         segment.removeAttribute("aria-disabled");
       }
     });
+    this.#syncSegmentA11y();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -3634,6 +3955,14 @@ class FigSlider extends HTMLElement {
   #showEmptyTextValue = false;
   #isSyncingValueAttribute = false;
   #value = "";
+  #a11yAttributes = [
+    "aria-label",
+    "aria-labelledby",
+    "aria-describedby",
+    "aria-invalid",
+    "aria-required",
+    "aria-valuetext",
+  ];
   // Private fields declarations
   #typeDefaults = {
     range: { min: 0, max: 100, step: 1 },
@@ -3746,6 +4075,7 @@ class FigSlider extends HTMLElement {
     requestAnimationFrame(() => {
       this.input = this.querySelector("[type=range]");
       this.inputContainer = this.querySelector(".fig-slider-input-container");
+      this.#syncInputA11yAttributes();
       this.input.removeEventListener("input", this.#boundHandleInput);
       this.input.addEventListener("input", this.#boundHandleInput);
       this.input.removeEventListener("change", this.#boundHandleChange);
@@ -3802,6 +4132,7 @@ class FigSlider extends HTMLElement {
         }
       }
       if (this.figInputNumber) {
+        this.#syncTextInputA11yAttributes();
         this.figInputNumber.removeEventListener(
           "input",
           this.#boundHandleTextInput,
@@ -3953,6 +4284,39 @@ class FigSlider extends HTMLElement {
       );
     }
   }
+  #syncInputA11yAttributes() {
+    if (!this.input) return;
+    if (this.text) {
+      this.input.setAttribute("aria-hidden", "true");
+      ["aria-label", "aria-labelledby", "aria-describedby", "aria-valuetext"].forEach(
+        (name) => this.input.removeAttribute(name),
+      );
+      this.#syncTextInputA11yAttributes();
+      return;
+    }
+    this.input.removeAttribute("aria-hidden");
+    this.#a11yAttributes.forEach((name) => {
+      const value = this.getAttribute(name);
+      if (value === null) {
+        this.input.removeAttribute(name);
+      } else {
+        this.input.setAttribute(name, value);
+      }
+    });
+  }
+  #syncTextInputA11yAttributes() {
+    if (!this.figInputNumber) return;
+    ["aria-label", "aria-labelledby", "aria-describedby", "aria-invalid", "aria-required"].forEach(
+      (name) => {
+        const value = this.getAttribute(name);
+        if (value === null) {
+          this.figInputNumber.removeAttribute(name);
+        } else {
+          this.figInputNumber.setAttribute(name, value);
+        }
+      },
+    );
+  }
 
   #handleInput() {
     this.#showEmptyTextValue = false;
@@ -4004,10 +4368,20 @@ class FigSlider extends HTMLElement {
       "placeholder",
       "default",
       "precision",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "aria-invalid",
+      "aria-required",
+      "aria-valuetext",
     ];
   }
 
   focus() {
+    if (this.text && this.figInputNumber) {
+      this.figInputNumber.focus();
+      return;
+    }
     this.input.focus();
   }
 
@@ -4082,6 +4456,14 @@ class FigSlider extends HTMLElement {
           this.text = newValue !== "false";
           this.#regenerateInnerHTML();
           break;
+        case "aria-label":
+        case "aria-labelledby":
+        case "aria-describedby":
+        case "aria-invalid":
+        case "aria-required":
+        case "aria-valuetext":
+          this.#syncInputA11yAttributes();
+          break;
         default:
           this[name] = this.input[name] = newValue;
           this.#syncValue();
@@ -4113,6 +4495,13 @@ class FigInputText extends HTMLElement {
   #boundMouseDown;
   #boundInputChange;
   #boundNativeInput;
+  #a11yAttributes = [
+    "aria-label",
+    "aria-labelledby",
+    "aria-describedby",
+    "aria-invalid",
+    "aria-required",
+  ];
 
   constructor() {
     super();
@@ -4196,6 +4585,7 @@ class FigInputText extends HTMLElement {
 
       this.input = this.querySelector("input,textarea");
       this.input.readOnly = this.readonly;
+      this.#syncInputA11yAttributes();
       this.#syncSearchPrefix();
       this.#syncSearchClear();
       this.#syncSearchClearVisibility();
@@ -4233,6 +4623,17 @@ class FigInputText extends HTMLElement {
 
   focus() {
     this.input.focus();
+  }
+  #syncInputA11yAttributes() {
+    if (!this.input) return;
+    this.#a11yAttributes.forEach((name) => {
+      const value = this.getAttribute(name);
+      if (value === null) {
+        this.input.removeAttribute(name);
+      } else {
+        this.input.setAttribute(name, value);
+      }
+    });
   }
   #syncSearchPrefix() {
     const generated = this.querySelector(
@@ -4483,6 +4884,11 @@ class FigInputText extends HTMLElement {
       "max",
       "transform",
       "name",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "aria-invalid",
+      "aria-required",
     ];
   }
 
@@ -4540,6 +4946,13 @@ class FigInputText extends HTMLElement {
           this.#syncSearchClearVisibility();
           this.#syncPasswordToggle();
           break;
+        case "aria-label":
+        case "aria-labelledby":
+        case "aria-describedby":
+        case "aria-invalid":
+        case "aria-required":
+          this.#syncInputA11yAttributes();
+          break;
         default:
           this[name] = this.input[name] = newValue;
           break;
@@ -4581,6 +4994,13 @@ class FigInputNumber extends HTMLElement {
   #precision;
   #isInteracting = false;
   #stepperEl = null;
+  #a11yAttributes = [
+    "aria-label",
+    "aria-labelledby",
+    "aria-describedby",
+    "aria-invalid",
+    "aria-required",
+  ];
   static #DEFAULT_UNITS_DISALLOW = "px";
 
   #parseUnitsDisallowList(value) {
@@ -4659,6 +5079,7 @@ class FigInputNumber extends HTMLElement {
     this.value = value;
     this.input.value = this.#formatWithUnit(this.value);
     this.#syncStepperState();
+    this.#syncSpinbuttonAria();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -4751,6 +5172,7 @@ class FigInputNumber extends HTMLElement {
       }
 
       this.input = this.querySelector("input");
+      this.#syncInputA11yAttributes();
 
       if (this.getAttribute("min")) {
         this.min = Number(this.getAttribute("min"));
@@ -4770,6 +5192,7 @@ class FigInputNumber extends HTMLElement {
         this.disabled = this.input.disabled = disabledAttr !== "false";
       }
       this.#syncStepperState();
+      this.#syncSpinbuttonAria();
 
       this.addEventListener("pointerdown", this.#boundMouseDown);
       this.input.removeEventListener("change", this.#boundInputChange);
@@ -4801,6 +5224,41 @@ class FigInputNumber extends HTMLElement {
 
   focus() {
     this.input.focus();
+  }
+
+  #syncInputA11yAttributes() {
+    if (!this.input) return;
+    this.#a11yAttributes.forEach((name) => {
+      const value = this.getAttribute(name);
+      if (value === null) {
+        this.input.removeAttribute(name);
+      } else {
+        this.input.setAttribute(name, value);
+      }
+    });
+  }
+
+  #syncSpinbuttonAria() {
+    if (!this.input) return;
+    this.input.setAttribute("role", "spinbutton");
+    if (typeof this.min === "number") {
+      this.input.setAttribute("aria-valuemin", String(this.min));
+    } else {
+      this.input.removeAttribute("aria-valuemin");
+    }
+    if (typeof this.max === "number") {
+      this.input.setAttribute("aria-valuemax", String(this.max));
+    } else {
+      this.input.removeAttribute("aria-valuemax");
+    }
+    const value = this.value === "" ? null : Number(this.value);
+    if (Number.isFinite(value)) {
+      this.input.setAttribute("aria-valuenow", String(value));
+      this.input.setAttribute("aria-valuetext", this.#formatWithUnit(this.value));
+    } else {
+      this.input.removeAttribute("aria-valuenow");
+      this.input.removeAttribute("aria-valuetext");
+    }
   }
 
   #getNumericValue(str) {
@@ -4882,6 +5340,7 @@ class FigInputNumber extends HTMLElement {
       e.target.value = "";
     }
     this.#syncStepperState();
+    this.#syncSpinbuttonAria();
     this.dispatchEvent(
       new CustomEvent("change", { detail: this.value, bubbles: true }),
     );
@@ -4908,6 +5367,7 @@ class FigInputNumber extends HTMLElement {
     this.value = value;
     this.input.value = this.#formatWithUnit(this.value);
     this.#syncStepperState();
+    this.#syncSpinbuttonAria();
 
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
@@ -4925,6 +5385,7 @@ class FigInputNumber extends HTMLElement {
       this.value = "";
     }
     this.#syncStepperState();
+    this.#syncSpinbuttonAria();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -4943,6 +5404,7 @@ class FigInputNumber extends HTMLElement {
       e.target.value = "";
     }
     this.#syncStepperState();
+    this.#syncSpinbuttonAria();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -4964,6 +5426,7 @@ class FigInputNumber extends HTMLElement {
     this.value = value;
     this.input.value = this.#formatWithUnit(this.value);
     this.#syncStepperState();
+    this.#syncSpinbuttonAria();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
@@ -5037,6 +5500,11 @@ class FigInputNumber extends HTMLElement {
       "unit-position",
       "steppers",
       "precision",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "aria-invalid",
+      "aria-required",
     ];
   }
 
@@ -5052,6 +5520,7 @@ class FigInputNumber extends HTMLElement {
           this.#rawUnits = newValue || "";
           this.#setUnitsFromAttributes();
           this.input.value = this.#formatWithUnit(this.value);
+          this.#syncSpinbuttonAria();
           break;
         case "units-disallow":
           this.#unitsDisallow = this.#parseUnitsDisallowList(
@@ -5061,14 +5530,17 @@ class FigInputNumber extends HTMLElement {
           );
           this.#setUnitsFromAttributes();
           this.input.value = this.#formatWithUnit(this.value);
+          this.#syncSpinbuttonAria();
           break;
         case "unit-position":
           this.#unitPosition = newValue || "suffix";
           this.input.value = this.#formatWithUnit(this.value);
+          this.#syncSpinbuttonAria();
           break;
         case "transform":
           this.transform = Number(newValue) || 1;
           this.input.value = this.#formatWithUnit(this.value);
+          this.#syncSpinbuttonAria();
           break;
         case "value":
           if (this.#isInteracting) break;
@@ -5080,6 +5552,7 @@ class FigInputNumber extends HTMLElement {
           this.value = value;
           this.input.value = this.#formatWithUnit(this.value);
           this.#syncStepperState();
+          this.#syncSpinbuttonAria();
           break;
         case "min":
         case "max":
@@ -5087,10 +5560,12 @@ class FigInputNumber extends HTMLElement {
           if (newValue === null || newValue === "") {
             this[name] = undefined;
             this.#syncStepperState();
+            this.#syncSpinbuttonAria();
             break;
           }
           this[name] = Number(newValue);
           this.#syncStepperState();
+          this.#syncSpinbuttonAria();
           break;
         case "steppers": {
           const hasSteppers = newValue !== null && newValue !== "false";
@@ -5100,6 +5575,7 @@ class FigInputNumber extends HTMLElement {
         case "precision":
           this.#precision = newValue !== null ? Number(newValue) : 2;
           this.input.value = this.#formatWithUnit(this.value);
+          this.#syncSpinbuttonAria();
           break;
         case "name":
           this[name] = this.input[name] = newValue;
@@ -5108,6 +5584,13 @@ class FigInputNumber extends HTMLElement {
         case "placeholder":
           this.placeholder = newValue ?? "";
           this.input.placeholder = this.placeholder;
+          break;
+        case "aria-label":
+        case "aria-labelledby":
+        case "aria-describedby":
+        case "aria-invalid":
+        case "aria-required":
+          this.#syncInputA11yAttributes();
           break;
         default:
           this[name] = this.input[name] = newValue;
@@ -5211,9 +5694,8 @@ class FigField extends HTMLElement {
       }
 
       if (this.input && this.label && !this.#toggleable) {
-        let inputId = this.input.getAttribute("id") || figUniqueId();
-        this.input.setAttribute("id", inputId);
-        this.label.setAttribute("for", inputId);
+        this.#syncLabelAssociation();
+        requestAnimationFrame(() => this.#syncLabelAssociation());
       }
 
       if (this.label) {
@@ -5248,11 +5730,36 @@ class FigField extends HTMLElement {
     if (this.label) FigTooltip.hide(this.label);
   }
 
+  #syncLabelAssociation() {
+    if (!this.input || !this.label) return;
+    const labelId = this.label.getAttribute("id") || figUniqueId();
+    this.label.setAttribute("id", labelId);
+    const nativeInputs = this.input.querySelectorAll("input, select, textarea");
+    if (nativeInputs.length === 1) {
+      const nativeInput = nativeInputs[0];
+      const inputId = nativeInput.getAttribute("id") || figUniqueId();
+      nativeInput.setAttribute("id", inputId);
+      this.label.setAttribute("for", inputId);
+      if (this.input.getAttribute("aria-labelledby") === labelId) {
+        this.input.removeAttribute("aria-labelledby");
+      }
+      if (!nativeInput.hasAttribute("aria-labelledby")) {
+        nativeInput.setAttribute("aria-labelledby", labelId);
+      }
+      return;
+    }
+    this.label.removeAttribute("for");
+    if (!this.input.hasAttribute("aria-label") && !this.input.hasAttribute("aria-labelledby")) {
+      this.input.setAttribute("aria-labelledby", labelId);
+    }
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
       case "label":
         if (this.label) {
           this.label.textContent = newValue;
+          this.#syncLabelAssociation();
         }
         break;
     }
@@ -5376,6 +5883,7 @@ class FigInputColor extends HTMLElement {
       this.#fillPicker = this.querySelector("fig-fill-picker");
       this.#textInput = this.querySelector("fig-input-text:not([type=number])");
       this.#alphaInput = this.querySelector("fig-input-number");
+      this.#syncA11yAttributes();
 
       // Setup swatch (native picker)
       if (this.#swatch) {
@@ -5590,6 +6098,56 @@ class FigInputColor extends HTMLElement {
     this.#swatch?.focus();
   }
 
+  #accessibleName() {
+    return this.getAttribute("aria-label") || "Color";
+  }
+
+  #syncA11yAttributes() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "group");
+    if (this.#disabled) this.setAttribute("aria-disabled", "true");
+    else this.removeAttribute("aria-disabled");
+
+    const describedBy = this.getAttribute("aria-describedby");
+    const invalid = this.getAttribute("aria-invalid");
+    const required = this.getAttribute("aria-required");
+    const labelledBy = this.getAttribute("aria-labelledby");
+    const name = this.#accessibleName();
+
+    if (this.#textInput) {
+      this.#textInput.setAttribute("aria-label", `${name} hex color`);
+      if (describedBy) this.#textInput.setAttribute("aria-describedby", describedBy);
+      else this.#textInput.removeAttribute("aria-describedby");
+      if (invalid) this.#textInput.setAttribute("aria-invalid", invalid);
+      else this.#textInput.removeAttribute("aria-invalid");
+      if (required) this.#textInput.setAttribute("aria-required", required);
+      else this.#textInput.removeAttribute("aria-required");
+    }
+
+    if (this.#alphaInput) {
+      this.#alphaInput.setAttribute("aria-label", `${name} opacity`);
+      if (describedBy) this.#alphaInput.setAttribute("aria-describedby", describedBy);
+      else this.#alphaInput.removeAttribute("aria-describedby");
+      if (invalid) this.#alphaInput.setAttribute("aria-invalid", invalid);
+      else this.#alphaInput.removeAttribute("aria-invalid");
+      if (required) this.#alphaInput.setAttribute("aria-required", required);
+      else this.#alphaInput.removeAttribute("aria-required");
+    }
+
+    if (!this.#textInput) {
+      const swatchInput = this.#swatch?.querySelector('input[type="color"]');
+      if (!swatchInput) return;
+      if (labelledBy) {
+        swatchInput.setAttribute("aria-labelledby", labelledBy);
+        swatchInput.removeAttribute("aria-label");
+      } else {
+        swatchInput.setAttribute("aria-label", name);
+        swatchInput.removeAttribute("aria-labelledby");
+      }
+      if (describedBy) swatchInput.setAttribute("aria-describedby", describedBy);
+      else swatchInput.removeAttribute("aria-describedby");
+    }
+  }
+
   #handleInput(event) {
     //do not propagate to onInput handler for web component
     event.stopPropagation();
@@ -5662,6 +6220,11 @@ class FigInputColor extends HTMLElement {
       "alpha",
       "text",
       "disabled",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "aria-invalid",
+      "aria-required",
     ];
   }
 
@@ -5713,6 +6276,13 @@ class FigInputColor extends HTMLElement {
       case "disabled":
         this.#syncDisabled();
         break;
+      case "aria-label":
+      case "aria-labelledby":
+      case "aria-describedby":
+      case "aria-invalid":
+      case "aria-required":
+        this.#syncA11yAttributes();
+        break;
     }
   }
 
@@ -5729,6 +6299,7 @@ class FigInputColor extends HTMLElement {
       if (disabled) child.setAttribute("disabled", "");
       else child.removeAttribute("disabled");
     }
+    this.#syncA11yAttributes();
     if (this.#fillPicker) {
       this.#syncFillPicker();
     }
@@ -6131,10 +6702,21 @@ class FigInputFill extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled", "mode", "experimental", "alpha"];
+    return [
+      "value",
+      "disabled",
+      "mode",
+      "experimental",
+      "alpha",
+      "aria-label",
+      "aria-describedby",
+      "aria-invalid",
+      "aria-required",
+    ];
   }
 
   connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "group");
     this.#parseValue();
     this.#render();
   }
@@ -6257,6 +6839,7 @@ class FigInputFill extends HTMLElement {
 
   #syncDisabled() {
     const disabled = this.hasAttribute("disabled");
+    this.setAttribute("aria-disabled", disabled ? "true" : "false");
     for (const child of [
       this.#fillPicker,
       this.#opacityInput,
@@ -6266,6 +6849,28 @@ class FigInputFill extends HTMLElement {
       if (disabled) child.setAttribute("disabled", "");
       else child.removeAttribute("disabled");
     }
+  }
+
+  #syncA11y() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "group");
+    this.#syncDisabled();
+    const name = this.getAttribute("aria-label") || "Fill";
+    const describedBy = this.getAttribute("aria-describedby");
+    const invalid = this.getAttribute("aria-invalid");
+    const required = this.getAttribute("aria-required");
+    const syncState = (el, label) => {
+      if (!el) return;
+      el.setAttribute("aria-label", label);
+      if (describedBy) el.setAttribute("aria-describedby", describedBy);
+      else el.removeAttribute("aria-describedby");
+      if (invalid) el.setAttribute("aria-invalid", invalid);
+      else el.removeAttribute("aria-invalid");
+      if (required) el.setAttribute("aria-required", required);
+      else el.removeAttribute("aria-required");
+    };
+    syncState(this.#fillPicker, `${name} picker`);
+    syncState(this.#hexInput, `${name} hex color`);
+    syncState(this.#opacityInput, `${name} opacity`);
   }
 
   #render() {
@@ -6352,6 +6957,7 @@ class FigInputFill extends HTMLElement {
       this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
       this.#hexInput = this.querySelector(".fig-input-fill-hex");
       const label = this.querySelector(".fig-input-fill-label");
+      this.#syncA11y();
 
       // Label click triggers fill picker
       if (label && this.#fillPicker) {
@@ -6638,6 +7244,7 @@ class FigInputFill extends HTMLElement {
       this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
       this.#hexInput = this.querySelector(".fig-input-fill-hex");
       const label = this.querySelector(".fig-input-fill-label");
+      this.#syncA11y();
 
       // Label click triggers fill picker
       if (label && this.#fillPicker) {
@@ -6803,6 +7410,12 @@ class FigInputFill extends HTMLElement {
             this.#fillPicker.removeAttribute(name);
           }
         }
+        break;
+      case "aria-label":
+      case "aria-describedby":
+      case "aria-invalid":
+      case "aria-required":
+        this.#syncA11y();
         break;
     }
   }
@@ -8061,7 +8674,6 @@ class FigCheckbox extends HTMLElement {
     this.input.setAttribute("id", figUniqueId());
     this.input.setAttribute("name", this.name);
     this.input.setAttribute("type", "checkbox");
-    this.input.setAttribute("role", "checkbox");
     this.#boundHandleInput = this.handleInput.bind(this);
   }
   connectedCallback() {
@@ -8073,18 +8685,9 @@ class FigCheckbox extends HTMLElement {
       this.append(this.input);
     }
 
-    this.input.checked =
-      this.hasAttribute("checked") && this.getAttribute("checked") !== "false";
     this.input.removeEventListener("change", this.#boundHandleInput);
     this.input.addEventListener("change", this.#boundHandleInput);
-
-    if (this.hasAttribute("disabled")) {
-      this.input.disabled = true;
-    }
-    if (this.hasAttribute("indeterminate")) {
-      this.input.indeterminate = true;
-      this.input.setAttribute("indeterminate", "true");
-    }
+    this.#syncInputState();
 
     const existingLabel = this.querySelector(":scope > label");
     if (existingLabel) {
@@ -8120,6 +8723,35 @@ class FigCheckbox extends HTMLElement {
   }
 
   render() {}
+
+  #isAttrOn(name) {
+    return this.hasAttribute(name) && this.getAttribute(name) !== "false";
+  }
+
+  #syncAriaChecked() {
+    if (this.input.indeterminate) {
+      this.input.setAttribute("aria-checked", "mixed");
+    } else {
+      this.input.setAttribute("aria-checked", this.input.checked ? "true" : "false");
+    }
+  }
+
+  #syncInputState() {
+    const checked = this.#isAttrOn("checked");
+    const indeterminate = this.#isAttrOn("indeterminate") && !checked;
+    const disabled = this.#isAttrOn("disabled");
+    this.input.checked = checked;
+    this.input.indeterminate = indeterminate;
+    this.input.disabled = disabled;
+    this.input.value = this.getAttribute("value") || "";
+    this.input.setAttribute("name", this.getAttribute("name") || this.name);
+    if (indeterminate) {
+      this.input.setAttribute("indeterminate", "true");
+    } else {
+      this.input.removeAttribute("indeterminate");
+    }
+    this.#syncAriaChecked();
+  }
 
   focus() {
     this.input.focus();
@@ -8164,35 +8796,22 @@ class FigCheckbox extends HTMLElement {
         }
         break;
       case "checked":
-        this.input.checked =
-          this.hasAttribute("checked") &&
-          this.getAttribute("checked") !== "false";
-        if (this.input.checked && this.hasAttribute("indeterminate")) {
+        if (this.#isAttrOn("checked") && this.hasAttribute("indeterminate")) {
           this.removeAttribute("indeterminate");
         }
-        this.input.indeterminate =
-          this.hasAttribute("indeterminate") &&
-          this.getAttribute("indeterminate") !== "false" &&
-          !this.input.checked;
-        if (this.input.indeterminate) {
-          this.input.setAttribute("indeterminate", "true");
-        } else {
-          this.input.removeAttribute("indeterminate");
-        }
+        this.#syncInputState();
         break;
       case "indeterminate":
-        this.input.indeterminate =
-          this.hasAttribute("indeterminate") &&
-          this.getAttribute("indeterminate") !== "false" &&
-          !this.input.checked;
-        if (this.input.indeterminate) {
-          this.input.setAttribute("indeterminate", "true");
-        } else {
-          this.input.removeAttribute("indeterminate");
-        }
+        this.#syncInputState();
+        break;
+      case "disabled":
+        this.#syncInputState();
+        break;
+      case "name":
+        this.input.setAttribute("name", newValue || this.name);
         break;
       case "value":
-        this.input.value = newValue;
+        this.input.value = newValue || "";
         break;
       default:
         this.input[name] = newValue;
@@ -8205,8 +8824,10 @@ class FigCheckbox extends HTMLElement {
     e.stopPropagation();
     this.input.indeterminate = false;
     this.input.removeAttribute("indeterminate");
-    // Update ARIA state
-    this.input.setAttribute("aria-checked", this.input.checked);
+    if (this.hasAttribute("indeterminate")) {
+      this.removeAttribute("indeterminate");
+    }
+    this.#syncAriaChecked();
     // Sync attribute with input state (without triggering setter loop)
     if (this.input.checked) {
       this.setAttribute("checked", "");
@@ -8266,166 +8887,6 @@ class FigSwitch extends FigCheckbox {
   }
 }
 customElements.define("fig-switch", FigSwitch);
-
-/* Toast */
-/**
- * A toast notification element for non-modal, time-based messages.
- * Always positioned at bottom center of the screen.
- * @attr {number} duration - Auto-dismiss duration in ms (0 = no auto-dismiss, default: 5000)
- * @attr {number} offset - Distance from bottom edge in pixels (default: 16)
- * @attr {string} theme - Visual theme: "dark" (default), "light", "danger", "brand"
- * @attr {boolean} open - Whether the toast is visible
- */
-class FigToast extends HTMLDialogElement {
-  constructor() {
-    super();
-    this._figInit();
-  }
-
-  _figInit() {
-    if (this._figInitialized) return;
-    this._figInitialized = true;
-    this._defaultOffset = 16;
-    this._autoCloseTimer = null;
-    this._boundHandleClose = this.handleClose.bind(this);
-  }
-
-  getOffset() {
-    return parseInt(this.getAttribute("offset") ?? this._defaultOffset);
-  }
-
-  connectedCallback() {
-    this._figInit();
-
-    // Set default theme if not specified
-    if (!this.hasAttribute("theme")) {
-      this.setAttribute("theme", "dark");
-    }
-
-    // Ensure toast is closed by default
-    // Remove native open attribute if present and not explicitly "true"
-    const shouldOpen =
-      this.getAttribute("open") === "true" || this.getAttribute("open") === "";
-    if (this.hasAttribute("open") && !shouldOpen) {
-      this.removeAttribute("open");
-    }
-
-    // Close the dialog initially (override native behavior)
-    if (!shouldOpen) {
-      this.close();
-    }
-
-    requestAnimationFrame(() => {
-      this.addCloseListeners();
-      this.applyPosition();
-
-      // Auto-show if open attribute is explicitly true
-      if (shouldOpen) {
-        this.showToast();
-      }
-    });
-  }
-
-  disconnectedCallback() {
-    this._figInit();
-    this.clearAutoClose();
-  }
-
-  addCloseListeners() {
-    this.querySelectorAll("[close-toast]").forEach((button) => {
-      button.removeEventListener("click", this._boundHandleClose);
-      button.addEventListener("click", this._boundHandleClose);
-    });
-  }
-
-  handleClose() {
-    this.hideToast();
-  }
-
-  applyPosition() {
-    // Always bottom center
-    this.style.position = "fixed";
-    this.style.margin = "0";
-    this.style.top = "auto";
-    this.style.bottom = `${this.getOffset()}px`;
-    this.style.left = "50%";
-    this.style.right = "auto";
-    this.style.transform = "translateX(-50%)";
-  }
-
-  startAutoClose() {
-    this.clearAutoClose();
-
-    const duration = parseInt(this.getAttribute("duration") ?? "5000");
-    if (duration > 0) {
-      this._autoCloseTimer = setTimeout(() => {
-        this.hideToast();
-      }, duration);
-    }
-  }
-
-  clearAutoClose() {
-    if (this._autoCloseTimer) {
-      clearTimeout(this._autoCloseTimer);
-      this._autoCloseTimer = null;
-    }
-  }
-
-  _resolveAutoTheme() {
-    if (this.getAttribute("theme") !== "auto") return;
-    const cs = getComputedStyle(document.documentElement).colorScheme || "";
-    const isDark = cs.includes("dark");
-    this.style.colorScheme = isDark ? "light" : "dark";
-  }
-
-  /**
-   * Show the toast notification (non-modal)
-   */
-  showToast() {
-    this._resolveAutoTheme();
-    this.show(); // Non-modal show
-    this.applyPosition();
-    this.startAutoClose();
-    this.dispatchEvent(new CustomEvent("toast-show", { bubbles: true }));
-  }
-
-  /**
-   * Hide the toast notification
-   */
-  hideToast() {
-    this.clearAutoClose();
-    this.close();
-    this.dispatchEvent(new CustomEvent("toast-hide", { bubbles: true }));
-  }
-
-  static get observedAttributes() {
-    return ["duration", "offset", "open", "theme"];
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    this._figInit();
-    if (name === "offset") {
-      this.applyPosition();
-    }
-
-    if (name === "open") {
-      if (newValue !== null && newValue !== "false") {
-        this.showToast();
-      } else {
-        this.hideToast();
-      }
-    }
-
-    if (name === "theme") {
-      if (newValue === "auto") {
-        this._resolveAutoTheme();
-      } else {
-        this.style.removeProperty("color-scheme");
-      }
-    }
-  }
-}
-figDefineCustomizedBuiltIn("fig-toast", FigToast, { extends: "dialog" });
 
 /* Combo Input */
 /**
@@ -8660,12 +9121,22 @@ class FigChit extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["background", "size", "selected", "disabled", "alpha"];
+    return [
+      "background",
+      "size",
+      "selected",
+      "disabled",
+      "alpha",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+    ];
   }
 
   connectedCallback() {
     this.#render();
     this.#updateAlpha();
+    this.#syncA11y();
   }
 
   #updateAlpha() {
@@ -8732,9 +9203,11 @@ class FigChit extends HTMLElement {
         if (!isVar) {
           this.input.addEventListener("input", this.#boundHandleInput);
         }
+        this.#syncA11y();
       } else {
         this.innerHTML = "<div></div>";
         this.input = null;
+        this.#syncA11y();
       }
     } else if (this.#type === "color" && this.input) {
       const hex = this.#toHex(bg);
@@ -8751,6 +9224,36 @@ class FigChit extends HTMLElement {
       "--chit-background",
       isImage ? rawBg : `linear-gradient(${rawBg}, ${rawBg})`,
     );
+  }
+
+  #syncA11y() {
+    const disabled =
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    this.setAttribute("aria-disabled", disabled ? "true" : "false");
+    if (this.input) {
+      this.input.disabled = disabled;
+      const labelledBy = this.getAttribute("aria-labelledby");
+      const label = this.getAttribute("aria-label") || "Color swatch";
+      const describedBy = this.getAttribute("aria-describedby");
+      if (labelledBy) {
+        this.input.setAttribute("aria-labelledby", labelledBy);
+        this.input.removeAttribute("aria-label");
+      } else {
+        this.input.setAttribute("aria-label", label);
+        this.input.removeAttribute("aria-labelledby");
+      }
+      if (describedBy) this.input.setAttribute("aria-describedby", describedBy);
+      else this.input.removeAttribute("aria-describedby");
+      this.removeAttribute("role");
+      this.removeAttribute("aria-hidden");
+      return;
+    }
+    if (!this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby")) {
+      this.setAttribute("aria-hidden", "true");
+    } else {
+      this.setAttribute("role", "img");
+      this.removeAttribute("aria-hidden");
+    }
   }
 
   #handleInput(e) {
@@ -8790,6 +9293,13 @@ class FigChit extends HTMLElement {
       this.#render();
     } else if (name === "alpha") {
       this.#updateAlpha();
+    } else if (
+      name === "disabled" ||
+      name === "aria-label" ||
+      name === "aria-labelledby" ||
+      name === "aria-describedby"
+    ) {
+      this.#syncA11y();
     }
   }
 
@@ -8825,6 +9335,8 @@ customElements.define("fig-swatch", FigSwatch);
  * @attr {boolean} loop - Video loop
  * @attr {boolean} muted - Video muted
  * @attr {string} poster - Video poster image URL
+ * @attr {string} aria-label - Accessible label forwarded to generated video
+ * @attr {string} aria-labelledby - Accessible label reference forwarded to generated video
  *
  * Sizing model:
  *   - Default: host shrinkwraps to its inner <img>/<video> intrinsic size.
@@ -8834,6 +9346,7 @@ customElements.define("fig-swatch", FigSwatch);
 class FigMedia extends HTMLElement {
   #src = null;
   #mediaEl = null;
+  #previewEl = null;
   #fileInput = null;
   #blobUrl = null;
   #previewSrc = null;
@@ -8865,6 +9378,9 @@ class FigMedia extends HTMLElement {
       "loop",
       "muted",
       "poster",
+      "aria-label",
+      "aria-labelledby",
+      "title",
     ];
   }
 
@@ -8939,8 +9455,10 @@ class FigMedia extends HTMLElement {
     }
 
     this.querySelectorAll("fig-chit[data-generated]").forEach((el) => el.remove());
+    this.#ensurePreviewElement();
     this.#ensureMediaElement();
     this.#syncGeneratedMediaElement();
+    this.#syncMediaAccessibility();
 
     const isUpload = this.hasAttribute("upload") && this.getAttribute("upload") !== "false";
     if (isUpload && !this.querySelector("fig-input-file[data-generated]")) {
@@ -8968,6 +9486,19 @@ class FigMedia extends HTMLElement {
     }
   }
 
+  #ensurePreviewElement() {
+    if (this.#previewEl?.isConnected) return;
+    const existing = this.querySelector(":scope > fig-preview");
+    if (existing) {
+      this.#previewEl = existing;
+      return;
+    }
+    const preview = document.createElement("fig-preview");
+    preview.setAttribute("data-generated", "");
+    this.prepend(preview);
+    this.#previewEl = preview;
+  }
+
   #userProvidedMediaEl() {
     const tag = this.mediaKind === "video" ? "video" : "img";
     return this.querySelector(`${tag}:not([data-generated])`);
@@ -8976,6 +9507,7 @@ class FigMedia extends HTMLElement {
   #ensureMediaElement() {
     const userEl = this.#userProvidedMediaEl();
     if (userEl) {
+      this.#ensurePreviewElement();
       if (this.#mediaEl && this.#mediaEl !== userEl) {
         this.#removeMediaElementListeners();
         if (this.#mediaEl.hasAttribute("data-generated")) {
@@ -8983,9 +9515,14 @@ class FigMedia extends HTMLElement {
         }
       }
       this.#mediaEl = userEl;
+      if (this.#previewEl && userEl.parentElement !== this.#previewEl) {
+        this.#previewEl.append(userEl);
+      }
+      this.#syncMediaAccessibility();
       return;
     }
 
+    this.#ensurePreviewElement();
     const expectedTag = this.mediaKind === "video" ? "VIDEO" : "IMG";
     if (this.#mediaEl && this.#mediaEl.tagName !== expectedTag) {
       this.#removeMediaElementListeners();
@@ -9002,7 +9539,7 @@ class FigMedia extends HTMLElement {
       video.className = "fig-media-element";
       video.setAttribute("playsinline", "");
       video.preload = "auto";
-      this.prepend(video);
+      this.#previewEl.append(video);
       this.#mediaEl = video;
       this.#mediaEl.addEventListener("play", this.#boundHandleMediaPlay);
       this.#mediaEl.addEventListener("pause", this.#boundHandleMediaPause);
@@ -9021,9 +9558,31 @@ class FigMedia extends HTMLElement {
       img.loading = "lazy";
       img.decoding = "async";
       img.alt = this.getAttribute("alt") || "";
-      this.prepend(img);
+      this.#previewEl.append(img);
       this.#mediaEl = img;
     }
+  }
+
+  #syncMediaAccessibility() {
+    if (!this.#mediaEl) return;
+    if (this.#mediaEl.tagName === "IMG") {
+      if (
+        this.hasAttribute("alt") ||
+        this.#mediaEl.hasAttribute("data-generated")
+      ) {
+        this.#mediaEl.alt = this.getAttribute("alt") || "";
+      }
+      return;
+    }
+    if (this.#mediaEl.tagName !== "VIDEO") return;
+    ["aria-label", "aria-labelledby", "title"].forEach((name) => {
+      const value = this.getAttribute(name);
+      if (value === null) {
+        this.#mediaEl.removeAttribute(name);
+      } else {
+        this.#mediaEl.setAttribute(name, value);
+      }
+    });
   }
 
   #isEnabledAttr(name, defaultEnabled = false) {
@@ -9044,7 +9603,7 @@ class FigMedia extends HTMLElement {
       }
     }
     if (this.#mediaEl.tagName === "IMG") {
-      this.#mediaEl.alt = this.getAttribute("alt") || "";
+      this.#syncMediaAccessibility();
       return;
     }
     const poster = this.getAttribute("poster");
@@ -9059,6 +9618,7 @@ class FigMedia extends HTMLElement {
     this.#mediaEl.loop = this.#isEnabledAttr("loop", false);
     this.#mediaEl.muted = this.#isEnabledAttr("muted", false);
     this.#mediaEl.playsInline = true;
+    this.#syncMediaAccessibility();
     this.#syncControlsVisibility();
   }
 
@@ -9096,7 +9656,6 @@ class FigMedia extends HTMLElement {
     }
     const controls = document.createElement("fig-media-controls");
     controls.setAttribute("data-generated", "");
-    controls.setAttribute("overlay", "");
     this.append(controls);
     this.#controlsEl = controls;
     this.#wireControlsToMedia();
@@ -9225,7 +9784,8 @@ class FigMedia extends HTMLElement {
       fi.setAttribute("url", this.#src);
     }
     fi.addEventListener("change", this.#boundHandleFileInput);
-    this.append(fi);
+    this.#ensurePreviewElement();
+    this.#previewEl.append(fi);
     this.#fileInput = fi;
   }
 
@@ -9366,8 +9926,8 @@ class FigMedia extends HTMLElement {
       }
     }
 
-    if (name === "alt" && this.#mediaEl && this.#mediaEl.tagName === "IMG") {
-      this.#mediaEl.alt = newValue || "";
+    if (["alt", "aria-label", "aria-labelledby", "title"].includes(name)) {
+      this.#syncMediaAccessibility();
     }
 
     if (name === "upload") {
@@ -9501,6 +10061,10 @@ class FigMediaControls extends HTMLElement {
   #render() {
     if (this.#rendered) return;
     this.#rendered = true;
+    if (!this.hasAttribute("role")) this.setAttribute("role", "group");
+    if (!this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby")) {
+      this.setAttribute("aria-label", "Media controls");
+    }
 
     const tooltip = document.createElement("fig-tooltip");
     tooltip.setAttribute("text", "Play");
@@ -9527,7 +10091,12 @@ class FigMediaControls extends HTMLElement {
     slider.setAttribute("step", "0.1");
     slider.setAttribute("value", String(this.time));
     slider.setAttribute("full", "");
-    const timeEl = document.createElement("label");
+    slider.setAttribute("aria-label", "Seek");
+    slider.setAttribute(
+      "aria-valuetext",
+      this.#formatTimeValueText(this.time, this.duration),
+    );
+    const timeEl = document.createElement("span");
     timeEl.className = "fig-media-controls-time";
     timeEl.textContent = this.#formatTime(this.time);
 
@@ -9567,6 +10136,12 @@ class FigMediaControls extends HTMLElement {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
+  #formatTimeValueText(time, duration = 0) {
+    const current = this.#formatTime(time);
+    if (!Number.isFinite(duration) || duration <= 0) return current;
+    return `${current} of ${this.#formatTime(duration)}`;
+  }
+
   #syncPlayingUi() {
     if (!this.#playBtn) return;
     const playing = this.playing;
@@ -9588,6 +10163,10 @@ class FigMediaControls extends HTMLElement {
     if (!this.#userSeeking) {
       this.#timeSlider.setAttribute("value", String(t));
     }
+    this.#timeSlider.setAttribute(
+      "aria-valuetext",
+      this.#formatTimeValueText(t, duration),
+    );
     if (this.#timeEl) this.#timeEl.textContent = this.#formatTime(t);
   }
 
@@ -9823,6 +10402,7 @@ class FigInputFile extends HTMLElement {
       this.#clearBtn = document.createElement("fig-button");
       this.#clearBtn.setAttribute("variant", variant === "overlay" ? "overlay" : "ghost");
       this.#clearBtn.setAttribute("icon", "true");
+      this.#clearBtn.setAttribute("aria-label", "Remove");
       this.#clearBtn.className = "fig-input-file-clear";
       if (disabled) this.#clearBtn.setAttribute("disabled", "");
       this.#clearBtn.replaceChildren(createFigIcon("minus"));
@@ -11652,7 +12232,7 @@ customElements.define("fig-origin-grid", FigOriginGrid);
  * @attr {number} transform - A scaling factor for the output.
  * @attr {boolean} fields - Whether to display X and Y inputs.
  * @attr {string} aspect-ratio - Aspect ratio for the joystick plane container.
- * @attr {string} axis-labels - Space-delimited labels. 1 token: top. 2 tokens: x y. 4 tokens: left right top bottom.
+ * @attr {string} axis-labels - Comma- or space-delimited labels. 1 token: top. 2 tokens: x y. 4 tokens: left right top bottom.
  */
 class FigInputJoystick extends HTMLElement {
   #boundPlanePointerDown = null;
@@ -11736,7 +12316,7 @@ class FigInputJoystick extends HTMLElement {
     if (!raw) {
       return { left: "", right: "", top: "", bottom: "", leftNoRotate: false };
     }
-    const tokens = raw.split(/\s+/).filter(Boolean);
+    const tokens = raw.split(/[\s,]+/).filter(Boolean);
     if (tokens.length === 1) {
       return {
         left: "",
@@ -12069,10 +12649,11 @@ class FigShimmer extends HTMLElement {
     if (duration) {
       this.style.setProperty(this.durationPropertyName, duration);
     }
+    this.#syncA11y();
   }
 
   static get observedAttributes() {
-    return ["duration", "playing"];
+    return ["duration", "playing", "aria-label", "aria-labelledby"];
   }
 
   get playing() {
@@ -12091,7 +12672,21 @@ class FigShimmer extends HTMLElement {
     if (name === "duration") {
       this.style.setProperty(this.durationPropertyName, newValue || "1.5s");
     }
-    // playing is handled purely by CSS attribute selectors
+    if (name === "playing" || name === "aria-label" || name === "aria-labelledby") {
+      this.#syncA11y();
+    }
+  }
+
+  #syncA11y() {
+    const playing = this.playing;
+    this.setAttribute("aria-busy", playing ? "true" : "false");
+    if (this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby")) {
+      if (!this.hasAttribute("role")) this.setAttribute("role", "status");
+      this.removeAttribute("aria-hidden");
+    } else {
+      this.removeAttribute("role");
+      this.setAttribute("aria-hidden", "true");
+    }
   }
 }
 customElements.define("fig-shimmer", FigShimmer);
@@ -12099,120 +12694,6 @@ customElements.define("fig-shimmer", FigShimmer);
 // FigSkeleton
 class FigSkeleton extends FigShimmer {}
 customElements.define("fig-skeleton", FigSkeleton);
-
-// FigLayer
-class FigLayer extends HTMLElement {
-  static get observedAttributes() {
-    return ["open", "visible"];
-  }
-
-  #chevron = null;
-  #boundHandleChevronClick = null;
-
-  connectedCallback() {
-    // Use requestAnimationFrame to ensure child elements have rendered
-    requestAnimationFrame(() => {
-      this.#injectChevron();
-    });
-  }
-
-  disconnectedCallback() {
-    if (this.#chevron && this.#boundHandleChevronClick) {
-      this.#chevron.removeEventListener("click", this.#boundHandleChevronClick);
-    }
-  }
-
-  #injectChevron() {
-    const row = this.querySelector(":scope > .fig-layer-row");
-    if (!row) return;
-
-    // Check if chevron already exists
-    if (row.querySelector(".fig-layer-chevron")) return;
-
-    // Always create chevron element - CSS handles visibility via :has(fig-layer)
-    this.#chevron = document.createElement("span");
-    this.#chevron.className = "fig-layer-chevron";
-    row.prepend(this.#chevron);
-
-    // Add click listener to chevron only
-    this.#boundHandleChevronClick = this.#handleChevronClick.bind(this);
-    this.#chevron.addEventListener("click", this.#boundHandleChevronClick);
-  }
-
-  #handleChevronClick(e) {
-    e.stopPropagation();
-    this.open = !this.open;
-  }
-
-  get open() {
-    const attr = this.getAttribute("open");
-    return attr !== null && attr !== "false";
-  }
-
-  set open(value) {
-    const oldValue = this.open;
-    if (value) {
-      this.setAttribute("open", "true");
-    } else {
-      this.setAttribute("open", "false");
-    }
-    if (oldValue !== value) {
-      this.dispatchEvent(
-        new CustomEvent("openchange", {
-          detail: { open: value },
-          bubbles: true,
-        }),
-      );
-    }
-  }
-
-  get visible() {
-    const attr = this.getAttribute("visible");
-    return attr !== "false";
-  }
-
-  set visible(value) {
-    const oldValue = this.visible;
-    if (value) {
-      this.setAttribute("visible", "true");
-    } else {
-      this.setAttribute("visible", "false");
-    }
-    if (oldValue !== value) {
-      this.dispatchEvent(
-        new CustomEvent("visibilitychange", {
-          detail: { visible: value },
-          bubbles: true,
-        }),
-      );
-    }
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue) return;
-
-    if (name === "open") {
-      const isOpen = newValue !== null && newValue !== "false";
-      this.dispatchEvent(
-        new CustomEvent("openchange", {
-          detail: { open: isOpen },
-          bubbles: true,
-        }),
-      );
-    }
-
-    if (name === "visible") {
-      const isVisible = newValue !== "false";
-      this.dispatchEvent(
-        new CustomEvent("visibilitychange", {
-          detail: { visible: isVisible },
-          bubbles: true,
-        }),
-      );
-    }
-  }
-}
-customElements.define("fig-layer", FigLayer);
 
 // FigGroup
 class FigGroup extends HTMLElement {
@@ -12346,7 +12827,14 @@ class FigFooter extends HTMLElement {}
 customElements.define("fig-footer", FigFooter);
 
 /* Presentational elements (CSS-only, no behavior) */
-class FigSpinner extends HTMLElement {}
+class FigSpinner extends HTMLElement {
+  connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "status");
+    if (!this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby")) {
+      this.setAttribute("aria-label", "Loading");
+    }
+  }
+}
 customElements.define("fig-spinner", FigSpinner);
 
 /**
@@ -12486,7 +12974,16 @@ class FigColorTip extends HTMLElement {
   #boundHandleChange = this.#handlePickerChange.bind(this);
 
   static get observedAttributes() {
-    return ["value", "selected", "disabled", "alpha", "control"];
+    return [
+      "value",
+      "selected",
+      "disabled",
+      "alpha",
+      "control",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+    ];
   }
 
   get #controlMode() {
@@ -12549,10 +13046,12 @@ class FigColorTip extends HTMLElement {
     const mode = this.#controlMode;
     if (mode === "add" || mode === "remove") {
       const iconName = mode === "add" ? "add" : "minus";
-      this.innerHTML = `<fig-button icon variant="ghost"><fig-icon name="${iconName}"></fig-icon></fig-button>`;
+      const label = this.getAttribute("aria-label") || (mode === "add" ? "Add color stop" : "Remove color stop");
+      this.innerHTML = `<fig-button icon variant="ghost" aria-label="${label}"><fig-icon name="${iconName}"></fig-icon></fig-button>`;
       this.#fillPicker = null;
       this.#chit = null;
       this.addEventListener("click", this.#handleControlClick);
+      this.#syncA11y();
       return;
     }
     this.removeEventListener("click", this.#handleControlClick);
@@ -12586,6 +13085,7 @@ class FigColorTip extends HTMLElement {
       this.#chit?.addEventListener("change", this.#boundHandleChange);
     }
     this.#observeChitSelected();
+    this.#syncA11y();
   }
 
   #handleControlClick = () => {
@@ -12681,6 +13181,7 @@ class FigColorTip extends HTMLElement {
     }
 
     if (this.#fillPicker) {
+      this.#syncA11y();
       const pickerVal =
         alpha < 1
           ? { type: "solid", color, opacity: Math.round(alpha * 100) }
@@ -12699,6 +13200,7 @@ class FigColorTip extends HTMLElement {
     }
 
     if (this.#chit) {
+      this.#syncA11y();
       this.#chit.setAttribute("background", color);
       if (alpha < 1) {
         this.#chit.setAttribute("alpha", String(alpha));
@@ -12711,6 +13213,39 @@ class FigColorTip extends HTMLElement {
         this.#chit.removeAttribute("disabled");
       }
     }
+  }
+
+  #syncA11y() {
+    const mode = this.#controlMode;
+    const disabled =
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    const selected =
+      this.hasAttribute("selected") && this.getAttribute("selected") !== "false";
+    this.setAttribute("aria-disabled", disabled ? "true" : "false");
+    this.setAttribute("aria-pressed", selected ? "true" : "false");
+    if (mode === "add" || mode === "remove") {
+      const button = this.querySelector("fig-button");
+      const label = this.getAttribute("aria-label") || (mode === "add" ? "Add color stop" : "Remove color stop");
+      button?.setAttribute("aria-label", label);
+      if (disabled) button?.setAttribute("disabled", "");
+      else button?.removeAttribute("disabled");
+      return;
+    }
+
+    const target = this.#fillPicker || this.#chit;
+    if (!target) return;
+    const label = this.getAttribute("aria-label") || "Color stop";
+    const labelledBy = this.getAttribute("aria-labelledby");
+    const describedBy = this.getAttribute("aria-describedby");
+    if (labelledBy) {
+      target.setAttribute("aria-labelledby", labelledBy);
+      target.removeAttribute("aria-label");
+    } else {
+      target.setAttribute("aria-label", label);
+      target.removeAttribute("aria-labelledby");
+    }
+    if (describedBy) target.setAttribute("aria-describedby", describedBy);
+    else target.removeAttribute("aria-describedby");
   }
 
   #updateColorFromPicker(detail, type) {
@@ -12762,7 +13297,11 @@ class FigColorTip extends HTMLElement {
       case "value":
       case "selected":
       case "disabled":
+      case "aria-label":
+      case "aria-labelledby":
+      case "aria-describedby":
         this.#syncFromAttributes();
+        this.#syncA11y();
         break;
     }
   }
@@ -13426,6 +13965,8 @@ class FigHandle extends HTMLElement {
     "tip",
     "hit-area",
     "hit-area-mode",
+    "aria-label",
+    "aria-labelledby",
   ];
 
   #isDragging = false;
@@ -13653,6 +14194,7 @@ class FigHandle extends HTMLElement {
   }
 
   connectedCallback() {
+    this.#syncA11y();
     this.#syncDrag();
     this.#syncHitArea();
     this.addEventListener("click", this.#handleSelect);
@@ -13710,6 +14252,19 @@ class FigHandle extends HTMLElement {
 
   #handleKeyDown = (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target === this && !this.hasAttribute("selected")) {
+      e.preventDefault();
+      if (
+        this.getAttribute("type") === "color" &&
+        this.#canOpenColorPicker &&
+        !this.#tipMode
+      ) {
+        this.#openDirectColorPicker();
+      } else {
+        this.select();
+      }
+      return;
+    }
     if (!this.hasAttribute("selected")) return;
     if (this.getAttribute("type") !== "color") return;
     if (!this.#canOpenColorPicker) return;
@@ -13734,6 +14289,16 @@ class FigHandle extends HTMLElement {
     if (name === "drag") this.#syncDrag();
     if (name === "hit-area") this.#syncHitArea();
     if (name === "selected") this.#syncColorTipSelected();
+    if (
+      name === "selected" ||
+      name === "disabled" ||
+      name === "type" ||
+      name === "tip" ||
+      name === "aria-label" ||
+      name === "aria-labelledby"
+    ) {
+      this.#syncA11y();
+    }
     if (name === "value" && !this.#applyingValue && !this.#isDragging) {
       this.#applyValue(value);
     }
@@ -13752,6 +14317,25 @@ class FigHandle extends HTMLElement {
       this.addEventListener("pointerdown", this.#boundPointerDown);
     } else if (!this.#dragEnabled && this.#boundPointerDown) {
       this.#teardownDrag();
+    }
+  }
+
+  #syncA11y() {
+    const disabled =
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    const selected =
+      this.hasAttribute("selected") && this.getAttribute("selected") !== "false";
+    if (!this.hasAttribute("role")) this.setAttribute("role", "button");
+    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", disabled ? "-1" : "0");
+    else if (disabled) this.setAttribute("tabindex", "-1");
+    this.setAttribute("aria-disabled", disabled ? "true" : "false");
+    this.setAttribute("aria-pressed", selected ? "true" : "false");
+    if (!this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby")) {
+      const mode = this.#tipMode || this.getAttribute("type") || "handle";
+      this.setAttribute(
+        "aria-label",
+        mode === "color" ? "Color handle" : mode === "add" ? "Add handle" : mode === "remove" ? "Remove handle" : "Handle",
+      );
     }
   }
 
@@ -14240,9 +14824,29 @@ class FigMenuItem extends HTMLElement {
     if (!this.hasAttribute("tabindex")) {
       this.setAttribute("tabindex", "-1");
     }
+    this.#syncDisabled();
   }
 
-  attributeChangedCallback() {}
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name === "disabled") {
+      this.#syncDisabled();
+    }
+  }
+
+  #syncDisabled() {
+    const disabled =
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    if (disabled) {
+      this.setAttribute("aria-disabled", "true");
+      this.setAttribute("tabindex", "-1");
+    } else {
+      this.removeAttribute("aria-disabled");
+      if (!this.hasAttribute("tabindex")) {
+        this.setAttribute("tabindex", "-1");
+      }
+    }
+  }
 }
 customElements.define("fig-menu-item", FigMenuItem);
 
@@ -14312,6 +14916,7 @@ class FigMenu extends HTMLElement {
 
   disconnectedCallback() {
     this.#teardownListeners();
+    document.removeEventListener("keydown", this.#boundMenuKeydown, true);
     if (this.#observer) {
       this.#observer.disconnect();
       this.#observer = null;
@@ -14366,6 +14971,7 @@ class FigMenu extends HTMLElement {
     this.#popup.setAttribute("is", "fig-popup");
     this.#popup.setAttribute("theme", "menu");
     this.#popup.setAttribute("role", "menu");
+    this.#popup.setAttribute("id", this.#popup.getAttribute("id") || figUniqueId());
 
     const position = this.getAttribute("position") || "bottom left";
     this.#popup.setAttribute("position", position);
@@ -14399,9 +15005,11 @@ class FigMenu extends HTMLElement {
       this.#trigger.addEventListener("click", this.#boundTriggerClick);
       this.#trigger.setAttribute("aria-haspopup", "menu");
       this.#trigger.setAttribute("aria-expanded", "false");
+      this.#trigger.setAttribute("aria-controls", this.#popup.getAttribute("id"));
     }
     if (this.#popup) {
       this.#popup.addEventListener("click", this.#boundPopupClick);
+      this.#popup.addEventListener("keydown", this.#boundMenuKeydown);
     }
   }
 
@@ -14412,6 +15020,7 @@ class FigMenu extends HTMLElement {
     }
     if (this.#popup) {
       this.#popup.removeEventListener("click", this.#boundPopupClick);
+      this.#popup.removeEventListener("keydown", this.#boundMenuKeydown);
     }
   }
 
@@ -14431,6 +15040,7 @@ class FigMenu extends HTMLElement {
               this.#trigger.addEventListener("click", this.#boundTriggerClick);
               this.#trigger.setAttribute("aria-haspopup", "menu");
               this.#trigger.setAttribute("aria-expanded", "false");
+              this.#trigger.setAttribute("aria-controls", this.#popup.getAttribute("id"));
               this.#popup.anchor = this.#trigger;
               this.#syncDisabled();
             }
@@ -14443,7 +15053,10 @@ class FigMenu extends HTMLElement {
 
   #getItems() {
     if (!this.#popup) return [];
-    return Array.from(this.#popup.querySelectorAll("fig-menu-item:not([disabled]):not([disabled='true'])"));
+    return Array.from(this.#popup.querySelectorAll("fig-menu-item")).filter(
+      (item) =>
+        !item.hasAttribute("disabled") || item.getAttribute("disabled") === "false",
+    );
   }
 
   #syncFocusedIndex() {
@@ -14462,9 +15075,9 @@ class FigMenu extends HTMLElement {
   #focusItemAt(index) {
     const items = this.#getItems();
     if (!items.length) return;
-    const clamped = Math.max(0, Math.min(index, items.length - 1));
-    this.#focusedIndex = clamped;
-    items[clamped].focus();
+    const wrapped = (index + items.length) % items.length;
+    this.#focusedIndex = wrapped;
+    items[wrapped].focus();
   }
 
   #syncDisabled() {
@@ -14472,8 +15085,11 @@ class FigMenu extends HTMLElement {
     const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
     if (disabled) {
       this.#trigger.setAttribute("disabled", "");
+      this.#trigger.setAttribute("aria-disabled", "true");
+      this.#trigger.setAttribute("aria-expanded", "false");
     } else {
       this.#trigger.removeAttribute("disabled");
+      this.#trigger.removeAttribute("aria-disabled");
     }
   }
 
@@ -14501,7 +15117,19 @@ class FigMenu extends HTMLElement {
   }
 
   #handleMenuKeydown(e) {
-    if (!this.open || !this.#popup?.matches?.(":open")) return;
+    if (e.currentTarget === document && e.key !== "Escape") return;
+    if (e.currentTarget === this && this.#popup?.contains(e.target)) return;
+    if (!this.open || !this.#popup?.matches?.(":open")) {
+      if (
+        this.#trigger?.contains(e.target) &&
+        (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
+      ) {
+        e.preventDefault();
+        this.open = true;
+        requestAnimationFrame(() => this.#focusItemAt(0));
+      }
+      return;
+    }
 
     const items = this.#getItems();
     if (!items.length) return;
@@ -14527,6 +15155,12 @@ class FigMenu extends HTMLElement {
       case "End": {
         e.preventDefault();
         this.#focusItemAt(items.length - 1);
+        break;
+      }
+      case "Escape": {
+        e.preventDefault();
+        this.open = false;
+        this.#trigger?.focus();
         break;
       }
       case "Enter":
@@ -14567,6 +15201,7 @@ class FigMenu extends HTMLElement {
   #openMenu() {
     if (!this.#popup) return;
     this.#popup.open = true;
+    document.addEventListener("keydown", this.#boundMenuKeydown, true);
     if (this.#trigger) {
       this.#trigger.setAttribute("aria-expanded", "true");
     }
@@ -14579,7 +15214,9 @@ class FigMenu extends HTMLElement {
 
   #closeMenu() {
     if (!this.#popup) return;
+    document.removeEventListener("keydown", this.#boundMenuKeydown, true);
     this.#popup.open = false;
+    this.#trigger?.setAttribute("aria-expanded", "false");
   }
 }
 customElements.define("fig-menu", FigMenu);

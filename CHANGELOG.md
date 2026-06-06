@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Added focused Playwright accessibility coverage for media, form primitives, selection controls, overlays, loading indicators, display swatches, handles, color tips, layers, and toast live regions.
+- Added `fig-toast` and `fig-layer` registration/coverage in the main component contract flow.
+
+### Changed
+
+- Reworked `fig-media`, `fig-image`, and `fig-video` so generated media is contained in `fig-preview` and generated video controls attach below the preview instead of overlaying the media surface.
+- Improved accessible names, ARIA state sync, disabled behavior, and keyboard support across buttons, checkboxes, radios, switches, text inputs, number inputs, fields, sliders, color inputs, fill inputs, tabs, segmented controls, menus, dialogs, popups, toasts, chits, handles, color tips, spinners, shimmers, skeletons, and layers.
+- Updated playground examples to remove `experimental="modern"` from dropdown/fill/gradient examples except the existing easing-curve behavior.
+- Documented accessibility coverage, media preview composition, keyboard patterns, loading semantics, and fill/media naming guidance in the README and playground component descriptions.
+
+### Fixed
+
+- Fixed generated icon-only media/file controls and dialog close controls so they expose accessible names.
+- Fixed generated media upload overlays to remain keyboard reachable while preserving the visible preview surface.
+
 ## [6.4.0]
 
 ### Added

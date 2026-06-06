@@ -1,0 +1,111 @@
+/* Layer */
+fig-layer {
+  --indent: var(--spacer-3);
+  display: block;
+  color: var(--figma-color-text);
+  position: relative;
+  user-select: none;
+  width: 100%;
+  padding: 0 var(--spacer-3);
+  border-radius: var(--radius-medium);
+}
+
+fig-layer:has(fig-layer) > .fig-layer-row > .fig-layer-chevron {
+  visibility: visible;
+}
+
+fig-layer > .fig-layer-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-1);
+  padding: var(--spacer-1) var(--spacer-2);
+  height: var(--spacer-4);
+  border-radius: var(--radius-medium);
+  position: relative;
+}
+
+fig-layer > .fig-layer-row .fig-layer-chevron {
+  mask-image: var(--icon-16-chevron);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  display: flex;
+  visibility: hidden;
+  background: var(--figma-color-text-tertiary);
+  width: var(--spacer-3);
+  height: var(--spacer-3);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+  position: absolute;
+  left: calc(var(--spacer-3) * -1);
+  top: var(--spacer-1);
+  rotate: -90deg;
+}
+
+fig-layer > .fig-layer-row:hover {
+  background: var(--figma-color-bg-secondary);
+}
+
+fig-layer > .fig-layer-row:hover .fig-layer-actions {
+  opacity: 1;
+}
+
+fig-layer > .fig-layer-row .fig-layer-icon {
+  flex-shrink: 0;
+  width: var(--spacer-3);
+  height: var(--spacer-3);
+  color: var(--figma-color-icon-tertiary);
+  margin-left: calc(var(--spacer-1) * -1);
+}
+
+fig-layer > .fig-layer-row > label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--figma-color-text);
+}
+
+fig-layer .fig-layer-actions {
+  display: flex;
+  margin-right: calc(-1 * var(--spacer-1));
+  gap: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+fig-layer .fig-layer-actions > * {
+  flex-shrink: 0;
+}
+
+fig-layer > fig-layer {
+  padding: 0;
+  margin-top: 1px;
+}
+
+fig-layer > fig-layer .fig-layer-row {
+  padding-left: var(--indent);
+}
+
+fig-layer:not([open]) > fig-layer,
+fig-layer[open="false"] > fig-layer {
+  display: none;
+}
+
+fig-layer[open]:not([open="false"]) > .fig-layer-row > .fig-layer-chevron {
+  rotate: 0deg;
+}
+
+fig-layer[visible="false"] > .fig-layer-row > label {
+  color: var(--figma-color-text-tertiary);
+}
+
+fig-layer[selected]:not([selected="false"]) > .fig-layer-row {
+  background: var(--figma-color-bg-selected);
+}
+
+fig-layer[selected]:not([selected="false"]) > .fig-layer-row > .fig-layer-icon {
+  color: var(--figma-color-icon);
+}

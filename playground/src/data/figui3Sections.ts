@@ -145,7 +145,7 @@ export const figui3Sections: Section[] = [
         id: "modern",
         name: "Modern",
         markup: `<div class="prop-panel">
-  <fig-dropdown experimental="modern">
+  <fig-dropdown>
     <option value="frame" selected>Frame</option>
     <option value="group">Group</option>
     <option value="component">Component</option>
@@ -159,15 +159,48 @@ export const figui3Sections: Section[] = [
     name: "Fill Picker",
     group: "Core components",
     description:
-      "Comprehensive fill editor for solid, gradient, and image fills.",
+      "Comprehensive fill editor for solid, gradient, image, video, and webcam fills.",
     examples: [
       {
-        id: "default",
-        name: "Default",
+        id: "all-modes",
+        name: "All modes",
         markup: `<div class="prop-panel">
-  <fig-fill-picker value='{"type":"solid","color":"#0D99FF"}'>
-    <fig-chit background="#0D99FF"></fig-chit>
-  </fig-fill-picker>
+  <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":85}' full></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "solid",
+        name: "Solid",
+        markup: `<div class="prop-panel">
+  <fig-input-fill picker-mode="solid" value='{"type":"solid","color":"#FF24BD","opacity":72}' full></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "gradient",
+        name: "Gradient",
+        markup: `<div class="prop-panel">
+  <fig-input-fill picker-mode="gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' full></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "image",
+        name: "Image",
+        markup: `<div class="prop-panel">
+  <fig-input-fill picker-mode="image" value='{"type":"image","image":{"url":"https://picsum.photos/320/320?random=41","scaleMode":"fill","scale":50}}' full></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "video",
+        name: "Video",
+        markup: `<div class="prop-panel">
+  <fig-input-fill picker-mode="video" value='{"type":"video","video":{"url":"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4","scaleMode":"fill","scale":50}}' full></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "webcam",
+        name: "Webcam",
+        markup: `<div class="prop-panel">
+  <fig-input-fill picker-mode="webcam" value='{"type":"webcam"}' full></fig-input-fill>
 </div>`,
       },
     ],
@@ -487,7 +520,8 @@ export const figui3Sections: Section[] = [
     id: "segmented-control",
     name: "Segmented Control",
     group: "Core components",
-    description: "Segmented options for mutually exclusive selections.",
+    description:
+      "Segmented options for mutually exclusive selections using radio-group semantics and arrow-key navigation.",
     examples: [
       {
         id: "default",
@@ -524,7 +558,8 @@ export const figui3Sections: Section[] = [
     id: "tabs",
     name: "Tabs",
     group: "Core components",
-    description: "Tab interfaces for organizing grouped content panes.",
+    description:
+      "Tab interfaces for organizing grouped content panes with roving focus and tab panel associations.",
     examples: [
       {
         id: "default",
@@ -588,7 +623,8 @@ export const figui3Sections: Section[] = [
     id: "image",
     name: "Image",
     group: "Core components",
-    description: "Image previews with optional upload overlay.",
+    description:
+      "Image previews rendered inside fig-preview with optional keyboard-reachable upload overlay.",
     examples: [
       {
         id: "with-src",
@@ -621,7 +657,8 @@ export const figui3Sections: Section[] = [
     id: "media",
     name: "Media",
     group: "Core components",
-    description: "Shared media host supporting image or video content.",
+    description:
+      "Shared media host that renders image/video content inside fig-preview and attaches generated controls below the preview.",
     examples: [
       {
         id: "image",
@@ -665,7 +702,8 @@ export const figui3Sections: Section[] = [
     id: "video",
     name: "Video",
     group: "Core components",
-    description: "Video previews with playback controls and optional upload overlay.",
+    description:
+      "Video previews rendered inside fig-preview with playback controls attached below the preview and optional upload overlay.",
     examples: [
       {
         id: "default",
@@ -694,7 +732,8 @@ export const figui3Sections: Section[] = [
     id: "layer",
     name: "Layer",
     group: "Core components",
-    description: "Layer row examples with and without leading layer icons.",
+    description:
+      "Layer row examples with treeitem semantics, expanded state, visibility state, and keyboard-toggleable chevrons.",
     examples: [
       {
         id: "with-icon",
@@ -781,7 +820,8 @@ export const figui3Sections: Section[] = [
     id: "toast",
     name: "Toast",
     group: "Core components",
-    description: "Toast notifications for temporary feedback messages.",
+    description:
+      "Toast notifications for temporary feedback messages with polite/assertive live-region semantics.",
     examples: [
       {
         id: "default",
@@ -820,7 +860,8 @@ export const figui3Sections: Section[] = [
     id: "spinner",
     name: "Spinner",
     group: "Core components",
-    description: "Loading spinner indicator for async operations.",
+    description:
+      "Loading spinner indicator for async operations with status semantics and a default accessible label.",
     examples: [
       {
         id: "default",
@@ -835,7 +876,8 @@ export const figui3Sections: Section[] = [
     id: "shimmer",
     name: "Shimmer",
     group: "Core components",
-    description: "Animated loading placeholder skeleton.",
+    description:
+      "Animated loading placeholder skeleton that stays hidden from assistive tech unless explicitly named.",
     examples: [
       {
         id: "default",
@@ -851,7 +893,7 @@ export const figui3Sections: Section[] = [
     name: "Menu",
     group: "Core components",
     description:
-      "Context menu triggered by a button with keyboard navigation and item selection.",
+      "Context menu triggered by a button with ARIA trigger state, roving item focus, Escape close, and disabled item handling.",
     examples: [
       {
         id: "default",

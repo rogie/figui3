@@ -252,7 +252,7 @@ nav {
 }
 
 .preferences-popup {
-  width: 200px;
+  width: 180px;
   padding: var(--spacer-2);
 
   fig-field {

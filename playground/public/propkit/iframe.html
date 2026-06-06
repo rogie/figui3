@@ -229,6 +229,37 @@
         <fig-slider value="0.04" step="0.01" min="0" max="1" text="true" full></fig-slider>
       </fig-field>
     </fig-group>
+    <fig-group name="Dialog Example" collapsible>
+      <fig-field columns="half">
+        <label>Preview</label>
+        <fig-button
+          full
+          onclick="document.getElementById('iframe-demo-dialog')?.showModal();"
+        >
+          Open Dialog
+        </fig-button>
+      </fig-field>
+      <dialog
+        id="iframe-demo-dialog"
+        is="fig-dialog"
+        title="Iframe Dialog"
+        handle="fig-header"
+        position="center center"
+        style="width: 280px;"
+      >
+        <fig-content>
+          <p>This dialog opens from inside the iframe example.</p>
+          <fig-field columns="half">
+            <label>Name</label>
+            <fig-input-text value="Nested dialog" full></fig-input-text>
+          </fig-field>
+        </fig-content>
+        <fig-footer>
+          <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+          <fig-button close-dialog>Done</fig-button>
+        </fig-footer>
+      </dialog>
+    </fig-group>
   
     <fig-group name="More info" collapsible>
       <p>Pay attention to what gives you energy, then make more room for it. A good life is often shaped by the small things you repeat.</p>

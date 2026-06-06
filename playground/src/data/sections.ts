@@ -36,7 +36,7 @@ export const propkitSections: Section[] = [
   <fig-group name="Layout">
     <fig-field>
       <label>Direction</label>
-      <fig-dropdown full experimental="modern">
+      <fig-dropdown full>
         <option selected>Horizontal</option>
         <option>Vertical</option>
       </fig-dropdown>
@@ -93,11 +93,11 @@ export const propkitSections: Section[] = [
     </fig-field>
     <fig-field>
       <label>Image</label>
-      <fig-image full="true" upload="true" label="Upload" size="auto"></fig-image>
+      <fig-image full="true" upload="true" label="Upload" alt="" size="auto"></fig-image>
     </fig-field>
     <fig-field>
       <label>Blend Mode</label>
-      <fig-dropdown full experimental="modern">
+      <fig-dropdown full>
         <option selected>Normal</option>
         <option>Multiply</option>
         <option>Screen</option>
@@ -274,12 +274,12 @@ export const propkitSections: Section[] = [
   <fig-field direction="vertical">
     <label>Style</label>
     <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
-      <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-d"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-e"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-f"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-a" aria-label="Image A" selected><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-b" aria-label="Image B"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-c" aria-label="Image C"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-d" aria-label="Image D"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-e" aria-label="Image E"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-f" aria-label="Image F"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -291,12 +291,12 @@ export const propkitSections: Section[] = [
   <fig-field direction="vertical">
     <label>Style</label>
     <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
-      <fig-choice value="img-a" padding selected><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label A</label></fig-choice>
-      <fig-choice value="img-b" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label B</label></fig-choice>
-      <fig-choice value="img-c" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label C</label></fig-choice>
-      <fig-choice value="img-d" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label D</label></fig-choice>
-      <fig-choice value="img-e" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label E</label></fig-choice>
-      <fig-choice value="img-f" padding><fig-image src="${landscapeUrl()}" size="medium" aspect-ratio="1/1" full></fig-image><label>Label F</label></fig-choice>
+      <fig-choice value="img-a" padding selected><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label A</label></fig-choice>
+      <fig-choice value="img-b" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label B</label></fig-choice>
+      <fig-choice value="img-c" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label C</label></fig-choice>
+      <fig-choice value="img-d" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label D</label></fig-choice>
+      <fig-choice value="img-e" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label E</label></fig-choice>
+      <fig-choice value="img-f" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label F</label></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -431,7 +431,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Blend Mode</label>
-    <fig-dropdown full experimental="modern">
+    <fig-dropdown full>
       <option selected>Normal</option>
       <option>Multiply</option>
       <option>Screen</option>
@@ -448,7 +448,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Blend Mode</label>
-    <fig-dropdown full experimental="modern">
+    <fig-dropdown full>
       <optgroup label="">
         <option selected>Normal</option>
         <option>Multiply</option>
@@ -469,7 +469,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Blend Mode</label>
-    <fig-dropdown full experimental="modern">
+    <fig-dropdown full>
       <optgroup label="Basic">
         <option selected>Normal</option>
         <option>Multiply</option>
@@ -528,7 +528,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Fill</label>
-    <fig-input-fill value='{"type":"solid","color":"#667eea"}' experimental="modern"></fig-input-fill>
+    <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
   </fig-field>
 </div>`,
       },
@@ -538,7 +538,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Fill</label>
-    <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}' experimental="modern"></fig-input-fill>
+    <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}'></fig-input-fill>
   </fig-field>
 </div>`,
       },
@@ -548,7 +548,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Fill</label>
-    <fig-input-fill value='{"type":"gradient","gradient":{"type":"radial","centerX":50,"centerY":50,"stops":[{"position":0,"color":"#ff6b6b","opacity":100},{"position":100,"color":"#4ecdc4","opacity":100}]}}' experimental="modern"></fig-input-fill>
+    <fig-input-fill value='{"type":"gradient","gradient":{"type":"radial","centerX":50,"centerY":50,"stops":[{"position":0,"color":"#ff6b6b","opacity":100},{"position":100,"color":"#4ecdc4","opacity":100}]}}'></fig-input-fill>
   </fig-field>
 </div>`,
       },
@@ -558,7 +558,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Fill</label>
-    <fig-input-fill value='{"type":"gradient","gradient":{"type":"angular","stops":[{"position":0,"color":"#ff0000","opacity":100},{"position":33,"color":"#00ff00","opacity":100},{"position":66,"color":"#0000ff","opacity":100},{"position":100,"color":"#ff0000","opacity":100}]}}' experimental="modern"></fig-input-fill>
+    <fig-input-fill value='{"type":"gradient","gradient":{"type":"angular","stops":[{"position":0,"color":"#ff0000","opacity":100},{"position":33,"color":"#00ff00","opacity":100},{"position":66,"color":"#0000ff","opacity":100},{"position":100,"color":"#ff0000","opacity":100}]}}'></fig-input-fill>
   </fig-field>
 </div>`,
       },
@@ -568,7 +568,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Fill</label>
-    <fig-input-fill value='{"type":"image","image":{"url":"${squareUrl()}","scaleMode":"fill","scale":50,"opacity":1}}' experimental="modern"></fig-input-fill>
+    <fig-input-fill value='{"type":"image","image":{"url":"${squareUrl()}","scaleMode":"fill","scale":50,"opacity":1}}'></fig-input-fill>
   </fig-field>
 </div>`,
       },
@@ -587,7 +587,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Gradient</label>
-    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}' experimental="modern"></fig-input-gradient>
+    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
   </fig-field>
 </div>`,
       },
@@ -598,7 +598,7 @@ export const propkitSections: Section[] = [
     name: "Image",
     group: "Field controls",
     description:
-      "An image upload field for selecting or previewing image assets.",
+      "An accessible image field that renders media inside a fig-preview and keeps upload actions keyboard reachable.",
     examples: [
       {
         id: "plain-image",
@@ -606,7 +606,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Image</label>
-    <fig-image full="true" src="${portraitUrl()}" fit="cover" size="auto" checkerboard="true"></fig-image>
+    <fig-image full="true" src="${portraitUrl()}" alt="Image preview" fit="cover" size="auto" checkerboard="true"></fig-image>
   </fig-field>
 </div>`,
       },
@@ -616,7 +616,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Image</label>
-    <fig-image full="true" upload="true" label="Upload" fit="cover" size="auto" checkerboard="true"></fig-image>
+    <fig-image full="true" upload="true" label="Upload" alt="" fit="cover" size="auto" checkerboard="true"></fig-image>
   </fig-field>
 </div>`,
       },
@@ -626,7 +626,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Image</label>
-    <fig-image full="true" upload="true" src="${portraitUrl()}" fit="cover" size="auto" checkerboard="true"></fig-image>
+    <fig-image full="true" upload="true" src="${portraitUrl()}" alt="Uploaded image preview" fit="cover" size="auto" checkerboard="true"></fig-image>
   </fig-field>
 </div>`,
       },
@@ -636,7 +636,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Image</label>
-    <fig-image full="true" src="${portraitUrl()}" fit="cover" size="auto" checkerboard="true">
+    <fig-image full="true" src="${portraitUrl()}" alt="Image preview" fit="cover" size="auto" checkerboard="true">
       <fig-input-file accepts="image/*" label="Change" variant="overlay"></fig-input-file>
     </fig-image>
   </fig-field>
@@ -649,7 +649,7 @@ export const propkitSections: Section[] = [
     name: "Video",
     group: "Field controls",
     description:
-      "A video field for previewing, poster-only states, or uploading video assets.",
+      "An accessible video field with a fig-preview media surface and playback controls that attach below the preview.",
     examples: [
       {
         id: "default",
@@ -657,7 +657,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Video</label>
-    <fig-video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/640/360?random=29" autoplay="true" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+    <fig-video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Flower video preview" poster="https://picsum.photos/640/360?random=29" autoplay="true" controls muted fit="cover" size="auto" full checkerboard="true"></fig-video>
   </fig-field>
 </div>`,
       },
@@ -667,7 +667,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Video</label>
-    <fig-video poster="https://picsum.photos/640/360?random=29" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+    <fig-video aria-label="Poster-only video preview" poster="https://picsum.photos/640/360?random=29" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
   </fig-field>
 </div>`,
       },
@@ -677,7 +677,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Video</label>
-    <fig-video upload="true" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+    <fig-video upload="true" aria-label="Uploaded video preview" controls muted fit="cover" size="auto" full checkerboard="true"></fig-video>
   </fig-field>
 </div>`,
       },
@@ -688,7 +688,7 @@ export const propkitSections: Section[] = [
     name: "Media",
     group: "Field controls",
     description:
-      "A media field using the PropKit row pattern with image/video support and upload overlay.",
+      "A media field using the PropKit row pattern with image/video support, a fig-preview surface, keyboard-reachable upload, and bottom playback controls.",
     examples: [
       {
         id: "default",
@@ -696,7 +696,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Preview</label>
-    <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/320.webp?random=29" autoplay="true" muted="true" upload="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
+    <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Flower media preview" poster="https://picsum.photos/320.webp?random=29" autoplay="true" controls muted="true" upload="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
   </fig-field>
 </div>`,
       },
@@ -1214,11 +1214,11 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field>
           <label>Fill</label>
-          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}' experimental="modern"></fig-input-fill>
+          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}'></fig-input-fill>
         </fig-field>
         <fig-field>
           <label>Gradient</label>
-          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}' experimental="modern"></fig-input-gradient>
+          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
         </fig-field>
         <fig-field>
           <label>Palette</label>
@@ -1228,7 +1228,7 @@ export const propkitSections: Section[] = [
       <fig-group name="Choices" collapsible open>
         <fig-field>
           <label>Dropdown</label>
-          <fig-dropdown full experimental="modern">
+          <fig-dropdown full>
             <option selected>Auto</option>
             <option>Light</option>
             <option>Dark</option>
@@ -1257,20 +1257,20 @@ export const propkitSections: Section[] = [
         <fig-field>
           <label>Chooser</label>
           <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
-            <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-            <fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-            <fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+            <fig-choice value="img-a" aria-label="Image A" selected><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+            <fig-choice value="img-b" aria-label="Image B"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+            <fig-choice value="img-c" aria-label="Image C"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
           </fig-chooser>
         </fig-field>
       </fig-group>
       <fig-group name="Visuals" collapsible open>
         <fig-field>
           <label>Image</label>
-          <fig-image full="true" src="${portraitUrl()}" size="auto" checkerboard="true"></fig-image>
+          <fig-image full="true" src="${portraitUrl()}" alt="Image preview" size="auto" checkerboard="true"></fig-image>
         </fig-field>
         <fig-field>
           <label>Media</label>
-          <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/320.webp?random=29" autoplay="true" muted="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
+          <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Media preview" poster="https://picsum.photos/320.webp?random=29" autoplay="true" controls muted="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
         </fig-field>
         <fig-field>
           <label>Preview</label>
@@ -1386,11 +1386,11 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field direction="horizontal">
           <label>Background</label>
-          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}' experimental="modern"></fig-input-fill>
+          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}'></fig-input-fill>
         </fig-field>
         <fig-field direction="horizontal">
           <label>Brand Fade</label>
-          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}' experimental="modern"></fig-input-gradient>
+          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
         </fig-field>
         <fig-field direction="horizontal">
           <label>Swatches</label>
@@ -1400,7 +1400,7 @@ export const propkitSections: Section[] = [
       <fig-group name="Choices" collapsible open>
         <fig-field direction="horizontal">
           <label>Theme</label>
-          <fig-dropdown full experimental="modern">
+          <fig-dropdown full>
             <option selected>Auto</option>
             <option>Light</option>
             <option>Dark</option>
@@ -1429,20 +1429,20 @@ export const propkitSections: Section[] = [
         <fig-field direction="horizontal">
           <label>Cover Image</label>
           <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
-            <fig-choice value="img-a" selected><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-            <fig-choice value="img-b"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-            <fig-choice value="img-c"><fig-image src="${landscapeUrl()}" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+            <fig-choice value="img-a" aria-label="Cover image A" selected><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+            <fig-choice value="img-b" aria-label="Cover image B"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+            <fig-choice value="img-c" aria-label="Cover image C"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
           </fig-chooser>
         </fig-field>
       </fig-group>
       <fig-group name="Visuals" collapsible open>
         <fig-field direction="horizontal">
           <label>Avatar</label>
-          <fig-image full="true" src="${portraitUrl()}" size="auto" checkerboard="true"></fig-image>
+          <fig-image full="true" src="${portraitUrl()}" alt="Avatar preview" size="auto" checkerboard="true"></fig-image>
         </fig-field>
         <fig-field direction="horizontal">
           <label>Demo Video</label>
-          <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/320.webp?random=29" autoplay="true" muted="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
+          <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Demo video" poster="https://picsum.photos/320.webp?random=29" autoplay="true" controls muted="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
         </fig-field>
         <fig-field direction="horizontal">
           <label>Card Preview</label>
@@ -1826,7 +1826,7 @@ export const propkitSections: Section[] = [
     <fig-group name="Usage" collapsible open>
       <fig-field>
         <label>Preview</label>
-        <fig-image full upload="true" size="auto"></fig-image>
+        <fig-image full upload="true" alt="" size="auto"></fig-image>
       </fig-field>
       <fig-field>
         <label>Publish</label>
@@ -2132,7 +2132,7 @@ export const propkitSections: Section[] = [
   <dialog is="fig-dialog" title="Animated Melty Gif" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content>
     <fig-field columns="half">
-      <fig-image full upload="true" size="auto" aspect-ratio="16/10"></fig-image>
+      <fig-image full upload="true" alt="" size="auto" aspect-ratio="16/10"></fig-image>
     </fig-field>
     <fig-group>
       <fig-field columns="half">

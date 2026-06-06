@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Nav from "./components/Nav";
 import ExampleView from "./components/ExampleView";
 import AttributesView from "./components/AttributesView";
@@ -66,6 +66,83 @@ function sectionsForMode(mode: Props["mode"]): Section[] {
   return propkitSections;
 }
 
+function getRequiredCustomElements(markup: string): string[] {
+  if (typeof DOMParser === "undefined") return [];
+  const doc = new DOMParser().parseFromString(markup, "text/html");
+  const required = new Set<string>();
+
+  doc.body.querySelectorAll("*").forEach((node) => {
+    const tag = node.tagName.toLowerCase();
+    if (tag.startsWith("fig-")) {
+      required.add(tag);
+      return;
+    }
+
+    const customizedBuiltIn = node.getAttribute("is")?.toLowerCase();
+    if (customizedBuiltIn?.startsWith("fig-")) {
+      required.add(customizedBuiltIn);
+    }
+  });
+
+  return Array.from(required);
+}
+
+function getSectionRequiredCustomElements(section: Section): string[] {
+  const required = new Set<string>();
+  section.examples.forEach((example) => {
+    getRequiredCustomElements(example.markup).forEach((tag) => required.add(tag));
+  });
+  return Array.from(required);
+}
+
+function isExampleAvailable(example: Section["examples"][number]) {
+  if (typeof customElements === "undefined") return true;
+  return getRequiredCustomElements(example.markup).every((tag) =>
+    Boolean(customElements.get(tag)),
+  );
+}
+
+const EDITOR_SECTION_IDS = new Set(["fill-picker", "layer", "toast"]);
+const EDITOR_GROUP_NAME = "Editor components";
+
+function filterAvailableSections(
+  sections: Section[],
+  options: { includeEditorControls: boolean },
+): Section[] {
+  const visibleSections = sections
+    .filter((section) => {
+      if (EDITOR_SECTION_IDS.has(section.id)) return options.includeEditorControls;
+      return true;
+    })
+    .map((section) => ({
+      ...section,
+      group: EDITOR_SECTION_IDS.has(section.id) ? EDITOR_GROUP_NAME : section.group,
+      examples: section.examples.filter(isExampleAvailable),
+    }))
+    .filter((section) => section.examples.length > 0);
+
+  const editorSections = visibleSections.filter(
+    (section) => section.group === EDITOR_GROUP_NAME,
+  );
+  if (!editorSections.length) return visibleSections;
+
+  const otherSections = visibleSections.filter(
+    (section) => section.group !== EDITOR_GROUP_NAME,
+  );
+  const lastCoreIndex = otherSections.reduce(
+    (lastIndex, section, index) =>
+      section.group === "Core components" ? index : lastIndex,
+    -1,
+  );
+  const insertIndex = lastCoreIndex + 1;
+
+  return [
+    ...otherSections.slice(0, insertIndex),
+    ...editorSections,
+    ...otherSections.slice(insertIndex),
+  ];
+}
+
 function titleForMode(mode: Props["mode"]): string {
   if (mode === "lab") return "Lab";
   if (mode === "figui3") return "FigUI3";
@@ -79,9 +156,24 @@ function basePathForMode(mode: Props["mode"]): string {
 }
 
 export default function App({ mode }: Props) {
-  const { isDark, setTheme, includeFillPicker, setIncludeFillPicker } =
-    useTheme();
-  const sections: Section[] = sectionsForMode(mode);
+  const {
+    isDark,
+    setTheme,
+    includeEditorControls,
+    setIncludeEditorControls,
+    editorComponentsVersion,
+  } = useTheme();
+  const allSections: Section[] = sectionsForMode(mode);
+  const [customElementsVersion, setCustomElementsVersion] = useState(0);
+  const sections = useMemo(
+    () => filterAvailableSections(allSections, { includeEditorControls }),
+    [
+      allSections,
+      customElementsVersion,
+      editorComponentsVersion,
+      includeEditorControls,
+    ],
+  );
   const basePath = basePathForMode(mode);
   const appTitle = titleForMode(mode);
   const {
@@ -96,6 +188,27 @@ export default function App({ mode }: Props) {
   const initialParamsRef = useRef<Record<string, string> | null>(
     hasURLParams() ? readFromURL() : null,
   );
+
+  useEffect(() => {
+    if (typeof customElements === "undefined") return;
+    const pending = new Set<string>();
+    allSections.forEach((section) => {
+      getSectionRequiredCustomElements(section).forEach((tag) => {
+        if (!customElements.get(tag)) pending.add(tag);
+      });
+    });
+
+    let cancelled = false;
+    pending.forEach((tag) => {
+      customElements.whenDefined(tag).then(() => {
+        if (!cancelled) setCustomElementsVersion((version) => version + 1);
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [allSections]);
 
   useEffect(() => {
     if (!activeExample) {
@@ -228,8 +341,8 @@ export default function App({ mode }: Props) {
         activeExampleId={activeExampleId}
         isDark={isDark}
         setTheme={setTheme}
-        includeFillPicker={includeFillPicker}
-        setIncludeFillPicker={setIncludeFillPicker}
+        includeEditorControls={includeEditorControls}
+        setIncludeEditorControls={setIncludeEditorControls}
         navigateTo={navigateTo}
         sections={sections}
         appTitle={appTitle}

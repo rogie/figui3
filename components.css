@@ -1,3 +1,4 @@
+@layer figui.defaults {
 :root,
 :host {
   color-scheme: light dark;
@@ -48,6 +49,10 @@
   --figma-color-bg-warning-secondary: light-dark(#fab815, #e4a711);
   --figma-color-bg-warning-tertiary: light-dark(#fff1c2, #5c4100);
   --figma-color-bg-switch: light-dark(#e6e6e6, #444444);
+  --figma-color-bg-slot: light-dark(
+    rgba(255, 36, 189, 0.25),
+    rgba(243, 22, 176, 0.25)
+  );
 
   /* Border Colors */
   --figma-color-border: light-dark(#e6e6e6, #444444);
@@ -80,6 +85,11 @@
   --figma-color-border-success-strong: light-dark(#009951, #79d297);
   --figma-color-border-warning: light-dark(#ffe8a3, #925711);
   --figma-color-border-warning-strong: light-dark(#b86200, #f7d15f);
+  --figma-color-border-slot: light-dark(#ff24bd, #f316b0);
+
+  /* Focus */
+  --figma-focus-outline: 1px solid var(--figma-color-border-selected);
+  --figma-focus-outline-offset: -1px;
 
   /* Icon Colors */
   --figma-color-icon: light-dark(#000000e5, #ffffff);
@@ -190,6 +200,7 @@
   --figma-color-text-menu-secondary: rgba(255, 255, 255, 0.7);
   --figma-color-text-menu-tertiary: rgba(255, 255, 255, 0.4);
 }
+}
 
 :root,
 :host {
@@ -286,7 +297,7 @@
       rgba(0, 0, 0, 0.2) 0% 25%,
       rgba(255, 255, 255, 0.2) 0% 50%
     )
-    0 0 / 0.875rem 0.875rem;
+    0 0 / 0.4375rem 0.4375rem;
     --checkerboard-slider: repeating-conic-gradient(
       rgba(0, 0, 0, 0.2) 0% 25%,
       rgba(255, 255, 255, 0.2) 0% 50%
@@ -296,7 +307,7 @@
       rgba(0, 0, 0, 0.2) 0% 25%,
       rgba(255, 255, 255, 0.2) 0% 50%
     )
-    0 0 / 0.625rem 0.625rem;
+    0 0 / 0.375rem 0.375rem;
   --bg-hue: linear-gradient(
     90deg,
     rgba(255, 0, 0, 1),
@@ -1018,8 +1029,8 @@ fig-button {
 
   &:focus-visible,
   &[data-focus-visible] {
-    outline: 0;
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
   svg {
     *[fill]:not([fill="none"]) {
@@ -1446,6 +1457,11 @@ fig-input-file {
     flex-shrink: 0;
   }
 
+  fig-button:has(> input[type="file"]:focus-visible) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
   &[dragover] fig-button {
     outline: 1px dashed var(--figma-color-border-brand);
     outline-offset: -1px;
@@ -1457,91 +1473,86 @@ fig-image,
 fig-video {
   --fig-media-fit: contain;
   --fig-media-aspect-ratio: 4/3;
-  --fig-media-size: 100%; 
+  --fig-media-size: 100%;
   display: inline-flex;
-  max-width:var(--fig-media-size); 
-  max-height:var(--fig-media-size); 
-  background-color: var(--figma-color-bg-secondary);
-  border-radius: var(--radius-medium);
-  overflow: hidden;
-  aspect-ratio: var(--fig-media-aspect-ratio);
-  align-items: center;
-  min-height: 4rem;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  max-width: var(--fig-media-size);
+  align-items: stretch;
   position: relative;
 
   &[size="small"] {
     --fig-media-size: 2rem;
-    min-height: auto;
     width: var(--fig-media-size);
   }
   &[size="medium"] {
     --fig-media-size: 4rem;
-    min-height: auto;
     width: var(--fig-media-size);
   }
   &[size="large"] {
     --fig-media-size: 6rem;
-    min-height: auto;
     width: var(--fig-media-size);
   }
 
-  & > *{
-    position: absolute;
-    z-index: 1;
+  > fig-preview {
+    --fig-preview-fit: var(--fig-media-fit);
+    width: 100%;
+    max-width: var(--fig-media-size);
+    aspect-ratio: var(--fig-media-aspect-ratio);
+    min-height: 4rem;
   }
 
-  &[checkerboard]:not([checkerboard="false"]) {
+  &[size="small"] > fig-preview,
+  &[size="medium"] > fig-preview,
+  &[size="large"] > fig-preview {
+    min-height: auto;
+  }
+
+  &[checkerboard]:not([checkerboard="false"]) > fig-preview {
     background: var(--checkerboard);
   }
-  &::after{
-    content: "";
-    width: 100%;
-    height: 100%;
-    border-radius: inherit;
-    position: absolute;
-    inset: 0;
-    border: 1px solid var(--figma-color-bordertranslucent);
-  }
-  > video, 
-  > img,
-  > .fig-media-element[data-generated] {
+
+  > fig-preview > video,
+  > fig-preview > img,
+  > fig-preview > .fig-media-element[data-generated] {
     display: block;
     width: stretch;
     height: stretch;
     position: static;
-    object-fit: var(--fig-media-fit);
+    object-fit: var(--fig-preview-fit);
     object-position: center;
     z-index: 0;
   }
 
   &:is(:not([src]), [src=""]):is(:not([poster]), [poster=""])
-    > video.fig-media-element[data-generated] {
+    > fig-preview > video.fig-media-element[data-generated] {
     opacity: 0;
     pointer-events: none;
   }
-  &:not(:has(> img.fig-media-element[data-generated][src]:not([src=""]))) > img.fig-media-element[data-generated] {
+  &:not(:has(> fig-preview > img.fig-media-element[data-generated][src]:not([src=""]))) > fig-preview > img.fig-media-element[data-generated] {
     opacity: 0;
     pointer-events: none;
   }
-  > fig-input-file[data-generated] {
+  > fig-preview > fig-input-file[data-generated] {
     opacity: 0;
     pointer-events: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 2;
-    max-width:calc(100% - var(--spacer-4));
+    max-width: calc(100% - var(--spacer-4));
   }
-  &:not(:has(> img.fig-media-element[data-generated][src]:not([src=""]))) > fig-input-file[data-generated],
-  &:hover > fig-input-file[data-generated] {
+  &:not(:has(> fig-preview > img.fig-media-element[data-generated][src]:not([src=""]))) > fig-preview > fig-input-file[data-generated],
+  > fig-preview:hover > fig-input-file[data-generated],
+  > fig-preview:focus-within > fig-input-file[data-generated] {
     opacity: 1;
     pointer-events: all;
   }
 
   > fig-media-controls[data-generated] {
-    position: absolute;
-    inset: var(--spacer-2);
-    top: auto;
-    width: auto;
-    z-index: 3;
+    position: static;
+    width: 100%;
     pointer-events: auto;
   }
 }
@@ -2107,6 +2118,7 @@ input[type="checkbox"].switch {
   --knob-height: 0.5rem;
   --width: 2rem;
   --height: 1rem;
+  --figma-focus-outline-offset: 1px;
   contain: strict;
   display: inline-flex;
   margin: 0;
@@ -2184,17 +2196,15 @@ input[type="checkbox"].switch {
     }
   }
 
-  &:focus {
-    outline: 0;
-  }
-
-  &:checked:focus {
-    outline: 0;
+  &:focus, &:focus-within {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
 }
 
 /* Checkbox */
 input[type="checkbox"]:not(.switch) {
+  --figma-focus-outline-offset: 1px;
   contain: strict;
   vertical-align: middle;
   --size: 1rem;
@@ -2230,10 +2240,11 @@ input[type="checkbox"]:not(.switch) {
   }
 
   &:focus {
-    outline: 0;
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
 
     &:not(:checked) {
-      box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     }
   }
   &:disabled{
@@ -2273,6 +2284,7 @@ label.checkbox:has([type="checkbox"]) {
 
 /* Radio */
 input[type="radio"] {
+  --figma-focus-outline-offset: 1px;
   contain: strict;
   appearance: none;
   border-radius: 0.5rem;
@@ -2295,11 +2307,8 @@ input[type="radio"] {
   }
 
   &:focus {
-    outline: 0;
-
-    &:not(:checked) {
-      box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
-    }
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
 
   &:hover:not(:checked):not(:disabled) {
@@ -2456,6 +2465,7 @@ fig-slider {
   --slider-transition: none;
   --handle-transition: var(--slider-transition);
   --slider-checkerboard: var(--checkerboard);
+  --figma-focus-outline-offset: 1px;
 
   display: flex;
   align-items: center;
@@ -2565,6 +2575,17 @@ fig-slider {
 
     &:focus {
       outline: none;
+    }
+
+    &:focus-visible {
+      &::-webkit-slider-thumb {
+        outline: var(--figma-focus-outline);
+        outline-offset: var(--figma-focus-outline-offset);
+      }
+      &::-moz-range-thumb {
+        outline: var(--figma-focus-outline);
+        outline-offset: var(--figma-focus-outline-offset);
+      }
     }
 
     &:disabled {
@@ -3000,70 +3021,6 @@ dialog[is="fig-popup"] {
 
 }
 
-dialog[is="fig-toast"] {
-  contain: layout paint;
-  --z-index: 999999;
-  z-index: var(--z-index);
-  box-shadow: var(--figma-elevation-100);
-  border-radius: var(--radius-large);
-  padding: var(--spacer-2) var(--spacer-3);
-  align-items: center;
-  gap: var(--spacer-2);
-  height: 2.5rem;
-  justify-content: center;
-  min-width: 0;
-  color: var(--figma-color-text);
-  background-color: var(--figma-color-bg);
-
-  &[open] {
-    display: flex;
-  }
-
-  & p {
-    margin: 0;
-    padding: 0;
-    color: inherit;
-    font-weight: var(--body-medium-strong-fontWeight);
-  }
-
-  hr[vertical] {
-    margin: 0;
-  }
-
-  & fig-button:last-child {
-    margin-right: calc(var(--spacer-2) * -1);
-  }
-
-  /* Theme: Dark (default) - hardcoded to ensure consistency regardless of global theme */
-  &[theme="dark"] {
-    color-scheme: dark;
-  }
-
-  /* Theme: Light - hardcoded to ensure consistency regardless of global theme */
-  &[theme="light"] {
-    color-scheme: light;
-  }
-
-  /* Theme: Danger - hardcoded to ensure consistency regardless of global theme */
-  &[theme="danger"] {
-    background-color: var(--figma-color-bg-danger);
-    color-scheme: dark;
-  }
-
-  /* Theme: Brand - hardcoded to ensure consistency regardless of global theme */
-  &[theme="brand"] {
-    background-color: var(--figma-color-bg-brand);
-    color-scheme: dark;
-  }
-
-  &[theme="success"] {
-    background-color: var(--figma-color-bg-success);
-    color-scheme: dark;
-  }
-}
-
-
-
 /* Tooltip */
 fig-tooltip {
   display: contents;
@@ -3140,6 +3097,7 @@ fig-dropdown {
 
 fig-checkbox,
 fig-radio {
+  
   align-items: center;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
@@ -3520,6 +3478,8 @@ fig-input-gradient {
   fig-handle[type="color"]{
     --height: var(--fig-input-gradient-handle-size);
     --width: var(--fig-input-gradient-handle-size);
+    --fig-handle-padding: 0.125rem;
+   
   }
 
   &:focus,
@@ -3536,6 +3496,7 @@ fig-input-gradient {
       --fig-handle-outline-color: transparent;
       --fig-handle-shadow: none;
       --fig-handle-inner-outline: none;
+      
       fig-color-tip{
         bottom: calc(100%);
       }
@@ -4082,6 +4043,7 @@ fig-joystick {
     line-height: 1;
     letter-spacing: 0.01em;
     font-weight: 700;
+    text-transform: uppercase;
     text-shadow:
       1px 0 0 var(--figma-color-bg-secondary),
       -1px 0 0 var(--figma-color-bg-secondary),
@@ -4186,137 +4148,6 @@ fig-joystick {
   }
 }
 
-/* Layer */
-fig-layer {
-  --indent: var(--spacer-3);
-  display: block;
-  color: var(--figma-color-text);
-  position: relative;
-  user-select: none;
-  width: 100%;
-  padding: 0 var(--spacer-3);
-  border-radius: var(--radius-medium);
-
-  /* When layer has children */
-  &:has(fig-layer) {
-    & > .fig-layer-row {
-      & > .fig-layer-chevron {
-        visibility: visible;
-      }
-    }
-  }
-
-  & > .fig-layer-row {
-    display: flex;
-    align-items: center;
-    gap: var(--spacer-1);
-    padding: var(--spacer-1) var(--spacer-2);
-    height: var(--spacer-4);
-    border-radius: var(--radius-medium);
-    position: relative;
-
-    /* Chevron element - injected by JS when layer has children */
-    .fig-layer-chevron {
-      mask-image: var(--icon-16-chevron);
-      mask-size: contain;
-      mask-repeat: no-repeat;
-      mask-position: center;
-      display: flex;
-      visibility: hidden;
-      background: var(--figma-color-text-tertiary);
-      width: var(--spacer-3);
-      height: var(--spacer-3);
-      flex-shrink: 0;
-      transition: transform 0.15s;
-      position: absolute;
-      left: calc(var(--spacer-3) * -1);
-      top: var(--spacer-1);
-      rotate: -90deg;
-    }
-
-    &:hover {
-      background: var(--figma-color-bg-secondary);
-
-      .fig-layer-actions {
-        opacity: 1;
-      }
-    }
-
-    /* Layer icon */
-    .fig-layer-icon {
-      flex-shrink: 0;
-      width: var(--spacer-3);
-      height: var(--spacer-3);
-      color: var(--figma-color-icon-tertiary);
-      margin-left: calc(var(--spacer-1) * -1);
-    }
-
-    > label {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: var(--figma-color-text);
-    }
-  }
-
-  .fig-layer-actions {
-    display: flex;
-    margin-right: calc(-1 * var(--spacer-1));
-    gap: 0;
-    opacity: 0;
-    transition: opacity 0.15s;
-    flex-shrink: 0;
-
-    > * {
-      flex-shrink: 0;
-    }
-  }
-
-  /* Nested layers indentation */
-  > fig-layer {
-    padding: 0;
-    margin-top: 1px;
-    .fig-layer-row {
-      padding-left: var(--indent);
-    }
-  }
-
-  /* Collapsed state - hide children */
-  &:not([open]) > fig-layer,
-  &[open="false"] > fig-layer {
-    display: none;
-  }
-
-  &[open]:not([open="false"]) {
-    /* Rotate chevron when open */
-    & > .fig-layer-row > .fig-layer-chevron {
-      rotate: 0deg;
-    }
-  }
-
-  /* Dimmed when not visible */
-  &[visible="false"] > .fig-layer-row {
-    & > label {
-      color: var(--figma-color-text-tertiary);
-    }
-  }
-
-  /* Selected state */
-  &[selected]:not([selected="false"]) {
-    /* Open with children */
-    /*&:has(fig-layer) {
-      background: var(--figma-color-bg-selected-secondary);
-    }*/
-    & > .fig-layer-row {
-      background: var(--figma-color-bg-selected);
-      & > .fig-layer-icon {
-        color: var(--figma-color-icon);
-      }
-    }
-  }
-}
 @keyframes fig-shimmer-text {
   from {
     background-position: var(--fig-shimmer-text-from, 100% 0%);
@@ -4775,7 +4606,7 @@ fig-handle {
   --fill: transparent;
   --border-radius: 50%;
   --fig-handle-bg: var(--handle-color);
-  --fig-handle-checkerboard: var(--checkerboard);
+  --fig-handle-checkerboard: var(--checkerboard-handle);
   --fig-handle-height: var(--width);
   --fig-handle-hit-area-opacity: 0;
   --fig-handle-hit-area-size: 0;
@@ -4810,8 +4641,6 @@ fig-handle {
     width: 100%;
     height: 100%;
     background: var(--fig-handle-inner-bg);
-    background-position: 0 0;
-    background-size: calc(var(--fig-handle-width) - var(--fig-handle-padding) * 2) calc(var(--fig-handle-height) - var(--fig-handle-padding) * 2);
     border-radius: var(--fig-handle-inner-radius);
     box-shadow: var(--fig-handle-inner-shadow);
     outline: var(--fig-handle-inner-outline);
@@ -4878,8 +4707,7 @@ fig-handle {
   &[tip="add"],
   &[tip="remove"] {
     --fig-handle-inner-bg: linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
-    --fig-handle-padding: 1px;
-    --fig-handle-shadow: none;
+    --fig-handle-padding: 0.25rem;
     --fig-handle-inner-outline: none;
     position: relative;
     overflow: visible;
@@ -4893,22 +4721,8 @@ fig-handle {
     }
   }
   &[type="color"]{
-    --width: 0.75rem;
-    --height: 0.75rem;
-    &:hover,
-    &:focus-within,
-    &[selected]:not([selected="false"]){
-      --width: 1rem;
-      --height: 1rem;
-      --fig-handle-outline-color: transparent;
-    }
-    &.dragging,
-    &:active{
-      --fig-handle-padding: 2px !important;
-    }
-    &[selected]:not([selected="false"]){
-      --fig-handle-padding: 1px;
-    }
+
+
   }
 
   &[disabled]:not([disabled="false"]),
@@ -5039,7 +4853,8 @@ fig-menu-item {
     }
   }
 
-  &[disabled]:not([disabled="false"]) {
+  &[disabled]:not([disabled="false"]),
+  &[aria-disabled="true"] {
     opacity: 0.4;
     pointer-events: none;
   }
