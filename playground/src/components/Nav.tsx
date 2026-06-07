@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback, useMemo } from "react";
 import type { Section } from "../data/sections";
 import ThemeToggle from "./ThemeToggle";
 import { copyText } from "../lib/prompt";
+import { useCopyTooltip } from "../hooks/useCopyTooltip";
 import ClipboardIcon from "../icons/icon.24.clipboard.svg?react";
 import ChatIcon from "../icons/icon.24.cursor-chat.svg?react";
 
@@ -39,7 +40,9 @@ export default function Nav({
   appTitle,
 }: Props) {
   const navRef = useRef<HTMLDivElement>(null);
-  const toastRef = useRef<HTMLElement>(null);
+  const commandCopyTooltipRef = useRef<HTMLElement>(null);
+  const promptCopyTooltipRef = useRef<HTMLElement>(null);
+  const { showCopyTooltip } = useCopyTooltip();
   const orderedExamples = useMemo(
     () =>
       sections.flatMap((section) =>
@@ -51,28 +54,15 @@ export default function Nav({
     [sections],
   );
 
-  const showToast = useCallback((message: string) => {
-    const el = toastRef.current as HTMLElement & { showToast?: () => void };
-    const colorScheme =
-      document.documentElement.style.colorScheme ||
-      window.getComputedStyle(document.documentElement).colorScheme;
-    const isDark = colorScheme.includes("dark");
-    el?.setAttribute("theme", isDark ? "light" : "dark");
-    if (el) {
-      el.textContent = message;
-    }
-    el?.showToast?.();
-  }, []);
-
   const handleCopyInstallCommand = useCallback(async () => {
     await copyText(INSTALL_COMMAND);
-    showToast("Command copied");
-  }, [showToast]);
+    showCopyTooltip("Command copied", commandCopyTooltipRef.current);
+  }, [showCopyTooltip]);
 
   const handleCopyInstallPrompt = useCallback(async () => {
     await copyText(INSTALL_PROMPT);
-    showToast("Prompt copied");
-  }, [showToast]);
+    showCopyTooltip("Prompt copied", promptCopyTooltipRef.current);
+  }, [showCopyTooltip]);
 
   const handleLayerClick = useCallback(
     (e: Event) => {
@@ -261,7 +251,7 @@ export default function Nav({
       <footer className="nav-footer">
         <div className="nav-install-row">
           <fig-input-text value={INSTALL_COMMAND} readonly></fig-input-text>
-          <fig-tooltip text="Copy command">
+          <fig-tooltip ref={commandCopyTooltipRef} text="Copy command">
             <fig-button
               variant="ghost"
               icon
@@ -271,7 +261,7 @@ export default function Nav({
               <ClipboardIcon />
             </fig-button>
           </fig-tooltip>
-          <fig-tooltip text="Copy prompt">
+          <fig-tooltip ref={promptCopyTooltipRef} text="Copy prompt">
             <fig-button
               variant="ghost"
               icon
@@ -283,12 +273,6 @@ export default function Nav({
           </fig-tooltip>
         </div>
       </footer>
-      <dialog
-        is="fig-toast"
-        ref={toastRef as React.RefObject<HTMLDialogElement>}
-      >
-        Command copied
-      </dialog>
     </nav>
   );
 }

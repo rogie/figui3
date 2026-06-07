@@ -18,7 +18,8 @@ fig-field-slider {
 
 
   &:focus-within {
-    outline: 1px solid var(--figma-color-border-selected);
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
 
   label {
@@ -86,8 +87,8 @@ fig-field-slider {
       --slider-tick-opacity: 1;
 
       &:has(input[type="range"]:focus-within) {
-        --slider-thumb-outline: 1.5px solid var(--figma-color-border-selected) !important;
-        --slider-thumb-outline-offset: 2px !important;
+        --slider-thumb-outline: var(--figma-focus-outline) !important;
+        --slider-thumb-outline-offset: var(--figma-focus-outline-offset) !important;
       }
 
       .fig-slider-input-container {
@@ -170,7 +171,8 @@ fig-field-slider {
         box-shadow: none !important;
       }
       &:has(input:focus) {
-        box-shadow: inset 0 0 0 1px var(--figma-color-border-selected) !important;
+        outline: var(--figma-focus-outline) !important;
+        outline-offset: var(--figma-focus-outline-offset) !important;
       }
       input {
         field-sizing: content;
@@ -363,7 +365,10 @@ fig-input-angle {
     background-color: var(--figma-color-bg-secondary);
     border-radius: 100%;
     box-shadow: inset 0 0 0 1px var(--figma-color-border);
-    &:focus,
+    &:focus {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
     &.dragging {
       outline: 0;
       box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);

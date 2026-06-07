@@ -2,9 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/figui",
-  testIgnore: /.*-performance\.spec\.ts/,
-  timeout: 30_000,
-  fullyParallel: true,
+  testMatch: /.*-performance\.spec\.ts/,
+  timeout: 60_000,
+  fullyParallel: false,
+  workers: 1,
   reporter: [["list"]],
   use: {
     baseURL: "http://127.0.0.1:3000",
@@ -19,7 +20,7 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
+      name: "perf",
       use: { ...devices["Desktop Chrome"] },
     },
   ],

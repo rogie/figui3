@@ -33,6 +33,7 @@ lib-cov
 
 coverage
 *.lcov
+test-results/
 
 # nyc test coverage
 

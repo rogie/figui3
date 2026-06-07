@@ -257,13 +257,10 @@ const GRADIENT_HUE_INTERPOLATIONS = [
 function normalizeGradientConfig(gradient) {
   const next = { ...(gradient ?? {}) };
   let interpolationSpace = String(
-    next.interpolationSpace ?? "oklab",
+    next.interpolationSpace ?? "srgb",
   ).toLowerCase();
   if (!GRADIENT_INTERPOLATION_SPACES.includes(interpolationSpace)) {
-    interpolationSpace = "oklab";
-  }
-  if (interpolationSpace === "srgb" || interpolationSpace === "display-p3") {
-    interpolationSpace = "oklab";
+    interpolationSpace = "srgb";
   }
   next.interpolationSpace = interpolationSpace;
 
@@ -292,6 +289,9 @@ function gradientToValueShape(gradient) {
 
 function gradientInterpolationClause(gradient) {
   const normalized = normalizeGradientConfig(gradient);
+  if (normalized.interpolationSpace === "srgb") {
+    return "";
+  }
   if (normalized.interpolationSpace === "oklch") {
     return `in oklch ${normalized.hueInterpolation} hue`;
   }
@@ -324,7 +324,7 @@ class FigFillPicker extends HTMLElement {
     angle: 0,
     centerX: 50,
     centerY: 50,
-    interpolationSpace: "oklab",
+    interpolationSpace: "srgb",
     hueInterpolation: "shorter",
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
@@ -348,13 +348,26 @@ class FigFillPicker extends HTMLElement {
   #teardownColorAreaEvents = null;
   #dialogOpenObserver = null;
   #webcamTabObserver = null;
+  #boundTriggerClick = null;
+  #boundTriggerKeydown = null;
 
   constructor() {
     super();
+    this.#boundTriggerClick = this.#handleTriggerClick.bind(this);
+    this.#boundTriggerKeydown = this.#handleTriggerKeydown.bind(this);
   }
 
   static get observedAttributes() {
-    return ["value", "disabled", "alpha", "mode", "experimental"];
+    return [
+      "value",
+      "disabled",
+      "alpha",
+      "mode",
+      "experimental",
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+    ];
   }
 
   connectedCallback() {
@@ -393,6 +406,10 @@ class FigFillPicker extends HTMLElement {
       URL.revokeObjectURL(this.#video.url);
     }
     if (this.#chit) this.#chit.removeAttribute("selected");
+    if (this.#trigger) {
+      this.#trigger.removeEventListener("click", this.#boundTriggerClick);
+      this.#trigger.removeEventListener("keydown", this.#boundTriggerKeydown);
+    }
     if (this.#dialog) {
       this.#dialog.close();
       this.#dialog.remove();
@@ -421,22 +438,65 @@ class FigFillPicker extends HTMLElement {
       this.#chit = null;
     }
 
-    this.#trigger.addEventListener("click", (e) => {
-      if (this.hasAttribute("disabled")) return;
-      e.stopPropagation();
-      e.preventDefault();
-      this.#openDialog();
-    });
+    this.#syncTriggerA11y();
+    this.#trigger.removeEventListener("click", this.#boundTriggerClick);
+    this.#trigger.addEventListener("click", this.#boundTriggerClick);
+    this.#trigger.removeEventListener("keydown", this.#boundTriggerKeydown);
+    this.#trigger.addEventListener("keydown", this.#boundTriggerKeydown);
 
     // Prevent fig-chit's internal color input from opening system picker
     if (this.#chit) {
       requestAnimationFrame(() => {
         const input = this.#chit.querySelector('input[type="color"]');
         if (input) {
-          input.style.pointerEvents = "none";
+          input.remove();
         }
+        this.#syncTriggerA11y();
       });
     }
+  }
+
+  #triggerLabel() {
+    return this.getAttribute("aria-label") || "Fill picker";
+  }
+
+  #syncTriggerA11y() {
+    if (!this.#trigger) return;
+    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    const labelledBy = this.getAttribute("aria-labelledby");
+    if (!this.#trigger.hasAttribute("role")) this.#trigger.setAttribute("role", "button");
+    this.#trigger.setAttribute("tabindex", disabled ? "-1" : "0");
+    this.#trigger.setAttribute("aria-disabled", disabled ? "true" : "false");
+    if (labelledBy) {
+      this.#trigger.setAttribute("aria-labelledby", labelledBy);
+      this.#trigger.removeAttribute("aria-label");
+    } else if (this.hasAttribute("aria-label")) {
+      this.#trigger.setAttribute("aria-label", `Open ${this.#triggerLabel()}`);
+      this.#trigger.removeAttribute("aria-labelledby");
+    } else {
+      this.#trigger.removeAttribute("aria-labelledby");
+      if (!this.#trigger.hasAttribute("aria-label")) {
+        this.#trigger.setAttribute("aria-label", `Open ${this.#triggerLabel()}`);
+      }
+    }
+    const describedBy = this.getAttribute("aria-describedby");
+    if (describedBy) this.#trigger.setAttribute("aria-describedby", describedBy);
+    else this.#trigger.removeAttribute("aria-describedby");
+  }
+
+  #handleTriggerClick(e) {
+    if (this.hasAttribute("disabled")) return;
+    e.stopPropagation();
+    e.preventDefault();
+    this.#openDialog();
+  }
+
+  #handleTriggerKeydown(e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    if (this.hasAttribute("disabled")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    this.#openDialog();
   }
 
   #parseValue() {
@@ -658,7 +718,7 @@ class FigFillPicker extends HTMLElement {
       const options = allowedModes
         .map((m) => `<option value="${m}">${modeLabels[m]}</option>`)
         .join("\n          ");
-      headerContent = `<fig-dropdown class="fig-fill-picker-type" ${expAttr} value="${this.#fillType}">
+      headerContent = `<fig-dropdown class="fig-fill-picker-type" label="Fill type" ${expAttr} value="${this.#fillType}">
           ${options}
         </fig-dropdown>`;
     }
@@ -668,7 +728,7 @@ class FigFillPicker extends HTMLElement {
       .map((m) => `<div class="fig-fill-picker-tab" data-tab="${m}"></div>`)
       .join("\n        ");
 
-    const gamutDropdown = `<fig-dropdown class="fig-fill-picker-gamut" ${expAttr} value="${this.#gamut}">
+    const gamutDropdown = `<fig-dropdown class="fig-fill-picker-gamut" label="Color gamut" ${expAttr} value="${this.#gamut}">
           <option value="srgb">sRGB</option>
           <option value="display-p3">Display P3</option>
         </fig-dropdown>`;
@@ -677,7 +737,7 @@ class FigFillPicker extends HTMLElement {
       <fig-header>
         ${headerContent}
         ${gamutDropdown}
-        <fig-button icon variant="ghost" class="fig-fill-picker-close">
+        <fig-button icon variant="ghost" class="fig-fill-picker-close" aria-label="Close fill picker">
           <fig-icon name="close"></fig-icon>
         </fig-button>
       </fig-header>
@@ -845,6 +905,7 @@ class FigFillPicker extends HTMLElement {
       <fig-preview class="fig-fill-picker-color-area">
         <canvas width="200" height="200"></canvas>
         <fig-handle
+          aria-label="Color saturation and brightness"
           type="color"
           color="${this.#hsvToHex({ ...this.#color, a: 1 })}"
           data-no-color-picker
@@ -855,20 +916,20 @@ class FigFillPicker extends HTMLElement {
         ></fig-handle>
       </fig-preview>
       <div class="fig-fill-picker-sliders">
-        <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper"><fig-icon name="eyedropper"></fig-icon></fig-button></fig-tooltip>
-        <fig-slider type="hue" text="false" min="0" max="360" value="${
+        <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper" aria-label="Sample color"><fig-icon name="eyedropper"></fig-icon></fig-button></fig-tooltip>
+        <fig-slider type="hue" text="false" min="0" max="360" aria-label="Hue" value="${
           this.#color.h
         }"></fig-slider>
         ${
           showAlpha
-            ? `<fig-slider type="opacity" text="true" units="%" min="0" max="100" value="${
+            ? `<fig-slider type="opacity" text="true" units="%" min="0" max="100" aria-label="Opacity" value="${
                 this.#color.a * 100
               }" color="${this.#hsvToHex(this.#color)}"></fig-slider>`
             : ""
         }
       </div>
       <fig-field class="fig-fill-picker-inputs">
-        <fig-dropdown class="fig-fill-picker-input-mode" ${expAttr} value="${this.#colorInputMode}">
+        <fig-dropdown class="fig-fill-picker-input-mode" label="Color value format" ${expAttr} value="${this.#colorInputMode}">
           <option value="hex">Hex</option>
           <option value="rgb">RGB</option>
           <option value="hsl">HSL</option>
@@ -1151,48 +1212,48 @@ class FigFillPicker extends HTMLElement {
     const wrap = (tooltip, html) =>
       `<fig-tooltip text="${tooltip}">${html}</fig-tooltip>`;
 
-    const num = (cls, min, max, step) =>
-      `<fig-input-number class="${cls}" min="${min}" max="${max}"${step != null ? ` step="${step}"` : ""}></fig-input-number>`;
+    const num = (cls, label, min, max, step) =>
+      `<fig-input-number class="${cls}" aria-label="${label}" min="${min}" max="${max}"${step != null ? ` step="${step}"` : ""}></fig-input-number>`;
 
     let html;
     switch (this.#colorInputMode) {
       case "rgb":
         html = `<div class="input-combo">
-          ${wrap("Red", num("fig-fill-picker-ci-r", 0, 255))}
-          ${wrap("Green", num("fig-fill-picker-ci-g", 0, 255))}
-          ${wrap("Blue", num("fig-fill-picker-ci-b", 0, 255))}
+          ${wrap("Red", num("fig-fill-picker-ci-r", "Red", 0, 255))}
+          ${wrap("Green", num("fig-fill-picker-ci-g", "Green", 0, 255))}
+          ${wrap("Blue", num("fig-fill-picker-ci-b", "Blue", 0, 255))}
         </div>`;
         break;
       case "hsl":
         html = `<div class="input-combo">
-          ${wrap("Hue", num("fig-fill-picker-ci-h", 0, 360))}
-          ${wrap("Saturation", num("fig-fill-picker-ci-s", 0, 100))}
-          ${wrap("Lightness", num("fig-fill-picker-ci-l", 0, 100))}
+          ${wrap("Hue", num("fig-fill-picker-ci-h", "Hue", 0, 360))}
+          ${wrap("Saturation", num("fig-fill-picker-ci-s", "Saturation", 0, 100))}
+          ${wrap("Lightness", num("fig-fill-picker-ci-l", "Lightness", 0, 100))}
         </div>`;
         break;
       case "hsb":
         html = `<div class="input-combo">
-          ${wrap("Hue", num("fig-fill-picker-ci-h", 0, 360))}
-          ${wrap("Saturation", num("fig-fill-picker-ci-s", 0, 100))}
-          ${wrap("Brightness", num("fig-fill-picker-ci-v", 0, 100))}
+          ${wrap("Hue", num("fig-fill-picker-ci-h", "Hue", 0, 360))}
+          ${wrap("Saturation", num("fig-fill-picker-ci-s", "Saturation", 0, 100))}
+          ${wrap("Brightness", num("fig-fill-picker-ci-v", "Brightness", 0, 100))}
         </div>`;
         break;
       case "lab":
         html = `<div class="input-combo">
-          ${wrap("Lightness", num("fig-fill-picker-ci-okl", 0, 100))}
-          ${wrap("Green-Red axis", num("fig-fill-picker-ci-oka", -0.4, 0.4, 0.001))}
-          ${wrap("Blue-Yellow axis", num("fig-fill-picker-ci-okb", -0.4, 0.4, 0.001))}
+          ${wrap("Lightness", num("fig-fill-picker-ci-okl", "Lightness", 0, 100))}
+          ${wrap("Green-Red axis", num("fig-fill-picker-ci-oka", "Green-Red axis", -0.4, 0.4, 0.001))}
+          ${wrap("Blue-Yellow axis", num("fig-fill-picker-ci-okb", "Blue-Yellow axis", -0.4, 0.4, 0.001))}
         </div>`;
         break;
       case "lch":
         html = `<div class="input-combo">
-          ${wrap("Lightness", num("fig-fill-picker-ci-okl", 0, 100))}
-          ${wrap("Chroma", num("fig-fill-picker-ci-okc", 0, 0.4, 0.001))}
-          ${wrap("Hue", num("fig-fill-picker-ci-okh", 0, 360))}
+          ${wrap("Lightness", num("fig-fill-picker-ci-okl", "Lightness", 0, 100))}
+          ${wrap("Chroma", num("fig-fill-picker-ci-okc", "Chroma", 0, 0.4, 0.001))}
+          ${wrap("Hue", num("fig-fill-picker-ci-okh", "Hue", 0, 360))}
         </div>`;
         break;
       default: // hex
-        html = `<fig-input-text class="fig-fill-picker-ci-hex" placeholder="FFFFFF"></fig-input-text>`;
+        html = `<fig-input-text class="fig-fill-picker-ci-hex" aria-label="Hex color" placeholder="FFFFFF"></fig-input-text>`;
         break;
     }
 
@@ -1349,7 +1410,7 @@ class FigFillPicker extends HTMLElement {
 
     container.innerHTML = `
       <fig-field class="fig-fill-picker-gradient-header">
-        <fig-dropdown class="fig-fill-picker-gradient-type" ${expAttr} value="${
+        <fig-dropdown class="fig-fill-picker-gradient-type" label="Gradient type" ${expAttr} value="${
           this.#gradient.type
         }">
           <option value="linear" selected>Linear</option>
@@ -1357,35 +1418,36 @@ class FigFillPicker extends HTMLElement {
           <option value="angular">Angular</option>
         </fig-dropdown>
         <fig-tooltip text="Rotate gradient">
-          <fig-input-number class="fig-fill-picker-gradient-angle" value="${
+          <fig-input-number class="fig-fill-picker-gradient-angle" aria-label="Gradient angle" value="${
             (this.#gradient.angle - 90 + 360) % 360
           }" min="0" max="360" units="°" wrap></fig-input-number>
         </fig-tooltip>
         <div class="fig-fill-picker-gradient-center input-combo" style="display: none;">
-          <fig-input-number min="0" max="100" value="${
+          <fig-input-number min="0" max="100" aria-label="Gradient center X" value="${
             this.#gradient.centerX
           }" units="%" class="fig-fill-picker-gradient-cx"></fig-input-number>
-          <fig-input-number min="0" max="100" value="${
+          <fig-input-number min="0" max="100" aria-label="Gradient center Y" value="${
             this.#gradient.centerY
           }" units="%" class="fig-fill-picker-gradient-cy"></fig-input-number>
         </div>
         <fig-tooltip text="Flip gradient">
-          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip">
+          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip" aria-label="Flip gradient">
             <fig-icon name="swap"></fig-icon>
           </fig-button>
         </fig-tooltip>
       </fig-field>
       <fig-preview class="fig-fill-picker-gradient-preview">
-        <fig-input-gradient class="fig-fill-picker-gradient-bar-input" edit="true" mode="tip" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
+        <fig-input-gradient class="fig-fill-picker-gradient-bar-input" aria-label="Gradient stops" edit="true" mode="tip" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
       </fig-preview>
       <fig-field class="fig-fill-picker-gradient-interpolation">
         <label>Mixing</label>
-        <fig-dropdown class="fig-fill-picker-gradient-space" full ${expAttr} value="${
+        <fig-dropdown class="fig-fill-picker-gradient-space" label="Gradient mixing" full ${expAttr} value="${
           this.#gradient.interpolationSpace === "oklch"
             ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
             : this.#gradient.interpolationSpace
         }">
           <optgroup label="sRGB">
+            <option value="srgb">Classic</option>
             <option value="srgb-linear">Linear</option>
           </optgroup>
           <optgroup label="OKLab">
@@ -1402,7 +1464,7 @@ class FigFillPicker extends HTMLElement {
       <div class="fig-fill-picker-gradient-stops">
         <fig-header class="fig-fill-picker-gradient-stops-header" borderless>
           <span>Stops</span>
-          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-add" title="Add stop">
+          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-add" aria-label="Add gradient stop" title="Add stop">
             <fig-icon name="add"></fig-icon>
           </fig-button>
         </fig-header>
@@ -1631,15 +1693,15 @@ class FigFillPicker extends HTMLElement {
       .map(
         (stop, index) => `
       <fig-field class="fig-fill-picker-gradient-stop-row" data-index="${index}">
-        <fig-input-number class="fig-fill-picker-stop-position" min="0" max="100" value="${
+        <fig-input-number class="fig-fill-picker-stop-position" aria-label="Gradient stop position" min="0" max="100" value="${
           stop.position
         }" units="%"></fig-input-number>
-        <fig-input-color class="fig-fill-picker-stop-color" text="true" alpha="true" picker="figma" picker-dialog-position="right" value="${
+        <fig-input-color class="fig-fill-picker-stop-color" aria-label="Gradient stop color" text="true" alpha="true" picker="figma" picker-dialog-position="right" value="${
           stop.color
         }"></fig-input-color>
         <fig-button icon variant="ghost" class="fig-fill-picker-stop-remove" ${
           this.#gradient.stops.length <= 2 ? "disabled" : ""
-        }>
+        } aria-label="Remove gradient stop">
           <fig-icon name="minus"></fig-icon>
         </fig-button>
       </fig-field>
@@ -1711,9 +1773,9 @@ class FigFillPicker extends HTMLElement {
         return `${color} ${s.position}%`;
       })
       .join(", ");
-    const interpolation = includeInterpolation
-      ? ` ${gradientInterpolationClause(gradient)}`
-      : "";
+    const interpolationClause = gradientInterpolationClause(gradient);
+    const interpolation =
+      includeInterpolation && interpolationClause ? ` ${interpolationClause}` : "";
     switch (gradient.type) {
       case "linear":
         return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
@@ -1755,7 +1817,7 @@ class FigFillPicker extends HTMLElement {
 
     container.innerHTML = `
       <fig-field class="fig-fill-picker-media-header">
-        <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
+        <fig-dropdown class="fig-fill-picker-scale-mode" label="Image scale mode" ${expAttr} value="${
           this.#image.scaleMode
         }">
           <option value="fill" selected>Fill</option>
@@ -1763,7 +1825,7 @@ class FigFillPicker extends HTMLElement {
           <option value="crop">Crop</option>
           <option value="tile">Tile</option>
         </fig-dropdown>
-        <fig-input-number class="fig-fill-picker-scale" min="1" max="200" value="${
+        <fig-input-number class="fig-fill-picker-scale" aria-label="Image tile scale" min="1" max="200" value="${
           this.#image.scale
         }" units="%" ${
           this.#image.scaleMode === "tile" ? "" : 'style="display: none;"'
@@ -1923,7 +1985,7 @@ class FigFillPicker extends HTMLElement {
 
     container.innerHTML = `
       <fig-field class="fig-fill-picker-media-header">
-        <fig-dropdown class="fig-fill-picker-scale-mode" ${expAttr} value="${
+        <fig-dropdown class="fig-fill-picker-scale-mode" label="Video scale mode" ${expAttr} value="${
           this.#video.scaleMode
         }">
           <option value="fill" selected>Fill</option>
@@ -1982,7 +2044,7 @@ class FigFillPicker extends HTMLElement {
 
     container.innerHTML = `
       <fig-field class="fig-fill-picker-webcam-camera" style="display: none;">
-        <fig-dropdown class="fig-fill-picker-camera-select" full ${expAttr}>
+        <fig-dropdown class="fig-fill-picker-camera-select" label="Camera" full ${expAttr}>
         </fig-dropdown>
       </fig-field>
       <fig-video class="fig-fill-picker-webcam-preview" aria-label="Webcam preview" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true">
@@ -2484,7 +2546,12 @@ class FigFillPicker extends HTMLElement {
         }
         break;
       case "disabled":
-        // Handled in click listener
+        this.#syncTriggerA11y();
+        break;
+      case "aria-label":
+      case "aria-labelledby":
+      case "aria-describedby":
+        this.#syncTriggerA11y();
         break;
     }
   }

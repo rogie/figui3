@@ -90,6 +90,7 @@
   /* Focus */
   --figma-focus-outline: 1px solid var(--figma-color-border-selected);
   --figma-focus-outline-offset: -1px;
+  --figma-focus-outline-radius: inherit;
 
   /* Icon Colors */
   --figma-color-icon: light-dark(#000000e5, #ffffff);
@@ -99,8 +100,8 @@
   --figma-color-icon-brand-tertiary: light-dark(#bde3ff, #394360);
   --figma-color-icon-component: light-dark(#8638e5, #d1a8ff);
   --figma-color-icon-component-pressed: light-dark(#7c2bda, #d6b6fb);
-  --figma-color-icon-component-secondary: light-dark(#c5b2dc, #7f699b);
-  --figma-color-icon-component-tertiary: light-dark(#c5b2dc, #7f699b);
+  --figma-color-icon-component-secondary: light-dark(#6f3bb2, #d1a8ff);
+  --figma-color-icon-component-tertiary: light-dark(#6f3bb2, #d1a8ff);
   --figma-color-icon-danger: light-dark(#f24822, #e03e1a);
   --figma-color-icon-danger-hover: light-dark(#bd2915, #fbbcb6);
   --figma-color-icon-danger-pressed: light-dark(#bd2915, #fbbcb6);
@@ -131,7 +132,7 @@
   --figma-color-icon-onwarning-secondary: #00000080;
   --figma-color-icon-onwarning-tertiary: #0000004d;
   --figma-color-icon-pressed: light-dark(#007be5, #0a6dc2);
-  --figma-color-icon-secondary: light-dark(#00000080, #ffffffb2);
+  --figma-color-icon-secondary: light-dark(#00000099, #ffffffcc);
   --figma-color-icon-secondary-hover: light-dark(#000000e5, #ffffff);
   --figma-color-icon-selected: light-dark(#007be5, #7cc4f8);
   --figma-color-icon-selected-secondary: light-dark(#007be5, #7cc4f8);
@@ -140,7 +141,7 @@
   --figma-color-icon-success-pressed: light-dark(#008043, #a1e8b9);
   --figma-color-icon-success-secondary: light-dark(#14ae5c, #198f51);
   --figma-color-icon-success-tertiary: light-dark(#14ae5c, #198f51);
-  --figma-color-icon-tertiary: light-dark(#0000004d, #ffffff66);
+  --figma-color-icon-tertiary: light-dark(#00000099, #ffffff99);
   --figma-color-icon-tertiary-hover: light-dark(#000000e5, #ffffff);
   --figma-color-icon-warning: light-dark(#ffcd29, #f3c11b);
   --figma-color-icon-warning-pressed: light-dark(#b86200, #f7d15f);
@@ -154,8 +155,8 @@
   --figma-color-text-brand-tertiary: light-dark(#007be5, #7cc4f8);
   --figma-color-text-component: light-dark(#8638e5, #d1a8ff);
   --figma-color-text-component-pressed: light-dark(#7c2bda, #d6b6fb);
-  --figma-color-text-component-secondary: light-dark(#c5b2dc, #7f699b);
-  --figma-color-text-component-tertiary: light-dark(#c5b2dc, #7f699b);
+  --figma-color-text-component-secondary: light-dark(#6f3bb2, #d1a8ff);
+  --figma-color-text-component-tertiary: light-dark(#6f3bb2, #d1a8ff);
   --figma-color-text-danger: light-dark(#dc3412, #fca397);
   --figma-color-text-danger-secondary: light-dark(#dc3412, #fca397);
   --figma-color-text-danger-tertiary: light-dark(#dc3412, #fca397);
@@ -182,7 +183,7 @@
   --figma-color-text-onwarning: #000000e5;
   --figma-color-text-onwarning-secondary: #00000080;
   --figma-color-text-onwarning-tertiary: #0000004d;
-  --figma-color-text-secondary: light-dark(#00000080, #ffffffb2);
+  --figma-color-text-secondary: light-dark(#00000099, #ffffffcc);
   --figma-color-text-secondary-hover: light-dark(#000000e5, #ffffff);
   --figma-color-text-selection: rgba(13, 153, 255, 0.4);
   --figma-color-text-selected: light-dark(#007be5, #7cc4f8);
@@ -191,14 +192,14 @@
   --figma-color-text-success: light-dark(#009951, #79d297);
   --figma-color-text-success-secondary: light-dark(#009951, #79d297);
   --figma-color-text-success-tertiary: light-dark(#009951, #79d297);
-  --figma-color-text-tertiary: light-dark(#0000004d, #ffffff66);
+  --figma-color-text-tertiary: light-dark(#00000099, #ffffff99);
   --figma-color-text-tertiary-hover: light-dark(#000000e5, #ffffff);
   --figma-color-text-warning: light-dark(#b86200, #f7d15f);
   --figma-color-text-warning-secondary: light-dark(#b86200, #f7d15f);
   --figma-color-text-warning-tertiary: light-dark(#b86200, #f7d15f);
   --figma-color-text-menu: #ffffff;
   --figma-color-text-menu-secondary: rgba(255, 255, 255, 0.7);
-  --figma-color-text-menu-tertiary: rgba(255, 255, 255, 0.4);
+  --figma-color-text-menu-tertiary: rgba(255, 255, 255, 0.7);
 }
 }
 
@@ -207,9 +208,8 @@
   /* Typography & Sizing */
   --font-size: 16px;
   --font-family:
-    "Inter", AppleSystemUIFont, BlinkMacSystemFont, avenir next, avenir,
-    segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial,
-    sans-serif;
+    AppleSystemUIFont, BlinkMacSystemFont, avenir next, avenir, segoe ui,
+    helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
   --body-medium-fontSize: 0.6875rem;
   --body-large-fontSize: 0.8125rem;
   --body-letter-spacing: 0.055px;
@@ -463,8 +463,8 @@ input[type="tel"],
   -moz-appearance: textfield;
 
   &:focus {
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
-    outline: 0;
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
@@ -578,8 +578,8 @@ input[type="text"][list] {
   text-overflow: ellipsis;
 
   &:focus {
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
-    outline: 0;
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
 
   &::-webkit-calendar-picker-indicator {
@@ -1028,7 +1028,9 @@ fig-button {
   }
 
   &:focus-visible,
-  &[data-focus-visible] {
+  &[data-focus-visible],
+  &[type="select"]:focus-within,
+  &[type="upload"]:focus-within {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
@@ -1135,6 +1137,12 @@ fig-tab,
     background-color: var(--figma-color-bg-secondary);
   }
 
+  &:focus-visible,
+  &[data-focus-visible] {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
   &[disabled]:not([disabled="false"]) {
     opacity: 0.4;
     pointer-events: none;
@@ -1214,8 +1222,8 @@ input[type="color"] {
   display: inline-grid;
 
   &:focus {
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
-    outline: 0;
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
 
   &::-webkit-color-swatch-wrapper {
@@ -1481,6 +1489,11 @@ fig-video {
   align-items: stretch;
   position: relative;
 
+  &:has(> :is([slot="overlay"], fig-input-file[variant="overlay"])) {
+    display: inline-grid;
+    grid-template-areas: "media-preview";
+  }
+
   &[size="small"] {
     --fig-media-size: 2rem;
     width: var(--fig-media-size);
@@ -1512,6 +1525,10 @@ fig-video {
     background: var(--checkerboard);
   }
 
+  > :is(fig-preview, [slot="overlay"], fig-input-file[variant="overlay"]) {
+    grid-area: media-preview;
+  }
+
   > fig-preview > video,
   > fig-preview > img,
   > fig-preview > .fig-media-element[data-generated] {
@@ -1533,7 +1550,7 @@ fig-video {
     opacity: 0;
     pointer-events: none;
   }
-  > fig-preview > fig-input-file[data-generated] {
+  > fig-preview > fig-input-file:is([data-generated], [variant="overlay"]) {
     opacity: 0;
     pointer-events: none;
     position: absolute;
@@ -1543,9 +1560,28 @@ fig-video {
     z-index: 2;
     max-width: calc(100% - var(--spacer-4));
   }
-  &:not(:has(> fig-preview > img.fig-media-element[data-generated][src]:not([src=""]))) > fig-preview > fig-input-file[data-generated],
-  > fig-preview:hover > fig-input-file[data-generated],
-  > fig-preview:focus-within > fig-input-file[data-generated] {
+  &:not(:has(> fig-preview > img.fig-media-element[data-generated][src]:not([src=""]))) > fig-preview > fig-input-file:is([data-generated], [variant="overlay"]),
+  > fig-preview:hover > fig-input-file:is([data-generated], [variant="overlay"]),
+  > fig-preview:focus-within > fig-input-file:is([data-generated], [variant="overlay"]) {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  > :is([slot="overlay"], fig-input-file[variant="overlay"]) {
+    place-self: center;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    max-width: calc(100% - var(--spacer-4));
+  }
+
+  &:not(:has(> fig-preview > img.fig-media-element[data-generated][src]:not([src=""]))) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> fig-preview:hover) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> fig-preview:focus-within) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> [slot="overlay"]:is(:focus, :focus-within, :active)) > [slot="overlay"],
+  &:has(> fig-input-file[variant="overlay"]:is(:focus, :focus-within, :active)) > fig-input-file[variant="overlay"],
+  > [slot="overlay"]:focus-within,
+  > fig-input-file[variant="overlay"]:focus-within {
     opacity: 1;
     pointer-events: all;
   }
@@ -1980,6 +2016,12 @@ fig-origin-grid {
     cursor: default;
     touch-action: none;
 
+    &:focus-visible {
+      --figma-focus-outline-offset: 1px;
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+
     &.beyond-bounds-x,
     &.beyond-bounds-y {
       -webkit-mask-image: var(--icon-24-arrow-left);
@@ -2064,6 +2106,27 @@ fig-combo-input {
   display: inline-flex;
   flex: 1;
   min-width: 0;
+
+  > .input-combo {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  fig-input-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+fig-combo-input fig-button[type="select"] {
+  > fig-dropdown,
+  > fig-dropdown > select {
+    width: 100%;
+    height: 100%;
+    min-width: 100%;
+    padding: 0;
+  }
 }
 
 .input-combo {
@@ -2138,7 +2201,6 @@ input[type="checkbox"].switch {
   justify-content: center;
   border-radius: 0.5rem;
   background-color: var(--figma-color-bg-switch);
-  transition: var(--input-transition);
   box-sizing: border-box;
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   &:after {
@@ -2204,10 +2266,10 @@ input[type="checkbox"].switch {
 
 /* Checkbox */
 input[type="checkbox"]:not(.switch) {
-  --figma-focus-outline-offset: 1px;
   contain: strict;
   vertical-align: middle;
   --size: 1rem;
+  --figma-focus-outline-offset: 1px;
   appearance: none;
   border-radius: var(--radius-medium);
   width: var(--size);
@@ -2284,8 +2346,8 @@ label.checkbox:has([type="checkbox"]) {
 
 /* Radio */
 input[type="radio"] {
-  --figma-focus-outline-offset: 1px;
   contain: strict;
+  --figma-focus-outline-offset: 1px;
   appearance: none;
   border-radius: 0.5rem;
   width: 1rem;
@@ -2465,7 +2527,6 @@ fig-slider {
   --slider-transition: none;
   --handle-transition: var(--slider-transition);
   --slider-checkerboard: var(--checkerboard);
-  --figma-focus-outline-offset: 1px;
 
   display: flex;
   align-items: center;
@@ -2579,10 +2640,12 @@ fig-slider {
 
     &:focus-visible {
       &::-webkit-slider-thumb {
+        --figma-focus-outline-offset: 1px;
         outline: var(--figma-focus-outline);
         outline-offset: var(--figma-focus-outline-offset);
       }
       &::-moz-range-thumb {
+        --figma-focus-outline-offset: 1px;
         outline: var(--figma-focus-outline);
         outline-offset: var(--figma-focus-outline-offset);
       }
@@ -2748,8 +2811,8 @@ fig-slider {
   &:not([variant="classic"]) {
     --slider-height: 0.375rem;
     --slider-thumb-size: 0.75rem;
-    --slider-tick-width: calc(var(--slider-height) / 3);
-    --slider-tick-height: calc(var(--slider-height) / 3);
+    --slider-tick-width: calc(var(--slider-height) / 2);
+    --slider-tick-height: calc(var(--slider-height) / 2);
     --handle-transition: none;
     --slider-transition: none;
     --slider-handle-shadow:
@@ -3154,6 +3217,13 @@ fig-group {
   & > fig-header {
     cursor: default;
     padding-left: var(--spacer-3);
+      
+    &:focus-visible {
+      --figma-focus-outline-radius: var(--radius-medium);
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+      border-radius: var(--figma-focus-outline-radius);
+    }
     h3 {
       .fig-group-chevron {
         --icon: var(--icon-16-chevron);
@@ -3363,8 +3433,15 @@ fig-input-number {
 
     &:focus,
     &:active {
+      outline: 0;
       box-shadow: none !important;
     }
+  }
+
+  & input[type="text"]:focus,
+  & input[type="text"]:active {
+    outline: 0;
+    box-shadow: none !important;
   }
 
   & input[type="search"] {
@@ -3379,8 +3456,8 @@ fig-input-number {
   }
 
   &:has(input:focus) {
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
-    outline: 0;
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
   &:hover {
     box-shadow: inset 0 0 0 1px var(--figma-color-border);
@@ -3416,8 +3493,8 @@ fig-input-fill {
   &:focus,
   &:focus-within,
   &.has-popup-open {
-    outline: 1px solid var(--figma-color-border-selected) !important;
-    outline-offset: -1px !important;
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
   }
   &:hover {
     outline: 1px solid var(--figma-color-border);
@@ -3437,6 +3514,7 @@ fig-input-fill {
     &:hover {
       background-color: transparent !important;
       box-shadow: none !important;
+      outline: 0 !important;
       border: 0 !important;
       --selected: 0;
     }
@@ -3458,6 +3536,13 @@ fig-input-fill {
     flex-basis: 3rem;
     box-shadow: inset 1px 0 0 0 var(--figma-color-bg) !important;
     background-color: transparent !important;
+    outline: 0 !important;
+
+    &:focus,
+    &:focus-within,
+    &:hover {
+      outline: 0 !important;
+    }
   }
 
   fig-field:not([direction="vertical"]) & {
@@ -3485,8 +3570,8 @@ fig-input-gradient {
   &:focus,
   &:active,
   &:focus-within {
-    outline: 1px solid var(--figma-color-border-selected) !important;
-    outline-offset: -1px !important;
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
   }
   &[mode="tip"]{
     fig-handle[type="color"]{
@@ -3609,6 +3694,10 @@ fig-input-palette {
       height: var(--palette-colors-height);
       fig-input-color {
         width: 100%;
+        &:focus,
+        &:focus-within {
+          outline: 0 !important;
+        }
         fig-chit {
           --border-radius: 0px;
           --width: 100%;
@@ -3637,6 +3726,15 @@ fig-input-palette {
       }
       
     }
+  }
+  &:focus-visible {
+    outline: 0;
+  }
+  &:focus-visible > .palette-colors-inline,
+  > .palette-colors-inline:focus-visible,
+  &:has(> .palette-colors-inline :focus-visible) > .palette-colors-inline {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
   &[open]:not([open="false"]):not([edit="false"]) {
     grid-template-areas:
@@ -3850,6 +3948,7 @@ fig-segmented-control {
   }
 
   & fig-segment {
+    --figma-focus-outline-offset: 0;
     flex: 1 1 0;
     min-width: 0;
     display: block;
@@ -3872,6 +3971,11 @@ fig-segmented-control {
       background-color: var(--figma-color-bg);
       border-radius: calc(var(--radius-medium) - 1px);
       box-shadow: 0 0 0 1px var(--figma-color-border);
+    }
+
+    &:focus-visible {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
     }
 
     svg {
@@ -4138,10 +4242,6 @@ fig-joystick {
       var(--figma-color-bg-secondary);
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
   }
-  .fig-input-joystick-plane-container:focus .fig-input-joystick-guides {
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
-  }
-
   fig-handle {
     position: absolute;
     z-index: 4;
@@ -4571,6 +4671,11 @@ fig-choice {
     background-color: var(--figma-color-bg-secondary);
   }
 
+  &:focus-visible {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
   &[padding]:not([padding="false"]) {
     --fig-choice-padding: var(--spacer-2);
   }
@@ -4665,6 +4770,13 @@ fig-handle {
   &:hover,
   &[selected]:not([selected="false"]) {
     --fig-handle-outline-color: var(--figma-color-border-selected);
+    --fig-handle-outline: 2px solid var(--fig-handle-outline-color);
+  }
+
+  &:focus-visible {
+    --figma-focus-outline-offset: 1px;
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
   }
 
   /* Default handle (no type) hover/selected */
@@ -4672,6 +4784,7 @@ fig-handle {
   &[selected]:not([selected="false"]):not([type]) {
    --fig-handle-inner-bg:  var(--figma-color-bg-brand);
    --fig-handle-outline-color: var(--figma-color-border-selected);
+   --fig-handle-outline: 2px solid var(--fig-handle-outline-color);
   }
 
   &[type="canvas"]{
@@ -4720,11 +4833,6 @@ fig-handle {
       z-index: 10;
     }
   }
-  &[type="color"]{
-
-
-  }
-
   &[disabled]:not([disabled="false"]),
   &[aria-disabled="true"] {
     --fig-handle-outline-color: transparent;

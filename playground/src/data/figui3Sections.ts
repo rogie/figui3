@@ -179,7 +179,7 @@ export const figui3Sections: Section[] = [
         id: "gradient",
         name: "Gradient",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' full></fig-input-fill>
+  <fig-input-fill picker-mode="gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' full></fig-input-fill>
 </div>`,
       },
       {
@@ -485,6 +485,23 @@ export const figui3Sections: Section[] = [
     </fig-field>
     <fig-field>
       <fig-radio name="size-group" value="large" label="Large"></fig-radio>
+    </fig-field>
+  </fig-group>
+</div>`,
+      },
+      {
+        id: "independent",
+        name: "Multiple radios",
+        markup: `<div class="prop-panel">
+  <fig-group name="Independent options">
+    <fig-field>
+      <fig-radio name="enable-notifications" value="on" label="Notifications"></fig-radio>
+    </fig-field>
+    <fig-field>
+      <fig-radio name="enable-sounds" value="on" label="Sounds"></fig-radio>
+    </fig-field>
+    <fig-field>
+      <fig-radio name="enable-previews" value="on" label="Previews"></fig-radio>
     </fig-field>
   </fig-group>
 </div>`,

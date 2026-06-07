@@ -216,13 +216,13 @@ export default function ExampleView({
       const fieldIndex = resolveFieldIndex(target);
       if (fieldIndex < 0) return;
       controlValueCacheRef.current.delete(fieldIndex);
-      const shouldSkipPersistForAnimatedSegmentedControl =
-        tagName === "fig-segmented-control" &&
-        target.hasAttribute("animated") &&
-        target.getAttribute("animated") !== "false";
-      if (shouldSkipPersistForAnimatedSegmentedControl) {
-        // Avoid full example markup refresh after click; preserving DOM state
-        // prevents segmented indicator/text flicker in animated mode.
+      const shouldSkipPersistForFocusedControl =
+        tagName === "fig-segmented-control" ||
+        tagName === "fig-joystick" ||
+        tagName === "fig-origin-grid";
+      if (shouldSkipPersistForFocusedControl) {
+        // Avoid full example markup refresh after keyboard interaction; preserving DOM state
+        // keeps focus on roving segments and draggable handles.
         return;
       }
       onPersistControlValue?.(fieldIndex, value);

@@ -44,6 +44,14 @@ Feature requests are welcome! Please provide:
    bun build
    ```
 
+5. **Run tests**
+   ```bash
+   npm run test:components
+   npm run test:perf
+   npm run test:all
+   ```
+   Component tests include accessibility, keyboard, focus, and axe smoke coverage. Performance tests use the dedicated Playwright performance config and budgets in `tests/figui/perf-budgets.ts`.
+
 ## Code Style
 
 - Use consistent indentation (2 spaces)
@@ -51,6 +59,8 @@ Feature requests are welcome! Please provide:
 - Add JSDoc comments for new components with `@attr` annotations
 - Ensure components work in both light and dark themes
 - Test keyboard navigation and accessibility
+- Preserve native semantics where possible, forward accessible names/states to generated native controls, and keep focus-visible styles on the component surface users can see.
+- Update README, changelog, playground examples, and relevant tests when component behavior changes.
 
 ## Pull Request Process
 

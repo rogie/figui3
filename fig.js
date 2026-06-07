@@ -135,15 +135,19 @@ class FigButton extends HTMLElement {
   type;
   #selected;
   #a11yAttributes = ["aria-label", "aria-labelledby", "aria-describedby", "title"];
+  #boundHandleControlKeydown = this.#handleControlKeydown.bind(this);
   constructor() {
     super();
     this.attachShadow({ mode: "open", delegatesFocus: true });
   }
   connectedCallback() {
     this.type = this.getAttribute("type") || "button";
+    const isControlWrapper = this.type === "select" || this.type === "upload";
+    const controlTag = isControlWrapper ? "span" : "button";
+    const typeAttr = isControlWrapper ? "" : ` type="${this.type}"`;
     this.shadowRoot.innerHTML = `
             <style>
-                button, button:hover, button:active {
+                button, button:hover, button:active, .fig-button-control {
                     padding: 0 var(--spacer-2);
                     appearance: none;
                     display: flex;
@@ -165,37 +169,38 @@ class FigButton extends HTMLElement {
                     width: 100%;
                     min-width: 0;
                 }
-                :host([size="large"]) button {
+                :host([size="large"]) button,
+                :host([size="large"]) .fig-button-control {
                     height: var(--spacer-5);
                 }
-                :host([size="large"][icon]) button {
+                :host([size="large"][icon]) button,
+                :host([size="large"][icon]) .fig-button-control {
                     padding: 0;
                 }
             </style>
-            <button type="${this.type}">
+            <${controlTag} class="fig-button-control"${typeAttr}>
                 <slot></slot>
-            </button>
+            </${controlTag}>
             `;
 
     this.#selected =
       this.hasAttribute("selected") &&
       this.getAttribute("selected") !== "false";
 
-    requestAnimationFrame(() => {
-      this.button = this.shadowRoot.querySelector("button");
-      this.#syncButtonAttributes();
-      this.button.addEventListener("click", this.#handleClick.bind(this));
+    this.button = this.shadowRoot.querySelector("button, .fig-button-control");
+    this.#syncButtonAttributes();
+    this.button.addEventListener("click", this.#handleClick.bind(this));
 
-      // Forward focus-visible state to host element
-      this.button.addEventListener("focus", () => {
-        if (this.button.matches(":focus-visible")) {
-          this.setAttribute("data-focus-visible", "");
-        }
-      });
-      this.button.addEventListener("blur", () => {
-        this.removeAttribute("data-focus-visible");
-      });
+    // Forward focus-visible state to host element
+    this.button.addEventListener("focus", () => {
+      if (this.button.matches(":focus-visible")) {
+        this.setAttribute("data-focus-visible", "");
+      }
     });
+    this.button.addEventListener("blur", () => {
+      this.removeAttribute("data-focus-visible");
+    });
+    this.addEventListener("keydown", this.#boundHandleControlKeydown);
   }
 
   get type() {
@@ -238,6 +243,37 @@ class FigButton extends HTMLElement {
       }
     }
   }
+  #getSlottedControl() {
+    if (this.type === "select") {
+      return this.querySelector("select, fig-dropdown");
+    }
+    if (this.type === "upload") {
+      return this.querySelector('input[type="file"], input');
+    }
+    return null;
+  }
+  #getSlottedSelect() {
+    const control = this.#getSlottedControl();
+    if (control instanceof HTMLSelectElement) return control;
+    if (control?.tagName === "FIG-DROPDOWN") {
+      return control.select || control.querySelector?.("select") || null;
+    }
+    return null;
+  }
+  #handleControlKeydown(e) {
+    if (this.type !== "select") return;
+    if (e.key !== "Enter") return;
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const select = this.#getSlottedSelect();
+    if (!select || select.disabled || select.multiple) return;
+    if (typeof select.showPicker !== "function") return;
+    e.preventDefault();
+    try {
+      select.showPicker();
+    } catch {
+      // showPicker can be blocked outside trusted user activation.
+    }
+  }
   #syncPressedState() {
     if (!this.button) return;
     if (this.type !== "toggle") {
@@ -251,6 +287,7 @@ class FigButton extends HTMLElement {
   }
   #syncA11yAttributes() {
     if (!this.button) return;
+    if (!(this.button instanceof HTMLButtonElement)) return;
     this.#a11yAttributes.forEach((name) => {
       const value = this.getAttribute(name);
       if (value === null) {
@@ -264,9 +301,12 @@ class FigButton extends HTMLElement {
     if (!this.button) return;
     const disabled =
       this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
-    this.disabled = this.button.disabled = disabled;
-    this.button.type = this.type;
-    this.button.setAttribute("type", this.type);
+    this.disabled = disabled;
+    if (this.button instanceof HTMLButtonElement) {
+      this.button.disabled = disabled;
+      this.button.type = this.type;
+      this.button.setAttribute("type", this.type);
+    }
     this.#syncA11yAttributes();
     this.#syncPressedState();
   }
@@ -297,6 +337,9 @@ class FigButton extends HTMLElement {
         break;
     }
   }
+  disconnectedCallback() {
+    this.removeEventListener("keydown", this.#boundHandleControlKeydown);
+  }
 }
 customElements.define("fig-button", FigButton);
 
@@ -310,6 +353,7 @@ class FigDropdown extends HTMLElement {
   #selectedValue = null; // Stores last selected value for dropdown type
   #boundHandleSelectInput;
   #boundHandleSelectChange;
+  #boundHandleSelectKeydown;
   #selectedContentEnabled = false;
   #selectedContentEl = null;
 
@@ -327,6 +371,7 @@ class FigDropdown extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.#boundHandleSelectInput = this.#handleSelectInput.bind(this);
     this.#boundHandleSelectChange = this.#handleSelectChange.bind(this);
+    this.#boundHandleSelectKeydown = this.#handleSelectKeydown.bind(this);
     this.#boundSlotChange = this.slotChange.bind(this);
   }
 
@@ -379,6 +424,7 @@ class FigDropdown extends HTMLElement {
   #addEventListeners() {
     this.select.addEventListener("input", this.#boundHandleSelectInput);
     this.select.addEventListener("change", this.#boundHandleSelectChange);
+    this.select.addEventListener("keydown", this.#boundHandleSelectKeydown);
   }
 
   #hasPersistentControl(optionEl) {
@@ -406,6 +452,7 @@ class FigDropdown extends HTMLElement {
 
     this.#label = this.getAttribute("label") || this.#label;
     this.select.setAttribute("aria-label", this.#label);
+    this.#syncDisabled();
 
     this.appendChild(this.select);
     this.shadowRoot.appendChild(this.optionsSlot);
@@ -494,6 +541,21 @@ class FigDropdown extends HTMLElement {
     );
   }
 
+  #handleSelectKeydown(e) {
+    if (this.closest('fig-button[type="select"]')) return;
+    if (e.key !== "Enter" || e.defaultPrevented) return;
+    if (this.#selectedContentEnabled && this.select.matches(":open")) return;
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (this.select.disabled || this.select.multiple) return;
+    if (typeof this.select.showPicker !== "function") return;
+    e.preventDefault();
+    try {
+      this.select.showPicker();
+    } catch {
+      // showPicker can be unavailable during non-user-initiated key events.
+    }
+  }
+
   focus() {
     this.select.focus();
   }
@@ -515,7 +577,12 @@ class FigDropdown extends HTMLElement {
     this.setAttribute("value", value);
   }
   static get observedAttributes() {
-    return ["value", "type", "experimental"];
+    return ["value", "type", "experimental", "label", "disabled"];
+  }
+  #syncDisabled() {
+    const disabled =
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    this.select.disabled = disabled;
   }
   #syncSelectedValue(value) {
     // For dropdown type, don't sync the visual selection - it should always show the hidden placeholder
@@ -545,12 +612,16 @@ class FigDropdown extends HTMLElement {
       this.#label = newValue;
       this.select.setAttribute("aria-label", this.#label);
     }
+    if (name === "disabled") {
+      this.#syncDisabled();
+    }
   }
 
   disconnectedCallback() {
     this.optionsSlot.removeEventListener("slotchange", this.#boundSlotChange);
     this.select.removeEventListener("input", this.#boundHandleSelectInput);
     this.select.removeEventListener("change", this.#boundHandleSelectChange);
+    this.select.removeEventListener("keydown", this.#boundHandleSelectKeydown);
   }
 }
 
@@ -579,6 +650,7 @@ class FigTooltip extends HTMLElement {
   #boundHandleTouchEnd;
   #boundHandleTouchCancel;
   #boundHandleDialogClose;
+  #boundHandleEscape;
   #parentDialog = null;
   #touchTimeout;
   #isTouching = false;
@@ -596,6 +668,7 @@ class FigTooltip extends HTMLElement {
     this.#boundHandleTouchMove = this.#handleTouchMove.bind(this);
     this.#boundHandleTouchEnd = this.#handleTouchEnd.bind(this);
     this.#boundHandleTouchCancel = this.#handleTouchCancel.bind(this);
+    this.#boundHandleEscape = this.#handleEscape.bind(this);
     this.#boundHandleDialogClose = () => {
       clearTimeout(this.timeout);
       this.destroy();
@@ -619,6 +692,7 @@ class FigTooltip extends HTMLElement {
       this.#boundHideOnChromeOpen,
       true,
     );
+    document.removeEventListener("keydown", this.#boundHandleEscape, true);
     if (this.#parentDialog) {
       this.#parentDialog.removeEventListener("close", this.#boundHandleDialogClose);
       this.#parentDialog = null;
@@ -666,7 +740,7 @@ class FigTooltip extends HTMLElement {
     this.popup.setAttribute("variant", "tooltip");
     this.popup.setAttribute("data-tooltip-managed", "");
     this.popup.setAttribute("role", "tooltip");
-    this.popup.setAttribute("closedby", "none");
+    this.popup.setAttribute("closedby", "closerequest");
     if (supportsPopover) this.popup.setAttribute("popover", "manual");
 
     const tooltipId = figUniqueId();
@@ -754,6 +828,7 @@ class FigTooltip extends HTMLElement {
     }
 
     document.addEventListener("mousedown", this.#boundHideOnChromeOpen, true);
+    document.addEventListener("keydown", this.#boundHandleEscape, true);
   }
 
   get #showPersisted() {
@@ -848,6 +923,13 @@ class FigTooltip extends HTMLElement {
       clearTimeout(this.#touchTimeout);
       this.hidePopup();
     }
+  }
+
+  #handleEscape(event) {
+    if ((!this.isOpen && !this.popup) || event.key !== "Escape") return;
+    event.preventDefault();
+    this.hidePopup();
+    this.firstElementChild?.focus?.();
   }
 
   static get observedAttributes() {
@@ -958,7 +1040,7 @@ class FigTooltip extends HTMLElement {
       popup.setAttribute("variant", "tooltip");
       popup.setAttribute("data-tooltip-managed", "");
       popup.setAttribute("role", "tooltip");
-      popup.setAttribute("closedby", "none");
+      popup.setAttribute("closedby", "closerequest");
       if (supportsPopover) popup.setAttribute("popover", "manual");
       const content = document.createElement("span");
       content.innerText = text;
@@ -1114,6 +1196,8 @@ class FigDialog extends HTMLDialogElement {
     this._boundIframeMessage = this._handleIframeMessage.bind(this);
     this._boundContentMutation = this._scheduleAutoResize.bind(this);
     this._boundContentResize = this._scheduleAutoResize.bind(this);
+    this._boundRestoreFocus = this._restoreFocus.bind(this);
+    this._previousFocus = null;
   }
 
   get autoresize() {
@@ -1153,6 +1237,36 @@ class FigDialog extends HTMLDialogElement {
     });
     window.removeEventListener("message", this._boundIframeMessage);
     this._teardownAutoResize();
+    this.removeEventListener("close", this._boundRestoreFocus);
+  }
+
+  _captureFocusBeforeOpen() {
+    const active = document.activeElement;
+    this._previousFocus =
+      active instanceof HTMLElement && active !== document.body && !this.contains(active)
+        ? active
+        : null;
+  }
+
+  _restoreFocus() {
+    const target = this._previousFocus;
+    this._previousFocus = null;
+    if (!target?.isConnected) return;
+    const active = document.activeElement;
+    if (active && active !== document.body && !this.contains(active)) return;
+    requestAnimationFrame(() => target.focus?.());
+  }
+
+  show() {
+    this._captureFocusBeforeOpen();
+    this.addEventListener("close", this._boundRestoreFocus, { once: true });
+    return super.show();
+  }
+
+  showModal() {
+    this._captureFocusBeforeOpen();
+    this.addEventListener("close", this._boundRestoreFocus, { once: true });
+    return super.showModal();
   }
 
   _handleIframeMessage(event) {
@@ -1740,14 +1854,17 @@ class FigPopup extends HTMLDialogElement {
   _boundPointerMove;
   _boundPointerUp;
   _wasDragged = false;
+  _previousFocus = null;
+  _boundDocumentKeydown;
 
   constructor() {
     super();
     this._boundReposition = this.queueReposition.bind(this);
     this._boundScroll = (e) => {
+      const target = e.target;
       if (
         this.open &&
-        !this.contains(e.target) &&
+        (!(target instanceof Node) || !this.contains(target)) &&
         this.shouldAutoReposition()
       ) {
         this.queueReposition();
@@ -1757,6 +1874,7 @@ class FigPopup extends HTMLDialogElement {
     this._boundPointerDown = this.handlePointerDown.bind(this);
     this._boundPointerMove = this.handlePointerMove.bind(this);
     this._boundPointerUp = this.handlePointerUp.bind(this);
+    this._boundDocumentKeydown = this.handleDocumentKeydown.bind(this);
   }
 
   ensureInitialized() {
@@ -1781,15 +1899,17 @@ class FigPopup extends HTMLDialogElement {
       this._dragOffset = { x: 0, y: 0 };
     if (typeof this._dragThreshold !== "number") this._dragThreshold = 3;
     if (typeof this._wasDragged === "undefined") this._wasDragged = false;
+    if (typeof this._previousFocus === "undefined") this._previousFocus = null;
 
     if (typeof this._boundReposition !== "function") {
       this._boundReposition = this.queueReposition.bind(this);
     }
     if (typeof this._boundScroll !== "function") {
       this._boundScroll = (e) => {
+        const target = e.target;
         if (
           this.open &&
-          !this.contains(e.target) &&
+          (!(target instanceof Node) || !this.contains(target)) &&
           this.shouldAutoReposition()
         ) {
           this.queueReposition();
@@ -1807,6 +1927,9 @@ class FigPopup extends HTMLDialogElement {
     }
     if (typeof this._boundPointerUp !== "function") {
       this._boundPointerUp = this.handlePointerUp.bind(this);
+    }
+    if (typeof this._boundDocumentKeydown !== "function") {
+      this._boundDocumentKeydown = this.handleDocumentKeydown.bind(this);
     }
   }
 
@@ -1916,6 +2039,7 @@ class FigPopup extends HTMLDialogElement {
       this._boundOutsidePointerDown,
       true,
     );
+    document.removeEventListener("keydown", this._boundDocumentKeydown, true);
     if (this._rafId !== null) {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
@@ -1961,6 +2085,7 @@ class FigPopup extends HTMLDialogElement {
     this.style.inset = "auto";
     this.style.margin = "0";
     this.style.zIndex = String(figGetHighestZIndex() + 1);
+    this.captureFocusBeforeOpen();
 
     // When the popup opts into the native popover API, prefer showPopover()
     // so the element is promoted into the browser's top layer (above any
@@ -1998,6 +2123,7 @@ class FigPopup extends HTMLDialogElement {
       this._boundOutsidePointerDown,
       true,
     );
+    document.addEventListener("keydown", this._boundDocumentKeydown, true);
     this._wasDragged = false;
     this.queueReposition();
     this._isPopupActive = true;
@@ -2007,6 +2133,10 @@ class FigPopup extends HTMLDialogElement {
   }
 
   hidePopup() {
+    const wasActive =
+      this._isPopupActive ||
+      this.matches?.(":open") ||
+      this.matches?.(":popover-open");
     const anchor = this.resolveAnchor();
     if (anchor?.classList) anchor.classList.remove("has-popup-open");
 
@@ -2019,6 +2149,7 @@ class FigPopup extends HTMLDialogElement {
       this._boundOutsidePointerDown,
       true,
     );
+    document.removeEventListener("keydown", this._boundDocumentKeydown, true);
 
     if (
       this.hasAttribute("popover") &&
@@ -2041,6 +2172,39 @@ class FigPopup extends HTMLDialogElement {
         // Ignore when dialog is not in an open state.
       }
     }
+    if (wasActive) this.restoreFocusAfterClose();
+  }
+
+  shouldRestoreFocus() {
+    return this.getAttribute("variant") !== "tooltip";
+  }
+
+  captureFocusBeforeOpen() {
+    if (!this.shouldRestoreFocus()) return;
+    const active = document.activeElement;
+    this._previousFocus =
+      active instanceof HTMLElement && active !== document.body && !this.contains(active)
+        ? active
+        : null;
+  }
+
+  restoreFocusAfterClose() {
+    if (!this.shouldRestoreFocus()) {
+      this._previousFocus = null;
+      return;
+    }
+    const anchor = this.resolveAnchor();
+    const target =
+      this._previousFocus?.isConnected
+        ? this._previousFocus
+        : anchor instanceof HTMLElement
+          ? anchor
+          : null;
+    this._previousFocus = null;
+    if (!target?.isConnected) return;
+    const active = document.activeElement;
+    if (active && active !== document.body && !this.contains(active)) return;
+    requestAnimationFrame(() => target.focus?.());
   }
 
   get autoresize() {
@@ -2180,6 +2344,27 @@ class FigPopup extends HTMLDialogElement {
 
     if (this.isInsideDescendantPopup(target)) return;
 
+    this.open = false;
+  }
+
+  handleDocumentKeydown(event) {
+    if (event.key !== "Escape" || event.defaultPrevented) return;
+    if (!this.open) return;
+    if (this.getAttribute("role") === "menu") return;
+    const closedby = this.getAttribute("closedby");
+    if (closedby === "none") return;
+    const openPopups = Array.from(
+      document.querySelectorAll('dialog[is="fig-popup"][open]'),
+    ).filter((popup) => popup.open);
+    const topPopup = openPopups
+      .map((popup) => ({
+        popup,
+        z: Number.parseInt(getComputedStyle(popup).zIndex || "0", 10) || 0,
+      }))
+      .sort((a, b) => a.z - b.z)
+      .at(-1)?.popup;
+    if (topPopup && topPopup !== this) return;
+    event.preventDefault();
     this.open = false;
   }
 
@@ -3386,6 +3571,9 @@ class FigSegmentedControl extends HTMLElement {
     const next = segments[nextIndex];
     this.#selectSegment(next);
     next.focus();
+    requestAnimationFrame(() => {
+      if (this.contains(next)) next.focus();
+    });
   }
 
   #selectByValue(value) {
@@ -3976,6 +4164,12 @@ class FigSlider extends HTMLElement {
   #boundHandleChange;
   #boundHandleTextInput;
   #boundHandleTextChange;
+  #boundHandleKeyDown;
+  #boundRangePointerDown;
+  #boundRangePointerUp;
+  #lastSliderComplete = null;
+  #lastSliderDefault = null;
+  #lastSliderUnchanged = null;
 
   constructor() {
     super();
@@ -3991,6 +4185,9 @@ class FigSlider extends HTMLElement {
       e.stopPropagation();
       this.#handleChange();
     };
+    this.#boundHandleKeyDown = (e) => {
+      this.#handleKeyDown(e);
+    };
 
     this.#boundHandleTextInput = (e) => {
       e.stopPropagation();
@@ -4000,6 +4197,12 @@ class FigSlider extends HTMLElement {
     this.#boundHandleTextChange = (e) => {
       e.stopPropagation();
       this.#handleTextChange();
+    };
+    this.#boundRangePointerDown = () => {
+      this.#isInteracting = true;
+    };
+    this.#boundRangePointerUp = () => {
+      this.#isInteracting = false;
     };
   }
 
@@ -4030,8 +4233,9 @@ class FigSlider extends HTMLElement {
         ? 0
         : this.min;
     this.#showEmptyTextValue =
-      rawValue === null ||
-      (typeof rawValue === "string" && rawValue.trim() === "");
+      this.type !== "range" &&
+      (rawValue === null ||
+        (typeof rawValue === "string" && rawValue.trim() === ""));
     this.value = this.#normalizeSliderValue(rawValue);
 
     if (this.color) {
@@ -4071,88 +4275,85 @@ class FigSlider extends HTMLElement {
     }
     this.innerHTML = html;
 
-    //child nodes hack
-    requestAnimationFrame(() => {
-      this.input = this.querySelector("[type=range]");
-      this.inputContainer = this.querySelector(".fig-slider-input-container");
-      this.#syncInputA11yAttributes();
-      this.input.removeEventListener("input", this.#boundHandleInput);
-      this.input.addEventListener("input", this.#boundHandleInput);
-      this.input.removeEventListener("change", this.#boundHandleChange);
-      this.input.addEventListener("change", this.#boundHandleChange);
-      this.input.addEventListener("pointerdown", () => {
-        this.#isInteracting = true;
-      });
-      this.input.addEventListener("pointerup", () => {
-        this.#isInteracting = false;
-      });
+    this.input = this.querySelector("[type=range]");
+    this.inputContainer = this.querySelector(".fig-slider-input-container");
+    this.#syncInputA11yAttributes();
+    this.input.removeEventListener("input", this.#boundHandleInput);
+    this.input.addEventListener("input", this.#boundHandleInput);
+    this.input.removeEventListener("change", this.#boundHandleChange);
+    this.input.addEventListener("change", this.#boundHandleChange);
+    this.input.removeEventListener("keydown", this.#boundHandleKeyDown);
+    this.input.addEventListener("keydown", this.#boundHandleKeyDown);
+    this.input.removeEventListener("pointerdown", this.#boundRangePointerDown);
+    this.input.addEventListener("pointerdown", this.#boundRangePointerDown);
+    this.input.removeEventListener("pointerup", this.#boundRangePointerUp);
+    this.input.addEventListener("pointerup", this.#boundRangePointerUp);
 
-      if (this.default) {
-        this.style.setProperty(
-          "--default",
-          this.#calculateNormal(this.default),
-        );
-      }
+    if (this.default) {
+      this.style.setProperty(
+        "--default",
+        this.#calculateNormal(this.default),
+      );
+    }
 
-      this.datalist = this.querySelector("datalist");
-      this.figInputNumber = this.querySelector("fig-input-number");
-      if (this.datalist) {
-        this.inputContainer.append(this.datalist);
-        this.datalist.setAttribute(
-          "id",
-          this.datalist.getAttribute("id") || figUniqueId(),
-        );
-        this.input.setAttribute("list", this.datalist.getAttribute("id"));
-      } else if (this.type === "stepper") {
-        this.datalist = document.createElement("datalist");
-        this.datalist.setAttribute("id", figUniqueId());
-        let steps = (this.max - this.min) / this.step + 1;
-        for (let i = 0; i < steps; i++) {
-          let option = document.createElement("option");
-          option.setAttribute("value", this.min + i * this.step);
-          this.datalist.append(option);
-        }
-        this.inputContainer.append(this.datalist);
-        this.input.setAttribute("list", this.datalist.getAttribute("id"));
-      } else if (this.type === "delta") {
-        this.datalist = document.createElement("datalist");
-        this.datalist.setAttribute("id", figUniqueId());
+    this.datalist = this.querySelector("datalist");
+    this.figInputNumber = this.querySelector("fig-input-number");
+    if (this.datalist) {
+      this.inputContainer.append(this.datalist);
+      this.datalist.setAttribute(
+        "id",
+        this.datalist.getAttribute("id") || figUniqueId(),
+      );
+      this.input.setAttribute("list", this.datalist.getAttribute("id"));
+    } else if (this.type === "stepper") {
+      this.datalist = document.createElement("datalist");
+      this.datalist.setAttribute("id", figUniqueId());
+      let steps = (this.max - this.min) / this.step + 1;
+      for (let i = 0; i < steps; i++) {
         let option = document.createElement("option");
-        option.setAttribute("value", this.default);
+        option.setAttribute("value", this.min + i * this.step);
         this.datalist.append(option);
-        this.inputContainer.append(this.datalist);
-        this.input.setAttribute("list", this.datalist.getAttribute("id"));
       }
-      if (this.datalist) {
-        let defaultOption = this.datalist.querySelector(
-          `option[value='${this.default}']`,
-        );
-        if (defaultOption) {
-          defaultOption.setAttribute("default", "true");
-        }
+      this.inputContainer.append(this.datalist);
+      this.input.setAttribute("list", this.datalist.getAttribute("id"));
+    } else if (this.type === "delta") {
+      this.datalist = document.createElement("datalist");
+      this.datalist.setAttribute("id", figUniqueId());
+      let option = document.createElement("option");
+      option.setAttribute("value", this.default);
+      this.datalist.append(option);
+      this.inputContainer.append(this.datalist);
+      this.input.setAttribute("list", this.datalist.getAttribute("id"));
+    }
+    if (this.datalist) {
+      let defaultOption = this.datalist.querySelector(
+        `option[value='${this.default}']`,
+      );
+      if (defaultOption) {
+        defaultOption.setAttribute("default", "true");
       }
-      if (this.figInputNumber) {
-        this.#syncTextInputA11yAttributes();
-        this.figInputNumber.removeEventListener(
-          "input",
-          this.#boundHandleTextInput,
-        );
-        this.figInputNumber.addEventListener(
-          "input",
-          this.#boundHandleTextInput,
-        );
-        this.figInputNumber.removeEventListener(
-          "change",
-          this.#boundHandleTextChange,
-        );
-        this.figInputNumber.addEventListener(
-          "change",
-          this.#boundHandleTextChange,
-        );
-      }
+    }
+    if (this.figInputNumber) {
+      this.#syncTextInputA11yAttributes();
+      this.figInputNumber.removeEventListener(
+        "input",
+        this.#boundHandleTextInput,
+      );
+      this.figInputNumber.addEventListener(
+        "input",
+        this.#boundHandleTextInput,
+      );
+      this.figInputNumber.removeEventListener(
+        "change",
+        this.#boundHandleTextChange,
+      );
+      this.figInputNumber.addEventListener(
+        "change",
+        this.#boundHandleTextChange,
+      );
+    }
 
-      this.#syncValue();
-    });
+    this.#syncValue();
   }
 
   connectedCallback() {
@@ -4195,6 +4396,9 @@ class FigSlider extends HTMLElement {
     if (this.input) {
       this.input.removeEventListener("input", this.#boundHandleInput);
       this.input.removeEventListener("change", this.#boundHandleChange);
+      this.input.removeEventListener("keydown", this.#boundHandleKeyDown);
+      this.input.removeEventListener("pointerdown", this.#boundRangePointerDown);
+      this.input.removeEventListener("pointerup", this.#boundRangePointerUp);
     }
     if (this.figInputNumber) {
       this.figInputNumber.removeEventListener(
@@ -4256,6 +4460,10 @@ class FigSlider extends HTMLElement {
       if (deltaDefault !== null) return this.#clampToBounds(deltaDefault);
       return this.#clampToBounds(0);
     }
+    if (this.type === "range") {
+      const { min, max } = this.#getBounds();
+      return this.#clampToBounds(min + (max - min) / 2);
+    }
     const { min } = this.#getBounds();
     return min;
   }
@@ -4265,11 +4473,22 @@ class FigSlider extends HTMLElement {
     return this.#clampToBounds(parsed);
   }
   #syncProperties() {
-    let complete = this.#calculateNormal(this.value);
-    this.style.setProperty("--slider-complete", complete);
-    let defaultValue = this.#calculateNormal(this.default);
-    this.style.setProperty("--default", defaultValue);
-    this.style.setProperty("--unchanged", complete === defaultValue ? 1 : 0);
+    const complete = this.#calculateNormal(this.value);
+    const defaultValue = this.#calculateNormal(this.default);
+    const unchanged = complete === defaultValue ? 1 : 0;
+
+    if (this.#lastSliderComplete !== complete) {
+      this.style.setProperty("--slider-complete", complete);
+      this.#lastSliderComplete = complete;
+    }
+    if (this.#lastSliderDefault !== defaultValue) {
+      this.style.setProperty("--default", defaultValue);
+      this.#lastSliderDefault = defaultValue;
+    }
+    if (this.#lastSliderUnchanged !== unchanged) {
+      this.style.setProperty("--unchanged", unchanged);
+      this.#lastSliderUnchanged = unchanged;
+    }
   }
   #syncValue() {
     let val = this.input.value;
@@ -4330,6 +4549,34 @@ class FigSlider extends HTMLElement {
     this.#isInteracting = false;
     this.#showEmptyTextValue = false;
     this.#syncValue();
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: this.value, bubbles: true }),
+    );
+  }
+
+  #handleKeyDown(event) {
+    if (this.disabled || !event.shiftKey) return;
+    if (
+      !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    this.#showEmptyTextValue = false;
+
+    const direction =
+      event.key === "ArrowRight" || event.key === "ArrowUp" ? 1 : -1;
+    const current = this.#toFiniteNumber(this.input.value) ?? this.#getFallbackValue();
+    const step = this.#toFiniteNumber(this.step) ?? 1;
+    const nextValue = this.#normalizeSliderValue(current + step * 10 * direction);
+
+    this.value = nextValue;
+    this.input.value = String(nextValue);
+    this.#syncValue();
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: this.value, bubbles: true }),
+    );
     this.dispatchEvent(
       new CustomEvent("change", { detail: this.value, bubbles: true }),
     );
@@ -4495,6 +4742,7 @@ class FigInputText extends HTMLElement {
   #boundMouseDown;
   #boundInputChange;
   #boundNativeInput;
+  #boundFocusControl;
   #a11yAttributes = [
     "aria-label",
     "aria-labelledby",
@@ -4517,6 +4765,7 @@ class FigInputText extends HTMLElement {
     this.#boundNativeInput = () => {
       this.#syncSearchClearVisibility();
     };
+    this.#boundFocusControl = this.focus.bind(this);
   }
 
   connectedCallback() {
@@ -4532,16 +4781,6 @@ class FigInputText extends HTMLElement {
     if (this.type === "number") {
       if (this.getAttribute("step")) {
         this.step = Number(this.getAttribute("step"));
-      }
-
-      if (this.getAttribute("min")) {
-        this.input.setAttribute("min", String(this.min));
-      }
-      if (this.getAttribute("max")) {
-        this.input.setAttribute("max", String(this.max));
-      }
-      if (this.getAttribute("step")) {
-        this.input.setAttribute("step", String(this.step));
       }
       if (this.getAttribute("min")) {
         this.min = Number(this.getAttribute("min"));
@@ -4567,47 +4806,46 @@ class FigInputText extends HTMLElement {
       placeholder="${this.placeholder}">${this.value}</textarea>`;
     }
 
-    //child nodes hack
-    requestAnimationFrame(() => {
-      let append = this.querySelector("[slot=append]");
-      let prepend = this.querySelector("[slot=prepend]");
+    let append = this.querySelector("[slot=append]");
+    let prepend = this.querySelector("[slot=prepend]");
 
-      this.innerHTML = html;
+    this.innerHTML = html;
 
-      if (prepend) {
-        prepend.addEventListener("click", this.focus.bind(this));
-        this.prepend(prepend);
+    if (prepend) {
+      prepend.removeEventListener("click", this.#boundFocusControl);
+      prepend.addEventListener("click", this.#boundFocusControl);
+      this.prepend(prepend);
+    }
+    if (append) {
+      append.removeEventListener("click", this.#boundFocusControl);
+      append.addEventListener("click", this.#boundFocusControl);
+      this.append(append);
+    }
+
+    this.input = this.querySelector("input,textarea");
+    this.input.readOnly = this.readonly;
+    this.#syncInputA11yAttributes();
+    this.#syncSearchPrefix();
+    this.#syncSearchClear();
+    this.#syncSearchClearVisibility();
+    this.#syncPasswordToggle();
+
+    if (this.type === "number") {
+      if (this.getAttribute("min")) {
+        this.input.setAttribute("min", this.#transformNumber(this.min));
       }
-      if (append) {
-        append.addEventListener("click", this.focus.bind(this));
-        this.append(append);
+      if (this.getAttribute("max")) {
+        this.input.setAttribute("max", this.#transformNumber(this.max));
       }
-
-      this.input = this.querySelector("input,textarea");
-      this.input.readOnly = this.readonly;
-      this.#syncInputA11yAttributes();
-      this.#syncSearchPrefix();
-      this.#syncSearchClear();
-      this.#syncSearchClearVisibility();
-      this.#syncPasswordToggle();
-
-      if (this.type === "number") {
-        if (this.getAttribute("min")) {
-          this.input.setAttribute("min", this.#transformNumber(this.min));
-        }
-        if (this.getAttribute("max")) {
-          this.input.setAttribute("max", this.#transformNumber(this.max));
-        }
-        if (this.getAttribute("step")) {
-          this.input.setAttribute("step", this.#transformNumber(this.step));
-        }
-        this.addEventListener("pointerdown", this.#boundMouseDown);
+      if (this.getAttribute("step")) {
+        this.input.setAttribute("step", this.#transformNumber(this.step));
       }
-      this.input.removeEventListener("change", this.#boundInputChange);
-      this.input.addEventListener("change", this.#boundInputChange);
-      this.input.removeEventListener("input", this.#boundNativeInput);
-      this.input.addEventListener("input", this.#boundNativeInput);
-    });
+      this.addEventListener("pointerdown", this.#boundMouseDown);
+    }
+    this.input.removeEventListener("change", this.#boundInputChange);
+    this.input.addEventListener("change", this.#boundInputChange);
+    this.input.removeEventListener("input", this.#boundNativeInput);
+    this.input.addEventListener("input", this.#boundNativeInput);
   }
 
   disconnectedCallback() {
@@ -4987,6 +5225,7 @@ class FigInputNumber extends HTMLElement {
   #boundFocus;
   #boundBlur;
   #boundKeyDown;
+  #boundFocusControl;
   #units;
   #rawUnits;
   #unitsDisallow;
@@ -5112,6 +5351,7 @@ class FigInputNumber extends HTMLElement {
     this.#boundKeyDown = (e) => {
       this.#handleKeyDown(e);
     };
+    this.#boundFocusControl = this.focus.bind(this);
   }
 
   connectedCallback() {
@@ -5155,57 +5395,56 @@ class FigInputNumber extends HTMLElement {
       placeholder="${this.placeholder}"
       value="${this.#formatWithUnit(this.value)}" />`;
 
-    //child nodes hack
-    requestAnimationFrame(() => {
-      let append = this.querySelector("[slot=append]");
-      let prepend = this.querySelector("[slot=prepend]");
+    let append = this.querySelector("[slot=append]");
+    let prepend = this.querySelector("[slot=prepend]");
 
-      this.innerHTML = html;
+    this.innerHTML = html;
 
-      if (prepend) {
-        prepend.addEventListener("click", this.focus.bind(this));
-        this.prepend(prepend);
-      }
-      if (append) {
-        append.addEventListener("click", this.focus.bind(this));
-        this.append(append);
-      }
+    if (prepend) {
+      prepend.removeEventListener("click", this.#boundFocusControl);
+      prepend.addEventListener("click", this.#boundFocusControl);
+      this.prepend(prepend);
+    }
+    if (append) {
+      append.removeEventListener("click", this.#boundFocusControl);
+      append.addEventListener("click", this.#boundFocusControl);
+      this.append(append);
+    }
 
-      this.input = this.querySelector("input");
-      this.#syncInputA11yAttributes();
+    this.input = this.querySelector("input");
+    this.#syncInputA11yAttributes();
 
-      if (this.getAttribute("min")) {
-        this.min = Number(this.getAttribute("min"));
-      }
-      if (this.getAttribute("max")) {
-        this.max = Number(this.getAttribute("max"));
-      }
-      if (this.getAttribute("step")) {
-        this.step = Number(this.getAttribute("step"));
-      }
+    if (this.getAttribute("min")) {
+      this.min = Number(this.getAttribute("min"));
+    }
+    if (this.getAttribute("max")) {
+      this.max = Number(this.getAttribute("max"));
+    }
+    if (this.getAttribute("step")) {
+      this.step = Number(this.getAttribute("step"));
+    }
 
-      this.#syncSteppers(hasSteppers);
+    this.#syncSteppers(hasSteppers);
 
-      // Set disabled state if present
-      if (this.hasAttribute("disabled")) {
-        const disabledAttr = this.getAttribute("disabled");
-        this.disabled = this.input.disabled = disabledAttr !== "false";
-      }
-      this.#syncStepperState();
-      this.#syncSpinbuttonAria();
+    // Set disabled state if present
+    if (this.hasAttribute("disabled")) {
+      const disabledAttr = this.getAttribute("disabled");
+      this.disabled = this.input.disabled = disabledAttr !== "false";
+    }
+    this.#syncStepperState();
+    this.#syncSpinbuttonAria();
 
-      this.addEventListener("pointerdown", this.#boundMouseDown);
-      this.input.removeEventListener("change", this.#boundInputChange);
-      this.input.addEventListener("change", this.#boundInputChange);
-      this.input.removeEventListener("input", this.#boundInput);
-      this.input.addEventListener("input", this.#boundInput);
-      this.input.removeEventListener("focus", this.#boundFocus);
-      this.input.addEventListener("focus", this.#boundFocus);
-      this.input.removeEventListener("blur", this.#boundBlur);
-      this.input.addEventListener("blur", this.#boundBlur);
-      this.input.removeEventListener("keydown", this.#boundKeyDown);
-      this.input.addEventListener("keydown", this.#boundKeyDown);
-    });
+    this.addEventListener("pointerdown", this.#boundMouseDown);
+    this.input.removeEventListener("change", this.#boundInputChange);
+    this.input.addEventListener("change", this.#boundInputChange);
+    this.input.removeEventListener("input", this.#boundInput);
+    this.input.addEventListener("input", this.#boundInput);
+    this.input.removeEventListener("focus", this.#boundFocus);
+    this.input.addEventListener("focus", this.#boundFocus);
+    this.input.removeEventListener("blur", this.#boundBlur);
+    this.input.addEventListener("blur", this.#boundBlur);
+    this.input.removeEventListener("keydown", this.#boundKeyDown);
+    this.input.addEventListener("keydown", this.#boundKeyDown);
   }
 
   disconnectedCallback() {
@@ -5612,9 +5851,7 @@ class FigAvatar extends HTMLElement {
     this.initials = this.getInitials(this.name);
     this.setAttribute("initials", this.initials);
     this.setSrc(this.src);
-    requestAnimationFrame(() => {
-      this.img = this.querySelector("img");
-    });
+    this.img = this.querySelector("img");
   }
   setSrc(src) {
     this.src = src;
@@ -5655,9 +5892,15 @@ class FigField extends HTMLElement {
   #toggleable = false;
   #chevron = null;
   #boundToggle = null;
+  #boundFocus = null;
+  #boundLabelEnter = null;
+  #boundLabelLeave = null;
 
   constructor() {
     super();
+    this.#boundFocus = this.focus.bind(this);
+    this.#boundLabelEnter = this.#onLabelEnter.bind(this);
+    this.#boundLabelLeave = this.#onLabelLeave.bind(this);
   }
 
   static get observedAttributes() {
@@ -5665,56 +5908,67 @@ class FigField extends HTMLElement {
   }
 
   connectedCallback() {
-    requestAnimationFrame(() => {
-      this.label = this.querySelector(":scope>label");
-      this.input = Array.from(this.childNodes).find((node) =>
-        node.nodeName.toLowerCase().startsWith("fig-"),
-      );
+    queueMicrotask(() => {
+      if (this.isConnected) this.#setup();
+    });
+  }
 
-      this.#toggleable = !!(this.input && "open" in this.input);
+  #setup() {
+    this.label = this.querySelector(":scope>label");
+    this.input = Array.from(this.childNodes).find((node) =>
+      node.nodeName.toLowerCase().startsWith("fig-"),
+    );
 
-      if (this.#toggleable && this.label) {
+    this.#toggleable = !!(this.input && "open" in this.input);
+
+    if (this.#toggleable && this.label) {
+      if (!this.#chevron || !this.#chevron.isConnected) {
         this.#chevron = createFigIcon("chevron", {
           size: "small",
           className: "fig-field-chevron",
         });
         this.insertBefore(this.#chevron, this.label);
-
-        this.#boundToggle = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (this.input && typeof this.input.open !== "undefined") {
-            this.input.open = !this.input.open;
-          }
-        };
-        this.#chevron.addEventListener("click", this.#boundToggle);
-        this.label.addEventListener("click", this.#boundToggle);
-      } else if (this.input && this.label) {
-        this.label.addEventListener("click", this.focus.bind(this));
       }
 
-      if (this.input && this.label && !this.#toggleable) {
-        this.#syncLabelAssociation();
-        requestAnimationFrame(() => this.#syncLabelAssociation());
-      }
+      this.#boundToggle = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.input && typeof this.input.open !== "undefined") {
+          this.input.open = !this.input.open;
+        }
+      };
+      this.#chevron.addEventListener("click", this.#boundToggle);
+      this.label.addEventListener("click", this.#boundToggle);
+    } else if (this.input && this.label) {
+      this.label.removeEventListener("click", this.#boundFocus);
+      this.label.addEventListener("click", this.#boundFocus);
+    }
 
-      if (this.label) {
-        this.label.addEventListener(
-          "pointerenter",
-          this.#onLabelEnter.bind(this),
-        );
-        this.label.addEventListener(
-          "pointerleave",
-          this.#onLabelLeave.bind(this),
-        );
-      }
-    });
+    if (this.input && this.label && !this.#toggleable) {
+      this.#syncLabelAssociation();
+    }
+
+    if (this.label) {
+      this.label.removeEventListener("pointerenter", this.#boundLabelEnter);
+      this.label.addEventListener("pointerenter", this.#boundLabelEnter);
+      this.label.removeEventListener("pointerleave", this.#boundLabelLeave);
+      this.label.addEventListener("pointerleave", this.#boundLabelLeave);
+    }
   }
 
   disconnectedCallback() {
     if (this.label) FigTooltip.hide(this.label);
     if (this.label && this.#boundToggle) {
       this.label.removeEventListener("click", this.#boundToggle);
+    }
+    if (this.label && this.#boundFocus) {
+      this.label.removeEventListener("click", this.#boundFocus);
+    }
+    if (this.label && this.#boundLabelEnter) {
+      this.label.removeEventListener("pointerenter", this.#boundLabelEnter);
+    }
+    if (this.label && this.#boundLabelLeave) {
+      this.label.removeEventListener("pointerleave", this.#boundLabelLeave);
     }
     if (this.#chevron && this.#boundToggle) {
       this.#chevron.removeEventListener("click", this.#boundToggle);
@@ -5830,14 +6084,8 @@ class FigInputColor extends HTMLElement {
   }
 
   connectedCallback() {
-    if (this.#renderRAF) cancelAnimationFrame(this.#renderRAF);
-    this.#renderRAF = requestAnimationFrame(() => {
-      this.#renderRAF = null;
-      this.#buildUI();
-    });
+    this.#buildUI();
   }
-
-  #renderRAF = null;
 
   #buildUI() {
     this.#setValues(this.getAttribute("value"));
@@ -5878,62 +6126,60 @@ class FigInputColor extends HTMLElement {
     }
     this.innerHTML = html;
 
-    requestAnimationFrame(() => {
-      this.#swatch = this.querySelector("fig-chit");
-      this.#fillPicker = this.querySelector("fig-fill-picker");
-      this.#textInput = this.querySelector("fig-input-text:not([type=number])");
-      this.#alphaInput = this.querySelector("fig-input-number");
-      this.#syncA11yAttributes();
+    this.#swatch = this.querySelector("fig-chit");
+    this.#fillPicker = this.querySelector("fig-fill-picker");
+    this.#textInput = this.querySelector("fig-input-text:not([type=number])");
+    this.#alphaInput = this.querySelector("fig-input-number");
+    this.#syncA11yAttributes();
 
-      // Setup swatch (native picker)
+    // Setup swatch (native picker)
+    if (this.#swatch) {
+      this.#swatch.disabled = this.hasAttribute("disabled");
+      const swatchInput = this.#swatch.querySelector('input[type="color"]');
+      if (this.#textInput || this.hasAttribute("swatch-disabled")) {
+        swatchInput?.setAttribute("tabindex", "-1");
+      }
+      if (this.hasAttribute("swatch-disabled")) {
+        swatchInput?.setAttribute("disabled", "");
+        if (swatchInput) swatchInput.style.pointerEvents = "none";
+      }
+      this.#swatch.addEventListener("pointerdown", this.#handleSwatchPointerDown.bind(this), {
+        capture: true,
+      });
+      this.#swatch.addEventListener("click", this.#handleSwatchClick.bind(this), {
+        capture: true,
+      });
+      swatchInput?.addEventListener("keydown", this.#handleSwatchKeyDown.bind(this));
+      this.#swatch.addEventListener("input", this.#handleInput.bind(this));
+    }
+
+    if (this.#textInput) {
+      const hex = this.rgbAlphaToHex(this.rgba, 1);
+      // Display without # prefix
+      this.#textInput.value = hex.slice(1).toUpperCase();
       if (this.#swatch) {
-        this.#swatch.disabled = this.hasAttribute("disabled");
-        const swatchInput = this.#swatch.querySelector('input[type="color"]');
-        if (this.#textInput || this.hasAttribute("swatch-disabled")) {
-          swatchInput?.setAttribute("tabindex", "-1");
-        }
-        if (this.hasAttribute("swatch-disabled")) {
-          swatchInput?.setAttribute("disabled", "");
-          if (swatchInput) swatchInput.style.pointerEvents = "none";
-        }
-        this.#swatch.addEventListener("pointerdown", this.#handleSwatchPointerDown.bind(this), {
-          capture: true,
-        });
-        this.#swatch.addEventListener("click", this.#handleSwatchClick.bind(this), {
-          capture: true,
-        });
-        swatchInput?.addEventListener("keydown", this.#handleSwatchKeyDown.bind(this));
-        this.#swatch.addEventListener("input", this.#handleInput.bind(this));
+        this.#swatch.background = hex;
       }
+      this.#textInput.addEventListener(
+        "input",
+        this.#handleTextInput.bind(this),
+      );
+      this.#textInput.addEventListener(
+        "change",
+        this.#handleChange.bind(this),
+      );
+    }
 
-      if (this.#textInput) {
-        const hex = this.rgbAlphaToHex(this.rgba, 1);
-        // Display without # prefix
-        this.#textInput.value = hex.slice(1).toUpperCase();
-        if (this.#swatch) {
-          this.#swatch.background = hex;
-        }
-        this.#textInput.addEventListener(
-          "input",
-          this.#handleTextInput.bind(this),
-        );
-        this.#textInput.addEventListener(
-          "change",
-          this.#handleChange.bind(this),
-        );
-      }
-
-      if (this.#alphaInput) {
-        this.#alphaInput.addEventListener(
-          "input",
-          this.#handleAlphaInput.bind(this),
-        );
-        this.#alphaInput.addEventListener(
-          "change",
-          this.#handleChange.bind(this),
-        );
-      }
-    });
+    if (this.#alphaInput) {
+      this.#alphaInput.addEventListener(
+        "input",
+        this.#handleAlphaInput.bind(this),
+      );
+      this.#alphaInput.addEventListener(
+        "change",
+        this.#handleChange.bind(this),
+      );
+    }
   }
 
   #syncFillPicker() {
@@ -6419,18 +6665,15 @@ const GRADIENT_HUE_INTERPOLATIONS = [
   "decreasing",
 ];
 
-const GRADIENT_PICKER_SPACES = ["srgb-linear", "oklab", "oklch"];
+const GRADIENT_PICKER_SPACES = ["srgb", "srgb-linear", "oklab", "oklch"];
 
 function normalizeGradientConfig(gradient) {
   const next = { ...(gradient ?? {}) };
   let interpolationSpace = String(
-    next.interpolationSpace ?? "oklab",
+    next.interpolationSpace ?? "srgb",
   ).toLowerCase();
   if (!GRADIENT_INTERPOLATION_SPACES.includes(interpolationSpace)) {
-    interpolationSpace = "oklab";
-  }
-  if (interpolationSpace === "srgb" || interpolationSpace === "display-p3") {
-    interpolationSpace = "oklab";
+    interpolationSpace = "srgb";
   }
   next.interpolationSpace = interpolationSpace;
 
@@ -6459,6 +6702,9 @@ function gradientToValueShape(gradient) {
 
 function gradientInterpolationClause(gradient) {
   const normalized = normalizeGradientConfig(gradient);
+  if (normalized.interpolationSpace === "srgb") {
+    return "";
+  }
   if (normalized.interpolationSpace === "oklch") {
     return `in oklch ${normalized.hueInterpolation} hue`;
   }
@@ -6686,7 +6932,7 @@ class FigInputFill extends HTMLElement {
   #gradient = {
     type: "linear",
     angle: 180,
-    interpolationSpace: "oklab",
+    interpolationSpace: "srgb",
     hueInterpolation: "shorter",
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
@@ -6952,128 +7198,126 @@ class FigInputFill extends HTMLElement {
   }
 
   #setupEventListeners() {
-    requestAnimationFrame(() => {
-      this.#fillPicker = this.querySelector("fig-fill-picker");
-      this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
-      this.#hexInput = this.querySelector(".fig-input-fill-hex");
-      const label = this.querySelector(".fig-input-fill-label");
-      this.#syncA11y();
+    this.#fillPicker = this.querySelector("fig-fill-picker");
+    this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
+    this.#hexInput = this.querySelector(".fig-input-fill-hex");
+    const label = this.querySelector(".fig-input-fill-label");
+    this.#syncA11y();
 
-      // Label click triggers fill picker
-      if (label && this.#fillPicker) {
-        label.addEventListener("click", () => {
-          const chit = this.#fillPicker.querySelector("fig-chit");
-          if (chit) {
-            chit.click();
-          }
-        });
+    // Label click triggers fill picker
+    if (label && this.#fillPicker) {
+      label.addEventListener("click", () => {
+        const chit = this.#fillPicker.querySelector("fig-chit");
+        if (chit) {
+          chit.click();
+        }
+      });
+    }
+
+    if (this.#fillPicker) {
+      const anchor = this.getAttribute("picker-anchor");
+      if (!anchor || anchor === "self") {
+        this.#fillPicker.anchorElement = this;
+      } else {
+        const el = document.querySelector(anchor);
+        if (el) this.#fillPicker.anchorElement = el;
       }
 
-      if (this.#fillPicker) {
-        const anchor = this.getAttribute("picker-anchor");
-        if (!anchor || anchor === "self") {
-          this.#fillPicker.anchorElement = this;
-        } else {
-          const el = document.querySelector(anchor);
-          if (el) this.#fillPicker.anchorElement = el;
+      this.#fillPicker.addEventListener("input", (e) => {
+        e.stopPropagation();
+        const detail = e.detail;
+        if (!detail) return;
+
+        const newType = detail.type;
+        const typeChanged = newType !== this.#fillType;
+
+        // Update internal state
+        this.#fillType = newType;
+        switch (newType) {
+          case "solid":
+            this.#solid.color = detail.color;
+            this.#solid.alpha = detail.alpha;
+            break;
+          case "gradient":
+            if (detail.gradient) {
+              this.#gradient = normalizeGradientConfig({
+                ...this.#gradient,
+                ...detail.gradient,
+              });
+            }
+            break;
+          case "image":
+            if (detail.image) this.#image = detail.image;
+            break;
+          case "video":
+            if (detail.video) this.#video = detail.video;
+            break;
         }
 
-        this.#fillPicker.addEventListener("input", (e) => {
-          e.stopPropagation();
-          const detail = e.detail;
-          if (!detail) return;
+        // Update controls (don't re-render to keep dialog open)
+        if (typeChanged) {
+          this.#updateControlsForType();
+        } else {
+          this.#updateControls();
+        }
 
-          const newType = detail.type;
-          const typeChanged = newType !== this.#fillType;
+        this.#emitInput();
+      });
 
-          // Update internal state
-          this.#fillType = newType;
-          switch (newType) {
-            case "solid":
-              this.#solid.color = detail.color;
-              this.#solid.alpha = detail.alpha;
-              break;
-            case "gradient":
-              if (detail.gradient) {
-                this.#gradient = normalizeGradientConfig({
-                  ...this.#gradient,
-                  ...detail.gradient,
-                });
-              }
-              break;
-            case "image":
-              if (detail.image) this.#image = detail.image;
-              break;
-            case "video":
-              if (detail.video) this.#video = detail.video;
-              break;
-          }
+      this.#fillPicker.addEventListener("change", (e) => {
+        e.stopPropagation();
+        this.#emitChange();
+      });
+    }
 
-          // Update controls (don't re-render to keep dialog open)
-          if (typeChanged) {
-            this.#updateControlsForType();
-          } else {
-            this.#updateControls();
-          }
+    // Hex input (solid only)
+    if (this.#hexInput) {
+      this.#hexInput.addEventListener("input", (e) => {
+        e.stopPropagation();
+        const hex = "#" + e.target.value.replace("#", "");
+        this.#solid.color = hex;
+        this.#updateFillPicker();
+        this.#emitInput();
+      });
+      this.#hexInput.addEventListener("change", (e) => {
+        e.stopPropagation();
+        this.#emitChange();
+      });
+    }
 
-          this.#emitInput();
-        });
-
-        this.#fillPicker.addEventListener("change", (e) => {
-          e.stopPropagation();
-          this.#emitChange();
-        });
-      }
-
-      // Hex input (solid only)
-      if (this.#hexInput) {
-        this.#hexInput.addEventListener("input", (e) => {
-          e.stopPropagation();
-          const hex = "#" + e.target.value.replace("#", "");
-          this.#solid.color = hex;
-          this.#updateFillPicker();
-          this.#emitInput();
-        });
-        this.#hexInput.addEventListener("change", (e) => {
-          e.stopPropagation();
-          this.#emitChange();
-        });
-      }
-
-      // Opacity input (all fill types)
-      if (this.#opacityInput) {
-        this.#opacityInput.addEventListener("input", (e) => {
-          e.stopPropagation();
-          const parsed = parseFloat(e.target.value);
-          const opacity = isNaN(parsed) ? 100 : parsed;
-          const alpha = opacity / 100;
-          switch (this.#fillType) {
-            case "solid":
-              this.#solid.alpha = alpha;
-              break;
-            case "gradient":
-              break;
-            case "image":
-              this.#image.opacity = alpha;
-              break;
-            case "video":
-              this.#video.opacity = alpha;
-              break;
-            case "webcam":
-              this.#webcam.opacity = alpha;
-              break;
-          }
-          this.#updateFillPicker();
-          // Update the chit's alpha
-          this.#updateChitAlpha(alpha);
-          this.#emitInput();
-        });
-        this.#opacityInput.addEventListener("change", (e) => {
-          e.stopPropagation();
-          this.#emitChange();
-        });
-      }
-    });
+    // Opacity input (all fill types)
+    if (this.#opacityInput) {
+      this.#opacityInput.addEventListener("input", (e) => {
+        e.stopPropagation();
+        const parsed = parseFloat(e.target.value);
+        const opacity = isNaN(parsed) ? 100 : parsed;
+        const alpha = opacity / 100;
+        switch (this.#fillType) {
+          case "solid":
+            this.#solid.alpha = alpha;
+            break;
+          case "gradient":
+            break;
+          case "image":
+            this.#image.opacity = alpha;
+            break;
+          case "video":
+            this.#video.opacity = alpha;
+            break;
+          case "webcam":
+            this.#webcam.opacity = alpha;
+            break;
+        }
+        this.#updateFillPicker();
+        // Update the chit's alpha
+        this.#updateChitAlpha(alpha);
+        this.#emitInput();
+      });
+      this.#opacityInput.addEventListener("change", (e) => {
+        e.stopPropagation();
+        this.#emitChange();
+      });
+    }
   }
 
   #updateControls() {
@@ -7240,70 +7484,68 @@ class FigInputFill extends HTMLElement {
     combo.insertAdjacentHTML("beforeend", controlsHtml);
 
     // Re-setup event listeners for the new controls
-    requestAnimationFrame(() => {
-      this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
-      this.#hexInput = this.querySelector(".fig-input-fill-hex");
-      const label = this.querySelector(".fig-input-fill-label");
-      this.#syncA11y();
+    this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
+    this.#hexInput = this.querySelector(".fig-input-fill-hex");
+    const label = this.querySelector(".fig-input-fill-label");
+    this.#syncA11y();
 
-      // Label click triggers fill picker
-      if (label && this.#fillPicker) {
-        label.addEventListener("click", () => {
-          const chit = this.#fillPicker.querySelector("fig-chit");
-          if (chit) {
-            chit.click();
-          }
-        });
-      }
+    // Label click triggers fill picker
+    if (label && this.#fillPicker) {
+      label.addEventListener("click", () => {
+        const chit = this.#fillPicker.querySelector("fig-chit");
+        if (chit) {
+          chit.click();
+        }
+      });
+    }
 
-      // Hex input (solid only)
-      if (this.#hexInput) {
-        this.#hexInput.addEventListener("input", (e) => {
-          e.stopPropagation();
-          const hex = "#" + e.target.value.replace("#", "");
-          this.#solid.color = hex;
-          this.#updateFillPicker();
-          this.#emitInput();
-        });
-        this.#hexInput.addEventListener("change", (e) => {
-          e.stopPropagation();
-          this.#emitChange();
-        });
-      }
+    // Hex input (solid only)
+    if (this.#hexInput) {
+      this.#hexInput.addEventListener("input", (e) => {
+        e.stopPropagation();
+        const hex = "#" + e.target.value.replace("#", "");
+        this.#solid.color = hex;
+        this.#updateFillPicker();
+        this.#emitInput();
+      });
+      this.#hexInput.addEventListener("change", (e) => {
+        e.stopPropagation();
+        this.#emitChange();
+      });
+    }
 
-      // Opacity input
-      if (this.#opacityInput) {
-        this.#opacityInput.addEventListener("input", (e) => {
-          e.stopPropagation();
-          const parsed = parseFloat(e.target.value);
-          const opacity = isNaN(parsed) ? 100 : parsed;
-          const alpha = opacity / 100;
-          switch (this.#fillType) {
-            case "solid":
-              this.#solid.alpha = alpha;
-              break;
-            case "gradient":
-              break;
-            case "image":
-              this.#image.opacity = alpha;
-              break;
-            case "video":
-              this.#video.opacity = alpha;
-              break;
-            case "webcam":
-              this.#webcam.opacity = alpha;
-              break;
-          }
-          this.#updateFillPicker();
-          this.#updateChitAlpha(alpha);
-          this.#emitInput();
-        });
-        this.#opacityInput.addEventListener("change", (e) => {
-          e.stopPropagation();
-          this.#emitChange();
-        });
-      }
-    });
+    // Opacity input
+    if (this.#opacityInput) {
+      this.#opacityInput.addEventListener("input", (e) => {
+        e.stopPropagation();
+        const parsed = parseFloat(e.target.value);
+        const opacity = isNaN(parsed) ? 100 : parsed;
+        const alpha = opacity / 100;
+        switch (this.#fillType) {
+          case "solid":
+            this.#solid.alpha = alpha;
+            break;
+          case "gradient":
+            break;
+          case "image":
+            this.#image.opacity = alpha;
+            break;
+          case "video":
+            this.#video.opacity = alpha;
+            break;
+          case "webcam":
+            this.#webcam.opacity = alpha;
+            break;
+        }
+        this.#updateFillPicker();
+        this.#updateChitAlpha(alpha);
+        this.#emitInput();
+      });
+      this.#opacityInput.addEventListener("change", (e) => {
+        e.stopPropagation();
+        this.#emitChange();
+      });
+    }
   }
 
   #updateFillPicker() {
@@ -7439,6 +7681,7 @@ class FigInputPalette extends HTMLElement {
   #inlinePickers = [];
   #expandedPickers = [];
   #renderRAF = null;
+  #boundHandleKeyDown = this.#handleKeyDown.bind(this);
 
   static get observedAttributes() {
     return ["value", "disabled", "min", "max", "open", "fixed"];
@@ -7483,6 +7726,8 @@ class FigInputPalette extends HTMLElement {
 
   connectedCallback() {
     if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "0");
+    this.removeEventListener("keydown", this.#boundHandleKeyDown);
+    this.addEventListener("keydown", this.#boundHandleKeyDown);
     if (this.#renderRAF) cancelAnimationFrame(this.#renderRAF);
     this.#renderRAF = requestAnimationFrame(() => {
       this.#renderRAF = null;
@@ -7496,8 +7741,19 @@ class FigInputPalette extends HTMLElement {
       cancelAnimationFrame(this.#renderRAF);
       this.#renderRAF = null;
     }
+    this.removeEventListener("keydown", this.#boundHandleKeyDown);
     this.#inlinePickers = [];
     this.#expandedPickers = [];
+  }
+
+  #handleKeyDown(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    if (event.target !== this && !event.target?.closest?.(".palette-colors-inline")) return;
+    if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.open = true;
+    this.querySelector(".palette-colors-inline")?.setAttribute("aria-expanded", "true");
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -7612,13 +7868,24 @@ class FigInputPalette extends HTMLElement {
 
     const inlineWrap = document.createElement("div");
     inlineWrap.className = "palette-colors-inline";
-    inlineWrap.addEventListener("click", () => {
+    inlineWrap.setAttribute("role", "button");
+    inlineWrap.setAttribute("aria-expanded", String(this.open));
+    inlineWrap.setAttribute("aria-label", "Edit palette colors");
+    const openPalette = () => {
       if (
         this.hasAttribute("disabled") &&
         this.getAttribute("disabled") !== "false"
       )
         return;
       this.open = true;
+      inlineWrap.setAttribute("aria-expanded", "true");
+    };
+    inlineWrap.addEventListener("click", openPalette);
+    inlineWrap.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      event.stopPropagation();
+      openPalette();
     });
 
     const wrap = document.createElement("div");
@@ -7871,10 +8138,11 @@ class FigInputGradient extends HTMLElement {
   #handleDragging = false;
   #arrowTooltipTimer = null;
   #colorObserver = null;
+  #repositionRAF = null;
   #gradient = {
     type: "linear",
     angle: 180,
-    interpolationSpace: "oklab",
+    interpolationSpace: "srgb",
     hueInterpolation: "shorter",
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
@@ -7916,6 +8184,10 @@ class FigInputGradient extends HTMLElement {
     if (this.#colorObserver) {
       this.#colorObserver.disconnect();
       this.#colorObserver = null;
+    }
+    if (this.#repositionRAF !== null) {
+      cancelAnimationFrame(this.#repositionRAF);
+      this.#repositionRAF = null;
     }
     clearTimeout(this.#arrowTooltipTimer);
     this.removeEventListener("pointerenter", this.#onTrackEnter);
@@ -8044,7 +8316,8 @@ class FigInputGradient extends HTMLElement {
       })
       .join(", ");
     const interp = gradientInterpolationClause(this.#gradient);
-    return `linear-gradient(${this.#gradient.angle}deg ${interp}, ${stops})`;
+    const interpolation = interp ? ` ${interp}` : "";
+    return `linear-gradient(${this.#gradient.angle}deg${interpolation}, ${stops})`;
   }
 
   #stopColorCSS(stop) {
@@ -8095,7 +8368,6 @@ class FigInputGradient extends HTMLElement {
     if (mode === "true" || mode === "picker") {
       this.#setupGhostHandle();
       this.#setupEventListeners();
-      requestAnimationFrame(() => this.#repositionHandles());
     }
   }
 
@@ -8271,6 +8543,8 @@ class FigInputGradient extends HTMLElement {
   };
 
   #repositionHandles() {
+    this.#repositionRAF = null;
+    if (!this.isConnected) return;
     if (!this.#track) return;
     const stops = this.#gradient.stops;
     this.#track
@@ -8286,6 +8560,11 @@ class FigInputGradient extends HTMLElement {
     this.#repositionHandles();
   }
 
+  #scheduleRepositionHandles() {
+    if (this.#repositionRAF !== null) return;
+    this.#repositionRAF = requestAnimationFrame(() => this.#repositionHandles());
+  }
+
   #syncHandles() {
     if (!this.#track) return;
     const handles = this.#track.querySelectorAll(
@@ -8299,7 +8578,7 @@ class FigInputGradient extends HTMLElement {
       if (ghost) this.#track.appendChild(ghost);
       this.#syncHandleMode();
       this.#reobserveHandleColors();
-      requestAnimationFrame(() => this.#repositionHandles());
+      this.#scheduleRepositionHandles();
       return;
     }
 
@@ -8904,6 +9183,11 @@ class FigComboInput extends HTMLElement {
     "value",
     "disabled",
     "experimental",
+    "aria-label",
+    "aria-labelledby",
+    "aria-describedby",
+    "aria-invalid",
+    "aria-required",
   ];
 
   #usesCustomDropdown = false;
@@ -8912,6 +9196,13 @@ class FigComboInput extends HTMLElement {
   #button = null;
   #customDropdown = null;
   #internalUpdate = false;
+  #a11yAttributes = [
+    "aria-label",
+    "aria-labelledby",
+    "aria-describedby",
+    "aria-invalid",
+    "aria-required",
+  ];
 
   #boundHandleDropdownInput = this.#handleDropdownInput.bind(this);
   #boundHandleTextInput = this.#handleTextInput.bind(this);
@@ -8953,10 +9244,11 @@ class FigComboInput extends HTMLElement {
     const currentValue = this.value;
     const experimental = this.getAttribute("experimental");
     const expAttr = experimental ? ` experimental="${experimental}"` : "";
+    const dropdownLabel = this.#dropdownLabel();
 
     const dropdownHTML = this.#usesCustomDropdown
       ? ""
-      : `<fig-dropdown type="dropdown"${expAttr}>${options.map((o) => `<option>${o.trim()}</option>`).join("")}</fig-dropdown>`;
+      : `<fig-dropdown type="dropdown" label="${dropdownLabel}"${expAttr}>${options.map((o) => `<option>${o.trim()}</option>`).join("")}</fig-dropdown>`;
 
     this.innerHTML = `<div class="input-combo">
   <fig-input-text placeholder="${placeholder}" value="${currentValue}"></fig-input-text>
@@ -8975,6 +9267,9 @@ class FigComboInput extends HTMLElement {
       if (!this.#customDropdown.hasAttribute("type")) {
         this.#customDropdown.setAttribute("type", "dropdown");
       }
+      if (!this.#customDropdown.hasAttribute("label")) {
+        this.#customDropdown.setAttribute("label", dropdownLabel);
+      }
       if (experimental) {
         this.#customDropdown.setAttribute("experimental", experimental);
       }
@@ -8982,6 +9277,7 @@ class FigComboInput extends HTMLElement {
     }
 
     this.#dropdown = this.querySelector("fig-dropdown");
+    this.#syncA11yAttributes();
   }
 
   #setupListeners() {
@@ -9052,6 +9348,31 @@ class FigComboInput extends HTMLElement {
       .filter(Boolean);
   }
 
+  #controlName() {
+    return (
+      this.getAttribute("aria-label") ||
+      this.getAttribute("placeholder") ||
+      "Combo input"
+    ).trim();
+  }
+
+  #dropdownLabel() {
+    return `${this.#controlName()} options`;
+  }
+
+  #syncA11yAttributes() {
+    if (this.#input) {
+      this.#a11yAttributes.forEach((name) => {
+        const value = this.getAttribute(name);
+        if (value === null) this.#input.removeAttribute(name);
+        else this.#input.setAttribute(name, value);
+      });
+    }
+    if (this.#dropdown && !this.#dropdown.hasAttribute("aria-label")) {
+      this.#dropdown.setAttribute("label", this.#dropdownLabel());
+    }
+  }
+
   #applyDisabled(disabled) {
     if (this.#input) {
       if (disabled) this.#input.setAttribute("disabled", "");
@@ -9060,6 +9381,10 @@ class FigComboInput extends HTMLElement {
     if (this.#button) {
       if (disabled) this.#button.setAttribute("disabled", "");
       else this.#button.removeAttribute("disabled");
+    }
+    if (this.#dropdown) {
+      if (disabled) this.#dropdown.setAttribute("disabled", "");
+      else this.#dropdown.removeAttribute("disabled");
     }
   }
 
@@ -9080,6 +9405,7 @@ class FigComboInput extends HTMLElement {
         break;
       case "placeholder":
         if (this.#input) this.#input.setAttribute("placeholder", newValue || "");
+        this.#syncA11yAttributes();
         break;
       case "value":
         if (!this.#internalUpdate && this.#input) {
@@ -9095,6 +9421,13 @@ class FigComboInput extends HTMLElement {
           else if (!this.#usesCustomDropdown)
             this.#dropdown.removeAttribute("experimental");
         }
+        break;
+      case "aria-label":
+      case "aria-labelledby":
+      case "aria-describedby":
+      case "aria-invalid":
+      case "aria-required":
+        this.#syncA11yAttributes();
         break;
     }
   }
@@ -10088,7 +10421,7 @@ class FigMediaControls extends HTMLElement {
     slider.setAttribute("text", "false");
     slider.setAttribute("min", "0");
     slider.setAttribute("max", String(this.duration));
-    slider.setAttribute("step", "0.1");
+    slider.setAttribute("step", "1");
     slider.setAttribute("value", String(this.time));
     slider.setAttribute("full", "");
     slider.setAttribute("aria-label", "Seek");
@@ -10864,8 +11197,8 @@ class FigEasingCurve extends HTMLElement {
         <line class="fig-easing-curve-target" x1="0" y1="${targetY}" x2="${size}" y2="${targetY}"/>
         <line class="fig-easing-curve-diagonal" x1="0" y1="${startY}" x2="0" y2="${startY}"/>
         <path class="fig-easing-curve-path"/>
-        <foreignObject class="fig-easing-curve-handle" data-handle="bounce" width="20" height="20"><fig-handle size="small"></fig-handle></foreignObject>
-        <foreignObject class="fig-easing-curve-handle fig-easing-curve-duration-bar" data-handle="duration" width="20" height="20"><fig-handle size="small"></fig-handle></foreignObject>
+        <foreignObject class="fig-easing-curve-handle" data-handle="bounce" width="20" height="20"><fig-handle size="small" drag aria-label="Spring bounce handle"></fig-handle></foreignObject>
+        <foreignObject class="fig-easing-curve-handle fig-easing-curve-duration-bar" data-handle="duration" width="20" height="20"><fig-handle size="small" drag drag-axes="x" aria-label="Spring duration handle"></fig-handle></foreignObject>
       </svg></div>${valueInput}`;
     }
 
@@ -10877,8 +11210,8 @@ class FigEasingCurve extends HTMLElement {
       <path class="fig-easing-curve-path"/>
       <circle class="fig-easing-curve-endpoint" data-endpoint="start" r="${this.#bezierEndpointRadius}"/>
       <circle class="fig-easing-curve-endpoint" data-endpoint="end" r="${this.#bezierEndpointRadius}"/>
-      <foreignObject class="fig-easing-curve-handle" data-handle="1" width="20" height="20"><fig-handle size="small"></fig-handle></foreignObject>
-      <foreignObject class="fig-easing-curve-handle" data-handle="2" width="20" height="20"><fig-handle size="small"></fig-handle></foreignObject>
+      <foreignObject class="fig-easing-curve-handle" data-handle="1" width="20" height="20"><fig-handle size="small" drag aria-label="First easing control point"></fig-handle></foreignObject>
+      <foreignObject class="fig-easing-curve-handle" data-handle="2" width="20" height="20"><fig-handle size="small" drag aria-label="Second easing control point"></fig-handle></foreignObject>
     </svg></div>${valueInput}`;
   }
 
@@ -11053,6 +11386,18 @@ class FigEasingCurve extends HTMLElement {
       this.#bezierEndpointEnd.setAttribute("cx", p3.x);
       this.#bezierEndpointEnd.setAttribute("cy", p3.y);
     }
+    this.#syncBezierHandleTabOrder();
+  }
+
+  #syncBezierHandleTabOrder() {
+    if (!this.#svg || !this.#handle1 || !this.#handle2) return;
+    const handles =
+      this.#cp1.y >= this.#cp2.y
+        ? [this.#handle1, this.#handle2]
+        : [this.#handle2, this.#handle1];
+    for (const handle of handles) {
+      this.#svg.append(handle);
+    }
   }
 
   #updateSpringPaths() {
@@ -11217,6 +11562,137 @@ class FigEasingCurve extends HTMLElement {
     );
   }
 
+  #syncAfterHandleInput(eventType) {
+    this.#updatePaths();
+    this.#presetName = this.#matchPreset();
+    this.#syncDropdown();
+    this.#syncValueInput();
+    this.#emit(eventType);
+  }
+
+  #handleBezierKeyboard(event, handle) {
+    const step = event.shiftKey ? 0.1 : 0.01;
+    const point = handle === 1 ? this.#cp1 : this.#cp2;
+
+    switch (event.key) {
+      case "ArrowLeft":
+        point.x -= step;
+        break;
+      case "ArrowRight":
+        point.x += step;
+        break;
+      case "ArrowUp":
+        point.y += step;
+        break;
+      case "ArrowDown":
+        point.y -= step;
+        break;
+      case "Home":
+        point.x = 0;
+        point.y = 0;
+        break;
+      case "End":
+        point.x = 1;
+        point.y = 1;
+        break;
+      default:
+        return false;
+    }
+
+    point.x = Math.max(0, Math.min(1, Math.round(point.x * 100) / 100));
+    point.y = Math.round(point.y * 100) / 100;
+    this.#syncAfterHandleInput("input");
+    this.#emit("change");
+    return true;
+  }
+
+  #handleSpringKeyboard(event, handleType) {
+    const unit = event.shiftKey ? 10 : 1;
+
+    if (handleType === "bounce") {
+      switch (event.key) {
+        case "ArrowUp":
+          this.#spring.damping = Math.max(1, Math.round(this.#spring.damping - unit));
+          break;
+        case "ArrowDown":
+          this.#spring.damping = Math.max(1, Math.round(this.#spring.damping + unit));
+          break;
+        case "Home":
+          this.#spring.damping = 1;
+          break;
+        case "End":
+          this.#spring.damping = 50;
+          break;
+        default:
+          return false;
+      }
+    } else {
+      const dx = unit * 2;
+      switch (event.key) {
+        case "ArrowLeft":
+          this.#springDuration = Math.max(0.05, this.#springDuration - dx / 200);
+          this.#spring.stiffness = Math.max(10, Math.round(this.#spring.stiffness + dx * 1.5));
+          break;
+        case "ArrowRight":
+          this.#springDuration = Math.min(0.95, this.#springDuration + dx / 200);
+          this.#spring.stiffness = Math.max(10, Math.round(this.#spring.stiffness - dx * 1.5));
+          break;
+        case "Home":
+          this.#springDuration = 0.05;
+          break;
+        case "End":
+          this.#springDuration = 0.95;
+          break;
+        default:
+          return false;
+      }
+    }
+
+    this.#syncAfterHandleInput("input");
+    this.#emit("change");
+    return true;
+  }
+
+  #setupHandleInteraction(handleContainer, handle) {
+    const handleEl = handleContainer?.querySelector("fig-handle");
+    if (!handleEl) return;
+
+    handleEl.addEventListener(
+      "pointerdown",
+      (event) => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (this.#mode === "bezier") {
+          this.#startBezierDrag(event, Number(handle));
+        } else {
+          this.#startSpringDrag(event, handle);
+        }
+      },
+      { capture: true },
+    );
+
+    handleEl.addEventListener(
+      "keydown",
+      (event) => {
+        if (
+          !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(
+            event.key,
+          )
+        ) {
+          return;
+        }
+        const handled =
+          this.#mode === "bezier"
+            ? this.#handleBezierKeyboard(event, Number(handle))
+            : this.#handleSpringKeyboard(event, handle);
+        if (!handled) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      },
+      { capture: true },
+    );
+  }
+
   // --- Events ---
 
   #emit(type) {
@@ -11235,6 +11711,8 @@ class FigEasingCurve extends HTMLElement {
 
   #setupEvents() {
     if (this.#svg && this.#mode === "bezier") {
+      this.#setupHandleInteraction(this.#handle1, "1");
+      this.#setupHandleInteraction(this.#handle2, "2");
       this.#handle1.addEventListener("pointerdown", (e) =>
         this.#startBezierDrag(e, 1),
       );
@@ -11253,6 +11731,8 @@ class FigEasingCurve extends HTMLElement {
         });
       }
     } else if (this.#svg) {
+      this.#setupHandleInteraction(this.#handle1, "bounce");
+      this.#setupHandleInteraction(this.#handle2, "duration");
       this.#handle1.addEventListener("pointerdown", (e) => {
         e.stopPropagation();
         this.#startSpringDrag(e, "bounce");
@@ -12098,6 +12578,46 @@ class FigOriginGrid extends HTMLElement {
     };
   }
 
+  #moveHandleByKeyboard(event) {
+    if (!this.#dragEnabled) return false;
+    const step = event.shiftKey ? 10 : 1;
+    let nextX = this.#x;
+    let nextY = this.#y;
+
+    switch (event.key) {
+      case "ArrowLeft":
+        nextX -= step;
+        break;
+      case "ArrowRight":
+        nextX += step;
+        break;
+      case "ArrowUp":
+        nextY -= step;
+        break;
+      case "ArrowDown":
+        nextY += step;
+        break;
+      case "Home":
+        nextX = 0;
+        nextY = 0;
+        break;
+      case "End":
+        nextX = 100;
+        nextY = 100;
+        break;
+      default:
+        return false;
+    }
+
+    this.#setFromPercent(
+      this.#clampPercentage(nextX),
+      this.#clampPercentage(nextY),
+      "input",
+    );
+    this.#emit("change");
+    return true;
+  }
+
   #detachHandleDragListeners() {
     if (
       !this.#grid ||
@@ -12199,6 +12719,12 @@ class FigOriginGrid extends HTMLElement {
 
     this.#grid.addEventListener("pointerleave", () => {
       this.#clearHoveredCells();
+    });
+
+    this.#handle.addEventListener("keydown", (e) => {
+      if (!this.#moveHandleByKeyboard(e)) return;
+      e.preventDefault();
+      e.stopPropagation();
     });
 
     const bindValueInput = (inputEl, axis) => {
@@ -12355,7 +12881,7 @@ class FigInputJoystick extends HTMLElement {
     ].join("");
 
     return `        
-          <div class="fig-input-joystick-plane-container" tabindex="0">
+          <div class="fig-input-joystick-plane-container">
             ${labelsMarkup}
             <div class="fig-input-joystick-plane">
               <div class="fig-input-joystick-guides"></div>
@@ -12557,8 +13083,7 @@ class FigInputJoystick extends HTMLElement {
   }
 
   focus() {
-    const container = this.querySelector(".fig-input-joystick-plane-container");
-    container?.focus();
+    this.cursor?.focus();
   }
   static get observedAttributes() {
     return [
@@ -12692,18 +13217,24 @@ class FigShimmer extends HTMLElement {
 customElements.define("fig-shimmer", FigShimmer);
 
 // FigSkeleton
-class FigSkeleton extends FigShimmer {}
+class FigSkeleton extends FigShimmer {
+  connectedCallback() {
+    super.connectedCallback();
+    this.inert = true;
+    this.setAttribute("inert", "");
+  }
+}
 customElements.define("fig-skeleton", FigSkeleton);
 
 // FigGroup
 class FigGroup extends HTMLElement {
-  static observedAttributes = ["name", "collapsible"];
+  static observedAttributes = ["name", "collapsible", "open"];
 
   #header = null;
   #chevron = null;
 
   connectedCallback() {
-    requestAnimationFrame(() => this.#render());
+    this.#render();
   }
 
   disconnectedCallback() {
@@ -12712,11 +13243,17 @@ class FigGroup extends HTMLElement {
     }
     if (this.#header) {
       this.#header.removeEventListener("click", this.#handleToggle);
+      this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
+      this.#header.querySelector("h3")?.removeEventListener("click", this.#handleToggle);
     }
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
+    if (name === "open") {
+      this.#header?.setAttribute("aria-expanded", String(this.open));
+      return;
+    }
     this.#render();
   }
 
@@ -12732,6 +13269,7 @@ class FigGroup extends HTMLElement {
     } else {
       this.setAttribute("open", "false");
     }
+    this.#header?.setAttribute("aria-expanded", String(!!value));
     if (was !== !!value) {
       this.dispatchEvent(
         new CustomEvent("openchange", {
@@ -12743,6 +13281,13 @@ class FigGroup extends HTMLElement {
   }
 
   #handleToggle = (e) => {
+    e.stopPropagation();
+    this.open = !this.open;
+  };
+
+  #handleHeaderKeyDown = (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
     e.stopPropagation();
     this.open = !this.open;
   };
@@ -12779,8 +13324,13 @@ class FigGroup extends HTMLElement {
       h3 = document.createElement("h3");
       this.#header.prepend(h3);
     }
+    if (!h3.id) h3.id = figUniqueId();
     if (this.#header.dataset.generated) {
       h3.textContent = label;
+    }
+    if (!this.hasAttribute("role")) this.setAttribute("role", "group");
+    if (!this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby")) {
+      this.setAttribute("aria-labelledby", h3.id);
     }
 
     if (isCollapsible) {
@@ -12792,12 +13342,26 @@ class FigGroup extends HTMLElement {
         h3.prepend(chevron);
       }
       this.#chevron = h3.querySelector(".fig-group-chevron");
-      h3.addEventListener("click", this.#handleToggle);
+      h3.removeEventListener("click", this.#handleToggle);
+      this.#header.removeEventListener("click", this.#handleToggle);
+      this.#header.addEventListener("click", this.#handleToggle);
+      this.#header.setAttribute("role", "button");
+      this.#header.setAttribute("tabindex", "0");
+      this.#header.setAttribute("aria-expanded", String(this.open));
+      this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
+      this.#header.addEventListener("keydown", this.#handleHeaderKeyDown);
 
       if (!this.hasAttribute("open")) {
         this.setAttribute("open", "false");
+        this.#header.setAttribute("aria-expanded", "false");
       }
     } else {
+      h3.removeEventListener("click", this.#handleToggle);
+      this.#header.removeEventListener("click", this.#handleToggle);
+      this.#header.removeAttribute("role");
+      this.#header.removeAttribute("tabindex");
+      this.#header.removeAttribute("aria-expanded");
+      this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
       if (this.#chevron) {
         this.#chevron.remove();
         this.#chevron = null;
@@ -14251,6 +14815,18 @@ class FigHandle extends HTMLElement {
   };
 
   #handleKeyDown = (e) => {
+    if (e.defaultPrevented) return;
+    if (
+      e.target === this &&
+      this.#dragEnabled &&
+      ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)
+    ) {
+      if (this.#moveByKeyboard(e)) {
+        e.preventDefault();
+        if (!this.hasAttribute("selected")) this.select();
+      }
+      return;
+    }
     if (e.key !== "Enter" && e.key !== " ") return;
     if (e.target === this && !this.hasAttribute("selected")) {
       e.preventDefault();
@@ -14273,6 +14849,64 @@ class FigHandle extends HTMLElement {
       this.#openDirectColorPicker();
     }
   };
+
+  #moveByKeyboard(event) {
+    if (this.hasAttribute("disabled")) return false;
+    const container = this.#getContainer();
+    if (!container) return false;
+    const rect = container.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+
+    const axes = this.#axes;
+    const current = this.#positionDetail(rect);
+    const pctStep = event.shiftKey ? 0.1 : 0.01;
+    let px = current.px;
+    let py = current.py;
+
+    switch (event.key) {
+      case "ArrowLeft":
+        if (!axes.x) return false;
+        px -= pctStep;
+        break;
+      case "ArrowRight":
+        if (!axes.x) return false;
+        px += pctStep;
+        break;
+      case "ArrowUp":
+        if (!axes.y) return false;
+        py -= pctStep;
+        break;
+      case "ArrowDown":
+        if (!axes.y) return false;
+        py += pctStep;
+        break;
+      case "Home":
+        if (axes.x) px = 0;
+        if (axes.y) py = 0;
+        break;
+      case "End":
+        if (axes.x) px = 1;
+        if (axes.y) py = 1;
+        break;
+      default:
+        return false;
+    }
+
+    px = Math.max(0, Math.min(1, px));
+    py = Math.max(0, Math.min(1, py));
+    this.#syncPositionTranslate(axes);
+    if (axes.x) this.style.left = `${Math.round(px * rect.width)}px`;
+    if (axes.y) this.style.top = `${Math.round(py * rect.height)}px`;
+    this.#syncValueAttribute();
+    const detail = {
+      ...this.#positionDetail(rect),
+      shiftKey: event.shiftKey,
+      keyboard: true,
+    };
+    this.dispatchEvent(new CustomEvent("input", { bubbles: true, detail }));
+    this.dispatchEvent(new CustomEvent("change", { bubbles: true, detail }));
+    return true;
+  }
 
   attributeChangedCallback(name, _old, value) {
     if (name === "color") {

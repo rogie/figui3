@@ -89,12 +89,128 @@ test.describe("fig.js component contracts", () => {
   }
 });
 
+test.describe("dropdown keyboard behavior", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.evaluate(async () => {
+      await customElements.whenDefined("fig-dropdown");
+    });
+  });
+
+  test("opens the native picker when Enter is pressed on the focused select", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-dropdown label="Residence type">
+          <option>House</option>
+          <option>Apartment</option>
+        </fig-dropdown>
+      `;
+      const select = root.querySelector("fig-dropdown select");
+      if (!select) throw new Error("Missing generated select");
+      (select as HTMLSelectElement & { showPicker?: () => void }).showPicker = () => {
+        select.setAttribute("data-show-picker-called", "true");
+      };
+    });
+
+    await page.locator("fig-dropdown select").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("fig-dropdown select")).toHaveAttribute(
+      "data-show-picker-called",
+      "true",
+    );
+  });
+
+  test("opens modern dropdown on Enter and lets open picker commit selection", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-dropdown experimental="modern" label="Residence type">
+          <option>House</option>
+          <option>Apartment</option>
+        </fig-dropdown>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const closedState = await page.locator("fig-dropdown select").evaluate((select) => {
+      (select as HTMLSelectElement & { showPicker?: () => void }).showPicker = () => {
+        select.setAttribute("data-show-picker-called", "true");
+      };
+      const event = new KeyboardEvent("keydown", {
+        key: "Enter",
+        bubbles: true,
+        cancelable: true,
+      });
+      select.dispatchEvent(event);
+      return {
+        prevented: event.defaultPrevented,
+        showPickerCalled: select.getAttribute("data-show-picker-called"),
+      };
+    });
+
+    expect(closedState).toEqual({
+      prevented: true,
+      showPickerCalled: "true",
+    });
+
+    const openState = await page.locator("fig-dropdown select").evaluate((select) => {
+      select.addEventListener(
+        "keydown",
+        (event) => {
+          queueMicrotask(() => {
+            select.setAttribute(
+              "data-open-enter-prevented",
+              String(event.defaultPrevented),
+            );
+          });
+        },
+        { once: true },
+      );
+      const originalMatches = select.matches.bind(select);
+      select.matches = (selector: string) =>
+        selector === ":open" ? true : originalMatches(selector);
+
+      const event = new KeyboardEvent("keydown", {
+        key: "Enter",
+        bubbles: true,
+        cancelable: true,
+      });
+      select.dispatchEvent(event);
+
+      return new Promise((resolve) => {
+        queueMicrotask(() => {
+          resolve({
+            prevented: select.getAttribute("data-open-enter-prevented") === "true",
+            hasSelectedContent: !!select.querySelector("selectedcontent"),
+          });
+        });
+      });
+    });
+
+    expect(openState).toEqual({
+      prevented: false,
+      hasSelectedContent: true,
+    });
+  });
+});
+
 test.describe("joystick axis labels", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
     await page.evaluate(async () => {
-      await customElements.whenDefined("fig-joystick");
+      await Promise.all([
+        customElements.whenDefined("fig-joystick"),
+        customElements.whenDefined("fig-handle"),
+      ]);
     });
   });
 
@@ -149,6 +265,45 @@ test.describe("joystick axis labels", () => {
       bottom: "Bottom",
       leftNoRotate: false,
     });
+  });
+
+  test("focuses the handle and keeps focus during keyboard movement", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-joystick id="joy" style="width: 200px;"></fig-joystick>`;
+    });
+    await page.waitForTimeout(100);
+
+    const plane = page.locator("#joy .fig-input-joystick-plane-container");
+    const handle = page.locator("#joy fig-handle");
+    await expect(plane).not.toHaveAttribute("tabindex", "0");
+
+    await page.locator("#joy").evaluate((host: HTMLElement) => host.focus());
+    await expect(handle).toBeFocused();
+
+    const focusStyles = await page.locator("#joy").evaluate((host) => {
+      const guides = host.querySelector(".fig-input-joystick-guides");
+      const handle = host.querySelector("fig-handle");
+      const guideStyle = guides ? getComputedStyle(guides) : null;
+      const handleStyle = handle ? getComputedStyle(handle) : null;
+      return {
+        guideOutlineStyle: guideStyle?.outlineStyle,
+        handleOutlineStyle: handleStyle?.outlineStyle,
+        handleOutlineOffset: handleStyle?.outlineOffset,
+      };
+    });
+    expect(focusStyles).toEqual({
+      guideOutlineStyle: "none",
+      handleOutlineStyle: "solid",
+      handleOutlineOffset: "1px",
+    });
+
+    await page.keyboard.press("ArrowRight");
+    await expect(handle).toBeFocused();
+    await expect(page.locator("#joy")).toHaveAttribute("value", "51% 50%");
   });
 });
 
@@ -443,6 +598,104 @@ test.describe("number input accessibility", () => {
   });
 });
 
+test.describe("combo input accessibility", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.evaluate(async () => {
+      await Promise.all([
+        customElements.whenDefined("fig-combo-input"),
+        customElements.whenDefined("fig-input-text"),
+        customElements.whenDefined("fig-button"),
+        customElements.whenDefined("fig-dropdown"),
+      ]);
+    });
+  });
+
+  test("forwards accessible name and state to generated controls", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <p id="combo-help">Choose or enter a font.</p>
+        <fig-combo-input
+          id="combo"
+          options="Inter, Roboto"
+          placeholder="Font"
+          aria-label="Font family"
+          aria-describedby="combo-help"
+          aria-required="true"
+        ></fig-combo-input>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const state = await page.locator("#combo").evaluate((host) => {
+      const input = host.querySelector("fig-input-text input");
+      const button = host.querySelector('fig-button[type="select"]');
+      const dropdown = host.querySelector("fig-dropdown select");
+      return {
+        inputLabel: input?.getAttribute("aria-label"),
+        inputDescribedBy: input?.getAttribute("aria-describedby"),
+        inputRequired: input?.getAttribute("aria-required"),
+        selectButtons: host.querySelectorAll('fig-button[type="select"]').length,
+        nativeButtonInSelect: button?.shadowRoot?.querySelector("button") !== null,
+        dropdownLabel: dropdown?.getAttribute("aria-label"),
+      };
+    });
+
+    expect(state).toEqual({
+      inputLabel: "Font family",
+      inputDescribedBy: "combo-help",
+      inputRequired: "true",
+      selectButtons: 1,
+      nativeButtonInSelect: false,
+      dropdownLabel: "Font family options",
+    });
+
+    await page.locator("#combo fig-dropdown select").evaluate((select) => {
+      const el = select as HTMLSelectElement & { showPicker?: () => void };
+      el.showPicker = () => {
+        el.dataset.showPickerCalled = "true";
+      };
+    });
+    await page.locator("#combo fig-dropdown select").focus();
+    await expect
+      .poll(() =>
+        page.locator("#combo").evaluate((host) => {
+          const dropdownSelect = host.querySelector("fig-dropdown select");
+          const button = host.querySelector('fig-button[type="select"]');
+          return {
+            selectFocused: document.activeElement === dropdownSelect,
+            buttonFocused: document.activeElement === button,
+          };
+        }),
+      )
+      .toEqual({ selectFocused: true, buttonFocused: false });
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#combo fig-dropdown select")).toHaveAttribute(
+      "data-show-picker-called",
+      "true",
+    );
+
+    const focusRing = await page
+      .locator('#combo fig-button[type="select"]')
+      .evaluate((button) => {
+        const style = getComputedStyle(button);
+        return {
+          outlineStyle: style.outlineStyle,
+          outlineWidth: style.outlineWidth,
+        };
+      });
+    expect(focusRing).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "1px",
+    });
+  });
+});
+
 test.describe("field accessibility", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -526,6 +779,8 @@ test.describe("slider accessibility", () => {
       root.innerHTML = `
         <fig-slider id="text-slider" value="50" min="0" max="100" units="%" aria-label="Opacity"></fig-slider>
         <fig-slider id="range-slider" text="false" value="12" min="0" max="24" aria-label="Frames"></fig-slider>
+        <fig-slider id="default-range" aria-label="Default range"></fig-slider>
+        <fig-slider id="custom-range" min="10" max="30" aria-label="Custom range"></fig-slider>
       `;
     });
     await page.waitForTimeout(100);
@@ -575,6 +830,208 @@ test.describe("slider accessibility", () => {
       rangeLabel: "Frames",
       rangeValueNow: "12",
     });
+
+    const defaultRangeState = await page.locator("#default-range").evaluate((host) => {
+      const range = host.querySelector('input[type="range"]');
+      const number = host.querySelector("fig-input-number input");
+      return {
+        hostValue: host.getAttribute("value"),
+        rangeValue: (range as HTMLInputElement | null)?.value,
+        rangeValueNow: range?.getAttribute("aria-valuenow"),
+        numberValue: (number as HTMLInputElement | null)?.value,
+      };
+    });
+    expect(defaultRangeState).toEqual({
+      hostValue: "50",
+      rangeValue: "50",
+      rangeValueNow: "50",
+      numberValue: "50",
+    });
+
+    const customRangeState = await page.locator("#custom-range").evaluate((host) => {
+      const range = host.querySelector('input[type="range"]');
+      const number = host.querySelector("fig-input-number input");
+      return {
+        hostValue: host.getAttribute("value"),
+        rangeValue: (range as HTMLInputElement | null)?.value,
+        numberValue: (number as HTMLInputElement | null)?.value,
+      };
+    });
+    expect(customRangeState).toEqual({
+      hostValue: "20",
+      rangeValue: "20",
+      numberValue: "20",
+    });
+  });
+
+  test("fig-slider range supports Shift arrow key stepping", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider id="slider" text="false" value="50" min="0" max="100" step="2" aria-label="Scale"></fig-slider>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    await page.locator("#slider input").focus();
+    await page.keyboard.press("Shift+ArrowRight");
+
+    const state = await page.locator("#slider").evaluate((host) => {
+      const range = host.querySelector('input[type="range"]') as HTMLInputElement | null;
+      return {
+        hostValue: host.getAttribute("value"),
+        rangeValue: range?.value,
+        rangeValueNow: range?.getAttribute("aria-valuenow"),
+      };
+    });
+
+    expect(state).toEqual({
+      hostValue: "70",
+      rangeValue: "70",
+      rangeValueNow: "70",
+    });
+  });
+});
+
+test.describe("render timing composition", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.evaluate(async () => {
+      await Promise.all([
+        customElements.whenDefined("fig-field"),
+        customElements.whenDefined("fig-group"),
+        customElements.whenDefined("fig-input-number"),
+        customElements.whenDefined("fig-input-text"),
+        customElements.whenDefined("fig-slider"),
+      ]);
+    });
+  });
+
+  test("preserves composed children during synchronous setup", async ({ page }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-text id="text">
+          <span id="text-prepend" slot="prepend">T</span>
+          <button id="text-append" slot="append" type="button">Clear</button>
+        </fig-input-text>
+        <fig-input-number id="number" value="12" units="px" steppers>
+          <span id="number-prepend" slot="prepend">N</span>
+          <span id="number-append" slot="append">px</span>
+        </fig-input-number>
+        <fig-slider id="slider" text="false" value="5" min="0" max="10">
+          <datalist id="slider-ticks">
+            <option value="0"></option>
+            <option value="5"></option>
+          </datalist>
+        </fig-slider>
+        <fig-field id="field">
+          <label>Name</label>
+          <fig-input-text id="field-input"></fig-input-text>
+        </fig-field>
+        <fig-group id="group" name="Group" collapsible>
+          <p id="group-body">Body</p>
+        </fig-group>
+      `;
+
+      const text = document.querySelector("#text");
+      const number = document.querySelector("#number");
+      const slider = document.querySelector("#slider");
+      const field = document.querySelector("#field");
+      const group = document.querySelector("#group");
+      const fieldLabel = field?.querySelector("label");
+      const fieldNativeInput = field?.querySelector("fig-input-text input");
+      const sliderInput = slider?.querySelector('input[type="range"]');
+      const sliderDatalist = slider?.querySelector("datalist");
+
+      return {
+        textChildren: Array.from(text?.children ?? []).map((child) => child.id || child.tagName.toLowerCase()),
+        numberChildren: Array.from(number?.children ?? []).map((child) => child.id || child.tagName.toLowerCase()),
+        textInputReady: !!text?.querySelector("input"),
+        numberInputReady: !!number?.querySelector("input"),
+        numberSteppersReady: !!number?.querySelector(".fig-steppers"),
+        sliderInputReady: !!sliderInput,
+        sliderList: sliderInput?.getAttribute("list"),
+        sliderDatalistParent: sliderDatalist?.parentElement?.className,
+        fieldLabelFor: fieldLabel?.getAttribute("for"),
+        fieldInputId: fieldNativeInput?.id || null,
+        fieldInputLabelledBy: fieldNativeInput?.getAttribute("aria-labelledby"),
+        fieldLabelId: fieldLabel?.id || null,
+        groupHeaderReady: !!group?.querySelector(":scope > fig-header h3 .fig-group-chevron"),
+        groupBodyStillProjected: group?.querySelector("#group-body")?.parentElement?.id,
+      };
+    });
+
+    expect(state.textChildren).toEqual(["text-prepend", "input", "text-append"]);
+    expect(state.numberChildren).toEqual([
+      "number-prepend",
+      "input",
+      "number-append",
+      "span",
+    ]);
+    expect(state.textInputReady).toBe(true);
+    expect(state.numberInputReady).toBe(true);
+    expect(state.numberSteppersReady).toBe(true);
+    expect(state.sliderInputReady).toBe(true);
+    expect(state.sliderList).toBe("slider-ticks");
+    expect(state.sliderDatalistParent).toContain("fig-slider-input-container");
+    expect(state.fieldLabelFor).toBe(state.fieldInputId);
+    expect(state.fieldInputLabelledBy).toBe(state.fieldLabelId);
+    expect(state.groupHeaderReady).toBe(true);
+    expect(state.groupBodyStillProjected).toBe("group");
+  });
+
+  test("fig-group applies tokenized focus outline to collapsible header", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-group id="group" name="Advanced" collapsible>
+          <p>Body</p>
+        </fig-group>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const group = page.locator("#group");
+    const header = page.locator("#group > fig-header");
+    const headingId = await page.locator("#group > fig-header h3").getAttribute("id");
+    expect(headingId).toBeTruthy();
+    await expect(group).toHaveAttribute("role", "group");
+    await expect(group).toHaveAttribute("aria-labelledby", headingId || "");
+    await expect(page.getByRole("group", { name: "Advanced" })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Advanced" })).toHaveCount(1);
+    await expect(header).toHaveAttribute("role", "button");
+    await expect(header).toHaveAttribute("tabindex", "0");
+    await expect(header).toHaveAttribute("aria-expanded", "false");
+
+    await header.focus();
+    const focusStyle = await header.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+        outlineOffset: style.outlineOffset,
+        focusOutlineRadius: style.getPropertyValue("--figma-focus-outline-radius").trim(),
+        borderRadius: style.borderRadius,
+      };
+    });
+    expect(focusStyle).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "1px",
+      outlineOffset: "-1px",
+      focusOutlineRadius: "0.3125rem",
+      borderRadius: "5px",
+    });
+
+    await page.keyboard.press("Enter");
+    await expect(header).toHaveAttribute("aria-expanded", "true");
+    await expect(group).toHaveAttribute("open", "true");
   });
 });
 
@@ -643,6 +1100,36 @@ test.describe("color input accessibility", () => {
       alphaDisabled: false,
     });
 
+    await page.locator("#color fig-input-text input").focus();
+    const hexFocusStyles = await page.locator("#color").evaluate((host) => {
+      const hexHost = host.querySelector("fig-input-text");
+      const hostStyle = getComputedStyle(host);
+      const hexStyle = hexHost ? getComputedStyle(hexHost) : null;
+      return {
+        hostOutlineStyle: hostStyle.outlineStyle,
+        hexOutlineStyle: hexStyle?.outlineStyle,
+      };
+    });
+    expect(hexFocusStyles).toEqual({
+      hostOutlineStyle: "solid",
+      hexOutlineStyle: "none",
+    });
+
+    await page.locator("#color fig-input-number input").focus();
+    const opacityFocusStyles = await page.locator("#color").evaluate((host) => {
+      const opacityHost = host.querySelector("fig-input-number");
+      const hostStyle = getComputedStyle(host);
+      const opacityStyle = opacityHost ? getComputedStyle(opacityHost) : null;
+      return {
+        hostOutlineStyle: hostStyle.outlineStyle,
+        opacityOutlineStyle: opacityStyle?.outlineStyle,
+        opacityBoxShadow: opacityStyle?.boxShadow,
+      };
+    });
+    expect(opacityFocusStyles.hostOutlineStyle).toBe("solid");
+    expect(opacityFocusStyles.opacityOutlineStyle).toBe("none");
+    expect(opacityFocusStyles.opacityBoxShadow).not.toBe("none");
+
     await page.locator("#color").evaluate((host) => {
       host.setAttribute("aria-label", "Stroke");
       host.setAttribute("disabled", "");
@@ -664,6 +1151,85 @@ test.describe("color input accessibility", () => {
   });
 });
 
+test.describe("fill picker accessibility", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+    await page.evaluate(async () => {
+      await Promise.all([
+        customElements.whenDefined("fig-fill-picker"),
+        customElements.whenDefined("fig-chit"),
+        customElements.whenDefined("fig-button"),
+        customElements.whenDefined("fig-dropdown"),
+        customElements.whenDefined("fig-slider"),
+        customElements.whenDefined("fig-handle"),
+      ]);
+    });
+  });
+
+  test("names trigger swatches and generated dialog controls", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-fill-picker
+          id="picker"
+          mode="solid,gradient"
+          aria-label="Layer fill"
+          value='{"type":"solid","color":"#0D99FF"}'
+        >
+          <fig-chit background="#0D99FF"></fig-chit>
+        </fig-fill-picker>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    await expect(page.locator("#picker fig-chit")).toHaveAttribute(
+      "aria-label",
+      "Open Layer fill",
+    );
+    await page.locator("#picker fig-chit").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
+      "open",
+      "true",
+    );
+
+    const state = await page.evaluate(() => {
+      const dialog = document.querySelector("dialog.fig-fill-picker-dialog");
+      const closeButton = dialog?.querySelector(".fig-fill-picker-close");
+      const nativeClose = closeButton?.shadowRoot?.querySelector("button");
+      const eyedropper = dialog?.querySelector(".fig-fill-picker-eyedropper");
+      const nativeEyedropper = eyedropper?.shadowRoot?.querySelector("button");
+      const fillType = dialog?.querySelector(".fig-fill-picker-type select");
+      const gamut = dialog?.querySelector(".fig-fill-picker-gamut select");
+      const handle = dialog?.querySelector("fig-handle");
+      const hue = dialog?.querySelector('fig-slider[type="hue"] input[type="range"]');
+      const opacity = dialog?.querySelector('fig-slider[type="opacity"] fig-input-number input');
+      return {
+        closeLabel: nativeClose?.getAttribute("aria-label"),
+        eyedropperLabel: nativeEyedropper?.getAttribute("aria-label"),
+        fillTypeLabel: fillType?.getAttribute("aria-label"),
+        gamutLabel: gamut?.getAttribute("aria-label"),
+        handleLabel: handle?.getAttribute("aria-label"),
+        hueLabel: hue?.getAttribute("aria-label"),
+        opacityLabel: opacity?.getAttribute("aria-label"),
+      };
+    });
+
+    expect(state).toEqual({
+      closeLabel: "Close fill picker",
+      eyedropperLabel: "Sample color",
+      fillTypeLabel: "Fill type",
+      gamutLabel: "Color gamut",
+      handleLabel: "Color saturation and brightness",
+      hueLabel: "Hue",
+      opacityLabel: "Opacity",
+    });
+  });
+});
+
 test.describe("remaining accessibility contracts", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -673,9 +1239,13 @@ test.describe("remaining accessibility contracts", () => {
         customElements.whenDefined("fig-tabs"),
         customElements.whenDefined("fig-segmented-control"),
         customElements.whenDefined("fig-menu"),
+        customElements.whenDefined("fig-easing-curve"),
+        customElements.whenDefined("fig-origin-grid"),
         customElements.whenDefined("fig-input-fill"),
+        customElements.whenDefined("fig-input-palette"),
         customElements.whenDefined("fig-spinner"),
         customElements.whenDefined("fig-shimmer"),
+        customElements.whenDefined("fig-skeleton"),
         customElements.whenDefined("fig-handle"),
         customElements.whenDefined("fig-color-tip"),
         customElements.whenDefined("fig-layer"),
@@ -709,10 +1279,165 @@ test.describe("remaining accessibility contracts", () => {
     await expect(page.locator('fig-segment[value="left"]')).toHaveAttribute("role", "radio");
     await expect(page.locator('fig-segment[value="left"]')).toHaveAttribute("aria-checked", "true");
 
+    await page.locator('fig-tab[value="one"]').focus();
+    const tabFocusStyle = await page.locator('fig-tab[value="one"]').evaluate((tab) => {
+      const style = getComputedStyle(tab);
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+        outlineOffset: style.outlineOffset,
+      };
+    });
+    expect(tabFocusStyle).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "1px",
+      outlineOffset: "-1px",
+    });
+
     await page.locator('fig-segment[value="left"]').focus();
+    const leftFocusStyle = await page
+      .locator('fig-segment[value="left"]')
+      .evaluate((segment) => {
+        const style = getComputedStyle(segment);
+        return {
+          outlineStyle: style.outlineStyle,
+          outlineWidth: style.outlineWidth,
+          outlineOffset: style.outlineOffset,
+        };
+      });
+    expect(leftFocusStyle).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "1px",
+      outlineOffset: "0px",
+    });
+
     await page.keyboard.press("ArrowRight");
     await expect(page.locator('fig-segment[value="right"]')).toHaveAttribute("aria-checked", "true");
     await expect(page.locator('fig-segment[value="right"]')).toBeFocused();
+    await page.waitForTimeout(50);
+    await expect(page.locator('fig-segment[value="right"]')).toBeFocused();
+    const rightFocusStyle = await page
+      .locator('fig-segment[value="right"]')
+      .evaluate((segment) => {
+        const style = getComputedStyle(segment);
+        return {
+          outlineStyle: style.outlineStyle,
+          outlineWidth: style.outlineWidth,
+          outlineOffset: style.outlineOffset,
+        };
+      });
+    expect(rightFocusStyle).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "1px",
+      outlineOffset: "0px",
+    });
+  });
+
+  test("fig-input-palette uses tokenized focus outline on the visible swatch row", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-palette
+          id="palette"
+          value='["#0D99FF","#14AE5C","#FFCD29"]'
+          aria-label="Palette"
+        ></fig-input-palette>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    await page.locator("#palette").focus();
+
+    const focusStyle = await page.locator("#palette").evaluate((host) => {
+      const row = host.querySelector(".palette-colors-inline");
+      if (!row) return null;
+      const hostStyle = getComputedStyle(host);
+      const rowStyle = getComputedStyle(row);
+      return {
+        hostOutlineStyle: hostStyle.outlineStyle,
+        rowOutlineStyle: rowStyle.outlineStyle,
+        rowOutlineWidth: rowStyle.outlineWidth,
+        rowOutlineOffset: rowStyle.outlineOffset,
+      };
+    });
+
+    expect(focusStyle).toEqual({
+      hostOutlineStyle: "none",
+      rowOutlineStyle: "solid",
+      rowOutlineWidth: "1px",
+      rowOutlineOffset: "-1px",
+    });
+
+    const row = page.locator("#palette .palette-colors-inline");
+    await expect(row).toHaveAttribute("role", "button");
+    await expect(row).not.toHaveAttribute("tabindex", "0");
+    await expect(row).toHaveAttribute("aria-expanded", "false");
+    await page.locator("#palette").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#palette")).toHaveAttribute("open", "");
+    await expect(row).toHaveAttribute("aria-expanded", "true");
+
+    await page.keyboard.press("Tab");
+    await expect(row).not.toBeFocused();
+
+    await page.locator("#palette .palette-colors-inline fig-input-color").first().focus();
+    const inlineSwatchStyle = await page
+      .locator("#palette .palette-colors-inline fig-input-color")
+      .first()
+      .evaluate((element) => {
+        const style = getComputedStyle(element);
+        const rowStyle = getComputedStyle(element.closest(".palette-colors-inline") as Element);
+        return {
+          outlineStyle: style.outlineStyle,
+          rowOutlineStyle: rowStyle.outlineStyle,
+          rowOutlineWidth: rowStyle.outlineWidth,
+          rowOutlineOffset: rowStyle.outlineOffset,
+        };
+      });
+    expect(inlineSwatchStyle).toEqual({
+      outlineStyle: "none",
+      rowOutlineStyle: "none",
+      rowOutlineWidth: "3px",
+      rowOutlineOffset: "0px",
+    });
+  });
+
+  test("fig-origin-grid handle uses tokenized focus outline", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-origin-grid id="origin" value="50% 50%"></fig-origin-grid>`;
+    });
+    await page.waitForTimeout(100);
+
+    const handle = page.locator("#origin fig-handle");
+    await handle.focus();
+
+    const focusStyle = await handle.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+        outlineOffset: style.outlineOffset,
+      };
+    });
+
+    expect(focusStyle).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "1px",
+      outlineOffset: "1px",
+    });
+
+    await page.keyboard.press("ArrowRight");
+    await expect(handle).toBeFocused();
+    await expect(page.locator("#origin")).toHaveAttribute("value", "51% 50%");
+
+    await page.keyboard.press("Shift+ArrowDown");
+    await expect(handle).toBeFocused();
+    await expect(page.locator("#origin")).toHaveAttribute("value", "51% 60%");
   });
 
   test("menu trigger and items support keyboard menu semantics", async ({ page }) => {
@@ -813,6 +1538,173 @@ test.describe("remaining accessibility contracts", () => {
       toastLive: "polite",
     });
   });
+
+  test("fig-skeleton hides descendant controls from tab focus", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <button id="before">Before</button>
+        <fig-skeleton>
+          <input id="hidden-input" value="Hidden">
+          <button id="hidden-button">Hidden button</button>
+        </fig-skeleton>
+        <button id="after">After</button>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    await expect(page.locator("fig-skeleton")).toHaveAttribute("inert", "");
+    await page.locator("#before").focus();
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#after")).toBeFocused();
+  });
+
+  test("draggable handles move with keyboard and emit value changes", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="position: relative; width: 200px; height: 100px;">
+          <fig-handle id="keyboard-handle" drag="true" value="50% 50%"></fig-handle>
+        </div>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const handle = page.locator("#keyboard-handle");
+    await handle.focus();
+    const focusStyle = await handle.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+        outlineOffset: style.outlineOffset,
+      };
+    });
+    expect(focusStyle).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "1px",
+      outlineOffset: "1px",
+    });
+
+    await page.keyboard.press("ArrowRight");
+    await expect(handle).toHaveAttribute("value", "51% 50%");
+    await page.keyboard.press("Shift+ArrowDown");
+    await expect(handle).toHaveAttribute("value", "51% 60%");
+    await page.keyboard.press("Home");
+    await expect(handle).toHaveAttribute("value", "0% 0%");
+  });
+
+  test("fig-easing-curve handles are draggable and support keyboard movement", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-easing-curve
+          id="curve"
+          value="0.25, 0.25, 0.75, 0.75"
+        ></fig-easing-curve>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const handleOrder = await page.locator("#curve").evaluate((host) =>
+      Array.from(host.querySelectorAll(".fig-easing-curve-handle")).map((handle) =>
+        handle.getAttribute("data-handle"),
+      ),
+    );
+    expect(handleOrder).toEqual(["2", "1"]);
+
+    const firstHandle = page.locator('#curve [data-handle="1"] fig-handle');
+    await expect(firstHandle).toHaveAttribute("drag", "");
+
+    await firstHandle.focus();
+    await page.keyboard.press("ArrowRight");
+
+    const state = await page.locator("#curve").evaluate((host) => {
+      const input = host.querySelector(".fig-easing-curve-value-input");
+      return {
+        value: host.value,
+        inputValue: input?.getAttribute("value"),
+      };
+    });
+
+    expect(state).toEqual({
+      value: "0.26, 0.25, 0.75, 0.75",
+      inputValue: "0.26, 0.25, 0.75, 0.75",
+    });
+  });
+
+  test("tooltip Escape dismisses and returns focus to the trigger", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-tooltip id="tooltip" action="click" text="Helpful note">
+          <fig-button id="tooltip-trigger">Help</fig-button>
+        </fig-tooltip>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const trigger = page.locator("#tooltip-trigger");
+    await trigger.focus();
+    await trigger.click();
+    await expect(page.locator('dialog[is="fig-popup"][data-tooltip-managed]')).toHaveCount(1);
+    await page.keyboard.press("Escape");
+    await expect(page.locator('dialog[is="fig-popup"][data-tooltip-managed]')).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+  });
+
+  test("dialog and popup close paths restore focus", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="dialog-trigger">Open dialog</fig-button>
+        <dialog id="restore-dialog" is="fig-dialog" aria-label="Example dialog">
+          <fig-button close-dialog>Close dialog</fig-button>
+        </dialog>
+        <fig-button id="popup-trigger">Open popup</fig-button>
+        <dialog id="restore-popup" is="fig-popup" anchor="#popup-trigger" aria-label="Example popup">
+          <fig-button id="popup-close">Close popup</fig-button>
+        </dialog>
+      `;
+      const dialogTrigger = document.querySelector("#dialog-trigger");
+      const dialog = document.querySelector("#restore-dialog");
+      dialogTrigger?.addEventListener("click", () => dialog?.show());
+      const popupTrigger = document.querySelector("#popup-trigger");
+      const popup = document.querySelector("#restore-popup");
+      popupTrigger?.addEventListener("click", () => {
+        popup.open = true;
+      });
+      document.querySelector("#popup-close")?.addEventListener("click", () => {
+        popup.open = false;
+      });
+    });
+    await page.waitForTimeout(100);
+
+    const dialogTrigger = page.locator("#dialog-trigger");
+    await dialogTrigger.focus();
+    await dialogTrigger.click();
+    await page.locator("#restore-dialog > fig-button[close-dialog]").click();
+    await expect(dialogTrigger).toBeFocused();
+
+    const popupTrigger = page.locator("#popup-trigger");
+    await popupTrigger.focus();
+    await popupTrigger.click();
+    await expect(page.locator("#restore-popup")).toHaveAttribute("open", "true");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#restore-popup")).not.toHaveAttribute("open", "true");
+    await expect(popupTrigger).toBeFocused();
+  });
 });
 
 test.describe("media accessibility", () => {
@@ -911,6 +1803,8 @@ test.describe("media accessibility", () => {
       return {
         hostRole: host.getAttribute("role"),
         hostLabel: host.getAttribute("aria-label"),
+        sliderStep: slider?.getAttribute("step"),
+        inputStep: input?.getAttribute("step"),
         sliderLabel: input?.getAttribute("aria-label"),
         sliderValueText: input?.getAttribute("aria-valuetext"),
         timeTag: time?.tagName,
@@ -921,6 +1815,8 @@ test.describe("media accessibility", () => {
     expect(state).toEqual({
       hostRole: "group",
       hostLabel: "Media controls",
+      sliderStep: "1",
+      inputStep: "1",
       sliderLabel: "Seek",
       sliderValueText: "00:12 of 01:30",
       timeTag: "SPAN",
@@ -996,6 +1892,60 @@ test.describe("media accessibility", () => {
         page
           .locator("fig-image > fig-preview > fig-input-file[data-generated]")
           .evaluate((element) => getComputedStyle(element).opacity),
+      )
+      .toBe("1");
+  });
+
+  test("fig-image overlays slotted custom children without reparenting them", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-image
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          alt="Image preview"
+        >
+          <fig-input-file slot="overlay" accepts="image/*" label="Change" variant="overlay"></fig-input-file>
+        </fig-image>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    await expect(
+      page.locator("fig-image > fig-input-file[slot='overlay']"),
+    ).toHaveCount(1);
+    await expect(
+      page.locator("fig-image > fig-preview > fig-input-file[slot='overlay']"),
+    ).toHaveCount(0);
+
+    const overlayStyle = await page
+      .locator("fig-image > fig-input-file[slot='overlay']")
+      .evaluate((element) => {
+        const style = getComputedStyle(element);
+        const hostStyle = getComputedStyle(element.parentElement as Element);
+        return {
+          hostDisplay: hostStyle.display,
+          opacity: style.opacity,
+          gridArea: style.gridArea,
+          placeSelf: style.placeSelf,
+        };
+      });
+
+    expect(overlayStyle).toEqual({
+      hostDisplay: "grid",
+      opacity: "0",
+      gridArea: "media-preview",
+      placeSelf: "center",
+    });
+
+    await page.locator("fig-image > fig-input-file[slot='overlay'] input[type=file]").focus();
+    await expect
+      .poll(() =>
+        page.locator("fig-image > fig-input-file[slot='overlay']").evaluate((element) =>
+          getComputedStyle(element).opacity,
+        ),
       )
       .toBe("1");
   });

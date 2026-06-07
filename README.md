@@ -21,12 +21,13 @@ A lightweight, zero-dependency web components library for building Figma plugin 
 
 FigUI3 components are built to preserve native semantics where possible and add ARIA only where custom elements need extra state or naming.
 
-- Form primitives forward accessible names and state to their native controls, including text, number, slider, checkbox, radio, switch, color, and fill inputs.
-- Selection components use standard keyboard patterns: tabs use roving focus and `aria-controls`, segmented controls expose a radio-group pattern, choosers expose listbox/options, and menus support trigger state, item focus, Escape close, and disabled items.
-- Dialog, popup, tooltip, and toast surfaces expose names, close affordances, live-region behavior, and focus return behavior appropriate to their role.
-- Media components render their visual surface inside `fig-preview`; image/video semantics stay on the native media element, upload controls remain keyboard reachable, and generated video controls render below the preview instead of as an overlay.
-- Display and pointer components expose useful semantics when interactive or informative: handles, chits, color tips, layers, spinners, shimmers, and skeletons sync names, busy states, disabled states, or hidden states as appropriate.
-- Focus styling uses shared `--figma-focus-outline` and `--figma-focus-outline-offset` tokens so visible focus treatment stays consistent across components.
+- Form primitives forward accessible names and state to their native controls, including combo inputs, dropdowns, text, number, slider, checkbox, radio, switch, color, and fill inputs.
+- Selection components use standard keyboard patterns: tabs use roving focus and `aria-controls`, segmented controls expose a radio-group pattern with focus following arrow selection, choosers expose listbox/options, and menus support trigger state, item focus, Escape close, and disabled items.
+- Dialog, popup, tooltip, and toast surfaces expose names, close affordances, live-region behavior, Escape dismissal, and focus return behavior appropriate to their role.
+- Media components render their visual surface inside `fig-preview`; image/video semantics stay on the native media element, upload controls remain keyboard reachable, slotted image overlays stay in light DOM for framework ownership, and generated video controls render below the preview instead of as an overlay.
+- Display and pointer components expose useful semantics when interactive or informative: handles, chits, color tips, layers, spinners, shimmers, and skeletons sync names, busy states, disabled states, keyboard movement, inert states, or hidden states as appropriate.
+- Focus styling uses shared `--figma-focus-outline`, `--figma-focus-outline-offset`, and `--figma-focus-outline-radius` tokens so visible focus treatment stays consistent across components.
+- Component contracts include Playwright keyboard/focus coverage plus an axe smoke suite for representative form, media, overlay, selection, and loading fixtures.
 
 ## Quick Start
 
@@ -153,6 +154,8 @@ Minimal example:
 </fig-button>
 ```
 
+`type="select"` and `type="upload"` are visual wrappers for native select/file controls. They avoid nested native buttons, show the shared focus outline on the wrapper, and open the native picker from keyboard activation where supported.
+
 ---
 
 #### Dropdown
@@ -164,6 +167,8 @@ Minimal example:
 | `value` | string | — | Selected value |
 | `type` | string | `"select"` | `"select"` or `"dropdown"` |
 | `experimental` | string | — | Feature flags (e.g. `"modern"` for `appearance: base-select`) |
+| `label` | string | — | Accessible label for the generated native `<select>` |
+| `disabled` | boolean | `false` | Disabled state |
 
 ```html
 <fig-dropdown value="2">
@@ -171,6 +176,8 @@ Minimal example:
   <option value="2">Option 2</option>
 </fig-dropdown>
 ```
+
+Keyboard activation follows the native select pattern. Enter opens the closed picker, and when `experimental="modern"` is open, Enter is left to the browser so the focused option commits normally.
 
 ---
 
@@ -258,7 +265,7 @@ Minimal example:
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `type` | string | `"range"` | `"range"`, `"hue"`, `"opacity"`, `"delta"`, `"stepper"` |
-| `value` | number | — | Current value |
+| `value` | number | midpoint for `type="range"` | Current value |
 | `min` | number | `0` | Minimum |
 | `max` | number | `100` | Maximum |
 | `step` | number | `1` | Step increment |
@@ -279,6 +286,8 @@ Minimal example:
 <fig-slider type="hue" value="180" text="false"></fig-slider>
 <fig-slider type="opacity" value="75" color="#FF5733" units="%"></fig-slider>
 ```
+
+For `type="range"`, omitting `value` follows native range behavior and starts at the midpoint of `min` and `max`. Arrow keys move by `step`; hold Shift to move by a larger step.
 
 ---
 
@@ -486,6 +495,8 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 <fig-input-palette value='[{"color":"#FF0000","alpha":0.5},{"color":"#00FF00","alpha":1}]' open></fig-input-palette>
 ```
 
+The collapsed palette is a single tab stop. Enter or Space expands it, and focus styling uses the shared focus outline tokens on the visible swatch row.
+
 ---
 
 #### Gradient Input
@@ -593,7 +604,7 @@ Optional full fill picker dialog supporting solid, gradient, image, video, and w
 
 **Events:** `input`, `change` with selected tab value.
 
-Tabs use `role="tablist"` / `role="tab"` and roving focus. Use `content="#panel-id"` on each `<fig-tab>` to associate generated tab panels.
+Tabs use `role="tablist"` / `role="tab"` and roving focus. Use `content="#panel-id"` on each `<fig-tab>` to associate generated tab panels. Focus-visible tabs use the shared focus outline tokens.
 
 ```html
 <fig-tabs value="tab1">
@@ -617,7 +628,7 @@ Tabs use `role="tablist"` / `role="tab"` and roving focus. Use `content="#panel-
 
 **Events:** `input`, `change` — detail contains the selected value.
 
-Segmented controls expose a radio-group pattern. Arrow keys, Home, and End move selection between enabled segments.
+Segmented controls expose a radio-group pattern. Arrow keys, Home, and End move selection between enabled segments and move focus to the selected segment.
 
 ```html
 <fig-segmented-control>
@@ -696,6 +707,8 @@ A 2D position input control with optional X/Y fields.
 <fig-joystick value="50% 50%" fields="true" precision="2"></fig-joystick>
 ```
 
+Keyboard focus lands on the internal handle. Arrow keys move the handle and keep focus on it during interaction.
+
 ---
 
 #### Origin Grid
@@ -722,6 +735,8 @@ A transform-origin grid control with a draggable handle and optional X/Y percent
 ```html
 <fig-origin-grid value="50% 50%" drag="true" fields="true"></fig-origin-grid>
 ```
+
+The internal handle uses the shared focus outline and supports Arrow, Shift+Arrow, Home, and End keyboard movement.
 
 ---
 
@@ -751,6 +766,8 @@ An interactive bezier or spring easing curve editor with a preset dropdown and m
 <fig-easing-curve value="0.42, 0, 0.58, 1"></fig-easing-curve>
 <fig-easing-curve value="spring(200, 15, 1)" edit="false"></fig-easing-curve>
 ```
+
+Editable bezier and spring handles are keyboard operable. Bezier handles keep tab order aligned with the visual handle order.
 
 ---
 
@@ -823,6 +840,8 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
   <fig-handle drag="true" value="50% 50%"></fig-handle>
 </div>
 ```
+
+When `drag="true"`, focused handles support Arrow key movement, Home/End jumps, and a tokenized focus outline with a 1px offset.
 
 ---
 
@@ -918,6 +937,8 @@ A modal/non-modal dialog. Uses `is="fig-dialog"` on a native `<dialog>` element.
 </dialog>
 ```
 
+Dialog close paths restore focus to the element that opened the dialog.
+
 ---
 
 #### Popup
@@ -945,6 +966,8 @@ An anchored floating surface built on `<dialog>` with collision-aware positionin
   <fig-header><h3>Popup</h3></fig-header>
 </dialog>
 ```
+
+Popups restore focus on close. Escape dismissal is scoped so nested menu and overlay behavior can keep its own keyboard handling.
 
 ---
 
@@ -991,6 +1014,8 @@ Contextual tooltip on hover or click. Auto-repositions when the child element mo
   <fig-button>Hover me</fig-button>
 </fig-tooltip>
 ```
+
+Escape dismisses an open tooltip and returns focus to its trigger.
 
 ---
 
@@ -1146,7 +1171,12 @@ Use meaningful `alt` text for informative images. Use `alt=""` for decorative pr
 <fig-image src="photo.jpg" alt="Selected image"></fig-image>
 <fig-image src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover"></fig-image>
 <fig-image upload label="Upload Image" alt=""></fig-image>
+<fig-image src="photo.jpg" alt="Selected image">
+  <fig-input-file slot="overlay" variant="overlay" label="Change image"></fig-input-file>
+</fig-image>
 ```
+
+Use `slot="overlay"` for custom overlay controls. Slotted overlays stay as direct light-DOM children so frameworks like React keep ownership of their nodes, while CSS places them over the preview and keeps them visible on hover, focus, and active interaction.
 
 ---
 
@@ -1258,7 +1288,7 @@ Shimmer and skeleton placeholders are hidden from assistive tech unless you add 
 
 `<fig-skeleton>`
 
-Extends `<fig-shimmer>` with no additional attributes. Use for structured loading placeholders.
+Extends `<fig-shimmer>` for structured loading placeholders. Skeletons are inert by default, so any placeholder inputs or buttons inside them are removed from tab focus while loading.
 
 ```html
 <fig-skeleton style="width: 100%; height: 1rem; border-radius: 4px;"></fig-skeleton>
@@ -1290,6 +1320,16 @@ Force a theme manually:
   <!-- Forces dark theme -->
 </body>
 ```
+
+Focus indicators are controlled with shared tokens:
+
+```css
+--figma-focus-outline
+--figma-focus-outline-offset
+--figma-focus-outline-radius
+```
+
+`--figma-focus-outline-radius` defaults to `inherit`, so focused controls can inherit their component radius unless a component overrides it for a specific shape.
 
 ---
 

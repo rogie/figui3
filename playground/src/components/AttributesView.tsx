@@ -1221,7 +1221,6 @@ export default function AttributesView({
                 <fig-input-number
                   value={currentX}
                   step="1"
-                  steppers
                   full
                   onInput={handleOffsetInput("x")}
                   onChange={handleOffsetInput("x")}
@@ -1231,7 +1230,6 @@ export default function AttributesView({
                 <fig-input-number
                   value={currentY}
                   step="1"
-                  steppers
                   full
                   onInput={handleOffsetInput("y")}
                   onChange={handleOffsetInput("y")}

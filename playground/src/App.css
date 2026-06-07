@@ -260,6 +260,8 @@ nav {
   }
 }
 
+
+
 main {
   width: 100%;
   max-width: calc(var(--playground-width) + var(--spacer-4) * 2);
@@ -585,9 +587,8 @@ code {
     font-size: 14px;
 
     &:focus {
-      outline: 2px solid
-        color-mix(in srgb, var(--sandbox-brand) 35%, transparent);
-      outline-offset: 1px;
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
       border-color: var(--sandbox-brand);
     }
   }

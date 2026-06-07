@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback } from "react";
 import { createEditor, replaceDoc } from "../lib/codemirror";
 import { buildPrompt, copyText } from "../lib/prompt";
 import type { EditorView } from "@codemirror/view";
+import { useCopyTooltip } from "../hooks/useCopyTooltip";
 import ClipboardIcon from "../icons/icon.24.clipboard.svg?react";
 import ChatIcon from "../icons/icon.24.cursor-chat.svg?react";
 import { getCodeSourceMarkup, mergePreviewOnlyElements } from "../lib/exampleMarkup";
@@ -14,7 +15,9 @@ interface Props {
 export default function CodeView({ markup, onMarkupChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
-  const toastRef = useRef<HTMLElement>(null);
+  const htmlCopyTooltipRef = useRef<HTMLElement>(null);
+  const promptCopyTooltipRef = useRef<HTMLElement>(null);
+  const { showCopyTooltip } = useCopyTooltip();
   const markupRef = useRef(markup);
   const editorOriginRef = useRef(false);
   const suppressOnChangeRef = useRef(false);
@@ -51,43 +54,35 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
     suppressOnChangeRef.current = false;
   }, [codeMarkup]);
 
-  const showToast = useCallback((message: string) => {
-    const el = toastRef.current as HTMLElement & { showToast?: () => void };
-    const colorScheme =
-      document.documentElement.style.colorScheme ||
-      window.getComputedStyle(document.documentElement).colorScheme;
-    const isDark = colorScheme.includes("dark");
-    el?.setAttribute("theme", isDark ? "light" : "dark");
-    if (el) {
-      el.textContent = message;
-    }
-    el?.showToast?.();
-  }, []);
-
   const handleCopyCode = useCallback(async () => {
     if (!codeMarkup) return;
     await copyText(codeMarkup);
-    showToast("HTML copied");
-  }, [codeMarkup, showToast]);
+    showCopyTooltip("HTML copied", htmlCopyTooltipRef.current);
+  }, [codeMarkup, showCopyTooltip]);
 
   const handleCopyPrompt = useCallback(async () => {
     if (!codeMarkup) return;
     const prompt = buildPrompt(codeMarkup);
     await copyText(prompt);
-    showToast("Prompt copied");
-  }, [codeMarkup, showToast]);
+    showCopyTooltip("Prompt copied", promptCopyTooltipRef.current);
+  }, [codeMarkup, showCopyTooltip]);
 
   return (
     <div className="propkit-code-view">
       <fig-header>
         <h3>Code</h3>
         <div className="propkit-code-view-actions">
-          <fig-tooltip text="Copy HTML">
-            <fig-button variant="ghost" icon onClick={handleCopyCode} aria-label="Copy HTML">
+          <fig-tooltip ref={htmlCopyTooltipRef} text="Copy HTML">
+            <fig-button
+              variant="ghost"
+              icon
+              onClick={handleCopyCode}
+              aria-label="Copy HTML"
+            >
               <ClipboardIcon />
             </fig-button>
           </fig-tooltip>
-          <fig-tooltip text="Copy prompt">
+          <fig-tooltip ref={promptCopyTooltipRef} text="Copy prompt">
             <fig-button
               variant="ghost"
               icon
@@ -100,9 +95,6 @@ export default function CodeView({ markup, onMarkupChange }: Props) {
         </div>
       </fig-header>
       <div ref={containerRef} />
-      <dialog is="fig-toast" ref={toastRef as React.RefObject<HTMLDialogElement>}>
-        HTML copied
-      </dialog>
     </div>
   );
 }

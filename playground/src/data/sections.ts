@@ -342,10 +342,10 @@ export const propkitSections: Section[] = [
   <fig-field direction="vertical">
     <label>Gradients</label>
     <fig-chooser layout="vertical" value="sunset-glow" full drag data-playground-hide-attrs="layout,drag,loop" style="max-height: 240px">
-      <fig-choice value="sunset-glow" selected><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#FFB347","opacity":100},{"position":50,"color":"#FF5E78","opacity":100},{"position":100,"color":"#7A2BD9","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
-      <fig-choice value="aurora"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
-      <fig-choice value="bubblegum"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":45,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#FFC2E2","opacity":100},{"position":48,"color":"#FF4FA2","opacity":100},{"position":52,"color":"#7DF3D4","opacity":100},{"position":100,"color":"#2EB39A","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
-      <fig-choice value="holographic"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#FF6EC7","opacity":100},{"position":25,"color":"#FFD86E","opacity":100},{"position":50,"color":"#6EE7FF","opacity":100},{"position":75,"color":"#A06EFF","opacity":100},{"position":100,"color":"#FF6E9A","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="sunset-glow" selected><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#FFB347","opacity":100},{"position":50,"color":"#FF5E78","opacity":100},{"position":100,"color":"#7A2BD9","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="aurora"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="bubblegum"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":45,"stops":[{"position":0,"color":"#FFC2E2","opacity":100},{"position":48,"color":"#FF4FA2","opacity":100},{"position":52,"color":"#7DF3D4","opacity":100},{"position":100,"color":"#2EB39A","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="holographic"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#FF6EC7","opacity":100},{"position":25,"color":"#FFD86E","opacity":100},{"position":50,"color":"#6EE7FF","opacity":100},{"position":75,"color":"#A06EFF","opacity":100},{"position":100,"color":"#FF6E9A","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -538,7 +538,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Fill</label>
-    <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":135,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}'></fig-input-fill>
+    <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}'></fig-input-fill>
   </fig-field>
 </div>`,
       },
@@ -587,7 +587,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Gradient</label>
-    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
+    <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
   </fig-field>
 </div>`,
       },
@@ -637,7 +637,7 @@ export const propkitSections: Section[] = [
   <fig-field>
     <label>Image</label>
     <fig-image full="true" src="${portraitUrl()}" alt="Image preview" fit="cover" size="auto" checkerboard="true">
-      <fig-input-file accepts="image/*" label="Change" variant="overlay"></fig-input-file>
+      <fig-input-file slot="overlay" accepts="image/*" label="Change" variant="overlay"></fig-input-file>
     </fig-image>
   </fig-field>
 </div>`,
@@ -1218,7 +1218,7 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field>
           <label>Gradient</label>
-          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
+          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
         </fig-field>
         <fig-field>
           <label>Palette</label>
@@ -1390,7 +1390,7 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field direction="horizontal">
           <label>Brand Fade</label>
-          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"oklab","stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
+          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
         </fig-field>
         <fig-field direction="horizontal">
           <label>Swatches</label>

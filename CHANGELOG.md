@@ -7,17 +7,34 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added focused Playwright accessibility coverage for media, form primitives, selection controls, overlays, loading indicators, display swatches, handles, color tips, layers, and toast live regions.
+- Added an axe-powered accessibility smoke suite covering representative form, selection, media, overlay, and loading fixtures.
+- Added regression coverage for combo input labels, fill picker controls, keyboard handles, overlay focus restoration, slider defaults, segmented focus movement, palette expansion, group semantics, image overlays, joystick/origin-grid handles, and skeleton tab suppression.
+- Added performance test scaffolding, budgets, and `npm run test:perf` / `npm run test:all` commands for render and runtime checks.
 - Added `fig-toast` and `fig-layer` registration/coverage in the main component contract flow.
+- Added a playground "Multiple radios" example to show independent, non-grouped radio tab behavior.
 
 ### Changed
 
 - Reworked `fig-media`, `fig-image`, and `fig-video` so generated media is contained in `fig-preview` and generated video controls attach below the preview instead of overlaying the media surface.
-- Improved accessible names, ARIA state sync, disabled behavior, and keyboard support across buttons, checkboxes, radios, switches, text inputs, number inputs, fields, sliders, color inputs, fill inputs, tabs, segmented controls, menus, dialogs, popups, toasts, chits, handles, color tips, spinners, shimmers, skeletons, and layers.
+- Improved accessible names, ARIA state sync, disabled behavior, and keyboard support across buttons, combo inputs, dropdowns, checkboxes, radios, switches, text inputs, number inputs, fields, sliders, color inputs, fill inputs, fill pickers, tabs, segmented controls, menus, dialogs, popups, toasts, chits, handles, color tips, joystick, origin grid, easing curves, spinners, shimmers, skeletons, and layers.
+- Updated shared focus styling with a stronger `--figma-focus-outline`, component-specific offsets, and the new inheritable `--figma-focus-outline-radius` token.
+- Updated `fig-slider type="range"` so an omitted `value` defaults to the midpoint of `min` and `max`, matching native range behavior.
+- Updated media and image custom overlays to use light-DOM `slot="overlay"` placement instead of reparenting child nodes, preserving framework ownership.
 - Updated playground examples to remove `experimental="modern"` from dropdown/fill/gradient examples except the existing easing-curve behavior.
-- Documented accessibility coverage, media preview composition, keyboard patterns, loading semantics, and fill/media naming guidance in the README and playground component descriptions.
+- Documented accessibility coverage, media preview composition, keyboard patterns, loading semantics, fill/media naming guidance, overlay slots, focus tokens, and verification commands in the README, changelog, contributing guide, and playground component descriptions.
 
 ### Fixed
 
+- Fixed `fig-button type="select"` and combo-input select affordances so native controls keep accessible labels while the wrapper shows the correct focus state and opens the picker on keyboard activation.
+- Fixed `fig-dropdown experimental="modern"` so Enter opens the closed picker and still allows native option commitment while open.
+- Fixed `fig-fill-picker` icon-only buttons, generated dropdowns, swatches, gradient controls, and media controls so they expose usable labels and keyboard states.
+- Fixed keyboard movement and focus retention for `fig-handle`, `fig-easing-curve`, `fig-joystick`, and `fig-origin-grid`.
+- Fixed focus return for dialogs, popups, and tooltips after Escape or close interactions.
+- Fixed focus outlines for tabs, segments, palette rows, groups, handles, switches, checkboxes, radios, composite color/fill fields, and lab sliders.
+- Fixed `fig-input-palette` so the collapsed palette has one tab stop, expands on Enter/Space, and suppresses chunky nested swatch outlines.
+- Fixed `fig-group` headers so collapsible groups expose `role`, `aria-expanded`, keyboard toggle behavior, and the shared focus outline.
+- Fixed `fig-image` custom overlay controls so they stay over the preview and remain visible during hover, focus, and active interaction.
+- Fixed `fig-skeleton` so descendant placeholder controls are inert and skipped by Tab.
 - Fixed generated icon-only media/file controls and dialog close controls so they expose accessible names.
 - Fixed generated media upload overlays to remain keyboard reachable while preserving the visible preview surface.
 
