@@ -654,6 +654,7 @@ When app code rebuilds a chooser by setting `fig-chooser.innerHTML`, the chooser
 | `value` | string | — | Selected choice value |
 | `choice-element` | string | `"fig-choice"` | CSS selector for child choices |
 | `layout` | string | `"vertical"` | `"vertical"`, `"horizontal"`, `"grid"` |
+| `columns` | number | `2` | Grid column count when `layout="grid"` |
 | `disabled` | boolean | `false` | Disabled state |
 | `drag` | boolean | `false` | Enable drag-to-scroll |
 | `overflow` | string | — | Overflow behavior |

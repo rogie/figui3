@@ -3319,7 +3319,14 @@ class FigTabs extends HTMLElement {
   #ensureScroller() {
     if (this.#isStructuring) return;
     const existing = this.querySelector(":scope > [data-fig-tabs-scroll]");
-    if (existing && existing === this.#scroller) return;
+    const directNodes = existing
+      ? Array.from(this.childNodes).filter((node) => {
+          if (node === existing) return false;
+          if (node.nodeType !== Node.ELEMENT_NODE) return true;
+          return !node.hasAttribute("data-fig-tabs-nav");
+        })
+      : null;
+    if (existing && existing === this.#scroller && !directNodes?.length) return;
 
     this.#isStructuring = true;
     try {
@@ -3332,11 +3339,13 @@ class FigTabs extends HTMLElement {
       scroller.className = "fig-tabs-scroll";
       scroller.dataset.figTabsScroll = "";
 
-      const nodes = Array.from(this.childNodes).filter((node) => {
-        if (node === scroller) return false;
-        if (node.nodeType !== Node.ELEMENT_NODE) return true;
-        return !node.hasAttribute("data-fig-tabs-nav");
-      });
+      const nodes =
+        directNodes ??
+        Array.from(this.childNodes).filter((node) => {
+          if (node === scroller) return false;
+          if (node.nodeType !== Node.ELEMENT_NODE) return true;
+          return !node.hasAttribute("data-fig-tabs-nav");
+        });
 
       for (const node of nodes) {
         scroller.appendChild(node);
@@ -14237,6 +14246,7 @@ customElements.define("fig-choice", FigChoice);
  * A selection controller for a list of choice elements.
  * @attr {string} choice-element - CSS selector for child choices (default: "fig-choice")
  * @attr {string} layout - Layout mode: "vertical" (default), "horizontal", "grid"
+ * @attr {number} columns - Number of columns when layout="grid" (default: 2)
  * @attr {string} value - Value of the currently selected choice
  * @attr {boolean} disabled - Whether the chooser is disabled
  */
@@ -14262,7 +14272,9 @@ class FigChooser extends HTMLElement {
       "value",
       "disabled",
       "choice-element",
+      "columns",
       "drag",
+      "layout",
       "overflow",
       "loop",
     ];
@@ -14281,6 +14293,16 @@ class FigChooser extends HTMLElement {
 
   get #choiceSelector() {
     return this.getAttribute("choice-element") || "fig-choice";
+  }
+
+  #syncGridColumns() {
+    const raw = this.getAttribute("columns");
+    const columns = raw === null ? NaN : Number(raw);
+    if (Number.isInteger(columns) && columns > 0) {
+      this.style.setProperty("--fig-chooser-grid-columns", String(columns));
+    } else {
+      this.style.removeProperty("--fig-chooser-grid-columns");
+    }
   }
 
   get choices() {
@@ -14360,6 +14382,7 @@ class FigChooser extends HTMLElement {
 
   connectedCallback() {
     this.setAttribute("role", "listbox");
+    this.#syncGridColumns();
     this.#ensureScroller();
     this.addEventListener("click", this.#boundHandleClick);
     this.addEventListener("keydown", this.#boundHandleKeyDown);
@@ -14436,6 +14459,9 @@ class FigChooser extends HTMLElement {
     if (name === "choice-element") {
       requestAnimationFrame(() => this.#syncSelection());
     }
+    if (name === "columns") {
+      this.#syncGridColumns();
+    }
     if (name === "drag") {
       if (this.#dragEnabled) {
         this.#setupDrag();
@@ -14445,6 +14471,10 @@ class FigChooser extends HTMLElement {
     }
     if (name === "overflow") {
       this.#applyOverflowMode();
+    }
+    if (name === "layout") {
+      this.#applyOverflowMode();
+      requestAnimationFrame(() => this.#syncOverflow());
     }
   }
 

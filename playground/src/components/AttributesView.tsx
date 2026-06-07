@@ -664,8 +664,9 @@ export default function AttributesView({
                     )
                   : toNumberValue(value, fallback);
             const useNumberInputControl =
-              target.controlTag === "fig-input-number" &&
-              (name === "min" || name === "max" || name === "step");
+              (target.controlTag === "fig-input-number" &&
+                (name === "min" || name === "max" || name === "step")) ||
+              (target.controlTag === "fig-chooser" && name === "columns");
             if (useNumberInputControl) {
               const handleNumberInput = (e: any) => {
                 const host = e.currentTarget as HTMLElement & {
@@ -680,6 +681,8 @@ export default function AttributesView({
                 <fig-input-number
                   value={String(numberValue)}
                   step={name === "step" ? "0.1" : "1"}
+                  min={rule.min === undefined ? undefined : String(rule.min)}
+                  max={rule.max === undefined ? undefined : String(rule.max)}
                   steppers="true"
                   full
                   onInput={handleNumberInput}

@@ -287,6 +287,26 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
+        id: "grid",
+        name: "Grid",
+        markup: `<div class="prop-panel">
+  <fig-field direction="vertical">
+    <label>Alignment</label>
+    <fig-chooser layout="grid" columns="3" value="top-left" full>
+      <fig-choice value="top-left" padding selected>Top left</fig-choice>
+      <fig-choice value="top" padding>Top</fig-choice>
+      <fig-choice value="top-right" padding>Top right</fig-choice>
+      <fig-choice value="left" padding>Left</fig-choice>
+      <fig-choice value="center" padding>Center</fig-choice>
+      <fig-choice value="right" padding>Right</fig-choice>
+      <fig-choice value="bottom-left" padding>Bottom left</fig-choice>
+      <fig-choice value="bottom" padding>Bottom</fig-choice>
+      <fig-choice value="bottom-right" padding>Bottom right</fig-choice>
+    </fig-chooser>
+  </fig-field>
+</div>`,
+      },
+      {
         id: "images",
         name: "Images",
         markup: `<div class="prop-panel">

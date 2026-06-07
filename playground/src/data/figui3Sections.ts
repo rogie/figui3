@@ -1,10 +1,54 @@
 import { propkitSections, type Section } from "./sections";
+import { landscapeUrl } from "../lib/images";
 
 const randomAvatarId = Math.floor(Math.random() * 70) + 1;
 
 function avatarServiceUrl(size: number): string {
   return `https://i.pravatar.cc/${size}?img=${randomAvatarId}`;
 }
+
+function unwrapChooserField(markup: string): string {
+  return markup
+    .replace(
+      /\n  <fig-field direction="vertical">\n    <label>[^<]*<\/label>\n    <fig-chooser/g,
+      "\n  <fig-chooser",
+    )
+    .replace(/\n    <\/fig-chooser>\n  <\/fig-field>/g, "\n  </fig-chooser")
+    .replace(/\n      /g, "\n    ");
+}
+
+function figui3ChooserGridMarkup(): string {
+  const images = Array.from({ length: 10 }, (_, index) => {
+    const label = `Image ${String.fromCharCode(65 + index)}`;
+    const value = `img-${index + 1}`;
+    return `    <fig-choice value="${value}" aria-label="${label}"${index === 0 ? " selected" : ""}><fig-image src="${landscapeUrl()}" alt="" aspect-ratio="1/1" full></fig-image></fig-choice>`;
+  }).join("\n");
+
+  return `<div class="prop-panel">
+  <fig-chooser layout="grid" columns="3" value="img-1" full>
+${images}
+  </fig-chooser>
+</div>`;
+}
+
+const propkitChooserSection = propkitSections.find(
+  (section) => section.id === "chooser",
+);
+const figui3ChooserSections: Section[] = propkitChooserSection
+  ? [
+      {
+        ...propkitChooserSection,
+        group: "Core components",
+        examples: propkitChooserSection.examples.map((example) => ({
+          ...example,
+          markup:
+            example.id === "grid"
+              ? figui3ChooserGridMarkup()
+              : unwrapChooserField(example.markup),
+        })),
+      },
+    ]
+  : [];
 
 export const figui3Sections: Section[] = [
   {
@@ -571,6 +615,7 @@ export const figui3Sections: Section[] = [
       },
     ],
   },
+  ...figui3ChooserSections,
   {
     id: "tabs",
     name: "Tabs",

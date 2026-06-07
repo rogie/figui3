@@ -1600,6 +1600,9 @@ fig-video {
     --fig-media-size: 6rem;
     width: var(--fig-media-size);
   }
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
 
   > fig-preview {
     --fig-preview-fit: var(--fig-media-fit);
@@ -1611,7 +1614,8 @@ fig-video {
 
   &[size="small"] > fig-preview,
   &[size="medium"] > fig-preview,
-  &[size="large"] > fig-preview {
+  &[size="large"] > fig-preview,
+  &[aspect-ratio] > fig-preview {
     min-height: auto;
   }
 
@@ -4611,7 +4615,10 @@ fig-chooser {
   &[layout="grid"] {
     > .fig-chooser-scroll {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(
+        var(--fig-chooser-grid-columns, 2),
+        minmax(0, 1fr)
+      );
     }
 
     > .fig-chooser-scroll > * {

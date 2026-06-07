@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.6.0]
+
+### Added
+
+- Added `columns` support for `fig-chooser layout="grid"` to control grid column count.
+- Added `/figui3` chooser examples copied from PropsKit without field wrappers.
+
+### Changed
+
+- Updated the `/figui3` chooser grid example to use 10 full-width random image choices.
+
+### Fixed
+
+- Fixed explicit aspect-ratio media previews so `fig-image full aspect-ratio="1/1"` can render square in narrow grid cells.
+
 ## [6.5.1]
 
 ### Changed

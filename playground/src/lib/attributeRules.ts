@@ -660,6 +660,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["vertical", "horizontal", "grid"],
     },
+    columns: {
+      label: "Columns",
+      type: "number",
+      min: 2,
+      max: 4,
+      step: 1,
+    },
     drag: {
       label: "Drag",
       type: "boolean",

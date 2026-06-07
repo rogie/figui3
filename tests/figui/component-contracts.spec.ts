@@ -1516,6 +1516,51 @@ test.describe("remaining accessibility contracts", () => {
       });
   });
 
+  test("fig-chooser supports grid column counts with fallback", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = Array.from({ length: 6 }, (_, index) => {
+        return `<fig-choice value="choice-${index}">Choice ${index}</fig-choice>`;
+      }).join("");
+      root.innerHTML = `
+        <fig-chooser id="grid-default" layout="grid">${choices}</fig-chooser>
+        <fig-chooser id="grid-three" layout="grid" columns="3">${choices}</fig-chooser>
+        <fig-chooser id="grid-invalid" layout="grid" columns="nope">${choices}</fig-chooser>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const columnCount = (selector: string) => {
+            const chooser = document.querySelector(selector);
+            const scroller = chooser?.querySelector("[data-fig-chooser-scroll]");
+            if (!chooser || !scroller) return null;
+            return {
+              columns: getComputedStyle(scroller).gridTemplateColumns
+                .split(" ")
+                .filter(Boolean).length,
+              columnVar: getComputedStyle(chooser)
+                .getPropertyValue("--fig-chooser-grid-columns")
+                .trim(),
+            };
+          };
+
+          return {
+            defaultGrid: columnCount("#grid-default"),
+            threeGrid: columnCount("#grid-three"),
+            invalidGrid: columnCount("#grid-invalid"),
+          };
+        }),
+      )
+      .toEqual({
+        defaultGrid: { columns: 2, columnVar: "" },
+        threeGrid: { columns: 3, columnVar: "3" },
+        invalidGrid: { columns: 2, columnVar: "" },
+      });
+  });
+
   test("tabs and segmented controls expose roving selection semantics", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -1734,6 +1779,9 @@ test.describe("remaining accessibility contracts", () => {
         page.locator("#overflow-tabs").evaluate((tabs) => {
           return {
             tabs: tabs.querySelectorAll("fig-tab").length,
+            scrollerTabs: tabs.querySelectorAll(
+              ":scope > [data-fig-tabs-scroll] > fig-tab",
+            ).length,
             navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
             sharedButtons: tabs.querySelectorAll(".fig-overflow").length,
           };
@@ -1741,6 +1789,34 @@ test.describe("remaining accessibility contracts", () => {
       )
       .toEqual({
         tabs: 5,
+        scrollerTabs: 5,
+        navButtons: 2,
+        sharedButtons: 2,
+      });
+
+    await page.locator("#overflow-tabs").evaluate((tabs) => {
+      const tab = document.createElement("fig-tab");
+      tab.setAttribute("value", "sixth");
+      tab.textContent = "Sixth";
+      tabs.append(tab);
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => {
+          return {
+            tabs: tabs.querySelectorAll("fig-tab").length,
+            scrollerTabs: tabs.querySelectorAll(
+              ":scope > [data-fig-tabs-scroll] > fig-tab",
+            ).length,
+            navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
+            sharedButtons: tabs.querySelectorAll(".fig-overflow").length,
+          };
+        }),
+      )
+      .toEqual({
+        tabs: 6,
+        scrollerTabs: 6,
         navButtons: 2,
         sharedButtons: 2,
       });
@@ -2232,6 +2308,42 @@ test.describe("media accessibility", () => {
       "alt",
       "Updated slotted preview",
     );
+  });
+
+  test("fig-image with explicit aspect ratio lets preview shrink below default min height", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="width: 40px;">
+          <fig-image
+            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+            alt=""
+            aspect-ratio="1/1"
+            full
+          ></fig-image>
+        </div>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("fig-image > fig-preview").evaluate((preview) => {
+          const rect = preview.getBoundingClientRect();
+          return {
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            minHeight: getComputedStyle(preview).minHeight,
+          };
+        }),
+      )
+      .toEqual({
+        width: 40,
+        height: 40,
+        minHeight: "auto",
+      });
   });
 
   test("fig-media forwards video labels and creates named controls", async ({ page }) => {
