@@ -3568,10 +3568,12 @@ fig-input-gradient {
   }
 
   &:focus,
-  &:active,
-  &:focus-within {
+  &:active {
     outline: var(--figma-focus-outline) !important;
     outline-offset: var(--figma-focus-outline-offset) !important;
+  }
+  &:focus-within:not(:focus) {
+    outline: 0 !important;
   }
   &[mode="tip"]{
     fig-handle[type="color"]{
@@ -3592,15 +3594,10 @@ fig-input-gradient {
     --fig-input-gradient-chit-border-radius: var(--radius-medium);
   }
 
-  &[edit="false"] {
+  &[edit="false"],
+  &[edit="picker"] {
     pointer-events: none;
     --fig-input-gradient-chit-border-radius: var(--radius-medium);
-
-    &:focus,
-    &:active,
-    &:focus-within {
-      outline: none !important;
-    }
 
   }
 

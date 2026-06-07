@@ -1159,6 +1159,7 @@ test.describe("fill picker accessibility", () => {
     await page.evaluate(async () => {
       await Promise.all([
         customElements.whenDefined("fig-fill-picker"),
+        customElements.whenDefined("fig-input-gradient"),
         customElements.whenDefined("fig-chit"),
         customElements.whenDefined("fig-button"),
         customElements.whenDefined("fig-dropdown"),
@@ -1228,6 +1229,34 @@ test.describe("fill picker accessibility", () => {
       opacityLabel: "Opacity",
     });
   });
+
+  test("fig-input-gradient picker mode opens fill picker on Enter", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-gradient
+          id="gradient"
+          edit="picker"
+          value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#14AE5C","opacity":100}]}}'
+        ></fig-input-gradient>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const gradient = page.locator("#gradient");
+    await expect(gradient).toHaveAttribute("tabindex", "0");
+    await gradient.evaluate((host) => host.focus());
+    await expect(gradient).toBeFocused();
+
+    await page.keyboard.press("Enter");
+    await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
+      "open",
+      "true",
+    );
+  });
 });
 
 test.describe("remaining accessibility contracts", () => {
@@ -1242,6 +1271,7 @@ test.describe("remaining accessibility contracts", () => {
         customElements.whenDefined("fig-easing-curve"),
         customElements.whenDefined("fig-origin-grid"),
         customElements.whenDefined("fig-input-fill"),
+        customElements.whenDefined("fig-input-gradient"),
         customElements.whenDefined("fig-input-palette"),
         customElements.whenDefined("fig-spinner"),
         customElements.whenDefined("fig-shimmer"),
@@ -1402,6 +1432,73 @@ test.describe("remaining accessibility contracts", () => {
       rowOutlineStyle: "none",
       rowOutlineWidth: "3px",
       rowOutlineOffset: "0px",
+    });
+  });
+
+  test("fig-input-gradient routes focus to handles only when editable", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const value =
+        '{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#14AE5C","opacity":100}]}}';
+      root.innerHTML = `
+        <button id="before">Before</button>
+        <fig-input-gradient id="editable" value='${value}'></fig-input-gradient>
+        <fig-input-gradient id="static" edit="false" value='${value}'></fig-input-gradient>
+        <button id="after">After</button>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const editable = page.locator("#editable");
+    const editableFirstHandle = page
+      .locator("#editable fig-handle:not(.fig-input-gradient-ghost)")
+      .first();
+    const staticGradient = page.locator("#static");
+
+    await expect(editable).toHaveAttribute("tabindex", "-1");
+    await editable.evaluate((host) => host.focus());
+    await expect(editableFirstHandle).toBeFocused();
+
+    const editableFocusStyle = await editable.evaluate((host) => {
+      const handle = host.querySelector("fig-handle:not(.fig-input-gradient-ghost)");
+      if (!handle) return null;
+      const hostStyle = getComputedStyle(host);
+      const handleStyle = getComputedStyle(handle);
+      return {
+        hostOutlineStyle: hostStyle.outlineStyle,
+        handleOutlineStyle: handleStyle.outlineStyle,
+        handleOutlineOffset: handleStyle.outlineOffset,
+      };
+    });
+    expect(editableFocusStyle).toEqual({
+      hostOutlineStyle: "none",
+      handleOutlineStyle: "solid",
+      handleOutlineOffset: "1px",
+    });
+
+    await page.locator("#before").focus();
+    await page.keyboard.press("Tab");
+    await expect(editableFirstHandle).toBeFocused();
+
+    await expect(staticGradient).toHaveAttribute("tabindex", "0");
+    await staticGradient.evaluate((host) => host.focus());
+    await expect(staticGradient).toBeFocused();
+
+    const staticFocusStyle = await staticGradient.evaluate((host) => {
+      const style = getComputedStyle(host);
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+        outlineOffset: style.outlineOffset,
+      };
+    });
+    expect(staticFocusStyle).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "1px",
+      outlineOffset: "-1px",
     });
   });
 

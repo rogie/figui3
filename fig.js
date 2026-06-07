@@ -8141,7 +8141,7 @@ class FigInputGradient extends HTMLElement {
   #repositionRAF = null;
   #gradient = {
     type: "linear",
-    angle: 180,
+    angle: 90,
     interpolationSpace: "srgb",
     hueInterpolation: "shorter",
     stops: [
@@ -8173,14 +8173,41 @@ class FigInputGradient extends HTMLElement {
     return this.getAttribute("mode") === "tip" ? "tip" : "handle";
   }
 
+  #firstStopHandle() {
+    if (!this.#track) return null;
+    return this.#track.querySelector(
+      "fig-handle:not(.fig-input-gradient-ghost):not([disabled])",
+    );
+  }
+
+  #syncFocusTarget() {
+    const disabled = this.hasAttribute("disabled");
+    if (disabled) {
+      this.setAttribute("tabindex", "-1");
+      return;
+    }
+    this.setAttribute("tabindex", this.#isEditable ? "-1" : "0");
+  }
+
+  #normalizeGradient(gradient) {
+    return {
+      ...normalizeGradientConfig(gradient),
+      type: "linear",
+      angle: 90,
+    };
+  }
+
   connectedCallback() {
     this.#parseValue();
     this.#render();
+    this.removeEventListener("keydown", this.#onPickerKeyDown);
+    this.addEventListener("keydown", this.#onPickerKeyDown);
     if (this.#isEditable) document.addEventListener("keydown", this.#onKeyDown);
   }
 
   disconnectedCallback() {
     document.removeEventListener("keydown", this.#onKeyDown);
+    this.removeEventListener("keydown", this.#onPickerKeyDown);
     if (this.#colorObserver) {
       this.#colorObserver.disconnect();
       this.#colorObserver = null;
@@ -8276,27 +8303,34 @@ class FigInputGradient extends HTMLElement {
     this.#emitChange();
   };
 
+  #onPickerKeyDown = (e) => {
+    if (this.#editMode !== "picker") return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (this.hasAttribute("disabled")) return;
+    const picker = this.querySelector("fig-fill-picker");
+    if (!picker || typeof picker.open !== "function") return;
+    e.preventDefault();
+    picker.open();
+  };
+
   #parseValue() {
     const valueAttr = this.getAttribute("value");
     if (!valueAttr) return;
     try {
       const parsed = JSON.parse(valueAttr);
       if (parsed?.type === "gradient" && parsed.gradient) {
-        this.#gradient = normalizeGradientConfig({
+        this.#gradient = this.#normalizeGradient({
           ...this.#gradient,
           ...parsed.gradient,
         });
-        this.#gradient.type = "linear";
-        this.#gradient.angle = 90;
         return;
       }
       if (parsed?.gradient) {
-        this.#gradient = normalizeGradientConfig({
+        this.#gradient = this.#normalizeGradient({
           ...this.#gradient,
           ...parsed.gradient,
         });
-        this.#gradient.type = "linear";
-        this.#gradient.angle = 90;
       }
     } catch (e) {
       // Ignore invalid JSON and keep current/default gradient.
@@ -8304,7 +8338,8 @@ class FigInputGradient extends HTMLElement {
   }
 
   #buildGradientCSS() {
-    const sorted = [...this.#gradient.stops].sort(
+    const gradient = this.#normalizeGradient(this.#gradient);
+    const sorted = [...gradient.stops].sort(
       (a, b) => a.position - b.position,
     );
     const stops = sorted
@@ -8315,9 +8350,9 @@ class FigInputGradient extends HTMLElement {
         return `rgba(${r}, ${g}, ${b}, ${alpha}) ${s.position}%`;
       })
       .join(", ");
-    const interp = gradientInterpolationClause(this.#gradient);
+    const interp = gradientInterpolationClause(gradient);
     const interpolation = interp ? ` ${interp}` : "";
-    return `linear-gradient(${this.#gradient.angle}deg${interpolation}, ${stops})`;
+    return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
   }
 
   #stopColorCSS(stop) {
@@ -8356,6 +8391,7 @@ class FigInputGradient extends HTMLElement {
       this.#chit = this.querySelector("fig-chit");
       this.#track = null;
       this.#setupPickerEvents();
+      this.#syncFocusTarget();
       return;
     }
 
@@ -8369,6 +8405,7 @@ class FigInputGradient extends HTMLElement {
       this.#setupGhostHandle();
       this.#setupEventListeners();
     }
+    this.#syncFocusTarget();
   }
 
   #setupPickerEvents() {
@@ -8380,7 +8417,7 @@ class FigInputGradient extends HTMLElement {
       e.stopPropagation();
       const detail = e.detail;
       if (!detail?.gradient) return;
-      this.#gradient = normalizeGradientConfig({
+      this.#gradient = this.#normalizeGradient({
         ...this.#gradient,
         ...detail.gradient,
       });
@@ -8879,7 +8916,7 @@ class FigInputGradient extends HTMLElement {
   get value() {
     return {
       type: "gradient",
-      gradient: gradientToValueShape(this.#gradient),
+      gradient: gradientToValueShape(this.#normalizeGradient(this.#gradient)),
     };
   }
 
@@ -8889,6 +8926,18 @@ class FigInputGradient extends HTMLElement {
     } else {
       this.setAttribute("value", JSON.stringify(val));
     }
+  }
+
+  focus(options) {
+    if (this.hasAttribute("disabled")) return;
+    if (this.#isEditable) {
+      const firstHandle = this.#firstStopHandle();
+      if (firstHandle) {
+        firstHandle.focus(options);
+        return;
+      }
+    }
+    HTMLElement.prototype.focus.call(this, options);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -8918,6 +8967,7 @@ class FigInputGradient extends HTMLElement {
 
   #syncDisabled() {
     const disabled = this.hasAttribute("disabled");
+    this.#syncFocusTarget();
     if (this.#chit) {
       if (disabled) this.#chit.setAttribute("disabled", "");
       else this.#chit.removeAttribute("disabled");
