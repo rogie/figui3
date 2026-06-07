@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [6.4.8]
+
+### Fixed
+
+- Fixed `fig-input-text` and multiline textarea focus styling so inner native controls suppress their own ring and the host draws the shared focus outline.
+
 ## [6.4.7]
 
 ### Added

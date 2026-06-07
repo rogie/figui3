@@ -521,6 +521,66 @@ test.describe("text input accessibility", () => {
       ariaInvalid: null,
     });
   });
+
+  test("fig-input-text shows focus outline only on the host", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-text
+          id="search"
+          type="search"
+          value="Text here"
+          placeholder="Placeholder text"
+        ></fig-input-text>
+        <fig-input-text
+          id="multiline"
+          multiline
+          placeholder="Type here..."
+        ></fig-input-text>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const focusStyles = async (hostSelector: string, controlSelector: string) => {
+      await page.locator(`${hostSelector} ${controlSelector}`).focus();
+      return page.locator(hostSelector).evaluate((host, controlSelector) => {
+        const input = host.querySelector(controlSelector);
+        const hostStyle = getComputedStyle(host);
+        const inputStyle = input ? getComputedStyle(input) : null;
+        return {
+          hostOutlineStyle: hostStyle.outlineStyle,
+          hostOutlineWidth: hostStyle.outlineWidth,
+          hostOutlineOffset: hostStyle.outlineOffset,
+          inputOutlineStyle: inputStyle?.outlineStyle,
+          inputOutlineWidth: inputStyle?.outlineWidth,
+          inputBoxShadow: inputStyle?.boxShadow,
+        };
+      }, controlSelector);
+    };
+
+    const searchFocusStyles = await focusStyles("#search", "input");
+    expect(searchFocusStyles).toEqual({
+      hostOutlineStyle: "solid",
+      hostOutlineWidth: "1px",
+      hostOutlineOffset: "-1px",
+      inputOutlineStyle: "none",
+      inputOutlineWidth: "0px",
+      inputBoxShadow: "none",
+    });
+
+    const multilineFocusStyles = await focusStyles("#multiline", "textarea");
+    expect(multilineFocusStyles).toEqual({
+      hostOutlineStyle: "solid",
+      hostOutlineWidth: "1px",
+      hostOutlineOffset: "-1px",
+      inputOutlineStyle: "none",
+      inputOutlineWidth: "0px",
+      inputBoxShadow: "none",
+    });
+  });
 });
 
 test.describe("number input accessibility", () => {
