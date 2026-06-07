@@ -1150,12 +1150,106 @@ fig-tab,
   }
 }
 
+.fig-overflow {
+  all: unset;
+  position: absolute;
+  z-index: 3;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  color: var(--figma-color-icon);
+  background: var(--figma-color-bg) !important;
+
+  &:before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg) !important;
+    z-index: -1;
+  }
+
+  &:hover:before{
+    background: var(--figma-color-bg-hover) !important;
+  }
+
+  .fig-overflow-chevron{
+    position: relative;
+  }
+
+  &:active .fig-overflow-chevron {
+    transform: translateY(1px);
+  }
+}
+
+.overflow-start > .fig-overflow-start {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.overflow-end > .fig-overflow-end {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 fig-tabs,
 .tabs {
-  display: flex;
+  --fig-overflow-size: var(--spacer-4);
+  display: block;
+  min-width: 0;
+  position: relative;
   width: 100%;
-  gap: var(--spacer-1);
-  padding: var(--spacer-1) var(--spacer-2);
+  overflow: hidden;
+
+  > .fig-tabs-scroll {
+    box-sizing: border-box;
+    display: flex;
+    gap: var(--spacer-1);
+    overflow: auto hidden;
+    padding: var(--spacer-1) var(--spacer-2);
+    scrollbar-width: none;
+    width: 100%;
+    min-width: 0;
+  }
+
+  > .fig-overflow {
+    top: 0;
+    bottom: 0;
+    height: auto;
+    width: var(--fig-overflow-size);
+  }
+
+  > .fig-overflow-start {
+    left: 0;
+    right: auto;
+    box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
+
+    &:before{
+      border-radius: var(--radius-medium) 0 0 var(--radius-medium);
+    }
+
+    .fig-overflow-chevron {
+      rotate: 90deg;
+    }
+  }
+
+  > .fig-overflow-end {
+    right: 0;
+    left: auto;
+    box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
+
+    &:before{
+      border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+    }
+
+    .fig-overflow-chevron {
+      rotate: -90deg;
+    }
+  }
 }
 
 fig-tab-content,
@@ -3183,18 +3277,25 @@ fig-input-color {
 fig-header {
   height: var(--spacer-6);
   margin: 0;
-  padding: var(--spacer-1) var(--spacer-2) var(--spacer-1) var(--spacer-3);
+  padding: var(--spacer-1) var(--spacer-3);
   display: flex;
   align-items: center;
   box-shadow: inset 0 -1px 0 0 var(--figma-color-border);
-  gap: 0.25rem;
+  gap: var(--spacer-2);
   user-select: none;
+  color: var(--figma-color-text-secondary);
+  
+
+  & >fig-button[icon][variant="ghost"] {
+    margin-right: calc(var(--spacer-2) * -1);
+  }
 
   & h3 {
     font-weight: var(--body-medium-strong-fontWeight);
     flex-grow: 1;
     display: flex;
     align-items: center;
+    color: var(--figma-color-text);
   }
 
   &[borderless] {
@@ -4456,67 +4557,65 @@ fig-chooser {
   --chooser-fade-size: var(--spacer-4);
   --fig-chooser-gap: var(--spacer-2);
 
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  overflow: visible auto;
-  scrollbar-width: none;
-  scroll-snap-type: y mandatory;
+  display: block;
+  min-width: 0;
+  overflow: visible;
+  position: relative;
 
-  > * {
+  > .fig-chooser-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fig-chooser-gap);
+    overflow: visible auto;
+    scrollbar-width: none;
+    scroll-snap-type: y mandatory;
+    width: 100%;
+    height: inherit;
+    max-height: inherit;
+    max-width: inherit;
+    min-width: 0;
+  }
+
+  > .fig-chooser-scroll > * {
     scroll-snap-align: start;
-    &:not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
-      margin-block-end: var(--fig-chooser-gap);
-    }
   }
 
   &[overflow="scrollbar"] {
-    scrollbar-width: thin;
-    scrollbar-color: var(--figma-color-border) transparent;
-  }
-
-  &[layout="horizontal"] {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow: auto hidden;
-    scrollbar-width: none;
-
-    &[overflow="scrollbar"] {
+    > .fig-chooser-scroll {
       scrollbar-width: thin;
       scrollbar-color: var(--figma-color-border) transparent;
     }
+  }
 
-    > :not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
-      flex: 1 1 0%;
+  &[layout="horizontal"] {
+    > .fig-chooser-scroll {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      overflow: auto hidden;
+      scrollbar-width: none;
+      scroll-snap-type: x mandatory;
     }
 
-    > * {
-      &:not(.fig-chooser-nav-start):not(.fig-chooser-nav-end) {
-        margin-inline-end: var(--fig-chooser-gap);
-        margin-block-end: 0;
+    &[overflow="scrollbar"] {
+      > .fig-chooser-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: var(--figma-color-border) transparent;
       }
+    }
+
+    > .fig-chooser-scroll > * {
+      flex: 1 1 0%;
     }
   }
 
   &[layout="grid"] {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-
-    fig-choice {
-      margin-inline-end: var(--fig-chooser-gap);
-      margin-bottom: 0;
-      &:nth-child(2n + 1){
-        margin-inline-end: 0;
-      }
+    > .fig-chooser-scroll {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
     }
 
-    > * {
+    > .fig-chooser-scroll > * {
       min-width: 0;
-    }
-
-    > .fig-chooser-nav-start,
-    > .fig-chooser-nav-end {
-      grid-column: 1 / -1;
     }
   }
 
@@ -4529,63 +4628,28 @@ fig-chooser {
     opacity: 0.4;
   }
 
-  .fig-chooser-nav-start,
-  .fig-chooser-nav-end {
-    all: unset;
-    position: sticky;
-    z-index: 3;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  > .fig-overflow {
     left: 0;
     right: 0;
     width: 100%;
     height: var(--chooser-fade-size);
-    cursor: pointer;
-    opacity: 0;
-    pointer-events: none;
-    color: var(--figma-color-icon);
-    background: var(--figma-color-bg) !important;
-    &:before{
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: var(--radius-medium);
-      background: var(--figma-color-bg) !important;
-      z-index: -1;
-    }
-
-    &:hover:before{
-      background: var(--figma-color-bg-hover) !important;
-    }
-
-    .fig-chooser-nav-chevron{
-      position: relative;
-    }
-
-    &:active .fig-chooser-nav-chevron {
-      transform: translateY(1px);
-    }
   }
 
-  .fig-chooser-nav-start {
+  > .fig-overflow-start {
     top: 0;
-    margin-bottom: calc(var(--chooser-fade-size) * -1);
     box-shadow: 0 1px 0 0 var(--figma-color-bordertranslucent);
     &:before{
       border-radius: var(--radius-medium) 0 0 var(--radius-medium);
     }
 
 
-    .fig-chooser-nav-chevron {
+    .fig-overflow-chevron {
       rotate: 180deg;
     }
   }
 
-  .fig-chooser-nav-end {
+  > .fig-overflow-end {
     bottom: 0;
-    margin-top: calc(var(--chooser-fade-size) * -1);
     box-shadow: 0 -1px 0 0 var(--figma-color-bordertranslucent);
     &:before{
       border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
@@ -4593,8 +4657,7 @@ fig-chooser {
   }
 
   &[layout="horizontal"] {
-    .fig-chooser-nav-start,
-    .fig-chooser-nav-end {
+    > .fig-overflow {
       top: 0;
       bottom: 0;
       height: auto;
@@ -4603,50 +4666,38 @@ fig-chooser {
       margin: 0;
     }
 
-    .fig-chooser-nav-start {
+    > .fig-overflow-start {
       left: 0;
       right: auto;
-      margin-right: calc(var(--chooser-fade-size) * -1);
       box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
 
-      .fig-chooser-nav-chevron {
+      .fig-overflow-chevron {
         rotate: 90deg;
       }
     }
 
-    .fig-chooser-nav-end {
+    > .fig-overflow-end {
       right: 0;
       left: auto;
-      margin-left: calc(var(--chooser-fade-size) * -1);
       box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
 
-      .fig-chooser-nav-chevron {
+      .fig-overflow-chevron {
         rotate: -90deg;
       }
     }
   }
   &[layout="vertical"], 
   &[layout="grid"]{
-    .fig-chooser-nav-start{
+    > .fig-overflow-start{
       &:before{
         border-radius: var(--radius-medium) var(--radius-medium) 0 0;
       }
     }
-    .fig-chooser-nav-end {
+    > .fig-overflow-end {
       &:before{
         border-radius: 0 0 var(--radius-medium) var(--radius-medium);
       }
     }
-  }
-
-  &.overflow-start > .fig-chooser-nav-start {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  &.overflow-end > .fig-chooser-nav-end {
-    opacity: 1;
-    pointer-events: auto;
   }
 }
 

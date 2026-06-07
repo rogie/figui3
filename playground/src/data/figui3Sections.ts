@@ -580,7 +580,18 @@ export const figui3Sections: Section[] = [
     examples: [
       {
         id: "default",
-        name: "Default",
+        name: "No content",
+        markup: `<div class="prop-panel">
+  <fig-tabs data-playground-hide-field>
+    <fig-tab selected>General</fig-tab>
+    <fig-tab>Advanced</fig-tab>
+    <fig-tab>Export</fig-tab>
+  </fig-tabs>
+</div>`,
+      },
+      {
+        id: "tab-content",
+        name: "Tab content",
         markup: `<div class="prop-panel">
   <fig-tabs data-playground-hide-field>
     <fig-tab selected content="#tabs-general">General</fig-tab>
@@ -632,6 +643,23 @@ export const figui3Sections: Section[] = [
       </fig-field>
     </fig-group>
   </fig-tab-content>
+</div>`,
+      },
+      {
+        id: "overflow",
+        name: "Overflow",
+        markup: `<div class="prop-panel">
+  <fig-tabs data-playground-hide-field>
+    <fig-tab value="all" selected>All</fig-tab>
+    <fig-tab value="ascii">ASCII</fig-tab>
+    <fig-tab value="latin">Latin</fig-tab>
+    <fig-tab value="punctuation">Punctuation</fig-tab>
+    <fig-tab value="math">Math</fig-tab>
+    <fig-tab value="arrows">Arrows</fig-tab>
+    <fig-tab value="currency">Currency</fig-tab>
+    <fig-tab value="symbols">Symbols</fig-tab>
+    <fig-tab value="emoji">Emoji</fig-tab>
+  </fig-tabs>
 </div>`,
       },
     ],

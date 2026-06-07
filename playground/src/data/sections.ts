@@ -183,6 +183,25 @@ export const propkitSections: Section[] = [
   </fig-header>
 </div>`,
       },
+      {
+        id: "accessory-text",
+        name: "Accessory text",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <h3>Characters</h3>
+    <span>352 characters</span>
+  </fig-header>
+</div>`,
+      },
+      {
+        id: "search-header",
+        name: "Search header",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <fig-input-text type="search" placeholder="Search layers..." full></fig-input-text>
+  </fig-header>
+</div>`,
+      },
     ],
   },
   {
@@ -257,12 +276,12 @@ export const propkitSections: Section[] = [
   <fig-field direction="vertical">
     <label>Style</label>
     <fig-chooser layout="vertical" value="option-a" full drag style="max-height: 240px">
-      <fig-choice value="option-a" padding selected>Option A</fig-choice>
-      <fig-choice value="option-b" padding>Option B</fig-choice>
-      <fig-choice value="option-c" padding>Option C</fig-choice>
-      <fig-choice value="option-d" padding>Option D</fig-choice>
-      <fig-choice value="option-e" padding>Option E</fig-choice>
-      <fig-choice value="option-f" padding>Option F</fig-choice>
+      <fig-choice value="option-a" padding selected><span style="white-space: nowrap;">Option A</span></fig-choice>
+      <fig-choice value="option-b" padding><span style="white-space: nowrap;">Option B</span></fig-choice>
+      <fig-choice value="option-c" padding><span style="white-space: nowrap;">Option C</span></fig-choice>
+      <fig-choice value="option-d" padding><span style="white-space: nowrap;">Option D</span></fig-choice>
+      <fig-choice value="option-e" padding><span style="white-space: nowrap;">Option E</span></fig-choice>
+      <fig-choice value="option-f" padding><span style="white-space: nowrap;">Option F</span></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,

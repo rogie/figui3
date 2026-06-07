@@ -1327,6 +1327,8 @@ test.describe("remaining accessibility contracts", () => {
       await Promise.all([
         customElements.whenDefined("fig-tabs"),
         customElements.whenDefined("fig-segmented-control"),
+        customElements.whenDefined("fig-chooser"),
+        customElements.whenDefined("fig-choice"),
         customElements.whenDefined("fig-menu"),
         customElements.whenDefined("fig-easing-curve"),
         customElements.whenDefined("fig-origin-grid"),
@@ -1342,6 +1344,176 @@ test.describe("remaining accessibility contracts", () => {
         customElements.whenDefined("fig-toast"),
       ]);
     });
+  });
+
+  test("fig-chooser restores light-DOM overflow buttons after choices are replaced", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = Array.from({ length: 6 }, (_, index) => {
+        return `<fig-choice value="choice-${index}" style="min-width: 96px; height: 24px;">Choice ${index}</fig-choice>`;
+      }).join("");
+      root.innerHTML = `
+        <fig-chooser
+          id="chooser"
+          layout="horizontal"
+          style="width: 120px; max-width: 120px;"
+        >${choices}</fig-chooser>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#chooser").evaluate((chooser) => {
+          return {
+            navButtons: chooser.querySelectorAll("[data-fig-chooser-nav]").length,
+            hasEndOverflow: chooser.classList.contains("overflow-end"),
+          };
+        }),
+      )
+      .toEqual({
+        navButtons: 2,
+        hasEndOverflow: true,
+      });
+
+    await page.locator("#chooser").evaluate((chooser) => {
+      chooser.innerHTML = `
+        <fig-choice value="new-0" style="min-width: 96px; height: 24px;">New 0</fig-choice>
+        <fig-choice value="new-1" style="min-width: 96px; height: 24px;">New 1</fig-choice>
+        <fig-choice value="new-2" style="min-width: 96px; height: 24px;">New 2</fig-choice>
+        <fig-choice value="new-3" style="min-width: 96px; height: 24px;">New 3</fig-choice>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#chooser").evaluate((chooser) => {
+          const navEnd = chooser.querySelector('[data-fig-chooser-nav="end"]');
+          return {
+            choices: chooser.querySelectorAll("fig-choice").length,
+            navButtons: chooser.querySelectorAll("[data-fig-chooser-nav]").length,
+            value: chooser.getAttribute("value"),
+            hasEndOverflow: chooser.classList.contains("overflow-end"),
+            navEndPosition: navEnd ? getComputedStyle(navEnd).position : null,
+            navEndPointerEvents: navEnd ? getComputedStyle(navEnd).pointerEvents : null,
+          };
+        }),
+      )
+      .toEqual({
+        choices: 4,
+        navButtons: 2,
+        value: "new-0",
+        hasEndOverflow: true,
+        navEndPosition: "absolute",
+        navEndPointerEvents: "auto",
+      });
+
+    await page.locator("#chooser").evaluate((chooser) => {
+      chooser.querySelector('fig-choice[value="new-2"]')?.click();
+    });
+    await expect(page.locator("#chooser")).toHaveAttribute("value", "new-2");
+
+    await page.locator("#chooser").evaluate((chooser) => {
+      chooser.scrollLeft = 0;
+      const navEnd = chooser.querySelector('[data-fig-chooser-nav="end"]');
+      navEnd?.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          pointerId: 1,
+        }),
+      );
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#chooser").evaluate((chooser) => {
+          const navEnd = chooser.querySelector('[data-fig-chooser-nav="end"]');
+          if (chooser.scrollLeft <= 0) return null;
+          if (!navEnd) return null;
+          const chooserRect = chooser.getBoundingClientRect();
+          const navEndRect = navEnd.getBoundingClientRect();
+          return {
+            scrollLeft: chooser.scrollLeft,
+            navEndRightDelta: Math.round(navEndRect.right - chooserRect.right),
+          };
+        }),
+      )
+      .toMatchObject({
+        scrollLeft: expect.any(Number),
+        navEndRightDelta: 0,
+      });
+
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = Array.from({ length: 6 }, (_, index) => {
+        return `<fig-choice value="vertical-${index}" style="height: 32px;">Vertical ${index}</fig-choice>`;
+      }).join("");
+      root.insertAdjacentHTML("beforeend", `
+        <fig-chooser
+          id="vertical-chooser"
+          style="height: 72px; max-height: 72px; width: 120px;"
+        >${choices}</fig-chooser>
+      `);
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#vertical-chooser").evaluate((chooser) => {
+          const navEnd = chooser.querySelector('[data-fig-chooser-nav="end"]');
+          if (!navEnd) return null;
+          chooser.scrollTop = 40;
+          const chooserRect = chooser.getBoundingClientRect();
+          const navEndRect = navEnd.getBoundingClientRect();
+          return {
+            scrollTop: chooser.scrollTop,
+            navEndBottomDelta: Math.round(navEndRect.bottom - chooserRect.bottom),
+          };
+        }),
+      )
+      .toMatchObject({
+        scrollTop: expect.any(Number),
+        navEndBottomDelta: 0,
+      });
+
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="panel" style="width: 240px;">
+          <fig-chooser id="panel-chooser" layout="horizontal" value="a" full drag>
+            <fig-choice value="a" padding selected>Option A</fig-choice>
+            <fig-choice value="b" padding>Option B</fig-choice>
+            <fig-choice value="c" padding>Option C</fig-choice>
+            <fig-choice value="d" padding>Option D</fig-choice>
+            <fig-choice value="e" padding>Option E</fig-choice>
+            <fig-choice value="f" padding>Option F</fig-choice>
+          </fig-chooser>
+        </div>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#panel-chooser").evaluate((chooser) => {
+          const panel = document.querySelector("#panel");
+          if (!panel) return null;
+          return {
+            panelWidth: Math.round(panel.getBoundingClientRect().width),
+            chooserWidth: Math.round(chooser.getBoundingClientRect().width),
+            scrollsHorizontally: chooser.scrollWidth > chooser.clientWidth,
+          };
+        }),
+      )
+      .toEqual({
+        panelWidth: 240,
+        chooserWidth: 240,
+        scrollsHorizontally: true,
+      });
   });
 
   test("tabs and segmented controls expose roving selection semantics", async ({ page }) => {
@@ -1421,6 +1593,157 @@ test.describe("remaining accessibility contracts", () => {
       outlineWidth: "1px",
       outlineOffset: "0px",
     });
+  });
+
+  test("fig-tabs centers selected tabs in overflow without moving the page", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="scroll-page" style="height: 2000px; padding-top: 400px;">
+          <div style="width: 120px;">
+            <fig-tabs id="overflow-tabs" value="all">
+              <fig-tab value="all">All</fig-tab>
+              <fig-tab value="ascii">ASCII</fig-tab>
+              <fig-tab value="latin">Latin</fig-tab>
+              <fig-tab value="punctuation">Punctuation</fig-tab>
+              <fig-tab value="math">Math</fig-tab>
+              <fig-tab value="arrows">Arrows</fig-tab>
+              <fig-tab value="currency">Currency</fig-tab>
+              <fig-tab value="symbols">Symbols</fig-tab>
+              <fig-tab value="emoji">Emoji</fig-tab>
+            </fig-tabs>
+          </div>
+        </div>
+      `;
+      window.scrollTo(0, 200);
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => {
+          const navEnd = tabs.querySelector('[data-fig-tabs-nav="end"]');
+          return {
+            navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
+            hasEndOverflow: tabs.classList.contains("overflow-end"),
+            navEndPointerEvents: navEnd ? getComputedStyle(navEnd).pointerEvents : null,
+            navEndPosition: navEnd ? getComputedStyle(navEnd).position : null,
+          };
+        }),
+      )
+      .toEqual({
+        navButtons: 2,
+        hasEndOverflow: true,
+        navEndPointerEvents: "auto",
+        navEndPosition: "absolute",
+      });
+
+    await page.locator("#overflow-tabs").evaluate((tabs) => {
+      const navEnd = tabs.querySelector('[data-fig-tabs-nav="end"]');
+      navEnd?.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          pointerId: 1,
+        }),
+      );
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => {
+          return tabs.scrollLeft > 0 && tabs.classList.contains("overflow-start");
+        }),
+      )
+      .toBe(true);
+
+    await page.locator("#overflow-tabs").evaluate((tabs) => {
+      tabs.setAttribute("value", "math");
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => {
+          const scroller = tabs.querySelector("[data-fig-tabs-scroll]");
+          const selected = tabs.querySelector('fig-tab[value="math"]');
+          if (!scroller || !selected) return false;
+          const tabsRect = scroller.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          const tabsCenter = tabsRect.left + tabsRect.width / 2;
+          const selectedCenter = selectedRect.left + selectedRect.width / 2;
+          return window.scrollY === 200 && Math.abs(selectedCenter - tabsCenter) <= 3;
+        }),
+      )
+      .toBe(true);
+
+    await page.locator("#overflow-tabs").evaluate((tabs) => {
+      tabs.querySelector('fig-tab[value="currency"]')?.dispatchEvent(
+        new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => {
+          const scroller = tabs.querySelector("[data-fig-tabs-scroll]");
+          const selected = tabs.querySelector('fig-tab[value="currency"]');
+          if (!scroller || !selected) return false;
+          const tabsRect = scroller.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          const tabsCenter = tabsRect.left + tabsRect.width / 2;
+          const selectedCenter = selectedRect.left + selectedRect.width / 2;
+          return window.scrollY === 200 && Math.abs(selectedCenter - tabsCenter) <= 3;
+        }),
+      )
+      .toBe(true);
+
+    await page.locator("#overflow-tabs").evaluate((tabs) => {
+      tabs.setAttribute("value", "all");
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => {
+          const selected = tabs.querySelector('fig-tab[value="all"]');
+          if (!selected) return false;
+          const tabsRect = tabs.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          return window.scrollY === 200 && selectedRect.left >= tabsRect.left - 1;
+        }),
+      )
+      .toBe(true);
+
+    await page.locator("#overflow-tabs").evaluate((tabs) => {
+      tabs.innerHTML = `
+        <fig-tab value="first">First</fig-tab>
+        <fig-tab value="second">Second</fig-tab>
+        <fig-tab value="third">Third</fig-tab>
+        <fig-tab value="fourth">Fourth</fig-tab>
+        <fig-tab value="fifth">Fifth</fig-tab>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => {
+          return {
+            tabs: tabs.querySelectorAll("fig-tab").length,
+            navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
+            sharedButtons: tabs.querySelectorAll(".fig-overflow").length,
+          };
+        }),
+      )
+      .toEqual({
+        tabs: 5,
+        navButtons: 2,
+        sharedButtons: 2,
+      });
   });
 
   test("fig-input-palette uses tokenized focus outline on the visible swatch row", async ({

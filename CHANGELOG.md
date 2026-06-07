@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [6.5.0]
+
+### Added
+
+- Added shared `.fig-overflow` button styling for scroll overflow controls.
+- Added examples for tab overflow plus header accessory text and search header patterns.
+
+### Changed
+
+- Changed `fig-chooser` overflow buttons from sticky in-flow controls to absolute light-DOM overlays.
+- Changed overflowing `fig-tabs` so selecting a tab centers it in the scroll view like `fig-chooser`.
+
+### Fixed
+
+- Fixed `fig-chooser` rebuilds via `innerHTML` so the light-DOM overflow buttons are restored after app code replaces choices.
+- Fixed overflowing `fig-tabs` so they expose start/end overflow buttons without moving the page.
 
 ## [6.4.8]
 
