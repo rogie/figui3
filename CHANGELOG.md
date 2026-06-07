@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.5.1]
+
+### Changed
+
+- Moved `/figui3` container examples below core and editor components, reusing the PropsKit container examples.
+
 ## [6.5.0]
 
 ### Added

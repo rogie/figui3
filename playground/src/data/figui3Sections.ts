@@ -1,4 +1,4 @@
-import type { Section } from "./sections";
+import { propkitSections, type Section } from "./sections";
 
 const randomAvatarId = Math.floor(Math.random() * 70) + 1;
 
@@ -818,26 +818,6 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
-    id: "header",
-    name: "Header",
-    group: "Core components",
-    description: "Section header with title and optional actions.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <fig-header>
-    <h3>Section title</h3>
-    <fig-button variant="ghost" icon="true">
-      <fig-icon name="close"></fig-icon>
-    </fig-button>
-  </fig-header>
-</div>`,
-      },
-    ],
-  },
-  {
     id: "popup",
     name: "Popup",
     group: "Core components",
@@ -970,6 +950,7 @@ export const figui3Sections: Section[] = [
       },
     ],
   },
+  ...propkitSections.filter((section) => section.group === "Containers"),
   {
     id: "color-tip",
     name: "Color Tip",
