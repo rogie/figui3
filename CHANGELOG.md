@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [6.4.7]
+
 ### Added
 
 - Added focused Playwright accessibility coverage for media, form primitives, selection controls, overlays, loading indicators, display swatches, handles, color tips, layers, and toast live regions.
@@ -32,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - Fixed focus return for dialogs, popups, and tooltips after Escape or close interactions.
 - Fixed focus outlines for tabs, segments, palette rows, groups, handles, switches, checkboxes, radios, composite color/fill fields, and lab sliders.
 - Fixed `fig-input-palette` so the collapsed palette has one tab stop, expands on Enter/Space, and suppresses chunky nested swatch outlines.
+- Fixed `fig-input-gradient` focus behavior so editable gradients tab to the first stop handle, static gradients focus the host, and picker gradients open the fill picker from Enter/Space.
 - Fixed `fig-group` headers so collapsible groups expose `role`, `aria-expanded`, keyboard toggle behavior, and the shared focus outline.
 - Fixed `fig-image` custom overlay controls so they stay over the preview and remain visible during hover, focus, and active interaction.
 - Fixed `fig-skeleton` so descendant placeholder controls are inert and skipped by Tab.
