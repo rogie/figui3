@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.6.2]
+
+### Fixed
+
+- Fixed `fig-input-text` search clear icon missing after reconnect by using `fig-icon name="close"` instead of imperative `--icon` styling.
+- Fixed framework remount/reconnect bugs across inputs and controls: skip redundant `innerHTML` rebuilds, guard duplicate DOM wiring, and repair generated affordances on reconnect.
+- Fixed `fig-dropdown` duplicating its internal `<select>` when reconnected.
+- Fixed `fig-slider`, `fig-options`, `fig-combo-input`, `fig-input-color`, `fig-origin-grid`, `fig-joystick`, and `fig-3d-rotate` rebuilding duplicate markup or leaking listeners on reconnect.
+- Fixed `fig-button` re-rendering shadow DOM and duplicating click listeners on every reconnect.
+- Added `figNextFrame()` guards so deferred `connectedCallback` work is skipped after disconnect.
+
+### Added
+
+- Added reconnect resilience Playwright coverage for search clear, password toggle, dropdown, slider, options, combo input, color input, origin grid, and joystick.
+
 ## [6.6.1]
 
 ### Fixed

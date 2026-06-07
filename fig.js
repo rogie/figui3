@@ -27,6 +27,14 @@ function createFigIcon(name, options = {}) {
   return icon;
 }
 
+/** Run callback on the next frame; skip if the host disconnected first. */
+function figNextFrame(host, callback) {
+  requestAnimationFrame(() => {
+    if (host && !host.isConnected) return;
+    callback();
+  });
+}
+
 function createFigOverflowButtons({
   owner,
   onStart,
@@ -202,16 +210,26 @@ class FigButton extends HTMLElement {
   #selected;
   #a11yAttributes = ["aria-label", "aria-labelledby", "aria-describedby", "title"];
   #boundHandleControlKeydown = this.#handleControlKeydown.bind(this);
+  #boundHandleClick = this.#handleClick.bind(this);
+  #boundHandleFocus = () => {
+    if (this.button?.matches(":focus-visible")) {
+      this.setAttribute("data-focus-visible", "");
+    }
+  };
+  #boundHandleBlur = () => {
+    this.removeAttribute("data-focus-visible");
+  };
   constructor() {
     super();
     this.attachShadow({ mode: "open", delegatesFocus: true });
   }
   connectedCallback() {
     this.type = this.getAttribute("type") || "button";
-    const isControlWrapper = this.type === "select" || this.type === "upload";
-    const controlTag = isControlWrapper ? "span" : "button";
-    const typeAttr = isControlWrapper ? "" : ` type="${this.type}"`;
-    this.shadowRoot.innerHTML = `
+    if (!this.button) {
+      const isControlWrapper = this.type === "select" || this.type === "upload";
+      const controlTag = isControlWrapper ? "span" : "button";
+      const typeAttr = isControlWrapper ? "" : ` type="${this.type}"`;
+      this.shadowRoot.innerHTML = `
             <style>
                 button, button:hover, button:active, .fig-button-control {
                     padding: 0 var(--spacer-2);
@@ -249,24 +267,18 @@ class FigButton extends HTMLElement {
             </${controlTag}>
             `;
 
+      this.button = this.shadowRoot.querySelector("button, .fig-button-control");
+      this.button.addEventListener("click", this.#boundHandleClick);
+      this.button.addEventListener("focus", this.#boundHandleFocus);
+      this.button.addEventListener("blur", this.#boundHandleBlur);
+      this.addEventListener("keydown", this.#boundHandleControlKeydown);
+    }
+
     this.#selected =
       this.hasAttribute("selected") &&
       this.getAttribute("selected") !== "false";
 
-    this.button = this.shadowRoot.querySelector("button, .fig-button-control");
     this.#syncButtonAttributes();
-    this.button.addEventListener("click", this.#handleClick.bind(this));
-
-    // Forward focus-visible state to host element
-    this.button.addEventListener("focus", () => {
-      if (this.button.matches(":focus-visible")) {
-        this.setAttribute("data-focus-visible", "");
-      }
-    });
-    this.button.addEventListener("blur", () => {
-      this.removeAttribute("data-focus-visible");
-    });
-    this.addEventListener("keydown", this.#boundHandleControlKeydown);
   }
 
   get type() {
@@ -390,8 +402,17 @@ class FigButton extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     switch (name) {
+      case "type": {
+        const isWrapper = (type) => type === "select" || type === "upload";
+        if (isWrapper(oldValue || "button") !== isWrapper(newValue || "button")) {
+          this.button = null;
+          this.connectedCallback();
+          break;
+        }
+        this.#syncButtonAttributes();
+        break;
+      }
       case "disabled":
-      case "type":
         this.#syncButtonAttributes();
         break;
       case "selected":
@@ -520,11 +541,19 @@ class FigDropdown extends HTMLElement {
     this.select.setAttribute("aria-label", this.#label);
     this.#syncDisabled();
 
-    this.appendChild(this.select);
-    this.shadowRoot.appendChild(this.optionsSlot);
+    if (!this.select.isConnected) {
+      this.appendChild(this.select);
+    }
+    if (!this.optionsSlot.isConnected) {
+      this.shadowRoot.appendChild(this.optionsSlot);
+    }
 
+    this.optionsSlot.removeEventListener("slotchange", this.#boundSlotChange);
     this.optionsSlot.addEventListener("slotchange", this.#boundSlotChange);
 
+    this.select.removeEventListener("input", this.#boundHandleSelectInput);
+    this.select.removeEventListener("change", this.#boundHandleSelectChange);
+    this.select.removeEventListener("keydown", this.#boundHandleSelectKeydown);
     this.#addEventListeners();
   }
 
@@ -1152,7 +1181,7 @@ class FigTruncate extends HTMLElement {
 
   connectedCallback() {
     this.#originalText = this.textContent;
-    requestAnimationFrame(() => {
+    figNextFrame(this, () => {
       this.#render();
       this.#setupTooltip();
     });
@@ -1284,7 +1313,7 @@ class FigDialog extends HTMLDialogElement {
 
     this._ensureHeader();
 
-    requestAnimationFrame(() => {
+    figNextFrame(this, () => {
       this._addCloseListeners();
       this._setupDragListeners();
       this._applyPosition();
@@ -3111,7 +3140,7 @@ class FigTab extends HTMLElement {
     if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
     this.addEventListener("click", this.#boundHandleClick);
 
-    requestAnimationFrame(() => {
+    figNextFrame(this, () => {
       if (typeof this.getAttribute("content") === "string") {
         this.content = document.querySelector(this.getAttribute("content"));
         if (this.content) {
@@ -3211,7 +3240,7 @@ class FigTabs extends HTMLElement {
     this.#createNavButtons();
     this.#startObserver();
     this.#startResizeObserver();
-    requestAnimationFrame(() => {
+    figNextFrame(this, () => {
       const value = this.getAttribute("value");
       if (value) {
         this.#selectByValue(value);
@@ -3662,7 +3691,7 @@ class FigSegmentedControl extends HTMLElement {
     this.#startResizeObserver();
 
     // Defer initial selection so child segments are available.
-    requestAnimationFrame(() => {
+    figNextFrame(this, () => {
       this.#syncSelectionFromAttributes({ enforceFallback: true });
       this.#refreshResizeObserverTargets();
       this.#queueIndicatorSync({ forceInstant: true });
@@ -4118,13 +4147,52 @@ class FigOptions extends HTMLElement {
     return String(fallbackValue);
   }
 
+  #canReuseControl() {
+    if (this.#parsedOptions.length === 0) return false;
+    const segments = this.querySelector(":scope > fig-segmented-control");
+    if (segments) {
+      const opts = segments.querySelectorAll("fig-segment");
+      if (opts.length !== this.#parsedOptions.length) return false;
+      return Array.from(opts).every(
+        (seg, i) => seg.getAttribute("value") === this.#parsedOptions[i],
+      );
+    }
+    const dropdown = this.querySelector(":scope > fig-dropdown");
+    if (dropdown) {
+      const opts = dropdown.querySelectorAll("option");
+      return (
+        opts.length === this.#parsedOptions.length &&
+        Array.from(opts).every(
+          (opt, i) => opt.textContent?.trim() === this.#parsedOptions[i],
+        )
+      );
+    }
+    return false;
+  }
+
+  #reuseControl() {
+    const segments = this.querySelector(":scope > fig-segmented-control");
+    if (segments) {
+      this.#childControl = segments;
+      this.#currentMode = "segments";
+    } else {
+      this.#childControl = this.querySelector(":scope > fig-dropdown");
+      this.#currentMode = "dropdown";
+    }
+    this.#syncValueToChild();
+  }
+
   connectedCallback() {
     this.#parseOptions();
+    if (this.#canReuseControl()) {
+      this.#reuseControl();
+      this.#startResizeObserver();
+      figNextFrame(this, () => figNextFrame(this, () => this.#checkOverflow()));
+      return;
+    }
     this.#renderSegments();
     this.#startResizeObserver();
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => this.#checkOverflow());
-    });
+    figNextFrame(this, () => figNextFrame(this, () => this.#checkOverflow()));
   }
 
   disconnectedCallback() {
@@ -4476,7 +4544,7 @@ class FigSlider extends HTMLElement {
     };
   }
 
-  #regenerateInnerHTML() {
+  #readAttributesFromMarkup() {
     const rawValue = this.getAttribute("value");
     this.type = this.getAttribute("type") || "range";
     this.variant = this.getAttribute("variant") || "default";
@@ -4507,6 +4575,103 @@ class FigSlider extends HTMLElement {
       (rawValue === null ||
         (typeof rawValue === "string" && rawValue.trim() === ""));
     this.value = this.#normalizeSliderValue(rawValue);
+  }
+
+  #canReuseRenderedMarkup() {
+    const range = this.querySelector("[type=range]");
+    if (!range) return false;
+    const wantsText = this.getAttribute("text") !== "false";
+    return wantsText === !!this.querySelector("fig-input-number");
+  }
+
+  #updateRenderedMarkup() {
+    this.#readAttributesFromMarkup();
+    if (this.color) {
+      this.style.setProperty("--color", this.color);
+    } else {
+      this.style.removeProperty("--color");
+    }
+
+    this.input = this.querySelector("[type=range]");
+    this.inputContainer = this.querySelector(".fig-slider-input-container");
+    this.input.className = this.type;
+    this.input.min = String(this.min);
+    this.input.max = String(this.max);
+    this.input.step = String(this.step);
+    this.input.value = String(this.value);
+    this.input.disabled = this.disabled;
+    if (this.text) this.input.setAttribute("tabindex", "-1");
+    else this.input.removeAttribute("tabindex");
+    this.input.setAttribute("aria-valuemin", String(this.min));
+    this.input.setAttribute("aria-valuemax", String(this.max));
+    this.input.setAttribute("aria-valuenow", String(this.value));
+
+    this.figInputNumber = this.querySelector("fig-input-number");
+    if (this.figInputNumber) {
+      this.figInputNumber.setAttribute("placeholder", this.placeholder);
+      this.figInputNumber.setAttribute("min", String(this.min));
+      this.figInputNumber.setAttribute("max", String(this.max));
+      this.figInputNumber.setAttribute("transform", String(this.transform));
+      this.figInputNumber.setAttribute("step", String(this.step));
+      this.figInputNumber.setAttribute(
+        "value",
+        this.#showEmptyTextValue ? "" : String(this.value),
+      );
+      if (this.units) this.figInputNumber.setAttribute("units", this.units);
+      else this.figInputNumber.removeAttribute("units");
+      if (this.precision !== null) {
+        this.figInputNumber.setAttribute("precision", String(this.precision));
+      } else {
+        this.figInputNumber.removeAttribute("precision");
+      }
+      this.figInputNumber.disabled = this.disabled;
+      this.figInputNumber.toggleAttribute("disabled", this.disabled);
+    }
+  }
+
+  #bindControlListeners() {
+    this.#syncInputA11yAttributes();
+    this.input.removeEventListener("input", this.#boundHandleInput);
+    this.input.addEventListener("input", this.#boundHandleInput);
+    this.input.removeEventListener("change", this.#boundHandleChange);
+    this.input.addEventListener("change", this.#boundHandleChange);
+    this.input.removeEventListener("keydown", this.#boundHandleKeyDown);
+    this.input.addEventListener("keydown", this.#boundHandleKeyDown);
+    this.input.removeEventListener("pointerdown", this.#boundRangePointerDown);
+    this.input.addEventListener("pointerdown", this.#boundRangePointerDown);
+    this.input.removeEventListener("pointerup", this.#boundRangePointerUp);
+    this.input.addEventListener("pointerup", this.#boundRangePointerUp);
+
+    if (this.default) {
+      this.style.setProperty(
+        "--default",
+        this.#calculateNormal(this.default),
+      );
+    }
+
+    if (this.figInputNumber) {
+      this.#syncTextInputA11yAttributes();
+      this.figInputNumber.removeEventListener(
+        "input",
+        this.#boundHandleTextInput,
+      );
+      this.figInputNumber.addEventListener(
+        "input",
+        this.#boundHandleTextInput,
+      );
+      this.figInputNumber.removeEventListener(
+        "change",
+        this.#boundHandleTextChange,
+      );
+      this.figInputNumber.addEventListener(
+        "change",
+        this.#boundHandleTextChange,
+      );
+    }
+  }
+
+  #regenerateInnerHTML() {
+    this.#readAttributesFromMarkup();
 
     if (this.color) {
       this.style.setProperty("--color", this.color);
@@ -4547,24 +4712,7 @@ class FigSlider extends HTMLElement {
 
     this.input = this.querySelector("[type=range]");
     this.inputContainer = this.querySelector(".fig-slider-input-container");
-    this.#syncInputA11yAttributes();
-    this.input.removeEventListener("input", this.#boundHandleInput);
-    this.input.addEventListener("input", this.#boundHandleInput);
-    this.input.removeEventListener("change", this.#boundHandleChange);
-    this.input.addEventListener("change", this.#boundHandleChange);
-    this.input.removeEventListener("keydown", this.#boundHandleKeyDown);
-    this.input.addEventListener("keydown", this.#boundHandleKeyDown);
-    this.input.removeEventListener("pointerdown", this.#boundRangePointerDown);
-    this.input.addEventListener("pointerdown", this.#boundRangePointerDown);
-    this.input.removeEventListener("pointerup", this.#boundRangePointerUp);
-    this.input.addEventListener("pointerup", this.#boundRangePointerUp);
-
-    if (this.default) {
-      this.style.setProperty(
-        "--default",
-        this.#calculateNormal(this.default),
-      );
-    }
+    this.#bindControlListeners();
 
     this.datalist = this.querySelector("datalist");
     this.figInputNumber = this.querySelector("fig-input-number");
@@ -4603,30 +4751,16 @@ class FigSlider extends HTMLElement {
         defaultOption.setAttribute("default", "true");
       }
     }
-    if (this.figInputNumber) {
-      this.#syncTextInputA11yAttributes();
-      this.figInputNumber.removeEventListener(
-        "input",
-        this.#boundHandleTextInput,
-      );
-      this.figInputNumber.addEventListener(
-        "input",
-        this.#boundHandleTextInput,
-      );
-      this.figInputNumber.removeEventListener(
-        "change",
-        this.#boundHandleTextChange,
-      );
-      this.figInputNumber.addEventListener(
-        "change",
-        this.#boundHandleTextChange,
-      );
-    }
-
     this.#syncValue();
   }
 
   connectedCallback() {
+    if (this.#canReuseRenderedMarkup()) {
+      this.#updateRenderedMarkup();
+      this.#bindControlListeners();
+      this.#syncValue();
+      return;
+    }
     this.#regenerateInnerHTML();
   }
 
@@ -5064,35 +5198,7 @@ class FigInputText extends HTMLElement {
       }
     }
 
-    let html = `<input 
-      type="${this.type}" 
-      ${this.name ? `name="${this.name}"` : ""}
-      placeholder="${this.placeholder}"
-      value="${
-        this.type === "number" ? this.#transformNumber(this.value) : this.value
-      }" />`;
-    if (this.multiline) {
-      html = `<textarea  
-      placeholder="${this.placeholder}">${this.value}</textarea>`;
-    }
-
-    let append = this.querySelector("[slot=append]");
-    let prepend = this.querySelector("[slot=prepend]");
-
-    this.innerHTML = html;
-
-    if (prepend) {
-      prepend.removeEventListener("click", this.#boundFocusControl);
-      prepend.addEventListener("click", this.#boundFocusControl);
-      this.prepend(prepend);
-    }
-    if (append) {
-      append.removeEventListener("click", this.#boundFocusControl);
-      append.addEventListener("click", this.#boundFocusControl);
-      this.append(append);
-    }
-
-    this.input = this.querySelector("input,textarea");
+    this.input = this.#ensureInputControl();
     this.input.readOnly = this.readonly;
     this.#syncInputA11yAttributes();
     this.#syncSearchPrefix();
@@ -5132,6 +5238,46 @@ class FigInputText extends HTMLElement {
   focus() {
     this.input.focus();
   }
+  #ensureInputControl() {
+    const wantsTextarea = this.multiline;
+    const existing = this.querySelector("input,textarea");
+    if (existing) {
+      const matches = wantsTextarea
+        ? existing.tagName === "TEXTAREA"
+        : existing.tagName === "INPUT";
+      if (matches) return existing;
+    }
+
+    let html = `<input 
+      type="${this.type}" 
+      ${this.name ? `name="${this.name}"` : ""}
+      placeholder="${this.placeholder}"
+      value="${
+        this.type === "number" ? this.#transformNumber(this.value) : this.value
+      }" />`;
+    if (wantsTextarea) {
+      html = `<textarea  
+      placeholder="${this.placeholder}">${this.value}</textarea>`;
+    }
+
+    const append = this.querySelector("[slot=append]");
+    const prepend = this.querySelector("[slot=prepend]");
+
+    this.innerHTML = html;
+
+    if (prepend) {
+      prepend.removeEventListener("click", this.#boundFocusControl);
+      prepend.addEventListener("click", this.#boundFocusControl);
+      this.prepend(prepend);
+    }
+    if (append) {
+      append.removeEventListener("click", this.#boundFocusControl);
+      append.addEventListener("click", this.#boundFocusControl);
+      this.append(append);
+    }
+
+    return this.querySelector("input,textarea");
+  }
   #syncInputA11yAttributes() {
     if (!this.input) return;
     this.#a11yAttributes.forEach((name) => {
@@ -5153,13 +5299,19 @@ class FigInputText extends HTMLElement {
     }
     const prepend = this.querySelector('[slot="prepend"]');
     if (prepend && prepend !== generated) return;
-    if (generated) return;
+    if (generated) {
+      const icon = generated.querySelector("fig-icon");
+      if (icon && icon.getAttribute("name") !== "search") {
+        icon.setAttribute("name", "search");
+      }
+      return;
+    }
 
     const icon = createFigIcon("search");
     icon.setAttribute("slot", "prepend");
     icon.setAttribute("data-generated", "search-prefix");
     icon.setAttribute("color", "var(--figma-color-icon)");
-    icon.addEventListener("click", this.focus.bind(this));
+    icon.addEventListener("click", this.#boundFocusControl);
     this.prepend(icon);
   }
   #syncSearchClear() {
@@ -5172,7 +5324,13 @@ class FigInputText extends HTMLElement {
     }
     const append = this.querySelector('[slot="append"]');
     if (append && append !== generated) return;
-    if (generated) return;
+    if (generated) {
+      const icon = generated.querySelector("fig-icon");
+      if (icon && icon.getAttribute("name") !== "close") {
+        icon.setAttribute("name", "close");
+      }
+      return;
+    }
 
     const wrapper = document.createElement("span");
     wrapper.setAttribute("slot", "append");
@@ -5186,13 +5344,12 @@ class FigInputText extends HTMLElement {
     button.setAttribute("icon", "");
     button.setAttribute("aria-label", "Clear search");
 
-    const icon = createFigIcon("", { size: "small" });
+    const icon = createFigIcon("close", { size: "small" });
     icon.setAttribute("color", "var(--figma-color-icon-secondary)");
     button.append(icon);
     tooltip.append(button);
     wrapper.append(tooltip);
     this.append(wrapper);
-    icon.style.setProperty("--icon", "var(--icon-16-close)");
 
     button.addEventListener("click", (e) => {
       e.preventDefault();
@@ -5658,30 +5815,7 @@ class FigInputNumber extends HTMLElement {
       this.hasAttribute("steppers") &&
       this.getAttribute("steppers") !== "false";
 
-    let html = `<input 
-      type="text"
-      inputmode="decimal"
-      ${this.name ? `name="${this.name}"` : ""}
-      placeholder="${this.placeholder}"
-      value="${this.#formatWithUnit(this.value)}" />`;
-
-    let append = this.querySelector("[slot=append]");
-    let prepend = this.querySelector("[slot=prepend]");
-
-    this.innerHTML = html;
-
-    if (prepend) {
-      prepend.removeEventListener("click", this.#boundFocusControl);
-      prepend.addEventListener("click", this.#boundFocusControl);
-      this.prepend(prepend);
-    }
-    if (append) {
-      append.removeEventListener("click", this.#boundFocusControl);
-      append.addEventListener("click", this.#boundFocusControl);
-      this.append(append);
-    }
-
-    this.input = this.querySelector("input");
+    this.input = this.#ensureInputControl();
     this.#syncInputA11yAttributes();
 
     if (this.getAttribute("min")) {
@@ -5733,6 +5867,36 @@ class FigInputNumber extends HTMLElement {
 
   focus() {
     this.input.focus();
+  }
+
+  #ensureInputControl() {
+    const existing = this.querySelector("input");
+    if (existing) return existing;
+
+    const html = `<input 
+      type="text"
+      inputmode="decimal"
+      ${this.name ? `name="${this.name}"` : ""}
+      placeholder="${this.placeholder}"
+      value="${this.#formatWithUnit(this.value)}" />`;
+
+    const append = this.querySelector("[slot=append]");
+    const prepend = this.querySelector("[slot=prepend]");
+
+    this.innerHTML = html;
+
+    if (prepend) {
+      prepend.removeEventListener("click", this.#boundFocusControl);
+      prepend.addEventListener("click", this.#boundFocusControl);
+      this.prepend(prepend);
+    }
+    if (append) {
+      append.removeEventListener("click", this.#boundFocusControl);
+      append.addEventListener("click", this.#boundFocusControl);
+      this.append(append);
+    }
+
+    return this.querySelector("input");
   }
 
   #syncInputA11yAttributes() {
@@ -6318,6 +6482,14 @@ class FigInputColor extends HTMLElement {
   #suppressNativeColorClick = false;
   #pendingFillPickerPointerOpen = false;
   #nativeColorClickTimer = null;
+  #boundSwatchPointerDown = this.#handleSwatchPointerDown.bind(this);
+  #boundSwatchClick = this.#handleSwatchClick.bind(this);
+  #boundSwatchKeyDown = this.#handleSwatchKeyDown.bind(this);
+  #boundHandleInput = this.#handleInput.bind(this);
+  #boundTextInput = this.#handleTextInput.bind(this);
+  #boundChange = this.#handleChange.bind(this);
+  #boundAlphaInput = this.#handleAlphaInput.bind(this);
+  #boundFillPickerInput = this.#handleFillPickerInput.bind(this);
   constructor() {
     super();
   }
@@ -6354,7 +6526,103 @@ class FigInputColor extends HTMLElement {
   }
 
   connectedCallback() {
+    if (this.#canReuseUI()) {
+      this.#refreshUI();
+      return;
+    }
     this.#buildUI();
+  }
+
+  disconnectedCallback() {
+    this.#teardownControlListeners();
+  }
+
+  #canReuseUI() {
+    const showText = this.getAttribute("text") !== "false";
+    return showText
+      ? !!this.querySelector(":scope > .input-combo")
+      : !!this.querySelector(":scope > fig-chit");
+  }
+
+  #refreshUI() {
+    this.#setValues(this.getAttribute("value"));
+    this.#swatch = this.querySelector("fig-chit");
+    this.#fillPicker = this.querySelector("fig-fill-picker");
+    this.#textInput = this.querySelector("fig-input-text:not([type=number])");
+    this.#alphaInput = this.querySelector("fig-input-number");
+    if (this.#textInput) {
+      this.#textInput.setAttribute(
+        "value",
+        this.hexOpaque.slice(1).toUpperCase(),
+      );
+    }
+    if (this.#alphaInput) {
+      this.#alphaInput.setAttribute("value", String(this.#alphaPercent));
+    }
+    if (this.#swatch) {
+      this.#swatch.setAttribute("background", this.hexOpaque);
+      this.#swatch.setAttribute("alpha", String(this.rgba.a));
+    }
+    this.#syncA11yAttributes();
+    this.#bindControlListeners();
+  }
+
+  #teardownControlListeners() {
+    if (this.#swatch) {
+      this.#swatch.removeEventListener(
+        "pointerdown",
+        this.#boundSwatchPointerDown,
+        { capture: true },
+      );
+      this.#swatch.removeEventListener("click", this.#boundSwatchClick, {
+        capture: true,
+      });
+      const swatchInput = this.#swatch.querySelector('input[type="color"]');
+      swatchInput?.removeEventListener("keydown", this.#boundSwatchKeyDown);
+      this.#swatch.removeEventListener("input", this.#boundHandleInput);
+    }
+    this.#textInput?.removeEventListener("input", this.#boundTextInput);
+    this.#textInput?.removeEventListener("change", this.#boundChange);
+    this.#alphaInput?.removeEventListener("input", this.#boundAlphaInput);
+    this.#alphaInput?.removeEventListener("change", this.#boundChange);
+    this.#fillPicker?.removeEventListener("input", this.#boundFillPickerInput);
+    this.#fillPicker?.removeEventListener("change", this.#boundChange);
+  }
+
+  #bindControlListeners() {
+    if (this.#swatch) {
+      this.#swatch.disabled = this.hasAttribute("disabled");
+      const swatchInput = this.#swatch.querySelector('input[type="color"]');
+      if (this.#textInput || this.hasAttribute("swatch-disabled")) {
+        swatchInput?.setAttribute("tabindex", "-1");
+      }
+      if (this.hasAttribute("swatch-disabled")) {
+        swatchInput?.setAttribute("disabled", "");
+        if (swatchInput) swatchInput.style.pointerEvents = "none";
+      }
+      this.#swatch.addEventListener(
+        "pointerdown",
+        this.#boundSwatchPointerDown,
+        { capture: true },
+      );
+      this.#swatch.addEventListener("click", this.#boundSwatchClick, {
+        capture: true,
+      });
+      swatchInput?.addEventListener("keydown", this.#boundSwatchKeyDown);
+      this.#swatch.addEventListener("input", this.#boundHandleInput);
+    }
+    if (this.#textInput) {
+      this.#textInput.addEventListener("input", this.#boundTextInput);
+      this.#textInput.addEventListener("change", this.#boundChange);
+    }
+    if (this.#alphaInput) {
+      this.#alphaInput.addEventListener("input", this.#boundAlphaInput);
+      this.#alphaInput.addEventListener("change", this.#boundChange);
+    }
+    if (this.#fillPicker) {
+      this.#fillPicker.addEventListener("input", this.#boundFillPickerInput);
+      this.#fillPicker.addEventListener("change", this.#boundChange);
+    }
   }
 
   #buildUI() {
@@ -6402,54 +6670,15 @@ class FigInputColor extends HTMLElement {
     this.#alphaInput = this.querySelector("fig-input-number");
     this.#syncA11yAttributes();
 
-    // Setup swatch (native picker)
-    if (this.#swatch) {
-      this.#swatch.disabled = this.hasAttribute("disabled");
-      const swatchInput = this.#swatch.querySelector('input[type="color"]');
-      if (this.#textInput || this.hasAttribute("swatch-disabled")) {
-        swatchInput?.setAttribute("tabindex", "-1");
-      }
-      if (this.hasAttribute("swatch-disabled")) {
-        swatchInput?.setAttribute("disabled", "");
-        if (swatchInput) swatchInput.style.pointerEvents = "none";
-      }
-      this.#swatch.addEventListener("pointerdown", this.#handleSwatchPointerDown.bind(this), {
-        capture: true,
-      });
-      this.#swatch.addEventListener("click", this.#handleSwatchClick.bind(this), {
-        capture: true,
-      });
-      swatchInput?.addEventListener("keydown", this.#handleSwatchKeyDown.bind(this));
-      this.#swatch.addEventListener("input", this.#handleInput.bind(this));
-    }
-
     if (this.#textInput) {
       const hex = this.rgbAlphaToHex(this.rgba, 1);
-      // Display without # prefix
       this.#textInput.value = hex.slice(1).toUpperCase();
       if (this.#swatch) {
         this.#swatch.background = hex;
       }
-      this.#textInput.addEventListener(
-        "input",
-        this.#handleTextInput.bind(this),
-      );
-      this.#textInput.addEventListener(
-        "change",
-        this.#handleChange.bind(this),
-      );
     }
 
-    if (this.#alphaInput) {
-      this.#alphaInput.addEventListener(
-        "input",
-        this.#handleAlphaInput.bind(this),
-      );
-      this.#alphaInput.addEventListener(
-        "change",
-        this.#handleChange.bind(this),
-      );
-    }
+    this.#bindControlListeners();
   }
 
   #syncFillPicker() {
@@ -8001,6 +8230,7 @@ class FigInputPalette extends HTMLElement {
     if (this.#renderRAF) cancelAnimationFrame(this.#renderRAF);
     this.#renderRAF = requestAnimationFrame(() => {
       this.#renderRAF = null;
+      if (!this.isConnected) return;
       this.#parseValue();
       this.#render();
     });
@@ -9536,6 +9766,24 @@ class FigComboInput extends HTMLElement {
     this.setAttribute("value", val ?? "");
   }
 
+  #canReuseMarkup() {
+    return !!this.querySelector(":scope > .input-combo");
+  }
+
+  #refreshMarkup() {
+    this.#input = this.querySelector("fig-input-text");
+    this.#button = this.querySelector("fig-button");
+    this.#dropdown = this.querySelector("fig-dropdown");
+    if (this.#input) {
+      this.#input.setAttribute("value", this.value);
+      this.#input.setAttribute(
+        "placeholder",
+        this.getAttribute("placeholder") || "",
+      );
+    }
+    this.#syncA11yAttributes();
+  }
+
   connectedCallback() {
     this.#customDropdown =
       Array.from(this.children).find(
@@ -9546,8 +9794,13 @@ class FigComboInput extends HTMLElement {
       this.#customDropdown.remove();
     }
 
-    this.#render();
-    this.#setupListeners();
+    if (this.#canReuseMarkup()) {
+      this.#refreshMarkup();
+      this.#setupListeners();
+    } else {
+      this.#render();
+      this.#setupListeners();
+    }
 
     if (this.hasAttribute("disabled")) {
       this.#applyDisabled(true);
@@ -9601,6 +9854,7 @@ class FigComboInput extends HTMLElement {
   }
 
   #setupListeners() {
+    this.#teardownListeners();
     this.#dropdown?.addEventListener("input", this.#boundHandleDropdownInput);
     this.#input?.addEventListener("input", this.#boundHandleTextInput);
     this.#input?.addEventListener("change", this.#boundHandleTextChange);
@@ -12251,8 +12505,11 @@ class Fig3DRotate extends HTMLElement {
   #container = null;
   #boundKeyDown = null;
   #boundKeyUp = null;
+  #boundContainerPointerDown = (e) => this.#startDrag(e);
+  #eventAbort = null;
   #fields = [];
   #fieldInputs = {};
+  #fieldInputHandlers = {};
 
   static get observedAttributes() {
     return [
@@ -12281,16 +12538,36 @@ class Fig3DRotate extends HTMLElement {
     this.#parseFields(this.getAttribute("fields"));
     const val = this.getAttribute("value");
     if (val) this.#parseValue(val);
-    this.#render();
+    if (this.querySelector(".fig-3d-rotate-container")) {
+      this.#reuseRenderedMarkup();
+    } else {
+      this.#render();
+    }
     this.#syncSelected(this.getAttribute("selected"));
     this.#syncDragState();
   }
 
   disconnectedCallback() {
     this.#isDragging = false;
+    this.#teardownEvents();
+  }
+
+  #reuseRenderedMarkup() {
+    this.#container = this.querySelector(".fig-3d-rotate-container");
+    this.#cube = this.querySelector(".fig-3d-rotate-cube");
+    this.#wireFieldInputs();
+    this.#updateCube();
+    this.#setupEvents();
+  }
+
+  #teardownEvents() {
+    this.#eventAbort?.abort();
+    this.#eventAbort = null;
     if (this.#boundKeyDown) {
       window.removeEventListener("keydown", this.#boundKeyDown);
       window.removeEventListener("keyup", this.#boundKeyUp);
+      this.#boundKeyDown = null;
+      this.#boundKeyUp = null;
     }
   }
 
@@ -12444,12 +12721,19 @@ class Fig3DRotate extends HTMLElement {
     </div>${fieldsHTML}`;
     this.#container = this.querySelector(".fig-3d-rotate-container");
     this.#cube = this.querySelector(".fig-3d-rotate-cube");
+    this.#wireFieldInputs();
+    this.#updateCube();
+    this.#setupEvents();
+  }
+
+  #wireFieldInputs() {
     this.#fieldInputs = {};
     for (const axis of this.#fields) {
       const input = this.querySelector(`fig-input-number[name="${axis}"]`);
-      if (input) {
-        this.#fieldInputs[axis] = input;
-        const handleFieldValue = (e) => {
+      if (!input) continue;
+      this.#fieldInputs[axis] = input;
+      if (!this.#fieldInputHandlers[axis]) {
+        this.#fieldInputHandlers[axis] = (e) => {
           e.stopPropagation();
           const val = parseFloat(e.target.value);
           if (isNaN(val)) return;
@@ -12459,12 +12743,13 @@ class Fig3DRotate extends HTMLElement {
           this.#updateCube();
           this.#emit(e.type);
         };
-        input.addEventListener("input", handleFieldValue);
-        input.addEventListener("change", handleFieldValue);
       }
+      const handler = this.#fieldInputHandlers[axis];
+      input.removeEventListener("input", handler);
+      input.removeEventListener("change", handler);
+      input.addEventListener("input", handler);
+      input.addEventListener("change", handler);
     }
-    this.#updateCube();
-    this.#setupEvents();
   }
 
   #syncFieldInputs() {
@@ -12505,7 +12790,12 @@ class Fig3DRotate extends HTMLElement {
   }
 
   #setupEvents() {
-    this.#container.addEventListener("pointerdown", (e) => this.#startDrag(e));
+    this.#teardownEvents();
+    if (!this.#container) return;
+    this.#eventAbort = new AbortController();
+    this.#container.addEventListener("pointerdown", this.#boundContainerPointerDown, {
+      signal: this.#eventAbort.signal,
+    });
     this.#boundKeyDown = (e) => {
       if (e.key === "Shift") this.#isShiftHeld = true;
     };
@@ -12597,12 +12887,28 @@ class FigOriginGrid extends HTMLElement {
     return ["value", "precision", "aspect-ratio", "drag", "fields"];
   }
 
+  #reuseRenderedMarkup() {
+    this.#grid = this.querySelector(".origin-grid");
+    this.#cells = Array.from(this.querySelectorAll(".origin-grid-cell"));
+    this.#handle = this.querySelector("fig-handle");
+    this.#xInput = this.querySelector('fig-input-number[name="x"]');
+    this.#yInput = this.querySelector('fig-input-number[name="y"]');
+    this.#syncHandlePosition();
+    this.#syncOverflowState();
+    this.#syncValueInputs();
+    this.#setupEvents();
+  }
+
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "0");
     figSyncCssVar(this, "--aspect-ratio", this.getAttribute("aspect-ratio"));
     this.#applyIncomingValue(this.getAttribute("value"));
 
-    this.#render();
+    if (this.querySelector(".fig-origin-grid-surface")) {
+      this.#reuseRenderedMarkup();
+    } else {
+      this.#render();
+    }
     this.#syncDragState();
     this.#syncValueAttribute();
   }
@@ -12610,6 +12916,7 @@ class FigOriginGrid extends HTMLElement {
   disconnectedCallback() {
     this.#isDragging = false;
     this.#detachHandleDragListeners();
+    this.#teardownEvents();
   }
 
   get value() {
@@ -13014,38 +13321,65 @@ class FigOriginGrid extends HTMLElement {
     );
   }
 
+  #eventAbort = null;
+
+  #teardownEvents() {
+    this.#eventAbort?.abort();
+    this.#eventAbort = null;
+  }
+
   #setupEvents() {
+    this.#teardownEvents();
     if (!this.#grid || !this.#handle) return;
 
-    this.#grid.addEventListener("pointerdown", (e) => {
-      const hovered = this.#gridCellFromClient(e.clientX, e.clientY);
-      this.#setHoveredCell(hovered);
+    this.#eventAbort = new AbortController();
+    const { signal } = this.#eventAbort;
 
-      if (this.#dragEnabled) {
-        this.#startGridDrag(e);
-        return;
-      }
+    this.#grid.addEventListener(
+      "pointerdown",
+      (e) => {
+        const hovered = this.#gridCellFromClient(e.clientX, e.clientY);
+        this.#setHoveredCell(hovered);
 
-      const center = this.#cellCenterFromClient(e.clientX, e.clientY);
-      this.#setFromPercent(center.x, center.y, "input");
-      this.#emit("change");
-    });
+        if (this.#dragEnabled) {
+          this.#startGridDrag(e);
+          return;
+        }
 
-    this.#grid.addEventListener("pointermove", (e) => {
-      if (this.#isDragging) return;
-      const hovered = this.#gridCellFromClient(e.clientX, e.clientY);
-      this.#setHoveredCell(hovered);
-    });
+        const center = this.#cellCenterFromClient(e.clientX, e.clientY);
+        this.#setFromPercent(center.x, center.y, "input");
+        this.#emit("change");
+      },
+      { signal },
+    );
 
-    this.#grid.addEventListener("pointerleave", () => {
-      this.#clearHoveredCells();
-    });
+    this.#grid.addEventListener(
+      "pointermove",
+      (e) => {
+        if (this.#isDragging) return;
+        const hovered = this.#gridCellFromClient(e.clientX, e.clientY);
+        this.#setHoveredCell(hovered);
+      },
+      { signal },
+    );
 
-    this.#handle.addEventListener("keydown", (e) => {
-      if (!this.#moveHandleByKeyboard(e)) return;
-      e.preventDefault();
-      e.stopPropagation();
-    });
+    this.#grid.addEventListener(
+      "pointerleave",
+      () => {
+        this.#clearHoveredCells();
+      },
+      { signal },
+    );
+
+    this.#handle.addEventListener(
+      "keydown",
+      (e) => {
+        if (!this.#moveHandleByKeyboard(e)) return;
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      { signal },
+    );
 
     const bindValueInput = (inputEl, axis) => {
       if (!inputEl) return;
@@ -13058,11 +13392,15 @@ class FigOriginGrid extends HTMLElement {
           this.#setFromPercent(this.#x, next, "input");
         }
       };
-      inputEl.addEventListener("input", handle);
-      inputEl.addEventListener("change", handle);
-      inputEl.addEventListener("focusout", () => {
-        this.#emit("change");
-      });
+      inputEl.addEventListener("input", handle, { signal });
+      inputEl.addEventListener("change", handle, { signal });
+      inputEl.addEventListener(
+        "focusout",
+        () => {
+          this.#emit("change");
+        },
+        { signal },
+      );
     };
 
     bindValueInput(this.#xInput, "x");
@@ -13116,9 +13454,16 @@ class FigInputJoystick extends HTMLElement {
     this.#boundYFocusOut = () => this.#handleFieldFocusOut();
   }
 
+  #reuseRenderedMarkup() {
+    this.#setupListeners();
+    this.#syncHandlePosition();
+    this.#syncValueAttribute();
+    this.#syncResetButton();
+    this.#initialized = true;
+  }
+
   connectedCallback() {
-    // Initialize position
-    requestAnimationFrame(() => {
+    figNextFrame(this, () => {
       this.precision = this.getAttribute("precision") || 3;
       this.precision = parseInt(this.precision);
       this.transform = this.getAttribute("transform") || 1;
@@ -13127,6 +13472,11 @@ class FigInputJoystick extends HTMLElement {
       figSyncCssVar(this, "--aspect-ratio", this.getAttribute("aspect-ratio"));
       if (!this.hasAttribute("value")) {
         this.setAttribute("value", "50% 50%");
+      }
+
+      if (this.querySelector(".fig-input-joystick-plane")) {
+        this.#reuseRenderedMarkup();
+        return;
       }
 
       this.#render();
@@ -14417,7 +14767,7 @@ class FigChooser extends HTMLElement {
     this.#startObserver();
     this.#startResizeObserver();
 
-    requestAnimationFrame(() => {
+    figNextFrame(this, () => {
       this.#syncSelection();
       this.#syncOverflow();
       this.#scheduleInitialScrollSettle();

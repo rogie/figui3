@@ -200,6 +200,52 @@ test.describe("dropdown keyboard behavior", () => {
       hasSelectedContent: true,
     });
   });
+
+  test("fig-dropdown keeps a single select on reconnect", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-dropdown id="dropdown-reconnect" label="Residence type" value="Apartment">
+          <option>House</option>
+          <option value="Apartment">Apartment</option>
+        </fig-dropdown>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const getState = () =>
+      page.locator("#dropdown-reconnect").evaluate((host) => {
+        const selects = host.querySelectorAll("select");
+        const select = selects[0] as HTMLSelectElement | undefined;
+        return {
+          selectCount: selects.length,
+          value: select?.value ?? null,
+          optionCount: select?.options.length ?? 0,
+        };
+      });
+
+    expect(await getState()).toEqual({
+      selectCount: 1,
+      value: "Apartment",
+      optionCount: 2,
+    });
+
+    await page.evaluate(() => {
+      const host = document.querySelector("#dropdown-reconnect");
+      const parent = host?.parentElement;
+      if (!host || !parent) throw new Error("Missing dropdown host");
+      parent.removeChild(host);
+      parent.appendChild(host);
+    });
+    await page.waitForTimeout(50);
+
+    expect(await getState()).toEqual({
+      selectCount: 1,
+      value: "Apartment",
+      optionCount: 2,
+    });
+  });
 });
 
 test.describe("joystick axis labels", () => {
@@ -581,6 +627,94 @@ test.describe("text input accessibility", () => {
       inputBoxShadow: "none",
     });
   });
+
+  test("fig-input-text search clear icon survives reconnect", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-text
+          id="search-reconnect"
+          type="search"
+          value="Text here"
+        ></fig-input-text>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const getClearIconStyle = () =>
+      page
+        .locator('#search-reconnect [data-generated="search-clear"] fig-icon')
+        .evaluate((icon) => ({
+        name: icon.getAttribute("name"),
+        iconVar: icon.style.getPropertyValue("--icon"),
+      }));
+
+    expect(await getClearIconStyle()).toEqual({
+      name: "close",
+      iconVar: "var(--icon-16-close)",
+    });
+
+    await page.evaluate(() => {
+      const host = document.querySelector("#search-reconnect");
+      const parent = host?.parentElement;
+      if (!host || !parent) throw new Error("Missing search host");
+      parent.removeChild(host);
+      parent.appendChild(host);
+    });
+    await page.waitForTimeout(50);
+
+    expect(await getClearIconStyle()).toEqual({
+      name: "close",
+      iconVar: "var(--icon-16-close)",
+    });
+  });
+
+  test("fig-input-text password toggle icon survives reconnect", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-text
+          id="password-reconnect"
+          type="password"
+          value="secret"
+        ></fig-input-text>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const getToggleIcon = () =>
+      page
+        .locator('#password-reconnect [data-generated="password-toggle"] fig-icon')
+        .evaluate((icon) => ({
+          name: icon.getAttribute("name"),
+          iconVar: icon.style.getPropertyValue("--icon"),
+        }));
+
+    expect(await getToggleIcon()).toEqual({
+      name: "hidden",
+      iconVar: "var(--icon-16-hidden)",
+    });
+
+    await page.evaluate(() => {
+      const host = document.querySelector("#password-reconnect");
+      const parent = host?.parentElement;
+      if (!host || !parent) throw new Error("Missing password host");
+      parent.removeChild(host);
+      parent.appendChild(host);
+    });
+    await page.waitForTimeout(50);
+
+    expect(await getToggleIcon()).toEqual({
+      name: "hidden",
+      iconVar: "var(--icon-16-hidden)",
+    });
+  });
 });
 
 test.describe("number input accessibility", () => {
@@ -950,6 +1084,263 @@ test.describe("slider accessibility", () => {
       hostValue: "70",
       rangeValue: "70",
       rangeValueNow: "70",
+    });
+  });
+
+  test("fig-slider survives reconnect without duplicate controls", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider
+          id="slider-reconnect"
+          value="50"
+          min="0"
+          max="100"
+          units="%"
+          aria-label="Opacity"
+        ></fig-slider>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const getState = () =>
+      page.locator("#slider-reconnect").evaluate((host) => {
+        const range = host.querySelector('input[type="range"]') as HTMLInputElement | null;
+        const number = host.querySelector("fig-input-number");
+        return {
+          rangeCount: host.querySelectorAll('input[type="range"]').length,
+          numberCount: host.querySelectorAll("fig-input-number").length,
+          hostValue: host.getAttribute("value"),
+          rangeValue: range?.value ?? null,
+          numberValue: number?.getAttribute("value") ?? null,
+        };
+      });
+
+    expect(await getState()).toEqual({
+      rangeCount: 1,
+      numberCount: 1,
+      hostValue: "50",
+      rangeValue: "50",
+      numberValue: "50",
+    });
+
+    await page.evaluate(() => {
+      const host = document.querySelector("#slider-reconnect");
+      const parent = host?.parentElement;
+      if (!host || !parent) throw new Error("Missing slider host");
+      parent.removeChild(host);
+      parent.appendChild(host);
+    });
+    await page.waitForTimeout(50);
+
+    expect(await getState()).toEqual({
+      rangeCount: 1,
+      numberCount: 1,
+      hostValue: "50",
+      rangeValue: "50",
+      numberValue: "50",
+    });
+  });
+});
+
+test.describe("reconnect resilience", () => {
+  const reconnect = async (page: import("@playwright/test").Page, selector: string) => {
+    await page.evaluate((sel) => {
+      const host = document.querySelector(sel);
+      const parent = host?.parentElement;
+      if (!host || !parent) throw new Error(`Missing ${sel}`);
+      parent.removeChild(host);
+      parent.appendChild(host);
+    }, selector);
+    await page.waitForTimeout(50);
+  };
+
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+  });
+
+  test("fig-options keeps a single segmented control on reconnect", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-options id="options-reconnect" options="One,Two,Three" value="Two"></fig-options>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const getState = () =>
+      page.locator("#options-reconnect").evaluate((host) => ({
+        controlCount: host.querySelectorAll(
+          ":scope > fig-segmented-control, :scope > fig-dropdown",
+        ).length,
+        value: host.getAttribute("value"),
+        segmentCount: host.querySelectorAll("fig-segment").length,
+      }));
+
+    expect(await getState()).toEqual({
+      controlCount: 1,
+      value: "Two",
+      segmentCount: 3,
+    });
+
+    await reconnect(page, "#options-reconnect");
+
+    expect(await getState()).toEqual({
+      controlCount: 1,
+      value: "Two",
+      segmentCount: 3,
+    });
+  });
+
+  test("fig-combo-input keeps a single combo on reconnect", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-combo-input
+          id="combo-reconnect"
+          options="Alpha,Beta"
+          value="Beta"
+          placeholder="Type..."
+        ></fig-combo-input>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const getState = () =>
+      page.locator("#combo-reconnect").evaluate((host) => ({
+        comboCount: host.querySelectorAll(":scope > .input-combo").length,
+        textCount: host.querySelectorAll("fig-input-text").length,
+        dropdownCount: host.querySelectorAll("fig-dropdown").length,
+        value: host.getAttribute("value"),
+        inputValue: host.querySelector("fig-input-text")?.getAttribute("value"),
+      }));
+
+    expect(await getState()).toEqual({
+      comboCount: 1,
+      textCount: 1,
+      dropdownCount: 1,
+      value: "Beta",
+      inputValue: "Beta",
+    });
+
+    await reconnect(page, "#combo-reconnect");
+
+    expect(await getState()).toEqual({
+      comboCount: 1,
+      textCount: 1,
+      dropdownCount: 1,
+      value: "Beta",
+      inputValue: "Beta",
+    });
+  });
+
+  test("fig-origin-grid keeps a single handle on reconnect", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-origin-grid id="origin-reconnect" value="50% 50%" fields></fig-origin-grid>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const getState = () =>
+      page.locator("#origin-reconnect").evaluate((host) => ({
+        surfaceCount: host.querySelectorAll(".fig-origin-grid-surface").length,
+        handleCount: host.querySelectorAll("fig-handle").length,
+        value: host.getAttribute("value"),
+      }));
+
+    expect(await getState()).toEqual({
+      surfaceCount: 1,
+      handleCount: 1,
+      value: "50% 50%",
+    });
+
+    await reconnect(page, "#origin-reconnect");
+
+    expect(await getState()).toEqual({
+      surfaceCount: 1,
+      handleCount: 1,
+      value: "50% 50%",
+    });
+  });
+
+  test("fig-joystick keeps a single plane on reconnect", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-joystick id="joystick-reconnect" value="50% 50%"></fig-joystick>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const getState = () =>
+      page.locator("#joystick-reconnect").evaluate((host) => ({
+        planeCount: host.querySelectorAll(".fig-input-joystick-plane").length,
+        handleCount: host.querySelectorAll("fig-handle").length,
+        value: host.getAttribute("value"),
+      }));
+
+    expect(await getState()).toEqual({
+      planeCount: 1,
+      handleCount: 1,
+      value: "50% 50%",
+    });
+
+    await reconnect(page, "#joystick-reconnect");
+    await page.waitForTimeout(50);
+
+    expect(await getState()).toEqual({
+      planeCount: 1,
+      handleCount: 1,
+      value: "50% 50%",
+    });
+  });
+
+  test("fig-input-color keeps a single combo on reconnect", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-color id="color-reconnect" value="#ff0000"></fig-input-color>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const getState = () =>
+      page.locator("#color-reconnect").evaluate((host) => ({
+        comboCount: host.querySelectorAll(":scope > .input-combo").length,
+        chitCount: host.querySelectorAll("fig-chit").length,
+        textCount: host.querySelectorAll("fig-input-text").length,
+        value: host.getAttribute("value"),
+      }));
+
+    expect(await getState()).toEqual({
+      comboCount: 1,
+      chitCount: 1,
+      textCount: 1,
+      value: "#ff0000",
+    });
+
+    await reconnect(page, "#color-reconnect");
+
+    expect(await getState()).toEqual({
+      comboCount: 1,
+      chitCount: 1,
+      textCount: 1,
+      value: "#ff0000",
     });
   });
 });
