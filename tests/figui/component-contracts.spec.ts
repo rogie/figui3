@@ -1572,6 +1572,10 @@ test.describe("remaining accessibility contracts", () => {
         </fig-tabs>
         <section id="panel-one">One panel</section>
         <section id="panel-two">Two panel</section>
+        <fig-tabs id="text-tabs">
+          <fig-tab selected>General</fig-tab>
+          <fig-tab>Advanced</fig-tab>
+        </fig-tabs>
         <fig-segmented-control value="left">
           <fig-segment value="left">Left</fig-segment>
           <fig-segment value="right">Right</fig-segment>
@@ -1638,6 +1642,57 @@ test.describe("remaining accessibility contracts", () => {
       outlineWidth: "1px",
       outlineOffset: "0px",
     });
+
+    await page.locator("fig-tabs").first().evaluate((tabs) => {
+      (window as any).__tabEvents = [];
+      const record = (event: CustomEvent) => {
+        (window as any).__tabEvents.push({
+          type: event.type,
+          detail: event.detail,
+          value: (event.target as any)?.value,
+        });
+      };
+      tabs.addEventListener("input", record as EventListener);
+      tabs.addEventListener("change", record as EventListener);
+    });
+    await page.locator('fig-tab[value="two"]').click();
+    await expect
+      .poll(() => page.evaluate(() => (window as any).__tabEvents))
+      .toEqual([
+        { type: "input", detail: "two", value: "two" },
+        { type: "change", detail: "two", value: "two" },
+      ]);
+
+    await page.locator('fig-tab[value="two"]').focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect
+      .poll(() => page.evaluate(() => (window as any).__tabEvents))
+      .toEqual([
+        { type: "input", detail: "two", value: "two" },
+        { type: "change", detail: "two", value: "two" },
+        { type: "input", detail: "one", value: "one" },
+        { type: "change", detail: "one", value: "one" },
+      ]);
+
+    await page.locator("#text-tabs").evaluate((tabs) => {
+      (window as any).__textTabEvents = [];
+      const record = (event: CustomEvent) => {
+        (window as any).__textTabEvents.push({
+          type: event.type,
+          detail: event.detail,
+          value: (event.target as any)?.value,
+        });
+      };
+      tabs.addEventListener("input", record as EventListener);
+      tabs.addEventListener("change", record as EventListener);
+    });
+    await page.locator("#text-tabs fig-tab").nth(1).click();
+    await expect
+      .poll(() => page.evaluate(() => (window as any).__textTabEvents))
+      .toEqual([
+        { type: "input", detail: "Advanced", value: "Advanced" },
+        { type: "change", detail: "Advanced", value: "Advanced" },
+      ]);
   });
 
   test("fig-tabs centers selected tabs in overflow without moving the page", async ({

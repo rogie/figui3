@@ -3453,26 +3453,45 @@ class FigTabs extends HTMLElement {
       this.querySelectorAll("fig-tab").forEach((tab) => tab.removeAttribute("selected"));
       this.selectedTab = tabs[newIndex];
       tabs[newIndex].setAttribute("selected", "true");
-      const val = tabs[newIndex].getAttribute("value");
+      const val = this.#resolveTabValue(tabs[newIndex]);
       if (val) this.setAttribute("value", val);
+      else this.removeAttribute("value");
       tabs[newIndex].focus();
       this.#syncTabIndexes();
       this.#scrollSelectedTabIntoView(tabs[newIndex]);
+      this.#emitSelectionEvents();
     }
   }
 
   get value() {
-    return this.selectedTab?.getAttribute("value") || "";
+    return this.#resolveTabValue(this.selectedTab);
   }
 
   set value(val) {
     this.setAttribute("value", val);
   }
 
+  #emitSelectionEvents() {
+    const val = this.value;
+    this.dispatchEvent(
+      new CustomEvent("input", { detail: val, bubbles: true }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", { detail: val, bubbles: true }),
+    );
+  }
+
+  #resolveTabValue(tab) {
+    if (!tab) return "";
+    const attrValue = tab.getAttribute("value");
+    if (attrValue !== null) return attrValue;
+    return tab.textContent?.trim() || "";
+  }
+
   #selectByValue(value) {
     const tabs = this.querySelectorAll("fig-tab");
     for (const tab of tabs) {
-      if (tab.getAttribute("value") === value) {
+      if (this.#resolveTabValue(tab) === value) {
         this.selectedTab = tab;
         tab.setAttribute("selected", "true");
       } else {
@@ -3500,6 +3519,8 @@ class FigTabs extends HTMLElement {
     if (this.hasAttribute("disabled")) return;
     const target = event.target.closest("fig-tab");
     if (!target || !this.contains(target)) return;
+    const previousTab = this.selectedTab;
+    const previousValue = this.value;
     const tabs = this.querySelectorAll("fig-tab");
     for (const tab of tabs) {
       if (tab === target) {
@@ -3509,10 +3530,14 @@ class FigTabs extends HTMLElement {
         tab.removeAttribute("selected");
       }
     }
-    const val = target.getAttribute("value");
+    const val = this.#resolveTabValue(target);
     if (val) this.setAttribute("value", val);
+    else this.removeAttribute("value");
     this.#syncTabIndexes();
     this.#scrollSelectedTabIntoView(target);
+    if (previousTab !== target || previousValue !== this.value) {
+      this.#emitSelectionEvents();
+    }
   }
 }
 customElements.define("fig-tabs", FigTabs);

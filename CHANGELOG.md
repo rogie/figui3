@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.6.1]
+
+### Fixed
+
+- Fixed `fig-tabs` so user tab selection emits `input` and `change` events for event output and integrations.
+
 ## [6.6.0]
 
 ### Added
