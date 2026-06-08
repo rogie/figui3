@@ -2665,6 +2665,63 @@ test.describe("remaining accessibility contracts", () => {
     await expect(trigger).toBeFocused();
   });
 
+  test("tooltip keeps beak aligned when anchor is near viewport edge", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 280, height: 480 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="edge-anchor" icon variant="ghost" style="position:fixed;right:8px;top:48px"></fig-button>
+        <dialog is="fig-popup" variant="tooltip" position="top center" offset="8 8" anchor="#edge-anchor" open>
+          <span>Clear search</span>
+        </dialog>
+      `;
+      const button = document.querySelector("#edge-anchor");
+      if (button) {
+        const icon = document.createElement("fig-icon");
+        icon.setAttribute("name", "close");
+        icon.setAttribute("size", "small");
+        button.append(icon);
+      }
+    });
+    await page.waitForTimeout(100);
+
+    const state = await page.evaluate(() => {
+      const popup = document.querySelector(
+        'dialog[is="fig-popup"][variant="tooltip"]',
+      );
+      const anchor = document.querySelector("#edge-anchor");
+      if (!(popup instanceof HTMLDialogElement) || !(anchor instanceof HTMLElement)) {
+        return null;
+      }
+
+      popup.positionPopup?.();
+
+      const popupRect = popup.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+      const anchorCenterX = anchorRect.left + anchorRect.width / 2;
+      const beakOffset = parseFloat(
+        getComputedStyle(popup).getPropertyValue("--fig-popup-beak-offset"),
+      );
+      const beakX = popupRect.left + beakOffset;
+
+      return {
+        beakDelta: Math.abs(beakX - anchorCenterX),
+        pointer: popup.getAttribute("pointer"),
+        viewportMarginRight: window.innerWidth - popupRect.right,
+      };
+    });
+
+    expect(state).not.toBeNull();
+    expect(state?.viewportMarginRight).toBeGreaterThanOrEqual(7);
+    expect(state?.viewportMarginRight).toBeLessThanOrEqual(9);
+    if (state?.pointer !== "false") {
+      expect(state?.beakDelta).toBeLessThan(1.5);
+    }
+  });
+
   test("dialog and popup close paths restore focus", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.6.4]
+
+### Fixed
+
+- Fixed `fig-popup` tooltip/popover positioning at viewport edges: anchor-aware clamping keeps the beak on the anchor when possible, uses `visualViewport` bounds, prefers better placements when center overflows, and hides the pointer when alignment is impossible.
+
+### Added
+
+- Added Playwright coverage for edge-anchored tooltip beak alignment.
+
 ## [6.6.3]
 
 ### Fixed

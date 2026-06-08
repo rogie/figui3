@@ -2884,10 +2884,167 @@ class FigPopup extends HTMLDialogElement {
     return "top";
   }
 
-  updatePopoverBeak(anchorRect, popupRect, left, top, placementSide) {
+  lengthToPx(value, fallback = 0) {
+    const styles = getComputedStyle(this);
+    const raw = String(value || "").trim();
+    const n = parseFloat(raw);
+    if (!Number.isFinite(n)) return fallback;
+    if (raw.endsWith("rem")) {
+      return n * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    }
+    if (raw.endsWith("em")) {
+      return n * parseFloat(styles.fontSize);
+    }
+    return n;
+  }
+
+  radiusForSide(side) {
+    const styles = getComputedStyle(this);
+    const toPx = (value) => this.lengthToPx(value, 0);
+    if (side === "top") {
+      return Math.max(
+        toPx(styles.borderTopLeftRadius),
+        toPx(styles.borderTopRightRadius),
+      );
+    }
+    if (side === "bottom") {
+      return Math.max(
+        toPx(styles.borderBottomLeftRadius),
+        toPx(styles.borderBottomRightRadius),
+      );
+    }
+    if (side === "left") {
+      return Math.max(
+        toPx(styles.borderTopLeftRadius),
+        toPx(styles.borderBottomLeftRadius),
+      );
+    }
+    if (side === "right") {
+      return Math.max(
+        toPx(styles.borderTopRightRadius),
+        toPx(styles.borderBottomRightRadius),
+      );
+    }
+    return 0;
+  }
+
+  getBeakEdgeInset(beakSide) {
+    const beakWidth = this.lengthToPx(
+      getComputedStyle(this).getPropertyValue("--fig-popup-beak-width"),
+      16,
+    );
+    return Math.max(10, this.radiusForSide(beakSide) + beakWidth / 2);
+  }
+
+  tracksAnchorBeak() {
     const variant = this.getAttribute("variant");
-    const beakVariants = variant === "popover" || variant === "tooltip";
-    if (!beakVariants || !anchorRect) {
+    return variant === "popover" || variant === "tooltip";
+  }
+
+  getViewportBounds(m) {
+    const vv = window.visualViewport;
+    const width = vv?.width ?? window.innerWidth;
+    const height = vv?.height ?? window.innerHeight;
+    const offsetLeft = vv?.offsetLeft ?? 0;
+    const offsetTop = vv?.offsetTop ?? 0;
+
+    return {
+      minLeft: offsetLeft + m.left,
+      minTop: offsetTop + m.top,
+      maxRight: offsetLeft + width - m.right,
+      maxBottom: offsetTop + height - m.bottom,
+    };
+  }
+
+  clampToViewport(coords, popupRect, m) {
+    const bounds = this.getViewportBounds(m);
+    const maxLeft = bounds.maxRight - popupRect.width;
+    const maxTop = bounds.maxBottom - popupRect.height;
+
+    return {
+      left: Math.min(maxLeft, Math.max(bounds.minLeft, coords.left)),
+      top: Math.min(maxTop, Math.max(bounds.minTop, coords.top)),
+    };
+  }
+
+  resolveCoordsAtViewport(anchorRect, popupRect, coords, placementSide, m) {
+    let { left, top } = this.clampToViewport(coords, popupRect, m);
+    if (!anchorRect || !this.tracksAnchorBeak()) {
+      return { left, top };
+    }
+
+    const beakSide = this.oppositeSide(placementSide);
+    const bounds = this.getViewportBounds(m);
+    const maxLeft = bounds.maxRight - popupRect.width;
+    const minLeft = bounds.minLeft;
+    const maxTop = bounds.maxBottom - popupRect.height;
+    const minTop = bounds.minTop;
+
+    if (beakSide === "top" || beakSide === "bottom") {
+      const inset = this.getBeakEdgeInset(beakSide);
+      const anchorCenterX = anchorRect.left + anchorRect.width / 2;
+      const beakOffset = anchorCenterX - left;
+      if (beakOffset < inset) {
+        left = anchorCenterX - inset;
+      } else if (beakOffset > popupRect.width - inset) {
+        left = anchorCenterX - (popupRect.width - inset);
+      }
+      left = Math.min(maxLeft, Math.max(minLeft, left));
+    } else if (beakSide === "left" || beakSide === "right") {
+      const inset = this.getBeakEdgeInset(beakSide);
+      const anchorCenterY = anchorRect.top + anchorRect.height / 2;
+      const beakOffset = anchorCenterY - top;
+      if (beakOffset < inset) {
+        top = anchorCenterY - inset;
+      } else if (beakOffset > popupRect.height - inset) {
+        top = anchorCenterY - (popupRect.height - inset);
+      }
+      top = Math.min(maxTop, Math.max(minTop, top));
+    }
+
+    return { left, top };
+  }
+
+  canPointAtAnchor(anchorRect, popupRect, left, top, placementSide) {
+    if (!anchorRect || !this.tracksAnchorBeak()) return true;
+
+    const beakSide = this.oppositeSide(placementSide);
+    const inset = this.getBeakEdgeInset(beakSide);
+
+    if (beakSide === "top" || beakSide === "bottom") {
+      const beakOffset = anchorRect.left + anchorRect.width / 2 - left;
+      return (
+        beakOffset >= inset - 0.5 &&
+        beakOffset <= popupRect.width - inset + 0.5
+      );
+    }
+
+    const beakOffset = anchorRect.top + anchorRect.height / 2 - top;
+    return (
+      beakOffset >= inset - 0.5 &&
+      beakOffset <= popupRect.height - inset + 0.5
+    );
+  }
+
+  updatePointerVisibility(anchorRect, popupRect, left, top, placementSide) {
+    if (!this.tracksAnchorBeak()) return;
+    if (this.getAttribute("pointer") === "false") return;
+
+    if (
+      anchorRect &&
+      !this.canPointAtAnchor(anchorRect, popupRect, left, top, placementSide)
+    ) {
+      this.setAttribute("pointer", "false");
+      return;
+    }
+
+    if (this.hasAttribute("pointer")) {
+      this.removeAttribute("pointer");
+    }
+  }
+
+  updatePopoverBeak(anchorRect, popupRect, left, top, placementSide) {
+    if (!this.tracksAnchorBeak() || !anchorRect) {
       this.style.removeProperty("--fig-popup-beak-offset");
       this.removeAttribute("data-beak-side");
       return;
@@ -2903,54 +3060,9 @@ class FigPopup extends HTMLDialogElement {
       measuredRect.width > 0 && measuredRect.height > 0
         ? measuredRect
         : popupRect;
-    // Always use the rendered popup rect so beak alignment matches real final placement.
     const resolvedLeft = rect.left;
     const resolvedTop = rect.top;
-    const styles = getComputedStyle(this);
-    const toPx = (value, fallback = 0) => {
-      const raw = String(value || "").trim();
-      const n = parseFloat(raw);
-      if (!Number.isFinite(n)) return fallback;
-      if (raw.endsWith("rem")) {
-        return n * parseFloat(getComputedStyle(document.documentElement).fontSize);
-      }
-      if (raw.endsWith("em")) {
-        return n * parseFloat(styles.fontSize);
-      }
-      return n;
-    };
-    const radiusForSide = (side) => {
-      if (side === "top") {
-        return Math.max(
-          toPx(styles.borderTopLeftRadius),
-          toPx(styles.borderTopRightRadius),
-        );
-      }
-      if (side === "bottom") {
-        return Math.max(
-          toPx(styles.borderBottomLeftRadius),
-          toPx(styles.borderBottomRightRadius),
-        );
-      }
-      if (side === "left") {
-        return Math.max(
-          toPx(styles.borderTopLeftRadius),
-          toPx(styles.borderBottomLeftRadius),
-        );
-      }
-      if (side === "right") {
-        return Math.max(
-          toPx(styles.borderTopRightRadius),
-          toPx(styles.borderBottomRightRadius),
-        );
-      }
-      return 0;
-    };
-    const beakWidth = toPx(
-      styles.getPropertyValue("--fig-popup-beak-width"),
-      16,
-    );
-    const edgeInset = Math.max(10, radiusForSide(beakSide) + beakWidth / 2);
+    const edgeInset = this.getBeakEdgeInset(beakSide);
 
     let beakOffset;
     if (beakSide === "top" || beakSide === "bottom") {
@@ -2969,15 +3081,14 @@ class FigPopup extends HTMLDialogElement {
   }
 
   overflowScore(coords, popupRect, m) {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const bounds = this.getViewportBounds(m);
     const right = coords.left + popupRect.width;
     const bottom = coords.top + popupRect.height;
 
-    const overflowLeft = Math.max(0, m.left - coords.left);
-    const overflowTop = Math.max(0, m.top - coords.top);
-    const overflowRight = Math.max(0, right - (vw - m.right));
-    const overflowBottom = Math.max(0, bottom - (vh - m.bottom));
+    const overflowLeft = Math.max(0, bounds.minLeft - coords.left);
+    const overflowTop = Math.max(0, bounds.minTop - coords.top);
+    const overflowRight = Math.max(0, right - bounds.maxRight);
+    const overflowBottom = Math.max(0, bottom - bounds.maxBottom);
 
     return overflowLeft + overflowTop + overflowRight + overflowBottom;
   }
@@ -2986,22 +3097,73 @@ class FigPopup extends HTMLDialogElement {
     return this.overflowScore(coords, popupRect, m) === 0;
   }
 
-  clamp(coords, popupRect, m) {
-    const minLeft = m.left;
-    const minTop = m.top;
-    const maxLeft = Math.max(
-      m.left,
-      window.innerWidth - popupRect.width - m.right,
-    );
-    const maxTop = Math.max(
-      m.top,
-      window.innerHeight - popupRect.height - m.bottom,
-    );
+  clamp(coords, popupRect, m, anchorRect = null, placementSide = "top") {
+    if (anchorRect) {
+      return this.resolveCoordsAtViewport(
+        anchorRect,
+        popupRect,
+        coords,
+        placementSide,
+        m,
+      );
+    }
+    return this.clampToViewport(coords, popupRect, m);
+  }
 
-    return {
-      left: Math.min(maxLeft, Math.max(minLeft, coords.left)),
-      top: Math.min(maxTop, Math.max(minTop, coords.top)),
-    };
+  placementScore(anchorRect, popupRect, coords, placementSide, m) {
+    const resolved = this.resolveCoordsAtViewport(
+      anchorRect,
+      popupRect,
+      coords,
+      placementSide,
+      m,
+    );
+    let score = this.overflowScore(resolved, popupRect, m);
+    if (
+      anchorRect &&
+      !this.canPointAtAnchor(
+        anchorRect,
+        popupRect,
+        resolved.left,
+        resolved.top,
+        placementSide,
+      )
+    ) {
+      score += 10000;
+    }
+    return { score, resolved };
+  }
+
+  applyPopupPosition(
+    anchorRect,
+    popupRect,
+    coords,
+    placementSide,
+    m,
+  ) {
+    const resolved = this.resolveCoordsAtViewport(
+      anchorRect,
+      popupRect,
+      coords,
+      placementSide,
+      m,
+    );
+    this.style.left = `${resolved.left}px`;
+    this.style.top = `${resolved.top}px`;
+    this.updatePointerVisibility(
+      anchorRect,
+      popupRect,
+      resolved.left,
+      resolved.top,
+      placementSide,
+    );
+    this.updatePopoverBeak(
+      anchorRect,
+      popupRect,
+      resolved.left,
+      resolved.top,
+      placementSide,
+    );
   }
 
   positionPopup() {
@@ -3015,14 +3177,16 @@ class FigPopup extends HTMLDialogElement {
 
     if (!anchor) {
       this.updatePopoverBeak(null, popupRect, 0, 0, "top");
+      const bounds = this.getViewportBounds(m);
       const centered = {
         left:
-          m.left + (window.innerWidth - m.right - m.left - popupRect.width) / 2,
+          bounds.minLeft +
+          (bounds.maxRight - bounds.minLeft - popupRect.width) / 2,
         top:
-          m.top +
-          (window.innerHeight - m.bottom - m.top - popupRect.height) / 2,
+          bounds.minTop +
+          (bounds.maxBottom - bounds.minTop - popupRect.height) / 2,
       };
-      const clamped = this.clamp(centered, popupRect, m);
+      const clamped = this.clampToViewport(centered, popupRect, m);
       this.style.left = `${clamped.left}px`;
       this.style.top = `${clamped.top}px`;
       return;
@@ -3041,64 +3205,56 @@ class FigPopup extends HTMLDialogElement {
     for (const { v, h, s } of candidates) {
       const coords = this.computeCoords(anchorRect, popupRect, v, h, offset, s);
       const placementSide = this.getPlacementSide(v, h, s);
+      const { score, resolved } = this.placementScore(
+        anchorRect,
+        popupRect,
+        coords,
+        placementSide,
+        m,
+      );
 
       if (s) {
-        const clamped = this.clamp(coords, popupRect, m);
+        const bounds = this.getViewportBounds(m);
         const primaryFits =
           s === "left" || s === "right"
-            ? coords.left >= m.left &&
-              coords.left + popupRect.width <= window.innerWidth - m.right
-            : coords.top >= m.top &&
-              coords.top + popupRect.height <= window.innerHeight - m.bottom;
-        if (primaryFits) {
-          this.style.left = `${clamped.left}px`;
-          this.style.top = `${clamped.top}px`;
-          this.updatePopoverBeak(
+            ? coords.left >= bounds.minLeft &&
+              coords.left + popupRect.width <= bounds.maxRight
+            : coords.top >= bounds.minTop &&
+              coords.top + popupRect.height <= bounds.maxBottom;
+        if (primaryFits && score < 10000) {
+          this.applyPopupPosition(
             anchorRect,
             popupRect,
-            clamped.left,
-            clamped.top,
+            coords,
             placementSide,
+            m,
           );
           return;
         }
-        const score = this.overflowScore(coords, popupRect, m);
-        if (score < bestScore) {
-          bestScore = score;
-          best = clamped;
-          bestSide = placementSide;
-        }
-      } else {
-        if (this.fits(coords, popupRect, m)) {
-          this.style.left = `${coords.left}px`;
-          this.style.top = `${coords.top}px`;
-          this.updatePopoverBeak(
-            anchorRect,
-            popupRect,
-            coords.left,
-            coords.top,
-            placementSide,
-          );
-          return;
-        }
-        const score = this.overflowScore(coords, popupRect, m);
-        if (score < bestScore) {
-          bestScore = score;
-          best = coords;
-          bestSide = placementSide;
-        }
+      } else if (score === 0) {
+        this.applyPopupPosition(
+          anchorRect,
+          popupRect,
+          coords,
+          placementSide,
+          m,
+        );
+        return;
+      }
+
+      if (score < bestScore) {
+        bestScore = score;
+        best = resolved;
+        bestSide = placementSide;
       }
     }
 
-    const clamped = this.clamp(best || { left: 0, top: 0 }, popupRect, m);
-    this.style.left = `${clamped.left}px`;
-    this.style.top = `${clamped.top}px`;
-    this.updatePopoverBeak(
+    this.applyPopupPosition(
       anchorRect,
       popupRect,
-      clamped.left,
-      clamped.top,
+      best || { left: 0, top: 0 },
       bestSide,
+      m,
     );
   }
 
