@@ -164,6 +164,19 @@ function figUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
+/** Zero-size portal for fixed overlays so they never affect body layout metrics. */
+function figGetOverlayRoot() {
+  if (!document.body) return null;
+  const attr = "data-figui-overlay-root";
+  let root = document.body.querySelector(`:scope > [${attr}]`);
+  if (!root) {
+    root = document.createElement("div");
+    root.setAttribute(attr, "");
+    document.body.append(root);
+  }
+  return root;
+}
+
 let _figZCounter = 10000;
 function figGetHighestZIndex() {
   return _figZCounter++;
@@ -859,13 +872,13 @@ class FigTooltip extends HTMLElement {
     // - Without popover support, fall back to today's behavior: nearest open
     //   <dialog> ancestor if present, else document.body.
     if (supportsPopover) {
-      document.body.append(this.popup);
+      (figGetOverlayRoot() ?? document.body).append(this.popup);
     } else {
       const parentDialog = this.closest("dialog");
       if (parentDialog && parentDialog.open) {
         parentDialog.append(this.popup);
       } else {
-        document.body.append(this.popup);
+        (figGetOverlayRoot() ?? document.body).append(this.popup);
       }
     }
 
@@ -1142,13 +1155,13 @@ class FigTooltip extends HTMLElement {
       popup.append(content);
 
       if (supportsPopover) {
-        document.body.append(popup);
+        (figGetOverlayRoot() ?? document.body).append(popup);
       } else {
         const parentDialog = anchor.closest?.("dialog");
         if (parentDialog && parentDialog.open) {
           parentDialog.append(popup);
         } else {
-          document.body.append(popup);
+          (figGetOverlayRoot() ?? document.body).append(popup);
         }
       }
 
@@ -3026,23 +3039,6 @@ class FigPopup extends HTMLDialogElement {
     );
   }
 
-  updatePointerVisibility(anchorRect, popupRect, left, top, placementSide) {
-    if (!this.tracksAnchorBeak()) return;
-    if (this.getAttribute("pointer") === "false") return;
-
-    if (
-      anchorRect &&
-      !this.canPointAtAnchor(anchorRect, popupRect, left, top, placementSide)
-    ) {
-      this.setAttribute("pointer", "false");
-      return;
-    }
-
-    if (this.hasAttribute("pointer")) {
-      this.removeAttribute("pointer");
-    }
-  }
-
   updatePopoverBeak(anchorRect, popupRect, left, top, placementSide) {
     if (!this.tracksAnchorBeak() || !anchorRect) {
       this.style.removeProperty("--fig-popup-beak-offset");
@@ -3110,6 +3106,23 @@ class FigPopup extends HTMLDialogElement {
     return this.clampToViewport(coords, popupRect, m);
   }
 
+  primaryAxisOverflowPenalty(coords, popupRect, m, placementSide) {
+    const bounds = this.getViewportBounds(m);
+    let overflow = 0;
+
+    if (placementSide === "top") {
+      overflow = Math.max(0, bounds.minTop - coords.top);
+    } else if (placementSide === "bottom") {
+      overflow = Math.max(0, coords.top + popupRect.height - bounds.maxBottom);
+    } else if (placementSide === "left") {
+      overflow = Math.max(0, bounds.minLeft - coords.left);
+    } else if (placementSide === "right") {
+      overflow = Math.max(0, coords.left + popupRect.width - bounds.maxRight);
+    }
+
+    return overflow > 0 ? 1000 + overflow : 0;
+  }
+
   placementScore(anchorRect, popupRect, coords, placementSide, m) {
     const resolved = this.resolveCoordsAtViewport(
       anchorRect,
@@ -3119,6 +3132,12 @@ class FigPopup extends HTMLDialogElement {
       m,
     );
     let score = this.overflowScore(resolved, popupRect, m);
+    score += this.primaryAxisOverflowPenalty(
+      coords,
+      popupRect,
+      m,
+      placementSide,
+    );
     if (
       anchorRect &&
       !this.canPointAtAnchor(
@@ -3150,13 +3169,6 @@ class FigPopup extends HTMLDialogElement {
     );
     this.style.left = `${resolved.left}px`;
     this.style.top = `${resolved.top}px`;
-    this.updatePointerVisibility(
-      anchorRect,
-      popupRect,
-      resolved.left,
-      resolved.top,
-      placementSide,
-    );
     this.updatePopoverBeak(
       anchorRect,
       popupRect,
@@ -3167,7 +3179,7 @@ class FigPopup extends HTMLDialogElement {
   }
 
   positionPopup() {
-    if (!this.open || !this.matches?.(":open")) return;
+    if (!this.open) return;
 
     const popupRect = this.getBoundingClientRect();
     const offset = this.parseOffset();
@@ -3259,7 +3271,9 @@ class FigPopup extends HTMLDialogElement {
   }
 
   queueReposition() {
-    if (!this.open || !this.shouldAutoReposition()) return;
+    if (!this.open || !this.isPopupDisplayed() || !this.shouldAutoReposition()) {
+      return;
+    }
     if (this._rafId !== null) return;
 
     this._rafId = requestAnimationFrame(() => {
@@ -3271,6 +3285,14 @@ class FigPopup extends HTMLDialogElement {
   shouldAutoReposition() {
     if (!(this.drag && this._wasDragged)) return true;
     return !this.resolveAnchor();
+  }
+
+  isPopupDisplayed() {
+    return Boolean(
+      this._isPopupActive ||
+        this.matches?.(":open") ||
+        this.matches?.(":popover-open"),
+    );
   }
 }
 figDefineCustomizedBuiltIn("fig-popup", FigPopup, { extends: "dialog" });

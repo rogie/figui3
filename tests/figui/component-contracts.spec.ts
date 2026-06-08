@@ -2722,6 +2722,109 @@ test.describe("remaining accessibility contracts", () => {
     }
   });
 
+  test("fig-tooltip positions popup when using popover API", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-tooltip id="popover-tooltip" action="manual" show text="Clear search">
+          <fig-button id="popover-tooltip-trigger" icon variant="ghost" aria-label="Clear search" style="position:fixed;left:50%;top:8px;transform:translateX(-50%)"></fig-button>
+        </fig-tooltip>
+      `;
+      const button = document.querySelector("#popover-tooltip-trigger");
+      if (button) {
+        const icon = document.createElement("fig-icon");
+        icon.setAttribute("name", "close");
+        icon.setAttribute("size", "small");
+        button.append(icon);
+      }
+
+      await customElements.whenDefined("fig-tooltip");
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const trigger = document.querySelector("#popover-tooltip-trigger");
+
+      const popup = document.querySelector(
+        'dialog[is="fig-popup"][data-tooltip-managed]',
+      );
+      if (!(popup instanceof HTMLDialogElement) || !(trigger instanceof HTMLElement)) {
+        return null;
+      }
+
+      popup.positionPopup?.();
+
+      const popupRect = popup.getBoundingClientRect();
+      const triggerRect = trigger.getBoundingClientRect();
+
+      return {
+        left: popup.style.left,
+        top: popup.style.top,
+        width: popupRect.width,
+        belowAnchor: popupRect.top >= triggerRect.bottom - 1,
+        beakSide: popup.getAttribute("data-beak-side"),
+        pointer: popup.getAttribute("pointer"),
+      };
+    });
+
+    expect(state).not.toBeNull();
+    expect(state?.left).not.toBe("");
+    expect(state?.top).not.toBe("");
+    expect(state?.width).toBeGreaterThan(0);
+    expect(state?.belowAnchor || state?.beakSide === "top").toBe(true);
+    expect(state?.beakSide).toBe("top");
+    expect(state?.pointer).not.toBe("false");
+  });
+
+  test("tooltip flips below anchor when there is no room above", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 300, height: 400 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="top-anchor" icon variant="ghost" style="position:fixed;left:50%;top:8px;transform:translateX(-50%)"></fig-button>
+        <dialog is="fig-popup" variant="tooltip" position="top center" offset="8 8" anchor="#top-anchor" open>
+          <span>Clear search</span>
+        </dialog>
+      `;
+      const button = document.querySelector("#top-anchor");
+      if (button) {
+        const icon = document.createElement("fig-icon");
+        icon.setAttribute("name", "close");
+        icon.setAttribute("size", "small");
+        button.append(icon);
+      }
+    });
+    await page.waitForTimeout(100);
+
+    const state = await page.evaluate(() => {
+      const popup = document.querySelector(
+        'dialog[is="fig-popup"][variant="tooltip"]',
+      );
+      const anchor = document.querySelector("#top-anchor");
+      if (!(popup instanceof HTMLDialogElement) || !(anchor instanceof HTMLElement)) {
+        return null;
+      }
+
+      popup.positionPopup?.();
+
+      const popupRect = popup.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+
+      return {
+        beakSide: popup.getAttribute("data-beak-side"),
+        pointer: popup.getAttribute("pointer"),
+        popupTop: popupRect.top,
+        anchorBottom: anchorRect.bottom,
+      };
+    });
+
+    expect(state).not.toBeNull();
+    expect(state?.beakSide).toBe("top");
+    expect(state?.pointer).not.toBe("false");
+    expect(state?.popupTop).toBeGreaterThanOrEqual((state?.anchorBottom ?? 0) + 7);
+  });
+
   test("dialog and popup close paths restore focus", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

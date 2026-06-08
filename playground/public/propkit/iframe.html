@@ -10,14 +10,8 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
     />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/@rogieking/figui3@latest/dist/fig.css"
-    />
-    <script
-      type="module"
-      src="https://unpkg.com/@rogieking/figui3@latest/dist/fig.js"
-    ></script>
+    <link rel="stylesheet" href="/fig.css" />
+    <script type="module" src="/fig.js"></script>
     <style>
      html,
       body {
@@ -32,7 +26,11 @@
         overflow: hidden;
         background: transparent;
       }
+      body > fig-header {
+        flex: 0 0 auto;
+      }
       body > fig-content {
+        flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
       }
@@ -153,6 +151,9 @@
     </script>
   </head>
   <body>
+    <fig-header>
+      <fig-input-text type="search" placeholder="Search layers..." full></fig-input-text>
+    </fig-header>
     <fig-content>
     <fig-group>
       <fig-field columns="half">

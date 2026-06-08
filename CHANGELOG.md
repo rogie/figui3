@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.6.5]
+
+### Fixed
+
+- Fixed `fig-popup` tooltips not repositioning when shown via the Popover API (`:popover-open` without `:open`).
+- Fixed tooltips stuck at the viewport top edge by flipping below the anchor when top placement overflows.
+- Fixed missing tooltip beaks after edge flip by no longer auto-hiding the pointer when alignment is imperfect.
+- Fixed tooltip popups inflating iframe/plugin autoresize by portaling them into a zero-size `[data-figui-overlay-root]` container.
+
+### Changed
+
+- Updated playground `iframe.html` to load local `/fig.js` + `/fig.css` and include a search `fig-header` example.
+
+### Added
+
+- Added Playwright coverage for popover tooltips, top-edge flip, and bottom beak visibility.
+
 ## [6.6.4]
 
 ### Fixed

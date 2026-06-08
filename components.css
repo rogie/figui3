@@ -3182,6 +3182,18 @@ dialog[is="fig-popup"] {
 }
 
 /* Tooltip */
+[data-figui-overlay-root] {
+  position: fixed;
+  inset: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 fig-tooltip {
   display: contents;
 }
