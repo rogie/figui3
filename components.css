@@ -3141,7 +3141,6 @@ dialog[is="fig-popup"] {
     --fig-popup-radius: var(--radius-medium, 0.3125rem);
     --fig-popup-tip-clip-path: var(--tip-pointer);
 
-    color: var(--figma-color-text);
     line-height: 1rem !important;
     max-width: 180px;
     width: max-content;
@@ -3288,6 +3287,11 @@ fig-header {
   gap: var(--spacer-2);
   user-select: none;
   color: var(--figma-color-text-secondary);
+
+  fig-input-text:only-child{
+    margin-right: calc(var(--spacer-2) * -1);
+    margin-left: calc(var(--spacer-2) * -1);
+  }
   
 
   & >fig-button[icon][variant="ghost"] {

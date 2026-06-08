@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.6.3]
+
+### Fixed
+
+- Fixed `fig-header` layout when it contains only a `fig-input-text` by applying negative side margins to align with header padding.
+- Removed inherited text color from `fig-popup` tooltips so content uses its own color tokens.
+
 ## [6.6.2]
 
 ### Fixed
