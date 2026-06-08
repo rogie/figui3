@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.7.0]
+
+### Fixed
+
+- Fixed `fig-tooltip` warmup so hopping between tooltips after one is shown is instant again: warmup now lasts 1s after show/hide, includes open/recently-hidden tooltips, and warm hops show synchronously.
+
+### Changed
+
+- `fig-footer` switches to a vertical layout when there are multiple actions (including tooltip-wrapped buttons).
+- `fig-footer` centers label-only footers with no buttons.
+- Playground footer examples: split long-label variants into separate examples and removed the long-label attributes toggle.
+
+### Added
+
+- Playground footer examples: **Waiting**, **Long label**, **Long label/many actions** (with disabled-button tooltips), and **Lots of things**.
+- `fig-footer` `.fig-footer-action` wrapper pattern for tooltips on disabled buttons.
+
 ## [6.6.6]
 
 ### Fixed

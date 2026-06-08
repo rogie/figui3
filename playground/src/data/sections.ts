@@ -212,6 +212,17 @@ export const propkitSections: Section[] = [
       "A bottom action bar container for secondary and primary actions.",
     examples: [
       {
+        id: "waiting",
+        name: "Waiting",
+        description:
+          "A label-only footer for idle states. With no buttons, the message is centered.",
+        markup: `<div class="prop-panel">
+  <fig-footer>
+    <label>Select text, or click to copy</label>
+  </fig-footer>
+</div>`,
+      },
+      {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
@@ -232,12 +243,62 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
+        id: "long-label",
+        name: "Long label",
+        description:
+          "A footer label with more instructional text beside a disabled action.",
+        markup: `<div class="prop-panel">
+  <fig-footer>
+    <label>In order to run this tool, you will need to select at least one layer selected</label>
+    <fig-button disabled>Apply</fig-button>
+  </fig-footer>
+</div>`,
+      },
+      {
         id: "selected-layer",
         name: "Has selection",
         markup: `<div class="prop-panel">
   <fig-footer>
     <label>3 selected</label>
     <fig-button>Apply</fig-button>
+  </fig-footer>
+</div>`,
+      },
+      {
+        id: "long-label-many-actions",
+        name: "Long label/many actions",
+        description:
+          "A long instructional label above a vertical stack of actions.",
+        markup: `<div class="prop-panel">
+  <fig-footer>
+    <label>In order to run this tool, you will need to select at least one layer selected</label>
+    <fig-tooltip text="Select at least one layer to reset">
+      <span class="fig-footer-action">
+        <fig-button variant="secondary" disabled full>Reset</fig-button>
+      </span>
+    </fig-tooltip>
+    <fig-tooltip text="Close without applying changes">
+      <span class="fig-footer-action">
+        <fig-button variant="secondary" full>Cancel</fig-button>
+      </span>
+    </fig-tooltip>
+    <fig-tooltip text="Select at least one layer to apply">
+      <span class="fig-footer-action">
+        <fig-button disabled full>Apply</fig-button>
+      </span>
+    </fig-tooltip>
+  </fig-footer>
+</div>`,
+      },
+      {
+        id: "lots-of-things",
+        name: "Lots of things",
+        markup: `<div class="prop-panel">
+  <fig-footer>
+    <label>Make a selection</label>
+    <fig-button variant="secondary" disabled>Reset</fig-button>
+    <fig-button variant="secondary" disabled>Cancel</fig-button>
+    <fig-button disabled>Apply</fig-button>
   </fig-footer>
 </div>`,
       },

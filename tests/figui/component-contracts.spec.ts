@@ -2701,6 +2701,19 @@ test.describe("remaining accessibility contracts", () => {
     await expect(popup).toHaveCount(1);
 
     await tiles.nth(1).hover();
+    await expect(popup).toHaveCount(1);
+
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(50);
+    await tiles.nth(0).hover();
+    await page.waitForTimeout(150);
+    await expect(popup).toHaveCount(1);
+    await tiles.nth(1).hover();
+    await expect(popup).toHaveCount(1);
+
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(1100);
+    await tiles.nth(1).hover();
     await page.waitForTimeout(80);
     await expect(popup).toHaveCount(0);
     await page.waitForTimeout(150);

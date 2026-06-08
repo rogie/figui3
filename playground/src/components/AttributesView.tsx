@@ -6,7 +6,6 @@ import {
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
-  applyFooterLongLabelMutation,
   applyChooserMaxSizeMutation,
   applyChooserPaletteLabelsMutation,
   applyHandleHitAreaDebugMutation,
@@ -18,8 +17,6 @@ import {
   FIG_ICON_COLOR_OPTIONS,
   getFigIconColorOptionLabel,
   getFigIconPlaygroundNames,
-  getFooterLongLabelEnabled,
-  getFooterLongLabelToggleEnabled,
   getHandleHitArea,
   getHandleHitAreaDebug,
   getHeaderIconEnabled,
@@ -1515,34 +1512,6 @@ export default function AttributesView({
                                     markup,
                                     target.fieldIndex,
                                     !iconEnabled,
-                                  ),
-                                )
-                              }
-                            />
-                          </fig-field>
-                        );
-                      })()}
-                    {target.controlTag === "fig-footer" &&
-                      getFooterLongLabelToggleEnabled(markup, target.fieldIndex) &&
-                      (() => {
-                        const longLabelEnabled = getFooterLongLabelEnabled(
-                          markup,
-                          target.fieldIndex,
-                        );
-                        return (
-                          <fig-field
-                            columns="2/5"
-                            key={`control-footer-long-label-${target.fieldIndex}`}
-                          >
-                            <label>Long label</label>
-                            <fig-switch
-                              checked={longLabelEnabled ? "true" : undefined}
-                              onChange={() =>
-                                onMarkupChange(
-                                  applyFooterLongLabelMutation(
-                                    markup,
-                                    target.fieldIndex,
-                                    !longLabelEnabled,
                                   ),
                                 )
                               }

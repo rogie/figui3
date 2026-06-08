@@ -747,8 +747,8 @@ customElements.define("fig-dropdown", FigDropdown);
  */
 class FigTooltip extends HTMLElement {
   static #lastShownAt = 0;
-  static #lastShownInstance = null;
-  static #warmupWindow = 500;
+  static #lastHiddenAt = 0;
+  static #warmupWindow = 1000;
   static #hoverOpen = null;
 
   #boundHideOnChromeOpen;
@@ -989,17 +989,29 @@ class FigTooltip extends HTMLElement {
     return this.hasAttribute("show") && this.getAttribute("show") !== "false";
   }
 
+  #isWarmSession() {
+    const now = Date.now();
+    const windowMs = FigTooltip.#warmupWindow;
+    if (this.action === "hover" && FigTooltip.#hoverOpen) return true;
+    if (FigTooltip.#lastShownAt && now - FigTooltip.#lastShownAt < windowMs)
+      return true;
+    if (FigTooltip.#lastHiddenAt && now - FigTooltip.#lastHiddenAt < windowMs)
+      return true;
+    return false;
+  }
+
   showDelayedPopup() {
     if (this.#showPersisted) return;
     clearTimeout(this.timeout);
-    const warm =
-      FigTooltip.#lastShownInstance === this &&
-      Date.now() - FigTooltip.#lastShownAt < FigTooltip.#warmupWindow;
-    const effectiveDelay = warm ? 0 : this.delay;
+    if (this.#isWarmSession()) {
+      this.render();
+      this.showPopup();
+      return;
+    }
     this.timeout = setTimeout(() => {
       this.render();
       this.showPopup();
-    }, effectiveDelay);
+    }, this.delay);
   }
 
   showPopup() {
@@ -1021,19 +1033,20 @@ class FigTooltip extends HTMLElement {
     this.isOpen = true;
     if (this.action === "hover") FigTooltip.#hoverOpen = this;
     FigTooltip.#lastShownAt = Date.now();
-    FigTooltip.#lastShownInstance = this;
   }
 
   hidePopup() {
     if (this.#showPersisted) return;
     clearTimeout(this.timeout);
     clearTimeout(this.#touchTimeout);
+    const wasShowing = this.isOpen;
     if (this.popup) {
       this.destroy();
     }
 
     this.isOpen = false;
     if (FigTooltip.#hoverOpen === this) FigTooltip.#hoverOpen = null;
+    if (wasShowing) FigTooltip.#lastHiddenAt = Date.now();
   }
 
   hidePopupOutsideClick(event) {

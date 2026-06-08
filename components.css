@@ -3411,8 +3411,34 @@ fig-footer {
     align-items: center;
   }
 
-  & > fig-button{
+  & > fig-button {
     flex-shrink: 0;
+  }
+
+  &:not(:has(> fig-button)) > :is(label, h3) {
+    flex-grow: 1;
+    justify-content: center;
+    text-align: center;
+  }
+
+  &:has(> :is(fig-button, fig-tooltip) ~ :is(fig-button, fig-tooltip)) {
+    flex-direction: column;
+    align-items: stretch;
+
+    & > :is(label, h3) {
+      flex-grow: 0;
+      justify-content: flex-start;
+      text-align: start;
+    }
+
+    & > fig-button,
+    & > .fig-footer-action {
+      width: 100%;
+    }
+
+    & > .fig-footer-action fig-button {
+      width: 100%;
+    }
   }
 
   &[borderless] {

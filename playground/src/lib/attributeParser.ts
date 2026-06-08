@@ -697,50 +697,6 @@ export function applyHeaderIconMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
-export const FOOTER_SHORT_LABEL = "Select a layer";
-export const FOOTER_LONG_LABEL =
-  "In order to run this tool, you will need to select at least one layer";
-
-export function getFooterLongLabelEnabled(
-  markup: string,
-  fieldIndex: number,
-): boolean {
-  const root = parseSourceRoot(markup);
-  const element = getTargetElement(root, { fieldIndex, target: "control" });
-  if (!element || getControlTag(element) !== "fig-footer") return false;
-  return element.querySelector(":scope > label")?.textContent?.trim() === FOOTER_LONG_LABEL;
-}
-
-export function getFooterLongLabelToggleEnabled(
-  markup: string,
-  fieldIndex: number,
-): boolean {
-  const root = parseSourceRoot(markup);
-  const element = getTargetElement(root, { fieldIndex, target: "control" });
-  if (!element || getControlTag(element) !== "fig-footer") return false;
-  const text = element.querySelector(":scope > label")?.textContent?.trim();
-  return text === FOOTER_SHORT_LABEL || text === FOOTER_LONG_LABEL;
-}
-
-export function applyFooterLongLabelMutation(
-  markup: string,
-  fieldIndex: number,
-  enabled: boolean,
-): string {
-  const root = parseSourceRoot(markup);
-  const element = getTargetElement(root, { fieldIndex, target: "control" });
-  if (!element || getControlTag(element) !== "fig-footer") return markup;
-
-  let label = element.querySelector(":scope > label");
-  if (!label) {
-    label = root.ownerDocument.createElement("label");
-    element.prepend(label);
-  }
-  label.textContent = enabled ? FOOTER_LONG_LABEL : FOOTER_SHORT_LABEL;
-
-  return getExampleSourceMarkup(serializeSourceMarkup(root));
-}
-
 export type ChooserContentMode = "text" | "image" | "image-label" | "colors";
 
 export function getChooserContentMode(
