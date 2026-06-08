@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Character Finder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+    />
+    <link rel="stylesheet" href="/fig.css" />
+    <script type="module" src="/fig.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: auto;
+        min-height: 0;
+        background: transparent;
+      }
+
+      body {
+        display: block;
+      }
+
+      #plugin-root {
+        height: auto;
+      }
+
+      fig-field.group-tabs-field {
+        --fig-field-left-padding: var(--spacer-2);
+        --fig-field-right-padding: var(--spacer-2);
+      }
+
+      fig-field.group-tabs-field fig-tabs.group-tabs > .fig-tabs-scroll {
+        padding-left: 0;
+      }
+
+      .result-summary {
+        color: var(--figma-color-text-secondary);
+      }
+
+      fig-chooser.character-grid {
+        max-height: 320px;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      fig-chooser.character-grid > .fig-chooser-scroll {
+        align-content: start;
+        max-height: 320px;
+        min-height: 0;
+        overflow-y: auto;
+      }
+
+      fig-chooser.character-grid fig-choice.character-tile {
+        font-size: 14px;
+        line-height: 16px;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+      }
+
+      fig-chooser.character-grid fig-choice.character-tile fig-tooltip {
+        display: contents;
+      }
+
+      fig-chooser.character-grid fig-choice.character-tile .character-content {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        font-size: 24px;
+        gap: 2px;
+        justify-content: center;
+        line-height: 1.1;
+        min-width: 0;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+      }
+
+      fig-chooser.character-grid fig-choice.character-tile .character-symbol {
+        font-size: inherit;
+        font-weight: 500;
+        line-height: inherit;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .empty-state {
+        color: var(--figma-color-text-secondary);
+        font: var(--body-small-font);
+        padding: 0 16px 16px;
+      }
+    </style>
+    <script type="module">
+      const FRAME_ID = (() => {
+        try {
+          return new URLSearchParams(location.search).get("frameId") || "";
+        } catch {
+          return "";
+        }
+      })();
+
+      let lastHeight = 0;
+      let lastWidth = 0;
+      let rafId = 0;
+
+      const measure = () => {
+        const root = document.getElementById("plugin-root");
+        if (!root) return { height: 0, width: 0 };
+        const rect = root.getBoundingClientRect();
+        let height = Math.ceil(rect.height);
+        const dialog = document.querySelector("dialog.fig-fill-picker-dialog[open]");
+        if (dialog) {
+          const dialogBottom = Math.ceil(dialog.getBoundingClientRect().bottom + 12);
+          height = Math.max(height, dialogBottom);
+        }
+        return { height, width: Math.ceil(rect.width) };
+      };
+
+      const send = () => {
+        rafId = 0;
+        const { width, height } = measure();
+        if (height === lastHeight && width === lastWidth) return;
+        lastHeight = height;
+        lastWidth = width;
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            { type: "figui:iframe-resize", frameId: FRAME_ID, width, height },
+            "*",
+          );
+        }
+      };
+
+      const scheduleSend = () => {
+        if (rafId) return;
+        rafId = requestAnimationFrame(send);
+      };
+
+      const root = document.getElementById("plugin-root");
+      if (root && typeof ResizeObserver !== "undefined") {
+        new ResizeObserver(scheduleSend).observe(root);
+      }
+
+      if (typeof MutationObserver !== "undefined") {
+        new MutationObserver(scheduleSend).observe(document.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ["open"],
+        });
+      }
+
+      window.addEventListener("load", scheduleSend);
+      window.addEventListener("resize", scheduleSend);
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(scheduleSend).catch(() => {});
+      }
+      scheduleSend();
+    </script>
+  </head>
+  <body>
+    <div id="plugin-root">
+      <fig-header>
+        <fig-input-text
+          type="search"
+          value=""
+          placeholder="Search name or emoji"
+          aria-label="Search characters"
+        ></fig-input-text>
+      </fig-header>
+      <fig-content>
+        <fig-field class="group-tabs-field">
+          <fig-tabs class="group-tabs" value="all" aria-label="Character groups">
+            <fig-tab value="all" selected>All</fig-tab>
+            <fig-tab value="ascii">ASCII</fig-tab>
+            <fig-tab value="latin">Latin</fig-tab>
+            <fig-tab value="punctuation">Punct</fig-tab>
+            <fig-tab value="math">Math</fig-tab>
+            <fig-tab value="arrows">Arrows</fig-tab>
+            <fig-tab value="currency">Currency</fig-tab>
+            <fig-tab value="symbols">Symbols</fig-tab>
+            <fig-tab value="emoji">Emoji</fig-tab>
+          </fig-tabs>
+        </fig-field>
+        <fig-header borderless>
+          <h3>Characters</h3>
+          <span class="result-summary">36 characters</span>
+        </fig-header>
+        <fig-field>
+          <fig-chooser
+            class="character-grid"
+            layout="grid"
+            columns="4"
+            loop
+            overflow="buttons"
+            aria-label="Characters"
+          >
+            <fig-choice class="character-tile" value="char-1">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😀</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-2">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😃</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-3">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😄</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-4">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😁</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-5">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😆</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-6">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😅</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-7">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">🤣</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-8">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😂</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-9">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">🙂</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-10">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😉</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-11">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😊</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-12">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">😍</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-13">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">❤</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-14">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">👍</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-15">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">⭐</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-16">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">🔥</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-17">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">©</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-18">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">®</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-19">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">™</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-20">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">✓</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-21">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">←</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-22">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">→</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-23">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">↑</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-24">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">↓</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-25">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">€</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-26">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">£</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-27">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">¥</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-28">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">₹</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-29">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">±</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-30">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">∞</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-31">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">π</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-32">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">§</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-33">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">☺</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-34">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">⌘</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-35">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">★</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+            <fig-choice class="character-tile" value="char-36">
+              <fig-tooltip text="Click to copy" delay="500">
+                <span class="character-content"
+                  ><span class="character-symbol">☕</span></span
+                >
+              </fig-tooltip>
+            </fig-choice>
+          </fig-chooser>
+        </fig-field>
+        <div class="empty-state" hidden>No characters match that search.</div>
+      </fig-content>
+    </div>
+  </body>
+</html>

@@ -1738,6 +1738,25 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "dialog-iframe-alt",
+    name: "Plugin (alt)",
+    group: "Controls in dialogs",
+    description:
+      "A plugin dialog hosting a character-finder style panel inside an iframe (static UI demo).",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Plugin (alt)</fig-button>
+  <dialog is="fig-dialog" title="Plugin (alt)" open handle="fig-header" position="center center" autoresize data-playground-hide-field style="width: 300px;">
+    <iframe src="/propkit/plugin-alt.html"></iframe>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "dialog-export",
     name: "Export Settings",
     group: "Controls in dialogs",

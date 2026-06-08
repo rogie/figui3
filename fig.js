@@ -747,7 +747,9 @@ customElements.define("fig-dropdown", FigDropdown);
  */
 class FigTooltip extends HTMLElement {
   static #lastShownAt = 0;
+  static #lastShownInstance = null;
   static #warmupWindow = 500;
+  static #hoverOpen = null;
 
   #boundHideOnChromeOpen;
   #boundHidePopupOutsideClick;
@@ -760,6 +762,8 @@ class FigTooltip extends HTMLElement {
   #boundHandleDialogClose;
   #boundHandleEscape;
   #parentDialog = null;
+  #triggerEl = null;
+  #childObserver = null;
   #touchTimeout;
   #isTouching = false;
   constructor() {
@@ -785,6 +789,7 @@ class FigTooltip extends HTMLElement {
   }
   connectedCallback() {
     this.setup();
+    this.#bindTriggerListeners();
     this.setupEventListeners();
     this.#parentDialog = this.closest("dialog");
     if (this.#parentDialog) {
@@ -795,6 +800,8 @@ class FigTooltip extends HTMLElement {
   disconnectedCallback() {
     clearTimeout(this.timeout);
     this.destroy();
+    this.#unbindTriggerListeners();
+    this.#teardownChildObserver();
     document.removeEventListener(
       "mousedown",
       this.#boundHideOnChromeOpen,
@@ -814,17 +821,77 @@ class FigTooltip extends HTMLElement {
     }
 
     clearTimeout(this.#touchTimeout);
-    if (this.action === "hover") {
-      this.removeEventListener("pointerenter", this.#boundShowDelayedPopup);
-      this.removeEventListener("pointerleave", this.#boundHandlePointerLeave);
-      this.removeEventListener("touchstart", this.#boundHandleTouchStart);
-      this.removeEventListener("touchmove", this.#boundHandleTouchMove);
-      this.removeEventListener("touchend", this.#boundHandleTouchEnd);
-      this.removeEventListener("touchcancel", this.#boundHandleTouchCancel);
-    } else if (this.action === "click") {
-      this.removeEventListener("click", this.#boundShowDelayedPopup);
-      this.removeEventListener("touchstart", this.#boundShowDelayedPopup);
+    if (FigTooltip.#hoverOpen === this) FigTooltip.#hoverOpen = null;
+  }
+
+  #getTrigger() {
+    return this.firstElementChild;
+  }
+
+  #teardownChildObserver() {
+    this.#childObserver?.disconnect();
+    this.#childObserver = null;
+  }
+
+  #bindTriggerListeners() {
+    this.#unbindTriggerListeners();
+    if (this.action === "manual") return;
+
+    const trigger = this.#getTrigger();
+    if (!trigger) {
+      if (!this.#childObserver && typeof MutationObserver !== "undefined") {
+        this.#childObserver = new MutationObserver(() => {
+          if (this.#getTrigger()) {
+            this.#teardownChildObserver();
+            this.#bindTriggerListeners();
+          }
+        });
+        this.#childObserver.observe(this, { childList: true });
+      }
+      return;
     }
+
+    this.#triggerEl = trigger;
+    if (this.action === "hover") {
+      if (!this.isTouchDevice()) {
+        trigger.addEventListener("pointerenter", this.#boundShowDelayedPopup);
+        trigger.addEventListener("pointerleave", this.#boundHandlePointerLeave);
+      }
+      trigger.addEventListener("touchstart", this.#boundHandleTouchStart, {
+        passive: true,
+      });
+      trigger.addEventListener("touchmove", this.#boundHandleTouchMove, {
+        passive: true,
+      });
+      trigger.addEventListener("touchend", this.#boundHandleTouchEnd, {
+        passive: true,
+      });
+      trigger.addEventListener("touchcancel", this.#boundHandleTouchCancel, {
+        passive: true,
+      });
+    } else if (this.action === "click") {
+      trigger.addEventListener("click", this.#boundShowDelayedPopup);
+      trigger.addEventListener("touchstart", this.#boundShowDelayedPopup, {
+        passive: true,
+      });
+    }
+  }
+
+  #unbindTriggerListeners() {
+    const trigger = this.#triggerEl;
+    if (!trigger) return;
+    if (this.action === "hover") {
+      trigger.removeEventListener("pointerenter", this.#boundShowDelayedPopup);
+      trigger.removeEventListener("pointerleave", this.#boundHandlePointerLeave);
+      trigger.removeEventListener("touchstart", this.#boundHandleTouchStart);
+      trigger.removeEventListener("touchmove", this.#boundHandleTouchMove);
+      trigger.removeEventListener("touchend", this.#boundHandleTouchEnd);
+      trigger.removeEventListener("touchcancel", this.#boundHandleTouchCancel);
+    } else if (this.action === "click") {
+      trigger.removeEventListener("click", this.#boundShowDelayedPopup);
+      trigger.removeEventListener("touchstart", this.#boundShowDelayedPopup);
+    }
+    this.#triggerEl = null;
   }
 
   setup() {
@@ -889,6 +956,7 @@ class FigTooltip extends HTMLElement {
 
   destroy() {
     if (this.popup) {
+      this.popup.hidePopup?.();
       this.popup.remove();
       this.popup = null;
     }
@@ -909,30 +977,8 @@ class FigTooltip extends HTMLElement {
   }
 
   setupEventListeners() {
-    if (this.action === "manual") return;
-    if (this.action === "hover") {
-      if (!this.isTouchDevice()) {
-        this.addEventListener("pointerenter", this.#boundShowDelayedPopup);
-        this.addEventListener("pointerleave", this.#boundHandlePointerLeave);
-      }
-      this.addEventListener("touchstart", this.#boundHandleTouchStart, {
-        passive: true,
-      });
-      this.addEventListener("touchmove", this.#boundHandleTouchMove, {
-        passive: true,
-      });
-      this.addEventListener("touchend", this.#boundHandleTouchEnd, {
-        passive: true,
-      });
-      this.addEventListener("touchcancel", this.#boundHandleTouchCancel, {
-        passive: true,
-      });
-    } else if (this.action === "click") {
-      this.addEventListener("click", this.#boundShowDelayedPopup);
+    if (this.action === "click") {
       document.body.addEventListener("click", this.#boundHidePopupOutsideClick);
-      this.addEventListener("touchstart", this.#boundShowDelayedPopup, {
-        passive: true,
-      });
     }
 
     document.addEventListener("mousedown", this.#boundHideOnChromeOpen, true);
@@ -945,17 +991,27 @@ class FigTooltip extends HTMLElement {
 
   showDelayedPopup() {
     if (this.#showPersisted) return;
-    this.render();
     clearTimeout(this.timeout);
     const warm =
+      FigTooltip.#lastShownInstance === this &&
       Date.now() - FigTooltip.#lastShownAt < FigTooltip.#warmupWindow;
     const effectiveDelay = warm ? 0 : this.delay;
-    this.timeout = setTimeout(this.showPopup.bind(this), effectiveDelay);
+    this.timeout = setTimeout(() => {
+      this.render();
+      this.showPopup();
+    }, effectiveDelay);
   }
 
   showPopup() {
     if (this.#parentDialog && !this.#parentDialog.open) return;
     if (!this.firstElementChild) return;
+    if (
+      this.action === "hover" &&
+      FigTooltip.#hoverOpen &&
+      FigTooltip.#hoverOpen !== this
+    ) {
+      FigTooltip.#hoverOpen.hidePopup();
+    }
     if (!this.popup) this.render();
     // Keep anchor in sync in case the trigger child was swapped between
     // creation and show.
@@ -963,7 +1019,9 @@ class FigTooltip extends HTMLElement {
     this.popup.open = true;
 
     this.isOpen = true;
+    if (this.action === "hover") FigTooltip.#hoverOpen = this;
     FigTooltip.#lastShownAt = Date.now();
+    FigTooltip.#lastShownInstance = this;
   }
 
   hidePopup() {
@@ -975,7 +1033,7 @@ class FigTooltip extends HTMLElement {
     }
 
     this.isOpen = false;
-    FigTooltip.#lastShownAt = Date.now();
+    if (FigTooltip.#hoverOpen === this) FigTooltip.#hoverOpen = null;
   }
 
   hidePopupOutsideClick(event) {

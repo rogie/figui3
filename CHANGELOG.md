@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.6.6]
+
+### Fixed
+
+- Fixed `fig-tooltip` hover tooltips not dismissing when the host uses `display: contents` (e.g. character grid tiles) by binding pointer events to the trigger child instead of the tooltip element.
+- Fixed multiple hover tooltips stacking open at once — only one hover tooltip is shown at a time.
+- Fixed `fig-tooltip` `delay` being ignored when moving between tiles; warmup now applies only when re-hovering the same tooltip, and the popup is created after the delay elapses.
+- Fixed popover tooltips not fully closing on destroy by calling `hidePopup()` before removal.
+
+### Added
+
+- Added playground **Plugin (alt)** example with a static character-finder iframe demo (`plugin-alt.html`).
+- Added Playwright coverage for tooltip delay and `display: contents` hover dismissal.
+
 ## [6.6.5]
 
 ### Fixed

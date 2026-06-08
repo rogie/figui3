@@ -2665,6 +2665,99 @@ test.describe("remaining accessibility contracts", () => {
     await expect(trigger).toBeFocused();
   });
 
+  test("hover tooltips honor delay when moving between tiles", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <style>
+          fig-tooltip { display: contents; }
+        </style>
+        <fig-chooser layout="grid" columns="2" id="delay-grid">
+          <fig-choice value="a">
+            <fig-tooltip text="Tile A" delay="200">
+              <span class="tile">A</span>
+            </fig-tooltip>
+          </fig-choice>
+          <fig-choice value="b">
+            <fig-tooltip text="Tile B" delay="200">
+              <span class="tile">B</span>
+            </fig-tooltip>
+          </fig-choice>
+        </fig-chooser>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const popup = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    const tiles = page.locator("#delay-grid .tile");
+
+    await tiles.nth(0).hover();
+    await page.waitForTimeout(80);
+    await expect(popup).toHaveCount(0);
+    await page.waitForTimeout(150);
+    await expect(popup).toHaveCount(1);
+
+    await tiles.nth(1).hover();
+    await page.waitForTimeout(80);
+    await expect(popup).toHaveCount(0);
+    await page.waitForTimeout(150);
+    await expect(popup).toHaveCount(1);
+  });
+
+  test("hover tooltips on display:contents triggers hide when moving between tiles", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <style>
+          fig-tooltip { display: contents; }
+        </style>
+        <fig-chooser layout="grid" columns="4" id="tile-grid">
+          <fig-choice value="a">
+            <fig-tooltip text="Click to copy" delay="0">
+              <span class="tile">A</span>
+            </fig-tooltip>
+          </fig-choice>
+          <fig-choice value="b">
+            <fig-tooltip text="Click to copy" delay="0">
+              <span class="tile">B</span>
+            </fig-tooltip>
+          </fig-choice>
+          <fig-choice value="c">
+            <fig-tooltip text="Click to copy" delay="0">
+              <span class="tile">C</span>
+            </fig-tooltip>
+          </fig-choice>
+        </fig-chooser>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const tiles = page.locator("#tile-grid .tile");
+    await tiles.nth(0).hover();
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveCount(1);
+    await tiles.nth(1).hover();
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveCount(1);
+    await tiles.nth(2).hover();
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveCount(1);
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(50);
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveCount(0);
+  });
+
   test("tooltip keeps beak aligned when anchor is near viewport edge", async ({
     page,
   }) => {
