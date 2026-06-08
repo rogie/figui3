@@ -3306,7 +3306,7 @@ fig-header {
   }
   
 
-  & >fig-button[icon][variant="ghost"] {
+  fig-button[icon][variant="ghost"]:not(fig-input-text fig-button) {
     margin-right: calc(var(--spacer-2) * -1);
   }
 

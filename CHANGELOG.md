@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.7.2]
+
+### Fixed
+
+- Fixed `fig-header` ghost icon button negative margin applying to clear buttons inside `fig-input-text`.
+
 ## [6.7.1]
 
 ### Fixed
