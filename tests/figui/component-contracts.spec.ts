@@ -2720,6 +2720,62 @@ test.describe("remaining accessibility contracts", () => {
     await expect(popup).toHaveCount(1);
   });
 
+  test("hover tooltips dismiss when the pointer leaves an iframe", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const srcdoc = `<!DOCTYPE html><html><head><link rel="stylesheet" href="/fig.css"><script type="module" src="/fig.js"><\/script></head><body style="margin:0;padding:12px"><fig-tooltip text="Help" delay="0"><fig-button id="iframe-tooltip-trigger">Help</fig-button></fig-tooltip></body></html>`;
+      root.innerHTML = `
+        <dialog is="fig-dialog" open style="width:260px;padding:0;border:0">
+          <iframe
+            id="tooltip-iframe"
+            style="width:100%;height:88px;border:0;display:block"
+            srcdoc="${srcdoc.replace(/"/g, "&quot;")}"
+          ></iframe>
+        </dialog>
+      `;
+    });
+    await page.waitForTimeout(300);
+
+    const frame = page.frameLocator("#tooltip-iframe");
+    const popup = frame.locator(
+      'dialog[is="fig-popup"][data-tooltip-managed]',
+    );
+    await frame.locator("#iframe-tooltip-trigger").hover();
+    await expect(popup).toHaveCount(1);
+
+    await page.locator("#tooltip-iframe").dispatchEvent("mouseleave");
+    await expect(popup).toHaveCount(0);
+  });
+
+  test("hover tooltips dismiss when the pointer leaves the document", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-tooltip text="Help" delay="0">
+          <fig-button id="exit-tooltip-trigger">Help</fig-button>
+        </fig-tooltip>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const popup = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    await page.locator("#exit-tooltip-trigger").hover();
+    await expect(popup).toHaveCount(1);
+
+    await page.evaluate(() => {
+      document.documentElement.dispatchEvent(
+        new MouseEvent("mouseleave", { bubbles: false }),
+      );
+    });
+    await expect(popup).toHaveCount(0);
+  });
+
   test("hover tooltips on display:contents triggers hide when moving between tiles", async ({
     page,
   }) => {

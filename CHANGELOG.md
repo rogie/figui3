@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.7.1]
+
+### Fixed
+
+- Fixed `fig-tooltip` staying open when the pointer leaves the window or document.
+- Fixed `fig-tooltip` staying open when the pointer leaves an iframe: dismisses on `frameElement` mouseleave, `figui:dismiss-tooltips` postMessage from parent `fig-dialog` iframes, and document exit listeners.
+
+### Added
+
+- Added Playwright coverage for tooltip dismiss on document and iframe exit.
+
 ## [6.7.0]
 
 ### Fixed

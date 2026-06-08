@@ -750,6 +750,7 @@ class FigTooltip extends HTMLElement {
   static #lastHiddenAt = 0;
   static #warmupWindow = 1000;
   static #hoverOpen = null;
+  static #documentExitListenersReady = false;
 
   #boundHideOnChromeOpen;
   #boundHidePopupOutsideClick;
@@ -788,6 +789,7 @@ class FigTooltip extends HTMLElement {
     };
   }
   connectedCallback() {
+    FigTooltip.#ensureDocumentExitListeners();
     this.setup();
     this.#bindTriggerListeners();
     this.setupEventListeners();
@@ -1197,6 +1199,48 @@ class FigTooltip extends HTMLElement {
     }
   }
 
+  static #ensureDocumentExitListeners() {
+    if (FigTooltip.#documentExitListenersReady) return;
+    FigTooltip.#documentExitListenersReady = true;
+
+    const handlePointerLeftDocument = () => {
+      FigTooltip.#dismissHoverTooltipsOnDocumentExit();
+    };
+
+    document.documentElement.addEventListener(
+      "mouseleave",
+      handlePointerLeftDocument,
+    );
+    document.addEventListener("mouseout", (event) => {
+      if (event.relatedTarget) return;
+      handlePointerLeftDocument();
+    });
+
+    // Same-origin embed: leaving the iframe element (e.g. into a parent dialog).
+    try {
+      const frame = window.frameElement;
+      if (frame) {
+        frame.addEventListener("mouseleave", handlePointerLeftDocument);
+      }
+    } catch {}
+
+    window.addEventListener("message", (event) => {
+      if (event?.data?.type !== "figui:dismiss-tooltips") return;
+      if (window.parent !== window && event.source !== window.parent) return;
+      handlePointerLeftDocument();
+    });
+  }
+
+  static #dismissHoverTooltipsOnDocumentExit() {
+    for (const node of document.querySelectorAll("fig-tooltip")) {
+      if (!(node instanceof FigTooltip)) continue;
+      if (node.action !== "hover") continue;
+      if (node.hasAttribute("show") && node.getAttribute("show") !== "false")
+        continue;
+      if (node.isOpen || node.timeout) node.hidePopup();
+    }
+  }
+
   static #programmatic = new WeakMap();
 
   static show(anchor, text, options = {}) {
@@ -1376,6 +1420,8 @@ class FigDialog extends HTMLDialogElement {
     this._boundContentMutation = this._scheduleAutoResize.bind(this);
     this._boundContentResize = this._scheduleAutoResize.bind(this);
     this._boundRestoreFocus = this._restoreFocus.bind(this);
+    this._boundIframeMouseLeave = this._handleIframeMouseLeave.bind(this);
+    this._iframeDismissMutationObserver = null;
     this._previousFocus = null;
   }
 
@@ -1402,6 +1448,7 @@ class FigDialog extends HTMLDialogElement {
       this._setupDragListeners();
       this._applyPosition();
       this._syncAutoResize();
+      this._setupIframeDismissListeners();
       this._syncA11y();
     });
 
@@ -1416,6 +1463,7 @@ class FigDialog extends HTMLDialogElement {
     });
     window.removeEventListener("message", this._boundIframeMessage);
     this._teardownAutoResize();
+    this._teardownIframeDismissListeners();
     this.removeEventListener("close", this._boundRestoreFocus);
   }
 
@@ -1446,6 +1494,44 @@ class FigDialog extends HTMLDialogElement {
     this._captureFocusBeforeOpen();
     this.addEventListener("close", this._boundRestoreFocus, { once: true });
     return super.showModal();
+  }
+
+  _handleIframeMouseLeave(event) {
+    const iframe = event?.currentTarget;
+    if (!(iframe instanceof HTMLIFrameElement)) return;
+    try {
+      iframe.contentWindow?.postMessage({ type: "figui:dismiss-tooltips" }, "*");
+    } catch {}
+  }
+
+  _syncIframeDismissListeners() {
+    for (const iframe of this.querySelectorAll(":scope > iframe")) {
+      if (!(iframe instanceof HTMLIFrameElement)) continue;
+      if (iframe.dataset.figuiDismissBound === "true") continue;
+      iframe.dataset.figuiDismissBound = "true";
+      iframe.addEventListener("mouseleave", this._boundIframeMouseLeave);
+    }
+  }
+
+  _setupIframeDismissListeners() {
+    this._syncIframeDismissListeners();
+    if (this._iframeDismissMutationObserver) return;
+    this._iframeDismissMutationObserver = new MutationObserver(() => {
+      this._syncIframeDismissListeners();
+    });
+    this._iframeDismissMutationObserver.observe(this, {
+      childList: true,
+      subtree: false,
+    });
+  }
+
+  _teardownIframeDismissListeners() {
+    this._iframeDismissMutationObserver?.disconnect();
+    this._iframeDismissMutationObserver = null;
+    for (const iframe of this.querySelectorAll(":scope > iframe")) {
+      iframe.removeEventListener("mouseleave", this._boundIframeMouseLeave);
+      delete iframe.dataset.figuiDismissBound;
+    }
   }
 
   _handleIframeMessage(event) {
