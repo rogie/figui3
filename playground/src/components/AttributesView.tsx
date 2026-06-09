@@ -489,6 +489,10 @@ export default function AttributesView({
                 entry.name === "open" &&
                 target.controlTag === "fig-group" &&
                 target.controlAttributes.collapsible === undefined
+              ) &&
+              !(
+                entry.name === "columns" &&
+                target.controlTag === "fig-chooser"
               ),
           )
           .sort((a, b) => {
@@ -1566,6 +1570,26 @@ export default function AttributesView({
                         const currentLayout =
                           target.controlAttributes.layout ?? "vertical";
                         const isHorizontal = currentLayout === "horizontal";
+                        const columnsRule = mergedControlRules.columns;
+                        const columnsField =
+                          currentLayout === "grid" &&
+                          columnsRule &&
+                          !hiddenControlAttrs.has("columns") ? (
+                            <fig-field
+                              columns="2/5"
+                              key={`control-chooser-columns-${target.fieldIndex}`}
+                            >
+                              <label>{sentenceCase(columnsRule.label)}</label>
+                              {renderControl(
+                                {
+                                  name: "columns",
+                                  value: target.controlAttributes.columns,
+                                  rule: columnsRule,
+                                },
+                                "control",
+                              )}
+                            </fig-field>
+                          ) : null;
 
                         const currentOverflow =
                           target.controlAttributes.overflow ?? "buttons";
@@ -1638,7 +1662,12 @@ export default function AttributesView({
                         );
                         const hasPalettes = markup.includes("fig-input-palette");
                         if (!hasPalettes) {
-                          return [field, overflowField, maxSizeField];
+                          return [
+                            field,
+                            columnsField,
+                            overflowField,
+                            maxSizeField,
+                          ].filter(Boolean);
                         }
 
                         const paletteLabelsEnabled = getChooserPaletteLabelsEnabled(markup, target.fieldIndex);
@@ -1664,7 +1693,13 @@ export default function AttributesView({
                             />
                           </fig-field>
                         );
-                        return [field, overflowField, maxSizeField, paletteLabelsField];
+                        return [
+                          field,
+                          columnsField,
+                          overflowField,
+                          maxSizeField,
+                          paletteLabelsField,
+                        ].filter(Boolean);
                       }
 
                       if (

@@ -1761,12 +1761,16 @@ test.describe("remaining accessibility contracts", () => {
           return {
             navButtons: chooser.querySelectorAll("[data-fig-chooser-nav]").length,
             hasEndOverflow: chooser.classList.contains("overflow-end"),
+            hasStartOverflow: chooser.classList.contains("overflow-start"),
+            scrollLeft: chooser.scrollLeft,
           };
         }),
       )
       .toEqual({
         navButtons: 2,
         hasEndOverflow: true,
+        hasStartOverflow: false,
+        scrollLeft: 0,
       });
 
     await page.locator("#chooser").evaluate((chooser) => {
@@ -1784,6 +1788,8 @@ test.describe("remaining accessibility contracts", () => {
           const navEnd = chooser.querySelector('[data-fig-chooser-nav="end"]');
           return {
             choices: chooser.querySelectorAll("fig-choice").length,
+            directChoices: chooser.querySelectorAll(":scope > fig-choice").length,
+            legacyScroller: chooser.querySelectorAll(":scope > [data-fig-chooser-scroll]").length,
             navButtons: chooser.querySelectorAll("[data-fig-chooser-nav]").length,
             value: chooser.getAttribute("value"),
             hasEndOverflow: chooser.classList.contains("overflow-end"),
@@ -1794,10 +1800,12 @@ test.describe("remaining accessibility contracts", () => {
       )
       .toEqual({
         choices: 4,
+        directChoices: 4,
+        legacyScroller: 0,
         navButtons: 2,
         value: "new-0",
         hasEndOverflow: true,
-        navEndPosition: "absolute",
+        navEndPosition: "sticky",
         navEndPointerEvents: "auto",
       });
 
@@ -1855,6 +1863,66 @@ test.describe("remaining accessibility contracts", () => {
     await expect
       .poll(() =>
         page.locator("#vertical-chooser").evaluate((chooser) => {
+          return {
+            scrollTop: chooser.scrollTop,
+            hasEndOverflow: chooser.classList.contains("overflow-end"),
+            hasStartOverflow: chooser.classList.contains("overflow-start"),
+          };
+        }),
+      )
+      .toEqual({
+        scrollTop: 0,
+        hasEndOverflow: true,
+        hasStartOverflow: false,
+      });
+
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.insertAdjacentHTML("beforeend", `
+        <fig-chooser
+          id="text-chooser"
+          layout="vertical"
+          value="option-a"
+          full
+          drag
+          style="max-height: 190px; width: 240px;"
+        >
+          <fig-choice value="option-a" padding selected><span style="white-space: nowrap;">Option A</span></fig-choice>
+          <fig-choice value="option-b" padding><span style="white-space: nowrap;">Option B</span></fig-choice>
+          <fig-choice value="option-c" padding><span style="white-space: nowrap;">Option C</span></fig-choice>
+          <fig-choice value="option-d" padding><span style="white-space: nowrap;">Option D</span></fig-choice>
+          <fig-choice value="option-e" padding><span style="white-space: nowrap;">Option E</span></fig-choice>
+          <fig-choice value="option-f" padding><span style="white-space: nowrap;">Option F</span></fig-choice>
+        </fig-chooser>
+      `);
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#text-chooser").evaluate((chooser) => {
+          const navStart = chooser.querySelector('[data-fig-chooser-nav="start"]');
+          const navEnd = chooser.querySelector('[data-fig-chooser-nav="end"]');
+          return {
+            scrollTop: chooser.scrollTop,
+            hasEndOverflow: chooser.classList.contains("overflow-end"),
+            hasStartOverflow: chooser.classList.contains("overflow-start"),
+            navStartOpacity: navStart ? getComputedStyle(navStart).opacity : null,
+            navEndOpacity: navEnd ? getComputedStyle(navEnd).opacity : null,
+          };
+        }),
+      )
+      .toEqual({
+        scrollTop: 0,
+        hasEndOverflow: true,
+        hasStartOverflow: false,
+        navStartOpacity: "0",
+        navEndOpacity: "1",
+      });
+
+    await expect
+      .poll(() =>
+        page.locator("#vertical-chooser").evaluate((chooser) => {
           const navEnd = chooser.querySelector('[data-fig-chooser-nav="end"]');
           if (!navEnd) return null;
           chooser.scrollTop = 40;
@@ -1905,6 +1973,59 @@ test.describe("remaining accessibility contracts", () => {
         chooserWidth: 240,
         scrollsHorizontally: true,
       });
+
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = [
+        "red",
+        "blue",
+        "green",
+        "orange",
+        "purple",
+        "pink",
+        "teal",
+        "yellow",
+      ]
+        .map((color) => {
+          return `<fig-choice value="${color}"><fig-chit size="large" disabled></fig-chit></fig-choice>`;
+        })
+        .join("");
+      root.innerHTML = `
+        <fig-chooser id="color-chooser" layout="horizontal" value="red" full drag style="width: 240px; max-width: 240px;">
+          ${choices}
+        </fig-chooser>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#color-chooser").evaluate((chooser) => {
+          const choices = Array.from(chooser.querySelectorAll(":scope > fig-choice"));
+          const rects = choices.map((choice) => choice.getBoundingClientRect());
+          const gaps = rects.slice(1).map((rect, index) =>
+            Math.round(rect.left - rects[index].right),
+          );
+          return {
+            scrollsHorizontally: chooser.scrollWidth > chooser.clientWidth,
+            minChoiceWidth: Math.min(
+              ...choices.map((choice) =>
+                Math.round(choice.getBoundingClientRect().width),
+              ),
+            ),
+            minGap: Math.min(...gaps),
+            hasEndOverflow: chooser.classList.contains("overflow-end"),
+            hasStartOverflow: chooser.classList.contains("overflow-start"),
+          };
+        }),
+      )
+      .toEqual({
+        scrollsHorizontally: true,
+        minChoiceWidth: 32,
+        minGap: 8,
+        hasEndOverflow: true,
+        hasStartOverflow: false,
+      });
   });
 
   test("fig-chooser supports grid column counts with fallback", async ({ page }) => {
@@ -1926,10 +2047,9 @@ test.describe("remaining accessibility contracts", () => {
         page.evaluate(() => {
           const columnCount = (selector: string) => {
             const chooser = document.querySelector(selector);
-            const scroller = chooser?.querySelector("[data-fig-chooser-scroll]");
-            if (!chooser || !scroller) return null;
+            if (!chooser) return null;
             return {
-              columns: getComputedStyle(scroller).gridTemplateColumns
+              columns: getComputedStyle(chooser).gridTemplateColumns
                 .split(" ")
                 .filter(Boolean).length,
               columnVar: getComputedStyle(chooser)
@@ -1949,6 +2069,44 @@ test.describe("remaining accessibility contracts", () => {
         defaultGrid: { columns: 2, columnVar: "" },
         threeGrid: { columns: 3, columnVar: "3" },
         invalidGrid: { columns: 2, columnVar: "" },
+      });
+  });
+
+  test("fig-chooser grid overflow keeps scrollTop at start with sticky nav", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = Array.from({ length: 12 }, (_, index) => {
+        return `<fig-choice value="grid-${index}" style="height: 48px;">Grid ${index}</fig-choice>`;
+      }).join("");
+      root.innerHTML = `
+        <fig-chooser id="grid-overflow" layout="grid" columns="2" style="height: 120px; max-height: 120px; width: 160px;">
+          ${choices}
+        </fig-chooser>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#grid-overflow").evaluate((chooser) => {
+          const navStart = chooser.querySelector('[data-fig-chooser-nav="start"]');
+          return {
+            scrollTop: chooser.scrollTop,
+            hasEndOverflow: chooser.classList.contains("overflow-end"),
+            navStartOpacity: navStart ? getComputedStyle(navStart).opacity : null,
+            directChoices: chooser.querySelectorAll(":scope > fig-choice").length,
+            legacyScroller: chooser.querySelectorAll(":scope > [data-fig-chooser-scroll]").length,
+          };
+        }),
+      )
+      .toEqual({
+        scrollTop: 0,
+        hasEndOverflow: true,
+        navStartOpacity: "0",
+        directChoices: 12,
+        legacyScroller: 0,
       });
   });
 
@@ -2128,7 +2286,7 @@ test.describe("remaining accessibility contracts", () => {
         navButtons: 2,
         hasEndOverflow: true,
         navEndPointerEvents: "auto",
-        navEndPosition: "absolute",
+        navEndPosition: "sticky",
       });
 
     await page.locator("#overflow-tabs").evaluate((tabs) => {
@@ -2158,10 +2316,9 @@ test.describe("remaining accessibility contracts", () => {
     await expect
       .poll(() =>
         page.locator("#overflow-tabs").evaluate((tabs) => {
-          const scroller = tabs.querySelector("[data-fig-tabs-scroll]");
           const selected = tabs.querySelector('fig-tab[value="math"]');
-          if (!scroller || !selected) return false;
-          const tabsRect = scroller.getBoundingClientRect();
+          if (!selected) return false;
+          const tabsRect = tabs.getBoundingClientRect();
           const selectedRect = selected.getBoundingClientRect();
           const tabsCenter = tabsRect.left + tabsRect.width / 2;
           const selectedCenter = selectedRect.left + selectedRect.width / 2;
@@ -2182,10 +2339,9 @@ test.describe("remaining accessibility contracts", () => {
     await expect
       .poll(() =>
         page.locator("#overflow-tabs").evaluate((tabs) => {
-          const scroller = tabs.querySelector("[data-fig-tabs-scroll]");
           const selected = tabs.querySelector('fig-tab[value="currency"]');
-          if (!scroller || !selected) return false;
-          const tabsRect = scroller.getBoundingClientRect();
+          if (!selected) return false;
+          const tabsRect = tabs.getBoundingClientRect();
           const selectedRect = selected.getBoundingClientRect();
           const tabsCenter = tabsRect.left + tabsRect.width / 2;
           const selectedCenter = selectedRect.left + selectedRect.width / 2;
@@ -2225,9 +2381,8 @@ test.describe("remaining accessibility contracts", () => {
         page.locator("#overflow-tabs").evaluate((tabs) => {
           return {
             tabs: tabs.querySelectorAll("fig-tab").length,
-            scrollerTabs: tabs.querySelectorAll(
-              ":scope > [data-fig-tabs-scroll] > fig-tab",
-            ).length,
+            directTabs: tabs.querySelectorAll(":scope > fig-tab").length,
+            legacyScroller: tabs.querySelectorAll(":scope > [data-fig-tabs-scroll]").length,
             navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
             sharedButtons: tabs.querySelectorAll(".fig-overflow").length,
           };
@@ -2235,7 +2390,8 @@ test.describe("remaining accessibility contracts", () => {
       )
       .toEqual({
         tabs: 5,
-        scrollerTabs: 5,
+        directTabs: 5,
+        legacyScroller: 0,
         navButtons: 2,
         sharedButtons: 2,
       });
@@ -2252,9 +2408,8 @@ test.describe("remaining accessibility contracts", () => {
         page.locator("#overflow-tabs").evaluate((tabs) => {
           return {
             tabs: tabs.querySelectorAll("fig-tab").length,
-            scrollerTabs: tabs.querySelectorAll(
-              ":scope > [data-fig-tabs-scroll] > fig-tab",
-            ).length,
+            directTabs: tabs.querySelectorAll(":scope > fig-tab").length,
+            legacyScroller: tabs.querySelectorAll(":scope > [data-fig-tabs-scroll]").length,
             navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
             sharedButtons: tabs.querySelectorAll(".fig-overflow").length,
           };
@@ -2262,7 +2417,8 @@ test.describe("remaining accessibility contracts", () => {
       )
       .toEqual({
         tabs: 6,
-        scrollerTabs: 6,
+        directTabs: 6,
+        legacyScroller: 0,
         navButtons: 2,
         sharedButtons: 2,
       });

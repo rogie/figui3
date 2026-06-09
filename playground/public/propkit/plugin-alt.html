@@ -35,8 +35,8 @@
         --fig-field-right-padding: var(--spacer-2);
       }
 
-      fig-field.group-tabs-field fig-tabs.group-tabs > .fig-tabs-scroll {
-        padding-left: 0;
+      fig-field.group-tabs-field fig-tabs.group-tabs {
+        --fig-tabs-inline-padding: 0;
       }
 
       .result-summary {
@@ -44,16 +44,10 @@
       }
 
       fig-chooser.character-grid {
-        max-height: 320px;
-        min-height: 0;
-        overflow: hidden;
-      }
-
-      fig-chooser.character-grid > .fig-chooser-scroll {
         align-content: start;
         max-height: 320px;
         min-height: 0;
-        overflow-y: auto;
+        overflow: hidden auto;
       }
 
       fig-chooser.character-grid fig-choice.character-tile {

@@ -1199,32 +1199,52 @@ fig-tab,
 fig-tabs,
 .tabs {
   --fig-overflow-size: var(--spacer-4);
-  display: block;
+  --fig-tabs-inline-padding: var(--spacer-2);
+  --fig-tabs-block-padding: var(--spacer-1);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
   min-width: 0;
-  position: relative;
+  overflow: auto hidden;
+  padding: 0;
+  scrollbar-width: none;
   width: 100%;
-  overflow: hidden;
 
-  > .fig-tabs-scroll {
-    box-sizing: border-box;
-    display: flex;
-    gap: var(--spacer-1);
-    overflow: auto hidden;
-    padding: var(--spacer-1) var(--spacer-2);
-    scrollbar-width: none;
-    width: 100%;
-    min-width: 0;
+  > fig-tab {
+    flex-shrink: 0;
+    margin-block: var(--fig-tabs-block-padding);
+  }
+
+  > fig-tab + fig-tab {
+    margin-inline-start: var(--spacer-1);
+  }
+
+  > .fig-overflow-start + fig-tab {
+    margin-inline-start: var(--fig-tabs-inline-padding);
+  }
+
+  > fig-tab:has(+ .fig-overflow-end) {
+    margin-inline-end: var(--fig-tabs-inline-padding);
   }
 
   > .fig-overflow {
-    top: 0;
-    bottom: 0;
+    align-self: stretch;
+    flex: 0 0 var(--fig-overflow-size);
     height: auto;
+    margin-block: 0;
+    position: sticky;
+    top: 0;
     width: var(--fig-overflow-size);
+    z-index: 3;
   }
 
   > .fig-overflow-start {
+    inset-inline-start: 0;
     left: 0;
+    margin-inline-end: calc(-1 * var(--fig-overflow-size));
+    order: -1;
     right: auto;
     box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
 
@@ -1238,8 +1258,11 @@ fig-tabs,
   }
 
   > .fig-overflow-end {
-    right: 0;
+    inset-inline-end: 0;
     left: auto;
+    margin-inline-start: calc(-1 * var(--fig-overflow-size));
+    order: 1;
+    right: 0;
     box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
 
     &:before{
@@ -3327,6 +3350,10 @@ fig-group {
   display: block;
   margin-bottom: var(--spacer-2-5);
 
+  p{
+    margin: 0 var(--spacer-3) var(--spacer-2) var(--spacer-3);
+  }
+
   /* Sibling groups  */
   & + fig-group {
     box-shadow: inset 0 1px 0 0 var(--figma-color-border);
@@ -3455,13 +3482,16 @@ fig-footer {
 }
 
 fig-content {
-  padding: var(--spacer-2) 0;
+  padding: var(--spacer-2) var(--spacer-3);
   display: block;
+  color: var(--figma-color-text-secondary);
 
   p{
     margin: 0 0 var(--spacer-2) 0;
-    padding: 0 var(--spacer-3);
   }
+}
+body>fig-content{
+  padding: var(--spacer-2) 0;
 }
 
 vstack,
@@ -4602,69 +4632,186 @@ fig-icon {
 fig-chooser {
   --chooser-fade-size: var(--spacer-4);
   --fig-chooser-gap: var(--spacer-2);
+  --fig-chooser-inline-padding: var(--spacer-2);
+  --fig-chooser-block-padding: var(--spacer-2);
 
-  display: block;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: inherit;
+  max-height: inherit;
+  max-width: inherit;
   min-width: 0;
-  overflow: visible;
-  position: relative;
+  overflow: hidden auto;
+  padding: 0;
+  scrollbar-width: none;
+  width: 100%;
 
-  > .fig-chooser-scroll {
-    display: flex;
-    flex-direction: column;
-    gap: var(--fig-chooser-gap);
-    overflow: visible auto;
-    scrollbar-width: none;
-    scroll-snap-type: y mandatory;
-    width: 100%;
-    height: inherit;
-    max-height: inherit;
-    max-width: inherit;
+  > :not(.fig-overflow) {
+    flex-shrink: 0;
     min-width: 0;
   }
 
-  > .fig-chooser-scroll > * {
-    scroll-snap-align: start;
+  > :not(.fig-overflow) + :not(.fig-overflow) {
+    margin-block-start: var(--fig-chooser-gap);
+  }
+
+  > .fig-overflow-start + :not(.fig-overflow) {
+    margin-block-start: var(--fig-chooser-block-padding);
+  }
+
+  > :not(.fig-overflow):has(+ .fig-overflow-end) {
+    margin-block-end: var(--fig-chooser-block-padding);
+  }
+
+  > .fig-overflow {
+    flex: 0 0 var(--chooser-fade-size);
+    height: var(--chooser-fade-size);
+    margin-inline: 0;
+    position: sticky;
+    width: 100%;
+    z-index: 3;
+  }
+
+  > .fig-overflow-start {
+    box-shadow: 0 1px 0 0 var(--figma-color-bordertranslucent);
+    margin-block-end: calc(-1 * var(--chooser-fade-size));
+    order: -1;
+    top: 0;
+
+    &:before {
+      border-radius: var(--radius-medium) var(--radius-medium) 0 0;
+    }
+
+    .fig-overflow-chevron {
+      rotate: 180deg;
+    }
+  }
+
+  > .fig-overflow-end {
+    bottom: 0;
+    box-shadow: 0 -1px 0 0 var(--figma-color-bordertranslucent);
+    margin-block-start: calc(-1 * var(--chooser-fade-size));
+    order: 1;
+
+    &:before {
+      border-radius: 0 0 var(--radius-medium) var(--radius-medium);
+    }
   }
 
   &[overflow="scrollbar"] {
-    > .fig-chooser-scroll {
-      scrollbar-width: thin;
-      scrollbar-color: var(--figma-color-border) transparent;
-    }
+    scrollbar-width: thin;
+    scrollbar-color: var(--figma-color-border) transparent;
   }
 
   &[layout="horizontal"] {
-    > .fig-chooser-scroll {
-      flex-direction: row;
-      flex-wrap: nowrap;
-      overflow: auto hidden;
-      scrollbar-width: none;
-      scroll-snap-type: x mandatory;
+    flex-direction: row;
+    overflow: auto hidden;
+
+    > :not(.fig-overflow) + :not(.fig-overflow) {
+      margin-block-start: 0;
+      margin-inline-start: var(--fig-chooser-gap);
     }
 
-    &[overflow="scrollbar"] {
-      > .fig-chooser-scroll {
-        scrollbar-width: thin;
-        scrollbar-color: var(--figma-color-border) transparent;
+    > .fig-overflow-start + :not(.fig-overflow) {
+      margin-block-start: 0;
+      margin-inline-start: var(--fig-chooser-inline-padding);
+    }
+
+    > :not(.fig-overflow):has(+ .fig-overflow-end) {
+      margin-block-end: 0;
+      margin-inline-end: var(--fig-chooser-inline-padding);
+    }
+
+    > :not(.fig-overflow) {
+      flex: 0 0 auto;
+    }
+
+    > .fig-overflow {
+      align-self: stretch;
+      flex: 0 0 var(--chooser-fade-size);
+      height: auto;
+      margin-block: 0;
+      width: var(--chooser-fade-size);
+    }
+
+    > .fig-overflow-start {
+      box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
+      inset-inline-start: 0;
+      left: 0;
+      margin-block-end: 0;
+      margin-inline-end: calc(-1 * var(--chooser-fade-size));
+      right: auto;
+      top: 0;
+
+      &:before {
+        border-radius: var(--radius-medium) 0 0 var(--radius-medium);
+      }
+
+      .fig-overflow-chevron {
+        rotate: 90deg;
       }
     }
 
-    > .fig-chooser-scroll > * {
-      flex: 1 1 0%;
+    > .fig-overflow-end {
+      bottom: auto;
+      box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
+      inset-inline-end: 0;
+      left: auto;
+      margin-block-start: 0;
+      margin-inline-start: calc(-1 * var(--chooser-fade-size));
+      right: 0;
+      top: 0;
+
+      &:before {
+        border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+      }
+
+      .fig-overflow-chevron {
+        rotate: -90deg;
+      }
     }
   }
 
   &[layout="grid"] {
-    > .fig-chooser-scroll {
-      display: grid;
-      grid-template-columns: repeat(
-        var(--fig-chooser-grid-columns, 2),
-        minmax(0, 1fr)
-      );
+    display: grid;
+    gap: var(--fig-chooser-gap);
+    grid-template-columns: repeat(
+      var(--fig-chooser-grid-columns, 2),
+      minmax(0, 1fr)
+    );
+    overflow: auto;
+    scroll-snap-type: none;
+
+    > :not(.fig-overflow) {
+      margin: 0;
     }
 
-    > .fig-chooser-scroll > * {
-      min-width: 0;
+    > :not(.fig-overflow) + :not(.fig-overflow) {
+      margin: 0;
+    }
+
+    > .fig-overflow-start + :not(.fig-overflow),
+    > :not(.fig-overflow):has(+ .fig-overflow-end) {
+      margin: 0;
+    }
+
+    > .fig-overflow {
+      grid-column: 1 / -1;
+      margin-inline: 0;
+    }
+
+    > .fig-overflow-start {
+      order: -1;
+    }
+
+    > :not(.fig-overflow) {
+      order: 0;
+    }
+
+    > .fig-overflow-end {
+      order: 1;
     }
   }
 
@@ -4675,78 +4822,6 @@ fig-chooser {
   &[disabled]:not([disabled="false"]) {
     pointer-events: none;
     opacity: 0.4;
-  }
-
-  > .fig-overflow {
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: var(--chooser-fade-size);
-  }
-
-  > .fig-overflow-start {
-    top: 0;
-    box-shadow: 0 1px 0 0 var(--figma-color-bordertranslucent);
-    &:before{
-      border-radius: var(--radius-medium) 0 0 var(--radius-medium);
-    }
-
-
-    .fig-overflow-chevron {
-      rotate: 180deg;
-    }
-  }
-
-  > .fig-overflow-end {
-    bottom: 0;
-    box-shadow: 0 -1px 0 0 var(--figma-color-bordertranslucent);
-    &:before{
-      border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
-    }
-  }
-
-  &[layout="horizontal"] {
-    > .fig-overflow {
-      top: 0;
-      bottom: 0;
-      height: auto;
-      width: var(--chooser-fade-size);
-      align-self: stretch;
-      margin: 0;
-    }
-
-    > .fig-overflow-start {
-      left: 0;
-      right: auto;
-      box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
-
-      .fig-overflow-chevron {
-        rotate: 90deg;
-      }
-    }
-
-    > .fig-overflow-end {
-      right: 0;
-      left: auto;
-      box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
-
-      .fig-overflow-chevron {
-        rotate: -90deg;
-      }
-    }
-  }
-  &[layout="vertical"], 
-  &[layout="grid"]{
-    > .fig-overflow-start{
-      &:before{
-        border-radius: var(--radius-medium) var(--radius-medium) 0 0;
-      }
-    }
-    > .fig-overflow-end {
-      &:before{
-        border-radius: 0 0 var(--radius-medium) var(--radius-medium);
-      }
-    }
   }
 }
 

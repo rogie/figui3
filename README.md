@@ -645,7 +645,7 @@ Segmented controls expose a radio-group pattern. Arrow keys, Home, and End move 
 `<fig-chooser>` / `<fig-choice>`
 
 A selection list controller. `<fig-choice>` elements are selectable options within a `<fig-chooser>`.
-When app code rebuilds a chooser by setting `fig-chooser.innerHTML`, the chooser restores its internal light-DOM overflow buttons automatically.
+When app code rebuilds a chooser by setting `fig-chooser.innerHTML`, the chooser restores its overflow buttons automatically. Choices remain direct light-DOM children (React-safe).
 
 **fig-chooser attributes:**
 

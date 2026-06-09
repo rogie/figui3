@@ -193,15 +193,6 @@ export const propkitSections: Section[] = [
   </fig-header>
 </div>`,
       },
-      {
-        id: "search-header",
-        name: "Search header",
-        markup: `<div class="prop-panel">
-  <fig-header>
-    <fig-input-text type="search" placeholder="Search layers..." full></fig-input-text>
-  </fig-header>
-</div>`,
-      },
     ],
   },
   {
@@ -426,11 +417,15 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="vertical">
     <label>Palettes</label>
-    <fig-chooser layout="vertical" value="sunset" full drag data-playground-hide-attrs="layout,drag,loop" style="max-height: 240px">
+    <fig-chooser layout="vertical" value="sunset" full drag style="max-height: 240px">
       <fig-choice value="sunset" selected><fig-input-palette value="#FF6B6B,#FFA07A,#FFD700,#FF4500" fixed disabled full></fig-input-palette></fig-choice>
       <fig-choice value="ocean"><fig-input-palette value="#0D99FF,#00CEC9,#6C5CE7,#0984E3" fixed disabled full></fig-input-palette></fig-choice>
       <fig-choice value="forest"><fig-input-palette value="#00B894,#55E6C1,#2D6A4F,#95D5B2" fixed disabled full></fig-input-palette></fig-choice>
       <fig-choice value="berry"><fig-input-palette value="#E84393,#A855F7,#6D28D9,#FD79A8" fixed disabled full></fig-input-palette></fig-choice>
+      <fig-choice value="mono"><fig-input-palette value="#000000,#3A3A3A,#CFCFCF,#FFFFFF" fixed disabled full></fig-input-palette></fig-choice>
+      <fig-choice value="desert"><fig-input-palette value="#7C2D12,#C2410C,#FDBA74,#FEF3C7" fixed disabled full></fig-input-palette></fig-choice>
+      <fig-choice value="candy"><fig-input-palette value="#FF2E88,#FF9F1C,#FFF275,#00F5D4" fixed disabled full></fig-input-palette></fig-choice>
+      <fig-choice value="midnight"><fig-input-palette value="#020617,#1E1B4B,#312E81,#38BDF8" fixed disabled full></fig-input-palette></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -441,11 +436,15 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="vertical">
     <label>Gradients</label>
-    <fig-chooser layout="vertical" value="sunset-glow" full drag data-playground-hide-attrs="layout,drag,loop" style="max-height: 240px">
+    <fig-chooser layout="vertical" value="sunset-glow" full drag style="max-height: 240px">
       <fig-choice value="sunset-glow" selected><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#FFB347","opacity":100},{"position":50,"color":"#FF5E78","opacity":100},{"position":100,"color":"#7A2BD9","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
       <fig-choice value="aurora"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
       <fig-choice value="bubblegum"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":45,"stops":[{"position":0,"color":"#FFC2E2","opacity":100},{"position":48,"color":"#FF4FA2","opacity":100},{"position":52,"color":"#7DF3D4","opacity":100},{"position":100,"color":"#2EB39A","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
       <fig-choice value="holographic"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#FF6EC7","opacity":100},{"position":25,"color":"#FFD86E","opacity":100},{"position":50,"color":"#6EE7FF","opacity":100},{"position":75,"color":"#A06EFF","opacity":100},{"position":100,"color":"#FF6E9A","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="chrome"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#111827","opacity":100},{"position":18,"color":"#F8FAFC","opacity":100},{"position":34,"color":"#94A3B8","opacity":100},{"position":52,"color":"#FFFFFF","opacity":100},{"position":70,"color":"#475569","opacity":100},{"position":100,"color":"#E2E8F0","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="black-white"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#000000","opacity":100},{"position":28,"color":"#FFFFFF","opacity":100},{"position":50,"color":"#1F2937","opacity":100},{"position":72,"color":"#FFFFFF","opacity":100},{"position":100,"color":"#000000","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="laser-lemonade"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":25,"stops":[{"position":0,"color":"#FFF700","opacity":100},{"position":30,"color":"#00FF85","opacity":100},{"position":64,"color":"#00D4FF","opacity":100},{"position":100,"color":"#FF00E5","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
+      <fig-choice value="cosmic-sorbet"><fig-input-gradient edit="false" value='{"type":"gradient","gradient":{"type":"linear","angle":155,"stops":[{"position":0,"color":"#2B0B5A","opacity":100},{"position":24,"color":"#7C3AED","opacity":100},{"position":48,"color":"#F97316","opacity":100},{"position":72,"color":"#FDE68A","opacity":100},{"position":100,"color":"#22D3EE","opacity":100}]}}' disabled full></fig-input-gradient></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -2320,6 +2319,429 @@ export const propkitSections: Section[] = [
       <fig-button disabled>Place in Figma</fig-button>
     </fig-footer>
   </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "atom-position",
+    name: "Position",
+    group: "Atoms",
+    description:
+      "XY coordinate fields as paired percentage number inputs with axis prepend labels.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Position</label>
+    <hstack style="width: 100%;">
+      <fig-input-number value="50" min="0" max="100" step="1" units="%">
+        <span slot="prepend">X</span>
+      </fig-input-number>
+      <fig-input-number value="50" min="0" max="100" step="1" units="%">
+        <span slot="prepend">Y</span>
+      </fig-input-number>
+    </hstack>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "atom-grouped-inputs",
+    name: "Grouped inputs",
+    group: "Atoms",
+    description:
+      "Related fields collected in a named fig-group for visual separation and optional collapse.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-group name="Layout">
+    <fig-field>
+      <label>Direction</label>
+      <fig-dropdown full>
+        <option selected>Horizontal</option>
+        <option>Vertical</option>
+      </fig-dropdown>
+    </fig-field>
+    <fig-field>
+      <label>Spacing</label>
+      <fig-slider value="8" min="0" max="64" text="true" units="px" full></fig-slider>
+    </fig-field>
+    <fig-field>
+      <label>Padding</label>
+      <fig-slider value="16" min="0" max="64" text="true" units="px" full></fig-slider>
+    </fig-field>
+  </fig-group>
+  <fig-group name="Fill">
+    <fig-field>
+      <label>Background</label>
+      <fig-input-color value="#FFFFFF" text="true" full></fig-input-color>
+    </fig-field>
+    <fig-field>
+      <label>Opacity</label>
+      <fig-slider value="100" min="0" max="100" text="true" units="%" full></fig-slider>
+    </fig-field>
+  </fig-group>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "atom-tabs",
+    name: "Tabs",
+    group: "Atoms",
+    description:
+      "Tabs at the top of a panel for navigation and grouping related settings into separate views.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<fig-tabs>
+  <fig-tab selected>General</fig-tab>
+  <fig-tab>Advanced</fig-tab>
+  <fig-tab>Export</fig-tab>
+</fig-tabs>`,
+      },
+      {
+        id: "tab-content",
+        name: "With content",
+        markup: `<fig-tabs>
+  <fig-tab selected content="#atom-tabs-general">General</fig-tab>
+  <fig-tab content="#atom-tabs-export">Export</fig-tab>
+</fig-tabs>
+<fig-tab-content id="atom-tabs-general">
+  <fig-group>
+    <fig-field>
+      <label>Name</label>
+      <fig-input-text value="Hero Card" full></fig-input-text>
+    </fig-field>
+    <fig-field>
+      <label>Visible</label>
+      <fig-switch checked></fig-switch>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-tabs-export">
+  <fig-group>
+    <fig-field>
+      <label>Format</label>
+      <fig-options options="PNG,SVG,PDF" value="PNG" full></fig-options>
+    </fig-field>
+    <fig-field>
+      <label>Scale</label>
+      <fig-options options="1x,2x,3x" value="2x" full></fig-options>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>`,
+      },
+    ],
+  },
+  {
+    id: "atom-segmented-control",
+    name: "Segmented control",
+    group: "Atoms",
+    description:
+      "Short mutually exclusive choices with a few compact segment labels. Prefer fig-dropdown or fig-options when labels are long or numerous.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Align</label>
+    <fig-segmented-control sizing="equal" full>
+      <fig-segment value="left" selected>Left</fig-segment>
+      <fig-segment value="right">Right</fig-segment>
+    </fig-segmented-control>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "atom-dropdown",
+    name: "Dropdown",
+    group: "Atoms",
+    description:
+      "Text-only option lists with many or longer labels. Use instead of segmented controls when choices do not fit compact segments.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Font family</label>
+    <fig-dropdown full>
+      <option selected>Inter</option>
+      <option>SF Pro Display</option>
+      <option>Roboto</option>
+      <option>Helvetica Neue</option>
+      <option>Source Sans 3</option>
+      <option>IBM Plex Sans</option>
+      <option>Noto Sans</option>
+      <option>Work Sans</option>
+    </fig-dropdown>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "atom-menu",
+    name: "Menu",
+    group: "Atoms",
+    description:
+      "Text-based action menus launched from a button trigger.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left">
+    <fig-button variant="secondary" fig-menu-trigger>Actions</fig-button>
+    <fig-menu-item value="duplicate">Duplicate</fig-menu-item>
+    <fig-menu-item value="rename">Rename</fig-menu-item>
+    <fig-menu-item value="copy-link">Copy link</fig-menu-item>
+    <fig-menu-separator></fig-menu-separator>
+    <fig-menu-item value="delete">Delete</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "atom-helper-text",
+    name: "Helper text",
+    group: "Atoms",
+    description:
+      "Supplementary guidance below fields using fig-content for readable helper copy.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Characters</label>
+    <fig-input-text value="!@#abc123" full></fig-input-text>
+  </fig-field>
+  <fig-content>Some helper text here</fig-content>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "atom-more-info",
+    name: "More info",
+    group: "Atoms",
+    description:
+      "Collapsible supplementary copy placed at the end of fig-content, before fig-footer.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<fig-group name="More info" collapsible open="false">
+  <p>Exports use the current selection bounds. PNG keeps transparency; SVG flattens effects that Figma cannot represent as vectors.</p>
+  <p>Need batch export? Run this plugin once per page or use the desktop app for <a href="https://figma.com">multi-file</a> output.</p>
+</fig-group>
+
+<fig-footer>
+  <fig-button variant="secondary">Cancel</fig-button>
+  <fig-button>Export</fig-button>
+</fig-footer>`,
+      },
+    ],
+  },
+  {
+    id: "atom-footer",
+    name: "Footer",
+    group: "Atoms",
+    description:
+      "Bottom action bar anchored at the end of a panel for labels, primary actions, and disabled states.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<fig-footer>
+  <fig-button>Apply</fig-button>
+</fig-footer>`,
+      },
+      {
+        id: "two-buttons",
+        name: "Two buttons",
+        markup: `<fig-footer>
+  <fig-button variant="secondary">Cancel</fig-button>
+  <fig-button>Apply</fig-button>
+</fig-footer>`,
+      },
+      {
+        id: "waiting",
+        name: "Waiting",
+        description:
+          "A label-only footer for idle states. With no buttons, the message is centered.",
+        markup: `<fig-footer>
+  <label>Select text, or click to copy</label>
+</fig-footer>`,
+      },
+      {
+        id: "label-button",
+        name: "Waiting for selection",
+        markup: `<fig-footer>
+  <label>Select a layer</label>
+  <fig-button disabled>Apply</fig-button>
+</fig-footer>`,
+      },
+      {
+        id: "long-label",
+        name: "Long label",
+        description:
+          "A footer label with more instructional text beside a disabled action.",
+        markup: `<fig-footer>
+  <label>In order to run this tool, you will need to select at least one layer selected</label>
+  <fig-button disabled>Apply</fig-button>
+</fig-footer>`,
+      },
+      {
+        id: "selected-layer",
+        name: "Has selection",
+        markup: `<fig-footer>
+  <label>3 selected</label>
+  <fig-button>Apply</fig-button>
+</fig-footer>`,
+      },
+      {
+        id: "long-label-many-actions",
+        name: "Long label/many actions",
+        description:
+          "A long instructional label above a vertical stack of actions.",
+        markup: `<fig-footer>
+  <label>In order to run this tool, you will need to select at least one layer selected</label>
+  <fig-tooltip text="Select at least one layer to reset">
+    <span class="fig-footer-action">
+      <fig-button variant="secondary" disabled full>Reset</fig-button>
+    </span>
+  </fig-tooltip>
+  <fig-tooltip text="Close without applying changes">
+    <span class="fig-footer-action">
+      <fig-button variant="secondary" full>Cancel</fig-button>
+    </span>
+  </fig-tooltip>
+  <fig-tooltip text="Select at least one layer to apply">
+    <span class="fig-footer-action">
+      <fig-button disabled full>Apply</fig-button>
+    </span>
+  </fig-tooltip>
+</fig-footer>`,
+      },
+      {
+        id: "lots-of-things",
+        name: "Lots of things",
+        markup: `<fig-footer>
+  <label>Make a selection</label>
+  <fig-button variant="secondary" disabled>Reset</fig-button>
+  <fig-button variant="secondary" disabled>Cancel</fig-button>
+  <fig-button disabled>Apply</fig-button>
+</fig-footer>`,
+      },
+    ],
+  },
+  {
+    id: "atom-preview",
+    name: "Preview",
+    group: "Atoms",
+    description:
+      "Media preview surfaces for images and video inside fig-content.",
+    examples: [
+      {
+        id: "default",
+        name: "Image",
+        markup: `<fig-content>
+  <fig-image src="${landscapeUrl()}" alt="Landscape preview" full fit="cover" size="auto" checkerboard="true"></fig-image>
+</fig-content>`,
+      },
+      {
+        id: "video",
+        name: "Video",
+        markup: `<fig-content>
+  <fig-video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Flower video preview" poster="https://picsum.photos/640/360?random=29" controls muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+</fig-content>`,
+      },
+    ],
+  },
+  {
+    id: "atom-search",
+    name: "Search",
+    group: "Atoms",
+    description:
+      "Plugin search patterns for filtering local content or fetching remote results.",
+    examples: [
+      {
+        id: "live-results",
+        name: "Live results",
+        description:
+          "Search header for filtering content that is already loaded in the panel.",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <fig-input-text type="search" placeholder="Search layers..." full></fig-input-text>
+  </fig-header>
+</div>`,
+      },
+      {
+        id: "fetch-results",
+        name: "Fetch results",
+        description:
+          "Search header with a submit action and a fetched result grid.",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <fig-input-text type="search" placeholder="Search characters..." full></fig-input-text>
+    <fig-button>Go</fig-button>
+  </fig-header>
+  <fig-content>
+    <fig-chooser layout="grid" columns="3" value="img-1" full>
+      <fig-choice value="img-1" aria-label="Image A" selected><fig-image src="https://picsum.photos/320.webp?random=41" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-2" aria-label="Image B"><fig-image src="https://picsum.photos/320.webp?random=42" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-3" aria-label="Image C"><fig-image src="https://picsum.photos/320.webp?random=43" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-4" aria-label="Image D"><fig-image src="https://picsum.photos/320.webp?random=44" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-5" aria-label="Image E"><fig-image src="https://picsum.photos/320.webp?random=45" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-6" aria-label="Image F"><fig-image src="https://picsum.photos/320.webp?random=46" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-7" aria-label="Image G"><fig-image src="https://picsum.photos/320.webp?random=47" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-8" aria-label="Image H"><fig-image src="https://picsum.photos/320.webp?random=48" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-9" aria-label="Image I"><fig-image src="https://picsum.photos/320.webp?random=49" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-10" aria-label="Image J"><fig-image src="https://picsum.photos/320.webp?random=50" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+    </fig-chooser>
+  </fig-content>
+</div>`,
+      },
+      {
+        id: "fetch-results-loading",
+        name: "Fetch results (loading)",
+        description:
+          "Search header with a submit action while fetched results shimmer in a skeleton placeholder.",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <fig-input-text type="search" placeholder="Search characters..." full></fig-input-text>
+    <fig-button>Go</fig-button>
+  </fig-header>
+  <fig-content>
+    <fig-skeleton duration="1.5s">
+      <fig-chooser layout="grid" columns="3" value="img-1" full>
+        <fig-choice value="img-1" aria-label="Image A" selected><fig-image src="https://picsum.photos/320.webp?random=41" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-2" aria-label="Image B"><fig-image src="https://picsum.photos/320.webp?random=42" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-3" aria-label="Image C"><fig-image src="https://picsum.photos/320.webp?random=43" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-4" aria-label="Image D"><fig-image src="https://picsum.photos/320.webp?random=44" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-5" aria-label="Image E"><fig-image src="https://picsum.photos/320.webp?random=45" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-6" aria-label="Image F"><fig-image src="https://picsum.photos/320.webp?random=46" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-7" aria-label="Image G"><fig-image src="https://picsum.photos/320.webp?random=47" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-8" aria-label="Image H"><fig-image src="https://picsum.photos/320.webp?random=48" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-9" aria-label="Image I"><fig-image src="https://picsum.photos/320.webp?random=49" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-10" aria-label="Image J"><fig-image src="https://picsum.photos/320.webp?random=50" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      </fig-chooser>
+    </fig-skeleton>
+  </fig-content>
 </div>`,
       },
     ],

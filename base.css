@@ -17,6 +17,7 @@ body,
 :host {
   font-size: var(--body-medium-fontSize);
   letter-spacing: var(--body-letter-spacing);
+  line-height: 1.4545em;
 }
 
 h1,

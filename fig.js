@@ -3550,10 +3550,9 @@ class FigTabs extends HTMLElement {
   #boundSyncOverflow = this.#syncOverflow.bind(this);
   #mutationObserver = null;
   #resizeObserver = null;
-  #scroller = null;
   #navStart = null;
   #navEnd = null;
-  #isStructuring = false;
+  #isUnwrapping = false;
 
   constructor() {
     super();
@@ -3568,10 +3567,11 @@ class FigTabs extends HTMLElement {
   connectedCallback() {
     this.name = this.getAttribute("name") || "tabs";
     this.setAttribute("role", "tablist");
-    this.#ensureScroller();
+    if (this.shadowRoot) this.shadowRoot.replaceChildren();
+    this.#removeLegacyScroller();
     this.addEventListener("click", this.#boundHandleClick);
     this.addEventListener("keydown", this.#boundHandleKeyDown);
-    this.#scrollElement.addEventListener("scroll", this.#boundSyncOverflow);
+    this.addEventListener("scroll", this.#boundSyncOverflow);
     this.#createNavButtons();
     this.#startObserver();
     this.#startResizeObserver();
@@ -3587,30 +3587,6 @@ class FigTabs extends HTMLElement {
       this.#syncOverflow();
       this.#scrollSelectedTabIntoView(undefined, "auto");
     });
-  }
-
-  get #scrollElement() {
-    return this.#scroller || this;
-  }
-
-  get scrollLeft() {
-    return this.#scrollElement.scrollLeft;
-  }
-
-  set scrollLeft(value) {
-    this.#scrollElement.scrollLeft = value;
-  }
-
-  get scrollWidth() {
-    return this.#scrollElement.scrollWidth;
-  }
-
-  scrollTo(...args) {
-    this.#scrollElement.scrollTo(...args);
-  }
-
-  scrollBy(...args) {
-    this.#scrollElement.scrollBy(...args);
   }
 
   #applyDisabled(disabled) {
@@ -3652,17 +3628,16 @@ class FigTabs extends HTMLElement {
 
     requestAnimationFrame(() => {
       if (!this.isConnected || !target.isConnected) return;
-      const scrollEl = this.#scrollElement;
-      const overflowX = scrollEl.scrollWidth > scrollEl.clientWidth;
+      const overflowX = this.scrollWidth > this.clientWidth;
       if (!overflowX) return;
 
-      const containerRect = scrollEl.getBoundingClientRect();
+      const containerRect = this.getBoundingClientRect();
       const tabRect = target.getBoundingClientRect();
       const tabCenter =
-        tabRect.left - containerRect.left + scrollEl.scrollLeft + tabRect.width / 2;
+        tabRect.left - containerRect.left + this.scrollLeft + tabRect.width / 2;
 
-      scrollEl.scrollTo({
-        left: tabCenter - scrollEl.clientWidth / 2,
+      this.scrollTo({
+        left: tabCenter - this.clientWidth / 2,
         behavior,
       });
       this.#syncOverflow();
@@ -3672,7 +3647,7 @@ class FigTabs extends HTMLElement {
   disconnectedCallback() {
     this.removeEventListener("click", this.#boundHandleClick);
     this.removeEventListener("keydown", this.#boundHandleKeyDown);
-    this.#scrollElement.removeEventListener("scroll", this.#boundSyncOverflow);
+    this.removeEventListener("scroll", this.#boundSyncOverflow);
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = null;
     this.#resizeObserver?.disconnect();
@@ -3680,68 +3655,35 @@ class FigTabs extends HTMLElement {
     this.#removeNavButtons();
   }
 
-  #ensureScroller() {
-    if (this.#isStructuring) return;
-    const existing = this.querySelector(":scope > [data-fig-tabs-scroll]");
-    const directNodes = existing
-      ? Array.from(this.childNodes).filter((node) => {
-          if (node === existing) return false;
-          if (node.nodeType !== Node.ELEMENT_NODE) return true;
-          return !node.hasAttribute("data-fig-tabs-nav");
-        })
-      : null;
-    if (existing && existing === this.#scroller && !directNodes?.length) return;
+  #removeLegacyScroller() {
+    if (this.#isUnwrapping) return;
+    const legacy = this.querySelector(":scope > [data-fig-tabs-scroll]");
+    if (!legacy) return;
 
-    this.#isStructuring = true;
+    this.#isUnwrapping = true;
     try {
-      const previousScroller = this.#scroller;
-      if (previousScroller && previousScroller !== existing) {
-        previousScroller.removeEventListener("scroll", this.#boundSyncOverflow);
-      }
-
-      const scroller = existing || document.createElement("div");
-      scroller.className = "fig-tabs-scroll";
-      scroller.dataset.figTabsScroll = "";
-
-      const nodes =
-        directNodes ??
-        Array.from(this.childNodes).filter((node) => {
-          if (node === scroller) return false;
-          if (node.nodeType !== Node.ELEMENT_NODE) return true;
-          return !node.hasAttribute("data-fig-tabs-nav");
-        });
-
-      for (const node of nodes) {
-        scroller.appendChild(node);
-      }
-
-      if (!existing) this.prepend(scroller);
-
-      this.#scroller = scroller;
-      this.#scroller.removeEventListener("scroll", this.#boundSyncOverflow);
-      this.#scroller.addEventListener("scroll", this.#boundSyncOverflow);
-      if (this.#resizeObserver) this.#resizeObserver.observe(this.#scroller);
+      const nodes = Array.from(legacy.childNodes);
+      legacy.replaceWith(...nodes);
     } finally {
-      this.#isStructuring = false;
+      this.#isUnwrapping = false;
     }
   }
 
   #syncOverflow() {
-    figSyncOverflowState(this, this.#scrollElement, "x");
+    figSyncOverflowState(this, this, "x");
   }
 
   #startResizeObserver() {
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = new ResizeObserver(() => this.#syncOverflow());
     this.#resizeObserver.observe(this);
-    if (this.#scroller) this.#resizeObserver.observe(this.#scroller);
   }
 
   #startObserver() {
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = new MutationObserver(() => {
-      if (this.#isStructuring) return;
-      this.#ensureScroller();
+      if (this.#isUnwrapping) return;
+      this.#removeLegacyScroller();
       this.#createNavButtons();
       this.#syncTabIndexes();
       requestAnimationFrame(() => {
@@ -3749,7 +3691,7 @@ class FigTabs extends HTMLElement {
         this.#scrollSelectedTabIntoView();
       });
     });
-    this.#mutationObserver.observe(this, { childList: true, subtree: true });
+    this.#mutationObserver.observe(this, { childList: true, subtree: false });
   }
 
   #removeNavButtons() {
@@ -3775,8 +3717,8 @@ class FigTabs extends HTMLElement {
 
     const buttons = createFigOverflowButtons({
       owner: "tabs",
-      onStart: () => figScrollOverflowPage(this.#scrollElement, "x", -1),
-      onEnd: () => figScrollOverflowPage(this.#scrollElement, "x", 1),
+      onStart: () => figScrollOverflowPage(this, "x", -1),
+      onEnd: () => figScrollOverflowPage(this, "x", 1),
     });
     this.#navStart = buttons.start;
     this.#navEnd = buttons.end;
@@ -14967,11 +14909,10 @@ class FigChooser extends HTMLElement {
   #boundSyncOverflow = this.#syncOverflow.bind(this);
   #mutationObserver = null;
   #resizeObserver = null;
-  #scroller = null;
   #navStart = null;
   #navEnd = null;
   #dragState = null;
-  #isStructuring = false;
+  #isUnwrapping = false;
 
   constructor() {
     super();
@@ -15016,43 +14957,7 @@ class FigChooser extends HTMLElement {
   }
 
   get choices() {
-    return Array.from((this.#scroller || this).querySelectorAll(this.#choiceSelector));
-  }
-
-  get #scrollElement() {
-    return this.#scroller || this;
-  }
-
-  get scrollTop() {
-    return this.#scrollElement.scrollTop;
-  }
-
-  set scrollTop(value) {
-    this.#scrollElement.scrollTop = value;
-  }
-
-  get scrollLeft() {
-    return this.#scrollElement.scrollLeft;
-  }
-
-  set scrollLeft(value) {
-    this.#scrollElement.scrollLeft = value;
-  }
-
-  get scrollWidth() {
-    return this.#scrollElement.scrollWidth;
-  }
-
-  get scrollHeight() {
-    return this.#scrollElement.scrollHeight;
-  }
-
-  scrollTo(...args) {
-    this.#scrollElement.scrollTo(...args);
-  }
-
-  scrollBy(...args) {
-    this.#scrollElement.scrollBy(...args);
+    return Array.from(this.querySelectorAll(`:scope > ${this.#choiceSelector}`));
   }
 
   get selectedChoice() {
@@ -15092,11 +14997,12 @@ class FigChooser extends HTMLElement {
 
   connectedCallback() {
     this.setAttribute("role", "listbox");
+    if (this.shadowRoot) this.shadowRoot.replaceChildren();
     this.#syncGridColumns();
-    this.#ensureScroller();
+    this.#removeLegacyScroller();
     this.addEventListener("click", this.#boundHandleClick);
     this.addEventListener("keydown", this.#boundHandleKeyDown);
-    this.#scrollElement.addEventListener("scroll", this.#boundSyncOverflow);
+    this.addEventListener("scroll", this.#boundSyncOverflow);
     this.#applyOverflowMode();
     this.#setupDrag();
     this.#startObserver();
@@ -15140,7 +15046,7 @@ class FigChooser extends HTMLElement {
   disconnectedCallback() {
     this.removeEventListener("click", this.#boundHandleClick);
     this.removeEventListener("keydown", this.#boundHandleKeyDown);
-    this.#scrollElement.removeEventListener("scroll", this.#boundSyncOverflow);
+    this.removeEventListener("scroll", this.#boundSyncOverflow);
     this.#teardownDrag();
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = null;
@@ -15323,7 +15229,7 @@ class FigChooser extends HTMLElement {
   #syncOverflow() {
     if (this.#overflowMode === "scrollbar") return;
     const isHorizontal = this.getAttribute("layout") === "horizontal";
-    figSyncOverflowState(this, this.#scrollElement, isHorizontal ? "x" : "y");
+    figSyncOverflowState(this, this, isHorizontal ? "x" : "y");
   }
 
   #startResizeObserver() {
@@ -15332,30 +15238,29 @@ class FigChooser extends HTMLElement {
       this.#syncOverflow();
     });
     this.#resizeObserver.observe(this);
-    if (this.#scroller) this.#resizeObserver.observe(this.#scroller);
   }
 
   #setupDrag() {
     if (this.#dragState?.bound) return;
     if (!this.#dragEnabled) return;
-    const scrollEl = this.#scrollElement;
 
     const onPointerDown = (e) => {
       if (e.button !== 0) return;
+      if (e.target.closest("[data-fig-chooser-nav]")) return;
       const isHorizontal = this.getAttribute("layout") === "horizontal";
       const hasOverflow = isHorizontal
-        ? scrollEl.scrollWidth > scrollEl.clientWidth
-        : scrollEl.scrollHeight > scrollEl.clientHeight;
+        ? this.scrollWidth > this.clientWidth
+        : this.scrollHeight > this.clientHeight;
       if (!hasOverflow) return;
 
       this.#dragState.active = true;
       this.#dragState.didDrag = false;
       this.#dragState.startX = e.clientX;
       this.#dragState.startY = e.clientY;
-      this.#dragState.scrollLeft = scrollEl.scrollLeft;
-      this.#dragState.scrollTop = scrollEl.scrollTop;
-      scrollEl.style.cursor = "grab";
-      scrollEl.style.userSelect = "none";
+      this.#dragState.scrollLeft = this.scrollLeft;
+      this.#dragState.scrollTop = this.scrollTop;
+      this.style.cursor = "grab";
+      this.style.userSelect = "none";
     };
 
     const onPointerMove = (e) => {
@@ -15366,16 +15271,16 @@ class FigChooser extends HTMLElement {
 
       if (!this.#dragState.didDrag && Math.abs(isHorizontal ? dx : dy) > 3) {
         this.#dragState.didDrag = true;
-        scrollEl.style.cursor = "grabbing";
-        scrollEl.setPointerCapture(e.pointerId);
+        this.style.cursor = "grabbing";
+        this.setPointerCapture(e.pointerId);
       }
 
       if (!this.#dragState.didDrag) return;
 
       if (isHorizontal) {
-        scrollEl.scrollLeft = this.#dragState.scrollLeft - dx;
+        this.scrollLeft = this.#dragState.scrollLeft - dx;
       } else {
-        scrollEl.scrollTop = this.#dragState.scrollTop - dy;
+        this.scrollTop = this.#dragState.scrollTop - dy;
       }
     };
 
@@ -15384,11 +15289,11 @@ class FigChooser extends HTMLElement {
       const wasDrag = this.#dragState.didDrag;
       this.#dragState.active = false;
       this.#dragState.didDrag = false;
-      scrollEl.style.cursor = "";
-      scrollEl.style.userSelect = "";
+      this.style.cursor = "";
+      this.style.userSelect = "";
       if (e.pointerId !== undefined) {
         try {
-          scrollEl.releasePointerCapture(e.pointerId);
+          this.releasePointerCapture(e.pointerId);
         } catch {}
       }
       if (wasDrag) {
@@ -15428,10 +15333,9 @@ class FigChooser extends HTMLElement {
       onPointerUp,
       onClick,
       onPointerUpCapture,
-      scrollEl,
     };
 
-    scrollEl.addEventListener("pointerdown", onPointerDown);
+    this.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     this.addEventListener("pointerup", onPointerUpCapture, true);
@@ -15440,7 +15344,7 @@ class FigChooser extends HTMLElement {
 
   #teardownDrag() {
     if (!this.#dragState?.bound) return;
-    this.#dragState.scrollEl.removeEventListener("pointerdown", this.#dragState.onPointerDown);
+    this.removeEventListener("pointerdown", this.#dragState.onPointerDown);
     window.removeEventListener("pointermove", this.#dragState.onPointerMove);
     window.removeEventListener("pointerup", this.#dragState.onPointerUp);
     this.removeEventListener(
@@ -15449,52 +15353,26 @@ class FigChooser extends HTMLElement {
       true,
     );
     this.removeEventListener("click", this.#dragState.onClick, true);
-    this.#dragState.scrollEl.style.cursor = "";
-    this.#dragState.scrollEl.style.userSelect = "";
+    this.style.cursor = "";
+    this.style.userSelect = "";
     this.#dragState = null;
   }
 
-  #ensureScroller() {
-    if (this.#isStructuring) return;
-    const existing = this.querySelector(":scope > [data-fig-chooser-scroll]");
-    if (existing && existing === this.#scroller) return;
+  #removeLegacyScroller() {
+    if (this.#isUnwrapping) return;
+    const legacy = this.querySelector(":scope > [data-fig-chooser-scroll]");
+    if (!legacy) return;
 
-    this.#isStructuring = true;
+    this.#isUnwrapping = true;
     try {
-      const previousScroller = this.#scroller;
-      if (previousScroller && previousScroller !== existing) {
-        previousScroller.removeEventListener("scroll", this.#boundSyncOverflow);
-      }
-
-      const scroller = existing || document.createElement("div");
-      scroller.className = "fig-chooser-scroll";
-      scroller.dataset.figChooserScroll = "";
-
-      const nodes = Array.from(this.childNodes).filter((node) => {
-        if (node === scroller) return false;
-        if (node.nodeType !== Node.ELEMENT_NODE) return true;
-        return !node.hasAttribute("data-fig-chooser-nav");
-      });
-
-      for (const node of nodes) {
-        scroller.appendChild(node);
-      }
-
-      if (!existing) {
-        this.prepend(scroller);
-      }
-
-      this.#scroller = scroller;
-      this.#scroller.removeEventListener("scroll", this.#boundSyncOverflow);
-      this.#scroller.addEventListener("scroll", this.#boundSyncOverflow);
-      if (this.#resizeObserver) this.#resizeObserver.observe(this.#scroller);
+      const nodes = Array.from(legacy.childNodes);
+      legacy.replaceWith(...nodes);
     } finally {
-      this.#isStructuring = false;
+      this.#isUnwrapping = false;
     }
   }
 
   #applyOverflowMode() {
-    this.#ensureScroller();
     if (this.#overflowMode === "scrollbar") {
       this.#removeNavButtons();
     } else {
@@ -15542,47 +15420,87 @@ class FigChooser extends HTMLElement {
 
   #scrollByPage(direction) {
     const isHorizontal = this.getAttribute("layout") === "horizontal";
-    const scrollEl = this.#scrollElement;
-    figScrollOverflowPage(scrollEl, isHorizontal ? "x" : "y", direction);
+    figScrollOverflowPage(this, isHorizontal ? "x" : "y", direction);
   }
 
   #scrollToChoice(el, behavior = "smooth") {
     if (!el) return;
     requestAnimationFrame(() => {
       if (!el.isConnected) return;
-      const scrollEl = this.#scrollElement;
-      const overflowY = scrollEl.scrollHeight > scrollEl.clientHeight;
-      const overflowX = scrollEl.scrollWidth > scrollEl.clientWidth;
+      const overflowY = this.scrollHeight > this.clientHeight;
+      const overflowX = this.scrollWidth > this.clientWidth;
       if (!overflowX && !overflowY) return;
 
       const choiceRect = el.getBoundingClientRect();
-      const hostRect = scrollEl.getBoundingClientRect();
+      const hostRect = this.getBoundingClientRect();
       const options = { behavior };
+      let shouldScroll = false;
+      const threshold = 2;
 
       if (overflowY) {
-        const choiceCenter =
-          choiceRect.top - hostRect.top + scrollEl.scrollTop + choiceRect.height / 2;
-        options.top = choiceCenter - scrollEl.clientHeight / 2;
+        const fullyVisible =
+          choiceRect.top >= hostRect.top - 1 &&
+          choiceRect.bottom <= hostRect.bottom + 1;
+        const topVisible = choiceRect.top >= hostRect.top - 1;
+        const bottomVisible = choiceRect.bottom <= hostRect.bottom + 1;
+        const atScrollStart = this.scrollTop <= threshold;
+        const needsScroll =
+          !fullyVisible &&
+          (!topVisible ||
+            (!bottomVisible && !atScrollStart) ||
+            choiceRect.top >= hostRect.bottom - 1);
+        if (needsScroll) {
+          const choiceTop = choiceRect.top - hostRect.top + this.scrollTop;
+          const maxScroll = this.scrollHeight - this.clientHeight;
+          options.top = Math.max(
+            0,
+            Math.min(
+              choiceTop + choiceRect.height / 2 - this.clientHeight / 2,
+              maxScroll,
+            ),
+          );
+          shouldScroll = true;
+        }
       }
 
       if (overflowX) {
-        const choiceCenter =
-          choiceRect.left -
-          hostRect.left +
-          scrollEl.scrollLeft +
-          choiceRect.width / 2;
-        options.left = choiceCenter - scrollEl.clientWidth / 2;
+        const fullyVisible =
+          choiceRect.left >= hostRect.left - 1 &&
+          choiceRect.right <= hostRect.right + 1;
+        const startVisible = choiceRect.left >= hostRect.left - 1;
+        const endVisible = choiceRect.right <= hostRect.right + 1;
+        const atScrollStart = this.scrollLeft <= threshold;
+        const needsScroll =
+          !fullyVisible &&
+          (!startVisible ||
+            (!endVisible && !atScrollStart) ||
+            choiceRect.left >= hostRect.right - 1);
+        if (needsScroll) {
+          const choiceLeft = choiceRect.left - hostRect.left + this.scrollLeft;
+          const maxScroll = this.scrollWidth - this.clientWidth;
+          options.left = Math.max(
+            0,
+            Math.min(
+              choiceLeft + choiceRect.width / 2 - this.clientWidth / 2,
+              maxScroll,
+            ),
+          );
+          shouldScroll = true;
+        }
       }
 
-      scrollEl.scrollTo(options);
+      if (shouldScroll) {
+        this.scrollTo(options);
+      }
+      this.#syncOverflow();
     });
   }
 
   #startObserver() {
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = new MutationObserver(() => {
-      if (this.#isStructuring) return;
-      this.#ensureScroller();
+      if (this.#isUnwrapping) return;
+      this.#removeLegacyScroller();
       this.#applyOverflowMode();
       const choices = this.choices;
       if (this.#selectedChoice && !choices.includes(this.#selectedChoice)) {
@@ -15593,7 +15511,7 @@ class FigChooser extends HTMLElement {
       }
       requestAnimationFrame(() => this.#syncOverflow());
     });
-    this.#mutationObserver.observe(this, { childList: true, subtree: true });
+    this.#mutationObserver.observe(this, { childList: true, subtree: false });
   }
 }
 customElements.define("fig-chooser", FigChooser);
