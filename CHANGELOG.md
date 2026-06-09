@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.7.3]
+
+### Fixed
+
+- Fixed `fig-tabs` and `fig-chooser` overflow controls so options remain direct light-DOM children for React-safe rendering.
+- Fixed `fig-chooser` start overflow buttons showing before the user scrolls in initially-overflowed examples.
+- Fixed horizontal `fig-chooser` choices shrinking and visually losing gaps in compact color chooser examples.
+- Fixed chooser playground controls so `Columns` only appears for grid layout and chooser overflow/max-size controls appear consistently.
+- Fixed vulnerable dev dependency lockfile entries for Vite, PostCSS, Picomatch, and Brace Expansion.
+
+### Changed
+
+- Updated chooser playground examples with more palette and gradient presets.
+
 ## [6.7.2]
 
 ### Fixed
