@@ -1058,6 +1058,49 @@ test.describe("slider accessibility", () => {
     });
   });
 
+  test("fig-slider text input updates the range value", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider id="slider" value="50" min="0" max="100" aria-label="Opacity"></fig-slider>
+      `;
+      const slider = root.querySelector("#slider");
+      slider?.addEventListener("input", (event) => {
+        slider.setAttribute(
+          "data-last-input",
+          String((event as CustomEvent).detail),
+        );
+      });
+    });
+    await page.waitForTimeout(100);
+
+    await page.locator("#slider fig-input-number input").fill("75");
+
+    await expect
+      .poll(() =>
+        page.locator("#slider").evaluate((host) => {
+          const range = host.querySelector('input[type="range"]') as HTMLInputElement | null;
+          const number = host.querySelector("fig-input-number");
+          const numberInput = number?.querySelector("input") as HTMLInputElement | null;
+          return {
+            hostValue: host.getAttribute("value"),
+            rangeValue: range?.value,
+            numberValue: number?.getAttribute("value"),
+            numberInputValue: numberInput?.value,
+            lastInput: host.getAttribute("data-last-input"),
+          };
+        }),
+      )
+      .toEqual({
+        hostValue: "75",
+        rangeValue: "75",
+        numberValue: "75",
+        numberInputValue: "75",
+        lastInput: "75",
+      });
+  });
+
   test("fig-slider range supports Shift arrow key stepping", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

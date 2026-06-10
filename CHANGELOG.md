@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.7.4]
+
+### Fixed
+
+- Fixed `fig-slider` text inputs not updating the range value after listener binding moved ahead of number input lookup.
+
+### Added
+
+- Added Playwright coverage for `fig-slider` text input and range value synchronization.
+
 ## [6.7.3]
 
 ### Fixed

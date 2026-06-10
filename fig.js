@@ -4989,10 +4989,10 @@ class FigSlider extends HTMLElement {
 
     this.input = this.querySelector("[type=range]");
     this.inputContainer = this.querySelector(".fig-slider-input-container");
+    this.figInputNumber = this.querySelector("fig-input-number");
     this.#bindControlListeners();
 
     this.datalist = this.querySelector("datalist");
-    this.figInputNumber = this.querySelector("fig-input-number");
     if (this.datalist) {
       this.inputContainer.append(this.datalist);
       this.datalist.setAttribute(
