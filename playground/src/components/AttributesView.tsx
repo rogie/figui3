@@ -869,6 +869,15 @@ export default function AttributesView({
                   );
                   return;
                 }
+                if (target.controlTag === "fig-spinner" && name === "size") {
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    option === "default" ? null : option,
+                  );
+                  return;
+                }
                 if (target.controlTag === "fig-handle" && name === "type") {
                   let updated = applyAttributeMutation(markup, {
                     fieldIndex: target.fieldIndex,
@@ -1366,6 +1375,45 @@ export default function AttributesView({
                         }}
                       ></fig-switch>
                     </fig-field>
+                    {target.hasLabel && (
+                      <fig-field
+                        columns="2/5"
+                        key={`field-label-text-${target.fieldIndex}`}
+                      >
+                        <label>Field label</label>
+                        <fig-input-text
+                          key={`field-label-input-${target.fieldIndex}-${target.label}`}
+                          value={target.label}
+                          full
+                          onInput={(e: any) => {
+                            const host = e.currentTarget as HTMLElement & {
+                              value?: string;
+                            };
+                            const nextValue =
+                              host.value ?? (e as CustomEvent).detail?.value;
+                            if (typeof nextValue !== "string") return;
+                            applyLabelChange(
+                              target.fieldIndex,
+                              true,
+                              nextValue,
+                            );
+                          }}
+                          onChange={(e: any) => {
+                            const host = e.currentTarget as HTMLElement & {
+                              value?: string;
+                            };
+                            const nextValue =
+                              host.value ?? (e as CustomEvent).detail?.value;
+                            if (typeof nextValue !== "string") return;
+                            applyLabelChange(
+                              target.fieldIndex,
+                              true,
+                              nextValue,
+                            );
+                          }}
+                        ></fig-input-text>
+                      </fig-field>
+                    )}
                     {fieldEntries.map((entry) => (
                       <fig-field
                         columns="2/5"

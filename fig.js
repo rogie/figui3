@@ -6606,9 +6606,11 @@ class FigField extends HTMLElement {
   #boundFocus = null;
   #boundLabelEnter = null;
   #boundLabelLeave = null;
+  #childrenObserver = null;
 
   constructor() {
     super();
+    this.#boundToggle = this.#toggle.bind(this);
     this.#boundFocus = this.focus.bind(this);
     this.#boundLabelEnter = this.#onLabelEnter.bind(this);
     this.#boundLabelLeave = this.#onLabelLeave.bind(this);
@@ -6620,14 +6622,34 @@ class FigField extends HTMLElement {
 
   connectedCallback() {
     queueMicrotask(() => {
-      if (this.isConnected) this.#setup();
+      if (!this.isConnected) return;
+      this.#setup();
+      this.#observeChildren();
     });
   }
 
+  #observeChildren() {
+    if (this.#childrenObserver || typeof MutationObserver === "undefined") return;
+    this.#childrenObserver = new MutationObserver(() => {
+      this.#setup();
+    });
+    this.#childrenObserver.observe(this, { childList: true });
+  }
+
   #setup() {
+    const previousLabel = this.label;
+    const previousChevron = this.#chevron;
+    previousLabel?.removeEventListener("click", this.#boundToggle);
+    previousLabel?.removeEventListener("click", this.#boundFocus);
+    previousLabel?.removeEventListener("pointerenter", this.#boundLabelEnter);
+    previousLabel?.removeEventListener("pointerleave", this.#boundLabelLeave);
+    previousChevron?.removeEventListener("click", this.#boundToggle);
+
     this.label = this.querySelector(":scope>label");
     this.input = Array.from(this.childNodes).find((node) =>
-      node.nodeName.toLowerCase().startsWith("fig-"),
+      node.nodeType === Node.ELEMENT_NODE &&
+      node.nodeName.toLowerCase().startsWith("fig-") &&
+      !(node instanceof Element && node.classList.contains("fig-field-chevron")),
     );
 
     this.#toggleable = !!(this.input && "open" in this.input);
@@ -6641,17 +6663,9 @@ class FigField extends HTMLElement {
         this.insertBefore(this.#chevron, this.label);
       }
 
-      this.#boundToggle = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (this.input && typeof this.input.open !== "undefined") {
-          this.input.open = !this.input.open;
-        }
-      };
       this.#chevron.addEventListener("click", this.#boundToggle);
       this.label.addEventListener("click", this.#boundToggle);
     } else if (this.input && this.label) {
-      this.label.removeEventListener("click", this.#boundFocus);
       this.label.addEventListener("click", this.#boundFocus);
     }
 
@@ -6668,6 +6682,8 @@ class FigField extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.#childrenObserver?.disconnect();
+    this.#childrenObserver = null;
     if (this.label) FigTooltip.hide(this.label);
     if (this.label && this.#boundToggle) {
       this.label.removeEventListener("click", this.#boundToggle);
@@ -6683,6 +6699,14 @@ class FigField extends HTMLElement {
     }
     if (this.#chevron && this.#boundToggle) {
       this.#chevron.removeEventListener("click", this.#boundToggle);
+    }
+  }
+
+  #toggle(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (this.input && typeof this.input.open !== "undefined") {
+      this.input.open = !this.input.open;
     }
   }
 

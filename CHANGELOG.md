@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.0]
+
+### Fixed
+
+- Fixed `fig-field` setup so labels inserted after connection get focus/toggle behavior and overflow tooltips.
+
+### Changed
+
+- Updated `fig-spinner` to use encoded icon masks, with small-size mask support.
+- Updated playground controls and PropKit examples for field labels, chooser grid layout, and footer working states.
+
+### Added
+
+- Added `size="small"` support for `fig-spinner`.
+- Added Playwright coverage for dynamic `fig-field` label tooltip behavior.
+
 ## [6.7.4]
 
 ### Fixed

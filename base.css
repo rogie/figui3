@@ -29,6 +29,9 @@ h3 {
   font-weight: var(--body-medium-strong-fontWeight);
   font-size: var(--body-medium-fontSize);
 }
+strong{
+  font-weight: var(--body-medium-strong-fontWeight);
+}
 
 hr {
   height: 1px;

@@ -1361,6 +1361,20 @@ export const propkitSections: Section[] = [
             <fig-choice value="img-c" aria-label="Image C"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
           </fig-chooser>
         </fig-field>
+        <fig-field>
+          <label>Grid</label>
+          <fig-chooser layout="grid" columns="3" value="top-left" full>
+            <fig-choice value="top-left" padding selected>Top left</fig-choice>
+            <fig-choice value="top" padding>Top</fig-choice>
+            <fig-choice value="top-right" padding>Top right</fig-choice>
+            <fig-choice value="left" padding>Left</fig-choice>
+            <fig-choice value="center" padding>Center</fig-choice>
+            <fig-choice value="right" padding>Right</fig-choice>
+            <fig-choice value="bottom-left" padding>Bottom left</fig-choice>
+            <fig-choice value="bottom" padding>Bottom</fig-choice>
+            <fig-choice value="bottom-right" padding>Bottom right</fig-choice>
+          </fig-chooser>
+        </fig-field>
       </fig-group>
       <fig-group name="Visuals" collapsible open>
         <fig-field>
@@ -2611,6 +2625,14 @@ export const propkitSections: Section[] = [
         markup: `<fig-footer>
   <label>3 selected</label>
   <fig-button>Apply</fig-button>
+</fig-footer>`,
+      },
+      {
+        id: "working",
+        name: "Working...",
+        markup: `<fig-footer>
+  <label><fig-spinner></fig-spinner> <strong>2 of 10 layers</strong></label>
+  <fig-button disabled>Run</fig-button>
 </fig-footer>`,
       },
       {

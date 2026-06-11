@@ -565,7 +565,9 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       ],
     },
   },
-  "fig-spinner": {},
+  "fig-spinner": {
+    size: { label: "Size", type: "enum", options: ["default", "small"] },
+  },
   "fig-shimmer": {
     duration: {
       label: "Duration",

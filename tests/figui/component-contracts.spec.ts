@@ -899,6 +899,7 @@ test.describe("field accessibility", () => {
         customElements.whenDefined("fig-field"),
         customElements.whenDefined("fig-input-text"),
         customElements.whenDefined("fig-image"),
+        customElements.whenDefined("fig-popup"),
       ]);
     });
   });
@@ -951,6 +952,42 @@ test.describe("field accessibility", () => {
     expect(imageAssociation.labelId).toBeTruthy();
     expect(imageAssociation.labelFor).toBeNull();
     expect(imageAssociation.hostLabelledBy).toBe(imageAssociation.labelId);
+  });
+
+  test("fig-field shows a tooltip for labels inserted after connection", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-field id="dynamic-label-field" style="width: 140px;">
+          <fig-input-text></fig-input-text>
+        </fig-field>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    await page.evaluate(() => {
+      const field = document.querySelector("#dynamic-label-field");
+      const input = field?.querySelector("fig-input-text");
+      if (!field || !input) throw new Error("Missing dynamic field");
+      const label = document.createElement("label");
+      label.textContent = "A very long field label that should truncate";
+      field.insertBefore(label, input);
+    });
+
+    const label = page.locator("#dynamic-label-field > label");
+    await expect
+      .poll(() =>
+        label.evaluate((node) => node.scrollWidth > node.clientWidth),
+      )
+      .toBe(true);
+
+    await label.hover();
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveCount(1);
   });
 });
 

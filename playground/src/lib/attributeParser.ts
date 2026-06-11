@@ -598,7 +598,7 @@ export function applyFieldLabelMutation(
   const existingLabel = field.querySelector(":scope > label");
 
   if (mutation.enabled) {
-    const labelText = mutation.text?.trim() || "Label";
+    const labelText = mutation.text ?? "Label";
     if (existingLabel) {
       existingLabel.textContent = labelText;
     } else {
