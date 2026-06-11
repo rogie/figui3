@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.1]
+
+### Fixed
+
+- Fixed the PropKit iframe demo header to render borderless.
+
+### Changed
+
+- Refined `fig-content` spacing for grouped content layouts.
+
 ## [6.8.0]
 
 ### Fixed

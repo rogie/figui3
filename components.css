@@ -3002,17 +3002,11 @@ dialog,
   max-width: 50vw;
   height: max-content;
 
-  & > fig-content,
-  &> .fig-content,
   &> main {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
-  }
-
-  p {
-    padding: 0 var(--spacer-3);
   }
 
   &:popover-open {
@@ -3326,11 +3320,6 @@ fig-header {
   gap: var(--spacer-2);
   user-select: none;
   color: var(--figma-color-text-secondary);
-
-  fig-input-text:only-child{
-    margin-right: calc(var(--spacer-2) * -1);
-    margin-left: calc(var(--spacer-2) * -1);
-  }
   
 
   fig-button[icon][variant="ghost"]:not(fig-input-text fig-button) {
@@ -3486,8 +3475,14 @@ fig-footer {
 }
 
 fig-content {
-  padding: var(--spacer-2) 0;
+  padding: var(--spacer-2-5) 0;
   display: block;
+  &:has(>fig-group[name]:first-child){
+    padding-top: 0;
+  }
+  &:has(>fig-group[name]:last-child){
+    padding-bottom: 0;
+  }
 }
 
 vstack,
