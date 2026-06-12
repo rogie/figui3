@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.3]
+
+### Fixed
+
+- Fixed resizable dialogs forcing a `12rem` minimum width.
+
 ## [6.8.2]
 
 ### Fixed

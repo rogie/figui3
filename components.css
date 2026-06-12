@@ -3050,7 +3050,6 @@ dialog[is="fig-dialog"] {
   &[resizable]:not([resizable="false"]) {
     resize: both;
     overflow: auto;
-    min-width: 12rem;
     min-height: 6rem;
   }
   & > iframe{
