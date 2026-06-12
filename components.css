@@ -3297,7 +3297,8 @@ fig-input-color {
 }
 
 fig-header {
-  height: var(--spacer-6);
+  --fig-header-height: var(--spacer-6);
+  height: var(--fig-header-height);
   margin: 0;
   padding: var(--spacer-1) var(--spacer-3);
   display: flex;
@@ -3343,6 +3344,7 @@ fig-group {
 
   & > fig-header {
     cursor: default;
+    
     padding-left: var(--spacer-3);
       
     &:focus-visible {
@@ -3352,6 +3354,7 @@ fig-group {
       border-radius: var(--figma-focus-outline-radius);
     }
     h3 {
+      margin:0;
       .fig-group-chevron {
         --icon: var(--icon-16-chevron);
         --size: 1rem;

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.6]
+
+### Fixed
+
+- Fixed `fig-joystick` X/Y number fields not syncing when dragging the handle or clicking the plane.
+
+### Changed
+
+- `fig-header` height now uses a `--fig-header-height` custom property; reset `fig-group` header `h3` margin.
+
 ## [6.8.5]
 
 ### Fixed
