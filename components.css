@@ -3002,7 +3002,7 @@ dialog,
   max-height: calc(60vh - var(--spacer-4));
   max-width: var(--dialog-max-width);
   height: max-content;
-
+  & > fig-content,
   &> main {
     flex: 1 1 auto;
     min-height: 0;

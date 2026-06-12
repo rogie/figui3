@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.4]
+
+### Fixed
+
+- Fixed dialog `fig-content` sizing so content areas can flex and scroll correctly.
+
 ## [6.8.3]
 
 ### Fixed
