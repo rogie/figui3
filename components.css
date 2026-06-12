@@ -2988,6 +2988,7 @@ dialog,
 .popover,
 [popover] {
   --dialog-radius: var(--radius-large, 0.8125rem);
+  --dialog-max-width: calc(100vw - var(--spacer-4));
   padding: 0;
   outline: 0;
   border: 0;
@@ -2996,10 +2997,10 @@ dialog,
   color: var(--figma-color-text);
   border-radius: var(--dialog-radius);
   background: var(--figma-color-bg);
-  min-width: var(--popover-min-width);
+  min-width: min(var(--popover-min-width), var(--dialog-max-width));
   box-shadow: var(--figma-elevation-500-modal-window);
   max-height: calc(60vh - var(--spacer-4));
-  max-width: 50vw;
+  max-width: var(--dialog-max-width);
   height: max-content;
 
   &> main {

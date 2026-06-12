@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.2]
+
+### Fixed
+
+- Fixed dialog and popup max width so narrow viewports respect available space.
+
+### Changed
+
+- Restored the PropKit iframe demo header to the standard bordered style.
+
 ## [6.8.1]
 
 ### Fixed
