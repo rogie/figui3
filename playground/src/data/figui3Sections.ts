@@ -643,7 +643,7 @@ export const figui3Sections: Section[] = [
     <fig-tab content="#tabs-advanced">Advanced</fig-tab>
     <fig-tab content="#tabs-export">Export</fig-tab>
   </fig-tabs>
-  <fig-tab-content id="tabs-general" data-playground-ignore-controls="true">
+  <fig-tab-content id="tabs-general" data-playground-ignore-controls="true" data-playground-show-source="true">
     <fig-group>
       <fig-field>
         <label>Name</label>
@@ -659,7 +659,7 @@ export const figui3Sections: Section[] = [
       </fig-field>
     </fig-group>
   </fig-tab-content>
-  <fig-tab-content id="tabs-advanced" data-playground-ignore-controls="true">
+  <fig-tab-content id="tabs-advanced" data-playground-ignore-controls="true" data-playground-show-source="true">
     <fig-group>
       <fig-field>
         <label>Clip content</label>
@@ -676,7 +676,7 @@ export const figui3Sections: Section[] = [
       </fig-field>
     </fig-group>
   </fig-tab-content>
-  <fig-tab-content id="tabs-export" data-playground-ignore-controls="true">
+  <fig-tab-content id="tabs-export" data-playground-ignore-controls="true" data-playground-show-source="true">
     <fig-group>
       <fig-field>
         <label>Format</label>
@@ -705,6 +705,95 @@ export const figui3Sections: Section[] = [
     <fig-tab value="symbols">Symbols</fig-tab>
     <fig-tab value="emoji">Emoji</fig-tab>
   </fig-tabs>
+</div>`,
+      },
+      {
+        id: "overflow-content",
+        name: "Overflow with content",
+        markup: `<div class="prop-panel">
+  <fig-tabs data-playground-hide-field>
+    <fig-tab value="all" content="#overflow-tabs-all" selected>All</fig-tab>
+    <fig-tab value="ascii" content="#overflow-tabs-ascii">ASCII</fig-tab>
+    <fig-tab value="latin" content="#overflow-tabs-latin">Latin</fig-tab>
+    <fig-tab value="punctuation" content="#overflow-tabs-punctuation">Punctuation</fig-tab>
+    <fig-tab value="math" content="#overflow-tabs-math">Math</fig-tab>
+    <fig-tab value="arrows" content="#overflow-tabs-arrows">Arrows</fig-tab>
+    <fig-tab value="currency" content="#overflow-tabs-currency">Currency</fig-tab>
+    <fig-tab value="symbols" content="#overflow-tabs-symbols">Symbols</fig-tab>
+    <fig-tab value="emoji" content="#overflow-tabs-emoji">Emoji</fig-tab>
+  </fig-tabs>
+  <fig-tab-content id="overflow-tabs-all" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Characters</label>
+        <fig-input-text value="All character sets" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="overflow-tabs-ascii" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Range</label>
+        <fig-input-text value="U+0000-007F" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="overflow-tabs-latin" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Range</label>
+        <fig-input-text value="Latin Extended" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="overflow-tabs-punctuation" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Preview</label>
+        <fig-input-text value=".,!?;:" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="overflow-tabs-math" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Preview</label>
+        <fig-input-text value="+ − × ÷ =" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="overflow-tabs-arrows" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Preview</label>
+        <fig-input-text value="← ↑ → ↓" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="overflow-tabs-currency" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Preview</label>
+        <fig-input-text value="$ € ¥ £" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="overflow-tabs-symbols" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Preview</label>
+        <fig-input-text value="★ ◆ ● ■" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
+  <fig-tab-content id="overflow-tabs-emoji" data-playground-ignore-controls="true" data-playground-show-source="true">
+    <fig-group>
+      <fig-field>
+        <label>Preview</label>
+        <fig-input-text value="😀 🎉 🚀" full></fig-input-text>
+      </fig-field>
+    </fig-group>
+  </fig-tab-content>
 </div>`,
       },
     ],

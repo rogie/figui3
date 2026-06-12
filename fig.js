@@ -62,7 +62,7 @@ function createFigOverflowButtons({
         className: ["fig-overflow-chevron", chevronClass].filter(Boolean).join(" "),
       }),
     );
-    button.addEventListener("pointerdown", (event) => {
+    button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       onPointerDown?.(event);

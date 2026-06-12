@@ -74,7 +74,10 @@ function stripPreviewOnlyElements(markup: string): string {
   const doc = parser.parseFromString(`<div>${markup}</div>`, "text/html");
   doc
     .querySelectorAll('[data-playground-ignore-controls="true"]')
-    .forEach((el) => el.remove());
+    .forEach((el) => {
+      if (el.getAttribute("data-playground-show-source") === "true") return;
+      el.remove();
+    });
   const raw = singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
   return preserveIsAttributes(markup, raw);
 }

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.5]
+
+### Fixed
+
+- Fixed `fig-tabs` overflow controls to stay pinned while focused tabs scroll into view.
+- Fixed overflow control activation to use click handling instead of pointer-down handling.
+
+### Changed
+
+- Updated `fig-tabs` and `fig-chooser` overflow spacing.
+- Updated Tabs playground examples to show tab content source while keeping child controls out of Attributes View.
+
 ## [6.8.4]
 
 ### Fixed
