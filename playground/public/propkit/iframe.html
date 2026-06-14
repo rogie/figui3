@@ -155,6 +155,23 @@
       <fig-input-text type="search" placeholder="Search layers..." full></fig-input-text>
     </fig-header>
     <fig-content>
+      <section>
+        <canvas id="gradient-preview" width="320" height="160" style="width: 100%; max-width: 320px; border-radius: var(--radius-medium); display: block;"></canvas>
+        <script>
+          {
+            const canvas = document.getElementById("gradient-preview");
+            const ctx = canvas.getContext("2d");
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+
+            gradient.addColorStop(0, "#0D99FF");
+            gradient.addColorStop(0.5, "#9747FF");
+            gradient.addColorStop(1, "#FF7262");
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+        </script>
+      </section>
     <fig-group>
       <fig-field columns="half">
         <label>Title</label>

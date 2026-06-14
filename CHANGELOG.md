@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.8]
+
+### Changed
+
+- Added default section and fieldset padding for plugin content layout.
+- Updated the PropKit iframe demo with a canvas gradient preview.
+
 ## [6.8.7]
 
 ### Fixed
