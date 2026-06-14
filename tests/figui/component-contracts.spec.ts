@@ -3020,9 +3020,121 @@ test.describe("remaining accessibility contracts", () => {
     await trigger.focus();
     await trigger.click();
     await expect(page.locator('dialog[is="fig-popup"][data-tooltip-managed]')).toHaveCount(1);
+    await expect(trigger).toHaveAttribute("aria-describedby", /.+/);
     await page.keyboard.press("Escape");
     await expect(page.locator('dialog[is="fig-popup"][data-tooltip-managed]')).toHaveCount(0);
+    await expect(trigger).not.toHaveAttribute("aria-describedby");
     await expect(trigger).toBeFocused();
+  });
+
+  test("tooltips dismiss when their scroll context moves", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="tooltip-scrollbox" style="height:80px; overflow:auto;">
+          <div style="height:220px; padding-top:20px;">
+            <fig-tooltip text="Scroll dismissed" delay="0">
+              <fig-button id="scroll-tooltip-trigger">Help</fig-button>
+            </fig-tooltip>
+          </div>
+        </div>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const popup = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    await page.locator("#scroll-tooltip-trigger").hover();
+    await expect(popup).toHaveCount(1);
+    await page.locator("#tooltip-scrollbox").evaluate((box) => {
+      box.scrollTop = 80;
+      box.dispatchEvent(new Event("scroll"));
+    });
+    await expect(popup).toHaveCount(0);
+  });
+
+  test("pending tooltips are cancelled by scroll", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="pending-tooltip-scrollbox" style="height:80px; overflow:auto;">
+          <div style="height:220px; padding-top:20px;">
+            <fig-tooltip text="Pending dismissed" delay="500">
+              <fig-button id="pending-scroll-tooltip-trigger">Help</fig-button>
+            </fig-tooltip>
+          </div>
+        </div>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const popup = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    await page.locator("#pending-scroll-tooltip-trigger").hover();
+    await page.locator("#pending-tooltip-scrollbox").evaluate((box) => {
+      box.scrollTop = 80;
+      box.dispatchEvent(new Event("scroll"));
+    });
+    await page.waitForTimeout(550);
+    await expect(popup).toHaveCount(0);
+  });
+
+  test("programmatic tooltips dismiss on scroll", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="programmatic-tooltip-scrollbox" style="height:80px; overflow:auto;">
+          <div style="height:220px; padding-top:20px;">
+            <button id="programmatic-tooltip-trigger" type="button">Help</button>
+          </div>
+        </div>
+      `;
+      const Tooltip = customElements.get("fig-tooltip");
+      const trigger = document.querySelector("#programmatic-tooltip-trigger");
+      Tooltip.show(trigger, "Programmatic dismissed", { delay: 0 });
+    });
+
+    const popup = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    await expect(popup).toHaveCount(1);
+    await page.locator("#programmatic-tooltip-scrollbox").evaluate((box) => {
+      box.scrollTop = 80;
+      box.dispatchEvent(new Event("scroll"));
+    });
+    await expect(popup).toHaveCount(0);
+  });
+
+  test("show-controlled tooltips stay visible on scroll", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="persisted-tooltip-scrollbox" style="height:80px; overflow:auto;">
+          <div style="height:220px; padding-top:20px;">
+            <fig-tooltip text="Persisted tooltip" show="true">
+              <fig-button id="persisted-tooltip-trigger">Help</fig-button>
+            </fig-tooltip>
+          </div>
+        </div>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const popup = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    await expect(popup).toHaveCount(1);
+    await page.locator("#persisted-tooltip-scrollbox").evaluate((box) => {
+      box.scrollTop = 80;
+      box.dispatchEvent(new Event("scroll"));
+    });
+    await expect(popup).toHaveCount(1);
   });
 
   test("hover tooltips honor delay when moving between tiles", async ({

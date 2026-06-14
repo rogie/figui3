@@ -810,6 +810,7 @@ class FigTooltip extends HTMLElement {
   static #warmupWindow = 1000;
   static #hoverOpen = null;
   static #documentExitListenersReady = false;
+  static #programmaticAnchors = new Set();
 
   #boundHideOnChromeOpen;
   #boundHidePopupOutsideClick;
@@ -1017,6 +1018,7 @@ class FigTooltip extends HTMLElement {
 
   destroy() {
     if (this.popup) {
+      this.#removeDescribedBy(this.popup.id);
       this.popup.hidePopup?.();
       this.popup.remove();
       this.popup = null;
@@ -1028,6 +1030,18 @@ class FigTooltip extends HTMLElement {
         this.#boundHidePopupOutsideClick,
       );
     }
+  }
+  #removeDescribedBy(id) {
+    const trigger = this.firstElementChild;
+    if (!trigger || !id) return;
+    const value = trigger.getAttribute("aria-describedby");
+    if (!value) return;
+    const next = value
+      .split(/\s+/)
+      .filter((token) => token && token !== id)
+      .join(" ");
+    if (next) trigger.setAttribute("aria-describedby", next);
+    else trigger.removeAttribute("aria-describedby");
   }
   isTouchDevice() {
     return (
@@ -1265,6 +1279,9 @@ class FigTooltip extends HTMLElement {
     const handlePointerLeftDocument = () => {
       FigTooltip.#dismissHoverTooltipsOnDocumentExit();
     };
+    const handleViewportChange = () => {
+      FigTooltip.#dismissTooltipsOnViewportChange();
+    };
 
     document.documentElement.addEventListener(
       "mouseleave",
@@ -1273,6 +1290,17 @@ class FigTooltip extends HTMLElement {
     document.addEventListener("mouseout", (event) => {
       if (event.relatedTarget) return;
       handlePointerLeftDocument();
+    });
+    document.addEventListener("scroll", handleViewportChange, {
+      capture: true,
+      passive: true,
+    });
+    window.addEventListener("scroll", handleViewportChange, { passive: true });
+    window.visualViewport?.addEventListener("scroll", handleViewportChange, {
+      passive: true,
+    });
+    window.visualViewport?.addEventListener("resize", handleViewportChange, {
+      passive: true,
     });
 
     // Same-origin embed: leaving the iframe element (e.g. into a parent dialog).
@@ -1294,15 +1322,26 @@ class FigTooltip extends HTMLElement {
     for (const node of document.querySelectorAll("fig-tooltip")) {
       if (!(node instanceof FigTooltip)) continue;
       if (node.action !== "hover") continue;
-      if (node.hasAttribute("show") && node.getAttribute("show") !== "false")
-        continue;
+      if (node.#showPersisted) continue;
       if (node.isOpen || node.timeout) node.hidePopup();
     }
   }
 
   static #programmatic = new WeakMap();
 
+  static #dismissTooltipsOnViewportChange() {
+    for (const node of document.querySelectorAll("fig-tooltip")) {
+      if (!(node instanceof FigTooltip)) continue;
+      if (node.#showPersisted) continue;
+      if (node.isOpen || node.timeout) node.hidePopup();
+    }
+    for (const anchor of Array.from(FigTooltip.#programmaticAnchors)) {
+      FigTooltip.hide(anchor);
+    }
+  }
+
   static show(anchor, text, options = {}) {
+    FigTooltip.#ensureDocumentExitListeners();
     FigTooltip.hide(anchor);
     const delay = options.delay ?? 500;
     const warm =
@@ -1311,6 +1350,7 @@ class FigTooltip extends HTMLElement {
 
     const state = { timeout: null, popup: null };
     FigTooltip.#programmatic.set(anchor, state);
+    FigTooltip.#programmaticAnchors.add(anchor);
 
     state.timeout = setTimeout(() => {
       const supportsPopover =
@@ -1351,8 +1391,12 @@ class FigTooltip extends HTMLElement {
     const state = FigTooltip.#programmatic.get(anchor);
     if (!state) return;
     clearTimeout(state.timeout);
-    if (state.popup) state.popup.remove();
+    if (state.popup) {
+      state.popup.remove();
+      FigTooltip.#lastHiddenAt = Date.now();
+    }
     FigTooltip.#programmatic.delete(anchor);
+    FigTooltip.#programmaticAnchors.delete(anchor);
   }
 }
 
