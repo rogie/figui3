@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.7]
+
+### Fixed
+
+- Fixed `fig-chooser` selection scrolling so clicked and keyboard-selected choices center reliably after layout or size changes.
+
 ## [6.8.6]
 
 ### Fixed
