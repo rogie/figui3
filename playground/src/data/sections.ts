@@ -23,9 +23,161 @@ export interface Section {
 
 export const propkitSections: Section[] = [
   {
+    id: "atom-tabs",
+    name: "Tabs",
+    group: "Containers & navigation",
+    description:
+      "Tabs at the top of a panel for navigation and grouping related settings into separate views.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<fig-tabs>
+  <fig-tab selected>General</fig-tab>
+  <fig-tab>Advanced</fig-tab>
+  <fig-tab>Export</fig-tab>
+</fig-tabs>`,
+      },
+      {
+        id: "tab-content",
+        name: "With content",
+        markup: `<fig-tabs>
+  <fig-tab selected content="#atom-tabs-general">General</fig-tab>
+  <fig-tab content="#atom-tabs-export">Export</fig-tab>
+</fig-tabs>
+<fig-tab-content id="atom-tabs-general">
+  <fig-group>
+    <fig-field>
+      <label>Name</label>
+      <fig-input-text value="Hero Card" full></fig-input-text>
+    </fig-field>
+    <fig-field>
+      <label>Visible</label>
+      <fig-switch checked></fig-switch>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-tabs-export">
+  <fig-group>
+    <fig-field>
+      <label>Format</label>
+      <fig-options options="PNG,SVG,PDF" value="PNG" full></fig-options>
+    </fig-field>
+    <fig-field>
+      <label>Scale</label>
+      <fig-options options="1x,2x,3x" value="2x" full></fig-options>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>`,
+      },
+      {
+        id: "overflow",
+        name: "Overflow",
+        markup: `<fig-tabs>
+  <fig-tab value="all" selected>All</fig-tab>
+  <fig-tab value="ascii">ASCII</fig-tab>
+  <fig-tab value="latin">Latin</fig-tab>
+  <fig-tab value="punctuation">Punctuation</fig-tab>
+  <fig-tab value="math">Math</fig-tab>
+  <fig-tab value="arrows">Arrows</fig-tab>
+  <fig-tab value="currency">Currency</fig-tab>
+  <fig-tab value="symbols">Symbols</fig-tab>
+  <fig-tab value="emoji">Emoji</fig-tab>
+</fig-tabs>`,
+      },
+      {
+        id: "overflow-content",
+        name: "Overflow with content",
+        markup: `<fig-tabs>
+  <fig-tab value="all" content="#atom-overflow-tabs-all" selected>All</fig-tab>
+  <fig-tab value="ascii" content="#atom-overflow-tabs-ascii">ASCII</fig-tab>
+  <fig-tab value="latin" content="#atom-overflow-tabs-latin">Latin</fig-tab>
+  <fig-tab value="punctuation" content="#atom-overflow-tabs-punctuation">Punctuation</fig-tab>
+  <fig-tab value="math" content="#atom-overflow-tabs-math">Math</fig-tab>
+  <fig-tab value="arrows" content="#atom-overflow-tabs-arrows">Arrows</fig-tab>
+  <fig-tab value="currency" content="#atom-overflow-tabs-currency">Currency</fig-tab>
+  <fig-tab value="symbols" content="#atom-overflow-tabs-symbols">Symbols</fig-tab>
+  <fig-tab value="emoji" content="#atom-overflow-tabs-emoji">Emoji</fig-tab>
+</fig-tabs>
+<fig-tab-content id="atom-overflow-tabs-all">
+  <fig-group>
+    <fig-field>
+      <label>Characters</label>
+      <fig-input-text value="All character sets" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-overflow-tabs-ascii">
+  <fig-group>
+    <fig-field>
+      <label>Range</label>
+      <fig-input-text value="U+0000-007F" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-overflow-tabs-latin">
+  <fig-group>
+    <fig-field>
+      <label>Range</label>
+      <fig-input-text value="Latin Extended" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-overflow-tabs-punctuation">
+  <fig-group>
+    <fig-field>
+      <label>Preview</label>
+      <fig-input-text value=".,!?;:" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-overflow-tabs-math">
+  <fig-group>
+    <fig-field>
+      <label>Preview</label>
+      <fig-input-text value="+ − × ÷ =" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-overflow-tabs-arrows">
+  <fig-group>
+    <fig-field>
+      <label>Preview</label>
+      <fig-input-text value="← ↑ → ↓" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-overflow-tabs-currency">
+  <fig-group>
+    <fig-field>
+      <label>Preview</label>
+      <fig-input-text value="$ € ¥ £" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-overflow-tabs-symbols">
+  <fig-group>
+    <fig-field>
+      <label>Preview</label>
+      <fig-input-text value="★ ◆ ● ■" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>
+<fig-tab-content id="atom-overflow-tabs-emoji">
+  <fig-group>
+    <fig-field>
+      <label>Preview</label>
+      <fig-input-text value="😀 🎉 🚀" full></fig-input-text>
+    </fig-field>
+  </fig-group>
+</fig-tab-content>`,
+      },
+    ],
+  },
+  {
     id: "group",
     name: "Group",
-    group: "Containers",
+    group: "Containers & navigation",
     description:
       "A collapsible group container with an optional named header and sibling border separators.",
     examples: [
@@ -136,7 +288,7 @@ export const propkitSections: Section[] = [
   {
     id: "content",
     name: "Content",
-    group: "Containers",
+    group: "Containers & navigation",
     description:
       "A scrollable content container for dialog and panel bodies.",
     examples: [
@@ -167,7 +319,7 @@ export const propkitSections: Section[] = [
   {
     id: "header",
     name: "Header",
-    group: "Containers",
+    group: "Containers & navigation",
     description:
       "A top bar container for titles, actions, and dialog drag handles.",
     examples: [
@@ -198,7 +350,7 @@ export const propkitSections: Section[] = [
   {
     id: "footer",
     name: "Footer",
-    group: "Containers",
+    group: "Containers & navigation",
     description:
       "A bottom action bar container for secondary and primary actions.",
     examples: [
@@ -328,12 +480,12 @@ export const propkitSections: Section[] = [
   <fig-field direction="vertical">
     <label>Style</label>
     <fig-chooser layout="vertical" value="option-a" full drag style="max-height: 240px">
-      <fig-choice value="option-a" padding selected><span style="white-space: nowrap;">Option A</span></fig-choice>
-      <fig-choice value="option-b" padding><span style="white-space: nowrap;">Option B</span></fig-choice>
-      <fig-choice value="option-c" padding><span style="white-space: nowrap;">Option C</span></fig-choice>
-      <fig-choice value="option-d" padding><span style="white-space: nowrap;">Option D</span></fig-choice>
-      <fig-choice value="option-e" padding><span style="white-space: nowrap;">Option E</span></fig-choice>
-      <fig-choice value="option-f" padding><span style="white-space: nowrap;">Option F</span></fig-choice>
+      <fig-choice value="option-a" selected>Option A</fig-choice>
+      <fig-choice value="option-b">Option B</fig-choice>
+      <fig-choice value="option-c">Option C</fig-choice>
+      <fig-choice value="option-d">Option D</fig-choice>
+      <fig-choice value="option-e">Option E</fig-choice>
+      <fig-choice value="option-f">Option F</fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -2402,56 +2554,6 @@ export const propkitSections: Section[] = [
     </fig-field>
   </fig-group>
 </div>`,
-      },
-    ],
-  },
-  {
-    id: "atom-tabs",
-    name: "Tabs",
-    group: "Atoms",
-    description:
-      "Tabs at the top of a panel for navigation and grouping related settings into separate views.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<fig-tabs>
-  <fig-tab selected>General</fig-tab>
-  <fig-tab>Advanced</fig-tab>
-  <fig-tab>Export</fig-tab>
-</fig-tabs>`,
-      },
-      {
-        id: "tab-content",
-        name: "With content",
-        markup: `<fig-tabs>
-  <fig-tab selected content="#atom-tabs-general">General</fig-tab>
-  <fig-tab content="#atom-tabs-export">Export</fig-tab>
-</fig-tabs>
-<fig-tab-content id="atom-tabs-general">
-  <fig-group>
-    <fig-field>
-      <label>Name</label>
-      <fig-input-text value="Hero Card" full></fig-input-text>
-    </fig-field>
-    <fig-field>
-      <label>Visible</label>
-      <fig-switch checked></fig-switch>
-    </fig-field>
-  </fig-group>
-</fig-tab-content>
-<fig-tab-content id="atom-tabs-export">
-  <fig-group>
-    <fig-field>
-      <label>Format</label>
-      <fig-options options="PNG,SVG,PDF" value="PNG" full></fig-options>
-    </fig-field>
-    <fig-field>
-      <label>Scale</label>
-      <fig-options options="1x,2x,3x" value="2x" full></fig-options>
-    </fig-field>
-  </fig-group>
-</fig-tab-content>`,
       },
     ],
   },

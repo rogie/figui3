@@ -2022,11 +2022,10 @@ test.describe("remaining accessibility contracts", () => {
       chooser.scrollLeft = 0;
       const navEnd = chooser.querySelector('[data-fig-chooser-nav="end"]');
       navEnd?.dispatchEvent(
-        new PointerEvent("pointerdown", {
+        new MouseEvent("click", {
           bubbles: true,
           cancelable: true,
           button: 0,
-          pointerId: 1,
         }),
       );
     });
@@ -2276,6 +2275,189 @@ test.describe("remaining accessibility contracts", () => {
       });
   });
 
+  test("fig-chooser centers selected choices on click and keyboard", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = Array.from({ length: 8 }, (_, index) => {
+        return `<fig-choice value="choice-${index}" style="width: 72px; height: 32px;">Choice ${index}</fig-choice>`;
+      }).join("");
+      root.innerHTML = `
+        <fig-chooser id="selection-scroll-chooser" layout="horizontal" value="choice-0" style="width: 200px; max-width: 200px;">
+          ${choices}
+        </fig-chooser>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#selection-scroll-chooser").evaluate((chooser) => {
+          return {
+            scrollLeft: chooser.scrollLeft,
+            hasEndOverflow: chooser.classList.contains("overflow-end"),
+          };
+        }),
+      )
+      .toEqual({
+        scrollLeft: 0,
+        hasEndOverflow: true,
+      });
+
+    await page.locator('#selection-scroll-chooser fig-choice[value="choice-2"]').click();
+
+    await expect
+      .poll(() =>
+        page.locator("#selection-scroll-chooser").evaluate((chooser) => {
+          const selected = chooser.querySelector('fig-choice[value="choice-2"]');
+          if (!selected) return null;
+          const chooserRect = chooser.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          const centerDelta = Math.round(
+            selectedRect.left +
+              selectedRect.width / 2 -
+              (chooserRect.left + chooserRect.width / 2),
+          );
+          return {
+            value: chooser.getAttribute("value"),
+            scrollLeft: Math.round(chooser.scrollLeft),
+            centerDelta,
+          };
+        }),
+      )
+      .toMatchObject({
+        value: "choice-2",
+        scrollLeft: expect.any(Number),
+        centerDelta: 0,
+      });
+
+    await expect
+      .poll(() =>
+        page.locator("#selection-scroll-chooser").evaluate((chooser) => chooser.scrollLeft),
+      )
+      .toBeGreaterThan(0);
+
+    await page.locator('#selection-scroll-chooser fig-choice[value="choice-2"]').press("ArrowRight");
+
+    await expect
+      .poll(() =>
+        page.locator("#selection-scroll-chooser").evaluate((chooser) => {
+          const selected = chooser.querySelector('fig-choice[value="choice-3"]');
+          if (!selected) return null;
+          const chooserRect = chooser.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          const centerDelta = Math.round(
+            selectedRect.left +
+              selectedRect.width / 2 -
+              (chooserRect.left + chooserRect.width / 2),
+          );
+          return {
+            value: chooser.getAttribute("value"),
+            centerDelta,
+          };
+        }),
+      )
+      .toEqual({
+        value: "choice-3",
+        centerDelta: 0,
+      });
+  });
+
+  test("fig-chooser resettles selected choice after resize and layout changes", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = Array.from({ length: 8 }, (_, index) => {
+        return `<fig-choice value="choice-${index}" style="width: 72px; height: 32px;">Choice ${index}</fig-choice>`;
+      }).join("");
+      root.innerHTML = `
+        <fig-chooser id="resize-scroll-chooser" layout="horizontal" value="choice-4" style="width: 320px; max-width: 320px;">
+          ${choices}
+        </fig-chooser>
+      `;
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#resize-scroll-chooser").evaluate((chooser) => {
+          const selected = chooser.querySelector('fig-choice[value="choice-4"]');
+          if (!selected) return null;
+          const chooserRect = chooser.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          return Math.round(
+            selectedRect.left +
+              selectedRect.width / 2 -
+              (chooserRect.left + chooserRect.width / 2),
+          );
+        }),
+      )
+      .toBe(0);
+
+    await page.locator("#resize-scroll-chooser").evaluate((chooser) => {
+      chooser.style.width = "180px";
+      chooser.style.maxWidth = "180px";
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#resize-scroll-chooser").evaluate((chooser) => {
+          const selected = chooser.querySelector('fig-choice[value="choice-4"]');
+          if (!selected) return null;
+          const chooserRect = chooser.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          return {
+            width: Math.round(chooserRect.width),
+            centerDelta: Math.round(
+              selectedRect.left +
+                selectedRect.width / 2 -
+                (chooserRect.left + chooserRect.width / 2),
+            ),
+          };
+        }),
+      )
+      .toEqual({
+        width: 180,
+        centerDelta: 0,
+      });
+
+    await page.locator("#resize-scroll-chooser").evaluate((chooser) => {
+      chooser.setAttribute("layout", "vertical");
+      chooser.style.width = "180px";
+      chooser.style.maxHeight = "96px";
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#resize-scroll-chooser").evaluate((chooser) => {
+          const selected = chooser.querySelector('fig-choice[value="choice-4"]');
+          if (!selected) return null;
+          const chooserRect = chooser.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          return {
+            scrollLeft: Math.round(chooser.scrollLeft),
+            scrollTop: Math.round(chooser.scrollTop),
+            centerDelta: Math.round(
+              selectedRect.top +
+                selectedRect.height / 2 -
+                (chooserRect.top + chooserRect.height / 2),
+            ),
+          };
+        }),
+      )
+      .toMatchObject({
+        scrollLeft: 0,
+        scrollTop: expect.any(Number),
+        centerDelta: 0,
+      });
+
+    await expect
+      .poll(() =>
+        page.locator("#resize-scroll-chooser").evaluate((chooser) => chooser.scrollTop),
+      )
+      .toBeGreaterThan(0);
+  });
+
   test("fig-chooser grid overflow keeps scrollTop at start with sticky nav", async ({
     page,
   }) => {
@@ -2496,11 +2678,10 @@ test.describe("remaining accessibility contracts", () => {
     await page.locator("#overflow-tabs").evaluate((tabs) => {
       const navEnd = tabs.querySelector('[data-fig-tabs-nav="end"]');
       navEnd?.dispatchEvent(
-        new PointerEvent("pointerdown", {
+        new MouseEvent("click", {
           bubbles: true,
           cancelable: true,
           button: 0,
-          pointerId: 1,
         }),
       );
     });

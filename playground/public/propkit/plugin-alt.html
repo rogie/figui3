@@ -29,16 +29,6 @@
       #plugin-root {
         height: auto;
       }
-
-      fig-field.group-tabs-field {
-        --fig-field-left-padding: var(--spacer-2);
-        --fig-field-right-padding: var(--spacer-2);
-      }
-
-      fig-field.group-tabs-field fig-tabs.group-tabs {
-        --fig-tabs-inline-padding: 0;
-      }
-
       .result-summary {
         color: var(--figma-color-text-secondary);
       }
@@ -168,7 +158,6 @@
         ></fig-input-text>
       </fig-header>
       <fig-content>
-        <fig-field class="group-tabs-field">
           <fig-tabs class="group-tabs" value="all" aria-label="Character groups">
             <fig-tab value="all" selected>All</fig-tab>
             <fig-tab value="ascii">ASCII</fig-tab>
@@ -180,12 +169,6 @@
             <fig-tab value="symbols">Symbols</fig-tab>
             <fig-tab value="emoji">Emoji</fig-tab>
           </fig-tabs>
-        </fig-field>
-        <fig-header borderless>
-          <h3>Characters</h3>
-          <span class="result-summary">36 characters</span>
-        </fig-header>
-        <fig-field>
           <fig-chooser
             class="character-grid"
             layout="grid"
@@ -447,7 +430,6 @@
               </fig-tooltip>
             </fig-choice>
           </fig-chooser>
-        </fig-field>
         <div class="empty-state" hidden>No characters match that search.</div>
       </fig-content>
     </div>

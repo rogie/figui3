@@ -1204,24 +1204,24 @@ fig-tab,
 fig-tabs,
 .tabs {
   --fig-overflow-size: calc(var(--spacer-4) + var(--spacer-2));
-  --fig-tabs-inline-padding: var(--spacer-2);
-  --fig-tabs-block-padding: var(--spacer-1);
+  --fig-tabs-inline-padding: 0;
+  --fig-tabs-inline-margin: var(--spacer-2-5);
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  flex-wrap: nowrap;
   gap: var(--spacer-1);
   min-width: 0;
   overflow: auto hidden;
-  padding: var(--spacer-1) var(--spacer-2-5);
+  padding: var(--spacer-2) var(--fig-tabs-inline-padding);
+  margin: 0 var(--fig-tabs-inline-margin);
   position: relative;
   scrollbar-width: none;
-  width: 100%;
+  width: calc(100% - var(--fig-tabs-inline-margin) * 2);
 
   > fig-tab {
     flex-shrink: 0;
   }
-
 
   > .fig-overflow {
     align-self: stretch;
@@ -1231,12 +1231,12 @@ fig-tabs,
     top: 0;
     z-index: 3;
     width: var(--spacer-4);
-    margin-left: calc(var(--spacer-3) * -1);
-    margin-right: calc(var(--spacer-3) * -1);
+    margin-left: calc(var(--spacer-2-5) * -1);
+    margin-right: calc(var(--spacer-2-5) * -1);
   }
 
   > .fig-overflow-start {
-    left: calc(var(--spacer-2-5) * -1);
+    left: 0;
     order: -1;
     right: auto;
     box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
@@ -1253,7 +1253,7 @@ fig-tabs,
   > .fig-overflow-end {
     left: auto;
     order: 1;
-    right: calc(var(--spacer-2-5) * -1);
+    right: 0;
     box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
 
     &:before{
@@ -1264,12 +1264,6 @@ fig-tabs,
       rotate: -90deg;
     }
   }
-}
-
-fig-tab-content,
-.fig-tab-content {
-  display: none;
-  width: 100%;
 }
 
 /* Avatar */
@@ -3469,6 +3463,7 @@ fig-footer {
 fig-content {
   padding: var(--spacer-2-5) 0;
   display: block;
+  gap: 0;
   &:has(>fig-group[name]:first-child){
     padding-top: 0;
   }
@@ -3952,6 +3947,7 @@ fig-input-palette {
     }
   }
 }
+
 
 fig-field {
   --fig-field-gap: var(--spacer-2);
@@ -4632,7 +4628,7 @@ fig-chooser {
   --fig-chooser-gap: var(--spacer-2);
   --fig-chooser-inline-padding: var(--spacer-2);
   --fig-chooser-block-padding: var(--spacer-2);
-  outline: red;
+  --fig-chooser-inline-margin: var(--spacer-3);
 
   box-sizing: border-box;
   display: flex;
@@ -4644,8 +4640,13 @@ fig-chooser {
   min-width: 0;
   overflow: hidden auto;
   padding: 0;
+  margin: 0 var(--fig-chooser-inline-margin);
   scrollbar-width: none;
-  width: 100%;
+  width: calc(100% - var(--fig-chooser-inline-margin) * 2);
+
+  fig-field > &{
+    --fig-chooser-inline-margin:0;
+  }
 
   > :not(.fig-overflow) {
     flex-shrink: 0;
@@ -4808,19 +4809,27 @@ fig-chooser {
 }
 
 fig-choice {
-  --fig-choice-selection-ring-width: 1.5px;
+  --fig-choice-selection-ring-width: 1px;
   --fig-choice-padding: 0px;
-  --fig-choice-border-radius: calc(
-    var(--radius-medium) + var(--fig-choice-padding)
-  );
+  --fig-choice-text-padding-inline: var(--spacer-2);
+  --fig-choice-border-radius: var(--radius-medium);
+  --fig-choice-min-height: 1.5rem;
+
+  min-height: var(--fig-choice-min-height);
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-direction: column;
   border-radius: var(--fig-choice-border-radius);
   gap: var(--spacer-2);
   outline: none;
   cursor: default;
   padding: var(--fig-choice-padding);
+
+  &:not(:has(> *)) {
+    padding-inline: var(--fig-choice-text-padding-inline);
+  }
+
 
   &:hover:not([selected]):not([disabled]):not([aria-disabled="true"]) {
     background-color: var(--figma-color-bg-secondary);

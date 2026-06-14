@@ -15304,6 +15304,7 @@ class FigChooser extends HTMLElement {
     }
     if (name === "columns") {
       this.#syncGridColumns();
+      this.#resettleSelectedChoice();
     }
     if (name === "drag") {
       if (this.#dragEnabled) {
@@ -15314,10 +15315,16 @@ class FigChooser extends HTMLElement {
     }
     if (name === "overflow") {
       this.#applyOverflowMode();
+      requestAnimationFrame(() => this.#syncOverflow());
     }
     if (name === "layout") {
       this.#applyOverflowMode();
-      requestAnimationFrame(() => this.#syncOverflow());
+      if (newValue === "horizontal") {
+        this.scrollTop = 0;
+      } else {
+        this.scrollLeft = 0;
+      }
+      this.#resettleSelectedChoice();
     }
   }
 
@@ -15463,6 +15470,7 @@ class FigChooser extends HTMLElement {
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = new ResizeObserver(() => {
       this.#syncOverflow();
+      this.#resettleSelectedChoice();
     });
     this.#resizeObserver.observe(this);
   }
@@ -15650,6 +15658,11 @@ class FigChooser extends HTMLElement {
     figScrollOverflowPage(this, isHorizontal ? "x" : "y", direction);
   }
 
+  #resettleSelectedChoice() {
+    if (!this.#selectedChoice) return;
+    this.#scrollToChoice(this.#selectedChoice, "auto");
+  }
+
   #scrollToChoice(el, behavior = "smooth") {
     if (!el) return;
     requestAnimationFrame(() => {
@@ -15662,58 +15675,25 @@ class FigChooser extends HTMLElement {
       const hostRect = this.getBoundingClientRect();
       const options = { behavior };
       let shouldScroll = false;
-      const threshold = 2;
 
       if (overflowY) {
-        const fullyVisible =
-          choiceRect.top >= hostRect.top - 1 &&
-          choiceRect.bottom <= hostRect.bottom + 1;
-        const topVisible = choiceRect.top >= hostRect.top - 1;
-        const bottomVisible = choiceRect.bottom <= hostRect.bottom + 1;
-        const atScrollStart = this.scrollTop <= threshold;
-        const needsScroll =
-          !fullyVisible &&
-          (!topVisible ||
-            (!bottomVisible && !atScrollStart) ||
-            choiceRect.top >= hostRect.bottom - 1);
-        if (needsScroll) {
-          const choiceTop = choiceRect.top - hostRect.top + this.scrollTop;
-          const maxScroll = this.scrollHeight - this.clientHeight;
-          options.top = Math.max(
-            0,
-            Math.min(
-              choiceTop + choiceRect.height / 2 - this.clientHeight / 2,
-              maxScroll,
-            ),
-          );
-          shouldScroll = true;
-        }
+        const choiceTop = choiceRect.top - hostRect.top + this.scrollTop;
+        const maxScroll = this.scrollHeight - this.clientHeight;
+        options.top = Math.max(
+          0,
+          Math.min(choiceTop + choiceRect.height / 2 - this.clientHeight / 2, maxScroll),
+        );
+        shouldScroll = true;
       }
 
       if (overflowX) {
-        const fullyVisible =
-          choiceRect.left >= hostRect.left - 1 &&
-          choiceRect.right <= hostRect.right + 1;
-        const startVisible = choiceRect.left >= hostRect.left - 1;
-        const endVisible = choiceRect.right <= hostRect.right + 1;
-        const atScrollStart = this.scrollLeft <= threshold;
-        const needsScroll =
-          !fullyVisible &&
-          (!startVisible ||
-            (!endVisible && !atScrollStart) ||
-            choiceRect.left >= hostRect.right - 1);
-        if (needsScroll) {
-          const choiceLeft = choiceRect.left - hostRect.left + this.scrollLeft;
-          const maxScroll = this.scrollWidth - this.clientWidth;
-          options.left = Math.max(
-            0,
-            Math.min(
-              choiceLeft + choiceRect.width / 2 - this.clientWidth / 2,
-              maxScroll,
-            ),
-          );
-          shouldScroll = true;
-        }
+        const choiceLeft = choiceRect.left - hostRect.left + this.scrollLeft;
+        const maxScroll = this.scrollWidth - this.clientWidth;
+        options.left = Math.max(
+          0,
+          Math.min(choiceLeft + choiceRect.width / 2 - this.clientWidth / 2, maxScroll),
+        );
+        shouldScroll = true;
       }
 
       if (shouldScroll) {
