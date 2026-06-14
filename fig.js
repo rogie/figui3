@@ -35,6 +35,65 @@ function figNextFrame(host, callback) {
   });
 }
 
+function figNormalizeTextOnlyInputSlots(host) {
+  host
+    .querySelectorAll(':scope > [slot="prepend"], :scope > [slot="append"]')
+    .forEach((node) => {
+      if (node.children.length > 0) {
+        figClearInputSlotTooltip(node);
+        return;
+      }
+      const text = node.textContent.trim();
+      if (!text) {
+        figClearInputSlotTooltip(node);
+        return;
+      }
+      const previousFullText = node.dataset.figInputSlotFullText || "";
+      const previousShortText = previousFullText
+        ? Array.from(previousFullText)[0]?.toUpperCase()
+        : "";
+      const fullText = text === previousShortText ? previousFullText : text;
+      const first = Array.from(text)[0];
+      const normalized = first.toUpperCase();
+      if (node.textContent !== normalized) node.textContent = normalized;
+      if (fullText && fullText !== normalized) {
+        node.dataset.figInputSlotFullText = fullText;
+        node.setAttribute("aria-label", fullText);
+        figBindInputSlotTooltip(node);
+      } else {
+        figClearInputSlotTooltip(node);
+      }
+    });
+}
+
+function figBindInputSlotTooltip(node) {
+  if (node.dataset.figInputSlotTooltipBound === "true") return;
+  node.dataset.figInputSlotTooltipBound = "true";
+  node.addEventListener("pointerenter", figShowInputSlotTooltip);
+  node.addEventListener("pointerleave", figHideInputSlotTooltip);
+  node.addEventListener("focus", figShowInputSlotTooltip);
+  node.addEventListener("blur", figHideInputSlotTooltip);
+}
+
+function figClearInputSlotTooltip(node) {
+  figHideInputSlotTooltip({ currentTarget: node });
+  delete node.dataset.figInputSlotFullText;
+  node.removeAttribute("aria-label");
+}
+
+function figShowInputSlotTooltip(event) {
+  const node = event.currentTarget;
+  const text = node?.dataset?.figInputSlotFullText;
+  if (!node || !text) return;
+  FigTooltip.show(node, text);
+}
+
+function figHideInputSlotTooltip(event) {
+  const node = event.currentTarget;
+  if (!node) return;
+  FigTooltip.hide(node);
+}
+
 function createFigOverflowButtons({
   owner,
   onStart,
@@ -5424,6 +5483,9 @@ class FigInputText extends HTMLElement {
   #boundInputChange;
   #boundNativeInput;
   #boundFocusControl;
+  #boundAdornmentClick;
+  #mutationObserver = null;
+  #syncRaf = 0;
   #a11yAttributes = [
     "aria-label",
     "aria-labelledby",
@@ -5447,6 +5509,7 @@ class FigInputText extends HTMLElement {
       this.#syncSearchClearVisibility();
     };
     this.#boundFocusControl = this.focus.bind(this);
+    this.#boundAdornmentClick = this.#handleAdornmentClick.bind(this);
   }
 
   connectedCallback() {
@@ -5482,6 +5545,8 @@ class FigInputText extends HTMLElement {
     this.#syncSearchClear();
     this.#syncSearchClearVisibility();
     this.#syncPasswordToggle();
+    figNormalizeTextOnlyInputSlots(this);
+    this.#startObserver();
 
     if (this.type === "number") {
       if (this.getAttribute("min")) {
@@ -5495,6 +5560,8 @@ class FigInputText extends HTMLElement {
       }
       this.addEventListener("pointerdown", this.#boundMouseDown);
     }
+    this.removeEventListener("click", this.#boundAdornmentClick);
+    this.addEventListener("click", this.#boundAdornmentClick);
     this.input.removeEventListener("change", this.#boundInputChange);
     this.input.addEventListener("change", this.#boundInputChange);
     this.input.removeEventListener("input", this.#boundNativeInput);
@@ -5506,10 +5573,17 @@ class FigInputText extends HTMLElement {
       this.input.removeEventListener("change", this.#boundInputChange);
       this.input.removeEventListener("input", this.#boundNativeInput);
     }
+    this.removeEventListener("click", this.#boundAdornmentClick);
     this.removeEventListener("pointerdown", this.#boundMouseDown);
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
     window.removeEventListener("blur", this.#boundWindowBlur);
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = null;
+    if (this.#syncRaf) {
+      cancelAnimationFrame(this.#syncRaf);
+      this.#syncRaf = 0;
+    }
   }
 
   focus() {
@@ -5523,37 +5597,61 @@ class FigInputText extends HTMLElement {
         ? existing.tagName === "TEXTAREA"
         : existing.tagName === "INPUT";
       if (matches) return existing;
+      existing.remove();
     }
 
-    let html = `<input 
-      type="${this.type}" 
-      ${this.name ? `name="${this.name}"` : ""}
-      placeholder="${this.placeholder}"
-      value="${
-        this.type === "number" ? this.#transformNumber(this.value) : this.value
-      }" />`;
+    let control;
     if (wantsTextarea) {
-      html = `<textarea  
-      placeholder="${this.placeholder}">${this.value}</textarea>`;
+      control = document.createElement("textarea");
+      control.value = this.value;
+    } else {
+      control = document.createElement("input");
+      control.type = this.type;
+      control.value =
+        this.type === "number" ? this.#transformNumber(this.value) : this.value;
     }
+    control.setAttribute("data-generated", "input-control");
+    if (this.name) control.name = this.name;
+    control.placeholder = this.placeholder;
+    this.insertBefore(control, this.querySelector('[slot="append"]'));
 
-    const append = this.querySelector("[slot=append]");
-    const prepend = this.querySelector("[slot=prepend]");
-
-    this.innerHTML = html;
-
-    if (prepend) {
-      prepend.removeEventListener("click", this.#boundFocusControl);
-      prepend.addEventListener("click", this.#boundFocusControl);
-      this.prepend(prepend);
+    return control;
+  }
+  #handleAdornmentClick(event) {
+    const adornment = event.target?.closest?.("[slot]");
+    if (!adornment || adornment.parentElement !== this) return;
+    this.focus();
+  }
+  #startObserver() {
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = new MutationObserver(() => this.#scheduleLightDomSync());
+    this.#mutationObserver.observe(this, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  }
+  #scheduleLightDomSync() {
+    if (this.#syncRaf) return;
+    this.#syncRaf = requestAnimationFrame(() => {
+      this.#syncRaf = 0;
+      if (!this.isConnected) return;
+      this.#syncLightDom();
+    });
+  }
+  #syncLightDom() {
+    if (!this.input || !this.contains(this.input)) {
+      this.input = this.#ensureInputControl();
+      this.input.readOnly = this.readonly;
+      this.input.addEventListener("change", this.#boundInputChange);
+      this.input.addEventListener("input", this.#boundNativeInput);
     }
-    if (append) {
-      append.removeEventListener("click", this.#boundFocusControl);
-      append.addEventListener("click", this.#boundFocusControl);
-      this.append(append);
-    }
-
-    return this.querySelector("input,textarea");
+    this.#syncInputA11yAttributes();
+    this.#syncSearchPrefix();
+    this.#syncSearchClear();
+    this.#syncSearchClearVisibility();
+    this.#syncPasswordToggle();
+    figNormalizeTextOnlyInputSlots(this);
   }
   #syncInputA11yAttributes() {
     if (!this.input) return;
@@ -5574,8 +5672,11 @@ class FigInputText extends HTMLElement {
       generated?.remove();
       return;
     }
-    const prepend = this.querySelector('[slot="prepend"]');
-    if (prepend && prepend !== generated) return;
+    const prepend = this.querySelector('[slot="prepend"]:not([data-generated])');
+    if (prepend) {
+      generated?.remove();
+      return;
+    }
     if (generated) {
       const icon = generated.querySelector("fig-icon");
       if (icon && icon.getAttribute("name") !== "search") {
@@ -5599,8 +5700,11 @@ class FigInputText extends HTMLElement {
       generated?.remove();
       return;
     }
-    const append = this.querySelector('[slot="append"]');
-    if (append && append !== generated) return;
+    const append = this.querySelector('[slot="append"]:not([data-generated])');
+    if (append) {
+      generated?.remove();
+      return;
+    }
     if (generated) {
       const icon = generated.querySelector("fig-icon");
       if (icon && icon.getAttribute("name") !== "close") {
@@ -5659,8 +5763,11 @@ class FigInputText extends HTMLElement {
       this.#passwordVisible = false;
       return;
     }
-    const append = this.querySelector('[slot="append"]');
-    if (append && append !== generated) return;
+    const append = this.querySelector('[slot="append"]:not([data-generated])');
+    if (append) {
+      generated?.remove();
+      return;
+    }
     if (generated) {
       this.#updatePasswordToggle(generated);
       return;
@@ -5930,6 +6037,7 @@ class FigInputNumber extends HTMLElement {
   #boundBlur;
   #boundKeyDown;
   #boundFocusControl;
+  #boundAdornmentClick;
   #units;
   #rawUnits;
   #unitsDisallow;
@@ -5937,6 +6045,8 @@ class FigInputNumber extends HTMLElement {
   #precision;
   #isInteracting = false;
   #stepperEl = null;
+  #mutationObserver = null;
+  #syncRaf = 0;
   #a11yAttributes = [
     "aria-label",
     "aria-labelledby",
@@ -6056,6 +6166,7 @@ class FigInputNumber extends HTMLElement {
       this.#handleKeyDown(e);
     };
     this.#boundFocusControl = this.focus.bind(this);
+    this.#boundAdornmentClick = this.#handleAdornmentClick.bind(this);
   }
 
   connectedCallback() {
@@ -6114,8 +6225,12 @@ class FigInputNumber extends HTMLElement {
     }
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
+    figNormalizeTextOnlyInputSlots(this);
 
     this.addEventListener("pointerdown", this.#boundMouseDown);
+    this.removeEventListener("click", this.#boundAdornmentClick);
+    this.addEventListener("click", this.#boundAdornmentClick);
+    this.#startObserver();
     this.input.removeEventListener("change", this.#boundInputChange);
     this.input.addEventListener("change", this.#boundInputChange);
     this.input.removeEventListener("input", this.#boundInput);
@@ -6136,10 +6251,17 @@ class FigInputNumber extends HTMLElement {
       this.input.removeEventListener("blur", this.#boundBlur);
       this.input.removeEventListener("keydown", this.#boundKeyDown);
     }
+    this.removeEventListener("click", this.#boundAdornmentClick);
     this.removeEventListener("pointerdown", this.#boundMouseDown);
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
     window.removeEventListener("blur", this.#boundWindowBlur);
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = null;
+    if (this.#syncRaf) {
+      cancelAnimationFrame(this.#syncRaf);
+      this.#syncRaf = 0;
+    }
   }
 
   focus() {
@@ -6150,30 +6272,62 @@ class FigInputNumber extends HTMLElement {
     const existing = this.querySelector("input");
     if (existing) return existing;
 
-    const html = `<input 
-      type="text"
-      inputmode="decimal"
-      ${this.name ? `name="${this.name}"` : ""}
-      placeholder="${this.placeholder}"
-      value="${this.#formatWithUnit(this.value)}" />`;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "decimal";
+    input.setAttribute("data-generated", "input-control");
+    if (this.name) input.name = this.name;
+    input.placeholder = this.placeholder;
+    input.value = this.#formatWithUnit(this.value);
+    this.insertBefore(input, this.querySelector('[slot="append"]'));
 
-    const append = this.querySelector("[slot=append]");
-    const prepend = this.querySelector("[slot=prepend]");
+    return input;
+  }
 
-    this.innerHTML = html;
+  #handleAdornmentClick(event) {
+    const adornment = event.target?.closest?.("[slot]");
+    if (!adornment || adornment.parentElement !== this) return;
+    this.focus();
+  }
 
-    if (prepend) {
-      prepend.removeEventListener("click", this.#boundFocusControl);
-      prepend.addEventListener("click", this.#boundFocusControl);
-      this.prepend(prepend);
+  #startObserver() {
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = new MutationObserver(() => this.#scheduleLightDomSync());
+    this.#mutationObserver.observe(this, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  }
+
+  #scheduleLightDomSync() {
+    if (this.#syncRaf) return;
+    this.#syncRaf = requestAnimationFrame(() => {
+      this.#syncRaf = 0;
+      if (!this.isConnected) return;
+      this.#syncLightDom();
+    });
+  }
+
+  #syncLightDom() {
+    if (!this.input || !this.contains(this.input)) {
+      this.input = this.#ensureInputControl();
+      this.input.addEventListener("change", this.#boundInputChange);
+      this.input.addEventListener("input", this.#boundInput);
+      this.input.addEventListener("focus", this.#boundFocus);
+      this.input.addEventListener("blur", this.#boundBlur);
+      this.input.addEventListener("keydown", this.#boundKeyDown);
     }
-    if (append) {
-      append.removeEventListener("click", this.#boundFocusControl);
-      append.addEventListener("click", this.#boundFocusControl);
-      this.append(append);
+    const hasSteppers =
+      this.hasAttribute("steppers") &&
+      this.getAttribute("steppers") !== "false";
+    if (this.#stepperEl && !this.contains(this.#stepperEl)) {
+      this.#stepperEl = null;
     }
-
-    return this.querySelector("input");
+    this.#syncSteppers(hasSteppers);
+    this.#syncInputA11yAttributes();
+    this.#syncSpinbuttonAria();
+    figNormalizeTextOnlyInputSlots(this);
   }
 
   #syncInputA11yAttributes() {

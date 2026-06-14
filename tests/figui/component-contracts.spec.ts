@@ -715,6 +715,71 @@ test.describe("text input accessibility", () => {
       iconVar: "var(--icon-16-hidden)",
     });
   });
+
+  test("fig-input-text keeps prepend and append visually ordered across reactive child insertion", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-text id="text-slots" value="Button" style="width: 220px">
+          <span id="text-append" slot="append">append</span>
+        </fig-input-text>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    await page.locator("#text-slots").evaluate((host) => {
+      const prepend = document.createElement("span");
+      prepend.id = "text-prepend";
+      prepend.setAttribute("slot", "prepend");
+      prepend.textContent = "prepend";
+      host.append(prepend);
+    });
+    await page.waitForTimeout(50);
+
+    const order = await page.locator("#text-slots").evaluate((host) => {
+      const prepend = host.querySelector("#text-prepend");
+      const input = host.querySelector("input");
+      const append = host.querySelector("#text-append");
+      if (!prepend || !input || !append) throw new Error("Missing slot test nodes");
+      return {
+        domOrder: Array.from(host.children).map((child) => child.id || child.tagName),
+        prependText: prepend.textContent,
+        appendText: append.textContent,
+        prependLabel: prepend.getAttribute("aria-label"),
+        appendLabel: append.getAttribute("aria-label"),
+        prependLeft: prepend.getBoundingClientRect().left,
+        inputLeft: input.getBoundingClientRect().left,
+        appendLeft: append.getBoundingClientRect().left,
+      };
+    });
+
+    expect(order.domOrder).toEqual(["INPUT", "text-append", "text-prepend"]);
+    expect(order.prependText).toBe("P");
+    expect(order.appendText).toBe("A");
+    expect(order.prependLabel).toBe("prepend");
+    expect(order.appendLabel).toBe("append");
+    expect(order.prependLeft).toBeLessThan(order.inputLeft);
+    expect(order.inputLeft).toBeLessThan(order.appendLeft);
+
+    await page.locator("#text-append").hover();
+    await expect(page.locator('dialog[data-tooltip-managed][role="tooltip"]')).toContainText("append");
+    await page.mouse.move(0, 0);
+
+    await page.locator("#text-append").evaluate((append) => {
+      append.textContent = "suffix";
+    });
+    await expect
+      .poll(() => page.locator("#text-append").evaluate((append) => append.textContent))
+      .toBe("S");
+    await expect
+      .poll(() => page.locator("#text-append").evaluate((append) => append.getAttribute("aria-label")))
+      .toBe("suffix");
+    await page.locator("#text-append").hover();
+    await expect(page.locator('dialog[data-tooltip-managed][role="tooltip"]')).toContainText("suffix");
+  });
 });
 
 test.describe("number input accessibility", () => {
@@ -789,6 +854,65 @@ test.describe("number input accessibility", () => {
       ariaValueNow: "75",
       ariaValueText: "75%",
     });
+  });
+
+  test("fig-input-number keeps slots visually around the input before steppers", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-number id="number-slots" value="12" steppers style="width: 220px">
+          <span id="number-append" slot="append">pixels</span>
+        </fig-input-number>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    await page.locator("#number-slots").evaluate((host) => {
+      const prepend = document.createElement("span");
+      prepend.id = "number-prepend";
+      prepend.setAttribute("slot", "prepend");
+      prepend.textContent = "axis";
+      host.append(prepend);
+    });
+    await page.waitForTimeout(50);
+
+    const order = await page.locator("#number-slots").evaluate((host) => {
+      const prepend = host.querySelector("#number-prepend");
+      const input = host.querySelector("input");
+      const append = host.querySelector("#number-append");
+      const steppers = host.querySelector(".fig-steppers");
+      if (!prepend || !input || !append || !steppers) {
+        throw new Error("Missing number slot test nodes");
+      }
+      return {
+        domOrder: Array.from(host.children).map((child) => child.id || child.tagName),
+        prependText: prepend.textContent,
+        appendText: append.textContent,
+        prependLabel: prepend.getAttribute("aria-label"),
+        appendLabel: append.getAttribute("aria-label"),
+        prependLeft: prepend.getBoundingClientRect().left,
+        inputLeft: input.getBoundingClientRect().left,
+        appendLeft: append.getBoundingClientRect().left,
+        steppersLeft: steppers.getBoundingClientRect().left,
+      };
+    });
+
+    expect(order.domOrder).toEqual([
+      "INPUT",
+      "number-append",
+      "SPAN",
+      "number-prepend",
+    ]);
+    expect(order.prependText).toBe("A");
+    expect(order.appendText).toBe("P");
+    expect(order.prependLabel).toBe("axis");
+    expect(order.appendLabel).toBe("pixels");
+    expect(order.prependLeft).toBeLessThan(order.inputLeft);
+    expect(order.inputLeft).toBeLessThan(order.appendLeft);
+    expect(order.appendLeft).toBeLessThan(order.steppersLeft);
   });
 });
 

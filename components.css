@@ -480,6 +480,7 @@ input[type="tel"],
 }
 
 fig-input-number .fig-steppers {
+  order: 3;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -3299,6 +3300,7 @@ fig-input-color {
 fig-header {
   --fig-header-height: var(--spacer-6);
   height: var(--fig-header-height);
+  flex-shrink: 0;
   margin: 0;
   padding: var(--spacer-1) var(--spacer-3);
   display: flex;
@@ -3397,6 +3399,7 @@ fig-group {
 
 fig-footer {
   display: flex;
+  flex-shrink: 0;
   align-items: flex-start;
   justify-content: flex-end;
   gap: var(--spacer-2);
@@ -3484,6 +3487,11 @@ vstack,
   flex-wrap: wrap;
 }
 
+:root [hidden],
+[hidden] {
+  display: none !important;
+}
+
 hstack,
 .hstack{
   display: flex;
@@ -3558,11 +3566,13 @@ fig-input-number {
   }
 
   & [slot="prepend"] {
+    order: 0;
     padding-right: 0;
     margin-right: calc(var(--spacer-2) * -1);
   }
 
   & [slot="append"] {
+    order: 2;
     padding-left: 0;
     margin-left: calc(var(--spacer-2) * -1);
   }
@@ -3586,6 +3596,7 @@ fig-input-number {
 
   & input,
   & textarea {
+    order: 1;
     background-color: transparent !important;
     flex: 1;
 
