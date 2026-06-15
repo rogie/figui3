@@ -199,6 +199,10 @@ function isFigTag(element: Element): boolean {
   return isName.startsWith("fig-");
 }
 
+function isSupportedControl(element: Element): boolean {
+  return isFigTag(element) || element.tagName.toLowerCase() === "progress";
+}
+
 function getControlTag(element: Element): string {
   if (element.tagName.toLowerCase() === "dialog") {
     const isName = element.getAttribute("is")?.toLowerCase() ?? "";
@@ -221,7 +225,7 @@ function getFieldControl(field: Element): Element | null {
     (child) => child.tagName.toLowerCase() === "label",
   );
   const search = labelIndex >= 0 ? children.slice(labelIndex + 1) : children;
-  return search.find((child) => isFigTag(child)) ?? null;
+  return search.find((child) => isSupportedControl(child)) ?? null;
 }
 
 function hasFigAncestor(element: Element): boolean {
@@ -247,7 +251,7 @@ function getTopLevelFields(root: HTMLElement): Element[] {
 
 function getPrimaryControls(root: HTMLElement): Element[] {
   return Array.from(root.querySelectorAll("*")).filter(
-    (el) => isFigTag(el) && !hasFigAncestor(el) && !shouldIgnoreControl(el),
+    (el) => isSupportedControl(el) && !hasFigAncestor(el) && !shouldIgnoreControl(el),
   );
 }
 

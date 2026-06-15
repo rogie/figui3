@@ -119,6 +119,21 @@ function stripPlaygroundAttributes(markup: string): string {
   return preserveIsAttributes(markup, raw);
 }
 
+function stripListedPlaygroundAttributes(markup: string): string {
+  if (!markup.includes("data-playground-strip-attrs")) return markup;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${markup}</div>`, "text/html");
+  doc.querySelectorAll("[data-playground-strip-attrs]").forEach((el) => {
+    const attrs = (el.getAttribute("data-playground-strip-attrs") ?? "")
+      .split(",")
+      .map((attr) => attr.trim())
+      .filter(Boolean);
+    attrs.forEach((attr) => el.removeAttribute(attr));
+  });
+  const raw = singleQuoteAttrs(doc.body.firstElementChild?.innerHTML?.trim() ?? markup);
+  return preserveIsAttributes(markup, raw);
+}
+
 export function getExampleSourceMarkup(markup: string): string {
   return dedentMarkup(unwrapPropPanel(markup) ?? normalizeMarkup(markup));
 }
@@ -131,9 +146,11 @@ export function getCodeSourceMarkup(markup: string): string {
   return cleanPresenceAttributes(
     dedentMarkup(
       stripPlaygroundAttributes(
-        unwrapPreviewWrappers(
-          stripInternalFieldAttributes(
-            stripPreviewOnlyElements(unwrapPropPanel(markup) ?? normalizeMarkup(markup)),
+        stripListedPlaygroundAttributes(
+          unwrapPreviewWrappers(
+            stripInternalFieldAttributes(
+              stripPreviewOnlyElements(unwrapPropPanel(markup) ?? normalizeMarkup(markup)),
+            ),
           ),
         ),
       ),
@@ -229,6 +246,6 @@ export function mergePreviewOnlyElements(
 
 export function getInjectedExampleMarkup(markup: string): string {
   const trimmed = normalizeMarkup(markup);
-  const content = unwrapPropPanel(trimmed) ?? trimmed;
+  const content = stripListedPlaygroundAttributes(unwrapPropPanel(trimmed) ?? trimmed);
   return `<div class="${PROP_PANEL_CLASS}">\n${content}\n</div>`;
 }

@@ -1321,6 +1321,35 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
+    id: "native-progress",
+    name: "<progress>",
+    group: "Native elements",
+    description:
+      "Native progress indicator for determinate and indeterminate loading states.",
+    examples: [
+      {
+        id: "determinate",
+        name: "Determinate",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label for="upload-progress">Progress</label>
+    <progress id="upload-progress" value="64" max="100">64%</progress>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "indeterminate",
+        name: "Indeterminate",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label for="sync-progress">Syncing</label>
+    <progress id="sync-progress" data-playground-hide-attrs="value,max" data-playground-strip-attrs="value,max">Loading</progress>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "native-fieldset",
     name: "<fieldset>",
     group: "Native elements",

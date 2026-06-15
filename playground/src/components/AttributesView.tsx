@@ -212,6 +212,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-menu": "Menu",
     "fig-input-palette": "Palette",
     "fig-canvas-control": "Canvas control",
+    progress: "Progress",
   };
   return (
     titles[controlTag] ?? sentenceCase(toTitle(controlTag.replace(/^fig-/, "")))
@@ -493,6 +494,11 @@ export default function AttributesView({
               !(
                 entry.name === "columns" &&
                 target.controlTag === "fig-chooser"
+              ) &&
+              !(
+                target.controlTag === "progress" &&
+                !("value" in target.controlAttributes) &&
+                (entry.name === "value" || entry.name === "max")
               ),
           )
           .sort((a, b) => {

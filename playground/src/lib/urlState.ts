@@ -16,6 +16,18 @@ const SPECIAL_PREFIX = "_";
 const REMOVE_SENTINEL = "!";
 const URL_EXCLUDED_ATTRS = new Set(["src"]);
 
+function stripsAttribute(
+  target: ReturnType<typeof parseAttributeTargets>[number] | undefined,
+  attr: string,
+): boolean {
+  return Boolean(
+    target?.controlAttributes["data-playground-strip-attrs"]
+      ?.split(",")
+      .map((value) => value.trim())
+      .includes(attr),
+  );
+}
+
 export function diffFromDefault(
   currentMarkup: string,
   defaultMarkup: string,
@@ -32,12 +44,20 @@ export function diffFromDefault(
     const idx = currentTargets.length > 1 ? `${i}.` : "";
 
     for (const [key, val] of Object.entries(cur.controlAttributes)) {
-      if (!URL_EXCLUDED_ATTRS.has(key) && def.controlAttributes[key] !== val) {
+      if (
+        !URL_EXCLUDED_ATTRS.has(key) &&
+        !stripsAttribute(def, key) &&
+        def.controlAttributes[key] !== val
+      ) {
         params[`${idx}${key}`] = val;
       }
     }
     for (const key of Object.keys(def.controlAttributes)) {
-      if (!URL_EXCLUDED_ATTRS.has(key) && !(key in cur.controlAttributes)) {
+      if (
+        !URL_EXCLUDED_ATTRS.has(key) &&
+        !stripsAttribute(def, key) &&
+        !(key in cur.controlAttributes)
+      ) {
         params[`${idx}${key}`] = REMOVE_SENTINEL;
       }
     }
@@ -159,6 +179,7 @@ export function applyParamsToMarkup(
   }
 
   for (const { idx, attr, val } of controlEntries) {
+    if (stripsAttribute(defaultTargets[idx], attr)) continue;
     if (attr === "style") {
       markup = applyChooserMaxSizeMutation(markup, idx, val);
     } else {

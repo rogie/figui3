@@ -681,6 +681,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "presence",
     },
   },
+  progress: {
+    value: { label: "Value", type: "number", min: 0, max: 100, step: 1 },
+    max: { label: "Max", type: "number", min: 1, max: 100, step: 1 },
+  },
   "fig-canvas-control": {
     type: {
       label: "Type",
