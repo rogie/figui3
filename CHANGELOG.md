@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.0]
+
+### Fixed
+
+- Fixed cross-browser media preview sizing so `fig-image`, `fig-media`, `fig-video`, and `fig-preview` fill their preview surface consistently in Safari and Chrome.
+- Fixed `fig-easing-curve` handle positioning in Safari by avoiding absolute-positioned `fig-handle` children inside SVG `foreignObject` handles.
+- Fixed `fig-input-fill` and `fig-input-color` value cells so solid, gradient, image, and color inputs size and truncate consistently.
+- Fixed fill picker header overflow caused by the color gamut selector and close button layout.
+- Fixed segmented control icon alignment by centering segment contents with flex layout.
+- Fixed horizontal chooser gradient previews from collapsing by preserving a minimum choice and gradient width.
+
+### Changed
+
+- Styled native `<progress>` controls to match FigUI slider tracks, including determinate and indeterminate states.
+- Updated paragraph and content defaults for more predictable text rhythm in plugin layouts.
+- Updated playground video examples to use a larger randomized demo video pool.
+
 ## [6.8.8]
 
 ### Changed

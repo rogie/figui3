@@ -3164,7 +3164,6 @@ test.describe("remaining accessibility contracts", () => {
     expect(handleOrder).toEqual(["2", "1"]);
 
     const firstHandle = page.locator('#curve [data-handle="1"] fig-handle');
-    await expect(firstHandle).toHaveAttribute("drag", "");
 
     await firstHandle.focus();
     await page.keyboard.press("ArrowRight");

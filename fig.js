@@ -12270,8 +12270,8 @@ class FigEasingCurve extends HTMLElement {
         <line class="fig-easing-curve-target" x1="0" y1="${targetY}" x2="${size}" y2="${targetY}"/>
         <line class="fig-easing-curve-diagonal" x1="0" y1="${startY}" x2="0" y2="${startY}"/>
         <path class="fig-easing-curve-path"/>
-        <foreignObject class="fig-easing-curve-handle" data-handle="bounce" width="20" height="20"><fig-handle size="small" drag aria-label="Spring bounce handle"></fig-handle></foreignObject>
-        <foreignObject class="fig-easing-curve-handle fig-easing-curve-duration-bar" data-handle="duration" width="20" height="20"><fig-handle size="small" drag drag-axes="x" aria-label="Spring duration handle"></fig-handle></foreignObject>
+        <foreignObject class="fig-easing-curve-handle" data-handle="bounce" width="20" height="20"><fig-handle size="small" aria-label="Spring bounce handle"></fig-handle></foreignObject>
+        <foreignObject class="fig-easing-curve-handle fig-easing-curve-duration-bar" data-handle="duration" width="20" height="20"><fig-handle size="small" aria-label="Spring duration handle"></fig-handle></foreignObject>
       </svg></div>${valueInput}`;
     }
 
@@ -12283,8 +12283,8 @@ class FigEasingCurve extends HTMLElement {
       <path class="fig-easing-curve-path"/>
       <circle class="fig-easing-curve-endpoint" data-endpoint="start" r="${this.#bezierEndpointRadius}"/>
       <circle class="fig-easing-curve-endpoint" data-endpoint="end" r="${this.#bezierEndpointRadius}"/>
-      <foreignObject class="fig-easing-curve-handle" data-handle="1" width="20" height="20"><fig-handle size="small" drag aria-label="First easing control point"></fig-handle></foreignObject>
-      <foreignObject class="fig-easing-curve-handle" data-handle="2" width="20" height="20"><fig-handle size="small" drag aria-label="Second easing control point"></fig-handle></foreignObject>
+      <foreignObject class="fig-easing-curve-handle" data-handle="1" width="20" height="20"><fig-handle size="small" aria-label="First easing control point"></fig-handle></foreignObject>
+      <foreignObject class="fig-easing-curve-handle" data-handle="2" width="20" height="20"><fig-handle size="small" aria-label="Second easing control point"></fig-handle></foreignObject>
     </svg></div>${valueInput}`;
   }
 

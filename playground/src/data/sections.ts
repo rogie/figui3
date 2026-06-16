@@ -4,6 +4,7 @@ import {
   squareUrl,
   variedAspectRatioUrl,
 } from "../lib/images";
+import { videoExampleAttrs, videoSrc } from "../lib/videos";
 
 export interface Example {
   id: string;
@@ -908,7 +909,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Video</label>
-    <fig-video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Flower video preview" poster="https://picsum.photos/640/360?random=29" autoplay="true" controls muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+    <fig-video ${videoExampleAttrs('aria-label="Video preview" autoplay="true" controls muted fit="cover" size="auto" full checkerboard="true"')}></fig-video>
   </fig-field>
 </div>`,
       },
@@ -918,7 +919,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Video</label>
-    <fig-video aria-label="Poster-only video preview" poster="https://picsum.photos/640/360?random=29" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+    <fig-video poster="${landscapeUrl()}" aria-label="Poster-only video preview" muted fit="cover" size="auto" full checkerboard="true"></fig-video>
   </fig-field>
 </div>`,
       },
@@ -947,7 +948,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Preview</label>
-    <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Flower media preview" poster="https://picsum.photos/320.webp?random=29" autoplay="true" controls muted="true" upload="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
+    <fig-media type="video" ${videoExampleAttrs('aria-label="Media preview" autoplay="true" controls muted="true" upload="true" fit="contain" size="auto" full checkerboard="true"')}></fig-media>
   </fig-field>
 </div>`,
       },
@@ -1535,7 +1536,7 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field>
           <label>Media</label>
-          <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Media preview" poster="https://picsum.photos/320.webp?random=29" autoplay="true" controls muted="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
+          <fig-media type="video" ${videoExampleAttrs('aria-label="Media preview" autoplay="true" controls muted="true" fit="contain" size="auto" full checkerboard="true"')}></fig-media>
         </fig-field>
         <fig-field>
           <label>Preview</label>
@@ -1707,7 +1708,7 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field direction="horizontal">
           <label>Demo Video</label>
-          <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Demo video" poster="https://picsum.photos/320.webp?random=29" autoplay="true" controls muted="true" fit="contain" size="auto" full checkerboard="true"></fig-media>
+          <fig-media type="video" ${videoExampleAttrs('aria-label="Demo video" autoplay="true" controls muted="true" fit="contain" size="auto" full checkerboard="true"')}></fig-media>
         </fig-field>
         <fig-field direction="horizontal">
           <label>Card Preview</label>
@@ -2791,7 +2792,7 @@ export const propkitSections: Section[] = [
         id: "video",
         name: "Video",
         markup: `<fig-content>
-  <fig-video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" aria-label="Flower video preview" poster="https://picsum.photos/640/360?random=29" controls muted fit="cover" size="auto" full checkerboard="true"></fig-video>
+  <fig-video ${videoExampleAttrs('aria-label="Video preview" controls muted fit="cover" size="auto" full checkerboard="true"')}></fig-video>
 </fig-content>`,
       },
     ],

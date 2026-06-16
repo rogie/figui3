@@ -1,5 +1,6 @@
 import { propkitSections, type Section } from "./sections";
 import { landscapeUrl } from "../lib/images";
+import { videoExampleAttrs, videoSrc } from "../lib/videos";
 
 const randomAvatarId = Math.floor(Math.random() * 70) + 1;
 
@@ -237,7 +238,7 @@ export const figui3Sections: Section[] = [
         id: "video",
         name: "Video",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="video" value='{"type":"video","video":{"url":"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4","scaleMode":"fill","scale":50}}' full></fig-input-fill>
+  <fig-input-fill picker-mode="video" value='{"type":"video","video":{"url":"${videoSrc()}","scaleMode":"fill","scale":50}}' full></fig-input-fill>
 </div>`,
       },
       {
@@ -850,7 +851,7 @@ export const figui3Sections: Section[] = [
         id: "video",
         name: "Video type",
         markup: `<div class="prop-panel">
-  <fig-media type="video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" autoplay="true" muted size="auto" full checkerboard="true"></fig-media>
+  <fig-media type="video" ${videoExampleAttrs('autoplay="true" muted size="auto" full checkerboard="true"')}></fig-media>
 </div>`,
       },
     ],
@@ -888,14 +889,14 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" poster="https://picsum.photos/640/360?random=29" autoplay="true" muted size="auto" full checkerboard="true"></fig-video>
+  <fig-video ${videoExampleAttrs('autoplay="true" muted size="auto" full checkerboard="true"')}></fig-video>
 </div>`,
       },
       {
         id: "poster-only",
         name: "Poster",
         markup: `<div class="prop-panel">
-  <fig-video poster="https://picsum.photos/640/360?random=29" muted size="auto" full checkerboard="true"></fig-video>
+  <fig-video poster="${landscapeUrl()}" muted size="auto" full checkerboard="true"></fig-video>
 </div>`,
       },
       {
