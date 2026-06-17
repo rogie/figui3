@@ -223,7 +223,7 @@ Rule of thumb: `fig-dialog` = dialog UX, `fig-popup` = popup primitive.
 2. **Confirm API surface impact.** Identify affected attributes, events, and slots.
 3. **Implement with compatibility in mind.** Preserve defaults and old usage unless explicitly changed.
 4. **Update docs/demo in same pass.** Keep examples and behavior synchronized.
-5. **Run project checks.** Use `bun dev` for interactive verification and `bun build` for output sanity.
+5. **Run project checks.** Use `bun build` for output sanity. Never kill the playground/dev server when running tests, building, or updating code; treat existing `npm run dev:playground`, Vite, `bun dev`, and local preview servers as user-owned long-running processes. Only start a dev server if none is already running.
 6. **Verify accessibility and theming.** Check keyboard flow, labels, disabled states, and both light/dark appearance.
 
 ## Release-Ready Checklist

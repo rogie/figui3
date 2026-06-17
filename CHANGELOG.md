@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.1]
+
+### Fixed
+
+- Fixed paragraph/list text defaults so plugin content uses secondary text color consistently.
+- Fixed the PropKit plugin alt demo width to better match the embedded panel.
+
+### Changed
+
+- Updated FigUI3 agent guidance to preserve existing dev/playground servers during checks.
+
 ## [6.9.0]
 
 ### Fixed
