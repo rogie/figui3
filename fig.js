@@ -14560,6 +14560,7 @@ customElements.define("fig-header", FigHeader);
  * fig-footer
  * @element fig-footer
  * @attr {boolean} borderless - Removes the top border
+ * @attr {boolean} sticky - Pins the footer to the bottom of its scroll container
  */
 class FigFooter extends HTMLElement {}
 customElements.define("fig-footer", FigFooter);

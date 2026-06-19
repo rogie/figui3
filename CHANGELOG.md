@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.2]
+
+### Changed
+
+- Documented the `sticky` attribute for `fig-footer`.
+- Updated playground layout spacing for FigUI3 examples.
+
 ## [6.9.1]
 
 ### Fixed
