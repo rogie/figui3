@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.3]
+
+### Changed
+
+- Refined PropKit playground example alignment.
+
 ## [6.9.2]
 
 ### Changed
