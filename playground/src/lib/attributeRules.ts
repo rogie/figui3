@@ -201,7 +201,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
-  "fig-chit": {
+  "fig-swatch": {
     size: { label: "Size", type: "enum", options: ["small", "medium", "large"] },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },

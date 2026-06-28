@@ -349,13 +349,13 @@ export default function App({ mode }: Props) {
       />
       <main className={mode === "figui3" ? "mode-figui3" : undefined}>
         {activeSection && (
-          <>
+          <div className="example-header">
             <h2>{activeTitle}</h2>
             <p
               className="description"
               dangerouslySetInnerHTML={{ __html: activeDescription }}
             />
-          </>
+          </div>
         )}
         {activeExample && (
           <div className="example-view-container">

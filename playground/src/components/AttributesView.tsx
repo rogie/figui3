@@ -174,7 +174,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-fill-picker": "Fill picker",
     "fig-color-tip": "Color tip",
     "fig-checkbox": "Checkbox",
-    "fig-chit": "Chit",
+    "fig-swatch": "Swatch",
     "fig-radio": "Radio",
     "fig-field": "Field",
     "fig-field-slider": "Field slider",
@@ -1577,14 +1577,14 @@ export default function AttributesView({
                           </fig-field>
                         );
                       })()}
-                    {target.controlTag === "fig-chit" &&
+                    {target.controlTag === "fig-swatch" &&
                       (() => {
                         const bg = (target.controlAttributes.background ?? "").toLowerCase();
                         const currentFill = bg.includes("gradient") ? "gradient" : "solid";
                         return (
                           <fig-field
                             columns="2/5"
-                            key={`control-chit-fill-${target.fieldIndex}`}
+                            key={`control-swatch-fill-${target.fieldIndex}`}
                           >
                             <label>Fill</label>
                             <fig-options

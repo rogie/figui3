@@ -309,7 +309,7 @@ function gradientInterpolationClause(gradient) {
  */
 class FigFillPicker extends HTMLElement {
   #trigger = null;
-  #chit = null;
+  #swatch = null;
   #dialog = null;
   #activeTab = "solid";
   anchorElement = null;
@@ -377,7 +377,7 @@ class FigFillPicker extends HTMLElement {
     requestAnimationFrame(() => {
       this.#setupTrigger();
       this.#parseValue();
-      this.#updateChit();
+      this.#updateSwatch();
     });
   }
 
@@ -405,7 +405,7 @@ class FigFillPicker extends HTMLElement {
     if (this.#video.url && this.#video.url.startsWith("blob:")) {
       URL.revokeObjectURL(this.#video.url);
     }
-    if (this.#chit) this.#chit.removeAttribute("selected");
+    if (this.#swatch) this.#swatch.removeAttribute("selected");
     if (this.#trigger) {
       this.#trigger.removeEventListener("click", this.#boundTriggerClick);
       this.#trigger.removeEventListener("keydown", this.#boundTriggerKeydown);
@@ -423,19 +423,19 @@ class FigFillPicker extends HTMLElement {
     );
 
     if (!child) {
-      // Scenario 1: Empty - create fig-chit
-      this.#chit = document.createElement("fig-chit");
-      this.#chit.setAttribute("background", "#D9D9D9");
-      this.appendChild(this.#chit);
-      this.#trigger = this.#chit;
-    } else if (child.tagName === "FIG-CHIT") {
-      // Scenario 2: Has fig-chit - use and populate it
-      this.#chit = child;
+      // Scenario 1: Empty - create fig-swatch
+      this.#swatch = document.createElement("fig-swatch");
+      this.#swatch.setAttribute("background", "#D9D9D9");
+      this.appendChild(this.#swatch);
+      this.#trigger = this.#swatch;
+    } else if (child.matches("fig-swatch")) {
+      // Scenario 2: Has swatch - use and populate it
+      this.#swatch = child;
       this.#trigger = child;
     } else {
       // Scenario 3: Other element - trigger only, no populate
       this.#trigger = child;
-      this.#chit = null;
+      this.#swatch = null;
     }
 
     this.#syncTriggerA11y();
@@ -444,10 +444,10 @@ class FigFillPicker extends HTMLElement {
     this.#trigger.removeEventListener("keydown", this.#boundTriggerKeydown);
     this.#trigger.addEventListener("keydown", this.#boundTriggerKeydown);
 
-    // Prevent fig-chit's internal color input from opening system picker
-    if (this.#chit) {
+    // Prevent the swatch's internal color input from opening system picker
+    if (this.#swatch) {
       requestAnimationFrame(() => {
-        const input = this.#chit.querySelector('input[type="color"]');
+        const input = this.#swatch.querySelector('input[type="color"]');
         if (input) {
           input.remove();
         }
@@ -549,8 +549,8 @@ class FigFillPicker extends HTMLElement {
     }
   }
 
-  #updateChit() {
-    if (!this.#chit) return;
+  #updateSwatch() {
+    if (!this.#swatch) return;
 
     let bg;
     let bgSize = "cover";
@@ -591,17 +591,17 @@ class FigFillPicker extends HTMLElement {
         break;
       default:
         const slot = this.#customSlots[this.#fillType];
-        bg = slot?.element?.getAttribute("chit-background") || "#D9D9D9";
+        bg = slot?.element?.getAttribute("swatch-background") || "#D9D9D9";
     }
 
-    this.#chit.setAttribute("background", bg);
-    this.#chit.style.setProperty("--chit-bg-size", bgSize);
-    this.#chit.style.setProperty("--chit-bg-position", bgPosition);
+    this.#swatch.setAttribute("background", bg);
+    this.#swatch.style.setProperty("--swatch-bg-size", bgSize);
+    this.#swatch.style.setProperty("--swatch-bg-position", bgPosition);
 
     if (this.#fillType === "solid") {
-      this.#chit.setAttribute("alpha", this.#color.a);
+      this.#swatch.setAttribute("alpha", this.#color.a);
     } else {
-      this.#chit.removeAttribute("alpha");
+      this.#swatch.removeAttribute("alpha");
     }
   }
 
@@ -630,7 +630,7 @@ class FigFillPicker extends HTMLElement {
     const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
     if (gamutEl) gamutEl.value = this.#gamut;
 
-    if (this.#chit) this.#chit.setAttribute("selected", "true");
+    if (this.#swatch) this.#swatch.setAttribute("selected", "true");
 
     this.#dialog.open = true;
 
@@ -796,7 +796,7 @@ class FigFillPicker extends HTMLElement {
       });
 
     const onDialogClose = () => {
-      if (this.#chit) this.#chit.removeAttribute("selected");
+      if (this.#swatch) this.#swatch.removeAttribute("selected");
       this.#emitChange();
       this.dispatchEvent(new CustomEvent("close"));
     };
@@ -890,7 +890,7 @@ class FigFillPicker extends HTMLElement {
       });
     }
 
-    this.#updateChit();
+    this.#updateSwatch();
     this.#emitInput();
   }
 
@@ -1399,7 +1399,7 @@ class FigFillPicker extends HTMLElement {
       this.#opacitySlider.setAttribute("color", hex);
     }
 
-    this.#updateChit();
+    this.#updateSwatch();
   }
 
   // ============ GRADIENT TAB ============
@@ -1582,7 +1582,7 @@ class FigFillPicker extends HTMLElement {
           ...this.#gradient,
           ...detail.gradient,
         });
-        this.#updateChit();
+        this.#updateSwatch();
         this.#updateGradientStopsList();
       };
       gradientBarInput.addEventListener("input", (e) => {
@@ -1652,7 +1652,7 @@ class FigFillPicker extends HTMLElement {
       );
     }
 
-    this.#updateChit();
+    this.#updateSwatch();
   }
 
   #updateGradientStopsList() {
@@ -1851,14 +1851,14 @@ class FigFillPicker extends HTMLElement {
       this.#image.scaleMode = e.target.value;
       scaleInput.style.display = e.target.value === "tile" ? "block" : "none";
       this.#updateImagePreview(preview);
-      this.#updateChit();
+      this.#updateSwatch();
       this.#emitInput();
     });
 
     scaleInput.addEventListener("input", (e) => {
       this.#image.scale = parseFloat(e.target.value) || 100;
       this.#updateImagePreview(preview);
-      this.#updateChit();
+      this.#updateSwatch();
       this.#emitInput();
     });
 
@@ -1867,7 +1867,7 @@ class FigFillPicker extends HTMLElement {
       if (!src) return;
       this.#image.url = src;
       this.#updateImagePreview(preview);
-      this.#updateChit();
+      this.#updateSwatch();
       this.#emitInput();
     });
 
@@ -1875,7 +1875,7 @@ class FigFillPicker extends HTMLElement {
       if (preview.src) return;
       this.#image.url = null;
       this.#updateImagePreview(preview);
-      this.#updateChit();
+      this.#updateSwatch();
       this.#emitInput();
     });
 
@@ -2011,7 +2011,7 @@ class FigFillPicker extends HTMLElement {
     scaleModeDropdown.addEventListener("change", (e) => {
       this.#video.scaleMode = e.target.value;
       this.#updateVideoPreviewStyle(preview);
-      this.#updateChit();
+      this.#updateSwatch();
       this.#emitInput();
     });
 
@@ -2021,7 +2021,7 @@ class FigFillPicker extends HTMLElement {
       this.#video.url = src;
       this.#updateVideoPreviewStyle(preview);
       preview.play?.();
-      this.#updateChit();
+      this.#updateSwatch();
       this.#emitInput();
     });
 
@@ -2029,7 +2029,7 @@ class FigFillPicker extends HTMLElement {
       if (preview.src) return;
       this.#video.url = null;
       this.#updateVideoPreviewStyle(preview);
-      this.#updateChit();
+      this.#updateSwatch();
       this.#emitInput();
     });
 
@@ -2453,7 +2453,7 @@ class FigFillPicker extends HTMLElement {
 
   // ============ EVENT EMITTERS ============
   #emitInput() {
-    this.#updateChit();
+    this.#updateSwatch();
     this.dispatchEvent(
       new CustomEvent("input", {
         bubbles: true,
@@ -2523,7 +2523,7 @@ class FigFillPicker extends HTMLElement {
     switch (name) {
       case "value":
         this.#parseValue();
-        this.#updateChit();
+        this.#updateSwatch();
         if (this.#dialog) {
           // Update dialog UI if open - but don't rebuild if user is dragging
           if (!this.#isDraggingColor) {

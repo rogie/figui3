@@ -712,7 +712,7 @@ export function getChooserContentMode(
   if (!element) return "text";
   const firstChoice = element.querySelector("fig-choice");
   if (!firstChoice) return "text";
-  if (firstChoice.querySelector("fig-chit")) return "colors";
+  if (firstChoice.querySelector("fig-swatch")) return "colors";
   if (firstChoice.querySelector("fig-image")) {
     const hasLabel =
       firstChoice.querySelector("label") ||
@@ -751,14 +751,14 @@ const CHOOSER_PRESETS: Record<ChooserContentMode, string[]> = {
     `<fig-choice value="img-f"><fig-image src="${landscapeUrl()}" size="auto" aspect-ratio="1/1" full></fig-image><label>Label F</label></fig-choice>`,
   ],
   colors: [
-    '<fig-choice value="red" selected><fig-chit background="#FF0000" size="large" disabled></fig-chit></fig-choice>',
-    '<fig-choice value="blue"><fig-chit background="#0D99FF" size="large" disabled></fig-chit></fig-choice>',
-    '<fig-choice value="green"><fig-chit background="#14AE5C" size="large" disabled></fig-chit></fig-choice>',
-    '<fig-choice value="orange"><fig-chit background="#FF8C00" size="large" disabled></fig-chit></fig-choice>',
-    '<fig-choice value="purple"><fig-chit background="#9747FF" size="large" disabled></fig-chit></fig-choice>',
-    '<fig-choice value="pink"><fig-chit background="#E84BA5" size="large" disabled></fig-chit></fig-choice>',
-    '<fig-choice value="teal"><fig-chit background="#24B5A8" size="large" disabled></fig-chit></fig-choice>',
-    '<fig-choice value="yellow"><fig-chit background="#FFCD29" size="large" disabled></fig-chit></fig-choice>',
+    '<fig-choice value="red" selected><fig-swatch background="#FF0000" size="large" disabled></fig-swatch></fig-choice>',
+    '<fig-choice value="blue"><fig-swatch background="#0D99FF" size="large" disabled></fig-swatch></fig-choice>',
+    '<fig-choice value="green"><fig-swatch background="#14AE5C" size="large" disabled></fig-swatch></fig-choice>',
+    '<fig-choice value="orange"><fig-swatch background="#FF8C00" size="large" disabled></fig-swatch></fig-choice>',
+    '<fig-choice value="purple"><fig-swatch background="#9747FF" size="large" disabled></fig-swatch></fig-choice>',
+    '<fig-choice value="pink"><fig-swatch background="#E84BA5" size="large" disabled></fig-swatch></fig-choice>',
+    '<fig-choice value="teal"><fig-swatch background="#24B5A8" size="large" disabled></fig-swatch></fig-choice>',
+    '<fig-choice value="yellow"><fig-swatch background="#FFCD29" size="large" disabled></fig-swatch></fig-choice>',
   ],
 };
 

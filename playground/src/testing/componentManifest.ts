@@ -265,13 +265,6 @@ export const componentContracts: ComponentContract[] = [
     properties: [{ name: "value property", property: "value", value: "Medium", expected: "Medium" }],
   },
   {
-    tag: "fig-chit",
-    title: "Chit",
-    group: "display",
-    markup: `<fig-chit background="#0D99FF"></fig-chit>`,
-    attributes: [{ name: "background", attribute: "background", value: "#FF0000" }],
-  },
-  {
     tag: "fig-swatch",
     title: "Swatch",
     group: "display",

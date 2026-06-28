@@ -54,7 +54,7 @@ declare global {
       "fig-checkbox": WCProps;
       "fig-choice": WCProps;
       "fig-chooser": WCProps;
-      "fig-chit": WCProps;
+      "fig-swatch": WCProps;
       "fig-combo-input": WCProps;
       "fig-content": WCProps;
       "fig-dropdown": WCProps;
@@ -392,7 +392,7 @@ Use these first for most property panels:
 ### Color And Fill
 
 - `fig-input-color`: one solid color. Attrs/modifiers: `value`, `alpha`, `text`, `disabled`, `swatch-disabled`, `full`, plus ARIA passthrough attrs. Use `text="true"` for hex entry and `alpha="true"` when opacity matters.
-- `fig-chit`: display-only swatch for colors, gradients, images, and fill previews. Attrs/modifiers: `background`, `size="small|large"`, `selected`, `disabled`, `alpha`, plus ARIA label attrs.
+- `fig-swatch`: display-only swatch for colors, gradients, images, and fill previews. Attrs/modifiers: `background`, `size="small|large"`, `selected`, `disabled`, `alpha`, plus ARIA label attrs.
 - `fig-input-palette`: editable list of colors. Attrs/modifiers: `value`, `disabled`, `min`, `max`, `open`, `fixed`, `full`. Good for chart series, card accents, generated palettes, and theme ramps.
 - `fig-input-gradient`: focused gradient stop editor. Attrs/modifiers: `value`, `disabled`, `edit="true|false"`, `mode="handle|tip"`, `size="large"`, `full`. Use `edit="false"` for preset previews inside `fig-choice`.
 - `fig-input-fill`: best default for fills. Attrs/modifiers: `value`, `disabled`, `mode`, `alpha`, `full`, plus ARIA passthrough attrs. Supports solid, gradient, image, video, and webcam fill shapes depending on value type.

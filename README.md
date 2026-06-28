@@ -25,7 +25,7 @@ FigUI3 components are built to preserve native semantics where possible and add 
 - Selection components use standard keyboard patterns: tabs use roving focus and `aria-controls`, segmented controls expose a radio-group pattern with focus following arrow selection, choosers expose listbox/options, and menus support trigger state, item focus, Escape close, and disabled items.
 - Dialog, popup, tooltip, and toast surfaces expose names, close affordances, live-region behavior, Escape dismissal, and focus return behavior appropriate to their role.
 - Media components render their visual surface inside `fig-preview`; image/video semantics stay on the native media element, upload controls remain keyboard reachable, slotted image overlays stay in light DOM for framework ownership, and generated video controls render below the preview instead of as an overlay.
-- Display and pointer components expose useful semantics when interactive or informative: handles, chits, color tips, layers, spinners, shimmers, and skeletons sync names, busy states, disabled states, keyboard movement, inert states, or hidden states as appropriate.
+- Display and pointer components expose useful semantics when interactive or informative: handles, swatches, color tips, layers, spinners, shimmers, and skeletons sync names, busy states, disabled states, keyboard movement, inert states, or hidden states as appropriate.
 - Focus styling uses shared `--figma-focus-outline`, `--figma-focus-outline-offset`, and `--figma-focus-outline-radius` tokens so visible focus treatment stays consistent across components.
 - Component contracts include Playwright keyboard/focus coverage plus an axe smoke suite for representative form, media, overlay, selection, and loading fixtures.
 
@@ -92,7 +92,7 @@ Minimal example:
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
 | [Input Angle](#input-angle) | `<fig-input-angle>` | Angle/rotation dial and text input |
-| [Chit](#chit) | `<fig-chit>` | Color/gradient/image swatch |
+| [Swatch](#swatch) | `<fig-swatch>` | Color/gradient/image swatch |
 | [Color Tip](#color-tip) | `<fig-color-tip>` | Compact color tip with picker |
 | [Color Input](#color-input) | `<fig-input-color>` | Color picker with hex/alpha |
 | [Input Palette](#input-palette) | `<fig-input-palette>` | Editable multi-color palette |
@@ -388,9 +388,9 @@ Angle/rotation input with circular dial, optional text input, multi-unit support
 
 ### Color & Fill
 
-#### Chit
+#### Swatch
 
-`<fig-chit>` — [demo](https://rog.ie/figui3/#chit)
+`<fig-swatch>` — [demo](https://rog.ie/figui3/#swatch)
 
 A color/gradient/image swatch element with checkerboard background for alpha.
 
@@ -403,8 +403,8 @@ A color/gradient/image swatch element with checkerboard background for alpha.
 | `alpha` | number | — | Opacity (0-1) |
 
 ```html
-<fig-chit background="#FF5733"></fig-chit>
-<fig-chit background="linear-gradient(90deg, #FF0000, #0000FF)" size="large"></fig-chit>
+<fig-swatch background="#FF5733"></fig-swatch>
+<fig-swatch background="linear-gradient(90deg, #FF0000, #0000FF)" size="large"></fig-swatch>
 ```
 
 ---
@@ -584,7 +584,7 @@ Optional full fill picker dialog supporting solid, gradient, image, video, and w
 
 ```html
 <fig-fill-picker value='{"type":"solid","color":"#FF5733"}'>
-  <fig-chit></fig-chit>
+  <fig-swatch></fig-swatch>
 </fig-fill-picker>
 ```
 

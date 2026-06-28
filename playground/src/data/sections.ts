@@ -552,14 +552,14 @@ export const propkitSections: Section[] = [
   <fig-field direction="vertical">
     <label>Color</label>
     <fig-chooser layout="horizontal" value="red" full drag style="max-width: 100%">
-      <fig-choice value="red" selected><fig-chit background="#FF0000" size="large" disabled></fig-chit></fig-choice>
-      <fig-choice value="blue"><fig-chit background="#0D99FF" size="large" disabled></fig-chit></fig-choice>
-      <fig-choice value="green"><fig-chit background="#14AE5C" size="large" disabled></fig-chit></fig-choice>
-      <fig-choice value="orange"><fig-chit background="#FF8C00" size="large" disabled></fig-chit></fig-choice>
-      <fig-choice value="purple"><fig-chit background="#9747FF" size="large" disabled></fig-chit></fig-choice>
-      <fig-choice value="pink"><fig-chit background="#E84BA5" size="large" disabled></fig-chit></fig-choice>
-      <fig-choice value="teal"><fig-chit background="#24B5A8" size="large" disabled></fig-chit></fig-choice>
-      <fig-choice value="yellow"><fig-chit background="#FFCD29" size="large" disabled></fig-chit></fig-choice>
+      <fig-choice value="red" selected><fig-swatch background="#FF0000" size="large" disabled></fig-swatch></fig-choice>
+      <fig-choice value="blue"><fig-swatch background="#0D99FF" size="large" disabled></fig-swatch></fig-choice>
+      <fig-choice value="green"><fig-swatch background="#14AE5C" size="large" disabled></fig-swatch></fig-choice>
+      <fig-choice value="orange"><fig-swatch background="#FF8C00" size="large" disabled></fig-swatch></fig-choice>
+      <fig-choice value="purple"><fig-swatch background="#9747FF" size="large" disabled></fig-swatch></fig-choice>
+      <fig-choice value="pink"><fig-swatch background="#E84BA5" size="large" disabled></fig-swatch></fig-choice>
+      <fig-choice value="teal"><fig-swatch background="#24B5A8" size="large" disabled></fig-swatch></fig-choice>
+      <fig-choice value="yellow"><fig-swatch background="#FFCD29" size="large" disabled></fig-swatch></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -1466,7 +1466,7 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field>
           <label>Fill</label>
-          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}'></fig-input-fill>
+          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}' full></fig-input-fill>
         </fig-field>
         <fig-field>
           <label>Gradient</label>
@@ -1652,7 +1652,7 @@ export const propkitSections: Section[] = [
         </fig-field>
         <fig-field direction="horizontal">
           <label>Background</label>
-          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}'></fig-input-fill>
+          <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":0.8}' full></fig-input-fill>
         </fig-field>
         <fig-field direction="horizontal">
           <label>Brand Fade</label>

@@ -65,22 +65,22 @@ const colorFillSyncFixtures = [
   {
     name: "color-value",
     markup: `<fig-input-color value="#0D99FF" text="true"></fig-input-color>`,
-    tags: ["fig-input-color", "fig-input-text", "fig-input-number", "fig-chit"],
+    tags: ["fig-input-color", "fig-input-text", "fig-input-number", "fig-swatch"],
   },
   {
     name: "fill-solid-value",
     markup: `<fig-input-fill value='{"type":"solid","color":"#0D99FF"}'></fig-input-fill>`,
-    tags: ["fig-input-fill", "fig-input-text", "fig-input-number", "fig-chit"],
+    tags: ["fig-input-fill", "fig-input-text", "fig-input-number", "fig-swatch"],
   },
   {
     name: "fill-type-swap",
     markup: `<fig-input-fill value='{"type":"solid","color":"#0D99FF"}'></fig-input-fill>`,
-    tags: ["fig-input-fill", "fig-input-text", "fig-input-number", "fig-chit"],
+    tags: ["fig-input-fill", "fig-input-text", "fig-input-number", "fig-swatch"],
   },
   {
     name: "fill-mode",
     markup: `<fig-input-fill mode="solid" value='{"type":"solid","color":"#0D99FF"}'></fig-input-fill>`,
-    tags: ["fig-input-fill", "fig-chit"],
+    tags: ["fig-input-fill", "fig-swatch"],
   },
 ];
 
@@ -507,7 +507,7 @@ test.describe("fig.js runtime performance", () => {
   }
 
   test("syncs color and fill controls through public attribute paths with frame-settled reads", async ({ page }) => {
-    await mountMarkup(page, colorFillMarkup(), ["fig-input-color", "fig-input-fill", "fig-chit"]);
+    await mountMarkup(page, colorFillMarkup(), ["fig-input-color", "fig-input-fill", "fig-swatch"]);
 
     const measurement = await measureScenario(page, async () => {
       const color = document.querySelector("fig-input-color");

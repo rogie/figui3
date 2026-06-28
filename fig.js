@@ -7040,12 +7040,12 @@ class FigInputColor extends HTMLElement {
     const showText = this.getAttribute("text") !== "false";
     return showText
       ? !!this.querySelector(":scope > .input-combo")
-      : !!this.querySelector(":scope > fig-chit");
+      : !!this.querySelector(":scope > fig-swatch");
   }
 
   #refreshUI() {
     this.#setValues(this.getAttribute("value"));
-    this.#swatch = this.querySelector("fig-chit");
+    this.#swatch = this.querySelector("fig-swatch");
     this.#fillPicker = this.querySelector("fig-fill-picker");
     this.#textInput = this.querySelector("fig-input-text:not([type=number])");
     this.#alphaInput = this.querySelector("fig-input-number");
@@ -7152,18 +7152,18 @@ class FigInputColor extends HTMLElement {
       }
 
       let swatchElement = "";
-      swatchElement = `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-chit>`;
+      swatchElement = `<fig-swatch background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-swatch>`;
 
       html = `<div class="input-combo">
                 ${swatchElement}
                 ${label}
             </div>`;
     } else {
-      html = `<fig-chit background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-chit>`;
+      html = `<fig-swatch background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-swatch>`;
     }
     this.innerHTML = html;
 
-    this.#swatch = this.querySelector("fig-chit");
+    this.#swatch = this.querySelector("fig-swatch");
     this.#fillPicker = this.querySelector("fig-fill-picker");
     this.#textInput = this.querySelector("fig-input-text:not([type=number])");
     this.#alphaInput = this.querySelector("fig-input-number");
@@ -8041,7 +8041,7 @@ class FigInputFill extends HTMLElement {
       .join(" ");
   }
 
-  #fillPickerChitBackground() {
+  #fillPickerSwatchBackground() {
     switch (this.#fillType) {
       case "solid":
         return this.#solid.color;
@@ -8066,7 +8066,7 @@ class FigInputFill extends HTMLElement {
     }
   }
 
-  #fillPickerChitAlpha() {
+  #fillPickerSwatchAlpha() {
     switch (this.#fillType) {
       case "solid":
         return this.#solid.alpha;
@@ -8187,7 +8187,7 @@ class FigInputFill extends HTMLElement {
         <fig-fill-picker ${fpAttrs} value='${fillPickerValue}' ${
           disabled ? "disabled" : ""
         }>
-          <fig-chit background="${this.#fillPickerChitBackground()}" alpha="${this.#fillPickerChitAlpha()}"${disabled ? " disabled" : ""}></fig-chit>
+          <fig-swatch background="${this.#fillPickerSwatchBackground()}" alpha="${this.#fillPickerSwatchAlpha()}"${disabled ? " disabled" : ""}></fig-swatch>
         </fig-fill-picker>
         ${controlsHtml}
       </div>`;
@@ -8205,9 +8205,9 @@ class FigInputFill extends HTMLElement {
     // Label click triggers fill picker
     if (label && this.#fillPicker) {
       label.addEventListener("click", () => {
-        const chit = this.#fillPicker.querySelector("fig-chit");
-        if (chit) {
-          chit.click();
+        const swatch = this.#fillPicker.querySelector("fig-swatch");
+        if (swatch) {
+          swatch.click();
         }
       });
     }
@@ -8307,8 +8307,8 @@ class FigInputFill extends HTMLElement {
             break;
         }
         this.#updateFillPicker();
-        // Update the chit's alpha
-        this.#updateChitAlpha(alpha);
+        // Update the swatch's alpha
+        this.#updateSwatchAlpha(alpha);
         this.#emitInput();
       });
       this.#opacityInput.addEventListener("change", (e) => {
@@ -8490,9 +8490,9 @@ class FigInputFill extends HTMLElement {
     // Label click triggers fill picker
     if (label && this.#fillPicker) {
       label.addEventListener("click", () => {
-        const chit = this.#fillPicker.querySelector("fig-chit");
-        if (chit) {
-          chit.click();
+        const swatch = this.#fillPicker.querySelector("fig-swatch");
+        if (swatch) {
+          swatch.click();
         }
       });
     }
@@ -8536,7 +8536,7 @@ class FigInputFill extends HTMLElement {
             break;
         }
         this.#updateFillPicker();
-        this.#updateChitAlpha(alpha);
+        this.#updateSwatchAlpha(alpha);
         this.#emitInput();
       });
       this.#opacityInput.addEventListener("change", (e) => {
@@ -8552,11 +8552,11 @@ class FigInputFill extends HTMLElement {
     }
   }
 
-  #updateChitAlpha(alpha) {
+  #updateSwatchAlpha(alpha) {
     if (this.#fillPicker) {
-      const chit = this.#fillPicker.querySelector("fig-chit");
-      if (chit) {
-        chit.setAttribute("alpha", alpha);
+      const swatch = this.#fillPicker.querySelector("fig-swatch");
+      if (swatch) {
+        swatch.setAttribute("alpha", alpha);
       }
     }
   }
@@ -9132,7 +9132,7 @@ customElements.define("fig-input-palette", FigInputPalette);
  */
 class FigInputGradient extends HTMLElement {
   static SHIFT_SNAP = 5;
-  #chit;
+  #swatch;
   #track;
   #handleDragging = false;
   #arrowTooltipTimer = null;
@@ -9278,7 +9278,7 @@ class FigInputGradient extends HTMLElement {
           selected.showColorTip();
         }, 600);
       }
-      this.#syncChit();
+      this.#syncSwatch();
       this.#emitInput();
       this.#emitChange();
       return;
@@ -9297,7 +9297,7 @@ class FigInputGradient extends HTMLElement {
     selected.removeAttribute("selected");
     this.#gradient.stops.splice(idx, 1);
     this.#syncHandles();
-    this.#syncChit();
+    this.#syncSwatch();
     this.#emitInput();
     this.#emitChange();
   };
@@ -9385,9 +9385,9 @@ class FigInputGradient extends HTMLElement {
       const gradientValue = JSON.stringify(this.value);
       this.innerHTML = `
         <fig-fill-picker mode="gradient"${expAttr} value='${gradientValue}'${disabled ? " disabled" : ""}>
-          <fig-chit background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
+          <fig-swatch background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-swatch>
         </fig-fill-picker>`;
-      this.#chit = this.querySelector("fig-chit");
+      this.#swatch = this.querySelector("fig-swatch");
       this.#track = null;
       this.#setupPickerEvents();
       this.#syncFocusTarget();
@@ -9395,9 +9395,9 @@ class FigInputGradient extends HTMLElement {
     }
 
     this.innerHTML = `
-      <fig-chit background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-chit>
+      <fig-swatch background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-swatch>
       ${mode === "true" || mode === "picker" ? `<div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>` : ""}`;
-    this.#chit = this.querySelector("fig-chit");
+    this.#swatch = this.querySelector("fig-swatch");
     this.#track = this.querySelector(".fig-input-gradient-track");
 
     if (mode === "true" || mode === "picker") {
@@ -9420,7 +9420,7 @@ class FigInputGradient extends HTMLElement {
         ...this.#gradient,
         ...detail.gradient,
       });
-      this.#syncChit();
+      this.#syncSwatch();
     };
 
     picker.addEventListener("input", (e) => {
@@ -9514,7 +9514,7 @@ class FigInputGradient extends HTMLElement {
       this.#gradient.stops[i].position = Math.round((i / (count - 1)) * 100);
     }
     this.#syncHandles();
-    this.#syncChit();
+    this.#syncSwatch();
     this.#emitInput();
     this.#emitChange();
   }
@@ -9565,7 +9565,7 @@ class FigInputGradient extends HTMLElement {
       (s) => s.position === position && s.color === color,
     );
     this.#syncHandles();
-    this.#syncChit();
+    this.#syncSwatch();
     this.#emitInput();
     this.#emitChange();
 
@@ -9702,9 +9702,9 @@ class FigInputGradient extends HTMLElement {
     });
   }
 
-  #syncChit() {
-    if (!this.#chit) return;
-    this.#chit.setAttribute("background", this.#buildGradientCSS());
+  #syncSwatch() {
+    if (!this.#swatch) return;
+    this.#swatch.setAttribute("background", this.#buildGradientCSS());
   }
 
   #setupEventListeners() {
@@ -9731,7 +9731,7 @@ class FigInputGradient extends HTMLElement {
       );
       this.#addedOnPointerDown = true;
       this.#syncHandles();
-      this.#syncChit();
+      this.#syncSwatch();
       this.#emitInput();
       this.#hideGhost();
 
@@ -9775,7 +9775,7 @@ class FigInputGradient extends HTMLElement {
             "color",
             this.#stopColorCSS(this.#gradient.stops[idx]),
           );
-          this.#syncChit();
+          this.#syncSwatch();
           this.#emitInput();
         }
         return;
@@ -9816,7 +9816,7 @@ class FigInputGradient extends HTMLElement {
           handle.hideColorTip();
         }
       }
-      this.#syncChit();
+      this.#syncSwatch();
       this.#emitInput();
     });
 
@@ -9835,7 +9835,7 @@ class FigInputGradient extends HTMLElement {
             "color",
             this.#stopColorCSS(this.#gradient.stops[idx]),
           );
-          this.#syncChit();
+          this.#syncSwatch();
           this.#emitChange();
         }
         return;
@@ -9861,7 +9861,7 @@ class FigInputGradient extends HTMLElement {
       handle.style.left = `${(position / 100) * trackW}px`;
       this.#gradient.stops.sort((a, b) => a.position - b.position);
       this.#syncStopIndices();
-      this.#syncChit();
+      this.#syncSwatch();
       this.#emitChange();
       requestAnimationFrame(() => {
         this.#handleDragging = false;
@@ -9879,7 +9879,7 @@ class FigInputGradient extends HTMLElement {
         if (!newColor || !newColor.startsWith("#")) continue;
         if (newColor !== this.#gradient.stops[idx].color) {
           this.#gradient.stops[idx].color = newColor;
-          this.#syncChit();
+          this.#syncSwatch();
           this.#emitInput();
         }
       }
@@ -9944,7 +9944,7 @@ class FigInputGradient extends HTMLElement {
     switch (name) {
       case "value":
         this.#parseValue();
-        this.#syncChit();
+        this.#syncSwatch();
         this.#syncHandles();
         break;
       case "disabled":
@@ -9967,9 +9967,9 @@ class FigInputGradient extends HTMLElement {
   #syncDisabled() {
     const disabled = this.hasAttribute("disabled");
     this.#syncFocusTarget();
-    if (this.#chit) {
-      if (disabled) this.#chit.setAttribute("disabled", "");
-      else this.#chit.removeAttribute("disabled");
+    if (this.#swatch) {
+      if (disabled) this.#swatch.setAttribute("disabled", "");
+      else this.#swatch.removeAttribute("disabled");
     }
     if (this.#track) {
       for (const handle of this.#track.querySelectorAll("fig-handle")) {
@@ -10507,7 +10507,7 @@ class FigComboInput extends HTMLElement {
 }
 customElements.define("fig-combo-input", FigComboInput);
 
-/* Chit */
+/* Swatch */
 /**
  * A color/gradient/image swatch element.
  * @attr {string} background - Any CSS background value: color (#FF0000, rgba(...)), gradient (linear-gradient(...)), or image (url(...))
@@ -10516,7 +10516,7 @@ customElements.define("fig-combo-input", FigComboInput);
  * @attr {boolean} disabled - Whether the chip is disabled
  * @attr {number} alpha - Opacity value (0-1) to display the color with transparency
  */
-class FigChit extends HTMLElement {
+class FigSwatch extends HTMLElement {
   #type = "color"; // 'color', 'gradient', 'image'
   #boundHandleInput = null;
   #internalUpdate = false; // Flag to prevent re-render during internal input
@@ -10627,7 +10627,7 @@ class FigChit extends HTMLElement {
         rawBg,
       );
     this.style.setProperty(
-      "--chit-background",
+      "--swatch-background",
       isImage ? rawBg : `linear-gradient(${rawBg}, ${rawBg})`,
     );
   }
@@ -10691,7 +10691,7 @@ class FigChit extends HTMLElement {
             newValue,
           );
         this.style.setProperty(
-          "--chit-background",
+          "--swatch-background",
           isImg ? newValue : `linear-gradient(${newValue}, ${newValue})`,
         );
         return;
@@ -10721,8 +10721,6 @@ class FigChit extends HTMLElement {
     }
   }
 }
-customElements.define("fig-chit", FigChit);
-class FigSwatch extends FigChit {}
 customElements.define("fig-swatch", FigSwatch);
 
 /* Media */
@@ -10860,7 +10858,7 @@ class FigMedia extends HTMLElement {
       this.style.setProperty("--fig-media-fit", fit);
     }
 
-    this.querySelectorAll("fig-chit[data-generated]").forEach((el) => el.remove());
+    this.querySelectorAll("fig-swatch[data-generated]").forEach((el) => el.remove());
     this.#ensurePreviewElement();
     this.#ensureMediaElement();
     this.#syncGeneratedMediaElement();
@@ -14707,8 +14705,8 @@ customElements.define("fig-input-combo", FigInputCombo);
  */
 class FigColorTip extends HTMLElement {
   #fillPicker = null;
-  #chit = null;
-  #chitSelectedObserver = null;
+  #swatch = null;
+  #swatchSelectedObserver = null;
   #boundHandleInput = this.#handlePickerInput.bind(this);
   #boundHandleChange = this.#handlePickerChange.bind(this);
 
@@ -14744,33 +14742,33 @@ class FigColorTip extends HTMLElement {
       this.#fillPicker.removeEventListener("input", this.#boundHandleInput);
       this.#fillPicker.removeEventListener("change", this.#boundHandleChange);
     }
-    if (this.#chit) {
-      this.#chit.removeEventListener("input", this.#boundHandleInput);
-      this.#chit.removeEventListener("change", this.#boundHandleChange);
+    if (this.#swatch) {
+      this.#swatch.removeEventListener("input", this.#boundHandleInput);
+      this.#swatch.removeEventListener("change", this.#boundHandleChange);
     }
-    if (this.#chitSelectedObserver) {
-      this.#chitSelectedObserver.disconnect();
-      this.#chitSelectedObserver = null;
+    if (this.#swatchSelectedObserver) {
+      this.#swatchSelectedObserver.disconnect();
+      this.#swatchSelectedObserver = null;
     }
   }
 
-  #observeChitSelected() {
-    if (this.#chitSelectedObserver) {
-      this.#chitSelectedObserver.disconnect();
-      this.#chitSelectedObserver = null;
+  #observeSwatchSelected() {
+    if (this.#swatchSelectedObserver) {
+      this.#swatchSelectedObserver.disconnect();
+      this.#swatchSelectedObserver = null;
     }
-    if (!this.#chit) return;
-    this.#chitSelectedObserver = new MutationObserver(() => {
-      const chitSelected =
-        this.#chit?.hasAttribute("selected") &&
-        this.#chit.getAttribute("selected") !== "false";
-      if (chitSelected) {
+    if (!this.#swatch) return;
+    this.#swatchSelectedObserver = new MutationObserver(() => {
+      const swatchSelected =
+        this.#swatch?.hasAttribute("selected") &&
+        this.#swatch.getAttribute("selected") !== "false";
+      if (swatchSelected) {
         if (!this.hasAttribute("selected")) this.setAttribute("selected", "");
       } else if (this.hasAttribute("selected")) {
         this.removeAttribute("selected");
       }
     });
-    this.#chitSelectedObserver.observe(this.#chit, {
+    this.#swatchSelectedObserver.observe(this.#swatch, {
       attributes: true,
       attributeFilter: ["selected"],
     });
@@ -14788,7 +14786,7 @@ class FigColorTip extends HTMLElement {
       const label = this.getAttribute("aria-label") || (mode === "add" ? "Add color stop" : "Remove color stop");
       this.innerHTML = `<fig-button icon variant="ghost" aria-label="${label}"><fig-icon name="${iconName}"></fig-icon></fig-button>`;
       this.#fillPicker = null;
-      this.#chit = null;
+      this.#swatch = null;
       this.addEventListener("click", this.#handleControlClick);
       this.#syncA11y();
       return;
@@ -14807,23 +14805,23 @@ class FigColorTip extends HTMLElement {
             opacity: Math.round(alpha * 100),
           })
         : JSON.stringify({ type: "solid", color });
-    const chitAlphaAttr = alpha < 1 ? ` alpha="${alpha}"` : "";
+    const swatchAlphaAttr = alpha < 1 ? ` alpha="${alpha}"` : "";
     this.innerHTML = hasFigFillPicker()
       ? `<fig-fill-picker mode="solid" ${alphaAttr} value='${pickerValue}'>
-          <fig-chit background="${color}"${chitAlphaAttr}></fig-chit>
+          <fig-swatch background="${color}"${swatchAlphaAttr}></fig-swatch>
         </fig-fill-picker>`
-      : `<fig-chit background="${color}"${chitAlphaAttr}></fig-chit>`;
+      : `<fig-swatch background="${color}"${swatchAlphaAttr}></fig-swatch>`;
 
     this.#fillPicker = this.querySelector("fig-fill-picker");
-    this.#chit = this.querySelector("fig-chit");
+    this.#swatch = this.querySelector("fig-swatch");
     this.#teardownListeners();
     this.#fillPicker?.addEventListener("input", this.#boundHandleInput);
     this.#fillPicker?.addEventListener("change", this.#boundHandleChange);
     if (!this.#fillPicker) {
-      this.#chit?.addEventListener("input", this.#boundHandleInput);
-      this.#chit?.addEventListener("change", this.#boundHandleChange);
+      this.#swatch?.addEventListener("input", this.#boundHandleInput);
+      this.#swatch?.addEventListener("change", this.#boundHandleChange);
     }
-    this.#observeChitSelected();
+    this.#observeSwatchSelected();
     this.#syncA11y();
   }
 
@@ -14938,18 +14936,18 @@ class FigColorTip extends HTMLElement {
       }
     }
 
-    if (this.#chit) {
+    if (this.#swatch) {
       this.#syncA11y();
-      this.#chit.setAttribute("background", color);
+      this.#swatch.setAttribute("background", color);
       if (alpha < 1) {
-        this.#chit.setAttribute("alpha", String(alpha));
+        this.#swatch.setAttribute("alpha", String(alpha));
       } else {
-        this.#chit.removeAttribute("alpha");
+        this.#swatch.removeAttribute("alpha");
       }
       if (this.hasAttribute("disabled")) {
-        this.#chit.setAttribute("disabled", "");
+        this.#swatch.setAttribute("disabled", "");
       } else {
-        this.#chit.removeAttribute("disabled");
+        this.#swatch.removeAttribute("disabled");
       }
     }
   }
@@ -14971,7 +14969,7 @@ class FigColorTip extends HTMLElement {
       return;
     }
 
-    const target = this.#fillPicker || this.#chit;
+    const target = this.#fillPicker || this.#swatch;
     if (!target) return;
     const label = this.getAttribute("aria-label") || "Color stop";
     const labelledBy = this.getAttribute("aria-labelledby");

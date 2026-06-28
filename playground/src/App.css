@@ -8,6 +8,7 @@
   --playground-width: 260px;
   --playground-min-width: 260px;
   --playground-example-width: 240px;
+  --dash-inset: -3rem;
 }
 
 body {
@@ -264,9 +265,7 @@ nav {
 
 main {
   width: 100%;
-  max-width: calc(var(--playground-width) + var(--spacer-4) * 2);
-  min-width: calc(var(--playground-min-width) + var(--spacer-4) * 2);
-  padding: 0 var(--spacer-4);
+  max-width: var(--playground-example-width);
   padding-bottom: var(--spacer-4);
   max-height: calc(100vh - var(--spacer-4));
   overflow: visible;
@@ -277,7 +276,7 @@ main {
     font-size: 18px;
     font-weight: 600;
     color: var(--figma-color-text);
-    margin: 0 0 8px 0;
+    margin-bottom: var(--spacer-4);
   }
 }
 
@@ -286,11 +285,12 @@ main {
 }
 
 .propkit-example {
-  --dash-inset: -3rem;
+  
   width: var(--playground-example-width);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0;
   border: none;
   margin-top: calc(var(--dash-inset) * -0.5);
@@ -327,6 +327,7 @@ main {
   & > fig-layer {
     width: 100%;
   }
+
 }
 
 #app main {
@@ -359,6 +360,8 @@ code {
 .propkit-code-view {
   margin-top: var(--spacer-2);
   border: 1px solid var(--figma-color-border);
+  margin-left: calc(var(--dash-inset) * 0.5);
+  margin-right: calc(var(--dash-inset) * 0.5);
   border-radius: var(--radius-large);
   display: flex;
   flex-direction: column;

@@ -293,7 +293,7 @@
       rgba(255, 255, 255, 0.2) 0% 50%
     )
     0 0 / 0.5rem 0.5rem;
-  --checkerboard-chit: repeating-conic-gradient(
+  --checkerboard-swatch: repeating-conic-gradient(
       rgba(0, 0, 0, 0.2) 0% 25%,
       rgba(255, 255, 255, 0.2) 0% 50%
     )
@@ -1466,15 +1466,15 @@ input[type="color"] {
   }
 }
 
-fig-chit {
+fig-swatch {
   --size: 1.5rem;
   --padding: 5px;
   --width: var(--size);
   --height: var(--size);
   --border-radius: var(--radius-medium);
-  --chit-background: linear-gradient(#d9d9d9, #d9d9d9);
-  --chit-bg-size: cover;
-  --chit-bg-position: center;
+  --swatch-background: linear-gradient(#d9d9d9, #d9d9d9);
+  --swatch-bg-size: cover;
+  --swatch-bg-position: center;
   --selected: 0;
   --alpha: 1;
 
@@ -1494,7 +1494,7 @@ fig-chit {
     grid-area: 1/1;
   }
   & > div {
-    background: var(--checkerboard-chit);
+    background: var(--checkerboard-swatch);
     border-radius: var(--border-radius);
   }
 
@@ -1546,9 +1546,9 @@ fig-chit {
   }
   &::before {
     content: "";
-    background: var(--chit-background);
-    background-size: var(--chit-bg-size);
-    background-position: var(--chit-bg-position);
+    background: var(--swatch-background);
+    background-size: var(--swatch-bg-size);
+    background-position: var(--swatch-bg-position);
     background-repeat: no-repeat;
     border-radius: calc(var(--border-radius) - (var(--padding) / 2));
     mask-image: linear-gradient(
@@ -2020,7 +2020,7 @@ fig-3d-rotate {
         width: var(--figma-3d-rotate-handle-size);
         height: var(--figma-3d-rotate-handle-size);
         border-radius: 50%;
-        background: var(--figma-color-border-strong);
+        background: var(--figma-color-icon-brand);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -2340,7 +2340,7 @@ fig-combo-input fig-button[type="select"] {
     color: var(--figma-color-text);
   }
 
-  & > *:not(fig-chit){
+  & > *:not(fig-swatch){
     &:first-child:not(:last-child),
     &:first-child:not(:last-child) > * {
       border-top-right-radius: 0;
@@ -3094,11 +3094,6 @@ dialog,
     display: flex;
     flex-direction: column;
   }
-  >fig-header{
-    fig-button[icon][variant="ghost"]:not(fig-input-text fig-button) {
-      margin: 0;
-    }
-  }
 }
 dialog[is="fig-dialog"] {
   --z-index: 999999;
@@ -3475,10 +3470,12 @@ fig-group {
 fig-footer {
   display: flex;
   flex-shrink: 0;
+  width: 100%;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: flex-end;
   gap: var(--spacer-2);
-  padding: var(--spacer-2-5) var(--spacer-3);
+  padding: var(--spacer-2-5);
   box-shadow: inset 0 1px 0 0 var(--figma-color-border);
 
   & h3 {
@@ -3508,7 +3505,7 @@ fig-footer {
     text-align: center;
   }
 
-  &:has(> :is(fig-button, fig-tooltip) ~ :is(fig-button, fig-tooltip)) {
+  /*&:has(> :is(fig-button, fig-tooltip) ~ :is(fig-button, fig-tooltip)) {
     flex-direction: column;
     align-items: stretch;
 
@@ -3526,7 +3523,7 @@ fig-footer {
     & > .fig-footer-action fig-button {
       width: 100%;
     }
-  }
+  }*/
 
   &[borderless] {
     box-shadow: none;
@@ -3747,14 +3744,14 @@ fig-input-fill {
     outline-offset: -1px !important;
   }
 
-  & > .input-combo > fig-chit:not(:only-child),
-  & > .input-combo > fig-chit:not(:only-child) input,
+  & > .input-combo > fig-swatch:not(:only-child),
+  & > .input-combo > fig-swatch:not(:only-child) input,
   & > .input-combo > fig-fill-picker:not(:only-child),
-  & > .input-combo > fig-fill-picker:not(:only-child) > fig-chit > input,
+  & > .input-combo > fig-fill-picker:not(:only-child) > fig-swatch > input,
   & > .input-combo > label,
   & fig-fill-picker:not(:only-child),
   fig-input-text,
-  fig-chit {
+  fig-swatch {
     &,
     &:focus,
     &:hover {
@@ -3765,8 +3762,8 @@ fig-input-fill {
       --selected: 0;
     }
   }
-  fig-chit ~ fig-input-text > input,
-  fig-chit ~ label,
+  fig-swatch ~ fig-input-text > input,
+  fig-swatch ~ label,
   fig-fill-picker ~ fig-input-text > input {
     padding-left: 0 !important;
   }
@@ -3813,6 +3810,11 @@ fig-input-fill {
   }
 }
 
+fig-input-color,
+fig-input-fill {
+  width: 8.9375rem;
+}
+
 fig-input-fill {
   & > .input-combo > fig-fill-picker {
     display: contents;
@@ -3853,7 +3855,7 @@ fig-input-gradient {
   --fig-input-gradient-height: 1.5rem;
   --fig-input-gradient-padding: var(--spacer-1);
   --fig-input-gradient-handle-size: 14px;
-  --fig-input-gradient-chit-border-radius: var(--radius-large);
+  --fig-input-gradient-swatch-border-radius: var(--radius-large);
   position: relative;
   height: var(--fig-input-gradient-height);
   width: 100%;
@@ -3890,13 +3892,13 @@ fig-input-gradient {
     .fig-input-gradient-track {
       inset: 0 calc(var(--fig-input-gradient-padding) + 2px);
     }
-    --fig-input-gradient-chit-border-radius: var(--radius-medium);
+    --fig-input-gradient-swatch-border-radius: var(--radius-medium);
   }
 
   &[edit="false"],
   &[edit="picker"] {
     pointer-events: none;
-    --fig-input-gradient-chit-border-radius: var(--radius-medium);
+    --fig-input-gradient-swatch-border-radius: var(--radius-medium);
 
   }
 
@@ -3905,15 +3907,15 @@ fig-input-gradient {
       display: contents;
     }
   }
-  & > fig-chit,
-  & > fig-fill-picker > fig-chit {
+  & > fig-swatch,
+  & > fig-fill-picker > fig-swatch {
     --width: 100%;
     width: var(--width);
-    --border-radius: var(--fig-input-gradient-chit-border-radius);
+    --border-radius: var(--fig-input-gradient-swatch-border-radius);
   }
   &[size="large"] {
     --fig-input-gradient-height: 2rem;
-    --fig-input-gradient-chit-border-radius: var(--radius-medium);
+    --fig-input-gradient-swatch-border-radius: var(--radius-medium);
     height: var(--fig-input-gradient-height) !important;
     
     .fig-input-gradient-track {
@@ -3994,7 +3996,7 @@ fig-input-palette {
         &:focus-within {
           outline: 0 !important;
         }
-        fig-chit {
+        fig-swatch {
           --border-radius: 0px;
           --width: 100%;
           --padding: 0px;
@@ -4015,7 +4017,7 @@ fig-input-palette {
           }
         }
         &:first-child{
-          & fig-chit::after{
+          & fig-swatch::after{
             box-shadow: none;
           }
         }
@@ -4068,7 +4070,7 @@ fig-input-palette {
       grid-column: button;
     }
 
-    fig-chit {
+    fig-swatch {
       --border-radius: var(--radius-medium);
       width: auto !important;
       height: var(--size);
@@ -5162,6 +5164,7 @@ fig-handle {
 }
 
 fig-color-tip {
+  --size: 1.5rem;
   --tip-selection-width: 1px;
   --tip-selection-scale: 1;
   --beak-offset: 50%;
@@ -5174,10 +5177,10 @@ fig-color-tip {
   position: relative;
   color: var(--figma-color-text);
   color-scheme: light only;
+  width: var(--size);
+  height: var(--size);
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
-  min-width: max-content;
-  min-height: max-content;
   background-color: var(--figma-color-bg);
   border-radius: var(--radius-medium, 0.3125rem);
   box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
@@ -5190,7 +5193,7 @@ fig-color-tip {
     cursor: pointer;
   }
 
-  fig-chit {
+  fig-swatch {
     input[type="color"] {
       background: transparent;
     }

@@ -251,8 +251,8 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
-    id: "chit",
-    name: "Chit",
+    id: "swatch",
+    name: "Swatch",
     group: "Core components",
     description: "Color and gradient swatch display for fill previews.",
     examples: [
@@ -260,7 +260,7 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-chit background="linear-gradient(135deg, #667eea, #764ba2)" alpha="0.8"></fig-chit>
+  <fig-swatch background="linear-gradient(135deg, #667eea, #764ba2)" alpha="0.8"></fig-swatch>
 </div>`,
       },
     ],

@@ -1526,14 +1526,14 @@ test.describe("reconnect resilience", () => {
     const getState = () =>
       page.locator("#color-reconnect").evaluate((host) => ({
         comboCount: host.querySelectorAll(":scope > .input-combo").length,
-        chitCount: host.querySelectorAll("fig-chit").length,
+        swatchCount: host.querySelectorAll("fig-swatch").length,
         textCount: host.querySelectorAll("fig-input-text").length,
         value: host.getAttribute("value"),
       }));
 
     expect(await getState()).toEqual({
       comboCount: 1,
-      chitCount: 1,
+      swatchCount: 1,
       textCount: 1,
       value: "#ff0000",
     });
@@ -1542,7 +1542,7 @@ test.describe("reconnect resilience", () => {
 
     expect(await getState()).toEqual({
       comboCount: 1,
-      chitCount: 1,
+      swatchCount: 1,
       textCount: 1,
       value: "#ff0000",
     });
@@ -1815,7 +1815,7 @@ test.describe("fill picker accessibility", () => {
       await Promise.all([
         customElements.whenDefined("fig-fill-picker"),
         customElements.whenDefined("fig-input-gradient"),
-        customElements.whenDefined("fig-chit"),
+        customElements.whenDefined("fig-swatch"),
         customElements.whenDefined("fig-button"),
         customElements.whenDefined("fig-dropdown"),
         customElements.whenDefined("fig-slider"),
@@ -1835,17 +1835,17 @@ test.describe("fill picker accessibility", () => {
           aria-label="Layer fill"
           value='{"type":"solid","color":"#0D99FF"}'
         >
-          <fig-chit background="#0D99FF"></fig-chit>
+          <fig-swatch background="#0D99FF"></fig-swatch>
         </fig-fill-picker>
       `;
     });
     await page.waitForTimeout(100);
 
-    await expect(page.locator("#picker fig-chit")).toHaveAttribute(
+    await expect(page.locator("#picker fig-swatch")).toHaveAttribute(
       "aria-label",
       "Open Layer fill",
     );
-    await page.locator("#picker fig-chit").focus();
+    await page.locator("#picker fig-swatch").focus();
     await page.keyboard.press("Enter");
     await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
       "open",
@@ -2191,7 +2191,7 @@ test.describe("remaining accessibility contracts", () => {
         "yellow",
       ]
         .map((color) => {
-          return `<fig-choice value="${color}"><fig-chit size="large" disabled></fig-chit></fig-choice>`;
+          return `<fig-choice value="${color}"><fig-swatch size="large" disabled></fig-swatch></fig-choice>`;
         })
         .join("");
       root.innerHTML = `
