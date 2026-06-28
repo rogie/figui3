@@ -12,7 +12,7 @@ fig-field-slider {
   --fig-field-slider-elastic-distance: var(--spacer-2);
   --fig-field-slider-elastic-size: 0px;
   --fig-field-slider-elastic-position-offset: 0px;
-  --fig-field-slider-elastic-transition: 0.05s ease-out;
+  --fig-field-slider-elastic-transition: 0.1s ease-out;
   --figma-focus-outline-offset: 1px;
   --fig-field-slider-progress-shadow: inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
   --field-text-shadow: 0 1px 1.5px
@@ -20,7 +20,6 @@ fig-field-slider {
   display: block;
   position: relative;
   width: 100%;
-  transform: translateX(0);
   border-radius: var(--radius-medium);
   transition:
     width var(--fig-field-slider-elastic-transition),
@@ -116,8 +115,9 @@ fig-field-slider {
           calc(var(--slider-percent) - var(--start-percent)),
           calc(var(--start-percent) - var(--slider-percent))
         );
+        --slider-delta-right-inset: max(var(--slider-delta-direction, 1), 0);
         --slider-thumb-travel-offset: calc(
-          var(--slider-thumb-edge-offset) * var(--slider-delta-direction, 1)
+          var(--slider-thumb-edge-offset) * var(--slider-delta-right-inset)
         );
       }
 
@@ -152,6 +152,8 @@ fig-field-slider {
         }
         input[type="range"] {
           border-radius: 0 !important;
+          width: calc(100% - var(--spacer-2)) !important;
+          margin-left: var(--spacer-2);
           &::-webkit-slider-thumb {
             margin-left: var(--slider-thumb-travel-offset);
           }
@@ -189,6 +191,40 @@ fig-field-slider {
           )
         ) !important;
         width: var(--abs-width) !important;
+      }
+
+      &:is([type="hue"], [type="opacity"]) {
+        .fig-slider-input-container {
+          &::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            border-radius: var(--slider-border-radius);
+          }
+
+          input[type="range"] {
+            position: relative;
+            z-index: 1;
+            &::-webkit-slider-runnable-track {
+              background: transparent;
+            }
+            &::-moz-range-track {
+              background: transparent;
+            }
+          }
+        }
+      }
+
+      &[type="hue"] .fig-slider-input-container::after {
+        background: var(--bg-hue);
+      }
+
+      &[type="opacity"] .fig-slider-input-container::after {
+        background:
+          linear-gradient(to right, transparent, var(--color)),
+          var(--slider-checkerboard);
       }
     }
     &:hover,
