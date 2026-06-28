@@ -4753,6 +4753,20 @@ fig-icon {
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
+
+  &:has(> svg) {
+    background: transparent;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  & > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: inherit;
+    flex-shrink: 0;
+  }
 }
 
 @keyframes fig-spinner-spin {

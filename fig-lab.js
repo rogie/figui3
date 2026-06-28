@@ -13,6 +13,7 @@ class FigFieldSlider extends HTMLElement {
   #field = null;
   #label = null;
   #slider = null;
+  #hasCustomLabel = false;
   #observer = null;
   #managedSliderAttrs = new Set();
   #steppersSyncFrame = 0;
@@ -134,8 +135,11 @@ class FigFieldSlider extends HTMLElement {
       );
     });
 
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
     const field = document.createElement("fig-field");
-    const label = document.createElement("label");
+    const label = customLabel || document.createElement("label");
     const slider = document.createElement("fig-slider");
     slider.setAttribute("text", "true");
     for (const attrName of this.#getForwardedSliderAttrNames()) {
@@ -148,11 +152,13 @@ class FigFieldSlider extends HTMLElement {
     this.#field = field;
     this.#label = label;
     this.#slider = slider;
+    this.#hasCustomLabel = Boolean(customLabel);
 
     this.replaceChildren(field);
     this.#setupContextMenu();
 
     for (const node of initialChildren) {
+      if (node === customLabel) continue;
       this.#slider.appendChild(node);
     }
   }
@@ -183,7 +189,9 @@ class FigFieldSlider extends HTMLElement {
         this.#label.remove();
       }
     } else {
-      this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      if (!this.#hasCustomLabel) {
+        this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      }
       if (this.#label.parentElement !== this.#field) {
         this.#field.prepend(this.#label);
       }

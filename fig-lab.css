@@ -13,6 +13,7 @@ fig-field-slider {
   --fig-field-slider-elastic-size: 0px;
   --fig-field-slider-elastic-position-offset: 0px;
   --fig-field-slider-elastic-transition: 0.1s ease-out;
+  --fig-field-slider-height: 2rem;
   --figma-focus-outline-offset: 1px;
   --fig-field-slider-progress-shadow: inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
   --field-text-shadow: 0 1px 1.5px
@@ -20,6 +21,7 @@ fig-field-slider {
   display: block;
   position: relative;
   width: 100%;
+  height: var(--fig-field-slider-height);
   border-radius: var(--radius-medium);
   transition:
     width var(--fig-field-slider-elastic-transition),
@@ -57,6 +59,7 @@ fig-field-slider {
     position: relative;
     padding-left: var(--spacer-2-5);
     display: flex;
+    height: 100%;
 
     & > label {
       min-width: 0;
@@ -64,6 +67,15 @@ fig-field-slider {
       width: 100%;
       flex: 1 1 auto;
       color: var(--figma-color-text);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--spacer-1);
+      margin:0;
+      height: 100%;
+      fig-icon:first-child{
+        margin-left: calc(var(--spacer-1) * -1);
+      }
     }
 
     fig-slider {
