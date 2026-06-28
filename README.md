@@ -305,6 +305,10 @@ Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slid
 
 **Events:** `input`, `change` — forwarded from the inner slider.
 
+Double-click or right-click and choose "Reset to default" to reset to the `default` value, falling back to the slider minimum.
+
+**Methods:** `resetToDefault()` triggers the same reset behavior.
+
 ```html
 <fig-field-slider label="Opacity" min="0" max="100" value="75" units="%"></fig-field-slider>
 ```
@@ -1034,8 +1038,11 @@ Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="m
 | `position` | string | `"bottom left"` | Popup placement |
 | `offset` | string | — | Popup offset |
 | `closedby` | string | — | Popup close behavior |
+| `trigger` | string | — | Use `"contextmenu"` to open on right-click |
 
 **Keyboard:** Arrow keys move between enabled items, Home/End jump to edges, Enter/Space selects, Escape closes and returns focus to the trigger.
+
+**Methods:** `showAt(x, y)` opens the menu at viewport coordinates, useful for custom context menu behavior.
 
 ```html
 <fig-menu position="bottom left">

@@ -4887,6 +4887,7 @@ class FigSlider extends HTMLElement {
   #boundRangePointerUp;
   #lastSliderComplete = null;
   #lastSliderDefault = null;
+  #lastSliderDeltaDirection = null;
   #lastSliderUnchanged = null;
 
   constructor() {
@@ -5259,6 +5260,7 @@ class FigSlider extends HTMLElement {
   #syncProperties() {
     const complete = this.#calculateNormal(this.value);
     const defaultValue = this.#calculateNormal(this.default);
+    const deltaDirection = complete < defaultValue ? -1 : 1;
     const unchanged = complete === defaultValue ? 1 : 0;
 
     if (this.#lastSliderComplete !== complete) {
@@ -5268,6 +5270,10 @@ class FigSlider extends HTMLElement {
     if (this.#lastSliderDefault !== defaultValue) {
       this.style.setProperty("--default", defaultValue);
       this.#lastSliderDefault = defaultValue;
+    }
+    if (this.#lastSliderDeltaDirection !== deltaDirection) {
+      this.style.setProperty("--slider-delta-direction", deltaDirection);
+      this.#lastSliderDeltaDirection = deltaDirection;
     }
     if (this.#lastSliderUnchanged !== unchanged) {
       this.style.setProperty("--unchanged", unchanged);
@@ -16704,20 +16710,23 @@ customElements.define("fig-menu-separator", FigMenuSeparator);
 class FigMenu extends HTMLElement {
   #popup = null;
   #trigger = null;
+  #virtualAnchor = null;
   #observer = null;
   #boundTriggerClick;
+  #boundTriggerContextMenu;
   #boundPopupClick;
   #boundMenuKeydown;
   #boundPopupClose;
   #focusedIndex = -1;
 
   static get observedAttributes() {
-    return ["position", "offset", "closedby", "disabled", "open"];
+    return ["position", "offset", "closedby", "disabled", "open", "trigger"];
   }
 
   constructor() {
     super();
     this.#boundTriggerClick = this.#handleTriggerClick.bind(this);
+    this.#boundTriggerContextMenu = this.#handleTriggerContextMenu.bind(this);
     this.#boundPopupClick = this.#handlePopupClick.bind(this);
     this.#boundMenuKeydown = this.#handleMenuKeydown.bind(this);
     this.#boundPopupClose = this.#handlePopupClose.bind(this);
@@ -16808,6 +16817,11 @@ class FigMenu extends HTMLElement {
       this.querySelector(":scope > :not(fig-menu-item):not(fig-menu-separator)");
   }
 
+  #usesContextMenuTrigger() {
+    const trigger = (this.getAttribute("trigger") || "").toLowerCase();
+    return trigger === "contextmenu" || this.hasAttribute("contextmenu");
+  }
+
   #createPopup() {
     this.#popup = document.createElement("dialog", { is: "fig-popup" });
     this.#popup.setAttribute("is", "fig-popup");
@@ -16845,6 +16859,7 @@ class FigMenu extends HTMLElement {
     this.addEventListener("keydown", this.#boundMenuKeydown);
     if (this.#trigger) {
       this.#trigger.addEventListener("click", this.#boundTriggerClick);
+      this.#trigger.addEventListener("contextmenu", this.#boundTriggerContextMenu);
       this.#trigger.setAttribute("aria-haspopup", "menu");
       this.#trigger.setAttribute("aria-expanded", "false");
       this.#trigger.setAttribute("aria-controls", this.#popup.getAttribute("id"));
@@ -16859,6 +16874,7 @@ class FigMenu extends HTMLElement {
     this.removeEventListener("keydown", this.#boundMenuKeydown);
     if (this.#trigger) {
       this.#trigger.removeEventListener("click", this.#boundTriggerClick);
+      this.#trigger.removeEventListener("contextmenu", this.#boundTriggerContextMenu);
     }
     if (this.#popup) {
       this.#popup.removeEventListener("click", this.#boundPopupClick);
@@ -16880,6 +16896,7 @@ class FigMenu extends HTMLElement {
             this.#detectTrigger();
             if (this.#trigger) {
               this.#trigger.addEventListener("click", this.#boundTriggerClick);
+              this.#trigger.addEventListener("contextmenu", this.#boundTriggerContextMenu);
               this.#trigger.setAttribute("aria-haspopup", "menu");
               this.#trigger.setAttribute("aria-expanded", "false");
               this.#trigger.setAttribute("aria-controls", this.#popup.getAttribute("id"));
@@ -16936,6 +16953,7 @@ class FigMenu extends HTMLElement {
   }
 
   #handleTriggerClick(e) {
+    if (this.#usesContextMenuTrigger()) return;
     if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
     e.stopPropagation();
     const popupShowing = this.#popup?.matches?.(":open") ?? false;
@@ -16946,8 +16964,38 @@ class FigMenu extends HTMLElement {
     if (effectiveOpen) {
       this.open = false;
     } else {
+      if (this.#popup && this.#trigger) {
+        this.#popup.anchor = this.#trigger;
+      }
       this.open = true;
     }
+  }
+
+  #handleTriggerContextMenu(e) {
+    if (!this.#usesContextMenuTrigger()) return;
+    if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+    e.preventDefault();
+    e.stopPropagation();
+    this.#showAtAfterPointerRelease(e.clientX, e.clientY);
+  }
+
+  #showAtAfterPointerRelease(x, y) {
+    let opened = false;
+    let fallbackTimer = 0;
+    const openMenu = () => {
+      if (opened) return;
+      opened = true;
+      window.clearTimeout(fallbackTimer);
+      window.removeEventListener("pointerup", openMenu, true);
+      window.removeEventListener("pointercancel", openMenu, true);
+      requestAnimationFrame(() => this.showAt(x, y));
+    };
+    window.addEventListener("pointerup", openMenu, { once: true, capture: true });
+    window.addEventListener("pointercancel", openMenu, {
+      once: true,
+      capture: true,
+    });
+    fallbackTimer = window.setTimeout(openMenu, 180);
   }
 
   #handlePopupClick(e) {
@@ -16967,6 +17015,9 @@ class FigMenu extends HTMLElement {
         (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
       ) {
         e.preventDefault();
+        if (this.#popup && this.#trigger) {
+          this.#popup.anchor = this.#trigger;
+        }
         this.open = true;
         requestAnimationFrame(() => this.#focusItemAt(0));
       }
@@ -17038,6 +17089,28 @@ class FigMenu extends HTMLElement {
       })
     );
     this.open = false;
+  }
+
+  showAt(x, y) {
+    this.#virtualAnchor = {
+      getBoundingClientRect: () => ({
+        width: 0,
+        height: 0,
+        top: y,
+        right: x,
+        bottom: y,
+        left: x,
+        x,
+        y,
+      }),
+    };
+    if (this.#popup) {
+      this.#popup.anchor = this.#virtualAnchor;
+    }
+    if (this.open) this.open = false;
+    requestAnimationFrame(() => {
+      this.open = true;
+    });
   }
 
   #openMenu() {

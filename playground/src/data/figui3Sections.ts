@@ -1083,6 +1083,21 @@ export const figui3Sections: Section[] = [
   </fig-menu>
 </div>`,
       },
+      {
+        id: "context",
+        name: "Context menu",
+        markup: `<div class="prop-panel">
+  <fig-menu trigger="contextmenu" position="bottom left">
+    <div fig-menu-trigger tabindex="0" data-playground-ignore-controls="true" data-playground-show-source="true" style="display: grid; place-items: center; min-height: 4rem; padding: var(--spacer-4); border: 1px dashed var(--figma-color-border); border-radius: var(--radius-medium); color: var(--figma-color-text-secondary); user-select: none;">
+      Right-click this area
+    </div>
+    <fig-menu-item value="copy">Copy</fig-menu-item>
+    <fig-menu-item value="paste">Paste</fig-menu-item>
+    <fig-menu-separator></fig-menu-separator>
+    <fig-menu-item value="delete">Delete</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
     ],
   },
   ...propkitSections.filter((section) => section.group === "Containers"),

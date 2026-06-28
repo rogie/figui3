@@ -16,9 +16,30 @@ class FigFieldSlider extends HTMLElement {
   #observer = null;
   #managedSliderAttrs = new Set();
   #steppersSyncFrame = 0;
+  #focusSyncFrame = 0;
+  #rangeInput = null;
+  #contextMenu = null;
+  #pendingClickTimer = 0;
+  #pendingClickValue = null;
+  #isElasticTracking = false;
+  #elasticMaxPx = 0;
+  #elasticRangeRect = null;
   #boundHandleSliderInput = null;
   #boundHandleSliderChange = null;
-  #ignoredSliderAttrs = new Set(["variant", "color", "text", "full"]);
+  #boundHandleElasticPointerDown = this.#handleElasticPointerDown.bind(this);
+  #boundHandleElasticPointerMove = this.#handleElasticPointerMove.bind(this);
+  #boundHandleElasticPointerEnd = this.#handleElasticPointerEnd.bind(this);
+  #boundHandleRangeDoubleClick = this.#handleRangeDoubleClick.bind(this);
+  #boundHandleContextMenu = this.#handleContextMenu.bind(this);
+  #boundHandleContextMenuChange = this.#handleContextMenuChange.bind(this);
+  #ignoredSliderAttrs = new Set([
+    "variant",
+    "color",
+    "text",
+    "full",
+    "data-elastic-dragging",
+    "style",
+  ]);
 
   static get observedAttributes() {
     return ["label", "direction"];
@@ -32,6 +53,16 @@ class FigFieldSlider extends HTMLElement {
     this.#syncField();
     this.#syncSliderAttributes();
     this.#bindSliderEvents();
+    this.#queueFocusDelegationSync();
+    this.removeEventListener("pointerdown", this.#boundHandleElasticPointerDown, {
+      capture: true,
+    });
+    this.addEventListener("pointerdown", this.#boundHandleElasticPointerDown, {
+      capture: true,
+      passive: true,
+    });
+    this.removeEventListener("contextmenu", this.#boundHandleContextMenu);
+    this.addEventListener("contextmenu", this.#boundHandleContextMenu);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -58,7 +89,10 @@ class FigFieldSlider extends HTMLElement {
         }
 
         if (syncField) this.#syncField();
-        if (syncSlider) this.#syncSliderAttributes();
+        if (syncSlider) {
+          this.#syncSliderAttributes();
+          this.#queueFocusDelegationSync();
+        }
       });
     }
 
@@ -71,7 +105,19 @@ class FigFieldSlider extends HTMLElement {
       cancelAnimationFrame(this.#steppersSyncFrame);
       this.#steppersSyncFrame = 0;
     }
+    if (this.#focusSyncFrame) {
+      cancelAnimationFrame(this.#focusSyncFrame);
+      this.#focusSyncFrame = 0;
+    }
+    this.#clearPendingClick();
+    this.#resetElasticPull();
+    this.#unbindRangeInput();
     this.#unbindSliderEvents();
+    this.removeEventListener("pointerdown", this.#boundHandleElasticPointerDown, {
+      capture: true,
+    });
+    this.removeEventListener("contextmenu", this.#boundHandleContextMenu);
+    this.#contextMenu?.removeEventListener("change", this.#boundHandleContextMenuChange);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -104,10 +150,26 @@ class FigFieldSlider extends HTMLElement {
     this.#slider = slider;
 
     this.replaceChildren(field);
+    this.#setupContextMenu();
 
     for (const node of initialChildren) {
       this.#slider.appendChild(node);
     }
+  }
+
+  #setupContextMenu() {
+    const menu = document.createElement("fig-menu");
+    menu.setAttribute("position", "bottom left");
+    menu.setAttribute("offset", "0 0");
+
+    const resetItem = document.createElement("fig-menu-item");
+    resetItem.setAttribute("value", "reset-default");
+    resetItem.textContent = "Reset to default";
+    menu.appendChild(resetItem);
+    menu.addEventListener("change", this.#boundHandleContextMenuChange);
+
+    this.#contextMenu = menu;
+    this.appendChild(menu);
   }
 
   #syncField() {
@@ -204,7 +266,242 @@ class FigFieldSlider extends HTMLElement {
     this.#steppersSyncFrame = requestAnimationFrame(() => {
       this.#steppersSyncFrame = 0;
       this.#syncSteppersToNumberInput();
+      this.#syncFocusDelegation();
     });
+  }
+
+  #queueFocusDelegationSync() {
+    if (this.#focusSyncFrame) {
+      cancelAnimationFrame(this.#focusSyncFrame);
+    }
+    this.#focusSyncFrame = requestAnimationFrame(() => {
+      this.#focusSyncFrame = 0;
+      this.#syncFocusDelegation();
+    });
+  }
+
+  #syncFocusDelegation() {
+    const rangeInput = this.#slider?.querySelector('input[type="range"]');
+    const numberInput = this.#slider?.querySelector("fig-input-number input");
+    if (rangeInput !== this.#rangeInput) {
+      this.#bindRangeInput(rangeInput);
+    }
+    rangeInput?.removeAttribute("tabindex");
+    numberInput?.setAttribute("tabindex", "-1");
+  }
+
+  #bindRangeInput(rangeInput) {
+    this.#unbindRangeInput();
+    this.#rangeInput = rangeInput;
+    if (!this.#rangeInput) return;
+    this.#rangeInput.addEventListener("dblclick", this.#boundHandleRangeDoubleClick, {
+      capture: true,
+    });
+  }
+
+  #unbindRangeInput() {
+    if (!this.#rangeInput) return;
+    this.#rangeInput.removeEventListener("dblclick", this.#boundHandleRangeDoubleClick, {
+      capture: true,
+    });
+    this.#rangeInput = null;
+  }
+
+  #handleRangeDoubleClick(event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    this.#resetToDefault();
+  }
+
+  #handleElasticPointerDown(event) {
+    if (event.button !== 0 || this.hasAttribute("disabled")) return;
+    if (event.target?.closest?.("fig-input-number")) return;
+    const rangeInput =
+      this.#slider?.querySelector('input[type="range"]') ?? this.#rangeInput;
+    if (!rangeInput) return;
+    this.#rangeInput = rangeInput;
+    this.#isElasticTracking = true;
+    this.#elasticMaxPx = this.#readElasticDistance();
+    const rect = rangeInput.getBoundingClientRect();
+    this.#elasticRangeRect = {
+      left: rect.left,
+      right: rect.right,
+      width: rect.width,
+    };
+    window.addEventListener("pointermove", this.#boundHandleElasticPointerMove, {
+      passive: true,
+    });
+    window.addEventListener("pointerup", this.#boundHandleElasticPointerEnd, {
+      once: true,
+    });
+    window.addEventListener("pointercancel", this.#boundHandleElasticPointerEnd, {
+      once: true,
+    });
+  }
+
+  #handleElasticPointerMove(event) {
+    if (!this.#isElasticTracking) return;
+    this.#updateElasticPull(event.clientX);
+  }
+
+  #handleElasticPointerEnd() {
+    window.removeEventListener("pointermove", this.#boundHandleElasticPointerMove);
+    window.removeEventListener("pointerup", this.#boundHandleElasticPointerEnd);
+    window.removeEventListener("pointercancel", this.#boundHandleElasticPointerEnd);
+    this.#isElasticTracking = false;
+    this.#resetElasticPull();
+  }
+
+  #handleContextMenu(event) {
+    if (this.hasAttribute("disabled")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    this.#clearPendingClick();
+    this.#showContextMenuAfterPointerRelease(event.clientX, event.clientY);
+  }
+
+  #showContextMenuAfterPointerRelease(x, y) {
+    let opened = false;
+    let fallbackTimer = 0;
+    const openMenu = () => {
+      if (opened) return;
+      opened = true;
+      window.clearTimeout(fallbackTimer);
+      window.removeEventListener("pointerup", openMenu, true);
+      window.removeEventListener("pointercancel", openMenu, true);
+      requestAnimationFrame(() => {
+        this.#contextMenu?.showAt?.(x, y);
+      });
+    };
+    window.addEventListener("pointerup", openMenu, { once: true, capture: true });
+    window.addEventListener("pointercancel", openMenu, {
+      once: true,
+      capture: true,
+    });
+    fallbackTimer = window.setTimeout(openMenu, 180);
+  }
+
+  #handleContextMenuChange(event) {
+    event.stopPropagation();
+    if (event.detail?.value !== "reset-default") return;
+    this.#resetToDefault();
+  }
+
+  #clearPendingClick() {
+    if (this.#pendingClickTimer) {
+      clearTimeout(this.#pendingClickTimer);
+      this.#pendingClickTimer = 0;
+    }
+    this.#pendingClickValue = null;
+  }
+
+  #readElasticDistance() {
+    let raw = getComputedStyle(this)
+      .getPropertyValue("--fig-field-slider-elastic-distance")
+      .trim();
+    if (raw.includes("var(") || !raw.endsWith("px")) {
+      const probe = document.createElement("div");
+      Object.assign(probe.style, {
+        position: "absolute",
+        visibility: "hidden",
+        pointerEvents: "none",
+        width: "var(--fig-field-slider-elastic-distance)",
+      });
+      this.appendChild(probe);
+      raw = getComputedStyle(probe).width;
+      probe.remove();
+    }
+    const value = Number.parseFloat(raw);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+  }
+
+  #updateElasticPull(pointerX) {
+    const rect = this.#elasticRangeRect;
+    if (!rect || !this.#elasticMaxPx) {
+      this.#resetElasticPull();
+      return;
+    }
+    const overshoot =
+      pointerX < rect.left
+        ? pointerX - rect.left
+        : pointerX > rect.right
+          ? pointerX - rect.right
+          : 0;
+    if (!overshoot) {
+      this.#clearElasticPull();
+      return;
+    }
+    const offset = Math.max(
+      -this.#elasticMaxPx,
+      Math.min(this.#elasticMaxPx, overshoot * 0.5),
+    );
+    const stretch = Math.abs(offset);
+    this.dataset.elasticDragging = "true";
+    this.style.setProperty("--fig-field-slider-elastic-size", `${stretch}px`);
+    this.style.setProperty(
+      "--fig-field-slider-elastic-position-offset",
+      offset < 0 ? `${-stretch / 2}px` : `${stretch / 2}px`,
+    );
+  }
+
+  #resetElasticPull() {
+    this.#clearElasticPull();
+    this.#elasticMaxPx = 0;
+    this.#elasticRangeRect = null;
+  }
+
+  #clearElasticPull() {
+    this.removeAttribute("data-elastic-dragging");
+    this.style.removeProperty("--fig-field-slider-elastic-size");
+    this.style.removeProperty("--fig-field-slider-elastic-position-offset");
+  }
+
+  #valueFromPointer(event) {
+    const input = this.#rangeInput;
+    if (!input) return this.#slider?.value ?? "";
+    const rect = input.getBoundingClientRect();
+    const percent = rect.width
+      ? Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width))
+      : 0;
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const step = input.step === "any" ? 0 : Number(input.step || 1);
+    const raw = min + (max - min) * percent;
+    if (!step) return String(raw);
+    const snapped = Math.round((raw - min) / step) * step + min;
+    const decimals = Math.max(0, `${step}`.split(".")[1]?.length || 0);
+    return String(Number(snapped.toFixed(decimals)));
+  }
+
+  #defaultValue() {
+    return (
+      this.getAttribute("default") ??
+      this.#slider?.getAttribute("default") ??
+      this.getAttribute("value") ??
+      this.#slider?.getAttribute("value") ??
+      this.#rangeInput?.min ??
+      "0"
+    );
+  }
+
+  #resetToDefault() {
+    this.#clearPendingClick();
+    this.#setSliderValue(this.#defaultValue(), "input");
+    this.#setSliderValue(this.#defaultValue(), "change");
+  }
+
+  #setSliderValue(value, eventType) {
+    if (!this.#slider || value === null || value === undefined) return;
+    this.#slider.value = value;
+    this.dispatchEvent(
+      new CustomEvent(eventType, {
+        detail: this.#slider.value,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
   }
 
   #syncSteppersToNumberInput() {
@@ -254,6 +551,9 @@ class FigFieldSlider extends HTMLElement {
 
   #forwardSliderEvent(type, event) {
     event.stopPropagation();
+    if (type === "change") {
+      this.#resetElasticPull();
+    }
     const detail =
       event instanceof CustomEvent && event.detail !== undefined
         ? event.detail
@@ -266,6 +566,14 @@ class FigFieldSlider extends HTMLElement {
         composed: true,
       }),
     );
+  }
+
+  focus(options) {
+    this.#slider?.querySelector('input[type="range"]')?.focus(options);
+  }
+
+  resetToDefault() {
+    this.#resetToDefault();
   }
 }
 customElements.define("fig-field-slider", FigFieldSlider);
