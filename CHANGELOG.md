@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.5]
+
+### Fixed
+
+- Fixed `fig-joystick` rotated side axis labels sitting too far from the edge.
+
 ## [6.9.4]
 
 ### Fixed

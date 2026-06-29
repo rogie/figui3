@@ -4482,20 +4482,21 @@ fig-joystick {
     }
 
     &.left {
-      left: var(--spacer-2);
+      left: calc(var(--spacer-2) + 0.5em);
       top: 50%;
-      transform: translateY(-50%) rotate(-90deg);
+      transform: translate(-50%, -50%) rotate(-90deg);
       transform-origin: center;
 
       &.no-rotate {
+        left: var(--spacer-2);
         transform: translateY(-50%);
       }
     }
 
     &.right {
-      right: var(--spacer-2);
+      right: calc(var(--spacer-2) + 0.5em);
       top: 50%;
-      transform: translateY(-50%) rotate(90deg);
+      transform: translate(50%, -50%) rotate(90deg);
       transform-origin: center;
     }
   }
