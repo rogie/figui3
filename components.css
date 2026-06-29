@@ -3371,6 +3371,7 @@ fig-header {
   --fig-header-height: var(--spacer-6);
   height: var(--fig-header-height);
   flex-shrink: 0;
+  width: 100%;
   margin: 0;
   padding: var(--spacer-1) var(--spacer-3);
   display: flex;
@@ -3400,6 +3401,7 @@ fig-header {
 
 fig-group {
   display: block;
+  width: 100%;
   margin-bottom: var(--spacer-2-5);
 
   p{
@@ -3542,6 +3544,7 @@ main,
 fig-content {
   padding: var(--spacer-2-5) 0;
   display: block;
+  width: 100%;
   gap: 0;
   &:has(>fig-group[name]:first-child){
     padding-top: 0;

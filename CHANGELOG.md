@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.4]
+
+### Fixed
+
+- Fixed `fig-field-slider` handle edge positioning across range, delta, hue, opacity, and stepper variants.
+- Fixed `fig-field-slider` right-click reset menu positioning.
+- Fixed full-width layout behavior for `fig-header`, `fig-group`, and `fig-content`.
+
+### Changed
+
+- Added `fig-field-slider` reset-to-default interactions and elastic edge feedback.
+- Added context menu support for `fig-menu` and documented programmatic `showAt(x, y)` usage.
+- Added support for custom `fig-field-slider` labels and inline SVG content inside `fig-icon`.
+- Refined hue and opacity field slider visual fades.
+
 ## [6.9.3]
 
 ### Changed

@@ -244,7 +244,7 @@ class FigFieldSlider extends HTMLElement {
     if (sliderType === "opacity") {
       this.#slider.style.setProperty(
         "--color",
-        "var(--figma-color-bg-tertiary)",
+        "light-dark(#444444, #e6e6e6)",
       );
     } else {
       this.#slider.style.removeProperty("--color");

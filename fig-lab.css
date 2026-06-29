@@ -137,6 +137,11 @@ fig-field-slider {
         --slider-thumb-travel-offset: 0px;
       }
 
+      &[type="stepper"] .fig-slider-input-container input[type="range"] {
+        width: 100% !important;
+        margin-left: 0;
+      }
+
       &:has(input[type="range"]:focus-within) {
         --slider-thumb-outline: var(--figma-focus-outline) !important;
         --slider-thumb-outline-offset: var(--figma-focus-outline-offset) !important;
@@ -230,10 +235,28 @@ fig-field-slider {
       }
 
       &[type="hue"] .fig-slider-input-container::after {
+        --fig-field-slider-hue-fade-size: 30%;
         background: var(--bg-hue);
+        mask-image: linear-gradient(
+          to right,
+          transparent 0%,
+          rgba(0, 0, 0, 0.16) calc(var(--slider-percent) - var(--fig-field-slider-hue-fade-size)),
+          black var(--slider-percent),
+          rgba(0, 0, 0, 0.16) calc(var(--slider-percent) + var(--fig-field-slider-hue-fade-size)),
+          transparent 100%
+        );
+        -webkit-mask-image: linear-gradient(
+          to right,
+          transparent 0%,
+          rgba(0, 0, 0, 0.16) calc(var(--slider-percent) - var(--fig-field-slider-hue-fade-size)),
+          black var(--slider-percent),
+          rgba(0, 0, 0, 0.16) calc(var(--slider-percent) + var(--fig-field-slider-hue-fade-size)),
+          transparent 100%
+        );
       }
 
       &[type="opacity"] .fig-slider-input-container::after {
+        opacity: calc(0.2 + var(--slider-complete) * 0.65);
         background:
           linear-gradient(to right, transparent, var(--color)),
           var(--slider-checkerboard);
