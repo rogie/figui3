@@ -476,6 +476,24 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "presence",
     },
   },
+  "fig-input-oscillator": {
+    value: { label: "Value", type: "string" },
+    edit: {
+      label: "Edit",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    "aspect-ratio": aspectRatioRule,
+    precision: {
+      label: "Precision",
+      type: "number",
+      min: 0,
+      max: 4,
+      step: 1,
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-joystick": {
     "aspect-ratio": aspectRatioRule,
     "axis-labels": { label: "Axis labels", type: "string" },

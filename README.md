@@ -92,6 +92,7 @@ Minimal example:
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
 | [Input Angle](#input-angle) | `<fig-input-angle>` | Angle/rotation dial and text input |
+| [Input Oscillator](#input-oscillator) | `<fig-input-oscillator>` | Waveform oscillator editor |
 | [Swatch](#swatch) | `<fig-swatch>` | Color/gradient/image swatch |
 | [Color Tip](#color-tip) | `<fig-color-tip>` | Compact color tip with picker |
 | [Color Input](#color-input) | `<fig-input-color>` | Color picker with hex/alpha |
@@ -386,6 +387,39 @@ Angle/rotation input with circular dial, optional text input, multi-unit support
 <fig-input-angle value="90" text="true"></fig-input-angle>
 <fig-input-angle text="true" units="rad" value="3.14159"></fig-input-angle>
 <fig-input-angle text="true" rotations value="1080"></fig-input-angle>
+```
+
+---
+
+#### Input Oscillator
+
+`<fig-input-oscillator>`
+
+Waveform oscillator input with composable wave functions, live SVG waveform preview, draggable parameter handles, and direct numeric controls.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `value` | JSON string | — | `{"waves":[{"type":"sine","frequency":1,"amplitude":1,"phase":0,"offset":0}]}` |
+| `precision` | number | `2` | Decimal places |
+| `aspect-ratio` | string | `"2 / 1"` | Editor aspect ratio |
+| `edit` | boolean | `true` | Show editor and number fields; set to `"false"` for preview only |
+| `disabled` | boolean | `false` | Disable interaction |
+
+Supported `type` values: `"sine"`, `"square"`, `"sawtooth"`, `"triangle"`.
+
+**Properties:** `value` returns a normalized JSON string. `data` returns `{ waves }`. Single-wave JSON values are still accepted and normalized into `waves`.
+
+**Events:**
+
+| Event | Detail |
+|---|---|
+| `input` | `{ value, data, preset }` — while dragging or editing |
+| `change` | `{ value, data, preset }` — on release or committed edit |
+
+```html
+<fig-input-oscillator
+  value='{"waves":[{"type":"sine","frequency":1,"amplitude":1,"phase":0,"offset":0},{"type":"triangle","frequency":2,"amplitude":0.5,"phase":0,"offset":0}]}'
+></fig-input-oscillator>
 ```
 
 ---

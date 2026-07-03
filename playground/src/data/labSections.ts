@@ -122,4 +122,62 @@ export const labSections: Section[] = [
       },
     ],
   },
+  {
+    id: "oscillator",
+    name: "Oscillator",
+    description:
+      "A waveform oscillator input with a live SVG preview and direct parameter controls.",
+    examples: [
+      {
+        id: "sine",
+        name: "Wave",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Wave</label>
+    <fig-input-oscillator value='{"waves":[{"type":"sine","frequency":1,"amplitude":1,"phase":0,"offset":0}]}'></fig-input-oscillator>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "composite",
+        name: "Composite",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Composite Wave</label>
+    <fig-input-oscillator value='{"waves":[{"type":"sine","frequency":1,"amplitude":1,"phase":0,"offset":0},{"type":"triangle","frequency":2,"amplitude":0.5,"phase":90,"offset":0}]}'></fig-input-oscillator>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "square",
+        name: "Square",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Step Wave</label>
+    <fig-input-oscillator value='{"waves":[{"type":"square","frequency":2,"amplitude":1,"phase":0,"offset":0}]}'></fig-input-oscillator>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "triangle",
+        name: "Triangle",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Modulation</label>
+    <fig-input-oscillator value='{"waves":[{"type":"triangle","frequency":1.5,"amplitude":0.75,"phase":45,"offset":0}]}'></fig-input-oscillator>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "compact",
+        name: "Preview Only",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Wave Preview</label>
+    <fig-input-oscillator edit="false" value='{"waves":[{"type":"sawtooth","frequency":1,"amplitude":1,"phase":0,"offset":0}]}'></fig-input-oscillator>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
 ];

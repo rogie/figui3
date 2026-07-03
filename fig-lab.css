@@ -113,6 +113,13 @@ fig-field-slider {
         0px
       );
       --slider-thumb-travel-offset: var(--slider-thumb-edge-offset);
+      --fig-field-slider-progress-offset: calc(
+        min(var(--slider-complete), calc(1 - var(--slider-complete))) *
+          var(--spacer-2)
+      );
+      --fig-field-slider-progress-percent: calc(
+        var(--slider-percent) + var(--fig-field-slider-progress-offset)
+      );
       --slider-handle-shadow:
         inset 0 0 0 var(--slider-thumb-height) var(--slider-thumb-color),
         var(--handle-shadow) !important;
@@ -127,9 +134,8 @@ fig-field-slider {
           calc(var(--slider-percent) - var(--start-percent)),
           calc(var(--start-percent) - var(--slider-percent))
         );
-        --slider-delta-right-inset: max(var(--slider-delta-direction, 1), 0);
         --slider-thumb-travel-offset: calc(
-          var(--slider-thumb-edge-offset) * var(--slider-delta-right-inset)
+          (var(--slider-complete) - 1) * var(--spacer-2)
         );
       }
 
@@ -181,7 +187,7 @@ fig-field-slider {
       }
 
       &:not([type="delta"]) .fig-slider-input-container::before {
-        width: var(--slider-percent) !important;
+        width: var(--fig-field-slider-progress-percent) !important;
       }
 
       &[type="delta"] .fig-slider-input-container::before {
@@ -240,17 +246,17 @@ fig-field-slider {
         mask-image: linear-gradient(
           to right,
           transparent 0%,
-          rgba(0, 0, 0, 0.16) calc(var(--slider-percent) - var(--fig-field-slider-hue-fade-size)),
-          black var(--slider-percent),
-          rgba(0, 0, 0, 0.16) calc(var(--slider-percent) + var(--fig-field-slider-hue-fade-size)),
+          rgba(0, 0, 0, 0.16) calc(var(--fig-field-slider-progress-percent) - var(--fig-field-slider-hue-fade-size)),
+          black var(--fig-field-slider-progress-percent),
+          rgba(0, 0, 0, 0.16) calc(var(--fig-field-slider-progress-percent) + var(--fig-field-slider-hue-fade-size)),
           transparent 100%
         );
         -webkit-mask-image: linear-gradient(
           to right,
           transparent 0%,
-          rgba(0, 0, 0, 0.16) calc(var(--slider-percent) - var(--fig-field-slider-hue-fade-size)),
-          black var(--slider-percent),
-          rgba(0, 0, 0, 0.16) calc(var(--slider-percent) + var(--fig-field-slider-hue-fade-size)),
+          rgba(0, 0, 0, 0.16) calc(var(--fig-field-slider-progress-percent) - var(--fig-field-slider-hue-fade-size)),
+          black var(--fig-field-slider-progress-percent),
+          rgba(0, 0, 0, 0.16) calc(var(--fig-field-slider-progress-percent) + var(--fig-field-slider-hue-fade-size)),
           transparent 100%
         );
       }
@@ -520,6 +526,152 @@ fig-input-angle {
       box-shadow: var(--handle-shadow);
       border-radius: 50%;
     }
+  }
+}
+
+/* Oscillator Input */
+fig-input-oscillator {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  --aspect-ratio: 2 / 1;
+  --oscillator-stroke-width: 1;
+  --fig-input-oscillator-playhead-radius: 4px;
+
+  .fig-input-oscillator-svg-container {
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg-secondary);
+    padding: var(--spacer-3) var(--spacer-2);
+    margin-bottom: var(--spacer-2);
+    overflow: hidden;
+
+    &:is(:hover, :active, :focus, :focus-visible, :focus-within) {
+      overflow: visible;
+    }
+    path{
+      stroke: var(--figma-color-border-strong);
+    }
+  }
+
+  .fig-input-oscillator-svg {
+    display: block;
+    width: 100%;
+    aspect-ratio: var(--aspect-ratio);
+    overflow: visible;
+
+    .fig-input-oscillator-handle{
+      opacity: 0;
+    }
+    &:hover, 
+    &:focus-within,
+    &.dragging{
+      .fig-input-oscillator-handle{
+        opacity: 1;
+      }
+    }
+  }
+
+  .fig-input-oscillator-bounds {
+    fill: transparent;
+  }
+
+  .fig-input-oscillator-baseline {
+    pointer-events: none;
+    stroke: var(--figma-color-bordertranslucent);
+    stroke-width: var(--oscillator-stroke-width);
+    stroke-linecap: round;
+  }
+
+  .fig-input-oscillator-path {
+    pointer-events: none;
+    fill: none;
+    stroke: var(--figma-color-text);
+    stroke-width: var(--oscillator-stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .fig-input-oscillator-playhead {
+    pointer-events: none;
+    r: var(--fig-input-oscillator-playhead-radius);
+    fill: var(--handle-color);
+    stroke: var(--figma-color-bg);
+    stroke-width: 1px;
+  }
+
+  .fig-input-oscillator-handle {
+    overflow: visible;
+    pointer-events: all;
+    cursor: default;
+
+    .fig-input-oscillator-handle-inner {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+  }
+
+  .fig-input-oscillator-waves {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacer-2);
+  }
+
+  .fig-input-oscillator-wave {
+    padding: 0;
+
+    > .fig-input-oscillator-wave-summary {
+      min-height: var(--control-height);
+      padding: 0;
+
+      > label {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacer-1);
+        min-width: 0;
+
+        > svg {
+          flex: 0 0 auto;
+        }
+      }
+
+      > .fig-input-oscillator-remove-button {
+        margin-left: auto;
+      }
+    }
+  }
+
+  .fig-input-oscillator-field {
+    --fig-field-left-padding: 0;
+    --fig-field-right-padding: 0;
+
+    > fig-slider {
+      min-width: 0;
+    }
+  }
+
+  .fig-input-oscillator-add-wave {
+    display: grid;
+    grid-template-columns: auto;
+    justify-content: end;
+    width: 100%;
+
+    > fig-button[type="select"] {
+      > fig-dropdown,
+      > fig-dropdown > select {
+        width: 100%;
+        height: 100%;
+        min-width: 100%;
+        padding: 0;
+      }
+    }
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+    opacity: 0.6;
   }
 }
 

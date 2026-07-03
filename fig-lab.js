@@ -1774,6 +1774,827 @@ class FigCanvasControl extends HTMLElement {
 }
 customElements.define("fig-canvas-control", FigCanvasControl);
 
+/* Oscillator Input */
+/**
+ * A waveform oscillator input with live SVG preview and parameter controls.
+ * @attr {string} value - JSON string: {"waves":[{"type":"sine","frequency":1,"amplitude":1,"phase":0,"offset":0}]}
+ * @attr {number} precision - Decimal places for output values.
+ * @attr {string} aspect-ratio - SVG editor aspect ratio.
+ * @attr {boolean} edit - Whether to show the editor and number fields. Defaults to true.
+ */
+class FigInputOscillator extends HTMLElement {
+  #waves = [FigInputOscillator.#defaultWave()];
+  #activeWaveIndex = 0;
+  #precision = 2;
+  #drawWidth = 240;
+  #drawHeight = 120;
+  #isDragging = null;
+  #svg = null;
+  #path = null;
+  #playhead = null;
+  #playheadFrame = 0;
+  #baseline = null;
+  #bounds = null;
+  #handleAmplitude = null;
+  #handleFrequency = null;
+  #addTypeControl = null;
+  #fields = [];
+  #typeControls = [];
+  #waveRows = [];
+  #resizeObserver = null;
+
+  static TYPES = [
+    { name: "Wave", value: "sine" },
+    { name: "Square", value: "square" },
+    { name: "Sawtooth", value: "sawtooth" },
+    { name: "Triangle", value: "triangle" },
+  ];
+
+  static #defaultWave(type = "sine") {
+    return {
+      type,
+      frequency: 1,
+      amplitude: 1,
+      phase: 0,
+      offset: 0,
+    };
+  }
+
+  static get observedAttributes() {
+    return ["value", "precision", "aspect-ratio", "edit", "disabled"];
+  }
+
+  connectedCallback() {
+    this.#precision = this.#readInteger("precision", 2);
+    this.#parseValue(this.getAttribute("value"));
+    this.#syncAspectRatio();
+    this.#render();
+    this.#setupResizeObserver();
+  }
+
+  disconnectedCallback() {
+    this.#isDragging = null;
+    this.#stopPlayhead();
+    if (this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+      this.#resizeObserver = null;
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    if (name === "value") {
+      this.#parseValue(newValue);
+      if (this.isConnected) this.#render();
+      return;
+    }
+
+    if (name === "precision") {
+      this.#precision = this.#readInteger("precision", 2);
+      if (this.isConnected) this.#syncUI();
+      return;
+    }
+
+    if (name === "aspect-ratio") {
+      this.#syncAspectRatio();
+      if (this.#svg) this.#updateWaveform();
+      return;
+    }
+
+    if (name === "edit" || name === "disabled") {
+      if (this.isConnected) this.#render();
+    }
+  }
+
+  get value() {
+    return JSON.stringify(this.data);
+  }
+
+  set value(value) {
+    this.setAttribute(
+      "value",
+      typeof value === "object" && value !== null ? JSON.stringify(value) : value,
+    );
+  }
+
+  get data() {
+    return {
+      waves: this.#waves.map((wave) => this.#roundWave(wave)),
+    };
+  }
+
+  get preset() {
+    const wave = this.#activeWave;
+    return FigInputOscillator.TYPES.find((type) => type.value === wave.type)?.name;
+  }
+
+  #readInteger(name, fallback) {
+    const value = Number.parseInt(this.getAttribute(name) || "", 10);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  #readBooleanAttribute(name, defaultValue = false) {
+    const value = this.getAttribute(name);
+    if (value === null) return defaultValue;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "" || normalized === "true") return true;
+    if (normalized === "false") return false;
+    return true;
+  }
+
+  #isEditEnabled() {
+    return this.getAttribute("edit") !== "false";
+  }
+
+  #isDisabled() {
+    return this.#readBooleanAttribute("disabled", false);
+  }
+
+  #syncAspectRatio() {
+    const aspectRatio = this.getAttribute("aspect-ratio") || "2 / 1";
+    this.style.setProperty("--aspect-ratio", aspectRatio);
+  }
+
+  #parseValue(value) {
+    if (!value) return false;
+
+    let parsed = null;
+    if (typeof value === "string") {
+      try {
+        parsed = JSON.parse(value);
+      } catch {
+        parsed = null;
+      }
+    } else if (typeof value === "object") {
+      parsed = value;
+    }
+
+    if (!parsed) return false;
+
+    const nextWaves = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed.waves)
+        ? parsed.waves
+        : [parsed];
+
+    this.#waves = nextWaves.map((wave) => this.#normalizeWave(wave));
+    if (!this.#waves.length) {
+      this.#waves = [FigInputOscillator.#defaultWave()];
+    }
+    this.#activeWaveIndex = Math.min(this.#activeWaveIndex, this.#waves.length - 1);
+    return true;
+  }
+
+  #normalizeWave(state = {}) {
+    return {
+      type: this.#normalizeType(state.type),
+      frequency: this.#clampNumber(state.frequency, 1, 0.1, 16),
+      amplitude: this.#clampNumber(state.amplitude, 1, -4, 4),
+      phase: this.#clampNumber(state.phase, 0, -360, 360),
+      offset: this.#clampNumber(state.offset, 0, -4, 4),
+    };
+  }
+
+  #roundWave(wave) {
+    return {
+      type: wave.type,
+      frequency: this.#round(wave.frequency),
+      amplitude: this.#round(wave.amplitude),
+      phase: this.#round(wave.phase),
+      offset: this.#round(wave.offset),
+    };
+  }
+
+  get #activeWave() {
+    if (!this.#waves[this.#activeWaveIndex]) {
+      this.#activeWaveIndex = 0;
+    }
+    return this.#waves[this.#activeWaveIndex] || FigInputOscillator.#defaultWave();
+  }
+
+  #normalizeType(type) {
+    const normalized = String(type || "").toLowerCase();
+    return FigInputOscillator.TYPES.some((item) => item.value === normalized)
+      ? normalized
+      : "sine";
+  }
+
+  #clampNumber(value, fallback, min, max) {
+    const number = Number.parseFloat(value);
+    if (!Number.isFinite(number)) return fallback;
+    return Math.min(max, Math.max(min, number));
+  }
+
+  #round(value) {
+    const scale = 10 ** this.#precision;
+    return Math.round(value * scale) / scale;
+  }
+
+  static #escapeAttribute(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  static #labelForType(type) {
+    return FigInputOscillator.TYPES.find((item) => item.value === type)?.name || "Wave";
+  }
+
+  static waveIcon(type, size = 24) {
+    const samples = 32;
+    const pad = 5;
+    const draw = size - pad * 2;
+    let d = "";
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      const value = FigInputOscillator.#waveValue(type, t);
+      const x = pad + t * draw;
+      const y = pad + (1 - (value + 1) / 2) * draw;
+      d += `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+
+  static #waveValue(type, t, phase = 0) {
+    const cycle = t + phase / 360;
+    const wrapped = cycle - Math.floor(cycle);
+    const angle = cycle * Math.PI * 2;
+
+    switch (type) {
+      case "square":
+        return Math.sin(angle) >= 0 ? 1 : -1;
+      case "sawtooth":
+        return wrapped * 2 - 1;
+      case "triangle":
+        return 1 - Math.abs(wrapped * 4 - 2);
+      default:
+        return Math.sin(angle);
+    }
+  }
+
+  #render() {
+    this.#stopPlayhead();
+    this.innerHTML = this.#getInnerHTML();
+    this.#cacheRefs();
+    this.#syncViewportSize();
+    this.#updateWaveform();
+    this.#setupEvents();
+    this.#startPlayhead();
+  }
+
+  #getInnerHTML() {
+    const disabled = this.#isDisabled() ? " disabled" : "";
+
+    return `<div class="fig-input-oscillator-svg-container">
+        <svg viewBox="0 0 ${this.#drawWidth} ${this.#drawHeight}" class="fig-input-oscillator-svg">
+          <rect class="fig-input-oscillator-bounds" x="0" y="0" width="${this.#drawWidth}" height="${this.#drawHeight}"></rect>
+          <line class="fig-input-oscillator-baseline"></line>
+          <path class="fig-input-oscillator-path"></path>
+          <circle class="fig-input-oscillator-playhead"></circle>
+          <foreignObject class="fig-input-oscillator-handle fig-input-oscillator-amplitude-handle" data-handle="amplitude" width="20" height="20"><div class="fig-input-oscillator-handle-inner"><fig-tooltip text="Amplitude"><fig-handle type="canvas" size="small" aria-label="Oscillator amplitude handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
+          <foreignObject class="fig-input-oscillator-handle fig-input-oscillator-frequency-handle" data-handle="frequency" width="20" height="20"><div class="fig-input-oscillator-handle-inner"><fig-tooltip text="Frequency"><fig-handle type="canvas" size="small" aria-label="Oscillator frequency handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
+        </svg>
+      </div>
+      ${this.#isEditEnabled() ? this.#getWaveControlsHTML(disabled) : ""}`;
+  }
+
+  #getWaveControlsHTML(disabled) {
+    return `<div class="fig-input-oscillator-waves">
+      ${this.#waves.map((wave, index) => this.#getWaveRowHTML(wave, index, disabled)).join("")}
+      <hstack class="fig-input-oscillator-add-wave">
+        <fig-button class="fig-input-oscillator-add-type-button" type="select" variant="ghost" icon aria-label="Choose waveform type"${disabled}>
+          <fig-icon name="settings"></fig-icon>
+          ${this.#getWaveTypeDropdownHTML("fig-input-oscillator-add-type", "sine", disabled)}
+        </fig-button>
+      </hstack>
+    </div>`;
+  }
+
+  #getWaveRowHTML(wave, index, disabled) {
+    const removeDisabled = disabled || this.#waves.length <= 1 ? " disabled" : "";
+    const active = index === this.#activeWaveIndex ? " data-active" : "";
+    const label = FigInputOscillator.#labelForType(wave.type);
+    return `<details class="fig-input-oscillator-wave" data-wave-index="${index}" open>
+      <summary class="fig-input-oscillator-wave-summary">
+        <label>${FigInputOscillator.waveIcon(wave.type, 24)}<span>${label}</span></label>
+        <fig-button class="fig-input-oscillator-remove-button" variant="ghost" icon data-wave-index="${index}" aria-label="Remove waveform"${removeDisabled}><fig-icon name="minus"></fig-icon></fig-button>
+      </summary>
+      <div class="fig-input-oscillator-fields" data-wave-index="${index}"${active}>
+        ${this.#getNumberFieldHTML(index, "frequency", "Frequency", 0.1, 16, 0.1, "")}
+        ${this.#getNumberFieldHTML(index, "amplitude", "Amplitude", -4, 4, 0.1, "")}
+        ${this.#getNumberFieldHTML(index, "phase", "Phase", -360, 360, 1, "°")}
+        ${this.#getNumberFieldHTML(index, "offset", "Offset", -4, 4, 0.1, "")}
+      </div>
+    </details>`;
+  }
+
+  #getWaveTypeDropdownHTML(className, value, disabled, index = null) {
+    const options = FigInputOscillator.TYPES.map((type) => {
+      const selected = type.value === value ? " selected" : "";
+      return `<option value="${type.value}"${selected}>
+        ${FigInputOscillator.waveIcon(type.value, 24)}
+        <label>${type.name}</label>
+      </option>`;
+    }).join("");
+    const indexAttr = index === null ? "" : ` data-wave-index="${index}"`;
+    const dropdownAttr = index === null ? ' type="dropdown" label="Choose waveform type"' : "";
+    return `<fig-dropdown class="${className}" value="${value}" experimental="modern"${dropdownAttr}${indexAttr}${disabled}>${options}</fig-dropdown>`;
+  }
+
+  #getNumberFieldHTML(index, name, label, min, max, step, units) {
+    const disabled = this.#isDisabled() ? " disabled" : "";
+    const unitsAttr = units
+      ? ` units="${FigInputOscillator.#escapeAttribute(units)}"`
+      : "";
+    const wave = this.#waves[index] || FigInputOscillator.#defaultWave();
+    return `<fig-field class="fig-input-oscillator-field" direction="horizontal" data-wave-index="${index}">
+      <label>${label}</label>
+      <fig-slider name="${name}" data-wave-index="${index}" value="${this.#round(wave[name])}" min="${min}" max="${max}" step="${step}" precision="${this.#precision}" text="true"${unitsAttr}${disabled}></fig-slider>
+    </fig-field>
+    `;
+  }
+
+  #cacheRefs() {
+    this.#svg = this.querySelector(".fig-input-oscillator-svg");
+    this.#path = this.querySelector(".fig-input-oscillator-path");
+    this.#playhead = this.querySelector(".fig-input-oscillator-playhead");
+    this.#baseline = this.querySelector(".fig-input-oscillator-baseline");
+    this.#bounds = this.querySelector(".fig-input-oscillator-bounds");
+    this.#handleAmplitude = this.querySelector('[data-handle="amplitude"]');
+    this.#handleFrequency = this.querySelector('[data-handle="frequency"]');
+    this.#addTypeControl = this.querySelector(".fig-input-oscillator-add-type");
+    this.#typeControls = Array.from(
+      this.querySelectorAll(".fig-input-oscillator-wave-type"),
+    );
+    this.#fields = Array.from(this.querySelectorAll("fig-slider[name]"));
+    this.#waveRows = Array.from(this.querySelectorAll("[data-wave-index]")).filter(
+      (row) => row.classList.contains("fig-input-oscillator-field"),
+    );
+  }
+
+  #setupResizeObserver() {
+    if (this.#resizeObserver || !window.ResizeObserver) return;
+    this.#resizeObserver = new ResizeObserver(() => {
+      if (this.#syncViewportSize()) this.#updateWaveform();
+    });
+    this.#resizeObserver.observe(this);
+  }
+
+  #syncViewportSize() {
+    if (!this.#svg) return false;
+    const rect = this.#svg.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width || 240));
+    const height = Math.max(1, Math.round(rect.height || 120));
+    const changed = width !== this.#drawWidth || height !== this.#drawHeight;
+    this.#drawWidth = width;
+    this.#drawHeight = height;
+    this.#svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    return changed;
+  }
+
+  #getValueRange() {
+    let span = 1;
+    const samples = 256;
+    for (let i = 0; i <= samples; i++) {
+      span = Math.max(span, Math.abs(this.#sampleAt(i / samples)));
+    }
+    return {
+      min: -span,
+      max: span,
+    };
+  }
+
+  #toY(value) {
+    const { min, max } = this.#getValueRange();
+    return this.#drawHeight - ((value - min) / (max - min)) * this.#drawHeight;
+  }
+
+  #fromY(y) {
+    const { min, max } = this.#getValueRange();
+    return min + (1 - y / this.#drawHeight) * (max - min);
+  }
+
+  #sampleAt(t) {
+    return this.#waves.reduce((sum, wave) => {
+      const cycleT = t * wave.frequency;
+      const value = FigInputOscillator.#waveValue(wave.type, cycleT, wave.phase);
+      return sum + wave.offset + value * wave.amplitude;
+    }, 0);
+  }
+
+  #updateWaveform() {
+    if (!this.#svg || !this.#path) return;
+    this.#syncViewportSize();
+
+    if (this.#bounds) {
+      this.#bounds.setAttribute("width", this.#drawWidth);
+      this.#bounds.setAttribute("height", this.#drawHeight);
+    }
+
+    const maxFrequency = Math.max(...this.#waves.map((wave) => wave.frequency));
+    const hasSharpWave = this.#waves.some(
+      (wave) => wave.type === "square" || wave.type === "sawtooth",
+    );
+    const samples = hasSharpWave
+      ? Math.max(192, Math.ceil(maxFrequency * 64))
+      : Math.max(96, Math.ceil(maxFrequency * 64));
+    let d = "";
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      const x = t * this.#drawWidth;
+      const y = this.#toY(this.#sampleAt(t));
+      d += `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+    }
+    this.#path.setAttribute("d", d);
+
+    const baselineY = this.#toY(0);
+    this.#baseline?.setAttribute("x1", "0");
+    this.#baseline?.setAttribute("y1", baselineY);
+    this.#baseline?.setAttribute("x2", this.#drawWidth);
+    this.#baseline?.setAttribute("y2", baselineY);
+
+    this.#positionHandles();
+  }
+
+  #startPlayhead() {
+    if (this.#playheadFrame || !this.#playhead) return;
+
+    const tick = (time) => {
+      if (!this.isConnected || !this.#playhead) {
+        this.#playheadFrame = 0;
+        return;
+      }
+      this.#updatePlayhead((time % 1000) / 1000);
+      this.#playheadFrame = requestAnimationFrame(tick);
+    };
+
+    this.#playheadFrame = requestAnimationFrame(tick);
+  }
+
+  #stopPlayhead() {
+    if (!this.#playheadFrame) return;
+    cancelAnimationFrame(this.#playheadFrame);
+    this.#playheadFrame = 0;
+  }
+
+  #updatePlayhead(t) {
+    if (!this.#playhead) return;
+    const x = t * this.#drawWidth;
+    const y = this.#toY(this.#sampleAt(t));
+    this.#playhead.setAttribute("cx", x.toFixed(1));
+    this.#playhead.setAttribute("cy", y.toFixed(1));
+  }
+
+  #positionHandles() {
+    const radius = 8;
+    const wave = this.#activeWave;
+    const amplitudeX = this.#getAmplitudeHandleX();
+    const frequencyX = Math.max(
+      radius,
+      Math.min(this.#drawWidth - radius, this.#drawWidth / wave.frequency),
+    );
+    const amplitudeY = this.#toY(this.#sampleAt(amplitudeX / this.#drawWidth));
+    const frequencyY = this.#toY(this.#sampleAt(frequencyX / this.#drawWidth));
+
+    this.#setHandlePosition(this.#handleAmplitude, amplitudeX, amplitudeY, radius);
+    this.#setHandlePosition(this.#handleFrequency, frequencyX, frequencyY, radius);
+  }
+
+  #getAmplitudeHandleX() {
+    const wave = this.#activeWave;
+    const phaseCycle = wave.phase / 360;
+    const frequency = Math.max(0.1, wave.frequency);
+    let targetCycle = 0.25;
+    if (wave.type === "triangle") targetCycle = 0.5;
+    if (wave.type === "sawtooth") targetCycle = 1;
+    let t = (targetCycle - phaseCycle) / frequency;
+
+    while (t < 0) t += 1 / frequency;
+    while (t > 1) t -= 1 / frequency;
+
+    if (t < 0 || t > 1 || !Number.isFinite(t)) {
+      t = 0.25;
+    }
+
+    return Math.max(8, Math.min(this.#drawWidth - 8, t * this.#drawWidth));
+  }
+
+  #setHandlePosition(handle, x, y, radius) {
+    if (!handle) return;
+    handle.setAttribute("x", x - radius);
+    handle.setAttribute("y", y - radius);
+    handle.setAttribute("width", radius * 2);
+    handle.setAttribute("height", radius * 2);
+  }
+
+  #setupEvents() {
+    for (const typeControl of this.#typeControls) {
+      typeControl.addEventListener("change", (event) => {
+        if (this.#isDisabled()) return;
+        const index = this.#indexFromElement(typeControl);
+        this.#setActiveWave(index);
+        this.#waves[index].type = this.#normalizeType(
+          event.detail ?? event.target?.value,
+        );
+        this.#syncUI();
+        this.#emit("input");
+        this.#emit("change");
+      });
+    }
+
+    for (const field of this.#fields) {
+      field.addEventListener("input", (event) => {
+        event.stopPropagation();
+        this.#applyFieldValue(
+          this.#indexFromElement(field),
+          field.getAttribute("name"),
+          event.detail ?? event.currentTarget?.value ?? event.target?.value,
+          "input",
+        );
+      });
+      field.addEventListener("change", (event) => {
+        event.stopPropagation();
+        this.#applyFieldValue(
+          this.#indexFromElement(field),
+          field.getAttribute("name"),
+          event.detail ?? event.currentTarget?.value ?? event.target?.value,
+          "change",
+        );
+      });
+    }
+
+    for (const row of this.#waveRows) {
+      row.addEventListener("pointerdown", () => {
+        this.#setActiveWave(this.#indexFromElement(row));
+      });
+      row.addEventListener("focusin", () => {
+        this.#setActiveWave(this.#indexFromElement(row));
+      });
+    }
+
+    this.#addTypeControl?.addEventListener("change", (event) => {
+      if (this.#isDisabled()) return;
+      if (event.target !== this.#addTypeControl) return;
+      const type = this.#normalizeType(event.detail ?? this.#addTypeControl?.value);
+      this.#waves.push(FigInputOscillator.#defaultWave(type));
+      this.#activeWaveIndex = this.#waves.length - 1;
+      this.#render();
+      this.#emit("input");
+      this.#emit("change");
+    });
+
+    for (const button of this.querySelectorAll(".fig-input-oscillator-remove-button")) {
+      button.addEventListener("click", () => {
+        if (this.#isDisabled() || this.#waves.length <= 1) return;
+        const index = this.#indexFromElement(button);
+        this.#waves.splice(index, 1);
+        this.#activeWaveIndex = Math.min(this.#activeWaveIndex, this.#waves.length - 1);
+        this.#render();
+        this.#emit("input");
+        this.#emit("change");
+      });
+    }
+
+    for (const handle of [
+      this.#handleAmplitude,
+      this.#handleFrequency,
+    ]) {
+      this.#setupHandle(handle);
+    }
+
+    const surface = this.querySelector(".fig-input-oscillator-svg-container");
+    surface?.addEventListener("pointerdown", (event) => {
+      if (this.#isDisabled()) return;
+      if (event.target?.closest?.(".fig-input-oscillator-handle, fig-handle")) {
+        return;
+      }
+      this.#startDrag(event, "offset");
+    });
+  }
+
+  #indexFromElement(element) {
+    const index = Number.parseInt(element?.getAttribute("data-wave-index") || "", 10);
+    return Number.isFinite(index) ? Math.min(this.#waves.length - 1, Math.max(0, index)) : 0;
+  }
+
+  #setupHandle(handleContainer) {
+    const handle = handleContainer?.querySelector("fig-handle");
+    const type = handleContainer?.getAttribute("data-handle");
+    if (!handle || !type) return;
+
+    handle.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (this.#isDisabled()) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.#startDrag(event, type);
+      },
+      { capture: true },
+    );
+
+    handle.addEventListener(
+      "keydown",
+      (event) => {
+        if (this.#isDisabled()) return;
+        if (
+          !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(
+            event.key,
+          )
+        ) {
+          return;
+        }
+        if (!this.#handleKeyboard(event, type)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      },
+      { capture: true },
+    );
+  }
+
+  #setActiveWave(index) {
+    const nextIndex = Math.min(this.#waves.length - 1, Math.max(0, index));
+    if (nextIndex === this.#activeWaveIndex) return;
+    this.#activeWaveIndex = nextIndex;
+    this.#syncActiveWave();
+    this.#positionHandles();
+  }
+
+  #applyFieldValue(index, name, value, eventType) {
+    if (this.#isDisabled()) return;
+    this.#setActiveWave(index);
+    const next = Number.parseFloat(value);
+    if (!Number.isFinite(next)) {
+      if (eventType === "change") this.#syncFields();
+      return;
+    }
+
+    this.#waves[index] = this.#normalizeWave({
+      ...this.#waves[index],
+      [name]: next,
+    });
+    this.#syncUI();
+    this.#emit(eventType);
+  }
+
+  #handleKeyboard(event, type) {
+    const step = event.shiftKey ? 0.5 : 0.1;
+    const wave = this.#activeWave;
+    switch (type) {
+      case "amplitude":
+        if (event.key === "ArrowUp") wave.amplitude += step;
+        else if (event.key === "ArrowDown") wave.amplitude -= step;
+        else if (event.key === "Home") wave.amplitude = -4;
+        else if (event.key === "End") wave.amplitude = 4;
+        else return false;
+        break;
+      case "offset":
+        if (event.key === "ArrowUp") wave.offset += step;
+        else if (event.key === "ArrowDown") wave.offset -= step;
+        else if (event.key === "Home") wave.offset = -4;
+        else if (event.key === "End") wave.offset = 4;
+        else return false;
+        break;
+      case "frequency":
+        if (event.key === "ArrowLeft") wave.frequency -= step;
+        else if (event.key === "ArrowRight") wave.frequency += step;
+        else if (event.key === "Home") wave.frequency = 0.1;
+        else if (event.key === "End") wave.frequency = 16;
+        else return false;
+        break;
+      default:
+        return false;
+    }
+
+    this.#waves[this.#activeWaveIndex] = this.#normalizeWave(wave);
+    this.#syncUI();
+    this.#emit("input");
+    this.#emit("change");
+    return true;
+  }
+
+  #clientToSVG(event) {
+    const ctm = this.#svg?.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const inv = ctm.inverse();
+    return {
+      x: inv.a * event.clientX + inv.c * event.clientY + inv.e,
+      y: inv.b * event.clientX + inv.d * event.clientY + inv.f,
+    };
+  }
+
+  #startDrag(event, type) {
+    this.#isDragging = type;
+
+    const onMove = (moveEvent) => {
+      if (!this.#isDragging) return;
+      const point = this.#clientToSVG(moveEvent);
+      const wave = this.#activeWave;
+
+      if (type === "frequency") {
+        const x = Math.max(1, Math.min(this.#drawWidth, point.x));
+        wave.frequency = this.#drawWidth / x;
+      } else if (type === "offset") {
+        const t = this.#clampNumber(point.x / this.#drawWidth, 0, 0, 1);
+        const activeValue = this.#activeWaveValueAt(wave, t);
+        wave.offset =
+          this.#fromY(point.y) -
+          this.#sampleAtWithoutWave(this.#activeWaveIndex, t) -
+          activeValue * wave.amplitude;
+      } else if (type === "amplitude") {
+        const t = this.#clampNumber(point.x / this.#drawWidth, 0, 0, 1);
+        const activeValue = this.#activeWaveValueAt(wave, t);
+        const nextAmplitude =
+          this.#fromY(point.y) -
+          this.#sampleAtWithoutWave(this.#activeWaveIndex, t) -
+          wave.offset;
+        wave.amplitude =
+          Math.abs(activeValue) < 0.001 ? wave.amplitude : nextAmplitude / activeValue;
+      }
+
+      this.#waves[this.#activeWaveIndex] = this.#normalizeWave(wave);
+      this.#syncUI();
+      this.#emit("input");
+    };
+
+    const onUp = () => {
+      this.#isDragging = null;
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      this.#emit("change");
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+
+  #sampleAtWithoutWave(excludedIndex, t) {
+    return this.#waves.reduce((sum, wave, index) => {
+      if (index === excludedIndex) return sum;
+      const cycleT = t * wave.frequency;
+      const value = FigInputOscillator.#waveValue(wave.type, cycleT, wave.phase);
+      return sum + wave.offset + value * wave.amplitude;
+    }, 0);
+  }
+
+  #activeWaveValueAt(wave, t) {
+    return FigInputOscillator.#waveValue(
+      wave.type,
+      t * wave.frequency,
+      wave.phase,
+    );
+  }
+
+  #syncUI() {
+    this.#syncTypeControls();
+    this.#syncFields();
+    this.#syncActiveWave();
+    this.#updateWaveform();
+  }
+
+  #syncTypeControls() {
+    for (const control of this.#typeControls) {
+      const index = this.#indexFromElement(control);
+      control.value = this.#waves[index]?.type || "sine";
+    }
+  }
+
+  #syncFields() {
+    for (const field of this.#fields) {
+      const index = this.#indexFromElement(field);
+      const name = field.getAttribute("name");
+      field.setAttribute("value", this.#round(this.#waves[index]?.[name] ?? 0));
+    }
+  }
+
+  #syncActiveWave() {
+    for (const row of this.#waveRows) {
+      if (this.#indexFromElement(row) === this.#activeWaveIndex) {
+        row.setAttribute("data-active", "");
+      } else {
+        row.removeAttribute("data-active");
+      }
+    }
+  }
+
+  #emit(type) {
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        bubbles: true,
+        detail: {
+          value: this.value,
+          data: this.data,
+          preset: FigInputOscillator.#labelForType(this.#activeWave.type),
+        },
+      }),
+    );
+  }
+}
+customElements.define("fig-input-oscillator", FigInputOscillator);
+
 /* Angle Input */
 /**
  * A custom angle chooser input element.

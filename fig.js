@@ -12944,6 +12944,7 @@ class FigEasingCurve extends HTMLElement {
   #startSpringDrag(e, handleType) {
     e.preventDefault();
     this.#isDragging = handleType;
+    this.classList.toggle("spring-bounce-dragging", handleType === "bounce");
 
     const startDamping = this.#spring.damping;
     const startStiffness = this.#spring.stiffness;
@@ -12981,6 +12982,7 @@ class FigEasingCurve extends HTMLElement {
 
     const onUp = () => {
       this.#isDragging = null;
+      this.classList.remove("spring-bounce-dragging");
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
       this.#emit("change");
