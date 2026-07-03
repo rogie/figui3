@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.6]
+
+### Fixed
+
+- Fixed `fig-media` generated controls so duplicate `fig-media-controls` rows are reused and cleaned up.
+- Fixed `fig-tab-content` block layout styling.
+
+### Added
+
+- Added composable oscillator controls.
+
 ## [6.9.5]
 
 ### Fixed

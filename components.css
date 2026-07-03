@@ -1247,6 +1247,10 @@ fig-tab {
     cursor: default;
   }
 }
+fig-tab-content {
+  display: block;
+  width: 100%;
+}
 
 .fig-overflow {
   all: unset;
