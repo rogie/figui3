@@ -11060,7 +11060,14 @@ class FigMedia extends HTMLElement {
   }
 
   #ensureControls() {
-    if (this.#controlsEl && this.#controlsEl.isConnected) {
+    const generatedControls = Array.from(
+      this.querySelectorAll(":scope > fig-media-controls[data-generated]"),
+    );
+    const existingControls = generatedControls[0];
+    generatedControls.slice(1).forEach((controls) => controls.remove());
+
+    if (existingControls) {
+      this.#controlsEl = existingControls;
       this.#wireControlsToMedia();
       return;
     }
@@ -11157,10 +11164,9 @@ class FigMedia extends HTMLElement {
 
   #removeControls() {
     this.#unwireControls();
-    if (!this.#controlsEl) return;
-    if (this.#controlsEl.hasAttribute("data-generated")) {
-      this.#controlsEl.remove();
-    }
+    this.querySelectorAll(":scope > fig-media-controls[data-generated]").forEach((controls) => {
+      controls.remove();
+    });
     this.#controlsEl = null;
   }
 

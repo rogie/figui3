@@ -3798,6 +3798,31 @@ test.describe("media accessibility", () => {
     );
   });
 
+  test("fig-media reuses one generated controls row from light DOM", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-media
+          id="media-generated-controls"
+          type="video"
+          src="data:video/mp4;base64,"
+          controls
+        >
+          <fig-media-controls data-generated data-keep="true"></fig-media-controls>
+          <fig-media-controls data-generated></fig-media-controls>
+        </fig-media>
+      `;
+    });
+
+    await expect(
+      page.locator("#media-generated-controls > fig-media-controls[data-generated]"),
+    ).toHaveCount(1);
+    await expect(
+      page.locator("#media-generated-controls > fig-media-controls[data-generated]"),
+    ).toHaveAttribute("data-keep", "true");
+  });
+
   test("fig-media-controls names the seek slider with formatted value text", async ({
     page,
   }) => {
