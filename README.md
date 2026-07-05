@@ -1189,11 +1189,11 @@ Use meaningful `alt` text for informative images. Use `alt=""` only when the ima
 <fig-media type="image" src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover"></fig-media>
 <fig-media type="video" src="clip.mp4" aria-label="Product demo video" caption="Looping product demo" controls muted></fig-media>
 <fig-media type="image" src="photo.jpg" alt="Selected image">
-  <caption>Selected image from the current document.</caption>
+  <figcaption>Selected image from the current document.</figcaption>
 </fig-media>
 ```
 
-Use the `caption` attribute for the most reliable plain-text caption. A direct `<caption>` child is also supported when the browser parser preserves it inside the custom element; because native `<caption>` is table-associated HTML, parser behavior can vary by authoring context.
+Use the `caption` attribute for a plain-text caption, or a direct `<figcaption>` child for authored caption content.
 
 ---
 
@@ -1222,7 +1222,7 @@ Use meaningful `alt` text for informative images. Use `alt=""` for decorative pr
 <fig-image src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover" caption="Cover image"></fig-image>
 <fig-image upload label="Upload Image" alt=""></fig-image>
 <fig-image src="photo.jpg" alt="Selected image">
-  <caption>Selected image from the current document.</caption>
+  <figcaption>Selected image from the current document.</figcaption>
   <fig-input-file slot="overlay" variant="overlay" label="Change image"></fig-input-file>
 </fig-image>
 ```
@@ -1259,7 +1259,7 @@ Prefer `controls` for videos that play motion. Use native `<track>` text tracks 
 <fig-video src="clip.mp4" aria-label="Product demo video" caption="Product demo" controls></fig-video>
 <fig-video src="clip.mp4" aria-label="Product demo video" aspect-ratio="16 / 9" controls></fig-video>
 <fig-video upload label="Upload Video" aria-label="Uploaded video preview" controls muted>
-  <caption>Uploaded video preview.</caption>
+  <figcaption>Uploaded video preview.</figcaption>
 </fig-video>
 ```
 

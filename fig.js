@@ -10999,12 +10999,12 @@ class FigMedia extends HTMLElement {
   }
 
   #userProvidedCaptionEl() {
-    return this.querySelector(":scope > caption:not([data-generated])");
+    return this.querySelector(":scope > figcaption:not([data-generated])");
   }
 
   #generatedCaptionEls() {
     return Array.from(
-      this.querySelectorAll(":scope > caption[data-generated]"),
+      this.querySelectorAll(":scope > figcaption[data-generated]"),
     );
   }
 
@@ -11023,7 +11023,7 @@ class FigMedia extends HTMLElement {
       return;
     }
 
-    const caption = generatedCaptions[0] || document.createElement("caption");
+    const caption = generatedCaptions[0] || document.createElement("figcaption");
     generatedCaptions.slice(1).forEach((duplicate) => duplicate.remove());
     if (!caption.hasAttribute("data-generated")) {
       caption.setAttribute("data-generated", "");

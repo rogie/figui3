@@ -1797,7 +1797,7 @@ fig-video {
     pointer-events: auto;
   }
 
-  > caption {
+  > figcaption {
     display: block;
     width: 100%;
     color: var(--figma-color-text-secondary);

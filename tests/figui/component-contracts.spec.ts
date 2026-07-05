@@ -3839,7 +3839,7 @@ test.describe("media accessibility", () => {
       `;
     });
 
-    const caption = page.locator("#image-caption > caption[data-generated]");
+    const caption = page.locator("#image-caption > figcaption[data-generated]");
     await expect(caption).toHaveCount(1);
     await expect(caption).toHaveText("Generated image caption");
 
@@ -3871,13 +3871,13 @@ test.describe("media accessibility", () => {
       `;
     });
 
-    await expect(page.locator("#video-caption > caption[data-generated]")).toHaveText(
+    await expect(page.locator("#video-caption > figcaption[data-generated]")).toHaveText(
       "Generated video caption",
     );
     await expect(page.locator("#video-caption > fig-media-controls")).toHaveCount(1);
 
     const captionBeforeControls = await page.locator("#video-caption").evaluate((host) => {
-      const caption = host.querySelector("caption[data-generated]");
+      const caption = host.querySelector("figcaption[data-generated]");
       const controls = host.querySelector("fig-media-controls");
       if (!caption || !controls) return false;
       return Boolean(
@@ -3905,16 +3905,16 @@ test.describe("media accessibility", () => {
       media.setAttribute("alt", "");
       media.setAttribute("caption", "Generated fallback caption");
 
-      const caption = document.createElement("caption");
+      const caption = document.createElement("figcaption");
       caption.textContent = "Authored child caption";
       media.append(caption);
       root.append(media);
     });
 
-    await expect(page.locator("#child-caption > caption")).toHaveText(
+    await expect(page.locator("#child-caption > figcaption")).toHaveText(
       "Authored child caption",
     );
-    await expect(page.locator("#child-caption > caption[data-generated]")).toHaveCount(0);
+    await expect(page.locator("#child-caption > figcaption[data-generated]")).toHaveCount(0);
   });
 
   test("fig-media-controls names the seek slider with formatted value text", async ({

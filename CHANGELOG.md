@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.8]
+
+### Changed
+
+- Changed media caption child support and generated captions to use native `figcaption` instead of `caption`.
+
 ## [6.9.7]
 
 ### Added

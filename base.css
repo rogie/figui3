@@ -128,7 +128,7 @@ p:last-child {
   margin-block-end: 0;
 }
 
-label, p, li {
+label, p, li, figcaption {
   color: var(--figma-color-text-secondary);
   text-wrap: pretty;
 }
