@@ -10740,6 +10740,7 @@ customElements.define("fig-swatch", FigSwatch);
  * @attr {string} aspect-ratio - CSS aspect-ratio value
  * @attr {string} fit - CSS object-fit value
  * @attr {boolean} checkerboard - Show checkerboard behind transparent media
+ * @attr {string} caption - Caption text rendered below the media preview
  * @attr {boolean} controls - Video controls visibility (default false)
  * @attr {boolean} autoplay - Video autoplay
  * @attr {boolean} loop - Video loop
@@ -10783,6 +10784,7 @@ class FigMedia extends HTMLElement {
       "aspect-ratio",
       "fit",
       "checkerboard",
+      "caption",
       "controls",
       "autoplay",
       "loop",
@@ -10869,6 +10871,7 @@ class FigMedia extends HTMLElement {
     this.#ensureMediaElement();
     this.#syncGeneratedMediaElement();
     this.#syncMediaAccessibility();
+    this.#syncCaption();
 
     const isUpload = this.hasAttribute("upload") && this.getAttribute("upload") !== "false";
     if (isUpload && !this.querySelector("fig-input-file[data-generated]")) {
@@ -10993,6 +10996,50 @@ class FigMedia extends HTMLElement {
         this.#mediaEl.setAttribute(name, value);
       }
     });
+  }
+
+  #userProvidedCaptionEl() {
+    return this.querySelector(":scope > caption:not([data-generated])");
+  }
+
+  #generatedCaptionEls() {
+    return Array.from(
+      this.querySelectorAll(":scope > caption[data-generated]"),
+    );
+  }
+
+  #syncCaption() {
+    const userCaption = this.#userProvidedCaptionEl();
+    const generatedCaptions = this.#generatedCaptionEls();
+
+    if (userCaption) {
+      generatedCaptions.forEach((caption) => caption.remove());
+      return;
+    }
+
+    const captionText = this.getAttribute("caption") || "";
+    if (!captionText) {
+      generatedCaptions.forEach((caption) => caption.remove());
+      return;
+    }
+
+    const caption = generatedCaptions[0] || document.createElement("caption");
+    generatedCaptions.slice(1).forEach((duplicate) => duplicate.remove());
+    if (!caption.hasAttribute("data-generated")) {
+      caption.setAttribute("data-generated", "");
+    }
+    if (caption.textContent !== captionText) {
+      caption.textContent = captionText;
+    }
+
+    const controls = this.querySelector(":scope > fig-media-controls");
+    if (controls) {
+      controls.before(caption);
+    } else if (this.#previewEl?.isConnected) {
+      this.#previewEl.after(caption);
+    } else if (!caption.isConnected) {
+      this.append(caption);
+    }
   }
 
   #isEnabledAttr(name, defaultEnabled = false) {
@@ -11378,6 +11425,10 @@ class FigMedia extends HTMLElement {
 
     if (["controls", "autoplay", "loop", "muted", "poster"].includes(name)) {
       this.#syncGeneratedMediaElement();
+    }
+
+    if (name === "caption") {
+      this.#syncCaption();
     }
   }
 }

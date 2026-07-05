@@ -20,6 +20,7 @@ function describeImage(el: Element): string {
   if (el.hasAttribute("fit")) parts.push(`fit ${el.getAttribute("fit")}`);
   if (el.hasAttribute("aspect-ratio"))
     parts.push(`aspect ratio ${el.getAttribute("aspect-ratio")}`);
+  if (el.hasAttribute("caption")) parts.push(`caption "${el.getAttribute("caption")}"`);
   return parts.join(", ");
 }
 

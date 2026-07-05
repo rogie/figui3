@@ -232,6 +232,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-image": {
+    caption: { label: "Caption", type: "string" },
     "aspect-ratio": aspectRatioRule,
     fit: {
       label: "Fit",
@@ -247,6 +248,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
   },
   "fig-media": {
+    caption: { label: "Caption", type: "string" },
     "aspect-ratio": aspectRatioRule,
     fit: {
       label: "Fit",
@@ -272,6 +274,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     poster: { label: "Poster", type: "string" },
   },
   "fig-video": {
+    caption: { label: "Caption", type: "string" },
     "aspect-ratio": aspectRatioRule,
     fit: {
       label: "Fit",

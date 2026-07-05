@@ -1174,6 +1174,7 @@ Unified media component that supports image/video modes and shared sizing/upload
 | `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
 | `fit` | string | `"contain"` | CSS object-fit (`"cover"`, `"contain"`, etc.) |
 | `checkerboard` | boolean | `false` | Show checkerboard behind transparent media |
+| `caption` | string | — | Caption text rendered below the media preview |
 | `controls` | boolean | `false` | Show playback controls for video |
 | `autoplay` | boolean | `false` | Video autoplay |
 | `loop` | boolean | `false` | Video loop |
@@ -1186,8 +1187,13 @@ Use meaningful `alt` text for informative images. Use `alt=""` only when the ima
 ```html
 <fig-media type="image" src="photo.jpg" alt="Selected image"></fig-media>
 <fig-media type="image" src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover"></fig-media>
-<fig-media type="video" src="clip.mp4" aria-label="Product demo video" controls muted></fig-media>
+<fig-media type="video" src="clip.mp4" aria-label="Product demo video" caption="Looping product demo" controls muted></fig-media>
+<fig-media type="image" src="photo.jpg" alt="Selected image">
+  <caption>Selected image from the current document.</caption>
+</fig-media>
 ```
+
+Use the `caption` attribute for the most reliable plain-text caption. A direct `<caption>` child is also supported when the browser parser preserves it inside the custom element; because native `<caption>` is table-associated HTML, parser behavior can vary by authoring context.
 
 ---
 
@@ -1207,14 +1213,16 @@ An image display component with optional upload, aspect ratio, and object-fit co
 | `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
 | `fit` | string | `"contain"` | CSS object-fit (`"cover"`, `"contain"`, etc.) |
 | `checkerboard` | boolean | `false` | Show checkerboard behind transparent images |
+| `caption` | string | — | Caption text rendered below the image preview |
 
 Use meaningful `alt` text for informative images. Use `alt=""` for decorative previews, thumbnails with visible labels, or upload placeholders.
 
 ```html
 <fig-image src="photo.jpg" alt="Selected image"></fig-image>
-<fig-image src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover"></fig-image>
+<fig-image src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover" caption="Cover image"></fig-image>
 <fig-image upload label="Upload Image" alt=""></fig-image>
 <fig-image src="photo.jpg" alt="Selected image">
+  <caption>Selected image from the current document.</caption>
   <fig-input-file slot="overlay" variant="overlay" label="Change image"></fig-input-file>
 </fig-image>
 ```
@@ -1243,13 +1251,16 @@ Video display/upload component with the same preview styling model as `fig-image
 | `muted` | boolean | `false` | Mute video |
 | `poster` | string | — | Poster image URL (forwarded to inner `<video>`) |
 | `aria-label` | string | — | Accessible label forwarded to the generated `<video>` |
+| `caption` | string | — | Caption text rendered below the video preview |
 
-Prefer `controls` for videos that play motion. Add captions with a slotted `<track>` when the video includes speech or essential audio.
+Prefer `controls` for videos that play motion. Use native `<track>` text tracks when the video includes speech or essential audio.
 
 ```html
-<fig-video src="clip.mp4" aria-label="Product demo video" controls></fig-video>
+<fig-video src="clip.mp4" aria-label="Product demo video" caption="Product demo" controls></fig-video>
 <fig-video src="clip.mp4" aria-label="Product demo video" aspect-ratio="16 / 9" controls></fig-video>
-<fig-video upload label="Upload Video" aria-label="Uploaded video preview" controls muted></fig-video>
+<fig-video upload label="Upload Video" aria-label="Uploaded video preview" controls muted>
+  <caption>Uploaded video preview.</caption>
+</fig-video>
 ```
 
 ---

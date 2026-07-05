@@ -3823,6 +3823,100 @@ test.describe("media accessibility", () => {
     ).toHaveAttribute("data-keep", "true");
   });
 
+  test("fig-image syncs generated captions from the caption attribute", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-image
+          id="image-caption"
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          alt=""
+          caption="Generated image caption"
+        ></fig-image>
+      `;
+    });
+
+    const caption = page.locator("#image-caption > caption[data-generated]");
+    await expect(caption).toHaveCount(1);
+    await expect(caption).toHaveText("Generated image caption");
+
+    await page.locator("#image-caption").evaluate((host) => {
+      host.setAttribute("caption", "Updated image caption");
+    });
+    await expect(caption).toHaveCount(1);
+    await expect(caption).toHaveText("Updated image caption");
+
+    await page.locator("#image-caption").evaluate((host) => {
+      host.removeAttribute("caption");
+    });
+    await expect(caption).toHaveCount(0);
+  });
+
+  test("fig-video renders generated captions with controls", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-video
+          id="video-caption"
+          src="data:video/mp4;base64,"
+          aria-label="Clip preview"
+          caption="Generated video caption"
+          controls
+          muted
+        ></fig-video>
+      `;
+    });
+
+    await expect(page.locator("#video-caption > caption[data-generated]")).toHaveText(
+      "Generated video caption",
+    );
+    await expect(page.locator("#video-caption > fig-media-controls")).toHaveCount(1);
+
+    const captionBeforeControls = await page.locator("#video-caption").evaluate((host) => {
+      const caption = host.querySelector("caption[data-generated]");
+      const controls = host.querySelector("fig-media-controls");
+      if (!caption || !controls) return false;
+      return Boolean(
+        caption.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    });
+    expect(captionBeforeControls).toBe(true);
+  });
+
+  test("fig-media preserves direct child captions over generated captions", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = "";
+
+      const media = document.createElement("fig-media");
+      media.id = "child-caption";
+      media.setAttribute("type", "image");
+      media.setAttribute(
+        "src",
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+      );
+      media.setAttribute("alt", "");
+      media.setAttribute("caption", "Generated fallback caption");
+
+      const caption = document.createElement("caption");
+      caption.textContent = "Authored child caption";
+      media.append(caption);
+      root.append(media);
+    });
+
+    await expect(page.locator("#child-caption > caption")).toHaveText(
+      "Authored child caption",
+    );
+    await expect(page.locator("#child-caption > caption[data-generated]")).toHaveCount(0);
+  });
+
   test("fig-media-controls names the seek slider with formatted value text", async ({
     page,
   }) => {

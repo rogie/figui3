@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.7]
+
+### Added
+
+- Added caption support for `fig-media`, `fig-image`, and `fig-video`.
+- Added blank caption fields to the PropKit and FigUI3 attributes panels for media examples.
+
+### Changed
+
+- Refined text wrapping defaults and footer action wrapping.
+
 ## [6.9.6]
 
 ### Fixed
