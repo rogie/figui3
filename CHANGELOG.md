@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.9.9]
+
+### Fixed
+
+- Fixed `fig-field-slider` elastic pull so repeated drags keep tracking reliably.
+
+### Changed
+
+- Changed `fig-field-slider` elastic pull to use scale-based stretching with a springier return and slightly longer pull distance.
+
 ## [6.9.8]
 
 ### Changed

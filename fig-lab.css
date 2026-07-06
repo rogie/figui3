@@ -9,10 +9,11 @@
  */
 
 fig-field-slider {
-  --fig-field-slider-elastic-distance: var(--spacer-2);
+  --fig-field-slider-elastic-distance: calc(var(--spacer-2) + 0.25rem);
   --fig-field-slider-elastic-size: 0px;
-  --fig-field-slider-elastic-position-offset: 0px;
-  --fig-field-slider-elastic-transition: 0.1s ease-out;
+  --fig-field-slider-elastic-scale: 1;
+  --fig-field-slider-elastic-origin: left center;
+  --fig-field-slider-elastic-transition: 0.18s cubic-bezier(0.2, 1.45, 0.35, 1);
   --fig-field-slider-height: 2rem;
   --figma-focus-outline-offset: 1px;
   --fig-field-slider-progress-shadow: inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
@@ -23,9 +24,8 @@ fig-field-slider {
   width: 100%;
   height: var(--fig-field-slider-height);
   border-radius: var(--radius-medium);
-  transition:
-    width var(--fig-field-slider-elastic-transition),
-    transform var(--fig-field-slider-elastic-transition);
+  transform-origin: var(--fig-field-slider-elastic-origin);
+  transition: transform var(--fig-field-slider-elastic-transition);
   
   label {
     pointer-events: none;
@@ -317,8 +317,7 @@ fig-field-slider {
   }
 
   &[data-elastic-dragging="true"] {
-    width: calc(100% + var(--fig-field-slider-elastic-size));
-    transform: translateX(var(--fig-field-slider-elastic-position-offset));
+    transform: scaleX(var(--fig-field-slider-elastic-scale));
     transition: none;
   }
 }

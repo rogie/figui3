@@ -25,6 +25,8 @@ class FigFieldSlider extends HTMLElement {
   #isElasticTracking = false;
   #elasticMaxPx = 0;
   #elasticRangeRect = null;
+  #elasticHostWidth = 0;
+  #elasticPointerId = null;
   #boundHandleSliderInput = null;
   #boundHandleSliderChange = null;
   #boundHandleElasticPointerDown = this.#handleElasticPointerDown.bind(this);
@@ -111,6 +113,7 @@ class FigFieldSlider extends HTMLElement {
       this.#focusSyncFrame = 0;
     }
     this.#clearPendingClick();
+    this.#stopElasticTracking();
     this.#resetElasticPull();
     this.#unbindRangeInput();
     this.#unbindSliderEvents();
@@ -327,15 +330,20 @@ class FigFieldSlider extends HTMLElement {
     const rangeInput =
       this.#slider?.querySelector('input[type="range"]') ?? this.#rangeInput;
     if (!rangeInput) return;
+    this.#stopElasticTracking();
+    this.#resetElasticPull();
     this.#rangeInput = rangeInput;
     this.#isElasticTracking = true;
+    this.#elasticPointerId = event.pointerId;
     this.#elasticMaxPx = this.#readElasticDistance();
     const rect = rangeInput.getBoundingClientRect();
+    const hostRect = this.getBoundingClientRect();
     this.#elasticRangeRect = {
       left: rect.left,
       right: rect.right,
       width: rect.width,
     };
+    this.#elasticHostWidth = hostRect.width;
     window.addEventListener("pointermove", this.#boundHandleElasticPointerMove, {
       passive: true,
     });
@@ -345,19 +353,40 @@ class FigFieldSlider extends HTMLElement {
     window.addEventListener("pointercancel", this.#boundHandleElasticPointerEnd, {
       once: true,
     });
+    window.addEventListener("blur", this.#boundHandleElasticPointerEnd, {
+      once: true,
+    });
   }
 
   #handleElasticPointerMove(event) {
     if (!this.#isElasticTracking) return;
+    if (event.pointerId !== this.#elasticPointerId) return;
+    if (event.buttons === 0) {
+      this.#handleElasticPointerEnd(event);
+      return;
+    }
     this.#updateElasticPull(event.clientX);
   }
 
-  #handleElasticPointerEnd() {
+  #handleElasticPointerEnd(event) {
+    if (
+      event?.pointerId !== undefined &&
+      this.#elasticPointerId !== null &&
+      event.pointerId !== this.#elasticPointerId
+    ) {
+      return;
+    }
+    this.#stopElasticTracking();
+    this.#resetElasticPull();
+  }
+
+  #stopElasticTracking() {
     window.removeEventListener("pointermove", this.#boundHandleElasticPointerMove);
     window.removeEventListener("pointerup", this.#boundHandleElasticPointerEnd);
     window.removeEventListener("pointercancel", this.#boundHandleElasticPointerEnd);
+    window.removeEventListener("blur", this.#boundHandleElasticPointerEnd);
     this.#isElasticTracking = false;
-    this.#resetElasticPull();
+    this.#elasticPointerId = null;
   }
 
   #handleContextMenu(event) {
@@ -445,11 +474,15 @@ class FigFieldSlider extends HTMLElement {
       Math.min(this.#elasticMaxPx, overshoot * 0.5),
     );
     const stretch = Math.abs(offset);
+    const scale = this.#elasticHostWidth
+      ? (this.#elasticHostWidth + stretch) / this.#elasticHostWidth
+      : 1;
     this.dataset.elasticDragging = "true";
     this.style.setProperty("--fig-field-slider-elastic-size", `${stretch}px`);
+    this.style.setProperty("--fig-field-slider-elastic-scale", `${scale}`);
     this.style.setProperty(
-      "--fig-field-slider-elastic-position-offset",
-      offset < 0 ? `${-stretch / 2}px` : `${stretch / 2}px`,
+      "--fig-field-slider-elastic-origin",
+      offset < 0 ? "right center" : "left center",
     );
   }
 
@@ -457,12 +490,15 @@ class FigFieldSlider extends HTMLElement {
     this.#clearElasticPull();
     this.#elasticMaxPx = 0;
     this.#elasticRangeRect = null;
+    this.#elasticHostWidth = 0;
+    this.#elasticPointerId = null;
   }
 
   #clearElasticPull() {
     this.removeAttribute("data-elastic-dragging");
     this.style.removeProperty("--fig-field-slider-elastic-size");
-    this.style.removeProperty("--fig-field-slider-elastic-position-offset");
+    this.style.removeProperty("--fig-field-slider-elastic-scale");
+    this.style.removeProperty("--fig-field-slider-elastic-origin");
   }
 
   #valueFromPointer(event) {
