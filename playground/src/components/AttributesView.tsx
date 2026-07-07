@@ -1065,6 +1065,14 @@ export default function AttributesView({
                     }
                     if (
                       target.controlTag === "fig-field-slider" &&
+                      name === "size" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-field-slider" &&
                       name === "type"
                     ) {
                       let updated = applyAttributeMutation(markup, {
@@ -1160,7 +1168,10 @@ export default function AttributesView({
                               : target.controlTag === "fig-avatar" &&
                                   name === "size"
                                 ? "Default"
-                                : target.controlTag === "fig-dialog" &&
+                                : target.controlTag === "fig-field-slider" &&
+                                    name === "size"
+                                  ? "Default"
+                                  : target.controlTag === "fig-dialog" &&
                                     name === "position"
                                   ? "Default"
                                   : "None"

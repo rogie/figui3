@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.10.0]
+
+### Added
+
+- Added `elastic` and `size` attributes to `fig-field-slider`.
+- Added `compact` styling for `fig-header` and `fig-group`.
+- Reworked `fig-input-oscillator` wave rows into collapsible `fig-group` sections with per-row add and remove controls.
+
+### Changed
+
+- Changed `fig-input-oscillator` parameter fields to use `fig-field-slider`.
+- Changed oscillator add-form control to an inline header action that inserts a waveform after the current row.
+- Updated oscillator and field-slider playground attribute panels.
+
+### Fixed
+
+- Fixed `fig-field-slider` drag lock when used inside `fig-input-oscillator`.
+- Fixed duplicate waveform insertion when choosing a type from the add-form menu.
+- Fixed add-form and remove controls toggling wave group collapse.
+
 ## [6.9.9]
 
 ### Fixed

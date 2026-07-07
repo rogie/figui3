@@ -3403,8 +3403,10 @@ fig-header {
   box-shadow: inset 0 -1px 0 0 var(--figma-color-border);
   gap: var(--spacer-2);
   user-select: none;
-  color: var(--figma-color-text-secondary);
-  
+
+  &[compact]:not([compact="false"]) {
+    --fig-header-height: var(--spacer-5);
+  }
 
   fig-button[icon][variant="ghost"]:not(fig-input-text fig-button) {
     margin-right: calc(var(--spacer-2) * -1);
@@ -3415,7 +3417,10 @@ fig-header {
     flex-grow: 1;
     display: flex;
     align-items: center;
-    color: var(--figma-color-text);
+  }
+
+  span, label{
+    color: var(--figma-color-text-secondary);
   }
 
   &[borderless] {
@@ -3428,6 +3433,8 @@ fig-group {
   width: 100%;
   margin-bottom: var(--spacer-2-5);
 
+  
+
   p{
     margin: 0 var(--spacer-3) var(--spacer-2) var(--spacer-3);
   }
@@ -3439,10 +3446,22 @@ fig-group {
       padding-top: var(--spacer-2-5);
     }
   }
+  &[borderless]:not([borderless="false"]) + fig-group{
+    box-shadow: none;
+    &:not([name]) {
+      padding-top: 0;
+    }
+  }
+
+  &[compact]:not([compact="false"]) {
+    & > fig-header{
+      --fig-header-height: var(--spacer-5);
+    }
+  }
+
 
   & > fig-header {
     cursor: default;
-    
     padding-left: var(--spacer-3);
       
     &:focus-visible {
@@ -3490,6 +3509,11 @@ fig-group {
   &[collapsible]:not([open]):not([open="true"]) > :not(fig-header),
   &[collapsible][open="false"] > :not(fig-header) {
     display: none;
+  }
+
+  &[compact]:not([compact="false"]) > fig-header {
+    --fig-header-height: var(--spacer-5);
+    height: var(--fig-header-height);
   }
 }
 

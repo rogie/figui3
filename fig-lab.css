@@ -15,10 +15,15 @@ fig-field-slider {
   --fig-field-slider-elastic-origin: left center;
   --fig-field-slider-elastic-transition: 0.18s cubic-bezier(0.2, 1.45, 0.35, 1);
   --fig-field-slider-height: 2rem;
+  --fig-field-slider-vertical-padding: var(--spacer-1);
+  --fig-field-slider-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
   --fig-field-slider-progress-shadow: inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
   --field-text-shadow: 0 1px 1.5px
     light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
+  --fig-field-slider-fig-slider-height: calc(var(--fig-field-slider-height) - var(--fig-field-slider-vertical-padding) * 2);
+  --fig-field-slider-fig-slider-thumb-height: calc(var(--fig-field-slider-fig-slider-height) - var(--spacer-2-5));
+
   display: block;
   position: relative;
   width: 100%;
@@ -26,6 +31,15 @@ fig-field-slider {
   border-radius: var(--radius-medium);
   transform-origin: var(--fig-field-slider-elastic-origin);
   transition: transform var(--fig-field-slider-elastic-transition);
+  padding-top: var(--fig-field-slider-vertical-padding);
+  padding-bottom: var(--fig-field-slider-vertical-padding);
+  padding-left: var(--fig-field-slider-horizontal-padding);
+  padding-right: var(--fig-field-slider-horizontal-padding);
+
+  &[size="large"]{
+    --fig-field-slider-vertical-padding: 0px;
+    --fig-field-slider-fig-slider-thumb-height: calc(var(--fig-field-slider-fig-slider-height) - var(--spacer-3));
+  }
   
   label {
     pointer-events: none;
@@ -57,7 +71,7 @@ fig-field-slider {
 
   fig-field:not([direction="vertical"]) {
     position: relative;
-    padding-left: var(--spacer-2-5);
+    padding-left: var(--spacer-2);
     display: flex;
     height: 100%;
 
@@ -83,8 +97,8 @@ fig-field-slider {
       inset: 0;
       padding: 0;
       background-color: transparent;
-      --slider-height: 2rem;
-      --slider-field-height: 2rem;
+      --slider-height: var(--fig-field-slider-fig-slider-height);
+      --slider-field-height: calc(var(--fig-field-slider-height) - var(--fig-field-slider-vertical-padding) * 2);
       --slider-thumb-width: var(--spacer-1);
       --slider-thumb-color: light-dark(
         var(--figma-color-text-secondary),
@@ -94,7 +108,7 @@ fig-field-slider {
         var(--spacer-2) + (var(--spacer-3) - var(--spacer-2)) *
           min(var(--slider-complete), calc(1 - var(--slider-complete))) * 2
       );*/
-      --slider-thumb-height: calc(var(--slider-height) - var(--spacer-3));
+      --slider-thumb-height: var(--fig-field-slider-fig-slider-thumb-height);
       --slider-border-radius: var(--radius-medium);
       --slider-tick-width: 0.125rem;
       --slider-tick-height: var(--spacer-2);
@@ -539,10 +553,18 @@ fig-input-oscillator {
 
   .fig-input-oscillator-svg-container {
     border-radius: var(--radius-medium);
-    background: var(--figma-color-bg-secondary);
-    padding: var(--spacer-3) var(--spacer-2);
+    padding: var(--spacer-3) var(--spacer-5);
     margin-bottom: var(--spacer-2);
     overflow: hidden;
+    position: relative;
+
+    &::before{
+      position: absolute;
+      inset: 0 var(--spacer-3);
+      content: "";
+      background: var(--figma-color-bg-secondary);
+      border-radius: var(--radius-medium);
+    }
 
     &:is(:hover, :active, :focus, :focus-visible, :focus-within) {
       overflow: visible;
@@ -557,6 +579,8 @@ fig-input-oscillator {
     width: 100%;
     aspect-ratio: var(--aspect-ratio);
     overflow: visible;
+    position: relative;
+    z-index: 1;
 
     .fig-input-oscillator-handle{
       opacity: 0;
@@ -615,56 +639,31 @@ fig-input-oscillator {
   .fig-input-oscillator-waves {
     display: flex;
     flex-direction: column;
-    gap: var(--spacer-2);
+    gap: 0;
   }
 
   .fig-input-oscillator-wave {
-    padding: 0;
+    margin-bottom: 0;
 
-    > .fig-input-oscillator-wave-summary {
-      min-height: var(--control-height);
-      padding: 0;
-
-      > label {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacer-1);
-        min-width: 0;
-
-        > svg {
-          flex: 0 0 auto;
-        }
-      }
-
-      > .fig-input-oscillator-remove-button {
-        margin-left: auto;
+    > fig-header {
+      .fig-input-oscillator-remove-button,
+      .fig-input-oscillator-add-type-button {
+        flex-shrink: 0;
       }
     }
   }
 
   .fig-input-oscillator-field {
-    --fig-field-left-padding: 0;
-    --fig-field-right-padding: 0;
-
-    > fig-slider {
-      min-width: 0;
-    }
+    width: 100%;
   }
 
-  .fig-input-oscillator-add-wave {
-    display: grid;
-    grid-template-columns: auto;
-    justify-content: end;
-    width: 100%;
-
-    > fig-button[type="select"] {
-      > fig-dropdown,
-      > fig-dropdown > select {
-        width: 100%;
-        height: 100%;
-        min-width: 100%;
-        padding: 0;
-      }
+  .fig-input-oscillator-add-type-button {
+    > fig-dropdown,
+    > fig-dropdown > select {
+      width: 100%;
+      height: 100%;
+      min-width: 100%;
+      padding: 0;
     }
   }
 

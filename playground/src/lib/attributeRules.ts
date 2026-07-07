@@ -349,6 +349,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "%", "px", "°"],
     },
+    elastic: {
+      label: "Elastic",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
@@ -640,6 +647,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-header": {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
+    compact: { label: "Compact", type: "boolean", boolMode: "string" },
   },
   "fig-footer": {
     borderless: { label: "Borderless", type: "boolean", boolMode: "presence" },
@@ -649,6 +657,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     name: { label: "Name", type: "string" },
     collapsible: { label: "Collapsible", type: "boolean", boolMode: "presence" },
     open: { label: "Open", type: "boolean", boolMode: "presence" },
+    compact: { label: "Compact", type: "boolean", boolMode: "string" },
   },
   "fig-handle": {
     type: {

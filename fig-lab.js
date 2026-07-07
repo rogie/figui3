@@ -40,6 +40,12 @@ class FigFieldSlider extends HTMLElement {
     "color",
     "text",
     "full",
+    "elastic",
+    "size",
+    "name",
+    "class",
+    "data-wave-index",
+    "data-active",
     "data-elastic-dragging",
     "style",
   ]);
@@ -326,6 +332,7 @@ class FigFieldSlider extends HTMLElement {
 
   #handleElasticPointerDown(event) {
     if (event.button !== 0 || this.hasAttribute("disabled")) return;
+    if (this.getAttribute("elastic") === "false") return;
     if (event.target?.closest?.("fig-input-number")) return;
     const rangeInput =
       this.#slider?.querySelector('input[type="range"]') ?? this.#rangeInput;
@@ -498,7 +505,6 @@ class FigFieldSlider extends HTMLElement {
     this.removeAttribute("data-elastic-dragging");
     this.style.removeProperty("--fig-field-slider-elastic-size");
     this.style.removeProperty("--fig-field-slider-elastic-scale");
-    this.style.removeProperty("--fig-field-slider-elastic-origin");
   }
 
   #valueFromPointer(event) {
@@ -594,7 +600,7 @@ class FigFieldSlider extends HTMLElement {
   }
 
   #forwardSliderEvent(type, event) {
-    event.stopPropagation();
+    event.stopImmediatePropagation();
     if (type === "change") {
       this.#resetElasticPull();
     }
@@ -1833,11 +1839,13 @@ class FigInputOscillator extends HTMLElement {
   #bounds = null;
   #handleAmplitude = null;
   #handleFrequency = null;
-  #addTypeControl = null;
   #fields = [];
   #typeControls = [];
   #waveRows = [];
+  #waveGroups = [];
+  #expandedWaveIndices = new Set();
   #resizeObserver = null;
+  #activeFieldInput = null;
 
   static TYPES = [
     { name: "Wave", value: "sine" },
@@ -2100,12 +2108,6 @@ class FigInputOscillator extends HTMLElement {
   #getWaveControlsHTML(disabled) {
     return `<div class="fig-input-oscillator-waves">
       ${this.#waves.map((wave, index) => this.#getWaveRowHTML(wave, index, disabled)).join("")}
-      <hstack class="fig-input-oscillator-add-wave">
-        <fig-button class="fig-input-oscillator-add-type-button" type="select" variant="ghost" icon aria-label="Choose waveform type"${disabled}>
-          <fig-icon name="settings"></fig-icon>
-          ${this.#getWaveTypeDropdownHTML("fig-input-oscillator-add-type", "sine", disabled)}
-        </fig-button>
-      </hstack>
     </div>`;
   }
 
@@ -2113,18 +2115,27 @@ class FigInputOscillator extends HTMLElement {
     const removeDisabled = disabled || this.#waves.length <= 1 ? " disabled" : "";
     const active = index === this.#activeWaveIndex ? " data-active" : "";
     const label = FigInputOscillator.#labelForType(wave.type);
-    return `<details class="fig-input-oscillator-wave" data-wave-index="${index}" open>
-      <summary class="fig-input-oscillator-wave-summary">
-        <label>${FigInputOscillator.waveIcon(wave.type, 24)}<span>${label}</span></label>
-        <fig-button class="fig-input-oscillator-remove-button" variant="ghost" icon data-wave-index="${index}" aria-label="Remove waveform"${removeDisabled}><fig-icon name="minus"></fig-icon></fig-button>
-      </summary>
+    const open = this.#expandedWaveIndices.has(index) ? ' open="true"' : ' open="false"';
+    return `<fig-group class="fig-input-oscillator-wave" collapsible borderless compact="true"${open} data-wave-index="${index}">
+      <fig-header borderless>
+        <h3>${label}</h3>
+        <fig-tooltip text="Remove form">
+          <fig-button class="fig-input-oscillator-remove-button" variant="ghost" icon data-wave-index="${index}" aria-label="Remove form"${removeDisabled}><fig-icon name="minus"></fig-icon></fig-button>
+        </fig-tooltip>
+        <fig-tooltip text="Add form">
+          <fig-button class="fig-input-oscillator-add-type-button" type="select" variant="ghost" icon data-wave-index="${index}" aria-label="Add form"${disabled}>
+            <fig-icon name="add"></fig-icon>
+            ${this.#getWaveTypeDropdownHTML("fig-input-oscillator-add-type", "sine", disabled, index)}
+          </fig-button>
+        </fig-tooltip>
+      </fig-header>
       <div class="fig-input-oscillator-fields" data-wave-index="${index}"${active}>
         ${this.#getNumberFieldHTML(index, "frequency", "Frequency", 0.1, 16, 0.1, "")}
         ${this.#getNumberFieldHTML(index, "amplitude", "Amplitude", -4, 4, 0.1, "")}
         ${this.#getNumberFieldHTML(index, "phase", "Phase", -360, 360, 1, "°")}
         ${this.#getNumberFieldHTML(index, "offset", "Offset", -4, 4, 0.1, "")}
       </div>
-    </details>`;
+    </fig-group>`;
   }
 
   #getWaveTypeDropdownHTML(className, value, disabled, index = null) {
@@ -2135,9 +2146,9 @@ class FigInputOscillator extends HTMLElement {
         <label>${type.name}</label>
       </option>`;
     }).join("");
-    const indexAttr = index === null ? "" : ` data-wave-index="${index}"`;
-    const dropdownAttr = index === null ? ' type="dropdown" label="Choose waveform type"' : "";
-    return `<fig-dropdown class="${className}" value="${value}" experimental="modern"${dropdownAttr}${indexAttr}${disabled}>${options}</fig-dropdown>`;
+    const indexAttr =
+      index === null ? "" : ` data-wave-index="${FigInputOscillator.#escapeAttribute(String(index))}"`;
+    return `<fig-dropdown class="${className}" value="${value}" experimental="modern" type="dropdown" label="Add form"${indexAttr}${disabled}>${options}</fig-dropdown>`;
   }
 
   #getNumberFieldHTML(index, name, label, min, max, step, units) {
@@ -2146,11 +2157,7 @@ class FigInputOscillator extends HTMLElement {
       ? ` units="${FigInputOscillator.#escapeAttribute(units)}"`
       : "";
     const wave = this.#waves[index] || FigInputOscillator.#defaultWave();
-    return `<fig-field class="fig-input-oscillator-field" direction="horizontal" data-wave-index="${index}">
-      <label>${label}</label>
-      <fig-slider name="${name}" data-wave-index="${index}" value="${this.#round(wave[name])}" min="${min}" max="${max}" step="${step}" precision="${this.#precision}" text="true"${unitsAttr}${disabled}></fig-slider>
-    </fig-field>
-    `;
+    return `<fig-field-slider class="fig-input-oscillator-field" label="${label}" direction="horizontal" name="${name}" data-wave-index="${index}" value="${this.#round(wave[name])}" min="${min}" max="${max}" step="${step}" precision="${this.#precision}" elastic="false"${unitsAttr}${disabled}></fig-field-slider>`;
   }
 
   #cacheRefs() {
@@ -2161,14 +2168,34 @@ class FigInputOscillator extends HTMLElement {
     this.#bounds = this.querySelector(".fig-input-oscillator-bounds");
     this.#handleAmplitude = this.querySelector('[data-handle="amplitude"]');
     this.#handleFrequency = this.querySelector('[data-handle="frequency"]');
-    this.#addTypeControl = this.querySelector(".fig-input-oscillator-add-type");
     this.#typeControls = Array.from(
       this.querySelectorAll(".fig-input-oscillator-wave-type"),
     );
-    this.#fields = Array.from(this.querySelectorAll("fig-slider[name]"));
-    this.#waveRows = Array.from(this.querySelectorAll("[data-wave-index]")).filter(
-      (row) => row.classList.contains("fig-input-oscillator-field"),
+    this.#fields = Array.from(this.querySelectorAll("fig-field-slider[name]"));
+    this.#waveGroups = Array.from(
+      this.querySelectorAll("fig-group.fig-input-oscillator-wave"),
     );
+    this.#waveRows = Array.from(
+      this.querySelectorAll(".fig-input-oscillator-fields"),
+    );
+  }
+
+  #reindexExpandedWaves(removedIndex) {
+    const nextExpanded = new Set();
+    for (const index of this.#expandedWaveIndices) {
+      if (index < removedIndex) nextExpanded.add(index);
+      else if (index > removedIndex) nextExpanded.add(index - 1);
+    }
+    this.#expandedWaveIndices = nextExpanded;
+  }
+
+  #reindexExpandedWavesAfterInsert(insertIndex) {
+    const nextExpanded = new Set();
+    for (const index of this.#expandedWaveIndices) {
+      nextExpanded.add(index >= insertIndex ? index + 1 : index);
+    }
+    nextExpanded.add(insertIndex);
+    this.#expandedWaveIndices = nextExpanded;
   }
 
   #setupResizeObserver() {
@@ -2344,12 +2371,17 @@ class FigInputOscillator extends HTMLElement {
     for (const field of this.#fields) {
       field.addEventListener("input", (event) => {
         event.stopPropagation();
-        this.#applyFieldValue(
-          this.#indexFromElement(field),
-          field.getAttribute("name"),
-          event.detail ?? event.currentTarget?.value ?? event.target?.value,
-          "input",
-        );
+        this.#activeFieldInput = field;
+        try {
+          this.#applyFieldValue(
+            this.#indexFromElement(field),
+            field.getAttribute("name"),
+            event.detail ?? event.currentTarget?.value ?? event.target?.value,
+            "input",
+          );
+        } finally {
+          this.#activeFieldInput = null;
+        }
       });
       field.addEventListener("change", (event) => {
         event.stopPropagation();
@@ -2362,31 +2394,64 @@ class FigInputOscillator extends HTMLElement {
       });
     }
 
-    for (const row of this.#waveRows) {
-      row.addEventListener("pointerdown", () => {
-        this.#setActiveWave(this.#indexFromElement(row));
+    for (const group of this.#waveGroups) {
+      group.addEventListener("pointerdown", () => {
+        this.#setActiveWave(this.#indexFromElement(group));
       });
-      row.addEventListener("focusin", () => {
-        this.#setActiveWave(this.#indexFromElement(row));
+      group.addEventListener("focusin", () => {
+        this.#setActiveWave(this.#indexFromElement(group));
+      });
+      group.addEventListener("openchange", (event) => {
+        const index = this.#indexFromElement(group);
+        if (event.detail?.open) {
+          this.#expandedWaveIndices.add(index);
+        } else {
+          this.#expandedWaveIndices.delete(index);
+        }
       });
     }
 
-    this.#addTypeControl?.addEventListener("change", (event) => {
-      if (this.#isDisabled()) return;
-      if (event.target !== this.#addTypeControl) return;
-      const type = this.#normalizeType(event.detail ?? this.#addTypeControl?.value);
-      this.#waves.push(FigInputOscillator.#defaultWave(type));
-      this.#activeWaveIndex = this.#waves.length - 1;
-      this.#render();
-      this.#emit("input");
-      this.#emit("change");
-    });
+    for (const control of this.querySelectorAll(".fig-input-oscillator-add-type")) {
+      const stopHeaderToggle = (event) => {
+        event.stopPropagation();
+      };
+      control.addEventListener("pointerdown", stopHeaderToggle);
+      control.addEventListener("click", stopHeaderToggle);
+      control.addEventListener("change", (event) => {
+        if (event.target !== control) return;
+        if (this.#isDisabled()) return;
+        const insertAfter = this.#indexFromElement(control);
+        const insertIndex = insertAfter + 1;
+        const type = this.#normalizeType(event.detail ?? control.value);
+        this.#waves.splice(insertIndex, 0, FigInputOscillator.#defaultWave(type));
+        this.#reindexExpandedWavesAfterInsert(insertIndex);
+        this.#activeWaveIndex = insertIndex;
+        this.#render();
+        this.#emit("input");
+        this.#emit("change");
+      });
+    }
+
+    for (const button of this.querySelectorAll(".fig-input-oscillator-add-type-button")) {
+      const stopHeaderToggle = (event) => {
+        event.stopPropagation();
+      };
+      button.addEventListener("pointerdown", stopHeaderToggle);
+      button.addEventListener("click", stopHeaderToggle);
+      button.closest("fig-tooltip")?.addEventListener("pointerdown", stopHeaderToggle);
+      button.closest("fig-tooltip")?.addEventListener("click", stopHeaderToggle);
+    }
 
     for (const button of this.querySelectorAll(".fig-input-oscillator-remove-button")) {
-      button.addEventListener("click", () => {
+      button.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+      });
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
         if (this.#isDisabled() || this.#waves.length <= 1) return;
         const index = this.#indexFromElement(button);
         this.#waves.splice(index, 1);
+        this.#reindexExpandedWaves(index);
         this.#activeWaveIndex = Math.min(this.#activeWaveIndex, this.#waves.length - 1);
         this.#render();
         this.#emit("input");
@@ -2472,7 +2537,7 @@ class FigInputOscillator extends HTMLElement {
       ...this.#waves[index],
       [name]: next,
     });
-    this.#syncUI();
+    this.#syncUI({ skipFieldSync: eventType == "input" });
     this.#emit(eventType);
   }
 
@@ -2584,9 +2649,9 @@ class FigInputOscillator extends HTMLElement {
     );
   }
 
-  #syncUI() {
+  #syncUI({ skipFieldSync = false } = {}) {
     this.#syncTypeControls();
-    this.#syncFields();
+    if (!skipFieldSync) this.#syncFields();
     this.#syncActiveWave();
     this.#updateWaveform();
   }
@@ -2600,9 +2665,16 @@ class FigInputOscillator extends HTMLElement {
 
   #syncFields() {
     for (const field of this.#fields) {
+      if (field === this.#activeFieldInput) continue;
       const index = this.#indexFromElement(field);
       const name = field.getAttribute("name");
-      field.setAttribute("value", this.#round(this.#waves[index]?.[name] ?? 0));
+      const next = this.#round(this.#waves[index]?.[name] ?? 0);
+      const slider = field.querySelector("fig-slider");
+      if (slider) {
+        slider.value = next;
+      } else {
+        field.setAttribute("value", String(next));
+      }
     }
   }
 
