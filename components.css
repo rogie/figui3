@@ -3412,6 +3412,12 @@ fig-header {
     margin-right: calc(var(--spacer-2) * -1);
   }
 
+  &>fig-dropdown{
+    &:first-child{
+      margin-left: calc(var(--spacer-2) * -1);
+    }
+  }
+
   & h3 {
     font-weight: var(--body-medium-strong-fontWeight);
     flex-grow: 1;

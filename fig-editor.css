@@ -78,24 +78,12 @@ fig-fill-picker {
   width: 240px;
   padding: 0;
 
-  & > fig-header {
-    padding: var(--spacer-2);
-    min-width: 0;
-    overflow: hidden;
-  }
-
   fig-tab {
     font-size: 0.6875rem;
     padding: var(--spacer-1) var(--spacer-1);
   }
   & > fig-content {
     padding-bottom: var(--spacer-2-5);
-  }
-  .fig-fill-picker-type-label {
-    font-size: var(--font-size-small);
-    font-weight: var(--font-weight-medium);
-    color: var(--figma-color-text);
-    padding: var(--spacer-1) var(--spacer-2);
   }
 
   .fig-fill-picker-gamut {

@@ -2,6 +2,51 @@ import type { Section } from "./sections";
 
 export const labSections: Section[] = [
   {
+    id: "reorder",
+    name: "Reorder",
+    description:
+      "A display:contents wrapper that drag-reorders direct children. Omit handle to drag whole rows; use handle when rows contain nested controls.",
+    examples: [
+      {
+        id: "default",
+        name: "Rows",
+        markup: `<div class="prop-panel">
+  <fig-reorder>
+    <fig-field>
+      <label>Number</label>
+      <fig-input-number value="16" min="0" max="100" units="px"></fig-input-number>
+    </fig-field>
+    <fig-field>
+      <label>Text</label>
+      <fig-input-text value="Rows" full></fig-input-text>
+    </fig-field>
+    <fig-field>
+      <label>Color</label>
+      <fig-input-color value="#0D99FF"></fig-input-color>
+    </fig-field>
+  </fig-reorder>
+</div>`,
+      },
+      {
+        id: "groups",
+        name: "Groups",
+        markup: `<div class="prop-panel">
+  <fig-reorder>
+    <fig-group name="Fill" collapsible open="true">
+      <fig-field-slider label="Opacity" direction="horizontal" type="opacity" value="100" min="0" max="100" units="%"></fig-field-slider>
+    </fig-group>
+    <fig-group name="Stroke" collapsible open="false">
+      <fig-field-slider label="Width" direction="horizontal" value="2" min="0" max="24" units="px"></fig-field-slider>
+    </fig-group>
+    <fig-group name="Effects" collapsible open="false">
+      <fig-field-slider label="Blur" direction="horizontal" value="4" min="0" max="64" units="px"></fig-field-slider>
+    </fig-group>
+  </fig-reorder>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "field-slider",
     name: "Field Slider",
     description: "A modern, full surface slider that composes fig-field and fig-slider into a single element.",

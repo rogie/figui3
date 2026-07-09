@@ -778,6 +778,9 @@ export default function AttributesView({
             const useSegmentedControl =
               isCheckRadioLabel ||
               isColorPickerMode ||
+              (target.controlTag === "fig-input-gradient" &&
+                scope === "control" &&
+                name === "size") ||
               (target.controlTag === "fig-handle" &&
                 scope === "control" &&
                 (name === "drag-axes" ||
@@ -802,6 +805,12 @@ export default function AttributesView({
                 }
                 if (target.controlTag === "fig-handle" && name === "size") {
                   return option === "" ? "Default" : "Small";
+                }
+                if (
+                  target.controlTag === "fig-input-gradient" &&
+                  name === "size"
+                ) {
+                  return option === "" ? "Default" : "Large";
                 }
                 if (target.controlTag === "fig-handle" && name === "drag-axes") {
                   return option === "x,y" ? "X & Y" : option.toUpperCase();
@@ -869,6 +878,18 @@ export default function AttributesView({
                   return;
                 }
                 if (target.controlTag === "fig-handle" && name === "size") {
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    option === "" ? null : option,
+                  );
+                  return;
+                }
+                if (
+                  target.controlTag === "fig-input-gradient" &&
+                  name === "size"
+                ) {
                   applyChange(
                     target.fieldIndex,
                     scope,
@@ -1072,6 +1093,14 @@ export default function AttributesView({
                       return;
                     }
                     if (
+                      target.controlTag === "fig-input-gradient" &&
+                      name === "size" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
                       target.controlTag === "fig-field-slider" &&
                       name === "type"
                     ) {
@@ -1171,7 +1200,10 @@ export default function AttributesView({
                                 : target.controlTag === "fig-field-slider" &&
                                     name === "size"
                                   ? "Default"
-                                  : target.controlTag === "fig-dialog" &&
+                                  : target.controlTag === "fig-input-gradient" &&
+                                      name === "size"
+                                    ? "Default"
+                                    : target.controlTag === "fig-dialog" &&
                                     name === "position"
                                   ? "Default"
                                   : "None"

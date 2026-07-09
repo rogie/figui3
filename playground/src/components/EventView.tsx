@@ -36,9 +36,11 @@ export default function EventView() {
 
     container.addEventListener("input", handler);
     container.addEventListener("change", handler);
+    container.addEventListener("reorder", handler);
     return () => {
       container.removeEventListener("input", handler);
       container.removeEventListener("change", handler);
+      container.removeEventListener("reorder", handler);
       cancelAnimationFrame(rafId);
     };
   }, []);

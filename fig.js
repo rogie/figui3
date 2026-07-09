@@ -9132,6 +9132,7 @@ customElements.define("fig-input-palette", FigInputPalette);
 /**
  * A gradient-only fill input built on top of fig-fill-picker.
  * @attr {string} value - JSON string with gradient fill data
+ * @attr {string} size - Passed through to the internal fig-swatch (e.g. "large")
  * @attr {boolean} disabled - Whether the input is disabled
  * @fires input - When the gradient value changes
  * @fires change - When the gradient value is committed
@@ -9160,7 +9161,7 @@ class FigInputGradient extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled", "edit", "mode"];
+    return ["value", "disabled", "edit", "mode", "size"];
   }
 
   get #editMode() {
@@ -9367,6 +9368,18 @@ class FigInputGradient extends HTMLElement {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
+  #swatchSizeAttr() {
+    const size = this.getAttribute("size");
+    return size ? ` size="${size}"` : "";
+  }
+
+  #syncSwatchSize() {
+    if (!this.#swatch) return;
+    const size = this.getAttribute("size");
+    if (size) this.#swatch.setAttribute("size", size);
+    else this.#swatch.removeAttribute("size");
+  }
+
   #buildStopHandles() {
     const disabled = this.hasAttribute("disabled");
     const tipAttr = this.#stopHandleMode === "tip" ? ' tip="color"' : "";
@@ -9391,7 +9404,7 @@ class FigInputGradient extends HTMLElement {
       const gradientValue = JSON.stringify(this.value);
       this.innerHTML = `
         <fig-fill-picker mode="gradient"${expAttr} value='${gradientValue}'${disabled ? " disabled" : ""}>
-          <fig-swatch background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-swatch>
+          <fig-swatch background="${this.#buildGradientCSS()}"${this.#swatchSizeAttr()}${disabled ? " disabled" : ""}></fig-swatch>
         </fig-fill-picker>`;
       this.#swatch = this.querySelector("fig-swatch");
       this.#track = null;
@@ -9401,7 +9414,7 @@ class FigInputGradient extends HTMLElement {
     }
 
     this.innerHTML = `
-      <fig-swatch background="${this.#buildGradientCSS()}"${disabled ? " disabled" : ""}></fig-swatch>
+      <fig-swatch background="${this.#buildGradientCSS()}"${this.#swatchSizeAttr()}${disabled ? " disabled" : ""}></fig-swatch>
       ${mode === "true" || mode === "picker" ? `<div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>` : ""}`;
     this.#swatch = this.querySelector("fig-swatch");
     this.#track = this.querySelector(".fig-input-gradient-track");
@@ -9711,6 +9724,7 @@ class FigInputGradient extends HTMLElement {
   #syncSwatch() {
     if (!this.#swatch) return;
     this.#swatch.setAttribute("background", this.#buildGradientCSS());
+    this.#syncSwatchSize();
   }
 
   #setupEventListeners() {
@@ -9966,6 +9980,9 @@ class FigInputGradient extends HTMLElement {
         break;
       case "mode":
         this.#syncHandleMode();
+        break;
+      case "size":
+        this.#syncSwatchSize();
         break;
     }
   }

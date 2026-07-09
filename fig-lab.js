@@ -2098,8 +2098,8 @@ class FigInputOscillator extends HTMLElement {
           <line class="fig-input-oscillator-baseline"></line>
           <path class="fig-input-oscillator-path"></path>
           <circle class="fig-input-oscillator-playhead"></circle>
-          <foreignObject class="fig-input-oscillator-handle fig-input-oscillator-amplitude-handle" data-handle="amplitude" width="20" height="20"><div class="fig-input-oscillator-handle-inner"><fig-tooltip text="Amplitude"><fig-handle type="canvas" size="small" aria-label="Oscillator amplitude handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
-          <foreignObject class="fig-input-oscillator-handle fig-input-oscillator-frequency-handle" data-handle="frequency" width="20" height="20"><div class="fig-input-oscillator-handle-inner"><fig-tooltip text="Frequency"><fig-handle type="canvas" size="small" aria-label="Oscillator frequency handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
+          <foreignObject class="fig-input-oscillator-handle fig-input-oscillator-amplitude-handle" data-handle="amplitude" width="20" height="20"><div class="fig-input-oscillator-handle-inner"><fig-tooltip text="Amplitude"><fig-handle size="small" aria-label="Oscillator amplitude handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
+          <foreignObject class="fig-input-oscillator-handle fig-input-oscillator-frequency-handle" data-handle="frequency" width="20" height="20"><div class="fig-input-oscillator-handle-inner"><fig-tooltip text="Frequency"><fig-handle size="small" aria-label="Oscillator frequency handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
         </svg>
       </div>
       ${this.#isEditEnabled() ? this.#getWaveControlsHTML(disabled) : ""}`;
@@ -2589,6 +2589,13 @@ class FigInputOscillator extends HTMLElement {
 
   #startDrag(event, type) {
     this.#isDragging = type;
+    this.#svg?.classList.add("dragging");
+    const dragCursor =
+      type === "frequency" ? "ew-resize" : type === "amplitude" ? "ns-resize" : "";
+    const prevBodyCursor = document.body.style.cursor;
+    if (dragCursor) {
+      document.body.style.cursor = dragCursor;
+    }
 
     const onMove = (moveEvent) => {
       if (!this.#isDragging) return;
@@ -2623,6 +2630,10 @@ class FigInputOscillator extends HTMLElement {
 
     const onUp = () => {
       this.#isDragging = null;
+      this.#svg?.classList.remove("dragging");
+      if (dragCursor) {
+        document.body.style.cursor = prevBodyCursor;
+      }
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
       this.#emit("change");
@@ -3220,4 +3231,442 @@ class FigInputAngle extends HTMLElement {
   }
 }
 customElements.define("fig-input-angle", FigInputAngle);
+
+/* Reorder wrapper */
+class FigReorder extends HTMLElement {
+  static observedAttributes = ["axis", "handle", "disabled"];
+
+  static #DRAG_THRESHOLD = 6;
+
+  static #INTERACTIVE_SELECTORS = [
+    "input",
+    "button",
+    "select",
+    "textarea",
+    "a[href]",
+    "label",
+    "summary",
+    "fig-button",
+    "fig-dropdown",
+    "fig-slider",
+    "fig-input-number",
+    "fig-input-text",
+    "fig-field-slider",
+    "fig-checkbox",
+    "fig-switch",
+    "fig-combo-input",
+    "fig-segmented-control",
+    "fig-input-color",
+    "fig-input-fill",
+    '[contenteditable="true"]',
+  ];
+
+  #childObserver = null;
+  #bindings = new Map();
+  #drag = null;
+  #indicator = null;
+
+  connectedCallback() {
+    this.style.display = "contents";
+    this.#syncChildren();
+    this.#childObserver = new MutationObserver(() => this.#syncChildren());
+    this.#childObserver.observe(this, { childList: true });
+  }
+
+  disconnectedCallback() {
+    this.#childObserver?.disconnect();
+    this.#childObserver = null;
+    this.#unbindAll();
+    this.#cancelDrag();
+    this.#removeIndicator();
+  }
+
+  attributeChangedCallback() {
+    if (this.isConnected) this.#syncChildren();
+  }
+
+  get #disabled() {
+    return (
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false"
+    );
+  }
+
+  get #axis() {
+    const value = (this.getAttribute("axis") || "vertical").trim().toLowerCase();
+    return value === "horizontal" ? "horizontal" : "vertical";
+  }
+
+  get #handleSelector() {
+    return (this.getAttribute("handle") || "").trim();
+  }
+
+  #getElementChildren() {
+    return [...this.children].filter((node) => node.nodeType === Node.ELEMENT_NODE);
+  }
+
+  #syncChildren() {
+    const children = this.#getElementChildren();
+    const childSet = new Set(children);
+
+    for (const [child, binding] of this.#bindings) {
+      if (!childSet.has(child)) {
+        binding.target.removeEventListener(
+          "pointerdown",
+          binding.onPointerDown,
+          true,
+        );
+        this.#bindings.delete(child);
+      }
+    }
+
+    this.#clearHandleMarks(children);
+    this.#clearReorderItemMarks(children);
+
+    if (this.#disabled || children.length < 2) {
+      this.#unbindAll();
+      return;
+    }
+
+    for (const child of children) {
+      const target = this.#getDragTarget(child);
+      const existing = this.#bindings.get(child);
+      if (existing && existing.target === target) continue;
+      if (existing) {
+        existing.target.removeEventListener(
+          "pointerdown",
+          existing.onPointerDown,
+          true,
+        );
+        this.#bindings.delete(child);
+      }
+      if (!target) continue;
+      this.#bindChild(child, target);
+    }
+
+    this.#markHandles(children);
+    this.#markReorderItems(children);
+  }
+
+  #clearReorderItemMarks(children) {
+    for (const child of children) {
+      child.removeAttribute("data-reorder-item");
+    }
+  }
+
+  #markReorderItems(children) {
+    for (const child of children) {
+      child.setAttribute("data-reorder-item", "");
+    }
+  }
+
+  #clearHandleMarks(children) {
+    for (const child of children) {
+      child
+        .querySelectorAll("[data-reorder-handle]")
+        .forEach((node) => node.removeAttribute("data-reorder-handle"));
+    }
+  }
+
+  #markHandles(children) {
+    if (!this.#handleSelector) return;
+    for (const child of children) {
+      const handle = child.querySelector(this.#handleSelector);
+      if (handle) handle.setAttribute("data-reorder-handle", "");
+    }
+  }
+
+  #getDragTarget(child) {
+    if (this.#handleSelector) {
+      return child.querySelector(this.#handleSelector);
+    }
+    return child;
+  }
+
+  #bindChild(child, target) {
+    const onPointerDown = (event) => {
+      if (this.#disabled || this.#getElementChildren().length < 2) return;
+      if (event.button !== 0) return;
+      if (
+        !this.#handleSelector &&
+        this.#isInteractiveTarget(event.target, child)
+      ) {
+        return;
+      }
+      this.#startPendingDrag(event, child, target);
+    };
+
+    target.addEventListener("pointerdown", onPointerDown, true);
+    this.#bindings.set(child, { target, onPointerDown });
+  }
+
+  #isInteractiveTarget(target, child) {
+    let node = target;
+    while (node && node !== child) {
+      if (node instanceof Element) {
+        for (const selector of FigReorder.#INTERACTIVE_SELECTORS) {
+          if (node.matches(selector)) return true;
+        }
+      }
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  static #DRAGGING_BODY_CLASS = "fig-reorder-dragging";
+
+  static #setDocumentDragging(active) {
+    document.body.classList.toggle(FigReorder.#DRAGGING_BODY_CLASS, active);
+  }
+
+  #startPendingDrag(event, item, target) {
+    this.#cancelDrag();
+
+    const state = {
+      item,
+      target,
+      pointerId: event.pointerId,
+      oldIndex: this.#getElementChildren().indexOf(item),
+      startX: event.clientX,
+      startY: event.clientY,
+      active: false,
+      onMove: null,
+      onUp: null,
+      onKeyDown: null,
+    };
+
+    state.onMove = (moveEvent) => {
+      if (moveEvent.pointerId !== state.pointerId) return;
+
+      const dx = moveEvent.clientX - state.startX;
+      const dy = moveEvent.clientY - state.startY;
+
+      if (!state.active) {
+        if (dx * dx + dy * dy < FigReorder.#DRAG_THRESHOLD * FigReorder.#DRAG_THRESHOLD) {
+          return;
+        }
+        state.active = true;
+        event.preventDefault();
+        event.stopPropagation();
+        item.classList.add("dragging");
+        FigReorder.#setDocumentDragging(true);
+        try {
+          target.setPointerCapture(state.pointerId);
+        } catch {}
+      }
+
+      moveEvent.preventDefault();
+      const pointer =
+        this.#axis === "horizontal" ? moveEvent.clientX : moveEvent.clientY;
+      const index = this.#getInsertIndex(pointer);
+      this.#moveItemToIndex(item, index);
+      this.#updateIndicator(index, item);
+    };
+
+    state.onKeyDown = (keyEvent) => {
+      if (keyEvent.key !== "Escape" || !state.active) return;
+      keyEvent.preventDefault();
+      this.#finishDrag(state, true);
+    };
+
+    state.onUp = (upEvent) => {
+      if (upEvent.pointerId !== state.pointerId) return;
+      this.#finishDrag(state, false);
+    };
+
+    this.#drag = state;
+    window.addEventListener("pointermove", state.onMove);
+    window.addEventListener("pointerup", state.onUp);
+    window.addEventListener("pointercancel", state.onUp);
+    window.addEventListener("keydown", state.onKeyDown);
+  }
+
+  #getInsertIndex(pointer) {
+    const items = this.#getElementChildren();
+    const horizontal = this.#axis === "horizontal";
+
+    for (let i = 0; i < items.length; i++) {
+      const rect = items[i].getBoundingClientRect();
+      const midpoint = horizontal
+        ? rect.left + rect.width / 2
+        : rect.top + rect.height / 2;
+      if (pointer < midpoint) return i;
+    }
+
+    return items.length;
+  }
+
+  #shouldShowIndicator(item, index) {
+    const items = this.#getElementChildren();
+    const currentIndex = items.indexOf(item);
+    if (currentIndex === -1) return false;
+
+    const clamped = Math.max(0, Math.min(index, items.length));
+
+    // Hide only the redundant bottom line when the dragged item is already last.
+    if (clamped >= items.length && currentIndex === items.length - 1) {
+      return false;
+    }
+
+    return true;
+  }
+
+  #getReorderBounds(items) {
+    if (!items.length) return null;
+
+    let left = Infinity;
+    let right = -Infinity;
+    let top = Infinity;
+    let bottom = -Infinity;
+
+    for (const item of items) {
+      const rect = item.getBoundingClientRect();
+      left = Math.min(left, rect.left);
+      right = Math.max(right, rect.right);
+      top = Math.min(top, rect.top);
+      bottom = Math.max(bottom, rect.bottom);
+    }
+
+    return {
+      left,
+      top,
+      width: right - left,
+      height: bottom - top,
+    };
+  }
+
+  #ensureIndicator() {
+    if (this.#indicator) return this.#indicator;
+
+    const indicator = document.createElement("div");
+    indicator.className = "fig-reorder-indicator";
+    indicator.setAttribute("data-axis", this.#axis);
+    document.body.appendChild(indicator);
+    this.#indicator = indicator;
+    return indicator;
+  }
+
+  #updateIndicator(index, item) {
+    const items = this.#getElementChildren();
+    if (!this.#shouldShowIndicator(item, index)) {
+      this.#removeIndicator();
+      return;
+    }
+
+    const bounds = this.#getReorderBounds(items);
+    if (!bounds) {
+      this.#removeIndicator();
+      return;
+    }
+
+    const indicator = this.#ensureIndicator();
+    indicator.setAttribute("data-axis", this.#axis);
+
+    if (this.#axis === "horizontal") {
+      let x;
+      if (index <= 0) {
+        x = items[0].getBoundingClientRect().left;
+      } else if (index >= items.length) {
+        x = items[items.length - 1].getBoundingClientRect().right;
+      } else {
+        x = items[index].getBoundingClientRect().left;
+      }
+
+      indicator.style.left = `${x - 1}px`;
+      indicator.style.top = `${bounds.top}px`;
+      indicator.style.width = "2px";
+      indicator.style.height = `${bounds.height}px`;
+      return;
+    }
+
+    let y;
+    if (index <= 0) {
+      y = items[0].getBoundingClientRect().top;
+    } else if (index >= items.length) {
+      y = items[items.length - 1].getBoundingClientRect().bottom;
+    } else {
+      y = items[index].getBoundingClientRect().top;
+    }
+
+    indicator.style.left = `${bounds.left}px`;
+    indicator.style.top = `${y - 1}px`;
+    indicator.style.width = `${bounds.width}px`;
+    indicator.style.height = "2px";
+  }
+
+  #removeIndicator() {
+    this.#indicator?.remove();
+    this.#indicator = null;
+  }
+
+  #moveItemToIndex(item, index) {
+    const items = this.#getElementChildren();
+    const clamped = Math.max(0, Math.min(index, items.length));
+
+    if (clamped >= items.length) {
+      if (items[items.length - 1] !== item) this.appendChild(item);
+      return;
+    }
+
+    const ref = items[clamped];
+    if (ref !== item) this.insertBefore(item, ref);
+  }
+
+  #finishDrag(state, revert) {
+    const { item, oldIndex, active, onMove, onUp, onKeyDown } = state;
+
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
+    window.removeEventListener("keydown", onKeyDown);
+
+    if (active) {
+      if (revert) {
+        this.#restoreItemIndex(item, oldIndex);
+      } else {
+        const newIndex = this.#getElementChildren().indexOf(item);
+        if (newIndex !== -1 && newIndex !== oldIndex) {
+          this.dispatchEvent(
+            new CustomEvent("reorder", {
+              bubbles: true,
+              detail: { oldIndex, newIndex, item },
+            }),
+          );
+        }
+      }
+    }
+
+    item.classList.remove("dragging");
+    FigReorder.#setDocumentDragging(false);
+    this.#removeIndicator();
+    if (this.#drag === state) this.#drag = null;
+  }
+
+  #restoreItemIndex(item, index) {
+    const items = this.#getElementChildren().filter((node) => node !== item);
+    const ref = items[index] ?? null;
+    if (ref) {
+      this.insertBefore(item, ref);
+      return;
+    }
+    this.appendChild(item);
+  }
+
+  #unbindAll() {
+    for (const [, binding] of this.#bindings) {
+      binding.target.removeEventListener(
+        "pointerdown",
+        binding.onPointerDown,
+        true,
+      );
+    }
+    this.#bindings.clear();
+  }
+
+  #cancelDrag() {
+    if (!this.#drag) return;
+    this.#finishDrag(this.#drag, true);
+  }
+}
+
+customElements.define("fig-reorder", FigReorder);
 

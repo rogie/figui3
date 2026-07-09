@@ -161,6 +161,13 @@ function getTargetElement(
     return groupControls[mutation.fieldIndex] ?? null;
   }
 
+  const reorderControls = primaryControls.filter(
+    (el) => getControlTag(el) === "fig-reorder",
+  );
+  if (reorderControls.length) {
+    return reorderControls[mutation.fieldIndex] ?? null;
+  }
+
   const fields = getTopLevelFields(root);
   if (fields.length) {
     const field = fields[mutation.fieldIndex];
@@ -341,6 +348,21 @@ export function parseAttributeTargets(markup: string): ParsedAttributeTarget[] {
   );
   if (groupControls.length) {
     return groupControls.map((control, fieldIndex) => ({
+      fieldIndex,
+      label: "",
+      hasLabel: false,
+      hasField: false,
+      controlTag: getControlTag(control),
+      fieldAttributes: {},
+      controlAttributes: attrsToRecord(control),
+    }));
+  }
+
+  const reorderControls = primaryControls.filter(
+    (el) => getControlTag(el) === "fig-reorder",
+  );
+  if (reorderControls.length) {
+    return reorderControls.map((control, fieldIndex) => ({
       fieldIndex,
       label: "",
       hasLabel: false,

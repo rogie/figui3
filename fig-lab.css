@@ -302,7 +302,7 @@ fig-field-slider {
       background-color: transparent;
       box-shadow: none !important;
       position: absolute;
-      right: var(--spacer-1);
+      right: 0;
       width: fit-content;
       min-width: fit-content;
       max-width: max-content;
@@ -636,6 +636,32 @@ fig-input-oscillator {
     }
   }
 
+  .fig-input-oscillator-frequency-handle {
+    cursor: ew-resize;
+
+    fig-handle,
+    fig-handle:hover,
+    fig-handle .fig-handle-hit-area,
+    fig-handle:hover .fig-handle-hit-area,
+    fig-handle:is(:active, .active, .dragging),
+    fig-handle:is(:active, .active, .dragging) .fig-handle-hit-area {
+      cursor: ew-resize !important;
+    }
+  }
+
+  .fig-input-oscillator-amplitude-handle {
+    cursor: ns-resize;
+
+    fig-handle,
+    fig-handle:hover,
+    fig-handle .fig-handle-hit-area,
+    fig-handle:hover .fig-handle-hit-area,
+    fig-handle:is(:active, .active, .dragging),
+    fig-handle:is(:active, .active, .dragging) .fig-handle-hit-area {
+      cursor: ns-resize !important;
+    }
+  }
+
   .fig-input-oscillator-waves {
     display: flex;
     flex-direction: column;
@@ -671,5 +697,54 @@ fig-input-oscillator {
     pointer-events: none;
     opacity: 0.6;
   }
+}
+
+/* Reorder */
+fig-reorder {
+  display: contents;
+}
+
+fig-reorder:not([handle]):not([disabled]):not([disabled="false"]) > [data-reorder-item] {
+  cursor: grab;
+}
+
+fig-reorder:not([handle]):not([disabled]):not([disabled="false"]) > [data-reorder-item] > fig-header,
+fig-reorder:not([handle]):not([disabled]):not([disabled="false"]) > [data-reorder-item] > fig-header *,
+fig-reorder:not([handle]):not([disabled]):not([disabled="false"]) > [data-reorder-item] > label {
+  cursor: grab;
+}
+
+fig-reorder > .dragging {
+  opacity: 0.6;
+}
+
+[data-reorder-handle] {
+  cursor: grab;
+}
+
+fig-reorder[disabled]:not([disabled="false"]) [data-reorder-handle] {
+  cursor: inherit;
+}
+
+body.fig-reorder-dragging,
+body.fig-reorder-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: grabbing !important;
+}
+
+.fig-reorder-indicator {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  background: var(--figma-color-border-strong);
+}
+
+.fig-reorder-indicator[data-axis="vertical"] {
+  height: 2px;
+}
+
+.fig-reorder-indicator[data-axis="horizontal"] {
+  width: 2px;
 }
 

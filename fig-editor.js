@@ -1439,28 +1439,6 @@ class FigFillPicker extends HTMLElement {
       <fig-preview class="fig-fill-picker-gradient-preview">
         <fig-input-gradient class="fig-fill-picker-gradient-bar-input" aria-label="Gradient stops" edit="true" mode="tip" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
       </fig-preview>
-      <fig-field class="fig-fill-picker-gradient-interpolation">
-        <label>Mixing</label>
-        <fig-dropdown class="fig-fill-picker-gradient-space" label="Gradient mixing" full ${expAttr} value="${
-          this.#gradient.interpolationSpace === "oklch"
-            ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
-            : this.#gradient.interpolationSpace
-        }">
-          <optgroup label="sRGB">
-            <option value="srgb">Classic</option>
-            <option value="srgb-linear">Linear</option>
-          </optgroup>
-          <optgroup label="OKLab">
-            <option value="oklab">Perceptual</option>
-          </optgroup>
-          <optgroup label="OKLCH">
-            <option value="oklch-shorter">Shorter hue</option>
-            <option value="oklch-longer">Longer hue</option>
-            <option value="oklch-increasing">Increasing hue</option>
-            <option value="oklch-decreasing">Decreasing hue</option>
-          </optgroup>
-        </fig-dropdown>
-      </fig-field>
       <div class="fig-fill-picker-gradient-stops">
         <fig-header class="fig-fill-picker-gradient-stops-header" borderless>
           <span>Stops</span>
@@ -1469,6 +1447,32 @@ class FigFillPicker extends HTMLElement {
           </fig-button>
         </fig-header>
         <div class="fig-fill-picker-gradient-stops-list"></div>
+      </div>
+      <div class="fig-fill-picker-gradient-interpolation">
+        <fig-header class="fig-fill-picker-gradient-interpolation-header" borderless>
+          <span>Color interpolation</span>
+        </fig-header>
+        <fig-field class="fig-fill-picker-gradient-interpolation-field">
+          <fig-dropdown class="fig-fill-picker-gradient-space" label="Color interpolation" full ${expAttr} value="${
+            this.#gradient.interpolationSpace === "oklch"
+              ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
+              : this.#gradient.interpolationSpace
+          }">
+            <optgroup label="sRGB">
+              <option value="srgb">Classic</option>
+              <option value="srgb-linear">Linear</option>
+            </optgroup>
+            <optgroup label="OKLab">
+              <option value="oklab">Perceptual</option>
+            </optgroup>
+            <optgroup label="OKLCH">
+              <option value="oklch-shorter">Shorter hue</option>
+              <option value="oklch-longer">Longer hue</option>
+              <option value="oklch-increasing">Increasing hue</option>
+              <option value="oklch-decreasing">Decreasing hue</option>
+            </optgroup>
+          </fig-dropdown>
+        </fig-field>
       </div>
     `;
 

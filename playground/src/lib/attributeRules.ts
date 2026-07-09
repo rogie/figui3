@@ -337,6 +337,15 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "%", "px", "°"],
     },
   },
+  "fig-reorder": {
+    axis: {
+      label: "Axis",
+      type: "enum",
+      options: ["vertical", "horizontal"],
+    },
+    handle: { label: "Handle", type: "string" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-field-slider": {
     type: {
       label: "Type",
@@ -376,6 +385,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-input-gradient": {
     edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
     mode: { label: "Mode", type: "enum", options: ["handle", "tip"] },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-color": {

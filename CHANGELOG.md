@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.11.0]
+
+### Added
+
+- Added `fig-reorder` lab component for drag-reordering direct children, with optional handle selector, axis control, and `reorder` event.
+- Added `size` attribute to `fig-input-gradient`; passes through to the internal `fig-swatch`.
+- Added playground attributes support for `fig-reorder` and `fig-input-gradient` size.
+- Added playground event logging for `reorder` events.
+- Added browser tests and lab fixture coverage for `fig-reorder`.
+
+### Changed
+
+- Moved fill picker gradient color interpolation controls below stops with an updated header and label.
+- Updated oscillator amplitude and frequency handles to show axis-specific drag cursors while dragging.
+- Adjusted `fig-header` spacing when a leading `fig-dropdown` is present.
+
 ## [6.10.0]
 
 ### Added
