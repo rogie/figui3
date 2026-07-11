@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.12.0]
+
+### Added
+
+- Added gradient stop reordering in `fig-fill-picker` via `fig-reorder`.
+- Added shared boolean attribute helpers so `attr="false"` is treated as unset across core and lab components.
+- Added CSS tokens for `--figma-color-bg-active`, `--font-size-small`, `--line-height`, `--spacer-half`, `--transition-duration`, `--transition-timing-function`, and `--control-height`.
+- Added browser tests for gradient stop reorder color persistence and audit regressions.
+
+### Changed
+
+- Changed `fig-reorder` to show the grabbing cursor on pointer down, move the item on mouse up, highlight the dragged item with selected background, and raise the drop indicator above fill-picker dialogs.
+- Changed `fig-input-text` and `fig-input-number` to share the same intrinsic default width as `fig-input-color`, and to fill horizontal `fig-field` input columns.
+- Changed presence-style CSS attribute selectors (`icon`, `full`, `open`, `borderless`, `autoresize`, `multiline`, `resizable`, and related) to ignore `"false"`.
+- Styled native `fig-dropdown` option rows for Chromium webviews so popup menus stay readable.
+- Imported `fig-lab` from `fig-editor` so fill-picker reorder works without a lazy-load race.
+
+### Fixed
+
+- Fixed gradient stop color edits so they persist through reorder after `fig-input-color` disconnect/reconnect.
+- Fixed `fig-input-color` hex text display to strip the leading `#`.
+- Fixed parent `disabled` handling for tabs and segments so already-disabled children are not incorrectly cleared.
+
 ## [6.11.0]
 
 ### Added

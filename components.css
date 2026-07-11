@@ -25,6 +25,7 @@
   --figma-color-bg-disabled: light-dark(#d9d9d9, #757575);
   --figma-color-bg-disabled-secondary: #b3b3b3;
   --figma-color-bg-hover: light-dark(#f5f5f5, #383838);
+  --figma-color-bg-active: var(--figma-color-bg-pressed);
   --figma-color-bg-inverse: light-dark(#2c2c2c, #ffffff);
   --figma-color-bg-onselected: light-dark(#bde3ff, #667799);
   --figma-color-bg-onselected-hover: light-dark(#bde3ff, #667799);
@@ -216,6 +217,8 @@
   --body-medium-strong-fontWeight: 550;
   --body-large-strong-fontWeight: 500;
   --body-medium-fontWeight: 450;
+  --font-size-small: var(--body-medium-fontSize);
+  --line-height: 1rem;
 
   /* Spacing */
   --spacer-1: 0.25rem;
@@ -225,6 +228,7 @@
   --spacer-4: 1.5rem;
   --spacer-5: 2rem;
   --spacer-6: 2.5rem;
+  --spacer-half: 0.125rem;
 
   /* Radii */
   --radius-none: 0;
@@ -238,9 +242,12 @@
 
   /* Transitions */
   --input-transition: all 0.08s ease-out;
+  --transition-duration: 0.08s;
+  --transition-timing-function: ease-out;
 
   /* Misc UI */
   --popover-min-width: 15rem;
+  --control-height: var(--spacer-4);
   --handle-color: #fff;
   --bg-selected: #f5f5f5;
   --bg-selected-active: #e5f4ff;
@@ -885,6 +892,19 @@ fig-dropdown {
     display: none !important;
   }
 }
+
+/* Native select popups in Chromium webviews do not reliably inherit themed
+   option colors. Style only the popup rows so the closed control continues
+   to resolve FigUI's light-dark tokens from the application color scheme. */
+fig-dropdown:not([experimental~="modern"]) > select {
+  color: inherit;
+
+  option,
+  optgroup {
+    color: #1e1e1e;
+    background-color: #ffffff;
+  }
+}
 fig-dropdown,
 select,
 .fig-dropdown {
@@ -915,7 +935,7 @@ select,
   }
 
   /* Autoresize to content width */
-  &[autoresize] select {
+  &[autoresize]:not([autoresize="false"]) select {
     field-sizing: content;
   }
 }
@@ -1040,7 +1060,7 @@ fig-button {
   }
 
   /* Icon only */
-  &[icon] {
+  &[icon]:not([icon="false"]) {
     width: var(--spacer-4);
     padding: 0;
     flex-grow: 0;
@@ -1075,15 +1095,15 @@ fig-button {
     padding: 0 var(--spacer-3);
   }
 
-  &[size="large"][icon],
-  &[size="large"][icon] > button {
+  &[size="large"][icon]:not([icon="false"]),
+  &[size="large"][icon]:not([icon="false"]) > button {
     width: var(--spacer-5);
     flex-basis: var(--spacer-5);
     padding: 0;
   }
 
   /* Full width */
-  &[full] {
+  &[full]:not([full="false"]) {
     width: 100%;
   }
 
@@ -3114,7 +3134,7 @@ dialog,
     outline: none !important;
   }
 
-  &[open]{
+  &[open]:not([open="false"]){
     display: flex;
     flex-direction: column;
   }
@@ -3165,7 +3185,7 @@ dialog[is="fig-popup"] {
     max-height: calc(100vh - var(--spacer-4));
   }
 
-  &[open] {
+  &[open]:not([open="false"]) {
     display: block;
   }
 
@@ -3408,7 +3428,7 @@ fig-header {
     --fig-header-height: var(--spacer-5);
   }
 
-  fig-button[icon][variant="ghost"]:not(fig-input-text fig-button) {
+  fig-button[icon]:not([icon="false"])[variant="ghost"]:not(fig-input-text fig-button) {
     margin-right: calc(var(--spacer-2) * -1);
   }
 
@@ -3429,7 +3449,7 @@ fig-header {
     color: var(--figma-color-text-secondary);
   }
 
-  &[borderless] {
+  &[borderless]:not([borderless="false"]) {
     box-shadow: none;
   }
 }
@@ -3574,7 +3594,7 @@ fig-footer {
     }
   }
 
-  &[borderless] {
+  &[borderless]:not([borderless="false"]) {
     box-shadow: none;
   }
 
@@ -3648,29 +3668,36 @@ fig-input-number {
   user-select: all;
   gap: 0;
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
   color: var(--figma-color-text);
+
+  fig-field:not([direction="vertical"]) & {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
 
   &[full]:not([full="false"]) {
     display: flex;
+    flex: 1;
     width: 100%;
   }
-  &[multiline] {
+  &[multiline]:not([multiline="false"]) {
     display: flex;
     width: 100%;
   }
-  &[autoresize] input,
-  &[autoresize] textarea {
+  &[autoresize]:not([autoresize="false"]) input,
+  &[autoresize]:not([autoresize="false"]) textarea {
     field-sizing: content;
   }
-  &[resizable] input,
-  &[resizable] textarea {
+  &[resizable]:not([resizable="false"]) input,
+  &[resizable]:not([resizable="false"]) textarea {
     resize: both;
   }
-  &[resizable]:has(textarea[style*="width"]),
-  &[resizable]:has(textarea[style*="height"]),
-  &[resizable]:has(input[style*="width"]),
-  &[resizable]:has(input[style*="height"]) {
+  &[resizable]:not([resizable="false"]):has(textarea[style*="width"]),
+  &[resizable]:not([resizable="false"]):has(textarea[style*="height"]),
+  &[resizable]:not([resizable="false"]):has(input[style*="width"]),
+  &[resizable]:not([resizable="false"]):has(input[style*="height"]) {
     flex: unset;
   }
 
@@ -3857,11 +3884,14 @@ fig-input-fill {
   fig-field:not([direction="vertical"]) & {
     flex: 1;
     min-width: 0;
+    width: 100%;
   }
 }
 
 fig-input-color,
-fig-input-fill {
+fig-input-fill,
+fig-input-text,
+fig-input-number {
   width: 8.9375rem;
 }
 
@@ -4163,7 +4193,7 @@ fig-field {
     --fig-field-input-ratio: 3fr;
   }
 
-  & > [full] {
+  & > [full]:not([full="false"]) {
     flex: 1 1 auto;
   }
 
@@ -5041,7 +5071,7 @@ fig-choice {
   }
 
 
-  &:hover:not([selected]):not([disabled]):not([aria-disabled="true"]) {
+  &:hover:not([selected]:not([selected="false"])):not([disabled]:not([disabled="false"])):not([aria-disabled="true"]) {
     background-color: var(--figma-color-bg-secondary);
   }
 
@@ -5054,7 +5084,7 @@ fig-choice {
     --fig-choice-padding: var(--spacer-2);
   }
 
-  &[selected] {
+  &[selected]:not([selected="false"]) {
     position: relative;
     &::after {
       content: "";
@@ -5098,7 +5128,7 @@ fig-handle {
   --fig-handle-outline-color: transparent;
   --fig-handle-outline-offset: 0px;
   --fig-handle-padding: 0.25rem;
-  --fig-handle-shadow: var(--figma-elevation-200-canvas);
+  --fig-handle-shadow: none;
   --fig-handle-width: var(--width);
 
   margin: 0;
@@ -5144,7 +5174,8 @@ fig-handle {
   &:hover,
   &[selected]:not([selected="false"]) {
     --fig-handle-outline-color: var(--figma-color-border-selected);
-    --fig-handle-outline: 2px solid var(--fig-handle-outline-color);
+    --fig-handle-outline: 1px solid var(--fig-handle-outline-color);
+    --fig-handle-shadow: var(--figma-elevation-200-canvas);
   }
 
   &:focus-visible {
@@ -5158,7 +5189,7 @@ fig-handle {
   &[selected]:not([selected="false"]):not([type]) {
    --fig-handle-inner-bg:  var(--figma-color-bg-brand);
    --fig-handle-outline-color: var(--figma-color-border-selected);
-   --fig-handle-outline: 2px solid var(--fig-handle-outline-color);
+   --fig-handle-outline: 1px solid var(--fig-handle-outline-color);
   }
 
   &[type="canvas"]{

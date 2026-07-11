@@ -1,243 +1,14 @@
-import "./fig-layer.js";
+import "./fig.js";
+import "./fig-lab.js";
 
-function figEditorIsWebKitOrIOSBrowser() {
-  if (typeof navigator === "undefined") {
-    return false;
-  }
-  const userAgent = navigator.userAgent || "";
-  const isIOSBrowser =
-    /\b(iPad|iPhone|iPod)\b/.test(userAgent) ||
-    (/\bMacintosh\b/.test(userAgent) && /\bMobile\b/.test(userAgent));
-  const isDesktopWebKit =
-    /\bAppleWebKit\b/.test(userAgent) &&
-    !/\b(Chrome|Chromium|Edg|OPR|SamsungBrowser)\b/.test(userAgent);
-  return isIOSBrowser || isDesktopWebKit;
+function figEditorEscapeAttribute(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
-
-function figEditorSupportsCustomizedBuiltIns() {
-  if (
-    typeof window === "undefined" ||
-    !window.customElements ||
-    typeof HTMLButtonElement === "undefined"
-  ) {
-    return false;
-  }
-
-  const testName = `fig-editor-builtin-probe-${Math.random().toString(36).slice(2)}`;
-  class FigEditorCustomizedBuiltInProbe extends HTMLButtonElement {}
-
-  try {
-    customElements.define(testName, FigEditorCustomizedBuiltInProbe, {
-      extends: "button",
-    });
-    const probe = document.createElement("button", { is: testName });
-    return probe instanceof FigEditorCustomizedBuiltInProbe;
-  } catch (_error) {
-    return false;
-  }
-}
-
-const figEditorNeedsBuiltInPolyfill =
-  figEditorIsWebKitOrIOSBrowser() && !figEditorSupportsCustomizedBuiltIns();
-const figEditorBuiltInPolyfillReady = (
-  figEditorNeedsBuiltInPolyfill
-    ? import("./polyfills/custom-elements-webkit.js")
-    : Promise.resolve()
-)
-  .then(() => {})
-  .catch((error) => {
-    throw error;
-  });
-
-function figEditorDefineCustomizedBuiltIn(name, constructor, options) {
-  const define = () => {
-    if (!customElements.get(name)) {
-      customElements.define(name, constructor, options);
-    }
-  };
-
-  if (!figEditorNeedsBuiltInPolyfill) {
-    define();
-    return;
-  }
-
-  figEditorBuiltInPolyfillReady.then(define).catch((error) => {
-    console.error(
-      `[figui3] Failed to load customized built-in polyfill for "${name}".`,
-      error,
-    );
-  });
-}
-
-/* Toast */
-/**
- * A toast notification element for non-modal, time-based messages.
- * Always positioned at bottom center of the screen.
- * @attr {number} duration - Auto-dismiss duration in ms (0 = no auto-dismiss, default: 5000)
- * @attr {number} offset - Distance from bottom edge in pixels (default: 16)
- * @attr {string} theme - Visual theme: "dark" (default), "light", "danger", "brand"
- * @attr {boolean} open - Whether the toast is visible
- */
-class FigToast extends HTMLDialogElement {
-  constructor() {
-    super();
-    this._figInit();
-  }
-
-  _figInit() {
-    if (this._figInitialized) return;
-    this._figInitialized = true;
-    this._defaultOffset = 16;
-    this._autoCloseTimer = null;
-    this._boundHandleClose = this.handleClose.bind(this);
-  }
-
-  getOffset() {
-    return parseInt(this.getAttribute("offset") ?? this._defaultOffset);
-  }
-
-  connectedCallback() {
-    this._figInit();
-
-    if (!this.hasAttribute("theme")) {
-      this.setAttribute("theme", "dark");
-    }
-
-    this.syncLiveRegion();
-
-    const shouldOpen =
-      this.getAttribute("open") === "true" || this.getAttribute("open") === "";
-    if (this.hasAttribute("open") && !shouldOpen) {
-      this.removeAttribute("open");
-    }
-
-    if (!shouldOpen) {
-      this.close();
-    }
-
-    requestAnimationFrame(() => {
-      this.addCloseListeners();
-      this.applyPosition();
-
-      if (shouldOpen) {
-        this.showToast();
-      }
-    });
-  }
-
-  disconnectedCallback() {
-    this._figInit();
-    this.clearAutoClose();
-  }
-
-  addCloseListeners() {
-    this.querySelectorAll("[close-toast]").forEach((button) => {
-      button.removeEventListener("click", this._boundHandleClose);
-      button.addEventListener("click", this._boundHandleClose);
-    });
-  }
-
-  handleClose() {
-    this.hideToast();
-  }
-
-  applyPosition() {
-    this.style.position = "fixed";
-    this.style.margin = "0";
-    this.style.top = "auto";
-    this.style.bottom = `${this.getOffset()}px`;
-    this.style.left = "50%";
-    this.style.right = "auto";
-    this.style.transform = "translateX(-50%)";
-  }
-
-  startAutoClose() {
-    this.clearAutoClose();
-
-    const duration = parseInt(this.getAttribute("duration") ?? "5000");
-    if (duration > 0) {
-      this._autoCloseTimer = setTimeout(() => {
-        this.hideToast();
-      }, duration);
-    }
-  }
-
-  syncLiveRegion() {
-    const assertive =
-      this.getAttribute("live") === "assertive" ||
-      this.getAttribute("theme") === "danger";
-    if (!this.hasAttribute("role")) {
-      this.setAttribute("role", assertive ? "alert" : "status");
-    }
-    if (!this.hasAttribute("aria-live")) {
-      this.setAttribute("aria-live", assertive ? "assertive" : "polite");
-    }
-    if (!this.hasAttribute("aria-atomic")) {
-      this.setAttribute("aria-atomic", "true");
-    }
-  }
-
-  clearAutoClose() {
-    if (this._autoCloseTimer) {
-      clearTimeout(this._autoCloseTimer);
-      this._autoCloseTimer = null;
-    }
-  }
-
-  _resolveAutoTheme() {
-    if (this.getAttribute("theme") !== "auto") return;
-    const cs = getComputedStyle(document.documentElement).colorScheme || "";
-    const isDark = cs.includes("dark");
-    this.style.colorScheme = isDark ? "light" : "dark";
-  }
-
-  showToast() {
-    this._resolveAutoTheme();
-    if (!this.open) this.show();
-    this.applyPosition();
-    this.startAutoClose();
-    this.dispatchEvent(new CustomEvent("toast-show", { bubbles: true }));
-  }
-
-  hideToast() {
-    this.clearAutoClose();
-    this.close();
-    this.dispatchEvent(new CustomEvent("toast-hide", { bubbles: true }));
-  }
-
-  static get observedAttributes() {
-    return ["duration", "offset", "open", "theme", "live"];
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    this._figInit();
-    if (!this.isConnected) return;
-    if (name === "offset") {
-      this.applyPosition();
-    }
-
-    if (name === "open") {
-      if (newValue !== null && newValue !== "false") {
-        this.showToast();
-      } else {
-        this.hideToast();
-      }
-    }
-
-    if (name === "theme") {
-      if (newValue === "auto") {
-        this._resolveAutoTheme();
-      } else {
-        this.style.removeProperty("color-scheme");
-      }
-    }
-
-    if (name === "theme" || name === "live") {
-      this.syncLiveRegion();
-    }
-  }
-}
-figEditorDefineCustomizedBuiltIn("fig-toast", FigToast, { extends: "dialog" });
 
 // FigFillPicker
 const GRADIENT_INTERPOLATION_SPACES = [
@@ -345,9 +116,11 @@ class FigFillPicker extends HTMLElement {
   #hueSlider = null;
   #opacitySlider = null;
   #isDraggingColor = false;
+  #syncingGradientBar = false;
   #teardownColorAreaEvents = null;
-  #dialogOpenObserver = null;
-  #webcamTabObserver = null;
+  #valueAtOpen = null;
+  #webcamStart = null;
+  #webcamRequestId = 0;
   #boundTriggerClick = null;
   #boundTriggerKeydown = null;
 
@@ -382,24 +155,10 @@ class FigFillPicker extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (this.#teardownColorAreaEvents) {
-      this.#teardownColorAreaEvents();
-      this.#teardownColorAreaEvents = null;
-    }
-    if (this.#dialogOpenObserver) {
-      this.#dialogOpenObserver.disconnect();
-      this.#dialogOpenObserver = null;
-    }
-    if (this.#webcamTabObserver) {
-      this.#webcamTabObserver.disconnect();
-      this.#webcamTabObserver = null;
-    }
-    if (this.#webcam.stream) {
-      this.#webcam.stream.getTracks().forEach((track) => track.stop());
-      this.#webcam.stream = null;
-    }
+    this.#discardDialog();
     if (this.#webcam.snapshot?.startsWith("blob:")) {
       URL.revokeObjectURL(this.#webcam.snapshot);
+      if (this.#image.url === this.#webcam.snapshot) this.#image.url = null;
       this.#webcam.snapshot = null;
     }
     if (this.#video.url && this.#video.url.startsWith("blob:")) {
@@ -409,11 +168,6 @@ class FigFillPicker extends HTMLElement {
     if (this.#trigger) {
       this.#trigger.removeEventListener("click", this.#boundTriggerClick);
       this.#trigger.removeEventListener("keydown", this.#boundTriggerKeydown);
-    }
-    if (this.#dialog) {
-      this.#dialog.close();
-      this.#dialog.remove();
-      this.#dialog = null;
     }
   }
 
@@ -485,7 +239,11 @@ class FigFillPicker extends HTMLElement {
   }
 
   #handleTriggerClick(e) {
-    if (this.hasAttribute("disabled")) return;
+    if (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    )
+      return;
     e.stopPropagation();
     e.preventDefault();
     this.#openDialog();
@@ -493,7 +251,11 @@ class FigFillPicker extends HTMLElement {
 
   #handleTriggerKeydown(e) {
     if (e.key !== "Enter" && e.key !== " ") return;
-    if (this.hasAttribute("disabled")) return;
+    if (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    )
+      return;
     e.preventDefault();
     e.stopPropagation();
     this.#openDialog();
@@ -625,7 +387,8 @@ class FigFillPicker extends HTMLElement {
       this.#createDialog();
     }
 
-    this.#switchTab(this.#fillType);
+    this.#valueAtOpen = JSON.stringify(this.value);
+    this.#switchTab(this.#fillType, { emit: false });
 
     const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
     if (gamutEl) gamutEl.value = this.#gamut;
@@ -648,6 +411,43 @@ class FigFillPicker extends HTMLElement {
 
   close() {
     if (this.#dialog) this.#dialog.open = false;
+  }
+
+  #restoreCustomSlotContent() {
+    if (!this.#dialog) return;
+    for (const [modeName, { element }] of Object.entries(this.#customSlots)) {
+      const container = Array.from(
+        this.#dialog.querySelectorAll(".fig-fill-picker-tab"),
+      ).find((candidate) => candidate.dataset.tab === modeName);
+      if (!container) continue;
+      while (container.firstChild) element.appendChild(container.firstChild);
+    }
+  }
+
+  #discardDialog() {
+    if (this.#teardownColorAreaEvents) {
+      this.#teardownColorAreaEvents();
+      this.#teardownColorAreaEvents = null;
+    }
+    this.#stopWebcam();
+    if (!this.#dialog) return;
+    this.#restoreCustomSlotContent();
+    this.#dialog.remove();
+    this.#dialog = null;
+    this.#webcamStart = null;
+    this.#valueAtOpen = null;
+  }
+
+  #stopWebcam() {
+    this.#webcamRequestId += 1;
+    if (this.#webcam.stream) {
+      this.#webcam.stream.getTracks().forEach((track) => track.stop());
+      this.#webcam.stream = null;
+    }
+    const video = this.#dialog?.querySelector(
+      ".fig-fill-picker-webcam-video",
+    );
+    if (video) video.srcObject = null;
   }
 
   #createDialog() {
@@ -709,23 +509,31 @@ class FigFillPicker extends HTMLElement {
     }
 
     const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
+    const expAttr = experimental
+      ? `experimental="${figEditorEscapeAttribute(experimental)}"`
+      : "";
 
     let headerContent;
     if (allowedModes.length === 1) {
-      headerContent = `<h3 class="fig-fill-picker-type-label">${modeLabels[allowedModes[0]]}</h3>`;
+      headerContent = `<h3 class="fig-fill-picker-type-label">${figEditorEscapeAttribute(modeLabels[allowedModes[0]])}</h3>`;
     } else {
       const options = allowedModes
-        .map((m) => `<option value="${m}">${modeLabels[m]}</option>`)
+        .map(
+          (m) =>
+            `<option value="${figEditorEscapeAttribute(m)}">${figEditorEscapeAttribute(modeLabels[m])}</option>`,
+        )
         .join("\n          ");
-      headerContent = `<fig-dropdown class="fig-fill-picker-type" label="Fill type" ${expAttr} value="${this.#fillType}">
+      headerContent = `<fig-dropdown class="fig-fill-picker-type" label="Fill type" ${expAttr} value="${figEditorEscapeAttribute(this.#fillType)}">
           ${options}
         </fig-dropdown>`;
     }
 
     // Generate tab containers for all allowed modes
     const tabDivs = allowedModes
-      .map((m) => `<div class="fig-fill-picker-tab" data-tab="${m}"></div>`)
+      .map(
+        (m) =>
+          `<div class="fig-fill-picker-tab" data-tab="${figEditorEscapeAttribute(m)}"></div>`,
+      )
       .join("\n        ");
 
     const gamutDropdown = `<fig-dropdown class="fig-fill-picker-gamut" label="Color gamut" ${expAttr} value="${this.#gamut}">
@@ -750,7 +558,9 @@ class FigFillPicker extends HTMLElement {
 
     // Populate custom tab containers and emit modeready
     for (const [modeName, { element }] of Object.entries(this.#customSlots)) {
-      const container = this.#dialog.querySelector(`[data-tab="${modeName}"]`);
+      const container = Array.from(
+        this.#dialog.querySelectorAll(".fig-fill-picker-tab"),
+      ).find((candidate) => candidate.dataset.tab === modeName);
       if (!container) continue;
 
       // Move children (not the element itself) for vanilla HTML usage
@@ -785,7 +595,6 @@ class FigFillPicker extends HTMLElement {
           this.#onGamutChange();
         }
       };
-      gamutEl.addEventListener("input", handleGamutChange);
       gamutEl.addEventListener("change", handleGamutChange);
     }
 
@@ -797,21 +606,17 @@ class FigFillPicker extends HTMLElement {
 
     const onDialogClose = () => {
       if (this.#swatch) this.#swatch.removeAttribute("selected");
-      this.#emitChange();
+      this.#stopWebcam();
+      if (
+        this.#valueAtOpen !== null &&
+        this.#valueAtOpen !== JSON.stringify(this.value)
+      ) {
+        this.#emitChange();
+      }
+      this.#valueAtOpen = null;
       this.dispatchEvent(new CustomEvent("close"));
     };
     this.#dialog.addEventListener("close", onDialogClose);
-
-    this.#dialogOpenObserver = new MutationObserver(() => {
-      const isOpen =
-        this.#dialog.hasAttribute("open") &&
-        this.#dialog.getAttribute("open") !== "false";
-      if (!isOpen) onDialogClose();
-    });
-    this.#dialogOpenObserver.observe(this.#dialog, {
-      attributes: true,
-      attributeFilter: ["open"],
-    });
 
     // Initialize built-in tabs (skip any overridden by custom slots)
     const builtinInits = {
@@ -828,7 +633,9 @@ class FigFillPicker extends HTMLElement {
     // Listen for input/change from custom tab content
     for (const modeName of Object.keys(this.#customSlots)) {
       if (builtinModes.includes(modeName)) continue;
-      const container = this.#dialog.querySelector(`[data-tab="${modeName}"]`);
+      const container = Array.from(
+        this.#dialog.querySelectorAll(".fig-fill-picker-tab"),
+      ).find((candidate) => candidate.dataset.tab === modeName);
       if (!container) continue;
       container.addEventListener("input", (e) => {
         if (e.target === this) return;
@@ -845,15 +652,19 @@ class FigFillPicker extends HTMLElement {
     }
   }
 
-  #switchTab(tabName) {
+  #switchTab(tabName, { emit = true } = {}) {
     // Only allow switching to modes that have a tab container in the dialog
-    const tab = this.#dialog?.querySelector(
-      `.fig-fill-picker-tab[data-tab="${tabName}"]`,
-    );
+    const tab = Array.from(
+      this.#dialog?.querySelectorAll(".fig-fill-picker-tab") ?? [],
+    ).find((candidate) => candidate.dataset.tab === tabName);
     if (!tab) return;
 
+    const previousTab = this.#activeTab;
     this.#activeTab = tabName;
     this.#fillType = tabName;
+    if (previousTab === "webcam" && tabName !== "webcam") {
+      this.#stopWebcam();
+    }
 
     // Update dropdown selection (only exists if not locked)
     const typeDropdown = this.#dialog.querySelector(".fig-fill-picker-type");
@@ -890,8 +701,10 @@ class FigFillPicker extends HTMLElement {
       });
     }
 
+    if (tabName === "webcam") this.#webcamStart?.();
+
     this.#updateSwatch();
-    this.#emitInput();
+    if (emit) this.#emitInput();
   }
 
   // ============ SOLID TAB ============
@@ -978,7 +791,7 @@ class FigFillPicker extends HTMLElement {
 
     // Setup color input mode dropdown
     const modeDropdown = container.querySelector(".fig-fill-picker-input-mode");
-    modeDropdown.addEventListener("input", (e) => {
+    modeDropdown.addEventListener("change", (e) => {
       this.#colorInputMode = e.target.value;
       this.#rebuildColorInputFields();
     });
@@ -1446,7 +1259,9 @@ class FigFillPicker extends HTMLElement {
             <fig-icon name="add"></fig-icon>
           </fig-button>
         </fig-header>
-        <div class="fig-fill-picker-gradient-stops-list"></div>
+        <div class="fig-fill-picker-gradient-stops-list">
+          <fig-reorder></fig-reorder>
+        </div>
       </div>
       <div class="fig-fill-picker-gradient-interpolation">
         <fig-header class="fig-fill-picker-gradient-interpolation-header" borderless>
@@ -1493,7 +1308,6 @@ class FigFillPicker extends HTMLElement {
       this.#updateGradientUI();
       this.#emitInput();
     };
-    typeDropdown.addEventListener("input", handleTypeChange);
     typeDropdown.addEventListener("change", handleTypeChange);
 
     const interpolationDropdown = container.querySelector(
@@ -1515,7 +1329,6 @@ class FigFillPicker extends HTMLElement {
       this.#updateGradientUI();
       this.#emitInput();
     };
-    interpolationDropdown?.addEventListener("input", handleInterpolationChange);
     interpolationDropdown?.addEventListener(
       "change",
       handleInterpolationChange,
@@ -1536,12 +1349,14 @@ class FigFillPicker extends HTMLElement {
     const cxInput = container.querySelector(".fig-fill-picker-gradient-cx");
     const cyInput = container.querySelector(".fig-fill-picker-gradient-cy");
     cxInput?.addEventListener("input", (e) => {
-      this.#gradient.centerX = parseFloat(e.target.value) || 50;
+      const value = Number.parseFloat(e.target.value);
+      this.#gradient.centerX = Number.isFinite(value) ? value : 50;
       this.#updateGradientPreview();
       this.#emitInput();
     });
     cyInput?.addEventListener("input", (e) => {
-      this.#gradient.centerY = parseFloat(e.target.value) || 50;
+      const value = Number.parseFloat(e.target.value);
+      this.#gradient.centerY = Number.isFinite(value) ? value : 50;
       this.#updateGradientPreview();
       this.#emitInput();
     });
@@ -1580,6 +1395,7 @@ class FigFillPicker extends HTMLElement {
     if (gradientBarInput) {
       const syncFromBarInput = (e) => {
         e.stopPropagation();
+        if (this.#syncingGradientBar) return;
         const detail = e.detail;
         if (!detail?.gradient) return;
         this.#gradient = normalizeGradientConfig({
@@ -1597,6 +1413,152 @@ class FigFillPicker extends HTMLElement {
         syncFromBarInput(e);
         this.#emitChange();
       });
+    }
+
+    const stopsReorder = container.querySelector(
+      ".fig-fill-picker-gradient-stops-list > fig-reorder",
+    );
+    stopsReorder?.addEventListener("reorder", (event) => {
+      this.#handleGradientStopsReorder(event);
+    });
+  }
+
+  #formatStopColorValue(stop) {
+    const hex = String(stop.color || "#888888")
+      .replace(/^#/, "")
+      .slice(0, 6);
+    const opacity = stop.opacity ?? 100;
+    if (opacity >= 100) return `#${hex}`;
+    const alpha = Math.round((opacity / 100) * 255)
+      .toString(16)
+      .padStart(2, "0");
+    return `#${hex}${alpha}`;
+  }
+
+  #readGradientStopColor(colorInput) {
+    if (!(colorInput instanceof HTMLElement)) return "#888888";
+
+    if (colorInput.hexOpaque) {
+      return this.#normalizeStopHex(colorInput.hexOpaque);
+    }
+
+    const liveValue = colorInput.value;
+    if (typeof liveValue === "string" && liveValue.startsWith("#")) {
+      return this.#normalizeStopHex(
+        liveValue.length > 7 ? liveValue.slice(0, 7) : liveValue,
+      );
+    }
+
+    const textInput = colorInput.querySelector(
+      'fig-input-text:not([type="number"])',
+    );
+    const textHex = String(
+      textInput?.value ?? textInput?.getAttribute("value") ?? "",
+    )
+      .replace(/#/g, "")
+      .slice(0, 6);
+    if (/^[0-9A-Fa-f]{6}$/.test(textHex)) {
+      return `#${textHex.toUpperCase()}`;
+    }
+
+    const attr = colorInput.getAttribute("value");
+    if (typeof attr === "string" && attr.startsWith("#")) {
+      return this.#normalizeStopHex(
+        attr.length > 7 ? attr.slice(0, 7) : attr,
+      );
+    }
+
+    return "#888888";
+  }
+
+  #normalizeStopHex(color) {
+    const hex = String(color || "#888888")
+      .replace(/^#/, "")
+      .slice(0, 6);
+    if (!/^[0-9A-Fa-f]{6}$/.test(hex)) return "#888888";
+    return `#${hex.toUpperCase()}`;
+  }
+
+  #readGradientStopFromRow(row) {
+    const posInput = row.querySelector(".fig-fill-picker-stop-position");
+    const colorInput = row.querySelector(".fig-fill-picker-stop-color");
+
+    const position =
+      parseFloat(posInput?.value ?? posInput?.getAttribute("value") ?? "0") ||
+      0;
+
+    const color = this.#readGradientStopColor(colorInput);
+    let opacity = 100;
+
+    if (colorInput instanceof HTMLElement && colorInput.rgba?.a !== undefined) {
+      opacity = Math.round(colorInput.rgba.a * 100);
+    } else {
+      const oldIndex = parseInt(row.dataset.index, 10);
+      if (!isNaN(oldIndex) && this.#gradient.stops[oldIndex]) {
+        opacity = this.#gradient.stops[oldIndex].opacity ?? 100;
+      }
+    }
+
+    return { position, color, opacity };
+  }
+
+  #syncGradientStopRow(row) {
+    const index = parseInt(row.dataset.index, 10);
+    if (isNaN(index) || index < 0 || index >= this.#gradient.stops.length) {
+      return;
+    }
+    const stop = {
+      ...this.#gradient.stops[index],
+      ...this.#readGradientStopFromRow(row),
+    };
+    this.#gradient.stops[index] = stop;
+    // Persist to the input value attributes so that reordering (which detaches
+    // and re-attaches the row's DOM nodes) doesn't reset them to stale markup.
+    this.#persistGradientStopRowAttrs(row, stop);
+  }
+
+  #persistGradientStopRowAttrs(row, stop) {
+    const posInput = row.querySelector(".fig-fill-picker-stop-position");
+    if (posInput) posInput.setAttribute("value", String(stop.position));
+    const colorInput = row.querySelector(".fig-fill-picker-stop-color");
+    if (colorInput) {
+      colorInput.setAttribute("value", this.#formatStopColorValue(stop));
+    }
+  }
+
+  #handleGradientStopsReorder(event) {
+    const { oldIndex, newIndex } = event.detail ?? {};
+    if (
+      oldIndex == null ||
+      newIndex == null ||
+      oldIndex === newIndex ||
+      oldIndex < 0 ||
+      newIndex < 0 ||
+      oldIndex >= this.#gradient.stops.length ||
+      newIndex >= this.#gradient.stops.length
+    ) {
+      return;
+    }
+
+    const reorder = event.currentTarget;
+    const rows = reorder.querySelectorAll(".fig-fill-picker-gradient-stop-row");
+
+    // Rows still carry their pre-drag data-index; flush live inputs first.
+    rows.forEach((row) => this.#syncGradientStopRow(row));
+
+    const [stop] = this.#gradient.stops.splice(oldIndex, 1);
+    this.#gradient.stops.splice(newIndex, 0, stop);
+
+    rows.forEach((row, index) => {
+      row.dataset.index = String(index);
+    });
+
+    this.#syncingGradientBar = true;
+    try {
+      this.#updateGradientPreview();
+      this.#emitInput();
+    } finally {
+      this.#syncingGradientBar = false;
     }
   }
 
@@ -1647,6 +1609,7 @@ class FigFillPicker extends HTMLElement {
       ".fig-fill-picker-gradient-bar-input",
     );
     if (barInput) {
+      this.#syncingGradientBar = true;
       barInput.setAttribute(
         "value",
         JSON.stringify({
@@ -1654,6 +1617,7 @@ class FigFillPicker extends HTMLElement {
           gradient: gradientToValueShape(this.#gradient),
         }),
       );
+      this.#syncingGradientBar = false;
     }
 
     this.#updateSwatch();
@@ -1665,9 +1629,10 @@ class FigFillPicker extends HTMLElement {
     const list = this.#dialog.querySelector(
       ".fig-fill-picker-gradient-stops-list",
     );
-    if (!list) return;
+    const reorder = list?.querySelector("fig-reorder");
+    if (!list || !reorder) return;
 
-    const existingRows = list.querySelectorAll(
+    const existingRows = reorder.querySelectorAll(
       ".fig-fill-picker-gradient-stop-row",
     );
 
@@ -1678,7 +1643,9 @@ class FigFillPicker extends HTMLElement {
         const posInput = row.querySelector(".fig-fill-picker-stop-position");
         if (posInput) posInput.setAttribute("value", stop.position);
         const colorInput = row.querySelector(".fig-fill-picker-stop-color");
-        if (colorInput) colorInput.setAttribute("value", stop.color);
+        if (colorInput) {
+          colorInput.setAttribute("value", this.#formatStopColorValue(stop));
+        }
         const removeBtn = row.querySelector(".fig-fill-picker-stop-remove");
         if (removeBtn) {
           if (this.#gradient.stops.length <= 2)
@@ -1693,16 +1660,19 @@ class FigFillPicker extends HTMLElement {
   }
 
   #rebuildGradientStopsList(list) {
-    list.innerHTML = this.#gradient.stops
+    const reorder = list.querySelector("fig-reorder");
+    if (!reorder) return;
+
+    reorder.innerHTML = this.#gradient.stops
       .map(
         (stop, index) => `
       <fig-field class="fig-fill-picker-gradient-stop-row" data-index="${index}">
         <fig-input-number class="fig-fill-picker-stop-position" aria-label="Gradient stop position" min="0" max="100" value="${
           stop.position
         }" units="%"></fig-input-number>
-        <fig-input-color class="fig-fill-picker-stop-color" aria-label="Gradient stop color" text="true" alpha="true" picker="figma" picker-dialog-position="right" value="${
-          stop.color
-        }"></fig-input-color>
+        <fig-input-color class="fig-fill-picker-stop-color" aria-label="Gradient stop color" text="true" alpha="true" picker="figma" picker-dialog-position="right" value="${this.#formatStopColorValue(
+          stop,
+        )}"></fig-input-color>
         <fig-button icon variant="ghost" class="fig-fill-picker-stop-remove" ${
           this.#gradient.stops.length <= 2 ? "disabled" : ""
         } aria-label="Remove gradient stop">
@@ -1713,16 +1683,13 @@ class FigFillPicker extends HTMLElement {
       )
       .join("");
 
-    list
+    reorder
       .querySelectorAll(".fig-fill-picker-gradient-stop-row")
       .forEach((row) => {
-        const index = parseInt(row.dataset.index);
-
         row
           .querySelector(".fig-fill-picker-stop-position")
-          .addEventListener("input", (e) => {
-            this.#gradient.stops[index].position =
-              parseFloat(e.target.value) || 0;
+          .addEventListener("input", () => {
+            this.#syncGradientStopRow(row);
             this.#updateGradientPreview();
             this.#emitInput();
           });
@@ -1738,20 +1705,24 @@ class FigFillPicker extends HTMLElement {
           });
         }
 
-        stopColor.addEventListener("input", (e) => {
-          this.#gradient.stops[index].color =
-            e.target.hexOpaque || e.target.value;
-          const a = e.detail?.rgba?.a;
-          if (a !== undefined) {
-            this.#gradient.stops[index].opacity = Math.round(a * 100);
+        const syncStopColor = () => {
+          this.#syncGradientStopRow(row);
+          this.#syncingGradientBar = true;
+          try {
+            this.#updateGradientPreview();
+            this.#emitInput();
+          } finally {
+            this.#syncingGradientBar = false;
           }
-          this.#updateGradientPreview();
-          this.#emitInput();
-        });
+        };
+
+        stopColor.addEventListener("input", syncStopColor);
+        stopColor.addEventListener("change", syncStopColor);
 
         row
           .querySelector(".fig-fill-picker-stop-remove")
           .addEventListener("click", () => {
+            const index = parseInt(row.dataset.index, 10);
             if (this.#gradient.stops.length > 2) {
               this.#gradient.stops.splice(index, 1);
               this.#updateGradientUI();
@@ -2081,23 +2052,31 @@ class FigFillPicker extends HTMLElement {
     );
 
     const startWebcam = async (deviceId = null) => {
+      this.#stopWebcam();
+      const requestId = this.#webcamRequestId;
       try {
         const constraints = {
           video: deviceId ? { deviceId: { exact: deviceId } } : true,
         };
 
-        if (this.#webcam.stream) {
-          this.#webcam.stream.getTracks().forEach((track) => track.stop());
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (
+          requestId !== this.#webcamRequestId ||
+          !this.isConnected ||
+          this.#activeTab !== "webcam"
+        ) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
         }
 
-        this.#webcam.stream =
-          await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = this.#webcam.stream;
+        this.#webcam.stream = stream;
+        video.srcObject = stream;
         video.style.display = "block";
         status.style.display = "none";
 
         // Enumerate cameras
         const devices = await navigator.mediaDevices.enumerateDevices();
+        if (requestId !== this.#webcamRequestId) return;
         const cameras = devices.filter((d) => d.kind === "videoinput");
 
         if (cameras.length > 1) {
@@ -2129,6 +2108,7 @@ class FigFillPicker extends HTMLElement {
             .forEach((option) => option.remove());
         }
       } catch (err) {
+        if (requestId !== this.#webcamRequestId) return;
         console.error("Webcam error:", err.name, err.message);
         let message = "Camera access denied";
         if (err.name === "NotAllowedError") {
@@ -2142,21 +2122,15 @@ class FigFillPicker extends HTMLElement {
         } else if (!window.isSecureContext) {
           message = "Camera requires secure context";
         }
-        status.innerHTML = `<span>${message}</span>`;
+        status.replaceChildren();
+        const messageElement = document.createElement("span");
+        messageElement.textContent = message;
+        status.appendChild(messageElement);
         status.style.display = "flex";
         video.style.display = "none";
       }
     };
-
-    this.#webcamTabObserver = new MutationObserver(() => {
-      if (container.style.display !== "none" && !this.#webcam.stream) {
-        startWebcam();
-      }
-    });
-    this.#webcamTabObserver.observe(container, {
-      attributes: true,
-      attributeFilter: ["style"],
-    });
+    this.#webcamStart = startWebcam;
 
     cameraSelect.addEventListener("change", (e) => {
       startWebcam(e.target.value);
@@ -2552,6 +2526,15 @@ class FigFillPicker extends HTMLElement {
       case "disabled":
         this.#syncTriggerA11y();
         break;
+      case "alpha":
+      case "mode":
+      case "experimental": {
+        if (!this.#dialog) break;
+        const wasOpen = this.#dialog.open;
+        this.#discardDialog();
+        if (wasOpen && this.isConnected) this.#openDialog();
+        break;
+      }
       case "aria-label":
       case "aria-labelledby":
       case "aria-describedby":

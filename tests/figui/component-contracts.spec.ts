@@ -1513,6 +1513,29 @@ test.describe("reconnect resilience", () => {
     });
   });
 
+  test("fig-input-color strips hash from hex text display", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<fig-input-color id="color-hex-display" value="#000000" text="true" full></fig-input-color>';
+    });
+    await page.waitForTimeout(50);
+
+    const getHexDisplay = () =>
+      page
+        .locator("#color-hex-display fig-input-text input")
+        .evaluate((input) => input.value);
+
+    expect(await getHexDisplay()).toBe("000000");
+
+    await page.locator("#color-hex-display").evaluate((host) => {
+      host.setAttribute("value", "#FF0000");
+    });
+
+    expect(await getHexDisplay()).toBe("FF0000");
+  });
+
   test("fig-input-color keeps a single combo on reconnect", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

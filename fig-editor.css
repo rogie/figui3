@@ -1,4 +1,5 @@
 @import url("fig-layer.css");
+@import url("fig-lab.css");
 
 :root,
 :host {
@@ -21,7 +22,7 @@ dialog[is="fig-toast"] {
   color: var(--figma-color-text);
   background-color: var(--figma-color-bg);
 
-  &[open] {
+  &[open]:not([open="false"]) {
     display: flex;
   }
 
@@ -173,6 +174,7 @@ fig-fill-picker {
     width: calc(100% - var(--spacer-3) * 2);
     margin: var(--spacer-2) var(--spacer-3);
     margin-top: calc(var(--spacer-4) + var(--spacer-1));
+    margin-bottom:0;
     background: transparent;
     &::after{
       display: none;
@@ -212,6 +214,10 @@ fig-fill-picker {
     display: flex;
     flex-direction: column;
     gap: var(--spacer-1);
+
+    fig-reorder {
+      display: contents;
+    }
   }
 
   .fig-fill-picker-gradient-stop-row {
@@ -219,6 +225,11 @@ fig-fill-picker {
     display: flex;
     padding-left: var(--spacer-3);
     gap: var(--spacer-2);
+
+    &.dragging {
+      background-color: var(--figma-color-bg-selected);
+    }
+
     & > .fig-fill-picker-stop-position {
       flex: 0;
       flex-basis: 3rem;

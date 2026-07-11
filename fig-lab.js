@@ -8,6 +8,10 @@
  *   <script src="fig-lab.js"></script>
  */
 
+function figLabBooleanAttribute(element, name) {
+  return element.hasAttribute(name) && element.getAttribute(name) !== "false";
+}
+
 /* Field + Slider wrapper */
 class FigFieldSlider extends HTMLElement {
   #field = null;
@@ -331,7 +335,7 @@ class FigFieldSlider extends HTMLElement {
   }
 
   #handleElasticPointerDown(event) {
-    if (event.button !== 0 || this.hasAttribute("disabled")) return;
+    if (event.button !== 0 || figLabBooleanAttribute(this, "disabled")) return;
     if (this.getAttribute("elastic") === "false") return;
     if (event.target?.closest?.("fig-input-number")) return;
     const rangeInput =
@@ -397,7 +401,7 @@ class FigFieldSlider extends HTMLElement {
   }
 
   #handleContextMenu(event) {
-    if (this.hasAttribute("disabled")) return;
+    if (figLabBooleanAttribute(this, "disabled")) return;
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
@@ -872,7 +876,7 @@ class FigCanvasControl extends HTMLElement {
     this.#radiusTooltip = null;
     this.#angleTooltip = null;
 
-    const disabled = this.hasAttribute("disabled");
+    const disabled = figLabBooleanAttribute(this, "disabled");
     const type = this.#type;
     const tooltips = this.#tooltipsEnabled;
 
@@ -945,7 +949,7 @@ class FigCanvasControl extends HTMLElement {
   }
 
   #activateMoveCursor(e) {
-    if (this.hasAttribute("disabled")) return;
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (e?.button !== undefined && e.button !== 0) return;
     if (e?.isPrimary === false) return;
 
@@ -1190,7 +1194,7 @@ class FigCanvasControl extends HTMLElement {
 
   #setupLineDrag(hitLine) {
     hitLine.addEventListener("pointerdown", (e) => {
-      if (this.hasAttribute("disabled")) return;
+      if (figLabBooleanAttribute(this, "disabled")) return;
       e.preventDefault();
       e.stopPropagation();
       const container = this.#container;
@@ -1705,7 +1709,7 @@ class FigCanvasControl extends HTMLElement {
       circle.style.cursor = this.#resizeCursorSvg(deg);
     });
     const onDown = (e) => {
-      if (this.hasAttribute("disabled")) return;
+      if (figLabBooleanAttribute(this, "disabled")) return;
       e.preventDefault();
       e.stopPropagation();
       this.#isRadiusDragging = true;
@@ -1830,6 +1834,7 @@ class FigInputOscillator extends HTMLElement {
   #precision = 2;
   #drawWidth = 240;
   #drawHeight = 120;
+  #valueRange = { min: -1, max: 1 };
   #isDragging = null;
   #svg = null;
   #path = null;
@@ -1935,7 +1940,9 @@ class FigInputOscillator extends HTMLElement {
 
   #readInteger(name, fallback) {
     const value = Number.parseInt(this.getAttribute(name) || "", 10);
-    return Number.isFinite(value) ? value : fallback;
+    return Number.isFinite(value)
+      ? Math.max(0, Math.min(100, value))
+      : fallback;
   }
 
   #readBooleanAttribute(name, defaultValue = false) {
@@ -2231,12 +2238,12 @@ class FigInputOscillator extends HTMLElement {
   }
 
   #toY(value) {
-    const { min, max } = this.#getValueRange();
+    const { min, max } = this.#valueRange;
     return this.#drawHeight - ((value - min) / (max - min)) * this.#drawHeight;
   }
 
   #fromY(y) {
-    const { min, max } = this.#getValueRange();
+    const { min, max } = this.#valueRange;
     return min + (1 - y / this.#drawHeight) * (max - min);
   }
 
@@ -2251,6 +2258,7 @@ class FigInputOscillator extends HTMLElement {
   #updateWaveform() {
     if (!this.#svg || !this.#path) return;
     this.#syncViewportSize();
+    this.#valueRange = this.#getValueRange();
 
     if (this.#bounds) {
       this.#bounds.setAttribute("width", this.#drawWidth);
@@ -3420,12 +3428,14 @@ class FigReorder extends HTMLElement {
 
   #startPendingDrag(event, item, target) {
     this.#cancelDrag();
+    FigReorder.#setDocumentDragging(true);
 
     const state = {
       item,
       target,
       pointerId: event.pointerId,
       oldIndex: this.#getElementChildren().indexOf(item),
+      targetIndex: this.#getElementChildren().indexOf(item),
       startX: event.clientX,
       startY: event.clientY,
       active: false,
@@ -3448,7 +3458,6 @@ class FigReorder extends HTMLElement {
         event.preventDefault();
         event.stopPropagation();
         item.classList.add("dragging");
-        FigReorder.#setDocumentDragging(true);
         try {
           target.setPointerCapture(state.pointerId);
         } catch {}
@@ -3458,7 +3467,7 @@ class FigReorder extends HTMLElement {
       const pointer =
         this.#axis === "horizontal" ? moveEvent.clientX : moveEvent.clientY;
       const index = this.#getInsertIndex(pointer);
-      this.#moveItemToIndex(item, index);
+      state.targetIndex = index;
       this.#updateIndicator(index, item);
     };
 
@@ -3470,7 +3479,7 @@ class FigReorder extends HTMLElement {
 
     state.onUp = (upEvent) => {
       if (upEvent.pointerId !== state.pointerId) return;
-      this.#finishDrag(state, false);
+      this.#finishDrag(state, upEvent.type === "pointercancel");
     };
 
     this.#drag = state;
@@ -3501,6 +3510,8 @@ class FigReorder extends HTMLElement {
     if (currentIndex === -1) return false;
 
     const clamped = Math.max(0, Math.min(index, items.length));
+
+    if (index === currentIndex) return false;
 
     // Hide only the redundant bottom line when the dragged item is already last.
     if (clamped >= items.length && currentIndex === items.length - 1) {
@@ -3620,9 +3631,8 @@ class FigReorder extends HTMLElement {
     window.removeEventListener("keydown", onKeyDown);
 
     if (active) {
-      if (revert) {
-        this.#restoreItemIndex(item, oldIndex);
-      } else {
+      if (!revert) {
+        this.#moveItemToIndex(item, state.targetIndex);
         const newIndex = this.#getElementChildren().indexOf(item);
         if (newIndex !== -1 && newIndex !== oldIndex) {
           this.dispatchEvent(
@@ -3639,16 +3649,6 @@ class FigReorder extends HTMLElement {
     FigReorder.#setDocumentDragging(false);
     this.#removeIndicator();
     if (this.#drag === state) this.#drag = null;
-  }
-
-  #restoreItemIndex(item, index) {
-    const items = this.#getElementChildren().filter((node) => node !== item);
-    const ref = items[index] ?? null;
-    if (ref) {
-      this.insertBefore(item, ref);
-      return;
-    }
-    this.appendChild(item);
   }
 
   #unbindAll() {
@@ -3669,4 +3669,3 @@ class FigReorder extends HTMLElement {
 }
 
 customElements.define("fig-reorder", FigReorder);
-

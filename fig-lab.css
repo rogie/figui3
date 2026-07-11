@@ -302,13 +302,15 @@ fig-field-slider {
       background-color: transparent;
       box-shadow: none !important;
       position: absolute;
-      right: 0;
+      right: 2px;
+      top:2px;
+      bottom:2px;
       width: fit-content;
       min-width: fit-content;
       max-width: max-content;
       flex: 0 0 auto;
       border-left: 0;
-      border-radius: var(--radius-small);
+      border-radius: var(--radius-medium);
 
       &:hover,
       &:has(input:focus) {
@@ -321,7 +323,7 @@ fig-field-slider {
       input {
         field-sizing: content;
         font-variant-numeric: tabular-nums;
-        border-radius: var(--radius-small);
+        border-radius: var(--radius-medium);
         width: auto;
         flex: 0 0 auto;
         text-align: right;
@@ -704,18 +706,18 @@ fig-reorder {
   display: contents;
 }
 
-fig-reorder:not([handle]):not([disabled]):not([disabled="false"]) > [data-reorder-item] {
+fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reorder-item] {
   cursor: grab;
 }
 
-fig-reorder:not([handle]):not([disabled]):not([disabled="false"]) > [data-reorder-item] > fig-header,
-fig-reorder:not([handle]):not([disabled]):not([disabled="false"]) > [data-reorder-item] > fig-header *,
-fig-reorder:not([handle]):not([disabled]):not([disabled="false"]) > [data-reorder-item] > label {
+fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reorder-item] > fig-header,
+fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reorder-item] > fig-header *,
+fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reorder-item] > label {
   cursor: grab;
 }
 
 fig-reorder > .dragging {
-  opacity: 0.6;
+  background-color: var(--figma-color-bg-selected);
 }
 
 [data-reorder-handle] {
@@ -736,7 +738,7 @@ body.fig-reorder-dragging * {
 .fig-reorder-indicator {
   position: fixed;
   pointer-events: none;
-  z-index: 10000;
+  z-index: 1000000;
   background: var(--figma-color-border-strong);
 }
 
@@ -747,4 +749,3 @@ body.fig-reorder-dragging * {
 .fig-reorder-indicator[data-axis="horizontal"] {
   width: 2px;
 }
-
