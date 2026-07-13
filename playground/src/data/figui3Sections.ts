@@ -36,6 +36,9 @@ ${images}
 const propkitChooserSection = propkitSections.find(
   (section) => section.id === "chooser",
 );
+const propkitColorSection = propkitSections.find(
+  (section) => section.id === "color",
+);
 const figui3ChooserSections: Section[] = propkitChooserSection
   ? [
       {
@@ -374,21 +377,9 @@ export const figui3Sections: Section[] = [
       },
     ],
   },
-  {
-    id: "color-input",
-    name: "Color Input",
-    group: "Core components",
-    description: "Color fields with text, alpha, and picker integration.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <fig-input-color value="#0D99FF"></fig-input-color>
-</div>`,
-      },
-    ],
-  },
+  ...(propkitColorSection
+    ? [{ ...propkitColorSection, group: "Core components" }]
+    : []),
   {
     id: "fill-input",
     name: "Fill Input",

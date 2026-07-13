@@ -1963,7 +1963,7 @@ fig-easing-curve {
 /* 3D Rotate */
 fig-3d-rotate {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--spacer-2);
   width: 100%;
   --aspect-ratio: 1 / 1;
@@ -2510,7 +2510,6 @@ input[type="checkbox"].switch {
 
 /* Checkbox */
 input[type="checkbox"]:not(.switch) {
-  contain: strict;
   vertical-align: middle;
   --size: 1rem;
   --figma-focus-outline-offset: 1px;

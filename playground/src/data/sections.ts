@@ -669,6 +669,21 @@ export const propkitSections: Section[] = [
   </fig-field>
 </div>`,
       },
+      {
+        id: "with-visibility",
+        name: "With visibility",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Color</label>
+    <div style="display:flex; gap:var(--spacer-1); align-items:center; min-width:0; width:100%;">
+      <fig-input-color value="#0D99FF" text="true" full></fig-input-color>
+      <fig-button variant="ghost" type="toggle" icon selected aria-label="Hide color" data-playground-ignore-controls="true" onclick="const b=this,i=b.querySelector('fig-icon'),h=i.getAttribute('name')==='hidden';i.setAttribute('name',h?'visible':'hidden');b.setAttribute('aria-label',h?'Hide color':'Show color');b.toggleAttribute('selected',h);">
+        <fig-icon name="visible" size="small"></fig-icon>
+      </fig-button>
+    </div>
+  </fig-field>
+</div>`,
+      },
     ],
   },
   {
