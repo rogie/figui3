@@ -973,8 +973,9 @@ export const FIG_ICON_SET_24 = [
   "search",
   "visible",
   "hidden",
-  "eyedropper",
+  "edit",
   "steppers",
+  "eyedropper",
 ] as const;
 
 export const FIG_ICON_SET_16 = [
@@ -985,9 +986,20 @@ export const FIG_ICON_SET_16 = [
   "close",
   "visible",
   "hidden",
+  "edit",
 ] as const;
 
 export type FigIconPlaygroundSet = "16" | "24";
+
+export function buildFigIconExampleMarkup(
+  set: FigIconPlaygroundSet,
+  name = set === "16" ? "chevron" : "add",
+): string {
+  const sizeAttr = set === "16" ? ' size="small"' : "";
+  return `<div class="prop-panel">
+  <fig-icon name="${name}"${sizeAttr} data-playground-hide-field data-playground-hide-attrs="name,size,color" data-playground-icon-set="${set}"></fig-icon>
+</div>`;
+}
 
 export function getFigIconPlaygroundNames(set: FigIconPlaygroundSet): string[] {
   return set === "16" ? [...FIG_ICON_SET_16] : [...FIG_ICON_SET_24];

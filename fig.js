@@ -15090,7 +15090,10 @@ const FIG_ICON_TOKENS = {
   chevron: "--icon-16-chevron",
   checkmark: "--icon-16-checkmark",
   reset: "--icon-16-reset",
-  "arrow-left": "--icon-16-arrow-left",
+  "arrow-left": {
+    medium: "--icon-24-arrow-left",
+    small: "--icon-16-arrow-left",
+  },
   steppers: "--icon-24-steppers",
   eyedropper: "--icon-24-eyedropper",
   add: "--icon-24-add",
@@ -15103,6 +15106,7 @@ const FIG_ICON_TOKENS = {
   play: "--icon-24-play",
   pause: "--icon-24-pause",
   search: "--icon-24-search",
+  edit: { medium: "--icon-24-edit", small: "--icon-16-edit" },
   visible: { medium: "--icon-24-visible", small: "--icon-16-visible" },
   hidden: { medium: "--icon-24-hidden", small: "--icon-16-hidden" },
 };

@@ -582,6 +582,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "search",
         "visible",
         "hidden",
+        "edit",
         "eyedropper",
         "steppers",
       ],
