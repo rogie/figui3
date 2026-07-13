@@ -2048,14 +2048,14 @@ fig-3d-rotate {
       background: var(--figma-color-border-strong) !important;
       inset: -1px;
       border-radius: var(--radius-medium);
-      box-shadow: var(--figma-elevation-100-canvas);
+      border: 1px solid var(--figma-color-border);
     }
 
     &.front {
       background: var(--front-face-bg);
       border-radius: var(--radius-medium);
       transform-style: preserve-3d;
-      box-shadow: var(--figma-elevation-100-canvas);
+      border: 1px solid var(--figma-color-bordertranslucent);
       inset: -1px;
 
       &::after {
