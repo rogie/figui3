@@ -15107,6 +15107,8 @@ const FIG_ICON_TOKENS = {
   pause: "--icon-24-pause",
   search: "--icon-24-search",
   edit: { medium: "--icon-24-edit", small: "--icon-16-edit" },
+  settings: { medium: "--icon-24-settings", small: "--icon-16-settings" },
+  more: { medium: "--icon-24-more", small: "--icon-16-more" },
   visible: { medium: "--icon-24-visible", small: "--icon-16-visible" },
   hidden: { medium: "--icon-24-hidden", small: "--icon-16-hidden" },
 };

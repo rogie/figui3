@@ -974,6 +974,8 @@ export const FIG_ICON_SET_24 = [
   "visible",
   "hidden",
   "edit",
+  "settings",
+  "more",
   "steppers",
   "eyedropper",
 ] as const;
@@ -987,6 +989,8 @@ export const FIG_ICON_SET_16 = [
   "visible",
   "hidden",
   "edit",
+  "settings",
+  "more",
 ] as const;
 
 export type FigIconPlaygroundSet = "16" | "24";

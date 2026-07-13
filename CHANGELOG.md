@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.13.0]
+
+### Added
+
+- Added `edit`, `eyedropper`, `settings`, and `more` icon tokens for `fig-icon` (24px and 16px where applicable).
+- Added Color visibility toggle playground example.
+- Added `settings` and `more` to Icon playground name options on `/figui3`.
+
+### Changed
+
+- Simplified Icon playground to a single `fig-icon` example driven by the attributes panel.
+- Synced figui3 Color section demos from propkit source.
+- Reduced `fig-3d-rotate` face paint cost by replacing shadows with borders.
+
 ## [6.12.0]
 
 ### Added
