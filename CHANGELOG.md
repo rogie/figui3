@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.14.0]
+
+### Added
+
+- Added `download`, `upload`, `sun`, and `moon` icon tokens for `fig-icon` (24px).
+- Added those names to `FIG_ICON_TOKENS` and the playground Icon attribute options.
+
+### Changed
+
+- PropKit Icons theme example uses `fig-icon` for sun and moon segments.
+
 ## [6.13.2]
 
 ### Changed
