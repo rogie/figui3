@@ -3061,6 +3061,7 @@ fig-slider {
     --slider-thumb-size: 0.75rem;
     --slider-tick-width: calc(var(--slider-height) / 2);
     --slider-tick-height: calc(var(--slider-height) / 2);
+    --slider-number-width: 3.5rem;
     --handle-transition: none;
     --slider-transition: none;
     --slider-handle-shadow:
@@ -3088,7 +3089,7 @@ fig-slider {
     }
     fig-input-text,
     fig-input-number {
-      flex-basis: 3rem;
+      flex-basis: var(--slider-number-width);
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
       border-left: 1px solid var(--figma-color-bg);
@@ -3674,12 +3675,6 @@ fig-input-number {
   min-width: 0;
   flex: 0 1 auto;
   color: var(--figma-color-text);
-
-  fig-field:not([direction="vertical"]) & {
-    flex: 1;
-    min-width: 0;
-    width: 100%;
-  }
 
   &[full]:not([full="false"]) {
     display: flex;

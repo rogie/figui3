@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.13.1]
+
+### Changed
+
+- Changed `fig-slider` paired number input width to use `--slider-number-width` (default `3.5rem`).
+- Removed horizontal `fig-field` flex override from `fig-input-number` so intrinsic sizing matches other inputs.
+
 ## [6.13.0]
 
 ### Added
