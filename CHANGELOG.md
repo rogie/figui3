@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.13.2]
+
+### Changed
+
+- Added shared `--input-opacity-width` token (`calc(3.5rem - 2px)`) for opacity number fields on `fig-input-fill`, `fig-input-color`, and `fig-slider`.
+
 ## [6.13.1]
 
 ### Changed

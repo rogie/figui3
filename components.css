@@ -253,6 +253,7 @@
   --bg-selected-active: #e5f4ff;
   --bg-tooltip: var(--figma-color-bg-menu);
   --color-tooltip: var(--figma-color-text);
+  --input-opacity-width: calc(3.5rem - 2px);
 
   /* Transparent Backgrounds - use light-dark() */
   --figma-color-bordertranslucent: light-dark(
@@ -3061,7 +3062,7 @@ fig-slider {
     --slider-thumb-size: 0.75rem;
     --slider-tick-width: calc(var(--slider-height) / 2);
     --slider-tick-height: calc(var(--slider-height) / 2);
-    --slider-number-width: 3.5rem;
+    --slider-number-width: var(--input-opacity-width);
     --handle-transition: none;
     --slider-transition: none;
     --slider-handle-shadow:
@@ -3676,6 +3677,7 @@ fig-input-number {
   flex: 0 1 auto;
   color: var(--figma-color-text);
 
+
   &[full]:not([full="false"]) {
     display: flex;
     flex: 1;
@@ -3861,14 +3863,14 @@ fig-input-fill {
   }
 
   & > .input-combo > fig-tooltip > .fig-input-fill-opacity {
-    flex: 0 0 3rem;
-    width: 3rem;
-    min-width: 3rem;
+    flex: 0 0 var(--input-opacity-width);
+    width: var(--input-opacity-width);
+    min-width: var(--input-opacity-width);
   }
 
   fig-input-number {
     flex: 0;
-    flex-basis: 3rem;
+    flex-basis: var(--input-opacity-width);
     box-shadow: inset 1px 0 0 0 var(--figma-color-bg) !important;
     background-color: transparent !important;
     outline: 0 !important;
@@ -3919,9 +3921,9 @@ fig-input-fill {
 
 fig-input-color {
   & > .input-combo > fig-tooltip > fig-input-number {
-    flex: 0 0 3rem;
-    width: 3rem;
-    min-width: 3rem;
+    flex: 0 0 var(--input-opacity-width);
+    width: var(--input-opacity-width);
+    min-width: var(--input-opacity-width);    
   }
 
   & > .input-combo > fig-input-text {
