@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.14.1]
+
+### Added
+
+- Added `adjust` icon tokens for `fig-icon` (24px and 16px).
+- Added `adjust` to `FIG_ICON_TOKENS` and the playground Icon attribute options.
+
 ## [6.14.0]
 
 ### Added
