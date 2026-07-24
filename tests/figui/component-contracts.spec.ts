@@ -146,6 +146,100 @@ test.describe("propskit-number", () => {
   });
 });
 
+test.describe("propskit-color", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-color");
+    });
+  });
+
+  test("composes and forwards color attributes, events, and focus", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-color label="Fill" value="#0D99FF" alpha="true"></propskit-color>';
+    });
+
+    const control = page.locator("propskit-color");
+    const field = control.locator("fig-field");
+    const colorInput = control.locator("fig-input-color");
+    await expect(control.locator("fig-field > label")).toHaveText("Fill");
+    await expect(colorInput).toHaveAttribute("value", "#0D99FF");
+    await expect(colorInput).toHaveAttribute("alpha", "true");
+    await expect(colorInput).toHaveAttribute("text", "true");
+    await expect(colorInput.locator("fig-swatch")).toHaveCount(1);
+    await expect(colorInput.locator("fig-input-text input")).toHaveValue("0D99FF");
+    expect(
+      await colorInput
+        .locator("fig-input-text input")
+        .evaluate((element) => getComputedStyle(element).fieldSizing),
+    ).toBe("fixed");
+    const hexInput = colorInput.locator("fig-input-text input");
+    await colorInput.evaluate((element) => element.setAttribute("value", "#111111"));
+    const numericWidth = (await hexInput.boundingBox())?.width;
+    await colorInput.evaluate((element) => element.setAttribute("value", "#FFFFFF"));
+    const alphaWidth = (await hexInput.boundingBox())?.width;
+    expect(alphaWidth).toBe(numericWidth);
+    const opacityInput = colorInput.locator("fig-input-number input");
+    expect(
+      await opacityInput.evaluate((element) => getComputedStyle(element).fieldSizing),
+    ).toBe("fixed");
+    const opacityWidth = (await opacityInput.boundingBox())?.width;
+    await opacityInput.evaluate((element) => {
+      (element as HTMLInputElement).value = "1";
+    });
+    expect((await opacityInput.boundingBox())?.width).toBe(opacityWidth);
+
+    const fieldBox = await field.boundingBox();
+    const labelBox = await control.locator("fig-field > label").boundingBox();
+    const inputBox = await colorInput.boundingBox();
+    expect(inputBox?.height).toBe(fieldBox?.height);
+    expect(inputBox?.x).toBeGreaterThanOrEqual(
+      (labelBox?.x ?? 0) + (labelBox?.width ?? 0) + 7,
+    );
+    expect(
+      Math.abs(
+        (inputBox?.x ?? 0) +
+          (inputBox?.width ?? 0) -
+          ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
+      ),
+    ).toBeLessThan(1);
+
+    const events = await control.evaluate((element) => {
+      const received: Array<{ type: string; detail: unknown }> = [];
+      element.addEventListener("input", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      const inner = element.querySelector("fig-input-color");
+      inner?.setAttribute("value", "#FF00FF");
+      inner?.dispatchEvent(
+        new CustomEvent("input", {
+          detail: { color: "#FF00FF", alpha: 1 },
+          bubbles: true,
+        }),
+      );
+      return received;
+    });
+
+    expect(events).toEqual([
+      { type: "input", detail: { color: "#FF00FF", alpha: 1 } },
+    ]);
+    await expect(control).toHaveAttribute("value", "#FF00FF");
+    await control.evaluate((element) => (element as HTMLElement).focus());
+    await expect(colorInput.locator("fig-input-text input")).toBeFocused();
+    expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("none");
+  });
+});
+
 test.describe("propskit-switch", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -366,6 +460,69 @@ test.describe("propskit-text", () => {
     );
     expect(await input.evaluate((element) => getComputedStyle(element).textOverflow))
       .toBe("ellipsis");
+  });
+});
+
+test.describe("propskit delegated click behavior", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+    });
+  });
+
+  test("focuses fields, toggles switches, and opens selects", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-number label="Count" value="3"></propskit-number>
+        <propskit-text label="Name" value="Layer 1"></propskit-text>
+        <propskit-color label="Fill" value="#0D99FF"></propskit-color>
+        <propskit-slider label="Amount" value="50" min="0" max="100"></propskit-slider>
+        <propskit-select label="Alignment" value="left">
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </propskit-select>
+        <propskit-switch label="Visible" checked></propskit-switch>
+      `;
+      const select = root.querySelector("propskit-select select");
+      if (select) {
+        (select as HTMLSelectElement & { showPicker?: () => void }).showPicker =
+          () => select.setAttribute("data-show-picker-called", "true");
+      }
+    });
+
+    const clickField = async (tag: string) => {
+      await page.locator(`${tag} fig-field`).dispatchEvent("click");
+    };
+
+    await clickField("propskit-number");
+    await expect(page.locator("propskit-number input")).toBeFocused();
+
+    await clickField("propskit-text");
+    await expect(page.locator("propskit-text input")).toBeFocused();
+
+    await clickField("propskit-color");
+    await expect(page.locator("propskit-color fig-input-text input")).toBeFocused();
+
+    await page.locator("propskit-slider fig-field").click({ position: { x: 12, y: 12 } });
+    await expect(page.locator('propskit-slider input[type="range"]')).toBeFocused();
+
+    await clickField("propskit-select");
+    await expect(page.locator("propskit-select select")).toBeFocused();
+    await expect(page.locator("propskit-select select")).toHaveAttribute(
+      "data-show-picker-called",
+      "true",
+    );
+
+    await clickField("propskit-switch");
+    await expect(page.locator("propskit-switch")).not.toHaveAttribute("checked", "");
+    await expect(
+      page.locator('propskit-switch fig-segment[value="off"]'),
+    ).toHaveAttribute("selected", "true");
   });
 });
 

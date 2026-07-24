@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.16.0]
+
+### Added
+
+- Added `propskit-color`, a full-surface labeled color control with playground, documentation, JSX, and browser test coverage.
+
+### Changed
+
+- Propskit field surfaces now focus inputs, toggle switches, and open selects when clicked.
+- Propskit color uses stable hex and opacity widths with an auto-width color control.
+
 ## [6.15.0]
 
 ### Added

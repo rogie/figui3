@@ -89,6 +89,7 @@ Minimal example:
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
 | [Propskit Slider](#propskit-slider) | `<propskit-slider>` | Labeled field + slider combo |
+| [Propskit Color](#propskit-color) | `<propskit-color>` | Full-surface labeled color control |
 | [Propskit Number](#propskit-number) | `<propskit-number>` | Full-surface labeled number control |
 | [Propskit Select](#propskit-select) | `<propskit-select>` | Full-surface labeled select control |
 | [Propskit Switch](#propskit-switch) | `<propskit-switch>` | Full-surface labeled switch control |
@@ -312,6 +313,22 @@ Composes a `<fig-field>` and `<fig-input-number>` into a full-surface property c
 
 ```html
 <propskit-number label="Width" value="24" min="0" max="100" units="px"></propskit-number>
+```
+
+---
+
+#### Propskit Color
+
+`<propskit-color>`
+
+Composes a `<fig-field>` and `<fig-input-color>` into a full-surface property control. Color attributes are forwarded to the inner input and text editing remains enabled.
+
+**Attributes:** `label`, `value`, `alpha`, `disabled`, `experimental`, `size`
+
+**Events:** `input`, `change` — forwarded from the inner color input.
+
+```html
+<propskit-color label="Fill" value="#0D99FF" alpha="true"></propskit-color>
 ```
 
 ---

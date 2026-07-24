@@ -17,6 +17,7 @@ declare module "react" {
       "fig-layer": FigAttrs;
       "fig-field": FigAttrs;
       "fig-slider": FigAttrs;
+      "propskit-color": FigAttrs;
       "propskit-number": FigAttrs;
       "propskit-select": FigAttrs;
       "propskit-slider": FigAttrs;

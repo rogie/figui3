@@ -177,6 +177,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-swatch": "Swatch",
     "fig-radio": "Radio",
     "fig-field": "Field",
+    "propskit-color": "Propskit color",
     "propskit-number": "Propskit number",
     "propskit-select": "Propskit select",
     "propskit-slider": "Propskit slider",
@@ -1090,6 +1091,7 @@ export default function AttributesView({
                     }
                     if (
                       (target.controlTag === "propskit-slider" ||
+                        target.controlTag === "propskit-color" ||
                         target.controlTag === "propskit-number" ||
                         target.controlTag === "propskit-select" ||
                         target.controlTag === "propskit-switch" ||
@@ -1206,6 +1208,7 @@ export default function AttributesView({
                                   name === "size"
                                 ? "Default"
                                 : (target.controlTag === "propskit-slider" ||
+                                      target.controlTag === "propskit-color" ||
                                       target.controlTag === "propskit-number" ||
                                       target.controlTag === "propskit-select" ||
                                       target.controlTag === "propskit-switch" ||

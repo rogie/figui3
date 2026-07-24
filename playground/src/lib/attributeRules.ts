@@ -352,6 +352,24 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  "propskit-color": {
+    label: { label: "Label", type: "string" },
+    alpha: {
+      label: "Alpha",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    experimental: {
+      label: "Experimental",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: "modern",
+      falseValue: null,
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "propskit-select": {
     label: { label: "Label", type: "string" },
     value: { label: "Value", type: "string" },

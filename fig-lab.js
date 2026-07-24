@@ -22,6 +22,7 @@ class PropskitSwitch extends HTMLElement {
   #managedSwitchAttrs = new Set();
   #boundHandleInput = null;
   #boundHandleChange = null;
+  #boundHandleClick = this.#handleClick.bind(this);
 
   static get observedAttributes() {
     return ["label", "direction"];
@@ -32,6 +33,8 @@ class PropskitSwitch extends HTMLElement {
     this.#syncField();
     this.#syncSwitchAttributes();
     this.#bindSwitchEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.addEventListener("click", this.#boundHandleClick);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -61,6 +64,7 @@ class PropskitSwitch extends HTMLElement {
   disconnectedCallback() {
     this.#observer?.disconnect();
     this.#unbindSwitchEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -193,6 +197,14 @@ class PropskitSwitch extends HTMLElement {
     );
   }
 
+  #handleClick(event) {
+    if (event.target instanceof Element && event.target.closest("fig-segmented-control")) {
+      return;
+    }
+    const value = this.#switch?.value === "on" ? "off" : "on";
+    this.#switch?.querySelector(`fig-segment[value="${value}"]`)?.click();
+  }
+
   get checked() {
     return this.#switch
       ? this.#switch.value === "on"
@@ -220,6 +232,216 @@ class PropskitSwitch extends HTMLElement {
 }
 customElements.define("propskit-switch", PropskitSwitch);
 
+/* Field + Color wrapper */
+class PropskitColor extends HTMLElement {
+  #field = null;
+  #label = null;
+  #input = null;
+  #hasCustomLabel = false;
+  #observer = null;
+  #managedInputAttrs = new Set();
+  #boundHandleInput = null;
+  #boundHandleChange = null;
+  #boundHandleClick = this.#handleClick.bind(this);
+
+  static get observedAttributes() {
+    return ["label", "direction", "aria-label"];
+  }
+
+  connectedCallback() {
+    if (!this.#field) this.#initialize();
+    this.#syncField();
+    this.#syncInputAttributes();
+    this.#bindInputEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.addEventListener("click", this.#boundHandleClick);
+
+    if (!this.#observer) {
+      this.#observer = new MutationObserver((mutations) => {
+        let syncField = false;
+        let syncInput = false;
+
+        for (const mutation of mutations) {
+          if (mutation.type !== "attributes") continue;
+          if (
+            mutation.attributeName === "label" ||
+            mutation.attributeName === "direction" ||
+            mutation.attributeName === "aria-label"
+          ) {
+            syncField = true;
+          } else {
+            syncInput = true;
+          }
+        }
+
+        if (syncField) this.#syncField();
+        if (syncInput) this.#syncInputAttributes();
+      });
+    }
+
+    this.#observer.observe(this, { attributes: true });
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#unbindInputEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#field) return;
+    if (name === "label" || name === "direction" || name === "aria-label") {
+      this.#syncField();
+    }
+  }
+
+  #initialize() {
+    const initialChildren = Array.from(this.childNodes).filter(
+      (node) =>
+        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
+    );
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
+    const field = document.createElement("fig-field");
+    const label = customLabel || document.createElement("label");
+    const input = document.createElement("fig-input-color");
+
+    for (const node of initialChildren) {
+      if (node !== customLabel) input.appendChild(node);
+    }
+    field.append(label, input);
+    this.#field = field;
+    this.#label = label;
+    this.#input = input;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.replaceChildren(field);
+  }
+
+  #syncField() {
+    if (!this.#field || !this.#label || !this.#input) return;
+    const hasLabelAttr = this.hasAttribute("label");
+    const rawLabel = this.getAttribute("label");
+    const isBlankLabel = hasLabelAttr && (rawLabel ?? "").trim() === "";
+
+    if (isBlankLabel) {
+      this.#label.remove();
+    } else {
+      if (!this.#hasCustomLabel) {
+        this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      }
+      if (this.#label.parentElement !== this.#field) {
+        this.#field.prepend(this.#label);
+      }
+    }
+
+    this.#field.setAttribute(
+      "direction",
+      this.getAttribute("direction") || "horizontal",
+    );
+    this.#input.setAttribute(
+      "aria-label",
+      this.getAttribute("aria-label") ||
+        this.#label.textContent?.trim() ||
+        "Color",
+    );
+  }
+
+  #getForwardedInputAttrNames() {
+    const reserved = new Set([
+      "label",
+      "direction",
+      "oninput",
+      "onchange",
+      "class",
+      "style",
+      "id",
+      "size",
+      "aria-label",
+      "text",
+    ]);
+    return this.getAttributeNames().filter(
+      (name) => !reserved.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncInputAttributes() {
+    if (!this.#input) return;
+    const inputAttrs = this.#getForwardedInputAttrNames();
+    const nextManaged = new Set(inputAttrs);
+
+    for (const attrName of this.#managedInputAttrs) {
+      if (!nextManaged.has(attrName)) this.#input.removeAttribute(attrName);
+    }
+    for (const attrName of inputAttrs) {
+      this.#input.setAttribute(attrName, this.getAttribute(attrName) ?? "");
+    }
+
+    this.#input.setAttribute("text", "true");
+    this.#managedInputAttrs = nextManaged;
+  }
+
+  #bindInputEvents() {
+    if (!this.#input) return;
+    this.#boundHandleInput ??= this.#forwardInputEvent.bind(this, "input");
+    this.#boundHandleChange ??= this.#forwardInputEvent.bind(this, "change");
+    this.#input.addEventListener("input", this.#boundHandleInput);
+    this.#input.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #unbindInputEvents() {
+    if (!this.#input) return;
+    if (this.#boundHandleInput) {
+      this.#input.removeEventListener("input", this.#boundHandleInput);
+    }
+    if (this.#boundHandleChange) {
+      this.#input.removeEventListener("change", this.#boundHandleChange);
+    }
+  }
+
+  #forwardInputEvent(type, event) {
+    event.stopImmediatePropagation();
+    const value = this.#input?.getAttribute("value") ?? "";
+    this.setAttribute("value", value);
+    const detail =
+      event instanceof CustomEvent && event.detail !== undefined
+        ? event.detail
+        : value;
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #handleClick(event) {
+    if (event.target instanceof Element && event.target.closest("fig-input-color")) {
+      return;
+    }
+    this.focus();
+  }
+
+  get value() {
+    return this.#input?.getAttribute("value") ?? this.getAttribute("value") ?? "";
+  }
+
+  set value(nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.removeAttribute("value");
+    } else {
+      this.setAttribute("value", String(nextValue));
+    }
+  }
+
+  focus(options) {
+    this.#input?.querySelector("input:not([tabindex='-1'])")?.focus(options);
+  }
+}
+customElements.define("propskit-color", PropskitColor);
+
 /* Field + Select wrapper */
 class PropskitSelect extends HTMLElement {
   #field = null;
@@ -230,6 +452,7 @@ class PropskitSelect extends HTMLElement {
   #managedSelectAttrs = new Set();
   #boundHandleInput = null;
   #boundHandleChange = null;
+  #boundHandleClick = this.#handleClick.bind(this);
 
   static get observedAttributes() {
     return ["label", "direction", "aria-label"];
@@ -240,6 +463,8 @@ class PropskitSelect extends HTMLElement {
     this.#syncField();
     this.#syncSelectAttributes();
     this.#bindSelectEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.addEventListener("click", this.#boundHandleClick);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -270,6 +495,7 @@ class PropskitSelect extends HTMLElement {
   disconnectedCallback() {
     this.#observer?.disconnect();
     this.#unbindSelectEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -399,6 +625,21 @@ class PropskitSelect extends HTMLElement {
     );
   }
 
+  #handleClick(event) {
+    if (event.target instanceof Element && event.target.closest("fig-dropdown")) {
+      return;
+    }
+    const select = this.#select?.querySelector("select");
+    select?.focus();
+    if (typeof select?.showPicker === "function") {
+      try {
+        select.showPicker();
+      } catch {
+        // Browser may reject showPicker when no user activation is available.
+      }
+    }
+  }
+
   get value() {
     return this.#select?.value ?? this.getAttribute("value") ?? "";
   }
@@ -427,6 +668,7 @@ class PropskitText extends HTMLElement {
   #managedInputAttrs = new Set();
   #boundHandleInput = null;
   #boundHandleChange = null;
+  #boundHandleClick = this.#handleClick.bind(this);
 
   static get observedAttributes() {
     return ["label", "direction", "aria-label"];
@@ -437,6 +679,8 @@ class PropskitText extends HTMLElement {
     this.#syncField();
     this.#syncInputAttributes();
     this.#bindInputEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.addEventListener("click", this.#boundHandleClick);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -467,6 +711,7 @@ class PropskitText extends HTMLElement {
   disconnectedCallback() {
     this.#observer?.disconnect();
     this.#unbindInputEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -598,6 +843,13 @@ class PropskitText extends HTMLElement {
     );
   }
 
+  #handleClick(event) {
+    if (event.target instanceof Element && event.target.closest("fig-input-text")) {
+      return;
+    }
+    this.focus();
+  }
+
   get value() {
     return this.#input?.value ?? this.getAttribute("value") ?? "";
   }
@@ -626,6 +878,7 @@ class PropskitNumber extends HTMLElement {
   #managedInputAttrs = new Set();
   #boundHandleInput = null;
   #boundHandleChange = null;
+  #boundHandleClick = this.#handleClick.bind(this);
 
   static get observedAttributes() {
     return ["label", "direction"];
@@ -636,6 +889,8 @@ class PropskitNumber extends HTMLElement {
     this.#syncField();
     this.#syncInputAttributes();
     this.#bindInputEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.addEventListener("click", this.#boundHandleClick);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -665,6 +920,7 @@ class PropskitNumber extends HTMLElement {
   disconnectedCallback() {
     this.#observer?.disconnect();
     this.#unbindInputEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -784,6 +1040,13 @@ class PropskitNumber extends HTMLElement {
         composed: true,
       }),
     );
+  }
+
+  #handleClick(event) {
+    if (event.target instanceof Element && event.target.closest("fig-input-number")) {
+      return;
+    }
+    this.focus();
   }
 
   get value() {
@@ -4051,6 +4314,7 @@ class FigReorder extends HTMLElement {
     "fig-slider",
     "fig-input-number",
     "fig-input-text",
+    "propskit-color",
     "propskit-number",
     "propskit-select",
     "propskit-slider",

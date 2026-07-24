@@ -47,6 +47,21 @@ export const labSections: Section[] = [
     ],
   },
   {
+    id: "propskit-color",
+    name: "Propskit Color",
+    description:
+      "A full-surface color field that composes fig-field and fig-input-color into a single property control.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <propskit-color label="Fill" value="#0D99FF" alpha="true"></propskit-color>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "propskit-text",
     name: "Propskit Text",
     description:

@@ -83,6 +83,124 @@ propskit-switch {
   }
 }
 
+propskit-color {
+  --propskit-color-height: 2rem;
+  --propskit-color-vertical-padding: var(--spacer-1);
+  --propskit-color-horizontal-padding: var(--spacer-3);
+  --figma-focus-outline-offset: 1px;
+
+  display: block;
+  width: 100%;
+  height: var(--propskit-color-height);
+  padding: var(--propskit-color-vertical-padding)
+    var(--propskit-color-horizontal-padding);
+
+  &[size="large"] {
+    --propskit-color-vertical-padding: 0px;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
+    label {
+      color: var(--figma-color-text-disabled);
+    }
+  }
+
+  fig-field:not([direction="vertical"]) {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-2);
+    height: 100%;
+    padding-left: var(--spacer-2);
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+
+    & > label {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      width: auto;
+      max-width: 50%;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      color: var(--figma-color-text-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+
+      fig-icon:first-child {
+        margin-left: calc(var(--spacer-1) * -1);
+      }
+    }
+
+    fig-input-color {
+      --figma-focus-outline-offset: 1px;
+
+      position: relative;
+      align-self: center;
+      flex: 0 1 auto !important;
+      width: fit-content !important;
+      max-width: none;
+      min-width: 0;
+      margin-left: auto;
+      height: calc(
+        var(--propskit-color-height) - var(--propskit-color-vertical-padding) * 2
+      );
+      border-radius: var(--radius-medium);
+      background-color: transparent;
+      box-shadow: none;
+
+      > .input-combo {
+        flex: 0 0 auto;
+        width: auto;
+      }
+
+      fig-input-text {
+        flex: 0 0 3.25rem;
+        width: 3.25rem;
+
+        input {
+          field-sizing: fixed;
+          box-sizing: border-box;
+          width: 100%;
+          min-width: 0;
+        }
+      }
+
+      fig-input-number {
+        flex: 0 0 3rem;
+        width: 3rem;
+        min-width: 3rem;
+
+        input {
+          field-sizing: fixed;
+          box-sizing: border-box;
+          width: 100%;
+          min-width: 0;
+        }
+      }
+    }
+  }
+}
+
 propskit-select {
   --propskit-select-height: 2rem;
   --propskit-select-vertical-padding: var(--spacer-1);
