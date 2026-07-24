@@ -11,6 +11,10 @@ interface Props {
   onPersistControlValue?: (fieldIndex: number, value: string) => void;
 }
 
+function isComponentTag(tag: string): boolean {
+  return tag.startsWith("fig-") || tag.startsWith("propskit-");
+}
+
 export default function ExampleView({
   example,
   markup,
@@ -24,10 +28,10 @@ export default function ExampleView({
   const getPrimaryControls = (container: HTMLElement) =>
     Array.from(container.querySelectorAll("*")).filter((node) => {
       const el = node as Element;
-      if (!el.tagName.toLowerCase().startsWith("fig-")) return false;
+      if (!isComponentTag(el.tagName.toLowerCase())) return false;
       let parent = el.parentElement;
       while (parent) {
-        if (parent.tagName.toLowerCase().startsWith("fig-")) return false;
+        if (isComponentTag(parent.tagName.toLowerCase())) return false;
         parent = parent.parentElement;
       }
       return true;
@@ -75,7 +79,7 @@ export default function ExampleView({
         const tag = el.tagName.toLowerCase();
         const isFigDialog =
           tag === "dialog" && (el.getAttribute("is")?.toLowerCase() ?? "") === "fig-dialog";
-        const isFigTag = tag.startsWith("fig-") || isFigDialog;
+        const isFigTag = isComponentTag(tag) || isFigDialog;
         if (!isFigTag) return false;
         if (el.getAttribute("data-playground-ignore-controls") === "true") return false;
         let parent = el.parentElement;
@@ -84,7 +88,7 @@ export default function ExampleView({
           const parentIsFigDialog =
             parentTag === "dialog" &&
             (parent.getAttribute("is")?.toLowerCase() ?? "") === "fig-dialog";
-          if (parentTag.startsWith("fig-") || parentIsFigDialog) return false;
+          if (isComponentTag(parentTag) || parentIsFigDialog) return false;
           parent = parent.parentElement;
         }
         return true;
@@ -140,7 +144,7 @@ export default function ExampleView({
         const tag = el.tagName.toLowerCase();
         const isFigDialog =
           tag === "dialog" && (el.getAttribute("is")?.toLowerCase() ?? "") === "fig-dialog";
-        const isFigTag = tag.startsWith("fig-") || isFigDialog;
+        const isFigTag = isComponentTag(tag) || isFigDialog;
         if (!isFigTag) return false;
         if (el.getAttribute("data-playground-ignore-controls") === "true") return false;
         let parent = el.parentElement;
@@ -149,7 +153,7 @@ export default function ExampleView({
           const parentIsFigDialog =
             parentTag === "dialog" &&
             (parent.getAttribute("is")?.toLowerCase() ?? "") === "fig-dialog";
-          if (parentTag.startsWith("fig-") || parentIsFigDialog) return false;
+          if (isComponentTag(parentTag) || parentIsFigDialog) return false;
           parent = parent.parentElement;
         }
         return true;
@@ -165,7 +169,8 @@ export default function ExampleView({
 
     const handleInput = (event: Event) => {
       const target = event.target as HTMLElement | null;
-      if (!target || target.tagName.toLowerCase() !== "fig-switch") return;
+      const tag = target?.tagName.toLowerCase();
+      if (!target || (tag !== "fig-switch" && tag !== "propskit-switch")) return;
       syncSwitchCheckedState(target);
     };
 
@@ -186,6 +191,10 @@ export default function ExampleView({
       "fig-origin-grid",
       "fig-joystick",
       "fig-segmented-control",
+      "propskit-number",
+      "propskit-select",
+      "propskit-slider",
+      "propskit-text",
     ]);
 
     const resolveFieldIndex = (target: HTMLElement): number => {

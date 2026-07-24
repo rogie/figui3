@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.15.0]
+
+### Added
+
+- Added `propskit-number`, `propskit-select`, `propskit-switch`, and `propskit-text` full-surface property controls.
+- Added playground examples, attribute editing, value persistence, JSX types, documentation, and browser contract tests for Propskit controls.
+
+### Changed
+
+- Renamed `fig-field-slider` to `propskit-slider` across the library and playground.
+- Updated playground component discovery, prompts, events, and parsing to support `propskit-*` elements.
+- Changed `propskit-switch` to use an Off/On segmented control.
+
 ## [6.14.1]
 
 ### Added

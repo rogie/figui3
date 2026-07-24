@@ -85,9 +85,10 @@ export function buildPrompt(codeMarkup: string): string {
   const fields = root.querySelectorAll("fig-field");
   if (fields.length) return buildFieldPrompt(fields[0]);
 
-  const topLevel = Array.from(root.children).filter((c) =>
-    c.tagName.toLowerCase().startsWith("fig-"),
-  );
+  const topLevel = Array.from(root.children).filter((c) => {
+    const tag = c.tagName.toLowerCase();
+    return tag.startsWith("fig-") || tag.startsWith("propskit-");
+  });
   if (topLevel.length === 1) return buildStandalonePrompt(topLevel[0]);
   if (topLevel.length > 1) {
     const first = topLevel[0];

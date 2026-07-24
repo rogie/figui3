@@ -177,7 +177,11 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-swatch": "Swatch",
     "fig-radio": "Radio",
     "fig-field": "Field",
-    "fig-field-slider": "Field slider",
+    "propskit-number": "Propskit number",
+    "propskit-select": "Propskit select",
+    "propskit-slider": "Propskit slider",
+    "propskit-switch": "Propskit switch",
+    "propskit-text": "Propskit text",
     "fig-combo-input": "Combo input",
     "fig-media": "Media",
     "fig-media-controls": "Media controls",
@@ -197,7 +201,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-3d-rotate": "3D rotate",
     "fig-origin-grid": "Origin grid",
     "fig-input-angle": "Angle input",
-    "fig-input-oscillator": "Oscillator input",
+    "propskit-oscillator": "Oscillator input",
     "fig-joystick": "Joystick",
     "fig-toast": "Toast",
     "fig-icon": "Icon",
@@ -332,7 +336,7 @@ export default function AttributesView({
           "fig-3d-rotate",
           "fig-origin-grid",
           "fig-input-angle",
-          "fig-input-oscillator",
+          "propskit-oscillator",
           "fig-combo-input",
           "fig-joystick",
           "fig-radio",
@@ -985,7 +989,7 @@ export default function AttributesView({
             const needsCustomHandler =
               (target.controlTag === "fig-button" && name === "type") ||
               (target.controlTag === "fig-chooser" && name === "layout") ||
-              (target.controlTag === "fig-field-slider" && name === "type") ||
+              (target.controlTag === "propskit-slider" && name === "type") ||
               (target.controlTag === "fig-handle" && name === "tip") ||
               (target.controlTag === "fig-color-tip" && name === "control") ||
               options.includes("");
@@ -1085,7 +1089,11 @@ export default function AttributesView({
                       return;
                     }
                     if (
-                      target.controlTag === "fig-field-slider" &&
+                      (target.controlTag === "propskit-slider" ||
+                        target.controlTag === "propskit-number" ||
+                        target.controlTag === "propskit-select" ||
+                        target.controlTag === "propskit-switch" ||
+                        target.controlTag === "propskit-text") &&
                       name === "size" &&
                       resolvedValue === ""
                     ) {
@@ -1101,7 +1109,7 @@ export default function AttributesView({
                       return;
                     }
                     if (
-                      target.controlTag === "fig-field-slider" &&
+                      target.controlTag === "propskit-slider" &&
                       name === "type"
                     ) {
                       let updated = applyAttributeMutation(markup, {
@@ -1197,7 +1205,11 @@ export default function AttributesView({
                               : target.controlTag === "fig-avatar" &&
                                   name === "size"
                                 ? "Default"
-                                : target.controlTag === "fig-field-slider" &&
+                                : (target.controlTag === "propskit-slider" ||
+                                      target.controlTag === "propskit-number" ||
+                                      target.controlTag === "propskit-select" ||
+                                      target.controlTag === "propskit-switch" ||
+                                      target.controlTag === "propskit-text") &&
                                     name === "size"
                                   ? "Default"
                                   : target.controlTag === "fig-input-gradient" &&
@@ -1382,7 +1394,7 @@ export default function AttributesView({
 
         return (
           <Fragment key={target.fieldIndex}>
-            {showFieldControls && target.hasField && target.controlTag !== "fig-field-slider" && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
+            {showFieldControls && target.hasField && !target.controlTag.startsWith("propskit-") && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
                   <h3>Field</h3>

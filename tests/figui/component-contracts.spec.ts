@@ -89,6 +89,286 @@ test.describe("fig.js component contracts", () => {
   }
 });
 
+test.describe("propskit-number", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-number");
+    });
+  });
+
+  test("composes and forwards number attributes and events", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-number label="Width" value="24" min="0" max="100" units="px"></propskit-number>';
+    });
+
+    const control = page.locator("propskit-number");
+    await expect(control.locator("fig-field > label")).toHaveText("Width");
+    await expect(control.locator("fig-input-number")).toHaveAttribute("units", "px");
+    await expect(control.locator("input")).toHaveValue("24");
+    const fieldBox = await control.locator("fig-field").boundingBox();
+    const inputBox = await control.locator("fig-input-number").boundingBox();
+    expect(inputBox?.height).toBe(fieldBox?.height);
+    expect(inputBox?.width).toBeLessThan(fieldBox?.width ?? 0);
+    expect(
+      Math.abs(
+        (inputBox?.x ?? 0) +
+          (inputBox?.width ?? 0) -
+          ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
+      ),
+    ).toBeLessThan(1);
+
+    const events = await control.evaluate((element) => {
+      const received: Array<{ type: string; detail: unknown }> = [];
+      element.addEventListener("input", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      const inner = element.querySelector("fig-input-number");
+      inner?.dispatchEvent(
+        new CustomEvent("input", {
+          detail: 32,
+          bubbles: true,
+        }),
+      );
+      return received;
+    });
+
+    expect(events).toEqual([{ type: "input", detail: 32 }]);
+  });
+});
+
+test.describe("propskit-switch", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-switch");
+    });
+  });
+
+  test("composes and forwards switch state, events, and focus", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-switch label="Visible" checked name="visibility"></propskit-switch>';
+    });
+
+    const control = page.locator("propskit-switch");
+    const field = control.locator("fig-field");
+    const innerSwitch = control.locator("fig-segmented-control");
+    const offSegment = innerSwitch.locator('fig-segment[value="off"]');
+    const onSegment = innerSwitch.locator('fig-segment[value="on"]');
+    await expect(control.locator("fig-field > label")).toHaveText("Visible");
+    await expect(innerSwitch).toHaveAttribute("name", "visibility");
+    await expect(onSegment).toHaveAttribute("selected", "true");
+
+    const fieldBox = await field.boundingBox();
+    const switchBox = await innerSwitch.boundingBox();
+    expect(switchBox?.width).toBeLessThan(fieldBox?.width ?? 0);
+    expect(switchBox?.x).toBeGreaterThan(
+      (fieldBox?.x ?? 0) + (fieldBox?.width ?? 0) / 2,
+    );
+
+    const eventDetail = await control.evaluate((element) => {
+      return new Promise((resolve) => {
+        element.addEventListener(
+          "input",
+          (event) => resolve((event as CustomEvent).detail),
+          { once: true },
+        );
+        (element.querySelector('fig-segment[value="off"]') as HTMLElement)?.click();
+      });
+    });
+
+    expect(eventDetail).toEqual({ checked: false, value: "" });
+    await expect(control).not.toHaveAttribute("checked", "");
+    await expect(offSegment).toHaveAttribute("selected", "true");
+    await offSegment.focus();
+    await expect(offSegment).toBeFocused();
+    expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("none");
+  });
+});
+
+test.describe("propskit-select", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-select");
+    });
+  });
+
+  test("composes and forwards options, value, events, and focus", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-select label="Alignment" value="center">
+          <option value="left">Left</option>
+          <option value="center">Center</option>
+          <option value="right">Right</option>
+        </propskit-select>
+      `;
+    });
+
+    const control = page.locator("propskit-select");
+    const field = control.locator("fig-field");
+    const dropdown = control.locator("fig-dropdown");
+    const select = dropdown.locator("select");
+    await expect(control.locator("fig-field > label")).toHaveText("Alignment");
+    await expect(dropdown).toHaveAttribute("value", "center");
+    await expect(select).toHaveValue("center");
+    await expect(select.locator("option")).toHaveCount(3);
+
+    const fieldBox = await field.boundingBox();
+    const dropdownBox = await dropdown.boundingBox();
+    expect(dropdownBox?.height).toBe(fieldBox?.height);
+    expect(dropdownBox?.width).toBeLessThan(fieldBox?.width ?? 0);
+    expect(
+      Math.abs(
+        (dropdownBox?.x ?? 0) +
+          (dropdownBox?.width ?? 0) -
+          ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
+      ),
+    ).toBeLessThan(1);
+
+    const events = await control.evaluate((element) => {
+      const received: Array<{ type: string; detail: unknown }> = [];
+      element.addEventListener("input", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      element.addEventListener("change", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      const nativeSelect = element.querySelector("select");
+      if (!(nativeSelect instanceof HTMLSelectElement)) {
+        throw new Error("Missing native select");
+      }
+      nativeSelect.value = "right";
+      nativeSelect.dispatchEvent(new Event("input", { bubbles: true }));
+      nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      return received;
+    });
+
+    expect(events).toEqual([
+      { type: "input", detail: "right" },
+      { type: "change", detail: "right" },
+    ]);
+    await expect(control).toHaveAttribute("value", "right");
+    await select.focus();
+    await expect(select).toBeFocused();
+    expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("none");
+  });
+});
+
+test.describe("propskit-text", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-text");
+    });
+  });
+
+  test("composes and forwards text attributes, events, and focus", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-text label="Name" value="Layer 1" placeholder="Enter a name"></propskit-text>';
+    });
+
+    const control = page.locator("propskit-text");
+    const field = control.locator("fig-field");
+    const textInput = control.locator("fig-input-text");
+    const input = textInput.locator("input");
+    await expect(control.locator("fig-field > label")).toHaveText("Name");
+    await expect(textInput).toHaveAttribute("placeholder", "Enter a name");
+    await expect(input).toHaveValue("Layer 1");
+    await expect(input).toHaveAttribute("aria-label", "Name");
+
+    const fieldBox = await field.boundingBox();
+    const inputBox = await textInput.boundingBox();
+    expect(inputBox?.height).toBe(fieldBox?.height);
+    expect(inputBox?.width).toBeLessThan(fieldBox?.width ?? 0);
+    expect(
+      Math.abs(
+        (inputBox?.x ?? 0) +
+          (inputBox?.width ?? 0) -
+          ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
+      ),
+    ).toBeLessThan(1);
+
+    const events = await control.evaluate((element) => {
+      const received: Array<{ type: string; detail: unknown }> = [];
+      element.addEventListener("input", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      element.addEventListener("change", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      const nativeInput = element.querySelector("input");
+      if (!(nativeInput instanceof HTMLInputElement)) {
+        throw new Error("Missing native input");
+      }
+      nativeInput.value = "Layer 2";
+      nativeInput.dispatchEvent(new Event("input", { bubbles: true }));
+      nativeInput.dispatchEvent(new Event("change", { bubbles: true }));
+      return received;
+    });
+
+    expect(events).toEqual([
+      { type: "input", detail: "Layer 2" },
+      { type: "change", detail: "Layer 2" },
+    ]);
+    await expect(control).toHaveAttribute("value", "Layer 2");
+    await input.focus();
+    await expect(input).toBeFocused();
+    expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("none");
+
+    await input.fill("A very long layer name that cannot overlap the label");
+    await input.blur();
+    const labelBox = await control.locator("fig-field > label").boundingBox();
+    const constrainedInputBox = await textInput.boundingBox();
+    expect(constrainedInputBox?.x).toBeGreaterThanOrEqual(
+      (labelBox?.x ?? 0) + (labelBox?.width ?? 0) + 7,
+    );
+    expect(await input.evaluate((element) => getComputedStyle(element).textOverflow))
+      .toBe("ellipsis");
+  });
+});
+
 test.describe("dropdown keyboard behavior", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);

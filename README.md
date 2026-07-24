@@ -88,11 +88,15 @@ Minimal example:
 | [Radio](#radio) | `<fig-radio>` | Radio button |
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
-| [Field Slider](#field-slider) | `<fig-field-slider>` | Labeled field + slider combo |
+| [Propskit Slider](#propskit-slider) | `<propskit-slider>` | Labeled field + slider combo |
+| [Propskit Number](#propskit-number) | `<propskit-number>` | Full-surface labeled number control |
+| [Propskit Select](#propskit-select) | `<propskit-select>` | Full-surface labeled select control |
+| [Propskit Switch](#propskit-switch) | `<propskit-switch>` | Full-surface labeled switch control |
+| [Propskit Text](#propskit-text) | `<propskit-text>` | Full-surface labeled text control |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
 | [Input Angle](#input-angle) | `<fig-input-angle>` | Angle/rotation dial and text input |
-| [Input Oscillator](#input-oscillator) | `<fig-input-oscillator>` | Waveform oscillator editor |
+| [Propskit Oscillator](#propskit-oscillator) | `<propskit-oscillator>` | Waveform oscillator editor |
 | [Swatch](#swatch) | `<fig-swatch>` | Color/gradient/image swatch |
 | [Color Tip](#color-tip) | `<fig-color-tip>` | Compact color tip with picker |
 | [Color Input](#color-input) | `<fig-input-color>` | Color picker with hex/alpha |
@@ -292,9 +296,81 @@ For `type="range"`, omitting `value` follows native range behavior and starts at
 
 ---
 
-#### Field Slider
+#### Propskit Number
 
-`<fig-field-slider>`
+`<propskit-number>`
+
+Composes a `<fig-field>` and `<fig-input-number>` into a full-surface property control. Number attributes are forwarded to the inner input.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | `"Label"` | Field label text; use an empty value to hide it |
+| `direction` | string | `"horizontal"` | Field layout direction |
+| *number attrs* | — | — | All `<fig-input-number>` attributes are forwarded |
+
+**Events:** `input`, `change` — forwarded from the inner number input.
+
+```html
+<propskit-number label="Width" value="24" min="0" max="100" units="px"></propskit-number>
+```
+
+---
+
+#### Propskit Switch
+
+`<propskit-switch>`
+
+Composes a `<fig-field>` and an Off/On `<fig-segmented-control>` into a full-surface boolean property control.
+
+**Attributes:** `label`, `checked`, `disabled`, `name`, `value`, `size`
+
+**Events:** `input`, `change` — forwarded from the inner switch.
+
+```html
+<propskit-switch label="Visible" checked></propskit-switch>
+```
+
+---
+
+#### Propskit Select
+
+`<propskit-select>`
+
+Composes a `<fig-field>` and `<fig-dropdown>` into a full-surface property control. Dropdown attributes and child `<option>` elements are forwarded to the inner control.
+
+**Attributes:** `label`, `value`, `disabled`, `experimental`, `size`
+
+**Events:** `input`, `change` — forwarded from the inner dropdown.
+
+```html
+<propskit-select label="Alignment" value="center">
+  <option value="left">Left</option>
+  <option value="center">Center</option>
+  <option value="right">Right</option>
+</propskit-select>
+```
+
+---
+
+#### Propskit Text
+
+`<propskit-text>`
+
+Composes a `<fig-field>` and `<fig-input-text>` into a full-surface, single-line property control. Text input attributes and adornment slots are forwarded to the inner control.
+
+**Attributes:** `label`, `value`, `placeholder`, `type`, `disabled`, `readonly`, `autoresize`, `size`
+
+**Events:** `input`, `change` — forwarded from the inner text input.
+
+```html
+<propskit-text label="Name" value="Layer 1" placeholder="Enter a name"></propskit-text>
+```
+
+---
+
+#### Propskit Slider
+
+`<propskit-slider>`
 
 Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slider attributes (except `label`, `direction`) are forwarded to the inner slider.
 
@@ -311,7 +387,7 @@ Double-click or right-click and choose "Reset to default" to reset to the `defau
 **Methods:** `resetToDefault()` triggers the same reset behavior.
 
 ```html
-<fig-field-slider label="Opacity" min="0" max="100" value="75" units="%"></fig-field-slider>
+<propskit-slider label="Opacity" min="0" max="100" value="75" units="%"></propskit-slider>
 ```
 
 ---
@@ -391,9 +467,9 @@ Angle/rotation input with circular dial, optional text input, multi-unit support
 
 ---
 
-#### Input Oscillator
+#### Propskit Oscillator
 
-`<fig-input-oscillator>`
+`<propskit-oscillator>`
 
 Waveform oscillator input with composable wave functions, live SVG waveform preview, draggable parameter handles, and direct numeric controls.
 
@@ -417,9 +493,9 @@ Supported `type` values: `"sine"`, `"square"`, `"sawtooth"`, `"triangle"`.
 | `change` | `{ value, data, preset }` — on release or committed edit |
 
 ```html
-<fig-input-oscillator
+<propskit-oscillator
   value='{"waves":[{"type":"sine","frequency":1,"amplitude":1,"phase":0,"offset":0},{"type":"triangle","frequency":2,"amplitude":0.5,"phase":0,"offset":0}]}'
-></fig-input-oscillator>
+></propskit-oscillator>
 ```
 
 ---

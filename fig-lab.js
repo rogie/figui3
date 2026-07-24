@@ -12,8 +12,800 @@ function figLabBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
 
+/* Field + Switch wrapper */
+class PropskitSwitch extends HTMLElement {
+  #field = null;
+  #label = null;
+  #switch = null;
+  #hasCustomLabel = false;
+  #observer = null;
+  #managedSwitchAttrs = new Set();
+  #boundHandleInput = null;
+  #boundHandleChange = null;
+
+  static get observedAttributes() {
+    return ["label", "direction"];
+  }
+
+  connectedCallback() {
+    if (!this.#field) this.#initialize();
+    this.#syncField();
+    this.#syncSwitchAttributes();
+    this.#bindSwitchEvents();
+
+    if (!this.#observer) {
+      this.#observer = new MutationObserver((mutations) => {
+        let syncField = false;
+        let syncSwitch = false;
+
+        for (const mutation of mutations) {
+          if (mutation.type !== "attributes") continue;
+          if (
+            mutation.attributeName === "label" ||
+            mutation.attributeName === "direction"
+          ) {
+            syncField = true;
+          } else {
+            syncSwitch = true;
+          }
+        }
+
+        if (syncField) this.#syncField();
+        if (syncSwitch) this.#syncSwitchAttributes();
+      });
+    }
+
+    this.#observer.observe(this, { attributes: true });
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#unbindSwitchEvents();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#field) return;
+    if (name === "label" || name === "direction") this.#syncField();
+  }
+
+  #initialize() {
+    const initialChildren = Array.from(this.childNodes).filter(
+      (node) =>
+        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
+    );
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
+    const field = document.createElement("fig-field");
+    const label = customLabel || document.createElement("label");
+    const switchControl = document.createElement("fig-segmented-control");
+    const offSegment = document.createElement("fig-segment");
+    const onSegment = document.createElement("fig-segment");
+    switchControl.setAttribute("sizing", "equal");
+    offSegment.setAttribute("value", "off");
+    offSegment.textContent = "Off";
+    onSegment.setAttribute("value", "on");
+    onSegment.textContent = "On";
+    switchControl.append(offSegment, onSegment);
+
+    field.append(label, switchControl);
+    this.#field = field;
+    this.#label = label;
+    this.#switch = switchControl;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.replaceChildren(field);
+
+  }
+
+  #syncField() {
+    if (!this.#field || !this.#label) return;
+    const hasLabelAttr = this.hasAttribute("label");
+    const rawLabel = this.getAttribute("label");
+    const isBlankLabel = hasLabelAttr && (rawLabel ?? "").trim() === "";
+
+    if (isBlankLabel) {
+      this.#label.remove();
+    } else {
+      if (!this.#hasCustomLabel) {
+        this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      }
+      if (this.#label.parentElement !== this.#field) {
+        this.#field.prepend(this.#label);
+      }
+    }
+
+    this.#field.setAttribute(
+      "direction",
+      this.getAttribute("direction") || "horizontal",
+    );
+  }
+
+  #getForwardedSwitchAttrNames() {
+    const reserved = new Set([
+      "label",
+      "direction",
+      "oninput",
+      "onchange",
+      "class",
+      "style",
+      "id",
+      "size",
+      "checked",
+      "value",
+    ]);
+    return this.getAttributeNames().filter(
+      (name) => !reserved.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncSwitchAttributes() {
+    if (!this.#switch) return;
+    const switchAttrs = this.#getForwardedSwitchAttrNames();
+    const nextManaged = new Set(switchAttrs);
+
+    for (const attrName of this.#managedSwitchAttrs) {
+      if (!nextManaged.has(attrName)) this.#switch.removeAttribute(attrName);
+    }
+    for (const attrName of switchAttrs) {
+      this.#switch.setAttribute(attrName, this.getAttribute(attrName) ?? "");
+    }
+
+    this.#switch.setAttribute(
+      "value",
+      figLabBooleanAttribute(this, "checked") ? "on" : "off",
+    );
+    this.#managedSwitchAttrs = nextManaged;
+  }
+
+  #bindSwitchEvents() {
+    if (!this.#switch) return;
+    this.#boundHandleInput ??= this.#forwardSwitchEvent.bind(this, "input");
+    this.#boundHandleChange ??= this.#forwardSwitchEvent.bind(this, "change");
+    this.#switch.addEventListener("input", this.#boundHandleInput);
+    this.#switch.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #unbindSwitchEvents() {
+    if (!this.#switch) return;
+    if (this.#boundHandleInput) {
+      this.#switch.removeEventListener("input", this.#boundHandleInput);
+    }
+    if (this.#boundHandleChange) {
+      this.#switch.removeEventListener("change", this.#boundHandleChange);
+    }
+  }
+
+  #forwardSwitchEvent(type, event) {
+    event.stopImmediatePropagation();
+    const checked = this.#switch?.value === "on";
+    this.toggleAttribute("checked", checked);
+    const detail = {
+      checked,
+      value: this.getAttribute("value") ?? "",
+    };
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  get checked() {
+    return this.#switch
+      ? this.#switch.value === "on"
+      : figLabBooleanAttribute(this, "checked");
+  }
+
+  set checked(nextChecked) {
+    this.toggleAttribute("checked", Boolean(nextChecked));
+  }
+
+  get value() {
+    return this.#switch?.value ?? this.getAttribute("value") ?? "";
+  }
+
+  set value(nextValue) {
+    this.setAttribute("value", nextValue ?? "");
+  }
+
+  focus(options) {
+    const selected =
+      this.#switch?.querySelector("fig-segment[selected]") ||
+      this.#switch?.querySelector("fig-segment");
+    selected?.focus(options);
+  }
+}
+customElements.define("propskit-switch", PropskitSwitch);
+
+/* Field + Select wrapper */
+class PropskitSelect extends HTMLElement {
+  #field = null;
+  #label = null;
+  #select = null;
+  #hasCustomLabel = false;
+  #observer = null;
+  #managedSelectAttrs = new Set();
+  #boundHandleInput = null;
+  #boundHandleChange = null;
+
+  static get observedAttributes() {
+    return ["label", "direction", "aria-label"];
+  }
+
+  connectedCallback() {
+    if (!this.#field) this.#initialize();
+    this.#syncField();
+    this.#syncSelectAttributes();
+    this.#bindSelectEvents();
+
+    if (!this.#observer) {
+      this.#observer = new MutationObserver((mutations) => {
+        let syncField = false;
+        let syncSelect = false;
+
+        for (const mutation of mutations) {
+          if (mutation.type !== "attributes") continue;
+          if (
+            mutation.attributeName === "label" ||
+            mutation.attributeName === "direction" ||
+            mutation.attributeName === "aria-label"
+          ) {
+            syncField = true;
+          } else {
+            syncSelect = true;
+          }
+        }
+
+        if (syncField) this.#syncField();
+        if (syncSelect) this.#syncSelectAttributes();
+      });
+    }
+
+    this.#observer.observe(this, { attributes: true });
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#unbindSelectEvents();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#field) return;
+    if (name === "label" || name === "direction" || name === "aria-label") {
+      this.#syncField();
+    }
+  }
+
+  #initialize() {
+    const initialChildren = Array.from(this.childNodes).filter(
+      (node) =>
+        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
+    );
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
+    const field = document.createElement("fig-field");
+    const label = customLabel || document.createElement("label");
+    const select = document.createElement("fig-dropdown");
+
+    for (const node of initialChildren) {
+      if (node !== customLabel) select.appendChild(node);
+    }
+    field.append(label, select);
+    this.#field = field;
+    this.#label = label;
+    this.#select = select;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.replaceChildren(field);
+  }
+
+  #syncField() {
+    if (!this.#field || !this.#label || !this.#select) return;
+    const hasLabelAttr = this.hasAttribute("label");
+    const rawLabel = this.getAttribute("label");
+    const isBlankLabel = hasLabelAttr && (rawLabel ?? "").trim() === "";
+
+    if (isBlankLabel) {
+      this.#label.remove();
+    } else {
+      if (!this.#hasCustomLabel) {
+        this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      }
+      if (this.#label.parentElement !== this.#field) {
+        this.#field.prepend(this.#label);
+      }
+    }
+
+    this.#field.setAttribute(
+      "direction",
+      this.getAttribute("direction") || "horizontal",
+    );
+    this.#select.setAttribute(
+      "label",
+      this.getAttribute("aria-label") ||
+        this.#label.textContent?.trim() ||
+        "Select",
+    );
+  }
+
+  #getForwardedSelectAttrNames() {
+    const reserved = new Set([
+      "label",
+      "direction",
+      "oninput",
+      "onchange",
+      "class",
+      "style",
+      "id",
+      "size",
+      "aria-label",
+    ]);
+    return this.getAttributeNames().filter(
+      (name) => !reserved.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncSelectAttributes() {
+    if (!this.#select) return;
+    const selectAttrs = this.#getForwardedSelectAttrNames();
+    const nextManaged = new Set(selectAttrs);
+
+    for (const attrName of this.#managedSelectAttrs) {
+      if (!nextManaged.has(attrName)) this.#select.removeAttribute(attrName);
+    }
+    for (const attrName of selectAttrs) {
+      this.#select.setAttribute(attrName, this.getAttribute(attrName) ?? "");
+    }
+
+    this.#managedSelectAttrs = nextManaged;
+  }
+
+  #bindSelectEvents() {
+    if (!this.#select) return;
+    this.#boundHandleInput ??= this.#forwardSelectEvent.bind(this, "input");
+    this.#boundHandleChange ??= this.#forwardSelectEvent.bind(this, "change");
+    this.#select.addEventListener("input", this.#boundHandleInput);
+    this.#select.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #unbindSelectEvents() {
+    if (!this.#select) return;
+    if (this.#boundHandleInput) {
+      this.#select.removeEventListener("input", this.#boundHandleInput);
+    }
+    if (this.#boundHandleChange) {
+      this.#select.removeEventListener("change", this.#boundHandleChange);
+    }
+  }
+
+  #forwardSelectEvent(type, event) {
+    event.stopImmediatePropagation();
+    const value = this.#select?.value ?? "";
+    this.setAttribute("value", String(value));
+    const detail =
+      event instanceof CustomEvent && event.detail !== undefined
+        ? event.detail
+        : value;
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  get value() {
+    return this.#select?.value ?? this.getAttribute("value") ?? "";
+  }
+
+  set value(nextValue) {
+    if (nextValue === null || nextValue === undefined) {
+      this.removeAttribute("value");
+    } else {
+      this.setAttribute("value", String(nextValue));
+    }
+  }
+
+  focus(options) {
+    this.#select?.focus(options);
+  }
+}
+customElements.define("propskit-select", PropskitSelect);
+
+/* Field + Text wrapper */
+class PropskitText extends HTMLElement {
+  #field = null;
+  #label = null;
+  #input = null;
+  #hasCustomLabel = false;
+  #observer = null;
+  #managedInputAttrs = new Set();
+  #boundHandleInput = null;
+  #boundHandleChange = null;
+
+  static get observedAttributes() {
+    return ["label", "direction", "aria-label"];
+  }
+
+  connectedCallback() {
+    if (!this.#field) this.#initialize();
+    this.#syncField();
+    this.#syncInputAttributes();
+    this.#bindInputEvents();
+
+    if (!this.#observer) {
+      this.#observer = new MutationObserver((mutations) => {
+        let syncField = false;
+        let syncInput = false;
+
+        for (const mutation of mutations) {
+          if (mutation.type !== "attributes") continue;
+          if (
+            mutation.attributeName === "label" ||
+            mutation.attributeName === "direction" ||
+            mutation.attributeName === "aria-label"
+          ) {
+            syncField = true;
+          } else {
+            syncInput = true;
+          }
+        }
+
+        if (syncField) this.#syncField();
+        if (syncInput) this.#syncInputAttributes();
+      });
+    }
+
+    this.#observer.observe(this, { attributes: true });
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#unbindInputEvents();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#field) return;
+    if (name === "label" || name === "direction" || name === "aria-label") {
+      this.#syncField();
+    }
+  }
+
+  #initialize() {
+    const initialChildren = Array.from(this.childNodes).filter(
+      (node) =>
+        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
+    );
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
+    const field = document.createElement("fig-field");
+    const label = customLabel || document.createElement("label");
+    const input = document.createElement("fig-input-text");
+
+    for (const node of initialChildren) {
+      if (node !== customLabel) input.appendChild(node);
+    }
+    field.append(label, input);
+    this.#field = field;
+    this.#label = label;
+    this.#input = input;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.replaceChildren(field);
+  }
+
+  #syncField() {
+    if (!this.#field || !this.#label || !this.#input) return;
+    const hasLabelAttr = this.hasAttribute("label");
+    const rawLabel = this.getAttribute("label");
+    const isBlankLabel = hasLabelAttr && (rawLabel ?? "").trim() === "";
+
+    if (isBlankLabel) {
+      this.#label.remove();
+    } else {
+      if (!this.#hasCustomLabel) {
+        this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      }
+      if (this.#label.parentElement !== this.#field) {
+        this.#field.prepend(this.#label);
+      }
+    }
+
+    this.#field.setAttribute(
+      "direction",
+      this.getAttribute("direction") || "horizontal",
+    );
+    this.#input.setAttribute(
+      "aria-label",
+      this.getAttribute("aria-label") ||
+        this.#label.textContent?.trim() ||
+        "Text",
+    );
+  }
+
+  #getForwardedInputAttrNames() {
+    const reserved = new Set([
+      "label",
+      "direction",
+      "oninput",
+      "onchange",
+      "class",
+      "style",
+      "id",
+      "size",
+      "aria-label",
+      "multiline",
+      "resizable",
+    ]);
+    return this.getAttributeNames().filter(
+      (name) => !reserved.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncInputAttributes() {
+    if (!this.#input) return;
+    const inputAttrs = this.#getForwardedInputAttrNames();
+    const nextManaged = new Set(inputAttrs);
+
+    for (const attrName of this.#managedInputAttrs) {
+      if (!nextManaged.has(attrName)) this.#input.removeAttribute(attrName);
+    }
+    for (const attrName of inputAttrs) {
+      this.#input.setAttribute(attrName, this.getAttribute(attrName) ?? "");
+    }
+
+    this.#managedInputAttrs = nextManaged;
+  }
+
+  #bindInputEvents() {
+    if (!this.#input) return;
+    this.#boundHandleInput ??= this.#forwardInputEvent.bind(this, "input");
+    this.#boundHandleChange ??= this.#forwardInputEvent.bind(this, "change");
+    this.#input.addEventListener("input", this.#boundHandleInput);
+    this.#input.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #unbindInputEvents() {
+    if (!this.#input) return;
+    if (this.#boundHandleInput) {
+      this.#input.removeEventListener("input", this.#boundHandleInput);
+    }
+    if (this.#boundHandleChange) {
+      this.#input.removeEventListener("change", this.#boundHandleChange);
+    }
+  }
+
+  #forwardInputEvent(type, event) {
+    event.stopImmediatePropagation();
+    const value = this.#input?.value ?? "";
+    this.setAttribute("value", String(value));
+    const detail =
+      event instanceof CustomEvent && event.detail !== undefined
+        ? event.detail
+        : value;
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  get value() {
+    return this.#input?.value ?? this.getAttribute("value") ?? "";
+  }
+
+  set value(nextValue) {
+    if (nextValue === null || nextValue === undefined) {
+      this.removeAttribute("value");
+    } else {
+      this.setAttribute("value", String(nextValue));
+    }
+  }
+
+  focus(options) {
+    this.#input?.focus(options);
+  }
+}
+customElements.define("propskit-text", PropskitText);
+
+/* Field + Number wrapper */
+class PropskitNumber extends HTMLElement {
+  #field = null;
+  #label = null;
+  #input = null;
+  #hasCustomLabel = false;
+  #observer = null;
+  #managedInputAttrs = new Set();
+  #boundHandleInput = null;
+  #boundHandleChange = null;
+
+  static get observedAttributes() {
+    return ["label", "direction"];
+  }
+
+  connectedCallback() {
+    if (!this.#field) this.#initialize();
+    this.#syncField();
+    this.#syncInputAttributes();
+    this.#bindInputEvents();
+
+    if (!this.#observer) {
+      this.#observer = new MutationObserver((mutations) => {
+        let syncField = false;
+        let syncInput = false;
+
+        for (const mutation of mutations) {
+          if (mutation.type !== "attributes") continue;
+          if (
+            mutation.attributeName === "label" ||
+            mutation.attributeName === "direction"
+          ) {
+            syncField = true;
+          } else {
+            syncInput = true;
+          }
+        }
+
+        if (syncField) this.#syncField();
+        if (syncInput) this.#syncInputAttributes();
+      });
+    }
+
+    this.#observer.observe(this, { attributes: true });
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#unbindInputEvents();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#field) return;
+    if (name === "label" || name === "direction") this.#syncField();
+  }
+
+  #initialize() {
+    const initialChildren = Array.from(this.childNodes).filter(
+      (node) =>
+        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
+    );
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
+    const field = document.createElement("fig-field");
+    const label = customLabel || document.createElement("label");
+    const input = document.createElement("fig-input-number");
+
+    field.append(label, input);
+    this.#field = field;
+    this.#label = label;
+    this.#input = input;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.replaceChildren(field);
+
+    for (const node of initialChildren) {
+      if (node !== customLabel) input.appendChild(node);
+    }
+  }
+
+  #syncField() {
+    if (!this.#field || !this.#label) return;
+    const hasLabelAttr = this.hasAttribute("label");
+    const rawLabel = this.getAttribute("label");
+    const isBlankLabel = hasLabelAttr && (rawLabel ?? "").trim() === "";
+
+    if (isBlankLabel) {
+      this.#label.remove();
+    } else {
+      if (!this.#hasCustomLabel) {
+        this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      }
+      if (this.#label.parentElement !== this.#field) {
+        this.#field.prepend(this.#label);
+      }
+    }
+
+    this.#field.setAttribute(
+      "direction",
+      this.getAttribute("direction") || "horizontal",
+    );
+  }
+
+  #getForwardedInputAttrNames() {
+    const reserved = new Set([
+      "label",
+      "direction",
+      "oninput",
+      "onchange",
+      "class",
+      "style",
+      "id",
+    ]);
+    return this.getAttributeNames().filter(
+      (name) => !reserved.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncInputAttributes() {
+    if (!this.#input) return;
+    const inputAttrs = this.#getForwardedInputAttrNames();
+    const nextManaged = new Set(inputAttrs);
+
+    for (const attrName of this.#managedInputAttrs) {
+      if (!nextManaged.has(attrName)) this.#input.removeAttribute(attrName);
+    }
+    for (const attrName of inputAttrs) {
+      this.#input.setAttribute(attrName, this.getAttribute(attrName) ?? "");
+    }
+
+    this.#managedInputAttrs = nextManaged;
+  }
+
+  #bindInputEvents() {
+    if (!this.#input) return;
+    this.#boundHandleInput ??= this.#forwardInputEvent.bind(this, "input");
+    this.#boundHandleChange ??= this.#forwardInputEvent.bind(this, "change");
+    this.#input.addEventListener("input", this.#boundHandleInput);
+    this.#input.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #unbindInputEvents() {
+    if (!this.#input) return;
+    if (this.#boundHandleInput) {
+      this.#input.removeEventListener("input", this.#boundHandleInput);
+    }
+    if (this.#boundHandleChange) {
+      this.#input.removeEventListener("change", this.#boundHandleChange);
+    }
+  }
+
+  #forwardInputEvent(type, event) {
+    event.stopImmediatePropagation();
+    const detail =
+      event instanceof CustomEvent && event.detail !== undefined
+        ? event.detail
+        : this.#input?.value;
+    if (this.#input?.value !== undefined) {
+      this.setAttribute("value", String(this.#input.value));
+    }
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  get value() {
+    return this.#input?.value ?? this.getAttribute("value") ?? "";
+  }
+
+  set value(nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.removeAttribute("value");
+    } else {
+      this.setAttribute("value", String(nextValue));
+    }
+  }
+
+  focus(options) {
+    this.#input?.focus(options);
+  }
+}
+customElements.define("propskit-number", PropskitNumber);
+
 /* Field + Slider wrapper */
-class FigFieldSlider extends HTMLElement {
+class PropskitSlider extends HTMLElement {
   #field = null;
   #label = null;
   #slider = null;
@@ -446,7 +1238,7 @@ class FigFieldSlider extends HTMLElement {
 
   #readElasticDistance() {
     let raw = getComputedStyle(this)
-      .getPropertyValue("--fig-field-slider-elastic-distance")
+      .getPropertyValue("--propskit-slider-elastic-distance")
       .trim();
     if (raw.includes("var(") || !raw.endsWith("px")) {
       const probe = document.createElement("div");
@@ -454,7 +1246,7 @@ class FigFieldSlider extends HTMLElement {
         position: "absolute",
         visibility: "hidden",
         pointerEvents: "none",
-        width: "var(--fig-field-slider-elastic-distance)",
+        width: "var(--propskit-slider-elastic-distance)",
       });
       this.appendChild(probe);
       raw = getComputedStyle(probe).width;
@@ -489,10 +1281,10 @@ class FigFieldSlider extends HTMLElement {
       ? (this.#elasticHostWidth + stretch) / this.#elasticHostWidth
       : 1;
     this.dataset.elasticDragging = "true";
-    this.style.setProperty("--fig-field-slider-elastic-size", `${stretch}px`);
-    this.style.setProperty("--fig-field-slider-elastic-scale", `${scale}`);
+    this.style.setProperty("--propskit-slider-elastic-size", `${stretch}px`);
+    this.style.setProperty("--propskit-slider-elastic-scale", `${scale}`);
     this.style.setProperty(
-      "--fig-field-slider-elastic-origin",
+      "--propskit-slider-elastic-origin",
       offset < 0 ? "right center" : "left center",
     );
   }
@@ -507,8 +1299,8 @@ class FigFieldSlider extends HTMLElement {
 
   #clearElasticPull() {
     this.removeAttribute("data-elastic-dragging");
-    this.style.removeProperty("--fig-field-slider-elastic-size");
-    this.style.removeProperty("--fig-field-slider-elastic-scale");
+    this.style.removeProperty("--propskit-slider-elastic-size");
+    this.style.removeProperty("--propskit-slider-elastic-scale");
   }
 
   #valueFromPointer(event) {
@@ -630,7 +1422,7 @@ class FigFieldSlider extends HTMLElement {
     this.#resetToDefault();
   }
 }
-customElements.define("fig-field-slider", FigFieldSlider);
+customElements.define("propskit-slider", PropskitSlider);
 
 /* Canvas Control */
 class FigCanvasControl extends HTMLElement {
@@ -1828,8 +2620,8 @@ customElements.define("fig-canvas-control", FigCanvasControl);
  * @attr {string} aspect-ratio - SVG editor aspect ratio.
  * @attr {boolean} edit - Whether to show the editor and number fields. Defaults to true.
  */
-class FigInputOscillator extends HTMLElement {
-  #waves = [FigInputOscillator.#defaultWave()];
+class PropskitOscillator extends HTMLElement {
+  #waves = [PropskitOscillator.#defaultWave()];
   #activeWaveIndex = 0;
   #precision = 2;
   #drawWidth = 240;
@@ -1935,7 +2727,7 @@ class FigInputOscillator extends HTMLElement {
 
   get preset() {
     const wave = this.#activeWave;
-    return FigInputOscillator.TYPES.find((type) => type.value === wave.type)?.name;
+    return PropskitOscillator.TYPES.find((type) => type.value === wave.type)?.name;
   }
 
   #readInteger(name, fallback) {
@@ -1991,7 +2783,7 @@ class FigInputOscillator extends HTMLElement {
 
     this.#waves = nextWaves.map((wave) => this.#normalizeWave(wave));
     if (!this.#waves.length) {
-      this.#waves = [FigInputOscillator.#defaultWave()];
+      this.#waves = [PropskitOscillator.#defaultWave()];
     }
     this.#activeWaveIndex = Math.min(this.#activeWaveIndex, this.#waves.length - 1);
     return true;
@@ -2021,12 +2813,12 @@ class FigInputOscillator extends HTMLElement {
     if (!this.#waves[this.#activeWaveIndex]) {
       this.#activeWaveIndex = 0;
     }
-    return this.#waves[this.#activeWaveIndex] || FigInputOscillator.#defaultWave();
+    return this.#waves[this.#activeWaveIndex] || PropskitOscillator.#defaultWave();
   }
 
   #normalizeType(type) {
     const normalized = String(type || "").toLowerCase();
-    return FigInputOscillator.TYPES.some((item) => item.value === normalized)
+    return PropskitOscillator.TYPES.some((item) => item.value === normalized)
       ? normalized
       : "sine";
   }
@@ -2051,7 +2843,7 @@ class FigInputOscillator extends HTMLElement {
   }
 
   static #labelForType(type) {
-    return FigInputOscillator.TYPES.find((item) => item.value === type)?.name || "Wave";
+    return PropskitOscillator.TYPES.find((item) => item.value === type)?.name || "Wave";
   }
 
   static waveIcon(type, size = 24) {
@@ -2061,7 +2853,7 @@ class FigInputOscillator extends HTMLElement {
     let d = "";
     for (let i = 0; i <= samples; i++) {
       const t = i / samples;
-      const value = FigInputOscillator.#waveValue(type, t);
+      const value = PropskitOscillator.#waveValue(type, t);
       const x = pad + t * draw;
       const y = pad + (1 - (value + 1) / 2) * draw;
       d += `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
@@ -2099,21 +2891,21 @@ class FigInputOscillator extends HTMLElement {
   #getInnerHTML() {
     const disabled = this.#isDisabled() ? " disabled" : "";
 
-    return `<div class="fig-input-oscillator-svg-container">
-        <svg viewBox="0 0 ${this.#drawWidth} ${this.#drawHeight}" class="fig-input-oscillator-svg">
-          <rect class="fig-input-oscillator-bounds" x="0" y="0" width="${this.#drawWidth}" height="${this.#drawHeight}"></rect>
-          <line class="fig-input-oscillator-baseline"></line>
-          <path class="fig-input-oscillator-path"></path>
-          <circle class="fig-input-oscillator-playhead"></circle>
-          <foreignObject class="fig-input-oscillator-handle fig-input-oscillator-amplitude-handle" data-handle="amplitude" width="20" height="20"><div class="fig-input-oscillator-handle-inner"><fig-tooltip text="Amplitude"><fig-handle size="small" aria-label="Oscillator amplitude handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
-          <foreignObject class="fig-input-oscillator-handle fig-input-oscillator-frequency-handle" data-handle="frequency" width="20" height="20"><div class="fig-input-oscillator-handle-inner"><fig-tooltip text="Frequency"><fig-handle size="small" aria-label="Oscillator frequency handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
+    return `<div class="propskit-oscillator-svg-container">
+        <svg viewBox="0 0 ${this.#drawWidth} ${this.#drawHeight}" class="propskit-oscillator-svg">
+          <rect class="propskit-oscillator-bounds" x="0" y="0" width="${this.#drawWidth}" height="${this.#drawHeight}"></rect>
+          <line class="propskit-oscillator-baseline"></line>
+          <path class="propskit-oscillator-path"></path>
+          <circle class="propskit-oscillator-playhead"></circle>
+          <foreignObject class="propskit-oscillator-handle propskit-oscillator-amplitude-handle" data-handle="amplitude" width="20" height="20"><div class="propskit-oscillator-handle-inner"><fig-tooltip text="Amplitude"><fig-handle size="small" aria-label="Oscillator amplitude handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
+          <foreignObject class="propskit-oscillator-handle propskit-oscillator-frequency-handle" data-handle="frequency" width="20" height="20"><div class="propskit-oscillator-handle-inner"><fig-tooltip text="Frequency"><fig-handle size="small" aria-label="Oscillator frequency handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
         </svg>
       </div>
       ${this.#isEditEnabled() ? this.#getWaveControlsHTML(disabled) : ""}`;
   }
 
   #getWaveControlsHTML(disabled) {
-    return `<div class="fig-input-oscillator-waves">
+    return `<div class="propskit-oscillator-waves">
       ${this.#waves.map((wave, index) => this.#getWaveRowHTML(wave, index, disabled)).join("")}
     </div>`;
   }
@@ -2121,22 +2913,22 @@ class FigInputOscillator extends HTMLElement {
   #getWaveRowHTML(wave, index, disabled) {
     const removeDisabled = disabled || this.#waves.length <= 1 ? " disabled" : "";
     const active = index === this.#activeWaveIndex ? " data-active" : "";
-    const label = FigInputOscillator.#labelForType(wave.type);
+    const label = PropskitOscillator.#labelForType(wave.type);
     const open = this.#expandedWaveIndices.has(index) ? ' open="true"' : ' open="false"';
-    return `<fig-group class="fig-input-oscillator-wave" collapsible borderless compact="true"${open} data-wave-index="${index}">
+    return `<fig-group class="propskit-oscillator-wave" collapsible borderless compact="true"${open} data-wave-index="${index}">
       <fig-header borderless>
         <h3>${label}</h3>
         <fig-tooltip text="Remove form">
-          <fig-button class="fig-input-oscillator-remove-button" variant="ghost" icon data-wave-index="${index}" aria-label="Remove form"${removeDisabled}><fig-icon name="minus"></fig-icon></fig-button>
+          <fig-button class="propskit-oscillator-remove-button" variant="ghost" icon data-wave-index="${index}" aria-label="Remove form"${removeDisabled}><fig-icon name="minus"></fig-icon></fig-button>
         </fig-tooltip>
         <fig-tooltip text="Add form">
-          <fig-button class="fig-input-oscillator-add-type-button" type="select" variant="ghost" icon data-wave-index="${index}" aria-label="Add form"${disabled}>
+          <fig-button class="propskit-oscillator-add-type-button" type="select" variant="ghost" icon data-wave-index="${index}" aria-label="Add form"${disabled}>
             <fig-icon name="add"></fig-icon>
-            ${this.#getWaveTypeDropdownHTML("fig-input-oscillator-add-type", "sine", disabled, index)}
+            ${this.#getWaveTypeDropdownHTML("propskit-oscillator-add-type", "sine", disabled, index)}
           </fig-button>
         </fig-tooltip>
       </fig-header>
-      <div class="fig-input-oscillator-fields" data-wave-index="${index}"${active}>
+      <div class="propskit-oscillator-fields" data-wave-index="${index}"${active}>
         ${this.#getNumberFieldHTML(index, "frequency", "Frequency", 0.1, 16, 0.1, "")}
         ${this.#getNumberFieldHTML(index, "amplitude", "Amplitude", -4, 4, 0.1, "")}
         ${this.#getNumberFieldHTML(index, "phase", "Phase", -360, 360, 1, "°")}
@@ -2146,44 +2938,44 @@ class FigInputOscillator extends HTMLElement {
   }
 
   #getWaveTypeDropdownHTML(className, value, disabled, index = null) {
-    const options = FigInputOscillator.TYPES.map((type) => {
+    const options = PropskitOscillator.TYPES.map((type) => {
       const selected = type.value === value ? " selected" : "";
       return `<option value="${type.value}"${selected}>
-        ${FigInputOscillator.waveIcon(type.value, 24)}
+        ${PropskitOscillator.waveIcon(type.value, 24)}
         <label>${type.name}</label>
       </option>`;
     }).join("");
     const indexAttr =
-      index === null ? "" : ` data-wave-index="${FigInputOscillator.#escapeAttribute(String(index))}"`;
+      index === null ? "" : ` data-wave-index="${PropskitOscillator.#escapeAttribute(String(index))}"`;
     return `<fig-dropdown class="${className}" value="${value}" experimental="modern" type="dropdown" label="Add form"${indexAttr}${disabled}>${options}</fig-dropdown>`;
   }
 
   #getNumberFieldHTML(index, name, label, min, max, step, units) {
     const disabled = this.#isDisabled() ? " disabled" : "";
     const unitsAttr = units
-      ? ` units="${FigInputOscillator.#escapeAttribute(units)}"`
+      ? ` units="${PropskitOscillator.#escapeAttribute(units)}"`
       : "";
-    const wave = this.#waves[index] || FigInputOscillator.#defaultWave();
-    return `<fig-field-slider class="fig-input-oscillator-field" label="${label}" direction="horizontal" name="${name}" data-wave-index="${index}" value="${this.#round(wave[name])}" min="${min}" max="${max}" step="${step}" precision="${this.#precision}" elastic="false"${unitsAttr}${disabled}></fig-field-slider>`;
+    const wave = this.#waves[index] || PropskitOscillator.#defaultWave();
+    return `<propskit-slider class="propskit-oscillator-field" label="${label}" direction="horizontal" name="${name}" data-wave-index="${index}" value="${this.#round(wave[name])}" min="${min}" max="${max}" step="${step}" precision="${this.#precision}" elastic="false"${unitsAttr}${disabled}></propskit-slider>`;
   }
 
   #cacheRefs() {
-    this.#svg = this.querySelector(".fig-input-oscillator-svg");
-    this.#path = this.querySelector(".fig-input-oscillator-path");
-    this.#playhead = this.querySelector(".fig-input-oscillator-playhead");
-    this.#baseline = this.querySelector(".fig-input-oscillator-baseline");
-    this.#bounds = this.querySelector(".fig-input-oscillator-bounds");
+    this.#svg = this.querySelector(".propskit-oscillator-svg");
+    this.#path = this.querySelector(".propskit-oscillator-path");
+    this.#playhead = this.querySelector(".propskit-oscillator-playhead");
+    this.#baseline = this.querySelector(".propskit-oscillator-baseline");
+    this.#bounds = this.querySelector(".propskit-oscillator-bounds");
     this.#handleAmplitude = this.querySelector('[data-handle="amplitude"]');
     this.#handleFrequency = this.querySelector('[data-handle="frequency"]');
     this.#typeControls = Array.from(
-      this.querySelectorAll(".fig-input-oscillator-wave-type"),
+      this.querySelectorAll(".propskit-oscillator-wave-type"),
     );
-    this.#fields = Array.from(this.querySelectorAll("fig-field-slider[name]"));
+    this.#fields = Array.from(this.querySelectorAll("propskit-slider[name]"));
     this.#waveGroups = Array.from(
-      this.querySelectorAll("fig-group.fig-input-oscillator-wave"),
+      this.querySelectorAll("fig-group.propskit-oscillator-wave"),
     );
     this.#waveRows = Array.from(
-      this.querySelectorAll(".fig-input-oscillator-fields"),
+      this.querySelectorAll(".propskit-oscillator-fields"),
     );
   }
 
@@ -2250,7 +3042,7 @@ class FigInputOscillator extends HTMLElement {
   #sampleAt(t) {
     return this.#waves.reduce((sum, wave) => {
       const cycleT = t * wave.frequency;
-      const value = FigInputOscillator.#waveValue(wave.type, cycleT, wave.phase);
+      const value = PropskitOscillator.#waveValue(wave.type, cycleT, wave.phase);
       return sum + wave.offset + value * wave.amplitude;
     }, 0);
   }
@@ -2419,7 +3211,7 @@ class FigInputOscillator extends HTMLElement {
       });
     }
 
-    for (const control of this.querySelectorAll(".fig-input-oscillator-add-type")) {
+    for (const control of this.querySelectorAll(".propskit-oscillator-add-type")) {
       const stopHeaderToggle = (event) => {
         event.stopPropagation();
       };
@@ -2431,7 +3223,7 @@ class FigInputOscillator extends HTMLElement {
         const insertAfter = this.#indexFromElement(control);
         const insertIndex = insertAfter + 1;
         const type = this.#normalizeType(event.detail ?? control.value);
-        this.#waves.splice(insertIndex, 0, FigInputOscillator.#defaultWave(type));
+        this.#waves.splice(insertIndex, 0, PropskitOscillator.#defaultWave(type));
         this.#reindexExpandedWavesAfterInsert(insertIndex);
         this.#activeWaveIndex = insertIndex;
         this.#render();
@@ -2440,7 +3232,7 @@ class FigInputOscillator extends HTMLElement {
       });
     }
 
-    for (const button of this.querySelectorAll(".fig-input-oscillator-add-type-button")) {
+    for (const button of this.querySelectorAll(".propskit-oscillator-add-type-button")) {
       const stopHeaderToggle = (event) => {
         event.stopPropagation();
       };
@@ -2450,7 +3242,7 @@ class FigInputOscillator extends HTMLElement {
       button.closest("fig-tooltip")?.addEventListener("click", stopHeaderToggle);
     }
 
-    for (const button of this.querySelectorAll(".fig-input-oscillator-remove-button")) {
+    for (const button of this.querySelectorAll(".propskit-oscillator-remove-button")) {
       button.addEventListener("pointerdown", (event) => {
         event.stopPropagation();
       });
@@ -2474,10 +3266,10 @@ class FigInputOscillator extends HTMLElement {
       this.#setupHandle(handle);
     }
 
-    const surface = this.querySelector(".fig-input-oscillator-svg-container");
+    const surface = this.querySelector(".propskit-oscillator-svg-container");
     surface?.addEventListener("pointerdown", (event) => {
       if (this.#isDisabled()) return;
-      if (event.target?.closest?.(".fig-input-oscillator-handle, fig-handle")) {
+      if (event.target?.closest?.(".propskit-oscillator-handle, fig-handle")) {
         return;
       }
       this.#startDrag(event, "offset");
@@ -2655,13 +3447,13 @@ class FigInputOscillator extends HTMLElement {
     return this.#waves.reduce((sum, wave, index) => {
       if (index === excludedIndex) return sum;
       const cycleT = t * wave.frequency;
-      const value = FigInputOscillator.#waveValue(wave.type, cycleT, wave.phase);
+      const value = PropskitOscillator.#waveValue(wave.type, cycleT, wave.phase);
       return sum + wave.offset + value * wave.amplitude;
     }, 0);
   }
 
   #activeWaveValueAt(wave, t) {
-    return FigInputOscillator.#waveValue(
+    return PropskitOscillator.#waveValue(
       wave.type,
       t * wave.frequency,
       wave.phase,
@@ -2714,13 +3506,13 @@ class FigInputOscillator extends HTMLElement {
         detail: {
           value: this.value,
           data: this.data,
-          preset: FigInputOscillator.#labelForType(this.#activeWave.type),
+          preset: PropskitOscillator.#labelForType(this.#activeWave.type),
         },
       }),
     );
   }
 }
-customElements.define("fig-input-oscillator", FigInputOscillator);
+customElements.define("propskit-oscillator", PropskitOscillator);
 
 /* Angle Input */
 /**
@@ -3259,7 +4051,11 @@ class FigReorder extends HTMLElement {
     "fig-slider",
     "fig-input-number",
     "fig-input-text",
-    "fig-field-slider",
+    "propskit-number",
+    "propskit-select",
+    "propskit-slider",
+    "propskit-switch",
+    "propskit-text",
     "fig-checkbox",
     "fig-switch",
     "fig-combo-input",

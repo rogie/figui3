@@ -346,7 +346,58 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     handle: { label: "Handle", type: "string" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
-  "fig-field-slider": {
+  "propskit-switch": {
+    label: { label: "Label", type: "string" },
+    checked: { label: "Checked", type: "boolean", boolMode: "presence" },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "propskit-select": {
+    label: { label: "Label", type: "string" },
+    value: { label: "Value", type: "string" },
+    experimental: {
+      label: "Experimental",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: "modern",
+      falseValue: null,
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "propskit-text": {
+    label: { label: "Label", type: "string" },
+    type: {
+      label: "Type",
+      type: "enum",
+      options: ["text", "email", "password", "search", "url"],
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+    readonly: { label: "Readonly", type: "boolean", boolMode: "presence" },
+  },
+  "propskit-number": {
+    label: { label: "Label", type: "string" },
+    min: { label: "Min", type: "number", min: -1000, max: 1000, step: 1 },
+    max: { label: "Max", type: "number", min: -1000, max: 1000, step: 1 },
+    step: { label: "Step", type: "number", min: 0.001, max: 100, step: 0.001 },
+    precision: {
+      label: "Precision",
+      type: "number",
+      min: 0,
+      max: 10,
+      step: 1,
+    },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["", "%", "px", "°"],
+    },
+    steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "propskit-slider": {
     type: {
       label: "Type",
       type: "enum",
@@ -496,7 +547,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "presence",
     },
   },
-  "fig-input-oscillator": {
+  "propskit-oscillator": {
     value: { label: "Value", type: "string" },
     edit: {
       label: "Edit",

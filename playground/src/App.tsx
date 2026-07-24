@@ -73,7 +73,7 @@ function getRequiredCustomElements(markup: string): string[] {
 
   doc.body.querySelectorAll("*").forEach((node) => {
     const tag = node.tagName.toLowerCase();
-    if (tag.startsWith("fig-")) {
+    if (tag.startsWith("fig-") || tag.startsWith("propskit-")) {
       required.add(tag);
       return;
     }

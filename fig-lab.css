@@ -8,37 +8,408 @@
  *   <link rel="stylesheet" href="fig-lab.css">
  */
 
-fig-field-slider {
-  --fig-field-slider-elastic-distance: calc(var(--spacer-2) + 0.25rem);
-  --fig-field-slider-elastic-size: 0px;
-  --fig-field-slider-elastic-scale: 1;
-  --fig-field-slider-elastic-origin: left center;
-  --fig-field-slider-elastic-transition: 0.18s cubic-bezier(0.2, 1.45, 0.35, 1);
-  --fig-field-slider-height: 2rem;
-  --fig-field-slider-vertical-padding: var(--spacer-1);
-  --fig-field-slider-horizontal-padding: var(--spacer-3);
+propskit-switch {
+  --propskit-switch-height: 2rem;
+  --propskit-switch-vertical-padding: var(--spacer-1);
+  --propskit-switch-horizontal-padding: var(--spacer-3);
+
+  display: block;
+  width: 100%;
+  height: var(--propskit-switch-height);
+  padding: var(--propskit-switch-vertical-padding)
+    var(--propskit-switch-horizontal-padding);
+
+  &[size="large"] {
+    --propskit-switch-vertical-padding: 0px;
+
+    fig-field:not([direction="vertical"]) {
+      padding-right: var(--spacer-1);
+    }
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
+    label {
+      color: var(--figma-color-text-disabled);
+    }
+  }
+
+  fig-field:not([direction="vertical"]) {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 0 0 var(--spacer-2);
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+
+    & > label {
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      color: var(--figma-color-text-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+
+      fig-icon:first-child {
+        margin-left: calc(var(--spacer-1) * -1);
+      }
+    }
+
+    fig-segmented-control {
+      flex: 0 0 auto;
+      margin-left: auto;
+      min-width: 4.5rem;
+    }
+  }
+}
+
+propskit-select {
+  --propskit-select-height: 2rem;
+  --propskit-select-vertical-padding: var(--spacer-1);
+  --propskit-select-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
-  --fig-field-slider-progress-shadow: inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
+
+  display: block;
+  width: 100%;
+  height: var(--propskit-select-height);
+  padding: var(--propskit-select-vertical-padding)
+    var(--propskit-select-horizontal-padding);
+
+  &[size="large"] {
+    --propskit-select-vertical-padding: 0px;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
+    label {
+      color: var(--figma-color-text-disabled);
+    }
+  }
+
+  fig-field:not([direction="vertical"]) {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+
+    & > label {
+      position: absolute;
+      inset: 0 auto 0 var(--spacer-2);
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      width: calc(50% - var(--spacer-2));
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      color: var(--figma-color-text-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+
+      fig-icon:first-child {
+        margin-left: calc(var(--spacer-1) * -1);
+      }
+    }
+
+    fig-dropdown {
+      position: relative;
+      flex: 0 0 auto;
+      width: fit-content;
+      min-width: 0;
+      margin-left: auto;
+      border-radius: var(--radius-medium);
+
+      select {
+        field-sizing: content;
+        width: auto;
+        min-width: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+propskit-text {
+  --propskit-text-height: 2rem;
+  --propskit-text-vertical-padding: var(--spacer-1);
+  --propskit-text-horizontal-padding: var(--spacer-3);
+  --figma-focus-outline-offset: 1px;
+
+  display: block;
+  width: 100%;
+  height: var(--propskit-text-height);
+  padding: var(--propskit-text-vertical-padding)
+    var(--propskit-text-horizontal-padding);
+
+  &[size="large"] {
+    --propskit-text-vertical-padding: 0px;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
+    label,
+    input {
+      color: var(--figma-color-text-disabled);
+    }
+  }
+
+  fig-field:not([direction="vertical"]) {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-2);
+    height: 100%;
+    padding-left: var(--spacer-2);
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+
+    & > label {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      width: auto;
+      max-width: 50%;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      color: var(--figma-color-text-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+
+      fig-icon:first-child {
+        margin-left: calc(var(--spacer-1) * -1);
+      }
+    }
+
+    fig-input-text {
+      --figma-focus-outline-offset: 1px;
+
+      position: relative;
+      align-self: center;
+      flex: 0 1 auto !important;
+      width: fit-content !important;
+      max-width: none;
+      min-width: 0;
+      margin-left: auto;
+      height: calc(
+        var(--propskit-text-height) - var(--propskit-text-vertical-padding) * 2
+      );
+      border-radius: var(--radius-medium);
+      background-color: transparent;
+      box-shadow: none;
+
+      &:has(input:focus) {
+        outline: var(--figma-focus-outline) !important;
+        outline-offset: var(--figma-focus-outline-offset) !important;
+      }
+
+      input {
+        field-sizing: content;
+        width: auto;
+        max-width: 100%;
+        min-width: 0;
+        flex: 0 0 auto;
+        text-align: right;
+
+        &:not(:focus) {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+}
+
+propskit-number {
+  --propskit-number-height: 2rem;
+  --propskit-number-vertical-padding: var(--spacer-1);
+  --propskit-number-horizontal-padding: var(--spacer-3);
+  --figma-focus-outline-offset: 1px;
+
+  display: block;
+  width: 100%;
+  height: var(--propskit-number-height);
+  padding: var(--propskit-number-vertical-padding)
+    var(--propskit-number-horizontal-padding);
+
+  &[size="large"] {
+    --propskit-number-vertical-padding: 0px;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
+    label,
+    input {
+      color: var(--figma-color-text-disabled);
+    }
+  }
+
+  &[steppers]:not([steppers="false"]) fig-input-number input {
+    padding-right: 0;
+  }
+
+  fig-field:not([direction="vertical"]) {
+    position: relative;
+    display: flex;
+    height: 100%;
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+
+    & > label {
+      position: absolute;
+      inset: 0 auto 0 var(--spacer-2);
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      width: calc(50% - var(--spacer-2));
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      color: var(--figma-color-text-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+
+      fig-icon:first-child {
+        margin-left: calc(var(--spacer-1) * -1);
+      }
+    }
+
+    fig-input-number {
+      --figma-focus-outline-offset: 1px;
+
+      position: relative;
+      align-self: center;
+      flex: 0 0 auto;
+      width: fit-content;
+      min-width: 0;
+      margin-left: auto;
+      height: calc(
+        var(--propskit-number-height) -
+          var(--propskit-number-vertical-padding) * 2
+      );
+      border-radius: var(--radius-medium);
+      background-color: transparent;
+      box-shadow: none;
+
+      &:has(input:focus) {
+        outline: var(--figma-focus-outline) !important;
+        outline-offset: var(--figma-focus-outline-offset) !important;
+      }
+
+      input {
+        field-sizing: content;
+        width: auto;
+        min-width: 0;
+        flex: 0 0 auto;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+  }
+}
+
+propskit-slider {
+  --propskit-slider-elastic-distance: calc(var(--spacer-2) + 0.25rem);
+  --propskit-slider-elastic-size: 0px;
+  --propskit-slider-elastic-scale: 1;
+  --propskit-slider-elastic-origin: left center;
+  --propskit-slider-elastic-transition: 0.18s cubic-bezier(0.2, 1.45, 0.35, 1);
+  --propskit-slider-height: 2rem;
+  --propskit-slider-vertical-padding: var(--spacer-1);
+  --propskit-slider-horizontal-padding: var(--spacer-3);
+  --figma-focus-outline-offset: 1px;
+  --propskit-slider-progress-shadow: inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
   --field-text-shadow: 0 1px 1.5px
     light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
-  --fig-field-slider-fig-slider-height: calc(var(--fig-field-slider-height) - var(--fig-field-slider-vertical-padding) * 2);
-  --fig-field-slider-fig-slider-thumb-height: calc(var(--fig-field-slider-fig-slider-height) - var(--spacer-2-5));
+  --propskit-slider-fig-slider-height: calc(var(--propskit-slider-height) - var(--propskit-slider-vertical-padding) * 2);
+  --propskit-slider-fig-slider-thumb-height: calc(var(--propskit-slider-fig-slider-height) - var(--spacer-2-5));
 
   display: block;
   position: relative;
   width: 100%;
-  height: var(--fig-field-slider-height);
+  height: var(--propskit-slider-height);
   border-radius: var(--radius-medium);
-  transform-origin: var(--fig-field-slider-elastic-origin);
-  transition: transform var(--fig-field-slider-elastic-transition);
-  padding-top: var(--fig-field-slider-vertical-padding);
-  padding-bottom: var(--fig-field-slider-vertical-padding);
-  padding-left: var(--fig-field-slider-horizontal-padding);
-  padding-right: var(--fig-field-slider-horizontal-padding);
+  transform-origin: var(--propskit-slider-elastic-origin);
+  transition: transform var(--propskit-slider-elastic-transition);
+  padding-top: var(--propskit-slider-vertical-padding);
+  padding-bottom: var(--propskit-slider-vertical-padding);
+  padding-left: var(--propskit-slider-horizontal-padding);
+  padding-right: var(--propskit-slider-horizontal-padding);
 
   &[size="large"]{
-    --fig-field-slider-vertical-padding: 0px;
-    --fig-field-slider-fig-slider-thumb-height: calc(var(--fig-field-slider-fig-slider-height) - var(--spacer-3));
+    --propskit-slider-vertical-padding: 0px;
+    --propskit-slider-fig-slider-thumb-height: calc(var(--propskit-slider-fig-slider-height) - var(--spacer-3));
   }
   
   label {
@@ -80,7 +451,7 @@ fig-field-slider {
       max-width: none;
       width: 100%;
       flex: 1 1 auto;
-      color: var(--figma-color-text);
+      color: var(--figma-color-text-secondary);
       padding: 0;
       display: flex;
       align-items: center;
@@ -97,8 +468,8 @@ fig-field-slider {
       inset: 0;
       padding: 0;
       background-color: transparent;
-      --slider-height: var(--fig-field-slider-fig-slider-height);
-      --slider-field-height: calc(var(--fig-field-slider-height) - var(--fig-field-slider-vertical-padding) * 2);
+      --slider-height: var(--propskit-slider-fig-slider-height);
+      --slider-field-height: calc(var(--propskit-slider-height) - var(--propskit-slider-vertical-padding) * 2);
       --slider-thumb-width: var(--spacer-1);
       --slider-thumb-color: light-dark(
         var(--figma-color-text-secondary),
@@ -108,7 +479,7 @@ fig-field-slider {
         var(--spacer-2) + (var(--spacer-3) - var(--spacer-2)) *
           min(var(--slider-complete), calc(1 - var(--slider-complete))) * 2
       );*/
-      --slider-thumb-height: var(--fig-field-slider-fig-slider-thumb-height);
+      --slider-thumb-height: var(--propskit-slider-fig-slider-thumb-height);
       --slider-border-radius: var(--radius-medium);
       --slider-tick-width: 0.125rem;
       --slider-tick-height: var(--spacer-2);
@@ -127,12 +498,12 @@ fig-field-slider {
         0px
       );
       --slider-thumb-travel-offset: var(--slider-thumb-edge-offset);
-      --fig-field-slider-progress-offset: calc(
+      --propskit-slider-progress-offset: calc(
         min(var(--slider-complete), calc(1 - var(--slider-complete))) *
           var(--spacer-2)
       );
-      --fig-field-slider-progress-percent: calc(
-        var(--slider-percent) + var(--fig-field-slider-progress-offset)
+      --propskit-slider-progress-percent: calc(
+        var(--slider-percent) + var(--propskit-slider-progress-offset)
       );
       --slider-handle-shadow:
         inset 0 0 0 var(--slider-thumb-height) var(--slider-thumb-color),
@@ -182,7 +553,7 @@ fig-field-slider {
           }
         }
         &::before {
-          box-shadow: var(--fig-field-slider-progress-shadow) !important;
+          box-shadow: var(--propskit-slider-progress-shadow) !important;
           background: var(--figma-color-bordertranslucent) !important;
           min-width: 0 !important;
           box-shadow: none !important;
@@ -201,7 +572,7 @@ fig-field-slider {
       }
 
       &:not([type="delta"]) .fig-slider-input-container::before {
-        width: var(--fig-field-slider-progress-percent) !important;
+        width: var(--propskit-slider-progress-percent) !important;
       }
 
       &[type="delta"] .fig-slider-input-container::before {
@@ -255,22 +626,22 @@ fig-field-slider {
       }
 
       &[type="hue"] .fig-slider-input-container::after {
-        --fig-field-slider-hue-fade-size: 30%;
+        --propskit-slider-hue-fade-size: 30%;
         background: var(--bg-hue);
         mask-image: linear-gradient(
           to right,
           transparent 0%,
-          rgba(0, 0, 0, 0.16) calc(var(--fig-field-slider-progress-percent) - var(--fig-field-slider-hue-fade-size)),
-          black var(--fig-field-slider-progress-percent),
-          rgba(0, 0, 0, 0.16) calc(var(--fig-field-slider-progress-percent) + var(--fig-field-slider-hue-fade-size)),
+          rgba(0, 0, 0, 0.16) calc(var(--propskit-slider-progress-percent) - var(--propskit-slider-hue-fade-size)),
+          black var(--propskit-slider-progress-percent),
+          rgba(0, 0, 0, 0.16) calc(var(--propskit-slider-progress-percent) + var(--propskit-slider-hue-fade-size)),
           transparent 100%
         );
         -webkit-mask-image: linear-gradient(
           to right,
           transparent 0%,
-          rgba(0, 0, 0, 0.16) calc(var(--fig-field-slider-progress-percent) - var(--fig-field-slider-hue-fade-size)),
-          black var(--fig-field-slider-progress-percent),
-          rgba(0, 0, 0, 0.16) calc(var(--fig-field-slider-progress-percent) + var(--fig-field-slider-hue-fade-size)),
+          rgba(0, 0, 0, 0.16) calc(var(--propskit-slider-progress-percent) - var(--propskit-slider-hue-fade-size)),
+          black var(--propskit-slider-progress-percent),
+          rgba(0, 0, 0, 0.16) calc(var(--propskit-slider-progress-percent) + var(--propskit-slider-hue-fade-size)),
           transparent 100%
         );
       }
@@ -333,7 +704,7 @@ fig-field-slider {
   }
 
   &[data-elastic-dragging="true"] {
-    transform: scaleX(var(--fig-field-slider-elastic-scale));
+    transform: scaleX(var(--propskit-slider-elastic-scale));
     transition: none;
   }
 }
@@ -545,15 +916,15 @@ fig-input-angle {
 }
 
 /* Oscillator Input */
-fig-input-oscillator {
+propskit-oscillator {
   display: flex;
   flex-direction: column;
   width: 100%;
   --aspect-ratio: 2 / 1;
   --oscillator-stroke-width: 1;
-  --fig-input-oscillator-playhead-radius: 4px;
+  --propskit-oscillator-playhead-radius: 4px;
 
-  .fig-input-oscillator-svg-container {
+  .propskit-oscillator-svg-container {
     border-radius: var(--radius-medium);
     padding: var(--spacer-3) var(--spacer-5);
     margin-bottom: var(--spacer-2);
@@ -576,7 +947,7 @@ fig-input-oscillator {
     }
   }
 
-  .fig-input-oscillator-svg {
+  .propskit-oscillator-svg {
     display: block;
     width: 100%;
     aspect-ratio: var(--aspect-ratio);
@@ -584,30 +955,30 @@ fig-input-oscillator {
     position: relative;
     z-index: 1;
 
-    .fig-input-oscillator-handle{
+    .propskit-oscillator-handle{
       opacity: 0;
     }
     &:hover, 
     &:focus-within,
     &.dragging{
-      .fig-input-oscillator-handle{
+      .propskit-oscillator-handle{
         opacity: 1;
       }
     }
   }
 
-  .fig-input-oscillator-bounds {
+  .propskit-oscillator-bounds {
     fill: transparent;
   }
 
-  .fig-input-oscillator-baseline {
+  .propskit-oscillator-baseline {
     pointer-events: none;
     stroke: var(--figma-color-bordertranslucent);
     stroke-width: var(--oscillator-stroke-width);
     stroke-linecap: round;
   }
 
-  .fig-input-oscillator-path {
+  .propskit-oscillator-path {
     pointer-events: none;
     fill: none;
     stroke: var(--figma-color-text);
@@ -616,20 +987,20 @@ fig-input-oscillator {
     stroke-linecap: round;
   }
 
-  .fig-input-oscillator-playhead {
+  .propskit-oscillator-playhead {
     pointer-events: none;
-    r: var(--fig-input-oscillator-playhead-radius);
+    r: var(--propskit-oscillator-playhead-radius);
     fill: var(--handle-color);
     stroke: var(--figma-color-bg);
     stroke-width: 1px;
   }
 
-  .fig-input-oscillator-handle {
+  .propskit-oscillator-handle {
     overflow: visible;
     pointer-events: all;
     cursor: default;
 
-    .fig-input-oscillator-handle-inner {
+    .propskit-oscillator-handle-inner {
       display: grid;
       place-items: center;
       width: 100%;
@@ -638,7 +1009,7 @@ fig-input-oscillator {
     }
   }
 
-  .fig-input-oscillator-frequency-handle {
+  .propskit-oscillator-frequency-handle {
     cursor: ew-resize;
 
     fig-handle,
@@ -651,7 +1022,7 @@ fig-input-oscillator {
     }
   }
 
-  .fig-input-oscillator-amplitude-handle {
+  .propskit-oscillator-amplitude-handle {
     cursor: ns-resize;
 
     fig-handle,
@@ -664,28 +1035,28 @@ fig-input-oscillator {
     }
   }
 
-  .fig-input-oscillator-waves {
+  .propskit-oscillator-waves {
     display: flex;
     flex-direction: column;
     gap: 0;
   }
 
-  .fig-input-oscillator-wave {
+  .propskit-oscillator-wave {
     margin-bottom: 0;
 
     > fig-header {
-      .fig-input-oscillator-remove-button,
-      .fig-input-oscillator-add-type-button {
+      .propskit-oscillator-remove-button,
+      .propskit-oscillator-add-type-button {
         flex-shrink: 0;
       }
     }
   }
 
-  .fig-input-oscillator-field {
+  .propskit-oscillator-field {
     width: 100%;
   }
 
-  .fig-input-oscillator-add-type-button {
+  .propskit-oscillator-add-type-button {
     > fig-dropdown,
     > fig-dropdown > select {
       width: 100%;

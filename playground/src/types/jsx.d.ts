@@ -17,6 +17,11 @@ declare module "react" {
       "fig-layer": FigAttrs;
       "fig-field": FigAttrs;
       "fig-slider": FigAttrs;
+      "propskit-number": FigAttrs;
+      "propskit-select": FigAttrs;
+      "propskit-slider": FigAttrs;
+      "propskit-switch": FigAttrs;
+      "propskit-text": FigAttrs;
       "fig-dropdown": FigAttrs;
       "fig-options": FigAttrs;
       "fig-segmented-control": FigAttrs;
@@ -30,7 +35,7 @@ declare module "react" {
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-input-angle": FigAttrs;
-      "fig-input-oscillator": FigAttrs;
+      "propskit-oscillator": FigAttrs;
       "fig-input-number": FigAttrs;
       "fig-easing-curve": FigAttrs;
       "fig-3d-rotate": FigAttrs;

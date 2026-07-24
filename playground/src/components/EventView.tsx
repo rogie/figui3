@@ -15,7 +15,9 @@ export default function EventView() {
     const handler = (e: Event) => {
       const ce = e as CustomEvent;
       const target = e.target as HTMLElement | null;
-      if (!target?.tagName.toLowerCase().startsWith("fig-")) return;
+      if (!target) return;
+      const tag = target.tagName.toLowerCase();
+      if (!tag.startsWith("fig-") && !tag.startsWith("propskit-")) return;
       const value =
         "value" in target
           ? (target as unknown as { value?: unknown }).value ?? null
