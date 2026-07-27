@@ -313,30 +313,30 @@ test.describe("propskit-select", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <propskit-select label="Alignment" value="center">
-          <option value="left">Left</option>
-          <option value="center">Center</option>
-          <option value="right">Right</option>
+          <fig-select-option value="left">Left</fig-select-option>
+          <fig-select-option value="center">Center</fig-select-option>
+          <fig-select-option value="right">Right</fig-select-option>
         </propskit-select>
       `;
     });
 
     const control = page.locator("propskit-select");
     const field = control.locator("fig-field");
-    const dropdown = control.locator("fig-dropdown");
-    const select = dropdown.locator("select");
+    const select = control.locator("fig-select");
+    const trigger = select.locator(".fig-select-trigger");
     await expect(control.locator("fig-field > label")).toHaveText("Alignment");
-    await expect(dropdown).toHaveAttribute("value", "center");
-    await expect(select).toHaveValue("center");
-    await expect(select.locator("option")).toHaveCount(3);
+    await expect(select).toHaveAttribute("value", "center");
+    await expect(select.locator("fig-select-option")).toHaveCount(3);
+    await expect(select.locator(".fig-select-label")).toHaveText("Center");
 
     const fieldBox = await field.boundingBox();
-    const dropdownBox = await dropdown.boundingBox();
-    expect(dropdownBox?.height).toBe(fieldBox?.height);
-    expect(dropdownBox?.width).toBeLessThan(fieldBox?.width ?? 0);
+    const selectBox = await select.boundingBox();
+    expect(selectBox?.height).toBe(fieldBox?.height);
+    expect(selectBox?.width).toBeLessThan(fieldBox?.width ?? 0);
     expect(
       Math.abs(
-        (dropdownBox?.x ?? 0) +
-          (dropdownBox?.width ?? 0) -
+        (selectBox?.x ?? 0) +
+          (selectBox?.width ?? 0) -
           ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
       ),
     ).toBeLessThan(1);
@@ -355,13 +355,25 @@ test.describe("propskit-select", () => {
           detail: (event as CustomEvent).detail,
         });
       });
-      const nativeSelect = element.querySelector("select");
-      if (!(nativeSelect instanceof HTMLSelectElement)) {
-        throw new Error("Missing native select");
-      }
-      nativeSelect.value = "right";
-      nativeSelect.dispatchEvent(new Event("input", { bubbles: true }));
-      nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      const figSelect = element.querySelector("fig-select") as HTMLElement & {
+        value: string;
+      };
+      if (!figSelect) throw new Error("Missing fig-select");
+      figSelect.value = "right";
+      figSelect.dispatchEvent(
+        new CustomEvent("input", {
+          detail: "right",
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      figSelect.dispatchEvent(
+        new CustomEvent("change", {
+          detail: "right",
+          bubbles: true,
+          composed: true,
+        }),
+      );
       return received;
     });
 
@@ -370,8 +382,8 @@ test.describe("propskit-select", () => {
       { type: "change", detail: "right" },
     ]);
     await expect(control).toHaveAttribute("value", "right");
-    await select.focus();
-    await expect(select).toBeFocused();
+    await trigger.focus();
+    await expect(trigger).toBeFocused();
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("none");
   });
@@ -483,16 +495,11 @@ test.describe("propskit delegated click behavior", () => {
         <propskit-color label="Fill" value="#0D99FF"></propskit-color>
         <propskit-slider label="Amount" value="50" min="0" max="100"></propskit-slider>
         <propskit-select label="Alignment" value="left">
-          <option value="left">Left</option>
-          <option value="right">Right</option>
+          <fig-select-option value="left">Left</fig-select-option>
+          <fig-select-option value="right">Right</fig-select-option>
         </propskit-select>
         <propskit-switch label="Visible" checked></propskit-switch>
       `;
-      const select = root.querySelector("propskit-select select");
-      if (select) {
-        (select as HTMLSelectElement & { showPicker?: () => void }).showPicker =
-          () => select.setAttribute("data-show-picker-called", "true");
-      }
     });
 
     const clickField = async (tag: string) => {
@@ -512,9 +519,9 @@ test.describe("propskit delegated click behavior", () => {
     await expect(page.locator('propskit-slider input[type="range"]')).toBeFocused();
 
     await clickField("propskit-select");
-    await expect(page.locator("propskit-select select")).toBeFocused();
-    await expect(page.locator("propskit-select select")).toHaveAttribute(
-      "data-show-picker-called",
+    await expect(page.locator("propskit-select fig-select")).toHaveAttribute("open", "");
+    await expect(page.locator("propskit-select .fig-select-trigger")).toHaveAttribute(
+      "aria-expanded",
       "true",
     );
 

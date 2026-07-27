@@ -515,7 +515,7 @@ class PropskitSelect extends HTMLElement {
     );
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
-    const select = document.createElement("fig-dropdown");
+    const select = document.createElement("fig-select");
 
     for (const node of initialChildren) {
       if (node !== customLabel) select.appendChild(node);
@@ -626,17 +626,12 @@ class PropskitSelect extends HTMLElement {
   }
 
   #handleClick(event) {
-    if (event.target instanceof Element && event.target.closest("fig-dropdown")) {
+    if (event.target instanceof Element && event.target.closest("fig-select")) {
       return;
     }
-    const select = this.#select?.querySelector("select");
-    select?.focus();
-    if (typeof select?.showPicker === "function") {
-      try {
-        select.showPicker();
-      } catch {
-        // Browser may reject showPicker when no user activation is available.
-      }
+    this.#select?.focus();
+    if (this.#select && !figLabBooleanAttribute(this.#select, "disabled")) {
+      this.#select.open = true;
     }
   }
 
@@ -4729,3 +4724,596 @@ class FigReorder extends HTMLElement {
 }
 
 customElements.define("fig-reorder", FigReorder);
+
+/* Select — dropdown-styled trigger + fig-popup listbox */
+let figLabSelectId = 0;
+function figLabUniqueId(prefix = "fig-select") {
+  figLabSelectId += 1;
+  return `${prefix}-${figLabSelectId}`;
+}
+
+class FigSelectOption extends HTMLElement {
+  static get observedAttributes() {
+    return ["value", "disabled", "selected"];
+  }
+
+  get value() {
+    const attr = this.getAttribute("value");
+    if (attr !== null) return attr;
+    return (this.textContent || "").trim();
+  }
+
+  set value(val) {
+    if (val === null || val === undefined) {
+      this.removeAttribute("value");
+    } else {
+      this.setAttribute("value", String(val));
+    }
+  }
+
+  get disabled() {
+    return figLabBooleanAttribute(this, "disabled");
+  }
+
+  set disabled(val) {
+    if (val) this.setAttribute("disabled", "");
+    else this.removeAttribute("disabled");
+  }
+
+  get selected() {
+    return figLabBooleanAttribute(this, "selected");
+  }
+
+  set selected(val) {
+    if (val) this.setAttribute("selected", "");
+    else this.removeAttribute("selected");
+  }
+
+  connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "option");
+    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
+    this.#syncDisabled();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name === "disabled") this.#syncDisabled();
+  }
+
+  #syncDisabled() {
+    const disabled = this.disabled;
+    if (disabled) {
+      this.setAttribute("aria-disabled", "true");
+      this.setAttribute("tabindex", "-1");
+    } else {
+      this.removeAttribute("aria-disabled");
+      if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
+    }
+  }
+}
+customElements.define("fig-select-option", FigSelectOption);
+
+class FigSelect extends HTMLElement {
+  #trigger = null;
+  #popup = null;
+  #labelEl = null;
+  #observer = null;
+  #focusedIndex = -1;
+  #syncingValue = false;
+  #popupPositionPatched = false;
+  #originalPositionPopup = null;
+  #boundTriggerClick = this.#handleTriggerClick.bind(this);
+  #boundPopupClick = this.#handlePopupClick.bind(this);
+  #boundKeydown = this.#handleKeydown.bind(this);
+  #boundPopupClose = this.#handlePopupClose.bind(this);
+
+  static get observedAttributes() {
+    return ["value", "disabled", "label", "position", "offset", "closedby", "open"];
+  }
+
+  get value() {
+    return this.getAttribute("value") ?? "";
+  }
+
+  set value(val) {
+    if (val === null || val === undefined) this.removeAttribute("value");
+    else this.setAttribute("value", String(val));
+  }
+
+  get open() {
+    return figLabBooleanAttribute(this, "open");
+  }
+
+  set open(val) {
+    if (val) this.setAttribute("open", "");
+    else this.removeAttribute("open");
+  }
+
+  connectedCallback() {
+    if (!this.#trigger) this.#initialize();
+    this.#syncDisabled();
+    this.#syncPopupAttrs();
+    this.#syncValue();
+    this.#setupObserver();
+    if (this.open) this.#openList();
+  }
+
+  disconnectedCallback() {
+    this.#teardownListeners();
+    document.removeEventListener("keydown", this.#boundKeydown, true);
+    this.#observer?.disconnect();
+    this.#observer = null;
+    if (this.#popup) {
+      this.#popup.removeEventListener("close", this.#boundPopupClose);
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#trigger) return;
+    if (name === "value" || name === "label") {
+      this.#syncValue();
+      return;
+    }
+    if (name === "disabled") {
+      this.#syncDisabled();
+      return;
+    }
+    if (name === "open") {
+      if (newValue === null || newValue === "false") this.#closeList();
+      else this.#openList();
+      return;
+    }
+    if (name === "position" || name === "offset" || name === "closedby") {
+      this.#syncPopupAttrs();
+    }
+  }
+
+  focus(options) {
+    this.#trigger?.focus(options);
+  }
+
+  blur() {
+    this.#trigger?.blur();
+  }
+
+  #initialize() {
+    const options = Array.from(
+      this.querySelectorAll(":scope > fig-select-option"),
+    );
+    const trigger = document.createElement("fig-button");
+    trigger.className = "fig-select-trigger";
+    trigger.setAttribute("variant", "ghost");
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "fig-select-label";
+    trigger.appendChild(labelEl);
+
+    const popup = document.createElement("dialog", { is: "fig-popup" });
+    popup.setAttribute("is", "fig-popup");
+    popup.setAttribute("theme", "menu");
+    popup.setAttribute("role", "listbox");
+    const popupId = figLabUniqueId("fig-select-list");
+    popup.id = popupId;
+    trigger.setAttribute("aria-controls", popupId);
+    popup.setAttribute(
+      "position",
+      this.getAttribute("position") || "bottom left",
+    );
+    popup.anchor = trigger;
+
+    for (const option of options) popup.appendChild(option);
+
+    this.#trigger = trigger;
+    this.#labelEl = labelEl;
+    this.#popup = popup;
+    this.append(trigger, popup);
+    this.#setupListeners();
+    this.#installPopupPositioning();
+
+    if (!this.hasAttribute("value")) {
+      const selected = options.find((opt) =>
+        figLabBooleanAttribute(opt, "selected"),
+      );
+      if (selected) this.setAttribute("value", selected.value);
+    }
+  }
+
+  #installPopupPositioning() {
+    if (!this.#popup || this.#popupPositionPatched) return;
+    if (typeof this.#popup.positionPopup !== "function") return;
+    this.#originalPositionPopup = this.#popup.positionPopup.bind(this.#popup);
+    this.#popup.positionPopup = () => {
+      if (!this.open) {
+        this.#originalPositionPopup?.();
+        return;
+      }
+      this.#positionPopupOverSelected();
+    };
+    this.#popupPositionPatched = true;
+  }
+
+  #getOptionTextRect(option) {
+    if (!option) return null;
+    const range = document.createRange();
+    range.selectNodeContents(option);
+    const rects = [...range.getClientRects()].filter(
+      (rect) => rect.width > 0 && rect.height > 0,
+    );
+    if (rects.length) return rects[0];
+    return option.getBoundingClientRect();
+  }
+
+  #getViewportMargins() {
+    if (typeof this.#popup?.parseViewportMargins === "function") {
+      return this.#popup.parseViewportMargins();
+    }
+    return { top: 8, right: 8, bottom: 8, left: 8 };
+  }
+
+  #positionPopupOverSelected() {
+    const popup = this.#popup;
+    const label = this.#labelEl;
+    if (!popup || !label) {
+      this.#originalPositionPopup?.();
+      return;
+    }
+
+    const options = this.#getOptions();
+    const selected =
+      options.find((opt) => this.#optionValue(opt) === this.value) ||
+      options[0];
+    if (!selected) {
+      this.#originalPositionPopup?.();
+      return;
+    }
+
+    // Lay out with the default positioning first so option metrics are valid.
+    this.#originalPositionPopup?.();
+
+    const popupRect = popup.getBoundingClientRect();
+    const labelRect = label.getBoundingClientRect();
+    const optionTextRect = this.#getOptionTextRect(selected);
+    if (
+      !popupRect.width ||
+      !popupRect.height ||
+      !labelRect.width ||
+      !optionTextRect
+    ) {
+      return;
+    }
+
+    const selectedOffsetX = optionTextRect.left - popupRect.left;
+    const selectedOffsetY = optionTextRect.top - popupRect.top;
+    let left = labelRect.left - selectedOffsetX;
+    let top = labelRect.top - selectedOffsetY;
+
+    const margins = this.#getViewportMargins();
+    const minLeft = margins.left;
+    const minTop = margins.top;
+    const maxLeft = window.innerWidth - popupRect.width - margins.right;
+    const maxTop = window.innerHeight - popupRect.height - margins.bottom;
+    left = Math.min(Math.max(left, minLeft), Math.max(minLeft, maxLeft));
+    top = Math.min(Math.max(top, minTop), Math.max(minTop, maxTop));
+
+    popup.style.left = `${Math.round(left)}px`;
+    popup.style.top = `${Math.round(top)}px`;
+  }
+
+  #setupListeners() {
+    this.#trigger?.addEventListener("click", this.#boundTriggerClick);
+    this.#trigger?.addEventListener("keydown", this.#boundKeydown);
+    this.#popup?.addEventListener("click", this.#boundPopupClick);
+    this.#popup?.addEventListener("keydown", this.#boundKeydown);
+    this.#popup?.addEventListener("close", this.#boundPopupClose);
+  }
+
+  #teardownListeners() {
+    this.#trigger?.removeEventListener("click", this.#boundTriggerClick);
+    this.#trigger?.removeEventListener("keydown", this.#boundKeydown);
+    this.#popup?.removeEventListener("click", this.#boundPopupClick);
+    this.#popup?.removeEventListener("keydown", this.#boundKeydown);
+  }
+
+  #setupObserver() {
+    if (this.#observer) return;
+    this.#observer = new MutationObserver((mutations) => {
+      if (this.#syncingValue) return;
+      let needsSync = false;
+      for (const mutation of mutations) {
+        if (mutation.type === "childList") {
+          for (const node of mutation.addedNodes) {
+            if (
+              node.nodeType === 1 &&
+              node.tagName === "FIG-SELECT-OPTION" &&
+              node.parentElement === this
+            ) {
+              this.#popup?.appendChild(node);
+              needsSync = true;
+            }
+          }
+          if (
+            [...mutation.removedNodes].some(
+              (node) =>
+                node.nodeType === 1 && node.tagName === "FIG-SELECT-OPTION",
+            )
+          ) {
+            needsSync = true;
+          }
+        }
+        if (
+          mutation.type === "attributes" &&
+          mutation.target?.tagName === "FIG-SELECT-OPTION" &&
+          (mutation.attributeName === "value" ||
+            mutation.attributeName === "disabled")
+        ) {
+          needsSync = true;
+        }
+        if (
+          mutation.type === "characterData" &&
+          mutation.target?.parentElement?.tagName === "FIG-SELECT-OPTION"
+        ) {
+          needsSync = true;
+        }
+      }
+      if (needsSync) this.#syncValue();
+    });
+    this.#observer.observe(this, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["value", "disabled"],
+    });
+  }
+
+  #getOptions({ enabledOnly = false } = {}) {
+    if (!this.#popup) return [];
+    const options = Array.from(
+      this.#popup.querySelectorAll(":scope > fig-select-option"),
+    );
+    if (!enabledOnly) return options;
+    return options.filter((opt) => !figLabBooleanAttribute(opt, "disabled"));
+  }
+
+  #optionValue(option) {
+    if (!option) return "";
+    if (typeof option.value === "string") return option.value;
+    const attr = option.getAttribute?.("value");
+    if (attr != null) return attr;
+    return (option.textContent || "").trim();
+  }
+
+  #optionLabel(option) {
+    return (option?.textContent || "").trim();
+  }
+
+  #syncPopupAttrs() {
+    if (!this.#popup) return;
+    this.#popup.setAttribute(
+      "position",
+      this.getAttribute("position") || "bottom left",
+    );
+    const offset = this.getAttribute("offset");
+    if (offset) this.#popup.setAttribute("offset", offset);
+    else this.#popup.removeAttribute("offset");
+    const closedby = this.getAttribute("closedby");
+    if (closedby) this.#popup.setAttribute("closedby", closedby);
+    else this.#popup.removeAttribute("closedby");
+  }
+
+  #syncDisabled() {
+    const disabled = figLabBooleanAttribute(this, "disabled");
+    if (this.#trigger) {
+      if (disabled) this.#trigger.setAttribute("disabled", "");
+      else this.#trigger.removeAttribute("disabled");
+    }
+    if (disabled && this.open) this.open = false;
+  }
+
+  #syncValue() {
+    if (this.#syncingValue) return;
+    this.#syncingValue = true;
+    try {
+      const options = this.#getOptions();
+      const value = this.getAttribute("value");
+      const match =
+        value !== null
+          ? options.find((opt) => this.#optionValue(opt) === value)
+          : null;
+
+      for (const opt of options) {
+        const selected = opt === match;
+        opt.setAttribute("aria-selected", selected ? "true" : "false");
+        if (selected) opt.setAttribute("selected", "");
+        else opt.removeAttribute("selected");
+      }
+
+      const label =
+        (match && this.#optionLabel(match)) || this.getAttribute("label") || "";
+      if (this.#labelEl) this.#labelEl.textContent = label;
+
+      const ariaLabel = this.getAttribute("label") || "Select";
+      this.#trigger?.setAttribute("aria-label", ariaLabel);
+    } finally {
+      this.#syncingValue = false;
+    }
+  }
+
+  #handleTriggerClick(e) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const popupShowing = this.#popup?.matches?.(":open") ?? false;
+    if (this.open && popupShowing) this.open = false;
+    else {
+      if (this.#popup && this.#trigger) this.#popup.anchor = this.#trigger;
+      this.open = true;
+    }
+  }
+
+  #handlePopupClick(e) {
+    const option = e.target.closest("fig-select-option");
+    if (!option || !this.#popup?.contains(option)) return;
+    if (figLabBooleanAttribute(option, "disabled")) return;
+    this.#selectOption(option);
+  }
+
+  #handleKeydown(e) {
+    if (e.currentTarget === document && e.key !== "Escape") return;
+
+    const listOpen = this.open && (this.#popup?.matches?.(":open") ?? false);
+    if (!listOpen) {
+      if (
+        this.#trigger?.contains(e.target) &&
+        (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
+      ) {
+        e.preventDefault();
+        if (this.#popup && this.#trigger) this.#popup.anchor = this.#trigger;
+        this.open = true;
+        requestAnimationFrame(() => {
+          const options = this.#getOptions({ enabledOnly: true });
+          const selectedIndex = options.findIndex(
+            (opt) => this.#optionValue(opt) === this.value,
+          );
+          this.#focusOptionAt(selectedIndex >= 0 ? selectedIndex : 0);
+        });
+      }
+      return;
+    }
+
+    const options = this.#getOptions({ enabledOnly: true });
+    if (!options.length) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        this.#syncFocusedIndex();
+        this.#focusOptionAt(this.#focusedIndex + 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        this.#syncFocusedIndex();
+        this.#focusOptionAt(this.#focusedIndex - 1);
+        break;
+      case "Home":
+        e.preventDefault();
+        this.#focusOptionAt(0);
+        break;
+      case "End":
+        e.preventDefault();
+        this.#focusOptionAt(options.length - 1);
+        break;
+      case "Escape":
+        e.preventDefault();
+        this.open = false;
+        this.#trigger?.focus();
+        break;
+      case "Enter":
+      case " ": {
+        this.#syncFocusedIndex();
+        const focused = options[this.#focusedIndex];
+        if (!focused) return;
+        e.preventDefault();
+        this.#selectOption(focused);
+        break;
+      }
+    }
+  }
+
+  #handlePopupClose() {
+    if (this.hasAttribute("open")) this.removeAttribute("open");
+    this.#trigger?.setAttribute("aria-expanded", "false");
+    this.#trigger?.focus();
+    this.#focusedIndex = -1;
+  }
+
+  #selectOption(option) {
+    const value = this.#optionValue(option);
+    this.setAttribute("value", value);
+    this.#syncValue();
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        detail: value,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        detail: value,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.open = false;
+  }
+
+  #getEnabledOptions() {
+    return this.#getOptions({ enabledOnly: true });
+  }
+
+  #syncFocusedIndex() {
+    const options = this.#getEnabledOptions();
+    if (!options.length) {
+      this.#focusedIndex = -1;
+      return;
+    }
+    const active = this.#popup?.querySelector("fig-select-option:focus");
+    const index = active ? options.indexOf(active) : -1;
+    this.#focusedIndex = index >= 0 ? index : this.#focusedIndex;
+  }
+
+  #focusOptionAt(index) {
+    const options = this.#getEnabledOptions();
+    if (!options.length) return;
+    const next = ((index % options.length) + options.length) % options.length;
+    this.#focusedIndex = next;
+    options[next]?.focus();
+  }
+
+  #syncPopupWidth() {
+    if (!this.#popup || !this.#trigger) return;
+    const triggerWidth = Math.ceil(this.#trigger.getBoundingClientRect().width);
+    const minWidth = Math.max(triggerWidth, 96);
+    this.#popup.style.minWidth = `${minWidth}px`;
+    this.#popup.style.width = "max-content";
+    this.#popup.style.maxWidth = "min(20rem, calc(100vw - 1rem))";
+  }
+
+  #openList() {
+    if (!this.#popup || figLabBooleanAttribute(this, "disabled")) return;
+    if (this.#trigger) this.#popup.anchor = this.#trigger;
+    this.#installPopupPositioning();
+    this.#syncValue();
+    this.#syncPopupWidth();
+    this.#popup.open = true;
+    document.addEventListener("keydown", this.#boundKeydown, true);
+    this.#trigger?.setAttribute("aria-expanded", "true");
+    this.#focusedIndex = -1;
+    requestAnimationFrame(() => {
+      this.#positionPopupOverSelected();
+      const options = this.#getEnabledOptions();
+      const selectedIndex = options.findIndex(
+        (opt) => this.#optionValue(opt) === this.value,
+      );
+      if (selectedIndex >= 0) {
+        this.#focusOptionAt(selectedIndex);
+      } else if (
+        this.#trigger?.hasAttribute("data-focus-visible") ||
+        this.#trigger?.matches?.(":focus-visible")
+      ) {
+        this.#focusOptionAt(0);
+      }
+    });
+  }
+
+  #closeList() {
+    if (!this.#popup) return;
+    document.removeEventListener("keydown", this.#boundKeydown, true);
+    this.#popup.open = false;
+    this.#trigger?.setAttribute("aria-expanded", "false");
+  }
+}
+customElements.define("fig-select", FigSelect);

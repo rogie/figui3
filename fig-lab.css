@@ -266,20 +266,26 @@ propskit-select {
       }
     }
 
-    fig-dropdown {
+    fig-select {
       position: relative;
       flex: 0 0 auto;
       width: fit-content;
       min-width: 0;
       margin-left: auto;
       border-radius: var(--radius-medium);
+      background: transparent;
+      box-shadow: none;
 
-      select {
-        field-sizing: content;
+      &::after {
+        right: 0;
+      }
+
+      & > fig-button.fig-select-trigger {
         width: auto;
         min-width: 0;
         background: transparent;
         box-shadow: none;
+        padding-right: var(--spacer-4);
       }
     }
   }
@@ -1237,4 +1243,167 @@ body.fig-reorder-dragging * {
 
 .fig-reorder-indicator[data-axis="horizontal"] {
   width: 2px;
+}
+
+/* Select — dropdown-styled trigger + menu-themed popup listbox */
+fig-select {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  min-width: 0;
+  height: var(--spacer-4);
+  border-radius: var(--radius-medium);
+  background-color: var(--figma-color-bg);
+  color: var(--figma-color-text);
+  box-shadow: inset 0 0 0 1px var(--figma-color-border);
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+    &::after{
+      background-color: var(--figma-color-icon-disabled);
+    }
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    mask-image: var(--icon-16-chevron);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    background-color: var(--figma-color-icon);
+    pointer-events: none;
+  }
+
+  & > fig-select-option {
+    display: none;
+  }
+
+  & > fig-button.fig-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0 var(--spacer-4) 0 var(--spacer-2);
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    font-weight: inherit;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+
+    &:hover,
+    &:active,
+    &:active:hover {
+      background: transparent;
+      box-shadow: none;
+      color: inherit;
+    }
+
+    &:focus-visible,
+    &[data-focus-visible] {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+  }
+
+  .fig-select-label {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+  }
+
+  dialog[is="fig-popup"][theme="menu"] {
+    width: max-content;
+    max-width: min(20rem, calc(100vw - 1rem));
+    min-width: 6rem;
+  }
+}
+
+fig-select-option {
+  /* Match fig-dropdown[experimental~="modern"] option + option::checkmark */
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-1);
+  position: relative;
+  height: var(--spacer-4);
+  padding: 0 var(--spacer-4) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
+  border-radius: var(--radius-medium);
+  color: var(--figma-color-text-menu);
+  font-weight: var(--body-medium-fontWeight);
+  cursor: default;
+  user-select: none;
+
+  &::before {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0 var(--spacer-2);
+    border-radius: var(--radius-medium);
+    z-index: -1;
+    background-color: transparent;
+  }
+
+  &::after {
+    content: "";
+    display: block;
+    flex: 0 0 1rem;
+    order: -1;
+    width: 1rem;
+    height: 1rem;
+    background-color: currentColor;
+    -webkit-mask-image: var(--icon-16-checkmark);
+    mask-image: var(--icon-16-checkmark);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    visibility: hidden;
+  }
+
+  &:hover,
+  &:focus-visible {
+    outline: none;
+
+    &::before {
+      background-color: var(--figma-color-bg-menu-hover);
+    }
+  }
+
+  &[selected]:not([selected="false"])::after,
+  &[aria-selected="true"]::after {
+    visibility: visible;
+  }
+
+  &[disabled]:not([disabled="false"]),
+  &[aria-disabled="true"] {
+    opacity: 0.4;
+    pointer-events: none;
+  }
 }

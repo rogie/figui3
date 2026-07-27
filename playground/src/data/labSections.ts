@@ -77,19 +77,60 @@ export const labSections: Section[] = [
     ],
   },
   {
+    id: "select",
+    name: "Select",
+    description:
+      "A dropdown-styled select that opens a fig-popup listbox. Options are declared with fig-select-option (not native option elements).",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-select value="center" label="Align">
+    <fig-select-option value="left">Left</fig-select-option>
+    <fig-select-option value="center">Center</fig-select-option>
+    <fig-select-option value="right">Right</fig-select-option>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "full",
+        name: "Full width",
+        markup: `<div class="prop-panel">
+  <fig-select value="multiply" full label="Blend">
+    <fig-select-option value="normal">Normal</fig-select-option>
+    <fig-select-option value="multiply">Multiply</fig-select-option>
+    <fig-select-option value="screen">Screen</fig-select-option>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "disabled",
+        name: "Disabled",
+        markup: `<div class="prop-panel">
+  <fig-select value="center" disabled label="Align">
+    <fig-select-option value="left">Left</fig-select-option>
+    <fig-select-option value="center">Center</fig-select-option>
+    <fig-select-option value="right">Right</fig-select-option>
+  </fig-select>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "propskit-select",
     name: "Propskit Select",
     description:
-      "A full-surface select field that composes fig-field and fig-dropdown into a single property control.",
+      "A full-surface select field that composes fig-field and fig-select into a single property control.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
   <propskit-select label="Alignment" value="center">
-    <option value="left">Left</option>
-    <option value="center">Center</option>
-    <option value="right">Right</option>
+    <fig-select-option value="left">Left</fig-select-option>
+    <fig-select-option value="center">Center</fig-select-option>
+    <fig-select-option value="right">Right</fig-select-option>
   </propskit-select>
 </div>`,
       },

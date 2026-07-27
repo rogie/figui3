@@ -346,6 +346,24 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     handle: { label: "Handle", type: "string" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  "fig-select": {
+    value: { label: "Value", type: "string" },
+    label: { label: "Label", type: "string" },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+    position: {
+      label: "Position",
+      type: "enum",
+      options: [
+        "bottom left",
+        "bottom right",
+        "top left",
+        "top right",
+        "bottom center",
+        "top center",
+      ],
+    },
+  },
   "propskit-switch": {
     label: { label: "Label", type: "string" },
     checked: { label: "Checked", type: "boolean", boolMode: "presence" },
@@ -373,13 +391,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "propskit-select": {
     label: { label: "Label", type: "string" },
     value: { label: "Value", type: "string" },
-    experimental: {
-      label: "Experimental",
-      type: "boolean",
-      boolMode: "custom",
-      trueValue: "modern",
-      falseValue: null,
-    },
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
