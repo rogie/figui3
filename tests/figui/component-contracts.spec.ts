@@ -556,6 +556,185 @@ test.describe("propskit-select", () => {
   });
 });
 
+test.describe("fig-select viewport edge repositioning", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("fig-select");
+    });
+  });
+
+  const edgeCases = [
+    {
+      id: "top-left",
+      style: "position:fixed;left:8px;top:8px;width:7rem",
+      value: "Omega",
+    },
+    {
+      id: "top-right",
+      style: "position:fixed;right:8px;top:8px;width:7rem",
+      value: "Omega",
+    },
+    {
+      id: "bottom-left",
+      style: "position:fixed;left:8px;bottom:8px;width:7rem",
+      value: "Alpha",
+    },
+    {
+      id: "bottom-right",
+      style: "position:fixed;right:8px;bottom:8px;width:7rem",
+      value: "Alpha",
+    },
+    {
+      id: "mid-left",
+      // Avoid transform on the host — it makes position:fixed listboxes
+      // resolve against the host box instead of the viewport.
+      style: "position:fixed;left:8px;top:198px;width:7rem",
+      value: "Mu",
+    },
+    {
+      id: "mid-right",
+      style: "position:fixed;right:8px;top:198px;width:7rem",
+      value: "Mu",
+    },
+  ] as const;
+
+  for (const edge of edgeCases) {
+    test(`keeps listbox fully in viewport near ${edge.id}`, async ({ page }) => {
+      await page.setViewportSize({ width: 360, height: 420 });
+      await page.evaluate((fixture) => {
+        const root = document.querySelector("#fixture-root");
+        if (!root) throw new Error("Missing #fixture-root");
+        const options = [
+          "Alpha",
+          "Beta",
+          "Gamma",
+          "Delta",
+          "Epsilon",
+          "Zeta",
+          "Eta",
+          "Theta",
+          "Iota",
+          "Kappa",
+          "Lambda",
+          "Mu",
+          "Nu",
+          "Xi",
+          "Omicron",
+          "Pi",
+          "Rho",
+          "Sigma",
+          "Tau",
+          "Upsilon",
+          "Phi",
+          "Chi",
+          "Psi",
+          "Omega",
+        ];
+        root.innerHTML = `
+          <fig-select
+            id="edge-select"
+            label="Greek"
+            value="${fixture.value}"
+            options="${options.join(",")}"
+            style="${fixture.style}"
+          ></fig-select>
+        `;
+      }, edge);
+
+      const select = page.locator("#edge-select");
+      await select.locator("fig-button.fig-select-trigger").click();
+      await expect(select).toHaveAttribute("open");
+
+      const popup = select.locator('dialog[is="fig-popup"]');
+      await expect(popup).toHaveAttribute("open");
+
+      // Wait for open-time rAF align + clamp.
+      await page.waitForTimeout(50);
+
+      const state = await popup.evaluate((dialog) => {
+        const rect = dialog.getBoundingClientRect();
+        const margin = 8;
+        const vv = window.visualViewport;
+        const width = vv?.width ?? window.innerWidth;
+        const height = vv?.height ?? window.innerHeight;
+        const offsetLeft = vv?.offsetLeft ?? 0;
+        const offsetTop = vv?.offsetTop ?? 0;
+        return {
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height,
+          minLeft: offsetLeft + margin,
+          minTop: offsetTop + margin,
+          maxRight: offsetLeft + width - margin,
+          maxBottom: offsetTop + height - margin,
+        };
+      });
+
+      expect(state.width, `${edge.id} menu width`).toBeGreaterThan(0);
+      expect(state.height, `${edge.id} menu height`).toBeGreaterThan(0);
+      expect(state.left, `${edge.id} left`).toBeGreaterThanOrEqual(state.minLeft - 0.5);
+      expect(state.top, `${edge.id} top`).toBeGreaterThanOrEqual(state.minTop - 0.5);
+      expect(state.right, `${edge.id} right`).toBeLessThanOrEqual(state.maxRight + 0.5);
+      expect(state.bottom, `${edge.id} bottom`).toBeLessThanOrEqual(
+        state.maxBottom + 0.5,
+      );
+    });
+  }
+
+  test("clamps a wide menu when trigger sits on the far right", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 480 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select
+          id="wide-edge-select"
+          label="Wide"
+          value="Short"
+          style="position:fixed;right:4px;top:40%;width:4rem"
+        >
+          <fig-select-options slot="panel">
+            <fig-select-option value="Short">Short</fig-select-option>
+            <fig-select-option value="Wide">
+              Extremely long option label that should force horizontal clamp
+            </fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      `;
+    });
+
+    const select = page.locator("#wide-edge-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+    await page.waitForTimeout(50);
+
+    const state = await select
+      .locator('dialog[is="fig-popup"]')
+      .evaluate((dialog) => {
+        const rect = dialog.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          viewportWidth: window.visualViewport?.width ?? window.innerWidth,
+        };
+      });
+
+    expect(state.width).toBeGreaterThan(0);
+    expect(state.left).toBeGreaterThanOrEqual(7.5);
+    expect(state.right).toBeLessThanOrEqual(state.viewportWidth - 7.5);
+  });
+});
+
 test.describe("propskit-text", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);

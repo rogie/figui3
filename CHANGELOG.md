@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.18.1]
+
+### Fixed
+
+- `fig-select` listbox now stays fully in-viewport when the trigger sits on viewport edges/corners (`::part(listbox) inset` no longer blocks clamped `left`/`top`).
+- Non-modal `fig-dialog` stacking uses `figGetHighestZIndex` on `show()` / markup `open` so dialogs sit above other FigUI overlays.
+
 ## [6.18.0]
 
 ### Added

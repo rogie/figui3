@@ -1600,6 +1600,11 @@ class FigDialog extends HTMLDialogElement {
 
     this._ensureHeader();
 
+    // Markup `<dialog open>` (non-modal) never calls show() — still need a stack bump.
+    if (this.open && !this.matches?.(":modal")) {
+      this._assignStackingOrder();
+    }
+
     figNextFrame(this, () => {
       this._addCloseListeners();
       this._setupDragListeners();
@@ -1641,16 +1646,35 @@ class FigDialog extends HTMLDialogElement {
     requestAnimationFrame(() => target.focus?.());
   }
 
+  _assignStackingOrder() {
+    this.style.zIndex = String(figGetHighestZIndex() + 1);
+  }
+
+  _clearStackingOrder() {
+    this.style.zIndex = "";
+  }
+
   show() {
     this._captureFocusBeforeOpen();
+    // Non-modal dialogs are position:fixed in normal paint order — bump above
+    // other FigUI overlays (same helper as fig-popup).
+    this._assignStackingOrder();
     this.addEventListener("close", this._boundRestoreFocus, { once: true });
     return super.show();
   }
 
   showModal() {
     this._captureFocusBeforeOpen();
+    // Top layer owns stacking; clear any prior non-modal inline z-index.
+    this._clearStackingOrder();
     this.addEventListener("close", this._boundRestoreFocus, { once: true });
     return super.showModal();
+  }
+
+  close(...args) {
+    const result = super.close(...args);
+    this._clearStackingOrder();
+    return result;
   }
 
   _handleIframeMouseLeave(event) {

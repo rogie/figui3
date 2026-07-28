@@ -3153,8 +3153,7 @@ dialog,
   }
 }
 dialog[is="fig-dialog"] {
-  --z-index: 999999;
-  z-index: var(--z-index);
+  /* Non-modal stacking is assigned in FigDialog.show() via figGetHighestZIndex. */
 
   &[autoresize]:not([autoresize="false"]) {
     height: max-content;

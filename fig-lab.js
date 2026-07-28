@@ -5354,16 +5354,26 @@ class FigSelect extends HTMLElement {
     let left = labelRect.left - selectedOffsetX;
     let top = labelRect.top - selectedOffsetY;
 
+    // Keep the whole menu in-view when aligning over the selected option
+    // would otherwise push it past a viewport edge (corners / far sides).
     const margins = this.#getViewportMargins();
-    const minLeft = margins.left;
-    const minTop = margins.top;
-    const maxLeft = window.innerWidth - popupRect.width - margins.right;
-    const maxTop = window.innerHeight - popupRect.height - margins.bottom;
-    left = Math.min(Math.max(left, minLeft), Math.max(minLeft, maxLeft));
-    top = Math.min(Math.max(top, minTop), Math.max(minTop, maxTop));
+    if (typeof popup.clampToViewport === "function") {
+      ({ left, top } = popup.clampToViewport({ left, top }, popupRect, margins));
+    } else {
+      const minLeft = margins.left;
+      const minTop = margins.top;
+      const maxLeft = window.innerWidth - popupRect.width - margins.right;
+      const maxTop = window.innerHeight - popupRect.height - margins.bottom;
+      left = Math.min(Math.max(left, minLeft), Math.max(minLeft, maxLeft));
+      top = Math.min(Math.max(top, minTop), Math.max(minTop, maxTop));
+    }
 
-    popup.style.left = `${Math.round(left)}px`;
-    popup.style.top = `${Math.round(top)}px`;
+    // !important: fig-select::part(listbox) and dialog UA rules can otherwise
+    // keep the menu at its static/anchor position past the viewport edge.
+    popup.style.setProperty("right", "auto", "important");
+    popup.style.setProperty("bottom", "auto", "important");
+    popup.style.setProperty("left", `${Math.round(left)}px`, "important");
+    popup.style.setProperty("top", `${Math.round(top)}px`, "important");
 
     // Nudge the panel scroller so the selected label stays over the trigger.
     const panel = this.#getPanel();

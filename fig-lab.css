@@ -1299,7 +1299,8 @@ fig-select::part(listbox) {
 
   z-index: var(--z-index);
   position: fixed;
-  inset: auto;
+  /* Do not set inset here — ::part inset beats inline left/top and
+     prevents edge clamping from moving the menu back into view. */
   margin: 0;
   border: 0;
   outline: 0;
