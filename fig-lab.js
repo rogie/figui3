@@ -455,7 +455,7 @@ class PropskitSelect extends HTMLElement {
   #boundHandleClick = this.#handleClick.bind(this);
 
   static get observedAttributes() {
-    return ["label", "direction", "aria-label"];
+    return ["label", "direction", "aria-label", "options", "value"];
   }
 
   connectedCallback() {
@@ -473,10 +473,11 @@ class PropskitSelect extends HTMLElement {
 
         for (const mutation of mutations) {
           if (mutation.type !== "attributes") continue;
+          const name = mutation.attributeName;
           if (
-            mutation.attributeName === "label" ||
-            mutation.attributeName === "direction" ||
-            mutation.attributeName === "aria-label"
+            name === "label" ||
+            name === "direction" ||
+            name === "aria-label"
           ) {
             syncField = true;
           } else {
@@ -502,34 +503,18 @@ class PropskitSelect extends HTMLElement {
     if (oldValue === newValue || !this.#field) return;
     if (name === "label" || name === "direction" || name === "aria-label") {
       this.#syncField();
+      return;
+    }
+    if (name === "options" || name === "value") {
+      this.#syncSelectAttributes();
     }
   }
 
   #initialize() {
-    const initialChildren = Array.from(this.childNodes).filter(
-      (node) =>
-        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
-    );
-    const customLabel = initialChildren.find(
-      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
-    );
+    const customLabel = this.querySelector(":scope > label");
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
     const select = document.createElement("fig-select");
-    const existingPanel = initialChildren.find(
-      (node) =>
-        node.nodeType === Node.ELEMENT_NODE &&
-        node.tagName === "FIG-SELECT-OPTIONS",
-    );
-    const panel =
-      existingPanel || document.createElement("fig-select-options");
-    panel.setAttribute("slot", "panel");
-
-    for (const node of initialChildren) {
-      if (node === customLabel || node === existingPanel) continue;
-      panel.appendChild(node);
-    }
-    select.append(panel);
     field.append(label, select);
     this.#field = field;
     this.#label = label;
@@ -586,7 +571,14 @@ class PropskitSelect extends HTMLElement {
 
   #syncSelectAttributes() {
     if (!this.#select) return;
-    const selectAttrs = this.#getForwardedSelectAttrNames();
+    const selectAttrs = this.#getForwardedSelectAttrNames().sort((a, b) => {
+      // Build options before applying value so fig-select can resolve selection.
+      if (a === "options") return -1;
+      if (b === "options") return 1;
+      if (a === "value") return 1;
+      if (b === "value") return -1;
+      return 0;
+    });
     const nextManaged = new Set(selectAttrs);
 
     for (const attrName of this.#managedSelectAttrs) {
@@ -4743,6 +4735,38 @@ function figLabUniqueId(prefix = "fig-select") {
   return `${prefix}-${figLabSelectId}`;
 }
 
+/** Parse options attr — same formats as fig-options / propskit-select. */
+function figLabParseOptionsAttribute(raw) {
+  const text = raw || "";
+  if (text.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      /* fall through */
+    }
+  }
+  const delimiter = text.includes("\n") ? "\n" : ",";
+  return text
+    .split(delimiter)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function figLabOptionEntryValue(opt) {
+  if (opt && typeof opt === "object") {
+    return String(opt.value ?? opt.label ?? "");
+  }
+  return String(opt ?? "");
+}
+
+function figLabOptionEntryLabel(opt) {
+  if (opt && typeof opt === "object") {
+    return String(opt.label ?? opt.value ?? "");
+  }
+  return String(opt ?? "");
+}
+
 class FigSelectOption extends HTMLElement {
   static get observedAttributes() {
     return ["value", "disabled", "selected"];
@@ -4960,6 +4984,7 @@ class FigSelect extends HTMLElement {
   #originalPositionPopup = null;
   /** After open align, stop repositioning so overflow scroll isn't yanked back. */
   #freezeMenuPosition = false;
+  #syncingOptions = false;
   #boundTriggerClick = this.#handleTriggerClick.bind(this);
   #boundOptionClick = this.#handleOptionClick.bind(this);
   #boundKeydown = this.#handleKeydown.bind(this);
@@ -4967,7 +4992,16 @@ class FigSelect extends HTMLElement {
   #boundSlotChange = this.#handleSlotChange.bind(this);
 
   static get observedAttributes() {
-    return ["value", "disabled", "label", "position", "offset", "closedby", "open"];
+    return [
+      "value",
+      "disabled",
+      "label",
+      "options",
+      "position",
+      "offset",
+      "closedby",
+      "open",
+    ];
   }
 
   get value() {
@@ -4991,6 +5025,7 @@ class FigSelect extends HTMLElement {
   connectedCallback() {
     if (!this.#initialized) this.#initialize();
     this.#ensurePanelSlotAttrs();
+    this.#syncOptionsFromAttribute();
     this.#syncDisabled();
     this.#syncPopupAttrs();
     this.#syncValue();
@@ -5007,6 +5042,11 @@ class FigSelect extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue || !this.#initialized) return;
+    if (name === "options") {
+      this.#syncOptionsFromAttribute();
+      this.#syncValue();
+      return;
+    }
     if (name === "value" || name === "label") {
       this.#syncValue();
       return;
@@ -5055,6 +5095,65 @@ class FigSelect extends HTMLElement {
     );
     if (fromSlot) return fromSlot;
     return this.querySelector(":scope > fig-select-options");
+  }
+
+  #hasAuthoredOptions() {
+    return Boolean(
+      this.querySelector(
+        ":scope > fig-select-option:not([data-fig-generated]), :scope > fig-select-options > fig-select-option:not([data-fig-generated])",
+      ),
+    );
+  }
+
+  #ensureOptionsPanel() {
+    let panel = this.#getPanel();
+    if (panel) {
+      if (!panel.hasAttribute("slot")) panel.setAttribute("slot", "panel");
+      return panel;
+    }
+    panel = document.createElement("fig-select-options");
+    panel.setAttribute("slot", "panel");
+    panel.setAttribute("data-fig-generated", "");
+    this.appendChild(panel);
+    return panel;
+  }
+
+  /**
+   * When no authored fig-select-option exists, build panel/options from the
+   * options attribute (comma / newline / JSON — same as fig-options).
+   */
+  #syncOptionsFromAttribute() {
+    if (this.#hasAuthoredOptions()) return;
+
+    const hasOptionsAttr = this.hasAttribute("options");
+    const panel = hasOptionsAttr
+      ? this.#ensureOptionsPanel()
+      : this.#getPanel();
+    if (!panel) return;
+
+    this.#syncingOptions = true;
+    try {
+      for (const opt of panel.querySelectorAll(
+        ":scope > fig-select-option[data-fig-generated]",
+      )) {
+        opt.remove();
+      }
+
+      if (!hasOptionsAttr) return;
+
+      const parsed = figLabParseOptionsAttribute(this.getAttribute("options"));
+      const endBtn = panel.querySelector(":scope > .fig-overflow-end");
+      for (const entry of parsed) {
+        const el = document.createElement("fig-select-option");
+        el.setAttribute("data-fig-generated", "");
+        el.setAttribute("value", figLabOptionEntryValue(entry));
+        el.textContent = figLabOptionEntryLabel(entry);
+        if (endBtn) panel.insertBefore(el, endBtn);
+        else panel.appendChild(el);
+      }
+    } finally {
+      this.#syncingOptions = false;
+    }
   }
 
   #initialize() {
@@ -5106,6 +5205,10 @@ class FigSelect extends HTMLElement {
         .fig-select-trigger[data-focus-visible] {
           outline: var(--figma-focus-outline);
           outline-offset: var(--figma-focus-outline-offset);
+        }
+        :host([disabled]:not([disabled="false"])) .fig-select-trigger,
+        :host([disabled]:not([disabled="false"])) .fig-select-label {
+          color: var(--figma-color-text-tertiary);
         }
         .fig-select-label {
           display: block;
@@ -5305,7 +5408,7 @@ class FigSelect extends HTMLElement {
   #setupObserver() {
     if (this.#observer) return;
     this.#observer = new MutationObserver((mutations) => {
-      if (this.#syncingValue) return;
+      if (this.#syncingValue || this.#syncingOptions) return;
       let needsSync = false;
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
@@ -5432,6 +5535,14 @@ class FigSelect extends HTMLElement {
 
       if (!match) {
         if (hasValueAttr) {
+          // Options may not be built yet (options attr sync). Keep value until then.
+          if (!options.length) {
+            if (this.#labelEl) {
+              this.#labelEl.textContent =
+                previousValue || this.getAttribute("label") || "";
+            }
+            return;
+          }
           // Value orphaned (option removed / value attr changed) — clamp or clear.
           match = this.#pickFallbackOption(options);
           if (match) {

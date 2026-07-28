@@ -353,18 +353,14 @@ Composes a `<fig-field>` and an Off/On `<fig-segmented-control>` into a full-sur
 
 `<propskit-select>`
 
-Composes a `<fig-field>` and `<fig-dropdown>` into a full-surface property control. Dropdown attributes and child `<option>` elements are forwarded to the inner control.
+Composes a `<fig-field>` and `<fig-select>` into a full-surface property control. Options come from the `options` attribute (same formats as `fig-options`: comma-separated, newline-delimited, or a JSON array).
 
-**Attributes:** `label`, `value`, `disabled`, `experimental`, `size`
+**Attributes:** `label`, `value`, `options`, `disabled`, `size`
 
-**Events:** `input`, `change` — forwarded from the inner dropdown.
+**Events:** `input`, `change` — forwarded from the inner select.
 
 ```html
-<propskit-select label="Alignment" value="center">
-  <option value="left">Left</option>
-  <option value="center">Center</option>
-  <option value="right">Right</option>
-</propskit-select>
+<propskit-select label="Alignment" value="Center" options="Left,Center,Right"></propskit-select>
 ```
 
 ---

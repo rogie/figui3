@@ -349,6 +349,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-select": {
     value: { label: "Value", type: "string" },
     label: { label: "Label", type: "string" },
+    options: { label: "Options", type: "string" },
     full: { label: "Full", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     position: {
@@ -391,6 +392,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "propskit-select": {
     label: { label: "Label", type: "string" },
     value: { label: "Value", type: "string" },
+    options: { label: "Options", type: "string" },
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },

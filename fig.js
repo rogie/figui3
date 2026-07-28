@@ -7145,7 +7145,20 @@ class FigField extends HTMLElement {
       !(node instanceof Element && node.classList.contains("fig-field-chevron")),
     );
 
-    this.#toggleable = !!(this.input && "open" in this.input);
+    // Popup/menu hosts also expose `open`, but that is overlay state — not a
+    // fig-field disclosure. Only treat true expand/collapse children as toggleable.
+    const inputTag = this.input?.localName ?? "";
+    const popupOpenHost =
+      inputTag === "fig-select" ||
+      inputTag === "fig-menu" ||
+      inputTag === "fig-dropdown" ||
+      inputTag === "fig-tooltip" ||
+      (this.input instanceof HTMLDialogElement);
+    this.#toggleable = !!(
+      this.input &&
+      "open" in this.input &&
+      !popupOpenHost
+    );
 
     if (this.#toggleable && this.label) {
       if (!this.#chevron || !this.#chevron.isConnected) {
@@ -7158,12 +7171,21 @@ class FigField extends HTMLElement {
 
       this.#chevron.addEventListener("click", this.#boundToggle);
       this.label.addEventListener("click", this.#boundToggle);
-    } else if (this.input && this.label) {
-      const nativeInputs = this.input.querySelectorAll("input, select, textarea");
-      // A label with a `for` target already focuses and activates its control.
-      // Only use the composite fallback when there is no single native target.
-      if (nativeInputs.length !== 1) {
-        this.label.addEventListener("click", this.#boundFocus);
+    } else {
+      if (this.#chevron) {
+        this.#chevron.removeEventListener("click", this.#boundToggle);
+        this.#chevron.remove();
+        this.#chevron = null;
+      }
+      if (this.input && this.label) {
+        const nativeInputs = this.input.querySelectorAll(
+          "input, select, textarea",
+        );
+        // A label with a `for` target already focuses and activates its control.
+        // Only use the composite fallback when there is no single native target.
+        if (nativeInputs.length !== 1) {
+          this.label.addEventListener("click", this.#boundFocus);
+        }
       }
     }
 

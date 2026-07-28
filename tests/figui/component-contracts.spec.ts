@@ -312,11 +312,11 @@ test.describe("propskit-select", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-select label="Alignment" value="center">
-          <fig-select-option value="left">Left</fig-select-option>
-          <fig-select-option value="center">Center</fig-select-option>
-          <fig-select-option value="right">Right</fig-select-option>
-        </propskit-select>
+        <propskit-select
+          label="Alignment"
+          value="Center"
+          options="Left,Center,Right"
+        ></propskit-select>
       `;
     });
 
@@ -326,9 +326,9 @@ test.describe("propskit-select", () => {
     const optionsDialog = select.locator('dialog[is="fig-popup"]');
     const trigger = select.locator("fig-button.fig-select-trigger");
     await expect(control.locator("fig-field > label")).toHaveText("Alignment");
-    await expect(select).toHaveAttribute("value", "center");
+    await expect(select).toHaveAttribute("value", "Center");
     await expect(optionsDialog).toHaveCount(1);
-    // Panel stays in light DOM; options are direct kids (overflow buttons are chrome).
+    // Options are generated from the options attribute into the panel.
     const panel = select.locator(':scope > fig-select-options[slot="panel"]');
     await expect(panel).toHaveCount(1);
     await expect(panel.locator(":scope > fig-select-option")).toHaveCount(3);
@@ -364,17 +364,17 @@ test.describe("propskit-select", () => {
         value: string;
       };
       if (!figSelect) throw new Error("Missing fig-select");
-      figSelect.value = "right";
+      figSelect.value = "Right";
       figSelect.dispatchEvent(
         new CustomEvent("input", {
-          detail: "right",
+          detail: "Right",
           bubbles: true,
           composed: true,
         }),
       );
       figSelect.dispatchEvent(
         new CustomEvent("change", {
-          detail: "right",
+          detail: "Right",
           bubbles: true,
           composed: true,
         }),
@@ -383,14 +383,87 @@ test.describe("propskit-select", () => {
     });
 
     expect(events).toEqual([
-      { type: "input", detail: "right" },
-      { type: "change", detail: "right" },
+      { type: "input", detail: "Right" },
+      { type: "change", detail: "Right" },
     ]);
-    await expect(control).toHaveAttribute("value", "right");
+    await expect(control).toHaveAttribute("value", "Right");
     await trigger.focus();
     await expect(trigger).toBeFocused();
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("none");
+  });
+
+  test("accepts JSON array options", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-select
+          label="Size"
+          value="Medium"
+          options='["Small","Medium","Large"]'
+        ></propskit-select>
+      `;
+    });
+
+    const panel = page.locator("propskit-select fig-select-options");
+    await expect(panel.locator(":scope > fig-select-option")).toHaveCount(3);
+    await expect(
+      page.locator("propskit-select fig-select .fig-select-label"),
+    ).toHaveText("Medium");
+  });
+
+  test("builds panel options from the options attribute", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select
+          label="Align"
+          value="Center"
+          options="Left,Center,Right"
+        ></fig-select>
+      `;
+    });
+
+    const select = page.locator("fig-select");
+    const panel = select.locator(':scope > fig-select-options[slot="panel"]');
+    await expect(panel).toHaveCount(1);
+    await expect(panel.locator(":scope > fig-select-option")).toHaveCount(3);
+    await expect(panel.locator(":scope > fig-select-option").nth(1)).toHaveAttribute(
+      "value",
+      "Center",
+    );
+    await expect(select.locator(".fig-select-label")).toHaveText("Center");
+
+    await select.evaluate((el) => {
+      el.setAttribute("options", '["Small","Medium"]');
+      el.setAttribute("value", "Medium");
+    });
+    await expect(panel.locator(":scope > fig-select-option")).toHaveCount(2);
+    await expect(select.locator(".fig-select-label")).toHaveText("Medium");
+  });
+
+  test("options attribute does not override authored fig-select-option children", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select label="Align" value="left" options="A,B,C">
+          <fig-select-options slot="panel">
+            <fig-select-option value="left">Left</fig-select-option>
+            <fig-select-option value="right">Right</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      `;
+    });
+
+    const panel = page.locator("fig-select fig-select-options");
+    await expect(panel.locator(":scope > fig-select-option")).toHaveCount(2);
+    await expect(panel.locator('fig-select-option[value="left"]')).toHaveCount(1);
+    await expect(panel.locator('fig-select-option[value="A"]')).toHaveCount(0);
   });
 
   test("selecting a slotted option updates value, label, and events", async ({
@@ -588,10 +661,7 @@ test.describe("propskit delegated click behavior", () => {
         <propskit-text label="Name" value="Layer 1"></propskit-text>
         <propskit-color label="Fill" value="#0D99FF"></propskit-color>
         <propskit-slider label="Amount" value="50" min="0" max="100"></propskit-slider>
-        <propskit-select label="Alignment" value="left">
-          <fig-select-option value="left">Left</fig-select-option>
-          <fig-select-option value="right">Right</fig-select-option>
-        </propskit-select>
+        <propskit-select label="Alignment" value="Left" options="Left,Right"></propskit-select>
         <propskit-switch label="Visible" checked></propskit-switch>
       `;
     });

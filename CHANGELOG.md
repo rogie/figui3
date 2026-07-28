@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.18.0]
+
+### Added
+
+- Added optional `options` attribute on `fig-select` and `propskit-select` (comma / newline / JSON array, same as `fig-options`); builds `fig-select-options` when no authored options exist.
+- Added lab examples for Select / Propskit Select options attribute formats.
+
+### Changed
+
+- `propskit-select` is attribute-driven (`value` + `options`); child `fig-select-option` authoring is no longer supported on the propskit wrapper.
+
+### Fixed
+
+- `fig-field` no longer treats popup hosts (`fig-select`, `fig-menu`, etc.) as disclosures, which was injecting a duplicate field chevron.
+- Disabled `fig-select` trigger label uses tertiary text color.
+
 ## [6.17.0]
 
 ### Added

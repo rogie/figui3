@@ -80,7 +80,7 @@ export const labSections: Section[] = [
     id: "select",
     name: "Select",
     description:
-      "A dropdown-styled select. Author options inside fig-select-options; overflow uses top/bottom buttons (same pattern as fig-chooser, no scrollbar).",
+      "A dropdown-styled select. Author options inside fig-select-options, or pass an options attribute (comma / JSON, same as fig-options). Overflow uses top/bottom buttons.",
     examples: [
       {
         id: "default",
@@ -93,6 +93,13 @@ export const labSections: Section[] = [
       <fig-select-option value="right">Right</fig-select-option>
     </fig-select-options>
   </fig-select>
+</div>`,
+      },
+      {
+        id: "options-attr",
+        name: "Options attribute",
+        markup: `<div class="prop-panel">
+  <fig-select label="Align" value="Center" options="Left,Center,Right"></fig-select>
 </div>`,
       },
       {
@@ -181,17 +188,26 @@ export const labSections: Section[] = [
     id: "propskit-select",
     name: "Propskit Select",
     description:
-      "A full-surface select field that composes fig-field and fig-select into a single property control.",
+      "A full-surface select field that composes fig-field and fig-select. Pass choices via the options attribute (comma-separated or JSON array).",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-select label="Alignment" value="center">
-    <fig-select-option value="left">Left</fig-select-option>
-    <fig-select-option value="center">Center</fig-select-option>
-    <fig-select-option value="right">Right</fig-select-option>
-  </propskit-select>
+  <propskit-select label="Alignment" value="Center" options="Left,Center,Right"></propskit-select>
+</div>`,
+      },
+      {
+        id: "options-attr",
+        name: "Options attribute",
+        markup: `<div class="prop-panel">
+  <propskit-select label="Align" value="Center" options="Left,Center,Right"></propskit-select>
+  <propskit-select label="Size" value="Medium" options='["Small","Medium","Large"]'></propskit-select>
+  <propskit-select
+    label="Blend"
+    value="multiply"
+    options='[{"value":"normal","label":"Normal"},{"value":"multiply","label":"Multiply"},{"value":"screen","label":"Screen"}]'
+  ></propskit-select>
 </div>`,
       },
     ],
