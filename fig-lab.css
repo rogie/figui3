@@ -168,6 +168,11 @@ propskit-color {
       background-color: transparent;
       box-shadow: none;
 
+      /* Field ::after owns hover chrome — don't double-outline the color control. */
+      &:hover:not(:focus):not(:focus-within):not(.has-popup-open) {
+        outline: none !important;
+      }
+
       > .input-combo {
         flex: 0 0 auto;
         width: auto;

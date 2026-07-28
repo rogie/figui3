@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.18.2]
+
+### Fixed
+
+- `propskit-color` no longer shows a hover outline on nested `fig-input-color` (field row hover chrome only).
+
 ## [6.18.1]
 
 ### Fixed
