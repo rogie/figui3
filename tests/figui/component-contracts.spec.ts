@@ -867,6 +867,16 @@ test.describe("propskit delegated click behavior", () => {
       page.locator("propskit-select fig-select fig-button.fig-select-trigger"),
     ).toHaveAttribute("aria-expanded", "true");
 
+    // Second click on the field closes (toggle), and must not reopen after
+    // fig-popup light-dismiss on pointerdown.
+    await page.locator("propskit-select fig-field").click({ position: { x: 12, y: 12 } });
+    await expect(page.locator("propskit-select fig-select")).not.toHaveAttribute(
+      "open",
+    );
+    await expect(
+      page.locator("propskit-select fig-select fig-button.fig-select-trigger"),
+    ).toHaveAttribute("aria-expanded", "false");
+
     await clickField("propskit-switch");
     await expect(page.locator("propskit-switch")).not.toHaveAttribute("checked", "");
     await expect(

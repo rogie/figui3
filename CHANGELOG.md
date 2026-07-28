@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.18.3]
+
+### Fixed
+
+- `propskit-select` field click toggles the menu closed when already open (no reopen after popup light-dismiss).
+
 ## [6.18.2]
 
 ### Fixed

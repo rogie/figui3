@@ -453,6 +453,9 @@ class PropskitSelect extends HTMLElement {
   #boundHandleInput = null;
   #boundHandleChange = null;
   #boundHandleClick = this.#handleClick.bind(this);
+  #boundHandlePointerDown = this.#handlePointerDown.bind(this);
+  /** True when pointerdown saw the menu open — skip click-to-open after light-dismiss. */
+  #closeGesture = false;
 
   static get observedAttributes() {
     return ["label", "direction", "aria-label", "options", "value"];
@@ -465,6 +468,8 @@ class PropskitSelect extends HTMLElement {
     this.#bindSelectEvents();
     this.removeEventListener("click", this.#boundHandleClick);
     this.addEventListener("click", this.#boundHandleClick);
+    this.removeEventListener("pointerdown", this.#boundHandlePointerDown, true);
+    this.addEventListener("pointerdown", this.#boundHandlePointerDown, true);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -497,6 +502,7 @@ class PropskitSelect extends HTMLElement {
     this.#observer?.disconnect();
     this.#unbindSelectEvents();
     this.removeEventListener("click", this.#boundHandleClick);
+    this.removeEventListener("pointerdown", this.#boundHandlePointerDown, true);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -628,14 +634,44 @@ class PropskitSelect extends HTMLElement {
     );
   }
 
-  #handleClick(event) {
-    if (event.target instanceof Element && event.target.closest("fig-select")) {
+  #isSelectMenuOpen() {
+    if (!this.#select) return false;
+    if (this.#select.open) return true;
+    const popup = this.#select.shadowRoot?.querySelector(
+      'dialog[is="fig-popup"]',
+    );
+    return Boolean(popup?.open || popup?.matches?.(":open"));
+  }
+
+  #handlePointerDown(event) {
+    if (!(event.target instanceof Element)) return;
+    // fig-select owns its trigger/option clicks.
+    if (event.target.closest("fig-select")) {
+      this.#closeGesture = false;
       return;
     }
-    this.#select?.focus();
-    if (this.#select && !figLabBooleanAttribute(this.#select, "disabled")) {
-      this.#select.open = true;
+    // Light-dismiss closes on pointerdown; remember so click doesn't reopen.
+    this.#closeGesture = this.#isSelectMenuOpen();
+  }
+
+  #handleClick(event) {
+    if (event.target instanceof Element && event.target.closest("fig-select")) {
+      this.#closeGesture = false;
+      return;
     }
+    if (!this.#select || figLabBooleanAttribute(this.#select, "disabled")) {
+      this.#closeGesture = false;
+      return;
+    }
+    this.#select.focus();
+
+    if (this.#closeGesture || this.#isSelectMenuOpen()) {
+      this.#closeGesture = false;
+      this.#select.open = false;
+      return;
+    }
+
+    this.#select.open = true;
   }
 
   get value() {
@@ -5606,12 +5642,11 @@ class FigSelect extends HTMLElement {
     if (figLabBooleanAttribute(this, "disabled")) return;
     e.preventDefault();
     e.stopPropagation();
-    const popupShowing = this.#popup?.matches?.(":open") ?? false;
-    if (this.open && popupShowing) this.open = false;
-    else {
-      if (this.#popup && this.#button) this.#popup.anchor = this.#button;
-      this.open = true;
+    const nextOpen = !this.open;
+    if (nextOpen && this.#popup && this.#button) {
+      this.#popup.anchor = this.#button;
     }
+    this.open = nextOpen;
   }
 
   #handleOptionClick(e) {
