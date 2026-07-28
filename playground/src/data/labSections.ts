@@ -80,16 +80,18 @@ export const labSections: Section[] = [
     id: "select",
     name: "Select",
     description:
-      "A dropdown-styled select that opens a fig-popup listbox. Options are declared with fig-select-option (not native option elements).",
+      "A dropdown-styled select. Author options inside fig-select-options; overflow uses top/bottom buttons (same pattern as fig-chooser, no scrollbar).",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-select value="center" label="Align">
-    <fig-select-option value="left">Left</fig-select-option>
-    <fig-select-option value="center">Center</fig-select-option>
-    <fig-select-option value="right">Right</fig-select-option>
+    <fig-select-options>
+      <fig-select-option value="left">Left</fig-select-option>
+      <fig-select-option value="center">Center</fig-select-option>
+      <fig-select-option value="right">Right</fig-select-option>
+    </fig-select-options>
   </fig-select>
 </div>`,
       },
@@ -98,9 +100,65 @@ export const labSections: Section[] = [
         name: "Full width",
         markup: `<div class="prop-panel">
   <fig-select value="multiply" full label="Blend">
-    <fig-select-option value="normal">Normal</fig-select-option>
-    <fig-select-option value="multiply">Multiply</fig-select-option>
-    <fig-select-option value="screen">Screen</fig-select-option>
+    <fig-select-options>
+      <fig-select-option value="normal">Normal</fig-select-option>
+      <fig-select-option value="multiply">Multiply</fig-select-option>
+      <fig-select-option value="screen">Screen</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "many-options",
+        name: "Many options",
+        markup: `<div class="prop-panel">
+  <fig-select value="overlay" label="Blend">
+    <fig-select-options>
+      <fig-select-option value="normal">Normal</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="darken">Darken</fig-select-option>
+      <fig-select-option value="multiply">Multiply</fig-select-option>
+      <fig-select-option value="color-burn">Color burn</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="lighten">Lighten</fig-select-option>
+      <fig-select-option value="screen">Screen</fig-select-option>
+      <fig-select-option value="color-dodge">Color dodge</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="overlay">Overlay</fig-select-option>
+      <fig-select-option value="soft-light">Soft light</fig-select-option>
+      <fig-select-option value="hard-light">Hard light</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="difference">Difference</fig-select-option>
+      <fig-select-option value="exclusion">Exclusion</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="hue">Hue</fig-select-option>
+      <fig-select-option value="saturation">Saturation</fig-select-option>
+      <fig-select-option value="color">Color</fig-select-option>
+      <fig-select-option value="luminosity">Luminosity</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "grouped",
+        name: "Grouped items",
+        markup: `<div class="prop-panel">
+  <fig-select value="multiply" label="Blend">
+    <fig-select-options>
+      <fig-select-option value="normal">Normal</fig-select-option>
+      <fig-menu-separator label="Darken"></fig-menu-separator>
+      <fig-select-option value="darken">Darken</fig-select-option>
+      <fig-select-option value="multiply">Multiply</fig-select-option>
+      <fig-select-option value="color-burn">Color burn</fig-select-option>
+      <fig-menu-separator label="Lighten"></fig-menu-separator>
+      <fig-select-option value="lighten">Lighten</fig-select-option>
+      <fig-select-option value="screen">Screen</fig-select-option>
+      <fig-select-option value="color-dodge">Color dodge</fig-select-option>
+      <fig-menu-separator label="Contrast"></fig-menu-separator>
+      <fig-select-option value="overlay">Overlay</fig-select-option>
+      <fig-select-option value="soft-light">Soft light</fig-select-option>
+      <fig-select-option value="hard-light">Hard light</fig-select-option>
+    </fig-select-options>
   </fig-select>
 </div>`,
       },
@@ -109,9 +167,11 @@ export const labSections: Section[] = [
         name: "Disabled",
         markup: `<div class="prop-panel">
   <fig-select value="center" disabled label="Align">
-    <fig-select-option value="left">Left</fig-select-option>
-    <fig-select-option value="center">Center</fig-select-option>
-    <fig-select-option value="right">Right</fig-select-option>
+    <fig-select-options>
+      <fig-select-option value="left">Left</fig-select-option>
+      <fig-select-option value="center">Center</fig-select-option>
+      <fig-select-option value="right">Right</fig-select-option>
+    </fig-select-options>
   </fig-select>
 </div>`,
       },

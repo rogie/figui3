@@ -1178,8 +1178,12 @@ Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="m
   <fig-menu-item value="paste">Paste</fig-menu-item>
   <fig-menu-separator></fig-menu-separator>
   <fig-menu-item value="delete" disabled>Delete</fig-menu-item>
+  <fig-menu-separator label="More"></fig-menu-separator>
+  <fig-menu-item value="settings">Settings</fig-menu-item>
 </fig-menu>
 ```
+
+`fig-menu-separator` accepts optional `label` — renders the rule, then secondary group text underneath.
 
 ---
 

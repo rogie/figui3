@@ -1076,6 +1076,20 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "labeled-separator",
+        name: "Labeled separator",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left">
+    <fig-button variant="secondary" fig-menu-trigger>Arrange</fig-button>
+    <fig-menu-item value="bring-to-front">Bring to front</fig-menu-item>
+    <fig-menu-item value="bring-forward">Bring forward</fig-menu-item>
+    <fig-menu-separator label="Send"></fig-menu-separator>
+    <fig-menu-item value="send-backward">Send backward</fig-menu-item>
+    <fig-menu-item value="send-to-back">Send to back</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
+      {
         id: "context",
         name: "Context menu",
         markup: `<div class="prop-panel">

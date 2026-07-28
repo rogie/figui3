@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.17.0]
+
+### Added
+
+- Added `fig-select` with authored `fig-select-options` panel (slot=panel auto), overflow top/bottom buttons, and full-width menu matching.
+- Added optional `label` on `fig-menu-separator` (rule + secondary group text underneath).
+- Added lab Select examples: full width, many options, grouped items; Menu labeled-separator example.
+
+### Changed
+
+- `propskit-select` now composes `fig-select` with a slotted options panel (React-safe; options stay in light DOM).
+- `fig-popup` outside dismiss uses `composedPath()` so slotted menu/select clicks are not treated as outside.
+
+### Fixed
+
+- Select overflow paging no longer gets yanked back by open-time menu repositioning.
+- Select `[full]` popup width now matches the trigger (part listbox width rules no longer win over inline sizing).
+
 ## [6.16.0]
 
 ### Added

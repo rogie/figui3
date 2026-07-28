@@ -23,6 +23,9 @@ declare module "react" {
       "propskit-slider": FigAttrs;
       "propskit-switch": FigAttrs;
       "propskit-text": FigAttrs;
+      "fig-select": FigAttrs;
+      "fig-select-options": FigAttrs;
+      "fig-select-option": FigAttrs;
       "fig-dropdown": FigAttrs;
       "fig-options": FigAttrs;
       "fig-segmented-control": FigAttrs;

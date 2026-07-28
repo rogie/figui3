@@ -2845,10 +2845,16 @@ class FigPopup extends HTMLDialogElement {
     if (closedby === "none" || closedby === "closerequest") return;
     const target = event.target;
     if (!(target instanceof Node)) return;
+
+    // Prefer composedPath so slotted light-DOM content (e.g. fig-select options)
+    // counts as inside — Node.contains() is false for slotted nodes.
+    const path =
+      typeof event.composedPath === "function" ? event.composedPath() : [];
+    if (path.includes(this)) return;
     if (this.contains(target)) return;
 
     const anchor = this.resolveAnchor();
-    if (anchor?.contains && anchor.contains(target)) return;
+    if (anchor && (path.includes(anchor) || anchor.contains?.(target))) return;
 
     if (this.isInsideDescendantPopup(target)) return;
 
@@ -17186,11 +17192,40 @@ class FigMenuItem extends HTMLElement {
 }
 customElements.define("fig-menu-item", FigMenuItem);
 
+/**
+ * Visual divider between menu item groups.
+ * @attr {string} label - Optional group label shown in secondary text under the line.
+ */
 class FigMenuSeparator extends HTMLElement {
+  static get observedAttributes() {
+    return ["label"];
+  }
+
+  get label() {
+    return this.getAttribute("label") ?? "";
+  }
+
+  set label(value) {
+    if (value == null || value === "") this.removeAttribute("label");
+    else this.setAttribute("label", String(value));
+  }
+
   connectedCallback() {
+    this.#sync();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    this.#sync();
+  }
+
+  #sync() {
     if (!this.hasAttribute("role")) {
       this.setAttribute("role", "separator");
     }
+    const label = this.label.trim();
+    if (label) this.setAttribute("aria-label", label);
+    else this.removeAttribute("aria-label");
   }
 }
 customElements.define("fig-menu-separator", FigMenuSeparator);

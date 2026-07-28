@@ -323,10 +323,15 @@ test.describe("propskit-select", () => {
     const control = page.locator("propskit-select");
     const field = control.locator("fig-field");
     const select = control.locator("fig-select");
-    const trigger = select.locator(".fig-select-trigger");
+    const optionsDialog = select.locator('dialog[is="fig-popup"]');
+    const trigger = select.locator("fig-button.fig-select-trigger");
     await expect(control.locator("fig-field > label")).toHaveText("Alignment");
     await expect(select).toHaveAttribute("value", "center");
-    await expect(select.locator("fig-select-option")).toHaveCount(3);
+    await expect(optionsDialog).toHaveCount(1);
+    // Panel stays in light DOM; options are direct kids (overflow buttons are chrome).
+    const panel = select.locator(':scope > fig-select-options[slot="panel"]');
+    await expect(panel).toHaveCount(1);
+    await expect(panel.locator(":scope > fig-select-option")).toHaveCount(3);
     await expect(select.locator(".fig-select-label")).toHaveText("Center");
 
     const fieldBox = await field.boundingBox();
@@ -386,6 +391,95 @@ test.describe("propskit-select", () => {
     await expect(trigger).toBeFocused();
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("none");
+  });
+
+  test("selecting a slotted option updates value, label, and events", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select label="Align" value="left">
+          <fig-select-options slot="panel">
+            <fig-select-option value="left">Left</fig-select-option>
+            <fig-select-option value="center">Center</fig-select-option>
+            <fig-select-option value="right">Right</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      `;
+    });
+
+    const select = page.locator("fig-select");
+    const events = await select.evaluate((element) => {
+      const received: Array<{ type: string; detail: unknown }> = [];
+      element.addEventListener("input", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      element.addEventListener("change", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      (element as HTMLElement & { open: boolean }).open = true;
+      return new Promise<Array<{ type: string; detail: unknown }>>((resolve) => {
+        requestAnimationFrame(() => {
+          const option = element.querySelector(
+            'fig-select-option[value="center"]',
+          ) as HTMLElement | null;
+          option?.click();
+          resolve(received);
+        });
+      });
+    });
+
+    expect(events).toEqual([
+      { type: "input", detail: "center" },
+      { type: "change", detail: "center" },
+    ]);
+    await expect(select).toHaveAttribute("value", "center");
+    await expect(select.locator(".fig-select-label")).toHaveText("Center");
+    await expect(select).not.toHaveAttribute("open", "");
+  });
+
+  test("resyncs value when the selected option is removed or its value changes", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select label="Align" value="center">
+          <fig-select-options slot="panel">
+            <fig-select-option value="left">Left</fig-select-option>
+            <fig-select-option value="center">Center</fig-select-option>
+            <fig-select-option value="right">Right</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      `;
+    });
+
+    const select = page.locator("fig-select");
+    await expect(select).toHaveAttribute("value", "center");
+    await expect(select.locator(".fig-select-label")).toHaveText("Center");
+
+    await select.evaluate((element) => {
+      element.querySelector('fig-select-option[value="center"]')?.remove();
+    });
+    await expect(select).toHaveAttribute("value", "left");
+    await expect(select.locator(".fig-select-label")).toHaveText("Left");
+
+    await select.evaluate((element) => {
+      const left = element.querySelector('fig-select-option[value="left"]');
+      left?.setAttribute("value", "start");
+      if (left) left.textContent = "Start";
+    });
+    await expect(select).toHaveAttribute("value", "start");
+    await expect(select.locator(".fig-select-label")).toHaveText("Start");
   });
 });
 
@@ -520,10 +614,9 @@ test.describe("propskit delegated click behavior", () => {
 
     await clickField("propskit-select");
     await expect(page.locator("propskit-select fig-select")).toHaveAttribute("open", "");
-    await expect(page.locator("propskit-select .fig-select-trigger")).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
+    await expect(
+      page.locator("propskit-select fig-select fig-button.fig-select-trigger"),
+    ).toHaveAttribute("aria-expanded", "true");
 
     await clickField("propskit-switch");
     await expect(page.locator("propskit-switch")).not.toHaveAttribute("checked", "");

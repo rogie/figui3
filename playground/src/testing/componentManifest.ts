@@ -444,6 +444,7 @@ export const componentContracts: ComponentContract[] = [
     title: "Menu Separator",
     group: "display",
     markup: `<fig-menu-separator></fig-menu-separator>`,
+    attributes: [{ name: "label", attribute: "label", value: "Group" }],
   },
   {
     tag: "fig-menu",

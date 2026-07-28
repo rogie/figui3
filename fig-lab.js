@@ -516,10 +516,20 @@ class PropskitSelect extends HTMLElement {
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
     const select = document.createElement("fig-select");
+    const existingPanel = initialChildren.find(
+      (node) =>
+        node.nodeType === Node.ELEMENT_NODE &&
+        node.tagName === "FIG-SELECT-OPTIONS",
+    );
+    const panel =
+      existingPanel || document.createElement("fig-select-options");
+    panel.setAttribute("slot", "panel");
 
     for (const node of initialChildren) {
-      if (node !== customLabel) select.appendChild(node);
+      if (node === customLabel || node === existingPanel) continue;
+      panel.appendChild(node);
     }
+    select.append(panel);
     field.append(label, select);
     this.#field = field;
     this.#label = label;
@@ -608,6 +618,7 @@ class PropskitSelect extends HTMLElement {
   }
 
   #forwardSelectEvent(type, event) {
+    if (event.target !== this.#select) return;
     event.stopImmediatePropagation();
     const value = this.#select?.value ?? "";
     this.setAttribute("value", String(value));
@@ -4793,19 +4804,167 @@ class FigSelectOption extends HTMLElement {
 }
 customElements.define("fig-select-option", FigSelectOption);
 
+function figLabSyncOverflowState(host, scrollEl, threshold = 2) {
+  if (!host || !scrollEl) return false;
+  const scrollable = scrollEl.scrollHeight - scrollEl.clientHeight > threshold;
+  const atStart = !scrollable || scrollEl.scrollTop <= threshold;
+  const atEnd =
+    !scrollable ||
+    scrollEl.scrollTop + scrollEl.clientHeight >=
+      scrollEl.scrollHeight - threshold;
+  host.classList.toggle("overflow-start", !atStart);
+  host.classList.toggle("overflow-end", !atEnd);
+  return scrollable;
+}
+
+function figLabScrollOverflowPage(scrollEl, direction = 1) {
+  if (!scrollEl) return;
+  scrollEl.scrollBy({
+    top: scrollEl.clientHeight * 0.8 * direction,
+    behavior: "smooth",
+  });
+}
+
+function figLabCreateOverflowButtons({ onStart, onEnd } = {}) {
+  const makeButton = (direction, onClick) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `fig-overflow fig-overflow-${direction}`;
+    button.dataset.figOverflow = direction;
+    button.setAttribute("data-fig-select-nav", direction);
+    button.setAttribute("tabindex", "-1");
+    button.setAttribute(
+      "aria-label",
+      direction === "start" ? "Scroll up" : "Scroll down",
+    );
+    const icon = document.createElement("fig-icon");
+    icon.setAttribute("name", "chevron");
+    icon.setAttribute("size", "small");
+    icon.className = "fig-overflow-chevron";
+    button.appendChild(icon);
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClick?.(event);
+    });
+    return button;
+  };
+  return {
+    start: makeButton("start", onStart),
+    end: makeButton("end", onEnd),
+  };
+}
+
+/** Light-DOM panel wrapper projected into fig-select's popup; owns overflow buttons. */
+class FigSelectOptions extends HTMLElement {
+  #navStart = null;
+  #navEnd = null;
+  #resizeObserver = null;
+  #boundSyncOverflow = this.syncOverflow.bind(this);
+
+  connectedCallback() {
+    if (!this.hasAttribute("slot")) this.setAttribute("slot", "panel");
+    this.#unwrapLegacyChooser();
+    this.#ensureNavButtons();
+    this.addEventListener("scroll", this.#boundSyncOverflow, { passive: true });
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = new ResizeObserver(() => this.syncOverflow());
+    this.#resizeObserver.observe(this);
+    requestAnimationFrame(() => this.syncOverflow());
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("scroll", this.#boundSyncOverflow);
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+    this.#removeNavButtons();
+  }
+
+  syncOverflow() {
+    return figLabSyncOverflowState(this, this);
+  }
+
+  scrollToOption(option, behavior = "auto") {
+    if (!option || !this.contains(option)) return;
+    requestAnimationFrame(() => {
+      if (!option.isConnected) return;
+      if (this.scrollHeight <= this.clientHeight + 1) {
+        this.syncOverflow();
+        return;
+      }
+      const optionRect = option.getBoundingClientRect();
+      const hostRect = this.getBoundingClientRect();
+      const optionTop = optionRect.top - hostRect.top + this.scrollTop;
+      const maxScroll = this.scrollHeight - this.clientHeight;
+      const top = Math.max(
+        0,
+        Math.min(
+          optionTop + optionRect.height / 2 - this.clientHeight / 2,
+          maxScroll,
+        ),
+      );
+      this.scrollTo({ top, behavior });
+      this.syncOverflow();
+    });
+  }
+
+  #unwrapLegacyChooser() {
+    const chooser = this.querySelector(":scope > fig-chooser");
+    if (!chooser) return;
+    while (chooser.firstChild) {
+      this.insertBefore(chooser.firstChild, chooser);
+    }
+    chooser.remove();
+  }
+
+  #ensureNavButtons() {
+    if (
+      this.#navStart &&
+      this.#navEnd &&
+      this.contains(this.#navStart) &&
+      this.contains(this.#navEnd)
+    ) {
+      return;
+    }
+    this.#removeNavButtons();
+    const buttons = figLabCreateOverflowButtons({
+      onStart: () => figLabScrollOverflowPage(this, -1),
+      onEnd: () => figLabScrollOverflowPage(this, 1),
+    });
+    this.#navStart = buttons.start;
+    this.#navEnd = buttons.end;
+    this.prepend(this.#navStart);
+    this.append(this.#navEnd);
+  }
+
+  #removeNavButtons() {
+    this.#navStart?.remove();
+    this.#navEnd?.remove();
+    this.#navStart = null;
+    this.#navEnd = null;
+    this.classList.remove("overflow-start", "overflow-end");
+  }
+}
+customElements.define("fig-select-options", FigSelectOptions);
+
 class FigSelect extends HTMLElement {
-  #trigger = null;
+  #button = null;
   #popup = null;
   #labelEl = null;
+  #panelSlot = null;
   #observer = null;
+  #initialized = false;
   #focusedIndex = -1;
   #syncingValue = false;
   #popupPositionPatched = false;
   #originalPositionPopup = null;
+  /** After open align, stop repositioning so overflow scroll isn't yanked back. */
+  #freezeMenuPosition = false;
   #boundTriggerClick = this.#handleTriggerClick.bind(this);
-  #boundPopupClick = this.#handlePopupClick.bind(this);
+  #boundOptionClick = this.#handleOptionClick.bind(this);
   #boundKeydown = this.#handleKeydown.bind(this);
   #boundPopupClose = this.#handlePopupClose.bind(this);
+  #boundSlotChange = this.#handleSlotChange.bind(this);
 
   static get observedAttributes() {
     return ["value", "disabled", "label", "position", "offset", "closedby", "open"];
@@ -4830,7 +4989,8 @@ class FigSelect extends HTMLElement {
   }
 
   connectedCallback() {
-    if (!this.#trigger) this.#initialize();
+    if (!this.#initialized) this.#initialize();
+    this.#ensurePanelSlotAttrs();
     this.#syncDisabled();
     this.#syncPopupAttrs();
     this.#syncValue();
@@ -4843,13 +5003,10 @@ class FigSelect extends HTMLElement {
     document.removeEventListener("keydown", this.#boundKeydown, true);
     this.#observer?.disconnect();
     this.#observer = null;
-    if (this.#popup) {
-      this.#popup.removeEventListener("close", this.#boundPopupClose);
-    }
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue || !this.#trigger) return;
+    if (oldValue === newValue || !this.#initialized) return;
     if (name === "value" || name === "label") {
       this.#syncValue();
       return;
@@ -4869,51 +5026,152 @@ class FigSelect extends HTMLElement {
   }
 
   focus(options) {
-    this.#trigger?.focus(options);
+    this.#button?.focus(options);
   }
 
   blur() {
-    this.#trigger?.blur();
+    this.#button?.blur();
+  }
+
+  #isMenuChild(node) {
+    return (
+      node?.nodeType === 1 &&
+      (node.tagName === "FIG-SELECT-OPTION" ||
+        node.tagName === "FIG-MENU-SEPARATOR" ||
+        node.tagName === "FIG-SELECT-OPTIONS")
+    );
+  }
+
+  #ensurePanelSlotAttrs() {
+    for (const panel of this.querySelectorAll(":scope > fig-select-options")) {
+      if (!panel.hasAttribute("slot")) panel.setAttribute("slot", "panel");
+    }
+  }
+
+  #getPanel() {
+    const assigned = this.#panelSlot?.assignedElements({ flatten: true }) ?? [];
+    const fromSlot = assigned.find(
+      (el) => el.tagName === "FIG-SELECT-OPTIONS",
+    );
+    if (fromSlot) return fromSlot;
+    return this.querySelector(":scope > fig-select-options");
   }
 
   #initialize() {
-    const options = Array.from(
-      this.querySelectorAll(":scope > fig-select-option"),
-    );
-    const trigger = document.createElement("fig-button");
-    trigger.className = "fig-select-trigger";
-    trigger.setAttribute("variant", "ghost");
-    trigger.setAttribute("aria-haspopup", "listbox");
-    trigger.setAttribute("aria-expanded", "false");
+    this.#initialized = true;
+    const shadow = this.attachShadow({ mode: "open" });
+    shadow.innerHTML = `
+      <style>
+        :host {
+          display: inline-flex;
+          position: relative;
+          align-items: center;
+          min-width: 0;
+        }
+        :host([full]:not([full="false"])) {
+          display: flex;
+          width: 100%;
+        }
+        .fig-select-trigger {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          flex: 1;
+          min-width: 0;
+          width: var(--fig-select-trigger-width, 100%);
+          height: 100%;
+          margin: 0;
+          padding: 0 var(--spacer-4, 1rem) 0 var(--spacer-2, 0.5rem);
+          border: 0;
+          border-radius: inherit;
+          background: transparent;
+          box-shadow: none;
+          color: inherit;
+          font: inherit;
+          font-weight: inherit;
+          text-align: left;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          cursor: default;
+        }
+        .fig-select-trigger:hover,
+        .fig-select-trigger:active,
+        .fig-select-trigger:active:hover {
+          background: transparent;
+          box-shadow: none;
+          color: inherit;
+        }
+        .fig-select-trigger:focus-visible,
+        .fig-select-trigger[data-focus-visible] {
+          outline: var(--figma-focus-outline);
+          outline-offset: var(--figma-focus-outline-offset);
+        }
+        .fig-select-label {
+          display: block;
+          width: 100%;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          text-align: left;
+        }
+        /* Listbox chrome from document fig-select::part(listbox).
+           Overflow UI lives on slotted fig-select-options.
+           Never set display except when open — closed <dialog> must stay display:none. */
+        dialog[is="fig-popup"] {
+          flex-direction: column;
+          overflow: hidden;
+        }
+        dialog[is="fig-popup"][open] {
+          display: flex;
+        }
+        ::slotted(fig-select-options) {
+          flex: 1 1 auto;
+          min-height: 0;
+          max-height: inherit;
+        }
+      </style>
+    `;
+
+    const button = document.createElement("fig-button");
+    button.className = "fig-select-trigger";
+    button.setAttribute("part", "trigger");
+    button.setAttribute("variant", "ghost");
+    button.setAttribute("aria-haspopup", "listbox");
+    button.setAttribute("aria-expanded", "false");
 
     const labelEl = document.createElement("span");
     labelEl.className = "fig-select-label";
-    trigger.appendChild(labelEl);
+    labelEl.setAttribute("part", "label");
+    button.appendChild(labelEl);
 
     const popup = document.createElement("dialog", { is: "fig-popup" });
     popup.setAttribute("is", "fig-popup");
+    popup.setAttribute("part", "listbox");
     popup.setAttribute("theme", "menu");
     popup.setAttribute("role", "listbox");
-    const popupId = figLabUniqueId("fig-select-list");
-    popup.id = popupId;
-    trigger.setAttribute("aria-controls", popupId);
-    popup.setAttribute(
-      "position",
-      this.getAttribute("position") || "bottom left",
-    );
-    popup.anchor = trigger;
+    popup.id = figLabUniqueId("fig-select-list");
+    button.setAttribute("aria-controls", popup.id);
 
-    for (const option of options) popup.appendChild(option);
+    const panelSlot = document.createElement("slot");
+    panelSlot.setAttribute("name", "panel");
+    popup.appendChild(panelSlot);
 
-    this.#trigger = trigger;
+    shadow.append(button, popup);
+
+    this.#button = button;
     this.#labelEl = labelEl;
     this.#popup = popup;
-    this.append(trigger, popup);
+    this.#panelSlot = panelSlot;
+    popup.anchor = button;
+
+    this.#ensurePanelSlotAttrs();
     this.#setupListeners();
     this.#installPopupPositioning();
 
     if (!this.hasAttribute("value")) {
-      const selected = options.find((opt) =>
+      const selected = this.#getOptions().find((opt) =>
         figLabBooleanAttribute(opt, "selected"),
       );
       if (selected) this.setAttribute("value", selected.value);
@@ -4953,6 +5211,10 @@ class FigSelect extends HTMLElement {
   }
 
   #positionPopupOverSelected() {
+    // Content ResizeObserver / anchor tracking re-enter here after overflow
+    // scroll; keep the open-time alignment instead of fighting the scroller.
+    if (this.#freezeMenuPosition) return;
+
     const popup = this.#popup;
     const label = this.#labelEl;
     if (!popup || !label) {
@@ -4999,21 +5261,45 @@ class FigSelect extends HTMLElement {
 
     popup.style.left = `${Math.round(left)}px`;
     popup.style.top = `${Math.round(top)}px`;
+
+    // Nudge the panel scroller so the selected label stays over the trigger.
+    const panel = this.#getPanel();
+    const alignedTextRect = this.#getOptionTextRect(selected);
+    if (
+      alignedTextRect &&
+      panel &&
+      panel.scrollHeight > panel.clientHeight + 1
+    ) {
+      const deltaY = alignedTextRect.top - labelRect.top;
+      if (Math.abs(deltaY) > 0.5) {
+        panel.scrollTop += deltaY;
+      }
+      panel.syncOverflow?.();
+    }
   }
 
   #setupListeners() {
-    this.#trigger?.addEventListener("click", this.#boundTriggerClick);
-    this.#trigger?.addEventListener("keydown", this.#boundKeydown);
-    this.#popup?.addEventListener("click", this.#boundPopupClick);
+    this.#button?.addEventListener("click", this.#boundTriggerClick);
+    this.#button?.addEventListener("keydown", this.#boundKeydown);
+    // Host click: slotted options stay in light DOM (not dialog.contains).
+    this.addEventListener("click", this.#boundOptionClick);
     this.#popup?.addEventListener("keydown", this.#boundKeydown);
     this.#popup?.addEventListener("close", this.#boundPopupClose);
+    this.#panelSlot?.addEventListener("slotchange", this.#boundSlotChange);
   }
 
   #teardownListeners() {
-    this.#trigger?.removeEventListener("click", this.#boundTriggerClick);
-    this.#trigger?.removeEventListener("keydown", this.#boundKeydown);
-    this.#popup?.removeEventListener("click", this.#boundPopupClick);
+    this.#button?.removeEventListener("click", this.#boundTriggerClick);
+    this.#button?.removeEventListener("keydown", this.#boundKeydown);
+    this.removeEventListener("click", this.#boundOptionClick);
     this.#popup?.removeEventListener("keydown", this.#boundKeydown);
+    this.#popup?.removeEventListener("close", this.#boundPopupClose);
+    this.#panelSlot?.removeEventListener("slotchange", this.#boundSlotChange);
+  }
+
+  #handleSlotChange() {
+    this.#ensurePanelSlotAttrs();
+    this.#syncValue();
   }
 
   #setupObserver() {
@@ -5023,21 +5309,9 @@ class FigSelect extends HTMLElement {
       let needsSync = false;
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
-          for (const node of mutation.addedNodes) {
-            if (
-              node.nodeType === 1 &&
-              node.tagName === "FIG-SELECT-OPTION" &&
-              node.parentElement === this
-            ) {
-              this.#popup?.appendChild(node);
-              needsSync = true;
-            }
-          }
           if (
-            [...mutation.removedNodes].some(
-              (node) =>
-                node.nodeType === 1 && node.tagName === "FIG-SELECT-OPTION",
-            )
+            [...mutation.addedNodes].some((node) => this.#isMenuChild(node)) ||
+            [...mutation.removedNodes].some((node) => this.#isMenuChild(node))
           ) {
             needsSync = true;
           }
@@ -5064,15 +5338,15 @@ class FigSelect extends HTMLElement {
       subtree: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ["value", "disabled"],
+      attributeFilter: ["value", "disabled", "selected"],
     });
   }
 
   #getOptions({ enabledOnly = false } = {}) {
-    if (!this.#popup) return [];
-    const options = Array.from(
-      this.#popup.querySelectorAll(":scope > fig-select-option"),
-    );
+    const panel = this.#getPanel();
+    const options = panel
+      ? Array.from(panel.querySelectorAll(":scope > fig-select-option"))
+      : [];
     if (!enabledOnly) return options;
     return options.filter((opt) => !figLabBooleanAttribute(opt, "disabled"));
   }
@@ -5105,11 +5379,43 @@ class FigSelect extends HTMLElement {
 
   #syncDisabled() {
     const disabled = figLabBooleanAttribute(this, "disabled");
-    if (this.#trigger) {
-      if (disabled) this.#trigger.setAttribute("disabled", "");
-      else this.#trigger.removeAttribute("disabled");
+    if (this.#button) {
+      if (disabled) this.#button.setAttribute("disabled", "");
+      else this.#button.removeAttribute("disabled");
     }
     if (disabled && this.open) this.open = false;
+  }
+
+  #pickFallbackOption(options) {
+    if (!options.length) return null;
+    const selected = options.find((opt) =>
+      figLabBooleanAttribute(opt, "selected"),
+    );
+    if (selected && !figLabBooleanAttribute(selected, "disabled")) {
+      return selected;
+    }
+    return (
+      options.find((opt) => !figLabBooleanAttribute(opt, "disabled")) ||
+      options[0] ||
+      null
+    );
+  }
+
+  #emitValueEvents(value) {
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        detail: value,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        detail: value,
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   #syncValue() {
@@ -5117,11 +5423,38 @@ class FigSelect extends HTMLElement {
     this.#syncingValue = true;
     try {
       const options = this.#getOptions();
-      const value = this.getAttribute("value");
-      const match =
-        value !== null
-          ? options.find((opt) => this.#optionValue(opt) === value)
-          : null;
+      const hasValueAttr = this.hasAttribute("value");
+      const previousValue = hasValueAttr ? this.getAttribute("value") : null;
+      let match = hasValueAttr
+        ? options.find((opt) => this.#optionValue(opt) === previousValue)
+        : null;
+      let valueCorrected = false;
+
+      if (!match) {
+        if (hasValueAttr) {
+          // Value orphaned (option removed / value attr changed) — clamp or clear.
+          match = this.#pickFallbackOption(options);
+          if (match) {
+            const nextValue = this.#optionValue(match);
+            if (previousValue !== nextValue) {
+              this.setAttribute("value", nextValue);
+              valueCorrected = true;
+            }
+          } else {
+            this.removeAttribute("value");
+            valueCorrected = true;
+          }
+        } else {
+          // No host value yet — honor a selected option if present.
+          match = options.find((opt) =>
+            figLabBooleanAttribute(opt, "selected"),
+          );
+          if (match) {
+            this.setAttribute("value", this.#optionValue(match));
+            valueCorrected = true;
+          }
+        }
+      }
 
       for (const opt of options) {
         const selected = opt === match;
@@ -5135,7 +5468,14 @@ class FigSelect extends HTMLElement {
       if (this.#labelEl) this.#labelEl.textContent = label;
 
       const ariaLabel = this.getAttribute("label") || "Select";
-      this.#trigger?.setAttribute("aria-label", ariaLabel);
+      this.#button?.setAttribute("aria-label", ariaLabel);
+
+      // Don't scrollToOption while open — reposition/sync would fight overflow paging.
+      this.#getPanel()?.syncOverflow?.();
+
+      if (valueCorrected) {
+        this.#emitValueEvents(this.getAttribute("value") ?? "");
+      }
     } finally {
       this.#syncingValue = false;
     }
@@ -5148,15 +5488,19 @@ class FigSelect extends HTMLElement {
     const popupShowing = this.#popup?.matches?.(":open") ?? false;
     if (this.open && popupShowing) this.open = false;
     else {
-      if (this.#popup && this.#trigger) this.#popup.anchor = this.#trigger;
+      if (this.#popup && this.#button) this.#popup.anchor = this.#button;
       this.open = true;
     }
   }
 
-  #handlePopupClick(e) {
-    const option = e.target.closest("fig-select-option");
-    if (!option || !this.#popup?.contains(option)) return;
+  #handleOptionClick(e) {
+    const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+    const option = path.find(
+      (node) => node?.tagName === "FIG-SELECT-OPTION",
+    );
+    if (!option || !this.contains(option)) return;
     if (figLabBooleanAttribute(option, "disabled")) return;
+    // Do not stopPropagation — React light-DOM onClick must still fire.
     this.#selectOption(option);
   }
 
@@ -5166,11 +5510,11 @@ class FigSelect extends HTMLElement {
     const listOpen = this.open && (this.#popup?.matches?.(":open") ?? false);
     if (!listOpen) {
       if (
-        this.#trigger?.contains(e.target) &&
+        this.#button?.contains(e.target) &&
         (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
       ) {
         e.preventDefault();
-        if (this.#popup && this.#trigger) this.#popup.anchor = this.#trigger;
+        if (this.#popup && this.#button) this.#popup.anchor = this.#button;
         this.open = true;
         requestAnimationFrame(() => {
           const options = this.#getOptions({ enabledOnly: true });
@@ -5208,7 +5552,7 @@ class FigSelect extends HTMLElement {
       case "Escape":
         e.preventDefault();
         this.open = false;
-        this.#trigger?.focus();
+        this.#button?.focus();
         break;
       case "Enter":
       case " ": {
@@ -5224,8 +5568,8 @@ class FigSelect extends HTMLElement {
 
   #handlePopupClose() {
     if (this.hasAttribute("open")) this.removeAttribute("open");
-    this.#trigger?.setAttribute("aria-expanded", "false");
-    this.#trigger?.focus();
+    this.#button?.setAttribute("aria-expanded", "false");
+    this.#button?.focus();
     this.#focusedIndex = -1;
   }
 
@@ -5233,20 +5577,7 @@ class FigSelect extends HTMLElement {
     const value = this.#optionValue(option);
     this.setAttribute("value", value);
     this.#syncValue();
-    this.dispatchEvent(
-      new CustomEvent("input", {
-        detail: value,
-        bubbles: true,
-        composed: true,
-      }),
-    );
-    this.dispatchEvent(
-      new CustomEvent("change", {
-        detail: value,
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this.#emitValueEvents(value);
     this.open = false;
   }
 
@@ -5260,7 +5591,7 @@ class FigSelect extends HTMLElement {
       this.#focusedIndex = -1;
       return;
     }
-    const active = this.#popup?.querySelector("fig-select-option:focus");
+    const active = options.find((opt) => opt === document.activeElement);
     const index = active ? options.indexOf(active) : -1;
     this.#focusedIndex = index >= 0 ? index : this.#focusedIndex;
   }
@@ -5274,26 +5605,43 @@ class FigSelect extends HTMLElement {
   }
 
   #syncPopupWidth() {
-    if (!this.#popup || !this.#trigger) return;
-    const triggerWidth = Math.ceil(this.#trigger.getBoundingClientRect().width);
-    const minWidth = Math.max(triggerWidth, 96);
-    this.#popup.style.minWidth = `${minWidth}px`;
-    this.#popup.style.width = "max-content";
-    this.#popup.style.maxWidth = "min(20rem, calc(100vw - 1rem))";
+    if (!this.#popup || !this.#button) return;
+    const hostWidth = Math.ceil(this.getBoundingClientRect().width);
+    const triggerWidth = Math.ceil(this.#button.getBoundingClientRect().width);
+    const anchorWidth = Math.max(hostWidth, triggerWidth, 96);
+    const full = figLabBooleanAttribute(this, "full");
+
+    // Use !important — fig-select::part(listbox) width rules beat element.style.
+    if (full) {
+      this.#popup.style.setProperty("width", `${anchorWidth}px`, "important");
+      this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
+      this.#popup.style.setProperty("max-width", `${anchorWidth}px`, "important");
+    } else {
+      this.#popup.style.setProperty("width", "max-content", "important");
+      this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
+      this.#popup.style.setProperty(
+        "max-width",
+        "min(20rem, calc(100vw - 1rem))",
+        "important",
+      );
+    }
   }
 
   #openList() {
     if (!this.#popup || figLabBooleanAttribute(this, "disabled")) return;
-    if (this.#trigger) this.#popup.anchor = this.#trigger;
+    if (this.#button) this.#popup.anchor = this.#button;
     this.#installPopupPositioning();
+    this.#freezeMenuPosition = false;
     this.#syncValue();
     this.#syncPopupWidth();
     this.#popup.open = true;
     document.addEventListener("keydown", this.#boundKeydown, true);
-    this.#trigger?.setAttribute("aria-expanded", "true");
+    this.#button?.setAttribute("aria-expanded", "true");
     this.#focusedIndex = -1;
     requestAnimationFrame(() => {
+      this.#syncPopupWidth();
       this.#positionPopupOverSelected();
+      const panel = this.#getPanel();
       const options = this.#getEnabledOptions();
       const selectedIndex = options.findIndex(
         (opt) => this.#optionValue(opt) === this.value,
@@ -5301,19 +5649,23 @@ class FigSelect extends HTMLElement {
       if (selectedIndex >= 0) {
         this.#focusOptionAt(selectedIndex);
       } else if (
-        this.#trigger?.hasAttribute("data-focus-visible") ||
-        this.#trigger?.matches?.(":focus-visible")
+        this.#button?.hasAttribute("data-focus-visible") ||
+        this.#button?.matches?.(":focus-visible")
       ) {
         this.#focusOptionAt(0);
       }
+      panel?.syncOverflow?.();
+      // Freeze after open align so later positionPopup passes don't undo scroll.
+      this.#freezeMenuPosition = true;
     });
   }
 
   #closeList() {
     if (!this.#popup) return;
+    this.#freezeMenuPosition = false;
     document.removeEventListener("keydown", this.#boundKeydown, true);
     this.#popup.open = false;
-    this.#trigger?.setAttribute("aria-expanded", "false");
+    this.#button?.setAttribute("aria-expanded", "false");
   }
 }
 customElements.define("fig-select", FigSelect);
