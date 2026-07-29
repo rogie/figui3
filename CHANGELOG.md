@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.18.4]
+
+### Fixed
+
+- `fig-canvas-control` rotate cursor only on the outside hit-area ring; handle body keeps the normal point cursor (point-point + angle).
+- Active rotate drag keeps the rotate cursor (`fig-lab-rotate-active`) instead of switching to move.
+
+### Changed
+
+- `propskit-select` nested `fig-select` spans the full field width (value right-aligned over the label).
+
 ## [6.18.3]
 
 ### Fixed

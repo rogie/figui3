@@ -273,15 +273,20 @@ propskit-select {
 
     fig-select {
       position: relative;
-      flex: 0 0 auto;
-      width: fit-content;
+      display: flex;
+      flex: 1 1 auto;
+      width: 100%;
       min-width: 0;
-      margin-left: auto;
+      height: 100%;
       border-radius: var(--radius-medium);
       background: transparent;
       box-shadow: none;
 
-      --fig-select-trigger-width: auto;
+      --fig-select-trigger-width: 100%;
+
+      &::part(label) {
+        text-align: right;
+      }
     }
   }
 }
