@@ -1758,6 +1758,11 @@ class FigCanvasControl extends HTMLElement {
   #moveCursorPrevBodyCursor = "";
   #moveCursorPrevBodyCursorPriority = "";
   #boundMoveCursorEnd = null;
+  #rotateCursorPointerId = null;
+  #rotateCursorHandle = null;
+  #rotateCursorPrevBodyCursor = "";
+  #rotateCursorPrevBodyCursorPriority = "";
+  #boundRotateCursorEnd = null;
 
   get #type() {
     return this.getAttribute("type") || "point";
@@ -1858,7 +1863,9 @@ class FigCanvasControl extends HTMLElement {
   disconnectedCallback() {
     this.#teardownRadiusDrag();
     this.#deactivateMoveCursor();
+    this.#deactivateRotateCursor();
     document.body.classList.remove("fig-lab-move-active");
+    document.body.classList.remove("fig-lab-rotate-active");
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
@@ -2020,19 +2027,27 @@ class FigCanvasControl extends HTMLElement {
       this.#createSecondHandle(disabled, tooltips, handleSurface);
     }
 
-    this.#setupHandleMoveCursor(this.#pointHandle);
-    this.#setupHandleMoveCursor(this.#angleHandle);
-    this.#setupHandleMoveCursor(this.#secondHandle);
+    this.#setupHandleDragCursor(this.#pointHandle);
+    this.#setupHandleDragCursor(this.#angleHandle);
+    this.#setupHandleDragCursor(this.#secondHandle);
     this.#setupEventListeners();
     this.#wireHoverTooltips();
     requestAnimationFrame(() => this.#syncPositions());
   }
 
-  #setupHandleMoveCursor(handle) {
+  #setupHandleDragCursor(handle) {
     if (!handle) return;
     handle.addEventListener(
       "pointerdown",
-      (e) => this.#activateMoveCursor(e),
+      (e) => {
+        // Hit-area (outside ring) = rotate; handle body = move/resize.
+        const onHitArea = e.target?.classList?.contains("fig-handle-hit-area");
+        if (onHitArea && handle.querySelector(".fig-handle-hit-area")) {
+          this.#activateRotateCursor(e, handle);
+        } else {
+          this.#activateMoveCursor(e);
+        }
+      },
       { capture: true },
     );
   }
@@ -2098,6 +2113,86 @@ class FigCanvasControl extends HTMLElement {
       window.removeEventListener("pointerup", this.#boundMoveCursorEnd);
       window.removeEventListener("pointercancel", this.#boundMoveCursorEnd);
       window.removeEventListener("blur", this.#boundMoveCursorEnd);
+    }
+  }
+
+  #rotateDegForHandle(handle) {
+    if (!handle) return 0;
+    if (handle === this.#angleHandle) return this.#angle;
+    if (!this.#hasSecondPoint) return 0;
+    const lineDeg = this.#pointPointLineDeg();
+    return handle === this.#pointHandle ? lineDeg + 180 : lineDeg;
+  }
+
+  #refreshBodyRotateCursor() {
+    if (this.#rotateCursorPointerId === null) return;
+    const cursor = this.#rotateCursorSvg(
+      this.#rotateDegForHandle(this.#rotateCursorHandle),
+    );
+    document.body.style.setProperty("--fig-lab-cursor-rotate", cursor);
+    document.body.style.setProperty("cursor", cursor, "important");
+  }
+
+  #activateRotateCursor(e, handle) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    if (e?.button !== undefined && e.button !== 0) return;
+    if (e?.isPrimary === false) return;
+
+    if (this.#rotateCursorPointerId === null) {
+      this.#rotateCursorPrevBodyCursor =
+        document.body.style.getPropertyValue("cursor");
+      this.#rotateCursorPrevBodyCursorPriority =
+        document.body.style.getPropertyPriority("cursor");
+    }
+
+    this.#rotateCursorPointerId = e?.pointerId ?? -1;
+    this.#rotateCursorHandle = handle;
+    document.body.classList.add("fig-lab-rotate-active");
+    this.#refreshBodyRotateCursor();
+
+    if (!this.#boundRotateCursorEnd) {
+      this.#boundRotateCursorEnd = (event) => {
+        if (
+          event?.pointerId !== undefined &&
+          this.#rotateCursorPointerId !== null &&
+          event.pointerId !== this.#rotateCursorPointerId
+        ) {
+          return;
+        }
+        if (event?.type === "blur") {
+          this.#deactivateRotateCursor();
+        } else {
+          requestAnimationFrame(() => this.#deactivateRotateCursor());
+        }
+      };
+    }
+
+    window.addEventListener("pointerup", this.#boundRotateCursorEnd);
+    window.addEventListener("pointercancel", this.#boundRotateCursorEnd);
+    window.addEventListener("blur", this.#boundRotateCursorEnd);
+  }
+
+  #deactivateRotateCursor() {
+    if (this.#rotateCursorPointerId === null) return;
+    document.body.classList.remove("fig-lab-rotate-active");
+    document.body.style.removeProperty("--fig-lab-cursor-rotate");
+    if (this.#rotateCursorPrevBodyCursor) {
+      document.body.style.setProperty(
+        "cursor",
+        this.#rotateCursorPrevBodyCursor,
+        this.#rotateCursorPrevBodyCursorPriority,
+      );
+    } else {
+      document.body.style.removeProperty("cursor");
+    }
+    this.#rotateCursorPointerId = null;
+    this.#rotateCursorHandle = null;
+    this.#rotateCursorPrevBodyCursor = "";
+    this.#rotateCursorPrevBodyCursorPriority = "";
+    if (this.#boundRotateCursorEnd) {
+      window.removeEventListener("pointerup", this.#boundRotateCursorEnd);
+      window.removeEventListener("pointercancel", this.#boundRotateCursorEnd);
+      window.removeEventListener("blur", this.#boundRotateCursorEnd);
     }
   }
 
@@ -2401,11 +2496,27 @@ class FigCanvasControl extends HTMLElement {
     return `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='rotate(${r} 16 16)'%3E%3Cg filter='url(%23f)'%3E%3Cpath d='M12.5607 22.4393L12.0216 21.9002C17.1558 21.2216 21.2216 17.1558 21.9002 12.0216L22.4393 12.5607C23.0251 13.1464 23.9749 13.1464 24.5607 12.5607C25.1464 11.9749 25.1464 11.0251 24.5607 10.4393L21.5607 7.43934C20.9749 6.85355 20.0251 6.85355 19.4393 7.43934L16.4393 10.4393C15.8536 11.0251 15.8536 11.9749 16.4393 12.5607C17.0251 13.1464 17.9749 13.1464 18.5607 12.5607L18.8056 12.3157C18.1013 15.5527 15.5527 18.1013 12.3157 18.8056L12.5607 18.5607C13.1464 17.9749 13.1464 17.0251 12.5607 16.4393C11.9749 15.8536 11.0251 15.8536 10.4393 16.4393L7.43934 19.4393C6.85356 20.0251 6.85356 20.9749 7.43934 21.5607L10.4393 24.5607C11.0251 25.1464 11.9749 25.1464 12.5607 24.5607C13.1464 23.9749 13.1464 23.0251 12.5607 22.4393Z' fill='white'/%3E%3C/g%3E%3Cpath d='M23.8536 11.8536C23.6583 12.0488 23.3417 12.0488 23.1464 11.8536L21 9.70711V10.5C21 16.299 16.299 21 10.5 21H9.70711L11.8536 23.1464C12.0488 23.3417 12.0488 23.6583 11.8536 23.8536C11.6583 24.0488 11.3417 24.0488 11.1464 23.8536L8.14645 20.8536C7.95119 20.6583 7.95119 20.3417 8.14645 20.1464L11.1464 17.1464C11.3417 16.9512 11.6583 16.9512 11.8536 17.1464C12.0488 17.3417 12.0488 17.6583 11.8536 17.8536L9.70711 20H10.5C15.7467 20 20 15.7467 20 10.5V9.70711L17.8536 11.8536C17.6583 12.0488 17.3417 12.0488 17.1464 11.8536C16.9512 11.6583 16.9512 11.3417 17.1464 11.1464L20.1464 8.14645C20.3417 7.95119 20.6583 7.95119 20.8536 8.14645L23.8536 11.1464C24.0488 11.3417 24.0488 11.6583 23.8536 11.8536Z' fill='black'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='f' x='4' y='5' width='24' height='24' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='a'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='b'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0'/%3E%3CfeBlend in2='a' result='c'/%3E%3CfeBlend in='SourceGraphic' in2='c'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E") 16 16, pointer`;
   }
 
+  #setHitCursor(el, cursor) {
+    if (!el) return;
+    // !important — fig-canvas-control hover rules override plain inline cursor.
+    el.style.setProperty("cursor", cursor, "important");
+  }
+
+  #applyRotateCursor(handle, deg) {
+    if (!handle) return;
+    // Rotate only on the outside hit-area ring — handle body uses normal point cursor.
+    const hitArea = handle.querySelector(".fig-handle-hit-area");
+    if (!hitArea) return;
+    hitArea.setAttribute("data-cursor", "rotate");
+    this.#setHitCursor(hitArea, this.#rotateCursorSvg(deg));
+    if (this.#rotateCursorHandle === handle) {
+      this.#refreshBodyRotateCursor();
+    }
+  }
+
   #syncAngleCursor() {
     if (!this.#angleHandle || !this.#hasAngle) return;
-    const hitArea = this.#angleHandle.querySelector(".fig-handle-hit-area");
-    if (!hitArea) return;
-    hitArea.style.cursor = this.#rotateCursorSvg(this.#angle);
+    this.#applyRotateCursor(this.#angleHandle, this.#angle);
   }
 
   #pointPointLineDeg() {
@@ -2415,13 +2526,11 @@ class FigCanvasControl extends HTMLElement {
   #syncPointPointCursors() {
     if (!this.#hasSecondPoint) return;
     const deg = this.#pointPointLineDeg();
-    const setHitCursor = (handle, rotateDeg) => {
-      if (!handle) return;
-      const hitArea = handle.querySelector(".fig-handle-hit-area");
-      if (hitArea) hitArea.style.cursor = this.#rotateCursorSvg(rotateDeg);
-    };
-    setHitCursor(this.#pointHandle, deg + 180);
-    setHitCursor(this.#secondHandle, deg);
+    // Handle body: leave cursor to CSS (same as default point handle).
+    this.#pointHandle?.style.removeProperty("cursor");
+    this.#secondHandle?.style.removeProperty("cursor");
+    this.#applyRotateCursor(this.#pointHandle, deg + 180);
+    this.#applyRotateCursor(this.#secondHandle, deg);
   }
 
   #positionHandle(handle, xPct, yPct, rect) {
@@ -2795,7 +2904,7 @@ class FigCanvasControl extends HTMLElement {
         (Math.atan2(e.clientY - rect.top - cy, e.clientX - rect.left - cx) *
           180) /
         Math.PI;
-      circle.style.cursor = this.#resizeCursorSvg(deg);
+      this.#setHitCursor(circle, this.#resizeCursorSvg(deg));
     });
     const onDown = (e) => {
       if (figLabBooleanAttribute(this, "disabled")) return;

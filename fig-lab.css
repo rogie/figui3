@@ -848,6 +848,11 @@ body.fig-lab-move-active * {
   cursor: var(--fig-lab-cursor-move) !important;
 }
 
+body.fig-lab-rotate-active,
+body.fig-lab-rotate-active * {
+  cursor: var(--fig-lab-cursor-rotate) !important;
+}
+
 fig-canvas-control {
   display: contents;
   --fig-canvas-control-line-stroke: light-dark(
@@ -888,13 +893,14 @@ fig-canvas-control {
         --fig-handle-padding: 2px !important;
       }
       &[selected]:not([selected="false"]){
-        --fig-handle-padding: 1px;
+        --fig-handle-padding: 2px;
       }
     }
   }
 
+  /* Point handle hover — resize/rotate hit-areas set cursor via JS !important. */
   fig-handle:hover,
-  fig-handle:hover .fig-handle-hit-area {
+  fig-handle:hover .fig-handle-hit-area:not([data-cursor]) {
     cursor: var(--fig-lab-cursor) !important;
   }
 
@@ -904,7 +910,7 @@ fig-canvas-control {
   }
 
   fig-handle:is(:active, .active, .dragging),
-  fig-handle:is(:active, .active, .dragging) .fig-handle-hit-area {
+  fig-handle:is(:active, .active, .dragging) .fig-handle-hit-area:not([data-cursor]) {
     cursor: var(--fig-lab-cursor-move) !important;
   }
 
