@@ -764,10 +764,13 @@ propskit-slider {
       --slider-handle-shadow:
         inset 0 0 0 var(--slider-thumb-height) var(--slider-thumb-color),
         var(--handle-shadow) !important;
-      /*--slider-thumb-opacity: calc(
+      /* Fade handle toward track ends (0 at edges, 1 at center). Squared = sharper falloff. */
+      --slider-thumb-edge-fade: calc(
         min(var(--slider-complete), calc(1 - var(--slider-complete))) * 2
-      );*/
-      --slider-thumb-opacity: 0;
+      );
+      --slider-thumb-opacity: calc(
+        var(--slider-thumb-edge-fade) * var(--slider-thumb-edge-fade)
+      );
       --slider-tick-opacity: 0.5;
 
       &[type="delta"] {
@@ -915,12 +918,6 @@ propskit-slider {
         background:
           linear-gradient(to right, transparent, var(--color)),
           var(--slider-checkerboard);
-      }
-    }
-    &:hover,
-    &:focus-within {
-      fig-slider {
-        --slider-thumb-opacity: 1;
       }
     }
     datalist {

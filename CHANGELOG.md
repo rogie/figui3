@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.19.1]
+
+### Fixed
+
+- Restored `propskit-slider` handle edge fade (opacity falls off toward track ends; sharper squared curve).
+
 ## [6.19.0]
 
 ### Added
