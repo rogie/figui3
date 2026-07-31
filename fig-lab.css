@@ -8,6 +8,135 @@
  *   <link rel="stylesheet" href="fig-lab.css">
  */
 
+propskit-group {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--spacer-2-5);
+
+  p {
+    margin: 0 var(--spacer-3) var(--spacer-2) var(--spacer-3);
+  }
+
+  & + propskit-group {
+    box-shadow: inset 0 1px 0 0 var(--figma-color-border);
+
+    &:not([name]) {
+      padding-top: var(--spacer-2-5);
+    }
+  }
+
+  &[borderless]:not([borderless="false"]) + propskit-group {
+    box-shadow: none;
+
+    &:not([name]) {
+      padding-top: 0;
+    }
+  }
+
+  &[compact]:not([compact="false"]) > fig-header {
+    --fig-header-height: var(--spacer-5);
+    height: var(--fig-header-height);
+  }
+
+  & > fig-header {
+    cursor: default;
+    padding-left: var(--spacer-3);
+
+    &:focus-visible {
+      --figma-focus-outline-radius: var(--radius-medium);
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+      border-radius: var(--figma-focus-outline-radius);
+    }
+
+    h3 {
+      margin: 0;
+      user-select: none;
+
+      .propskit-group-chevron {
+        --icon: var(--icon-16-chevron);
+        --size: 1rem;
+        color: var(--figma-color-text-tertiary);
+        transform: rotate(-90deg);
+        transition: transform var(--transition-duration)
+          var(--transition-timing-function);
+        margin-left: calc(var(--spacer-3) * -1);
+      }
+    }
+  }
+
+  &:not([open]):not([open="true"]),
+  &[open="false"] {
+    margin-bottom: 0;
+
+    & > fig-header {
+      color: var(--figma-color-text-secondary);
+
+      &:hover {
+        color: var(--figma-color-text);
+
+        .propskit-group-chevron {
+          color: inherit;
+        }
+      }
+    }
+
+    & > :not(fig-header) {
+      display: none;
+    }
+  }
+
+  &[open]:not([open="false"]) > fig-header .propskit-group-chevron {
+    transform: rotate(0deg);
+  }
+
+  & > fig-header > .propskit-group-reset-tooltip {
+    flex-shrink: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    color: var(--figma-color-icon-tertiary);
+    transition:
+      opacity var(--transition-duration) var(--transition-timing-function),
+      visibility var(--transition-duration) var(--transition-timing-function),
+      color var(--transition-duration) var(--transition-timing-function);
+
+    fig-icon {
+      color: var(--figma-color-icon-tertiary);
+    }
+
+    &:hover,
+    &:focus-within {
+      fig-icon {
+        color: var(--figma-color-icon-primary, var(--figma-color-icon));
+      }
+    }
+  }
+
+  /* Reset only when a child control differs from its captured default. */
+  &[data-dirty]:not([data-dirty="false"]):not([show-reset="false"])
+    > fig-header
+    > .propskit-group-reset-tooltip:not([hidden]) {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  &[show-reset="false"] > fig-header > .propskit-group-reset-tooltip {
+    display: none;
+  }
+}
+
+main:has(> propskit-group[name]:first-child),
+fig-content:has(> propskit-group[name]:first-child) {
+  padding-top: 0;
+}
+
+main:has(> propskit-group[name]:last-child),
+fig-content:has(> propskit-group[name]:last-child) {
+  padding-bottom: 0;
+}
+
 propskit-switch {
   --propskit-switch-height: 2rem;
   --propskit-switch-vertical-padding: var(--spacer-1);
@@ -235,6 +364,8 @@ propskit-select {
     display: flex;
     align-items: center;
     height: 100%;
+    /* Reset fig-field vertical padding so select fills the chrome. */
+    padding: 0;
     border-radius: var(--radius-medium);
     background-color: var(--figma-color-bg-secondary);
 
@@ -275,6 +406,7 @@ propskit-select {
       position: relative;
       display: flex;
       flex: 1 1 auto;
+      align-self: stretch;
       width: 100%;
       min-width: 0;
       height: 100%;
@@ -1471,6 +1603,7 @@ fig-select-option {
   position: relative;
   height: var(--spacer-4);
   padding: 0 var(--spacer-2);
+  padding-right: var(--spacer-3);
   border-radius: var(--radius-medium);
   color: var(--figma-color-text-menu);
   font-weight: var(--body-medium-fontWeight);

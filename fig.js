@@ -15141,7 +15141,7 @@ customElements.define("fig-preview", FigPreview);
 const FIG_ICON_TOKENS = {
   chevron: "--icon-16-chevron",
   checkmark: "--icon-16-checkmark",
-  reset: "--icon-16-reset",
+  reset: { medium: "--icon-24-reset", small: "--icon-16-reset" },
   "arrow-left": {
     medium: "--icon-24-arrow-left",
     small: "--icon-16-arrow-left",

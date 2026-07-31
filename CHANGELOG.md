@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.19.0]
+
+### Added
+
+- `propskit-group` — always-collapsible property group with optional header reset (`show-reset`, default true). Reset appears only while child propskit fields are dirty and restores them to captured defaults.
+- Lab examples for `propskit-group` (default, compact, no-reset).
+- `--icon-24-reset` token; `fig-icon name="reset"` resolves medium/small sizes.
+
+### Fixed
+
+- `propskit-color` value forwarding uses live color from input events (stale `value` attribute no longer blocks edits or breaks group reset).
+
 ## [6.18.4]
 
 ### Fixed

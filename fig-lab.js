@@ -243,6 +243,7 @@ class PropskitColor extends HTMLElement {
   #boundHandleInput = null;
   #boundHandleChange = null;
   #boundHandleClick = this.#handleClick.bind(this);
+  #initialValue = null;
 
   static get observedAttributes() {
     return ["label", "direction", "aria-label"];
@@ -253,6 +254,10 @@ class PropskitColor extends HTMLElement {
     this.#syncField();
     this.#syncInputAttributes();
     this.#bindInputEvents();
+    if (this.#initialValue === null) {
+      this.#initialValue =
+        this.getAttribute("default") ?? this.getAttribute("value") ?? "";
+    }
     this.removeEventListener("click", this.#boundHandleClick);
     this.addEventListener("click", this.#boundHandleClick);
 
@@ -359,6 +364,7 @@ class PropskitColor extends HTMLElement {
       "size",
       "aria-label",
       "text",
+      "default",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -374,7 +380,16 @@ class PropskitColor extends HTMLElement {
       if (!nextManaged.has(attrName)) this.#input.removeAttribute(attrName);
     }
     for (const attrName of inputAttrs) {
-      this.#input.setAttribute(attrName, this.getAttribute(attrName) ?? "");
+      const next = this.getAttribute(attrName) ?? "";
+      // Soft sync only. Never force-clear value here — that fights live edits
+      // (fig-input-color often keeps a stale value attribute while editing).
+      if (
+        attrName === "value" &&
+        this.#input.getAttribute("value") === next
+      ) {
+        continue;
+      }
+      this.#input.setAttribute(attrName, next);
     }
 
     this.#input.setAttribute("text", "true");
@@ -399,10 +414,31 @@ class PropskitColor extends HTMLElement {
     }
   }
 
+  #valueFromColorEvent(event) {
+    const detail =
+      event instanceof CustomEvent && event.detail !== undefined
+        ? event.detail
+        : undefined;
+    if (typeof detail === "string" && detail) return detail;
+    if (detail && typeof detail === "object") {
+      if (typeof detail.value === "string" && detail.value) return detail.value;
+      if (typeof detail.hex === "string" && detail.hex) return detail.hex;
+      if (typeof detail.color === "string" && detail.color) return detail.color;
+    }
+    // Prefer live JS value — fig-input-color often leaves the attribute stale.
+    if (typeof this.#input?.value === "string" && this.#input.value) {
+      return this.#input.value;
+    }
+    return this.#input?.getAttribute("value") ?? "";
+  }
+
   #forwardInputEvent(type, event) {
     event.stopImmediatePropagation();
-    const value = this.#input?.getAttribute("value") ?? "";
+    const value = this.#valueFromColorEvent(event);
     this.setAttribute("value", value);
+    if (this.#input && this.#input.getAttribute("value") !== value) {
+      this.#input.setAttribute("value", value);
+    }
     const detail =
       event instanceof CustomEvent && event.detail !== undefined
         ? event.detail
@@ -425,15 +461,55 @@ class PropskitColor extends HTMLElement {
   }
 
   get value() {
-    return this.#input?.getAttribute("value") ?? this.getAttribute("value") ?? "";
+    return this.getAttribute("value") ?? this.#input?.value ?? this.#input?.getAttribute("value") ?? "";
   }
 
   set value(nextValue) {
     if (nextValue === null || nextValue === undefined || nextValue === "") {
       this.removeAttribute("value");
-    } else {
-      this.setAttribute("value", String(nextValue));
+      this.#input?.removeAttribute("value");
+      return;
     }
+    const next = String(nextValue);
+    this.setAttribute("value", next);
+    if (this.#input && this.#input.getAttribute("value") !== next) {
+      this.#input.setAttribute("value", next);
+    }
+  }
+
+  /** Force fig-input-color UI refresh even when the hex string is unchanged. */
+  #forceInputValue(next) {
+    if (!this.#input) return;
+    if (this.#input.getAttribute("value") === next) {
+      this.#input.removeAttribute("value");
+    }
+    this.#input.setAttribute("value", next);
+  }
+
+  #defaultValue() {
+    return this.getAttribute("default") ?? this.#initialValue ?? "";
+  }
+
+  resetToDefault() {
+    const next = String(this.#defaultValue());
+    this.setAttribute("value", next);
+    this.#forceInputValue(next);
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        detail: next,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        detail: next,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
   }
 
   focus(options) {
@@ -521,6 +597,8 @@ class PropskitSelect extends HTMLElement {
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
     const select = document.createElement("fig-select");
+    // Match menu width to the full-surface control.
+    select.setAttribute("full", "");
     field.append(label, select);
     this.#field = field;
     this.#label = label;
@@ -556,6 +634,8 @@ class PropskitSelect extends HTMLElement {
         this.#label.textContent?.trim() ||
         "Select",
     );
+    // Always match menu width to the control surface.
+    this.#select.setAttribute("full", "");
   }
 
   #getForwardedSelectAttrNames() {
@@ -569,6 +649,7 @@ class PropskitSelect extends HTMLElement {
       "id",
       "size",
       "aria-label",
+      "full",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -1100,6 +1181,397 @@ class PropskitNumber extends HTMLElement {
   }
 }
 customElements.define("propskit-number", PropskitNumber);
+
+/* Collapsible property group — always collapsible (no collapsible attr). */
+class PropskitGroup extends HTMLElement {
+  static observedAttributes = ["name", "open", "show-reset"];
+
+  static #CONTROL_SELECTOR = [
+    "propskit-color",
+    "propskit-number",
+    "propskit-select",
+    "propskit-slider",
+    "propskit-switch",
+    "propskit-text",
+  ].join(",");
+
+  #header = null;
+  #chevron = null;
+  #resetTooltip = null;
+  #defaults = new WeakMap();
+  #childObserver = null;
+  #dirtyFrame = 0;
+  #boundOnControlEvent = () => this.#queueDirtySync();
+
+  connectedCallback() {
+    this.#render();
+    this.#bindDirtyListeners();
+    requestAnimationFrame(() => {
+      this.#ensureDefaults();
+      this.#syncDirtyState();
+    });
+  }
+
+  disconnectedCallback() {
+    this.#unbindDirtyListeners();
+    if (this.#dirtyFrame) {
+      cancelAnimationFrame(this.#dirtyFrame);
+      this.#dirtyFrame = 0;
+    }
+    if (this.#header) {
+      this.#header.removeEventListener("click", this.#handleToggle);
+      this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
+    }
+    const resetBtn = this.#resetTooltip?.querySelector("fig-button");
+    resetBtn?.removeEventListener("click", this.#handleReset);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name === "open") {
+      this.#header?.setAttribute("aria-expanded", String(this.open));
+      return;
+    }
+    if (name === "show-reset") {
+      this.#syncResetButton();
+      this.#syncDirtyState();
+      return;
+    }
+    this.#render();
+  }
+
+  get open() {
+    const attr = this.getAttribute("open");
+    return attr !== null && attr !== "false";
+  }
+
+  set open(value) {
+    const was = this.open;
+    if (value) {
+      this.setAttribute("open", "true");
+    } else {
+      this.setAttribute("open", "false");
+    }
+    this.#header?.setAttribute("aria-expanded", String(!!value));
+    if (was !== !!value) {
+      this.dispatchEvent(
+        new CustomEvent("openchange", {
+          detail: { open: !!value },
+          bubbles: true,
+        }),
+      );
+    }
+  }
+
+  /** When true (default), show the reset control while the group is dirty. */
+  get showReset() {
+    const attr = this.getAttribute("show-reset");
+    if (attr === null) return true;
+    return attr !== "false";
+  }
+
+  set showReset(value) {
+    if (value) this.setAttribute("show-reset", "true");
+    else this.setAttribute("show-reset", "false");
+  }
+
+  get dirty() {
+    return this.hasAttribute("data-dirty") && this.getAttribute("data-dirty") !== "false";
+  }
+
+  /** Restore all propskit controls in this group to their captured defaults. */
+  resetProperties() {
+    this.#resetControls();
+  }
+
+  #bindDirtyListeners() {
+    this.removeEventListener("input", this.#boundOnControlEvent, true);
+    this.removeEventListener("change", this.#boundOnControlEvent, true);
+    this.addEventListener("input", this.#boundOnControlEvent, true);
+    this.addEventListener("change", this.#boundOnControlEvent, true);
+
+    if (!this.#childObserver) {
+      this.#childObserver = new MutationObserver(() => {
+        this.#ensureDefaults();
+        this.#queueDirtySync();
+      });
+    }
+    this.#childObserver.disconnect();
+    this.#childObserver.observe(this, { childList: true, subtree: true });
+  }
+
+  #unbindDirtyListeners() {
+    this.removeEventListener("input", this.#boundOnControlEvent, true);
+    this.removeEventListener("change", this.#boundOnControlEvent, true);
+    this.#childObserver?.disconnect();
+  }
+
+  #queueDirtySync() {
+    if (this.#dirtyFrame) return;
+    this.#dirtyFrame = requestAnimationFrame(() => {
+      this.#dirtyFrame = 0;
+      this.#ensureDefaults();
+      this.#syncDirtyState();
+    });
+  }
+
+  #isResetTarget(target) {
+    return (
+      target instanceof Element &&
+      Boolean(
+        target.closest(
+          ".propskit-group-reset, .propskit-group-reset-tooltip",
+        ),
+      )
+    );
+  }
+
+  #handleToggle = (e) => {
+    if (this.#isResetTarget(e.target)) return;
+    e.stopPropagation();
+    this.open = !this.open;
+  };
+
+  #handleHeaderKeyDown = (e) => {
+    if (this.#isResetTarget(e.target)) return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    e.stopPropagation();
+    this.open = !this.open;
+  };
+
+  #handleReset = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.#resetControls();
+  };
+
+  #controls() {
+    return [
+      ...this.querySelectorAll(PropskitGroup.#CONTROL_SELECTOR),
+    ].filter((el) => el.closest("propskit-group") === this);
+  }
+
+  #snapshotControl(el) {
+    if (el.localName === "propskit-switch") {
+      return { kind: "checked", value: Boolean(el.checked) };
+    }
+    if ("value" in el) {
+      return { kind: "value", value: el.value };
+    }
+    return { kind: "value", value: el.getAttribute("value") ?? "" };
+  }
+
+  #ensureDefaults() {
+    for (const el of this.#controls()) {
+      if (this.#defaults.has(el)) continue;
+      if (el.hasAttribute("default")) {
+        if (el.localName === "propskit-switch") {
+          this.#defaults.set(el, {
+            kind: "checked",
+            value: figLabBooleanAttribute(el, "default"),
+          });
+          continue;
+        }
+        this.#defaults.set(el, {
+          kind: "value",
+          value: el.getAttribute("default") ?? "",
+        });
+        continue;
+      }
+      this.#defaults.set(el, this.#snapshotControl(el));
+    }
+  }
+
+  #controlIsDirty(el) {
+    const snap = this.#defaults.get(el);
+    if (!snap) return false;
+    const cur = this.#snapshotControl(el);
+    if (snap.kind === "checked") {
+      return Boolean(cur.value) !== Boolean(snap.value);
+    }
+    return String(cur.value ?? "") !== String(snap.value ?? "");
+  }
+
+  #computeDirty() {
+    for (const el of this.#controls()) {
+      if (this.#controlIsDirty(el)) return true;
+    }
+    return false;
+  }
+
+  #syncDirtyState() {
+    const dirty = this.#computeDirty();
+    if (dirty) this.setAttribute("data-dirty", "");
+    else this.removeAttribute("data-dirty");
+    this.#syncResetButton();
+  }
+
+  #restoreControl(el) {
+    const snap = this.#defaults.get(el);
+    if (!snap) return;
+
+    if (snap.kind === "checked") {
+      el.checked = snap.value;
+      const detail = {
+        checked: Boolean(snap.value),
+        value: el.getAttribute("value") ?? "",
+      };
+      el.dispatchEvent(
+        new CustomEvent("input", {
+          detail,
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        }),
+      );
+      el.dispatchEvent(
+        new CustomEvent("change", {
+          detail,
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        }),
+      );
+      return;
+    }
+
+    if (typeof el.resetToDefault === "function") {
+      const prevDefault = el.getAttribute("default");
+      el.setAttribute("default", String(snap.value ?? ""));
+      el.resetToDefault();
+      if (prevDefault === null) el.removeAttribute("default");
+      else el.setAttribute("default", prevDefault);
+      return;
+    }
+
+    el.value = snap.value;
+    const detail =
+      el.getAttribute?.("value") ??
+      ("value" in el ? el.value : snap.value);
+    el.dispatchEvent(
+      new CustomEvent("input", {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+    el.dispatchEvent(
+      new CustomEvent("change", {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #resetControls() {
+    this.#ensureDefaults();
+    for (const el of this.#controls()) this.#restoreControl(el);
+    this.#syncDirtyState();
+    this.dispatchEvent(
+      new CustomEvent("reset", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #syncResetButton() {
+    if (!this.showReset) {
+      this.#resetTooltip?.setAttribute("hidden", "");
+      return;
+    }
+    this.#ensureResetButton();
+    this.#resetTooltip?.removeAttribute("hidden");
+  }
+
+  #ensureResetButton() {
+    if (!this.#header || !this.showReset) return;
+    let tip = this.#header.querySelector(":scope > .propskit-group-reset-tooltip");
+    if (!tip) {
+      tip = document.createElement("fig-tooltip");
+      tip.className = "propskit-group-reset-tooltip";
+      tip.setAttribute("text", "Reset properties");
+      const btn = document.createElement("fig-button");
+      btn.className = "propskit-group-reset";
+      btn.setAttribute("variant", "ghost");
+      btn.setAttribute("icon", "");
+      btn.setAttribute("aria-label", "Reset properties");
+      const icon = document.createElement("fig-icon");
+      icon.setAttribute("name", "reset");
+      btn.appendChild(icon);
+      tip.appendChild(btn);
+      this.#header.appendChild(tip);
+      btn.addEventListener("click", this.#handleReset);
+    } else {
+      const btn = tip.querySelector("fig-button");
+      btn?.removeEventListener("click", this.#handleReset);
+      btn?.addEventListener("click", this.#handleReset);
+    }
+    this.#resetTooltip = tip;
+  }
+
+  #render() {
+    const nameAttr = this.getAttribute("name");
+    const label = nameAttr || "Group";
+    const userHeader = this.querySelector(":scope > fig-header");
+
+    if (userHeader) {
+      this.#header = userHeader;
+    } else if (!this.#header || !this.#header.dataset.generated) {
+      this.#header = document.createElement("fig-header");
+      this.#header.setAttribute("borderless", "");
+      this.#header.dataset.generated = "true";
+      this.prepend(this.#header);
+    }
+
+    let h3 = this.#header.querySelector("h3");
+    if (!h3) {
+      h3 = document.createElement("h3");
+      this.#header.prepend(h3);
+    }
+    if (!h3.id) h3.id = figLabUniqueId("propskit-group");
+    if (this.#header.dataset.generated) {
+      // Preserve chevron while updating the title text node.
+      const chevron = h3.querySelector(".propskit-group-chevron");
+      h3.textContent = label;
+      if (chevron) h3.prepend(chevron);
+    }
+    if (!this.hasAttribute("role")) this.setAttribute("role", "group");
+    if (
+      !this.hasAttribute("aria-label") &&
+      !this.hasAttribute("aria-labelledby")
+    ) {
+      this.setAttribute("aria-labelledby", h3.id);
+    }
+
+    if (!h3.querySelector(".propskit-group-chevron")) {
+      const chevron = document.createElement("fig-icon");
+      chevron.setAttribute("name", "chevron");
+      chevron.setAttribute("size", "small");
+      chevron.className = "propskit-group-chevron";
+      h3.prepend(chevron);
+    }
+    this.#chevron = h3.querySelector(".propskit-group-chevron");
+    this.#syncResetButton();
+    this.#header.removeEventListener("click", this.#handleToggle);
+    this.#header.addEventListener("click", this.#handleToggle);
+    this.#header.setAttribute("role", "button");
+    this.#header.setAttribute("tabindex", "0");
+    this.#header.setAttribute("aria-expanded", String(this.open));
+    this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
+    this.#header.addEventListener("keydown", this.#handleHeaderKeyDown);
+
+    if (!this.hasAttribute("open")) {
+      this.setAttribute("open", "false");
+      this.#header.setAttribute("aria-expanded", "false");
+    }
+  }
+}
+customElements.define("propskit-group", PropskitGroup);
 
 /* Field + Slider wrapper */
 class PropskitSlider extends HTMLElement {
@@ -5496,7 +5968,12 @@ class FigSelect extends HTMLElement {
 
     const selectedOffsetX = optionTextRect.left - popupRect.left;
     const selectedOffsetY = optionTextRect.top - popupRect.top;
-    let left = labelRect.left - selectedOffsetX;
+    const full = figLabBooleanAttribute(this, "full");
+    // [full]: pin menu to host width/edges. Otherwise overlay selected
+    // option text on the trigger label (blend-mode style).
+    let left = full
+      ? this.getBoundingClientRect().left
+      : labelRect.left - selectedOffsetX;
     let top = labelRect.top - selectedOffsetY;
 
     // Keep the whole menu in-view when aligning over the selected option
@@ -5877,6 +6354,7 @@ class FigSelect extends HTMLElement {
     const full = figLabBooleanAttribute(this, "full");
 
     // Use !important — fig-select::part(listbox) width rules beat element.style.
+    // [full]: lock to host. Otherwise content-sized with host as min and 20rem max.
     if (full) {
       this.#popup.style.setProperty("width", `${anchorWidth}px`, "important");
       this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");

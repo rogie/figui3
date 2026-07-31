@@ -984,6 +984,7 @@ export const FIG_ICON_SET_24 = [
   "more",
   "steppers",
   "eyedropper",
+  "reset",
 ] as const;
 
 export const FIG_ICON_SET_16 = [

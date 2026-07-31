@@ -213,6 +213,65 @@ export const labSections: Section[] = [
     ],
   },
   {
+    id: "propskit-group",
+    name: "Propskit Group",
+    description:
+      "A collapsible property group (always collapsible). Reset appears only while child propskit fields differ from their defaults (`show-reset` defaults to true).",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <propskit-group name="Appearance" open>
+    <propskit-color label="Fill" value="#0D99FF" alpha="true"></propskit-color>
+    <propskit-text label="Name" value="Layer 1" placeholder="Enter a name"></propskit-text>
+    <propskit-select label="Blend" value="Normal" options="Normal,Multiply,Screen,Overlay"></propskit-select>
+    <propskit-slider label="Opacity" direction="horizontal" type="opacity" value="100" min="0" max="100" units="%"></propskit-slider>
+    <propskit-number label="Corner" value="8" min="0" max="100" units="px"></propskit-number>
+  </propskit-group>
+  <propskit-group name="Advanced" open>
+    <propskit-color label="Stroke" value="#000000" alpha="true"></propskit-color>
+    <propskit-number label="Width" value="1" min="0" max="24" units="px"></propskit-number>
+    <propskit-select label="Position" value="Inside" options="Inside,Center,Outside"></propskit-select>
+    <propskit-switch label="Noise" checked></propskit-switch>
+    <propskit-switch label="Clip alpha" checked></propskit-switch>
+  </propskit-group>
+  <propskit-group name="Misc">
+    <propskit-text label="Notes" value="" placeholder="Optional notes"></propskit-text>
+    <propskit-slider label="Blur" direction="horizontal" value="4" min="0" max="64" units="px"></propskit-slider>
+    <propskit-switch label="Visible"></propskit-switch>
+  </propskit-group>
+</div>`,
+      },
+      {
+        id: "compact",
+        name: "Compact",
+        markup: `<div class="prop-panel">
+  <propskit-group name="Fill" open compact>
+    <propskit-color label="Color" value="#14AE5C" alpha="true"></propskit-color>
+    <propskit-slider label="Opacity" direction="horizontal" type="opacity" value="80" min="0" max="100" units="%"></propskit-slider>
+    <propskit-select label="Type" value="Solid" options="Solid,Gradient,Image"></propskit-select>
+  </propskit-group>
+  <propskit-group name="Stroke" open compact>
+    <propskit-color label="Color" value="#FF7262"></propskit-color>
+    <propskit-number label="Width" value="2" min="0" max="24" units="px"></propskit-number>
+    <propskit-text label="Dash" value="4, 2"></propskit-text>
+  </propskit-group>
+</div>`,
+      },
+      {
+        id: "no-reset",
+        name: "No reset",
+        markup: `<div class="prop-panel">
+  <propskit-group name="Appearance" open show-reset="false">
+    <propskit-color label="Fill" value="#9747FF" alpha="true"></propskit-color>
+    <propskit-number label="Corner" value="12" min="0" max="100" units="px"></propskit-number>
+  </propskit-group>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "propskit-switch",
     name: "Propskit Switch",
     description:
