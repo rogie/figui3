@@ -11907,6 +11907,279 @@ class FigVideo extends FigMedia {
 customElements.define("fig-video", FigVideo);
 
 /**
+ * <fig-card> — Media card with optional link, selection chrome, and truncated label.
+ *
+ * Composes a generated `fig-image` (or authored fig-image/fig-media/fig-preview).
+ * Selection is attribute-only (`selected`); apps own toggle/group logic.
+ * When `href` is set (and not disabled), content wraps in a real `<a>`.
+ *
+ * @attr {string} src - Image URL forwarded to generated fig-image
+ * @attr {string} alt - Alt text forwarded to generated fig-image
+ * @attr {string} label - Card title text (preferred over `text`)
+ * @attr {string} text - Alias for `label`
+ * @attr {string} sublabel - Secondary one-line text under the label
+ * @attr {string} href - Makes the card a link
+ * @attr {string} target - Forwarded to the `<a>`
+ * @attr {boolean} selected - Selected chrome (CSS only)
+ * @attr {boolean} disabled - Dim + non-interactive; no `<a>` when disabled
+ * @attr {boolean} full - Stretch to available width (CSS; default width is already 100%)
+ * @attr {string} aspect-ratio - Forwarded to fig-image (default `1/1`)
+ * @attr {string} fit - Forwarded to fig-image (default `contain`)
+ * @attr {string} label-line-clamp - `1` (default) or `2`
+ */
+class FigCard extends HTMLElement {
+  static get observedAttributes() {
+    return [
+      "src",
+      "alt",
+      "label",
+      "text",
+      "sublabel",
+      "href",
+      "target",
+      "selected",
+      "disabled",
+      "full",
+      "aspect-ratio",
+      "fit",
+      "label-line-clamp",
+    ];
+  }
+
+  #linkEl = null;
+  #mediaWrap = null;
+  #textWrap = null;
+  #imageEl = null;
+  #labelEl = null;
+  #sublabelEl = null;
+  #usesAuthoredMedia = false;
+
+  connectedCallback() {
+    this.#ensureStructure();
+    this.#sync();
+  }
+
+  attributeChangedCallback() {
+    if (!this.isConnected) return;
+    this.#ensureStructure();
+    this.#sync();
+  }
+
+  #labelText() {
+    return this.getAttribute("label") ?? this.getAttribute("text") ?? "";
+  }
+
+  #sublabelText() {
+    return this.getAttribute("sublabel") ?? "";
+  }
+
+  #wantsLink() {
+    const href = this.getAttribute("href");
+    return Boolean(href) && !figBooleanAttribute(this, "disabled");
+  }
+
+  #lineClamp() {
+    const raw = this.getAttribute("label-line-clamp");
+    return raw === "2" ? "2" : "1";
+  }
+
+  #findAuthoredMedia() {
+    return this.querySelector(
+      ":scope > fig-image:not([data-generated]), :scope > fig-media:not([data-generated]), :scope > fig-preview:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-image:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-media:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-preview:not([data-generated])",
+    );
+  }
+
+  #ensureStructure() {
+    const authored = this.#findAuthoredMedia();
+    this.#usesAuthoredMedia = Boolean(authored);
+
+    const wantAnchor = this.#wantsLink();
+    const tag = wantAnchor ? "a" : "div";
+
+    if (!this.#linkEl || this.#linkEl.tagName.toLowerCase() !== tag) {
+      const next = document.createElement(tag);
+      next.className = "fig-card-link";
+      if (this.#linkEl) {
+        while (this.#linkEl.firstChild) {
+          next.appendChild(this.#linkEl.firstChild);
+        }
+        this.#linkEl.replaceWith(next);
+      } else {
+        this.appendChild(next);
+      }
+      this.#linkEl = next;
+    }
+
+    if (!this.#mediaWrap || !this.#mediaWrap.isConnected) {
+      this.#mediaWrap = this.#linkEl.querySelector(":scope > .fig-card-media");
+      if (!this.#mediaWrap) {
+        this.#mediaWrap = document.createElement("div");
+        this.#mediaWrap.className = "fig-card-media";
+        this.#linkEl.prepend(this.#mediaWrap);
+      }
+    }
+
+    if (authored && authored.parentElement !== this.#mediaWrap) {
+      this.#mediaWrap
+        .querySelectorAll("[data-generated]")
+        .forEach((el) => el.remove());
+      this.#mediaWrap.appendChild(authored);
+      this.#imageEl = null;
+    }
+
+    if (!this.#usesAuthoredMedia) {
+      this.#imageEl =
+        this.#mediaWrap.querySelector(":scope > fig-image[data-generated]") ||
+        null;
+      if (!this.#imageEl) {
+        this.#mediaWrap
+          .querySelectorAll(
+            ":scope > fig-image, :scope > fig-media, :scope > fig-preview",
+          )
+          .forEach((el) => {
+            if (el.hasAttribute("data-generated")) el.remove();
+          });
+        this.#imageEl = document.createElement("fig-image");
+        this.#imageEl.setAttribute("data-generated", "");
+        this.#imageEl.setAttribute("full", "");
+        this.#imageEl.setAttribute("size", "auto");
+        this.#mediaWrap.appendChild(this.#imageEl);
+      }
+    }
+
+    if (!this.#textWrap || !this.#textWrap.isConnected) {
+      this.#textWrap = this.#linkEl.querySelector(":scope > .fig-card-text");
+      if (!this.#textWrap) {
+        this.#textWrap = document.createElement("div");
+        this.#textWrap.className = "fig-card-text";
+        this.#textWrap.setAttribute("data-generated", "");
+        this.#linkEl.appendChild(this.#textWrap);
+      }
+    }
+
+    if (!this.#labelEl || !this.#labelEl.isConnected) {
+      this.#labelEl = this.#textWrap.querySelector(
+        ":scope > .fig-card-label[data-generated]",
+      );
+      if (!this.#labelEl) {
+        this.#labelEl =
+          this.#linkEl.querySelector(":scope > .fig-card-label[data-generated]") ||
+          null;
+        if (!this.#labelEl) {
+          this.#labelEl = document.createElement("label");
+          this.#labelEl.className = "fig-card-label";
+          this.#labelEl.setAttribute("data-generated", "");
+        }
+        this.#textWrap.appendChild(this.#labelEl);
+      }
+    }
+
+    if (!this.#sublabelEl || !this.#sublabelEl.isConnected) {
+      this.#sublabelEl = this.#textWrap.querySelector(
+        ":scope > .fig-card-sublabel[data-generated]",
+      );
+      if (!this.#sublabelEl) {
+        this.#sublabelEl =
+          this.#linkEl.querySelector(
+            ":scope > .fig-card-sublabel[data-generated]",
+          ) || null;
+        if (!this.#sublabelEl) {
+          this.#sublabelEl = document.createElement("span");
+          this.#sublabelEl.className = "fig-card-sublabel";
+          this.#sublabelEl.setAttribute("data-generated", "");
+        }
+        this.#labelEl.after(this.#sublabelEl);
+      }
+    }
+  }
+
+  #sync() {
+    if (!this.#linkEl) return;
+
+    const disabled = figBooleanAttribute(this, "disabled");
+    const selected = figBooleanAttribute(this, "selected");
+    const label = this.#labelText();
+    const sublabel = this.#sublabelText();
+    const clamp = this.#lineClamp();
+
+    this.style.setProperty("--fig-card-label-line-clamp", clamp);
+
+    if (this.#wantsLink()) {
+      const href = this.getAttribute("href") || "";
+      const target = this.getAttribute("target");
+      this.#linkEl.setAttribute("href", href);
+      if (target) {
+        this.#linkEl.setAttribute("target", target);
+        if (target === "_blank") {
+          this.#linkEl.setAttribute("rel", "noopener noreferrer");
+        } else {
+          this.#linkEl.removeAttribute("rel");
+        }
+      } else {
+        this.#linkEl.removeAttribute("target");
+        this.#linkEl.removeAttribute("rel");
+      }
+      if (selected) {
+        this.#linkEl.setAttribute("aria-current", "true");
+      } else {
+        this.#linkEl.removeAttribute("aria-current");
+      }
+      this.removeAttribute("role");
+      this.removeAttribute("aria-label");
+    } else {
+      this.#linkEl.removeAttribute("href");
+      this.#linkEl.removeAttribute("target");
+      this.#linkEl.removeAttribute("rel");
+      this.#linkEl.removeAttribute("aria-current");
+      this.setAttribute("role", "group");
+      const ariaLabel = [label, sublabel].filter(Boolean).join(", ");
+      if (ariaLabel) {
+        this.setAttribute("aria-label", ariaLabel);
+      } else {
+        this.removeAttribute("aria-label");
+      }
+    }
+
+    if (disabled) {
+      this.setAttribute("aria-disabled", "true");
+    } else {
+      this.removeAttribute("aria-disabled");
+    }
+
+    if (this.#imageEl && !this.#usesAuthoredMedia) {
+      const src = this.getAttribute("src");
+      const altAttr = this.getAttribute("alt");
+      const aspect = this.getAttribute("aspect-ratio") || "1/1";
+      const fit = this.getAttribute("fit") || "contain";
+      const alt = altAttr != null ? altAttr : "";
+
+      if (src) this.#imageEl.setAttribute("src", src);
+      else this.#imageEl.removeAttribute("src");
+      this.#imageEl.setAttribute("alt", alt);
+      this.#imageEl.setAttribute("aspect-ratio", aspect);
+      this.#imageEl.setAttribute("fit", fit);
+      this.#imageEl.setAttribute("full", "");
+      this.#imageEl.setAttribute("size", "auto");
+    }
+
+    if (this.#labelEl) {
+      this.#labelEl.textContent = label;
+      this.#labelEl.hidden = !label;
+    }
+
+    if (this.#sublabelEl) {
+      this.#sublabelEl.textContent = sublabel;
+      this.#sublabelEl.hidden = !sublabel;
+    }
+
+    if (this.#textWrap) {
+      this.#textWrap.hidden = !label && !sublabel;
+    }
+  }
+}
+customElements.define("fig-card", FigCard);
+
+/**
  * <fig-media-controls> — Standalone playback controls UI.
  *
  * Renders a play/pause button, a scrubber slider, and a MM:SS time display.

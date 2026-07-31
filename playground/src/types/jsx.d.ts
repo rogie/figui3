@@ -34,6 +34,7 @@ declare module "react" {
       "fig-content": FigAttrs;
       "fig-media": FigAttrs;
       "fig-image": FigAttrs;
+      "fig-card": FigAttrs;
       "fig-video": FigAttrs;
       "fig-input-color": FigAttrs;
       "fig-input-gradient": FigAttrs;

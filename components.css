@@ -5054,6 +5054,137 @@ fig-chooser {
   }
 }
 
+fig-card {
+  --fig-card-label-line-clamp: 1;
+  --fig-card-media-radius: var(--radius-medium);
+  display: block;
+  width: 100%;
+  min-width: 0;
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  .fig-card-link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacer-1);
+    padding: var(--spacer-1);
+    border-radius: 0.5625rem;
+    text-decoration: none;
+    color: inherit;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .fig-card-link:focus-visible {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  .fig-card-media {
+    position: relative;
+    border-radius: var(--fig-card-media-radius);
+    background: var(--figma-color-bg-secondary);
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .fig-card-media > fig-image,
+  .fig-card-media > fig-media,
+  .fig-card-media > fig-preview {
+    display: block;
+    width: 100%;
+    max-width: none;
+    gap: 0;
+    border-radius: var(--fig-card-media-radius);
+  }
+
+  .fig-card-media > fig-image > fig-preview,
+  .fig-card-media > fig-media > fig-preview,
+  .fig-card-media > fig-preview {
+    width: 100%;
+    max-width: none;
+    border-radius: var(--fig-card-media-radius);
+    min-height: auto;
+  }
+
+  .fig-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+
+  .fig-card-text[hidden] {
+    display: none;
+  }
+
+  .fig-card-label {
+    font-size: var(--font-size-small);
+    line-height: var(--line-height);
+    color: var(--figma-color-text);
+    min-width: 0;
+    padding-inline: var(--spacer-1);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--fig-card-label-line-clamp);
+    overflow: hidden;
+    word-break: break-word;
+  }
+
+  .fig-card-label[hidden] {
+    display: none;
+  }
+
+  .fig-card-sublabel {
+    font-size: var(--font-size-small);
+    line-height: var(--line-height);
+    color: var(--figma-color-text-secondary);
+    padding-inline: var(--spacer-1);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fig-card-sublabel[hidden] {
+    display: none;
+  }
+
+  &:hover:not([selected]:not([selected="false"])):not(
+      [disabled]:not([disabled="false"])
+    ):not([aria-disabled="true"])
+    .fig-card-link {
+    background: var(--figma-color-bg-secondary);
+  }
+
+  &[selected]:not([selected="false"]) .fig-card-link {
+    background: var(--figma-color-bg-selected);
+  }
+
+  &[selected]:not([selected="false"]) .fig-card-media {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &[selected]:not([selected="false"])
+    .fig-card-media
+    > :is(fig-image, fig-media)
+    > fig-preview::after,
+  &[selected]:not([selected="false"]) .fig-card-media > fig-preview::after {
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+  }
+
+  &[disabled]:not([disabled="false"]),
+  &[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}
+
 fig-choice {
   --fig-choice-selection-ring-width: 1px;
   --fig-choice-padding: 0px;

@@ -286,6 +286,13 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "fit", attribute: "fit", value: "contain" }],
   },
   {
+    tag: "fig-card",
+    title: "Card",
+    group: "media",
+    markup: `<fig-card src="https://picsum.photos/320/320.webp?random=12" label="Card label" aspect-ratio="1/1"></fig-card>`,
+    attributes: [{ name: "selected", attribute: "selected", value: "" }],
+  },
+  {
     tag: "fig-video",
     title: "Video",
     group: "media",

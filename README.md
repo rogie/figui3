@@ -125,6 +125,7 @@ Minimal example:
 | [Preview](#preview) | `<fig-preview>` | Thin visual preview layer |
 | [Media](#media) | `<fig-media>` | Shared media host for image/video |
 | [Image](#image) | `<fig-image>` | Image display/upload |
+| [Card](#card) | `<fig-card>` | Media card with label, link, and selection chrome |
 | [Video](#video) | `<fig-video>` | Video display/upload with playback controls |
 | [Avatar](#avatar) | `<fig-avatar>` | Profile image or initials |
 | [Icon](#icon) | `<fig-icon>` | Masked icon from design tokens |
@@ -1321,6 +1322,39 @@ Use meaningful `alt` text for informative images. Use `alt=""` for decorative pr
 ```
 
 Use `slot="overlay"` for custom overlay controls. Slotted overlays stay as direct light-DOM children so frameworks like React keep ownership of their nodes, while CSS places them over the preview and keeps them visible on hover, focus, and active interaction.
+
+---
+
+#### Card
+
+`<fig-card>` — [demo](https://rog.ie/figui3/#card)
+
+A media card with a truncated label, optional link, and attribute-only selection chrome. Composes a generated `fig-image` (or an authored `fig-image` / `fig-media` / `fig-preview` child).
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `src` | string | — | Image URL forwarded to generated `fig-image` |
+| `alt` | string | `""` | Alt text forwarded to generated `fig-image` |
+| `label` | string | — | Card title (preferred over `text`) |
+| `text` | string | — | Alias for `label` |
+| `sublabel` | string | — | Secondary one-line text under the label |
+| `href` | string | — | When set, wraps content in a real `<a>` |
+| `target` | string | — | Forwarded to the `<a>` (`_blank` adds `rel="noopener noreferrer"`) |
+| `selected` | boolean | `false` | Selected chrome only (no click-toggle) |
+| `disabled` | boolean | `false` | Dim + non-interactive; no `<a>` when disabled |
+| `full` | boolean | `false` | Stretch to the available width (cards are already `width: 100%` by default) |
+| `aspect-ratio` | string | `"1/1"` | Forwarded to generated `fig-image` |
+| `fit` | string | `"contain"` | Forwarded to generated `fig-image` |
+| `label-line-clamp` | string | `"1"` | `"1"` or `"2"` line clamp for the label |
+
+```html
+<fig-card src="photo.jpg" label="Autumn field"></fig-card>
+<fig-card src="photo.jpg" label="Shader pill" sublabel="Generative tools/effects" selected></fig-card>
+<fig-card src="photo.jpg" label="Open asset" href="#asset"></fig-card>
+<fig-card src="photo.jpg" label="Wide card" aspect-ratio="16/9" full></fig-card>
+```
+
+Place cards in a CSS grid for multi-column layouts — there is no built-in columns attribute. Prefer `full` in fluid layouts for consistency with other FigUI controls.
 
 ---
 

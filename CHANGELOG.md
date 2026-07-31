@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.20.0]
+
+### Added
+
+- `fig-card` — media card composing `fig-image`, with `label` / `sublabel`, optional real `<a>` via `href`, attribute-only `selected`, `disabled`, `full`, `aspect-ratio`, `fit`, and `label-line-clamp`.
+- Playground Card examples (default, selected, sublabel, link, aspect ratio, grid) plus README / attribute panel wiring.
+
+### Fixed
+
+- Playground AttributesView string fields no longer remount (and steal focus) on each keystroke.
+
 ## [6.19.1]
 
 ### Fixed

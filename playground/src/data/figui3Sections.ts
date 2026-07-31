@@ -826,6 +826,69 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
+    id: "card",
+    name: "Card",
+    group: "Core components",
+    description:
+      "Media card with truncated label, optional link, and attribute-only selected chrome. Composes fig-image.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel" style="max-width: 10rem">
+  <fig-card src="${landscapeUrl()}" label="Autumn field"></fig-card>
+</div>`,
+      },
+      {
+        id: "selected",
+        name: "Selected",
+        markup: `<div class="prop-panel" style="max-width: 10rem">
+  <fig-card src="${landscapeUrl()}" label="Selected card" selected></fig-card>
+</div>`,
+      },
+      {
+        id: "sublabel",
+        name: "Sublabel",
+        markup: `<div class="prop-panel" style="max-width: 10rem">
+  <fig-card src="${landscapeUrl()}" label="Shader pill" sublabel="Generative tools/effects" selected></fig-card>
+</div>`,
+      },
+      {
+        id: "link",
+        name: "Link",
+        markup: `<div class="prop-panel" style="max-width: 10rem">
+  <fig-card src="${landscapeUrl()}" label="Open asset" href="#card"></fig-card>
+</div>`,
+      },
+      {
+        id: "two-line",
+        name: "Two-line label",
+        markup: `<div class="prop-panel" style="max-width: 10rem">
+  <fig-card src="${landscapeUrl()}" label="A longer title that wraps onto a second line" label-line-clamp="2"></fig-card>
+</div>`,
+      },
+      {
+        id: "aspect-ratio",
+        name: "Aspect ratio",
+        markup: `<div class="prop-panel" style="max-width: 12rem">
+  <fig-card src="${landscapeUrl()}" label="Wide card" aspect-ratio="16/9" fit="cover"></fig-card>
+</div>`,
+      },
+      {
+        id: "grid",
+        name: "Grid",
+        markup: `<div class="prop-panel" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacer-2); width: 100%">
+  <fig-card src="${landscapeUrl()}" label="Card A" sublabel="Library/effects" selected full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card B" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card C" sublabel="Generative tools/effects" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card D" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card E" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card F" full></fig-card>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "media",
     name: "Media",
     group: "Core components",

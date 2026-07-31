@@ -188,6 +188,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-media-controls": "Media controls",
     "fig-preview": "Preview",
     "fig-image": "Image",
+    "fig-card": "Card",
     "fig-video": "Video",
     "fig-input-color": "Color",
     "fig-input-gradient": "Gradient",
@@ -1386,7 +1387,7 @@ export default function AttributesView({
           };
           return (
             <fig-input-text
-              key={`${name}-${value ?? ""}`}
+              key={`${scope}-${name}`}
               value={value ?? ""}
               full
               onInput={handleTextInput}
@@ -1448,7 +1449,7 @@ export default function AttributesView({
                       >
                         <label>Field label</label>
                         <fig-input-text
-                          key={`field-label-input-${target.fieldIndex}-${target.label}`}
+                          key={`field-label-input-${target.fieldIndex}`}
                           value={target.label}
                           full
                           onInput={(e: any) => {
