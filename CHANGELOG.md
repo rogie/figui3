@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.20.1]
+
+### Changed
+
+- Propskit `size="large"`: more left field padding (`spacer-2-5`); trailing numbers inset with `spacer-1`; `propskit-select` insets label/trigger left and `fig-select` padding-right + chevron.
+- Focus rings move to the field/slider chrome (`fig-slider`, `propskit-number` / `propskit-slider` field) instead of the range thumb or nested number.
+
+### Fixed
+
+- `propskit-slider` progress tracks percent to 0; thumb keeps a constant inset from the progress edge (`delta` / `stepper` / `hue` use zero inset).
+
 ## [6.20.0]
 
 ### Added

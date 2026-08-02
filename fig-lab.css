@@ -137,6 +137,27 @@ fig-content:has(> propskit-group[name]:last-child) {
   padding-bottom: 0;
 }
 
+/* Large size: more left field padding; nudge trailing controls in from the right.
+   propskit-select applies left inset on label + trigger button instead (below). */
+:is(
+  propskit-switch,
+  propskit-color,
+  propskit-text,
+  propskit-number,
+  propskit-slider
+)[size="large"] {
+  fig-field:not([direction="vertical"]) {
+    padding-left: var(--spacer-2-5);
+  }
+}
+
+/* Flex-positioned numbers — margin works. Absolute numbers use right: calc(...) below. */
+:is(propskit-color, propskit-number)[size="large"] {
+  fig-field fig-input-number {
+    margin-right: var(--spacer-1);
+  }
+}
+
 propskit-switch {
   --propskit-switch-height: 2rem;
   --propskit-switch-vertical-padding: var(--spacer-1);
@@ -349,6 +370,27 @@ propskit-select {
 
   &[size="large"] {
     --propskit-select-vertical-padding: 0px;
+
+    fig-field:not([direction="vertical"]) {
+      padding-left: 0;
+
+      & > label {
+        inset: 0 auto 0 var(--spacer-2-5);
+        width: calc(50% - var(--spacer-2-5));
+      }
+
+      fig-select {
+        padding-right: var(--spacer-1);
+
+        &::after {
+          right: calc(0.25rem + var(--spacer-1));
+        }
+      }
+
+      fig-select::part(trigger) {
+        padding-left: var(--spacer-2-5);
+      }
+    }
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -546,6 +588,10 @@ propskit-number {
 
   &[size="large"] {
     --propskit-number-vertical-padding: 0px;
+
+    fig-field:not([direction="vertical"]) > label {
+      inset: 0 auto 0 var(--spacer-2-5);
+    }
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -567,6 +613,12 @@ propskit-number {
     height: 100%;
     border-radius: var(--radius-medium);
     background-color: var(--figma-color-bg-secondary);
+    outline: none;
+
+    &:focus-within {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
 
     &::after {
       content: "";
@@ -602,8 +654,6 @@ propskit-number {
     }
 
     fig-input-number {
-      --figma-focus-outline-offset: 1px;
-
       position: relative;
       align-self: center;
       flex: 0 0 auto;
@@ -617,10 +667,10 @@ propskit-number {
       border-radius: var(--radius-medium);
       background-color: transparent;
       box-shadow: none;
+      outline: none !important;
 
       &:has(input:focus) {
-        outline: var(--figma-focus-outline) !important;
-        outline-offset: var(--figma-focus-outline-offset) !important;
+        outline: none !important;
       }
 
       input {
@@ -650,6 +700,7 @@ propskit-slider {
     light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
   --propskit-slider-fig-slider-height: calc(var(--propskit-slider-height) - var(--propskit-slider-vertical-padding) * 2);
   --propskit-slider-fig-slider-thumb-height: calc(var(--propskit-slider-fig-slider-height) - var(--spacer-2-5));
+  --propskit-slider-number-right: 2px;
 
   display: block;
   position: relative;
@@ -663,9 +714,12 @@ propskit-slider {
   padding-left: var(--propskit-slider-horizontal-padding);
   padding-right: var(--propskit-slider-horizontal-padding);
 
-  &[size="large"]{
+  &[size="large"] {
     --propskit-slider-vertical-padding: 0px;
-    --propskit-slider-fig-slider-thumb-height: calc(var(--propskit-slider-fig-slider-height) - var(--spacer-3));
+    --propskit-slider-fig-slider-thumb-height: calc(
+      var(--propskit-slider-fig-slider-height) - var(--spacer-3)
+    );
+    --propskit-slider-number-right: calc(2px + var(--spacer-1));
   }
   
   label {
@@ -725,6 +779,11 @@ propskit-slider {
       padding: 0;
       background-color: transparent;
       --slider-height: var(--propskit-slider-fig-slider-height);
+
+      &:focus-within {
+        outline: var(--figma-focus-outline);
+        outline-offset: var(--figma-focus-outline-offset);
+      }
       --slider-field-height: calc(var(--propskit-slider-height) - var(--propskit-slider-vertical-padding) * 2);
       --slider-thumb-width: var(--spacer-1);
       --slider-thumb-color: light-dark(
@@ -741,25 +800,17 @@ propskit-slider {
       --slider-tick-height: var(--spacer-2);
       --slider-tick-radius: var(--radius-medium);
       --slider-stepper-padding: 0;
-      --slider-thumb-inset-threshold: calc(
-        var(--slider-thumb-width) + var(--spacer-2) * 2
-      );
-      --slider-thumb-inset-distance: var(--slider-percent);
-      --slider-thumb-edge-offset: clamp(
-        calc(-1 * var(--spacer-2)),
-        calc(
-          var(--slider-thumb-inset-threshold) -
-            var(--slider-thumb-inset-distance) - var(--spacer-2)
-        ),
-        0px
-      );
-      --slider-thumb-travel-offset: var(--slider-thumb-edge-offset);
-      --propskit-slider-progress-offset: calc(
-        min(var(--slider-complete), calc(1 - var(--slider-complete))) *
-          var(--spacer-2)
-      );
-      --propskit-slider-progress-percent: calc(
-        var(--slider-percent) + var(--propskit-slider-progress-offset)
+      /*
+        Progress = --slider-percent (0 → 100%).
+        Native range: thumbRight = complete * (100% - thumbWidth) + thumbWidth.
+        Wanted:       thumbRight = progress - inset = complete * 100% - inset.
+        Compensate with a constant-gap margin on the thumb.
+      */
+      --propskit-slider-thumb-inset: var(--spacer-2);
+      --propskit-slider-progress-percent: var(--slider-percent);
+      --propskit-slider-thumb-travel-offset: calc(
+        (var(--slider-complete) - 1) * var(--slider-thumb-width) -
+          var(--propskit-slider-thumb-inset)
       );
       --slider-handle-shadow:
         inset 0 0 0 var(--slider-thumb-height) var(--slider-thumb-color),
@@ -773,18 +824,13 @@ propskit-slider {
       );
       --slider-tick-opacity: 0.5;
 
-      &[type="delta"] {
-        --slider-thumb-inset-distance: max(
-          calc(var(--slider-percent) - var(--start-percent)),
-          calc(var(--start-percent) - var(--slider-percent))
-        );
-        --slider-thumb-travel-offset: calc(
-          (var(--slider-complete) - 1) * var(--spacer-2)
-        );
+      &[type="delta"],
+      &[type="stepper"],
+      &[type="hue"] {
+        --propskit-slider-thumb-inset: 0;
       }
 
       &[type="stepper"] {
-        --slider-thumb-travel-offset: 0px;
         datalist{
           opacity: 0;
         }
@@ -800,14 +846,10 @@ propskit-slider {
         margin-left: 0;
       }
 
-      &:has(input[type="range"]:focus-within) {
-        --slider-thumb-outline: var(--figma-focus-outline) !important;
-        --slider-thumb-outline-offset: var(--figma-focus-outline-offset) !important;
-      }
-
       .fig-slider-input-container {
         box-shadow: none !important;
         background-color: var(--figma-color-bg-secondary) !important;
+        overflow: hidden;
         &:hover,
         &:focus-within {
           &::after {
@@ -827,19 +869,20 @@ propskit-slider {
         }
         input[type="range"] {
           border-radius: 0 !important;
-          width: calc(100% - var(--spacer-2)) !important;
-          margin-left: var(--spacer-2);
+          width: 100% !important;
+          margin-left: 0;
           &::-webkit-slider-thumb {
-            margin-left: var(--slider-thumb-travel-offset);
+            margin-left: var(--propskit-slider-thumb-travel-offset);
           }
           &::-moz-range-thumb {
-            margin-left: var(--slider-thumb-travel-offset);
+            margin-left: var(--propskit-slider-thumb-travel-offset);
           }
         }
       }
 
       &:not([type="delta"]) .fig-slider-input-container::before {
         width: var(--propskit-slider-progress-percent) !important;
+        max-width: 100%;
       }
 
       &[type="delta"] .fig-slider-input-container::before {
@@ -934,23 +977,21 @@ propskit-slider {
       background-color: transparent;
       box-shadow: none !important;
       position: absolute;
-      right: 2px;
-      top:2px;
-      bottom:2px;
+      right: var(--propskit-slider-number-right);
+      top: 2px;
+      bottom: 2px;
       width: fit-content;
       min-width: fit-content;
       max-width: max-content;
       flex: 0 0 auto;
       border-left: 0;
       border-radius: var(--radius-medium);
+      outline: none !important;
 
       &:hover,
       &:has(input:focus) {
         box-shadow: none !important;
-      }
-      &:has(input:focus) {
-        outline: var(--figma-focus-outline) !important;
-        outline-offset: var(--figma-focus-outline-offset) !important;
+        outline: none !important;
       }
       input {
         field-sizing: content;

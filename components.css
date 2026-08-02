@@ -2791,6 +2791,12 @@ fig-slider {
   min-width: 0;
   height: var(--slider-field-height);
   transition: var(--slider-transition);
+  outline: none;
+
+  &:has(input[type="range"]:focus-visible) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
 
   & .slider {
     flex: 1 1 0;
@@ -2896,16 +2902,7 @@ fig-slider {
     }
 
     &:focus-visible {
-      &::-webkit-slider-thumb {
-        --figma-focus-outline-offset: 1px;
-        outline: var(--figma-focus-outline);
-        outline-offset: var(--figma-focus-outline-offset);
-      }
-      &::-moz-range-thumb {
-        --figma-focus-outline-offset: 1px;
-        outline: var(--figma-focus-outline);
-        outline-offset: var(--figma-focus-outline-offset);
-      }
+      outline: none;
     }
 
     &:disabled {
