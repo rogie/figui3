@@ -4136,6 +4136,114 @@ test.describe("remaining accessibility contracts", () => {
     await expect(popup).toHaveCount(1);
   });
 
+  test("hover tooltips dismiss when a menu opens", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-menu id="overlay-menu">
+          <fig-tooltip text="Actions tip" delay="0">
+            <fig-button fig-menu-trigger id="menu-open-trigger">Actions</fig-button>
+          </fig-tooltip>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+        </fig-menu>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const tip = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    const trigger = page.locator("#menu-open-trigger");
+    await trigger.hover();
+    await expect(tip).toHaveCount(1);
+    await trigger.click();
+    await expect(page.locator("#overlay-menu")).toHaveAttribute("open", "");
+    await expect(tip).toHaveCount(0);
+  });
+
+  test("hover tooltips dismiss when a dialog opens", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-tooltip text="Dialog tip" delay="0">
+          <fig-button id="open-dialog">Open</fig-button>
+        </fig-tooltip>
+        <dialog id="overlay-dialog" is="fig-dialog" aria-label="Overlay">
+          <fig-button close-dialog>Close</fig-button>
+        </dialog>
+      `;
+      document.querySelector("#open-dialog")?.addEventListener("click", () => {
+        document.querySelector("#overlay-dialog")?.show();
+      });
+    });
+    await page.waitForTimeout(100);
+
+    const tip = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    const trigger = page.locator("#open-dialog");
+    await trigger.hover();
+    await expect(tip).toHaveCount(1);
+    await trigger.click();
+    await expect(page.locator("#overlay-dialog")).toHaveAttribute("open", "");
+    await expect(tip).toHaveCount(0);
+  });
+
+  test("show-controlled tooltips stay visible when a menu opens", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-tooltip text="Persisted tip" show="true">
+          <fig-button id="persisted-menu-tooltip-trigger">Help</fig-button>
+        </fig-tooltip>
+        <fig-menu id="persisted-overlay-menu">
+          <fig-button fig-menu-trigger id="persisted-menu-open">Actions</fig-button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+        </fig-menu>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const tip = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    await expect(tip).toHaveCount(1);
+    await page.locator("#persisted-menu-open").click();
+    await expect(page.locator("#persisted-overlay-menu")).toHaveAttribute(
+      "open",
+      "",
+    );
+    await expect(tip).toHaveCount(1);
+  });
+
+  test("programmatic tooltips dismiss when a menu opens", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <button id="programmatic-menu-anchor" type="button">Help</button>
+        <fig-menu id="programmatic-overlay-menu">
+          <fig-button fig-menu-trigger id="programmatic-menu-open">Actions</fig-button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+        </fig-menu>
+      `;
+      const Tooltip = customElements.get("fig-tooltip");
+      Tooltip.show(
+        document.querySelector("#programmatic-menu-anchor"),
+        "Programmatic overlay",
+        { delay: 0 },
+      );
+    });
+
+    const tip = page.locator('dialog[is="fig-popup"][data-tooltip-managed]');
+    await expect(tip).toHaveCount(1);
+    await page.locator("#programmatic-menu-open").click();
+    await expect(page.locator("#programmatic-overlay-menu")).toHaveAttribute(
+      "open",
+      "",
+    );
+    await expect(tip).toHaveCount(0);
+  });
+
   test("hover tooltips honor delay when moving between tiles", async ({
     page,
   }) => {

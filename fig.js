@@ -834,6 +834,9 @@ customElements.define("fig-dropdown", FigDropdown);
  * @attr {string} theme - Optional theme passed to the underlying popup (e.g. "brand").
  * @attr {string} pointer - "false" to hide the beak.
  * @attr {boolean} show - When set, force-show the tooltip (ignores hide).
+ *
+ * Call {@link FigTooltip.dismissHoverTooltips} when opening menus/dialogs so
+ * hover tips do not stay visible over interactive overlays.
  */
 class FigTooltip extends HTMLElement {
   static #lastShownAt = 0;
@@ -1331,7 +1334,7 @@ class FigTooltip extends HTMLElement {
     FigTooltip.#documentExitListenersReady = true;
 
     const handlePointerLeftDocument = () => {
-      FigTooltip.#dismissHoverTooltipsOnDocumentExit();
+      FigTooltip.dismissHoverTooltips();
     };
     const handleViewportChange = () => {
       FigTooltip.#dismissTooltipsOnViewportChange();
@@ -1372,12 +1375,19 @@ class FigTooltip extends HTMLElement {
     });
   }
 
-  static #dismissHoverTooltipsOnDocumentExit() {
+  /**
+   * Dismiss open/pending hover tooltips and programmatic {@link FigTooltip.show} tips.
+   * Skips `show`-persisted and `action="click"` tooltips. Call when opening menus/dialogs.
+   */
+  static dismissHoverTooltips() {
     for (const node of document.querySelectorAll("fig-tooltip")) {
       if (!(node instanceof FigTooltip)) continue;
       if (node.action !== "hover") continue;
       if (node.#showPersisted) continue;
       if (node.isOpen || node.timeout) node.hidePopup();
+    }
+    for (const anchor of Array.from(FigTooltip.#programmaticAnchors)) {
+      FigTooltip.hide(anchor);
     }
   }
 
@@ -1660,6 +1670,7 @@ class FigDialog extends HTMLDialogElement {
     // other FigUI overlays (same helper as fig-popup).
     this._assignStackingOrder();
     this.addEventListener("close", this._boundRestoreFocus, { once: true });
+    FigTooltip.dismissHoverTooltips();
     return super.show();
   }
 
@@ -1668,6 +1679,7 @@ class FigDialog extends HTMLDialogElement {
     // Top layer owns stacking; clear any prior non-modal inline z-index.
     this._clearStackingOrder();
     this.addEventListener("close", this._boundRestoreFocus, { once: true });
+    FigTooltip.dismissHoverTooltips();
     return super.showModal();
   }
 
@@ -2651,6 +2663,11 @@ class FigPopup extends HTMLDialogElement {
 
     const anchor = this.resolveAnchor();
     if (anchor?.classList) anchor.classList.add("has-popup-open");
+
+    // Tooltips lose to interactive overlays (menus, selects, popovers).
+    if (this.getAttribute("variant") !== "tooltip") {
+      FigTooltip.dismissHoverTooltips();
+    }
   }
 
   hidePopup() {

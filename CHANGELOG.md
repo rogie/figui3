@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.20.2]
+
+### Added
+
+- `FigTooltip.dismissHoverTooltips()` — dismisses open/pending hover tooltips and programmatic `FigTooltip.show()` tips (skips `show`-persisted and `action="click"`).
+
+### Fixed
+
+- Hover tooltips no longer stay open when a non-tooltip `fig-popup` (menu, select, etc.) or `fig-dialog` opens.
+
 ## [6.20.1]
 
 ### Changed
