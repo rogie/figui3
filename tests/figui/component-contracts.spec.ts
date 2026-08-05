@@ -89,6 +89,44 @@ test.describe("fig.js component contracts", () => {
   }
 });
 
+test.describe("duplicate module registration", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+  });
+
+  test("re-evaluating package modules preserves existing definitions", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await import("/fig-editor.js");
+      const before = {
+        button: customElements.get("fig-button"),
+        switch: customElements.get("propskit-switch"),
+        fillPicker: customElements.get("fig-fill-picker"),
+      };
+
+      await import("/fig.js?duplicate-registration=1");
+      await import("/fig-lab.js?duplicate-registration=1");
+      await import("/fig-editor.js?duplicate-registration=1");
+
+      return {
+        button: before.button === customElements.get("fig-button"),
+        switch: before.switch === customElements.get("propskit-switch"),
+        fillPicker:
+          before.fillPicker === customElements.get("fig-fill-picker"),
+      };
+    });
+
+    expect(result).toEqual({
+      button: true,
+      switch: true,
+      fillPicker: true,
+    });
+  });
+});
+
 test.describe("propskit-number", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);

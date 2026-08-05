@@ -8,6 +8,12 @@
  *   <script src="fig-lab.js"></script>
  */
 
+function figLabDefineElement(name, constructor) {
+  if (!customElements.get(name)) {
+    customElements.define(name, constructor);
+  }
+}
+
 function figLabBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
@@ -230,7 +236,7 @@ class PropskitSwitch extends HTMLElement {
     selected?.focus(options);
   }
 }
-customElements.define("propskit-switch", PropskitSwitch);
+figLabDefineElement("propskit-switch", PropskitSwitch);
 
 /* Field + Color wrapper */
 class PropskitColor extends HTMLElement {
@@ -516,7 +522,7 @@ class PropskitColor extends HTMLElement {
     this.#input?.querySelector("input:not([tabindex='-1'])")?.focus(options);
   }
 }
-customElements.define("propskit-color", PropskitColor);
+figLabDefineElement("propskit-color", PropskitColor);
 
 /* Field + Select wrapper */
 class PropskitSelect extends HTMLElement {
@@ -771,7 +777,7 @@ class PropskitSelect extends HTMLElement {
     this.#select?.focus(options);
   }
 }
-customElements.define("propskit-select", PropskitSelect);
+figLabDefineElement("propskit-select", PropskitSelect);
 
 /* Field + Text wrapper */
 class PropskitText extends HTMLElement {
@@ -981,7 +987,7 @@ class PropskitText extends HTMLElement {
     this.#input?.focus(options);
   }
 }
-customElements.define("propskit-text", PropskitText);
+figLabDefineElement("propskit-text", PropskitText);
 
 /* Field + Number wrapper */
 class PropskitNumber extends HTMLElement {
@@ -1181,7 +1187,7 @@ class PropskitNumber extends HTMLElement {
     this.#input?.focus(options);
   }
 }
-customElements.define("propskit-number", PropskitNumber);
+figLabDefineElement("propskit-number", PropskitNumber);
 
 /* Collapsible property group — always collapsible (no collapsible attr). */
 class PropskitGroup extends HTMLElement {
@@ -1572,7 +1578,7 @@ class PropskitGroup extends HTMLElement {
     }
   }
 }
-customElements.define("propskit-group", PropskitGroup);
+figLabDefineElement("propskit-group", PropskitGroup);
 
 /* Field + Slider wrapper */
 class PropskitSlider extends HTMLElement {
@@ -2192,7 +2198,7 @@ class PropskitSlider extends HTMLElement {
     this.#resetToDefault();
   }
 }
-customElements.define("propskit-slider", PropskitSlider);
+figLabDefineElement("propskit-slider", PropskitSlider);
 
 /* Canvas Control */
 class FigCanvasControl extends HTMLElement {
@@ -3489,7 +3495,7 @@ class FigCanvasControl extends HTMLElement {
     }
   }
 }
-customElements.define("fig-canvas-control", FigCanvasControl);
+figLabDefineElement("fig-canvas-control", FigCanvasControl);
 
 /* Oscillator Input */
 /**
@@ -4391,7 +4397,7 @@ class PropskitOscillator extends HTMLElement {
     );
   }
 }
-customElements.define("propskit-oscillator", PropskitOscillator);
+figLabDefineElement("propskit-oscillator", PropskitOscillator);
 
 /* Angle Input */
 /**
@@ -4909,7 +4915,7 @@ class FigInputAngle extends HTMLElement {
     }
   }
 }
-customElements.define("fig-input-angle", FigInputAngle);
+figLabDefineElement("fig-input-angle", FigInputAngle);
 
 /* Reorder wrapper */
 class FigReorder extends HTMLElement {
@@ -5344,7 +5350,7 @@ class FigReorder extends HTMLElement {
   }
 }
 
-customElements.define("fig-reorder", FigReorder);
+figLabDefineElement("fig-reorder", FigReorder);
 
 /* Select — dropdown-styled trigger + fig-popup listbox */
 let figLabSelectId = 0;
@@ -5454,7 +5460,7 @@ class FigSelectOption extends HTMLElement {
     }
   }
 }
-customElements.define("fig-select-option", FigSelectOption);
+figLabDefineElement("fig-select-option", FigSelectOption);
 
 function figLabSyncOverflowState(host, scrollEl, threshold = 2) {
   if (!host || !scrollEl) return false;
@@ -5597,7 +5603,7 @@ class FigSelectOptions extends HTMLElement {
     this.classList.remove("overflow-start", "overflow-end");
   }
 }
-customElements.define("fig-select-options", FigSelectOptions);
+figLabDefineElement("fig-select-options", FigSelectOptions);
 
 class FigSelect extends HTMLElement {
   #button = null;
@@ -6527,4 +6533,4 @@ class FigSelect extends HTMLElement {
     this.#button?.setAttribute("aria-expanded", "false");
   }
 }
-customElements.define("fig-select", FigSelect);
+figLabDefineElement("fig-select", FigSelect);

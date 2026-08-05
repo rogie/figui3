@@ -1,6 +1,12 @@
 import "./fig.js";
 import "./fig-lab.js";
 
+function figEditorDefineElement(name, constructor) {
+  if (!customElements.get(name)) {
+    customElements.define(name, constructor);
+  }
+}
+
 function figEditorEscapeAttribute(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -2813,4 +2819,4 @@ class FigFillPicker extends HTMLElement {
     }
   }
 }
-customElements.define("fig-fill-picker", FigFillPicker);
+figEditorDefineElement("fig-fill-picker", FigFillPicker);

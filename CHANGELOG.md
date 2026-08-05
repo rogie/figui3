@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.21.1]
+
+### Fixed
+
+- Custom elements now register idempotently, preventing duplicate-registration errors when FigUI modules are re-evaluated or imported alongside PropsKit.
+- PropsKit, Lab, and Editor builds now share module imports instead of embedding duplicate component registries.
+
 ## [6.21.0]
 
 ### Added

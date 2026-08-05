@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "6.21.0",
+  "version": "6.21.1",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "MIT",
@@ -69,7 +69,7 @@
   ],
   "scripts": {
     "dev": "bun --hot server.ts",
-    "build": "bun build fig.js --minify --outdir dist && bun build fig-layer.js --minify --outdir dist && bun build fig-editor.js --minify --outdir dist --external ./fig.js && bun build fig-lab.js --minify --outdir dist --external ./fig.js --external ./fig-editor.js && bun build propskit.js --minify --outdir dist && npm run build:css && npm run build:propskit-css",
+    "build": "bun build fig.js --minify --outdir dist && bun build fig-layer.js --minify --outdir dist && bun build fig-editor.js --minify --outdir dist --external ./fig.js --external ./fig-lab.js && bun build fig-lab.js --minify --outdir dist --external ./fig.js --external ./fig-editor.js && bun build propskit.js --minify --outdir dist --external ./fig.js --external ./fig-lab.js --external ./fig-editor.js && npm run build:css && npm run build:propskit-css",
     "build:css": "node scripts/build-css.mjs",
     "build:propskit-css": "node scripts/build-propskit-css.mjs",
     "dev:playground": "node playground/dev.mjs",

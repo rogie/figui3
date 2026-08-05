@@ -223,6 +223,12 @@ function figDefineCustomizedBuiltIn(name, constructor, options) {
   });
 }
 
+function figDefineElement(name, constructor) {
+  if (!customElements.get(name)) {
+    customElements.define(name, constructor);
+  }
+}
+
 function figUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
@@ -551,7 +557,7 @@ class FigButton extends HTMLElement {
     this.removeEventListener("keydown", this.#boundHandleControlKeydown);
   }
 }
-customElements.define("fig-button", FigButton);
+figDefineElement("fig-button", FigButton);
 
 /**
  * A custom dropdown/select element.
@@ -854,7 +860,7 @@ class FigDropdown extends HTMLElement {
   }
 }
 
-customElements.define("fig-dropdown", FigDropdown);
+figDefineElement("fig-dropdown", FigDropdown);
 
 /* Tooltip */
 /**
@@ -1495,7 +1501,7 @@ class FigTooltip extends HTMLElement {
   }
 }
 
-customElements.define("fig-tooltip", FigTooltip);
+figDefineElement("fig-tooltip", FigTooltip);
 
 /* Text Truncation */
 class FigTruncate extends HTMLElement {
@@ -1574,7 +1580,7 @@ class FigTruncate extends HTMLElement {
     FigTooltip.hide(this);
   }
 }
-customElements.define("fig-truncate", FigTruncate);
+figDefineElement("fig-truncate", FigTruncate);
 
 /* Dialog */
 /**
@@ -3868,7 +3874,7 @@ class FigTab extends HTMLElement {
     }
   }
 }
-customElements.define("fig-tab", FigTab);
+figDefineElement("fig-tab", FigTab);
 
 /**
  * A custom tabs container element.
@@ -4198,7 +4204,7 @@ class FigTabs extends HTMLElement {
     }
   }
 }
-customElements.define("fig-tabs", FigTabs);
+figDefineElement("fig-tabs", FigTabs);
 
 /* Segmented Control */
 /**
@@ -4286,7 +4292,7 @@ class FigSegment extends HTMLElement {
     }
   }
 }
-customElements.define("fig-segment", FigSegment);
+figDefineElement("fig-segment", FigSegment);
 
 /**
  * A custom segmented control container element.
@@ -4770,7 +4776,7 @@ class FigSegmentedControl extends HTMLElement {
     }
   }
 }
-customElements.define("fig-segmented-control", FigSegmentedControl);
+figDefineElement("fig-segmented-control", FigSegmentedControl);
 
 /* Options */
 /**
@@ -5115,7 +5121,7 @@ class FigOptions extends HTMLElement {
     }
   }
 }
-customElements.define("fig-options", FigOptions);
+figDefineElement("fig-options", FigOptions);
 
 /* Slider */
 /**
@@ -5800,7 +5806,7 @@ class FigSlider extends HTMLElement {
     }
   }
 }
-customElements.define("fig-slider", FigSlider);
+figDefineElement("fig-slider", FigSlider);
 
 /**
  * A custom text input element.
@@ -6404,7 +6410,7 @@ class FigInputText extends HTMLElement {
     }
   }
 }
-customElements.define("fig-input-text", FigInputText);
+figDefineElement("fig-input-text", FigInputText);
 
 /**
  * A custom numeric input element that uses type="text" with inputmode="decimal".
@@ -7109,7 +7115,7 @@ class FigInputNumber extends HTMLElement {
     }
   }
 }
-customElements.define("fig-input-number", FigInputNumber);
+figDefineElement("fig-input-number", FigInputNumber);
 
 /* Avatar */
 class FigAvatar extends HTMLElement {
@@ -7161,7 +7167,7 @@ class FigAvatar extends HTMLElement {
     }
   }
 }
-customElements.define("fig-avatar", FigAvatar);
+figDefineElement("fig-avatar", FigAvatar);
 
 /* Form Field */
 class FigField extends HTMLElement {
@@ -7360,7 +7366,7 @@ class FigField extends HTMLElement {
     }
   }
 }
-customElements.define("fig-field", FigField);
+figDefineElement("fig-field", FigField);
 
 /* Color swatch */
 class FigInputColor extends HTMLElement {
@@ -8056,7 +8062,7 @@ class FigInputColor extends HTMLElement {
     return { r, g, b, a };
   }
 }
-customElements.define("fig-input-color", FigInputColor);
+figDefineElement("fig-input-color", FigInputColor);
 
 /* Input Fill */
 const GRADIENT_INTERPOLATION_SPACES = [
@@ -9157,7 +9163,7 @@ class FigInputFill extends HTMLElement {
     }
   }
 }
-customElements.define("fig-input-fill", FigInputFill);
+figDefineElement("fig-input-fill", FigInputFill);
 
 /* Input Palette */
 /**
@@ -9617,7 +9623,7 @@ class FigInputPalette extends HTMLElement {
     );
   }
 }
-customElements.define("fig-input-palette", FigInputPalette);
+figDefineElement("fig-input-palette", FigInputPalette);
 
 /* Input Gradient */
 /**
@@ -10529,7 +10535,7 @@ class FigInputGradient extends HTMLElement {
     }
   }
 }
-customElements.define("fig-input-gradient", FigInputGradient);
+figDefineElement("fig-input-gradient", FigInputGradient);
 
 /* Checkbox */
 /**
@@ -10767,7 +10773,7 @@ class FigCheckbox extends HTMLElement {
     );
   }
 }
-customElements.define("fig-checkbox", FigCheckbox);
+figDefineElement("fig-checkbox", FigCheckbox);
 
 /* Radio */
 /**
@@ -10787,7 +10793,7 @@ class FigRadio extends FigCheckbox {
     else this.input.removeAttribute("name");
   }
 }
-customElements.define("fig-radio", FigRadio);
+figDefineElement("fig-radio", FigRadio);
 
 /* Switch */
 /**
@@ -10804,7 +10810,7 @@ class FigSwitch extends FigCheckbox {
     this.input.setAttribute("role", "switch");
   }
 }
-customElements.define("fig-switch", FigSwitch);
+figDefineElement("fig-switch", FigSwitch);
 
 /* Combo Input */
 /**
@@ -11099,7 +11105,7 @@ class FigComboInput extends HTMLElement {
     }
   }
 }
-customElements.define("fig-combo-input", FigComboInput);
+figDefineElement("fig-combo-input", FigComboInput);
 
 /* Swatch */
 /**
@@ -11315,7 +11321,7 @@ class FigSwatch extends HTMLElement {
     }
   }
 }
-customElements.define("fig-swatch", FigSwatch);
+figDefineElement("fig-swatch", FigSwatch);
 
 /* Media */
 /**
@@ -12071,21 +12077,21 @@ class FigMedia extends HTMLElement {
   }
 }
 
-customElements.define("fig-media", FigMedia);
+figDefineElement("fig-media", FigMedia);
 
 class FigImage extends FigMedia {
   get mediaKind() {
     return "image";
   }
 }
-customElements.define("fig-image", FigImage);
+figDefineElement("fig-image", FigImage);
 
 class FigVideo extends FigMedia {
   get mediaKind() {
     return "video";
   }
 }
-customElements.define("fig-video", FigVideo);
+figDefineElement("fig-video", FigVideo);
 
 /**
  * <fig-card> — Media card with optional link, selection chrome, and truncated label.
@@ -12358,7 +12364,7 @@ class FigCard extends HTMLElement {
     }
   }
 }
-customElements.define("fig-card", FigCard);
+figDefineElement("fig-card", FigCard);
 
 /**
  * <fig-media-controls> — Standalone playback controls UI.
@@ -12601,7 +12607,7 @@ class FigMediaControls extends HTMLElement {
     this.toggle();
   }
 }
-customElements.define("fig-media-controls", FigMediaControls);
+figDefineElement("fig-media-controls", FigMediaControls);
 
 /* File Upload Input */
 class FigInputFile extends HTMLElement {
@@ -12865,7 +12871,7 @@ class FigInputFile extends HTMLElement {
     }
   }
 }
-customElements.define("fig-input-file", FigInputFile);
+figDefineElement("fig-input-file", FigInputFile);
 
 /**
  * A bezier / spring easing curve editor with draggable control points.
@@ -14002,7 +14008,7 @@ class FigEasingCurve extends HTMLElement {
     document.addEventListener("pointerup", onUp);
   }
 }
-customElements.define("fig-easing-curve", FigEasingCurve);
+figDefineElement("fig-easing-curve", FigEasingCurve);
 
 /**
  * A 3D rotation control with an interactive cube preview.
@@ -14372,7 +14378,7 @@ class Fig3DRotate extends HTMLElement {
     this.#container.addEventListener("lostpointercapture", onEnd);
   }
 }
-customElements.define("fig-3d-rotate", Fig3DRotate);
+figDefineElement("fig-3d-rotate", Fig3DRotate);
 
 /**
  * A transform-origin grid control with draggable handle.
@@ -14922,7 +14928,7 @@ class FigOriginGrid extends HTMLElement {
     bindValueInput(this.#yInput, "y");
   }
 }
-customElements.define("fig-origin-grid", FigOriginGrid);
+figDefineElement("fig-origin-grid", FigOriginGrid);
 
 /**
  * A custom joystick input element.
@@ -15347,7 +15353,7 @@ class FigInputJoystick extends HTMLElement {
   }
 }
 
-customElements.define("fig-joystick", FigInputJoystick);
+figDefineElement("fig-joystick", FigInputJoystick);
 
 
 // FigInputAngle moved to fig-lab.js
@@ -15404,7 +15410,7 @@ class FigShimmer extends HTMLElement {
     }
   }
 }
-customElements.define("fig-shimmer", FigShimmer);
+figDefineElement("fig-shimmer", FigShimmer);
 
 // FigSkeleton
 class FigSkeleton extends FigShimmer {
@@ -15414,7 +15420,7 @@ class FigSkeleton extends FigShimmer {
     this.setAttribute("inert", "");
   }
 }
-customElements.define("fig-skeleton", FigSkeleton);
+figDefineElement("fig-skeleton", FigSkeleton);
 
 // FigGroup
 class FigGroup extends HTMLElement {
@@ -15560,7 +15566,7 @@ class FigGroup extends HTMLElement {
     }
   }
 }
-customElements.define("fig-group", FigGroup);
+figDefineElement("fig-group", FigGroup);
 
 /**
  * A presentational header element used inside fig-dialog, fig-group, and other containers.
@@ -15570,7 +15576,7 @@ customElements.define("fig-group", FigGroup);
  * @attr {boolean} dialog-header - Marks this as a dialog header (auto-generated by fig-dialog)
  */
 class FigHeader extends HTMLElement {}
-customElements.define("fig-header", FigHeader);
+figDefineElement("fig-header", FigHeader);
 
 /**
  * fig-footer
@@ -15579,7 +15585,7 @@ customElements.define("fig-header", FigHeader);
  * @attr {boolean} sticky - Pins the footer to the bottom of its scroll container
  */
 class FigFooter extends HTMLElement {}
-customElements.define("fig-footer", FigFooter);
+figDefineElement("fig-footer", FigFooter);
 
 /* Presentational elements (CSS-only, no behavior) */
 class FigSpinner extends HTMLElement {
@@ -15590,7 +15596,7 @@ class FigSpinner extends HTMLElement {
     }
   }
 }
-customElements.define("fig-spinner", FigSpinner);
+figDefineElement("fig-spinner", FigSpinner);
 
 /**
  * A styled visual preview layer for arbitrary content such as images, canvas,
@@ -15620,7 +15626,7 @@ class FigPreview extends HTMLElement {
     }
   }
 }
-customElements.define("fig-preview", FigPreview);
+figDefineElement("fig-preview", FigPreview);
 
 /**
  * Compact swatch previewing gradient color-space interpolation.
@@ -15928,7 +15934,7 @@ class FigInterpolationSwatch extends HTMLElement {
     this.#fillEl.style.background = this.#previewBackground();
   }
 }
-customElements.define("fig-interpolation-swatch", FigInterpolationSwatch);
+figDefineElement("fig-interpolation-swatch", FigInterpolationSwatch);
 
 /** @type {Record<string, string | { medium: string, small: string }>} */
 const FIG_ICON_TOKENS = {
@@ -16015,19 +16021,19 @@ class FigIcon extends HTMLElement {
     }
   }
 }
-customElements.define("fig-icon", FigIcon);
+figDefineElement("fig-icon", FigIcon);
 
 class FigContent extends HTMLElement {}
-customElements.define("fig-content", FigContent);
+figDefineElement("fig-content", FigContent);
 
 class FigTabContent extends HTMLElement {}
-customElements.define("fig-tab-content", FigTabContent);
+figDefineElement("fig-tab-content", FigTabContent);
 
 class FigButtonCombo extends HTMLElement {}
-customElements.define("fig-button-combo", FigButtonCombo);
+figDefineElement("fig-button-combo", FigButtonCombo);
 
 class FigInputCombo extends HTMLElement {}
-customElements.define("fig-input-combo", FigInputCombo);
+figDefineElement("fig-input-combo", FigInputCombo);
 
 
 
@@ -16405,7 +16411,7 @@ class FigColorTip extends HTMLElement {
     this.toggleAttribute("disabled", Boolean(value));
   }
 }
-customElements.define("fig-color-tip", FigColorTip);
+figDefineElement("fig-color-tip", FigColorTip);
 
 /* Choice */
 /**
@@ -16454,7 +16460,7 @@ class FigChoice extends HTMLElement {
     }
   }
 }
-customElements.define("fig-choice", FigChoice);
+figDefineElement("fig-choice", FigChoice);
 
 /* Chooser */
 /**
@@ -17059,7 +17065,7 @@ class FigChooser extends HTMLElement {
     this.#mutationObserver.observe(this, { childList: true, subtree: false });
   }
 }
-customElements.define("fig-chooser", FigChooser);
+figDefineElement("fig-chooser", FigChooser);
 
 /* Handle */
 class FigHandle extends HTMLElement {
@@ -17981,7 +17987,7 @@ class FigHandle extends HTMLElement {
     return { x, y, px, py };
   }
 }
-customElements.define("fig-handle", FigHandle);
+figDefineElement("fig-handle", FigHandle);
 
 // ─── Menu ────────────────────────────────────────────────────────────────────
 
@@ -18029,7 +18035,7 @@ class FigMenuItem extends HTMLElement {
     }
   }
 }
-customElements.define("fig-menu-item", FigMenuItem);
+figDefineElement("fig-menu-item", FigMenuItem);
 
 /**
  * Visual divider between menu item groups.
@@ -18067,7 +18073,7 @@ class FigMenuSeparator extends HTMLElement {
     else this.removeAttribute("aria-label");
   }
 }
-customElements.define("fig-menu-separator", FigMenuSeparator);
+figDefineElement("fig-menu-separator", FigMenuSeparator);
 
 class FigMenu extends HTMLElement {
   #popup = null;
@@ -18510,4 +18516,4 @@ class FigMenu extends HTMLElement {
     this.#trigger?.setAttribute("aria-expanded", "false");
   }
 }
-customElements.define("fig-menu", FigMenu);
+figDefineElement("fig-menu", FigMenu);
