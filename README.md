@@ -75,6 +75,51 @@ Minimal example:
 <fig-button variant="primary">Save</fig-button>
 ```
 
+### PropsKit embed (one CSS + one JS)
+
+For property panels inside a host app, use the compiled PropsKit pair (bundles fig + fig-lab + fig-editor, styles scoped to `.figui-root`):
+
+```js
+import "@rogieking/figui3/propskit.css";
+import { createPropsKit } from "@rogieking/figui3/propskit.js";
+
+const layerConfig = {
+  name: { type: "text", default: "Layer 1", placeholder: "Enter a name" },
+  opacity: [75, 0, 100, 1], // slider: [value, min, max, step?]
+  visible: true, // switch
+  fill: "#0D99FF", // color (hex)
+  blend: {
+    type: "select",
+    options: ["Normal", "Multiply", "Screen", "Overlay"],
+    default: "Normal",
+  },
+  rotation: [0, -180, 180, 1],
+  cornerRadius: [8, 0, 64, 1],
+  easing: { type: "easing", value: [0.4, 0, 0.2, 1] },
+  shadow: {
+    _collapsed: true, // folder
+    offsetY: [8, 0, 24, 1],
+    blur: [16, 0, 48, 1],
+    color: "#000000",
+  },
+  reset: { type: "action" },
+};
+
+createPropsKit(mountEl, "Layer", layerConfig, {
+  theme: "system", // or "light" | "dark"
+  onChange: (path, value, values) => {},
+  onAction: (name) => {},
+});
+```
+
+```html
+<aside class="figui-root" theme="system">…</aside>
+<!-- or -->
+<fig-panel theme="dark">…</fig-panel>
+```
+
+One import for every host (`@rogieking/figui3/propskit.js`). Framework examples that call the same vanilla API live at `/propskit/quickstart`.
+
 ---
 
 ## Components
@@ -304,10 +349,13 @@ For `type="range"`, omitting `value` follows native range behavior and starts at
 
 Composes a `<fig-field>` and `<fig-input-number>` into a full-surface property control. Number attributes are forwarded to the inner input.
 
+PropsKit controls that support `size` default to the large layout when the attribute is omitted.
+
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `label` | string | `"Label"` | Field label text; use an empty value to hide it |
 | `direction` | string | `"horizontal"` | Field layout direction |
+| `size` | string | `"large"` | Control layout size |
 | *number attrs* | — | — | All `<fig-input-number>` attributes are forwarded |
 
 **Events:** `input`, `change` — forwarded from the inner number input.
@@ -392,7 +440,8 @@ Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slid
 |---|---|---|---|
 | `label` | string | — | Field label text |
 | `direction` | string | `"column"` | Layout direction |
-| *slider attrs* | — | — | All `<fig-slider>` attributes are forwarded |
+| `size` | string | `"large"` | Control layout size |
+| *slider attrs* | — | — | All `<fig-slider>` attributes except host-only PropsKit attributes are forwarded |
 
 **Events:** `input`, `change` — forwarded from the inner slider.
 

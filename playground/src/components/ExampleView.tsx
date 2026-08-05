@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import type { Example } from "../data/sections";
 import { getInjectedExampleMarkup } from "../lib/exampleMarkup";
+import { gradientValueToCss } from "../lib/gradientPreview";
 
 interface Props {
   example: Example;
@@ -266,6 +267,66 @@ export default function ExampleView({
       target?.setAttribute("value", value);
     }
   }, [markup]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Scripts in example markup do not run via innerHTML — re-execute them.
+    const scripts = Array.from(container.querySelectorAll("script"));
+    for (const oldScript of scripts) {
+      const script = document.createElement("script");
+      for (const attr of oldScript.attributes) {
+        script.setAttribute(attr.name, attr.value);
+      }
+      script.textContent = oldScript.textContent;
+      oldScript.replaceWith(script);
+    }
+  }, [markup, example.id]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const syncGradientPreview = (sourceEl: HTMLElement) => {
+      const panel = sourceEl.closest(".propkit-example");
+      const preview = panel?.querySelector(".gradient-result-preview");
+      if (!preview) return;
+      const host = sourceEl as HTMLElement & { value?: unknown };
+      const raw =
+        typeof host.value === "string"
+          ? host.value
+          : typeof host.value === "object" && host.value
+            ? JSON.stringify(host.value)
+            : sourceEl.getAttribute("value");
+      if (!raw) return;
+      preview.setAttribute("background", gradientValueToCss(raw));
+    };
+
+    const handleGradientEvent = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName.toLowerCase();
+      if (
+        !target ||
+        (tag !== "fig-interpolation-swatch" && tag !== "fig-input-gradient")
+      ) {
+        return;
+      }
+      syncGradientPreview(target);
+    };
+
+    container.addEventListener("input", handleGradientEvent as EventListener);
+    container.addEventListener("change", handleGradientEvent as EventListener);
+
+    container
+      .querySelectorAll<HTMLElement>("fig-interpolation-swatch")
+      .forEach((el) => syncGradientPreview(el));
+
+    return () => {
+      container.removeEventListener("input", handleGradientEvent as EventListener);
+      container.removeEventListener("change", handleGradientEvent as EventListener);
+    };
+  }, [markup, example.id]);
 
   return (
     <div>

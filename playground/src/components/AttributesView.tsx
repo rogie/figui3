@@ -30,6 +30,10 @@ import {
   type AttributeRule,
   type BoolMode,
 } from "../lib/attributeRules";
+import {
+  gradientValueToCss,
+  withGradientPreviewBackground,
+} from "../lib/gradientPreview";
 
 interface Props {
   markup: string;
@@ -192,6 +196,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-video": "Video",
     "fig-input-color": "Color",
     "fig-input-gradient": "Gradient",
+    "fig-interpolation-swatch": "Interpolation swatch",
     "fig-input-fill": "Fill",
     "fig-slider": "Slider",
     "fig-input-number": "Number",
@@ -224,6 +229,83 @@ function getInputPanelTitle(controlTag: string): string {
   return (
     titles[controlTag] ?? sentenceCase(toTitle(controlTag.replace(/^fig-/, "")))
   );
+}
+
+const INTERPOLATION_SWATCH_DEFAULT_VALUE = {
+  type: "gradient" as const,
+  gradient: {
+    type: "linear",
+    stops: [
+      { color: "#FF0000", position: 0, opacity: 100 },
+      { color: "#4F9EFF", position: 100, opacity: 100 },
+    ],
+    interpolationSpace: "srgb",
+    hueInterpolation: "shorter",
+  },
+};
+
+function parseInterpolationSwatchValue(raw: string | undefined): {
+  type: "gradient";
+  gradient: {
+    type: string;
+    stops: Array<{ color: string; position: number; opacity?: number }>;
+    interpolationSpace: string;
+    hueInterpolation: string;
+    [key: string]: unknown;
+  };
+} {
+  const fallback = {
+    type: "gradient" as const,
+    gradient: {
+      ...INTERPOLATION_SWATCH_DEFAULT_VALUE.gradient,
+      stops: INTERPOLATION_SWATCH_DEFAULT_VALUE.gradient.stops.map((s) => ({
+        ...s,
+      })),
+    },
+  };
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    const gradient =
+      parsed?.type === "gradient" && parsed.gradient
+        ? parsed.gradient
+        : parsed?.gradient
+          ? parsed.gradient
+          : parsed;
+    if (!gradient || typeof gradient !== "object") return fallback;
+    const stops = Array.isArray(gradient.stops)
+      ? gradient.stops.map(
+          (stop: { color?: string; position?: number; opacity?: number }) => ({
+            color: String(stop?.color || "#D9D9D9"),
+            position: stop?.position ?? 0,
+            opacity: stop?.opacity ?? 100,
+          }),
+        )
+      : fallback.gradient.stops;
+    return {
+      type: "gradient",
+      gradient: {
+        ...fallback.gradient,
+        ...gradient,
+        stops: stops.length >= 2 ? stops : fallback.gradient.stops,
+        interpolationSpace: String(
+          gradient.interpolationSpace ?? "srgb",
+        ).toLowerCase(),
+        hueInterpolation: String(
+          gradient.hueInterpolation ?? "shorter",
+        ).toLowerCase(),
+      },
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function withInterpolationSwatchGradientValue(
+  nextGradientValue: string,
+): string {
+  const next = parseInterpolationSwatchValue(nextGradientValue);
+  return JSON.stringify(next);
 }
 
 function getNumberAttrDefault(
@@ -1526,6 +1608,7 @@ export default function AttributesView({
             )}
 
             {(visibleControlEntries.length > 0 ||
+              target.controlTag === "fig-interpolation-swatch" ||
               (target.controlTag === "fig-icon" &&
                 (target.controlAttributes["data-playground-icon-set"] === "16" ||
                   target.controlAttributes["data-playground-icon-set"] === "24"))) && (
@@ -1535,6 +1618,64 @@ export default function AttributesView({
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
+                    {target.controlTag === "fig-interpolation-swatch" &&
+                      (() => {
+                        const valueAttr = target.controlAttributes.value;
+                        const parsedValue = parseInterpolationSwatchValue(valueAttr);
+                        const gradientControlValue = JSON.stringify(parsedValue);
+                        const applyInterpValue = (nextValue: string) => {
+                          let updated = applyAttributeMutation(markup, {
+                            fieldIndex: target.fieldIndex,
+                            target: "control",
+                            name: "value",
+                            value: nextValue,
+                          });
+                          updated = withGradientPreviewBackground(
+                            updated,
+                            gradientValueToCss(nextValue),
+                          );
+                          onMarkupChange(updated);
+                        };
+                        const handleGradientInput = (e: any) => {
+                          const host = e.currentTarget as HTMLElement & {
+                            value?: unknown;
+                          };
+                          const detail = (e as CustomEvent).detail;
+                          const eventValue =
+                            detail && typeof detail === "object"
+                              ? detail
+                              : host.value;
+                          const next =
+                            typeof detail === "string"
+                              ? detail
+                              : typeof eventValue === "string"
+                                ? eventValue
+                                : typeof eventValue === "object" && eventValue
+                                  ? JSON.stringify(eventValue)
+                                  : null;
+                          if (typeof next !== "string" || !next) return;
+                          applyInterpValue(
+                            withInterpolationSwatchGradientValue(next),
+                          );
+                        };
+                        return (
+                          <>
+                            <fig-field
+                              columns="2/5"
+                              key={`control-interp-swatch-gradient-${target.fieldIndex}`}
+                            >
+                              <label>Gradient</label>
+                              <fig-input-fill
+                                picker-mode="gradient"
+                                full
+                                value={gradientControlValue}
+                                onInput={handleGradientInput}
+                                onChange={handleGradientInput}
+                              ></fig-input-fill>
+                            </fig-field>
+                          </>
+                        );
+                      })()}
                     {target.controlTag === "fig-icon" &&
                       (() => {
                         const set = target.controlAttributes[

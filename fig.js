@@ -228,7 +228,7 @@ function figUniqueId() {
 }
 
 /** Zero-size portal for fixed overlays so they never affect body layout metrics. */
-function figGetOverlayRoot() {
+function figGetOverlayRoot(source) {
   if (!document.body) return null;
   const attr = "data-figui-overlay-root";
   let root = document.body.querySelector(`:scope > [${attr}]`);
@@ -237,7 +237,38 @@ function figGetOverlayRoot() {
     root.setAttribute(attr, "");
     document.body.append(root);
   }
+  figSyncOverlayThemeFromSource(root, source);
   return root;
+}
+
+/** Copy PropsKit / FigUI theme onto the overlay portal so portaled popups stay themed. */
+function figSyncOverlayThemeFromSource(overlayRoot, source) {
+  if (!overlayRoot) return;
+  const panel =
+    (source instanceof Element
+      ? source.closest(".figui-root")
+      : null) || document.querySelector(".figui-root");
+  if (!panel) return;
+
+  const themeAttr = panel.getAttribute("theme");
+  const theme =
+    themeAttr === "light" || themeAttr === "dark" || themeAttr === "system"
+      ? themeAttr
+      : panel.classList.contains("figma-dark")
+        ? "dark"
+        : panel.classList.contains("figma-light")
+          ? "light"
+          : "system";
+
+  overlayRoot.classList.toggle("figma-light", theme === "light");
+  overlayRoot.classList.toggle("figma-dark", theme === "dark");
+  if (theme === "system") {
+    overlayRoot.style.setProperty("color-scheme", "light dark");
+  } else {
+    overlayRoot.style.setProperty("color-scheme", theme);
+  }
+  if (themeAttr) overlayRoot.setAttribute("theme", theme);
+  else overlayRoot.removeAttribute("theme");
 }
 
 let _figZCounter = 10000;
@@ -1045,13 +1076,13 @@ class FigTooltip extends HTMLElement {
     // - Without popover support, fall back to today's behavior: nearest open
     //   <dialog> ancestor if present, else document.body.
     if (supportsPopover) {
-      (figGetOverlayRoot() ?? document.body).append(this.popup);
+      (figGetOverlayRoot(this) ?? document.body).append(this.popup);
     } else {
       const parentDialog = this.closest("dialog");
       if (parentDialog && parentDialog.open) {
         parentDialog.append(this.popup);
       } else {
-        (figGetOverlayRoot() ?? document.body).append(this.popup);
+        (figGetOverlayRoot(this) ?? document.body).append(this.popup);
       }
     }
 
@@ -1433,13 +1464,13 @@ class FigTooltip extends HTMLElement {
       popup.append(content);
 
       if (supportsPopover) {
-        (figGetOverlayRoot() ?? document.body).append(popup);
+        (figGetOverlayRoot(anchor) ?? document.body).append(popup);
       } else {
         const parentDialog = anchor.closest?.("dialog");
         if (parentDialog && parentDialog.open) {
           parentDialog.append(popup);
         } else {
-          (figGetOverlayRoot() ?? document.body).append(popup);
+          (figGetOverlayRoot(anchor) ?? document.body).append(popup);
         }
       }
 
@@ -8034,6 +8065,7 @@ const GRADIENT_INTERPOLATION_SPACES = [
   "display-p3",
   "oklab",
   "oklch",
+  "hsl",
 ];
 const GRADIENT_HUE_INTERPOLATIONS = [
   "shorter",
@@ -8041,6 +8073,7 @@ const GRADIENT_HUE_INTERPOLATIONS = [
   "increasing",
   "decreasing",
 ];
+const GRADIENT_HUE_SPACES = new Set(["oklch", "hsl"]);
 
 const GRADIENT_PICKER_SPACES = ["srgb", "srgb-linear", "oklab", "oklch"];
 
@@ -8069,7 +8102,7 @@ function gradientToValueShape(gradient) {
     ...normalized,
     interpolationSpace: normalized.interpolationSpace,
   };
-  if (normalized.interpolationSpace === "oklch") {
+  if (GRADIENT_HUE_SPACES.has(normalized.interpolationSpace)) {
     output.hueInterpolation = normalized.hueInterpolation;
   } else {
     delete output.hueInterpolation;
@@ -8082,8 +8115,8 @@ function gradientInterpolationClause(gradient) {
   if (normalized.interpolationSpace === "srgb") {
     return "";
   }
-  if (normalized.interpolationSpace === "oklch") {
-    return `in oklch ${normalized.hueInterpolation} hue`;
+  if (GRADIENT_HUE_SPACES.has(normalized.interpolationSpace)) {
+    return `in ${normalized.interpolationSpace} ${normalized.hueInterpolation} hue`;
   }
   return `in ${normalized.interpolationSpace}`;
 }
@@ -8232,6 +8265,25 @@ function figSampleGradientAt(
     r = rgb.r;
     g = rgb.g;
     b = rgb.b;
+  } else if (space === "hsl") {
+    const hsl1 = figRgbToHsl(c1.r, c1.g, c1.b);
+    const hsl2 = figRgbToHsl(c2.r, c2.g, c2.b);
+    const H = figInterpolateHue(
+      hsl1.h,
+      hsl2.h,
+      t,
+      hueInterpolation || "shorter",
+    );
+    const S = hsl1.s + (hsl2.s - hsl1.s) * t;
+    const L = hsl1.l + (hsl2.l - hsl1.l) * t;
+    const rgb = hslToSRGB(H, S, L);
+    r = rgb[0];
+    g = rgb[1];
+    b = rgb[2];
+  } else if (space === "srgb") {
+    r = Math.round(c1.r + (c2.r - c1.r) * t);
+    g = Math.round(c1.g + (c2.g - c1.g) * t);
+    b = Math.round(c1.b + (c2.b - c1.b) * t);
   } else {
     const lab1 = figRGBToOklab(c1.r, c1.g, c1.b);
     const lab2 = figRGBToOklab(c2.r, c2.g, c2.b);
@@ -8245,6 +8297,33 @@ function figSampleGradientAt(
   }
 
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase();
+}
+
+function figRgbToHsl(r, g, b) {
+  const R = r / 255;
+  const G = g / 255;
+  const B = b / 255;
+  const max = Math.max(R, G, B);
+  const min = Math.min(R, G, B);
+  const l = (max + min) / 2;
+  if (max === min) {
+    return { h: 0, s: 0, l: l * 100 };
+  }
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h;
+  switch (max) {
+    case R:
+      h = ((G - B) / d + (G < B ? 6 : 0)) / 6;
+      break;
+    case G:
+      h = ((B - R) / d + 2) / 6;
+      break;
+    default:
+      h = ((R - G) / d + 4) / 6;
+      break;
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
 }
 
 function hslToP3(h, s, l) {
@@ -8311,6 +8390,7 @@ class FigInputFill extends HTMLElement {
     angle: 180,
     interpolationSpace: "srgb",
     hueInterpolation: "shorter",
+    opacity: 1,
     stops: [
       { position: 0, color: "#D9D9D9", opacity: 100 },
       { position: 100, color: "#737373", opacity: 100 },
@@ -8371,6 +8451,15 @@ class FigInputFill extends HTMLElement {
               ...this.#gradient,
               ...parsed.gradient,
             });
+            this.#gradient.opacity = this.#normalizeFillOpacity(
+              parsed.gradient.opacity ?? parsed.opacity ?? parsed.alpha,
+              this.#gradient.opacity ?? 1,
+            );
+          } else if (parsed.opacity !== undefined || parsed.alpha !== undefined) {
+            this.#gradient.opacity = this.#normalizeFillOpacity(
+              parsed.opacity ?? parsed.alpha,
+              this.#gradient.opacity ?? 1,
+            );
           }
           break;
         case "image":
@@ -8446,10 +8535,20 @@ class FigInputFill extends HTMLElement {
     }
   }
 
+  #normalizeFillOpacity(value, fallback = 1) {
+    if (value === undefined || value === null || value === "") return fallback;
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    if (n > 1) return Math.max(0, Math.min(1, n / 100));
+    return Math.max(0, Math.min(1, n));
+  }
+
   #fillPickerSwatchAlpha() {
     switch (this.#fillType) {
       case "solid":
         return this.#solid.alpha;
+      case "gradient":
+        return this.#gradient.opacity ?? 1;
       case "image":
         return this.#image.opacity ?? 1;
       case "video":
@@ -8507,9 +8606,9 @@ class FigInputFill extends HTMLElement {
     const opacityHtml = (value) =>
       showAlpha
         ? `<fig-tooltip text="Opacity">
-            <fig-input-number 
+            <fig-input-number
               class="fig-input-fill-opacity"
-              placeholder="##" 
+              placeholder="##"
               min="0"
               max="100"
               value="${value}"
@@ -8539,7 +8638,8 @@ class FigInputFill extends HTMLElement {
           this.#gradient.type.charAt(0).toUpperCase() +
           this.#gradient.type.slice(1);
         controlsHtml = `
-          <label class="fig-input-fill-label">${figEscapeAttribute(gradientLabel)}</label>`;
+          <label class="fig-input-fill-label">${figEscapeAttribute(gradientLabel)}</label>
+          ${opacityHtml(Math.round((this.#gradient.opacity ?? 1) * 100))}`;
         break;
       }
 
@@ -8679,6 +8779,7 @@ class FigInputFill extends HTMLElement {
             this.#solid.alpha = alpha;
             break;
           case "gradient":
+            this.#gradient.opacity = alpha;
             break;
           case "image":
             this.#image.opacity = alpha;
@@ -8726,6 +8827,12 @@ class FigInputFill extends HTMLElement {
             this.#gradient.type.charAt(0).toUpperCase() +
             this.#gradient.type.slice(1);
           label.textContent = newLabel;
+        }
+        if (this.#opacityInput) {
+          this.#opacityInput.setAttribute(
+            "value",
+            Math.round((this.#gradient.opacity ?? 1) * 100),
+          );
         }
         break;
       }
@@ -8803,7 +8910,18 @@ class FigInputFill extends HTMLElement {
           this.#gradient.type.charAt(0).toUpperCase() +
           this.#gradient.type.slice(1);
         controlsHtml = `
-          <label class="fig-input-fill-label">${figEscapeAttribute(gradientLabel)}</label>`;
+          <label class="fig-input-fill-label">${figEscapeAttribute(gradientLabel)}</label>
+          ${showAlpha ? `<fig-tooltip text="Opacity">
+            <fig-input-number
+              class="fig-input-fill-opacity"
+              placeholder="##"
+              min="0"
+              max="100"
+              value="${Math.round((this.#gradient.opacity ?? 1) * 100)}"
+              units="%"
+              ${disabled ? "disabled" : ""}>
+            </fig-input-number>
+          </fig-tooltip>` : ""}`;
         break;
       }
       case "image":
@@ -8899,6 +9017,7 @@ class FigInputFill extends HTMLElement {
             this.#solid.alpha = alpha;
             break;
           case "gradient":
+            this.#gradient.opacity = alpha;
             break;
           case "image":
             this.#image.opacity = alpha;
@@ -9743,6 +9862,11 @@ class FigInputGradient extends HTMLElement {
       .join(", ");
     const interp = gradientInterpolationClause(gradient);
     const interpolation = interp ? ` ${interp}` : "";
+    // Inline stop editor always previews L→R so handles match the track axis,
+    // regardless of linear angle / radial / angular type.
+    if (this.#editMode === "true") {
+      return `linear-gradient(to right${interpolation}, ${stops})`;
+    }
     if (gradient.type === "radial") {
       return `radial-gradient(circle at ${gradient.centerX}% ${gradient.centerY}%${interpolation}, ${stops})`;
     }
@@ -11213,6 +11337,9 @@ customElements.define("fig-swatch", FigSwatch);
  * @attr {string} aria-label - Accessible label forwarded to generated video
  * @attr {string} aria-labelledby - Accessible label reference forwarded to generated video
  *
+ * When `controls` are shown and no video `src` is loaded, fig-media sets
+ * `disabled` on the associated `fig-media-controls` until media is available.
+ *
  * Sizing model:
  *   - Default: host shrinkwraps to its inner <img>/<video> intrinsic size.
  *   - `size` attribute applies a token-sized square.
@@ -11551,10 +11678,39 @@ class FigMedia extends HTMLElement {
     this.#mediaEl.playsInline = true;
     this.#syncMediaAccessibility();
     this.#syncControlsVisibility();
+    this.#syncControlsDisabled();
   }
 
   get mediaEl() {
     return this.#mediaEl;
+  }
+
+  #hasPlayableVideo() {
+    if (this.mediaKind !== "video") return false;
+    return Boolean(this.#currentMediaSrc());
+  }
+
+  #syncControlsDisabled() {
+    const controls =
+      this.#controlsEl ||
+      this.querySelector(":scope > fig-media-controls");
+    if (!controls) return;
+    if (this.mediaKind !== "video") return;
+
+    if (this.#hasPlayableVideo()) {
+      // Only clear disabled when we set it for the empty state.
+      if (controls.hasAttribute("data-fig-empty-disabled")) {
+        controls.removeAttribute("disabled");
+        controls.removeAttribute("data-fig-empty-disabled");
+      }
+      return;
+    }
+
+    controls.setAttribute("disabled", "");
+    controls.setAttribute("data-fig-empty-disabled", "");
+    controls.playing = false;
+    controls.time = 0;
+    controls.duration = 0;
   }
 
   #syncControlsVisibility() {
@@ -11571,6 +11727,7 @@ class FigMedia extends HTMLElement {
         this.#controlsEl = userControls;
       }
       this.#wireControlsToMedia();
+      this.#syncControlsDisabled();
       return;
     }
     if (this.#isEnabledAttr("controls", false)) {
@@ -11590,6 +11747,7 @@ class FigMedia extends HTMLElement {
     if (existingControls) {
       this.#controlsEl = existingControls;
       this.#wireControlsToMedia();
+      this.#syncControlsDisabled();
       return;
     }
     const controls = document.createElement("fig-media-controls");
@@ -11597,6 +11755,7 @@ class FigMedia extends HTMLElement {
     this.append(controls);
     this.#controlsEl = controls;
     this.#wireControlsToMedia();
+    this.#syncControlsDisabled();
   }
 
   #wireControlsToMedia() {
@@ -11605,6 +11764,7 @@ class FigMedia extends HTMLElement {
       this.#controlsWiredFor === this.#mediaEl &&
       this.#controlsWiredControls === this.#controlsEl
     ) {
+      this.#syncControlsDisabled();
       return;
     }
     this.#unwireControls();
@@ -11616,6 +11776,8 @@ class FigMedia extends HTMLElement {
 
     let pendingSeekTime = null;
     const syncFromVideo = () => {
+      this.#syncControlsDisabled();
+      if (!this.#hasPlayableVideo()) return;
       controls.playing = !video.paused && !video.ended;
       if (Number.isFinite(video.duration)) controls.duration = video.duration;
       if (pendingSeekTime !== null) {
@@ -11628,11 +11790,13 @@ class FigMedia extends HTMLElement {
       controls.time = video.currentTime || 0;
     };
     const onPlay = () => {
+      if (!this.#hasPlayableVideo()) return;
       const p = video.play?.();
       if (p && typeof p.catch === "function") p.catch(() => {});
     };
     const onPause = () => video.pause?.();
     const onSeek = (e) => {
+      if (!this.#hasPlayableVideo()) return;
       const next = Number(e?.detail?.time);
       if (!Number.isFinite(next)) return;
       pendingSeekTime = next;
@@ -12206,13 +12370,14 @@ customElements.define("fig-card", FigCard);
  *   - `playing` (boolean presence) — current play/pause state
  *   - `duration` (number, seconds) — total track length
  *   - `time` (number, seconds) — current playhead position
+ *   - `disabled` (boolean) — disables play/seek interaction
  *
  * Events:
  *   - `play` — emitted when the user toggles playback on (detail: { playing: true })
  *   - `pause` — emitted when the user toggles playback off (detail: { playing: false })
  *   - `seek` — emitted when the user drags the scrubber (detail: { time })
  *
- * Properties: `playing`, `duration`, `time` mirror the attributes.
+ * Properties: `playing`, `duration`, `time`, `disabled` mirror the attributes.
  */
 class FigMediaControls extends HTMLElement {
   #playBtn = null;
@@ -12223,13 +12388,14 @@ class FigMediaControls extends HTMLElement {
   #rendered = false;
 
   static get observedAttributes() {
-    return ["playing", "duration", "time"];
+    return ["playing", "duration", "time", "disabled"];
   }
 
   connectedCallback() {
     this.#render();
     this.#syncPlayingUi();
     this.#syncTimeUi();
+    this.#syncDisabled();
   }
 
   get playing() {
@@ -12266,10 +12432,19 @@ class FigMediaControls extends HTMLElement {
     this.setAttribute("time", String(n));
   }
 
+  get disabled() {
+    return figBooleanAttribute(this, "disabled");
+  }
+  set disabled(value) {
+    if (value) this.setAttribute("disabled", "");
+    else this.removeAttribute("disabled");
+  }
+
   attributeChangedCallback(name) {
     if (!this.#rendered) return;
     if (name === "playing") this.#syncPlayingUi();
     if (name === "duration" || name === "time") this.#syncTimeUi();
+    if (name === "disabled") this.#syncDisabled();
   }
 
   #render() {
@@ -12315,6 +12490,11 @@ class FigMediaControls extends HTMLElement {
     timeEl.textContent = this.#formatTime(this.time);
 
     const handleSeek = (e) => {
+      if (this.disabled) {
+        e.preventDefault?.();
+        e.stopPropagation();
+        return;
+      }
       const host = e.currentTarget;
       const next = Number(host?.value);
       if (!Number.isFinite(next)) return;
@@ -12340,6 +12520,20 @@ class FigMediaControls extends HTMLElement {
     this.#playTooltip = tooltip;
     this.#timeSlider = slider;
     this.#timeEl = timeEl;
+    this.#syncDisabled();
+  }
+
+  #syncDisabled() {
+    const disabled = this.disabled;
+    this.setAttribute("aria-disabled", disabled ? "true" : "false");
+    if (this.#playBtn) {
+      if (disabled) this.#playBtn.setAttribute("disabled", "");
+      else this.#playBtn.removeAttribute("disabled");
+    }
+    if (this.#timeSlider) {
+      if (disabled) this.#timeSlider.setAttribute("disabled", "");
+      else this.#timeSlider.removeAttribute("disabled");
+    }
   }
 
   #formatTime(seconds) {
@@ -12385,6 +12579,7 @@ class FigMediaControls extends HTMLElement {
   }
 
   toggle() {
+    if (this.disabled) return;
     const next = !this.playing;
     this.playing = next;
     this.dispatchEvent(
@@ -12397,12 +12592,12 @@ class FigMediaControls extends HTMLElement {
   }
 
   play() {
-    if (this.playing) return;
+    if (this.disabled || this.playing) return;
     this.toggle();
   }
 
   pause() {
-    if (!this.playing) return;
+    if (this.disabled || !this.playing) return;
     this.toggle();
   }
 }
@@ -15426,6 +15621,314 @@ class FigPreview extends HTMLElement {
   }
 }
 customElements.define("fig-preview", FigPreview);
+
+/**
+ * Compact swatch previewing gradient color-space interpolation.
+ * Polar: CSS conic-gradient masked (SVG data-URL, round linecaps) to an arc.
+ * Non-polar: CSS linear-gradient masked to a horizontal round-capped stroke.
+ * Accepts the same `value` shape as fig-input-gradient / fig-fill-picker.
+ *
+ * @element fig-interpolation-swatch
+ * @attr {string} value - JSON `{ type: "gradient", gradient: { … } }` (or a bare gradient object)
+ * @attr {string} size - `small` (default, 24px) or `large` (32px)
+ */
+class FigInterpolationSwatch extends HTMLElement {
+  static #HUE_SPACES = new Set(["oklch", "hsl"]);
+  static #CX = 10;
+  static #CY = 10;
+  static #R = 8;
+  static #STROKE = 3;
+  // Polar endpoints ≈ 10 o'clock → 2 o'clock (SVG deg: 0 = east, CW).
+  // CSS conic `from` is 0 = north; convert with +90.
+  static #START_DEG = 210;
+  static #DEFAULT_GRADIENT = {
+    type: "linear",
+    angle: 135,
+    interpolationSpace: "srgb",
+    hueInterpolation: "shorter",
+    stops: [
+      { color: "#FF0000", position: 0, opacity: 100 },
+      { color: "#4F9EFF", position: 100, opacity: 100 },
+    ],
+  };
+
+  #rendered = false;
+  #svgEl = null;
+  #fillEl = null;
+  #gradient = { ...FigInterpolationSwatch.#DEFAULT_GRADIENT };
+
+  static get observedAttributes() {
+    return ["value"];
+  }
+
+  get value() {
+    return {
+      type: "gradient",
+      gradient: { ...this.#gradient },
+    };
+  }
+
+  set value(val) {
+    if (val == null || val === "") {
+      this.removeAttribute("value");
+      return;
+    }
+    if (typeof val === "string") {
+      this.setAttribute("value", val);
+      return;
+    }
+    this.setAttribute("value", JSON.stringify(val));
+  }
+
+  connectedCallback() {
+    this.#ensureA11y();
+    this.#parseValue();
+    this.#render();
+    this.#updatePreview();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name !== "value") return;
+    this.#parseValue();
+    if (this.#rendered) this.#updatePreview();
+  }
+
+  #ensureA11y() {
+    const named =
+      this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");
+    if (!named && !this.hasAttribute("aria-hidden")) {
+      this.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  #parseValue() {
+    const valueAttr = this.getAttribute("value");
+    if (!valueAttr) {
+      this.#gradient = {
+        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
+        stops: FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({
+          ...s,
+        })),
+      };
+      return;
+    }
+    try {
+      const parsed = JSON.parse(valueAttr);
+      const gradient = parsed?.type === "gradient" && parsed.gradient
+        ? parsed.gradient
+        : parsed?.gradient
+          ? parsed.gradient
+          : parsed;
+      if (!gradient || typeof gradient !== "object") return;
+      this.#gradient = this.#normalizeGradient({
+        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
+        ...gradient,
+      });
+    } catch {
+      // Keep current/default gradient on invalid JSON.
+    }
+  }
+
+  #normalizeGradient(gradient) {
+    const next = { ...(gradient ?? {}) };
+    const interpolationSpace = String(
+      next.interpolationSpace ?? "srgb",
+    ).toLowerCase();
+    const hueInterpolation = String(
+      next.hueInterpolation ?? "shorter",
+    ).toLowerCase();
+    const stops = Array.isArray(next.stops)
+      ? next.stops.map((stop) => ({
+          color: String(stop?.color || "#D9D9D9").replace(
+            /^(#(?:[0-9a-f]{6})).*/i,
+            "$1",
+          ),
+          position: stop?.position ?? 0,
+          opacity: stop?.opacity ?? 100,
+        }))
+      : FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({ ...s }));
+    if (stops.length < 2) {
+      return {
+        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
+        stops: FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({
+          ...s,
+        })),
+      };
+    }
+    return {
+      type: ["linear", "radial", "angular"].includes(next.type)
+        ? next.type
+        : "linear",
+      angle: Number.isFinite(Number(next.angle)) ? Number(next.angle) : 135,
+      interpolationSpace,
+      hueInterpolation,
+      stops,
+    };
+  }
+
+  #isPolar() {
+    return FigInterpolationSwatch.#HUE_SPACES.has(
+      this.#gradient.interpolationSpace || "srgb",
+    );
+  }
+
+  #hueForColor(color) {
+    const { r, g, b } = figHexToRGB(color);
+    if (this.#gradient.interpolationSpace === "hsl") {
+      return figRgbToHsl(r, g, b).h;
+    }
+    const lab = figRGBToOklab(r, g, b);
+    const hue = figOklabToOklch(lab.l, lab.a, lab.b).h;
+    return ((hue % 360) + 360) % 360;
+  }
+
+  #polarArcGeometry() {
+    const stops = this.#sortedStops();
+    const startHue = this.#hueForColor(stops[0]?.color || "#FF0000");
+    const endHue = this.#hueForColor(
+      stops[stops.length - 1]?.color || "#4F9EFF",
+    );
+    const startDeg = FigInterpolationSwatch.#START_DEG - startHue;
+    const endDeg = FigInterpolationSwatch.#START_DEG - endHue;
+    const clockwiseSweep = ((endDeg - startDeg) % 360 + 360) % 360;
+    const counterclockwiseSweep =
+      clockwiseSweep === 0 ? 0 : clockwiseSweep - 360;
+    const method = this.#gradient.hueInterpolation || "shorter";
+
+    let sweepDeg;
+    if (method === "increasing") {
+      sweepDeg = counterclockwiseSweep;
+    } else if (method === "decreasing") {
+      sweepDeg = clockwiseSweep;
+    } else if (method === "longer") {
+      sweepDeg =
+        clockwiseSweep < 180 ? counterclockwiseSweep : clockwiseSweep;
+    } else {
+      sweepDeg =
+        clockwiseSweep <= 180 ? clockwiseSweep : counterclockwiseSweep;
+    }
+
+    // A round cap extends beyond the path endpoint. Inset the centerline so
+    // the visible cap edges, rather than their centers, land on the hues.
+    const direction = Math.sign(sweepDeg);
+    const capAngle =
+      (Math.asin(FigInterpolationSwatch.#STROKE / 2 / FigInterpolationSwatch.#R) *
+        180) /
+      Math.PI;
+    const inset = Math.min(
+      capAngle,
+      Math.max(0, (Math.abs(sweepDeg) - 0.01) / 2),
+    );
+    return {
+      startDeg: startDeg + direction * inset,
+      sweepDeg: sweepDeg - direction * inset * 2,
+    };
+  }
+
+  #pointOnCircle(deg) {
+    const rad = (deg * Math.PI) / 180;
+    return {
+      x: FigInterpolationSwatch.#CX + FigInterpolationSwatch.#R * Math.cos(rad),
+      y: FigInterpolationSwatch.#CY + FigInterpolationSwatch.#R * Math.sin(rad),
+    };
+  }
+
+  #arcMaskPath(startDeg, sweepDeg) {
+    const endDeg = startDeg + sweepDeg;
+    const start = this.#pointOnCircle(startDeg);
+    const end = this.#pointOnCircle(endDeg);
+    const largeArc = Math.abs(sweepDeg) > 180 ? 1 : 0;
+    const sweepFlag = sweepDeg >= 0 ? 1 : 0;
+    return `M ${start.x} ${start.y} A ${FigInterpolationSwatch.#R} ${FigInterpolationSwatch.#R} 0 ${largeArc} ${sweepFlag} ${end.x} ${end.y}`;
+  }
+
+  #lineMaskPath() {
+    const start = this.#pointOnCircle(180);
+    const end = this.#pointOnCircle(0);
+    return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+  }
+
+  #maskImageForPath(d) {
+    const stroke = FigInterpolationSwatch.#STROKE;
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none">` +
+      `<path d="${d}" fill="none" stroke="white" stroke-width="${stroke}" ` +
+      `stroke-linecap="round" stroke-linejoin="round"/>` +
+      `</svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  }
+
+  #sortedStops() {
+    return [...this.#gradient.stops].sort(
+      (a, b) => (a.position ?? 0) - (b.position ?? 0),
+    );
+  }
+
+  #cssInterpolationClause() {
+    const space = this.#gradient.interpolationSpace || "srgb";
+    if (space === "srgb") return "";
+    if (FigInterpolationSwatch.#HUE_SPACES.has(space)) {
+      return ` in ${space} ${this.#gradient.hueInterpolation || "shorter"} hue`;
+    }
+    return ` in ${space}`;
+  }
+
+  #previewBackground() {
+    const stops = this.#sortedStops();
+    const clause = this.#cssInterpolationClause();
+    if (this.#isPolar()) {
+      // Fixed hue wheel. The mask maps gradient endpoint hues onto this wheel.
+      const cssFrom = (FigInterpolationSwatch.#START_DEG + 90) % 360;
+      const space = this.#gradient.interpolationSpace;
+      const wheelColor = (hue) =>
+        space === "oklch"
+          ? `oklch(65% 0.25 ${hue})`
+          : `hsl(${hue} 100% 50%)`;
+      const wheelStops = [0, 300, 240, 180, 120, 60, 0]
+        .map(wheelColor)
+        .join(", ");
+      return `conic-gradient(from ${cssFrom}deg in ${space} decreasing hue, ${wheelStops})`;
+    }
+    const stopList = stops
+      .map((s) => `${s.color} ${s.position ?? 0}%`)
+      .join(", ");
+    return `linear-gradient(90deg${clause}, ${stopList})`;
+  }
+
+  #render() {
+    if (this.#rendered) return;
+    const stroke = FigInterpolationSwatch.#STROKE;
+    this.innerHTML = `
+      <svg class="fig-interpolation-swatch-svg" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle class="fig-interpolation-swatch-rim" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="${stroke}"/>
+      </svg>
+      <div class="fig-interpolation-swatch-fill" aria-hidden="true"></div>
+    `;
+    this.#svgEl = this.querySelector(".fig-interpolation-swatch-svg");
+    this.#fillEl = this.querySelector(".fig-interpolation-swatch-fill");
+    this.#rendered = true;
+  }
+
+  #updatePreview() {
+    if (!this.#fillEl) return;
+
+    const polar = this.#isPolar();
+    if (this.#svgEl) this.#svgEl.style.display = polar ? "" : "none";
+
+    const d = polar
+      ? (() => {
+          const { startDeg, sweepDeg } = this.#polarArcGeometry();
+          return this.#arcMaskPath(startDeg, sweepDeg);
+        })()
+      : this.#lineMaskPath();
+    const mask = this.#maskImageForPath(d);
+    this.#fillEl.style.setProperty("-webkit-mask-image", mask);
+    this.#fillEl.style.maskImage = mask;
+    this.#fillEl.style.background = this.#previewBackground();
+  }
+}
+customElements.define("fig-interpolation-swatch", FigInterpolationSwatch);
 
 /** @type {Record<string, string | { medium: string, small: string }>} */
 const FIG_ICON_TOKENS = {

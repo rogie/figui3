@@ -128,12 +128,12 @@ class PropskitSwitch extends HTMLElement {
     const reserved = new Set([
       "label",
       "direction",
+      "size",
       "oninput",
       "onchange",
       "class",
       "style",
       "id",
-      "size",
       "checked",
       "value",
     ]);
@@ -1094,6 +1094,7 @@ class PropskitNumber extends HTMLElement {
     const reserved = new Set([
       "label",
       "direction",
+      "size",
       "oninput",
       "onchange",
       "class",
@@ -5384,9 +5385,19 @@ function figLabOptionEntryLabel(opt) {
   return String(opt ?? "");
 }
 
+/**
+ * A selectable option for fig-select.
+ * Supports light-DOM slots: `slot="prepend"` (leading) and `slot="append"` (trailing).
+ * Use the `label` attribute for the closed-trigger label when option content is rich.
+ *
+ * @attr {string} value - Option value
+ * @attr {string} label - Optional display label for the select trigger
+ * @attr {boolean} disabled - Whether the option is disabled
+ * @attr {boolean} selected - Whether the option is selected
+ */
 class FigSelectOption extends HTMLElement {
   static get observedAttributes() {
-    return ["value", "disabled", "selected"];
+    return ["value", "disabled", "selected", "label"];
   }
 
   get value() {
@@ -5599,8 +5610,14 @@ class FigSelect extends HTMLElement {
   #syncingValue = false;
   #popupPositionPatched = false;
   #originalPositionPopup = null;
-  /** After open align, stop repositioning so overflow scroll isn't yanked back. */
+  /**
+   * After open align, ignore content/scroll-driven positionPopup passes so
+   * overflow paging isn't yanked back. Still realign when the trigger moves
+   * or the viewport size changes (window resize, layout shift, page scroll).
+   */
   #freezeMenuPosition = false;
+  #frozenLabelRect = null;
+  #frozenViewport = null;
   #syncingOptions = false;
   #boundTriggerClick = this.#handleTriggerClick.bind(this);
   #boundOptionClick = this.#handleOptionClick.bind(this);
@@ -5871,6 +5888,12 @@ class FigSelect extends HTMLElement {
     popup.setAttribute("part", "listbox");
     popup.setAttribute("theme", "menu");
     popup.setAttribute("role", "listbox");
+    // Top-layer via popover so the menu escapes ancestor contain/overflow
+    // (e.g. fig-fill-picker-dialog). Stays in shadow so option slots still work —
+    // unlike tooltips, we cannot portal this popup to the overlay root.
+    if ("popover" in HTMLElement.prototype) {
+      popup.setAttribute("popover", "manual");
+    }
     popup.id = figLabUniqueId("fig-select-list");
     button.setAttribute("aria-controls", popup.id);
 
@@ -5930,10 +5953,73 @@ class FigSelect extends HTMLElement {
     return { top: 8, right: 8, bottom: 8, left: 8 };
   }
 
+  #readLabelRectSnapshot() {
+    const rect = this.#labelEl?.getBoundingClientRect();
+    if (!rect) return null;
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    };
+  }
+
+  #readViewportSnapshot() {
+    const vv = window.visualViewport;
+    return {
+      width: vv?.width ?? window.innerWidth,
+      height: vv?.height ?? window.innerHeight,
+      offsetLeft: vv?.offsetLeft ?? 0,
+      offsetTop: vv?.offsetTop ?? 0,
+    };
+  }
+
+  #rectSnapshotChanged(prev, next, epsilon = 0.25) {
+    if (!prev && !next) return false;
+    if (!prev || !next) return true;
+    return (
+      Math.abs(prev.x - next.x) > epsilon ||
+      Math.abs(prev.y - next.y) > epsilon ||
+      Math.abs(prev.width - next.width) > epsilon ||
+      Math.abs(prev.height - next.height) > epsilon
+    );
+  }
+
+  #viewportSnapshotChanged(prev, next, epsilon = 0.25) {
+    if (!prev && !next) return false;
+    if (!prev || !next) return true;
+    return (
+      Math.abs(prev.width - next.width) > epsilon ||
+      Math.abs(prev.height - next.height) > epsilon ||
+      Math.abs(prev.offsetLeft - next.offsetLeft) > epsilon ||
+      Math.abs(prev.offsetTop - next.offsetTop) > epsilon
+    );
+  }
+
+  #shouldSkipFrozenPositionPass() {
+    if (!this.#freezeMenuPosition) return false;
+    const labelMoved = this.#rectSnapshotChanged(
+      this.#frozenLabelRect,
+      this.#readLabelRectSnapshot(),
+    );
+    const viewportChanged = this.#viewportSnapshotChanged(
+      this.#frozenViewport,
+      this.#readViewportSnapshot(),
+    );
+    // Skip only when neither the trigger nor the viewport moved — typical of
+    // overflow scroll / content sync fighting the open-time alignment.
+    return !labelMoved && !viewportChanged;
+  }
+
+  #rememberFrozenGeometry() {
+    this.#frozenLabelRect = this.#readLabelRectSnapshot();
+    this.#frozenViewport = this.#readViewportSnapshot();
+  }
+
   #positionPopupOverSelected() {
-    // Content ResizeObserver / anchor tracking re-enter here after overflow
-    // scroll; keep the open-time alignment instead of fighting the scroller.
-    if (this.#freezeMenuPosition) return;
+    // Content ResizeObserver / overflow scroll re-enter here; keep the
+    // open-time alignment unless the trigger or viewport actually changed.
+    if (this.#shouldSkipFrozenPositionPass()) return;
 
     const popup = this.#popup;
     const label = this.#labelEl;
@@ -6011,6 +6097,10 @@ class FigSelect extends HTMLElement {
       }
       panel.syncOverflow?.();
     }
+
+    if (this.#freezeMenuPosition || this.open) {
+      this.#rememberFrozenGeometry();
+    }
   }
 
   #setupListeners() {
@@ -6055,7 +6145,8 @@ class FigSelect extends HTMLElement {
           mutation.type === "attributes" &&
           mutation.target?.tagName === "FIG-SELECT-OPTION" &&
           (mutation.attributeName === "value" ||
-            mutation.attributeName === "disabled")
+            mutation.attributeName === "disabled" ||
+            mutation.attributeName === "label")
         ) {
           needsSync = true;
         }
@@ -6073,7 +6164,7 @@ class FigSelect extends HTMLElement {
       subtree: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ["value", "disabled", "selected"],
+      attributeFilter: ["value", "disabled", "selected", "label"],
     });
   }
 
@@ -6095,7 +6186,26 @@ class FigSelect extends HTMLElement {
   }
 
   #optionLabel(option) {
-    return (option?.textContent || "").trim();
+    if (!option) return "";
+    const labelAttr = option.getAttribute?.("label");
+    if (labelAttr != null && labelAttr !== "") return labelAttr.trim();
+
+    // Ignore prepend/append slot content when deriving a label from children.
+    const parts = [];
+    for (const node of option.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim();
+        if (text) parts.push(text);
+        continue;
+      }
+      if (!(node instanceof Element)) continue;
+      const slot = node.getAttribute("slot");
+      if (slot === "prepend" || slot === "append") continue;
+      const text = node.textContent?.trim();
+      if (text) parts.push(text);
+    }
+    if (parts.length) return parts.join(" ").trim();
+    return (option.textContent || "").trim();
   }
 
   #syncPopupAttrs() {
@@ -6375,6 +6485,8 @@ class FigSelect extends HTMLElement {
     if (this.#button) this.#popup.anchor = this.#button;
     this.#installPopupPositioning();
     this.#freezeMenuPosition = false;
+    this.#frozenLabelRect = null;
+    this.#frozenViewport = null;
     this.#syncValue();
     this.#syncPopupWidth();
     this.#popup.open = true;
@@ -6399,13 +6511,17 @@ class FigSelect extends HTMLElement {
       }
       panel?.syncOverflow?.();
       // Freeze after open align so later positionPopup passes don't undo scroll.
+      // Window resize / trigger movement still realigns via geometry checks.
       this.#freezeMenuPosition = true;
+      this.#rememberFrozenGeometry();
     });
   }
 
   #closeList() {
     if (!this.#popup) return;
     this.#freezeMenuPosition = false;
+    this.#frozenLabelRect = null;
+    this.#frozenViewport = null;
     document.removeEventListener("keydown", this.#boundKeydown, true);
     this.#popup.open = false;
     this.#button?.setAttribute("aria-expanded", "false");

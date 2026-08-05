@@ -122,7 +122,7 @@ test.describe("propskit-number", () => {
           (inputBox?.width ?? 0) -
           ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
       ),
-    ).toBeLessThan(1);
+    ).toBe(4);
 
     const events = await control.evaluate((element) => {
       const received: Array<{ type: string; detail: unknown }> = [];
@@ -143,6 +143,112 @@ test.describe("propskit-number", () => {
     });
 
     expect(events).toEqual([{ type: "input", detail: 32 }]);
+  });
+});
+
+test.describe("propskit default sizes", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await Promise.all(
+        [
+          "propskit-switch",
+          "propskit-color",
+          "propskit-select",
+          "propskit-text",
+          "propskit-number",
+          "propskit-slider",
+        ].map((tag) => customElements.whenDefined(tag)),
+      );
+    });
+  });
+
+  test("omitted size matches explicit large styling", async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const fixtures: Record<string, string> = {
+        "propskit-switch": 'label="Enabled"',
+        "propskit-color": 'label="Fill" value="#0D99FF"',
+        "propskit-select": 'label="Mode" value="A" options="A,B"',
+        "propskit-text": 'label="Name" value="Layer"',
+        "propskit-number": 'label="Width" value="24"',
+        "propskit-slider": 'label="Opacity" value="50" min="0" max="100"',
+      };
+      root.innerHTML = Object.entries(fixtures)
+        .flatMap(([tag, attrs]) => [
+          `<${tag} data-size-case="default" ${attrs}></${tag}>`,
+          `<${tag} data-size-case="large" size="large" ${attrs}></${tag}>`,
+        ])
+        .join("");
+
+      const signature = (element: Element) => {
+        const host = getComputedStyle(element);
+        const field = element.querySelector("fig-field");
+        const fieldStyle = field ? getComputedStyle(field) : null;
+        return {
+          paddingTop: host.paddingTop,
+          paddingBottom: host.paddingBottom,
+          paddingLeft: host.paddingLeft,
+          paddingRight: host.paddingRight,
+          fieldPaddingLeft: fieldStyle?.paddingLeft ?? "",
+          fieldPaddingRight: fieldStyle?.paddingRight ?? "",
+        };
+      };
+
+      const styles = Object.keys(fixtures).map((tag) => {
+        const defaultElement = root.querySelector(
+          `${tag}[data-size-case="default"]`,
+        );
+        const largeElement = root.querySelector(
+          `${tag}[data-size-case="large"]`,
+        );
+        if (!defaultElement || !largeElement) {
+          throw new Error(`Missing ${tag} size fixtures`);
+        }
+        return {
+          tag,
+          defaultStyle: signature(defaultElement),
+          largeStyle: signature(largeElement),
+        };
+      });
+
+      return {
+        styles,
+        numberForwardsSize: root
+          .querySelector('propskit-number[size="large"] fig-input-number')
+          ?.hasAttribute("size"),
+        rightSpacing: {
+          text: getComputedStyle(
+            root.querySelector(
+              'propskit-text[data-size-case="large"] fig-input-text',
+            )!,
+          ).marginRight,
+          number: getComputedStyle(
+            root.querySelector(
+              'propskit-number[data-size-case="large"] fig-input-number',
+            )!,
+          ).marginRight,
+          select: getComputedStyle(
+            root.querySelector(
+              'propskit-select[data-size-case="large"] fig-select',
+            )!,
+          ).paddingRight,
+        },
+      };
+    });
+
+    for (const entry of result.styles) {
+      expect(entry.defaultStyle, entry.tag).toEqual(entry.largeStyle);
+      expect(entry.defaultStyle.paddingTop, entry.tag).toBe("0px");
+      expect(entry.defaultStyle.paddingBottom, entry.tag).toBe("0px");
+    }
+    expect(result.numberForwardsSize).toBe(false);
+    expect(result.rightSpacing.text).toBe(result.rightSpacing.number);
+    expect(result.rightSpacing.text).toBe(result.rightSpacing.select);
   });
 });
 
@@ -337,7 +443,7 @@ test.describe("propskit-select", () => {
     const fieldBox = await field.boundingBox();
     const selectBox = await select.boundingBox();
     expect(selectBox?.height).toBe(fieldBox?.height);
-    expect(selectBox?.width).toBeLessThan(fieldBox?.width ?? 0);
+    expect(selectBox?.width).toBe(fieldBox?.width);
     expect(
       Math.abs(
         (selectBox?.x ?? 0) +
@@ -733,6 +839,86 @@ test.describe("fig-select viewport edge repositioning", () => {
     expect(state.left).toBeGreaterThanOrEqual(7.5);
     expect(state.right).toBeLessThanOrEqual(state.viewportWidth - 7.5);
   });
+
+  test("repositions open listbox when the window is resized", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 640, height: 480 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select
+          id="resize-select"
+          label="Resize"
+          value="Center"
+          style="position:fixed;left:40%;top:40%;width:7rem"
+        >
+          <fig-select-options slot="panel">
+            <fig-select-option value="Top">Top</fig-select-option>
+            <fig-select-option value="Center">Center</fig-select-option>
+            <fig-select-option value="Bottom">Bottom</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      `;
+    });
+
+    const select = page.locator("#resize-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+    await page.waitForTimeout(50);
+
+    const before = await select.evaluate((host) => {
+      const popup = host.shadowRoot?.querySelector('dialog[is="fig-popup"]');
+      const label = host.shadowRoot?.querySelector(".fig-select-label");
+      const popupRect = popup?.getBoundingClientRect();
+      const labelRect = label?.getBoundingClientRect();
+      return {
+        popupTop: popupRect?.top ?? null,
+        popupLeft: popupRect?.left ?? null,
+        labelTop: labelRect?.top ?? null,
+        labelLeft: labelRect?.left ?? null,
+      };
+    });
+
+    await page.setViewportSize({ width: 360, height: 420 });
+    await page.waitForTimeout(80);
+
+    const after = await select.evaluate((host) => {
+      const popup = host.shadowRoot?.querySelector('dialog[is="fig-popup"]');
+      const label = host.shadowRoot?.querySelector(".fig-select-label");
+      const popupRect = popup?.getBoundingClientRect();
+      const labelRect = label?.getBoundingClientRect();
+      const margin = 8;
+      const vv = window.visualViewport;
+      const width = vv?.width ?? window.innerWidth;
+      const height = vv?.height ?? window.innerHeight;
+      const offsetLeft = vv?.offsetLeft ?? 0;
+      const offsetTop = vv?.offsetTop ?? 0;
+      return {
+        popupTop: popupRect?.top ?? null,
+        popupLeft: popupRect?.left ?? null,
+        popupRight: popupRect?.right ?? null,
+        popupBottom: popupRect?.bottom ?? null,
+        labelTop: labelRect?.top ?? null,
+        labelLeft: labelRect?.left ?? null,
+        minLeft: offsetLeft + margin,
+        minTop: offsetTop + margin,
+        maxRight: offsetLeft + width - margin,
+        maxBottom: offsetTop + height - margin,
+      };
+    });
+
+    expect(before.popupTop).not.toBeNull();
+    expect(after.popupTop).not.toBeNull();
+    // Trigger moved with the % positioning; menu must follow.
+    expect(Math.abs((after.labelLeft ?? 0) - (before.labelLeft ?? 0))).toBeGreaterThan(1);
+    expect(Math.abs((after.popupLeft ?? 0) - (before.popupLeft ?? 0))).toBeGreaterThan(1);
+    expect(after.popupLeft!).toBeGreaterThanOrEqual(after.minLeft - 0.5);
+    expect(after.popupTop!).toBeGreaterThanOrEqual(after.minTop - 0.5);
+    expect(after.popupRight!).toBeLessThanOrEqual(after.maxRight + 0.5);
+    expect(after.popupBottom!).toBeLessThanOrEqual(after.maxBottom + 0.5);
+  });
 });
 
 test.describe("propskit-text", () => {
@@ -773,7 +959,7 @@ test.describe("propskit-text", () => {
           (inputBox?.width ?? 0) -
           ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
       ),
-    ).toBeLessThan(1);
+    ).toBe(4);
 
     const events = await control.evaluate((element) => {
       const received: Array<{ type: string; detail: unknown }> = [];
@@ -2636,7 +2822,7 @@ test.describe("fill picker accessibility", () => {
         customElements.whenDefined("fig-input-gradient"),
         customElements.whenDefined("fig-swatch"),
         customElements.whenDefined("fig-button"),
-        customElements.whenDefined("fig-dropdown"),
+        customElements.whenDefined("fig-select"),
         customElements.whenDefined("fig-slider"),
         customElements.whenDefined("fig-handle"),
       ]);
@@ -2677,16 +2863,17 @@ test.describe("fill picker accessibility", () => {
       const nativeClose = closeButton?.shadowRoot?.querySelector("button");
       const eyedropper = dialog?.querySelector(".fig-fill-picker-eyedropper");
       const nativeEyedropper = eyedropper?.shadowRoot?.querySelector("button");
-      const fillType = dialog?.querySelector(".fig-fill-picker-type select");
-      const gamut = dialog?.querySelector(".fig-fill-picker-gamut select");
+      const fillType = dialog?.querySelector(".fig-fill-picker-type");
+      const fillTypeTrigger = fillType?.shadowRoot?.querySelector("fig-button");
       const handle = dialog?.querySelector("fig-handle");
       const hue = dialog?.querySelector('fig-slider[type="hue"] input[type="range"]');
-      const opacity = dialog?.querySelector('fig-slider[type="opacity"] fig-input-number input');
+      const opacity = dialog?.querySelector(
+        'fig-slider[type="opacity"] input[type="range"]',
+      );
       return {
         closeLabel: nativeClose?.getAttribute("aria-label"),
         eyedropperLabel: nativeEyedropper?.getAttribute("aria-label"),
-        fillTypeLabel: fillType?.getAttribute("aria-label"),
-        gamutLabel: gamut?.getAttribute("aria-label"),
+        fillTypeLabel: fillTypeTrigger?.getAttribute("aria-label"),
         handleLabel: handle?.getAttribute("aria-label"),
         hueLabel: hue?.getAttribute("aria-label"),
         opacityLabel: opacity?.getAttribute("aria-label"),
@@ -2697,7 +2884,6 @@ test.describe("fill picker accessibility", () => {
       closeLabel: "Close fill picker",
       eyedropperLabel: "Sample color",
       fillTypeLabel: "Fill type",
-      gamutLabel: "Color gamut",
       handleLabel: "Color saturation and brightness",
       hueLabel: "Hue",
       opacityLabel: "Opacity",
@@ -3898,6 +4084,57 @@ test.describe("remaining accessibility contracts", () => {
       layerChevronLabel: "Expand layer",
       toastRole: "status",
       toastLive: "polite",
+    });
+  });
+
+  test("fig-input-fill gradient shows opacity when alpha is enabled", async ({
+    page,
+  }) => {
+    const gradientValue =
+      '{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#667eea","opacity":100},{"position":100,"color":"#764ba2","opacity":100}]}}';
+
+    await page.evaluate((value) => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-fill id="fill-alpha" alpha="true" value='${value}'></fig-input-fill>
+        <fig-input-fill id="fill-no-alpha" alpha="false" value='${value}'></fig-input-fill>
+      `;
+    }, gradientValue);
+    await page.waitForTimeout(100);
+
+    await expect(
+      page.locator("#fill-alpha .fig-input-fill-opacity"),
+    ).toHaveCount(1);
+    await expect(page.locator("#fill-alpha .fig-input-fill-label")).toHaveText(
+      "Linear",
+    );
+    await expect(
+      page.locator("#fill-no-alpha .fig-input-fill-opacity"),
+    ).toHaveCount(0);
+
+    const detail = await page.evaluate(() => {
+      const fill = document.querySelector("#fill-alpha");
+      if (!fill) throw new Error("Missing #fill-alpha");
+      let lastDetail = null;
+      fill.addEventListener("input", (event) => {
+        lastDetail = event.detail;
+      });
+      const opacityInput = fill.querySelector(".fig-input-fill-opacity input");
+      if (!(opacityInput instanceof HTMLInputElement)) {
+        throw new Error("Missing opacity input");
+      }
+      opacityInput.value = "50";
+      opacityInput.dispatchEvent(new Event("input", { bubbles: true }));
+      return lastDetail;
+    });
+
+    expect(detail).toMatchObject({
+      type: "gradient",
+      gradient: {
+        type: "linear",
+        opacity: 0.5,
+      },
     });
   });
 

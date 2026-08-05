@@ -2204,10 +2204,6 @@ export const propkitSections: Section[] = [
           <fig-options options="Current Frame,Selection,All Frames" value="Current Frame" full></fig-options>
         </fig-field>
       </fig-group>
-      <fig-footer>
-        <fig-button variant="secondary">Create Frame</fig-button>
-        <fig-button>Apply Setup</fig-button>
-      </fig-footer>
     </fig-tab-content>
     <fig-tab-content id="prepress-guides">
       <fig-group name="Guide Style">
@@ -2256,10 +2252,6 @@ export const propkitSections: Section[] = [
           <fig-input-number value="0.1667" min="0" step="0.0625" suffix="in" full></fig-input-number>
         </fig-field>
       </fig-group>
-      <fig-footer>
-        <fig-button variant="secondary">Clear Guides</fig-button>
-        <fig-button>Apply Guides</fig-button>
-      </fig-footer>
     </fig-tab-content>
     <fig-tab-content id="prepress-cmyk">
       <fig-group name="Color Profile">
@@ -2302,10 +2294,6 @@ export const propkitSections: Section[] = [
           <fig-switch checked></fig-switch>
         </fig-field>
       </fig-group>
-      <fig-footer>
-        <fig-button variant="secondary">Reset</fig-button>
-        <fig-button>Apply Profile</fig-button>
-      </fig-footer>
     </fig-tab-content>
     <fig-tab-content id="prepress-preflight">
       <fig-group name="Checks">
@@ -2344,10 +2332,6 @@ export const propkitSections: Section[] = [
           <fig-switch checked></fig-switch>
         </fig-field>
       </fig-group>
-      <fig-footer>
-        <fig-button variant="secondary">Skip</fig-button>
-        <fig-button>Run Preflight</fig-button>
-      </fig-footer>
     </fig-tab-content>
     <fig-tab-content id="prepress-export">
       <fig-group name="Format">
@@ -2402,12 +2386,12 @@ export const propkitSections: Section[] = [
           <fig-switch></fig-switch>
         </fig-field>
       </fig-group>
-      <fig-footer>
-        <fig-button variant="secondary" close-dialog>Cancel</fig-button>
-        <fig-button>Export PDF</fig-button>
-      </fig-footer>
     </fig-tab-content>
     </fig-content>
+    <fig-footer>
+      <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+      <fig-button>Apply</fig-button>
+    </fig-footer>
   </dialog>
 </div>`,
       },
@@ -2782,6 +2766,25 @@ export const propkitSections: Section[] = [
   <fig-button variant="secondary" disabled>Cancel</fig-button>
   <fig-button disabled>Apply</fig-button>
 </fig-footer>`,
+      },
+    ],
+  },
+  {
+    id: "atom-interpolation-swatch",
+    name: "Interpolation swatch",
+    group: "Atoms",
+    description:
+      "Compact arc preview of gradient color-space interpolation. Uses the same value shape as fig-input-gradient.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <div class="gradient-preview-compare" data-playground-ignore-controls="true">
+    <fig-swatch class="gradient-result-preview" size="large" background="linear-gradient(90deg in oklch longer hue, #FF0000 0%, #4F9EFF 100%)" data-playground-ignore-controls="true"></fig-swatch>
+  </div>
+  <fig-interpolation-swatch size="large" value='{"type":"gradient","gradient":{"type":"linear","stops":[{"color":"#FF0000","position":0},{"color":"#4F9EFF","position":100}],"interpolationSpace":"oklch","hueInterpolation":"longer"}}'></fig-interpolation-swatch>
+</div>`,
       },
     ],
   },

@@ -87,7 +87,7 @@ fig-fill-picker {
     padding-bottom: var(--spacer-2-5);
   }
 
-  .fig-fill-picker-gamut {
+  .fig-fill-picker-close {
     margin-left: auto;
   }
 
@@ -148,22 +148,76 @@ fig-fill-picker {
       grid-column: 2;
       min-width: 0;
     }
+
+    &.is-hue-only {
+      grid-template-rows: 1fr;
+
+      .fig-fill-picker-eyedropper {
+        grid-row: 1;
+        width: auto;
+        height: var(--spacer-4);
+        aspect-ratio: auto;
+      }
+    }
   }
 
   .fig-fill-picker-inputs {
+    /* Override labelless 1fr/2fr split so mode select matches eyedropper width
+       and color inputs take the remaining row. */
+    &:not([direction="vertical"]):not(:has(> label)) {
+      grid-template-columns:
+        var(--fig-field-left-padding)
+        3.5rem
+        var(--spacer-2)
+        minmax(0, 1fr)
+        var(--fig-field-right-padding);
+    }
+
+    .fig-fill-picker-input-mode {
+      width: 3.5rem;
+      flex-shrink: 0;
+      align-self: center;
+    }
+
     .fig-fill-picker-input-fields {
-      flex: 1;
+      width: 100%;
       min-width: 0;
       display: flex;
 
       .input-combo {
         flex: 1;
         min-width: 0;
+
+        fig-input-number > input,
+        fig-input-text:not(.fig-fill-picker-ci-hex) > input {
+          padding-inline: 0;
+          text-align: center;
+        }
       }
 
       fig-input-text {
         flex: 1;
         min-width: 0;
+      }
+
+      .fig-fill-picker-ci-css {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .fig-fill-picker-ci-hex-row {
+        .fig-fill-picker-ci-hex {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+
+        .fig-fill-picker-ci-a {
+          flex: 0 0 3rem;
+        }
+      }
+
+      .fig-fill-picker-ci-a {
+        flex: 0 0 2.75rem;
+        min-width: 2.75rem;
       }
     }
   }
@@ -181,24 +235,56 @@ fig-fill-picker {
     }
   }
 
-  .fig-fill-picker-gradient-header {
-    padding-right: var(--spacer-2);
+  fig-field.fig-fill-picker-gradient-header {
     display: flex;
+    align-items: center;
+    grid-template-columns: unset;
+    grid-template-areas: unset;
+    padding-right: var(--spacer-2);
     padding-left: var(--spacer-3);
     gap: var(--spacer-2);
-    .fig-fill-picker-gradient-type {
-      flex: 1;
+
+    > *:not(.fig-field-chevron):not(label) {
+      grid-area: unset;
+    }
+
+    .fig-fill-picker-gradient-type,
+    .fig-fill-picker-gradient-angle,
+    .fig-fill-picker-gradient-center {
+      flex: 1 1 0;
       min-width: 0;
+      width: auto;
     }
 
-    & > *:last-child fig-button {
-      margin-left: auto;
+    .fig-fill-picker-gradient-type,
+    .fig-fill-picker-gradient-angle {
+      display: flex;
     }
 
+    .fig-fill-picker-gradient-angle {
+      input {
+        width: 100%;
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: none;
+      }
+    }
+
+    /* Keep .input-combo join (1px gap + shared radii) — don't add spacer gap. */
     .fig-fill-picker-gradient-center {
       fig-input-number {
-        width: 48px;
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto; /* override default 8.9375rem so the pair can share */
       }
+    }
+
+    .fig-fill-picker-gradient-actions {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      gap: var(--spacer-1);
+      margin-left: auto;
     }
   }
 
@@ -206,6 +292,16 @@ fig-fill-picker {
     .fig-fill-picker-gradient-stops-header {
       > span {
         flex: 1;
+      }
+    }
+  }
+
+  .fig-fill-picker-gradient-space {
+    fig-select-option {
+
+      &:hover::before,
+      &:focus-visible::before {
+        background-color: var(--figma-color-bg-tertiary);
       }
     }
   }
@@ -251,25 +347,41 @@ fig-fill-picker {
   }
 
   /* Media Tabs (Image/Video/Webcam) */
-  .fig-fill-picker-media-header {
+  fig-field.fig-fill-picker-media-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    grid-template-columns: unset;
+    grid-template-areas: unset;
+    padding-left: var(--spacer-3);
+    padding-right: var(--spacer-2);
+    gap: var(--spacer-2);
+
+    > *:not(.fig-field-chevron):not(label) {
+      grid-area: unset;
+    }
+
     .fig-fill-picker-scale-mode {
       flex: 0 0 auto;
+      width: 4.5rem;
     }
 
     .fig-fill-picker-scale {
       width: 56px;
+      flex: 0 0 auto;
+    }
+
+    .fig-fill-picker-media-rotate {
+      flex-shrink: 0;
+      margin-left: auto;
     }
   }
 
   .fig-fill-picker-media-preview {
     position: relative;
-    aspect-ratio: 1;
-    margin: var(--spacer-2) var(--spacer-3) var(--spacer-1)  var(--spacer-3);
+    width: calc(100% - var(--spacer-3) * 2);
+    margin: var(--spacer-2) var(--spacer-3) var(--spacer-1);
     border-radius: var(--radius-medium);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
     &.dragover {
       outline: 2px dashed var(--figma-color-border-brand);
@@ -286,6 +398,15 @@ fig-fill-picker {
         }
       }
     }
+  }
+
+  /* Image/webcam: square host is fine (no chrome below the preview). */
+  fig-image.fig-fill-picker-media-preview {
+    aspect-ratio: 1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .fig-fill-picker-checkerboard {
@@ -343,10 +464,29 @@ fig-fill-picker {
     display: none;
   }
 
+  /*
+   * Video: host must grow for fig-media-controls. Keep the square on the
+   * inner fig-preview — aspect-ratio+overflow on the host was clipping
+   * the scrubber/play bar at the dialog bottom.
+   */
   fig-media.fig-fill-picker-video-preview {
+    aspect-ratio: unset;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     max-width: none;
     max-height: none;
-    width: auto;
+    width: calc(100% - var(--spacer-3) * 2);
+    gap: var(--spacer-2);
+
+    > fig-preview {
+      aspect-ratio: 1;
+      width: 100%;
+      max-width: none;
+      overflow: hidden;
+      border-radius: var(--radius-medium);
+    }
   }
 
   .fig-fill-picker-upload {

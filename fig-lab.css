@@ -137,23 +137,29 @@ fig-content:has(> propskit-group[name]:last-child) {
   padding-bottom: 0;
 }
 
-/* Large size: more left field padding; nudge trailing controls in from the right.
-   propskit-select applies left inset on label + trigger button instead (below). */
+/* Default/large size: more left field padding; nudge trailing controls in from
+   the right. propskit-select applies left inset on label + trigger instead. */
 :is(
   propskit-switch,
   propskit-color,
   propskit-text,
   propskit-number,
   propskit-slider
-)[size="large"] {
+):is(:not([size]), [size="large"]) {
   fig-field:not([direction="vertical"]) {
     padding-left: var(--spacer-2-5);
   }
 }
 
 /* Flex-positioned numbers — margin works. Absolute numbers use right: calc(...) below. */
-:is(propskit-color, propskit-number)[size="large"] {
+:is(propskit-color, propskit-number):is(:not([size]), [size="large"]) {
   fig-field fig-input-number {
+    margin-right: var(--spacer-1);
+  }
+}
+
+propskit-text:is(:not([size]), [size="large"]) {
+  fig-field > fig-input-text {
     margin-right: var(--spacer-1);
   }
 }
@@ -169,6 +175,7 @@ propskit-switch {
   padding: var(--propskit-switch-vertical-padding)
     var(--propskit-switch-horizontal-padding);
 
+  &:not([size]),
   &[size="large"] {
     --propskit-switch-vertical-padding: 0px;
 
@@ -245,6 +252,7 @@ propskit-color {
   padding: var(--propskit-color-vertical-padding)
     var(--propskit-color-horizontal-padding);
 
+  &:not([size]),
   &[size="large"] {
     --propskit-color-vertical-padding: 0px;
   }
@@ -368,6 +376,7 @@ propskit-select {
   padding: var(--propskit-select-vertical-padding)
     var(--propskit-select-horizontal-padding);
 
+  &:not([size]),
   &[size="large"] {
     --propskit-select-vertical-padding: 0px;
 
@@ -477,6 +486,7 @@ propskit-text {
   padding: var(--propskit-text-vertical-padding)
     var(--propskit-text-horizontal-padding);
 
+  &:not([size]),
   &[size="large"] {
     --propskit-text-vertical-padding: 0px;
   }
@@ -586,6 +596,7 @@ propskit-number {
   padding: var(--propskit-number-vertical-padding)
     var(--propskit-number-horizontal-padding);
 
+  &:not([size]),
   &[size="large"] {
     --propskit-number-vertical-padding: 0px;
 
@@ -714,6 +725,7 @@ propskit-slider {
   padding-left: var(--propskit-slider-horizontal-padding);
   padding-right: var(--propskit-slider-horizontal-padding);
 
+  &:not([size]),
   &[size="large"] {
     --propskit-slider-vertical-padding: 0px;
     --propskit-slider-fig-slider-thumb-height: calc(
@@ -1496,9 +1508,9 @@ fig-select::part(listbox) {
   background-color: var(--fig-popup-bg-color);
   color: var(--figma-color-text-menu);
   color-scheme: dark;
-  box-shadow: var(--figma-elevation-100);
+  box-shadow: var(--figma-elevation-400-menu-panel);
   /* width/min/max set in JS — ::part width rules override element.style. */
-  max-height: min(20rem, calc(100vh - 1rem));
+  max-height: calc(100vh - 1rem);
   height: max-content;
 }
 
@@ -1512,7 +1524,7 @@ fig-select-options {
   gap: 0;
   width: 100%;
   max-width: 100%;
-  max-height: min(20rem, calc(100vh - 1rem));
+  max-height: calc(100vh - 1rem);
   /* No block padding — sticky overflow buttons must sit flush to the popup edges. */
   padding: 0;
   overflow: hidden auto;
@@ -1595,56 +1607,35 @@ fig-select-options {
   & > fig-menu-separator {
     --fig-menu-separator-color: var(--figma-color-border-menu);
     --fig-menu-separator-label-color: var(--figma-color-text-menu-secondary);
-    /* Align label with option text (padding + checkmark column). */
-    --fig-menu-item-padding: calc(var(--spacer-1) * 2 + var(--spacer-1) + 1rem);
+
+    /* Align label with option text (padding + checkmark column).
+       Negative margins on ::before must match this padding exactly so the
+       rule bleeds to the listbox edges (base rule uses --fig-menu-item-padding). */
     &[label]:not([label=""]) {
       padding-left: var(--spacer-5);
       padding-right: var(--spacer-2);
+
+      &::before {
+        margin-inline: unset;
+        margin-left: calc(-1 * var(--spacer-5));
+        margin-right: calc(-1 * var(--spacer-2));
+      }
     }
   }
 }
-
-/*
-[label]:not([label=""]) {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacer-2);
-    height: auto;
-    margin: var(--spacer-2) 0;
-    margin-bottom: var(--spacer-1);
-    padding: 0 var(--spacer-2) 0 var(--fig-menu-item-padding, var(--spacer-4));
-    background: transparent;
-
-    &::before {
-      content: "";
-      display: block;
-      height: 1px;
-      margin-left: calc(-1 * var(--fig-menu-item-padding, var(--spacer-4)));
-      margin-right: calc(-1 * var(--spacer-2));
-      background: var(--fig-menu-separator-color);
-    }
-
-    &::after {
-      content: attr(label);
-      display: block;
-      color: var(--fig-menu-separator-label-color);
-      line-height: var(--spacer-4);
-      min-height: var(--spacer-4);
-    }
-  }*/
 
 fig-select-option {
   /* Match fig-dropdown[experimental~="modern"] option + option::checkmark */
   display: flex;
   align-items: center;
-  gap: var(--spacer-1);
+  gap: 0;
   position: relative;
-  height: var(--spacer-4);
-  padding: 0 var(--spacer-2);
+  min-height: var(--spacer-4);
+  height: auto;
+  padding: var(--spacer-1) var(--spacer-2);
   padding-right: var(--spacer-3);
   border-radius: var(--radius-medium);
   color: var(--figma-color-text-menu);
-  font-weight: var(--body-medium-fontWeight);
   cursor: default;
   user-select: none;
 
@@ -1676,6 +1667,24 @@ fig-select-option {
     -webkit-mask-size: contain;
     mask-size: contain;
     visibility: hidden;
+  }
+
+  & > [slot="prepend"] {
+    margin-top: calc(var(--spacer-1) * -1);
+    margin-bottom: calc(var(--spacer-1) * -1);
+    margin-right: var(--spacer-1);
+  }
+
+
+  & > :not([slot="prepend"]):not([slot="append"]) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  & > [slot="append"] {
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+    color: var(--figma-color-text-tertiary);
   }
 
   &:hover,

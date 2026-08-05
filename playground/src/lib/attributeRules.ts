@@ -495,6 +495,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  // Gradient/interpolation controls are custom-rendered in AttributesView.
+  "fig-interpolation-swatch": {
+    size: { label: "Size", type: "enum", options: ["small", "large"] },
+  },
   "fig-input-color": {
     alpha: {
       label: "Alpha",

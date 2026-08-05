@@ -17,6 +17,7 @@ const GRADIENT_INTERPOLATION_SPACES = [
   "display-p3",
   "oklab",
   "oklch",
+  "hsl",
 ];
 const GRADIENT_HUE_INTERPOLATIONS = [
   "shorter",
@@ -24,6 +25,7 @@ const GRADIENT_HUE_INTERPOLATIONS = [
   "increasing",
   "decreasing",
 ];
+const GRADIENT_HUE_SPACES = new Set(["oklch", "hsl"]);
 
 function normalizeGradientConfig(gradient) {
   const next = { ...(gradient ?? {}) };
@@ -50,7 +52,7 @@ function gradientToValueShape(gradient) {
     ...normalized,
     interpolationSpace: normalized.interpolationSpace,
   };
-  if (normalized.interpolationSpace === "oklch") {
+  if (GRADIENT_HUE_SPACES.has(normalized.interpolationSpace)) {
     output.hueInterpolation = normalized.hueInterpolation;
   } else {
     delete output.hueInterpolation;
@@ -63,10 +65,35 @@ function gradientInterpolationClause(gradient) {
   if (normalized.interpolationSpace === "srgb") {
     return "";
   }
-  if (normalized.interpolationSpace === "oklch") {
-    return `in oklch ${normalized.hueInterpolation} hue`;
+  if (GRADIENT_HUE_SPACES.has(normalized.interpolationSpace)) {
+    return `in ${normalized.interpolationSpace} ${normalized.hueInterpolation} hue`;
   }
   return `in ${normalized.interpolationSpace}`;
+}
+
+function gradientInterpolationSelectValue(gradient) {
+  const normalized = normalizeGradientConfig(gradient);
+  if (GRADIENT_HUE_SPACES.has(normalized.interpolationSpace)) {
+    return `${normalized.interpolationSpace}-${normalized.hueInterpolation || "shorter"}`;
+  }
+  return normalized.interpolationSpace;
+}
+
+function parseGradientInterpolationSelectValue(val) {
+  const raw = String(val ?? "");
+  for (const space of GRADIENT_HUE_SPACES) {
+    const prefix = `${space}-`;
+    if (raw.startsWith(prefix)) {
+      return {
+        interpolationSpace: space,
+        hueInterpolation: raw.slice(prefix.length) || "shorter",
+      };
+    }
+  }
+  return {
+    interpolationSpace: raw || "srgb",
+    hueInterpolation: "shorter",
+  };
 }
 
 /**
@@ -118,6 +145,7 @@ class FigFillPicker extends HTMLElement {
   #isDraggingColor = false;
   #syncingGradientBar = false;
   #teardownColorAreaEvents = null;
+  #gradientInterpolationOpenObserver = null;
   #valueAtOpen = null;
   #webcamStart = null;
   #webcamRequestId = 0;
@@ -285,9 +313,8 @@ class FigFillPicker extends HTMLElement {
       if (parsed.opacity !== undefined) {
         this.#color.a = parsed.opacity / 100;
       }
-      if (parsed.colorSpace === "display-p3" || parsed.colorSpace === "srgb") {
-        this.#gamut = parsed.colorSpace;
-      }
+      // Gamut UI hidden for now — lock to sRGB.
+      this.#gamut = "srgb";
       if (parsed.gradient) {
         this.#gradient = normalizeGradientConfig({
           ...this.#gradient,
@@ -390,9 +417,6 @@ class FigFillPicker extends HTMLElement {
     this.#valueAtOpen = JSON.stringify(this.value);
     this.#switchTab(this.#fillType, { emit: false });
 
-    const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
-    if (gamutEl) gamutEl.value = this.#gamut;
-
     if (this.#swatch) this.#swatch.setAttribute("selected", "true");
 
     this.#dialog.open = true;
@@ -429,6 +453,8 @@ class FigFillPicker extends HTMLElement {
       this.#teardownColorAreaEvents();
       this.#teardownColorAreaEvents = null;
     }
+    this.#gradientInterpolationOpenObserver?.disconnect();
+    this.#gradientInterpolationOpenObserver = null;
     this.#stopWebcam();
     if (!this.#dialog) return;
     this.#restoreCustomSlotContent();
@@ -508,11 +534,6 @@ class FigFillPicker extends HTMLElement {
       this.#activeTab = allowedModes[0];
     }
 
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental
-      ? `experimental="${figEditorEscapeAttribute(experimental)}"`
-      : "";
-
     let headerContent;
     if (allowedModes.length === 1) {
       headerContent = `<h3 class="fig-fill-picker-type-label">${figEditorEscapeAttribute(modeLabels[allowedModes[0]])}</h3>`;
@@ -520,12 +541,14 @@ class FigFillPicker extends HTMLElement {
       const options = allowedModes
         .map(
           (m) =>
-            `<option value="${figEditorEscapeAttribute(m)}">${figEditorEscapeAttribute(modeLabels[m])}</option>`,
+            `<fig-select-option value="${figEditorEscapeAttribute(m)}">${figEditorEscapeAttribute(modeLabels[m])}</fig-select-option>`,
         )
-        .join("\n          ");
-      headerContent = `<fig-dropdown class="fig-fill-picker-type" label="Fill type" ${expAttr} value="${figEditorEscapeAttribute(this.#fillType)}">
-          ${options}
-        </fig-dropdown>`;
+        .join("\n            ");
+      headerContent = `<fig-select class="fig-fill-picker-type" label="Fill type" value="${figEditorEscapeAttribute(this.#fillType)}">
+          <fig-select-options>
+            ${options}
+          </fig-select-options>
+        </fig-select>`;
     }
 
     // Generate tab containers for all allowed modes
@@ -536,15 +559,9 @@ class FigFillPicker extends HTMLElement {
       )
       .join("\n        ");
 
-    const gamutDropdown = `<fig-dropdown class="fig-fill-picker-gamut" label="Color gamut" ${expAttr} value="${this.#gamut}">
-          <option value="srgb">sRGB</option>
-          <option value="display-p3">Display P3</option>
-        </fig-dropdown>`;
-
     this.#dialog.innerHTML = `
       <fig-header>
         ${headerContent}
-        ${gamutDropdown}
         <fig-button icon variant="ghost" class="fig-fill-picker-close" aria-label="Close fill picker">
           <fig-icon name="close"></fig-icon>
         </fig-button>
@@ -577,25 +594,14 @@ class FigFillPicker extends HTMLElement {
       );
     }
 
-    // Setup type dropdown switching (only if not locked)
-    const typeDropdown = this.#dialog.querySelector(".fig-fill-picker-type");
-    if (typeDropdown) {
-      typeDropdown.addEventListener("change", (e) => {
-        this.#switchTab(e.target.value);
+    // Setup type select switching (only if not locked)
+    const typeSelect = this.#dialog.querySelector(".fig-fill-picker-type");
+    if (typeSelect) {
+      typeSelect.addEventListener("change", (e) => {
+        const next =
+          typeof e.detail === "string" ? e.detail : e.target?.value;
+        if (next) this.#switchTab(next);
       });
-    }
-
-    // Setup gamut dropdown
-    const gamutEl = this.#dialog.querySelector(".fig-fill-picker-gamut");
-    if (gamutEl) {
-      const handleGamutChange = (e) => {
-        const val = e.currentTarget?.value ?? e.target?.value ?? e.detail;
-        if (val && val !== this.#gamut) {
-          this.#gamut = val;
-          this.#onGamutChange();
-        }
-      };
-      gamutEl.addEventListener("change", handleGamutChange);
     }
 
     this.#dialog
@@ -666,10 +672,10 @@ class FigFillPicker extends HTMLElement {
       this.#stopWebcam();
     }
 
-    // Update dropdown selection (only exists if not locked)
-    const typeDropdown = this.#dialog.querySelector(".fig-fill-picker-type");
-    if (typeDropdown && typeDropdown.value !== tabName) {
-      typeDropdown.value = tabName;
+    // Update type select (only exists if not locked)
+    const typeSelect = this.#dialog.querySelector(".fig-fill-picker-type");
+    if (typeSelect && typeSelect.value !== tabName) {
+      typeSelect.value = tabName;
     }
 
     // Show/hide tab content
@@ -711,8 +717,6 @@ class FigFillPicker extends HTMLElement {
   #initSolidTab() {
     const container = this.#dialog.querySelector('[data-tab="solid"]');
     const showAlpha = this.getAttribute("alpha") !== "false";
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
       <fig-preview class="fig-fill-picker-color-area">
@@ -728,28 +732,31 @@ class FigFillPicker extends HTMLElement {
           drag-snapping="modifier"
         ></fig-handle>
       </fig-preview>
-      <div class="fig-fill-picker-sliders">
+      <div class="fig-fill-picker-sliders${showAlpha ? "" : " is-hue-only"}">
         <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper" aria-label="Sample color"><fig-icon name="eyedropper"></fig-icon></fig-button></fig-tooltip>
-        <fig-slider type="hue" text="false" min="0" max="360" aria-label="Hue" value="${
+        <fig-slider type="hue" variant="classic" text="false" min="0" max="360" aria-label="Hue" value="${
           this.#color.h
         }"></fig-slider>
         ${
           showAlpha
-            ? `<fig-slider type="opacity" text="true" units="%" min="0" max="100" aria-label="Opacity" value="${
+            ? `<fig-slider type="opacity" variant="classic" text="false" min="0" max="100" aria-label="Opacity" value="${
                 this.#color.a * 100
               }" color="${this.#hsvToHex(this.#color)}"></fig-slider>`
             : ""
         }
       </div>
       <fig-field class="fig-fill-picker-inputs">
-        <fig-dropdown class="fig-fill-picker-input-mode" label="Color value format" ${expAttr} value="${this.#colorInputMode}">
-          <option value="hex">Hex</option>
-          <option value="rgb">RGB</option>
-          <option value="hsl">HSL</option>
-          <option value="hsb">HSB</option>
-          <option value="lab">LAB</option>
-          <option value="lch">LCH</option>
-        </fig-dropdown>
+        <fig-select class="fig-fill-picker-input-mode" label="Color value format" value="${figEditorEscapeAttribute(this.#colorInputMode)}">
+          <fig-select-options>
+            <fig-select-option value="hex">Hex</fig-select-option>
+            <fig-select-option value="rgb">RGB</fig-select-option>
+            <fig-select-option value="css">CSS</fig-select-option>
+            <fig-select-option value="hsl">HSL</fig-select-option>
+            <fig-select-option value="hsb">HSB</fig-select-option>
+            <fig-select-option value="lab">LAB</fig-select-option>
+            <fig-select-option value="lch">LCH</fig-select-option>
+          </fig-select-options>
+        </fig-select>
         <span class="fig-fill-picker-input-fields"></span>
       </fig-field>
     `;
@@ -789,10 +796,13 @@ class FigFillPicker extends HTMLElement {
       });
     }
 
-    // Setup color input mode dropdown
-    const modeDropdown = container.querySelector(".fig-fill-picker-input-mode");
-    modeDropdown.addEventListener("change", (e) => {
-      this.#colorInputMode = e.target.value;
+    // Setup color input mode select
+    const modeSelect = container.querySelector(".fig-fill-picker-input-mode");
+    modeSelect.addEventListener("change", (e) => {
+      const next =
+        typeof e.detail === "string" ? e.detail : e.target?.value;
+      if (!next) return;
+      this.#colorInputMode = next;
       this.#rebuildColorInputFields();
     });
 
@@ -1025,8 +1035,17 @@ class FigFillPicker extends HTMLElement {
     const wrap = (tooltip, html) =>
       `<fig-tooltip text="${tooltip}">${html}</fig-tooltip>`;
 
-    const num = (cls, label, min, max, step) =>
-      `<fig-input-number class="${cls}" aria-label="${label}" min="${min}" max="${max}"${step != null ? ` step="${step}"` : ""}></fig-input-number>`;
+    const num = (cls, label, min, max, step, units) =>
+      `<fig-input-number class="${cls}" aria-label="${label}" min="${min}" max="${max}"${step != null ? ` step="${step}"` : ""}${units ? ` units="${units}"` : ""}></fig-input-number>`;
+
+    const showAlpha = this.getAttribute("alpha") !== "false";
+    const alphaField = () =>
+      showAlpha
+        ? wrap(
+            "Alpha",
+            num("fig-fill-picker-ci-a", "Alpha", 0, 100, 0.1, "%"),
+          )
+        : "";
 
     let html;
     switch (this.#colorInputMode) {
@@ -1035,6 +1054,7 @@ class FigFillPicker extends HTMLElement {
           ${wrap("Red", num("fig-fill-picker-ci-r", "Red", 0, 255))}
           ${wrap("Green", num("fig-fill-picker-ci-g", "Green", 0, 255))}
           ${wrap("Blue", num("fig-fill-picker-ci-b", "Blue", 0, 255))}
+          ${alphaField()}
         </div>`;
         break;
       case "hsl":
@@ -1042,6 +1062,7 @@ class FigFillPicker extends HTMLElement {
           ${wrap("Hue", num("fig-fill-picker-ci-h", "Hue", 0, 360))}
           ${wrap("Saturation", num("fig-fill-picker-ci-s", "Saturation", 0, 100))}
           ${wrap("Lightness", num("fig-fill-picker-ci-l", "Lightness", 0, 100))}
+          ${alphaField()}
         </div>`;
         break;
       case "hsb":
@@ -1049,6 +1070,7 @@ class FigFillPicker extends HTMLElement {
           ${wrap("Hue", num("fig-fill-picker-ci-h", "Hue", 0, 360))}
           ${wrap("Saturation", num("fig-fill-picker-ci-s", "Saturation", 0, 100))}
           ${wrap("Brightness", num("fig-fill-picker-ci-v", "Brightness", 0, 100))}
+          ${alphaField()}
         </div>`;
         break;
       case "lab":
@@ -1056,6 +1078,7 @@ class FigFillPicker extends HTMLElement {
           ${wrap("Lightness", num("fig-fill-picker-ci-okl", "Lightness", 0, 100))}
           ${wrap("Green-Red axis", num("fig-fill-picker-ci-oka", "Green-Red axis", -0.4, 0.4, 0.001))}
           ${wrap("Blue-Yellow axis", num("fig-fill-picker-ci-okb", "Blue-Yellow axis", -0.4, 0.4, 0.001))}
+          ${alphaField()}
         </div>`;
         break;
       case "lch":
@@ -1063,10 +1086,19 @@ class FigFillPicker extends HTMLElement {
           ${wrap("Lightness", num("fig-fill-picker-ci-okl", "Lightness", 0, 100))}
           ${wrap("Chroma", num("fig-fill-picker-ci-okc", "Chroma", 0, 0.4, 0.001))}
           ${wrap("Hue", num("fig-fill-picker-ci-okh", "Hue", 0, 360))}
+          ${alphaField()}
         </div>`;
         break;
+      case "css":
+        html = `<fig-input-text class="fig-fill-picker-ci-css" aria-label="CSS color" placeholder="rgba(0, 0, 0, 1)"></fig-input-text>`;
+        break;
       default: // hex
-        html = `<fig-input-text class="fig-fill-picker-ci-hex" aria-label="Hex color" placeholder="FFFFFF"></fig-input-text>`;
+        html = showAlpha
+          ? `<div class="input-combo fig-fill-picker-ci-hex-row">
+          <fig-input-text class="fig-fill-picker-ci-hex" aria-label="Hex color" placeholder="FFFFFF"></fig-input-text>
+          ${alphaField()}
+        </div>`
+          : `<fig-input-text class="fig-fill-picker-ci-hex" aria-label="Hex color" placeholder="FFFFFF"></fig-input-text>`;
         break;
     }
 
@@ -1085,11 +1117,15 @@ class FigFillPicker extends HTMLElement {
       if (this.#isDraggingColor) return;
       const color = this.#readColorFromInputs();
       if (!color) return;
-      this.#color = { ...color, a: this.#color.a };
+      const nextAlpha = Number.isFinite(color.a) ? color.a : this.#color.a;
+      this.#color = { ...color, a: nextAlpha };
       this.#drawColorArea();
       this.#updateHandlePosition();
       if (this.#hueSlider) {
         this.#hueSlider.setAttribute("value", this.#color.h);
+      }
+      if (this.#opacitySlider && Number.isFinite(color.a)) {
+        this.#opacitySlider.setAttribute("value", this.#color.a * 100);
       }
       this.#emitInput();
     };
@@ -1105,39 +1141,53 @@ class FigFillPicker extends HTMLElement {
     });
   }
 
+  #readAlphaFromInput() {
+    const el = this.#dialog?.querySelector(".fig-fill-picker-ci-a");
+    if (!el) return undefined;
+    const pct = parseFloat(el.value);
+    if (!Number.isFinite(pct)) return undefined;
+    return Math.max(0, Math.min(1, pct / 100));
+  }
+
   #readColorFromInputs() {
     const q = (cls) => this.#dialog?.querySelector(`.${cls}`);
     const val = (cls) => parseFloat(q(cls)?.value ?? 0);
+    const withAlpha = (color) => {
+      if (!color) return null;
+      const a = this.#readAlphaFromInput();
+      return { ...color, a: a ?? color.a ?? this.#color.a };
+    };
 
     switch (this.#colorInputMode) {
       case "rgb":
-        return this.#rgbToHSV({
-          r: val("fig-fill-picker-ci-r"),
-          g: val("fig-fill-picker-ci-g"),
-          b: val("fig-fill-picker-ci-b"),
-        });
+        return withAlpha(
+          this.#rgbToHSV({
+            r: val("fig-fill-picker-ci-r"),
+            g: val("fig-fill-picker-ci-g"),
+            b: val("fig-fill-picker-ci-b"),
+          }),
+        );
       case "hsl": {
         const rgb = this.#hslToRGB({
           h: val("fig-fill-picker-ci-h"),
           s: val("fig-fill-picker-ci-s"),
           l: val("fig-fill-picker-ci-l"),
         });
-        return this.#rgbToHSV(rgb);
+        return withAlpha(this.#rgbToHSV(rgb));
       }
       case "hsb":
-        return {
+        return withAlpha({
           h: val("fig-fill-picker-ci-h"),
           s: val("fig-fill-picker-ci-s"),
           v: val("fig-fill-picker-ci-v"),
-          a: 1,
-        };
+        });
       case "lab": {
         const rgb = this.#oklabToRGB({
           l: val("fig-fill-picker-ci-okl") / 100,
           a: val("fig-fill-picker-ci-oka"),
           b: val("fig-fill-picker-ci-okb"),
         });
-        return this.#rgbToHSV(rgb);
+        return withAlpha(this.#rgbToHSV(rgb));
       }
       case "lch": {
         const rgb = this.#oklchToRGB({
@@ -1145,7 +1195,12 @@ class FigFillPicker extends HTMLElement {
           c: val("fig-fill-picker-ci-okc"),
           h: val("fig-fill-picker-ci-okh"),
         });
-        return this.#rgbToHSV(rgb);
+        return withAlpha(this.#rgbToHSV(rgb));
+      }
+      case "css": {
+        const cssEl = q("fig-fill-picker-ci-css");
+        if (!cssEl) return null;
+        return this.#parseCssColor(cssEl.value);
       }
       default: {
         // hex
@@ -1154,8 +1209,14 @@ class FigFillPicker extends HTMLElement {
         let hex = hexEl.value.replace(/^#/, "");
         if (hex.length === 3)
           hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        if (hex.length === 8) {
+          const alpha = parseInt(hex.slice(6, 8), 16) / 255;
+          hex = hex.slice(0, 6);
+          if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+          return { ...this.#hexToHSV(`#${hex}`), a: alpha };
+        }
         if (hex.length !== 6 || !/^[0-9a-fA-F]{6}$/.test(hex)) return null;
-        return this.#hexToHSV(`#${hex}`);
+        return withAlpha(this.#hexToHSV(`#${hex}`));
       }
     }
   }
@@ -1203,9 +1264,20 @@ class FigFillPicker extends HTMLElement {
         set("fig-fill-picker-ci-okh", Math.round(lch.h));
         break;
       }
+      case "css":
+        set("fig-fill-picker-ci-css", this.#formatCssColor(this.#color));
+        break;
       default: // hex
         set("fig-fill-picker-ci-hex", hex.replace(/^#/, "").toUpperCase());
         break;
+    }
+
+    if (this.#colorInputMode !== "css") {
+      const alphaPct = Math.round(this.#color.a * 1000) / 10;
+      set(
+        "fig-fill-picker-ci-a",
+        Number.isInteger(alphaPct) ? alphaPct : +alphaPct.toFixed(1),
+      );
     }
 
     if (this.#opacitySlider) {
@@ -1218,19 +1290,18 @@ class FigFillPicker extends HTMLElement {
   // ============ GRADIENT TAB ============
   #initGradientTab() {
     const container = this.#dialog.querySelector('[data-tab="gradient"]');
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
+    const interpolationValue = gradientInterpolationSelectValue(this.#gradient);
 
     container.innerHTML = `
       <fig-field class="fig-fill-picker-gradient-header">
-        <fig-dropdown class="fig-fill-picker-gradient-type" label="Gradient type" ${expAttr} value="${
-          this.#gradient.type
-        }">
-          <option value="linear" selected>Linear</option>
-          <option value="radial">Radial</option>
-          <option value="angular">Angular</option>
-        </fig-dropdown>
-        <fig-tooltip text="Rotate gradient">
+        <fig-select class="fig-fill-picker-gradient-type" label="Gradient type" value="${figEditorEscapeAttribute(this.#gradient.type)}">
+          <fig-select-options>
+            <fig-select-option value="linear">Linear</fig-select-option>
+            <fig-select-option value="radial">Radial</fig-select-option>
+            <fig-select-option value="angular">Angular</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+        <fig-tooltip text="Gradient angle">
           <fig-input-number class="fig-fill-picker-gradient-angle" aria-label="Gradient angle" value="${
             (this.#gradient.angle - 90 + 360) % 360
           }" min="0" max="360" units="°" wrap></fig-input-number>
@@ -1243,11 +1314,18 @@ class FigFillPicker extends HTMLElement {
             this.#gradient.centerY
           }" units="%" class="fig-fill-picker-gradient-cy"></fig-input-number>
         </div>
-        <fig-tooltip text="Flip gradient">
-          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip" aria-label="Flip gradient">
-            <fig-icon name="swap"></fig-icon>
-          </fig-button>
-        </fig-tooltip>
+        <div class="fig-fill-picker-gradient-actions">
+          <fig-tooltip text="Flip gradient">
+            <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip" aria-label="Flip gradient">
+              <fig-icon name="swap"></fig-icon>
+            </fig-button>
+          </fig-tooltip>
+          <fig-tooltip text="Rotate gradient">
+            <fig-button icon variant="ghost" class="fig-fill-picker-gradient-rotate" aria-label="Rotate gradient">
+              <fig-icon name="rotate"></fig-icon>
+            </fig-button>
+          </fig-tooltip>
+        </div>
       </fig-field>
       <fig-preview class="fig-fill-picker-gradient-preview">
         <fig-input-gradient class="fig-fill-picker-gradient-bar-input" aria-label="Gradient stops" edit="true" mode="tip" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
@@ -1268,25 +1346,11 @@ class FigFillPicker extends HTMLElement {
           <span>Color interpolation</span>
         </fig-header>
         <fig-field class="fig-fill-picker-gradient-interpolation-field">
-          <fig-dropdown class="fig-fill-picker-gradient-space" label="Color interpolation" full ${expAttr} value="${
-            this.#gradient.interpolationSpace === "oklch"
-              ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
-              : this.#gradient.interpolationSpace
-          }">
-            <optgroup label="sRGB">
-              <option value="srgb">Classic</option>
-              <option value="srgb-linear">Linear</option>
-            </optgroup>
-            <optgroup label="OKLab">
-              <option value="oklab">Perceptual</option>
-            </optgroup>
-            <optgroup label="OKLCH">
-              <option value="oklch-shorter">Shorter hue</option>
-              <option value="oklch-longer">Longer hue</option>
-              <option value="oklch-increasing">Increasing hue</option>
-              <option value="oklch-decreasing">Decreasing hue</option>
-            </optgroup>
-          </fig-dropdown>
+          <fig-select class="fig-fill-picker-gradient-space" label="Color interpolation" full value="${figEditorEscapeAttribute(interpolationValue)}">
+            <fig-select-options>
+              ${this.#gradientInterpolationOptionsMarkup()}
+            </fig-select-options>
+          </fig-select>
         </fig-field>
       </div>
     `;
@@ -1295,44 +1359,141 @@ class FigFillPicker extends HTMLElement {
     this.#setupGradientEvents(container);
   }
 
-  #setupGradientEvents(container) {
-    // Type dropdown
-    const typeDropdown = container.querySelector(
-      ".fig-fill-picker-gradient-type",
-    );
-    const getDropdownValue = (event) =>
-      event.currentTarget?.value ?? event.target?.value ?? event.detail;
+  #gradientInterpolationOptionsMarkup() {
+    const hueMethods = ["shorter", "longer", "increasing", "decreasing"];
+    const groups = [
+      {
+        label: "Linear",
+        options: [
+          { value: "srgb", label: "sRGB" },
+        ],
+      },
+      {
+        label: "",
+        options: [{ value: "oklab", label: "OKLAB" }],
+      },
+      {
+        label: "Polar",
+        options: hueMethods.map((method) => ({
+          value: `oklch-${method}`,
+          label: `OKLCH ${method.charAt(0).toUpperCase()}${method.slice(1)}`,
+        })),
+      },
+      {
+        label: "",
+        separator: true,
+        options: hueMethods.map((method) => ({
+          value: `hsl-${method}`,
+          label: `HSL ${method.charAt(0).toUpperCase()}${method.slice(1)}`,
+        })),
+      },
+    ];
+    return groups
+      .map((group) => {
+        const options = group.options
+          .map((opt) => {
+            const methodLabel = opt.method
+              ? opt.method.charAt(0).toUpperCase() + opt.method.slice(1)
+              : "";
+            const appendLabel = opt.append || methodLabel;
+            return `<fig-select-option value="${figEditorEscapeAttribute(opt.value)}" label="${figEditorEscapeAttribute(opt.label)}">
+          <fig-interpolation-swatch slot="prepend" size="large" aria-hidden="true"></fig-interpolation-swatch>
+          ${figEditorEscapeAttribute(opt.label)}
+          ${appendLabel ? `<span slot="append">${figEditorEscapeAttribute(appendLabel)}</span>` : ""}
+        </fig-select-option>`;
+          })
+          .join("");
+        const separator = group.label || group.separator
+          ? `<fig-menu-separator${group.label ? ` label="${figEditorEscapeAttribute(group.label)}"` : ""}></fig-menu-separator>`
+          : "";
+        return `${separator}${options}`;
+      })
+      .join("");
+  }
 
-    const handleTypeChange = (e) => {
-      this.#gradient.type = getDropdownValue(e);
+  #setupGradientEvents(container) {
+    const getSelectValue = (event) =>
+      typeof event.detail === "string" ? event.detail : event.target?.value;
+    const gradientBarInput = container.querySelector(
+      ".fig-fill-picker-gradient-bar-input",
+    );
+    const setGradientBarPreview = (gradient) => {
+      if (!gradientBarInput) return;
+      this.#syncingGradientBar = true;
+      try {
+        gradientBarInput.setAttribute(
+          "value",
+          JSON.stringify({
+            type: "gradient",
+            gradient: gradientToValueShape(gradient),
+          }),
+        );
+      } finally {
+        this.#syncingGradientBar = false;
+      }
+    };
+    const restoreGradientBarPreview = () => {
+      setGradientBarPreview(this.#gradient);
+    };
+
+    const typeSelect = container.querySelector(".fig-fill-picker-gradient-type");
+    typeSelect?.addEventListener("change", (e) => {
+      const next = getSelectValue(e);
+      if (!next) return;
+      this.#gradient.type = next;
       this.#updateGradientUI();
       this.#emitInput();
-    };
-    typeDropdown.addEventListener("change", handleTypeChange);
+    });
 
-    const interpolationDropdown = container.querySelector(
+    const interpolationSelect = container.querySelector(
       ".fig-fill-picker-gradient-space",
     );
-    const handleInterpolationChange = (e) => {
-      const val = getDropdownValue(e);
-      let space = val;
-      let hue = "shorter";
-      if (val.startsWith("oklch-")) {
-        space = "oklch";
-        hue = val.slice(6);
-      }
+    interpolationSelect
+      ?.querySelectorAll("fig-select-option")
+      .forEach((option) => {
+        const previewOption = () => {
+          const parsed = parseGradientInterpolationSelectValue(
+            option.getAttribute("value") || "srgb",
+          );
+          setGradientBarPreview(
+            normalizeGradientConfig({
+              ...this.#gradient,
+              ...parsed,
+            }),
+          );
+        };
+        option.addEventListener("pointerenter", previewOption);
+        option.addEventListener("pointerleave", () => {
+          if (document.activeElement !== option) restoreGradientBarPreview();
+        });
+        option.addEventListener("focus", previewOption);
+        option.addEventListener("blur", () => {
+          if (!option.matches(":hover")) restoreGradientBarPreview();
+        });
+      });
+    this.#gradientInterpolationOpenObserver?.disconnect();
+    if (interpolationSelect) {
+      this.#gradientInterpolationOpenObserver = new MutationObserver(() => {
+        if (!interpolationSelect.hasAttribute("open")) {
+          restoreGradientBarPreview();
+        }
+      });
+      this.#gradientInterpolationOpenObserver.observe(interpolationSelect, {
+        attributes: true,
+        attributeFilter: ["open"],
+      });
+    }
+    interpolationSelect?.addEventListener("change", (e) => {
+      const val = getSelectValue(e);
+      if (!val) return;
+      const parsed = parseGradientInterpolationSelectValue(val);
       this.#gradient = normalizeGradientConfig({
         ...this.#gradient,
-        interpolationSpace: space,
-        hueInterpolation: hue,
+        ...parsed,
       });
       this.#updateGradientUI();
       this.#emitInput();
-    };
-    interpolationDropdown?.addEventListener(
-      "change",
-      handleInterpolationChange,
-    );
+    });
 
     // Angle input
     const angleInput = container.querySelector(
@@ -1360,6 +1521,15 @@ class FigFillPicker extends HTMLElement {
       this.#updateGradientPreview();
       this.#emitInput();
     });
+
+    // Rotate 90° clockwise
+    container
+      .querySelector(".fig-fill-picker-gradient-rotate")
+      ?.addEventListener("click", () => {
+        this.#gradient.angle = (Number(this.#gradient.angle) + 90) % 360;
+        this.#updateGradientUI();
+        this.#emitInput();
+      });
 
     // Flip button
     container
@@ -1389,9 +1559,6 @@ class FigFillPicker extends HTMLElement {
       });
 
     // Embedded gradient bar input
-    const gradientBarInput = container.querySelector(
-      ".fig-fill-picker-gradient-bar-input",
-    );
     if (gradientBarInput) {
       const syncFromBarInput = (e) => {
         e.stopPropagation();
@@ -1403,6 +1570,7 @@ class FigFillPicker extends HTMLElement {
           ...detail.gradient,
         });
         this.#updateSwatch();
+        this.#updateGradientInterpolationSwatches();
         this.#updateGradientStopsList();
       };
       gradientBarInput.addEventListener("input", (e) => {
@@ -1555,6 +1723,7 @@ class FigFillPicker extends HTMLElement {
 
     this.#syncingGradientBar = true;
     try {
+      this.#updateGradientInterpolationSwatches();
       this.#updateGradientPreview();
       this.#emitInput();
     } finally {
@@ -1573,33 +1742,77 @@ class FigFillPicker extends HTMLElement {
     const angleInput = container.querySelector(
       ".fig-fill-picker-gradient-angle",
     );
+    const rotateBtn = container.querySelector(
+      ".fig-fill-picker-gradient-rotate",
+    );
     const centerInputs = container.querySelector(
       ".fig-fill-picker-gradient-center",
     );
 
     if (this.#gradient.type === "radial") {
       angleInput.style.display = "none";
+      if (rotateBtn) rotateBtn.style.display = "none";
       centerInputs.style.display = "flex";
     } else {
-      angleInput.style.display = "block";
+      angleInput.style.removeProperty("display");
+      rotateBtn?.style.removeProperty("display");
       centerInputs.style.display = "none";
       // Sync angle input value (convert CSS angle to picker angle)
       const pickerAngle = (this.#gradient.angle - 90 + 360) % 360;
       angleInput.setAttribute("value", pickerAngle);
     }
 
-    const interpolationDropdown = container.querySelector(
+    const interpolationSelect = container.querySelector(
       ".fig-fill-picker-gradient-space",
     );
-    if (interpolationDropdown) {
-      interpolationDropdown.value =
-        this.#gradient.interpolationSpace === "oklch"
-          ? `oklch-${this.#gradient.hueInterpolation || "shorter"}`
-          : this.#gradient.interpolationSpace;
+    if (interpolationSelect) {
+      interpolationSelect.value = gradientInterpolationSelectValue(
+        this.#gradient,
+      );
     }
 
+    this.#updateGradientInterpolationSwatches();
     this.#updateGradientPreview();
     this.#updateGradientStopsList();
+  }
+
+  #interpolationPreviewStops() {
+    const stops = Array.isArray(this.#gradient.stops)
+      ? [...this.#gradient.stops].sort(
+          (a, b) => (a.position ?? 0) - (b.position ?? 0),
+        )
+      : [];
+    if (stops.length < 2) {
+      return [
+        { color: "#FF0000", position: 0 },
+        { color: "#4F9EFF", position: 100 },
+      ];
+    }
+    return stops.map((stop) => ({
+      color: String(stop.color || "#D9D9D9").replace(/^(#(?:[0-9a-f]{6})).*/i, "$1"),
+      position: stop.position ?? 0,
+    }));
+  }
+
+  #updateGradientInterpolationSwatches() {
+    if (!this.#dialog) return;
+    const stops = this.#interpolationPreviewStops();
+    this.#dialog
+      .querySelectorAll("fig-interpolation-swatch")
+      .forEach((swatch) => {
+        const optionVal =
+          swatch.closest("fig-select-option")?.getAttribute("value") || "srgb";
+        const parsed = parseGradientInterpolationSelectValue(optionVal);
+        const gradient = {
+          type: "linear",
+          stops,
+          interpolationSpace: parsed.interpolationSpace,
+        };
+        if (GRADIENT_HUE_SPACES.has(parsed.interpolationSpace)) {
+          gradient.hueInterpolation = parsed.hueInterpolation;
+        }
+        swatch.value = { type: "gradient", gradient };
+      });
   }
 
   #updateGradientPreview() {
@@ -1690,6 +1903,7 @@ class FigFillPicker extends HTMLElement {
           .querySelector(".fig-fill-picker-stop-position")
           .addEventListener("input", () => {
             this.#syncGradientStopRow(row);
+            this.#updateGradientInterpolationSwatches();
             this.#updateGradientPreview();
             this.#emitInput();
           });
@@ -1709,6 +1923,7 @@ class FigFillPicker extends HTMLElement {
           this.#syncGradientStopRow(row);
           this.#syncingGradientBar = true;
           try {
+            this.#updateGradientInterpolationSwatches();
             this.#updateGradientPreview();
             this.#emitInput();
           } finally {
@@ -1787,19 +2002,17 @@ class FigFillPicker extends HTMLElement {
   // ============ IMAGE TAB ============
   #initImageTab() {
     const container = this.#dialog.querySelector('[data-tab="image"]');
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
       <fig-field class="fig-fill-picker-media-header">
-        <fig-dropdown class="fig-fill-picker-scale-mode" label="Image scale mode" ${expAttr} value="${
-          this.#image.scaleMode
-        }">
-          <option value="fill" selected>Fill</option>
-          <option value="fit">Fit</option>
-          <option value="crop">Crop</option>
-          <option value="tile">Tile</option>
-        </fig-dropdown>
+        <fig-select class="fig-fill-picker-scale-mode" label="Image scale mode" value="${figEditorEscapeAttribute(this.#image.scaleMode)}">
+          <fig-select-options>
+            <fig-select-option value="fill">Fill</fig-select-option>
+            <fig-select-option value="fit">Fit</fig-select-option>
+            <fig-select-option value="crop">Crop</fig-select-option>
+            <fig-select-option value="tile">Tile</fig-select-option>
+          </fig-select-options>
+        </fig-select>
         <fig-input-number class="fig-fill-picker-scale" aria-label="Image tile scale" min="1" max="200" value="${
           this.#image.scale
         }" units="%" ${
@@ -1816,15 +2029,18 @@ class FigFillPicker extends HTMLElement {
   }
 
   #setupImageEvents(container) {
-    const scaleModeDropdown = container.querySelector(
+    const scaleModeSelect = container.querySelector(
       ".fig-fill-picker-scale-mode",
     );
     const scaleInput = container.querySelector(".fig-fill-picker-scale");
     const preview = container.querySelector(".fig-fill-picker-image-preview");
 
-    scaleModeDropdown.addEventListener("change", (e) => {
-      this.#image.scaleMode = e.target.value;
-      scaleInput.style.display = e.target.value === "tile" ? "block" : "none";
+    scaleModeSelect.addEventListener("change", (e) => {
+      const next =
+        typeof e.detail === "string" ? e.detail : e.target?.value;
+      if (!next) return;
+      this.#image.scaleMode = next;
+      scaleInput.style.display = next === "tile" ? "block" : "none";
       this.#updateImagePreview(preview);
       this.#updateSwatch();
       this.#emitInput();
@@ -1955,18 +2171,16 @@ class FigFillPicker extends HTMLElement {
   // ============ VIDEO TAB ============
   #initVideoTab() {
     const container = this.#dialog.querySelector('[data-tab="video"]');
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
       <fig-field class="fig-fill-picker-media-header">
-        <fig-dropdown class="fig-fill-picker-scale-mode" label="Video scale mode" ${expAttr} value="${
-          this.#video.scaleMode
-        }">
-          <option value="fill" selected>Fill</option>
-          <option value="fit">Fit</option>
-          <option value="crop">Crop</option>
-        </fig-dropdown>
+        <fig-select class="fig-fill-picker-scale-mode" label="Video scale mode" value="${figEditorEscapeAttribute(this.#video.scaleMode)}">
+          <fig-select-options>
+            <fig-select-option value="fill">Fill</fig-select-option>
+            <fig-select-option value="fit">Fit</fig-select-option>
+            <fig-select-option value="crop">Crop</fig-select-option>
+          </fig-select-options>
+        </fig-select>
         <fig-button class="fig-fill-picker-media-rotate" icon variant="ghost" aria-label="Rotate">
           <fig-icon name="rotate"></fig-icon>
         </fig-button>
@@ -1978,13 +2192,16 @@ class FigFillPicker extends HTMLElement {
   }
 
   #setupVideoEvents(container) {
-    const scaleModeDropdown = container.querySelector(
+    const scaleModeSelect = container.querySelector(
       ".fig-fill-picker-scale-mode",
     );
     const preview = container.querySelector(".fig-fill-picker-video-preview");
 
-    scaleModeDropdown.addEventListener("change", (e) => {
-      this.#video.scaleMode = e.target.value;
+    scaleModeSelect.addEventListener("change", (e) => {
+      const next =
+        typeof e.detail === "string" ? e.detail : e.target?.value;
+      if (!next) return;
+      this.#video.scaleMode = next;
       this.#updateVideoPreviewStyle(preview);
       this.#updateSwatch();
       this.#emitInput();
@@ -2014,13 +2231,12 @@ class FigFillPicker extends HTMLElement {
   // ============ WEBCAM TAB ============
   #initWebcamTab() {
     const container = this.#dialog.querySelector('[data-tab="webcam"]');
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental ? `experimental="${experimental}"` : "";
 
     container.innerHTML = `
       <fig-field class="fig-fill-picker-webcam-camera" style="display: none;">
-        <fig-dropdown class="fig-fill-picker-camera-select" label="Camera" full ${expAttr}>
-        </fig-dropdown>
+        <fig-select class="fig-fill-picker-camera-select" label="Camera" full>
+          <fig-select-options></fig-select-options>
+        </fig-select>
       </fig-field>
       <fig-video class="fig-fill-picker-webcam-preview" aria-label="Webcam preview" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true">
         <video class="fig-fill-picker-webcam-video" autoplay muted playsinline></video>
@@ -2081,11 +2297,14 @@ class FigFillPicker extends HTMLElement {
 
         if (cameras.length > 1) {
           cameraField.style.display = "";
-          cameraSelect
-            .querySelectorAll(":scope > option, :scope > optgroup")
-            .forEach((option) => option.remove());
+          let panel = cameraSelect.querySelector(":scope > fig-select-options");
+          if (!panel) {
+            panel = document.createElement("fig-select-options");
+            cameraSelect.append(panel);
+          }
+          panel.replaceChildren();
           cameras.forEach((cam, i) => {
-            const option = document.createElement("option");
+            const option = document.createElement("fig-select-option");
             option.value = cam.deviceId;
             const label =
               cam.label || (cameras.length > 1 ? `Camera ${i + 1}` : "Camera");
@@ -2098,14 +2317,14 @@ class FigFillPicker extends HTMLElement {
                 return ` ${displayId}`;
               },
             );
-            cameraSelect.append(option);
+            panel.append(option);
           });
           if (deviceId) cameraSelect.value = deviceId;
         } else {
           cameraField.style.display = "none";
           cameraSelect
-            .querySelectorAll(":scope > option, :scope > optgroup")
-            .forEach((option) => option.remove());
+            .querySelector(":scope > fig-select-options")
+            ?.replaceChildren();
         }
       } catch (err) {
         if (requestId !== this.#webcamRequestId) return;
@@ -2133,7 +2352,9 @@ class FigFillPicker extends HTMLElement {
     this.#webcamStart = startWebcam;
 
     cameraSelect.addEventListener("change", (e) => {
-      startWebcam(e.target.value);
+      const next =
+        typeof e.detail === "string" ? e.detail : e.target?.value;
+      if (next) startWebcam(next);
     });
 
     captureBtn.addEventListener("click", async () => {
@@ -2285,6 +2506,55 @@ class FigFillPicker extends HTMLElement {
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  #formatCssAlpha(alpha) {
+    const a = Math.max(0, Math.min(1, Number(alpha) || 0));
+    const rounded = Math.round(a * 1000) / 1000;
+    return String(rounded);
+  }
+
+  #formatCssColor(color = this.#color) {
+    const rgb = this.#hsvToRGB(color);
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.#formatCssAlpha(color.a)})`;
+  }
+
+  /** Parse CSS color strings (rgba/rgb/hex) into HSV(+alpha). */
+  #parseCssColor(raw) {
+    const value = String(raw ?? "").trim();
+    if (!value) return null;
+
+    const hexMatch = value.match(/^#?([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+    if (hexMatch) {
+      let hex = hexMatch[1];
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      let alpha = 1;
+      if (hex.length === 8) {
+        alpha = parseInt(hex.slice(6, 8), 16) / 255;
+        hex = hex.slice(0, 6);
+      }
+      const hsv = this.#hexToHSV(`#${hex}`);
+      return { ...hsv, a: alpha };
+    }
+
+    const rgbMatch = value.match(
+      /^rgba?\(\s*([+-]?(?:\d+\.?\d*|\.\d+))\s*,\s*([+-]?(?:\d+\.?\d*|\.\d+))\s*,\s*([+-]?(?:\d+\.?\d*|\.\d+))(?:\s*,\s*([+-]?(?:\d+\.?\d*|\.\d+))\s*)?\)$/i,
+    );
+    if (rgbMatch) {
+      const r = Math.max(0, Math.min(255, Math.round(parseFloat(rgbMatch[1]))));
+      const g = Math.max(0, Math.min(255, Math.round(parseFloat(rgbMatch[2]))));
+      const b = Math.max(0, Math.min(255, Math.round(parseFloat(rgbMatch[3]))));
+      const alpha =
+        rgbMatch[4] !== undefined
+          ? Math.max(0, Math.min(1, parseFloat(rgbMatch[4])))
+          : 1;
+      if (![r, g, b, alpha].every(Number.isFinite)) return null;
+      return { ...this.#rgbToHSV({ r, g, b }), a: alpha };
+    }
+
+    return null;
   }
 
   #hexToP3(hex, alpha = 1) {

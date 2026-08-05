@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "6.20.2",
+  "version": "6.21.0",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "MIT",
@@ -19,6 +19,15 @@
     "./fig-lab.css": "./dist/fig-lab.css",
     "./base.css": "./dist/base.css",
     "./components.css": "./dist/components.css",
+    "./propskit": {
+      "types": "./propskit.d.ts",
+      "default": "./dist/propskit.js"
+    },
+    "./propskit.js": {
+      "types": "./propskit.d.ts",
+      "default": "./dist/propskit.js"
+    },
+    "./propskit.css": "./dist/propskit.css",
     "./src/fig.js": "./fig.js",
     "./src/fig-layer.js": "./fig-layer.js",
     "./src/fig-editor.js": "./fig-editor.js",
@@ -35,6 +44,9 @@
     "fig-layer.js",
     "fig-editor.js",
     "fig-lab.js",
+    "propskit.js",
+    "propskit-core.js",
+    "propskit.d.ts",
     "fig.css",
     "fig-layer.css",
     "fig-editor.css",
@@ -48,12 +60,18 @@
     "LICENSE"
   ],
   "sideEffects": [
-    "*.css"
+    "*.css",
+    "./propskit.js",
+    "./dist/propskit.js",
+    "./fig.js",
+    "./fig-lab.js",
+    "./fig-editor.js"
   ],
   "scripts": {
     "dev": "bun --hot server.ts",
-    "build": "bun build fig.js --minify --outdir dist && bun build fig-layer.js --minify --outdir dist && bun build fig-editor.js --minify --outdir dist --external ./fig.js && bun build fig-lab.js --minify --outdir dist --external ./fig.js --external ./fig-editor.js && npm run build:css",
+    "build": "bun build fig.js --minify --outdir dist && bun build fig-layer.js --minify --outdir dist && bun build fig-editor.js --minify --outdir dist --external ./fig.js && bun build fig-lab.js --minify --outdir dist --external ./fig.js --external ./fig-editor.js && bun build propskit.js --minify --outdir dist && npm run build:css && npm run build:propskit-css",
     "build:css": "node scripts/build-css.mjs",
+    "build:propskit-css": "node scripts/build-propskit-css.mjs",
     "dev:playground": "node playground/dev.mjs",
     "build:playground": "cd playground && npm run build",
     "test": "npm run test:components",
@@ -107,6 +125,17 @@
     "playwright": "^1.58.2"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "react": ">=18",
+    "vue": ">=3.3",
+    "svelte": ">=5",
+    "solid-js": ">=1.8"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true },
+    "vue": { "optional": true },
+    "svelte": { "optional": true },
+    "solid-js": { "optional": true },
+    "typescript": { "optional": true }
   }
 }
