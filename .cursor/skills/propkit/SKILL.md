@@ -151,11 +151,11 @@ bootstrap();
 <!-- Fill + blend pair -->
 <fig-field direction="horizontal">
   <label>Fill</label>
-  <fig-input-fill value='{"type":"solid","color":"#667eea"}' experimental="modern"></fig-input-fill>
+  <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
 </fig-field>
 <fig-field direction="horizontal">
   <label>Blend</label>
-  <fig-dropdown full experimental="modern">
+  <fig-dropdown full>
     <option selected>Normal</option>
     <option>Multiply</option>
   </fig-dropdown>

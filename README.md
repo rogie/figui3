@@ -218,7 +218,6 @@ One import for every host (`@rogieking/figui3/propskit.js`). Framework examples 
 |---|---|---|---|
 | `value` | string | — | Selected value |
 | `type` | string | `"select"` | `"select"` or `"dropdown"` |
-| `experimental` | string | — | Feature flags (e.g. `"modern"` for `appearance: base-select`) |
 | `label` | string | — | Accessible label for the generated native `<select>` |
 | `disabled` | boolean | `false` | Disabled state |
 
@@ -229,7 +228,7 @@ One import for every host (`@rogieking/figui3/propskit.js`). Framework examples 
 </fig-dropdown>
 ```
 
-Keyboard activation follows the native select pattern. Enter opens the closed picker, and when `experimental="modern"` is open, Enter is left to the browser so the focused option commits normally.
+Keyboard activation follows the native select pattern. Enter opens the closed picker.
 
 ---
 
@@ -372,7 +371,7 @@ PropsKit controls that support `size` default to the large layout when the attri
 
 Composes a `<fig-field>` and `<fig-input-color>` into a full-surface property control. Color attributes are forwarded to the inner input and text editing remains enabled.
 
-**Attributes:** `label`, `value`, `alpha`, `disabled`, `experimental`, `size`
+**Attributes:** `label`, `value`, `alpha`, `disabled`, `size`
 
 **Events:** `input`, `change` — forwarded from the inner color input.
 
@@ -626,7 +625,6 @@ A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker 
 | `text` | boolean | `false` | Show hex text input |
 | `alpha` | boolean | `true` | Show alpha slider; set `alpha="false"` to hide opacity controls |
 | `mode` | string | — | Color mode (`"hex"`, `"rgb"`, `"hsl"`) |
-| `experimental` | string | — | Feature flags |
 | `picker-*` | string | — | Forwarded to `<fig-fill-picker>` when the optional picker is registered |
 | `disabled` | boolean | `false` | Disabled state |
 
@@ -688,7 +686,6 @@ A gradient editor with draggable stops. With `edit="picker"` and the optional pi
 | `edit` | boolean/string | `true` | `true`, `false`, or `"picker"` |
 | `mode` | string | `"handle"` | `"handle"` renders color stop handles without tips; `"tip"` renders persistent color tips |
 | `disabled` | boolean | `false` | Disabled state |
-| `experimental` | string | — | Picker feature flags |
 | `picker-*` | string | — | Passthrough picker attributes |
 
 Supported interpolation spaces: `srgb`, `srgb-linear`, `display-p3`, `oklab`, `oklch` (with `hueInterpolation`: `shorter`, `longer`, `increasing`, `decreasing`).
@@ -719,7 +716,6 @@ A comprehensive fill input supporting solid, gradient, image, and video fills. W
 | `value` | string | — | JSON fill data |
 | `disabled` | boolean | `false` | Disabled state |
 | `mode` | string | — | Lock to a fill mode |
-| `experimental` | string | — | Feature flags |
 | `alpha` | boolean | `true` | Show alpha controls |
 | `picker-*` | string | — | Forwarded to `<fig-fill-picker>` when the optional picker is registered |
 
@@ -750,7 +746,6 @@ Optional full fill picker dialog supporting solid, gradient, image, video, and w
 | `disabled` | boolean | `false` | Disabled state |
 | `alpha` | boolean | `true` | Show alpha controls |
 | `mode` | string | — | Lock to mode: `"solid"`, `"gradient"`, `"image"`, `"video"`, `"webcam"` |
-| `experimental` | string | — | Feature flags |
 
 **Events:**
 
@@ -1112,9 +1107,12 @@ A modal/non-modal dialog. Uses `is="fig-dialog"` on a native `<dialog>` element.
 ```html
 <dialog is="fig-dialog" id="myDialog" modal drag handle="fig-header" position="center center">
   <fig-header>Dialog Title</fig-header>
-  <fig-content><p>Content here.</p></fig-content>
+  <fig-content padding><p>Content here.</p></fig-content>
 </dialog>
 ```
+
+Use `padding` on `fig-content` for prose-only content. Leave it off when
+rendering `fig-field` or `fig-group` children, which provide their own gutters.
 
 Dialog close paths restore focus to the element that opened the dialog.
 

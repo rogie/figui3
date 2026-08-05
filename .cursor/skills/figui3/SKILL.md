@@ -73,7 +73,7 @@ export default defineConfig({
 - `fig-fill-picker` is optional. Import `fig-editor.js` and `fig-editor.css` when full picker behavior is needed.
 - Do not use `picker` or `picker-anchor` on `fig-input-color`; components auto-detect `fig-fill-picker` at interaction time.
 - `picker-*` attrs on `fig-input-color` are forwarded to `fig-fill-picker` only when the optional picker is registered.
-  - Example: `picker-dialog-position`, `picker-experimental`, etc.
+  - Example: `picker-dialog-position`.
 - For React custom modes, use `fig-fill-picker` + slot API:
   - Add a child with `slot="mode-<name>"` (and optional `label`).
   - Include `<name>` in the `mode` attribute (e.g. `mode="solid,react-demo"`).
@@ -87,19 +87,6 @@ export default defineConfig({
 - Preserve value shape expectations:
   - `fig-input-color` expects solid color data (`detail.color`, optional `detail.alpha`) from the picker.
   - `fig-fill-picker` custom modes use JSON with `type` set to mode name and remaining data in payload.
-
-## Experimental Attribute Guidance
-
-- Use `experimental` as a feature-flag string for opt-in behavior. Treat it as progressive enhancement, not guaranteed baseline behavior.
-- Prefer `experimental="modern"` when enabling modern customizable select/picker UI behavior.
-- Keep usage explicit on the component that needs it (for example `fig-dropdown`, `fig-fill-picker`, `fig-input-fill`, `fig-input-color`).
-- Preserve pass-through behavior:
-  - `fig-input-color` and `fig-input-fill` forward experimental-related picker settings into internal `fig-fill-picker` usage.
-  - Avoid adding hidden implicit defaults that enable experimental behavior globally.
-- Backward-compat rule:
-  - Do not reintroduce the old `neue` variant name for dropdown experimental behavior.
-  - Use `variant="classic"` only when a slider needs the previous visual style.
-- Documentation rule: any new experimental token must be documented with activation syntax, intended scope, and fallback behavior in demos + README + changelog.
 
 ## Critical Rules
 
@@ -142,7 +129,6 @@ export default defineConfig({
 - Update `README.md` component docs when public API or behavior changes.
 - Update demo surfaces (`index.html` and `playground/` routes where relevant) for visible behavior changes.
 - Prefer realistic examples that mirror plugin/property panel usage.
-- If introducing an experimental feature, document activation and fallback behavior clearly.
 
 ### Compatibility and Safety
 

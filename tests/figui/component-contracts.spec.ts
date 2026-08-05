@@ -26,6 +26,43 @@ test.describe("fig.js component contracts", () => {
     expect(missing).toEqual([]);
   });
 
+  test("registers fig-select and renders easing presets without fig-lab", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      await Promise.all([
+        customElements.whenDefined("fig-select"),
+        customElements.whenDefined("fig-select-option"),
+        customElements.whenDefined("fig-select-options"),
+        customElements.whenDefined("fig-easing-curve"),
+      ]);
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-easing-curve value="0, 0, 1, 1"></fig-easing-curve>`;
+      const easing = root.querySelector("fig-easing-curve");
+      const select = easing?.querySelector("fig-select");
+      return {
+        selectRegistered: Boolean(customElements.get("fig-select")),
+        optionRegistered: Boolean(customElements.get("fig-select-option")),
+        optionsRegistered: Boolean(customElements.get("fig-select-options")),
+        easingUsesSelect: Boolean(select),
+        selectedValue: select?.getAttribute("value"),
+        triggerHasIcon: Boolean(
+          select?.shadowRoot?.querySelector(".fig-select-prepend svg"),
+        ),
+      };
+    });
+
+    expect(result).toEqual({
+      selectRegistered: true,
+      optionRegistered: true,
+      optionsRegistered: true,
+      easingUsesSelect: true,
+      selectedValue: "Linear",
+      triggerHasIcon: true,
+    });
+  });
+
   for (const contract of componentContracts) {
     test(`${contract.tag}: mounts without runtime errors`, async ({ page }) => {
       const errors = collectPageErrors(page);
@@ -228,6 +265,7 @@ test.describe("propskit default sizes", () => {
         const field = element.querySelector("fig-field");
         const fieldStyle = field ? getComputedStyle(field) : null;
         return {
+          height: host.height,
           paddingTop: host.paddingTop,
           paddingBottom: host.paddingBottom,
           paddingLeft: host.paddingLeft,
@@ -281,8 +319,9 @@ test.describe("propskit default sizes", () => {
 
     for (const entry of result.styles) {
       expect(entry.defaultStyle, entry.tag).toEqual(entry.largeStyle);
-      expect(entry.defaultStyle.paddingTop, entry.tag).toBe("0px");
-      expect(entry.defaultStyle.paddingBottom, entry.tag).toBe("0px");
+      expect(entry.defaultStyle.paddingTop, entry.tag).toBe("4px");
+      expect(entry.defaultStyle.paddingBottom, entry.tag).toBe("4px");
+      expect(entry.defaultStyle.height, entry.tag).toBe("40px");
     }
     expect(result.numberForwardsSize).toBe(false);
     expect(result.rightSpacing.text).toBe(result.rightSpacing.number);
@@ -1145,82 +1184,6 @@ test.describe("dropdown keyboard behavior", () => {
     );
   });
 
-  test("opens modern dropdown on Enter and lets open picker commit selection", async ({
-    page,
-  }) => {
-    await page.evaluate(() => {
-      const root = document.querySelector("#fixture-root");
-      if (!root) throw new Error("Missing #fixture-root");
-      root.innerHTML = `
-        <fig-dropdown experimental="modern" label="Residence type">
-          <option>House</option>
-          <option>Apartment</option>
-        </fig-dropdown>
-      `;
-    });
-    await page.waitForTimeout(100);
-
-    const closedState = await page.locator("fig-dropdown select").evaluate((select) => {
-      (select as HTMLSelectElement & { showPicker?: () => void }).showPicker = () => {
-        select.setAttribute("data-show-picker-called", "true");
-      };
-      const event = new KeyboardEvent("keydown", {
-        key: "Enter",
-        bubbles: true,
-        cancelable: true,
-      });
-      select.dispatchEvent(event);
-      return {
-        prevented: event.defaultPrevented,
-        showPickerCalled: select.getAttribute("data-show-picker-called"),
-      };
-    });
-
-    expect(closedState).toEqual({
-      prevented: true,
-      showPickerCalled: "true",
-    });
-
-    const openState = await page.locator("fig-dropdown select").evaluate((select) => {
-      select.addEventListener(
-        "keydown",
-        (event) => {
-          queueMicrotask(() => {
-            select.setAttribute(
-              "data-open-enter-prevented",
-              String(event.defaultPrevented),
-            );
-          });
-        },
-        { once: true },
-      );
-      const originalMatches = select.matches.bind(select);
-      select.matches = (selector: string) =>
-        selector === ":open" ? true : originalMatches(selector);
-
-      const event = new KeyboardEvent("keydown", {
-        key: "Enter",
-        bubbles: true,
-        cancelable: true,
-      });
-      select.dispatchEvent(event);
-
-      return new Promise((resolve) => {
-        queueMicrotask(() => {
-          resolve({
-            prevented: select.getAttribute("data-open-enter-prevented") === "true",
-            hasSelectedContent: !!select.querySelector("selectedcontent"),
-          });
-        });
-      });
-    });
-
-    expect(openState).toEqual({
-      prevented: false,
-      hasSelectedContent: true,
-    });
-  });
-
   test("fig-dropdown keeps a single select on reconnect", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -1800,6 +1763,37 @@ test.describe("text input accessibility", () => {
     await page.locator("#text-append").hover();
     await expect(page.locator('dialog[data-tooltip-managed][role="tooltip"]')).toContainText("suffix");
   });
+
+  test("fig-input-text fills a header when it is the only child", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-header id="text-header" style="width:320px">
+          <fig-input-text value="Search"></fig-input-text>
+        </fig-header>
+      `;
+    });
+
+    const layout = await page.locator("#text-header").evaluate((header) => {
+      const input = header.querySelector("fig-input-text");
+      if (!input) throw new Error("Missing header text input");
+      const headerStyle = getComputedStyle(header);
+      const headerBox = header.getBoundingClientRect();
+      const inputBox = input.getBoundingClientRect();
+      return {
+        availableWidth:
+          headerBox.width -
+          parseFloat(headerStyle.paddingLeft) -
+          parseFloat(headerStyle.paddingRight),
+        inputWidth: inputBox.width,
+      };
+    });
+
+    expect(layout.inputWidth).toBeCloseTo(layout.availableWidth, 5);
+  });
 });
 
 test.describe("number input accessibility", () => {
@@ -2040,7 +2034,9 @@ test.describe("field accessibility", () => {
     await bootFigFixture(page);
     await page.evaluate(async () => {
       await Promise.all([
+        customElements.whenDefined("fig-button"),
         customElements.whenDefined("fig-field"),
+        customElements.whenDefined("fig-input-fill"),
         customElements.whenDefined("fig-input-text"),
         customElements.whenDefined("fig-image"),
         customElements.whenDefined("fig-popup"),
@@ -2098,6 +2094,97 @@ test.describe("field accessibility", () => {
     expect(imageAssociation.hostLabelledBy).toBe(imageAssociation.labelId);
   });
 
+  test("fig-field reserves input space only for trailing icon buttons", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-field id="plain-field" style="width:320px">
+          <label>Fill</label>
+          <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
+        </fig-field>
+        <fig-field id="primary-icon-field" style="width:320px">
+          <label>Action</label>
+          <fig-button icon aria-label="Action"><fig-icon name="add"></fig-icon></fig-button>
+        </fig-field>
+        <fig-field id="secondary-accessory-field" style="width:320px">
+          <label>Fill</label>
+          <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
+          <fig-button icon variant="secondary" aria-label="Action"><fig-icon name="add"></fig-icon></fig-button>
+        </fig-field>
+        <fig-field id="ghost-accessory-field" style="width:320px">
+          <label>Fill</label>
+          <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
+          <fig-button icon variant="ghost" aria-label="Action"><fig-icon name="add"></fig-icon></fig-button>
+        </fig-field>
+      `;
+    });
+
+    const layout = await page.evaluate(() => {
+      const measure = (id: string) => {
+        const field = document.querySelector(id);
+        const input = field?.querySelector("fig-input-text, fig-input-fill");
+        const button = field?.querySelector("fig-button");
+        if (!field) throw new Error(`Missing ${id}`);
+        const fieldStyle = getComputedStyle(field);
+        const fieldBox = field.getBoundingClientRect();
+        const labelBox = field.querySelector("label")?.getBoundingClientRect();
+        const inputBox = input?.getBoundingClientRect();
+        const buttonBox = button?.getBoundingClientRect();
+        return {
+          areas: fieldStyle.gridTemplateAreas,
+          columns: fieldStyle.gridTemplateColumns
+            .split(" ")
+            .map((value) => parseFloat(value)),
+          inputArea: input ? getComputedStyle(input).gridArea : null,
+          buttonArea: button ? getComputedStyle(button).gridArea : null,
+          labelWidth: labelBox?.width ?? null,
+          inputLeft: inputBox?.left ?? null,
+          gap:
+            inputBox && buttonBox ? buttonBox.left - inputBox.right : null,
+          rightPad: buttonBox ? fieldBox.right - buttonBox.right : null,
+        };
+      };
+      return {
+        plain: measure("#plain-field"),
+        primaryIcon: measure("#primary-icon-field"),
+        secondary: measure("#secondary-accessory-field"),
+        ghost: measure("#ghost-accessory-field"),
+      };
+    });
+
+    expect(layout.plain.areas).toBe('"chevron label input pad"');
+    expect(layout.plain.inputArea).toBe("input");
+    expect(layout.plain.columns).toHaveLength(4);
+    expect(layout.plain.columns.at(-1)).toBeCloseTo(16, 5);
+    expect(layout.primaryIcon.areas).toBe('"chevron label input pad"');
+    expect(layout.primaryIcon.buttonArea).toBe("input");
+    expect(layout.primaryIcon.columns).toHaveLength(4);
+    expect(layout.primaryIcon.columns.at(-1)).toBeCloseTo(16, 5);
+    expect(layout.secondary.areas).toBe('"chevron label input pad"');
+    expect(layout.secondary.columns).toEqual(layout.plain.columns);
+    expect(layout.secondary.inputArea).toBe("input");
+    expect(layout.secondary.buttonArea).toBe("input");
+    expect(layout.secondary.labelWidth).toBeCloseTo(
+      layout.plain.labelWidth ?? 0,
+      5,
+    );
+    expect(layout.secondary.inputLeft).toBeCloseTo(
+      layout.plain.inputLeft ?? 0,
+      5,
+    );
+    expect(layout.secondary.gap).toBeCloseTo(4, 5);
+    expect(layout.secondary.rightPad).toBeCloseTo(16, 5);
+    expect(layout.ghost.columns).toEqual(layout.plain.columns);
+    expect(layout.ghost.buttonArea).toBe("input");
+    expect(layout.ghost.labelWidth).toBeCloseTo(layout.plain.labelWidth ?? 0, 5);
+    expect(layout.ghost.inputLeft).toBeCloseTo(layout.plain.inputLeft ?? 0, 5);
+    expect(layout.ghost.gap).toBeCloseTo(4, 5);
+    expect(layout.ghost.rightPad).toBeCloseTo(12, 5);
+  });
+
   test("fig-field shows a tooltip for labels inserted after connection", async ({
     page,
   }) => {
@@ -2132,6 +2219,103 @@ test.describe("field accessibility", () => {
     await expect(
       page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
     ).toHaveCount(1);
+  });
+});
+
+test.describe("content layout", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+  });
+
+  test("fig-content adds inline gutters only when padding is enabled", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-content id="content-default">Default</fig-content>
+        <fig-content id="content-padded" padding>Padded</fig-content>
+        <fig-content id="content-padding-false" padding="false">False</fig-content>
+      `;
+    });
+
+    const padding = await page.evaluate(() => {
+      const read = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!element) throw new Error(`Missing ${selector}`);
+        const style = getComputedStyle(element);
+        return {
+          left: style.paddingLeft,
+          right: style.paddingRight,
+        };
+      };
+      return {
+        default: read("#content-default"),
+        padded: read("#content-padded"),
+        disabled: read("#content-padding-false"),
+      };
+    });
+
+    expect(padding.default).toEqual({ left: "0px", right: "0px" });
+    expect(padding.padded).toEqual({ left: "16px", right: "16px" });
+    expect(padding.disabled).toEqual({ left: "0px", right: "0px" });
+  });
+
+  test("adjacent hstack fields compact only their shared gutters", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <hstack id="paired-fields" style="width:400px">
+          <fig-field direction="vertical" style="flex:1"><label>First</label><fig-input-text full></fig-input-text></fig-field>
+          <fig-field direction="vertical" style="flex:1"><label>Last</label><fig-input-text full></fig-input-text></fig-field>
+        </hstack>
+        <hstack id="mixed-fields" style="width:400px">
+          <fig-field direction="vertical" style="flex:1"><label>First</label><fig-input-text full></fig-input-text></fig-field>
+          <span>Between</span>
+          <fig-field direction="vertical" style="flex:1"><label>Last</label><fig-input-text full></fig-input-text></fig-field>
+        </hstack>
+        <fig-field id="standalone-field" direction="vertical" style="width:200px">
+          <label>Name</label><fig-input-text full></fig-input-text>
+        </fig-field>
+      `;
+    });
+
+    const gutters = await page.evaluate(() => {
+      const columns = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!element) throw new Error(`Missing ${selector}`);
+        return getComputedStyle(element).gridTemplateColumns
+          .split(" ")
+          .map((value) => parseFloat(value));
+      };
+      return {
+        first: columns("#paired-fields > fig-field:first-child"),
+        last: columns("#paired-fields > fig-field:last-child"),
+        mixedFirst: columns("#mixed-fields > fig-field:first-child"),
+        mixedLast: columns("#mixed-fields > fig-field:last-child"),
+        standalone: columns("#standalone-field"),
+        gap: getComputedStyle(
+          document.querySelector("#paired-fields")!,
+        ).columnGap,
+      };
+    });
+
+    expect(gutters.first[0]).toBeCloseTo(16, 5);
+    expect(gutters.first.at(-1)).toBeCloseTo(4, 5);
+    expect(gutters.last[0]).toBeCloseTo(4, 5);
+    expect(gutters.last.at(-1)).toBeCloseTo(16, 5);
+    expect(gutters.gap).toBe("8px");
+    expect(gutters.mixedFirst[0]).toBeCloseTo(16, 5);
+    expect(gutters.mixedFirst.at(-1)).toBeCloseTo(16, 5);
+    expect(gutters.mixedLast[0]).toBeCloseTo(16, 5);
+    expect(gutters.mixedLast.at(-1)).toBeCloseTo(16, 5);
+    expect(gutters.standalone[0]).toBeCloseTo(16, 5);
+    expect(gutters.standalone.at(-1)).toBeCloseTo(16, 5);
   });
 });
 
@@ -2466,6 +2650,29 @@ test.describe("reconnect resilience", () => {
     });
   });
 
+  test("fig-3d-rotate keeps axis fields at control height", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-3d-rotate
+          id="rotate-fields"
+          value="rotateX(0deg) rotateY(0deg) rotateZ(0deg)"
+          fields="rotateX,rotateY,rotateZ"
+          style="width:180px"
+        ></fig-3d-rotate>
+      `;
+    });
+
+    const heights = await page
+      .locator("#rotate-fields > fig-input-number")
+      .evaluateAll((inputs) =>
+        inputs.map((input) => input.getBoundingClientRect().height),
+      );
+
+    expect(heights).toEqual([24, 24, 24]);
+  });
+
   test("fig-origin-grid keeps a single handle on reconnect", async ({
     page,
   }) => {
@@ -2498,6 +2705,47 @@ test.describe("reconnect resilience", () => {
       handleCount: 1,
       value: "50% 50%",
     });
+  });
+
+  test("fig-origin-grid fields share the available width equally", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-origin-grid id="origin-fields" value="50% 50%" fields style="width:240px"></fig-origin-grid>
+      `;
+    });
+
+    const layout = await page.locator("#origin-fields").evaluate((host) => {
+      const values = host.querySelector(".origin-values");
+      const inputs = Array.from(
+        host.querySelectorAll("fig-input-number"),
+      );
+      if (!values || inputs.length !== 2) {
+        throw new Error("Missing origin value inputs");
+      }
+      const valuesBox = values.getBoundingClientRect();
+      const [xBox, yBox] = inputs.map((input) =>
+        input.getBoundingClientRect(),
+      );
+      return {
+        containerLeft: valuesBox.left,
+        containerRight: valuesBox.right,
+        xLeft: xBox.left,
+        xRight: xBox.right,
+        xWidth: xBox.width,
+        yLeft: yBox.left,
+        yRight: yBox.right,
+        yWidth: yBox.width,
+      };
+    });
+
+    expect(layout.xWidth).toBeCloseTo(layout.yWidth, 5);
+    expect(layout.xLeft).toBeCloseTo(layout.containerLeft, 5);
+    expect(layout.yRight).toBeCloseTo(layout.containerRight, 5);
+    expect(layout.yLeft - layout.xRight).toBeCloseTo(8, 5);
   });
 
   test("fig-joystick keeps a single plane on reconnect", async ({ page }) => {
@@ -4274,6 +4522,64 @@ test.describe("remaining accessibility contracts", () => {
       value: "0.26, 0.25, 0.75, 0.75",
       inputValue: "0.26, 0.25, 0.75, 0.75",
     });
+  });
+
+  test("fig-easing-curve rescales to keep overshooting handles inside the preview", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-easing-curve
+          id="overshoot-curve"
+          value="0.25, 0.25, 0.75, 0.75"
+        ></fig-easing-curve>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const handle = page.locator(
+      '#overshoot-curve [data-handle="1"] fig-handle',
+    );
+    const svg = page.locator("#overshoot-curve .fig-easing-curve-svg");
+    const [handleBox, svgBox] = await Promise.all([
+      handle.boundingBox(),
+      svg.boundingBox(),
+    ]);
+    if (!handleBox || !svgBox) throw new Error("Missing easing geometry");
+
+    await page.mouse.move(
+      handleBox.x + handleBox.width / 2,
+      handleBox.y + handleBox.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      handleBox.x + handleBox.width / 2,
+      svgBox.y - svgBox.height,
+      { steps: 5 },
+    );
+    await page.mouse.up();
+
+    const state = await page.locator("#overshoot-curve").evaluate((host) => {
+      const svg = host.querySelector(".fig-easing-curve-svg");
+      const handle = host.querySelector('[data-handle="1"]');
+      const topBoundary = host.querySelector('[data-boundary="top"]');
+      return {
+        controlY: Number(host.value.split(",")[1]),
+        handleY: Number(handle?.getAttribute("y")),
+        handleHeight: Number(handle?.getAttribute("height")),
+        previewHeight: svg?.viewBox.baseVal.height ?? 0,
+        topBoundaryY: Number(topBoundary?.getAttribute("y1")),
+      };
+    });
+
+    expect(state.controlY).toBeGreaterThan(1);
+    expect(state.handleY).toBeGreaterThanOrEqual(0);
+    expect(state.handleY + state.handleHeight).toBeLessThanOrEqual(
+      state.previewHeight,
+    );
+    expect(state.topBoundaryY).toBeGreaterThan(state.handleY);
   });
 
   test("tooltip Escape dismisses and returns focus to the trigger", async ({

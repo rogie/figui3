@@ -171,14 +171,14 @@ propskit-switch {
 
   display: block;
   width: 100%;
-  height: var(--propskit-switch-height);
+  height: calc(
+    var(--propskit-switch-height) + var(--propskit-switch-vertical-padding) * 2
+  );
   padding: var(--propskit-switch-vertical-padding)
     var(--propskit-switch-horizontal-padding);
 
   &:not([size]),
   &[size="large"] {
-    --propskit-switch-vertical-padding: 0px;
-
     fig-field:not([direction="vertical"]) {
       padding-right: var(--spacer-1);
     }
@@ -248,14 +248,11 @@ propskit-color {
 
   display: block;
   width: 100%;
-  height: var(--propskit-color-height);
+  height: calc(
+    var(--propskit-color-height) + var(--propskit-color-vertical-padding) * 2
+  );
   padding: var(--propskit-color-vertical-padding)
     var(--propskit-color-horizontal-padding);
-
-  &:not([size]),
-  &[size="large"] {
-    --propskit-color-vertical-padding: 0px;
-  }
 
   &[disabled]:not([disabled="false"]) {
     pointer-events: none;
@@ -319,9 +316,7 @@ propskit-color {
       max-width: none;
       min-width: 0;
       margin-left: auto;
-      height: calc(
-        var(--propskit-color-height) - var(--propskit-color-vertical-padding) * 2
-      );
+      height: var(--propskit-color-height);
       border-radius: var(--radius-medium);
       background-color: transparent;
       box-shadow: none;
@@ -372,14 +367,14 @@ propskit-select {
 
   display: block;
   width: 100%;
-  height: var(--propskit-select-height);
+  height: calc(
+    var(--propskit-select-height) + var(--propskit-select-vertical-padding) * 2
+  );
   padding: var(--propskit-select-vertical-padding)
     var(--propskit-select-horizontal-padding);
 
   &:not([size]),
   &[size="large"] {
-    --propskit-select-vertical-padding: 0px;
-
     fig-field:not([direction="vertical"]) {
       padding-left: 0;
 
@@ -482,14 +477,11 @@ propskit-text {
 
   display: block;
   width: 100%;
-  height: var(--propskit-text-height);
+  height: calc(
+    var(--propskit-text-height) + var(--propskit-text-vertical-padding) * 2
+  );
   padding: var(--propskit-text-vertical-padding)
     var(--propskit-text-horizontal-padding);
-
-  &:not([size]),
-  &[size="large"] {
-    --propskit-text-vertical-padding: 0px;
-  }
 
   &[disabled]:not([disabled="false"]) {
     pointer-events: none;
@@ -554,9 +546,7 @@ propskit-text {
       max-width: none;
       min-width: 0;
       margin-left: auto;
-      height: calc(
-        var(--propskit-text-height) - var(--propskit-text-vertical-padding) * 2
-      );
+      height: var(--propskit-text-height);
       border-radius: var(--radius-medium);
       background-color: transparent;
       box-shadow: none;
@@ -592,14 +582,14 @@ propskit-number {
 
   display: block;
   width: 100%;
-  height: var(--propskit-number-height);
+  height: calc(
+    var(--propskit-number-height) + var(--propskit-number-vertical-padding) * 2
+  );
   padding: var(--propskit-number-vertical-padding)
     var(--propskit-number-horizontal-padding);
 
   &:not([size]),
   &[size="large"] {
-    --propskit-number-vertical-padding: 0px;
-
     fig-field:not([direction="vertical"]) > label {
       inset: 0 auto 0 var(--spacer-2-5);
     }
@@ -671,10 +661,7 @@ propskit-number {
       width: fit-content;
       min-width: 0;
       margin-left: auto;
-      height: calc(
-        var(--propskit-number-height) -
-          var(--propskit-number-vertical-padding) * 2
-      );
+      height: var(--propskit-number-height);
       border-radius: var(--radius-medium);
       background-color: transparent;
       box-shadow: none;
@@ -709,14 +696,16 @@ propskit-slider {
   --propskit-slider-progress-shadow: inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
   --field-text-shadow: 0 1px 1.5px
     light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
-  --propskit-slider-fig-slider-height: calc(var(--propskit-slider-height) - var(--propskit-slider-vertical-padding) * 2);
+  --propskit-slider-fig-slider-height: var(--propskit-slider-height);
   --propskit-slider-fig-slider-thumb-height: calc(var(--propskit-slider-fig-slider-height) - var(--spacer-2-5));
   --propskit-slider-number-right: 2px;
 
   display: block;
   position: relative;
   width: 100%;
-  height: var(--propskit-slider-height);
+  height: calc(
+    var(--propskit-slider-height) + var(--propskit-slider-vertical-padding) * 2
+  );
   border-radius: var(--radius-medium);
   transform-origin: var(--propskit-slider-elastic-origin);
   transition: transform var(--propskit-slider-elastic-transition);
@@ -727,7 +716,6 @@ propskit-slider {
 
   &:not([size]),
   &[size="large"] {
-    --propskit-slider-vertical-padding: 0px;
     --propskit-slider-fig-slider-thumb-height: calc(
       var(--propskit-slider-fig-slider-height) - var(--spacer-3)
     );
@@ -796,7 +784,7 @@ propskit-slider {
         outline: var(--figma-focus-outline);
         outline-offset: var(--figma-focus-outline-offset);
       }
-      --slider-field-height: calc(var(--propskit-slider-height) - var(--propskit-slider-vertical-padding) * 2);
+      --slider-field-height: var(--propskit-slider-height);
       --slider-thumb-width: var(--spacer-1);
       --slider-thumb-color: light-dark(
         var(--figma-color-text-secondary),
@@ -1377,12 +1365,16 @@ propskit-oscillator {
   }
 
   .propskit-oscillator-add-type-button {
-    > fig-dropdown,
-    > fig-dropdown > select {
-      width: 100%;
-      height: 100%;
-      min-width: 100%;
+    width: var(--spacer-4);
+    height: var(--spacer-4);
+    min-width: var(--spacer-4);
+
+    &::part(trigger) {
       padding: 0;
+    }
+
+    &::part(label) {
+      display: none;
     }
   }
 
@@ -1439,271 +1431,4 @@ body.fig-reorder-dragging * {
 
 .fig-reorder-indicator[data-axis="horizontal"] {
   width: 2px;
-}
-
-/* Select — host chrome; trigger/listbox live in shadow (options slotted) */
-fig-select {
-  display: inline-flex;
-  position: relative;
-  align-items: center;
-  min-width: 0;
-  height: var(--spacer-4);
-  border-radius: var(--radius-medium);
-  background-color: var(--figma-color-bg);
-  color: var(--figma-color-text);
-  box-shadow: inset 0 0 0 1px var(--figma-color-border);
-
-  &[full]:not([full="false"]) {
-    display: flex;
-    width: 100%;
-  }
-
-  &[disabled]:not([disabled="false"]) {
-    pointer-events: none;
-    color: var(--figma-color-text-tertiary);
-
-    &::after {
-      background-color: var(--figma-color-icon-disabled);
-    }
-  }
-
-  &::after {
-    content: "";
-    position: absolute;
-    right: 0.25rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1rem;
-    height: 1rem;
-    mask-image: var(--icon-16-chevron);
-    mask-size: contain;
-    mask-repeat: no-repeat;
-    mask-position: center;
-    background-color: var(--figma-color-icon);
-    pointer-events: none;
-    z-index: 1;
-  }
-}
-
-/*
- * Internal listbox is a fig-popup inside fig-select's shadow, so document
- * dialog[is="fig-popup"] rules don't apply. Expose part=listbox and mirror
- * the menu-theme popup chrome (same tokens as components.css).
- */
-fig-select::part(listbox) {
-  --z-index: 999999;
-  --fig-popup-radius: var(--radius-large);
-  --fig-popup-bg-color: var(--figma-color-bg-menu);
-
-  z-index: var(--z-index);
-  position: fixed;
-  /* Do not set inset here — ::part inset beats inline left/top and
-     prevents edge clamping from moving the menu back into view. */
-  margin: 0;
-  border: 0;
-  outline: 0;
-  padding: 0;
-  overflow: hidden;
-  border-radius: var(--fig-popup-radius);
-  background-color: var(--fig-popup-bg-color);
-  color: var(--figma-color-text-menu);
-  color-scheme: dark;
-  box-shadow: var(--figma-elevation-400-menu-panel);
-  /* width/min/max set in JS — ::part width rules override element.style. */
-  max-height: calc(100vh - 1rem);
-  height: max-content;
-}
-
-/* Panel is the scroller; overflow uses top/bottom buttons (fig-chooser pattern). */
-fig-select-options {
-  --fig-select-overflow-size: var(--spacer-4);
-
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-  max-width: 100%;
-  max-height: calc(100vh - 1rem);
-  /* No block padding — sticky overflow buttons must sit flush to the popup edges. */
-  padding: 0;
-  overflow: hidden auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  & > :not(.fig-overflow) {
-    flex-shrink: 0;
-  }
-
-  /* List breathing room (not on the scroller itself). */
-  & > :not(.fig-overflow):first-child,
-  & > .fig-overflow-start + :not(.fig-overflow) {
-    margin-top: var(--spacer-2);
-  }
-
-  & > :not(.fig-overflow):last-child,
-  & > :not(.fig-overflow):has(+ .fig-overflow-end) {
-    margin-bottom: var(--spacer-2);
-  }
-
-  & > .fig-overflow {
-    position: sticky;
-    left: 0;
-    flex: 0 0 var(--fig-select-overflow-size);
-    width: 100%;
-    height: var(--fig-select-overflow-size);
-    margin: 0;
-    z-index: 3;
-    /* Menu chrome — not option hover (bg-menu-hover is brand blue). */
-    color: var(--figma-color-text-menu);
-    background: var(--figma-color-bg-menu) !important;
-
-    &::before {
-      inset: 0;
-      border-radius: 0;
-      background: var(--figma-color-bg-menu) !important;
-    }
-
-    &:hover::before {
-      background: light-dark(
-          rgba(0, 0, 0, 0.06),
-          rgba(255, 255, 255, 0.08)
-        )
-        !important;
-    }
-
-    &:hover {
-      color: var(--figma-color-text-menu);
-    }
-  }
-
-  & > .fig-overflow-start {
-    order: -1;
-    top: 0;
-    margin-block-end: calc(-1 * var(--fig-select-overflow-size));
-
-    &::before {
-      border-radius: var(--radius-large) var(--radius-large) 0 0;
-    }
-
-    .fig-overflow-chevron {
-      rotate: 180deg;
-    }
-  }
-
-  & > .fig-overflow-end {
-    order: 1;
-    bottom: 0;
-    margin-block-start: calc(-1 * var(--fig-select-overflow-size));
-
-    &::before {
-      border-radius: 0 0 var(--radius-large) var(--radius-large);
-    }
-  }
-
-  & > fig-menu-separator {
-    --fig-menu-separator-color: var(--figma-color-border-menu);
-    --fig-menu-separator-label-color: var(--figma-color-text-menu-secondary);
-
-    /* Align label with option text (padding + checkmark column).
-       Negative margins on ::before must match this padding exactly so the
-       rule bleeds to the listbox edges (base rule uses --fig-menu-item-padding). */
-    &[label]:not([label=""]) {
-      padding-left: var(--spacer-5);
-      padding-right: var(--spacer-2);
-
-      &::before {
-        margin-inline: unset;
-        margin-left: calc(-1 * var(--spacer-5));
-        margin-right: calc(-1 * var(--spacer-2));
-      }
-    }
-  }
-}
-
-fig-select-option {
-  /* Match fig-dropdown[experimental~="modern"] option + option::checkmark */
-  display: flex;
-  align-items: center;
-  gap: 0;
-  position: relative;
-  min-height: var(--spacer-4);
-  height: auto;
-  padding: var(--spacer-1) var(--spacer-2);
-  padding-right: var(--spacer-3);
-  border-radius: var(--radius-medium);
-  color: var(--figma-color-text-menu);
-  cursor: default;
-  user-select: none;
-
-  &::before {
-    content: "";
-    display: block;
-    position: absolute;
-    inset: 0 var(--spacer-2);
-    border-radius: var(--radius-medium);
-    z-index: -1;
-    background-color: transparent;
-  }
-
-  &::after {
-    content: "";
-    display: block;
-    flex: 0 0 1rem;
-    order: -1;
-    width: 1rem;
-    height: 1rem;
-    margin-left: var(--spacer-1);
-    background-color: currentColor;
-    -webkit-mask-image: var(--icon-16-checkmark);
-    mask-image: var(--icon-16-checkmark);
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    visibility: hidden;
-  }
-
-  & > [slot="prepend"] {
-    margin-top: calc(var(--spacer-1) * -1);
-    margin-bottom: calc(var(--spacer-1) * -1);
-    margin-right: var(--spacer-1);
-  }
-
-
-  & > :not([slot="prepend"]):not([slot="append"]) {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  & > [slot="append"] {
-    flex: 0 0 auto;
-    margin-inline-start: auto;
-    color: var(--figma-color-text-tertiary);
-  }
-
-  &:hover,
-  &:focus-visible {
-    outline: none;
-
-    &::before {
-      background-color: var(--figma-color-bg-menu-hover);
-    }
-  }
-
-  &[selected]:not([selected="false"])::after,
-  &[aria-selected="true"]::after {
-    visibility: visible;
-  }
-
-  &[disabled]:not([disabled="false"]),
-  &[aria-disabled="true"] {
-    opacity: 0.4;
-    pointer-events: none;
-  }
 }

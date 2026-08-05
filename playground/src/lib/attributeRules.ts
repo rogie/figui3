@@ -404,13 +404,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
-    experimental: {
-      label: "Experimental",
-      type: "boolean",
-      boolMode: "custom",
-      trueValue: "modern",
-      falseValue: null,
-    },
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
@@ -508,15 +501,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     text: { label: "Text", type: "boolean", boolMode: "string" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
-  },
-  "fig-dropdown": {
-    experimental: {
-      label: "Experimental",
-      type: "boolean",
-      boolMode: "custom",
-      trueValue: "modern",
-      falseValue: null,
-    },
   },
   "fig-switch": {
     checked: {

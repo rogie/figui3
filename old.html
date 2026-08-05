@@ -942,11 +942,6 @@
                              value="Blue"
                              placeholder="Select a color"></fig-combo-input>
 
-            <h3>Experimental Modern</h3>
-            <p class="description">Uses the modern CSS picker styling for the dropdown.</p>
-            <fig-combo-input options="House, Apartment, Condo, Townhouse, Other"
-                             experimental="modern"
-                             placeholder="Type of residence"></fig-combo-input>
         </section>
         <hr>
 
@@ -1275,363 +1270,6 @@
                 <option>XXL Super Extended Option</option>
             </fig-dropdown>
 
-            <h3>Experimental Modern</h3>
-            <p class="description">
-                Use <code>experimental="modern"</code> to enable the customizable select picker using
-                <code>::picker(select)</code> and <code>appearance: base-select</code>. This is a progressive
-                enhancement that falls back to native select on unsupported browsers.
-            </p>
-            <fig-dropdown experimental="modern">
-                <optgroup label="Numbers">
-                    <option>One</option>
-                    <option>Two</option>
-                    <option>Three</option>
-                </optgroup>
-                <optgroup label="Fruits">
-                    <option>Apple</option>
-                    <option>Banana</option>
-                    <option>Cherry</option>
-                </optgroup>
-            </fig-dropdown>
-
-            <h3>Experimental Modern - Dropdown Type (with many options)</h3>
-            <fig-dropdown experimental="modern"
-                          type="dropdown"
-                          label="Choose">
-                <optgroup label="North America">
-                    <option value="us">United States</option>
-                    <option value="ca">Canada</option>
-                    <option value="mx">Mexico</option>
-                    <option value="gt">Guatemala</option>
-                    <option value="cu">Cuba</option>
-                    <option value="jm">Jamaica</option>
-                    <option value="ht">Haiti</option>
-                    <option value="do">Dominican Republic</option>
-                </optgroup>
-                <optgroup label="South America">
-                    <option value="br">Brazil</option>
-                    <option value="ar">Argentina</option>
-                    <option value="co">Colombia</option>
-                    <option value="pe">Peru</option>
-                    <option value="ve">Venezuela</option>
-                    <option value="cl">Chile</option>
-                    <option value="ec">Ecuador</option>
-                    <option value="bo">Bolivia</option>
-                    <option value="py">Paraguay</option>
-                    <option value="uy">Uruguay</option>
-                </optgroup>
-                <optgroup label="Europe">
-                    <option value="gb">United Kingdom</option>
-                    <option value="de">Germany</option>
-                    <option value="fr">France</option>
-                    <option value="it">Italy</option>
-                    <option value="es">Spain</option>
-                    <option value="pt">Portugal</option>
-                    <option value="nl">Netherlands</option>
-                    <option value="be">Belgium</option>
-                    <option value="se">Sweden</option>
-                    <option value="no">Norway</option>
-                    <option value="dk">Denmark</option>
-                    <option value="fi">Finland</option>
-                    <option value="pl">Poland</option>
-                    <option value="at">Austria</option>
-                    <option value="ch">Switzerland</option>
-                    <option value="ie">Ireland</option>
-                    <option value="gr">Greece</option>
-                    <option value="cz">Czech Republic</option>
-                </optgroup>
-                <optgroup label="Asia">
-                    <option value="cn">China</option>
-                    <option value="jp">Japan</option>
-                    <option value="kr">South Korea</option>
-                    <option value="in">India</option>
-                    <option value="id">Indonesia</option>
-                    <option value="th">Thailand</option>
-                    <option value="vn">Vietnam</option>
-                    <option value="ph">Philippines</option>
-                    <option value="my">Malaysia</option>
-                    <option value="sg">Singapore</option>
-                    <option value="pk">Pakistan</option>
-                    <option value="bd">Bangladesh</option>
-                    <option value="tw">Taiwan</option>
-                    <option value="hk">Hong Kong</option>
-                </optgroup>
-                <optgroup label="Middle East">
-                    <option value="ae">United Arab Emirates</option>
-                    <option value="sa">Saudi Arabia</option>
-                    <option value="il">Israel</option>
-                    <option value="tr">Turkey</option>
-                    <option value="eg">Egypt</option>
-                    <option value="ir">Iran</option>
-                    <option value="iq">Iraq</option>
-                    <option value="jo">Jordan</option>
-                    <option value="lb">Lebanon</option>
-                    <option value="qa">Qatar</option>
-                </optgroup>
-                <optgroup label="Africa">
-                    <option value="za">South Africa</option>
-                    <option value="ng">Nigeria</option>
-                    <option value="ke">Kenya</option>
-                    <option value="gh">Ghana</option>
-                    <option value="et">Ethiopia</option>
-                    <option value="tz">Tanzania</option>
-                    <option value="ug">Uganda</option>
-                    <option value="ma">Morocco</option>
-                    <option value="dz">Algeria</option>
-                    <option value="tn">Tunisia</option>
-                    <option value="sn">Senegal</option>
-                    <option value="ci">Ivory Coast</option>
-                </optgroup>
-                <optgroup label="Oceania">
-                    <option value="au">Australia</option>
-                    <option value="nz">New Zealand</option>
-                    <option value="fj">Fiji</option>
-                    <option value="pg">Papua New Guinea</option>
-                    <option value="ws">Samoa</option>
-                    <option value="to">Tonga</option>
-                    <option value="vu">Vanuatu</option>
-                    <option value="sb">Solomon Islands</option>
-                </optgroup>
-                <optgroup label="Programming Languages">
-                    <option value="js">JavaScript</option>
-                    <option value="ts">TypeScript</option>
-                    <option value="py">Python</option>
-                    <option value="rb">Ruby</option>
-                    <option value="go">Go</option>
-                    <option value="rs">Rust</option>
-                    <option value="java">Java</option>
-                    <option value="kt">Kotlin</option>
-                    <option value="swift">Swift</option>
-                    <option value="cpp">C++</option>
-                    <option value="cs">C#</option>
-                    <option value="php">PHP</option>
-                    <option value="r">R</option>
-                    <option value="scala">Scala</option>
-                    <option value="elixir">Elixir</option>
-                    <option value="clj">Clojure</option>
-                    <option value="hs">Haskell</option>
-                    <option value="lua">Lua</option>
-                </optgroup>
-                <optgroup label="Design Tools">
-                    <option value="figma">Figma</option>
-                    <option value="sketch">Sketch</option>
-                    <option value="xd">Adobe XD</option>
-                    <option value="ps">Photoshop</option>
-                    <option value="ai">Illustrator</option>
-                    <option value="ae">After Effects</option>
-                    <option value="framer">Framer</option>
-                    <option value="principle">Principle</option>
-                    <option value="invision">InVision</option>
-                    <option value="zeplin">Zeplin</option>
-                </optgroup>
-            </fig-dropdown>
-
-            <h3>Experimental Modern - Select Type (with many options)</h3>
-
-            <fig-dropdown experimental="modern">
-                <optgroup label="North America">
-                    <option value="us">United States</option>
-                    <option value="ca">Canada</option>
-                    <option value="mx">Mexico</option>
-                    <option value="gt">Guatemala</option>
-                    <option value="cu">Cuba</option>
-                    <option value="jm">Jamaica</option>
-                    <option value="ht">Haiti</option>
-                    <option value="do">Dominican Republic</option>
-                </optgroup>
-                <optgroup label="South America">
-                    <option value="br">Brazil</option>
-                    <option value="ar">Argentina</option>
-                    <option value="co">Colombia</option>
-                    <option value="pe">Peru</option>
-                    <option value="ve">Venezuela</option>
-                    <option value="cl">Chile</option>
-                    <option value="ec">Ecuador</option>
-                    <option value="bo">Bolivia</option>
-                    <option value="py">Paraguay</option>
-                    <option value="uy">Uruguay</option>
-                </optgroup>
-                <optgroup label="Europe">
-                    <option value="gb">United Kingdom</option>
-                    <option value="de">Germany</option>
-                    <option value="fr">France</option>
-                    <option value="it">Italy</option>
-                    <option value="es">Spain</option>
-                    <option value="pt">Portugal</option>
-                    <option value="nl">Netherlands</option>
-                    <option value="be">Belgium</option>
-                    <option value="se">Sweden</option>
-                    <option value="no">Norway</option>
-                    <option value="dk">Denmark</option>
-                    <option value="fi">Finland</option>
-                    <option value="pl">Poland</option>
-                    <option value="at">Austria</option>
-                    <option value="ch">Switzerland</option>
-                    <option value="ie">Ireland</option>
-                    <option value="gr">Greece</option>
-                    <option value="cz">Czech Republic</option>
-                </optgroup>
-                <optgroup label="Asia">
-                    <option value="cn">China</option>
-                    <option value="jp">Japan</option>
-                    <option value="kr">South Korea</option>
-                    <option value="in">India</option>
-                    <option value="id">Indonesia</option>
-                    <option value="th">Thailand</option>
-                    <option value="vn">Vietnam</option>
-                    <option value="ph">Philippines</option>
-                    <option value="my">Malaysia</option>
-                    <option value="sg">Singapore</option>
-                    <option value="pk">Pakistan</option>
-                    <option value="bd">Bangladesh</option>
-                    <option value="tw">Taiwan</option>
-                    <option value="hk">Hong Kong</option>
-                </optgroup>
-                <optgroup label="Middle East">
-                    <option value="ae">United Arab Emirates</option>
-                    <option value="sa">Saudi Arabia</option>
-                    <option value="il">Israel</option>
-                    <option value="tr">Turkey</option>
-                    <option value="eg">Egypt</option>
-                    <option value="ir">Iran</option>
-                    <option value="iq">Iraq</option>
-                    <option value="jo">Jordan</option>
-                    <option value="lb">Lebanon</option>
-                    <option value="qa">Qatar</option>
-                </optgroup>
-                <optgroup label="Africa">
-                    <option value="za">South Africa</option>
-                    <option value="ng">Nigeria</option>
-                    <option value="ke">Kenya</option>
-                    <option value="gh">Ghana</option>
-                    <option value="et">Ethiopia</option>
-                    <option value="tz">Tanzania</option>
-                    <option value="ug">Uganda</option>
-                    <option value="ma">Morocco</option>
-                    <option value="dz">Algeria</option>
-                    <option value="tn">Tunisia</option>
-                    <option value="sn">Senegal</option>
-                    <option value="ci">Ivory Coast</option>
-                </optgroup>
-                <optgroup label="Oceania">
-                    <option value="au">Australia</option>
-                    <option value="nz">New Zealand</option>
-                    <option value="fj">Fiji</option>
-                    <option value="pg">Papua New Guinea</option>
-                    <option value="ws">Samoa</option>
-                    <option value="to">Tonga</option>
-                    <option value="vu">Vanuatu</option>
-                    <option value="sb">Solomon Islands</option>
-                </optgroup>
-                <optgroup label="Programming Languages">
-                    <option value="js">JavaScript</option>
-                    <option value="ts">TypeScript</option>
-                    <option value="py">Python</option>
-                    <option value="rb">Ruby</option>
-                    <option value="go">Go</option>
-                    <option value="rs">Rust</option>
-                    <option value="java">Java</option>
-                    <option value="kt">Kotlin</option>
-                    <option value="swift">Swift</option>
-                    <option value="cpp">C++</option>
-                    <option value="cs">C#</option>
-                    <option value="php">PHP</option>
-                    <option value="r">R</option>
-                    <option value="scala">Scala</option>
-                    <option value="elixir">Elixir</option>
-                    <option value="clj">Clojure</option>
-                    <option value="hs">Haskell</option>
-                    <option value="lua">Lua</option>
-                </optgroup>
-                <optgroup label="Design Tools">
-                    <option value="figma">Figma</option>
-                    <option value="sketch">Sketch</option>
-                    <option value="xd">Adobe XD</option>
-                    <option value="ps">Photoshop</option>
-                    <option value="ai">Illustrator</option>
-                    <option value="ae">After Effects</option>
-                    <option value="framer">Framer</option>
-                    <option value="principle">Principle</option>
-                    <option value="invision">InVision</option>
-                    <option value="zeplin">Zeplin</option>
-                </optgroup>
-            </fig-dropdown>
-
-            <h3>Experimental Modern - With Icons (Bleeding Edge)</h3>
-            <p class="description">
-                Using icons inside options requires <code>appearance: base-select</code> support.
-                This is bleeding edge and may not work in all browsers.
-            </p>
-            <fig-dropdown experimental="modern">
-                <option value="home">
-                    <svg width="16"
-                         height="16"
-                         viewBox="0 0 16 16"
-                         fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2 6.5L8 2L14 6.5V13.5C14 14 13.5 14.5 13 14.5H3C2.5 14.5 2 14 2 13.5V6.5Z"
-                              stroke="currentColor"
-                              stroke-opacity="0.9"
-                              fill="none" />
-                    </svg>
-                    <label>Home</label>
-                </option>
-                <option value="settings">
-                    <svg width="16"
-                         height="16"
-                         viewBox="0 0 16 16"
-                         fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8"
-                                cy="8"
-                                r="2"
-                                stroke="currentColor"
-                                stroke-opacity="0.9"
-                                fill="none" />
-                        <path d="M8 1V3M8 13V15M1 8H3M13 8H15M2.5 2.5L4 4M12 12L13.5 13.5M2.5 13.5L4 12M12 4L13.5 2.5"
-                              stroke="currentColor"
-                              stroke-opacity="0.9" />
-                    </svg>
-                    <label>Settings</label>
-                </option>
-                <option value="user">
-                    <svg width="16"
-                         height="16"
-                         viewBox="0 0 16 16"
-                         fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8"
-                                cy="5"
-                                r="3"
-                                stroke="currentColor"
-                                stroke-opacity="0.9"
-                                fill="none" />
-                        <path d="M2 14C2 11 4.5 9 8 9C11.5 9 14 11 14 14"
-                              stroke="currentColor"
-                              stroke-opacity="0.9"
-                              fill="none" />
-                    </svg>
-                    <label>User Profile</label>
-                </option>
-                <option value="search">
-                    <svg width="16"
-                         height="16"
-                         viewBox="0 0 16 16"
-                         fill="none"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="6.5"
-                                cy="6.5"
-                                r="4"
-                                stroke="currentColor"
-                                stroke-opacity="0.9"
-                                fill="none" />
-                        <path d="M10 10L14 14"
-                              stroke="currentColor"
-                              stroke-opacity="0.9" />
-                    </svg>
-                    <label>Search</label>
-                </option>
-            </fig-dropdown>
         </section>
         <hr>
 
@@ -1676,8 +1314,7 @@
                 </fig-field>
                 <fig-field direction="horizontal">
                     <label>Dropdown</label>
-                    <fig-dropdown full
-                                  experimental="modern">
+                    <fig-dropdown full>
                         <option>Option One</option>
                         <option>Option Two</option>
                         <option>Option Three</option>
@@ -1864,8 +1501,7 @@
 
             <h4>Custom "Shader" Mode</h4>
             <fig-fill-picker mode="solid,shader"
-                             value='{"type":"solid","color":"#95E1D3"}'
-                             experimental="modern">
+                             value='{"type":"solid","color":"#95E1D3"}'>
                 <div slot="mode-shader"
                      label="Shader">
                     <fig-field label="Fragment Shader">
@@ -2002,17 +1638,6 @@
                 });
             </script>
 
-            <h3>Experimental</h3>
-            <p class="description">Use the <code>experimental</code> attribute to pass through experimental features to
-                internal <code>fig-dropdown</code> elements.</p>
-
-            <h4>fig-fill-picker</h4>
-            <fig-fill-picker experimental="modern"
-                             value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#f093fb","opacity":100},{"position":100,"color":"#f5576c","opacity":100}]}}'></fig-fill-picker>
-
-            <h4>fig-input-fill</h4>
-            <fig-input-fill experimental="modern"
-                            value='{"type":"gradient","gradient":{"type":"radial","centerX":50,"centerY":50,"stops":[{"position":0,"color":"#4facfe","opacity":100},{"position":100,"color":"#00f2fe","opacity":100}]}}'></fig-input-fill>
         </section>
         <hr>
 
@@ -2235,13 +1860,6 @@
                              alpha="true"
                              picker="figma"></fig-input-color>
 
-            <h4>Figma Picker (Experimental Modern)</h4>
-            <fig-input-color value="#E84393"
-                             text="true"
-                             alpha="true"
-                             picker="figma"
-                             experimental="modern"></fig-input-color>
-
             <h4>No Picker (text input only)</h4>
             <fig-input-color value="#9747FF"
                              text="true"
@@ -2430,10 +2048,6 @@
 
             <h3>Webcam Fill</h3>
             <fig-input-fill value='{"type":"webcam","webcam":{"opacity":1}}'></fig-input-fill>
-
-            <h3>Experimental Modern</h3>
-            <fig-input-fill experimental="modern"
-                            value='{"type":"solid","color":"#E84393","alpha":1}'></fig-input-fill>
 
             <h3>Disabled</h3>
             <fig-input-fill disabled
@@ -4759,8 +4373,7 @@ button.addEventListener('click', () => {
                           stroke-opacity="0.9"
                           stroke-linecap="round" />
                 </svg>
-                <fig-dropdown experimental="modern"
-                              type="dropdown">
+                <fig-dropdown type="dropdown">
                     <option value="existing-strokes">
                         <fig-checkbox checked
                                       label="Apply to existing strokes"></fig-checkbox>

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.22.0]
+
+### Added
+
+- Promoted `fig-select`, `fig-select-option`, and `fig-select-options` from Lab into the core runtime and styles, with rich selected-option icons and content-sized menus.
+- Added focused core, editor, Lab, accessibility, layout, and component-contract regression coverage.
+
+### Changed
+
+- Refined `fig-easing-curve` with 2px strokes, horizontal bounds, cleaner endpoints, improved layer order, preset selection via `fig-select`, and dynamic scaling for overshooting Bézier handles.
+- Improved select menu spacing, non-wrapping labels, checkmark geometry, viewport clamping, and selected-option presentation.
+- Improved PropsKit field sizing and gutters, header/content padding, 3D rotation inputs, and origin-grid value layout.
+- Migrated rich oscillator options to `fig-select`.
+- Removed legacy `experimental` dropdown styling and no-op fill/color picker attribute passthroughs.
+
+### Fixed
+
+- Fill, gradient, media, field, and overlay controls now preserve consistent sizing, focus, labels, disabled states, and reconnect behavior across core and optional modules.
+
 ## [6.21.1]
 
 ### Fixed
@@ -644,13 +663,11 @@ All notable changes to this project will be documented in this file.
 - Updated shared focus styling with a stronger `--figma-focus-outline`, component-specific offsets, and the new inheritable `--figma-focus-outline-radius` token.
 - Updated `fig-slider type="range"` so an omitted `value` defaults to the midpoint of `min` and `max`, matching native range behavior.
 - Updated media and image custom overlays to use light-DOM `slot="overlay"` placement instead of reparenting child nodes, preserving framework ownership.
-- Updated playground examples to remove `experimental="modern"` from dropdown/fill/gradient examples except the existing easing-curve behavior.
 - Documented accessibility coverage, media preview composition, keyboard patterns, loading semantics, fill/media naming guidance, overlay slots, focus tokens, and verification commands in the README, changelog, contributing guide, and playground component descriptions.
 
 ### Fixed
 
 - Fixed `fig-button type="select"` and combo-input select affordances so native controls keep accessible labels while the wrapper shows the correct focus state and opens the picker on keyboard activation.
-- Fixed `fig-dropdown experimental="modern"` so Enter opens the closed picker and still allows native option commitment while open.
 - Fixed `fig-fill-picker` icon-only buttons, generated dropdowns, swatches, gradient controls, and media controls so they expose usable labels and keyboard states.
 - Fixed keyboard movement and focus retention for `fig-handle`, `fig-easing-curve`, `fig-joystick`, and `fig-origin-grid`.
 - Fixed focus return for dialogs, popups, and tooltips after Escape or close interactions.
@@ -1772,7 +1789,6 @@ All notable changes to this project will be documented in this file.
 - Sliders no longer wrapped in `fig-field` elements inside `.fig-fill-picker-sliders`.
 - Gradient interpolation dropdown trimmed to sRGB Linear, OKLab, and OKLCH (gamut selection moved to top-level header).
 - Default gradient `interpolationSpace` changed from `srgb` to `oklab`.
-- `experimental` attribute passed through to color input mode dropdown.
 
 ## [3.11.0]
 
@@ -2331,7 +2347,7 @@ All notable changes to this project will be documented in this file.
 - Updated PropKit example metadata and curation (removed redundant gradient/image/slider variants, removed combined panel, and refined example naming).
 - Renamed example wrapper usage from `.prop-panel` to `.propkit-example`, with backward-compatible unwrap handling and standardized re-wrap behavior.
 - Updated `.propkit-example` styling to remove the border and use opposite `color-scheme` for stronger visual contrast.
-- Updated `Attributes` panel behavior with targeted control rules (dropdowns using `experimental=\"modern\"`, segmented control for `direction`, constrained aspect-ratio options, and specialized 3D rotate field labels/options).
+- Updated `Attributes` panel behavior with targeted control rules (segmented control for `direction`, constrained aspect-ratio options, and specialized 3D rotate field labels/options).
 - Removed `fig-popover` and `fig-popover-2` component implementations and associated demo/docs usage; popup guidance now centers on `fig-popup`.
 - Updated `glitch.html` to use a `fig-popup` example instead of `fig-popover`.
 
@@ -2441,7 +2457,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Improved modern dropdown layout and FigImage teardown safety.
+- Improved FigImage teardown safety.
 
 ## [2.23.0]
 
@@ -2550,14 +2566,12 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - `fig-input-fill` gradient label now updates when changing gradient subtype (e.g., Radial → Linear) without switching fill types.
-- `experimental` attribute now passes through to `fig-dropdown` elements in the image, video, and webcam tabs of `fig-fill-picker`.
 
 ## [2.18.3]
 
 ### Fixed
 
 - `fig-input-fill` gradient label now updates when changing gradient subtype (e.g., Radial → Linear) without switching fill types.
-- `experimental` attribute now passes through to `fig-dropdown` elements in the image, video, and webcam tabs of `fig-fill-picker`.
 
 ## [2.18.2]
 
@@ -2652,35 +2666,9 @@ All notable changes to this project will be documented in this file.
 
 - `fig-segmented-control` now supports a `disabled` attribute
 - Added disabled segmented control examples in `index.html` for both text and icon variants
-- Added an experimental modern dropdown example with icons in options (bleeding-edge browser support)
-
-### Changed
-
-- Improved experimental modern dropdown picker option layout spacing (`gap: var(--spacer-2)`)
-- Enforced dark color scheme for the modern picker menu to keep option colors consistent in light mode
-- Ensured nested elements inside modern picker options inherit text color for custom option content
 
 ## [2.15.0] - Breaking Changes
 
 ### Changed
 
-- **BREAKING**: Experimental CSS features (customizable select picker) now require `experimental="modern"` instead of the old `neue` variant name.
-  - Before: old dropdown variant attribute
-  - After: `<fig-dropdown experimental="modern">`
 - The `variant` attribute is now reserved for visual styling only.
-
-### Added
-
-- New `experimental` attribute for opting into experimental CSS features
-- Extensible format allows multiple features: `experimental="modern popover"` (for future features)
-
-### Migration Guide
-
-If you were using the old `neue` variant on `fig-dropdown` to enable the customizable select picker:
-
-```html
-<!-- After -->
-<fig-dropdown experimental="modern">
-  <option>Option 1</option>
-</fig-dropdown>
-```

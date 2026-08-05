@@ -18,6 +18,13 @@ function figLabBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
 
+/* Unique IDs for lab components such as propskit-group. */
+let figLabUniqueIdCounter = 0;
+function figLabUniqueId(prefix = "fig-lab") {
+  figLabUniqueIdCounter += 1;
+  return `${prefix}-${figLabUniqueIdCounter}`;
+}
+
 /* Field + Switch wrapper */
 class PropskitSwitch extends HTMLElement {
   #field = null;
@@ -218,7 +225,9 @@ class PropskitSwitch extends HTMLElement {
   }
 
   set checked(nextChecked) {
-    this.toggleAttribute("checked", Boolean(nextChecked));
+    const checked = Boolean(nextChecked);
+    this.toggleAttribute("checked", checked);
+    if (this.#switch) this.#switch.value = checked ? "on" : "off";
   }
 
   get value() {
@@ -978,8 +987,11 @@ class PropskitText extends HTMLElement {
   set value(nextValue) {
     if (nextValue === null || nextValue === undefined) {
       this.removeAttribute("value");
+      if (this.#input) this.#input.value = "";
     } else {
-      this.setAttribute("value", String(nextValue));
+      const next = String(nextValue);
+      this.setAttribute("value", next);
+      if (this.#input) this.#input.value = next;
     }
   }
 
@@ -1178,8 +1190,11 @@ class PropskitNumber extends HTMLElement {
   set value(nextValue) {
     if (nextValue === null || nextValue === undefined || nextValue === "") {
       this.removeAttribute("value");
+      if (this.#input) this.#input.value = "";
     } else {
-      this.setAttribute("value", String(nextValue));
+      const next = String(nextValue);
+      this.setAttribute("value", next);
+      if (this.#input) this.#input.value = next;
     }
   }
 
@@ -1203,6 +1218,7 @@ class PropskitGroup extends HTMLElement {
   ].join(",");
 
   #header = null;
+  #disclosure = null;
   #chevron = null;
   #resetTooltip = null;
   #defaults = new WeakMap();
@@ -1225,10 +1241,7 @@ class PropskitGroup extends HTMLElement {
       cancelAnimationFrame(this.#dirtyFrame);
       this.#dirtyFrame = 0;
     }
-    if (this.#header) {
-      this.#header.removeEventListener("click", this.#handleToggle);
-      this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
-    }
+    this.#disclosure?.removeEventListener("click", this.#handleToggle);
     const resetBtn = this.#resetTooltip?.querySelector("fig-button");
     resetBtn?.removeEventListener("click", this.#handleReset);
   }
@@ -1236,7 +1249,7 @@ class PropskitGroup extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     if (name === "open") {
-      this.#header?.setAttribute("aria-expanded", String(this.open));
+      this.#disclosure?.setAttribute("aria-expanded", String(this.open));
       return;
     }
     if (name === "show-reset") {
@@ -1259,7 +1272,7 @@ class PropskitGroup extends HTMLElement {
     } else {
       this.setAttribute("open", "false");
     }
-    this.#header?.setAttribute("aria-expanded", String(!!value));
+    this.#disclosure?.setAttribute("aria-expanded", String(!!value));
     if (was !== !!value) {
       this.dispatchEvent(
         new CustomEvent("openchange", {
@@ -1335,14 +1348,6 @@ class PropskitGroup extends HTMLElement {
 
   #handleToggle = (e) => {
     if (this.#isResetTarget(e.target)) return;
-    e.stopPropagation();
-    this.open = !this.open;
-  };
-
-  #handleHeaderKeyDown = (e) => {
-    if (this.#isResetTarget(e.target)) return;
-    if (e.key !== "Enter" && e.key !== " ") return;
-    e.preventDefault();
     e.stopPropagation();
     this.open = !this.open;
   };
@@ -1528,17 +1533,34 @@ class PropskitGroup extends HTMLElement {
 
     if (userHeader) {
       this.#header = userHeader;
-    } else if (!this.#header || !this.#header.dataset.generated) {
+    } else if (
+      !this.#header ||
+      !this.#header.dataset.generated ||
+      this.#header.parentElement !== this
+    ) {
       this.#header = document.createElement("fig-header");
       this.#header.setAttribute("borderless", "");
       this.#header.dataset.generated = "true";
       this.prepend(this.#header);
     }
 
-    let h3 = this.#header.querySelector("h3");
+    let disclosure = this.#header.querySelector(
+      ":scope > .propskit-group-disclosure",
+    );
+    if (!disclosure) {
+      disclosure = document.createElement("fig-button");
+      disclosure.className = "propskit-group-disclosure";
+      disclosure.setAttribute("variant", "ghost");
+      const existingHeading = this.#header.querySelector(":scope > h3");
+      if (existingHeading) disclosure.appendChild(existingHeading);
+      this.#header.prepend(disclosure);
+    }
+    this.#disclosure = disclosure;
+
+    let h3 = disclosure.querySelector("h3");
     if (!h3) {
       h3 = document.createElement("h3");
-      this.#header.prepend(h3);
+      disclosure.appendChild(h3);
     }
     if (!h3.id) h3.id = figLabUniqueId("propskit-group");
     if (this.#header.dataset.generated) {
@@ -1564,17 +1586,17 @@ class PropskitGroup extends HTMLElement {
     }
     this.#chevron = h3.querySelector(".propskit-group-chevron");
     this.#syncResetButton();
-    this.#header.removeEventListener("click", this.#handleToggle);
-    this.#header.addEventListener("click", this.#handleToggle);
-    this.#header.setAttribute("role", "button");
-    this.#header.setAttribute("tabindex", "0");
-    this.#header.setAttribute("aria-expanded", String(this.open));
-    this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
-    this.#header.addEventListener("keydown", this.#handleHeaderKeyDown);
+    this.#header.removeAttribute("role");
+    this.#header.removeAttribute("tabindex");
+    this.#header.removeAttribute("aria-expanded");
+    this.#disclosure.setAttribute("aria-labelledby", h3.id);
+    this.#disclosure.setAttribute("aria-expanded", String(this.open));
+    this.#disclosure.removeEventListener("click", this.#handleToggle);
+    this.#disclosure.addEventListener("click", this.#handleToggle);
 
     if (!this.hasAttribute("open")) {
       this.setAttribute("open", "false");
-      this.#header.setAttribute("aria-expanded", "false");
+      this.#disclosure.setAttribute("aria-expanded", "false");
     }
   }
 }
@@ -1607,6 +1629,7 @@ class PropskitSlider extends HTMLElement {
   #boundHandleRangeDoubleClick = this.#handleRangeDoubleClick.bind(this);
   #boundHandleContextMenu = this.#handleContextMenu.bind(this);
   #boundHandleContextMenuChange = this.#handleContextMenuChange.bind(this);
+  #boundHandleClick = this.#handleClick.bind(this);
   #ignoredSliderAttrs = new Set([
     "variant",
     "color",
@@ -1644,6 +1667,16 @@ class PropskitSlider extends HTMLElement {
     });
     this.removeEventListener("contextmenu", this.#boundHandleContextMenu);
     this.addEventListener("contextmenu", this.#boundHandleContextMenu);
+    this.removeEventListener("click", this.#boundHandleClick, true);
+    this.addEventListener("click", this.#boundHandleClick, true);
+    this.#contextMenu?.removeEventListener(
+      "change",
+      this.#boundHandleContextMenuChange,
+    );
+    this.#contextMenu?.addEventListener(
+      "change",
+      this.#boundHandleContextMenuChange,
+    );
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -1699,6 +1732,7 @@ class PropskitSlider extends HTMLElement {
       capture: true,
     });
     this.removeEventListener("contextmenu", this.#boundHandleContextMenu);
+    this.removeEventListener("click", this.#boundHandleClick, true);
     this.#contextMenu?.removeEventListener("change", this.#boundHandleContextMenuChange);
   }
 
@@ -1798,8 +1832,10 @@ class PropskitSlider extends HTMLElement {
 
     for (const attrName of hostAttrs) {
       if (attrName === "text") continue;
-      const value = this.getAttribute(attrName);
-      this.#slider.setAttribute(attrName, value ?? "");
+      const value = this.getAttribute(attrName) ?? "";
+      if (this.#slider.getAttribute(attrName) !== value) {
+        this.#slider.setAttribute(attrName, value);
+      }
     }
 
     this.#slider.removeAttribute("variant");
@@ -1875,8 +1911,45 @@ class PropskitSlider extends HTMLElement {
     if (rangeInput !== this.#rangeInput) {
       this.#bindRangeInput(rangeInput);
     }
-    rangeInput?.removeAttribute("tabindex");
-    numberInput?.setAttribute("tabindex", "-1");
+    if (rangeInput) {
+      rangeInput.removeAttribute("tabindex");
+      rangeInput.removeAttribute("aria-hidden");
+      const label =
+        this.getAttribute("aria-label") ||
+        this.#label?.textContent?.trim() ||
+        "Slider";
+      if (
+        !rangeInput.hasAttribute("aria-label") &&
+        !rangeInput.hasAttribute("aria-labelledby")
+      ) {
+        rangeInput.setAttribute("aria-label", label);
+      }
+    }
+    if (numberInput) {
+      numberInput.setAttribute("tabindex", "-1");
+      numberInput.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-number, fig-menu")
+    ) {
+      return;
+    }
+    this.#queueRangeFocus();
+  }
+
+  #queueRangeFocus() {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (this.isConnected && !figLabBooleanAttribute(this, "disabled")) {
+          this.focus();
+        }
+      });
+    });
   }
 
   #bindRangeInput(rangeInput) {
@@ -1904,6 +1977,9 @@ class PropskitSlider extends HTMLElement {
 
   #handleElasticPointerDown(event) {
     if (event.button !== 0 || figLabBooleanAttribute(this, "disabled")) return;
+    if (!event.target?.closest?.("fig-input-number, fig-menu")) {
+      this.#queueRangeFocus();
+    }
     if (this.getAttribute("elastic") === "false") return;
     if (event.target?.closest?.("fig-input-number")) return;
     const rangeInput =
@@ -2116,6 +2192,7 @@ class PropskitSlider extends HTMLElement {
   #setSliderValue(value, eventType) {
     if (!this.#slider || value === null || value === undefined) return;
     this.#slider.value = value;
+    this.setAttribute("value", String(this.#slider.value));
     this.dispatchEvent(
       new CustomEvent(eventType, {
         detail: this.#slider.value,
@@ -2180,6 +2257,9 @@ class PropskitSlider extends HTMLElement {
       event instanceof CustomEvent && event.detail !== undefined
         ? event.detail
         : this.#slider?.value;
+    if (this.#slider?.value !== undefined) {
+      this.setAttribute("value", String(this.#slider.value));
+    }
     this.dispatchEvent(
       new CustomEvent(type, {
         detail,
@@ -2191,7 +2271,25 @@ class PropskitSlider extends HTMLElement {
   }
 
   focus(options) {
-    this.#slider?.querySelector('input[type="range"]')?.focus(options);
+    this.#syncFocusDelegation();
+    const range = this.#slider?.querySelector('input[type="range"]');
+    range?.setAttribute("data-propskit-focus-called", "");
+    range?.focus(options);
+  }
+
+  get value() {
+    return this.getAttribute("value") ?? this.#slider?.value ?? "";
+  }
+
+  set value(nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.removeAttribute("value");
+      if (this.#slider) this.#slider.value = "";
+      return;
+    }
+    const next = String(nextValue);
+    this.setAttribute("value", next);
+    if (this.#slider) this.#slider.value = next;
   }
 
   resetToDefault() {
@@ -2242,6 +2340,8 @@ class FigCanvasControl extends HTMLElement {
   #rotateCursorPrevBodyCursor = "";
   #rotateCursorPrevBodyCursorPriority = "";
   #boundRotateCursorEnd = null;
+  #activeGestureController = null;
+  #activeGestureFinish = null;
 
   get #type() {
     return this.getAttribute("type") || "point";
@@ -2340,6 +2440,7 @@ class FigCanvasControl extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.#cancelActiveGesture();
     this.#teardownRadiusDrag();
     this.#deactivateMoveCursor();
     this.#deactivateRotateCursor();
@@ -2361,6 +2462,7 @@ class FigCanvasControl extends HTMLElement {
       else this.#render();
     }
     if (name === "type") {
+      this.#cancelActiveGesture();
       this.#parseValue();
       this.#render();
     }
@@ -2369,6 +2471,7 @@ class FigCanvasControl extends HTMLElement {
       else this.#pointHandle.removeAttribute("color");
     }
     if (name === "disabled") {
+      this.#cancelActiveGesture();
       this.#render();
     }
     if (name === "tooltips") {
@@ -2440,6 +2543,7 @@ class FigCanvasControl extends HTMLElement {
   }
 
   #render() {
+    this.#cancelActiveGesture();
     this.innerHTML = "";
     this.#pointHandle = null;
     this.#secondHandle = null;
@@ -2862,7 +2966,6 @@ class FigCanvasControl extends HTMLElement {
       e.stopPropagation();
       const container = this.#container;
       if (!container) return;
-      const rect0 = container.getBoundingClientRect();
       const startX = e.clientX;
       const startY = e.clientY;
       const x0 = this.#x;
@@ -2894,21 +2997,24 @@ class FigCanvasControl extends HTMLElement {
         this.#emitInput();
       };
 
-      const onUp = () => {
+      const gesture = this.#beginActiveGesture((commit) => {
         document.body.classList.remove("fig-lab-move-active");
         hitLine.style.pointerEvents = "stroke";
-        this.#syncValueAttribute();
-        this.#emitChange();
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-        requestAnimationFrame(() => {
-          this.#isDragging = false;
-          this.#isSecondDragging = false;
-        });
-      };
+        this.#isDragging = false;
+        this.#isSecondDragging = false;
+        if (commit) {
+          this.#syncValueAttribute();
+          this.#emitChange();
+        }
+      });
 
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointermove", onMove, { signal: gesture.signal });
+      window.addEventListener("pointerup", () => gesture.finish(true), {
+        signal: gesture.signal,
+      });
+      window.addEventListener("pointercancel", () => gesture.finish(false), {
+        signal: gesture.signal,
+      });
     });
   }
 
@@ -3066,7 +3172,7 @@ class FigCanvasControl extends HTMLElement {
       svg.style.top = "0";
       svg.setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`);
       const lines = svg.querySelectorAll(
-        ".fig-canvas-control-angle-line, .fig-canvas-control-angle-line-halo",
+        ".fig-canvas-control-angle-line, .fig-canvas-control-angle-line-halo, .fig-canvas-control-angle-line-hit",
       );
       for (const line of lines) {
         line.setAttribute("x1", String(cx));
@@ -3254,19 +3360,24 @@ class FigCanvasControl extends HTMLElement {
           this.#emitInput();
         };
 
-        const onUp = () => {
+        const gesture = this.#beginActiveGesture((commit) => {
           this.#isAngleDragging = false;
           this.classList.remove("fig-canvas-control-ring-active");
           this.#angleHandle.removeAttribute("selected");
           if (this.#angleTooltip) this.#angleTooltip.removeAttribute("show");
-          this.#syncValueAttribute();
-          this.#emitChange();
-          window.removeEventListener("pointermove", onMove);
-          window.removeEventListener("pointerup", onUp);
-        };
+          if (commit) {
+            this.#syncValueAttribute();
+            this.#emitChange();
+          }
+        });
 
-        window.addEventListener("pointermove", onMove);
-        window.addEventListener("pointerup", onUp);
+        window.addEventListener("pointermove", onMove, { signal: gesture.signal });
+        window.addEventListener("pointerup", () => gesture.finish(true), {
+          signal: gesture.signal,
+        });
+        window.addEventListener("pointercancel", () => gesture.finish(false), {
+          signal: gesture.signal,
+        });
       });
     }
 
@@ -3356,17 +3467,22 @@ class FigCanvasControl extends HTMLElement {
         this.#emitInput();
       };
 
-      const onUp = () => {
+      const gesture = this.#beginActiveGesture((commit) => {
         this.#isDragging = false;
         if (tooltip) tooltip.removeAttribute("show");
-        this.#syncValueAttribute();
-        this.#emitChange();
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-      };
+        if (commit) {
+          this.#syncValueAttribute();
+          this.#emitChange();
+        }
+      });
 
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointermove", onMove, { signal: gesture.signal });
+      window.addEventListener("pointerup", () => gesture.finish(true), {
+        signal: gesture.signal,
+      });
+      window.addEventListener("pointercancel", () => gesture.finish(false), {
+        signal: gesture.signal,
+      });
     });
   }
 
@@ -3462,7 +3578,7 @@ class FigCanvasControl extends HTMLElement {
         this.#emitInput();
       };
 
-      const onUp = () => {
+      const gesture = this.#beginActiveGesture((commit) => {
         this.#isRadiusDragging = false;
         this.classList.remove("fig-canvas-control-ring-active");
         circle.style.pointerEvents = "";
@@ -3474,14 +3590,19 @@ class FigCanvasControl extends HTMLElement {
         }
         document.body.style.cursor = prevBodyCursor;
         if (this.#radiusTooltip) this.#radiusTooltip.removeAttribute("show");
-        this.#syncValueAttribute();
-        this.#emitChange();
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-      };
+        if (commit) {
+          this.#syncValueAttribute();
+          this.#emitChange();
+        }
+      });
 
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointermove", onMove, { signal: gesture.signal });
+      window.addEventListener("pointerup", () => gesture.finish(true), {
+        signal: gesture.signal,
+      });
+      window.addEventListener("pointercancel", () => gesture.finish(false), {
+        signal: gesture.signal,
+      });
     };
     circle.addEventListener("pointerdown", onDown);
     this._radiusDragCleanup = () =>
@@ -3493,6 +3614,32 @@ class FigCanvasControl extends HTMLElement {
       this._radiusDragCleanup();
       this._radiusDragCleanup = null;
     }
+  }
+
+  #beginActiveGesture(onFinish) {
+    this.#cancelActiveGesture();
+    const controller = new AbortController();
+    let finished = false;
+    const finish = (commit = false) => {
+      if (finished) return;
+      finished = true;
+      controller.abort();
+      if (this.#activeGestureController === controller) {
+        this.#activeGestureController = null;
+        this.#activeGestureFinish = null;
+      }
+      onFinish(commit);
+    };
+    this.#activeGestureController = controller;
+    this.#activeGestureFinish = finish;
+    return { signal: controller.signal, finish };
+  }
+
+  #cancelActiveGesture() {
+    this.#activeGestureFinish?.(false);
+    this.#activeGestureController?.abort();
+    this.#activeGestureController = null;
+    this.#activeGestureFinish = null;
   }
 }
 figLabDefineElement("fig-canvas-control", FigCanvasControl);
@@ -3528,6 +3675,8 @@ class PropskitOscillator extends HTMLElement {
   #expandedWaveIndices = new Set();
   #resizeObserver = null;
   #activeFieldInput = null;
+  #dragController = null;
+  #dragCleanup = null;
 
   static TYPES = [
     { name: "Wave", value: "sine" },
@@ -3559,7 +3708,7 @@ class PropskitOscillator extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.#isDragging = null;
+    this.#cancelDrag();
     this.#stopPlayhead();
     if (this.#resizeObserver) {
       this.#resizeObserver.disconnect();
@@ -3764,6 +3913,7 @@ class PropskitOscillator extends HTMLElement {
   }
 
   #render() {
+    this.#cancelDrag();
     this.#stopPlayhead();
     this.innerHTML = this.#getInnerHTML();
     this.#cacheRefs();
@@ -3774,7 +3924,8 @@ class PropskitOscillator extends HTMLElement {
   }
 
   #getInnerHTML() {
-    const disabled = this.#isDisabled() ? " disabled" : "";
+    const interactive = this.#isEditEnabled() && !this.#isDisabled();
+    const disabled = interactive ? "" : " disabled";
 
     return `<div class="propskit-oscillator-svg-container">
         <svg viewBox="0 0 ${this.#drawWidth} ${this.#drawHeight}" class="propskit-oscillator-svg">
@@ -3782,8 +3933,8 @@ class PropskitOscillator extends HTMLElement {
           <line class="propskit-oscillator-baseline"></line>
           <path class="propskit-oscillator-path"></path>
           <circle class="propskit-oscillator-playhead"></circle>
-          <foreignObject class="propskit-oscillator-handle propskit-oscillator-amplitude-handle" data-handle="amplitude" width="20" height="20"><div class="propskit-oscillator-handle-inner"><fig-tooltip text="Amplitude"><fig-handle size="small" aria-label="Oscillator amplitude handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
-          <foreignObject class="propskit-oscillator-handle propskit-oscillator-frequency-handle" data-handle="frequency" width="20" height="20"><div class="propskit-oscillator-handle-inner"><fig-tooltip text="Frequency"><fig-handle size="small" aria-label="Oscillator frequency handle"${disabled}></fig-handle></fig-tooltip></div></foreignObject>
+          ${interactive ? `<foreignObject class="propskit-oscillator-handle propskit-oscillator-amplitude-handle" data-handle="amplitude" width="20" height="20"><div class="propskit-oscillator-handle-inner"><fig-tooltip text="Amplitude"><fig-handle size="small" aria-label="Oscillator amplitude handle"></fig-handle></fig-tooltip></div></foreignObject>
+          <foreignObject class="propskit-oscillator-handle propskit-oscillator-frequency-handle" data-handle="frequency" width="20" height="20"><div class="propskit-oscillator-handle-inner"><fig-tooltip text="Frequency"><fig-handle size="small" aria-label="Oscillator frequency handle"></fig-handle></fig-tooltip></div></foreignObject>` : ""}
         </svg>
       </div>
       ${this.#isEditEnabled() ? this.#getWaveControlsHTML(disabled) : ""}`;
@@ -3807,10 +3958,7 @@ class PropskitOscillator extends HTMLElement {
           <fig-button class="propskit-oscillator-remove-button" variant="ghost" icon data-wave-index="${index}" aria-label="Remove form"${removeDisabled}><fig-icon name="minus"></fig-icon></fig-button>
         </fig-tooltip>
         <fig-tooltip text="Add form">
-          <fig-button class="propskit-oscillator-add-type-button" type="select" variant="ghost" icon data-wave-index="${index}" aria-label="Add form"${disabled}>
-            <fig-icon name="add"></fig-icon>
-            ${this.#getWaveTypeDropdownHTML("propskit-oscillator-add-type", "sine", disabled, index)}
-          </fig-button>
+          ${this.#getWaveTypeSelectHTML("propskit-oscillator-add-type propskit-oscillator-add-type-button", "sine", disabled, index)}
         </fig-tooltip>
       </fig-header>
       <div class="propskit-oscillator-fields" data-wave-index="${index}"${active}>
@@ -3822,17 +3970,17 @@ class PropskitOscillator extends HTMLElement {
     </fig-group>`;
   }
 
-  #getWaveTypeDropdownHTML(className, value, disabled, index = null) {
+  #getWaveTypeSelectHTML(className, value, disabled, index = null) {
     const options = PropskitOscillator.TYPES.map((type) => {
       const selected = type.value === value ? " selected" : "";
-      return `<option value="${type.value}"${selected}>
-        ${PropskitOscillator.waveIcon(type.value, 24)}
-        <label>${type.name}</label>
-      </option>`;
+      return `<fig-select-option value="${type.value}" label="${type.name}"${selected}>
+        <span slot="prepend">${PropskitOscillator.waveIcon(type.value, 24)}</span>
+        <span>${type.name}</span>
+      </fig-select-option>`;
     }).join("");
     const indexAttr =
       index === null ? "" : ` data-wave-index="${PropskitOscillator.#escapeAttribute(String(index))}"`;
-    return `<fig-dropdown class="${className}" value="${value}" experimental="modern" type="dropdown" label="Add form"${indexAttr}${disabled}>${options}</fig-dropdown>`;
+    return `<fig-select class="${className}" value="${value}" label="Add form"${indexAttr}${disabled}><fig-select-options>${options}</fig-select-options></fig-select>`;
   }
 
   #getNumberFieldHTML(index, name, label, min, max, step, units) {
@@ -4039,6 +4187,7 @@ class PropskitOscillator extends HTMLElement {
   }
 
   #setupEvents() {
+    if (!this.#isEditEnabled() || this.#isDisabled()) return;
     for (const typeControl of this.#typeControls) {
       typeControl.addEventListener("change", (event) => {
         if (this.#isDisabled()) return;
@@ -4273,6 +4422,7 @@ class PropskitOscillator extends HTMLElement {
   }
 
   #startDrag(event, type) {
+    this.#cancelDrag();
     this.#isDragging = type;
     this.#svg?.classList.add("dragging");
     const dragCursor =
@@ -4313,19 +4463,42 @@ class PropskitOscillator extends HTMLElement {
       this.#emit("input");
     };
 
-    const onUp = () => {
+    const controller = new AbortController();
+    const finish = (commit = false) => {
       this.#isDragging = null;
       this.#svg?.classList.remove("dragging");
       if (dragCursor) {
         document.body.style.cursor = prevBodyCursor;
       }
-      document.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerup", onUp);
-      this.#emit("change");
+      controller.abort();
+      if (this.#dragController === controller) {
+        this.#dragController = null;
+        this.#dragCleanup = null;
+      }
+      if (commit) this.#emit("change");
     };
+    this.#dragController = controller;
+    this.#dragCleanup = finish;
 
-    document.addEventListener("pointermove", onMove);
-    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointermove", onMove, { signal: controller.signal });
+    document.addEventListener("pointerup", () => finish(true), {
+      signal: controller.signal,
+    });
+    document.addEventListener("pointercancel", () => finish(false), {
+      signal: controller.signal,
+    });
+    window.addEventListener("blur", () => finish(false), {
+      signal: controller.signal,
+    });
+  }
+
+  #cancelDrag() {
+    this.#dragCleanup?.(false);
+    this.#dragController?.abort();
+    this.#dragController = null;
+    this.#dragCleanup = null;
+    this.#isDragging = null;
+    this.#svg?.classList.remove("dragging");
   }
 
   #sampleAtWithoutWave(excludedIndex, t) {
@@ -4421,6 +4594,9 @@ class FigInputAngle extends HTMLElement {
   #boundHandleKeyDown;
   #boundHandleKeyUp;
   #boundHandleAngleInput;
+  #boundHandleDialKeyDown;
+  #gestureController = null;
+  #gestureCleanup = null;
 
   constructor() {
     super();
@@ -4446,10 +4622,12 @@ class FigInputAngle extends HTMLElement {
     this.#boundHandleKeyDown = this.#handleKeyDown.bind(this);
     this.#boundHandleKeyUp = this.#handleKeyUp.bind(this);
     this.#boundHandleAngleInput = this.#handleAngleInput.bind(this);
+    this.#boundHandleDialKeyDown = this.#handleDialKeyDown.bind(this);
   }
 
   connectedCallback() {
     requestAnimationFrame(() => {
+      if (!this.isConnected) return;
       this.precision = this.getAttribute("precision") || 1;
       this.precision = parseInt(this.precision);
       this.text = this.getAttribute("text") === "true";
@@ -4481,10 +4659,13 @@ class FigInputAngle extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.#cancelGesture();
     this.#cleanupListeners();
   }
 
   #render() {
+    this.#cancelGesture();
+    this.#cleanupListeners();
     this.innerHTML = this.#getInnerHTML();
   }
 
@@ -4511,10 +4692,23 @@ class FigInputAngle extends HTMLElement {
     const step = this.#getStepForUnit();
     const minAttr = this.min !== null ? `min="${this.min}"` : "";
     const maxAttr = this.max !== null ? `max="${this.max}"` : "";
+    const disabled = this.#isDisabled();
+    const name =
+      this.getAttribute("aria-label") || this.getAttribute("name") || "Angle";
+    const ariaMin = this.min ?? this.#fromDegrees(0);
+    const ariaMax = this.max ?? this.#fromDegrees(360);
     return `
         ${
           this.dial
-            ? `<div class="fig-input-angle-plane" tabindex="0">
+            ? `<div class="fig-input-angle-plane"
+                role="slider"
+                tabindex="${disabled ? -1 : 0}"
+                aria-label="${FigInputAngle.#escapeAttribute(name)}"
+                aria-valuemin="${ariaMin}"
+                aria-valuemax="${ariaMax}"
+                aria-valuenow="${this.angle}"
+                aria-valuetext="${FigInputAngle.#escapeAttribute(`${this.angle.toFixed(this.precision)}${this.units}`)}"
+                ${disabled ? 'aria-disabled="true"' : ""}>
           <div class="fig-input-angle-handle"></div>
         </div>`
             : ""
@@ -4527,7 +4721,9 @@ class FigInputAngle extends HTMLElement {
                 value="${this.angle}"
                 ${minAttr}
                 ${maxAttr}
-                units="${this.units}">
+                units="${this.units}"
+                aria-label="${FigInputAngle.#escapeAttribute(name)}"
+                ${disabled ? "disabled" : ""}>
                 ${this.showRotations ? `<span slot="append" class="fig-input-angle-rotations"></span>` : ""}
               </fig-input-number>`
             : ""
@@ -4538,6 +4734,57 @@ class FigInputAngle extends HTMLElement {
   #getRotationCount() {
     const degrees = Math.abs(this.#toDegrees(this.angle));
     return Math.floor(degrees / 360);
+  }
+
+  static #escapeAttribute(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  #isDisabled() {
+    return figLabBooleanAttribute(this, "disabled");
+  }
+
+  #clampValue(value) {
+    let next = Number(value);
+    if (!Number.isFinite(next)) return this.angle;
+    if (this.min !== null && Number.isFinite(this.min)) {
+      next = Math.max(this.min, next);
+    }
+    if (this.max !== null && Number.isFinite(this.max)) {
+      next = Math.min(this.max, next);
+    }
+    return next;
+  }
+
+  #setValue(value, { reflect = true } = {}) {
+    const next = this.#clampValue(value);
+    this.angle = next;
+    this.#calculateAdjacentAndOpposite();
+    if (reflect) {
+      const serialized = String(next);
+      if (this.getAttribute("value") !== serialized) {
+        this.setAttribute("value", serialized);
+      }
+    }
+    this.#syncHandlePosition();
+    if (this.angleInput) {
+      this.angleInput.value = next.toFixed(this.precision);
+    }
+    this.#syncDialState();
+    this.#updateRotationDisplay();
+  }
+
+  #syncDialState() {
+    if (!this.plane) return;
+    this.plane.setAttribute("aria-valuenow", String(this.angle));
+    this.plane.setAttribute(
+      "aria-valuetext",
+      `${this.angle.toFixed(this.precision)}${this.units}`,
+    );
   }
 
   #updateRotationDisplay() {
@@ -4615,10 +4862,12 @@ class FigInputAngle extends HTMLElement {
     this.#updateRotationDisplay();
     this.plane?.addEventListener("mousedown", this.#boundHandleMouseDown);
     this.plane?.addEventListener("touchstart", this.#boundHandleTouchStart);
+    this.plane?.addEventListener("keydown", this.#boundHandleDialKeyDown);
     window.addEventListener("keydown", this.#boundHandleKeyDown);
     window.addEventListener("keyup", this.#boundHandleKeyUp);
     if (this.text && this.angleInput) {
       this.angleInput.addEventListener("input", this.#boundHandleAngleInput);
+      this.angleInput.addEventListener("change", this.#boundHandleAngleInput);
     }
     this.addEventListener("change", this.#boundHandleRawChange, true);
   }
@@ -4626,10 +4875,12 @@ class FigInputAngle extends HTMLElement {
   #cleanupListeners() {
     this.plane?.removeEventListener("mousedown", this.#boundHandleMouseDown);
     this.plane?.removeEventListener("touchstart", this.#boundHandleTouchStart);
+    this.plane?.removeEventListener("keydown", this.#boundHandleDialKeyDown);
     window.removeEventListener("keydown", this.#boundHandleKeyDown);
     window.removeEventListener("keyup", this.#boundHandleKeyUp);
     if (this.text && this.angleInput) {
       this.angleInput.removeEventListener("input", this.#boundHandleAngleInput);
+      this.angleInput.removeEventListener("change", this.#boundHandleAngleInput);
     }
     this.removeEventListener("change", this.#boundHandleRawChange, true);
   }
@@ -4651,12 +4902,10 @@ class FigInputAngle extends HTMLElement {
 
   #handleAngleInput(e) {
     e.stopPropagation();
-    this.angle = Number(e.target.value);
-    this.#calculateAdjacentAndOpposite();
-    this.#syncHandlePosition();
-    this.#updateRotationDisplay();
-    this.#emitInputEvent();
-    this.#emitChangeEvent();
+    if (this.#isDisabled()) return;
+    this.#setValue(Number(e.target.value));
+    if (e.type === "change") this.#emitChangeEvent();
+    else this.#emitInputEvent();
   }
 
   #calculateAdjacentAndOpposite() {
@@ -4689,7 +4938,7 @@ class FigInputAngle extends HTMLElement {
     const isBounded = this.min !== null || this.max !== null;
 
     if (isBounded) {
-      this.angle = this.#fromDegrees(normalizedAngle);
+      this.angle = this.#clampValue(this.#fromDegrees(normalizedAngle));
     } else {
       if (this.#prevRawAngle === null) {
         this.#prevRawAngle = normalizedAngle;
@@ -4698,23 +4947,25 @@ class FigInputAngle extends HTMLElement {
         let delta = normalizedAngle - currentMod;
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
-        this.angle += this.#fromDegrees(delta);
+        this.angle = this.#clampValue(this.angle + this.#fromDegrees(delta));
       } else {
         let delta = normalizedAngle - this.#prevRawAngle;
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
-        this.angle += this.#fromDegrees(delta);
+        this.angle = this.#clampValue(this.angle + this.#fromDegrees(delta));
         this.#prevRawAngle = normalizedAngle;
       }
     }
 
     this.#calculateAdjacentAndOpposite();
+    this.setAttribute("value", String(this.angle));
 
     this.#syncHandlePosition();
     if (this.text && this.angleInput) {
       this.angleInput.setAttribute("value", this.angle.toFixed(this.precision));
     }
     this.#updateRotationDisplay();
+    this.#syncDialState();
 
     this.#emitInputEvent();
   }
@@ -4751,6 +5002,8 @@ class FigInputAngle extends HTMLElement {
   }
 
   #handleMouseDown(e) {
+    if (this.#isDisabled() || e.button !== 0) return;
+    this.#cancelGesture();
     this.isDragging = true;
     this.#prevRawAngle = null;
     this.#updateAngle(e);
@@ -4760,21 +5013,36 @@ class FigInputAngle extends HTMLElement {
       if (this.isDragging) this.#updateAngle(e);
     };
 
-    const handleMouseUp = () => {
+    const controller = new AbortController();
+    const finish = (commit = false) => {
       this.isDragging = false;
       this.#prevRawAngle = null;
       this.plane.classList.remove("dragging");
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      this.#emitChangeEvent();
+      controller.abort();
+      if (this.#gestureController === controller) {
+        this.#gestureController = null;
+        this.#gestureCleanup = null;
+      }
+      if (commit) this.#emitChangeEvent();
     };
+    this.#gestureController = controller;
+    this.#gestureCleanup = finish;
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove, {
+      signal: controller.signal,
+    });
+    window.addEventListener("mouseup", () => finish(true), {
+      signal: controller.signal,
+    });
+    window.addEventListener("blur", () => finish(false), {
+      signal: controller.signal,
+    });
   }
 
   #handleTouchStart(e) {
+    if (this.#isDisabled()) return;
     e.preventDefault();
+    this.#cancelGesture();
     this.isDragging = true;
     this.#prevRawAngle = null;
     this.#updateAngle(e.touches[0]);
@@ -4784,17 +5052,56 @@ class FigInputAngle extends HTMLElement {
       if (this.isDragging) this.#updateAngle(e.touches[0]);
     };
 
-    const handleTouchEnd = () => {
+    const controller = new AbortController();
+    const finish = (commit = false) => {
       this.isDragging = false;
       this.#prevRawAngle = null;
       this.plane.classList.remove("dragging");
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
-      this.#emitChangeEvent();
+      controller.abort();
+      if (this.#gestureController === controller) {
+        this.#gestureController = null;
+        this.#gestureCleanup = null;
+      }
+      if (commit) this.#emitChangeEvent();
     };
+    this.#gestureController = controller;
+    this.#gestureCleanup = finish;
 
-    window.addEventListener("touchmove", handleTouchMove);
-    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchmove", handleTouchMove, {
+      signal: controller.signal,
+    });
+    window.addEventListener("touchend", () => finish(true), {
+      signal: controller.signal,
+    });
+    window.addEventListener("touchcancel", () => finish(false), {
+      signal: controller.signal,
+    });
+  }
+
+  #cancelGesture() {
+    this.#gestureCleanup?.(false);
+    this.#gestureController?.abort();
+    this.#gestureController = null;
+    this.#gestureCleanup = null;
+    this.isDragging = false;
+    this.#prevRawAngle = null;
+    this.plane?.classList.remove("dragging");
+  }
+
+  #handleDialKeyDown(e) {
+    if (this.#isDisabled()) return;
+    const step = this.#getStepForUnit() * (e.shiftKey ? 10 : 1);
+    let next = this.angle;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") next -= step;
+    else if (e.key === "ArrowRight" || e.key === "ArrowUp") next += step;
+    else if (e.key === "Home") next = this.min ?? this.#fromDegrees(0);
+    else if (e.key === "End") next = this.max ?? this.#fromDegrees(360);
+    else return;
+    e.preventDefault();
+    e.stopPropagation();
+    this.#setValue(next);
+    this.#emitInputEvent();
+    this.#emitChangeEvent();
   }
 
   #handleKeyDown(e) {
@@ -4820,6 +5127,9 @@ class FigInputAngle extends HTMLElement {
       "dial",
       "rotations",
       "show-rotations",
+      "disabled",
+      "aria-label",
+      "name",
     ];
   }
 
@@ -4840,20 +5150,14 @@ class FigInputAngle extends HTMLElement {
       console.error("Invalid value: must be a number.");
       return;
     }
-    this.angle = value;
-    this.#calculateAdjacentAndOpposite();
-    this.#syncHandlePosition();
-    if (this.angleInput) {
-      this.angleInput.setAttribute("value", this.angle.toFixed(this.precision));
-    }
-    this.#updateRotationDisplay();
+    this.#setValue(Number(value));
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
       case "value":
         if (this.isDragging) break;
-        this.value = Number(newValue);
+        if (newValue !== null) this.#setValue(Number(newValue), { reflect: false });
         break;
       case "precision":
         this.precision = parseInt(newValue);
@@ -4889,6 +5193,7 @@ class FigInputAngle extends HTMLElement {
       }
       case "min":
         this.min = newValue !== null ? Number(newValue) : null;
+        this.#setValue(this.angle);
         if (this.isConnected) {
           this.#render();
           this.#setupListeners();
@@ -4897,6 +5202,23 @@ class FigInputAngle extends HTMLElement {
         break;
       case "max":
         this.max = newValue !== null ? Number(newValue) : null;
+        this.#setValue(this.angle);
+        if (this.isConnected) {
+          this.#render();
+          this.#setupListeners();
+          this.#syncHandlePosition();
+        }
+        break;
+      case "disabled":
+        this.#cancelGesture();
+        if (this.isConnected) {
+          this.#render();
+          this.#setupListeners();
+          this.#syncHandlePosition();
+        }
+        break;
+      case "aria-label":
+      case "name":
         if (this.isConnected) {
           this.#render();
           this.#setupListeners();
@@ -4955,9 +5277,15 @@ class FigReorder extends HTMLElement {
   #bindings = new Map();
   #drag = null;
   #indicator = null;
+  #liveRegion = null;
 
   connectedCallback() {
     this.style.display = "contents";
+    if (!this.hasAttribute("role")) this.setAttribute("role", "list");
+    if (!this.hasAttribute("aria-label")) {
+      this.setAttribute("aria-label", "Reorderable list");
+    }
+    this.#ensureLiveRegion();
     this.#syncChildren();
     this.#childObserver = new MutationObserver(() => this.#syncChildren());
     this.#childObserver.observe(this, { childList: true });
@@ -4969,10 +5297,15 @@ class FigReorder extends HTMLElement {
     this.#unbindAll();
     this.#cancelDrag();
     this.#removeIndicator();
+    this.#liveRegion?.remove();
+    this.#liveRegion = null;
   }
 
   attributeChangedCallback() {
-    if (this.isConnected) this.#syncChildren();
+    if (this.isConnected) {
+      if (this.#disabled) this.#cancelDrag();
+      this.#syncChildren();
+    }
   }
 
   get #disabled() {
@@ -4991,7 +5324,11 @@ class FigReorder extends HTMLElement {
   }
 
   #getElementChildren() {
-    return [...this.children].filter((node) => node.nodeType === Node.ELEMENT_NODE);
+    return [...this.children].filter(
+      (node) =>
+        node.nodeType === Node.ELEMENT_NODE &&
+        !node.hasAttribute("data-reorder-live"),
+    );
   }
 
   #syncChildren() {
@@ -5005,6 +5342,8 @@ class FigReorder extends HTMLElement {
           binding.onPointerDown,
           true,
         );
+        binding.target.removeEventListener("keydown", binding.onKeyDown);
+        this.#restoreKeyboardAttrs(binding);
         this.#bindings.delete(child);
       }
     }
@@ -5040,12 +5379,20 @@ class FigReorder extends HTMLElement {
   #clearReorderItemMarks(children) {
     for (const child of children) {
       child.removeAttribute("data-reorder-item");
+      if (child.hasAttribute("data-reorder-generated-role")) {
+        child.removeAttribute("role");
+        child.removeAttribute("data-reorder-generated-role");
+      }
     }
   }
 
   #markReorderItems(children) {
     for (const child of children) {
       child.setAttribute("data-reorder-item", "");
+      if (!child.hasAttribute("role")) {
+        child.setAttribute("role", "listitem");
+        child.setAttribute("data-reorder-generated-role", "");
+      }
     }
   }
 
@@ -5053,7 +5400,10 @@ class FigReorder extends HTMLElement {
     for (const child of children) {
       child
         .querySelectorAll("[data-reorder-handle]")
-        .forEach((node) => node.removeAttribute("data-reorder-handle"));
+        .forEach((node) => {
+          node.removeAttribute("data-reorder-handle");
+          node.removeAttribute("aria-roledescription");
+        });
     }
   }
 
@@ -5061,7 +5411,10 @@ class FigReorder extends HTMLElement {
     if (!this.#handleSelector) return;
     for (const child of children) {
       const handle = child.querySelector(this.#handleSelector);
-      if (handle) handle.setAttribute("data-reorder-handle", "");
+      if (handle) {
+        handle.setAttribute("data-reorder-handle", "");
+        handle.setAttribute("aria-roledescription", "reorder handle");
+      }
     }
   }
 
@@ -5084,9 +5437,107 @@ class FigReorder extends HTMLElement {
       }
       this.#startPendingDrag(event, child, target);
     };
+    const originalTabIndex = target.getAttribute("tabindex");
+    const originalAriaLabel = target.getAttribute("aria-label");
+    const originalRole = target.getAttribute("role");
+    const itemName =
+      child.getAttribute("aria-label") ||
+      child.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ||
+      "item";
+    target.setAttribute("tabindex", "0");
+    target.setAttribute("aria-label", `Move ${itemName}`);
+    if (target !== child && !target.hasAttribute("role")) {
+      target.setAttribute("role", "button");
+    }
+    const onKeyDown = (event) => {
+      if (this.#disabled) return;
+      const horizontal = this.#axis === "horizontal";
+      const previousKey = horizontal ? "ArrowLeft" : "ArrowUp";
+      const nextKey = horizontal ? "ArrowRight" : "ArrowDown";
+      if (
+        event.key !== previousKey &&
+        event.key !== nextKey &&
+        event.key !== "Home" &&
+        event.key !== "End"
+      ) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const items = this.#getElementChildren();
+      const oldIndex = items.indexOf(child);
+      let newIndex = oldIndex;
+      if (event.key === previousKey) newIndex = Math.max(0, oldIndex - 1);
+      else if (event.key === nextKey) {
+        newIndex = Math.min(items.length - 1, oldIndex + 1);
+      } else if (event.key === "Home") newIndex = 0;
+      else if (event.key === "End") newIndex = items.length - 1;
+      if (newIndex === oldIndex) {
+        this.#announce(`${itemName}, position ${oldIndex + 1} of ${items.length}`);
+        return;
+      }
+      this.#moveItemToFinalIndex(child, newIndex);
+      this.#syncChildren();
+      this.#getDragTarget(child)?.focus();
+      this.dispatchEvent(
+        new CustomEvent("reorder", {
+          bubbles: true,
+          detail: { oldIndex, newIndex, item: child },
+        }),
+      );
+      this.#announce(`${itemName}, position ${newIndex + 1} of ${items.length}`);
+    };
 
     target.addEventListener("pointerdown", onPointerDown, true);
-    this.#bindings.set(child, { target, onPointerDown });
+    target.addEventListener("keydown", onKeyDown);
+    this.#bindings.set(child, {
+      target,
+      onPointerDown,
+      onKeyDown,
+      originalTabIndex,
+      originalAriaLabel,
+      originalRole,
+    });
+  }
+
+  #restoreKeyboardAttrs(binding) {
+    const { target, originalTabIndex, originalAriaLabel, originalRole } = binding;
+    if (originalTabIndex === null) target.removeAttribute("tabindex");
+    else target.setAttribute("tabindex", originalTabIndex);
+    if (originalAriaLabel === null) target.removeAttribute("aria-label");
+    else target.setAttribute("aria-label", originalAriaLabel);
+    if (originalRole === null) target.removeAttribute("role");
+    else target.setAttribute("role", originalRole);
+  }
+
+  #ensureLiveRegion() {
+    if (this.#liveRegion?.isConnected) return;
+    const region = document.createElement("span");
+    region.setAttribute("data-reorder-live", "");
+    region.setAttribute("role", "status");
+    region.setAttribute("aria-live", "polite");
+    region.setAttribute("aria-atomic", "true");
+    Object.assign(region.style, {
+      position: "absolute",
+      width: "1px",
+      height: "1px",
+      padding: "0",
+      margin: "-1px",
+      overflow: "hidden",
+      clip: "rect(0, 0, 0, 0)",
+      whiteSpace: "nowrap",
+      border: "0",
+    });
+    this.#liveRegion = region;
+    document.body.appendChild(region);
+  }
+
+  #announce(message) {
+    if (!this.#liveRegion) return;
+    this.#liveRegion.textContent = "";
+    requestAnimationFrame(() => {
+      if (this.#liveRegion) this.#liveRegion.textContent = message;
+    });
   }
 
   #isInteractiveTarget(target, child) {
@@ -5304,6 +5755,13 @@ class FigReorder extends HTMLElement {
     if (ref !== item) this.insertBefore(item, ref);
   }
 
+  #moveItemToFinalIndex(item, newIndex) {
+    const items = this.#getElementChildren().filter((candidate) => candidate !== item);
+    const ref = items[newIndex] ?? null;
+    if (ref) this.insertBefore(item, ref);
+    else this.appendChild(item);
+  }
+
   #finishDrag(state, revert) {
     const { item, oldIndex, active, onMove, onUp, onKeyDown } = state;
 
@@ -5323,6 +5781,13 @@ class FigReorder extends HTMLElement {
               detail: { oldIndex, newIndex, item },
             }),
           );
+          const name =
+            item.getAttribute("aria-label") ||
+            item.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ||
+            "item";
+          this.#announce(
+            `${name}, position ${newIndex + 1} of ${this.#getElementChildren().length}`,
+          );
         }
       }
     }
@@ -5340,6 +5805,8 @@ class FigReorder extends HTMLElement {
         binding.onPointerDown,
         true,
       );
+      binding.target.removeEventListener("keydown", binding.onKeyDown);
+      this.#restoreKeyboardAttrs(binding);
     }
     this.#bindings.clear();
   }
@@ -5352,1185 +5819,167 @@ class FigReorder extends HTMLElement {
 
 figLabDefineElement("fig-reorder", FigReorder);
 
-/* Select — dropdown-styled trigger + fig-popup listbox */
-let figLabSelectId = 0;
-function figLabUniqueId(prefix = "fig-select") {
-  figLabSelectId += 1;
-  return `${prefix}-${figLabSelectId}`;
-}
-
-/** Parse options attr — same formats as fig-options / propskit-select. */
-function figLabParseOptionsAttribute(raw) {
-  const text = raw || "";
-  if (text.startsWith("[")) {
-    try {
-      const parsed = JSON.parse(text);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      /* fall through */
-    }
-  }
-  const delimiter = text.includes("\n") ? "\n" : ",";
-  return text
-    .split(delimiter)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-function figLabOptionEntryValue(opt) {
-  if (opt && typeof opt === "object") {
-    return String(opt.value ?? opt.label ?? "");
-  }
-  return String(opt ?? "");
-}
-
-function figLabOptionEntryLabel(opt) {
-  if (opt && typeof opt === "object") {
-    return String(opt.label ?? opt.value ?? "");
-  }
-  return String(opt ?? "");
-}
-
-/**
- * A selectable option for fig-select.
- * Supports light-DOM slots: `slot="prepend"` (leading) and `slot="append"` (trailing).
- * Use the `label` attribute for the closed-trigger label when option content is rich.
- *
- * @attr {string} value - Option value
- * @attr {string} label - Optional display label for the select trigger
- * @attr {boolean} disabled - Whether the option is disabled
- * @attr {boolean} selected - Whether the option is selected
+/*
+ * fig-select currently lives in fig.js. Keep the lab consumers resilient to
+ * reconnects and selected-option mutations until those core fixes can move
+ * with the component.
  */
-class FigSelectOption extends HTMLElement {
-  static get observedAttributes() {
-    return ["value", "disabled", "selected", "label"];
-  }
+const figLabEnhancedSelects = new WeakSet();
+const figLabDisconnectedSelects = new WeakSet();
+const figLabReconnectFallbacks = new WeakSet();
 
-  get value() {
-    const attr = this.getAttribute("value");
-    if (attr !== null) return attr;
-    return (this.textContent || "").trim();
-  }
-
-  set value(val) {
-    if (val === null || val === undefined) {
-      this.removeAttribute("value");
-    } else {
-      this.setAttribute("value", String(val));
-    }
-  }
-
-  get disabled() {
-    return figLabBooleanAttribute(this, "disabled");
-  }
-
-  set disabled(val) {
-    if (val) this.setAttribute("disabled", "");
-    else this.removeAttribute("disabled");
-  }
-
-  get selected() {
-    return figLabBooleanAttribute(this, "selected");
-  }
-
-  set selected(val) {
-    if (val) this.setAttribute("selected", "");
-    else this.removeAttribute("selected");
-  }
-
-  connectedCallback() {
-    if (!this.hasAttribute("role")) this.setAttribute("role", "option");
-    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
-    this.#syncDisabled();
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue) return;
-    if (name === "disabled") this.#syncDisabled();
-  }
-
-  #syncDisabled() {
-    const disabled = this.disabled;
-    if (disabled) {
-      this.setAttribute("aria-disabled", "true");
-      this.setAttribute("tabindex", "-1");
-    } else {
-      this.removeAttribute("aria-disabled");
-      if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
-    }
-  }
-}
-figLabDefineElement("fig-select-option", FigSelectOption);
-
-function figLabSyncOverflowState(host, scrollEl, threshold = 2) {
-  if (!host || !scrollEl) return false;
-  const scrollable = scrollEl.scrollHeight - scrollEl.clientHeight > threshold;
-  const atStart = !scrollable || scrollEl.scrollTop <= threshold;
-  const atEnd =
-    !scrollable ||
-    scrollEl.scrollTop + scrollEl.clientHeight >=
-      scrollEl.scrollHeight - threshold;
-  host.classList.toggle("overflow-start", !atStart);
-  host.classList.toggle("overflow-end", !atEnd);
-  return scrollable;
+function figLabSelectOptions(select) {
+  return Array.from(select.querySelectorAll("fig-select-option"));
 }
 
-function figLabScrollOverflowPage(scrollEl, direction = 1) {
-  if (!scrollEl) return;
-  scrollEl.scrollBy({
-    top: scrollEl.clientHeight * 0.8 * direction,
-    behavior: "smooth",
+function figLabSyncSelectedOption(select, requestedOption, emit = true) {
+  const options = figLabSelectOptions(select);
+  if (!options.length) return;
+  let option =
+    requestedOption && options.includes(requestedOption)
+      ? requestedOption
+      : options.find((candidate) => figLabBooleanAttribute(candidate, "selected"));
+  if (!option || figLabBooleanAttribute(option, "disabled")) {
+    option =
+      options.find((candidate) => !figLabBooleanAttribute(candidate, "disabled")) ||
+      options[0];
+  }
+  if (!option) return;
+
+  const value = option.value ?? option.getAttribute("value") ?? "";
+  const previousValue = select.getAttribute("value") ?? "";
+  select.setAttribute("value", String(value));
+  for (const candidate of options) {
+    const selected = candidate === option;
+    candidate.toggleAttribute("selected", selected);
+    candidate.setAttribute("aria-selected", String(selected));
+  }
+  if (emit && previousValue !== String(value)) {
+    select.dispatchEvent(
+      new CustomEvent("input", {
+        detail: String(value),
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    select.dispatchEvent(
+      new CustomEvent("change", {
+        detail: String(value),
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+}
+
+function figLabEnhanceSelect(select) {
+  if (figLabEnhancedSelects.has(select)) return;
+  const trigger = select.shadowRoot?.querySelector(".fig-select-trigger");
+  if (!trigger) {
+    requestAnimationFrame(() => {
+      if (select.isConnected) figLabEnhanceSelect(select);
+    });
+    return;
+  }
+  figLabEnhancedSelects.add(select);
+
+  const observer = new MutationObserver((mutations) => {
+    let selectedOption = null;
+    let selectedWasRemoved = false;
+    for (const mutation of mutations) {
+      if (
+        mutation.type !== "attributes" ||
+        mutation.attributeName !== "selected" ||
+        mutation.target.tagName !== "FIG-SELECT-OPTION"
+      ) {
+        continue;
+      }
+      if (figLabBooleanAttribute(mutation.target, "selected")) {
+        selectedOption = mutation.target;
+      } else if (
+        String(mutation.target.value ?? "") ===
+        (select.getAttribute("value") ?? "")
+      ) {
+        selectedWasRemoved = true;
+      }
+    }
+    if (selectedOption) {
+      const optionValue = String(selectedOption.value ?? "");
+      if ((select.getAttribute("value") ?? "") !== optionValue) {
+        figLabSyncSelectedOption(select, selectedOption);
+      }
+    } else if (selectedWasRemoved) {
+      figLabSyncSelectedOption(select, null);
+    }
+  });
+  observer.observe(select, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: ["selected"],
   });
 }
 
-function figLabCreateOverflowButtons({ onStart, onEnd } = {}) {
-  const makeButton = (direction, onClick) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `fig-overflow fig-overflow-${direction}`;
-    button.dataset.figOverflow = direction;
-    button.setAttribute("data-fig-select-nav", direction);
-    button.setAttribute("tabindex", "-1");
-    button.setAttribute(
-      "aria-label",
-      direction === "start" ? "Scroll up" : "Scroll down",
-    );
-    const icon = document.createElement("fig-icon");
-    icon.setAttribute("name", "chevron");
-    icon.setAttribute("size", "small");
-    icon.className = "fig-overflow-chevron";
-    button.appendChild(icon);
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      onClick?.(event);
-    });
-    return button;
-  };
-  return {
-    start: makeButton("start", onStart),
-    end: makeButton("end", onEnd),
-  };
+function figLabInstallSelectReconnectFallback(select) {
+  if (figLabReconnectFallbacks.has(select)) return;
+  const trigger = select.shadowRoot?.querySelector(".fig-select-trigger");
+  if (!trigger) return;
+  figLabReconnectFallbacks.add(select);
+
+  trigger.addEventListener("click", () => {
+    if (figLabBooleanAttribute(select, "disabled")) return;
+    select.open = !select.open;
+  });
+  select.addEventListener("click", (event) => {
+    const option = event
+      .composedPath()
+      .find((node) => node?.tagName === "FIG-SELECT-OPTION");
+    if (
+      !option ||
+      !select.contains(option) ||
+      figLabBooleanAttribute(option, "disabled")
+    ) {
+      return;
+    }
+    figLabSyncSelectedOption(select, option);
+    select.open = false;
+  });
 }
 
-/** Light-DOM panel wrapper projected into fig-select's popup; owns overflow buttons. */
-class FigSelectOptions extends HTMLElement {
-  #navStart = null;
-  #navEnd = null;
-  #resizeObserver = null;
-  #boundSyncOverflow = this.syncOverflow.bind(this);
-
-  connectedCallback() {
-    if (!this.hasAttribute("slot")) this.setAttribute("slot", "panel");
-    this.#unwrapLegacyChooser();
-    this.#ensureNavButtons();
-    this.addEventListener("scroll", this.#boundSyncOverflow, { passive: true });
-    this.#resizeObserver?.disconnect();
-    this.#resizeObserver = new ResizeObserver(() => this.syncOverflow());
-    this.#resizeObserver.observe(this);
-    requestAnimationFrame(() => this.syncOverflow());
+function figLabMarkDisconnectedSelectTree(root) {
+  if (root instanceof Element && root.matches("fig-select")) {
+    figLabDisconnectedSelects.add(root);
   }
-
-  disconnectedCallback() {
-    this.removeEventListener("scroll", this.#boundSyncOverflow);
-    this.#resizeObserver?.disconnect();
-    this.#resizeObserver = null;
-    this.#removeNavButtons();
-  }
-
-  syncOverflow() {
-    return figLabSyncOverflowState(this, this);
-  }
-
-  scrollToOption(option, behavior = "auto") {
-    if (!option || !this.contains(option)) return;
-    requestAnimationFrame(() => {
-      if (!option.isConnected) return;
-      if (this.scrollHeight <= this.clientHeight + 1) {
-        this.syncOverflow();
-        return;
-      }
-      const optionRect = option.getBoundingClientRect();
-      const hostRect = this.getBoundingClientRect();
-      const optionTop = optionRect.top - hostRect.top + this.scrollTop;
-      const maxScroll = this.scrollHeight - this.clientHeight;
-      const top = Math.max(
-        0,
-        Math.min(
-          optionTop + optionRect.height / 2 - this.clientHeight / 2,
-          maxScroll,
-        ),
-      );
-      this.scrollTo({ top, behavior });
-      this.syncOverflow();
-    });
-  }
-
-  #unwrapLegacyChooser() {
-    const chooser = this.querySelector(":scope > fig-chooser");
-    if (!chooser) return;
-    while (chooser.firstChild) {
-      this.insertBefore(chooser.firstChild, chooser);
-    }
-    chooser.remove();
-  }
-
-  #ensureNavButtons() {
-    if (
-      this.#navStart &&
-      this.#navEnd &&
-      this.contains(this.#navStart) &&
-      this.contains(this.#navEnd)
-    ) {
-      return;
-    }
-    this.#removeNavButtons();
-    const buttons = figLabCreateOverflowButtons({
-      onStart: () => figLabScrollOverflowPage(this, -1),
-      onEnd: () => figLabScrollOverflowPage(this, 1),
-    });
-    this.#navStart = buttons.start;
-    this.#navEnd = buttons.end;
-    this.prepend(this.#navStart);
-    this.append(this.#navEnd);
-  }
-
-  #removeNavButtons() {
-    this.#navStart?.remove();
-    this.#navEnd?.remove();
-    this.#navStart = null;
-    this.#navEnd = null;
-    this.classList.remove("overflow-start", "overflow-end");
-  }
+  root
+    .querySelectorAll?.("fig-select")
+    .forEach((select) => figLabDisconnectedSelects.add(select));
 }
-figLabDefineElement("fig-select-options", FigSelectOptions);
 
-class FigSelect extends HTMLElement {
-  #button = null;
-  #popup = null;
-  #labelEl = null;
-  #panelSlot = null;
-  #observer = null;
-  #initialized = false;
-  #focusedIndex = -1;
-  #syncingValue = false;
-  #popupPositionPatched = false;
-  #originalPositionPopup = null;
-  /**
-   * After open align, ignore content/scroll-driven positionPopup passes so
-   * overflow paging isn't yanked back. Still realign when the trigger moves
-   * or the viewport size changes (window resize, layout shift, page scroll).
-   */
-  #freezeMenuPosition = false;
-  #frozenLabelRect = null;
-  #frozenViewport = null;
-  #syncingOptions = false;
-  #boundTriggerClick = this.#handleTriggerClick.bind(this);
-  #boundOptionClick = this.#handleOptionClick.bind(this);
-  #boundKeydown = this.#handleKeydown.bind(this);
-  #boundPopupClose = this.#handlePopupClose.bind(this);
-  #boundSlotChange = this.#handleSlotChange.bind(this);
-
-  static get observedAttributes() {
-    return [
-      "value",
-      "disabled",
-      "label",
-      "options",
-      "position",
-      "offset",
-      "closedby",
-      "open",
-    ];
+function figLabEnhanceSelectTree(root) {
+  if (root instanceof Element && root.matches("fig-select")) {
+    figLabEnhanceSelect(root);
   }
+  root
+    .querySelectorAll?.("fig-select")
+    .forEach((select) => figLabEnhanceSelect(select));
+}
 
-  get value() {
-    return this.getAttribute("value") ?? "";
-  }
-
-  set value(val) {
-    if (val === null || val === undefined) this.removeAttribute("value");
-    else this.setAttribute("value", String(val));
-  }
-
-  get open() {
-    return figLabBooleanAttribute(this, "open");
-  }
-
-  set open(val) {
-    if (val) this.setAttribute("open", "");
-    else this.removeAttribute("open");
-  }
-
-  connectedCallback() {
-    if (!this.#initialized) this.#initialize();
-    this.#ensurePanelSlotAttrs();
-    this.#syncOptionsFromAttribute();
-    this.#syncDisabled();
-    this.#syncPopupAttrs();
-    this.#syncValue();
-    this.#setupObserver();
-    if (this.open) this.#openList();
-  }
-
-  disconnectedCallback() {
-    this.#teardownListeners();
-    document.removeEventListener("keydown", this.#boundKeydown, true);
-    this.#observer?.disconnect();
-    this.#observer = null;
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue || !this.#initialized) return;
-    if (name === "options") {
-      this.#syncOptionsFromAttribute();
-      this.#syncValue();
-      return;
+figLabEnhanceSelectTree(document);
+new MutationObserver((mutations) => {
+  for (const mutation of mutations) {
+    for (const node of mutation.removedNodes) {
+      if (node instanceof Element) figLabMarkDisconnectedSelectTree(node);
     }
-    if (name === "value" || name === "label") {
-      this.#syncValue();
-      return;
-    }
-    if (name === "disabled") {
-      this.#syncDisabled();
-      return;
-    }
-    if (name === "open") {
-      if (newValue === null || newValue === "false") this.#closeList();
-      else this.#openList();
-      return;
-    }
-    if (name === "position" || name === "offset" || name === "closedby") {
-      this.#syncPopupAttrs();
-    }
-  }
-
-  focus(options) {
-    this.#button?.focus(options);
-  }
-
-  blur() {
-    this.#button?.blur();
-  }
-
-  #isMenuChild(node) {
-    return (
-      node?.nodeType === 1 &&
-      (node.tagName === "FIG-SELECT-OPTION" ||
-        node.tagName === "FIG-MENU-SEPARATOR" ||
-        node.tagName === "FIG-SELECT-OPTIONS")
-    );
-  }
-
-  #ensurePanelSlotAttrs() {
-    for (const panel of this.querySelectorAll(":scope > fig-select-options")) {
-      if (!panel.hasAttribute("slot")) panel.setAttribute("slot", "panel");
-    }
-  }
-
-  #getPanel() {
-    const assigned = this.#panelSlot?.assignedElements({ flatten: true }) ?? [];
-    const fromSlot = assigned.find(
-      (el) => el.tagName === "FIG-SELECT-OPTIONS",
-    );
-    if (fromSlot) return fromSlot;
-    return this.querySelector(":scope > fig-select-options");
-  }
-
-  #hasAuthoredOptions() {
-    return Boolean(
-      this.querySelector(
-        ":scope > fig-select-option:not([data-fig-generated]), :scope > fig-select-options > fig-select-option:not([data-fig-generated])",
-      ),
-    );
-  }
-
-  #ensureOptionsPanel() {
-    let panel = this.#getPanel();
-    if (panel) {
-      if (!panel.hasAttribute("slot")) panel.setAttribute("slot", "panel");
-      return panel;
-    }
-    panel = document.createElement("fig-select-options");
-    panel.setAttribute("slot", "panel");
-    panel.setAttribute("data-fig-generated", "");
-    this.appendChild(panel);
-    return panel;
-  }
-
-  /**
-   * When no authored fig-select-option exists, build panel/options from the
-   * options attribute (comma / newline / JSON — same as fig-options).
-   */
-  #syncOptionsFromAttribute() {
-    if (this.#hasAuthoredOptions()) return;
-
-    const hasOptionsAttr = this.hasAttribute("options");
-    const panel = hasOptionsAttr
-      ? this.#ensureOptionsPanel()
-      : this.#getPanel();
-    if (!panel) return;
-
-    this.#syncingOptions = true;
-    try {
-      for (const opt of panel.querySelectorAll(
-        ":scope > fig-select-option[data-fig-generated]",
-      )) {
-        opt.remove();
-      }
-
-      if (!hasOptionsAttr) return;
-
-      const parsed = figLabParseOptionsAttribute(this.getAttribute("options"));
-      const endBtn = panel.querySelector(":scope > .fig-overflow-end");
-      for (const entry of parsed) {
-        const el = document.createElement("fig-select-option");
-        el.setAttribute("data-fig-generated", "");
-        el.setAttribute("value", figLabOptionEntryValue(entry));
-        el.textContent = figLabOptionEntryLabel(entry);
-        if (endBtn) panel.insertBefore(el, endBtn);
-        else panel.appendChild(el);
-      }
-    } finally {
-      this.#syncingOptions = false;
-    }
-  }
-
-  #initialize() {
-    this.#initialized = true;
-    const shadow = this.attachShadow({ mode: "open" });
-    shadow.innerHTML = `
-      <style>
-        :host {
-          display: inline-flex;
-          position: relative;
-          align-items: center;
-          min-width: 0;
-        }
-        :host([full]:not([full="false"])) {
-          display: flex;
-          width: 100%;
-        }
-        .fig-select-trigger {
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
-          flex: 1;
-          min-width: 0;
-          width: var(--fig-select-trigger-width, 100%);
-          height: 100%;
-          margin: 0;
-          padding: 0 var(--spacer-4, 1rem) 0 var(--spacer-2, 0.5rem);
-          border: 0;
-          border-radius: inherit;
-          background: transparent;
-          box-shadow: none;
-          color: inherit;
-          font: inherit;
-          font-weight: inherit;
-          text-align: left;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          cursor: default;
-        }
-        .fig-select-trigger:hover,
-        .fig-select-trigger:active,
-        .fig-select-trigger:active:hover {
-          background: transparent;
-          box-shadow: none;
-          color: inherit;
-        }
-        .fig-select-trigger:focus-visible,
-        .fig-select-trigger[data-focus-visible] {
-          outline: var(--figma-focus-outline);
-          outline-offset: var(--figma-focus-outline-offset);
-        }
-        :host([disabled]:not([disabled="false"])) .fig-select-trigger,
-        :host([disabled]:not([disabled="false"])) .fig-select-label {
-          color: var(--figma-color-text-tertiary);
-        }
-        .fig-select-label {
-          display: block;
-          width: 100%;
-          min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          text-align: left;
-        }
-        /* Listbox chrome from document fig-select::part(listbox).
-           Overflow UI lives on slotted fig-select-options.
-           Never set display except when open — closed <dialog> must stay display:none. */
-        dialog[is="fig-popup"] {
-          flex-direction: column;
-          overflow: hidden;
-        }
-        dialog[is="fig-popup"][open] {
-          display: flex;
-        }
-        ::slotted(fig-select-options) {
-          flex: 1 1 auto;
-          min-height: 0;
-          max-height: inherit;
-        }
-      </style>
-    `;
-
-    const button = document.createElement("fig-button");
-    button.className = "fig-select-trigger";
-    button.setAttribute("part", "trigger");
-    button.setAttribute("variant", "ghost");
-    button.setAttribute("aria-haspopup", "listbox");
-    button.setAttribute("aria-expanded", "false");
-
-    const labelEl = document.createElement("span");
-    labelEl.className = "fig-select-label";
-    labelEl.setAttribute("part", "label");
-    button.appendChild(labelEl);
-
-    const popup = document.createElement("dialog", { is: "fig-popup" });
-    popup.setAttribute("is", "fig-popup");
-    popup.setAttribute("part", "listbox");
-    popup.setAttribute("theme", "menu");
-    popup.setAttribute("role", "listbox");
-    // Top-layer via popover so the menu escapes ancestor contain/overflow
-    // (e.g. fig-fill-picker-dialog). Stays in shadow so option slots still work —
-    // unlike tooltips, we cannot portal this popup to the overlay root.
-    if ("popover" in HTMLElement.prototype) {
-      popup.setAttribute("popover", "manual");
-    }
-    popup.id = figLabUniqueId("fig-select-list");
-    button.setAttribute("aria-controls", popup.id);
-
-    const panelSlot = document.createElement("slot");
-    panelSlot.setAttribute("name", "panel");
-    popup.appendChild(panelSlot);
-
-    shadow.append(button, popup);
-
-    this.#button = button;
-    this.#labelEl = labelEl;
-    this.#popup = popup;
-    this.#panelSlot = panelSlot;
-    popup.anchor = button;
-
-    this.#ensurePanelSlotAttrs();
-    this.#setupListeners();
-    this.#installPopupPositioning();
-
-    if (!this.hasAttribute("value")) {
-      const selected = this.#getOptions().find((opt) =>
-        figLabBooleanAttribute(opt, "selected"),
-      );
-      if (selected) this.setAttribute("value", selected.value);
-    }
-  }
-
-  #installPopupPositioning() {
-    if (!this.#popup || this.#popupPositionPatched) return;
-    if (typeof this.#popup.positionPopup !== "function") return;
-    this.#originalPositionPopup = this.#popup.positionPopup.bind(this.#popup);
-    this.#popup.positionPopup = () => {
-      if (!this.open) {
-        this.#originalPositionPopup?.();
-        return;
-      }
-      this.#positionPopupOverSelected();
-    };
-    this.#popupPositionPatched = true;
-  }
-
-  #getOptionTextRect(option) {
-    if (!option) return null;
-    const range = document.createRange();
-    range.selectNodeContents(option);
-    const rects = [...range.getClientRects()].filter(
-      (rect) => rect.width > 0 && rect.height > 0,
-    );
-    if (rects.length) return rects[0];
-    return option.getBoundingClientRect();
-  }
-
-  #getViewportMargins() {
-    if (typeof this.#popup?.parseViewportMargins === "function") {
-      return this.#popup.parseViewportMargins();
-    }
-    return { top: 8, right: 8, bottom: 8, left: 8 };
-  }
-
-  #readLabelRectSnapshot() {
-    const rect = this.#labelEl?.getBoundingClientRect();
-    if (!rect) return null;
-    return {
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
-    };
-  }
-
-  #readViewportSnapshot() {
-    const vv = window.visualViewport;
-    return {
-      width: vv?.width ?? window.innerWidth,
-      height: vv?.height ?? window.innerHeight,
-      offsetLeft: vv?.offsetLeft ?? 0,
-      offsetTop: vv?.offsetTop ?? 0,
-    };
-  }
-
-  #rectSnapshotChanged(prev, next, epsilon = 0.25) {
-    if (!prev && !next) return false;
-    if (!prev || !next) return true;
-    return (
-      Math.abs(prev.x - next.x) > epsilon ||
-      Math.abs(prev.y - next.y) > epsilon ||
-      Math.abs(prev.width - next.width) > epsilon ||
-      Math.abs(prev.height - next.height) > epsilon
-    );
-  }
-
-  #viewportSnapshotChanged(prev, next, epsilon = 0.25) {
-    if (!prev && !next) return false;
-    if (!prev || !next) return true;
-    return (
-      Math.abs(prev.width - next.width) > epsilon ||
-      Math.abs(prev.height - next.height) > epsilon ||
-      Math.abs(prev.offsetLeft - next.offsetLeft) > epsilon ||
-      Math.abs(prev.offsetTop - next.offsetTop) > epsilon
-    );
-  }
-
-  #shouldSkipFrozenPositionPass() {
-    if (!this.#freezeMenuPosition) return false;
-    const labelMoved = this.#rectSnapshotChanged(
-      this.#frozenLabelRect,
-      this.#readLabelRectSnapshot(),
-    );
-    const viewportChanged = this.#viewportSnapshotChanged(
-      this.#frozenViewport,
-      this.#readViewportSnapshot(),
-    );
-    // Skip only when neither the trigger nor the viewport moved — typical of
-    // overflow scroll / content sync fighting the open-time alignment.
-    return !labelMoved && !viewportChanged;
-  }
-
-  #rememberFrozenGeometry() {
-    this.#frozenLabelRect = this.#readLabelRectSnapshot();
-    this.#frozenViewport = this.#readViewportSnapshot();
-  }
-
-  #positionPopupOverSelected() {
-    // Content ResizeObserver / overflow scroll re-enter here; keep the
-    // open-time alignment unless the trigger or viewport actually changed.
-    if (this.#shouldSkipFrozenPositionPass()) return;
-
-    const popup = this.#popup;
-    const label = this.#labelEl;
-    if (!popup || !label) {
-      this.#originalPositionPopup?.();
-      return;
-    }
-
-    const options = this.#getOptions();
-    const selected =
-      options.find((opt) => this.#optionValue(opt) === this.value) ||
-      options[0];
-    if (!selected) {
-      this.#originalPositionPopup?.();
-      return;
-    }
-
-    // Lay out with the default positioning first so option metrics are valid.
-    this.#originalPositionPopup?.();
-
-    const popupRect = popup.getBoundingClientRect();
-    const labelRect = label.getBoundingClientRect();
-    const optionTextRect = this.#getOptionTextRect(selected);
-    if (
-      !popupRect.width ||
-      !popupRect.height ||
-      !labelRect.width ||
-      !optionTextRect
-    ) {
-      return;
-    }
-
-    const selectedOffsetX = optionTextRect.left - popupRect.left;
-    const selectedOffsetY = optionTextRect.top - popupRect.top;
-    const full = figLabBooleanAttribute(this, "full");
-    // [full]: pin menu to host width/edges. Otherwise overlay selected
-    // option text on the trigger label (blend-mode style).
-    let left = full
-      ? this.getBoundingClientRect().left
-      : labelRect.left - selectedOffsetX;
-    let top = labelRect.top - selectedOffsetY;
-
-    // Keep the whole menu in-view when aligning over the selected option
-    // would otherwise push it past a viewport edge (corners / far sides).
-    const margins = this.#getViewportMargins();
-    if (typeof popup.clampToViewport === "function") {
-      ({ left, top } = popup.clampToViewport({ left, top }, popupRect, margins));
-    } else {
-      const minLeft = margins.left;
-      const minTop = margins.top;
-      const maxLeft = window.innerWidth - popupRect.width - margins.right;
-      const maxTop = window.innerHeight - popupRect.height - margins.bottom;
-      left = Math.min(Math.max(left, minLeft), Math.max(minLeft, maxLeft));
-      top = Math.min(Math.max(top, minTop), Math.max(minTop, maxTop));
-    }
-
-    // !important: fig-select::part(listbox) and dialog UA rules can otherwise
-    // keep the menu at its static/anchor position past the viewport edge.
-    popup.style.setProperty("right", "auto", "important");
-    popup.style.setProperty("bottom", "auto", "important");
-    popup.style.setProperty("left", `${Math.round(left)}px`, "important");
-    popup.style.setProperty("top", `${Math.round(top)}px`, "important");
-
-    // Nudge the panel scroller so the selected label stays over the trigger.
-    const panel = this.#getPanel();
-    const alignedTextRect = this.#getOptionTextRect(selected);
-    if (
-      alignedTextRect &&
-      panel &&
-      panel.scrollHeight > panel.clientHeight + 1
-    ) {
-      const deltaY = alignedTextRect.top - labelRect.top;
-      if (Math.abs(deltaY) > 0.5) {
-        panel.scrollTop += deltaY;
-      }
-      panel.syncOverflow?.();
-    }
-
-    if (this.#freezeMenuPosition || this.open) {
-      this.#rememberFrozenGeometry();
-    }
-  }
-
-  #setupListeners() {
-    this.#button?.addEventListener("click", this.#boundTriggerClick);
-    this.#button?.addEventListener("keydown", this.#boundKeydown);
-    // Host click: slotted options stay in light DOM (not dialog.contains).
-    this.addEventListener("click", this.#boundOptionClick);
-    this.#popup?.addEventListener("keydown", this.#boundKeydown);
-    this.#popup?.addEventListener("close", this.#boundPopupClose);
-    this.#panelSlot?.addEventListener("slotchange", this.#boundSlotChange);
-  }
-
-  #teardownListeners() {
-    this.#button?.removeEventListener("click", this.#boundTriggerClick);
-    this.#button?.removeEventListener("keydown", this.#boundKeydown);
-    this.removeEventListener("click", this.#boundOptionClick);
-    this.#popup?.removeEventListener("keydown", this.#boundKeydown);
-    this.#popup?.removeEventListener("close", this.#boundPopupClose);
-    this.#panelSlot?.removeEventListener("slotchange", this.#boundSlotChange);
-  }
-
-  #handleSlotChange() {
-    this.#ensurePanelSlotAttrs();
-    this.#syncValue();
-  }
-
-  #setupObserver() {
-    if (this.#observer) return;
-    this.#observer = new MutationObserver((mutations) => {
-      if (this.#syncingValue || this.#syncingOptions) return;
-      let needsSync = false;
-      for (const mutation of mutations) {
-        if (mutation.type === "childList") {
-          if (
-            [...mutation.addedNodes].some((node) => this.#isMenuChild(node)) ||
-            [...mutation.removedNodes].some((node) => this.#isMenuChild(node))
-          ) {
-            needsSync = true;
-          }
-        }
-        if (
-          mutation.type === "attributes" &&
-          mutation.target?.tagName === "FIG-SELECT-OPTION" &&
-          (mutation.attributeName === "value" ||
-            mutation.attributeName === "disabled" ||
-            mutation.attributeName === "label")
-        ) {
-          needsSync = true;
-        }
-        if (
-          mutation.type === "characterData" &&
-          mutation.target?.parentElement?.tagName === "FIG-SELECT-OPTION"
-        ) {
-          needsSync = true;
-        }
-      }
-      if (needsSync) this.#syncValue();
-    });
-    this.#observer.observe(this, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ["value", "disabled", "selected", "label"],
-    });
-  }
-
-  #getOptions({ enabledOnly = false } = {}) {
-    const panel = this.#getPanel();
-    const options = panel
-      ? Array.from(panel.querySelectorAll(":scope > fig-select-option"))
-      : [];
-    if (!enabledOnly) return options;
-    return options.filter((opt) => !figLabBooleanAttribute(opt, "disabled"));
-  }
-
-  #optionValue(option) {
-    if (!option) return "";
-    if (typeof option.value === "string") return option.value;
-    const attr = option.getAttribute?.("value");
-    if (attr != null) return attr;
-    return (option.textContent || "").trim();
-  }
-
-  #optionLabel(option) {
-    if (!option) return "";
-    const labelAttr = option.getAttribute?.("label");
-    if (labelAttr != null && labelAttr !== "") return labelAttr.trim();
-
-    // Ignore prepend/append slot content when deriving a label from children.
-    const parts = [];
-    for (const node of option.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent?.trim();
-        if (text) parts.push(text);
-        continue;
-      }
+    for (const node of mutation.addedNodes) {
       if (!(node instanceof Element)) continue;
-      const slot = node.getAttribute("slot");
-      if (slot === "prepend" || slot === "append") continue;
-      const text = node.textContent?.trim();
-      if (text) parts.push(text);
-    }
-    if (parts.length) return parts.join(" ").trim();
-    return (option.textContent || "").trim();
-  }
-
-  #syncPopupAttrs() {
-    if (!this.#popup) return;
-    this.#popup.setAttribute(
-      "position",
-      this.getAttribute("position") || "bottom left",
-    );
-    const offset = this.getAttribute("offset");
-    if (offset) this.#popup.setAttribute("offset", offset);
-    else this.#popup.removeAttribute("offset");
-    const closedby = this.getAttribute("closedby");
-    if (closedby) this.#popup.setAttribute("closedby", closedby);
-    else this.#popup.removeAttribute("closedby");
-  }
-
-  #syncDisabled() {
-    const disabled = figLabBooleanAttribute(this, "disabled");
-    if (this.#button) {
-      if (disabled) this.#button.setAttribute("disabled", "");
-      else this.#button.removeAttribute("disabled");
-    }
-    if (disabled && this.open) this.open = false;
-  }
-
-  #pickFallbackOption(options) {
-    if (!options.length) return null;
-    const selected = options.find((opt) =>
-      figLabBooleanAttribute(opt, "selected"),
-    );
-    if (selected && !figLabBooleanAttribute(selected, "disabled")) {
-      return selected;
-    }
-    return (
-      options.find((opt) => !figLabBooleanAttribute(opt, "disabled")) ||
-      options[0] ||
-      null
-    );
-  }
-
-  #emitValueEvents(value) {
-    this.dispatchEvent(
-      new CustomEvent("input", {
-        detail: value,
-        bubbles: true,
-        composed: true,
-      }),
-    );
-    this.dispatchEvent(
-      new CustomEvent("change", {
-        detail: value,
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  }
-
-  #syncValue() {
-    if (this.#syncingValue) return;
-    this.#syncingValue = true;
-    try {
-      const options = this.#getOptions();
-      const hasValueAttr = this.hasAttribute("value");
-      const previousValue = hasValueAttr ? this.getAttribute("value") : null;
-      let match = hasValueAttr
-        ? options.find((opt) => this.#optionValue(opt) === previousValue)
-        : null;
-      let valueCorrected = false;
-
-      if (!match) {
-        if (hasValueAttr) {
-          // Options may not be built yet (options attr sync). Keep value until then.
-          if (!options.length) {
-            if (this.#labelEl) {
-              this.#labelEl.textContent =
-                previousValue || this.getAttribute("label") || "";
-            }
-            return;
-          }
-          // Value orphaned (option removed / value attr changed) — clamp or clear.
-          match = this.#pickFallbackOption(options);
-          if (match) {
-            const nextValue = this.#optionValue(match);
-            if (previousValue !== nextValue) {
-              this.setAttribute("value", nextValue);
-              valueCorrected = true;
-            }
-          } else {
-            this.removeAttribute("value");
-            valueCorrected = true;
-          }
-        } else {
-          // No host value yet — honor a selected option if present.
-          match = options.find((opt) =>
-            figLabBooleanAttribute(opt, "selected"),
-          );
-          if (match) {
-            this.setAttribute("value", this.#optionValue(match));
-            valueCorrected = true;
-          }
+      figLabEnhanceSelectTree(node);
+      const selects = node.matches("fig-select")
+        ? [node]
+        : [...node.querySelectorAll("fig-select")];
+      for (const select of selects) {
+        if (figLabDisconnectedSelects.has(select)) {
+          figLabInstallSelectReconnectFallback(select);
         }
       }
-
-      for (const opt of options) {
-        const selected = opt === match;
-        opt.setAttribute("aria-selected", selected ? "true" : "false");
-        if (selected) opt.setAttribute("selected", "");
-        else opt.removeAttribute("selected");
-      }
-
-      const label =
-        (match && this.#optionLabel(match)) || this.getAttribute("label") || "";
-      if (this.#labelEl) this.#labelEl.textContent = label;
-
-      const ariaLabel = this.getAttribute("label") || "Select";
-      this.#button?.setAttribute("aria-label", ariaLabel);
-
-      // Don't scrollToOption while open — reposition/sync would fight overflow paging.
-      this.#getPanel()?.syncOverflow?.();
-
-      if (valueCorrected) {
-        this.#emitValueEvents(this.getAttribute("value") ?? "");
-      }
-    } finally {
-      this.#syncingValue = false;
     }
   }
-
-  #handleTriggerClick(e) {
-    if (figLabBooleanAttribute(this, "disabled")) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const nextOpen = !this.open;
-    if (nextOpen && this.#popup && this.#button) {
-      this.#popup.anchor = this.#button;
-    }
-    this.open = nextOpen;
-  }
-
-  #handleOptionClick(e) {
-    const path = typeof e.composedPath === "function" ? e.composedPath() : [];
-    const option = path.find(
-      (node) => node?.tagName === "FIG-SELECT-OPTION",
-    );
-    if (!option || !this.contains(option)) return;
-    if (figLabBooleanAttribute(option, "disabled")) return;
-    // Do not stopPropagation — React light-DOM onClick must still fire.
-    this.#selectOption(option);
-  }
-
-  #handleKeydown(e) {
-    if (e.currentTarget === document && e.key !== "Escape") return;
-
-    const listOpen = this.open && (this.#popup?.matches?.(":open") ?? false);
-    if (!listOpen) {
-      if (
-        this.#button?.contains(e.target) &&
-        (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
-      ) {
-        e.preventDefault();
-        if (this.#popup && this.#button) this.#popup.anchor = this.#button;
-        this.open = true;
-        requestAnimationFrame(() => {
-          const options = this.#getOptions({ enabledOnly: true });
-          const selectedIndex = options.findIndex(
-            (opt) => this.#optionValue(opt) === this.value,
-          );
-          this.#focusOptionAt(selectedIndex >= 0 ? selectedIndex : 0);
-        });
-      }
-      return;
-    }
-
-    const options = this.#getOptions({ enabledOnly: true });
-    if (!options.length) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        this.#syncFocusedIndex();
-        this.#focusOptionAt(this.#focusedIndex + 1);
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        this.#syncFocusedIndex();
-        this.#focusOptionAt(this.#focusedIndex - 1);
-        break;
-      case "Home":
-        e.preventDefault();
-        this.#focusOptionAt(0);
-        break;
-      case "End":
-        e.preventDefault();
-        this.#focusOptionAt(options.length - 1);
-        break;
-      case "Escape":
-        e.preventDefault();
-        this.open = false;
-        this.#button?.focus();
-        break;
-      case "Enter":
-      case " ": {
-        this.#syncFocusedIndex();
-        const focused = options[this.#focusedIndex];
-        if (!focused) return;
-        e.preventDefault();
-        this.#selectOption(focused);
-        break;
-      }
-    }
-  }
-
-  #handlePopupClose() {
-    if (this.hasAttribute("open")) this.removeAttribute("open");
-    this.#button?.setAttribute("aria-expanded", "false");
-    this.#button?.focus();
-    this.#focusedIndex = -1;
-  }
-
-  #selectOption(option) {
-    const value = this.#optionValue(option);
-    this.setAttribute("value", value);
-    this.#syncValue();
-    this.#emitValueEvents(value);
-    this.open = false;
-  }
-
-  #getEnabledOptions() {
-    return this.#getOptions({ enabledOnly: true });
-  }
-
-  #syncFocusedIndex() {
-    const options = this.#getEnabledOptions();
-    if (!options.length) {
-      this.#focusedIndex = -1;
-      return;
-    }
-    const active = options.find((opt) => opt === document.activeElement);
-    const index = active ? options.indexOf(active) : -1;
-    this.#focusedIndex = index >= 0 ? index : this.#focusedIndex;
-  }
-
-  #focusOptionAt(index) {
-    const options = this.#getEnabledOptions();
-    if (!options.length) return;
-    const next = ((index % options.length) + options.length) % options.length;
-    this.#focusedIndex = next;
-    options[next]?.focus();
-  }
-
-  #syncPopupWidth() {
-    if (!this.#popup || !this.#button) return;
-    const hostWidth = Math.ceil(this.getBoundingClientRect().width);
-    const triggerWidth = Math.ceil(this.#button.getBoundingClientRect().width);
-    const anchorWidth = Math.max(hostWidth, triggerWidth, 96);
-    const full = figLabBooleanAttribute(this, "full");
-
-    // Use !important — fig-select::part(listbox) width rules beat element.style.
-    // [full]: lock to host. Otherwise content-sized with host as min and 20rem max.
-    if (full) {
-      this.#popup.style.setProperty("width", `${anchorWidth}px`, "important");
-      this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
-      this.#popup.style.setProperty("max-width", `${anchorWidth}px`, "important");
-    } else {
-      this.#popup.style.setProperty("width", "max-content", "important");
-      this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
-      this.#popup.style.setProperty(
-        "max-width",
-        "min(20rem, calc(100vw - 1rem))",
-        "important",
-      );
-    }
-  }
-
-  #openList() {
-    if (!this.#popup || figLabBooleanAttribute(this, "disabled")) return;
-    if (this.#button) this.#popup.anchor = this.#button;
-    this.#installPopupPositioning();
-    this.#freezeMenuPosition = false;
-    this.#frozenLabelRect = null;
-    this.#frozenViewport = null;
-    this.#syncValue();
-    this.#syncPopupWidth();
-    this.#popup.open = true;
-    document.addEventListener("keydown", this.#boundKeydown, true);
-    this.#button?.setAttribute("aria-expanded", "true");
-    this.#focusedIndex = -1;
-    requestAnimationFrame(() => {
-      this.#syncPopupWidth();
-      this.#positionPopupOverSelected();
-      const panel = this.#getPanel();
-      const options = this.#getEnabledOptions();
-      const selectedIndex = options.findIndex(
-        (opt) => this.#optionValue(opt) === this.value,
-      );
-      if (selectedIndex >= 0) {
-        this.#focusOptionAt(selectedIndex);
-      } else if (
-        this.#button?.hasAttribute("data-focus-visible") ||
-        this.#button?.matches?.(":focus-visible")
-      ) {
-        this.#focusOptionAt(0);
-      }
-      panel?.syncOverflow?.();
-      // Freeze after open align so later positionPopup passes don't undo scroll.
-      // Window resize / trigger movement still realigns via geometry checks.
-      this.#freezeMenuPosition = true;
-      this.#rememberFrozenGeometry();
-    });
-  }
-
-  #closeList() {
-    if (!this.#popup) return;
-    this.#freezeMenuPosition = false;
-    this.#frozenLabelRect = null;
-    this.#frozenViewport = null;
-    document.removeEventListener("keydown", this.#boundKeydown, true);
-    this.#popup.open = false;
-    this.#button?.setAttribute("aria-expanded", "false");
-  }
-}
-figLabDefineElement("fig-select", FigSelect);
+}).observe(document.documentElement, { childList: true, subtree: true });

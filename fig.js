@@ -330,9 +330,11 @@ function figSupportsPopover() {
 class FigButton extends HTMLElement {
   type;
   #selected;
+  #slottedDisabledStates = new WeakMap();
   #a11yAttributes = ["aria-label", "aria-labelledby", "aria-describedby", "title"];
   #boundHandleControlKeydown = this.#handleControlKeydown.bind(this);
   #boundHandleClick = this.#handleClick.bind(this);
+  #boundHandleSlotChange = () => this.#syncSlottedControlDisabled();
   #boundHandleFocus = () => {
     if (this.button?.matches(":focus-visible")) {
       this.setAttribute("data-focus-visible", "");
@@ -398,6 +400,9 @@ class FigButton extends HTMLElement {
       this.button.addEventListener("blur", this.#boundHandleBlur);
     }
 
+    const slot = this.shadowRoot.querySelector("slot");
+    slot?.removeEventListener("slotchange", this.#boundHandleSlotChange);
+    slot?.addEventListener("slotchange", this.#boundHandleSlotChange);
     this.removeEventListener("keydown", this.#boundHandleControlKeydown);
     this.addEventListener("keydown", this.#boundHandleControlKeydown);
 
@@ -514,8 +519,29 @@ class FigButton extends HTMLElement {
       this.button.type = "button";
       this.button.setAttribute("type", "button");
     }
+    this.#syncSlottedControlDisabled();
     this.#syncA11yAttributes();
     this.#syncPressedState();
+  }
+  #syncSlottedControlDisabled() {
+    const control = this.#getSlottedControl();
+    if (!control) return;
+    const disabled = this.#isDisabled();
+    if (disabled) {
+      if (!this.#slottedDisabledStates.has(control)) {
+        this.#slottedDisabledStates.set(
+          control,
+          control.hasAttribute("disabled") &&
+            control.getAttribute("disabled") !== "false",
+        );
+      }
+      control.setAttribute("disabled", "");
+    } else if (this.#slottedDisabledStates.has(control)) {
+      const wasDisabled = this.#slottedDisabledStates.get(control);
+      this.#slottedDisabledStates.delete(control);
+      if (wasDisabled) control.setAttribute("disabled", "");
+      else control.removeAttribute("disabled");
+    }
   }
   static get observedAttributes() {
     return [
@@ -555,6 +581,9 @@ class FigButton extends HTMLElement {
   }
   disconnectedCallback() {
     this.removeEventListener("keydown", this.#boundHandleControlKeydown);
+    this.shadowRoot
+      ?.querySelector("slot")
+      ?.removeEventListener("slotchange", this.#boundHandleSlotChange);
   }
 }
 figDefineElement("fig-button", FigButton);
@@ -570,8 +599,6 @@ class FigDropdown extends HTMLElement {
   #boundHandleSelectInput;
   #boundHandleSelectChange;
   #boundHandleSelectKeydown;
-  #selectedContentEnabled = false;
-  #selectedContentEl = null;
 
   get label() {
     return this.#label;
@@ -589,54 +616,6 @@ class FigDropdown extends HTMLElement {
     this.#boundHandleSelectChange = this.#handleSelectChange.bind(this);
     this.#boundHandleSelectKeydown = this.#handleSelectKeydown.bind(this);
     this.#boundSlotChange = this.slotChange.bind(this);
-  }
-
-  #supportsSelectedContent() {
-    if (typeof CSS === "undefined" || typeof CSS.supports !== "function")
-      return false;
-    try {
-      return (
-        CSS.supports("appearance: base-select") &&
-        CSS.supports("selector(::picker(select))")
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  #enableSelectedContentIfNeeded() {
-    const experimental = this.getAttribute("experimental") || "";
-    const wantsModern = experimental
-      .split(/\s+/)
-      .filter(Boolean)
-      .includes("modern");
-
-    if (!wantsModern || !this.#supportsSelectedContent()) {
-      this.#selectedContentEnabled = false;
-      return;
-    }
-
-    const button = document.createElement("button");
-    button.setAttribute("type", "button");
-    button.setAttribute("aria-hidden", "true");
-    const selected = document.createElement("selectedcontent");
-    button.appendChild(selected);
-    this.select.appendChild(button);
-    this.#selectedContentEnabled = true;
-    this.#selectedContentEl = selected;
-  }
-
-  #syncSelectedContent() {
-    if (!this.#selectedContentEl) return;
-    const selectedOption = this.select.selectedOptions?.[0];
-    if (!selectedOption) {
-      this.#selectedContentEl.textContent = "";
-      return;
-    }
-    // Fallback mirror for browsers that don't auto-project selectedcontent reliably.
-    this.#selectedContentEl.replaceChildren(
-      ...Array.from(selectedOption.childNodes, (node) => node.cloneNode(true)),
-    );
   }
 
   #addEventListeners() {
@@ -703,8 +682,6 @@ class FigDropdown extends HTMLElement {
       this.select.firstChild.remove();
     }
 
-    this.#enableSelectedContentIfNeeded();
-
     if (this.type === "dropdown") {
       const hiddenOption = document.createElement("option");
       hiddenOption.setAttribute("hidden", "true");
@@ -720,7 +697,6 @@ class FigDropdown extends HTMLElement {
     if (selectedValue !== null) {
       this.#syncSelectedValue(selectedValue);
     }
-    this.#syncSelectedContent();
     if (this.type === "dropdown") {
       this.select.selectedIndex = -1;
     }
@@ -743,7 +719,6 @@ class FigDropdown extends HTMLElement {
       this.#selectedValue = selectedValue;
     }
     this.setAttribute("value", selectedValue);
-    this.#syncSelectedContent();
     this.dispatchEvent(
       new CustomEvent("input", {
         detail: selectedValue,
@@ -771,7 +746,6 @@ class FigDropdown extends HTMLElement {
     if (this.type === "dropdown") {
       this.select.selectedIndex = -1;
     }
-    this.#syncSelectedContent();
     this.dispatchEvent(
       new CustomEvent("change", {
         detail: selectedValue,
@@ -784,7 +758,6 @@ class FigDropdown extends HTMLElement {
   #handleSelectKeydown(e) {
     if (this.closest('fig-button[type="select"]')) return;
     if (e.key !== "Enter" || e.defaultPrevented) return;
-    if (this.#selectedContentEnabled && this.select.matches(":open")) return;
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
     if (this.select.disabled || this.select.multiple) return;
     if (typeof this.select.showPicker !== "function") return;
@@ -817,7 +790,7 @@ class FigDropdown extends HTMLElement {
     this.setAttribute("value", value);
   }
   static get observedAttributes() {
-    return ["value", "type", "experimental", "label", "disabled"];
+    return ["value", "type", "label", "disabled"];
   }
   #syncDisabled() {
     const disabled =
@@ -830,7 +803,6 @@ class FigDropdown extends HTMLElement {
       return;
     }
     if (this.select) this.select.value = value ?? "";
-    this.#syncSelectedContent();
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === "value") {
@@ -839,9 +811,6 @@ class FigDropdown extends HTMLElement {
     if (name === "type") {
       this.type = newValue || "select";
       if (this.isConnected) this.slotChange();
-    }
-    if (name === "experimental") {
-      this.slotChange();
     }
     if (name === "label") {
       this.#label = newValue || "Menu";
@@ -887,6 +856,8 @@ class FigTooltip extends HTMLElement {
   #boundHidePopupOutsideClick;
   #boundShowDelayedPopup;
   #boundHandlePointerLeave;
+  #boundHandleFocus;
+  #boundHandleBlur;
   #boundHandleTouchStart;
   #boundHandleTouchMove;
   #boundHandleTouchEnd;
@@ -896,6 +867,7 @@ class FigTooltip extends HTMLElement {
   #parentDialog = null;
   #triggerEl = null;
   #childObserver = null;
+  #suppressFocusOpen = false;
   #touchTimeout;
   #isTouching = false;
   constructor() {
@@ -908,6 +880,13 @@ class FigTooltip extends HTMLElement {
     this.#boundHidePopupOutsideClick = this.hidePopupOutsideClick.bind(this);
     this.#boundShowDelayedPopup = this.showDelayedPopup.bind(this);
     this.#boundHandlePointerLeave = this.#handlePointerLeave.bind(this);
+    this.#boundHandleFocus = () => {
+      if (!this.#suppressFocusOpen) this.showDelayedPopup();
+    };
+    this.#boundHandleBlur = () => {
+      this.#suppressFocusOpen = false;
+      this.hidePopup();
+    };
     this.#boundHandleTouchStart = this.#handleTouchStart.bind(this);
     this.#boundHandleTouchMove = this.#handleTouchMove.bind(this);
     this.#boundHandleTouchEnd = this.#handleTouchEnd.bind(this);
@@ -1002,6 +981,8 @@ class FigTooltip extends HTMLElement {
       trigger.addEventListener("touchcancel", this.#boundHandleTouchCancel, {
         passive: true,
       });
+      trigger.addEventListener("focus", this.#boundHandleFocus);
+      trigger.addEventListener("blur", this.#boundHandleBlur);
     } else if (this.action === "click") {
       trigger.addEventListener("click", this.#boundShowDelayedPopup);
       trigger.addEventListener("touchstart", this.#boundShowDelayedPopup, {
@@ -1020,6 +1001,8 @@ class FigTooltip extends HTMLElement {
       trigger.removeEventListener("touchmove", this.#boundHandleTouchMove);
       trigger.removeEventListener("touchend", this.#boundHandleTouchEnd);
       trigger.removeEventListener("touchcancel", this.#boundHandleTouchCancel);
+      trigger.removeEventListener("focus", this.#boundHandleFocus);
+      trigger.removeEventListener("blur", this.#boundHandleBlur);
     } else if (this.action === "click") {
       trigger.removeEventListener("click", this.#boundShowDelayedPopup);
       trigger.removeEventListener("touchstart", this.#boundShowDelayedPopup);
@@ -1421,6 +1404,16 @@ class FigTooltip extends HTMLElement {
       if (!(node instanceof FigTooltip)) continue;
       if (node.action !== "hover") continue;
       if (node.#showPersisted) continue;
+      node.#suppressFocusOpen = true;
+      setTimeout(() => {
+        const trigger = node.#triggerEl;
+        if (
+          trigger !== document.activeElement &&
+          !trigger?.matches?.(":focus, :focus-within")
+        ) {
+          node.#suppressFocusOpen = false;
+        }
+      }, 0);
       if (node.isOpen || node.timeout) node.hidePopup();
     }
     for (const anchor of Array.from(FigTooltip.#programmaticAnchors)) {
@@ -5123,6 +5116,1206 @@ class FigOptions extends HTMLElement {
 }
 figDefineElement("fig-options", FigOptions);
 
+/* Select — dropdown-styled trigger + fig-popup listbox */
+/** Parse options attr — same formats as fig-options / propskit-select. */
+function figSelectParseOptionsAttribute(raw) {
+  const text = raw || "";
+  if (text.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      /* fall through */
+    }
+  }
+  const delimiter = text.includes("\n") ? "\n" : ",";
+  return text
+    .split(delimiter)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function figSelectOptionEntryValue(opt) {
+  if (opt && typeof opt === "object") {
+    return String(opt.value ?? opt.label ?? "");
+  }
+  return String(opt ?? "");
+}
+
+function figSelectOptionEntryLabel(opt) {
+  if (opt && typeof opt === "object") {
+    return String(opt.label ?? opt.value ?? "");
+  }
+  return String(opt ?? "");
+}
+
+/**
+ * A selectable option for fig-select.
+ * Supports light-DOM slots: `slot="prepend"` (leading) and `slot="append"` (trailing).
+ * Use the `label` attribute for the closed-trigger label when option content is rich.
+ *
+ * @attr {string} value - Option value
+ * @attr {string} label - Optional display label for the select trigger
+ * @attr {boolean} disabled - Whether the option is disabled
+ * @attr {boolean} selected - Whether the option is selected
+ */
+class FigSelectOption extends HTMLElement {
+  static get observedAttributes() {
+    return ["value", "disabled", "selected", "label"];
+  }
+
+  get value() {
+    const attr = this.getAttribute("value");
+    if (attr !== null) return attr;
+    return (this.textContent || "").trim();
+  }
+
+  set value(val) {
+    if (val === null || val === undefined) {
+      this.removeAttribute("value");
+    } else {
+      this.setAttribute("value", String(val));
+    }
+  }
+
+  get disabled() {
+    return figBooleanAttribute(this, "disabled");
+  }
+
+  set disabled(val) {
+    if (val) this.setAttribute("disabled", "");
+    else this.removeAttribute("disabled");
+  }
+
+  get selected() {
+    return figBooleanAttribute(this, "selected");
+  }
+
+  set selected(val) {
+    if (val) this.setAttribute("selected", "");
+    else this.removeAttribute("selected");
+  }
+
+  connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "option");
+    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
+    this.#syncDisabled();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name === "disabled") this.#syncDisabled();
+  }
+
+  #syncDisabled() {
+    const disabled = this.disabled;
+    if (disabled) {
+      this.setAttribute("aria-disabled", "true");
+      this.setAttribute("tabindex", "-1");
+    } else {
+      this.removeAttribute("aria-disabled");
+      if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
+    }
+  }
+}
+figDefineElement("fig-select-option", FigSelectOption);
+
+function figSelectSyncOverflowState(host, scrollEl, threshold = 2) {
+  if (!host || !scrollEl) return false;
+  const scrollable = scrollEl.scrollHeight - scrollEl.clientHeight > threshold;
+  const atStart = !scrollable || scrollEl.scrollTop <= threshold;
+  const atEnd =
+    !scrollable ||
+    scrollEl.scrollTop + scrollEl.clientHeight >=
+      scrollEl.scrollHeight - threshold;
+  host.classList.toggle("overflow-start", !atStart);
+  host.classList.toggle("overflow-end", !atEnd);
+  return scrollable;
+}
+
+function figSelectScrollOverflowPage(scrollEl, direction = 1) {
+  if (!scrollEl) return;
+  scrollEl.scrollBy({
+    top: scrollEl.clientHeight * 0.8 * direction,
+    behavior: "smooth",
+  });
+}
+
+function figSelectCreateOverflowButtons({ onStart, onEnd } = {}) {
+  const makeButton = (direction, onClick) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `fig-overflow fig-overflow-${direction}`;
+    button.dataset.figOverflow = direction;
+    button.setAttribute("data-fig-select-nav", direction);
+    button.setAttribute("tabindex", "-1");
+    button.setAttribute(
+      "aria-label",
+      direction === "start" ? "Scroll up" : "Scroll down",
+    );
+    const icon = document.createElement("fig-icon");
+    icon.setAttribute("name", "chevron");
+    icon.setAttribute("size", "small");
+    icon.className = "fig-overflow-chevron";
+    button.appendChild(icon);
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClick?.(event);
+    });
+    return button;
+  };
+  return {
+    start: makeButton("start", onStart),
+    end: makeButton("end", onEnd),
+  };
+}
+
+/** Light-DOM panel wrapper projected into fig-select's popup; owns overflow buttons. */
+class FigSelectOptions extends HTMLElement {
+  #navStart = null;
+  #navEnd = null;
+  #resizeObserver = null;
+  #boundSyncOverflow = this.syncOverflow.bind(this);
+
+  connectedCallback() {
+    if (!this.hasAttribute("slot")) this.setAttribute("slot", "panel");
+    this.#unwrapLegacyChooser();
+    this.#ensureNavButtons();
+    this.addEventListener("scroll", this.#boundSyncOverflow, { passive: true });
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = new ResizeObserver(() => this.syncOverflow());
+    this.#resizeObserver.observe(this);
+    requestAnimationFrame(() => this.syncOverflow());
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("scroll", this.#boundSyncOverflow);
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+    this.#removeNavButtons();
+  }
+
+  syncOverflow() {
+    return figSelectSyncOverflowState(this, this);
+  }
+
+  scrollToOption(option, behavior = "auto") {
+    if (!option || !this.contains(option)) return;
+    requestAnimationFrame(() => {
+      if (!option.isConnected) return;
+      if (this.scrollHeight <= this.clientHeight + 1) {
+        this.syncOverflow();
+        return;
+      }
+      const optionRect = option.getBoundingClientRect();
+      const hostRect = this.getBoundingClientRect();
+      const optionTop = optionRect.top - hostRect.top + this.scrollTop;
+      const maxScroll = this.scrollHeight - this.clientHeight;
+      const top = Math.max(
+        0,
+        Math.min(
+          optionTop + optionRect.height / 2 - this.clientHeight / 2,
+          maxScroll,
+        ),
+      );
+      this.scrollTo({ top, behavior });
+      this.syncOverflow();
+    });
+  }
+
+  #unwrapLegacyChooser() {
+    const chooser = this.querySelector(":scope > fig-chooser");
+    if (!chooser) return;
+    while (chooser.firstChild) {
+      this.insertBefore(chooser.firstChild, chooser);
+    }
+    chooser.remove();
+  }
+
+  #ensureNavButtons() {
+    if (
+      this.#navStart &&
+      this.#navEnd &&
+      this.contains(this.#navStart) &&
+      this.contains(this.#navEnd)
+    ) {
+      return;
+    }
+    this.#removeNavButtons();
+    const buttons = figSelectCreateOverflowButtons({
+      onStart: () => figSelectScrollOverflowPage(this, -1),
+      onEnd: () => figSelectScrollOverflowPage(this, 1),
+    });
+    this.#navStart = buttons.start;
+    this.#navEnd = buttons.end;
+    this.prepend(this.#navStart);
+    this.append(this.#navEnd);
+  }
+
+  #removeNavButtons() {
+    this.#navStart?.remove();
+    this.#navEnd?.remove();
+    this.#navStart = null;
+    this.#navEnd = null;
+    this.classList.remove("overflow-start", "overflow-end");
+  }
+}
+figDefineElement("fig-select-options", FigSelectOptions);
+
+class FigSelect extends HTMLElement {
+  #button = null;
+  #popup = null;
+  #prependEl = null;
+  #labelEl = null;
+  #panelSlot = null;
+  #observer = null;
+  #initialized = false;
+  #focusedIndex = -1;
+  #syncingValue = false;
+  #popupPositionPatched = false;
+  #originalPositionPopup = null;
+  /**
+   * After open align, ignore content/scroll-driven positionPopup passes so
+   * overflow paging isn't yanked back. Still realign when the trigger moves
+   * or the viewport size changes (window resize, layout shift, page scroll).
+   */
+  #freezeMenuPosition = false;
+  #frozenLabelRect = null;
+  #frozenViewport = null;
+  #syncingOptions = false;
+  #boundTriggerClick = this.#handleTriggerClick.bind(this);
+  #boundOptionClick = this.#handleOptionClick.bind(this);
+  #boundKeydown = this.#handleKeydown.bind(this);
+  #boundPopupClose = this.#handlePopupClose.bind(this);
+  #boundSlotChange = this.#handleSlotChange.bind(this);
+
+  static get observedAttributes() {
+    return [
+      "value",
+      "disabled",
+      "label",
+      "options",
+      "position",
+      "offset",
+      "closedby",
+      "open",
+    ];
+  }
+
+  get value() {
+    return this.getAttribute("value") ?? "";
+  }
+
+  set value(val) {
+    if (val === null || val === undefined) this.removeAttribute("value");
+    else this.setAttribute("value", String(val));
+  }
+
+  get open() {
+    return figBooleanAttribute(this, "open");
+  }
+
+  set open(val) {
+    if (val) this.setAttribute("open", "");
+    else this.removeAttribute("open");
+  }
+
+  connectedCallback() {
+    if (!this.#initialized) this.#initialize();
+    this.#ensurePanelSlotAttrs();
+    this.#syncOptionsFromAttribute();
+    this.#syncDisabled();
+    this.#syncPopupAttrs();
+    this.#syncValue();
+    this.#setupObserver();
+    if (this.open) this.#openList();
+  }
+
+  disconnectedCallback() {
+    this.#teardownListeners();
+    document.removeEventListener("keydown", this.#boundKeydown, true);
+    this.#observer?.disconnect();
+    this.#observer = null;
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#initialized) return;
+    if (name === "options") {
+      this.#syncOptionsFromAttribute();
+      this.#syncValue();
+      return;
+    }
+    if (name === "value" || name === "label") {
+      this.#syncValue();
+      return;
+    }
+    if (name === "disabled") {
+      this.#syncDisabled();
+      return;
+    }
+    if (name === "open") {
+      if (newValue === null || newValue === "false") this.#closeList();
+      else this.#openList();
+      return;
+    }
+    if (name === "position" || name === "offset" || name === "closedby") {
+      this.#syncPopupAttrs();
+    }
+  }
+
+  focus(options) {
+    this.#button?.focus(options);
+  }
+
+  blur() {
+    this.#button?.blur();
+  }
+
+  #isMenuChild(node) {
+    return (
+      node?.nodeType === 1 &&
+      (node.tagName === "FIG-SELECT-OPTION" ||
+        node.tagName === "FIG-MENU-SEPARATOR" ||
+        node.tagName === "FIG-SELECT-OPTIONS")
+    );
+  }
+
+  #ensurePanelSlotAttrs() {
+    for (const panel of this.querySelectorAll(":scope > fig-select-options")) {
+      if (!panel.hasAttribute("slot")) panel.setAttribute("slot", "panel");
+    }
+  }
+
+  #getPanel() {
+    const assigned = this.#panelSlot?.assignedElements({ flatten: true }) ?? [];
+    const fromSlot = assigned.find(
+      (el) => el.tagName === "FIG-SELECT-OPTIONS",
+    );
+    if (fromSlot) return fromSlot;
+    return this.querySelector(":scope > fig-select-options");
+  }
+
+  #hasAuthoredOptions() {
+    return Boolean(
+      this.querySelector(
+        ":scope > fig-select-option:not([data-fig-generated]), :scope > fig-select-options > fig-select-option:not([data-fig-generated])",
+      ),
+    );
+  }
+
+  #ensureOptionsPanel() {
+    let panel = this.#getPanel();
+    if (panel) {
+      if (!panel.hasAttribute("slot")) panel.setAttribute("slot", "panel");
+      return panel;
+    }
+    panel = document.createElement("fig-select-options");
+    panel.setAttribute("slot", "panel");
+    panel.setAttribute("data-fig-generated", "");
+    this.appendChild(panel);
+    return panel;
+  }
+
+  /**
+   * When no authored fig-select-option exists, build panel/options from the
+   * options attribute (comma / newline / JSON — same as fig-options).
+   */
+  #syncOptionsFromAttribute() {
+    if (this.#hasAuthoredOptions()) return;
+
+    const hasOptionsAttr = this.hasAttribute("options");
+    const panel = hasOptionsAttr
+      ? this.#ensureOptionsPanel()
+      : this.#getPanel();
+    if (!panel) return;
+
+    this.#syncingOptions = true;
+    try {
+      for (const opt of panel.querySelectorAll(
+        ":scope > fig-select-option[data-fig-generated]",
+      )) {
+        opt.remove();
+      }
+
+      if (!hasOptionsAttr) return;
+
+      const parsed = figSelectParseOptionsAttribute(this.getAttribute("options"));
+      const endBtn = panel.querySelector(":scope > .fig-overflow-end");
+      for (const entry of parsed) {
+        const el = document.createElement("fig-select-option");
+        el.setAttribute("data-fig-generated", "");
+        el.setAttribute("value", figSelectOptionEntryValue(entry));
+        el.textContent = figSelectOptionEntryLabel(entry);
+        if (endBtn) panel.insertBefore(el, endBtn);
+        else panel.appendChild(el);
+      }
+    } finally {
+      this.#syncingOptions = false;
+    }
+  }
+
+  #initialize() {
+    this.#initialized = true;
+    const shadow = this.attachShadow({ mode: "open" });
+    shadow.innerHTML = `
+      <style>
+        :host {
+          display: inline-flex;
+          position: relative;
+          align-items: center;
+          min-width: 0;
+        }
+        :host([full]:not([full="false"])) {
+          display: flex;
+          width: 100%;
+        }
+        .fig-select-trigger {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          flex: 1;
+          min-width: 0;
+          width: var(--fig-select-trigger-width, 100%);
+          height: 100%;
+          margin: 0;
+          padding: 0 var(--spacer-4, 1rem) 0 var(--spacer-2, 0.5rem);
+          border: 0;
+          border-radius: inherit;
+          background: transparent;
+          box-shadow: none;
+          color: inherit;
+          font: inherit;
+          font-weight: inherit;
+          text-align: left;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          cursor: default;
+        }
+        .fig-select-trigger:has(.fig-select-prepend:not(:empty)) {
+          padding-left: 0;
+        }
+        .fig-select-trigger:hover,
+        .fig-select-trigger:active,
+        .fig-select-trigger:active:hover {
+          background: transparent;
+          box-shadow: none;
+          color: inherit;
+        }
+        .fig-select-trigger:focus-visible,
+        .fig-select-trigger[data-focus-visible] {
+          outline: var(--figma-focus-outline);
+          outline-offset: var(--figma-focus-outline-offset);
+        }
+        :host([disabled]:not([disabled="false"])) .fig-select-trigger,
+        :host([disabled]:not([disabled="false"])) .fig-select-label {
+          color: var(--figma-color-text-tertiary);
+        }
+        .fig-select-label {
+          display: block;
+          width: 100%;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          text-align: left;
+        }
+        .fig-select-prepend {
+          display: inline-flex;
+          flex: 0 0 auto;
+          align-items: center;
+          margin-right: var(--spacer-1, 0.25rem);
+          pointer-events: none;
+        }
+        .fig-select-prepend:empty {
+          display: none;
+        }
+        /* Listbox chrome from document fig-select::part(listbox).
+           Overflow UI lives on slotted fig-select-options.
+           Never set display except when open — closed <dialog> must stay display:none. */
+        dialog[is="fig-popup"] {
+          flex-direction: column;
+          overflow: hidden;
+        }
+        dialog[is="fig-popup"][open] {
+          display: flex;
+        }
+        ::slotted(fig-select-options) {
+          flex: 1 1 auto;
+          min-height: 0;
+          max-height: inherit;
+        }
+      </style>
+    `;
+
+    const button = document.createElement("fig-button");
+    button.className = "fig-select-trigger";
+    button.setAttribute("part", "trigger");
+    button.setAttribute("variant", "ghost");
+    button.setAttribute("aria-haspopup", "listbox");
+    button.setAttribute("aria-expanded", "false");
+
+    const prependEl = document.createElement("span");
+    prependEl.className = "fig-select-prepend";
+    prependEl.setAttribute("part", "prepend");
+    prependEl.setAttribute("aria-hidden", "true");
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "fig-select-label";
+    labelEl.setAttribute("part", "label");
+    button.append(prependEl, labelEl);
+
+    const popup = document.createElement("dialog", { is: "fig-popup" });
+    popup.setAttribute("is", "fig-popup");
+    popup.setAttribute("part", "listbox");
+    popup.setAttribute("theme", "menu");
+    popup.setAttribute("role", "listbox");
+    // Top-layer via popover so the menu escapes ancestor contain/overflow
+    // (e.g. fig-fill-picker-dialog). Stays in shadow so option slots still work —
+    // unlike tooltips, we cannot portal this popup to the overlay root.
+    if ("popover" in HTMLElement.prototype) {
+      popup.setAttribute("popover", "manual");
+    }
+    popup.id = figUniqueId();
+    button.setAttribute("aria-controls", popup.id);
+
+    const panelSlot = document.createElement("slot");
+    panelSlot.setAttribute("name", "panel");
+    popup.appendChild(panelSlot);
+
+    shadow.append(button, popup);
+
+    this.#button = button;
+    this.#prependEl = prependEl;
+    this.#labelEl = labelEl;
+    this.#popup = popup;
+    this.#panelSlot = panelSlot;
+    popup.anchor = button;
+
+    this.#ensurePanelSlotAttrs();
+    this.#setupListeners();
+    this.#installPopupPositioning();
+
+    if (!this.hasAttribute("value")) {
+      const selected = this.#getOptions().find((opt) =>
+        figBooleanAttribute(opt, "selected"),
+      );
+      if (selected) this.setAttribute("value", selected.value);
+    }
+  }
+
+  #installPopupPositioning() {
+    if (!this.#popup || this.#popupPositionPatched) return;
+    if (typeof this.#popup.positionPopup !== "function") return;
+    this.#originalPositionPopup = this.#popup.positionPopup.bind(this.#popup);
+    this.#popup.positionPopup = () => {
+      if (!this.open) {
+        this.#originalPositionPopup?.();
+        return;
+      }
+      this.#positionPopupOverSelected();
+    };
+    this.#popupPositionPatched = true;
+  }
+
+  #getOptionTextRect(option) {
+    if (!option) return null;
+    const range = document.createRange();
+    range.selectNodeContents(option);
+    const rects = [...range.getClientRects()].filter(
+      (rect) => rect.width > 0 && rect.height > 0,
+    );
+    if (rects.length) return rects[0];
+    return option.getBoundingClientRect();
+  }
+
+  #getViewportMargins() {
+    if (typeof this.#popup?.parseViewportMargins === "function") {
+      return this.#popup.parseViewportMargins();
+    }
+    return { top: 8, right: 8, bottom: 8, left: 8 };
+  }
+
+  #readLabelRectSnapshot() {
+    const rect = this.#labelEl?.getBoundingClientRect();
+    if (!rect) return null;
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    };
+  }
+
+  #readViewportSnapshot() {
+    const vv = window.visualViewport;
+    return {
+      width: vv?.width ?? window.innerWidth,
+      height: vv?.height ?? window.innerHeight,
+      offsetLeft: vv?.offsetLeft ?? 0,
+      offsetTop: vv?.offsetTop ?? 0,
+    };
+  }
+
+  #rectSnapshotChanged(prev, next, epsilon = 0.25) {
+    if (!prev && !next) return false;
+    if (!prev || !next) return true;
+    return (
+      Math.abs(prev.x - next.x) > epsilon ||
+      Math.abs(prev.y - next.y) > epsilon ||
+      Math.abs(prev.width - next.width) > epsilon ||
+      Math.abs(prev.height - next.height) > epsilon
+    );
+  }
+
+  #viewportSnapshotChanged(prev, next, epsilon = 0.25) {
+    if (!prev && !next) return false;
+    if (!prev || !next) return true;
+    return (
+      Math.abs(prev.width - next.width) > epsilon ||
+      Math.abs(prev.height - next.height) > epsilon ||
+      Math.abs(prev.offsetLeft - next.offsetLeft) > epsilon ||
+      Math.abs(prev.offsetTop - next.offsetTop) > epsilon
+    );
+  }
+
+  #shouldSkipFrozenPositionPass() {
+    if (!this.#freezeMenuPosition) return false;
+    const labelMoved = this.#rectSnapshotChanged(
+      this.#frozenLabelRect,
+      this.#readLabelRectSnapshot(),
+    );
+    const viewportChanged = this.#viewportSnapshotChanged(
+      this.#frozenViewport,
+      this.#readViewportSnapshot(),
+    );
+    // Skip only when neither the trigger nor the viewport moved — typical of
+    // overflow scroll / content sync fighting the open-time alignment.
+    return !labelMoved && !viewportChanged;
+  }
+
+  #rememberFrozenGeometry() {
+    this.#frozenLabelRect = this.#readLabelRectSnapshot();
+    this.#frozenViewport = this.#readViewportSnapshot();
+  }
+
+  #positionPopupOverSelected() {
+    // Content ResizeObserver / overflow scroll re-enter here; keep the
+    // open-time alignment unless the trigger or viewport actually changed.
+    if (this.#shouldSkipFrozenPositionPass()) return;
+
+    const popup = this.#popup;
+    const label = this.#labelEl;
+    if (!popup || !label) {
+      this.#originalPositionPopup?.();
+      return;
+    }
+
+    const options = this.#getOptions();
+    const selected =
+      options.find((opt) => this.#optionValue(opt) === this.value) ||
+      options[0];
+    if (!selected) {
+      this.#originalPositionPopup?.();
+      return;
+    }
+
+    // Lay out with the default positioning first so option metrics are valid.
+    this.#originalPositionPopup?.();
+
+    const popupRect = popup.getBoundingClientRect();
+    const labelRect = label.getBoundingClientRect();
+    const optionTextRect = this.#getOptionTextRect(selected);
+    if (
+      !popupRect.width ||
+      !popupRect.height ||
+      !labelRect.width ||
+      !optionTextRect
+    ) {
+      return;
+    }
+
+    const selectedOffsetX = optionTextRect.left - popupRect.left;
+    const selectedOffsetY = optionTextRect.top - popupRect.top;
+    const full = figBooleanAttribute(this, "full");
+    // [full]: pin menu to host width/edges. Otherwise overlay selected
+    // option text on the trigger label (blend-mode style).
+    let left = full
+      ? this.getBoundingClientRect().left
+      : labelRect.left - selectedOffsetX;
+    let top = labelRect.top - selectedOffsetY;
+
+    // Keep the whole menu in-view when aligning over the selected option
+    // would otherwise push it past a viewport edge (corners / far sides).
+    const margins = this.#getViewportMargins();
+    if (typeof popup.clampToViewport === "function") {
+      ({ left, top } = popup.clampToViewport({ left, top }, popupRect, margins));
+    } else {
+      const minLeft = margins.left;
+      const minTop = margins.top;
+      const maxLeft = window.innerWidth - popupRect.width - margins.right;
+      const maxTop = window.innerHeight - popupRect.height - margins.bottom;
+      left = Math.min(Math.max(left, minLeft), Math.max(minLeft, maxLeft));
+      top = Math.min(Math.max(top, minTop), Math.max(minTop, maxTop));
+    }
+
+    // !important: fig-select::part(listbox) and dialog UA rules can otherwise
+    // keep the menu at its static/anchor position past the viewport edge.
+    popup.style.setProperty("right", "auto", "important");
+    popup.style.setProperty("bottom", "auto", "important");
+    popup.style.setProperty("left", `${Math.round(left)}px`, "important");
+    popup.style.setProperty("top", `${Math.round(top)}px`, "important");
+
+    // Nudge the panel scroller so the selected label stays over the trigger.
+    const panel = this.#getPanel();
+    const alignedTextRect = this.#getOptionTextRect(selected);
+    if (
+      alignedTextRect &&
+      panel &&
+      panel.scrollHeight > panel.clientHeight + 1
+    ) {
+      const deltaY = alignedTextRect.top - labelRect.top;
+      if (Math.abs(deltaY) > 0.5) {
+        panel.scrollTop += deltaY;
+      }
+      panel.syncOverflow?.();
+    }
+
+    if (this.#freezeMenuPosition || this.open) {
+      this.#rememberFrozenGeometry();
+    }
+  }
+
+  #setupListeners() {
+    this.#button?.addEventListener("click", this.#boundTriggerClick);
+    this.#button?.addEventListener("keydown", this.#boundKeydown);
+    // Host click: slotted options stay in light DOM (not dialog.contains).
+    this.addEventListener("click", this.#boundOptionClick);
+    this.#popup?.addEventListener("keydown", this.#boundKeydown);
+    this.#popup?.addEventListener("close", this.#boundPopupClose);
+    this.#panelSlot?.addEventListener("slotchange", this.#boundSlotChange);
+  }
+
+  #teardownListeners() {
+    this.#button?.removeEventListener("click", this.#boundTriggerClick);
+    this.#button?.removeEventListener("keydown", this.#boundKeydown);
+    this.removeEventListener("click", this.#boundOptionClick);
+    this.#popup?.removeEventListener("keydown", this.#boundKeydown);
+    this.#popup?.removeEventListener("close", this.#boundPopupClose);
+    this.#panelSlot?.removeEventListener("slotchange", this.#boundSlotChange);
+  }
+
+  #handleSlotChange() {
+    this.#ensurePanelSlotAttrs();
+    this.#syncValue();
+  }
+
+  #setupObserver() {
+    if (this.#observer) return;
+    this.#observer = new MutationObserver((mutations) => {
+      if (this.#syncingValue || this.#syncingOptions) return;
+      let needsSync = false;
+      for (const mutation of mutations) {
+        if (mutation.type === "childList") {
+          if (
+            [...mutation.addedNodes].some((node) => this.#isMenuChild(node)) ||
+            [...mutation.removedNodes].some((node) => this.#isMenuChild(node)) ||
+            mutation.target?.closest?.("fig-select-option")
+          ) {
+            needsSync = true;
+          }
+        }
+        if (
+          mutation.type === "attributes" &&
+          mutation.target?.tagName === "FIG-SELECT-OPTION" &&
+          (mutation.attributeName === "value" ||
+            mutation.attributeName === "disabled" ||
+            mutation.attributeName === "label")
+        ) {
+          needsSync = true;
+        }
+        if (
+          mutation.type === "characterData" &&
+          mutation.target?.parentElement?.tagName === "FIG-SELECT-OPTION"
+        ) {
+          needsSync = true;
+        }
+      }
+      if (needsSync) this.#syncValue();
+    });
+    this.#observer.observe(this, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["value", "disabled", "selected", "label"],
+    });
+  }
+
+  #getOptions({ enabledOnly = false } = {}) {
+    const panel = this.#getPanel();
+    const options = panel
+      ? Array.from(panel.querySelectorAll(":scope > fig-select-option"))
+      : [];
+    if (!enabledOnly) return options;
+    return options.filter((opt) => !figBooleanAttribute(opt, "disabled"));
+  }
+
+  #optionValue(option) {
+    if (!option) return "";
+    if (typeof option.value === "string") return option.value;
+    const attr = option.getAttribute?.("value");
+    if (attr != null) return attr;
+    return (option.textContent || "").trim();
+  }
+
+  #optionLabel(option) {
+    if (!option) return "";
+    const labelAttr = option.getAttribute?.("label");
+    if (labelAttr != null && labelAttr !== "") return labelAttr.trim();
+
+    // Ignore prepend/append slot content when deriving a label from children.
+    const parts = [];
+    for (const node of option.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim();
+        if (text) parts.push(text);
+        continue;
+      }
+      if (!(node instanceof Element)) continue;
+      const slot = node.getAttribute("slot");
+      if (slot === "prepend" || slot === "append") continue;
+      const text = node.textContent?.trim();
+      if (text) parts.push(text);
+    }
+    if (parts.length) return parts.join(" ").trim();
+    return (option.textContent || "").trim();
+  }
+
+  #syncPrepend(option) {
+    if (!this.#prependEl) return;
+    const source = option?.querySelector?.(':scope > [slot="prepend"]');
+    this.#prependEl.replaceChildren(
+      ...Array.from(source?.childNodes ?? [], (node) => node.cloneNode(true)),
+    );
+  }
+
+  #syncPopupAttrs() {
+    if (!this.#popup) return;
+    this.#popup.setAttribute(
+      "position",
+      this.getAttribute("position") || "bottom left",
+    );
+    const offset = this.getAttribute("offset");
+    if (offset) this.#popup.setAttribute("offset", offset);
+    else this.#popup.removeAttribute("offset");
+    const closedby = this.getAttribute("closedby");
+    if (closedby) this.#popup.setAttribute("closedby", closedby);
+    else this.#popup.removeAttribute("closedby");
+  }
+
+  #syncDisabled() {
+    const disabled = figBooleanAttribute(this, "disabled");
+    if (this.#button) {
+      if (disabled) this.#button.setAttribute("disabled", "");
+      else this.#button.removeAttribute("disabled");
+    }
+    if (disabled && this.open) this.open = false;
+  }
+
+  #pickFallbackOption(options) {
+    if (!options.length) return null;
+    const selected = options.find((opt) =>
+      figBooleanAttribute(opt, "selected"),
+    );
+    if (selected && !figBooleanAttribute(selected, "disabled")) {
+      return selected;
+    }
+    return (
+      options.find((opt) => !figBooleanAttribute(opt, "disabled")) ||
+      options[0] ||
+      null
+    );
+  }
+
+  #emitValueEvents(value) {
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        detail: value,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        detail: value,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #syncValue() {
+    if (this.#syncingValue) return;
+    this.#syncingValue = true;
+    try {
+      const options = this.#getOptions();
+      const hasValueAttr = this.hasAttribute("value");
+      const previousValue = hasValueAttr ? this.getAttribute("value") : null;
+      let match = hasValueAttr
+        ? options.find((opt) => this.#optionValue(opt) === previousValue)
+        : null;
+      let valueCorrected = false;
+
+      if (!match) {
+        if (hasValueAttr) {
+          // Options may not be built yet (options attr sync). Keep value until then.
+          if (!options.length) {
+            if (this.#labelEl) {
+              this.#labelEl.textContent =
+                previousValue || this.getAttribute("label") || "";
+            }
+            return;
+          }
+          // Value orphaned (option removed / value attr changed) — clamp or clear.
+          match = this.#pickFallbackOption(options);
+          if (match) {
+            const nextValue = this.#optionValue(match);
+            if (previousValue !== nextValue) {
+              this.setAttribute("value", nextValue);
+              valueCorrected = true;
+            }
+          } else {
+            this.removeAttribute("value");
+            valueCorrected = true;
+          }
+        } else {
+          // No host value yet — honor a selected option if present.
+          match = options.find((opt) =>
+            figBooleanAttribute(opt, "selected"),
+          );
+          if (match) {
+            this.setAttribute("value", this.#optionValue(match));
+            valueCorrected = true;
+          }
+        }
+      }
+
+      for (const opt of options) {
+        const selected = opt === match;
+        opt.setAttribute("aria-selected", selected ? "true" : "false");
+        if (selected) opt.setAttribute("selected", "");
+        else opt.removeAttribute("selected");
+      }
+
+      const label =
+        (match && this.#optionLabel(match)) || this.getAttribute("label") || "";
+      if (this.#labelEl) this.#labelEl.textContent = label;
+      this.#syncPrepend(match);
+
+      const ariaLabel = this.getAttribute("label") || "Select";
+      this.#button?.setAttribute("aria-label", ariaLabel);
+
+      // Don't scrollToOption while open — reposition/sync would fight overflow paging.
+      this.#getPanel()?.syncOverflow?.();
+
+      if (valueCorrected) {
+        this.#emitValueEvents(this.getAttribute("value") ?? "");
+      }
+    } finally {
+      this.#syncingValue = false;
+    }
+  }
+
+  #handleTriggerClick(e) {
+    if (figBooleanAttribute(this, "disabled")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const nextOpen = !this.open;
+    if (nextOpen && this.#popup && this.#button) {
+      this.#popup.anchor = this.#button;
+    }
+    this.open = nextOpen;
+  }
+
+  #handleOptionClick(e) {
+    const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+    const option = path.find(
+      (node) => node?.tagName === "FIG-SELECT-OPTION",
+    );
+    if (!option || !this.contains(option)) return;
+    if (figBooleanAttribute(option, "disabled")) return;
+    // Do not stopPropagation — React light-DOM onClick must still fire.
+    this.#selectOption(option);
+  }
+
+  #handleKeydown(e) {
+    if (e.currentTarget === document && e.key !== "Escape") return;
+
+    const listOpen = this.open && (this.#popup?.matches?.(":open") ?? false);
+    if (!listOpen) {
+      if (
+        this.#button?.contains(e.target) &&
+        (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
+      ) {
+        e.preventDefault();
+        if (this.#popup && this.#button) this.#popup.anchor = this.#button;
+        this.open = true;
+        requestAnimationFrame(() => {
+          const options = this.#getOptions({ enabledOnly: true });
+          const selectedIndex = options.findIndex(
+            (opt) => this.#optionValue(opt) === this.value,
+          );
+          this.#focusOptionAt(selectedIndex >= 0 ? selectedIndex : 0);
+        });
+      }
+      return;
+    }
+
+    const options = this.#getOptions({ enabledOnly: true });
+    if (!options.length) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        this.#syncFocusedIndex();
+        this.#focusOptionAt(this.#focusedIndex + 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        this.#syncFocusedIndex();
+        this.#focusOptionAt(this.#focusedIndex - 1);
+        break;
+      case "Home":
+        e.preventDefault();
+        this.#focusOptionAt(0);
+        break;
+      case "End":
+        e.preventDefault();
+        this.#focusOptionAt(options.length - 1);
+        break;
+      case "Escape":
+        e.preventDefault();
+        this.open = false;
+        this.#button?.focus();
+        break;
+      case "Enter":
+      case " ": {
+        this.#syncFocusedIndex();
+        const focused = options[this.#focusedIndex];
+        if (!focused) return;
+        e.preventDefault();
+        this.#selectOption(focused);
+        break;
+      }
+    }
+  }
+
+  #handlePopupClose() {
+    if (this.hasAttribute("open")) this.removeAttribute("open");
+    this.#button?.setAttribute("aria-expanded", "false");
+    this.#button?.focus();
+    this.#focusedIndex = -1;
+  }
+
+  #selectOption(option) {
+    const value = this.#optionValue(option);
+    this.setAttribute("value", value);
+    this.#syncValue();
+    this.#emitValueEvents(value);
+    this.open = false;
+  }
+
+  #getEnabledOptions() {
+    return this.#getOptions({ enabledOnly: true });
+  }
+
+  #syncFocusedIndex() {
+    const options = this.#getEnabledOptions();
+    if (!options.length) {
+      this.#focusedIndex = -1;
+      return;
+    }
+    const active = options.find((opt) => opt === document.activeElement);
+    const index = active ? options.indexOf(active) : -1;
+    this.#focusedIndex = index >= 0 ? index : this.#focusedIndex;
+  }
+
+  #focusOptionAt(index) {
+    const options = this.#getEnabledOptions();
+    if (!options.length) return;
+    const next = ((index % options.length) + options.length) % options.length;
+    this.#focusedIndex = next;
+    options[next]?.focus();
+  }
+
+  #syncPopupWidth() {
+    if (!this.#popup || !this.#button) return;
+    const hostWidth = Math.ceil(this.getBoundingClientRect().width);
+    const triggerWidth = Math.ceil(this.#button.getBoundingClientRect().width);
+    const anchorWidth = Math.max(hostWidth, triggerWidth, 96);
+
+    // Use !important — fig-select::part(listbox) width rules beat element.style.
+    // Menus size to their options while remaining at least as wide as the trigger.
+    this.#popup.style.setProperty("width", "max-content", "important");
+    this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
+    this.#popup.style.setProperty(
+      "max-width",
+      "min(20rem, calc(100vw - 1rem))",
+      "important",
+    );
+  }
+
+  #openList() {
+    if (!this.#popup || figBooleanAttribute(this, "disabled")) return;
+    if (this.#button) this.#popup.anchor = this.#button;
+    this.#installPopupPositioning();
+    this.#freezeMenuPosition = false;
+    this.#frozenLabelRect = null;
+    this.#frozenViewport = null;
+    this.#syncValue();
+    this.#syncPopupWidth();
+    this.#popup.open = true;
+    document.addEventListener("keydown", this.#boundKeydown, true);
+    this.#button?.setAttribute("aria-expanded", "true");
+    this.#focusedIndex = -1;
+    requestAnimationFrame(() => {
+      this.#syncPopupWidth();
+      this.#positionPopupOverSelected();
+      const panel = this.#getPanel();
+      const options = this.#getEnabledOptions();
+      const selectedIndex = options.findIndex(
+        (opt) => this.#optionValue(opt) === this.value,
+      );
+      if (selectedIndex >= 0) {
+        this.#focusOptionAt(selectedIndex);
+      } else if (
+        this.#button?.hasAttribute("data-focus-visible") ||
+        this.#button?.matches?.(":focus-visible")
+      ) {
+        this.#focusOptionAt(0);
+      }
+      panel?.syncOverflow?.();
+      // Freeze after open align so later positionPopup passes don't undo scroll.
+      // Window resize / trigger movement still realigns via geometry checks.
+      this.#freezeMenuPosition = true;
+      this.#rememberFrozenGeometry();
+    });
+  }
+
+  #closeList() {
+    if (!this.#popup) return;
+    this.#freezeMenuPosition = false;
+    this.#frozenLabelRect = null;
+    this.#frozenViewport = null;
+    document.removeEventListener("keydown", this.#boundKeydown, true);
+    this.#popup.open = false;
+    this.#button?.setAttribute("aria-expanded", "false");
+  }
+}
+figDefineElement("fig-select", FigSelect);
+
 /* Slider */
 /**
  * A custom slider input element.
@@ -5823,6 +7016,8 @@ figDefineElement("fig-slider", FigSlider);
 class FigInputText extends HTMLElement {
   #isInteracting = false;
   #passwordVisible = false;
+  #value = "";
+  #reflectingValue = false;
   #boundMouseMove;
   #boundMouseUp;
   #boundWindowBlur;
@@ -5866,7 +7061,9 @@ class FigInputText extends HTMLElement {
         new CustomEvent("input", { detail: this.value, bubbles: true }),
       );
     };
-    this.#boundFocusControl = this.focus.bind(this);
+    this.#boundFocusControl = () => {
+      if (!this.disabled) this.focus();
+    };
     this.#boundAdornmentClick = this.#handleAdornmentClick.bind(this);
   }
 
@@ -5907,6 +7104,7 @@ class FigInputText extends HTMLElement {
     this.#syncSearchClear();
     this.#syncSearchClearVisibility();
     this.#syncPasswordToggle();
+    this.#syncGeneratedAdornmentDisabled();
     figNormalizeTextOnlyInputSlots(this);
     this.#startObserver();
 
@@ -5982,6 +7180,7 @@ class FigInputText extends HTMLElement {
   #handleAdornmentClick(event) {
     const adornment = event.target?.closest?.("[slot]");
     if (!adornment || adornment.parentElement !== this) return;
+    if (this.disabled) return;
     this.focus();
   }
   #startObserver() {
@@ -6013,6 +7212,7 @@ class FigInputText extends HTMLElement {
     this.#syncSearchClear();
     this.#syncSearchClearVisibility();
     this.#syncPasswordToggle();
+    this.#syncGeneratedAdornmentDisabled();
     figNormalizeTextOnlyInputSlots(this);
   }
   #syncInputA11yAttributes() {
@@ -6097,6 +7297,7 @@ class FigInputText extends HTMLElement {
     button.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (this.disabled) return;
       if (!this.input || this.input.value === "") {
         this.focus();
         return;
@@ -6155,6 +7356,7 @@ class FigInputText extends HTMLElement {
     button.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (this.disabled) return;
       this.#passwordVisible = !this.#passwordVisible;
       if (this.input) {
         this.input.type = this.#passwordVisible ? "text" : "password";
@@ -6171,6 +7373,14 @@ class FigInputText extends HTMLElement {
     tooltip?.setAttribute("text", label);
     button?.setAttribute("aria-label", label);
     icon?.setAttribute("name", this.#passwordVisible ? "visible" : "hidden");
+  }
+  #syncGeneratedAdornmentDisabled() {
+    this.querySelectorAll(
+      '[data-generated="search-clear"] fig-button, [data-generated="password-toggle"] fig-button',
+    ).forEach((button) => {
+      if (this.disabled) button.setAttribute("disabled", "");
+      else button.removeAttribute("disabled");
+    });
   }
   #transformNumber(value) {
     if (value === "") return "";
@@ -6275,15 +7485,29 @@ class FigInputText extends HTMLElement {
     return Number.isInteger(rounded) ? rounded : rounded.toFixed(precision);
   }
 
-  /*
   get value() {
-    return this.value;
+    return this.#value;
   }
 
   set value(val) {
-    this.value = val;
-    this.setAttribute("value", val);
-  }*/
+    const value = val ?? "";
+    this.#value = value;
+    const reflected = String(value);
+    if (this.getAttribute("value") !== reflected) {
+      this.#reflectingValue = true;
+      this.setAttribute("value", reflected);
+      this.#reflectingValue = false;
+    }
+    this.#syncRenderedValue(value);
+  }
+
+  #syncRenderedValue(value) {
+    if (!this.input || this.#isInteracting) return;
+    const rendered =
+      this.type === "number" ? String(this.#transformNumber(value)) : String(value ?? "");
+    if (this.input.value !== rendered) this.input.value = rendered;
+    this.#syncSearchClearVisibility();
+  }
 
   static get observedAttributes() {
     return [
@@ -6313,6 +7537,7 @@ class FigInputText extends HTMLElement {
         case "disabled":
           this.disabled = this.input.disabled =
             newValue !== null && newValue !== "false";
+          this.#syncGeneratedAdornmentDisabled();
           break;
         case "readonly":
           this.readonly = newValue !== null && newValue !== "false";
@@ -6329,13 +7554,9 @@ class FigInputText extends HTMLElement {
           let value = newValue;
           if (this.type === "number") {
             value = this.#sanitizeInput(value, false);
-            this.value = value;
-            this.input.value = this.#transformNumber(value);
-          } else {
-            this.value = value;
-            this.input.value = value;
           }
-          this.#syncSearchClearVisibility();
+          this.#value = value ?? "";
+          if (!this.#reflectingValue) this.#syncRenderedValue(this.#value);
           break;
         case "min":
         case "max":
@@ -6378,6 +7599,7 @@ class FigInputText extends HTMLElement {
           this.#syncSearchClear();
           this.#syncSearchClearVisibility();
           this.#syncPasswordToggle();
+          this.#syncGeneratedAdornmentDisabled();
           break;
         case "multiline": {
           const next = newValue !== null && newValue !== "false";
@@ -7405,10 +8627,12 @@ class FigInputColor extends HTMLElement {
 
   #fillPickerAttrs() {
     const attrs = {};
-    const experimental = this.getAttribute("experimental");
-    if (experimental) attrs["experimental"] = experimental;
     for (const { name, value } of this.attributes) {
-      if (name.startsWith("picker-") && name !== "picker-anchor") {
+      if (
+        name.startsWith("picker-") &&
+        name !== "picker-anchor" &&
+        name !== "picker-experimental"
+      ) {
         attrs[name.slice(7)] = value;
       }
     }
@@ -7615,8 +8839,8 @@ class FigInputColor extends HTMLElement {
 
     const picker = document.createElement("fig-fill-picker");
     picker.innerHTML = "<span hidden></span>";
-    picker.addEventListener("input", this.#handleFillPickerInput.bind(this));
-    picker.addEventListener("change", this.#handleChange.bind(this));
+    picker.addEventListener("input", this.#boundFillPickerInput);
+    picker.addEventListener("change", this.#boundChange);
     this.appendChild(picker);
     this.#fillPicker = picker;
     this.#syncFillPicker();
@@ -7681,8 +8905,22 @@ class FigInputColor extends HTMLElement {
   }
 
   #setValues(hexValue) {
-    const colorValue = hexValue || "#D9D9D9";
-    this.rgba = this.convertToRGBA(colorValue);
+    let colorValue =
+      typeof hexValue === "string" && hexValue.trim()
+        ? hexValue.trim()
+        : "#D9D9D9";
+    let rgba = this.convertToRGBA(colorValue);
+    if (
+      !rgba ||
+      !Number.isFinite(rgba.r) ||
+      !Number.isFinite(rgba.g) ||
+      !Number.isFinite(rgba.b) ||
+      !Number.isFinite(rgba.a)
+    ) {
+      colorValue = "#D9D9D9";
+      rgba = { r: 217, g: 217, b: 217, a: 1 };
+    }
+    this.rgba = rgba;
     this.value = this.rgbAlphaToHex(
       {
         r: isNaN(this.rgba.r) ? 0 : this.rgba.r,
@@ -7873,7 +9111,6 @@ class FigInputColor extends HTMLElement {
       "value",
       "style",
       "mode",
-      "experimental",
       "alpha",
       "text",
       "disabled",
@@ -7991,6 +9228,7 @@ class FigInputColor extends HTMLElement {
   }
 
   convertToRGBA(color) {
+    if (typeof color !== "string") return null;
     let r,
       g,
       b,
@@ -8415,7 +9653,6 @@ class FigInputFill extends HTMLElement {
       "value",
       "disabled",
       "mode",
-      "experimental",
       "alpha",
       "aria-label",
       "aria-describedby",
@@ -8499,13 +9736,15 @@ class FigInputFill extends HTMLElement {
     // Backward-compat: direct attributes forwarded to fill picker
     const mode = this.getAttribute("mode");
     if (mode) attrs["mode"] = mode;
-    const experimental = this.getAttribute("experimental");
-    if (experimental) attrs["experimental"] = experimental;
     const alpha = this.getAttribute("alpha");
     if (alpha) attrs["alpha"] = alpha;
     // picker-* overrides (except anchor, handled programmatically)
     for (const { name, value } of this.attributes) {
-      if (name.startsWith("picker-") && name !== "picker-anchor") {
+      if (
+        name.startsWith("picker-") &&
+        name !== "picker-anchor" &&
+        name !== "picker-experimental"
+      ) {
         attrs[name.slice(7)] = value;
       }
     }
@@ -8741,7 +9980,6 @@ class FigInputFill extends HTMLElement {
             if (detail.video) this.#video = detail.video;
             break;
         }
-
         // Update controls (don't re-render to keep dialog open)
         if (typeChanged) {
           this.#updateControlsForType();
@@ -9141,7 +10379,6 @@ class FigInputFill extends HTMLElement {
         this.#syncDisabled();
         break;
       case "mode":
-      case "experimental":
         // Pass through to internal fill picker
         if (this.#fillPicker) {
           if (newValue) {
@@ -9183,6 +10420,7 @@ class FigInputPalette extends HTMLElement {
   #expandedPickers = [];
   #renderRAF = null;
   #boundHandleKeyDown = this.#handleKeyDown.bind(this);
+  #boundHandleHostFocus = () => this.focus();
 
   static get observedAttributes() {
     return ["value", "disabled", "min", "max", "open", "fixed"];
@@ -9226,7 +10464,9 @@ class FigInputPalette extends HTMLElement {
   }
 
   connectedCallback() {
-    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "0");
+    this.setAttribute("tabindex", "-1");
+    this.removeEventListener("focus", this.#boundHandleHostFocus);
+    this.addEventListener("focus", this.#boundHandleHostFocus);
     this.removeEventListener("keydown", this.#boundHandleKeyDown);
     this.addEventListener("keydown", this.#boundHandleKeyDown);
     if (this.#renderRAF) cancelAnimationFrame(this.#renderRAF);
@@ -9244,13 +10484,14 @@ class FigInputPalette extends HTMLElement {
       this.#renderRAF = null;
     }
     this.removeEventListener("keydown", this.#boundHandleKeyDown);
+    this.removeEventListener("focus", this.#boundHandleHostFocus);
     this.#inlinePickers = [];
     this.#expandedPickers = [];
   }
 
   #handleKeyDown(event) {
     if (event.key !== "Enter" && event.key !== " ") return;
-    if (event.target !== this && !event.target?.closest?.(".palette-colors-inline")) return;
+    if (event.target !== this.querySelector(".palette-colors-inline")) return;
     if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
     event.preventDefault();
     event.stopPropagation();
@@ -9275,7 +10516,7 @@ class FigInputPalette extends HTMLElement {
         this.#render();
         break;
       case "open":
-        // CSS handles visibility; no re-render needed
+        this.#syncTriggerState();
         break;
     }
   }
@@ -9371,8 +10612,13 @@ class FigInputPalette extends HTMLElement {
     const inlineWrap = document.createElement("div");
     inlineWrap.className = "palette-colors-inline";
     inlineWrap.setAttribute("role", "button");
+    inlineWrap.setAttribute("tabindex", disabled ? "-1" : "+0");
     inlineWrap.setAttribute("aria-expanded", String(this.open));
     inlineWrap.setAttribute("aria-label", "Edit palette colors");
+    inlineWrap.addEventListener("blur", () => {
+      inlineWrap.style.removeProperty("outline");
+      inlineWrap.style.removeProperty("outline-offset");
+    });
     const openPalette = () => {
       if (
         this.hasAttribute("disabled") &&
@@ -9383,12 +10629,6 @@ class FigInputPalette extends HTMLElement {
       inlineWrap.setAttribute("aria-expanded", "true");
     };
     inlineWrap.addEventListener("click", openPalette);
-    inlineWrap.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      event.stopPropagation();
-      openPalette();
-    });
 
     const wrap = document.createElement("div");
     wrap.className = "palette-colors";
@@ -9399,6 +10639,7 @@ class FigInputPalette extends HTMLElement {
     });
     inlineWrap.appendChild(wrap);
     this.appendChild(inlineWrap);
+    this.#syncTriggerState();
 
     if (!this.#isFixed) this.#createAddButton(disabled, this);
 
@@ -9595,6 +10836,31 @@ class FigInputPalette extends HTMLElement {
       else addBtn.removeAttribute("disabled");
     }
     this.#syncRemoveButtons(disabled);
+    this.#syncTriggerState();
+  }
+
+  #syncTriggerState() {
+    const trigger = this.querySelector(".palette-colors-inline");
+    if (!trigger) return;
+    const disabled =
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false";
+    trigger.setAttribute("tabindex", disabled ? "-1" : "+0");
+    trigger.setAttribute("aria-disabled", String(disabled));
+    trigger.setAttribute("aria-expanded", String(this.open));
+  }
+
+  focus() {
+    if (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    )
+      return;
+    const trigger = this.querySelector(".palette-colors-inline");
+    if (!trigger) return;
+    trigger.style.outline = "var(--figma-focus-outline)";
+    trigger.style.outlineOffset = "var(--figma-focus-outline-offset)";
+    trigger.focus();
   }
 
   #syncRemoveButtons(disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") {
@@ -9923,11 +11189,9 @@ class FigInputGradient extends HTMLElement {
     const mode = this.#editMode;
 
     if (mode === "picker" && hasFigFillPicker()) {
-      const experimental = this.getAttribute("experimental");
-      const expAttr = experimental ? ` experimental="${experimental}"` : "";
       const gradientValue = JSON.stringify(this.value);
       this.innerHTML = `
-        <fig-fill-picker mode="gradient"${expAttr} value='${gradientValue}'${disabled ? " disabled" : ""}>
+        <fig-fill-picker mode="gradient" value='${gradientValue}'${disabled ? " disabled" : ""}>
           <fig-swatch background="${this.#buildGradientCSS()}"${this.#swatchSizeAttr()}${disabled ? " disabled" : ""}></fig-swatch>
         </fig-fill-picker>`;
       this.#swatch = this.querySelector("fig-swatch");
@@ -10819,7 +12083,6 @@ figDefineElement("fig-switch", FigSwitch);
  * @attr {string} placeholder - Placeholder text for the input
  * @attr {string} value - The current input value
  * @attr {boolean} disabled - Disables the input and dropdown button
- * @attr {string} experimental - Feature flag passed to internal fig-dropdown
  */
 class FigComboInput extends HTMLElement {
   static observedAttributes = [
@@ -10827,7 +12090,6 @@ class FigComboInput extends HTMLElement {
     "placeholder",
     "value",
     "disabled",
-    "experimental",
     "aria-label",
     "aria-labelledby",
     "aria-describedby",
@@ -10908,15 +12170,11 @@ class FigComboInput extends HTMLElement {
     const options = this.#getOptions();
     const placeholder = this.getAttribute("placeholder") || "";
     const currentValue = this.value;
-    const experimental = this.getAttribute("experimental");
-    const expAttr = experimental
-      ? ` experimental="${figEscapeAttribute(experimental)}"`
-      : "";
     const dropdownLabel = this.#dropdownLabel();
 
     const dropdownHTML = this.#usesCustomDropdown
       ? ""
-      : `<fig-dropdown type="dropdown" label="${figEscapeAttribute(dropdownLabel)}"${expAttr}>${options.map((o) => `<option>${figEscapeAttribute(o.trim())}</option>`).join("")}</fig-dropdown>`;
+      : `<fig-dropdown type="dropdown" label="${figEscapeAttribute(dropdownLabel)}">${options.map((o) => `<option>${figEscapeAttribute(o.trim())}</option>`).join("")}</fig-dropdown>`;
 
     this.innerHTML = `<div class="input-combo">
   <fig-input-text placeholder="${figEscapeAttribute(placeholder)}" value="${figEscapeAttribute(currentValue)}"></fig-input-text>
@@ -10937,9 +12195,6 @@ class FigComboInput extends HTMLElement {
       }
       if (!this.#customDropdown.hasAttribute("label")) {
         this.#customDropdown.setAttribute("label", dropdownLabel);
-      }
-      if (experimental) {
-        this.#customDropdown.setAttribute("experimental", experimental);
       }
       this.#button.append(this.#customDropdown);
     }
@@ -11087,13 +12342,6 @@ class FigComboInput extends HTMLElement {
         break;
       case "disabled":
         this.#applyDisabled(newValue !== null && newValue !== "false");
-        break;
-      case "experimental":
-        if (this.#dropdown) {
-          if (newValue) this.#dropdown.setAttribute("experimental", newValue);
-          else if (!this.#usesCustomDropdown)
-            this.#dropdown.removeAttribute("experimental");
-        }
         break;
       case "aria-label":
       case "aria-labelledby":
@@ -12892,9 +14140,7 @@ class FigEasingCurve extends HTMLElement {
   #line2 = null;
   #handle1 = null;
   #handle2 = null;
-  #bezierEndpointStart = null;
-  #bezierEndpointEnd = null;
-  #dropdown = null;
+  #select = null;
   #valueInput = null;
   #presetName = null;
   #targetLine = null;
@@ -12902,10 +14148,10 @@ class FigEasingCurve extends HTMLElement {
   #drawWidth = 200;
   #drawHeight = 200;
   #bounds = null;
-  #diagonal = null;
+  #boundaryTop = null;
+  #boundaryBottom = null;
   #resizeObserver = null;
   #bezierHandleRadius = 5;
-  #bezierEndpointRadius = 2;
   #durationBarWidth = 10;
   #durationBarHeight = 10;
   #durationBarRadius = 3;
@@ -13023,7 +14269,7 @@ class FigEasingCurve extends HTMLElement {
         this.#render();
       } else {
         if (this.#svg) this.#updatePaths();
-        this.#syncDropdown();
+        this.#syncSelect();
         this.#syncValueInput();
       }
     }
@@ -13246,14 +14492,15 @@ class FigEasingCurve extends HTMLElement {
       .replace(/>/g, "&gt;");
   }
 
-  #getDropdownHTML() {
+  #getSelectHTML() {
     let optionsHTML = "";
     let currentGroup = undefined;
     for (const p of FigEasingCurve.PRESETS) {
       if (!this.#isEditEnabled() && !p.value && !p.spring) continue;
       if (p.group !== currentGroup) {
-        if (currentGroup !== undefined) optionsHTML += `</optgroup>`;
-        if (p.group) optionsHTML += `<optgroup label="${p.group}">`;
+        if (p.group) {
+          optionsHTML += `<fig-menu-separator label="${FigEasingCurve.#escapeAttribute(p.group)}"></fig-menu-separator>`;
+        }
         currentGroup = p.group;
       }
       let icon;
@@ -13269,40 +14516,37 @@ class FigEasingCurve extends HTMLElement {
         ];
         icon = FigEasingCurve.curveIcon(...v);
       }
-      const selected = p.name === this.#presetName ? " selected" : "";
-      optionsHTML += `<option value="${p.name}"${selected}>${icon} ${p.name}</option>`;
+      const name = FigEasingCurve.#escapeAttribute(p.name);
+      optionsHTML += `<fig-select-option value="${name}" label="${name}"><span slot="prepend">${icon}</span><span>${name}</span></fig-select-option>`;
     }
-    if (currentGroup) optionsHTML += `</optgroup>`;
-    return `<fig-dropdown class="fig-easing-curve-dropdown" full experimental="modern">${optionsHTML}</fig-dropdown>`;
+    const value = FigEasingCurve.#escapeAttribute(this.#presetName);
+    return `<fig-select class="fig-easing-curve-select" label="Easing preset" value="${value}" full><fig-select-options>${optionsHTML}</fig-select-options></fig-select>`;
   }
 
   #getInnerHTML() {
     const size = 200;
-    const dropdown = this.#getDropdownHTML();
-    if (!this.#isEditEnabled()) return dropdown;
+    const select = this.#getSelectHTML();
+    if (!this.#isEditEnabled()) return select;
     const valueInput = `<fig-input-text class="fig-easing-curve-value-input" value="${FigEasingCurve.#escapeAttribute(this.value)}" full></fig-input-text>`;
 
     if (this.#mode === "spring") {
       const targetY = 40;
-      const startY = 180;
-      return `${dropdown}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
+      return `${select}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
         <rect class="fig-easing-curve-bounds" x="0" y="0" width="${size}" height="${size}"/>
         <line class="fig-easing-curve-target" x1="0" y1="${targetY}" x2="${size}" y2="${targetY}"/>
-        <line class="fig-easing-curve-diagonal" x1="0" y1="${startY}" x2="0" y2="${startY}"/>
         <path class="fig-easing-curve-path"/>
         <foreignObject class="fig-easing-curve-handle" data-handle="bounce" width="20" height="20"><fig-handle size="small" aria-label="Spring bounce handle"></fig-handle></foreignObject>
         <foreignObject class="fig-easing-curve-handle fig-easing-curve-duration-bar" data-handle="duration" width="20" height="20"><fig-handle size="small" aria-label="Spring duration handle"></fig-handle></foreignObject>
       </svg></div>${valueInput}`;
     }
 
-    return `${dropdown}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
+    return `${select}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
       <rect class="fig-easing-curve-bounds" x="0" y="0" width="${size}" height="${size}"/>
-      <line class="fig-easing-curve-diagonal" x1="0" y1="${size}" x2="${size}" y2="0"/>
+      <line class="fig-easing-curve-boundary" data-boundary="top" x1="0" y1="0" x2="${size}" y2="0"/>
+      <line class="fig-easing-curve-boundary" data-boundary="bottom" x1="0" y1="${size}" x2="${size}" y2="${size}"/>
+      <path class="fig-easing-curve-path"/>
       <line class="fig-easing-curve-arm" data-arm="1"/>
       <line class="fig-easing-curve-arm" data-arm="2"/>
-      <path class="fig-easing-curve-path"/>
-      <circle class="fig-easing-curve-endpoint" data-endpoint="start" r="${this.#bezierEndpointRadius}"/>
-      <circle class="fig-easing-curve-endpoint" data-endpoint="end" r="${this.#bezierEndpointRadius}"/>
       <foreignObject class="fig-easing-curve-handle" data-handle="1" width="20" height="20"><fig-handle size="small" aria-label="First easing control point"></fig-handle></foreignObject>
       <foreignObject class="fig-easing-curve-handle" data-handle="2" width="20" height="20"><fig-handle size="small" aria-label="Second easing control point"></fig-handle></foreignObject>
     </svg></div>${valueInput}`;
@@ -13316,10 +14560,6 @@ class FigEasingCurve extends HTMLElement {
   }
 
   #syncMetricsFromCSS() {
-    this.#bezierEndpointRadius = this.#readCssNumber(
-      "--easing-bezier-endpoint-radius",
-      this.#bezierEndpointRadius,
-    );
     this.#durationBarRadius = this.#readCssNumber(
       "--easing-duration-bar-radius",
       this.#durationBarRadius,
@@ -13337,13 +14577,12 @@ class FigEasingCurve extends HTMLElement {
     this.#handle2 =
       this.querySelector('[data-handle="2"]') ||
       this.querySelector('[data-handle="duration"]');
-    this.#bezierEndpointStart = this.querySelector('[data-endpoint="start"]');
-    this.#bezierEndpointEnd = this.querySelector('[data-endpoint="end"]');
-    this.#dropdown = this.querySelector(".fig-easing-curve-dropdown");
+    this.#select = this.querySelector(".fig-easing-curve-select");
     this.#valueInput = this.querySelector(".fig-easing-curve-value-input");
     this.#targetLine = this.querySelector(".fig-easing-curve-target");
     this.#bounds = this.querySelector(".fig-easing-curve-bounds");
-    this.#diagonal = this.querySelector(".fig-easing-curve-diagonal");
+    this.#boundaryTop = this.querySelector('[data-boundary="top"]');
+    this.#boundaryBottom = this.querySelector('[data-boundary="bottom"]');
   }
 
   #syncHandleSizes() {
@@ -13392,12 +14631,37 @@ class FigEasingCurve extends HTMLElement {
 
   // --- Coordinate helpers ---
 
+  #bezierDomain() {
+    const minVal = Math.min(0, this.#cp1.y, this.#cp2.y);
+    const maxVal = Math.max(1, this.#cp1.y, this.#cp2.y);
+    const range = maxVal - minVal || 1;
+    const pad = Math.min(
+      this.#bezierHandleRadius,
+      Math.max(0, (this.#drawHeight - 1) / 2),
+    );
+    return {
+      minVal,
+      maxVal,
+      range,
+      pad,
+      draw: Math.max(1, this.#drawHeight - pad * 2),
+    };
+  }
+
   #toSVG(nx, ny) {
-    return { x: nx * this.#drawWidth, y: (1 - ny) * this.#drawHeight };
+    const { maxVal, range, pad, draw } = this.#bezierDomain();
+    return {
+      x: nx * this.#drawWidth,
+      y: pad + ((maxVal - ny) / range) * draw,
+    };
   }
 
   #fromSVG(sx, sy) {
-    return { x: sx / this.#drawWidth, y: 1 - sy / this.#drawHeight };
+    const { maxVal, range, pad, draw } = this.#bezierDomain();
+    return {
+      x: sx / this.#drawWidth,
+      y: maxVal - ((sy - pad) / draw) * range,
+    };
   }
 
   #springScale = { minVal: 0, maxVal: 1.2, totalTime: 1 };
@@ -13442,17 +14706,20 @@ class FigEasingCurve extends HTMLElement {
       this.#bounds.setAttribute("width", this.#drawWidth);
       this.#bounds.setAttribute("height", this.#drawHeight);
     }
-    if (this.#diagonal) {
-      this.#diagonal.setAttribute("x1", "0");
-      this.#diagonal.setAttribute("y1", this.#drawHeight);
-      this.#diagonal.setAttribute("x2", this.#drawWidth);
-      this.#diagonal.setAttribute("y2", "0");
-    }
-
     const p0 = this.#toSVG(0, 0);
     const p1 = this.#toSVG(this.#cp1.x, this.#cp1.y);
     const p2 = this.#toSVG(this.#cp2.x, this.#cp2.y);
     const p3 = this.#toSVG(1, 1);
+    for (const [boundary, y] of [
+      [this.#boundaryTop, p3.y],
+      [this.#boundaryBottom, p0.y],
+    ]) {
+      if (!boundary) continue;
+      boundary.setAttribute("x1", "0");
+      boundary.setAttribute("y1", y);
+      boundary.setAttribute("x2", this.#drawWidth);
+      boundary.setAttribute("y2", y);
+    }
 
     this.#curve.setAttribute(
       "d",
@@ -13471,14 +14738,6 @@ class FigEasingCurve extends HTMLElement {
     this.#handle1.setAttribute("y", p1.y - hr);
     this.#handle2.setAttribute("x", p2.x - hr);
     this.#handle2.setAttribute("y", p2.y - hr);
-    if (this.#bezierEndpointStart) {
-      this.#bezierEndpointStart.setAttribute("cx", p0.x);
-      this.#bezierEndpointStart.setAttribute("cy", p0.y);
-    }
-    if (this.#bezierEndpointEnd) {
-      this.#bezierEndpointEnd.setAttribute("cx", p3.x);
-      this.#bezierEndpointEnd.setAttribute("cy", p3.y);
-    }
     this.#syncBezierHandleTabOrder();
   }
 
@@ -13571,11 +14830,11 @@ class FigEasingCurve extends HTMLElement {
     return peak;
   }
 
-  // --- Dropdown ---
+  // --- Select ---
 
-  #syncDropdown() {
-    if (!this.#dropdown) return;
-    this.#dropdown.value = this.#presetName;
+  #syncSelect() {
+    if (!this.#select) return;
+    this.#select.value = this.#presetName;
     this.#refreshCustomPresetIcons();
   }
 
@@ -13614,23 +14873,24 @@ class FigEasingCurve extends HTMLElement {
       this.#render();
     } else {
       this.#updatePaths();
-      this.#syncDropdown();
+      this.#syncSelect();
       if (eventType === "change") this.#syncValueInput();
     }
     this.#emit(eventType);
   }
 
-  #setOptionIconByValue(root, optionValue, icon) {
-    if (!root) return;
-    for (const option of root.querySelectorAll("option")) {
+  #setOptionIconByValue(optionValue, icon) {
+    if (!this.#select) return;
+    for (const option of this.#select.querySelectorAll("fig-select-option")) {
       if (option.value === optionValue) {
-        option.innerHTML = `${icon} ${optionValue}`;
+        const prepend = option.querySelector(':scope > [slot="prepend"]');
+        if (prepend) prepend.innerHTML = icon;
       }
     }
   }
 
   #refreshCustomPresetIcons() {
-    if (!this.#dropdown) return;
+    if (!this.#select) return;
     if (!this.#isEditEnabled()) return;
     const bezierIcon = FigEasingCurve.curveIcon(
       this.#cp1.x,
@@ -13640,25 +14900,14 @@ class FigEasingCurve extends HTMLElement {
     );
     const springIcon = FigEasingCurve.#springIcon(this.#spring);
 
-    // Update both slotted options and the cloned native select options.
-    this.#setOptionIconByValue(this.#dropdown, "Custom bezier", bezierIcon);
-    this.#setOptionIconByValue(this.#dropdown, "Custom spring", springIcon);
-    this.#setOptionIconByValue(
-      this.#dropdown.select,
-      "Custom bezier",
-      bezierIcon,
-    );
-    this.#setOptionIconByValue(
-      this.#dropdown.select,
-      "Custom spring",
-      springIcon,
-    );
+    this.#setOptionIconByValue("Custom bezier", bezierIcon);
+    this.#setOptionIconByValue("Custom spring", springIcon);
   }
 
   #syncAfterHandleInput(eventType) {
     this.#updatePaths();
     this.#presetName = this.#matchPreset();
-    this.#syncDropdown();
+    this.#syncSelect();
     this.#syncValueInput();
     this.#emit(eventType);
   }
@@ -13847,8 +15096,8 @@ class FigEasingCurve extends HTMLElement {
       }
     }
 
-    if (this.#dropdown) {
-      this.#dropdown.addEventListener("change", (e) => {
+    if (this.#select) {
+      this.#select.addEventListener("change", (e) => {
         const name = e.detail;
         const preset = FigEasingCurve.PRESETS.find((p) => p.name === name);
         if (!preset) return;
@@ -13921,11 +15170,30 @@ class FigEasingCurve extends HTMLElement {
     e.preventDefault();
     this.#isDragging = handle;
     this.#syncActiveBezierArm();
+    const svgRect = this.#svg.getBoundingClientRect();
+    const startClientX = e.clientX;
+    const startClientY = e.clientY;
+    const fromHandle = e.target?.closest?.(
+      ".fig-easing-curve-handle, fig-handle",
+    );
+    const currentPoint = handle === 1 ? this.#cp1 : this.#cp2;
+    const svgPoint = this.#clientToSVG(e);
+    const startPoint = fromHandle
+      ? { ...currentPoint }
+      : this.#fromSVG(svgPoint.x, svgPoint.y);
+    const { range, draw } = this.#bezierDomain();
+    const unitsPerClientY =
+      range /
+      Math.max(1, (draw / this.#drawHeight) * Math.max(1, svgRect.height));
 
     const onMove = (e) => {
       if (!this.#isDragging) return;
-      const svgPt = this.#clientToSVG(e);
-      const norm = this.#fromSVG(svgPt.x, svgPt.y);
+      const norm = {
+        x:
+          startPoint.x +
+          (e.clientX - startClientX) / Math.max(1, svgRect.width),
+        y: startPoint.y - (e.clientY - startClientY) * unitsPerClientY,
+      };
 
       norm.x = Math.round(norm.x * 100) / 100;
       norm.y = Math.round(norm.y * 100) / 100;
@@ -13940,7 +15208,7 @@ class FigEasingCurve extends HTMLElement {
       }
       this.#updatePaths();
       this.#presetName = this.#matchPreset();
-      this.#syncDropdown();
+      this.#syncSelect();
       this.#syncValueInput();
       this.#emit("input");
     };
@@ -13991,7 +15259,7 @@ class FigEasingCurve extends HTMLElement {
 
       this.#updatePaths();
       this.#presetName = this.#matchPreset();
-      this.#syncDropdown();
+      this.#syncSelect();
       this.#syncValueInput();
       this.#emit("input");
     };
@@ -16576,6 +17844,7 @@ class FigChooser extends HTMLElement {
     this.#setupDrag();
     this.#startObserver();
     this.#startResizeObserver();
+    this.#syncDisabledChoices();
 
     figNextFrame(this, () => {
       this.#syncSelection();
@@ -16629,17 +17898,7 @@ class FigChooser extends HTMLElement {
       this.#selectByValue(newValue);
     }
     if (name === "disabled") {
-      const isDisabled = newValue !== null && newValue !== "false";
-      const choices = this.choices;
-      for (const choice of choices) {
-        if (isDisabled) {
-          choice.setAttribute("aria-disabled", "true");
-          choice.setAttribute("tabindex", "-1");
-        } else {
-          choice.removeAttribute("aria-disabled");
-          choice.setAttribute("tabindex", "0");
-        }
-      }
+      this.#syncDisabledChoices();
     }
     if (name === "choice-element") {
       requestAnimationFrame(() => this.#syncSelection());
@@ -16689,6 +17948,23 @@ class FigChooser extends HTMLElement {
     }
 
     this.selectedChoice = choices[0];
+  }
+
+  #syncDisabledChoices() {
+    const chooserDisabled = figBooleanAttribute(this, "disabled");
+    if (chooserDisabled) this.setAttribute("aria-disabled", "true");
+    else this.removeAttribute("aria-disabled");
+    for (const choice of this.choices) {
+      const disabled =
+        chooserDisabled || figBooleanAttribute(choice, "disabled");
+      if (disabled) {
+        choice.setAttribute("aria-disabled", "true");
+        choice.setAttribute("tabindex", "-1");
+      } else {
+        choice.removeAttribute("aria-disabled");
+        choice.setAttribute("tabindex", "0");
+      }
+    }
   }
 
   #selectByValue(value) {
@@ -17053,6 +18329,7 @@ class FigChooser extends HTMLElement {
       if (this.#isUnwrapping) return;
       this.#removeLegacyScroller();
       this.#applyOverflowMode();
+      this.#syncDisabledChoices();
       const choices = this.choices;
       if (this.#selectedChoice && !choices.includes(this.#selectedChoice)) {
         this.#selectedChoice = null;
@@ -17089,6 +18366,7 @@ class FigHandle extends HTMLElement {
   #isDragging = false;
   #didDrag = false;
   #boundPointerDown = null;
+  #activeDragCleanup = null;
   #applyingValue = false;
   #colorTip = null;
   #directColorPicker = null;
@@ -17527,11 +18805,14 @@ class FigHandle extends HTMLElement {
   }
 
   #teardownDrag() {
+    this.#activeDragCleanup?.();
+    this.#activeDragCleanup = null;
     if (this.#boundPointerDown) {
       this.removeEventListener("pointerdown", this.#boundPointerDown);
       this.#boundPointerDown = null;
     }
     this.#isDragging = false;
+    this.#didDrag = false;
   }
 
   #onPointerDown(e) {
@@ -17540,6 +18821,7 @@ class FigHandle extends HTMLElement {
     const container = this.#getContainer();
     if (!container) return;
 
+    this.#activeDragCleanup?.();
     this.#isDragging = true;
     const axes = this.#axes;
     let lastRect = null;
@@ -17617,11 +18899,7 @@ class FigHandle extends HTMLElement {
     };
 
     const onUp = (e) => {
-      this.#isDragging = false;
-      this.style.cursor = "";
-      this.classList.remove("dragging");
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
+      cleanup();
       if (this.#didDrag) {
         clampAndApply(e.clientX, e.clientY, e.shiftKey);
         this.#syncValueAttribute();
@@ -17646,6 +18924,17 @@ class FigHandle extends HTMLElement {
       this.#didDrag = false;
     };
 
+    const cleanup = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      this.#isDragging = false;
+      this.style.cursor = "";
+      this.classList.remove("dragging");
+      if (this.#activeDragCleanup === cleanup) {
+        this.#activeDragCleanup = null;
+      }
+    };
+    this.#activeDragCleanup = cleanup;
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   }
@@ -18114,6 +19403,7 @@ class FigMenu extends HTMLElement {
 
   set open(val) {
     if (val) {
+      if (this.#isDisabled()) return;
       this.setAttribute("open", "");
     } else {
       this.removeAttribute("open");
@@ -18160,19 +19450,17 @@ class FigMenu extends HTMLElement {
       if (newValue === null || newValue === "false") {
         this.#closeMenu();
       } else {
+        if (this.#isDisabled()) {
+          this.removeAttribute("open");
+          return;
+        }
         this.#openMenu();
       }
       return;
     }
 
     if (name === "disabled") {
-      if (this.#trigger) {
-        if (newValue !== null && newValue !== "false") {
-          this.#trigger.setAttribute("disabled", "");
-        } else {
-          this.#trigger.removeAttribute("disabled");
-        }
-      }
+      this.#syncDisabled();
       return;
     }
 
@@ -18314,8 +19602,12 @@ class FigMenu extends HTMLElement {
   }
 
   #syncDisabled() {
+    const disabled = this.#isDisabled();
+    if (disabled) {
+      if (this.open) this.removeAttribute("open");
+      else this.#closeMenu();
+    }
     if (!this.#trigger) return;
-    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
     if (disabled) {
       this.#trigger.setAttribute("disabled", "");
       this.#trigger.setAttribute("aria-disabled", "true");
@@ -18326,9 +19618,15 @@ class FigMenu extends HTMLElement {
     }
   }
 
+  #isDisabled() {
+    return (
+      this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false"
+    );
+  }
+
   #handleTriggerClick(e) {
     if (this.#usesContextMenuTrigger()) return;
-    if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+    if (this.#isDisabled()) return;
     e.stopPropagation();
     const popupShowing = this.#popup?.matches?.(":open") ?? false;
     if (this.open && !popupShowing) {
@@ -18347,7 +19645,7 @@ class FigMenu extends HTMLElement {
 
   #handleTriggerContextMenu(e) {
     if (!this.#usesContextMenuTrigger()) return;
-    if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+    if (this.#isDisabled()) return;
     e.preventDefault();
     e.stopPropagation();
     this.#showAtAfterPointerRelease(e.clientX, e.clientY);
@@ -18381,6 +19679,7 @@ class FigMenu extends HTMLElement {
   }
 
   #handlePopupClick(e) {
+    if (this.#isDisabled()) return;
     const item = e.target.closest("fig-menu-item");
     if (!item) return;
     if (item.hasAttribute("disabled") && item.getAttribute("disabled") !== "false") return;
@@ -18389,6 +19688,7 @@ class FigMenu extends HTMLElement {
   }
 
   #handleMenuKeydown(e) {
+    if (this.#isDisabled()) return;
     if (e.currentTarget === document && e.key !== "Escape") return;
     if (e.currentTarget === this && this.#popup?.contains(e.target)) return;
     if (!this.open || !this.#popup?.matches?.(":open")) {
@@ -18474,6 +19774,7 @@ class FigMenu extends HTMLElement {
   }
 
   showAt(x, y) {
+    if (this.#isDisabled()) return;
     this.#virtualAnchor = {
       getBoundingClientRect: () => ({
         width: 0,
@@ -18491,12 +19792,16 @@ class FigMenu extends HTMLElement {
     }
     if (this.open) this.open = false;
     requestAnimationFrame(() => {
+      if (this.#isDisabled()) return;
       this.open = true;
     });
   }
 
   #openMenu() {
-    if (!this.#popup) return;
+    if (!this.#popup || this.#isDisabled()) {
+      if (this.hasAttribute("open")) this.removeAttribute("open");
+      return;
+    }
     this.#popup.open = true;
     document.addEventListener("keydown", this.#boundMenuKeydown, true);
     if (this.#trigger) {

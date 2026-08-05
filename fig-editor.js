@@ -111,10 +111,13 @@ function parseGradientInterpolationSelectValue(val) {
  * @attr {boolean} alpha - Whether to show alpha/opacity controls (default: true)
  * @attr {string} dialog-position - Position of the popup (default: "left")
  */
+let figFillPickerDialogId = 0;
+
 class FigFillPicker extends HTMLElement {
   #trigger = null;
   #swatch = null;
   #dialog = null;
+  #dialogId = `fig-fill-picker-dialog-${++figFillPickerDialogId}`;
   #activeTab = "solid";
   anchorElement = null;
 
@@ -153,10 +156,13 @@ class FigFillPicker extends HTMLElement {
   #teardownColorAreaEvents = null;
   #gradientInterpolationOpenObserver = null;
   #valueAtOpen = null;
+  #lastChangeValue = null;
   #webcamStart = null;
   #webcamRequestId = 0;
   #boundTriggerClick = null;
   #boundTriggerKeydown = null;
+  #rafIds = new Set();
+  #ownedBlobUrls = new Set();
 
   constructor() {
     super();
@@ -170,7 +176,6 @@ class FigFillPicker extends HTMLElement {
       "disabled",
       "alpha",
       "mode",
-      "experimental",
       "aria-label",
       "aria-labelledby",
       "aria-describedby",
@@ -181,7 +186,7 @@ class FigFillPicker extends HTMLElement {
     // Use display: contents
     this.style.display = "contents";
 
-    requestAnimationFrame(() => {
+    this.#scheduleFrame(() => {
       this.#setupTrigger();
       this.#parseValue();
       this.#updateSwatch();
@@ -190,18 +195,44 @@ class FigFillPicker extends HTMLElement {
 
   disconnectedCallback() {
     this.#discardDialog();
-    if (this.#webcam.snapshot?.startsWith("blob:")) {
-      URL.revokeObjectURL(this.#webcam.snapshot);
-      if (this.#image.url === this.#webcam.snapshot) this.#image.url = null;
-      this.#webcam.snapshot = null;
-    }
-    if (this.#video.url && this.#video.url.startsWith("blob:")) {
-      URL.revokeObjectURL(this.#video.url);
-    }
+    this.#cancelFrames();
+    this.#revokeOwnedBlobUrls();
     if (this.#swatch) this.#swatch.removeAttribute("selected");
     if (this.#trigger) {
       this.#trigger.removeEventListener("click", this.#boundTriggerClick);
       this.#trigger.removeEventListener("keydown", this.#boundTriggerKeydown);
+    }
+    this.#trigger = null;
+    this.#swatch = null;
+  }
+
+  #isDisabled() {
+    return (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    );
+  }
+
+  #scheduleFrame(callback) {
+    const id = requestAnimationFrame(() => {
+      this.#rafIds.delete(id);
+      if (this.isConnected) callback();
+    });
+    this.#rafIds.add(id);
+    return id;
+  }
+
+  #cancelFrames() {
+    this.#rafIds.forEach((id) => cancelAnimationFrame(id));
+    this.#rafIds.clear();
+  }
+
+  #revokeOwnedBlobUrls() {
+    this.#ownedBlobUrls.forEach((url) => URL.revokeObjectURL(url));
+    this.#ownedBlobUrls.clear();
+    if (this.#webcam.snapshot?.startsWith("blob:")) {
+      if (this.#image.url === this.#webcam.snapshot) this.#image.url = null;
+      this.#webcam.snapshot = null;
     }
   }
 
@@ -234,7 +265,7 @@ class FigFillPicker extends HTMLElement {
 
     // Prevent the swatch's internal color input from opening system picker
     if (this.#swatch) {
-      requestAnimationFrame(() => {
+      this.#scheduleFrame(() => {
         const input = this.#swatch.querySelector('input[type="color"]');
         if (input) {
           input.remove();
@@ -250,11 +281,15 @@ class FigFillPicker extends HTMLElement {
 
   #syncTriggerA11y() {
     if (!this.#trigger) return;
-    const disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
+    const disabled = this.#isDisabled();
     const labelledBy = this.getAttribute("aria-labelledby");
     if (!this.#trigger.hasAttribute("role")) this.#trigger.setAttribute("role", "button");
     this.#trigger.setAttribute("tabindex", disabled ? "-1" : "0");
     this.#trigger.setAttribute("aria-disabled", disabled ? "true" : "false");
+    this.#trigger.setAttribute("aria-haspopup", "dialog");
+    this.#trigger.setAttribute("aria-expanded", this.#dialog?.open ? "true" : "false");
+    this.#trigger.setAttribute("aria-controls", this.#dialogId);
+    this.#trigger.removeAttribute("aria-hidden");
     if (labelledBy) {
       this.#trigger.setAttribute("aria-labelledby", labelledBy);
       this.#trigger.removeAttribute("aria-label");
@@ -273,11 +308,7 @@ class FigFillPicker extends HTMLElement {
   }
 
   #handleTriggerClick(e) {
-    if (
-      this.hasAttribute("disabled") &&
-      this.getAttribute("disabled") !== "false"
-    )
-      return;
+    if (this.#isDisabled()) return;
     e.stopPropagation();
     e.preventDefault();
     this.#openDialog();
@@ -285,11 +316,7 @@ class FigFillPicker extends HTMLElement {
 
   #handleTriggerKeydown(e) {
     if (e.key !== "Enter" && e.key !== " ") return;
-    if (
-      this.hasAttribute("disabled") &&
-      this.getAttribute("disabled") !== "false"
-    )
-      return;
+    if (this.#isDisabled()) return;
     e.preventDefault();
     e.stopPropagation();
     this.#openDialog();
@@ -315,9 +342,15 @@ class FigFillPicker extends HTMLElement {
           this.#color = parsed.color;
         }
       }
-      // Parse opacity (0-100) and convert to alpha (0-1)
-      if (parsed.opacity !== undefined) {
-        this.#color.a = parsed.opacity / 100;
+      // `alpha` is canonical (0-1); retain `opacity` (0-100) compatibility.
+      const parsedAlpha =
+        parsed.alpha !== undefined
+          ? Number(parsed.alpha)
+          : parsed.opacity !== undefined
+            ? Number(parsed.opacity) / 100
+            : undefined;
+      if (Number.isFinite(parsedAlpha)) {
+        this.#color.a = Math.max(0, Math.min(1, parsedAlpha));
       }
       // Gamut UI hidden for now — lock to sRGB.
       this.#gamut = "srgb";
@@ -416,19 +449,26 @@ class FigFillPicker extends HTMLElement {
   }
 
   #openDialog() {
+    if (this.#isDisabled()) return;
     if (!this.#dialog) {
       this.#createDialog();
     }
 
     this.#valueAtOpen = JSON.stringify(this.value);
+    this.#lastChangeValue = this.#valueAtOpen;
     this.#switchTab(this.#fillType, { emit: false });
 
     if (this.#swatch) this.#swatch.setAttribute("selected", "true");
 
     this.#dialog.open = true;
+    this.#syncTriggerA11y();
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    this.#scheduleFrame(() => {
+      const focusTarget = this.#dialog?.querySelector(
+        ".fig-fill-picker-close, .fig-fill-picker-type, fig-button, button, input, [tabindex='0']",
+      );
+      focusTarget?.focus?.();
+      this.#scheduleFrame(() => {
         this.#drawColorArea();
         this.#updateHandlePosition();
       });
@@ -440,7 +480,10 @@ class FigFillPicker extends HTMLElement {
   }
 
   close() {
-    if (this.#dialog) this.#dialog.open = false;
+    if (this.#dialog) {
+      this.#dialog.open = false;
+      this.#syncTriggerA11y();
+    }
   }
 
   #restoreCustomSlotContent() {
@@ -468,6 +511,13 @@ class FigFillPicker extends HTMLElement {
     this.#dialog = null;
     this.#webcamStart = null;
     this.#valueAtOpen = null;
+    this.#lastChangeValue = null;
+    this.#colorArea = null;
+    this.#colorAreaHandle = null;
+    this.#hueSlider = null;
+    this.#opacitySlider = null;
+    this.#syncingGradientBar = false;
+    this.#syncTriggerA11y();
   }
 
   #stopWebcam() {
@@ -497,6 +547,8 @@ class FigFillPicker extends HTMLElement {
 
     this.#dialog = document.createElement("dialog", { is: "fig-popup" });
     this.#dialog.setAttribute("is", "fig-popup");
+    this.#dialog.id = this.#dialogId;
+    this.#dialog.setAttribute("aria-label", this.#triggerLabel());
     this.#dialog.setAttribute("drag", "true");
     this.#dialog.setAttribute("handle", "fig-header");
     this.#dialog.setAttribute("autoresize", "false");
@@ -619,13 +671,19 @@ class FigFillPicker extends HTMLElement {
     const onDialogClose = () => {
       if (this.#swatch) this.#swatch.removeAttribute("selected");
       this.#stopWebcam();
-      if (
-        this.#valueAtOpen !== null &&
-        this.#valueAtOpen !== JSON.stringify(this.value)
-      ) {
+      const closingValue = JSON.stringify(this.value);
+      if (this.#lastChangeValue !== null && this.#lastChangeValue !== closingValue) {
         this.#emitChange();
       }
       this.#valueAtOpen = null;
+      this.#lastChangeValue = null;
+      this.#syncTriggerA11y();
+      const returnTarget = this.#trigger;
+      this.#scheduleFrame(() => {
+        if (returnTarget?.isConnected) {
+          HTMLElement.prototype.focus.call(returnTarget);
+        }
+      });
       this.dispatchEvent(new CustomEvent("close"));
     };
     this.#dialog.addEventListener("close", onDialogClose);
@@ -703,11 +761,11 @@ class FigFillPicker extends HTMLElement {
     // Update tab-specific UI after visibility change
     if (tabName === "gradient") {
       // Use RAF to ensure layout is complete before updating angle input
-      requestAnimationFrame(() => {
+      this.#scheduleFrame(() => {
         this.#updateGradientUI();
         const barInput = tab.querySelector(".fig-fill-picker-gradient-bar-input");
         barInput?.refreshLayout?.();
-        requestAnimationFrame(() => {
+        this.#scheduleFrame(() => {
           barInput?.refreshLayout?.();
         });
       });
@@ -717,6 +775,40 @@ class FigFillPicker extends HTMLElement {
 
     this.#updateSwatch();
     if (emit) this.#emitInput();
+  }
+
+  #refreshDialogUI() {
+    if (!this.#dialog?.open) return;
+    this.#switchTab(this.#fillType, { emit: false });
+
+    this.#drawColorArea();
+    this.#updateHandlePosition();
+    this.#updateColorInputs();
+    if (this.#hueSlider) this.#hueSlider.setAttribute("value", this.#color.h);
+    if (this.#opacitySlider) {
+      this.#opacitySlider.setAttribute("value", this.#color.a * 100);
+      this.#opacitySlider.setAttribute("color", this.#hsvToHex(this.#color));
+    }
+
+    this.#updateGradientUI();
+
+    const imageTab = this.#dialog.querySelector('[data-tab="image"]');
+    const imageMode = imageTab?.querySelector(".fig-fill-picker-scale-mode");
+    const imageScale = imageTab?.querySelector(".fig-fill-picker-scale");
+    const imagePreview = imageTab?.querySelector(".fig-fill-picker-image-preview");
+    if (imageMode) imageMode.value = this.#image.scaleMode;
+    if (imageScale) {
+      imageScale.setAttribute("value", this.#image.scale);
+      imageScale.style.display =
+        this.#image.scaleMode === "tile" ? "block" : "none";
+    }
+    if (imagePreview) this.#updateImagePreview(imagePreview);
+
+    const videoTab = this.#dialog.querySelector('[data-tab="video"]');
+    const videoMode = videoTab?.querySelector(".fig-fill-picker-scale-mode");
+    const videoPreview = videoTab?.querySelector(".fig-fill-picker-video-preview");
+    if (videoMode) videoMode.value = this.#video.scaleMode;
+    if (videoPreview) this.#updateVideoPreviewStyle(videoPreview);
   }
 
   // ============ SOLID TAB ============
@@ -729,6 +821,9 @@ class FigFillPicker extends HTMLElement {
         <canvas width="200" height="200"></canvas>
         <fig-handle
           aria-label="Color saturation and brightness"
+          role="slider"
+          aria-valuemin="0"
+          aria-valuemax="100"
           type="color"
           color="${this.#hsvToHex({ ...this.#color, a: 1 })}"
           data-no-color-picker
@@ -770,6 +865,7 @@ class FigFillPicker extends HTMLElement {
     // Setup color area
     this.#colorArea = container.querySelector("canvas");
     this.#colorAreaHandle = container.querySelector("fig-handle");
+    this.#syncColorAreaA11y();
     this.#drawColorArea();
     this.#updateHandlePosition();
     this.#setupColorAreaEvents();
@@ -900,12 +996,13 @@ class FigFillPicker extends HTMLElement {
 
   #updateHandlePosition(retryCount = 0) {
     if (!this.#colorAreaHandle || !this.#colorArea) return;
+    this.#syncColorAreaA11y();
 
     const rect = this.#colorArea.getBoundingClientRect();
 
     // If the canvas isn't visible yet (0 dimensions), schedule a retry (max 5 attempts)
     if ((rect.width === 0 || rect.height === 0) && retryCount < 5) {
-      requestAnimationFrame(() => this.#updateHandlePosition(retryCount + 1));
+      this.#scheduleFrame(() => this.#updateHandlePosition(retryCount + 1));
       return;
     }
 
@@ -919,6 +1016,19 @@ class FigFillPicker extends HTMLElement {
     );
   }
 
+  #syncColorAreaA11y() {
+    if (!this.#colorAreaHandle) return;
+    this.#colorAreaHandle.setAttribute(
+      "aria-valuenow",
+      String(Math.round(this.#color.v)),
+    );
+    this.#colorAreaHandle.setAttribute(
+      "aria-valuetext",
+      `Saturation ${Math.round(this.#color.s)}%, brightness ${Math.round(this.#color.v)}%`,
+    );
+    this.#colorAreaHandle.removeAttribute("aria-pressed");
+  }
+
   #updateColorFromAreaPosition(x, y, opts = {}) {
     const { updateHandle = true, emitInput = true, emitChange = false } = opts;
     this.#color.s = Math.max(0, Math.min(100, x * 100));
@@ -928,6 +1038,7 @@ class FigFillPicker extends HTMLElement {
         "color",
         this.#hsvToHex({ ...this.#color, a: 1 }),
       );
+      this.#syncColorAreaA11y();
     }
     if (updateHandle) this.#updateHandlePosition();
     this.#updateColorInputs();
@@ -1110,7 +1221,7 @@ class FigFillPicker extends HTMLElement {
 
     container.innerHTML = html;
     this.#wireColorInputEvents();
-    requestAnimationFrame(() => this.#updateColorInputs());
+    this.#scheduleFrame(() => this.#updateColorInputs());
   }
 
   #wireColorInputEvents() {
@@ -1919,7 +2030,7 @@ class FigFillPicker extends HTMLElement {
         if (stopFillPicker) {
           stopFillPicker.anchorElement = this.#dialog;
         } else {
-          requestAnimationFrame(() => {
+          this.#scheduleFrame(() => {
             const fp = stopColor.querySelector("fig-fill-picker");
             if (fp) fp.anchorElement = this.#dialog;
           });
@@ -2024,9 +2135,6 @@ class FigFillPicker extends HTMLElement {
         }" units="%" ${
           this.#image.scaleMode === "tile" ? "" : 'style="display: none;"'
         }></fig-input-number>
-        <fig-button class="fig-fill-picker-media-rotate" icon variant="ghost" aria-label="Rotate">
-          <fig-icon name="rotate"></fig-icon>
-        </fig-button>
       </fig-field>
       <fig-image class="fig-fill-picker-media-preview fig-fill-picker-image-preview" upload="true" label="Upload from computer" alt="Image fill preview" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true"></fig-image>
     `;
@@ -2187,9 +2295,6 @@ class FigFillPicker extends HTMLElement {
             <fig-select-option value="crop">Crop</fig-select-option>
           </fig-select-options>
         </fig-select>
-        <fig-button class="fig-fill-picker-media-rotate" icon variant="ghost" aria-label="Rotate">
-          <fig-icon name="rotate"></fig-icon>
-        </fig-button>
       </fig-field>
       <fig-media class="fig-fill-picker-media-preview fig-fill-picker-video-preview" type="video" upload="true" label="Upload from computer" aria-label="Video fill preview" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" controls muted="true" loop="true"></fig-media>
     `;
@@ -2246,12 +2351,12 @@ class FigFillPicker extends HTMLElement {
       </fig-field>
       <fig-video class="fig-fill-picker-webcam-preview" aria-label="Webcam preview" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true">
         <video class="fig-fill-picker-webcam-video" autoplay muted playsinline></video>
-        <div class="fig-fill-picker-webcam-status">
+        <div class="fig-fill-picker-webcam-status" role="status" aria-live="polite">
           <span>Camera access required</span>
         </div>
       </fig-video>
       <div class="fig-fill-picker-webcam-controls">
-        <fig-button class="fig-fill-picker-webcam-capture" variant="secondary" full>
+        <fig-button class="fig-fill-picker-webcam-capture" variant="secondary" full disabled>
           Capture
         </fig-button>
       </div>
@@ -2272,10 +2377,31 @@ class FigFillPicker extends HTMLElement {
     const cameraSelect = container.querySelector(
       ".fig-fill-picker-camera-select",
     );
+    const setCaptureReady = (ready) => {
+      if (ready) captureBtn.removeAttribute("disabled");
+      else captureBtn.setAttribute("disabled", "");
+    };
+    const updateFrameReadiness = () => {
+      const ready =
+        !!this.#webcam.stream &&
+        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+        video.videoWidth > 0 &&
+        video.videoHeight > 0;
+      setCaptureReady(ready);
+      if (ready) {
+        status.querySelector("span").textContent = "Camera ready";
+        status.style.display = "none";
+      }
+    };
+    video.addEventListener("loadedmetadata", updateFrameReadiness);
+    video.addEventListener("canplay", updateFrameReadiness);
 
     const startWebcam = async (deviceId = null) => {
       this.#stopWebcam();
       const requestId = this.#webcamRequestId;
+      setCaptureReady(false);
+      status.querySelector("span").textContent = "Starting camera";
+      status.style.display = "flex";
       try {
         const constraints = {
           video: deviceId ? { deviceId: { exact: deviceId } } : true,
@@ -2294,7 +2420,7 @@ class FigFillPicker extends HTMLElement {
         this.#webcam.stream = stream;
         video.srcObject = stream;
         video.style.display = "block";
-        status.style.display = "none";
+        updateFrameReadiness();
 
         // Enumerate cameras
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -2353,6 +2479,7 @@ class FigFillPicker extends HTMLElement {
         status.appendChild(messageElement);
         status.style.display = "flex";
         video.style.display = "none";
+        setCaptureReady(false);
       }
     };
     this.#webcamStart = startWebcam;
@@ -2379,8 +2506,10 @@ class FigFillPicker extends HTMLElement {
 
       if (this.#webcam.snapshot?.startsWith("blob:")) {
         URL.revokeObjectURL(this.#webcam.snapshot);
+        this.#ownedBlobUrls.delete(this.#webcam.snapshot);
       }
       this.#webcam.snapshot = URL.createObjectURL(blob);
+      this.#ownedBlobUrls.add(this.#webcam.snapshot);
       this.#image.url = this.#webcam.snapshot;
 
       const imagePreview = this.#dialog.querySelector(
@@ -2707,6 +2836,7 @@ class FigFillPicker extends HTMLElement {
 
   // ============ EVENT EMITTERS ============
   #emitInput() {
+    if (this.#isDisabled()) return;
     this.#updateSwatch();
     this.dispatchEvent(
       new CustomEvent("input", {
@@ -2717,6 +2847,8 @@ class FigFillPicker extends HTMLElement {
   }
 
   #emitChange() {
+    if (this.#isDisabled()) return;
+    this.#lastChangeValue = JSON.stringify(this.value);
     this.dispatchEvent(
       new CustomEvent("change", {
         bubbles: true,
@@ -2778,33 +2910,17 @@ class FigFillPicker extends HTMLElement {
       case "value":
         this.#parseValue();
         this.#updateSwatch();
-        if (this.#dialog) {
-          // Update dialog UI if open - but don't rebuild if user is dragging
-          if (!this.#isDraggingColor) {
-            // Just update the handle position and color inputs without rebuilding
-            this.#updateHandlePosition();
-            this.#updateColorInputs();
-            // Update hue slider
-            if (this.#hueSlider) {
-              this.#hueSlider.setAttribute("value", this.#color.h);
-            }
-            // Update opacity slider
-            if (this.#opacitySlider) {
-              this.#opacitySlider.setAttribute("value", this.#color.a * 100);
-              this.#opacitySlider.setAttribute(
-                "color",
-                this.#hsvToHex(this.#color),
-              );
-            }
-          }
+        if (this.#dialog?.open && !this.#isDraggingColor) {
+          this.#refreshDialogUI();
+          this.#lastChangeValue = JSON.stringify(this.value);
         }
         break;
       case "disabled":
         this.#syncTriggerA11y();
+        if (this.#isDisabled() && this.#dialog?.open) this.close();
         break;
       case "alpha":
-      case "mode":
-      case "experimental": {
+      case "mode": {
         if (!this.#dialog) break;
         const wasOpen = this.#dialog.open;
         this.#discardDialog();
@@ -2812,6 +2928,9 @@ class FigFillPicker extends HTMLElement {
         break;
       }
       case "aria-label":
+        if (this.#dialog) {
+          this.#dialog.setAttribute("aria-label", this.#triggerLabel());
+        }
       case "aria-labelledby":
       case "aria-describedby":
         this.#syncTriggerA11y();

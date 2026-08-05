@@ -145,7 +145,7 @@ export const figui3Sections: Section[] = [
     id: "dropdown",
     name: "Dropdown",
     group: "Core components",
-    description: "Select controls with native and modern dropdown behavior.",
+    description: "Native select controls with FigUI styling.",
     examples: [
       {
         id: "flat-options",
@@ -187,17 +187,6 @@ export const figui3Sections: Section[] = [
       <option value="v1">Marketing site v1</option>
       <option value="legacy">Legacy checkout</option>
     </optgroup>
-  </fig-dropdown>
-</div>`,
-      },
-      {
-        id: "modern",
-        name: "Modern",
-        markup: `<div class="prop-panel">
-  <fig-dropdown>
-    <option value="frame" selected>Frame</option>
-    <option value="group">Group</option>
-    <option value="component">Component</option>
   </fig-dropdown>
 </div>`,
       },

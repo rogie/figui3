@@ -800,6 +800,19 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
+        id: "with-toggle",
+        name: "With toggle",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Fill</label>
+    <fig-input-fill value='{"type":"solid","color":"#667eea"}' full></fig-input-fill>
+    <fig-button variant="ghost" type="toggle" icon aria-label="Hide fill" data-playground-ignore-controls="true" data-playground-show-source="true" onclick="const b=this,f=b.previousElementSibling,i=b.querySelector('fig-icon'),h=i.getAttribute('name')==='hidden';i.setAttribute('name',h?'visible':'hidden');b.setAttribute('aria-label',h?'Hide fill':'Show fill');b.toggleAttribute('selected',!h);f.toggleAttribute('disabled',!h);">
+      <fig-icon name="visible" size="small"></fig-icon>
+    </fig-button>
+  </fig-field>
+</div>`,
+      },
+      {
         id: "linear-gradient-cool",
         name: "Linear Gradient",
         markup: `<div class="prop-panel">
@@ -1412,6 +1425,97 @@ export const propkitSections: Section[] = [
     <label>Spreadsheet</label>
     <fig-input-file label="Upload spreadsheet" accepts=".xls,.xlsx,.csv" full></fig-input-file>
   </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-no-fields",
+    name: "No fields",
+    group: "Controls in dialogs",
+    description:
+      "A borderless dialog footer with primary and secondary actions.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Dialog</fig-button>
+  <dialog is="fig-dialog" title="Continue?" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
+    <fig-footer borderless>
+      <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+      <fig-button>Continue</fig-button>
+    </fig-footer>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-about",
+    name: "About",
+    group: "Controls in dialogs",
+    description:
+      "A simple informational dialog with text content and no controls.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open About</fig-button>
+  <dialog is="fig-dialog" title="About PropsKit" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
+    <fig-content padding>
+      <p>PropsKit is a collection of composable property controls for building compact, Figma-style interfaces with FigUI3.</p>
+    </fig-content>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "dialog-column-fields",
+    name: "Column fields",
+    group: "Controls in dialogs",
+    description:
+      "A dialog with vertically stacked field labels and inputs.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Column Fields</fig-button>
+  <dialog is="fig-dialog" title="Contact details" open handle="fig-header" position="center center" data-playground-hide-field style="width: 360px;">
+    <fig-content>
+      <hstack align="stretch" style="width: 100%;">
+        <fig-field direction="vertical" style="flex: 1; min-width: 0;">
+          <label>First name</label>
+          <fig-input-text value="Rogie" full></fig-input-text>
+        </fig-field>
+        <fig-field direction="vertical" style="flex: 1; min-width: 0;">
+          <label>Last name</label>
+          <fig-input-text value="King" full></fig-input-text>
+        </fig-field>
+      </hstack>
+      <hstack align="stretch" style="width: 100%;">
+        <fig-field direction="vertical" style="flex: 1; min-width: 0;">
+          <label>City</label>
+          <fig-input-text value="Austin" full></fig-input-text>
+        </fig-field>
+        <fig-field direction="vertical" style="flex: 1; min-width: 0;">
+          <label>State</label>
+          <fig-dropdown full>
+            <option selected>Texas</option>
+            <option>California</option>
+            <option>New York</option>
+          </fig-dropdown>
+        </fig-field>
+      </hstack>
+    </fig-content>
+    <fig-footer>
+      <fig-button variant="secondary" close-dialog>Cancel</fig-button>
+      <fig-button>Apply</fig-button>
+    </fig-footer>
+  </dialog>
 </div>`,
       },
     ],

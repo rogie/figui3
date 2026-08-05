@@ -253,7 +253,7 @@
   --bg-selected-active: #e5f4ff;
   --bg-tooltip: var(--figma-color-bg-menu);
   --color-tooltip: var(--figma-color-text);
-  --input-opacity-width: calc(3.5rem - 2px);
+  --input-opacity-width: calc(3.25rem - 2px);
 
   /* Transparent Backgrounds - use light-dark() */
   --figma-color-bordertranslucent: light-dark(
@@ -354,7 +354,7 @@
 
   /* Icons - colorless shapes for use with mask-image */
   --icon-16-chevron: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.87868 7.12132L8 9.24264L10.1213 7.12132' stroke='grey' stroke-linecap='round'/%3E%3C/svg%3E%0A");
-  --icon-16-checkmark: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.084 4.22266C11.2372 3.99292 11.5476 3.93084 11.7773 4.08398C12.0071 4.23716 12.0692 4.54758 11.916 4.77734L7.91602 10.7773C7.83292 10.902 7.6979 10.9833 7.54883 10.998C7.39993 11.0126 7.25229 10.9593 7.14648 10.8535L4.14648 7.85352C3.95126 7.65825 3.95123 7.34173 4.14648 7.14648C4.34174 6.95124 4.65825 6.95126 4.85352 7.14648L7.42188 9.71484L11.084 4.22266Z' fill='white'/%3E%3C/svg%3E%0A");
+  --icon-16-checkmark: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.5839 3.72266C11.7371 3.49298 12.0476 3.43085 12.2773 3.58399C12.5069 3.73716 12.569 4.04762 12.416 4.27735L7.41596 11.7773C7.33289 11.9019 7.19778 11.9833 7.04877 11.998C6.8999 12.0126 6.75223 11.9593 6.64642 11.8535L3.64642 8.85352C3.4512 8.65826 3.45119 8.34174 3.64642 8.14649C3.84169 7.95133 4.15822 7.95128 4.35346 8.14649L6.92182 10.7148L11.5839 3.72266Z' fill='white'/%3E%3C/svg%3E");
   --icon-16-reset: url("data:image/svg+xml,%3Csvg width='16' height='16' fill='none' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='black' fill-rule='evenodd' d='M6.354 2.146a.5.5 0 0 1 0 .708L5.207 4H8.5a5 5 0 1 1-5 5 .5.5 0 0 1 1 0 4 4 0 1 0 4-4H5.207l1.147 1.146a.5.5 0 1 1-.708.708l-2-2a.5.5 0 0 1 0-.708l2-2a.5.5 0 0 1 .708 0' clip-rule='evenodd'/%3E%3C/svg%3E");
   --icon-24-reset: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.22473 5.08203C8.41872 4.9541 8.68285 4.97586 8.85364 5.14648C9.0244 5.31725 9.046 5.58134 8.91809 5.77539L8.85364 5.85352L7.70715 7H12.0001C15.3136 7.00005 17.9999 9.68652 18.0001 13C18.0001 16.3137 15.3138 19 12.0001 19C8.68641 19 6.00012 16.3137 6.00012 13C6.00036 12.7241 6.22413 12.5 6.50012 12.5C6.77608 12.5 6.99989 12.7241 7.00012 13C7.00012 15.7614 9.2387 18 12.0001 18C14.7615 18 17.0001 15.7614 17.0001 13C16.9999 10.2388 14.7614 8.00005 12.0001 8H7.70715L8.85364 9.14648L8.91809 9.22461C9.04619 9.41859 9.02426 9.68264 8.85364 9.85352C8.68277 10.0244 8.41881 10.0461 8.22473 9.91797L8.14661 9.85352L6.14661 7.85352C5.95152 7.65824 5.9514 7.34169 6.14661 7.14648L8.14661 5.14648L8.22473 5.08203Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
   --icon-24-steppers: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.7245 6.08191C11.9186 5.95386 12.1826 5.97562 12.3534 6.14637L14.3534 8.14637L14.4179 8.22449C14.546 8.41852 14.5242 8.68253 14.3534 8.8534C14.1826 9.02426 13.9186 9.04601 13.7245 8.91785L13.6464 8.8534L11.9999 7.20691L10.3534 8.8534C10.1582 9.04866 9.84166 9.04866 9.6464 8.8534C9.45123 8.65813 9.45117 8.3416 9.6464 8.14637L11.6464 6.14637L11.7245 6.08191Z' fill='black'/%3E%3Cpath d='M13.7248 15.0822C13.9189 14.9541 14.1829 14.9758 14.3537 15.1467C14.5246 15.3176 14.5463 15.5815 14.4182 15.7756L14.3537 15.8537L12.3537 17.8537C12.1829 18.0246 11.9189 18.0463 11.7248 17.9182L11.6467 17.8537L9.64669 15.8537L9.58224 15.7756C9.45407 15.5815 9.47583 15.3176 9.64669 15.1467C9.81756 14.9758 10.0815 14.9541 10.2756 15.0822L10.3537 15.1467L12.0002 16.7932L13.6467 15.1467L13.7248 15.0822Z' fill='black' /%3E%3C/svg%3E%0A");
@@ -707,192 +707,6 @@ input[type="text"][list] {
   }
 }
 
-@supports (appearance: base-select) {
-  fig-dropdown[experimental~="modern"] {
-    &[type="dropdown"] {
-      select:before {
-        content: attr(aria-label);
-      }
-      option::checkmark {
-        display: none;
-      }
-      option {
-        padding-left: var(--spacer-3);
-      }
-    }
-    select {
-      --option-height: 1.5rem;
-      --max-width: 20rem;
-      @media (hover) and (pointer: fine) {
-        &,
-        &::picker(select) {
-          appearance: base-select;
-        }
-      }
-
-      padding-block: 0;
-      will-change: scale;
-
-      @supports (-webkit-touch-callout: none) {
-        font-size: 16px;
-      }
-
-      option::checkmark {
-        content: "";
-        display: block;
-        width: 1rem;
-        height: 1rem;
-        background-color: currentColor;
-        -webkit-mask-image: var(--icon-16-checkmark);
-        mask-image: var(--icon-16-checkmark);
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        -webkit-mask-size: contain;
-        mask-size: contain;
-      }
-
-      option {
-        display: flex;
-        gap: var(--spacer-1);
-        padding: 0 var(--spacer-4) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
-        font-weight: var(--body-medium-fontWeight);
-        color: var(--figma-color-text-menu);
-        position: relative;
-        & * {
-          color: inherit;
-        }
-        &[hidden] {
-          display: none;
-        }
-        &:before {
-          content: "";
-          display: block;
-          position: absolute;
-          inset: 0 var(--spacer-2);
-          border-radius: var(--radius-medium);
-          z-index: -1;
-        }
-        &:checked:before {
-          background-color: transparent;
-        }
-        &:not(:checked):before {
-          background-color: transparent;
-        }
-        &:not(:disabled) {
-          &:hover,
-          &:active,
-          &:focus-visible {
-            background-color: transparent;
-            outline: 0;
-            &:before {
-              background-color: var(--figma-color-bg-menu-hover);
-            }
-          }
-        }
-      }
-
-      optgroup {
-        color: var(--figma-color-text-menu-secondary);
-        text-align: left;
-        position: relative;
-        padding: 0 var(--spacer-1) 0 calc(var(--spacer-1) * 2 + var(--spacer-1));
-        font-weight: var(--body-medium-fontWeight);
-        &[label]:not([label=""]) {
-          padding-top: var(--spacer-2);
-          option:first-child {
-            margin-top: var(--spacer-2);
-          }
-        }
-        legend {
-          padding: var(--spacer-1, 0.3rem) var(--spacer-1, 1rem);
-        }
-        option {
-          margin: 0 calc(var(--spacer-1) * -1);
-          margin-left: calc((var(--spacer-1) * 2 + var(--spacer-1)) * -1);
-        }
-        &:not(:first-child):not(:first-of-type) {
-          margin-top: var(--spacer-2);
-          padding-top: var(--spacer-3);
-
-          &:before {
-            content: "";
-            display: block;
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 1px;
-            height: 1px;
-            background-color: var(--figma-color-border-menu);
-            margin-bottom: var(--spacer-2);
-          }
-        }
-      }
-      option[hidden="true"]:first-child + optgroup {
-        margin-top: 0;
-        padding-top: var(--spacer-2);
-        &:before {
-          display: none;
-        }
-      }
-
-      & > button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: var(--spacer-1, 0.25rem);
-        width: 100%;
-        border: 0;
-        background: transparent;
-        padding: 0;
-        margin: 0;
-        color: inherit;
-        font: inherit;
-        height: 100%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-
-        & > selectedcontent {
-          display: flex;
-          align-items: center;
-          gap: 0;
-          min-width: 0;
-          text-overflow: ellipsis;
-          overflow: hidden;
-          width: 100%;
-          &:has(> svg) {
-            margin-left: calc(var(--spacer-2) * -1);
-          }
-
-          & svg {
-            flex-shrink: 0;
-          }
-        }
-      }
-    }
-    ::picker-icon {
-      display: none;
-    }
-
-    ::picker(select) {
-      appearance: base-select;
-      color-scheme: dark;
-
-      /* Appearance/style */
-      scrollbar-width: thin;
-      outline: 0;
-      scrollbar-color: var(--figma-color-text-menu-tertiary)
-        var(--figma-color-bg-menu);
-      border-radius: var(--radius-large);
-      border: 0;
-      background-color: var(--figma-color-bg-menu);
-      padding: var(--spacer-2) 0;
-      box-shadow: var(--figma-elevation-400-menu-panel);
-    }
-  }
-}
 
 input[type="text"][list],
 select:not([multiple]) {
@@ -910,7 +724,7 @@ fig-dropdown {
 /* Native select popups in Chromium webviews do not reliably inherit themed
    option colors. Style only the popup rows so the closed control continues
    to resolve FigUI's light-dark tokens from the application color scheme. */
-fig-dropdown:not([experimental~="modern"]) > select {
+fig-dropdown > select {
   color: inherit;
 
   option,
@@ -1884,7 +1698,7 @@ fig-easing-curve {
   display: flex;
   flex-direction: column;
   gap: var(--spacer-2);
-  --stroke-width: 1;
+  --stroke-width: 2;
   --easing-bezier-handle-radius: 5;
   --easing-spring-handle-radius: 5;
   --easing-handle-fill: var(--figma-color-border-strong);
@@ -1923,14 +1737,14 @@ fig-easing-curve {
       cursor: ns-resize;
     }
   }
-  .fig-easing-curve-diagonal,
+  .fig-easing-curve-boundary,
   .fig-easing-curve-bounds,
   .fig-easing-curve-arm,
   .fig-easing-curve-path,
   .fig-easing-curve-target {
     pointer-events: none;
   }
-  .fig-easing-curve-diagonal {
+  .fig-easing-curve-boundary {
     stroke: var(--figma-color-bordertranslucent);
     stroke-width: var(--stroke-width);
     stroke-linejoin: round;
@@ -1972,11 +1786,8 @@ fig-easing-curve {
   &.spring-mode .fig-easing-curve-handle[data-handle="bounce"] .fig-handle-hit-area {
     cursor: ns-resize;
   }
-  .fig-easing-curve-endpoint {
-    fill: var(--easing-handle-fill);
-  }
-  .fig-easing-curve-dropdown {
-    option svg {
+  .fig-easing-curve-select {
+    [slot="prepend"] svg {
       vertical-align: middle;
     }
   }
@@ -2012,7 +1823,8 @@ fig-3d-rotate {
   }
 
   > fig-input-number {
-    flex: 1 0 3rem;
+    flex: 0 0 auto;
+    width: 100%;
   }
 
   .fig-3d-rotate-container {
@@ -2361,9 +2173,14 @@ fig-origin-grid {
   }
 
   .origin-values {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     gap: var(--spacer-2);
+
+    > fig-input-number {
+      flex: 1 1 0;
+      min-width: 0;
+      width: 0;
+    }
   }
 }
 
@@ -3450,6 +3267,10 @@ fig-header {
     margin-right: calc(var(--spacer-2) * -1);
   }
 
+  & > fig-input-text:only-child {
+    width: 100%;
+  }
+
   &>fig-dropdown,
   &>fig-select{
     &:first-child{
@@ -3640,6 +3461,10 @@ fig-content {
   }
 }
 
+fig-content[padding]:not([padding="false"]) {
+  padding-inline: var(--spacer-3);
+}
+
 vstack,
 .vstack,
 [vstack] {
@@ -3673,6 +3498,14 @@ hstack,
 
   &[align="stretch"] {
     --hstack-align: stretch;
+  }
+
+  & > fig-field:has(+ fig-field) {
+    --fig-field-right-padding: var(--spacer-1);
+  }
+
+  & > fig-field + fig-field {
+    --fig-field-left-padding: var(--spacer-1);
   }
 }
 
@@ -4197,6 +4030,43 @@ fig-field {
   padding: var(--fig-field-top-padding) 0 var(--fig-field-bottom-padding) 0;
   gap: 0;
   align-items: start;
+
+  &:not([direction="vertical"]):has(> label):has(
+      > :not(label):not(.fig-field-chevron):not(
+          fig-button[icon]:not([icon="false"])
+        )
+        + fig-button[icon]:not([icon="false"])
+    ) {
+    & > :not(label):not(.fig-field-chevron):not(
+        fig-button[icon]:not([icon="false"])
+      ):has(+ fig-button[icon]:not([icon="false"])) {
+      justify-self: start;
+      width: calc(100% - var(--spacer-4) - var(--spacer-1));
+    }
+
+    & > :not(label):not(.fig-field-chevron):not(
+        fig-button[icon]:not([icon="false"])
+      ):has(+ fig-button[icon]:not([icon="false"])[variant="ghost"]) {
+      width: calc(100% - var(--spacer-4));
+    }
+
+    & > :not(label):not(.fig-field-chevron):not(
+        fig-button[icon]:not([icon="false"])
+      )
+      + fig-button[icon]:not([icon="false"]) {
+      grid-area: input;
+      justify-self: end;
+      z-index: 1;
+    }
+
+    & > :not(label):not(.fig-field-chevron):not(
+        fig-button[icon]:not([icon="false"])
+      )
+      + fig-button[icon]:not([icon="false"])[variant="ghost"] {
+      margin-right: calc(var(--spacer-1) * -1);
+    }
+  }
+
 
   &[columns="half"] {
     --fig-field-label-ratio: 2fr;
@@ -5524,6 +5394,274 @@ fig-menu {
   & > fig-menu-item,
   & > fig-menu-separator {
     display: none;
+  }
+}
+
+/* Select — host chrome; trigger/listbox live in shadow (options slotted) */
+fig-select {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  min-width: 0;
+  height: var(--spacer-4);
+  border-radius: var(--radius-medium);
+  background-color: var(--figma-color-bg);
+  color: var(--figma-color-text);
+  box-shadow: inset 0 0 0 1px var(--figma-color-border);
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+    color: var(--figma-color-text-tertiary);
+
+    &::after {
+      background-color: var(--figma-color-icon-disabled);
+    }
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    mask-image: var(--icon-16-chevron);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    background-color: var(--figma-color-icon);
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+/*
+ * Internal listbox is a fig-popup inside fig-select's shadow, so document
+ * dialog[is="fig-popup"] rules don't apply. Expose part=listbox and mirror
+ * the menu-theme popup chrome (same tokens as components.css).
+ */
+fig-select::part(listbox) {
+  --z-index: 999999;
+  --fig-popup-radius: var(--radius-large);
+  --fig-popup-bg-color: var(--figma-color-bg-menu);
+
+  z-index: var(--z-index);
+  position: fixed;
+  /* Do not set inset here — ::part inset beats inline left/top and
+     prevents edge clamping from moving the menu back into view. */
+  margin: 0;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--fig-popup-radius);
+  background-color: var(--fig-popup-bg-color);
+  color: var(--figma-color-text-menu);
+  color-scheme: dark;
+  box-shadow: var(--figma-elevation-400-menu-panel);
+  /* width/min/max set in JS — ::part width rules override element.style. */
+  max-height: calc(100vh - 1rem);
+  height: max-content;
+}
+
+/* Panel is the scroller; overflow uses top/bottom buttons (fig-chooser pattern). */
+fig-select-options {
+  --fig-select-overflow-size: var(--spacer-4);
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: calc(100vh - 1rem);
+  /* No block padding — sticky overflow buttons must sit flush to the popup edges. */
+  padding: 0;
+  overflow: hidden auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  & > :not(.fig-overflow) {
+    flex-shrink: 0;
+  }
+
+  /* List breathing room (not on the scroller itself). */
+  & > :not(.fig-overflow):first-child,
+  & > .fig-overflow-start + :not(.fig-overflow) {
+    margin-top: var(--spacer-2);
+  }
+
+  & > :not(.fig-overflow):last-child,
+  & > :not(.fig-overflow):has(+ .fig-overflow-end) {
+    margin-bottom: var(--spacer-2);
+  }
+
+  & > .fig-overflow {
+    position: sticky;
+    left: 0;
+    flex: 0 0 var(--fig-select-overflow-size);
+    width: 100%;
+    height: var(--fig-select-overflow-size);
+    margin: 0;
+    z-index: 3;
+    /* Menu chrome — not option hover (bg-menu-hover is brand blue). */
+    color: var(--figma-color-text-menu);
+    background: var(--figma-color-bg-menu) !important;
+
+    &::before {
+      inset: 0;
+      border-radius: 0;
+      background: var(--figma-color-bg-menu) !important;
+    }
+
+    &:hover::before {
+      background: light-dark(
+          rgba(0, 0, 0, 0.06),
+          rgba(255, 255, 255, 0.08)
+        )
+        !important;
+    }
+
+    &:hover {
+      color: var(--figma-color-text-menu);
+    }
+  }
+
+  & > .fig-overflow-start {
+    order: -1;
+    top: 0;
+    margin-block-end: calc(-1 * var(--fig-select-overflow-size));
+
+    &::before {
+      border-radius: var(--radius-large) var(--radius-large) 0 0;
+    }
+
+    .fig-overflow-chevron {
+      rotate: 180deg;
+    }
+  }
+
+  & > .fig-overflow-end {
+    order: 1;
+    bottom: 0;
+    margin-block-start: calc(-1 * var(--fig-select-overflow-size));
+
+    &::before {
+      border-radius: 0 0 var(--radius-large) var(--radius-large);
+    }
+  }
+
+  & > fig-menu-separator {
+    --fig-menu-separator-color: var(--figma-color-border-menu);
+    --fig-menu-separator-label-color: var(--figma-color-text-menu-secondary);
+
+    /* Align label with option text (padding + checkmark column).
+       Negative margins on ::before must match this padding exactly so the
+       rule bleeds to the listbox edges (base rule uses --fig-menu-item-padding). */
+    &[label]:not([label=""]) {
+      padding-left: var(--spacer-5);
+      padding-right: var(--spacer-2);
+
+      &::before {
+        margin-inline: unset;
+        margin-left: calc(-1 * var(--spacer-5));
+        margin-right: calc(-1 * var(--spacer-2));
+      }
+    }
+  }
+}
+
+fig-select-option {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+  min-height: var(--spacer-4);
+  height: auto;
+  padding: var(--spacer-1) var(--spacer-2);
+  padding-right: var(--spacer-3);
+  border-radius: var(--radius-medium);
+  color: var(--figma-color-text-menu);
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+
+  &::before {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0 var(--spacer-2);
+    border-radius: var(--radius-medium);
+    z-index: -1;
+    background-color: transparent;
+  }
+
+  &::after {
+    content: "";
+    display: block;
+    flex: 0 0 1rem;
+    order: -1;
+    width: 1rem;
+    height: 1rem;
+    margin-left: var(--spacer-1);
+    margin-right: var(--spacer-1);
+    background-color: currentColor;
+    -webkit-mask-image: var(--icon-16-checkmark);
+    mask-image: var(--icon-16-checkmark);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    visibility: hidden;
+  }
+
+  & > [slot="prepend"] {
+    margin-top: calc(var(--spacer-1) * -1);
+    margin-bottom: calc(var(--spacer-1) * -1);
+    margin-right: var(--spacer-1);
+  }
+
+
+  & > :not([slot="prepend"]):not([slot="append"]) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  & > [slot="append"] {
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+    color: var(--figma-color-text-tertiary);
+  }
+
+  &:hover,
+  &:focus-visible {
+    outline: none;
+
+    &::before {
+      background-color: var(--figma-color-bg-menu-hover);
+    }
+  }
+
+  &[selected]:not([selected="false"])::after,
+  &[aria-selected="true"]::after {
+    visibility: visible;
+  }
+
+  &[disabled]:not([disabled="false"]),
+  &[aria-disabled="true"] {
+    opacity: 0.4;
+    pointer-events: none;
   }
 }
 
