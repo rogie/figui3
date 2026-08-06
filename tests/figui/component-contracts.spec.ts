@@ -1146,6 +1146,44 @@ test.describe("propskit delegated click behavior", () => {
       page.locator('propskit-switch fig-segment[value="off"]'),
     ).toHaveAttribute("selected", "true");
   });
+
+  test("does not interrupt native propskit slider dragging with delayed focus", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-slider label="Amount" value="25" min="0" max="100"></propskit-slider>';
+      const slider = root.querySelector("propskit-slider") as HTMLElement | null;
+      if (!slider) throw new Error("Missing propskit-slider");
+      slider.setAttribute("data-focus-calls", "0");
+      const nativeFocus = slider.focus.bind(slider);
+      slider.focus = (...args) => {
+        slider.setAttribute(
+          "data-focus-calls",
+          String(Number(slider.getAttribute("data-focus-calls")) + 1),
+        );
+        nativeFocus(...args);
+      };
+    });
+
+    const slider = page.locator("propskit-slider");
+    const range = slider.locator('input[type="range"]');
+    const box = await range.boundingBox();
+    if (!box) throw new Error("Missing range bounds");
+
+    await page.mouse.move(box.x + box.width * 0.25, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(50);
+    await expect(slider).toHaveAttribute("data-focus-calls", "0");
+
+    await page.mouse.move(box.x + box.width * 0.75, box.y + box.height / 2, {
+      steps: 5,
+    });
+    await expect(slider).not.toHaveAttribute("value", "25");
+    await page.mouse.up();
+  });
 });
 
 test.describe("dropdown keyboard behavior", () => {

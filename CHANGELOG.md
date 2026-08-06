@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.23.3]
+
+### Fixed
+
+- `propskit-slider` now defers delegated focus until pointer release so Chrome’s native range drag remains active.
+
 ## [6.23.2]
 
 ### Changed

@@ -1977,9 +1977,6 @@ class PropskitSlider extends HTMLElement {
 
   #handleElasticPointerDown(event) {
     if (event.button !== 0 || figLabBooleanAttribute(this, "disabled")) return;
-    if (!event.target?.closest?.("fig-input-number, fig-menu")) {
-      this.#queueRangeFocus();
-    }
     if (this.getAttribute("elastic") === "false") return;
     if (event.target?.closest?.("fig-input-number")) return;
     const rangeInput =
@@ -2031,8 +2028,12 @@ class PropskitSlider extends HTMLElement {
     ) {
       return;
     }
+    const shouldFocus =
+      event?.type === "pointerup" ||
+      (event?.type === "pointermove" && event.buttons === 0);
     this.#stopElasticTracking();
     this.#resetElasticPull();
+    if (shouldFocus) this.#queueRangeFocus();
   }
 
   #stopElasticTracking() {
