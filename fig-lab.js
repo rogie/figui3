@@ -1685,6 +1685,10 @@ class PropskitSlider extends HTMLElement {
 
         for (const mutation of mutations) {
           if (mutation.type === "attributes") {
+            if (mutation.attributeName === "value") {
+              this.#pushExternalValueToSlider();
+              continue;
+            }
             if (
               mutation.attributeName &&
               this.#ignoredSliderAttrs.has(mutation.attributeName)
@@ -1822,7 +1826,9 @@ class PropskitSlider extends HTMLElement {
     if (!this.#slider) return;
     const hostAttrs = this.#getForwardedSliderAttrNames();
 
-    const nextManaged = new Set(hostAttrs.filter((name) => name !== "text"));
+    const nextManaged = new Set(
+      hostAttrs.filter((name) => name !== "text" && name !== "value"),
+    );
 
     for (const attrName of this.#managedSliderAttrs) {
       if (!nextManaged.has(attrName)) {
@@ -1831,7 +1837,7 @@ class PropskitSlider extends HTMLElement {
     }
 
     for (const attrName of hostAttrs) {
-      if (attrName === "text") continue;
+      if (attrName === "text" || attrName === "value") continue;
       const value = this.getAttribute(attrName) ?? "";
       if (this.#slider.getAttribute(attrName) !== value) {
         this.#slider.setAttribute(attrName, value);
@@ -1868,7 +1874,16 @@ class PropskitSlider extends HTMLElement {
     }
 
     this.#managedSliderAttrs = nextManaged;
+    this.#pushExternalValueToSlider();
     this.#queueSteppersSync();
+  }
+
+  #pushExternalValueToSlider() {
+    if (!this.#slider) return;
+    const next = this.getAttribute("value") ?? "";
+    if (String(this.#slider.value) !== next) {
+      this.#slider.value = next;
+    }
   }
 
   #getForwardedSliderAttrNames() {
@@ -2259,7 +2274,10 @@ class PropskitSlider extends HTMLElement {
         ? event.detail
         : this.#slider?.value;
     if (this.#slider?.value !== undefined) {
-      this.setAttribute("value", String(this.#slider.value));
+      const next = String(this.#slider.value);
+      if (this.getAttribute("value") !== next) {
+        this.setAttribute("value", next);
+      }
     }
     this.dispatchEvent(
       new CustomEvent(type, {

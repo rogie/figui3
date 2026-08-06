@@ -1184,6 +1184,120 @@ test.describe("propskit delegated click behavior", () => {
     await expect(slider).not.toHaveAttribute("value", "25");
     await page.mouse.up();
   });
+
+  test("reflects scrub values without re-entering full slider attribute sync", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-slider label="Amount" value="10" min="0" max="100"></propskit-slider>';
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("propskit-slider");
+      const slider = host?.querySelector("fig-slider") as
+        | (HTMLElement & { value: string })
+        | null;
+      const range = slider?.querySelector('input[type="range"]');
+      if (!host || !slider || !range) throw new Error("Missing slider controls");
+
+      let innerValueWrites = 0;
+      const nativeSetAttribute = slider.setAttribute.bind(slider);
+      slider.setAttribute = (name, value) => {
+        if (name === "value") innerValueWrites += 1;
+        nativeSetAttribute(name, value);
+      };
+
+      for (let value = 20; value <= 60; value += 10) {
+        range.value = String(value);
+        range.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      await Promise.resolve();
+      await new Promise(requestAnimationFrame);
+
+      const reflected = {
+        hostValue: host.getAttribute("value"),
+        sliderValue: slider.value,
+        rangeValue: range.value,
+        innerValueWrites,
+      };
+
+      host.setAttribute("value", "80");
+      await Promise.resolve();
+      await new Promise(requestAnimationFrame);
+
+      return {
+        reflected,
+        external: {
+          hostValue: host.getAttribute("value"),
+          sliderValue: slider.value,
+          rangeValue: range.value,
+        },
+      };
+    });
+
+    expect(state).toEqual({
+      reflected: {
+        hostValue: "60",
+        sliderValue: "60",
+        rangeValue: "60",
+        innerValueWrites: 5,
+      },
+      external: {
+        hostValue: "80",
+        sliderValue: "80",
+        rangeValue: "80",
+      },
+    });
+  });
+
+  test("updates fig-slider constraints in place during interaction", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<fig-slider value="50" min="0" max="100" step="1" units="px" text="true"></fig-slider>';
+      await new Promise(requestAnimationFrame);
+
+      const slider = root.querySelector("fig-slider");
+      const before = slider?.querySelector('input[type="range"]');
+      if (!slider || !before) throw new Error("Missing fig-slider");
+      before.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+      slider.setAttribute("min", "0.0");
+      slider.setAttribute("max", "200");
+      slider.setAttribute("step", "2");
+      slider.setAttribute("units", "rem");
+      slider.setAttribute("text", "false");
+
+      const during = slider.querySelector('input[type="range"]');
+      const unitsDuring = slider
+        .querySelector("fig-input-number")
+        ?.getAttribute("units");
+      before.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      const after = slider.querySelector('input[type="range"]');
+      return {
+        sameRangeDuringInteraction: before === during,
+        regeneratedAfterRelease: before !== after,
+        min: after?.min,
+        max: after?.max,
+        step: after?.step,
+        unitsDuring,
+        hasTextInput: Boolean(slider.querySelector("fig-input-number")),
+      };
+    });
+
+    expect(state).toEqual({
+      sameRangeDuringInteraction: true,
+      regeneratedAfterRelease: true,
+      min: "0",
+      max: "200",
+      step: "2",
+      unitsDuring: "rem",
+      hasTextInput: false,
+    });
+  });
 });
 
 test.describe("dropdown keyboard behavior", () => {

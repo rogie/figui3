@@ -6282,6 +6282,7 @@ figDefineElement("fig-select", FigSelect);
  */
 class FigSlider extends HTMLElement {
   #isInteracting = false;
+  #pendingRegeneration = false;
   #showEmptyTextValue = false;
   #isSyncingValueAttribute = false;
   #value = "";
@@ -6347,6 +6348,10 @@ class FigSlider extends HTMLElement {
     };
     this.#boundRangePointerUp = () => {
       this.#isInteracting = false;
+      if (this.#pendingRegeneration && this.isConnected) {
+        this.#pendingRegeneration = false;
+        this.#regenerateInnerHTML();
+      }
     };
   }
 
@@ -6616,6 +6621,7 @@ class FigSlider extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.#pendingRegeneration = false;
     if (this.input) {
       this.input.removeEventListener("input", this.#boundHandleInput);
       this.input.removeEventListener("change", this.#boundHandleChange);
@@ -6828,6 +6834,62 @@ class FigSlider extends HTMLElement {
     }
   }
 
+  #syncRangeConstraint(name, rawValue) {
+    if (!this.input) return;
+    const defaults = this.#typeDefaults[this.type] || this.#typeDefaults.range;
+    const parsed =
+      rawValue === null || String(rawValue).trim() === ""
+        ? defaults[name]
+        : Number(rawValue);
+    let next = Number.isFinite(parsed) ? parsed : defaults[name];
+    if (name === "step" && !(next > 0)) {
+      next = defaults.step > 0 ? defaults.step : 1;
+    }
+    if (this[name] === next && this.input[name] === String(next)) return;
+
+    this[name] = next;
+    this.input[name] = String(next);
+    if (name === "min") {
+      this.input.setAttribute("aria-valuemin", String(next));
+    } else if (name === "max") {
+      this.input.setAttribute("aria-valuemax", String(next));
+    }
+    if (this.figInputNumber) {
+      this.figInputNumber.setAttribute(name, String(next));
+    }
+    if (!this.hasAttribute("default") && this.type !== "delta") {
+      this.default = this.min;
+    }
+    this.value = this.#normalizeSliderValue(this.value);
+    this.#syncProperties();
+    this.#syncStepperDatalist();
+  }
+
+  #syncStepperDatalist() {
+    if (this.type !== "stepper" || !this.datalist) return;
+    const steps = Math.min(
+      1001,
+      Math.max(0, Math.floor((this.max - this.min) / this.step) + 1),
+    );
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < steps; i++) {
+      const option = document.createElement("option");
+      option.setAttribute("value", this.min + i * this.step);
+      fragment.append(option);
+    }
+    this.datalist.replaceChildren(fragment);
+    this.input.setAttribute("list", this.datalist.id);
+  }
+
+  #regenerateWhenIdle() {
+    if (this.#isInteracting) {
+      this.#pendingRegeneration = true;
+      return;
+    }
+    this.#pendingRegeneration = false;
+    this.#regenerateInnerHTML();
+  }
+
   static get observedAttributes() {
     return [
       "value",
@@ -6862,6 +6924,7 @@ class FigSlider extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
     if (name === "value" && this.#isSyncingValueAttribute) return;
     if (this.input) {
       switch (name) {
@@ -6922,15 +6985,26 @@ class FigSlider extends HTMLElement {
         case "min":
         case "max":
         case "step":
+          this.#syncRangeConstraint(name, newValue);
+          break;
+        case "units":
+          this.units = newValue || "";
+          if (this.figInputNumber) {
+            if (this.units) {
+              this.figInputNumber.setAttribute("units", this.units);
+            } else {
+              this.figInputNumber.removeAttribute("units");
+            }
+          }
+          break;
         case "type":
         case "variant":
-        case "units":
-          this[name] = newValue;
-          this.#regenerateInnerHTML();
+          if (!this.#isInteracting) this[name] = newValue;
+          this.#regenerateWhenIdle();
           break;
         case "text":
-          this.text = newValue !== "false";
-          this.#regenerateInnerHTML();
+          if (!this.#isInteracting) this.text = newValue !== "false";
+          this.#regenerateWhenIdle();
           break;
         case "aria-label":
         case "aria-labelledby":

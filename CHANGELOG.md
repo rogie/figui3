@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.23.4]
+
+### Fixed
+
+- `propskit-slider` now reflects scrub values without re-running full attribute and focus synchronization.
+- `fig-slider` updates bounds and units in place and defers structural regeneration until pointer release.
+
 ## [6.23.3]
 
 ### Fixed
