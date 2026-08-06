@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.23.0]
+
+### Added
+
+- Added viewport-bounded top and bottom overflow controls to `fig-menu`, with paging, keyboard scrolling, and reconnect-safe behavior.
+- Added core playground examples for `fig-select`, icon-triggered menus, and overflowing menus.
+
+### Changed
+
+- Shared vertical overflow helpers and menu chrome between `fig-select` and `fig-menu`.
+- Moved the `fig-select` playground documentation from Lab to FigUI3 core.
+
+### Fixed
+
+- Regular menu separator labels now align with menu items while select separators retain checkmark-column alignment.
+- Header trailing icon menus now use the same edge alignment as direct icon buttons.
+
 ## [6.22.0]
 
 ### Added

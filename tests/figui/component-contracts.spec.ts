@@ -4300,6 +4300,82 @@ test.describe("remaining accessibility contracts", () => {
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
+  test("long menus page, keyboard-scroll, stay in viewport, and reconnect cleanly", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const items = Array.from(
+        { length: 24 },
+        (_, index) =>
+          `<fig-menu-item value="${index + 1}">Command ${index + 1}</fig-menu-item>`,
+      ).join("");
+      root.innerHTML = `
+        <fig-menu id="long-menu" style="position:fixed;left:8px;top:8px">
+          <fig-button fig-menu-trigger>Commands</fig-button>
+          <fig-menu-separator label="Commands"></fig-menu-separator>
+          ${items}
+        </fig-menu>
+      `;
+    });
+
+    const menu = page.locator("#long-menu");
+    const trigger = menu.locator("[fig-menu-trigger]");
+    const popup = menu.locator('dialog[is="fig-popup"]');
+    const panel = menu.locator(".fig-menu-options");
+    const up = panel.locator('[data-fig-menu-nav="start"]');
+    const down = panel.locator('[data-fig-menu-nav="end"]');
+
+    await trigger.click();
+    await expect(menu).toHaveAttribute("open");
+    await page.waitForTimeout(50);
+    await expect(up).toHaveCSS("opacity", "0");
+    await expect(down).toHaveCSS("opacity", "1");
+    const leftPadding = await menu.evaluate((element) => {
+      const item = element.querySelector("fig-menu-item");
+      const separator = element.querySelector("fig-menu-separator");
+      return {
+        item: item ? getComputedStyle(item).paddingLeft : null,
+        separator: separator ? getComputedStyle(separator).paddingLeft : null,
+      };
+    });
+    expect(leftPadding.separator).toBe(leftPadding.item);
+
+    const bounds = await popup.evaluate((dialog) => {
+      const rect = dialog.getBoundingClientRect();
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        viewportHeight: window.visualViewport?.height ?? window.innerHeight,
+      };
+    });
+    expect(bounds.top).toBeGreaterThanOrEqual(7.5);
+    expect(bounds.bottom).toBeLessThanOrEqual(bounds.viewportHeight - 7.5);
+
+    await down.click();
+    await expect
+      .poll(() => panel.evaluate((element) => element.scrollTop))
+      .toBeGreaterThan(0);
+    await expect(up).toHaveCSS("opacity", "1");
+
+    await trigger.focus();
+    await page.keyboard.press("End");
+    await expect(menu.locator('fig-menu-item[value="24"]')).toBeFocused();
+    await expect
+      .poll(() => panel.evaluate((element) => element.scrollTop))
+      .toBeGreaterThan(0);
+
+    await menu.evaluate((element) => {
+      const parent = element.parentElement;
+      element.remove();
+      parent?.appendChild(element);
+    });
+    await expect(menu.locator('[data-fig-menu-nav]')).toHaveCount(2);
+    await expect(menu.locator(".fig-menu-options")).toHaveCount(1);
+  });
+
   test("fill, loading, handle, color-tip, and toast expose accessible state", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

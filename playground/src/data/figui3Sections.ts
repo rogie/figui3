@@ -193,6 +193,115 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
+    id: "select",
+    name: "Select",
+    group: "Core components",
+    description:
+      "A dropdown-styled select. Author options inside fig-select-options, or pass an options attribute (comma / JSON, same as fig-options). Overflow uses top/bottom buttons.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-select value="center" label="Align">
+    <fig-select-options>
+      <fig-select-option value="left">Left</fig-select-option>
+      <fig-select-option value="center">Center</fig-select-option>
+      <fig-select-option value="right">Right</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "options-attr",
+        name: "Options attribute",
+        markup: `<div class="prop-panel">
+  <fig-select label="Align" value="Center" options="Left,Center,Right"></fig-select>
+</div>`,
+      },
+      {
+        id: "full",
+        name: "Full width",
+        markup: `<div class="prop-panel">
+  <fig-select value="multiply" full label="Blend">
+    <fig-select-options>
+      <fig-select-option value="normal">Normal</fig-select-option>
+      <fig-select-option value="multiply">Multiply</fig-select-option>
+      <fig-select-option value="screen">Screen</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "many-options",
+        name: "Many options",
+        markup: `<div class="prop-panel">
+  <fig-select value="overlay" label="Blend">
+    <fig-select-options>
+      <fig-select-option value="normal">Normal</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="darken">Darken</fig-select-option>
+      <fig-select-option value="multiply">Multiply</fig-select-option>
+      <fig-select-option value="color-burn">Color burn</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="lighten">Lighten</fig-select-option>
+      <fig-select-option value="screen">Screen</fig-select-option>
+      <fig-select-option value="color-dodge">Color dodge</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="overlay">Overlay</fig-select-option>
+      <fig-select-option value="soft-light">Soft light</fig-select-option>
+      <fig-select-option value="hard-light">Hard light</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="difference">Difference</fig-select-option>
+      <fig-select-option value="exclusion">Exclusion</fig-select-option>
+      <fig-menu-separator></fig-menu-separator>
+      <fig-select-option value="hue">Hue</fig-select-option>
+      <fig-select-option value="saturation">Saturation</fig-select-option>
+      <fig-select-option value="color">Color</fig-select-option>
+      <fig-select-option value="luminosity">Luminosity</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "grouped",
+        name: "Grouped items",
+        markup: `<div class="prop-panel">
+  <fig-select value="multiply" label="Blend">
+    <fig-select-options>
+      <fig-select-option value="normal">Normal</fig-select-option>
+      <fig-menu-separator label="Darken"></fig-menu-separator>
+      <fig-select-option value="darken">Darken</fig-select-option>
+      <fig-select-option value="multiply">Multiply</fig-select-option>
+      <fig-select-option value="color-burn">Color burn</fig-select-option>
+      <fig-menu-separator label="Lighten"></fig-menu-separator>
+      <fig-select-option value="lighten">Lighten</fig-select-option>
+      <fig-select-option value="screen">Screen</fig-select-option>
+      <fig-select-option value="color-dodge">Color dodge</fig-select-option>
+      <fig-menu-separator label="Contrast"></fig-menu-separator>
+      <fig-select-option value="overlay">Overlay</fig-select-option>
+      <fig-select-option value="soft-light">Soft light</fig-select-option>
+      <fig-select-option value="hard-light">Hard light</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "disabled",
+        name: "Disabled",
+        markup: `<div class="prop-panel">
+  <fig-select value="center" disabled label="Align">
+    <fig-select-options>
+      <fig-select-option value="left">Left</fig-select-option>
+      <fig-select-option value="center">Center</fig-select-option>
+      <fig-select-option value="right">Right</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "fill-picker",
     name: "Fill Picker",
     group: "Core components",
@@ -1110,6 +1219,46 @@ export const figui3Sections: Section[] = [
     <fig-menu-item value="paste">Paste</fig-menu-item>
     <fig-menu-separator></fig-menu-separator>
     <fig-menu-item value="delete">Delete</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
+      {
+        id: "icon-button",
+        name: "Icon button",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom right">
+    <fig-button variant="ghost" icon fig-menu-trigger aria-label="More actions">
+      <fig-icon name="more"></fig-icon>
+    </fig-button>
+    <fig-menu-item value="rename">Rename</fig-menu-item>
+    <fig-menu-item value="duplicate">Duplicate</fig-menu-item>
+    <fig-menu-separator></fig-menu-separator>
+    <fig-menu-item value="delete">Delete</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
+      {
+        id: "overflow",
+        name: "Overflow",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left">
+    <fig-button variant="secondary" fig-menu-trigger>Insert</fig-button>
+    <fig-menu-item value="frame">Frame</fig-menu-item>
+    <fig-menu-item value="section">Section</fig-menu-item>
+    <fig-menu-item value="slice">Slice</fig-menu-item>
+    <fig-menu-separator label="Shape"></fig-menu-separator>
+    <fig-menu-item value="rectangle">Rectangle</fig-menu-item>
+    <fig-menu-item value="line">Line</fig-menu-item>
+    <fig-menu-item value="arrow">Arrow</fig-menu-item>
+    <fig-menu-item value="ellipse">Ellipse</fig-menu-item>
+    <fig-menu-item value="polygon">Polygon</fig-menu-item>
+    <fig-menu-item value="star">Star</fig-menu-item>
+    <fig-menu-separator label="Media"></fig-menu-separator>
+    <fig-menu-item value="image">Image</fig-menu-item>
+    <fig-menu-item value="video">Video</fig-menu-item>
+    <fig-menu-item value="audio">Audio</fig-menu-item>
+    <fig-menu-item value="document">Document</fig-menu-item>
+    <fig-menu-item value="link">Link</fig-menu-item>
   </fig-menu>
 </div>`,
       },

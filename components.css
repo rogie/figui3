@@ -3047,6 +3047,12 @@ dialog[is="fig-popup"] {
     padding: var(--spacer-2) 0;
     min-width: 6rem;
     box-shadow: var(--figma-elevation-100);
+
+    &.fig-menu-popup {
+      max-height: calc(100vh - 1rem);
+      padding: 0;
+      overflow: hidden;
+    }
   }
 
   &[variant="tooltip"],
@@ -3263,7 +3269,9 @@ fig-header {
     --fig-header-height: var(--spacer-5);
   }
 
-  fig-button[icon]:not([icon="false"])[variant="ghost"]:not(fig-input-text fig-button) {
+  & > fig-button:last-child[icon]:not([icon="false"])[variant="ghost"],
+  & > fig-tooltip:last-child > fig-button[icon]:not([icon="false"])[variant="ghost"],
+  & > fig-menu:last-child > fig-button[fig-menu-trigger][icon]:not([icon="false"])[variant="ghost"] {
     margin-right: calc(var(--spacer-2) * -1);
   }
 
@@ -5470,9 +5478,10 @@ fig-select::part(listbox) {
   height: max-content;
 }
 
-/* Panel is the scroller; overflow uses top/bottom buttons (fig-chooser pattern). */
-fig-select-options {
-  --fig-select-overflow-size: var(--spacer-4);
+/* Vertical option panels own their scroller and shared top/bottom paging buttons. */
+fig-select-options,
+.fig-menu-options {
+  --fig-vertical-overflow-size: var(--spacer-4);
 
   box-sizing: border-box;
   display: flex;
@@ -5508,9 +5517,9 @@ fig-select-options {
   & > .fig-overflow {
     position: sticky;
     left: 0;
-    flex: 0 0 var(--fig-select-overflow-size);
+    flex: 0 0 var(--fig-vertical-overflow-size);
     width: 100%;
-    height: var(--fig-select-overflow-size);
+    height: var(--fig-vertical-overflow-size);
     margin: 0;
     z-index: 3;
     /* Menu chrome — not option hover (bg-menu-hover is brand blue). */
@@ -5539,7 +5548,7 @@ fig-select-options {
   & > .fig-overflow-start {
     order: -1;
     top: 0;
-    margin-block-end: calc(-1 * var(--fig-select-overflow-size));
+    margin-block-end: calc(-1 * var(--fig-vertical-overflow-size));
 
     &::before {
       border-radius: var(--radius-large) var(--radius-large) 0 0;
@@ -5553,29 +5562,25 @@ fig-select-options {
   & > .fig-overflow-end {
     order: 1;
     bottom: 0;
-    margin-block-start: calc(-1 * var(--fig-select-overflow-size));
+    margin-block-start: calc(-1 * var(--fig-vertical-overflow-size));
 
     &::before {
       border-radius: 0 0 var(--radius-large) var(--radius-large);
     }
   }
 
-  & > fig-menu-separator {
-    --fig-menu-separator-color: var(--figma-color-border-menu);
-    --fig-menu-separator-label-color: var(--figma-color-text-menu-secondary);
+}
 
-    /* Align label with option text (padding + checkmark column).
-       Negative margins on ::before must match this padding exactly so the
-       rule bleeds to the listbox edges (base rule uses --fig-menu-item-padding). */
-    &[label]:not([label=""]) {
-      padding-left: var(--spacer-5);
-      padding-right: var(--spacer-2);
+fig-select-options > fig-menu-separator {
+  /* Align labels with select option text after the checkmark column. */
+  &[label]:not([label=""]) {
+    padding-left: var(--spacer-5);
+    padding-right: var(--spacer-2);
 
-      &::before {
-        margin-inline: unset;
-        margin-left: calc(-1 * var(--spacer-5));
-        margin-right: calc(-1 * var(--spacer-2));
-      }
+    &::before {
+      margin-inline: unset;
+      margin-left: calc(-1 * var(--spacer-5));
+      margin-right: calc(-1 * var(--spacer-2));
     }
   }
 }
