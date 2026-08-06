@@ -2,14 +2,14 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import SandboxApp from "./SandboxApp";
 import TestApp from "./TestApp";
+import "./App.css";
 
 type PlaygroundMode =
   | "propkit"
   | "figui3"
   | "lab"
   | "sandbox"
-  | "tests"
-  | "quickstart";
+  | "tests";
 
 function normalizePathname(pathname: string): string {
   if (pathname.length > 1 && pathname.endsWith("/")) {
@@ -20,12 +20,6 @@ function normalizePathname(pathname: string): string {
 
 function resolveModeFromPath(pathname: string): PlaygroundMode {
   const normalized = normalizePathname(pathname);
-  if (
-    normalized === "/propkit/quickstart" ||
-    normalized === "/propskit/quickstart"
-  ) {
-    return "quickstart";
-  }
   if (normalized === "/propkit/lab" || normalized === "/propskit/lab") {
     return "lab";
   }
@@ -47,10 +41,6 @@ function resolveModeFromPath(pathname: string): PlaygroundMode {
 }
 
 function applyTitleForMode(mode: PlaygroundMode) {
-  if (mode === "quickstart") {
-    document.title = "PropsKit Quickstart — blank host embed test";
-    return;
-  }
   if (mode === "propkit") {
     document.title =
       "PropsKit playground: A framework-agnostic, opinionated set of property controls for Figma plugins";
@@ -113,21 +103,6 @@ const bootstrap = async () => {
   const mode = resolveModeFromPath(window.location.pathname);
   const appRoot = document.getElementById("app")!;
   appRoot.dataset.mode = mode;
-
-  if (mode === "quickstart") {
-    // Blank host page: only the PropsKit pair (no App.css / fig.css on document).
-    // Dynamic import so QuickstartApp.css never leaks into /propskit or other modes.
-    await import("../../dist/propskit.css");
-    const propskit = await import("../../propskit.js");
-    window.createPropsKit = propskit.createPropsKit;
-    window.applyFiguiTheme = propskit.applyFiguiTheme;
-    const { default: QuickstartApp } = await import("./QuickstartApp");
-    applyTitleForMode(mode);
-    createRoot(appRoot).render(<QuickstartApp />);
-    return;
-  }
-
-  await import("./App.css");
 
   if (mode !== "sandbox") {
     await import("../../fig.css");

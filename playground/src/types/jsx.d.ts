@@ -24,7 +24,6 @@ declare module "react" {
       "propskit-switch": FigAttrs;
       "propskit-text": FigAttrs;
       "propskit-group": FigAttrs;
-      "fig-panel": FigAttrs;
       "fig-select": FigAttrs;
       "fig-select-options": FigAttrs;
       "fig-select-option": FigAttrs;

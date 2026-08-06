@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.23.1]
+
+### Changed
+
+- Removed unintended standalone package entry points, generated bundles, isolation tests, and quickstart artifacts.
+
 ## [6.23.0]
 
 ### Added
@@ -42,14 +48,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Custom elements now register idempotently, preventing duplicate-registration errors when FigUI modules are re-evaluated or imported alongside PropsKit.
-- PropsKit, Lab, and Editor builds now share module imports instead of embedding duplicate component registries.
+- Custom elements now register idempotently, preventing duplicate-registration errors when FigUI modules are re-evaluated together.
 
 ## [6.21.0]
 
 ### Added
 
-- PropsKit embed entry points (`propskit.js`, `propskit.css`) with a config-driven vanilla API, type definitions, scoped styling, theme-aware overlays, and quickstart examples.
 - `fig-interpolation-swatch` for compact linear and polar gradient interpolation previews, with small and large sizes.
 - HSL gradient interpolation with shorter, longer, increasing, and decreasing hue paths.
 - Gradient opacity editing in `fig-input-fill`.
@@ -63,7 +67,6 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Gradient previews and interpolation swatches stay synchronized when stops, colors, positions, or interpolation settings change.
-- Portaled popups inherit their PropsKit theme without restyling the host page.
 - Empty video media disables playback controls until a playable source is available.
 
 ## [6.20.2]

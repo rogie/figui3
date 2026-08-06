@@ -282,7 +282,7 @@ function figUniqueId() {
 }
 
 /** Zero-size portal for fixed overlays so they never affect body layout metrics. */
-function figGetOverlayRoot(source) {
+function figGetOverlayRoot() {
   if (!document.body) return null;
   const attr = "data-figui-overlay-root";
   let root = document.body.querySelector(`:scope > [${attr}]`);
@@ -291,38 +291,7 @@ function figGetOverlayRoot(source) {
     root.setAttribute(attr, "");
     document.body.append(root);
   }
-  figSyncOverlayThemeFromSource(root, source);
   return root;
-}
-
-/** Copy PropsKit / FigUI theme onto the overlay portal so portaled popups stay themed. */
-function figSyncOverlayThemeFromSource(overlayRoot, source) {
-  if (!overlayRoot) return;
-  const panel =
-    (source instanceof Element
-      ? source.closest(".figui-root")
-      : null) || document.querySelector(".figui-root");
-  if (!panel) return;
-
-  const themeAttr = panel.getAttribute("theme");
-  const theme =
-    themeAttr === "light" || themeAttr === "dark" || themeAttr === "system"
-      ? themeAttr
-      : panel.classList.contains("figma-dark")
-        ? "dark"
-        : panel.classList.contains("figma-light")
-          ? "light"
-          : "system";
-
-  overlayRoot.classList.toggle("figma-light", theme === "light");
-  overlayRoot.classList.toggle("figma-dark", theme === "dark");
-  if (theme === "system") {
-    overlayRoot.style.setProperty("color-scheme", "light dark");
-  } else {
-    overlayRoot.style.setProperty("color-scheme", theme);
-  }
-  if (themeAttr) overlayRoot.setAttribute("theme", theme);
-  else overlayRoot.removeAttribute("theme");
 }
 
 let _figZCounter = 10000;
@@ -1113,13 +1082,13 @@ class FigTooltip extends HTMLElement {
     // - Without popover support, fall back to today's behavior: nearest open
     //   <dialog> ancestor if present, else document.body.
     if (supportsPopover) {
-      (figGetOverlayRoot(this) ?? document.body).append(this.popup);
+      (figGetOverlayRoot() ?? document.body).append(this.popup);
     } else {
       const parentDialog = this.closest("dialog");
       if (parentDialog && parentDialog.open) {
         parentDialog.append(this.popup);
       } else {
-        (figGetOverlayRoot(this) ?? document.body).append(this.popup);
+        (figGetOverlayRoot() ?? document.body).append(this.popup);
       }
     }
 
@@ -1511,13 +1480,13 @@ class FigTooltip extends HTMLElement {
       popup.append(content);
 
       if (supportsPopover) {
-        (figGetOverlayRoot(anchor) ?? document.body).append(popup);
+        (figGetOverlayRoot() ?? document.body).append(popup);
       } else {
         const parentDialog = anchor.closest?.("dialog");
         if (parentDialog && parentDialog.open) {
           parentDialog.append(popup);
         } else {
-          (figGetOverlayRoot(anchor) ?? document.body).append(popup);
+          (figGetOverlayRoot() ?? document.body).append(popup);
         }
       }
 
