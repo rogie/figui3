@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.23.2]
+
+### Changed
+
+- Clarified that the PropsKit dropdown field uses the native dropdown menu.
+
 ## [6.23.1]
 
 ### Changed

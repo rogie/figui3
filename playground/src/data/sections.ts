@@ -690,7 +690,7 @@ export const propkitSections: Section[] = [
     id: "dropdown",
     name: "Dropdown",
     group: "Field controls",
-    description: "A dropdown select field for choosing from a set of options.",
+    description: "A dropdown select field that uses a native dropdown menu.",
     examples: [
       {
         id: "default",
