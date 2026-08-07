@@ -1521,7 +1521,7 @@ class FigFillPicker extends HTMLElement {
           })
           .join("");
         const separator = group.label || group.separator
-          ? `<fig-menu-separator${group.label ? ` label="${figEditorEscapeAttribute(group.label)}"` : ""}></fig-menu-separator>`
+          ? `<fig-separator${group.label ? ` label="${figEditorEscapeAttribute(group.label)}"` : ""}></fig-separator>`
           : "";
         return `${separator}${options}`;
       })

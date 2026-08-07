@@ -78,7 +78,7 @@ declare global {
       "fig-media-controls": WCProps;
       "fig-menu": WCProps;
       "fig-menu-item": WCProps;
-      "fig-menu-separator": WCProps;
+      "fig-separator": WCProps;
       "fig-options": WCProps;
       "fig-origin-grid": WCProps;
       "fig-preview": WCProps;
@@ -433,7 +433,8 @@ Fill value examples:
 - `fig-dialog`: modal or non-modal dialog surface using `<dialog is="fig-dialog">`. Attrs/modifiers: `open`, `modal`, `drag`, `handle`, `position`, `title`, `resizable`, `closedby`.
 - `fig-popup`: anchored floating surface using `<dialog is="fig-popup">`. Attrs/modifiers: `open`, `anchor`, `position`, `offset`, `variant`, `theme`, `viewport-margin`, `closedby`.
 - `fig-toast`: temporary feedback using `<dialog is="fig-toast">`. Attrs/modifiers: `duration`, `offset`, `open`, `theme`, `live`.
-- `fig-menu`, `fig-menu-item`, `fig-menu-separator`: triggered keyboard-accessible action menus. Attrs/modifiers: menu `position`, `offset`, `disabled`; trigger `[fig-menu-trigger]`; item `value`, `disabled`.
+- `fig-menu`, `fig-menu-item`: triggered keyboard-accessible action menus. Attrs/modifiers: menu `position`, `offset`, `disabled`; trigger `[fig-menu-trigger]`; item `value`, `disabled`.
+- `fig-separator`: visual divider with an optional `label`.
 
 ### Status And Display
 

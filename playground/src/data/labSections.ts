@@ -1,6 +1,6 @@
 import type { Section } from "./sections";
 
-export const labSections: Section[] = [
+const ungroupedLabSections: Section[] = [
   {
     id: "reorder",
     name: "Reorder",
@@ -252,6 +252,67 @@ export const labSections: Section[] = [
     ],
   },
   {
+    id: "ai-prompt",
+    name: "AI Prompt",
+    description:
+      "A presentation-only prompt surface composed from existing FigUI3 input, button, and icon components.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-ai-prompt>
+    <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
+    <fig-button variant="ghost" icon aria-label="Add attachment">
+      <fig-icon name="add"></fig-icon>
+    </fig-button>
+    <fig-button variant="ghost" icon aria-label="Prompt settings">
+      <fig-icon name="adjust"></fig-icon>
+    </fig-button>
+  </fig-ai-prompt>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "ai-chat-message",
+    name: "Chat Message",
+    description:
+      "A presentation-only chat message with agent and user styling.",
+    examples: [
+      {
+        id: "conversation",
+        name: "Conversation",
+        markup: `<div class="prop-panel">
+  <fig-chat-message from="user">Create a settings panel for my plugin.<fig-avatar src="https://i.pravatar.cc/128?img=12" name="Rogie King"></fig-avatar></fig-chat-message>
+  <fig-chat-message from="agent">I’ll create a compact settings panel using FigUI3 fields and controls.</fig-chat-message>
+  <fig-chat-message from="agent"><fig-shimmer><span>Thinking&hellip;</span></fig-shimmer></fig-chat-message>
+</div>`,
+      },
+      {
+        id: "user",
+        name: "User",
+        markup: `<div class="prop-panel">
+  <fig-chat-message from="user">Make the interface more compact.</fig-chat-message>
+</div>`,
+      },
+      {
+        id: "user-avatar",
+        name: "User with avatar",
+        markup: `<div class="prop-panel">
+  <fig-chat-message from="user">Make the interface more compact.<fig-avatar name="Rogie King"></fig-avatar></fig-chat-message>
+</div>`,
+      },
+      {
+        id: "agent",
+        name: "Agent",
+        markup: `<div class="prop-panel">
+  <fig-chat-message from="agent">I reduced the spacing and grouped related controls.</fig-chat-message>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "canvas-control",
     name: "Canvas Control",
     description:
@@ -364,4 +425,22 @@ export const labSections: Section[] = [
       },
     ],
   },
+];
+
+const isPropskitSection = (section: Section) =>
+  section.id.startsWith("propskit-") || section.id === "oscillator";
+const isAiSection = (section: Section) => section.id.startsWith("ai-");
+
+export const labSections: Section[] = [
+  ...ungroupedLabSections
+    .filter(isPropskitSection)
+    .map((section) => ({ ...section, group: "Propskit" })),
+  ...ungroupedLabSections
+    .filter(isAiSection)
+    .map((section) => ({ ...section, group: "AI" })),
+  ...ungroupedLabSections
+    .filter(
+      (section) => !isPropskitSection(section) && !isAiSection(section),
+    )
+    .map((section) => ({ ...section, group: "Misc" })),
 ];

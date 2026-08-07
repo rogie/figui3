@@ -239,22 +239,22 @@ export const figui3Sections: Section[] = [
   <fig-select value="overlay" label="Blend">
     <fig-select-options>
       <fig-select-option value="normal">Normal</fig-select-option>
-      <fig-menu-separator></fig-menu-separator>
+      <fig-separator></fig-separator>
       <fig-select-option value="darken">Darken</fig-select-option>
       <fig-select-option value="multiply">Multiply</fig-select-option>
       <fig-select-option value="color-burn">Color burn</fig-select-option>
-      <fig-menu-separator></fig-menu-separator>
+      <fig-separator></fig-separator>
       <fig-select-option value="lighten">Lighten</fig-select-option>
       <fig-select-option value="screen">Screen</fig-select-option>
       <fig-select-option value="color-dodge">Color dodge</fig-select-option>
-      <fig-menu-separator></fig-menu-separator>
+      <fig-separator></fig-separator>
       <fig-select-option value="overlay">Overlay</fig-select-option>
       <fig-select-option value="soft-light">Soft light</fig-select-option>
       <fig-select-option value="hard-light">Hard light</fig-select-option>
-      <fig-menu-separator></fig-menu-separator>
+      <fig-separator></fig-separator>
       <fig-select-option value="difference">Difference</fig-select-option>
       <fig-select-option value="exclusion">Exclusion</fig-select-option>
-      <fig-menu-separator></fig-menu-separator>
+      <fig-separator></fig-separator>
       <fig-select-option value="hue">Hue</fig-select-option>
       <fig-select-option value="saturation">Saturation</fig-select-option>
       <fig-select-option value="color">Color</fig-select-option>
@@ -270,15 +270,15 @@ export const figui3Sections: Section[] = [
   <fig-select value="multiply" label="Blend">
     <fig-select-options>
       <fig-select-option value="normal">Normal</fig-select-option>
-      <fig-menu-separator label="Darken"></fig-menu-separator>
+      <fig-separator label="Darken"></fig-separator>
       <fig-select-option value="darken">Darken</fig-select-option>
       <fig-select-option value="multiply">Multiply</fig-select-option>
       <fig-select-option value="color-burn">Color burn</fig-select-option>
-      <fig-menu-separator label="Lighten"></fig-menu-separator>
+      <fig-separator label="Lighten"></fig-separator>
       <fig-select-option value="lighten">Lighten</fig-select-option>
       <fig-select-option value="screen">Screen</fig-select-option>
       <fig-select-option value="color-dodge">Color dodge</fig-select-option>
-      <fig-menu-separator label="Contrast"></fig-menu-separator>
+      <fig-separator label="Contrast"></fig-separator>
       <fig-select-option value="overlay">Overlay</fig-select-option>
       <fig-select-option value="soft-light">Soft light</fig-select-option>
       <fig-select-option value="hard-light">Hard light</fig-select-option>
@@ -1202,6 +1202,29 @@ export const figui3Sections: Section[] = [
     ],
   },
   {
+    id: "separator",
+    name: "Separator",
+    group: "Core components",
+    description:
+      "Visual divider between content groups with an optional accessible label.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-separator></fig-separator>
+</div>`,
+      },
+      {
+        id: "labeled",
+        name: "Labeled",
+        markup: `<div class="prop-panel">
+  <fig-separator label="Group"></fig-separator>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "menu",
     name: "Menu",
     group: "Core components",
@@ -1217,7 +1240,7 @@ export const figui3Sections: Section[] = [
     <fig-menu-item value="cut">Cut</fig-menu-item>
     <fig-menu-item value="copy">Copy</fig-menu-item>
     <fig-menu-item value="paste">Paste</fig-menu-item>
-    <fig-menu-separator></fig-menu-separator>
+    <fig-separator></fig-separator>
     <fig-menu-item value="delete">Delete</fig-menu-item>
   </fig-menu>
 </div>`,
@@ -1232,7 +1255,7 @@ export const figui3Sections: Section[] = [
     </fig-button>
     <fig-menu-item value="rename">Rename</fig-menu-item>
     <fig-menu-item value="duplicate">Duplicate</fig-menu-item>
-    <fig-menu-separator></fig-menu-separator>
+    <fig-separator></fig-separator>
     <fig-menu-item value="delete">Delete</fig-menu-item>
   </fig-menu>
 </div>`,
@@ -1246,14 +1269,14 @@ export const figui3Sections: Section[] = [
     <fig-menu-item value="frame">Frame</fig-menu-item>
     <fig-menu-item value="section">Section</fig-menu-item>
     <fig-menu-item value="slice">Slice</fig-menu-item>
-    <fig-menu-separator label="Shape"></fig-menu-separator>
+    <fig-separator label="Shape"></fig-separator>
     <fig-menu-item value="rectangle">Rectangle</fig-menu-item>
     <fig-menu-item value="line">Line</fig-menu-item>
     <fig-menu-item value="arrow">Arrow</fig-menu-item>
     <fig-menu-item value="ellipse">Ellipse</fig-menu-item>
     <fig-menu-item value="polygon">Polygon</fig-menu-item>
     <fig-menu-item value="star">Star</fig-menu-item>
-    <fig-menu-separator label="Media"></fig-menu-separator>
+    <fig-separator label="Media"></fig-separator>
     <fig-menu-item value="image">Image</fig-menu-item>
     <fig-menu-item value="video">Video</fig-menu-item>
     <fig-menu-item value="audio">Audio</fig-menu-item>
@@ -1270,7 +1293,7 @@ export const figui3Sections: Section[] = [
     <fig-button variant="secondary" fig-menu-trigger>Edit</fig-button>
     <fig-menu-item value="undo">Undo</fig-menu-item>
     <fig-menu-item value="redo" disabled>Redo</fig-menu-item>
-    <fig-menu-separator></fig-menu-separator>
+    <fig-separator></fig-separator>
     <fig-menu-item value="cut">Cut</fig-menu-item>
     <fig-menu-item value="copy">Copy</fig-menu-item>
   </fig-menu>
@@ -1284,7 +1307,7 @@ export const figui3Sections: Section[] = [
     <fig-button variant="secondary" fig-menu-trigger>Arrange</fig-button>
     <fig-menu-item value="bring-to-front">Bring to front</fig-menu-item>
     <fig-menu-item value="bring-forward">Bring forward</fig-menu-item>
-    <fig-menu-separator label="Send"></fig-menu-separator>
+    <fig-separator label="Send"></fig-separator>
     <fig-menu-item value="send-backward">Send backward</fig-menu-item>
     <fig-menu-item value="send-to-back">Send to back</fig-menu-item>
   </fig-menu>
@@ -1300,7 +1323,7 @@ export const figui3Sections: Section[] = [
     </div>
     <fig-menu-item value="copy">Copy</fig-menu-item>
     <fig-menu-item value="paste">Paste</fig-menu-item>
-    <fig-menu-separator></fig-menu-separator>
+    <fig-separator></fig-separator>
     <fig-menu-item value="delete">Delete</fig-menu-item>
   </fig-menu>
 </div>`,

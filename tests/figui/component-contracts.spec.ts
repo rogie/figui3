@@ -126,6 +126,153 @@ test.describe("fig.js component contracts", () => {
   }
 });
 
+test.describe("AI lab styling components", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await Promise.all([
+        customElements.whenDefined("fig-ai-prompt"),
+        customElements.whenDefined("fig-chat-message"),
+      ]);
+    });
+  });
+
+  test("registers as a presentation-only prompt layout", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="width:240px">
+          <fig-ai-prompt>
+            <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
+            <fig-button variant="ghost" icon aria-label="Add attachment">
+              <fig-icon name="add"></fig-icon>
+            </fig-button>
+            <fig-button variant="ghost" icon aria-label="Prompt settings">
+              <fig-icon name="adjust"></fig-icon>
+            </fig-button>
+          </fig-ai-prompt>
+        </div>
+      `;
+    });
+
+    const prompt = page.locator("fig-ai-prompt");
+    const layout = await prompt.evaluate((element) => {
+      const input = element.querySelector("fig-input-text");
+      const textarea = input?.querySelector("textarea");
+      const buttons = element.querySelectorAll("fig-button");
+      const hostRect = element.getBoundingClientRect();
+      const inputRect = input?.getBoundingClientRect();
+      const addRect = buttons[0]?.getBoundingClientRect();
+      const settingsRect = buttons[1]?.getBoundingClientRect();
+      return {
+        registered: Boolean(customElements.get("fig-ai-prompt")),
+        directChildren: Array.from(element.children).map((child) =>
+          child.tagName.toLowerCase(),
+        ),
+        width: hostRect.width,
+        marginInline: getComputedStyle(element).marginInline,
+        minHeight: hostRect.height,
+        inputFontSize: textarea ? getComputedStyle(textarea).fontSize : null,
+        inputPadding: textarea
+          ? getComputedStyle(textarea).paddingLeft
+          : null,
+        inputFillsPrompt:
+          Boolean(inputRect) &&
+          Math.abs((inputRect?.left ?? 0) - hostRect.left) <= 1 &&
+          Math.abs((inputRect?.right ?? 0) - hostRect.right) <= 1 &&
+          Math.abs((inputRect?.top ?? 0) - hostRect.top) <= 1 &&
+          Math.abs((inputRect?.bottom ?? 0) - hostRect.bottom) <= 1,
+        actionsSeparated:
+          Boolean(addRect && settingsRect) && addRect.left < settingsRect.left,
+      };
+    });
+
+    expect(layout).toEqual({
+      registered: true,
+      directChildren: ["fig-input-text", "fig-button", "fig-button"],
+      width: 224,
+      marginInline: "8px",
+      minHeight: 128,
+      inputFontSize: "13px",
+      inputPadding: "16px",
+      inputFillsPrompt: true,
+      actionsSeparated: true,
+    });
+  });
+
+  test("styles user and agent chat messages without changing content", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.setAttribute("style", "width:240px");
+      root.innerHTML = `
+        <fig-chat-message id="user-message" from="user">User message<fig-avatar name="Rogie King"></fig-avatar></fig-chat-message>
+        <fig-chat-message id="agent-message" from="agent">Agent message</fig-chat-message>
+        <fig-chat-message from="agent"><fig-shimmer><span id="thinking">Thinking…</span></fig-shimmer></fig-chat-message>
+      `;
+    });
+
+    const result = await page.evaluate(() => {
+      const user = document.querySelector("#user-message");
+      const agent = document.querySelector("#agent-message");
+      if (!user || !agent) throw new Error("Missing chat messages");
+      const avatar = user.querySelector("fig-avatar");
+      const userStyle = getComputedStyle(user);
+      const agentStyle = getComputedStyle(agent);
+      const thinking = document.querySelector("#thinking");
+      const userRect = user.getBoundingClientRect();
+      const avatarRect = avatar?.getBoundingClientRect();
+      return {
+        registered: Boolean(customElements.get("fig-chat-message")),
+        userText: user.textContent,
+        agentText: agent.textContent,
+        userNarrower:
+          user.getBoundingClientRect().width <
+          agent.getBoundingClientRect().width,
+        userFontSize: userStyle.fontSize,
+        agentFontSize: agentStyle.fontSize,
+        userPaddingLeft: userStyle.paddingLeft,
+        userPaddingRight: userStyle.paddingRight,
+        userMarginLeft: userStyle.marginLeft,
+        avatarFontSize: avatar
+          ? getComputedStyle(avatar, "::after").fontSize
+          : null,
+        avatarAlignedOutside:
+          Boolean(avatarRect) &&
+          (avatarRect?.left ?? 0) > userRect.right &&
+          Math.abs((avatarRect?.bottom ?? 0) - userRect.bottom) <= 0.5,
+        differentBackground:
+          userStyle.backgroundColor !== agentStyle.backgroundColor,
+        thinkingAnimation: thinking
+          ? getComputedStyle(thinking).animationName
+          : null,
+      };
+    });
+
+    expect(result).toEqual({
+      registered: true,
+      userText: "User message",
+      agentText: "Agent message",
+      userNarrower: true,
+      userFontSize: "13px",
+      agentFontSize: "13px",
+      userPaddingLeft: "12px",
+      userPaddingRight: "12px",
+      userMarginLeft: "24px",
+      avatarFontSize: "11px",
+      avatarAlignedOutside: true,
+      differentBackground: true,
+      thinkingAnimation: "fig-shimmer-text",
+    });
+  });
+});
+
 test.describe("duplicate module registration", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -4426,6 +4573,41 @@ test.describe("remaining accessibility contracts", () => {
     await expect(page.locator("#origin")).toHaveAttribute("value", "51% 60%");
   });
 
+  test("fig-separator exposes separator semantics and label API", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;width:240px">
+          <fig-separator id="separator" label="Commands"></fig-separator>
+        </div>
+      `;
+    });
+
+    expect(
+      await page.evaluate(() => ({
+        separator: Boolean(customElements.get("fig-separator")),
+      })),
+    ).toEqual({ separator: true });
+
+    const separator = page.locator("#separator");
+    await expect(separator).toHaveAttribute("role", "separator");
+    await expect(separator).toHaveAttribute("aria-label", "Commands");
+    expect(
+      await separator.evaluate((element) => ({
+        width: element.getBoundingClientRect().width,
+        paddingLeft: getComputedStyle(element).paddingLeft,
+        ruleDisplay: getComputedStyle(element, "::before").display,
+      })),
+    ).toEqual({ width: 240, paddingLeft: "16px", ruleDisplay: "block" });
+
+    await separator.evaluate((element) => {
+      (element as HTMLElement & { label: string }).label = "";
+    });
+    await expect(separator).not.toHaveAttribute("label");
+    await expect(separator).not.toHaveAttribute("aria-label");
+  });
+
   test("menu trigger and items support keyboard menu semantics", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -4467,8 +4649,8 @@ test.describe("remaining accessibility contracts", () => {
       root.innerHTML = `
         <fig-menu id="long-menu" style="position:fixed;left:8px;top:8px">
           <fig-button fig-menu-trigger>Commands</fig-button>
-          <fig-menu-separator label="Commands"></fig-menu-separator>
           ${items}
+          <fig-separator label="Commands"></fig-separator>
         </fig-menu>
       `;
     });
@@ -4487,13 +4669,17 @@ test.describe("remaining accessibility contracts", () => {
     await expect(down).toHaveCSS("opacity", "1");
     const leftPadding = await menu.evaluate((element) => {
       const item = element.querySelector("fig-menu-item");
-      const separator = element.querySelector("fig-menu-separator");
+      const separator = element.querySelector("fig-separator");
       return {
         item: item ? getComputedStyle(item).paddingLeft : null,
         separator: separator ? getComputedStyle(separator).paddingLeft : null,
+        separatorRule: separator
+          ? getComputedStyle(separator, "::before").display
+          : null,
       };
     });
     expect(leftPadding.separator).toBe(leftPadding.item);
+    expect(leftPadding.separatorRule).toBe("block");
 
     const bounds = await popup.evaluate((dialog) => {
       const rect = dialog.getBoundingClientRect();

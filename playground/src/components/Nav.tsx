@@ -16,6 +16,7 @@ interface Props {
   navigateTo: (sectionId: string, exampleId: string) => void;
   sections: Section[];
   appTitle: string;
+  groupOrder?: string[];
 }
 
 const INSTALL_COMMAND = "npm i @rogieking/figui3";
@@ -25,7 +26,9 @@ const INSTALL_PROMPT =
 function toSentenceCase(text: string): string {
   const trimmed = text.trim();
   if (!trimmed) return "";
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+  return (
+    trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase()
+  ).replace(/^Ai\b/, "AI");
 }
 
 export default function Nav({
@@ -38,6 +41,7 @@ export default function Nav({
   navigateTo,
   sections,
   appTitle,
+  groupOrder,
 }: Props) {
   const navRef = useRef<HTMLDivElement>(null);
   const commandCopyTooltipRef = useRef<HTMLElement>(null);
@@ -195,6 +199,22 @@ export default function Nav({
             } else {
               groups.push({ group: section.group, sections: [section] });
             }
+          }
+          if (groupOrder) {
+            const orderedGroups = groupOrder.map(
+              (group) =>
+                groups.find((entry) => entry.group === group) ?? {
+                  group,
+                  sections: [],
+                },
+            );
+            groups
+              .filter(
+                (entry) =>
+                  !entry.group || !groupOrder.includes(entry.group),
+              )
+              .forEach((entry) => orderedGroups.push(entry));
+            groups.splice(0, groups.length, ...orderedGroups);
           }
 
           return groups.map((g, gi) => {

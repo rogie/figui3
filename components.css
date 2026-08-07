@@ -1245,6 +1245,7 @@ fig-avatar,
   }
   &::after {
     content: attr(initials);
+    font-size: var(--body-medium-fontSize);
   }
   &[size="large"] {
     --size: 3rem;
@@ -4598,6 +4599,7 @@ fig-joystick {
 /* Shimmer */
 fig-shimmer {
   display: contents;
+  color: var(--figma-color-text-secondary);
   --fig-shimmer-angle: 90deg;
   --fig-shimmer-bright-fill-color: var(--figma-color-bg-tertiary);
   --fig-shimmer-bright-text-color: var(--figma-color-text);
@@ -5400,7 +5402,7 @@ fig-menu {
   display: contents;
 
   & > fig-menu-item,
-  & > fig-menu-separator {
+  & > fig-separator {
     display: none;
   }
 }
@@ -5571,11 +5573,10 @@ fig-select-options,
 
 }
 
-fig-select-options > fig-menu-separator {
+fig-select-options > fig-separator {
   /* Align labels with select option text after the checkmark column. */
   &[label]:not([label=""]) {
-    padding-left: var(--spacer-5);
-    padding-right: var(--spacer-2);
+    --fig-menu-inline-padding: 0 var(--spacer-2) 0 var(--spacer-5);
 
     &::before {
       margin-inline: unset;
@@ -5708,26 +5709,23 @@ fig-menu-item {
   }
 }
 
-fig-menu-separator {
-  --fig-menu-separator-color: var(--figma-color-border);
-  --fig-menu-separator-label-color: var(--figma-color-text-secondary);
+fig-separator {
+  --fig-separator-color: var(--figma-color-border);
+  --fig-separator-label-color: var(--figma-color-text-secondary);
+  --fig-menu-inline-padding: 0 var(--spacer-3);
 
   display: block;
+  box-sizing: border-box;
+  width: 100%;
   height: 1px;
   margin: var(--spacer-2) 0;
   padding: 0;
   border: 0;
-  background: var(--fig-menu-separator-color);
-  color: var(--fig-menu-separator-label-color);
+  background: var(--fig-separator-color);
+  color: var(--fig-separator-label-color);
   font-weight: var(--body-medium-fontWeight);
   pointer-events: none;
   user-select: none;
-
-  &:first-of-type{
-    &[label]:not([label=""])::before {
-     display: none;
-    }
-  }
 
   /* Labeled: rule, then secondary group label (same pattern as menu optgroups). */
   &[label]:not([label=""]) {
@@ -5737,29 +5735,46 @@ fig-menu-separator {
     height: auto;
     margin: var(--spacer-2) 0;
     margin-bottom: var(--spacer-1);
-    padding: 0 var(--fig-menu-item-padding, var(--spacer-4));
+    padding: var(--fig-menu-inline-padding);
     background: transparent;
 
     &::before {
       content: "";
       display: block;
       height: 1px;
-      margin-inline: calc(-1 * var(--fig-menu-item-padding, var(--spacer-4)));
-      background: var(--fig-menu-separator-color);
+      margin-inline: calc(-1 * var(--spacer-3));
+      background: var(--fig-separator-color);
     }
 
     &::after {
       content: attr(label);
       display: block;
-      color: var(--fig-menu-separator-label-color);
+      color: var(--fig-separator-label-color);
       line-height: var(--spacer-4);
       min-height: var(--spacer-4);
     }
   }
 }
 
-dialog[is="fig-popup"][theme="menu"] fig-menu-separator,
-fig-select-options > fig-menu-separator {
-  --fig-menu-separator-color: var(--figma-color-border-menu);
-  --fig-menu-separator-label-color: var(--figma-color-text-menu-secondary);
+dialog[is="fig-popup"][theme="menu"]
+  fig-separator:first-child[label]:not([label=""])::before,
+fig-select-options > fig-separator:first-child[label]:not([label=""])::before {
+  display: none;
+}
+
+dialog[is="fig-popup"][theme="menu"] fig-separator,
+fig-select-options > fig-separator {
+  --fig-separator-color: var(--figma-color-border-menu);
+  --fig-separator-label-color: var(--figma-color-text-menu-secondary);
+}
+
+dialog[is="fig-popup"][theme="menu"] fig-separator {
+  --fig-menu-inline-padding: 0
+    var(--fig-menu-item-padding, var(--spacer-4));
+
+  &[label]:not([label=""])::before {
+    margin-inline: calc(
+      -1 * var(--fig-menu-item-padding, var(--spacer-4))
+    );
+  }
 }

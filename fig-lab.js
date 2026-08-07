@@ -25,6 +25,14 @@ function figLabUniqueId(prefix = "fig-lab") {
   return `${prefix}-${figLabUniqueIdCounter}`;
 }
 
+/* Presentation-only composition surface for AI prompt controls. */
+class FigAiPrompt extends HTMLElement {}
+figLabDefineElement("fig-ai-prompt", FigAiPrompt);
+
+/* Presentation-only message surface for AI conversations. */
+class FigChatMessage extends HTMLElement {}
+figLabDefineElement("fig-chat-message", FigChatMessage);
+
 /* Field + Switch wrapper */
 class PropskitSwitch extends HTMLElement {
   #field = null;

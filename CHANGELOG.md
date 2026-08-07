@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.24.0]
+
+### Added
+
+- Added `fig-separator`, a reusable labeled divider for menus, selects, and general content.
+- Added experimental `fig-ai-prompt` and `fig-chat-message` styling components with AI playground examples.
+
+### Changed
+
+- Replaced `fig-menu-separator` with `fig-separator` throughout the runtime, docs, and examples.
+- Grouped the Lab navigation into Propskit, AI, and Misc sections.
+- Improved avatar initials and shimmer text defaults for chat compositions.
+
 ## [6.23.4]
 
 ### Fixed
@@ -189,7 +202,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added `fig-select` with authored `fig-select-options` panel (slot=panel auto), overflow top/bottom buttons, and full-width menu matching.
-- Added optional `label` on `fig-menu-separator` (rule + secondary group text underneath).
+- Added optional `label` on `fig-separator` (rule + secondary group text underneath).
 - Added lab Select examples: full width, many options, grouped items; Menu labeled-separator example.
 
 ### Changed
@@ -1290,7 +1303,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- `fig-menu`: Hide direct `fig-menu-item` and `fig-menu-separator` children via CSS so items don't flash before JS moves them into the popup.
+- `fig-menu`: Hide direct `fig-menu-item` and `fig-separator` children via CSS so items don't flash before JS moves them into the popup.
 - `fig-menu`: Detect late-arriving trigger elements (e.g. React rendering children after `connectedCallback`) via MutationObserver, wiring up click listener and popup anchor when the trigger appears.
 
 ## [4.4.1]
@@ -1371,7 +1384,7 @@ All notable changes to this project will be documented in this file.
 
 - `fig-menu`: new context menu component with trigger detection, keyboard navigation (arrow keys, Home/End, Enter/Space), ARIA roles, `position`/`offset`/`closedby` forwarding, `open` attribute, and `change` event with `{ value, item }` detail.
 - `fig-menu-item`: menu item element with `value` attribute and `disabled` support.
-- `fig-menu-separator`: visual divider between menu item groups.
+- `fig-separator`: visual divider between menu item groups.
 - Playground: added Menu examples (default + disabled items) to `/figui3` Core components.
 - Playground: EventView now serializes DOM elements in event output instead of showing `{}`.
 

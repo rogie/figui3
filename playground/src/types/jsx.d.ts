@@ -55,6 +55,8 @@ declare module "react" {
       "fig-toast": FigAttrs;
       "fig-tooltip": FigAttrs;
       "fig-handle": FigAttrs;
+      "fig-ai-prompt": FigAttrs;
+      "fig-chat-message": FigAttrs;
       dialog: React.DetailedHTMLProps<
         React.DialogHTMLAttributes<HTMLDialogElement>,
         HTMLDialogElement

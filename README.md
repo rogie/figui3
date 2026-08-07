@@ -119,6 +119,7 @@ Minimal example:
 | [Popup](#popup) | `<fig-popup>` | Anchored floating surface |
 | [Toast](#toast) | `<fig-toast>` | Toast notification |
 | [Tooltip](#tooltip) | `<fig-tooltip>` | Hover/click tooltip |
+| [Separator](#separator) | `<fig-separator>` | Visual divider with an optional label |
 | [Menu](#menu) | `<fig-menu>` | Triggered menu with keyboard navigation |
 | [Header](#header) | `<fig-header>` | Section header |
 | [Layer](#layer) | `<fig-layer>` | Collapsible layer list item from `fig-layer.js` |
@@ -1151,9 +1152,22 @@ Escape dismisses an open tooltip and returns focus to its trigger.
 
 ---
 
+#### Separator
+
+`<fig-separator>` — [demo](https://rog.ie/figui3/#separator)
+
+A visual divider between content groups. The optional `label` attribute adds a group label and accessible name.
+
+```html
+<fig-separator></fig-separator>
+<fig-separator label="More"></fig-separator>
+```
+
+---
+
 #### Menu
 
-`<fig-menu>` / `<fig-menu-item>` / `<fig-menu-separator>` — [demo](https://rog.ie/figui3/#menu)
+`<fig-menu>` / `<fig-menu-item>` / `<fig-separator>` — [demo](https://rog.ie/figui3/#menu)
 
 Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="menu"`, `aria-expanded`, and `aria-controls`; menu items use `role="menuitem"` and disabled items are skipped by keyboard navigation.
 
@@ -1175,14 +1189,14 @@ Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="m
   <fig-button fig-menu-trigger>Actions</fig-button>
   <fig-menu-item value="copy">Copy</fig-menu-item>
   <fig-menu-item value="paste">Paste</fig-menu-item>
-  <fig-menu-separator></fig-menu-separator>
+  <fig-separator></fig-separator>
   <fig-menu-item value="delete" disabled>Delete</fig-menu-item>
-  <fig-menu-separator label="More"></fig-menu-separator>
+  <fig-separator label="More"></fig-separator>
   <fig-menu-item value="settings">Settings</fig-menu-item>
 </fig-menu>
 ```
 
-`fig-menu-separator` accepts optional `label` — renders the rule, then secondary group text underneath.
+`fig-separator` accepts optional `label` — renders the rule, then secondary group text underneath.
 
 ---
 

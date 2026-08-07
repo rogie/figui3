@@ -5425,7 +5425,7 @@ class FigSelect extends HTMLElement {
     return (
       node?.nodeType === 1 &&
       (node.tagName === "FIG-SELECT-OPTION" ||
-        node.tagName === "FIG-MENU-SEPARATOR" ||
+        node.tagName === "FIG-SEPARATOR" ||
         node.tagName === "FIG-SELECT-OPTIONS")
     );
   }
@@ -14522,7 +14522,7 @@ class FigEasingCurve extends HTMLElement {
       if (!this.#isEditEnabled() && !p.value && !p.spring) continue;
       if (p.group !== currentGroup) {
         if (p.group) {
-          optionsHTML += `<fig-menu-separator label="${FigEasingCurve.#escapeAttribute(p.group)}"></fig-menu-separator>`;
+          optionsHTML += `<fig-separator label="${FigEasingCurve.#escapeAttribute(p.group)}"></fig-separator>`;
         }
         currentGroup = p.group;
       }
@@ -19350,10 +19350,10 @@ class FigMenuItem extends HTMLElement {
 figDefineElement("fig-menu-item", FigMenuItem);
 
 /**
- * Visual divider between menu item groups.
+ * Visual divider between content groups.
  * @attr {string} label - Optional group label shown in secondary text under the line.
  */
-class FigMenuSeparator extends HTMLElement {
+class FigSeparator extends HTMLElement {
   static get observedAttributes() {
     return ["label"];
   }
@@ -19385,7 +19385,7 @@ class FigMenuSeparator extends HTMLElement {
     else this.removeAttribute("aria-label");
   }
 }
-figDefineElement("fig-menu-separator", FigMenuSeparator);
+figDefineElement("fig-separator", FigSeparator);
 
 class FigMenu extends HTMLElement {
   #popup = null;
@@ -19464,7 +19464,7 @@ class FigMenu extends HTMLElement {
       this.#popup.removeEventListener("close", this.#boundPopupClose);
       const items = Array.from(
         this.#panel?.querySelectorAll(
-          ":scope > fig-menu-item, :scope > fig-menu-separator",
+          ":scope > fig-menu-item, :scope > fig-separator",
         ) ?? [],
       );
       for (const item of items) this.insertBefore(item, this.#popup);
@@ -19507,7 +19507,7 @@ class FigMenu extends HTMLElement {
   #detectTrigger() {
     this.#trigger =
       this.querySelector("[fig-menu-trigger]") ||
-      this.querySelector(":scope > :not(fig-menu-item):not(fig-menu-separator)");
+      this.querySelector(":scope > :not(fig-menu-item):not(fig-separator)");
   }
 
   #usesContextMenuTrigger() {
@@ -19547,7 +19547,7 @@ class FigMenu extends HTMLElement {
   #moveItemsToPopup() {
     if (!this.#panel) return;
     const items = Array.from(this.querySelectorAll(
-      ":scope > fig-menu-item, :scope > fig-menu-separator"
+      ":scope > fig-menu-item, :scope > fig-separator"
     ));
     for (const item of items) {
       this.#panel.appendChild(item);
@@ -19587,7 +19587,8 @@ class FigMenu extends HTMLElement {
         for (const node of mutation.addedNodes) {
           if (node.nodeType !== 1 || node === this.#popup) continue;
           if (
-            (node.tagName === "FIG-MENU-ITEM" || node.tagName === "FIG-MENU-SEPARATOR") &&
+            (node.tagName === "FIG-MENU-ITEM" ||
+              node.tagName === "FIG-SEPARATOR") &&
             node.parentElement === this
           ) {
             this.#panel?.appendChild(node);

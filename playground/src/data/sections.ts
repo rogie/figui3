@@ -2723,7 +2723,7 @@ export const propkitSections: Section[] = [
     <fig-menu-item value="duplicate">Duplicate</fig-menu-item>
     <fig-menu-item value="rename">Rename</fig-menu-item>
     <fig-menu-item value="copy-link">Copy link</fig-menu-item>
-    <fig-menu-separator></fig-menu-separator>
+    <fig-separator></fig-separator>
     <fig-menu-item value="delete">Delete</fig-menu-item>
   </fig-menu>
 </div>`,

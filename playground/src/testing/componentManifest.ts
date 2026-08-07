@@ -447,17 +447,17 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
   },
   {
-    tag: "fig-menu-separator",
-    title: "Menu Separator",
+    tag: "fig-separator",
+    title: "Separator",
     group: "display",
-    markup: `<fig-menu-separator></fig-menu-separator>`,
+    markup: `<fig-separator></fig-separator>`,
     attributes: [{ name: "label", attribute: "label", value: "Group" }],
   },
   {
     tag: "fig-menu",
     title: "Menu",
     group: "overlay",
-    markup: `<fig-menu><fig-button slot="trigger">Menu</fig-button><fig-menu-item>Item</fig-menu-item><fig-menu-separator></fig-menu-separator><fig-menu-item>Other</fig-menu-item></fig-menu>`,
+    markup: `<fig-menu><fig-button slot="trigger">Menu</fig-button><fig-menu-item>Item</fig-menu-item><fig-separator></fig-separator><fig-menu-item>Other</fig-menu-item></fig-menu>`,
     attributes: [{ name: "open", attribute: "open", value: "" }],
   },
 ];

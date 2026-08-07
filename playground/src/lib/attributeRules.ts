@@ -848,6 +848,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  "fig-separator": {
+    label: { label: "Label", type: "string" },
+  },
+  "fig-chat-message": {
+    from: { label: "From", type: "enum", options: ["agent", "user"] },
+  },
   "fig-menu": {
     position: {
       label: "Position",
