@@ -17229,7 +17229,7 @@ figDefineElement("fig-interpolation-swatch", FigInterpolationSwatch);
 
 /** @type {Record<string, string | { medium: string, small: string }>} */
 const FIG_ICON_TOKENS = {
-  chevron: "--icon-16-chevron",
+  chevron: { medium: "--icon-24-chevron", small: "--icon-16-chevron" },
   checkmark: "--icon-16-checkmark",
   reset: { medium: "--icon-24-reset", small: "--icon-16-reset" },
   "arrow-left": {

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.24.5]
+
+### Fixed
+
+- Encoded the 24px chevron icon and added size-specific `fig-icon` mappings and playground coverage.
+
 ## [6.24.4]
 
 ### Added

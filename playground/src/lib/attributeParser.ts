@@ -964,6 +964,7 @@ export function applyHandleHitAreaMutation(
 export const FIG_ICON_SET_24 = [
   "add",
   "send",
+  "chevron",
   "adjust",
   "minus",
   "close",

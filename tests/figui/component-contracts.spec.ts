@@ -126,6 +126,31 @@ test.describe("fig.js component contracts", () => {
   }
 });
 
+test("fig-icon maps chevron to size-specific tokens", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-icon id="medium-chevron" name="chevron"></fig-icon>
+      <fig-icon id="small-chevron" name="chevron" size="small"></fig-icon>
+    `;
+  });
+
+  const iconVars = await page.evaluate(() => ({
+    medium: (document.querySelector("#medium-chevron") as HTMLElement).style
+      .getPropertyValue("--icon"),
+    small: (document.querySelector("#small-chevron") as HTMLElement).style
+      .getPropertyValue("--icon"),
+  }));
+
+  expect(iconVars).toEqual({
+    medium: "var(--icon-24-chevron)",
+    small: "var(--icon-16-chevron)",
+  });
+});
+
 test.describe("AI lab styling components", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
