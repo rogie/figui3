@@ -662,6 +662,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: [
         "add",
+        "send",
         "adjust",
         "minus",
         "close",

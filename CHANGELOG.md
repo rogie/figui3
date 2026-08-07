@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.24.2]
+
+### Added
+
+- Added 16px and 24px `send` icons to `fig-icon`, its playground catalogs, and documentation.
+
+### Changed
+
+- Refined `fig-ai-prompt` spacing, input-only focus treatment, and footer layout with model selection and send actions.
+
 ## [6.24.1]
 
 ### Fixed

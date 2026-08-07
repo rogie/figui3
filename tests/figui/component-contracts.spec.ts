@@ -152,9 +152,17 @@ test.describe("AI lab styling components", () => {
               <fig-button variant="ghost" icon aria-label="Add attachment">
                 <fig-icon name="add"></fig-icon>
               </fig-button>
-              <fig-button variant="ghost" icon aria-label="Prompt settings">
-                <fig-icon name="adjust"></fig-icon>
-              </fig-button>
+              <hstack>
+                <fig-select value="auto" aria-label="Model">
+                  <fig-select-options>
+                    <fig-select-option value="auto">Auto</fig-select-option>
+                    <fig-select-option value="fast">Fast</fig-select-option>
+                  </fig-select-options>
+                </fig-select>
+                <fig-button icon aria-label="Send prompt">
+                  <fig-icon name="send"></fig-icon>
+                </fig-button>
+              </hstack>
             </fig-footer>
           </fig-ai-prompt>
         </div>
@@ -166,6 +174,10 @@ test.describe("AI lab styling components", () => {
       const input = element.querySelector("fig-input-text");
       const textarea = input?.querySelector("textarea");
       const footer = element.querySelector("fig-footer");
+      const model = element.querySelector("fig-select");
+      const sendIcon = element.querySelector(
+        'fig-button[aria-label="Send prompt"] fig-icon',
+      );
       const buttons = element.querySelectorAll("fig-button");
       const hostRect = element.getBoundingClientRect();
       const inputRect = input?.getBoundingClientRect();
@@ -193,6 +205,10 @@ test.describe("AI lab styling components", () => {
         inputEndsAboveFooter:
           Boolean(inputRect && footerRect) &&
           inputRect.bottom <= footerRect.top,
+        modelValue: model?.getAttribute("value"),
+        sendIconVar: (sendIcon as HTMLElement | null)?.style.getPropertyValue(
+          "--icon",
+        ),
         actionsSeparated:
           Boolean(addRect && settingsRect) && addRect.left < settingsRect.left,
       };
@@ -201,16 +217,32 @@ test.describe("AI lab styling components", () => {
     expect(layout).toEqual({
       registered: true,
       directChildren: ["fig-input-text", "fig-footer"],
-      width: 224,
-      marginInline: "8px",
+      width: 208,
+      marginInline: "16px",
       minHeight: 128,
       inputFontSize: "13px",
       inputPosition: "static",
       inputPadding: "16px",
       inputReachesPromptEdges: true,
       inputEndsAboveFooter: true,
+      modelValue: "auto",
+      sendIconVar: "var(--icon-24-send)",
       actionsSeparated: true,
     });
+
+    await prompt.locator("textarea").focus();
+    await expect
+      .poll(() =>
+        prompt.evaluate((element) => getComputedStyle(element).outlineStyle),
+      )
+      .not.toBe("none");
+
+    await prompt.locator("fig-footer fig-button").first().focus();
+    await expect
+      .poll(() =>
+        prompt.evaluate((element) => getComputedStyle(element).outlineStyle),
+      )
+      .toBe("none");
   });
 
   test("styles user and agent chat messages without changing content", async ({

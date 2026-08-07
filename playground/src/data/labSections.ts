@@ -267,9 +267,18 @@ const ungroupedLabSections: Section[] = [
       <fig-button variant="ghost" icon aria-label="Add attachment">
         <fig-icon name="add"></fig-icon>
       </fig-button>
-      <fig-button variant="ghost" icon aria-label="Prompt settings">
-        <fig-icon name="adjust"></fig-icon>
-      </fig-button>
+      <hstack>
+        <fig-select value="auto" aria-label="Model">
+          <fig-select-options>
+            <fig-select-option value="auto">Auto</fig-select-option>
+            <fig-select-option value="fast">Fast</fig-select-option>
+            <fig-select-option value="smart">Smart</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+        <fig-button icon aria-label="Send prompt">
+          <fig-icon name="send"></fig-icon>
+        </fig-button>
+      </hstack>
     </fig-footer>
   </fig-ai-prompt>
 </div>`,

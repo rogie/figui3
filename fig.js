@@ -17239,6 +17239,7 @@ const FIG_ICON_TOKENS = {
   steppers: "--icon-24-steppers",
   eyedropper: "--icon-24-eyedropper",
   add: "--icon-24-add",
+  send: { medium: "--icon-24-send", small: "--icon-16-send" },
   adjust: { medium: "--icon-24-adjust", small: "--icon-16-adjust" },
   minus: "--icon-24-minus",
   back: "--icon-24-back",
