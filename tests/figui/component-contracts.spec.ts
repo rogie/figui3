@@ -148,12 +148,14 @@ test.describe("AI lab styling components", () => {
         <div style="width:240px">
           <fig-ai-prompt>
             <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
-            <fig-button variant="ghost" icon aria-label="Add attachment">
-              <fig-icon name="add"></fig-icon>
-            </fig-button>
-            <fig-button variant="ghost" icon aria-label="Prompt settings">
-              <fig-icon name="adjust"></fig-icon>
-            </fig-button>
+            <fig-footer>
+              <fig-button variant="ghost" icon aria-label="Add attachment">
+                <fig-icon name="add"></fig-icon>
+              </fig-button>
+              <fig-button variant="ghost" icon aria-label="Prompt settings">
+                <fig-icon name="adjust"></fig-icon>
+              </fig-button>
+            </fig-footer>
           </fig-ai-prompt>
         </div>
       `;
@@ -163,9 +165,11 @@ test.describe("AI lab styling components", () => {
     const layout = await prompt.evaluate((element) => {
       const input = element.querySelector("fig-input-text");
       const textarea = input?.querySelector("textarea");
+      const footer = element.querySelector("fig-footer");
       const buttons = element.querySelectorAll("fig-button");
       const hostRect = element.getBoundingClientRect();
       const inputRect = input?.getBoundingClientRect();
+      const footerRect = footer?.getBoundingClientRect();
       const addRect = buttons[0]?.getBoundingClientRect();
       const settingsRect = buttons[1]?.getBoundingClientRect();
       return {
@@ -177,15 +181,18 @@ test.describe("AI lab styling components", () => {
         marginInline: getComputedStyle(element).marginInline,
         minHeight: hostRect.height,
         inputFontSize: textarea ? getComputedStyle(textarea).fontSize : null,
+        inputPosition: input ? getComputedStyle(input).position : null,
         inputPadding: textarea
           ? getComputedStyle(textarea).paddingLeft
           : null,
-        inputFillsPrompt:
+        inputReachesPromptEdges:
           Boolean(inputRect) &&
-          Math.abs((inputRect?.left ?? 0) - hostRect.left) <= 1 &&
-          Math.abs((inputRect?.right ?? 0) - hostRect.right) <= 1 &&
-          Math.abs((inputRect?.top ?? 0) - hostRect.top) <= 1 &&
-          Math.abs((inputRect?.bottom ?? 0) - hostRect.bottom) <= 1,
+          Math.abs((inputRect?.left ?? 0) - hostRect.left) <= 2 &&
+          Math.abs((inputRect?.right ?? 0) - hostRect.right) <= 2 &&
+          Math.abs((inputRect?.top ?? 0) - hostRect.top) <= 2,
+        inputEndsAboveFooter:
+          Boolean(inputRect && footerRect) &&
+          inputRect.bottom <= footerRect.top,
         actionsSeparated:
           Boolean(addRect && settingsRect) && addRect.left < settingsRect.left,
       };
@@ -193,13 +200,15 @@ test.describe("AI lab styling components", () => {
 
     expect(layout).toEqual({
       registered: true,
-      directChildren: ["fig-input-text", "fig-button", "fig-button"],
+      directChildren: ["fig-input-text", "fig-footer"],
       width: 224,
       marginInline: "8px",
       minHeight: 128,
       inputFontSize: "13px",
+      inputPosition: "static",
       inputPadding: "16px",
-      inputFillsPrompt: true,
+      inputReachesPromptEdges: true,
+      inputEndsAboveFooter: true,
       actionsSeparated: true,
     });
   });

@@ -263,12 +263,14 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-ai-prompt>
     <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
-    <fig-button variant="ghost" icon aria-label="Add attachment">
-      <fig-icon name="add"></fig-icon>
-    </fig-button>
-    <fig-button variant="ghost" icon aria-label="Prompt settings">
-      <fig-icon name="adjust"></fig-icon>
-    </fig-button>
+    <fig-footer>
+      <fig-button variant="ghost" icon aria-label="Add attachment">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+      <fig-button variant="ghost" icon aria-label="Prompt settings">
+        <fig-icon name="adjust"></fig-icon>
+      </fig-button>
+    </fig-footer>
   </fig-ai-prompt>
 </div>`,
       },

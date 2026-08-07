@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.24.1]
+
+### Fixed
+
+- `fig-ai-prompt` now lays out its textarea without absolute positioning and keeps it above the footer action area.
+- AI prompt actions now compose through `fig-footer`.
+
 ## [6.24.0]
 
 ### Added

@@ -11,16 +11,15 @@
 fig-ai-prompt {
   --fig-ai-prompt-margin-inline: var(--spacer-2);
 
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: minmax(var(--spacer-6), 1fr) auto;
-  position: relative;
-  gap: var(--spacer-2);
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
-  width: calc(100% - var(--fig-ai-prompt-margin-inline) * 2);
+  width: calc(
+    100% - var(--fig-ai-prompt-margin-inline) -
+      var(--fig-ai-prompt-margin-inline)
+  );
   min-height: 8rem;
   margin-inline: var(--fig-ai-prompt-margin-inline);
-  padding: var(--spacer-3);
   border: 1px solid var(--figma-color-border);
   border-radius: var(--radius-large);
   background: var(--figma-color-bg);
@@ -32,10 +31,9 @@ fig-ai-prompt {
   }
 
   & > fig-input-text {
-    position: absolute;
-    inset: 0;
+    flex: 1 1 auto;
     width: 100%;
-    height: 100%;
+    min-width: 0;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
@@ -53,26 +51,14 @@ fig-ai-prompt {
       height: 100%;
       min-height: var(--spacer-6);
       padding: var(--spacer-3);
-      padding-bottom: calc(var(--spacer-5) + var(--spacer-3));
       resize: none;
       font-size: inherit;
     }
   }
 
-  & > fig-button {
-    grid-row: 2;
-    align-self: end;
-    position: relative;
-    z-index: 1;
-    color: var(--figma-color-text);
-
-    &:first-of-type {
-      justify-self: start;
-    }
-
-    &:last-of-type {
-      justify-self: end;
-    }
+  & > fig-footer {
+    border: none;
+    box-shadow: none;
   }
 }
 
