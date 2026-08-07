@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.24.3]
+
+### Fixed
+
+- `fig-ai-prompt` textareas now fill the input height without bottom padding.
+
 ## [6.24.2]
 
 ### Added

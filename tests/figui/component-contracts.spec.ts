@@ -181,6 +181,7 @@ test.describe("AI lab styling components", () => {
       const buttons = element.querySelectorAll("fig-button");
       const hostRect = element.getBoundingClientRect();
       const inputRect = input?.getBoundingClientRect();
+      const textareaRect = textarea?.getBoundingClientRect();
       const footerRect = footer?.getBoundingClientRect();
       const addRect = buttons[0]?.getBoundingClientRect();
       const settingsRect = buttons[1]?.getBoundingClientRect();
@@ -197,6 +198,9 @@ test.describe("AI lab styling components", () => {
         inputPadding: textarea
           ? getComputedStyle(textarea).paddingLeft
           : null,
+        inputPaddingBottom: textarea
+          ? getComputedStyle(textarea).paddingBottom
+          : null,
         inputReachesPromptEdges:
           Boolean(inputRect) &&
           Math.abs((inputRect?.left ?? 0) - hostRect.left) <= 2 &&
@@ -205,6 +209,10 @@ test.describe("AI lab styling components", () => {
         inputEndsAboveFooter:
           Boolean(inputRect && footerRect) &&
           inputRect.bottom <= footerRect.top,
+        textareaFillsInputHeight:
+          Boolean(inputRect && textareaRect) &&
+          Math.abs((textareaRect?.top ?? 0) - (inputRect?.top ?? 0)) <= 1 &&
+          Math.abs((textareaRect?.bottom ?? 0) - (inputRect?.bottom ?? 0)) <= 1,
         modelValue: model?.getAttribute("value"),
         sendIconVar: (sendIcon as HTMLElement | null)?.style.getPropertyValue(
           "--icon",
@@ -223,8 +231,10 @@ test.describe("AI lab styling components", () => {
       inputFontSize: "13px",
       inputPosition: "static",
       inputPadding: "16px",
+      inputPaddingBottom: "0px",
       inputReachesPromptEdges: true,
       inputEndsAboveFooter: true,
+      textareaFillsInputHeight: true,
       modelValue: "auto",
       sendIconVar: "var(--icon-24-send)",
       actionsSeparated: true,

@@ -48,9 +48,11 @@ fig-ai-prompt {
     & > textarea {
       box-sizing: border-box;
       width: 100%;
-      height: 100%;
+      height: auto;
+      align-self: stretch;
       min-height: var(--spacer-6);
       padding: var(--spacer-3);
+      padding-bottom: 0;
       resize: none;
       font-size: inherit;
     }
