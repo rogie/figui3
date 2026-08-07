@@ -45,6 +45,11 @@ fig-ai-prompt {
       box-shadow: none;
     }
 
+    &[disabled]:not([disabled="false"]) {
+      background: transparent;
+      box-shadow: none;
+    }
+
     & > textarea {
       box-sizing: border-box;
       width: 100%;

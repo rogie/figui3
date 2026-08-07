@@ -283,6 +283,32 @@ const ungroupedLabSections: Section[] = [
   </fig-ai-prompt>
 </div>`,
       },
+      {
+        id: "sending",
+        name: "Sending",
+        markup: `<div class="prop-panel">
+  <fig-ai-prompt>
+    <fig-input-text multiline disabled placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
+    <fig-footer>
+      <fig-button variant="ghost" icon disabled aria-label="Add attachment">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+      <hstack>
+        <fig-select value="auto" disabled aria-label="Model">
+          <fig-select-options>
+            <fig-select-option value="auto">Auto</fig-select-option>
+            <fig-select-option value="fast">Fast</fig-select-option>
+            <fig-select-option value="smart">Smart</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+        <fig-button variant="ghost" icon disabled aria-label="Sending prompt">
+          <fig-spinner></fig-spinner>
+        </fig-button>
+      </hstack>
+    </fig-footer>
+  </fig-ai-prompt>
+</div>`,
+      },
     ],
   },
   {

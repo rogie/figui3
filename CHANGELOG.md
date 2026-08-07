@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.24.4]
+
+### Added
+
+- Added an AI prompt sending-state example with disabled controls and a spinner.
+
+### Fixed
+
+- Disabled text inputs inside `fig-ai-prompt` no longer show an inner border.
+
 ## [6.24.3]
 
 ### Fixed

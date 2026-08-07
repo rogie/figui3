@@ -253,6 +253,17 @@ test.describe("AI lab styling components", () => {
         prompt.evaluate((element) => getComputedStyle(element).outlineStyle),
       )
       .toBe("none");
+
+    await prompt.locator("fig-input-text").evaluate((input) => {
+      input.setAttribute("disabled", "");
+    });
+    await expect
+      .poll(() =>
+        prompt
+          .locator("fig-input-text")
+          .evaluate((input) => getComputedStyle(input).boxShadow),
+      )
+      .toBe("none");
   });
 
   test("styles user and agent chat messages without changing content", async ({
