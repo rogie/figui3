@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.25.0]
+
+### Changed
+
+- `fig-reorder` now drags from any child surface while preserving nested controls with their own drag behavior.
+- `propskit-group` now matches `fig-group` header structure and keeps reset controls right-aligned.
+
 ## [6.24.5]
 
 ### Fixed

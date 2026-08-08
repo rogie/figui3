@@ -1226,7 +1226,6 @@ class PropskitGroup extends HTMLElement {
   ].join(",");
 
   #header = null;
-  #disclosure = null;
   #chevron = null;
   #resetTooltip = null;
   #defaults = new WeakMap();
@@ -1249,7 +1248,8 @@ class PropskitGroup extends HTMLElement {
       cancelAnimationFrame(this.#dirtyFrame);
       this.#dirtyFrame = 0;
     }
-    this.#disclosure?.removeEventListener("click", this.#handleToggle);
+    this.#header?.removeEventListener("click", this.#handleToggle);
+    this.#header?.removeEventListener("keydown", this.#handleHeaderKeyDown);
     const resetBtn = this.#resetTooltip?.querySelector("fig-button");
     resetBtn?.removeEventListener("click", this.#handleReset);
   }
@@ -1257,7 +1257,7 @@ class PropskitGroup extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     if (name === "open") {
-      this.#disclosure?.setAttribute("aria-expanded", String(this.open));
+      this.#header?.setAttribute("aria-expanded", String(this.open));
       return;
     }
     if (name === "show-reset") {
@@ -1280,7 +1280,7 @@ class PropskitGroup extends HTMLElement {
     } else {
       this.setAttribute("open", "false");
     }
-    this.#disclosure?.setAttribute("aria-expanded", String(!!value));
+    this.#header?.setAttribute("aria-expanded", String(!!value));
     if (was !== !!value) {
       this.dispatchEvent(
         new CustomEvent("openchange", {
@@ -1356,6 +1356,14 @@ class PropskitGroup extends HTMLElement {
 
   #handleToggle = (e) => {
     if (this.#isResetTarget(e.target)) return;
+    e.stopPropagation();
+    this.open = !this.open;
+  };
+
+  #handleHeaderKeyDown = (e) => {
+    if (this.#isResetTarget(e.target)) return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
     e.stopPropagation();
     this.open = !this.open;
   };
@@ -1552,24 +1560,30 @@ class PropskitGroup extends HTMLElement {
       this.prepend(this.#header);
     }
 
-    let disclosure = this.#header.querySelector(
-      ":scope > .propskit-group-disclosure",
+    let h3 = this.#header.querySelector(":scope > h3");
+    const legacyDisclosure = this.#header.querySelector(
+      ":scope > fig-button.propskit-group-disclosure",
     );
-    if (!disclosure) {
-      disclosure = document.createElement("fig-button");
-      disclosure.className = "propskit-group-disclosure";
-      disclosure.setAttribute("variant", "ghost");
-      const existingHeading = this.#header.querySelector(":scope > h3");
-      if (existingHeading) disclosure.appendChild(existingHeading);
-      this.#header.prepend(disclosure);
+    if (!h3 && legacyDisclosure) {
+      h3 = legacyDisclosure.querySelector(":scope > h3");
+      if (h3) this.#header.insertBefore(h3, legacyDisclosure);
+      legacyDisclosure.remove();
     }
-    this.#disclosure = disclosure;
-
-    let h3 = disclosure.querySelector("h3");
     if (!h3) {
       h3 = document.createElement("h3");
-      disclosure.appendChild(h3);
+      this.#header.prepend(h3);
     }
+
+    const disclosure = h3.querySelector(
+      ":scope > button.propskit-group-disclosure",
+    );
+    if (disclosure) {
+      while (disclosure.firstChild) {
+        h3.insertBefore(disclosure.firstChild, disclosure);
+      }
+      disclosure.remove();
+    }
+
     if (!h3.id) h3.id = figLabUniqueId("propskit-group");
     if (this.#header.dataset.generated) {
       // Preserve chevron while updating the title text node.
@@ -1594,17 +1608,17 @@ class PropskitGroup extends HTMLElement {
     }
     this.#chevron = h3.querySelector(".propskit-group-chevron");
     this.#syncResetButton();
-    this.#header.removeAttribute("role");
-    this.#header.removeAttribute("tabindex");
-    this.#header.removeAttribute("aria-expanded");
-    this.#disclosure.setAttribute("aria-labelledby", h3.id);
-    this.#disclosure.setAttribute("aria-expanded", String(this.open));
-    this.#disclosure.removeEventListener("click", this.#handleToggle);
-    this.#disclosure.addEventListener("click", this.#handleToggle);
+    this.#header.setAttribute("role", "button");
+    this.#header.setAttribute("tabindex", "0");
+    this.#header.setAttribute("aria-expanded", String(this.open));
+    this.#header.removeEventListener("click", this.#handleToggle);
+    this.#header.addEventListener("click", this.#handleToggle);
+    this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
+    this.#header.addEventListener("keydown", this.#handleHeaderKeyDown);
 
     if (!this.hasAttribute("open")) {
       this.setAttribute("open", "false");
-      this.#disclosure.setAttribute("aria-expanded", "false");
+      this.#header.setAttribute("aria-expanded", "false");
     }
   }
 }
@@ -5272,32 +5286,22 @@ class FigReorder extends HTMLElement {
 
   static #DRAG_THRESHOLD = 6;
 
-  static #INTERACTIVE_SELECTORS = [
-    "input",
-    "button",
-    "select",
-    "textarea",
-    "a[href]",
-    "label",
-    "summary",
-    "fig-button",
-    "fig-dropdown",
+  static #NESTED_DRAG_SELECTORS = [
+    '[draggable]:not([draggable="false"])',
+    'img:not([draggable="false"])',
+    'a[href]:not([draggable="false"])',
+    'input[type="range"]',
+    "fig-handle",
     "fig-slider",
     "fig-input-number",
-    "fig-input-text",
-    "propskit-color",
+    "fig-input-gradient",
+    "fig-easing-curve",
+    "fig-input-angle",
+    "fig-input-joystick",
+    "fig-canvas-control",
     "propskit-number",
-    "propskit-select",
     "propskit-slider",
-    "propskit-switch",
-    "propskit-text",
-    "fig-checkbox",
-    "fig-switch",
-    "fig-combo-input",
-    "fig-segmented-control",
-    "fig-input-color",
-    "fig-input-fill",
-    '[contenteditable="true"]',
+    "propskit-oscillator",
   ];
 
   #childObserver = null;
@@ -5458,7 +5462,7 @@ class FigReorder extends HTMLElement {
       if (event.button !== 0) return;
       if (
         !this.#handleSelector &&
-        this.#isInteractiveTarget(event.target, child)
+        this.#isNestedDragTarget(event.target, child)
       ) {
         return;
       }
@@ -5567,11 +5571,11 @@ class FigReorder extends HTMLElement {
     });
   }
 
-  #isInteractiveTarget(target, child) {
+  #isNestedDragTarget(target, child) {
     let node = target;
     while (node && node !== child) {
       if (node instanceof Element) {
-        for (const selector of FigReorder.#INTERACTIVE_SELECTORS) {
+        for (const selector of FigReorder.#NESTED_DRAG_SELECTORS) {
           if (node.matches(selector)) return true;
         }
       }
@@ -5588,7 +5592,6 @@ class FigReorder extends HTMLElement {
 
   #startPendingDrag(event, item, target) {
     this.#cancelDrag();
-    FigReorder.#setDocumentDragging(true);
 
     const state = {
       item,
@@ -5618,6 +5621,7 @@ class FigReorder extends HTMLElement {
         event.preventDefault();
         event.stopPropagation();
         item.classList.add("dragging");
+        FigReorder.#setDocumentDragging(true);
         try {
           target.setPointerCapture(state.pointerId);
         } catch {}

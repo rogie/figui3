@@ -410,7 +410,7 @@ test.describe("fig-lab audit regressions", () => {
     expect(state).toEqual({ canvasStable: true, angleStable: true });
   });
 
-  test("slider reset reconnects and group uses sibling disclosure/reset controls", async ({
+  test("slider reset reconnects and group matches fig-group header structure", async ({
     page,
   }) => {
     const state = await page.evaluate(async () => {
@@ -438,23 +438,37 @@ test.describe("fig-lab audit regressions", () => {
       await new Promise(requestAnimationFrame);
       const header = group.querySelector(":scope > fig-header");
       if (!header) throw new Error(`Missing group header: ${group.outerHTML}`);
-      const disclosure = header.querySelector(
-        ":scope > .propskit-group-disclosure",
-      )!;
+      const heading = header.querySelector(":scope > h3")!;
       const reset = header.querySelector(":scope > .propskit-group-reset-tooltip");
+      const headerRect = header.getBoundingClientRect();
+      const resetRect = reset
+        ?.querySelector("fig-button")
+        ?.getBoundingClientRect();
       return {
         resetValue: slider.value,
         headerRole: header.getAttribute("role"),
-        disclosureExpanded: disclosure.getAttribute("aria-expanded"),
-        resetIsSibling: Boolean(reset && !disclosure.contains(reset)),
-        nestedReset: disclosure.querySelector(".propskit-group-reset"),
+        headingTag: heading.tagName,
+        headingIsDirectChild: heading.parentElement === header,
+        disclosureButton: heading.querySelector(
+          ".propskit-group-disclosure",
+        ),
+        disclosureExpanded: header.getAttribute("aria-expanded"),
+        resetOnRight:
+          Boolean(resetRect) &&
+          (resetRect?.right ?? 0) > headerRect.left + headerRect.width * 0.75,
+        resetIsSibling: Boolean(reset && !heading.contains(reset)),
+        nestedReset: heading.querySelector(".propskit-group-reset"),
       };
     });
 
     expect(state).toEqual({
       resetValue: "25",
-      headerRole: null,
+      headerRole: "button",
+      headingTag: "H3",
+      headingIsDirectChild: true,
+      disclosureButton: null,
       disclosureExpanded: "false",
+      resetOnRight: true,
       resetIsSibling: true,
       nestedReset: null,
     });

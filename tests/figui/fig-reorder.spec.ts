@@ -81,6 +81,109 @@ test.describe("fig-reorder", () => {
     expect(result.order).toEqual(["item-b", "item-c", "item-a"]);
   });
 
+  test("drags from nested surfaces but preserves nested drag controls", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-reorder id="label-reorder">
+          <div id="label-a"><label id="drag-label">Label surface</label></div>
+          <div id="label-b">B</div>
+        </fig-reorder>
+        <fig-reorder id="button-reorder">
+          <div id="button-a"><button id="drag-button">Button surface</button></div>
+          <div id="button-b">B</div>
+        </fig-reorder>
+        <fig-reorder id="range-reorder">
+          <div id="range-a"><input id="nested-range" type="range"></div>
+          <div id="range-b">B</div>
+        </fig-reorder>
+      `;
+      await customElements.whenDefined("fig-reorder");
+
+      const dragToEnd = (
+        target: Element,
+        item: Element,
+        pointerId: number,
+      ) => {
+        const rect = item.getBoundingClientRect();
+        target.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + 4,
+            clientY: rect.top + 4,
+            button: 0,
+            pointerId,
+            pointerType: "mouse",
+          }),
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointermove", {
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + 4,
+            clientY: rect.bottom + 80,
+            button: 0,
+            pointerId,
+            pointerType: "mouse",
+          }),
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointerup", {
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + 4,
+            clientY: rect.bottom + 80,
+            button: 0,
+            pointerId,
+            pointerType: "mouse",
+          }),
+        );
+      };
+
+      dragToEnd(
+        document.querySelector("#drag-label")!,
+        document.querySelector("#label-a")!,
+        11,
+      );
+      dragToEnd(
+        document.querySelector("#drag-button")!,
+        document.querySelector("#button-a")!,
+        12,
+      );
+      dragToEnd(
+        document.querySelector("#nested-range")!,
+        document.querySelector("#range-a")!,
+        13,
+      );
+
+      return {
+        labelOrder: [
+          ...document.querySelector("#label-reorder")!.children,
+        ].map((child) => child.id),
+        buttonOrder: [
+          ...document.querySelector("#button-reorder")!.children,
+        ].map((child) => child.id),
+        rangeOrder: [
+          ...document.querySelector("#range-reorder")!.children,
+        ].map((child) => child.id),
+        draggingClass: document.body.classList.contains(
+          "fig-reorder-dragging",
+        ),
+      };
+    });
+
+    expect(result).toEqual({
+      labelOrder: ["label-b", "label-a"],
+      buttonOrder: ["button-b", "button-a"],
+      rangeOrder: ["range-a", "range-b"],
+      draggingClass: false,
+    });
+  });
+
   test("shows a drop indicator while dragging", async ({ page }) => {
     const indicator = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
