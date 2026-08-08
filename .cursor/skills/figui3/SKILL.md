@@ -87,6 +87,8 @@ export default defineConfig({
 - Preserve value shape expectations:
   - `fig-input-color` expects solid color data (`detail.color`, optional `detail.alpha`) from the picker.
   - `fig-fill-picker` custom modes use JSON with `type` set to mode name and remaining data in payload.
+- Direct color events expose additive `{ color, alpha, opacity }` aliases: opaque `#RRGGBB`, `0–1`, and `0–100`, respectively.
+- Keep `fig-input-color`'s legacy `value`, `hex`, and `rgba` event-detail fields unchanged; consume the aliases for a shared contract.
 
 ## Critical Rules
 
@@ -180,7 +182,7 @@ attributeChangedCallback(name, oldValue, newValue) {
 ```txt
 Event contract quick map:
 - fig-slider: input/change -> current value on e.target.value
-- fig-input-color: input/change -> value on e.target.value, structured color via e.detail (when available)
+- fig-input-color: input/change -> legacy value/hex/rgba plus color/alpha/opacity aliases in e.detail
 - fig-input-fill / fig-fill-picker: input/change -> fill payload in e.detail
 ```
 

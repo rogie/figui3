@@ -938,6 +938,17 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "manual",
+        name: "Manual",
+        markup: `<div class="prop-panel" style="max-width: 10rem">
+  <fig-card label="Loading preview">
+    <fig-preview style="--fig-preview-background: transparent; aspect-ratio: 1/1; display: grid">
+      <fig-spinner></fig-spinner>
+    </fig-preview>
+  </fig-card>
+</div>`,
+      },
+      {
         id: "selected",
         name: "Selected",
         markup: `<div class="prop-panel" style="max-width: 10rem">

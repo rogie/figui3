@@ -39,6 +39,20 @@ function figBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
 
+function figColorEventAliases(color, alpha, opacity) {
+  const numericAlpha = Number(alpha);
+  const numericOpacity = Number(opacity);
+  const normalizedAlpha = Number.isFinite(numericAlpha)
+    ? Math.max(0, Math.min(1, numericAlpha))
+    : Number.isFinite(numericOpacity)
+      ? Math.max(0, Math.min(100, numericOpacity)) / 100
+      : 1;
+  const normalizedOpacity = Number.isFinite(numericOpacity)
+    ? Math.max(0, Math.min(100, numericOpacity))
+    : Math.round(normalizedAlpha * 100);
+  return { color, alpha: normalizedAlpha, opacity: normalizedOpacity };
+}
+
 function figNormalizeTextOnlyInputSlots(host) {
   host
     .querySelectorAll(':scope > [slot="prepend"], :scope > [slot="append"]')
@@ -9115,7 +9129,7 @@ class FigInputColor extends HTMLElement {
       new CustomEvent("input", {
         bubbles: true,
         cancelable: true,
-        detail: { value: this.value, hex: this.hex, rgba: this.rgba },
+        detail: this.#eventDetail(),
       }),
     );
   }
@@ -9124,9 +9138,22 @@ class FigInputColor extends HTMLElement {
       new CustomEvent("change", {
         bubbles: true,
         cancelable: true,
-        detail: { value: this.value, hex: this.hex, rgba: this.rgba },
+        detail: this.#eventDetail(),
       }),
     );
+  }
+
+  #eventDetail() {
+    return {
+      value: this.value,
+      hex: this.hex,
+      rgba: this.rgba,
+      ...figColorEventAliases(
+        this.hexOpaque,
+        this.rgba?.a,
+        Math.round((this.rgba?.a ?? 1) * 100),
+      ),
+    };
   }
 
   static get observedAttributes() {
@@ -11605,6 +11632,10 @@ class FigInputGradient extends HTMLElement {
           this.#gradient.stops[idx].color = e.detail.color;
           if (e.detail.opacity !== undefined) {
             this.#gradient.stops[idx].opacity = e.detail.opacity;
+          } else if (e.detail.alpha !== undefined) {
+            this.#gradient.stops[idx].opacity = Math.round(
+              e.detail.alpha * 100,
+            );
           }
           handle.setAttribute(
             "color",
@@ -13367,7 +13398,8 @@ figDefineElement("fig-video", FigVideo);
 /**
  * <fig-card> — Media card with optional link, selection chrome, and truncated label.
  *
- * Composes a generated `fig-image` (or authored fig-image/fig-media/fig-preview).
+ * Composes a generated `fig-image` when `src` is set. Without `src`, authored
+ * children remain direct children and generated label content is appended.
  * Selection is attribute-only (`selected`); apps own toggle/group logic.
  * When `href` is set (and not disabled), content wraps in a real `<a>`.
  *
@@ -13405,16 +13437,37 @@ class FigCard extends HTMLElement {
   }
 
   #linkEl = null;
-  #mediaWrap = null;
   #textWrap = null;
   #imageEl = null;
   #labelEl = null;
   #sublabelEl = null;
   #usesAuthoredMedia = false;
-
-  connectedCallback() {
+  #mediaObserver = new MutationObserver((mutations) => {
+    const authoredMediaChanged = mutations.some((mutation) =>
+      [...mutation.addedNodes, ...mutation.removedNodes].some(
+        (node) =>
+          node instanceof Element &&
+          (node.matches(
+            "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated])",
+          ) ||
+            node.querySelector(
+              "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated])",
+            )),
+      ),
+    );
+    if (!authoredMediaChanged || !this.isConnected) return;
     this.#ensureStructure();
     this.#sync();
+  });
+
+  connectedCallback() {
+    this.#mediaObserver.observe(this, { childList: true, subtree: true });
+    this.#ensureStructure();
+    this.#sync();
+  }
+
+  disconnectedCallback() {
+    this.#mediaObserver.disconnect();
   }
 
   attributeChangedCallback() {
@@ -13441,13 +13494,27 @@ class FigCard extends HTMLElement {
     return raw === "2" ? "2" : "1";
   }
 
+  #usesGeneratedMedia() {
+    return Boolean(this.getAttribute("src"));
+  }
+
   #findAuthoredMedia() {
     return this.querySelector(
-      ":scope > fig-image:not([data-generated]), :scope > fig-media:not([data-generated]), :scope > fig-preview:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-image:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-media:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-preview:not([data-generated])",
+      ":scope > fig-image:not([data-generated]), :scope > fig-media:not([data-generated]), :scope > fig-preview:not([data-generated]), :scope > .fig-card-link > fig-image:not([data-generated]), :scope > .fig-card-link > fig-media:not([data-generated]), :scope > .fig-card-link > fig-preview:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-image:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-media:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-preview:not([data-generated])",
     );
   }
 
   #ensureStructure() {
+    if (!this.#usesGeneratedMedia()) {
+      this.#ensureManualStructure();
+      return;
+    }
+
+    this.querySelectorAll(":scope > .fig-card-text[data-generated]").forEach(
+      (element) => element.remove(),
+    );
+    if (this.#textWrap?.parentElement === this) this.#textWrap = null;
+
     const authored = this.#findAuthoredMedia();
     this.#usesAuthoredMedia = Boolean(authored);
 
@@ -13468,29 +13535,30 @@ class FigCard extends HTMLElement {
       this.#linkEl = next;
     }
 
-    if (!this.#mediaWrap || !this.#mediaWrap.isConnected) {
-      this.#mediaWrap = this.#linkEl.querySelector(":scope > .fig-card-media");
-      if (!this.#mediaWrap) {
-        this.#mediaWrap = document.createElement("div");
-        this.#mediaWrap.className = "fig-card-media";
-        this.#linkEl.prepend(this.#mediaWrap);
+    const legacyMediaWrap = this.#linkEl.querySelector(
+      ":scope > .fig-card-media",
+    );
+    if (legacyMediaWrap) {
+      while (legacyMediaWrap.firstChild) {
+        this.#linkEl.insertBefore(legacyMediaWrap.firstChild, legacyMediaWrap);
       }
+      legacyMediaWrap.remove();
     }
 
-    if (authored && authored.parentElement !== this.#mediaWrap) {
-      this.#mediaWrap
-        .querySelectorAll("[data-generated]")
+    if (authored && authored.parentElement !== this.#linkEl) {
+      this.#linkEl
+        .querySelectorAll(":scope > [data-generated]:not(.fig-card-text)")
         .forEach((el) => el.remove());
-      this.#mediaWrap.appendChild(authored);
+      this.#linkEl.prepend(authored);
       this.#imageEl = null;
     }
 
     if (!this.#usesAuthoredMedia) {
       this.#imageEl =
-        this.#mediaWrap.querySelector(":scope > fig-image[data-generated]") ||
+        this.#linkEl.querySelector(":scope > fig-image[data-generated]") ||
         null;
       if (!this.#imageEl) {
-        this.#mediaWrap
+        this.#linkEl
           .querySelectorAll(
             ":scope > fig-image, :scope > fig-media, :scope > fig-preview",
           )
@@ -13501,12 +13569,26 @@ class FigCard extends HTMLElement {
         this.#imageEl.setAttribute("data-generated", "");
         this.#imageEl.setAttribute("full", "");
         this.#imageEl.setAttribute("size", "auto");
-        this.#mediaWrap.appendChild(this.#imageEl);
+        this.#linkEl.prepend(this.#imageEl);
       }
     }
 
     if (!this.#textWrap || !this.#textWrap.isConnected) {
       this.#textWrap = this.#linkEl.querySelector(":scope > .fig-card-text");
+      if (this.#textWrap?.tagName.toLowerCase() !== "div") {
+        const text = document.createElement("div");
+        text.className = "fig-card-text";
+        text.setAttribute("data-generated", "");
+        if (this.#textWrap) {
+          while (this.#textWrap.firstChild) {
+            text.appendChild(this.#textWrap.firstChild);
+          }
+          this.#textWrap.replaceWith(text);
+        } else {
+          this.#linkEl.appendChild(text);
+        }
+        this.#textWrap = text;
+      }
       if (!this.#textWrap) {
         this.#textWrap = document.createElement("div");
         this.#textWrap.className = "fig-card-text";
@@ -13542,7 +13624,7 @@ class FigCard extends HTMLElement {
             ":scope > .fig-card-sublabel[data-generated]",
           ) || null;
         if (!this.#sublabelEl) {
-          this.#sublabelEl = document.createElement("span");
+          this.#sublabelEl = document.createElement("label");
           this.#sublabelEl.className = "fig-card-sublabel";
           this.#sublabelEl.setAttribute("data-generated", "");
         }
@@ -13551,7 +13633,49 @@ class FigCard extends HTMLElement {
     }
   }
 
+  #ensureManualStructure() {
+    const staleLink =
+      this.#linkEl || this.querySelector(":scope > .fig-card-link");
+    if (staleLink) {
+      staleLink
+        .querySelectorAll(
+          "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated])",
+        )
+        .forEach((media) => this.insertBefore(media, staleLink));
+      staleLink.remove();
+    }
+    this.querySelectorAll(":scope > [data-generated]").forEach((element) =>
+      element.remove(),
+    );
+
+    this.#linkEl = null;
+    this.#imageEl = null;
+    this.#usesAuthoredMedia = true;
+
+    this.#textWrap = document.createElement("div");
+    this.#textWrap.className = "fig-card-text";
+    this.#textWrap.setAttribute("data-generated", "");
+    this.#labelEl = document.createElement("label");
+    this.#labelEl.className = "fig-card-label";
+    this.#labelEl.setAttribute("data-generated", "");
+    this.#textWrap.appendChild(this.#labelEl);
+
+    const sublabel = this.#sublabelText();
+    this.#sublabelEl = null;
+    if (sublabel) {
+      this.#sublabelEl = document.createElement("label");
+      this.#sublabelEl.className = "fig-card-sublabel";
+      this.#sublabelEl.setAttribute("data-generated", "");
+      this.#textWrap.appendChild(this.#sublabelEl);
+    }
+    this.appendChild(this.#textWrap);
+  }
+
   #sync() {
+    if (!this.#usesGeneratedMedia()) {
+      this.#syncManual();
+      return;
+    }
     if (!this.#linkEl) return;
 
     const disabled = figBooleanAttribute(this, "disabled");
@@ -13633,6 +13757,29 @@ class FigCard extends HTMLElement {
     if (this.#textWrap) {
       this.#textWrap.hidden = !label && !sublabel;
     }
+  }
+
+  #syncManual() {
+    const disabled = figBooleanAttribute(this, "disabled");
+    const label = this.#labelText();
+    const sublabel = this.#sublabelText();
+
+    this.style.setProperty(
+      "--fig-card-label-line-clamp",
+      this.#lineClamp(),
+    );
+    this.setAttribute("role", "group");
+    const ariaLabel = [label, sublabel].filter(Boolean).join(", ");
+    if (ariaLabel) this.setAttribute("aria-label", ariaLabel);
+    else this.removeAttribute("aria-label");
+    if (disabled) this.setAttribute("aria-disabled", "true");
+    else this.removeAttribute("aria-disabled");
+
+    if (this.#labelEl) {
+      this.#labelEl.textContent = label;
+      this.#labelEl.hidden = !label;
+    }
+    if (this.#sublabelEl) this.#sublabelEl.textContent = sublabel;
   }
 }
 figDefineElement("fig-card", FigCard);
@@ -17637,6 +17784,14 @@ class FigColorTip extends HTMLElement {
         eventDetail.opacity = Math.round(detail.alpha * 100);
       }
     }
+    Object.assign(
+      eventDetail,
+      figColorEventAliases(
+        eventDetail.color,
+        this.#alphaEnabled ? detail?.alpha : 1,
+        eventDetail.opacity,
+      ),
+    );
 
     this.dispatchEvent(
       new CustomEvent(type, {
@@ -19183,7 +19338,11 @@ class FigHandle extends HTMLElement {
         : detail.alpha !== undefined
           ? Math.round(detail.alpha * 100)
           : undefined;
-    return { color: detail.color, opacity };
+    return {
+      color: detail.color,
+      opacity,
+      ...figColorEventAliases(detail.color, detail.alpha, opacity),
+    };
   }
 
   #handleDirectColorPickerInput = (e) => {
@@ -19214,7 +19373,11 @@ class FigHandle extends HTMLElement {
 
   #detailFromNativeColor(value) {
     const { opacity } = this.#normalizeColorForPicker();
-    return opacity < 100 ? { color: value, opacity } : { color: value };
+    const detail = opacity < 100 ? { color: value, opacity } : { color: value };
+    return {
+      ...detail,
+      ...figColorEventAliases(value, undefined, opacity),
+    };
   }
 
   #handleNativeColorInput = (e) => {
@@ -19249,14 +19412,23 @@ class FigHandle extends HTMLElement {
   #handleColorTipInput = (e) => {
     e.stopPropagation();
     if (e.detail?.color) {
+      const detail = {
+        color: e.detail.color,
+        opacity: e.detail.opacity,
+        ...figColorEventAliases(
+          e.detail.color,
+          e.detail.alpha,
+          e.detail.opacity,
+        ),
+      };
       this.setAttribute(
         "color",
-        this.#colorWithOpacity(e.detail.color, e.detail.opacity),
+        this.#colorWithOpacity(detail.color, detail.opacity),
       );
       this.dispatchEvent(
         new CustomEvent("input", {
           bubbles: true,
-          detail: { color: e.detail.color, opacity: e.detail.opacity },
+          detail,
         }),
       );
     }
@@ -19265,14 +19437,23 @@ class FigHandle extends HTMLElement {
   #handleColorTipChange = (e) => {
     e.stopPropagation();
     if (e.detail?.color) {
+      const detail = {
+        color: e.detail.color,
+        opacity: e.detail.opacity,
+        ...figColorEventAliases(
+          e.detail.color,
+          e.detail.alpha,
+          e.detail.opacity,
+        ),
+      };
       this.setAttribute(
         "color",
-        this.#colorWithOpacity(e.detail.color, e.detail.opacity),
+        this.#colorWithOpacity(detail.color, detail.opacity),
       );
       this.dispatchEvent(
         new CustomEvent("change", {
           bubbles: true,
-          detail: { color: e.detail.color, opacity: e.detail.opacity },
+          detail,
         }),
       );
     }

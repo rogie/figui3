@@ -18,6 +18,20 @@ function figLabBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
 
+function figLabColorEventAliases(color, alpha, opacity) {
+  const numericAlpha = Number(alpha);
+  const numericOpacity = Number(opacity);
+  const normalizedAlpha = Number.isFinite(numericAlpha)
+    ? Math.max(0, Math.min(1, numericAlpha))
+    : Number.isFinite(numericOpacity)
+      ? Math.max(0, Math.min(100, numericOpacity)) / 100
+      : 1;
+  const normalizedOpacity = Number.isFinite(numericOpacity)
+    ? Math.max(0, Math.min(100, numericOpacity))
+    : Math.round(normalizedAlpha * 100);
+  return { color, alpha: normalizedAlpha, opacity: normalizedOpacity };
+}
+
 /* Unique IDs for lab components such as propskit-group. */
 let figLabUniqueIdCounter = 0;
 function figLabUniqueId(prefix = "fig-lab") {
@@ -3243,16 +3257,27 @@ class FigCanvasControl extends HTMLElement {
     this.#syncPointPointCursors();
   }
 
-  #emitInput() {
+  #emitInput(detail = this.value) {
     this.dispatchEvent(
-      new CustomEvent("input", { bubbles: true, detail: this.value }),
+      new CustomEvent("input", { bubbles: true, detail }),
     );
   }
 
-  #emitChange() {
+  #emitChange(detail = this.value) {
     this.dispatchEvent(
-      new CustomEvent("change", { bubbles: true, detail: this.value }),
+      new CustomEvent("change", { bubbles: true, detail }),
     );
+  }
+
+  #colorEventDetail(detail) {
+    return {
+      ...this.value,
+      ...figLabColorEventAliases(
+        detail.color,
+        detail.alpha,
+        detail.opacity,
+      ),
+    };
   }
 
   #syncValueAttribute() {
@@ -3265,8 +3290,11 @@ class FigCanvasControl extends HTMLElement {
     this.#pointHandle.addEventListener("input", (e) => {
       e.stopPropagation();
       if (e.detail?.color) {
-        this.setAttribute("color", e.detail.color);
-        this.#emitInput();
+        this.setAttribute(
+          "color",
+          this.#pointHandle.getAttribute("color") || e.detail.color,
+        );
+        this.#emitInput(this.#colorEventDetail(e.detail));
         return;
       }
       this.#isDragging = true;
@@ -3285,8 +3313,11 @@ class FigCanvasControl extends HTMLElement {
     this.#pointHandle.addEventListener("change", (e) => {
       e.stopPropagation();
       if (e.detail?.color) {
-        this.setAttribute("color", e.detail.color);
-        this.#emitChange();
+        this.setAttribute(
+          "color",
+          this.#pointHandle.getAttribute("color") || e.detail.color,
+        );
+        this.#emitChange(this.#colorEventDetail(e.detail));
         return;
       }
       const px = e.detail?.px ?? this.#x / 100;

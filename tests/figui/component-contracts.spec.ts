@@ -3224,6 +3224,214 @@ test.describe("reconnect resilience", () => {
       value: "#ff0000",
     });
   });
+
+  test("fig-card preserves authored media as direct children without src", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const results = [];
+
+      for (const tag of ["fig-media", "fig-preview", "fig-image"]) {
+        const card = document.createElement("fig-card");
+        card.setAttribute("label", tag);
+        root.appendChild(card);
+
+        const media = document.createElement(tag);
+        media.setAttribute("data-authored-test", tag);
+        card.appendChild(media);
+        const control = document.createElement("button");
+        control.textContent = "Custom control";
+        card.appendChild(control);
+        await new Promise(requestAnimationFrame);
+
+        const directText = card.querySelector(
+          ":scope > .fig-card-text[data-generated]",
+        );
+        results.push({
+          tag,
+          sameNode:
+            card.querySelector(`[data-authored-test="${tag}"]`) === media,
+          parentIsCard: media.parentElement === card,
+          controlParentIsCard: control.parentElement === card,
+          generatedImages: card.querySelectorAll(
+            "fig-image[data-generated]",
+          ).length,
+          wrappers: card.querySelectorAll(".fig-card-link, .fig-card-media")
+            .length,
+          directLabel: Boolean(
+            directText?.querySelector(":scope > .fig-card-label[data-generated]"),
+          ),
+          labelTag: directText?.querySelector(".fig-card-label")?.tagName,
+          textTag: directText?.tagName,
+          labelIsLast: card.lastElementChild === directText,
+          directMedia: card.querySelectorAll(
+            ":scope > fig-media, :scope > fig-preview, :scope > fig-image",
+          ).length,
+        });
+      }
+
+      return results;
+    });
+
+    expect(state).toEqual([
+      {
+        tag: "fig-media",
+        sameNode: true,
+        parentIsCard: true,
+        controlParentIsCard: true,
+        generatedImages: 0,
+        wrappers: 0,
+        directLabel: true,
+        labelTag: "LABEL",
+        textTag: "DIV",
+        labelIsLast: true,
+        directMedia: 1,
+      },
+      {
+        tag: "fig-preview",
+        sameNode: true,
+        parentIsCard: true,
+        controlParentIsCard: true,
+        generatedImages: 0,
+        wrappers: 0,
+        directLabel: true,
+        labelTag: "LABEL",
+        textTag: "DIV",
+        labelIsLast: true,
+        directMedia: 1,
+      },
+      {
+        tag: "fig-image",
+        sameNode: true,
+        parentIsCard: true,
+        controlParentIsCard: true,
+        generatedImages: 0,
+        wrappers: 0,
+        directLabel: true,
+        labelTag: "LABEL",
+        textTag: "DIV",
+        labelIsLast: true,
+        directMedia: 1,
+      },
+    ]);
+  });
+
+  test("fig-card generates a direct image and label text without a media wrapper", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-card
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          label="Generated card"
+          sublabel="Generated details"
+        ></fig-card>
+      `;
+      await new Promise(requestAnimationFrame);
+      const card = root.querySelector("fig-card")!;
+      const link = card.querySelector(":scope > .fig-card-link");
+      const image = link?.querySelector(
+        ":scope > fig-image[data-generated]",
+      );
+      const text = link?.querySelector(
+        ":scope > .fig-card-text[data-generated]",
+      );
+      return {
+        mediaWrappers: card.querySelectorAll(".fig-card-media").length,
+        imageIsDirect: image?.parentElement === link,
+        textIsDirect: text?.parentElement === link,
+        textTag: text?.tagName,
+        labelTag: text?.querySelector(".fig-card-label")?.tagName,
+        sublabelTag: text?.querySelector(".fig-card-sublabel")?.tagName,
+        gap: getComputedStyle(card).gap,
+      };
+    });
+
+    expect(state).toEqual({
+      mediaWrappers: 0,
+      imageIsDirect: true,
+      textIsDirect: true,
+      textTag: "DIV",
+      labelTag: "LABEL",
+      sublabelTag: "LABEL",
+      gap: "4px",
+    });
+  });
+
+  test("color tips, handles, and gradient adapters share alpha aliases", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-color-tip id="tip" value="#0D99FF"></fig-color-tip>
+        <fig-handle id="handle" type="color" tip="color" color="#0D99FF"></fig-handle>
+        <fig-input-gradient
+          id="gradient"
+          value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#14AE5C","opacity":100}]}}'
+        ></fig-input-gradient>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const tip = root.querySelector("#tip")!;
+      const tipEvents: unknown[] = [];
+      tip.addEventListener("input", (event) => {
+        tipEvents.push((event as CustomEvent).detail);
+      });
+      tip.querySelector("fig-swatch")?.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: { color: "#112233", alpha: 0.35 },
+        }),
+      );
+
+      const handle = root.querySelector("#handle")!;
+      const handleEvents: unknown[] = [];
+      handle.addEventListener("input", (event) => {
+        handleEvents.push((event as CustomEvent).detail);
+      });
+      handle.querySelector("fig-color-tip")?.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: { color: "#445566", alpha: 0.35 },
+        }),
+      );
+
+      const gradient = root.querySelector("#gradient")!;
+      let gradientDetail: unknown;
+      gradient.addEventListener("input", (event) => {
+        gradientDetail = (event as CustomEvent).detail;
+      });
+      gradient.querySelector("fig-handle")?.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: { color: "#778899", alpha: 0.35 },
+        }),
+      );
+
+      return { tipEvents, handleEvents, gradientDetail };
+    });
+
+    expect(state.tipEvents).toEqual([
+      { color: "#112233", alpha: 0.35, opacity: 35 },
+    ]);
+    expect(state.handleEvents).toEqual([
+      { color: "#445566", opacity: 35, alpha: 0.35 },
+    ]);
+    expect(state.gradientDetail).toMatchObject({
+      gradient: {
+        stops: [
+          { color: "#778899", opacity: 35 },
+          { color: "#14AE5C", opacity: 100 },
+        ],
+      },
+    });
+  });
 });
 
 test.describe("render timing composition", () => {
@@ -5739,7 +5947,7 @@ test.describe("media accessibility", () => {
     );
   });
 
-  test("fig-image with explicit aspect ratio lets preview shrink below default min height", async ({
+  test("fig-image with explicit aspect ratio fills width and lets preview shrink below default min height", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -5751,7 +5959,6 @@ test.describe("media accessibility", () => {
             src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
             alt=""
             aspect-ratio="1/1"
-            full
           ></fig-image>
         </div>
       `;

@@ -1153,7 +1153,8 @@ fig-tabs,
 .tabs {
   --fig-overflow-size: calc(var(--spacer-4) + var(--spacer-2));
   --fig-tabs-inline-padding: 0;
-  --fig-tabs-inline-margin: var(--spacer-2-5);
+  --fig-tabs-margin-left: var(--spacer-1);
+  --fig-tabs-margin-right: var(--spacer-2);
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
@@ -1161,11 +1162,14 @@ fig-tabs,
   gap: var(--spacer-1);
   min-width: 0;
   overflow: auto hidden;
-  padding: var(--spacer-2) var(--fig-tabs-inline-padding);
-  margin: 0 var(--fig-tabs-inline-margin);
+  padding: var(--spacer-2) 0;
+  padding-inline: var(--fig-tabs-inline-padding);
+  margin: 0;
+  margin-left: var(--fig-tabs-margin-left);
+  margin-right: var(--fig-tabs-margin-right);
   position: relative;
   scrollbar-width: none;
-  width: calc(100% - var(--fig-tabs-inline-margin) * 2);
+  width: calc(100% - var(--fig-tabs-margin-left) - var(--fig-tabs-margin-right));
 
   > fig-tab {
     flex-shrink: 0;
@@ -1559,6 +1563,10 @@ fig-video {
     width: var(--fig-media-size);
   }
   &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &[aspect-ratio] {
     width: 100%;
   }
 
@@ -3165,12 +3173,13 @@ fig-tooltip {
 
 fig-preview {
   --fig-preview-fit: contain;
+  --fig-preview-background: var(--figma-color-bg-secondary);
 
   display: block;
   place-items: center;
   min-width: 0;
   max-width: 100%;
-  background-color: var(--figma-color-bg-secondary);
+  background-color: var(--fig-preview-background);
   border-radius: var(--radius-medium);
   position: relative;
   overflow: hidden;
@@ -4992,12 +5001,20 @@ fig-chooser {
 fig-card {
   --fig-card-label-line-clamp: 1;
   --fig-card-media-radius: var(--radius-medium);
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-1);
   width: 100%;
   min-width: 0;
 
   &[full]:not([full="false"]) {
     width: 100%;
+  }
+
+  &:is(:not([src]), [src=""]) {
+    padding: var(--spacer-1);
+    border-radius: 0.5625rem;
+    box-sizing: border-box;
   }
 
   .fig-card-link {
@@ -5019,17 +5036,12 @@ fig-card {
     outline-offset: var(--figma-focus-outline-offset);
   }
 
-  .fig-card-media {
-    position: relative;
-    border-radius: var(--fig-card-media-radius);
-    background: var(--figma-color-bg-secondary);
-    overflow: hidden;
-    min-width: 0;
-  }
-
-  .fig-card-media > fig-image,
-  .fig-card-media > fig-media,
-  .fig-card-media > fig-preview {
+  .fig-card-link > fig-image,
+  .fig-card-link > fig-media,
+  .fig-card-link > fig-preview,
+  &:is(:not([src]), [src=""]) > fig-image,
+  &:is(:not([src]), [src=""]) > fig-media,
+  &:is(:not([src]), [src=""]) > fig-preview {
     display: block;
     width: 100%;
     max-width: none;
@@ -5037,9 +5049,12 @@ fig-card {
     border-radius: var(--fig-card-media-radius);
   }
 
-  .fig-card-media > fig-image > fig-preview,
-  .fig-card-media > fig-media > fig-preview,
-  .fig-card-media > fig-preview {
+  .fig-card-link > fig-image > fig-preview,
+  .fig-card-link > fig-media > fig-preview,
+  .fig-card-link > fig-preview,
+  &:is(:not([src]), [src=""]) > fig-image > fig-preview,
+  &:is(:not([src]), [src=""]) > fig-media > fig-preview,
+  &:is(:not([src]), [src=""]) > fig-preview {
     width: 100%;
     max-width: none;
     border-radius: var(--fig-card-media-radius);
@@ -5092,24 +5107,39 @@ fig-card {
   &:hover:not([selected]:not([selected="false"])):not(
       [disabled]:not([disabled="false"])
     ):not([aria-disabled="true"])
-    .fig-card-link {
+    .fig-card-link,
+  &:is(:not([src]), [src=""]):hover:not(
+      [selected]:not([selected="false"])
+    ):not([disabled]:not([disabled="false"])):not([aria-disabled="true"]) {
     background: var(--figma-color-bg-secondary);
   }
 
-  &[selected]:not([selected="false"]) .fig-card-link {
+  &[selected]:not([selected="false"]) .fig-card-link,
+  &:is(:not([src]), [src=""])[selected]:not([selected="false"]) {
     background: var(--figma-color-bg-selected);
   }
 
-  &[selected]:not([selected="false"]) .fig-card-media {
+  &[selected]:not([selected="false"])
+    .fig-card-link
+    > :is(fig-image, fig-media, fig-preview),
+  &:is(:not([src]), [src=""])[selected]:not([selected="false"])
+    > :is(fig-image, fig-media, fig-preview) {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
 
   &[selected]:not([selected="false"])
-    .fig-card-media
+    .fig-card-link
     > :is(fig-image, fig-media)
     > fig-preview::after,
-  &[selected]:not([selected="false"]) .fig-card-media > fig-preview::after {
+  &[selected]:not([selected="false"])
+    .fig-card-link
+    > fig-preview::after,
+  &:is(:not([src]), [src=""])[selected]:not([selected="false"])
+    > :is(fig-image, fig-media)
+    > fig-preview::after,
+  &:is(:not([src]), [src=""])[selected]:not([selected="false"])
+    > fig-preview::after {
     box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
   }
 

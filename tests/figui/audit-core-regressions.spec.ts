@@ -128,6 +128,159 @@ test.describe("fig.js audit core regressions", () => {
     expect(counts).toEqual({ inputs: 2, changes: 2 });
   });
 
+  test("fig-input-color adds canonical aliases without changing legacy events", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await customElements.whenDefined("fig-fill-picker");
+      const color = document.createElement("fig-input-color") as HTMLElement & {
+        value: string;
+      };
+      color.setAttribute("value", "#33669980");
+      document.body.append(color);
+      await new Promise(requestAnimationFrame);
+
+      type ColorDetail = {
+        value: string;
+        hex?: string;
+        rgba: { r: number; g: number; b: number; a: number };
+        color: string;
+        alpha: number;
+        opacity: number;
+      };
+      const events: Array<{
+        type: string;
+        detail: ColorDetail;
+        keys: string[];
+        bubbles: boolean;
+        cancelable: boolean;
+        defaultPrevented: boolean;
+        targetIsHost: boolean;
+      }> = [];
+      const capture = (event: Event) => {
+        const customEvent = event as CustomEvent<ColorDetail>;
+        if (events.length === 0) event.preventDefault();
+        events.push({
+          type: event.type,
+          detail: customEvent.detail,
+          keys: Object.keys(customEvent.detail).sort(),
+          bubbles: event.bubbles,
+          cancelable: event.cancelable,
+          defaultPrevented: event.defaultPrevented,
+          targetIsHost: event.target === color,
+        });
+      };
+      color.addEventListener("input", capture);
+      color.addEventListener("change", capture);
+
+      color.setAttribute("value", "#ABCDEF00");
+      const afterProgrammaticWrite = {
+        eventCount: events.length,
+        value: color.value,
+        attribute: color.getAttribute("value"),
+      };
+
+      const text = color.querySelector("fig-input-text") as HTMLElement & {
+        value: string;
+      };
+      text.value = "112233";
+      text.dispatchEvent(new Event("input", { bubbles: true }));
+      text.dispatchEvent(new Event("change", { bubbles: true }));
+
+      const alpha = color.querySelector("fig-input-number") as HTMLElement & {
+        value: string;
+      };
+      alpha.value = "0";
+      alpha.dispatchEvent(new Event("input", { bubbles: true }));
+      alpha.dispatchEvent(new Event("change", { bubbles: true }));
+
+      const swatchInput = color.querySelector(
+        'fig-swatch input[type="color"]',
+      ) as HTMLInputElement;
+      swatchInput.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+      );
+      await new Promise(requestAnimationFrame);
+      const picker = color.querySelector("fig-fill-picker")!;
+      picker.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: { color: "#445566", alpha: 0.5 },
+        }),
+      );
+      picker.dispatchEvent(new CustomEvent("change", { bubbles: true }));
+
+      return {
+        afterProgrammaticWrite,
+        finalAttribute: color.getAttribute("value"),
+        events,
+      };
+    });
+
+    expect(state.afterProgrammaticWrite).toEqual({
+      eventCount: 0,
+      value: "#ABCDEF00",
+      attribute: "#ABCDEF00",
+    });
+    expect(state.finalAttribute).toBe("#ABCDEF00");
+    expect(state.events.map(({ type }) => type)).toEqual([
+      "input",
+      "change",
+      "input",
+      "change",
+      "input",
+      "change",
+    ]);
+    for (const event of state.events) {
+      expect(event.keys).toEqual([
+        "alpha",
+        "color",
+        "hex",
+        "opacity",
+        "rgba",
+        "value",
+      ]);
+      expect(event).toMatchObject({
+        bubbles: true,
+        cancelable: true,
+        targetIsHost: true,
+      });
+    }
+    expect(state.events.map(({ defaultPrevented }) => defaultPrevented)).toEqual([
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(state.events[0].detail).toEqual({
+      value: "#112233",
+      rgba: { r: 17, g: 34, b: 51, a: 1 },
+      color: "#112233",
+      alpha: 1,
+      opacity: 100,
+    });
+    expect(state.events[1].detail).toEqual(state.events[0].detail);
+    expect(state.events[2].detail).toEqual({
+      value: "#11223300",
+      rgba: { r: 17, g: 34, b: 51, a: 0 },
+      color: "#112233",
+      alpha: 0,
+      opacity: 0,
+    });
+    expect(state.events[3].detail).toEqual(state.events[2].detail);
+    expect(state.events[4].detail).toEqual({
+      value: "#44556680",
+      rgba: { r: 68, g: 85, b: 102, a: 128 / 255 },
+      color: "#445566",
+      alpha: 128 / 255,
+      opacity: 50,
+    });
+    expect(state.events[5].detail).toEqual(state.events[4].detail);
+  });
+
   test("disabled menus close and reject every opening path", async ({ page }) => {
     const state = await page.evaluate(async () => {
       const menu = document.createElement("fig-menu") as HTMLElement & {

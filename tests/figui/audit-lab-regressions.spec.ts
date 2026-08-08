@@ -37,6 +37,54 @@ test.describe("fig-lab audit regressions", () => {
     expect(coordinates.hit).toEqual(["20", "20", "160", "70"]);
   });
 
+  test("canvas color controls preserve handle opacity in wrapper events", async ({
+    page,
+  }) => {
+    const details = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <div style="position:relative;width:200px;height:100px">
+          <fig-canvas-control type="color" color="#0D99FF"></fig-canvas-control>
+        </div>`;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("fig-canvas-control")!;
+      const handle = host.querySelector("fig-handle")!;
+      const events: Record<string, unknown>[] = [];
+      host.addEventListener("input", (event) => {
+        events.push((event as CustomEvent).detail);
+      });
+      host.addEventListener("change", (event) => {
+        events.push((event as CustomEvent).detail);
+      });
+
+      handle.setAttribute("color", "rgba(255, 0, 191, 0.35)");
+      handle.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: { color: "#FF00BF", alpha: 0.35 },
+        }),
+      );
+      handle.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: { color: "#FF00BF", opacity: 35 },
+        }),
+      );
+      return {
+        events,
+        wrapperColor: host.getAttribute("color"),
+      };
+    });
+
+    expect(details).toEqual({
+      events: [
+        { x: 50, y: 50, color: "#FF00BF", alpha: 0.35, opacity: 35 },
+        { x: 50, y: 50, color: "#FF00BF", alpha: 0.35, opacity: 35 },
+      ],
+      wrapperColor: "rgba(255, 0, 191, 0.35)",
+    });
+  });
+
   test("angle dial exposes slider semantics, clamps, reflects, and separates input/change", async ({
     page,
   }) => {

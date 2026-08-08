@@ -559,8 +559,8 @@ A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker 
 
 | Event | Detail |
 |---|---|
-| `input` | `{ color, opacity? }` — while editing |
-| `change` | `{ color, opacity? }` — on commit |
+| `input` | `{ color, alpha, opacity }` — while editing |
+| `change` | `{ color, alpha, opacity }` — on commit |
 | `add` | — (when `control="add"` is clicked) |
 | `remove` | — (when `control="remove"` is clicked) |
 
@@ -588,8 +588,10 @@ A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker 
 
 | Event | Detail |
 |---|---|
-| `input` | `{ color, alpha, hsv: { h, s, v, a } }` |
-| `change` | `{ color, alpha, hsv: { h, s, v, a } }` |
+| `input` | `{ value, hex, rgba, color, alpha, opacity }` |
+| `change` | `{ value, hex, rgba, color, alpha, opacity }` |
+
+`value`, `hex`, and `rgba` retain their legacy values. The additive aliases use opaque `#RRGGBB` for `color`, `0–1` for `alpha`, and `0–100` for `opacity`.
 
 ```html
 <fig-input-color value="#FF5733" text="true"></fig-input-color>
@@ -959,8 +961,8 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
 |---|---|
 | `input` | `{ x, y, px, py, shiftKey }` — while dragging |
 | `change` | `{ x, y, px, py }` — on release |
-| `input` | `{ color, opacity }` — while editing a `type="color"` handle |
-| `change` | `{ color, opacity }` — when committing a `type="color"` handle |
+| `input` | `{ color, alpha, opacity }` — while editing a `type="color"` handle |
+| `change` | `{ color, alpha, opacity }` — when committing a `type="color"` handle |
 | `add` | — (when `tip="add"`) |
 | `remove` | — (when `tip="remove"`) |
 | `hitareadown` | `{ originalEvent }` — when `hit-area-mode="delegate"` and the hit area is clicked |
@@ -1007,6 +1009,8 @@ A composite point control with optional radius circle, angle handle, or second p
 |---|---|
 | `input` | Value object (shape depends on type) — while dragging |
 | `change` | Value object (shape depends on type) — on release |
+
+For `type="color"`, color edits add `{ color, alpha, opacity }` to the positional value object.
 
 For `point-point`, both handles support direct drag (with a dynamic directional resize cursor) and rotation via their hit area (dragging from the hit area rotates around the opposite handle at fixed distance, with a rotate cursor).
 
@@ -1255,6 +1259,8 @@ A thin styled layer for arbitrary visual content. Use it for generated previews,
 | `full` | boolean | `false` | Stretch to the available width |
 | `checkerboard` | boolean | `false` | Show checkerboard behind transparent content |
 
+Set `--fig-preview-background` to customize the surface color, including `transparent` to remove it.
+
 ```html
 <fig-preview full style="height: 96px">
   <canvas width="320" height="180"></canvas>
@@ -1345,7 +1351,7 @@ Use `slot="overlay"` for custom overlay controls. Slotted overlays stay as direc
 
 `<fig-card>` — [demo](https://rog.ie/figui3/#card)
 
-A media card with a truncated label, optional link, and attribute-only selection chrome. Composes a generated `fig-image` (or an authored `fig-image` / `fig-media` / `fig-preview` child).
+A media card with a truncated label, optional link, and attribute-only selection chrome. With `src`, it composes a generated `fig-image`. Without `src`, authored children stay in place and only generated label content is added.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1368,7 +1374,12 @@ A media card with a truncated label, optional link, and attribute-only selection
 <fig-card src="photo.jpg" label="Shader pill" sublabel="Generative tools/effects" selected></fig-card>
 <fig-card src="photo.jpg" label="Open asset" href="#asset"></fig-card>
 <fig-card src="photo.jpg" label="Wide card" aspect-ratio="16/9" full></fig-card>
+<fig-card label="Custom preview">
+  <fig-preview>...</fig-preview>
+</fig-card>
 ```
+
+When `src` is omitted, authored direct children such as `fig-image`, `fig-media`, or `fig-preview` remain direct children of the card.
 
 Place cards in a CSS grid for multi-column layouts — there is no built-in columns attribute. Prefer `full` in fluid layouts for consistency with other FigUI controls.
 

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.26.0]
+
+### Added
+
+- Added `--fig-preview-background` for customizing or removing preview surface backgrounds.
+- Added a manual `fig-card` example composed from an authored `fig-preview` and spinner.
+
+### Changed
+
+- Direct color emitters now share additive `{ color, alpha, opacity }` fields while preserving legacy `fig-input-color` payloads.
+- `fig-card` now preserves authored children without `src`, generates media without a `.fig-card-media` wrapper, and uses semantic label elements.
+- Media with an explicit `aspect-ratio` now fills the available width automatically.
+- Refined tab strip inline margins with independent left and right variables.
+
+### Fixed
+
+- `fig-canvas-control` now preserves color alpha aliases from its handle events.
+- Gradient color adapters now accept either fractional `alpha` or percentage `opacity`.
+
 ## [6.25.0]
 
 ### Changed
