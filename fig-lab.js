@@ -32,6 +32,125 @@ function figLabColorEventAliases(color, alpha, opacity) {
   return { color, alpha: normalizedAlpha, opacity: normalizedOpacity };
 }
 
+const figLabPropskitResetMenus = new WeakMap();
+
+function figLabConnectPropskitResetMenu(host) {
+  let state = figLabPropskitResetMenus.get(host);
+  if (!state) {
+    const menu = document.createElement("fig-menu");
+    menu.setAttribute("position", "bottom left");
+    menu.setAttribute("offset", "0 0");
+    const resetItem = document.createElement("fig-menu-item");
+    resetItem.setAttribute("value", "reset-default");
+    resetItem.textContent = "Reset";
+    menu.appendChild(resetItem);
+
+    let fallbackTimer = 0;
+    const clearPendingOpen = () => {
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+        fallbackTimer = 0;
+      }
+      window.removeEventListener("pointerup", openMenu, true);
+      window.removeEventListener("pointercancel", openMenu, true);
+    };
+    const openMenu = () => {
+      clearPendingOpen();
+      const point = state?.point;
+      if (point) menu.showAt?.(point.x, point.y);
+    };
+    const handleContextMenu = (event) => {
+      if (
+        figLabBooleanAttribute(host, "disabled") ||
+        event.target?.closest?.("fig-menu")
+      ) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+      state.point = { x: event.clientX, y: event.clientY };
+      clearPendingOpen();
+      window.addEventListener("pointerup", openMenu, {
+        once: true,
+        capture: true,
+      });
+      window.addEventListener("pointercancel", openMenu, {
+        once: true,
+        capture: true,
+      });
+      fallbackTimer = window.setTimeout(openMenu, 180);
+    };
+    const handleChange = (event) => {
+      event.stopPropagation();
+      if (event.detail?.value === "reset-default") host.resetToDefault?.();
+    };
+    state = {
+      menu,
+      point: null,
+      clearPendingOpen,
+      handleContextMenu,
+      handleChange,
+    };
+    figLabPropskitResetMenus.set(host, state);
+  }
+
+  if (state.menu.parentElement !== host) host.appendChild(state.menu);
+  host.removeEventListener("contextmenu", state.handleContextMenu);
+  host.addEventListener("contextmenu", state.handleContextMenu);
+  state.menu.removeEventListener("change", state.handleChange);
+  state.menu.addEventListener("change", state.handleChange);
+}
+
+function figLabDisconnectPropskitResetMenu(host) {
+  const state = figLabPropskitResetMenus.get(host);
+  if (!state) return;
+  state.clearPendingOpen();
+  host.removeEventListener("contextmenu", state.handleContextMenu);
+  state.menu.removeEventListener("change", state.handleChange);
+}
+
+function figLabEmitPropskitReset(host, detail) {
+  for (const type of ["input", "change"]) {
+    host.dispatchEvent(
+      new CustomEvent(type, {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+}
+
+function figLabPropskitValuesEqual(value, defaultValue) {
+  if (typeof value === "boolean" || typeof defaultValue === "boolean") {
+    return Boolean(value) === Boolean(defaultValue);
+  }
+  return String(value ?? "") === String(defaultValue ?? "");
+}
+
+function figLabPerceivedColorTheme(context, color) {
+  if (!context || !color) return null;
+  const probe = document.createElement("span");
+  probe.style.cssText =
+    "position:absolute;visibility:hidden;pointer-events:none;color:" + color;
+  context.appendChild(probe);
+  const resolved = getComputedStyle(probe).color;
+  probe.remove();
+  if (!resolved.startsWith("rgb")) return null;
+  const channels = resolved.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+  if (!channels || channels.length < 3 || channels.some(Number.isNaN)) return null;
+  const [r, g, b] = channels.map((channel) => {
+    const value = channel / 255;
+    return value <= 0.04045
+      ? value / 12.92
+      : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance <= 0.179 ? "light" : "dark";
+}
+
 /* Unique IDs for lab components such as propskit-group. */
 let figLabUniqueIdCounter = 0;
 function figLabUniqueId(prefix = "fig-lab") {
@@ -58,6 +177,7 @@ class PropskitSwitch extends HTMLElement {
   #boundHandleInput = null;
   #boundHandleChange = null;
   #boundHandleClick = this.#handleClick.bind(this);
+  #initialChecked = false;
 
   static get observedAttributes() {
     return ["label", "direction"];
@@ -70,6 +190,7 @@ class PropskitSwitch extends HTMLElement {
     this.#bindSwitchEvents();
     this.removeEventListener("click", this.#boundHandleClick);
     this.addEventListener("click", this.#boundHandleClick);
+    figLabConnectPropskitResetMenu(this);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -100,6 +221,7 @@ class PropskitSwitch extends HTMLElement {
     this.#observer?.disconnect();
     this.#unbindSwitchEvents();
     this.removeEventListener("click", this.#boundHandleClick);
+    figLabDisconnectPropskitResetMenu(this);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -108,6 +230,7 @@ class PropskitSwitch extends HTMLElement {
   }
 
   #initialize() {
+    this.#initialChecked = figLabBooleanAttribute(this, "checked");
     const initialChildren = Array.from(this.childNodes).filter(
       (node) =>
         node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
@@ -171,6 +294,7 @@ class PropskitSwitch extends HTMLElement {
       "id",
       "checked",
       "value",
+      "default",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -233,7 +357,10 @@ class PropskitSwitch extends HTMLElement {
   }
 
   #handleClick(event) {
-    if (event.target instanceof Element && event.target.closest("fig-segmented-control")) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-segmented-control, fig-menu")
+    ) {
       return;
     }
     const value = this.#switch?.value === "on" ? "off" : "on";
@@ -258,6 +385,25 @@ class PropskitSwitch extends HTMLElement {
 
   set value(nextValue) {
     this.setAttribute("value", nextValue ?? "");
+  }
+
+  get defaultValue() {
+    return this.hasAttribute("default")
+      ? figLabBooleanAttribute(this, "default")
+      : this.#initialChecked;
+  }
+
+  get isDefault() {
+    return this.checked === this.defaultValue;
+  }
+
+  resetToDefault() {
+    const checked = this.defaultValue;
+    this.checked = checked;
+    figLabEmitPropskitReset(this, {
+      checked,
+      value: this.getAttribute("value") ?? "",
+    });
   }
 
   focus(options) {
@@ -297,6 +443,7 @@ class PropskitColor extends HTMLElement {
     }
     this.removeEventListener("click", this.#boundHandleClick);
     this.addEventListener("click", this.#boundHandleClick);
+    figLabConnectPropskitResetMenu(this);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -328,6 +475,7 @@ class PropskitColor extends HTMLElement {
     this.#observer?.disconnect();
     this.#unbindInputEvents();
     this.removeEventListener("click", this.#boundHandleClick);
+    figLabDisconnectPropskitResetMenu(this);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -491,7 +639,10 @@ class PropskitColor extends HTMLElement {
   }
 
   #handleClick(event) {
-    if (event.target instanceof Element && event.target.closest("fig-input-color")) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-color, fig-menu")
+    ) {
       return;
     }
     this.focus();
@@ -527,8 +678,16 @@ class PropskitColor extends HTMLElement {
     return this.getAttribute("default") ?? this.#initialValue ?? "";
   }
 
+  get defaultValue() {
+    return String(this.#defaultValue());
+  }
+
+  get isDefault() {
+    return figLabPropskitValuesEqual(this.value, this.defaultValue);
+  }
+
   resetToDefault() {
-    const next = String(this.#defaultValue());
+    const next = this.defaultValue;
     this.setAttribute("value", next);
     this.#forceInputValue(next);
     this.dispatchEvent(
@@ -569,6 +728,7 @@ class PropskitSelect extends HTMLElement {
   #boundHandlePointerDown = this.#handlePointerDown.bind(this);
   /** True when pointerdown saw the menu open — skip click-to-open after light-dismiss. */
   #closeGesture = false;
+  #initialValue = null;
 
   static get observedAttributes() {
     return ["label", "direction", "aria-label", "options", "value"];
@@ -583,6 +743,7 @@ class PropskitSelect extends HTMLElement {
     this.addEventListener("click", this.#boundHandleClick);
     this.removeEventListener("pointerdown", this.#boundHandlePointerDown, true);
     this.addEventListener("pointerdown", this.#boundHandlePointerDown, true);
+    figLabConnectPropskitResetMenu(this);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -616,6 +777,7 @@ class PropskitSelect extends HTMLElement {
     this.#unbindSelectEvents();
     this.removeEventListener("click", this.#boundHandleClick);
     this.removeEventListener("pointerdown", this.#boundHandlePointerDown, true);
+    figLabDisconnectPropskitResetMenu(this);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -630,6 +792,7 @@ class PropskitSelect extends HTMLElement {
   }
 
   #initialize() {
+    this.#initialValue = this.getAttribute("value") ?? "";
     const customLabel = this.querySelector(":scope > label");
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
@@ -687,6 +850,7 @@ class PropskitSelect extends HTMLElement {
       "size",
       "aria-label",
       "full",
+      "default",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -763,6 +927,7 @@ class PropskitSelect extends HTMLElement {
 
   #handlePointerDown(event) {
     if (!(event.target instanceof Element)) return;
+    if (event.target.closest("fig-menu")) return;
     // fig-select owns its trigger/option clicks.
     if (event.target.closest("fig-select")) {
       this.#closeGesture = false;
@@ -773,6 +938,9 @@ class PropskitSelect extends HTMLElement {
   }
 
   #handleClick(event) {
+    if (event.target instanceof Element && event.target.closest("fig-menu")) {
+      return;
+    }
     if (event.target instanceof Element && event.target.closest("fig-select")) {
       this.#closeGesture = false;
       return;
@@ -804,6 +972,21 @@ class PropskitSelect extends HTMLElement {
     }
   }
 
+  get defaultValue() {
+    return this.getAttribute("default") ?? this.#initialValue ?? "";
+  }
+
+  get isDefault() {
+    return figLabPropskitValuesEqual(this.value, this.defaultValue);
+  }
+
+  resetToDefault() {
+    const value = this.defaultValue;
+    this.value = value;
+    if (this.#select) this.#select.value = value;
+    figLabEmitPropskitReset(this, value);
+  }
+
   focus(options) {
     this.#select?.focus(options);
   }
@@ -821,6 +1004,7 @@ class PropskitText extends HTMLElement {
   #boundHandleInput = null;
   #boundHandleChange = null;
   #boundHandleClick = this.#handleClick.bind(this);
+  #initialValue = null;
 
   static get observedAttributes() {
     return ["label", "direction", "aria-label"];
@@ -833,6 +1017,7 @@ class PropskitText extends HTMLElement {
     this.#bindInputEvents();
     this.removeEventListener("click", this.#boundHandleClick);
     this.addEventListener("click", this.#boundHandleClick);
+    figLabConnectPropskitResetMenu(this);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -864,6 +1049,7 @@ class PropskitText extends HTMLElement {
     this.#observer?.disconnect();
     this.#unbindInputEvents();
     this.removeEventListener("click", this.#boundHandleClick);
+    figLabDisconnectPropskitResetMenu(this);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -874,6 +1060,7 @@ class PropskitText extends HTMLElement {
   }
 
   #initialize() {
+    this.#initialValue = this.getAttribute("value") ?? "";
     const initialChildren = Array.from(this.childNodes).filter(
       (node) =>
         node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
@@ -938,6 +1125,7 @@ class PropskitText extends HTMLElement {
       "aria-label",
       "multiline",
       "resizable",
+      "default",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -996,7 +1184,10 @@ class PropskitText extends HTMLElement {
   }
 
   #handleClick(event) {
-    if (event.target instanceof Element && event.target.closest("fig-input-text")) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-text, fig-menu")
+    ) {
       return;
     }
     this.focus();
@@ -1017,6 +1208,20 @@ class PropskitText extends HTMLElement {
     }
   }
 
+  get defaultValue() {
+    return this.getAttribute("default") ?? this.#initialValue ?? "";
+  }
+
+  get isDefault() {
+    return figLabPropskitValuesEqual(this.value, this.defaultValue);
+  }
+
+  resetToDefault() {
+    const value = this.defaultValue;
+    this.value = value;
+    figLabEmitPropskitReset(this, value);
+  }
+
   focus(options) {
     this.#input?.focus(options);
   }
@@ -1034,6 +1239,7 @@ class PropskitNumber extends HTMLElement {
   #boundHandleInput = null;
   #boundHandleChange = null;
   #boundHandleClick = this.#handleClick.bind(this);
+  #initialValue = null;
 
   static get observedAttributes() {
     return ["label", "direction"];
@@ -1046,6 +1252,7 @@ class PropskitNumber extends HTMLElement {
     this.#bindInputEvents();
     this.removeEventListener("click", this.#boundHandleClick);
     this.addEventListener("click", this.#boundHandleClick);
+    figLabConnectPropskitResetMenu(this);
 
     if (!this.#observer) {
       this.#observer = new MutationObserver((mutations) => {
@@ -1076,6 +1283,7 @@ class PropskitNumber extends HTMLElement {
     this.#observer?.disconnect();
     this.#unbindInputEvents();
     this.removeEventListener("click", this.#boundHandleClick);
+    figLabDisconnectPropskitResetMenu(this);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -1084,6 +1292,8 @@ class PropskitNumber extends HTMLElement {
   }
 
   #initialize() {
+    this.#initialValue =
+      this.getAttribute("value") ?? this.getAttribute("min") ?? "0";
     const initialChildren = Array.from(this.childNodes).filter(
       (node) =>
         node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
@@ -1140,6 +1350,7 @@ class PropskitNumber extends HTMLElement {
       "class",
       "style",
       "id",
+      "default",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -1199,7 +1410,10 @@ class PropskitNumber extends HTMLElement {
   }
 
   #handleClick(event) {
-    if (event.target instanceof Element && event.target.closest("fig-input-number")) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-number, fig-menu")
+    ) {
       return;
     }
     this.focus();
@@ -1220,6 +1434,20 @@ class PropskitNumber extends HTMLElement {
     }
   }
 
+  get defaultValue() {
+    return this.getAttribute("default") ?? this.#initialValue ?? "0";
+  }
+
+  get isDefault() {
+    return figLabPropskitValuesEqual(this.value, this.defaultValue);
+  }
+
+  resetToDefault() {
+    const value = this.defaultValue;
+    this.value = value;
+    figLabEmitPropskitReset(this, this.#input?.value ?? value);
+  }
+
   focus(options) {
     this.#input?.focus(options);
   }
@@ -1237,12 +1465,12 @@ class PropskitGroup extends HTMLElement {
     "propskit-slider",
     "propskit-switch",
     "propskit-text",
+    "propskit-oscillator",
   ].join(",");
 
   #header = null;
   #chevron = null;
   #resetTooltip = null;
-  #defaults = new WeakMap();
   #childObserver = null;
   #dirtyFrame = 0;
   #boundOnControlEvent = () => this.#queueDirtySync();
@@ -1251,7 +1479,6 @@ class PropskitGroup extends HTMLElement {
     this.#render();
     this.#bindDirtyListeners();
     requestAnimationFrame(() => {
-      this.#ensureDefaults();
       this.#syncDirtyState();
     });
   }
@@ -1334,12 +1561,16 @@ class PropskitGroup extends HTMLElement {
 
     if (!this.#childObserver) {
       this.#childObserver = new MutationObserver(() => {
-        this.#ensureDefaults();
         this.#queueDirtySync();
       });
     }
     this.#childObserver.disconnect();
-    this.#childObserver.observe(this, { childList: true, subtree: true });
+    this.#childObserver.observe(this, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["value", "checked", "default"],
+    });
   }
 
   #unbindDirtyListeners() {
@@ -1352,7 +1583,6 @@ class PropskitGroup extends HTMLElement {
     if (this.#dirtyFrame) return;
     this.#dirtyFrame = requestAnimationFrame(() => {
       this.#dirtyFrame = 0;
-      this.#ensureDefaults();
       this.#syncDirtyState();
     });
   }
@@ -1391,48 +1621,15 @@ class PropskitGroup extends HTMLElement {
   #controls() {
     return [
       ...this.querySelectorAll(PropskitGroup.#CONTROL_SELECTOR),
-    ].filter((el) => el.closest("propskit-group") === this);
-  }
-
-  #snapshotControl(el) {
-    if (el.localName === "propskit-switch") {
-      return { kind: "checked", value: Boolean(el.checked) };
-    }
-    if ("value" in el) {
-      return { kind: "value", value: el.value };
-    }
-    return { kind: "value", value: el.getAttribute("value") ?? "" };
-  }
-
-  #ensureDefaults() {
-    for (const el of this.#controls()) {
-      if (this.#defaults.has(el)) continue;
-      if (el.hasAttribute("default")) {
-        if (el.localName === "propskit-switch") {
-          this.#defaults.set(el, {
-            kind: "checked",
-            value: figLabBooleanAttribute(el, "default"),
-          });
-          continue;
-        }
-        this.#defaults.set(el, {
-          kind: "value",
-          value: el.getAttribute("default") ?? "",
-        });
-        continue;
-      }
-      this.#defaults.set(el, this.#snapshotControl(el));
-    }
+    ].filter(
+      (el) =>
+        el.closest("propskit-group") === this &&
+        !el.parentElement?.closest(PropskitGroup.#CONTROL_SELECTOR),
+    );
   }
 
   #controlIsDirty(el) {
-    const snap = this.#defaults.get(el);
-    if (!snap) return false;
-    const cur = this.#snapshotControl(el);
-    if (snap.kind === "checked") {
-      return Boolean(cur.value) !== Boolean(snap.value);
-    }
-    return String(cur.value ?? "") !== String(snap.value ?? "");
+    return el.isDefault === false;
   }
 
   #computeDirty() {
@@ -1450,67 +1647,12 @@ class PropskitGroup extends HTMLElement {
   }
 
   #restoreControl(el) {
-    const snap = this.#defaults.get(el);
-    if (!snap) return;
-
-    if (snap.kind === "checked") {
-      el.checked = snap.value;
-      const detail = {
-        checked: Boolean(snap.value),
-        value: el.getAttribute("value") ?? "",
-      };
-      el.dispatchEvent(
-        new CustomEvent("input", {
-          detail,
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-        }),
-      );
-      el.dispatchEvent(
-        new CustomEvent("change", {
-          detail,
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-        }),
-      );
-      return;
-    }
-
     if (typeof el.resetToDefault === "function") {
-      const prevDefault = el.getAttribute("default");
-      el.setAttribute("default", String(snap.value ?? ""));
       el.resetToDefault();
-      if (prevDefault === null) el.removeAttribute("default");
-      else el.setAttribute("default", prevDefault);
-      return;
     }
-
-    el.value = snap.value;
-    const detail =
-      el.getAttribute?.("value") ??
-      ("value" in el ? el.value : snap.value);
-    el.dispatchEvent(
-      new CustomEvent("input", {
-        detail,
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-      }),
-    );
-    el.dispatchEvent(
-      new CustomEvent("change", {
-        detail,
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-      }),
-    );
   }
 
   #resetControls() {
-    this.#ensureDefaults();
     for (const el of this.#controls()) this.#restoreControl(el);
     this.#syncDirtyState();
     this.dispatchEvent(
@@ -1652,6 +1794,7 @@ class PropskitSlider extends HTMLElement {
   #contextMenu = null;
   #pendingClickTimer = 0;
   #pendingClickValue = null;
+  #initialValue = null;
   #isElasticTracking = false;
   #elasticMaxPx = 0;
   #elasticRangeRect = null;
@@ -1725,6 +1868,10 @@ class PropskitSlider extends HTMLElement {
               this.#pushExternalValueToSlider();
               continue;
             }
+            if (mutation.attributeName === "color") {
+              syncSlider = true;
+              continue;
+            }
             if (
               mutation.attributeName &&
               this.#ignoredSliderAttrs.has(mutation.attributeName)
@@ -1784,6 +1931,8 @@ class PropskitSlider extends HTMLElement {
   }
 
   #initialize() {
+    this.#initialValue =
+      this.getAttribute("value") ?? this.getAttribute("min") ?? "0";
     const initialChildren = Array.from(this.childNodes).filter((node) => {
       return (
         node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim())
@@ -1825,7 +1974,7 @@ class PropskitSlider extends HTMLElement {
 
     const resetItem = document.createElement("fig-menu-item");
     resetItem.setAttribute("value", "reset-default");
-    resetItem.textContent = "Reset to default";
+    resetItem.textContent = "Reset";
     menu.appendChild(resetItem);
     menu.addEventListener("change", this.#boundHandleContextMenuChange);
 
@@ -1903,15 +2052,31 @@ class PropskitSlider extends HTMLElement {
     if (sliderType === "opacity") {
       this.#slider.style.setProperty(
         "--color",
-        "light-dark(#444444, #e6e6e6)",
+        this.getAttribute("color") || "var(--figma-color-bg-secondary)",
       );
     } else {
       this.#slider.style.removeProperty("--color");
     }
+    this.#syncNumberTheme(sliderType);
 
     this.#managedSliderAttrs = nextManaged;
     this.#pushExternalValueToSlider();
     this.#queueSteppersSync();
+  }
+
+  #syncNumberTheme(sliderType) {
+    const numberInput = this.#slider?.querySelector("fig-input-number");
+    if (!numberInput) return;
+    if (sliderType !== "opacity" || !this.hasAttribute("color")) {
+      numberInput.removeAttribute("theme");
+      return;
+    }
+    const theme = figLabPerceivedColorTheme(
+      this.#slider,
+      this.getAttribute("color"),
+    );
+    if (theme) numberInput.setAttribute("theme", theme);
+    else numberInput.removeAttribute("theme");
   }
 
   #pushExternalValueToSlider() {
@@ -1977,8 +2142,8 @@ class PropskitSlider extends HTMLElement {
       }
     }
     if (numberInput) {
-      numberInput.setAttribute("tabindex", "-1");
-      numberInput.setAttribute("aria-hidden", "true");
+      numberInput.removeAttribute("tabindex");
+      numberInput.removeAttribute("aria-hidden");
     }
   }
 
@@ -2228,8 +2393,7 @@ class PropskitSlider extends HTMLElement {
     return (
       this.getAttribute("default") ??
       this.#slider?.getAttribute("default") ??
-      this.getAttribute("value") ??
-      this.#slider?.getAttribute("value") ??
+      this.#initialValue ??
       this.#rangeInput?.min ??
       "0"
     );
@@ -2345,6 +2509,14 @@ class PropskitSlider extends HTMLElement {
     const next = String(nextValue);
     this.setAttribute("value", next);
     if (this.#slider) this.#slider.value = next;
+  }
+
+  get defaultValue() {
+    return this.#defaultValue();
+  }
+
+  get isDefault() {
+    return figLabPropskitValuesEqual(this.value, this.defaultValue);
   }
 
   resetToDefault() {
@@ -3749,6 +3921,7 @@ class PropskitOscillator extends HTMLElement {
   #activeFieldInput = null;
   #dragController = null;
   #dragCleanup = null;
+  #initialValue = null;
 
   static TYPES = [
     { name: "Wave", value: "sine" },
@@ -3772,11 +3945,18 @@ class PropskitOscillator extends HTMLElement {
   }
 
   connectedCallback() {
+    if (this.#initialValue === null) {
+      this.#initialValue =
+        this.getAttribute("default") ??
+        this.getAttribute("value") ??
+        JSON.stringify({ waves: [PropskitOscillator.#defaultWave()] });
+    }
     this.#precision = this.#readInteger("precision", 2);
     this.#parseValue(this.getAttribute("value"));
     this.#syncAspectRatio();
     this.#render();
     this.#setupResizeObserver();
+    figLabConnectPropskitResetMenu(this);
   }
 
   disconnectedCallback() {
@@ -3786,6 +3966,7 @@ class PropskitOscillator extends HTMLElement {
       this.#resizeObserver.disconnect();
       this.#resizeObserver = null;
     }
+    figLabDisconnectPropskitResetMenu(this);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -3823,6 +4004,27 @@ class PropskitOscillator extends HTMLElement {
       "value",
       typeof value === "object" && value !== null ? JSON.stringify(value) : value,
     );
+  }
+
+  get defaultValue() {
+    return this.getAttribute("default") ?? this.#initialValue ?? "";
+  }
+
+  get isDefault() {
+    const defaultWaves = this.#normalizedWaves(this.defaultValue);
+    if (!defaultWaves) return false;
+    return (
+      JSON.stringify(this.data.waves) ===
+      JSON.stringify(defaultWaves.map((wave) => this.#roundWave(wave)))
+    );
+  }
+
+  resetToDefault() {
+    const value = this.defaultValue;
+    if (!value) return;
+    this.value = value;
+    this.#emit("input");
+    this.#emit("change");
   }
 
   get data() {
@@ -3866,33 +4068,35 @@ class PropskitOscillator extends HTMLElement {
   }
 
   #parseValue(value) {
-    if (!value) return false;
-
-    let parsed = null;
-    if (typeof value === "string") {
-      try {
-        parsed = JSON.parse(value);
-      } catch {
-        parsed = null;
-      }
-    } else if (typeof value === "object") {
-      parsed = value;
-    }
-
-    if (!parsed) return false;
-
-    const nextWaves = Array.isArray(parsed)
-      ? parsed
-      : Array.isArray(parsed.waves)
-        ? parsed.waves
-        : [parsed];
-
-    this.#waves = nextWaves.map((wave) => this.#normalizeWave(wave));
+    const nextWaves = this.#normalizedWaves(value);
+    if (!nextWaves) return false;
+    this.#waves = nextWaves;
     if (!this.#waves.length) {
       this.#waves = [PropskitOscillator.#defaultWave()];
     }
     this.#activeWaveIndex = Math.min(this.#activeWaveIndex, this.#waves.length - 1);
     return true;
+  }
+
+  #normalizedWaves(value) {
+    if (!value) return null;
+    let parsed = null;
+    if (typeof value === "string") {
+      try {
+        parsed = JSON.parse(value);
+      } catch {
+        return null;
+      }
+    } else if (typeof value === "object") {
+      parsed = value;
+    }
+    if (!parsed) return null;
+    const waves = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed.waves)
+        ? parsed.waves
+        : [parsed];
+    return waves.map((wave) => this.#normalizeWave(wave));
   }
 
   #normalizeWave(state = {}) {
@@ -3993,6 +4197,7 @@ class PropskitOscillator extends HTMLElement {
     this.#updateWaveform();
     this.#setupEvents();
     this.#startPlayhead();
+    figLabConnectPropskitResetMenu(this);
   }
 
   #getInnerHTML() {
@@ -4029,9 +4234,7 @@ class PropskitOscillator extends HTMLElement {
         <fig-tooltip text="Remove form">
           <fig-button class="propskit-oscillator-remove-button" variant="ghost" icon data-wave-index="${index}" aria-label="Remove form"${removeDisabled}><fig-icon name="minus"></fig-icon></fig-button>
         </fig-tooltip>
-        <fig-tooltip text="Add form">
-          ${this.#getWaveTypeSelectHTML("propskit-oscillator-add-type propskit-oscillator-add-type-button", "sine", disabled, index)}
-        </fig-tooltip>
+        ${this.#getWaveTypeMenuHTML(disabled, index)}
       </fig-header>
       <div class="propskit-oscillator-fields" data-wave-index="${index}"${active}>
         ${this.#getNumberFieldHTML(index, "frequency", "Frequency", 0.1, 16, 0.1, "")}
@@ -4042,26 +4245,33 @@ class PropskitOscillator extends HTMLElement {
     </fig-group>`;
   }
 
-  #getWaveTypeSelectHTML(className, value, disabled, index = null) {
-    const options = PropskitOscillator.TYPES.map((type) => {
-      const selected = type.value === value ? " selected" : "";
-      return `<fig-select-option value="${type.value}" label="${type.name}"${selected}>
-        <span slot="prepend">${PropskitOscillator.waveIcon(type.value, 24)}</span>
+  #getWaveTypeMenuHTML(disabled, index) {
+    const items = PropskitOscillator.TYPES.map((type) => {
+      return `<fig-menu-item value="${type.value}">
+        ${PropskitOscillator.waveIcon(type.value, 24)}
         <span>${type.name}</span>
-      </fig-select-option>`;
+      </fig-menu-item>`;
     }).join("");
-    const indexAttr =
-      index === null ? "" : ` data-wave-index="${PropskitOscillator.#escapeAttribute(String(index))}"`;
-    return `<fig-select class="${className}" value="${value}" label="Add form"${indexAttr}${disabled}><fig-select-options>${options}</fig-select-options></fig-select>`;
+    const indexAttr = ` data-wave-index="${PropskitOscillator.#escapeAttribute(String(index))}"`;
+    return `<fig-menu class="propskit-oscillator-add-type" position="bottom right"${indexAttr}${disabled}>
+      <fig-tooltip text="Add form">
+        <fig-button class="propskit-oscillator-add-type-button" variant="ghost" icon fig-menu-trigger aria-label="Add form"><fig-icon name="plus"></fig-icon></fig-button>
+      </fig-tooltip>
+      ${items}
+    </fig-menu>`;
   }
 
   #getNumberFieldHTML(index, name, label, min, max, step, units) {
     const disabled = this.#isDisabled() ? " disabled" : "";
+    const typeAttrs =
+      name === "amplitude" || name === "offset"
+        ? ' type="delta" default="0"'
+        : "";
     const unitsAttr = units
       ? ` units="${PropskitOscillator.#escapeAttribute(units)}"`
       : "";
     const wave = this.#waves[index] || PropskitOscillator.#defaultWave();
-    return `<propskit-slider class="propskit-oscillator-field" label="${label}" direction="horizontal" name="${name}" data-wave-index="${index}" value="${this.#round(wave[name])}" min="${min}" max="${max}" step="${step}" precision="${this.#precision}" elastic="false"${unitsAttr}${disabled}></propskit-slider>`;
+    return `<propskit-slider class="propskit-oscillator-field" label="${label}" direction="horizontal" name="${name}" data-wave-index="${index}" value="${this.#round(wave[name])}" min="${min}" max="${max}" step="${step}" precision="${this.#precision}" elastic="false"${typeAttrs}${unitsAttr}${disabled}></propskit-slider>`;
   }
 
   #cacheRefs() {
@@ -4328,7 +4538,7 @@ class PropskitOscillator extends HTMLElement {
         if (this.#isDisabled()) return;
         const insertAfter = this.#indexFromElement(control);
         const insertIndex = insertAfter + 1;
-        const type = this.#normalizeType(event.detail ?? control.value);
+        const type = this.#normalizeType(event.detail?.value ?? control.value);
         this.#waves.splice(insertIndex, 0, PropskitOscillator.#defaultWave(type));
         this.#reindexExpandedWavesAfterInsert(insertIndex);
         this.#activeWaveIndex = insertIndex;

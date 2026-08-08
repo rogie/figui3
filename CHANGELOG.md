@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.27.0]
+
+### Added
+
+- Added shared `defaultValue`, `isDefault`, `resetToDefault()`, and right-click reset support across PropsKit inputs.
+- Added an opacity color control to the PropsKit slider playground attributes.
+
+### Changed
+
+- `propskit-group` now derives dirty and reset state from each nested input's default contract, including oscillators.
+- `propskit-slider[type="opacity"]` now uses a stable full-width color gradient revealed with progress and contrast-aware number text.
+- Refined oscillator wave controls with a menu-based add action, zero-centered delta fields, and stronger waveform styling.
+
+### Fixed
+
+- Opacity slider number fields remain directly editable above the range surface.
+- Programmatic PropsKit value and default changes now update group dirty state predictably.
+
 ## [6.26.0]
 
 ### Added

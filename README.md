@@ -306,14 +306,21 @@ Composes a `<fig-field>` and `<fig-input-number>` into a full-surface property c
 
 PropsKit controls that support `size` default to the large layout when the attribute is omitted.
 
+All PropsKit inputs expose `defaultValue`, `isDefault`, and `resetToDefault()`. A
+`propskit-group` uses this shared contract to track its `dirty` state and reset
+each nested input to its own current `default`.
+
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `label` | string | `"Label"` | Field label text; use an empty value to hide it |
 | `direction` | string | `"horizontal"` | Field layout direction |
 | `size` | string | `"large"` | Control layout size |
+| `default` | number/string | initial `value` | Right-click reset target |
 | *number attrs* | — | — | All `<fig-input-number>` attributes are forwarded |
 
 **Events:** `input`, `change` — forwarded from the inner number input.
+
+Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` (falling back to the initial value).
 
 ```html
 <propskit-number label="Width" value="24" min="0" max="100" units="px"></propskit-number>
@@ -327,9 +334,11 @@ PropsKit controls that support `size` default to the large layout when the attri
 
 Composes a `<fig-field>` and `<fig-input-color>` into a full-surface property control. Color attributes are forwarded to the inner input and text editing remains enabled.
 
-**Attributes:** `label`, `value`, `alpha`, `disabled`, `size`
+**Attributes:** `label`, `value`, `default`, `alpha`, `disabled`, `size`
 
 **Events:** `input`, `change` — forwarded from the inner color input.
+
+Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial color.
 
 ```html
 <propskit-color label="Fill" value="#0D99FF" alpha="true"></propskit-color>
@@ -343,9 +352,11 @@ Composes a `<fig-field>` and `<fig-input-color>` into a full-surface property co
 
 Composes a `<fig-field>` and an Off/On `<fig-segmented-control>` into a full-surface boolean property control.
 
-**Attributes:** `label`, `checked`, `disabled`, `name`, `value`, `size`
+**Attributes:** `label`, `checked`, `default`, `disabled`, `name`, `value`, `size`
 
 **Events:** `input`, `change` — forwarded from the inner switch.
+
+Right-click and choose **Reset**, or call `resetToDefault()`, to restore the default checked state.
 
 ```html
 <propskit-switch label="Visible" checked></propskit-switch>
@@ -359,9 +370,11 @@ Composes a `<fig-field>` and an Off/On `<fig-segmented-control>` into a full-sur
 
 Composes a `<fig-field>` and `<fig-select>` into a full-surface property control. Options come from the `options` attribute (same formats as `fig-options`: comma-separated, newline-delimited, or a JSON array).
 
-**Attributes:** `label`, `value`, `options`, `disabled`, `size`
+**Attributes:** `label`, `value`, `default`, `options`, `disabled`, `size`
 
 **Events:** `input`, `change` — forwarded from the inner select.
+
+Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial selection.
 
 ```html
 <propskit-select label="Alignment" value="Center" options="Left,Center,Right"></propskit-select>
@@ -375,9 +388,11 @@ Composes a `<fig-field>` and `<fig-select>` into a full-surface property control
 
 Composes a `<fig-field>` and `<fig-input-text>` into a full-surface, single-line property control. Text input attributes and adornment slots are forwarded to the inner control.
 
-**Attributes:** `label`, `value`, `placeholder`, `type`, `disabled`, `readonly`, `autoresize`, `size`
+**Attributes:** `label`, `value`, `default`, `placeholder`, `type`, `disabled`, `readonly`, `autoresize`, `size`
 
 **Events:** `input`, `change` — forwarded from the inner text input.
+
+Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial text.
 
 ```html
 <propskit-text label="Name" value="Layer 1" placeholder="Enter a name"></propskit-text>
@@ -396,11 +411,12 @@ Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slid
 | `label` | string | — | Field label text |
 | `direction` | string | `"column"` | Layout direction |
 | `size` | string | `"large"` | Control layout size |
+| `default` | number/string | initial `value` | Double-click and right-click reset target |
 | *slider attrs* | — | — | All `<fig-slider>` attributes except host-only PropsKit attributes are forwarded |
 
 **Events:** `input`, `change` — forwarded from the inner slider.
 
-Double-click or right-click and choose "Reset to default" to reset to the `default` value, falling back to the slider minimum.
+Double-click or right-click and choose **Reset** to restore `default`, falling back to the initial value.
 
 **Methods:** `resetToDefault()` triggers the same reset behavior.
 
@@ -494,6 +510,7 @@ Waveform oscillator input with composable wave functions, live SVG waveform prev
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | JSON string | — | `{"waves":[{"type":"sine","frequency":1,"amplitude":1,"phase":0,"offset":0}]}` |
+| `default` | JSON string | initial `value` | Right-click reset target |
 | `precision` | number | `2` | Decimal places |
 | `aspect-ratio` | string | `"2 / 1"` | Editor aspect ratio |
 | `edit` | boolean | `true` | Show editor and number fields; set to `"false"` for preview only |
@@ -502,6 +519,8 @@ Waveform oscillator input with composable wave functions, live SVG waveform prev
 Supported `type` values: `"sine"`, `"square"`, `"sawtooth"`, `"triangle"`.
 
 **Properties:** `value` returns a normalized JSON string. `data` returns `{ waves }`. Single-wave JSON values are still accepted and normalized into `waves`.
+
+Right-click and choose **Reset**, or call `resetToDefault()`, to restore the oscillator value.
 
 **Events:**
 

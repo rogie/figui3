@@ -113,6 +113,8 @@ bootstrap();
   - Default variant for most property panels.
   - `variant="classic"` only when the previous slider appearance is needed.
 - Always set explicit `min`, `max`, and `step` (and `units` where applicable) to keep behavior predictable.
+- Set `default` on PropsKit value controls when reset behavior should differ from the initial value.
+- PropsKit value controls support `resetToDefault()` and a right-click **Reset** menu; `propskit-slider` also supports double-click reset.
 
 ### Control Selection Heuristics
 

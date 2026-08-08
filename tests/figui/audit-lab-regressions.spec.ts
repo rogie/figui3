@@ -326,6 +326,150 @@ test.describe("fig-lab audit regressions", () => {
     });
   });
 
+  test("propskit opacity gradient stays visually consistent across values", async ({
+    page,
+  }) => {
+    const styles = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <propskit-slider type="opacity" color="#0D99FF"
+          value="10" min="0" max="100"></propskit-slider>
+        <propskit-slider data-default-color type="opacity"
+          value="100" min="0" max="100"></propskit-slider>
+        <propskit-slider data-dark-color type="opacity" color="#111111"
+          value="50" min="0" max="100"></propskit-slider>
+        <propskit-slider data-light-color type="opacity" color="#F5F5F5"
+          value="50" min="0" max="100"></propskit-slider>
+        <propskit-slider data-non-opacity type="range" color="#111111"
+          value="50" min="0" max="100"></propskit-slider>`;
+      await new Promise(requestAnimationFrame);
+      const slider = root.querySelector("propskit-slider") as HTMLElement & {
+        value: string;
+      };
+      const track = slider.querySelector(".fig-slider-input-container")!;
+      const read = () => {
+        const style = getComputedStyle(track, "::before");
+        return {
+          opacity: style.opacity,
+          backgroundImage: style.backgroundImage,
+          width: Number.parseFloat(style.width),
+          trackWidth: track.getBoundingClientRect().width,
+          clipPath: style.clipPath,
+          borderRadius: style.borderRadius,
+          afterBackground: getComputedStyle(track, "::after").backgroundImage,
+        };
+      };
+      const low = read();
+      slider.value = "90";
+      await new Promise(requestAnimationFrame);
+      const defaultSlider = root.querySelector(
+        "propskit-slider[data-default-color] fig-slider",
+      )!;
+      const defaultTrack = defaultSlider.querySelector(
+        ".fig-slider-input-container",
+      )!;
+      const probe = document.createElement("div");
+      probe.style.background = "var(--figma-color-bg-secondary)";
+      root.append(probe);
+      const darkSlider = root.querySelector(
+        "propskit-slider[data-dark-color]",
+      )!;
+      const numberTheme = (host: Element) =>
+        host.querySelector("fig-input-number")?.getAttribute("theme");
+      const numberStyle = (host: Element) => {
+        const style = getComputedStyle(
+          host.querySelector("fig-input-number input")!,
+        );
+        return {
+          backgroundImage: style.backgroundImage,
+          textFillColor: style.webkitTextFillColor,
+        };
+      };
+      const lightSlider = root.querySelector(
+        "propskit-slider[data-light-color]",
+      )!;
+      const initialThemes = {
+        dark: numberTheme(darkSlider),
+        light: numberTheme(lightSlider),
+        noColor: numberTheme(
+          root.querySelector("propskit-slider[data-default-color]")!,
+        ),
+        nonOpacity: numberTheme(
+          root.querySelector("propskit-slider[data-non-opacity]")!,
+        ),
+      };
+      const initialTextStyles = {
+        dark: numberStyle(darkSlider),
+        light: numberStyle(lightSlider),
+      };
+      darkSlider.setAttribute("color", "#FFFFFF");
+      await new Promise(requestAnimationFrame);
+      const changedTheme = numberTheme(darkSlider);
+      darkSlider.removeAttribute("color");
+      await new Promise(requestAnimationFrame);
+      return {
+        low,
+        high: read(),
+        expectedColor: getComputedStyle(probe).backgroundColor,
+        defaultGradient: getComputedStyle(defaultTrack, "::before").backgroundImage,
+        initialThemes,
+        initialTextStyles,
+        changedTheme,
+        removedTheme: numberTheme(darkSlider),
+      };
+    });
+
+    expect(styles.low.opacity).toBe("1");
+    expect(styles.high.opacity).toBe("1");
+    expect(styles.high.backgroundImage).toBe(styles.low.backgroundImage);
+    expect(styles.low.width).toBeCloseTo(styles.low.trackWidth, 0);
+    expect(styles.high.width).toBeCloseTo(styles.high.trackWidth, 0);
+    expect(styles.high.clipPath).not.toBe(styles.low.clipPath);
+    expect(styles.low.clipPath).toContain("round");
+    expect(styles.low.borderRadius).not.toBe("0px");
+    expect(styles.low.afterBackground).toBe("none");
+    expect(styles.high.afterBackground).toBe("none");
+    expect(styles.low.backgroundImage).toContain("rgb(13, 153, 255)");
+    expect(styles.defaultGradient).toContain(styles.expectedColor);
+    expect(styles.initialThemes).toEqual({
+      dark: "light",
+      light: "dark",
+      noColor: null,
+      nonOpacity: null,
+    });
+    expect(styles.initialTextStyles.dark.backgroundImage).toContain(
+      "rgb(255, 255, 255)",
+    );
+    expect(styles.initialTextStyles.light.backgroundImage).toContain(
+      "rgb(0, 0, 0)",
+    );
+    expect(styles.initialTextStyles.dark.textFillColor).toBe(
+      "rgba(0, 0, 0, 0)",
+    );
+    expect(styles.changedTheme).toBe("dark");
+    expect(styles.removedTheme).toBeNull();
+  });
+
+  test("propskit opacity number input remains directly editable", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <propskit-slider type="opacity" color="#111111"
+          value="50" min="0" max="100"></propskit-slider>`;
+    });
+    const input = page.locator("propskit-slider fig-input-number input");
+    await input.click();
+    await input.fill("42");
+
+    await expect(input).toBeFocused();
+    await expect(input).toHaveValue("42");
+    await expect(input).not.toHaveAttribute("tabindex", "-1");
+    await expect(input).not.toHaveAttribute("aria-hidden", "true");
+    await expect(page.locator("propskit-slider")).toHaveAttribute("value", "42");
+  });
+
   test("oscillator edit=false is noninteractive and active gestures cancel on rerender", async ({
     page,
   }) => {
@@ -366,7 +510,62 @@ test.describe("fig-lab audit regressions", () => {
     expect(state).toEqual({ inputs: 0, handles: 0, controls: 0 });
   });
 
-  test("oscillator add-form selector preserves rich options and inserts waves", async ({
+  test("oscillator matches easing curve stroke thickness", async ({ page }) => {
+    const strokeWidths = await page.evaluate(async () => {
+      const oscillator = document.createElement("propskit-oscillator");
+      const easing = document.createElement("fig-easing-curve");
+      document.body.append(oscillator, easing);
+      await new Promise(requestAnimationFrame);
+
+      return {
+        oscillator: getComputedStyle(
+          oscillator.querySelector(".propskit-oscillator-path")!,
+        ).strokeWidth,
+        easing: getComputedStyle(
+          easing.querySelector(".fig-easing-curve-path")!,
+        ).strokeWidth,
+      };
+    });
+
+    expect(strokeWidths.oscillator).toBe(strokeWidths.easing);
+    expect(strokeWidths.oscillator).toBe("2px");
+  });
+
+  test("oscillator amplitude and offset use zero-centered delta sliders", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const oscillator = document.createElement("propskit-oscillator");
+      document.body.append(oscillator);
+      await new Promise(requestAnimationFrame);
+
+      return ["amplitude", "offset"].map((name) => {
+        const field = oscillator.querySelector(
+          `propskit-slider[name="${name}"]`,
+        )!;
+        const slider = field.querySelector("fig-slider")!;
+        return {
+          name,
+          hostType: field.getAttribute("type"),
+          hostDefault: field.getAttribute("default"),
+          sliderType: slider.getAttribute("type"),
+          sliderDefault: slider.getAttribute("default"),
+        };
+      });
+    });
+
+    expect(state).toEqual(
+      ["amplitude", "offset"].map((name) => ({
+        name,
+        hostType: "delta",
+        hostDefault: "0",
+        sliderType: "delta",
+        sliderDefault: "0",
+      })),
+    );
+  });
+
+  test("oscillator add-form menu uses a plus trigger and inserts waves", async ({
     page,
   }) => {
     const state = await page.evaluate(async () => {
@@ -376,25 +575,28 @@ test.describe("fig-lab audit regressions", () => {
       document.body.append(oscillator);
       await new Promise(requestAnimationFrame);
 
-      const select = oscillator.querySelector(
+      const menu = oscillator.querySelector(
         ".propskit-oscillator-add-type",
       ) as HTMLElement;
-      const options = [...select.querySelectorAll("fig-select-option")];
-      (select.querySelector('fig-select-option[value="triangle"]') as HTMLElement).click();
+      const items = [...menu.querySelectorAll("fig-menu-item")];
+      const trigger = menu.querySelector("[fig-menu-trigger]") as HTMLElement;
+      (menu.querySelector('fig-menu-item[value="triangle"]') as HTMLElement).click();
       await new Promise(requestAnimationFrame);
 
       return {
-        tag: select.tagName,
-        optionCount: options.length,
-        icons: options.filter((option) => option.querySelector("svg")).length,
+        tag: menu.tagName,
+        itemCount: items.length,
+        icons: items.filter((item) => item.querySelector("svg")).length,
+        triggerIcon: trigger.querySelector("fig-icon")?.getAttribute("name"),
         waveTypes: oscillator.data.waves.map((wave) => wave.type),
       };
     });
 
     expect(state).toEqual({
-      tag: "FIG-SELECT",
-      optionCount: 4,
+      tag: "FIG-MENU",
+      itemCount: 4,
       icons: 4,
+      triggerIcon: "plus",
       waveTypes: ["sine", "triangle"],
     });
   });
@@ -479,6 +681,20 @@ test.describe("fig-lab audit regressions", () => {
         }),
       );
 
+      const implicitSlider = document.createElement(
+        "propskit-slider",
+      ) as HTMLElement & { value: string };
+      implicitSlider.setAttribute("value", "70");
+      document.body.append(implicitSlider);
+      await new Promise(requestAnimationFrame);
+      implicitSlider.value = "90";
+      implicitSlider.querySelector("fig-menu")?.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: { value: "reset-default" },
+        }),
+      );
+
       const group = document.createElement("propskit-group");
       group.setAttribute("name", "Appearance");
       group.innerHTML = `<propskit-number value="1"></propskit-number>`;
@@ -494,6 +710,10 @@ test.describe("fig-lab audit regressions", () => {
         ?.getBoundingClientRect();
       return {
         resetValue: slider.value,
+        implicitResetValue: implicitSlider.value,
+        resetMenuText:
+          implicitSlider.querySelector('fig-menu-item[value="reset-default"]')
+            ?.textContent,
         headerRole: header.getAttribute("role"),
         headingTag: heading.tagName,
         headingIsDirectChild: heading.parentElement === header,
@@ -511,6 +731,8 @@ test.describe("fig-lab audit regressions", () => {
 
     expect(state).toEqual({
       resetValue: "25",
+      implicitResetValue: "70",
+      resetMenuText: "Reset",
       headerRole: "button",
       headingTag: "H3",
       headingIsDirectChild: true,
@@ -519,6 +741,272 @@ test.describe("fig-lab audit regressions", () => {
       resetOnRight: true,
       resetIsSibling: true,
       nestedReset: null,
+    });
+  });
+
+  test("propskit controls expose default values and shared reset menus", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <propskit-switch value="visible" checked default="false"></propskit-switch>
+        <propskit-color value="#FF0000" default="#112233"></propskit-color>
+        <propskit-select value="A" default="B" options="A,B,C"></propskit-select>
+        <propskit-text value="Initial" default="Default text"></propskit-text>
+        <propskit-number value="4" default="8" min="0" max="10"></propskit-number>
+      `;
+      const oscillator = document.createElement(
+        "propskit-oscillator",
+      ) as HTMLElement & {
+        value: string;
+        data: { waves: Array<{ frequency: number }> };
+      };
+      const oscillatorDefault = JSON.stringify({
+        waves: [
+          {
+            type: "sine",
+            frequency: 2,
+            amplitude: 1,
+            phase: 0,
+            offset: 0,
+          },
+        ],
+      });
+      oscillator.setAttribute("value", oscillatorDefault);
+      oscillator.setAttribute("default", oscillatorDefault);
+      root.append(oscillator);
+      const group = document.createElement("propskit-group");
+      root.append(group);
+      await new Promise(requestAnimationFrame);
+
+      const controls = [
+        ...root.querySelectorAll(
+          "propskit-switch, propskit-color, propskit-select, propskit-text, propskit-number",
+        ),
+      ] as Array<HTMLElement & {
+        checked?: boolean;
+        value: string;
+      }>;
+      const events = new Map<Element, string[]>();
+      for (const control of controls) {
+        events.set(control, []);
+        control.addEventListener("input", () => events.get(control)?.push("input"));
+        control.addEventListener("change", () =>
+          events.get(control)?.push("change"),
+        );
+      }
+
+      controls[0].checked = true;
+      controls[1].value = "#445566";
+      controls[2].value = "C";
+      controls[3].value = "Changed";
+      controls[4].value = "9";
+      oscillator.value = JSON.stringify({
+        waves: [
+          {
+            type: "square",
+            frequency: 7,
+            amplitude: 0.5,
+            phase: 90,
+            offset: 1,
+          },
+        ],
+      });
+      const oscillatorEvents: string[] = [];
+      oscillator.addEventListener("input", () => oscillatorEvents.push("input"));
+      oscillator.addEventListener("change", () =>
+        oscillatorEvents.push("change"),
+      );
+
+      const numberMenu = controls[4].querySelector("fig-menu") as HTMLElement & {
+        open: boolean;
+      };
+      const contextPrevented = !controls[4].dispatchEvent(
+        new MouseEvent("contextmenu", {
+          bubbles: true,
+          cancelable: true,
+          clientX: 20,
+          clientY: 20,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const contextMenuOpened = numberMenu.open;
+
+      for (const control of controls) {
+        control.querySelector("fig-menu")?.dispatchEvent(
+          new CustomEvent("change", {
+            bubbles: true,
+            detail: { value: "reset-default" },
+          }),
+        );
+      }
+      oscillator.querySelector(":scope > fig-menu")?.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: { value: "reset-default" },
+        }),
+      );
+
+      return {
+        values: [
+          controls[0].checked,
+          controls[1].value,
+          controls[2].value,
+          controls[3].value,
+          String(controls[4].value),
+        ],
+        menuCounts: controls.map(
+          (control) => control.querySelectorAll(":scope > fig-menu").length,
+        ),
+        menuLabels: controls.map(
+          (control) =>
+            control.querySelector('fig-menu-item[value="reset-default"]')
+              ?.textContent,
+        ),
+        events: controls.map((control) => events.get(control)),
+        contextPrevented,
+        contextMenuOpened,
+        oscillatorFrequency: oscillator.data.waves[0]?.frequency,
+        oscillatorEvents,
+        oscillatorMenuLabel: oscillator.querySelector(
+          ':scope > fig-menu fig-menu-item[value="reset-default"]',
+        )?.textContent,
+        groupMenuCount: group.querySelectorAll(":scope > fig-menu").length,
+      };
+    });
+
+    expect(state).toEqual({
+      values: [false, "#112233", "B", "Default text", "8"],
+      menuCounts: [1, 1, 1, 1, 1],
+      menuLabels: ["Reset", "Reset", "Reset", "Reset", "Reset"],
+      events: [
+        ["input", "change"],
+        ["input", "change"],
+        ["input", "change"],
+        ["input", "change"],
+        ["input", "change"],
+      ],
+      contextPrevented: true,
+      contextMenuOpened: true,
+      oscillatorFrequency: 2,
+      oscillatorEvents: ["input", "change"],
+      oscillatorMenuLabel: "Reset",
+      groupMenuCount: 0,
+    });
+  });
+
+  test("propskit group uses control defaults for dirty state and reset", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const group = document.createElement("propskit-group") as HTMLElement & {
+        dirty: boolean;
+        resetProperties(): void;
+      };
+      group.innerHTML = `
+        <propskit-switch checked default="false"></propskit-switch>
+        <propskit-color value="#111111" default="#222222"></propskit-color>
+        <propskit-select value="A" default="B" options="A,B,C"></propskit-select>
+        <propskit-text value="A" default="B"></propskit-text>
+        <propskit-number value="1" default="2"></propskit-number>
+        <propskit-slider value="10" default="20" min="0" max="100"></propskit-slider>
+      `;
+      const oscillator = document.createElement("propskit-oscillator");
+      const oscillatorDefault = JSON.stringify({
+        type: "sine",
+        frequency: 2,
+        amplitude: 1,
+        phase: 0,
+        offset: 0,
+      });
+      oscillator.setAttribute("value", JSON.stringify({ type: "square", frequency: 3 }));
+      oscillator.setAttribute("default", oscillatorDefault);
+      group.append(oscillator);
+      document.body.append(group);
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const controls = [
+        ...group.querySelectorAll(
+          ":scope > propskit-switch, :scope > propskit-color, :scope > propskit-select, :scope > propskit-text, :scope > propskit-number, :scope > propskit-slider, :scope > propskit-oscillator",
+        ),
+      ] as Array<
+        HTMLElement & {
+          checked?: boolean;
+          value: string;
+          defaultValue: unknown;
+          isDefault: boolean;
+          resetToDefault(): void;
+        }
+      >;
+      const dirtyInitially = group.dirty;
+      const initialDefaults = controls.map((control) => control.defaultValue);
+      const initialDefaultStates = controls.map((control) => control.isDefault);
+      const resetCalls = controls.map(() => 0);
+      controls.forEach((control, index) => {
+        const reset = control.resetToDefault.bind(control);
+        control.resetToDefault = () => {
+          resetCalls[index] += 1;
+          reset();
+        };
+      });
+
+      controls[0].checked = false;
+      controls[1].value = "#222222";
+      controls[2].value = "B";
+      controls[3].value = "B";
+      controls[4].value = "2";
+      controls[5].value = "20";
+      controls[6].value = oscillatorDefault;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const dirtyAtDefaults = group.dirty;
+
+      controls[0].checked = true;
+      controls[1].value = "#333333";
+      controls[2].value = "C";
+      controls[3].value = "C";
+      controls[4].value = "3";
+      controls[5].value = "30";
+      controls[6].value = JSON.stringify({ type: "triangle", frequency: 4 });
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const dirtyAfterChanges = group.dirty;
+
+      group.resetProperties();
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      return {
+        dirtyInitially,
+        initialDefaults,
+        initialDefaultStates,
+        dirtyAtDefaults,
+        dirtyAfterChanges,
+        dirtyAfterReset: group.dirty,
+        resetCalls,
+        defaultStatesAfterReset: controls.map((control) => control.isDefault),
+      };
+    });
+
+    expect(state).toEqual({
+      dirtyInitially: true,
+      initialDefaults: [
+        false,
+        "#222222",
+        "B",
+        "B",
+        "2",
+        "20",
+        expect.any(String),
+      ],
+      initialDefaultStates: [false, false, false, false, false, false, false],
+      dirtyAtDefaults: false,
+      dirtyAfterChanges: true,
+      dirtyAfterReset: false,
+      resetCalls: [1, 1, 1, 1, 1, 1, 1],
+      defaultStatesAfterReset: [true, true, true, true, true, true, true],
     });
   });
 

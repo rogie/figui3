@@ -393,11 +393,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "propskit-switch": {
     label: { label: "Label", type: "string" },
     checked: { label: "Checked", type: "boolean", boolMode: "presence" },
+    default: { label: "Default", type: "boolean", boolMode: "string" },
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-color": {
     label: { label: "Label", type: "string" },
+    default: { label: "Default", type: "string" },
     alpha: {
       label: "Alpha",
       type: "boolean",
@@ -410,12 +412,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "propskit-select": {
     label: { label: "Label", type: "string" },
     value: { label: "Value", type: "string" },
+    default: { label: "Default", type: "string" },
     options: { label: "Options", type: "string" },
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-text": {
     label: { label: "Label", type: "string" },
+    default: { label: "Default", type: "string" },
     type: {
       label: "Type",
       type: "enum",
@@ -427,6 +431,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "propskit-number": {
     label: { label: "Label", type: "string" },
+    default: { label: "Default", type: "number", min: -1000, max: 1000, step: 1 },
     min: { label: "Min", type: "number", min: -1000, max: 1000, step: 1 },
     max: { label: "Max", type: "number", min: -1000, max: 1000, step: 1 },
     step: { label: "Step", type: "number", min: 0.001, max: 100, step: 0.001 },
@@ -452,7 +457,9 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["range", "hue", "delta", "stepper", "opacity"],
     },
+    color: { label: "Color", type: "string" },
     label: { label: "Label", type: "string" },
+    default: { label: "Default", type: "number", min: -1000, max: 1000, step: 1 },
     units: {
       label: "Units",
       type: "enum",
@@ -593,6 +600,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "propskit-oscillator": {
     value: { label: "Value", type: "string" },
+    default: { label: "Default", type: "string" },
     edit: {
       label: "Edit",
       type: "boolean",

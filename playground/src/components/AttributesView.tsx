@@ -533,6 +533,12 @@ export default function AttributesView({
                 !sliderTextEnabled
               ) &&
               !(
+                entry.name === "color" &&
+                target.controlTag === "propskit-slider" &&
+                (target.controlAttributes.type ?? "range").toLowerCase() !==
+                  "opacity"
+              ) &&
+              !(
                 entry.name === "units" &&
                 target.controlTag === "fig-slider" &&
                 !sliderTextEnabled
@@ -1454,6 +1460,28 @@ export default function AttributesView({
                 alpha="true"
                
                
+                full
+                onInput={handleColorChange}
+                onChange={handleColorChange}
+              ></fig-input-color>
+            );
+          }
+
+          if (
+            target.controlTag === "propskit-slider" &&
+            scope === "control" &&
+            name === "color"
+          ) {
+            const handleColorChange = (e: any) => {
+              const nextValue = readColorInputEventValue(e);
+              if (typeof nextValue !== "string") return;
+              applyChange(target.fieldIndex, scope, name, nextValue || null);
+            };
+            return (
+              <fig-input-color
+                value={value || "#F5F5F5"}
+                text="true"
+                alpha="false"
                 full
                 onInput={handleColorChange}
                 onChange={handleColorChange}
