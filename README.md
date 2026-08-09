@@ -305,7 +305,8 @@ For `type="range"`, omitting `value` follows native range behavior and starts at
 
 Composes a `<fig-field>` and `<fig-input-number>` into a full-surface property control. Number attributes are forwarded to the inner input.
 
-PropsKit controls that support `size` default to the large layout when the attribute is omitted.
+PropsKit controls use the compact default layout when `size` is omitted. Set
+`size="large"` for the 40px row layout.
 
 All PropsKit inputs expose `defaultValue`, `isDefault`, and `resetToDefault()`. A
 `propskit-group` uses this shared contract to track its `dirty` state and reset
@@ -315,7 +316,7 @@ each nested input to its own current `default`.
 |---|---|---|---|
 | `label` | string | `"Label"` | Field label text; use an empty value to hide it |
 | `direction` | string | `"horizontal"` | Field layout direction |
-| `size` | string | `"large"` | Control layout size |
+| `size` | string | default | Set to `"large"` for the expanded layout |
 | `default` | number/string | initial `value` | Right-click reset target |
 | *number attrs* | — | — | All `<fig-input-number>` attributes are forwarded |
 
@@ -361,7 +362,7 @@ Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property
 | `edit` | boolean/string | `true` | `true`, `false`, or `"picker"` |
 | `mode` | string | `"handle"` | `"handle"` or `"tip"` stop presentation |
 | `disabled` | boolean | `false` | Disabled state |
-| `size` | string | `"large"` | Control layout size |
+| `size` | string | default | Set to `"large"` for the expanded layout |
 
 **Events:** `input`, `change` — bubbling, composed events with `{ type: "gradient", gradient }` in `event.detail`.
 
@@ -443,7 +444,7 @@ Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slid
 |---|---|---|---|
 | `label` | string | — | Field label text |
 | `direction` | string | `"column"` | Layout direction |
-| `size` | string | `"large"` | Control layout size |
+| `size` | string | default | Set to `"large"` for the expanded layout |
 | `default` | number/string | initial `value` | Double-click and right-click reset target |
 | *slider attrs* | — | — | All `<fig-slider>` attributes except host-only PropsKit attributes are forwarded |
 

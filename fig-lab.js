@@ -900,9 +900,6 @@ class PropskitGradient extends HTMLElement {
     }
 
     if (!this.hasAttribute("edit")) this.#input.setAttribute("edit", "true");
-    const size = this.getAttribute("size");
-    if (!size || size === "large") this.#input.setAttribute("size", "large");
-    else this.#input.removeAttribute("size");
     this.#managedInputAttrs = nextManaged;
   }
 

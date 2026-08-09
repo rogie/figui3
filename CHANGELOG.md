@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.29.1]
+
+### Changed
+
+- PropsKit controls now use a compact default size and expand to a 40px row with `size="large"`.
+
 ## [6.29.0]
 
 ### Added

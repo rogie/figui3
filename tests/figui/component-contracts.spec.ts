@@ -431,7 +431,7 @@ test.describe("propskit-number", () => {
           (inputBox?.width ?? 0) -
           ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
       ),
-    ).toBe(4);
+    ).toBe(0);
 
     const events = await control.evaluate((element) => {
       const received: Array<{ type: string; detail: unknown }> = [];
@@ -455,7 +455,7 @@ test.describe("propskit-number", () => {
   });
 });
 
-test.describe("propskit default sizes", () => {
+test.describe("propskit sizes", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
@@ -476,7 +476,7 @@ test.describe("propskit default sizes", () => {
     });
   });
 
-  test("omitted size matches explicit large styling", async ({ page }) => {
+  test("omitted size stays compact and large expands the control", async ({ page }) => {
     const result = await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -534,6 +534,30 @@ test.describe("propskit default sizes", () => {
         numberForwardsSize: root
           .querySelector('propskit-number[size="large"] fig-input-number')
           ?.hasAttribute("size"),
+        gradientSizes: {
+          default: root
+            .querySelector(
+              'propskit-gradient[data-size-case="default"] fig-input-gradient',
+            )
+            ?.getAttribute("size"),
+          large: root
+            .querySelector(
+              'propskit-gradient[data-size-case="large"] fig-input-gradient',
+            )
+            ?.getAttribute("size"),
+        },
+        gradientHeights: {
+          default: root
+            .querySelector(
+              'propskit-gradient[data-size-case="default"] fig-input-gradient',
+            )
+            ?.getBoundingClientRect().height,
+          large: root
+            .querySelector(
+              'propskit-gradient[data-size-case="large"] fig-input-gradient',
+            )
+            ?.getBoundingClientRect().height,
+        },
         rightSpacing: {
           text: getComputedStyle(
             root.querySelector(
@@ -555,12 +579,21 @@ test.describe("propskit default sizes", () => {
     });
 
     for (const entry of result.styles) {
-      expect(entry.defaultStyle, entry.tag).toEqual(entry.largeStyle);
       expect(entry.defaultStyle.paddingTop, entry.tag).toBe("4px");
       expect(entry.defaultStyle.paddingBottom, entry.tag).toBe("4px");
-      expect(entry.defaultStyle.height, entry.tag).toBe("40px");
+      expect(entry.defaultStyle.height, entry.tag).toBe("32px");
+      expect(entry.largeStyle.paddingTop, entry.tag).toBe("4px");
+      expect(entry.largeStyle.paddingBottom, entry.tag).toBe("4px");
+      expect(entry.largeStyle.height, entry.tag).toBe("40px");
     }
     expect(result.numberForwardsSize).toBe(false);
+    expect(result.gradientSizes).toEqual({ default: null, large: null });
+    expect(result.gradientHeights).toEqual({ default: 24, large: 24 });
+    const gradientStyles = result.styles.find(
+      (entry) => entry.tag === "propskit-gradient",
+    );
+    expect(gradientStyles?.defaultStyle.fieldPaddingRight).toBe("4px");
+    expect(gradientStyles?.largeStyle.fieldPaddingRight).toBe("4px");
     expect(result.rightSpacing.text).toBe(result.rightSpacing.number);
     expect(result.rightSpacing.text).toBe(result.rightSpacing.select);
   });
@@ -703,7 +736,7 @@ test.describe("propskit-gradient", () => {
     await expect(control.locator("fig-field > label")).toHaveText("Fill");
     await expect(gradient).toHaveAttribute("edit", "true");
     await expect(gradient).toHaveAttribute("mode", "tip");
-    await expect(gradient).toHaveAttribute("size", "large");
+    await expect(gradient).not.toHaveAttribute("size");
     await expect(gradient).toHaveAttribute("aria-label", "Fill");
     await expect(gradient.locator("fig-handle:not(.fig-input-gradient-ghost)")).toHaveCount(
       2,
@@ -711,7 +744,7 @@ test.describe("propskit-gradient", () => {
     const fieldBox = await control.locator("fig-field").boundingBox();
     const labelBox = await control.locator("fig-field > label").boundingBox();
     const gradientBox = await gradient.boundingBox();
-    expect(gradientBox?.height).toBe(32);
+    expect(gradientBox?.height).toBe(24);
     expect(gradientBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.45);
     expect(gradientBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.5);
     expect(gradientBox?.x).toBeGreaterThan(
@@ -1519,7 +1552,7 @@ test.describe("propskit-text", () => {
           (inputBox?.width ?? 0) -
           ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
       ),
-    ).toBe(4);
+    ).toBe(0);
 
     const events = await control.evaluate((element) => {
       const received: Array<{ type: string; detail: unknown }> = [];
