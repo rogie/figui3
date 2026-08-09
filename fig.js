@@ -5349,6 +5349,7 @@ class FigSelect extends HTMLElement {
   #syncingOptions = false;
   #boundTriggerClick = this.#handleTriggerClick.bind(this);
   #boundOptionClick = this.#handleOptionClick.bind(this);
+  #boundOptionPointerOver = this.#handleOptionPointerOver.bind(this);
   #boundKeydown = this.#handleKeydown.bind(this);
   #boundPopupClose = this.#handlePopupClose.bind(this);
   #boundSlotChange = this.#handleSlotChange.bind(this);
@@ -5855,6 +5856,7 @@ class FigSelect extends HTMLElement {
     this.#button?.addEventListener("keydown", this.#boundKeydown);
     // Host click: slotted options stay in light DOM (not dialog.contains).
     this.addEventListener("click", this.#boundOptionClick);
+    this.addEventListener("pointerover", this.#boundOptionPointerOver);
     this.#popup?.addEventListener("keydown", this.#boundKeydown);
     this.#popup?.addEventListener("close", this.#boundPopupClose);
     this.#panelSlot?.addEventListener("slotchange", this.#boundSlotChange);
@@ -5864,6 +5866,7 @@ class FigSelect extends HTMLElement {
     this.#button?.removeEventListener("click", this.#boundTriggerClick);
     this.#button?.removeEventListener("keydown", this.#boundKeydown);
     this.removeEventListener("click", this.#boundOptionClick);
+    this.removeEventListener("pointerover", this.#boundOptionPointerOver);
     this.#popup?.removeEventListener("keydown", this.#boundKeydown);
     this.#popup?.removeEventListener("close", this.#boundPopupClose);
     this.#panelSlot?.removeEventListener("slotchange", this.#boundSlotChange);
@@ -6111,6 +6114,32 @@ class FigSelect extends HTMLElement {
     if (figBooleanAttribute(option, "disabled")) return;
     // Do not stopPropagation — React light-DOM onClick must still fire.
     this.#selectOption(option);
+  }
+
+  /**
+   * Fires `optionhover` with the enabled option's value in `event.detail`
+   * without changing the current selection.
+   */
+  #handleOptionPointerOver(e) {
+    const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+    const option = path.find(
+      (node) => node?.tagName === "FIG-SELECT-OPTION",
+    );
+    if (!option || !this.contains(option)) return;
+    if (figBooleanAttribute(option, "disabled")) return;
+    if (
+      e.relatedTarget instanceof Node &&
+      option.contains(e.relatedTarget)
+    ) {
+      return;
+    }
+    this.dispatchEvent(
+      new CustomEvent("optionhover", {
+        detail: this.#optionValue(option),
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   #handleKeydown(e) {

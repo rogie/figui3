@@ -724,6 +724,7 @@ class PropskitSelect extends HTMLElement {
   #managedSelectAttrs = new Set();
   #boundHandleInput = null;
   #boundHandleChange = null;
+  #boundHandleOptionHover = null;
   #boundHandleClick = this.#handleClick.bind(this);
   #boundHandlePointerDown = this.#handlePointerDown.bind(this);
   /** True when pointerdown saw the menu open — skip click-to-open after light-dismiss. */
@@ -883,8 +884,13 @@ class PropskitSelect extends HTMLElement {
     if (!this.#select) return;
     this.#boundHandleInput ??= this.#forwardSelectEvent.bind(this, "input");
     this.#boundHandleChange ??= this.#forwardSelectEvent.bind(this, "change");
+    this.#boundHandleOptionHover ??= this.#forwardSelectEvent.bind(
+      this,
+      "optionhover",
+    );
     this.#select.addEventListener("input", this.#boundHandleInput);
     this.#select.addEventListener("change", this.#boundHandleChange);
+    this.#select.addEventListener("optionhover", this.#boundHandleOptionHover);
   }
 
   #unbindSelectEvents() {
@@ -895,13 +901,19 @@ class PropskitSelect extends HTMLElement {
     if (this.#boundHandleChange) {
       this.#select.removeEventListener("change", this.#boundHandleChange);
     }
+    if (this.#boundHandleOptionHover) {
+      this.#select.removeEventListener(
+        "optionhover",
+        this.#boundHandleOptionHover,
+      );
+    }
   }
 
   #forwardSelectEvent(type, event) {
     if (event.target !== this.#select) return;
     event.stopImmediatePropagation();
     const value = this.#select?.value ?? "";
-    this.setAttribute("value", String(value));
+    if (type !== "optionhover") this.setAttribute("value", String(value));
     const detail =
       event instanceof CustomEvent && event.detail !== undefined
         ? event.detail

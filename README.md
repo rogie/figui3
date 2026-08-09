@@ -372,7 +372,7 @@ Composes a `<fig-field>` and `<fig-select>` into a full-surface property control
 
 **Attributes:** `label`, `value`, `default`, `options`, `disabled`, `size`
 
-**Events:** `input`, `change` — forwarded from the inner select.
+**Events:** `input`, `change`, `optionhover` — forwarded from the inner select. `optionhover` fires once when the pointer enters an enabled option, with the option value in `event.detail`, without changing the selection.
 
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial selection.
 

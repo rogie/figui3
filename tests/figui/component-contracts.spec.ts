@@ -936,6 +936,82 @@ test.describe("propskit-select", () => {
     await expect(select).not.toHaveAttribute("open", "");
   });
 
+  test("emits optionhover with the hovered value without selecting it", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select id="core-select" label="Align" value="left">
+          <fig-select-options slot="panel">
+            <fig-select-option value="left">Left</fig-select-option>
+            <fig-select-option value="center"><span>Center</span></fig-select-option>
+            <fig-select-option value="right" disabled>Right</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+        <propskit-select
+          id="propskit-select"
+          label="Alignment"
+          value="Left"
+          options="Left,Center,Right"
+        ></propskit-select>
+      `;
+      for (const id of ["core-select", "propskit-select"]) {
+        const element = document.querySelector(`#${id}`) as HTMLElement & {
+          hoverEvents?: unknown[];
+        };
+        element.hoverEvents = [];
+        element.addEventListener("optionhover", (event) => {
+          element.hoverEvents?.push((event as CustomEvent).detail);
+        });
+      }
+    });
+
+    const core = page.locator("#core-select");
+    await core.locator("fig-button.fig-select-trigger").click();
+    await page.mouse.move(0, 0);
+    await core.evaluate(
+      (element: HTMLElement & { hoverEvents?: unknown[] }) =>
+        (element.hoverEvents = []),
+    );
+    await core.locator('fig-select-option[value="center"]').hover();
+    await core.locator('fig-select-option[value="center"] span').hover();
+    await core.evaluate((element) => {
+      element
+        .querySelector('fig-select-option[value="right"]')
+        ?.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+
+    expect(
+      await core.evaluate(
+        (element: HTMLElement & { hoverEvents?: unknown[] }) =>
+          element.hoverEvents,
+      ),
+    ).toEqual(["center"]);
+    await expect(core).toHaveAttribute("value", "left");
+    await core.evaluate(
+      (element: HTMLElement & { open?: boolean }) => (element.open = false),
+    );
+
+    const propskit = page.locator("#propskit-select");
+    await propskit.locator("fig-button.fig-select-trigger").click();
+    await page.mouse.move(0, 0);
+    await propskit.evaluate(
+      (element: HTMLElement & { hoverEvents?: unknown[] }) =>
+        (element.hoverEvents = []),
+    );
+    await propskit.locator('fig-select-option[value="Right"]').hover();
+
+    expect(
+      await propskit.evaluate(
+        (element: HTMLElement & { hoverEvents?: unknown[] }) =>
+          element.hoverEvents,
+      ),
+    ).toEqual(["Right"]);
+    await expect(propskit).toHaveAttribute("value", "Left");
+  });
+
   test("resyncs value when the selected option is removed or its value changes", async ({
     page,
   }) => {

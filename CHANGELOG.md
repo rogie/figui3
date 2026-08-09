@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.28.0]
+
+### Added
+
+- Added `optionhover` events to `fig-select` and `propskit-select`, exposing the hovered enabled option value without changing selection.
+- Added `optionhover` support to the playground event output.
+
 ## [6.27.0]
 
 ### Added
