@@ -3869,6 +3869,9 @@ fig-input-gradient {
     .fig-input-gradient-track {
       inset: 0;
     }
+    > fig-swatch{
+      --size: var(--fig-input-gradient-height);
+    }
   }
 
   .fig-input-gradient-track {

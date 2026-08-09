@@ -130,6 +130,33 @@ function figLabPropskitValuesEqual(value, defaultValue) {
   return String(value ?? "") === String(defaultValue ?? "");
 }
 
+function figLabPropskitJsonValuesEqual(value, defaultValue) {
+  const normalize = (input) => {
+    if (Array.isArray(input)) return input.map(normalize);
+    if (input && typeof input === "object") {
+      return Object.keys(input)
+        .sort()
+        .reduce((result, key) => {
+          result[key] = normalize(input[key]);
+          return result;
+        }, {});
+    }
+    return input;
+  };
+
+  try {
+    const parsedValue = typeof value === "string" ? JSON.parse(value) : value;
+    const parsedDefault =
+      typeof defaultValue === "string" ? JSON.parse(defaultValue) : defaultValue;
+    return (
+      JSON.stringify(normalize(parsedValue)) ===
+      JSON.stringify(normalize(parsedDefault))
+    );
+  } catch {
+    return figLabPropskitValuesEqual(value, defaultValue);
+  }
+}
+
 function figLabPerceivedColorTheme(context, color) {
   if (!context || !color) return null;
   const probe = document.createElement("span");
@@ -713,6 +740,269 @@ class PropskitColor extends HTMLElement {
   }
 }
 figLabDefineElement("propskit-color", PropskitColor);
+
+/* Field + Gradient wrapper */
+class PropskitGradient extends HTMLElement {
+  #field = null;
+  #label = null;
+  #input = null;
+  #hasCustomLabel = false;
+  #observer = null;
+  #managedInputAttrs = new Set();
+  #boundHandleInput = null;
+  #boundHandleChange = null;
+  #boundHandleClick = this.#handleClick.bind(this);
+  #initialValue = null;
+
+  static get observedAttributes() {
+    return ["label", "direction", "aria-label"];
+  }
+
+  connectedCallback() {
+    if (!this.#field) this.#initialize();
+    this.#syncField();
+    this.#syncInputAttributes();
+    this.#bindInputEvents();
+    if (this.#initialValue === null) {
+      this.#initialValue =
+        this.getAttribute("default") ??
+        this.getAttribute("value") ??
+        JSON.stringify(this.#input?.value ?? {});
+    }
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.addEventListener("click", this.#boundHandleClick);
+    figLabConnectPropskitResetMenu(this);
+
+    if (!this.#observer) {
+      this.#observer = new MutationObserver((mutations) => {
+        let syncField = false;
+        let syncInput = false;
+
+        for (const mutation of mutations) {
+          if (mutation.type !== "attributes") continue;
+          if (
+            mutation.attributeName === "label" ||
+            mutation.attributeName === "direction" ||
+            mutation.attributeName === "aria-label"
+          ) {
+            syncField = true;
+          } else {
+            syncInput = true;
+          }
+        }
+
+        if (syncField) this.#syncField();
+        if (syncInput) this.#syncInputAttributes();
+      });
+    }
+
+    this.#observer.observe(this, { attributes: true });
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#unbindInputEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    figLabDisconnectPropskitResetMenu(this);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#field) return;
+    if (name === "label" || name === "direction" || name === "aria-label") {
+      this.#syncField();
+    }
+  }
+
+  #initialize() {
+    const initialChildren = Array.from(this.childNodes).filter(
+      (node) =>
+        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
+    );
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
+    const field = document.createElement("fig-field");
+    const label = customLabel || document.createElement("label");
+    const input = document.createElement("fig-input-gradient");
+
+    field.append(label, input);
+    this.#field = field;
+    this.#label = label;
+    this.#input = input;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.replaceChildren(field);
+  }
+
+  #syncField() {
+    if (!this.#field || !this.#label || !this.#input) return;
+    const hasLabelAttr = this.hasAttribute("label");
+    const rawLabel = this.getAttribute("label");
+    const isBlankLabel = hasLabelAttr && (rawLabel ?? "").trim() === "";
+
+    if (isBlankLabel) {
+      this.#label.remove();
+    } else {
+      if (!this.#hasCustomLabel) {
+        this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      }
+      if (this.#label.parentElement !== this.#field) {
+        this.#field.prepend(this.#label);
+      }
+    }
+
+    this.#field.setAttribute(
+      "direction",
+      this.getAttribute("direction") || "horizontal",
+    );
+    this.#input.setAttribute(
+      "aria-label",
+      this.getAttribute("aria-label") ||
+        this.#label.textContent?.trim() ||
+        "Gradient",
+    );
+  }
+
+  #getForwardedInputAttrNames() {
+    const reserved = new Set([
+      "label",
+      "direction",
+      "oninput",
+      "onchange",
+      "class",
+      "style",
+      "id",
+      "size",
+      "aria-label",
+      "default",
+    ]);
+    return this.getAttributeNames().filter(
+      (name) => !reserved.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncInputAttributes() {
+    if (!this.#input) return;
+    const inputAttrs = this.#getForwardedInputAttrNames();
+    const nextManaged = new Set(inputAttrs);
+
+    for (const attrName of this.#managedInputAttrs) {
+      if (!nextManaged.has(attrName)) this.#input.removeAttribute(attrName);
+    }
+    for (const attrName of inputAttrs) {
+      const next = this.getAttribute(attrName) ?? "";
+      if (
+        attrName === "value" &&
+        this.#input.getAttribute("value") === next
+      ) {
+        continue;
+      }
+      this.#input.setAttribute(attrName, next);
+    }
+
+    if (!this.hasAttribute("edit")) this.#input.setAttribute("edit", "true");
+    const size = this.getAttribute("size");
+    if (!size || size === "large") this.#input.setAttribute("size", "large");
+    else this.#input.removeAttribute("size");
+    this.#managedInputAttrs = nextManaged;
+  }
+
+  #bindInputEvents() {
+    if (!this.#input) return;
+    this.#boundHandleInput ??= this.#forwardInputEvent.bind(this, "input");
+    this.#boundHandleChange ??= this.#forwardInputEvent.bind(this, "change");
+    this.#input.addEventListener("input", this.#boundHandleInput);
+    this.#input.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #unbindInputEvents() {
+    if (!this.#input) return;
+    if (this.#boundHandleInput) {
+      this.#input.removeEventListener("input", this.#boundHandleInput);
+    }
+    if (this.#boundHandleChange) {
+      this.#input.removeEventListener("change", this.#boundHandleChange);
+    }
+  }
+
+  #valueFromGradientEvent(event) {
+    const detail =
+      event instanceof CustomEvent && event.detail && typeof event.detail === "object"
+        ? event.detail
+        : this.#input?.value;
+    if (!detail || typeof detail !== "object") return this.value;
+    return JSON.stringify(detail);
+  }
+
+  #forwardInputEvent(type, event) {
+    event.stopImmediatePropagation();
+    const value = this.#valueFromGradientEvent(event);
+    this.setAttribute("value", value);
+    const detail =
+      event instanceof CustomEvent && event.detail !== undefined
+        ? event.detail
+        : this.#input?.value;
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #handleClick(event) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-gradient, fig-menu")
+    ) {
+      return;
+    }
+    this.focus();
+  }
+
+  get value() {
+    return (
+      this.getAttribute("value") ??
+      JSON.stringify(this.#input?.value ?? {})
+    );
+  }
+
+  set value(nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.removeAttribute("value");
+      this.#input?.removeAttribute("value");
+      return;
+    }
+    const next =
+      typeof nextValue === "object" ? JSON.stringify(nextValue) : String(nextValue);
+    this.setAttribute("value", next);
+    if (this.#input && this.#input.getAttribute("value") !== next) {
+      this.#input.setAttribute("value", next);
+    }
+  }
+
+  get defaultValue() {
+    return this.getAttribute("default") ?? this.#initialValue ?? "";
+  }
+
+  get isDefault() {
+    return figLabPropskitJsonValuesEqual(this.value, this.defaultValue);
+  }
+
+  resetToDefault() {
+    const next = this.defaultValue;
+    if (!next) return;
+    this.value = next;
+    const detail = this.#input?.value;
+    figLabEmitPropskitReset(this, detail);
+  }
+
+  focus(options) {
+    this.#input?.focus(options);
+  }
+}
+figLabDefineElement("propskit-gradient", PropskitGradient);
 
 /* Field + Select wrapper */
 class PropskitSelect extends HTMLElement {
@@ -1472,6 +1762,7 @@ class PropskitGroup extends HTMLElement {
 
   static #CONTROL_SELECTOR = [
     "propskit-color",
+    "propskit-gradient",
     "propskit-number",
     "propskit-select",
     "propskit-slider",

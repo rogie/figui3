@@ -182,6 +182,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-radio": "Radio",
     "fig-field": "Field",
     "propskit-color": "Propskit color",
+    "propskit-gradient": "Propskit gradient",
     "propskit-number": "Propskit number",
     "propskit-select": "Propskit select",
     "propskit-slider": "Propskit slider",
@@ -872,7 +873,8 @@ export default function AttributesView({
             const useSegmentedControl =
               isCheckRadioLabel ||
               isColorPickerMode ||
-              (target.controlTag === "fig-input-gradient" &&
+              ((target.controlTag === "fig-input-gradient" ||
+                target.controlTag === "propskit-gradient") &&
                 scope === "control" &&
                 name === "size") ||
               (target.controlTag === "fig-handle" &&
@@ -901,7 +903,8 @@ export default function AttributesView({
                   return option === "" ? "Default" : "Small";
                 }
                 if (
-                  target.controlTag === "fig-input-gradient" &&
+                  (target.controlTag === "fig-input-gradient" ||
+                    target.controlTag === "propskit-gradient") &&
                   name === "size"
                 ) {
                   return option === "" ? "Default" : "Large";
@@ -981,7 +984,8 @@ export default function AttributesView({
                   return;
                 }
                 if (
-                  target.controlTag === "fig-input-gradient" &&
+                  (target.controlTag === "fig-input-gradient" ||
+                    target.controlTag === "propskit-gradient") &&
                   name === "size"
                 ) {
                   applyChange(
@@ -1181,6 +1185,7 @@ export default function AttributesView({
                     if (
                       (target.controlTag === "propskit-slider" ||
                         target.controlTag === "propskit-color" ||
+                        target.controlTag === "propskit-gradient" ||
                         target.controlTag === "propskit-number" ||
                         target.controlTag === "propskit-select" ||
                         target.controlTag === "propskit-switch" ||
@@ -1298,6 +1303,7 @@ export default function AttributesView({
                                 ? "Default"
                                 : (target.controlTag === "propskit-slider" ||
                                       target.controlTag === "propskit-color" ||
+                                      target.controlTag === "propskit-gradient" ||
                                       target.controlTag === "propskit-number" ||
                                       target.controlTag === "propskit-select" ||
                                       target.controlTag === "propskit-switch" ||

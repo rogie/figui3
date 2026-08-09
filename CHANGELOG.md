@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.29.0]
+
+### Added
+
+- Added `propskit-gradient`, an inline-editable gradient field with shared PropsKit defaults, reset behavior, and group dirty-state integration.
+
+### Changed
+
+- Large gradient inputs now size their swatch to the full control height.
+
 ## [6.28.1]
 
 ### Changed

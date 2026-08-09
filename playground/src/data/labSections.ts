@@ -62,6 +62,21 @@ const ungroupedLabSections: Section[] = [
     ],
   },
   {
+    id: "propskit-gradient",
+    name: "Propskit Gradient",
+    description:
+      "A full-surface gradient field that composes fig-field and fig-input-gradient into a single inline-editable property control.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <propskit-gradient label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "propskit-text",
     name: "Propskit Text",
     description:
@@ -116,6 +131,7 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <propskit-group name="Appearance" open>
     <propskit-color label="Fill" value="#0D99FF" default="#0D99FF" alpha="true"></propskit-color>
+    <propskit-gradient label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
     <propskit-text label="Name" value="Layer 1" default="Layer 1" placeholder="Enter a name"></propskit-text>
     <propskit-select label="Blend" value="Normal" default="Normal" options="Normal,Multiply,Screen,Overlay"></propskit-select>
     <propskit-slider label="Opacity" direction="horizontal" type="opacity" value="100" default="100" min="0" max="100" units="%"></propskit-slider>

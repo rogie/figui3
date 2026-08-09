@@ -193,6 +193,7 @@ export default function ExampleView({
       "fig-joystick",
       "fig-segmented-control",
       "propskit-color",
+      "propskit-gradient",
       "propskit-number",
       "propskit-select",
       "propskit-slider",

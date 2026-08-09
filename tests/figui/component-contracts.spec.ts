@@ -466,6 +466,7 @@ test.describe("propskit default sizes", () => {
         [
           "propskit-switch",
           "propskit-color",
+          "propskit-gradient",
           "propskit-select",
           "propskit-text",
           "propskit-number",
@@ -482,6 +483,8 @@ test.describe("propskit default sizes", () => {
       const fixtures: Record<string, string> = {
         "propskit-switch": 'label="Enabled"',
         "propskit-color": 'label="Fill" value="#0D99FF"',
+        "propskit-gradient":
+          "label=\"Gradient\" value='{\"type\":\"gradient\",\"gradient\":{\"type\":\"linear\",\"angle\":90,\"stops\":[{\"position\":0,\"color\":\"#0D99FF\",\"opacity\":100},{\"position\":100,\"color\":\"#9747FF\",\"opacity\":100}]}}'",
         "propskit-select": 'label="Mode" value="A" options="A,B"',
         "propskit-text": 'label="Name" value="Layer"',
         "propskit-number": 'label="Width" value="24"',
@@ -654,6 +657,176 @@ test.describe("propskit-color", () => {
     await expect(colorInput.locator("fig-input-text input")).toBeFocused();
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("none");
+  });
+});
+
+test.describe("propskit-gradient", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-gradient");
+    });
+  });
+
+  test("composes an inline gradient and preserves its JSON event contract", async ({
+    page,
+  }) => {
+    const initial = {
+      type: "gradient",
+      gradient: {
+        type: "linear",
+        angle: 90,
+        interpolationSpace: "srgb",
+        hueInterpolation: "shorter",
+        stops: [
+          { position: 0, color: "#0D99FF", opacity: 100 },
+          { position: 100, color: "#9747FF", opacity: 100 },
+        ],
+      },
+    };
+    await page.evaluate((value) => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const control = document.createElement("propskit-gradient");
+      control.setAttribute("label", "Fill");
+      control.setAttribute("mode", "tip");
+      control.setAttribute("value", JSON.stringify(value));
+      control.setAttribute("default", JSON.stringify(value));
+      root.append(control);
+    }, initial);
+
+    const control = page.locator("propskit-gradient");
+    const gradient = control.locator("fig-input-gradient");
+    await expect(control.locator("fig-field > label")).toHaveText("Fill");
+    await expect(gradient).toHaveAttribute("edit", "true");
+    await expect(gradient).toHaveAttribute("mode", "tip");
+    await expect(gradient).toHaveAttribute("size", "large");
+    await expect(gradient).toHaveAttribute("aria-label", "Fill");
+    await expect(gradient.locator("fig-handle:not(.fig-input-gradient-ghost)")).toHaveCount(
+      2,
+    );
+    const fieldBox = await control.locator("fig-field").boundingBox();
+    const labelBox = await control.locator("fig-field > label").boundingBox();
+    const gradientBox = await gradient.boundingBox();
+    expect(gradientBox?.height).toBe(32);
+    expect(gradientBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.45);
+    expect(gradientBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.5);
+    expect(gradientBox?.x).toBeGreaterThan(
+      (labelBox?.x ?? 0) + (labelBox?.width ?? 0),
+    );
+    expect(
+      Math.abs(
+        (gradientBox?.x ?? 0) +
+          (gradientBox?.width ?? 0) -
+          ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0) - 4),
+      ),
+    ).toBeLessThan(1);
+    await gradient.hover();
+    expect(
+      await gradient.evaluate((element) => getComputedStyle(element).outlineStyle),
+    ).toBe("none");
+
+    const next = {
+      ...initial,
+      gradient: {
+        ...initial.gradient,
+        stops: [
+          { position: 0, color: "#FF0000", opacity: 100 },
+          { position: 100, color: "#0000FF", opacity: 100 },
+        ],
+      },
+    };
+    const received = await control.evaluate((element, detail) => {
+      const events: Array<{ type: string; detail: unknown }> = [];
+      element.addEventListener("input", (event) => {
+        events.push({ type: event.type, detail: (event as CustomEvent).detail });
+      });
+      element.querySelector("fig-input-gradient")?.dispatchEvent(
+        new CustomEvent("input", { detail, bubbles: true }),
+      );
+      return events;
+    }, next);
+
+    expect(received).toEqual([{ type: "input", detail: next }]);
+    await expect(control).toHaveAttribute("value", JSON.stringify(next));
+    await control.evaluate((element) => (element as HTMLElement).focus());
+    await expect(
+      gradient.locator("fig-handle:not(.fig-input-gradient-ghost)").first(),
+    ).toBeFocused();
+  });
+
+  test("uses structural defaults, resets, and forwards disabled state", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const initial = {
+        type: "gradient",
+        gradient: {
+          type: "linear",
+          angle: 90,
+          stops: [
+            { position: 0, color: "#0D99FF", opacity: 100 },
+            { position: 100, color: "#9747FF", opacity: 100 },
+          ],
+        },
+      };
+      const reordered = {
+        gradient: {
+          stops: initial.gradient.stops.map((stop) => ({
+            opacity: stop.opacity,
+            color: stop.color,
+            position: stop.position,
+          })),
+          angle: 90,
+          type: "linear",
+        },
+        type: "gradient",
+      };
+      const control = document.createElement("propskit-gradient") as HTMLElement & {
+        value: string | object;
+        defaultValue: string;
+        isDefault: boolean;
+        resetToDefault(): void;
+      };
+      control.setAttribute("value", JSON.stringify(initial));
+      control.setAttribute("default", JSON.stringify(reordered));
+      control.setAttribute("disabled", "");
+      document.querySelector("#fixture-root")?.append(control);
+      await new Promise(requestAnimationFrame);
+      const structurallyDefault = control.isDefault;
+      control.value = {
+        ...initial,
+        gradient: { ...initial.gradient, angle: 45 },
+      };
+      const dirty = control.isDefault;
+      const resetEvents: string[] = [];
+      control.addEventListener("input", () => resetEvents.push("input"));
+      control.addEventListener("change", () => resetEvents.push("change"));
+      control.resetToDefault();
+      return {
+        structurallyDefault,
+        dirty,
+        resetDefault: control.isDefault,
+        defaultValue: control.defaultValue,
+        value: control.value,
+        disabled: control
+          .querySelector("fig-input-gradient")
+          ?.hasAttribute("disabled"),
+        resetEvents,
+      };
+    });
+
+    expect(state.structurallyDefault).toBe(true);
+    expect(state.dirty).toBe(false);
+    expect(state.resetDefault).toBe(true);
+    expect(JSON.parse(state.value as string)).toEqual(
+      JSON.parse(state.defaultValue),
+    );
+    expect(state.disabled).toBe(true);
+    expect(state.resetEvents).toEqual(["input", "change"]);
   });
 });
 

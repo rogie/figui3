@@ -409,6 +409,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  "propskit-gradient": {
+    label: { label: "Label", type: "string" },
+    default: { label: "Default", type: "string" },
+    edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
+    mode: { label: "Mode", type: "enum", options: ["handle", "tip"] },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "propskit-select": {
     label: { label: "Label", type: "string" },
     value: { label: "Value", type: "string" },

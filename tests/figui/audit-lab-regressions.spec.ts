@@ -1010,6 +1010,88 @@ test.describe("fig-lab audit regressions", () => {
     });
   });
 
+  test("propskit gradient reset menu participates in group dirty state", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const defaultValue = JSON.stringify({
+        type: "gradient",
+        gradient: {
+          type: "linear",
+          angle: 90,
+          stops: [
+            { position: 0, color: "#0D99FF", opacity: 100 },
+            { position: 100, color: "#9747FF", opacity: 100 },
+          ],
+        },
+      });
+      const changedValue = JSON.stringify({
+        type: "gradient",
+        gradient: {
+          type: "linear",
+          angle: 45,
+          stops: [
+            { position: 0, color: "#FF0000", opacity: 100 },
+            { position: 100, color: "#0000FF", opacity: 100 },
+          ],
+        },
+      });
+      const group = document.createElement("propskit-group") as HTMLElement & {
+        dirty: boolean;
+        resetProperties(): void;
+      };
+      const gradient = document.createElement(
+        "propskit-gradient",
+      ) as HTMLElement & {
+        value: string;
+        isDefault: boolean;
+      };
+      gradient.setAttribute("value", changedValue);
+      gradient.setAttribute("default", defaultValue);
+      group.append(gradient);
+      document.querySelector("#fixture-root")?.append(group);
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const dirtyInitially = group.dirty;
+      const resetLabel = gradient.querySelector(
+        'fig-menu-item[value="reset-default"]',
+      )?.textContent;
+      gradient.querySelector("fig-menu")?.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: { value: "reset-default" },
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const dirtyAfterMenuReset = group.dirty;
+      gradient.value = changedValue;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const dirtyAfterChange = group.dirty;
+      group.resetProperties();
+      await new Promise(requestAnimationFrame);
+      return {
+        dirtyInitially,
+        dirtyAfterMenuReset,
+        dirtyAfterChange,
+        dirtyAfterGroupReset: group.dirty,
+        isDefault: gradient.isDefault,
+        value: gradient.value,
+        defaultValue,
+        resetLabel,
+      };
+    });
+
+    expect(state.dirtyInitially).toBe(true);
+    expect(state.dirtyAfterMenuReset).toBe(false);
+    expect(state.dirtyAfterChange).toBe(true);
+    expect(state.dirtyAfterGroupReset).toBe(false);
+    expect(state.isDefault).toBe(true);
+    expect(state.value).toBe(state.defaultValue);
+    expect(state.resetLabel).toBe("Reset");
+  });
+
   test("slider preserves range focus across a real pointer value update", async ({
     page,
   }) => {

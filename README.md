@@ -90,6 +90,7 @@ Minimal example:
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
 | [Propskit Slider](#propskit-slider) | `<propskit-slider>` | Labeled field + slider combo |
 | [Propskit Color](#propskit-color) | `<propskit-color>` | Full-surface labeled color control |
+| [Propskit Gradient](#propskit-gradient) | `<propskit-gradient>` | Full-surface labeled gradient control |
 | [Propskit Number](#propskit-number) | `<propskit-number>` | Full-surface labeled number control |
 | [Propskit Select](#propskit-select) | `<propskit-select>` | Full-surface labeled select control |
 | [Propskit Switch](#propskit-switch) | `<propskit-switch>` | Full-surface labeled switch control |
@@ -342,6 +343,38 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 ```html
 <propskit-color label="Fill" value="#0D99FF" alpha="true"></propskit-color>
+```
+
+---
+
+#### Propskit Gradient
+
+`<propskit-gradient>`
+
+Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property control. The gradient is inline-editable by default.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | `"Label"` | Field label text; use an empty value to hide it |
+| `value` | JSON string | default gradient | Canonical `{ "type": "gradient", "gradient": { ... } }` data |
+| `default` | JSON string | initial `value` | Right-click and group reset target |
+| `edit` | boolean/string | `true` | `true`, `false`, or `"picker"` |
+| `mode` | string | `"handle"` | `"handle"` or `"tip"` stop presentation |
+| `disabled` | boolean | `false` | Disabled state |
+| `size` | string | `"large"` | Control layout size |
+
+**Events:** `input`, `change` — bubbling, composed events with `{ type: "gradient", gradient }` in `event.detail`.
+
+**Methods and state:** `defaultValue`, `isDefault`, and `resetToDefault()`. JSON defaults use structural equality, so object key order does not affect dirty state.
+
+The first stop receives focus when the field is focused. Arrow keys move the selected stop, Shift+Arrow moves by 5%, Tab cycles stops, and Delete/Backspace removes a stop while preserving the two-stop minimum.
+
+```html
+<propskit-gradient
+  label="Fill"
+  value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'
+  default='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'
+></propskit-gradient>
 ```
 
 ---
@@ -671,8 +704,8 @@ Supported interpolation spaces: `srgb`, `srgb-linear`, `display-p3`, `oklab`, `o
 
 | Event | Detail |
 |---|---|
-| `input` | `{ type, gradient, css }` |
-| `change` | `{ type, gradient, css }` |
+| `input` | `{ type, gradient }` |
+| `change` | `{ type, gradient }` |
 
 ```html
 <fig-input-gradient
