@@ -868,6 +868,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-separator": {
     label: { label: "Label", type: "string" },
   },
+  "fig-attachment": {
+    src: { label: "Source", type: "string" },
+    name: { label: "Name", type: "string" },
+    value: { label: "Value", type: "string" },
+    removable: {
+      label: "Removable",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-chat-message": {
     from: { label: "From", type: "enum", options: ["agent", "user"] },
   },

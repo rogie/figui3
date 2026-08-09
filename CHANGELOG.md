@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.30.0]
+
+### Added
+
+- Added experimental `fig-attachment` and `fig-attachments` lab components for removable image previews and wrapping AI prompt attachments.
+
+### Changed
+
+- The playground event output now reports attachment `remove` events.
+
 ## [6.29.1]
 
 ### Changed

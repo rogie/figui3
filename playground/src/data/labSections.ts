@@ -268,6 +268,39 @@ const ungroupedLabSections: Section[] = [
     ],
   },
   {
+    id: "ai-attachments",
+    name: "Attachments",
+    description:
+      "Image attachments with filename tooltips, hover removal controls, and a wrapping container for prompt composition.",
+    examples: [
+      {
+        id: "default",
+        name: "Attachment",
+        markup: `<div class="prop-panel">
+  <fig-attachment value="reference" name="reference.png" src="https://picsum.photos/128.webp?random=51"></fig-attachment>
+</div>`,
+      },
+      {
+        id: "multiple",
+        name: "Multiple",
+        markup: `<div class="prop-panel">
+  <fig-attachments aria-label="Prompt attachments">
+    <fig-attachment value="layout" name="layout.png" src="https://picsum.photos/128.webp?random=52"></fig-attachment>
+    <fig-attachment value="texture" name="texture.jpg" src="https://picsum.photos/128.webp?random=53"></fig-attachment>
+    <fig-attachment value="notes" name="notes.pdf"></fig-attachment>
+  </fig-attachments>
+</div>`,
+      },
+      {
+        id: "fallback",
+        name: "Fallback",
+        markup: `<div class="prop-panel">
+  <fig-attachment value="brief" name="project-brief.pdf"></fig-attachment>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "ai-prompt",
     name: "AI Prompt",
     description:
@@ -279,6 +312,10 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-ai-prompt>
     <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
+    <fig-attachments aria-label="Prompt attachments">
+      <fig-attachment value="reference" name="reference.png" src="https://picsum.photos/128.webp?random=54"></fig-attachment>
+      <fig-attachment value="brief" name="brief.pdf"></fig-attachment>
+    </fig-attachments>
     <fig-footer>
       <fig-button variant="ghost" icon aria-label="Add attachment">
         <fig-icon name="add"></fig-icon>

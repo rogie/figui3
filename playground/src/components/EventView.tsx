@@ -40,11 +40,13 @@ export default function EventView() {
     container.addEventListener("change", handler);
     container.addEventListener("optionhover", handler);
     container.addEventListener("reorder", handler);
+    container.addEventListener("remove", handler);
     return () => {
       container.removeEventListener("input", handler);
       container.removeEventListener("change", handler);
       container.removeEventListener("optionhover", handler);
       container.removeEventListener("reorder", handler);
+      container.removeEventListener("remove", handler);
       cancelAnimationFrame(rafId);
     };
   }, []);

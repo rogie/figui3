@@ -160,6 +160,8 @@ test.describe("AI lab styling components", () => {
       await import("/fig-lab.js");
       await Promise.all([
         customElements.whenDefined("fig-ai-prompt"),
+        customElements.whenDefined("fig-attachment"),
+        customElements.whenDefined("fig-attachments"),
         customElements.whenDefined("fig-chat-message"),
       ]);
     });
@@ -289,6 +291,157 @@ test.describe("AI lab styling components", () => {
           .evaluate((input) => getComputedStyle(input).boxShadow),
       )
       .toBe("none");
+  });
+
+  test("composes square attachment previews with wrapping and fallback states", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-attachments aria-label="Prompt attachments" style="width:100px">
+          <fig-attachment id="image-attachment" name="reference.png" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='16' height='16' fill='red'/%3E%3C/svg%3E"></fig-attachment>
+          <fig-attachment id="file-attachment" name="brief.pdf"></fig-attachment>
+          <fig-attachment name="notes.txt"></fig-attachment>
+        </fig-attachments>
+      `;
+    });
+
+    const result = await page.evaluate(() => {
+      const container = document.querySelector("fig-attachments");
+      const imageAttachment = document.querySelector("#image-attachment");
+      const fileAttachment = document.querySelector("#file-attachment");
+      const image = imageAttachment?.querySelector("fig-image");
+      const mediaImage = image?.querySelector("img");
+      const tooltip = imageAttachment?.querySelector("fig-tooltip");
+      const items = Array.from(
+        container?.querySelectorAll(":scope > fig-attachment") || [],
+      );
+      const rects = items.map((item) => item.getBoundingClientRect());
+      return {
+        registered:
+          Boolean(customElements.get("fig-attachment")) &&
+          Boolean(customElements.get("fig-attachments")),
+        containerRole: container?.getAttribute("role"),
+        itemRoles: items.map((item) => item.getAttribute("role")),
+        aspectRatio: image?.getAttribute("aspect-ratio"),
+        fit: image?.getAttribute("fit"),
+        full: image?.hasAttribute("full"),
+        alt: mediaImage?.getAttribute("alt"),
+        tooltip: tooltip?.getAttribute("text"),
+        imageSize: imageAttachment?.getBoundingClientRect().width,
+        isSquare:
+          Math.abs(
+            (imageAttachment?.getBoundingClientRect().width ?? 0) -
+              (imageAttachment?.getBoundingClientRect().height ?? 0),
+          ) <= 0.5,
+        wrapped:
+          rects.length === 3 &&
+          Math.abs(rects[0].top - rects[1].top) <= 0.5 &&
+          rects[2].top > rects[0].top,
+        fallback:
+          fileAttachment?.hasAttribute("data-fallback") &&
+          fileAttachment.querySelector(".fig-attachment-fallback")?.textContent,
+      };
+    });
+
+    expect(result).toEqual({
+      registered: true,
+      containerRole: "list",
+      itemRoles: ["listitem", "listitem", "listitem"],
+      aspectRatio: "1/1",
+      fit: "cover",
+      full: true,
+      alt: "reference.png",
+      tooltip: "reference.png",
+      imageSize: 40,
+      isSquare: true,
+      wrapped: true,
+      fallback: "PDF",
+    });
+
+    await page.locator("#image-attachment").evaluate((attachment) => {
+      attachment.setAttribute("src", "data:image/png;base64,broken");
+    });
+    await expect
+      .poll(() =>
+        page
+          .locator("#image-attachment")
+          .evaluate((attachment) => attachment.hasAttribute("data-fallback")),
+      )
+      .toBe(true);
+  });
+
+  test("reveals a keyboard-accessible remove control and emits a cancelable request", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-attachment id="removable" value="asset-1" name="reference.png" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E"></fig-attachment>
+        <fig-attachment id="fixed" name="fixed.png" removable="false"></fig-attachment>
+        <fig-attachment id="disabled" name="disabled.png" disabled></fig-attachment>
+      `;
+      const attachment = document.querySelector("#removable");
+      attachment?.addEventListener("remove", (event) => {
+        const customEvent = event as CustomEvent;
+        customEvent.preventDefault();
+        (window as typeof window & { attachmentRemove?: unknown }).attachmentRemove = {
+          defaultPrevented: customEvent.defaultPrevented,
+          value: customEvent.detail.value,
+          name: customEvent.detail.name,
+          src: customEvent.detail.src,
+          attachmentMatches: customEvent.detail.attachment === attachment,
+        };
+      });
+    });
+
+    const removeButton = page.locator("#removable .fig-attachment-remove");
+    await expect(removeButton).toHaveCSS("opacity", "0");
+    await page.locator("#removable").hover();
+    await expect(removeButton).toHaveCSS("opacity", "1");
+    await expect(removeButton).toHaveAttribute("aria-label", "Remove reference.png");
+    await expect(removeButton).toHaveAttribute("variant", "overlay");
+    await expect(
+      page.locator("#removable .fig-attachment-remove-tooltip"),
+    ).toHaveAttribute("text", "Remove attachment");
+    await expect(removeButton.locator("fig-icon")).toHaveAttribute("name", "close");
+    await expect(removeButton.locator("fig-icon")).toHaveAttribute("size", "small");
+    expect(await removeButton.boundingBox()).toMatchObject({
+      width: 20,
+      height: 20,
+    });
+
+    await removeButton.focus();
+    await expect(removeButton).toHaveCSS("opacity", "1");
+    await removeButton.press("Enter");
+
+    const event = await page.evaluate(
+      () =>
+        (window as typeof window & { attachmentRemove?: unknown })
+          .attachmentRemove,
+    );
+    expect(event).toEqual({
+      defaultPrevented: true,
+      value: "asset-1",
+      name: "reference.png",
+      src: expect.stringContaining("data:image/svg+xml"),
+      attachmentMatches: true,
+    });
+    await expect(page.locator("#removable")).toHaveCount(1);
+    await expect(page.locator("#fixed .fig-attachment-remove")).toBeHidden();
+    await expect(page.locator("#disabled .fig-attachment-remove")).toHaveAttribute(
+      "disabled",
+      "",
+    );
+    expect(
+      await page.locator("#disabled .fig-attachment-remove").evaluate(
+        (button) =>
+          (button as HTMLElement & { button?: HTMLButtonElement }).button?.disabled,
+      ),
+    ).toBe(true);
   });
 
   test("styles user and agent chat messages without changing content", async ({
