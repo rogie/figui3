@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.28.1]
+
+### Changed
+
+- Horizontal `fig-field` labels now center within a capped large-control height while preserving ellipsis truncation.
+
+### Fixed
+
+- `fig-input-gradient[edit="picker"]` now opens the gradient fill editor by pointer or keyboard and upgrades when the optional picker registers later.
+
 ## [6.28.0]
 
 ### Added

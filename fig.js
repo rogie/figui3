@@ -10987,6 +10987,7 @@ class FigInputGradient extends HTMLElement {
   #arrowTooltipTimer = null;
   #colorObserver = null;
   #repositionRAF = null;
+  #pickerDefinitionPromise = null;
   #gradient = {
     type: "linear",
     angle: 90,
@@ -11060,9 +11061,20 @@ class FigInputGradient extends HTMLElement {
   connectedCallback() {
     this.#parseValue();
     this.#render();
+    this.#renderPickerWhenAvailable();
     this.removeEventListener("keydown", this.#onPickerKeyDown);
     this.addEventListener("keydown", this.#onPickerKeyDown);
     if (this.#isEditable) document.addEventListener("keydown", this.#onKeyDown);
+  }
+
+  #renderPickerWhenAvailable() {
+    if (this.#editMode !== "picker" || hasFigFillPicker()) return;
+    this.#pickerDefinitionPromise ??= customElements
+      .whenDefined("fig-fill-picker")
+      .then(() => {
+        if (!this.isConnected || this.#editMode !== "picker") return;
+        this.#render();
+      });
   }
 
   disconnectedCallback() {
@@ -11851,6 +11863,7 @@ class FigInputGradient extends HTMLElement {
         break;
       case "edit":
         this.#render();
+        this.#renderPickerWhenAvailable();
         if (this.#isEditable) {
           document.addEventListener("keydown", this.#onKeyDown);
         } else {

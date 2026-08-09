@@ -3843,14 +3843,14 @@ fig-input-gradient {
     --fig-input-gradient-swatch-border-radius: var(--radius-medium);
   }
 
-  &[edit="false"],
-  &[edit="picker"] {
+  &[edit="false"] {
     pointer-events: none;
     --fig-input-gradient-swatch-border-radius: var(--radius-medium);
-
   }
 
   &[edit="picker"] {
+    --fig-input-gradient-swatch-border-radius: var(--radius-medium);
+
     & > fig-fill-picker {
       display: contents;
     }
@@ -4040,6 +4040,7 @@ fig-field {
   --fig-field-right-padding: var(--spacer-3);
   --fig-field-top-padding: var(--spacer-1);
   --fig-field-bottom-padding: var(--spacer-1);
+  --fig-field-label-max-height: var(--spacer-5);
   --fig-field-label-ratio: 1fr;
   --fig-field-input-ratio: 2fr;
   display: grid;
@@ -4118,6 +4119,14 @@ fig-field {
     white-space: nowrap;
     margin-right: var(--fig-field-gap);
     min-width: 0;
+  }
+
+  &:not([direction="vertical"]) > label {
+    align-self: start;
+    align-content: center;
+    box-sizing: border-box;
+    height: min(100%, var(--fig-field-label-max-height));
+    padding-block: 0;
   }
 
   & > *:not(.fig-field-chevron):not(label) {

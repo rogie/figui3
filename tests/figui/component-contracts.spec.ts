@@ -3767,6 +3767,47 @@ test.describe("color input accessibility", () => {
   });
 });
 
+test.describe("gradient picker availability", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.evaluate(() =>
+      customElements.whenDefined("fig-input-gradient"),
+    );
+  });
+
+  test("upgrades picker edit mode when fig-fill-picker registers later", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-gradient
+          id="late-gradient"
+          edit="picker"
+          value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#14AE5C","opacity":100}]}}'
+        ></fig-input-gradient>
+      `;
+    });
+
+    const gradient = page.locator("#late-gradient");
+    await expect(gradient.locator("fig-fill-picker")).toHaveCount(0);
+
+    await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+    await page.evaluate(() => customElements.whenDefined("fig-fill-picker"));
+    await expect(gradient.locator('fig-fill-picker[mode="gradient"]')).toHaveCount(
+      1,
+    );
+
+    await gradient.locator("fig-swatch").click();
+    const dialog = page.locator("dialog.fig-fill-picker-dialog");
+    await expect(dialog).toHaveAttribute("open", "true");
+    await expect(dialog.locator('[data-tab="gradient"]')).toBeVisible();
+    await expect(dialog.locator('[data-tab="solid"]')).toHaveCount(0);
+  });
+});
+
 test.describe("fill picker accessibility", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
