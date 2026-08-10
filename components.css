@@ -2280,6 +2280,10 @@ fig-combo-input fig-button[type="select"] {
   margin-left: -1px;
 }
 
+input[type="checkbox"] {
+  flex-shrink: 0;
+}
+
 /* Switch */
 input[type="checkbox"].switch {
   --knob-width: 0.75rem;
@@ -3257,8 +3261,6 @@ fig-dropdown {
 
 fig-checkbox,
 fig-radio {
-  
-  align-items: center;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
 
@@ -3267,8 +3269,16 @@ fig-radio {
   }
 }
 
-fig-switch {
+fig-checkbox {
+  align-items: flex-start;
+}
+
+fig-radio {
   align-items: center;
+}
+
+fig-switch {
+  align-items: flex-start;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
 }

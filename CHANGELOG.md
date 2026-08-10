@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.33.1]
+
+### Fixed
+
+- Checkbox and switch inputs no longer shrink in flex layouts, and `fig-checkbox` and `fig-switch` align multiline content from the top.
+
 ## [6.33.0]
 
 ### Added
