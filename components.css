@@ -3175,8 +3175,10 @@ fig-tooltip {
 fig-preview {
   --fig-preview-fit: contain;
   --fig-preview-background: var(--figma-color-bg-secondary);
+  --fig-preview-aspect-ratio: auto;
 
   display: block;
+  aspect-ratio: var(--fig-preview-aspect-ratio);
   place-items: center;
   min-width: 0;
   max-width: 100%;

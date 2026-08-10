@@ -17089,19 +17089,22 @@ figDefineElement("fig-spinner", FigSpinner);
  * A styled visual preview layer for arbitrary content such as images, canvas,
  * video, SVG, or custom rendered surfaces.
  * @attr {string} fit - CSS object-fit value for direct media children
+ * @attr {string} aspect-ratio - CSS aspect-ratio value
  */
 class FigPreview extends HTMLElement {
   static get observedAttributes() {
-    return ["fit"];
+    return ["fit", "aspect-ratio"];
   }
 
   connectedCallback() {
     this.#syncFit();
+    this.#syncAspectRatio();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     if (name === "fit") this.#syncFit();
+    if (name === "aspect-ratio") this.#syncAspectRatio();
   }
 
   #syncFit() {
@@ -17110,6 +17113,15 @@ class FigPreview extends HTMLElement {
       this.style.setProperty("--fig-preview-fit", fit);
     } else {
       this.style.removeProperty("--fig-preview-fit");
+    }
+  }
+
+  #syncAspectRatio() {
+    const aspectRatio = this.getAttribute("aspect-ratio");
+    if (aspectRatio) {
+      this.style.setProperty("--fig-preview-aspect-ratio", aspectRatio);
+    } else {
+      this.style.removeProperty("--fig-preview-aspect-ratio");
     }
   }
 }

@@ -332,6 +332,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     time: { label: "Time", type: "number", min: 0, max: 600, step: 1 },
   },
   "fig-preview": {
+    "aspect-ratio": { label: "Aspect ratio", type: "string" },
     fit: {
       label: "Fit",
       type: "enum",

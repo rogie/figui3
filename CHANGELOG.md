@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.32.0]
+
+### Added
+
+- Added an `aspect-ratio` attribute to `fig-preview`.
+
+### Changed
+
+- Updated the Card playground descriptions and manual example to document authored media and footer composition.
+
 ## [6.31.2]
 
 ### Changed

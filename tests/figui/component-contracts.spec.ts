@@ -3685,6 +3685,33 @@ test.describe("reconnect resilience", () => {
     });
   });
 
+  test("fig-preview applies and updates its aspect-ratio attribute", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<fig-preview id="ratio-preview" aspect-ratio="16/9"></fig-preview>';
+    });
+
+    const preview = page.locator("#ratio-preview");
+    await expect
+      .poll(() =>
+        preview.evaluate((element) => getComputedStyle(element).aspectRatio),
+      )
+      .toBe("16 / 9");
+
+    await preview.evaluate((element) =>
+      element.setAttribute("aspect-ratio", "1/1"),
+    );
+    await expect
+      .poll(() =>
+        preview.evaluate((element) => getComputedStyle(element).aspectRatio),
+      )
+      .toBe("1 / 1");
+  });
+
   test("fig-card large size increases generated and authored padding", async ({
     page,
   }) => {

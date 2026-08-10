@@ -928,55 +928,77 @@ export const figui3Sections: Section[] = [
     name: "Card",
     group: "Core components",
     description:
-      "Media card with truncated label, optional link, and attribute-only selected chrome. Composes fig-image.",
+      "Media card that can generate a fig-image from src and a compact fig-footer from label attributes, or preserve authored media and footer content. Supports optional links and attribute-only selection chrome.",
     examples: [
       {
         id: "default",
         name: "Default",
+        description:
+          "Setting src composes a fig-image; label generates a compact fig-footer below it.",
         markup: `<fig-card src="${landscapeUrl()}" label="Autumn field" fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "large",
         name: "Large",
+        description:
+          "size=\"large\" increases the card padding and spacing around its generated label and sublabel footer.",
         markup: `<fig-card src="${landscapeUrl()}" label="Image effects" sublabel="Design tools" size="large" aspect-ratio="16/9" fit="fill" full></fig-card>`,
       },
       {
         id: "manual",
         name: "Manual",
-        markup: `<fig-card label="Loading preview" fit="fill" style="width: 10rem">
-  <fig-preview style="--fig-preview-background: transparent; aspect-ratio: 1/1; display: grid">
+        description:
+          "Authors fig-preview and fig-footer directly. Omitting src, label, text, and sublabel prevents fig-card from generating media or footer content.",
+        markup: `<fig-card size="large" style="width: 10rem">
+  <fig-preview aspect-ratio="1/1" style="--fig-preview-background: transparent; display: grid">
     <fig-spinner></fig-spinner>
   </fig-preview>
+  <fig-footer>
+    <label class="fig-card-label">Loading preview</label>
+    <label class="fig-card-sublabel">Manual card</label>
+  </fig-footer>
 </fig-card>`,
       },
       {
         id: "selected",
         name: "Selected",
+        description:
+          "selected adds selection chrome without implementing click-to-toggle behavior.",
         markup: `<fig-card src="${landscapeUrl()}" label="Selected card" selected fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "sublabel",
         name: "Sublabel",
+        description:
+          "sublabel adds secondary, single-line text below the generated label.",
         markup: `<fig-card src="${landscapeUrl()}" label="Shader pill" sublabel="Generative tools/effects" selected fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "link",
         name: "Link",
+        description:
+          "href makes the generated card surface a real anchor; target can configure its browsing context.",
         markup: `<fig-card src="${landscapeUrl()}" label="Open asset" href="#card" fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "two-line",
         name: "Two-line label",
+        description:
+          "label-line-clamp=\"2\" allows the generated label to wrap to two lines before truncating.",
         markup: `<fig-card src="${landscapeUrl()}" label="A longer title that wraps onto a second line" label-line-clamp="2" fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "aspect-ratio",
         name: "Aspect ratio",
+        description:
+          "aspect-ratio is forwarded to the generated fig-image to control the media shape.",
         markup: `<fig-card src="${landscapeUrl()}" label="Wide card" aspect-ratio="16/9" fit="fill" style="width: 12rem"></fig-card>`,
       },
       {
         id: "grid",
         name: "Grid",
+        description:
+          "Cards have no columns API; compose them in a CSS grid and use full for fluid sizing.",
         markup: `<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacer-2); width: 100%">
   <fig-card src="${landscapeUrl()}" label="Card A" sublabel="Library/effects" selected fit="fill" full></fig-card>
   <fig-card src="${landscapeUrl()}" label="Card B" fit="fill" full></fig-card>

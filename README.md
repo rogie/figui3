@@ -1308,6 +1308,7 @@ A thin styled layer for arbitrary visual content. Use it for generated previews,
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
+| `aspect-ratio` | string | `auto` | CSS aspect ratio such as `"1/1"` or `"16/9"` |
 | `fit` | string | `contain` | Object fit for direct media children |
 | `full` | boolean | `false` | Stretch to the available width |
 | `checkerboard` | boolean | `false` | Show checkerboard behind transparent content |
