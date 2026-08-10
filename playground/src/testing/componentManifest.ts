@@ -290,7 +290,10 @@ export const componentContracts: ComponentContract[] = [
     title: "Card",
     group: "media",
     markup: `<fig-card src="https://picsum.photos/320/320.webp?random=12" label="Card label" aspect-ratio="1/1"></fig-card>`,
-    attributes: [{ name: "selected", attribute: "selected", value: "" }],
+    attributes: [
+      { name: "selected", attribute: "selected", value: "" },
+      { name: "large size", attribute: "size", value: "large" },
+    ],
   },
   {
     tag: "fig-video",

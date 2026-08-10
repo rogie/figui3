@@ -1418,12 +1418,14 @@ A media card with a truncated label, optional link, and attribute-only selection
 | `selected` | boolean | `false` | Selected chrome only (no click-toggle) |
 | `disabled` | boolean | `false` | Dim + non-interactive; no `<a>` when disabled |
 | `full` | boolean | `false` | Stretch to the available width (cards are already `width: 100%` by default) |
+| `size` | string | default | Set to `"large"` for `--spacer-2` card padding and `--spacer-1` label spacing |
 | `aspect-ratio` | string | `"1/1"` | Forwarded to generated `fig-image` |
 | `fit` | string | `"contain"` | Forwarded to generated `fig-image` |
 | `label-line-clamp` | string | `"1"` | `"1"` or `"2"` line clamp for the label |
 
 ```html
 <fig-card src="photo.jpg" label="Autumn field"></fig-card>
+<fig-card src="photo.jpg" label="Large card" size="large"></fig-card>
 <fig-card src="photo.jpg" label="Shader pill" sublabel="Generative tools/effects" selected></fig-card>
 <fig-card src="photo.jpg" label="Open asset" href="#asset"></fig-card>
 <fig-card src="photo.jpg" label="Wide card" aspect-ratio="16/9" full></fig-card>

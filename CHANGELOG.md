@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.31.0]
+
+### Added
+
+- Added `size="large"` to `fig-card` for `--spacer-2` card padding and `--spacer-1` label spacing.
+- Added `globe` icon tokens for `fig-icon` (24px and 16px).
+
+### Changed
+
+- The playground Icon name dropdown is now sorted alphabetically.
+
 ## [6.30.0]
 
 ### Added

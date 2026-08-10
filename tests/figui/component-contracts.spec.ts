@@ -151,6 +151,31 @@ test("fig-icon maps chevron to size-specific tokens", async ({ page }) => {
   });
 });
 
+test("fig-icon maps globe to size-specific tokens", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-icon id="medium-globe" name="globe"></fig-icon>
+      <fig-icon id="small-globe" name="globe" size="small"></fig-icon>
+    `;
+  });
+
+  const iconVars = await page.evaluate(() => ({
+    medium: (document.querySelector("#medium-globe") as HTMLElement).style
+      .getPropertyValue("--icon"),
+    small: (document.querySelector("#small-globe") as HTMLElement).style
+      .getPropertyValue("--icon"),
+  }));
+
+  expect(iconVars).toEqual({
+    medium: "var(--icon-24-globe)",
+    small: "var(--icon-16-globe)",
+  });
+});
+
 test.describe("AI lab styling components", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -3657,6 +3682,55 @@ test.describe("reconnect resilience", () => {
       swatchCount: 1,
       textCount: 1,
       value: "#ff0000",
+    });
+  });
+
+  test("fig-card large size increases generated and authored padding", async ({
+    page,
+  }) => {
+    const padding = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const src =
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+      root.innerHTML = `
+        <fig-card id="generated-default" src="${src}" label="Default"></fig-card>
+        <fig-card id="generated-large" src="${src}" label="Large" size="large"></fig-card>
+        <fig-card id="authored-default" label="Default"><fig-preview></fig-preview></fig-card>
+        <fig-card id="authored-large" label="Large" size="large"><fig-preview></fig-preview></fig-card>
+      `;
+      await new Promise(requestAnimationFrame);
+      const readPadding = (id: string) => {
+        const card = document.querySelector(`#${id}`);
+        const surface = card?.querySelector(":scope > .fig-card-link") || card;
+        return surface ? getComputedStyle(surface).padding : null;
+      };
+      const readTextMarginTop = (id: string) => {
+        const card = document.querySelector(`#${id}`);
+        const text = card?.querySelector(".fig-card-text");
+        return text ? getComputedStyle(text).marginTop : null;
+      };
+      return {
+        generatedDefault: readPadding("generated-default"),
+        generatedLarge: readPadding("generated-large"),
+        authoredDefault: readPadding("authored-default"),
+        authoredLarge: readPadding("authored-large"),
+        textMarginDefault: readTextMarginTop("generated-default"),
+        textMarginLarge: readTextMarginTop("generated-large"),
+        authoredTextMarginDefault: readTextMarginTop("authored-default"),
+        authoredTextMarginLarge: readTextMarginTop("authored-large"),
+      };
+    });
+
+    expect(padding).toEqual({
+      generatedDefault: "4px",
+      generatedLarge: "8px",
+      authoredDefault: "4px",
+      authoredLarge: "8px",
+      textMarginDefault: "0px",
+      textMarginLarge: "4px",
+      authoredTextMarginDefault: "0px",
+      authoredTextMarginLarge: "4px",
     });
   });
 

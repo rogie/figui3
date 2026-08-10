@@ -260,6 +260,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     full: { label: "Full", type: "boolean", boolMode: "presence" },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
     "aspect-ratio": aspectRatioRule,
     fit: {
       label: "Fit",
@@ -704,6 +705,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "more",
         "eyedropper",
         "steppers",
+        "globe",
       ],
     },
     size: {

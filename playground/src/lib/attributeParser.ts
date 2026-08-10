@@ -987,6 +987,7 @@ export const FIG_ICON_SET_24 = [
   "steppers",
   "eyedropper",
   "reset",
+  "globe",
 ] as const;
 
 export const FIG_ICON_SET_16 = [
@@ -1002,6 +1003,7 @@ export const FIG_ICON_SET_16 = [
   "edit",
   "settings",
   "more",
+  "globe",
 ] as const;
 
 export type FigIconPlaygroundSet = "16" | "24";
@@ -1017,7 +1019,8 @@ export function buildFigIconExampleMarkup(
 }
 
 export function getFigIconPlaygroundNames(set: FigIconPlaygroundSet): string[] {
-  return set === "16" ? [...FIG_ICON_SET_16] : [...FIG_ICON_SET_24];
+  const names = set === "16" ? [...FIG_ICON_SET_16] : [...FIG_ICON_SET_24];
+  return names.sort((a, b) => a.localeCompare(b));
 }
 
 export const FIG_ICON_COLOR_OPTIONS = [

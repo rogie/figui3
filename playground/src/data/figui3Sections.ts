@@ -933,66 +933,57 @@ export const figui3Sections: Section[] = [
       {
         id: "default",
         name: "Default",
-        markup: `<div class="prop-panel" style="max-width: 10rem">
-  <fig-card src="${landscapeUrl()}" label="Autumn field"></fig-card>
-</div>`,
+        markup: `<fig-card src="${landscapeUrl()}" label="Autumn field" fit="fill" style="width: 10rem"></fig-card>`,
+      },
+      {
+        id: "large",
+        name: "Large",
+        markup: `<fig-card src="${landscapeUrl()}" label="Image effects" sublabel="Design tools" size="large" aspect-ratio="16/9" fit="fill" full></fig-card>`,
       },
       {
         id: "manual",
         name: "Manual",
-        markup: `<div class="prop-panel" style="max-width: 10rem">
-  <fig-card label="Loading preview">
-    <fig-preview style="--fig-preview-background: transparent; aspect-ratio: 1/1; display: grid">
-      <fig-spinner></fig-spinner>
-    </fig-preview>
-  </fig-card>
-</div>`,
+        markup: `<fig-card label="Loading preview" fit="fill" style="width: 10rem">
+  <fig-preview style="--fig-preview-background: transparent; aspect-ratio: 1/1; display: grid">
+    <fig-spinner></fig-spinner>
+  </fig-preview>
+</fig-card>`,
       },
       {
         id: "selected",
         name: "Selected",
-        markup: `<div class="prop-panel" style="max-width: 10rem">
-  <fig-card src="${landscapeUrl()}" label="Selected card" selected></fig-card>
-</div>`,
+        markup: `<fig-card src="${landscapeUrl()}" label="Selected card" selected fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "sublabel",
         name: "Sublabel",
-        markup: `<div class="prop-panel" style="max-width: 10rem">
-  <fig-card src="${landscapeUrl()}" label="Shader pill" sublabel="Generative tools/effects" selected></fig-card>
-</div>`,
+        markup: `<fig-card src="${landscapeUrl()}" label="Shader pill" sublabel="Generative tools/effects" selected fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "link",
         name: "Link",
-        markup: `<div class="prop-panel" style="max-width: 10rem">
-  <fig-card src="${landscapeUrl()}" label="Open asset" href="#card"></fig-card>
-</div>`,
+        markup: `<fig-card src="${landscapeUrl()}" label="Open asset" href="#card" fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "two-line",
         name: "Two-line label",
-        markup: `<div class="prop-panel" style="max-width: 10rem">
-  <fig-card src="${landscapeUrl()}" label="A longer title that wraps onto a second line" label-line-clamp="2"></fig-card>
-</div>`,
+        markup: `<fig-card src="${landscapeUrl()}" label="A longer title that wraps onto a second line" label-line-clamp="2" fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "aspect-ratio",
         name: "Aspect ratio",
-        markup: `<div class="prop-panel" style="max-width: 12rem">
-  <fig-card src="${landscapeUrl()}" label="Wide card" aspect-ratio="16/9" fit="cover"></fig-card>
-</div>`,
+        markup: `<fig-card src="${landscapeUrl()}" label="Wide card" aspect-ratio="16/9" fit="fill" style="width: 12rem"></fig-card>`,
       },
       {
         id: "grid",
         name: "Grid",
-        markup: `<div class="prop-panel" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacer-2); width: 100%">
-  <fig-card src="${landscapeUrl()}" label="Card A" sublabel="Library/effects" selected full></fig-card>
-  <fig-card src="${landscapeUrl()}" label="Card B" full></fig-card>
-  <fig-card src="${landscapeUrl()}" label="Card C" sublabel="Generative tools/effects" full></fig-card>
-  <fig-card src="${landscapeUrl()}" label="Card D" full></fig-card>
-  <fig-card src="${landscapeUrl()}" label="Card E" full></fig-card>
-  <fig-card src="${landscapeUrl()}" label="Card F" full></fig-card>
+        markup: `<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacer-2); width: 100%">
+  <fig-card src="${landscapeUrl()}" label="Card A" sublabel="Library/effects" selected fit="fill" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card B" fit="fill" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card C" sublabel="Generative tools/effects" fit="fill" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card D" fit="fill" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card E" fit="fill" full></fig-card>
+  <fig-card src="${landscapeUrl()}" label="Card F" fit="fill" full></fig-card>
 </div>`,
       },
     ],

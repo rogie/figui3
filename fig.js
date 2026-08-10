@@ -13455,6 +13455,7 @@ figDefineElement("fig-video", FigVideo);
  * @attr {boolean} selected - Selected chrome (CSS only)
  * @attr {boolean} disabled - Dim + non-interactive; no `<a>` when disabled
  * @attr {boolean} full - Stretch to available width (CSS; default width is already 100%)
+ * @attr {string} size - Set to `large` for spacer-2 card padding and spacer-1 label spacing
  * @attr {string} aspect-ratio - Forwarded to fig-image (default `1/1`)
  * @attr {string} fit - Forwarded to fig-image (default `contain`)
  * @attr {string} label-line-clamp - `1` (default) or `2`
@@ -13472,6 +13473,7 @@ class FigCard extends HTMLElement {
       "selected",
       "disabled",
       "full",
+      "size",
       "aspect-ratio",
       "fit",
       "label-line-clamp",
@@ -17448,6 +17450,7 @@ const FIG_ICON_TOKENS = {
   more: { medium: "--icon-24-more", small: "--icon-16-more" },
   visible: { medium: "--icon-24-visible", small: "--icon-16-visible" },
   hidden: { medium: "--icon-24-hidden", small: "--icon-16-hidden" },
+  globe: { medium: "--icon-24-globe", small: "--icon-16-globe" },
 };
 
 function figIconCssVar(name, size = "medium") {
