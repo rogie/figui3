@@ -6806,6 +6806,181 @@ test.describe("media accessibility", () => {
       .toBe("00:30 of 02:00");
   });
 
+  test("fig-image and fig-media forward native load lifecycle events", async ({
+    page,
+  }) => {
+    const received = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-image id="event-image"></fig-image>
+        <fig-media id="event-video" type="video"></fig-media>
+      `;
+
+      const image = root.querySelector("#event-image")!;
+      const video = root.querySelector("#event-video")!;
+      const events: Array<Record<string, unknown>> = [];
+      const listen = (host: Element, type: string) => {
+        host.addEventListener(
+          type,
+          (event) => {
+            const customEvent = event as CustomEvent;
+            events.push({
+              host: host.id,
+              type: event.type,
+              targetIsHost: event.target === host,
+              bubbles: event.bubbles,
+              composed: event.composed,
+              mediaTag: customEvent.detail?.media?.tagName,
+              originalTargetTag:
+                customEvent.detail?.originalEvent?.target?.tagName,
+            });
+          },
+          { once: true },
+        );
+      };
+
+      listen(image, "load");
+      listen(image, "error");
+      listen(video, "loadstart");
+      listen(video, "loadedmetadata");
+      listen(video, "canplay");
+      listen(video, "waiting");
+      listen(video, "error");
+
+      const img = image.querySelector("img")!;
+      const videoEl = video.querySelector("video")!;
+      img.dispatchEvent(new Event("load"));
+      img.dispatchEvent(new Event("error"));
+      ["loadstart", "loadedmetadata", "canplay", "waiting", "error"].forEach(
+        (type) => videoEl.dispatchEvent(new Event(type)),
+      );
+
+      return events;
+    });
+
+    expect(received).toEqual([
+      {
+        host: "event-image",
+        type: "load",
+        targetIsHost: true,
+        bubbles: true,
+        composed: true,
+        mediaTag: "IMG",
+        originalTargetTag: "IMG",
+      },
+      {
+        host: "event-image",
+        type: "error",
+        targetIsHost: true,
+        bubbles: true,
+        composed: true,
+        mediaTag: "IMG",
+        originalTargetTag: "IMG",
+      },
+      ...["loadstart", "loadedmetadata", "canplay", "waiting", "error"].map(
+        (type) => ({
+          host: "event-video",
+          type,
+          targetIsHost: true,
+          bubbles: true,
+          composed: true,
+          mediaTag: "VIDEO",
+          originalTargetTag: "VIDEO",
+        }),
+      ),
+    ]);
+  });
+
+  test("generated images show a delayed loading spinner with an opt-out", async ({
+    page,
+  }) => {
+    let releaseRequests!: () => void;
+    let markRequestsReady!: () => void;
+    const requestsReady = new Promise<void>((resolve) => {
+      markRequestsReady = resolve;
+    });
+    const requestHold = new Promise<void>((resolve) => {
+      releaseRequests = resolve;
+    });
+    let requestCount = 0;
+
+    await page.route("**/slow-loading-*.gif", async (route) => {
+      requestCount += 1;
+      if (requestCount === 2) markRequestsReady();
+      await requestHold;
+      await route.fulfill({
+        contentType: "image/gif",
+        body: Buffer.from(
+          "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+          "base64",
+        ),
+      });
+    });
+
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-image id="loading-image" src="/slow-loading-image.gif" aspect-ratio="4/3" full></fig-image>
+        <fig-media id="loading-media" type="image" src="/slow-loading-media.gif" aspect-ratio="4/3" full></fig-media>
+      `;
+    });
+
+    await requestsReady;
+    await page.waitForTimeout(175);
+
+    for (const selector of ["#loading-image", "#loading-media"]) {
+      await expect(page.locator(selector)).toHaveAttribute("aria-busy", "true");
+      const spinner = page.locator(
+        `${selector} > fig-spinner[slot="overlay"][data-loading-indicator][data-generated]`,
+      );
+      await expect(spinner).toHaveCount(1);
+      const centerOffset = await spinner.evaluate((element) => {
+        const preview = element.parentElement?.querySelector("fig-preview");
+        if (!preview) throw new Error("Missing fig-preview");
+        const spinnerRect = element.getBoundingClientRect();
+        const previewRect = preview.getBoundingClientRect();
+        return {
+          x:
+            spinnerRect.left +
+            spinnerRect.width / 2 -
+            (previewRect.left + previewRect.width / 2),
+          y:
+            spinnerRect.top +
+            spinnerRect.height / 2 -
+            (previewRect.top + previewRect.height / 2),
+        };
+      });
+      expect(Math.abs(centerOffset.x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(centerOffset.y)).toBeLessThanOrEqual(1);
+    }
+
+    await page.locator("#loading-image").evaluate((element) => {
+      element.setAttribute("loading-indicator", "false");
+    });
+    await expect(page.locator("#loading-image")).not.toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    await expect(
+      page.locator(
+        '#loading-image > fig-spinner[slot="overlay"][data-loading-indicator]',
+      ),
+    ).toHaveCount(0);
+
+    releaseRequests();
+    await expect(page.locator("#loading-media")).not.toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    await expect(
+      page.locator(
+        '#loading-media > fig-spinner[slot="overlay"][data-loading-indicator]',
+      ),
+    ).toHaveCount(0);
+  });
+
   test("fig-button and file clear controls expose icon-only button names", async ({
     page,
   }) => {
@@ -6862,6 +7037,39 @@ test.describe("media accessibility", () => {
         page
           .locator("fig-image > fig-preview > fig-input-file[data-generated]")
           .evaluate((element) => getComputedStyle(element).opacity),
+      )
+      .toBe("1");
+  });
+
+  test("loaded video upload overlay stays hidden until hover", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-media
+          type="video"
+          upload
+          src="data:video/mp4;base64,AAAA"
+          muted
+        ></fig-media>
+      `;
+    });
+
+    const overlay = page.locator(
+      "fig-media > fig-preview > fig-input-file[data-generated]",
+    );
+    await expect
+      .poll(() =>
+        overlay.evaluate((element) => getComputedStyle(element).opacity),
+      )
+      .toBe("0");
+
+    await page.locator("fig-media > fig-preview").hover();
+    await expect
+      .poll(() =>
+        overlay.evaluate((element) => getComputedStyle(element).opacity),
       )
       .toBe("1");
   });

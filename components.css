@@ -1609,6 +1609,13 @@ fig-video {
     z-index: 0;
   }
 
+  > fig-spinner[slot="overlay"][data-loading-indicator][data-generated] {
+    place-self: center;
+    z-index: 1;
+    opacity: 1;
+    pointer-events: none;
+  }
+
   &:is(:not([src]), [src=""]):is(:not([poster]), [poster=""])
     > fig-preview > video.fig-media-element[data-generated] {
     opacity: 0;
@@ -1628,7 +1635,7 @@ fig-video {
     z-index: 2;
     max-width: calc(100% - var(--spacer-4));
   }
-  &:not(:has(> fig-preview > img.fig-media-element[data-generated][src]:not([src=""]))) > fig-preview > fig-input-file:is([data-generated], [variant="overlay"]),
+  &:not(:has(> fig-preview > :is(img, video).fig-media-element[data-generated][src]:not([src=""]))) > fig-preview > fig-input-file:is([data-generated], [variant="overlay"]),
   > fig-preview:hover > fig-input-file:is([data-generated], [variant="overlay"]),
   > fig-preview:focus-within > fig-input-file:is([data-generated], [variant="overlay"]) {
     opacity: 1;
@@ -1643,7 +1650,7 @@ fig-video {
     max-width: calc(100% - var(--spacer-4));
   }
 
-  &:not(:has(> fig-preview > img.fig-media-element[data-generated][src]:not([src=""]))) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:not(:has(> fig-preview > :is(img, video).fig-media-element[data-generated][src]:not([src=""]))) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
   &:has(> fig-preview:hover) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
   &:has(> fig-preview:focus-within) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
   &:has(> [slot="overlay"]:is(:focus, :focus-within, :active)) > [slot="overlay"],

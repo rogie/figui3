@@ -245,6 +245,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "presence",
       defaultChecked: false,
     },
+    "loading-indicator": {
+      label: "Loading indicator",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
   },
   "fig-card": {
@@ -286,6 +292,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "boolean",
       boolMode: "presence",
       defaultChecked: false,
+    },
+    "loading-indicator": {
+      label: "Loading indicator",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
     },
     checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
     controls: {

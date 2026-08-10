@@ -901,6 +901,25 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
+        id: "loading",
+        name: "Loading",
+        description:
+          "fig-image automatically shows a spinner when a generated image takes longer than 150ms to load, then removes it on load or error.",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Image</label>
+    <fig-image
+      full="true"
+      src="${portraitUrl().replace("320.webp", "1920.webp")}"
+      alt="Image preview"
+      fit="cover"
+      size="auto"
+      checkerboard="true"
+    ></fig-image>
+  </fig-field>
+</div>`,
+      },
+      {
         id: "upload-with-image",
         name: "Upload (With Image)",
         markup: `<div class="prop-panel">

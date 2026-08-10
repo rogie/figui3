@@ -12668,11 +12668,42 @@ class FigSwatch extends HTMLElement {
 figDefineElement("fig-swatch", FigSwatch);
 
 /* Media */
+const FIG_IMAGE_FORWARDED_EVENTS = ["load", "error"];
+const FIG_VIDEO_FORWARDED_EVENTS = [
+  "loadstart",
+  "progress",
+  "suspend",
+  "abort",
+  "error",
+  "emptied",
+  "stalled",
+  "loadedmetadata",
+  "loadeddata",
+  "canplay",
+  "canplaythrough",
+  "playing",
+  "waiting",
+  "seeking",
+  "seeked",
+  "durationchange",
+  "timeupdate",
+  "ratechange",
+  "resize",
+  "volumechange",
+];
+const FIG_MEDIA_FORWARDED_EVENTS = [
+  ...new Set([
+    ...FIG_IMAGE_FORWARDED_EVENTS,
+    ...FIG_VIDEO_FORWARDED_EVENTS,
+  ]),
+];
+
 /**
  * @attr {string} src - Media source URL
  * @attr {string} type - "image" (default) or "video" (for fig-media)
  * @attr {string} alt - Alt text for the generated image (default "")
  * @attr {boolean} upload - Show upload overlay (generates fig-input-file)
+ * @attr {boolean} loading-indicator - Set to `false` to disable the generated image loading spinner
  * @attr {string} label - Upload button label (default "Upload")
  * @attr {string} size - small | medium | large | auto (token-sized square)
  * @attr {string} aspect-ratio - CSS aspect-ratio value (default `4/3`)
@@ -12686,6 +12717,14 @@ figDefineElement("fig-swatch", FigSwatch);
  * @attr {string} poster - Video poster image URL
  * @attr {string} aria-label - Accessible label forwarded to generated video
  * @attr {string} aria-labelledby - Accessible label reference forwarded to generated video
+ * @fires load - Image loaded
+ * @fires error - Image or video failed to load
+ * @fires loadstart - Video loading started
+ * @fires loadedmetadata - Video metadata loaded
+ * @fires loadeddata - Video frame data loaded
+ * @fires canplay - Video can begin playback
+ * @fires canplaythrough - Video can likely play through
+ * @fires waiting - Video playback is waiting for data
  *
  * When `controls` are shown and no video `src` is loaded, fig-media sets
  * `disabled` on the associated `fig-media-controls` until media is available.
@@ -12707,6 +12746,11 @@ class FigMedia extends HTMLElement {
   #boundHandleMediaPlay = this.#handleMediaPlay.bind(this);
   #boundHandleMediaPause = this.#handleMediaPause.bind(this);
   #boundHandleMediaEnded = this.#handleMediaEnded.bind(this);
+  #boundForwardMediaEvent = this.#forwardMediaEvent.bind(this);
+  #loadingSpinner = null;
+  #loadingTimer = null;
+  #loadingSource = null;
+  #ariaBusyBeforeLoading = undefined;
   #controlsEl = null;
   #controlsWiredFor = null;
   #controlsWiredControls = null;
@@ -12721,6 +12765,7 @@ class FigMedia extends HTMLElement {
       "type",
       "alt",
       "upload",
+      "loading-indicator",
       "label",
       "aspect-ratio",
       "fit",
@@ -12812,6 +12857,7 @@ class FigMedia extends HTMLElement {
     this.#ensureMediaElement();
     this.#addMediaElementListeners();
     this.#syncGeneratedMediaElement();
+    this.#syncImageLoadingState();
     this.#syncMediaAccessibility();
     this.#syncCaption();
 
@@ -12826,6 +12872,7 @@ class FigMedia extends HTMLElement {
 
   disconnectedCallback() {
     this.#fileInput?.removeEventListener("change", this.#boundHandleFileInput);
+    this.#finishImageLoading();
     this.#removeMediaElementListeners();
     this.#removeControls();
     if (this.#blobUrl) {
@@ -12837,6 +12884,9 @@ class FigMedia extends HTMLElement {
 
   #removeMediaElementListeners() {
     if (!this.#mediaEl) return;
+    FIG_MEDIA_FORWARDED_EVENTS.forEach((type) => {
+      this.#mediaEl.removeEventListener(type, this.#boundForwardMediaEvent);
+    });
     if (this.#mediaEl.tagName === "VIDEO") {
       this.#mediaEl.removeEventListener("play", this.#boundHandleMediaPlay);
       this.#mediaEl.removeEventListener("pause", this.#boundHandleMediaPause);
@@ -12846,10 +12896,84 @@ class FigMedia extends HTMLElement {
 
   #addMediaElementListeners() {
     this.#removeMediaElementListeners();
-    if (this.#mediaEl?.tagName !== "VIDEO") return;
+    if (!this.#mediaEl) return;
+    const forwardedEvents =
+      this.#mediaEl.tagName === "VIDEO"
+        ? FIG_VIDEO_FORWARDED_EVENTS
+        : FIG_IMAGE_FORWARDED_EVENTS;
+    forwardedEvents.forEach((type) => {
+      this.#mediaEl.addEventListener(type, this.#boundForwardMediaEvent);
+    });
+    if (this.#mediaEl.tagName !== "VIDEO") return;
     this.#mediaEl.addEventListener("play", this.#boundHandleMediaPlay);
     this.#mediaEl.addEventListener("pause", this.#boundHandleMediaPause);
     this.#mediaEl.addEventListener("ended", this.#boundHandleMediaEnded);
+  }
+
+  #usesDefaultImageLoadingIndicator() {
+    return (
+      this.mediaKind === "image" &&
+      this.getAttribute("loading-indicator") !== "false" &&
+      this.#previewEl?.hasAttribute("data-generated") &&
+      this.#mediaEl?.hasAttribute("data-generated")
+    );
+  }
+
+  #syncImageLoadingState() {
+    const src = this.#currentMediaSrc();
+    if (!src || !this.#usesDefaultImageLoadingIndicator()) {
+      this.#finishImageLoading();
+      return;
+    }
+    if (
+      this.#mediaEl?.tagName === "IMG" &&
+      this.#mediaEl.complete &&
+      this.#mediaEl.currentSrc
+    ) {
+      this.#finishImageLoading();
+      return;
+    }
+    if (this.#loadingSource === src) return;
+
+    this.#finishImageLoading();
+    this.#loadingSource = src;
+    this.#ariaBusyBeforeLoading = this.getAttribute("aria-busy");
+    this.setAttribute("aria-busy", "true");
+    this.#loadingTimer = setTimeout(() => {
+      this.#loadingTimer = null;
+      if (
+        this.#loadingSource !== src ||
+        !this.isConnected ||
+        !this.#usesDefaultImageLoadingIndicator()
+      ) {
+        return;
+      }
+      const spinner = document.createElement("fig-spinner");
+      spinner.setAttribute("data-generated", "");
+      spinner.setAttribute("data-loading-indicator", "");
+      spinner.setAttribute("slot", "overlay");
+      spinner.setAttribute("aria-hidden", "true");
+      this.append(spinner);
+      this.#loadingSpinner = spinner;
+    }, 150);
+  }
+
+  #finishImageLoading() {
+    if (this.#loadingTimer !== null) {
+      clearTimeout(this.#loadingTimer);
+      this.#loadingTimer = null;
+    }
+    this.#loadingSpinner?.remove();
+    this.#loadingSpinner = null;
+    this.#loadingSource = null;
+    if (this.#ariaBusyBeforeLoading !== undefined) {
+      if (this.#ariaBusyBeforeLoading === null) {
+        this.removeAttribute("aria-busy");
+      } else {
+        this.setAttribute("aria-busy", this.#ariaBusyBeforeLoading);
+      }
+      this.#ariaBusyBeforeLoading = undefined;
+    }
   }
 
   #ensurePreviewElement() {
@@ -12884,6 +13008,7 @@ class FigMedia extends HTMLElement {
       if (this.#previewEl && userEl.parentElement !== this.#previewEl) {
         this.#previewEl.append(userEl);
       }
+      this.#addMediaElementListeners();
       this.#syncMediaAccessibility();
       return;
     }
@@ -12907,7 +13032,6 @@ class FigMedia extends HTMLElement {
       video.preload = "auto";
       this.#previewEl.append(video);
       this.#mediaEl = video;
-      this.#addMediaElementListeners();
       const seekToFirstFrame = () => {
         if (this.#mediaEl?.autoplay) return;
         try {
@@ -12925,6 +13049,7 @@ class FigMedia extends HTMLElement {
       this.#previewEl.append(img);
       this.#mediaEl = img;
     }
+    this.#addMediaElementListeners();
   }
 
   #syncMediaAccessibility() {
@@ -13012,6 +13137,7 @@ class FigMedia extends HTMLElement {
     }
     if (this.#mediaEl.tagName === "IMG") {
       this.#syncMediaAccessibility();
+      this.#syncImageLoadingState();
       return;
     }
     const poster = this.getAttribute("poster");
@@ -13029,6 +13155,7 @@ class FigMedia extends HTMLElement {
     this.#syncMediaAccessibility();
     this.#syncControlsVisibility();
     this.#syncControlsDisabled();
+    this.#syncImageLoadingState();
   }
 
   get mediaEl() {
@@ -13321,6 +13448,37 @@ class FigMedia extends HTMLElement {
     );
   }
 
+  #forwardMediaEvent(event) {
+    const media = this.#mediaEl;
+    if (!media || event.currentTarget !== media) return;
+    if (
+      media.tagName === "IMG" &&
+      (event.type === "load" || event.type === "error")
+    ) {
+      this.#finishImageLoading();
+    }
+    const detail = {
+      src: this.#currentMediaSrc(),
+      media,
+      originalEvent: event,
+    };
+    if (media.tagName === "VIDEO") {
+      detail.currentTime = media.currentTime;
+      detail.duration = media.duration;
+      detail.readyState = media.readyState;
+      detail.networkState = media.networkState;
+      detail.error = media.error;
+    }
+    this.dispatchEvent(
+      new CustomEvent(event.type, {
+        bubbles: true,
+        cancelable: false,
+        composed: true,
+        detail,
+      }),
+    );
+  }
+
   #handleMediaPlay() {
     this.#emitPlaybackEvent("play");
   }
@@ -13388,6 +13546,10 @@ class FigMedia extends HTMLElement {
       } else if (!on) {
         this.#removeFileInput();
       }
+    }
+
+    if (name === "loading-indicator") {
+      this.#syncImageLoadingState();
     }
 
     if (name === "aspect-ratio") {

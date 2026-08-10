@@ -1339,6 +1339,7 @@ Unified media component that supports image/video modes and shared sizing/upload
 | `src` | string | — | Media URL |
 | `alt` | string | `""` | Alt text forwarded to the generated `<img>` (image mode) |
 | `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `loading-indicator` | boolean | `true` | Set to `"false"` to disable the delayed loading spinner for generated images |
 | `label` | string | `"Upload"` | Upload button label |
 | `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
 | `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
@@ -1365,6 +1366,10 @@ Use meaningful `alt` text for informative images. Use `alt=""` only when the ima
 
 Use the `caption` attribute for a plain-text caption, or a direct `<figcaption>` child for authored caption content.
 
+Native load lifecycle events are re-emitted from the `fig-media` host as bubbling, composed `CustomEvent`s. Image mode emits `load` and `error`. Video mode forwards `loadstart`, `progress`, `suspend`, `abort`, `error`, `emptied`, `stalled`, `loadedmetadata`, `loadeddata`, `canplay`, `canplaythrough`, `playing`, `waiting`, `seeking`, `seeked`, `durationchange`, `timeupdate`, `ratechange`, `resize`, and `volumechange`; existing `play`, `pause`, and `ended` events remain available. Event `detail` includes `src`, `media`, and `originalEvent`, plus video timing and readiness state.
+
+For generated images, a spinner appears when loading exceeds 150ms and is removed on `load` or `error`. The host reflects `aria-busy="true"` while pending. Authored media or preview content does not receive an automatic spinner.
+
 ---
 
 #### Image
@@ -1378,6 +1383,7 @@ An image display component with optional upload, aspect ratio, and object-fit co
 | `src` | string | — | Image URL |
 | `alt` | string | `""` | Alt text forwarded to the generated `<img>` |
 | `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `loading-indicator` | boolean | `true` | Set to `"false"` to disable the delayed loading spinner |
 | `label` | string | `"Upload"` | Upload button label |
 | `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
 | `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
@@ -1386,6 +1392,8 @@ An image display component with optional upload, aspect ratio, and object-fit co
 | `caption` | string | — | Caption text rendered below the image preview |
 
 Use meaningful `alt` text for informative images. Use `alt=""` for decorative previews, thumbnails with visible labels, or upload placeholders.
+
+The generated image's native `load` and `error` events are re-emitted from `fig-image` as bubbling, composed `CustomEvent`s with `src`, `media`, and `originalEvent` in `event.detail`.
 
 ```html
 <fig-image src="photo.jpg" alt="Selected image"></fig-image>

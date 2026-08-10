@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.33.0]
+
+### Added
+
+- `fig-image`, `fig-media`, and `fig-video` now re-emit native image and video load lifecycle events from their host elements.
+- `fig-image` and image-mode `fig-media` now show a delayed default spinner while generated images load, with `loading-indicator="false"` as an opt-out.
+- Added a loading-state example for `fig-image`.
+
+### Fixed
+
+- Loaded `fig-media` videos now keep upload overlay buttons hidden until hover or keyboard focus.
+
 ## [6.32.2]
 
 ### Changed
