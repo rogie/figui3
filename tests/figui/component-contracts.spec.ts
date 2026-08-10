@@ -3685,14 +3685,13 @@ test.describe("reconnect resilience", () => {
     });
   });
 
-  test("fig-preview applies and updates its aspect-ratio attribute", async ({
+  test("fig-preview defaults and updates its aspect ratio", async ({
     page,
   }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
-      root.innerHTML =
-        '<fig-preview id="ratio-preview" aspect-ratio="16/9"></fig-preview>';
+      root.innerHTML = '<fig-preview id="ratio-preview"></fig-preview>';
     });
 
     const preview = page.locator("#ratio-preview");
@@ -3700,16 +3699,16 @@ test.describe("reconnect resilience", () => {
       .poll(() =>
         preview.evaluate((element) => getComputedStyle(element).aspectRatio),
       )
-      .toBe("16 / 9");
+      .toBe("4 / 3");
 
     await preview.evaluate((element) =>
-      element.setAttribute("aspect-ratio", "1/1"),
+      element.setAttribute("aspect-ratio", "16/9"),
     );
     await expect
       .poll(() =>
         preview.evaluate((element) => getComputedStyle(element).aspectRatio),
       )
-      .toBe("1 / 1");
+      .toBe("16 / 9");
   });
 
   test("fig-card large size increases generated and authored padding", async ({

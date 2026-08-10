@@ -133,7 +133,7 @@
   --figma-color-icon-onwarning-secondary: #00000080;
   --figma-color-icon-onwarning-tertiary: #0000004d;
   --figma-color-icon-pressed: light-dark(#007be5, #0a6dc2);
-  --figma-color-icon-secondary: light-dark(#00000099, #ffffffcc);
+  --figma-color-icon-secondary: light-dark(#00000080, #ffffffb3);
   --figma-color-icon-secondary-hover: light-dark(#000000e5, #ffffff);
   --figma-color-icon-selected: light-dark(#007be5, #7cc4f8);
   --figma-color-icon-selected-secondary: light-dark(#007be5, #7cc4f8);
@@ -1226,6 +1226,7 @@ fig-avatar,
   contain: layout paint;
   --size: 1.5rem;
   width: var(--size);
+  flex-shrink: 0;
   display: inline-grid;
   place-items: center;
   height: var(--size);
@@ -3176,7 +3177,7 @@ fig-tooltip {
 fig-preview {
   --fig-preview-fit: contain;
   --fig-preview-background: var(--figma-color-bg-secondary);
-  --fig-preview-aspect-ratio: auto;
+  --fig-preview-aspect-ratio: 4/3;
 
   display: block;
   aspect-ratio: var(--fig-preview-aspect-ratio);

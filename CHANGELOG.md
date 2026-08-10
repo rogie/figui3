@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.32.2]
+
+### Changed
+
+- `fig-preview` now defaults to a `4/3` aspect ratio, and its playground control uses the shared aspect-ratio dropdown.
+- `fig-avatar` no longer shrinks inside flex layouts.
+- Adjusted the secondary icon token to 50% black in light mode and 70% white in dark mode.
+
 ## [6.32.1]
 
 ### Changed

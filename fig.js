@@ -12675,7 +12675,7 @@ figDefineElement("fig-swatch", FigSwatch);
  * @attr {boolean} upload - Show upload overlay (generates fig-input-file)
  * @attr {string} label - Upload button label (default "Upload")
  * @attr {string} size - small | medium | large | auto (token-sized square)
- * @attr {string} aspect-ratio - CSS aspect-ratio value
+ * @attr {string} aspect-ratio - CSS aspect-ratio value (default `4/3`)
  * @attr {string} fit - CSS object-fit value
  * @attr {boolean} checkerboard - Show checkerboard behind transparent media
  * @attr {string} caption - Caption text rendered below the media preview
