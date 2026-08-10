@@ -5028,7 +5028,8 @@ fig-card {
   &[size="large"] {
     --fig-card-padding: var(--spacer-2);
 
-    .fig-card-text {
+    > fig-footer,
+    .fig-card-link > fig-footer {
       margin-top: var(--spacer-1);
     }
 
@@ -5088,14 +5089,23 @@ fig-card {
     min-height: auto;
   }
 
-  .fig-card-text {
+  > fig-footer,
+  .fig-card-link > fig-footer {
     display: flex;
     flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
     gap: 0;
+    width: auto;
+    padding: 0;
+    box-shadow: none;
+    box-sizing: border-box;
     min-width: 0;
   }
 
-  .fig-card-text[hidden] {
+  > fig-footer[hidden],
+  .fig-card-link > fig-footer[hidden] {
     display: none;
   }
 
@@ -5104,7 +5114,10 @@ fig-card {
     line-height: var(--line-height);
     color: var(--figma-color-text);
     min-width: 0;
+    min-height: 0;
     padding-inline: var(--spacer-1);
+    justify-content: flex-start;
+    text-align: start;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: var(--fig-card-label-line-clamp);
@@ -5122,6 +5135,9 @@ fig-card {
     color: var(--figma-color-text-secondary);
     padding-inline: var(--spacer-1);
     min-width: 0;
+    min-height: 0;
+    justify-content: flex-start;
+    text-align: start;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

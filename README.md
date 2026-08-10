@@ -1404,7 +1404,7 @@ Use `slot="overlay"` for custom overlay controls. Slotted overlays stay as direc
 
 `<fig-card>` — [demo](https://rog.ie/figui3/#card)
 
-A media card with a truncated label, optional link, and attribute-only selection chrome. With `src`, it composes a generated `fig-image`. Without `src`, authored children stay in place and only generated label content is added.
+A media card with a truncated label, optional link, and attribute-only selection chrome. With `src`, it composes a generated `fig-image`. The `label` and `sublabel` attributes render inside a generated `fig-footer`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1432,9 +1432,13 @@ A media card with a truncated label, optional link, and attribute-only selection
 <fig-card label="Custom preview">
   <fig-preview>...</fig-preview>
 </fig-card>
+<fig-card>
+  <fig-preview>...</fig-preview>
+  <fig-footer><label>Authored footer</label></fig-footer>
+</fig-card>
 ```
 
-When `src` is omitted, authored direct children such as `fig-image`, `fig-media`, or `fig-preview` remain direct children of the card.
+When `src` is omitted, authored direct children such as `fig-image`, `fig-media`, or `fig-preview` remain direct children of the card. An authored `fig-footer` is preserved; when no `label`, `text`, or `sublabel` attributes are present, the card does not generate another footer.
 
 Place cards in a CSS grid for multi-column layouts — there is no built-in columns attribute. Prefer `full` in fluid layouts for consistency with other FigUI controls.
 

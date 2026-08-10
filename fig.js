@@ -13440,8 +13440,8 @@ figDefineElement("fig-video", FigVideo);
 /**
  * <fig-card> — Media card with optional link, selection chrome, and truncated label.
  *
- * Composes a generated `fig-image` when `src` is set. Without `src`, authored
- * children remain direct children and generated label content is appended.
+ * Composes a generated `fig-image` when `src` is set. Attribute-driven labels
+ * render in a generated `fig-footer`; authored footers remain untouched.
  * Selection is attribute-only (`selected`); apps own toggle/group logic.
  * When `href` is set (and not disabled), content wraps in a real `<a>`.
  *
@@ -13481,7 +13481,7 @@ class FigCard extends HTMLElement {
   }
 
   #linkEl = null;
-  #textWrap = null;
+  #footerEl = null;
   #imageEl = null;
   #labelEl = null;
   #sublabelEl = null;
@@ -13492,10 +13492,10 @@ class FigCard extends HTMLElement {
         (node) =>
           node instanceof Element &&
           (node.matches(
-            "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated])",
+            "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated]), fig-footer:not([data-generated])",
           ) ||
             node.querySelector(
-              "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated])",
+              "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated]), fig-footer:not([data-generated])",
             )),
       ),
     );
@@ -13554,10 +13554,10 @@ class FigCard extends HTMLElement {
       return;
     }
 
-    this.querySelectorAll(":scope > .fig-card-text[data-generated]").forEach(
+    this.querySelectorAll(":scope > fig-footer[data-generated]").forEach(
       (element) => element.remove(),
     );
-    if (this.#textWrap?.parentElement === this) this.#textWrap = null;
+    if (this.#footerEl?.parentElement === this) this.#footerEl = null;
 
     const authored = this.#findAuthoredMedia();
     this.#usesAuthoredMedia = Boolean(authored);
@@ -13591,7 +13591,7 @@ class FigCard extends HTMLElement {
 
     if (authored && authored.parentElement !== this.#linkEl) {
       this.#linkEl
-        .querySelectorAll(":scope > [data-generated]:not(.fig-card-text)")
+        .querySelectorAll(":scope > [data-generated]:not(fig-footer)")
         .forEach((el) => el.remove());
       this.#linkEl.prepend(authored);
       this.#imageEl = null;
@@ -13617,32 +13617,32 @@ class FigCard extends HTMLElement {
       }
     }
 
-    if (!this.#textWrap || !this.#textWrap.isConnected) {
-      this.#textWrap = this.#linkEl.querySelector(":scope > .fig-card-text");
-      if (this.#textWrap?.tagName.toLowerCase() !== "div") {
-        const text = document.createElement("div");
-        text.className = "fig-card-text";
-        text.setAttribute("data-generated", "");
-        if (this.#textWrap) {
-          while (this.#textWrap.firstChild) {
-            text.appendChild(this.#textWrap.firstChild);
-          }
-          this.#textWrap.replaceWith(text);
-        } else {
-          this.#linkEl.appendChild(text);
-        }
-        this.#textWrap = text;
-      }
-      if (!this.#textWrap) {
-        this.#textWrap = document.createElement("div");
-        this.#textWrap.className = "fig-card-text";
-        this.#textWrap.setAttribute("data-generated", "");
-        this.#linkEl.appendChild(this.#textWrap);
+    const hasGeneratedLabels = Boolean(
+      this.#labelText() || this.#sublabelText(),
+    );
+    if (!hasGeneratedLabels) {
+      this.#linkEl
+        .querySelector(":scope > fig-footer[data-generated]")
+        ?.remove();
+      this.#footerEl = null;
+      this.#labelEl = null;
+      this.#sublabelEl = null;
+      return;
+    }
+
+    if (!this.#footerEl || !this.#footerEl.isConnected) {
+      this.#footerEl = this.#linkEl.querySelector(
+        ":scope > fig-footer[data-generated]",
+      );
+      if (!this.#footerEl) {
+        this.#footerEl = document.createElement("fig-footer");
+        this.#footerEl.setAttribute("data-generated", "");
+        this.#linkEl.appendChild(this.#footerEl);
       }
     }
 
     if (!this.#labelEl || !this.#labelEl.isConnected) {
-      this.#labelEl = this.#textWrap.querySelector(
+      this.#labelEl = this.#footerEl.querySelector(
         ":scope > .fig-card-label[data-generated]",
       );
       if (!this.#labelEl) {
@@ -13654,12 +13654,12 @@ class FigCard extends HTMLElement {
           this.#labelEl.className = "fig-card-label";
           this.#labelEl.setAttribute("data-generated", "");
         }
-        this.#textWrap.appendChild(this.#labelEl);
+        this.#footerEl.appendChild(this.#labelEl);
       }
     }
 
     if (!this.#sublabelEl || !this.#sublabelEl.isConnected) {
-      this.#sublabelEl = this.#textWrap.querySelector(
+      this.#sublabelEl = this.#footerEl.querySelector(
         ":scope > .fig-card-sublabel[data-generated]",
       );
       if (!this.#sublabelEl) {
@@ -13683,9 +13683,9 @@ class FigCard extends HTMLElement {
     if (staleLink) {
       staleLink
         .querySelectorAll(
-          "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated])",
+          "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated]), fig-footer:not([data-generated])",
         )
-        .forEach((media) => this.insertBefore(media, staleLink));
+        .forEach((element) => this.insertBefore(element, staleLink));
       staleLink.remove();
     }
     this.querySelectorAll(":scope > [data-generated]").forEach((element) =>
@@ -13696,13 +13696,18 @@ class FigCard extends HTMLElement {
     this.#imageEl = null;
     this.#usesAuthoredMedia = true;
 
-    this.#textWrap = document.createElement("div");
-    this.#textWrap.className = "fig-card-text";
-    this.#textWrap.setAttribute("data-generated", "");
+    this.#footerEl = null;
+    this.#labelEl = null;
+    this.#sublabelEl = null;
+
+    if (!this.#labelText() && !this.#sublabelText()) return;
+
+    this.#footerEl = document.createElement("fig-footer");
+    this.#footerEl.setAttribute("data-generated", "");
     this.#labelEl = document.createElement("label");
     this.#labelEl.className = "fig-card-label";
     this.#labelEl.setAttribute("data-generated", "");
-    this.#textWrap.appendChild(this.#labelEl);
+    this.#footerEl.appendChild(this.#labelEl);
 
     const sublabel = this.#sublabelText();
     this.#sublabelEl = null;
@@ -13710,9 +13715,9 @@ class FigCard extends HTMLElement {
       this.#sublabelEl = document.createElement("label");
       this.#sublabelEl.className = "fig-card-sublabel";
       this.#sublabelEl.setAttribute("data-generated", "");
-      this.#textWrap.appendChild(this.#sublabelEl);
+      this.#footerEl.appendChild(this.#sublabelEl);
     }
-    this.appendChild(this.#textWrap);
+    this.appendChild(this.#footerEl);
   }
 
   #sync() {
@@ -13798,8 +13803,8 @@ class FigCard extends HTMLElement {
       this.#sublabelEl.hidden = !sublabel;
     }
 
-    if (this.#textWrap) {
-      this.#textWrap.hidden = !label && !sublabel;
+    if (this.#footerEl) {
+      this.#footerEl.hidden = !label && !sublabel;
     }
   }
 

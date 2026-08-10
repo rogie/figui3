@@ -3705,20 +3705,20 @@ test.describe("reconnect resilience", () => {
         const surface = card?.querySelector(":scope > .fig-card-link") || card;
         return surface ? getComputedStyle(surface).padding : null;
       };
-      const readTextMarginTop = (id: string) => {
+      const readFooterMarginTop = (id: string) => {
         const card = document.querySelector(`#${id}`);
-        const text = card?.querySelector(".fig-card-text");
-        return text ? getComputedStyle(text).marginTop : null;
+        const footer = card?.querySelector("fig-footer[data-generated]");
+        return footer ? getComputedStyle(footer).marginTop : null;
       };
       return {
         generatedDefault: readPadding("generated-default"),
         generatedLarge: readPadding("generated-large"),
         authoredDefault: readPadding("authored-default"),
         authoredLarge: readPadding("authored-large"),
-        textMarginDefault: readTextMarginTop("generated-default"),
-        textMarginLarge: readTextMarginTop("generated-large"),
-        authoredTextMarginDefault: readTextMarginTop("authored-default"),
-        authoredTextMarginLarge: readTextMarginTop("authored-large"),
+        footerMarginDefault: readFooterMarginTop("generated-default"),
+        footerMarginLarge: readFooterMarginTop("generated-large"),
+        authoredFooterMarginDefault: readFooterMarginTop("authored-default"),
+        authoredFooterMarginLarge: readFooterMarginTop("authored-large"),
       };
     });
 
@@ -3727,10 +3727,10 @@ test.describe("reconnect resilience", () => {
       generatedLarge: "8px",
       authoredDefault: "4px",
       authoredLarge: "8px",
-      textMarginDefault: "0px",
-      textMarginLarge: "4px",
-      authoredTextMarginDefault: "0px",
-      authoredTextMarginLarge: "4px",
+      footerMarginDefault: "0px",
+      footerMarginLarge: "4px",
+      authoredFooterMarginDefault: "0px",
+      authoredFooterMarginLarge: "4px",
     });
   });
 
@@ -3755,8 +3755,8 @@ test.describe("reconnect resilience", () => {
         card.appendChild(control);
         await new Promise(requestAnimationFrame);
 
-        const directText = card.querySelector(
-          ":scope > .fig-card-text[data-generated]",
+        const directFooter = card.querySelector(
+          ":scope > fig-footer[data-generated]",
         );
         results.push({
           tag,
@@ -3770,11 +3770,13 @@ test.describe("reconnect resilience", () => {
           wrappers: card.querySelectorAll(".fig-card-link, .fig-card-media")
             .length,
           directLabel: Boolean(
-            directText?.querySelector(":scope > .fig-card-label[data-generated]"),
+            directFooter?.querySelector(
+              ":scope > .fig-card-label[data-generated]",
+            ),
           ),
-          labelTag: directText?.querySelector(".fig-card-label")?.tagName,
-          textTag: directText?.tagName,
-          labelIsLast: card.lastElementChild === directText,
+          labelTag: directFooter?.querySelector(".fig-card-label")?.tagName,
+          footerTag: directFooter?.tagName,
+          labelIsLast: card.lastElementChild === directFooter,
           directMedia: card.querySelectorAll(
             ":scope > fig-media, :scope > fig-preview, :scope > fig-image",
           ).length,
@@ -3794,7 +3796,7 @@ test.describe("reconnect resilience", () => {
         wrappers: 0,
         directLabel: true,
         labelTag: "LABEL",
-        textTag: "DIV",
+        footerTag: "FIG-FOOTER",
         labelIsLast: true,
         directMedia: 1,
       },
@@ -3807,7 +3809,7 @@ test.describe("reconnect resilience", () => {
         wrappers: 0,
         directLabel: true,
         labelTag: "LABEL",
-        textTag: "DIV",
+        footerTag: "FIG-FOOTER",
         labelIsLast: true,
         directMedia: 1,
       },
@@ -3820,14 +3822,14 @@ test.describe("reconnect resilience", () => {
         wrappers: 0,
         directLabel: true,
         labelTag: "LABEL",
-        textTag: "DIV",
+        footerTag: "FIG-FOOTER",
         labelIsLast: true,
         directMedia: 1,
       },
     ]);
   });
 
-  test("fig-card generates a direct image and label text without a media wrapper", async ({
+  test("fig-card generates a direct image and label footer without a media wrapper", async ({
     page,
   }) => {
     const state = await page.evaluate(async () => {
@@ -3846,16 +3848,18 @@ test.describe("reconnect resilience", () => {
       const image = link?.querySelector(
         ":scope > fig-image[data-generated]",
       );
-      const text = link?.querySelector(
-        ":scope > .fig-card-text[data-generated]",
+      const footer = link?.querySelector(
+        ":scope > fig-footer[data-generated]",
       );
       return {
         mediaWrappers: card.querySelectorAll(".fig-card-media").length,
         imageIsDirect: image?.parentElement === link,
-        textIsDirect: text?.parentElement === link,
-        textTag: text?.tagName,
-        labelTag: text?.querySelector(".fig-card-label")?.tagName,
-        sublabelTag: text?.querySelector(".fig-card-sublabel")?.tagName,
+        footerIsDirect: footer?.parentElement === link,
+        footerTag: footer?.tagName,
+        labelTag: footer?.querySelector(".fig-card-label")?.tagName,
+        sublabelTag: footer?.querySelector(".fig-card-sublabel")?.tagName,
+        footerPadding: footer ? getComputedStyle(footer).padding : null,
+        footerBoxShadow: footer ? getComputedStyle(footer).boxShadow : null,
         gap: getComputedStyle(card).gap,
       };
     });
@@ -3863,11 +3867,54 @@ test.describe("reconnect resilience", () => {
     expect(state).toEqual({
       mediaWrappers: 0,
       imageIsDirect: true,
-      textIsDirect: true,
-      textTag: "DIV",
+      footerIsDirect: true,
+      footerTag: "FIG-FOOTER",
       labelTag: "LABEL",
       sublabelTag: "LABEL",
+      footerPadding: "0px",
+      footerBoxShadow: "none",
       gap: "4px",
+    });
+  });
+
+  test("fig-card preserves an authored footer without generating labels", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-card id="custom-card">
+          <fig-preview></fig-preview>
+          <fig-footer id="custom-footer"><label>Authored label</label></fig-footer>
+        </fig-card>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const card = root.querySelector("#custom-card")!;
+      const footer = root.querySelector("#custom-footer")!;
+      const style = getComputedStyle(footer);
+      return {
+        footerPreserved: card.querySelector("#custom-footer") === footer,
+        footerIsDirect: footer.parentElement === card,
+        generatedFooters: card.querySelectorAll(
+          "fig-footer[data-generated]",
+        ).length,
+        generatedLabels: card.querySelectorAll(
+          ".fig-card-label[data-generated], .fig-card-sublabel[data-generated]",
+        ).length,
+        padding: style.padding,
+        boxShadow: style.boxShadow,
+      };
+    });
+
+    expect(state).toEqual({
+      footerPreserved: true,
+      footerIsDirect: true,
+      generatedFooters: 0,
+      generatedLabels: 0,
+      padding: "0px",
+      boxShadow: "none",
     });
   });
 

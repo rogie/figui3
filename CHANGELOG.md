@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.31.2]
+
+### Changed
+
+- `fig-card` now renders attribute-driven labels in a compact `fig-footer` and preserves authored footers without generating labels when no label attributes are present.
+
 ## [6.31.1]
 
 ### Fixed
