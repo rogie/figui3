@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.31.1]
+
+### Fixed
+
+- `fig-card[size="large"]` no longer adds extra horizontal padding on generated labels and sublabels.
+
 ## [6.31.0]
 
 ### Added
