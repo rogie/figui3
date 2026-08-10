@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.32.1]
+
+### Changed
+
+- Updated the 24px globe icon token and encoded it as an SVG data URI.
+
 ## [6.32.0]
 
 ### Added
