@@ -1,6 +1,9 @@
 import {
   parseAttributeTargets,
   applyAttributeMutation,
+  applyButtonIconMutation,
+  applyButtonTypeMutation,
+  applyButtonVariantMutation,
   applyChooserContentMutation,
   applyChooserMaxSizeMutation,
   applyFieldLabelMutation,
@@ -189,6 +192,43 @@ export function applyParamsToMarkup(
         name: attr,
         value: val === REMOVE_SENTINEL ? null : val,
       });
+    }
+  }
+
+  const buttonAttrsByIndex = new Map<number, Set<string>>();
+  for (const { idx, attr } of controlEntries) {
+    if (defaultTargets[idx]?.controlTag !== "fig-button") continue;
+    const attrs = buttonAttrsByIndex.get(idx) ?? new Set<string>();
+    attrs.add(attr);
+    buttonAttrsByIndex.set(idx, attrs);
+  }
+  for (const [idx, changedAttrs] of buttonAttrsByIndex) {
+    let target = parseAttributeTargets(markup)[idx];
+    if (!target) continue;
+
+    if (changedAttrs.has("type")) {
+      markup = applyButtonTypeMutation(
+        markup,
+        idx,
+        target.controlAttributes.type ?? "button",
+      );
+      target = parseAttributeTargets(markup)[idx];
+    }
+    if (changedAttrs.has("variant")) {
+      markup = applyButtonVariantMutation(
+        markup,
+        idx,
+        target?.controlAttributes.variant ?? "",
+      );
+      target = parseAttributeTargets(markup)[idx];
+    }
+    if (changedAttrs.has("icon")) {
+      const icon = target?.controlAttributes.icon;
+      markup = applyButtonIconMutation(
+        markup,
+        idx,
+        icon !== undefined && icon !== "false",
+      );
     }
   }
 

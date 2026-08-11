@@ -145,7 +145,7 @@ Minimal example:
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `variant` | string | `"primary"` | `"primary"`, `"secondary"`, `"destructive"`, `"destructiveSecondary"`, `"destructiveGhost"`, `"ghost"`, `"link"` |
+| `variant` | string | `"primary"` | `"primary"`, `"secondary"`, `"destructive"`, `"destructiveSecondary"`, `"destructiveGhost"`, `"destructiveLink"`, `"ghost"`, `"link"` |
 | `type` | string | `"button"` | `"button"`, `"toggle"`, `"submit"`, `"select"`, `"upload"` |
 | `size` | string | — | `"large"`, `"compact"` |
 | `selected` | boolean | `false` | Selected state (toggle type) |
@@ -160,6 +160,7 @@ Minimal example:
 <fig-button variant="destructive">Delete</fig-button>
 <fig-button variant="destructiveSecondary">Destructive secondary</fig-button>
 <fig-button variant="destructiveGhost">Destructive ghost</fig-button>
+<fig-button variant="destructiveLink">Destructive link</fig-button>
 <fig-button type="toggle" selected="true">Toggle</fig-button>
 <fig-button variant="ghost" icon>
   <svg><!-- icon --></svg>

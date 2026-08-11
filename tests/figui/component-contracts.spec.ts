@@ -136,6 +136,7 @@ test("fig-button destructive variants use danger colors", async ({ page }) => {
       <fig-button id="destructive" variant="destructive">Delete</fig-button>
       <fig-button id="destructive-secondary" variant="destructiveSecondary">Destructive secondary</fig-button>
       <fig-button id="destructive-ghost" variant="destructiveGhost">Destructive ghost</fig-button>
+      <fig-button id="destructive-link" variant="destructiveLink">Destructive link</fig-button>
     `;
   });
 
@@ -218,6 +219,24 @@ test("fig-button destructive variants use danger colors", async ({ page }) => {
       "--figma-color-text-danger",
     ),
   );
+
+  const link = page.locator("#destructive-link");
+  await link.hover();
+  await page.mouse.down();
+  const linkStyles = await link.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      backgroundColor: style.backgroundColor,
+      color: style.color,
+    };
+  });
+  expect(linkStyles).toEqual(
+    await resolveTokens(
+      "--figma-color-bg-danger-tertiary",
+      "--figma-color-text-danger-secondary",
+    ),
+  );
+  await page.mouse.up();
 });
 
 test("fig-icon maps chevron to size-specific tokens", async ({ page }) => {

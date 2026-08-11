@@ -1091,8 +1091,9 @@ export default function AttributesView({
 
             if (needsCustomHandler) {
               return (
-                <fig-dropdown
+                <fig-select
                   full
+                  label={rule.label}
                   value={current}
                   onChange={(e: any) => {
                     const host = e.currentTarget as HTMLElement & {
@@ -1293,52 +1294,58 @@ export default function AttributesView({
                     applyChange(target.fieldIndex, scope, name, resolvedValue);
                   }}
                 >
-                  {options.map((option) => (
-                    <option key={option} value={option}>
-                      {option === ""
-                        ? isShimmerLikeControl && name === "direction"
-                          ? "Default"
-                          : target.controlTag === "fig-button" &&
-                              name === "variant"
-                            ? "Default (primary)"
+                  <fig-select-options>
+                    {options.map((option) => (
+                      <fig-select-option key={option} value={option}>
+                        {option === ""
+                          ? isShimmerLikeControl && name === "direction"
+                            ? "Default"
                             : target.controlTag === "fig-button" &&
-                                name === "size"
-                              ? "Default"
-                              : target.controlTag === "fig-avatar" &&
+                                name === "variant"
+                              ? "Default (primary)"
+                              : target.controlTag === "fig-button" &&
                                   name === "size"
                                 ? "Default"
-                                : (target.controlTag === "propskit-slider" ||
-                                      target.controlTag === "propskit-color" ||
-                                      target.controlTag === "propskit-gradient" ||
-                                      target.controlTag === "propskit-number" ||
-                                      target.controlTag === "propskit-select" ||
-                                      target.controlTag === "propskit-switch" ||
-                                      target.controlTag === "propskit-text") &&
+                                : target.controlTag === "fig-avatar" &&
                                     name === "size"
                                   ? "Default"
-                                  : target.controlTag === "fig-input-gradient" &&
+                                  : (target.controlTag === "propskit-slider" ||
+                                        target.controlTag === "propskit-color" ||
+                                        target.controlTag === "propskit-gradient" ||
+                                        target.controlTag === "propskit-number" ||
+                                        target.controlTag === "propskit-select" ||
+                                        target.controlTag === "propskit-switch" ||
+                                        target.controlTag === "propskit-text") &&
                                       name === "size"
                                     ? "Default"
-                                    : target.controlTag === "fig-dialog" &&
-                                    name === "position"
-                                  ? "Default"
-                                  : "None"
-                        : target.controlTag === "fig-button" &&
-                            name === "variant" &&
-                            option === "destructiveSecondary"
-                          ? "Destructive (secondary)"
+                                    : target.controlTag === "fig-input-gradient" &&
+                                        name === "size"
+                                      ? "Default"
+                                      : target.controlTag === "fig-dialog" &&
+                                          name === "position"
+                                        ? "Default"
+                                        : "None"
                           : target.controlTag === "fig-button" &&
                               name === "variant" &&
-                              option === "destructiveGhost"
-                            ? "Destructive (ghost)"
-                          : name === "units"
-                            ? option
-                            : name === "fields"
-                              ? toFieldsLabel(option)
-                              : toSentenceCaseLabel(option)}
-                    </option>
-                  ))}
-                </fig-dropdown>
+                              option === "destructiveSecondary"
+                            ? "Destructive (secondary)"
+                            : target.controlTag === "fig-button" &&
+                                name === "variant" &&
+                                option === "destructiveGhost"
+                              ? "Destructive (ghost)"
+                              : target.controlTag === "fig-button" &&
+                                  name === "variant" &&
+                                  option === "destructiveLink"
+                                ? "Destructive (link)"
+                                : name === "units"
+                                  ? option
+                                  : name === "fields"
+                                    ? toFieldsLabel(option)
+                                    : toSentenceCaseLabel(option)}
+                      </fig-select-option>
+                    ))}
+                  </fig-select-options>
+                </fig-select>
               );
             }
 
@@ -1626,9 +1633,10 @@ export default function AttributesView({
                         key={`field-input-${target.fieldIndex}`}
                       >
                         <label>Input</label>
-                        <fig-dropdown
+                        <fig-select
                           key={`field-input-select-${target.fieldIndex}-${currentFieldInputTag}`}
                           full
+                          label="Input"
                           value={currentFieldInputTag}
                           onChange={(e: any) => {
                             const host = e.currentTarget as HTMLElement & {
@@ -1642,12 +1650,14 @@ export default function AttributesView({
                             applyFieldInputChange(target.fieldIndex, nextTag);
                           }}
                         >
-                          {FIELD_INPUT_OPTIONS.map((option) => (
-                            <option key={option.tag} value={option.tag}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </fig-dropdown>
+                          <fig-select-options>
+                            {FIELD_INPUT_OPTIONS.map((option) => (
+                              <fig-select-option key={option.tag} value={option.tag}>
+                                {option.label}
+                              </fig-select-option>
+                            ))}
+                          </fig-select-options>
+                        </fig-select>
                       </fig-field>
                     )}
                   </div>

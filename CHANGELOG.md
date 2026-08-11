@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.36.0]
+
+### Added
+
+- Added the `destructiveLink` variant for `fig-button`.
+
+### Changed
+
+- Attribute controls in the playground now use `fig-select` instead of `fig-dropdown`.
+- Icon button examples now use `fig-icon` with the `visible` icon.
+
+### Fixed
+
+- Button type, variant, and icon content now rehydrates correctly from playground URL state.
+
 ## [6.35.0]
 
 ### Added

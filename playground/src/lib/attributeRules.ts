@@ -70,6 +70,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "destructive",
         "destructiveSecondary",
         "destructiveGhost",
+        "destructiveLink",
         "ghost",
         "link",
         "input",

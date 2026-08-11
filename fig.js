@@ -352,7 +352,7 @@ function figSupportsPopover() {
 
 /**
  * A custom button element that supports different types and states.
- * @attr {string} variant - Visual style: "primary", "secondary", "destructive", "destructiveSecondary", "destructiveGhost", "ghost", "link", "input", or "overlay"
+ * @attr {string} variant - Visual style: "primary", "secondary", "destructive", "destructiveSecondary", "destructiveGhost", "destructiveLink", "ghost", "link", "input", or "overlay"
  * @attr {string} type - The button type: "button" (default), "toggle", "submit", or "link"
  * @attr {boolean} selected - Whether the button is in a selected state
  * @attr {boolean} disabled - Whether the button is disabled
