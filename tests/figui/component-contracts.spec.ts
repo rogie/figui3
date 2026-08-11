@@ -2133,6 +2133,63 @@ test.describe("propskit delegated click behavior", () => {
     await page.mouse.up();
   });
 
+  test("number area drags the slider before focus and supports editing after click", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-slider label="Amount" value="25" min="0" max="100"></propskit-slider>';
+    });
+
+    const host = page.locator("propskit-slider");
+    const range = host.locator('input[type="range"]');
+    const number = host.locator("fig-input-number input");
+    const numberBox = await number.boundingBox();
+    const rangeBox = await range.boundingBox();
+    if (!numberBox || !rangeBox) throw new Error("Missing slider bounds");
+
+    await page.mouse.click(
+      numberBox.x + numberBox.width / 2,
+      numberBox.y + numberBox.height / 2,
+    );
+    await expect(number).toBeFocused();
+    await expect(host).toHaveAttribute("value", "25");
+
+    await number.evaluate((input: HTMLInputElement) => input.blur());
+    await page.mouse.move(
+      numberBox.x + numberBox.width / 2,
+      numberBox.y + numberBox.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(rangeBox.x + rangeBox.width * 0.65, rangeBox.y + rangeBox.height / 2, {
+      steps: 5,
+    });
+    await page.mouse.up();
+
+    await expect(host).not.toHaveAttribute("value", "25");
+    await expect(range).toBeFocused();
+
+    await number.focus();
+    const valueBeforeAltDrag = await host.getAttribute("value");
+    await page.keyboard.down("Alt");
+    await page.mouse.move(
+      numberBox.x + numberBox.width / 2,
+      numberBox.y + numberBox.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      numberBox.x + numberBox.width / 2 + 10,
+      numberBox.y + numberBox.height / 2,
+      { steps: 2 },
+    );
+    await page.mouse.up();
+    await page.keyboard.up("Alt");
+
+    await expect(host).not.toHaveAttribute("value", valueBeforeAltDrag ?? "");
+  });
+
   test("reflects scrub values without re-entering full slider attribute sync", async ({
     page,
   }) => {

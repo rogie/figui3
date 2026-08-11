@@ -2299,11 +2299,20 @@ class PropskitSlider extends HTMLElement {
   #elasticRangeRect = null;
   #elasticHostWidth = 0;
   #elasticPointerId = null;
+  #numberPointerId = null;
+  #numberPointerStartX = 0;
+  #numberPointerStartY = 0;
+  #isNumberScrubbing = false;
+  #suppressNumberClick = false;
+  #numberClickResetTimer = 0;
   #boundHandleSliderInput = null;
   #boundHandleSliderChange = null;
   #boundHandleElasticPointerDown = this.#handleElasticPointerDown.bind(this);
   #boundHandleElasticPointerMove = this.#handleElasticPointerMove.bind(this);
   #boundHandleElasticPointerEnd = this.#handleElasticPointerEnd.bind(this);
+  #boundHandleNumberPointerDown = this.#handleNumberPointerDown.bind(this);
+  #boundHandleNumberPointerMove = this.#handleNumberPointerMove.bind(this);
+  #boundHandleNumberPointerEnd = this.#handleNumberPointerEnd.bind(this);
   #boundHandleRangeDoubleClick = this.#handleRangeDoubleClick.bind(this);
   #boundHandleContextMenu = this.#handleContextMenu.bind(this);
   #boundHandleContextMenuChange = this.#handleContextMenuChange.bind(this);
@@ -2342,6 +2351,12 @@ class PropskitSlider extends HTMLElement {
     this.addEventListener("pointerdown", this.#boundHandleElasticPointerDown, {
       capture: true,
       passive: true,
+    });
+    this.removeEventListener("pointerdown", this.#boundHandleNumberPointerDown, {
+      capture: true,
+    });
+    this.addEventListener("pointerdown", this.#boundHandleNumberPointerDown, {
+      capture: true,
     });
     this.removeEventListener("contextmenu", this.#boundHandleContextMenu);
     this.addEventListener("contextmenu", this.#boundHandleContextMenu);
@@ -2410,11 +2425,17 @@ class PropskitSlider extends HTMLElement {
       this.#focusSyncFrame = 0;
     }
     this.#clearPendingClick();
+    this.#stopNumberTracking();
+    clearTimeout(this.#numberClickResetTimer);
+    this.#numberClickResetTimer = 0;
     this.#stopElasticTracking();
     this.#resetElasticPull();
     this.#unbindRangeInput();
     this.#unbindSliderEvents();
     this.removeEventListener("pointerdown", this.#boundHandleElasticPointerDown, {
+      capture: true,
+    });
+    this.removeEventListener("pointerdown", this.#boundHandleNumberPointerDown, {
       capture: true,
     });
     this.removeEventListener("contextmenu", this.#boundHandleContextMenu);
@@ -2652,6 +2673,14 @@ class PropskitSlider extends HTMLElement {
       event.target instanceof Element &&
       event.target.closest("fig-input-number, fig-menu")
     ) {
+      if (
+        this.#suppressNumberClick &&
+        event.target.closest("fig-input-number")
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.#suppressNumberClick = false;
+      }
       return;
     }
     this.#queueRangeFocus();
@@ -2688,6 +2717,89 @@ class PropskitSlider extends HTMLElement {
     event.preventDefault();
     event.stopImmediatePropagation();
     this.#resetToDefault();
+  }
+
+  #handleNumberPointerDown(event) {
+    if (
+      event.button !== 0 ||
+      event.altKey ||
+      figLabBooleanAttribute(this, "disabled") ||
+      !(event.target instanceof Element)
+    ) {
+      return;
+    }
+    const input = event.target.closest("fig-input-number input");
+    if (!input || input === document.activeElement) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    this.#stopNumberTracking();
+    this.#numberPointerId = event.pointerId;
+    this.#numberPointerStartX = event.clientX;
+    this.#numberPointerStartY = event.clientY;
+    this.#isNumberScrubbing = false;
+    window.addEventListener("pointermove", this.#boundHandleNumberPointerMove);
+    window.addEventListener("pointerup", this.#boundHandleNumberPointerEnd, {
+      once: true,
+    });
+    window.addEventListener("pointercancel", this.#boundHandleNumberPointerEnd, {
+      once: true,
+    });
+    window.addEventListener("blur", this.#boundHandleNumberPointerEnd, {
+      once: true,
+    });
+  }
+
+  #handleNumberPointerMove(event) {
+    if (event.pointerId !== this.#numberPointerId) return;
+    if (event.buttons === 0) {
+      this.#handleNumberPointerEnd(event);
+      return;
+    }
+    if (!this.#isNumberScrubbing) {
+      const distance = Math.hypot(
+        event.clientX - this.#numberPointerStartX,
+        event.clientY - this.#numberPointerStartY,
+      );
+      if (distance < 4) return;
+      this.#isNumberScrubbing = true;
+      this.setAttribute("data-number-scrubbing", "");
+    }
+    this.#setSliderValue(this.#valueFromPointer(event), "input");
+  }
+
+  #handleNumberPointerEnd(event) {
+    if (
+      event?.pointerId !== undefined &&
+      this.#numberPointerId !== null &&
+      event.pointerId !== this.#numberPointerId
+    ) {
+      return;
+    }
+    const wasScrubbing = this.#isNumberScrubbing;
+    this.#stopNumberTracking();
+    if (wasScrubbing) {
+      this.#setSliderValue(this.#slider?.value, "change");
+      this.#suppressNumberClick = true;
+      clearTimeout(this.#numberClickResetTimer);
+      this.#numberClickResetTimer = window.setTimeout(() => {
+        this.#suppressNumberClick = false;
+        this.#numberClickResetTimer = 0;
+      }, 0);
+      this.#queueRangeFocus();
+      return;
+    }
+    this.#slider?.querySelector("fig-input-number input")?.focus();
+  }
+
+  #stopNumberTracking() {
+    window.removeEventListener("pointermove", this.#boundHandleNumberPointerMove);
+    window.removeEventListener("pointerup", this.#boundHandleNumberPointerEnd);
+    window.removeEventListener("pointercancel", this.#boundHandleNumberPointerEnd);
+    window.removeEventListener("blur", this.#boundHandleNumberPointerEnd);
+    this.#numberPointerId = null;
+    this.#isNumberScrubbing = false;
+    this.removeAttribute("data-number-scrubbing");
   }
 
   #handleElasticPointerDown(event) {

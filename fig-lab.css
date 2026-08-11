@@ -1293,6 +1293,13 @@ propskit-slider {
         flex: 0 0 auto;
         text-align: right;
         color: var(--field-text-color);
+        cursor: default;
+        touch-action: none;
+
+        &:focus {
+          cursor: text;
+          touch-action: auto;
+        }
       }
     }
   }

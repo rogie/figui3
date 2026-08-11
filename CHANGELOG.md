@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.39.0]
+
+### Changed
+
+- Unfocused PropsKit slider number fields now drag the slider, while clicks focus the field for editing and Alt-drag scrubbing.
+
 ## [6.38.0]
 
 ### Changed
