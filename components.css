@@ -803,6 +803,41 @@ fig-button {
     }
   }
 
+  /* Variant: Destructive */
+  &[variant="destructive"] {
+    background-color: var(--figma-color-bg-danger);
+    color: var(--figma-color-text-ondanger);
+
+    &:hover {
+      background-color: var(--figma-color-bg-danger-hover);
+    }
+
+    &:active,
+    &:hover:active {
+      background-color: var(--figma-color-bg-danger-pressed);
+      color: var(--figma-color-text-ondanger-secondary);
+    }
+  }
+
+  /* Variant: Destructive Secondary */
+  &[variant="destructiveSecondary"] {
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-danger);
+    padding: 0 calc(var(--spacer-2) - 1px);
+    background: none;
+    color: var(--figma-color-text-danger);
+
+    &:hover {
+      background-color: var(--figma-color-bg-danger-tertiary);
+    }
+
+    &:active,
+    &:hover:active {
+      box-shadow: inset 0 0 0 1px var(--figma-color-border-danger-strong);
+      background-color: var(--figma-color-bg-danger-tertiary);
+      color: var(--figma-color-text-danger-secondary);
+    }
+  }
+
   /* Variant: Link */
   &[variant="link"] {
     box-shadow: none;
@@ -910,11 +945,12 @@ fig-button {
     background-color: var(--figma-color-bg-disabled);
     pointer-events: none;
     cursor: not-allowed;
-    &:not([variant="secondary"]) {
+    &:not([variant="secondary"]):not([variant="destructiveSecondary"]) {
       color: var(--figma-color-text-ondisabled);
       box-shadow: none;
     }
     &[variant="secondary"],
+    &[variant="destructiveSecondary"],
     &[variant="ghost"] {
       color: var(--figma-color-text-disabled);
       background-color: transparent;

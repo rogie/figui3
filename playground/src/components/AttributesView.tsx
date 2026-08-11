@@ -3,6 +3,7 @@ import {
   applyAttributeMutation,
   applyButtonIconMutation,
   applyButtonTypeMutation,
+  applyButtonVariantMutation,
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
@@ -1112,16 +1113,21 @@ export default function AttributesView({
                       return;
                     }
                     if (
-                      target.controlTag === "fig-dialog" &&
-                      name === "position" &&
-                      resolvedValue === ""
+                      target.controlTag === "fig-button" &&
+                      name === "variant"
                     ) {
-                      applyChange(target.fieldIndex, scope, name, null);
+                      onMarkupChange(
+                        applyButtonVariantMutation(
+                          markup,
+                          target.fieldIndex,
+                          resolvedValue,
+                        ),
+                      );
                       return;
                     }
                     if (
-                      target.controlTag === "fig-button" &&
-                      name === "variant" &&
+                      target.controlTag === "fig-dialog" &&
+                      name === "position" &&
                       resolvedValue === ""
                     ) {
                       applyChange(target.fieldIndex, scope, name, null);
@@ -1317,11 +1323,15 @@ export default function AttributesView({
                                     name === "position"
                                   ? "Default"
                                   : "None"
-                        : name === "units"
-                          ? option
-                          : name === "fields"
-                            ? toFieldsLabel(option)
-                            : toSentenceCaseLabel(option)}
+                        : target.controlTag === "fig-button" &&
+                            name === "variant" &&
+                            option === "destructiveSecondary"
+                          ? "Destructive (secondary)"
+                          : name === "units"
+                            ? option
+                            : name === "fields"
+                              ? toFieldsLabel(option)
+                              : toSentenceCaseLabel(option)}
                     </option>
                   ))}
                 </fig-dropdown>

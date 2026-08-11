@@ -67,7 +67,7 @@ export const figui3Sections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-button variant="primary">Primary</fig-button>
+  <fig-button>Primary</fig-button>
 </div>`,
       },
     ],

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.34.0]
+
+### Added
+
+- Added `destructive` and `destructiveSecondary` variants for `fig-button`.
+
+### Changed
+
+- Button variant controls in the FigUI3 playground now update the example label and correctly represent the default primary variant.
+
 ## [6.33.1]
 
 ### Fixed

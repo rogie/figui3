@@ -126,6 +126,83 @@ test.describe("fig.js component contracts", () => {
   }
 });
 
+test("fig-button destructive variants use danger colors", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-button id="destructive" variant="destructive">Delete</fig-button>
+      <fig-button id="destructive-secondary" variant="destructiveSecondary">Destructive secondary</fig-button>
+    `;
+  });
+
+  const button = page.locator("#destructive");
+  const styles = () =>
+    button.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        color: style.color,
+      };
+    });
+  const resolveTokens = async (backgroundToken: string, colorToken: string) =>
+    page.evaluate(
+      ([background, color]) => {
+        const probe = document.createElement("div");
+        probe.style.backgroundColor = `var(${background})`;
+        probe.style.color = `var(${color})`;
+        document.body.append(probe);
+        const style = getComputedStyle(probe);
+        const resolved = {
+          backgroundColor: style.backgroundColor,
+          color: style.color,
+        };
+        probe.remove();
+        return resolved;
+      },
+      [backgroundToken, colorToken],
+    );
+
+  expect(await styles()).toEqual(
+    await resolveTokens("--figma-color-bg-danger", "--figma-color-text-ondanger"),
+  );
+
+  await button.hover();
+  expect(await styles()).toEqual(
+    await resolveTokens(
+      "--figma-color-bg-danger-hover",
+      "--figma-color-text-ondanger",
+    ),
+  );
+
+  await page.mouse.down();
+  expect(await styles()).toEqual(
+    await resolveTokens(
+      "--figma-color-bg-danger-pressed",
+      "--figma-color-text-ondanger-secondary",
+    ),
+  );
+  await page.mouse.up();
+
+  const secondary = page.locator("#destructive-secondary");
+  await secondary.hover();
+  const secondaryStyles = await secondary.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      backgroundColor: style.backgroundColor,
+      color: style.color,
+    };
+  });
+  expect(secondaryStyles).toEqual(
+    await resolveTokens(
+      "--figma-color-bg-danger-tertiary",
+      "--figma-color-text-danger",
+    ),
+  );
+});
+
 test("fig-icon maps chevron to size-specific tokens", async ({ page }) => {
   collectPageErrors(page);
   await bootFigFixture(page);

@@ -514,6 +514,30 @@ export function applyButtonTypeMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export function applyButtonVariantMutation(
+  markup: string,
+  fieldIndex: number,
+  nextVariant: string,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element || getControlTag(element) !== "fig-button") return markup;
+
+  if (nextVariant) element.setAttribute("variant", nextVariant);
+  else element.removeAttribute("variant");
+
+  const spacedVariant = nextVariant.replace(/([a-z])([A-Z])/g, "$1 $2");
+  const label = spacedVariant
+    ? `${spacedVariant.charAt(0).toUpperCase()}${spacedVariant.slice(1)}`
+    : "Primary";
+  const textNode = Array.from(element.childNodes).find(
+    (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+  );
+  if (textNode) textNode.textContent = label;
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export function applyButtonIconMutation(
   markup: string,
   fieldIndex: number,

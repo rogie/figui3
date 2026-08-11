@@ -64,7 +64,16 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     variant: {
       label: "Variant",
       type: "enum",
-      options: ["", "secondary", "ghost", "link", "input", "overlay"],
+      options: [
+        "",
+        "secondary",
+        "destructive",
+        "destructiveSecondary",
+        "ghost",
+        "link",
+        "input",
+        "overlay",
+      ],
     },
     type: {
       label: "Type",
