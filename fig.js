@@ -1164,9 +1164,16 @@ class FigTooltip extends HTMLElement {
     return false;
   }
 
-  showDelayedPopup() {
+  showDelayedPopup(event) {
     if (this.#showPersisted) return;
     clearTimeout(this.timeout);
+    if (event?.type === "pointerenter") {
+      const trigger = this.#triggerEl;
+      const openSelect =
+        trigger?.matches?.("fig-select[open]") ||
+        trigger?.querySelector?.("fig-select[open]");
+      if (openSelect) return;
+    }
     if (this.#isWarmSession()) {
       this.render();
       this.showPopup();

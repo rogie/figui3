@@ -6096,6 +6096,35 @@ test.describe("remaining accessibility contracts", () => {
     await expect(trigger).toBeFocused();
   });
 
+  test("select option hover does not reopen a wrapping tooltip", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-tooltip text="Choose an option" delay="0">
+          <fig-select value="one">
+            <fig-select-options>
+              <fig-select-option value="one">One</fig-select-option>
+              <fig-select-option value="two">Two</fig-select-option>
+            </fig-select-options>
+          </fig-select>
+        </fig-tooltip>
+      `;
+    });
+
+    const select = page.locator("fig-tooltip > fig-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open", "");
+    await select.locator('fig-select-option[value="two"]').hover();
+    await page.waitForTimeout(100);
+
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveCount(0);
+  });
+
   test("tooltips dismiss when their scroll context moves", async ({
     page,
   }) => {

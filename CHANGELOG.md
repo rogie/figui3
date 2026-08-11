@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.37.1]
+
+### Fixed
+
+- Hovering options in an open `fig-select` no longer reopens a wrapping `fig-tooltip`.
+
 ## [6.37.0]
 
 ### Added
