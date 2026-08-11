@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.35.0]
+
+### Added
+
+- Added the `destructiveGhost` variant for `fig-button`.
+
 ## [6.34.0]
 
 ### Added

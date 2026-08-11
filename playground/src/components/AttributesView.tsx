@@ -1327,6 +1327,10 @@ export default function AttributesView({
                             name === "variant" &&
                             option === "destructiveSecondary"
                           ? "Destructive (secondary)"
+                          : target.controlTag === "fig-button" &&
+                              name === "variant" &&
+                              option === "destructiveGhost"
+                            ? "Destructive (ghost)"
                           : name === "units"
                             ? option
                             : name === "fields"

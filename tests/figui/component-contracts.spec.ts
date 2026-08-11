@@ -135,6 +135,7 @@ test("fig-button destructive variants use danger colors", async ({ page }) => {
     root.innerHTML = `
       <fig-button id="destructive" variant="destructive">Delete</fig-button>
       <fig-button id="destructive-secondary" variant="destructiveSecondary">Destructive secondary</fig-button>
+      <fig-button id="destructive-ghost" variant="destructiveGhost">Destructive ghost</fig-button>
     `;
   });
 
@@ -196,6 +197,22 @@ test("fig-button destructive variants use danger colors", async ({ page }) => {
     };
   });
   expect(secondaryStyles).toEqual(
+    await resolveTokens(
+      "--figma-color-bg-danger-tertiary",
+      "--figma-color-text-danger",
+    ),
+  );
+
+  const ghost = page.locator("#destructive-ghost");
+  await ghost.hover();
+  const ghostStyles = await ghost.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      backgroundColor: style.backgroundColor,
+      color: style.color,
+    };
+  });
+  expect(ghostStyles).toEqual(
     await resolveTokens(
       "--figma-color-bg-danger-tertiary",
       "--figma-color-text-danger",

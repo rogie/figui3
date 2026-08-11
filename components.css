@@ -838,6 +838,22 @@ fig-button {
     }
   }
 
+  /* Variant: Destructive Ghost */
+  &[variant="destructiveGhost"] {
+    box-shadow: none;
+    background: none;
+    color: var(--figma-color-text-danger);
+
+    &:hover:not(:active) {
+      background-color: var(--figma-color-bg-danger-tertiary);
+    }
+
+    &:active {
+      background-color: var(--figma-color-bg-danger-tertiary);
+      color: var(--figma-color-text-danger-secondary);
+    }
+  }
+
   /* Variant: Link */
   &[variant="link"] {
     box-shadow: none;
@@ -945,12 +961,15 @@ fig-button {
     background-color: var(--figma-color-bg-disabled);
     pointer-events: none;
     cursor: not-allowed;
-    &:not([variant="secondary"]):not([variant="destructiveSecondary"]) {
+    &:not([variant="secondary"]):not([variant="destructiveSecondary"]):not(
+        [variant="destructiveGhost"]
+      ) {
       color: var(--figma-color-text-ondisabled);
       box-shadow: none;
     }
     &[variant="secondary"],
     &[variant="destructiveSecondary"],
+    &[variant="destructiveGhost"],
     &[variant="ghost"] {
       color: var(--figma-color-text-disabled);
       background-color: transparent;
