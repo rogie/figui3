@@ -6659,6 +6659,8 @@ class FigSlider extends HTMLElement {
 
   set value(value) {
     const rawValue = value === null || value === undefined ? "" : String(value);
+    this.#showEmptyTextValue =
+      this.type !== "range" && rawValue.trim() === "";
     const hasParsedBounds = this.min !== undefined || this.max !== undefined;
     const normalized = hasParsedBounds
       ? String(this.#normalizeSliderValue(rawValue))
@@ -7004,18 +7006,8 @@ class FigSlider extends HTMLElement {
           break;
         case "value":
           if (this.#isInteracting) break;
-          this.#showEmptyTextValue =
-            newValue === null ||
-            (typeof newValue === "string" && newValue.trim() === "");
-          this.value = this.#normalizeSliderValue(newValue);
-          this.input.value = String(this.value);
+          this.value = newValue;
           this.#syncValue();
-          if (this.figInputNumber) {
-            this.figInputNumber.setAttribute(
-              "value",
-              this.#showEmptyTextValue ? "" : this.value,
-            );
-          }
           break;
         case "transform":
           this.transform = Number(newValue) || 1;

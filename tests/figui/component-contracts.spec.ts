@@ -911,6 +911,55 @@ test.describe("propskit sizes", () => {
     expect(result.rightSpacing.text).toBe(result.rightSpacing.number);
     expect(result.rightSpacing.text).toBe(result.rightSpacing.select);
   });
+
+  test("horizontal field labels truncate at forty percent width", async ({ page }) => {
+    const labels = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "300px";
+      const fixtures: Record<string, string> = {
+        "propskit-switch": "",
+        "propskit-color": 'value="#0D99FF"',
+        "propskit-gradient": "",
+        "propskit-select": 'value="A" options="A,B"',
+        "propskit-text": 'value="Layer"',
+        "propskit-number": 'value="24"',
+        "propskit-slider": 'value="50" min="0" max="100"',
+      };
+      root.innerHTML = Object.entries(fixtures)
+        .map(
+          ([tag, attrs]) =>
+            `<${tag} label="An intentionally long property label" ${attrs}></${tag}>`,
+        )
+        .join("");
+
+      return Object.keys(fixtures).map((tag) => {
+        const label = root.querySelector(`${tag} fig-field > label`);
+        if (!label) throw new Error(`Missing ${tag} label`);
+        const style = getComputedStyle(label);
+        return {
+          tag,
+          display: style.display,
+          maxWidth: style.maxWidth,
+          overflow: style.overflow,
+          textOverflow: style.textOverflow,
+          whiteSpace: style.whiteSpace,
+          isTruncated: label.scrollWidth > label.clientWidth,
+        };
+      });
+    });
+
+    for (const label of labels) {
+      expect(label, label.tag).toMatchObject({
+        display: "block",
+        maxWidth: "40%",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        isTruncated: true,
+      });
+    }
+  });
 });
 
 test.describe("propskit-color", () => {
@@ -1942,6 +1991,54 @@ test.describe("propskit delegated click behavior", () => {
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.evaluate(async () => {
       await import("/fig-lab.js");
+    });
+  });
+
+  test("delta slider passes its value to the number input", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-slider
+          label="Attractor strength"
+          type="delta"
+        ></propskit-slider>
+      `;
+      const host = root.querySelector("propskit-slider") as
+        | (HTMLElement & { value: string })
+        | null;
+      if (!host) throw new Error("Missing propskit-slider");
+      host.value = "0";
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      const slider = host?.querySelector("fig-slider") as
+        | (HTMLElement & { value: string })
+        | null;
+      const number = slider?.querySelector("fig-input-number") as
+        | (HTMLElement & { value: string })
+        | null;
+      const input = number?.querySelector("input");
+      return {
+        hostAttribute: host?.getAttribute("value"),
+        hostValue: host?.value,
+        sliderAttribute: slider?.getAttribute("value"),
+        sliderValue: slider?.value,
+        numberAttribute: number?.getAttribute("value"),
+        numberValue: number?.value,
+        inputValue: input?.value,
+      };
+    });
+
+    expect(state).toEqual({
+      hostAttribute: "0",
+      hostValue: "0",
+      sliderAttribute: "0",
+      sliderValue: "0",
+      numberAttribute: "0",
+      numberValue: 0,
+      inputValue: "0",
     });
   });
 

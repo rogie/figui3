@@ -1330,6 +1330,22 @@ propskit-slider {
   }
 }
 
+:is(
+  propskit-switch,
+  propskit-color,
+  propskit-gradient,
+  propskit-select,
+  propskit-text,
+  propskit-number,
+  propskit-slider
+) fig-field:not([direction="vertical"]) > label {
+  display: block;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Canvas Control */
 body {
   --fig-lab-cursor: url('data:image/svg+xml,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(%23clip0_20065_231516)"><g filter="url(%23filter0_d_20065_231516)"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.93938 2.93938C3.35531 2.52345 3.97597 2.38901 4.52673 2.59555L15.5267 6.72055C16.1416 6.95111 16.535 7.55477 16.4976 8.21034C16.4603 8.86592 16.0009 9.421 15.3638 9.58026L10.737 10.737L9.58026 15.3638C9.421 16.0009 8.86592 16.4603 8.21034 16.4976C7.55477 16.535 6.95111 16.1416 6.72055 15.5267L2.59555 4.52673C2.38901 3.97597 2.52345 3.35531 2.93938 2.93938Z" fill="white"/></g><path fill-rule="evenodd" clip-rule="evenodd" d="M4.17558 3.53185C3.99199 3.463 3.7851 3.50782 3.64646 3.64646C3.50782 3.7851 3.463 3.99199 3.53185 4.17558L7.65685 15.1756C7.7337 15.3805 7.93492 15.5117 8.15345 15.4992C8.37197 15.4868 8.557 15.3336 8.61009 15.1213L9.91232 9.91232L15.1213 8.61009C15.3336 8.557 15.4868 8.37197 15.4992 8.15345C15.5117 7.93492 15.3805 7.7337 15.1756 7.65685L4.17558 3.53185Z" fill="black"/></g><defs><filter id="filter0_d_20065_231516" x="-0.5" y="0.5" width="20" height="20" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="1"/><feGaussianBlur stdDeviation="1.5"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_20065_231516"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_20065_231516" result="shape"/></filter><clipPath id="clip0_20065_231516"><rect width="32" height="32" fill="white"/></clipPath></defs></svg>') 3 3, default;

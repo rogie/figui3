@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.38.0]
+
+### Changed
+
+- Horizontal PropsKit field labels now truncate at a maximum width of 40%.
+
+### Fixed
+
+- Late-set delta slider values now sync to the nested `fig-input-number`.
+
 ## [6.37.1]
 
 ### Fixed
