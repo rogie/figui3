@@ -5899,6 +5899,14 @@ fig-separator {
   pointer-events: none;
   user-select: none;
 
+  &[borderless]:not([borderless="false"]) {
+    background: transparent;
+
+    &[label]:not([label=""])::before {
+      display: none;
+    }
+  }
+
   /* Labeled: rule, then secondary group label (same pattern as menu optgroups). */
   &[label]:not([label=""]) {
     display: flex;

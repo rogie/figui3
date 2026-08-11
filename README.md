@@ -1217,11 +1217,12 @@ Escape dismisses an open tooltip and returns focus to its trigger.
 
 `<fig-separator>` — [demo](https://rog.ie/figui3/#separator)
 
-A visual divider between content groups. The optional `label` attribute adds a group label and accessible name.
+A visual divider between content groups. The optional `label` attribute adds a group label and accessible name. Add `borderless` to hide the separator line.
 
 ```html
 <fig-separator></fig-separator>
 <fig-separator label="More"></fig-separator>
+<fig-separator label="First group" borderless></fig-separator>
 ```
 
 ---

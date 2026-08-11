@@ -265,23 +265,21 @@ export const figui3Sections: Section[] = [
       },
       {
         id: "grouped",
-        name: "Grouped items",
+        name: "AI models",
         markup: `<div class="prop-panel">
-  <fig-select value="multiply" label="Blend">
-    <fig-select-options>
-      <fig-select-option value="normal">Normal</fig-select-option>
-      <fig-separator label="Darken"></fig-separator>
-      <fig-select-option value="darken">Darken</fig-select-option>
-      <fig-select-option value="multiply">Multiply</fig-select-option>
-      <fig-select-option value="color-burn">Color burn</fig-select-option>
-      <fig-separator label="Lighten"></fig-separator>
-      <fig-select-option value="lighten">Lighten</fig-select-option>
-      <fig-select-option value="screen">Screen</fig-select-option>
-      <fig-select-option value="color-dodge">Color dodge</fig-select-option>
-      <fig-separator label="Contrast"></fig-separator>
-      <fig-select-option value="overlay">Overlay</fig-select-option>
-      <fig-select-option value="soft-light">Soft light</fig-select-option>
-      <fig-select-option value="hard-light">Hard light</fig-select-option>
+  <fig-select value="claude-opus-5" label="AI model">
+    <fig-select-options slot="panel">
+      <fig-separator label="OpenAI"></fig-separator>
+      <fig-select-option value="gpt-5.6-sol">GPT-5.6 Sol</fig-select-option>
+      <fig-select-option value="gpt-5.6-terra">GPT-5.6 Terra</fig-select-option>
+      <fig-separator label="Anthropic"></fig-separator>
+      <fig-select-option value="claude-fable-5">Claude Fable 5</fig-select-option>
+      <fig-select-option value="claude-opus-5">Claude Opus 5</fig-select-option>
+      <fig-select-option value="claude-sonnet-5">Claude Sonnet 5</fig-select-option>
+      <fig-separator label="Gemini"></fig-separator>
+      <fig-select-option value="gemini-3.6-flash">Gemini 3.6 Flash</fig-select-option>
+      <fig-select-option value="gemini-3.5-flash">Gemini 3.5 Flash</fig-select-option>
+      <fig-select-option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</fig-select-option>
     </fig-select-options>
   </fig-select>
 </div>`,

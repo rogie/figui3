@@ -5262,6 +5262,7 @@ class FigSelectOptions extends HTMLElement {
   connectedCallback() {
     if (!this.hasAttribute("slot")) this.setAttribute("slot", "panel");
     this.#unwrapLegacyChooser();
+    this.#markFirstSeparatorBorderless();
     this.#ensureNavButtons();
     this.addEventListener("scroll", this.#boundSyncOverflow, { passive: true });
     this.#resizeObserver?.disconnect();
@@ -5278,6 +5279,7 @@ class FigSelectOptions extends HTMLElement {
   }
 
   syncOverflow() {
+    this.#markFirstSeparatorBorderless();
     return figSyncOverflowState(this, this, "y");
   }
 
@@ -5292,6 +5294,15 @@ class FigSelectOptions extends HTMLElement {
       this.insertBefore(chooser.firstChild, chooser);
     }
     chooser.remove();
+  }
+
+  #markFirstSeparatorBorderless() {
+    const firstContent = Array.from(this.children).find(
+      (child) => !child.hasAttribute("data-fig-select-nav"),
+    );
+    if (firstContent?.tagName === "FIG-SEPARATOR") {
+      firstContent.setAttribute("borderless", "");
+    }
   }
 
   #ensureNavButtons() {
@@ -19759,6 +19770,7 @@ figDefineElement("fig-menu-item", FigMenuItem);
 /**
  * Visual divider between content groups.
  * @attr {string} label - Optional group label shown in secondary text under the line.
+ * @attr {boolean} borderless - Hides the separator line when present or "true".
  */
 class FigSeparator extends HTMLElement {
   static get observedAttributes() {

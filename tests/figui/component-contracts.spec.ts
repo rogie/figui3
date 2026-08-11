@@ -239,6 +239,29 @@ test("fig-button destructive variants use danger colors", async ({ page }) => {
   await page.mouse.up();
 });
 
+test("fig-separator borderless hides the separator line", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-separator id="default-separator" label="Group"></fig-separator>
+      <fig-separator id="borderless-separator" label="Group" borderless></fig-separator>
+      <fig-separator id="false-separator" label="Group" borderless="false"></fig-separator>
+    `;
+  });
+
+  const beforeDisplay = (selector: string) =>
+    page.locator(selector).evaluate((element) => {
+      return getComputedStyle(element, "::before").display;
+    });
+
+  expect(await beforeDisplay("#default-separator")).not.toBe("none");
+  expect(await beforeDisplay("#borderless-separator")).toBe("none");
+  expect(await beforeDisplay("#false-separator")).not.toBe("none");
+});
+
 test("fig-icon maps chevron to size-specific tokens", async ({ page }) => {
   collectPageErrors(page);
   await bootFigFixture(page);
@@ -1378,6 +1401,27 @@ test.describe("propskit-select", () => {
     await expect(panel.locator(":scope > fig-select-option")).toHaveCount(2);
     await expect(panel.locator('fig-select-option[value="left"]')).toHaveCount(1);
     await expect(panel.locator('fig-select-option[value="A"]')).toHaveCount(0);
+  });
+
+  test("marks the first select separator as borderless", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select value="one">
+          <fig-select-options>
+            <fig-separator label="First"></fig-separator>
+            <fig-select-option value="one">One</fig-select-option>
+            <fig-separator label="Second"></fig-separator>
+            <fig-select-option value="two">Two</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      `;
+    });
+
+    const separators = page.locator("fig-select-options > fig-separator");
+    await expect(separators.first()).toHaveAttribute("borderless", "");
+    await expect(separators.nth(1)).not.toHaveAttribute("borderless");
   });
 
   test("selecting a slotted option updates value, label, and events", async ({

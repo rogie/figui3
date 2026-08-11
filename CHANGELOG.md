@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.37.0]
+
+### Added
+
+- Added the `borderless` attribute for `fig-separator`.
+
+### Changed
+
+- `fig-select-options` now marks a leading separator as borderless.
+- Replaced the grouped select playground example with grouped AI models.
+
 ## [6.36.0]
 
 ### Added
