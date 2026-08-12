@@ -1461,6 +1461,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Dialog</fig-button>
   <dialog is="fig-dialog" title="Continue?" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
+    <fig-content></fig-content>
     <fig-footer borderless>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
       <fig-button>Continue</fig-button>
@@ -2764,7 +2765,7 @@ export const propkitSections: Section[] = [
     <label>Characters</label>
     <fig-input-text value="!@#abc123" full></fig-input-text>
   </fig-field>
-  <fig-content>Some helper text here</fig-content>
+  <fig-content padding>Some helper text here</fig-content>
 </div>`,
       },
     ],

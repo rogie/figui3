@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.40.1]
+
+### Fixed
+
+- Empty `fig-content` elements no longer reserve padding.
+- Full-width `fig-chooser` elements now account for their inline margins.
+
+### Changed
+
+- Updated dialog and helper-text examples to demonstrate `fig-content` padding behavior.
+
 ## [6.40.0]
 
 ### Changed

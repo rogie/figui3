@@ -125,7 +125,7 @@ export const figui3Sections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Dialog</fig-button>
   <dialog is="fig-dialog" title="A long time ago..." handle="fig-header" position="center center">
-    <fig-content>
+    <fig-content padding>
       <p>"I find your lack of faith disturbing." Vader's gloved hand tightened around the Admiral's throat from across the room, the Force crushing his windpipe as the bridge officers studiously avoided looking at the dying man.</p>
       <p>"The Force is strong with this one," Vader murmured, watching the X-wing skim along the trench. The targeting computer chirped uselessly. He had felt the boy's presence before, on Tatooine, in dreams that smelled of sand and engine grease. The past had a long reach.</p>
       <p>"You don't know the power of the Dark Side. I must obey my master." The Emperor's lightning arced between his fingers, and Luke convulsed on the metal grating. Somewhere beneath the black mask, beneath thirty years of regret, a father remembered a son.</p>

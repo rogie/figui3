@@ -3579,8 +3579,12 @@ fig-content {
   }
 }
 
-fig-content[padding]:not([padding="false"]) {
+fig-content[padding]:not([padding="false"]):not(:empty) {
   padding-inline: var(--spacer-3);
+}
+
+fig-content:empty {
+  padding: 0;
 }
 
 vstack,
@@ -5098,7 +5102,7 @@ fig-chooser {
   }
 
   &[full]:not([full="false"]) {
-    width: 100%;
+    width: calc(100% - var(--fig-chooser-inline-margin) * 2);
   }
 
   &[disabled]:not([disabled="false"]) {
