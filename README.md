@@ -1418,7 +1418,7 @@ Use `slot="overlay"` for custom overlay controls. Slotted overlays stay as direc
 
 `<fig-card>` — [demo](https://rog.ie/figui3/#card)
 
-A media card with a truncated label, optional link, and attribute-only selection chrome. With `src`, it composes a generated `fig-image`. The `label` and `sublabel` attributes render inside a generated `fig-footer`.
+A media card with a truncated label and attribute-only selection chrome. With `src`, it composes a generated `fig-image`. The `label` and `sublabel` attributes render inside a generated `fig-footer`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1427,10 +1427,8 @@ A media card with a truncated label, optional link, and attribute-only selection
 | `label` | string | — | Card title (preferred over `text`) |
 | `text` | string | — | Alias for `label` |
 | `sublabel` | string | — | Secondary one-line text under the label |
-| `href` | string | — | When set, wraps content in a real `<a>` |
-| `target` | string | — | Forwarded to the `<a>` (`_blank` adds `rel="noopener noreferrer"`) |
 | `selected` | boolean | `false` | Selected chrome only (no click-toggle) |
-| `disabled` | boolean | `false` | Dim + non-interactive; no `<a>` when disabled |
+| `disabled` | boolean | `false` | Dim + non-interactive |
 | `full` | boolean | `false` | Stretch to the available width (cards are already `width: 100%` by default) |
 | `size` | string | default | Set to `"large"` for `--spacer-2` card padding and `--spacer-1` label spacing |
 | `aspect-ratio` | string | `"1/1"` | Forwarded to generated `fig-image` |
@@ -1441,7 +1439,6 @@ A media card with a truncated label, optional link, and attribute-only selection
 <fig-card src="photo.jpg" label="Autumn field"></fig-card>
 <fig-card src="photo.jpg" label="Large card" size="large"></fig-card>
 <fig-card src="photo.jpg" label="Shader pill" sublabel="Generative tools/effects" selected></fig-card>
-<fig-card src="photo.jpg" label="Open asset" href="#asset"></fig-card>
 <fig-card src="photo.jpg" label="Wide card" aspect-ratio="16/9" full></fig-card>
 <fig-card label="Custom preview">
   <fig-preview>...</fig-preview>

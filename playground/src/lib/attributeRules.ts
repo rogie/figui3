@@ -268,12 +268,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     src: { label: "Src", type: "string" },
     label: { label: "Label", type: "string" },
     sublabel: { label: "Sublabel", type: "string" },
-    href: { label: "Href", type: "string" },
-    target: {
-      label: "Target",
-      type: "enum",
-      options: ["", "_blank", "_self"],
-    },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     full: { label: "Full", type: "boolean", boolMode: "presence" },

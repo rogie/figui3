@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.0.0]
+
+### Added
+
+- Added `fig-chit` as a backwards-compatible alias for `fig-swatch`, including fill-picker support.
+
+### Changed
+
+- `fig-card` now renders generated media and footers as direct children without a `.fig-card-link` wrapper.
+
+### Fixed
+
+- Long `fig-card` sublabels now truncate with an ellipsis.
+- Loading spinners stay centered in `fig-card` images and authored previews.
+
+### Removed
+
+- Removed the `href` and `target` attributes and built-in link behavior from `fig-card`.
+
 ## [6.40.1]
 
 ### Fixed

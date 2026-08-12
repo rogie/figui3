@@ -247,7 +247,7 @@ class FigFillPicker extends HTMLElement {
       this.#swatch.setAttribute("background", "#D9D9D9");
       this.appendChild(this.#swatch);
       this.#trigger = this.#swatch;
-    } else if (child.matches("fig-swatch")) {
+    } else if (child.matches("fig-swatch, fig-chit")) {
       // Scenario 2: Has swatch - use and populate it
       this.#swatch = child;
       this.#trigger = child;

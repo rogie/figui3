@@ -272,6 +272,13 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "selected", attribute: "selected", value: "" }],
   },
   {
+    tag: "fig-chit",
+    title: "Chit (legacy alias)",
+    group: "display",
+    markup: `<fig-chit background="#14AE5C"></fig-chit>`,
+    attributes: [{ name: "selected", attribute: "selected", value: "" }],
+  },
+  {
     tag: "fig-media",
     title: "Media",
     group: "media",

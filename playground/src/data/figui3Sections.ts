@@ -926,7 +926,7 @@ export const figui3Sections: Section[] = [
     name: "Card",
     group: "Core components",
     description:
-      "Media card that can generate a fig-image from src and a compact fig-footer from label attributes, or preserve authored media and footer content. Supports optional links and attribute-only selection chrome.",
+      "Media card that can generate a fig-image from src and a compact fig-footer from label attributes, or preserve authored media and footer content. Supports attribute-only selection chrome.",
     examples: [
       {
         id: "default",
@@ -970,13 +970,6 @@ export const figui3Sections: Section[] = [
         description:
           "sublabel adds secondary, single-line text below the generated label.",
         markup: `<fig-card src="${landscapeUrl()}" label="Shader pill" sublabel="Generative tools/effects" selected fit="fill" style="width: 10rem"></fig-card>`,
-      },
-      {
-        id: "link",
-        name: "Link",
-        description:
-          "href makes the generated card surface a real anchor; target can configure its browsing context.",
-        markup: `<fig-card src="${landscapeUrl()}" label="Open asset" href="#card" fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
         id: "two-line",

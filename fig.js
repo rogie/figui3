@@ -12678,6 +12678,11 @@ class FigSwatch extends HTMLElement {
 }
 figDefineElement("fig-swatch", FigSwatch);
 
+// Backwards-compatible alias. Custom element constructors cannot be registered
+// under multiple tag names, so the legacy tag uses an otherwise empty subclass.
+class FigChit extends FigSwatch {}
+figDefineElement("fig-chit", FigChit);
+
 /* Media */
 const FIG_IMAGE_FORWARDED_EVENTS = ["load", "error"];
 const FIG_VIDEO_FORWARDED_EVENTS = [
@@ -13611,22 +13616,19 @@ class FigVideo extends FigMedia {
 figDefineElement("fig-video", FigVideo);
 
 /**
- * <fig-card> — Media card with optional link, selection chrome, and truncated label.
+ * <fig-card> — Media card with selection chrome and truncated labels.
  *
  * Composes a generated `fig-image` when `src` is set. Attribute-driven labels
  * render in a generated `fig-footer`; authored footers remain untouched.
  * Selection is attribute-only (`selected`); apps own toggle/group logic.
- * When `href` is set (and not disabled), content wraps in a real `<a>`.
  *
  * @attr {string} src - Image URL forwarded to generated fig-image
  * @attr {string} alt - Alt text forwarded to generated fig-image
  * @attr {string} label - Card title text (preferred over `text`)
  * @attr {string} text - Alias for `label`
  * @attr {string} sublabel - Secondary one-line text under the label
- * @attr {string} href - Makes the card a link
- * @attr {string} target - Forwarded to the `<a>`
  * @attr {boolean} selected - Selected chrome (CSS only)
- * @attr {boolean} disabled - Dim + non-interactive; no `<a>` when disabled
+ * @attr {boolean} disabled - Dim + non-interactive
  * @attr {boolean} full - Stretch to available width (CSS; default width is already 100%)
  * @attr {string} size - Set to `large` for spacer-2 card padding and spacer-1 label spacing
  * @attr {string} aspect-ratio - Forwarded to fig-image (default `1/1`)
@@ -13641,8 +13643,6 @@ class FigCard extends HTMLElement {
       "label",
       "text",
       "sublabel",
-      "href",
-      "target",
       "selected",
       "disabled",
       "full",
@@ -13653,7 +13653,6 @@ class FigCard extends HTMLElement {
     ];
   }
 
-  #linkEl = null;
   #footerEl = null;
   #imageEl = null;
   #labelEl = null;
@@ -13701,11 +13700,6 @@ class FigCard extends HTMLElement {
     return this.getAttribute("sublabel") ?? "";
   }
 
-  #wantsLink() {
-    const href = this.getAttribute("href");
-    return Boolean(href) && !figBooleanAttribute(this, "disabled");
-  }
-
   #lineClamp() {
     const raw = this.getAttribute("label-line-clamp");
     return raw === "2" ? "2" : "1";
@@ -13717,65 +13711,48 @@ class FigCard extends HTMLElement {
 
   #findAuthoredMedia() {
     return this.querySelector(
-      ":scope > fig-image:not([data-generated]), :scope > fig-media:not([data-generated]), :scope > fig-preview:not([data-generated]), :scope > .fig-card-link > fig-image:not([data-generated]), :scope > .fig-card-link > fig-media:not([data-generated]), :scope > .fig-card-link > fig-preview:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-image:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-media:not([data-generated]), :scope > .fig-card-link > .fig-card-media > fig-preview:not([data-generated])",
+      ":scope > fig-image:not([data-generated]), :scope > fig-media:not([data-generated]), :scope > fig-preview:not([data-generated])",
     );
   }
 
+  #unwrapLegacyStructure() {
+    this.querySelectorAll(":scope > .fig-card-link").forEach((wrapper) => {
+      wrapper.querySelectorAll(":scope > .fig-card-media").forEach((mediaWrap) => {
+        while (mediaWrap.firstChild) {
+          wrapper.insertBefore(mediaWrap.firstChild, mediaWrap);
+        }
+        mediaWrap.remove();
+      });
+      while (wrapper.firstChild) {
+        this.insertBefore(wrapper.firstChild, wrapper);
+      }
+      wrapper.remove();
+    });
+  }
+
   #ensureStructure() {
+    this.#unwrapLegacyStructure();
     if (!this.#usesGeneratedMedia()) {
       this.#ensureManualStructure();
       return;
     }
 
-    this.querySelectorAll(":scope > fig-footer[data-generated]").forEach(
-      (element) => element.remove(),
-    );
-    if (this.#footerEl?.parentElement === this) this.#footerEl = null;
-
     const authored = this.#findAuthoredMedia();
     this.#usesAuthoredMedia = Boolean(authored);
 
-    const wantAnchor = this.#wantsLink();
-    const tag = wantAnchor ? "a" : "div";
-
-    if (!this.#linkEl || this.#linkEl.tagName.toLowerCase() !== tag) {
-      const next = document.createElement(tag);
-      next.className = "fig-card-link";
-      if (this.#linkEl) {
-        while (this.#linkEl.firstChild) {
-          next.appendChild(this.#linkEl.firstChild);
-        }
-        this.#linkEl.replaceWith(next);
-      } else {
-        this.appendChild(next);
-      }
-      this.#linkEl = next;
-    }
-
-    const legacyMediaWrap = this.#linkEl.querySelector(
-      ":scope > .fig-card-media",
-    );
-    if (legacyMediaWrap) {
-      while (legacyMediaWrap.firstChild) {
-        this.#linkEl.insertBefore(legacyMediaWrap.firstChild, legacyMediaWrap);
-      }
-      legacyMediaWrap.remove();
-    }
-
-    if (authored && authored.parentElement !== this.#linkEl) {
-      this.#linkEl
+    if (authored) {
+      this
         .querySelectorAll(":scope > [data-generated]:not(fig-footer)")
         .forEach((el) => el.remove());
-      this.#linkEl.prepend(authored);
       this.#imageEl = null;
     }
 
     if (!this.#usesAuthoredMedia) {
       this.#imageEl =
-        this.#linkEl.querySelector(":scope > fig-image[data-generated]") ||
+        this.querySelector(":scope > fig-image[data-generated]") ||
         null;
       if (!this.#imageEl) {
-        this.#linkEl
+        this
           .querySelectorAll(
             ":scope > fig-image, :scope > fig-media, :scope > fig-preview",
           )
@@ -13786,7 +13763,7 @@ class FigCard extends HTMLElement {
         this.#imageEl.setAttribute("data-generated", "");
         this.#imageEl.setAttribute("full", "");
         this.#imageEl.setAttribute("size", "auto");
-        this.#linkEl.prepend(this.#imageEl);
+        this.prepend(this.#imageEl);
       }
     }
 
@@ -13794,9 +13771,7 @@ class FigCard extends HTMLElement {
       this.#labelText() || this.#sublabelText(),
     );
     if (!hasGeneratedLabels) {
-      this.#linkEl
-        .querySelector(":scope > fig-footer[data-generated]")
-        ?.remove();
+      this.querySelector(":scope > fig-footer[data-generated]")?.remove();
       this.#footerEl = null;
       this.#labelEl = null;
       this.#sublabelEl = null;
@@ -13804,13 +13779,13 @@ class FigCard extends HTMLElement {
     }
 
     if (!this.#footerEl || !this.#footerEl.isConnected) {
-      this.#footerEl = this.#linkEl.querySelector(
+      this.#footerEl = this.querySelector(
         ":scope > fig-footer[data-generated]",
       );
       if (!this.#footerEl) {
         this.#footerEl = document.createElement("fig-footer");
         this.#footerEl.setAttribute("data-generated", "");
-        this.#linkEl.appendChild(this.#footerEl);
+        this.appendChild(this.#footerEl);
       }
     }
 
@@ -13819,14 +13794,9 @@ class FigCard extends HTMLElement {
         ":scope > .fig-card-label[data-generated]",
       );
       if (!this.#labelEl) {
-        this.#labelEl =
-          this.#linkEl.querySelector(":scope > .fig-card-label[data-generated]") ||
-          null;
-        if (!this.#labelEl) {
-          this.#labelEl = document.createElement("label");
-          this.#labelEl.className = "fig-card-label";
-          this.#labelEl.setAttribute("data-generated", "");
-        }
+        this.#labelEl = document.createElement("label");
+        this.#labelEl.className = "fig-card-label";
+        this.#labelEl.setAttribute("data-generated", "");
         this.#footerEl.appendChild(this.#labelEl);
       }
     }
@@ -13836,36 +13806,20 @@ class FigCard extends HTMLElement {
         ":scope > .fig-card-sublabel[data-generated]",
       );
       if (!this.#sublabelEl) {
-        this.#sublabelEl =
-          this.#linkEl.querySelector(
-            ":scope > .fig-card-sublabel[data-generated]",
-          ) || null;
-        if (!this.#sublabelEl) {
-          this.#sublabelEl = document.createElement("label");
-          this.#sublabelEl.className = "fig-card-sublabel";
-          this.#sublabelEl.setAttribute("data-generated", "");
-        }
+        this.#sublabelEl = document.createElement("label");
+        this.#sublabelEl.className = "fig-card-sublabel";
+        this.#sublabelEl.setAttribute("data-generated", "");
         this.#labelEl.after(this.#sublabelEl);
       }
     }
   }
 
   #ensureManualStructure() {
-    const staleLink =
-      this.#linkEl || this.querySelector(":scope > .fig-card-link");
-    if (staleLink) {
-      staleLink
-        .querySelectorAll(
-          "fig-image:not([data-generated]), fig-media:not([data-generated]), fig-preview:not([data-generated]), fig-footer:not([data-generated])",
-        )
-        .forEach((element) => this.insertBefore(element, staleLink));
-      staleLink.remove();
-    }
+    this.#unwrapLegacyStructure();
     this.querySelectorAll(":scope > [data-generated]").forEach((element) =>
       element.remove(),
     );
 
-    this.#linkEl = null;
     this.#imageEl = null;
     this.#usesAuthoredMedia = true;
 
@@ -13898,50 +13852,20 @@ class FigCard extends HTMLElement {
       this.#syncManual();
       return;
     }
-    if (!this.#linkEl) return;
 
     const disabled = figBooleanAttribute(this, "disabled");
-    const selected = figBooleanAttribute(this, "selected");
     const label = this.#labelText();
     const sublabel = this.#sublabelText();
     const clamp = this.#lineClamp();
 
     this.style.setProperty("--fig-card-label-line-clamp", clamp);
 
-    if (this.#wantsLink()) {
-      const href = this.getAttribute("href") || "";
-      const target = this.getAttribute("target");
-      this.#linkEl.setAttribute("href", href);
-      if (target) {
-        this.#linkEl.setAttribute("target", target);
-        if (target === "_blank") {
-          this.#linkEl.setAttribute("rel", "noopener noreferrer");
-        } else {
-          this.#linkEl.removeAttribute("rel");
-        }
-      } else {
-        this.#linkEl.removeAttribute("target");
-        this.#linkEl.removeAttribute("rel");
-      }
-      if (selected) {
-        this.#linkEl.setAttribute("aria-current", "true");
-      } else {
-        this.#linkEl.removeAttribute("aria-current");
-      }
-      this.removeAttribute("role");
-      this.removeAttribute("aria-label");
+    this.setAttribute("role", "group");
+    const ariaLabel = [label, sublabel].filter(Boolean).join(", ");
+    if (ariaLabel) {
+      this.setAttribute("aria-label", ariaLabel);
     } else {
-      this.#linkEl.removeAttribute("href");
-      this.#linkEl.removeAttribute("target");
-      this.#linkEl.removeAttribute("rel");
-      this.#linkEl.removeAttribute("aria-current");
-      this.setAttribute("role", "group");
-      const ariaLabel = [label, sublabel].filter(Boolean).join(", ");
-      if (ariaLabel) {
-        this.setAttribute("aria-label", ariaLabel);
-      } else {
-        this.removeAttribute("aria-label");
-      }
+      this.removeAttribute("aria-label");
     }
 
     if (disabled) {

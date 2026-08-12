@@ -3996,6 +3996,43 @@ test.describe("reconnect resilience", () => {
     });
   });
 
+  test("fig-chit remains a backwards-compatible fig-swatch alias", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-swatch background="#14AE5C" alpha="0.5" size="large" selected></fig-swatch>
+        <fig-chit background="#14AE5C" alpha="0.5" size="large" selected></fig-chit>
+      `;
+      const swatch = root.querySelector("fig-swatch");
+      const chit = root.querySelector("fig-chit");
+      const Swatch = customElements.get("fig-swatch");
+      if (!swatch || !chit || !Swatch) throw new Error("Missing swatch aliases");
+      const signature = (element: Element) => {
+        const style = getComputedStyle(element);
+        return {
+          display: style.display,
+          width: style.width,
+          height: style.height,
+          background: style.getPropertyValue("--swatch-background").trim(),
+          alpha: style.getPropertyValue("--alpha").trim(),
+          dataType: element.getAttribute("data-type"),
+          childTags: Array.from(element.children).map((child) => child.tagName),
+        };
+      };
+      return {
+        chitIsSwatch: chit instanceof Swatch,
+        swatch: signature(swatch),
+        chit: signature(chit),
+      };
+    });
+
+    expect(state.chitIsSwatch).toBe(true);
+    expect(state.chit).toEqual(state.swatch);
+  });
+
   test("fig-preview defaults and updates its aspect ratio", async ({
     page,
   }) => {
@@ -4039,8 +4076,7 @@ test.describe("reconnect resilience", () => {
       await new Promise(requestAnimationFrame);
       const readPadding = (id: string) => {
         const card = document.querySelector(`#${id}`);
-        const surface = card?.querySelector(":scope > .fig-card-link") || card;
-        return surface ? getComputedStyle(surface).padding : null;
+        return card ? getComputedStyle(card).padding : null;
       };
       const readFooterMarginTop = (id: string) => {
         const card = document.querySelector(`#${id}`);
@@ -4166,7 +4202,7 @@ test.describe("reconnect resilience", () => {
     ]);
   });
 
-  test("fig-card generates a direct image and label footer without a media wrapper", async ({
+  test("fig-card generates direct media and ignores legacy link attributes", async ({
     page,
   }) => {
     const state = await page.evaluate(async () => {
@@ -4177,21 +4213,42 @@ test.describe("reconnect resilience", () => {
           src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
           label="Generated card"
           sublabel="Generated details"
+          href="#legacy"
+          target="_blank"
         ></fig-card>
       `;
       await new Promise(requestAnimationFrame);
       const card = root.querySelector("fig-card")!;
-      const link = card.querySelector(":scope > .fig-card-link");
-      const image = link?.querySelector(
+      const staleWrapper = document.createElement("div");
+      staleWrapper.className = "fig-card-link";
+      while (card.firstChild) staleWrapper.appendChild(card.firstChild);
+      card.appendChild(staleWrapper);
+      card.remove();
+      root.appendChild(card);
+      await new Promise(requestAnimationFrame);
+
+      const image = card.querySelector(
         ":scope > fig-image[data-generated]",
       );
-      const footer = link?.querySelector(
+      const footer = card.querySelector(
         ":scope > fig-footer[data-generated]",
       );
       return {
+        anchors: card.querySelectorAll("a").length,
+        linkWrappers: card.querySelectorAll(".fig-card-link").length,
         mediaWrappers: card.querySelectorAll(".fig-card-media").length,
-        imageIsDirect: image?.parentElement === link,
-        footerIsDirect: footer?.parentElement === link,
+        observesHref: (
+          customElements.get("fig-card") as
+            | (CustomElementConstructor & { observedAttributes?: string[] })
+            | undefined
+        )?.observedAttributes?.includes("href"),
+        observesTarget: (
+          customElements.get("fig-card") as
+            | (CustomElementConstructor & { observedAttributes?: string[] })
+            | undefined
+        )?.observedAttributes?.includes("target"),
+        imageIsDirect: image?.parentElement === card,
+        footerIsDirect: footer?.parentElement === card,
         footerTag: footer?.tagName,
         labelTag: footer?.querySelector(".fig-card-label")?.tagName,
         sublabelTag: footer?.querySelector(".fig-card-sublabel")?.tagName,
@@ -4202,7 +4259,11 @@ test.describe("reconnect resilience", () => {
     });
 
     expect(state).toEqual({
+      anchors: 0,
+      linkWrappers: 0,
       mediaWrappers: 0,
+      observesHref: false,
+      observesTarget: false,
       imageIsDirect: true,
       footerIsDirect: true,
       footerTag: "FIG-FOOTER",
@@ -4212,6 +4273,108 @@ test.describe("reconnect resilience", () => {
       footerBoxShadow: "none",
       gap: "4px",
     });
+  });
+
+  test("fig-card truncates long sublabels with an ellipsis", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-card
+          style="width: 10rem"
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          label="Shader pill"
+          sublabel="Generative tools/effects very long label"
+        ></fig-card>
+      `;
+      await new Promise(requestAnimationFrame);
+      const sublabel = root.querySelector(".fig-card-sublabel");
+      if (!sublabel) throw new Error("Missing fig-card sublabel");
+      const style = getComputedStyle(sublabel);
+      return {
+        display: style.display,
+        overflow: style.overflow,
+        textOverflow: style.textOverflow,
+        whiteSpace: style.whiteSpace,
+        isTruncated: sublabel.scrollWidth > sublabel.clientWidth,
+      };
+    });
+
+    expect(state).toEqual({
+      display: "block",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      isTruncated: true,
+    });
+  });
+
+  test("fig-card centers loading spinners in images and previews", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-card
+          id="image-card"
+          style="width: 10rem"
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          label="Loading"
+        ></fig-card>
+        <fig-card id="preview-card" style="width: 10rem">
+          <fig-preview aspect-ratio="1/1">
+            <fig-spinner></fig-spinner>
+          </fig-preview>
+        </fig-card>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const image = root.querySelector("#image-card fig-image");
+      const imagePreview = image?.querySelector("fig-preview");
+      if (!image || !imagePreview) throw new Error("Missing generated fig-image");
+      const imageSpinner = document.createElement("fig-spinner");
+      imageSpinner.setAttribute("slot", "overlay");
+      imageSpinner.setAttribute("data-loading-indicator", "");
+      imageSpinner.setAttribute("data-generated", "");
+      image.append(imageSpinner);
+      await new Promise(requestAnimationFrame);
+
+      const preview = root.querySelector("#preview-card > fig-preview");
+      const previewSpinner = preview?.querySelector("fig-spinner");
+      if (!preview || !previewSpinner) throw new Error("Missing authored preview");
+
+      const centered = (container: Element, spinner: Element) => {
+        const containerBox = container.getBoundingClientRect();
+        const spinnerBox = spinner.getBoundingClientRect();
+        return {
+          x: Math.abs(
+            spinnerBox.left +
+              spinnerBox.width / 2 -
+              (containerBox.left + containerBox.width / 2),
+          ),
+          y: Math.abs(
+            spinnerBox.top +
+              spinnerBox.height / 2 -
+              (containerBox.top + containerBox.height / 2),
+          ),
+        };
+      };
+
+      return {
+        imageDisplay: getComputedStyle(image).display,
+        previewDisplay: getComputedStyle(preview).display,
+        imageCenter: centered(imagePreview, imageSpinner),
+        previewCenter: centered(preview, previewSpinner),
+      };
+    });
+
+    expect(state.imageDisplay).toBe("grid");
+    expect(state.previewDisplay).toBe("grid");
+    expect(state.imageCenter.x).toBeLessThanOrEqual(0.5);
+    expect(state.imageCenter.y).toBeLessThanOrEqual(0.5);
+    expect(state.previewCenter.x).toBeLessThanOrEqual(0.5);
+    expect(state.previewCenter.y).toBeLessThanOrEqual(0.5);
   });
 
   test("fig-card preserves an authored footer without generating labels", async ({
@@ -4654,17 +4817,17 @@ test.describe("fill picker accessibility", () => {
           aria-label="Layer fill"
           value='{"type":"solid","color":"#0D99FF"}'
         >
-          <fig-swatch background="#0D99FF"></fig-swatch>
+          <fig-chit background="#0D99FF"></fig-chit>
         </fig-fill-picker>
       `;
     });
     await page.waitForTimeout(100);
 
-    await expect(page.locator("#picker fig-swatch")).toHaveAttribute(
+    await expect(page.locator("#picker fig-chit")).toHaveAttribute(
       "aria-label",
       "Open Layer fill",
     );
-    await page.locator("#picker fig-swatch").focus();
+    await page.locator("#picker fig-chit").focus();
     await page.keyboard.press("Enter");
     await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
       "open",
