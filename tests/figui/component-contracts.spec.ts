@@ -1339,7 +1339,7 @@ test.describe("propskit-select without fig-editor", () => {
   test("falls back to fig-dropdown when fig-select is unavailable", async ({
     page,
   }) => {
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
@@ -1349,13 +1349,24 @@ test.describe("propskit-select without fig-editor", () => {
           options="Left,Center,Right"
         ></propskit-select>
       `;
+      // Allow fig-dropdown slotchange to clone options into the native select.
+      await Promise.resolve();
+      await new Promise((r) => requestAnimationFrame(r));
       const control = root.querySelector("propskit-select");
       const dropdown = control?.querySelector("fig-dropdown");
+      const nativeSelect = dropdown?.querySelector(":scope > select") as
+        | HTMLSelectElement
+        | null
+        | undefined;
       return {
         selectRegistered: Boolean(customElements.get("fig-select")),
         usesDropdown: Boolean(dropdown),
         usesSelect: Boolean(control?.querySelector("fig-select")),
+        hasNativeSelect: Boolean(nativeSelect),
+        full: dropdown?.hasAttribute("full") ?? false,
         value: dropdown?.getAttribute("value"),
+        nativeValue: nativeSelect?.value ?? null,
+        nativeOptionCount: nativeSelect?.options.length ?? 0,
         optionCount: dropdown?.querySelectorAll(":scope > option").length,
       };
     });
@@ -1364,7 +1375,11 @@ test.describe("propskit-select without fig-editor", () => {
       selectRegistered: false,
       usesDropdown: true,
       usesSelect: false,
+      hasNativeSelect: true,
+      full: true,
       value: "Center",
+      nativeValue: "Center",
+      nativeOptionCount: 3,
       optionCount: 3,
     });
   });

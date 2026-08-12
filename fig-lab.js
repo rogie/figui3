@@ -1331,8 +1331,8 @@ class PropskitSelect extends HTMLElement {
     const select = document.createElement(
       this.#usesFigSelect ? "fig-select" : "fig-dropdown",
     );
-    // Match menu width to the full-surface control when fig-select is available.
-    if (this.#usesFigSelect) select.setAttribute("full", "");
+    // Match menu/control width to the full-surface field.
+    select.setAttribute("full", "");
     field.append(label, select);
     this.#field = field;
     this.#label = label;
@@ -1369,7 +1369,7 @@ class PropskitSelect extends HTMLElement {
         "Select",
     );
     // Always match menu width to the control surface.
-    if (this.#usesFigSelect) this.#select.setAttribute("full", "");
+    this.#select.setAttribute("full", "");
   }
 
   #getForwardedSelectAttrNames() {
@@ -1398,14 +1398,30 @@ class PropskitSelect extends HTMLElement {
     const parsed = PropskitSelect.#parseOptionsAttribute(
       this.getAttribute("options"),
     );
-    this.#select.replaceChildren(
-      ...parsed.map((entry) => {
-        const option = document.createElement("option");
-        option.value = PropskitSelect.#optionEntryValue(entry);
-        option.textContent = PropskitSelect.#optionEntryLabel(entry);
-        return option;
-      }),
-    );
+    // Keep fig-dropdown's internal <select>; only replace slotted options.
+    for (const child of [...this.#select.children]) {
+      if (child.localName === "option" || child.localName === "optgroup") {
+        child.remove();
+      }
+    }
+    for (const entry of parsed) {
+      const option = document.createElement("option");
+      option.value = PropskitSelect.#optionEntryValue(entry);
+      option.textContent = PropskitSelect.#optionEntryLabel(entry);
+      this.#select.appendChild(option);
+    }
+    // Re-apply value after options land; fig-dropdown clones via async slotchange.
+    const value = this.getAttribute("value");
+    if (value != null) {
+      const applyValue = () => {
+        this.#select?.setAttribute("value", value);
+        if (this.#select && "value" in this.#select) {
+          this.#select.value = value;
+        }
+      };
+      applyValue();
+      queueMicrotask(applyValue);
+    }
   }
 
   #syncSelectAttributes() {

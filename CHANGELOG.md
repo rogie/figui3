@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.0.1]
+
+### Fixed
+
+- `propskit-select` fig-dropdown fallback no longer wipes the native `<select>`, and matches fig-select field layout CSS.
+
 ## [8.0.0]
 
 ### Changed
