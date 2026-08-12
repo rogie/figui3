@@ -912,7 +912,9 @@ test.describe("propskit sizes", () => {
     expect(result.rightSpacing.text).toBe(result.rightSpacing.select);
   });
 
-  test("horizontal field labels truncate at forty percent width", async ({ page }) => {
+  test("horizontal field labels span three quarters of the field", async ({
+    page,
+  }) => {
     const labels = await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -929,18 +931,22 @@ test.describe("propskit sizes", () => {
       root.innerHTML = Object.entries(fixtures)
         .map(
           ([tag, attrs]) =>
-            `<${tag} label="An intentionally long property label" ${attrs}></${tag}>`,
+            `<${tag} label="An intentionally long property label that must truncate" ${attrs}></${tag}>`,
         )
         .join("");
 
       return Object.keys(fixtures).map((tag) => {
         const label = root.querySelector(`${tag} fig-field > label`);
+        const field = root.querySelector(`${tag} fig-field`);
         if (!label) throw new Error(`Missing ${tag} label`);
+        if (!field) throw new Error(`Missing ${tag} field`);
         const style = getComputedStyle(label);
         return {
           tag,
           display: style.display,
           maxWidth: style.maxWidth,
+          width: label.getBoundingClientRect().width,
+          fieldWidth: field.getBoundingClientRect().width,
           overflow: style.overflow,
           textOverflow: style.textOverflow,
           whiteSpace: style.whiteSpace,
@@ -952,12 +958,13 @@ test.describe("propskit sizes", () => {
     for (const label of labels) {
       expect(label, label.tag).toMatchObject({
         display: "block",
-        maxWidth: "40%",
+        maxWidth: "75%",
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
         isTruncated: true,
       });
+      expect(label.width, label.tag).toBeCloseTo(label.fieldWidth * 0.75, 4);
     }
   });
 });
@@ -1012,11 +1019,10 @@ test.describe("propskit-color", () => {
     expect((await opacityInput.boundingBox())?.width).toBe(opacityWidth);
 
     const fieldBox = await field.boundingBox();
-    const labelBox = await control.locator("fig-field > label").boundingBox();
     const inputBox = await colorInput.boundingBox();
     expect(inputBox?.height).toBe(fieldBox?.height);
     expect(inputBox?.x).toBeGreaterThanOrEqual(
-      (labelBox?.x ?? 0) + (labelBox?.width ?? 0) + 7,
+      (fieldBox?.x ?? 0) + (fieldBox?.width ?? 0) * 0.4,
     );
     expect(
       Math.abs(
@@ -1105,13 +1111,12 @@ test.describe("propskit-gradient", () => {
       2,
     );
     const fieldBox = await control.locator("fig-field").boundingBox();
-    const labelBox = await control.locator("fig-field > label").boundingBox();
     const gradientBox = await gradient.boundingBox();
     expect(gradientBox?.height).toBe(24);
     expect(gradientBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.45);
     expect(gradientBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.5);
     expect(gradientBox?.x).toBeGreaterThan(
-      (labelBox?.x ?? 0) + (labelBox?.width ?? 0),
+      (fieldBox?.x ?? 0) + (fieldBox?.width ?? 0) * 0.4,
     );
     expect(
       Math.abs(
@@ -1974,11 +1979,6 @@ test.describe("propskit-text", () => {
 
     await input.fill("A very long layer name that cannot overlap the label");
     await input.blur();
-    const labelBox = await control.locator("fig-field > label").boundingBox();
-    const constrainedInputBox = await textInput.boundingBox();
-    expect(constrainedInputBox?.x).toBeGreaterThanOrEqual(
-      (labelBox?.x ?? 0) + (labelBox?.width ?? 0) + 7,
-    );
     expect(await input.evaluate((element) => getComputedStyle(element).textOverflow))
       .toBe("ellipsis");
   });

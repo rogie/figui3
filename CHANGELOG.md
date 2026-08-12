@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.40.0]
+
+### Changed
+
+- Horizontal PropsKit labels now span 75% of their field while preserving ellipsis truncation.
+
 ## [6.39.0]
 
 ### Changed

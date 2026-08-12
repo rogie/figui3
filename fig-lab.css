@@ -1346,11 +1346,31 @@ propskit-slider {
   propskit-number,
   propskit-slider
 ) fig-field:not([direction="vertical"]) > label {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: block;
-  max-width: 40%;
+  align-content: center;
+  box-sizing: border-box;
+  width: 75%;
+  max-width: 75%;
+  padding: 0 0 0 var(--spacer-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  pointer-events: none;
+}
+
+:is(
+  propskit-switch,
+  propskit-color,
+  propskit-gradient,
+  propskit-select,
+  propskit-text,
+  propskit-number,
+  propskit-slider
+)[size="large"] fig-field:not([direction="vertical"]) > label {
+  padding-left: var(--spacer-2-5);
 }
 
 /* Canvas Control */
