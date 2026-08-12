@@ -316,7 +316,7 @@ fig-content:has(> propskit-group[name]:last-child) {
 }
 
 /* Large size: more left field padding; nudge trailing controls in from
-   the right. propskit-select applies left inset on label + trigger instead. */
+   the right. propskit-select uses shared label padding instead. */
 :is(
   propskit-switch,
   propskit-color,
@@ -649,13 +649,6 @@ propskit-select {
     --propskit-select-height: 2rem;
 
     fig-field:not([direction="vertical"]) {
-      padding-left: 0;
-
-      & > label {
-        inset: 0 auto 0 var(--spacer-2-5);
-        width: calc(50% - var(--spacer-2-5));
-      }
-
       :is(fig-select, fig-dropdown) {
         padding-right: var(--spacer-1);
 
@@ -704,22 +697,8 @@ propskit-select {
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     }
 
+    /* Label geometry comes from the shared propskit horizontal-label rules. */
     & > label {
-      position: absolute;
-      inset: 0 auto 0 var(--spacer-2);
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      width: calc(50% - var(--spacer-2));
-      min-width: 0;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      color: var(--figma-color-text-secondary);
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      pointer-events: none;
-
       fig-icon:first-child {
         margin-left: calc(var(--spacer-1) * -1);
       }
@@ -730,6 +709,7 @@ propskit-select {
       display: flex;
       flex: 1 1 auto;
       align-self: stretch;
+      align-items: stretch;
       width: 100%;
       min-width: 0;
       height: 100%;
@@ -746,11 +726,15 @@ propskit-select {
       }
     }
 
-    /* fig-dropdown fallback: match fig-select trigger layout in the field. */
+    /* fig-dropdown fallback: match fig-select trigger layout in the field.
+       Native select defaults to --spacer-4; stretch it to the field height. */
     fig-dropdown > select {
+      flex: 1 1 auto;
+      align-self: stretch;
+      box-sizing: border-box;
       width: 100%;
-      height: 100%;
-      min-width: 0;
+      height: auto;
+      min-height: 100%;
       padding: 0 var(--spacer-4) 0 var(--spacer-2);
       text-align: right;
       text-align-last: right;
@@ -886,10 +870,6 @@ propskit-number {
 
   &[size="large"] {
     --propskit-number-height: 2rem;
-
-    fig-field:not([direction="vertical"]) > label {
-      inset: 0 auto 0 var(--spacer-2-5);
-    }
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -930,21 +910,9 @@ propskit-number {
       box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     }
 
+    /* Label geometry comes from the shared propskit horizontal-label rules. */
     & > label {
-      position: absolute;
-      inset: 0 auto 0 var(--spacer-2);
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      width: calc(50% - var(--spacer-2));
-      min-width: 0;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
       color: var(--figma-color-text-secondary);
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      pointer-events: none;
 
       fig-icon:first-child {
         margin-left: calc(var(--spacer-1) * -1);
@@ -1388,8 +1356,14 @@ propskit-slider {
   propskit-text,
   propskit-number,
   propskit-slider
-)[size="large"] fig-field:not([direction="vertical"]) > label {
-  padding-left: var(--spacer-2-5);
+)[size="large"] {
+  fig-field {
+    --fig-field-label-max-height: var(--spacer-5);
+  }
+
+  fig-field:not([direction="vertical"]) > label {
+    padding-left: var(--spacer-2-5);
+  }
 }
 
 /* Canvas Control */

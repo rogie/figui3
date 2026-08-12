@@ -1005,6 +1005,84 @@ test.describe("propskit sizes", () => {
       expect(label.width, label.tag).toBeCloseTo(label.fieldWidth * 0.75, 4);
     }
   });
+
+  test("large propskit-select label matches shared horizontal label padding", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "300px";
+      root.innerHTML = `
+        <propskit-text size="large" label="Alignment" value="Layer"></propskit-text>
+        <propskit-select size="large" label="Alignment" value="Center" options="Left,Center,Right"></propskit-select>
+      `;
+      const textLabel = root.querySelector("propskit-text fig-field > label");
+      const selectLabel = root.querySelector(
+        "propskit-select fig-field > label",
+      );
+      const selectField = root.querySelector("propskit-select fig-field");
+      if (!textLabel || !selectLabel || !selectField) {
+        throw new Error("Missing large propskit labels");
+      }
+      const textStyle = getComputedStyle(textLabel);
+      const selectStyle = getComputedStyle(selectLabel);
+      return {
+        textPaddingLeft: textStyle.paddingLeft,
+        selectPaddingLeft: selectStyle.paddingLeft,
+        selectMaxWidth: selectStyle.maxWidth,
+        selectWidth: selectLabel.getBoundingClientRect().width,
+        fieldWidth: selectField.getBoundingClientRect().width,
+      };
+    });
+
+    expect(result.selectPaddingLeft).toBe(result.textPaddingLeft);
+    expect(result.selectMaxWidth).toBe("75%");
+    expect(result.selectWidth).toBeCloseTo(result.fieldWidth * 0.75, 4);
+  });
+
+  test("large propskit labels use spacer-5 max height", async ({ page }) => {
+    const results = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const fixtures: Record<string, string> = {
+        "propskit-switch": 'label="Enabled"',
+        "propskit-color": 'label="Fill" value="#0D99FF"',
+        "propskit-gradient": "label=\"Gradient\"",
+        "propskit-select": 'label="Align" value="A" options="A,B"',
+        "propskit-text": 'label="Name" value="Layer"',
+        "propskit-number": 'label="Size" value="24"',
+        "propskit-slider": 'label="Amount" value="50" min="0" max="100"',
+      };
+      root.innerHTML = Object.entries(fixtures)
+        .map(
+          ([tag, attrs]) => `<${tag} size="large" ${attrs}></${tag}>`,
+        )
+        .join("");
+
+      return Object.keys(fixtures).map((tag) => {
+        const field = root.querySelector(`${tag} fig-field`) as HTMLElement;
+        const label = root.querySelector(
+          `${tag} fig-field > label`,
+        ) as HTMLElement;
+        if (!field || !label) throw new Error(`Missing ${tag}`);
+        return {
+          tag,
+          maxHeightVar: getComputedStyle(field)
+            .getPropertyValue("--fig-field-label-max-height")
+            .trim(),
+          labelHeight: label.getBoundingClientRect().height,
+          fieldHeight: field.getBoundingClientRect().height,
+        };
+      });
+    });
+
+    for (const entry of results) {
+      expect(entry.maxHeightVar, entry.tag).toBe("2rem");
+      expect(entry.labelHeight, entry.tag).toBe(entry.fieldHeight);
+      expect(entry.labelHeight, entry.tag).toBe(32);
+    }
+  });
 });
 
 test.describe("propskit-color", () => {
@@ -1382,6 +1460,38 @@ test.describe("propskit-select without fig-editor", () => {
       nativeOptionCount: 3,
       optionCount: 3,
     });
+  });
+
+  test("fig-dropdown native select stretches to the field height", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-select
+          size="large"
+          label="Alignment"
+          value="Center"
+          options="Left,Center,Right"
+        ></propskit-select>
+      `;
+      await Promise.resolve();
+      await new Promise((r) => requestAnimationFrame(r));
+      const dropdown = root.querySelector("propskit-select fig-dropdown");
+      const nativeSelect = dropdown?.querySelector(
+        ":scope > select",
+      ) as HTMLSelectElement | null;
+      if (!dropdown || !nativeSelect) throw new Error("Missing dropdown select");
+      return {
+        dropdownHeight: dropdown.getBoundingClientRect().height,
+        selectHeight: nativeSelect.getBoundingClientRect().height,
+        selectHeightCss: getComputedStyle(nativeSelect).height,
+      };
+    });
+
+    expect(result.dropdownHeight).toBe(32);
+    expect(result.selectHeight).toBe(result.dropdownHeight);
   });
 });
 

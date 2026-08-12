@@ -122,6 +122,12 @@ function toSentenceCaseLabel(value: string): string {
   return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 }
 
+function isDefaultLargeSizeControl(controlTag: string): boolean {
+  return (
+    controlTag === "fig-input-gradient" || controlTag.startsWith("propskit-")
+  );
+}
+
 function toFieldsLabel(value: string): string {
   return value
     .split(",")
@@ -874,8 +880,7 @@ export default function AttributesView({
             const useSegmentedControl =
               isCheckRadioLabel ||
               isColorPickerMode ||
-              ((target.controlTag === "fig-input-gradient" ||
-                target.controlTag === "propskit-gradient") &&
+              (isDefaultLargeSizeControl(target.controlTag) &&
                 scope === "control" &&
                 name === "size") ||
               (target.controlTag === "fig-handle" &&
@@ -904,8 +909,7 @@ export default function AttributesView({
                   return option === "" ? "Default" : "Small";
                 }
                 if (
-                  (target.controlTag === "fig-input-gradient" ||
-                    target.controlTag === "propskit-gradient") &&
+                  isDefaultLargeSizeControl(target.controlTag) &&
                   name === "size"
                 ) {
                   return option === "" ? "Default" : "Large";
@@ -985,8 +989,7 @@ export default function AttributesView({
                   return;
                 }
                 if (
-                  (target.controlTag === "fig-input-gradient" ||
-                    target.controlTag === "propskit-gradient") &&
+                  isDefaultLargeSizeControl(target.controlTag) &&
                   name === "size"
                 ) {
                   applyChange(

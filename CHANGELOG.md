@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.0.2]
+
+### Fixed
+
+- Large PropsKit labels use `--fig-field-label-max-height: var(--spacer-5)` so they fill the control height.
+- `propskit-select` and `propskit-number` large labels follow the shared horizontal label padding rules.
+- `propskit-select` fig-dropdown fallback stretches the native `<select>` to the field height.
+
 ## [8.0.1]
 
 ### Fixed
