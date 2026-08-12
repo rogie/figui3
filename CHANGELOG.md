@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.1.0]
+
+### Added
+
+- Added a populated multiline text input example for `fig-field`.
+
+### Changed
+
+- Reduced vertical padding for `fig-tabs` and the maximum field-label height.
+- Dialogs can now grow to the viewport height while retaining outer spacing.
+
 ## [7.0.0]
 
 ### Added

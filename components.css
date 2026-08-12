@@ -1239,7 +1239,7 @@ fig-tabs,
   gap: var(--spacer-1);
   min-width: 0;
   overflow: auto hidden;
-  padding: var(--spacer-2) 0;
+  padding: var(--spacer-1) 0;
   padding-inline: var(--fig-tabs-inline-padding);
   margin: 0;
   margin-left: var(--fig-tabs-margin-left);
@@ -3055,7 +3055,7 @@ dialog,
   background: var(--figma-color-bg);
   min-width: min(var(--popover-min-width), var(--dialog-max-width));
   box-shadow: var(--figma-elevation-500-modal-window);
-  max-height: calc(60vh - var(--spacer-4));
+  max-height: calc(100vh - var(--spacer-4) * 2);
   max-width: min(var(--dialog-max-width), 30rem);
   height: max-content;
   & > fig-content,
@@ -4144,7 +4144,7 @@ fig-field {
   --fig-field-right-padding: var(--spacer-3);
   --fig-field-top-padding: var(--spacer-1);
   --fig-field-bottom-padding: var(--spacer-1);
-  --fig-field-label-max-height: var(--spacer-5);
+  --fig-field-label-max-height: var(--spacer-4);
   --fig-field-label-ratio: 1fr;
   --fig-field-input-ratio: 2fr;
   display: grid;

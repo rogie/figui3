@@ -664,6 +664,16 @@ export const figui3Sections: Section[] = [
   </fig-field>
 </div>`,
       },
+      {
+        id: "multiline",
+        name: "Multiline",
+        markup: `<div class="prop-panel">
+  <fig-field data-playground-field-only-controls="true">
+    <label>Description</label>
+    <fig-input-text multiline autoresize value="Design systems help teams build consistent interfaces by providing shared components, patterns, and guidance. They make product decisions easier to understand, reuse, and improve over time." placeholder="Enter description…" full></fig-input-text>
+  </fig-field>
+</div>`,
+      },
     ],
   },
   {
