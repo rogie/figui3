@@ -1205,6 +1205,7 @@ class PropskitSelect extends HTMLElement {
   #field = null;
   #label = null;
   #select = null;
+  #usesFigSelect = false;
   #hasCustomLabel = false;
   #observer = null;
   #managedSelectAttrs = new Set();
@@ -1219,6 +1220,49 @@ class PropskitSelect extends HTMLElement {
 
   static get observedAttributes() {
     return ["label", "direction", "aria-label", "options", "value"];
+  }
+
+  static #canUseFigSelect() {
+    return ["fig-select", "fig-select-options", "fig-select-option"].every(
+      (tag) => {
+        const Constructor = customElements.get(tag);
+        return (
+          typeof Constructor === "function" &&
+          Constructor.prototype instanceof HTMLElement
+        );
+      },
+    );
+  }
+
+  static #parseOptionsAttribute(raw) {
+    const text = raw || "";
+    if (text.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(text);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        /* fall through */
+      }
+    }
+    const delimiter = text.includes("\n") ? "\n" : ",";
+    return text
+      .split(delimiter)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  static #optionEntryValue(opt) {
+    if (opt && typeof opt === "object") {
+      return String(opt.value ?? opt.label ?? "");
+    }
+    return String(opt ?? "");
+  }
+
+  static #optionEntryLabel(opt) {
+    if (opt && typeof opt === "object") {
+      return String(opt.label ?? opt.value ?? "");
+    }
+    return String(opt ?? "");
   }
 
   connectedCallback() {
@@ -1283,9 +1327,12 @@ class PropskitSelect extends HTMLElement {
     const customLabel = this.querySelector(":scope > label");
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
-    const select = document.createElement("fig-select");
-    // Match menu width to the full-surface control.
-    select.setAttribute("full", "");
+    this.#usesFigSelect = PropskitSelect.#canUseFigSelect();
+    const select = document.createElement(
+      this.#usesFigSelect ? "fig-select" : "fig-dropdown",
+    );
+    // Match menu width to the full-surface control when fig-select is available.
+    if (this.#usesFigSelect) select.setAttribute("full", "");
     field.append(label, select);
     this.#field = field;
     this.#label = label;
@@ -1322,7 +1369,7 @@ class PropskitSelect extends HTMLElement {
         "Select",
     );
     // Always match menu width to the control surface.
-    this.#select.setAttribute("full", "");
+    if (this.#usesFigSelect) this.#select.setAttribute("full", "");
   }
 
   #getForwardedSelectAttrNames() {
@@ -1339,13 +1386,31 @@ class PropskitSelect extends HTMLElement {
       "full",
       "default",
     ]);
+    // fig-dropdown consumes light-DOM <option>s, not an options attribute.
+    if (!this.#usesFigSelect) reserved.add("options");
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
     );
   }
 
+  #syncDropdownOptions() {
+    if (!this.#select || this.#usesFigSelect) return;
+    const parsed = PropskitSelect.#parseOptionsAttribute(
+      this.getAttribute("options"),
+    );
+    this.#select.replaceChildren(
+      ...parsed.map((entry) => {
+        const option = document.createElement("option");
+        option.value = PropskitSelect.#optionEntryValue(entry);
+        option.textContent = PropskitSelect.#optionEntryLabel(entry);
+        return option;
+      }),
+    );
+  }
+
   #syncSelectAttributes() {
     if (!this.#select) return;
+    if (!this.#usesFigSelect) this.#syncDropdownOptions();
     const selectAttrs = this.#getForwardedSelectAttrNames().sort((a, b) => {
       // Build options before applying value so fig-select can resolve selection.
       if (a === "options") return -1;
@@ -1370,13 +1435,15 @@ class PropskitSelect extends HTMLElement {
     if (!this.#select) return;
     this.#boundHandleInput ??= this.#forwardSelectEvent.bind(this, "input");
     this.#boundHandleChange ??= this.#forwardSelectEvent.bind(this, "change");
-    this.#boundHandleOptionHover ??= this.#forwardSelectEvent.bind(
-      this,
-      "optionhover",
-    );
     this.#select.addEventListener("input", this.#boundHandleInput);
     this.#select.addEventListener("change", this.#boundHandleChange);
-    this.#select.addEventListener("optionhover", this.#boundHandleOptionHover);
+    if (this.#usesFigSelect) {
+      this.#boundHandleOptionHover ??= this.#forwardSelectEvent.bind(
+        this,
+        "optionhover",
+      );
+      this.#select.addEventListener("optionhover", this.#boundHandleOptionHover);
+    }
   }
 
   #unbindSelectEvents() {
@@ -1415,7 +1482,7 @@ class PropskitSelect extends HTMLElement {
   }
 
   #isSelectMenuOpen() {
-    if (!this.#select) return false;
+    if (!this.#select || !this.#usesFigSelect) return false;
     if (this.#select.open) return true;
     const popup = this.#select.shadowRoot?.querySelector(
       'dialog[is="fig-popup"]',
@@ -1426,11 +1493,12 @@ class PropskitSelect extends HTMLElement {
   #handlePointerDown(event) {
     if (!(event.target instanceof Element)) return;
     if (event.target.closest("fig-menu")) return;
-    // fig-select owns its trigger/option clicks.
-    if (event.target.closest("fig-select")) {
+    // Native dropdown / fig-select own their own trigger clicks.
+    if (event.target.closest("fig-select, fig-dropdown")) {
       this.#closeGesture = false;
       return;
     }
+    if (!this.#usesFigSelect) return;
     // Light-dismiss closes on pointerdown; remember so click doesn't reopen.
     this.#closeGesture = this.#isSelectMenuOpen();
   }
@@ -1439,7 +1507,10 @@ class PropskitSelect extends HTMLElement {
     if (event.target instanceof Element && event.target.closest("fig-menu")) {
       return;
     }
-    if (event.target instanceof Element && event.target.closest("fig-select")) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-select, fig-dropdown")
+    ) {
       this.#closeGesture = false;
       return;
     }
@@ -1448,6 +1519,7 @@ class PropskitSelect extends HTMLElement {
       return;
     }
     this.#select.focus();
+    if (!this.#usesFigSelect) return;
 
     if (this.#closeGesture || this.#isSelectMenuOpen()) {
       this.#closeGesture = false;
@@ -6701,168 +6773,3 @@ class FigReorder extends HTMLElement {
 }
 
 figLabDefineElement("fig-reorder", FigReorder);
-
-/*
- * fig-select currently lives in fig.js. Keep the lab consumers resilient to
- * reconnects and selected-option mutations until those core fixes can move
- * with the component.
- */
-const figLabEnhancedSelects = new WeakSet();
-const figLabDisconnectedSelects = new WeakSet();
-const figLabReconnectFallbacks = new WeakSet();
-
-function figLabSelectOptions(select) {
-  return Array.from(select.querySelectorAll("fig-select-option"));
-}
-
-function figLabSyncSelectedOption(select, requestedOption, emit = true) {
-  const options = figLabSelectOptions(select);
-  if (!options.length) return;
-  let option =
-    requestedOption && options.includes(requestedOption)
-      ? requestedOption
-      : options.find((candidate) => figLabBooleanAttribute(candidate, "selected"));
-  if (!option || figLabBooleanAttribute(option, "disabled")) {
-    option =
-      options.find((candidate) => !figLabBooleanAttribute(candidate, "disabled")) ||
-      options[0];
-  }
-  if (!option) return;
-
-  const value = option.value ?? option.getAttribute("value") ?? "";
-  const previousValue = select.getAttribute("value") ?? "";
-  select.setAttribute("value", String(value));
-  for (const candidate of options) {
-    const selected = candidate === option;
-    candidate.toggleAttribute("selected", selected);
-    candidate.setAttribute("aria-selected", String(selected));
-  }
-  if (emit && previousValue !== String(value)) {
-    select.dispatchEvent(
-      new CustomEvent("input", {
-        detail: String(value),
-        bubbles: true,
-        composed: true,
-      }),
-    );
-    select.dispatchEvent(
-      new CustomEvent("change", {
-        detail: String(value),
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  }
-}
-
-function figLabEnhanceSelect(select) {
-  if (figLabEnhancedSelects.has(select)) return;
-  const trigger = select.shadowRoot?.querySelector(".fig-select-trigger");
-  if (!trigger) {
-    requestAnimationFrame(() => {
-      if (select.isConnected) figLabEnhanceSelect(select);
-    });
-    return;
-  }
-  figLabEnhancedSelects.add(select);
-
-  const observer = new MutationObserver((mutations) => {
-    let selectedOption = null;
-    let selectedWasRemoved = false;
-    for (const mutation of mutations) {
-      if (
-        mutation.type !== "attributes" ||
-        mutation.attributeName !== "selected" ||
-        mutation.target.tagName !== "FIG-SELECT-OPTION"
-      ) {
-        continue;
-      }
-      if (figLabBooleanAttribute(mutation.target, "selected")) {
-        selectedOption = mutation.target;
-      } else if (
-        String(mutation.target.value ?? "") ===
-        (select.getAttribute("value") ?? "")
-      ) {
-        selectedWasRemoved = true;
-      }
-    }
-    if (selectedOption) {
-      const optionValue = String(selectedOption.value ?? "");
-      if ((select.getAttribute("value") ?? "") !== optionValue) {
-        figLabSyncSelectedOption(select, selectedOption);
-      }
-    } else if (selectedWasRemoved) {
-      figLabSyncSelectedOption(select, null);
-    }
-  });
-  observer.observe(select, {
-    attributes: true,
-    subtree: true,
-    attributeFilter: ["selected"],
-  });
-}
-
-function figLabInstallSelectReconnectFallback(select) {
-  if (figLabReconnectFallbacks.has(select)) return;
-  const trigger = select.shadowRoot?.querySelector(".fig-select-trigger");
-  if (!trigger) return;
-  figLabReconnectFallbacks.add(select);
-
-  trigger.addEventListener("click", () => {
-    if (figLabBooleanAttribute(select, "disabled")) return;
-    select.open = !select.open;
-  });
-  select.addEventListener("click", (event) => {
-    const option = event
-      .composedPath()
-      .find((node) => node?.tagName === "FIG-SELECT-OPTION");
-    if (
-      !option ||
-      !select.contains(option) ||
-      figLabBooleanAttribute(option, "disabled")
-    ) {
-      return;
-    }
-    figLabSyncSelectedOption(select, option);
-    select.open = false;
-  });
-}
-
-function figLabMarkDisconnectedSelectTree(root) {
-  if (root instanceof Element && root.matches("fig-select")) {
-    figLabDisconnectedSelects.add(root);
-  }
-  root
-    .querySelectorAll?.("fig-select")
-    .forEach((select) => figLabDisconnectedSelects.add(select));
-}
-
-function figLabEnhanceSelectTree(root) {
-  if (root instanceof Element && root.matches("fig-select")) {
-    figLabEnhanceSelect(root);
-  }
-  root
-    .querySelectorAll?.("fig-select")
-    .forEach((select) => figLabEnhanceSelect(select));
-}
-
-figLabEnhanceSelectTree(document);
-new MutationObserver((mutations) => {
-  for (const mutation of mutations) {
-    for (const node of mutation.removedNodes) {
-      if (node instanceof Element) figLabMarkDisconnectedSelectTree(node);
-    }
-    for (const node of mutation.addedNodes) {
-      if (!(node instanceof Element)) continue;
-      figLabEnhanceSelectTree(node);
-      const selects = node.matches("fig-select")
-        ? [node]
-        : [...node.querySelectorAll("fig-select")];
-      for (const select of selects) {
-        if (figLabDisconnectedSelects.has(select)) {
-          figLabInstallSelectReconnectFallback(select);
-        }
-      }
-    }
-  }
-}).observe(document.documentElement, { childList: true, subtree: true });

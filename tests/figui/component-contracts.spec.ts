@@ -26,10 +26,14 @@ test.describe("fig.js component contracts", () => {
     expect(missing).toEqual([]);
   });
 
-  test("registers fig-select and renders easing presets without fig-lab", async ({
-    page,
-  }) => {
+  test("fig.js alone does not register fig-select", async ({ page }) => {
+    const registered = await page.evaluate(() => Boolean(customElements.get("fig-select")));
+    expect(registered).toBe(false);
+  });
+
+  test("fig-editor registers fig-select and easing uses it", async ({ page }) => {
     const result = await page.evaluate(async () => {
+      await import("/fig-editor.js");
       await Promise.all([
         customElements.whenDefined("fig-select"),
         customElements.whenDefined("fig-select-option"),
@@ -60,6 +64,38 @@ test.describe("fig.js component contracts", () => {
       easingUsesSelect: true,
       selectedValue: "Linear",
       triggerHasIcon: true,
+    });
+  });
+
+  test("fig-easing-curve falls back to fig-dropdown without fig-editor", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<fig-easing-curve value="0, 0, 1, 1"></fig-easing-curve>';
+      const easing = root.querySelector("fig-easing-curve");
+      const dropdown = easing?.querySelector("fig-dropdown");
+      return {
+        selectRegistered: Boolean(customElements.get("fig-select")),
+        usesDropdown: Boolean(dropdown),
+        usesSelect: Boolean(easing?.querySelector("fig-select")),
+        value: dropdown?.getAttribute("value"),
+        optionCount: dropdown?.querySelectorAll(
+          ":scope > option, :scope > optgroup > option",
+        ).length,
+        groupCount: dropdown?.querySelectorAll(":scope > optgroup").length,
+      };
+    });
+
+    expect(result).toEqual({
+      selectRegistered: false,
+      usesDropdown: true,
+      usesSelect: false,
+      value: "Linear",
+      optionCount: 13,
+      groupCount: 2,
     });
   });
 
@@ -318,12 +354,13 @@ test.describe("AI lab styling components", () => {
     await bootFigFixture(page);
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.evaluate(async () => {
-      await import("/fig-lab.js");
+      await import("/fig-editor.js");
       await Promise.all([
         customElements.whenDefined("fig-ai-prompt"),
         customElements.whenDefined("fig-attachment"),
         customElements.whenDefined("fig-attachments"),
         customElements.whenDefined("fig-chat-message"),
+        customElements.whenDefined("fig-select"),
       ]);
     });
   });
@@ -775,7 +812,7 @@ test.describe("propskit sizes", () => {
     await bootFigFixture(page);
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.evaluate(async () => {
-      await import("/fig-lab.js");
+      await import("/fig-editor.js");
       await Promise.all(
         [
           "propskit-switch",
@@ -785,6 +822,7 @@ test.describe("propskit sizes", () => {
           "propskit-text",
           "propskit-number",
           "propskit-slider",
+          "fig-select",
         ].map((tag) => customElements.whenDefined(tag)),
       );
     });
@@ -1287,7 +1325,7 @@ test.describe("propskit-switch", () => {
   });
 });
 
-test.describe("propskit-select", () => {
+test.describe("propskit-select without fig-editor", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
@@ -1295,6 +1333,54 @@ test.describe("propskit-select", () => {
     await page.evaluate(async () => {
       await import("/fig-lab.js");
       await customElements.whenDefined("propskit-select");
+    });
+  });
+
+  test("falls back to fig-dropdown when fig-select is unavailable", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-select
+          label="Alignment"
+          value="Center"
+          options="Left,Center,Right"
+        ></propskit-select>
+      `;
+      const control = root.querySelector("propskit-select");
+      const dropdown = control?.querySelector("fig-dropdown");
+      return {
+        selectRegistered: Boolean(customElements.get("fig-select")),
+        usesDropdown: Boolean(dropdown),
+        usesSelect: Boolean(control?.querySelector("fig-select")),
+        value: dropdown?.getAttribute("value"),
+        optionCount: dropdown?.querySelectorAll(":scope > option").length,
+      };
+    });
+
+    expect(result).toEqual({
+      selectRegistered: false,
+      usesDropdown: true,
+      usesSelect: false,
+      value: "Center",
+      optionCount: 3,
+    });
+  });
+});
+
+test.describe("propskit-select", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await Promise.all([
+        customElements.whenDefined("propskit-select"),
+        customElements.whenDefined("fig-select"),
+      ]);
     });
   });
 
@@ -1650,7 +1736,7 @@ test.describe("fig-select viewport edge repositioning", () => {
     await bootFigFixture(page);
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.evaluate(async () => {
-      await import("/fig-lab.js");
+      await import("/fig-editor.js");
       await customElements.whenDefined("fig-select");
     });
   });

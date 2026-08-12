@@ -1090,8 +1090,72 @@ export default function AttributesView({
               options.includes("");
 
             if (needsCustomHandler) {
+              const enumOptionLabel = (option: string): string => {
+                if (option === "") {
+                  if (isShimmerLikeControl && name === "direction") return "Default";
+                  if (target.controlTag === "fig-button" && name === "variant") {
+                    return "Default (primary)";
+                  }
+                  if (target.controlTag === "fig-button" && name === "size") {
+                    return "Default";
+                  }
+                  if (target.controlTag === "fig-avatar" && name === "size") {
+                    return "Default";
+                  }
+                  if (
+                    (target.controlTag === "propskit-slider" ||
+                      target.controlTag === "propskit-color" ||
+                      target.controlTag === "propskit-gradient" ||
+                      target.controlTag === "propskit-number" ||
+                      target.controlTag === "propskit-select" ||
+                      target.controlTag === "propskit-switch" ||
+                      target.controlTag === "propskit-text") &&
+                    name === "size"
+                  ) {
+                    return "Default";
+                  }
+                  if (
+                    target.controlTag === "fig-input-gradient" &&
+                    name === "size"
+                  ) {
+                    return "Default";
+                  }
+                  if (
+                    target.controlTag === "fig-dialog" &&
+                    name === "position"
+                  ) {
+                    return "Default";
+                  }
+                  return "None";
+                }
+                if (
+                  target.controlTag === "fig-button" &&
+                  name === "variant" &&
+                  option === "destructiveSecondary"
+                ) {
+                  return "Destructive (secondary)";
+                }
+                if (
+                  target.controlTag === "fig-button" &&
+                  name === "variant" &&
+                  option === "destructiveGhost"
+                ) {
+                  return "Destructive (ghost)";
+                }
+                if (
+                  target.controlTag === "fig-button" &&
+                  name === "variant" &&
+                  option === "destructiveLink"
+                ) {
+                  return "Destructive (link)";
+                }
+                if (name === "units") return option;
+                if (name === "fields") return toFieldsLabel(option);
+                return toSentenceCaseLabel(option);
+              };
+
               return (
-                <fig-select
+                <fig-dropdown
                   full
                   label={rule.label}
                   value={current}
@@ -1099,8 +1163,10 @@ export default function AttributesView({
                     const host = e.currentTarget as HTMLElement & {
                       value?: string;
                     };
+                    const detail = (e as CustomEvent).detail;
                     const nextValue =
-                      host.value ?? (e as CustomEvent).detail?.value;
+                      (typeof detail === "string" ? detail : detail?.value) ??
+                      host.value;
                     if (typeof nextValue !== "string") return;
                     const resolvedValue = resolveEnumOption(options, nextValue);
                     if (target.controlTag === "fig-button" && name === "type") {
@@ -1294,58 +1360,12 @@ export default function AttributesView({
                     applyChange(target.fieldIndex, scope, name, resolvedValue);
                   }}
                 >
-                  <fig-select-options>
-                    {options.map((option) => (
-                      <fig-select-option key={option} value={option}>
-                        {option === ""
-                          ? isShimmerLikeControl && name === "direction"
-                            ? "Default"
-                            : target.controlTag === "fig-button" &&
-                                name === "variant"
-                              ? "Default (primary)"
-                              : target.controlTag === "fig-button" &&
-                                  name === "size"
-                                ? "Default"
-                                : target.controlTag === "fig-avatar" &&
-                                    name === "size"
-                                  ? "Default"
-                                  : (target.controlTag === "propskit-slider" ||
-                                        target.controlTag === "propskit-color" ||
-                                        target.controlTag === "propskit-gradient" ||
-                                        target.controlTag === "propskit-number" ||
-                                        target.controlTag === "propskit-select" ||
-                                        target.controlTag === "propskit-switch" ||
-                                        target.controlTag === "propskit-text") &&
-                                      name === "size"
-                                    ? "Default"
-                                    : target.controlTag === "fig-input-gradient" &&
-                                        name === "size"
-                                      ? "Default"
-                                      : target.controlTag === "fig-dialog" &&
-                                          name === "position"
-                                        ? "Default"
-                                        : "None"
-                          : target.controlTag === "fig-button" &&
-                              name === "variant" &&
-                              option === "destructiveSecondary"
-                            ? "Destructive (secondary)"
-                            : target.controlTag === "fig-button" &&
-                                name === "variant" &&
-                                option === "destructiveGhost"
-                              ? "Destructive (ghost)"
-                              : target.controlTag === "fig-button" &&
-                                  name === "variant" &&
-                                  option === "destructiveLink"
-                                ? "Destructive (link)"
-                                : name === "units"
-                                  ? option
-                                  : name === "fields"
-                                    ? toFieldsLabel(option)
-                                    : toSentenceCaseLabel(option)}
-                      </fig-select-option>
-                    ))}
-                  </fig-select-options>
-                </fig-select>
+                  {options.map((option) => (
+                    <option key={option || "__empty"} value={option}>
+                      {enumOptionLabel(option)}
+                    </option>
+                  ))}
+                </fig-dropdown>
               );
             }
 
@@ -1633,8 +1653,8 @@ export default function AttributesView({
                         key={`field-input-${target.fieldIndex}`}
                       >
                         <label>Input</label>
-                        <fig-select
-                          key={`field-input-select-${target.fieldIndex}-${currentFieldInputTag}`}
+                        <fig-dropdown
+                          key={`field-input-dropdown-${target.fieldIndex}-${currentFieldInputTag}`}
                           full
                           label="Input"
                           value={currentFieldInputTag}
@@ -1642,22 +1662,23 @@ export default function AttributesView({
                             const host = e.currentTarget as HTMLElement & {
                               value?: string;
                             };
+                            const detail = (e as CustomEvent).detail;
                             const nextValue =
-                              host.value ?? (e as CustomEvent).detail?.value;
+                              (typeof detail === "string"
+                                ? detail
+                                : detail?.value) ?? host.value;
                             if (typeof nextValue !== "string") return;
                             const nextTag = resolveFieldInputTag(nextValue);
                             if (!nextTag) return;
                             applyFieldInputChange(target.fieldIndex, nextTag);
                           }}
                         >
-                          <fig-select-options>
-                            {FIELD_INPUT_OPTIONS.map((option) => (
-                              <fig-select-option key={option.tag} value={option.tag}>
-                                {option.label}
-                              </fig-select-option>
-                            ))}
-                          </fig-select-options>
-                        </fig-select>
+                          {FIELD_INPUT_OPTIONS.map((option) => (
+                            <option key={option.tag} value={option.tag}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </fig-dropdown>
                       </fig-field>
                     )}
                   </div>

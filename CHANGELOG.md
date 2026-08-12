@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.0.0]
+
+### Changed
+
+- Moved `fig-select`, `fig-select-option`, and `fig-select-options` from core into the editor bundle (`fig-editor.js` / `fig-editor.css`).
+- `propskit-select` and `fig-easing-curve` fall back to `fig-dropdown` when `fig-select` is not registered.
+- Select playground docs now live under Editor components.
+
+### Breaking
+
+- Import `fig-editor.js` (and `fig-editor.css`) to use `fig-select`. Core `fig.js` alone no longer registers it.
+
 ## [7.1.0]
 
 ### Added

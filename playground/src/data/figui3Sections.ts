@@ -195,9 +195,9 @@ export const figui3Sections: Section[] = [
   {
     id: "select",
     name: "Select",
-    group: "Core components",
+    group: "Editor components",
     description:
-      "A dropdown-styled select. Author options inside fig-select-options, or pass an options attribute (comma / JSON, same as fig-options). Overflow uses top/bottom buttons.",
+      "A dropdown-styled select (requires <code>fig-editor.js</code>). Author options inside fig-select-options, or pass an options attribute (comma / JSON, same as fig-options). Overflow uses top/bottom buttons.",
     examples: [
       {
         id: "default",

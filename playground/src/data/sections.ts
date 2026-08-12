@@ -529,18 +529,18 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
-        id: "images-labels",
-        name: "Images + Labels",
+        id: "cards",
+        name: "Cards",
         markup: `<div class="prop-panel">
   <fig-field direction="vertical">
     <label>Style</label>
-    <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
-      <fig-choice value="img-a" padding selected><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label A</label></fig-choice>
-      <fig-choice value="img-b" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label B</label></fig-choice>
-      <fig-choice value="img-c" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label C</label></fig-choice>
-      <fig-choice value="img-d" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label D</label></fig-choice>
-      <fig-choice value="img-e" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label E</label></fig-choice>
-      <fig-choice value="img-f" padding><fig-image src="${landscapeUrl()}" alt="" size="medium" aspect-ratio="1/1" full></fig-image><label>Label F</label></fig-choice>
+    <fig-chooser layout="horizontal" value="amber-dusk" full drag style="max-width: 100%">
+      <fig-choice value="amber-dusk" selected><fig-card src="${landscapeUrl()}" label="Amber dusk" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
+      <fig-choice value="soft-fog"><fig-card src="${landscapeUrl()}" label="Soft fog" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
+      <fig-choice value="salt-light"><fig-card src="${landscapeUrl()}" label="Salt light" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
+      <fig-choice value="pine-glow"><fig-card src="${landscapeUrl()}" label="Pine glow" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
+      <fig-choice value="river-glass"><fig-card src="${landscapeUrl()}" label="River glass" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
+      <fig-choice value="quiet-cove"><fig-card src="${landscapeUrl()}" label="Quiet cove" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,

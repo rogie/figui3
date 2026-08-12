@@ -51,7 +51,7 @@ import "@rogieking/figui3/fig-layer.css";
 import "@rogieking/figui3/fig-layer.js";
 ```
 
-Opt into editor components like the full Figma-style fill picker when you need them:
+Opt into editor components like `<fig-select>` and the full Figma-style fill picker when you need them:
 
 ```js
 import "@rogieking/figui3/fig-editor.css";
@@ -406,7 +406,7 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore the def
 
 `<propskit-select>`
 
-Composes a `<fig-field>` and `<fig-select>` into a full-surface property control. Options come from the `options` attribute (same formats as `fig-options`: comma-separated, newline-delimited, or a JSON array).
+Composes a `<fig-field>` and `<fig-select>` into a full-surface property control. Requires `fig-editor.js` (which registers `fig-select`). Options come from the `options` attribute (same formats as `fig-options`: comma-separated, newline-delimited, or a JSON array).
 
 **Attributes:** `label`, `value`, `default`, `options`, `disabled`, `size`
 
