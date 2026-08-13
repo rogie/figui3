@@ -6074,6 +6074,50 @@ test.describe("remaining accessibility contracts", () => {
     });
   });
 
+  test("fig-input-gradient swatch always previews left-to-right linear", async ({
+    page,
+  }) => {
+    const backgrounds = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const cases = [
+        {
+          id: "linear-angled",
+          value:
+            '{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#14AE5C","opacity":100}]}}',
+        },
+        {
+          id: "radial",
+          value:
+            '{"type":"gradient","gradient":{"type":"radial","centerX":50,"centerY":50,"stops":[{"position":0,"color":"#FF0000","opacity":100},{"position":100,"color":"#0000FF","opacity":100}]}}',
+        },
+        {
+          id: "angular",
+          value:
+            '{"type":"gradient","gradient":{"type":"angular","angle":45,"stops":[{"position":0,"color":"#FFCD29","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}',
+        },
+      ];
+      root.innerHTML = cases
+        .map(
+          ({ id, value }) =>
+            `<fig-input-gradient id="${id}" edit="false" value='${value}'></fig-input-gradient>`,
+        )
+        .join("");
+      return cases.map(({ id }) => {
+        const swatch = root.querySelector(`#${id} fig-swatch`);
+        return {
+          id,
+          background: swatch?.getAttribute("background") ?? "",
+        };
+      });
+    });
+
+    for (const entry of backgrounds) {
+      expect(entry.background, entry.id).toMatch(/^linear-gradient\(to right/);
+      expect(entry.background, entry.id).not.toMatch(/radial-gradient|conic-gradient|\d+deg/);
+    }
+  });
+
   test("fig-input-gradient routes focus to handles only when editable", async ({
     page,
   }) => {

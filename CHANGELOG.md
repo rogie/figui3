@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.0.3]
+
+### Changed
+
+- `fig-input-gradient` swatches always preview as a left-to-right linear gradient, regardless of type or angle.
+
 ## [8.0.2]
 
 ### Fixed

@@ -10064,18 +10064,9 @@ class FigInputGradient extends HTMLElement {
       .join(", ");
     const interp = gradientInterpolationClause(gradient);
     const interpolation = interp ? ` ${interp}` : "";
-    // Inline stop editor always previews L→R so handles match the track axis,
-    // regardless of linear angle / radial / angular type.
-    if (this.#editMode === "true") {
-      return `linear-gradient(to right${interpolation}, ${stops})`;
-    }
-    if (gradient.type === "radial") {
-      return `radial-gradient(circle at ${gradient.centerX}% ${gradient.centerY}%${interpolation}, ${stops})`;
-    }
-    if (gradient.type === "angular") {
-      return `conic-gradient(from ${gradient.angle}deg${interpolation}, ${stops})`;
-    }
-    return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
+    // Compact swatch always previews L→R, regardless of linear angle /
+    // radial / angular type (stop handles also use this axis when editing).
+    return `linear-gradient(to right${interpolation}, ${stops})`;
   }
 
   #stopColorCSS(stop) {
