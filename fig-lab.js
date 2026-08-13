@@ -4267,7 +4267,7 @@ class PropskitSlider extends HTMLElement {
   }
 
   #pushExternalValueToSlider() {
-    if (!this.#slider) return;
+    if (!this.#slider || !this.hasAttribute("value")) return;
     const next = this.getAttribute("value") ?? "";
     if (String(this.#slider.value) !== next) {
       this.#slider.value = next;

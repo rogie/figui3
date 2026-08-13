@@ -3267,6 +3267,52 @@ test.describe("propskit delegated click behavior", () => {
     });
   });
 
+  test("delta slider keeps the number input in sync with a default value", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-slider
+          label="Attractor strength"
+          type="delta"
+          default="0.08"
+          min="-2"
+          max="2"
+          step="0.01"
+        ></propskit-slider>
+      `;
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      const host = root.querySelector("propskit-slider") as HTMLElement | null;
+      const slider = host?.querySelector("fig-slider") as
+        | (HTMLElement & { value: string })
+        | null;
+      const number = slider?.querySelector("fig-input-number") as
+        | (HTMLElement & { value: string | number })
+        | null;
+      const input = number?.querySelector("input");
+      return {
+        sliderAttribute: slider?.getAttribute("value"),
+        sliderValue: slider?.value,
+        numberAttribute: number?.getAttribute("value"),
+        numberValue: number?.value,
+        inputValue: input?.value,
+      };
+    });
+
+    expect(state).toEqual({
+      sliderAttribute: "0.08",
+      sliderValue: "0.08",
+      numberAttribute: "0.08",
+      numberValue: 0.08,
+      inputValue: "0.08",
+    });
+  });
+
   test("focuses fields, toggles switches, and opens selects", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -4846,6 +4892,72 @@ test.describe("slider accessibility", () => {
         numberInputValue: "75",
         lastInput: "75",
       });
+  });
+
+  test("fig-slider types pass resolved values through to the number input", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const cases = [
+        { type: "range", value: "42", fallback: "50", attrs: 'min="0" max="100"' },
+        { type: "hue", value: "180", fallback: "0", attrs: 'min="0" max="360"' },
+        { type: "delta", value: "0.08", fallback: "0.08", attrs: 'min="-2" max="2" default="0.08" step="0.01"' },
+        { type: "stepper", value: "50", fallback: "0", attrs: 'min="0" max="100" step="25"' },
+        { type: "opacity", value: "75", fallback: "0", attrs: 'min="0" max="100"' },
+      ];
+      root.innerHTML = cases
+        .flatMap(({ type, value, attrs }) => [
+          `<fig-slider id="${type}-valued" type="${type}" value="${value}" ${attrs} text="true"></fig-slider>`,
+          `<fig-slider id="${type}-fallback" type="${type}" ${attrs} text="true"></fig-slider>`,
+        ])
+        .join("");
+
+      const read = (id: string) => {
+        const host = root.querySelector(`#${id}`) as HTMLElement | null;
+        const number = host?.querySelector("fig-input-number") as
+          | (HTMLElement & { value: string | number })
+          | null;
+        const input = number?.querySelector("input") as HTMLInputElement | null;
+        return {
+          hostValue: host?.getAttribute("value"),
+          numberAttribute: number?.getAttribute("value"),
+          inputValue: input?.value,
+        };
+      };
+
+      return Object.fromEntries(
+        cases.map(({ type, value, fallback }) => [
+          type,
+          {
+            valued: read(`${type}-valued`),
+            fallback: read(`${type}-fallback`),
+            expectedValue: value,
+            expectedFallback: fallback,
+          },
+        ]),
+      );
+    });
+
+    for (const [type, result] of Object.entries(state)) {
+      const typed = result as {
+        valued: { hostValue: string; numberAttribute: string; inputValue: string };
+        fallback: { hostValue: string; numberAttribute: string; inputValue: string };
+        expectedValue: string;
+        expectedFallback: string;
+      };
+      expect(typed.valued, type).toEqual({
+        hostValue: typed.expectedValue,
+        numberAttribute: typed.expectedValue,
+        inputValue: typed.expectedValue,
+      });
+      expect(typed.fallback, type).toEqual({
+        hostValue: typed.expectedFallback,
+        numberAttribute: typed.expectedFallback,
+        inputValue: typed.expectedFallback,
+      });
+    }
   });
 
   test("fig-slider range supports Shift arrow key stepping", async ({ page }) => {

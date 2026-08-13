@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.2.1]
+
+### Fixed
+
+- Non-range `fig-slider` types (`delta`, `hue`, `stepper`, `opacity`) now pass their resolved value through to the number input instead of showing the placeholder.
+
 ## [8.2.0]
 
 ### Added

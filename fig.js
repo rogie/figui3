@@ -5173,7 +5173,6 @@ figDefineElement("fig-options", FigOptions);
 class FigSlider extends HTMLElement {
   #isInteracting = false;
   #pendingRegeneration = false;
-  #showEmptyTextValue = false;
   #isSyncingValueAttribute = false;
   #value = "";
   #a11yAttributes = [
@@ -5278,10 +5277,6 @@ class FigSlider extends HTMLElement {
       : this.type === "delta"
         ? 0
         : this.min;
-    this.#showEmptyTextValue =
-      this.type !== "range" &&
-      (rawValue === null ||
-        (typeof rawValue === "string" && rawValue.trim() === ""));
     this.value = this.#normalizeSliderValue(rawValue);
   }
 
@@ -5321,10 +5316,7 @@ class FigSlider extends HTMLElement {
       this.figInputNumber.setAttribute("max", String(this.max));
       this.figInputNumber.setAttribute("transform", String(this.transform));
       this.figInputNumber.setAttribute("step", String(this.step));
-      this.figInputNumber.setAttribute(
-        "value",
-        this.#showEmptyTextValue ? "" : String(this.value),
-      );
+      this.figInputNumber.setAttribute("value", String(this.value));
       if (this.units) this.figInputNumber.setAttribute("units", this.units);
       else this.figInputNumber.removeAttribute("units");
       if (this.precision !== null) {
@@ -5411,7 +5403,7 @@ class FigSlider extends HTMLElement {
                         max="${this.max}"
                         transform="${this.transform}"
                         step="${this.step}"
-                        value="${this.#showEmptyTextValue ? "" : this.value}"
+                        value="${this.value}"
                         ${this.units ? `units="${figEscapeAttribute(this.units)}"` : ""}
                         ${this.precision !== null ? `precision="${this.precision}"` : ""}>
                     </fig-input-number>`;
@@ -5487,8 +5479,6 @@ class FigSlider extends HTMLElement {
 
   set value(value) {
     const rawValue = value === null || value === undefined ? "" : String(value);
-    this.#showEmptyTextValue =
-      this.type !== "range" && rawValue.trim() === "";
     const hasParsedBounds = this.min !== undefined || this.max !== undefined;
     const normalized = hasParsedBounds
       ? String(this.#normalizeSliderValue(rawValue))
@@ -5504,10 +5494,7 @@ class FigSlider extends HTMLElement {
       this.input.setAttribute("aria-valuenow", normalized);
     }
     if (this.figInputNumber) {
-      this.figInputNumber.setAttribute(
-        "value",
-        this.#showEmptyTextValue ? "" : normalized,
-      );
+      this.figInputNumber.setAttribute("value", normalized);
     }
     if (this.input) this.#syncProperties();
   }
@@ -5537,10 +5524,6 @@ class FigSlider extends HTMLElement {
   #handleTextInput() {
     if (this.figInputNumber) {
       const rawTextValue = this.figInputNumber.value;
-      this.#showEmptyTextValue =
-        rawTextValue === null ||
-        rawTextValue === undefined ||
-        (typeof rawTextValue === "string" && rawTextValue.trim() === "");
       const normalized = this.#normalizeSliderValue(rawTextValue);
       this.value = normalized;
       this.input.value = String(normalized);
@@ -5624,10 +5607,7 @@ class FigSlider extends HTMLElement {
     // Update ARIA value
     this.input.setAttribute("aria-valuenow", val);
     if (this.figInputNumber) {
-      this.figInputNumber.setAttribute(
-        "value",
-        this.#showEmptyTextValue ? "" : val,
-      );
+      this.figInputNumber.setAttribute("value", val);
     }
   }
   #syncInputA11yAttributes() {
@@ -5665,7 +5645,6 @@ class FigSlider extends HTMLElement {
   }
 
   #handleInput() {
-    this.#showEmptyTextValue = false;
     this.#syncValue();
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
@@ -5674,7 +5653,6 @@ class FigSlider extends HTMLElement {
 
   #handleChange() {
     this.#isInteracting = false;
-    this.#showEmptyTextValue = false;
     this.#syncValue();
     this.dispatchEvent(
       new CustomEvent("change", { detail: this.value, bubbles: true }),
@@ -5690,7 +5668,6 @@ class FigSlider extends HTMLElement {
     }
 
     event.preventDefault();
-    this.#showEmptyTextValue = false;
 
     const direction =
       event.key === "ArrowRight" || event.key === "ArrowUp" ? 1 : -1;
@@ -5712,10 +5689,6 @@ class FigSlider extends HTMLElement {
   #handleTextChange() {
     if (this.figInputNumber) {
       const rawTextValue = this.figInputNumber.value;
-      this.#showEmptyTextValue =
-        rawTextValue === null ||
-        rawTextValue === undefined ||
-        (typeof rawTextValue === "string" && rawTextValue.trim() === "");
       const normalized = this.#normalizeSliderValue(rawTextValue);
       this.value = normalized;
       this.input.value = String(normalized);
