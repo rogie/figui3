@@ -7730,6 +7730,54 @@ test.describe("remaining accessibility contracts", () => {
     });
   });
 
+  test("fig-input-fill swatch preserves gradient type but ignores radial center", async ({
+    page,
+  }) => {
+    const backgrounds = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+
+      const backgroundFor = async (type: string) => {
+        const fill = document.createElement("fig-input-fill");
+        fill.setAttribute(
+          "value",
+          JSON.stringify({
+            type: "gradient",
+            gradient: {
+              type,
+              angle: 45,
+              centerX: 12,
+              centerY: 88,
+              stops: [
+                { position: 0, color: "#FF0000", opacity: 100 },
+                { position: 100, color: "#0000FF", opacity: 100 },
+              ],
+            },
+          }),
+        );
+        root.append(fill);
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        const background = fill
+          .querySelector("fig-swatch")
+          ?.getAttribute("background");
+        fill.remove();
+        return background;
+      };
+
+      return {
+        linear: await backgroundFor("linear"),
+        radial: await backgroundFor("radial"),
+        angular: await backgroundFor("angular"),
+      };
+    });
+
+    expect(backgrounds.linear).toMatch(/^linear-gradient\(45deg,/);
+    expect(backgrounds.radial).toMatch(/^radial-gradient\(circle,/);
+    expect(backgrounds.radial).not.toContain("12%");
+    expect(backgrounds.radial).not.toContain("88%");
+    expect(backgrounds.angular).toMatch(/^conic-gradient\(from 45deg,/);
+  });
+
   test("fig-skeleton hides descendant controls from tab focus", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

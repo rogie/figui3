@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.4.1]
+
+### Fixed
+
+- `fig-input-fill` swatches preserve linear, radial, and angular gradient types while keeping radial previews centered.
+
 ## [8.4.0]
 
 ### Added

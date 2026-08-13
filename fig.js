@@ -8741,7 +8741,15 @@ class FigInputFill extends HTMLElement {
           })
           .join(", ");
         const interpolation = gradientInterpolationClause(this.#gradient);
-        return `linear-gradient(${this.#gradient.angle}deg${interpolation ? ` ${interpolation}` : ""}, ${stops})`;
+        const interpolationSuffix = interpolation ? ` ${interpolation}` : "";
+        switch (this.#gradient.type) {
+          case "radial":
+            return `radial-gradient(circle${interpolationSuffix}, ${stops})`;
+          case "angular":
+            return `conic-gradient(from ${this.#gradient.angle}deg${interpolationSuffix}, ${stops})`;
+          default:
+            return `linear-gradient(${this.#gradient.angle}deg${interpolationSuffix}, ${stops})`;
+        }
       }
       case "image":
         return this.#image.url ? `url(${this.#image.url})` : "#D9D9D9";
