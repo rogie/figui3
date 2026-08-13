@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.3.0]
+
+### Added
+
+- Restored `fig-menu-separator` as a backwards-compatible `FigSeparator` alias.
+
+### Changed
+
+- The no-fields dialog example shows the footer divider again.
+- Empty `fig-content` collapses padding even when it has no element children.
+
+### Fixed
+
+- Gradient handle-mode stops stay selected and focused, so Delete/Backspace reliably removes them.
+
 ## [8.2.1]
 
 ### Fixed
