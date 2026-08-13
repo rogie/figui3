@@ -7311,6 +7311,49 @@ test.describe("remaining accessibility contracts", () => {
     });
   });
 
+  test("fig-input-gradient handle mode deletes the selected stop", async ({
+    page,
+  }) => {
+    const value =
+      '{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":40,"color":"#F24822","opacity":100},{"position":70,"color":"#FFCD29","opacity":100},{"position":100,"color":"#14AE5C","opacity":100}]}}';
+    await page.evaluate((gradientValue) => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-input-gradient id="gradient" mode="handle" value='${gradientValue}'></fig-input-gradient>`;
+    }, value);
+
+    const gradient = page.locator("#gradient");
+    const handles = gradient.locator("fig-handle:not(.fig-input-gradient-ghost)");
+    await expect(handles).toHaveCount(4);
+
+    await handles.nth(1).dispatchEvent("pointerdown", { button: 0 });
+    await expect(handles.nth(1)).toHaveAttribute("selected", "");
+    await expect(handles.nth(1)).toBeFocused();
+
+    await page.keyboard.press("Delete");
+    await expect(handles).toHaveCount(3);
+
+    const afterFirst = await gradient.evaluate((host) => {
+      const selected = host.querySelector(
+        "fig-handle[selected]:not(.fig-input-gradient-ghost)",
+      );
+      return {
+        selected: Boolean(selected),
+        focused: selected === document.activeElement,
+        count: host.querySelectorAll(
+          "fig-handle:not(.fig-input-gradient-ghost)",
+        ).length,
+      };
+    });
+    expect(afterFirst).toEqual({ selected: true, focused: true, count: 3 });
+
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await page.keyboard.press("Backspace");
+    await expect(handles).toHaveCount(2);
+  });
+
   test("fig-origin-grid handle uses tokenized focus outline", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

@@ -1453,7 +1453,7 @@ export const propkitSections: Section[] = [
     name: "No fields",
     group: "Controls in dialogs",
     description:
-      "A borderless dialog footer with primary and secondary actions.",
+      "A dialog footer with primary and secondary actions.",
     examples: [
       {
         id: "default",
@@ -1462,7 +1462,7 @@ export const propkitSections: Section[] = [
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Dialog</fig-button>
   <dialog is="fig-dialog" title="Continue?" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
     <fig-content></fig-content>
-    <fig-footer borderless>
+    <fig-footer>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
       <fig-button>Continue</fig-button>
     </fig-footer>

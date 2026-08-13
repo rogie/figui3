@@ -9841,6 +9841,30 @@ class FigInputGradient extends HTMLElement {
     );
   }
 
+  #activeStopHandle() {
+    if (!this.#track) return null;
+    const selected = this.#track.querySelector(
+      "fig-handle[selected]:not(.fig-input-gradient-ghost)",
+    );
+    if (selected) return selected;
+    const active = document.activeElement;
+    if (!(active instanceof Element) || !this.#track.contains(active)) {
+      return null;
+    }
+    return active.closest("fig-handle:not(.fig-input-gradient-ghost)");
+  }
+
+  #activateStopHandle(handle) {
+    if (!handle || !this.#track) return;
+    this.#track
+      .querySelectorAll("fig-handle:not(.fig-input-gradient-ghost)")
+      .forEach((other) => {
+        if (other !== handle) other.deselect();
+      });
+    handle.select();
+    handle.focus();
+  }
+
   #syncFocusTarget() {
     const disabled =
       this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
@@ -9910,7 +9934,15 @@ class FigInputGradient extends HTMLElement {
 
   #onKeyDown = (e) => {
     const active = document.activeElement;
-    if (!(active instanceof Node) || !this.contains(active)) return;
+    const activeIsInside = active instanceof Node && this.contains(active);
+    const selectedHandle = this.#track?.querySelector(
+      "fig-handle[selected]:not(.fig-input-gradient-ghost)",
+    );
+    const focusLostToBody =
+      !active ||
+      active === document.body ||
+      active === document.documentElement;
+    if (!activeIsInside && !(selectedHandle && focusLostToBody)) return;
     const isTyping =
       active &&
       (active.tagName === "INPUT" ||
@@ -9919,9 +9951,7 @@ class FigInputGradient extends HTMLElement {
     if (!this.#track) return;
 
     if (e.key === "Tab" && !isTyping) {
-      const selected = this.#track.querySelector(
-        "fig-handle[selected]:not(.fig-input-gradient-ghost)",
-      );
+      const selected = this.#activeStopHandle();
       if (!selected) return;
       e.preventDefault();
       const handles = [
@@ -9934,14 +9964,12 @@ class FigInputGradient extends HTMLElement {
         ? (curIdx - 1 + handles.length) % handles.length
         : (curIdx + 1) % handles.length;
       selected.deselect();
-      handles[next].select();
+      this.#activateStopHandle(handles[next]);
       return;
     }
 
     if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !isTyping) {
-      const selected = this.#track.querySelector(
-        "fig-handle[selected]:not(.fig-input-gradient-ghost)",
-      );
+      const selected = this.#activeStopHandle();
       if (!selected) return;
       const idx = parseInt(selected.dataset.stopIndex, 10);
       if (isNaN(idx) || !this.#gradient.stops[idx]) return;
@@ -9973,19 +10001,21 @@ class FigInputGradient extends HTMLElement {
     if (e.key !== "Delete" && e.key !== "Backspace") return;
     if (isTyping) return;
     if (this.#gradient.stops.length <= 2) return;
-    const selected = this.#track.querySelector(
-      "fig-handle[selected]:not(.fig-input-gradient-ghost)",
-    );
+    const selected = this.#activeStopHandle();
     if (!selected) return;
     const idx = parseInt(selected.dataset.stopIndex, 10);
     if (isNaN(idx) || !this.#gradient.stops[idx]) return;
     e.preventDefault();
-    selected.removeAttribute("selected");
     this.#gradient.stops.splice(idx, 1);
     this.#syncHandles();
     this.#syncSwatch();
     this.#emitInput();
     this.#emitChange();
+    const nextIdx = Math.min(idx, this.#gradient.stops.length - 1);
+    const next = this.#track.querySelectorAll(
+      "fig-handle:not(.fig-input-gradient-ghost)",
+    )[nextIdx];
+    this.#activateStopHandle(next);
   };
 
   #onPickerKeyDown = (e) => {
@@ -10279,7 +10309,7 @@ class FigInputGradient extends HTMLElement {
         "fig-handle:not(.fig-input-gradient-ghost)",
       );
       const newHandle = handles[newIndex];
-      if (newHandle) newHandle.click();
+      if (newHandle) this.#activateStopHandle(newHandle);
     });
   };
 
@@ -10446,12 +10476,7 @@ class FigInputGradient extends HTMLElement {
       );
       const newHandle = handles[newIndex];
       if (newHandle) {
-        this.#track
-          .querySelectorAll("fig-handle:not(.fig-input-gradient-ghost)")
-          .forEach((h) => {
-            if (h !== newHandle) h.deselect();
-          });
-        newHandle.select();
+        this.#activateStopHandle(newHandle);
         newHandle.dispatchEvent(
           new PointerEvent("pointerdown", {
             bubbles: true,
@@ -17795,15 +17820,14 @@ class FigHandle extends HTMLElement {
       this.#didDrag = false;
       return;
     }
+    this.select();
     if (
       this.getAttribute("type") === "color" &&
       this.#canOpenColorPicker &&
       !this.#tipMode
     ) {
       this.#openDirectColorPicker();
-      return;
     }
-    this.select();
   };
 
   #handleDeselect = (e) => {
@@ -17985,6 +18009,8 @@ class FigHandle extends HTMLElement {
   #onPointerDown(e) {
     if (!this.#dragEnabled || figBooleanAttribute(this, "disabled")) return;
     e.preventDefault();
+    this.focus();
+    this.select();
     const container = this.#getContainer();
     if (!container) return;
 
@@ -18384,17 +18410,19 @@ class FigHandle extends HTMLElement {
     e.stopPropagation();
     const detail = this.#detailFromNativeColor(e.target.value);
     this.setAttribute("color", this.#colorWithOpacity(detail.color, detail.opacity));
-    this.removeAttribute("selected");
     this.dispatchEvent(
       new CustomEvent("change", {
         bubbles: true,
         detail,
       }),
     );
+    if (this.isConnected) this.focus();
   };
 
   #handleDirectColorPickerClose = () => {
-    this.removeAttribute("selected");
+    if (!this.isConnected) return;
+    this.setAttribute("selected", "");
+    this.focus();
   };
 
   #handleColorTipInput = (e) => {
