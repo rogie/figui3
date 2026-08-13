@@ -122,10 +122,6 @@ test.describe("fig-fill-picker audit regressions", () => {
       const gradientVisible =
         (dialog.querySelector('[data-tab="gradient"]') as HTMLElement).style
           .display === "block";
-      const gradientAngle = dialog
-        .querySelector(".fig-fill-picker-gradient-angle")
-        ?.getAttribute("value");
-
       picker.value = {
         type: "image",
         image: { url: "/tests/figui/fixture.html", scaleMode: "tile", scale: 37 },
@@ -133,7 +129,6 @@ test.describe("fig-fill-picker audit regressions", () => {
       const imageTab = dialog.querySelector('[data-tab="image"]') as HTMLElement;
       return {
         gradientVisible,
-        gradientAngle,
         imageVisible: imageTab.style.display === "block",
         imageMode: (imageTab.querySelector(".fig-fill-picker-scale-mode") as any)
           .value,
@@ -148,7 +143,6 @@ test.describe("fig-fill-picker audit regressions", () => {
 
     expect(state).toEqual({
       gradientVisible: true,
-      gradientAngle: "90",
       imageVisible: true,
       imageMode: "tile",
       imageScale: "37",
@@ -321,6 +315,7 @@ test.describe("fig-fill-picker audit regressions", () => {
         statusLive: status.getAttribute("aria-live"),
         captureInitiallyDisabled,
         captureReady,
+        mutedProperty: video.muted,
         revokedOwnedUrls: revoked.length,
         stoppedTracks,
         dialogRemoved: !dialog.isConnected,
@@ -333,9 +328,93 @@ test.describe("fig-fill-picker audit regressions", () => {
       statusLive: "polite",
       captureInitiallyDisabled: true,
       captureReady: true,
+      mutedProperty: true,
       revokedOwnedUrls: 1,
       stoppedTracks: 1,
       dialogRemoved: true,
+    });
+  });
+
+  test("reports webcam captures when the picker is locked to webcam", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }),
+          enumerateDevices: async () => [],
+        },
+      });
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        open(): void;
+      };
+      picker.setAttribute("mode", "webcam");
+      picker.value = { type: "webcam" };
+      picker.append(document.createElement("fig-swatch"));
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+
+      const events: string[] = [];
+      picker.addEventListener("input", () => events.push("input"));
+      picker.addEventListener("change", () => events.push("change"));
+      picker.open();
+
+      const dialog = document.querySelector(
+        "dialog.fig-fill-picker-dialog",
+      ) as HTMLElement;
+      const capture = dialog.querySelector(
+        ".fig-fill-picker-webcam-capture",
+      ) as HTMLElement;
+      const video = dialog.querySelector(
+        ".fig-fill-picker-webcam-video",
+      ) as HTMLVideoElement;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      Object.defineProperties(video, {
+        readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+        videoWidth: { configurable: true, value: 320 },
+        videoHeight: { configurable: true, value: 240 },
+      });
+      video.dispatchEvent(new Event("canplay"));
+
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+      HTMLCanvasElement.prototype.getContext = (() => ({
+        drawImage() {},
+      })) as typeof HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.toBlob = function (callback) {
+        callback(new Blob(["snapshot"], { type: "image/png" }));
+      };
+      capture.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      HTMLCanvasElement.prototype.toBlob = originalToBlob;
+
+      const swatch = picker.querySelector("fig-swatch");
+      const value = picker.value;
+      picker.remove();
+      return {
+        events,
+        type: value.type,
+        capturedBlobUrl: String(value.image?.url ?? "").startsWith("blob:"),
+        activeTab: (
+          dialog.querySelector(
+            '.fig-fill-picker-tab[data-tab="webcam"]',
+          ) as HTMLElement
+        ).style.display,
+        swatchShowsCapture: (swatch?.getAttribute("background") ?? "").startsWith(
+          "url(blob:",
+        ),
+      };
+    });
+
+    expect(state).toEqual({
+      events: ["input", "change"],
+      type: "webcam",
+      capturedBlobUrl: true,
+      activeTab: "block",
+      swatchShowsCapture: true,
     });
   });
 });

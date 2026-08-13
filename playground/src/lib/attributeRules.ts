@@ -345,6 +345,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-media-controls": {
     playing: { label: "Playing", type: "boolean", boolMode: "presence" },
     overlay: { label: "Overlay", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     duration: { label: "Duration", type: "number", min: 0, max: 600, step: 1 },
     time: { label: "Time", type: "number", min: 0, max: 600, step: 1 },
   },

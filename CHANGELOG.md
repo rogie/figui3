@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.4.0]
+
+### Added
+
+- Added segmented gradient interpolation presets with tooltips and an overflow menu for advanced hue directions.
+- Added regression coverage that prevents HTML parsing sinks in shipped JavaScript.
+
+### Changed
+
+- Simplified gradient editing by removing angle and radial center fields, keeping rotation available for radial gradients, and moving interpolation controls before stops.
+- Moved `fig-interpolation-swatch` from core into the editor bundle (`fig-editor.js` / `fig-editor.css`).
+- Rebuilt dynamic component markup with DOM APIs so authored values remain literal text and attributes.
+- Updated dropdown examples with labeled option groups.
+
+### Fixed
+
+- Fixed fixed-size media collapsing when combined with `full` and `aspect-ratio`.
+- Fixed custom media overlay controls flickering when hovered.
+- Fixed uploaded videos remaining hidden or disabled after selection.
+- Fixed locked webcam pickers failing to report captured snapshots.
+- Fixed disabled slider styling and related component layout regressions.
+
 ## [8.3.0]
 
 ### Added

@@ -31,6 +31,32 @@ test.describe("fig.js component contracts", () => {
     expect(registered).toBe(false);
   });
 
+  test("fig.js alone does not register fig-interpolation-swatch", async ({
+    page,
+  }) => {
+    const registered = await page.evaluate(() =>
+      Boolean(customElements.get("fig-interpolation-swatch")),
+    );
+    expect(registered).toBe(false);
+  });
+
+  test("fig-editor registers fig-interpolation-swatch", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await customElements.whenDefined("fig-interpolation-swatch");
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-interpolation-swatch size="large" value='{"type":"gradient","gradient":{"type":"linear","stops":[{"color":"#FF0000","position":0},{"color":"#4F9EFF","position":100}],"interpolationSpace":"oklch","hueInterpolation":"longer"}}'></fig-interpolation-swatch>`;
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const el = root.querySelector("fig-interpolation-swatch") as HTMLElement;
+      return {
+        registered: Boolean(customElements.get("fig-interpolation-swatch")),
+        hasFill: Boolean(el?.querySelector(".fig-interpolation-swatch-fill")),
+      };
+    });
+    expect(state).toEqual({ registered: true, hasFill: true });
+  });
+
   test("fig-editor registers fig-select and easing uses it", async ({ page }) => {
     const result = await page.evaluate(async () => {
       await import("/fig-editor.js");
@@ -8701,6 +8727,63 @@ test.describe("media accessibility", () => {
       );
     });
     expect(captionBeforeControls).toBe(true);
+  });
+
+  test("fig-video reveals uploaded video and enables controls", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-video id="video-upload" upload="true" controls="true" muted></fig-video>
+      `;
+    });
+
+    const emptyState = await page.locator("#video-upload").evaluate((host) => {
+      const video = host.querySelector("video");
+      const controls = host.querySelector("fig-media-controls");
+      return {
+        videoOpacity: video ? getComputedStyle(video).opacity : null,
+        controlsDisabled: controls?.hasAttribute("disabled") ?? null,
+        playDisabled:
+          controls?.querySelector("fig-button")?.hasAttribute("disabled") ?? null,
+      };
+    });
+    expect(emptyState).toEqual({
+      videoOpacity: "0",
+      controlsDisabled: true,
+      playDisabled: true,
+    });
+
+    await page.locator('#video-upload input[type="file"]').setInputFiles({
+      name: "clip.mp4",
+      mimeType: "video/mp4",
+      buffer: Buffer.from("00000000", "hex"),
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#video-upload").evaluate((host) => {
+          const video = host.querySelector("video");
+          return video ? getComputedStyle(video).opacity : null;
+        }),
+      )
+      .toBe("1");
+
+    const loadedState = await page.locator("#video-upload").evaluate((host) => {
+      const video = host.querySelector("video");
+      const controls = host.querySelector("fig-media-controls");
+      return {
+        videoHasSrc: Boolean(video?.getAttribute("src")),
+        controlsDisabled: controls?.hasAttribute("disabled") ?? null,
+        playDisabled:
+          controls?.querySelector("fig-button")?.hasAttribute("disabled") ?? null,
+      };
+    });
+    expect(loadedState).toEqual({
+      videoHasSrc: true,
+      controlsDisabled: false,
+      playDisabled: false,
+    });
   });
 
   test("fig-media preserves direct child captions over generated captions", async ({

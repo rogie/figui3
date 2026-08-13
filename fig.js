@@ -27,6 +27,51 @@ function createFigIcon(name, options = {}) {
   return icon;
 }
 
+const FIG_SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
+function figAppendChildren(parent, children) {
+  const append = (child) => {
+    if (child === null || child === undefined || child === false) return;
+    if (Array.isArray(child)) {
+      child.forEach(append);
+      return;
+    }
+    parent.append(child instanceof Node ? child : String(child));
+  };
+  append(children);
+  return parent;
+}
+
+function figSetAttributes(element, attributes = {}) {
+  for (const [name, value] of Object.entries(attributes)) {
+    if (value === null || value === undefined || value === false) continue;
+    if (name === "className") {
+      if (element.namespaceURI === FIG_SVG_NAMESPACE) {
+        element.setAttribute("class", String(value));
+      } else {
+        element.className = String(value);
+      }
+    } else if (value === true) {
+      element.setAttribute(name, "");
+    } else {
+      element.setAttribute(name, String(value));
+    }
+  }
+  return element;
+}
+
+function figCreateElement(tagName, attributes, children) {
+  const element = document.createElement(tagName);
+  figSetAttributes(element, attributes);
+  return figAppendChildren(element, children);
+}
+
+function figCreateSvgElement(tagName, attributes, children) {
+  const element = document.createElementNS(FIG_SVG_NAMESPACE, tagName);
+  figSetAttributes(element, attributes);
+  return figAppendChildren(element, children);
+}
+
 /** Run callback on the next frame; skip if the host disconnected first. */
 function figNextFrame(host, callback) {
   requestAnimationFrame(() => {
@@ -387,46 +432,50 @@ class FigButton extends HTMLElement {
       // Custom button modes are implemented by the host. Keep the shadow
       // control inert so invalid native types (for example "toggle") cannot
       // normalize to "submit" inside a form.
-      const typeAttr = isControlWrapper ? "" : ' type="button"';
-      this.shadowRoot.innerHTML = `
-            <style>
-                button, button:hover, button:active, .fig-button-control {
-                    padding: 0 var(--spacer-2);
-                    appearance: none;
-                    display: flex;
-                    border: 0;
-                    flex: 1;
-                    text-align: center;
-                    align-items: stretch;
-                    justify-content: center;
-                    font: inherit;
-                    color: inherit;
-                    outline: 0;
-                    place-items: center; 
-                    background: transparent;
-                    margin: calc(var(--spacer-2)*-1);
-                    height: var(--spacer-4);
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    width: 100%;
-                    min-width: 0;
-                }
-                :host([size="large"]) button,
-                :host([size="large"]) .fig-button-control {
-                    height: var(--spacer-5);
-                }
-                :host([size="large"][icon]) button,
-                :host([size="large"][icon]) .fig-button-control {
-                    padding: 0;
-                }
-            </style>
-            <${controlTag} class="fig-button-control"${typeAttr}>
-                <slot></slot>
-            </${controlTag}>
-            `;
+      const style = document.createElement("style");
+      style.textContent = `
+        button, button:hover, button:active, .fig-button-control {
+          padding: 0 var(--spacer-2);
+          appearance: none;
+          display: flex;
+          border: 0;
+          flex: 1;
+          text-align: center;
+          align-items: stretch;
+          justify-content: center;
+          font: inherit;
+          color: inherit;
+          outline: 0;
+          place-items: center;
+          background: transparent;
+          margin: calc(var(--spacer-2)*-1);
+          height: var(--spacer-4);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: 100%;
+          min-width: 0;
+        }
+        :host([size="large"]) button,
+        :host([size="large"]) .fig-button-control {
+          height: var(--spacer-5);
+        }
+        :host([size="large"][icon]) button,
+        :host([size="large"][icon]) .fig-button-control {
+          padding: 0;
+        }
+      `;
+      const control = figCreateElement(
+        controlTag,
+        {
+          className: "fig-button-control",
+          type: isControlWrapper ? null : "button",
+        },
+        document.createElement("slot"),
+      );
+      this.shadowRoot.replaceChildren(style, control);
 
-      this.button = this.shadowRoot.querySelector("button, .fig-button-control");
+      this.button = control;
       this.button.addEventListener("click", this.#boundHandleClick);
       this.button.addEventListener("focus", this.#boundHandleFocus);
       this.button.addEventListener("blur", this.#boundHandleBlur);
@@ -1573,7 +1622,7 @@ class FigTruncate extends HTMLElement {
       } else {
         splitIndex = Math.ceil(text.length / 2);
       }
-      this.innerHTML = "";
+      this.replaceChildren();
       const startSpan = document.createElement("span");
       startSpan.className = "start";
       startSpan.textContent = text.slice(0, splitIndex);
@@ -4960,7 +5009,7 @@ class FigOptions extends HTMLElement {
   }
 
   #renderSegments() {
-    this.innerHTML = "";
+    this.replaceChildren();
     if (this.#parsedOptions.length === 0) return;
 
     const sc = document.createElement("fig-segmented-control");
@@ -5019,7 +5068,7 @@ class FigOptions extends HTMLElement {
   }
 
   #renderDropdown() {
-    this.innerHTML = "";
+    this.replaceChildren();
     if (this.#parsedOptions.length === 0) return;
 
     const dd = document.createElement("fig-dropdown");
@@ -5207,7 +5256,7 @@ class FigSlider extends HTMLElement {
   constructor() {
     super();
     // Parser-created custom elements do not have their children yet here.
-    this.initialInnerHTML = null;
+    this.initialChildren = null;
 
     // Bind the event handlers
     this.#boundHandleInput = (e) => {
@@ -5239,7 +5288,7 @@ class FigSlider extends HTMLElement {
       this.#isInteracting = false;
       if (this.#pendingRegeneration && this.isConnected) {
         this.#pendingRegeneration = false;
-        this.#regenerateInnerHTML();
+        this.#regenerateMarkup();
       }
     };
   }
@@ -5372,48 +5421,57 @@ class FigSlider extends HTMLElement {
     }
   }
 
-  #regenerateInnerHTML() {
+  #regenerateMarkup() {
     this.#readAttributesFromMarkup();
 
     if (this.color) {
       this.style.setProperty("--color", this.color);
     }
 
-    let html = "";
-    let slider = `<div class="fig-slider-input-container" role="group">
-                <input 
-                    type="range"
-                    ${this.text ? 'tabindex="-1"' : ""}
-                    ${this.disabled ? "disabled" : ""}
-                    min="${this.min}"
-                    max="${this.max}"
-                    step="${this.step}"
-                    class="${this.type}"
-                    value="${this.value}"
-                    aria-valuemin="${this.min}"
-                    aria-valuemax="${this.max}"
-                    aria-valuenow="${this.value}">
-                ${this.initialInnerHTML}
-            </div>`;
-    if (this.text) {
-      html = `${slider}
-                    <fig-input-number
-                        placeholder="${figEscapeAttribute(this.placeholder)}"
-                        min="${this.min}"
-                        max="${this.max}"
-                        transform="${this.transform}"
-                        step="${this.step}"
-                        value="${this.value}"
-                        ${this.units ? `units="${figEscapeAttribute(this.units)}"` : ""}
-                        ${this.precision !== null ? `precision="${this.precision}"` : ""}>
-                    </fig-input-number>`;
-    } else {
-      html = slider;
+    const input = figCreateElement("input", {
+      type: "range",
+      tabindex: this.text ? "-1" : null,
+      disabled: this.disabled,
+      min: this.min,
+      max: this.max,
+      step: this.step,
+      className: this.type,
+      value: this.value,
+      "aria-valuemin": this.min,
+      "aria-valuemax": this.max,
+      "aria-valuenow": this.value,
+    });
+    const inputContainer = figCreateElement(
+      "div",
+      {
+        className: "fig-slider-input-container",
+        role: "group",
+      },
+      input,
+    );
+    for (const child of this.initialChildren ?? []) {
+      inputContainer.appendChild(child);
     }
-    this.innerHTML = html;
 
-    this.input = this.querySelector("[type=range]");
-    this.inputContainer = this.querySelector(".fig-slider-input-container");
+    const renderedChildren = [inputContainer];
+    if (this.text) {
+      renderedChildren.push(
+        figCreateElement("fig-input-number", {
+          placeholder: this.placeholder,
+          min: this.min,
+          max: this.max,
+          transform: this.transform,
+          step: this.step,
+          value: this.value,
+          units: this.units || null,
+          precision: this.precision,
+        }),
+      );
+    }
+    this.replaceChildren(...renderedChildren);
+
+    this.input = input;
+    this.inputContainer = inputContainer;
     this.figInputNumber = this.querySelector("fig-input-number");
     this.#bindControlListeners();
 
@@ -5449,8 +5507,8 @@ class FigSlider extends HTMLElement {
       this.input.setAttribute("list", this.datalist.getAttribute("id"));
     }
     if (this.datalist) {
-      let defaultOption = this.datalist.querySelector(
-        `option[value='${this.default}']`,
+      const defaultOption = [...this.datalist.querySelectorAll("option")].find(
+        (option) => option.value === String(this.default),
       );
       if (defaultOption) {
         defaultOption.setAttribute("default", "true");
@@ -5460,14 +5518,16 @@ class FigSlider extends HTMLElement {
   }
 
   connectedCallback() {
-    if (this.initialInnerHTML === null) this.initialInnerHTML = this.innerHTML;
+    if (this.initialChildren === null) {
+      this.initialChildren = Array.from(this.childNodes);
+    }
     if (this.#canReuseRenderedMarkup()) {
       this.#updateRenderedMarkup();
       this.#bindControlListeners();
       this.#syncValue();
       return;
     }
-    this.#regenerateInnerHTML();
+    this.#regenerateMarkup();
   }
 
   get value() {
@@ -5752,7 +5812,7 @@ class FigSlider extends HTMLElement {
       return;
     }
     this.#pendingRegeneration = false;
-    this.#regenerateInnerHTML();
+    this.#regenerateMarkup();
   }
 
   static get observedAttributes() {
@@ -6581,9 +6641,18 @@ class FigInputNumber extends HTMLElement {
     if (hasSteppers && !this.#stepperEl) {
       this.#stepperEl = document.createElement("span");
       this.#stepperEl.className = "fig-steppers";
-      this.#stepperEl.innerHTML =
-        `<button class="fig-stepper-up" tabindex="-1" aria-label="Increase"></button>` +
-        `<button class="fig-stepper-down" tabindex="-1" aria-label="Decrease"></button>`;
+      this.#stepperEl.append(
+        figCreateElement("button", {
+          className: "fig-stepper-up",
+          tabindex: "-1",
+          "aria-label": "Increase",
+        }),
+        figCreateElement("button", {
+          className: "fig-stepper-down",
+          tabindex: "-1",
+          "aria-label": "Decrease",
+        }),
+      );
       this.#stepperEl.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -7511,7 +7580,9 @@ class FigInputColor extends HTMLElement {
         name !== "picker-anchor" &&
         name !== "picker-experimental"
       ) {
-        attrs[name.slice(7)] = value;
+        const forwardedName = name.slice(7);
+        if (/^on/i.test(forwardedName)) continue;
+        attrs[forwardedName] = value;
       }
     }
     if (!attrs["dialog-position"]) attrs["dialog-position"] = "left";
@@ -7630,41 +7701,49 @@ class FigInputColor extends HTMLElement {
 
     const showAlpha = this.getAttribute("alpha") !== "false";
     const disabled = this.#disabled;
-    const disabledAttr = disabled ? " disabled" : "";
-
-    let html = ``;
     const showText = this.getAttribute("text") !== "false";
+    const swatch = figCreateElement("fig-swatch", {
+      background: this.hexOpaque,
+      alpha: this.rgba.a,
+      disabled,
+    });
+
     if (showText) {
-      let label = `<fig-input-text 
-        type="text"
-        placeholder="000000"
-        value="${this.hexOpaque.slice(1).toUpperCase()}"${disabledAttr}>
-      </fig-input-text>`;
+      const combo = figCreateElement(
+        "div",
+        { className: "input-combo" },
+        [
+          swatch,
+          figCreateElement("fig-input-text", {
+            type: "text",
+            placeholder: "000000",
+            value: this.hexOpaque.slice(1).toUpperCase(),
+            disabled,
+          }),
+        ],
+      );
       if (showAlpha) {
-        label += `<fig-tooltip text="Opacity">
-                    <fig-input-number 
-                        placeholder="##" 
-                        min="0"
-                        max="100"
-                        value="${this.#alphaPercent}"
-                        units="%"${disabledAttr}>
-                    </fig-input-number>
-                </fig-tooltip>`;
+        combo.appendChild(
+          figCreateElement(
+            "fig-tooltip",
+            { text: "Opacity" },
+            figCreateElement("fig-input-number", {
+              placeholder: "##",
+              min: "0",
+              max: "100",
+              value: this.#alphaPercent,
+              units: "%",
+              disabled,
+            }),
+          ),
+        );
       }
-
-      let swatchElement = "";
-      swatchElement = `<fig-swatch background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-swatch>`;
-
-      html = `<div class="input-combo">
-                ${swatchElement}
-                ${label}
-            </div>`;
+      this.replaceChildren(combo);
     } else {
-      html = `<fig-swatch background="${this.hexOpaque}" alpha="${this.rgba.a}"${disabledAttr}></fig-swatch>`;
+      this.replaceChildren(swatch);
     }
-    this.innerHTML = html;
 
-    this.#swatch = this.querySelector("fig-swatch");
+    this.#swatch = swatch;
     this.#fillPicker = this.querySelector("fig-fill-picker");
     this.#textInput = this.querySelector("fig-input-text:not([type=number])");
     this.#alphaInput = this.querySelector("fig-input-number");
@@ -7716,7 +7795,7 @@ class FigInputColor extends HTMLElement {
     }
 
     const picker = document.createElement("fig-fill-picker");
-    picker.innerHTML = "<span hidden></span>";
+    picker.appendChild(figCreateElement("span", { hidden: true }));
     picker.addEventListener("input", this.#boundFillPickerInput);
     picker.addEventListener("change", this.#boundChange);
     this.appendChild(picker);
@@ -8636,13 +8715,13 @@ class FigInputFill extends HTMLElement {
         name !== "picker-anchor" &&
         name !== "picker-experimental"
       ) {
-        attrs[name.slice(7)] = value;
+        const forwardedName = name.slice(7);
+        if (/^on/i.test(forwardedName)) continue;
+        attrs[forwardedName] = value;
       }
     }
     if (!attrs["dialog-position"]) attrs["dialog-position"] = "left";
-    return Object.entries(attrs)
-      .map(([k, v]) => `${k}="${figEscapeAttribute(v)}"`)
-      .join(" ");
+    return attrs;
   }
 
   #fillPickerSwatchBackground() {
@@ -8666,6 +8745,10 @@ class FigInputFill extends HTMLElement {
       }
       case "image":
         return this.#image.url ? `url(${this.#image.url})` : "#D9D9D9";
+      case "webcam":
+        return this.#webcam.snapshot
+          ? `url(${this.#webcam.snapshot})`
+          : "#D9D9D9";
       default:
         return "#D9D9D9";
     }
@@ -8733,81 +8816,97 @@ class FigInputFill extends HTMLElement {
     syncState(this.#opacityInput, `${name} opacity`);
   }
 
+  #createOpacityControl(value, disabled) {
+    if (this.getAttribute("alpha") === "false") return null;
+    return figCreateElement(
+      "fig-tooltip",
+      { text: "Opacity" },
+      figCreateElement("fig-input-number", {
+        className: "fig-input-fill-opacity",
+        placeholder: "##",
+        min: "0",
+        max: "100",
+        value,
+        units: "%",
+        disabled,
+      }),
+    );
+  }
+
+  #createControls(disabled) {
+    let label = null;
+    let opacity = 1;
+
+    switch (this.#fillType) {
+      case "solid":
+        return [
+          figCreateElement("fig-input-text", {
+            type: "text",
+            className: "fig-input-fill-hex",
+            placeholder: "000000",
+            value: this.#solid.color.slice(1).toUpperCase(),
+            disabled,
+          }),
+          this.#createOpacityControl(
+            Math.round(this.#solid.alpha * 100),
+            disabled,
+          ),
+        ].filter(Boolean);
+      case "gradient":
+        label =
+          this.#gradient.type.charAt(0).toUpperCase() +
+          this.#gradient.type.slice(1);
+        opacity = this.#gradient.opacity ?? 1;
+        break;
+      case "image":
+        label = "Image";
+        opacity = this.#image.opacity ?? 1;
+        break;
+      case "video":
+        label = "Video";
+        opacity = this.#video.opacity ?? 1;
+        break;
+      case "webcam":
+        label = "Webcam";
+        opacity = this.#webcam.opacity ?? 1;
+        break;
+    }
+
+    return [
+      figCreateElement(
+        "label",
+        { className: "fig-input-fill-label" },
+        label,
+      ),
+      this.#createOpacityControl(Math.round(opacity * 100), disabled),
+    ].filter(Boolean);
+  }
+
   #render() {
     const disabled =
       this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
     const fillPickerValue = JSON.stringify(this.value);
-    const showAlpha = this.getAttribute("alpha") !== "false";
-
-    const opacityHtml = (value) =>
-      showAlpha
-        ? `<fig-tooltip text="Opacity">
-            <fig-input-number
-              class="fig-input-fill-opacity"
-              placeholder="##"
-              min="0"
-              max="100"
-              value="${value}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>`
-        : "";
-
-    let controlsHtml = "";
-
-    switch (this.#fillType) {
-      case "solid":
-        controlsHtml = `
-          <fig-input-text 
-            type="text"
-            class="fig-input-fill-hex"
-            placeholder="000000"
-            value="${figEscapeAttribute(this.#solid.color.slice(1).toUpperCase())}"
-            ${disabled ? "disabled" : ""}>
-          </fig-input-text>
-          ${opacityHtml(Math.round(this.#solid.alpha * 100))}`;
-        break;
-
-      case "gradient": {
-        const gradientLabel =
-          this.#gradient.type.charAt(0).toUpperCase() +
-          this.#gradient.type.slice(1);
-        controlsHtml = `
-          <label class="fig-input-fill-label">${figEscapeAttribute(gradientLabel)}</label>
-          ${opacityHtml(Math.round((this.#gradient.opacity ?? 1) * 100))}`;
-        break;
-      }
-
-      case "image":
-        controlsHtml = `
-          <label class="fig-input-fill-label">Image</label>
-          ${opacityHtml(Math.round((this.#image.opacity ?? 1) * 100))}`;
-        break;
-
-      case "video":
-        controlsHtml = `
-          <label class="fig-input-fill-label">Video</label>
-          ${opacityHtml(Math.round((this.#video.opacity ?? 1) * 100))}`;
-        break;
-
-      case "webcam":
-        controlsHtml = `
-          <label class="fig-input-fill-label">Webcam</label>
-          ${opacityHtml(Math.round((this.#webcam.opacity ?? 1) * 100))}`;
-        break;
-    }
-
     const fpAttrs = this.#buildFillPickerAttrs();
-    this.innerHTML = `
-      <div class="input-combo">
-        <fig-fill-picker ${fpAttrs} value='${figEscapeAttribute(fillPickerValue)}' ${
-          disabled ? "disabled" : ""
-        }>
-          <fig-swatch background="${figEscapeAttribute(this.#fillPickerSwatchBackground())}" alpha="${this.#fillPickerSwatchAlpha()}"${disabled ? " disabled" : ""}></fig-swatch>
-        </fig-fill-picker>
-        ${controlsHtml}
-      </div>`;
+    const swatch = figCreateElement("fig-swatch", {
+      background: this.#fillPickerSwatchBackground(),
+      alpha: this.#fillPickerSwatchAlpha(),
+      disabled,
+    });
+    const picker = figCreateElement(
+      "fig-fill-picker",
+      {
+        value: fillPickerValue,
+        disabled,
+        ...fpAttrs,
+      },
+      swatch,
+    );
+    const combo = figCreateElement(
+      "div",
+      { className: "input-combo" },
+      [picker, this.#createControls(disabled)],
+    );
+    this.replaceChildren(combo);
 
     this.#setupEventListeners();
   }
@@ -8869,6 +8968,9 @@ class FigInputFill extends HTMLElement {
             break;
           case "video":
             if (detail.video) this.#video = detail.video;
+            break;
+          case "webcam":
+            if (detail.image?.url) this.#webcam.snapshot = detail.image.url;
             break;
         }
         // Update controls (don't re-render to keep dialog open)
@@ -9002,7 +9104,6 @@ class FigInputFill extends HTMLElement {
     // Update only the controls (not the fill picker) when type changes
     const disabled =
       this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
-    const showAlpha = this.getAttribute("alpha") !== "false";
     const combo = this.querySelector(".input-combo");
     if (!combo) return;
 
@@ -9016,98 +9117,8 @@ class FigInputFill extends HTMLElement {
     oldHex?.remove();
     oldTooltips.forEach((t) => t.remove());
 
-    // Generate new controls HTML
-    let controlsHtml = "";
-    switch (this.#fillType) {
-      case "solid":
-        controlsHtml = `
-          <fig-input-text 
-            type="text"
-            class="fig-input-fill-hex"
-            placeholder="000000"
-            value="${figEscapeAttribute(this.#solid.color.slice(1).toUpperCase())}"
-            ${disabled ? "disabled" : ""}>
-          </fig-input-text>
-          ${showAlpha ? `<fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${Math.round(this.#solid.alpha * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>` : ""}`;
-        break;
-      case "gradient": {
-        const gradientLabel =
-          this.#gradient.type.charAt(0).toUpperCase() +
-          this.#gradient.type.slice(1);
-        controlsHtml = `
-          <label class="fig-input-fill-label">${figEscapeAttribute(gradientLabel)}</label>
-          ${showAlpha ? `<fig-tooltip text="Opacity">
-            <fig-input-number
-              class="fig-input-fill-opacity"
-              placeholder="##"
-              min="0"
-              max="100"
-              value="${Math.round((this.#gradient.opacity ?? 1) * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>` : ""}`;
-        break;
-      }
-      case "image":
-        controlsHtml = `
-          <label class="fig-input-fill-label">Image</label>
-          ${showAlpha ? `<fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${Math.round((this.#image.opacity ?? 1) * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>` : ""}`;
-        break;
-      case "video":
-        controlsHtml = `
-          <label class="fig-input-fill-label">Video</label>
-          ${showAlpha ? `<fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${Math.round((this.#video.opacity ?? 1) * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>` : ""}`;
-        break;
-      case "webcam":
-        controlsHtml = `
-          <label class="fig-input-fill-label">Webcam</label>
-          ${showAlpha ? `<fig-tooltip text="Opacity">
-            <fig-input-number 
-              class="fig-input-fill-opacity"
-              placeholder="##" 
-              min="0"
-              max="100"
-              value="${Math.round((this.#webcam.opacity ?? 1) * 100)}"
-              units="%"
-              ${disabled ? "disabled" : ""}>
-            </fig-input-number>
-          </fig-tooltip>` : ""}`;
-        break;
-    }
-
     // Append new controls after the fill picker
-    combo.insertAdjacentHTML("beforeend", controlsHtml);
+    combo.append(...this.#createControls(disabled));
 
     // Re-setup event listeners for the new controls
     this.#opacityInput = this.querySelector(".fig-input-fill-opacity");
@@ -9496,7 +9507,7 @@ class FigInputPalette extends HTMLElement {
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false";
 
-    this.innerHTML = "";
+    this.replaceChildren();
     this.#inlinePickers = [];
     this.#expandedPickers = [];
 
@@ -10079,11 +10090,6 @@ class FigInputGradient extends HTMLElement {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  #swatchSizeAttr() {
-    const size = this.getAttribute("size");
-    return size ? ` size="${size}"` : "";
-  }
-
   #syncSwatchSize() {
     if (!this.#swatch) return;
     const size = this.getAttribute("size");
@@ -10091,16 +10097,32 @@ class FigInputGradient extends HTMLElement {
     else this.#swatch.removeAttribute("size");
   }
 
-  #buildStopHandles() {
+  #createStopHandles() {
     const disabled =
       this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
-    const tipAttr = this.#stopHandleMode === "tip" ? ' tip="color"' : "";
     return this.#gradient.stops
       .map(
         (stop, i) =>
-          `<fig-tooltip action="manual" text="${Math.round(stop.position)}%"><fig-handle drag drag-axes="x" drag-surface=".fig-input-gradient-track" type="color"${tipAttr} color="${this.#stopColorCSS(stop)}" value="${stop.position}% 50%" hit-area="4" data-stop-index="${i}"${disabled ? " disabled" : ""}></fig-handle></fig-tooltip>`,
-      )
-      .join("");
+          figCreateElement(
+            "fig-tooltip",
+            {
+              action: "manual",
+              text: `${Math.round(stop.position)}%`,
+            },
+            figCreateElement("fig-handle", {
+              drag: true,
+              "drag-axes": "x",
+              "drag-surface": ".fig-input-gradient-track",
+              type: "color",
+              tip: this.#stopHandleMode === "tip" ? "color" : null,
+              color: this.#stopColorCSS(stop),
+              value: `${stop.position}% 50%`,
+              "hit-area": "4",
+              "data-stop-index": i,
+              disabled,
+            }),
+          ),
+      );
   }
 
   #ghostHandle = null;
@@ -10111,27 +10133,45 @@ class FigInputGradient extends HTMLElement {
     this.#colorObserver = null;
     const disabled = figBooleanAttribute(this, "disabled");
     const mode = this.#editMode;
+    const size = this.getAttribute("size");
+    const swatch = figCreateElement("fig-swatch", {
+      background: this.#buildGradientCSS(),
+      size: size || null,
+      disabled,
+    });
 
     if (mode === "picker" && hasFigFillPicker()) {
       const gradientValue = JSON.stringify(this.value);
-      this.innerHTML = `
-        <fig-fill-picker mode="gradient" value='${gradientValue}'${disabled ? " disabled" : ""}>
-          <fig-swatch background="${this.#buildGradientCSS()}"${this.#swatchSizeAttr()}${disabled ? " disabled" : ""}></fig-swatch>
-        </fig-fill-picker>`;
-      this.#swatch = this.querySelector("fig-swatch");
+      const picker = figCreateElement(
+        "fig-fill-picker",
+        {
+          mode: "gradient",
+          value: gradientValue,
+          disabled,
+        },
+        swatch,
+      );
+      this.replaceChildren(picker);
+      this.#swatch = swatch;
       this.#track = null;
       this.#setupPickerEvents();
       this.#syncFocusTarget();
       return;
     }
 
-    this.innerHTML = `
-      <fig-swatch background="${this.#buildGradientCSS()}"${this.#swatchSizeAttr()}${disabled ? " disabled" : ""}></fig-swatch>
-      ${mode === "true" || mode === "picker" ? `<div class="fig-input-gradient-track">${this.#buildStopHandles()}</div>` : ""}`;
-    this.#swatch = this.querySelector("fig-swatch");
-    this.#track = this.querySelector(".fig-input-gradient-track");
+    const editable = mode === "true" || mode === "picker";
+    const track = editable
+      ? figCreateElement(
+          "div",
+          { className: "fig-input-gradient-track" },
+          this.#createStopHandles(),
+        )
+      : null;
+    this.replaceChildren(...(track ? [swatch, track] : [swatch]));
+    this.#swatch = swatch;
+    this.#track = track;
 
-    if (mode === "true" || mode === "picker") {
+    if (editable) {
       this.#setupGhostHandle();
       this.#setupEventListeners();
     }
@@ -10345,7 +10385,7 @@ class FigInputGradient extends HTMLElement {
 
     if (handles.length !== stops.length) {
       const ghost = this.#ghostHandle;
-      this.#track.innerHTML = this.#buildStopHandles();
+      this.#track.replaceChildren(...this.#createStopHandles());
       if (ghost) this.#track.appendChild(ghost);
       this.#syncHandleMode();
       this.#reobserveHandleColors();
@@ -11096,22 +11136,54 @@ class FigComboInput extends HTMLElement {
     const currentValue = this.value;
     const dropdownLabel = this.#dropdownLabel();
 
-    const dropdownHTML = this.#usesCustomDropdown
-      ? ""
-      : `<fig-dropdown type="dropdown" label="${figEscapeAttribute(dropdownLabel)}">${options.map((o) => `<option>${figEscapeAttribute(o.trim())}</option>`).join("")}</fig-dropdown>`;
+    const input = figCreateElement("fig-input-text", {
+      placeholder,
+      value: currentValue,
+    });
+    const icon = figCreateSvgElement(
+      "svg",
+      {
+        width: "16",
+        height: "16",
+        viewBox: "0 0 16 16",
+        fill: "none",
+      },
+      figCreateSvgElement("path", {
+        d: "M5.87868 7.12132L8 9.24264L10.1213 7.12132",
+        stroke: "currentColor",
+        "stroke-opacity": "0.9",
+        "stroke-linecap": "round",
+      }),
+    );
+    const button = figCreateElement(
+      "fig-button",
+      {
+        type: "select",
+        variant: "input",
+        icon: true,
+      },
+      icon,
+    );
+    if (!this.#usesCustomDropdown) {
+      button.appendChild(
+        figCreateElement(
+          "fig-dropdown",
+          {
+            type: "dropdown",
+            label: dropdownLabel,
+          },
+          options.map((option) =>
+            figCreateElement("option", {}, option.trim()),
+          ),
+        ),
+      );
+    }
+    this.replaceChildren(
+      figCreateElement("div", { className: "input-combo" }, [input, button]),
+    );
 
-    this.innerHTML = `<div class="input-combo">
-  <fig-input-text placeholder="${figEscapeAttribute(placeholder)}" value="${figEscapeAttribute(currentValue)}"></fig-input-text>
-  <fig-button type="select" variant="input" icon>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M5.87868 7.12132L8 9.24264L10.1213 7.12132" stroke="currentColor" stroke-opacity="0.9" stroke-linecap="round"/>
-    </svg>
-    ${dropdownHTML}
-  </fig-button>
-</div>`;
-
-    this.#input = this.querySelector("fig-input-text");
-    this.#button = this.querySelector("fig-button");
+    this.#input = input;
+    this.#button = button;
 
     if (this.#usesCustomDropdown && this.#customDropdown && this.#button) {
       if (!this.#customDropdown.hasAttribute("type")) {
@@ -11376,14 +11448,18 @@ class FigSwatch extends HTMLElement {
 
       if (this.#type === "color") {
         const hex = this.#toHex(bg);
-        this.innerHTML = `<div></div><input type="color" value="${hex}" />`;
-        this.input = this.querySelector("input");
+        const input = figCreateElement("input", {
+          type: "color",
+          value: hex,
+        });
+        this.replaceChildren(document.createElement("div"), input);
+        this.input = input;
         if (!isVar) {
           this.input.addEventListener("input", this.#boundHandleInput);
         }
         this.#syncA11y();
       } else {
-        this.innerHTML = "<div></div>";
+        this.replaceChildren(document.createElement("div"));
         this.input = null;
         this.#syncA11y();
       }
@@ -13162,7 +13238,7 @@ class FigInputFile extends HTMLElement {
       !!this.getAttribute("url") ||
       !!this.getAttribute("filename");
 
-    this.innerHTML = "";
+    this.replaceChildren();
 
     if (hasFile) {
       const tooltipText = accepts
@@ -13545,10 +13621,10 @@ class FigEasingCurve extends HTMLElement {
       const y = pad + (1 - (pts[i].value - minVal) / range) * s;
       d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
     }
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1" stroke-linecap="round" fill="none"/></svg>`;
+    return FigEasingCurve.#createSvgIcon(d, size);
   }
 
-  static curveIcon(cp1x, cp1y, cp2x, cp2y, size = 24) {
+  static #curveIconPath(cp1x, cp1y, cp2x, cp2y, size = 24) {
     const draw = 12;
     const pad = (size - draw) / 2;
     const samples = 48;
@@ -13594,6 +13670,43 @@ class FigEasingCurve extends HTMLElement {
       const py = toY(points[i].y);
       d += `${i === 0 ? "M" : "L"}${px.toFixed(1)},${py.toFixed(1)}`;
     }
+    return d;
+  }
+
+  static #createSvgIcon(d, size = 24) {
+    return figCreateSvgElement(
+      "svg",
+      {
+        width: size,
+        height: size,
+        viewBox: `0 0 ${size} ${size}`,
+        fill: "none",
+      },
+      figCreateSvgElement("path", {
+        d,
+        stroke: "currentColor",
+        "stroke-width": "1",
+        "stroke-linecap": "round",
+        fill: "none",
+      }),
+    );
+  }
+
+  static #createCurveIcon(cp1x, cp1y, cp2x, cp2y, size = 24) {
+    return FigEasingCurve.#createSvgIcon(
+      FigEasingCurve.#curveIconPath(cp1x, cp1y, cp2x, cp2y, size),
+      size,
+    );
+  }
+
+  static curveIcon(cp1x, cp1y, cp2x, cp2y, size = 24) {
+    const d = FigEasingCurve.#curveIconPath(
+      cp1x,
+      cp1y,
+      cp2x,
+      cp2y,
+      size,
+    );
     return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`;
   }
 
@@ -13607,7 +13720,7 @@ class FigEasingCurve extends HTMLElement {
     this.classList.toggle("spring-mode", this.#mode === "spring");
     this.classList.toggle("bezier-mode", this.#mode !== "spring");
     this.#syncMetricsFromCSS();
-    this.innerHTML = this.#getInnerHTML();
+    this.replaceChildren(...this.#createContent());
     this.#cacheRefs();
     if (this.#svg) {
       this.#syncHandleSizes();
@@ -13616,14 +13729,6 @@ class FigEasingCurve extends HTMLElement {
     }
     this.#syncValueInput();
     this.#setupEvents();
-  }
-
-  static #escapeAttribute(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
   }
 
   #canUseFigSelect() {
@@ -13638,38 +13743,43 @@ class FigEasingCurve extends HTMLElement {
     );
   }
 
-  #getDropdownHTML() {
-    let optionsHTML = "";
+  #createDropdown() {
+    const dropdown = figCreateElement("fig-dropdown", {
+      className: "fig-easing-curve-select",
+      label: "Easing preset",
+      value: this.#presetName,
+      full: true,
+    });
     let currentGroup = undefined;
-    let groupOpen = false;
+    let parent = dropdown;
     for (const preset of FigEasingCurve.PRESETS) {
       if (!this.#isEditEnabled() && !preset.value && !preset.spring) continue;
       if (preset.group !== currentGroup) {
-        if (groupOpen) optionsHTML += "</optgroup>";
-        groupOpen = Boolean(preset.group);
-        if (groupOpen) {
-          optionsHTML += `<optgroup label="${FigEasingCurve.#escapeAttribute(preset.group)}">`;
-        }
         currentGroup = preset.group;
+        parent = currentGroup
+          ? figCreateElement("optgroup", { label: currentGroup })
+          : dropdown;
+        if (parent !== dropdown) dropdown.appendChild(parent);
       }
-      const name = FigEasingCurve.#escapeAttribute(preset.name);
-      optionsHTML += `<option value="${name}">${name}</option>`;
+      parent.appendChild(
+        figCreateElement("option", { value: preset.name }, preset.name),
+      );
     }
-    if (groupOpen) optionsHTML += "</optgroup>";
-    const value = FigEasingCurve.#escapeAttribute(this.#presetName);
-    return `<fig-dropdown class="fig-easing-curve-select" label="Easing preset" value="${value}" full>${optionsHTML}</fig-dropdown>`;
+    return dropdown;
   }
 
-  #getSelectHTML() {
-    if (!this.#canUseFigSelect()) return this.#getDropdownHTML();
+  #createSelect() {
+    if (!this.#canUseFigSelect()) return this.#createDropdown();
 
-    let optionsHTML = "";
+    const options = document.createElement("fig-select-options");
     let currentGroup = undefined;
     for (const p of FigEasingCurve.PRESETS) {
       if (!this.#isEditEnabled() && !p.value && !p.spring) continue;
       if (p.group !== currentGroup) {
         if (p.group) {
-          optionsHTML += `<fig-separator label="${FigEasingCurve.#escapeAttribute(p.group)}"></fig-separator>`;
+          options.appendChild(
+            figCreateElement("fig-separator", { label: p.group }),
+          );
         }
         currentGroup = p.group;
       }
@@ -13684,42 +13794,152 @@ class FigEasingCurve extends HTMLElement {
           this.#cp2.x,
           this.#cp2.y,
         ];
-        icon = FigEasingCurve.curveIcon(...v);
+        icon = FigEasingCurve.#createCurveIcon(...v);
       }
-      const name = FigEasingCurve.#escapeAttribute(p.name);
-      optionsHTML += `<fig-select-option value="${name}" label="${name}"><span slot="prepend">${icon}</span><span>${name}</span></fig-select-option>`;
+      options.appendChild(
+        figCreateElement(
+          "fig-select-option",
+          {
+            value: p.name,
+            label: p.name,
+          },
+          [
+            figCreateElement("span", { slot: "prepend" }, icon),
+            figCreateElement("span", {}, p.name),
+          ],
+        ),
+      );
     }
-    const value = FigEasingCurve.#escapeAttribute(this.#presetName);
-    return `<fig-select class="fig-easing-curve-select" label="Easing preset" value="${value}" full><fig-select-options>${optionsHTML}</fig-select-options></fig-select>`;
+    return figCreateElement(
+      "fig-select",
+      {
+        className: "fig-easing-curve-select",
+        label: "Easing preset",
+        value: this.#presetName,
+        full: true,
+      },
+      options,
+    );
   }
 
-  #getInnerHTML() {
+  #createHandle(className, dataHandle, label) {
+    return figCreateSvgElement(
+      "foreignObject",
+      {
+        className,
+        "data-handle": dataHandle,
+        width: "20",
+        height: "20",
+      },
+      figCreateElement("fig-handle", {
+        size: "small",
+        "aria-label": label,
+      }),
+    );
+  }
+
+  #createContent() {
     const size = 200;
-    const select = this.#getSelectHTML();
-    if (!this.#isEditEnabled()) return select;
-    const valueInput = `<fig-input-text class="fig-easing-curve-value-input" value="${FigEasingCurve.#escapeAttribute(this.value)}" full></fig-input-text>`;
+    const select = this.#createSelect();
+    if (!this.#isEditEnabled()) return [select];
+    const valueInput = figCreateElement("fig-input-text", {
+      className: "fig-easing-curve-value-input",
+      value: this.value,
+      full: true,
+    });
+    const svgChildren = [
+      figCreateSvgElement("rect", {
+        className: "fig-easing-curve-bounds",
+        x: "0",
+        y: "0",
+        width: size,
+        height: size,
+      }),
+    ];
 
     if (this.#mode === "spring") {
       const targetY = 40;
-      return `${select}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
-        <rect class="fig-easing-curve-bounds" x="0" y="0" width="${size}" height="${size}"/>
-        <line class="fig-easing-curve-target" x1="0" y1="${targetY}" x2="${size}" y2="${targetY}"/>
-        <path class="fig-easing-curve-path"/>
-        <foreignObject class="fig-easing-curve-handle" data-handle="bounce" width="20" height="20"><fig-handle size="small" aria-label="Spring bounce handle"></fig-handle></foreignObject>
-        <foreignObject class="fig-easing-curve-handle fig-easing-curve-duration-bar" data-handle="duration" width="20" height="20"><fig-handle size="small" aria-label="Spring duration handle"></fig-handle></foreignObject>
-      </svg></div>${valueInput}`;
+      svgChildren.push(
+        figCreateSvgElement("line", {
+          className: "fig-easing-curve-target",
+          x1: "0",
+          y1: targetY,
+          x2: size,
+          y2: targetY,
+        }),
+        figCreateSvgElement("path", {
+          className: "fig-easing-curve-path",
+        }),
+        this.#createHandle(
+          "fig-easing-curve-handle",
+          "bounce",
+          "Spring bounce handle",
+        ),
+        this.#createHandle(
+          "fig-easing-curve-handle fig-easing-curve-duration-bar",
+          "duration",
+          "Spring duration handle",
+        ),
+      );
+    } else {
+      svgChildren.push(
+        figCreateSvgElement("line", {
+          className: "fig-easing-curve-boundary",
+          "data-boundary": "top",
+          x1: "0",
+          y1: "0",
+          x2: size,
+          y2: "0",
+        }),
+        figCreateSvgElement("line", {
+          className: "fig-easing-curve-boundary",
+          "data-boundary": "bottom",
+          x1: "0",
+          y1: size,
+          x2: size,
+          y2: size,
+        }),
+        figCreateSvgElement("path", {
+          className: "fig-easing-curve-path",
+        }),
+        figCreateSvgElement("line", {
+          className: "fig-easing-curve-arm",
+          "data-arm": "1",
+        }),
+        figCreateSvgElement("line", {
+          className: "fig-easing-curve-arm",
+          "data-arm": "2",
+        }),
+        this.#createHandle(
+          "fig-easing-curve-handle",
+          "1",
+          "First easing control point",
+        ),
+        this.#createHandle(
+          "fig-easing-curve-handle",
+          "2",
+          "Second easing control point",
+        ),
+      );
     }
 
-    return `${select}<div class="fig-easing-curve-svg-container"><svg viewBox="0 0 ${size} ${size}" class="fig-easing-curve-svg">
-      <rect class="fig-easing-curve-bounds" x="0" y="0" width="${size}" height="${size}"/>
-      <line class="fig-easing-curve-boundary" data-boundary="top" x1="0" y1="0" x2="${size}" y2="0"/>
-      <line class="fig-easing-curve-boundary" data-boundary="bottom" x1="0" y1="${size}" x2="${size}" y2="${size}"/>
-      <path class="fig-easing-curve-path"/>
-      <line class="fig-easing-curve-arm" data-arm="1"/>
-      <line class="fig-easing-curve-arm" data-arm="2"/>
-      <foreignObject class="fig-easing-curve-handle" data-handle="1" width="20" height="20"><fig-handle size="small" aria-label="First easing control point"></fig-handle></foreignObject>
-      <foreignObject class="fig-easing-curve-handle" data-handle="2" width="20" height="20"><fig-handle size="small" aria-label="Second easing control point"></fig-handle></foreignObject>
-    </svg></div>${valueInput}`;
+    const svg = figCreateSvgElement(
+      "svg",
+      {
+        viewBox: `0 0 ${size} ${size}`,
+        className: "fig-easing-curve-svg",
+      },
+      svgChildren,
+    );
+    return [
+      select,
+      figCreateElement(
+        "div",
+        { className: "fig-easing-curve-svg-container" },
+        svg,
+      ),
+      valueInput,
+    ];
   }
 
   #readCssNumber(name, fallback) {
@@ -14054,7 +14274,7 @@ class FigEasingCurve extends HTMLElement {
     for (const option of this.#select.querySelectorAll("fig-select-option")) {
       if (option.value === optionValue) {
         const prepend = option.querySelector(':scope > [slot="prepend"]');
-        if (prepend) prepend.innerHTML = icon;
+        if (prepend) prepend.replaceChildren(icon.cloneNode(true));
       }
     }
   }
@@ -14062,7 +14282,7 @@ class FigEasingCurve extends HTMLElement {
   #refreshCustomPresetIcons() {
     if (!this.#select) return;
     if (!this.#isEditEnabled()) return;
-    const bezierIcon = FigEasingCurve.curveIcon(
+    const bezierIcon = FigEasingCurve.#createCurveIcon(
       this.#cp1.x,
       this.#cp1.y,
       this.#cp2.x,
@@ -14652,34 +14872,44 @@ class Fig3DRotate extends HTMLElement {
       rotateY: this.#ry,
       rotateZ: this.#rz,
     };
-    const fieldsHTML = this.#fields
-      .map(
-        (axis) =>
-          `<fig-input-number
-            name="${axis}"
-            step="1"
-            precision="1"
-            value="${axisValues[axis]}"
-            units="°">
-            <span slot="prepend">${axisLabels[axis]}</span>
-          </fig-input-number>`,
-      )
-      .join("");
+    const cube = figCreateElement(
+      "div",
+      { className: "fig-3d-rotate-cube" },
+      ["front", "back", "right", "left", "top", "bottom"].map((face) =>
+        figCreateElement("div", {
+          className: `fig-3d-rotate-face ${face}`,
+        }),
+      ),
+    );
+    const container = figCreateElement(
+      "div",
+      {
+        className: "fig-3d-rotate-container",
+        tabindex: "0",
+      },
+      figCreateElement(
+        "div",
+        { className: "fig-3d-rotate-scene" },
+        cube,
+      ),
+    );
+    const fields = this.#fields.map((axis) =>
+      figCreateElement(
+        "fig-input-number",
+        {
+          name: axis,
+          step: "1",
+          precision: "1",
+          value: axisValues[axis],
+          units: "°",
+        },
+        figCreateElement("span", { slot: "prepend" }, axisLabels[axis]),
+      ),
+    );
 
-    this.innerHTML = `<div class="fig-3d-rotate-container" tabindex="0">
-      <div class="fig-3d-rotate-scene">
-        <div class="fig-3d-rotate-cube">
-          <div class="fig-3d-rotate-face front"></div>
-          <div class="fig-3d-rotate-face back"></div>
-          <div class="fig-3d-rotate-face right"></div>
-          <div class="fig-3d-rotate-face left"></div>
-          <div class="fig-3d-rotate-face top"></div>
-          <div class="fig-3d-rotate-face bottom"></div>
-        </div>
-      </div>
-    </div>${fieldsHTML}`;
-    this.#container = this.querySelector(".fig-3d-rotate-container");
-    this.#cube = this.querySelector(".fig-3d-rotate-cube");
+    this.replaceChildren(container, ...fields);
+    this.#container = container;
+    this.#cube = cube;
     this.#wireFieldInputs();
     this.#updateCube();
     this.#setupEvents();
@@ -14982,31 +15212,65 @@ class FigOriginGrid extends HTMLElement {
     const cells = Array.from({ length: 9 }, (_, index) => {
       const col = index % 3;
       const row = Math.floor(index / 3);
-      return `<span class="origin-grid-cell" data-col="${col}" data-row="${row}">
-        <span class="origin-grid-dot"></span>
-      </span>`;
-    }).join("");
+      return figCreateElement(
+        "span",
+        {
+          className: "origin-grid-cell",
+          "data-col": col,
+          "data-row": row,
+        },
+        figCreateElement("span", { className: "origin-grid-dot" }),
+      );
+    });
 
     const xValue = this.#x.toFixed(this.#precision);
     const yValue = this.#y.toFixed(this.#precision);
-    const fieldsMarkup = this.#fieldsEnabled
-      ? `<div class="origin-values">
-      <fig-input-number name="x" value="${xValue}" step="1" units="%"><span slot="prepend">X</span></fig-input-number>
-      <fig-input-number name="y" value="${yValue}" step="1" units="%"><span slot="prepend">Y</span></fig-input-number>
-    </div>`
-      : "";
+    const handle = document.createElement("fig-handle");
+    const grid = figCreateElement(
+      "div",
+      {
+        className: "origin-grid",
+        "aria-label": "Transform origin grid",
+      },
+      [
+        figCreateElement(
+          "div",
+          { className: "origin-grid-cells" },
+          cells,
+        ),
+        handle,
+      ],
+    );
+    const surface = figCreateElement(
+      "div",
+      { className: "fig-origin-grid-surface" },
+      grid,
+    );
+    const rendered = [surface];
+    if (this.#fieldsEnabled) {
+      const createValueInput = (name, value) =>
+        figCreateElement(
+          "fig-input-number",
+          {
+            name,
+            value,
+            step: "1",
+            units: "%",
+          },
+          figCreateElement("span", { slot: "prepend" }, name.toUpperCase()),
+        );
+      rendered.push(
+        figCreateElement("div", { className: "origin-values" }, [
+          createValueInput("x", xValue),
+          createValueInput("y", yValue),
+        ]),
+      );
+    }
 
-    this.innerHTML = `<div class="fig-origin-grid-surface">
-      <div class="origin-grid" aria-label="Transform origin grid">
-        <div class="origin-grid-cells">${cells}</div>
-        <fig-handle></fig-handle>
-      </div>
-    </div>
-    ${fieldsMarkup}`;
-
-    this.#grid = this.querySelector(".origin-grid");
-    this.#cells = Array.from(this.querySelectorAll(".origin-grid-cell"));
-    this.#handle = this.querySelector("fig-handle");
+    this.replaceChildren(...rendered);
+    this.#grid = grid;
+    this.#cells = cells;
+    this.#handle = handle;
     this.#xInput = this.querySelector('fig-input-number[name="x"]');
     this.#yInput = this.querySelector('fig-input-number[name="y"]');
     this.#syncHandlePosition();
@@ -15463,7 +15727,100 @@ class FigInputJoystick extends HTMLElement {
   }
 
   #render() {
-    this.innerHTML = this.#getInnerHTML();
+    const axisLabels = this.#getAxisLabels();
+    const planeContainer = figCreateElement("div", {
+      className: "fig-input-joystick-plane-container",
+    });
+    const createAxisLabel = (position, text, noRotate = false) =>
+      text
+        ? figCreateElement(
+            "label",
+            {
+              className: [
+                "fig-joystick-axis-label",
+                position,
+                noRotate ? "no-rotate" : "",
+              ]
+                .filter(Boolean)
+                .join(" "),
+              "aria-hidden": "true",
+            },
+            text,
+          )
+        : null;
+    planeContainer.append(
+      ...[
+        createAxisLabel(
+          "left",
+          axisLabels.left,
+          axisLabels.leftNoRotate,
+        ),
+        createAxisLabel("right", axisLabels.right),
+        createAxisLabel("top", axisLabels.top),
+        createAxisLabel("bottom", axisLabels.bottom),
+      ].filter(Boolean),
+    );
+
+    const plane = figCreateElement(
+      "div",
+      { className: "fig-input-joystick-plane" },
+      [
+        figCreateElement("div", {
+          className: "fig-input-joystick-guides",
+        }),
+        figCreateElement("fig-handle", {
+          drag: true,
+          "drag-surface": ".fig-input-joystick-plane",
+          "drag-axes": "x,y",
+          "drag-snapping": "modifier",
+        }),
+      ],
+    );
+    const reset = figCreateElement(
+      "fig-tooltip",
+      { text: "Reset" },
+      figCreateElement(
+        "fig-button",
+        {
+          variant: "ghost",
+          icon: "true",
+          className: "fig-joystick-reset",
+          "aria-label": "Reset to default",
+        },
+        createFigIcon("reset", { size: "small" }),
+      ),
+    );
+    planeContainer.append(plane, reset);
+
+    const children = [planeContainer];
+    if (this.#fieldsEnabled) {
+      const createValueInput = (name, value) =>
+        figCreateElement(
+          "fig-input-number",
+          {
+            name,
+            step: "1",
+            value,
+            min: "0",
+            max: "100",
+            units: "%",
+          },
+          figCreateElement("span", { slot: "prepend" }, name.toUpperCase()),
+        );
+      children.push(
+        figCreateElement("div", { className: "joystick-values" }, [
+          createValueInput(
+            "x",
+            (this.position.x * 100).toFixed(this.precision),
+          ),
+          createValueInput(
+            "y",
+            (this.position.y * 100).toFixed(this.precision),
+          ),
+        ]),
+      );
+    }
+    this.replaceChildren(...children);
   }
 
   #getAxisLabels() {
@@ -15490,63 +15847,6 @@ class FigInputJoystick extends HTMLElement {
       return { left, right, top, bottom, leftNoRotate: false };
     }
     return { left: "", right: "", top: "", bottom: "", leftNoRotate: false };
-  }
-
-  #getInnerHTML() {
-    const axisLabels = this.#getAxisLabels();
-    const labelsMarkup = [
-      axisLabels.left
-        ? `<label class="fig-joystick-axis-label left${axisLabels.leftNoRotate ? " no-rotate" : ""}" aria-hidden="true">${axisLabels.left}</label>`
-        : "",
-      axisLabels.right
-        ? `<label class="fig-joystick-axis-label right" aria-hidden="true">${axisLabels.right}</label>`
-        : "",
-      axisLabels.top
-        ? `<label class="fig-joystick-axis-label top" aria-hidden="true">${axisLabels.top}</label>`
-        : "",
-      axisLabels.bottom
-        ? `<label class="fig-joystick-axis-label bottom" aria-hidden="true">${axisLabels.bottom}</label>`
-        : "",
-    ].join("");
-
-    return `        
-          <div class="fig-input-joystick-plane-container">
-            ${labelsMarkup}
-            <div class="fig-input-joystick-plane">
-              <div class="fig-input-joystick-guides"></div>
-              <fig-handle drag drag-surface=".fig-input-joystick-plane" drag-axes="x,y" drag-snapping="modifier"></fig-handle>
-            </div>
-            <fig-tooltip text="Reset">
-              <fig-button variant="ghost" icon="true" class="fig-joystick-reset" aria-label="Reset to default">
-                <fig-icon name="reset" size="small"></fig-icon>
-              </fig-button>
-            </fig-tooltip>
-          </div>
-          ${
-            this.#fieldsEnabled
-              ? `<div class="joystick-values">
-                  <fig-input-number
-                    name="x"
-                    step="1"
-                    value="${(this.position.x * 100).toFixed(this.precision)}"
-                    min="0"
-                    max="100"
-                    units="%">
-                    <span slot="prepend">X</span>
-                  </fig-input-number>
-                  <fig-input-number
-                    name="y"
-                    step="1"
-                    min="0"
-                    max="100"
-                    value="${(this.position.y * 100).toFixed(this.precision)}"
-                    units="%">
-                    <span slot="prepend">Y</span>
-                  </fig-input-number>
-                </div>`
-              : ""
-          }
-        `;
   }
 
   #setupListeners() {
@@ -16078,314 +16378,6 @@ class FigPreview extends HTMLElement {
 }
 figDefineElement("fig-preview", FigPreview);
 
-/**
- * Compact swatch previewing gradient color-space interpolation.
- * Polar: CSS conic-gradient masked (SVG data-URL, round linecaps) to an arc.
- * Non-polar: CSS linear-gradient masked to a horizontal round-capped stroke.
- * Accepts the same `value` shape as fig-input-gradient / fig-fill-picker.
- *
- * @element fig-interpolation-swatch
- * @attr {string} value - JSON `{ type: "gradient", gradient: { … } }` (or a bare gradient object)
- * @attr {string} size - `small` (default, 24px) or `large` (32px)
- */
-class FigInterpolationSwatch extends HTMLElement {
-  static #HUE_SPACES = new Set(["oklch", "hsl"]);
-  static #CX = 10;
-  static #CY = 10;
-  static #R = 8;
-  static #STROKE = 3;
-  // Polar endpoints ≈ 10 o'clock → 2 o'clock (SVG deg: 0 = east, CW).
-  // CSS conic `from` is 0 = north; convert with +90.
-  static #START_DEG = 210;
-  static #DEFAULT_GRADIENT = {
-    type: "linear",
-    angle: 135,
-    interpolationSpace: "srgb",
-    hueInterpolation: "shorter",
-    stops: [
-      { color: "#FF0000", position: 0, opacity: 100 },
-      { color: "#4F9EFF", position: 100, opacity: 100 },
-    ],
-  };
-
-  #rendered = false;
-  #svgEl = null;
-  #fillEl = null;
-  #gradient = { ...FigInterpolationSwatch.#DEFAULT_GRADIENT };
-
-  static get observedAttributes() {
-    return ["value"];
-  }
-
-  get value() {
-    return {
-      type: "gradient",
-      gradient: { ...this.#gradient },
-    };
-  }
-
-  set value(val) {
-    if (val == null || val === "") {
-      this.removeAttribute("value");
-      return;
-    }
-    if (typeof val === "string") {
-      this.setAttribute("value", val);
-      return;
-    }
-    this.setAttribute("value", JSON.stringify(val));
-  }
-
-  connectedCallback() {
-    this.#ensureA11y();
-    this.#parseValue();
-    this.#render();
-    this.#updatePreview();
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue) return;
-    if (name !== "value") return;
-    this.#parseValue();
-    if (this.#rendered) this.#updatePreview();
-  }
-
-  #ensureA11y() {
-    const named =
-      this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");
-    if (!named && !this.hasAttribute("aria-hidden")) {
-      this.setAttribute("aria-hidden", "true");
-    }
-  }
-
-  #parseValue() {
-    const valueAttr = this.getAttribute("value");
-    if (!valueAttr) {
-      this.#gradient = {
-        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
-        stops: FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({
-          ...s,
-        })),
-      };
-      return;
-    }
-    try {
-      const parsed = JSON.parse(valueAttr);
-      const gradient = parsed?.type === "gradient" && parsed.gradient
-        ? parsed.gradient
-        : parsed?.gradient
-          ? parsed.gradient
-          : parsed;
-      if (!gradient || typeof gradient !== "object") return;
-      this.#gradient = this.#normalizeGradient({
-        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
-        ...gradient,
-      });
-    } catch {
-      // Keep current/default gradient on invalid JSON.
-    }
-  }
-
-  #normalizeGradient(gradient) {
-    const next = { ...(gradient ?? {}) };
-    const interpolationSpace = String(
-      next.interpolationSpace ?? "srgb",
-    ).toLowerCase();
-    const hueInterpolation = String(
-      next.hueInterpolation ?? "shorter",
-    ).toLowerCase();
-    const stops = Array.isArray(next.stops)
-      ? next.stops.map((stop) => ({
-          color: String(stop?.color || "#D9D9D9").replace(
-            /^(#(?:[0-9a-f]{6})).*/i,
-            "$1",
-          ),
-          position: stop?.position ?? 0,
-          opacity: stop?.opacity ?? 100,
-        }))
-      : FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({ ...s }));
-    if (stops.length < 2) {
-      return {
-        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
-        stops: FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({
-          ...s,
-        })),
-      };
-    }
-    return {
-      type: ["linear", "radial", "angular"].includes(next.type)
-        ? next.type
-        : "linear",
-      angle: Number.isFinite(Number(next.angle)) ? Number(next.angle) : 135,
-      interpolationSpace,
-      hueInterpolation,
-      stops,
-    };
-  }
-
-  #isPolar() {
-    return FigInterpolationSwatch.#HUE_SPACES.has(
-      this.#gradient.interpolationSpace || "srgb",
-    );
-  }
-
-  #hueForColor(color) {
-    const { r, g, b } = figHexToRGB(color);
-    if (this.#gradient.interpolationSpace === "hsl") {
-      return figRgbToHsl(r, g, b).h;
-    }
-    const lab = figRGBToOklab(r, g, b);
-    const hue = figOklabToOklch(lab.l, lab.a, lab.b).h;
-    return ((hue % 360) + 360) % 360;
-  }
-
-  #polarArcGeometry() {
-    const stops = this.#sortedStops();
-    const startHue = this.#hueForColor(stops[0]?.color || "#FF0000");
-    const endHue = this.#hueForColor(
-      stops[stops.length - 1]?.color || "#4F9EFF",
-    );
-    const startDeg = FigInterpolationSwatch.#START_DEG - startHue;
-    const endDeg = FigInterpolationSwatch.#START_DEG - endHue;
-    const clockwiseSweep = ((endDeg - startDeg) % 360 + 360) % 360;
-    const counterclockwiseSweep =
-      clockwiseSweep === 0 ? 0 : clockwiseSweep - 360;
-    const method = this.#gradient.hueInterpolation || "shorter";
-
-    let sweepDeg;
-    if (method === "increasing") {
-      sweepDeg = counterclockwiseSweep;
-    } else if (method === "decreasing") {
-      sweepDeg = clockwiseSweep;
-    } else if (method === "longer") {
-      sweepDeg =
-        clockwiseSweep < 180 ? counterclockwiseSweep : clockwiseSweep;
-    } else {
-      sweepDeg =
-        clockwiseSweep <= 180 ? clockwiseSweep : counterclockwiseSweep;
-    }
-
-    // A round cap extends beyond the path endpoint. Inset the centerline so
-    // the visible cap edges, rather than their centers, land on the hues.
-    const direction = Math.sign(sweepDeg);
-    const capAngle =
-      (Math.asin(FigInterpolationSwatch.#STROKE / 2 / FigInterpolationSwatch.#R) *
-        180) /
-      Math.PI;
-    const inset = Math.min(
-      capAngle,
-      Math.max(0, (Math.abs(sweepDeg) - 0.01) / 2),
-    );
-    return {
-      startDeg: startDeg + direction * inset,
-      sweepDeg: sweepDeg - direction * inset * 2,
-    };
-  }
-
-  #pointOnCircle(deg) {
-    const rad = (deg * Math.PI) / 180;
-    return {
-      x: FigInterpolationSwatch.#CX + FigInterpolationSwatch.#R * Math.cos(rad),
-      y: FigInterpolationSwatch.#CY + FigInterpolationSwatch.#R * Math.sin(rad),
-    };
-  }
-
-  #arcMaskPath(startDeg, sweepDeg) {
-    const endDeg = startDeg + sweepDeg;
-    const start = this.#pointOnCircle(startDeg);
-    const end = this.#pointOnCircle(endDeg);
-    const largeArc = Math.abs(sweepDeg) > 180 ? 1 : 0;
-    const sweepFlag = sweepDeg >= 0 ? 1 : 0;
-    return `M ${start.x} ${start.y} A ${FigInterpolationSwatch.#R} ${FigInterpolationSwatch.#R} 0 ${largeArc} ${sweepFlag} ${end.x} ${end.y}`;
-  }
-
-  #lineMaskPath() {
-    const start = this.#pointOnCircle(180);
-    const end = this.#pointOnCircle(0);
-    return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
-  }
-
-  #maskImageForPath(d) {
-    const stroke = FigInterpolationSwatch.#STROKE;
-    const svg =
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none">` +
-      `<path d="${d}" fill="none" stroke="white" stroke-width="${stroke}" ` +
-      `stroke-linecap="round" stroke-linejoin="round"/>` +
-      `</svg>`;
-    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-  }
-
-  #sortedStops() {
-    return [...this.#gradient.stops].sort(
-      (a, b) => (a.position ?? 0) - (b.position ?? 0),
-    );
-  }
-
-  #cssInterpolationClause() {
-    const space = this.#gradient.interpolationSpace || "srgb";
-    if (space === "srgb") return "";
-    if (FigInterpolationSwatch.#HUE_SPACES.has(space)) {
-      return ` in ${space} ${this.#gradient.hueInterpolation || "shorter"} hue`;
-    }
-    return ` in ${space}`;
-  }
-
-  #previewBackground() {
-    const stops = this.#sortedStops();
-    const clause = this.#cssInterpolationClause();
-    if (this.#isPolar()) {
-      // Fixed hue wheel. The mask maps gradient endpoint hues onto this wheel.
-      const cssFrom = (FigInterpolationSwatch.#START_DEG + 90) % 360;
-      const space = this.#gradient.interpolationSpace;
-      const wheelColor = (hue) =>
-        space === "oklch"
-          ? `oklch(65% 0.25 ${hue})`
-          : `hsl(${hue} 100% 50%)`;
-      const wheelStops = [0, 300, 240, 180, 120, 60, 0]
-        .map(wheelColor)
-        .join(", ");
-      return `conic-gradient(from ${cssFrom}deg in ${space} decreasing hue, ${wheelStops})`;
-    }
-    const stopList = stops
-      .map((s) => `${s.color} ${s.position ?? 0}%`)
-      .join(", ");
-    return `linear-gradient(90deg${clause}, ${stopList})`;
-  }
-
-  #render() {
-    if (this.#rendered) return;
-    const stroke = FigInterpolationSwatch.#STROKE;
-    this.innerHTML = `
-      <svg class="fig-interpolation-swatch-svg" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <circle class="fig-interpolation-swatch-rim" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="${stroke}"/>
-      </svg>
-      <div class="fig-interpolation-swatch-fill" aria-hidden="true"></div>
-    `;
-    this.#svgEl = this.querySelector(".fig-interpolation-swatch-svg");
-    this.#fillEl = this.querySelector(".fig-interpolation-swatch-fill");
-    this.#rendered = true;
-  }
-
-  #updatePreview() {
-    if (!this.#fillEl) return;
-
-    const polar = this.#isPolar();
-    if (this.#svgEl) this.#svgEl.style.display = polar ? "" : "none";
-
-    const d = polar
-      ? (() => {
-          const { startDeg, sweepDeg } = this.#polarArcGeometry();
-          return this.#arcMaskPath(startDeg, sweepDeg);
-        })()
-      : this.#lineMaskPath();
-    const mask = this.#maskImageForPath(d);
-    this.#fillEl.style.setProperty("-webkit-mask-image", mask);
-    this.#fillEl.style.maskImage = mask;
-    this.#fillEl.style.background = this.#previewBackground();
-  }
-}
-figDefineElement("fig-interpolation-swatch", FigInterpolationSwatch);
-
 /** @type {Record<string, string | { medium: string, small: string }>} */
 const FIG_ICON_TOKENS = {
   chevron: { medium: "--icon-24-chevron", small: "--icon-16-chevron" },
@@ -16575,11 +16567,22 @@ class FigColorTip extends HTMLElement {
   }
 
   #render() {
+    this.#teardownListeners();
     const mode = this.#controlMode;
     if (mode === "add" || mode === "remove") {
       const iconName = mode === "add" ? "add" : "minus";
       const label = this.getAttribute("aria-label") || (mode === "add" ? "Add color stop" : "Remove color stop");
-      this.innerHTML = `<fig-button icon variant="ghost" aria-label="${figEscapeAttribute(label)}"><fig-icon name="${iconName}"></fig-icon></fig-button>`;
+      this.replaceChildren(
+        figCreateElement(
+          "fig-button",
+          {
+            icon: true,
+            variant: "ghost",
+            "aria-label": label,
+          },
+          createFigIcon(iconName),
+        ),
+      );
       this.#fillPicker = null;
       this.#swatch = null;
       this.addEventListener("click", this.#handleControlClick);
@@ -16591,7 +16594,6 @@ class FigColorTip extends HTMLElement {
     const rawValue = (this.getAttribute("value") || "").trim();
     const color = this.#normalizeColor(rawValue);
     const alpha = this.#extractAlpha(rawValue);
-    const alphaAttr = this.#alphaEnabled ? "" : 'alpha="false"';
     const pickerValue =
       alpha < 1
         ? JSON.stringify({
@@ -16600,16 +16602,28 @@ class FigColorTip extends HTMLElement {
             opacity: Math.round(alpha * 100),
           })
         : JSON.stringify({ type: "solid", color });
-    const swatchAlphaAttr = alpha < 1 ? ` alpha="${alpha}"` : "";
-    this.innerHTML = hasFigFillPicker()
-      ? `<fig-fill-picker mode="solid" ${alphaAttr} value='${pickerValue}'>
-          <fig-swatch background="${color}"${swatchAlphaAttr}></fig-swatch>
-        </fig-fill-picker>`
-      : `<fig-swatch background="${color}"${swatchAlphaAttr}></fig-swatch>`;
+    const swatch = figCreateElement("fig-swatch", {
+      background: color,
+      alpha: alpha < 1 ? alpha : null,
+    });
+    let picker = null;
+    if (hasFigFillPicker()) {
+      picker = figCreateElement(
+        "fig-fill-picker",
+        {
+          mode: "solid",
+          alpha: this.#alphaEnabled ? null : "false",
+          value: pickerValue,
+        },
+        swatch,
+      );
+      this.replaceChildren(picker);
+    } else {
+      this.replaceChildren(swatch);
+    }
 
-    this.#fillPicker = this.querySelector("fig-fill-picker");
-    this.#swatch = this.querySelector("fig-swatch");
-    this.#teardownListeners();
+    this.#fillPicker = picker;
+    this.#swatch = swatch;
     this.#fillPicker?.addEventListener("input", this.#boundHandleInput);
     this.#fillPicker?.addEventListener("change", this.#boundHandleChange);
     if (!this.#fillPicker) {

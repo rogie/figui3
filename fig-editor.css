@@ -5,6 +5,52 @@
   --icon-24-eyedropper: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M15.1592 5.65801C16.0376 4.78045 17.4621 4.78055 18.3408 5.65899L18.4951 5.82989C19.1671 6.65442 19.168 7.84476 18.4951 8.66973L18.3408 8.84063L16.6455 10.533C17.1104 11.083 17.1181 11.889 16.6641 12.4461L16.5605 12.5604C16.0111 13.1097 15.1425 13.1428 14.5537 12.6629L14.5342 12.6453L10.0908 17.0916C9.6188 17.5633 8.98876 17.7764 8.375 17.742L7.56055 18.5574C6.97441 19.1432 6.02451 19.1422 5.43945 18.5584V18.5574C4.8538 17.9718 4.85405 17.0221 5.43945 16.4363L6.25586 15.618C6.22412 15.0058 6.44026 14.3794 6.90918 13.91L11.3516 9.46367C10.856 8.87434 10.885 7.99381 11.4395 7.43926L11.5537 7.33574C12.1094 6.88283 12.9136 6.88854 13.4639 7.35137L15.1592 5.65801ZM7.61621 14.617C7.33755 14.8961 7.21782 15.2747 7.25781 15.6385C7.27925 15.8351 7.24419 16.0445 7.10449 16.1844L6.14648 17.1434C5.9516 17.3387 5.95135 17.6553 6.14648 17.8504C6.34167 18.0449 6.65842 18.0451 6.85352 17.8504L7.80859 16.8943C7.94931 16.7536 8.16065 16.7184 8.3584 16.741C8.72329 16.7828 9.10374 16.6643 9.38379 16.3846L13.8223 11.9432L12.0547 10.1756L7.61621 14.617ZM17.6338 6.36602C17.1458 5.87828 16.3544 5.8783 15.8662 6.36602L14.084 8.14629L14.0186 8.20586C13.6767 8.48476 13.1722 8.46484 12.8535 8.14629C12.6583 7.95131 12.3417 7.95119 12.1465 8.14629C11.9514 8.34148 11.9515 8.65808 12.1465 8.85332L15.1465 11.8533C15.3175 12.024 15.5814 12.0451 15.7754 11.9168L15.8535 11.8533C16.0486 11.6582 16.0484 11.3416 15.8535 11.1463V11.1453C15.8524 11.1443 15.8507 11.1434 15.8496 11.1424C15.5128 10.8013 15.514 10.2513 15.8535 9.91192L17.6338 8.1336C18.1216 7.6457 18.1213 6.85425 17.6338 6.36602Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
 }
 
+fig-interpolation-swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  color: var(--figma-color-bordertranslucent);
+  overflow: visible;
+
+  &[size="large"] {
+    width: 2rem;
+    height: 2rem;
+
+    .fig-interpolation-swatch-svg,
+    .fig-interpolation-swatch-fill {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+
+  .fig-interpolation-swatch-svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    overflow: visible;
+  }
+
+  .fig-interpolation-swatch-fill {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1rem;
+    height: 1rem;
+    background: linear-gradient(90deg, #ff0000, #4f9eff);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+  }
+}
+
 /* Toast */
 dialog[is="fig-toast"] {
   contain: layout paint;
@@ -247,35 +293,11 @@ fig-fill-picker {
       grid-area: unset;
     }
 
-    .fig-fill-picker-gradient-type,
-    .fig-fill-picker-gradient-angle,
-    .fig-fill-picker-gradient-center {
-      flex: 1 1 0;
+    .fig-fill-picker-gradient-type {
+      display: flex;
+      flex: 0 1 auto;
       min-width: 0;
       width: auto;
-    }
-
-    .fig-fill-picker-gradient-type,
-    .fig-fill-picker-gradient-angle {
-      display: flex;
-    }
-
-    .fig-fill-picker-gradient-angle {
-      input {
-        width: 100%;
-        flex: 1 1 auto;
-        min-width: 0;
-        max-width: none;
-      }
-    }
-
-    /* Keep .input-combo join (1px gap + shared radii) — don't add spacer gap. */
-    .fig-fill-picker-gradient-center {
-      fig-input-number {
-        flex: 1 1 0;
-        min-width: 0;
-        width: auto; /* override default 8.9375rem so the pair can share */
-      }
     }
 
     .fig-fill-picker-gradient-actions {
@@ -295,13 +317,92 @@ fig-fill-picker {
     }
   }
 
+  fig-field.fig-fill-picker-gradient-interpolation-field {
+    display: flex;
+    align-items: center;
+    grid-template-columns: unset;
+    grid-template-areas: unset;
+    padding-left: var(--spacer-3);
+    padding-right: var(--spacer-2);
+    gap: var(--spacer-1);
+
+    > *:not(.fig-field-chevron):not(label) {
+      grid-area: unset;
+    }
+  }
+
+  .fig-fill-picker-gradient-interpolation-modes {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    fig-interpolation-swatch {
+      pointer-events: none;
+    }
+  }
+
+  /* Transparent select trigger sits on the icon button so its menu anchors here. */
+  .fig-fill-picker-gradient-interpolation-more {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+
+    > fig-button {
+      pointer-events: none;
+    }
+
+    .fig-fill-picker-gradient-space {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      opacity: 0;
+    }
+
+    &:has(.fig-fill-picker-gradient-space:hover) > fig-button,
+    &:has(.fig-fill-picker-gradient-space[open]) > fig-button {
+      background-color: var(--figma-color-bg-transparent-hover);
+    }
+
+    &:has(.fig-fill-picker-gradient-space:focus-within) > fig-button {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+  }
+
   .fig-fill-picker-gradient-space {
+    &::part(prepend) {
+      display: none;
+    }
+
     fig-select-option {
+      min-height: 3rem;
 
       &:hover::before,
       &:focus-visible::before {
         background-color: var(--figma-color-bg-tertiary);
       }
+    }
+
+    .fig-fill-picker-gradient-interpolation-label {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      line-height: 1.25;
+    }
+
+    .fig-fill-picker-gradient-interpolation-title,
+    .fig-fill-picker-gradient-interpolation-subtitle {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fig-fill-picker-gradient-interpolation-subtitle {
+      color: var(--figma-color-text-tertiary);
+    }
+
+    fig-select-options.fig-fill-picker-gradient-interpolation-collapsed {
+      overflow: hidden;
     }
   }
 

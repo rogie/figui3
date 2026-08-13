@@ -163,11 +163,11 @@ export const figui3Sections: Section[] = [
         name: "Groups",
         markup: `<div class="prop-panel">
   <fig-dropdown>
-    <optgroup>
+    <optgroup label="In progress">
       <option value="draft" selected>Draft</option>
       <option value="review">In review</option>
     </optgroup>
-    <optgroup>
+    <optgroup label="Completed">
       <option value="approved">Approved</option>
       <option value="archived">Archived</option>
     </optgroup>
@@ -1081,7 +1081,7 @@ export const figui3Sections: Section[] = [
         id: "upload",
         name: "Upload",
         markup: `<div class="prop-panel">
-  <fig-video upload="true" muted size="auto" full checkerboard="true"></fig-video>
+  <fig-video upload="true" controls="true" muted size="auto" full checkerboard="true"></fig-video>
 </div>`,
       },
     ],

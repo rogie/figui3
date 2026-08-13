@@ -102,7 +102,13 @@ function isExampleAvailable(example: Section["examples"][number]) {
   );
 }
 
-const EDITOR_SECTION_IDS = new Set(["select", "fill-picker", "layer", "toast"]);
+const EDITOR_SECTION_IDS = new Set([
+  "select",
+  "fill-picker",
+  "layer",
+  "toast",
+  "atom-interpolation-swatch",
+]);
 const EDITOR_GROUP_NAME = "Editor components";
 
 function filterAvailableSections(

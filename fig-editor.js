@@ -32,6 +32,123 @@ function figEditorCreateIcon(name, options = {}) {
   return icon;
 }
 
+function figEditorAppendChildren(parent, children) {
+  const append = (child) => {
+    if (child === null || child === undefined || child === false) return;
+    if (Array.isArray(child)) {
+      child.forEach(append);
+      return;
+    }
+    parent.append(child instanceof Node ? child : String(child));
+  };
+  append(children);
+  return parent;
+}
+
+function figEditorSetAttributes(element, attributes = {}) {
+  for (const [name, value] of Object.entries(attributes)) {
+    if (value === null || value === undefined || value === false) continue;
+    if (name === "className") {
+      element.className = String(value);
+    } else if (value === true) {
+      element.setAttribute(name, "");
+    } else {
+      element.setAttribute(name, String(value));
+    }
+  }
+  return element;
+}
+
+function figEditorCreateElement(tagName, attributes, children) {
+  const element = document.createElement(tagName);
+  figEditorSetAttributes(element, attributes);
+  return figEditorAppendChildren(element, children);
+}
+
+const FIG_EDITOR_SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
+function figEditorCreateSvgElement(tagName, attributes, children) {
+  const element = document.createElementNS(FIG_EDITOR_SVG_NAMESPACE, tagName);
+  for (const [name, value] of Object.entries(attributes || {})) {
+    if (value === null || value === undefined || value === false) continue;
+    if (name === "className") {
+      element.setAttribute("class", String(value));
+    } else if (value === true) {
+      element.setAttribute(name, "");
+    } else {
+      element.setAttribute(name, String(value));
+    }
+  }
+  return figEditorAppendChildren(element, children);
+}
+
+function figEditorHexToRgb(hex) {
+  const h = String(hex || "").replace(/^#/, "");
+  return {
+    r: parseInt(h.substring(0, 2), 16) || 0,
+    g: parseInt(h.substring(2, 4), 16) || 0,
+    b: parseInt(h.substring(4, 6), 16) || 0,
+  };
+}
+
+function figEditorRgbToHsl(r, g, b) {
+  const R = r / 255;
+  const G = g / 255;
+  const B = b / 255;
+  const max = Math.max(R, G, B);
+  const min = Math.min(R, G, B);
+  const l = (max + min) / 2;
+  if (max === min) return { h: 0, s: 0, l: l * 100 };
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h;
+  switch (max) {
+    case R:
+      h = ((G - B) / d + (G < B ? 6 : 0)) / 6;
+      break;
+    case G:
+      h = ((B - R) / d + 2) / 6;
+      break;
+    default:
+      h = ((R - G) / d + 4) / 6;
+      break;
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function figEditorRgbToLinear(c) {
+  const s = c / 255;
+  return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+}
+
+function figEditorRgbToOklab(r, g, b) {
+  const lr = figEditorRgbToLinear(r);
+  const lg = figEditorRgbToLinear(g);
+  const lb = figEditorRgbToLinear(b);
+  const l_ = Math.cbrt(
+    0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb,
+  );
+  const m_ = Math.cbrt(
+    0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb,
+  );
+  const s_ = Math.cbrt(
+    0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb,
+  );
+  return {
+    l: 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
+    a: 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
+    b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
+  };
+}
+
+function figEditorOklabToOklch(L, a, b) {
+  return {
+    l: L,
+    c: Math.sqrt(a * a + b * b),
+    h: (Math.atan2(b, a) * 180) / Math.PI,
+  };
+}
+
 function figEditorCreateOverflowButtons({
   owner,
   onStart,
@@ -534,8 +651,8 @@ class FigSelect extends HTMLElement {
   #initialize() {
     this.#initialized = true;
     const shadow = this.attachShadow({ mode: "open" });
-    shadow.innerHTML = `
-      <style>
+    const style = document.createElement("style");
+    style.textContent = `
         :host {
           display: inline-flex;
           position: relative;
@@ -622,8 +739,8 @@ class FigSelect extends HTMLElement {
           min-height: 0;
           max-height: inherit;
         }
-      </style>
     `;
+    shadow.appendChild(style);
 
     const button = document.createElement("fig-button");
     button.className = "fig-select-trigger";
@@ -1434,6 +1551,59 @@ function parseGradientInterpolationSelectValue(val) {
 let figFillPickerDialogId = 0;
 
 class FigFillPicker extends HTMLElement {
+  // One segment per color space; `advanced` variants live in the overflow menu
+  // and retarget their space's segment when picked.
+  static #GRADIENT_INTERPOLATION_MODES = [
+    { value: "srgb", space: "srgb", title: "Classic", subtitle: "sRGB Linear" },
+    { value: "oklab", space: "oklab", title: "Smooth", subtitle: "OKLab" },
+    {
+      value: "oklch-increasing",
+      space: "oklch",
+      title: "Vibrant",
+      subtitle: "OKLCH Increasing",
+    },
+    {
+      value: "hsl-increasing",
+      space: "hsl",
+      title: "Vivid",
+      subtitle: "HSL Increasing",
+    },
+    {
+      value: "oklch-decreasing",
+      space: "oklch",
+      title: "Vibrant",
+      subtitle: "OKLCH Decreasing",
+      advanced: true,
+    },
+    {
+      value: "hsl-decreasing",
+      space: "hsl",
+      title: "Vivid",
+      subtitle: "HSL Decreasing",
+      advanced: true,
+    },
+  ];
+
+  static #gradientInterpolationMode(value) {
+    const modes = FigFillPicker.#GRADIENT_INTERPOLATION_MODES;
+    const exact = modes.find((mode) => mode.value === value);
+    if (exact) return exact;
+    // External values (e.g. "oklch-shorter") still label against their space.
+    const parsed = parseGradientInterpolationSelectValue(value);
+    const base = modes.find((mode) => mode.space === parsed.interpolationSpace);
+    const spaceLabel =
+      base?.subtitle.split(" ")[0] ?? parsed.interpolationSpace.toUpperCase();
+    const hue = parsed.hueInterpolation;
+    return {
+      value,
+      space: parsed.interpolationSpace,
+      title: base?.title ?? "Custom",
+      subtitle: GRADIENT_HUE_SPACES.has(parsed.interpolationSpace)
+        ? `${spaceLabel} ${hue.charAt(0).toUpperCase()}${hue.slice(1)}`
+        : spaceLabel,
+    };
+  }
+
   #trigger = null;
   #swatch = null;
   #dialog = null;
@@ -1737,6 +1907,9 @@ class FigFillPicker extends HTMLElement {
           bg = "";
         }
         break;
+      case "webcam":
+        bg = this.#webcam.snapshot ? `url(${this.#webcam.snapshot})` : "";
+        break;
       default:
         const slot = this.#customSlots[this.#fillType];
         bg = slot?.element?.getAttribute("swatch-background") || "#D9D9D9";
@@ -1914,40 +2087,58 @@ class FigFillPicker extends HTMLElement {
 
     let headerContent;
     if (allowedModes.length === 1) {
-      headerContent = `<h3 class="fig-fill-picker-type-label">${figEditorEscapeAttribute(modeLabels[allowedModes[0]])}</h3>`;
+      headerContent = figEditorCreateElement(
+        "h3",
+        { className: "fig-fill-picker-type-label" },
+        modeLabels[allowedModes[0]],
+      );
     } else {
-      const options = allowedModes
-        .map(
-          (m) =>
-            `<fig-select-option value="${figEditorEscapeAttribute(m)}">${figEditorEscapeAttribute(modeLabels[m])}</fig-select-option>`,
-        )
-        .join("\n            ");
-      headerContent = `<fig-select class="fig-fill-picker-type" label="Fill type" value="${figEditorEscapeAttribute(this.#fillType)}">
-          <fig-select-options>
-            ${options}
-          </fig-select-options>
-        </fig-select>`;
+      const options = figEditorCreateElement(
+        "fig-select-options",
+        {},
+        allowedModes.map((modeName) =>
+          figEditorCreateElement(
+            "fig-select-option",
+            { value: modeName },
+            modeLabels[modeName],
+          ),
+        ),
+      );
+      headerContent = figEditorCreateElement(
+        "fig-select",
+        {
+          className: "fig-fill-picker-type",
+          label: "Fill type",
+          value: this.#fillType,
+        },
+        options,
+      );
     }
 
     // Generate tab containers for all allowed modes
-    const tabDivs = allowedModes
-      .map(
-        (m) =>
-          `<div class="fig-fill-picker-tab" data-tab="${figEditorEscapeAttribute(m)}"></div>`,
-      )
-      .join("\n        ");
-
-    this.#dialog.innerHTML = `
-      <fig-header>
-        ${headerContent}
-        <fig-button icon variant="ghost" class="fig-fill-picker-close" aria-label="Close fill picker">
-          <fig-icon name="close"></fig-icon>
-        </fig-button>
-      </fig-header>
-      <fig-content>
-        ${tabDivs}
-      </fig-content>
-    `;
+    const tabDivs = allowedModes.map((modeName) =>
+      figEditorCreateElement("div", {
+        className: "fig-fill-picker-tab",
+        "data-tab": modeName,
+      }),
+    );
+    const closeButton = figEditorCreateElement(
+      "fig-button",
+      {
+        icon: true,
+        variant: "ghost",
+        className: "fig-fill-picker-close",
+        "aria-label": "Close fill picker",
+      },
+      figEditorCreateIcon("close"),
+    );
+    this.#dialog.replaceChildren(
+      figEditorCreateElement("fig-header", {}, [
+        headerContent,
+        closeButton,
+      ]),
+      figEditorCreateElement("fig-content", {}, tabDivs),
+    );
 
     document.body.appendChild(this.#dialog);
 
@@ -2080,7 +2271,7 @@ class FigFillPicker extends HTMLElement {
 
     // Update tab-specific UI after visibility change
     if (tabName === "gradient") {
-      // Use RAF to ensure layout is complete before updating angle input
+      // Use RAF to ensure layout is complete before refreshing gradient UI
       this.#scheduleFrame(() => {
         this.#updateGradientUI();
         const barInput = tab.querySelector(".fig-fill-picker-gradient-bar-input");
@@ -2136,51 +2327,106 @@ class FigFillPicker extends HTMLElement {
     const container = this.#dialog.querySelector('[data-tab="solid"]');
     const showAlpha = this.getAttribute("alpha") !== "false";
 
-    container.innerHTML = `
-      <fig-preview class="fig-fill-picker-color-area">
-        <canvas width="200" height="200"></canvas>
-        <fig-handle
-          aria-label="Color saturation and brightness"
-          role="slider"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          type="color"
-          color="${this.#hsvToHex({ ...this.#color, a: 1 })}"
-          data-no-color-picker
-          drag
-          drag-surface=".fig-fill-picker-color-area"
-          drag-axes="x,y"
-          drag-snapping="modifier"
-        ></fig-handle>
-      </fig-preview>
-      <div class="fig-fill-picker-sliders${showAlpha ? "" : " is-hue-only"}">
-        <fig-tooltip text="Sample color"><fig-button icon variant="ghost" class="fig-fill-picker-eyedropper" aria-label="Sample color"><fig-icon name="eyedropper"></fig-icon></fig-button></fig-tooltip>
-        <fig-slider type="hue" variant="classic" text="false" min="0" max="360" aria-label="Hue" value="${
-          this.#color.h
-        }"></fig-slider>
-        ${
-          showAlpha
-            ? `<fig-slider type="opacity" variant="classic" text="false" min="0" max="100" aria-label="Opacity" value="${
-                this.#color.a * 100
-              }" color="${this.#hsvToHex(this.#color)}"></fig-slider>`
-            : ""
-        }
-      </div>
-      <fig-field class="fig-fill-picker-inputs">
-        <fig-select class="fig-fill-picker-input-mode" label="Color value format" value="${figEditorEscapeAttribute(this.#colorInputMode)}">
-          <fig-select-options>
-            <fig-select-option value="hex">Hex</fig-select-option>
-            <fig-select-option value="rgb">RGB</fig-select-option>
-            <fig-select-option value="css">CSS</fig-select-option>
-            <fig-select-option value="hsl">HSL</fig-select-option>
-            <fig-select-option value="hsb">HSB</fig-select-option>
-            <fig-select-option value="lab">LAB</fig-select-option>
-            <fig-select-option value="lch">LCH</fig-select-option>
-          </fig-select-options>
-        </fig-select>
-        <span class="fig-fill-picker-input-fields"></span>
-      </fig-field>
-    `;
+    const canvas = figEditorCreateElement("canvas", {
+      width: "200",
+      height: "200",
+    });
+    const colorHandle = figEditorCreateElement("fig-handle", {
+      "aria-label": "Color saturation and brightness",
+      role: "slider",
+      "aria-valuemin": "0",
+      "aria-valuemax": "100",
+      type: "color",
+      color: this.#hsvToHex({ ...this.#color, a: 1 }),
+      "data-no-color-picker": true,
+      drag: true,
+      "drag-surface": ".fig-fill-picker-color-area",
+      "drag-axes": "x,y",
+      "drag-snapping": "modifier",
+    });
+    const preview = figEditorCreateElement(
+      "fig-preview",
+      { className: "fig-fill-picker-color-area" },
+      [canvas, colorHandle],
+    );
+    const eyedropperControl = figEditorCreateElement(
+      "fig-tooltip",
+      { text: "Sample color" },
+      figEditorCreateElement(
+        "fig-button",
+        {
+          icon: true,
+          variant: "ghost",
+          className: "fig-fill-picker-eyedropper",
+          "aria-label": "Sample color",
+        },
+        figEditorCreateIcon("eyedropper"),
+      ),
+    );
+    const sliders = figEditorCreateElement(
+      "div",
+      {
+        className: `fig-fill-picker-sliders${showAlpha ? "" : " is-hue-only"}`,
+      },
+      [
+        eyedropperControl,
+        figEditorCreateElement("fig-slider", {
+          type: "hue",
+          variant: "classic",
+          text: "false",
+          min: "0",
+          max: "360",
+          "aria-label": "Hue",
+          value: this.#color.h,
+        }),
+        showAlpha
+          ? figEditorCreateElement("fig-slider", {
+              type: "opacity",
+              variant: "classic",
+              text: "false",
+              min: "0",
+              max: "100",
+              "aria-label": "Opacity",
+              value: this.#color.a * 100,
+              color: this.#hsvToHex(this.#color),
+            })
+          : null,
+      ],
+    );
+    const formatOptions = figEditorCreateElement(
+      "fig-select-options",
+      {},
+      [
+        ["hex", "Hex"],
+        ["rgb", "RGB"],
+        ["css", "CSS"],
+        ["hsl", "HSL"],
+        ["hsb", "HSB"],
+        ["lab", "LAB"],
+        ["lch", "LCH"],
+      ].map(([value, label]) =>
+        figEditorCreateElement("fig-select-option", { value }, label),
+      ),
+    );
+    const inputs = figEditorCreateElement(
+      "fig-field",
+      { className: "fig-fill-picker-inputs" },
+      [
+        figEditorCreateElement(
+          "fig-select",
+          {
+            className: "fig-fill-picker-input-mode",
+            label: "Color value format",
+            value: this.#colorInputMode,
+          },
+          formatOptions,
+        ),
+        figEditorCreateElement("span", {
+          className: "fig-fill-picker-input-fields",
+        }),
+      ],
+    );
+    container.replaceChildren(preview, sliders, inputs);
 
     // Setup color area
     this.#colorArea = container.querySelector("canvas");
@@ -2469,11 +2715,18 @@ class FigFillPicker extends HTMLElement {
     );
     if (!container) return;
 
-    const wrap = (tooltip, html) =>
-      `<fig-tooltip text="${tooltip}">${html}</fig-tooltip>`;
+    const wrap = (tooltip, child) =>
+      figEditorCreateElement("fig-tooltip", { text: tooltip }, child);
 
     const num = (cls, label, min, max, step, units) =>
-      `<fig-input-number class="${cls}" aria-label="${label}" min="${min}" max="${max}"${step != null ? ` step="${step}"` : ""}${units ? ` units="${units}"` : ""}></fig-input-number>`;
+      figEditorCreateElement("fig-input-number", {
+        className: cls,
+        "aria-label": label,
+        min,
+        max,
+        step,
+        units,
+      });
 
     const showAlpha = this.getAttribute("alpha") !== "false";
     const alphaField = () =>
@@ -2482,64 +2735,119 @@ class FigFillPicker extends HTMLElement {
             "Alpha",
             num("fig-fill-picker-ci-a", "Alpha", 0, 100, 0.1, "%"),
           )
-        : "";
+        : null;
+    const combo = (children, extraClass = "") =>
+      figEditorCreateElement(
+        "div",
+        {
+          className: ["input-combo", extraClass].filter(Boolean).join(" "),
+        },
+        children,
+      );
 
-    let html;
+    let content;
     switch (this.#colorInputMode) {
       case "rgb":
-        html = `<div class="input-combo">
-          ${wrap("Red", num("fig-fill-picker-ci-r", "Red", 0, 255))}
-          ${wrap("Green", num("fig-fill-picker-ci-g", "Green", 0, 255))}
-          ${wrap("Blue", num("fig-fill-picker-ci-b", "Blue", 0, 255))}
-          ${alphaField()}
-        </div>`;
+        content = combo([
+          wrap("Red", num("fig-fill-picker-ci-r", "Red", 0, 255)),
+          wrap("Green", num("fig-fill-picker-ci-g", "Green", 0, 255)),
+          wrap("Blue", num("fig-fill-picker-ci-b", "Blue", 0, 255)),
+          alphaField(),
+        ]);
         break;
       case "hsl":
-        html = `<div class="input-combo">
-          ${wrap("Hue", num("fig-fill-picker-ci-h", "Hue", 0, 360))}
-          ${wrap("Saturation", num("fig-fill-picker-ci-s", "Saturation", 0, 100))}
-          ${wrap("Lightness", num("fig-fill-picker-ci-l", "Lightness", 0, 100))}
-          ${alphaField()}
-        </div>`;
+        content = combo([
+          wrap("Hue", num("fig-fill-picker-ci-h", "Hue", 0, 360)),
+          wrap(
+            "Saturation",
+            num("fig-fill-picker-ci-s", "Saturation", 0, 100),
+          ),
+          wrap(
+            "Lightness",
+            num("fig-fill-picker-ci-l", "Lightness", 0, 100),
+          ),
+          alphaField(),
+        ]);
         break;
       case "hsb":
-        html = `<div class="input-combo">
-          ${wrap("Hue", num("fig-fill-picker-ci-h", "Hue", 0, 360))}
-          ${wrap("Saturation", num("fig-fill-picker-ci-s", "Saturation", 0, 100))}
-          ${wrap("Brightness", num("fig-fill-picker-ci-v", "Brightness", 0, 100))}
-          ${alphaField()}
-        </div>`;
+        content = combo([
+          wrap("Hue", num("fig-fill-picker-ci-h", "Hue", 0, 360)),
+          wrap(
+            "Saturation",
+            num("fig-fill-picker-ci-s", "Saturation", 0, 100),
+          ),
+          wrap(
+            "Brightness",
+            num("fig-fill-picker-ci-v", "Brightness", 0, 100),
+          ),
+          alphaField(),
+        ]);
         break;
       case "lab":
-        html = `<div class="input-combo">
-          ${wrap("Lightness", num("fig-fill-picker-ci-okl", "Lightness", 0, 100))}
-          ${wrap("Green-Red axis", num("fig-fill-picker-ci-oka", "Green-Red axis", -0.4, 0.4, 0.001))}
-          ${wrap("Blue-Yellow axis", num("fig-fill-picker-ci-okb", "Blue-Yellow axis", -0.4, 0.4, 0.001))}
-          ${alphaField()}
-        </div>`;
+        content = combo([
+          wrap(
+            "Lightness",
+            num("fig-fill-picker-ci-okl", "Lightness", 0, 100),
+          ),
+          wrap(
+            "Green-Red axis",
+            num(
+              "fig-fill-picker-ci-oka",
+              "Green-Red axis",
+              -0.4,
+              0.4,
+              0.001,
+            ),
+          ),
+          wrap(
+            "Blue-Yellow axis",
+            num(
+              "fig-fill-picker-ci-okb",
+              "Blue-Yellow axis",
+              -0.4,
+              0.4,
+              0.001,
+            ),
+          ),
+          alphaField(),
+        ]);
         break;
       case "lch":
-        html = `<div class="input-combo">
-          ${wrap("Lightness", num("fig-fill-picker-ci-okl", "Lightness", 0, 100))}
-          ${wrap("Chroma", num("fig-fill-picker-ci-okc", "Chroma", 0, 0.4, 0.001))}
-          ${wrap("Hue", num("fig-fill-picker-ci-okh", "Hue", 0, 360))}
-          ${alphaField()}
-        </div>`;
+        content = combo([
+          wrap(
+            "Lightness",
+            num("fig-fill-picker-ci-okl", "Lightness", 0, 100),
+          ),
+          wrap(
+            "Chroma",
+            num("fig-fill-picker-ci-okc", "Chroma", 0, 0.4, 0.001),
+          ),
+          wrap("Hue", num("fig-fill-picker-ci-okh", "Hue", 0, 360)),
+          alphaField(),
+        ]);
         break;
       case "css":
-        html = `<fig-input-text class="fig-fill-picker-ci-css" aria-label="CSS color" placeholder="rgba(0, 0, 0, 1)"></fig-input-text>`;
+        content = figEditorCreateElement("fig-input-text", {
+          className: "fig-fill-picker-ci-css",
+          "aria-label": "CSS color",
+          placeholder: "rgba(0, 0, 0, 1)",
+        });
         break;
       default: // hex
-        html = showAlpha
-          ? `<div class="input-combo fig-fill-picker-ci-hex-row">
-          <fig-input-text class="fig-fill-picker-ci-hex" aria-label="Hex color" placeholder="FFFFFF"></fig-input-text>
-          ${alphaField()}
-        </div>`
-          : `<fig-input-text class="fig-fill-picker-ci-hex" aria-label="Hex color" placeholder="FFFFFF"></fig-input-text>`;
+        {
+          const hexInput = figEditorCreateElement("fig-input-text", {
+            className: "fig-fill-picker-ci-hex",
+            "aria-label": "Hex color",
+            placeholder: "FFFFFF",
+          });
+          content = showAlpha
+            ? combo([hexInput, alphaField()], "fig-fill-picker-ci-hex-row")
+            : hexInput;
+        }
         break;
     }
 
-    container.innerHTML = html;
+    container.replaceChildren(content);
     this.#wireColorInputEvents();
     this.#scheduleFrame(() => this.#updateColorInputs());
   }
@@ -2728,124 +3036,222 @@ class FigFillPicker extends HTMLElement {
   #initGradientTab() {
     const container = this.#dialog.querySelector('[data-tab="gradient"]');
     const interpolationValue = gradientInterpolationSelectValue(this.#gradient);
-
-    container.innerHTML = `
-      <fig-field class="fig-fill-picker-gradient-header">
-        <fig-select class="fig-fill-picker-gradient-type" label="Gradient type" value="${figEditorEscapeAttribute(this.#gradient.type)}">
-          <fig-select-options>
-            <fig-select-option value="linear">Linear</fig-select-option>
-            <fig-select-option value="radial">Radial</fig-select-option>
-            <fig-select-option value="angular">Angular</fig-select-option>
-          </fig-select-options>
-        </fig-select>
-        <fig-tooltip text="Gradient angle">
-          <fig-input-number class="fig-fill-picker-gradient-angle" aria-label="Gradient angle" value="${
-            (this.#gradient.angle - 90 + 360) % 360
-          }" min="0" max="360" units="°" wrap></fig-input-number>
-        </fig-tooltip>
-        <div class="fig-fill-picker-gradient-center input-combo" style="display: none;">
-          <fig-input-number min="0" max="100" aria-label="Gradient center X" value="${
-            this.#gradient.centerX
-          }" units="%" class="fig-fill-picker-gradient-cx"></fig-input-number>
-          <fig-input-number min="0" max="100" aria-label="Gradient center Y" value="${
-            this.#gradient.centerY
-          }" units="%" class="fig-fill-picker-gradient-cy"></fig-input-number>
-        </div>
-        <div class="fig-fill-picker-gradient-actions">
-          <fig-tooltip text="Flip gradient">
-            <fig-button icon variant="ghost" class="fig-fill-picker-gradient-flip" aria-label="Flip gradient">
-              <fig-icon name="swap"></fig-icon>
-            </fig-button>
-          </fig-tooltip>
-          <fig-tooltip text="Rotate gradient">
-            <fig-button icon variant="ghost" class="fig-fill-picker-gradient-rotate" aria-label="Rotate gradient">
-              <fig-icon name="rotate"></fig-icon>
-            </fig-button>
-          </fig-tooltip>
-        </div>
-      </fig-field>
-      <fig-preview class="fig-fill-picker-gradient-preview">
-        <fig-input-gradient class="fig-fill-picker-gradient-bar-input" aria-label="Gradient stops" edit="true" mode="tip" size="large" value='${JSON.stringify({ type: "gradient", gradient: gradientToValueShape(this.#gradient) })}'></fig-input-gradient>
-      </fig-preview>
-      <div class="fig-fill-picker-gradient-stops">
-        <fig-header class="fig-fill-picker-gradient-stops-header" borderless>
-          <span>Stops</span>
-          <fig-button icon variant="ghost" class="fig-fill-picker-gradient-add" aria-label="Add gradient stop" title="Add stop">
-            <fig-icon name="add"></fig-icon>
-          </fig-button>
-        </fig-header>
-        <div class="fig-fill-picker-gradient-stops-list">
-          <fig-reorder></fig-reorder>
-        </div>
-      </div>
-      <div class="fig-fill-picker-gradient-interpolation">
-        <fig-header class="fig-fill-picker-gradient-interpolation-header" borderless>
-          <span>Color interpolation</span>
-        </fig-header>
-        <fig-field class="fig-fill-picker-gradient-interpolation-field">
-          <fig-select class="fig-fill-picker-gradient-space" label="Color interpolation" full value="${figEditorEscapeAttribute(interpolationValue)}">
-            <fig-select-options>
-              ${this.#gradientInterpolationOptionsMarkup()}
-            </fig-select-options>
-          </fig-select>
-        </fig-field>
-      </div>
-    `;
+    const gradientType = figEditorCreateElement(
+      "fig-select",
+      {
+        className: "fig-fill-picker-gradient-type",
+        label: "Gradient type",
+        value: this.#gradient.type,
+      },
+      figEditorCreateElement(
+        "fig-select-options",
+        {},
+        [
+          ["linear", "Linear"],
+          ["radial", "Radial"],
+          ["angular", "Angular"],
+        ].map(([value, label]) =>
+          figEditorCreateElement("fig-select-option", { value }, label),
+        ),
+      ),
+    );
+    const createAction = (text, className, iconName) =>
+      figEditorCreateElement(
+        "fig-tooltip",
+        { text },
+        figEditorCreateElement(
+          "fig-button",
+          {
+            icon: true,
+            variant: "ghost",
+            className,
+            "aria-label": text,
+          },
+          figEditorCreateIcon(iconName),
+        ),
+      );
+    const actions = figEditorCreateElement(
+      "div",
+      { className: "fig-fill-picker-gradient-actions" },
+      [
+        createAction(
+          "Flip gradient",
+          "fig-fill-picker-gradient-flip",
+          "swap",
+        ),
+        createAction(
+          "Rotate gradient",
+          "fig-fill-picker-gradient-rotate",
+          "rotate",
+        ),
+      ],
+    );
+    const header = figEditorCreateElement(
+      "fig-field",
+      { className: "fig-fill-picker-gradient-header" },
+      [gradientType, actions],
+    );
+    const gradientBar = figEditorCreateElement("fig-input-gradient", {
+      className: "fig-fill-picker-gradient-bar-input",
+      "aria-label": "Gradient stops",
+      edit: "true",
+      mode: "tip",
+      size: "large",
+      value: JSON.stringify({
+        type: "gradient",
+        gradient: gradientToValueShape(this.#gradient),
+      }),
+    });
+    const preview = figEditorCreateElement(
+      "fig-preview",
+      { className: "fig-fill-picker-gradient-preview" },
+      gradientBar,
+    );
+    const addButton = figEditorCreateElement(
+      "fig-button",
+      {
+        icon: true,
+        variant: "ghost",
+        className: "fig-fill-picker-gradient-add",
+        "aria-label": "Add gradient stop",
+        title: "Add stop",
+      },
+      figEditorCreateIcon("add"),
+    );
+    const stops = figEditorCreateElement(
+      "div",
+      { className: "fig-fill-picker-gradient-stops" },
+      [
+        figEditorCreateElement(
+          "fig-header",
+          {
+            className: "fig-fill-picker-gradient-stops-header",
+            borderless: true,
+          },
+          [figEditorCreateElement("span", {}, "Stops"), addButton],
+        ),
+        figEditorCreateElement(
+          "div",
+          { className: "fig-fill-picker-gradient-stops-list" },
+          document.createElement("fig-reorder"),
+        ),
+      ],
+    );
+    const interpolationModes = figEditorCreateElement(
+      "fig-segmented-control",
+      {
+        className: "fig-fill-picker-gradient-interpolation-modes",
+        "aria-label": "Color interpolation",
+        value: interpolationValue,
+      },
+      FigFillPicker.#GRADIENT_INTERPOLATION_MODES.filter(
+        (mode) => !mode.advanced,
+      ).map(({ value, space, title, subtitle }) =>
+        figEditorCreateElement(
+          "fig-tooltip",
+          { text: `${title} — ${subtitle}` },
+          figEditorCreateElement(
+            "fig-segment",
+            {
+              value,
+              "data-space": space,
+              "aria-label": `${title} — ${subtitle}`,
+            },
+            figEditorCreateElement("fig-interpolation-swatch", {
+              "aria-hidden": "true",
+            }),
+          ),
+        ),
+      ),
+    );
+    const interpolationSelect = figEditorCreateElement(
+      "fig-select",
+      {
+        className: "fig-fill-picker-gradient-space",
+        label: "Color interpolation",
+        value: interpolationValue,
+      },
+      figEditorCreateElement(
+        "fig-select-options",
+        {},
+        this.#createGradientInterpolationOptions(),
+      ),
+    );
+    // The select trigger overlays the icon button so its menu anchors correctly.
+    const interpolationMore = figEditorCreateElement(
+      "div",
+      { className: "fig-fill-picker-gradient-interpolation-more" },
+      [
+        figEditorCreateElement(
+          "fig-button",
+          {
+            icon: true,
+            variant: "ghost",
+            "aria-hidden": "true",
+            tabindex: "-1",
+          },
+          figEditorCreateIcon("more"),
+        ),
+        interpolationSelect,
+      ],
+    );
+    const interpolation = figEditorCreateElement(
+      "fig-field",
+      { className: "fig-fill-picker-gradient-interpolation-field" },
+      [interpolationModes, interpolationMore],
+    );
+    container.replaceChildren(header, preview, interpolation, stops);
 
     this.#updateGradientUI();
     this.#setupGradientEvents(container);
   }
 
-  #gradientInterpolationOptionsMarkup() {
-    const hueMethods = ["shorter", "longer", "increasing", "decreasing"];
-    const groups = [
-      {
-        label: "Linear",
-        options: [
-          { value: "srgb", label: "sRGB" },
+  #createGradientInterpolationOptions() {
+    const createOption = ({ value, title, subtitle, advanced = false }) =>
+      figEditorCreateElement(
+        "fig-select-option",
+        {
+          value,
+          label: `${title} — ${subtitle}`,
+          className: advanced
+            ? "fig-fill-picker-gradient-interpolation-advanced"
+            : null,
+        },
+        [
+          figEditorCreateElement("fig-interpolation-swatch", {
+            slot: "prepend",
+            size: "large",
+            "aria-hidden": "true",
+          }),
+          figEditorCreateElement(
+            "span",
+            { className: "fig-fill-picker-gradient-interpolation-label" },
+            [
+              figEditorCreateElement(
+                "span",
+                { className: "fig-fill-picker-gradient-interpolation-title" },
+                title,
+              ),
+              figEditorCreateElement(
+                "span",
+                { className: "fig-fill-picker-gradient-interpolation-subtitle" },
+                subtitle,
+              ),
+            ],
+          ),
         ],
-      },
-      {
-        label: "",
-        options: [{ value: "oklab", label: "OKLAB" }],
-      },
-      {
-        label: "Polar",
-        options: hueMethods.map((method) => ({
-          value: `oklch-${method}`,
-          label: `OKLCH ${method.charAt(0).toUpperCase()}${method.slice(1)}`,
-        })),
-      },
-      {
-        label: "",
-        separator: true,
-        options: hueMethods.map((method) => ({
-          value: `hsl-${method}`,
-          label: `HSL ${method.charAt(0).toUpperCase()}${method.slice(1)}`,
-        })),
-      },
+      );
+
+    const separator = figEditorCreateElement("fig-separator", {
+      className: "fig-fill-picker-gradient-interpolation-advanced",
+    });
+
+    const modes = FigFillPicker.#GRADIENT_INTERPOLATION_MODES;
+    return [
+      ...modes.filter((mode) => !mode.advanced).map(createOption),
+      separator,
+      ...modes.filter((mode) => mode.advanced).map(createOption),
     ];
-    return groups
-      .map((group) => {
-        const options = group.options
-          .map((opt) => {
-            const methodLabel = opt.method
-              ? opt.method.charAt(0).toUpperCase() + opt.method.slice(1)
-              : "";
-            const appendLabel = opt.append || methodLabel;
-            return `<fig-select-option value="${figEditorEscapeAttribute(opt.value)}" label="${figEditorEscapeAttribute(opt.label)}">
-          <fig-interpolation-swatch slot="prepend" size="large" aria-hidden="true"></fig-interpolation-swatch>
-          ${figEditorEscapeAttribute(opt.label)}
-          ${appendLabel ? `<span slot="append">${figEditorEscapeAttribute(appendLabel)}</span>` : ""}
-        </fig-select-option>`;
-          })
-          .join("");
-        const separator = group.label || group.separator
-          ? `<fig-separator${group.label ? ` label="${figEditorEscapeAttribute(group.label)}"` : ""}></fig-separator>`
-          : "";
-        return `${separator}${options}`;
-      })
-      .join("");
   }
 
   #setupGradientEvents(container) {
@@ -2885,6 +3291,93 @@ class FigFillPicker extends HTMLElement {
     const interpolationSelect = container.querySelector(
       ".fig-fill-picker-gradient-space",
     );
+    const interpolationPanel = interpolationSelect?.querySelector(
+      "fig-select-options",
+    );
+    // Collapsed list clips the advanced options so fig-select-options' own
+    // overflow chevron is the "show all" affordance; clicking it expands.
+    const COLLAPSED_CLASS = "fig-fill-picker-gradient-interpolation-collapsed";
+    const firstAdvancedOption = interpolationPanel?.querySelector(
+      ".fig-fill-picker-gradient-interpolation-advanced",
+    );
+    const isInterpolationCollapsed = () =>
+      Boolean(interpolationPanel?.classList.contains(COLLAPSED_CLASS));
+    const setOverflowChevronLabel = (collapsed) => {
+      interpolationPanel
+        ?.querySelector(".fig-overflow-end")
+        ?.setAttribute(
+          "aria-label",
+          collapsed ? "Show all color interpolation options" : "Scroll down",
+        );
+    };
+    const expandInterpolationOptions = () => {
+      if (!interpolationPanel) return;
+      interpolationPanel.classList.remove(COLLAPSED_CLASS);
+      interpolationPanel.style.removeProperty("max-height");
+      setOverflowChevronLabel(false);
+      interpolationPanel.syncOverflow?.();
+    };
+    const collapseInterpolationOptions = () => {
+      if (!interpolationPanel || !firstAdvancedOption) return;
+      interpolationPanel.style.removeProperty("max-height");
+      interpolationPanel.classList.add(COLLAPSED_CLASS);
+      interpolationPanel.scrollTop = 0;
+      const panelTop = interpolationPanel.getBoundingClientRect().top;
+      const advancedTop = firstAdvancedOption.getBoundingClientRect().top;
+      const chevronHeight =
+        interpolationPanel.querySelector(".fig-overflow-end")?.offsetHeight || 0;
+      const visibleHeight = advancedTop - panelTop;
+      if (visibleHeight > 0) {
+        interpolationPanel.style.maxHeight = `${Math.round(visibleHeight + chevronHeight)}px`;
+      }
+      setOverflowChevronLabel(true);
+      interpolationPanel.syncOverflow?.();
+    };
+    const isAdvancedInterpolationValue = (value) =>
+      Boolean(
+        interpolationPanel?.querySelector(
+          `fig-select-option.fig-fill-picker-gradient-interpolation-advanced[value="${value}"]`,
+        ),
+      );
+    const syncInterpolationCollapse = () => {
+      if (
+        isAdvancedInterpolationValue(
+          gradientInterpolationSelectValue(this.#gradient),
+        )
+      ) {
+        expandInterpolationOptions();
+      } else {
+        collapseInterpolationOptions();
+      }
+    };
+    interpolationPanel?.addEventListener(
+      "click",
+      (event) => {
+        if (!isInterpolationCollapsed()) return;
+        if (!event.target?.closest?.(".fig-overflow-end")) return;
+        event.preventDefault();
+        event.stopPropagation();
+        expandInterpolationOptions();
+      },
+      true,
+    );
+    // Arrow-key focus lands on a clipped option — reveal the rest instead.
+    interpolationPanel?.addEventListener("focusin", (event) => {
+      if (!isInterpolationCollapsed()) return;
+      if (
+        event.target?.closest?.(
+          ".fig-fill-picker-gradient-interpolation-advanced",
+        )
+      ) {
+        expandInterpolationOptions();
+      }
+    });
+    // Menu alignment nudges the scroller; collapsed list must stay at the top.
+    interpolationPanel?.addEventListener("scroll", () => {
+      if (isInterpolationCollapsed() && interpolationPanel.scrollTop !== 0) {
+        interpolationPanel.scrollTop = 0;
+      }
+    });
     interpolationSelect
       ?.querySelectorAll("fig-select-option")
       .forEach((option) => {
@@ -2913,6 +3406,8 @@ class FigFillPicker extends HTMLElement {
       this.#gradientInterpolationOpenObserver = new MutationObserver(() => {
         if (!interpolationSelect.hasAttribute("open")) {
           restoreGradientBarPreview();
+        } else {
+          this.#scheduleFrame(syncInterpolationCollapse);
         }
       });
       this.#gradientInterpolationOpenObserver.observe(interpolationSelect, {
@@ -2920,8 +3415,11 @@ class FigFillPicker extends HTMLElement {
         attributeFilter: ["open"],
       });
     }
-    interpolationSelect?.addEventListener("change", (e) => {
-      const val = getSelectValue(e);
+    const interpolationModes = container.querySelector(
+      ".fig-fill-picker-gradient-interpolation-modes",
+    );
+    interpolationModes?.addEventListener("change", (e) => {
+      const val = typeof e.detail === "string" ? e.detail : e.target?.value;
       if (!val) return;
       const parsed = parseGradientInterpolationSelectValue(val);
       this.#gradient = normalizeGradientConfig({
@@ -2931,31 +3429,29 @@ class FigFillPicker extends HTMLElement {
       this.#updateGradientUI();
       this.#emitInput();
     });
-
-    // Angle input
-    const angleInput = container.querySelector(
-      ".fig-fill-picker-gradient-angle",
-    );
-    angleInput.addEventListener("input", (e) => {
-      const pickerAngle = parseFloat(e.target.value) || 0;
-      this.#gradient.angle = (pickerAngle + 90) % 360;
-      this.#updateGradientPreview();
-      this.#emitInput();
+    interpolationModes?.querySelectorAll("fig-segment").forEach((segment) => {
+      const previewSegment = () => {
+        setGradientBarPreview(
+          normalizeGradientConfig({
+            ...this.#gradient,
+            ...parseGradientInterpolationSelectValue(
+              segment.getAttribute("value") || "srgb",
+            ),
+          }),
+        );
+      };
+      segment.addEventListener("pointerenter", previewSegment);
+      segment.addEventListener("pointerleave", restoreGradientBarPreview);
     });
-
-    // Center X/Y inputs
-    const cxInput = container.querySelector(".fig-fill-picker-gradient-cx");
-    const cyInput = container.querySelector(".fig-fill-picker-gradient-cy");
-    cxInput?.addEventListener("input", (e) => {
-      const value = Number.parseFloat(e.target.value);
-      this.#gradient.centerX = Number.isFinite(value) ? value : 50;
-      this.#updateGradientPreview();
-      this.#emitInput();
-    });
-    cyInput?.addEventListener("input", (e) => {
-      const value = Number.parseFloat(e.target.value);
-      this.#gradient.centerY = Number.isFinite(value) ? value : 50;
-      this.#updateGradientPreview();
+    interpolationSelect?.addEventListener("change", (e) => {
+      const val = getSelectValue(e);
+      if (!val) return;
+      const parsed = parseGradientInterpolationSelectValue(val);
+      this.#gradient = normalizeGradientConfig({
+        ...this.#gradient,
+        ...parsed,
+      });
+      this.#updateGradientUI();
       this.#emitInput();
     });
 
@@ -3175,37 +3671,32 @@ class FigFillPicker extends HTMLElement {
     if (!container) return;
     this.#gradient = normalizeGradientConfig(this.#gradient);
 
-    // Show/hide angle vs center inputs
-    const angleInput = container.querySelector(
-      ".fig-fill-picker-gradient-angle",
-    );
-    const rotateBtn = container.querySelector(
-      ".fig-fill-picker-gradient-rotate",
-    );
-    const centerInputs = container.querySelector(
-      ".fig-fill-picker-gradient-center",
-    );
-
-    if (this.#gradient.type === "radial") {
-      angleInput.style.display = "none";
-      if (rotateBtn) rotateBtn.style.display = "none";
-      centerInputs.style.display = "flex";
-    } else {
-      angleInput.style.removeProperty("display");
-      rotateBtn?.style.removeProperty("display");
-      centerInputs.style.display = "none";
-      // Sync angle input value (convert CSS angle to picker angle)
-      const pickerAngle = (this.#gradient.angle - 90 + 360) % 360;
-      angleInput.setAttribute("value", pickerAngle);
-    }
-
+    const interpolationValue = gradientInterpolationSelectValue(this.#gradient);
     const interpolationSelect = container.querySelector(
       ".fig-fill-picker-gradient-space",
     );
     if (interpolationSelect) {
-      interpolationSelect.value = gradientInterpolationSelectValue(
-        this.#gradient,
-      );
+      interpolationSelect.value = interpolationValue;
+    }
+    const interpolationModes = container.querySelector(
+      ".fig-fill-picker-gradient-interpolation-modes",
+    );
+    if (interpolationModes) {
+      const mode = FigFillPicker.#gradientInterpolationMode(interpolationValue);
+      // Menu-only variants retarget the segment for their color space.
+      const segment =
+        interpolationModes.querySelector(
+          `fig-segment[value="${interpolationValue}"]`,
+        ) ||
+        interpolationModes.querySelector(`fig-segment[data-space="${mode.space}"]`);
+      if (segment) {
+        const label = `${mode.title} — ${mode.subtitle}`;
+        segment.setAttribute("value", interpolationValue);
+        segment.setAttribute("aria-label", label);
+        const tip = segment.closest("fig-tooltip");
+        if (tip) tip.setAttribute("text", label);
+        interpolationModes.value = interpolationValue;
+      }
     }
 
     this.#updateGradientInterpolationSwatches();
@@ -3238,7 +3729,9 @@ class FigFillPicker extends HTMLElement {
       .querySelectorAll("fig-interpolation-swatch")
       .forEach((swatch) => {
         const optionVal =
-          swatch.closest("fig-select-option")?.getAttribute("value") || "srgb";
+          swatch
+            .closest("fig-select-option, fig-segment")
+            ?.getAttribute("value") || "srgb";
         const parsed = parseGradientInterpolationSelectValue(optionVal);
         const gradient = {
           type: "linear",
@@ -3313,25 +3806,46 @@ class FigFillPicker extends HTMLElement {
     const reorder = list.querySelector("fig-reorder");
     if (!reorder) return;
 
-    reorder.innerHTML = this.#gradient.stops
-      .map(
-        (stop, index) => `
-      <fig-field class="fig-fill-picker-gradient-stop-row" data-index="${index}">
-        <fig-input-number class="fig-fill-picker-stop-position" aria-label="Gradient stop position" min="0" max="100" value="${
-          stop.position
-        }" units="%"></fig-input-number>
-        <fig-input-color class="fig-fill-picker-stop-color" aria-label="Gradient stop color" text="true" alpha="true" picker="figma" picker-dialog-position="right" value="${this.#formatStopColorValue(
-          stop,
-        )}"></fig-input-color>
-        <fig-button icon variant="ghost" class="fig-fill-picker-stop-remove" ${
-          this.#gradient.stops.length <= 2 ? "disabled" : ""
-        } aria-label="Remove gradient stop">
-          <fig-icon name="minus"></fig-icon>
-        </fig-button>
-      </fig-field>
-    `,
-      )
-      .join("");
+    const rows = this.#gradient.stops.map((stop, index) =>
+      figEditorCreateElement(
+        "fig-field",
+        {
+          className: "fig-fill-picker-gradient-stop-row",
+          "data-index": index,
+        },
+        [
+          figEditorCreateElement("fig-input-number", {
+            className: "fig-fill-picker-stop-position",
+            "aria-label": "Gradient stop position",
+            min: "0",
+            max: "100",
+            value: stop.position,
+            units: "%",
+          }),
+          figEditorCreateElement("fig-input-color", {
+            className: "fig-fill-picker-stop-color",
+            "aria-label": "Gradient stop color",
+            text: "true",
+            alpha: "true",
+            picker: "figma",
+            "picker-dialog-position": "right",
+            value: this.#formatStopColorValue(stop),
+          }),
+          figEditorCreateElement(
+            "fig-button",
+            {
+              icon: true,
+              variant: "ghost",
+              className: "fig-fill-picker-stop-remove",
+              disabled: this.#gradient.stops.length <= 2,
+              "aria-label": "Remove gradient stop",
+            },
+            figEditorCreateIcon("minus"),
+          ),
+        ],
+      ),
+    );
+    reorder.replaceChildren(...rows);
 
     reorder
       .querySelectorAll(".fig-fill-picker-gradient-stop-row")
@@ -3440,24 +3954,52 @@ class FigFillPicker extends HTMLElement {
   #initImageTab() {
     const container = this.#dialog.querySelector('[data-tab="image"]');
 
-    container.innerHTML = `
-      <fig-field class="fig-fill-picker-media-header">
-        <fig-select class="fig-fill-picker-scale-mode" label="Image scale mode" value="${figEditorEscapeAttribute(this.#image.scaleMode)}">
-          <fig-select-options>
-            <fig-select-option value="fill">Fill</fig-select-option>
-            <fig-select-option value="fit">Fit</fig-select-option>
-            <fig-select-option value="crop">Crop</fig-select-option>
-            <fig-select-option value="tile">Tile</fig-select-option>
-          </fig-select-options>
-        </fig-select>
-        <fig-input-number class="fig-fill-picker-scale" aria-label="Image tile scale" min="1" max="200" value="${
-          this.#image.scale
-        }" units="%" ${
-          this.#image.scaleMode === "tile" ? "" : 'style="display: none;"'
-        }></fig-input-number>
-      </fig-field>
-      <fig-image class="fig-fill-picker-media-preview fig-fill-picker-image-preview" upload="true" label="Upload from computer" alt="Image fill preview" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true"></fig-image>
-    `;
+    const scaleMode = figEditorCreateElement(
+      "fig-select",
+      {
+        className: "fig-fill-picker-scale-mode",
+        label: "Image scale mode",
+        value: this.#image.scaleMode,
+      },
+      figEditorCreateElement(
+        "fig-select-options",
+        {},
+        [
+          ["fill", "Fill"],
+          ["fit", "Fit"],
+          ["crop", "Crop"],
+          ["tile", "Tile"],
+        ].map(([value, label]) =>
+          figEditorCreateElement("fig-select-option", { value }, label),
+        ),
+      ),
+    );
+    const scale = figEditorCreateElement("fig-input-number", {
+      className: "fig-fill-picker-scale",
+      "aria-label": "Image tile scale",
+      min: "1",
+      max: "200",
+      value: this.#image.scale,
+      units: "%",
+    });
+    if (this.#image.scaleMode !== "tile") scale.style.display = "none";
+    const header = figEditorCreateElement(
+      "fig-field",
+      { className: "fig-fill-picker-media-header" },
+      [scaleMode, scale],
+    );
+    const preview = figEditorCreateElement("fig-image", {
+      className:
+        "fig-fill-picker-media-preview fig-fill-picker-image-preview",
+      upload: "true",
+      label: "Upload from computer",
+      alt: "Image fill preview",
+      size: "auto",
+      "aspect-ratio": "1/1",
+      fit: "cover",
+      checkerboard: "true",
+    });
+    container.replaceChildren(header, preview);
 
     this.#setupImageEvents(container);
   }
@@ -3606,18 +4148,47 @@ class FigFillPicker extends HTMLElement {
   #initVideoTab() {
     const container = this.#dialog.querySelector('[data-tab="video"]');
 
-    container.innerHTML = `
-      <fig-field class="fig-fill-picker-media-header">
-        <fig-select class="fig-fill-picker-scale-mode" label="Video scale mode" value="${figEditorEscapeAttribute(this.#video.scaleMode)}">
-          <fig-select-options>
-            <fig-select-option value="fill">Fill</fig-select-option>
-            <fig-select-option value="fit">Fit</fig-select-option>
-            <fig-select-option value="crop">Crop</fig-select-option>
-          </fig-select-options>
-        </fig-select>
-      </fig-field>
-      <fig-media class="fig-fill-picker-media-preview fig-fill-picker-video-preview" type="video" upload="true" label="Upload from computer" aria-label="Video fill preview" size="auto" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" controls muted="true" loop="true"></fig-media>
-    `;
+    const scaleMode = figEditorCreateElement(
+      "fig-select",
+      {
+        className: "fig-fill-picker-scale-mode",
+        label: "Video scale mode",
+        value: this.#video.scaleMode,
+      },
+      figEditorCreateElement(
+        "fig-select-options",
+        {},
+        [
+          ["fill", "Fill"],
+          ["fit", "Fit"],
+          ["crop", "Crop"],
+        ].map(([value, label]) =>
+          figEditorCreateElement("fig-select-option", { value }, label),
+        ),
+      ),
+    );
+    const header = figEditorCreateElement(
+      "fig-field",
+      { className: "fig-fill-picker-media-header" },
+      scaleMode,
+    );
+    const preview = figEditorCreateElement("fig-media", {
+      className:
+        "fig-fill-picker-media-preview fig-fill-picker-video-preview",
+      type: "video",
+      upload: "true",
+      label: "Upload from computer",
+      "aria-label": "Video fill preview",
+      size: "auto",
+      "aspect-ratio": "1/1",
+      fit: "cover",
+      checkerboard: "true",
+      autoplay: "true",
+      controls: true,
+      muted: "true",
+      loop: "true",
+    });
+    container.replaceChildren(header, preview);
 
     this.#setupVideoEvents(container);
   }
@@ -3663,24 +4234,64 @@ class FigFillPicker extends HTMLElement {
   #initWebcamTab() {
     const container = this.#dialog.querySelector('[data-tab="webcam"]');
 
-    container.innerHTML = `
-      <fig-field class="fig-fill-picker-webcam-camera" style="display: none;">
-        <fig-select class="fig-fill-picker-camera-select" label="Camera" full>
-          <fig-select-options></fig-select-options>
-        </fig-select>
-      </fig-field>
-      <fig-video class="fig-fill-picker-webcam-preview" aria-label="Webcam preview" aspect-ratio="1/1" fit="cover" checkerboard="true" autoplay="true" muted="true">
-        <video class="fig-fill-picker-webcam-video" autoplay muted playsinline></video>
-        <div class="fig-fill-picker-webcam-status" role="status" aria-live="polite">
-          <span>Camera access required</span>
-        </div>
-      </fig-video>
-      <div class="fig-fill-picker-webcam-controls">
-        <fig-button class="fig-fill-picker-webcam-capture" variant="secondary" full disabled>
-          Capture
-        </fig-button>
-      </div>
-    `;
+    const cameraField = figEditorCreateElement(
+      "fig-field",
+      { className: "fig-fill-picker-webcam-camera" },
+      figEditorCreateElement(
+        "fig-select",
+        {
+          className: "fig-fill-picker-camera-select",
+          label: "Camera",
+          full: true,
+        },
+        document.createElement("fig-select-options"),
+      ),
+    );
+    cameraField.style.display = "none";
+    const video = figEditorCreateElement("video", {
+      className: "fig-fill-picker-webcam-video",
+      autoplay: true,
+      muted: true,
+      playsinline: true,
+    });
+    video.muted = true;
+    const status = figEditorCreateElement(
+      "div",
+      {
+        className: "fig-fill-picker-webcam-status",
+        role: "status",
+        "aria-live": "polite",
+      },
+      figEditorCreateElement("span", {}, "Camera access required"),
+    );
+    const preview = figEditorCreateElement(
+      "fig-video",
+      {
+        className: "fig-fill-picker-webcam-preview",
+        "aria-label": "Webcam preview",
+        "aspect-ratio": "1/1",
+        fit: "cover",
+        checkerboard: "true",
+        autoplay: "true",
+        muted: "true",
+      },
+      [video, status],
+    );
+    const controls = figEditorCreateElement(
+      "div",
+      { className: "fig-fill-picker-webcam-controls" },
+      figEditorCreateElement(
+        "fig-button",
+        {
+          className: "fig-fill-picker-webcam-capture",
+          variant: "secondary",
+          full: true,
+          disabled: true,
+        },
+        "Capture",
+      ),
+    );
+    container.replaceChildren(cameraField, preview, controls);
 
     this.#setupWebcamEvents(container);
   }
@@ -3837,8 +4448,19 @@ class FigFillPicker extends HTMLElement {
       );
       if (imagePreview) this.#updateImagePreview(imagePreview);
 
-      // Switch to image tab to show result
-      this.#switchTab("image");
+      const hasImageTab = Array.from(
+        this.#dialog.querySelectorAll(".fig-fill-picker-tab"),
+      ).some((candidate) => candidate.dataset.tab === "image");
+
+      if (hasImageTab) {
+        // Switch to image tab to show result
+        this.#switchTab("image");
+      } else {
+        // Webcam-only pickers keep the webcam type and report the snapshot
+        this.#updateSwatch();
+        this.#emitInput();
+      }
+      this.#emitChange();
     });
   }
 
@@ -4259,3 +4881,330 @@ class FigFillPicker extends HTMLElement {
   }
 }
 figEditorDefineElement("fig-fill-picker", FigFillPicker);
+
+/**
+ * Compact swatch previewing gradient color-space interpolation.
+ * Polar: CSS conic-gradient masked (SVG data-URL, round linecaps) to an arc.
+ * Non-polar: CSS linear-gradient masked to a horizontal round-capped stroke.
+ * Accepts the same `value` shape as fig-input-gradient / fig-fill-picker.
+ *
+ * @element fig-interpolation-swatch
+ * @attr {string} value - JSON `{ type: "gradient", gradient: { … } }` (or a bare gradient object)
+ * @attr {string} size - `small` (default, 24px) or `large` (32px)
+ */
+class FigInterpolationSwatch extends HTMLElement {
+  static #HUE_SPACES = new Set(["oklch", "hsl"]);
+  static #CX = 10;
+  static #CY = 10;
+  static #R = 8;
+  static #STROKE = 3;
+  // Polar endpoints ≈ 10 o'clock → 2 o'clock (SVG deg: 0 = east, CW).
+  // CSS conic `from` is 0 = north; convert with +90.
+  static #START_DEG = 210;
+  static #DEFAULT_GRADIENT = {
+    type: "linear",
+    angle: 135,
+    interpolationSpace: "srgb",
+    hueInterpolation: "shorter",
+    stops: [
+      { color: "#FF0000", position: 0, opacity: 100 },
+      { color: "#4F9EFF", position: 100, opacity: 100 },
+    ],
+  };
+
+  #rendered = false;
+  #svgEl = null;
+  #fillEl = null;
+  #gradient = { ...FigInterpolationSwatch.#DEFAULT_GRADIENT };
+
+  static get observedAttributes() {
+    return ["value"];
+  }
+
+  get value() {
+    return {
+      type: "gradient",
+      gradient: { ...this.#gradient },
+    };
+  }
+
+  set value(val) {
+    if (val == null || val === "") {
+      this.removeAttribute("value");
+      return;
+    }
+    if (typeof val === "string") {
+      this.setAttribute("value", val);
+      return;
+    }
+    this.setAttribute("value", JSON.stringify(val));
+  }
+
+  connectedCallback() {
+    this.#ensureA11y();
+    this.#parseValue();
+    this.#render();
+    this.#updatePreview();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name !== "value") return;
+    this.#parseValue();
+    if (this.#rendered) this.#updatePreview();
+  }
+
+  #ensureA11y() {
+    const named =
+      this.hasAttribute("aria-label") || this.hasAttribute("aria-labelledby");
+    if (!named && !this.hasAttribute("aria-hidden")) {
+      this.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  #parseValue() {
+    const valueAttr = this.getAttribute("value");
+    if (!valueAttr) {
+      this.#gradient = {
+        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
+        stops: FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({
+          ...s,
+        })),
+      };
+      return;
+    }
+    try {
+      const parsed = JSON.parse(valueAttr);
+      const gradient = parsed?.type === "gradient" && parsed.gradient
+        ? parsed.gradient
+        : parsed?.gradient
+          ? parsed.gradient
+          : parsed;
+      if (!gradient || typeof gradient !== "object") return;
+      this.#gradient = this.#normalizeGradient({
+        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
+        ...gradient,
+      });
+    } catch {
+      // Keep current/default gradient on invalid JSON.
+    }
+  }
+
+  #normalizeGradient(gradient) {
+    const next = { ...(gradient ?? {}) };
+    const interpolationSpace = String(
+      next.interpolationSpace ?? "srgb",
+    ).toLowerCase();
+    const hueInterpolation = String(
+      next.hueInterpolation ?? "shorter",
+    ).toLowerCase();
+    const stops = Array.isArray(next.stops)
+      ? next.stops.map((stop) => ({
+          color: String(stop?.color || "#D9D9D9").replace(
+            /^(#(?:[0-9a-f]{6})).*/i,
+            "$1",
+          ),
+          position: stop?.position ?? 0,
+          opacity: stop?.opacity ?? 100,
+        }))
+      : FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({ ...s }));
+    if (stops.length < 2) {
+      return {
+        ...FigInterpolationSwatch.#DEFAULT_GRADIENT,
+        stops: FigInterpolationSwatch.#DEFAULT_GRADIENT.stops.map((s) => ({
+          ...s,
+        })),
+      };
+    }
+    return {
+      type: ["linear", "radial", "angular"].includes(next.type)
+        ? next.type
+        : "linear",
+      angle: Number.isFinite(Number(next.angle)) ? Number(next.angle) : 135,
+      interpolationSpace,
+      hueInterpolation,
+      stops,
+    };
+  }
+
+  #isPolar() {
+    return FigInterpolationSwatch.#HUE_SPACES.has(
+      this.#gradient.interpolationSpace || "srgb",
+    );
+  }
+
+  #hueForColor(color) {
+    const { r, g, b } = figEditorHexToRgb(color);
+    if (this.#gradient.interpolationSpace === "hsl") {
+      return figEditorRgbToHsl(r, g, b).h;
+    }
+    const lab = figEditorRgbToOklab(r, g, b);
+    const hue = figEditorOklabToOklch(lab.l, lab.a, lab.b).h;
+    return ((hue % 360) + 360) % 360;
+  }
+
+  #polarArcGeometry() {
+    const stops = this.#sortedStops();
+    const startHue = this.#hueForColor(stops[0]?.color || "#FF0000");
+    const endHue = this.#hueForColor(
+      stops[stops.length - 1]?.color || "#4F9EFF",
+    );
+    const startDeg = FigInterpolationSwatch.#START_DEG - startHue;
+    const endDeg = FigInterpolationSwatch.#START_DEG - endHue;
+    const clockwiseSweep = ((endDeg - startDeg) % 360 + 360) % 360;
+    const counterclockwiseSweep =
+      clockwiseSweep === 0 ? 0 : clockwiseSweep - 360;
+    const method = this.#gradient.hueInterpolation || "shorter";
+
+    let sweepDeg;
+    if (method === "increasing") {
+      sweepDeg = counterclockwiseSweep;
+    } else if (method === "decreasing") {
+      sweepDeg = clockwiseSweep;
+    } else if (method === "longer") {
+      sweepDeg =
+        clockwiseSweep < 180 ? counterclockwiseSweep : clockwiseSweep;
+    } else {
+      sweepDeg =
+        clockwiseSweep <= 180 ? clockwiseSweep : counterclockwiseSweep;
+    }
+
+    // A round cap extends beyond the path endpoint. Inset the centerline so
+    // the visible cap edges, rather than their centers, land on the hues.
+    const direction = Math.sign(sweepDeg);
+    const capAngle =
+      (Math.asin(FigInterpolationSwatch.#STROKE / 2 / FigInterpolationSwatch.#R) *
+        180) /
+      Math.PI;
+    const inset = Math.min(
+      capAngle,
+      Math.max(0, (Math.abs(sweepDeg) - 0.01) / 2),
+    );
+    return {
+      startDeg: startDeg + direction * inset,
+      sweepDeg: sweepDeg - direction * inset * 2,
+    };
+  }
+
+  #pointOnCircle(deg) {
+    const rad = (deg * Math.PI) / 180;
+    return {
+      x: FigInterpolationSwatch.#CX + FigInterpolationSwatch.#R * Math.cos(rad),
+      y: FigInterpolationSwatch.#CY + FigInterpolationSwatch.#R * Math.sin(rad),
+    };
+  }
+
+  #arcMaskPath(startDeg, sweepDeg) {
+    const endDeg = startDeg + sweepDeg;
+    const start = this.#pointOnCircle(startDeg);
+    const end = this.#pointOnCircle(endDeg);
+    const largeArc = Math.abs(sweepDeg) > 180 ? 1 : 0;
+    const sweepFlag = sweepDeg >= 0 ? 1 : 0;
+    return `M ${start.x} ${start.y} A ${FigInterpolationSwatch.#R} ${FigInterpolationSwatch.#R} 0 ${largeArc} ${sweepFlag} ${end.x} ${end.y}`;
+  }
+
+  #lineMaskPath() {
+    const start = this.#pointOnCircle(180);
+    const end = this.#pointOnCircle(0);
+    return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+  }
+
+  #maskImageForPath(d) {
+    const stroke = FigInterpolationSwatch.#STROKE;
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none">` +
+      `<path d="${d}" fill="none" stroke="white" stroke-width="${stroke}" ` +
+      `stroke-linecap="round" stroke-linejoin="round"/>` +
+      `</svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  }
+
+  #sortedStops() {
+    return [...this.#gradient.stops].sort(
+      (a, b) => (a.position ?? 0) - (b.position ?? 0),
+    );
+  }
+
+  #cssInterpolationClause() {
+    const space = this.#gradient.interpolationSpace || "srgb";
+    if (space === "srgb") return "";
+    if (FigInterpolationSwatch.#HUE_SPACES.has(space)) {
+      return ` in ${space} ${this.#gradient.hueInterpolation || "shorter"} hue`;
+    }
+    return ` in ${space}`;
+  }
+
+  #previewBackground() {
+    const stops = this.#sortedStops();
+    const clause = this.#cssInterpolationClause();
+    if (this.#isPolar()) {
+      // Fixed hue wheel. The mask maps gradient endpoint hues onto this wheel.
+      const cssFrom = (FigInterpolationSwatch.#START_DEG + 90) % 360;
+      const space = this.#gradient.interpolationSpace;
+      const wheelColor = (hue) =>
+        space === "oklch"
+          ? `oklch(65% 0.25 ${hue})`
+          : `hsl(${hue} 100% 50%)`;
+      const wheelStops = [0, 300, 240, 180, 120, 60, 0]
+        .map(wheelColor)
+        .join(", ");
+      return `conic-gradient(from ${cssFrom}deg in ${space} decreasing hue, ${wheelStops})`;
+    }
+    const stopList = stops
+      .map((s) => `${s.color} ${s.position ?? 0}%`)
+      .join(", ");
+    return `linear-gradient(90deg${clause}, ${stopList})`;
+  }
+
+  #render() {
+    if (this.#rendered) return;
+    const stroke = FigInterpolationSwatch.#STROKE;
+    const svg = figEditorCreateSvgElement(
+      "svg",
+      {
+        className: "fig-interpolation-swatch-svg",
+        width: "20",
+        height: "20",
+        viewBox: "0 0 20 20",
+        fill: "none",
+        "aria-hidden": "true",
+      },
+      figEditorCreateSvgElement("circle", {
+        className: "fig-interpolation-swatch-rim",
+        cx: "10",
+        cy: "10",
+        r: "8",
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": stroke,
+      }),
+    );
+    const fill = figEditorCreateElement("div", {
+      className: "fig-interpolation-swatch-fill",
+      "aria-hidden": "true",
+    });
+    this.replaceChildren(svg, fill);
+    this.#svgEl = svg;
+    this.#fillEl = fill;
+    this.#rendered = true;
+  }
+
+  #updatePreview() {
+    if (!this.#fillEl) return;
+
+    const polar = this.#isPolar();
+    if (this.#svgEl) this.#svgEl.style.display = polar ? "" : "none";
+
+    const d = polar
+      ? (() => {
+          const { startDeg, sweepDeg } = this.#polarArcGeometry();
+          return this.#arcMaskPath(startDeg, sweepDeg);
+        })()
+      : this.#lineMaskPath();
+    const mask = this.#maskImageForPath(d);
+    this.#fillEl.style.setProperty("-webkit-mask-image", mask);
+    this.#fillEl.style.maskImage = mask;
+    this.#fillEl.style.background = this.#previewBackground();
+  }
+}
+figEditorDefineElement("fig-interpolation-swatch", FigInterpolationSwatch);

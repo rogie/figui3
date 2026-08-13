@@ -716,15 +716,19 @@ export const propkitSections: Section[] = [
   <fig-field>
     <label>Blend Mode</label>
     <fig-dropdown full>
-      <optgroup label="">
+      <optgroup label="Normal">
         <option selected>Normal</option>
-        <option>Multiply</option>
-        <option>Screen</option>
+        <option>Pass through</option>
       </optgroup>
-      <optgroup label="">
-        <option>Overlay</option>
+      <optgroup label="Darken">
         <option>Darken</option>
+        <option>Multiply</option>
+        <option>Color burn</option>
+      </optgroup>
+      <optgroup label="Lighten">
         <option>Lighten</option>
+        <option>Screen</option>
+        <option>Color dodge</option>
       </optgroup>
     </fig-dropdown>
   </fig-field>
@@ -2898,7 +2902,7 @@ export const propkitSections: Section[] = [
     name: "Interpolation swatch",
     group: "Atoms",
     description:
-      "Compact arc preview of gradient color-space interpolation. Uses the same value shape as fig-input-gradient.",
+      "Compact arc preview of gradient color-space interpolation (requires <code>fig-editor.js</code>). Uses the same value shape as fig-input-gradient.",
     examples: [
       {
         id: "default",

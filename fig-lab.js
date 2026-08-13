@@ -18,6 +18,51 @@ function figLabBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
 
+const FIG_LAB_SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
+function figLabAppendChildren(parent, children) {
+  const append = (child) => {
+    if (child === null || child === undefined || child === false) return;
+    if (Array.isArray(child)) {
+      child.forEach(append);
+      return;
+    }
+    parent.append(child instanceof Node ? child : String(child));
+  };
+  append(children);
+  return parent;
+}
+
+function figLabSetAttributes(element, attributes = {}) {
+  for (const [name, value] of Object.entries(attributes)) {
+    if (value === null || value === undefined || value === false) continue;
+    if (name === "className") {
+      if (element.namespaceURI === FIG_LAB_SVG_NAMESPACE) {
+        element.setAttribute("class", String(value));
+      } else {
+        element.className = String(value);
+      }
+    } else if (value === true) {
+      element.setAttribute(name, "");
+    } else {
+      element.setAttribute(name, String(value));
+    }
+  }
+  return element;
+}
+
+function figLabCreateElement(tagName, attributes, children) {
+  const element = document.createElement(tagName);
+  figLabSetAttributes(element, attributes);
+  return figLabAppendChildren(element, children);
+}
+
+function figLabCreateSvgElement(tagName, attributes, children) {
+  const element = document.createElementNS(FIG_LAB_SVG_NAMESPACE, tagName);
+  figLabSetAttributes(element, attributes);
+  return figLabAppendChildren(element, children);
+}
+
 function figLabSyncDisabledControls(host, controls) {
   const disabled = figLabBooleanAttribute(host, "disabled");
   for (const control of controls) {
@@ -5058,7 +5103,7 @@ class FigCanvasControl extends HTMLElement {
 
   #render() {
     this.#cancelActiveGesture();
-    this.innerHTML = "";
+    this.replaceChildren();
     this.#pointHandle = null;
     this.#secondHandle = null;
     this.#angleHandle = null;
@@ -6431,19 +6476,11 @@ class PropskitOscillator extends HTMLElement {
     return Math.round(value * scale) / scale;
   }
 
-  static #escapeAttribute(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
   static #labelForType(type) {
     return PropskitOscillator.TYPES.find((item) => item.value === type)?.name || "Wave";
   }
 
-  static waveIcon(type, size = 24) {
+  static #waveIconPath(type, size = 24) {
     const samples = 32;
     const pad = 5;
     const draw = size - pad * 2;
@@ -6455,6 +6492,30 @@ class PropskitOscillator extends HTMLElement {
       const y = pad + (1 - (value + 1) / 2) * draw;
       d += `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
     }
+    return d;
+  }
+
+  static #createWaveIcon(type, size = 24) {
+    return figLabCreateSvgElement(
+      "svg",
+      {
+        width: size,
+        height: size,
+        viewBox: `0 0 ${size} ${size}`,
+        fill: "none",
+      },
+      figLabCreateSvgElement("path", {
+        d: PropskitOscillator.#waveIconPath(type, size),
+        stroke: "currentColor",
+        "stroke-width": "1",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+      }),
+    );
+  }
+
+  static waveIcon(type, size = 24) {
+    const d = PropskitOscillator.#waveIconPath(type, size);
     return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><path d="${d}" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
 
@@ -6478,7 +6539,7 @@ class PropskitOscillator extends HTMLElement {
   #render() {
     this.#cancelDrag();
     this.#stopPlayhead();
-    this.innerHTML = this.#getInnerHTML();
+    this.replaceChildren(...this.#createContent());
     this.#cacheRefs();
     this.#syncViewportSize();
     this.#updateWaveform();
@@ -6487,79 +6548,201 @@ class PropskitOscillator extends HTMLElement {
     figLabConnectPropskitResetMenu(this);
   }
 
-  #getInnerHTML() {
+  #createOscillatorHandle(type, label) {
+    return figLabCreateSvgElement(
+      "foreignObject",
+      {
+        className: `propskit-oscillator-handle propskit-oscillator-${type}-handle`,
+        "data-handle": type,
+        width: "20",
+        height: "20",
+      },
+      figLabCreateElement(
+        "div",
+        { className: "propskit-oscillator-handle-inner" },
+        figLabCreateElement(
+          "fig-tooltip",
+          { text: label },
+          figLabCreateElement("fig-handle", {
+            size: "small",
+            "aria-label": `Oscillator ${type} handle`,
+          }),
+        ),
+      ),
+    );
+  }
+
+  #createContent() {
     const interactive = this.#isEditEnabled() && !this.#isDisabled();
-    const disabled = interactive ? "" : " disabled";
-
-    return `<div class="propskit-oscillator-svg-container">
-        <svg viewBox="0 0 ${this.#drawWidth} ${this.#drawHeight}" class="propskit-oscillator-svg">
-          <rect class="propskit-oscillator-bounds" x="0" y="0" width="${this.#drawWidth}" height="${this.#drawHeight}"></rect>
-          <line class="propskit-oscillator-baseline"></line>
-          <path class="propskit-oscillator-path"></path>
-          <circle class="propskit-oscillator-playhead"></circle>
-          ${interactive ? `<foreignObject class="propskit-oscillator-handle propskit-oscillator-amplitude-handle" data-handle="amplitude" width="20" height="20"><div class="propskit-oscillator-handle-inner"><fig-tooltip text="Amplitude"><fig-handle size="small" aria-label="Oscillator amplitude handle"></fig-handle></fig-tooltip></div></foreignObject>
-          <foreignObject class="propskit-oscillator-handle propskit-oscillator-frequency-handle" data-handle="frequency" width="20" height="20"><div class="propskit-oscillator-handle-inner"><fig-tooltip text="Frequency"><fig-handle size="small" aria-label="Oscillator frequency handle"></fig-handle></fig-tooltip></div></foreignObject>` : ""}
-        </svg>
-      </div>
-      ${this.#isEditEnabled() ? this.#getWaveControlsHTML(disabled) : ""}`;
+    const svgChildren = [
+      figLabCreateSvgElement("rect", {
+        className: "propskit-oscillator-bounds",
+        x: "0",
+        y: "0",
+        width: this.#drawWidth,
+        height: this.#drawHeight,
+      }),
+      figLabCreateSvgElement("line", {
+        className: "propskit-oscillator-baseline",
+      }),
+      figLabCreateSvgElement("path", {
+        className: "propskit-oscillator-path",
+      }),
+      figLabCreateSvgElement("circle", {
+        className: "propskit-oscillator-playhead",
+      }),
+    ];
+    if (interactive) {
+      svgChildren.push(
+        this.#createOscillatorHandle("amplitude", "Amplitude"),
+        this.#createOscillatorHandle("frequency", "Frequency"),
+      );
+    }
+    const svg = figLabCreateSvgElement(
+      "svg",
+      {
+        viewBox: `0 0 ${this.#drawWidth} ${this.#drawHeight}`,
+        className: "propskit-oscillator-svg",
+      },
+      svgChildren,
+    );
+    const content = [
+      figLabCreateElement(
+        "div",
+        { className: "propskit-oscillator-svg-container" },
+        svg,
+      ),
+    ];
+    if (this.#isEditEnabled()) {
+      content.push(
+        figLabCreateElement(
+          "div",
+          { className: "propskit-oscillator-waves" },
+          this.#waves.map((wave, index) =>
+            this.#createWaveRow(wave, index, !interactive),
+          ),
+        ),
+      );
+    }
+    return content;
   }
 
-  #getWaveControlsHTML(disabled) {
-    return `<div class="propskit-oscillator-waves">
-      ${this.#waves.map((wave, index) => this.#getWaveRowHTML(wave, index, disabled)).join("")}
-    </div>`;
-  }
-
-  #getWaveRowHTML(wave, index, disabled) {
-    const removeDisabled = disabled || this.#waves.length <= 1 ? " disabled" : "";
-    const active = index === this.#activeWaveIndex ? " data-active" : "";
+  #createWaveRow(wave, index, disabled) {
+    const removeDisabled = disabled || this.#waves.length <= 1;
+    const active = index === this.#activeWaveIndex;
     const label = PropskitOscillator.#labelForType(wave.type);
-    const open = this.#expandedWaveIndices.has(index) ? ' open="true"' : ' open="false"';
-    return `<fig-group class="propskit-oscillator-wave" collapsible borderless compact="true"${open} data-wave-index="${index}">
-      <fig-header borderless>
-        <h3>${label}</h3>
-        <fig-tooltip text="Remove form">
-          <fig-button class="propskit-oscillator-remove-button" variant="ghost" icon data-wave-index="${index}" aria-label="Remove form"${removeDisabled}><fig-icon name="minus"></fig-icon></fig-button>
-        </fig-tooltip>
-        ${this.#getWaveTypeMenuHTML(disabled, index)}
-      </fig-header>
-      <div class="propskit-oscillator-fields" data-wave-index="${index}"${active}>
-        ${this.#getNumberFieldHTML(index, "frequency", "Frequency", 0.1, 16, 0.1, "")}
-        ${this.#getNumberFieldHTML(index, "amplitude", "Amplitude", -4, 4, 0.1, "")}
-        ${this.#getNumberFieldHTML(index, "phase", "Phase", -360, 360, 1, "°")}
-        ${this.#getNumberFieldHTML(index, "offset", "Offset", -4, 4, 0.1, "")}
-      </div>
-    </fig-group>`;
+    const removeButton = figLabCreateElement(
+      "fig-tooltip",
+      { text: "Remove form" },
+      figLabCreateElement(
+        "fig-button",
+        {
+          className: "propskit-oscillator-remove-button",
+          variant: "ghost",
+          icon: true,
+          "data-wave-index": index,
+          "aria-label": "Remove form",
+          disabled: removeDisabled,
+        },
+        figLabCreateElement("fig-icon", { name: "minus" }),
+      ),
+    );
+    const header = figLabCreateElement(
+      "fig-header",
+      { borderless: true },
+      [
+        figLabCreateElement("h3", {}, label),
+        removeButton,
+        this.#createWaveTypeMenu(disabled, index),
+      ],
+    );
+    const fields = figLabCreateElement(
+      "div",
+      {
+        className: "propskit-oscillator-fields",
+        "data-wave-index": index,
+        "data-active": active,
+      },
+      [
+        this.#createNumberField(index, "frequency", "Frequency", 0.1, 16, 0.1, ""),
+        this.#createNumberField(index, "amplitude", "Amplitude", -4, 4, 0.1, ""),
+        this.#createNumberField(index, "phase", "Phase", -360, 360, 1, "°"),
+        this.#createNumberField(index, "offset", "Offset", -4, 4, 0.1, ""),
+      ],
+    );
+    return figLabCreateElement(
+      "fig-group",
+      {
+        className: "propskit-oscillator-wave",
+        collapsible: true,
+        borderless: true,
+        compact: "true",
+        open: this.#expandedWaveIndices.has(index) ? "true" : "false",
+        "data-wave-index": index,
+      },
+      [header, fields],
+    );
   }
 
-  #getWaveTypeMenuHTML(disabled, index) {
-    const disabledAttr = disabled ? " disabled" : "";
-    const items = PropskitOscillator.TYPES.map((type) => {
-      return `<fig-menu-item value="${type.value}">
-        ${PropskitOscillator.waveIcon(type.value, 24)}
-        <span>${type.name}</span>
-      </fig-menu-item>`;
-    }).join("");
-    const indexAttr = ` data-wave-index="${PropskitOscillator.#escapeAttribute(String(index))}"`;
-    return `<fig-menu class="propskit-oscillator-add-type" position="bottom right"${indexAttr}${disabledAttr}>
-      <fig-tooltip text="Add form">
-        <fig-button class="propskit-oscillator-add-type-button" variant="ghost" icon fig-menu-trigger aria-label="Add form"${disabledAttr}><fig-icon name="plus"></fig-icon></fig-button>
-      </fig-tooltip>
-      ${items}
-    </fig-menu>`;
+  #createWaveTypeMenu(disabled, index) {
+    const trigger = figLabCreateElement(
+      "fig-tooltip",
+      { text: "Add form" },
+      figLabCreateElement(
+        "fig-button",
+        {
+          className: "propskit-oscillator-add-type-button",
+          variant: "ghost",
+          icon: true,
+          "fig-menu-trigger": true,
+          "aria-label": "Add form",
+          disabled,
+        },
+        figLabCreateElement("fig-icon", { name: "plus" }),
+      ),
+    );
+    const items = PropskitOscillator.TYPES.map((type) =>
+      figLabCreateElement(
+        "fig-menu-item",
+        { value: type.value },
+        [
+          PropskitOscillator.#createWaveIcon(type.value, 24),
+          figLabCreateElement("span", {}, type.name),
+        ],
+      ),
+    );
+    return figLabCreateElement(
+      "fig-menu",
+      {
+        className: "propskit-oscillator-add-type",
+        position: "bottom right",
+        "data-wave-index": index,
+        disabled,
+      },
+      [trigger, items],
+    );
   }
 
-  #getNumberFieldHTML(index, name, label, min, max, step, units) {
-    const disabled = this.#isDisabled() ? " disabled" : "";
-    const typeAttrs =
-      name === "amplitude" || name === "offset"
-        ? ' type="delta" default="0"'
-        : "";
-    const unitsAttr = units
-      ? ` units="${PropskitOscillator.#escapeAttribute(units)}"`
-      : "";
+  #createNumberField(index, name, label, min, max, step, units) {
     const wave = this.#waves[index] || PropskitOscillator.#defaultWave();
-    return `<propskit-slider class="propskit-oscillator-field" label="${label}" direction="horizontal" name="${name}" data-wave-index="${index}" value="${this.#round(wave[name])}" min="${min}" max="${max}" step="${step}" precision="${this.#precision}" elastic="false"${typeAttrs}${unitsAttr}${disabled}></propskit-slider>`;
+    const isDelta = name === "amplitude" || name === "offset";
+    return figLabCreateElement("propskit-slider", {
+      className: "propskit-oscillator-field",
+      label,
+      direction: "horizontal",
+      name,
+      "data-wave-index": index,
+      value: this.#round(wave[name]),
+      min,
+      max,
+      step,
+      precision: this.#precision,
+      elastic: "false",
+      type: isDelta ? "delta" : null,
+      default: isDelta ? "0" : null,
+      units: units || null,
+      disabled: this.#isDisabled(),
+    });
   }
 
   #cacheRefs() {
@@ -7236,7 +7419,61 @@ class FigInputAngle extends HTMLElement {
   #render() {
     this.#cancelGesture();
     this.#cleanupListeners();
-    this.innerHTML = this.#getInnerHTML();
+    const step = this.#getStepForUnit();
+    const disabled = this.#isDisabled();
+    const name =
+      this.getAttribute("aria-label") || this.getAttribute("name") || "Angle";
+    const ariaMin = this.min ?? this.#fromDegrees(0);
+    const ariaMax = this.max ?? this.#fromDegrees(360);
+    const children = [];
+
+    if (this.dial) {
+      children.push(
+        figLabCreateElement(
+          "div",
+          {
+            className: "fig-input-angle-plane",
+            role: "slider",
+            tabindex: disabled ? "-1" : "0",
+            "aria-label": name,
+            "aria-valuemin": ariaMin,
+            "aria-valuemax": ariaMax,
+            "aria-valuenow": this.angle,
+            "aria-valuetext": `${this.angle.toFixed(this.precision)}${this.units}`,
+            "aria-disabled": disabled ? "true" : null,
+          },
+          figLabCreateElement("div", {
+            className: "fig-input-angle-handle",
+          }),
+        ),
+      );
+    }
+
+    if (this.text) {
+      children.push(
+        figLabCreateElement(
+          "fig-input-number",
+          {
+            name: "angle",
+            step,
+            value: this.angle,
+            min: this.min,
+            max: this.max,
+            units: this.units,
+            "aria-label": name,
+            disabled,
+          },
+          this.showRotations
+            ? figLabCreateElement("span", {
+                slot: "append",
+                className: "fig-input-angle-rotations",
+              })
+            : null,
+        ),
+      );
+    }
+
+    this.replaceChildren(...children);
   }
 
   #readBooleanAttribute(name, defaultValue = false) {
@@ -7258,60 +7495,9 @@ class FigInputAngle extends HTMLElement {
     return false;
   }
 
-  #getInnerHTML() {
-    const step = this.#getStepForUnit();
-    const minAttr = this.min !== null ? `min="${this.min}"` : "";
-    const maxAttr = this.max !== null ? `max="${this.max}"` : "";
-    const disabled = this.#isDisabled();
-    const name =
-      this.getAttribute("aria-label") || this.getAttribute("name") || "Angle";
-    const ariaMin = this.min ?? this.#fromDegrees(0);
-    const ariaMax = this.max ?? this.#fromDegrees(360);
-    return `
-        ${
-          this.dial
-            ? `<div class="fig-input-angle-plane"
-                role="slider"
-                tabindex="${disabled ? -1 : 0}"
-                aria-label="${FigInputAngle.#escapeAttribute(name)}"
-                aria-valuemin="${ariaMin}"
-                aria-valuemax="${ariaMax}"
-                aria-valuenow="${this.angle}"
-                aria-valuetext="${FigInputAngle.#escapeAttribute(`${this.angle.toFixed(this.precision)}${this.units}`)}"
-                ${disabled ? 'aria-disabled="true"' : ""}>
-          <div class="fig-input-angle-handle"></div>
-        </div>`
-            : ""
-        }
-        ${
-          this.text
-            ? `<fig-input-number
-                name="angle"
-                step="${step}"
-                value="${this.angle}"
-                ${minAttr}
-                ${maxAttr}
-                units="${this.units}"
-                aria-label="${FigInputAngle.#escapeAttribute(name)}"
-                ${disabled ? "disabled" : ""}>
-                ${this.showRotations ? `<span slot="append" class="fig-input-angle-rotations"></span>` : ""}
-              </fig-input-number>`
-            : ""
-        }
-    `;
-  }
-
   #getRotationCount() {
     const degrees = Math.abs(this.#toDegrees(this.angle));
     return Math.floor(degrees / 360);
-  }
-
-  static #escapeAttribute(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
   }
 
   #isDisabled() {
