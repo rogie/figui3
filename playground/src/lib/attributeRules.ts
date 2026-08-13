@@ -1004,6 +1004,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "presence",
     },
   },
+  "fig-menu-separator": {
+    label: { label: "Label", type: "string" },
+    borderless: {
+      label: "Borderless",
+      type: "boolean",
+      boolMode: "presence",
+    },
+  },
   "fig-attachment": {
     src: { label: "Source", type: "string" },
     name: { label: "Name", type: "string" },

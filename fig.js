@@ -18586,6 +18586,19 @@ class FigSeparator extends HTMLElement {
 }
 figDefineElement("fig-separator", FigSeparator);
 
+// Backwards-compatible alias. Custom element constructors cannot be registered
+// under multiple tag names, so the legacy tag uses an otherwise empty subclass.
+class FigMenuSeparator extends FigSeparator {}
+figDefineElement("fig-menu-separator", FigMenuSeparator);
+
+const FIG_MENU_CHILD_SELECTOR =
+  ":scope > fig-menu-item, :scope > fig-separator, :scope > fig-menu-separator";
+const FIG_MENU_CHILD_TAGS = new Set([
+  "FIG-MENU-ITEM",
+  "FIG-SEPARATOR",
+  "FIG-MENU-SEPARATOR",
+]);
+
 class FigMenu extends HTMLElement {
   #popup = null;
   #panel = null;
@@ -18662,9 +18675,7 @@ class FigMenu extends HTMLElement {
     if (this.#popup) {
       this.#popup.removeEventListener("close", this.#boundPopupClose);
       const items = Array.from(
-        this.#panel?.querySelectorAll(
-          ":scope > fig-menu-item, :scope > fig-separator",
-        ) ?? [],
+        this.#panel?.querySelectorAll(FIG_MENU_CHILD_SELECTOR) ?? [],
       );
       for (const item of items) this.insertBefore(item, this.#popup);
       this.#popup.remove();
@@ -18706,7 +18717,9 @@ class FigMenu extends HTMLElement {
   #detectTrigger() {
     this.#trigger =
       this.querySelector("[fig-menu-trigger]") ||
-      this.querySelector(":scope > :not(fig-menu-item):not(fig-separator)");
+      this.querySelector(
+        ":scope > :not(fig-menu-item):not(fig-separator):not(fig-menu-separator)",
+      );
   }
 
   #usesContextMenuTrigger() {
@@ -18745,9 +18758,7 @@ class FigMenu extends HTMLElement {
 
   #moveItemsToPopup() {
     if (!this.#panel) return;
-    const items = Array.from(this.querySelectorAll(
-      ":scope > fig-menu-item, :scope > fig-separator"
-    ));
+    const items = Array.from(this.querySelectorAll(FIG_MENU_CHILD_SELECTOR));
     for (const item of items) {
       this.#panel.appendChild(item);
     }
@@ -18786,8 +18797,7 @@ class FigMenu extends HTMLElement {
         for (const node of mutation.addedNodes) {
           if (node.nodeType !== 1 || node === this.#popup) continue;
           if (
-            (node.tagName === "FIG-MENU-ITEM" ||
-              node.tagName === "FIG-SEPARATOR") &&
+            FIG_MENU_CHILD_TAGS.has(node.tagName) &&
             node.parentElement === this
           ) {
             this.#panel?.appendChild(node);

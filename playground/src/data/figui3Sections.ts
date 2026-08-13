@@ -1247,6 +1247,13 @@ export const figui3Sections: Section[] = [
   <fig-separator label="Group"></fig-separator>
 </div>`,
       },
+      {
+        id: "menu-alias",
+        name: "Menu alias",
+        markup: `<div class="prop-panel">
+  <fig-menu-separator></fig-menu-separator>
+</div>`,
+      },
     ],
   },
   {

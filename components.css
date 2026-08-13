@@ -5540,7 +5540,7 @@ fig-menu {
   display: contents;
 
   & > fig-menu-item,
-  & > fig-separator {
+  & > :is(fig-separator, fig-menu-separator) {
     display: none;
   }
 }
@@ -5583,7 +5583,7 @@ fig-menu-item {
   }
 }
 
-fig-separator {
+:is(fig-separator, fig-menu-separator) {
   --fig-separator-color: var(--figma-color-border);
   --fig-separator-label-color: var(--figma-color-text-secondary);
   --fig-menu-inline-padding: 0 var(--spacer-3);
@@ -5639,18 +5639,18 @@ fig-separator {
 }
 
 dialog[is="fig-popup"][theme="menu"]
-  fig-separator:first-child[label]:not([label=""])::before,
-fig-select-options > fig-separator:first-child[label]:not([label=""])::before {
+  :is(fig-separator, fig-menu-separator):first-child[label]:not([label=""])::before,
+fig-select-options > :is(fig-separator, fig-menu-separator):first-child[label]:not([label=""])::before {
   display: none;
 }
 
-dialog[is="fig-popup"][theme="menu"] fig-separator,
-fig-select-options > fig-separator {
+dialog[is="fig-popup"][theme="menu"] :is(fig-separator, fig-menu-separator),
+fig-select-options > :is(fig-separator, fig-menu-separator) {
   --fig-separator-color: var(--figma-color-border-menu);
   --fig-separator-label-color: var(--figma-color-text-menu-secondary);
 }
 
-dialog[is="fig-popup"][theme="menu"] fig-separator {
+dialog[is="fig-popup"][theme="menu"] :is(fig-separator, fig-menu-separator) {
   --fig-menu-inline-padding: 0
     var(--fig-menu-item-padding, var(--spacer-4));
 

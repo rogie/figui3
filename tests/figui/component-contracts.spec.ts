@@ -7424,6 +7424,56 @@ test.describe("remaining accessibility contracts", () => {
     await expect(separator).not.toHaveAttribute("aria-label");
   });
 
+  test("fig-menu-separator remains a backwards-compatible fig-separator alias", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="width:240px">
+          <fig-separator id="separator" label="More"></fig-separator>
+          <fig-menu-separator id="alias" label="More"></fig-menu-separator>
+        </div>
+        <fig-menu id="menu">
+          <fig-button fig-menu-trigger>Actions</fig-button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+          <fig-menu-separator id="menu-alias"></fig-menu-separator>
+          <fig-menu-item value="settings">Settings</fig-menu-item>
+        </fig-menu>
+      `;
+      const separator = root.querySelector("#separator");
+      const alias = root.querySelector("#alias");
+      const menuAlias = root.querySelector("#menu-alias");
+      const Separator = customElements.get("fig-separator");
+      if (!separator || !alias || !menuAlias || !Separator) {
+        throw new Error("Missing separator aliases");
+      }
+      const signature = (element: Element) => {
+        const style = getComputedStyle(element);
+        return {
+          role: element.getAttribute("role"),
+          ariaLabel: element.getAttribute("aria-label"),
+          display: style.display,
+          height: style.height,
+          background: style.backgroundColor,
+        };
+      };
+      return {
+        aliasIsSeparator: alias instanceof Separator,
+        registered: Boolean(customElements.get("fig-menu-separator")),
+        inPopup: Boolean(menuAlias.closest("dialog")),
+        separator: signature(separator),
+        alias: signature(alias),
+      };
+    });
+
+    expect(state.aliasIsSeparator).toBe(true);
+    expect(state.registered).toBe(true);
+    expect(state.inPopup).toBe(true);
+    expect(state.alias).toEqual(state.separator);
+  });
+
   test("menu trigger and items support keyboard menu semantics", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

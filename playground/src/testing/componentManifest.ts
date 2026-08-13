@@ -467,6 +467,16 @@ export const componentContracts: ComponentContract[] = [
     ],
   },
   {
+    tag: "fig-menu-separator",
+    title: "Menu separator",
+    group: "display",
+    markup: `<fig-menu-separator></fig-menu-separator>`,
+    attributes: [
+      { name: "label", attribute: "label", value: "Group" },
+      { name: "borderless", attribute: "borderless", value: "" },
+    ],
+  },
+  {
     tag: "fig-menu",
     title: "Menu",
     group: "overlay",
