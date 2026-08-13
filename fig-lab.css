@@ -1201,24 +1201,9 @@ propskit-slider {
       }
 
       &[type="hue"] .fig-slider-input-container::after {
-        --propskit-slider-hue-fade-size: 30%;
         background: var(--bg-hue);
-        mask-image: linear-gradient(
-          to right,
-          transparent 0%,
-          rgba(0, 0, 0, 0.16) calc(var(--propskit-slider-progress-percent) - var(--propskit-slider-hue-fade-size)),
-          black var(--propskit-slider-progress-percent),
-          rgba(0, 0, 0, 0.16) calc(var(--propskit-slider-progress-percent) + var(--propskit-slider-hue-fade-size)),
-          transparent 100%
-        );
-        -webkit-mask-image: linear-gradient(
-          to right,
-          transparent 0%,
-          rgba(0, 0, 0, 0.16) calc(var(--propskit-slider-progress-percent) - var(--propskit-slider-hue-fade-size)),
-          black var(--propskit-slider-progress-percent),
-          rgba(0, 0, 0, 0.16) calc(var(--propskit-slider-progress-percent) + var(--propskit-slider-hue-fade-size)),
-          transparent 100%
-        );
+        mask-image: none;
+        -webkit-mask-image: none;
       }
 
       &[type="opacity"] .fig-slider-input-container::before {
@@ -1363,6 +1348,119 @@ propskit-slider {
 
   fig-field:not([direction="vertical"]) > label {
     padding-left: var(--spacer-2-5);
+  }
+}
+
+propskit-color-point,
+propskit-point-point,
+propskit-point-radius,
+propskit-point-radius-angle {
+  display: contents;
+}
+
+propskit-position {
+  --propskit-position-height: 1.5rem;
+  --propskit-position-vertical-padding: var(--spacer-1);
+  --propskit-position-horizontal-padding: var(--spacer-3);
+  --figma-focus-outline-offset: 1px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-1);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--propskit-position-vertical-padding)
+    var(--propskit-position-horizontal-padding);
+
+  &[size="large"] {
+    --propskit-position-height: 2rem;
+
+    .propskit-position-row {
+      --fig-field-label-max-height: var(--spacer-5);
+      padding-left: var(--spacer-2-5);
+    }
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
+    .propskit-position-row > label {
+      color: var(--figma-color-text-disabled);
+    }
+
+    .propskit-position-row > [data-propskit-position-axis] {
+      opacity: 0.5;
+    }
+  }
+
+  .propskit-position-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: var(--propskit-position-height);
+    min-height: var(--propskit-position-height);
+    padding: 0 var(--spacer-1) 0 var(--spacer-2);
+    padding-right: 0;
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+
+    & > label {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0 auto 0 0;
+      padding: 0;
+      overflow: hidden;
+      color: var(--figma-color-text-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    & > [data-propskit-position-axis] {
+      position: relative;
+      z-index: 1;
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+  }
+
+  fig-input-number {
+    width: 3.85rem;
+    border: 0;
+    background-color: transparent;
+    box-shadow: none;
+    outline: none !important;
+
+    &:hover,
+    &:focus-within {
+      border: 0;
+      background-color: transparent;
+      box-shadow: none;
+      outline: none !important;
+    }
+  }
+
+  fig-input-number[data-propskit-position-axis="y"] {
+    margin-left: calc(-1 * var(--spacer-2));
   }
 }
 

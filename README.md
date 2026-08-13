@@ -92,6 +92,11 @@ Minimal example:
 | [Propskit Color](#propskit-color) | `<propskit-color>` | Full-surface labeled color control |
 | [Propskit Gradient](#propskit-gradient) | `<propskit-gradient>` | Full-surface labeled gradient control |
 | [Propskit Number](#propskit-number) | `<propskit-number>` | Full-surface labeled number control |
+| [Propskit Position](#propskit-position) | `<propskit-position>` | Compact X/Y control |
+| [Propskit Color Point](#propskit-color-point) | `<propskit-color-point>` | Collapsible color and position group |
+| [Propskit Point Point](#propskit-point-point) | `<propskit-point-point>` | Collapsible start and end position group |
+| [Propskit Point Radius](#propskit-point-radius) | `<propskit-point-radius>` | Collapsible position and radius group |
+| [Propskit Point Radius Angle](#propskit-point-radius-angle) | `<propskit-point-radius-angle>` | Collapsible position, radius, and angle group |
 | [Propskit Select](#propskit-select) | `<propskit-select>` | Full-surface labeled select control |
 | [Propskit Switch](#propskit-switch) | `<propskit-switch>` | Full-surface labeled switch control |
 | [Propskit Text](#propskit-text) | `<propskit-text>` | Full-surface labeled text control |
@@ -460,6 +465,152 @@ Double-click or right-click and choose **Reset** to restore `default`, falling b
 
 ```html
 <propskit-slider label="Opacity" min="0" max="100" value="75" units="%"></propskit-slider>
+```
+
+---
+
+#### Propskit Position
+
+`<propskit-position>`
+
+A compact X/Y field with optional percentage units.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `x` | number | `50` | Horizontal value |
+| `y` | number | `50` | Vertical value |
+| `default` | JSON string | initial `{ x, y }` | Right-click and group reset target |
+| `label` | string | `"Position"` | Field label; empty values use the semantic default |
+| `units` | string | — | `"percent"` shows `%`; omit for no units |
+| `size` | string | default | Set to `"large"` for the expanded row |
+| `disabled` | boolean | `false` | Disable both number inputs |
+
+**Properties and methods:** `x`, `y`, and `value` expose the current coordinates; `defaultValue` returns the normalized reset object; `isDefault` compares both coordinates; `resetToDefault()` restores both values.
+
+**Events:** `input` and `change` bubble across shadow boundaries with numeric `{ x, y, units }` in `event.detail`.
+
+```html
+<propskit-position
+  label="Position"
+  x="50"
+  y="50"
+  units="percent"
+  default='{"x":50,"y":50}'
+></propskit-position>
+```
+
+---
+
+#### Propskit Color Point
+
+`<propskit-color-point>`
+
+A compact `<fig-group>` wrapper that combines `<propskit-color>` and `<propskit-position>`. The group is collapsible and open by default.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | — | Passed to the internal `fig-group` as `name` |
+| `value` | JSON string | `{"x":50,"y":50,"color":"#D9D9D9"}` | Current color-point value |
+| `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
+| `open` | boolean | `true` | Passed to the internal `fig-group` |
+| `size` | string | default | Passed to both internal PropsKit controls |
+
+The internal group always has `compact`. `value` uses the same `{ x, y, color }` shape as `<fig-canvas-control type="color">`.
+
+**Events:** `input` and `change` bubble with numeric coordinates and `units` in `event.detail`. `openchange` mirrors the internal group's expanded state.
+
+```html
+<propskit-color-point
+  label="Light"
+  value='{"x":50,"y":50,"color":"#FF00BF"}'
+></propskit-color-point>
+```
+
+---
+
+#### Propskit Point Radius
+
+`<propskit-point-radius>`
+
+A compact `<fig-group>` wrapper that combines `<propskit-position>` and `<propskit-number>` for point-radius values. The group is collapsible and open by default.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | — | Passed to the internal `fig-group` as `name` |
+| `value` | JSON string | `{"x":50,"y":50,"radius":0}` | Current point-radius value |
+| `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
+| `open` | boolean | `true` | Passed to the internal `fig-group` |
+| `units` | string | — | `"percent"` passes percentage units to position and radius; omit for no units |
+| `size` | string | default | Passed to both internal PropsKit controls |
+
+The internal group always has `compact`. `value` uses the same `{ x, y, radius }` shape as `<fig-canvas-control type="point-radius">`. Numeric radius values use pixels; percentage strings preserve `%`.
+
+**Events:** `input` and `change` bubble with numeric `{ x, y, radius, units }` in `event.detail`. `openchange` mirrors the internal group's expanded state.
+
+```html
+<propskit-point-radius
+  label="Blur"
+  units="percent"
+  value='{"x":50,"y":50,"radius":"25%"}'
+></propskit-point-radius>
+```
+
+---
+
+#### Propskit Point Radius Angle
+
+`<propskit-point-radius-angle>`
+
+A compact `<fig-group>` wrapper combining `<propskit-position>` with radius and angle `<propskit-number>` controls. The group is collapsible and open by default.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | — | Passed to the internal `fig-group` as `name` |
+| `value` | JSON string | `{"x":50,"y":50,"radius":0,"angle":0}` | Current point-radius-angle value |
+| `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
+| `open` | boolean | `true` | Passed to the internal `fig-group` |
+| `units` | string | — | `"percent"` passes percentage units to position and radius; omit for no units |
+| `size` | string | default | Passed to every internal PropsKit control |
+
+The internal group always has `compact`. `value` uses the same `{ x, y, radius, angle }` shape as `<fig-canvas-control type="point-radius-angle">`. Numeric radius values use pixels; percentage strings preserve `%`. Angles are degrees.
+
+**Events:** `input` and `change` bubble with numeric `{ x, y, radius, angle, units }` in `event.detail`. `openchange` mirrors the internal group's expanded state.
+
+```html
+<propskit-point-radius-angle
+  label="Gradient"
+  units="percent"
+  value='{"x":50,"y":50,"radius":"25%","angle":45}'
+></propskit-point-radius-angle>
+```
+
+---
+
+#### Propskit Point Point
+
+`<propskit-point-point>`
+
+A compact `<fig-group>` wrapper combining start and end `<propskit-position>` controls. The group is collapsible and open by default.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | — | Passed to the internal `fig-group` as `name` |
+| `value` | JSON string | `{"x":50,"y":50,"x2":75,"y2":75}` | Current point-point value |
+| `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
+| `open` | boolean | `true` | Passed to the internal `fig-group` |
+| `units` | string | — | `"percent"` passes percentage units to both positions; omit for no units |
+| `size` | string | default | Passed to both position controls |
+
+The internal group always has `compact`. `value` uses the same `{ x, y, x2, y2 }` shape as `<fig-canvas-control type="point-point">`.
+
+**Events:** `input` and `change` bubble with numeric `{ x, y, x2, y2, units }` in `event.detail`. `openchange` mirrors the internal group's expanded state.
+
+```html
+<propskit-point-point
+  label="Gradient"
+  units="percent"
+  value='{"x":25,"y":25,"x2":75,"y2":75}'
+></propskit-point-point>
 ```
 
 ---

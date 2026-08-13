@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.1.0]
+
+### Added
+
+- Added `propskit-position`, `propskit-color-point`, `propskit-point-radius`, `propskit-point-radius-angle`, and `propskit-point-point` spatial property controls.
+- Added numeric spatial control event details with explicit `units`.
+
+### Changed
+
+- Spatial PropsKit controls pass optional percentage units through to their composed inputs.
+- PropsKit playground navigation uses compact groups and shorter example names.
+- Lab CSS loads only on lab-enabled playground routes instead of through `fig-editor.css`.
+
 ## [8.0.3]
 
 ### Changed

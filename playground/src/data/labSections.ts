@@ -48,7 +48,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "propskit-color",
-    name: "Propskit Color",
+    name: "Color",
     description:
       "A full-surface color field that composes fig-field and fig-input-color into a single property control.",
     examples: [
@@ -63,7 +63,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "propskit-gradient",
-    name: "Propskit Gradient",
+    name: "Gradient",
     description:
       "A full-surface gradient field that composes fig-field and fig-input-gradient into a single inline-editable property control.",
     examples: [
@@ -78,7 +78,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "propskit-text",
-    name: "Propskit Text",
+    name: "Text",
     description:
       "A full-surface text field that composes fig-field and fig-input-text into a single property control.",
     examples: [
@@ -93,7 +93,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "propskit-select",
-    name: "Propskit Select",
+    name: "Select",
     description:
       "A full-surface select field that composes fig-field and fig-select. Pass choices via the options attribute (comma-separated or JSON array).",
     examples: [
@@ -121,7 +121,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "propskit-group",
-    name: "Propskit Group",
+    name: "Group",
     description:
       "A collapsible property group (always collapsible). Reset appears only while child propskit fields differ from their defaults (`show-reset` defaults to true).",
     examples: [
@@ -181,7 +181,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "propskit-switch",
-    name: "Propskit Switch",
+    name: "Switch",
     description:
       "A full-surface boolean field that composes fig-field and an Off/On segmented control.",
     examples: [
@@ -196,7 +196,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "propskit-number",
-    name: "Propskit Number",
+    name: "Number",
     description:
       "A full-surface number field that composes fig-field and fig-input-number into a single property control.",
     examples: [
@@ -218,7 +218,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "propskit-slider",
-    name: "Propskit Slider",
+    name: "Slider",
     description: "A modern, full surface slider that composes fig-field and fig-slider into a single &lt;propskit-slider&gt; element.",
     examples: [
       {
@@ -263,6 +263,81 @@ const ungroupedLabSections: Section[] = [
         name: "Stepper",
         markup: `<div class="prop-panel">
   <propskit-slider label="Step" direction="horizontal" type="stepper" value="50" min="0" max="100" step="10" default="50"></propskit-slider>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-position",
+    name: "Position",
+    description:
+      "A compact X/Y editor with optional percentage units.",
+    examples: [
+      {
+        id: "default",
+        name: "Position",
+        markup: `<div class="prop-panel">
+  <propskit-position label="Position" x="50" y="50" units="percent" default='{"x":50,"y":50}'></propskit-position>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-color-point",
+    name: "Color Point",
+    description:
+      "A compact collapsible group for a color and its canvas position.",
+    examples: [
+      {
+        id: "default",
+        name: "Color Point",
+        markup: `<div class="prop-panel">
+  <propskit-color-point label="Light" value='{"x":50,"y":50,"color":"#FF00BF"}'></propskit-color-point>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-point-radius",
+    name: "Point Radius",
+    description:
+      "A compact collapsible group for a canvas position and radius.",
+    examples: [
+      {
+        id: "default",
+        name: "Point Radius",
+        markup: `<div class="prop-panel">
+  <propskit-point-radius label="Blur" units="percent" value='{"x":50,"y":50,"radius":"25%"}'></propskit-point-radius>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-point-radius-angle",
+    name: "Point Radius Angle",
+    description:
+      "A compact collapsible group for a canvas position, radius, and angle.",
+    examples: [
+      {
+        id: "default",
+        name: "Point Radius Angle",
+        markup: `<div class="prop-panel">
+  <propskit-point-radius-angle label="Emitter" units="percent" value='{"x":50,"y":50,"radius":"25%","angle":45}'></propskit-point-radius-angle>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-point-point",
+    name: "Point Point",
+    description:
+      "A compact collapsible group for start and end canvas positions.",
+    examples: [
+      {
+        id: "default",
+        name: "Point Point",
+        markup: `<div class="prop-panel">
+  <propskit-point-point label="Gradient" units="percent" value='{"x":25,"y":25,"x2":75,"y2":75}'></propskit-point-point>
 </div>`,
       },
     ],

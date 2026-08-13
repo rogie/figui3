@@ -2040,6 +2040,1466 @@ class PropskitNumber extends HTMLElement {
 }
 figLabDefineElement("propskit-number", PropskitNumber);
 
+/**
+ * Compact X/Y editor.
+ *
+ * @attr {number} x - Horizontal value.
+ * @attr {number} y - Vertical value.
+ * @attr {string} default - JSON reset value with x and y.
+ * @attr {string} label - Field label. Empty values use "Position".
+ * @attr {string} units - Set to "percent" to show percentage units.
+ * @attr {boolean|string} disabled - Disables both number inputs.
+ * @attr {string} size - Set to "large" for the expanded row.
+ * @fires input - Composed event with { x, y }.
+ * @fires change - Composed event with { x, y }.
+ */
+class PropskitPosition extends HTMLElement {
+  static observedAttributes = [
+    "x",
+    "y",
+    "default",
+    "label",
+    "units",
+    "disabled",
+    "size",
+  ];
+
+  #field = null;
+  #xInput = null;
+  #yInput = null;
+  #initialValue = null;
+  #initialized = false;
+  #reflecting = false;
+  #boundHandleInput = this.#handleInputEvent.bind(this, "input");
+  #boundHandleChange = this.#handleInputEvent.bind(this, "change");
+  #boundHandleClick = this.#handleClick.bind(this);
+
+  connectedCallback() {
+    if (!this.#initialized) {
+      this.#initialValue = this.#readValue();
+      this.#reflectValue(this.#initialValue);
+      this.#initialized = true;
+    }
+    if (!this.#field) this.#render();
+    this.#syncLabel();
+    this.#syncInputs();
+    this.#bindEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.addEventListener("click", this.#boundHandleClick);
+    figLabConnectPropskitResetMenu(this);
+  }
+
+  disconnectedCallback() {
+    this.#unbindEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    figLabDisconnectPropskitResetMenu(this);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#initialized) return;
+    if ((name === "x" || name === "y") && !this.#reflecting) {
+      this.#syncInputs();
+    } else if (name === "label") {
+      this.#syncLabel();
+    } else if (name === "units") {
+      this.#syncUnits();
+    } else if (name === "disabled") {
+      this.#syncDisabled();
+    }
+  }
+
+  #finiteNumber(value, fallback = 50) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  #readValue() {
+    const x = this.getAttribute("x");
+    const y = this.getAttribute("y");
+    return {
+      x: x === null || !x.trim() ? 50 : this.#finiteNumber(x, 50),
+      y: y === null || !y.trim() ? 50 : this.#finiteNumber(y, 50),
+    };
+  }
+
+  #parseDefault(value) {
+    if (typeof value !== "string" || !value.trim()) return null;
+    try {
+      const parsed = JSON.parse(value);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return null;
+      }
+      return {
+        x: this.#finiteNumber(parsed.x, this.#initialValue?.x ?? 50),
+        y: this.#finiteNumber(parsed.y, this.#initialValue?.y ?? 50),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  #reflectValue(value) {
+    const current = this.#readValue();
+    const normalized = {
+      x: this.#finiteNumber(value?.x, current.x),
+      y: this.#finiteNumber(value?.y, current.y),
+    };
+    this.#reflecting = true;
+    this.setAttribute("x", String(normalized.x));
+    this.setAttribute("y", String(normalized.y));
+    this.#reflecting = false;
+    return normalized;
+  }
+
+  #createNumber(axis, value) {
+    const input = document.createElement("fig-input-number");
+    input.setAttribute("data-propskit-position-axis", axis);
+    input.setAttribute("value", String(value));
+    input.setAttribute("min", "0");
+    input.setAttribute("max", "100");
+    input.setAttribute("step", "1");
+    input.setAttribute("precision", "2");
+    if (this.units === "percent") input.setAttribute("units", "%");
+    input.setAttribute("aria-label", `${axis.toUpperCase()} position`);
+    const prepend = document.createElement("span");
+    prepend.setAttribute("slot", "prepend");
+    prepend.textContent = axis.toUpperCase();
+    input.append(prepend);
+    if (figLabBooleanAttribute(this, "disabled")) {
+      input.setAttribute("disabled", "");
+    }
+    return input;
+  }
+
+  #render() {
+    const value = this.#readValue();
+    const field = document.createElement("fig-field");
+    field.className = "propskit-position-row";
+    field.setAttribute("direction", "horizontal");
+    const label = document.createElement("label");
+    const xInput = this.#createNumber("x", value.x);
+    const yInput = this.#createNumber("y", value.y);
+    field.append(label, xInput, yInput);
+    this.#field = field;
+    this.#xInput = xInput;
+    this.#yInput = yInput;
+    this.replaceChildren(field);
+    figLabConnectPropskitResetMenu(this);
+  }
+
+  #syncLabel() {
+    const label = this.#field?.querySelector(":scope > label");
+    if (!label) return;
+    const rawLabel = this.getAttribute("label");
+    label.textContent = rawLabel?.trim() || "Position";
+  }
+
+  #syncInputs() {
+    const value = this.#readValue();
+    this.#xInput?.setAttribute("value", String(value.x));
+    this.#yInput?.setAttribute("value", String(value.y));
+    this.#syncUnits();
+    this.#syncDisabled();
+  }
+
+  #syncUnits() {
+    const units = this.units === "percent" ? "%" : null;
+    for (const input of [this.#xInput, this.#yInput]) {
+      if (!input) continue;
+      if (units) input.setAttribute("units", units);
+      else input.removeAttribute("units");
+    }
+  }
+
+  #syncDisabled() {
+    const disabled = figLabBooleanAttribute(this, "disabled");
+    this.#xInput?.toggleAttribute("disabled", disabled);
+    this.#yInput?.toggleAttribute("disabled", disabled);
+  }
+
+  #bindEvents() {
+    this.#unbindEvents();
+    this.#xInput?.addEventListener("input", this.#boundHandleInput);
+    this.#xInput?.addEventListener("change", this.#boundHandleChange);
+    this.#yInput?.addEventListener("input", this.#boundHandleInput);
+    this.#yInput?.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #unbindEvents() {
+    this.#xInput?.removeEventListener("input", this.#boundHandleInput);
+    this.#xInput?.removeEventListener("change", this.#boundHandleChange);
+    this.#yInput?.removeEventListener("input", this.#boundHandleInput);
+    this.#yInput?.removeEventListener("change", this.#boundHandleChange);
+  }
+
+  #handleInputEvent(type, event) {
+    event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    const axis = event.currentTarget?.getAttribute("data-propskit-position-axis");
+    if (axis !== "x" && axis !== "y") return;
+    const value = this.value;
+    value[axis] = this.#finiteNumber(event.currentTarget.value, value[axis]);
+    const detail = this.#reflectValue(value);
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail: { ...detail, units: this.units },
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #handleClick(event) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-number, fig-menu")
+    ) {
+      return;
+    }
+    this.focus();
+  }
+
+  get x() {
+    return this.#readValue().x;
+  }
+
+  set x(value) {
+    this.setAttribute("x", String(this.#finiteNumber(value, 50)));
+  }
+
+  get y() {
+    return this.#readValue().y;
+  }
+
+  set y(value) {
+    this.setAttribute("y", String(this.#finiteNumber(value, 50)));
+  }
+
+  get units() {
+    return this.getAttribute("units")?.trim().toLowerCase() === "percent"
+      ? "percent"
+      : "none";
+  }
+
+  set units(value) {
+    this.setAttribute(
+      "units",
+      String(value).trim().toLowerCase() === "none" ? "none" : "percent",
+    );
+  }
+
+  get value() {
+    return { ...this.#readValue() };
+  }
+
+  set value(value) {
+    const normalized = this.#reflectValue(value);
+    this.#syncInputs(normalized);
+  }
+
+  get defaultValue() {
+    return (
+      this.#parseDefault(this.getAttribute("default")) || {
+        ...(this.#initialValue || { x: 50, y: 50 }),
+      }
+    );
+  }
+
+  get isDefault() {
+    return figLabPropskitJsonValuesEqual(this.value, this.defaultValue);
+  }
+
+  resetToDefault() {
+    const value = this.defaultValue;
+    this.value = value;
+    figLabEmitPropskitReset(this, { ...value, units: this.units });
+  }
+
+  focus(options) {
+    this.#xInput?.focus(options);
+  }
+}
+figLabDefineElement("propskit-position", PropskitPosition);
+
+/**
+ * Collapsible color-point group composed from color and position controls.
+ *
+ * @attr {string} label - Passed to the internal fig-group name.
+ * @attr {boolean|string} collapsible - Internal group collapsibility; defaults true.
+ * @attr {boolean|string} open - Internal group expanded state; defaults true.
+ * @attr {string} size - Passed to both internal PropsKit controls.
+ * @attr {string} value - JSON object with x, y, and color.
+ * @fires input - Composed event with { x, y, color }.
+ * @fires change - Composed event with { x, y, color }.
+ * @fires openchange - Composed event mirroring the internal fig-group.
+ */
+class PropskitColorPoint extends HTMLElement {
+  static observedAttributes = [
+    "label",
+    "collapsible",
+    "open",
+    "size",
+    "value",
+  ];
+
+  #group = null;
+  #colorControl = null;
+  #positionControl = null;
+  #initialized = false;
+  #reflectingValue = false;
+  #reflectingOpen = false;
+  #boundHandleInput = this.#handleControlEvent.bind(this, "input");
+  #boundHandleChange = this.#handleControlEvent.bind(this, "change");
+  #boundHandleOpenChange = this.#handleOpenChange.bind(this);
+
+  connectedCallback() {
+    if (!this.#initialized) {
+      this.#reflectValue(this.#readValue());
+      this.#initialized = true;
+    }
+    if (!this.#group) this.#render();
+    this.#syncGroupAttributes();
+    this.#syncSize();
+    this.#syncControls(this.#readValue());
+    this.removeEventListener("input", this.#boundHandleInput);
+    this.addEventListener("input", this.#boundHandleInput);
+    this.removeEventListener("change", this.#boundHandleChange);
+    this.addEventListener("change", this.#boundHandleChange);
+    this.removeEventListener("openchange", this.#boundHandleOpenChange);
+    this.addEventListener("openchange", this.#boundHandleOpenChange);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("input", this.#boundHandleInput);
+    this.removeEventListener("change", this.#boundHandleChange);
+    this.removeEventListener("openchange", this.#boundHandleOpenChange);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#initialized) return;
+    if (name === "value") {
+      if (!this.#reflectingValue) {
+        const value = this.#reflectValue(this.#readValue());
+        this.#syncControls(value);
+      }
+      return;
+    }
+    if (name === "size") {
+      this.#syncSize();
+      return;
+    }
+    this.#syncGroupAttributes();
+  }
+
+  #finiteNumber(value, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  #normalizeValue(value) {
+    let source = value;
+    if (typeof value === "string") {
+      try {
+        source = JSON.parse(value);
+      } catch {
+        source = null;
+      }
+    }
+    if (!source || typeof source !== "object" || Array.isArray(source)) {
+      source = {};
+    }
+    return {
+      x: this.#finiteNumber(source.x, 50),
+      y: this.#finiteNumber(source.y, 50),
+      color:
+        typeof source.color === "string" && source.color.trim()
+          ? source.color.trim()
+          : "#D9D9D9",
+    };
+  }
+
+  #readValue() {
+    return this.#normalizeValue(this.getAttribute("value"));
+  }
+
+  #reflectValue(value) {
+    const normalized = this.#normalizeValue(value);
+    const serialized = JSON.stringify(normalized);
+    if (this.getAttribute("value") === serialized) return normalized;
+    this.#reflectingValue = true;
+    this.setAttribute("value", serialized);
+    this.#reflectingValue = false;
+    return normalized;
+  }
+
+  #render() {
+    const value = this.#readValue();
+    const group = document.createElement("fig-group");
+    const color = document.createElement("propskit-color");
+    const position = document.createElement("propskit-position");
+    group.setAttribute("compact", "");
+    color.setAttribute("label", "Color");
+    color.setAttribute("value", value.color);
+    color.setAttribute("data-propskit-color-point-control", "color");
+    position.setAttribute("label", "Position");
+    position.setAttribute("x", String(value.x));
+    position.setAttribute("y", String(value.y));
+    position.setAttribute("units", "percent");
+    position.setAttribute("data-propskit-color-point-control", "position");
+    this.#group = group;
+    this.#colorControl = color;
+    this.#positionControl = position;
+    this.#syncGroupAttributes();
+    this.#syncSize();
+    group.append(color, position);
+    this.replaceChildren(group);
+  }
+
+  #syncGroupAttributes() {
+    if (!this.#group) return;
+    this.#group.setAttribute("compact", "");
+    const label = this.getAttribute("label")?.trim();
+    if (label) this.#group.setAttribute("name", label);
+    else this.#group.removeAttribute("name");
+    this.#group.toggleAttribute("collapsible", this.collapsible);
+    if (this.collapsible) {
+      this.#group.setAttribute("open", String(this.open));
+    } else {
+      this.#group.removeAttribute("open");
+    }
+  }
+
+  #syncSize() {
+    const size = this.getAttribute("size");
+    for (const control of [this.#colorControl, this.#positionControl]) {
+      if (!control) continue;
+      if (size === null) control.removeAttribute("size");
+      else control.setAttribute("size", size);
+    }
+  }
+
+  #syncControls(value) {
+    const normalized = this.#normalizeValue(value);
+    if (this.#colorControl) this.#colorControl.value = normalized.color;
+    if (this.#positionControl) {
+      this.#positionControl.value = {
+        x: normalized.x,
+        y: normalized.y,
+      };
+    }
+  }
+
+  #handleControlEvent(type, event) {
+    if (event.target === this) return;
+    const control = event.target?.closest?.(
+      "[data-propskit-color-point-control]",
+    );
+    if (!control || !this.contains(control)) return;
+    event.stopImmediatePropagation();
+    const value = this.value;
+    const kind = control.getAttribute("data-propskit-color-point-control");
+    if (kind === "color") {
+      value.color = control.value || control.getAttribute("value");
+    } else if (kind === "position") {
+      value.x = this.#finiteNumber(control.value?.x, value.x);
+      value.y = this.#finiteNumber(control.value?.y, value.y);
+    } else {
+      return;
+    }
+    const detail = this.#reflectValue(value);
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail: { ...detail, units: "percent" },
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #handleOpenChange(event) {
+    if (event.target !== this.#group || this.#reflectingOpen) return;
+    event.stopImmediatePropagation();
+    const open = Boolean(event.detail?.open);
+    this.#reflectingOpen = true;
+    this.setAttribute("open", String(open));
+    this.#reflectingOpen = false;
+    this.dispatchEvent(
+      new CustomEvent("openchange", {
+        detail: { open },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  get collapsible() {
+    const value = this.getAttribute("collapsible");
+    return value === null || value !== "false";
+  }
+
+  set collapsible(value) {
+    this.setAttribute("collapsible", String(Boolean(value)));
+  }
+
+  get open() {
+    const value = this.getAttribute("open");
+    return value === null || value !== "false";
+  }
+
+  set open(value) {
+    this.setAttribute("open", String(Boolean(value)));
+  }
+
+  get value() {
+    return { ...this.#readValue() };
+  }
+
+  set value(value) {
+    const normalized = this.#reflectValue(value);
+    this.#syncControls(normalized);
+  }
+
+  focus(options) {
+    this.#colorControl?.focus(options);
+  }
+}
+figLabDefineElement("propskit-color-point", PropskitColorPoint);
+
+/**
+ * Collapsible point-radius group composed from position and number controls.
+ *
+ * @attr {string} label - Passed to the internal fig-group name.
+ * @attr {boolean|string} collapsible - Internal group collapsibility; defaults true.
+ * @attr {boolean|string} open - Internal group expanded state; defaults true.
+ * @attr {string} size - Passed to both internal PropsKit controls.
+ * @attr {string} units - Passed to the internal position and radius controls.
+ * @attr {string} value - JSON object with x, y, and radius.
+ * @fires input - Composed event with { x, y, radius }.
+ * @fires change - Composed event with { x, y, radius }.
+ * @fires openchange - Composed event mirroring the internal fig-group.
+ */
+class PropskitPointRadius extends HTMLElement {
+  static observedAttributes = [
+    "label",
+    "collapsible",
+    "open",
+    "size",
+    "units",
+    "value",
+  ];
+
+  #group = null;
+  #positionControl = null;
+  #radiusControl = null;
+  #initialized = false;
+  #reflectingValue = false;
+  #reflectingOpen = false;
+  #boundHandleInput = this.#handleControlEvent.bind(this, "input");
+  #boundHandleChange = this.#handleControlEvent.bind(this, "change");
+  #boundHandleOpenChange = this.#handleOpenChange.bind(this);
+
+  connectedCallback() {
+    if (!this.#initialized) {
+      this.#reflectValue(this.#readValue());
+      this.#initialized = true;
+    }
+    if (!this.#group) this.#render();
+    this.#syncGroupAttributes();
+    this.#syncSize();
+    this.#syncUnits();
+    this.#syncControls(this.#readValue());
+    this.removeEventListener("input", this.#boundHandleInput);
+    this.addEventListener("input", this.#boundHandleInput);
+    this.removeEventListener("change", this.#boundHandleChange);
+    this.addEventListener("change", this.#boundHandleChange);
+    this.removeEventListener("openchange", this.#boundHandleOpenChange);
+    this.addEventListener("openchange", this.#boundHandleOpenChange);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("input", this.#boundHandleInput);
+    this.removeEventListener("change", this.#boundHandleChange);
+    this.removeEventListener("openchange", this.#boundHandleOpenChange);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#initialized) return;
+    if (name === "value") {
+      if (!this.#reflectingValue) {
+        const value = this.#reflectValue(this.#readValue());
+        this.#syncControls(value);
+      }
+      return;
+    }
+    if (name === "size") {
+      this.#syncSize();
+      return;
+    }
+    if (name === "units") {
+      this.#syncUnits();
+      return;
+    }
+    this.#syncGroupAttributes();
+  }
+
+  #finiteNumber(value, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  #normalizeRadius(value) {
+    if (typeof value === "string" && value.trim().endsWith("%")) {
+      const number = Number.parseFloat(value);
+      if (Number.isFinite(number)) return `${number}%`;
+    }
+    return this.#finiteNumber(value, 0);
+  }
+
+  #normalizeValue(value) {
+    let source = value;
+    if (typeof value === "string") {
+      try {
+        source = JSON.parse(value);
+      } catch {
+        source = null;
+      }
+    }
+    if (!source || typeof source !== "object" || Array.isArray(source)) {
+      source = {};
+    }
+    return {
+      x: this.#finiteNumber(source.x, 50),
+      y: this.#finiteNumber(source.y, 50),
+      radius: this.#normalizeRadius(source.radius),
+    };
+  }
+
+  #readValue() {
+    return this.#normalizeValue(this.getAttribute("value"));
+  }
+
+  #reflectValue(value) {
+    const normalized = this.#normalizeValue(value);
+    const serialized = JSON.stringify(normalized);
+    if (this.getAttribute("value") === serialized) return normalized;
+    this.#reflectingValue = true;
+    this.setAttribute("value", serialized);
+    this.#reflectingValue = false;
+    return normalized;
+  }
+
+  #radiusParts(radius) {
+    const percent =
+      typeof radius === "string" && radius.trim().endsWith("%");
+    return {
+      value: percent ? Number.parseFloat(radius) : radius,
+      units: percent ? "%" : "px",
+    };
+  }
+
+  #render() {
+    const value = this.#readValue();
+    const radiusValue = this.#radiusParts(value.radius);
+    const group = document.createElement("fig-group");
+    const position = document.createElement("propskit-position");
+    const radius = document.createElement("propskit-number");
+    group.setAttribute("compact", "");
+    position.setAttribute("label", "Position");
+    position.setAttribute("x", String(value.x));
+    position.setAttribute("y", String(value.y));
+    if (this.hasAttribute("units")) position.setAttribute("units", this.units);
+    position.setAttribute("data-propskit-point-radius-control", "position");
+    radius.setAttribute("label", "Radius");
+    radius.setAttribute("value", String(radiusValue.value));
+    if (this.units === "percent") radius.setAttribute("units", "%");
+    radius.setAttribute("units-disallow", "");
+    radius.setAttribute("min", "0");
+    radius.setAttribute("precision", "2");
+    radius.setAttribute("data-propskit-point-radius-control", "radius");
+    this.#group = group;
+    this.#positionControl = position;
+    this.#radiusControl = radius;
+    this.#syncGroupAttributes();
+    this.#syncSize();
+    group.append(position, radius);
+    this.replaceChildren(group);
+  }
+
+  #syncGroupAttributes() {
+    if (!this.#group) return;
+    this.#group.setAttribute("compact", "");
+    const label = this.getAttribute("label")?.trim();
+    if (label) this.#group.setAttribute("name", label);
+    else this.#group.removeAttribute("name");
+    this.#group.toggleAttribute("collapsible", this.collapsible);
+    if (this.collapsible) {
+      this.#group.setAttribute("open", String(this.open));
+    } else {
+      this.#group.removeAttribute("open");
+    }
+  }
+
+  #syncSize() {
+    const size = this.getAttribute("size");
+    for (const control of [this.#positionControl, this.#radiusControl]) {
+      if (!control) continue;
+      if (size === null) control.removeAttribute("size");
+      else control.setAttribute("size", size);
+    }
+  }
+
+  #syncUnits() {
+    if (this.hasAttribute("units")) {
+      this.#positionControl?.setAttribute("units", this.units);
+    } else {
+      this.#positionControl?.removeAttribute("units");
+    }
+    if (this.units === "percent") {
+      this.#radiusControl?.setAttribute("units", "%");
+    } else {
+      this.#radiusControl?.removeAttribute("units");
+    }
+  }
+
+  #syncControls(value) {
+    const normalized = this.#normalizeValue(value);
+    if (this.#positionControl) {
+      this.#positionControl.value = {
+        x: normalized.x,
+        y: normalized.y,
+      };
+    }
+    if (this.#radiusControl) {
+      const radius = this.#radiusParts(normalized.radius);
+      this.#radiusControl.value = radius.value;
+    }
+  }
+
+  #radiusFromControl(control, fallback) {
+    const fallbackValue = this.#radiusParts(fallback).value;
+    const value = this.#finiteNumber(control.value, fallbackValue);
+    const units =
+      control.querySelector("fig-input-number")?.getAttribute("units") ||
+      control.getAttribute("units");
+    return units === "%" ? `${value}%` : value;
+  }
+
+  #handleControlEvent(type, event) {
+    if (event.target === this) return;
+    const control = event.target?.closest?.(
+      "[data-propskit-point-radius-control]",
+    );
+    if (!control || !this.contains(control)) return;
+    event.stopImmediatePropagation();
+    const value = this.value;
+    const kind = control.getAttribute("data-propskit-point-radius-control");
+    if (kind === "position") {
+      value.x = this.#finiteNumber(control.value?.x, value.x);
+      value.y = this.#finiteNumber(control.value?.y, value.y);
+    } else if (kind === "radius") {
+      value.radius = this.#radiusFromControl(control, value.radius);
+    } else {
+      return;
+    }
+    const detail = this.#reflectValue(value);
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail: {
+          ...detail,
+          radius: this.#radiusParts(detail.radius).value,
+          units: this.units,
+        },
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #handleOpenChange(event) {
+    if (event.target !== this.#group || this.#reflectingOpen) return;
+    event.stopImmediatePropagation();
+    const open = Boolean(event.detail?.open);
+    this.#reflectingOpen = true;
+    this.setAttribute("open", String(open));
+    this.#reflectingOpen = false;
+    this.dispatchEvent(
+      new CustomEvent("openchange", {
+        detail: { open },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  get collapsible() {
+    const value = this.getAttribute("collapsible");
+    return value === null || value !== "false";
+  }
+
+  set collapsible(value) {
+    this.setAttribute("collapsible", String(Boolean(value)));
+  }
+
+  get open() {
+    const value = this.getAttribute("open");
+    return value === null || value !== "false";
+  }
+
+  set open(value) {
+    this.setAttribute("open", String(Boolean(value)));
+  }
+
+  get units() {
+    return this.getAttribute("units")?.trim().toLowerCase() === "percent"
+      ? "percent"
+      : "none";
+  }
+
+  set units(value) {
+    this.setAttribute(
+      "units",
+      String(value).trim().toLowerCase() === "none" ? "none" : "percent",
+    );
+  }
+
+  get value() {
+    return { ...this.#readValue() };
+  }
+
+  set value(value) {
+    const normalized = this.#reflectValue(value);
+    this.#syncControls(normalized);
+  }
+
+  focus(options) {
+    this.#positionControl?.focus(options);
+  }
+}
+figLabDefineElement("propskit-point-radius", PropskitPointRadius);
+
+/**
+ * Collapsible point-radius-angle group composed from PropsKit controls.
+ *
+ * @attr {string} label - Passed to the internal fig-group name.
+ * @attr {boolean|string} collapsible - Internal group collapsibility; defaults true.
+ * @attr {boolean|string} open - Internal group expanded state; defaults true.
+ * @attr {string} size - Passed to every internal PropsKit control.
+ * @attr {string} units - Passed to the internal position and radius controls.
+ * @attr {string} value - JSON object with x, y, radius, and angle.
+ * @fires input - Composed event with { x, y, radius, angle }.
+ * @fires change - Composed event with { x, y, radius, angle }.
+ * @fires openchange - Composed event mirroring the internal fig-group.
+ */
+class PropskitPointRadiusAngle extends HTMLElement {
+  static observedAttributes = [
+    "label",
+    "collapsible",
+    "open",
+    "size",
+    "units",
+    "value",
+  ];
+
+  #group = null;
+  #positionControl = null;
+  #radiusControl = null;
+  #angleControl = null;
+  #initialized = false;
+  #reflectingValue = false;
+  #reflectingOpen = false;
+  #boundHandleInput = this.#handleControlEvent.bind(this, "input");
+  #boundHandleChange = this.#handleControlEvent.bind(this, "change");
+  #boundHandleOpenChange = this.#handleOpenChange.bind(this);
+
+  connectedCallback() {
+    if (!this.#initialized) {
+      this.#reflectValue(this.#readValue());
+      this.#initialized = true;
+    }
+    if (!this.#group) this.#render();
+    this.#syncGroupAttributes();
+    this.#syncSize();
+    this.#syncUnits();
+    this.#syncControls(this.#readValue());
+    this.removeEventListener("input", this.#boundHandleInput);
+    this.addEventListener("input", this.#boundHandleInput);
+    this.removeEventListener("change", this.#boundHandleChange);
+    this.addEventListener("change", this.#boundHandleChange);
+    this.removeEventListener("openchange", this.#boundHandleOpenChange);
+    this.addEventListener("openchange", this.#boundHandleOpenChange);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("input", this.#boundHandleInput);
+    this.removeEventListener("change", this.#boundHandleChange);
+    this.removeEventListener("openchange", this.#boundHandleOpenChange);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#initialized) return;
+    if (name === "value") {
+      if (!this.#reflectingValue) {
+        const value = this.#reflectValue(this.#readValue());
+        this.#syncControls(value);
+      }
+      return;
+    }
+    if (name === "size") {
+      this.#syncSize();
+      return;
+    }
+    if (name === "units") {
+      this.#syncUnits();
+      return;
+    }
+    this.#syncGroupAttributes();
+  }
+
+  #finiteNumber(value, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  #normalizeRadius(value) {
+    if (typeof value === "string" && value.trim().endsWith("%")) {
+      const number = Number.parseFloat(value);
+      if (Number.isFinite(number)) return `${number}%`;
+    }
+    return this.#finiteNumber(value, 0);
+  }
+
+  #normalizeValue(value) {
+    let source = value;
+    if (typeof value === "string") {
+      try {
+        source = JSON.parse(value);
+      } catch {
+        source = null;
+      }
+    }
+    if (!source || typeof source !== "object" || Array.isArray(source)) {
+      source = {};
+    }
+    return {
+      x: this.#finiteNumber(source.x, 50),
+      y: this.#finiteNumber(source.y, 50),
+      radius: this.#normalizeRadius(source.radius),
+      angle: this.#finiteNumber(source.angle, 0),
+    };
+  }
+
+  #readValue() {
+    return this.#normalizeValue(this.getAttribute("value"));
+  }
+
+  #reflectValue(value) {
+    const normalized = this.#normalizeValue(value);
+    const serialized = JSON.stringify(normalized);
+    if (this.getAttribute("value") === serialized) return normalized;
+    this.#reflectingValue = true;
+    this.setAttribute("value", serialized);
+    this.#reflectingValue = false;
+    return normalized;
+  }
+
+  #radiusParts(radius) {
+    const percent =
+      typeof radius === "string" && radius.trim().endsWith("%");
+    return {
+      value: percent ? Number.parseFloat(radius) : radius,
+      units: percent ? "%" : "px",
+    };
+  }
+
+  #render() {
+    const value = this.#readValue();
+    const radiusValue = this.#radiusParts(value.radius);
+    const group = document.createElement("fig-group");
+    const position = document.createElement("propskit-position");
+    const radius = document.createElement("propskit-number");
+    const angle = document.createElement("propskit-number");
+    group.setAttribute("compact", "");
+    position.setAttribute("label", "Position");
+    position.setAttribute("x", String(value.x));
+    position.setAttribute("y", String(value.y));
+    if (this.hasAttribute("units")) position.setAttribute("units", this.units);
+    position.setAttribute(
+      "data-propskit-point-radius-angle-control",
+      "position",
+    );
+    radius.setAttribute("label", "Radius");
+    radius.setAttribute("value", String(radiusValue.value));
+    if (this.units === "percent") radius.setAttribute("units", "%");
+    radius.setAttribute("units-disallow", "");
+    radius.setAttribute("min", "0");
+    radius.setAttribute("precision", "2");
+    radius.setAttribute("data-propskit-point-radius-angle-control", "radius");
+    angle.setAttribute("label", "Angle");
+    angle.setAttribute("value", String(value.angle));
+    angle.setAttribute("units", "°");
+    angle.setAttribute("units-disallow", "");
+    angle.setAttribute("precision", "1");
+    angle.setAttribute("data-propskit-point-radius-angle-control", "angle");
+    this.#group = group;
+    this.#positionControl = position;
+    this.#radiusControl = radius;
+    this.#angleControl = angle;
+    this.#syncGroupAttributes();
+    this.#syncSize();
+    group.append(position, radius, angle);
+    this.replaceChildren(group);
+  }
+
+  #syncGroupAttributes() {
+    if (!this.#group) return;
+    this.#group.setAttribute("compact", "");
+    const label = this.getAttribute("label")?.trim();
+    if (label) this.#group.setAttribute("name", label);
+    else this.#group.removeAttribute("name");
+    this.#group.toggleAttribute("collapsible", this.collapsible);
+    if (this.collapsible) {
+      this.#group.setAttribute("open", String(this.open));
+    } else {
+      this.#group.removeAttribute("open");
+    }
+  }
+
+  #syncSize() {
+    const size = this.getAttribute("size");
+    for (const control of [
+      this.#positionControl,
+      this.#radiusControl,
+      this.#angleControl,
+    ]) {
+      if (!control) continue;
+      if (size === null) control.removeAttribute("size");
+      else control.setAttribute("size", size);
+    }
+  }
+
+  #syncUnits() {
+    if (this.hasAttribute("units")) {
+      this.#positionControl?.setAttribute("units", this.units);
+    } else {
+      this.#positionControl?.removeAttribute("units");
+    }
+    if (this.units === "percent") {
+      this.#radiusControl?.setAttribute("units", "%");
+    } else {
+      this.#radiusControl?.removeAttribute("units");
+    }
+  }
+
+  #syncControls(value) {
+    const normalized = this.#normalizeValue(value);
+    if (this.#positionControl) {
+      this.#positionControl.value = {
+        x: normalized.x,
+        y: normalized.y,
+      };
+    }
+    if (this.#radiusControl) {
+      const radius = this.#radiusParts(normalized.radius);
+      this.#radiusControl.value = radius.value;
+    }
+    if (this.#angleControl) {
+      this.#angleControl.value = normalized.angle;
+    }
+  }
+
+  #radiusFromControl(control, fallback) {
+    const fallbackValue = this.#radiusParts(fallback).value;
+    const value = this.#finiteNumber(control.value, fallbackValue);
+    const units =
+      control.querySelector("fig-input-number")?.getAttribute("units") ||
+      control.getAttribute("units");
+    return units === "%" ? `${value}%` : value;
+  }
+
+  #handleControlEvent(type, event) {
+    if (event.target === this) return;
+    const control = event.target?.closest?.(
+      "[data-propskit-point-radius-angle-control]",
+    );
+    if (!control || !this.contains(control)) return;
+    event.stopImmediatePropagation();
+    const value = this.value;
+    const kind = control.getAttribute(
+      "data-propskit-point-radius-angle-control",
+    );
+    if (kind === "position") {
+      value.x = this.#finiteNumber(control.value?.x, value.x);
+      value.y = this.#finiteNumber(control.value?.y, value.y);
+    } else if (kind === "radius") {
+      value.radius = this.#radiusFromControl(control, value.radius);
+    } else if (kind === "angle") {
+      value.angle = this.#finiteNumber(control.value, value.angle);
+    } else {
+      return;
+    }
+    const detail = this.#reflectValue(value);
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail: {
+          ...detail,
+          radius: this.#radiusParts(detail.radius).value,
+          units: this.units,
+        },
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #handleOpenChange(event) {
+    if (event.target !== this.#group || this.#reflectingOpen) return;
+    event.stopImmediatePropagation();
+    const open = Boolean(event.detail?.open);
+    this.#reflectingOpen = true;
+    this.setAttribute("open", String(open));
+    this.#reflectingOpen = false;
+    this.dispatchEvent(
+      new CustomEvent("openchange", {
+        detail: { open },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  get collapsible() {
+    const value = this.getAttribute("collapsible");
+    return value === null || value !== "false";
+  }
+
+  set collapsible(value) {
+    this.setAttribute("collapsible", String(Boolean(value)));
+  }
+
+  get open() {
+    const value = this.getAttribute("open");
+    return value === null || value !== "false";
+  }
+
+  set open(value) {
+    this.setAttribute("open", String(Boolean(value)));
+  }
+
+  get units() {
+    return this.getAttribute("units")?.trim().toLowerCase() === "percent"
+      ? "percent"
+      : "none";
+  }
+
+  set units(value) {
+    this.setAttribute(
+      "units",
+      String(value).trim().toLowerCase() === "none" ? "none" : "percent",
+    );
+  }
+
+  get value() {
+    return { ...this.#readValue() };
+  }
+
+  set value(value) {
+    const normalized = this.#reflectValue(value);
+    this.#syncControls(normalized);
+  }
+
+  focus(options) {
+    this.#positionControl?.focus(options);
+  }
+}
+figLabDefineElement(
+  "propskit-point-radius-angle",
+  PropskitPointRadiusAngle,
+);
+
+/**
+ * Collapsible point-point group composed from two position controls.
+ *
+ * @attr {string} label - Passed to the internal fig-group name.
+ * @attr {boolean|string} collapsible - Internal group collapsibility; defaults true.
+ * @attr {boolean|string} open - Internal group expanded state; defaults true.
+ * @attr {string} size - Passed to both internal position controls.
+ * @attr {string} units - Passed to both internal position controls.
+ * @attr {string} value - JSON object with x, y, x2, and y2.
+ * @fires input - Composed event with { x, y, x2, y2 }.
+ * @fires change - Composed event with { x, y, x2, y2 }.
+ * @fires openchange - Composed event mirroring the internal fig-group.
+ */
+class PropskitPointPoint extends HTMLElement {
+  static observedAttributes = [
+    "label",
+    "collapsible",
+    "open",
+    "size",
+    "units",
+    "value",
+  ];
+
+  #group = null;
+  #startControl = null;
+  #endControl = null;
+  #initialized = false;
+  #reflectingValue = false;
+  #reflectingOpen = false;
+  #boundHandleInput = this.#handleControlEvent.bind(this, "input");
+  #boundHandleChange = this.#handleControlEvent.bind(this, "change");
+  #boundHandleOpenChange = this.#handleOpenChange.bind(this);
+
+  connectedCallback() {
+    if (!this.#initialized) {
+      this.#reflectValue(this.#readValue());
+      this.#initialized = true;
+    }
+    if (!this.#group) this.#render();
+    this.#syncGroupAttributes();
+    this.#syncSize();
+    this.#syncUnits();
+    this.#syncControls(this.#readValue());
+    this.removeEventListener("input", this.#boundHandleInput);
+    this.addEventListener("input", this.#boundHandleInput);
+    this.removeEventListener("change", this.#boundHandleChange);
+    this.addEventListener("change", this.#boundHandleChange);
+    this.removeEventListener("openchange", this.#boundHandleOpenChange);
+    this.addEventListener("openchange", this.#boundHandleOpenChange);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("input", this.#boundHandleInput);
+    this.removeEventListener("change", this.#boundHandleChange);
+    this.removeEventListener("openchange", this.#boundHandleOpenChange);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#initialized) return;
+    if (name === "value") {
+      if (!this.#reflectingValue) {
+        const value = this.#reflectValue(this.#readValue());
+        this.#syncControls(value);
+      }
+      return;
+    }
+    if (name === "size") {
+      this.#syncSize();
+      return;
+    }
+    if (name === "units") {
+      this.#syncUnits();
+      return;
+    }
+    this.#syncGroupAttributes();
+  }
+
+  #finiteNumber(value, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  #normalizeValue(value) {
+    let source = value;
+    if (typeof value === "string") {
+      try {
+        source = JSON.parse(value);
+      } catch {
+        source = null;
+      }
+    }
+    if (!source || typeof source !== "object" || Array.isArray(source)) {
+      source = {};
+    }
+    return {
+      x: this.#finiteNumber(source.x, 50),
+      y: this.#finiteNumber(source.y, 50),
+      x2: this.#finiteNumber(source.x2, 75),
+      y2: this.#finiteNumber(source.y2, 75),
+    };
+  }
+
+  #readValue() {
+    return this.#normalizeValue(this.getAttribute("value"));
+  }
+
+  #reflectValue(value) {
+    const normalized = this.#normalizeValue(value);
+    const serialized = JSON.stringify(normalized);
+    if (this.getAttribute("value") === serialized) return normalized;
+    this.#reflectingValue = true;
+    this.setAttribute("value", serialized);
+    this.#reflectingValue = false;
+    return normalized;
+  }
+
+  #createPosition(label, role, x, y) {
+    const control = document.createElement("propskit-position");
+    control.setAttribute("label", label);
+    control.setAttribute("x", String(x));
+    control.setAttribute("y", String(y));
+    if (this.hasAttribute("units")) control.setAttribute("units", this.units);
+    control.setAttribute("data-propskit-point-point-control", role);
+    return control;
+  }
+
+  #render() {
+    const value = this.#readValue();
+    const group = document.createElement("fig-group");
+    const start = this.#createPosition("Start", "start", value.x, value.y);
+    const end = this.#createPosition("End", "end", value.x2, value.y2);
+    group.setAttribute("compact", "");
+    this.#group = group;
+    this.#startControl = start;
+    this.#endControl = end;
+    this.#syncGroupAttributes();
+    this.#syncSize();
+    group.append(start, end);
+    this.replaceChildren(group);
+  }
+
+  #syncGroupAttributes() {
+    if (!this.#group) return;
+    this.#group.setAttribute("compact", "");
+    const label = this.getAttribute("label")?.trim();
+    if (label) this.#group.setAttribute("name", label);
+    else this.#group.removeAttribute("name");
+    this.#group.toggleAttribute("collapsible", this.collapsible);
+    if (this.collapsible) {
+      this.#group.setAttribute("open", String(this.open));
+    } else {
+      this.#group.removeAttribute("open");
+    }
+  }
+
+  #syncSize() {
+    const size = this.getAttribute("size");
+    for (const control of [this.#startControl, this.#endControl]) {
+      if (!control) continue;
+      if (size === null) control.removeAttribute("size");
+      else control.setAttribute("size", size);
+    }
+  }
+
+  #syncUnits() {
+    for (const control of [this.#startControl, this.#endControl]) {
+      if (!control) continue;
+      if (this.hasAttribute("units")) control.setAttribute("units", this.units);
+      else control.removeAttribute("units");
+    }
+  }
+
+  #syncControls(value) {
+    const normalized = this.#normalizeValue(value);
+    if (this.#startControl) {
+      this.#startControl.value = {
+        x: normalized.x,
+        y: normalized.y,
+      };
+    }
+    if (this.#endControl) {
+      this.#endControl.value = {
+        x: normalized.x2,
+        y: normalized.y2,
+      };
+    }
+  }
+
+  #handleControlEvent(type, event) {
+    if (event.target === this) return;
+    const control = event.target?.closest?.(
+      "[data-propskit-point-point-control]",
+    );
+    if (!control || !this.contains(control)) return;
+    event.stopImmediatePropagation();
+    const value = this.value;
+    const point = control.value;
+    const role = control.getAttribute("data-propskit-point-point-control");
+    if (role === "start") {
+      value.x = this.#finiteNumber(point?.x, value.x);
+      value.y = this.#finiteNumber(point?.y, value.y);
+    } else if (role === "end") {
+      value.x2 = this.#finiteNumber(point?.x, value.x2);
+      value.y2 = this.#finiteNumber(point?.y, value.y2);
+    } else {
+      return;
+    }
+    const detail = this.#reflectValue(value);
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail: { ...detail, units: this.units },
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #handleOpenChange(event) {
+    if (event.target !== this.#group || this.#reflectingOpen) return;
+    event.stopImmediatePropagation();
+    const open = Boolean(event.detail?.open);
+    this.#reflectingOpen = true;
+    this.setAttribute("open", String(open));
+    this.#reflectingOpen = false;
+    this.dispatchEvent(
+      new CustomEvent("openchange", {
+        detail: { open },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  get collapsible() {
+    const value = this.getAttribute("collapsible");
+    return value === null || value !== "false";
+  }
+
+  set collapsible(value) {
+    this.setAttribute("collapsible", String(Boolean(value)));
+  }
+
+  get open() {
+    const value = this.getAttribute("open");
+    return value === null || value !== "false";
+  }
+
+  set open(value) {
+    this.setAttribute("open", String(Boolean(value)));
+  }
+
+  get units() {
+    return this.getAttribute("units")?.trim().toLowerCase() === "percent"
+      ? "percent"
+      : "none";
+  }
+
+  set units(value) {
+    this.setAttribute(
+      "units",
+      String(value).trim().toLowerCase() === "none" ? "none" : "percent",
+    );
+  }
+
+  get value() {
+    return { ...this.#readValue() };
+  }
+
+  set value(value) {
+    const normalized = this.#reflectValue(value);
+    this.#syncControls(normalized);
+  }
+
+  focus(options) {
+    this.#startControl?.focus(options);
+  }
+}
+figLabDefineElement("propskit-point-point", PropskitPointPoint);
+
 /* Collapsible property group — always collapsible (no collapsible attr). */
 class PropskitGroup extends HTMLElement {
   static observedAttributes = ["name", "open", "show-reset"];
@@ -2048,6 +3508,7 @@ class PropskitGroup extends HTMLElement {
     "propskit-color",
     "propskit-gradient",
     "propskit-number",
+    "propskit-position",
     "propskit-select",
     "propskit-slider",
     "propskit-switch",
@@ -2156,7 +3617,7 @@ class PropskitGroup extends HTMLElement {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["value", "checked", "default"],
+      attributeFilter: ["value", "checked", "default", "x", "y"],
     });
   }
 
@@ -3437,6 +4898,14 @@ class FigCanvasControl extends HTMLElement {
       if (typeof v.angle === "number") this.#angle = v.angle;
       if (typeof v.x2 === "number") this.#x2 = v.x2;
       if (typeof v.y2 === "number") this.#y2 = v.y2;
+      if (
+        this.#type === "color" &&
+        typeof v.color === "string" &&
+        v.color.trim() &&
+        this.getAttribute("color") !== v.color.trim()
+      ) {
+        this.setAttribute("color", v.color.trim());
+      }
     } catch {
       /* ignore */
     }
@@ -6239,7 +7708,12 @@ class FigReorder extends HTMLElement {
     "fig-input-angle",
     "fig-input-joystick",
     "fig-canvas-control",
+    "propskit-color-point",
     "propskit-number",
+    "propskit-point-point",
+    "propskit-point-radius",
+    "propskit-point-radius-angle",
+    "propskit-position",
     "propskit-slider",
     "propskit-oscillator",
   ];

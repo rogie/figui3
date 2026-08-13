@@ -116,8 +116,10 @@ const bootstrap = async () => {
       // @ts-expect-error runtime side-effect import for optional editor component registration
       await import("../../fig-editor.js");
     }
-    if (mode === "lab" || mode === "propkit") {
+    if (mode === "lab") {
       await import("../../fig-lab.css");
+    }
+    if (mode === "lab" || mode === "propkit") {
       // @ts-expect-error runtime side-effect import for lab component registration
       await import("../../fig-lab.js");
     }

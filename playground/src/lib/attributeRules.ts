@@ -428,6 +428,23 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  "propskit-color-point": {
+    label: { label: "Label", type: "string" },
+    value: { label: "Value", type: "string" },
+    collapsible: {
+      label: "Collapsible",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    open: {
+      label: "Open",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+  },
   "propskit-gradient": {
     label: { label: "Label", type: "string" },
     default: { label: "Default", type: "string" },
@@ -477,6 +494,85 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
     size: { label: "Size", type: "enum", options: ["", "large"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "propskit-position": {
+    label: { label: "Label", type: "string" },
+    x: { label: "X", type: "number", min: 0, max: 100, step: 1 },
+    y: { label: "Y", type: "number", min: 0, max: 100, step: 1 },
+    default: { label: "Default", type: "string" },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["", "percent"],
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "propskit-point-radius": {
+    label: { label: "Label", type: "string" },
+    value: { label: "Value", type: "string" },
+    collapsible: {
+      label: "Collapsible",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    open: {
+      label: "Open",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["", "percent"],
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+  },
+  "propskit-point-radius-angle": {
+    label: { label: "Label", type: "string" },
+    value: { label: "Value", type: "string" },
+    collapsible: {
+      label: "Collapsible",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    open: {
+      label: "Open",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["", "percent"],
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
+  },
+  "propskit-point-point": {
+    label: { label: "Label", type: "string" },
+    value: { label: "Value", type: "string" },
+    collapsible: {
+      label: "Collapsible",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    open: {
+      label: "Open",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["", "percent"],
+    },
+    size: { label: "Size", type: "enum", options: ["", "large"] },
   },
   "propskit-slider": {
     type: {

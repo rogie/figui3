@@ -806,6 +806,762 @@ test.describe("propskit-number", () => {
   });
 });
 
+test.describe("propskit-position", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-position");
+    });
+  });
+
+  test("reflects x and y while preserving the compact point layout", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-position id="position" label="" x="25" y="75"
+          default='{"x":25,"y":75}'></propskit-position>
+      `;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("#position") as HTMLElement & {
+        value: { x: number; y: number };
+        units: "none" | "percent";
+        isDefault: boolean;
+        resetToDefault(): void;
+      };
+      const events: Array<{ type: string; detail: unknown; composed: boolean }> = [];
+      for (const type of ["input", "change"]) {
+        host.addEventListener(type, (event) => {
+          events.push({
+            type,
+            detail: (event as CustomEvent).detail,
+            composed: event.composed,
+          });
+        });
+      }
+      const xInput = host.querySelector(
+        '[data-propskit-position-axis="x"]',
+      ) as HTMLElement & { value: number };
+      xInput.value = 40;
+      xInput.dispatchEvent(
+        new CustomEvent("input", { bubbles: true, detail: 40 }),
+      );
+      const isDefaultAfterEdit = host.isDefault;
+      host.resetToDefault();
+      const inputs = [
+        ...host.querySelectorAll("[data-propskit-position-axis]"),
+      ];
+      const initialUnits = inputs.map((input) => input.getAttribute("units"));
+      host.units = "none";
+      const noUnits = inputs.map((input) => input.getAttribute("units"));
+      host.units = "percent";
+      const percentUnits = inputs.map((input) => input.getAttribute("units"));
+      return {
+        label: host.querySelector(":scope > fig-field > label")?.textContent,
+        axes: [
+          ...host.querySelectorAll("[data-propskit-position-axis]"),
+        ].map((input) => input.getAttribute("data-propskit-position-axis")),
+        prepends: [...host.querySelectorAll("[slot='prepend']")].map(
+          (prepend) => prepend.textContent,
+        ),
+        isDefaultAfterEdit,
+        value: host.value,
+        attributes: { x: host.getAttribute("x"), y: host.getAttribute("y") },
+        initialUnits,
+        noUnits,
+        percentUnits,
+        events,
+      };
+    });
+
+    expect(state).toEqual({
+      label: "Position",
+      axes: ["x", "y"],
+      prepends: ["X", "Y"],
+      isDefaultAfterEdit: false,
+      value: { x: 25, y: 75 },
+      attributes: { x: "25", y: "75" },
+      initialUnits: [null, null],
+      noUnits: [null, null],
+      percentUnits: ["%", "%"],
+      events: [
+        {
+          type: "input",
+          detail: { x: 40, y: 75, units: "none" },
+          composed: true,
+        },
+        {
+          type: "input",
+          detail: { x: 25, y: 75, units: "none" },
+          composed: true,
+        },
+        {
+          type: "change",
+          detail: { x: 25, y: 75, units: "none" },
+          composed: true,
+        },
+      ],
+    });
+  });
+});
+
+test.describe("propskit-color-point", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-color-point");
+    });
+  });
+
+  test("wraps compact color and position controls with color-point values", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-color-point id="control" label="Light" size="large"
+          value='{"x":25,"y":75,"color":"#FF00BF"}'></propskit-color-point>
+      `;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("#control") as HTMLElement & {
+        value: { x: number; y: number; color: string };
+      };
+      const group = host.querySelector(
+        ":scope > fig-group",
+      ) as HTMLElement & { open: boolean };
+      const color = group.querySelector(
+        ":scope > propskit-color",
+      ) as HTMLElement & { value: string };
+      const position = group.querySelector(
+        ":scope > propskit-position",
+      ) as HTMLElement & { value: { x: number; y: number } };
+      const initial = {
+        name: group.getAttribute("name"),
+        compact: group.hasAttribute("compact"),
+        collapsible: group.hasAttribute("collapsible"),
+        open: group.getAttribute("open"),
+        children: [...group.children]
+          .filter((child) => child.hasAttribute("data-propskit-color-point-control"))
+          .map((child) => child.tagName.toLowerCase()),
+        sizes: [color.getAttribute("size"), position.getAttribute("size")],
+        color: color.value,
+        position: position.value,
+        positionUnits: position.getAttribute("units"),
+        value: host.value,
+      };
+
+      host.setAttribute("label", "Sun");
+      host.setAttribute("collapsible", "false");
+      const collapsedDisabled = {
+        name: group.getAttribute("name"),
+        collapsible: group.hasAttribute("collapsible"),
+        open: group.getAttribute("open"),
+      };
+      host.setAttribute("collapsible", "true");
+      host.setAttribute("open", "false");
+      group.open = true;
+      host.removeAttribute("size");
+
+      const events: Array<{ type: string; detail: unknown; composed: boolean }> = [];
+      for (const type of ["input", "change"]) {
+        host.addEventListener(type, (event) => {
+          events.push({
+            type,
+            detail: (event as CustomEvent).detail,
+            composed: event.composed,
+          });
+        });
+      }
+      position.value = { x: 40, y: 60 };
+      position.dispatchEvent(
+        new CustomEvent("input", {
+          detail: position.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      color.value = "#0D99FF";
+      color.dispatchEvent(
+        new CustomEvent("change", {
+          detail: color.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      return {
+        initial,
+        collapsedDisabled,
+        hostOpenAfterGroupToggle: host.getAttribute("open"),
+        sizesAfterRemoval: [
+          color.getAttribute("size"),
+          position.getAttribute("size"),
+        ],
+        value: host.value,
+        valueAttribute: JSON.parse(host.getAttribute("value") || "{}"),
+        events,
+      };
+    });
+
+    expect(state).toEqual({
+      initial: {
+        name: "Light",
+        compact: true,
+        collapsible: true,
+        open: "true",
+        children: ["propskit-color", "propskit-position"],
+        sizes: ["large", "large"],
+        color: "#FF00BF",
+        position: { x: 25, y: 75 },
+        positionUnits: "percent",
+        value: { x: 25, y: 75, color: "#FF00BF" },
+      },
+      collapsedDisabled: {
+        name: "Sun",
+        collapsible: false,
+        open: null,
+      },
+      hostOpenAfterGroupToggle: "true",
+      sizesAfterRemoval: [null, null],
+      value: { x: 40, y: 60, color: "#0D99FF" },
+      valueAttribute: { x: 40, y: 60, color: "#0D99FF" },
+      events: [
+        {
+          type: "input",
+          detail: {
+            x: 40,
+            y: 60,
+            color: "#FF00BF",
+            units: "percent",
+          },
+          composed: true,
+        },
+        {
+          type: "change",
+          detail: {
+            x: 40,
+            y: 60,
+            color: "#0D99FF",
+            units: "percent",
+          },
+          composed: true,
+        },
+      ],
+    });
+  });
+});
+
+test.describe("propskit-point-radius", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-point-radius");
+    });
+  });
+
+  test("wraps compact position and radius controls with unit-preserving values", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-point-radius id="control" label="Blur" size="large" units="percent"
+          value='{"x":25,"y":75,"radius":"25%"}'></propskit-point-radius>
+      `;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("#control") as HTMLElement & {
+        value: { x: number; y: number; radius: number | string };
+        units: "none" | "percent";
+      };
+      const group = host.querySelector(":scope > fig-group")!;
+      const position = group.querySelector(
+        ":scope > propskit-position",
+      ) as HTMLElement & { value: { x: number; y: number } };
+      const radius = group.querySelector(
+        ":scope > propskit-number",
+      ) as HTMLElement & { value: number | string };
+      const radiusInput = radius.querySelector("fig-input-number")!;
+      const initial = {
+        name: group.getAttribute("name"),
+        compact: group.hasAttribute("compact"),
+        collapsible: group.hasAttribute("collapsible"),
+        open: group.getAttribute("open"),
+        children: [...group.children]
+          .filter((child) => child.hasAttribute("data-propskit-point-radius-control"))
+          .map((child) => child.tagName.toLowerCase()),
+        sizes: [position.getAttribute("size"), radius.getAttribute("size")],
+        position: position.value,
+        positionUnits: position.getAttribute("units"),
+        radius: radius.value,
+        radiusUnits: radius.getAttribute("units"),
+        value: host.value,
+      };
+
+      host.removeAttribute("units");
+      await new Promise(requestAnimationFrame);
+      const unitsAfterDefault = {
+        attribute: position.getAttribute("units"),
+        inputs: [
+          ...position.querySelectorAll("fig-input-number"),
+        ].map((input) => input.getAttribute("units")),
+        radius: radius.getAttribute("units"),
+        radiusInput: radiusInput.getAttribute("units"),
+      };
+      host.units = "percent";
+
+      host.value = { x: 25, y: 75, radius: 16 };
+      await new Promise(requestAnimationFrame);
+      const numericRadius = {
+        value: radius.value,
+        units: radius.getAttribute("units"),
+        inputUnits: radiusInput.getAttribute("units"),
+      };
+      host.value = { x: 25, y: 75, radius: "25%" };
+      await new Promise(requestAnimationFrame);
+
+      const events: Array<{ type: string; detail: unknown; composed: boolean }> = [];
+      for (const type of ["input", "change"]) {
+        host.addEventListener(type, (event) => {
+          events.push({
+            type,
+            detail: (event as CustomEvent).detail,
+            composed: event.composed,
+          });
+        });
+      }
+      position.value = { x: 40, y: 60 };
+      position.dispatchEvent(
+        new CustomEvent("input", {
+          detail: position.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      radius.value = 35;
+      radiusInput.setAttribute("units", "%");
+      radius.dispatchEvent(
+        new CustomEvent("change", {
+          detail: radius.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      return {
+        initial,
+        unitsAfterDefault,
+        numericRadius,
+        value: host.value,
+        valueAttribute: JSON.parse(host.getAttribute("value") || "{}"),
+        radiusUnitsAfterEdit: radius.getAttribute("units"),
+        events,
+      };
+    });
+
+    expect(state).toEqual({
+      initial: {
+        name: "Blur",
+        compact: true,
+        collapsible: true,
+        open: "true",
+        children: ["propskit-position", "propskit-number"],
+        sizes: ["large", "large"],
+        position: { x: 25, y: 75 },
+        positionUnits: "percent",
+        radius: 25,
+        radiusUnits: "%",
+        value: { x: 25, y: 75, radius: "25%" },
+      },
+      unitsAfterDefault: {
+        attribute: null,
+        inputs: [null, null],
+        radius: null,
+        radiusInput: null,
+      },
+      numericRadius: {
+        value: 16,
+        units: "%",
+        inputUnits: "%",
+      },
+      value: { x: 40, y: 60, radius: "35%" },
+      valueAttribute: { x: 40, y: 60, radius: "35%" },
+      radiusUnitsAfterEdit: "%",
+      events: [
+        {
+          type: "input",
+          detail: { x: 40, y: 60, radius: 25, units: "percent" },
+          composed: true,
+        },
+        {
+          type: "change",
+          detail: { x: 40, y: 60, radius: 35, units: "percent" },
+          composed: true,
+        },
+      ],
+    });
+  });
+});
+
+test.describe("propskit-point-radius-angle", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-point-radius-angle");
+    });
+  });
+
+  test("wraps compact position, radius, and angle controls", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-point-radius-angle id="control" label="Gradient" size="large" units="percent"
+          value='{"x":25,"y":75,"radius":"25%","angle":45}'></propskit-point-radius-angle>
+      `;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("#control") as HTMLElement & {
+        value: {
+          x: number;
+          y: number;
+          radius: number | string;
+          angle: number;
+        };
+        units: "none" | "percent";
+      };
+      const group = host.querySelector(":scope > fig-group")!;
+      const position = group.querySelector(
+        ':scope > [data-propskit-point-radius-angle-control="position"]',
+      ) as HTMLElement & { value: { x: number; y: number } };
+      const radius = group.querySelector(
+        ':scope > [data-propskit-point-radius-angle-control="radius"]',
+      ) as HTMLElement & { value: number | string };
+      const angle = group.querySelector(
+        ':scope > [data-propskit-point-radius-angle-control="angle"]',
+      ) as HTMLElement & { value: number | string };
+      const radiusInput = radius.querySelector("fig-input-number")!;
+      const initial = {
+        name: group.getAttribute("name"),
+        compact: group.hasAttribute("compact"),
+        collapsible: group.hasAttribute("collapsible"),
+        open: group.getAttribute("open"),
+        children: [...group.children]
+          .filter((child) =>
+            child.hasAttribute("data-propskit-point-radius-angle-control"),
+          )
+          .map((child) => child.tagName.toLowerCase()),
+        sizes: [
+          position.getAttribute("size"),
+          radius.getAttribute("size"),
+          angle.getAttribute("size"),
+        ],
+        positionUnits: position.getAttribute("units"),
+        radiusUnits: radius.getAttribute("units"),
+        angleUnits: angle.getAttribute("units"),
+        value: host.value,
+      };
+
+      host.removeAttribute("units");
+      await new Promise(requestAnimationFrame);
+      const defaultUnits = {
+        position: [...position.querySelectorAll("fig-input-number")].map(
+          (input) => input.getAttribute("units"),
+        ),
+        radius: radius.getAttribute("units"),
+        radiusInput: radiusInput.getAttribute("units"),
+      };
+      host.units = "percent";
+
+      const events: Array<{ type: string; detail: unknown; composed: boolean }> = [];
+      for (const type of ["input", "change"]) {
+        host.addEventListener(type, (event) => {
+          events.push({
+            type,
+            detail: (event as CustomEvent).detail,
+            composed: event.composed,
+          });
+        });
+      }
+      position.value = { x: 40, y: 60 };
+      position.dispatchEvent(
+        new CustomEvent("input", {
+          detail: position.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      radius.value = 35;
+      radiusInput.setAttribute("units", "%");
+      radius.dispatchEvent(
+        new CustomEvent("change", {
+          detail: radius.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      angle.value = 90;
+      angle.dispatchEvent(
+        new CustomEvent("input", {
+          detail: angle.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      return {
+        initial,
+        defaultUnits,
+        value: host.value,
+        valueAttribute: JSON.parse(host.getAttribute("value") || "{}"),
+        events,
+      };
+    });
+
+    expect(state).toEqual({
+      initial: {
+        name: "Gradient",
+        compact: true,
+        collapsible: true,
+        open: "true",
+        children: [
+          "propskit-position",
+          "propskit-number",
+          "propskit-number",
+        ],
+        sizes: ["large", "large", "large"],
+        positionUnits: "percent",
+        radiusUnits: "%",
+        angleUnits: "°",
+        value: { x: 25, y: 75, radius: "25%", angle: 45 },
+      },
+      defaultUnits: {
+        position: [null, null],
+        radius: null,
+        radiusInput: null,
+      },
+      value: { x: 40, y: 60, radius: "35%", angle: 90 },
+      valueAttribute: { x: 40, y: 60, radius: "35%", angle: 90 },
+      events: [
+        {
+          type: "input",
+          detail: {
+            x: 40,
+            y: 60,
+            radius: 25,
+            angle: 45,
+            units: "percent",
+          },
+          composed: true,
+        },
+        {
+          type: "change",
+          detail: {
+            x: 40,
+            y: 60,
+            radius: 35,
+            angle: 45,
+            units: "percent",
+          },
+          composed: true,
+        },
+        {
+          type: "input",
+          detail: {
+            x: 40,
+            y: 60,
+            radius: 35,
+            angle: 90,
+            units: "percent",
+          },
+          composed: true,
+        },
+      ],
+    });
+  });
+});
+
+test.describe("propskit-point-point", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-point-point");
+    });
+  });
+
+  test("wraps two position controls and aggregates values", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-point-point id="control" label="Gradient" size="large" units="percent"
+          value='{"x":25,"y":30,"x2":75,"y2":70}'></propskit-point-point>
+      `;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("#control") as HTMLElement & {
+        value: { x: number; y: number; x2: number; y2: number };
+        units: "none" | "percent";
+      };
+      const group = host.querySelector(":scope > fig-group")!;
+      const start = group.querySelector(
+        ':scope > [data-propskit-point-point-control="start"]',
+      ) as HTMLElement & { value: { x: number; y: number } };
+      const end = group.querySelector(
+        ':scope > [data-propskit-point-point-control="end"]',
+      ) as HTMLElement & { value: { x: number; y: number } };
+      const initial = {
+        name: group.getAttribute("name"),
+        compact: group.hasAttribute("compact"),
+        collapsible: group.hasAttribute("collapsible"),
+        open: group.getAttribute("open"),
+        labels: [start.getAttribute("label"), end.getAttribute("label")],
+        sizes: [start.getAttribute("size"), end.getAttribute("size")],
+        units: [start.getAttribute("units"), end.getAttribute("units")],
+        value: host.value,
+      };
+
+      host.removeAttribute("units");
+      const noUnits = [start, end].map((control) => ({
+        attribute: control.getAttribute("units"),
+        inputs: [...control.querySelectorAll("fig-input-number")].map((input) =>
+          input.getAttribute("units"),
+        ),
+      }));
+
+      const events: Array<{ type: string; detail: unknown }> = [];
+      for (const type of ["input", "change"]) {
+        host.addEventListener(type, (event) => {
+          events.push({ type, detail: (event as CustomEvent).detail });
+        });
+      }
+      start.value = { x: 10, y: 20 };
+      start.dispatchEvent(
+        new CustomEvent("input", {
+          detail: start.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      end.value = { x: 80, y: 90 };
+      end.dispatchEvent(
+        new CustomEvent("change", {
+          detail: end.value,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      return {
+        initial,
+        noUnits,
+        value: host.value,
+        valueAttribute: JSON.parse(host.getAttribute("value") || "{}"),
+        events,
+      };
+    });
+
+    expect(state).toEqual({
+      initial: {
+        name: "Gradient",
+        compact: true,
+        collapsible: true,
+        open: "true",
+        labels: ["Start", "End"],
+        sizes: ["large", "large"],
+        units: ["percent", "percent"],
+        value: { x: 25, y: 30, x2: 75, y2: 70 },
+      },
+      noUnits: [
+        { attribute: null, inputs: [null, null] },
+        { attribute: null, inputs: [null, null] },
+      ],
+      value: { x: 10, y: 20, x2: 80, y2: 90 },
+      valueAttribute: { x: 10, y: 20, x2: 80, y2: 90 },
+      events: [
+        {
+          type: "input",
+          detail: {
+            x: 10,
+            y: 20,
+            x2: 75,
+            y2: 70,
+            units: "none",
+          },
+        },
+        {
+          type: "change",
+          detail: {
+            x: 10,
+            y: 20,
+            x2: 80,
+            y2: 90,
+            units: "none",
+          },
+        },
+      ],
+    });
+  });
+});
+
+test.describe("fig-canvas-control value synchronization", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+    });
+  });
+
+  test("color value objects synchronize fig-canvas-control color", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="position:relative;width:200px;height:100px">
+          <fig-canvas-control id="canvas" type="color"
+            value='{"x":20,"y":30,"color":"#FF00BF"}'></fig-canvas-control>
+        </div>
+      `;
+      await new Promise(requestAnimationFrame);
+      const canvas = root.querySelector("#canvas") as HTMLElement & {
+        value: Record<string, unknown>;
+      };
+      canvas.value = { x: 40, y: 60, color: "#0D99FF" };
+      await new Promise(requestAnimationFrame);
+      return {
+        value: canvas.value,
+        color: canvas.getAttribute("color"),
+        handleColor: canvas.querySelector("fig-handle")?.getAttribute("color"),
+      };
+    });
+
+    expect(state).toEqual({
+      value: { x: 40, y: 60, color: "#0D99FF" },
+      color: "#0D99FF",
+      handleColor: "#0D99FF",
+    });
+  });
+});
+
 test.describe("propskit sizes", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -821,6 +1577,7 @@ test.describe("propskit sizes", () => {
           "propskit-select",
           "propskit-text",
           "propskit-number",
+          "propskit-position",
           "propskit-slider",
           "fig-select",
         ].map((tag) => customElements.whenDefined(tag)),
@@ -840,6 +1597,7 @@ test.describe("propskit sizes", () => {
         "propskit-select": 'label="Mode" value="A" options="A,B"',
         "propskit-text": 'label="Name" value="Layer"',
         "propskit-number": 'label="Width" value="24"',
+        "propskit-position": 'label="Position" x="25" y="75"',
         "propskit-slider": 'label="Opacity" value="50" min="0" max="100"',
       };
       root.innerHTML = Object.entries(fixtures)

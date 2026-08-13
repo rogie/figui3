@@ -253,6 +253,7 @@ export default function Nav({
                 <fig-group
                   key={g.group}
                   name={g.group}
+                  compact
                   collapsible
                   open={collapsed ? undefined : true}
                 >

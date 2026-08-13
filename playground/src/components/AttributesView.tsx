@@ -128,6 +128,15 @@ function isDefaultLargeSizeControl(controlTag: string): boolean {
   );
 }
 
+function isPropskitSpatialUnitsControl(controlTag: string): boolean {
+  return (
+    controlTag === "propskit-position" ||
+    controlTag === "propskit-point-radius" ||
+    controlTag === "propskit-point-radius-angle" ||
+    controlTag === "propskit-point-point"
+  );
+}
+
 function toFieldsLabel(value: string): string {
   return value
     .split(",")
@@ -189,8 +198,13 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-radio": "Radio",
     "fig-field": "Field",
     "propskit-color": "Propskit color",
+    "propskit-color-point": "Propskit color point",
     "propskit-gradient": "Propskit gradient",
     "propskit-number": "Propskit number",
+    "propskit-point-point": "Propskit point point",
+    "propskit-point-radius": "Propskit point radius",
+    "propskit-point-radius-angle": "Propskit point radius angle",
+    "propskit-position": "Propskit position",
     "propskit-select": "Propskit select",
     "propskit-slider": "Propskit slider",
     "propskit-switch": "Propskit switch",
@@ -883,6 +897,9 @@ export default function AttributesView({
               (isDefaultLargeSizeControl(target.controlTag) &&
                 scope === "control" &&
                 name === "size") ||
+              (isPropskitSpatialUnitsControl(target.controlTag) &&
+                scope === "control" &&
+                name === "units") ||
               (target.controlTag === "fig-handle" &&
                 scope === "control" &&
                 (name === "drag-axes" ||
@@ -913,6 +930,12 @@ export default function AttributesView({
                   name === "size"
                 ) {
                   return option === "" ? "Default" : "Large";
+                }
+                if (
+                  isPropskitSpatialUnitsControl(target.controlTag) &&
+                  name === "units"
+                ) {
+                  return option === "" ? "Default" : "Percent";
                 }
                 if (target.controlTag === "fig-handle" && name === "drag-axes") {
                   return option === "x,y" ? "X & Y" : option.toUpperCase();
@@ -991,6 +1014,18 @@ export default function AttributesView({
                 if (
                   isDefaultLargeSizeControl(target.controlTag) &&
                   name === "size"
+                ) {
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    option === "" ? null : option,
+                  );
+                  return;
+                }
+                if (
+                  isPropskitSpatialUnitsControl(target.controlTag) &&
+                  name === "units"
                 ) {
                   applyChange(
                     target.fieldIndex,
@@ -1108,8 +1143,13 @@ export default function AttributesView({
                   if (
                     (target.controlTag === "propskit-slider" ||
                       target.controlTag === "propskit-color" ||
+                      target.controlTag === "propskit-color-point" ||
                       target.controlTag === "propskit-gradient" ||
                       target.controlTag === "propskit-number" ||
+                      target.controlTag === "propskit-point-point" ||
+                      target.controlTag === "propskit-point-radius" ||
+                      target.controlTag === "propskit-point-radius-angle" ||
+                      target.controlTag === "propskit-position" ||
                       target.controlTag === "propskit-select" ||
                       target.controlTag === "propskit-switch" ||
                       target.controlTag === "propskit-text") &&
@@ -1261,8 +1301,13 @@ export default function AttributesView({
                     if (
                       (target.controlTag === "propskit-slider" ||
                         target.controlTag === "propskit-color" ||
+                        target.controlTag === "propskit-color-point" ||
                         target.controlTag === "propskit-gradient" ||
                         target.controlTag === "propskit-number" ||
+                        target.controlTag === "propskit-point-point" ||
+                        target.controlTag === "propskit-point-radius" ||
+                        target.controlTag === "propskit-point-radius-angle" ||
+                        target.controlTag === "propskit-position" ||
                         target.controlTag === "propskit-select" ||
                         target.controlTag === "propskit-switch" ||
                         target.controlTag === "propskit-text") &&
