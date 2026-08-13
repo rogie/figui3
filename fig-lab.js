@@ -18,6 +18,13 @@ function figLabBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
 
+function figLabSyncDisabledControls(host, controls) {
+  const disabled = figLabBooleanAttribute(host, "disabled");
+  for (const control of controls) {
+    control?.toggleAttribute("disabled", disabled);
+  }
+}
+
 function figLabColorEventAliases(color, alpha, opacity) {
   const numericAlpha = Number(alpha);
   const numericOpacity = Number(opacity);
@@ -566,6 +573,7 @@ class PropskitSwitch extends HTMLElement {
 
   #forwardSwitchEvent(type, event) {
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const checked = this.#switch?.value === "on";
     this.toggleAttribute("checked", checked);
     const detail = {
@@ -583,6 +591,7 @@ class PropskitSwitch extends HTMLElement {
   }
 
   #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (
       event.target instanceof Element &&
       event.target.closest("fig-segmented-control, fig-menu")
@@ -845,6 +854,7 @@ class PropskitColor extends HTMLElement {
 
   #forwardInputEvent(type, event) {
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.#valueFromColorEvent(event);
     this.setAttribute("value", value);
     if (this.#input && this.#input.getAttribute("value") !== value) {
@@ -865,6 +875,7 @@ class PropskitColor extends HTMLElement {
   }
 
   #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (
       event.target instanceof Element &&
       event.target.closest("fig-input-color, fig-menu")
@@ -1131,6 +1142,7 @@ class PropskitGradient extends HTMLElement {
 
   #forwardInputEvent(type, event) {
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.#valueFromGradientEvent(event);
     this.setAttribute("value", value);
     const detail =
@@ -1148,6 +1160,7 @@ class PropskitGradient extends HTMLElement {
   }
 
   #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (
       event.target instanceof Element &&
       event.target.closest("fig-input-gradient, fig-menu")
@@ -1481,6 +1494,7 @@ class PropskitSelect extends HTMLElement {
   #forwardSelectEvent(type, event) {
     if (event.target !== this.#select) return;
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.#select?.value ?? "";
     if (type !== "optionhover") this.setAttribute("value", String(value));
     const detail =
@@ -1520,6 +1534,7 @@ class PropskitSelect extends HTMLElement {
   }
 
   #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (event.target instanceof Element && event.target.closest("fig-menu")) {
       return;
     }
@@ -1753,6 +1768,7 @@ class PropskitText extends HTMLElement {
 
   #forwardInputEvent(type, event) {
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.#input?.value ?? "";
     this.setAttribute("value", String(value));
     const detail =
@@ -1770,6 +1786,7 @@ class PropskitText extends HTMLElement {
   }
 
   #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (
       event.target instanceof Element &&
       event.target.closest("fig-input-text, fig-menu")
@@ -1978,6 +1995,7 @@ class PropskitNumber extends HTMLElement {
 
   #forwardInputEvent(type, event) {
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const detail =
       event instanceof CustomEvent && event.detail !== undefined
         ? event.detail
@@ -1996,6 +2014,7 @@ class PropskitNumber extends HTMLElement {
   }
 
   #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (
       event.target instanceof Element &&
       event.target.closest("fig-input-number, fig-menu")
@@ -2251,6 +2270,7 @@ class PropskitPosition extends HTMLElement {
   }
 
   #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (
       event.target instanceof Element &&
       event.target.closest("fig-input-number, fig-menu")
@@ -2329,6 +2349,7 @@ figLabDefineElement("propskit-position", PropskitPosition);
  * @attr {boolean|string} collapsible - Internal group collapsibility; defaults true.
  * @attr {boolean|string} open - Internal group expanded state; defaults true.
  * @attr {string} size - Passed to both internal PropsKit controls.
+ * @attr {boolean|string} disabled - Disables both internal controls.
  * @attr {string} value - JSON object with x, y, and color.
  * @fires input - Composed event with { x, y, color }.
  * @fires change - Composed event with { x, y, color }.
@@ -2340,6 +2361,7 @@ class PropskitColorPoint extends HTMLElement {
     "collapsible",
     "open",
     "size",
+    "disabled",
     "value",
   ];
 
@@ -2361,6 +2383,7 @@ class PropskitColorPoint extends HTMLElement {
     if (!this.#group) this.#render();
     this.#syncGroupAttributes();
     this.#syncSize();
+    this.#syncDisabled();
     this.#syncControls(this.#readValue());
     this.removeEventListener("input", this.#boundHandleInput);
     this.addEventListener("input", this.#boundHandleInput);
@@ -2387,6 +2410,10 @@ class PropskitColorPoint extends HTMLElement {
     }
     if (name === "size") {
       this.#syncSize();
+      return;
+    }
+    if (name === "disabled") {
+      this.#syncDisabled();
       return;
     }
     this.#syncGroupAttributes();
@@ -2452,6 +2479,7 @@ class PropskitColorPoint extends HTMLElement {
     this.#positionControl = position;
     this.#syncGroupAttributes();
     this.#syncSize();
+    this.#syncDisabled();
     group.append(color, position);
     this.replaceChildren(group);
   }
@@ -2479,6 +2507,13 @@ class PropskitColorPoint extends HTMLElement {
     }
   }
 
+  #syncDisabled() {
+    figLabSyncDisabledControls(this, [
+      this.#colorControl,
+      this.#positionControl,
+    ]);
+  }
+
   #syncControls(value) {
     const normalized = this.#normalizeValue(value);
     if (this.#colorControl) this.#colorControl.value = normalized.color;
@@ -2497,6 +2532,7 @@ class PropskitColorPoint extends HTMLElement {
     );
     if (!control || !this.contains(control)) return;
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.value;
     const kind = control.getAttribute("data-propskit-color-point-control");
     if (kind === "color") {
@@ -2575,6 +2611,7 @@ figLabDefineElement("propskit-color-point", PropskitColorPoint);
  * @attr {boolean|string} open - Internal group expanded state; defaults true.
  * @attr {string} size - Passed to both internal PropsKit controls.
  * @attr {string} units - Passed to the internal position and radius controls.
+ * @attr {boolean|string} disabled - Disables both internal controls.
  * @attr {string} value - JSON object with x, y, and radius.
  * @fires input - Composed event with { x, y, radius }.
  * @fires change - Composed event with { x, y, radius }.
@@ -2587,6 +2624,7 @@ class PropskitPointRadius extends HTMLElement {
     "open",
     "size",
     "units",
+    "disabled",
     "value",
   ];
 
@@ -2609,6 +2647,7 @@ class PropskitPointRadius extends HTMLElement {
     this.#syncGroupAttributes();
     this.#syncSize();
     this.#syncUnits();
+    this.#syncDisabled();
     this.#syncControls(this.#readValue());
     this.removeEventListener("input", this.#boundHandleInput);
     this.addEventListener("input", this.#boundHandleInput);
@@ -2639,6 +2678,10 @@ class PropskitPointRadius extends HTMLElement {
     }
     if (name === "units") {
       this.#syncUnits();
+      return;
+    }
+    if (name === "disabled") {
+      this.#syncDisabled();
       return;
     }
     this.#syncGroupAttributes();
@@ -2723,6 +2766,7 @@ class PropskitPointRadius extends HTMLElement {
     this.#radiusControl = radius;
     this.#syncGroupAttributes();
     this.#syncSize();
+    this.#syncDisabled();
     group.append(position, radius);
     this.replaceChildren(group);
   }
@@ -2763,6 +2807,13 @@ class PropskitPointRadius extends HTMLElement {
     }
   }
 
+  #syncDisabled() {
+    figLabSyncDisabledControls(this, [
+      this.#positionControl,
+      this.#radiusControl,
+    ]);
+  }
+
   #syncControls(value) {
     const normalized = this.#normalizeValue(value);
     if (this.#positionControl) {
@@ -2793,6 +2844,7 @@ class PropskitPointRadius extends HTMLElement {
     );
     if (!control || !this.contains(control)) return;
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.value;
     const kind = control.getAttribute("data-propskit-point-radius-control");
     if (kind === "position") {
@@ -2888,6 +2940,7 @@ figLabDefineElement("propskit-point-radius", PropskitPointRadius);
  * @attr {boolean|string} open - Internal group expanded state; defaults true.
  * @attr {string} size - Passed to every internal PropsKit control.
  * @attr {string} units - Passed to the internal position and radius controls.
+ * @attr {boolean|string} disabled - Disables every internal control.
  * @attr {string} value - JSON object with x, y, radius, and angle.
  * @fires input - Composed event with { x, y, radius, angle }.
  * @fires change - Composed event with { x, y, radius, angle }.
@@ -2900,6 +2953,7 @@ class PropskitPointRadiusAngle extends HTMLElement {
     "open",
     "size",
     "units",
+    "disabled",
     "value",
   ];
 
@@ -2923,6 +2977,7 @@ class PropskitPointRadiusAngle extends HTMLElement {
     this.#syncGroupAttributes();
     this.#syncSize();
     this.#syncUnits();
+    this.#syncDisabled();
     this.#syncControls(this.#readValue());
     this.removeEventListener("input", this.#boundHandleInput);
     this.addEventListener("input", this.#boundHandleInput);
@@ -2953,6 +3008,10 @@ class PropskitPointRadiusAngle extends HTMLElement {
     }
     if (name === "units") {
       this.#syncUnits();
+      return;
+    }
+    if (name === "disabled") {
+      this.#syncDisabled();
       return;
     }
     this.#syncGroupAttributes();
@@ -3049,6 +3108,7 @@ class PropskitPointRadiusAngle extends HTMLElement {
     this.#angleControl = angle;
     this.#syncGroupAttributes();
     this.#syncSize();
+    this.#syncDisabled();
     group.append(position, radius, angle);
     this.replaceChildren(group);
   }
@@ -3093,6 +3153,14 @@ class PropskitPointRadiusAngle extends HTMLElement {
     }
   }
 
+  #syncDisabled() {
+    figLabSyncDisabledControls(this, [
+      this.#positionControl,
+      this.#radiusControl,
+      this.#angleControl,
+    ]);
+  }
+
   #syncControls(value) {
     const normalized = this.#normalizeValue(value);
     if (this.#positionControl) {
@@ -3126,6 +3194,7 @@ class PropskitPointRadiusAngle extends HTMLElement {
     );
     if (!control || !this.contains(control)) return;
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.value;
     const kind = control.getAttribute(
       "data-propskit-point-radius-angle-control",
@@ -3228,6 +3297,7 @@ figLabDefineElement(
  * @attr {boolean|string} open - Internal group expanded state; defaults true.
  * @attr {string} size - Passed to both internal position controls.
  * @attr {string} units - Passed to both internal position controls.
+ * @attr {boolean|string} disabled - Disables both internal position controls.
  * @attr {string} value - JSON object with x, y, x2, and y2.
  * @fires input - Composed event with { x, y, x2, y2 }.
  * @fires change - Composed event with { x, y, x2, y2 }.
@@ -3240,6 +3310,7 @@ class PropskitPointPoint extends HTMLElement {
     "open",
     "size",
     "units",
+    "disabled",
     "value",
   ];
 
@@ -3262,6 +3333,7 @@ class PropskitPointPoint extends HTMLElement {
     this.#syncGroupAttributes();
     this.#syncSize();
     this.#syncUnits();
+    this.#syncDisabled();
     this.#syncControls(this.#readValue());
     this.removeEventListener("input", this.#boundHandleInput);
     this.addEventListener("input", this.#boundHandleInput);
@@ -3292,6 +3364,10 @@ class PropskitPointPoint extends HTMLElement {
     }
     if (name === "units") {
       this.#syncUnits();
+      return;
+    }
+    if (name === "disabled") {
+      this.#syncDisabled();
       return;
     }
     this.#syncGroupAttributes();
@@ -3357,6 +3433,7 @@ class PropskitPointPoint extends HTMLElement {
     this.#endControl = end;
     this.#syncGroupAttributes();
     this.#syncSize();
+    this.#syncDisabled();
     group.append(start, end);
     this.replaceChildren(group);
   }
@@ -3392,6 +3469,13 @@ class PropskitPointPoint extends HTMLElement {
     }
   }
 
+  #syncDisabled() {
+    figLabSyncDisabledControls(this, [
+      this.#startControl,
+      this.#endControl,
+    ]);
+  }
+
   #syncControls(value) {
     const normalized = this.#normalizeValue(value);
     if (this.#startControl) {
@@ -3415,6 +3499,7 @@ class PropskitPointPoint extends HTMLElement {
     );
     if (!control || !this.contains(control)) return;
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.value;
     const point = control.value;
     const role = control.getAttribute("data-propskit-point-point-control");
@@ -3502,13 +3587,17 @@ figLabDefineElement("propskit-point-point", PropskitPointPoint);
 
 /* Collapsible property group — always collapsible (no collapsible attr). */
 class PropskitGroup extends HTMLElement {
-  static observedAttributes = ["name", "open", "show-reset"];
+  static observedAttributes = ["name", "open", "show-reset", "disabled"];
 
   static #CONTROL_SELECTOR = [
     "propskit-color",
     "propskit-gradient",
     "propskit-number",
     "propskit-position",
+    "propskit-color-point",
+    "propskit-point-radius",
+    "propskit-point-radius-angle",
+    "propskit-point-point",
     "propskit-select",
     "propskit-slider",
     "propskit-switch",
@@ -3525,6 +3614,7 @@ class PropskitGroup extends HTMLElement {
 
   connectedCallback() {
     this.#render();
+    this.#syncDisabled();
     this.#bindDirtyListeners();
     requestAnimationFrame(() => {
       this.#syncDirtyState();
@@ -3552,6 +3642,10 @@ class PropskitGroup extends HTMLElement {
     if (name === "show-reset") {
       this.#syncResetButton();
       this.#syncDirtyState();
+      return;
+    }
+    if (name === "disabled") {
+      this.#syncDisabled();
       return;
     }
     this.#render();
@@ -3609,6 +3703,7 @@ class PropskitGroup extends HTMLElement {
 
     if (!this.#childObserver) {
       this.#childObserver = new MutationObserver(() => {
+        this.#syncDisabled();
         this.#queueDirtySync();
       });
     }
@@ -3647,12 +3742,14 @@ class PropskitGroup extends HTMLElement {
   }
 
   #handleToggle = (e) => {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (this.#isResetTarget(e.target)) return;
     e.stopPropagation();
     this.open = !this.open;
   };
 
   #handleHeaderKeyDown = (e) => {
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (this.#isResetTarget(e.target)) return;
     if (e.key !== "Enter" && e.key !== " ") return;
     e.preventDefault();
@@ -3663,6 +3760,7 @@ class PropskitGroup extends HTMLElement {
   #handleReset = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     this.#resetControls();
   };
 
@@ -3674,6 +3772,26 @@ class PropskitGroup extends HTMLElement {
         el.closest("propskit-group") === this &&
         !el.parentElement?.closest(PropskitGroup.#CONTROL_SELECTOR),
     );
+  }
+
+  #syncDisabled() {
+    const disabled = figLabBooleanAttribute(this, "disabled");
+    for (const control of this.#controls()) {
+      if (disabled) {
+        if (!figLabBooleanAttribute(control, "disabled")) {
+          control.setAttribute("disabled", "");
+          control.setAttribute("data-propskit-group-disabled", "");
+        }
+      } else if (control.hasAttribute("data-propskit-group-disabled")) {
+        control.removeAttribute("disabled");
+        control.removeAttribute("data-propskit-group-disabled");
+      }
+    }
+    this.#header?.setAttribute("aria-disabled", String(disabled));
+    this.#header?.setAttribute("tabindex", disabled ? "-1" : "0");
+    this.#resetTooltip
+      ?.querySelector("fig-button")
+      ?.toggleAttribute("disabled", disabled);
   }
 
   #controlIsDirty(el) {
@@ -3813,7 +3931,7 @@ class PropskitGroup extends HTMLElement {
     this.#chevron = h3.querySelector(".propskit-group-chevron");
     this.#syncResetButton();
     this.#header.setAttribute("role", "button");
-    this.#header.setAttribute("tabindex", "0");
+    this.#syncDisabled();
     this.#header.setAttribute("aria-expanded", String(this.open));
     this.#header.removeEventListener("click", this.#handleToggle);
     this.#header.addEventListener("click", this.#handleToggle);
@@ -4626,6 +4744,7 @@ class PropskitSlider extends HTMLElement {
 
   #forwardSliderEvent(type, event) {
     event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
     if (type === "change") {
       this.#resetElasticPull();
     }
@@ -6364,7 +6483,7 @@ class PropskitOscillator extends HTMLElement {
     this.#syncViewportSize();
     this.#updateWaveform();
     this.#setupEvents();
-    this.#startPlayhead();
+    if (!this.#isDisabled()) this.#startPlayhead();
     figLabConnectPropskitResetMenu(this);
   }
 
@@ -6414,6 +6533,7 @@ class PropskitOscillator extends HTMLElement {
   }
 
   #getWaveTypeMenuHTML(disabled, index) {
+    const disabledAttr = disabled ? " disabled" : "";
     const items = PropskitOscillator.TYPES.map((type) => {
       return `<fig-menu-item value="${type.value}">
         ${PropskitOscillator.waveIcon(type.value, 24)}
@@ -6421,9 +6541,9 @@ class PropskitOscillator extends HTMLElement {
       </fig-menu-item>`;
     }).join("");
     const indexAttr = ` data-wave-index="${PropskitOscillator.#escapeAttribute(String(index))}"`;
-    return `<fig-menu class="propskit-oscillator-add-type" position="bottom right"${indexAttr}${disabled}>
+    return `<fig-menu class="propskit-oscillator-add-type" position="bottom right"${indexAttr}${disabledAttr}>
       <fig-tooltip text="Add form">
-        <fig-button class="propskit-oscillator-add-type-button" variant="ghost" icon fig-menu-trigger aria-label="Add form"><fig-icon name="plus"></fig-icon></fig-button>
+        <fig-button class="propskit-oscillator-add-type-button" variant="ghost" icon fig-menu-trigger aria-label="Add form"${disabledAttr}><fig-icon name="plus"></fig-icon></fig-button>
       </fig-tooltip>
       ${items}
     </fig-menu>`;

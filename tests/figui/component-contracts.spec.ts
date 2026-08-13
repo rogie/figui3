@@ -70,7 +70,7 @@ test.describe("fig.js component contracts", () => {
   test("fig-easing-curve falls back to fig-dropdown without fig-editor", async ({
     page,
   }) => {
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML =
@@ -506,7 +506,7 @@ test.describe("AI lab styling components", () => {
       `;
     });
 
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(async () => {
       const container = document.querySelector("fig-attachments");
       const imageAttachment = document.querySelector("#image-attachment");
       const fileAttachment = document.querySelector("#file-attachment");
@@ -517,6 +517,16 @@ test.describe("AI lab styling components", () => {
         container?.querySelectorAll(":scope > fig-attachment") || [],
       );
       const rects = items.map((item) => item.getBoundingClientRect());
+      const heightBeforeLoading =
+        imageAttachment?.getBoundingClientRect().height ?? 0;
+      const spinner = document.createElement("fig-spinner");
+      spinner.setAttribute("slot", "overlay");
+      spinner.setAttribute("data-loading-indicator", "");
+      spinner.setAttribute("data-generated", "");
+      image?.append(spinner);
+      await new Promise(requestAnimationFrame);
+      const heightWhileLoading =
+        imageAttachment?.getBoundingClientRect().height ?? 0;
       return {
         registered:
           Boolean(customElements.get("fig-attachment")) &&
@@ -534,6 +544,9 @@ test.describe("AI lab styling components", () => {
             (imageAttachment?.getBoundingClientRect().width ?? 0) -
               (imageAttachment?.getBoundingClientRect().height ?? 0),
           ) <= 0.5,
+        loadingHeightStable:
+          Math.abs(heightBeforeLoading - heightWhileLoading) <= 0.5,
+        spinnerFlexShrink: getComputedStyle(spinner).flexShrink,
         wrapped:
           rects.length === 3 &&
           Math.abs(rects[0].top - rects[1].top) <= 0.5 &&
@@ -555,6 +568,8 @@ test.describe("AI lab styling components", () => {
       tooltip: "reference.png",
       imageSize: 40,
       isSquare: true,
+      loadingHeightStable: true,
+      spinnerFlexShrink: "0",
       wrapped: true,
       fallback: "PDF",
     });
@@ -907,6 +922,52 @@ test.describe("propskit-position", () => {
         },
       ],
     });
+  });
+
+  test("removes disabled text and number input chrome", async ({ page }) => {
+    const styles = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-position disabled></propskit-position>
+        <propskit-number disabled value="12"></propskit-number>
+        <propskit-text disabled value="Layer"></propskit-text>
+      `;
+      await new Promise(requestAnimationFrame);
+      return [
+        ...root.querySelectorAll("fig-input-number, fig-input-text"),
+      ].map((input) => {
+        const style = getComputedStyle(input);
+        return {
+          backgroundColor: style.backgroundColor,
+          borderWidth: style.borderWidth,
+          boxShadow: style.boxShadow,
+        };
+      });
+    });
+
+    expect(styles).toEqual([
+      {
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        borderWidth: "0px",
+        boxShadow: "none",
+      },
+      {
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        borderWidth: "0px",
+        boxShadow: "none",
+      },
+      {
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        borderWidth: "0px",
+        boxShadow: "none",
+      },
+      {
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        borderWidth: "0px",
+        boxShadow: "none",
+      },
+    ]);
   });
 });
 
@@ -1517,6 +1578,201 @@ test.describe("propskit-point-point", () => {
         },
       ],
     });
+  });
+});
+
+test.describe("PropsKit disabled contract", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+    });
+  });
+
+  test("forwards disabled across primitive and composite controls", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-switch disabled></propskit-switch>
+        <propskit-color disabled></propskit-color>
+        <propskit-gradient disabled></propskit-gradient>
+        <propskit-select disabled options="One,Two"></propskit-select>
+        <propskit-text disabled></propskit-text>
+        <propskit-number disabled></propskit-number>
+        <propskit-position disabled></propskit-position>
+        <propskit-slider disabled></propskit-slider>
+        <propskit-oscillator disabled></propskit-oscillator>
+        <propskit-color-point disabled></propskit-color-point>
+        <propskit-point-radius disabled></propskit-point-radius>
+        <propskit-point-radius-angle disabled></propskit-point-radius-angle>
+        <propskit-point-point disabled></propskit-point-point>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const innerSelectors: Record<string, string> = {
+        "propskit-switch": "fig-segmented-control",
+        "propskit-color": "fig-input-color",
+        "propskit-gradient": "fig-input-gradient",
+        "propskit-select": "fig-select, fig-dropdown",
+        "propskit-text": "fig-input-text",
+        "propskit-number": "fig-input-number",
+        "propskit-position": "fig-input-number",
+        "propskit-slider": "fig-slider",
+      };
+      const primitives = Object.fromEntries(
+        Object.entries(innerSelectors).map(([tag, selector]) => {
+          const controls = [
+            ...root.querySelectorAll(`${tag} ${selector}`),
+          ];
+          return [
+            tag,
+            controls.length > 0 &&
+              controls.every((control) => control.hasAttribute("disabled")),
+          ];
+        }),
+      );
+
+      const composites = [
+        "propskit-color-point",
+        "propskit-point-radius",
+        "propskit-point-radius-angle",
+        "propskit-point-point",
+      ].map((tag) => {
+        const host = root.querySelector(tag)!;
+        const controls = [
+          ...host.querySelectorAll(`:scope > fig-group > [data-${tag}-control]`),
+        ];
+        return {
+          tag,
+          count: controls.length,
+          allDisabled: controls.every((control) =>
+            control.hasAttribute("disabled"),
+          ),
+        };
+      });
+
+      const oscillator = root.querySelector("propskit-oscillator")!;
+      const oscillatorControls = [
+        ...oscillator.querySelectorAll(
+          "propskit-slider, .propskit-oscillator-remove-button, .propskit-oscillator-add-type, .propskit-oscillator-add-type-button",
+        ),
+      ];
+
+      return {
+        primitives,
+        composites,
+        oscillator: oscillatorControls.map((control) => ({
+          tag: control.tagName.toLowerCase(),
+          className: control.className,
+          disabled: control.hasAttribute("disabled"),
+        })),
+      };
+    });
+
+    expect(state.primitives).toEqual({
+      "propskit-switch": true,
+      "propskit-color": true,
+      "propskit-gradient": true,
+      "propskit-select": true,
+      "propskit-text": true,
+      "propskit-number": true,
+      "propskit-position": true,
+      "propskit-slider": true,
+    });
+    expect(state.composites).toEqual([
+      { tag: "propskit-color-point", count: 2, allDisabled: true },
+      { tag: "propskit-point-radius", count: 2, allDisabled: true },
+      { tag: "propskit-point-radius-angle", count: 3, allDisabled: true },
+      { tag: "propskit-point-point", count: 2, allDisabled: true },
+    ]);
+    expect(state.oscillator.length).toBeGreaterThan(0);
+    expect(state.oscillator.filter((control) => !control.disabled)).toEqual([]);
+  });
+
+  test("group disabled state is reversible and preserves authored state", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-group id="group" name="Layer" open>
+          <propskit-number id="inherited" value="1"></propskit-number>
+          <propskit-number id="authored" value="2" disabled></propskit-number>
+        </propskit-group>
+      `;
+      await new Promise(requestAnimationFrame);
+      const group = root.querySelector("#group")!;
+      const inherited = root.querySelector("#inherited")!;
+      const authored = root.querySelector("#authored")!;
+      group.setAttribute("disabled", "");
+      await new Promise(requestAnimationFrame);
+      const whileDisabled = {
+        inherited: inherited.hasAttribute("disabled"),
+        authored: authored.hasAttribute("disabled"),
+        headerDisabled: group
+          .querySelector(":scope > fig-header")
+          ?.getAttribute("aria-disabled"),
+      };
+      group.removeAttribute("disabled");
+      await new Promise(requestAnimationFrame);
+      return {
+        whileDisabled,
+        afterEnable: {
+          inherited: inherited.hasAttribute("disabled"),
+          authored: authored.hasAttribute("disabled"),
+          headerTabIndex: group
+            .querySelector(":scope > fig-header")
+            ?.getAttribute("tabindex"),
+        },
+      };
+    });
+
+    expect(state).toEqual({
+      whileDisabled: {
+        inherited: true,
+        authored: true,
+        headerDisabled: "true",
+      },
+      afterEnable: {
+        inherited: false,
+        authored: true,
+        headerTabIndex: "0",
+      },
+    });
+  });
+
+  test("disabled oscillator stops and resumes its playhead", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<propskit-oscillator id="oscillator"></propskit-oscillator>`;
+      const oscillator = root.querySelector("#oscillator")!;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      oscillator.setAttribute("disabled", "");
+      const disabledPlayhead = oscillator.querySelector(
+        ".propskit-oscillator-playhead",
+      );
+      const disabledStart = disabledPlayhead?.getAttribute("cx");
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      const disabledEnd = disabledPlayhead?.getAttribute("cx");
+      oscillator.removeAttribute("disabled");
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      const resumed = oscillator
+        .querySelector(".propskit-oscillator-playhead")
+        ?.getAttribute("cx");
+      return { disabledStart, disabledEnd, resumed };
+    });
+
+    expect(state.disabledEnd).toBe(state.disabledStart);
+    expect(state.resumed).not.toBeNull();
+    expect(state.resumed).not.toBe(state.disabledEnd);
   });
 });
 
@@ -8452,6 +8708,7 @@ test.describe("media accessibility", () => {
         `${selector} > fig-spinner[slot="overlay"][data-loading-indicator][data-generated]`,
       );
       await expect(spinner).toHaveCount(1);
+      await expect(spinner).toHaveAttribute("size", "small");
       const centerOffset = await spinner.evaluate((element) => {
         const preview = element.parentElement?.querySelector("fig-preview");
         if (!preview) throw new Error("Missing fig-preview");

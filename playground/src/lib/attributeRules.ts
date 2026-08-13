@@ -444,6 +444,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
     size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-gradient": {
     label: { label: "Label", type: "string" },
@@ -529,6 +530,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "percent"],
     },
     size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "propskit-group": {
+    name: { label: "Name", type: "string" },
+    open: { label: "Open", type: "boolean", boolMode: "string" },
+    "show-reset": {
+      label: "Show reset",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-point-radius-angle": {
     label: { label: "Label", type: "string" },
@@ -551,6 +564,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "percent"],
     },
     size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-point-point": {
     label: { label: "Label", type: "string" },
@@ -573,6 +587,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "percent"],
     },
     size: { label: "Size", type: "enum", options: ["", "large"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-slider": {
     type: {

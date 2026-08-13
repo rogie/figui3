@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.2.0]
+
+### Added
+
+- Added consistent `disabled` support across every PropsKit control, including composed controls and groups.
+
+### Changed
+
+- Generated image loading indicators use the small spinner size.
+- Documented the package imports required for Lab and PropsKit components.
+
+### Fixed
+
+- Disabled PropsKit text and number inputs render without input chrome.
+- Disabled oscillators stop and resume their playhead animation correctly.
+- Attachments keep a stable square size while loading, and loading spinners are no longer constrained by overlay sizing.
+
 ## [8.1.0]
 
 ### Added

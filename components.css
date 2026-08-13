@@ -1686,6 +1686,7 @@ fig-video {
 
   > fig-spinner[slot="overlay"][data-loading-indicator][data-generated] {
     place-self: center;
+    max-width: none;
     z-index: 1;
     opacity: 1;
     pointer-events: none;
@@ -4300,6 +4301,7 @@ fig-field {
 fig-spinner {
   width: var(--spacer-4);
   height: var(--spacer-4);
+  flex-shrink: 0;
   display: inline-flex;
   background-color: var(--figma-color-icon-tertiary);
   mask-image: var(--icon-24-spinner);

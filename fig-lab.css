@@ -92,6 +92,7 @@ fig-attachment {
   display: block;
   flex: 0 0 var(--fig-attachment-size);
   width: var(--fig-attachment-size);
+  height: var(--fig-attachment-size);
   min-width: 0;
 
   fig-image {
@@ -313,6 +314,28 @@ fig-content:has(> propskit-group[name]:first-child) {
 main:has(> propskit-group[name]:last-child),
 fig-content:has(> propskit-group[name]:last-child) {
   padding-bottom: 0;
+}
+
+/* Disabled PropsKit text and number inputs should render without input chrome. */
+:is(
+  propskit-switch,
+  propskit-color,
+  propskit-gradient,
+  propskit-select,
+  propskit-text,
+  propskit-number,
+  propskit-position,
+  propskit-color-point,
+  propskit-point-radius,
+  propskit-point-radius-angle,
+  propskit-point-point,
+  propskit-group,
+  propskit-slider,
+  propskit-oscillator
+) :is(fig-input-text, fig-input-number)[disabled]:not([disabled="false"]) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 /* Large size: more left field padding; nudge trailing controls in from
@@ -1386,10 +1409,6 @@ propskit-position {
 
     .propskit-position-row > label {
       color: var(--figma-color-text-disabled);
-    }
-
-    .propskit-position-row > [data-propskit-position-axis] {
-      opacity: 0.5;
     }
   }
 

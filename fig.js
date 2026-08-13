@@ -11787,6 +11787,7 @@ class FigMedia extends HTMLElement {
       spinner.setAttribute("data-generated", "");
       spinner.setAttribute("data-loading-indicator", "");
       spinner.setAttribute("slot", "overlay");
+      spinner.setAttribute("size", "small");
       spinner.setAttribute("aria-hidden", "true");
       this.append(spinner);
       this.#loadingSpinner = spinner;

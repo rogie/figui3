@@ -58,6 +58,13 @@ import "@rogieking/figui3/fig-editor.css";
 import "@rogieking/figui3/fig-editor.js";
 ```
 
+Opt into experimental Lab and PropsKit components after the core imports:
+
+```js
+import "@rogieking/figui3/fig-lab.css";
+import "@rogieking/figui3/fig-lab.js";
+```
+
 Or use a CDN:
 
 ```html
@@ -327,6 +334,7 @@ each nested input to its own current `default`.
 | `direction` | string | `"horizontal"` | Field layout direction |
 | `size` | string | default | Set to `"large"` for the expanded layout |
 | `default` | number/string | initial `value` | Right-click reset target |
+| `disabled` | boolean | `false` | Disable interaction |
 | *number attrs* | — | — | All `<fig-input-number>` attributes are forwarded |
 
 **Events:** `input`, `change` — forwarded from the inner number input.
@@ -455,6 +463,7 @@ Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slid
 | `direction` | string | `"column"` | Layout direction |
 | `size` | string | default | Set to `"large"` for the expanded layout |
 | `default` | number/string | initial `value` | Double-click and right-click reset target |
+| `disabled` | boolean | `false` | Disable interaction |
 | *slider attrs* | — | — | All `<fig-slider>` attributes except host-only PropsKit attributes are forwarded |
 
 **Events:** `input`, `change` — forwarded from the inner slider.
@@ -514,6 +523,7 @@ A compact `<fig-group>` wrapper that combines `<propskit-color>` and `<propskit-
 | `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
 | `open` | boolean | `true` | Passed to the internal `fig-group` |
 | `size` | string | default | Passed to both internal PropsKit controls |
+| `disabled` | boolean | `false` | Disable both internal controls |
 
 The internal group always has `compact`. `value` uses the same `{ x, y, color }` shape as `<fig-canvas-control type="color">`.
 
@@ -542,6 +552,7 @@ A compact `<fig-group>` wrapper that combines `<propskit-position>` and `<propsk
 | `open` | boolean | `true` | Passed to the internal `fig-group` |
 | `units` | string | — | `"percent"` passes percentage units to position and radius; omit for no units |
 | `size` | string | default | Passed to both internal PropsKit controls |
+| `disabled` | boolean | `false` | Disable both internal controls |
 
 The internal group always has `compact`. `value` uses the same `{ x, y, radius }` shape as `<fig-canvas-control type="point-radius">`. Numeric radius values use pixels; percentage strings preserve `%`.
 
@@ -571,6 +582,7 @@ A compact `<fig-group>` wrapper combining `<propskit-position>` with radius and 
 | `open` | boolean | `true` | Passed to the internal `fig-group` |
 | `units` | string | — | `"percent"` passes percentage units to position and radius; omit for no units |
 | `size` | string | default | Passed to every internal PropsKit control |
+| `disabled` | boolean | `false` | Disable every internal control |
 
 The internal group always has `compact`. `value` uses the same `{ x, y, radius, angle }` shape as `<fig-canvas-control type="point-radius-angle">`. Numeric radius values use pixels; percentage strings preserve `%`. Angles are degrees.
 
@@ -600,6 +612,7 @@ A compact `<fig-group>` wrapper combining start and end `<propskit-position>` co
 | `open` | boolean | `true` | Passed to the internal `fig-group` |
 | `units` | string | — | `"percent"` passes percentage units to both positions; omit for no units |
 | `size` | string | default | Passed to both position controls |
+| `disabled` | boolean | `false` | Disable both position controls |
 
 The internal group always has `compact`. `value` uses the same `{ x, y, x2, y2 }` shape as `<fig-canvas-control type="point-point">`.
 
