@@ -74,6 +74,9 @@ dialog[is="fig-toast"] {
       margin-inline: calc(var(--spacer-2) * -1);
     }
   }
+  &>fig-spinner:first-child {
+    margin-inline: calc(var(--spacer-2) * -1);
+  }
 
   /* Generic dialog[open] styling stacks content in a column; toasts stay inline. */
   &[open]:not([open="false"]) {

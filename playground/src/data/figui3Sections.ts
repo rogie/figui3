@@ -1178,6 +1178,14 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "processing",
+        name: "Processing",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="document.getElementById('demo-toast-processing').showToast()">Show Toast</fig-button>
+  <dialog id="demo-toast-processing" is="fig-toast" theme="auto" duration="3000" offset="16"><fig-spinner></fig-spinner>Processing&hellip;</dialog>
+</div>`,
+      },
+      {
         id: "error",
         name: "Error",
         markup: `<div class="prop-panel">

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.7.0]
+
+### Added
+
+- Added a Processing toast playground example composing a leading `fig-spinner`.
+
+### Changed
+
+- Toasts pull a leading `fig-spinner` flush to the inline edge like a leading icon.
+
 ## [8.6.1]
 
 ### Fixed
