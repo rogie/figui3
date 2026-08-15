@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.6.1]
+
+### Fixed
+
+- Dark-theme toasts no longer force the menu background color.
+
 ## [8.6.0]
 
 ### Added

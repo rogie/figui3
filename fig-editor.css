@@ -114,7 +114,6 @@ dialog[is="fig-toast"] {
 
   &[theme="dark"] {
     color-scheme: dark;
-    --fig-toast-bg-color: var(--figma-color-bg-menu);
   }
 
   &[theme="light"] {
