@@ -383,6 +383,7 @@ test.describe("AI lab styling components", () => {
       await import("/fig-editor.js");
       await Promise.all([
         customElements.whenDefined("fig-ai-prompt"),
+        customElements.whenDefined("fig-ai-context"),
         customElements.whenDefined("fig-attachment"),
         customElements.whenDefined("fig-attachments"),
         customElements.whenDefined("fig-chat-message"),
@@ -515,6 +516,68 @@ test.describe("AI lab styling components", () => {
           .evaluate((input) => getComputedStyle(input).boxShadow),
       )
       .toBe("none");
+  });
+
+  test("stacks fig-ai-context as an open container above the prompt", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="width:240px">
+          <fig-ai-context aria-label="Prompt context">
+            <fig-attachments aria-label="Prompt attachments">
+              <fig-attachment name="reference.png"></fig-attachment>
+              <fig-attachment name="brief.pdf"></fig-attachment>
+            </fig-attachments>
+            <hstack>
+              <fig-icon name="checkmark"></fig-icon>
+              <span>Indexed 24 files</span>
+            </hstack>
+          </fig-ai-context>
+          <fig-ai-prompt>
+            <fig-input-text multiline aria-label="Describe your idea"></fig-input-text>
+            <fig-footer>
+              <fig-button icon aria-label="Send prompt">
+                <fig-icon name="send"></fig-icon>
+              </fig-button>
+            </fig-footer>
+          </fig-ai-prompt>
+        </div>
+      `;
+    });
+
+    const result = await page.evaluate(() => {
+      const context = document.querySelector("fig-ai-context");
+      const prompt = document.querySelector("fig-ai-prompt");
+      const attachments = context?.querySelector("fig-attachments");
+      const contextRect = context?.getBoundingClientRect();
+      const promptRect = prompt?.getBoundingClientRect();
+      return {
+        registered: Boolean(customElements.get("fig-ai-context")),
+        isSiblingOfPrompt: context?.nextElementSibling === prompt,
+        display: context ? getComputedStyle(context).display : null,
+        flexDirection: context
+          ? getComputedStyle(context).flexDirection
+          : null,
+        attachmentsVisible: Boolean(
+          attachments && (attachments as HTMLElement).offsetHeight > 0,
+        ),
+        abovePrompt:
+          Boolean(contextRect && promptRect) &&
+          (contextRect?.bottom ?? 0) <= (promptRect?.top ?? 0) + 2,
+      };
+    });
+
+    expect(result).toEqual({
+      registered: true,
+      isSiblingOfPrompt: true,
+      display: "flex",
+      flexDirection: "column",
+      attachmentsVisible: true,
+      abovePrompt: true,
+    });
   });
 
   test("composes square attachment previews with wrapping and fallback states", async ({

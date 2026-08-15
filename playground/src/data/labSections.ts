@@ -377,7 +377,7 @@ const ungroupedLabSections: Section[] = [
   },
   {
     id: "ai-prompt",
-    name: "AI Prompt",
+    name: "AI composer",
     description:
       "A presentation-only prompt surface composed from existing FigUI3 input, button, and icon components.",
     examples: [
@@ -387,10 +387,6 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-ai-prompt>
     <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
-    <fig-attachments aria-label="Prompt attachments">
-      <fig-attachment value="reference" name="reference.png" src="https://picsum.photos/128.webp?random=54"></fig-attachment>
-      <fig-attachment value="brief" name="brief.pdf"></fig-attachment>
-    </fig-attachments>
     <fig-footer>
       <fig-button variant="ghost" icon aria-label="Add attachment">
         <fig-icon name="add"></fig-icon>
@@ -431,6 +427,99 @@ const ungroupedLabSections: Section[] = [
         </fig-select>
         <fig-button variant="ghost" icon disabled aria-label="Sending prompt">
           <fig-spinner></fig-spinner>
+        </fig-button>
+      </hstack>
+    </fig-footer>
+  </fig-ai-prompt>
+</div>`,
+      },
+      {
+        id: "attachments",
+        name: "Attachments",
+        markup: `<div class="prop-panel">
+  <fig-ai-context aria-label="Prompt context">
+    <fig-attachments aria-label="Prompt attachments">
+      <fig-attachment value="reference" name="reference.png" src="https://picsum.photos/128.webp?random=54"></fig-attachment>
+      <fig-attachment value="brief" name="brief.pdf"></fig-attachment>
+    </fig-attachments>
+  </fig-ai-context>
+  <fig-ai-prompt>
+    <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
+    <fig-footer>
+      <fig-button variant="ghost" icon aria-label="Add attachment">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+      <hstack>
+        <fig-select value="auto" aria-label="Model">
+          <fig-select-options>
+            <fig-select-option value="auto">Auto</fig-select-option>
+            <fig-select-option value="fast">Fast</fig-select-option>
+            <fig-select-option value="smart">Smart</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+        <fig-button icon aria-label="Send prompt">
+          <fig-icon name="send"></fig-icon>
+        </fig-button>
+      </hstack>
+    </fig-footer>
+  </fig-ai-prompt>
+</div>`,
+      },
+      {
+        id: "status",
+        name: "Status",
+        markup: `<div class="prop-panel">
+  <fig-ai-context aria-label="Prompt context">
+    <fig-shimmer><span>Reviewing your selection&hellip;</span></fig-shimmer>
+  </fig-ai-context>
+  <fig-ai-prompt>
+    <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
+    <fig-footer>
+      <fig-button variant="ghost" icon aria-label="Add attachment">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+      <hstack>
+        <fig-select value="auto" aria-label="Model">
+          <fig-select-options>
+            <fig-select-option value="auto">Auto</fig-select-option>
+            <fig-select-option value="fast">Fast</fig-select-option>
+            <fig-select-option value="smart">Smart</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+        <fig-button icon aria-label="Send prompt">
+          <fig-icon name="send"></fig-icon>
+        </fig-button>
+      </hstack>
+    </fig-footer>
+  </fig-ai-prompt>
+</div>`,
+      },
+      {
+        id: "action-needed",
+        name: "Action needed",
+        markup: `<div class="prop-panel">
+  <fig-ai-context aria-label="Prompt context">
+    <hstack>
+      <span>Connect provider</span>
+      <fig-button variant="secondary">Add API keys</fig-button>
+    </hstack>
+  </fig-ai-context>
+  <fig-ai-prompt>
+    <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
+    <fig-footer>
+      <fig-button variant="ghost" icon aria-label="Add attachment">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+      <hstack>
+        <fig-select value="auto" aria-label="Model">
+          <fig-select-options>
+            <fig-select-option value="auto">Auto</fig-select-option>
+            <fig-select-option value="fast">Fast</fig-select-option>
+            <fig-select-option value="smart">Smart</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+        <fig-button icon aria-label="Send prompt">
+          <fig-icon name="send"></fig-icon>
         </fig-button>
       </hstack>
     </fig-footer>

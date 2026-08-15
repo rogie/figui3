@@ -62,6 +62,7 @@ declare module "react" {
       "fig-tooltip": FigAttrs;
       "fig-handle": FigAttrs;
       "fig-ai-prompt": FigAttrs;
+      "fig-ai-context": FigAttrs;
       "fig-attachment": FigAttrs;
       "fig-attachments": FigAttrs;
       "fig-chat-message": FigAttrs;

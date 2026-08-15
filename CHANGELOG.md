@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.5.0]
+
+### Added
+
+- Added experimental `fig-ai-context`, a reusable open container for attachments and status rows that can sit above `fig-ai-prompt`.
+- Added AI composer playground examples for attachments, status, and action-needed context.
+
+### Changed
+
+- Renamed the AI Prompt lab section to AI composer and split attachment vs sending examples.
+
 ## [8.4.1]
 
 ### Fixed

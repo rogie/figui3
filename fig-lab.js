@@ -241,6 +241,10 @@ function figLabUniqueId(prefix = "fig-lab") {
 class FigAiPrompt extends HTMLElement {}
 figLabDefineElement("fig-ai-prompt", FigAiPrompt);
 
+/* Presentation-only open container for attachments and status rows above a prompt. */
+class FigAiContext extends HTMLElement {}
+figLabDefineElement("fig-ai-context", FigAiContext);
+
 /* Presentation-only message surface for AI conversations. */
 class FigChatMessage extends HTMLElement {}
 figLabDefineElement("fig-chat-message", FigChatMessage);
