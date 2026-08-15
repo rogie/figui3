@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.6.0]
+
+### Added
+
+- `fig-toast` supports optional `icon` (full-size `fig-icon` name) and `dismiss` (ghost close button).
+- `dismiss="true"` inserts a vertical `fig-separator` before the close control.
+- `fig-separator` supports `direction="vertical"`.
+- Added toast playground examples for actions and error states with Retry.
+
+### Fixed
+
+- Open toasts keep a horizontal flex row instead of inheriting the generic dialog column layout.
+
+### Changed
+
+- Toast attribute controls gate the icon name picker behind an Icon switch.
+
 ## [8.5.0]
 
 ### Added

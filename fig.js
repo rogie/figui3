@@ -2295,6 +2295,17 @@ class FigDialog extends HTMLDialogElement {
 figDefineCustomizedBuiltIn("fig-dialog", FigDialog, { extends: "dialog" });
 
 /* Toast */
+/* Toast */
+/**
+ * A temporary toast notification based on &lt;dialog&gt;.
+ * @attr {number|string} duration - Auto-dismiss ms (default 5000; 0 = no dismiss).
+ * @attr {number|string} offset - Distance from bottom in px (default 16).
+ * @attr {string} theme - Visual theme: "dark", "light", "danger", "brand", "success", or "auto".
+ * @attr {string} live - Set to "assertive" for urgent announcements.
+ * @attr {string} icon - Optional fig-icon name prepended when set; omit for no icon.
+ * @attr {boolean|string} dismiss - When true, appends a ghost close button that hides the toast.
+ * @attr {boolean|string} open - Open when present and not "false".
+ */
 class FigToast extends HTMLDialogElement {
   constructor() {
     super();
@@ -2310,6 +2321,9 @@ class FigToast extends HTMLDialogElement {
     this._syncingOpen = false;
     this._managedRole = null;
     this._managedLive = null;
+    this._managedIcon = null;
+    this._managedDismiss = null;
+    this._managedDismissSeparator = null;
     this._boundHandleClose = this.handleClose.bind(this);
   }
 
@@ -2317,6 +2331,8 @@ class FigToast extends HTMLDialogElement {
     this._figInit();
     if (!this.hasAttribute("theme")) this.setAttribute("theme", "dark");
     this.syncLiveRegion();
+    this.syncIcon();
+    this.syncDismiss();
     this.addCloseListeners();
     this.applyPosition();
     if (this.hasAttribute("open") && this.getAttribute("open") !== "false") {
@@ -2384,6 +2400,101 @@ class FigToast extends HTMLDialogElement {
     }
   }
 
+  syncIcon() {
+    const name = this.getAttribute("icon");
+    let icon = this._managedIcon;
+    if (!icon || icon.parentNode !== this) {
+      icon = this.querySelector(":scope > fig-icon[data-fig-toast-icon]");
+    }
+
+    if (!name) {
+      if (icon) icon.remove();
+      this._managedIcon = null;
+      return;
+    }
+
+    if (!icon) {
+      icon = document.createElement("fig-icon");
+      icon.setAttribute("data-fig-toast-icon", "");
+      icon.setAttribute("aria-hidden", "true");
+      this.prepend(icon);
+    } else if (this.firstElementChild !== icon) {
+      this.prepend(icon);
+    }
+
+    if (icon.getAttribute("size") !== "medium") {
+      icon.setAttribute("size", "medium");
+    }
+    if (icon.getAttribute("name") !== name) {
+      icon.setAttribute("name", name);
+    }
+    this._managedIcon = icon;
+  }
+
+  syncDismiss() {
+    const enabled = figBooleanAttribute(this, "dismiss");
+    let button = this._managedDismiss;
+    if (!button || button.parentNode !== this) {
+      button = this.querySelector(":scope > fig-button[data-fig-toast-dismiss]");
+    }
+    let separator = this._managedDismissSeparator;
+    if (!separator || separator.parentNode !== this) {
+      separator = this.querySelector(
+        ":scope > fig-separator[data-fig-toast-dismiss-separator]",
+      );
+    }
+
+    if (!enabled) {
+      if (button) {
+        button.removeEventListener("click", this._boundHandleClose);
+        button.remove();
+      }
+      if (separator) separator.remove();
+      this._managedDismiss = null;
+      this._managedDismissSeparator = null;
+      return;
+    }
+
+    if (!separator) {
+      separator = document.createElement("fig-separator");
+      separator.setAttribute("data-fig-toast-dismiss-separator", "");
+      separator.setAttribute("direction", "vertical");
+      separator.setAttribute("aria-orientation", "vertical");
+      separator.setAttribute("aria-hidden", "true");
+    }
+
+    if (!button) {
+      button = document.createElement("fig-button");
+      button.setAttribute("data-fig-toast-dismiss", "");
+      button.setAttribute("variant", "ghost");
+      button.setAttribute("icon", "");
+      button.setAttribute("close-toast", "");
+      button.setAttribute("aria-label", "Close notification");
+      const icon = document.createElement("fig-icon");
+      icon.setAttribute("name", "close");
+      icon.setAttribute("aria-hidden", "true");
+      button.append(icon);
+    }
+
+    if (separator.parentNode !== this || button.parentNode !== this) {
+      this.append(separator, button);
+    } else if (
+      this.lastElementChild !== button ||
+      button.previousElementSibling !== separator
+    ) {
+      this.append(separator, button);
+    }
+
+    if (separator.getAttribute("direction") !== "vertical") {
+      separator.setAttribute("direction", "vertical");
+    }
+
+    button.removeEventListener("click", this._boundHandleClose);
+    button.addEventListener("click", this._boundHandleClose);
+    this._managedDismiss = button;
+    this._managedDismissSeparator = separator;
+  }
+
   startAutoClose() {
     this.clearAutoClose();
     const duration = parseInt(this.getAttribute("duration") ?? "5000");
@@ -2409,6 +2520,8 @@ class FigToast extends HTMLDialogElement {
   showToast() {
     const wasVisible = this._toastVisible;
     this.syncLiveRegion();
+    this.syncIcon();
+    this.syncDismiss();
     this._resolveAutoTheme();
     this._syncingOpen = true;
     try {
@@ -2441,7 +2554,7 @@ class FigToast extends HTMLDialogElement {
   }
 
   static get observedAttributes() {
-    return ["duration", "offset", "open", "theme", "live"];
+    return ["duration", "offset", "open", "theme", "live", "icon", "dismiss"];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -2460,6 +2573,8 @@ class FigToast extends HTMLDialogElement {
       else this.style.removeProperty("color-scheme");
     }
     if (name === "theme" || name === "live") this.syncLiveRegion();
+    if (name === "icon") this.syncIcon();
+    if (name === "dismiss") this.syncDismiss();
   }
 }
 figDefineCustomizedBuiltIn("fig-toast", FigToast, { extends: "dialog" });
@@ -16419,6 +16534,7 @@ const FIG_ICON_TOKENS = {
   visible: { medium: "--icon-24-visible", small: "--icon-16-visible" },
   hidden: { medium: "--icon-24-hidden", small: "--icon-16-hidden" },
   globe: { medium: "--icon-24-globe", small: "--icon-16-globe" },
+  warning: { medium: "--icon-24-warning", small: "--icon-16-warning" },
 };
 
 function figIconCssVar(name, size = "medium") {
@@ -18572,11 +18688,12 @@ figDefineElement("fig-menu-item", FigMenuItem);
 /**
  * Visual divider between content groups.
  * @attr {string} label - Optional group label shown in secondary text under the line.
+ * @attr {string} direction - Orientation: "vertical" for a tall rule; default is horizontal.
  * @attr {boolean} borderless - Hides the separator line when present or "true".
  */
 class FigSeparator extends HTMLElement {
   static get observedAttributes() {
-    return ["label"];
+    return ["label", "direction"];
   }
 
   get label() {
@@ -18600,6 +18717,12 @@ class FigSeparator extends HTMLElement {
   #sync() {
     if (!this.hasAttribute("role")) {
       this.setAttribute("role", "separator");
+    }
+    const direction = this.getAttribute("direction");
+    if (direction === "vertical") {
+      this.setAttribute("aria-orientation", "vertical");
+    } else if (!this.hasAttribute("aria-orientation")) {
+      this.setAttribute("aria-orientation", "horizontal");
     }
     const label = this.label.trim();
     if (label) this.setAttribute("aria-label", label);

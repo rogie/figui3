@@ -432,7 +432,7 @@ Fill value examples:
 - `fig-tooltip`: hover, click, or manual contextual help. Attrs/modifiers: `action`, `delay`, `open`, `pointer`, `show`, `text`, `theme`.
 - `fig-dialog`: modal or non-modal dialog surface using `<dialog is="fig-dialog">`. Attrs/modifiers: `open`, `modal`, `drag`, `handle`, `position`, `title`, `resizable`, `closedby`.
 - `fig-popup`: anchored floating surface using `<dialog is="fig-popup">`. Attrs/modifiers: `open`, `anchor`, `position`, `offset`, `variant`, `theme`, `viewport-margin`, `closedby`.
-- `fig-toast`: temporary feedback using `<dialog is="fig-toast">`. Attrs/modifiers: `duration`, `offset`, `open`, `theme`, `live`.
+- `fig-toast`: temporary feedback using `<dialog is="fig-toast">`. Attrs/modifiers: `duration`, `offset`, `open`, `theme`, `live`, `icon`, `dismiss`.
 - `fig-menu`, `fig-menu-item`: triggered keyboard-accessible action menus. Attrs/modifiers: menu `position`, `offset`, `disabled`; trigger `[fig-menu-trigger]`; item `value`, `disabled`.
 - `fig-separator`: visual divider with an optional `label`.
 

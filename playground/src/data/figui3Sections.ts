@@ -1169,6 +1169,22 @@ export const figui3Sections: Section[] = [
   <dialog id="demo-toast" is="fig-toast" theme="auto" duration="3000" offset="16">Saved</dialog>
 </div>`,
       },
+      {
+        id: "with-actions",
+        name: "With actions",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="document.getElementById('demo-toast-actions').showToast()">Show Toast</fig-button>
+  <dialog id="demo-toast-actions" is="fig-toast" theme="auto" dismiss="true" duration="3000" offset="16">Applied to your layers<fig-button variant="secondary">Learn more</fig-button></dialog>
+</div>`,
+      },
+      {
+        id: "error",
+        name: "Error",
+        markup: `<div class="prop-panel">
+  <fig-button data-playground-ignore-controls="true" onclick="document.getElementById('demo-toast-error').showToast()">Show Error</fig-button>
+  <dialog id="demo-toast-error" is="fig-toast" theme="danger" live="assertive" icon="warning" dismiss="true" duration="3000" offset="16"><strong>Failed to upload</strong><fig-button variant="secondary">Retry</fig-button></dialog>
+</div>`,
+      },
     ],
   },
   {

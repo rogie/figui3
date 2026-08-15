@@ -527,6 +527,9 @@ export default function AttributesView({
         const perspectiveEnabled =
           target.controlTag === "fig-3d-rotate" &&
           (target.controlAttributes.perspective ?? "") !== "none";
+        const toastIconEnabled =
+          target.controlTag === "fig-toast" &&
+          target.controlAttributes.icon !== undefined;
         const textInputMultiline =
           target.controlTag === "fig-input-text" &&
           target.controlAttributes.multiline !== undefined;
@@ -584,6 +587,10 @@ export default function AttributesView({
                 entry.name === "perspective-distance" &&
                 target.controlTag === "fig-3d-rotate" &&
                 !perspectiveEnabled
+              ) &&
+              !(
+                entry.name === "icon" &&
+                target.controlTag === "fig-toast"
               ) &&
               !(
                 entry.name === "multiline" &&
@@ -1904,6 +1911,48 @@ export default function AttributesView({
                               }
                             />
                           </fig-field>
+                        );
+                      })()}
+                    {target.controlTag === "fig-toast" &&
+                      (() => {
+                        const iconRule = mergedControlRules.icon;
+                        if (!iconRule || iconRule.type !== "enum") return null;
+                        return (
+                          <>
+                            <fig-field
+                              columns="2/5"
+                              key={`control-toast-icon-${target.fieldIndex}`}
+                            >
+                              <label>Icon</label>
+                              <fig-switch
+                                checked={toastIconEnabled ? "true" : undefined}
+                                onChange={() =>
+                                  applyChange(
+                                    target.fieldIndex,
+                                    "control",
+                                    "icon",
+                                    toastIconEnabled ? null : "warning",
+                                  )
+                                }
+                              />
+                            </fig-field>
+                            {toastIconEnabled ? (
+                              <fig-field
+                                columns="2/5"
+                                key={`control-toast-icon-name-${target.fieldIndex}`}
+                              >
+                                <label>{sentenceCase(iconRule.label)}</label>
+                                {renderControl(
+                                  {
+                                    name: "icon",
+                                    value: target.controlAttributes.icon,
+                                    rule: iconRule,
+                                  },
+                                  "control",
+                                )}
+                              </fig-field>
+                            ) : null}
+                          </>
                         );
                       })()}
                     {target.controlTag === "fig-swatch" &&

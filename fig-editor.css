@@ -53,22 +53,32 @@ fig-interpolation-swatch {
 
 /* Toast */
 dialog[is="fig-toast"] {
-  contain: layout paint;
+  --fig-toast-bg-color: var(--figma-color-bg);
   --z-index: 999999;
+  contain: none;
   z-index: var(--z-index);
   box-shadow: var(--figma-elevation-100);
   border-radius: var(--radius-large);
   padding: var(--spacer-2) var(--spacer-3);
   align-items: center;
-  gap: var(--spacer-2);
+  gap: var(--spacer-2-5);
   height: 2.5rem;
+  flex-wrap: nowrap;
   justify-content: center;
   min-width: 0;
   color: var(--figma-color-text);
-  background-color: var(--figma-color-bg);
+  background-color: var(--fig-toast-bg-color);
 
+  &[icon]{
+    &>fig-icon:first-child {
+      margin-inline: calc(var(--spacer-2) * -1);
+    }
+  }
+
+  /* Generic dialog[open] styling stacks content in a column; toasts stay inline. */
   &[open]:not([open="false"]) {
     display: flex;
+    flex-direction: row;
   }
 
   & p {
@@ -82,12 +92,29 @@ dialog[is="fig-toast"] {
     margin: 0;
   }
 
+  & > fig-separator[data-fig-toast-dismiss-separator] {
+    flex: 0 0 auto;
+    align-self: stretch;
+    margin: 0;
+    --fig-separator-color: var(--figma-color-bordertranslucent);
+  }
   & fig-button:last-child {
-    margin-right: calc(var(--spacer-2) * -1);
+    margin-inline: calc(var(--spacer-2) * -1);
+    margin-left: calc(var(--spacer-1) * -1);
+  }
+
+  & > fig-icon[data-fig-toast-icon] {
+    flex: 0 0 auto;
+    --size: var(--spacer-4);
+  }
+
+  & > fig-button[data-fig-toast-dismiss] {
+    flex: 0 0 auto;
   }
 
   &[theme="dark"] {
     color-scheme: dark;
+    --fig-toast-bg-color: var(--figma-color-bg-menu);
   }
 
   &[theme="light"] {

@@ -1342,9 +1342,11 @@ Defaults to `role="status"`, `aria-live="polite"`, and `aria-atomic="true"`. Use
 | `offset` | number | `16` | Distance from bottom |
 | `theme` | string | `"dark"` | `"dark"`, `"light"`, `"danger"`, `"brand"`, `"auto"` |
 | `live` | string | — | `"assertive"` for urgent announcements |
+| `icon` | string | — | Optional `fig-icon` name prepended when set; always rendered at full size |
+| `dismiss` | boolean | `false` | Appends a ghost close button that hides the toast |
 
 ```html
-<dialog is="fig-toast" id="myToast" theme="brand" duration="3000">
+<dialog is="fig-toast" id="myToast" theme="brand" icon="warning" dismiss="true" duration="3000">
   Settings saved!
 </dialog>
 <fig-button onclick="document.getElementById('myToast').showToast()">Show</fig-button>

@@ -374,6 +374,42 @@ test("fig-icon maps globe to size-specific tokens", async ({ page }) => {
   });
 });
 
+test("fig-icon maps warning to size-specific tokens", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-icon id="medium-warning" name="warning"></fig-icon>
+      <fig-icon id="small-warning" name="warning" size="small"></fig-icon>
+    `;
+  });
+
+  const iconVars = await page.evaluate(() => ({
+    medium: (document.querySelector("#medium-warning") as HTMLElement).style
+      .getPropertyValue("--icon"),
+    small: (document.querySelector("#small-warning") as HTMLElement).style
+      .getPropertyValue("--icon"),
+  }));
+
+  expect(iconVars).toEqual({
+    medium: "var(--icon-24-warning)",
+    small: "var(--icon-16-warning)",
+  });
+
+  const resolved = await page.evaluate(() => {
+    const styles = getComputedStyle(document.documentElement);
+    return {
+      medium: styles.getPropertyValue("--icon-24-warning").trim(),
+      small: styles.getPropertyValue("--icon-16-warning").trim(),
+    };
+  });
+
+  expect(resolved.medium.startsWith('url("data:image/svg+xml,')).toBe(true);
+  expect(resolved.small.startsWith('url("data:image/svg+xml,')).toBe(true);
+});
+
 test.describe("AI lab styling components", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -7740,6 +7776,156 @@ test.describe("remaining accessibility contracts", () => {
       toastRole: "status",
       toastLive: "polite",
     });
+  });
+
+  test("fig-toast prepends and removes a managed icon from the icon attribute", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<dialog is="fig-toast" id="icon-toast">Saved</dialog>`;
+    });
+
+    const withoutIcon = await page.evaluate(() => {
+      const toast = document.querySelector("#icon-toast");
+      return {
+        iconCount: toast?.querySelectorAll(":scope > fig-icon[data-fig-toast-icon]")
+          .length,
+      };
+    });
+    expect(withoutIcon).toEqual({ iconCount: 0 });
+
+    const withIcon = await page.evaluate(() => {
+      const toast = document.querySelector("#icon-toast");
+      toast?.setAttribute("icon", "warning");
+      const icon = toast?.querySelector(":scope > fig-icon[data-fig-toast-icon]");
+      return {
+        firstChild: toast?.firstElementChild?.tagName.toLowerCase(),
+        name: icon?.getAttribute("name"),
+        size: icon?.getAttribute("size"),
+        ariaHidden: icon?.getAttribute("aria-hidden"),
+        iconVar: (icon as HTMLElement | null)?.style.getPropertyValue("--icon"),
+      };
+    });
+    expect(withIcon).toEqual({
+      firstChild: "fig-icon",
+      name: "warning",
+      size: "medium",
+      ariaHidden: "true",
+      iconVar: "var(--icon-24-warning)",
+    });
+
+    const renamed = await page.evaluate(() => {
+      const toast = document.querySelector("#icon-toast");
+      toast?.setAttribute("icon", "close");
+      const icons = toast?.querySelectorAll(":scope > fig-icon[data-fig-toast-icon]");
+      return {
+        count: icons?.length,
+        name: icons?.[0]?.getAttribute("name"),
+        size: icons?.[0]?.getAttribute("size"),
+        iconVar: (icons?.[0] as HTMLElement | undefined)?.style.getPropertyValue(
+          "--icon",
+        ),
+      };
+    });
+    expect(renamed).toEqual({
+      count: 1,
+      name: "close",
+      size: "medium",
+      iconVar: "var(--icon-24-close)",
+    });
+
+    const cleared = await page.evaluate(() => {
+      const toast = document.querySelector("#icon-toast");
+      toast?.removeAttribute("icon");
+      return {
+        iconCount: toast?.querySelectorAll(":scope > fig-icon[data-fig-toast-icon]")
+          .length,
+      };
+    });
+    expect(cleared).toEqual({ iconCount: 0 });
+  });
+
+  test("fig-toast appends a dismiss button that hides the toast", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<dialog is="fig-toast" id="dismiss-toast" duration="0">Saved</dialog>`;
+    });
+
+    const withoutDismiss = await page.evaluate(() => {
+      const toast = document.querySelector("#dismiss-toast");
+      return {
+        count: toast?.querySelectorAll(":scope > fig-button[data-fig-toast-dismiss]")
+          .length,
+      };
+    });
+    expect(withoutDismiss).toEqual({ count: 0 });
+
+    const withDismiss = await page.evaluate(() => {
+      const toast = document.querySelector("#dismiss-toast") as HTMLElement & {
+        showToast?: () => void;
+        open?: boolean;
+      };
+      toast?.setAttribute("dismiss", "true");
+      const button = toast?.querySelector(
+        ":scope > fig-button[data-fig-toast-dismiss]",
+      );
+      const separator = toast?.querySelector(
+        ":scope > fig-separator[data-fig-toast-dismiss-separator]",
+      );
+      const icon = button?.querySelector("fig-icon");
+      toast?.showToast?.();
+      return {
+        lastChild: toast?.lastElementChild?.tagName.toLowerCase(),
+        beforeButton: button?.previousElementSibling?.tagName.toLowerCase(),
+        separatorDirection: separator?.getAttribute("direction"),
+        variant: button?.getAttribute("variant"),
+        iconOnly: button?.hasAttribute("icon"),
+        closeToast: button?.hasAttribute("close-toast"),
+        ariaLabel: button?.getAttribute("aria-label"),
+        iconName: icon?.getAttribute("name"),
+        open: Boolean(toast?.open),
+      };
+    });
+    expect(withDismiss).toEqual({
+      lastChild: "fig-button",
+      beforeButton: "fig-separator",
+      separatorDirection: "vertical",
+      variant: "ghost",
+      iconOnly: true,
+      closeToast: true,
+      ariaLabel: "Close notification",
+      iconName: "close",
+      open: true,
+    });
+
+    await page.locator("#dismiss-toast fig-button[data-fig-toast-dismiss]").click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const toast = document.querySelector("#dismiss-toast") as HTMLDialogElement | null;
+          return Boolean(toast?.open);
+        }),
+      )
+      .toBe(false);
+
+    const cleared = await page.evaluate(() => {
+      const toast = document.querySelector("#dismiss-toast");
+      toast?.setAttribute("dismiss", "false");
+      return {
+        buttonCount: toast?.querySelectorAll(
+          ":scope > fig-button[data-fig-toast-dismiss]",
+        ).length,
+        separatorCount: toast?.querySelectorAll(
+          ":scope > fig-separator[data-fig-toast-dismiss-separator]",
+        ).length,
+      };
+    });
+    expect(cleared).toEqual({ buttonCount: 0, separatorCount: 0 });
   });
 
   test("fig-input-fill gradient shows opacity when alpha is enabled", async ({
