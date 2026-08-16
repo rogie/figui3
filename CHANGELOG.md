@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.8.0]
+
+### Added
+
+- `fig-icon` `color` aliases map semantic names (`primary`, `brand`, `component`, `danger`, `success`, `warning`, `selected`, `onbrand`, …) to `--figma-color-icon*` tokens.
+- Playground icon color controls use those aliases instead of raw CSS variables.
+
+### Changed
+
+- Renamed the Icon Medium playground example to Default.
+
 ## [8.7.0]
 
 ### Added

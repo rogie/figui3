@@ -1685,11 +1685,11 @@ Masked icon using `--icon-16-*` and `--icon-24-*` design tokens (SVG artboard si
 |---|---|---|---|
 | `name` | string | — | Icon name: `add`, `send`, `close`, `chevron`, `arrow-left`, etc. |
 | `size` | string | `medium` | `medium` (1.5rem) or `small` (1rem) |
-| `color` | string | — | Icon fill (`background-color`), e.g. `var(--figma-color-icon)` |
+| `color` | string | — | Alias (`primary`, `secondary`, `tertiary`, `disabled`, `brand`, `component`, `danger`, `success`, `warning`, `selected`, `hover`, `pressed`, `onbrand`, …); CSS variables and explicit CSS colors also accepted |
 
 ```html
 <fig-icon name="close"></fig-icon>
-<fig-icon name="send"></fig-icon>
+<fig-icon name="send" color="brand"></fig-icon>
 <fig-icon name="chevron" size="small"></fig-icon>
 ```
 

@@ -1203,17 +1203,17 @@ export const figui3Sections: Section[] = [
       "Masked icons from design tokens (--icon-24-* at medium display size, --icon-16-* at small).",
     examples: [
       {
-        id: "medium",
-        name: "Medium",
+        id: "default",
+        name: "Default",
         description:
-          "Masked icons from --icon-24-* design tokens at 1.5rem display size (medium, the default).<br><br>The color attribute sets the masked fill via background-color. Use Figma icon tokens, e.g. color=\"var(--figma-color-icon)\" or color=\"var(--figma-color-icon-brand)\".",
+          "Masked icons from --icon-24-* design tokens at 1.5rem display size (medium, the default).<br><br>The color attribute accepts aliases like color=\"brand\", color=\"danger\", or color=\"component\".",
         markup: buildFigIconExampleMarkup("24"),
       },
       {
         id: "small",
         name: "Small",
         description:
-          "Masked icons from --icon-16-* design tokens at 1rem display size. Set size=\"small\" on &lt;fig-icon&gt; for the compact 1rem size.<br><br>The color attribute sets the masked fill via background-color. Use Figma icon tokens, e.g. color=\"var(--figma-color-icon)\" or color=\"var(--figma-color-icon-secondary)\".",
+          "Masked icons from --icon-16-* design tokens at 1rem display size. Set size=\"small\" on &lt;fig-icon&gt; for the compact 1rem size.<br><br>The color attribute accepts aliases like color=\"secondary\", color=\"warning\", or color=\"onbrand\".",
         markup: buildFigIconExampleMarkup("16"),
       },
     ],

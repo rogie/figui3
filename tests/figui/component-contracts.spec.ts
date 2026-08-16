@@ -410,6 +410,63 @@ test("fig-icon maps warning to size-specific tokens", async ({ page }) => {
   expect(resolved.small.startsWith('url("data:image/svg+xml,')).toBe(true);
 });
 
+test("fig-icon maps color aliases to icon color tokens", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-icon id="primary-icon" name="add" color="primary"></fig-icon>
+      <fig-icon id="secondary-icon" name="add" color="secondary"></fig-icon>
+      <fig-icon id="tertiary-icon" name="add" color="tertiary"></fig-icon>
+      <fig-icon id="disabled-icon" name="add" color="disabled"></fig-icon>
+      <fig-icon id="brand-icon" name="add" color="brand"></fig-icon>
+      <fig-icon id="component-icon" name="add" color="component"></fig-icon>
+      <fig-icon id="danger-icon" name="add" color="danger"></fig-icon>
+      <fig-icon id="success-icon" name="add" color="success"></fig-icon>
+      <fig-icon id="warning-icon" name="add" color="warning"></fig-icon>
+      <fig-icon id="selected-icon" name="add" color="selected"></fig-icon>
+      <fig-icon id="variable-icon" name="add" color="var(--custom-icon-color)"></fig-icon>
+      <fig-icon id="literal-icon" name="add" color="#ff0000"></fig-icon>
+    `;
+  });
+
+  const colors = await page.evaluate(() => {
+    const background = (id: string) =>
+      (document.querySelector(`#${id}`) as HTMLElement).style.backgroundColor;
+    return {
+      primary: background("primary-icon"),
+      secondary: background("secondary-icon"),
+      tertiary: background("tertiary-icon"),
+      disabled: background("disabled-icon"),
+      brand: background("brand-icon"),
+      component: background("component-icon"),
+      danger: background("danger-icon"),
+      success: background("success-icon"),
+      warning: background("warning-icon"),
+      selected: background("selected-icon"),
+      variable: background("variable-icon"),
+      literal: background("literal-icon"),
+    };
+  });
+
+  expect(colors).toEqual({
+    primary: "var(--figma-color-icon)",
+    secondary: "var(--figma-color-icon-secondary)",
+    tertiary: "var(--figma-color-icon-tertiary)",
+    disabled: "var(--figma-color-icon-disabled)",
+    brand: "var(--figma-color-icon-brand)",
+    component: "var(--figma-color-icon-component)",
+    danger: "var(--figma-color-icon-danger)",
+    success: "var(--figma-color-icon-success)",
+    warning: "var(--figma-color-icon-warning)",
+    selected: "var(--figma-color-icon-selected)",
+    variable: "var(--custom-icon-color)",
+    literal: "rgb(255, 0, 0)",
+  });
+});
+
 test.describe("AI lab styling components", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);

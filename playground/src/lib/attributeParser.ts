@@ -1036,17 +1036,57 @@ export function getFigIconPlaygroundNames(set: FigIconPlaygroundSet): string[] {
 }
 
 export const FIG_ICON_COLOR_OPTIONS = [
-  { label: "Primary", value: "var(--figma-color-icon)" },
-  { label: "Secondary", value: "var(--figma-color-icon-secondary)" },
-  { label: "Tertiary", value: "var(--figma-color-icon-tertiary)" },
-  { label: "Disabled", value: "var(--figma-color-icon-disabled)" },
-  { label: "Brand", value: "var(--figma-color-icon-brand)" },
+  { label: "Primary", value: "primary" },
+  { label: "Secondary", value: "secondary" },
+  { label: "Tertiary", value: "tertiary" },
+  { label: "Disabled", value: "disabled" },
+  { label: "Brand", value: "brand" },
+  { label: "Component", value: "component" },
+  { label: "Danger", value: "danger" },
+  { label: "Success", value: "success" },
+  { label: "Warning", value: "warning" },
+  { label: "Selected", value: "selected" },
+  { label: "Hover", value: "hover" },
+  { label: "Pressed", value: "pressed" },
+  { label: "On brand", value: "onbrand" },
+  { label: "On component", value: "oncomponent" },
+  { label: "On danger", value: "ondanger" },
+  { label: "On disabled", value: "ondisabled" },
+  { label: "On inverse", value: "oninverse" },
+  { label: "On selected", value: "onselected" },
+  { label: "On success", value: "onsuccess" },
+  { label: "On warning", value: "onwarning" },
 ] as const;
+
+const FIG_ICON_COLOR_ALIASES: Record<string, string> = {
+  "var(--figma-color-icon)": "primary",
+  "var(--figma-color-icon-secondary)": "secondary",
+  "var(--figma-color-icon-tertiary)": "tertiary",
+  "var(--figma-color-icon-disabled)": "disabled",
+  "var(--figma-color-icon-brand)": "brand",
+  "var(--figma-color-icon-component)": "component",
+  "var(--figma-color-icon-danger)": "danger",
+  "var(--figma-color-icon-success)": "success",
+  "var(--figma-color-icon-warning)": "warning",
+  "var(--figma-color-icon-selected)": "selected",
+  "var(--figma-color-icon-hover)": "hover",
+  "var(--figma-color-icon-pressed)": "pressed",
+  "var(--figma-color-icon-onbrand)": "onbrand",
+  "var(--figma-color-icon-oncomponent)": "oncomponent",
+  "var(--figma-color-icon-ondanger)": "ondanger",
+  "var(--figma-color-icon-ondisabled)": "ondisabled",
+  "var(--figma-color-icon-oninverse)": "oninverse",
+  "var(--figma-color-icon-onselected)": "onselected",
+  "var(--figma-color-icon-onsuccess)": "onsuccess",
+  "var(--figma-color-icon-onwarning)": "onwarning",
+};
 
 export function getFigIconColorOptionLabel(colorAttr: string | undefined): string {
   if (!colorAttr) return FIG_ICON_COLOR_OPTIONS[0].label;
+  const normalized =
+    FIG_ICON_COLOR_ALIASES[colorAttr] ?? colorAttr.toLowerCase();
   return (
-    FIG_ICON_COLOR_OPTIONS.find((option) => option.value === colorAttr)?.label ??
+    FIG_ICON_COLOR_OPTIONS.find((option) => option.value === normalized)?.label ??
     FIG_ICON_COLOR_OPTIONS[0].label
   );
 }
