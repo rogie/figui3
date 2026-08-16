@@ -999,6 +999,7 @@ export const FIG_ICON_SET_24 = [
   "reset",
   "globe",
   "warning",
+  "copy",
 ] as const;
 
 export const FIG_ICON_SET_16 = [
@@ -1016,6 +1017,7 @@ export const FIG_ICON_SET_16 = [
   "more",
   "globe",
   "warning",
+  "copy",
 ] as const;
 
 export type FigIconPlaygroundSet = "16" | "24";

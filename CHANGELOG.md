@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.0]
+
+### Added
+
+- Added `copy` to `fig-icon` at medium and small sizes, including playground icon and toast controls.
+
 ## [8.8.1]
 
 ### Fixed

@@ -834,6 +834,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "hidden",
         "globe",
         "warning",
+        "copy",
       ],
     },
     dismiss: { label: "Dismiss", type: "boolean", boolMode: "string" },
@@ -872,6 +873,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "steppers",
         "globe",
         "warning",
+        "copy",
       ],
     },
     size: {

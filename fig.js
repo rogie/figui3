@@ -16535,6 +16535,7 @@ const FIG_ICON_TOKENS = {
   hidden: { medium: "--icon-24-hidden", small: "--icon-16-hidden" },
   globe: { medium: "--icon-24-globe", small: "--icon-16-globe" },
   warning: { medium: "--icon-24-warning", small: "--icon-16-warning" },
+  copy: { medium: "--icon-24-copy", small: "--icon-16-copy" },
 };
 
 function figIconCssVar(name, size = "medium") {
