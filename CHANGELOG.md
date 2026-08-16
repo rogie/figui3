@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.8.1]
+
+### Fixed
+
+- `fig-icon` with a slotted `<svg>` no longer paints a solid `color` background block behind the SVG, and now applies the `color` attribute to the SVG via `currentColor`.
+
 ## [8.8.0]
 
 ### Added

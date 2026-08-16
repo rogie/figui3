@@ -4873,8 +4873,11 @@ fig-icon {
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
 
+  /* Slotted SVGs paint themselves, so the mask/background pipeline must be
+     fully disabled — including the inline background-color set by [color]. */
   &:has(> svg) {
-    background: transparent;
+    background: transparent !important;
+    color: var(--icon-color, inherit);
     mask-image: none;
     -webkit-mask-image: none;
   }

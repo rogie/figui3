@@ -16611,8 +16611,13 @@ class FigIcon extends HTMLElement {
     }
 
     const color = figIconColorValue(this.getAttribute("color"));
-    if (color) this.style.backgroundColor = color;
-    else this.style.removeProperty("background-color");
+    if (color) {
+      this.style.backgroundColor = color;
+      this.style.setProperty("--icon-color", color);
+    } else {
+      this.style.removeProperty("background-color");
+      this.style.removeProperty("--icon-color");
+    }
 
     if (!this.hasAttribute("aria-hidden")) {
       this.setAttribute("aria-hidden", "true");

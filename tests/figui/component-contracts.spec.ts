@@ -467,6 +467,62 @@ test("fig-icon maps color aliases to icon color tokens", async ({ page }) => {
   });
 });
 
+test("fig-icon applies color to slotted svg instead of painting a background", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-icon id="slotted-colored" color="secondary"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6h12v12H6z" fill="currentColor"></path></svg></fig-icon>
+      <fig-icon id="slotted-plain"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6h12v12H6z" fill="currentColor"></path></svg></fig-icon>
+      <fig-icon id="masked-colored" name="add" color="secondary"></fig-icon>
+    `;
+  });
+
+  const result = await page.evaluate(() => {
+    const read = (id: string) => {
+      const el = document.querySelector(`#${id}`) as HTMLElement;
+      const styles = getComputedStyle(el);
+      const svg = el.querySelector("svg");
+      return {
+        backgroundColor: styles.backgroundColor,
+        maskImage: styles.maskImage,
+        svgColor: svg ? getComputedStyle(svg).color : null,
+      };
+    };
+    const secondary = getComputedStyle(document.documentElement)
+      .getPropertyValue("--figma-color-icon-secondary")
+      .trim();
+    const probe = document.createElement("span");
+    probe.style.color = secondary;
+    document.body.append(probe);
+    const secondaryRgb = getComputedStyle(probe).color;
+    probe.remove();
+    return {
+      slottedColored: read("slotted-colored"),
+      slottedPlain: read("slotted-plain"),
+      maskedColored: read("masked-colored"),
+      secondaryRgb,
+    };
+  });
+
+  // Slotted SVGs paint themselves: no background block, color drives currentColor.
+  expect(result.slottedColored.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+  expect(result.slottedColored.maskImage).toBe("none");
+  expect(result.slottedColored.svgColor).toBe(result.secondaryRgb);
+
+  // Without a color attribute the slotted SVG keeps inheriting from its context.
+  expect(result.slottedPlain.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+  expect(result.slottedPlain.svgColor).not.toBe(result.secondaryRgb);
+
+  // Masked icons still tint via background-color.
+  expect(result.maskedColored.backgroundColor).toBe(result.secondaryRgb);
+  expect(result.maskedColored.maskImage).not.toBe("none");
+});
+
 test.describe("AI lab styling components", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
