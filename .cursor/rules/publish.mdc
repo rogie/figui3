@@ -7,7 +7,11 @@ alwaysApply: true
 
 When the user says "publish", follow this exact sequence:
 
-1. **Bump version** in `package.json` — patch for bug fixes, minor for new features/enhancements, major for breaking changes. Ask only if ambiguous.
+1. **Bump version** in `package.json` using this project policy:
+   - **Patch** for bug fixes and small backward-compatible additions or refinements, including new icons, tokens, enum options, examples, styles, and minor component capabilities.
+   - **Minor** only for substantial new public features, such as a new component, major API surface, or significant workflow.
+   - **Major** for breaking changes.
+   - When uncertain between patch and minor, default to patch. Ask only when the change may be breaking.
 2. **Update `CHANGELOG.md`** — add a new version section at the top with all changes since the last publish, following the existing format (### Fixed, ### Changed, ### Added).
 3. **Rebuild dist** — run `npm run build` to ensure `dist/fig.js`, `dist/fig.css`, `dist/components.css`, and `dist/base.css` are up to date with the latest source changes. Never publish with stale dist files.
 4. **Git add, commit, push** — stage all changed files, commit with message `v{version}: {short summary}`, and push to origin.

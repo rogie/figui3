@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.1]
+
+### Fixed
+
+- `fig-select-options` now preserves top spacing when its overflow controls are adjacent in the DOM.
+
 ## [8.9.0]
 
 ### Added

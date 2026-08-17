@@ -3147,6 +3147,36 @@ test.describe("propskit-select", () => {
   });
 });
 
+test("fig-select-options spaces its first option when overflow buttons are adjacent", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await customElements.whenDefined("fig-select-options");
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-select-options>
+        <fig-select-option value="one">One</fig-select-option>
+        <fig-select-option value="two">Two</fig-select-option>
+      </fig-select-options>
+    `;
+    const panel = root.querySelector("fig-select-options");
+    const start = panel?.querySelector(".fig-overflow-start");
+    const end = panel?.querySelector(".fig-overflow-end");
+    if (!panel || !start || !end) throw new Error("Missing overflow controls");
+    panel.prepend(end);
+    panel.prepend(start);
+  });
+
+  const options = page.locator("fig-select-option");
+  await expect(options.first()).toHaveCSS("margin-top", "8px");
+  await expect(options.nth(1)).toHaveCSS("margin-top", "0px");
+});
+
 test.describe("fig-select viewport edge repositioning", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
