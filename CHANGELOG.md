@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.2]
+
+### Added
+
+- Added a verbose `fig-select` playground example with rich version-history options.
+
+### Changed
+
+- Added consistent spacing below headings in select and menu options.
+
 ## [8.9.1]
 
 ### Fixed

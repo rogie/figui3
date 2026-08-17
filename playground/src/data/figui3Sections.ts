@@ -220,6 +220,58 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "verbose-options",
+        name: "Verbose options",
+        markup: `<div class="prop-panel">
+  <fig-select value="ac4b47b8-3692-496b-bab2-1a05beaee2da" label="Version" full>
+    <fig-select-options slot="panel">
+      <fig-select-option value="ac4b47b8-3692-496b-bab2-1a05beaee2da" label="Current (Version 6)">
+        <div>
+          <h3>Current (Version 6)</h3>
+          <label>Aug 17, 5:54 AM</label>
+          <label>Updated shader source (1969 → 1974 lines)</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="71b7e332-12d4-4eab-af43-c4f18a21a592" label="Version 5">
+        <div>
+          <h3>Version 5</h3>
+          <label>Aug 17, 5:52 AM</label>
+          <label>Restored · Restored Version 3</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="d229a4ef-dd0d-4e1a-82ab-cd0681ed9cd6" label="Version 4">
+        <div>
+          <h3>Version 4</h3>
+          <label>Aug 17, 5:52 AM</label>
+          <label>Safety copy · Before restoring Version 3</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="e8324afb-ac2d-430d-ad07-58f7459d0330" label="Version 3">
+        <div>
+          <h3>Version 3</h3>
+          <label>Aug 17, 5:22 AM</label>
+          <label>Updated shader source (1455 → 1969 lines); changed properties: ambient, depth, diffuse, edgeRoundness +8 more</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="a40e1781-47f0-47ee-9fdb-5c2c6657b364" label="Version 2">
+        <div>
+          <h3>Version 2</h3>
+          <label>Aug 16, 12:19 PM</label>
+          <label>Updated shader source (2006 → 1455 lines); changed properties: edgeRoundness, rotateY</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="b3a5067c-14eb-43ad-8a44-5c6fc0d0ee7d" label="Version 1">
+        <div>
+          <h3>Version 1</h3>
+          <label>Aug 16, 10:04 AM</label>
+          <label>Initial saved version</label>
+        </div>
+      </fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
         id: "full",
         name: "Full width",
         markup: `<div class="prop-panel">

@@ -859,6 +859,10 @@ fig-select-option {
   user-select: none;
   white-space: nowrap;
 
+  h3{
+    margin: 0 0 var(--spacer-1) 0;
+  }
+
   &::before {
     content: "";
     display: block;
