@@ -107,7 +107,6 @@ const EDITOR_SECTION_IDS = new Set([
   "fill-picker",
   "layer",
   "toast",
-  "atom-interpolation-swatch",
 ]);
 const EDITOR_GROUP_NAME = "Editor components";
 

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.3]
+
+### Added
+
+- Added non-removable image attachments to the user message in the Chat Message conversation example.
+
+### Changed
+
+- Chat messages use column layout and consistent internal spacing for composed content.
+- Removed the standalone Interpolation Swatch playground example.
+
 ## [8.9.2]
 
 ### Added

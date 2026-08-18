@@ -181,20 +181,21 @@ fig-attachment {
 }
 
 fig-chat-message {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2-5);
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
   color: var(--figma-color-text);
   font-size: var(--body-large-fontSize);
-  line-height: calc(var(--line-height) + var(--spacer-1));
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 
   &[from="user"] {
     width: auto;
     margin-inline-start: var(--spacer-4);
-    padding: var(--spacer-2) var(--spacer-2-5);
+    padding: var(--spacer-2-5);
     border-radius: var(--radius-large);
     background: var(--figma-color-bg-secondary);
   }

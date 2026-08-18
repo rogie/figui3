@@ -2898,25 +2898,6 @@ export const propkitSections: Section[] = [
     ],
   },
   {
-    id: "atom-interpolation-swatch",
-    name: "Interpolation swatch",
-    group: "Atoms",
-    description:
-      "Compact arc preview of gradient color-space interpolation (requires <code>fig-editor.js</code>). Uses the same value shape as fig-input-gradient.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <div class="gradient-preview-compare" data-playground-ignore-controls="true">
-    <fig-swatch class="gradient-result-preview" size="large" background="linear-gradient(90deg in oklch longer hue, #FF0000 0%, #4F9EFF 100%)" data-playground-ignore-controls="true"></fig-swatch>
-  </div>
-  <fig-interpolation-swatch size="large" value='{"type":"gradient","gradient":{"type":"linear","stops":[{"color":"#FF0000","position":0},{"color":"#4F9EFF","position":100}],"interpolationSpace":"oklch","hueInterpolation":"longer"}}'></fig-interpolation-swatch>
-</div>`,
-      },
-    ],
-  },
-  {
     id: "atom-preview",
     name: "Preview",
     group: "Atoms",

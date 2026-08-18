@@ -538,7 +538,7 @@ const ungroupedLabSections: Section[] = [
         id: "conversation",
         name: "Conversation",
         markup: `<div class="prop-panel">
-  <fig-chat-message from="user">Create a settings panel for my plugin.<fig-avatar src="https://i.pravatar.cc/128?img=12" name="Rogie King"></fig-avatar></fig-chat-message>
+  <fig-chat-message from="user">Create a settings panel for my plugin.<fig-attachments aria-label="Message attachments"><fig-attachment value="settings" name="settings.png" src="https://picsum.photos/128.webp?random=55" removable="false"></fig-attachment><fig-attachment value="reference" name="reference.png" src="https://picsum.photos/128.webp?random=56" removable="false"></fig-attachment></fig-attachments><fig-avatar src="https://i.pravatar.cc/128?img=12" name="Rogie King"></fig-avatar></fig-chat-message>
   <fig-chat-message from="agent">I’ll create a compact settings panel using FigUI3 fields and controls.</fig-chat-message>
   <fig-chat-message from="agent"><fig-shimmer><span>Thinking&hellip;</span></fig-shimmer></fig-chat-message>
 </div>`,
