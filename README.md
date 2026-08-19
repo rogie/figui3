@@ -419,7 +419,7 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore the def
 
 `<propskit-select>`
 
-Composes a `<fig-field>` and `<fig-select>` into a full-surface property control. Requires `fig-editor.js` (which registers `fig-select`). Options come from the `options` attribute (same formats as `fig-options`: comma-separated, newline-delimited, or a JSON array).
+Composes a `<fig-field>` and `<fig-select>` into a full-surface property control. Requires `fig-editor.js` (which registers `fig-select`). Options can come from the `options` attribute (same formats as `fig-options`: comma-separated, newline-delimited, or a JSON array), or from an authored `<fig-select-options>` child for rich option content.
 
 **Attributes:** `label`, `value`, `default`, `options`, `disabled`, `size`
 
@@ -429,6 +429,16 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 ```html
 <propskit-select label="Alignment" value="Center" options="Left,Center,Right"></propskit-select>
+```
+
+```html
+<propskit-select label="Interpolation" value="srgb">
+  <fig-select-options slot="panel">
+    <fig-select-option value="srgb" label="Classic — sRGB Linear">
+      <div><h3>Classic</h3><span>sRGB Linear</span></div>
+    </fig-select-option>
+  </fig-select-options>
+</propskit-select>
 ```
 
 ---

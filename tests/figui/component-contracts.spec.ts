@@ -2907,6 +2907,34 @@ test.describe("propskit-select", () => {
     ).toHaveText("Medium");
   });
 
+  test("preserves an authored rich options panel", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-select label="Interpolation" value="srgb">
+          <fig-select-options slot="panel">
+            <fig-select-option value="srgb" label="Classic — sRGB Linear">
+              <div><h3>Classic</h3><span>sRGB Linear</span></div>
+            </fig-select-option>
+            <fig-select-option value="oklab" label="Smooth — OKLab">
+              <div><h3>Smooth</h3><span>OKLab</span></div>
+            </fig-select-option>
+          </fig-select-options>
+        </propskit-select>
+      `;
+    });
+
+    const control = page.locator("propskit-select");
+    const panel = control.locator("fig-select > fig-select-options");
+    await expect(panel.locator(":scope > fig-select-option")).toHaveCount(2);
+    await expect(panel.locator("h3").first()).toHaveText("Classic");
+    await expect(panel.locator("span").first()).toHaveText("sRGB Linear");
+    await expect(control.locator(".fig-select-label")).toHaveText(
+      "Classic — sRGB Linear",
+    );
+  });
+
   test("builds panel options from the options attribute", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

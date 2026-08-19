@@ -1387,6 +1387,7 @@ class PropskitSelect extends HTMLElement {
   #initialize() {
     this.#initialValue = this.getAttribute("value") ?? "";
     const customLabel = this.querySelector(":scope > label");
+    const customOptions = this.querySelector(":scope > fig-select-options");
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
     this.#usesFigSelect = PropskitSelect.#canUseFigSelect();
@@ -1395,6 +1396,7 @@ class PropskitSelect extends HTMLElement {
     );
     // Match menu/control width to the full-surface field.
     select.setAttribute("full", "");
+    if (this.#usesFigSelect && customOptions) select.append(customOptions);
     field.append(label, select);
     this.#field = field;
     this.#label = label;

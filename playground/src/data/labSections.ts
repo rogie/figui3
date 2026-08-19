@@ -105,6 +105,52 @@ const ungroupedLabSections: Section[] = [
 </div>`,
       },
       {
+        id: "rich-menu",
+        name: "Rich menu",
+        markup: `<div class="prop-panel">
+  <propskit-select label="Interpolation" value="srgb" default="srgb">
+    <fig-select-options slot="panel">
+      <fig-select-option value="srgb" label="Classic">
+        <div>
+          <h3>Classic</h3>
+          <label>sRGB Linear</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="oklab" label="Smooth">
+        <div>
+          <h3>Smooth</h3>
+          <label>OKLab</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="oklch-increasing" label="Vibrant">
+        <div>
+          <h3>Vibrant</h3>
+          <label>OKLCH Increasing</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="hsl-increasing" label="Vivid">
+        <div>
+          <h3>Vivid</h3>
+          <label>HSL Increasing</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="oklch-decreasing" label="Vibrant">
+        <div>
+          <h3>Vibrant</h3>
+          <label>OKLCH Decreasing</label>
+        </div>
+      </fig-select-option>
+      <fig-select-option value="hsl-decreasing" label="Vivid">
+        <div>
+          <h3>Vivid</h3>
+          <label>HSL Decreasing</label>
+        </div>
+      </fig-select-option>
+    </fig-select-options>
+  </propskit-select>
+</div>`,
+      },
+      {
         id: "options-attr",
         name: "Options attribute",
         markup: `<div class="prop-panel">

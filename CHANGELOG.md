@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.6]
+
+### Added
+
+- `propskit-select` now supports authored `fig-select-options` children for rich option content.
+- Added a Rich menu example to the Propskit Lab Select section.
+
 ## [8.9.5]
 
 ### Added
