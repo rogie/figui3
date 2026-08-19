@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.5]
+
+### Added
+
+- Added a theme-aware `--fig-popover-shadow` drop-shadow token for popovers, tooltips, and color tips.
+
+### Changed
+
+- Popup dialogs now use the menu-panel elevation by default.
+- The popup playground defaults to the inherited theme and removes the `theme` attribute when Default is selected.
+
 ## [8.9.4]
 
 ### Added

@@ -438,6 +438,11 @@
     inset 0px 0.5px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.08)),
     inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.075));
 
+  --fig-popover-shadow:
+    drop-shadow(0px 1px 1.5px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)))
+    drop-shadow(0px 2.5px 6px light-dark(rgba(0, 0, 0, 0.13), rgba(0, 0, 0, 0.5)))
+    drop-shadow(0px 0px 0.5px light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15)));
+
   --figma-elevation-500-modal-window:
     0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.08), transparent),
     0px 10px 24px 0px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.45)),
@@ -3116,6 +3121,7 @@ dialog[is="fig-popup"] {
   --fig-popup-tip-clip-path: path(
     "M16 0H0L0 1H0.757359C1.55301 1 2.31607 1.31607 2.87868 1.87868L6.29587 5.29587C7.23704 6.23704 8.76296 6.23704 9.70413 5.29587L13.1213 1.87868C13.6839 1.31607 14.447 1 15.2426 1H16V0Z"
   );
+  --fig-popup-shadow: var(--figma-elevation-400-menu-panel);
 
   z-index: var(--z-index);
   position: fixed;
@@ -3125,6 +3131,7 @@ dialog[is="fig-popup"] {
   overflow: auto;
   border-radius: var(--fig-popup-radius);
   background-color: var(--fig-popup-bg-color);
+  box-shadow: var(--fig-popup-shadow);
 
   &[autoresize]:not([autoresize="false"]) {
     width: max-content;
@@ -3171,9 +3178,7 @@ dialog[is="fig-popup"] {
   &[variant="popover"] {
     overflow: visible;
     box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
-    filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
-      drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13))
-      drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
+    filter: var(--fig-popover-shadow);
 
     &:after {
       content: "";
@@ -3221,9 +3226,7 @@ dialog[is="fig-popup"] {
     min-width: 0;
     box-shadow: inset 0 0.5px 0 0
     light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
-    filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
-      drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13))
-      drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
+    filter: var(--fig-popover-shadow);
     pointer-events: none;
 
     & > span {
@@ -5471,9 +5474,7 @@ fig-color-tip {
   background-color: var(--figma-color-bg);
   border-radius: var(--radius-medium, 0.3125rem);
   box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
-  filter: drop-shadow(0px 1px 1.5px rgba(0, 0, 0, 0.1))
-    drop-shadow(0px 2.5px 6px rgba(0, 0, 0, 0.13))
-    drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.15));
+  filter: var(--fig-popover-shadow);
 
   &[control="add"],
   &[control="remove"] {

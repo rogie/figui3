@@ -1440,8 +1440,10 @@ export default function AttributesView({
                     target.fieldIndex,
                     scope,
                     name,
-                    target.controlTag === "fig-slider" &&
-                      name === "variant" &&
+                    ((target.controlTag === "fig-slider" &&
+                      name === "variant") ||
+                      (target.controlTag === "fig-popup" &&
+                        name === "theme")) &&
                       (match ?? nextLabel) === "default"
                       ? null
                       : match ?? nextLabel,

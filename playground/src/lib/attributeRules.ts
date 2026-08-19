@@ -180,7 +180,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     theme: {
       label: "Theme",
       type: "enum",
-      options: ["light", "dark", "menu"],
+      options: ["default", "light", "dark", "menu"],
     },
     variant: {
       label: "Variant",
