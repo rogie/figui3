@@ -1829,7 +1829,7 @@ fig-easing-curve {
   .fig-easing-curve-svg-container {
     border-radius: var(--radius-medium);
     background: var(--figma-color-bg-secondary);
-    padding: var(--spacer-3);
+    padding: 45px;
     overflow: hidden;
     &:is(:hover, :active, :focus, :focus-visible, :focus-within) {
       overflow: visible;
@@ -1867,14 +1867,10 @@ fig-easing-curve {
     fill: transparent;
   }
   .fig-easing-curve-arm {
-    stroke: var(--figma-color-bordertranslucent);
+    stroke: var(--figma-color-border-brand-strong);
     stroke-width: var(--stroke-width);
     stroke-linejoin: round;
     stroke-linecap: round;
-
-    &.is-active {
-      stroke: var(--figma-color-bg-brand);
-    }
   }
   .fig-easing-curve-path {
     fill: none;
@@ -5304,7 +5300,7 @@ fig-handle {
   --fig-handle-hit-area-opacity: 0;
   --fig-handle-hit-area-size: 0;
   --fig-handle-inner-bg: var(--figma-color-bg-brand);
-  --fig-handle-inner-outline: 1px solid var(--figma-color-bg-brand);
+  --fig-handle-inner-outline: 1px solid var(--figma-color-border-selected);
   --fig-handle-inner-shadow: none;
   --fig-handle-inner-radius: 50%;
   --fig-handle-outline: 1.5px solid var(--fig-handle-outline-color);
@@ -5312,7 +5308,7 @@ fig-handle {
   --fig-handle-outline-color: transparent;
   --fig-handle-outline-offset: 0px;
   --fig-handle-padding: 0.25rem;
-  --fig-handle-shadow: none;
+  --fig-handle-shadow: var(--figma-elevation-100-canvas);
   --fig-handle-width: var(--width);
 
   margin: 0;
@@ -5330,7 +5326,6 @@ fig-handle {
   /* Used for active state/color handles */
   &::after {
     content: "";
-    color-scheme: light only;
     width: 100%;
     height: 100%;
     background: var(--fig-handle-inner-bg);
@@ -5409,8 +5404,8 @@ fig-handle {
   &[tip="add"],
   &[tip="remove"] {
     --fig-handle-inner-bg: linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
-    --fig-handle-padding: 0.25rem;
-    --fig-handle-inner-outline: none;
+    --fig-handle-padding: calc(0.25rem - 1px);
+    --fig-handle-inner-outline: transparent;
     position: relative;
     overflow: visible;
 
@@ -5422,6 +5417,18 @@ fig-handle {
       z-index: 10;
     }
   }
+  &[type="minimal"]{
+    --fig-handle-shadow: none;
+    --fig-handle-bg: var(--figma-color-border-brand-strong);
+    --fig-handle-outline: none;
+    --fig-handle-inner-bg: var(--figma-color-bg);
+    --fig-handle-padding: 2px;
+    --fig-handle-inner-outline: transparent;
+    --width: 10px;
+    --height: 10px;
+  }
+
+
   &[disabled]:not([disabled="false"]),
   &[aria-disabled="true"] {
     --fig-handle-outline-color: transparent;

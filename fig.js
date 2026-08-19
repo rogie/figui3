@@ -13956,6 +13956,7 @@ class FigEasingCurve extends HTMLElement {
       },
       figCreateElement("fig-handle", {
         size: "small",
+        type: "minimal",
         "aria-label": label,
       }),
     );
@@ -14148,10 +14149,7 @@ class FigEasingCurve extends HTMLElement {
     const minVal = Math.min(0, this.#cp1.y, this.#cp2.y);
     const maxVal = Math.max(1, this.#cp1.y, this.#cp2.y);
     const range = maxVal - minVal || 1;
-    const pad = Math.min(
-      this.#bezierHandleRadius,
-      Math.max(0, (this.#drawHeight - 1) / 2),
-    );
+    const pad = 0;
     return {
       minVal,
       maxVal,
@@ -14705,7 +14703,11 @@ class FigEasingCurve extends HTMLElement {
         x:
           startPoint.x +
           (e.clientX - startClientX) / Math.max(1, svgRect.width),
-        y: startPoint.y - (e.clientY - startClientY) * unitsPerClientY,
+        y: e.shiftKey
+          ? handle === 1
+            ? 0
+            : 1
+          : startPoint.y - (e.clientY - startClientY) * unitsPerClientY,
       };
 
       norm.x = Math.round(norm.x * 100) / 100;

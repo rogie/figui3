@@ -1501,6 +1501,15 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "minimal",
+        name: "Minimal",
+        markup: `<div class="prop-panel">
+  <div data-playground-unwrap="true" style="aspect-ratio: 1/1; width: 100%; position: relative; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary); display: grid; place-items: center;">
+    <fig-handle type="minimal" drag drag-snapping="modifier" data-playground-hide-field></fig-handle>
+  </div>
+</div>`,
+      },
+      {
         id: "color",
         name: "Color",
         markup: `<div class="prop-panel">

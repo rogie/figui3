@@ -978,7 +978,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     type: {
       label: "Type",
       type: "enum",
-      options: ["default", "color", "canvas"],
+      options: ["default", "minimal", "color", "canvas"],
     },
     tip: {
       label: "Tip",

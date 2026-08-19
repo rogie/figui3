@@ -8291,7 +8291,26 @@ test.describe("remaining accessibility contracts", () => {
     );
     expect(handleOrder).toEqual(["2", "1"]);
 
+    const edgeGeometry = await page.locator("#curve").evaluate((host) => {
+      const svg = host.querySelector(".fig-easing-curve-svg");
+      const top = host.querySelector('[data-boundary="top"]');
+      const bottom = host.querySelector('[data-boundary="bottom"]');
+      return {
+        width: svg?.viewBox.baseVal.width ?? 0,
+        height: svg?.viewBox.baseVal.height ?? 0,
+        top: Number(top?.getAttribute("y1")),
+        bottom: Number(bottom?.getAttribute("y1")),
+        boundaryStart: Number(top?.getAttribute("x1")),
+        boundaryEnd: Number(top?.getAttribute("x2")),
+      };
+    });
+    expect(edgeGeometry.top).toBe(0);
+    expect(edgeGeometry.bottom).toBe(edgeGeometry.height);
+    expect(edgeGeometry.boundaryStart).toBe(0);
+    expect(edgeGeometry.boundaryEnd).toBe(edgeGeometry.width);
+
     const firstHandle = page.locator('#curve [data-handle="1"] fig-handle');
+    await expect(firstHandle).toHaveAttribute("type", "minimal");
 
     await firstHandle.focus();
     await page.keyboard.press("ArrowRight");
@@ -8310,7 +8329,43 @@ test.describe("remaining accessibility contracts", () => {
     });
   });
 
-  test("fig-easing-curve rescales to keep overshooting handles inside the preview", async ({
+  test("fig-easing-curve shift-drag locks horizontally to the handle boundary", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-easing-curve
+          id="shift-curve"
+          value="0.25, 0.25, 0.75, 0.75"
+        ></fig-easing-curve>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const handle = page.locator('#shift-curve [data-handle="1"] fig-handle');
+    const box = await handle.boundingBox();
+    if (!box) throw new Error("Missing easing handle bounds");
+
+    await page.keyboard.down("Shift");
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      box.x + box.width / 2 + 30,
+      box.y + box.height / 2 + 40,
+    );
+    await page.mouse.up();
+    await page.keyboard.up("Shift");
+
+    const [x, y] = await page
+      .locator("#shift-curve")
+      .evaluate((host) => host.value.split(",").slice(0, 2).map(Number));
+    expect(x).toBeGreaterThan(0.25);
+    expect(y).toBe(0);
+  });
+
+  test("fig-easing-curve rescales overshooting curves to the preview edge", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -8349,10 +8404,12 @@ test.describe("remaining accessibility contracts", () => {
 
     const state = await page.locator("#overshoot-curve").evaluate((host) => {
       const svg = host.querySelector(".fig-easing-curve-svg");
+      const container = host.querySelector(".fig-easing-curve-svg-container");
       const handle = host.querySelector('[data-handle="1"]');
       const topBoundary = host.querySelector('[data-boundary="top"]');
       return {
         controlY: Number(host.value.split(",")[1]),
+        containerPadding: container ? getComputedStyle(container).padding : null,
         handleY: Number(handle?.getAttribute("y")),
         handleHeight: Number(handle?.getAttribute("height")),
         previewHeight: svg?.viewBox.baseVal.height ?? 0,
@@ -8361,10 +8418,9 @@ test.describe("remaining accessibility contracts", () => {
     });
 
     expect(state.controlY).toBeGreaterThan(1);
-    expect(state.handleY).toBeGreaterThanOrEqual(0);
-    expect(state.handleY + state.handleHeight).toBeLessThanOrEqual(
-      state.previewHeight,
-    );
+    expect(state.containerPadding).toBe("45px");
+    expect(state.handleY).toBeLessThan(0);
+    expect(state.handleY + state.handleHeight / 2).toBe(0);
     expect(state.topBoundaryY).toBeGreaterThan(state.handleY);
   });
 

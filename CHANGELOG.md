@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.4]
+
+### Added
+
+- Added the minimal `fig-handle` type and playground example.
+
+### Changed
+
+- `fig-easing-curve` uses minimal handles, edge-aligned curve geometry, 45px preview padding, and horizontal boundary snapping while Shift-dragging.
+- Refined handle shadows, outlines, padding, and easing control-arm colors.
+
+### Fixed
+
+- Handle inner backgrounds now respect the active light or dark color scheme.
+
 ## [8.9.3]
 
 ### Added
