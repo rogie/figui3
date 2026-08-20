@@ -55,6 +55,135 @@ const figui3ChooserSections: Section[] = propkitChooserSection
     ]
   : [];
 
+function aiModelSelectMarkup(): string {
+  const groups: Array<{ label: string; models: Array<[string, string]> }> = [
+    {
+      label: "OpenAI",
+      models: [
+        ["gpt-5.6-sol", "GPT-5.6 Sol"],
+        ["gpt-5.6-terra", "GPT-5.6 Terra"],
+        ["gpt-5.5", "GPT-5.5"],
+        ["gpt-5.3-codex", "GPT-5.3 Codex"],
+        ["gpt-5.2", "GPT-5.2"],
+        ["gpt-5.1", "GPT-5.1"],
+        ["gpt-5", "GPT-5"],
+        ["gpt-4.1", "GPT-4.1"],
+        ["gpt-4o", "GPT-4o"],
+        ["o4-mini", "o4-mini"],
+        ["o3", "o3"],
+        ["o3-mini", "o3-mini"],
+        ["o1", "o1"],
+      ],
+    },
+    {
+      label: "Anthropic",
+      models: [
+        ["claude-opus-5", "Claude Opus 5"],
+        ["claude-sonnet-5", "Claude Sonnet 5"],
+        ["claude-fable-5", "Claude Fable 5"],
+        ["claude-opus-4.7", "Claude Opus 4.7"],
+        ["claude-opus-4.6", "Claude Opus 4.6"],
+        ["claude-sonnet-4.6", "Claude Sonnet 4.6"],
+        ["claude-opus-4.5", "Claude Opus 4.5"],
+        ["claude-sonnet-4", "Claude Sonnet 4"],
+        ["claude-3.7-sonnet", "Claude 3.7 Sonnet"],
+        ["claude-3.5-sonnet", "Claude 3.5 Sonnet"],
+        ["claude-3.5-haiku", "Claude 3.5 Haiku"],
+        ["claude-3-opus", "Claude 3 Opus"],
+        ["claude-3-haiku", "Claude 3 Haiku"],
+      ],
+    },
+    {
+      label: "Google",
+      models: [
+        ["gemini-3.6-flash", "Gemini 3.6 Flash"],
+        ["gemini-3.5-flash", "Gemini 3.5 Flash"],
+        ["gemini-3.1-pro", "Gemini 3.1 Pro"],
+        ["gemini-3-flash", "Gemini 3 Flash"],
+        ["gemini-2.5-pro", "Gemini 2.5 Pro"],
+        ["gemini-2.5-flash", "Gemini 2.5 Flash"],
+        ["gemini-2.0-flash", "Gemini 2.0 Flash"],
+        ["gemini-1.5-pro", "Gemini 1.5 Pro"],
+        ["gemini-1.5-flash", "Gemini 1.5 Flash"],
+      ],
+    },
+    {
+      label: "Cursor",
+      models: [
+        ["composer-2.5-fast", "Composer 2.5 Fast"],
+        ["composer", "Composer"],
+        ["cursor-grok-4.6", "Grok 4.6"],
+        ["cursor-grok-4.5", "Grok 4.5"],
+      ],
+    },
+    {
+      label: "xAI",
+      models: [
+        ["grok-4", "Grok 4"],
+        ["grok-3", "Grok 3"],
+        ["grok-3-mini", "Grok 3 Mini"],
+        ["grok-2", "Grok 2"],
+      ],
+    },
+    {
+      label: "Meta",
+      models: [
+        ["llama-4-maverick", "Llama 4 Maverick"],
+        ["llama-4-scout", "Llama 4 Scout"],
+        ["llama-3.3-70b", "Llama 3.3 70B"],
+        ["llama-3.1-405b", "Llama 3.1 405B"],
+        ["llama-3.1-70b", "Llama 3.1 70B"],
+        ["llama-3.1-8b", "Llama 3.1 8B"],
+      ],
+    },
+    {
+      label: "DeepSeek",
+      models: [
+        ["deepseek-v3", "DeepSeek V3"],
+        ["deepseek-r1", "DeepSeek R1"],
+        ["deepseek-r1-distill", "DeepSeek R1 Distill"],
+        ["deepseek-coder", "DeepSeek Coder"],
+      ],
+    },
+    {
+      label: "Mistral",
+      models: [
+        ["mistral-large", "Mistral Large"],
+        ["mistral-medium", "Mistral Medium"],
+        ["mistral-small", "Mistral Small"],
+        ["codestral", "Codestral"],
+        ["pixtral-large", "Pixtral Large"],
+      ],
+    },
+    {
+      label: "Others",
+      models: [
+        ["qwen-3", "Qwen 3"],
+        ["qwen-2.5-coder", "Qwen 2.5 Coder"],
+        ["kimi-k2", "Kimi K2"],
+        ["command-a", "Command A"],
+        ["command-r-plus", "Command R+"],
+      ],
+    },
+  ];
+  const body = groups
+    .flatMap((group) => [
+      `      <fig-separator label="${group.label}"></fig-separator>`,
+      ...group.models.map(
+        ([value, name]) =>
+          `      <fig-select-option value="${value}">${name}</fig-select-option>`,
+      ),
+    ])
+    .join("\n");
+  return `<div class="prop-panel">
+  <fig-select value="claude-opus-5" label="AI model">
+    <fig-select-options slot="panel">
+${body}
+    </fig-select-options>
+  </fig-select>
+</div>`;
+}
+
 export const figui3Sections: Section[] = [
   {
     id: "button",
@@ -318,23 +447,7 @@ export const figui3Sections: Section[] = [
       {
         id: "grouped",
         name: "AI models",
-        markup: `<div class="prop-panel">
-  <fig-select value="claude-opus-5" label="AI model">
-    <fig-select-options slot="panel">
-      <fig-separator label="OpenAI"></fig-separator>
-      <fig-select-option value="gpt-5.6-sol">GPT-5.6 Sol</fig-select-option>
-      <fig-select-option value="gpt-5.6-terra">GPT-5.6 Terra</fig-select-option>
-      <fig-separator label="Anthropic"></fig-separator>
-      <fig-select-option value="claude-fable-5">Claude Fable 5</fig-select-option>
-      <fig-select-option value="claude-opus-5">Claude Opus 5</fig-select-option>
-      <fig-select-option value="claude-sonnet-5">Claude Sonnet 5</fig-select-option>
-      <fig-separator label="Gemini"></fig-separator>
-      <fig-select-option value="gemini-3.6-flash">Gemini 3.6 Flash</fig-select-option>
-      <fig-select-option value="gemini-3.5-flash">Gemini 3.5 Flash</fig-select-option>
-      <fig-select-option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</fig-select-option>
-    </fig-select-options>
-  </fig-select>
-</div>`,
+        markup: aiModelSelectMarkup(),
       },
       {
         id: "disabled",
@@ -1200,36 +1313,6 @@ export const figui3Sections: Section[] = [
     </fig-header>
     <fig-content>
       <p>Popup content</p>
-    </fig-content>
-  </dialog>
-</div>`,
-      },
-      {
-        id: "with-menu",
-        name: "With menu",
-        markup: `<div class="prop-panel">
-  <fig-button id="popup-menu-anchor" data-playground-ignore-controls="true" onclick="const popup=this.nextElementSibling; popup.open = !popup.open;">Versions</fig-button>
-  <dialog is="fig-popup" open closedby="none" anchor="#popup-menu-anchor" position="bottom left" offset="8 8" viewport-margin="8" variant="popover">
-    <fig-content>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--spacer-4);">
-        <fig-select value="6" aria-label="Version">
-          <fig-select-options>
-            <fig-select-option value="6">Version 6</fig-select-option>
-            <fig-select-option value="5">Version 5</fig-select-option>
-            <fig-select-option value="4">Version 4</fig-select-option>
-            <fig-select-option value="3">Version 3</fig-select-option>
-          </fig-select-options>
-        </fig-select>
-        <fig-menu position="bottom right">
-          <fig-button fig-menu-trigger variant="ghost" icon aria-label="Version actions">
-            <fig-icon name="more"></fig-icon>
-          </fig-button>
-          <fig-menu-item value="restore">Restore this version</fig-menu-item>
-          <fig-menu-item value="duplicate">Duplicate version</fig-menu-item>
-          <fig-separator></fig-separator>
-          <fig-menu-item value="delete">Delete version</fig-menu-item>
-        </fig-menu>
-      </div>
     </fig-content>
   </dialog>
 </div>`,

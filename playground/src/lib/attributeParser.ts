@@ -734,6 +734,44 @@ export function applyHeaderIconMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export function getSelectSeparatorStickyEnabled(
+  markup: string,
+  fieldIndex: number,
+): boolean {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return false;
+  const separators = element.querySelectorAll(
+    "fig-separator, fig-menu-separator",
+  );
+  if (!separators.length) return false;
+  return Array.from(separators).every(
+    (separator) =>
+      separator.hasAttribute("sticky") &&
+      separator.getAttribute("sticky") !== "false",
+  );
+}
+
+export function applySelectSeparatorStickyMutation(
+  markup: string,
+  fieldIndex: number,
+  enabled: boolean,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return markup;
+
+  const separators = element.querySelectorAll(
+    "fig-separator, fig-menu-separator",
+  );
+  separators.forEach((separator) => {
+    if (enabled) separator.setAttribute("sticky", "");
+    else separator.removeAttribute("sticky");
+  });
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export type ChooserContentMode = "text" | "image" | "image-label" | "colors";
 
 export function getChooserContentMode(

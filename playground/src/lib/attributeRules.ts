@@ -1057,6 +1057,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "boolean",
       boolMode: "presence",
     },
+    sticky: { label: "Sticky", type: "boolean", boolMode: "presence" },
   },
   "fig-menu-separator": {
     label: { label: "Label", type: "string" },
@@ -1065,6 +1066,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "boolean",
       boolMode: "presence",
     },
+    sticky: { label: "Sticky", type: "boolean", boolMode: "presence" },
   },
   "fig-attachment": {
     src: { label: "Source", type: "string" },

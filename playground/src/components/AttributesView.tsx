@@ -13,6 +13,7 @@ import {
   applyHandleHitAreaMutation,
   applyHeaderIconMutation,
   applyPrependSlotMutation,
+  applySelectSeparatorStickyMutation,
   applyTooltipActionMutation,
   getChooserPaletteLabelsEnabled,
   FIG_ICON_COLOR_OPTIONS,
@@ -22,6 +23,7 @@ import {
   getHandleHitAreaDebug,
   getHeaderIconEnabled,
   getPrependSlotMode,
+  getSelectSeparatorStickyEnabled,
   parseAttributeTargets,
   type FigIconPlaygroundSet,
   type PrependSlotMode,
@@ -2333,6 +2335,48 @@ export default function AttributesView({
                         ? [prependField, field]
                         : [field, prependField];
                     })}
+                    {target.controlTag === "fig-select" &&
+                      markup.includes("<fig-separator") &&
+                      (() => {
+                        const stickyEnabled = getSelectSeparatorStickyEnabled(
+                          markup,
+                          target.fieldIndex,
+                        );
+                        return (
+                          <fig-field
+                            columns="2/5"
+                            key={`control-select-separator-sticky-${target.fieldIndex}`}
+                          >
+                            <label>Sticky</label>
+                            <fig-switch
+                              checked={stickyEnabled ? "true" : undefined}
+                              onInput={(e: any) => {
+                                const customEvent = e as CustomEvent<{
+                                  checked?: boolean;
+                                }>;
+                                const host = e.currentTarget as HTMLElement & {
+                                  checked?: boolean;
+                                };
+                                const next =
+                                  typeof customEvent.detail?.checked ===
+                                  "boolean"
+                                    ? customEvent.detail.checked
+                                    : Boolean(
+                                        host.checked ??
+                                          host.hasAttribute("checked"),
+                                      );
+                                onMarkupChange(
+                                  applySelectSeparatorStickyMutation(
+                                    markup,
+                                    target.fieldIndex,
+                                    next,
+                                  ),
+                                );
+                              }}
+                            />
+                          </fig-field>
+                        );
+                      })()}
                     {target.controlTag === "fig-truncate" && (() => {
                       const styleAttr = target.controlAttributes.style || "";
                       const match = styleAttr.match(/max-width:\s*([\d.]+)%/);

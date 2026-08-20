@@ -8,8 +8,10 @@ import {
   applyChooserMaxSizeMutation,
   applyFieldLabelMutation,
   applyPrependSlotMutation,
+  applySelectSeparatorStickyMutation,
   getChooserContentMode,
   getPrependSlotMode,
+  getSelectSeparatorStickyEnabled,
   type ChooserContentMode,
   type PrependSlotMode,
 } from "./attributeParser";
@@ -81,6 +83,14 @@ export function diffFromDefault(
       const defContent = getChooserContentMode(defaultMarkup, i);
       if (curContent !== defContent) {
         params[`${idx}${SPECIAL_PREFIX}content`] = curContent;
+      }
+    }
+
+    if (cur.controlTag === "fig-select") {
+      const curSticky = getSelectSeparatorStickyEnabled(currentMarkup, i);
+      const defSticky = getSelectSeparatorStickyEnabled(defaultMarkup, i);
+      if (curSticky !== defSticky) {
+        params[`${idx}${SPECIAL_PREFIX}sticky`] = curSticky ? "1" : "0";
       }
     }
 
@@ -172,6 +182,8 @@ export function applyParamsToMarkup(
       markup = applyChooserContentMutation(markup, idx, val as ChooserContentMode);
     } else if (key === "_prepend" && val) {
       markup = applyPrependSlotMutation(markup, idx, val as PrependSlotMode);
+    } else if (key === "_sticky") {
+      markup = applySelectSeparatorStickyMutation(markup, idx, val !== "0");
     } else if (key === "_label") {
       markup = applyFieldLabelMutation(markup, {
         fieldIndex: idx,

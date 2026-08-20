@@ -3205,6 +3205,53 @@ test("fig-select-options spaces its first option when overflow buttons are adjac
   await expect(options.nth(1)).toHaveCSS("margin-top", "0px");
 });
 
+test("sticky fig-separator sits below overflow-start in select and menu lists", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await customElements.whenDefined("fig-separator");
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-select-options>
+        <fig-separator sticky label="Models"></fig-separator>
+        <fig-select-option value="one">One</fig-select-option>
+      </fig-select-options>
+      <div class="fig-menu-options">
+        <fig-separator sticky label="Actions"></fig-separator>
+        <fig-menu-item value="copy">Copy</fig-menu-item>
+      </div>
+    `;
+  });
+
+  const selectPanel = page.locator("fig-select-options");
+  const menuPanel = page.locator(".fig-menu-options");
+  const selectSeparator = selectPanel.locator("fig-separator");
+  const menuSeparator = menuPanel.locator("fig-separator");
+
+  await expect(selectSeparator).toHaveCSS("top", "0px");
+  await expect(menuSeparator).toHaveCSS("top", "0px");
+
+  await selectPanel.evaluate((panel) => panel.classList.add("overflow-start"));
+  await menuPanel.evaluate((panel) => panel.classList.add("overflow-start"));
+
+  const expectedTop = await selectPanel.evaluate((panel) => {
+    const probe = document.createElement("div");
+    probe.style.position = "absolute";
+    probe.style.top = "var(--fig-vertical-overflow-size)";
+    panel.append(probe);
+    const top = getComputedStyle(probe).top;
+    probe.remove();
+    return top;
+  });
+  await expect(selectSeparator).toHaveCSS("top", expectedTop);
+  await expect(menuSeparator).toHaveCSS("top", expectedTop);
+});
+
 test.describe("fig-select viewport edge repositioning", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);

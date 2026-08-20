@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.10]
+
+### Added
+
+- Select playground Sticky toggle applies `sticky` to each `fig-separator` and persists as `_sticky` in the URL.
+- Expanded the AI models select example with a long grouped model list.
+
+### Changed
+
+- Removed the Popup "With menu" playground example.
+
+### Fixed
+
+- Sticky labeled `fig-separator`s in overflowed `fig-select-options` and `.fig-menu-options` sit below the overflow-start button.
+
 ## [8.9.9]
 
 ### Added

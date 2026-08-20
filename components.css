@@ -5639,6 +5639,23 @@ fig-menu-item {
       line-height: var(--spacer-4);
       min-height: var(--spacer-4);
     }
+
+    &:first-child{
+      &::before {
+        display: none;
+      }
+    }
+
+    &[sticky]:not([sticky="false"]) {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--fig-popup-bg-color, var(--figma-color-bg));
+
+      :is(fig-select-options, .fig-menu-options).overflow-start > & {
+        top: var(--fig-vertical-overflow-size, var(--spacer-4));
+      }
+    }
   }
 }
 
