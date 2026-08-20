@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [8.9.8]
+## [8.9.9]
 
 ### Added
 
