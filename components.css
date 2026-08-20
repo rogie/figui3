@@ -3257,7 +3257,7 @@ dialog[is="fig-popup"] {
 
 }
 
-/* Tooltip */
+/* Overlay portal */
 [data-figui-overlay-root] {
   position: fixed;
   inset: 0;
@@ -3268,6 +3268,10 @@ dialog[is="fig-popup"] {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+[data-figui-overlay-root] > dialog.fig-menu-popup {
+  pointer-events: auto;
 }
 
 fig-tooltip {

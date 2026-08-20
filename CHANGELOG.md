@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.8]
+
+### Added
+
+- Added a Menu inside popover playground example.
+
+### Fixed
+
+- `fig-menu` popups now portal above open dialogs while preserving anchor positioning, scrolling, keyboard behavior, and reconnect cleanup.
+
 ## [8.9.7]
 
 ### Added

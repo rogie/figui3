@@ -1354,6 +1354,26 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "inside-popover",
+        name: "Inside popover",
+        markup: `<div class="prop-panel">
+  <fig-button id="menu-popover-anchor" variant="secondary" onclick="const popup=this.nextElementSibling; popup.open = !popup.open;">Versions</fig-button>
+  <dialog is="fig-popup" open closedby="none" anchor="#menu-popover-anchor" position="bottom left" offset="8 8" variant="popover">
+    <fig-content>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--spacer-4);">
+        <span>Version 6</span>
+        <fig-menu position="bottom right">
+          <fig-button fig-menu-trigger variant="ghost" icon aria-label="Version actions">
+            <fig-icon name="more"></fig-icon>
+          </fig-button>
+          <fig-menu-item value="restore">Restore this version</fig-menu-item>
+        </fig-menu>
+      </div>
+    </fig-content>
+  </dialog>
+</div>`,
+      },
+      {
         id: "subtle-items",
         name: "Subtle items",
         markup: `<div class="prop-panel">
