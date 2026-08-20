@@ -692,6 +692,15 @@ fig-select {
     }
   }
 
+  &[variant="ghost"] {
+    box-shadow: none;
+    background-color: transparent;
+
+    &:hover:not([disabled]):not([disabled="false"]) {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
+
   &::after {
     content: "";
     position: absolute;

@@ -454,6 +454,10 @@ class FigSelectOptions extends HTMLElement {
 }
 figEditorDefineElement("fig-select-options", FigSelectOptions);
 
+/**
+ * A dropdown-styled select.
+ * @attr {string} variant - Visual style. Use `ghost` for a borderless control.
+ */
 class FigSelect extends HTMLElement {
   #button = null;
   #popup = null;
@@ -492,6 +496,7 @@ class FigSelect extends HTMLElement {
       "offset",
       "closedby",
       "open",
+      "variant",
     ];
   }
 

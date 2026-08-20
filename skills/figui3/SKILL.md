@@ -1,242 +1,214 @@
 ---
 name: figui3
-description: Guides development and maintenance of the FigUI3 web components library for Figma-style plugin UIs. Applies when adding or modifying `fig-*` custom elements, updating docs/demo pages, adjusting theme tokens, improving accessibility, or debugging component behavior in `fig.js`, `components.css`, `index.html`, and `README.md`.
+description: >-
+  Guides FigUI3 core (`fig.js` / `fig.css`) web components for Figma-style plugin UIs.
+  Use when adding, using, or debugging fig-* elements from the core bundle—buttons,
+  fields, overlays, menus, sliders, color/fill inputs, media, dialogs, popups, toasts—or
+  when working in the /figui3 playground. Not for fig-select or fig-fill-picker
+  (fig-editor), propskit-* / AI / canvas / angle / reorder (fig-lab), or fig-layer.
 user-invocable: false
 ---
 
-# FigUI3
+# FigUI3 core (`fig.js`)
 
-A lightweight web components library for Figma UI3-style plugin and widget interfaces.
+Zero-dependency web components for Figma UI3 plugin and widget UIs.
 
-> IMPORTANT: Prefer the project's native scripts and structure. Use `bun dev` for local docs/demo work and `bun build` for production output.
+Canonical examples live in the **playground**, not `index.html`.
 
-## Current Project Context
+- Live: https://rog.ie/figui3/
+- Local: `npm run dev:playground` → `/figui3`
+- Sections: `playground/src/data/figui3Sections.ts`
+- Attribute inspector: `playground/src/lib/attributeRules.ts`
+- Public API: `README.md`
 
-```json
-!`node -e "const p=require('./package.json'); console.log(JSON.stringify({name:p.name,version:p.version,scripts:p.scripts,exports:p.exports},null,2))" 2>/dev/null || echo '{"error":"package.json not found"}'`
+Related skills: `fig-editor` (`fig-select`, `fig-fill-picker`), `fig-lab` (`propskit-*`, AI, canvas), `propkit` (`/propskit` field composition).
+
+## Bundles
+
+Always import CSS with JS. Register before first render.
+
+```js
+import "@rogieking/figui3/fig.css";
+import "@rogieking/figui3/fig.js";
 ```
 
-The JSON above is the source of truth for package name, build commands, and exported files.
+| Bundle | CSS + JS | Components |
+|---|---|---|
+| **Core** (this skill) | `fig.css` + `fig.js` | All `fig-*` below |
+| **Editor** | `fig-editor.css` + `fig-editor.js` | `fig-select*`, `fig-fill-picker`, `fig-interpolation-swatch` |
+| **Lab** (unstable) | `fig-lab.css` + `fig-lab.js` | `propskit-*`, `fig-ai-*`, `fig-canvas-control`, `fig-input-angle`, `fig-reorder` |
+| **Layer** | `fig-layer.css` + `fig-layer.js` | `fig-layer` |
+
+`fig-editor.js` also imports `fig.js` and `fig-lab.js`. Lab CSS is still separate. `fig-layer` is **not** registered by `fig-editor.js`.
+
+Playground “Full editor” toggle reveals `#select`, `#fill-picker`, `#layer`, and `#toast`. That grouping is UI-only: toast is core; layer is `fig-layer.js`.
 
 ## Principles
 
-1. **Preserve native Web Components patterns.** Keep components framework-agnostic and rooted in custom elements.
-2. **Prefer existing `fig-*` components over one-off markup.** Compose from current primitives before inventing new ones.
-3. **Keep Figma UI3 visual consistency.** Use existing CSS variables and spacing/radius conventions.
-4. **Honor interaction semantics.** Emit `input` while interacting and `change` on committed value changes.
-5. **Treat accessibility as required behavior.** Preserve labels, keyboard support, ARIA attributes, and disabled states.
+1. Prefer existing `fig-*` tags over one-off markup.
+2. Use design tokens (`--figma-color-*`, `--radius-*`, `--spacer-*`). Do not hardcode Figma colors.
+3. Emit `input` while interacting and `change` on commit. Do not fire `input` from programmatic attribute writes.
+4. Preserve a11y: labels, keyboard, ARIA, disabled. See the `a11y` skill.
+5. Keep components framework-agnostic. No React internals.
 
-## React + Vite Integration
-
-### Install and bootstrap in React
-
-- Install package: `npm i @rogieking/figui3` (or `pnpm add` / `bun add`).
-- Import CSS once in app entry (`main.tsx` / `main.jsx`): `import "@rogieking/figui3/fig.css";`
-- Register custom elements before first render. In Vite/React, prefer an explicit bootstrap:
+## React + Vite
 
 ```tsx
 import "@rogieking/figui3/fig.css";
 
 const bootstrap = async () => {
-  // Prevent production tree-shaking from dropping registration side effects.
   await import("@rogieking/figui3/fig.js");
   createRoot(document.getElementById("app")!).render(<App />);
 };
-
 bootstrap();
 ```
 
-### Vite config guidance
+- Use DOM attrs (`text="true"`). Read values from `e.target` / `e.detail`.
+- On `fig-*` and `<dialog is="fig-...">`, use `class` not `className`.
+- Prefer refs + `addEventListener` for `input`/`change`.
 
-- Standard React Vite config is usually enough:
+Color picker modes: `fig-fill-picker` is optional editor. Do not use `picker` / `picker-anchor` on `fig-input-color`. `picker-*` attrs forward to the picker only when it is registered. See `fig-editor`.
 
-```ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+## Overlay rules
 
-export default defineConfig({
-  plugins: [react()],
-});
-```
-
-- Keep FigUI3 registration import at the top-level app bootstrap (not inside leaf components).
-- If a production build appears to tree-shake element registration, use the explicit dynamic import pattern above.
-
-### React usage rules for web components
-
-- Use DOM attrs on custom elements (`<fig-slider text="true" />`) and read values from `e.target` / `e.detail`.
-- In React, use `class` (not `className`) for all FigUI3 web components (`fig-*` and `<dialog is="fig-...">`) to keep attribute behavior consistent.
-- Prefer refs + `addEventListener` when wiring complex `input`/`change` behavior.
-
-### React + color picker modes (`fig-input-color` / `fig-fill-picker`)
-
-- `fig-fill-picker` is optional. Import `fig-editor.js` and `fig-editor.css` when full picker behavior is needed.
-- Do not use `picker` or `picker-anchor` on `fig-input-color`; components auto-detect `fig-fill-picker` at interaction time.
-- `picker-*` attrs on `fig-input-color` are forwarded to `fig-fill-picker` only when the optional picker is registered.
-  - Example: `picker-dialog-position`.
-- For React custom modes, use `fig-fill-picker` + slot API:
-  - Add a child with `slot="mode-<name>"` (and optional `label`).
-  - Include `<name>` in the `mode` attribute (e.g. `mode="solid,react-demo"`).
-  - Listen for `modeready` and render into `e.detail.container`.
-- Do not reparent React-owned DOM into the picker after render; use the provided `modeready` container as mount target.
-- Keep React lifecycle cleanup explicit for custom mode mounts:
-  - keep one `root` per mode container
-  - call `root.unmount()` when the host component unmounts
-  - remove `modeready` listeners in cleanup to avoid duplicate mounts
-- Custom mode content must dispatch `input` / `change` with `detail` payload so picker can store mode data and propagate events.
-- Preserve value shape expectations:
-  - `fig-input-color` expects solid color data (`detail.color`, optional `detail.alpha`) from the picker.
-  - `fig-fill-picker` custom modes use JSON with `type` set to mode name and remaining data in payload.
-- Direct color events expose additive `{ color, alpha, opacity }` aliases: opaque `#RRGGBB`, `0–1`, and `0–100`, respectively.
-- Keep `fig-input-color`'s legacy `value`, `hex`, and `rgba` event-detail fields unchanged; consume the aliases for a shared contract.
-
-## Critical Rules
-
-### Overlay Components (`fig-dialog`, `fig-popup`)
-
-- Choose the overlay primitive intentionally:
-  - **`<dialog is="fig-dialog">`** for modal/light-dismiss dialog workflows.
-  - **`<dialog is="fig-popup">`** for anchored floating surfaces (menus, contextual panels, nested popups).
-- Keep overlay semantics stable:
-  - `fig-dialog` should remain dialog-first (title/header/footer patterns, modal semantics).
-  - `fig-popup` should remain anchor/position-first (offset, collision handling, viewport margins).
-- Preserve drag and positioning behavior on both `fig-dialog` and `fig-popup`; do not regress manual placement rules.
-- For popup chains, maintain containment and dismissal logic across descendant popups.
-- Document any overlay behavior change in demos and changelog with a concrete before/after note.
-
-### Component Architecture
-
-- Extend `HTMLElement` and implement lifecycle cleanup in `disconnectedCallback`.
-- Use `observedAttributes` + `attributeChangedCallback` for attribute-driven reactivity.
-- Keep attribute names and behavior backward-compatible unless explicitly doing a breaking change.
-- Support `disabled` behavior wherever interaction is possible.
-- Avoid introducing framework-specific assumptions in component internals.
-
-### Events and Data Contracts
-
-- Emit standard `input` and `change` events for form-like controls.
-- Put rich payloads in `event.detail` when needed; keep names stable.
-- Do not silently change event payload shape for existing components.
-- When adding new events, document trigger timing and payload fields.
-
-### Styling and Theming
-
-- Reuse established design tokens and CSS variables before adding new ones.
-- Keep light/dark compatibility working with `color-scheme` and current token strategy.
-- Avoid ad-hoc hardcoded colors when semantic tokens already exist.
-- Preserve current sizing, spacing, and radius rhythm unless intentionally refactoring system-wide.
-
-### Documentation and Demos
-
-- Update `README.md` component docs when public API or behavior changes.
-- Update demo surfaces (`index.html` and `playground/` routes where relevant) for visible behavior changes.
-- Prefer realistic examples that mirror plugin/property panel usage.
-
-### Compatibility and Safety
-
-- Keep browser support expectations aligned with current README claims.
-- Use progressive enhancement for bleeding-edge CSS features.
-- Avoid regressions in existing attributes, defaults, and emitted events.
-
-### Color Picker Mode Extensibility
-
-- Treat custom modes as a `fig-fill-picker` concern, not a standalone `fig-input-color` concern.
-- When adding a new mode, update demos/docs with both:
-  - vanilla slot usage (`slot="mode-*"`)
-  - React `modeready` usage
-- Do not emit `input` from programmatic attribute writes (`value` updates); preserve current loop-avoidance behavior for React.
-
-## Key Patterns
+- `<dialog is="fig-dialog">` — modal/task dialog. `position` is viewport placement. No `anchor`.
+- `<dialog is="fig-popup">` — anchored float (`anchor`, `position`, `offset`, `viewport-margin`). `variant="popover"` uses CSS `filter` (containing block for `position: fixed`).
+- `<dialog is="fig-toast">` — call `showToast()`. `theme`, `duration`, `live`, `dismiss`, `icon`.
+- `fig-menu` and `fig-select` use `popover="manual"` so lists escape filter-containing popups to the top layer. Nested menus inside popovers must keep that.
 
 ```html
-<!-- Modal/dialog content container -->
-<dialog is="fig-dialog" drag="true" handle="fig-header">
+<dialog is="fig-dialog" drag handle="fig-header">
   <fig-header>
-    Dialog Title
-    <fig-button variant="ghost" icon close-dialog aria-label="Close dialog">
+    Title
+    <fig-button variant="ghost" icon close-dialog aria-label="Close">
       <fig-icon name="close"></fig-icon>
     </fig-button>
   </fig-header>
-  <div>Dialog body</div>
+  <fig-content>Body</fig-content>
 </dialog>
 
-<!-- Anchored popup surface -->
 <dialog is="fig-popup" anchor="#trigger" position="bottom left" offset="8 8">
-  <div>Popup content</div>
+  Popup content
 </dialog>
 ```
 
-```js
-// Event contract pattern: continuous + committed updates.
-this.dispatchEvent(new CustomEvent("input", { detail, bubbles: true }));
-this.dispatchEvent(new CustomEvent("change", { detail, bubbles: true }));
+## Field composition
 
-// Attribute-driven updates.
-static get observedAttributes() { return ["value", "disabled"]; }
-attributeChangedCallback(name, oldValue, newValue) {
-  if (oldValue === newValue) return;
-  // sync internal UI state
-}
-```
-
-```txt
-Event contract quick map:
-- fig-slider: input/change -> current value on e.target.value
-- fig-input-color: input/change -> legacy value/hex/rgba plus color/alpha/opacity aliases in e.detail
-- fig-input-fill / fig-fill-picker: input/change -> fill payload in e.detail
-```
+Default property row:
 
 ```html
-<!-- Typical field composition -->
 <fig-field direction="horizontal">
   <label>Opacity</label>
-  <fig-slider value="75" min="0" max="100" text="true" units="%"></fig-slider>
+  <fig-slider value="75" min="0" max="100" text="true" units="%" full></fig-slider>
 </fig-field>
 ```
 
-## `fig-popup` vs `fig-dialog`
+Labeled property wrappers (`propskit-*`) are lab. For `/propskit` playground patterns, use the `propkit` skill.
 
-- **Use `fig-dialog` when the UI is a dialog.**
-  - Best for modal or primary task flows.
-  - Works well with explicit dialog structure and close policies.
-- **Use `fig-popup` when you need low-level floating control.**
-  - Best for anchored contextual surfaces and advanced positioning behavior.
-  - Prefer this when you need explicit anchor/position/offset/viewport tuning.
+## Select vs dropdown
 
-Rule of thumb: `fig-dialog` = dialog UX, `fig-popup` = popup primitive.
+| Tag | Bundle | Use |
+|---|---|---|
+| `fig-dropdown` | core | Native `<select>` wrapper. `type="select\|dropdown"`, `variant="ghost"` |
+| `fig-select` | editor | Custom listbox: groups, overflow chevrons, sticky separators, rich options |
+| `propskit-select` | lab | Full-surface labeled field around `fig-select` |
 
-## Workflow
+Prefer `fig-select` for Figma-style menus. Use `fig-dropdown` only for a native select.
 
-1. **Read existing implementation first.** Check `fig.js`, `components.css`, and related demo usage before editing.
-2. **Confirm API surface impact.** Identify affected attributes, events, and slots.
-3. **Implement with compatibility in mind.** Preserve defaults and old usage unless explicitly changed.
-4. **Update docs/demo in same pass.** Keep examples and behavior synchronized.
-5. **Run project checks.** Use `bun dev` for interactive verification and `bun build` for output sanity.
-6. **Verify accessibility and theming.** Check keyboard flow, labels, disabled states, and both light/dark appearance.
+## Core catalog
 
-## Release-Ready Checklist
+Playground hashes: `/figui3#{id}`. Full attrs: [reference.md](reference.md).
 
-- Validate in a production build (`bun build`) and confirm custom elements are registered at runtime.
-- Verify `input` vs `change` behavior for touched controls in both vanilla usage and React integration.
-- Verify light/dark themes and keyboard navigation for any changed component.
-- Verify overlay behavior (`fig-dialog`, `fig-popup`) including close/dismiss and drag behavior when applicable.
-- Update `README.md`, demos, and `CHANGELOG.md` for any public API or behavior change.
+### Buttons and inputs
 
-## Quick Reference
+| Tag | Playground | Notes |
+|---|---|---|
+| `fig-button` | `#button` | `variant`: secondary, ghost, link, destructive*, overlay, input. `type`: button, toggle, submit, select, upload. `size`, `icon`, `selected` |
+| `fig-dropdown` | `#dropdown` | Native select. Options as `<option>` / `<optgroup>`. `variant="ghost"` |
+| `fig-combo-input` | `#combo-input` | Text + suggestions (`options`) |
+| `fig-input-text` | `#text-input` | `multiline` for textarea |
+| `fig-input-number` | `#number-input` | `min`, `max`, `step`, `units`, `precision` |
+| `fig-input-file` | `#file-input` | `accepts`, `multiple`, button `variant` |
+| `fig-checkbox` / `fig-radio` / `fig-switch` | `#checkbox` `#radio` `#switch` | Switch supports `indeterminate` |
+| `fig-slider` | `#slider` | `type`: range, opacity, hue, stepper, delta. `text`, `units`, `transform`, `variant="classic"` |
+| `fig-options` | (propkit `#options`) | Option list helper; same option string formats as select |
 
-```bash
-# Start docs/demo server
-bun dev
+### Color and fill (no picker dialog)
 
-# Build distributable files
-bun build
+| Tag | Playground | Notes |
+|---|---|---|
+| `fig-input-color` | (propkit `#color`) | Solid color. `text`, `alpha`. Auto-detects `fig-fill-picker` |
+| `fig-input-fill` | `#fill-input` | Solid/gradient/image/video JSON `value`. `picker-*` forwarded if picker registered |
+| `fig-input-palette` | (propkit `#palette`) | Multi-color. `fixed`, `open` |
+| `fig-input-gradient` | (propkit `#gradient`) | Stops. `edit`, `mode="handle\|tip"` |
+| `fig-swatch` | `#swatch` | `size`, `selected`, `alpha` |
+| `fig-color-tip` | `#color-tip` | `control="color\|add\|remove"` |
+| `fig-chit` | — | Alias-style color chip |
+
+### Layout and chrome
+
+| Tag | Playground | Notes |
+|---|---|---|
+| `fig-field` | `#field` | `direction="horizontal\|vertical"`, `label` |
+| `fig-group` | (containers) | `name`, `collapsible`, `open`, `compact` |
+| `fig-header` / `fig-footer` / `fig-content` | (containers) | Header: `borderless`, `compact`. Footer: `sticky` |
+| `fig-tabs` / `fig-tab` | `#tabs` | Roving tabs. `content="#id"` for panels |
+| `fig-segmented-control` / `fig-segment` | `#segmented-control` | Radio-group pattern |
+| `fig-chooser` / `fig-choice` | (containers) | Listbox selection |
+| `fig-separator` / `fig-menu-separator` | `#separator` | Optional `label`, `sticky`, `borderless` |
+| `fig-menu` / `fig-menu-item` | `#menu` | `fig-menu-trigger`, `trigger="contextmenu"`, `position`, `offset` |
+| `fig-icon` | `#icon` | Token mask (`name`, `size="small"`, `color`) |
+| `fig-avatar` | `#avatar` | `src` / `name`, `size="large"` |
+| `fig-truncate` | `#truncate` | `position="right\|left\|middle"`, `tooltip`, `tail` |
+
+### Overlays
+
+| Tag | Playground | Notes |
+|---|---|---|
+| `dialog is="fig-dialog"` | `#dialog` | `modal`, `drag`, `resizable`, `autoresize`, `handle`, `closedby`, `position` |
+| `dialog is="fig-popup"` | `#popup` | `anchor`, `position`, `offset`, `viewport-margin`, `variant`, `theme` |
+| `dialog is="fig-toast"` | `#toast` | `showToast()`. `theme`, `duration`, `live`, `dismiss`, `icon` |
+| `fig-tooltip` | `#tooltip` | `text`, `action="hover\|click\|manual"`, `delay`, `theme` |
+
+### Media
+
+| Tag | Playground | Notes |
+|---|---|---|
+| `fig-preview` | (propkit `#preview`) | `aspect-ratio`, `fit`, `full`, `checkerboard` |
+| `fig-media` / `fig-image` / `fig-video` | `#media` `#image` `#video` | Upload via `upload`. Video controls below preview |
+| `fig-card` | `#card` | Media + label + selection |
+| `fig-media-controls` | `#media-controls` | Play/pause chrome |
+| `fig-input-file` | `#file-input` | File picker button |
+
+### Specialized
+
+| Tag | Playground | Notes |
+|---|---|---|
+| `fig-easing-curve` | (propkit `#easing`) | Bezier/spring |
+| `fig-3d-rotate` | (containers) | Cube rotate |
+| `fig-origin-grid` | (propkit) | Transform origin |
+| `fig-joystick` | (propkit `#joystick`) | 2D position |
+| `fig-handle` | `#handle` | `type="default\|minimal\|color\|canvas"`, `drag`, `drag-snapping` |
+| `fig-spinner` / `fig-shimmer` / `fig-skeleton` | `#spinner` `#shimmer` | Loading |
+
+`fig-input-angle` is **lab**, not core.
+
+## Events
+
+```txt
+fig-slider          input/change → e.target.value
+fig-input-color     input/change → detail { color, alpha, opacity } plus legacy value/hex/rgba
+fig-input-fill      input/change → fill payload in e.detail
+fig-menu            change → detail { value }
+fig-dialog/popup    native dialog close plus FigUI3 positioning attrs
 ```
 
-## Primary Files
+## Maintainer workflow
 
-- `fig.js` - component implementations and behavior
-- `components.css` - component-level styling and states
-- `base.css` - foundational styles and variables
-- `index.html` - main interactive docs/demo
-- `README.md` - public API and usage documentation
-- `CHANGELOG.md` - release history and migration notes
+1. Read `fig.js` + `components.css` before editing.
+2. Mirror playground examples in `figui3Sections.ts` and `attributeRules.ts`.
+3. Update `README.md` + `CHANGELOG.md` for public API changes.
+4. `bun build` for dist. Never kill `npm run dev:playground`.
+5. Tests: `npm run test:components` (Playwright). Do not start a second playground if one is running.
+
+Primary files: `fig.js`, `components.css`, `base.css`, `README.md`, `playground/src/data/figui3Sections.ts`.

@@ -72,6 +72,13 @@ Or use a CDN:
 <script type="module" src="https://unpkg.com/@rogieking/figui3@latest/dist/fig.js"></script>
 ```
 
+Agent skills ship in `.cursor/skills/` (included in the npm package):
+
+- `figui3` — core `fig.js` components
+- `fig-editor` — `fig-select` and `fig-fill-picker`
+- `fig-lab` — experimental `propskit-*`, canvas, AI, angle, reorder
+- `propkit` — `/propskit` property-row composition
+
 Minimal example:
 
 ```html
@@ -90,6 +97,7 @@ Minimal example:
 |---|---|---|
 | [Button](#button) | `<fig-button>` | Buttons with variants, toggle, select, upload |
 | [Dropdown](#dropdown) | `<fig-dropdown>` | Native select wrapper with Figma styling |
+| [Select](#select) | `<fig-select>` | Custom listbox select (requires `fig-editor.js`) |
 | [Combo Input](#combo-input) | `<fig-combo-input>` | Text input with dropdown suggestions |
 | [Checkbox](#checkbox) | `<fig-checkbox>` | Checkbox with indeterminate state |
 | [Radio](#radio) | `<fig-radio>` | Radio button |
@@ -192,6 +200,7 @@ Minimal example:
 | `value` | string | — | Selected value |
 | `type` | string | `"select"` | `"select"` or `"dropdown"` |
 | `label` | string | — | Accessible label for the generated native `<select>` |
+| `variant` | string | — | `"ghost"` for a borderless control with secondary hover fill |
 | `disabled` | boolean | `false` | Disabled state |
 
 ```html
@@ -202,6 +211,38 @@ Minimal example:
 ```
 
 Keyboard activation follows the native select pattern. Enter opens the closed picker.
+
+---
+
+#### Select
+
+`<fig-select>` — [demo](https://rog.ie/figui3/#select)
+
+Custom listbox select with overflow chevrons, grouped options, and sticky separators. Import `fig-editor.js` and `fig-editor.css`. Prefer this over `fig-dropdown` for Figma-style menus.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `value` | string | — | Selected option value |
+| `label` | string | — | Closed-state / accessible label |
+| `options` | string | — | Comma, newline, or JSON options if no authored `fig-select-option` children |
+| `variant` | string | — | `"ghost"` for a borderless control with secondary hover fill |
+| `full` | boolean | `false` | Stretch to available width |
+| `position` | string | `"bottom left"` | Popup position |
+| `disabled` | boolean | `false` | Disabled state |
+
+Author options in `<fig-select-options>`, or pass `options`. Use `label` on `<fig-select-option>` when the option content is rich. `fig-separator` with `sticky` pins group labels while scrolling.
+
+```html
+<fig-select value="center" label="Align">
+  <fig-select-options>
+    <fig-select-option value="left">Left</fig-select-option>
+    <fig-select-option value="center">Center</fig-select-option>
+    <fig-select-option value="right">Right</fig-select-option>
+  </fig-select-options>
+</fig-select>
+```
+
+**Events:** `input`, `change`, `optionhover` (`detail` is the hovered option value).
 
 ---
 
@@ -1456,7 +1497,7 @@ A section header component.
 `<fig-layer>` — [demo](https://rog.ie/figui3/#layer)
 
 A collapsible layer list item with expand/collapse and visibility toggling. Supports nesting and exposes `role="treeitem"`, `aria-expanded`, `aria-hidden`, `aria-disabled`, and a keyboard-toggleable chevron button.
-Import `fig-layer.js` and `fig-layer.css` to register and style it. `fig-editor.js` also includes the layer registration.
+Import `fig-layer.js` and `fig-layer.css` to register and style it.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|

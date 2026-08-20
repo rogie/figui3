@@ -673,6 +673,7 @@ figDefineElement("fig-button", FigButton);
  * A custom dropdown/select element.
  * @attr {string} type - The dropdown type: "select" (default) or "dropdown"
  * @attr {string} value - The currently selected value
+ * @attr {string} variant - Visual style. Use `ghost` for a borderless control.
  */
 class FigDropdown extends HTMLElement {
   #label = "Menu";
@@ -871,7 +872,7 @@ class FigDropdown extends HTMLElement {
     this.setAttribute("value", value);
   }
   static get observedAttributes() {
-    return ["value", "type", "label", "disabled"];
+    return ["value", "type", "label", "disabled", "variant"];
   }
   #syncDisabled() {
     const disabled =

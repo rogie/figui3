@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.11]
+
+### Added
+
+- `variant="ghost"` on `fig-dropdown` and `fig-select` for a borderless control with secondary hover fill.
+- Shipped Cursor skills for the core, editor, and lab bundles (`figui3`, `fig-editor`, `fig-lab`), plus an updated PropKit skill.
+
+### Changed
+
+- Documented `fig-select` in the README and clarified that `fig-layer` is a separate import, not part of `fig-editor.js`.
+
 ## [8.9.10]
 
 ### Added

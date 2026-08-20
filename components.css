@@ -3346,6 +3346,20 @@ fig-dropdown {
     display: flex;
     width: 100%;
   }
+
+  &[variant="ghost"] {
+    border-radius: var(--radius-medium);
+    background: transparent;
+
+    > select {
+      box-shadow: none;
+      background: transparent;
+    }
+
+    &:hover:not([disabled]):not([disabled="false"]) {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
 }
 
 fig-checkbox,

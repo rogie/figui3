@@ -1,54 +1,34 @@
 ---
 name: propkit
-description: Guides creation and refinement of Figma-style property panel patterns ("PropKit") using FigUI3 components. Applies when building or modifying property fields in the playground app (`/propkit` route), generating consistent field prompts, composing horizontal `fig-field` rows, or tuning panel UX for controls like image, color, fill, slider, switch, dropdown, segmented control, easing, and angle.
+description: >-
+  Guides Figma-style property panel composition in the /propskit playground using
+  fig-field rows and FigUI3 controls. Use when building or editing
+  playground/src/data/sections.ts, generating field prompts, or choosing between
+  raw fig-* rows and propskit-* wrappers (fig-lab).
 user-invocable: false
 ---
 
 # PropKit
 
-Patterns for composing clean, production-ready Figma property panels with FigUI3.
+Patterns for Figma property panels. Two layers:
 
-> IMPORTANT: Favor composition and consistency over custom one-off controls. Build panels from existing `fig-*` elements first.
+| Surface | Route | What to use |
+|---|---|---|
+| **PropsKit playground** | `/propskit` | Horizontal `fig-field` + core `fig-*` |
+| **Lab wrappers** | `/propskit/lab` | `propskit-*` (see `fig-lab` skill) |
 
-## Current Project Context
-
-```json
-!`node -e "const fs=require('fs'); const ok=fs.existsSync('playground/src/main.tsx'); console.log(JSON.stringify({playground:ok, route:'/propkit', example:'horizontal fig-field + label + fig-* control'},null,2))" 2>/dev/null || echo '{"error":"context unavailable"}'`
-```
+Canonical `/propskit` examples: `playground/src/data/sections.ts`.
+Core control APIs: `figui3` skill. Select/fill picker: `fig-editor`. Labeled wrappers: `fig-lab`.
 
 ## Principles
 
-1. **Use horizontal property rows by default.** PropKit fields are primarily `fig-field direction="horizontal"`.
-2. **One clear label per control.** Keep labels concise and aligned with Figma property language.
-3. **Prefer native FigUI3 controls.** Use `fig-input-fill`, `fig-slider`, `fig-dropdown`, `fig-switch`, etc.
-4. **Use realistic panel widths and spacing.** Match the property panel feel (`~240px` panel blocks in demos).
-5. **Keep prompts and examples deterministic.** Prompt text should describe exact structure and key attributes.
+1. Default to horizontal `fig-field` rows.
+2. One concise label per control.
+3. For new labeled property controls in lab, prefer `propskit-*` over duplicating field chrome.
+4. In `/propskit` demos, keep composing from `fig-*` so examples stay core-only unless the section needs lab.
+5. Panel width ~240px. Match existing section density.
 
-## React + Vite PropKit Usage
-
-### Include FigUI3 in React projects
-
-- Import once in app bootstrap:
-  - `import "@rogieking/figui3/fig.css";`
-  - `await import("@rogieking/figui3/fig.js");`
-- Register components before first React render to avoid undefined custom elements.
-- Keep this setup in entry files (`main.tsx` / `main.jsx`), not scattered across feature components.
-
-### Vite setup and tree-shaking behavior
-
-- Base Vite React config is sufficient in most cases:
-
-```ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-
-export default defineConfig({
-  plugins: [react()],
-});
-```
-
-- In production, FigUI3 side-effect registration can be tree-shaken if only imported for side effects.
-- Preferred pattern (from `webgpu-effects`) is explicit async bootstrap:
+## React bootstrap
 
 ```tsx
 import "@rogieking/figui3/fig.css";
@@ -57,169 +37,70 @@ const bootstrap = async () => {
   await import("@rogieking/figui3/fig.js");
   createRoot(document.getElementById("app")!).render(<App />);
 };
-
 bootstrap();
 ```
 
-### React composition conventions for PropKit rows
+Add `fig-editor` when using `fig-select` / fill picker. Add `fig-lab` when using `propskit-*`.
 
-- Continue using canonical row shape in JSX:
-  - `<fig-field direction="horizontal">` + `<label>` + one primary `fig-*` control.
-- For customized built-ins in React (`<dialog is="fig-popup">` / `<dialog is="fig-dialog">`), use `class`, not `className`.
-- Use refs and native event listeners (`input`, `change`) for reliable control updates.
+On `fig-*` and `<dialog is="fig-...">`, use `class` not `className`.
 
-## Critical Rules
-
-### Field Composition
-
-- Default pattern: label + single primary control inside one horizontal `fig-field`.
-- Keep control-specific options on the component itself (not hidden wrapper logic).
-- Use `full` where property controls should stretch within row constraints.
-- Avoid mixing unrelated controls in a single field row unless intentionally grouped.
-
-### Prompt Generation Style
-
-- Write prompts as imperative build instructions.
-- Include field direction, control tag, and meaningful attrs.
-- Prefer short explicit phrasing over vague prose.
-- Keep wording consistent:
-  - `Use a horizontal fig-field...`
-  - `With a label of ...`
-- Include concrete defaults when relevant (value, min/max, step, units, mode, variant) so generated fields are deterministic.
-- Avoid placeholder-only prompts for numeric controls; always specify range semantics.
-
-### Control Guidance
-
-- **Image:** prefer `fig-image` with `upload`, `fit`, and `aspect-ratio` where needed.
-- **Color:** use `fig-input-color` with `text="true"` and optional `alpha`.
-- **Fill:** use `fig-input-fill` for multi-mode fills; keep value JSON valid.
-- **Slider:** choose proper type (`range`, `opacity`, `hue`, `stepper`, `delta`) and include units/transform intentionally.
-- **Dropdown:** use `fig-dropdown`; include sensible default options.
-- **Boolean:** use `fig-switch`; avoid using dropdowns for true/false.
-- **Discrete choices:** use `fig-segmented-control` + `fig-segment`.
-- **Motion easing:** use `fig-easing-curve` with/without presets depending on context.
-- **Angle:** use `fig-input-angle` with `text="true"` for precision workflows.
-
-### Slider Types and Variants
-
-- Default to `type="range"` for generic numeric properties (opacity %, size, spacing, intensity).
-- Use `type="opacity"` when color context is needed (set `color` and usually `units="%"`).
-- Use `type="hue"` only for hue selection workflows.
-- Use `type="stepper"` for discrete snap points (include a `datalist` with valid stops).
-- Use `type="delta"` for offset/relative adjustments around a neutral point (typically include `default`, and often symmetric min/max).
-- Text input is shown by default; use `text="false"` only for compact/simplified rows.
-- Use `transform` when internal value scale differs from UI display (example: internal `0..1`, display `0..100%`).
-- Variants:
-  - Default variant for most property panels.
-  - `variant="classic"` only when the previous slider appearance is needed.
-- Always set explicit `min`, `max`, and `step` (and `units` where applicable) to keep behavior predictable.
-- Set `default` on PropsKit value controls when reset behavior should differ from the initial value.
-- PropsKit value controls support `resetToDefault()` and a right-click **Reset** menu; `propskit-slider` also supports double-click reset.
-
-### Control Selection Heuristics
-
-- Use `fig-slider` for scrub-friendly continuous values (opacity, intensity, scale, blur amount).
-- Use `fig-input-number` for precise direct entry (sizes, coordinates, exact typed values).
-- Use slider + text (`text="true"`) when users need both quick scrubbing and precise adjustment.
-- Use `fig-segmented-control` for small discrete sets (2-5 fixed options).
-- Use `fig-dropdown` for larger or less frequently switched option sets.
-- Use `fig-switch` for binary state, never slider/dropdown for pure on/off.
-
-### UX Consistency
-
-- Keep panel patterns visually consistent across sections.
-- Preserve theme behavior (light/dark) and avoid non-token color overrides.
-- Ensure labels and controls remain keyboard and screen-reader usable.
-
-## Key Patterns
+## Field composition
 
 ```html
-<!-- Canonical PropKit row -->
 <fig-field direction="horizontal">
   <label>Opacity</label>
   <fig-slider value="75" min="0" max="100" text="true" units="%" full></fig-slider>
 </fig-field>
 ```
 
-```html
-<!-- Non-horizontal (stacked/default column) field -->
-<fig-field>
-  <label>Opacity</label>
-  <fig-slider value="75" min="0" max="100" text="true" units="%"></fig-slider>
-</fig-field>
-```
+- Put control attrs on the control, not a wrapper.
+- Use `full` when the control should stretch.
+- Do not mix unrelated controls in one row unless grouped on purpose.
 
-```html
-<!-- Fill + blend pair -->
-<fig-field direction="horizontal">
-  <label>Fill</label>
-  <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
-</fig-field>
-<fig-field direction="horizontal">
-  <label>Blend</label>
-  <fig-dropdown full>
-    <option selected>Normal</option>
-    <option>Multiply</option>
-  </fig-dropdown>
-</fig-field>
-```
+## Control heuristics
+
+| Intent | `/propskit` (core) | Lab wrapper |
+|---|---|---|
+| Boolean | `fig-switch` | `propskit-switch` |
+| Continuous number | `fig-slider` | `propskit-slider` |
+| Exact number | `fig-input-number` | `propskit-number` |
+| Text | `fig-input-text` | `propskit-text` |
+| Small discrete set (2–5) | `fig-segmented-control` | — |
+| Larger / rich list | `fig-select` (editor) | `propskit-select` |
+| Native select only | `fig-dropdown` | — |
+| Color | `fig-input-color` `text="true"` | `propskit-color` |
+| Fill | `fig-input-fill` | — |
+| Gradient | `fig-input-gradient` | `propskit-gradient` |
+| Image | `fig-image` `upload` | — |
+| Easing | `fig-easing-curve` | — |
+| Angle | `fig-input-angle` (**lab**) | — |
+| X/Y | `fig-joystick` or two numbers | `propskit-position` |
+
+Do not use dropdown/slider for pure on/off. Do not use `fig-dropdown` for Figma-style property selects when `fig-select` is available.
+
+## Slider rules
+
+- Default `type="range"`. Always set `min`, `max`, `step`.
+- `opacity`: set `color`, usually `units="%"`
+- `hue`: hue workflows only
+- `stepper`: include a datalist of stops
+- `delta`: include `default`, often symmetric min/max
+- Text field on by default; `text="false"` for compact rows
+- `transform` when internal scale ≠ display scale
+- `variant="classic"` only when the old look is required
+
+Prompt style: imperative, include direction, tag, and behavior-critical attrs.
 
 ```txt
-Prompt pattern:
 Use a horizontal fig-field, with a fig-slider, min=0 max=100 text=true units=%. With a label of Opacity.
-```
-
-```html
-<!-- Slider type/variant examples -->
-<fig-field direction="horizontal">
-  <label>Opacity</label>
-  <fig-slider type="opacity" value="0.75" color="#0D99FF" units="%" text="true" full></fig-slider>
-</fig-field>
-<fig-field direction="horizontal">
-  <label>Hue</label>
-  <fig-slider type="hue" value="180" text="true" full></fig-slider>
-</fig-field>
-<fig-field direction="horizontal">
-  <label>Offset</label>
-  <fig-slider type="delta" value="0" default="0" min="-5" max="5" step="0.25" text="true" full></fig-slider>
-</fig-field>
 ```
 
 ## Workflow
 
-1. **Identify property intent.** Determine if control is boolean, discrete choice, continuous numeric, color/fill, media, or motion.
-2. **Pick the canonical FigUI3 control.** Avoid custom alternatives unless required.
-3. **Compose row structure.** Use horizontal `fig-field`, then label + control.
-4. **Set defaults and attrs explicitly.** Include values/ranges/units so behavior is deterministic.
-5. **Verify panel consistency.** Check row spacing, width, and theme parity against existing PropKit sections.
-6. **Validate events and interactions.** Ensure controls emit usable `input`/`change` and behave well in keyboard workflows.
+1. Identify intent (boolean, discrete, continuous, color/fill, media, motion).
+2. Pick core vs lab wrapper.
+3. Compose the row; set defaults explicitly.
+4. Check `/propskit` or `/propskit/lab` for an existing example before inventing markup.
+5. Verify `input`/`change` and keyboard.
 
-## Delivery Checklist
-
-- Confirm prompts include all behavior-critical attrs (`value`, `min`, `max`, `step`, `units`, `type`, `variant` as needed).
-- Confirm control choice matches intent (continuous vs discrete vs boolean vs exact numeric entry).
-- Verify row density and panel width feel consistent with existing PropKit sections.
-- Verify keyboard navigation and label association for every field row.
-- Verify changes in `playground/src/data/sections.ts` still mirror recommended patterns in this skill.
-
-## Quick Reference
-
-```txt
-Common PropKit controls:
-- fig-image
-- fig-input-color
-- fig-input-fill
-- fig-slider
-- fig-switch
-- fig-dropdown
-- fig-segmented-control
-- fig-easing-curve
-- fig-input-angle
-```
-
-## Primary Files
-
-- `playground/src/data/sections.ts` - canonical PropKit examples and prompt-copy behavior
-- `fig.js` - control behavior and emitted events
-- `components.css` - visual treatment and layout constraints
-- `README.md` - component API details and usage
+Primary files: `playground/src/data/sections.ts`, `playground/src/data/labSections.ts`, `fig.js`, `fig-lab.js`.

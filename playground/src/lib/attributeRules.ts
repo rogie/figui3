@@ -91,6 +91,21 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     icon: { label: "Icon", type: "boolean", boolMode: "presence" },
   },
+  "fig-dropdown": {
+    value: { label: "Value", type: "string" },
+    type: {
+      label: "Type",
+      type: "enum",
+      options: ["select", "dropdown"],
+    },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["", "ghost"],
+    },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-avatar": {
     image: {
       label: "Image",
@@ -395,6 +410,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     value: { label: "Value", type: "string" },
     label: { label: "Label", type: "string" },
     options: { label: "Options", type: "string" },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["", "ghost"],
+    },
     full: { label: "Full", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     position: {

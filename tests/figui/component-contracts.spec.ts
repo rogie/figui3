@@ -4042,6 +4042,67 @@ test.describe("dropdown keyboard behavior", () => {
   });
 });
 
+test("fig-dropdown and fig-select ghost variant drop the border and use secondary hover fill", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await Promise.all([
+      customElements.whenDefined("fig-dropdown"),
+      customElements.whenDefined("fig-select"),
+    ]);
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-dropdown id="dropdown-default">
+        <option>One</option>
+      </fig-dropdown>
+      <fig-dropdown id="dropdown-ghost" variant="ghost">
+        <option>One</option>
+      </fig-dropdown>
+      <fig-select id="select-default" value="one" options="One,Two"></fig-select>
+      <fig-select id="select-ghost" variant="ghost" value="one" options="One,Two"></fig-select>
+    `;
+  });
+
+  const secondary = await page.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.style.backgroundColor = "var(--figma-color-bg-secondary)";
+    document.body.append(probe);
+    const color = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return color;
+  });
+
+  await expect(page.locator("#dropdown-default select")).not.toHaveCSS(
+    "box-shadow",
+    "none",
+  );
+  await expect(page.locator("#dropdown-ghost select")).toHaveCSS(
+    "box-shadow",
+    "none",
+  );
+  await page.locator("#dropdown-ghost").hover();
+  await expect(page.locator("#dropdown-ghost")).toHaveCSS(
+    "background-color",
+    secondary,
+  );
+
+  await expect(page.locator("#select-default")).not.toHaveCSS(
+    "box-shadow",
+    "none",
+  );
+  await expect(page.locator("#select-ghost")).toHaveCSS("box-shadow", "none");
+  await page.locator("#select-ghost").hover();
+  await expect(page.locator("#select-ghost")).toHaveCSS(
+    "background-color",
+    secondary,
+  );
+});
+
 test.describe("joystick axis labels", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
