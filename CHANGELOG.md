@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.8]
+
+### Added
+
+- Added a Popup playground example with a nested `fig-menu`.
+
+### Fixed
+
+- `fig-menu` now opens on the top layer via `popover`, so nested menus inside `fig-popup` stay anchored to their trigger instead of offsetting by the parent popup.
+
 ## [8.9.7]
 
 ### Added

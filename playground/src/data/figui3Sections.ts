@@ -1204,6 +1204,36 @@ export const figui3Sections: Section[] = [
   </dialog>
 </div>`,
       },
+      {
+        id: "with-menu",
+        name: "With menu",
+        markup: `<div class="prop-panel">
+  <fig-button id="popup-menu-anchor" data-playground-ignore-controls="true" onclick="const popup=this.nextElementSibling; popup.open = !popup.open;">Versions</fig-button>
+  <dialog is="fig-popup" open closedby="none" anchor="#popup-menu-anchor" position="bottom left" offset="8 8" viewport-margin="8" variant="popover">
+    <fig-content>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--spacer-4);">
+        <fig-select value="6" aria-label="Version">
+          <fig-select-options>
+            <fig-select-option value="6">Version 6</fig-select-option>
+            <fig-select-option value="5">Version 5</fig-select-option>
+            <fig-select-option value="4">Version 4</fig-select-option>
+            <fig-select-option value="3">Version 3</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+        <fig-menu position="bottom right">
+          <fig-button fig-menu-trigger variant="ghost" icon aria-label="Version actions">
+            <fig-icon name="more"></fig-icon>
+          </fig-button>
+          <fig-menu-item value="restore">Restore this version</fig-menu-item>
+          <fig-menu-item value="duplicate">Duplicate version</fig-menu-item>
+          <fig-separator></fig-separator>
+          <fig-menu-item value="delete">Delete version</fig-menu-item>
+        </fig-menu>
+      </div>
+    </fig-content>
+  </dialog>
+</div>`,
+      },
     ],
   },
   {

@@ -18917,6 +18917,11 @@ class FigMenu extends HTMLElement {
     this.#popup.setAttribute("theme", "menu");
     this.#popup.setAttribute("role", "menu");
     this.#popup.setAttribute("id", this.#popup.getAttribute("id") || figUniqueId());
+    // Top-layer via popover so the menu escapes ancestor filter/contain
+    // (nested fig-popup with variant="popover" creates a fixed containing block).
+    if ("popover" in HTMLElement.prototype) {
+      this.#popup.setAttribute("popover", "manual");
+    }
 
     const position = this.getAttribute("position") || "bottom left";
     this.#popup.setAttribute("position", position);
