@@ -5563,6 +5563,15 @@ fig-menu-item {
     }
   }
 
+  &[subtle]:not([subtle="false"]) {
+    &:hover,
+    &:focus-visible {
+      &::before {
+        background-color: var(--figma-color-bg-secondary);
+      }
+    }
+  }
+
   &[disabled]:not([disabled="false"]),
   &[aria-disabled="true"] {
     opacity: 0.4;

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.7]
+
+### Added
+
+- Added subtle menu items with a secondary hover/focus treatment and playground example.
+
 ## [8.9.6]
 
 ### Added

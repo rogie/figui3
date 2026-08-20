@@ -1354,6 +1354,20 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "subtle-items",
+        name: "Subtle items",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left">
+    <fig-button variant="secondary" fig-menu-trigger>Actions</fig-button>
+    <fig-menu-item value="cut" subtle>Cut</fig-menu-item>
+    <fig-menu-item value="copy" subtle>Copy</fig-menu-item>
+    <fig-menu-item value="paste" subtle>Paste</fig-menu-item>
+    <fig-separator></fig-separator>
+    <fig-menu-item value="delete" subtle>Delete</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
+      {
         id: "icon-button",
         name: "Icon button",
         markup: `<div class="prop-panel">
