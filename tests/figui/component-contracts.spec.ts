@@ -7780,7 +7780,7 @@ test.describe("remaining accessibility contracts", () => {
       `;
       const separator = root.querySelector("#separator");
       const alias = root.querySelector("#alias");
-      const menuAlias = document.querySelector("#menu-alias");
+      const menuAlias = root.querySelector("#menu-alias");
       const Separator = customElements.get("fig-separator");
       if (!separator || !alias || !menuAlias || !Separator) {
         throw new Error("Missing separator aliases");
@@ -7808,155 +7808,6 @@ test.describe("remaining accessibility contracts", () => {
     expect(state.registered).toBe(true);
     expect(state.inPopup).toBe(true);
     expect(state.alias).toEqual(state.separator);
-  });
-
-  test("menu popup portals and tracks a trigger inside an open popup", async ({
-    page,
-  }) => {
-    await page.evaluate(() => {
-      const root = document.querySelector("#fixture-root");
-      if (!root) throw new Error("Missing #fixture-root");
-      root.innerHTML = `
-        <button id="parent-anchor" style="position:fixed;left:320px;top:120px">
-          Versions
-        </button>
-        <dialog
-          is="fig-popup"
-          id="parent-popup"
-          open
-          anchor="#parent-anchor"
-          position="bottom left"
-        >
-          <div id="parent-scroll" style="width:240px;height:120px;overflow:auto">
-            <div style="height:32px"></div>
-            <fig-menu id="nested-menu" position="bottom right">
-              <fig-button id="nested-menu-trigger" fig-menu-trigger>
-                Actions
-              </fig-button>
-              <fig-menu-item value="restore">Restore this version</fig-menu-item>
-            </fig-menu>
-            <div style="height:160px"></div>
-          </div>
-        </dialog>
-      `;
-    });
-    await page.waitForTimeout(50);
-
-    const trigger = page.locator("#nested-menu-trigger");
-    await trigger.click();
-    const popup = page.locator(
-      "[data-figui-overlay-root] > dialog.fig-menu-popup",
-    );
-    await expect(popup).toHaveCount(1);
-    await expect(popup).toHaveAttribute("popover", "manual");
-    await expect(trigger).toHaveAttribute("aria-expanded", "true");
-    expect(
-      await popup.evaluate((element) => Number(getComputedStyle(element).zIndex)),
-    ).toBeGreaterThan(
-      await page
-        .locator("#parent-popup")
-        .evaluate((element) => Number(getComputedStyle(element).zIndex)),
-    );
-
-    const alignment = () =>
-      page.evaluate(() => {
-        const triggerRect = document
-          .querySelector("#nested-menu-trigger")
-          ?.getBoundingClientRect();
-        const popupRect = document
-          .querySelector(
-            "[data-figui-overlay-root] > dialog.fig-menu-popup",
-          )
-          ?.getBoundingClientRect();
-        if (!triggerRect || !popupRect) throw new Error("Missing menu geometry");
-        return {
-          right: Math.abs(popupRect.right - triggerRect.right),
-          top: Math.abs(popupRect.top - triggerRect.bottom),
-        };
-      });
-
-    await expect.poll(alignment).toMatchObject({ right: 0, top: 0 });
-
-    const beforeScrollTop = await trigger.evaluate(
-      (element) => element.getBoundingClientRect().top,
-    );
-    await page.locator("#parent-scroll").evaluate((element) => {
-      element.scrollTop = 20;
-    });
-    await expect
-      .poll(() =>
-        trigger.evaluate((element) => element.getBoundingClientRect().top),
-      )
-      .toBeLessThan(beforeScrollTop);
-    await expect.poll(alignment).toMatchObject({ right: 0, top: 0 });
-
-    await popup.locator('fig-menu-item[value="restore"]').click();
-    await expect(page.locator("#parent-popup")).toHaveAttribute("open");
-    await expect(trigger).toHaveAttribute("aria-expanded", "false");
-    await expect(trigger).toBeFocused();
-
-    await trigger.focus();
-    await page.keyboard.press("ArrowDown");
-    await expect(popup.locator('fig-menu-item[value="restore"]')).toBeFocused();
-    await page.keyboard.press("Escape");
-    await expect(trigger).toHaveAttribute("aria-expanded", "false");
-    await expect(trigger).toBeFocused();
-
-    await page.locator("#nested-menu").evaluate((menu) => {
-      const parent = menu.parentElement;
-      menu.remove();
-      parent?.append(menu);
-    });
-    await expect(
-      page.locator("[data-figui-overlay-root] > dialog.fig-menu-popup"),
-    ).toHaveCount(1);
-    await expect(
-      page.locator("#nested-menu fig-menu-item[value='restore']"),
-    ).toHaveCount(0);
-    await expect(
-      page.locator(
-        "[data-figui-overlay-root] > dialog.fig-menu-popup fig-menu-item[value='restore']",
-      ),
-    ).toHaveCount(1);
-  });
-
-  test("menu popup portals out of a native open dialog", async ({ page }) => {
-    await page.evaluate(() => {
-      const root = document.querySelector("#fixture-root");
-      if (!root) throw new Error("Missing #fixture-root");
-      root.innerHTML = `
-        <dialog open style="position:fixed;left:360px;top:180px;margin:0">
-          <fig-menu position="bottom right">
-            <fig-button id="native-dialog-menu-trigger" fig-menu-trigger>
-              Actions
-            </fig-button>
-            <fig-menu-item value="restore">Restore</fig-menu-item>
-          </fig-menu>
-        </dialog>
-      `;
-    });
-
-    const trigger = page.locator("#native-dialog-menu-trigger");
-    await trigger.click();
-    const result = await page.evaluate(() => {
-      const triggerRect = document
-        .querySelector("#native-dialog-menu-trigger")
-        ?.getBoundingClientRect();
-      const popup = document.querySelector(
-        "[data-figui-overlay-root] > dialog.fig-menu-popup",
-      );
-      const popupRect = popup?.getBoundingClientRect();
-      if (!triggerRect || !popupRect) throw new Error("Missing menu geometry");
-      return {
-        portaled: Boolean(popup),
-        right: Math.abs(popupRect.right - triggerRect.right),
-        top: Math.abs(popupRect.top - triggerRect.bottom),
-      };
-    });
-
-    expect(result.portaled).toBe(true);
-    expect(result.right).toBeLessThanOrEqual(1);
-    expect(result.top).toBeLessThanOrEqual(1);
   });
 
   test("menu trigger and items support keyboard menu semantics", async ({ page }) => {
@@ -7989,7 +7840,6 @@ test.describe("remaining accessibility contracts", () => {
     page,
   }) => {
     await page.setViewportSize({ width: 320, height: 240 });
-    await page.addStyleTag({ url: "/fig-editor.css" });
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -8009,10 +7859,8 @@ test.describe("remaining accessibility contracts", () => {
 
     const menu = page.locator("#long-menu");
     const trigger = menu.locator("[fig-menu-trigger]");
-    const popupId = await trigger.getAttribute("aria-controls");
-    if (!popupId) throw new Error("Missing menu popup id");
-    const popup = page.locator(`#${popupId}`);
-    const panel = popup.locator(".fig-menu-options");
+    const popup = menu.locator('dialog[is="fig-popup"]');
+    const panel = menu.locator(".fig-menu-options");
     const up = panel.locator('[data-fig-menu-nav="start"]');
     const down = panel.locator('[data-fig-menu-nav="end"]');
 
@@ -8021,7 +7869,7 @@ test.describe("remaining accessibility contracts", () => {
     await page.waitForTimeout(50);
     await expect(up).toHaveCSS("opacity", "0");
     await expect(down).toHaveCSS("opacity", "1");
-    const leftPadding = await panel.evaluate((element) => {
+    const leftPadding = await menu.evaluate((element) => {
       const item = element.querySelector("fig-menu-item");
       const separator = element.querySelector("fig-separator");
       return {
@@ -8054,7 +7902,7 @@ test.describe("remaining accessibility contracts", () => {
 
     await trigger.focus();
     await page.keyboard.press("End");
-    await expect(popup.locator('fig-menu-item[value="24"]')).toBeFocused();
+    await expect(menu.locator('fig-menu-item[value="24"]')).toBeFocused();
     await expect
       .poll(() => panel.evaluate((element) => element.scrollTop))
       .toBeGreaterThan(0);
@@ -8064,14 +7912,8 @@ test.describe("remaining accessibility contracts", () => {
       element.remove();
       parent?.appendChild(element);
     });
-    const reconnectedPopupId = await trigger.getAttribute("aria-controls");
-    if (!reconnectedPopupId) throw new Error("Missing reconnected menu popup id");
-    const reconnectedPopup = page.locator(`#${reconnectedPopupId}`);
-    await expect(reconnectedPopup.locator("[data-fig-menu-nav]")).toHaveCount(2);
-    await expect(reconnectedPopup.locator(".fig-menu-options")).toHaveCount(1);
-    await expect(
-      page.locator("[data-figui-overlay-root] > dialog.fig-menu-popup"),
-    ).toHaveCount(1);
+    await expect(menu.locator('[data-fig-menu-nav]')).toHaveCount(2);
+    await expect(menu.locator(".fig-menu-options")).toHaveCount(1);
   });
 
   test("fill, loading, handle, color-tip, and toast expose accessible state", async ({ page }) => {

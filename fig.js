@@ -18796,7 +18796,6 @@ class FigMenu extends HTMLElement {
   #boundPopupClick;
   #boundMenuKeydown;
   #boundPopupClose;
-  #boundPopupToggle;
   #boundSyncOverflow = this.#syncOverflow.bind(this);
   #focusedIndex = -1;
 
@@ -18811,7 +18810,6 @@ class FigMenu extends HTMLElement {
     this.#boundPopupClick = this.#handlePopupClick.bind(this);
     this.#boundMenuKeydown = this.#handleMenuKeydown.bind(this);
     this.#boundPopupClose = this.#handlePopupClose.bind(this);
-    this.#boundPopupToggle = this.#handlePopupToggle.bind(this);
   }
 
   get value() {
@@ -18859,12 +18857,10 @@ class FigMenu extends HTMLElement {
     }
     if (this.#popup) {
       this.#popup.removeEventListener("close", this.#boundPopupClose);
-      this.#popup.removeEventListener("toggle", this.#boundPopupToggle);
-      this.#popup.open = false;
       const items = Array.from(
         this.#panel?.querySelectorAll(FIG_MENU_CHILD_SELECTOR) ?? [],
       );
-      for (const item of items) this.append(item);
+      for (const item of items) this.insertBefore(item, this.#popup);
       this.#popup.remove();
       this.#popup = null;
       this.#panel = null;
@@ -18915,16 +18911,12 @@ class FigMenu extends HTMLElement {
   }
 
   #createPopup() {
-    const supportsPopover =
-      typeof HTMLElement !== "undefined" &&
-      "popover" in HTMLElement.prototype;
     this.#popup = document.createElement("dialog", { is: "fig-popup" });
     this.#popup.setAttribute("is", "fig-popup");
     this.#popup.classList.add("fig-menu-popup");
     this.#popup.setAttribute("theme", "menu");
     this.#popup.setAttribute("role", "menu");
     this.#popup.setAttribute("id", this.#popup.getAttribute("id") || figUniqueId());
-    if (supportsPopover) this.#popup.setAttribute("popover", "manual");
 
     const position = this.getAttribute("position") || "bottom left";
     this.#popup.setAttribute("position", position);
@@ -18944,26 +18936,7 @@ class FigMenu extends HTMLElement {
     this.#panel.setAttribute("role", "presentation");
     this.#popup.appendChild(this.#panel);
     this.#popup.addEventListener("close", this.#boundPopupClose);
-    this.#popup.addEventListener("toggle", this.#boundPopupToggle);
-
-    if (supportsPopover) {
-      (figGetOverlayRoot() ?? document.body).append(this.#popup);
-      return;
-    }
-
-    const openDialogs = [];
-    let ancestor = this.parentElement;
-    while (ancestor) {
-      if (ancestor instanceof HTMLDialogElement && ancestor.open) {
-        openDialogs.push(ancestor);
-      }
-      ancestor = ancestor.parentElement;
-    }
-    if (openDialogs.length === 1) {
-      openDialogs[0].append(this.#popup);
-    } else {
-      (figGetOverlayRoot() ?? document.body).append(this.#popup);
-    }
+    this.appendChild(this.#popup);
   }
 
   #moveItemsToPopup() {
@@ -19142,7 +19115,7 @@ class FigMenu extends HTMLElement {
     if (this.#usesContextMenuTrigger()) return;
     if (this.#isDisabled()) return;
     e.stopPropagation();
-    const popupShowing = this.#isPopupShowing();
+    const popupShowing = this.#popup?.matches?.(":open") ?? false;
     if (this.open && !popupShowing) {
       this.removeAttribute("open");
     }
@@ -19205,7 +19178,7 @@ class FigMenu extends HTMLElement {
     if (this.#isDisabled()) return;
     if (e.currentTarget === document && e.key !== "Escape") return;
     if (e.currentTarget === this && this.#popup?.contains(e.target)) return;
-    if (!this.open || !this.#isPopupShowing()) {
+    if (!this.open || !this.#popup?.matches?.(":open")) {
       if (
         this.#trigger?.contains(e.target) &&
         (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
@@ -19273,17 +19246,6 @@ class FigMenu extends HTMLElement {
       this.#trigger.focus();
     }
     this.#focusedIndex = -1;
-  }
-
-  #handlePopupToggle(event) {
-    if (event.newState === "closed") this.#handlePopupClose();
-  }
-
-  #isPopupShowing() {
-    return Boolean(
-      this.#popup?.matches?.(":open") ||
-        this.#popup?.matches?.(":popover-open"),
-    );
   }
 
   #selectItem(item) {
