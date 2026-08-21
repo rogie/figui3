@@ -5731,7 +5731,7 @@ fig-menu-item {
     &[sticky]:not([sticky="false"]) {
       position: sticky;
       top: 0;
-      z-index: 1;
+      z-index: 9999;
       background: var(--fig-popup-bg-color, var(--figma-color-bg));
 
       &[stuck] {

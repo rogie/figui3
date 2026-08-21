@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.13]
+
+### Fixed
+
+- Sticky labeled `fig-separator`s stack above scrolling list items.
+
 ## [8.9.12]
 
 ### Added
