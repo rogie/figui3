@@ -7871,6 +7871,32 @@ test.describe("remaining accessibility contracts", () => {
     });
     await expect(separator).not.toHaveAttribute("label");
     await expect(separator).not.toHaveAttribute("aria-label");
+
+    const vertical = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="display:flex;flex-direction:row;align-items:stretch;height:40px;width:240px">
+          <span>Left</span>
+          <fig-separator id="vertical" direction="vertical"></fig-separator>
+          <span>Right</span>
+        </div>
+      `;
+      const el = root.querySelector("#vertical") as HTMLElement | null;
+      if (!el) throw new Error("Missing vertical separator");
+      const box = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      return {
+        width: Math.round(box.width),
+        paddingLeft: style.paddingLeft,
+        paddingRight: style.paddingRight,
+      };
+    });
+    expect(vertical).toEqual({
+      width: 1,
+      paddingLeft: "0px",
+      paddingRight: "0px",
+    });
   });
 
   test("fig-menu-separator remains a backwards-compatible fig-separator alias", async ({
@@ -8455,13 +8481,14 @@ test.describe("remaining accessibility contracts", () => {
       );
       const separator = toast?.querySelector(
         ":scope > fig-separator[data-fig-toast-dismiss-separator]",
-      );
+      ) as HTMLElement | null;
       const icon = button?.querySelector("fig-icon");
       toast?.showToast?.();
       return {
         lastChild: toast?.lastElementChild?.tagName.toLowerCase(),
         beforeButton: button?.previousElementSibling?.tagName.toLowerCase(),
         separatorDirection: separator?.getAttribute("direction"),
+        separatorWidth: separator ? Math.round(separator.getBoundingClientRect().width) : 0,
         variant: button?.getAttribute("variant"),
         iconOnly: button?.hasAttribute("icon"),
         closeToast: button?.hasAttribute("close-toast"),
@@ -8474,6 +8501,7 @@ test.describe("remaining accessibility contracts", () => {
       lastChild: "fig-button",
       beforeButton: "fig-separator",
       separatorDirection: "vertical",
+      separatorWidth: 1,
       variant: "ghost",
       iconOnly: true,
       closeToast: true,

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.14]
+
+### Fixed
+
+- Vertical `fig-separator`s stay 1px wide instead of picking up labeled-row padding.
+
 ## [8.9.13]
 
 ### Fixed

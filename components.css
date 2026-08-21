@@ -5683,9 +5683,11 @@ fig-menu-item {
   &[direction="vertical"] {
     align-self: stretch;
     width: 1px;
+    max-width: 1px;
     height: auto;
     min-height: var(--spacer-3);
     margin: 0;
+    padding: 0;
   }
 
   &[borderless]:not([borderless="false"]) {
