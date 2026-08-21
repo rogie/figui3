@@ -49,11 +49,12 @@ Toast: `theme`, `duration`, `offset`, `dismiss`, `live="polite|assertive"`, `ico
 
 ## `fig-menu`
 
-- Trigger: child with `fig-menu-trigger`, or `trigger="contextmenu"`
+- Trigger: child with `fig-menu-trigger` (auto `slot="trigger"`), or `trigger="contextmenu"`
 - `position`, `offset`, `closedby="auto|any|none"`, `open`
-- Items: `fig-menu-item` (`value`, `disabled`, `subtle`)
+- Items stay in light DOM and slot into the popup (do not relocate)
+- Items: `fig-menu-item` (`value`, `disabled`, `subtle`). Also a list row outside `fig-menu` (popup, sticky separators, nested row `fig-menu`).
 - Dividers: `fig-separator` / `fig-menu-separator` (`label`, `sticky`, `borderless`)
-- Popup uses `popover="manual"` (top layer)
+- Popup uses `popover="manual"` (top layer) and stays in the menu shadow so slots keep working
 
 ## Color / fill values
 

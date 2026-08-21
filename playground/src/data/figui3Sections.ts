@@ -9,6 +9,29 @@ function avatarServiceUrl(size: number): string {
   return `https://i.pravatar.cc/${size}?img=${randomAvatarId}`;
 }
 
+function versionHistoryRow(value: string, title: string, label: string): string {
+  return `    <fig-menu-item value="${value}" size="large" subtle>
+      <div>
+        <h3>${title}</h3>
+        <label>${label}</label>
+      </div>
+      <fig-menu position="bottom right">
+        <fig-button fig-menu-trigger variant="ghost" icon aria-label="More" data-playground-ignore-controls="true">
+          <fig-icon name="more"></fig-icon>
+        </fig-button>
+        <fig-menu-item value="restore">Restore this version</fig-menu-item>
+      </fig-menu>
+    </fig-menu-item>`;
+}
+
+function versionHistoryGroup(
+  heading: string,
+  rows: Array<[value: string, title: string, label: string]>,
+): string {
+  return `    <fig-separator sticky label="${heading}"></fig-separator>
+${rows.map(([value, title, label]) => versionHistoryRow(value, title, label)).join("\n")}`;
+}
+
 function unwrapChooserField(markup: string): string {
   return markup
     .replace(
@@ -1450,7 +1473,7 @@ export const figui3Sections: Section[] = [
     name: "Menu",
     group: "Core components",
     description:
-      "Context menu triggered by a button with ARIA trigger state, roving item focus, Escape close, and disabled item handling.",
+      "Context menu triggered by a button with ARIA trigger state, roving item focus, Escape close, and disabled item handling. fig-menu-item also works as a list row in fig-popup.",
     examples: [
       {
         id: "default",
@@ -1546,6 +1569,37 @@ export const figui3Sections: Section[] = [
     <fig-menu-item value="send-backward">Send backward</fig-menu-item>
     <fig-menu-item value="send-to-back">Send to back</fig-menu-item>
   </fig-menu>
+</div>`,
+      },
+      {
+        id: "popup-list",
+        name: "Popup list",
+        markup: `<div class="prop-panel">
+  <fig-button id="version-history-anchor" data-playground-ignore-controls="true" onclick="const p=this.nextElementSibling; p && (p.open = !p.open);">Version history</fig-button>
+  <dialog is="fig-popup" title="Version history" drag handle="fig-header" closedby="any" anchor="#version-history-anchor" position="bottom left" offset="0 8" style="width: 18rem; max-height: 400px;">
+    <fig-content padding="none">
+${versionHistoryGroup("Today", [
+  ["v12", "Tweaked interpolation", "Version 12"],
+  ["v11", "Changed properties", "Version 11"],
+  ["v10", "Updated shader source", "Version 10"],
+  ["v9", "Restored Version 3", "Version 9 · Restored"],
+])}
+${versionHistoryGroup("Yesterday", [
+  ["v8", "Renamed layers", "Version 8"],
+  ["v7", "Adjusted fill opacity", "Version 7"],
+  ["v6", "Added noise texture", "Version 6"],
+])}
+${versionHistoryGroup("August 16", [
+  ["v5", "Cropped bitmap", "Version 5"],
+  ["v4", "Tightened padding", "Version 4"],
+  ["v3", "Initial saved version", "Version 3"],
+])}
+${versionHistoryGroup("August 11", [
+  ["v2", "Duplicated frame", "Version 2"],
+  ["v1", "Created file", "Version 1"],
+])}
+    </fig-content>
+  </dialog>
 </div>`,
       },
       {

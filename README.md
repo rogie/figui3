@@ -1369,6 +1369,7 @@ An anchored floating surface built on `<dialog>` with collision-aware positionin
 | `drag` | boolean | `false` | Draggable |
 | `handle` | string | — | CSS selector for drag handle |
 | `autoresize` | boolean | `false` | Auto-resize to content |
+| `title` | string | — | Auto-generated header (same as `fig-dialog`) |
 
 ```html
 <dialog is="fig-popup" anchor="#my-button" position="center right" variant="popover">
@@ -1451,6 +1452,10 @@ A visual divider between content groups. The optional `label` attribute adds a g
 
 Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="menu"`, `aria-expanded`, and `aria-controls`; menu items use `role="menuitem"` and disabled items are skipped by keyboard navigation.
 
+Items stay in the menu's light DOM and project into the popup through slots (same pattern as `fig-select` / `fig-select-options`). The trigger is assigned `slot="trigger"` automatically; items use the default slot. React can add or remove `fig-menu-item` children without `removeChild` errors.
+
+`fig-menu-item` also works as a list row outside `fig-menu` — typically in `<dialog is="fig-popup">` with `<fig-content padding="none">`, sticky `<fig-separator>`s, and a nested `<fig-menu>` for row actions. Item color inherits from the parent surface.
+
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `open` | boolean | `false` | Open state |
@@ -1474,6 +1479,25 @@ Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="m
   <fig-separator label="More"></fig-separator>
   <fig-menu-item value="settings">Settings</fig-menu-item>
 </fig-menu>
+```
+
+Popup list (no wrapping `fig-menu`):
+
+```html
+<dialog is="fig-popup" title="Version history" anchor="#versions" position="bottom left">
+  <fig-content padding="none">
+    <fig-separator sticky label="Today"></fig-separator>
+    <fig-menu-item value="v9" subtle>
+      Version 9
+      <fig-menu position="bottom right">
+        <fig-button fig-menu-trigger variant="ghost" icon aria-label="More">
+          <fig-icon name="more"></fig-icon>
+        </fig-button>
+        <fig-menu-item value="restore">Restore this version</fig-menu-item>
+      </fig-menu>
+    </fig-menu-item>
+  </fig-content>
+</dialog>
 ```
 
 `fig-separator` and `fig-menu-separator` accept optional `label` — renders the rule, then secondary group text underneath.

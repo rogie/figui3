@@ -204,6 +204,195 @@ function createFigOverflowButtons({
   };
 }
 
+/* Shared by light-DOM fig-select-options and shadow fig-menu .fig-menu-options.
+   Adopted on document and on fig-menu's shadow so hover/icon/overflow stay one source. */
+const FIG_VERTICAL_OVERFLOW_CSS = `
+fig-select-options,
+.fig-menu-options {
+  --fig-vertical-overflow-size: var(--spacer-4);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: calc(100vh - 1rem);
+  padding: 0;
+  overflow: hidden auto;
+  scrollbar-width: none;
+}
+fig-select-options::-webkit-scrollbar,
+.fig-menu-options::-webkit-scrollbar {
+  display: none;
+}
+fig-select-options > :not(.fig-overflow),
+.fig-menu-options > :not(.fig-overflow) {
+  flex-shrink: 0;
+}
+fig-select-options > :nth-child(1 of :not(.fig-overflow)),
+.fig-menu-options > :nth-child(1 of :not(.fig-overflow)) {
+  margin-top: var(--spacer-2);
+}
+fig-select-options > :not(.fig-overflow):last-child,
+.fig-menu-options > :not(.fig-overflow):last-child,
+fig-select-options > :not(.fig-overflow):has(+ .fig-overflow-end),
+.fig-menu-options > :not(.fig-overflow):has(+ .fig-overflow-end) {
+  margin-bottom: var(--spacer-2);
+}
+fig-select-options > .fig-overflow,
+.fig-menu-options > .fig-overflow {
+  all: unset;
+  box-sizing: border-box;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  flex: 0 0 var(--fig-vertical-overflow-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--fig-vertical-overflow-size);
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  color: var(--figma-color-text-menu);
+  background: var(--figma-color-bg-menu) !important;
+}
+fig-select-options > .fig-overflow::before,
+.fig-menu-options > .fig-overflow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 0;
+  background: var(--figma-color-bg-menu) !important;
+}
+fig-select-options > .fig-overflow:hover,
+.fig-menu-options > .fig-overflow:hover {
+  color: var(--figma-color-text-menu);
+}
+fig-select-options > .fig-overflow:hover::before,
+.fig-menu-options > .fig-overflow:hover::before {
+  background: light-dark(
+    rgba(0, 0, 0, 0.06),
+    rgba(255, 255, 255, 0.08)
+  ) !important;
+}
+fig-select-options > .fig-overflow .fig-overflow-chevron,
+.fig-menu-options > .fig-overflow .fig-overflow-chevron {
+  position: relative;
+}
+fig-select-options > .fig-overflow:active .fig-overflow-chevron,
+.fig-menu-options > .fig-overflow:active .fig-overflow-chevron {
+  transform: translateY(1px);
+}
+fig-select-options.overflow-start > .fig-overflow-start,
+.fig-menu-options.overflow-start > .fig-overflow-start,
+fig-select-options.overflow-end > .fig-overflow-end,
+.fig-menu-options.overflow-end > .fig-overflow-end {
+  opacity: 1;
+  pointer-events: auto;
+}
+fig-select-options > .fig-overflow-start,
+.fig-menu-options > .fig-overflow-start {
+  order: -1;
+  top: 0;
+  margin-block-end: calc(-1 * var(--fig-vertical-overflow-size));
+}
+fig-select-options > .fig-overflow-start::before,
+.fig-menu-options > .fig-overflow-start::before {
+  border-radius: var(--radius-large) var(--radius-large) 0 0;
+}
+fig-select-options > .fig-overflow-start .fig-overflow-chevron,
+.fig-menu-options > .fig-overflow-start .fig-overflow-chevron {
+  rotate: 180deg;
+}
+fig-select-options > .fig-overflow-end,
+.fig-menu-options > .fig-overflow-end {
+  order: 1;
+  bottom: 0;
+  margin-block-start: calc(-1 * var(--fig-vertical-overflow-size));
+}
+fig-select-options > .fig-overflow-end::before,
+.fig-menu-options > .fig-overflow-end::before {
+  border-radius: 0 0 var(--radius-large) var(--radius-large);
+}
+`;
+
+const FIG_SHADOW_ICON_CSS = `
+fig-icon {
+  contain: strict;
+  --size: var(--spacer-4);
+  display: inline-flex;
+  width: var(--size);
+  height: var(--size);
+  flex-shrink: 0;
+  background: currentColor;
+  mask-image: var(--icon);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: var(--icon);
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+fig-icon[size="small"] {
+  --size: var(--spacer-3);
+}
+`;
+
+const figVerticalOverflowSheet =
+  typeof CSSStyleSheet === "function" &&
+  typeof CSSStyleSheet.prototype.replaceSync === "function"
+    ? new CSSStyleSheet()
+    : null;
+figVerticalOverflowSheet?.replaceSync(FIG_VERTICAL_OVERFLOW_CSS);
+
+const figShadowIconSheet =
+  typeof CSSStyleSheet === "function" &&
+  typeof CSSStyleSheet.prototype.replaceSync === "function"
+    ? new CSSStyleSheet()
+    : null;
+figShadowIconSheet?.replaceSync(FIG_SHADOW_ICON_CSS);
+
+function figAdoptConstructedSheet(root, sheet, cssText, marker) {
+  if (!root || !cssText) return;
+  if (sheet && "adoptedStyleSheets" in root) {
+    if ([...root.adoptedStyleSheets].includes(sheet)) return;
+    root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+    return;
+  }
+  const host = root === document ? document.documentElement : root;
+  if (host.querySelector?.(`style[data-fig-${marker}]`)) return;
+  const style = document.createElement("style");
+  style.setAttribute(`data-fig-${marker}`, "");
+  style.textContent = cssText;
+  host.prepend(style);
+}
+
+function figAdoptVerticalOverflowStyles(root, options = {}) {
+  figAdoptConstructedSheet(
+    root,
+    figVerticalOverflowSheet,
+    FIG_VERTICAL_OVERFLOW_CSS,
+    "vertical-overflow",
+  );
+  if (options.icons) {
+    figAdoptConstructedSheet(
+      root,
+      figShadowIconSheet,
+      FIG_SHADOW_ICON_CSS,
+      "shadow-icon",
+    );
+  }
+}
+
+if (typeof document !== "undefined") {
+  figAdoptVerticalOverflowStyles(document);
+}
+
 function figSyncOverflowState(host, scrollEl, axis = "x", threshold = 2) {
   if (!host || !scrollEl) return false;
   const isHorizontal = axis === "x";
@@ -1664,6 +1853,27 @@ class FigTruncate extends HTMLElement {
 }
 figDefineElement("fig-truncate", FigTruncate);
 
+function figEnsureAutoDialogHeader(host) {
+  if (host.querySelector("fig-header[dialog-header]")) return;
+  const header = document.createElement("fig-header");
+  header.setAttribute("dialog-header", "");
+  header.setAttribute("data-auto", "");
+  const h3 = document.createElement("h3");
+  h3.textContent = host.getAttribute("title") || "Dialog";
+  const tooltip = document.createElement("fig-tooltip");
+  tooltip.setAttribute("text", "Close");
+  const btn = document.createElement("fig-button");
+  btn.setAttribute("variant", "ghost");
+  btn.setAttribute("icon", "");
+  btn.setAttribute("aria-label", "Close dialog");
+  btn.setAttribute("close-dialog", "");
+  btn.appendChild(createFigIcon("close"));
+  tooltip.appendChild(btn);
+  header.appendChild(h3);
+  header.appendChild(tooltip);
+  host.prepend(header);
+}
+
 /* Dialog */
 /**
  * A custom dialog element for modal and non-modal dialogs.
@@ -1973,24 +2183,7 @@ class FigDialog extends HTMLDialogElement {
   }
 
   _ensureHeader() {
-    if (this.querySelector("fig-header[dialog-header]")) return;
-    const header = document.createElement("fig-header");
-    header.setAttribute("dialog-header", "");
-    header.setAttribute("data-auto", "");
-    const h3 = document.createElement("h3");
-    h3.textContent = this.getAttribute("title") || "Dialog";
-    const tooltip = document.createElement("fig-tooltip");
-    tooltip.setAttribute("text", "Close");
-    const btn = document.createElement("fig-button");
-    btn.setAttribute("variant", "ghost");
-    btn.setAttribute("icon", "");
-    btn.setAttribute("aria-label", "Close dialog");
-    btn.setAttribute("close-dialog", "");
-    btn.appendChild(createFigIcon("close"));
-    tooltip.appendChild(btn);
-    header.appendChild(h3);
-    header.appendChild(tooltip);
-    this.prepend(header);
+    figEnsureAutoDialogHeader(this);
   }
 
   _addCloseListeners() {
@@ -2588,6 +2781,7 @@ figDefineCustomizedBuiltIn("fig-toast", FigToast, { extends: "dialog" });
  * @attr {string} offset - Horizontal and vertical offset as "x y" (default: "0 0").
  * @attr {string} variant - Visual variant. Use variant="popover" to show an anchor beak.
  * @attr {string} theme - Visual theme: "light", "dark", or "menu".
+ * @attr {string} title - Title text for the auto-generated header (same as fig-dialog).
  * @attr {boolean|string} open - Open when present and not "false".
  */
 class FigPopup extends HTMLDialogElement {
@@ -2635,6 +2829,9 @@ class FigPopup extends HTMLDialogElement {
     this._boundPointerUp = this.handlePointerUp.bind(this);
     this._boundDocumentKeydown = this.handleDocumentKeydown.bind(this);
     this._boundNativeClose = this.handleNativeClose.bind(this);
+    this._boundAutoClose = () => {
+      this.open = false;
+    };
   }
 
   ensureInitialized() {
@@ -2694,6 +2891,11 @@ class FigPopup extends HTMLDialogElement {
     if (typeof this._boundNativeClose !== "function") {
       this._boundNativeClose = this.handleNativeClose.bind(this);
     }
+    if (typeof this._boundAutoClose !== "function") {
+      this._boundAutoClose = () => {
+        this.open = false;
+      };
+    }
   }
 
   static get observedAttributes() {
@@ -2708,6 +2910,7 @@ class FigPopup extends HTMLDialogElement {
       "handle",
       "autoresize",
       "viewport-margin",
+      "title",
     ];
   }
 
@@ -2778,6 +2981,8 @@ class FigPopup extends HTMLDialogElement {
     this.drag =
       this.hasAttribute("drag") && this.getAttribute("drag") !== "false";
 
+    this._ensureHeader();
+
     this.removeEventListener("close", this._boundNativeClose);
     this.addEventListener("close", this._boundNativeClose);
 
@@ -2833,6 +3038,13 @@ class FigPopup extends HTMLDialogElement {
       } else {
         this.removeDragListeners();
       }
+      return;
+    }
+
+    if (name === "title") {
+      this._ensureHeader();
+      const autoHeader = this.querySelector("fig-header[data-auto] h3");
+      if (autoHeader) autoHeader.textContent = newValue || "Dialog";
       return;
     }
 
@@ -3108,6 +3320,20 @@ class FigPopup extends HTMLDialogElement {
       this._anchorTrackRAF = null;
     }
     this._lastAnchorRect = null;
+  }
+
+  _ensureHeader() {
+    if (
+      !this.hasAttribute("title") ||
+      this.getAttribute("variant") === "tooltip"
+    ) {
+      return;
+    }
+    figEnsureAutoDialogHeader(this);
+    this.querySelectorAll("fig-button[close-dialog]").forEach((button) => {
+      button.removeEventListener("click", this._boundAutoClose);
+      button.addEventListener("click", this._boundAutoClose);
+    });
   }
 
   handleOutsidePointerDown(event) {
@@ -18729,10 +18955,15 @@ figDefineElement("fig-menu-item", FigMenuItem);
  * @attr {string} label - Optional group label shown in secondary text under the line.
  * @attr {string} direction - Orientation: "vertical" for a tall rule; default is horizontal.
  * @attr {boolean} borderless - Hides the separator line when present or "true".
+ * @attr {boolean} sticky - Stick to the top of the nearest scrollport while scrolling.
  */
 class FigSeparator extends HTMLElement {
+  #scrollRoot = null;
+  #resizeObserver = null;
+  #boundSyncStuck = this.#syncStuck.bind(this);
+
   static get observedAttributes() {
-    return ["label", "direction"];
+    return ["label", "direction", "sticky"];
   }
 
   get label() {
@@ -18746,11 +18977,17 @@ class FigSeparator extends HTMLElement {
 
   connectedCallback() {
     this.#sync();
+    this.#bindStuck();
+  }
+
+  disconnectedCallback() {
+    this.#unbindStuck();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     this.#sync();
+    if (name === "sticky") this.#bindStuck();
   }
 
   #sync() {
@@ -18767,36 +19004,106 @@ class FigSeparator extends HTMLElement {
     if (label) this.setAttribute("aria-label", label);
     else this.removeAttribute("aria-label");
   }
+
+  #isSticky() {
+    return this.hasAttribute("sticky") && this.getAttribute("sticky") !== "false";
+  }
+
+  #bindStuck() {
+    this.#unbindStuck();
+    if (!this.isConnected || !this.#isSticky()) {
+      this.removeAttribute("stuck");
+      return;
+    }
+    const root = figNearestScrollRoot(this);
+    this.#scrollRoot = root;
+    root?.addEventListener("scroll", this.#boundSyncStuck, { passive: true });
+    this.#resizeObserver = new ResizeObserver(this.#boundSyncStuck);
+    this.#resizeObserver.observe(this);
+    if (root instanceof Element) this.#resizeObserver.observe(root);
+    requestAnimationFrame(this.#boundSyncStuck);
+  }
+
+  #unbindStuck() {
+    this.#scrollRoot?.removeEventListener?.("scroll", this.#boundSyncStuck);
+    this.#scrollRoot = null;
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+  }
+
+  #syncStuck() {
+    if (!this.#isSticky() || !this.#scrollRoot) {
+      this.removeAttribute("stuck");
+      return;
+    }
+    const stickyTop = parseFloat(getComputedStyle(this).top) || 0;
+    const root = this.#scrollRoot;
+    const rootRect =
+      root === document.scrollingElement || root === document.documentElement
+        ? { top: 0 }
+        : root.getBoundingClientRect();
+    const paddingTop =
+      root instanceof Element ? parseFloat(getComputedStyle(root).paddingTop) || 0 : 0;
+    const line = rootRect.top + paddingTop + stickyTop;
+    this.toggleAttribute("stuck", this.getBoundingClientRect().top <= line + 1);
+  }
 }
 figDefineElement("fig-separator", FigSeparator);
+
+function figNearestScrollRoot(el) {
+  let node = el.parentElement;
+  while (node) {
+    const style = getComputedStyle(node);
+    const y = style.overflowY || style.overflow;
+    if (y && y !== "visible" && y !== "clip") return node;
+    node = node.parentElement;
+  }
+  return document.scrollingElement;
+}
 
 // Backwards-compatible alias. Custom element constructors cannot be registered
 // under multiple tag names, so the legacy tag uses an otherwise empty subclass.
 class FigMenuSeparator extends FigSeparator {}
 figDefineElement("fig-menu-separator", FigMenuSeparator);
 
-const FIG_MENU_CHILD_SELECTOR =
-  ":scope > fig-menu-item, :scope > fig-separator, :scope > fig-menu-separator";
 const FIG_MENU_CHILD_TAGS = new Set([
   "FIG-MENU-ITEM",
   "FIG-SEPARATOR",
   "FIG-MENU-SEPARATOR",
 ]);
+const FIG_MENU_TRIGGER_SLOT = "trigger";
+
+function figIsMenuChild(node) {
+  return node?.nodeType === 1 && FIG_MENU_CHILD_TAGS.has(node.tagName);
+}
+
+function figMenuTriggerHost(menu, trigger) {
+  if (!menu || !trigger) return null;
+  let host = trigger;
+  while (host.parentElement && host.parentElement !== menu) {
+    host = host.parentElement;
+  }
+  return host.parentElement === menu ? host : null;
+}
 
 class FigMenu extends HTMLElement {
   #popup = null;
   #panel = null;
+  #itemSlot = null;
   #trigger = null;
+  #triggerHost = null;
   #virtualAnchor = null;
   #observer = null;
   #resizeObserver = null;
   #navStart = null;
   #navEnd = null;
+  #initialized = false;
   #boundTriggerClick;
   #boundTriggerContextMenu;
-  #boundPopupClick;
+  #boundHostClick;
   #boundMenuKeydown;
   #boundPopupClose;
+  #boundSlotChange;
   #boundSyncOverflow = this.#syncOverflow.bind(this);
   #focusedIndex = -1;
 
@@ -18808,9 +19115,11 @@ class FigMenu extends HTMLElement {
     super();
     this.#boundTriggerClick = this.#handleTriggerClick.bind(this);
     this.#boundTriggerContextMenu = this.#handleTriggerContextMenu.bind(this);
-    this.#boundPopupClick = this.#handlePopupClick.bind(this);
+    this.#boundHostClick = this.#handleHostClick.bind(this);
     this.#boundMenuKeydown = this.#handleMenuKeydown.bind(this);
     this.#boundPopupClose = this.#handlePopupClose.bind(this);
+    this.#boundSlotChange = this.#syncOverflow.bind(this);
+    this.#initialize();
   }
 
   get value() {
@@ -18836,8 +19145,6 @@ class FigMenu extends HTMLElement {
 
   connectedCallback() {
     this.#detectTrigger();
-    this.#createPopup();
-    this.#moveItemsToPopup();
     this.#setupListeners();
     this.#setupOverflow();
     this.#setupObserver();
@@ -18855,16 +19162,6 @@ class FigMenu extends HTMLElement {
     if (this.#observer) {
       this.#observer.disconnect();
       this.#observer = null;
-    }
-    if (this.#popup) {
-      this.#popup.removeEventListener("close", this.#boundPopupClose);
-      const items = Array.from(
-        this.#panel?.querySelectorAll(FIG_MENU_CHILD_SELECTOR) ?? [],
-      );
-      for (const item of items) this.insertBefore(item, this.#popup);
-      this.#popup.remove();
-      this.#popup = null;
-      this.#panel = null;
     }
   }
 
@@ -18898,12 +19195,105 @@ class FigMenu extends HTMLElement {
     }
   }
 
+  #initialize() {
+    if (this.#initialized) return;
+    this.#initialized = true;
+    const shadow = this.attachShadow({ mode: "open" });
+    figAdoptVerticalOverflowStyles(shadow, { icons: true });
+    const style = document.createElement("style");
+    style.textContent = `
+      :host {
+        display: contents;
+      }
+      /* Listbox chrome comes from document fig-menu::part(listbox).
+         Stay in this shadow so item slots keep working — unlike tooltips,
+         we cannot portal this popup to the overlay root.
+         Overflow/hover/icon chrome lives in figVerticalOverflowSheet. */
+      dialog[is="fig-popup"] {
+        flex-direction: column;
+        overflow: hidden;
+        padding: 0;
+      }
+      dialog[is="fig-popup"][open] {
+        display: flex;
+      }
+      .fig-menu-items {
+        display: flex;
+        flex-direction: column;
+        flex: 0 0 auto;
+      }
+      .fig-menu-items > ::slotted(fig-menu-item),
+      .fig-menu-items > ::slotted(fig-separator),
+      .fig-menu-items > ::slotted(fig-menu-separator) {
+        flex-shrink: 0;
+      }
+    `;
+
+    const triggerSlot = document.createElement("slot");
+    triggerSlot.setAttribute("name", FIG_MENU_TRIGGER_SLOT);
+
+    const popup = document.createElement("dialog", { is: "fig-popup" });
+    popup.setAttribute("is", "fig-popup");
+    popup.classList.add("fig-menu-popup");
+    popup.setAttribute("part", "listbox");
+    popup.setAttribute("theme", "menu");
+    popup.setAttribute("role", "menu");
+    popup.id = figUniqueId();
+    if ("popover" in HTMLElement.prototype) {
+      popup.setAttribute("popover", "manual");
+    }
+
+    const panel = document.createElement("div");
+    panel.className = "fig-menu-options";
+    panel.setAttribute("part", "options");
+    panel.setAttribute("role", "presentation");
+
+    const items = document.createElement("div");
+    items.className = "fig-menu-items";
+    const itemSlot = document.createElement("slot");
+    items.appendChild(itemSlot);
+    panel.appendChild(items);
+    popup.appendChild(panel);
+
+    shadow.append(style, triggerSlot, popup);
+
+    this.#popup = popup;
+    this.#panel = panel;
+    this.#itemSlot = itemSlot;
+    this.#syncPopupAttrs();
+    popup.addEventListener("close", this.#boundPopupClose);
+    itemSlot.addEventListener("slotchange", this.#boundSlotChange);
+  }
+
+  #syncPopupAttrs() {
+    if (!this.#popup) return;
+    const position = this.getAttribute("position") || "bottom left";
+    this.#popup.setAttribute("position", position);
+    const offset = this.getAttribute("offset");
+    if (offset) this.#popup.setAttribute("offset", offset);
+    else this.#popup.removeAttribute("offset");
+    const closedby = this.getAttribute("closedby");
+    if (closedby) this.#popup.setAttribute("closedby", closedby);
+    else this.#popup.removeAttribute("closedby");
+  }
+
   #detectTrigger() {
     this.#trigger =
       this.querySelector("[fig-menu-trigger]") ||
       this.querySelector(
-        ":scope > :not(fig-menu-item):not(fig-separator):not(fig-menu-separator)",
-      );
+        `:scope > :not(fig-menu-item):not(fig-separator):not(fig-menu-separator):not([slot="${FIG_MENU_TRIGGER_SLOT}"])`,
+      ) ||
+      this.querySelector(`[slot="${FIG_MENU_TRIGGER_SLOT}"]`);
+    this.#assignTriggerSlot();
+  }
+
+  #assignTriggerSlot() {
+    const host = figMenuTriggerHost(this, this.#trigger);
+    this.#triggerHost = host;
+    if (!host) return;
+    if (host.getAttribute("slot") !== FIG_MENU_TRIGGER_SLOT) {
+      host.setAttribute("slot", FIG_MENU_TRIGGER_SLOT);
+    }
   }
 
   #usesContextMenuTrigger() {
@@ -18911,98 +19301,57 @@ class FigMenu extends HTMLElement {
     return trigger === "contextmenu" || this.hasAttribute("contextmenu");
   }
 
-  #createPopup() {
-    this.#popup = document.createElement("dialog", { is: "fig-popup" });
-    this.#popup.setAttribute("is", "fig-popup");
-    this.#popup.classList.add("fig-menu-popup");
-    this.#popup.setAttribute("theme", "menu");
-    this.#popup.setAttribute("role", "menu");
-    this.#popup.setAttribute("id", this.#popup.getAttribute("id") || figUniqueId());
-    // Top-layer via popover so the menu escapes ancestor filter/contain
-    // (nested fig-popup with variant="popover" creates a fixed containing block).
-    if ("popover" in HTMLElement.prototype) {
-      this.#popup.setAttribute("popover", "manual");
-    }
-
-    const position = this.getAttribute("position") || "bottom left";
-    this.#popup.setAttribute("position", position);
-
-    const offset = this.getAttribute("offset");
-    if (offset) this.#popup.setAttribute("offset", offset);
-
-    const closedby = this.getAttribute("closedby");
-    if (closedby) this.#popup.setAttribute("closedby", closedby);
-
-    if (this.#trigger) {
-      this.#popup.anchor = this.#trigger;
-    }
-
-    this.#panel = document.createElement("div");
-    this.#panel.className = "fig-menu-options";
-    this.#panel.setAttribute("role", "presentation");
-    this.#popup.appendChild(this.#panel);
-    this.#popup.addEventListener("close", this.#boundPopupClose);
-    this.appendChild(this.#popup);
+  #bindTrigger() {
+    if (!this.#trigger || !this.#popup) return;
+    this.#trigger.addEventListener("click", this.#boundTriggerClick);
+    this.#trigger.addEventListener("contextmenu", this.#boundTriggerContextMenu);
+    this.#trigger.setAttribute("aria-haspopup", "menu");
+    this.#trigger.setAttribute("aria-expanded", this.open ? "true" : "false");
+    this.#trigger.setAttribute("aria-controls", this.#popup.id);
+    this.#popup.anchor = this.#trigger;
   }
 
-  #moveItemsToPopup() {
-    if (!this.#panel) return;
-    const items = Array.from(this.querySelectorAll(FIG_MENU_CHILD_SELECTOR));
-    for (const item of items) {
-      this.#panel.appendChild(item);
-    }
+  #unbindTrigger() {
+    if (!this.#trigger) return;
+    this.#trigger.removeEventListener("click", this.#boundTriggerClick);
+    this.#trigger.removeEventListener("contextmenu", this.#boundTriggerContextMenu);
   }
 
   #setupListeners() {
     this.addEventListener("keydown", this.#boundMenuKeydown);
-    if (this.#trigger) {
-      this.#trigger.addEventListener("click", this.#boundTriggerClick);
-      this.#trigger.addEventListener("contextmenu", this.#boundTriggerContextMenu);
-      this.#trigger.setAttribute("aria-haspopup", "menu");
-      this.#trigger.setAttribute("aria-expanded", "false");
-      this.#trigger.setAttribute("aria-controls", this.#popup.getAttribute("id"));
-    }
-    if (this.#popup) {
-      this.#popup.addEventListener("click", this.#boundPopupClick);
-      this.#popup.addEventListener("keydown", this.#boundMenuKeydown);
-    }
+    this.addEventListener("click", this.#boundHostClick);
+    this.#bindTrigger();
+    this.#popup?.addEventListener("keydown", this.#boundMenuKeydown);
   }
 
   #teardownListeners() {
     this.removeEventListener("keydown", this.#boundMenuKeydown);
-    if (this.#trigger) {
-      this.#trigger.removeEventListener("click", this.#boundTriggerClick);
-      this.#trigger.removeEventListener("contextmenu", this.#boundTriggerContextMenu);
-    }
-    if (this.#popup) {
-      this.#popup.removeEventListener("click", this.#boundPopupClick);
-      this.#popup.removeEventListener("keydown", this.#boundMenuKeydown);
-    }
+    this.removeEventListener("click", this.#boundHostClick);
+    this.#unbindTrigger();
+    this.#popup?.removeEventListener("keydown", this.#boundMenuKeydown);
   }
 
   #setupObserver() {
+    if (this.#observer) return;
     this.#observer = new MutationObserver((mutations) => {
+      let triggerChanged = false;
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
-          if (node.nodeType !== 1 || node === this.#popup) continue;
-          if (
-            FIG_MENU_CHILD_TAGS.has(node.tagName) &&
-            node.parentElement === this
-          ) {
-            this.#panel?.appendChild(node);
-          } else if (!this.#trigger && node.parentElement === this) {
-            this.#detectTrigger();
-            if (this.#trigger) {
-              this.#trigger.addEventListener("click", this.#boundTriggerClick);
-              this.#trigger.addEventListener("contextmenu", this.#boundTriggerContextMenu);
-              this.#trigger.setAttribute("aria-haspopup", "menu");
-              this.#trigger.setAttribute("aria-expanded", "false");
-              this.#trigger.setAttribute("aria-controls", this.#popup.getAttribute("id"));
-              this.#popup.anchor = this.#trigger;
-              this.#syncDisabled();
-            }
+          if (node.nodeType !== 1) continue;
+          if (figIsMenuChild(node)) continue;
+          if (node.parentElement === this) triggerChanged = true;
+        }
+        for (const node of mutation.removedNodes) {
+          if (node === this.#trigger || node === this.#triggerHost) {
+            triggerChanged = true;
           }
         }
+      }
+      if (triggerChanged || !this.#trigger) {
+        this.#unbindTrigger();
+        this.#detectTrigger();
+        this.#bindTrigger();
+        this.#syncDisabled();
       }
       this.#syncOverflow();
     });
@@ -19028,8 +19377,25 @@ class FigMenu extends HTMLElement {
     this.#removeNavButtons();
   }
 
+  #markFirstSeparatorBorderless() {
+    const first = Array.from(this.children).find((child) => figIsMenuChild(child));
+    if (first && (first.tagName === "FIG-SEPARATOR" || first.tagName === "FIG-MENU-SEPARATOR")) {
+      first.setAttribute("borderless", "");
+    }
+  }
+
   #syncOverflow() {
-    return figSyncOverflowState(this.#panel, this.#panel, "y");
+    this.#markFirstSeparatorBorderless();
+    const scrollable = figSyncOverflowState(this.#panel, this.#panel, "y");
+    this.classList.toggle(
+      "overflow-start",
+      Boolean(this.#panel?.classList.contains("overflow-start")),
+    );
+    this.classList.toggle(
+      "overflow-end",
+      Boolean(this.#panel?.classList.contains("overflow-end")),
+    );
+    return scrollable;
   }
 
   #ensureNavButtons() {
@@ -19061,13 +19427,14 @@ class FigMenu extends HTMLElement {
     this.#navStart = null;
     this.#navEnd = null;
     this.#panel?.classList.remove("overflow-start", "overflow-end");
+    this.classList.remove("overflow-start", "overflow-end");
   }
 
   #getItems() {
-    if (!this.#panel) return [];
-    return Array.from(this.#panel.querySelectorAll("fig-menu-item")).filter(
+    return Array.from(this.querySelectorAll(":scope > fig-menu-item")).filter(
       (item) =>
-        !item.hasAttribute("disabled") || item.getAttribute("disabled") === "false",
+        !item.hidden &&
+        (!item.hasAttribute("disabled") || item.getAttribute("disabled") === "false"),
     );
   }
 
@@ -19091,7 +19458,31 @@ class FigMenu extends HTMLElement {
     this.#focusedIndex = wrapped;
     const item = items[wrapped];
     item.focus();
-    figScrollElementToCenter(this.#panel, item, "y");
+    this.#scrollItemIntoView(item);
+  }
+
+  #scrollItemIntoView(item) {
+    const panel = this.#panel;
+    if (!panel || !item) return;
+    requestAnimationFrame(() => {
+      if (!panel.isConnected || !item.isConnected) return;
+      const scrollSize = panel.scrollHeight;
+      const clientSize = panel.clientHeight;
+      if (scrollSize <= clientSize + 1) {
+        this.#syncOverflow();
+        return;
+      }
+      const itemRect = item.getBoundingClientRect();
+      const hostRect = panel.getBoundingClientRect();
+      const elementStart = itemRect.top - hostRect.top + panel.scrollTop;
+      const maxScroll = scrollSize - clientSize;
+      const nextScroll = Math.max(
+        0,
+        Math.min(elementStart + itemRect.height / 2 - clientSize / 2, maxScroll),
+      );
+      panel.scrollTo({ top: nextScroll, behavior: "auto" });
+      this.#syncOverflow();
+    });
   }
 
   #syncDisabled() {
@@ -19171,19 +19562,30 @@ class FigMenu extends HTMLElement {
     fallbackTimer = window.setTimeout(openMenu, 180);
   }
 
-  #handlePopupClick(e) {
+  #handleHostClick(e) {
     if (this.#isDisabled()) return;
-    const item = e.target.closest("fig-menu-item");
-    if (!item) return;
-    if (item.hasAttribute("disabled") && item.getAttribute("disabled") !== "false") return;
-
+    if (this.#trigger?.contains(e.target) || this.#triggerHost?.contains(e.target)) {
+      return;
+    }
+    const item = e.target.closest?.("fig-menu-item");
+    // Direct children only — nested fig-menu inside an item has its own host.
+    if (!item || item.parentElement !== this) return;
+    if (item.hasAttribute("disabled") && item.getAttribute("disabled") !== "false") {
+      return;
+    }
+    e.stopPropagation();
     this.#selectItem(item);
   }
 
   #handleMenuKeydown(e) {
     if (this.#isDisabled()) return;
     if (e.currentTarget === document && e.key !== "Escape") return;
-    if (e.currentTarget === this && this.#popup?.contains(e.target)) return;
+    // Slotted item keydown crosses the shadow slot, so the popup listener
+    // already handles it. Skip the host to avoid double-stepping.
+    if (e.currentTarget === this) {
+      const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+      if (this.#popup && path.includes(this.#popup)) return;
+    }
     if (!this.open || !this.#popup?.matches?.(":open")) {
       if (
         this.#trigger?.contains(e.target) &&

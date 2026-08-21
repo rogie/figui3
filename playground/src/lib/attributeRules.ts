@@ -192,6 +192,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     offset: { label: "Offset", type: "string" },
     "viewport-margin": { label: "Viewport margin", type: "string" },
+    title: { label: "Title", type: "string" },
     theme: {
       label: "Theme",
       type: "enum",

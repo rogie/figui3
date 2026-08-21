@@ -5110,6 +5110,7 @@ test.describe("content layout", () => {
         <fig-content id="content-default">Default</fig-content>
         <fig-content id="content-padded" padding>Padded</fig-content>
         <fig-content id="content-padding-false" padding="false">False</fig-content>
+        <fig-content id="content-padding-none" padding="none">None</fig-content>
       `;
     });
 
@@ -5119,6 +5120,7 @@ test.describe("content layout", () => {
         if (!element) throw new Error(`Missing ${selector}`);
         const style = getComputedStyle(element);
         return {
+          top: style.paddingTop,
           left: style.paddingLeft,
           right: style.paddingRight,
         };
@@ -5127,12 +5129,14 @@ test.describe("content layout", () => {
         default: read("#content-default"),
         padded: read("#content-padded"),
         disabled: read("#content-padding-false"),
+        none: read("#content-padding-none"),
       };
     });
 
-    expect(padding.default).toEqual({ left: "0px", right: "0px" });
-    expect(padding.padded).toEqual({ left: "16px", right: "16px" });
-    expect(padding.disabled).toEqual({ left: "0px", right: "0px" });
+    expect(padding.default).toEqual({ top: "12px", left: "0px", right: "0px" });
+    expect(padding.padded).toEqual({ top: "12px", left: "16px", right: "16px" });
+    expect(padding.disabled).toEqual({ top: "12px", left: "0px", right: "0px" });
+    expect(padding.none).toEqual({ top: "0px", left: "0px", right: "0px" });
   });
 
   test("adjacent hstack fields compact only their shared gutters", async ({
@@ -7839,6 +7843,7 @@ test.describe("remaining accessibility contracts", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;width:240px">
+          <span>Above</span>
           <fig-separator id="separator" label="Commands"></fig-separator>
         </div>
       `;
@@ -7876,8 +7881,8 @@ test.describe("remaining accessibility contracts", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <div style="width:240px">
-          <fig-separator id="separator" label="More"></fig-separator>
-          <fig-menu-separator id="alias" label="More"></fig-menu-separator>
+          <div><fig-separator id="separator" label="More"></fig-separator></div>
+          <div><fig-menu-separator id="alias" label="More"></fig-menu-separator></div>
         </div>
         <fig-menu id="menu">
           <fig-button fig-menu-trigger>Actions</fig-button>
@@ -7906,7 +7911,9 @@ test.describe("remaining accessibility contracts", () => {
       return {
         aliasIsSeparator: alias instanceof Separator,
         registered: Boolean(customElements.get("fig-menu-separator")),
-        inPopup: Boolean(menuAlias.closest("dialog")),
+        staysInHost: menuAlias.parentElement?.id === "menu",
+        assignedToDefaultSlot: menuAlias.assignedSlot instanceof HTMLSlotElement &&
+          !menuAlias.assignedSlot.name,
         separator: signature(separator),
         alias: signature(alias),
       };
@@ -7914,7 +7921,8 @@ test.describe("remaining accessibility contracts", () => {
 
     expect(state.aliasIsSeparator).toBe(true);
     expect(state.registered).toBe(true);
-    expect(state.inPopup).toBe(true);
+    expect(state.staysInHost).toBe(true);
+    expect(state.assignedToDefaultSlot).toBe(true);
     expect(state.alias).toEqual(state.separator);
   });
 
@@ -7977,6 +7985,20 @@ test.describe("remaining accessibility contracts", () => {
     await page.waitForTimeout(50);
     await expect(up).toHaveCSS("opacity", "0");
     await expect(down).toHaveCSS("opacity", "1");
+    const chevron = await down.evaluate((button) => {
+      const icon = button.querySelector("fig-icon");
+      if (!icon) return null;
+      const style = getComputedStyle(icon);
+      const rect = icon.getBoundingClientRect();
+      return {
+        width: rect.width,
+        height: rect.height,
+        mask: style.webkitMaskImage || style.maskImage,
+      };
+    });
+    expect(chevron?.width).toBeGreaterThan(8);
+    expect(chevron?.height).toBeGreaterThan(8);
+    expect(chevron?.mask && chevron.mask !== "none").toBe(true);
     const leftPadding = await menu.evaluate((element) => {
       const item = element.querySelector("fig-menu-item");
       const separator = element.querySelector("fig-separator");
@@ -8022,6 +8044,244 @@ test.describe("remaining accessibility contracts", () => {
     });
     await expect(menu.locator('[data-fig-menu-nav]')).toHaveCount(2);
     await expect(menu.locator(".fig-menu-options")).toHaveCount(1);
+  });
+
+  test("fig-menu slots items instead of relocating them", async ({ page }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-menu id="slotted-menu">
+          <fig-button fig-menu-trigger>Actions</fig-button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+          <fig-separator></fig-separator>
+          <fig-menu-item value="paste">Paste</fig-menu-item>
+        </fig-menu>
+      `;
+      const menu = root.querySelector("#slotted-menu");
+      const trigger = menu?.querySelector("[fig-menu-trigger]");
+      const item = menu?.querySelector('fig-menu-item[value="copy"]');
+      const extra = document.createElement("fig-menu-item");
+      extra.setAttribute("value", "share");
+      extra.textContent = "Share";
+      menu?.appendChild(extra);
+      extra.remove();
+      return {
+        triggerSlot: trigger?.getAttribute("slot"),
+        triggerParent: trigger?.parentElement?.id,
+        itemParent: item?.parentElement?.id,
+        itemSlotName: item?.assignedSlot?.name ?? null,
+        itemAssigned: item?.assignedSlot instanceof HTMLSlotElement,
+        removedParent: extra.parentElement,
+        stillQueryItem: Boolean(menu?.querySelector('fig-menu-item[value="copy"]')),
+      };
+    });
+
+    expect(state.triggerSlot).toBe("trigger");
+    expect(state.triggerParent).toBe("slotted-menu");
+    expect(state.itemParent).toBe("slotted-menu");
+    expect(state.itemSlotName).toBe("");
+    expect(state.itemAssigned).toBe(true);
+    expect(state.removedParent).toBeNull();
+    expect(state.stillQueryItem).toBe(true);
+  });
+
+  test("fig-menu items keep their row height inside the slotted flex list", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-menu id="sized-menu">
+          <fig-button fig-menu-trigger>Actions</fig-button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+          <fig-menu-item value="paste">Paste</fig-menu-item>
+          <fig-separator></fig-separator>
+          <fig-menu-item value="delete">Delete</fig-menu-item>
+        </fig-menu>
+      `;
+    });
+
+    const menu = page.locator("#sized-menu");
+    await menu.locator("[fig-menu-trigger]").click();
+    await expect(menu).toHaveAttribute("open");
+
+    const sizes = await menu.evaluate((element) => {
+      const item = element.querySelector("fig-menu-item");
+      if (!item) return null;
+      const style = getComputedStyle(item);
+      return {
+        height: item.getBoundingClientRect().height,
+        minHeight: Number.parseFloat(style.minHeight),
+        flexShrink: style.flexShrink,
+      };
+    });
+
+    expect(sizes).not.toBeNull();
+    expect(sizes?.flexShrink).toBe("0");
+    expect(sizes?.minHeight).toBeGreaterThanOrEqual(16);
+    expect(sizes?.height).toBeGreaterThanOrEqual(sizes?.minHeight ?? 16);
+  });
+
+  test("fig-menu-item in a popup list uses panel colors and keeps nested menus independent", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="version-anchor">Versions</fig-button>
+        <dialog is="fig-popup" id="version-popup" title="Version history" open closedby="any" anchor="#version-anchor" position="bottom left" style="width: 16rem; max-height: 12rem;">
+          <fig-content padding="none">
+          <fig-separator sticky label="Today"></fig-separator>
+          <fig-menu-item id="standalone-item" value="v9" subtle>
+            <div>
+              <h3>Changed properties</h3>
+              <label>Version 9</label>
+            </div>
+            <fig-menu id="row-menu" position="bottom right">
+              <fig-button fig-menu-trigger variant="ghost" icon aria-label="More">
+                <fig-icon name="more"></fig-icon>
+              </fig-button>
+              <fig-menu-item value="restore">Restore this version</fig-menu-item>
+            </fig-menu>
+          </fig-menu-item>
+          <fig-separator sticky label="Yesterday"></fig-separator>
+          <fig-menu-item value="v1" subtle>Version 1</fig-menu-item>
+          <fig-menu-item value="v0" subtle>Version 0</fig-menu-item>
+          <fig-menu-item value="v-1" subtle>Version -1</fig-menu-item>
+          <fig-menu-item value="v-2" subtle>Version -2</fig-menu-item>
+          <fig-menu-item value="v-3" subtle>Version -3</fig-menu-item>
+          <fig-menu-item value="v-4" subtle>Version -4</fig-menu-item>
+          <fig-menu-item value="v-5" subtle>Version -5</fig-menu-item>
+          <fig-menu-item value="v-6" subtle>Version -6</fig-menu-item>
+          </fig-content>
+        </dialog>
+        <fig-menu id="menu-for-color">
+          <fig-button fig-menu-trigger>Actions</fig-button>
+          <fig-menu-item id="menu-item" value="copy">Copy</fig-menu-item>
+        </fig-menu>
+      `;
+    });
+
+    const colors = await page.evaluate(() => {
+      const standalone = document.querySelector("#standalone-item");
+      const menuItem = document.querySelector("#menu-item");
+      if (!standalone || !menuItem) throw new Error("Missing items");
+      const probe = document.createElement("span");
+      document.body.append(probe);
+      probe.style.color = "var(--figma-color-text)";
+      const text = getComputedStyle(probe).color;
+      probe.style.color = "var(--figma-color-text-menu)";
+      const menuText = getComputedStyle(probe).color;
+      probe.remove();
+      return {
+        standalone: getComputedStyle(standalone).color,
+        menuItem: getComputedStyle(menuItem).color,
+        text,
+        menuText,
+      };
+    });
+
+    expect(colors.standalone).toBe(colors.text);
+    expect(colors.menuItem).toBe(colors.menuText);
+
+    const parentClicks = await page.evaluate(async () => {
+      const item = document.querySelector("#standalone-item") as HTMLElement & {
+        clicks?: number;
+      };
+      const popup = document.querySelector("#version-popup") as HTMLElement & {
+        open: boolean;
+      };
+      const rowMenu = document.querySelector("#row-menu") as HTMLElement & {
+        open: boolean;
+      };
+      item.clicks = 0;
+      item.addEventListener("click", () => {
+        item.clicks = (item.clicks ?? 0) + 1;
+      });
+      const trigger = item.querySelector("[fig-menu-trigger]");
+      (trigger as HTMLElement).click();
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const restore = rowMenu.querySelector('fig-menu-item[value="restore"]') as HTMLElement;
+      restore.click();
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      return {
+        parentClicks: item.clicks,
+        popupOpen: popup.hasAttribute("open"),
+        rowMenuOpen: rowMenu.hasAttribute("open"),
+        rowMenuValue: rowMenu.getAttribute("value"),
+      };
+    });
+
+    expect(parentClicks.parentClicks).toBe(0);
+    expect(parentClicks.popupOpen).toBe(true);
+    expect(parentClicks.rowMenuOpen).toBe(false);
+    expect(parentClicks.rowMenuValue).toBe("restore");
+
+    const sticky = await page.evaluate(async () => {
+      const popup = document.querySelector("#version-popup");
+      const content = popup?.querySelector("fig-content") as HTMLElement | null;
+      const later = content?.querySelector(
+        'fig-separator[label="Yesterday"]',
+      ) as HTMLElement | null;
+      if (!content || !later) throw new Error("Missing list");
+      content.scrollTop = content.scrollHeight;
+      content.dispatchEvent(new Event("scroll"));
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const style = getComputedStyle(later);
+      const contentTop = content.getBoundingClientRect().top;
+      const sepTop = later.getBoundingClientRect().top;
+      return {
+        top: style.top,
+        position: style.position,
+        pinned: Math.abs(sepTop - contentTop) <= 2,
+        overflowed: content.scrollHeight - content.clientHeight > 8,
+        contentPadding: getComputedStyle(content).padding,
+        stuck: later.hasAttribute("stuck"),
+        ruleDisplay: getComputedStyle(later, "::before").display,
+      };
+    });
+
+    expect(sticky.position).toBe("sticky");
+    expect(sticky.overflowed).toBe(true);
+    expect(sticky.pinned).toBe(true);
+    expect(sticky.contentPadding).toBe("0px");
+    expect(sticky.stuck).toBe(true);
+    expect(sticky.ruleDisplay).toBe("none");
+  });
+
+  test("fig-popup title generates a header like fig-dialog", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="title-anchor">Open</fig-button>
+        <dialog is="fig-popup" id="titled-popup" title="Version history" open anchor="#title-anchor">
+          Body
+        </dialog>
+      `;
+      await customElements.whenDefined("fig-popup");
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const popup = document.querySelector("#titled-popup") as HTMLElement & {
+        open: boolean;
+      };
+      const header = popup.querySelector("fig-header[dialog-header][data-auto]");
+      const heading = header?.querySelector("h3");
+      const close = header?.querySelector("fig-button[close-dialog]") as HTMLElement | null;
+      close?.click();
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      return {
+        heading: heading?.textContent,
+        hasClose: Boolean(close),
+        openAfterClose: popup.open,
+      };
+    });
+
+    expect(state.heading).toBe("Version history");
+    expect(state.hasClose).toBe(true);
+    expect(state.openAfterClose).toBe(false);
   });
 
   test("fill, loading, handle, color-tip, and toast expose accessible state", async ({ page }) => {

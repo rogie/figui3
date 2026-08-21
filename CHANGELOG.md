@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.12]
+
+### Added
+
+- `fig-popup` `title` auto-generates a header, matching `fig-dialog`.
+- `fig-menu-item` works as a list row outside `fig-menu` — typically in a `fig-popup` with sticky `fig-separator`s and a nested `fig-menu` for row actions.
+
+### Changed
+
+- `fig-menu` now slots `fig-menu-item` / `fig-separator` into the popup instead of relocating them, matching `fig-select`. Triggers get `slot="trigger"` automatically. React can add or remove items without `removeChild` errors.
+
+### Fixed
+
+- `fig-menu-item` color inherits from the parent surface instead of always painting menu-white.
+- Nested `fig-menu` inside a `fig-menu-item` only selects its own items and does not fire the parent row.
+- Sticky labeled `fig-separator`s hide the rule (`::before`) while stuck.
+
 ## [8.9.11]
 
 ### Added

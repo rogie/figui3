@@ -72,9 +72,9 @@ Color picker modes: `fig-fill-picker` is optional editor. Do not use `picker` / 
 ## Overlay rules
 
 - `<dialog is="fig-dialog">` — modal/task dialog. `position` is viewport placement. No `anchor`.
-- `<dialog is="fig-popup">` — anchored float (`anchor`, `position`, `offset`, `viewport-margin`). `variant="popover"` uses CSS `filter` (containing block for `position: fixed`).
+- `<dialog is="fig-popup">` — anchored float (`anchor`, `position`, `offset`, `viewport-margin`). `title` auto-builds a header. `variant="popover"` uses CSS `filter` (containing block for `position: fixed`). Sticky `fig-separator` + `fig-menu-item` lists scroll on the popup.
 - `<dialog is="fig-toast">` — call `showToast()`. `theme`, `duration`, `live`, `dismiss`, `icon`.
-- `fig-menu` and `fig-select` use `popover="manual"` so lists escape filter-containing popups to the top layer. Nested menus inside popovers must keep that.
+- `fig-menu` and `fig-select` use `popover="manual"` so lists escape filter-containing popups to the top layer. Nested menus inside popovers must keep that. `fig-menu` slots items (does not relocate them); triggers get `slot="trigger"`.
 
 ```html
 <dialog is="fig-dialog" drag handle="fig-header">
@@ -156,7 +156,7 @@ Playground hashes: `/figui3#{id}`. Full attrs: [reference.md](reference.md).
 | `fig-segmented-control` / `fig-segment` | `#segmented-control` | Radio-group pattern |
 | `fig-chooser` / `fig-choice` | (containers) | Listbox selection |
 | `fig-separator` / `fig-menu-separator` | `#separator` | Optional `label`, `sticky`, `borderless` |
-| `fig-menu` / `fig-menu-item` | `#menu` | `fig-menu-trigger`, `trigger="contextmenu"`, `position`, `offset` |
+| `fig-menu` / `fig-menu-item` | `#menu` | `fig-menu-trigger`, `trigger="contextmenu"`, `position`, `offset`. Item also works in `fig-popup` (sticky separators, nested row menus). |
 | `fig-icon` | `#icon` | Token mask (`name`, `size="small"`, `color`) |
 | `fig-avatar` | `#avatar` | `src` / `name`, `size="large"` |
 | `fig-truncate` | `#truncate` | `position="right\|left\|middle"`, `tooltip`, `tail` |
