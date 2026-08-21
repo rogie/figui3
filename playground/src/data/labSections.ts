@@ -50,7 +50,7 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-color",
     name: "Color",
     description:
-      "A full-surface color field that composes fig-field and fig-input-color into a single property control.",
+      "A full-surface color field with a large fill-picker swatch, matching propskit-gradient.",
     examples: [
       {
         id: "default",
@@ -65,7 +65,7 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-gradient",
     name: "Gradient",
     description:
-      "A full-surface gradient field that composes fig-field and fig-input-gradient into a single inline-editable property control.",
+      "A full-surface gradient field that opens the fill picker from a swatch.",
     examples: [
       {
         id: "default",

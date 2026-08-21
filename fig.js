@@ -7742,10 +7742,12 @@ class FigField extends HTMLElement {
       inputTag === "fig-menu" ||
       inputTag === "fig-dropdown" ||
       inputTag === "fig-tooltip" ||
+      inputTag === "fig-fill-picker" ||
       (this.input instanceof HTMLDialogElement);
     this.#toggleable = !!(
       this.input &&
       "open" in this.input &&
+      typeof this.input.open !== "function" &&
       !popupOpenHost
     );
 
@@ -11877,7 +11879,11 @@ class FigSwatch extends HTMLElement {
   }
 
   focus() {
-    this.input?.focus();
+    if (this.input?.isConnected) {
+      this.input.focus();
+      return;
+    }
+    HTMLElement.prototype.focus.call(this);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {

@@ -383,7 +383,7 @@ fig-content:has(> propskit-group[name]:last-child) {
 }
 
 /* Flex-positioned numbers — margin works. Absolute numbers use right: calc(...) below. */
-:is(propskit-color, propskit-number)[size="large"] {
+propskit-number[size="large"] {
   fig-field fig-input-number {
     margin-right: var(--spacer-1);
   }
@@ -504,7 +504,7 @@ propskit-color {
     align-items: center;
     gap: var(--spacer-2);
     height: 100%;
-    padding-left: var(--spacer-2);
+    padding: 0 0 0 var(--spacer-2);
     border-radius: var(--radius-medium);
     background-color: var(--figma-color-bg-secondary);
 
@@ -525,9 +525,8 @@ propskit-color {
       z-index: 1;
       display: flex;
       align-items: center;
-      flex: 0 0 auto;
-      width: auto;
-      max-width: 50%;
+      flex: 0 1 auto;
+      max-width: 40%;
       min-width: 0;
       margin: 0;
       padding: 0;
@@ -542,54 +541,25 @@ propskit-color {
       }
     }
 
-    fig-input-color {
-      --figma-focus-outline-offset: 1px;
+    fig-fill-picker {
+      display: contents;
+    }
 
+    fig-swatch {
       position: relative;
-      align-self: center;
-      flex: 0 1 auto !important;
-      width: fit-content !important;
-      max-width: none;
+      flex: 0 0 33%;
+      width: 33%;
       min-width: 0;
       margin-left: auto;
+      --width: 100%;
+      --height: var(--propskit-color-height);
+      --size: var(--propskit-color-height);
+      --border-radius: var(--radius-medium);
       height: var(--propskit-color-height);
       border-radius: var(--radius-medium);
-      background-color: transparent;
-      box-shadow: none;
 
-      /* Field ::after owns hover chrome — don't double-outline the color control. */
-      &:hover:not(:focus):not(:focus-within):not(.has-popup-open) {
+      &:hover {
         outline: none !important;
-      }
-
-      > .input-combo {
-        flex: 0 0 auto;
-        width: auto;
-      }
-
-      fig-input-text {
-        flex: 0 0 3.25rem;
-        width: 3.25rem;
-
-        input {
-          field-sizing: fixed;
-          box-sizing: border-box;
-          width: 100%;
-          min-width: 0;
-        }
-      }
-
-      fig-input-number {
-        flex: 0 0 3rem;
-        width: 3rem;
-        min-width: 3rem;
-
-        input {
-          field-sizing: fixed;
-          box-sizing: border-box;
-          width: 100%;
-          min-width: 0;
-        }
       }
     }
   }
@@ -612,8 +582,15 @@ propskit-gradient {
   &[size="large"] {
     --propskit-gradient-height: 2rem;
 
-    fig-field:not([direction="vertical"]) {
-      padding-right: var(--spacer-1);
+    fig-input-gradient {
+      --fig-input-gradient-height: var(--propskit-gradient-height);
+      height: var(--propskit-gradient-height);
+
+      fig-swatch {
+        --height: var(--propskit-gradient-height);
+        --size: var(--propskit-gradient-height);
+        height: var(--propskit-gradient-height);
+      }
     }
   }
 
@@ -631,7 +608,7 @@ propskit-gradient {
     align-items: center;
     gap: var(--spacer-2);
     height: 100%;
-    padding: 0 var(--spacer-1) 0 var(--spacer-2);
+    padding: 0 0 0 var(--spacer-2);
     border-radius: var(--radius-medium);
     background-color: var(--figma-color-bg-secondary);
 
@@ -670,8 +647,8 @@ propskit-gradient {
 
     fig-input-gradient {
       position: relative;
-      flex: 0 0 50%;
-      width: 50%;
+      flex: 0 0 33%;
+      width: 33%;
       min-width: 0;
       margin-left: auto;
       border-radius: var(--radius-medium);

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.15]
+
+### Changed
+
+- `propskit-color` is a large fill-picker swatch like `propskit-gradient`, with no hex or opacity text field.
+- `propskit-gradient` defaults to `edit="picker"`.
+- `propskit-color` and `propskit-gradient` field rows have no right padding.
+- `propskit-gradient size="large"` makes `fig-input-gradient` 2rem, matching `--propskit-color-height`.
+
+### Fixed
+
+- `fig-field` no longer shows a disclosure chevron when the control is a `fig-fill-picker`.
+- `fig-swatch.focus()` still works when the native color input is gone.
+
 ## [8.9.14]
 
 ### Fixed

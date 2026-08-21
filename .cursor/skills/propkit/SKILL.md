@@ -68,7 +68,7 @@ On `fig-*` and `<dialog is="fig-...">`, use `class` not `className`.
 | Small discrete set (2–5) | `fig-segmented-control` | — |
 | Larger / rich list | `fig-select` (editor) | `propskit-select` |
 | Native select only | `fig-dropdown` | — |
-| Color | `fig-input-color` `text="true"` | `propskit-color` |
+| Color | `fig-input-color` `text="true"` | `propskit-color` (fill-picker swatch) |
 | Fill | `fig-input-fill` | — |
 | Gradient | `fig-input-gradient` | `propskit-gradient` |
 | Image | `fig-image` `upload` | — |

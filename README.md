@@ -392,11 +392,11 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-color>`
 
-Composes a `<fig-field>` and `<fig-input-color>` into a full-surface property control. Color attributes are forwarded to the inner input and text editing remains enabled.
+Composes a `<fig-field>` and a solid `fig-fill-picker` swatch into a full-surface property control. Clicking the swatch opens the color picker. There is no hex/opacity text field.
 
 **Attributes:** `label`, `value`, `default`, `alpha`, `disabled`, `size`
 
-**Events:** `input`, `change` — forwarded from the inner color input.
+**Events:** `input`, `change` — `{ color, alpha, opacity }` from the fill picker.
 
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial color.
 
@@ -410,14 +410,14 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-gradient>`
 
-Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property control. The gradient is inline-editable by default.
+Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property control. Defaults to `edit="picker"` — click the swatch to open the fill picker.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `label` | string | `"Label"` | Field label text; use an empty value to hide it |
 | `value` | JSON string | default gradient | Canonical `{ "type": "gradient", "gradient": { ... } }` data |
 | `default` | JSON string | initial `value` | Right-click and group reset target |
-| `edit` | boolean/string | `true` | `true`, `false`, or `"picker"` |
+| `edit` | boolean/string | `"picker"` | `true` (inline stops), `false`, or `"picker"` |
 | `mode` | string | `"handle"` | `"handle"` or `"tip"` stop presentation |
 | `disabled` | boolean | `false` | Disabled state |
 | `size` | string | default | Set to `"large"` for the expanded layout |
@@ -426,7 +426,7 @@ Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property
 
 **Methods and state:** `defaultValue`, `isDefault`, and `resetToDefault()`. JSON defaults use structural equality, so object key order does not affect dirty state.
 
-The first stop receives focus when the field is focused. Arrow keys move the selected stop, Shift+Arrow moves by 5%, Tab cycles stops, and Delete/Backspace removes a stop while preserving the two-stop minimum.
+Click the swatch to open the fill picker. With `edit="true"`, the first stop receives focus; Arrow keys move the selected stop, Shift+Arrow moves by 5%, Tab cycles stops, and Delete/Backspace removes a stop while preserving the two-stop minimum.
 
 ```html
 <propskit-gradient

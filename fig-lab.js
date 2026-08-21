@@ -699,11 +699,37 @@ class PropskitSwitch extends HTMLElement {
 }
 figLabDefineElement("propskit-switch", PropskitSwitch);
 
+function figLabParseSolidColor(raw) {
+  const value = String(raw ?? "").trim();
+  if (/^#[0-9a-fA-F]{8}$/.test(value)) {
+    return {
+      color: value.slice(0, 7),
+      alpha: parseInt(value.slice(7, 9), 16) / 255,
+    };
+  }
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+    return { color: value, alpha: 1 };
+  }
+  if (/^#[0-9a-fA-F]{3}$/.test(value)) {
+    return {
+      color: `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`,
+      alpha: 1,
+    };
+  }
+  return { color: value || "#D9D9D9", alpha: 1 };
+}
+
+function figLabSolidFillValue(raw) {
+  const { color, alpha } = figLabParseSolidColor(raw);
+  return JSON.stringify({ type: "solid", color, alpha });
+}
+
 /* Field + Color wrapper */
 class PropskitColor extends HTMLElement {
   #field = null;
   #label = null;
   #input = null;
+  #swatch = null;
   #hasCustomLabel = false;
   #observer = null;
   #managedInputAttrs = new Set();
@@ -779,15 +805,18 @@ class PropskitColor extends HTMLElement {
     );
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
-    const input = document.createElement("fig-input-color");
-
+    const picker = document.createElement("fig-fill-picker");
+    const swatch = document.createElement("fig-swatch");
+    picker.append(swatch);
+    swatch.setAttribute("tabindex", "0");
     for (const node of initialChildren) {
-      if (node !== customLabel) input.appendChild(node);
+      if (node !== customLabel) picker.appendChild(node);
     }
-    field.append(label, input);
+    field.append(label, picker);
     this.#field = field;
     this.#label = label;
-    this.#input = input;
+    this.#input = picker;
+    this.#swatch = swatch;
     this.#hasCustomLabel = Boolean(customLabel);
     this.replaceChildren(field);
   }
@@ -821,6 +850,15 @@ class PropskitColor extends HTMLElement {
     );
   }
 
+  #parsedHostColor() {
+    return figLabParseSolidColor(this.getAttribute("value"));
+  }
+
+  #pickerValueFromHost() {
+    const { color, alpha } = this.#parsedHostColor();
+    return JSON.stringify({ type: "solid", color, alpha });
+  }
+
   #getForwardedInputAttrNames() {
     const reserved = new Set([
       "label",
@@ -834,6 +872,8 @@ class PropskitColor extends HTMLElement {
       "aria-label",
       "text",
       "default",
+      "value",
+      "mode",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -849,19 +889,19 @@ class PropskitColor extends HTMLElement {
       if (!nextManaged.has(attrName)) this.#input.removeAttribute(attrName);
     }
     for (const attrName of inputAttrs) {
-      const next = this.getAttribute(attrName) ?? "";
-      // Soft sync only. Never force-clear value here — that fights live edits
-      // (fig-input-color often keeps a stale value attribute while editing).
-      if (
-        attrName === "value" &&
-        this.#input.getAttribute("value") === next
-      ) {
-        continue;
-      }
-      this.#input.setAttribute(attrName, next);
+      this.#input.setAttribute(attrName, this.getAttribute(attrName) ?? "");
     }
 
-    this.#input.setAttribute("text", "true");
+    this.#input.setAttribute("mode", "solid");
+    const nextJson = this.#pickerValueFromHost();
+    if (this.#input.getAttribute("value") !== nextJson) {
+      this.#input.setAttribute("value", nextJson);
+    }
+    const { color, alpha } = this.#parsedHostColor();
+    if (this.#swatch) {
+      this.#swatch.setAttribute("background", color);
+      this.#swatch.setAttribute("alpha", String(alpha));
+    }
     this.#managedInputAttrs = nextManaged;
   }
 
@@ -888,31 +928,62 @@ class PropskitColor extends HTMLElement {
       event instanceof CustomEvent && event.detail !== undefined
         ? event.detail
         : undefined;
-    if (typeof detail === "string" && detail) return detail;
+    if (typeof detail === "string" && detail) {
+      return figLabParseSolidColor(detail).color;
+    }
     if (detail && typeof detail === "object") {
-      if (typeof detail.value === "string" && detail.value) return detail.value;
-      if (typeof detail.hex === "string" && detail.hex) return detail.hex;
       if (typeof detail.color === "string" && detail.color) return detail.color;
+      if (typeof detail.value === "string" && detail.value) {
+        return figLabParseSolidColor(detail.value).color;
+      }
+      if (typeof detail.hex === "string" && detail.hex) return detail.hex;
     }
-    // Prefer live JS value — fig-input-color often leaves the attribute stale.
-    if (typeof this.#input?.value === "string" && this.#input.value) {
-      return this.#input.value;
+    const live = this.#input?.value;
+    if (live && typeof live === "object" && typeof live.color === "string") {
+      return live.color;
     }
-    return this.#input?.getAttribute("value") ?? "";
+    if (typeof live === "string" && live) {
+      return figLabParseSolidColor(live).color;
+    }
+    return this.#parsedHostColor().color;
+  }
+
+  #colorDetailFromEvent(event, color) {
+    const detail =
+      event instanceof CustomEvent && event.detail && typeof event.detail === "object"
+        ? event.detail
+        : undefined;
+    const alpha = Number.isFinite(detail?.alpha)
+      ? Math.max(0, Math.min(1, Number(detail.alpha)))
+      : this.#parsedHostColor().alpha;
+    return {
+      color,
+      alpha,
+      opacity: Math.round(alpha * 100),
+    };
   }
 
   #forwardInputEvent(type, event) {
     event.stopImmediatePropagation();
     if (figLabBooleanAttribute(this, "disabled")) return;
     const value = this.#valueFromColorEvent(event);
-    this.setAttribute("value", value);
-    if (this.#input && this.#input.getAttribute("value") !== value) {
-      this.#input.setAttribute("value", value);
+    const detail = this.#colorDetailFromEvent(event, value);
+    const alphaHex =
+      detail.alpha < 1 - 1 / 255
+        ? Math.round(detail.alpha * 255)
+            .toString(16)
+            .padStart(2, "0")
+        : "";
+    const hostValue = `${detail.color.slice(0, 7)}${alphaHex}`;
+    this.setAttribute("value", hostValue);
+    const nextJson = this.#pickerValueFromHost();
+    if (this.#input && this.#input.getAttribute("value") !== nextJson) {
+      this.#input.setAttribute("value", nextJson);
     }
-    const detail =
-      event instanceof CustomEvent && event.detail !== undefined
-        ? event.detail
-        : value;
+    if (this.#swatch) {
+      this.#swatch.setAttribute("background", detail.color);
+      this.#swatch.setAttribute("alpha", String(detail.alpha));
+    }
     this.dispatchEvent(
       new CustomEvent(type, {
         detail,
@@ -927,7 +998,7 @@ class PropskitColor extends HTMLElement {
     if (figLabBooleanAttribute(this, "disabled")) return;
     if (
       event.target instanceof Element &&
-      event.target.closest("fig-input-color, fig-menu")
+      event.target.closest("fig-fill-picker, fig-swatch, fig-menu")
     ) {
       return;
     }
@@ -946,18 +1017,22 @@ class PropskitColor extends HTMLElement {
     }
     const next = String(nextValue);
     this.setAttribute("value", next);
-    if (this.#input && this.#input.getAttribute("value") !== next) {
-      this.#input.setAttribute("value", next);
-    }
+    this.#forceInputValue(next);
   }
 
-  /** Force fig-input-color UI refresh even when the hex string is unchanged. */
+  /** Force fill-picker refresh even when the serialized value is unchanged. */
   #forceInputValue(next) {
     if (!this.#input) return;
-    if (this.#input.getAttribute("value") === next) {
+    const json = figLabSolidFillValue(next);
+    if (this.#input.getAttribute("value") === json) {
       this.#input.removeAttribute("value");
     }
-    this.#input.setAttribute("value", next);
+    this.#input.setAttribute("value", json);
+    if (this.#swatch) {
+      const parsed = figLabParseSolidColor(next);
+      this.#swatch.setAttribute("background", parsed.color);
+      this.#swatch.setAttribute("alpha", String(parsed.alpha));
+    }
   }
 
   #defaultValue() {
@@ -995,7 +1070,8 @@ class PropskitColor extends HTMLElement {
   }
 
   focus(options) {
-    this.#input?.querySelector("input:not([tabindex='-1'])")?.focus(options);
+    const swatch = this.querySelector("fig-swatch");
+    if (swatch instanceof HTMLElement) swatch.focus(options);
   }
 }
 figLabDefineElement("propskit-color", PropskitColor);
@@ -1158,7 +1234,7 @@ class PropskitGradient extends HTMLElement {
       this.#input.setAttribute(attrName, next);
     }
 
-    if (!this.hasAttribute("edit")) this.#input.setAttribute("edit", "true");
+    if (!this.hasAttribute("edit")) this.#input.setAttribute("edit", "picker");
     this.#managedInputAttrs = nextManaged;
   }
 

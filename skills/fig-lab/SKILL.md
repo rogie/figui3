@@ -49,8 +49,8 @@ Shared:
 | Tag | Playground | Inner control | Notes |
 |---|---|---|---|
 | `propskit-switch` | `#propskit-switch` | `fig-switch` | `checked`, `default` boolean |
-| `propskit-color` | `#propskit-color` | `fig-input-color` | `alpha` default true |
-| `propskit-gradient` | `#propskit-gradient` | `fig-input-gradient` | `edit`, `mode="handle\|tip"` |
+| `propskit-color` | `#propskit-color` | `fig-fill-picker` + `fig-swatch` | Solid swatch, same size as gradient. Opens the fill picker. `alpha` default true |
+| `propskit-gradient` | `#propskit-gradient` | `fig-input-gradient` | Default `edit="picker"`. `mode="handle\|tip"` for inline edit |
 | `propskit-select` | `#propskit-select` | `fig-select` | `options` or slotted `fig-select-options` |
 | `propskit-text` | `#propskit-text` | `fig-input-text` | `type`, `readonly` |
 | `propskit-number` | `#propskit-number` | `fig-input-number` | `min`, `max`, `step`, `precision`, `units`, `steppers` |

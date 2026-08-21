@@ -1895,7 +1895,7 @@ test.describe("PropsKit disabled contract", () => {
 
       const innerSelectors: Record<string, string> = {
         "propskit-switch": "fig-segmented-control",
-        "propskit-color": "fig-input-color",
+        "propskit-color": "fig-fill-picker",
         "propskit-gradient": "fig-input-gradient",
         "propskit-select": "fig-select, fig-dropdown",
         "propskit-text": "fig-input-text",
@@ -2232,12 +2232,12 @@ test.describe("propskit sizes", () => {
     }
     expect(result.numberForwardsSize).toBe(false);
     expect(result.gradientSizes).toEqual({ default: null, large: null });
-    expect(result.gradientHeights).toEqual({ default: 24, large: 24 });
+    expect(result.gradientHeights).toEqual({ default: 24, large: 32 });
     const gradientStyles = result.styles.find(
       (entry) => entry.tag === "propskit-gradient",
     );
-    expect(gradientStyles?.defaultStyle.fieldPaddingRight).toBe("4px");
-    expect(gradientStyles?.largeStyle.fieldPaddingRight).toBe("4px");
+    expect(gradientStyles?.defaultStyle.fieldPaddingRight).toBe("0px");
+    expect(gradientStyles?.largeStyle.fieldPaddingRight).toBe("0px");
     expect(result.rightSpacing.text).toBe(result.rightSpacing.number);
     expect(result.rightSpacing.text).toBe(result.rightSpacing.select);
   });
@@ -2384,61 +2384,44 @@ test.describe("propskit-color", () => {
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.evaluate(async () => {
       await import("/fig-lab.js");
+      await import("/fig-editor.js");
       await customElements.whenDefined("propskit-color");
+      await customElements.whenDefined("fig-fill-picker");
     });
   });
 
-  test("composes and forwards color attributes, events, and focus", async ({ page }) => {
+  test("composes a fill-picker swatch and forwards color events", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML =
         '<propskit-color label="Fill" value="#0D99FF" alpha="true"></propskit-color>';
     });
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
 
     const control = page.locator("propskit-color");
     const field = control.locator("fig-field");
-    const colorInput = control.locator("fig-input-color");
+    const picker = control.locator("fig-fill-picker");
+    const swatch = picker.locator("fig-swatch");
     await expect(control.locator("fig-field > label")).toHaveText("Fill");
-    await expect(colorInput).toHaveAttribute("value", "#0D99FF");
-    await expect(colorInput).toHaveAttribute("alpha", "true");
-    await expect(colorInput).toHaveAttribute("text", "true");
-    await expect(colorInput.locator("fig-swatch")).toHaveCount(1);
-    await expect(colorInput.locator("fig-input-text input")).toHaveValue("0D99FF");
+    await expect(control.locator("fig-input-color")).toHaveCount(0);
+    await expect(control.locator(".fig-field-chevron")).toHaveCount(0);
+    await expect(picker).toHaveAttribute("mode", "solid");
+    await expect(picker).toHaveAttribute("alpha", "true");
+    await expect(swatch).toHaveCount(1);
     expect(
-      await colorInput
-        .locator("fig-input-text input")
-        .evaluate((element) => getComputedStyle(element).fieldSizing),
-    ).toBe("fixed");
-    const hexInput = colorInput.locator("fig-input-text input");
-    await colorInput.evaluate((element) => element.setAttribute("value", "#111111"));
-    const numericWidth = (await hexInput.boundingBox())?.width;
-    await colorInput.evaluate((element) => element.setAttribute("value", "#FFFFFF"));
-    const alphaWidth = (await hexInput.boundingBox())?.width;
-    expect(alphaWidth).toBe(numericWidth);
-    const opacityInput = colorInput.locator("fig-input-number input");
-    expect(
-      await opacityInput.evaluate((element) => getComputedStyle(element).fieldSizing),
-    ).toBe("fixed");
-    const opacityWidth = (await opacityInput.boundingBox())?.width;
-    await opacityInput.evaluate((element) => {
-      (element as HTMLInputElement).value = "1";
-    });
-    expect((await opacityInput.boundingBox())?.width).toBe(opacityWidth);
-
+      (await swatch.getAttribute("background"))?.toLowerCase(),
+    ).toBe("#0d99ff");
     const fieldBox = await field.boundingBox();
-    const inputBox = await colorInput.boundingBox();
-    expect(inputBox?.height).toBe(fieldBox?.height);
-    expect(inputBox?.x).toBeGreaterThanOrEqual(
+    const swatchBox = await swatch.boundingBox();
+    expect(swatchBox?.height).toBe(24);
+    expect(swatchBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.28);
+    expect(swatchBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.36);
+    expect(swatchBox?.x).toBeGreaterThan(
       (fieldBox?.x ?? 0) + (fieldBox?.width ?? 0) * 0.4,
     );
-    expect(
-      Math.abs(
-        (inputBox?.x ?? 0) +
-          (inputBox?.width ?? 0) -
-          ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
-      ),
-    ).toBeLessThan(1);
 
     const events = await control.evaluate((element) => {
       const received: Array<{ type: string; detail: unknown }> = [];
@@ -2448,11 +2431,10 @@ test.describe("propskit-color", () => {
           detail: (event as CustomEvent).detail,
         });
       });
-      const inner = element.querySelector("fig-input-color");
-      inner?.setAttribute("value", "#FF00FF");
+      const inner = element.querySelector("fig-fill-picker");
       inner?.dispatchEvent(
         new CustomEvent("input", {
-          detail: { color: "#FF00FF", alpha: 1 },
+          detail: { type: "solid", color: "#FF00FF", alpha: 1 },
           bubbles: true,
         }),
       );
@@ -2460,11 +2442,11 @@ test.describe("propskit-color", () => {
     });
 
     expect(events).toEqual([
-      { type: "input", detail: { color: "#FF00FF", alpha: 1 } },
+      { type: "input", detail: { color: "#FF00FF", alpha: 1, opacity: 100 } },
     ]);
     await expect(control).toHaveAttribute("value", "#FF00FF");
     await control.evaluate((element) => (element as HTMLElement).focus());
-    await expect(colorInput.locator("fig-input-text input")).toBeFocused();
+    await expect(swatch).toBeFocused();
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("none");
   });
@@ -2477,11 +2459,13 @@ test.describe("propskit-gradient", () => {
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.evaluate(async () => {
       await import("/fig-lab.js");
+      await import("/fig-editor.js");
       await customElements.whenDefined("propskit-gradient");
+      await customElements.whenDefined("fig-fill-picker");
     });
   });
 
-  test("composes an inline gradient and preserves its JSON event contract", async ({
+  test("composes a picker gradient and preserves its JSON event contract", async ({
     page,
   }) => {
     const initial = {
@@ -2511,18 +2495,19 @@ test.describe("propskit-gradient", () => {
     const control = page.locator("propskit-gradient");
     const gradient = control.locator("fig-input-gradient");
     await expect(control.locator("fig-field > label")).toHaveText("Fill");
-    await expect(gradient).toHaveAttribute("edit", "true");
+    await expect(gradient).toHaveAttribute("edit", "picker");
     await expect(gradient).toHaveAttribute("mode", "tip");
     await expect(gradient).not.toHaveAttribute("size");
     await expect(gradient).toHaveAttribute("aria-label", "Fill");
+    await expect(gradient.locator("fig-fill-picker")).toHaveCount(1);
     await expect(gradient.locator("fig-handle:not(.fig-input-gradient-ghost)")).toHaveCount(
-      2,
+      0,
     );
     const fieldBox = await control.locator("fig-field").boundingBox();
     const gradientBox = await gradient.boundingBox();
     expect(gradientBox?.height).toBe(24);
-    expect(gradientBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.45);
-    expect(gradientBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.5);
+    expect(gradientBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.28);
+    expect(gradientBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.36);
     expect(gradientBox?.x).toBeGreaterThan(
       (fieldBox?.x ?? 0) + (fieldBox?.width ?? 0) * 0.4,
     );
@@ -2530,7 +2515,7 @@ test.describe("propskit-gradient", () => {
       Math.abs(
         (gradientBox?.x ?? 0) +
           (gradientBox?.width ?? 0) -
-          ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0) - 4),
+          ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
       ),
     ).toBeLessThan(1);
     await gradient.hover();
@@ -2562,9 +2547,7 @@ test.describe("propskit-gradient", () => {
     expect(received).toEqual([{ type: "input", detail: next }]);
     await expect(control).toHaveAttribute("value", JSON.stringify(next));
     await control.evaluate((element) => (element as HTMLElement).focus());
-    await expect(
-      gradient.locator("fig-handle:not(.fig-input-gradient-ghost)").first(),
-    ).toBeFocused();
+    await expect(gradient).toBeFocused();
   });
 
   test("uses structural defaults, resets, and forwards disabled state", async ({
@@ -3599,6 +3582,7 @@ test.describe("propskit delegated click behavior", () => {
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.evaluate(async () => {
       await import("/fig-lab.js");
+      await import("/fig-editor.js");
     });
   });
 
@@ -3721,7 +3705,7 @@ test.describe("propskit delegated click behavior", () => {
     await expect(page.locator("propskit-text input")).toBeFocused();
 
     await clickField("propskit-color");
-    await expect(page.locator("propskit-color fig-input-text input")).toBeFocused();
+    await expect(page.locator("propskit-color fig-swatch")).toBeFocused();
 
     await page.locator("propskit-slider fig-field").click({ position: { x: 12, y: 12 } });
     await expect(page.locator('propskit-slider input[type="range"]')).toBeFocused();
