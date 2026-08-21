@@ -17337,7 +17337,7 @@ figDefineElement("fig-choice", FigChoice);
  * @attr {string} choice-element - CSS selector for child choices (default: "fig-choice")
  * @attr {string} layout - Layout mode: "vertical" (default), "horizontal", "grid"
  * @attr {number} columns - Number of columns when layout="grid" (default: 2)
- * @attr {string} value - Value of the currently selected choice
+ * @attr {string} value - Selected choice value. Omit to select the first choice; `value=""` means none.
  * @attr {boolean} disabled - Whether the chooser is disabled
  */
 class FigChooser extends HTMLElement {
@@ -17414,12 +17414,10 @@ class FigChooser extends HTMLElement {
         choice.removeAttribute("selected");
       }
     }
-    this.#selectedChoice = element;
+    this.#selectedChoice = element ?? null;
     const val = element?.getAttribute("value") ?? "";
     if (this.getAttribute("value") !== val) {
-      if (val) {
-        this.setAttribute("value", val);
-      }
+      this.setAttribute("value", val);
     }
     this.#scrollToChoice(element);
   }
@@ -17429,7 +17427,10 @@ class FigChooser extends HTMLElement {
   }
 
   set value(val) {
-    if (val === null || val === undefined || val === "") return;
+    if (val === null || val === undefined || val === "") {
+      this.setAttribute("value", "");
+      return;
+    }
     this.setAttribute("value", String(val));
   }
 
@@ -17495,8 +17496,14 @@ class FigChooser extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === "value" && newValue !== oldValue && newValue) {
-      this.#selectByValue(newValue);
+    if (name === "value" && newValue !== oldValue) {
+      if (newValue === "") {
+        this.selectedChoice = null;
+      } else if (newValue == null) {
+        this.#syncSelection();
+      } else {
+        this.#selectByValue(newValue);
+      }
     }
     if (name === "disabled") {
       this.#syncDisabledChoices();
@@ -17537,7 +17544,12 @@ class FigChooser extends HTMLElement {
       return;
     }
 
+    const hasValueAttr = this.hasAttribute("value");
     const valueAttr = this.getAttribute("value");
+    if (hasValueAttr && valueAttr === "") {
+      this.selectedChoice = null;
+      return;
+    }
     if (valueAttr && this.#selectByValue(valueAttr)) return;
 
     const alreadySelected = choices.find((choice) =>

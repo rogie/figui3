@@ -5312,7 +5312,9 @@ fig-choice {
       content: "";
       position: absolute;
       inset: 0;
-      border-radius: var(--fig-choice-border-radius);
+      border-radius: calc(
+        var(--fig-choice-border-radius) + var(--fig-choice-selection-ring-width)
+      );
       pointer-events: none;
       z-index: 1;
       box-shadow: inset 0 0 0 calc(var(--fig-choice-selection-ring-width)*2) var(--figma-color-bg);

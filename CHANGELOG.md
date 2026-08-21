@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.16]
+
+### Added
+
+- `fig-chooser value=""` keeps no choice selected. Omitting `value` still selects the first choice.
+
+### Fixed
+
+- `fig-choice` selected outline radius includes the ring offset so corners stay concentric.
+
 ## [8.9.15]
 
 ### Changed

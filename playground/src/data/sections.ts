@@ -492,6 +492,23 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
+        id: "empty",
+        name: "No selection",
+        markup: `<div class="prop-panel">
+  <fig-field direction="vertical">
+    <label>Style</label>
+    <fig-chooser layout="vertical" value="" full drag style="max-height: 240px">
+      <fig-choice value="option-a">Option A</fig-choice>
+      <fig-choice value="option-b">Option B</fig-choice>
+      <fig-choice value="option-c">Option C</fig-choice>
+      <fig-choice value="option-d">Option D</fig-choice>
+      <fig-choice value="option-e">Option E</fig-choice>
+      <fig-choice value="option-f">Option F</fig-choice>
+    </fig-chooser>
+  </fig-field>
+</div>`,
+      },
+      {
         id: "grid",
         name: "Grid",
         markup: `<div class="prop-panel">

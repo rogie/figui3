@@ -154,7 +154,7 @@ Playground hashes: `/figui3#{id}`. Full attrs: [reference.md](reference.md).
 | `fig-header` / `fig-footer` / `fig-content` | (containers) | Header: `borderless`, `compact`. Footer: `sticky` |
 | `fig-tabs` / `fig-tab` | `#tabs` | Roving tabs. `content="#id"` for panels |
 | `fig-segmented-control` / `fig-segment` | `#segmented-control` | Radio-group pattern |
-| `fig-chooser` / `fig-choice` | (containers) | Listbox selection |
+| `fig-chooser` / `fig-choice` | `#chooser` | Listbox. Omit `value` to select first; `value=""` means none. |
 | `fig-separator` / `fig-menu-separator` | `#separator` | Optional `label`, `sticky`, `borderless` |
 | `fig-menu` / `fig-menu-item` | `#menu` | `fig-menu-trigger`, `trigger="contextmenu"`, `position`, `offset`. Item also works in `fig-popup` (sticky separators, nested row menus). |
 | `fig-icon` | `#icon` | Token mask (`name`, `size="small"`, `color`) |

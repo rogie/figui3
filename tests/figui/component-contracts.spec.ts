@@ -6692,6 +6692,83 @@ test.describe("remaining accessibility contracts", () => {
     });
   });
 
+  test("fig-chooser value=\"\" keeps no selection and omitted value still picks the first choice", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-chooser id="empty" value="">
+          <fig-choice value="a">A</fig-choice>
+          <fig-choice value="b">B</fig-choice>
+        </fig-chooser>
+        <fig-chooser id="default">
+          <fig-choice value="a">A</fig-choice>
+          <fig-choice value="b">B</fig-choice>
+        </fig-chooser>
+        <fig-chooser id="clearable" value="b">
+          <fig-choice value="a">A</fig-choice>
+          <fig-choice value="b">B</fig-choice>
+        </fig-chooser>
+      `;
+    });
+
+    const empty = page.locator("#empty");
+    const fallback = page.locator("#default");
+    const clearable = page.locator("#clearable");
+
+    await expect
+      .poll(() =>
+        empty.evaluate((chooser) => ({
+          value: chooser.value,
+          selected: chooser.querySelectorAll("fig-choice[selected]").length,
+        })),
+      )
+      .toEqual({ value: "", selected: 0 });
+    await expect
+      .poll(() =>
+        fallback.evaluate((chooser) => ({
+          value: chooser.value,
+          selected: chooser.querySelector("fig-choice[selected]")?.getAttribute("value"),
+        })),
+      )
+      .toEqual({ value: "a", selected: "a" });
+
+    const events = await clearable.evaluate((chooser) => {
+      const received = [];
+      chooser.addEventListener("input", (event) => {
+        received.push({ type: event.type, detail: event.detail });
+      });
+      chooser.addEventListener("change", (event) => {
+        received.push({ type: event.type, detail: event.detail });
+      });
+      chooser.value = "";
+      return {
+        received,
+        value: chooser.value,
+        attr: chooser.getAttribute("value"),
+        selected: chooser.querySelectorAll("fig-choice[selected]").length,
+        selectedChoice: chooser.selectedChoice,
+      };
+    });
+    expect(events).toEqual({
+      received: [],
+      value: "",
+      attr: "",
+      selected: 0,
+      selectedChoice: null,
+    });
+
+    await clearable.evaluate((chooser) => {
+      chooser.value = null;
+    });
+    await expect(clearable).toHaveAttribute("value", "");
+    expect(
+      await clearable.evaluate((chooser) => chooser.querySelectorAll("fig-choice[selected]").length),
+    ).toBe(0);
+  });
+
   test("fig-chooser restores light-DOM overflow buttons after choices are replaced", async ({
     page,
   }) => {
