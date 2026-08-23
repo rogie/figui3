@@ -1499,8 +1499,16 @@ function normalizeGradientConfig(gradient) {
   return next;
 }
 
+function lockFillPickerGradientInterpolation(gradient) {
+  const next = normalizeGradientConfig(gradient);
+  // Interpolation UI hidden for now — lock to sRGB.
+  next.interpolationSpace = "srgb";
+  delete next.hueInterpolation;
+  return next;
+}
+
 function gradientToValueShape(gradient) {
-  const normalized = normalizeGradientConfig(gradient);
+  const normalized = lockFillPickerGradientInterpolation(gradient);
   const output = {
     ...normalized,
     interpolationSpace: normalized.interpolationSpace,
@@ -1991,7 +1999,7 @@ class FigFillPicker extends HTMLElement {
       // Gamut UI hidden for now — lock to sRGB.
       this.#gamut = "srgb";
       if (parsed.gradient) {
-        this.#gradient = normalizeGradientConfig({
+        this.#gradient = lockFillPickerGradientInterpolation({
           ...this.#gradient,
           ...parsed.gradient,
         });
@@ -2281,6 +2289,7 @@ class FigFillPicker extends HTMLElement {
         {
           className: "fig-fill-picker-type",
           label: "Fill type",
+          variant: "ghost",
           value: this.#fillType,
         },
         options,
@@ -3212,7 +3221,6 @@ class FigFillPicker extends HTMLElement {
   // ============ GRADIENT TAB ============
   #initGradientTab() {
     const container = this.#dialog.querySelector('[data-tab="gradient"]');
-    const interpolationValue = gradientInterpolationSelectValue(this.#gradient);
     const gradientType = figEditorCreateElement(
       "fig-select",
       {
@@ -3314,70 +3322,7 @@ class FigFillPicker extends HTMLElement {
         ),
       ],
     );
-    const interpolationModes = figEditorCreateElement(
-      "fig-segmented-control",
-      {
-        className: "fig-fill-picker-gradient-interpolation-modes",
-        "aria-label": "Color interpolation",
-        value: interpolationValue,
-      },
-      FigFillPicker.#GRADIENT_INTERPOLATION_MODES.filter(
-        (mode) => !mode.advanced,
-      ).map(({ value, space, title, subtitle }) =>
-        figEditorCreateElement(
-          "fig-tooltip",
-          { text: `${title} — ${subtitle}` },
-          figEditorCreateElement(
-            "fig-segment",
-            {
-              value,
-              "data-space": space,
-              "aria-label": `${title} — ${subtitle}`,
-            },
-            figEditorCreateElement("fig-interpolation-swatch", {
-              "aria-hidden": "true",
-            }),
-          ),
-        ),
-      ),
-    );
-    const interpolationSelect = figEditorCreateElement(
-      "fig-select",
-      {
-        className: "fig-fill-picker-gradient-space",
-        label: "Color interpolation",
-        value: interpolationValue,
-      },
-      figEditorCreateElement(
-        "fig-select-options",
-        {},
-        this.#createGradientInterpolationOptions(),
-      ),
-    );
-    // The select trigger overlays the icon button so its menu anchors correctly.
-    const interpolationMore = figEditorCreateElement(
-      "div",
-      { className: "fig-fill-picker-gradient-interpolation-more" },
-      [
-        figEditorCreateElement(
-          "fig-button",
-          {
-            icon: true,
-            variant: "ghost",
-            "aria-hidden": "true",
-            tabindex: "-1",
-          },
-          figEditorCreateIcon("more"),
-        ),
-        interpolationSelect,
-      ],
-    );
-    const interpolation = figEditorCreateElement(
-      "fig-field",
-      { className: "fig-fill-picker-gradient-interpolation-field" },
-      [interpolationModes, interpolationMore],
-    );
-    container.replaceChildren(header, preview, interpolation, stops);
+    container.replaceChildren(header, preview, stops);
 
     this.#updateGradientUI();
     this.#setupGradientEvents(container);
@@ -3675,7 +3620,7 @@ class FigFillPicker extends HTMLElement {
         if (this.#syncingGradientBar) return;
         const detail = e.detail;
         if (!detail?.gradient) return;
-        this.#gradient = normalizeGradientConfig({
+        this.#gradient = lockFillPickerGradientInterpolation({
           ...this.#gradient,
           ...detail.gradient,
         });
@@ -3846,7 +3791,7 @@ class FigFillPicker extends HTMLElement {
 
     const container = this.#dialog.querySelector('[data-tab="gradient"]');
     if (!container) return;
-    this.#gradient = normalizeGradientConfig(this.#gradient);
+    this.#gradient = lockFillPickerGradientInterpolation(this.#gradient);
 
     const interpolationValue = gradientInterpolationSelectValue(this.#gradient);
     const interpolationSelect = container.querySelector(
@@ -4286,6 +4231,11 @@ class FigFillPicker extends HTMLElement {
       }
 
       element.setAttribute("src", this.#video.url);
+      if (this.#video.poster) {
+        element.setAttribute("poster", this.#video.poster);
+      } else {
+        element.removeAttribute("poster");
+      }
       element.classList.add("has-media");
 
       const fileInput = element.querySelector("fig-input-file[data-generated]");

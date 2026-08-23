@@ -322,7 +322,7 @@ fig-select-options > .fig-overflow-end::before,
 
 const FIG_SHADOW_ICON_CSS = `
 fig-icon {
-  contain: strict;
+  contain: size;
   --size: var(--spacer-4);
   display: inline-flex;
   width: var(--size);
@@ -13382,13 +13382,9 @@ class FigMediaControls extends HTMLElement {
     tooltip.setAttribute("text", "Play");
     const btn = document.createElement("fig-button");
     btn.setAttribute("variant", "ghost");
-    btn.setAttribute("size", "small");
     btn.setAttribute("icon", "true");
     btn.setAttribute("aria-label", "Play");
-    const icon = createFigIcon("play", {
-      className: "fig-media-controls-play-icon",
-    });
-    btn.append(icon);
+    btn.append(createFigIcon("play"));
     tooltip.append(btn);
     btn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -13478,7 +13474,7 @@ class FigMediaControls extends HTMLElement {
     const playing = this.playing;
     this.#playBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
     this.#playTooltip?.setAttribute("text", playing ? "Pause" : "Play");
-    const icon = this.#playBtn.querySelector(".fig-media-controls-play-icon");
+    const icon = this.#playBtn.querySelector("fig-icon");
     if (icon) {
       icon.setAttribute("name", playing ? "pause" : "play");
     }

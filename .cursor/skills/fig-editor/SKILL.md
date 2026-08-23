@@ -178,7 +178,7 @@ Child `slot="mode-<name>"` plus `<name>` in `mode`. Custom content must dispatch
 
 ## `fig-interpolation-swatch`
 
-Preview for gradient interpolation (linear or polar hue arc). Playground attrs: `size="small|large"`. Used inside the fill picker gradient UI; can be used standalone with a gradient `value`.
+Preview for gradient interpolation (linear or polar hue arc). Playground attrs: `size="small|large"`. Can be used standalone with a gradient `value`. The fill picker interpolation row is hidden for now and locks to `srgb`.
 
 ## Maintainer notes
 

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.18]
+
+### Changed
+
+- `fig-fill-picker` hides the gradient interpolation row and locks interpolation to `srgb`.
+- `fig-fill-picker` dialog `fig-content` top padding is `--spacer-2`.
+- `fig-fill-picker` type select is `variant="ghost"`.
+- `fig-media-controls` play button no longer uses `size="small"`.
+- `fig-icon` uses `contain: size` instead of `contain: strict`.
+
+### Fixed
+
+- Video fills pass `poster` to `fig-swatch` `background` the same way image fills pass `url`.
+- Fill picker video preview gets the poster while the clip loads. Playground video fills use a live MDN clip (Google sample bucket is 403).
+- `fig-media-controls` play button stays visible without hover (`fig-tooltip` is a real flex item; `.has-media` only hides the replace overlay).
+
 ## [8.9.17]
 
 ### Added

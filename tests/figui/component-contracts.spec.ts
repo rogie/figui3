@@ -9837,6 +9837,24 @@ test.describe("media accessibility", () => {
     await expect(page.locator("#child-caption > figcaption[data-generated]")).toHaveCount(0);
   });
 
+  test("fig-media-controls play button is visible without hover", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-media-controls duration="10" time="0"></fig-media-controls>`;
+    });
+    await page.waitForTimeout(50);
+
+    const box = await page
+      .locator("fig-media-controls fig-button")
+      .boundingBox();
+    expect(box).toBeTruthy();
+    expect(box?.width).toBeGreaterThan(8);
+    expect(box?.height).toBeGreaterThan(8);
+  });
+
   test("fig-media-controls names the seek slider with formatted value text", async ({
     page,
   }) => {

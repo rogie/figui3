@@ -651,6 +651,48 @@ test.describe("fig-fill-picker audit regressions", () => {
     });
   });
 
+  test("video tab forwards url and poster to fig-media and the swatch", async ({
+    page,
+  }) => {
+    await page.addStyleTag({ url: "/fig-editor.css" });
+    const state = await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        open(): void;
+      };
+      picker.setAttribute("mode", "video");
+      picker.value = {
+        type: "video",
+        video: {
+          url: "https://example.com/clip.mp4",
+          poster: "https://example.com/still.jpg",
+          scaleMode: "fill",
+        },
+      };
+      picker.append(document.createElement("fig-swatch"));
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      await new Promise(requestAnimationFrame);
+      const preview = document.querySelector(".fig-fill-picker-video-preview");
+      const swatch = picker.querySelector("fig-swatch");
+      const play = preview?.querySelector("fig-media-controls fig-button");
+      const result = {
+        src: preview?.getAttribute("src"),
+        poster: preview?.getAttribute("poster"),
+        background: swatch?.getAttribute("background"),
+        playVisibility: play ? getComputedStyle(play).visibility : "",
+      };
+      picker.remove();
+      return result;
+    });
+
+    expect(state.src).toBe("https://example.com/clip.mp4");
+    expect(state.poster).toBe("https://example.com/still.jpg");
+    expect(state.background).toBe('url("https://example.com/still.jpg")');
+    expect(state.playVisibility).toBe("visible");
+  });
+
   test("uses default-video and posters the swatch, not the mp4", async ({
     page,
   }) => {
@@ -724,9 +766,8 @@ test.describe("fig-fill-picker audit regressions", () => {
       );
       await new Promise(requestAnimationFrame);
       const video = fill.value.video;
-      const videoSwatch = fill
-        .querySelector("fig-swatch")
-        ?.getAttribute("background");
+      const videoSwatchEl = fill.querySelector("fig-swatch");
+      const videoSwatch = videoSwatchEl?.getAttribute("background");
       fill.setAttribute(
         "value",
         JSON.stringify({
@@ -737,7 +778,13 @@ test.describe("fig-fill-picker audit regressions", () => {
       await new Promise(requestAnimationFrame);
       const legacy = fill.value.webcam;
       fill.remove();
-      return { webcam, webcamSwatch, video, videoSwatch, legacy };
+      return {
+        webcam,
+        webcamSwatch,
+        video,
+        videoSwatch,
+        legacy,
+      };
     });
 
     expect(state.webcam).toMatchObject({
@@ -820,5 +867,91 @@ test.describe("fig-fill-picker audit regressions", () => {
     expect(state.snapshot).toMatch(/^blob:/);
     expect(state.afterCapture).toBe(`url("${state.snapshot}")`);
     expect(state.afterRemount).toBe(`url("${state.snapshot}")`);
+  });
+
+  test("type select is ghost", async ({ page }) => {
+    const variant = await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        open(): void;
+      };
+      picker.append(document.createElement("fig-swatch"));
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      await new Promise(requestAnimationFrame);
+      const select = document.querySelector(
+        "dialog.fig-fill-picker-dialog .fig-fill-picker-type",
+      );
+      const value = select?.getAttribute("variant") ?? "";
+      picker.remove();
+      return value;
+    });
+
+    expect(variant).toBe("ghost");
+  });
+
+  test("fig-content top padding is spacer-2", async ({ page }) => {
+    await page.addStyleTag({ url: "/fig-editor.css" });
+    const padding = await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        open(): void;
+      };
+      picker.append(document.createElement("fig-swatch"));
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      await new Promise(requestAnimationFrame);
+      const content = document.querySelector(
+        "dialog.fig-fill-picker-dialog > fig-content",
+      );
+      const probe = document.createElement("div");
+      probe.style.paddingTop = "var(--spacer-2)";
+      document.body.append(probe);
+      const actual = content ? getComputedStyle(content).paddingTop : "";
+      const expected = getComputedStyle(probe).paddingTop;
+      picker.remove();
+      probe.remove();
+      return { actual, expected };
+    });
+
+    expect(padding.actual).toBe(padding.expected);
+    expect(padding.actual).not.toBe("");
+  });
+
+  test("hides gradient interpolation and locks to srgb", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        open(): void;
+      };
+      picker.setAttribute("mode", "gradient");
+      picker.value = {
+        type: "gradient",
+        gradient: {
+          type: "linear",
+          angle: 90,
+          interpolationSpace: "oklab",
+          stops: [
+            { position: 0, color: "#FF0000", opacity: 100 },
+            { position: 100, color: "#0000FF", opacity: 100 },
+          ],
+        },
+      };
+      picker.append(document.createElement("fig-swatch"));
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      await new Promise(requestAnimationFrame);
+      const dialog = document.querySelector("dialog.fig-fill-picker-dialog");
+      const fieldCount = dialog?.querySelectorAll(
+        ".fig-fill-picker-gradient-interpolation-field",
+      ).length;
+      const interpolationSpace = picker.value.gradient?.interpolationSpace;
+      picker.remove();
+      return { fieldCount, interpolationSpace };
+    });
+
+    expect(state.fieldCount).toBe(0);
+    expect(state.interpolationSpace).toBe("srgb");
   });
 });

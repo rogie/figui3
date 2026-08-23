@@ -1495,7 +1495,8 @@ input[type="color"] {
   }
   &::before {
     content: "";
-    background: var(--swatch-background);
+    background-color: transparent;
+    background-image: var(--swatch-background);
     background-size: var(--swatch-bg-size);
     background-position: var(--swatch-bg-position);
     background-repeat: no-repeat;
@@ -1779,6 +1780,18 @@ fig-media-controls {
   align-items: center;
   gap: var(--spacer-1);
   width: 100%;
+
+  /* display:contents on fig-tooltip drops the play button out of this flex
+     row until hover/reflow. Keep a real box so the control is always visible. */
+  > fig-tooltip {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+  }
+
+  fig-icon {
+    contain: none;
+  }
 
   &[overlay]:not([overlay="false"]) {
     border-radius: var(--radius-medium);
@@ -4891,7 +4904,9 @@ fig-skeleton {
 
 .fig-mask-icon,
 fig-icon {
-  contain: strict;
+  /* size only — paint containment skips mask-image when `name` / `--icon` updates
+     until a sibling hover (e.g. fig-preview) forces a repaint. */
+  contain: size;
   --size: var(--spacer-4);
   --icon: var(--icon-24-add);
 

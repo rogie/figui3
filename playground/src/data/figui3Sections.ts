@@ -1,7 +1,7 @@
 import { propkitSections, type Section } from "./sections";
 import { buildFigIconExampleMarkup } from "../lib/attributeParser";
 import { landscapeUrl } from "../lib/images";
-import { videoExampleAttrs, videoSrc } from "../lib/videos";
+import { DEMO_FILL_VIDEO, videoExampleAttrs } from "../lib/videos";
 
 const randomAvatarId = Math.floor(Math.random() * 70) + 1;
 
@@ -526,7 +526,7 @@ export const figui3Sections: Section[] = [
         id: "video",
         name: "Video",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="video" default-video="${videoSrc()}" value='{"type":"video","video":{"url":"${videoSrc()}","scaleMode":"fill","scale":50}}' full></fig-input-fill>
+  <fig-input-fill picker-mode="video" default-video="${DEMO_FILL_VIDEO.src}" value='{"type":"video","video":{"url":"${DEMO_FILL_VIDEO.src}","poster":"${DEMO_FILL_VIDEO.poster}","scaleMode":"fill","scale":50}}' full></fig-input-fill>
 </div>`,
       },
       {
@@ -668,7 +668,7 @@ export const figui3Sections: Section[] = [
     id: "fill-input",
     name: "Fill Input",
     group: "Core components",
-    description: "Fill controls for solid, gradient, and image fills.",
+    description: "Fill controls for solid, gradient, image, and video fills.",
     examples: [
       {
         id: "solid",
@@ -689,6 +689,13 @@ export const figui3Sections: Section[] = [
         name: "Image",
         markup: `<div class="prop-panel">
   <fig-input-fill value='{"type":"image","image":{"url":"https://picsum.photos/id/10/200/200","scaleMode":"fill","scale":100}}'></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "video",
+        name: "Video",
+        markup: `<div class="prop-panel">
+  <fig-input-fill default-video="${DEMO_FILL_VIDEO.src}" value='{"type":"video","video":{"url":"${DEMO_FILL_VIDEO.src}","poster":"${DEMO_FILL_VIDEO.poster}","scaleMode":"fill","scale":50}}'></fig-input-fill>
 </div>`,
       },
     ],

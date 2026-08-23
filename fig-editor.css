@@ -153,12 +153,14 @@ fig-fill-picker {
   width: 240px;
   padding: 0;
 
+  & > fig-content {
+    padding-bottom: var(--spacer-2-5);
+    padding-top: var(--spacer-2);
+  }
+
   fig-tab {
     font-size: 0.6875rem;
     padding: var(--spacer-1) var(--spacer-1);
-  }
-  & > fig-content {
-    padding-bottom: var(--spacer-2-5);
   }
 
   .fig-fill-picker-close {
@@ -518,11 +520,14 @@ fig-fill-picker {
     }
 
     &.has-media {
-      fig-button {
+      /* Replace/upload only — not fig-media-controls play. */
+      fig-preview fig-button,
+      fig-input-file fig-button {
         visibility: hidden;
       }
       &:hover {
-        fig-button {
+        fig-preview fig-button,
+        fig-input-file fig-button {
           visibility: visible;
         }
       }

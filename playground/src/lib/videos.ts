@@ -8,10 +8,13 @@ export type DemoVideo = {
 const MDN_VIDEO_BASE =
   "https://interactive-examples.mdn.mozilla.net/media/cc0-videos";
 
-const GOOGLE_VIDEO_BASE =
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample";
-
 const TEST_VIDEO_BASE = "https://test-videos.co.uk";
+
+/** Stable clip + still for fill examples. Google's sample bucket is 403 now. */
+export const DEMO_FILL_VIDEO: DemoVideo = {
+  src: `${MDN_VIDEO_BASE}/flower.mp4`,
+  poster: "https://picsum.photos/id/106/640/360.webp",
+};
 
 const TEST_VIDEO_MOVIES = [
   { slug: "bigbuckbunny", prefix: "Big_Buck_Bunny" },
@@ -38,35 +41,12 @@ function buildTestVideos(): DemoVideo[] {
   return videos;
 }
 
-const GOOGLE_VIDEOS: DemoVideo[] = [
-  "BigBuckBunny",
-  "ElephantsDream",
-  "ForBiggerBlazes",
-  "ForBiggerEscapes",
-  "ForBiggerFun",
-  "ForBiggerJoyrides",
-  "ForBiggerMeltdowns",
-  "Sintel",
-  "SubaruOutbackOnStreetAndDirt",
-  "TearsOfSteel",
-  "VolkswagenGTIReview",
-  "WeAreGoingOnBullrun",
-  "WhatCarCanYouGetForAGrand",
-].map((name) => ({
-  src: `${GOOGLE_VIDEO_BASE}/${name}.mp4`,
-  poster: `${GOOGLE_VIDEO_BASE}/images/${name}.jpg`,
-}));
-
 const MDN_VIDEOS: DemoVideo[] = [
-  { src: `${MDN_VIDEO_BASE}/flower.mp4` },
-  { src: `${MDN_VIDEO_BASE}/friday.mp4` },
+  { src: `${MDN_VIDEO_BASE}/flower.mp4`, poster: DEMO_FILL_VIDEO.poster },
+  { src: `${MDN_VIDEO_BASE}/friday.mp4`, poster: DEMO_FILL_VIDEO.poster },
 ];
 
-const DEMO_VIDEOS: DemoVideo[] = [
-  ...buildTestVideos(),
-  ...MDN_VIDEOS,
-  ...GOOGLE_VIDEOS,
-];
+const DEMO_VIDEOS: DemoVideo[] = [...buildTestVideos(), ...MDN_VIDEOS];
 
 function pickVideo(): DemoVideo {
   return DEMO_VIDEOS[Math.floor(Math.random() * DEMO_VIDEOS.length)];
