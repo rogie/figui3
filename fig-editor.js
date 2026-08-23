@@ -24,6 +24,11 @@ function figEditorUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
+function figEditorCssUrl(url) {
+  if (!url) return "";
+  return `url("${String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
+}
+
 function figEditorCreateIcon(name, options = {}) {
   const icon = document.createElement("fig-icon");
   if (name) icon.setAttribute("name", name);
@@ -1552,6 +1557,9 @@ function parseGradientInterpolationSelectValue(val) {
  * @attr {boolean} disabled - Whether the picker is disabled
  * @attr {boolean} alpha - Whether to show alpha/opacity controls (default: true)
  * @attr {string} dialog-position - Position of the popup (default: "left")
+ * @attr {string} webcam-mode - `live` (default) keeps the camera after close; Capture always writes an image still
+ * @attr {string} default-video - Sample clip URL when Video is selected with no file
+ * @fires webcamstream - `{ stream, deviceId }` when the live camera starts, switches, or is released
  */
 let figFillPickerDialogId = 0;
 
@@ -1634,8 +1642,24 @@ class FigFillPicker extends HTMLElement {
     ],
   };
   #image = { url: null, scaleMode: "fill", scale: 50 };
-  #video = { url: null, scaleMode: "fill", scale: 50 };
-  #webcam = { stream: null, snapshot: null };
+  #video = {
+    url: null,
+    poster: null,
+    scaleMode: "fill",
+    scale: 50,
+    opacity: 1,
+    missing: true,
+  };
+  #webcam = {
+    stream: null,
+    live: true,
+    snapshot: null,
+    deviceId: null,
+    scaleMode: "fill",
+    scale: 50,
+    opacity: 1,
+  };
+  #webcamPosterStream = null;
 
   // Custom mode slots and data
   #customSlots = {};
@@ -1671,6 +1695,8 @@ class FigFillPicker extends HTMLElement {
       "disabled",
       "alpha",
       "mode",
+      "webcam-mode",
+      "default-video",
       "aria-label",
       "aria-labelledby",
       "aria-describedby",
@@ -1689,7 +1715,7 @@ class FigFillPicker extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.#discardDialog();
+    this.#discardDialog({ stopWebcam: true });
     this.#cancelFrames();
     this.#revokeOwnedBlobUrls();
     if (this.#swatch) this.#swatch.removeAttribute("selected");
@@ -1708,6 +1734,116 @@ class FigFillPicker extends HTMLElement {
     );
   }
 
+  #webcamMode() {
+    return this.getAttribute("webcam-mode") === "snapshot" ? "snapshot" : "live";
+  }
+
+  #shouldKeepWebcamLive() {
+    return (
+      this.#fillType === "webcam" &&
+      this.#webcamMode() === "live" &&
+      this.#webcam.live !== false
+    );
+  }
+
+  #webcamValue() {
+    return {
+      live: this.#webcamMode() === "live" && this.#webcam.live !== false,
+      snapshot: this.#webcam.snapshot ?? null,
+      deviceId: this.#webcam.deviceId ?? null,
+      scaleMode: this.#webcam.scaleMode || "fill",
+      scale: this.#webcam.scale ?? 50,
+      opacity: this.#webcam.opacity ?? 1,
+    };
+  }
+
+  #videoValue() {
+    const url = this.#video.url ?? null;
+    return {
+      url,
+      poster: this.#video.poster ?? null,
+      scaleMode: this.#video.scaleMode || "fill",
+      scale: this.#video.scale ?? 50,
+      opacity: this.#video.opacity ?? 1,
+      ...(url ? {} : { missing: true }),
+    };
+  }
+
+  #applyParsedWebcam(parsed) {
+    if (parsed.webcam && typeof parsed.webcam === "object") {
+      const { stream: _ignored, ...rest } = parsed.webcam;
+      Object.assign(this.#webcam, rest);
+      return;
+    }
+    if (parsed.type === "webcam" && parsed.image) {
+      if (parsed.image.url != null) this.#webcam.snapshot = parsed.image.url;
+      if (parsed.image.scaleMode) this.#webcam.scaleMode = parsed.image.scaleMode;
+      if (parsed.image.scale != null) this.#webcam.scale = parsed.image.scale;
+    }
+  }
+
+  #emitWebcamStream() {
+    this.dispatchEvent(
+      new CustomEvent("webcamstream", {
+        bubbles: true,
+        composed: true,
+        detail: {
+          stream: this.#webcam.stream,
+          deviceId: this.#webcam.deviceId ?? null,
+        },
+      }),
+    );
+  }
+
+  get webcamStream() {
+    return this.#webcam.stream;
+  }
+
+  releaseWebcam() {
+    this.#stopWebcam();
+  }
+
+  #writeWebcamSnapshot(blob) {
+    if (!blob) return null;
+    if (this.#webcam.snapshot?.startsWith("blob:")) {
+      URL.revokeObjectURL(this.#webcam.snapshot);
+      this.#ownedBlobUrls.delete(this.#webcam.snapshot);
+    }
+    this.#webcam.snapshot = URL.createObjectURL(blob);
+    this.#ownedBlobUrls.add(this.#webcam.snapshot);
+    return this.#webcam.snapshot;
+  }
+
+  async #snapshotWebcamVideo(video) {
+    if (!video?.videoWidth || !video.videoHeight) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/png"),
+    );
+    return this.#writeWebcamSnapshot(blob);
+  }
+
+  #syncLiveWebcamSwatch(video) {
+    if (this.#fillType !== "webcam") return;
+    const stream = this.#webcam.stream;
+    if (!stream) return;
+    if (this.#webcamPosterStream === stream && this.#webcam.snapshot) {
+      this.#updateSwatch();
+      return;
+    }
+    this.#webcamPosterStream = stream;
+    this.#snapshotWebcamVideo(video).then((url) => {
+      if (!url || this.#fillType !== "webcam" || this.#webcam.stream !== stream) {
+        return;
+      }
+      this.#updateSwatch();
+      this.#emitInput();
+    });
+  }
+
   #scheduleFrame(callback) {
     const id = requestAnimationFrame(() => {
       this.#rafIds.delete(id);
@@ -1723,12 +1859,17 @@ class FigFillPicker extends HTMLElement {
   }
 
   #revokeOwnedBlobUrls() {
-    this.#ownedBlobUrls.forEach((url) => URL.revokeObjectURL(url));
+    // Keep blobs still published on value so fig-input-fill / hosts can paint the swatch.
+    const keep = new Set(
+      [this.#webcam.snapshot, this.#video.poster, this.#image.url].filter(
+        (url) => typeof url === "string" && url.startsWith("blob:"),
+      ),
+    );
+    this.#ownedBlobUrls.forEach((url) => {
+      if (!keep.has(url)) URL.revokeObjectURL(url);
+    });
     this.#ownedBlobUrls.clear();
-    if (this.#webcam.snapshot?.startsWith("blob:")) {
-      if (this.#image.url === this.#webcam.snapshot) this.#image.url = null;
-      this.#webcam.snapshot = null;
-    }
+    keep.forEach((url) => this.#ownedBlobUrls.add(url));
   }
 
   #setupTrigger() {
@@ -1856,7 +1997,11 @@ class FigFillPicker extends HTMLElement {
         });
       }
       if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
-      if (parsed.video) this.#video = { ...this.#video, ...parsed.video };
+      if (parsed.video) {
+        this.#video = { ...this.#video, ...parsed.video };
+        this.#video.missing = !this.#video.url;
+      }
+      this.#applyParsedWebcam(parsed);
 
       // Store full parsed data for custom (non-built-in) types
       if (parsed.type && !builtinTypes.includes(parsed.type)) {
@@ -1888,7 +2033,7 @@ class FigFillPicker extends HTMLElement {
         break;
       case "image":
         if (this.#image.url) {
-          bg = `url(${this.#image.url})`;
+          bg = figEditorCssUrl(this.#image.url);
           const sizing = this.#getBackgroundSizing(
             this.#image.scaleMode,
             this.#image.scale,
@@ -1900,8 +2045,8 @@ class FigFillPicker extends HTMLElement {
         }
         break;
       case "video":
-        if (this.#video.url) {
-          bg = `url(${this.#video.url})`;
+        if (this.#video.poster) {
+          bg = figEditorCssUrl(this.#video.poster);
           const sizing = this.#getBackgroundSizing(
             this.#video.scaleMode,
             this.#video.scale,
@@ -1913,7 +2058,17 @@ class FigFillPicker extends HTMLElement {
         }
         break;
       case "webcam":
-        bg = this.#webcam.snapshot ? `url(${this.#webcam.snapshot})` : "";
+        if (this.#webcam.snapshot) {
+          bg = figEditorCssUrl(this.#webcam.snapshot);
+          const sizing = this.#getBackgroundSizing(
+            this.#webcam.scaleMode,
+            this.#webcam.scale,
+          );
+          bgSize = sizing.size;
+          bgPosition = sizing.position;
+        } else {
+          bg = "";
+        }
         break;
       default:
         const slot = this.#customSlots[this.#fillType];
@@ -1995,14 +2150,15 @@ class FigFillPicker extends HTMLElement {
     }
   }
 
-  #discardDialog() {
+  #discardDialog({ stopWebcam = false } = {}) {
     if (this.#teardownColorAreaEvents) {
       this.#teardownColorAreaEvents();
       this.#teardownColorAreaEvents = null;
     }
     this.#gradientInterpolationOpenObserver?.disconnect();
     this.#gradientInterpolationOpenObserver = null;
-    this.#stopWebcam();
+    if (!stopWebcam && this.#shouldKeepWebcamLive()) this.#detachWebcamPreview();
+    else this.#stopWebcam();
     if (!this.#dialog) return;
     this.#restoreCustomSlotContent();
     this.#dialog.remove();
@@ -2018,16 +2174,27 @@ class FigFillPicker extends HTMLElement {
     this.#syncTriggerA11y();
   }
 
-  #stopWebcam() {
+  #detachWebcamPreview() {
     this.#webcamRequestId += 1;
-    if (this.#webcam.stream) {
-      this.#webcam.stream.getTracks().forEach((track) => track.stop());
-      this.#webcam.stream = null;
-    }
     const video = this.#dialog?.querySelector(
       ".fig-fill-picker-webcam-video",
     );
     if (video) video.srcObject = null;
+  }
+
+  #stopWebcam({ emit = true } = {}) {
+    this.#webcamRequestId += 1;
+    const hadStream = Boolean(this.#webcam.stream);
+    if (this.#webcam.stream) {
+      this.#webcam.stream.getTracks().forEach((track) => track.stop());
+      this.#webcam.stream = null;
+    }
+    this.#webcamPosterStream = null;
+    const video = this.#dialog?.querySelector(
+      ".fig-fill-picker-webcam-video",
+    );
+    if (video) video.srcObject = null;
+    if (hadStream && emit) this.#emitWebcamStream();
   }
 
   #createDialog() {
@@ -2186,7 +2353,8 @@ class FigFillPicker extends HTMLElement {
 
     const onDialogClose = () => {
       if (this.#swatch) this.#swatch.removeAttribute("selected");
-      this.#stopWebcam();
+      if (this.#shouldKeepWebcamLive()) this.#detachWebcamPreview();
+      else this.#stopWebcam();
       const closingValue = JSON.stringify(this.value);
       if (this.#lastChangeValue !== null && this.#lastChangeValue !== closingValue) {
         this.#emitChange();
@@ -2287,7 +2455,11 @@ class FigFillPicker extends HTMLElement {
       });
     }
 
-    if (tabName === "webcam") this.#webcamStart?.();
+    if (tabName === "video") this.#applyDefaultVideo();
+    if (tabName === "webcam") {
+      this.#webcam.live = this.#webcamMode() === "live";
+      this.#webcamStart?.(this.#webcam.deviceId);
+    }
 
     this.#updateSwatch();
     if (emit) this.#emitInput();
@@ -4196,6 +4368,68 @@ class FigFillPicker extends HTMLElement {
     container.replaceChildren(header, preview);
 
     this.#setupVideoEvents(container);
+    this.#applyDefaultVideo();
+  }
+
+  #revokeVideoPoster() {
+    if (this.#video.poster?.startsWith("blob:")) {
+      URL.revokeObjectURL(this.#video.poster);
+      this.#ownedBlobUrls.delete(this.#video.poster);
+    }
+    this.#video.poster = null;
+  }
+
+  #applyDefaultVideo({ emit = true } = {}) {
+    if (this.#video.url) {
+      this.#video.missing = false;
+      if (!this.#video.poster) this.#captureVideoPoster(this.#video.url, { emit });
+      return;
+    }
+    const fallback = this.getAttribute("default-video");
+    if (!fallback) {
+      this.#video.missing = true;
+      return;
+    }
+    this.#video.url = fallback;
+    this.#video.missing = false;
+    const preview = this.#dialog?.querySelector(
+      ".fig-fill-picker-video-preview",
+    );
+    if (preview) this.#updateVideoPreviewStyle(preview);
+    this.#captureVideoPoster(fallback, { emit });
+  }
+
+  async #captureVideoPoster(src, { emit = true } = {}) {
+    if (!src) return;
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.crossOrigin = "anonymous";
+    try {
+      await new Promise((resolve, reject) => {
+        const fail = () => reject(new Error("video poster failed"));
+        video.addEventListener("error", fail, { once: true });
+        video.addEventListener("loadeddata", resolve, { once: true });
+        video.src = src;
+      });
+      if (!video.videoWidth || !video.videoHeight) return;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", 0.85),
+      );
+      if (!blob) return;
+      this.#revokeVideoPoster();
+      this.#video.poster = URL.createObjectURL(blob);
+      this.#ownedBlobUrls.add(this.#video.poster);
+      this.#updateSwatch();
+      if (emit) this.#emitInput();
+    } catch {
+      // Cross-origin or decode failures leave the swatch empty until a poster exists.
+    }
   }
 
   #setupVideoEvents(container) {
@@ -4218,8 +4452,10 @@ class FigFillPicker extends HTMLElement {
       const src = e.detail?.src || preview.src;
       if (!src) return;
       this.#video.url = src;
+      this.#video.missing = false;
       this.#updateVideoPreviewStyle(preview);
       preview.play?.();
+      this.#captureVideoPoster(src);
       this.#updateSwatch();
       this.#emitInput();
     });
@@ -4227,6 +4463,8 @@ class FigFillPicker extends HTMLElement {
     preview.addEventListener("change", () => {
       if (preview.src) return;
       this.#video.url = null;
+      this.#revokeVideoPoster();
+      this.#applyDefaultVideo();
       this.#updateVideoPreviewStyle(preview);
       this.#updateSwatch();
       this.#emitInput();
@@ -4327,20 +4565,81 @@ class FigFillPicker extends HTMLElement {
       if (ready) {
         status.querySelector("span").textContent = "Camera ready";
         status.style.display = "none";
+        this.#syncLiveWebcamSwatch(video);
       }
     };
     video.addEventListener("loadedmetadata", updateFrameReadiness);
     video.addEventListener("canplay", updateFrameReadiness);
 
+    const attachPreview = (stream) => {
+      this.#webcam.stream = stream;
+      video.srcObject = stream;
+      video.style.display = "block";
+      updateFrameReadiness();
+    };
+
+    const populateCameras = async (requestId, selectedId) => {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      if (requestId != null && requestId !== this.#webcamRequestId) return;
+      const cameras = devices.filter((d) => d.kind === "videoinput");
+
+      if (cameras.length > 1) {
+        cameraField.style.display = "";
+        let panel = cameraSelect.querySelector(":scope > fig-select-options");
+        if (!panel) {
+          panel = document.createElement("fig-select-options");
+          cameraSelect.append(panel);
+        }
+        panel.replaceChildren();
+        cameras.forEach((cam, i) => {
+          const option = document.createElement("fig-select-option");
+          option.value = cam.deviceId;
+          const label =
+            cam.label || (cameras.length > 1 ? `Camera ${i + 1}` : "Camera");
+          option.textContent = label.replace(
+            /\s*\((?:[0-9a-f]{4}:)*([0-9a-f]{4})\)$/i,
+            (_, id) => {
+              const displayId = /^\d+$/.test(id)
+                ? Number.parseInt(id, 10).toString()
+                : id.replace(/^0+/, "") || "0";
+              return ` ${displayId}`;
+            },
+          );
+          panel.append(option);
+        });
+        if (selectedId) cameraSelect.value = selectedId;
+      } else {
+        cameraField.style.display = "none";
+        cameraSelect
+          .querySelector(":scope > fig-select-options")
+          ?.replaceChildren();
+      }
+    };
+
     const startWebcam = async (deviceId = null) => {
-      this.#stopWebcam();
+      const requested = deviceId || this.#webcam.deviceId || null;
+      const existing = this.#webcam.stream;
+      const liveTracks =
+        existing?.getTracks?.().filter((track) => track.readyState !== "ended") ??
+        [];
+      if (existing && liveTracks.length) {
+        const currentId = this.#webcam.deviceId;
+        if (!requested || !currentId || requested === currentId) {
+          attachPreview(existing);
+          this.#emitWebcamStream();
+          populateCameras(null, requested || currentId);
+          return;
+        }
+      }
+
+      this.#stopWebcam({ emit: Boolean(existing) });
       const requestId = this.#webcamRequestId;
       setCaptureReady(false);
       status.querySelector("span").textContent = "Starting camera";
       status.style.display = "flex";
       try {
         const constraints = {
-          video: deviceId ? { deviceId: { exact: deviceId } } : true,
+          video: requested ? { deviceId: { exact: requested } } : true,
         };
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -4353,47 +4652,13 @@ class FigFillPicker extends HTMLElement {
           return;
         }
 
-        this.#webcam.stream = stream;
-        video.srcObject = stream;
-        video.style.display = "block";
-        updateFrameReadiness();
-
-        // Enumerate cameras
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        if (requestId !== this.#webcamRequestId) return;
-        const cameras = devices.filter((d) => d.kind === "videoinput");
-
-        if (cameras.length > 1) {
-          cameraField.style.display = "";
-          let panel = cameraSelect.querySelector(":scope > fig-select-options");
-          if (!panel) {
-            panel = document.createElement("fig-select-options");
-            cameraSelect.append(panel);
-          }
-          panel.replaceChildren();
-          cameras.forEach((cam, i) => {
-            const option = document.createElement("fig-select-option");
-            option.value = cam.deviceId;
-            const label =
-              cam.label || (cameras.length > 1 ? `Camera ${i + 1}` : "Camera");
-            option.textContent = label.replace(
-              /\s*\((?:[0-9a-f]{4}:)*([0-9a-f]{4})\)$/i,
-              (_, id) => {
-                const displayId = /^\d+$/.test(id)
-                  ? Number.parseInt(id, 10).toString()
-                  : id.replace(/^0+/, "") || "0";
-                return ` ${displayId}`;
-              },
-            );
-            panel.append(option);
-          });
-          if (deviceId) cameraSelect.value = deviceId;
-        } else {
-          cameraField.style.display = "none";
-          cameraSelect
-            .querySelector(":scope > fig-select-options")
-            ?.replaceChildren();
-        }
+        const track = stream.getVideoTracks?.()?.[0];
+        this.#webcam.deviceId =
+          requested || track?.getSettings?.()?.deviceId || null;
+        this.#webcam.live = this.#webcamMode() === "live";
+        attachPreview(stream);
+        this.#emitWebcamStream();
+        await populateCameras(requestId, requested);
       } catch (err) {
         if (requestId !== this.#webcamRequestId) return;
         console.error("Webcam error:", err.name, err.message);
@@ -4423,30 +4688,18 @@ class FigFillPicker extends HTMLElement {
     cameraSelect.addEventListener("change", (e) => {
       const next =
         typeof e.detail === "string" ? e.detail : e.target?.value;
-      if (next) startWebcam(next);
+      if (!next) return;
+      this.#webcam.deviceId = next;
+      startWebcam(next);
     });
 
     captureBtn.addEventListener("click", async () => {
       if (!this.#webcam.stream) return;
-      if (!video.videoWidth || !video.videoHeight) return;
+      const snapshot = await this.#snapshotWebcamVideo(video);
+      if (!snapshot) return;
 
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
-      if (!blob) return;
-
-      if (this.#webcam.snapshot?.startsWith("blob:")) {
-        URL.revokeObjectURL(this.#webcam.snapshot);
-        this.#ownedBlobUrls.delete(this.#webcam.snapshot);
-      }
-      this.#webcam.snapshot = URL.createObjectURL(blob);
-      this.#ownedBlobUrls.add(this.#webcam.snapshot);
-      this.#image.url = this.#webcam.snapshot;
+      this.#image.url = snapshot;
+      this.#webcam.live = false;
 
       const imagePreview = this.#dialog.querySelector(
         ".fig-fill-picker-image-preview",
@@ -4458,10 +4711,8 @@ class FigFillPicker extends HTMLElement {
       ).some((candidate) => candidate.dataset.tab === "image");
 
       if (hasImageTab) {
-        // Switch to image tab to show result
         this.#switchTab("image");
       } else {
-        // Webcam-only pickers keep the webcam type and report the snapshot
         this.#updateSwatch();
         this.#emitInput();
       }
@@ -4830,12 +5081,12 @@ class FigFillPicker extends HTMLElement {
       case "video":
         return {
           ...base,
-          video: { ...this.#video },
+          video: this.#videoValue(),
         };
       case "webcam":
         return {
           ...base,
-          image: { url: this.#webcam.snapshot, scaleMode: "fill", scale: 50 },
+          webcam: this.#webcamValue(),
         };
       default:
         return { ...base, ...this.#customData[this.#fillType] };
@@ -4874,6 +5125,15 @@ class FigFillPicker extends HTMLElement {
         if (wasOpen && this.isConnected) this.#openDialog();
         break;
       }
+      case "webcam-mode":
+        if (this.#fillType === "webcam") this.#updateSwatch();
+        break;
+      case "default-video":
+        if (this.#fillType === "video") {
+          this.#applyDefaultVideo({ emit: false });
+          this.#updateSwatch();
+        }
+        break;
       case "aria-label":
         if (this.#dialog) {
           this.#dialog.setAttribute("aria-label", this.#triggerLabel());

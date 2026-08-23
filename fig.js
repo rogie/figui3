@@ -8679,6 +8679,11 @@ function gradientInterpolationClause(gradient) {
   return `in ${normalized.interpolationSpace}`;
 }
 
+function figCssUrl(url) {
+  if (!url) return "";
+  return `url("${String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
+}
+
 function figHexToRGB(hex) {
   const h = hex.replace(/^#/, "");
   return {
@@ -8929,11 +8934,14 @@ function hslToSRGB(h, s, l) {
 }
 
 /**
- * A fill input that supports solid colors, gradients, images, and videos.
+ * A fill input that supports solid colors, gradients, images, videos, and webcam.
  * @attr {string} value - JSON string with fill data
  * @attr {boolean} disabled - Whether the input is disabled
+ * @attr {string} webcam-mode - Forwarded to fig-fill-picker: `live` (default) or `snapshot`
+ * @attr {string} default-video - Forwarded sample clip URL for the Video tab
  * @fires input - When the fill value changes
  * @fires change - When the fill value is committed
+ * @fires webcamstream - `{ stream, deviceId }` forwarded from the inner picker
  */
 class FigInputFill extends HTMLElement {
   #fillType = "solid";
@@ -8955,8 +8963,22 @@ class FigInputFill extends HTMLElement {
     ],
   };
   #image = { url: null, scaleMode: "fill", scale: 50, opacity: 1 };
-  #video = { url: null, scaleMode: "fill", opacity: 1 };
-  #webcam = { snapshot: null, opacity: 1 };
+  #video = {
+    url: null,
+    poster: null,
+    scaleMode: "fill",
+    scale: 50,
+    opacity: 1,
+    missing: true,
+  };
+  #webcam = {
+    live: true,
+    snapshot: null,
+    deviceId: null,
+    scaleMode: "fill",
+    scale: 50,
+    opacity: 1,
+  };
 
   constructor() {
     super();
@@ -8968,6 +8990,8 @@ class FigInputFill extends HTMLElement {
       "disabled",
       "mode",
       "alpha",
+      "webcam-mode",
+      "default-video",
       "aria-label",
       "aria-describedby",
       "aria-invalid",
@@ -9023,11 +9047,22 @@ class FigInputFill extends HTMLElement {
           if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
           break;
         case "video":
-          if (parsed.video) this.#video = { ...this.#video, ...parsed.video };
+          if (parsed.video) {
+            this.#video = { ...this.#video, ...parsed.video };
+            this.#video.missing = !this.#video.url;
+          }
           break;
         case "webcam":
-          if (parsed.webcam)
-            this.#webcam = { ...this.#webcam, ...parsed.webcam };
+          if (parsed.webcam && typeof parsed.webcam === "object") {
+            const { stream: _ignored, ...rest } = parsed.webcam;
+            this.#webcam = { ...this.#webcam, ...rest };
+          } else if (parsed.image?.url) {
+            this.#webcam.snapshot = parsed.image.url;
+            if (parsed.image.scaleMode)
+              this.#webcam.scaleMode = parsed.image.scaleMode;
+            if (parsed.image.scale != null)
+              this.#webcam.scale = parsed.image.scale;
+          }
           if (parsed.opacity !== undefined)
             this.#webcam.opacity = parsed.opacity;
           break;
@@ -9065,6 +9100,11 @@ class FigInputFill extends HTMLElement {
       }
     }
     if (!attrs["dialog-position"]) attrs["dialog-position"] = "left";
+    const webcamMode = this.getAttribute("webcam-mode");
+    if (webcamMode && !attrs["webcam-mode"]) attrs["webcam-mode"] = webcamMode;
+    const defaultVideo = this.getAttribute("default-video");
+    if (defaultVideo && !attrs["default-video"])
+      attrs["default-video"] = defaultVideo;
     return attrs;
   }
 
@@ -9096,14 +9136,20 @@ class FigInputFill extends HTMLElement {
         }
       }
       case "image":
-        return this.#image.url ? `url(${this.#image.url})` : "#D9D9D9";
+        return this.#image.url ? figCssUrl(this.#image.url) : "#D9D9D9";
+      case "video":
+        return this.#video.poster ? figCssUrl(this.#video.poster) : "#D9D9D9";
       case "webcam":
         return this.#webcam.snapshot
-          ? `url(${this.#webcam.snapshot})`
+          ? figCssUrl(this.#webcam.snapshot)
           : "#D9D9D9";
       default:
         return "#D9D9D9";
     }
+  }
+
+  #gradientCss() {
+    return this.#fillPickerSwatchBackground();
   }
 
   #normalizeFillOpacity(value, fallback = 1) {
@@ -9319,10 +9365,15 @@ class FigInputFill extends HTMLElement {
             if (detail.image) this.#image = detail.image;
             break;
           case "video":
-            if (detail.video) this.#video = detail.video;
+            if (detail.video) this.#video = { ...this.#video, ...detail.video };
             break;
           case "webcam":
-            if (detail.image?.url) this.#webcam.snapshot = detail.image.url;
+            if (detail.webcam) {
+              const { stream: _ignored, ...rest } = detail.webcam;
+              this.#webcam = { ...this.#webcam, ...rest };
+            } else if (detail.image?.url) {
+              this.#webcam.snapshot = detail.image.url;
+            }
             break;
         }
         // Update controls (don't re-render to keep dialog open)
@@ -9331,6 +9382,7 @@ class FigInputFill extends HTMLElement {
         } else {
           this.#updateControls();
         }
+        this.#syncSwatch();
 
         this.#emitInput();
       });
@@ -9338,6 +9390,16 @@ class FigInputFill extends HTMLElement {
       this.#fillPicker.addEventListener("change", (e) => {
         e.stopPropagation();
         this.#emitChange();
+      });
+
+      this.#fillPicker.addEventListener("webcamstream", (e) => {
+        this.dispatchEvent(
+          new CustomEvent("webcamstream", {
+            bubbles: true,
+            composed: true,
+            detail: e.detail,
+          }),
+        );
       });
     }
 
@@ -9381,8 +9443,7 @@ class FigInputFill extends HTMLElement {
             break;
         }
         this.#updateFillPicker();
-        // Update the swatch's alpha
-        this.#updateSwatchAlpha(alpha);
+        this.#syncSwatch();
         this.#emitInput();
       });
       this.#opacityInput.addEventListener("change", (e) => {
@@ -9542,15 +9603,19 @@ class FigInputFill extends HTMLElement {
     if (this.#fillPicker) {
       this.#fillPicker.setAttribute("value", JSON.stringify(this.value));
     }
+    this.#syncSwatch();
+  }
+
+  #syncSwatch() {
+    const swatch = this.#fillPicker?.querySelector("fig-swatch");
+    if (!swatch) return;
+    swatch.setAttribute("background", this.#fillPickerSwatchBackground());
+    swatch.setAttribute("alpha", this.#fillPickerSwatchAlpha());
   }
 
   #updateSwatchAlpha(alpha) {
-    if (this.#fillPicker) {
-      const swatch = this.#fillPicker.querySelector("fig-swatch");
-      if (swatch) {
-        swatch.setAttribute("alpha", alpha);
-      }
-    }
+    const swatch = this.#fillPicker?.querySelector("fig-swatch");
+    if (swatch) swatch.setAttribute("alpha", alpha);
   }
 
   #emitInput() {
@@ -9571,11 +9636,43 @@ class FigInputFill extends HTMLElement {
     );
   }
 
+  get webcamStream() {
+    return this.#fillPicker?.webcamStream ?? null;
+  }
+
+  releaseWebcam() {
+    this.#fillPicker?.releaseWebcam?.();
+  }
+
+  #videoValue() {
+    const url = this.#video.url ?? null;
+    return {
+      url,
+      poster: this.#video.poster ?? null,
+      scaleMode: this.#video.scaleMode || "fill",
+      scale: this.#video.scale ?? 50,
+      opacity: this.#video.opacity ?? 1,
+      ...(url ? {} : { missing: true }),
+    };
+  }
+
+  #webcamValue() {
+    return {
+      live: this.#webcam.live !== false,
+      snapshot: this.#webcam.snapshot ?? null,
+      deviceId: this.#webcam.deviceId ?? null,
+      scaleMode: this.#webcam.scaleMode || "fill",
+      scale: this.#webcam.scale ?? 50,
+      opacity: this.#webcam.opacity ?? 1,
+    };
+  }
+
   get value() {
     switch (this.#fillType) {
       case "solid":
         return {
           type: "solid",
+          colorSpace: "srgb",
           color: this.#solid.color,
           alpha: this.#solid.alpha,
           opacity: Math.round(this.#solid.alpha * 100), // FigFillPicker expects opacity 0-100
@@ -9583,22 +9680,27 @@ class FigInputFill extends HTMLElement {
       case "gradient":
         return {
           type: "gradient",
+          colorSpace: "srgb",
           gradient: gradientToValueShape(this.#gradient),
+          css: this.#gradientCss(),
         };
       case "image":
         return {
           type: "image",
+          colorSpace: "srgb",
           image: { ...this.#image },
         };
       case "video":
         return {
           type: "video",
-          video: { ...this.#video },
+          colorSpace: "srgb",
+          video: this.#videoValue(),
         };
       case "webcam":
         return {
           type: "webcam",
-          webcam: { ...this.#webcam },
+          colorSpace: "srgb",
+          webcam: this.#webcamValue(),
         };
       default:
         return { type: this.#fillType };
@@ -9633,7 +9735,8 @@ class FigInputFill extends HTMLElement {
         this.#syncDisabled();
         break;
       case "mode":
-        // Pass through to internal fill picker
+      case "webcam-mode":
+      case "default-video":
         if (this.#fillPicker) {
           if (newValue) {
             this.#fillPicker.setAttribute(name, newValue);

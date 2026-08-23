@@ -329,7 +329,7 @@ test.describe("fig-fill-picker audit regressions", () => {
       captureInitiallyDisabled: true,
       captureReady: true,
       mutedProperty: true,
-      revokedOwnedUrls: 1,
+      revokedOwnedUrls: 0,
       stoppedTracks: 1,
       dialogRemoved: true,
     });
@@ -397,24 +397,428 @@ test.describe("fig-fill-picker audit regressions", () => {
       return {
         events,
         type: value.type,
-        capturedBlobUrl: String(value.image?.url ?? "").startsWith("blob:"),
+        capturedBlobUrl: String(value.webcam?.snapshot ?? "").startsWith("blob:"),
         activeTab: (
           dialog.querySelector(
             '.fig-fill-picker-tab[data-tab="webcam"]',
           ) as HTMLElement
         ).style.display,
-        swatchShowsCapture: (swatch?.getAttribute("background") ?? "").startsWith(
-          "url(blob:",
+        swatchShowsCapture: /url\("?blob:/.test(
+          swatch?.getAttribute("background") ?? "",
         ),
       };
     });
 
-    expect(state).toEqual({
-      events: ["input", "change"],
-      type: "webcam",
-      capturedBlobUrl: true,
-      activeTab: "block",
-      swatchShowsCapture: true,
+    expect(state.events.filter((name) => name === "change")).toEqual(["change"]);
+    expect(state.events).toContain("input");
+    expect(state.type).toBe("webcam");
+    expect(state.capturedBlobUrl).toBe(true);
+    expect(state.activeTab).toBe("block");
+    expect(state.swatchShowsCapture).toBe(true);
+  });
+
+  test("paints the swatch when webcam becomes ready", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }),
+          enumerateDevices: async () => [],
+        },
+      });
+      const fill = document.createElement("fig-input-fill") as HTMLElement & {
+        value: Record<string, any>;
+      };
+      fill.setAttribute("mode", "webcam");
+      fill.setAttribute("value", JSON.stringify({ type: "webcam" }));
+      document.body.append(fill);
+      await new Promise(requestAnimationFrame);
+      const picker = fill.querySelector("fig-fill-picker") as HTMLElement & {
+        open(): void;
+      };
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+      HTMLCanvasElement.prototype.getContext = (() => ({
+        drawImage() {},
+      })) as typeof HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.toBlob = function (callback) {
+        callback(new Blob(["live"], { type: "image/png" }));
+      };
+      picker.open();
+      const video = document.querySelector(
+        ".fig-fill-picker-webcam-video",
+      ) as HTMLVideoElement;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      Object.defineProperties(video, {
+        readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+        videoWidth: { configurable: true, value: 320 },
+        videoHeight: { configurable: true, value: 240 },
+      });
+      video.dispatchEvent(new Event("canplay"));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      HTMLCanvasElement.prototype.toBlob = originalToBlob;
+      const snapshot = fill.value.webcam?.snapshot;
+      const background =
+        fill.querySelector("fig-swatch")?.getAttribute("background") ?? "";
+      const type = fill.value.type;
+      fill.remove();
+      return { type, snapshot, background };
     });
+
+    expect(state.type).toBe("webcam");
+    expect(state.snapshot).toMatch(/^blob:/);
+    expect(state.background).toBe(`url("${state.snapshot}")`);
+  });
+
+  test("keeps a live webcam stream after the picker closes", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      let stoppedTracks = 0;
+      const stream = {
+        getTracks: () => [
+          { readyState: "live", stop: () => stoppedTracks++ },
+        ],
+        getVideoTracks: () => [
+          { readyState: "live", getSettings: () => ({ deviceId: "cam-1" }) },
+        ],
+      };
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => stream,
+          enumerateDevices: async () => [],
+        },
+      });
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        webcamStream: MediaStream | null;
+        open(): void;
+        close(): void;
+        releaseWebcam(): void;
+      };
+      picker.setAttribute("webcam-mode", "live");
+      picker.value = { type: "webcam" };
+      const streams: Array<unknown> = [];
+      picker.addEventListener("webcamstream", (event) => {
+        streams.push((event as CustomEvent).detail?.stream ?? null);
+      });
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      picker.close();
+      const afterClose = {
+        stoppedTracks,
+        hasStream: Boolean(picker.webcamStream),
+        live: picker.value.webcam?.live,
+        deviceId: picker.value.webcam?.deviceId,
+      };
+      picker.remove();
+      return {
+        ...afterClose,
+        stoppedAfterRemove: stoppedTracks,
+        releasedThen: streams.includes(null),
+      };
+    });
+
+    expect(state).toEqual({
+      stoppedTracks: 0,
+      hasStream: true,
+      live: true,
+      deviceId: "cam-1",
+      stoppedAfterRemove: 1,
+      releasedThen: true,
+    });
+  });
+
+  test("parses webcam values and legacy image snapshots", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+      };
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.value = {
+        type: "webcam",
+        webcam: {
+          live: true,
+          snapshot: "data:image/png;base64,abc",
+          deviceId: "cam-9",
+          scaleMode: "fit",
+          scale: 40,
+          opacity: 0.8,
+        },
+      };
+      const modern = picker.value.webcam;
+      picker.value = {
+        type: "webcam",
+        image: { url: "data:image/png;base64,legacy", scaleMode: "crop", scale: 25 },
+      };
+      const legacy = picker.value.webcam;
+      picker.remove();
+      return { modern, legacy, type: picker.value?.type };
+    });
+
+    expect(state.modern).toMatchObject({
+      live: true,
+      snapshot: "data:image/png;base64,abc",
+      deviceId: "cam-9",
+      scaleMode: "fit",
+      scale: 40,
+      opacity: 0.8,
+    });
+    expect(state.legacy).toMatchObject({
+      snapshot: "data:image/png;base64,legacy",
+      scaleMode: "crop",
+      scale: 25,
+    });
+  });
+
+  test("Capture turns a live webcam into an image fill", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }),
+          enumerateDevices: async () => [],
+        },
+      });
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        open(): void;
+      };
+      picker.setAttribute("mode", "image,webcam");
+      picker.value = { type: "webcam" };
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      const dialog = document.querySelector(
+        "dialog.fig-fill-picker-dialog",
+      ) as HTMLElement;
+      const capture = dialog.querySelector(
+        ".fig-fill-picker-webcam-capture",
+      ) as HTMLElement;
+      const useCamera = dialog.querySelector(".fig-fill-picker-webcam-use");
+      const video = dialog.querySelector(
+        ".fig-fill-picker-webcam-video",
+      ) as HTMLVideoElement;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      Object.defineProperties(video, {
+        readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+        videoWidth: { configurable: true, value: 320 },
+        videoHeight: { configurable: true, value: 240 },
+      });
+      video.dispatchEvent(new Event("canplay"));
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+      HTMLCanvasElement.prototype.getContext = (() => ({
+        drawImage() {},
+      })) as typeof HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.toBlob = function (callback) {
+        callback(new Blob(["snapshot"], { type: "image/png" }));
+      };
+      capture.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      HTMLCanvasElement.prototype.toBlob = originalToBlob;
+      const value = picker.value;
+      picker.remove();
+      return {
+        type: value.type,
+        imageUrl: String(value.image?.url ?? "").startsWith("blob:"),
+        useCamera: Boolean(useCamera),
+        webcamTab: (
+          dialog.querySelector(
+            '.fig-fill-picker-tab[data-tab="webcam"]',
+          ) as HTMLElement
+        ).style.display,
+        imageTab: (
+          dialog.querySelector(
+            '.fig-fill-picker-tab[data-tab="image"]',
+          ) as HTMLElement
+        ).style.display,
+      };
+    });
+
+    expect(state).toEqual({
+      type: "image",
+      imageUrl: true,
+      useCamera: false,
+      webcamTab: "none",
+      imageTab: "block",
+    });
+  });
+
+  test("uses default-video and posters the swatch, not the mp4", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        open(): void;
+      };
+      picker.setAttribute("mode", "video");
+      picker.setAttribute("default-video", "https://example.com/sample.mp4");
+      picker.append(document.createElement("fig-swatch"));
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      const afterOpen = picker.value.video;
+      picker.value = {
+        type: "video",
+        video: {
+          url: "https://example.com/clip.mp4",
+          poster: "data:image/jpeg;base64,poster",
+          scaleMode: "fit",
+          scale: 50,
+        },
+      };
+      await new Promise(requestAnimationFrame);
+      const swatch = picker.querySelector("fig-swatch");
+      const background = swatch?.getAttribute("background") ?? "";
+      picker.remove();
+      return {
+        defaultUrl: afterOpen?.url,
+        missing: afterOpen?.missing === true,
+        background,
+      };
+    });
+
+    expect(state.defaultUrl).toBe("https://example.com/sample.mp4");
+    expect(state.missing).toBe(false);
+    expect(state.background).toBe('url("data:image/jpeg;base64,poster")');
+  });
+
+  test("fig-input-fill copies webcam and video poster values", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      await customElements.whenDefined("fig-input-fill");
+      const fill = document.createElement("fig-input-fill") as HTMLElement & {
+        value: Record<string, any>;
+      };
+      fill.setAttribute(
+        "value",
+        JSON.stringify({
+          type: "webcam",
+          webcam: { snapshot: "data:image/png;base64,cam", deviceId: "front" },
+        }),
+      );
+      document.body.append(fill);
+      await new Promise(requestAnimationFrame);
+      const webcam = fill.value.webcam;
+      const webcamSwatch = fill
+        .querySelector("fig-swatch")
+        ?.getAttribute("background");
+      fill.setAttribute(
+        "value",
+        JSON.stringify({
+          type: "video",
+          video: {
+            url: "https://example.com/a.mp4",
+            poster: "data:image/jpeg;base64,vid",
+          },
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      const video = fill.value.video;
+      const videoSwatch = fill
+        .querySelector("fig-swatch")
+        ?.getAttribute("background");
+      fill.setAttribute(
+        "value",
+        JSON.stringify({
+          type: "webcam",
+          image: { url: "data:image/png;base64,legacy" },
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      const legacy = fill.value.webcam;
+      fill.remove();
+      return { webcam, webcamSwatch, video, videoSwatch, legacy };
+    });
+
+    expect(state.webcam).toMatchObject({
+      snapshot: "data:image/png;base64,cam",
+      deviceId: "front",
+    });
+    expect(state.webcamSwatch).toBe('url("data:image/png;base64,cam")');
+    expect(state.video).toMatchObject({
+      url: "https://example.com/a.mp4",
+      poster: "data:image/jpeg;base64,vid",
+    });
+    expect(state.videoSwatch).toBe('url("data:image/jpeg;base64,vid")');
+    expect(state.legacy.snapshot).toBe("data:image/png;base64,legacy");
+  });
+
+  test("keeps the webcam blob on fig-input-fill's swatch after remount", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }),
+          enumerateDevices: async () => [],
+        },
+      });
+      const fill = document.createElement("fig-input-fill") as HTMLElement & {
+        value: Record<string, any>;
+      };
+      fill.setAttribute("mode", "webcam");
+      fill.setAttribute("value", JSON.stringify({ type: "webcam" }));
+      document.body.append(fill);
+      await new Promise(requestAnimationFrame);
+      const picker = fill.querySelector("fig-fill-picker") as HTMLElement & {
+        open(): void;
+      };
+      picker.open();
+      const dialog = document.querySelector(
+        "dialog.fig-fill-picker-dialog",
+      ) as HTMLElement;
+      const capture = dialog.querySelector(
+        ".fig-fill-picker-webcam-capture",
+      ) as HTMLElement;
+      const video = dialog.querySelector(
+        ".fig-fill-picker-webcam-video",
+      ) as HTMLVideoElement;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      Object.defineProperties(video, {
+        readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+        videoWidth: { configurable: true, value: 320 },
+        videoHeight: { configurable: true, value: 240 },
+      });
+      video.dispatchEvent(new Event("canplay"));
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+      HTMLCanvasElement.prototype.getContext = (() => ({
+        drawImage() {},
+      })) as typeof HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.toBlob = function (callback) {
+        callback(new Blob(["snapshot"], { type: "image/png" }));
+      };
+      capture.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      HTMLCanvasElement.prototype.toBlob = originalToBlob;
+
+      const afterCapture = fill
+        .querySelector("fig-swatch")
+        ?.getAttribute("background");
+      const snapshot = fill.value.webcam?.snapshot;
+      fill.setAttribute("alpha", "false");
+      await new Promise(requestAnimationFrame);
+      const afterRemount = fill
+        .querySelector("fig-swatch")
+        ?.getAttribute("background");
+      fill.remove();
+      return { afterCapture, afterRemount, snapshot };
+    });
+
+    expect(state.snapshot).toMatch(/^blob:/);
+    expect(state.afterCapture).toBe(`url("${state.snapshot}")`);
+    expect(state.afterRemount).toBe(`url("${state.snapshot}")`);
   });
 });

@@ -138,7 +138,7 @@ Playground hashes: `/figui3#{id}`. Full attrs: [reference.md](reference.md).
 | Tag | Playground | Notes |
 |---|---|---|
 | `fig-input-color` | (propkit `#color`) | Solid color. `text`, `alpha`. Auto-detects `fig-fill-picker` |
-| `fig-input-fill` | `#fill-input` | Solid/gradient/image/video JSON `value`. `picker-*` forwarded if picker registered |
+| `fig-input-fill` | `#fill-input` | Solid/gradient/image/video/webcam JSON `value`. Same `webcam` / `video.poster` shape as the picker. `webcam-mode`, `default-video`, `picker-*` forwarded if picker registered |
 | `fig-input-palette` | (propkit `#palette`) | Multi-color. `fixed`, `open` |
 | `fig-input-gradient` | (propkit `#gradient`) | Stops. `edit`, `mode="handle\|tip"` |
 | `fig-swatch` | `#swatch` | `size`, `selected`, `alpha` |

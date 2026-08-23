@@ -217,6 +217,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "solid", "gradient", "image", "video", "webcam"],
     },
+    "webcam-mode": {
+      label: "Webcam mode",
+      type: "enum",
+      options: ["", "live", "snapshot"],
+    },
+    "default-video": { label: "Default video", type: "string" },
   },
   "fig-color-tip": {
     control: {
@@ -643,6 +649,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+    "webcam-mode": {
+      label: "Webcam mode",
+      type: "enum",
+      options: ["", "live", "snapshot"],
+    },
+    "default-video": { label: "Default video", type: "string" },
   },
   "fig-input-palette": {
     fixed: { label: "Fixed", type: "boolean", boolMode: "presence" },

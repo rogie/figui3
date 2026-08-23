@@ -136,19 +136,23 @@ Playground: `#fill-picker` — `all-modes`, `solid`, `gradient`, `image`, `video
 | `alpha` | `"true"` default; hide alpha with `"false"` |
 | `mode` | Lock modes: `solid`, `gradient`, `image`, `video`, `webcam`, comma-separated, plus custom names |
 | `disabled` | Presence |
+| `webcam-mode` | `live` (default) or `snapshot`. Webcam tab starts the camera. Capture writes a still and switches to Image |
+| `default-video` | Sample clip URL when Video has no file |
 
-Events: `input` / `change` with fill payload in `detail`.
+Events: `input` / `change` with fill payload in `detail`. `webcamstream` with `{ stream, deviceId }`. Live camera is `webcamStream` / `releaseWebcam()`, never JSON.
 
 Value shapes:
 
 ```txt
 solid   { type, colorSpace, color, alpha, hsv }
 gradient { type, colorSpace, gradient, css }
-image   { type, colorSpace, image }
-video   { type, colorSpace, video }
-webcam  { type, colorSpace, image: { url: snapshot, scaleMode, scale } }
+image   { type, colorSpace, image: { url, scaleMode, scale } }          // scaleMode includes tile
+video   { type, colorSpace, video: { url, poster, scaleMode, scale, opacity } }  // fill | fit | crop
+webcam  { type, colorSpace, webcam: { live, snapshot, deviceId, scaleMode, scale, opacity } }
 custom  { type: <modeName>, ...payload }
 ```
+
+Legacy `{ type: "webcam", image: { url } }` still parses as `webcam.snapshot` for one release. `fig-input-fill` uses the same `webcam` / `video.poster` shapes.
 
 `fig-input-color` expects solid data (`detail.color`, optional `detail.alpha`). Keep legacy `value` / `hex` / `rgba` on color input events.
 

@@ -939,7 +939,7 @@ Supported interpolation spaces: `srgb`, `srgb-linear`, `display-p3`, `oklab`, `o
 
 `<fig-input-fill>` — [demo](https://rog.ie/figui3/#fill-input)
 
-A comprehensive fill input supporting solid, gradient, image, and video fills. Without the optional picker, it renders a passive preview.
+A comprehensive fill input supporting solid, gradient, image, video, and webcam fills. Without the optional picker, it renders a passive preview.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -947,16 +947,21 @@ A comprehensive fill input supporting solid, gradient, image, and video fills. W
 | `disabled` | boolean | `false` | Disabled state |
 | `mode` | string | — | Lock to a fill mode |
 | `alpha` | boolean | `true` | Show alpha controls |
+| `webcam-mode` | string | `live` | Forwarded to the picker: `live` or `snapshot` |
+| `default-video` | string | — | Forwarded sample clip URL when Video has no file |
 | `picker-*` | string | — | Forwarded to `<fig-fill-picker>` when the optional picker is registered |
 
 Add `aria-label` to name the generated picker, hex field, and opacity field as one fill control group.
+
+Solid `alpha` is 0–1 (canonical). `opacity` 0–100 is also emitted for compatibility. Gradient values include `css`. Webcam JSON is `{ type, webcam }` — never a live `MediaStream`. Read `webcamStream` or listen for `webcamstream`. Video swatches use `video.poster`, not the mp4 URL.
 
 **Events:**
 
 | Event | Detail |
 |---|---|
-| `input` | `{ type, color?, gradient?, image?, video?, css }` |
-| `change` | `{ type, color?, gradient?, image?, video?, css }` |
+| `input` | `{ type, color?, gradient?, image?, video?, webcam?, css }` |
+| `change` | `{ type, color?, gradient?, image?, video?, webcam?, css }` |
+| `webcamstream` | `{ stream, deviceId }` |
 
 ```html
 <fig-input-fill value='{"type":"solid","color":"#FF5733","opacity":100}'></fig-input-fill>
@@ -976,13 +981,18 @@ Optional full fill picker dialog supporting solid, gradient, image, video, and w
 | `disabled` | boolean | `false` | Disabled state |
 | `alpha` | boolean | `true` | Show alpha controls |
 | `mode` | string | — | Lock to mode: `"solid"`, `"gradient"`, `"image"`, `"video"`, `"webcam"` |
+| `webcam-mode` | string | `live` | `live` keeps the camera after close; Capture always writes an image still |
+| `default-video` | string | — | Sample clip URL when Video is selected with no file |
+
+Webcam JSON is `{ type: "webcam", webcam: { live, snapshot, deviceId, scaleMode, scale, opacity } }`. The live `MediaStream` is `webcamStream` / `webcamstream`, not `value`. Closing the dialog does not stop a live camera; call `releaseWebcam()` or disconnect the element. Capture in `live` mode only updates `webcam.snapshot`. Video JSON includes `poster`; the swatch paints that, never `url(file.mp4)`.
 
 **Events:**
 
 | Event | Detail |
 |---|---|
-| `input` | `{ type, gradient?, color?, css }` |
-| `change` | `{ type, gradient?, color?, css }` |
+| `input` | `{ type, gradient?, color?, image?, video?, webcam?, css }` |
+| `change` | `{ type, gradient?, color?, image?, video?, webcam?, css }` |
+| `webcamstream` | `{ stream, deviceId }` |
 
 ```html
 <fig-fill-picker value='{"type":"solid","color":"#FF5733"}'>

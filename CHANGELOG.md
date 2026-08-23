@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.17]
+
+### Added
+
+- `fig-fill-picker` / `fig-input-fill` webcam JSON is now `{ type: "webcam", webcam: { live, snapshot, deviceId, scaleMode, scale, opacity } }`.
+- `webcamStream`, `releaseWebcam()`, and `webcamstream` for the live `MediaStream` (not stored in `value`).
+- `webcam-mode="live|snapshot"`. Choosing Webcam starts the live camera. Capture writes a still and switches to Image.
+- `default-video` plus `video.poster`. Swatches paint the poster, never `url(file.mp4)`.
+
+### Changed
+
+- Closing the picker no longer stops a live webcam. The stream stops when leaving Webcam, calling `releaseWebcam()`, or disconnecting the element.
+- `fig-input-fill` gradient values include `css`. Solid `alpha` (0–1) stays canonical beside `opacity` (0–100).
+
+### Fixed
+
+- Restoring `{ webcam }` or the legacy `{ type: "webcam", image: { url } }` snapshot no longer drops the still.
+- `fig-input-fill` copies `detail.webcam` and has a video swatch case.
+- Webcam/video blob URLs stay valid and are quoted onto the inner `fig-swatch` (`url("blob:…")`), including after `fig-input-fill` remounts.
+- Choosing Webcam paints the swatch as soon as the live camera has a frame.
+
 ## [8.9.16]
 
 ### Added

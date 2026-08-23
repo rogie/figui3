@@ -526,14 +526,14 @@ export const figui3Sections: Section[] = [
         id: "video",
         name: "Video",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="video" value='{"type":"video","video":{"url":"${videoSrc()}","scaleMode":"fill","scale":50}}' full></fig-input-fill>
+  <fig-input-fill picker-mode="video" default-video="${videoSrc()}" value='{"type":"video","video":{"url":"${videoSrc()}","scaleMode":"fill","scale":50}}' full></fig-input-fill>
 </div>`,
       },
       {
         id: "webcam",
         name: "Webcam",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="webcam" value='{"type":"webcam"}' full></fig-input-fill>
+  <fig-input-fill picker-mode="webcam" webcam-mode="live" value='{"type":"webcam"}' full></fig-input-fill>
 </div>`,
       },
     ],
