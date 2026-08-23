@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.24]
+
+### Changed
+
+- Split license: core stays MIT; editor and lab (`fig-editor.js`, `fig-lab.js`, their CSS, dist copies, and those skills) are PolyForm Shield 1.0.0. `package.json` is `SEE LICENSE IN LICENSE`. Copies already shipped under MIT stay MIT.
+
 ## [8.9.23]
 
 ### Fixed

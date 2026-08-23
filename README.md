@@ -3,7 +3,7 @@
 A lightweight, zero-dependency web components library for building Figma plugin and widget UIs with native look and feel.
 
 [![npm version](https://img.shields.io/npm/v/@rogieking/figui3.svg)](https://www.npmjs.com/package/@rogieking/figui3)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-split-lightgrey.svg)](LICENSE)
 
 **[Live Playground & Demos](https://rog.ie/figui3/)**
 
@@ -2004,4 +2004,9 @@ The playground is the fastest way to explore and validate component markup:
 
 ## License
 
-[MIT License](LICENSE) &copy; Rogie King
+Split license. See [LICENSE](LICENSE).
+
+- **MIT:** `fig.js`, `fig-layer.js`, core CSS, `polyfills/`
+- **PolyForm Shield 1.0.0 (not OSI open source):** `fig-editor.js`, `fig-lab.js`, and their CSS
+
+&copy; Rogie King

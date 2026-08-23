@@ -1,5 +1,6 @@
 /**
  * FigUI3 Lab — Experimental components
+ * Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE.
  *
  * These components are unstable and may change or be removed without notice.
  * Import alongside fig.js for opt-in access:

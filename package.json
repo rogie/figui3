@@ -1,9 +1,9 @@
 {
   "name": "@rogieking/figui3",
-  "version": "8.9.23",
+  "version": "8.9.24",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "main": "dist/fig.js",
   "module": "dist/fig.js",
