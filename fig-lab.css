@@ -658,20 +658,41 @@ propskit-gradient {
 }
 
 :is(propskit-color, propskit-fill, propskit-gradient) {
+  outline: none;
+
   fig-field:not([direction="vertical"]) {
     outline: none;
+  }
 
-    &:focus-within {
-      outline: var(--figma-focus-outline);
-      outline-offset: var(--figma-focus-outline-offset);
+  &:focus-within fig-field:not([direction="vertical"]),
+  &.has-popup-open fig-field:not([direction="vertical"]) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  /* Same split as fig-input-gradient: chrome outlines, inner focus does not. */
+  :is(fig-swatch, fig-chit, fig-input-gradient, fig-input-fill, fig-fill-picker) {
+    --selected: 0 !important;
+
+    &:hover,
+    &:focus,
+    &:active {
+      outline: 0 !important;
     }
 
-    :is(fig-swatch, fig-input-gradient, fig-input-fill, fig-fill-picker) {
-      &:is(:hover, :focus, :focus-visible, :focus-within),
-      &.has-popup-open {
-        outline: none !important;
-      }
+    &:focus-within:not(:focus) {
+      outline: 0 !important;
     }
+
+    &:focus-within:not(:focus) :is(input, fig-swatch, fig-chit) {
+      outline: 0 !important;
+      outline-offset: 0 !important;
+    }
+  }
+
+  input[type="color"]:is(:focus, :focus-visible) {
+    outline: 0 !important;
+    outline-offset: 0 !important;
   }
 }
 

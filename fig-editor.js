@@ -2228,6 +2228,8 @@ class FigFillPicker extends HTMLElement {
     if (this.#isDisabled()) return;
     if (!this.#dialog) {
       this.#createDialog();
+    } else {
+      this.#dialog.anchor = this.anchorElement || this.#trigger;
     }
 
     this.#valueAtOpen = JSON.stringify(this.value);

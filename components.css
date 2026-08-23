@@ -1369,6 +1369,10 @@ input[type="color"] {
     outline-offset: var(--figma-focus-outline-offset);
   }
 
+  :is(fig-swatch, fig-chit):focus-within:not(:focus) & {
+    outline: 0;
+  }
+
   &::-webkit-color-swatch-wrapper {
     padding: 0;
     border: 0;
@@ -1514,6 +1518,16 @@ input[type="color"] {
   &[size="large"]::before {
     border-radius: calc(var(--border-radius) - var(--padding));
   }
+  &:focus,
+  &:active {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &:focus-within:not(:focus) {
+    outline: 0;
+  }
+
   input[type="color"] {
     background: none;
     width: var(--width);
@@ -1522,6 +1536,11 @@ input[type="color"] {
     place-self: center;
     box-sizing: border-box;
     opacity: 0;
+
+    &:focus,
+    &:focus-visible {
+      outline: 0;
+    }
   }
 
   /* Gradient/Image types - inset thumbnail with hidden input */

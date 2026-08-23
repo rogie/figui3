@@ -49,9 +49,9 @@ Shared:
 | Tag | Playground | Inner control | Notes |
 |---|---|---|---|
 | `propskit-switch` | `#propskit-switch` | `fig-switch` | `checked`, `default` boolean |
-| `propskit-color` | `#propskit-color` | `fig-fill-picker` + `fig-swatch` | Solid swatch, same size as gradient. Clicking the field opens the picker. Focus ring on the field, not the swatch. `alpha` default true |
-| `propskit-fill` | `#propskit-fill` | `fig-fill-picker` + `fig-swatch` | Same chrome as color. Clicking the field opens the picker. Focus ring on the field, not the swatch. Full fill JSON (`solid` / `gradient` / `image` / `video` / `webcam` / custom). Forwards `mode-*` slots |
-| `propskit-gradient` | `#propskit-gradient` | `fig-input-gradient` | Default `edit="picker"`. Clicking the field opens the picker. Focus ring on the field, not the gradient. `mode="handle\|tip"` for inline edit |
+| `propskit-color` | `#propskit-color` | `fig-fill-picker` + `fig-swatch` | Solid swatch, same size as gradient. Clicking the field opens the picker anchored to the host. Focus ring on the field, not the swatch. `alpha` default true |
+| `propskit-fill` | `#propskit-fill` | `fig-fill-picker` + `fig-swatch` | Same chrome as color. Clicking the field opens the picker anchored to the host. Focus ring on the field, not the swatch. Full fill JSON (`solid` / `gradient` / `image` / `video` / `webcam` / custom). Forwards `mode-*` slots |
+| `propskit-gradient` | `#propskit-gradient` | `fig-input-gradient` | Default `edit="picker"`. Clicking the field opens the picker anchored to the host. Focus ring on the field, not the gradient. `mode="handle\|tip"` for inline edit |
 | `propskit-select` | `#propskit-select` | `fig-select` | `options` or slotted `fig-select-options` |
 | `propskit-text` | `#propskit-text` | `fig-input-text` | `type`, `readonly` |
 | `propskit-number` | `#propskit-number` | `fig-input-number` | `min`, `max`, `step`, `precision`, `units`, `steppers` |

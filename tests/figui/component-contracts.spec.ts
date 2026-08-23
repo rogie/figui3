@@ -2456,10 +2456,18 @@ test.describe("propskit-color", () => {
     await expect(control).toHaveAttribute("value", "#FF00FF");
     await control.evaluate((element) => (element as HTMLElement).focus());
     await expect(swatch).toBeFocused();
+    expect(await control.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("none");
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("solid");
     expect(await swatch.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("none");
+    expect(
+      await swatch.evaluate((element) => {
+        const input = element.querySelector("input");
+        return input ? getComputedStyle(input).outlineStyle : "none";
+      }),
+    ).toBe("none");
   });
 
   test("opens the color picker when the field surface is clicked", async ({
@@ -2480,6 +2488,36 @@ test.describe("propskit-color", () => {
       "open",
       "true",
     );
+    expect(
+      await page.evaluate(() => {
+        const host = document.querySelector("propskit-color") as HTMLElement;
+        const dialog = document.querySelector(
+          "dialog.fig-fill-picker-dialog",
+        ) as HTMLElement & { anchor?: Element };
+        const swatch = host?.querySelector("fig-swatch");
+        return {
+          anchoredToHost: dialog?.anchor === host,
+          hostOpen: host?.classList.contains("has-popup-open"),
+          hostOutline: getComputedStyle(host).outlineStyle,
+          fieldOutline: host
+            ? getComputedStyle(host.querySelector("fig-field") as Element)
+                .outlineStyle
+            : "",
+          swatchOutline: swatch ? getComputedStyle(swatch).outlineStyle : "",
+          inputOutline: swatch?.querySelector("input")
+            ? getComputedStyle(swatch.querySelector("input") as Element)
+                .outlineStyle
+            : "none",
+        };
+      }),
+    ).toEqual({
+      anchoredToHost: true,
+      hostOpen: true,
+      hostOutline: "none",
+      fieldOutline: "solid",
+      swatchOutline: "none",
+      inputOutline: "none",
+    });
   });
 });
 
@@ -2568,10 +2606,18 @@ test.describe("propskit-fill", () => {
     expect(events.value).toContain('"type":"gradient"');
     await control.evaluate((element) => (element as HTMLElement).focus());
     await expect(swatch).toBeFocused();
+    expect(await control.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("none");
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("solid");
     expect(await swatch.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("none");
+    const fillColorInput = swatch.locator("input[type='color']");
+    if ((await fillColorInput.count()) > 0) {
+      expect(
+        await fillColorInput.evaluate((element) => getComputedStyle(element).outlineStyle),
+      ).toBe("none");
+    }
   });
 
   test("opens the fill picker when the field surface is clicked", async ({
@@ -2592,6 +2638,36 @@ test.describe("propskit-fill", () => {
       "open",
       "true",
     );
+    expect(
+      await page.evaluate(() => {
+        const host = document.querySelector("propskit-fill") as HTMLElement;
+        const dialog = document.querySelector(
+          "dialog.fig-fill-picker-dialog",
+        ) as HTMLElement & { anchor?: Element };
+        const swatch = host?.querySelector("fig-swatch");
+        return {
+          anchoredToHost: dialog?.anchor === host,
+          hostOpen: host?.classList.contains("has-popup-open"),
+          hostOutline: getComputedStyle(host).outlineStyle,
+          fieldOutline: host
+            ? getComputedStyle(host.querySelector("fig-field") as Element)
+                .outlineStyle
+            : "",
+          swatchOutline: swatch ? getComputedStyle(swatch).outlineStyle : "",
+          inputOutline: swatch?.querySelector("input")
+            ? getComputedStyle(swatch.querySelector("input") as Element)
+                .outlineStyle
+            : "none",
+        };
+      }),
+    ).toEqual({
+      anchoredToHost: true,
+      hostOpen: true,
+      hostOutline: "none",
+      fieldOutline: "solid",
+      swatchOutline: "none",
+      inputOutline: "none",
+    });
   });
 
   test("captures a webcam snapshot onto the swatch and host value", async ({
@@ -2758,6 +2834,9 @@ test.describe("propskit-gradient", () => {
     await control.evaluate((element) => (element as HTMLElement).focus());
     await expect(gradient).toBeFocused();
     expect(
+      await control.evaluate((element) => getComputedStyle(element).outlineStyle),
+    ).toBe("none");
+    expect(
       await control.locator("fig-field").evaluate((element) => getComputedStyle(element).outlineStyle),
     ).toBe("solid");
     expect(
@@ -2869,6 +2948,36 @@ test.describe("propskit-gradient", () => {
       "open",
       "true",
     );
+    expect(
+      await page.evaluate(() => {
+        const host = document.querySelector("propskit-gradient") as HTMLElement;
+        const dialog = document.querySelector(
+          "dialog.fig-fill-picker-dialog",
+        ) as HTMLElement & { anchor?: Element };
+        const swatch = host?.querySelector("fig-swatch");
+        return {
+          anchoredToHost: dialog?.anchor === host,
+          hostOpen: host?.classList.contains("has-popup-open"),
+          hostOutline: getComputedStyle(host).outlineStyle,
+          fieldOutline: host
+            ? getComputedStyle(host.querySelector("fig-field") as Element)
+                .outlineStyle
+            : "",
+          swatchOutline: swatch ? getComputedStyle(swatch).outlineStyle : "",
+          inputOutline: swatch?.querySelector("input")
+            ? getComputedStyle(swatch.querySelector("input") as Element)
+                .outlineStyle
+            : "none",
+        };
+      }),
+    ).toEqual({
+      anchoredToHost: true,
+      hostOpen: true,
+      hostOutline: "none",
+      fieldOutline: "solid",
+      swatchOutline: "none",
+      inputOutline: "none",
+    });
   });
 });
 

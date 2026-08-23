@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.21]
+
+### Changed
+
+- `propskit-color`, `propskit-fill`, and `propskit-gradient` open the fill picker anchored on the host, not the swatch.
+- `fig-swatch` uses the same focus-inside split as `fig-input-gradient` (`:focus-within:not(:focus)`). Nested color inputs no longer draw their own ring.
+
+### Fixed
+
+- Propskit color/fill focus outline sits on `fig-field` only. The host, swatch, and inner color input stay ringless — matching gradient.
+
 ## [8.9.20]
 
 ### Added

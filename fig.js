@@ -10363,6 +10363,7 @@ class FigInputGradient extends HTMLElement {
   #colorObserver = null;
   #repositionRAF = null;
   #pickerDefinitionPromise = null;
+  anchorElement = null;
   #gradient = {
     type: "linear",
     angle: 90,
@@ -10733,7 +10734,7 @@ class FigInputGradient extends HTMLElement {
   #setupPickerEvents() {
     const picker = this.querySelector("fig-fill-picker");
     if (!picker) return;
-    picker.anchorElement = this;
+    picker.anchorElement = this.anchorElement || this;
 
     const syncFromPicker = (e) => {
       e.stopPropagation();

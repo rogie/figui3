@@ -922,6 +922,7 @@ class PropskitColor extends HTMLElement {
     const label = customLabel || document.createElement("label");
     const picker = document.createElement("fig-fill-picker");
     const swatch = document.createElement("fig-swatch");
+    picker.anchorElement = this;
     picker.append(swatch);
     swatch.setAttribute("tabindex", "0");
     for (const node of initialChildren) {
@@ -1278,6 +1279,7 @@ class PropskitFill extends HTMLElement {
     const label = customLabel || document.createElement("label");
     const picker = document.createElement("fig-fill-picker");
     const swatch = document.createElement("fig-swatch");
+    picker.anchorElement = this;
     picker.append(swatch);
     swatch.setAttribute("tabindex", "0");
     for (const node of initialChildren) {
@@ -1646,6 +1648,7 @@ class PropskitGradient extends HTMLElement {
     const field = document.createElement("fig-field");
     const label = customLabel || document.createElement("label");
     const input = document.createElement("fig-input-gradient");
+    input.anchorElement = this;
 
     field.append(label, input);
     this.#field = field;
