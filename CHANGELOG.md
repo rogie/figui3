@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.19]
+
+### Added
+
+- `fig-input-fill` forwards custom `mode-*` slots to the inner picker and uses image-style chrome (type label + opacity) for non-built-in types.
+- Fill picker playground **Custom** example: `slot="mode-shader"` tab with preview + source.
+
+### Changed
+
+- Empty `fig-swatch background=""` shows the checkerboard instead of gray `#D9D9D9`.
+- Webcam and custom fill swatches default to checkerboard unless a background is supplied.
+- Fill picker `fig-preview { overflow: visible }` is limited to solid and gradient tabs.
+- Popup `fig-header` no longer paints an opaque background over the panel.
+- Removed unused `old.html`.
+
+### Fixed
+
+- Custom mode `swatch-background` is read from the live slot before the picker dialog is created.
+- Webcam camera select can switch when the live stream's `deviceId` is unknown.
+
 ## [8.9.18]
 
 ### Changed

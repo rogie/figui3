@@ -2078,9 +2078,13 @@ class FigFillPicker extends HTMLElement {
           bg = "";
         }
         break;
-      default:
-        const slot = this.#customSlots[this.#fillType];
-        bg = slot?.element?.getAttribute("swatch-background") || "#D9D9D9";
+      default: {
+        const slot =
+          this.#customSlots[this.#fillType]?.element ||
+          this.querySelector(`[slot="mode-${this.#fillType}"]`);
+        bg = slot?.getAttribute("swatch-background") || "";
+        break;
+      }
     }
 
     this.#swatch.setAttribute("background", bg);
@@ -4573,11 +4577,16 @@ class FigFillPicker extends HTMLElement {
         existing?.getTracks?.().filter((track) => track.readyState !== "ended") ??
         [];
       if (existing && liveTracks.length) {
-        const currentId = this.#webcam.deviceId;
-        if (!requested || !currentId || requested === currentId) {
+        const liveId =
+          existing.getVideoTracks?.()?.[0]?.getSettings?.()?.deviceId ||
+          this.#webcam.deviceId ||
+          null;
+        // Reuse the live stream only when it is already the requested device.
+        // An unknown liveId is not a match — otherwise the camera select cannot switch.
+        if (!requested || requested === liveId) {
           attachPreview(existing);
           this.#emitWebcamStream();
-          populateCameras(null, requested || currentId);
+          populateCameras(null, requested || liveId);
           return;
         }
       }
@@ -4638,8 +4647,7 @@ class FigFillPicker extends HTMLElement {
     cameraSelect.addEventListener("change", (e) => {
       const next =
         typeof e.detail === "string" ? e.detail : e.target?.value;
-      if (!next) return;
-      this.#webcam.deviceId = next;
+      if (!next || next === this.#webcam.deviceId) return;
       startWebcam(next);
     });
 

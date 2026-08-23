@@ -174,8 +174,10 @@ fig-fill-picker {
       display: block;
     }
   }
-  fig-preview{
-    overflow: visible;
+  .fig-fill-picker-tab:is([data-tab="solid"], [data-tab="gradient"]) {
+    fig-preview {
+      overflow: visible;
+    }
   }
 
   .fig-fill-picker-color-area {

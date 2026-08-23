@@ -9,6 +9,64 @@ function avatarServiceUrl(size: number): string {
   return `https://i.pravatar.cc/${size}?img=${randomAvatarId}`;
 }
 
+const SHADER_SOURCE = `@fragment
+fn main() -> vec4f {
+  return vec4f(0.05, 0.62, 1.0, 1.0);
+}`;
+
+function fillPickerShaderMarkup(): string {
+  const value = JSON.stringify({
+    type: "shader",
+    source: SHADER_SOURCE,
+    language: "wgsl",
+  }).replace(/'/g, "&#39;");
+  return `<div class="prop-panel">
+  <fig-input-fill mode="solid,gradient,image,video,webcam,shader" value='${value}' full>
+    <div slot="mode-shader" label="Shader">
+      <fig-content>
+        <fig-field>
+          <fig-preview full aspect-ratio="16/9">
+            <canvas width="100%" height="320" aria-label="Generated shader preview" style="width: 100%; height: 100%; background: radial-gradient(circle at 20% 25%, #FFFFFFAA 0 8%, transparent 20%), radial-gradient(circle at 78% 35%, #7AEA66 0 12%, transparent 32%), radial-gradient(circle at 42% 72%, #FFCD29 0 10%, transparent 30%), conic-gradient(from 210deg at 52% 48%, #0D99FF, #9747FF, #FF00BF, #FF7262, #7AEA66, #0D99FF); filter: saturate(1.35) contrast(1.1);"></canvas>
+          </fig-preview>
+        </fig-field>
+        <fig-field>
+          <label>Source</label>
+          <fig-input-text multiline data-shader-source></fig-input-text>
+        </fig-field>
+      </fig-content>
+    </div>
+  </fig-input-fill>
+  <script>
+    (() => {
+      const fill = document.currentScript && document.currentScript.previousElementSibling;
+      const slot = fill && fill.querySelector('[slot="mode-shader"]');
+      const source = fill && fill.querySelector("[data-shader-source]");
+      if (!fill || !slot || !source) return;
+      const initial = ${JSON.stringify(SHADER_SOURCE)};
+      const emit = (type) => {
+        source.dispatchEvent(new CustomEvent(type, {
+          bubbles: true,
+          detail: { source: source.value || "", language: "wgsl" },
+        }));
+      };
+      const bind = () => {
+        source.value = initial;
+        source.addEventListener("input", (event) => {
+          event.stopPropagation();
+          emit("input");
+        });
+        source.addEventListener("change", (event) => {
+          event.stopPropagation();
+          emit("change");
+        });
+      };
+      if (customElements.get("fig-input-text")) bind();
+      else customElements.whenDefined("fig-input-text").then(bind);
+    })();
+  </script>
+</div>`;
+}
+
 function versionHistoryRow(value: string, title: string, label: string): string {
   return `    <fig-menu-item value="${value}" size="large" subtle>
       <div>
@@ -492,7 +550,7 @@ export const figui3Sections: Section[] = [
     name: "Fill Picker",
     group: "Core components",
     description:
-      "Comprehensive fill editor for solid, gradient, image, video, and webcam fills.",
+      "Comprehensive fill editor for solid, gradient, image, video, webcam, and custom slotted modes.",
     examples: [
       {
         id: "all-modes",
@@ -535,6 +593,13 @@ export const figui3Sections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-input-fill picker-mode="webcam" webcam-mode="live" value='{"type":"webcam"}' full></fig-input-fill>
 </div>`,
+      },
+      {
+        id: "shader",
+        name: "Custom",
+        description:
+          "Put a custom type in <code>mode</code> and slot markup with <code>slot=\"mode-&lt;name&gt;\"</code> on <code>fig-input-fill</code> (this example is <code>mode-shader</code>). <code>label</code> is the type-select option; children become the tab. The closed control uses the same chrome as image fills. Dispatch <code>input</code>/<code>change</code> with a <code>detail</code> object so the picker stores <code>{ type: \"shader\", …detail }</code>. In React, listen for <code>modeready</code> and mount into <code>e.detail.container</code>.",
+        markup: fillPickerShaderMarkup(),
       },
     ],
   },

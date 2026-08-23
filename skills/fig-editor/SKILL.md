@@ -128,7 +128,7 @@ Full fill editor. Core `fig-input-color` / `fig-input-fill` auto-open it when re
 </fig-fill-picker>
 ```
 
-Playground: `#fill-picker` — `all-modes`, `solid`, `gradient`, `image`, `video`, `webcam`.
+Playground: `#fill-picker` — `all-modes`, `solid`, `gradient`, `image`, `video`, `webcam`, `shader` (custom `slot="mode-shader"`).
 
 | Attr | Notes |
 |---|---|

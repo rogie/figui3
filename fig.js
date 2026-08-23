@@ -8979,6 +8979,7 @@ class FigInputFill extends HTMLElement {
     scale: 50,
     opacity: 1,
   };
+  #custom = {};
 
   constructor() {
     super();
@@ -9066,6 +9067,11 @@ class FigInputFill extends HTMLElement {
           if (parsed.opacity !== undefined)
             this.#webcam.opacity = parsed.opacity;
           break;
+        default: {
+          const { type: _type, ...rest } = parsed;
+          this.#custom = rest;
+          break;
+        }
       }
     } catch (e) {
       // If not JSON, treat as hex color
@@ -9142,9 +9148,9 @@ class FigInputFill extends HTMLElement {
       case "webcam":
         return this.#webcam.snapshot
           ? figCssUrl(this.#webcam.snapshot)
-          : "#D9D9D9";
+          : "";
       default:
-        return "#D9D9D9";
+        return this.#customSwatchBackground();
     }
   }
 
@@ -9173,7 +9179,38 @@ class FigInputFill extends HTMLElement {
       case "webcam":
         return this.#webcam.opacity ?? 1;
       default:
-        return 1;
+        return this.#normalizeFillOpacity(
+          this.#custom.opacity ?? this.#custom.alpha,
+          1,
+        );
+    }
+  }
+
+  #customModeSlot() {
+    return this.querySelector(`[slot="mode-${this.#fillType}"]`);
+  }
+
+  #customTypeLabel() {
+    const slotLabel = this.#customModeSlot()?.getAttribute("label");
+    if (slotLabel) return slotLabel;
+    if (!this.#fillType) return "Fill";
+    return this.#fillType.charAt(0).toUpperCase() + this.#fillType.slice(1);
+  }
+
+  #customSwatchBackground() {
+    return (
+      this.#custom.swatchBackground ||
+      this.#custom.background ||
+      this.#custom.css ||
+      this.#customModeSlot()?.getAttribute("swatch-background") ||
+      ""
+    );
+  }
+
+  #adoptModeSlots() {
+    if (!this.#fillPicker) return;
+    for (const slot of [...this.querySelectorAll(":scope > [slot^='mode-']")]) {
+      this.#fillPicker.append(slot);
     }
   }
 
@@ -9268,6 +9305,13 @@ class FigInputFill extends HTMLElement {
         label = "Webcam";
         opacity = this.#webcam.opacity ?? 1;
         break;
+      default:
+        label = this.#customTypeLabel();
+        opacity = this.#normalizeFillOpacity(
+          this.#custom.opacity ?? this.#custom.alpha,
+          1,
+        );
+        break;
     }
 
     return [
@@ -9290,6 +9334,7 @@ class FigInputFill extends HTMLElement {
       alpha: this.#fillPickerSwatchAlpha(),
       disabled,
     });
+    const modeSlots = [...this.querySelectorAll("[slot^='mode-']")];
     const picker = figCreateElement(
       "fig-fill-picker",
       {
@@ -9297,7 +9342,7 @@ class FigInputFill extends HTMLElement {
         disabled,
         ...fpAttrs,
       },
-      swatch,
+      [swatch, ...modeSlots],
     );
     const combo = figCreateElement(
       "div",
@@ -9307,6 +9352,11 @@ class FigInputFill extends HTMLElement {
     this.replaceChildren(combo);
 
     this.#setupEventListeners();
+    queueMicrotask(() => {
+      this.#adoptModeSlots();
+      this.#syncSwatch();
+      this.#updateControls();
+    });
   }
 
   #setupEventListeners() {
@@ -9375,6 +9425,11 @@ class FigInputFill extends HTMLElement {
               this.#webcam.snapshot = detail.image.url;
             }
             break;
+          default: {
+            const { type: _type, colorSpace: _colorSpace, ...rest } = detail;
+            this.#custom = rest;
+            break;
+          }
         }
         // Update controls (don't re-render to keep dialog open)
         if (typeChanged) {
@@ -9440,6 +9495,9 @@ class FigInputFill extends HTMLElement {
             break;
           case "webcam":
             this.#webcam.opacity = alpha;
+            break;
+          default:
+            this.#custom.opacity = alpha;
             break;
         }
         this.#updateFillPicker();
@@ -9510,6 +9568,22 @@ class FigInputFill extends HTMLElement {
           );
         }
         break;
+      default: {
+        const label = this.querySelector(".fig-input-fill-label");
+        if (label) label.textContent = this.#customTypeLabel();
+        if (this.#opacityInput) {
+          this.#opacityInput.setAttribute(
+            "value",
+            Math.round(
+              this.#normalizeFillOpacity(
+                this.#custom.opacity ?? this.#custom.alpha,
+                1,
+              ) * 100,
+            ),
+          );
+        }
+        break;
+      }
     }
   }
 
@@ -9586,6 +9660,9 @@ class FigInputFill extends HTMLElement {
             break;
           case "webcam":
             this.#webcam.opacity = alpha;
+            break;
+          default:
+            this.#custom.opacity = alpha;
             break;
         }
         this.#updateFillPicker();
@@ -9703,7 +9780,7 @@ class FigInputFill extends HTMLElement {
           webcam: this.#webcamValue(),
         };
       default:
-        return { type: this.#fillType };
+        return { type: this.#fillType, ...this.#custom };
     }
   }
 
@@ -11886,7 +11963,24 @@ class FigSwatch extends HTMLElement {
   }
 
   #render() {
-    const rawBg = this.getAttribute("background") || "#D9D9D9";
+    const rawAttr = this.getAttribute("background");
+    const emptyMedia = this.hasAttribute("background") && !rawAttr?.trim();
+    if (emptyMedia) {
+      if (this.#type !== "image" || this.input) {
+        this.#type = "image";
+        this.setAttribute("data-type", "image");
+        if (this.input) {
+          this.input.removeEventListener("input", this.#boundHandleInput);
+        }
+        this.replaceChildren(document.createElement("div"));
+        this.input = null;
+        this.#syncA11y();
+      }
+      this.style.setProperty("--swatch-background", "none");
+      return;
+    }
+
+    const rawBg = rawAttr || "#D9D9D9";
     const isVar = rawBg.includes("var(");
     const bg = isVar ? this.#resolveBackground(rawBg) : rawBg;
     const newType = this.#detectType(bg);

@@ -533,6 +533,89 @@ test.describe("fig-fill-picker audit regressions", () => {
     });
   });
 
+  test("switches the live webcam when the camera select changes", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const requested: string[] = [];
+      const streams: Array<{ id: string; stopped: number }> = [];
+      const makeStream = (deviceId: string) => {
+        const record = { id: deviceId, stopped: 0 };
+        streams.push(record);
+        return {
+          getTracks: () => [
+            { readyState: "live", stop: () => record.stopped++ },
+          ],
+          getVideoTracks: () => [
+            {
+              readyState: "live",
+              getSettings: () => ({ deviceId }),
+              stop: () => record.stopped++,
+            },
+          ],
+        };
+      };
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async (constraints: any) => {
+            const exact = constraints?.video?.deviceId?.exact;
+            const id =
+              typeof exact === "string"
+                ? exact
+                : typeof constraints?.video?.deviceId === "string"
+                  ? constraints.video.deviceId
+                  : "cam-1";
+            requested.push(id);
+            return makeStream(id);
+          },
+          enumerateDevices: async () => [
+            { kind: "videoinput", deviceId: "cam-1", label: "FaceTime HD" },
+            { kind: "videoinput", deviceId: "cam-2", label: "USB Camera" },
+          ],
+        },
+      });
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        open(): void;
+      };
+      picker.setAttribute("webcam-mode", "live");
+      picker.value = { type: "webcam" };
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const firstDevice = picker.value.webcam?.deviceId;
+      const select = document.querySelector(
+        ".fig-fill-picker-camera-select",
+      ) as HTMLElement;
+      select.dispatchEvent(
+        new CustomEvent("change", {
+          detail: "cam-2",
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const after = {
+        deviceId: picker.value.webcam?.deviceId,
+        requested,
+        firstStopped: streams[0]?.stopped ?? 0,
+        secondId: streams[1]?.id ?? null,
+      };
+      picker.remove();
+      return { firstDevice, ...after };
+    });
+
+    expect(state).toEqual({
+      firstDevice: "cam-1",
+      deviceId: "cam-2",
+      requested: ["cam-1", "cam-2"],
+      firstStopped: 1,
+      secondId: "cam-2",
+    });
+  });
+
   test("parses webcam values and legacy image snapshots", async ({ page }) => {
     const state = await page.evaluate(async () => {
       const picker = document.createElement("fig-fill-picker") as HTMLElement & {
@@ -953,5 +1036,52 @@ test.describe("fig-fill-picker audit regressions", () => {
 
     expect(state.fieldCount).toBe(0);
     expect(state.interpolationSpace).toBe("srgb");
+  });
+
+  test("custom shader mode slots into the type select and tab", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        open(): void;
+      };
+      picker.setAttribute("mode", "solid,shader");
+      picker.value = { type: "shader", source: "fn main() {}", language: "wgsl" };
+      picker.innerHTML = `
+        <fig-swatch></fig-swatch>
+        <div slot="mode-shader" label="Shader" swatch-background="#9747FF">
+          <fig-input-text multiline data-shader-source></fig-input-text>
+        </div>
+      `;
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+      await new Promise(requestAnimationFrame);
+      const dialog = document.querySelector("dialog.fig-fill-picker-dialog");
+      const typeSelect = dialog?.querySelector(".fig-fill-picker-type");
+      const tab = dialog?.querySelector('.fig-fill-picker-tab[data-tab="shader"]');
+      const source = tab?.querySelector("[data-shader-source]");
+      source?.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: { source: "@fragment fn main() {}", language: "wgsl" },
+        }),
+      );
+      const result = {
+        option: typeSelect?.querySelector('fig-select-option[value="shader"]')
+          ?.textContent,
+        hasSource: Boolean(source),
+        type: picker.value.type,
+        source: picker.value.source,
+      };
+      picker.remove();
+      return result;
+    });
+
+    expect(state.option).toBe("Shader");
+    expect(state.hasSource).toBe(true);
+    expect(state.type).toBe("shader");
+    expect(state.source).toBe("@fragment fn main() {}");
   });
 });

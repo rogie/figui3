@@ -128,7 +128,7 @@ Full fill editor. Core `fig-input-color` / `fig-input-fill` auto-open it when re
 </fig-fill-picker>
 ```
 
-Playground: `#fill-picker` — `all-modes`, `solid`, `gradient`, `image`, `video`, `webcam`.
+Playground: `#fill-picker` — `all-modes`, `solid`, `gradient`, `image`, `video`, `webcam`, `shader` (custom `slot="mode-shader"`).
 
 | Attr | Notes |
 |---|---|
@@ -161,13 +161,12 @@ Do not use `picker` or `picker-anchor` on `fig-input-color`. Forward picker chro
 ### Custom modes (vanilla)
 
 ```html
-<fig-fill-picker mode="solid,tokens">
-  <fig-swatch></fig-swatch>
+<fig-input-fill mode="solid,tokens" value='{"type":"tokens"}'>
   <div slot="mode-tokens" label="Tokens">Token UI</div>
-</fig-fill-picker>
+</fig-input-fill>
 ```
 
-Child `slot="mode-<name>"` plus `<name>` in `mode`. Custom content must dispatch `input` / `change` with `detail` so the picker stores mode data.
+Child `slot="mode-<name>"` plus `<name>` in `mode`. `fig-input-fill` forwards those slots to the inner picker and uses image-style chrome (type label + opacity). Custom content must dispatch `input` / `change` with `detail` so the picker stores mode data.
 
 ### Custom modes (React)
 
