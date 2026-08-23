@@ -10648,8 +10648,17 @@ class FigInputGradient extends HTMLElement {
       .join(", ");
     const interp = gradientInterpolationClause(gradient);
     const interpolation = interp ? ` ${interp}` : "";
-    // Compact swatch always previews L→R, regardless of linear angle /
-    // radial / angular type (stop handles also use this axis when editing).
+    if (this.#editMode === "picker") {
+      switch (gradient.type) {
+        case "radial":
+          return `radial-gradient(circle at ${gradient.centerX}% ${gradient.centerY}%${interpolation}, ${stops})`;
+        case "angular":
+          return `conic-gradient(from ${gradient.angle}deg${interpolation}, ${stops})`;
+        default:
+          return `linear-gradient(${gradient.angle}deg${interpolation}, ${stops})`;
+      }
+    }
+    // Inline editor swatch previews L→R so stop handles share that axis.
     return `linear-gradient(to right${interpolation}, ${stops})`;
   }
 
@@ -10761,6 +10770,11 @@ class FigInputGradient extends HTMLElement {
         ...this.#gradient,
         ...detail.gradient,
       });
+      if (this.#editMode === "picker" && typeof detail.css === "string" && detail.css) {
+        this.#swatch?.setAttribute("background", detail.css);
+        this.#syncSwatchSize();
+        return;
+      }
       this.#syncSwatch();
     };
 

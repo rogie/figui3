@@ -2873,6 +2873,60 @@ test.describe("propskit-gradient", () => {
     ).toBe("none");
   });
 
+  test("updates the swatch when the gradient type changes", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const control = document.createElement("propskit-gradient");
+      control.setAttribute("label", "Fill");
+      control.setAttribute(
+        "value",
+        JSON.stringify({
+          type: "gradient",
+          gradient: {
+            type: "linear",
+            angle: 90,
+            stops: [
+              { position: 0, color: "#0D99FF", opacity: 100 },
+              { position: 100, color: "#9747FF", opacity: 100 },
+            ],
+          },
+        }),
+      );
+      root.append(control);
+    });
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
+
+    const swatch = page.locator("propskit-gradient fig-swatch");
+    expect(await swatch.getAttribute("background")).toMatch(/^linear-gradient\(/);
+    expect(await swatch.getAttribute("background")).not.toMatch(/to right/);
+
+    await page.locator("propskit-gradient fig-fill-picker").evaluate((picker) => {
+      picker.dispatchEvent(
+        new CustomEvent("input", {
+          detail: {
+            type: "gradient",
+            gradient: {
+              type: "radial",
+              centerX: 50,
+              centerY: 50,
+              stops: [
+                { position: 0, color: "#0D99FF", opacity: 100 },
+                { position: 100, color: "#9747FF", opacity: 100 },
+              ],
+            },
+            css: "radial-gradient(circle at 50% 50%, #0D99FF 0%, #9747FF 100%)",
+          },
+          bubbles: true,
+        }),
+      );
+    });
+
+    expect(await swatch.getAttribute("background")).toMatch(/^radial-gradient\(/);
+  });
+
   test("uses structural defaults, resets, and forwards disabled state", async ({
     page,
   }) => {

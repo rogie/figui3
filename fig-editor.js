@@ -4475,7 +4475,7 @@ class FigFillPicker extends HTMLElement {
   #applyDefaultVideo({ emit = true } = {}) {
     if (this.#video.url) {
       this.#video.missing = false;
-      if (!this.#video.poster) this.#captureVideoPoster(this.#video.url, { emit });
+      if (!this.#video.poster) this.#captureVideoPoster(this.#video.url);
       return;
     }
     const fallback = this.getAttribute("default-video");
@@ -4489,14 +4489,15 @@ class FigFillPicker extends HTMLElement {
       ".fig-fill-picker-video-preview",
     );
     if (preview) this.#updateVideoPreviewStyle(preview);
-    this.#captureVideoPoster(fallback, { emit });
+    this.#captureVideoPoster(fallback);
+    if (emit) this.#emitInput();
   }
 
-  #ensureVideoPoster({ emit = true } = {}) {
+  #ensureVideoPoster() {
     if (this.#fillType !== "video") return;
     const src = this.#video.url;
     if (!src || this.#video.poster) return;
-    this.#captureVideoPoster(src, { emit });
+    this.#captureVideoPoster(src);
   }
 
   async #videoFrameBitmap(video) {
@@ -4550,7 +4551,7 @@ class FigFillPicker extends HTMLElement {
       : new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
   }
 
-  async #captureVideoPoster(src, { emit = true } = {}) {
+  async #captureVideoPoster(src, { emit = false } = {}) {
     if (!src || this.#videoPosterCapturing === src) return;
     this.#videoPosterCapturing = src;
     const video = document.createElement("video");

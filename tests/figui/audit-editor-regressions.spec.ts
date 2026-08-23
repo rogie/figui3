@@ -955,7 +955,7 @@ test.describe("fig-fill-picker audit regressions", () => {
   test("video without poster paints a createImageBitmap still on the swatch", async ({
     page,
   }) => {
-    const background = await page.evaluate(async () => {
+    const state = await page.evaluate(async () => {
       const canvas = document.createElement("canvas");
       canvas.width = 4;
       canvas.height = 4;
@@ -994,6 +994,10 @@ test.describe("fig-fill-picker audit regressions", () => {
 
       const picker = document.createElement("fig-fill-picker");
       picker.append(document.createElement("fig-swatch"));
+      let inputs = 0;
+      picker.addEventListener("input", () => {
+        inputs += 1;
+      });
       picker.setAttribute(
         "value",
         JSON.stringify({
@@ -1012,10 +1016,11 @@ test.describe("fig-fill-picker audit regressions", () => {
       picker.remove();
       globalThis.createImageBitmap = originalBitmap;
       HTMLVideoElement.prototype.addEventListener = origListen;
-      return next;
+      return { background: next, inputs };
     });
 
-    expect(background).toMatch(/^url\("blob:/);
+    expect(state.background).toMatch(/^url\("blob:/);
+    expect(state.inputs).toBe(0);
   });
 
   test("fig-input-fill copies webcam and video poster values", async ({

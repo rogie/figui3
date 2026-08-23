@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.23]
+
+### Fixed
+
+- Automatic video poster capture paints the swatch without emitting `input`. The still is derived UI, not a fill change.
+- `fig-input-gradient` / `propskit-gradient` picker swatches follow linear, radial, and angular types instead of staying a left-to-right strip.
+
 ## [8.9.22]
 
 ### Added
