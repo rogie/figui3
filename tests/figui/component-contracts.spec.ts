@@ -2670,6 +2670,35 @@ test.describe("propskit-fill", () => {
     });
   });
 
+  test("accepts a bare video URL as value", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        `<propskit-fill label="Fill" value="https://example.com/clip.mp4"></propskit-fill>`;
+      await customElements.whenDefined("propskit-fill");
+      await customElements.whenDefined("fig-fill-picker");
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+      const host = root.querySelector("propskit-fill") as HTMLElement;
+      const picker = host.querySelector("fig-fill-picker") as HTMLElement & {
+        value?: { type?: string; video?: { url?: string } };
+      };
+      return {
+        hostValue: host.getAttribute("value"),
+        type: picker.value?.type,
+        url: picker.value?.video?.url,
+      };
+    });
+
+    expect(state).toEqual({
+      hostValue: "https://example.com/clip.mp4",
+      type: "video",
+      url: "https://example.com/clip.mp4",
+    });
+  });
+
   test("captures a webcam snapshot onto the swatch and host value", async ({
     page,
   }) => {

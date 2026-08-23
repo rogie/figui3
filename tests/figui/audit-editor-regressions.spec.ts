@@ -952,6 +952,72 @@ test.describe("fig-fill-picker audit regressions", () => {
     expect(state.background).toBe('url("data:image/jpeg;base64,poster")');
   });
 
+  test("video without poster paints a createImageBitmap still on the swatch", async ({
+    page,
+  }) => {
+    const background = await page.evaluate(async () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 4;
+      canvas.height = 4;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ff00bf";
+      ctx.fillRect(0, 0, 4, 4);
+      const still = await createImageBitmap(canvas);
+      const originalBitmap = globalThis.createImageBitmap;
+      globalThis.createImageBitmap = async (source, ...rest) => {
+        if (source instanceof HTMLVideoElement) return still;
+        return originalBitmap.call(globalThis, source, ...rest);
+      };
+      Object.defineProperty(HTMLVideoElement.prototype, "videoWidth", {
+        configurable: true,
+        get() {
+          return 4;
+        },
+      });
+      Object.defineProperty(HTMLVideoElement.prototype, "videoHeight", {
+        configurable: true,
+        get() {
+          return 4;
+        },
+      });
+      const origListen = HTMLVideoElement.prototype.addEventListener;
+      HTMLVideoElement.prototype.addEventListener = function (type, fn, opts) {
+        if (type === "error") return;
+        if (type === "loadeddata") {
+          queueMicrotask(() =>
+            (fn as EventListener).call(this, new Event("loadeddata")),
+          );
+          return;
+        }
+        return origListen.call(this, type, fn, opts);
+      };
+
+      const picker = document.createElement("fig-fill-picker");
+      picker.append(document.createElement("fig-swatch"));
+      picker.setAttribute(
+        "value",
+        JSON.stringify({
+          type: "video",
+          video: { url: "https://example.com/clip.mp4", scaleMode: "fill" },
+        }),
+      );
+      document.body.append(picker);
+      let next = "";
+      for (let i = 0; i < 20; i += 1) {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        next =
+          picker.querySelector("fig-swatch")?.getAttribute("background") ?? "";
+        if (next.startsWith("url(\"blob:")) break;
+      }
+      picker.remove();
+      globalThis.createImageBitmap = originalBitmap;
+      HTMLVideoElement.prototype.addEventListener = origListen;
+      return next;
+    });
+
+    expect(background).toMatch(/^url\("blob:/);
+  });
+
   test("fig-input-fill copies webcam and video poster values", async ({
     page,
   }) => {

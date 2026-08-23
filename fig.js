@@ -8684,6 +8684,18 @@ function figCssUrl(url) {
   return `url("${String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
 }
 
+function figLooksLikeVideoUrl(raw) {
+  const text = String(raw ?? "").trim();
+  if (!text || text.startsWith("{") || text.startsWith("#")) return false;
+  if (text.startsWith("data:video/")) return true;
+  try {
+    const path = new URL(text, "https://fig.local").pathname;
+    return /\.(mp4|webm|mov|m4v|ogv)$/i.test(path);
+  } catch {
+    return /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(text);
+  }
+}
+
 function figHexToRGB(hex) {
   const h = hex.replace(/^#/, "");
   return {
@@ -9077,7 +9089,6 @@ class FigInputFill extends HTMLElement {
         }
       }
     } catch (e) {
-      // If not JSON, treat as hex color
       if (valueAttr.startsWith("#")) {
         this.#fillType = "solid";
         this.#solid.color = valueAttr.slice(0, 7);
@@ -9085,6 +9096,12 @@ class FigInputFill extends HTMLElement {
           const alphaHex = valueAttr.slice(7, 9);
           this.#solid.alpha = parseInt(alphaHex, 16) / 255;
         }
+        return;
+      }
+      if (figLooksLikeVideoUrl(valueAttr)) {
+        this.#fillType = "video";
+        this.#video.url = valueAttr.trim();
+        this.#video.missing = false;
       }
     }
   }

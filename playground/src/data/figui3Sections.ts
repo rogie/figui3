@@ -760,7 +760,7 @@ export const figui3Sections: Section[] = [
         id: "video",
         name: "Video",
         markup: `<div class="prop-panel">
-  <fig-input-fill default-video="${DEMO_FILL_VIDEO.src}" value='{"type":"video","video":{"url":"${DEMO_FILL_VIDEO.src}","poster":"${DEMO_FILL_VIDEO.poster}","scaleMode":"fill","scale":50}}'></fig-input-fill>
+  <fig-input-fill value="${DEMO_FILL_VIDEO.src}"></fig-input-fill>
 </div>`,
       },
     ],

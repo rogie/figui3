@@ -1,4 +1,5 @@
 import type { Section } from "./sections";
+import { DEMO_FILL_VIDEO } from "../lib/videos";
 
 const ungroupedLabSections: Section[] = [
   {
@@ -65,13 +66,13 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-fill",
     name: "Fill",
     description:
-      "A full-surface fill field with a large swatch like propskit-color. Clicking the field opens the fill picker for solid, gradient, image, video, webcam, and custom modes.",
+      "A labeled fill field. Click the bar to open the picker and set solid, gradient, image, video, webcam, or a custom mode.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-fill label="Fill" value='{"type":"solid","color":"#0D99FF","alpha":1}' default='{"type":"solid","color":"#0D99FF","alpha":1}'></propskit-fill>
+  <propskit-fill label="Fill" value="${DEMO_FILL_VIDEO.src}" default="${DEMO_FILL_VIDEO.src}"></propskit-fill>
 </div>`,
       },
     ],

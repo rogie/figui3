@@ -29,6 +29,18 @@ function figEditorCssUrl(url) {
   return `url("${String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
 }
 
+function figEditorLooksLikeVideoUrl(raw) {
+  const text = String(raw ?? "").trim();
+  if (!text || text.startsWith("{") || text.startsWith("#")) return false;
+  if (text.startsWith("data:video/")) return true;
+  try {
+    const path = new URL(text, "https://fig.local").pathname;
+    return /\.(mp4|webm|mov|m4v|ogv)$/i.test(path);
+  } catch {
+    return /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(text);
+  }
+}
+
 function figEditorCreateIcon(name, options = {}) {
   const icon = document.createElement("fig-icon");
   if (name) icon.setAttribute("name", name);
@@ -1692,6 +1704,7 @@ class FigFillPicker extends HTMLElement {
   #boundTriggerKeydown = null;
   #rafIds = new Set();
   #ownedBlobUrls = new Set();
+  #videoPosterCapturing = null;
 
   constructor() {
     super();
@@ -1721,6 +1734,7 @@ class FigFillPicker extends HTMLElement {
       this.#setupTrigger();
       this.#parseValue();
       this.#updateSwatch();
+      this.#ensureVideoPoster();
     });
   }
 
@@ -2117,8 +2131,12 @@ class FigFillPicker extends HTMLElement {
       }
       if (parsed.image) this.#image = { ...this.#image, ...parsed.image };
       if (parsed.video) {
+        const prevUrl = this.#video.url;
         this.#video = { ...this.#video, ...parsed.video };
         this.#video.missing = !this.#video.url;
+        if (this.#video.url !== prevUrl && parsed.video.poster == null) {
+          this.#revokeVideoPoster();
+        }
       }
       this.#applyParsedWebcam(parsed);
 
@@ -2128,10 +2146,17 @@ class FigFillPicker extends HTMLElement {
         this.#customData[parsed.type] = rest;
       }
     } catch (e) {
-      // If not JSON, treat as hex color
       if (valueAttr.startsWith("#")) {
         this.#fillType = "solid";
         this.#color = this.#hexToHSV(valueAttr);
+        return;
+      }
+      if (figEditorLooksLikeVideoUrl(valueAttr)) {
+        const prevUrl = this.#video.url;
+        this.#fillType = "video";
+        this.#video.url = valueAttr.trim();
+        this.#video.missing = false;
+        if (this.#video.url !== prevUrl) this.#revokeVideoPoster();
       }
     }
   }
@@ -4429,7 +4454,6 @@ class FigFillPicker extends HTMLElement {
       "aspect-ratio": "1/1",
       fit: "cover",
       checkerboard: "true",
-      autoplay: "true",
       controls: true,
       muted: "true",
       loop: "true",
@@ -4468,8 +4492,67 @@ class FigFillPicker extends HTMLElement {
     this.#captureVideoPoster(fallback, { emit });
   }
 
+  #ensureVideoPoster({ emit = true } = {}) {
+    if (this.#fillType !== "video") return;
+    const src = this.#video.url;
+    if (!src || this.#video.poster) return;
+    this.#captureVideoPoster(src, { emit });
+  }
+
+  async #videoFrameBitmap(video) {
+    if (typeof video.requestVideoFrameCallback === "function") {
+      await Promise.race([
+        new Promise((resolve) => video.requestVideoFrameCallback(() => resolve())),
+        new Promise((resolve) => setTimeout(resolve, 80)),
+      ]);
+    } else {
+      try {
+        await video.play();
+        video.pause();
+      } catch {
+        /* use the current decoded frame */
+      }
+    }
+    if (typeof createImageBitmap === "function") {
+      try {
+        return await createImageBitmap(video);
+      } catch {
+        /* tainted or undecoded — fall back to drawImage(video) */
+      }
+    }
+    return null;
+  }
+
+  async #blobFromVideoFrame(video) {
+    const bitmap = await this.#videoFrameBitmap(video);
+    const width = bitmap?.width || video.videoWidth;
+    const height = bitmap?.height || video.videoHeight;
+    if (!width || !height) {
+      bitmap?.close?.();
+      return null;
+    }
+    const canvas =
+      typeof OffscreenCanvas === "function"
+        ? new OffscreenCanvas(width, height)
+        : Object.assign(document.createElement("canvas"), { width, height });
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap?.close?.();
+      return null;
+    }
+    try {
+      ctx.drawImage(bitmap || video, 0, 0, width, height);
+    } finally {
+      bitmap?.close?.();
+    }
+    return canvas.convertToBlob
+      ? canvas.convertToBlob({ type: "image/jpeg", quality: 0.85 })
+      : new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+  }
+
   async #captureVideoPoster(src, { emit = true } = {}) {
-    if (!src) return;
+    if (!src || this.#videoPosterCapturing === src) return;
+    this.#videoPosterCapturing = src;
     const video = document.createElement("video");
     video.muted = true;
     video.playsInline = true;
@@ -4483,14 +4566,8 @@ class FigFillPicker extends HTMLElement {
         video.src = src;
       });
       if (!video.videoWidth || !video.videoHeight) return;
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", 0.85),
-      );
-      if (!blob) return;
+      const blob = await this.#blobFromVideoFrame(video);
+      if (!blob || this.#video.url !== src) return;
       this.#revokeVideoPoster();
       this.#video.poster = URL.createObjectURL(blob);
       this.#ownedBlobUrls.add(this.#video.poster);
@@ -4498,6 +4575,10 @@ class FigFillPicker extends HTMLElement {
       if (emit) this.#emitInput();
     } catch {
       // Cross-origin or decode failures leave the swatch empty until a poster exists.
+    } finally {
+      video.removeAttribute("src");
+      video.load();
+      if (this.#videoPosterCapturing === src) this.#videoPosterCapturing = null;
     }
   }
 
@@ -4523,7 +4604,6 @@ class FigFillPicker extends HTMLElement {
       this.#video.url = src;
       this.#video.missing = false;
       this.#updateVideoPreviewStyle(preview);
-      preview.play?.();
       this.#captureVideoPoster(src);
       this.#updateSwatch();
       this.#emitInput();
@@ -5186,6 +5266,7 @@ class FigFillPicker extends HTMLElement {
       case "value":
         this.#parseValue();
         this.#updateSwatch();
+        this.#ensureVideoPoster();
         if (this.#dialog?.open && !this.#isDraggingColor) {
           this.#refreshDialogUI();
           this.#lastChangeValue = JSON.stringify(this.value);

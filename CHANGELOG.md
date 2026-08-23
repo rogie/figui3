@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.22]
+
+### Added
+
+- Fill `value` may be a bare video URL (`.mp4`, `.webm`, `.mov`, `.m4v`, `.ogv`, or `data:video/…`). JSON still works.
+
+### Changed
+
+- Fill picker video preview stays paused after upload. First frame shows; play is opt-in.
+- Lab Fill and Fill Input Video examples use a video URL instead of JSON.
+
+### Fixed
+
+- Video fills without a poster paint a `createImageBitmap` still on the closed swatch. Capture runs on the picker when the URL is set, not only when the dialog opens.
+
 ## [8.9.21]
 
 ### Changed

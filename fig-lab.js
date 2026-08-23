@@ -728,6 +728,25 @@ function figLabCssUrl(url) {
   return `url("${String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
 }
 
+function figLabLooksLikeVideoUrl(raw) {
+  const text = String(raw ?? "").trim();
+  if (!text || text.startsWith("{") || text.startsWith("#")) return false;
+  if (text.startsWith("data:video/")) return true;
+  try {
+    const path = new URL(text, "https://fig.local").pathname;
+    return /\.(mp4|webm|mov|m4v|ogv)$/i.test(path);
+  } catch {
+    return /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(text);
+  }
+}
+
+function figLabVideoFillFromUrl(url) {
+  return {
+    type: "video",
+    video: { url, scaleMode: "fill", scale: 50 },
+  };
+}
+
 function figLabParseFillValue(raw) {
   if (raw && typeof raw === "object") return raw;
   const text = String(raw ?? "").trim();
@@ -742,6 +761,7 @@ function figLabParseFillValue(raw) {
     const { color, alpha } = figLabParseSolidColor(text);
     return { type: "solid", color, alpha };
   }
+  if (figLabLooksLikeVideoUrl(text)) return figLabVideoFillFromUrl(text);
   return { type: "solid", color: "#D9D9D9", alpha: 1 };
 }
 
