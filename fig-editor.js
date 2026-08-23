@@ -1668,6 +1668,8 @@ class FigFillPicker extends HTMLElement {
     opacity: 1,
   };
   #webcamPosterStream = null;
+  #webcamSnapshotting = false;
+  #webcamImageCapture = null;
 
   // Custom mode slots and data
   #customSlots = {};
@@ -1779,8 +1781,13 @@ class FigFillPicker extends HTMLElement {
 
   #applyParsedWebcam(parsed) {
     if (parsed.webcam && typeof parsed.webcam === "object") {
-      const { stream: _ignored, ...rest } = parsed.webcam;
+      const { stream: _ignored, snapshot, ...rest } = parsed.webcam;
       Object.assign(this.#webcam, rest);
+      // Host writes can arrive as `{ snapshot: null }` while a live frame is
+      // in flight — keep the captured still so the closed swatch can paint it.
+      if (typeof snapshot === "string" && snapshot) {
+        this.#webcam.snapshot = snapshot;
+      }
       return;
     }
     if (parsed.type === "webcam" && parsed.image) {
@@ -1822,12 +1829,96 @@ class FigFillPicker extends HTMLElement {
     return this.#webcam.snapshot;
   }
 
+  #webcamFrameIsBlank(ctx, width, height) {
+    if (typeof ctx.getImageData !== "function") return false;
+    let data;
+    try {
+      data = ctx.getImageData(0, 0, width, height).data;
+    } catch {
+      return false;
+    }
+    const step = Math.max(1, Math.floor((width * height) / 256));
+    let max = 0;
+    let lit = 0;
+    let samples = 0;
+    for (let i = 0; i < data.length; i += step * 4) {
+      const peak = Math.max(data[i], data[i + 1], data[i + 2]);
+      max = Math.max(max, peak);
+      samples += 1;
+      if (peak > 24) lit += 1;
+    }
+    if (!samples) return true;
+    // Built-in cams often emit near-black boot frames with a bit of noise.
+    return max <= 40 || lit / samples < 0.04;
+  }
+
+  async #webcamFrameSources(video) {
+    const sources = [];
+    const track = this.#webcam.stream?.getVideoTracks?.()?.[0];
+    if (track && typeof ImageCapture === "function") {
+      try {
+        if (this.#webcamImageCapture?.track !== track) {
+          this.#webcamImageCapture = new ImageCapture(track);
+        }
+        sources.push(await this.#webcamImageCapture.grabFrame());
+      } catch {
+        this.#webcamImageCapture = null;
+      }
+    }
+    if (typeof createImageBitmap === "function") {
+      try {
+        sources.push(await createImageBitmap(video));
+      } catch {
+        /* video not readable yet */
+      }
+    }
+    sources.push(video);
+    return sources.filter(Boolean);
+  }
+
+  async #paintWebcamFrame(ctx, video, width, height) {
+    const sources = await this.#webcamFrameSources(video);
+    for (const source of sources) {
+      try {
+        ctx.drawImage(source, 0, 0, width, height);
+      } catch {
+        continue;
+      } finally {
+        source.close?.();
+      }
+      if (!this.#webcamFrameIsBlank(ctx, width, height)) return true;
+    }
+    return false;
+  }
+
+  #waitForNextVideoFrame(video) {
+    return new Promise((resolve) => {
+      if (typeof video.requestVideoFrameCallback === "function") {
+        const timer = setTimeout(() => resolve(false), 400);
+        video.requestVideoFrameCallback(() => {
+          clearTimeout(timer);
+          resolve(true);
+        });
+        return;
+      }
+      setTimeout(() => resolve(false), 200);
+    });
+  }
+
   async #snapshotWebcamVideo(video) {
     if (!video?.videoWidth || !video.videoHeight) return null;
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+    const painted = await this.#paintWebcamFrame(
+      ctx,
+      video,
+      canvas.width,
+      canvas.height,
+    );
+    if (!painted) return null;
     const blob = await new Promise((resolve) =>
       canvas.toBlob(resolve, "image/png"),
     );
@@ -1842,14 +1933,34 @@ class FigFillPicker extends HTMLElement {
       this.#updateSwatch();
       return;
     }
-    this.#webcamPosterStream = stream;
-    this.#snapshotWebcamVideo(video).then((url) => {
+    if (this.#webcamSnapshotting) return;
+    this.#webcamSnapshotting = true;
+
+    const finish = (url) => {
+      this.#webcamSnapshotting = false;
       if (!url || this.#fillType !== "webcam" || this.#webcam.stream !== stream) {
         return;
       }
+      this.#webcamPosterStream = stream;
       this.#updateSwatch();
       this.#emitInput();
-    });
+    };
+
+    const attempt = async () => {
+      const url = await this.#snapshotWebcamVideo(video);
+      if (url) {
+        finish(url);
+        return;
+      }
+      if (this.#fillType !== "webcam" || this.#webcam.stream !== stream) {
+        this.#webcamSnapshotting = false;
+        return;
+      }
+      await this.#waitForNextVideoFrame(video);
+      return attempt();
+    };
+
+    attempt();
   }
 
   #scheduleFrame(callback) {
@@ -2202,6 +2313,8 @@ class FigFillPicker extends HTMLElement {
       this.#webcam.stream = null;
     }
     this.#webcamPosterStream = null;
+    this.#webcamSnapshotting = false;
+    this.#webcamImageCapture = null;
     const video = this.#dialog?.querySelector(
       ".fig-fill-picker-webcam-video",
     );
@@ -4524,11 +4637,16 @@ class FigFillPicker extends HTMLElement {
     };
     video.addEventListener("loadedmetadata", updateFrameReadiness);
     video.addEventListener("canplay", updateFrameReadiness);
+    video.addEventListener("playing", updateFrameReadiness);
 
     const attachPreview = (stream) => {
       this.#webcam.stream = stream;
       video.srcObject = stream;
+      video.muted = true;
+      video.playsInline = true;
       video.style.display = "block";
+      const play = video.play?.();
+      if (play?.catch) play.catch(() => {});
       updateFrameReadiness();
     };
 

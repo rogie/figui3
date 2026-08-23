@@ -49,8 +49,9 @@ Shared:
 | Tag | Playground | Inner control | Notes |
 |---|---|---|---|
 | `propskit-switch` | `#propskit-switch` | `fig-switch` | `checked`, `default` boolean |
-| `propskit-color` | `#propskit-color` | `fig-fill-picker` + `fig-swatch` | Solid swatch, same size as gradient. Opens the fill picker. `alpha` default true |
-| `propskit-gradient` | `#propskit-gradient` | `fig-input-gradient` | Default `edit="picker"`. `mode="handle\|tip"` for inline edit |
+| `propskit-color` | `#propskit-color` | `fig-fill-picker` + `fig-swatch` | Solid swatch, same size as gradient. Clicking the field opens the picker. Focus ring on the field, not the swatch. `alpha` default true |
+| `propskit-fill` | `#propskit-fill` | `fig-fill-picker` + `fig-swatch` | Same chrome as color. Clicking the field opens the picker. Focus ring on the field, not the swatch. Full fill JSON (`solid` / `gradient` / `image` / `video` / `webcam` / custom). Forwards `mode-*` slots |
+| `propskit-gradient` | `#propskit-gradient` | `fig-input-gradient` | Default `edit="picker"`. Clicking the field opens the picker. Focus ring on the field, not the gradient. `mode="handle\|tip"` for inline edit |
 | `propskit-select` | `#propskit-select` | `fig-select` | `options` or slotted `fig-select-options` |
 | `propskit-text` | `#propskit-text` | `fig-input-text` | `type`, `readonly` |
 | `propskit-number` | `#propskit-number` | `fig-input-number` | `min`, `max`, `step`, `precision`, `units`, `steppers` |
@@ -142,7 +143,7 @@ These are layout shells. Wire behavior yourself.
 | Labeled exact number | `propskit-number` |
 | Labeled text | `propskit-text` |
 | Labeled discrete list | `propskit-select` (not `fig-dropdown`) |
-| Labeled color / gradient | `propskit-color` / `propskit-gradient` |
+| Labeled color / fill / gradient | `propskit-color` / `propskit-fill` / `propskit-gradient` |
 | X/Y | `propskit-position` |
 | Spatial on a canvas | `fig-canvas-control` |
 | Angle | `fig-input-angle` |

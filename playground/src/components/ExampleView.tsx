@@ -194,6 +194,7 @@ export default function ExampleView({
       "fig-segmented-control",
       "propskit-color-point",
       "propskit-color",
+      "propskit-fill",
       "propskit-gradient",
       "propskit-number",
       "propskit-point-point",

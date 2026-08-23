@@ -1878,6 +1878,7 @@ test.describe("PropsKit disabled contract", () => {
       root.innerHTML = `
         <propskit-switch disabled></propskit-switch>
         <propskit-color disabled></propskit-color>
+        <propskit-fill disabled></propskit-fill>
         <propskit-gradient disabled></propskit-gradient>
         <propskit-select disabled options="One,Two"></propskit-select>
         <propskit-text disabled></propskit-text>
@@ -1896,6 +1897,7 @@ test.describe("PropsKit disabled contract", () => {
       const innerSelectors: Record<string, string> = {
         "propskit-switch": "fig-segmented-control",
         "propskit-color": "fig-fill-picker",
+        "propskit-fill": "fig-fill-picker",
         "propskit-gradient": "fig-input-gradient",
         "propskit-select": "fig-select, fig-dropdown",
         "propskit-text": "fig-input-text",
@@ -1956,6 +1958,7 @@ test.describe("PropsKit disabled contract", () => {
     expect(state.primitives).toEqual({
       "propskit-switch": true,
       "propskit-color": true,
+      "propskit-fill": true,
       "propskit-gradient": true,
       "propskit-select": true,
       "propskit-text": true,
@@ -2107,6 +2110,7 @@ test.describe("propskit sizes", () => {
         [
           "propskit-switch",
           "propskit-color",
+          "propskit-fill",
           "propskit-gradient",
           "propskit-select",
           "propskit-text",
@@ -2126,6 +2130,8 @@ test.describe("propskit sizes", () => {
       const fixtures: Record<string, string> = {
         "propskit-switch": 'label="Enabled"',
         "propskit-color": 'label="Fill" value="#0D99FF"',
+        "propskit-fill":
+          "label=\"Fill\" value='{\"type\":\"solid\",\"color\":\"#0D99FF\",\"alpha\":1}'",
         "propskit-gradient":
           "label=\"Gradient\" value='{\"type\":\"gradient\",\"gradient\":{\"type\":\"linear\",\"angle\":90,\"stops\":[{\"position\":0,\"color\":\"#0D99FF\",\"opacity\":100},{\"position\":100,\"color\":\"#9747FF\",\"opacity\":100}]}}'",
         "propskit-select": 'label="Mode" value="A" options="A,B"',
@@ -2252,6 +2258,7 @@ test.describe("propskit sizes", () => {
       const fixtures: Record<string, string> = {
         "propskit-switch": "",
         "propskit-color": 'value="#0D99FF"',
+        "propskit-fill": 'value=\'{"type":"solid","color":"#0D99FF","alpha":1}\'',
         "propskit-gradient": "",
         "propskit-select": 'value="A" options="A,B"',
         "propskit-text": 'value="Layer"',
@@ -2340,6 +2347,8 @@ test.describe("propskit sizes", () => {
       const fixtures: Record<string, string> = {
         "propskit-switch": 'label="Enabled"',
         "propskit-color": 'label="Fill" value="#0D99FF"',
+        "propskit-fill":
+          "label=\"Fill\" value='{\"type\":\"solid\",\"color\":\"#0D99FF\",\"alpha\":1}'",
         "propskit-gradient": "label=\"Gradient\"",
         "propskit-select": 'label="Align" value="A" options="A,B"',
         "propskit-text": 'label="Name" value="Layer"',
@@ -2448,7 +2457,207 @@ test.describe("propskit-color", () => {
     await control.evaluate((element) => (element as HTMLElement).focus());
     await expect(swatch).toBeFocused();
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("solid");
+    expect(await swatch.evaluate((element) => getComputedStyle(element).outlineStyle))
       .toBe("none");
+  });
+
+  test("opens the color picker when the field surface is clicked", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-color label="Background" value="#0D99FF" alpha="true"></propskit-color>';
+    });
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
+
+    await page.locator("propskit-color fig-field").click({ position: { x: 12, y: 12 } });
+    await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
+      "open",
+      "true",
+    );
+  });
+});
+
+test.describe("propskit-fill", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await import("/fig-editor.js");
+      await customElements.whenDefined("propskit-fill");
+      await customElements.whenDefined("fig-fill-picker");
+    });
+  });
+
+  test("composes a fill-picker swatch and forwards fill events", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        `<propskit-fill label="Fill" value='{"type":"solid","color":"#0D99FF","alpha":1}'></propskit-fill>`;
+    });
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
+
+    const control = page.locator("propskit-fill");
+    const field = control.locator("fig-field");
+    const picker = control.locator("fig-fill-picker");
+    const swatch = picker.locator("fig-swatch");
+    await expect(control.locator("fig-field > label")).toHaveText("Fill");
+    await expect(control.locator("fig-input-fill")).toHaveCount(0);
+    await expect(control.locator(".fig-input-fill-hex")).toHaveCount(0);
+    await expect(control.locator(".fig-field-chevron")).toHaveCount(0);
+    await expect(picker).not.toHaveAttribute("mode", "solid");
+    await expect(swatch).toHaveCount(1);
+    expect(
+      (await swatch.getAttribute("background"))?.toLowerCase(),
+    ).toBe("#0d99ff");
+    const fieldBox = await field.boundingBox();
+    const swatchBox = await swatch.boundingBox();
+    expect(swatchBox?.height).toBe(24);
+    expect(swatchBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.28);
+    expect(swatchBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.36);
+
+    const events = await control.evaluate((element) => {
+      const received: Array<{ type: string; detail: unknown }> = [];
+      element.addEventListener("input", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+        });
+      });
+      const inner = element.querySelector("fig-fill-picker");
+      inner?.dispatchEvent(
+        new CustomEvent("input", {
+          detail: {
+            type: "gradient",
+            gradient: {
+              type: "linear",
+              angle: 90,
+              stops: [
+                { position: 0, color: "#0D99FF", opacity: 100 },
+                { position: 100, color: "#9747FF", opacity: 100 },
+              ],
+            },
+          },
+          bubbles: true,
+        }),
+      );
+      return {
+        received,
+        background: element.querySelector("fig-swatch")?.getAttribute("background"),
+        value: element.getAttribute("value"),
+      };
+    });
+
+    expect(events.received[0]?.type).toBe("input");
+    expect((events.received[0]?.detail as { type?: string })?.type).toBe(
+      "gradient",
+    );
+    expect(events.background).toContain("linear-gradient");
+    expect(events.value).toContain('"type":"gradient"');
+    await control.evaluate((element) => (element as HTMLElement).focus());
+    await expect(swatch).toBeFocused();
+    expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("solid");
+    expect(await swatch.evaluate((element) => getComputedStyle(element).outlineStyle))
+      .toBe("none");
+  });
+
+  test("opens the fill picker when the field surface is clicked", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        `<propskit-fill label="Fill" value='{"type":"solid","color":"#0D99FF","alpha":1}'></propskit-fill>`;
+    });
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
+
+    await page.locator("propskit-fill fig-field").click({ position: { x: 12, y: 12 } });
+    await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
+      "open",
+      "true",
+    );
+  });
+
+  test("captures a webcam snapshot onto the swatch and host value", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }),
+          enumerateDevices: async () => [],
+        },
+      });
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        `<propskit-fill label="Fill" mode="webcam" value='{"type":"webcam"}'></propskit-fill>`;
+      await customElements.whenDefined("propskit-fill");
+      await customElements.whenDefined("fig-fill-picker");
+      const control = root.querySelector("propskit-fill") as HTMLElement;
+      const picker = control.querySelector("fig-fill-picker") as HTMLElement & {
+        open(): void;
+        value: { type?: string; webcam?: { snapshot?: string; scaleMode?: string } };
+      };
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+      HTMLCanvasElement.prototype.getContext = (() => ({
+        drawImage() {},
+      })) as typeof HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.toBlob = function (callback) {
+        callback(new Blob(["live"], { type: "image/png" }));
+      };
+      picker.open();
+      const video = document.querySelector(
+        ".fig-fill-picker-webcam-video",
+      ) as HTMLVideoElement;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      Object.defineProperties(video, {
+        readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+        videoWidth: { configurable: true, value: 320 },
+        videoHeight: { configurable: true, value: 240 },
+      });
+      video.dispatchEvent(new Event("canplay"));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      HTMLCanvasElement.prototype.toBlob = originalToBlob;
+      const hostValue = JSON.parse(control.getAttribute("value") || "{}");
+      const snapshot = hostValue.webcam?.snapshot ?? picker.value.webcam?.snapshot;
+      const swatch = control.querySelector("fig-swatch");
+      return {
+        type: hostValue.type,
+        snapshot,
+        background: swatch?.getAttribute("background") ?? "",
+        contain: getComputedStyle(swatch as Element).contain,
+        overflow: getComputedStyle(swatch as Element).overflow,
+        bgSize: (swatch as HTMLElement | null)?.style.getPropertyValue(
+          "--swatch-bg-size",
+        ),
+      };
+    });
+
+    expect(state.type).toBe("webcam");
+    expect(state.snapshot).toMatch(/^blob:/);
+    expect(state.background).toBe(`url("${state.snapshot}")`);
+    expect(state.contain).toMatch(/paint/);
+    expect(state.overflow).toBe("hidden");
   });
 });
 
@@ -2548,6 +2757,12 @@ test.describe("propskit-gradient", () => {
     await expect(control).toHaveAttribute("value", JSON.stringify(next));
     await control.evaluate((element) => (element as HTMLElement).focus());
     await expect(gradient).toBeFocused();
+    expect(
+      await control.locator("fig-field").evaluate((element) => getComputedStyle(element).outlineStyle),
+    ).toBe("solid");
+    expect(
+      await gradient.evaluate((element) => getComputedStyle(element).outlineStyle),
+    ).toBe("none");
   });
 
   test("uses structural defaults, resets, and forwards disabled state", async ({
@@ -2619,6 +2834,41 @@ test.describe("propskit-gradient", () => {
     );
     expect(state.disabled).toBe(true);
     expect(state.resetEvents).toEqual(["input", "change"]);
+  });
+
+  test("opens the fill picker when the field surface is clicked", async ({
+    page,
+  }) => {
+    const initial = {
+      type: "gradient",
+      gradient: {
+        type: "linear",
+        angle: 90,
+        interpolationSpace: "srgb",
+        hueInterpolation: "shorter",
+        stops: [
+          { position: 0, color: "#0D99FF", opacity: 100 },
+          { position: 100, color: "#9747FF", opacity: 100 },
+        ],
+      },
+    };
+    await page.evaluate((value) => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const control = document.createElement("propskit-gradient");
+      control.setAttribute("label", "Fill");
+      control.setAttribute("value", JSON.stringify(value));
+      root.append(control);
+    }, initial);
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
+
+    await page.locator("propskit-gradient fig-field").click({ position: { x: 12, y: 12 } });
+    await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
+      "open",
+      "true",
+    );
   });
 });
 
@@ -3705,7 +3955,14 @@ test.describe("propskit delegated click behavior", () => {
     await expect(page.locator("propskit-text input")).toBeFocused();
 
     await clickField("propskit-color");
-    await expect(page.locator("propskit-color fig-swatch")).toBeFocused();
+    await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
+      "open",
+      "true",
+    );
+    await page.locator(".fig-fill-picker-close").click();
+    await expect(page.locator("dialog.fig-fill-picker-dialog")).not.toHaveAttribute(
+      "open",
+    );
 
     await page.locator("propskit-slider fig-field").click({ position: { x: 12, y: 12 } });
     await expect(page.locator('propskit-slider input[type="range"]')).toBeFocused();
@@ -8594,6 +8851,33 @@ test.describe("remaining accessibility contracts", () => {
       };
     });
     expect(cleared).toEqual({ buttonCount: 0, separatorCount: 0 });
+  });
+
+  test("fig-input-fill has no host outline on hover, focus, or popup-open", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<fig-input-fill id="fill" aria-label="Layer fill" value="#0D99FF"></fig-input-fill>';
+    });
+    await page.waitForTimeout(50);
+
+    const fill = page.locator("#fill");
+    const outlineStyleOf = () =>
+      fill.evaluate((element) => getComputedStyle(element).outlineStyle);
+
+    expect(await outlineStyleOf()).toBe("none");
+
+    await fill.hover();
+    expect(await outlineStyleOf()).toBe("none");
+
+    await fill.locator("fig-input-text input").focus();
+    expect(await outlineStyleOf()).toBe("none");
+
+    await fill.evaluate((element) => element.classList.add("has-popup-open"));
+    expect(await outlineStyleOf()).toBe("none");
   });
 
   test("fig-input-fill gradient shows opacity when alpha is enabled", async ({

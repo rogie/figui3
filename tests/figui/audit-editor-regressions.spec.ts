@@ -471,6 +471,142 @@ test.describe("fig-fill-picker audit regressions", () => {
     expect(state.background).toBe(`url("${state.snapshot}")`);
   });
 
+  test("choosing webcam paints fig-input-fill's swatch from the first frame", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }),
+          enumerateDevices: async () => [],
+        },
+      });
+      const fill = document.createElement("fig-input-fill") as HTMLElement & {
+        value: Record<string, any>;
+      };
+      fill.setAttribute(
+        "value",
+        JSON.stringify({ type: "solid", color: "#0D99FF", alpha: 1 }),
+      );
+      document.body.append(fill);
+      await new Promise(requestAnimationFrame);
+      const picker = fill.querySelector("fig-fill-picker") as HTMLElement & {
+        open(): void;
+      };
+      picker.open();
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+      HTMLCanvasElement.prototype.getContext = (() => ({
+        drawImage() {},
+      })) as typeof HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.toBlob = function (callback) {
+        callback(new Blob(["first-frame"], { type: "image/png" }));
+      };
+      const typeSelect = document.querySelector(
+        "dialog.fig-fill-picker-dialog .fig-fill-picker-type",
+      ) as HTMLElement & { value: string };
+      typeSelect.value = "webcam";
+      typeSelect.dispatchEvent(
+        new CustomEvent("change", { bubbles: true, detail: "webcam" }),
+      );
+      const video = document.querySelector(
+        ".fig-fill-picker-webcam-video",
+      ) as HTMLVideoElement;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      Object.defineProperties(video, {
+        readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+        videoWidth: { configurable: true, value: 320 },
+        videoHeight: { configurable: true, value: 240 },
+      });
+      video.dispatchEvent(new Event("canplay"));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      HTMLCanvasElement.prototype.toBlob = originalToBlob;
+      const snapshot = fill.value.webcam?.snapshot;
+      const background =
+        fill.querySelector("fig-swatch")?.getAttribute("background") ?? "";
+      fill.remove();
+      return { type: fill.value.type, snapshot, background };
+    });
+
+    expect(state.type).toBe("webcam");
+    expect(state.snapshot).toMatch(/^blob:/);
+    expect(state.background).toBe(`url("${state.snapshot}")`);
+  });
+
+  test("retries a black webcam frame until the camera paints", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }),
+          enumerateDevices: async () => [],
+        },
+      });
+      const fill = document.createElement("fig-input-fill") as HTMLElement & {
+        value: Record<string, any>;
+      };
+      fill.setAttribute("mode", "webcam");
+      fill.setAttribute("value", JSON.stringify({ type: "webcam" }));
+      document.body.append(fill);
+      await new Promise(requestAnimationFrame);
+      const picker = fill.querySelector("fig-fill-picker") as HTMLElement & {
+        open(): void;
+      };
+      let draws = 0;
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+      const originalRVFC = HTMLVideoElement.prototype.requestVideoFrameCallback;
+      HTMLVideoElement.prototype.requestVideoFrameCallback = function (cb) {
+        return window.setTimeout(() => cb(0, { expectedDisplayTime: 0 } as any), 0);
+      };
+      HTMLCanvasElement.prototype.getContext = (() => ({
+        drawImage() {},
+        getImageData() {
+          draws += 1;
+          const pixels = new Uint8ClampedArray(4);
+          if (draws > 2) {
+            pixels[0] = 80;
+            pixels[1] = 90;
+            pixels[2] = 100;
+            pixels[3] = 255;
+          }
+          return { data: pixels };
+        },
+      })) as typeof HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.toBlob = function (callback) {
+        callback(new Blob(["lit"], { type: "image/png" }));
+      };
+      picker.open();
+      const video = document.querySelector(
+        ".fig-fill-picker-webcam-video",
+      ) as HTMLVideoElement;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      Object.defineProperties(video, {
+        readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+        videoWidth: { configurable: true, value: 2 },
+        videoHeight: { configurable: true, value: 1 },
+      });
+      video.dispatchEvent(new Event("canplay"));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      HTMLVideoElement.prototype.requestVideoFrameCallback = originalRVFC;
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      HTMLCanvasElement.prototype.toBlob = originalToBlob;
+      const snapshot = fill.value.webcam?.snapshot;
+      const background =
+        fill.querySelector("fig-swatch")?.getAttribute("background") ?? "";
+      fill.remove();
+      return { draws, snapshot, background };
+    });
+
+    expect(state.draws).toBeGreaterThan(2);
+    expect(state.snapshot).toMatch(/^blob:/);
+    expect(state.background).toBe(`url("${state.snapshot}")`);
+  });
+
   test("keeps a live webcam stream after the picker closes", async ({
     page,
   }) => {

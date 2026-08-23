@@ -724,6 +724,121 @@ function figLabSolidFillValue(raw) {
   return JSON.stringify({ type: "solid", color, alpha });
 }
 
+function figLabCssUrl(url) {
+  return `url("${String(url).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
+}
+
+function figLabParseFillValue(raw) {
+  if (raw && typeof raw === "object") return raw;
+  const text = String(raw ?? "").trim();
+  if (!text) return { type: "solid", color: "#D9D9D9", alpha: 1 };
+  if (text.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === "object") return parsed;
+    } catch {}
+  }
+  if (text.startsWith("#")) {
+    const { color, alpha } = figLabParseSolidColor(text);
+    return { type: "solid", color, alpha };
+  }
+  return { type: "solid", color: "#D9D9D9", alpha: 1 };
+}
+
+function figLabSerializeFillValue(fill) {
+  if (fill == null) return "";
+  return typeof fill === "string" ? fill : JSON.stringify(fill);
+}
+
+function figLabGradientCss(gradient) {
+  if (!gradient) return "";
+  const stops = [...(gradient.stops || [])]
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    .map((stop) => `${stop.color} ${stop.position ?? 0}%`)
+    .join(", ");
+  if (!stops) return "";
+  switch (gradient.type) {
+    case "radial":
+      return `radial-gradient(circle, ${stops})`;
+    case "angular":
+      return `conic-gradient(from ${gradient.angle || 0}deg, ${stops})`;
+    default:
+      return `linear-gradient(${gradient.angle ?? 180}deg, ${stops})`;
+  }
+}
+
+function figLabFillSwatchBackground(fill, slot) {
+  switch (fill?.type) {
+    case "solid":
+      return fill.color || "";
+    case "gradient":
+      return fill.css || figLabGradientCss(fill.gradient) || "";
+    case "image":
+      return fill.image?.url ? figLabCssUrl(fill.image.url) : "";
+    case "video":
+      return fill.video?.poster ? figLabCssUrl(fill.video.poster) : "";
+    case "webcam":
+      return fill.webcam?.snapshot ? figLabCssUrl(fill.webcam.snapshot) : "";
+    default:
+      return (
+        fill?.swatchBackground ||
+        fill?.background ||
+        fill?.css ||
+        slot?.getAttribute("swatch-background") ||
+        ""
+      );
+  }
+}
+
+function figLabFillSwatchMedia(fill) {
+  if (!fill || typeof fill !== "object") return null;
+  if (fill.type === "image") return fill.image;
+  if (fill.type === "video") return fill.video;
+  if (fill.type === "webcam") return fill.webcam;
+  return null;
+}
+
+function figLabFillSwatchSizing(fill) {
+  const media = figLabFillSwatchMedia(fill);
+  const scale = Number(media?.scale);
+  switch (media?.scaleMode) {
+    case "fit":
+      return { size: "contain", position: "center" };
+    case "tile":
+      return {
+        size: `${Number.isFinite(scale) ? scale : 50}%`,
+        position: "top left",
+      };
+    case "fill":
+    case "crop":
+      return { size: "cover", position: "center" };
+    default:
+      return fill?.type === "webcam" || fill?.type === "image" || fill?.type === "video"
+        ? { size: "cover", position: "center" }
+        : null;
+  }
+}
+
+function figLabFillSwatchAlpha(fill) {
+  switch (fill?.type) {
+    case "solid": {
+      if (Number.isFinite(fill.alpha)) return fill.alpha;
+      if (Number.isFinite(fill.opacity)) return fill.opacity / 100;
+      return 1;
+    }
+    case "gradient":
+      return fill.gradient?.opacity ?? fill.opacity ?? 1;
+    case "image":
+      return fill.image?.opacity ?? 1;
+    case "video":
+      return fill.video?.opacity ?? 1;
+    case "webcam":
+      return fill.webcam?.opacity ?? 1;
+    default:
+      return fill?.opacity ?? fill?.alpha ?? 1;
+  }
+}
+
 /* Field + Color wrapper */
 class PropskitColor extends HTMLElement {
   #field = null;
@@ -996,13 +1111,17 @@ class PropskitColor extends HTMLElement {
 
   #handleClick(event) {
     if (figLabBooleanAttribute(this, "disabled")) return;
+    if (event.target instanceof Element && event.target.closest("fig-menu")) {
+      return;
+    }
     if (
       event.target instanceof Element &&
-      event.target.closest("fig-fill-picker, fig-swatch, fig-menu")
+      event.target.closest("fig-fill-picker, fig-swatch")
     ) {
       return;
     }
     this.focus();
+    this.#input?.open?.();
   }
 
   get value() {
@@ -1075,6 +1194,374 @@ class PropskitColor extends HTMLElement {
   }
 }
 figLabDefineElement("propskit-color", PropskitColor);
+
+/* Field + Fill wrapper — color-style swatch that opens the full fill picker */
+class PropskitFill extends HTMLElement {
+  #field = null;
+  #label = null;
+  #input = null;
+  #swatch = null;
+  #hasCustomLabel = false;
+  #observer = null;
+  #managedInputAttrs = new Set();
+  #boundHandleInput = null;
+  #boundHandleChange = null;
+  #boundHandleClick = this.#handleClick.bind(this);
+  #initialValue = null;
+
+  static get observedAttributes() {
+    return ["label", "direction", "aria-label"];
+  }
+
+  connectedCallback() {
+    if (!this.#field) this.#initialize();
+    this.#syncField();
+    this.#syncInputAttributes();
+    this.#bindInputEvents();
+    if (this.#initialValue === null) {
+      this.#initialValue =
+        this.getAttribute("default") ?? this.getAttribute("value") ?? "";
+    }
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.addEventListener("click", this.#boundHandleClick);
+    figLabConnectPropskitResetMenu(this);
+
+    if (!this.#observer) {
+      this.#observer = new MutationObserver((mutations) => {
+        let syncField = false;
+        let syncInput = false;
+
+        for (const mutation of mutations) {
+          if (mutation.type !== "attributes") continue;
+          if (
+            mutation.attributeName === "label" ||
+            mutation.attributeName === "direction" ||
+            mutation.attributeName === "aria-label"
+          ) {
+            syncField = true;
+          } else {
+            syncInput = true;
+          }
+        }
+
+        if (syncField) this.#syncField();
+        if (syncInput) this.#syncInputAttributes();
+      });
+    }
+
+    this.#observer.observe(this, { attributes: true });
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#unbindInputEvents();
+    this.removeEventListener("click", this.#boundHandleClick);
+    figLabDisconnectPropskitResetMenu(this);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#field) return;
+    if (name === "label" || name === "direction" || name === "aria-label") {
+      this.#syncField();
+    }
+  }
+
+  #initialize() {
+    const initialChildren = Array.from(this.childNodes).filter(
+      (node) =>
+        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
+    );
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
+    const field = document.createElement("fig-field");
+    const label = customLabel || document.createElement("label");
+    const picker = document.createElement("fig-fill-picker");
+    const swatch = document.createElement("fig-swatch");
+    picker.append(swatch);
+    swatch.setAttribute("tabindex", "0");
+    for (const node of initialChildren) {
+      if (node !== customLabel) picker.appendChild(node);
+    }
+    field.append(label, picker);
+    this.#field = field;
+    this.#label = label;
+    this.#input = picker;
+    this.#swatch = swatch;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.replaceChildren(field);
+  }
+
+  #syncField() {
+    if (!this.#field || !this.#label || !this.#input) return;
+    const hasLabelAttr = this.hasAttribute("label");
+    const rawLabel = this.getAttribute("label");
+    const isBlankLabel = hasLabelAttr && (rawLabel ?? "").trim() === "";
+
+    if (isBlankLabel) {
+      this.#label.remove();
+    } else {
+      if (!this.#hasCustomLabel) {
+        this.#label.textContent = hasLabelAttr ? (rawLabel ?? "") : "Label";
+      }
+      if (this.#label.parentElement !== this.#field) {
+        this.#field.prepend(this.#label);
+      }
+    }
+
+    this.#field.setAttribute(
+      "direction",
+      this.getAttribute("direction") || "horizontal",
+    );
+    this.#input.setAttribute(
+      "aria-label",
+      this.getAttribute("aria-label") ||
+        this.#label.textContent?.trim() ||
+        "Fill",
+    );
+  }
+
+  #parsedHostFill() {
+    return figLabParseFillValue(this.getAttribute("value"));
+  }
+
+  #pickerValueFromHost() {
+    return figLabSerializeFillValue(this.#parsedHostFill());
+  }
+
+  #customModeSlot() {
+    const type = this.#parsedHostFill()?.type;
+    if (!type) return null;
+    return this.querySelector(`[slot="mode-${type}"]`);
+  }
+
+  #livePickerFill() {
+    const live = this.#input?.value;
+    if (live && typeof live === "object") return live;
+    if (typeof live === "string" && live) return figLabParseFillValue(live);
+    return null;
+  }
+
+  #captureFill(fill) {
+    const live = this.#livePickerFill();
+    if (!fill || typeof fill !== "object") return fill;
+    if (fill.type !== "webcam") return fill;
+    const snapshot = fill.webcam?.snapshot || live?.webcam?.snapshot;
+    if (!snapshot || fill.webcam?.snapshot) return fill;
+    return {
+      ...fill,
+      webcam: {
+        ...(live?.webcam && typeof live.webcam === "object" ? live.webcam : {}),
+        ...fill.webcam,
+        snapshot,
+      },
+    };
+  }
+
+  #syncSwatch(fill = this.#parsedHostFill()) {
+    if (!this.#swatch) return;
+    const next = this.#captureFill(fill);
+    let background = figLabFillSwatchBackground(next, this.#customModeSlot());
+    if (!background) {
+      background = figLabFillSwatchBackground(
+        this.#livePickerFill(),
+        this.#customModeSlot(),
+      );
+    }
+    if (!background) {
+      const painted = this.#swatch.getAttribute("background") ?? "";
+      if (painted.startsWith("url(")) background = painted;
+    }
+    this.#swatch.setAttribute("background", background);
+    this.#swatch.setAttribute("alpha", String(figLabFillSwatchAlpha(next)));
+    const sizing = figLabFillSwatchSizing(next || fill);
+    if (sizing) {
+      this.#swatch.style.setProperty("--swatch-bg-size", sizing.size);
+      this.#swatch.style.setProperty("--swatch-bg-position", sizing.position);
+    }
+  }
+
+  #getForwardedInputAttrNames() {
+    const reserved = new Set([
+      "label",
+      "direction",
+      "oninput",
+      "onchange",
+      "class",
+      "style",
+      "id",
+      "size",
+      "aria-label",
+      "text",
+      "default",
+      "value",
+    ]);
+    return this.getAttributeNames().filter(
+      (name) => !reserved.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncInputAttributes() {
+    if (!this.#input) return;
+    const inputAttrs = this.#getForwardedInputAttrNames();
+    const nextManaged = new Set(inputAttrs);
+
+    for (const attrName of this.#managedInputAttrs) {
+      if (!nextManaged.has(attrName)) this.#input.removeAttribute(attrName);
+    }
+    for (const attrName of inputAttrs) {
+      this.#input.setAttribute(attrName, this.getAttribute(attrName) ?? "");
+    }
+
+    const nextJson = this.#pickerValueFromHost();
+    if (this.#input.getAttribute("value") !== nextJson) {
+      this.#input.setAttribute("value", nextJson);
+    }
+    this.#syncSwatch();
+    this.#managedInputAttrs = nextManaged;
+  }
+
+  #bindInputEvents() {
+    if (!this.#input) return;
+    this.#boundHandleInput ??= this.#forwardInputEvent.bind(this, "input");
+    this.#boundHandleChange ??= this.#forwardInputEvent.bind(this, "change");
+    this.#input.addEventListener("input", this.#boundHandleInput);
+    this.#input.addEventListener("change", this.#boundHandleChange);
+  }
+
+  #unbindInputEvents() {
+    if (!this.#input) return;
+    if (this.#boundHandleInput) {
+      this.#input.removeEventListener("input", this.#boundHandleInput);
+    }
+    if (this.#boundHandleChange) {
+      this.#input.removeEventListener("change", this.#boundHandleChange);
+    }
+  }
+
+  #fillFromEvent(event) {
+    const detail =
+      event instanceof CustomEvent && event.detail !== undefined
+        ? event.detail
+        : undefined;
+    if (detail && typeof detail === "object") return detail;
+    if (typeof detail === "string" && detail) {
+      return figLabParseFillValue(detail);
+    }
+    const live = this.#input?.value;
+    if (live && typeof live === "object") return live;
+    if (typeof live === "string" && live) return figLabParseFillValue(live);
+    return this.#parsedHostFill();
+  }
+
+  #forwardInputEvent(type, event) {
+    event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    const fill = this.#captureFill(this.#fillFromEvent(event));
+    const serialized = figLabSerializeFillValue(fill);
+    this.setAttribute("value", serialized);
+    if (this.#input && this.#input.getAttribute("value") !== serialized) {
+      this.#input.setAttribute("value", serialized);
+    }
+    this.#syncSwatch(fill);
+    this.dispatchEvent(
+      new CustomEvent(type, {
+        detail: fill,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    if (event.target instanceof Element && event.target.closest("fig-menu")) {
+      return;
+    }
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-fill-picker, fig-swatch")
+    ) {
+      return;
+    }
+    this.focus();
+    this.#input?.open?.();
+  }
+
+  get value() {
+    return (
+      this.getAttribute("value") ??
+      figLabSerializeFillValue(this.#input?.value) ??
+      ""
+    );
+  }
+
+  set value(nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.removeAttribute("value");
+      this.#input?.removeAttribute("value");
+      this.#syncSwatch({ type: "solid", color: "", alpha: 1 });
+      return;
+    }
+    const serialized = figLabSerializeFillValue(
+      typeof nextValue === "string" ? figLabParseFillValue(nextValue) : nextValue,
+    );
+    this.setAttribute("value", serialized);
+    this.#forceInputValue(serialized);
+  }
+
+  #forceInputValue(next) {
+    if (!this.#input) return;
+    const json = figLabSerializeFillValue(figLabParseFillValue(next));
+    if (this.#input.getAttribute("value") === json) {
+      this.#input.removeAttribute("value");
+    }
+    this.#input.setAttribute("value", json);
+    this.#syncSwatch(figLabParseFillValue(json));
+  }
+
+  #defaultValue() {
+    return this.getAttribute("default") ?? this.#initialValue ?? "";
+  }
+
+  get defaultValue() {
+    return String(this.#defaultValue());
+  }
+
+  get isDefault() {
+    return figLabPropskitJsonValuesEqual(this.value, this.defaultValue);
+  }
+
+  resetToDefault() {
+    const next = this.defaultValue;
+    this.setAttribute("value", next);
+    this.#forceInputValue(next);
+    const fill = figLabParseFillValue(next);
+    this.dispatchEvent(
+      new CustomEvent("input", {
+        detail: fill,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        detail: fill,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }
+
+  focus(options) {
+    const swatch = this.querySelector("fig-swatch");
+    if (swatch instanceof HTMLElement) swatch.focus(options);
+  }
+}
+figLabDefineElement("propskit-fill", PropskitFill);
 
 /* Field + Gradient wrapper */
 class PropskitGradient extends HTMLElement {
@@ -1286,13 +1773,17 @@ class PropskitGradient extends HTMLElement {
 
   #handleClick(event) {
     if (figLabBooleanAttribute(this, "disabled")) return;
+    if (event.target instanceof Element && event.target.closest("fig-menu")) {
+      return;
+    }
     if (
       event.target instanceof Element &&
-      event.target.closest("fig-input-gradient, fig-menu")
+      event.target.closest("fig-input-gradient, fig-fill-picker, fig-swatch")
     ) {
       return;
     }
     this.focus();
+    this.#input?.querySelector?.("fig-fill-picker")?.open?.();
   }
 
   get value() {
@@ -3718,6 +4209,7 @@ class PropskitGroup extends HTMLElement {
 
   static #CONTROL_SELECTOR = [
     "propskit-color",
+    "propskit-fill",
     "propskit-gradient",
     "propskit-number",
     "propskit-position",

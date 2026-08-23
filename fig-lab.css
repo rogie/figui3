@@ -349,6 +349,7 @@ fig-content:has(> propskit-group[name]:last-child) {
 :is(
   propskit-switch,
   propskit-color,
+  propskit-fill,
   propskit-gradient,
   propskit-select,
   propskit-text,
@@ -372,6 +373,7 @@ fig-content:has(> propskit-group[name]:last-child) {
 :is(
   propskit-switch,
   propskit-color,
+  propskit-fill,
   propskit-gradient,
   propskit-text,
   propskit-number,
@@ -472,7 +474,8 @@ propskit-switch {
   }
 }
 
-propskit-color {
+propskit-color,
+propskit-fill {
   --propskit-color-height: 1.5rem;
   --propskit-color-vertical-padding: var(--spacer-1);
   --propskit-color-horizontal-padding: var(--spacer-3);
@@ -551,16 +554,14 @@ propskit-color {
       width: 33%;
       min-width: 0;
       margin-left: auto;
+      overflow: hidden;
+      contain: paint;
       --width: 100%;
       --height: var(--propskit-color-height);
       --size: var(--propskit-color-height);
       --border-radius: var(--radius-medium);
       height: var(--propskit-color-height);
       border-radius: var(--radius-medium);
-
-      &:hover {
-        outline: none !important;
-      }
     }
   }
 }
@@ -652,8 +653,22 @@ propskit-gradient {
       min-width: 0;
       margin-left: auto;
       border-radius: var(--radius-medium);
+    }
+  }
+}
 
-      &:hover {
+:is(propskit-color, propskit-fill, propskit-gradient) {
+  fig-field:not([direction="vertical"]) {
+    outline: none;
+
+    &:focus-within {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+
+    :is(fig-swatch, fig-input-gradient, fig-input-fill, fig-fill-picker) {
+      &:is(:hover, :focus, :focus-visible, :focus-within),
+      &.has-popup-open {
         outline: none !important;
       }
     }
@@ -1341,6 +1356,7 @@ propskit-slider {
 :is(
   propskit-switch,
   propskit-color,
+  propskit-fill,
   propskit-gradient,
   propskit-select,
   propskit-text,
@@ -1365,6 +1381,7 @@ propskit-slider {
 :is(
   propskit-switch,
   propskit-color,
+  propskit-fill,
   propskit-gradient,
   propskit-select,
   propskit-text,

@@ -3849,16 +3849,6 @@ fig-input-fill {
   background-color: var(--figma-color-bg-secondary);
   border-radius: var(--radius-medium);
   box-shadow: none !important;
-  &:focus,
-  &:focus-within,
-  &.has-popup-open {
-    outline: var(--figma-focus-outline) !important;
-    outline-offset: var(--figma-focus-outline-offset) !important;
-  }
-  &:hover {
-    outline: 1px solid var(--figma-color-border);
-    outline-offset: -1px !important;
-  }
 
   & > .input-combo > :is(fig-swatch, fig-chit):not(:only-child),
   & > .input-combo > :is(fig-swatch, fig-chit):not(:only-child) input,
@@ -3928,6 +3918,20 @@ fig-input-fill {
 }
 
 fig-input-color,
+fig-input-gradient {
+  &:focus,
+  &:focus-within,
+  &.has-popup-open {
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
+  }
+  &:hover {
+    outline: 1px solid var(--figma-color-border);
+    outline-offset: -1px !important;
+  }
+}
+
+fig-input-color,
 fig-input-fill,
 fig-input-text,
 fig-input-number {
@@ -3935,6 +3939,13 @@ fig-input-number {
 }
 
 fig-input-fill {
+  outline: none !important;
+
+  &:is(:hover, :focus, :focus-visible, :focus-within),
+  &.has-popup-open {
+    outline: none !important;
+  }
+
   & > [slot^="mode-"] {
     display: none;
   }

@@ -18,6 +18,7 @@ declare module "react" {
       "fig-field": FigAttrs;
       "fig-slider": FigAttrs;
       "propskit-color": FigAttrs;
+      "propskit-fill": FigAttrs;
       "propskit-color-point": FigAttrs;
       "propskit-gradient": FigAttrs;
       "propskit-number": FigAttrs;

@@ -9055,8 +9055,11 @@ class FigInputFill extends HTMLElement {
           break;
         case "webcam":
           if (parsed.webcam && typeof parsed.webcam === "object") {
-            const { stream: _ignored, ...rest } = parsed.webcam;
+            const { stream: _ignored, snapshot, ...rest } = parsed.webcam;
             this.#webcam = { ...this.#webcam, ...rest };
+            if (typeof snapshot === "string" && snapshot) {
+              this.#webcam.snapshot = snapshot;
+            }
           } else if (parsed.image?.url) {
             this.#webcam.snapshot = parsed.image.url;
             if (parsed.image.scaleMode)
@@ -9145,10 +9148,12 @@ class FigInputFill extends HTMLElement {
         return this.#image.url ? figCssUrl(this.#image.url) : "#D9D9D9";
       case "video":
         return this.#video.poster ? figCssUrl(this.#video.poster) : "#D9D9D9";
-      case "webcam":
-        return this.#webcam.snapshot
-          ? figCssUrl(this.#webcam.snapshot)
-          : "";
+      case "webcam": {
+        const snapshot =
+          this.#webcam.snapshot ||
+          this.#fillPicker?.value?.webcam?.snapshot;
+        return snapshot ? figCssUrl(snapshot) : "";
+      }
       default:
         return this.#customSwatchBackground();
     }
@@ -9419,10 +9424,17 @@ class FigInputFill extends HTMLElement {
             break;
           case "webcam":
             if (detail.webcam) {
-              const { stream: _ignored, ...rest } = detail.webcam;
+              const { stream: _ignored, snapshot, ...rest } = detail.webcam;
               this.#webcam = { ...this.#webcam, ...rest };
+              if (typeof snapshot === "string" && snapshot) {
+                this.#webcam.snapshot = snapshot;
+              }
             } else if (detail.image?.url) {
               this.#webcam.snapshot = detail.image.url;
+            }
+            if (!this.#webcam.snapshot) {
+              const fromPicker = this.#fillPicker?.value?.webcam?.snapshot;
+              if (fromPicker) this.#webcam.snapshot = fromPicker;
             }
             break;
           default: {
@@ -9686,7 +9698,15 @@ class FigInputFill extends HTMLElement {
   #syncSwatch() {
     const swatch = this.#fillPicker?.querySelector("fig-swatch");
     if (!swatch) return;
-    swatch.setAttribute("background", this.#fillPickerSwatchBackground());
+    const background = this.#fillPickerSwatchBackground();
+    if (this.#fillType === "webcam" && !background) {
+      const current = swatch.getAttribute("background") || "";
+      if (current.startsWith("url(")) {
+        swatch.setAttribute("alpha", this.#fillPickerSwatchAlpha());
+        return;
+      }
+    }
+    swatch.setAttribute("background", background);
     swatch.setAttribute("alpha", this.#fillPickerSwatchAlpha());
   }
 

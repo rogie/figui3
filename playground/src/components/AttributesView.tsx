@@ -200,6 +200,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-radio": "Radio",
     "fig-field": "Field",
     "propskit-color": "Propskit color",
+    "propskit-fill": "Propskit fill",
     "propskit-color-point": "Propskit color point",
     "propskit-gradient": "Propskit gradient",
     "propskit-number": "Propskit number",

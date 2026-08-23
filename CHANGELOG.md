@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.20]
+
+### Added
+
+- `propskit-fill`: labeled large swatch that opens the full fill picker (solid, gradient, image, video, webcam, custom `mode-*` slots). Same chrome as `propskit-color`.
+
+### Changed
+
+- `fig-input-fill` no longer draws its own hover/focus outline; the inner combo still does. Propskit color/fill/gradient fields take the focus ring so nested swatches stay clean.
+
+### Fixed
+
+- Choosing Webcam on `fig-input-fill` paints the closed swatch from the first real camera frame instead of checkerboard or a black boot still.
+- Built-in cameras that start black (FaceTime) keep retrying and prefer `ImageCapture` until the frame has actual pixels. Host writes of `snapshot: null` no longer wipe a live still.
+
 ## [8.9.19]
 
 ### Added

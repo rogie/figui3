@@ -50,13 +50,28 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-color",
     name: "Color",
     description:
-      "A full-surface color field with a large fill-picker swatch, matching propskit-gradient.",
+      "A full-surface color field with a large fill-picker swatch, matching propskit-gradient. Clicking the field opens the color picker.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-color label="Fill" value="#0D99FF" default="#0D99FF" alpha="true"></propskit-color>
+  <propskit-color label="Background" value="#0D99FF" default="#0D99FF" alpha="true"></propskit-color>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-fill",
+    name: "Fill",
+    description:
+      "A full-surface fill field with a large swatch like propskit-color. Clicking the field opens the fill picker for solid, gradient, image, video, webcam, and custom modes.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <propskit-fill label="Fill" value='{"type":"solid","color":"#0D99FF","alpha":1}' default='{"type":"solid","color":"#0D99FF","alpha":1}'></propskit-fill>
 </div>`,
       },
     ],
@@ -65,7 +80,7 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-gradient",
     name: "Gradient",
     description:
-      "A full-surface gradient field that opens the fill picker from a swatch.",
+      "A full-surface gradient field. Clicking the field opens the fill picker.",
     examples: [
       {
         id: "default",
@@ -177,6 +192,7 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <propskit-group name="Appearance" open>
     <propskit-color label="Fill" value="#0D99FF" default="#0D99FF" alpha="true"></propskit-color>
+    <propskit-fill label="Paint" value='{"type":"solid","color":"#0D99FF","alpha":1}' default='{"type":"solid","color":"#0D99FF","alpha":1}'></propskit-fill>
     <propskit-gradient label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
     <propskit-text label="Name" value="Layer 1" default="Layer 1" placeholder="Enter a name"></propskit-text>
     <propskit-select label="Blend" value="Normal" default="Normal" options="Normal,Multiply,Screen,Overlay"></propskit-select>

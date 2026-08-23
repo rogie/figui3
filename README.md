@@ -105,6 +105,7 @@ Minimal example:
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
 | [Propskit Slider](#propskit-slider) | `<propskit-slider>` | Labeled field + slider combo |
 | [Propskit Color](#propskit-color) | `<propskit-color>` | Full-surface labeled color control |
+| [Propskit Fill](#propskit-fill) | `<propskit-fill>` | Full-surface labeled fill control |
 | [Propskit Gradient](#propskit-gradient) | `<propskit-gradient>` | Full-surface labeled gradient control |
 | [Propskit Number](#propskit-number) | `<propskit-number>` | Full-surface labeled number control |
 | [Propskit Position](#propskit-position) | `<propskit-position>` | Compact X/Y control |
@@ -392,7 +393,7 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-color>`
 
-Composes a `<fig-field>` and a solid `fig-fill-picker` swatch into a full-surface property control. Clicking the swatch opens the color picker. There is no hex/opacity text field.
+Composes a `<fig-field>` and a solid `fig-fill-picker` swatch into a full-surface property control. Clicking the field opens the color picker. There is no hex/opacity text field.
 
 **Attributes:** `label`, `value`, `default`, `alpha`, `disabled`, `size`
 
@@ -401,7 +402,28 @@ Composes a `<fig-field>` and a solid `fig-fill-picker` swatch into a full-surfac
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial color.
 
 ```html
-<propskit-color label="Fill" value="#0D99FF" alpha="true"></propskit-color>
+<propskit-color label="Background" value="#0D99FF" alpha="true"></propskit-color>
+```
+
+---
+
+#### Propskit Fill
+
+`<propskit-fill>`
+
+Composes a `<fig-field>` and a `fig-fill-picker` swatch into a full-surface property control, same chrome as `propskit-color`. Clicking the field opens the fill picker for solid, gradient, image, video, webcam, and custom modes. There is no hex/opacity text field.
+
+**Attributes:** `label`, `value` (fill JSON), `default`, `mode`, `alpha`, `webcam-mode`, `default-video`, `disabled`, `size`
+
+**Events:** `input`, `change` — fill object in `event.detail` (`{ type, ... }`).
+
+Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial fill. Slot `mode-*` children onto the host to add custom picker tabs.
+
+```html
+<propskit-fill
+  label="Fill"
+  value='{"type":"solid","color":"#0D99FF","alpha":1}'
+></propskit-fill>
 ```
 
 ---
@@ -410,7 +432,7 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-gradient>`
 
-Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property control. Defaults to `edit="picker"` — click the swatch to open the fill picker.
+Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property control. Defaults to `edit="picker"` — click the field to open the fill picker.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -426,7 +448,7 @@ Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property
 
 **Methods and state:** `defaultValue`, `isDefault`, and `resetToDefault()`. JSON defaults use structural equality, so object key order does not affect dirty state.
 
-Click the swatch to open the fill picker. With `edit="true"`, the first stop receives focus; Arrow keys move the selected stop, Shift+Arrow moves by 5%, Tab cycles stops, and Delete/Backspace removes a stop while preserving the two-stop minimum.
+Click the field to open the fill picker. With `edit="true"`, the first stop receives focus; Arrow keys move the selected stop, Shift+Arrow moves by 5%, Tab cycles stops, and Delete/Backspace removes a stop while preserving the two-stop minimum.
 
 ```html
 <propskit-gradient
