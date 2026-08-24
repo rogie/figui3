@@ -3448,9 +3448,10 @@ fig-header {
   flex-shrink: 0;
   width: 100%;
   margin: 0;
-  padding: var(--spacer-1) var(--spacer-3);
+  padding: var(--spacer-1) var(--spacer-2);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   box-shadow: inset 0 -1px 0 0 var(--figma-color-border);
   gap: var(--spacer-2);
   user-select: none;
@@ -3459,28 +3460,18 @@ fig-header {
     --fig-header-height: var(--spacer-5);
   }
 
-  & > fig-button:last-child[icon]:not([icon="false"])[variant="ghost"],
-  & > fig-tooltip:last-child > fig-button[icon]:not([icon="false"])[variant="ghost"],
-  & > fig-menu:last-child > fig-button[fig-menu-trigger][icon]:not([icon="false"])[variant="ghost"] {
-    margin-right: calc(var(--spacer-2) * -1);
-  }
-
   & > fig-input-text:only-child {
     width: 100%;
   }
 
-  &>fig-dropdown,
-  &>fig-select{
-    &:first-child{
-      margin-left: calc(var(--spacer-2) * -1);
-    }
-  }
-
-  & h3 {
-    font-weight: var(--body-medium-strong-fontWeight);
-    flex-grow: 1;
-    display: flex;
+  & > h1, 
+  & > h2, 
+  & > h3{
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex; 
     align-items: center;
+    padding-left: var(--spacer-2);
   }
 
   span, label{
@@ -3526,7 +3517,6 @@ fig-group {
 
   & > fig-header {
     cursor: default;
-    padding-left: var(--spacer-3);
       
     &:focus-visible {
       --figma-focus-outline-radius: var(--radius-medium);

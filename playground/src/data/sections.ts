@@ -337,12 +337,56 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
+        id: "long-title",
+        name: "Long title",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <h3>Manage advanced layer export options</h3>
+    <fig-button variant="ghost" icon="true" aria-label="Close">
+      <fig-icon name="close"></fig-icon>
+    </fig-button>
+  </fig-header>
+</div>`,
+      },
+      {
         id: "accessory-text",
         name: "Accessory text",
         markup: `<div class="prop-panel">
   <fig-header>
     <h3>Characters</h3>
     <span>352 characters</span>
+  </fig-header>
+</div>`,
+      },
+      {
+        id: "dropdown",
+        name: "Dropdown",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <fig-dropdown aria-label="Content type">
+      <option value="characters" selected>Characters</option>
+      <option value="words">Words</option>
+      <option value="lines">Lines</option>
+    </fig-dropdown>
+    <fig-button variant="ghost" icon="true" aria-label="Close">
+      <fig-icon name="close"></fig-icon>
+    </fig-button>
+  </fig-header>
+</div>`,
+      },
+      {
+        id: "ghost-dropdown",
+        name: "Ghost dropdown",
+        markup: `<div class="prop-panel">
+  <fig-header>
+    <fig-dropdown variant="ghost" aria-label="Content type">
+      <option value="characters" selected>Characters</option>
+      <option value="words">Words</option>
+      <option value="lines">Lines</option>
+    </fig-dropdown>
+    <fig-button variant="ghost" icon="true" aria-label="Close">
+      <fig-icon name="close"></fig-icon>
+    </fig-button>
   </fig-header>
 </div>`,
       },

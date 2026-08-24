@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.27]
+
+### Changed
+
+- Refined `fig-header` padding and title/action alignment.
+- Added long-title, default dropdown, and ghost dropdown header examples.
+
 ## [8.9.26]
 
 ### Fixed
