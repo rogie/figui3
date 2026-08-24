@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.26]
+
+### Fixed
+
+- Replacing a video fill clears the previous poster and applies the newly captured poster to both the swatch and dialog preview. Posters from `default-video` or an earlier URL cannot remain after the video URL changes.
+
 ## [8.9.25]
 
 ### Fixed

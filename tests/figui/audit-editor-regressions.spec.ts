@@ -952,6 +952,108 @@ test.describe("fig-fill-picker audit regressions", () => {
     expect(state.background).toBe('url("data:image/jpeg;base64,poster")');
   });
 
+  test("replacing a video clears the default poster and applies the new still", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 4;
+      canvas.height = 4;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#00bf80";
+      ctx.fillRect(0, 0, 4, 4);
+      const still = await createImageBitmap(canvas);
+      const originalBitmap = globalThis.createImageBitmap;
+      globalThis.createImageBitmap = async (source, ...rest) => {
+        if (source instanceof HTMLVideoElement) return still;
+        return originalBitmap.call(globalThis, source, ...rest);
+      };
+      Object.defineProperty(HTMLVideoElement.prototype, "videoWidth", {
+        configurable: true,
+        get() {
+          return 4;
+        },
+      });
+      Object.defineProperty(HTMLVideoElement.prototype, "videoHeight", {
+        configurable: true,
+        get() {
+          return 4;
+        },
+      });
+      const origListen = HTMLVideoElement.prototype.addEventListener;
+      HTMLVideoElement.prototype.addEventListener = function (type, fn, opts) {
+        if (type === "error") return;
+        if (type === "loadeddata") {
+          queueMicrotask(() =>
+            (fn as EventListener).call(this, new Event("loadeddata")),
+          );
+          return;
+        }
+        return origListen.call(this, type, fn, opts);
+      };
+
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        open(): void;
+      };
+      picker.setAttribute("mode", "video");
+      picker.setAttribute("default-video", "https://example.com/sample.mp4");
+      picker.value = {
+        type: "video",
+        video: {
+          url: "https://example.com/sample.mp4",
+          poster: "https://example.com/default-still.jpg",
+          scaleMode: "fill",
+        },
+      };
+      picker.append(document.createElement("fig-swatch"));
+      document.body.append(picker);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      picker.open();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      const preview = document.querySelector(
+        ".fig-fill-picker-video-preview",
+      ) as HTMLElement;
+      const defaultPoster = preview.getAttribute("poster");
+
+      preview.dispatchEvent(
+        new CustomEvent("loaded", {
+          bubbles: true,
+          detail: { src: "https://example.com/replaced.mp4" },
+        }),
+      );
+      const posterAfterReplace = preview.getAttribute("poster");
+
+      let nextPoster = posterAfterReplace;
+      for (let i = 0; i < 20; i += 1) {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        nextPoster = preview.getAttribute("poster");
+        if (nextPoster?.startsWith("blob:")) break;
+      }
+
+      const swatch =
+        picker.querySelector("fig-swatch")?.getAttribute("background") ?? "";
+      const url = picker.value.video?.url;
+      picker.remove();
+      globalThis.createImageBitmap = originalBitmap;
+      HTMLVideoElement.prototype.addEventListener = origListen;
+      return {
+        defaultPoster,
+        posterAfterReplace,
+        capturedPoster: nextPoster,
+        swatch,
+        url,
+      };
+    });
+
+    expect(state.defaultPoster).toBe("https://example.com/default-still.jpg");
+    expect(state.posterAfterReplace).toBeNull();
+    expect(state.capturedPoster).toMatch(/^blob:/);
+    expect(state.swatch).toBe(`url("${state.capturedPoster}")`);
+    expect(state.url).toBe("https://example.com/replaced.mp4");
+  });
+
   test("video without poster paints a createImageBitmap still on the swatch", async ({
     page,
   }) => {

@@ -1706,6 +1706,7 @@ class FigFillPicker extends HTMLElement {
   #rafIds = new Set();
   #ownedBlobUrls = new Set();
   #videoPosterCapturing = null;
+  #videoPosterSrc = null;
 
   constructor() {
     super();
@@ -2134,8 +2135,12 @@ class FigFillPicker extends HTMLElement {
         const prevUrl = this.#video.url;
         this.#video = { ...this.#video, ...parsed.video };
         this.#video.missing = !this.#video.url;
-        if (this.#video.url !== prevUrl && parsed.video.poster == null) {
+        if (parsed.video.poster != null && parsed.video.poster !== "") {
+          this.#videoPosterSrc = this.#video.url;
+        } else if (this.#video.url !== prevUrl) {
           this.#revokeVideoPoster();
+        } else {
+          this.#discardStaleVideoPoster();
         }
       }
       this.#applyParsedWebcam(parsed);
@@ -2157,6 +2162,7 @@ class FigFillPicker extends HTMLElement {
         this.#video.url = valueAttr.trim();
         this.#video.missing = false;
         if (this.#video.url !== prevUrl) this.#revokeVideoPoster();
+        else this.#discardStaleVideoPoster();
       }
     }
   }
@@ -4477,12 +4483,28 @@ class FigFillPicker extends HTMLElement {
       this.#ownedBlobUrls.delete(this.#video.poster);
     }
     this.#video.poster = null;
+    this.#videoPosterSrc = null;
+  }
+
+  #discardStaleVideoPoster() {
+    if (!this.#video.poster) return;
+    if (this.#videoPosterSrc && this.#videoPosterSrc === this.#video.url) return;
+    this.#revokeVideoPoster();
+  }
+
+  #syncVideoPreview() {
+    const preview = this.#dialog?.querySelector(
+      ".fig-fill-picker-video-preview",
+    );
+    if (preview) this.#updateVideoPreviewStyle(preview);
   }
 
   #applyDefaultVideo({ emit = false } = {}) {
     if (this.#video.url) {
       this.#video.missing = false;
+      this.#discardStaleVideoPoster();
       if (!this.#video.poster) this.#captureVideoPoster(this.#video.url);
+      else this.#syncVideoPreview();
       return;
     }
     const fallback = this.getAttribute("default-video");
@@ -4492,10 +4514,7 @@ class FigFillPicker extends HTMLElement {
     }
     this.#video.url = fallback;
     this.#video.missing = false;
-    const preview = this.#dialog?.querySelector(
-      ".fig-fill-picker-video-preview",
-    );
-    if (preview) this.#updateVideoPreviewStyle(preview);
+    this.#syncVideoPreview();
     this.#captureVideoPoster(fallback);
     if (emit) this.#emitInput();
   }
@@ -4503,7 +4522,9 @@ class FigFillPicker extends HTMLElement {
   #ensureVideoPoster() {
     if (this.#fillType !== "video") return;
     const src = this.#video.url;
-    if (!src || this.#video.poster) return;
+    if (!src) return;
+    this.#discardStaleVideoPoster();
+    if (this.#video.poster) return;
     this.#captureVideoPoster(src);
   }
 
@@ -4578,8 +4599,10 @@ class FigFillPicker extends HTMLElement {
       if (!blob || this.#video.url !== src) return;
       this.#revokeVideoPoster();
       this.#video.poster = URL.createObjectURL(blob);
+      this.#videoPosterSrc = src;
       this.#ownedBlobUrls.add(this.#video.poster);
       this.#updateSwatch();
+      this.#syncVideoPreview();
       if (emit) this.#emitInput();
     } catch {
       // Cross-origin or decode failures leave the swatch empty until a poster exists.
@@ -4610,6 +4633,7 @@ class FigFillPicker extends HTMLElement {
       const src = e.detail?.src || preview.src;
       if (!src) return;
       const changed = src !== this.#video.url;
+      if (changed) this.#revokeVideoPoster();
       this.#video.url = src;
       this.#video.missing = false;
       this.#updateVideoPreviewStyle(preview);
