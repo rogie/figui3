@@ -1081,6 +1081,25 @@ fig-button {
   &:has(svg:first-child):not([icon]) {
     padding-left: var(--spacer-1);
   }
+
+  &[type="select"]{
+    &[icon]:not([icon="false"]){
+      width: auto;
+      padding-right: var(--spacer-1);
+    }
+    fig-dropdown{
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0;
+    }
+  }
+  &[type="select"]:not([icon]){
+    fig-icon[slot="append"]{
+      margin-right: calc(var(--spacer-1) * -1);
+      margin-left: auto;
+    }
+  }
 }
 
 /* Combo button */

@@ -468,14 +468,6 @@ export function applyButtonTypeMutation(
 
   if (nextType === "select") {
     ensureText("Select");
-    const dropdown = document.createElement("fig-dropdown");
-    ["Option One", "Option Two", "Option Three"].forEach((label, idx) => {
-      const option = document.createElement("option");
-      option.textContent = label;
-      if (idx === 0) option.setAttribute("selected", "");
-      dropdown.append(option);
-    });
-    element.append(dropdown);
   } else if (nextType === "upload") {
     ensureText("Upload");
     const input = document.createElement("input");

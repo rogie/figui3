@@ -600,7 +600,10 @@ class FigButton extends HTMLElement {
   #a11yAttributes = ["aria-label", "aria-labelledby", "aria-describedby", "title"];
   #boundHandleControlKeydown = this.#handleControlKeydown.bind(this);
   #boundHandleClick = this.#handleClick.bind(this);
-  #boundHandleSlotChange = () => this.#syncSlottedControlDisabled();
+  #boundHandleSlotChange = () => {
+    this.#syncSlottedControlDisabled();
+    this.#syncSelectChevron();
+  };
   #boundHandleFocus = () => {
     if (this.button?.matches(":focus-visible")) {
       this.setAttribute("data-focus-visible", "");
@@ -653,14 +656,22 @@ class FigButton extends HTMLElement {
         :host([size="large"][icon]) .fig-button-control {
           padding: 0;
         }
+        :host([type="select"]) .fig-button-control {
+          gap: var(--spacer-1);
+        }
       `;
+      const prependSlot = document.createElement("slot");
+      prependSlot.name = "prepend";
+      const defaultSlot = document.createElement("slot");
+      const appendSlot = document.createElement("slot");
+      appendSlot.name = "append";
       const control = figCreateElement(
         controlTag,
         {
           className: "fig-button-control",
           type: isControlWrapper ? null : "button",
         },
-        document.createElement("slot"),
+        [prependSlot, defaultSlot, appendSlot],
       );
       this.shadowRoot.replaceChildren(style, control);
 
@@ -670,9 +681,10 @@ class FigButton extends HTMLElement {
       this.button.addEventListener("blur", this.#boundHandleBlur);
     }
 
-    const slot = this.shadowRoot.querySelector("slot");
-    slot?.removeEventListener("slotchange", this.#boundHandleSlotChange);
-    slot?.addEventListener("slotchange", this.#boundHandleSlotChange);
+    this.shadowRoot.querySelectorAll("slot").forEach((slot) => {
+      slot.removeEventListener("slotchange", this.#boundHandleSlotChange);
+      slot.addEventListener("slotchange", this.#boundHandleSlotChange);
+    });
     this.removeEventListener("keydown", this.#boundHandleControlKeydown);
     this.addEventListener("keydown", this.#boundHandleControlKeydown);
 
@@ -681,6 +693,7 @@ class FigButton extends HTMLElement {
       this.getAttribute("selected") !== "false";
 
     this.#syncButtonAttributes();
+    this.#syncSelectChevron();
   }
 
   get type() {
@@ -767,6 +780,29 @@ class FigButton extends HTMLElement {
     this.setAttribute("aria-pressed", pressed ? "true" : "false");
     this.button.setAttribute("aria-pressed", pressed ? "true" : "false");
   }
+  #syncSelectChevron() {
+    const selector =
+      ':scope > fig-icon[slot="append"][data-generated="select-chevron"]';
+    const generatedIcons = Array.from(this.querySelectorAll(selector));
+    const generated = generatedIcons[0];
+    generatedIcons.slice(1).forEach((icon) => icon.remove());
+    if (this.type !== "select") {
+      generated?.remove();
+      return;
+    }
+    const authoredAppend = this.querySelector(
+      ':scope > [slot="append"]:not([data-generated])',
+    );
+    if (authoredAppend) {
+      generated?.remove();
+      return;
+    }
+    if (generated) return;
+    const chevron = createFigIcon("chevron", { size: "small" });
+    chevron.setAttribute("slot", "append");
+    chevron.setAttribute("data-generated", "select-chevron");
+    this.append(chevron);
+  }
   #syncA11yAttributes() {
     if (!this.button) return;
     if (!(this.button instanceof HTMLButtonElement)) return;
@@ -835,6 +871,7 @@ class FigButton extends HTMLElement {
           break;
         }
         this.#syncButtonAttributes();
+        this.#syncSelectChevron();
         break;
       }
       case "disabled":
@@ -851,9 +888,9 @@ class FigButton extends HTMLElement {
   }
   disconnectedCallback() {
     this.removeEventListener("keydown", this.#boundHandleControlKeydown);
-    this.shadowRoot
-      ?.querySelector("slot")
-      ?.removeEventListener("slotchange", this.#boundHandleSlotChange);
+    this.shadowRoot?.querySelectorAll("slot").forEach((slot) => {
+      slot.removeEventListener("slotchange", this.#boundHandleSlotChange);
+    });
   }
 }
 figDefineElement("fig-button", FigButton);
@@ -11673,6 +11710,7 @@ class FigComboInput extends HTMLElement {
   ];
 
   #boundHandleDropdownInput = this.#handleDropdownInput.bind(this);
+  #boundHandleDropdownChange = this.#handleDropdownChange.bind(this);
   #boundHandleTextInput = this.#handleTextInput.bind(this);
   #boundHandleTextChange = this.#handleTextChange.bind(this);
 
@@ -11737,21 +11775,6 @@ class FigComboInput extends HTMLElement {
       placeholder,
       value: currentValue,
     });
-    const icon = figCreateSvgElement(
-      "svg",
-      {
-        width: "16",
-        height: "16",
-        viewBox: "0 0 16 16",
-        fill: "none",
-      },
-      figCreateSvgElement("path", {
-        d: "M5.87868 7.12132L8 9.24264L10.1213 7.12132",
-        stroke: "currentColor",
-        "stroke-opacity": "0.9",
-        "stroke-linecap": "round",
-      }),
-    );
     const button = figCreateElement(
       "fig-button",
       {
@@ -11759,7 +11782,6 @@ class FigComboInput extends HTMLElement {
         variant: "input",
         icon: true,
       },
-      icon,
     );
     if (!this.#usesCustomDropdown) {
       button.appendChild(
@@ -11799,25 +11821,36 @@ class FigComboInput extends HTMLElement {
   #setupListeners() {
     this.#teardownListeners();
     this.#dropdown?.addEventListener("input", this.#boundHandleDropdownInput);
+    this.#dropdown?.addEventListener("change", this.#boundHandleDropdownChange);
     this.#input?.addEventListener("input", this.#boundHandleTextInput);
     this.#input?.addEventListener("change", this.#boundHandleTextChange);
   }
 
   #teardownListeners() {
     this.#dropdown?.removeEventListener("input", this.#boundHandleDropdownInput);
+    this.#dropdown?.removeEventListener("change", this.#boundHandleDropdownChange);
     this.#input?.removeEventListener("input", this.#boundHandleTextInput);
     this.#input?.removeEventListener("change", this.#boundHandleTextChange);
   }
 
   #handleDropdownInput(e) {
     e.stopPropagation();
+    this.#syncDropdownValue(e);
+    this.#emitInput();
+  }
+
+  #handleDropdownChange(e) {
+    e.stopPropagation();
+    this.#syncDropdownValue(e);
+    this.#emitChange();
+  }
+
+  #syncDropdownValue(e) {
     const val = e.target.closest("fig-dropdown")?.value ?? "";
     this.#internalUpdate = true;
     this.setAttribute("value", val);
     this.#internalUpdate = false;
     if (this.#input) this.#input.setAttribute("value", val);
-    this.#emitInput();
-    this.#emitChange();
   }
 
   #handleTextInput(e) {

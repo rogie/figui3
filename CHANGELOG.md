@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.29]
+
+### Added
+
+- `fig-button type="select"` automatically generates a small appended chevron; authored append-slot content overrides it.
+
+### Fixed
+
+- `fig-combo-input` now contains its dropdown events and broadcasts `input` and `change` only from the combo host.
+- Playground button type controls no longer inject sample dropdown markup when switching to `type="select"`.
+
+### Changed
+
+- Refined select-button spacing for labeled and icon-only layouts.
+
 ## [8.9.28]
 
 ### Fixed

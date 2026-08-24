@@ -5331,6 +5331,53 @@ test.describe("combo input accessibility", () => {
       outlineWidth: "1px",
     });
   });
+
+  test("broadcasts dropdown input and change from the combo host only", async ({
+    page,
+  }) => {
+    const events = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-combo-input
+          id="combo-events"
+          options="Inter, Roboto"
+          value="Inter"
+        ></fig-combo-input>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const received = [];
+      for (const type of ["input", "change"]) {
+        root.addEventListener(type, (event) => {
+          received.push({
+            type: event.type,
+            target: event.target?.tagName,
+            detail: event.detail,
+          });
+        });
+      }
+
+      const select = root.querySelector("#combo-events fig-dropdown select");
+      select.value = "Roboto";
+      select.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+      select.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+      return received;
+    });
+
+    expect(events).toEqual([
+      {
+        type: "input",
+        target: "FIG-COMBO-INPUT",
+        detail: { value: "Roboto" },
+      },
+      {
+        type: "change",
+        target: "FIG-COMBO-INPUT",
+        detail: { value: "Roboto" },
+      },
+    ]);
+  });
 });
 
 test.describe("field accessibility", () => {

@@ -42,6 +42,60 @@ test.describe("fig.js audit core regressions", () => {
     });
   });
 
+  test("fig-button select type generates an appended chevron", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `<fig-button id="select-button" type="select">Select</fig-button>`;
+      await new Promise(requestAnimationFrame);
+      const button = root.querySelector("#select-button")!;
+      const read = () => {
+        const icons = button.querySelectorAll(
+          ':scope > fig-icon[slot="append"][data-generated="select-chevron"]',
+        );
+        return {
+          count: icons.length,
+          name: icons[0]?.getAttribute("name") ?? null,
+          size: icons[0]?.getAttribute("size") ?? null,
+        };
+      };
+      const initial = read();
+      button.setAttribute("type", "button");
+      const afterButton = read();
+      button.setAttribute("type", "select");
+      const afterSelect = read();
+      const authored = document.createElement("span");
+      authored.setAttribute("slot", "append");
+      authored.textContent = "Custom";
+      button.append(authored);
+      await new Promise(requestAnimationFrame);
+      const withAuthoredAppend = read();
+      authored.remove();
+      await new Promise(requestAnimationFrame);
+      const afterAuthoredRemoved = read();
+      return {
+        initial,
+        afterButton,
+        afterSelect,
+        withAuthoredAppend,
+        afterAuthoredRemoved,
+        appendSlot: Boolean(
+          button.shadowRoot?.querySelector('slot[name="append"]'),
+        ),
+      };
+    });
+
+    expect(state).toEqual({
+      initial: { count: 1, name: "chevron", size: "small" },
+      afterButton: { count: 0, name: null, size: null },
+      afterSelect: { count: 1, name: "chevron", size: "small" },
+      withAuthoredAppend: { count: 0, name: null, size: null },
+      afterAuthoredRemoved: { count: 1, name: "chevron", size: "small" },
+      appendSlot: true,
+    });
+  });
+
   test("hover tooltip opens on focus and preserves authored descriptions", async ({
     page,
   }) => {
