@@ -9476,6 +9476,16 @@ class FigInputFill extends HTMLElement {
         this.#emitChange();
       });
 
+      this.#fillPicker.addEventListener("loaded", (e) => {
+        e.stopPropagation();
+        this.dispatchEvent(
+          new CustomEvent("loaded", {
+            bubbles: true,
+            detail: e.detail,
+          }),
+        );
+      });
+
       this.#fillPicker.addEventListener("webcamstream", (e) => {
         this.dispatchEvent(
           new CustomEvent("webcamstream", {
@@ -9773,7 +9783,10 @@ class FigInputFill extends HTMLElement {
   #webcamValue() {
     return {
       live: this.#webcam.live !== false,
-      snapshot: this.#webcam.snapshot ?? null,
+      snapshot:
+        this.#webcam.snapshot ??
+        this.#fillPicker?.value?.webcam?.snapshot ??
+        null,
       deviceId: this.#webcam.deviceId ?? null,
       scaleMode: this.#webcam.scaleMode || "fill",
       scale: this.#webcam.scale ?? 50,
@@ -12992,6 +13005,23 @@ class FigMedia extends HTMLElement {
         detail,
       }),
     );
+    if (
+      (media.tagName === "IMG" && event.type === "load") ||
+      (media.tagName === "VIDEO" && event.type === "loadeddata")
+    ) {
+      this.dispatchEvent(
+        new CustomEvent("loaded", {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          detail: {
+            src: detail.src,
+            file: this.#file,
+            media,
+          },
+        }),
+      );
+    }
   }
 
   #handleMediaPlay() {

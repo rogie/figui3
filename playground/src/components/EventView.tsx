@@ -36,17 +36,17 @@ export default function EventView() {
       rafId = requestAnimationFrame(() => setLatest(payload));
     };
 
-    container.addEventListener("input", handler);
-    container.addEventListener("change", handler);
-    container.addEventListener("optionhover", handler);
-    container.addEventListener("reorder", handler);
-    container.addEventListener("remove", handler);
+    const types = [
+      "input",
+      "change",
+      "loaded",
+      "optionhover",
+      "reorder",
+      "remove",
+    ];
+    for (const type of types) container.addEventListener(type, handler);
     return () => {
-      container.removeEventListener("input", handler);
-      container.removeEventListener("change", handler);
-      container.removeEventListener("optionhover", handler);
-      container.removeEventListener("reorder", handler);
-      container.removeEventListener("remove", handler);
+      for (const type of types) container.removeEventListener(type, handler);
       cancelAnimationFrame(rafId);
     };
   }, []);

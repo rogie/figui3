@@ -1958,7 +1958,6 @@ class FigFillPicker extends HTMLElement {
       }
       this.#webcamPosterStream = stream;
       this.#updateSwatch();
-      this.#emitInput();
     };
 
     const attempt = async () => {
@@ -2258,9 +2257,9 @@ class FigFillPicker extends HTMLElement {
       this.#dialog.anchor = this.anchorElement || this.#trigger;
     }
 
+    this.#switchTab(this.#fillType, { emit: false });
     this.#valueAtOpen = JSON.stringify(this.value);
     this.#lastChangeValue = this.#valueAtOpen;
-    this.#switchTab(this.#fillType, { emit: false });
 
     if (this.#swatch) this.#swatch.setAttribute("selected", "true");
 
@@ -2609,7 +2608,7 @@ class FigFillPicker extends HTMLElement {
       });
     }
 
-    if (tabName === "video") this.#applyDefaultVideo();
+    if (tabName === "video") this.#applyDefaultVideo({ emit: false });
     if (tabName === "webcam") {
       this.#webcam.live = this.#webcamMode() === "live";
       this.#webcamStart?.(this.#webcam.deviceId);
@@ -4299,10 +4298,17 @@ class FigFillPicker extends HTMLElement {
     preview.addEventListener("loaded", (e) => {
       const src = e.detail?.src || preview.src;
       if (!src) return;
+      const changed = src !== this.#image.url;
       this.#image.url = src;
       this.#updateImagePreview(preview);
       this.#updateSwatch();
-      this.#emitInput();
+      if (changed) this.#emitInput();
+      this.dispatchEvent(
+        new CustomEvent("loaded", {
+          bubbles: true,
+          detail: e.detail ?? { src },
+        }),
+      );
     });
 
     preview.addEventListener("change", () => {
@@ -4462,7 +4468,7 @@ class FigFillPicker extends HTMLElement {
     container.replaceChildren(header, preview);
 
     this.#setupVideoEvents(container);
-    this.#applyDefaultVideo();
+    this.#applyDefaultVideo({ emit: false });
   }
 
   #revokeVideoPoster() {
@@ -4473,7 +4479,7 @@ class FigFillPicker extends HTMLElement {
     this.#video.poster = null;
   }
 
-  #applyDefaultVideo({ emit = true } = {}) {
+  #applyDefaultVideo({ emit = false } = {}) {
     if (this.#video.url) {
       this.#video.missing = false;
       if (!this.#video.poster) this.#captureVideoPoster(this.#video.url);
@@ -4603,12 +4609,19 @@ class FigFillPicker extends HTMLElement {
     preview.addEventListener("loaded", (e) => {
       const src = e.detail?.src || preview.src;
       if (!src) return;
+      const changed = src !== this.#video.url;
       this.#video.url = src;
       this.#video.missing = false;
       this.#updateVideoPreviewStyle(preview);
       this.#captureVideoPoster(src);
       this.#updateSwatch();
-      this.#emitInput();
+      if (changed) this.#emitInput();
+      this.dispatchEvent(
+        new CustomEvent("loaded", {
+          bubbles: true,
+          detail: e.detail ?? { src },
+        }),
+      );
     });
 
     preview.addEventListener("change", () => {

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.25]
+
+### Fixed
+
+- Opening `fig-fill-picker` no longer emits `input` when nothing changed. Default-video apply, same-URL preview `loaded`, and the live webcam still are derived UI.
+- `fig-media` / `fig-image` / `fig-video` fire `loaded` when the src actually loads, not only after a file upload. The fill picker and `fig-input-fill` forward it so playground Event output can show it.
+
+### Changed
+
+- Playground theme switch uses `hstack` and tighter header padding.
+
 ## [8.9.24]
 
 ### Changed

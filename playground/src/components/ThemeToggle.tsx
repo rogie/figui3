@@ -57,7 +57,7 @@ export default function ThemeToggle({
   };
 
   return (
-    <div className="theme-switch" data-dark={isDark || undefined}>
+    <hstack className="theme-switch" data-dark={isDark || undefined}>
       <fig-tooltip text={tooltip}>
         <fig-button
           variant="ghost"
@@ -106,6 +106,6 @@ export default function ThemeToggle({
           </fig-field>
         </fig-content>
       </dialog>
-    </div>
+    </hstack>
   );
 }
