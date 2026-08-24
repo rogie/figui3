@@ -3464,9 +3464,9 @@ fig-header {
     width: 100%;
   }
 
-  & > h1, 
-  & > h2, 
-  & > h3{
+  & > h1:first-child, 
+  & > h2:first-child, 
+  & > h3:first-child{
     flex: 1 1 auto;
     min-width: 0;
     display: flex; 

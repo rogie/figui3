@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.28]
+
+### Fixed
+
+- Limit `fig-header` flexible title styling to a heading in the first-child position.
+
 ## [8.9.27]
 
 ### Changed
