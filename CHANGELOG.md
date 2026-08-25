@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.30]
+
+### Added
+
+- `fig-slider.defaultValue` exposes the resolved slider baseline.
+
+### Fixed
+
+- Slider defaults ignore non-numeric, out-of-range, and off-step values and remain synchronized when constraints change.
+- `fig-group` removes its generated fallback header when authored header content is present.
+
+### Changed
+
+- `propskit-slider` keeps its reset default separate while giving inner delta sliders a midpoint baseline.
+- `propskit-oscillator` uses the same minimal handles as `fig-easing-curve`.
+
 ## [8.9.29]
 
 ### Added

@@ -510,25 +510,69 @@ test.describe("fig-lab audit regressions", () => {
     expect(state).toEqual({ inputs: 0, handles: 0, controls: 0 });
   });
 
-  test("oscillator matches easing curve stroke thickness", async ({ page }) => {
-    const strokeWidths = await page.evaluate(async () => {
+  test("oscillator matches easing curve stroke and handles", async ({ page }) => {
+    const styles = await page.evaluate(async () => {
       const oscillator = document.createElement("propskit-oscillator");
       const easing = document.createElement("fig-easing-curve");
       document.body.append(oscillator, easing);
       await new Promise(requestAnimationFrame);
 
       return {
-        oscillator: getComputedStyle(
+        oscillatorStroke: getComputedStyle(
           oscillator.querySelector(".propskit-oscillator-path")!,
         ).strokeWidth,
-        easing: getComputedStyle(
+        easingStroke: getComputedStyle(
           easing.querySelector(".fig-easing-curve-path")!,
         ).strokeWidth,
+        oscillatorHandles: [
+          ...oscillator.querySelectorAll(".propskit-oscillator-handle fig-handle"),
+        ].map((handle) => ({
+          type: handle.getAttribute("type"),
+          size: handle.getAttribute("size"),
+        })),
+        easingHandle: {
+          type: easing
+            .querySelector(".fig-easing-curve-handle fig-handle")
+            ?.getAttribute("type"),
+          size: easing
+            .querySelector(".fig-easing-curve-handle fig-handle")
+            ?.getAttribute("size"),
+        },
       };
     });
 
-    expect(strokeWidths.oscillator).toBe(strokeWidths.easing);
-    expect(strokeWidths.oscillator).toBe("2px");
+    expect(styles.oscillatorStroke).toBe(styles.easingStroke);
+    expect(styles.oscillatorStroke).toBe("2px");
+    expect(styles.oscillatorHandles).toEqual([
+      styles.easingHandle,
+      styles.easingHandle,
+    ]);
+    expect(styles.easingHandle).toEqual({ type: "minimal", size: "small" });
+  });
+
+  test("oscillator uses its wave type as the only group header", async ({
+    page,
+  }) => {
+    const headers = await page.evaluate(async () => {
+      const oscillator = document.createElement("propskit-oscillator");
+      oscillator.setAttribute(
+        "value",
+        JSON.stringify({ waves: [{ type: "square", frequency: 1 }] }),
+      );
+      document.body.append(oscillator);
+      await new Promise(requestAnimationFrame);
+
+      return [
+        ...oscillator.querySelectorAll(
+          "fig-group.propskit-oscillator-wave > fig-header",
+        ),
+      ].map((header) => ({
+        label: header.querySelector("h3")?.textContent,
+        generated: header.hasAttribute("data-generated"),
+      }));
+    });
+
+    expect(headers).toEqual([{ label: "Square", generated: false }]);
   });
 
   test("oscillator amplitude and offset use zero-centered delta sliders", async ({
@@ -543,13 +587,16 @@ test.describe("fig-lab audit regressions", () => {
         const field = oscillator.querySelector(
           `propskit-slider[name="${name}"]`,
         )!;
-        const slider = field.querySelector("fig-slider")!;
+        const slider = field.querySelector("fig-slider") as HTMLElement & {
+          defaultValue: number;
+        };
         return {
           name,
           hostType: field.getAttribute("type"),
           hostDefault: field.getAttribute("default"),
           sliderType: slider.getAttribute("type"),
           sliderDefault: slider.getAttribute("default"),
+          sliderResolvedDefault: slider.defaultValue,
         };
       });
     });
@@ -561,6 +608,7 @@ test.describe("fig-lab audit regressions", () => {
         hostDefault: "0",
         sliderType: "delta",
         sliderDefault: "0",
+        sliderResolvedDefault: 0,
       })),
     );
   });

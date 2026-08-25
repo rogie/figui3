@@ -5700,11 +5700,7 @@ class FigSlider extends HTMLElement {
     this.step = readNumber("step", defaults.step);
     if (!(this.step > 0)) this.step = defaults.step > 0 ? defaults.step : 1;
     this.color = this.getAttribute("color") || defaults?.color;
-    this.default = this.hasAttribute("default")
-      ? this.getAttribute("default")
-      : this.type === "delta"
-        ? 0
-        : this.min;
+    this.default = this.#resolveDefaultValue();
     this.value = this.#normalizeSliderValue(rawValue);
   }
 
@@ -5772,12 +5768,7 @@ class FigSlider extends HTMLElement {
     this.input.removeEventListener("pointercancel", this.#boundRangePointerUp);
     this.input.addEventListener("pointercancel", this.#boundRangePointerUp);
 
-    if (this.default) {
-      this.style.setProperty(
-        "--default",
-        this.#calculateNormal(this.default),
-      );
-    }
+    this.style.setProperty("--default", this.#calculateNormal(this.default));
 
     if (this.figInputNumber) {
       this.#syncTextInputA11yAttributes();
@@ -5864,6 +5855,7 @@ class FigSlider extends HTMLElement {
       this.input.setAttribute("list", this.datalist.getAttribute("id"));
     } else if (this.type === "stepper") {
       this.datalist = document.createElement("datalist");
+      this.datalist.setAttribute("data-generated", "slider-stepper");
       this.datalist.setAttribute("id", figUniqueId());
       const steps = Math.min(
         1001,
@@ -5878,6 +5870,7 @@ class FigSlider extends HTMLElement {
       this.input.setAttribute("list", this.datalist.getAttribute("id"));
     } else if (this.type === "delta") {
       this.datalist = document.createElement("datalist");
+      this.datalist.setAttribute("data-generated", "slider-delta");
       this.datalist.setAttribute("id", figUniqueId());
       let option = document.createElement("option");
       option.setAttribute("value", this.default);
@@ -5885,14 +5878,7 @@ class FigSlider extends HTMLElement {
       this.inputContainer.append(this.datalist);
       this.input.setAttribute("list", this.datalist.getAttribute("id"));
     }
-    if (this.datalist) {
-      const defaultOption = [...this.datalist.querySelectorAll("option")].find(
-        (option) => option.value === String(this.default),
-      );
-      if (defaultOption) {
-        defaultOption.setAttribute("default", "true");
-      }
-    }
+    this.#syncDefaultDatalist();
     this.#syncValue();
   }
 
@@ -5936,6 +5922,10 @@ class FigSlider extends HTMLElement {
       this.figInputNumber.setAttribute("value", normalized);
     }
     if (this.input) this.#syncProperties();
+  }
+
+  get defaultValue() {
+    return this.#resolveDefaultValue();
   }
 
   disconnectedCallback() {
@@ -5997,6 +5987,28 @@ class FigSlider extends HTMLElement {
   #clampToBounds(value) {
     const { min, max } = this.#getBounds();
     return Math.min(max, Math.max(min, value));
+  }
+  #isStepAligned(value) {
+    const { min } = this.#getBounds();
+    const step = this.#toFiniteNumber(this.step);
+    if (!(step > 0)) return true;
+    const steps = (value - min) / step;
+    const nearest = Math.round(steps);
+    const tolerance = Number.EPSILON * Math.max(1, Math.abs(steps)) * 16;
+    return Math.abs(steps - nearest) <= tolerance;
+  }
+  #resolveDefaultValue(rawDefault = this.getAttribute("default")) {
+    const { min, max } = this.#getBounds();
+    const parsed = this.#toFiniteNumber(rawDefault);
+    const isValid =
+      parsed !== null &&
+      parsed >= min &&
+      parsed <= max &&
+      (this.type !== "stepper" || this.#isStepAligned(parsed));
+    if (isValid) return parsed;
+    return this.type === "delta"
+      ? Math.min(max, Math.max(min, 0))
+      : min;
   }
   #getFallbackValue() {
     if (this.type === "delta") {
@@ -6163,10 +6175,13 @@ class FigSlider extends HTMLElement {
     }
     if (!this.hasAttribute("default") && this.type !== "delta") {
       this.default = this.min;
+    } else {
+      this.default = this.#resolveDefaultValue();
     }
     this.value = this.#normalizeSliderValue(this.value);
     this.#syncProperties();
     this.#syncStepperDatalist();
+    this.#syncDefaultDatalist();
   }
 
   #syncStepperDatalist() {
@@ -6183,6 +6198,25 @@ class FigSlider extends HTMLElement {
     }
     this.datalist.replaceChildren(fragment);
     this.input.setAttribute("list", this.datalist.id);
+    this.#syncDefaultDatalist();
+  }
+
+  #syncDefaultDatalist() {
+    if (!this.datalist) return;
+    const defaultValue = String(this.default);
+    const options = [...this.datalist.querySelectorAll("option")];
+    options.forEach((option) => option.removeAttribute("default"));
+    let defaultOption = options.find((option) => option.value === defaultValue);
+    if (
+      !defaultOption &&
+      this.type === "delta" &&
+      this.datalist.getAttribute("data-generated") === "slider-delta"
+    ) {
+      defaultOption = document.createElement("option");
+      defaultOption.value = defaultValue;
+      this.datalist.replaceChildren(defaultOption);
+    }
+    defaultOption?.setAttribute("default", "true");
   }
 
   #regenerateWhenIdle() {
@@ -6272,9 +6306,9 @@ class FigSlider extends HTMLElement {
           }
           break;
         case "default":
-          this.default =
-            newValue !== null ? newValue : this.type === "delta" ? 0 : this.min;
+          this.default = this.#resolveDefaultValue(newValue);
           this.#syncProperties();
+          this.#syncDefaultDatalist();
           break;
         case "min":
         case "max":
@@ -16850,6 +16884,7 @@ class FigGroup extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
+    if (!this.isConnected) return;
     if (name === "open") {
       this.#header?.setAttribute("aria-expanded", String(this.open));
       return;
@@ -16898,7 +16933,9 @@ class FigGroup extends HTMLElement {
     const label = nameAttr || (isCollapsible ? "Group" : null);
 
     // Check if user supplied their own fig-header
-    const userHeader = this.querySelector(":scope > fig-header");
+    const userHeader = this.querySelector(
+      ":scope > fig-header:not([data-generated])",
+    );
 
     if (!label && !isCollapsible && !userHeader) {
       if (this.#header && this.#header.dataset.generated) {
@@ -16910,6 +16947,9 @@ class FigGroup extends HTMLElement {
     }
 
     if (userHeader) {
+      this.querySelectorAll(":scope > fig-header[data-generated]").forEach(
+        (header) => header.remove(),
+      );
       this.#header = userHeader;
     } else if (!this.#header || !this.#header.dataset.generated) {
       this.#header = document.createElement("fig-header");

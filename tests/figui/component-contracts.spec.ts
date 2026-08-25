@@ -4122,6 +4122,148 @@ test.describe("propskit delegated click behavior", () => {
     });
   });
 
+  test("propskit slider keeps reset defaults separate from inner baselines", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-slider
+          id="explicit-default"
+          type="delta"
+          value="5"
+          default="2"
+          min="-10"
+          max="10"
+        ></propskit-slider>
+        <propskit-slider
+          id="initial-default"
+          type="delta"
+          value="5"
+          min="-10"
+          max="30"
+        ></propskit-slider>
+      `;
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      type PropskitSliderElement = HTMLElement & {
+        value: string;
+        defaultValue: string;
+        isDefault: boolean;
+        resetToDefault(): void;
+      };
+      type SliderElement = HTMLElement & { defaultValue: number };
+      const read = (id: string) => {
+        const host = root.querySelector(`#${id}`) as PropskitSliderElement;
+        const slider = host.querySelector("fig-slider") as SliderElement;
+        return {
+          hostDefault: host.getAttribute("default"),
+          innerDefault: slider.getAttribute("default"),
+          resolvedDefault: slider.defaultValue,
+          publicDefault: host.defaultValue,
+          value: host.value,
+          isDefault: host.isDefault,
+        };
+      };
+
+      const before = {
+        explicit: read("explicit-default"),
+        initial: read("initial-default"),
+      };
+      const explicit = root.querySelector(
+        "#explicit-default",
+      ) as PropskitSliderElement;
+      const initial = root.querySelector(
+        "#initial-default",
+      ) as PropskitSliderElement;
+      explicit.value = "8";
+      initial.value = "8";
+      const updated = {
+        explicit: read("explicit-default"),
+        initial: read("initial-default"),
+      };
+      initial.setAttribute("min", "0");
+      initial.setAttribute("max", "40");
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+      const midpointUpdated = read("initial-default");
+      explicit.resetToDefault();
+      initial.resetToDefault();
+      const after = {
+        explicit: read("explicit-default"),
+        initial: read("initial-default"),
+      };
+      return { before, updated, midpointUpdated, after };
+    });
+
+    expect(state.before).toEqual({
+      explicit: {
+        hostDefault: "2",
+        innerDefault: "0",
+        resolvedDefault: 0,
+        publicDefault: "2",
+        value: "5",
+        isDefault: false,
+      },
+      initial: {
+        hostDefault: null,
+        innerDefault: "10",
+        resolvedDefault: 10,
+        publicDefault: "5",
+        value: "5",
+        isDefault: true,
+      },
+    });
+    expect(state.updated).toEqual({
+      explicit: {
+        hostDefault: "2",
+        innerDefault: "0",
+        resolvedDefault: 0,
+        publicDefault: "2",
+        value: "8",
+        isDefault: false,
+      },
+      initial: {
+        hostDefault: null,
+        innerDefault: "10",
+        resolvedDefault: 10,
+        publicDefault: "5",
+        value: "8",
+        isDefault: false,
+      },
+    });
+    expect(state.midpointUpdated).toEqual({
+      hostDefault: null,
+      innerDefault: "20",
+      resolvedDefault: 20,
+      publicDefault: "5",
+      value: "8",
+      isDefault: false,
+    });
+    expect(state.after).toEqual({
+      explicit: {
+        hostDefault: "2",
+        innerDefault: "0",
+        resolvedDefault: 0,
+        publicDefault: "2",
+        value: "2",
+        isDefault: true,
+      },
+      initial: {
+        hostDefault: null,
+        innerDefault: "20",
+        resolvedDefault: 20,
+        publicDefault: "5",
+        value: "5",
+        isDefault: true,
+      },
+    });
+  });
+
   test("focuses fields, toggles switches, and opens selects", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -5886,6 +6028,149 @@ test.describe("slider accessibility", () => {
         inputValue: typed.expectedFallback,
       });
     }
+  });
+
+  test("fig-slider ignores invalid defaults and keeps runtime defaults in range", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider id="delta-high" type="delta" default="200" min="-10" max="10"></fig-slider>
+        <fig-slider id="delta-positive" type="delta" default="30" min="10" max="20"></fig-slider>
+        <fig-slider id="delta-valid" type="delta" default="5" min="-10" max="10"></fig-slider>
+        <fig-slider id="delta-invalid" type="delta" default="nope" min="-10" max="10"></fig-slider>
+        <fig-slider id="stepper-off-step" type="stepper" value="40" default="35" min="0" max="100" step="10"></fig-slider>
+        <fig-slider id="range-high" type="range" value="50" default="200" min="0" max="100"></fig-slider>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      type Slider = HTMLElement & { defaultValue: number };
+      const read = (id: string) => {
+        const slider = root.querySelector(`#${id}`) as Slider;
+        const defaultOption = slider.querySelector("datalist option[default]");
+        return {
+          authoredDefault: slider.getAttribute("default"),
+          resolvedDefault: slider.defaultValue,
+          cssDefault: slider.style.getPropertyValue("--default"),
+          defaultTick: defaultOption?.getAttribute("value") ?? null,
+        };
+      };
+
+      const initial = Object.fromEntries(
+        [
+          "delta-high",
+          "delta-positive",
+          "delta-valid",
+          "delta-invalid",
+          "stepper-off-step",
+          "range-high",
+        ].map((id) => [id, read(id)]),
+      );
+
+      const dynamic = root.querySelector("#delta-valid") as Slider;
+      const normalizationEvents: string[] = [];
+      for (const type of ["input", "change"]) {
+        dynamic.addEventListener(type, () => normalizationEvents.push(type));
+      }
+      dynamic.setAttribute("default", "20");
+      const invalidDefault = read("delta-valid");
+      dynamic.setAttribute("min", "8");
+      const rangeExcludesZero = read("delta-valid");
+      dynamic.setAttribute("max", "30");
+      const expandedRange = read("delta-valid");
+
+      const stepper = root.querySelector("#stepper-off-step") as Slider;
+      stepper.setAttribute("default", "20");
+      const validStep = read("stepper-off-step");
+      stepper.setAttribute("step", "30");
+      const invalidatedStep = read("stepper-off-step");
+
+      return {
+        initial,
+        dynamic: {
+          invalidDefault,
+          rangeExcludesZero,
+          expandedRange,
+          validStep,
+          invalidatedStep,
+        },
+        normalizationEvents,
+      };
+    });
+
+    expect(state.initial).toEqual({
+      "delta-high": {
+        authoredDefault: "200",
+        resolvedDefault: 0,
+        cssDefault: "0.5",
+        defaultTick: "0",
+      },
+      "delta-positive": {
+        authoredDefault: "30",
+        resolvedDefault: 10,
+        cssDefault: "0",
+        defaultTick: "10",
+      },
+      "delta-valid": {
+        authoredDefault: "5",
+        resolvedDefault: 5,
+        cssDefault: "0.75",
+        defaultTick: "5",
+      },
+      "delta-invalid": {
+        authoredDefault: "nope",
+        resolvedDefault: 0,
+        cssDefault: "0.5",
+        defaultTick: "0",
+      },
+      "stepper-off-step": {
+        authoredDefault: "35",
+        resolvedDefault: 0,
+        cssDefault: "0",
+        defaultTick: "0",
+      },
+      "range-high": {
+        authoredDefault: "200",
+        resolvedDefault: 0,
+        cssDefault: "0",
+        defaultTick: null,
+      },
+    });
+    expect(state.dynamic).toEqual({
+      invalidDefault: {
+        authoredDefault: "20",
+        resolvedDefault: 0,
+        cssDefault: "0.5",
+        defaultTick: "0",
+      },
+      rangeExcludesZero: {
+        authoredDefault: "20",
+        resolvedDefault: 8,
+        cssDefault: "0",
+        defaultTick: "8",
+      },
+      expandedRange: {
+        authoredDefault: "20",
+        resolvedDefault: 20,
+        cssDefault: `${12 / 22}`,
+        defaultTick: "20",
+      },
+      validStep: {
+        authoredDefault: "20",
+        resolvedDefault: 20,
+        cssDefault: "0.2",
+        defaultTick: "20",
+      },
+      invalidatedStep: {
+        authoredDefault: "20",
+        resolvedDefault: 0,
+        cssDefault: "0",
+        defaultTick: "0",
+      },
+    });
+    expect(state.normalizationEvents).toEqual([]);
   });
 
   test("fig-slider range supports Shift arrow key stepping", async ({ page }) => {

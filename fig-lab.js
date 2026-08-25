@@ -4639,6 +4639,7 @@ class PropskitSlider extends HTMLElement {
     "data-wave-index",
     "data-active",
     "data-elastic-dragging",
+    "default",
     "style",
   ]);
 
@@ -4761,8 +4762,11 @@ class PropskitSlider extends HTMLElement {
   }
 
   #initialize() {
+    const sliderType = (this.getAttribute("type") || "range").toLowerCase();
     this.#initialValue =
-      this.getAttribute("value") ?? this.getAttribute("min") ?? "0";
+      this.getAttribute("value") ??
+      this.getAttribute("default") ??
+      (sliderType === "delta" ? "0" : this.getAttribute("min") ?? "0");
     const initialChildren = Array.from(this.childNodes).filter((node) => {
       return (
         node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim())
@@ -4866,12 +4870,15 @@ class PropskitSlider extends HTMLElement {
     this.#slider.setAttribute("text", "true");
 
     const sliderType = (this.getAttribute("type") || "range").toLowerCase();
-    if (sliderType === "delta" || sliderType === "stepper") {
-      this.#slider.setAttribute(
-        "default",
-        this.getAttribute("default") ?? "50",
-      );
-    } else if (!this.hasAttribute("default")) {
+    if (sliderType === "delta") {
+      const min = Number(this.#slider.min);
+      const max = Number(this.#slider.max);
+      const midpoint =
+        Number.isFinite(min) && Number.isFinite(max)
+          ? min + (max - min) / 2
+          : 0;
+      this.#slider.setAttribute("default", String(midpoint));
+    } else {
       this.#slider.removeAttribute("default");
     }
     if (sliderType === "stepper") {
@@ -4910,8 +4917,10 @@ class PropskitSlider extends HTMLElement {
   }
 
   #pushExternalValueToSlider() {
-    if (!this.#slider || !this.hasAttribute("value")) return;
-    const next = this.getAttribute("value") ?? "";
+    if (!this.#slider) return;
+    const next = this.hasAttribute("value")
+      ? this.getAttribute("value") ?? ""
+      : this.#initialValue ?? "";
     if (String(this.#slider.value) !== next) {
       this.#slider.value = next;
     }
@@ -5313,7 +5322,6 @@ class PropskitSlider extends HTMLElement {
   #defaultValue() {
     return (
       this.getAttribute("default") ??
-      this.#slider?.getAttribute("default") ??
       this.#initialValue ??
       this.#rangeInput?.min ??
       "0"
@@ -7163,6 +7171,7 @@ class PropskitOscillator extends HTMLElement {
           { text: label },
           figLabCreateElement("fig-handle", {
             size: "small",
+            type: "minimal",
             "aria-label": `Oscillator ${type} handle`,
           }),
         ),
