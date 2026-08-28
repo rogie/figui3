@@ -1093,6 +1093,8 @@ When app code rebuilds a chooser by setting `fig-chooser.innerHTML`, the chooser
 | `drag` | boolean | `false` | Enable drag-to-scroll |
 | `overflow` | string | — | Overflow behavior |
 | `loop` | boolean | `false` | Loop keyboard navigation |
+| `auto-scroll` | boolean | `true` | Automatically center the selection after selection, layout, resize, or media changes. Set to `"false"` to disable. |
+| `scroll-behavior` | string | `"smooth"` | Selection and overflow-button scrolling behavior: `"smooth"` or `"auto"`. The CSS `scroll-behavior` property can also override it. |
 
 **fig-choice attributes:**
 
@@ -1103,6 +1105,10 @@ When app code rebuilds a chooser by setting `fig-chooser.innerHTML`, the chooser
 | `disabled` | boolean | `false` | Disabled state |
 
 **Events (on fig-chooser):** `input`, `change` — detail is the selected value string.
+
+Selection follows the native `<select>` pattern: set `chooser.value` with a choice value, or set `chooser.selectedChoice` with a choice element. Neither programmatic selection nor scrolling emits events.
+
+When `auto-scroll="false"`, reveal the current selection explicitly with `chooser.scrollSelectionIntoView(options?)`. It accepts native-style `ScrollIntoViewOptions` (`behavior`, `block`, and `inline`) and centers by default.
 
 ```html
 <fig-chooser value="opt1">

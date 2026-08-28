@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.31]
+
+### Added
+
+- `fig-chooser` supports `auto-scroll`, `scroll-behavior`, and `scrollSelectionIntoView()` for independent selection and scrolling control.
+- Playground chooser controls and a manual-scroll example expose the new APIs.
+
+### Changed
+
+- Chooser selection and overflow scrolling respect CSS scroll behavior and reduced-motion preferences.
+
 ## [8.9.30]
 
 ### Added

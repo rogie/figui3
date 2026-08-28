@@ -80,7 +80,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     type: {
       label: "Type",
       type: "enum",
-      options: ["button", "toggle", "submit", "select", "upload"],
+      options: ["button", "toggle", "submit", "link", "select", "upload"],
     },
     size: {
       label: "Size",
@@ -1070,6 +1070,17 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Loop",
       type: "boolean",
       boolMode: "presence",
+    },
+    "auto-scroll": {
+      label: "Auto scroll",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    "scroll-behavior": {
+      label: "Scroll behavior",
+      type: "enum",
+      options: ["smooth", "auto"],
     },
   },
   progress: {

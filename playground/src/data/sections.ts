@@ -553,6 +553,31 @@ export const propkitSections: Section[] = [
 </div>`,
       },
       {
+        id: "manual-scroll",
+        name: "Manual scroll",
+        description:
+          "Select independently, then bring the current selection into view on demand.",
+        markup: `<div class="prop-panel">
+  <fig-field direction="vertical">
+    <label>Style</label>
+    <fig-chooser layout="horizontal" value="option-a" auto-scroll="false" scroll-behavior="smooth" full style="max-width: 100%">
+      <fig-choice value="option-a" padding selected>Option A</fig-choice>
+      <fig-choice value="option-b" padding>Option B</fig-choice>
+      <fig-choice value="option-c" padding>Option C</fig-choice>
+      <fig-choice value="option-d" padding>Option D</fig-choice>
+      <fig-choice value="option-e" padding>Option E</fig-choice>
+      <fig-choice value="option-f" padding>Option F</fig-choice>
+      <fig-choice value="option-g" padding>Option G</fig-choice>
+      <fig-choice value="option-h" padding>Option H</fig-choice>
+    </fig-chooser>
+  </fig-field>
+  <div style="display: flex; gap: var(--spacer-2)">
+    <fig-button variant="secondary" data-playground-ignore-controls="true" onclick="const r=this.closest('.prop-panel')||this.closest('.propkit-example');r.querySelector('fig-chooser').value='option-h'">Select last</fig-button>
+    <fig-button data-playground-ignore-controls="true" onclick="const r=this.closest('.prop-panel')||this.closest('.propkit-example');r.querySelector('fig-chooser').scrollSelectionIntoView()">Scroll to selection</fig-button>
+  </div>
+</div>`,
+      },
+      {
         id: "grid",
         name: "Grid",
         markup: `<div class="prop-panel">

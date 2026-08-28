@@ -7971,6 +7971,298 @@ test.describe("remaining accessibility contracts", () => {
       });
   });
 
+  test("fig-chooser separates selection from scrolling when auto-scroll is disabled", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = Array.from({ length: 8 }, (_, index) => {
+        const media = index === 0 ? "<video></video>" : "";
+        return `<fig-choice value="choice-${index}" style="width: 72px; height: 32px;">Choice ${index}${media}</fig-choice>`;
+      }).join("");
+      root.innerHTML = `
+        <fig-chooser
+          id="manual-scroll-chooser"
+          layout="horizontal"
+          value="choice-0"
+          auto-scroll="false"
+          scroll-behavior="auto"
+          style="width: 200px; max-width: 200px;"
+        >
+          ${choices}
+        </fig-chooser>
+      `;
+      const chooser = document.querySelector("#manual-scroll-chooser");
+      chooser.__events = [];
+      chooser.addEventListener("input", (event) => {
+        chooser.__events.push(["input", event.detail]);
+      });
+      chooser.addEventListener("change", (event) => {
+        chooser.__events.push(["change", event.detail]);
+      });
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#manual-scroll-chooser").evaluate((chooser) => ({
+          scrollLeft: chooser.scrollLeft,
+          value: chooser.value,
+          autoScroll: chooser.autoScroll,
+          scrollBehavior: chooser.scrollBehavior,
+        })),
+      )
+      .toEqual({
+        scrollLeft: 0,
+        value: "choice-0",
+        autoScroll: false,
+        scrollBehavior: "auto",
+      });
+
+    await page.locator("#manual-scroll-chooser").evaluate(async (chooser) => {
+      chooser.value = "choice-4";
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#manual-scroll-chooser").evaluate((chooser) => ({
+          scrollLeft: chooser.scrollLeft,
+          value: chooser.value,
+          selected: chooser.selectedChoice?.getAttribute("value"),
+          events: chooser.__events,
+        })),
+      )
+      .toEqual({
+        scrollLeft: 0,
+        value: "choice-4",
+        selected: "choice-4",
+        events: [],
+      });
+
+    const returnValue = await page
+      .locator("#manual-scroll-chooser")
+      .evaluate((chooser) => {
+        return chooser.scrollSelectionIntoView({
+          behavior: "auto",
+          inline: "center",
+        });
+      });
+    expect(returnValue).toBeUndefined();
+
+    await expect
+      .poll(() =>
+        page.locator("#manual-scroll-chooser").evaluate((chooser) => {
+          const selected = chooser.selectedChoice;
+          if (!selected) return null;
+          const chooserRect = chooser.getBoundingClientRect();
+          const selectedRect = selected.getBoundingClientRect();
+          return {
+            scrollLeft: Math.round(chooser.scrollLeft),
+            centerDelta: Math.round(
+              selectedRect.left +
+                selectedRect.width / 2 -
+                (chooserRect.left + chooserRect.width / 2),
+            ),
+            events: chooser.__events,
+          };
+        }),
+      )
+      .toMatchObject({
+        scrollLeft: expect.any(Number),
+        centerDelta: 0,
+        events: [],
+      });
+
+    await expect
+      .poll(() =>
+        page.locator("#manual-scroll-chooser").evaluate((chooser) => chooser.scrollLeft),
+      )
+      .toBeGreaterThan(0);
+
+    const settled = await page
+      .locator("#manual-scroll-chooser")
+      .evaluate(async (chooser) => {
+        chooser.scrollLeft = 0;
+        chooser.setAttribute("columns", "3");
+        chooser.style.width = "180px";
+        chooser.style.maxWidth = "180px";
+        chooser.setAttribute("layout", "vertical");
+        chooser.style.height = "64px";
+        chooser.style.maxHeight = "64px";
+        chooser.querySelector("video")?.dispatchEvent(new Event("loadedmetadata"));
+        chooser.append(
+          Object.assign(document.createElement("fig-choice"), {
+            textContent: "Choice 8",
+          }),
+        );
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+        return {
+          scrollLeft: chooser.scrollLeft,
+          scrollTop: chooser.scrollTop,
+          value: chooser.value,
+          events: chooser.__events,
+        };
+      });
+    expect(settled).toEqual({
+      scrollLeft: 0,
+      scrollTop: 0,
+      value: "choice-4",
+      events: [],
+    });
+  });
+
+  test("fig-chooser prevents implicit focus scrolling when auto-scroll is disabled", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-chooser id="keyboard-scroll-chooser" layout="horizontal" value="choice-0" auto-scroll="false" style="width: 120px;">
+          <fig-choice value="choice-0" style="width: 72px;">Choice 0</fig-choice>
+          <fig-choice value="choice-1" style="width: 72px;">Choice 1</fig-choice>
+          <fig-choice value="choice-2" style="width: 72px;">Choice 2</fig-choice>
+        </fig-chooser>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const chooser = document.querySelector("#keyboard-scroll-chooser");
+      const current = chooser.querySelector('[value="choice-0"]');
+      const next = chooser.querySelector('[value="choice-1"]');
+      const events = [];
+      let focusOptions = null;
+      next.focus = (options) => {
+        focusOptions = options;
+      };
+      chooser.addEventListener("input", (event) => {
+        events.push(["input", event.detail]);
+      });
+      chooser.addEventListener("change", (event) => {
+        events.push(["change", event.detail]);
+      });
+
+      current.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+
+      return {
+        value: chooser.value,
+        scrollLeft: chooser.scrollLeft,
+        focusOptions,
+        events,
+      };
+    });
+
+    expect(state).toEqual({
+      value: "choice-1",
+      scrollLeft: 0,
+      focusOptions: { preventScroll: true },
+      events: [
+        ["input", "choice-1"],
+        ["change", "choice-1"],
+      ],
+    });
+  });
+
+  test("fig-chooser resolves scroll behavior for selection and overflow controls", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const choices = Array.from({ length: 8 }, (_, index) => {
+        return `<fig-choice value="choice-${index}" style="width: 72px;">Choice ${index}</fig-choice>`;
+      }).join("");
+      root.innerHTML = `
+        <fig-chooser id="behavior-chooser" layout="horizontal" value="choice-0" scroll-behavior="auto" style="width: 160px;">
+          ${choices}
+        </fig-chooser>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const chooser = document.querySelector("#behavior-chooser");
+      const scrollToCalls = [];
+      const scrollByCalls = [];
+      chooser.scrollTo = (options) => scrollToCalls.push(options);
+      chooser.scrollBy = (options) => scrollByCalls.push(options);
+
+      chooser.value = "choice-4";
+      await new Promise(requestAnimationFrame);
+      chooser
+        .querySelector('[data-fig-chooser-nav="end"]')
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      chooser.scrollSelectionIntoView({ behavior: "smooth", inline: "end" });
+      await new Promise(requestAnimationFrame);
+
+      const attributeAuto = getComputedStyle(chooser).scrollBehavior;
+      chooser.scrollBehavior = "smooth";
+      const attributeSmooth = getComputedStyle(chooser).scrollBehavior;
+      chooser.style.scrollBehavior = "auto";
+      const cssOverride = getComputedStyle(chooser).scrollBehavior;
+
+      return {
+        scrollToBehaviors: scrollToCalls.map((options) => options.behavior),
+        scrollByBehaviors: scrollByCalls.map((options) => options.behavior),
+        attributeAuto,
+        attributeSmooth,
+        cssOverride,
+        reflectedAttribute: chooser.getAttribute("scroll-behavior"),
+      };
+    });
+
+    expect(state).toMatchObject({
+      scrollByBehaviors: ["auto"],
+      attributeAuto: "auto",
+      attributeSmooth: "smooth",
+      cssOverride: "auto",
+      reflectedAttribute: "smooth",
+    });
+    expect(state.scrollToBehaviors.at(-1)).toBe("smooth");
+    expect(state.scrollToBehaviors.slice(0, -1)).not.toHaveLength(0);
+    expect(state.scrollToBehaviors.slice(0, -1)).toEqual(
+      state.scrollToBehaviors.slice(0, -1).map(() => "auto"),
+    );
+  });
+
+  test("fig-chooser defaults to reduced-motion-safe scrolling", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-chooser id="reduced-default">
+          <fig-choice value="a">A</fig-choice>
+        </fig-chooser>
+        <fig-chooser id="reduced-explicit" scroll-behavior="smooth">
+          <fig-choice value="a">A</fig-choice>
+        </fig-chooser>
+      `;
+      return {
+        defaultBehavior: getComputedStyle(
+          document.querySelector("#reduced-default"),
+        ).scrollBehavior,
+        explicitBehavior: getComputedStyle(
+          document.querySelector("#reduced-explicit"),
+        ).scrollBehavior,
+      };
+    });
+
+    expect(state).toEqual({
+      defaultBehavior: "auto",
+      explicitBehavior: "smooth",
+    });
+  });
+
   test("fig-chooser resettles selected choice after resize and layout changes", async ({
     page,
   }) => {

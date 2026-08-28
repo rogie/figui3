@@ -407,14 +407,19 @@ function figSyncOverflowState(host, scrollEl, axis = "x", threshold = 2) {
   return scrollable;
 }
 
-function figScrollOverflowPage(scrollEl, axis = "x", direction = 1) {
+function figScrollOverflowPage(
+  scrollEl,
+  axis = "x",
+  direction = 1,
+  behavior = "smooth",
+) {
   if (!scrollEl) return;
   const isHorizontal = axis === "x";
   const pageSize = isHorizontal ? scrollEl.clientWidth : scrollEl.clientHeight;
   const scrollAmount = pageSize * 0.8 * direction;
   scrollEl.scrollBy({
     [isHorizontal ? "left" : "top"]: scrollAmount,
-    behavior: "smooth",
+    behavior,
   });
 }
 
@@ -17687,6 +17692,8 @@ figDefineElement("fig-choice", FigChoice);
  * @attr {number} columns - Number of columns when layout="grid" (default: 2)
  * @attr {string} value - Selected choice value. Omit to select the first choice; `value=""` means none.
  * @attr {boolean} disabled - Whether the chooser is disabled
+ * @attr {boolean} auto-scroll - Whether selection changes automatically scroll into view (default: true)
+ * @attr {"auto"|"smooth"} scroll-behavior - Scrolling animation behavior (default: "smooth")
  */
 class FigChooser extends HTMLElement {
   #selectedChoice = null;
@@ -17714,6 +17721,7 @@ class FigChooser extends HTMLElement {
       "layout",
       "overflow",
       "loop",
+      "auto-scroll",
     ];
   }
 
@@ -17726,6 +17734,31 @@ class FigChooser extends HTMLElement {
   get #dragEnabled() {
     const attr = this.getAttribute("drag");
     return attr === null || attr !== "false";
+  }
+
+  get autoScroll() {
+    const attr = this.getAttribute("auto-scroll");
+    return attr === null || attr !== "false";
+  }
+
+  set autoScroll(value) {
+    if (value === false || value === "false" || value === null) {
+      this.setAttribute("auto-scroll", "false");
+    } else {
+      this.removeAttribute("auto-scroll");
+    }
+  }
+
+  get scrollBehavior() {
+    return this.getAttribute("scroll-behavior") === "auto" ? "auto" : "smooth";
+  }
+
+  set scrollBehavior(value) {
+    if (value === "auto" || value === "smooth") {
+      this.setAttribute("scroll-behavior", value);
+    } else {
+      this.removeAttribute("scroll-behavior");
+    }
   }
 
   get #choiceSelector() {
@@ -17767,7 +17800,7 @@ class FigChooser extends HTMLElement {
     if (this.getAttribute("value") !== val) {
       this.setAttribute("value", val);
     }
-    this.#scrollToChoice(element);
+    if (this.autoScroll) this.#scrollToChoice(element);
   }
 
   get value() {
@@ -17780,6 +17813,11 @@ class FigChooser extends HTMLElement {
       return;
     }
     this.setAttribute("value", String(val));
+  }
+
+  scrollSelectionIntoView(options = {}) {
+    if (!this.#selectedChoice) return;
+    this.#scrollToChoice(this.#selectedChoice, options);
   }
 
   connectedCallback() {
@@ -17805,9 +17843,9 @@ class FigChooser extends HTMLElement {
 
   #scheduleInitialScrollSettle() {
     const resettle = () => {
-      if (!this.isConnected) return;
+      if (!this.isConnected || !this.autoScroll) return;
       if (this.#selectedChoice) {
-        this.#scrollToChoice(this.#selectedChoice, "auto");
+        this.#scrollToChoice(this.#selectedChoice);
       }
     };
     const wireImages = () => {
@@ -17881,6 +17919,9 @@ class FigChooser extends HTMLElement {
       } else {
         this.scrollLeft = 0;
       }
+      this.#resettleSelectedChoice();
+    }
+    if (name === "auto-scroll" && this.autoScroll) {
       this.#resettleSelectedChoice();
     }
   }
@@ -18026,7 +18067,7 @@ class FigChooser extends HTMLElement {
 
     if (nextIndex !== currentIndex && choices[nextIndex]) {
       this.selectedChoice = choices[nextIndex];
-      choices[nextIndex].focus();
+      choices[nextIndex].focus({ preventScroll: !this.autoScroll });
       this.#emitEvents();
     }
   }
@@ -18236,16 +18277,25 @@ class FigChooser extends HTMLElement {
 
   #scrollByPage(direction) {
     const isHorizontal = this.getAttribute("layout") === "horizontal";
-    figScrollOverflowPage(this, isHorizontal ? "x" : "y", direction);
+    figScrollOverflowPage(this, isHorizontal ? "x" : "y", direction, "auto");
   }
 
   #resettleSelectedChoice() {
-    if (!this.#selectedChoice) return;
-    this.#scrollToChoice(this.#selectedChoice, "auto");
+    if (!this.autoScroll || !this.#selectedChoice) return;
+    this.#scrollToChoice(this.#selectedChoice);
   }
 
-  #scrollToChoice(el, behavior = "smooth") {
+  #scrollToChoice(el, options = {}) {
     if (!el) return;
+    const scrollOptions =
+      typeof options === "object" && options !== null ? options : {};
+    const behavior =
+      scrollOptions.behavior === "smooth" ||
+      scrollOptions.behavior === "instant"
+        ? scrollOptions.behavior
+        : "auto";
+    const block = scrollOptions.block || "center";
+    const inline = scrollOptions.inline || "center";
     requestAnimationFrame(() => {
       if (!el.isConnected) return;
       const overflowY = this.scrollHeight > this.clientHeight;
@@ -18260,9 +18310,13 @@ class FigChooser extends HTMLElement {
       if (overflowY) {
         const choiceTop = choiceRect.top - hostRect.top + this.scrollTop;
         const maxScroll = this.scrollHeight - this.clientHeight;
-        options.top = Math.max(
-          0,
-          Math.min(choiceTop + choiceRect.height / 2 - this.clientHeight / 2, maxScroll),
+        options.top = this.#alignedScrollPosition(
+          choiceTop,
+          choiceRect.height,
+          this.clientHeight,
+          this.scrollTop,
+          maxScroll,
+          block,
         );
         shouldScroll = true;
       }
@@ -18270,9 +18324,13 @@ class FigChooser extends HTMLElement {
       if (overflowX) {
         const choiceLeft = choiceRect.left - hostRect.left + this.scrollLeft;
         const maxScroll = this.scrollWidth - this.clientWidth;
-        options.left = Math.max(
-          0,
-          Math.min(choiceLeft + choiceRect.width / 2 - this.clientWidth / 2, maxScroll),
+        options.left = this.#alignedScrollPosition(
+          choiceLeft,
+          choiceRect.width,
+          this.clientWidth,
+          this.scrollLeft,
+          maxScroll,
+          inline,
         );
         shouldScroll = true;
       }
@@ -18282,6 +18340,36 @@ class FigChooser extends HTMLElement {
       }
       this.#syncOverflow();
     });
+  }
+
+  #alignedScrollPosition(
+    elementStart,
+    elementSize,
+    viewportSize,
+    currentScroll,
+    maxScroll,
+    alignment,
+  ) {
+    let nextScroll;
+    if (alignment === "start") {
+      nextScroll = elementStart;
+    } else if (alignment === "end") {
+      nextScroll = elementStart + elementSize - viewportSize;
+    } else if (alignment === "nearest") {
+      const viewportStart = currentScroll;
+      const viewportEnd = currentScroll + viewportSize;
+      const elementEnd = elementStart + elementSize;
+      if (elementStart >= viewportStart && elementEnd <= viewportEnd) {
+        nextScroll = currentScroll;
+      } else if (elementStart < viewportStart) {
+        nextScroll = elementStart;
+      } else {
+        nextScroll = elementEnd - viewportSize;
+      }
+    } else {
+      nextScroll = elementStart + elementSize / 2 - viewportSize / 2;
+    }
+    return Math.max(0, Math.min(nextScroll, maxScroll));
   }
 
   #startObserver() {

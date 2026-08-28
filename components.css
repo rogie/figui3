@@ -5017,8 +5017,17 @@ fig-chooser {
   overflow: hidden auto;
   padding: 0;
   margin: 0 var(--fig-chooser-inline-margin);
+  scroll-behavior: smooth;
   scrollbar-width: none;
   width: calc(100% - var(--fig-chooser-inline-margin) * 2);
+
+  &[scroll-behavior="auto"] {
+    scroll-behavior: auto;
+  }
+
+  &[scroll-behavior="smooth"] {
+    scroll-behavior: smooth;
+  }
 
   fig-field > &{
     --fig-chooser-inline-margin:0;
@@ -5181,6 +5190,12 @@ fig-chooser {
   &[disabled]:not([disabled="false"]) {
     pointer-events: none;
     opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  fig-chooser:not([scroll-behavior="smooth"]) {
+    scroll-behavior: auto;
   }
 }
 
