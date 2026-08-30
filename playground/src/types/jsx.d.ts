@@ -30,6 +30,7 @@ declare module "react" {
       "propskit-slider": FigAttrs;
       "propskit-switch": FigAttrs;
       "propskit-text": FigAttrs;
+      "propskit-wheel": FigAttrs;
       "propskit-group": FigAttrs;
       "fig-select": FigAttrs;
       "fig-select-options": FigAttrs;

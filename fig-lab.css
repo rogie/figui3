@@ -362,6 +362,7 @@ fig-content:has(> propskit-group[name]:last-child) {
   propskit-point-point,
   propskit-group,
   propskit-slider,
+  propskit-wheel,
   propskit-oscillator
 ) :is(fig-input-text, fig-input-number)[disabled]:not([disabled="false"]) {
   border: 0;
@@ -369,8 +370,8 @@ fig-content:has(> propskit-group[name]:last-child) {
   box-shadow: none;
 }
 
-/* Large size: more left field padding; nudge trailing controls in from
-   the right. propskit-select uses shared label padding instead. */
+/* Large is the default size: use wider field padding and nudge trailing
+   controls in from the right. propskit-select uses shared label padding. */
 :is(
   propskit-switch,
   propskit-color,
@@ -379,27 +380,27 @@ fig-content:has(> propskit-group[name]:last-child) {
   propskit-text,
   propskit-number,
   propskit-slider
-)[size="large"] {
+):not([size="small"]) {
   fig-field:not([direction="vertical"]) {
     padding-left: var(--spacer-2-5);
   }
 }
 
 /* Flex-positioned numbers — margin works. Absolute numbers use right: calc(...) below. */
-propskit-number[size="large"] {
+propskit-number {
   fig-field fig-input-number {
     margin-right: var(--spacer-1);
   }
 }
 
-propskit-text[size="large"] {
+propskit-text {
   fig-field > fig-input-text {
     margin-right: var(--spacer-1);
   }
 }
 
 propskit-switch {
-  --propskit-switch-height: 1.5rem;
+  --propskit-switch-height: 2rem;
   --propskit-switch-vertical-padding: var(--spacer-1);
   --propskit-switch-horizontal-padding: var(--spacer-3);
 
@@ -411,11 +412,15 @@ propskit-switch {
   padding: var(--propskit-switch-vertical-padding)
     var(--propskit-switch-horizontal-padding);
 
-  &[size="large"] {
-    --propskit-switch-height: 2rem;
+  &:not([size="small"]) fig-field:not([direction="vertical"]) {
+    padding-right: var(--spacer-1);
+  }
+
+  &[size="small"] {
+    --propskit-switch-height: 1.5rem;
 
     fig-field:not([direction="vertical"]) {
-      padding-right: var(--spacer-1);
+      padding-right: 0;
     }
   }
 
@@ -477,7 +482,7 @@ propskit-switch {
 
 propskit-color,
 propskit-fill {
-  --propskit-color-height: 1.5rem;
+  --propskit-color-height: 2rem;
   --propskit-color-vertical-padding: var(--spacer-1);
   --propskit-color-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
@@ -490,8 +495,8 @@ propskit-fill {
   padding: var(--propskit-color-vertical-padding)
     var(--propskit-color-horizontal-padding);
 
-  &[size="large"] {
-    --propskit-color-height: 2rem;
+  &[size="small"] {
+    --propskit-color-height: 1.5rem;
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -568,7 +573,7 @@ propskit-fill {
 }
 
 propskit-gradient {
-  --propskit-gradient-height: 1.5rem;
+  --propskit-gradient-height: 2rem;
   --propskit-gradient-vertical-padding: var(--spacer-1);
   --propskit-gradient-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
@@ -581,18 +586,18 @@ propskit-gradient {
   padding: var(--propskit-gradient-vertical-padding)
     var(--propskit-gradient-horizontal-padding);
 
-  &[size="large"] {
-    --propskit-gradient-height: 2rem;
+  &[size="small"] {
+    --propskit-gradient-height: 1.5rem;
+  }
 
-    fig-input-gradient {
-      --fig-input-gradient-height: var(--propskit-gradient-height);
+  fig-input-gradient {
+    --fig-input-gradient-height: var(--propskit-gradient-height);
+    height: var(--propskit-gradient-height);
+
+    fig-swatch {
+      --height: var(--propskit-gradient-height);
+      --size: var(--propskit-gradient-height);
       height: var(--propskit-gradient-height);
-
-      fig-swatch {
-        --height: var(--propskit-gradient-height);
-        --size: var(--propskit-gradient-height);
-        height: var(--propskit-gradient-height);
-      }
     }
   }
 
@@ -654,12 +659,17 @@ propskit-gradient {
       min-width: 0;
       margin-left: auto;
       border-radius: var(--radius-medium);
+      background-color: transparent;
     }
   }
 }
 
 :is(propskit-color, propskit-fill, propskit-gradient) {
   outline: none;
+
+  fig-swatch {
+    background-color: transparent !important;
+  }
 
   fig-field:not([direction="vertical"]) {
     outline: none;
@@ -698,7 +708,7 @@ propskit-gradient {
 }
 
 propskit-select {
-  --propskit-select-height: 1.5rem;
+  --propskit-select-height: 2rem;
   --propskit-select-vertical-padding: var(--spacer-1);
   --propskit-select-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
@@ -711,24 +721,42 @@ propskit-select {
   padding: var(--propskit-select-vertical-padding)
     var(--propskit-select-horizontal-padding);
 
-  &[size="large"] {
-    --propskit-select-height: 2rem;
+  fig-field:not([direction="vertical"]) {
+    :is(fig-select, fig-dropdown) {
+      padding-right: var(--spacer-1);
+
+      &::after {
+        right: calc(0.25rem + var(--spacer-1));
+      }
+    }
+
+    fig-select::part(trigger) {
+      padding-left: var(--spacer-2-5);
+    }
+
+    fig-dropdown > select {
+      padding-left: var(--spacer-2-5);
+    }
+  }
+
+  &[size="small"] {
+    --propskit-select-height: 1.5rem;
 
     fig-field:not([direction="vertical"]) {
       :is(fig-select, fig-dropdown) {
-        padding-right: var(--spacer-1);
+        padding-right: 0;
 
         &::after {
-          right: calc(0.25rem + var(--spacer-1));
+          right: 0.25rem;
         }
       }
 
       fig-select::part(trigger) {
-        padding-left: var(--spacer-2-5);
+        padding-left: var(--spacer-2);
       }
 
       fig-dropdown > select {
-        padding-left: var(--spacer-2-5);
+        padding-left: var(--spacer-2);
       }
     }
   }
@@ -812,7 +840,7 @@ propskit-select {
 }
 
 propskit-text {
-  --propskit-text-height: 1.5rem;
+  --propskit-text-height: 2rem;
   --propskit-text-vertical-padding: var(--spacer-1);
   --propskit-text-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
@@ -825,8 +853,8 @@ propskit-text {
   padding: var(--propskit-text-vertical-padding)
     var(--propskit-text-horizontal-padding);
 
-  &[size="large"] {
-    --propskit-text-height: 2rem;
+  &[size="small"] {
+    --propskit-text-height: 1.5rem;
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -921,7 +949,7 @@ propskit-text {
 }
 
 propskit-number {
-  --propskit-number-height: 1.5rem;
+  --propskit-number-height: 2rem;
   --propskit-number-vertical-padding: var(--spacer-1);
   --propskit-number-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
@@ -934,8 +962,8 @@ propskit-number {
   padding: var(--propskit-number-vertical-padding)
     var(--propskit-number-horizontal-padding);
 
-  &[size="large"] {
-    --propskit-number-height: 2rem;
+  &[size="small"] {
+    --propskit-number-height: 1.5rem;
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -992,7 +1020,7 @@ propskit-number {
       width: fit-content;
       min-width: 0;
       margin-left: auto;
-      height: var(--propskit-number-height);
+      height: var(--control-height);
       border-radius: var(--radius-medium);
       background-color: transparent;
       box-shadow: none;
@@ -1020,7 +1048,7 @@ propskit-slider {
   --propskit-slider-elastic-scale: 1;
   --propskit-slider-elastic-origin: left center;
   --propskit-slider-elastic-transition: 0.18s cubic-bezier(0.2, 1.45, 0.35, 1);
-  --propskit-slider-height: 1.5rem;
+  --propskit-slider-height: 2rem;
   --propskit-slider-vertical-padding: var(--spacer-1);
   --propskit-slider-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
@@ -1028,8 +1056,10 @@ propskit-slider {
   --field-text-shadow: 0 1px 1.5px
     light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
   --propskit-slider-fig-slider-height: var(--propskit-slider-height);
-  --propskit-slider-fig-slider-thumb-height: calc(var(--propskit-slider-fig-slider-height) - var(--spacer-2-5));
-  --propskit-slider-number-right: 2px;
+  --propskit-slider-fig-slider-thumb-height: calc(
+    var(--propskit-slider-fig-slider-height) - var(--spacer-3)
+  );
+  --propskit-slider-number-right: calc(2px + var(--spacer-1));
 
   display: block;
   position: relative;
@@ -1045,12 +1075,12 @@ propskit-slider {
   padding-left: var(--propskit-slider-horizontal-padding);
   padding-right: var(--propskit-slider-horizontal-padding);
 
-  &[size="large"] {
-    --propskit-slider-height: 2rem;
+  &[size="small"] {
+    --propskit-slider-height: 1.5rem;
     --propskit-slider-fig-slider-thumb-height: calc(
-      var(--propskit-slider-fig-slider-height) - var(--spacer-3)
+      var(--propskit-slider-fig-slider-height) - var(--spacer-2-5)
     );
-    --propskit-slider-number-right: calc(2px + var(--spacer-1));
+    --propskit-slider-number-right: 2px;
   }
   
   label {
@@ -1071,8 +1101,10 @@ propskit-slider {
   &[type="hue"] {
     label,
     input {
-      text-shadow: var(--field-text-shadow);
-      color: white;
+      color: var(
+        --propskit-slider-filled-text-color,
+        var(--figma-color-text-oninverse)
+      ) !important;
     }
   }
 
@@ -1266,22 +1298,75 @@ propskit-slider {
         }
       }
 
-      &[type="hue"] .fig-slider-input-container::after {
-        background: var(--bg-hue);
-        mask-image: none;
-        -webkit-mask-image: none;
+      &[type="hue"] .fig-slider-input-container {
+        --propskit-slider-hue-color: hsl(
+          calc(var(--slider-complete) * 360deg) 100% 50%
+        );
+        background: var(--propskit-slider-hue-color) !important;
+
+        &::after {
+          box-sizing: border-box;
+          inset: auto 0 0;
+          height: 3px;
+          border: 0;
+          border-radius: 0;
+          background: var(--bg-hue);
+          box-shadow: none !important;
+          mask-image: none;
+          -webkit-mask-image: none;
+        }
+
       }
 
-      &[type="opacity"] .fig-slider-input-container::before {
-        display: block;
-        width: 100% !important;
-        clip-path: inset(
-          0 calc(100% - var(--propskit-slider-progress-percent)) 0 0 round
-            var(--slider-border-radius)
+      &[type="opacity"] .fig-slider-input-container {
+        --propskit-slider-opacity-color: color-mix(
+          in srgb,
+          var(--color) calc(var(--slider-complete) * 100%),
+          transparent
         );
-        background:
-          linear-gradient(to right, transparent, var(--color)),
-          var(--slider-checkerboard) !important;
+        --propskit-slider-strip-effective-color: color-mix(
+          in srgb,
+          var(--color) calc(var(--slider-complete) * 100%),
+          var(--figma-color-bg-secondary)
+        );
+        --propskit-slider-strip-border-color: color-mix(
+          in srgb,
+          var(--propskit-slider-strip-effective-color) 90%,
+          light-dark(#000, #fff) 10%
+        );
+        --propskit-slider-strip-border-color: light-dark(
+          oklch(
+            from var(--propskit-slider-strip-effective-color)
+              clamp(0, calc(l - 0.08), 0.85) c h
+          ),
+          oklch(
+            from var(--propskit-slider-strip-effective-color)
+              clamp(0.4, calc(l + 0.08), 1) c h
+          )
+        );
+
+        &::before {
+          display: block;
+          opacity: 1;
+          box-shadow: none !important;
+          background:
+            linear-gradient(
+              var(--propskit-slider-opacity-color),
+              var(--propskit-slider-opacity-color)
+            ),
+            var(--slider-checkerboard) !important;
+        }
+
+        &::after {
+          box-sizing: border-box;
+          inset: 0 auto 0 0;
+          width: var(--propskit-slider-progress-percent);
+          border: 1px solid var(--propskit-slider-strip-border-color);
+          background: transparent;
+          box-shadow: none !important;
+          mix-blend-mode: normal;
+          opacity: clamp(0, var(--slider-complete) * 1000, 1);
+        }
       }
     }
     datalist {
@@ -1299,9 +1384,10 @@ propskit-slider {
       box-shadow: none !important;
       position: absolute;
       right: var(--propskit-slider-number-right);
-      top: 2px;
-      bottom: 2px;
+      top: 50%;
+      bottom: auto;
       z-index: 2;
+      height: var(--control-height);
       width: fit-content;
       min-width: fit-content;
       max-width: max-content;
@@ -1309,14 +1395,7 @@ propskit-slider {
       border-left: 0;
       border-radius: var(--radius-medium);
       outline: none !important;
-
-      &[theme="light"] {
-        --propskit-slider-filled-text-color: #fff;
-      }
-
-      &[theme="dark"] {
-        --propskit-slider-filled-text-color: #000;
-      }
+      transform: translateY(-50%);
 
       &:hover,
       &:has(input:focus) {
@@ -1331,10 +1410,10 @@ propskit-slider {
         flex: 0 0 auto;
         text-align: right;
         color: var(--field-text-color);
-        cursor: default;
+        cursor: ew-resize;
         touch-action: none;
 
-        &:focus {
+        &:is(:focus, :active) {
           cursor: text;
           touch-action: auto;
         }
@@ -1345,6 +1424,25 @@ propskit-slider {
   &[type="opacity"][color] {
     fig-slider {
       container-type: inline-size;
+    }
+
+    fig-field:not([direction="vertical"]) > label {
+      --propskit-slider-label-fill-edge: clamp(
+        0%,
+        calc(var(--propskit-slider-complete, 0) * 133.333333%),
+        100%
+      );
+      background-image: linear-gradient(
+        to right,
+        var(--propskit-slider-filled-text-color) 0
+          var(--propskit-slider-label-fill-edge),
+        var(--figma-color-text-secondary)
+          var(--propskit-slider-label-fill-edge) 100%
+      );
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent;
     }
 
     fig-input-number[theme] input {
@@ -1371,6 +1469,258 @@ propskit-slider {
 
   &[data-elastic-dragging="true"] {
     transform: scaleX(var(--propskit-slider-elastic-scale));
+    transition: none;
+  }
+}
+
+propskit-wheel {
+  --propskit-wheel-elastic-distance: calc(var(--spacer-2) + 0.25rem);
+  --propskit-wheel-elastic-scale: 1;
+  --propskit-wheel-elastic-origin: left center;
+  --propskit-wheel-elastic-transition: 0.28s
+    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --propskit-wheel-handle-drag-max: 0.5rem;
+  --propskit-wheel-handle-drag-offset: 0px;
+  --propskit-wheel-handle-spring: 0.28s
+    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --propskit-wheel-keyboard-handle-spring: 0.14s
+    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --propskit-wheel-height: 2rem;
+  --propskit-wheel-vertical-padding: var(--spacer-1);
+  --propskit-wheel-horizontal-padding: var(--spacer-3);
+  --propskit-wheel-number-right: calc(2px + var(--spacer-1));
+  --propskit-wheel-handle-width: var(--spacer-1);
+  --propskit-wheel-handle-height: calc(
+    var(--propskit-wheel-height) - var(--spacer-3)
+  );
+  --propskit-wheel-handle-color: light-dark(
+    var(--figma-color-text-secondary),
+    var(--figma-color-text)
+  );
+  --propskit-wheel-tick-width: 0.125rem;
+  --propskit-wheel-tick-width-min: 1px;
+  --propskit-wheel-tick-height: calc(
+    var(--propskit-wheel-handle-height) - 4px
+  );
+  --propskit-wheel-tick-height-min: 8px;
+  --propskit-wheel-tick-inset: 3rem;
+  --propskit-wheel-tick-fade: 1rem;
+  --propskit-wheel-tick-opacity: 0.5;
+  --propskit-wheel-tick-opacity-min: 0.1;
+  --figma-focus-outline-offset: 1px;
+
+  display: block;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: calc(
+    var(--propskit-wheel-height) + var(--propskit-wheel-vertical-padding) * 2
+  );
+  transform-origin: var(--propskit-wheel-elastic-origin);
+  transition: transform var(--propskit-wheel-elastic-transition);
+  padding: var(--propskit-wheel-vertical-padding)
+    var(--propskit-wheel-horizontal-padding);
+
+  &[size="small"] {
+    --propskit-wheel-height: 1.5rem;
+    --propskit-wheel-handle-height: calc(
+      var(--propskit-wheel-height) - var(--spacer-2-5)
+    );
+    --propskit-wheel-number-right: 2px;
+
+    .propskit-wheel-surface > label {
+      padding-left: var(--spacer-2);
+    }
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+
+    label,
+    input {
+      color: var(--figma-color-text-disabled);
+    }
+
+    .propskit-wheel-wheel {
+      opacity: 0.5;
+    }
+  }
+
+  .propskit-wheel-surface {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+    overflow: hidden;
+
+    &:focus-within {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+
+    > label {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: block;
+      box-sizing: border-box;
+      width: 75%;
+      max-width: 75%;
+      padding: 0 0 0 var(--spacer-2-5);
+      overflow: hidden;
+      color: var(--figma-color-text-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      align-content: center;
+      pointer-events: none;
+    }
+  }
+
+  .propskit-wheel-wheel {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    outline: none;
+    cursor: ew-resize;
+    mask-image: linear-gradient(
+      to right,
+      rgb(0 0 0 / var(--propskit-wheel-tick-opacity-min))
+        var(--propskit-wheel-tick-inset),
+      rgb(0 0 0 / var(--propskit-wheel-tick-opacity))
+        calc(
+          var(--propskit-wheel-tick-inset) + var(--propskit-wheel-tick-fade)
+        ),
+      rgb(0 0 0 / var(--propskit-wheel-tick-opacity))
+        calc(
+          100% - var(--propskit-wheel-tick-inset) -
+            var(--propskit-wheel-tick-fade)
+        ),
+      rgb(0 0 0 / var(--propskit-wheel-tick-opacity-min))
+        calc(100% - var(--propskit-wheel-tick-inset))
+    );
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .propskit-wheel-wheel-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    color: var(--figma-color-icon-tertiary);
+  }
+
+  .propskit-wheel-tick {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .propskit-wheel-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    width: var(--propskit-wheel-handle-width);
+    height: var(--propskit-wheel-handle-height);
+    border-radius: calc(var(--propskit-wheel-handle-width) / 2);
+    background: transparent;
+    pointer-events: none;
+    transform: translate(
+      calc(-50% + var(--propskit-wheel-handle-drag-offset)),
+      -50%
+    );
+    transition: transform var(--propskit-wheel-handle-spring);
+    box-shadow:
+      inset 0 0 0 var(--propskit-wheel-handle-height)
+        var(--propskit-wheel-handle-color),
+      var(--handle-shadow);
+  }
+
+  fig-input-number {
+    background-color: transparent;
+    box-shadow: none !important;
+    position: absolute;
+    right: var(--propskit-wheel-number-right);
+    top: 50%;
+    bottom: auto;
+    z-index: 2;
+    height: var(--control-height);
+    width: fit-content;
+    min-width: fit-content;
+    max-width: max-content;
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: var(--radius-medium);
+    outline: none !important;
+    transform: translateY(-50%);
+
+    &:hover,
+    &:has(input:focus) {
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    input {
+      field-sizing: content;
+      font-variant-numeric: tabular-nums;
+      width: auto;
+      flex: 0 0 auto;
+      text-align: right;
+      cursor: ew-resize;
+      touch-action: none;
+
+      &:is(:focus, :active) {
+        cursor: text;
+        touch-action: auto;
+      }
+    }
+  }
+
+  &[data-elastic-dragging="true"] {
+    transform: scaleX(var(--propskit-wheel-elastic-scale));
+    transition: none;
+
+    .propskit-wheel-handle {
+      transition: none;
+    }
+  }
+
+  &[data-keyboard-moving] .propskit-wheel-handle {
+    transition: none;
+  }
+
+  &[data-keyboard-settling] .propskit-wheel-handle {
+    transition: transform var(--propskit-wheel-keyboard-handle-spring);
+  }
+}
+
+body.fig-propskit-wheel-dragging,
+body.fig-propskit-wheel-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  propskit-wheel,
+  propskit-wheel .propskit-wheel-handle {
     transition: none;
   }
 }
@@ -1409,13 +1759,52 @@ propskit-slider {
   propskit-text,
   propskit-number,
   propskit-slider
-)[size="large"] {
+) {
   fig-field {
     --fig-field-label-max-height: var(--spacer-5);
   }
 
   fig-field:not([direction="vertical"]) > label {
     padding-left: var(--spacer-2-5);
+  }
+}
+
+:is(
+  propskit-switch,
+  propskit-color,
+  propskit-fill,
+  propskit-gradient,
+  propskit-select,
+  propskit-text,
+  propskit-number,
+  propskit-slider
+)[size="small"] {
+  fig-field {
+    --fig-field-label-max-height: var(--spacer-4);
+  }
+
+  fig-field:not([direction="vertical"]) > label {
+    padding-left: var(--spacer-2);
+  }
+}
+
+:is(
+  propskit-switch,
+  propskit-color,
+  propskit-fill,
+  propskit-gradient,
+  propskit-text,
+  propskit-number,
+  propskit-slider
+)[size="small"] {
+  fig-field:not([direction="vertical"]) {
+    padding-left: var(--spacer-2);
+  }
+}
+
+:is(propskit-text, propskit-number)[size="small"] {
+  fig-field > :is(fig-input-text, fig-input-number) {
+    margin-right: 0;
   }
 }
 
@@ -1427,7 +1816,7 @@ propskit-point-radius-angle {
 }
 
 propskit-position {
-  --propskit-position-height: 1.5rem;
+  --propskit-position-height: 2rem;
   --propskit-position-vertical-padding: var(--spacer-1);
   --propskit-position-horizontal-padding: var(--spacer-3);
   --figma-focus-outline-offset: 1px;
@@ -1440,12 +1829,12 @@ propskit-position {
   padding: var(--propskit-position-vertical-padding)
     var(--propskit-position-horizontal-padding);
 
-  &[size="large"] {
-    --propskit-position-height: 2rem;
+  &[size="small"] {
+    --propskit-position-height: 1.5rem;
 
     .propskit-position-row {
-      --fig-field-label-max-height: var(--spacer-5);
-      padding-left: var(--spacer-2-5);
+      --fig-field-label-max-height: var(--spacer-4);
+      padding-left: var(--spacer-2);
     }
   }
 
@@ -1458,6 +1847,7 @@ propskit-position {
   }
 
   .propskit-position-row {
+    --fig-field-label-max-height: var(--spacer-5);
     position: relative;
     display: flex;
     align-items: center;
@@ -1466,7 +1856,7 @@ propskit-position {
     min-width: 0;
     height: var(--propskit-position-height);
     min-height: var(--propskit-position-height);
-    padding: 0 var(--spacer-1) 0 var(--spacer-2);
+    padding: 0 var(--spacer-1) 0 var(--spacer-2-5);
     padding-right: 0;
     border-radius: var(--radius-medium);
     background-color: var(--figma-color-bg-secondary);
@@ -1509,6 +1899,7 @@ propskit-position {
 
   fig-input-number {
     width: 3.85rem;
+    height: var(--control-height);
     border: 0;
     background-color: transparent;
     box-shadow: none;
@@ -1525,6 +1916,74 @@ propskit-position {
 
   fig-input-number[data-propskit-position-axis="y"] {
     margin-left: calc(-1 * var(--spacer-2));
+  }
+}
+
+:is(
+  propskit-number,
+  propskit-slider,
+  propskit-wheel,
+  propskit-position
+) fig-input-number:is(:focus-within, :active, :has(input:active)) {
+  background-color: var(--figma-color-bg);
+}
+
+:is(
+  propskit-switch,
+  propskit-color,
+  propskit-fill,
+  propskit-gradient,
+  propskit-select,
+  propskit-text,
+  propskit-number,
+  propskit-slider,
+  propskit-position,
+  propskit-wheel
+)[variant="minimal"] {
+  --propskit-switch-vertical-padding: 0px;
+  --propskit-color-vertical-padding: 0px;
+  --propskit-gradient-vertical-padding: 0px;
+  --propskit-select-vertical-padding: 0px;
+  --propskit-text-vertical-padding: 0px;
+  --propskit-number-vertical-padding: 0px;
+  --propskit-slider-vertical-padding: 0px;
+  --propskit-position-vertical-padding: 0px;
+  --propskit-wheel-vertical-padding: 0px;
+
+  & > fig-field {
+    background-color: transparent;
+
+    &:hover {
+      background-color: var(--figma-color-bg-secondary);
+
+      &::after {
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+propskit-wheel[variant="minimal"] {
+  .propskit-wheel-surface {
+    background-color: transparent;
+
+    &:hover {
+      background-color: var(--figma-color-bg-secondary);
+
+      &::after {
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+propskit-slider[variant="minimal"] {
+  & > fig-field fig-slider .fig-slider-input-container {
+    background-color: transparent !important;
+
+    &:hover::after {
+      box-shadow: none !important;
+    }
   }
 }
 

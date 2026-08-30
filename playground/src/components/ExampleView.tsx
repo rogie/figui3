@@ -203,6 +203,7 @@ export default function ExampleView({
       "propskit-select",
       "propskit-slider",
       "propskit-text",
+      "propskit-wheel",
     ]);
 
     const resolveFieldIndex = (target: HTMLElement): number => {
@@ -236,7 +237,8 @@ export default function ExampleView({
       const shouldSkipPersistForFocusedControl =
         tagName === "fig-segmented-control" ||
         tagName === "fig-joystick" ||
-        tagName === "fig-origin-grid";
+        tagName === "fig-origin-grid" ||
+        tagName === "propskit-wheel";
       if (shouldSkipPersistForFocusedControl) {
         // Avoid full example markup refresh after keyboard interaction; preserving DOM state
         // keeps focus on roving segments and draggable handles.

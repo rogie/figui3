@@ -1067,7 +1067,8 @@ test.describe("propskit-number", () => {
     await expect(control.locator("input")).toHaveValue("24");
     const fieldBox = await control.locator("fig-field").boundingBox();
     const inputBox = await control.locator("fig-input-number").boundingBox();
-    expect(inputBox?.height).toBe(fieldBox?.height);
+    expect(fieldBox?.height).toBe(32);
+    expect(inputBox?.height).toBe(24);
     expect(inputBox?.width).toBeLessThan(fieldBox?.width ?? 0);
     expect(
       Math.abs(
@@ -1075,7 +1076,7 @@ test.describe("propskit-number", () => {
           (inputBox?.width ?? 0) -
           ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
       ),
-    ).toBe(0);
+    ).toBe(4);
 
     const events = await control.evaluate((element) => {
       const received: Array<{ type: string; detail: unknown }> = [];
@@ -1096,6 +1097,1094 @@ test.describe("propskit-number", () => {
     });
 
     expect(events).toEqual([{ type: "input", detail: 32 }]);
+  });
+});
+
+test.describe("propskit-wheel", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-wheel");
+    });
+  });
+
+  test("defaults generic values and normalizes time unit aliases", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel id="omitted"></propskit-wheel>
+        <propskit-wheel id="named" label="Delay" value="240"></propskit-wheel>
+        <propskit-wheel id="blank" label="" value="240"></propskit-wheel>
+        <propskit-wheel id="seconds" units="s" value="1.5"></propskit-wheel>
+        <propskit-wheel id="seconds-long" units="seconds"></propskit-wheel>
+        <propskit-wheel id="milliseconds-long" units="milliseconds"></propskit-wheel>
+        <propskit-wheel id="arbitrary" units="px" value="12"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const omitted = root.querySelector("#omitted")!;
+      const named = root.querySelector("#named")!;
+      const blank = root.querySelector("#blank")!;
+      const seconds = root.querySelector("#seconds")!;
+      const secondsLong = root.querySelector("#seconds-long")!;
+      const millisecondsLong = root.querySelector("#milliseconds-long")!;
+      const arbitrary = root.querySelector("#arbitrary")!;
+      const surface = omitted.querySelector(".propskit-wheel-surface");
+      const tickPath = omitted.querySelector(
+        ".propskit-wheel-tick",
+      ) as SVGPathElement | null;
+      const ticks = (tickPath?.getAttribute("d") ?? "")
+        .split(" Z")
+        .filter(Boolean)
+        .map((command) => {
+          const parts = command.trim().split(/\s+/);
+          return {
+            x: Number(parts[1]),
+            y1: Number(parts[2]),
+            y2: Number(parts[14]),
+            width: Number(parts[4]) - Number(parts[16]),
+          };
+        });
+      const xs = ticks.map((tick) => tick.x);
+      const mid = (surface?.clientWidth ?? 0) / 2;
+      const tickExtent = Math.max(...xs.map((x) => Math.abs(x - mid)));
+      const centerSpan = xs.filter((x) => Math.abs(x - mid) < tickExtent * 0.4);
+      const edgeSpan = xs.filter((x) => Math.abs(x - mid) > tickExtent * 0.7);
+      const centerLengths = ticks
+        .filter((tick) => Math.abs(tick.x - mid) < tickExtent * 0.4)
+        .map((tick) => Math.abs(tick.y2 - tick.y1));
+      const edgeLengths = ticks
+        .filter((tick) => Math.abs(tick.x - mid) > tickExtent * 0.7)
+        .map((tick) => Math.abs(tick.y2 - tick.y1));
+      const centerWidths = ticks
+        .filter((tick) => Math.abs(tick.x - mid) < tickExtent * 0.4)
+        .map((tick) => tick.width);
+      const edgeWidths = ticks
+        .filter((tick) => Math.abs(tick.x - mid) > tickExtent * 0.7)
+        .map((tick) => tick.width);
+      const centerGaps: number[] = [];
+      const sortedCenter = centerSpan.slice().sort((a, b) => a - b);
+      for (let i = 1; i < sortedCenter.length; i += 1) {
+        centerGaps.push(sortedCenter[i] - sortedCenter[i - 1]);
+      }
+      const edgeGaps: number[] = [];
+      const sortedEdge = edgeSpan.slice().sort((a, b) => a - b);
+      for (let i = 1; i < sortedEdge.length; i += 1) {
+        edgeGaps.push(sortedEdge[i] - sortedEdge[i - 1]);
+      }
+      const avg = (values: number[]) =>
+        values.length
+          ? values.reduce((sum, value) => sum + value, 0) / values.length
+          : 0;
+      return {
+        omittedLabel: omitted.querySelector("label")?.textContent,
+        namedLabel: named.querySelector("label")?.textContent,
+        blankLabel: blank.querySelector("label")?.textContent,
+        hasField: Boolean(omitted.querySelector("fig-field, fig-slider")),
+        surfaceCount: omitted.querySelectorAll(".propskit-wheel-surface").length,
+        units: omitted.querySelector("fig-input-number")?.getAttribute("units"),
+        step: omitted.querySelector("fig-input-number")?.getAttribute("step"),
+        precision: omitted
+          .querySelector("fig-input-number")
+          ?.getAttribute("precision"),
+        value: Number((omitted as HTMLElement & { value: string }).value),
+        secondsUnits: seconds.querySelector("fig-input-number")?.getAttribute("units"),
+        secondsStep: seconds.querySelector("fig-input-number")?.getAttribute("step"),
+        secondsPrecision: seconds
+          .querySelector("fig-input-number")
+          ?.getAttribute("precision"),
+        secondsLongUnits: secondsLong
+          .querySelector("fig-input-number")
+          ?.getAttribute("units"),
+        millisecondsLongUnits: millisecondsLong
+          .querySelector("fig-input-number")
+          ?.getAttribute("units"),
+        millisecondsLongStep: millisecondsLong
+          .querySelector("fig-input-number")
+          ?.getAttribute("step"),
+        millisecondsLongPrecision: millisecondsLong
+          .querySelector("fig-input-number")
+          ?.getAttribute("precision"),
+        arbitraryUnits: arbitrary
+          .querySelector("fig-input-number")
+          ?.getAttribute("units"),
+        arbitraryStep: arbitrary
+          .querySelector("fig-input-number")
+          ?.getAttribute("step"),
+        arbitraryPrecision: arbitrary
+          .querySelector("fig-input-number")
+          ?.getAttribute("precision"),
+        wheelRole: omitted.querySelector(".propskit-wheel-wheel")?.getAttribute("role"),
+        tickElementCount: omitted.querySelectorAll(".propskit-wheel-tick").length,
+        tickCount: ticks.length,
+        centerGap: avg(centerGaps),
+        edgeGap: avg(edgeGaps),
+        centerLength: avg(centerLengths),
+        edgeLength: avg(edgeLengths),
+        centerWidth: avg(centerWidths),
+        edgeWidth: avg(edgeWidths),
+        minTickWidth: Math.min(...ticks.map((tick) => tick.width)),
+        maxTickWidth: Math.max(...ticks.map((tick) => tick.width)),
+        maxTickVisualHeight: Math.max(
+          ...ticks.map((tick) => Math.abs(tick.y2 - tick.y1)),
+        ),
+        handleHeight:
+          omitted.querySelector(".propskit-wheel-handle")?.getBoundingClientRect()
+            .height ?? 0,
+        leftTickInset: Math.min(...xs),
+        rightTickInset: (surface?.clientWidth ?? 0) - Math.max(...xs),
+        expectedTickInset:
+          parseFloat(getComputedStyle(document.documentElement).fontSize) * 3,
+        wheelMask:
+          getComputedStyle(
+            omitted.querySelector(".propskit-wheel-wheel")!,
+          ).maskImage,
+        tickOpacity: tickPath ? getComputedStyle(tickPath).opacity : "",
+      };
+    });
+
+    expect(state.omittedLabel).toBe("Value");
+    expect(state.namedLabel).toBe("Delay");
+    expect(state.blankLabel).toBe("");
+    expect(state.hasField).toBe(false);
+    expect(state.surfaceCount).toBe(1);
+    expect(state.units).toBeNull();
+    expect(state.step).toBe("1");
+    expect(state.precision).toBe("0");
+    expect(state.value).toBe(0);
+    expect(state.secondsUnits).toBe("s");
+    expect(state.secondsStep).toBe("0.1");
+    expect(state.secondsPrecision).toBe("2");
+    expect(state.secondsLongUnits).toBe("s");
+    expect(state.millisecondsLongUnits).toBe("ms");
+    expect(state.millisecondsLongStep).toBe("100");
+    expect(state.millisecondsLongPrecision).toBe("0");
+    expect(state.arbitraryUnits).toBe("px");
+    expect(state.arbitraryStep).toBe("1");
+    expect(state.arbitraryPrecision).toBe("0");
+    expect(state.wheelRole).toBe("spinbutton");
+    expect(state.tickElementCount).toBe(1);
+    expect(state.tickCount).toBe(11);
+    expect(state.centerGap).toBeGreaterThan(0);
+    expect(state.edgeGap).toBeGreaterThan(0);
+    expect(state.centerLength).toBeCloseTo(state.edgeLength, 1);
+    expect(state.centerWidth).toBeGreaterThan(state.edgeWidth);
+    expect(state.minTickWidth).toBeGreaterThanOrEqual(1);
+    expect(state.maxTickWidth).toBeLessThanOrEqual(2);
+    expect(state.maxTickVisualHeight).toBeCloseTo(state.handleHeight - 4, 1);
+    expect(state.leftTickInset).toBeCloseTo(state.expectedTickInset, 0);
+    expect(state.rightTickInset).toBeCloseTo(state.expectedTickInset, 0);
+    expect(state.wheelMask).not.toBe("none");
+    expect(state.wheelMask).toContain("rgba(0, 0, 0, 0.1)");
+    expect(state.wheelMask).toContain("rgba(0, 0, 0, 0.5)");
+    expect(state.tickOpacity).toBe("1");
+  });
+
+  test("coalesces tick rendering into one path update per frame", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `<propskit-wheel value="0"></propskit-wheel>`;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("propskit-wheel")!;
+      const tickPath = host.querySelector(".propskit-wheel-tick")!;
+      let pathUpdates = 0;
+      const observer = new MutationObserver((records) => {
+        pathUpdates += records.filter(
+          (record) => record.attributeName === "d",
+        ).length;
+      });
+      observer.observe(tickPath, { attributes: true });
+
+      for (let value = 1; value <= 100; value += 1) {
+        host.setAttribute("value", String(value));
+      }
+      await new Promise(requestAnimationFrame);
+      await Promise.resolve();
+      observer.disconnect();
+
+      return {
+        pathUpdates,
+        tickElementCount: host.querySelectorAll(".propskit-wheel-tick").length,
+      };
+    });
+
+    expect(state.pathUpdates).toBe(1);
+    expect(state.tickElementCount).toBe(1);
+  });
+
+  test("keeps a tick centered at every snapped step", async ({ page }) => {
+    const deltas = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `<propskit-wheel value="0" step="0.1" units="s"></propskit-wheel>`;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("propskit-wheel")!;
+      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
+      const tickPath = host.querySelector(".propskit-wheel-tick")!;
+      const readCenterDelta = () => {
+        const centerX = wheel.clientWidth / 2;
+        const tickXs = [
+          ...(tickPath.getAttribute("d") ?? "").matchAll(/M ([^ ]+) /g),
+        ].map((match) => Number(match[1]));
+        return Math.min(...tickXs.map((x) => Math.abs(x - centerX)));
+      };
+
+      const result = [readCenterDelta()];
+      for (const value of ["0.1", "0.2", "-0.1", "1"]) {
+        host.setAttribute("value", value);
+        await new Promise(requestAnimationFrame);
+        result.push(readCenterDelta());
+      }
+      return result;
+    });
+
+    expect(deltas).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  test("rotates continuously between snapped tick values", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `<propskit-wheel value="0" step="1"></propskit-wheel>`;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+        value: string;
+      };
+      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
+      const tickPath = host.querySelector(".propskit-wheel-tick")!;
+      const rect = wheel.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const initialPath = tickPath.getAttribute("d");
+
+      wheel.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          pointerId: 1,
+          clientX: centerX,
+          clientY: centerY,
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: centerX + (rect.width / 11) * 0.4,
+          clientY: centerY,
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      const movingPath = tickPath.getAttribute("d");
+      const movingValue = Number(host.value);
+
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: centerX + (rect.width / 11) * 0.4,
+          clientY: centerY,
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+
+      return {
+        movingValue,
+        pathMoved: movingPath !== initialPath,
+        returnedToSnappedPath: tickPath.getAttribute("d") === initialPath,
+      };
+    });
+
+    expect(state).toEqual({
+      movingValue: 0,
+      pathMoved: true,
+      returnedToSnappedPath: true,
+    });
+  });
+
+  test("dragging left moves value and tick wheel left by step", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel value="0" step="0.25" precision="0" units="s"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+        value: string;
+      };
+      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
+      const rect = wheel.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const wheelCenterX = rect.width / 2;
+      const dragDistance = rect.width / 11;
+      wheel.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          pointerId: 1,
+          clientX: centerX,
+          clientY: centerY,
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: centerX - dragDistance,
+          clientY: centerY,
+        }),
+      );
+      const valueDuringInput = Number(host.value);
+      await new Promise(requestAnimationFrame);
+      const centerTickX = Number([
+        ...(
+          host.querySelector(".propskit-wheel-tick")?.getAttribute("d") ?? ""
+        ).matchAll(/M ([^ ]+) /g),
+      ][0]?.[1]);
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: centerX - dragDistance,
+          clientY: centerY,
+        }),
+      );
+
+      return {
+        valueDuringInput,
+        valueAfterChange: Number(host.value),
+        centerTickX,
+        wheelCenterX,
+        innerPrecision: host
+          .querySelector("fig-input-number")
+          ?.getAttribute("precision"),
+      };
+    });
+
+    expect(state.valueDuringInput).toBe(-0.25);
+    expect(state.valueAfterChange).toBe(-0.25);
+    expect(state.centerTickX).toBeLessThan(state.wheelCenterX);
+    expect(state.innerPrecision).toBe("0");
+  });
+
+  test("shift-drag scrubs at ten times the step speed", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel value="0" step="0.25" units="s"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+        value: string;
+      };
+      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
+      const rect = wheel.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dragDistance = rect.width / 11;
+
+      wheel.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          pointerId: 1,
+          clientX: centerX,
+          clientY: centerY,
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          pointerId: 1,
+          shiftKey: true,
+          clientX: centerX + dragDistance,
+          clientY: centerY,
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          pointerId: 1,
+          shiftKey: true,
+          clientX: centerX + dragDistance,
+          clientY: centerY,
+        }),
+      );
+      return Number(host.value);
+    });
+
+    expect(state).toBe(2.5);
+  });
+
+  test("focused wheel supports every arrow and shift multiplies step", async ({
+    page,
+  }) => {
+    const events = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `<propskit-wheel id="time" value="0" units="s"></propskit-wheel>`;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("#time") as HTMLElement & { value: string };
+      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
+      const received: Array<{ type: string; detail: unknown }> = [];
+      host.addEventListener("input", (event) => {
+        received.push({ type: event.type, detail: (event as CustomEvent).detail });
+      });
+      host.addEventListener("change", (event) => {
+        received.push({ type: event.type, detail: (event as CustomEvent).detail });
+      });
+      host.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      const focusedAfterClick = document.activeElement === wheel;
+      const press = (key: string, shiftKey = false) => {
+        wheel.dispatchEvent(
+          new KeyboardEvent("keydown", { key, shiftKey, bubbles: true }),
+        );
+        return Number(host.value);
+      };
+      const arrows = {
+        up: press("ArrowUp"),
+        down: press("ArrowDown"),
+        right: press("ArrowRight"),
+        left: press("ArrowLeft"),
+        shiftUp: press("ArrowUp", true),
+        shiftDown: press("ArrowDown", true),
+        shiftRight: press("ArrowRight", true),
+        shiftLeft: press("ArrowLeft", true),
+      };
+      const startBox = wheel.getBoundingClientRect();
+      wheel.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          pointerId: 1,
+          clientX: startBox.left + startBox.width / 2,
+          clientY: startBox.top + startBox.height / 2,
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: startBox.left + startBox.width / 2 + 80,
+          clientY: startBox.top + startBox.height / 2,
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: startBox.left + startBox.width / 2 + 80,
+          clientY: startBox.top + startBox.height / 2,
+        }),
+      );
+      const afterDrag = Number(host.value);
+      const focusedAfterDrag = document.activeElement === wheel;
+      host.setAttribute("disabled", "");
+      const disabledEvents = received.length;
+      wheel.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      );
+      return {
+        arrows,
+        afterDrag,
+        focusedAfterClick,
+        focusedAfterDrag,
+        emittedAfterDisable: received.length - disabledEvents,
+        types: received.map((entry) => entry.type),
+      };
+    });
+
+    expect(events.arrows).toEqual({
+      up: 0.1,
+      down: 0,
+      right: 0.1,
+      left: 0,
+      shiftUp: 1,
+      shiftDown: 0,
+      shiftRight: 1,
+      shiftLeft: 0,
+    });
+    expect(events.afterDrag).toBeGreaterThan(0);
+    expect(events.focusedAfterClick).toBe(true);
+    expect(events.focusedAfterDrag).toBe(true);
+    expect(events.emittedAfterDisable).toBe(0);
+    expect(events.types).toContain("input");
+    expect(events.types).toContain("change");
+  });
+
+  test("keyboard travel rotates ticks and nudges the handle", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `<propskit-wheel value="0" step="1"></propskit-wheel>`;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+        value: string;
+      };
+      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
+      const tickPath = host.querySelector(".propskit-wheel-tick")!;
+      const centerDelta = () => {
+        const centerX = wheel.clientWidth / 2;
+        const tickXs = [
+          ...(tickPath.getAttribute("d") ?? "").matchAll(/M ([^ ]+) /g),
+        ].map((match) => Number(match[1]));
+        return Math.min(...tickXs.map((x) => Math.abs(x - centerX)));
+      };
+
+      wheel.focus();
+      wheel.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          shiftKey: true,
+          bubbles: true,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const movingRight = {
+        value: Number(host.value),
+        active: host.hasAttribute("data-keyboard-moving"),
+        centerDelta: centerDelta(),
+        handleOffset: Number.parseFloat(
+          host.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
+        ),
+      };
+      wheel.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          shiftKey: true,
+          bubbles: true,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const repeatedRightOffset = Number.parseFloat(
+        host.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 180));
+      const settled = {
+        active: host.hasAttribute("data-keyboard-moving"),
+        centerDelta: centerDelta(),
+        hasHandleOffset: Boolean(
+          host.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
+        ),
+      };
+
+      wheel.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowLeft",
+          shiftKey: true,
+          bubbles: true,
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const movingLeftOffset = Number.parseFloat(
+        host.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
+      );
+
+      return { movingRight, repeatedRightOffset, settled, movingLeftOffset };
+    });
+
+    expect(state.movingRight.value).toBe(10);
+    expect(state.movingRight.active).toBe(true);
+    expect(state.movingRight.centerDelta).toBeGreaterThan(0.1);
+    expect(state.movingRight.handleOffset).toBeGreaterThan(0);
+    expect(state.repeatedRightOffset).toBeGreaterThanOrEqual(
+      state.movingRight.handleOffset,
+    );
+    expect(state.settled.active).toBe(false);
+    expect(state.settled.centerDelta).toBeCloseTo(0, 5);
+    expect(state.settled.hasHandleOffset).toBe(false);
+    expect(state.movingLeftOffset).toBeLessThan(0);
+  });
+
+  test("omitted min/max stay unbounded and authored bounds clamp", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel id="free" value="0" units="s"></propskit-wheel>
+        <propskit-wheel id="bounded" value="50" min="0" max="100" step="10" units="s"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const free = root.querySelector("#free") as HTMLElement & {
+        value: string;
+        min: number | null;
+        max: number | null;
+      };
+      const bounded = root.querySelector("#bounded") as HTMLElement & {
+        value: string;
+        min: number | null;
+        max: number | null;
+      };
+      const freeWheel = free.querySelector(".propskit-wheel-wheel") as HTMLElement;
+      const boundedWheel = bounded.querySelector(
+        ".propskit-wheel-wheel",
+      ) as HTMLElement;
+      freeWheel.focus();
+      freeWheel.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }),
+      );
+      const freeAfterLeft = Number(free.value);
+      boundedWheel.focus();
+      for (let index = 0; index < 20; index += 1) {
+        boundedWheel.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }),
+        );
+      }
+      const atMin = Number(bounded.value);
+      for (let index = 0; index < 30; index += 1) {
+        boundedWheel.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+        );
+      }
+      const atMax = Number(bounded.value);
+      boundedWheel.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Home", bubbles: true }),
+      );
+      const afterHome = Number(bounded.value);
+      boundedWheel.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "End", bubbles: true }),
+      );
+      const afterEnd = Number(bounded.value);
+      boundedWheel.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Home", bubbles: true }),
+      );
+      bounded.min = 20;
+      const afterRaiseMin = Number(bounded.value);
+      bounded.max = null;
+      bounded.value = "500";
+      const afterClearMax = Number(bounded.value);
+      return {
+        freeAfterLeft,
+        freeMin: free.min,
+        freeMax: free.max,
+        freeAriaMin: freeWheel.getAttribute("aria-valuemin"),
+        freeAriaMax: freeWheel.getAttribute("aria-valuemax"),
+        atMin,
+        atMax,
+        afterHome,
+        afterEnd,
+        afterRaiseMin,
+        afterClearMax,
+        inputMin: bounded.querySelector("fig-input-number")?.getAttribute("min"),
+        inputMax: bounded.querySelector("fig-input-number")?.getAttribute("max"),
+        ariaMin: boundedWheel.getAttribute("aria-valuemin"),
+        ariaMax: boundedWheel.getAttribute("aria-valuemax"),
+        minProp: bounded.min,
+      };
+    });
+
+    expect(state.freeAfterLeft).toBe(-0.1);
+    expect(state.freeMin).toBeNull();
+    expect(state.freeMax).toBeNull();
+    expect(state.freeAriaMin).toBeNull();
+    expect(state.freeAriaMax).toBeNull();
+    expect(state.atMin).toBe(0);
+    expect(state.atMax).toBe(100);
+    expect(state.afterHome).toBe(0);
+    expect(state.afterEnd).toBe(100);
+    expect(state.afterRaiseMin).toBe(20);
+    expect(state.afterClearMax).toBe(500);
+    expect(state.inputMin).toBe("20");
+    expect(state.inputMax).toBeNull();
+    expect(state.ariaMin).toBe("20");
+    expect(state.ariaMax).toBeNull();
+    expect(state.minProp).toBe(20);
+  });
+
+  test("dragging stops at bounds and updates the number on input", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel id="min-time" value="50" min="0" max="100" step="1" units="ms"></propskit-wheel>
+        <propskit-wheel id="max-time" value="50" min="0" max="100" step="1" units="ms"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const minHost = root.querySelector("#min-time") as HTMLElement & {
+        value: string;
+      };
+      const maxHost = root.querySelector("#max-time") as HTMLElement & {
+        value: string;
+      };
+      const minWheel = minHost.querySelector(
+        ".propskit-wheel-wheel",
+      ) as HTMLElement;
+      const maxWheel = maxHost.querySelector(
+        ".propskit-wheel-wheel",
+      ) as HTMLElement;
+      const minNumberInput = minHost.querySelector(
+        "fig-input-number input",
+      ) as HTMLInputElement;
+      const maxNumberInput = maxHost.querySelector(
+        "fig-input-number input",
+      ) as HTMLInputElement;
+      const tickPath = minHost.querySelector(
+        ".propskit-wheel-tick",
+      ) as SVGPathElement;
+      const inputSnapshots: string[] = [];
+      minHost.addEventListener("input", () => {
+        inputSnapshots.push(minNumberInput.value);
+      });
+      maxHost.addEventListener("input", () => {
+        inputSnapshots.push(maxNumberInput.value);
+      });
+
+      const minRect = minWheel.getBoundingClientRect();
+      const minCenterX = minRect.left + minRect.width / 2;
+      const minCenterY = minRect.top + minRect.height / 2;
+      minWheel.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          pointerId: 1,
+          clientX: minCenterX,
+          clientY: minCenterY,
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: minCenterX - minRect.width * 5,
+          clientY: minCenterY,
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      const minValue = Number(minHost.value);
+      const minInput = minNumberInput.value;
+      const minPath = tickPath.getAttribute("d");
+
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: minCenterX - minRect.width * 6,
+          clientY: minCenterY,
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      const stoppedMinPath = tickPath.getAttribute("d");
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: minCenterX - minRect.width * 6,
+          clientY: minCenterY,
+        }),
+      );
+
+      maxWheel.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          key: "End",
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      const maxValue = Number(maxHost.value);
+      const maxInput = maxNumberInput.value;
+
+      return {
+        minValue,
+        minInput,
+        maxValue,
+        maxInput,
+        minPath,
+        stoppedMinPath,
+        inputSnapshots,
+      };
+    });
+
+    expect(state.minValue).toBe(0);
+    expect(state.minInput).toBe("0ms");
+    expect(state.maxValue).toBe(100);
+    expect(state.maxInput).toBe("100ms");
+    expect(state.stoppedMinPath).toBe(state.minPath);
+    expect(state.inputSnapshots).toContain("0ms");
+    expect(state.inputSnapshots).toContain("100ms");
+  });
+
+  test("handle follows drag while the control stretches and both spring back", async ({
+    page,
+  }) => {
+    await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel id="elastic" value="0" units="s"></propskit-wheel>
+        <propskit-wheel id="rigid" value="0" units="s" elastic="false"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+    });
+
+    const dragHandle = async (id: string) => {
+      const host = page.locator(`#${id}`);
+      const wheel = host.locator(".propskit-wheel-wheel");
+      const rect = await wheel.boundingBox();
+      if (!rect) throw new Error(`Missing wheel bounds for #${id}`);
+      await page.mouse.move(
+        rect.x + rect.width / 2,
+        rect.y + rect.height / 2,
+      );
+      const hoverCursor = await wheel.evaluate(
+        (element) => getComputedStyle(element).cursor,
+      );
+      await page.mouse.down();
+      await page.mouse.move(rect.x + rect.width + 40, rect.y + rect.height / 2);
+      const dragging = await host.evaluate((element) => {
+        const wheelEl = element.querySelector(".propskit-wheel-wheel")!;
+        const handleEl = element.querySelector(".propskit-wheel-handle")!;
+        const wheelRect = wheelEl.getBoundingClientRect();
+        const handleRect = handleEl.getBoundingClientRect();
+        const hostTransform = getComputedStyle(element).transform;
+        return {
+          elasticDragging: (element as HTMLElement).dataset.elasticDragging,
+          offset: Number.parseFloat(
+            (element as HTMLElement).style.getPropertyValue(
+              "--propskit-wheel-handle-drag-offset",
+            ),
+          ),
+          centerDelta:
+            handleRect.left +
+            handleRect.width / 2 -
+            (wheelRect.left + wheelRect.width / 2),
+          hostTransform,
+          hostScale:
+            hostTransform === "none" ? 1 : new DOMMatrix(hostTransform).a,
+          cursor: getComputedStyle(wheelEl).cursor,
+          bodyDragging: document.body.classList.contains(
+            "fig-propskit-wheel-dragging",
+          ),
+          forwardedElastic: element
+            .querySelector("fig-input-number")
+            ?.hasAttribute("elastic"),
+        };
+      });
+      await page.mouse.up();
+      const releaseStartDelta = await host.evaluate((element) => {
+        const wheelRect = element
+          .querySelector(".propskit-wheel-wheel")!
+          .getBoundingClientRect();
+        const handleRect = element
+          .querySelector(".propskit-wheel-handle")!
+          .getBoundingClientRect();
+        return (
+          handleRect.left +
+          handleRect.width / 2 -
+          (wheelRect.left + wheelRect.width / 2)
+        );
+      });
+      await page.waitForTimeout(350);
+      const released = await host.evaluate((element) => {
+        const wheelRect = element
+          .querySelector(".propskit-wheel-wheel")!
+          .getBoundingClientRect();
+        const handle = element.querySelector(".propskit-wheel-handle")!;
+        const handleRect = handle.getBoundingClientRect();
+        const hostTransform = getComputedStyle(element).transform;
+        return {
+          elasticDragging: (element as HTMLElement).dataset.elasticDragging,
+          offset: (element as HTMLElement).style.getPropertyValue(
+            "--propskit-wheel-handle-drag-offset",
+          ),
+          centerDelta:
+            handleRect.left +
+            handleRect.width / 2 -
+            (wheelRect.left + wheelRect.width / 2),
+          transitionDuration: getComputedStyle(handle).transitionDuration,
+          hostScale:
+            hostTransform === "none" ? 1 : new DOMMatrix(hostTransform).a,
+          cursor: getComputedStyle(
+            element.querySelector(".propskit-wheel-wheel")!,
+          ).cursor,
+          bodyDragging: document.body.classList.contains(
+            "fig-propskit-wheel-dragging",
+          ),
+        };
+      });
+      return { hoverCursor, dragging, releaseStartDelta, released };
+    };
+
+    const elastic = await dragHandle("elastic");
+    const rigid = await dragHandle("rigid");
+
+    expect(elastic.hoverCursor).toBe("ew-resize");
+    expect(elastic.dragging.cursor).toBe("grabbing");
+    expect(elastic.dragging.bodyDragging).toBe(true);
+    expect(elastic.released.cursor).toBe("ew-resize");
+    expect(elastic.released.bodyDragging).toBe(false);
+    expect(elastic.dragging.elasticDragging).toBe("true");
+    expect(elastic.dragging.offset).toBeGreaterThan(0);
+    expect(elastic.dragging.offset).toBeLessThanOrEqual(8);
+    expect(elastic.dragging.centerDelta).toBeGreaterThan(0);
+    expect(elastic.dragging.centerDelta).toBeLessThanOrEqual(8.5);
+    expect(elastic.dragging.hostTransform).not.toBe("none");
+    expect(elastic.dragging.hostScale).toBeGreaterThan(1);
+    expect(elastic.releaseStartDelta).toBeGreaterThan(0);
+    expect(elastic.released.elasticDragging).toBeUndefined();
+    expect(elastic.released.offset).toBe("");
+    expect(elastic.released.centerDelta).toBeCloseTo(0, 1);
+    expect(elastic.released.transitionDuration).toBe("0.28s");
+    expect(elastic.released.hostScale).toBeCloseTo(1, 2);
+    expect(elastic.dragging.forwardedElastic).toBe(false);
+    expect(rigid.dragging.elasticDragging).toBeUndefined();
+    expect(rigid.dragging.offset).toBeNaN();
+    expect(rigid.dragging.centerDelta).toBeCloseTo(0, 1);
+    expect(rigid.dragging.hostScale).toBe(1);
+    expect(rigid.dragging.forwardedElastic).toBe(false);
+  });
+
+  test("number field starts a scrub before focus and still clicks to edit", async ({
+    page,
+  }) => {
+    await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel value="50" min="0" max="100" step="1" units="s"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("propskit-wheel") as HTMLElement;
+      host.dataset.inputCount = "0";
+      host.dataset.changeCount = "0";
+      host.addEventListener("input", () => {
+        host.dataset.inputCount = String(
+          Number(host.dataset.inputCount) + 1,
+        );
+      });
+      host.addEventListener("change", () => {
+        host.dataset.changeCount = String(
+          Number(host.dataset.changeCount) + 1,
+        );
+      });
+    });
+
+    const host = page.locator("propskit-wheel");
+    const input = host.locator("fig-input-number input");
+    const rect = await input.boundingBox();
+    if (!rect) throw new Error("Missing time number input bounds");
+    const startX = rect.x + rect.width / 2;
+    const startY = rect.y + rect.height / 2;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 2, startY);
+    const beforeThreshold = await host.evaluate((element) => ({
+      value: Number((element as HTMLElement & { value: string }).value),
+      numberScrubbing: element.hasAttribute("data-number-scrubbing"),
+    }));
+    await page.mouse.move(startX + 40, startY);
+    const duringScrub = await host.evaluate((element) => ({
+      value: Number((element as HTMLElement & { value: string }).value),
+      numberScrubbing: element.hasAttribute("data-number-scrubbing"),
+      handleOffset: Number.parseFloat(
+        (element as HTMLElement).style.getPropertyValue(
+          "--propskit-wheel-handle-drag-offset",
+        ),
+      ),
+      inputCount: Number((element as HTMLElement).dataset.inputCount),
+      wheelFocused:
+        document.activeElement ===
+        element.querySelector(".propskit-wheel-wheel"),
+    }));
+    await page.mouse.up();
+    await page.waitForTimeout(20);
+    const afterScrub = await host.evaluate((element) => ({
+      numberScrubbing: element.hasAttribute("data-number-scrubbing"),
+      changeCount: Number((element as HTMLElement).dataset.changeCount),
+    }));
+
+    await input.click();
+    const focusedAfterClick = await input.evaluate(
+      (element) => element === document.activeElement,
+    );
+
+    expect(beforeThreshold.value).toBe(50);
+    expect(beforeThreshold.numberScrubbing).toBe(false);
+    expect(duringScrub.value).toBeGreaterThan(50);
+    expect(duringScrub.numberScrubbing).toBe(true);
+    expect(duringScrub.handleOffset).toBeGreaterThan(0);
+    expect(duringScrub.inputCount).toBeGreaterThan(0);
+    expect(duringScrub.wheelFocused).toBe(true);
+    expect(afterScrub.numberScrubbing).toBe(false);
+    expect(afterScrub.changeCount).toBe(1);
+    expect(focusedAfterClick).toBe(true);
+  });
+
+  test("disabled does not emit and number stays the inner control", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<propskit-wheel disabled value="12" units="s"></propskit-wheel>`;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("propskit-wheel") as HTMLElement;
+      const input = host.querySelector("fig-input-number");
+      let emitted = 0;
+      host.addEventListener("input", () => {
+        emitted += 1;
+      });
+      host.querySelector(".propskit-wheel-wheel")?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      );
+      return {
+        inputDisabled: input?.hasAttribute("disabled"),
+        wheelTabIndex: host.querySelector(".propskit-wheel-wheel")?.getAttribute("tabindex"),
+        emitted,
+      };
+    });
+
+    expect(state.inputDisabled).toBe(true);
+    expect(state.wheelTabIndex).toBe("-1");
+    expect(state.emitted).toBe(0);
   });
 });
 
@@ -1267,7 +2356,7 @@ test.describe("propskit-color-point", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-color-point id="control" label="Light" size="large"
+        <propskit-color-point id="control" label="Light" size="small"
           value='{"x":25,"y":75,"color":"#FF00BF"}'></propskit-color-point>
       `;
       await new Promise(requestAnimationFrame);
@@ -1358,7 +2447,7 @@ test.describe("propskit-color-point", () => {
         collapsible: true,
         open: "true",
         children: ["propskit-color", "propskit-position"],
-        sizes: ["large", "large"],
+        sizes: ["small", "small"],
         color: "#FF00BF",
         position: { x: 25, y: 75 },
         positionUnits: "percent",
@@ -1417,7 +2506,7 @@ test.describe("propskit-point-radius", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-point-radius id="control" label="Blur" size="large" units="percent"
+        <propskit-point-radius id="control" label="Blur" size="small" units="percent"
           value='{"x":25,"y":75,"radius":"25%"}'></propskit-point-radius>
       `;
       await new Promise(requestAnimationFrame);
@@ -1517,7 +2606,7 @@ test.describe("propskit-point-radius", () => {
         collapsible: true,
         open: "true",
         children: ["propskit-position", "propskit-number"],
-        sizes: ["large", "large"],
+        sizes: ["small", "small"],
         position: { x: 25, y: 75 },
         positionUnits: "percent",
         radius: 25,
@@ -1570,7 +2659,7 @@ test.describe("propskit-point-radius-angle", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-point-radius-angle id="control" label="Gradient" size="large" units="percent"
+        <propskit-point-radius-angle id="control" label="Gradient" size="small" units="percent"
           value='{"x":25,"y":75,"radius":"25%","angle":45}'></propskit-point-radius-angle>
       `;
       await new Promise(requestAnimationFrame);
@@ -1682,7 +2771,7 @@ test.describe("propskit-point-radius-angle", () => {
           "propskit-number",
           "propskit-number",
         ],
-        sizes: ["large", "large", "large"],
+        sizes: ["small", "small", "small"],
         positionUnits: "percent",
         radiusUnits: "%",
         angleUnits: "°",
@@ -1750,7 +2839,7 @@ test.describe("propskit-point-point", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-point-point id="control" label="Gradient" size="large" units="percent"
+        <propskit-point-point id="control" label="Gradient" size="small" units="percent"
           value='{"x":25,"y":30,"x2":75,"y2":70}'></propskit-point-point>
       `;
       await new Promise(requestAnimationFrame);
@@ -1823,7 +2912,7 @@ test.describe("propskit-point-point", () => {
         collapsible: true,
         open: "true",
         labels: ["Start", "End"],
-        sizes: ["large", "large"],
+        sizes: ["small", "small"],
         units: ["percent", "percent"],
         value: { x: 25, y: 30, x2: 75, y2: 70 },
       },
@@ -1885,6 +2974,7 @@ test.describe("PropsKit disabled contract", () => {
         <propskit-number disabled></propskit-number>
         <propskit-position disabled></propskit-position>
         <propskit-slider disabled></propskit-slider>
+        <propskit-wheel disabled></propskit-wheel>
         <propskit-oscillator disabled></propskit-oscillator>
         <propskit-color-point disabled></propskit-color-point>
         <propskit-point-radius disabled></propskit-point-radius>
@@ -1904,6 +2994,7 @@ test.describe("PropsKit disabled contract", () => {
         "propskit-number": "fig-input-number",
         "propskit-position": "fig-input-number",
         "propskit-slider": "fig-slider",
+        "propskit-wheel": "fig-input-number",
       };
       const primitives = Object.fromEntries(
         Object.entries(innerSelectors).map(([tag, selector]) => {
@@ -1965,6 +3056,7 @@ test.describe("PropsKit disabled contract", () => {
       "propskit-number": true,
       "propskit-position": true,
       "propskit-slider": true,
+      "propskit-wheel": true,
     });
     expect(state.composites).toEqual([
       { tag: "propskit-color-point", count: 2, allDisabled: true },
@@ -2117,13 +3209,14 @@ test.describe("propskit sizes", () => {
           "propskit-number",
           "propskit-position",
           "propskit-slider",
+          "propskit-wheel",
           "fig-select",
         ].map((tag) => customElements.whenDefined(tag)),
       );
     });
   });
 
-  test("omitted size stays compact and large expands the control", async ({ page }) => {
+  test("omitted size is large, small compacts, and explicit large stays compatible", async ({ page }) => {
     const result = await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -2139,10 +3232,12 @@ test.describe("propskit sizes", () => {
         "propskit-number": 'label="Width" value="24"',
         "propskit-position": 'label="Position" x="25" y="75"',
         "propskit-slider": 'label="Opacity" value="50" min="0" max="100"',
+        "propskit-wheel": 'label="Delay" value="240" units="ms"',
       };
       root.innerHTML = Object.entries(fixtures)
         .flatMap(([tag, attrs]) => [
           `<${tag} data-size-case="default" ${attrs}></${tag}>`,
+          `<${tag} data-size-case="small" size="small" ${attrs}></${tag}>`,
           `<${tag} data-size-case="large" size="large" ${attrs}></${tag}>`,
         ])
         .join("");
@@ -2169,12 +3264,16 @@ test.describe("propskit sizes", () => {
         const largeElement = root.querySelector(
           `${tag}[data-size-case="large"]`,
         );
-        if (!defaultElement || !largeElement) {
+        const smallElement = root.querySelector(
+          `${tag}[data-size-case="small"]`,
+        );
+        if (!defaultElement || !smallElement || !largeElement) {
           throw new Error(`Missing ${tag} size fixtures`);
         }
         return {
           tag,
           defaultStyle: signature(defaultElement),
+          smallStyle: signature(smallElement),
           largeStyle: signature(largeElement),
         };
       });
@@ -2182,12 +3281,17 @@ test.describe("propskit sizes", () => {
       return {
         styles,
         numberForwardsSize: root
-          .querySelector('propskit-number[size="large"] fig-input-number')
+          .querySelector('propskit-number[size="small"] fig-input-number')
           ?.hasAttribute("size"),
         gradientSizes: {
           default: root
             .querySelector(
               'propskit-gradient[data-size-case="default"] fig-input-gradient',
+            )
+            ?.getAttribute("size"),
+          small: root
+            .querySelector(
+              'propskit-gradient[data-size-case="small"] fig-input-gradient',
             )
             ?.getAttribute("size"),
           large: root
@@ -2202,6 +3306,11 @@ test.describe("propskit sizes", () => {
               'propskit-gradient[data-size-case="default"] fig-input-gradient',
             )
             ?.getBoundingClientRect().height,
+          small: root
+            .querySelector(
+              'propskit-gradient[data-size-case="small"] fig-input-gradient',
+            )
+            ?.getBoundingClientRect().height,
           large: root
             .querySelector(
               'propskit-gradient[data-size-case="large"] fig-input-gradient',
@@ -2209,43 +3318,225 @@ test.describe("propskit sizes", () => {
             ?.getBoundingClientRect().height,
         },
         rightSpacing: {
-          text: getComputedStyle(
+          defaultText: getComputedStyle(
             root.querySelector(
-              'propskit-text[data-size-case="large"] fig-input-text',
+              'propskit-text[data-size-case="default"] fig-input-text',
             )!,
           ).marginRight,
-          number: getComputedStyle(
+          defaultNumber: getComputedStyle(
             root.querySelector(
-              'propskit-number[data-size-case="large"] fig-input-number',
+              'propskit-number[data-size-case="default"] fig-input-number',
             )!,
           ).marginRight,
-          select: getComputedStyle(
+          defaultSelect: getComputedStyle(
             root.querySelector(
-              'propskit-select[data-size-case="large"] fig-select',
+              'propskit-select[data-size-case="default"] fig-select',
+            )!,
+          ).paddingRight,
+          smallText: getComputedStyle(
+            root.querySelector(
+              'propskit-text[data-size-case="small"] fig-input-text',
+            )!,
+          ).marginRight,
+          smallNumber: getComputedStyle(
+            root.querySelector(
+              'propskit-number[data-size-case="small"] fig-input-number',
+            )!,
+          ).marginRight,
+          smallSelect: getComputedStyle(
+            root.querySelector(
+              'propskit-select[data-size-case="small"] fig-select',
             )!,
           ).paddingRight,
         },
+        wheelLabelPadding: {
+          default: getComputedStyle(
+            root.querySelector(
+              'propskit-wheel[data-size-case="default"] .propskit-wheel-surface > label',
+            )!,
+          ).paddingLeft,
+          small: getComputedStyle(
+            root.querySelector(
+              'propskit-wheel[data-size-case="small"] .propskit-wheel-surface > label',
+            )!,
+          ).paddingLeft,
+          large: getComputedStyle(
+            root.querySelector(
+              'propskit-wheel[data-size-case="large"] .propskit-wheel-surface > label',
+            )!,
+          ).paddingLeft,
+        },
+        numberHeights: [
+          "propskit-number",
+          "propskit-position",
+          "propskit-slider",
+          "propskit-wheel",
+        ].flatMap((tag) =>
+          ["default", "small", "large"].map((sizeCase) => {
+            const number = root.querySelector(
+              `${tag}[data-size-case="${sizeCase}"] fig-input-number`,
+            );
+            const input = number?.querySelector("input");
+            return {
+              tag,
+              sizeCase,
+              host: number?.getBoundingClientRect().height ?? 0,
+              input: input?.getBoundingClientRect().height ?? 0,
+            };
+          }),
+        ),
       };
     });
 
+    const paddedFields = new Set([
+      "propskit-switch",
+      "propskit-color",
+      "propskit-fill",
+      "propskit-gradient",
+      "propskit-text",
+      "propskit-number",
+      "propskit-slider",
+    ]);
     for (const entry of result.styles) {
       expect(entry.defaultStyle.paddingTop, entry.tag).toBe("4px");
       expect(entry.defaultStyle.paddingBottom, entry.tag).toBe("4px");
-      expect(entry.defaultStyle.height, entry.tag).toBe("32px");
+      expect(entry.defaultStyle.height, entry.tag).toBe("40px");
+      expect(entry.smallStyle.paddingTop, entry.tag).toBe("4px");
+      expect(entry.smallStyle.paddingBottom, entry.tag).toBe("4px");
+      expect(entry.smallStyle.height, entry.tag).toBe("32px");
       expect(entry.largeStyle.paddingTop, entry.tag).toBe("4px");
       expect(entry.largeStyle.paddingBottom, entry.tag).toBe("4px");
       expect(entry.largeStyle.height, entry.tag).toBe("40px");
+      if (paddedFields.has(entry.tag)) {
+        expect(entry.defaultStyle.fieldPaddingLeft, entry.tag).toBe("12px");
+        expect(entry.smallStyle.fieldPaddingLeft, entry.tag).toBe("8px");
+        expect(entry.largeStyle.fieldPaddingLeft, entry.tag).toBe("12px");
+      }
     }
     expect(result.numberForwardsSize).toBe(false);
-    expect(result.gradientSizes).toEqual({ default: null, large: null });
-    expect(result.gradientHeights).toEqual({ default: 24, large: 32 });
+    expect(result.gradientSizes).toEqual({
+      default: null,
+      small: null,
+      large: null,
+    });
+    expect(result.gradientHeights).toEqual({
+      default: 32,
+      small: 24,
+      large: 32,
+    });
     const gradientStyles = result.styles.find(
       (entry) => entry.tag === "propskit-gradient",
     );
     expect(gradientStyles?.defaultStyle.fieldPaddingRight).toBe("0px");
+    expect(gradientStyles?.smallStyle.fieldPaddingRight).toBe("0px");
     expect(gradientStyles?.largeStyle.fieldPaddingRight).toBe("0px");
-    expect(result.rightSpacing.text).toBe(result.rightSpacing.number);
-    expect(result.rightSpacing.text).toBe(result.rightSpacing.select);
+    expect(result.rightSpacing.defaultText).toBe(result.rightSpacing.defaultNumber);
+    expect(result.rightSpacing.defaultText).toBe(result.rightSpacing.defaultSelect);
+    expect(result.rightSpacing.smallText).toBe(result.rightSpacing.smallNumber);
+    expect(result.rightSpacing.smallText).toBe(result.rightSpacing.smallSelect);
+    expect(result.wheelLabelPadding).toEqual({
+      default: "12px",
+      small: "8px",
+      large: "12px",
+    });
+    const switchStyles = result.styles.find(
+      (entry) => entry.tag === "propskit-switch",
+    );
+    expect(switchStyles?.defaultStyle.fieldPaddingRight).toBe("4px");
+    expect(switchStyles?.smallStyle.fieldPaddingRight).toBe("0px");
+    expect(switchStyles?.largeStyle.fieldPaddingRight).toBe("4px");
+    for (const number of result.numberHeights) {
+      expect(number.host, `${number.tag} ${number.sizeCase} host`).toBe(24);
+      expect(number.input, `${number.tag} ${number.sizeCase} input`).toBe(24);
+    }
+  });
+
+  test("PropsKit number inputs use focused backgrounds and scrub cursors", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-number label="Width" value="24"></propskit-number>
+        <propskit-slider label="Opacity" value="50" min="0" max="100"></propskit-slider>
+        <propskit-wheel label="Delay" value="240" units="ms"></propskit-wheel>
+        <propskit-position label="Position" x="25" y="75"></propskit-position>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const probe = document.createElement("div");
+      probe.style.backgroundColor = "var(--figma-color-bg)";
+      root.append(probe);
+      const expectedBackground = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+
+      const tags = [
+        "propskit-number",
+        "propskit-slider",
+        "propskit-wheel",
+        "propskit-position",
+      ];
+      const states = tags.map((tag) => {
+        const number = root.querySelector(
+          `${tag} fig-input-number`,
+        ) as HTMLElement | null;
+        const input = number?.querySelector("input");
+        if (!number || !(input instanceof HTMLInputElement)) {
+          throw new Error(`Missing ${tag} number input`);
+        }
+        const restingBackground = getComputedStyle(number).backgroundColor;
+        const restingCursor = getComputedStyle(input).cursor;
+        input.focus();
+        const focusedBackground = getComputedStyle(number).backgroundColor;
+        const focusedCursor = getComputedStyle(input).cursor;
+        input.blur();
+        return {
+          tag,
+          restingBackground,
+          restingCursor,
+          focusedBackground,
+          focusedCursor,
+        };
+      });
+
+      return { expectedBackground, states };
+    });
+
+    for (const state of result.states) {
+      expect(state.restingBackground, state.tag).toBe("rgba(0, 0, 0, 0)");
+      expect(state.focusedBackground, state.tag).toBe(
+        result.expectedBackground,
+      );
+      if (state.tag === "propskit-slider" || state.tag === "propskit-wheel") {
+        expect(state.restingCursor, state.tag).toBe("ew-resize");
+        expect(state.focusedCursor, state.tag).toBe("text");
+      }
+    }
+
+    const wheelInput = page.locator("propskit-wheel fig-input-number input");
+    await wheelInput.evaluate((input) => {
+      input.addEventListener("mousedown", (event) => event.preventDefault(), {
+        once: true,
+      });
+    });
+    await wheelInput.hover();
+    await page.mouse.down();
+    const activeState = await page
+      .locator("propskit-wheel fig-input-number")
+      .evaluate((number) => ({
+        active:
+          number.matches(":active") ||
+          Boolean(number.querySelector("input:active")),
+        background: getComputedStyle(number).backgroundColor,
+        cursor: getComputedStyle(number.querySelector("input")!).cursor,
+      }));
+    await page.mouse.up();
+
+    expect(activeState.active).toBe(true);
+    expect(activeState.background).toBe(result.expectedBackground);
+    expect(activeState.cursor).toBe("text");
   });
 
   test("horizontal field labels span three quarters of the field", async ({
@@ -2305,7 +3596,7 @@ test.describe("propskit sizes", () => {
     }
   });
 
-  test("large propskit-select label matches shared horizontal label padding", async ({
+  test("default propskit-select label matches shared horizontal label padding", async ({
     page,
   }) => {
     const result = await page.evaluate(() => {
@@ -2313,8 +3604,8 @@ test.describe("propskit sizes", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "300px";
       root.innerHTML = `
-        <propskit-text size="large" label="Alignment" value="Layer"></propskit-text>
-        <propskit-select size="large" label="Alignment" value="Center" options="Left,Center,Right"></propskit-select>
+        <propskit-text label="Alignment" value="Layer"></propskit-text>
+        <propskit-select label="Alignment" value="Center" options="Left,Center,Right"></propskit-select>
       `;
       const textLabel = root.querySelector("propskit-text fig-field > label");
       const selectLabel = root.querySelector(
@@ -2340,7 +3631,7 @@ test.describe("propskit sizes", () => {
     expect(result.selectWidth).toBeCloseTo(result.fieldWidth * 0.75, 4);
   });
 
-  test("large propskit labels use spacer-5 max height", async ({ page }) => {
+  test("default and small propskit labels use matching max heights", async ({ page }) => {
     const results = await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -2356,32 +3647,40 @@ test.describe("propskit sizes", () => {
         "propskit-slider": 'label="Amount" value="50" min="0" max="100"',
       };
       root.innerHTML = Object.entries(fixtures)
-        .map(
-          ([tag, attrs]) => `<${tag} size="large" ${attrs}></${tag}>`,
-        )
+        .flatMap(([tag, attrs]) => [
+          `<${tag} data-size-case="default" ${attrs}></${tag}>`,
+          `<${tag} data-size-case="small" size="small" ${attrs}></${tag}>`,
+        ])
         .join("");
 
-      return Object.keys(fixtures).map((tag) => {
-        const field = root.querySelector(`${tag} fig-field`) as HTMLElement;
-        const label = root.querySelector(
-          `${tag} fig-field > label`,
-        ) as HTMLElement;
-        if (!field || !label) throw new Error(`Missing ${tag}`);
-        return {
-          tag,
-          maxHeightVar: getComputedStyle(field)
-            .getPropertyValue("--fig-field-label-max-height")
-            .trim(),
-          labelHeight: label.getBoundingClientRect().height,
-          fieldHeight: field.getBoundingClientRect().height,
-        };
-      });
+      return Object.keys(fixtures).flatMap((tag) =>
+        ["default", "small"].map((sizeCase) => {
+          const host = root.querySelector(
+            `${tag}[data-size-case="${sizeCase}"]`,
+          );
+          const field = host?.querySelector("fig-field") as HTMLElement;
+          const label = host?.querySelector("fig-field > label") as HTMLElement;
+          if (!field || !label) throw new Error(`Missing ${tag} ${sizeCase}`);
+          return {
+            tag,
+            sizeCase,
+            maxHeightVar: getComputedStyle(field)
+              .getPropertyValue("--fig-field-label-max-height")
+              .trim(),
+            labelHeight: label.getBoundingClientRect().height,
+            fieldHeight: field.getBoundingClientRect().height,
+          };
+        }),
+      );
     });
 
     for (const entry of results) {
-      expect(entry.maxHeightVar, entry.tag).toBe("2rem");
+      const expectedHeight = entry.sizeCase === "small" ? 24 : 32;
+      expect(entry.maxHeightVar, entry.tag).toBe(
+        entry.sizeCase === "small" ? "1.5rem" : "2rem",
+      );
       expect(entry.labelHeight, entry.tag).toBe(entry.fieldHeight);
-      expect(entry.labelHeight, entry.tag).toBe(32);
+      expect(entry.labelHeight, entry.tag).toBe(expectedHeight);
     }
   });
 });
@@ -2425,7 +3724,7 @@ test.describe("propskit-color", () => {
     ).toBe("#0d99ff");
     const fieldBox = await field.boundingBox();
     const swatchBox = await swatch.boundingBox();
-    expect(swatchBox?.height).toBe(24);
+    expect(swatchBox?.height).toBe(32);
     expect(swatchBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.28);
     expect(swatchBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.36);
     expect(swatchBox?.x).toBeGreaterThan(
@@ -2562,7 +3861,7 @@ test.describe("propskit-fill", () => {
     ).toBe("#0d99ff");
     const fieldBox = await field.boundingBox();
     const swatchBox = await swatch.boundingBox();
-    expect(swatchBox?.height).toBe(24);
+    expect(swatchBox?.height).toBe(32);
     expect(swatchBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.28);
     expect(swatchBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.36);
 
@@ -2819,7 +4118,7 @@ test.describe("propskit-gradient", () => {
     );
     const fieldBox = await control.locator("fig-field").boundingBox();
     const gradientBox = await gradient.boundingBox();
-    expect(gradientBox?.height).toBe(24);
+    expect(gradientBox?.height).toBe(32);
     expect(gradientBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.28);
     expect(gradientBox?.width).toBeLessThanOrEqual((fieldBox?.width ?? 0) * 0.36);
     expect(gradientBox?.x).toBeGreaterThan(
@@ -3187,7 +4486,6 @@ test.describe("propskit-select without fig-editor", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <propskit-select
-          size="large"
           label="Alignment"
           value="Center"
           options="Left,Center,Right"
@@ -3974,7 +5272,7 @@ test.describe("propskit-text", () => {
           (inputBox?.width ?? 0) -
           ((fieldBox?.x ?? 0) + (fieldBox?.width ?? 0)),
       ),
-    ).toBe(0);
+    ).toBe(4);
 
     const events = await control.evaluate((element) => {
       const received: Array<{ type: string; detail: unknown }> = [];

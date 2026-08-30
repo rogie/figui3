@@ -12,6 +12,201 @@ test.describe("fig-lab audit regressions", () => {
     await bootLab(page);
   });
 
+  test("minimal propskit controls remove row padding and reveal backgrounds on hover", async ({
+    page,
+  }) => {
+    const controlIds = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <div id="minimal-background-reference" style="background-color:var(--figma-color-bg-secondary)"></div>
+        <div id="minimal-stack">
+          <propskit-switch id="minimal-switch" variant="minimal" label="Switch" checked></propskit-switch>
+          <propskit-color id="minimal-color" variant="minimal" label="Color" value="#0D99FF"></propskit-color>
+          <propskit-fill id="minimal-fill" variant="minimal" label="Fill" value='{"type":"solid","color":"#0D99FF","alpha":1}'></propskit-fill>
+          <propskit-gradient id="minimal-gradient" variant="minimal" label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
+          <propskit-select id="minimal-select" variant="minimal" label="Select" value="One" options="One,Two"></propskit-select>
+          <propskit-text id="minimal-text" variant="minimal" label="Text" value="Value"></propskit-text>
+          <propskit-number id="minimal-number" variant="minimal" label="Number" value="10"></propskit-number>
+          <propskit-slider id="minimal-slider" variant="minimal" label="Slider" value="50" min="0" max="100"></propskit-slider>
+          <propskit-wheel id="minimal-wheel" variant="minimal" label="Time" value="240" units="ms"></propskit-wheel>
+          <propskit-position id="minimal-position" variant="minimal" label="Position" x="50" y="50"></propskit-position>
+        </div>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      return [
+        "minimal-switch",
+        "minimal-color",
+        "minimal-fill",
+        "minimal-gradient",
+        "minimal-select",
+        "minimal-text",
+        "minimal-number",
+        "minimal-slider",
+        "minimal-wheel",
+        "minimal-position",
+      ];
+    });
+
+    const initial = await page.evaluate((ids) => {
+      return {
+        expectedHover: getComputedStyle(
+          document.querySelector("#minimal-background-reference")!,
+        ).backgroundColor,
+        controls: ids.map((id) => {
+          const host = document.querySelector(`#${id}`)!;
+          const field = host.querySelector(
+            ":scope > fig-field, :scope > .propskit-wheel-surface",
+          )!;
+          const sliderSurface = host.querySelector(".fig-slider-input-container");
+          const gradientInput = host.querySelector("fig-input-gradient");
+          const swatch = host.querySelector("fig-swatch");
+          const hostStyle = getComputedStyle(host);
+          return {
+            id,
+            paddingTop: hostStyle.paddingTop,
+            paddingBottom: hostStyle.paddingBottom,
+            fieldBackground: getComputedStyle(field).backgroundColor,
+            sliderBackground: sliderSurface
+              ? getComputedStyle(sliderSurface).backgroundColor
+              : null,
+            gradientInputBackground: gradientInput
+              ? getComputedStyle(gradientInput).backgroundColor
+              : null,
+            swatchBackground: swatch
+              ? getComputedStyle(swatch).backgroundColor
+              : null,
+            forwardedVariant: host.querySelector("[variant]")?.getAttribute("variant") ?? null,
+          };
+        }),
+      };
+    }, controlIds);
+
+    for (const control of initial.controls) {
+      expect(control).toMatchObject({
+        paddingTop: "0px",
+        paddingBottom: "0px",
+        fieldBackground: "rgba(0, 0, 0, 0)",
+        forwardedVariant: null,
+      });
+      if (control.id === "minimal-slider") {
+        expect(control.sliderBackground).toBe("rgba(0, 0, 0, 0)");
+      }
+      if (
+        control.id === "minimal-color" ||
+        control.id === "minimal-fill" ||
+        control.id === "minimal-gradient"
+      ) {
+        expect(control.swatchBackground).toBe("rgba(0, 0, 0, 0)");
+      }
+      if (control.id === "minimal-gradient") {
+        expect(control.gradientInputBackground).toBe("rgba(0, 0, 0, 0)");
+      }
+    }
+
+    for (const id of controlIds) {
+      const host = page.locator(`#minimal-stack > #${id}`);
+      await host.hover();
+      await expect
+        .poll(() =>
+          host.evaluate((element) => {
+            const field = element.querySelector(
+              ":scope > fig-field, :scope > .propskit-wheel-surface",
+            )!;
+            const sliderSurface = element.querySelector(
+              ".fig-slider-input-container",
+            );
+            return {
+              background: getComputedStyle(field).backgroundColor,
+              borderShadow: getComputedStyle(field, "::after").boxShadow,
+              sliderBorderShadow: sliderSurface
+                ? getComputedStyle(sliderSurface, "::after").boxShadow
+                : "none",
+            };
+          }),
+        )
+        .toEqual({
+          background: initial.expectedHover,
+          borderShadow: "none",
+          sliderBorderShadow: "none",
+        });
+    }
+  });
+
+  test("propskit group small size applies to unsized child controls", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <propskit-group id="sized-group" name="Minimal controls" size="small" open>
+          <propskit-text id="group-sized-text" variant="minimal" label="Text" value="Value"></propskit-text>
+          <propskit-number id="authored-sized-number" variant="minimal" size="large" label="Number" value="10"></propskit-number>
+        </propskit-group>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const group = root.querySelector("#sized-group")!;
+      const text = root.querySelector("#group-sized-text")!;
+      const number = root.querySelector("#authored-sized-number")!;
+      const initial = {
+        textSize: text.getAttribute("size"),
+        textGenerated: text.hasAttribute("data-propskit-group-size"),
+        numberSize: number.getAttribute("size"),
+        numberGenerated: number.hasAttribute("data-propskit-group-size"),
+      };
+
+      const added = document.createElement("propskit-switch");
+      added.id = "dynamic-group-sized-switch";
+      added.setAttribute("variant", "minimal");
+      added.setAttribute("label", "Switch");
+      group.append(added);
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const dynamic = {
+        size: added.getAttribute("size"),
+        generated: added.hasAttribute("data-propskit-group-size"),
+      };
+
+      group.removeAttribute("size");
+      await new Promise(requestAnimationFrame);
+      return {
+        initial,
+        dynamic,
+        restored: {
+          textSize: text.getAttribute("size"),
+          textGenerated: text.hasAttribute("data-propskit-group-size"),
+          numberSize: number.getAttribute("size"),
+          numberGenerated: number.hasAttribute("data-propskit-group-size"),
+          dynamicSize: added.getAttribute("size"),
+          dynamicGenerated: added.hasAttribute("data-propskit-group-size"),
+        },
+      };
+    });
+
+    expect(state).toEqual({
+      initial: {
+        textSize: "small",
+        textGenerated: true,
+        numberSize: "large",
+        numberGenerated: false,
+      },
+      dynamic: {
+        size: "small",
+        generated: true,
+      },
+      restored: {
+        textSize: null,
+        textGenerated: false,
+        numberSize: "large",
+        numberGenerated: false,
+        dynamicSize: null,
+        dynamicGenerated: false,
+      },
+    });
+  });
+
   test("point-point hit line tracks the visible line", async ({ page }) => {
     const coordinates = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root")!;
@@ -326,12 +521,14 @@ test.describe("fig-lab audit regressions", () => {
     });
   });
 
-  test("propskit opacity gradient stays visually consistent across values", async ({
+  test("propskit opacity fill stays solid while its alpha follows the value", async ({
     page,
   }) => {
     const styles = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root")!;
       root.innerHTML = `
+        <propskit-slider data-zero type="opacity" color="#0D99FF"
+          value="0" min="0" max="100"></propskit-slider>
         <propskit-slider type="opacity" color="#0D99FF"
           value="10" min="0" max="100"></propskit-slider>
         <propskit-slider data-default-color type="opacity"
@@ -340,23 +537,48 @@ test.describe("fig-lab audit regressions", () => {
           value="50" min="0" max="100"></propskit-slider>
         <propskit-slider data-light-color type="opacity" color="#F5F5F5"
           value="50" min="0" max="100"></propskit-slider>
+        <propskit-slider data-dark-surface type="opacity" color="#0D99FF"
+          value="61.3" min="0" max="100" style="color-scheme:dark"></propskit-slider>
+        <propskit-slider data-dark-surface-light-color type="opacity" color="#FFFFFF"
+          value="38.2" min="0" max="100" style="color-scheme:dark"></propskit-slider>
+        <propskit-slider data-red-light type="opacity" color="#FF0000"
+          value="100" min="0" max="100" style="color-scheme:light"></propskit-slider>
+        <propskit-slider data-red-dark type="opacity" color="#FF0000"
+          value="100" min="0" max="100" style="color-scheme:dark"></propskit-slider>
+        <propskit-slider data-black-dark type="opacity" color="#000000"
+          value="100" min="0" max="100" style="color-scheme:dark"></propskit-slider>
+        <propskit-slider data-white-light type="opacity" color="#FFFFFF"
+          value="100" min="0" max="100" style="color-scheme:light"></propskit-slider>
         <propskit-slider data-non-opacity type="range" color="#111111"
           value="50" min="0" max="100"></propskit-slider>`;
       await new Promise(requestAnimationFrame);
-      const slider = root.querySelector("propskit-slider") as HTMLElement & {
+      const slider = root.querySelector(
+        "propskit-slider:not([data-zero])",
+      ) as HTMLElement & {
         value: string;
       };
       const track = slider.querySelector(".fig-slider-input-container")!;
       const read = () => {
         const style = getComputedStyle(track, "::before");
+        const borderStyle = getComputedStyle(track, "::after");
+        const labelStyle = getComputedStyle(slider.querySelector("label")!);
         return {
           opacity: style.opacity,
           backgroundImage: style.backgroundImage,
+          backgroundColor: style.backgroundColor,
+          trackBackgroundImage: getComputedStyle(track).backgroundImage,
           width: Number.parseFloat(style.width),
           trackWidth: track.getBoundingClientRect().width,
           clipPath: style.clipPath,
           borderRadius: style.borderRadius,
-          afterBackground: getComputedStyle(track, "::after").backgroundImage,
+          borderWidth: borderStyle.borderWidth,
+          borderStyle: borderStyle.borderStyle,
+          borderColor: borderStyle.borderColor,
+          borderBlendMode: borderStyle.mixBlendMode,
+          borderOpacity: borderStyle.opacity,
+          afterBackground: borderStyle.backgroundImage,
+          labelBackgroundImage: labelStyle.backgroundImage,
+          labelTextFillColor: labelStyle.webkitTextFillColor,
         };
       };
       const low = read();
@@ -368,9 +590,6 @@ test.describe("fig-lab audit regressions", () => {
       const defaultTrack = defaultSlider.querySelector(
         ".fig-slider-input-container",
       )!;
-      const probe = document.createElement("div");
-      probe.style.background = "var(--figma-color-bg-secondary)";
-      root.append(probe);
       const darkSlider = root.querySelector(
         "propskit-slider[data-dark-color]",
       )!;
@@ -391,6 +610,14 @@ test.describe("fig-lab audit regressions", () => {
       const initialThemes = {
         dark: numberTheme(darkSlider),
         light: numberTheme(lightSlider),
+        darkSurface: numberTheme(
+          root.querySelector("propskit-slider[data-dark-surface]")!,
+        ),
+        darkSurfaceLightColor: numberTheme(
+          root.querySelector(
+            "propskit-slider[data-dark-surface-light-color]",
+          )!,
+        ),
         noColor: numberTheme(
           root.querySelector("propskit-slider[data-default-color]")!,
         ),
@@ -402,6 +629,75 @@ test.describe("fig-lab audit regressions", () => {
         dark: numberStyle(darkSlider),
         light: numberStyle(lightSlider),
       };
+      const labelStyle = (host: Element) => {
+        const style = getComputedStyle(host.querySelector("label")!);
+        return {
+          backgroundImage: style.backgroundImage,
+          textFillColor: style.webkitTextFillColor,
+        };
+      };
+      const initialLabelStyles = {
+        dark: labelStyle(darkSlider),
+        light: labelStyle(lightSlider),
+        darkSurface: labelStyle(
+          root.querySelector("propskit-slider[data-dark-surface]")!,
+        ),
+        darkSurfaceLightColor: labelStyle(
+          root.querySelector(
+            "propskit-slider[data-dark-surface-light-color]",
+          )!,
+        ),
+      };
+      const darkSurfaceBorderColor = getComputedStyle(
+        root.querySelector(
+          "propskit-slider[data-dark-surface] .fig-slider-input-container",
+        )!,
+        "::after",
+      ).borderColor;
+      const redBorderColor = (scheme: "light" | "dark") =>
+        getComputedStyle(
+          root.querySelector(
+            `propskit-slider[data-red-${scheme}] .fig-slider-input-container`,
+          )!,
+          "::after",
+        ).borderColor;
+      const extremeBorderColor = (color: "black" | "white", scheme: "dark" | "light") =>
+        getComputedStyle(
+          root.querySelector(
+            `propskit-slider[data-${color}-${scheme}] .fig-slider-input-container`,
+          )!,
+          "::after",
+        ).borderColor;
+      const zeroBorderOpacity = getComputedStyle(
+        root.querySelector(
+          "propskit-slider[data-zero] .fig-slider-input-container",
+        )!,
+        "::after",
+      ).opacity;
+      const resolveTextColor = (
+        token: "--figma-color-text" | "--figma-color-text-oninverse",
+        colorScheme: "light" | "dark",
+      ) => {
+        const probe = document.createElement("span");
+        probe.style.colorScheme = colorScheme;
+        probe.style.color = `var(${token})`;
+        root.append(probe);
+        const color = getComputedStyle(probe).color;
+        probe.remove();
+        return color;
+      };
+      const expectedTextColors = {
+        lightDefault: resolveTextColor("--figma-color-text", "light"),
+        lightInverse: resolveTextColor(
+          "--figma-color-text-oninverse",
+          "light",
+        ),
+        darkDefault: resolveTextColor("--figma-color-text", "dark"),
+        darkInverse: resolveTextColor(
+          "--figma-color-text-oninverse",
+          "dark",
+        ),
+      };
       darkSlider.setAttribute("color", "#FFFFFF");
       await new Promise(requestAnimationFrame);
       const changedTheme = numberTheme(darkSlider);
@@ -410,10 +706,20 @@ test.describe("fig-lab audit regressions", () => {
       return {
         low,
         high: read(),
-        expectedColor: getComputedStyle(probe).backgroundColor,
-        defaultGradient: getComputedStyle(defaultTrack, "::before").backgroundImage,
+        defaultBackground: getComputedStyle(
+          defaultTrack,
+          "::before",
+        ).backgroundImage,
         initialThemes,
         initialTextStyles,
+        initialLabelStyles,
+        darkSurfaceBorderColor,
+        redLightBorderColor: redBorderColor("light"),
+        redDarkBorderColor: redBorderColor("dark"),
+        blackDarkBorderColor: extremeBorderColor("black", "dark"),
+        whiteLightBorderColor: extremeBorderColor("white", "light"),
+        zeroBorderOpacity,
+        expectedTextColors,
         changedTheme,
         removedTheme: numberTheme(darkSlider),
       };
@@ -421,27 +727,70 @@ test.describe("fig-lab audit regressions", () => {
 
     expect(styles.low.opacity).toBe("1");
     expect(styles.high.opacity).toBe("1");
-    expect(styles.high.backgroundImage).toBe(styles.low.backgroundImage);
-    expect(styles.low.width).toBeCloseTo(styles.low.trackWidth, 0);
-    expect(styles.high.width).toBeCloseTo(styles.high.trackWidth, 0);
-    expect(styles.high.clipPath).not.toBe(styles.low.clipPath);
-    expect(styles.low.clipPath).toContain("round");
+    expect(styles.high.backgroundImage).not.toBe(styles.low.backgroundImage);
+    expect(styles.low.backgroundImage).toContain("linear-gradient");
+    expect(styles.high.backgroundColor).toBe(styles.low.backgroundColor);
+    expect(styles.low.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    expect(styles.low.trackBackgroundImage).toBe("none");
+    expect(styles.high.trackBackgroundImage).toBe(
+      styles.low.trackBackgroundImage,
+    );
+    expect(styles.low.width).toBeCloseTo(styles.low.trackWidth * 0.1, 0);
+    expect(styles.high.width).toBeCloseTo(styles.high.trackWidth * 0.9, 0);
+    expect(styles.low.clipPath).toBe("none");
+    expect(styles.high.clipPath).toBe("none");
     expect(styles.low.borderRadius).not.toBe("0px");
+    expect(styles.low.borderWidth).toBe("1px");
+    expect(styles.low.borderStyle).toBe("solid");
+    expect(styles.low.borderColor).not.toBe("rgb(0, 0, 0)");
+    expect(styles.low.borderColor).not.toBe("rgb(255, 255, 255)");
+    expect(styles.high.borderColor).not.toBe(styles.low.borderColor);
+    expect(styles.darkSurfaceBorderColor).not.toBe("rgb(255, 255, 255)");
+    expect(styles.redLightBorderColor).not.toBe(styles.redDarkBorderColor);
+    expect(styles.redLightBorderColor).not.toBe("rgb(255, 0, 0)");
+    expect(styles.redDarkBorderColor).not.toBe("rgb(255, 0, 0)");
+    expect(styles.blackDarkBorderColor).not.toBe("rgb(0, 0, 0)");
+    expect(styles.whiteLightBorderColor).not.toBe("rgb(255, 255, 255)");
+    expect(styles.zeroBorderOpacity).toBe("0");
+    expect(styles.low.borderBlendMode).toBe("normal");
+    expect(styles.high.borderBlendMode).toBe("normal");
+    expect(styles.low.borderOpacity).toBe("1");
+    expect(styles.high.borderOpacity).toBe("1");
     expect(styles.low.afterBackground).toBe("none");
     expect(styles.high.afterBackground).toBe("none");
-    expect(styles.low.backgroundImage).toContain("rgb(13, 153, 255)");
-    expect(styles.defaultGradient).toContain(styles.expectedColor);
+    expect(styles.low.labelBackgroundImage).not.toBe(
+      styles.high.labelBackgroundImage,
+    );
+    expect(styles.low.labelTextFillColor).toBe("rgba(0, 0, 0, 0)");
+    expect(styles.defaultBackground).toContain("linear-gradient");
     expect(styles.initialThemes).toEqual({
       dark: "light",
       light: "dark",
+      darkSurface: "light",
+      darkSurfaceLightColor: "dark",
       noColor: null,
       nonOpacity: null,
     });
     expect(styles.initialTextStyles.dark.backgroundImage).toContain(
-      "rgb(255, 255, 255)",
+      styles.expectedTextColors.lightInverse,
     );
     expect(styles.initialTextStyles.light.backgroundImage).toContain(
-      "rgb(0, 0, 0)",
+      styles.expectedTextColors.lightDefault,
+    );
+    expect(styles.initialLabelStyles.dark.backgroundImage).toContain(
+      styles.expectedTextColors.lightInverse,
+    );
+    expect(styles.initialLabelStyles.light.backgroundImage).toContain(
+      styles.expectedTextColors.lightDefault,
+    );
+    expect(styles.initialLabelStyles.darkSurface.backgroundImage).toContain(
+      styles.expectedTextColors.darkDefault,
+    );
+    expect(
+      styles.initialLabelStyles.darkSurfaceLightColor.backgroundImage,
+    ).toContain(styles.expectedTextColors.darkInverse);
+    expect(styles.initialLabelStyles.dark.textFillColor).toBe(
+      "rgba(0, 0, 0, 0)",
     );
     expect(styles.initialTextStyles.dark.textFillColor).toBe(
       "rgba(0, 0, 0, 0)",
@@ -468,6 +817,70 @@ test.describe("fig-lab audit regressions", () => {
     await expect(input).not.toHaveAttribute("tabindex", "-1");
     await expect(input).not.toHaveAttribute("aria-hidden", "true");
     await expect(page.locator("propskit-slider")).toHaveAttribute("value", "42");
+  });
+
+  test("propskit hue uses a selected-color surface with a bottom hue strip", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <propskit-slider id="hue-surface" type="hue" label="Hue"
+          value="0" min="0" max="360" units="°"></propskit-slider>`;
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("#hue-surface") as HTMLElement & {
+        value: string;
+      };
+      const track = host.querySelector(".fig-slider-input-container")!;
+      const label = host.querySelector("label")!;
+      const number = host.querySelector("fig-input-number")!;
+      const input = number.querySelector("input")!;
+      const read = () => {
+        const trackStyle = getComputedStyle(track);
+        const stripStyle = getComputedStyle(track, "::after");
+        return {
+          surface: trackStyle.backgroundColor,
+          stripHeight: stripStyle.height,
+          stripBottom: stripStyle.bottom,
+          stripLeft: stripStyle.left,
+          stripRight: stripStyle.right,
+          stripBackground: stripStyle.backgroundImage,
+          stripBorderRadius: stripStyle.borderRadius,
+          stripBorderTopWidth: stripStyle.borderTopWidth,
+          stripBorderBottomWidth: stripStyle.borderBottomWidth,
+          labelColor: getComputedStyle(label).color,
+          labelTextShadow: getComputedStyle(label).textShadow,
+          inputColor: getComputedStyle(input).color,
+          inputTextShadow: getComputedStyle(input).textShadow,
+          numberTheme: number.getAttribute("theme"),
+        };
+      };
+
+      const red = read();
+      host.value = "60";
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      return { red, yellow: read() };
+    });
+
+    expect(state.red.stripHeight).toBe("3px");
+    expect(state.red.stripBottom).toBe("0px");
+    expect(state.red.stripLeft).toBe("0px");
+    expect(state.red.stripRight).toBe("0px");
+    expect(state.red.stripBackground).not.toBe("none");
+    expect(state.red.stripBorderRadius).toBe("0px");
+    expect(state.red.stripBorderTopWidth).toBe("0px");
+    expect(state.red.stripBorderBottomWidth).toBe("0px");
+    expect(state.red.surface).not.toBe(state.yellow.surface);
+    expect(state.red.labelColor).toBe(state.red.inputColor);
+    expect(state.yellow.labelColor).toBe(state.yellow.inputColor);
+    expect(state.red.labelTextShadow).toBe("none");
+    expect(state.red.inputTextShadow).toBe("none");
+    expect(state.red.labelColor).not.toBe(state.yellow.labelColor);
+    expect(state.red.numberTheme).toBe("light");
+    expect(state.yellow.numberTheme).toBe("dark");
   });
 
   test("oscillator edit=false is noninteractive and active gestures cancel on rerender", async ({
@@ -959,6 +1372,7 @@ test.describe("fig-lab audit regressions", () => {
         <propskit-text value="A" default="B"></propskit-text>
         <propskit-number value="1" default="2"></propskit-number>
         <propskit-slider value="10" default="20" min="0" max="100"></propskit-slider>
+        <propskit-wheel value="10" default="20"></propskit-wheel>
       `;
       const oscillator = document.createElement("propskit-oscillator");
       const oscillatorDefault = JSON.stringify({
@@ -977,7 +1391,7 @@ test.describe("fig-lab audit regressions", () => {
 
       const controls = [
         ...group.querySelectorAll(
-          ":scope > propskit-switch, :scope > propskit-color, :scope > propskit-select, :scope > propskit-text, :scope > propskit-number, :scope > propskit-slider, :scope > propskit-oscillator",
+          ":scope > propskit-switch, :scope > propskit-color, :scope > propskit-select, :scope > propskit-text, :scope > propskit-number, :scope > propskit-slider, :scope > propskit-wheel, :scope > propskit-oscillator",
         ),
       ] as Array<
         HTMLElement & {
@@ -1006,7 +1420,8 @@ test.describe("fig-lab audit regressions", () => {
       controls[3].value = "B";
       controls[4].value = "2";
       controls[5].value = "20";
-      controls[6].value = oscillatorDefault;
+      controls[6].value = "20";
+      controls[7].value = oscillatorDefault;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const dirtyAtDefaults = group.dirty;
@@ -1017,7 +1432,8 @@ test.describe("fig-lab audit regressions", () => {
       controls[3].value = "C";
       controls[4].value = "3";
       controls[5].value = "30";
-      controls[6].value = JSON.stringify({ type: "triangle", frequency: 4 });
+      controls[6].value = "30";
+      controls[7].value = JSON.stringify({ type: "triangle", frequency: 4 });
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const dirtyAfterChanges = group.dirty;
@@ -1047,14 +1463,15 @@ test.describe("fig-lab audit regressions", () => {
         "B",
         "2",
         "20",
+        "20",
         expect.any(String),
       ],
-      initialDefaultStates: [false, false, false, false, false, false, false],
+      initialDefaultStates: [false, false, false, false, false, false, false, false],
       dirtyAtDefaults: false,
       dirtyAfterChanges: true,
       dirtyAfterReset: false,
-      resetCalls: [1, 1, 1, 1, 1, 1, 1],
-      defaultStatesAfterReset: [true, true, true, true, true, true, true],
+      resetCalls: [1, 1, 1, 1, 1, 1, 1, 1],
+      defaultStatesAfterReset: [true, true, true, true, true, true, true, true],
     });
   });
 

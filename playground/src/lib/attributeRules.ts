@@ -46,6 +46,12 @@ const aspectRatioRule: AttributeRule = {
   options: ["1/1", "4/3", "16/9"],
 };
 
+const propskitVariantRule: AttributeRule = {
+  label: "Variant",
+  type: "enum",
+  options: ["", "minimal"],
+};
+
 export const fieldAttributeRules: AttributeRuleSet = {
   direction: {
     label: "Direction",
@@ -439,13 +445,15 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "propskit-switch": {
     label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
     checked: { label: "Checked", type: "boolean", boolMode: "presence" },
     default: { label: "Default", type: "boolean", boolMode: "string" },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-color": {
     label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
     default: { label: "Default", type: "string" },
     alpha: {
       label: "Alpha",
@@ -453,11 +461,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-fill": {
     label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
     default: { label: "Default", type: "string" },
     mode: { label: "Mode", type: "string" },
     alpha: {
@@ -466,7 +475,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-color-point": {
@@ -484,39 +493,43 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-gradient": {
     label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
     default: { label: "Default", type: "string" },
     edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
     mode: { label: "Mode", type: "enum", options: ["handle", "tip"] },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-select": {
     label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
     value: { label: "Value", type: "string" },
     default: { label: "Default", type: "string" },
     options: { label: "Options", type: "string" },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-text": {
     label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
     default: { label: "Default", type: "string" },
     type: {
       label: "Type",
       type: "enum",
       options: ["text", "email", "password", "search", "url"],
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     readonly: { label: "Readonly", type: "boolean", boolMode: "presence" },
   },
   "propskit-number": {
     label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
     default: { label: "Default", type: "number", min: -1000, max: 1000, step: 1 },
     min: { label: "Min", type: "number", min: -1000, max: 1000, step: 1 },
     max: { label: "Max", type: "number", min: -1000, max: 1000, step: 1 },
@@ -534,11 +547,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["", "%", "px", "°"],
     },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-position": {
     label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
     x: { label: "X", type: "number", min: 0, max: 100, step: 1 },
     y: { label: "Y", type: "number", min: 0, max: 100, step: 1 },
     default: { label: "Default", type: "string" },
@@ -547,7 +561,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "percent"],
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-point-radius": {
@@ -570,11 +584,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "percent"],
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-group": {
     name: { label: "Name", type: "string" },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     open: { label: "Open", type: "boolean", boolMode: "string" },
     "show-reset": {
       label: "Show reset",
@@ -604,7 +619,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "percent"],
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-point-point": {
@@ -627,10 +642,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "percent"],
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "propskit-slider": {
+    variant: propskitVariantRule,
     type: {
       label: "Type",
       type: "enum",
@@ -650,8 +666,32 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
-    size: { label: "Size", type: "enum", options: ["", "large"] },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "propskit-wheel": {
+    label: { label: "Label", type: "string" },
+    variant: propskitVariantRule,
+    default: { label: "Default", type: "number", min: -10000, max: 10000, step: 1 },
+    units: { label: "Units", type: "string" },
+    min: { label: "Min", type: "number", step: 1 },
+    max: { label: "Max", type: "number", step: 1 },
+    step: { label: "Step", type: "number", min: 0.001, max: 1000, step: 0.001 },
+    precision: {
+      label: "Precision",
+      type: "number",
+      min: 0,
+      max: 10,
+      step: 1,
+    },
+    elastic: {
+      label: "Elastic",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    size: { label: "Size", type: "enum", options: ["", "small"] },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-fill": {

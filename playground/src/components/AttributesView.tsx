@@ -212,6 +212,7 @@ function getInputPanelTitle(controlTag: string): string {
     "propskit-slider": "Propskit slider",
     "propskit-switch": "Propskit switch",
     "propskit-text": "Propskit text",
+    "propskit-wheel": "Propskit wheel",
     "fig-combo-input": "Combo input",
     "fig-media": "Media",
     "fig-media-controls": "Media controls",
@@ -789,6 +790,9 @@ export default function AttributesView({
               : (getNumberAttrDefault(target.controlTag, name) ??
                 rule.min ??
                 0);
+            const isOptionalWheelBound =
+              target.controlTag === "propskit-wheel" &&
+              (name === "min" || name === "max");
             const numberValue =
               isShimmerLikeControl && name === "duration"
                 ? toNumberValue((value ?? "").replace(/s$/i, ""), fallback)
@@ -797,10 +801,13 @@ export default function AttributesView({
                       (value ?? "").replace(/[a-z]+$/i, ""),
                       fallback,
                     )
-                  : toNumberValue(value, fallback);
+                  : isOptionalWheelBound && (value === undefined || value === "")
+                    ? ""
+                    : toNumberValue(value, fallback);
             const useNumberInputControl =
               (target.controlTag === "fig-input-number" &&
                 (name === "min" || name === "max" || name === "step")) ||
+              isOptionalWheelBound ||
               (target.controlTag === "fig-chooser" && name === "columns");
             if (useNumberInputControl) {
               const handleNumberInput = (e: any) => {
@@ -810,11 +817,15 @@ export default function AttributesView({
                 const nextValue =
                   host.value ?? (e as CustomEvent).detail?.value;
                 if (nextValue === undefined || nextValue === null) return;
+                if (isOptionalWheelBound && nextValue === "") {
+                  applyChange(target.fieldIndex, scope, name, null);
+                  return;
+                }
                 applyChange(target.fieldIndex, scope, name, String(nextValue));
               };
               return (
                 <fig-input-number
-                  value={String(numberValue)}
+                  value={numberValue === "" ? "" : String(numberValue)}
                   step={name === "step" ? "0.1" : "1"}
                   min={rule.min === undefined ? undefined : String(rule.min)}
                   max={rule.max === undefined ? undefined : String(rule.max)}
@@ -939,7 +950,9 @@ export default function AttributesView({
                   isDefaultLargeSizeControl(target.controlTag) &&
                   name === "size"
                 ) {
-                  return option === "" ? "Default" : "Large";
+                  return option === ""
+                    ? "Default"
+                    : toSentenceCaseLabel(option);
                 }
                 if (
                   isPropskitSpatialUnitsControl(target.controlTag) &&
@@ -1155,6 +1168,7 @@ export default function AttributesView({
                       target.controlTag === "propskit-color" ||
                       target.controlTag === "propskit-color-point" ||
                       target.controlTag === "propskit-gradient" ||
+                      target.controlTag === "propskit-group" ||
                       target.controlTag === "propskit-number" ||
                       target.controlTag === "propskit-point-point" ||
                       target.controlTag === "propskit-point-radius" ||
@@ -1162,7 +1176,8 @@ export default function AttributesView({
                       target.controlTag === "propskit-position" ||
                       target.controlTag === "propskit-select" ||
                       target.controlTag === "propskit-switch" ||
-                      target.controlTag === "propskit-text") &&
+                      target.controlTag === "propskit-text" ||
+                      target.controlTag === "propskit-wheel") &&
                     name === "size"
                   ) {
                     return "Default";
@@ -1313,6 +1328,7 @@ export default function AttributesView({
                         target.controlTag === "propskit-color" ||
                         target.controlTag === "propskit-color-point" ||
                         target.controlTag === "propskit-gradient" ||
+                        target.controlTag === "propskit-group" ||
                         target.controlTag === "propskit-number" ||
                         target.controlTag === "propskit-point-point" ||
                         target.controlTag === "propskit-point-radius" ||
@@ -1320,7 +1336,8 @@ export default function AttributesView({
                         target.controlTag === "propskit-position" ||
                         target.controlTag === "propskit-select" ||
                         target.controlTag === "propskit-switch" ||
-                        target.controlTag === "propskit-text") &&
+                        target.controlTag === "propskit-text" ||
+                        target.controlTag === "propskit-wheel") &&
                       name === "size" &&
                       resolvedValue === ""
                     ) {

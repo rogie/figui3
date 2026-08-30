@@ -104,6 +104,7 @@ Minimal example:
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
 | [Propskit Slider](#propskit-slider) | `<propskit-slider>` | Labeled field + slider combo |
+| [Propskit Wheel](#propskit-wheel) | `<propskit-wheel>` | Generic numeric scrubber with tick wheel |
 | [Propskit Color](#propskit-color) | `<propskit-color>` | Full-surface labeled color control |
 | [Propskit Fill](#propskit-fill) | `<propskit-fill>` | Full-surface labeled fill control |
 | [Propskit Gradient](#propskit-gradient) | `<propskit-gradient>` | Full-surface labeled gradient control |
@@ -355,6 +356,8 @@ Author options in `<fig-select-options>`, or pass `options`. Use `label` on `<fi
 
 For `type="range"`, omitting `value` follows native range behavior and starts at the midpoint of `min` and `max`. Arrow keys move by `step`; hold Shift to move by a larger step.
 
+Full-surface `propskit-*` controls support `variant="minimal"`. The minimal variant removes vertical row padding and keeps the field background transparent until hover. It is available on switch, color, fill, gradient, select, text, number, slider, position, and wheel controls.
+
 ---
 
 #### Propskit Number
@@ -363,18 +366,21 @@ For `type="range"`, omitting `value` follows native range behavior and starts at
 
 Composes a `<fig-field>` and `<fig-input-number>` into a full-surface property control. Number attributes are forwarded to the inner input.
 
-PropsKit controls use the compact default layout when `size` is omitted. Set
-`size="large"` for the 40px row layout.
+PropsKit controls use the 40px large layout when `size` is omitted. Set
+`size="small"` for the compact 32px row layout. Explicit `size="large"`
+remains supported as an alias for the default layout.
 
 All PropsKit inputs expose `defaultValue`, `isDefault`, and `resetToDefault()`. A
 `propskit-group` uses this shared contract to track its `dirty` state and reset
-each nested input to its own current `default`.
+each nested input to its own current `default`. Set `size="small"` on a
+`propskit-group` to apply the compact layout to nested controls that do not
+define their own size.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `label` | string | `"Label"` | Field label text; use an empty value to hide it |
 | `direction` | string | `"horizontal"` | Field layout direction |
-| `size` | string | default | Set to `"large"` for the expanded layout |
+| `size` | string | default | Set to `"small"` for the compact layout |
 | `default` | number/string | initial `value` | Right-click reset target |
 | `disabled` | boolean | `false` | Disable interaction |
 | *number attrs* | — | — | All `<fig-input-number>` attributes are forwarded |
@@ -442,7 +448,7 @@ Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property
 | `edit` | boolean/string | `"picker"` | `true` (inline stops), `false`, or `"picker"` |
 | `mode` | string | `"handle"` | `"handle"` or `"tip"` stop presentation |
 | `disabled` | boolean | `false` | Disabled state |
-| `size` | string | default | Set to `"large"` for the expanded layout |
+| `size` | string | default | Set to `"small"` for the compact layout |
 
 **Events:** `input`, `change` — bubbling, composed events with `{ type: "gradient", gradient }` in `event.detail`.
 
@@ -534,7 +540,7 @@ Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slid
 |---|---|---|---|
 | `label` | string | — | Field label text |
 | `direction` | string | `"column"` | Layout direction |
-| `size` | string | default | Set to `"large"` for the expanded layout |
+| `size` | string | default | Set to `"small"` for the compact layout |
 | `default` | number/string | initial `value` | Double-click and right-click reset target |
 | `disabled` | boolean | `false` | Disable interaction |
 | *slider attrs* | — | — | All `<fig-slider>` attributes except host-only PropsKit attributes are forwarded |
@@ -547,6 +553,38 @@ Double-click or right-click and choose **Reset** to restore `default`, falling b
 
 ```html
 <propskit-slider label="Opacity" min="0" max="100" value="75" units="%"></propskit-slider>
+```
+
+---
+
+#### Propskit Wheel
+
+`<propskit-wheel>`
+
+A generic numeric scrubber with optional arbitrary units. The host is the row chrome; an inner `.propskit-wheel-surface` holds a projected SVG tick wheel and a `fig-input-number`. There is no `fig-field` or `fig-slider`.
+
+Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that exact value is used. Units are omitted by default and arbitrary values such as `px` pass through unchanged. Time aliases receive time-focused defaults.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | `"Value"` when omitted | Authored values (including blank) are used as-is |
+| `units` | string | — | Optional arbitrary units. `seconds` / `milliseconds` normalize to `s` / `ms` |
+| `value` | number | `0` | Numeric value in `units`. Unbounded unless `min`/`max` are set |
+| `min` | number | — | Inclusive lower bound. Omit for no minimum |
+| `max` | number | — | Inclusive upper bound. Omit for no maximum |
+| `step` | number | `1`; `0.1` (`s`) / `100` (`ms`) | Drag, keyboard, and mouse wheel increment |
+| `precision` | number | `0`; `2` (`s`) / `0` (`ms`) | Displayed decimal places on the inner number |
+| `elastic` | boolean/string | `true` | Resisted handle movement, edge stretch, and spring return while scrubbing; set `"false"` to disable |
+| `size` | string | default | Set to `"small"` for the compact layout |
+| `default` | number/string | initial `value` | Right-click reset target |
+| `disabled` | boolean | `false` | Disable wheel and number |
+| `variant` | string | — | `"minimal"` removes vertical padding |
+
+**Events:** `input` while dragging or typing; `change` on commit. Dragging moves by `step` on every `input`; hold Shift to scrub at `10× step`. `precision` only formats the displayed number. Arrow keys on the focused wheel move by `step`; Shift+arrow moves by `10× step`.
+
+```html
+<propskit-wheel label="Duration" value="1.5" default="0" units="seconds"></propskit-wheel>
+<propskit-wheel label="Delay" value="240" default="0" min="0" max="1000" units="ms"></propskit-wheel>
 ```
 
 ---
@@ -564,7 +602,7 @@ A compact X/Y field with optional percentage units.
 | `default` | JSON string | initial `{ x, y }` | Right-click and group reset target |
 | `label` | string | `"Position"` | Field label; empty values use the semantic default |
 | `units` | string | — | `"percent"` shows `%`; omit for no units |
-| `size` | string | default | Set to `"large"` for the expanded row |
+| `size` | string | default | Set to `"small"` for the compact row |
 | `disabled` | boolean | `false` | Disable both number inputs |
 
 **Properties and methods:** `x`, `y`, and `value` expose the current coordinates; `defaultValue` returns the normalized reset object; `isDefault` compares both coordinates; `resetToDefault()` restores both values.

@@ -40,11 +40,13 @@ Full-surface `fig-field` wrappers. Prefer these over hand-rolled label+control r
 
 Shared:
 
-- `label`, `direction` (`horizontal` default for most), `size` (`""` | `large`), `disabled`
+- `label`, `direction` (`horizontal` default for most), `size` (`""` | `small`; `large` remains an alias for the default), `disabled`
+- `variant="minimal"` — removes vertical row padding and reveals the field background on hover
 - `default` — reset target (may differ from initial `value`)
 - Right-click **Reset** menu; `resetToDefault()`
 - `propskit-slider` also double-click resets
 - Forward remaining attrs to the inner control
+- Rows are large by default; `propskit-group size="small"` applies compact sizing to children without an authored size
 
 | Tag | Playground | Inner control | Notes |
 |---|---|---|---|
@@ -56,6 +58,7 @@ Shared:
 | `propskit-text` | `#propskit-text` | `fig-input-text` | `type`, `readonly` |
 | `propskit-number` | `#propskit-number` | `fig-input-number` | `min`, `max`, `step`, `precision`, `units`, `steppers` |
 | `propskit-slider` | `#propskit-slider` | `fig-slider` | `type` range/hue/delta/stepper/opacity; `elastic` default true |
+| `propskit-wheel` | `#propskit-wheel` | SVG wheel + `fig-input-number` | Generic numeric wheel with optional arbitrary `units`. Defaults: `value="0"`, no units, `label="Value"`, `step="1"`, `precision="0"`. Time aliases normalize to `s` / `ms` and default to `step="0.1"` / `precision="2"` for seconds or `step="100"` / `precision="0"` for milliseconds. Resisted handle drag + edge stretch + spring return (`elastic` default true). Optional `min`/`max` (omit = unbounded). No `fig-field` |
 | `propskit-position` | `#propskit-position` | two numbers | `x`, `y`, `units="percent"` |
 | `propskit-color-point` | `#propskit-color-point` | color + position | JSON `value`; `collapsible`, `open` |
 | `propskit-point-radius` | `#propskit-point-radius` | position + radius | JSON `value` |
@@ -140,6 +143,7 @@ These are layout shells. Wire behavior yourself.
 |---|---|
 | Labeled boolean | `propskit-switch` |
 | Labeled continuous number | `propskit-slider` |
+| Scrubbable number or time | `propskit-wheel` |
 | Labeled exact number | `propskit-number` |
 | Labeled text | `propskit-text` |
 | Labeled discrete list | `propskit-select` (not `fig-dropdown`) |

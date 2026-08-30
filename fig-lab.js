@@ -210,7 +210,7 @@ function figLabPropskitJsonValuesEqual(value, defaultValue) {
   }
 }
 
-function figLabPerceivedColorTheme(context, color) {
+function figLabPerceivedColorTheme(context, color, darkTextThreshold = 0.179) {
   if (!context || !color) return null;
   const probe = document.createElement("span");
   probe.style.cssText =
@@ -218,8 +218,12 @@ function figLabPerceivedColorTheme(context, color) {
   context.appendChild(probe);
   const resolved = getComputedStyle(probe).color;
   probe.remove();
-  if (!resolved.startsWith("rgb")) return null;
-  const channels = resolved.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+  const rawChannels = resolved.match(/[\d.]+/g)?.slice(0, 3).map(Number);
+  const channels = resolved.startsWith("rgb")
+    ? rawChannels
+    : resolved.startsWith("color(srgb") && rawChannels
+      ? rawChannels.map((channel) => channel * 255)
+      : null;
   if (!channels || channels.length < 3 || channels.some(Number.isNaN)) return null;
   const [r, g, b] = channels.map((channel) => {
     const value = channel / 255;
@@ -228,7 +232,7 @@ function figLabPerceivedColorTheme(context, color) {
       : ((value + 0.055) / 1.055) ** 2.4;
   });
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luminance <= 0.179 ? "light" : "dark";
+  return luminance <= darkTextThreshold ? "light" : "dark";
 }
 
 /* Unique IDs for lab components such as propskit-group. */
@@ -578,6 +582,7 @@ class PropskitSwitch extends HTMLElement {
       "checked",
       "value",
       "default",
+      "variant",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -1011,6 +1016,7 @@ class PropskitColor extends HTMLElement {
       "default",
       "value",
       "mode",
+      "variant",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -1418,6 +1424,7 @@ class PropskitFill extends HTMLElement {
       "text",
       "default",
       "value",
+      "variant",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -1720,6 +1727,7 @@ class PropskitGradient extends HTMLElement {
       "size",
       "aria-label",
       "default",
+      "variant",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -2040,6 +2048,7 @@ class PropskitSelect extends HTMLElement {
       "aria-label",
       "full",
       "default",
+      "variant",
     ]);
     // fig-dropdown consumes light-DOM <option>s, not an options attribute.
     if (!this.#usesFigSelect) reserved.add("options");
@@ -2369,6 +2378,7 @@ class PropskitText extends HTMLElement {
       "multiline",
       "resizable",
       "default",
+      "variant",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -2596,6 +2606,7 @@ class PropskitNumber extends HTMLElement {
       "style",
       "id",
       "default",
+      "variant",
     ]);
     return this.getAttributeNames().filter(
       (name) => !reserved.has(name) && !name.startsWith("data-"),
@@ -2710,7 +2721,7 @@ figLabDefineElement("propskit-number", PropskitNumber);
  * @attr {string} label - Field label. Empty values use "Position".
  * @attr {string} units - Set to "percent" to show percentage units.
  * @attr {boolean|string} disabled - Disables both number inputs.
- * @attr {string} size - Set to "large" for the expanded row.
+ * @attr {string} size - Defaults to the large row; set to "small" for compact.
  * @fires input - Composed event with { x, y }.
  * @fires change - Composed event with { x, y }.
  */
@@ -4229,7 +4240,7 @@ figLabDefineElement("propskit-point-point", PropskitPointPoint);
 
 /* Collapsible property group — always collapsible (no collapsible attr). */
 class PropskitGroup extends HTMLElement {
-  static observedAttributes = ["name", "open", "show-reset", "disabled"];
+  static observedAttributes = ["name", "open", "show-reset", "disabled", "size"];
 
   static #CONTROL_SELECTOR = [
     "propskit-color",
@@ -4245,6 +4256,7 @@ class PropskitGroup extends HTMLElement {
     "propskit-slider",
     "propskit-switch",
     "propskit-text",
+    "propskit-wheel",
     "propskit-oscillator",
   ].join(",");
 
@@ -4258,6 +4270,7 @@ class PropskitGroup extends HTMLElement {
   connectedCallback() {
     this.#render();
     this.#syncDisabled();
+    this.#syncSize();
     this.#bindDirtyListeners();
     requestAnimationFrame(() => {
       this.#syncDirtyState();
@@ -4289,6 +4302,10 @@ class PropskitGroup extends HTMLElement {
     }
     if (name === "disabled") {
       this.#syncDisabled();
+      return;
+    }
+    if (name === "size") {
+      this.#syncSize();
       return;
     }
     this.#render();
@@ -4347,6 +4364,7 @@ class PropskitGroup extends HTMLElement {
     if (!this.#childObserver) {
       this.#childObserver = new MutationObserver(() => {
         this.#syncDisabled();
+        this.#syncSize();
         this.#queueDirtySync();
       });
     }
@@ -4435,6 +4453,26 @@ class PropskitGroup extends HTMLElement {
     this.#resetTooltip
       ?.querySelector("fig-button")
       ?.toggleAttribute("disabled", disabled);
+  }
+
+  #syncSize() {
+    const small = this.getAttribute("size") === "small";
+    for (const control of this.#controls()) {
+      const generated = control.hasAttribute("data-propskit-group-size");
+      if (small && !control.hasAttribute("size")) {
+        control.setAttribute("data-propskit-group-size", "");
+        control.setAttribute("size", "small");
+      } else if (
+        small &&
+        generated &&
+        control.getAttribute("size") !== "small"
+      ) {
+        control.setAttribute("size", "small");
+      } else if (!small && generated) {
+        control.removeAttribute("size");
+        control.removeAttribute("data-propskit-group-size");
+      }
+    }
   }
 
   #controlIsDirty(el) {
@@ -4903,17 +4941,67 @@ class PropskitSlider extends HTMLElement {
 
   #syncNumberTheme(sliderType) {
     const numberInput = this.#slider?.querySelector("fig-input-number");
-    if (!numberInput) return;
-    if (sliderType !== "opacity" || !this.hasAttribute("color")) {
-      numberInput.removeAttribute("theme");
+    const usesColorSurface =
+      sliderType === "hue" ||
+      (sliderType === "opacity" && this.hasAttribute("color"));
+    if (!usesColorSurface) {
+      numberInput?.removeAttribute("theme");
+      this.style.removeProperty("--propskit-slider-filled-text-color");
       return;
     }
+    const min = Number(this.#slider?.min);
+    const max = Number(this.#slider?.max);
+    const value = Number(this.#slider?.value);
+    const complete =
+      Number.isFinite(min) &&
+      Number.isFinite(max) &&
+      max > min &&
+      Number.isFinite(value)
+        ? Math.max(0, Math.min(1, (value - min) / (max - min)))
+        : 0;
+    const color = this.getAttribute("color");
+    const effectiveColor =
+      sliderType === "hue"
+        ? `hsl(${complete * 360}deg 100% 50%)`
+        : `color-mix(in srgb, ${color} ${complete * 100}%, var(--figma-color-bg-secondary))`;
+    const darkSurface =
+      getComputedStyle(this).colorScheme.trim().toLowerCase() === "dark";
     const theme = figLabPerceivedColorTheme(
       this.#slider,
-      this.getAttribute("color"),
+      effectiveColor,
+      sliderType === "hue" ? 0.35 : darkSurface ? 0.2 : 0.35,
     );
-    if (theme) numberInput.setAttribute("theme", theme);
-    else numberInput.removeAttribute("theme");
+    if (theme) {
+      numberInput?.setAttribute("theme", theme);
+      const useDefaultTextToken =
+        (theme === "light" && darkSurface) ||
+        (theme === "dark" && !darkSurface);
+      this.style.setProperty(
+        "--propskit-slider-filled-text-color",
+        useDefaultTextToken
+          ? "var(--figma-color-text)"
+          : "var(--figma-color-text-oninverse)",
+      );
+    } else {
+      numberInput?.removeAttribute("theme");
+      this.style.removeProperty("--propskit-slider-filled-text-color");
+    }
+  }
+
+  #syncProgressStyles() {
+    if (!this.#slider) return;
+    const min = Number(this.#slider.min);
+    const max = Number(this.#slider.max);
+    const value = Number(this.#slider.value);
+    const complete =
+      Number.isFinite(min) &&
+      Number.isFinite(max) &&
+      max > min &&
+      Number.isFinite(value)
+        ? Math.max(0, Math.min(1, (value - min) / (max - min)))
+        : 0;
+    this.style.setProperty("--propskit-slider-complete", String(complete));
+    this.#syncNumberTheme((this.getAttribute("type") || "range").toLowerCase());
   }
 
   #pushExternalValueToSlider() {
@@ -4924,6 +5012,7 @@ class PropskitSlider extends HTMLElement {
     if (String(this.#slider.value) !== next) {
       this.#slider.value = next;
     }
+    this.#syncProgressStyles();
   }
 
   #getForwardedSliderAttrNames() {
@@ -5409,6 +5498,7 @@ class PropskitSlider extends HTMLElement {
         this.setAttribute("value", next);
       }
     }
+    this.#syncProgressStyles();
     this.dispatchEvent(
       new CustomEvent(type, {
         detail,
@@ -5454,6 +5544,1053 @@ class PropskitSlider extends HTMLElement {
   }
 }
 figLabDefineElement("propskit-slider", PropskitSlider);
+
+/**
+ * Full-surface numeric wheel: SVG ticks + fig-input-number.
+ *
+ * @attr {string} label - Field label. Omitted defaults to "Value"; authored values (including blank) are used as-is.
+ * @attr {string} units - Optional unit forwarded to fig-input-number. Time aliases are normalized.
+ * @attr {number} value - Numeric value. Unbounded unless min/max are set.
+ * @attr {number} min - Inclusive lower bound. Omitted = unbounded below.
+ * @attr {number} max - Inclusive upper bound. Omitted = unbounded above.
+ * @attr {string} default - Reset target.
+ * @attr {number} step - Scrub/keyboard/wheel increment. Defaults: s=0.1, ms=100, otherwise 1.
+ * @attr {number} precision - Display decimals forwarded to fig-input-number. Defaults: s=2, otherwise 0.
+ * @attr {boolean|string} elastic - Enables resisted handle movement while scrubbing. Defaults to true.
+ * @attr {string} size - Defaults to the large row; set to "small" for compact.
+ * @attr {boolean|string} disabled - Disables wheel and number.
+ * @attr {string} variant - Set to "minimal" for compact chrome.
+ * @fires input - Composed event while dragging or typing.
+ * @fires change - Composed event on commit.
+ */
+class PropskitWheel extends HTMLElement {
+  static #TICK_COUNT = 33;
+  static #HALF_FOV_DEG = 60;
+  static #PERSPECTIVE_K = 0.55;
+  static #DRAGGING_BODY_CLASS = "fig-propskit-wheel-dragging";
+  static #RESERVED_ATTRS = new Set([
+    "label",
+    "size",
+    "disabled",
+    "variant",
+    "elastic",
+    "default",
+    "class",
+    "style",
+    "id",
+    "oninput",
+    "onchange",
+  ]);
+
+  #surface = null;
+  #wheel = null;
+  #svg = null;
+  #tickPath = null;
+  #tickMetrics = null;
+  #tickMetricProbe = null;
+  #wheelWidth = 0;
+  #wheelHeight = 0;
+  #layoutFrame = 0;
+  #keyboardAnimationFrame = 0;
+  #keyboardSettleTimer = 0;
+  #label = null;
+  #input = null;
+  #hasCustomLabel = false;
+  #observer = null;
+  #resizeObserver = null;
+  #managedInputAttrs = new Set();
+  #initialValue = null;
+  #isDragging = false;
+  #dragPointerId = null;
+  #dragStartX = 0;
+  #dragStartValue = 0;
+  #visualValue = null;
+  #handleDragMaxPx = 0;
+  #elasticMaxPx = 0;
+  #elasticRangeRect = null;
+  #elasticHostWidth = 0;
+  #numberPointerId = null;
+  #numberPointerStartX = 0;
+  #numberPointerStartY = 0;
+  #numberPointerStartValue = 0;
+  #isNumberScrubbing = false;
+  #suppressNumberClick = false;
+  #numberClickResetTimer = 0;
+  #boundHandleInput = null;
+  #boundHandleChange = null;
+  #boundPointerDown = this.#handlePointerDown.bind(this);
+  #boundPointerMove = this.#handlePointerMove.bind(this);
+  #boundPointerUp = this.#handlePointerUp.bind(this);
+  #boundNumberPointerDown = this.#handleNumberPointerDown.bind(this);
+  #boundNumberPointerMove = this.#handleNumberPointerMove.bind(this);
+  #boundNumberPointerEnd = this.#handleNumberPointerEnd.bind(this);
+  #boundWheel = this.#handleWheel.bind(this);
+  #boundKeyDown = this.#handleKeyDown.bind(this);
+  #boundClick = this.#handleClick.bind(this);
+
+  static get observedAttributes() {
+    return ["label", "units", "value", "disabled", "step", "precision", "min", "max"];
+  }
+
+  connectedCallback() {
+    if (!this.#surface) this.#initialize();
+    this.#syncLabel();
+    this.#syncDisabled();
+    this.#syncInputAttributes();
+    this.#syncValueFromHost();
+    this.#bindEvents();
+    figLabConnectPropskitResetMenu(this);
+    this.#observer?.disconnect();
+    this.#observer = new MutationObserver((mutations) => {
+      let syncInput = false;
+      for (const mutation of mutations) {
+        if (mutation.type !== "attributes") continue;
+        const name = mutation.attributeName;
+        if (
+          !PropskitWheel.#RESERVED_ATTRS.has(name) &&
+          !PropskitWheel.observedAttributes.includes(name) &&
+          !name?.startsWith("data-")
+        ) {
+          syncInput = true;
+        }
+      }
+      if (syncInput) this.#syncInputAttributes();
+    });
+    this.#observer.observe(this, { attributes: true });
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = new ResizeObserver((entries) => {
+      const rect = entries.at(-1)?.contentRect;
+      if (rect) this.#setWheelSize(rect.width, rect.height);
+    });
+    this.#resizeObserver.observe(this.#surface);
+    this.#queueWheelLayout();
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#resizeObserver?.disconnect();
+    if (this.#layoutFrame) cancelAnimationFrame(this.#layoutFrame);
+    this.#layoutFrame = 0;
+    this.#stopKeyboardAnimation();
+    this.#unbindEvents();
+    this.#stopDrag();
+    figLabDisconnectPropskitResetMenu(this);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#surface) return;
+    if (name === "label") this.#syncLabel();
+    if (name === "disabled") this.#syncDisabled();
+    if (name === "value" && !this.#isDragging) {
+      this.#syncValueFromHost();
+    }
+    if (name === "units" || name === "step" || name === "precision") {
+      this.#syncInputAttributes();
+      this.#queueWheelLayout();
+    }
+    if (name === "min" || name === "max") {
+      this.#syncInputAttributes();
+      this.#commitValue(this.#numericValue());
+    }
+  }
+
+  #initialize() {
+    this.#initialValue = this.getAttribute("value") ?? "0";
+    const initialChildren = Array.from(this.childNodes).filter(
+      (node) =>
+        node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()),
+    );
+    const customLabel = initialChildren.find(
+      (node) => node.nodeType === Node.ELEMENT_NODE && node.matches("label"),
+    );
+
+    const surface = figLabCreateElement("div", {
+      className: "propskit-wheel-surface",
+    });
+    const wheel = figLabCreateElement("div", {
+      className: "propskit-wheel-wheel",
+      tabindex: "0",
+      role: "spinbutton",
+    });
+    const svg = figLabCreateSvgElement("svg", {
+      className: "propskit-wheel-wheel-svg",
+      "aria-hidden": "true",
+    });
+    const label = customLabel || document.createElement("label");
+    const input = document.createElement("fig-input-number");
+    const labelId = figLabUniqueId("propskit-wheel-label");
+    label.id = labelId;
+    wheel.setAttribute("aria-labelledby", labelId);
+
+    const handle = figLabCreateElement("div", {
+      className: "propskit-wheel-handle",
+    });
+    wheel.append(svg);
+    surface.append(wheel, handle, label, input);
+    this.#surface = surface;
+    this.#wheel = wheel;
+    this.#svg = svg;
+    this.#label = label;
+    this.#input = input;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.replaceChildren(surface);
+
+    const metricProbe = document.createElement("div");
+    metricProbe.setAttribute("aria-hidden", "true");
+    metricProbe.style.cssText =
+      "position:absolute;visibility:hidden;pointer-events:none;left:0;top:0";
+    const maxEl = document.createElement("div");
+    maxEl.style.height = "var(--propskit-wheel-tick-height)";
+    const minEl = document.createElement("div");
+    minEl.style.height = "var(--propskit-wheel-tick-height-min)";
+    const maxWidthEl = document.createElement("div");
+    maxWidthEl.style.width = "var(--propskit-wheel-tick-width)";
+    const minWidthEl = document.createElement("div");
+    minWidthEl.style.width = "var(--propskit-wheel-tick-width-min)";
+    const insetEl = document.createElement("div");
+    insetEl.style.width = "var(--propskit-wheel-tick-inset)";
+    metricProbe.append(maxEl, minEl, maxWidthEl, minWidthEl, insetEl);
+    surface.append(metricProbe);
+    this.#tickMetricProbe = {
+      maxEl,
+      minEl,
+      maxWidthEl,
+      minWidthEl,
+      insetEl,
+    };
+
+    for (const node of initialChildren) {
+      if (node === customLabel) continue;
+      input.appendChild(node);
+    }
+
+    this.#ensureTickPath();
+  }
+
+  #ensureTickPath() {
+    if (!this.#svg || this.#tickPath) return;
+    this.#tickPath = figLabCreateSvgElement("path", {
+      className: "propskit-wheel-tick",
+    });
+    this.#svg.append(this.#tickPath);
+  }
+
+  #readTickMetrics() {
+    if (this.#tickMetrics) return this.#tickMetrics;
+    this.#tickMetrics = {
+      maxH: this.#tickMetricProbe?.maxEl.getBoundingClientRect().height || 8,
+      minH: this.#tickMetricProbe?.minEl.getBoundingClientRect().height || 4,
+      maxW:
+        this.#tickMetricProbe?.maxWidthEl.getBoundingClientRect().width || 2,
+      minW:
+        this.#tickMetricProbe?.minWidthEl.getBoundingClientRect().width || 1,
+      inset: this.#tickMetricProbe?.insetEl.getBoundingClientRect().width || 0,
+    };
+    return this.#tickMetrics;
+  }
+
+  #units() {
+    const raw = (this.getAttribute("units") || "").trim();
+    const normalized = raw.toLowerCase();
+    if (
+      normalized === "ms" ||
+      normalized === "millisecond" ||
+      normalized === "milliseconds"
+    ) {
+      return "ms";
+    }
+    if (
+      normalized === "s" ||
+      normalized === "second" ||
+      normalized === "seconds"
+    ) {
+      return "s";
+    }
+    return raw;
+  }
+
+  #defaultStep() {
+    const units = this.#units();
+    if (units === "s") return 0.1;
+    if (units === "ms") return 100;
+    return 1;
+  }
+
+  #defaultPrecision() {
+    return this.#units() === "s" ? 2 : 0;
+  }
+
+  #step() {
+    if (this.hasAttribute("step")) {
+      const parsed = Number(this.getAttribute("step"));
+      if (parsed > 0) return parsed;
+    }
+    return this.#defaultStep();
+  }
+
+  #precision() {
+    if (this.hasAttribute("precision")) {
+      const parsed = Number(this.getAttribute("precision"));
+      if (Number.isInteger(parsed) && parsed >= 0) return parsed;
+    }
+    return this.#defaultPrecision();
+  }
+
+  #numericValue() {
+    const parsed = Number(this.getAttribute("value") ?? this.#input?.value ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  #parseBound(name) {
+    if (!this.hasAttribute(name)) return null;
+    const raw = this.getAttribute(name);
+    if (raw === null || raw.trim() === "") return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  #boundMin() {
+    return this.#parseBound("min");
+  }
+
+  #boundMax() {
+    return this.#parseBound("max");
+  }
+
+  #writeBound(name, nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.removeAttribute(name);
+      return;
+    }
+    const parsed = Number(nextValue);
+    if (!Number.isFinite(parsed)) {
+      this.removeAttribute(name);
+      return;
+    }
+    this.setAttribute(name, String(parsed));
+  }
+
+  #clamp(value) {
+    let next = value;
+    const min = this.#boundMin();
+    const max = this.#boundMax();
+    if (min !== null) next = Math.max(min, next);
+    if (max !== null) next = Math.min(max, next);
+    return next;
+  }
+
+  #snap(value) {
+    const step = this.#step();
+    if (step <= 0) return value;
+    const base = this.#boundMin() ?? 0;
+    const snapped = Math.round((value - base) / step) * step + base;
+    return Number(snapped.toPrecision(15));
+  }
+
+  #commitValue(value, { snap = false, emit = null } = {}) {
+    let next = snap ? this.#snap(value) : value;
+    next = this.#clamp(next);
+    const asString = String(next);
+    if (this.getAttribute("value") !== asString) {
+      this.setAttribute("value", asString);
+    }
+    if (this.#input?.getAttribute("value") !== asString) {
+      this.#input?.setAttribute("value", asString);
+    }
+    this.#syncWheelAria(next);
+    this.#queueWheelLayout();
+    if (emit) {
+      this.dispatchEvent(
+        new CustomEvent(emit, {
+          detail: next,
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        }),
+      );
+    }
+  }
+
+  #syncValueFromHost() {
+    const value = this.#numericValue();
+    const clamped = this.#clamp(value);
+    if (clamped !== value) {
+      this.#commitValue(clamped);
+      return;
+    }
+    const asString = String(value);
+    if (this.#input?.getAttribute("value") !== asString) {
+      this.#input?.setAttribute("value", asString);
+    }
+    this.#syncWheelAria(value);
+    this.#queueWheelLayout();
+  }
+
+  #syncWheelAria(value = this.#numericValue()) {
+    if (!this.#wheel) return;
+    const units = this.#units();
+    const min = this.#boundMin();
+    const max = this.#boundMax();
+    this.#wheel.setAttribute("aria-valuenow", String(value));
+    this.#wheel.setAttribute(
+      "aria-valuetext",
+      units
+        ? `${value} ${
+            units === "s" ? "seconds" : units === "ms" ? "milliseconds" : units
+          }`
+        : String(value),
+    );
+    if (min === null) this.#wheel.removeAttribute("aria-valuemin");
+    else this.#wheel.setAttribute("aria-valuemin", String(min));
+    if (max === null) this.#wheel.removeAttribute("aria-valuemax");
+    else this.#wheel.setAttribute("aria-valuemax", String(max));
+  }
+
+  #syncLabel() {
+    if (!this.#label) return;
+    if (this.#hasCustomLabel) return;
+    if (!this.hasAttribute("label")) {
+      this.#label.textContent = "Value";
+      return;
+    }
+    this.#label.textContent = this.getAttribute("label") ?? "";
+  }
+
+  #syncDisabled() {
+    const disabled = figLabBooleanAttribute(this, "disabled");
+    this.#input?.toggleAttribute("disabled", disabled);
+    if (!this.#wheel) return;
+    if (disabled) {
+      this.setAttribute("aria-disabled", "true");
+      this.#wheel.setAttribute("tabindex", "-1");
+      this.#wheel.setAttribute("aria-disabled", "true");
+    } else {
+      this.removeAttribute("aria-disabled");
+      this.#wheel.setAttribute("tabindex", "0");
+      this.#wheel.removeAttribute("aria-disabled");
+    }
+  }
+
+  #getForwardedInputAttrNames() {
+    return this.getAttributeNames().filter(
+      (name) =>
+        !PropskitWheel.#RESERVED_ATTRS.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncInputAttributes() {
+    if (!this.#input) return;
+    const inputAttrs = this.#getForwardedInputAttrNames();
+    const nextManaged = new Set(inputAttrs);
+    for (const attrName of this.#managedInputAttrs) {
+      if (!nextManaged.has(attrName)) this.#input.removeAttribute(attrName);
+    }
+    for (const attrName of inputAttrs) {
+      this.#input.setAttribute(attrName, this.getAttribute(attrName) ?? "");
+    }
+    const units = this.#units();
+    if (units) this.#input.setAttribute("units", units);
+    else this.#input.removeAttribute("units");
+    nextManaged.add("units");
+    if (!this.hasAttribute("step")) {
+      this.#input.setAttribute("step", String(this.#defaultStep()));
+      nextManaged.add("step");
+    }
+    if (!this.hasAttribute("precision")) {
+      this.#input.setAttribute("precision", String(this.#defaultPrecision()));
+      nextManaged.add("precision");
+    }
+    this.#managedInputAttrs = nextManaged;
+    this.#syncWheelAria();
+  }
+
+  #setWheelSize(width, height) {
+    if (!this.#svg || width < 1 || height < 1) return;
+    if (width === this.#wheelWidth && height === this.#wheelHeight) return;
+    this.#wheelWidth = width;
+    this.#wheelHeight = height;
+    this.#tickMetrics = null;
+    this.#svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    this.#svg.setAttribute("width", String(width));
+    this.#svg.setAttribute("height", String(height));
+    this.#queueWheelLayout();
+  }
+
+  #queueWheelLayout() {
+    if (this.#layoutFrame) return;
+    this.#layoutFrame = requestAnimationFrame(() => {
+      if (!this.isConnected) {
+        this.#layoutFrame = 0;
+        return;
+      }
+      if (this.#wheelWidth < 1 || this.#wheelHeight < 1) {
+        const rect = this.#wheel?.getBoundingClientRect();
+        if (rect) this.#setWheelSize(rect.width, rect.height);
+      }
+      this.#layoutWheel();
+      this.#layoutFrame = 0;
+    });
+  }
+
+  #layoutWheel() {
+    if (!this.#tickPath) return;
+    const width = this.#wheelWidth;
+    const height = this.#wheelHeight;
+    if (width < 1 || height < 1) return;
+
+    const value = this.#visualValue ?? this.#numericValue();
+    const tickStep = 360 / PropskitWheel.#TICK_COUNT;
+    const step = this.#step();
+    const base = this.#boundMin() ?? 0;
+    const offsetDeg = ((value - base) / step) * tickStep;
+    const k = PropskitWheel.#PERSPECTIVE_K;
+    const cx = width / 2;
+    const cy = height / 2;
+
+    const { maxH, minH, maxW, minW, inset } = this.#readTickMetrics();
+    const drawableWidth = Math.max(0, width - inset * 2);
+    const radius = drawableWidth * 0.42;
+    const fov = PropskitWheel.#HALF_FOV_DEG;
+    const visibleHalf = Math.max(drawableWidth / 2, 1);
+    const commands = [];
+
+    for (let index = 0; index < PropskitWheel.#TICK_COUNT; index += 1) {
+      let theta = offsetDeg + index * tickStep;
+      theta = ((((theta + 180) % 360) + 360) % 360) - 180;
+      if (theta < -fov || theta >= fov) continue;
+      const rad = (theta * Math.PI) / 180;
+      const x = cx + (radius * Math.sin(rad)) / (1 - k * Math.cos(rad));
+      const t = Math.min(1, Math.abs(x - cx) / Math.max(visibleHalf, 1));
+      const taper = Math.cos(t * Math.PI * 0.5);
+      const visualH = minH + (maxH - minH) * taper;
+      const visualW = minW + (maxW - minW) * taper;
+      const halfH = visualH / 2;
+      const halfW = visualW / 2;
+      const top = cy - halfH;
+      const bottom = cy + halfH;
+      const left = x - halfW;
+      const right = x + halfW;
+      commands.push(
+        `M ${x} ${top}` +
+          ` Q ${right} ${top} ${right} ${top + halfW}` +
+          ` V ${bottom - halfW}` +
+          ` Q ${right} ${bottom} ${x} ${bottom}` +
+          ` Q ${left} ${bottom} ${left} ${bottom - halfW}` +
+          ` V ${top + halfW}` +
+          ` Q ${left} ${top} ${x} ${top} Z`,
+      );
+    }
+    this.#tickPath.setAttribute("d", commands.join(" "));
+  }
+
+  #bindEvents() {
+    this.#boundHandleInput ??= this.#forwardInputEvent.bind(this, "input");
+    this.#boundHandleChange ??= this.#forwardInputEvent.bind(this, "change");
+    this.#input?.addEventListener("input", this.#boundHandleInput);
+    this.#input?.addEventListener("change", this.#boundHandleChange);
+    this.#surface?.addEventListener("pointerdown", this.#boundPointerDown);
+    this.addEventListener("pointerdown", this.#boundNumberPointerDown, {
+      capture: true,
+    });
+    this.#wheel?.addEventListener("wheel", this.#boundWheel, { passive: false });
+    this.#wheel?.addEventListener("keydown", this.#boundKeyDown);
+    this.addEventListener("click", this.#boundClick, true);
+  }
+
+  #unbindEvents() {
+    this.#input?.removeEventListener("input", this.#boundHandleInput);
+    this.#input?.removeEventListener("change", this.#boundHandleChange);
+    this.#surface?.removeEventListener("pointerdown", this.#boundPointerDown);
+    this.removeEventListener("pointerdown", this.#boundNumberPointerDown, {
+      capture: true,
+    });
+    this.#wheel?.removeEventListener("wheel", this.#boundWheel);
+    this.#wheel?.removeEventListener("keydown", this.#boundKeyDown);
+    this.removeEventListener("click", this.#boundClick, true);
+    this.#stopNumberTracking();
+    clearTimeout(this.#numberClickResetTimer);
+    this.#numberClickResetTimer = 0;
+    window.removeEventListener("pointermove", this.#boundPointerMove);
+    window.removeEventListener("pointerup", this.#boundPointerUp);
+    window.removeEventListener("pointercancel", this.#boundPointerUp);
+  }
+
+  #forwardInputEvent(type, event) {
+    event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    const raw =
+      event instanceof CustomEvent && event.detail !== undefined
+        ? event.detail
+        : this.#input?.value;
+    const parsed = Number(raw);
+    const next = Number.isFinite(parsed) ? parsed : this.#numericValue();
+    this.#commitValue(next, { emit: type });
+  }
+
+  #handleClick(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-number, fig-menu")
+    ) {
+      if (
+        this.#suppressNumberClick &&
+        event.target.closest("fig-input-number")
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.#suppressNumberClick = false;
+      }
+      return;
+    }
+    this.#wheel?.focus();
+  }
+
+  #handlePointerDown(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    if (event.button !== 0) return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-number, fig-menu")
+    ) {
+      return;
+    }
+    event.preventDefault();
+    this.#stopKeyboardAnimation();
+    this.#isDragging = true;
+    this.#dragPointerId = event.pointerId;
+    this.#dragStartX = event.clientX;
+    this.#dragStartValue = this.#numericValue();
+    this.#startElasticPull();
+    this.setAttribute("data-active", "");
+    document.body.classList.add(PropskitWheel.#DRAGGING_BODY_CLASS);
+    this.#wheel?.focus();
+    this.#surface?.setPointerCapture?.(event.pointerId);
+    window.addEventListener("pointermove", this.#boundPointerMove);
+    window.addEventListener("pointerup", this.#boundPointerUp);
+    window.addEventListener("pointercancel", this.#boundPointerUp);
+  }
+
+  #handlePointerMove(event) {
+    if (!this.#isDragging) return;
+    if (this.#dragPointerId !== null && event.pointerId !== this.#dragPointerId) {
+      return;
+    }
+    this.#updateDrag(event.clientX, event.shiftKey ? 10 : 1);
+  }
+
+  #updateDrag(clientX, speed = 1) {
+    const width = this.#wheel?.clientWidth || 1;
+    const visibleSteps =
+      PropskitWheel.#TICK_COUNT *
+      ((PropskitWheel.#HALF_FOV_DEG * 2) / 360);
+    const visibleUnits = this.#step() * visibleSteps;
+    const delta =
+      (clientX - this.#dragStartX) * (visibleUnits / width) * speed;
+    const rawValue = this.#clamp(this.#dragStartValue + delta);
+    this.#visualValue = rawValue;
+    this.#commitValue(rawValue, {
+      snap: true,
+      emit: "input",
+    });
+    this.#updateElasticPull(clientX);
+  }
+
+  #handlePointerUp(event) {
+    if (!this.#isDragging) return;
+    if (this.#dragPointerId !== null && event.pointerId !== this.#dragPointerId) {
+      return;
+    }
+    if (this.#numericValue() !== this.#dragStartValue) {
+      this.#commitValue(this.#numericValue(), { snap: true, emit: "change" });
+    }
+    this.#stopDrag();
+  }
+
+  #stopDrag() {
+    this.#isDragging = false;
+    this.#dragPointerId = null;
+    this.#visualValue = null;
+    this.removeAttribute("data-active");
+    document.body.classList.remove(PropskitWheel.#DRAGGING_BODY_CLASS);
+    this.#resetElasticPull();
+    window.removeEventListener("pointermove", this.#boundPointerMove);
+    window.removeEventListener("pointerup", this.#boundPointerUp);
+    window.removeEventListener("pointercancel", this.#boundPointerUp);
+    this.#queueWheelLayout();
+  }
+
+  #handleNumberPointerDown(event) {
+    if (
+      event.button !== 0 ||
+      event.altKey ||
+      figLabBooleanAttribute(this, "disabled") ||
+      !(event.target instanceof Element)
+    ) {
+      return;
+    }
+    const input = event.target.closest("fig-input-number input");
+    if (!input || input === document.activeElement) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    this.#stopNumberTracking();
+    this.#numberPointerId = event.pointerId;
+    this.#numberPointerStartX = event.clientX;
+    this.#numberPointerStartY = event.clientY;
+    this.#numberPointerStartValue = this.#numericValue();
+    window.addEventListener("pointermove", this.#boundNumberPointerMove);
+    window.addEventListener("pointerup", this.#boundNumberPointerEnd, {
+      once: true,
+    });
+    window.addEventListener("pointercancel", this.#boundNumberPointerEnd, {
+      once: true,
+    });
+    window.addEventListener("blur", this.#boundNumberPointerEnd, {
+      once: true,
+    });
+  }
+
+  #handleNumberPointerMove(event) {
+    if (event.pointerId !== this.#numberPointerId) return;
+    if (event.buttons === 0) {
+      this.#handleNumberPointerEnd(event);
+      return;
+    }
+    if (!this.#isNumberScrubbing) {
+      const distance = Math.hypot(
+        event.clientX - this.#numberPointerStartX,
+        event.clientY - this.#numberPointerStartY,
+      );
+      if (distance < 4) return;
+      this.#stopKeyboardAnimation();
+      this.#isNumberScrubbing = true;
+      this.setAttribute("data-number-scrubbing", "");
+      this.#isDragging = true;
+      this.#dragPointerId = event.pointerId;
+      this.#dragStartX = this.#numberPointerStartX;
+      this.#dragStartValue = this.#numberPointerStartValue;
+      this.#startElasticPull();
+      this.setAttribute("data-active", "");
+      document.body.classList.add(PropskitWheel.#DRAGGING_BODY_CLASS);
+      this.#wheel?.focus();
+    }
+    this.#updateDrag(event.clientX, event.shiftKey ? 10 : 1);
+  }
+
+  #handleNumberPointerEnd(event) {
+    if (
+      event?.pointerId !== undefined &&
+      this.#numberPointerId !== null &&
+      event.pointerId !== this.#numberPointerId
+    ) {
+      return;
+    }
+    const wasScrubbing = this.#isNumberScrubbing;
+    this.#stopNumberTracking();
+    if (wasScrubbing) {
+      this.#commitValue(this.#numericValue(), { snap: true, emit: "change" });
+      this.#stopDrag();
+      this.#suppressNumberClick = true;
+      clearTimeout(this.#numberClickResetTimer);
+      this.#numberClickResetTimer = window.setTimeout(() => {
+        this.#suppressNumberClick = false;
+        this.#numberClickResetTimer = 0;
+      }, 0);
+      requestAnimationFrame(() => this.#wheel?.focus());
+      return;
+    }
+    this.#input?.querySelector("input")?.focus();
+  }
+
+  #stopNumberTracking() {
+    window.removeEventListener("pointermove", this.#boundNumberPointerMove);
+    window.removeEventListener("pointerup", this.#boundNumberPointerEnd);
+    window.removeEventListener("pointercancel", this.#boundNumberPointerEnd);
+    window.removeEventListener("blur", this.#boundNumberPointerEnd);
+    this.#numberPointerId = null;
+    this.#isNumberScrubbing = false;
+    this.removeAttribute("data-number-scrubbing");
+  }
+
+  #startElasticPull() {
+    this.#resetElasticPull();
+    if (this.getAttribute("elastic") === "false") return;
+    this.#handleDragMaxPx = this.#readCssLength(
+      "--propskit-wheel-handle-drag-max",
+    );
+    this.#elasticMaxPx = this.#readCssLength(
+      "--propskit-wheel-elastic-distance",
+    );
+    const rect = this.#wheel?.getBoundingClientRect();
+    if (rect) {
+      this.#elasticRangeRect = {
+        left: rect.left,
+        right: rect.right,
+      };
+    }
+    this.#elasticHostWidth = this.getBoundingClientRect().width;
+  }
+
+  #readCssLength(propertyName) {
+    let raw = getComputedStyle(this)
+      .getPropertyValue(propertyName)
+      .trim();
+    if (raw.includes("var(") || !raw.endsWith("px")) {
+      const probe = document.createElement("div");
+      Object.assign(probe.style, {
+        position: "absolute",
+        visibility: "hidden",
+        pointerEvents: "none",
+        width: `var(${propertyName})`,
+      });
+      this.appendChild(probe);
+      raw = getComputedStyle(probe).width;
+      probe.remove();
+    }
+    const value = Number.parseFloat(raw);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+  }
+
+  #updateElasticPull(pointerX) {
+    if (!this.#handleDragMaxPx && !this.#elasticMaxPx) {
+      this.#clearElasticPull();
+      return;
+    }
+    const dragDelta = pointerX - this.#dragStartX;
+    if (!dragDelta) {
+      this.#clearElasticPull();
+      return;
+    }
+    const offset =
+      this.#handleDragMaxPx *
+      Math.tanh(
+        dragDelta / Math.max(1, this.#handleDragMaxPx * 3),
+      );
+    this.dataset.elasticDragging = "true";
+    this.style.setProperty(
+      "--propskit-wheel-handle-drag-offset",
+      `${offset}px`,
+    );
+
+    const rect = this.#elasticRangeRect;
+    const overshoot = rect
+      ? pointerX < rect.left
+        ? pointerX - rect.left
+        : pointerX > rect.right
+          ? pointerX - rect.right
+          : 0
+      : 0;
+    if (!overshoot || !this.#elasticMaxPx) {
+      this.style.removeProperty("--propskit-wheel-elastic-scale");
+      this.style.removeProperty("--propskit-wheel-elastic-origin");
+      return;
+    }
+    const stretch = Math.min(this.#elasticMaxPx, Math.abs(overshoot) * 0.5);
+    const scale = this.#elasticHostWidth
+      ? (this.#elasticHostWidth + stretch) / this.#elasticHostWidth
+      : 1;
+    this.style.setProperty("--propskit-wheel-elastic-scale", `${scale}`);
+    this.style.setProperty(
+      "--propskit-wheel-elastic-origin",
+      overshoot < 0 ? "right center" : "left center",
+    );
+  }
+
+  #resetElasticPull() {
+    this.#clearElasticPull();
+    this.#handleDragMaxPx = 0;
+    this.#elasticMaxPx = 0;
+    this.#elasticRangeRect = null;
+    this.#elasticHostWidth = 0;
+  }
+
+  #clearElasticPull() {
+    this.removeAttribute("data-elastic-dragging");
+    this.style.removeProperty("--propskit-wheel-handle-drag-offset");
+    this.style.removeProperty("--propskit-wheel-elastic-scale");
+    this.style.removeProperty("--propskit-wheel-elastic-origin");
+  }
+
+  #handleWheel(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    event.preventDefault();
+    const direction = event.deltaY === 0 ? Math.sign(event.deltaX) : Math.sign(event.deltaY);
+    if (!direction) return;
+    const multiplier = event.shiftKey ? 10 : 1;
+    this.#commitValue(this.#numericValue() + this.#step() * multiplier * direction, {
+      snap: true,
+      emit: "input",
+    });
+    this.#commitValue(this.#numericValue(), { emit: "change" });
+  }
+
+  #handleKeyDown(event) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest("fig-input-number")
+    ) {
+      return;
+    }
+    if (event.key === "Home") {
+      const min = this.#boundMin();
+      if (min === null) return;
+      event.preventDefault();
+      this.#commitValue(min, { snap: true, emit: "input" });
+      this.#commitValue(this.#numericValue(), { emit: "change" });
+      return;
+    }
+    if (event.key === "End") {
+      const max = this.#boundMax();
+      if (max === null) return;
+      event.preventDefault();
+      this.#commitValue(max, { snap: true, emit: "input" });
+      this.#commitValue(this.#numericValue(), { emit: "change" });
+      return;
+    }
+    const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
+    if (!keys.includes(event.key)) return;
+    event.preventDefault();
+    const direction =
+      event.key === "ArrowRight" || event.key === "ArrowUp" ? 1 : -1;
+    const multiplier = event.shiftKey ? 10 : 1;
+    const previousValue = this.#numericValue();
+    this.#commitValue(previousValue + this.#step() * multiplier * direction, {
+      snap: true,
+      emit: "input",
+    });
+    this.#animateKeyboardMovement(
+      previousValue,
+      this.#numericValue(),
+      direction,
+      multiplier,
+    );
+    this.#commitValue(this.#numericValue(), { emit: "change" });
+  }
+
+  #animateKeyboardMovement(from, to, direction, multiplier) {
+    if (
+      from === to ||
+      globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      this.#stopKeyboardAnimation();
+      return;
+    }
+
+    if (this.#keyboardAnimationFrame) {
+      cancelAnimationFrame(this.#keyboardAnimationFrame);
+      this.#keyboardAnimationFrame = 0;
+    }
+    clearTimeout(this.#keyboardSettleTimer);
+    this.#keyboardSettleTimer = 0;
+    this.removeAttribute("data-keyboard-settling");
+    const visualFrom = this.#visualValue ?? from;
+    const handleFrom =
+      Number.parseFloat(
+        this.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
+      ) || 0;
+    const duration = multiplier > 1 ? 120 : 90;
+    const startedAt = performance.now();
+    const animateHandle = this.getAttribute("elastic") !== "false";
+    this.setAttribute("data-keyboard-moving", "");
+
+    const frame = (now) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      this.#visualValue = visualFrom + (to - visualFrom) * progress;
+      if (animateHandle) {
+        const eased = Math.sin((progress * Math.PI) / 2);
+        const offset = handleFrom + (direction * 4 - handleFrom) * eased;
+        this.style.setProperty(
+          "--propskit-wheel-handle-drag-offset",
+          `${offset}px`,
+        );
+      }
+      this.#layoutWheel();
+
+      if (progress < 1) {
+        this.#keyboardAnimationFrame = requestAnimationFrame(frame);
+        return;
+      }
+
+      this.#keyboardAnimationFrame = 0;
+      this.#visualValue = null;
+      this.removeAttribute("data-keyboard-moving");
+      this.setAttribute("data-keyboard-settling", "");
+      this.style.removeProperty("--propskit-wheel-handle-drag-offset");
+      this.#keyboardSettleTimer = window.setTimeout(() => {
+        this.removeAttribute("data-keyboard-settling");
+        this.#keyboardSettleTimer = 0;
+      }, 140);
+      this.#queueWheelLayout();
+    };
+
+    this.#keyboardAnimationFrame = requestAnimationFrame(frame);
+  }
+
+  #stopKeyboardAnimation() {
+    if (this.#keyboardAnimationFrame) {
+      cancelAnimationFrame(this.#keyboardAnimationFrame);
+      this.#keyboardAnimationFrame = 0;
+    }
+    clearTimeout(this.#keyboardSettleTimer);
+    this.#keyboardSettleTimer = 0;
+    this.#visualValue = null;
+    this.removeAttribute("data-keyboard-moving");
+    this.removeAttribute("data-keyboard-settling");
+    this.style.removeProperty("--propskit-wheel-handle-drag-offset");
+    if (this.isConnected) this.#queueWheelLayout();
+  }
+
+  get value() {
+    return this.getAttribute("value") ?? "0";
+  }
+
+  set value(nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.#commitValue(0);
+      return;
+    }
+    const parsed = Number(nextValue);
+    this.#commitValue(Number.isFinite(parsed) ? parsed : 0);
+  }
+
+  get min() {
+    return this.#boundMin();
+  }
+
+  set min(nextValue) {
+    this.#writeBound("min", nextValue);
+  }
+
+  get max() {
+    return this.#boundMax();
+  }
+
+  set max(nextValue) {
+    this.#writeBound("max", nextValue);
+  }
+
+  get defaultValue() {
+    return this.getAttribute("default") ?? this.#initialValue ?? "0";
+  }
+
+  get isDefault() {
+    return figLabPropskitValuesEqual(this.value, this.defaultValue);
+  }
+
+  resetToDefault() {
+    const parsed = Number(this.defaultValue);
+    const value = Number.isFinite(parsed) ? parsed : 0;
+    this.#commitValue(value);
+    figLabEmitPropskitReset(this, value);
+  }
+
+  focus(options) {
+    this.#wheel?.focus(options);
+  }
+}
+figLabDefineElement("propskit-wheel", PropskitWheel);
 
 /* Canvas Control */
 class FigCanvasControl extends HTMLElement {

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.32]
+
+### Added
+
+- Added `propskit-wheel`, a generic numeric scrubber with projected ticks, arbitrary and time units, bounds, keyboard and pointer controls, and elastic edge feedback.
+- Added `variant="minimal"` to full-surface PropsKit controls.
+
+### Changed
+
+- PropsKit rows now use the 40px large layout by default and support `size="small"` for the compact layout; groups propagate compact sizing while explicit `size="large"` remains compatible.
+- PropsKit number fields retain the standard 24px input height, use the default background while focused or active, and show scrub cursors before text editing.
+- Refined PropsKit hue and opacity slider fills, borders, and adaptive text contrast.
+- Playground attachment examples now use bundled gradient previews and expose the new PropsKit size, variant, group, and wheel APIs.
+
 ## [8.9.31]
 
 ### Added

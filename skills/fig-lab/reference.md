@@ -10,6 +10,13 @@ Playground: `/propskit/lab#{id}`. Rules: `playground/src/lib/attributeRules.ts`.
 - Slider: double-click also resets
 - Equality helpers treat booleans and JSON objects
 
+## Propskit sizes
+
+PropsKit rows are large by default; explicit `size="large"` remains supported.
+`propskit-group size="small"` applies `size="small"` to nested controls that do
+not define their own size and removes generated sizes when the group returns to
+the default size.
+
 ## `propskit-select`
 
 Observed: `label`, `direction`, `aria-label`, `options`, `value`.

@@ -231,6 +231,27 @@ const ungroupedLabSections: Section[] = [
 </div>`,
       },
       {
+        id: "minimal",
+        name: "Minimal",
+        markup: `<div class="prop-panel">
+  <propskit-group name="Minimal controls" open>
+    <propskit-color variant="minimal" label="Fill" value="#0D99FF" default="#0D99FF"></propskit-color>
+    <propskit-fill variant="minimal" label="Paint" value='{"type":"solid","color":"#9747FF","alpha":1}' default='{"type":"solid","color":"#9747FF","alpha":1}'></propskit-fill>
+    <propskit-gradient variant="minimal" label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
+    <propskit-text variant="minimal" label="Name" value="Layer 1" default="Layer 1"></propskit-text>
+    <propskit-select variant="minimal" label="Blend" value="Normal" default="Normal" options="Normal,Multiply,Screen"></propskit-select>
+    <propskit-slider variant="minimal" label="Amount" type="range" value="50" default="50" min="0" max="100"></propskit-slider>
+    <propskit-slider variant="minimal" label="Hue" type="hue" value="180" default="180" min="0" max="360" units="°"></propskit-slider>
+    <propskit-slider variant="minimal" label="Opacity" type="opacity" value="80" default="80" min="0" max="100" units="%"></propskit-slider>
+    <propskit-slider variant="minimal" label="Offset" type="delta" value="50" default="50" min="0" max="100"></propskit-slider>
+    <propskit-slider variant="minimal" label="Step" type="stepper" value="50" default="50" min="0" max="100" step="10"></propskit-slider>
+    <propskit-number variant="minimal" label="Corner" value="8" default="8" min="0" max="100" units="px"></propskit-number>
+    <propskit-position variant="minimal" label="Position" x="50" y="50" units="percent"></propskit-position>
+    <propskit-switch variant="minimal" label="Visible" checked default="true"></propskit-switch>
+  </propskit-group>
+</div>`,
+      },
+      {
         id: "no-reset",
         name: "No reset",
         markup: `<div class="prop-panel">
@@ -331,6 +352,42 @@ const ungroupedLabSections: Section[] = [
     ],
   },
   {
+    id: "propskit-wheel",
+    name: "Wheel",
+    description:
+      "A generic full-surface numeric scrubber with a projected tick wheel and optional units. These examples use time values.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <propskit-wheel label="Time" units="seconds" default="0"></propskit-wheel>
+</div>`,
+      },
+      {
+        id: "seconds",
+        name: "Seconds",
+        markup: `<div class="prop-panel">
+  <propskit-wheel label="Duration" value="1.5" default="0" units="seconds"></propskit-wheel>
+</div>`,
+      },
+      {
+        id: "small",
+        name: "Small",
+        markup: `<div class="prop-panel">
+  <propskit-wheel label="Delay" value="240" default="0" units="milliseconds" size="small"></propskit-wheel>
+</div>`,
+      },
+      {
+        id: "bounded",
+        name: "Min / max",
+        markup: `<div class="prop-panel">
+  <propskit-wheel label="Delay" value="240" default="0" min="0" max="1000" units="milliseconds"></propskit-wheel>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "propskit-position",
     name: "Position",
     description:
@@ -415,7 +472,7 @@ const ungroupedLabSections: Section[] = [
         id: "default",
         name: "Attachment",
         markup: `<div class="prop-panel">
-  <fig-attachment value="reference" name="reference.png" src="https://picsum.photos/128.webp?random=51"></fig-attachment>
+  <fig-attachment value="reference" name="reference.png" src="/images/attachments/gradient-01.webp"></fig-attachment>
 </div>`,
       },
       {
@@ -423,8 +480,8 @@ const ungroupedLabSections: Section[] = [
         name: "Multiple",
         markup: `<div class="prop-panel">
   <fig-attachments aria-label="Prompt attachments">
-    <fig-attachment value="layout" name="layout.png" src="https://picsum.photos/128.webp?random=52"></fig-attachment>
-    <fig-attachment value="texture" name="texture.jpg" src="https://picsum.photos/128.webp?random=53"></fig-attachment>
+    <fig-attachment value="layout" name="layout.png" src="/images/attachments/gradient-02.webp"></fig-attachment>
+    <fig-attachment value="texture" name="texture.jpg" src="/images/attachments/gradient-03.webp"></fig-attachment>
     <fig-attachment value="notes" name="notes.pdf"></fig-attachment>
   </fig-attachments>
 </div>`,
@@ -502,7 +559,7 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-ai-context aria-label="Prompt context">
     <fig-attachments aria-label="Prompt attachments">
-      <fig-attachment value="reference" name="reference.png" src="https://picsum.photos/128.webp?random=54"></fig-attachment>
+      <fig-attachment value="reference" name="reference.png" src="/images/attachments/gradient-04.webp"></fig-attachment>
       <fig-attachment value="brief" name="brief.pdf"></fig-attachment>
     </fig-attachments>
   </fig-ai-context>
@@ -601,7 +658,7 @@ const ungroupedLabSections: Section[] = [
         id: "conversation",
         name: "Conversation",
         markup: `<div class="prop-panel">
-  <fig-chat-message from="user">Create a settings panel for my plugin.<fig-attachments aria-label="Message attachments"><fig-attachment value="settings" name="settings.png" src="https://picsum.photos/128.webp?random=55" removable="false"></fig-attachment><fig-attachment value="reference" name="reference.png" src="https://picsum.photos/128.webp?random=56" removable="false"></fig-attachment></fig-attachments><fig-avatar src="https://i.pravatar.cc/128?img=12" name="Rogie King"></fig-avatar></fig-chat-message>
+  <fig-chat-message from="user">Create a settings panel for my plugin.<fig-attachments aria-label="Message attachments"><fig-attachment value="settings" name="settings.png" src="/images/attachments/gradient-05.webp" removable="false"></fig-attachment><fig-attachment value="reference" name="reference.png" src="/images/attachments/gradient-06.webp" removable="false"></fig-attachment></fig-attachments><fig-avatar src="https://i.pravatar.cc/128?img=12" name="Rogie King"></fig-avatar></fig-chat-message>
   <fig-chat-message from="agent">I’ll create a compact settings panel using FigUI3 fields and controls.</fig-chat-message>
   <fig-chat-message from="agent"><fig-shimmer><span>Thinking&hellip;</span></fig-shimmer></fig-chat-message>
 </div>`,

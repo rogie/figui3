@@ -40,11 +40,12 @@ Full-surface `fig-field` wrappers. Prefer these over hand-rolled label+control r
 
 Shared:
 
-- `label`, `direction` (`horizontal` default for most), `size` (`""` | `large`), `disabled`
+- `label`, `direction` (`horizontal` default for most), `size` (`""` | `small`; `large` remains an alias for the default), `disabled`
 - `default` — reset target (may differ from initial `value`)
 - Right-click **Reset** menu; `resetToDefault()`
 - `propskit-slider` also double-click resets
 - Forward remaining attrs to the inner control
+- Rows are large by default; `propskit-group size="small"` applies compact sizing to children without an authored size
 
 | Tag | Playground | Inner control | Notes |
 |---|---|---|---|
