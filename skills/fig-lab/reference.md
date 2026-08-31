@@ -35,9 +35,9 @@ Inner `fig-slider` still needs `min` / `max` / `step` / `value` as forwarded att
 
 Standalone interactive SVG tick + handle scrubber in the lab bundle.
 
-- Attrs: `value` (default `0`), `step` (default `1`), optional `min`/`max`, `elastic` (default true), `disabled`
+- Attrs: `value` (default `0`), `step` (default `1`), optional `min`/`max`, `spin` (default true), `elastic` (default true), `disabled`
 - Props: `value`, `min`, `max`, `step`
-- Methods: `focus()`, `beginScrub()`, `updateScrub()`, `endScrub()`
+- Methods: `focus()`, `spinTo(value)`, `beginScrub()`, `updateScrub()`, `endScrub()`
 - Events: numeric `input` and `change`, bubbling and composed
 - ARIA value text is numeric
 - Not supported: `units`, `text`, `precision`, `label`, `size`, `variant`, `default`/reset, or a number field
@@ -49,7 +49,7 @@ Standalone interactive SVG tick + handle scrubber in the lab bundle.
 
 ## `propskit-wheel`
 
-Composes `fig-input-wheel` with an optional `fig-input-number`. It retains `label`, `text`, `precision`, `units`, `default`/reset, `size`, and `variant`. Units and time aliases are wrapper/number-field behavior: normalized `s` defaults to step `0.1` and precision `2`, normalized `ms` defaults to step `100` and precision `0`, and other units default to step `1` and precision `0`. The wrapper applies the effective step and unit-aware `aria-valuetext` to the child wheel, but never sets child `units`.
+Composes `fig-input-wheel` with an optional `fig-input-number`. It retains `label`, `text`, `spin`, `precision`, `units`, `default`/reset, `size`, and `variant`. Set `spin="false"` to update the value and number field while leaving wheel ticks stationary. Units and time aliases are wrapper/number-field behavior: normalized `s` defaults to step `0.1` and precision `2`, normalized `ms` defaults to step `100` and precision `0`, and other units default to step `1` and precision `0`. The wrapper applies the effective step and unit-aware `aria-valuetext` to the child wheel, but never sets child `units`.
 
 ```html
 <propskit-wheel label="Duration" value="1.5" units="seconds"></propskit-wheel>

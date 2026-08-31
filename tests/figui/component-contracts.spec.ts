@@ -1249,6 +1249,62 @@ test.describe("fig-input-wheel", () => {
     expect(state.tickFill).not.toBe("none");
   });
 
+  test("spin false keeps ticks stationary while values keep updating", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <fig-input-wheel value="0" step="0.25" spin="false"></fig-input-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement & {
+        value: string;
+      };
+      const tickPath = wheel.querySelector(".fig-input-wheel-tick")!;
+      const initialPath = tickPath.getAttribute("d");
+      const events: number[] = [];
+      wheel.addEventListener("input", (event) => {
+        events.push((event as CustomEvent<number>).detail);
+      });
+
+      wheel.value = "0.5";
+      await new Promise(requestAnimationFrame);
+      const staticPath = tickPath.getAttribute("d");
+      wheel.focus();
+      wheel.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          bubbles: true,
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      const interactionPath = tickPath.getAttribute("d");
+      const interactionValue = wheel.value;
+
+      wheel.value = "0.5";
+      wheel.removeAttribute("spin");
+      await new Promise(requestAnimationFrame);
+      return {
+        initialPath,
+        staticPath,
+        interactionPath,
+        interactionValue,
+        spinningPath: tickPath.getAttribute("d"),
+        events,
+      };
+    });
+
+    expect(state.staticPath).toBe(state.initialPath);
+    expect(state.interactionPath).toBe(state.initialPath);
+    expect(Number(state.interactionValue)).toBeGreaterThan(0.5);
+    expect(state.events.length).toBeGreaterThan(0);
+    expect(state.spinningPath).not.toBe(state.initialPath);
+  });
+
   test("coalesces tick rendering into one path update per frame", async ({
     page,
   }) => {
@@ -2261,6 +2317,134 @@ test.describe("propskit-wheel", () => {
     expect(state.blankLayout.rightInset).toBeCloseTo(state.standardInset, 0);
     expect(state.omittedLayout.handleCenterDelta).toBeCloseTo(0, 5);
     expect(state.blankLayout.handleCenterDelta).toBeCloseTo(0, 5);
+  });
+
+  test("spin false updates only the value and number presentation", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel value="0" step="0.25" spin="false"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+        value: string;
+      };
+      const wheel = host.querySelector("fig-input-wheel") as HTMLElement & {
+        value: string;
+      };
+      const number = host.querySelector("fig-input-number")!;
+      const tickPath = wheel.querySelector(".fig-input-wheel-tick")!;
+      const initialPath = tickPath.getAttribute("d");
+
+      host.value = "0.5";
+      await new Promise(requestAnimationFrame);
+      const afterHostWrite = {
+        host: host.value,
+        wheel: wheel.value,
+        number: number.getAttribute("value"),
+        path: tickPath.getAttribute("d"),
+      };
+      wheel.focus();
+      wheel.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          bubbles: true,
+        }),
+      );
+      await new Promise(requestAnimationFrame);
+      return {
+        childSpin: wheel.getAttribute("spin"),
+        initialPath,
+        afterHostWrite,
+        afterInteraction: {
+          host: host.value,
+          wheel: wheel.value,
+          number: number.getAttribute("value"),
+          path: tickPath.getAttribute("d"),
+        },
+      };
+    });
+
+    expect(state.childSpin).toBe("false");
+    expect(state.afterHostWrite).toEqual({
+      host: "0.5",
+      wheel: "0.5",
+      number: "0.5",
+      path: state.initialPath,
+    });
+    expect(Number(state.afterInteraction.host)).toBeGreaterThan(0.5);
+    expect(state.afterInteraction.wheel).toBe(state.afterInteraction.host);
+    expect(state.afterInteraction.number).toBe(state.afterInteraction.host);
+    expect(state.afterInteraction.path).toBe(state.initialPath);
+  });
+
+  test("number input visibly spins ticks when enabled", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel value="0" step="1"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+        value: string;
+      };
+      const wheel = host.querySelector("fig-input-wheel") as HTMLElement & {
+        value: string;
+      };
+      const tickPath = wheel.querySelector(".fig-input-wheel-tick")!;
+      const number = host.querySelector("fig-input-number")!;
+      const input = number.querySelector("input") as HTMLInputElement;
+      const initialPath = tickPath.getAttribute("d");
+      const centerDelta = () => {
+        const centerX = wheel.clientWidth / 2;
+        const tickXs = [
+          ...(tickPath.getAttribute("d") ?? "").matchAll(/M ([^ ]+) /g),
+        ].map((match) => Number(match[1]));
+        return Math.min(...tickXs.map((x) => Math.abs(x - centerX)));
+      };
+
+      input.value = "4";
+      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      let movingPath = initialPath;
+      let moving = false;
+      let movingCenterDelta = 0;
+      for (let frame = 0; frame < 8; frame += 1) {
+        await new Promise(requestAnimationFrame);
+        movingPath = tickPath.getAttribute("d");
+        moving = wheel.hasAttribute(
+          "data-fig-input-wheel-keyboard-moving",
+        );
+        movingCenterDelta = centerDelta();
+        if (moving && movingCenterDelta > 0.1) break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 180));
+      return {
+        hostValue: host.value,
+        wheelValue: wheel.value,
+        numberValue: number.getAttribute("value"),
+        initialPath,
+        movingPath,
+        moving,
+        movingCenterDelta,
+        settledCenterDelta: centerDelta(),
+      };
+    });
+
+    expect(state.hostValue).toBe("4");
+    expect(state.wheelValue).toBe("4");
+    expect(state.numberValue).toBe("4");
+    expect(state.moving).toBe(true);
+    expect(state.movingPath).not.toBe(state.initialPath);
+    expect(state.movingCenterDelta).toBeGreaterThan(0.1);
+    expect(state.settledCenterDelta).toBeCloseTo(0, 5);
   });
 
   test("text false removes and reinserts the number while expanding the wheel", async ({

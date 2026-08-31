@@ -691,6 +691,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
+    spin: {
+      label: "Spin",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     text: {
       label: "Text",
       type: "boolean",
@@ -707,6 +713,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     step: { label: "Step", type: "number", min: 0.001, max: 1000, step: 0.001 },
     elastic: {
       label: "Elastic",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    spin: {
+      label: "Spin",
       type: "boolean",
       boolMode: "string",
       defaultChecked: true,

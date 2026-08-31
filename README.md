@@ -568,12 +568,13 @@ A standalone interactive SVG tick-and-handle control for scrubbing numeric value
 |---|---|---|---|
 | `value` | number | `0` | Current numeric value |
 | `step` | number | `1` | Scrub increment |
+| `spin` | boolean/string | `true` | Keep ticks synchronized to `value`; set `"false"` to leave them stationary |
 | `min` | number | — | Inclusive lower bound; omit for no minimum |
 | `max` | number | — | Inclusive upper bound; omit for no maximum |
 | `elastic` | boolean/string | `true` | Resisted drag and spring return; set `"false"` to disable |
 | `disabled` | boolean | `false` | Disable interaction |
 
-The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-valuetext` is numeric. `focus()`, `beginScrub()`, `updateScrub()`, and `endScrub()` expose the interaction lifecycle for imperative integrations.
+The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-valuetext` is numeric. `spinTo(value)` animates to a new value when `spin` is enabled. `focus()`, `beginScrub()`, `updateScrub()`, and `endScrub()` expose the interaction lifecycle for imperative integrations.
 
 **Events:** numeric `input` while scrubbing and `change` on commit. Both bubble across shadow boundaries.
 
@@ -603,6 +604,7 @@ Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that
 | `step` | number | `1`; `0.1` (`s`) / `100` (`ms`) | Drag, keyboard, and mouse wheel increment |
 | `precision` | number | `0`; `2` (`s`) / `0` (`ms`) | Displayed decimal places on the optional number field |
 | `elastic` | boolean/string | `true` | Resisted handle movement, edge stretch, and spring return while scrubbing; set `"false"` to disable |
+| `spin` | boolean/string | `true` | Keep wheel ticks synchronized to `value`; set `"false"` to update only the value and number field |
 | `text` | boolean/string | `true` | Include the editable `fig-input-number`; set `"false"` for only `fig-input-wheel` |
 | `size` | string | default | Set to `"small"` for the compact layout |
 | `default` | number/string | initial `value` | Right-click reset target |
@@ -615,6 +617,7 @@ Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that
 <propskit-wheel label="Duration" value="1.5" default="0" units="seconds"></propskit-wheel>
 <propskit-wheel label="Delay" value="240" default="0" min="0" max="1000" units="ms"></propskit-wheel>
 <propskit-wheel label="Frames" value="12" text="false"></propskit-wheel>
+<propskit-wheel label="Amount" value="12" spin="false"></propskit-wheel>
 ```
 
 ---

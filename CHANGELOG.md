@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.34]
+
+### Added
+
+- Added `spin` to `fig-input-wheel` and `propskit-wheel`; set `spin="false"` to update values while keeping ticks stationary.
+- Added `fig-input-wheel.spinTo(value)` plus playground controls and a static-wheel example.
+
+### Fixed
+
+- Editing a `propskit-wheel` number field now visibly spins the wheel to the new value when spinning is enabled.
+
 ## [8.9.33]
 
 ### Added

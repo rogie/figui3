@@ -392,6 +392,13 @@ const ungroupedLabSections: Section[] = [
   <propskit-wheel label="" value="12" default="0" text="false"></propskit-wheel>
 </div>`,
       },
+      {
+        id: "static-wheel",
+        name: "Static wheel",
+        markup: `<div class="prop-panel">
+  <propskit-wheel label="Amount" value="12" default="0" spin="false"></propskit-wheel>
+</div>`,
+      },
     ],
   },
   {

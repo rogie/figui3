@@ -5552,6 +5552,7 @@ figLabDefineElement("propskit-slider", PropskitSlider);
  * @attr {number} min - Inclusive lower bound. Omitted = unbounded below.
  * @attr {number} max - Inclusive upper bound. Omitted = unbounded above.
  * @attr {number} step - Increment. Defaults to 1.
+ * @attr {boolean|string} spin - Keeps ticks synchronized to value. Defaults to true.
  * @attr {boolean|string} elastic - Enables resisted handle movement. Defaults to true.
  * @attr {boolean|string} disabled - Disables interaction and focus.
  * @fires input - Numeric composed event during interaction.
@@ -5598,6 +5599,7 @@ class FigInputWheel extends HTMLElement {
       "step",
       "min",
       "max",
+      "spin",
       "elastic",
     ];
   }
@@ -5637,6 +5639,7 @@ class FigInputWheel extends HTMLElement {
       this.#syncWheelAria();
       this.#queueWheelLayout();
     }
+    if (name === "spin") this.#queueWheelLayout();
     if (name === "min" || name === "max") {
       this.#commitValue(this.#numericValue());
     }
@@ -5865,7 +5868,10 @@ class FigInputWheel extends HTMLElement {
     const height = this.#wheelHeight;
     if (width < 1 || height < 1) return;
 
-    const value = this.#visualValue ?? this.#numericValue();
+    const value =
+      this.getAttribute("spin") === "false"
+        ? (this.#boundMin() ?? 0)
+        : (this.#visualValue ?? this.#numericValue());
     const tickStep = 360 / FigInputWheel.#TICK_COUNT;
     const step = this.#step();
     const base = this.#boundMin() ?? 0;
@@ -6186,7 +6192,13 @@ class FigInputWheel extends HTMLElement {
     this.#commitValue(this.#numericValue(), { emit: "change" });
   }
 
-  #animateKeyboardMovement(from, to, direction, multiplier) {
+  #animateKeyboardMovement(
+    from,
+    to,
+    direction,
+    multiplier,
+    animateHandle = true,
+  ) {
     if (
       from === to ||
       globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches
@@ -6209,13 +6221,14 @@ class FigInputWheel extends HTMLElement {
       ) || 0;
     const duration = multiplier > 1 ? 120 : 90;
     const startedAt = performance.now();
-    const animateHandle = this.getAttribute("elastic") !== "false";
+    const shouldAnimateHandle =
+      animateHandle && this.getAttribute("elastic") !== "false";
     this.setAttribute("data-fig-input-wheel-keyboard-moving", "");
 
     const frame = (now) => {
       const progress = Math.min(1, (now - startedAt) / duration);
       this.#visualValue = visualFrom + (to - visualFrom) * progress;
-      if (animateHandle) {
+      if (shouldAnimateHandle) {
         const eased = Math.sin((progress * Math.PI) / 2);
         const offset = handleFrom + (direction * 4 - handleFrom) * eased;
         this.style.setProperty(
@@ -6272,6 +6285,25 @@ class FigInputWheel extends HTMLElement {
     this.#commitValue(Number.isFinite(parsed) ? parsed : 0);
   }
 
+  spinTo(nextValue) {
+    const previousValue = this.#numericValue();
+    this.value = nextValue;
+    const value = this.#numericValue();
+    if (this.getAttribute("spin") === "false") {
+      this.#stopKeyboardAnimation();
+      return value;
+    }
+    const direction = Math.sign(value - previousValue);
+    this.#animateKeyboardMovement(
+      previousValue,
+      value,
+      direction,
+      Math.abs(value - previousValue) > this.#step() ? 10 : 1,
+      false,
+    );
+    return value;
+  }
+
   get min() {
     return this.#boundMin();
   }
@@ -6304,6 +6336,7 @@ figLabDefineElement("fig-input-wheel", FigInputWheel);
  * @attr {string} label - Field label. Defaults to "Value".
  * @attr {string} default - Reset target.
  * @attr {number} precision - Number field display decimals.
+ * @attr {boolean|string} spin - Keeps wheel ticks synchronized to value. Defaults to true.
  * @attr {boolean|string} text - Shows the number field. Defaults to true.
  * @attr {string} size - Set to "small" for compact sizing.
  * @attr {string} variant - Set to "minimal" for compact chrome.
@@ -6317,6 +6350,7 @@ class PropskitWheel extends HTMLElement {
     "disabled",
     "variant",
     "elastic",
+    "spin",
     "text",
     "default",
     "class",
@@ -6337,6 +6371,7 @@ class PropskitWheel extends HTMLElement {
       "min",
       "max",
       "elastic",
+      "spin",
       "text",
     ];
   }
@@ -6421,9 +6456,16 @@ class PropskitWheel extends HTMLElement {
     if (name === "label") this.#syncLabel();
     if (name === "text") this.#syncText();
     if (
-      ["units", "value", "disabled", "step", "min", "max", "elastic"].includes(
-        name,
-      )
+      [
+        "units",
+        "value",
+        "disabled",
+        "step",
+        "min",
+        "max",
+        "elastic",
+        "spin",
+      ].includes(name)
     ) {
       this.#syncPrimitive();
     }
@@ -6500,7 +6542,7 @@ class PropskitWheel extends HTMLElement {
   #syncPrimitive() {
     if (!this.#wheel) return;
     this.#wheel.removeAttribute("units");
-    for (const name of ["min", "max", "elastic"]) {
+    for (const name of ["min", "max", "elastic", "spin"]) {
       this.#mirrorAttribute(name);
     }
     if (this.hasAttribute("step")) this.#mirrorAttribute("step");
@@ -6660,14 +6702,16 @@ class PropskitWheel extends HTMLElement {
     this.removeEventListener("click", this.#boundClick, true);
   }
 
-  #setSynchronizedValue(value) {
+  #setSynchronizedValue(value, { spin = false } = {}) {
     const parsed = Number(value);
     if (!this.#wheel) {
       const normalized = Number.isFinite(parsed) ? parsed : 0;
       this.setAttribute("value", String(normalized));
       return normalized;
     }
-    this.#wheel.value = Number.isFinite(parsed) ? parsed : 0;
+    const nextValue = Number.isFinite(parsed) ? parsed : 0;
+    if (spin) this.#wheel.spinTo(nextValue);
+    else this.#wheel.value = nextValue;
     const normalized = this.#wheel.value;
     if (this.getAttribute("value") !== normalized) {
       this.setAttribute("value", normalized);
@@ -6703,7 +6747,7 @@ class PropskitWheel extends HTMLElement {
       event instanceof CustomEvent && event.detail !== undefined
         ? event.detail
         : this.#input?.value;
-    const value = this.#setSynchronizedValue(raw);
+    const value = this.#setSynchronizedValue(raw, { spin: type === "input" });
     this.#emit(type, value);
   }
 
