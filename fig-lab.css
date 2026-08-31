@@ -1474,11 +1474,6 @@ propskit-slider {
 }
 
 fig-input-wheel {
-  --fig-input-wheel-elastic-distance: calc(var(--spacer-2) + 0.25rem);
-  --fig-input-wheel-elastic-scale: 1;
-  --fig-input-wheel-elastic-origin: left center;
-  --fig-input-wheel-elastic-transition: 0.28s
-    cubic-bezier(0.34, 1.56, 0.64, 1);
   --fig-input-wheel-handle-drag-max: 0.5rem;
   --fig-input-wheel-handle-drag-offset: 0px;
   --fig-input-wheel-handle-spring: 0.28s
@@ -1494,6 +1489,7 @@ fig-input-wheel {
   --fig-input-wheel-tick-fade: 1rem;
   --fig-input-wheel-tick-opacity: 0.5;
   --fig-input-wheel-tick-opacity-min: 0.1;
+  --fig-input-wheel-fast-tick-blur: 2px;
   --fig-input-wheel-handle-width: var(--spacer-1);
   --fig-input-wheel-handle-height: calc(
     var(--control-height) - var(--spacer-2)
@@ -1512,8 +1508,6 @@ fig-input-wheel {
   background-color: var(--figma-color-bg-secondary);
   outline: none;
   cursor: ew-resize;
-  transform-origin: var(--fig-input-wheel-elastic-origin);
-  transition: transform var(--fig-input-wheel-elastic-transition);
 
   &:focus-visible {
     outline: var(--figma-focus-outline);
@@ -1527,8 +1521,9 @@ fig-input-wheel {
 
   .fig-input-wheel-svg {
     display: block;
-    width: 100%;
+    width: calc(100% - var(--spacer-3));
     height: 100%;
+    margin-inline: var(--spacer-2);
     overflow: visible;
     color: var(--figma-color-icon-tertiary);
     mask-image: linear-gradient(
@@ -1545,6 +1540,7 @@ fig-input-wheel {
   .fig-input-wheel-tick {
     fill: currentColor;
     stroke: none;
+    transition: filter 0.12s ease-out;
   }
 
   .fig-input-wheel-handle {
@@ -1568,13 +1564,13 @@ fig-input-wheel {
       var(--handle-shadow);
   }
 
-  &[data-fig-input-wheel-elastic-dragging] {
-    transform: scaleX(var(--fig-input-wheel-elastic-scale));
+  &[data-fig-input-wheel-active] .fig-input-wheel-handle {
     transition: none;
+  }
 
-    .fig-input-wheel-handle {
-      transition: none;
-    }
+  &[data-fig-input-wheel-fast] .fig-input-wheel-tick {
+    filter: blur(var(--fig-input-wheel-fast-tick-blur));
+    transition: none;
   }
 
   &[data-fig-input-wheel-keyboard-moving] .fig-input-wheel-handle {
@@ -1587,6 +1583,7 @@ fig-input-wheel {
 }
 
 propskit-wheel {
+  --propskit-wheel-elastic-distance: calc(var(--spacer-2) + 0.25rem);
   --propskit-wheel-elastic-scale: 1;
   --propskit-wheel-elastic-origin: left center;
   --propskit-wheel-elastic-transition: 0.28s
@@ -1761,7 +1758,7 @@ body.fig-input-wheel-dragging * {
 
 @media (prefers-reduced-motion: reduce) {
   propskit-wheel,
-  fig-input-wheel,
+  fig-input-wheel .fig-input-wheel-tick,
   fig-input-wheel .fig-input-wheel-handle {
     transition: none;
   }

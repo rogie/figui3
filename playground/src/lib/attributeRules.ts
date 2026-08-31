@@ -711,12 +711,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     min: { label: "Min", type: "number", step: 1 },
     max: { label: "Max", type: "number", step: 1 },
     step: { label: "Step", type: "number", min: 0.001, max: 1000, step: 0.001 },
-    elastic: {
-      label: "Elastic",
-      type: "boolean",
-      boolMode: "string",
-      defaultChecked: true,
-    },
     spin: {
       label: "Spin",
       type: "boolean",

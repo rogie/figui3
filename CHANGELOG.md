@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.37]
+
+### Added
+
+- Fast `fig-input-wheel` scrubbing now applies a brief motion blur to its ticks.
+
+### Changed
+
+- `fig-input-wheel` keeps resisted handle pull without stretching its host; `propskit-wheel` retains optional elastic row stretching.
+- Doubled the horizontal inset around `fig-input-wheel` ticks.
+
 ## [8.9.36]
 
 ### Changed

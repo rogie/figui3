@@ -5553,7 +5553,6 @@ figLabDefineElement("propskit-slider", PropskitSlider);
  * @attr {number} max - Inclusive upper bound. Omitted = unbounded above.
  * @attr {number} step - Increment. Defaults to 1.
  * @attr {boolean|string} spin - Keeps ticks synchronized to value. Defaults to true.
- * @attr {boolean|string} elastic - Enables resisted handle movement. Defaults to true.
  * @attr {boolean|string} disabled - Disables interaction and focus.
  * @fires input - Numeric composed event during interaction.
  * @fires change - Numeric composed event on commit.
@@ -5562,6 +5561,8 @@ class FigInputWheel extends HTMLElement {
   static #TICK_COUNT = 33;
   static #HALF_FOV_DEG = 60;
   static #PERSPECTIVE_K = 0.55;
+  static #FAST_MOTION_THRESHOLD_PX_PER_MS = 1.5;
+  static #FAST_MOTION_TIMEOUT_MS = 80;
   static #DRAGGING_BODY_CLASS = "fig-input-wheel-dragging";
 
   #surface = null;
@@ -5583,9 +5584,9 @@ class FigInputWheel extends HTMLElement {
   #dragStartValue = 0;
   #visualValue = null;
   #handleDragMaxPx = 0;
-  #elasticMaxPx = 0;
-  #elasticRangeRect = null;
-  #elasticHostWidth = 0;
+  #motionLastX = null;
+  #motionLastTime = 0;
+  #motionBlurTimer = 0;
   #boundPointerDown = this.#handlePointerDown.bind(this);
   #boundPointerMove = this.#handlePointerMove.bind(this);
   #boundPointerUp = this.#handlePointerUp.bind(this);
@@ -5600,7 +5601,6 @@ class FigInputWheel extends HTMLElement {
       "min",
       "max",
       "spin",
-      "elastic",
     ];
   }
 
@@ -5960,7 +5960,8 @@ class FigInputWheel extends HTMLElement {
     this.#dragStartValue = Number.isFinite(requestedStart)
       ? this.#clamp(requestedStart)
       : this.#numericValue();
-    this.#startElasticPull();
+    this.#startTickMotionTracking(clientX);
+    this.#startHandlePull();
     this.setAttribute("data-fig-input-wheel-active", "");
     document.body.classList.add(FigInputWheel.#DRAGGING_BODY_CLASS);
     this.focus();
@@ -6006,13 +6007,19 @@ class FigInputWheel extends HTMLElement {
     const visibleUnits = this.#step() * visibleSteps;
     const delta =
       (clientX - this.#dragStartX) * (visibleUnits / width) * speed;
+    const previousVisualValue = this.#visualValue ?? this.#dragStartValue;
     const rawValue = this.#clamp(this.#dragStartValue + delta);
+    this.#updateTickMotionBlur(
+      clientX,
+      speed,
+      rawValue !== previousVisualValue,
+    );
     this.#visualValue = rawValue;
     this.#commitValue(rawValue, {
       snap: true,
       emit: "input",
     });
-    this.#updateElasticPull(clientX);
+    this.#updateHandlePull(clientX);
   }
 
   #handlePointerUp(event) {
@@ -6029,30 +6036,19 @@ class FigInputWheel extends HTMLElement {
     this.#visualValue = null;
     this.removeAttribute("data-fig-input-wheel-active");
     document.body.classList.remove(FigInputWheel.#DRAGGING_BODY_CLASS);
-    this.#resetElasticPull();
+    this.#stopTickMotionTracking();
+    this.#resetHandlePull();
     window.removeEventListener("pointermove", this.#boundPointerMove);
     window.removeEventListener("pointerup", this.#boundPointerUp);
     window.removeEventListener("pointercancel", this.#boundPointerUp);
     this.#queueWheelLayout();
   }
 
-  #startElasticPull() {
-    this.#resetElasticPull();
-    if (this.getAttribute("elastic") === "false") return;
+  #startHandlePull() {
+    this.#resetHandlePull();
     this.#handleDragMaxPx = this.#readCssLength(
       "--fig-input-wheel-handle-drag-max",
     );
-    this.#elasticMaxPx = this.#readCssLength(
-      "--fig-input-wheel-elastic-distance",
-    );
-    const rect = this.#wheel?.getBoundingClientRect();
-    if (rect) {
-      this.#elasticRangeRect = {
-        left: rect.left,
-        right: rect.right,
-      };
-    }
-    this.#elasticHostWidth = this.getBoundingClientRect().width;
   }
 
   #readCssLength(propertyName) {
@@ -6075,14 +6071,14 @@ class FigInputWheel extends HTMLElement {
     return Number.isFinite(value) ? Math.max(0, value) : 0;
   }
 
-  #updateElasticPull(pointerX) {
-    if (!this.#handleDragMaxPx && !this.#elasticMaxPx) {
-      this.#clearElasticPull();
+  #updateHandlePull(pointerX) {
+    if (!this.#handleDragMaxPx) {
+      this.#clearHandlePull();
       return;
     }
     const dragDelta = pointerX - this.#dragStartX;
     if (!dragDelta) {
-      this.#clearElasticPull();
+      this.#clearHandlePull();
       return;
     }
     const offset =
@@ -6090,49 +6086,60 @@ class FigInputWheel extends HTMLElement {
       Math.tanh(
         dragDelta / Math.max(1, this.#handleDragMaxPx * 3),
       );
-    this.setAttribute("data-fig-input-wheel-elastic-dragging", "");
     this.style.setProperty(
       "--fig-input-wheel-handle-drag-offset",
       `${offset}px`,
     );
+  }
 
-    const rect = this.#elasticRangeRect;
-    const overshoot = rect
-      ? pointerX < rect.left
-        ? pointerX - rect.left
-        : pointerX > rect.right
-          ? pointerX - rect.right
-          : 0
-      : 0;
-    if (!overshoot || !this.#elasticMaxPx) {
-      this.style.removeProperty("--fig-input-wheel-elastic-scale");
-      this.style.removeProperty("--fig-input-wheel-elastic-origin");
+  #resetHandlePull() {
+    this.#clearHandlePull();
+    this.#handleDragMaxPx = 0;
+  }
+
+  #clearHandlePull() {
+    this.style.removeProperty("--fig-input-wheel-handle-drag-offset");
+  }
+
+  #startTickMotionTracking(clientX) {
+    this.#stopTickMotionTracking();
+    this.#motionLastX = clientX;
+    this.#motionLastTime = performance.now();
+  }
+
+  #updateTickMotionBlur(clientX, speed, moved) {
+    const now = performance.now();
+    const elapsed = now - this.#motionLastTime;
+    const distance =
+      this.#motionLastX === null ? 0 : Math.abs(clientX - this.#motionLastX);
+    this.#motionLastX = clientX;
+    this.#motionLastTime = now;
+    const velocity =
+      elapsed > 0 ? (distance / elapsed) * Math.max(1, Math.abs(speed)) : 0;
+    if (
+      !moved ||
+      velocity < FigInputWheel.#FAST_MOTION_THRESHOLD_PX_PER_MS
+    ) {
+      this.#clearTickMotionBlur();
       return;
     }
-    const stretch = Math.min(this.#elasticMaxPx, Math.abs(overshoot) * 0.5);
-    const scale = this.#elasticHostWidth
-      ? (this.#elasticHostWidth + stretch) / this.#elasticHostWidth
-      : 1;
-    this.style.setProperty("--fig-input-wheel-elastic-scale", `${scale}`);
-    this.style.setProperty(
-      "--fig-input-wheel-elastic-origin",
-      overshoot < 0 ? "right center" : "left center",
-    );
+    this.toggleAttribute("data-fig-input-wheel-fast", true);
+    clearTimeout(this.#motionBlurTimer);
+    this.#motionBlurTimer = window.setTimeout(() => {
+      this.#clearTickMotionBlur();
+    }, FigInputWheel.#FAST_MOTION_TIMEOUT_MS);
   }
 
-  #resetElasticPull() {
-    this.#clearElasticPull();
-    this.#handleDragMaxPx = 0;
-    this.#elasticMaxPx = 0;
-    this.#elasticRangeRect = null;
-    this.#elasticHostWidth = 0;
+  #stopTickMotionTracking() {
+    this.#motionLastX = null;
+    this.#motionLastTime = 0;
+    this.#clearTickMotionBlur();
   }
 
-  #clearElasticPull() {
-    this.removeAttribute("data-fig-input-wheel-elastic-dragging");
-    this.style.removeProperty("--fig-input-wheel-handle-drag-offset");
-    this.style.removeProperty("--fig-input-wheel-elastic-scale");
-    this.style.removeProperty("--fig-input-wheel-elastic-origin");
+  #clearTickMotionBlur() {
+    clearTimeout(this.#motionBlurTimer);
+    this.#motionBlurTimer = 0;
+    this.removeAttribute("data-fig-input-wheel-fast");
   }
 
   #handleWheel(event) {
@@ -6221,8 +6228,7 @@ class FigInputWheel extends HTMLElement {
       ) || 0;
     const duration = multiplier > 1 ? 120 : 90;
     const startedAt = performance.now();
-    const shouldAnimateHandle =
-      animateHandle && this.getAttribute("elastic") !== "false";
+    const shouldAnimateHandle = animateHandle;
     this.setAttribute("data-fig-input-wheel-keyboard-moving", "");
 
     const frame = (now) => {
@@ -6336,6 +6342,7 @@ figLabDefineElement("fig-input-wheel", FigInputWheel);
  * @attr {string} label - Field label. Defaults to "Value".
  * @attr {string} default - Reset target.
  * @attr {number} precision - Number field display decimals.
+ * @attr {boolean|string} elastic - Enables resisted row stretching. Defaults to true.
  * @attr {boolean|string} spin - Keeps wheel ticks synchronized to value. Defaults to true.
  * @attr {boolean|string} text - Shows the number field. Defaults to true.
  * @attr {string} size - Set to "small" for compact sizing.
@@ -6382,9 +6389,12 @@ class PropskitWheel extends HTMLElement {
   #input = null;
   #hasCustomLabel = false;
   #observer = null;
-  #elasticObserver = null;
   #managedInputAttrs = new Set();
   #initialValue = null;
+  #elasticPointerId = null;
+  #elasticMaxPx = 0;
+  #elasticRangeRect = null;
+  #elasticHostWidth = 0;
   #numberPointerId = null;
   #numberPointerStartX = 0;
   #numberPointerStartY = 0;
@@ -6399,6 +6409,9 @@ class PropskitWheel extends HTMLElement {
   #boundNumberPointerDown = this.#handleNumberPointerDown.bind(this);
   #boundNumberPointerMove = this.#handleNumberPointerMove.bind(this);
   #boundNumberPointerEnd = this.#handleNumberPointerEnd.bind(this);
+  #boundElasticPointerDown = this.#handleElasticPointerDown.bind(this);
+  #boundElasticPointerMove = this.#handleElasticPointerMove.bind(this);
+  #boundElasticPointerEnd = this.#handleElasticPointerEnd.bind(this);
   #boundClick = this.#handleClick.bind(this);
 
   connectedCallback() {
@@ -6425,24 +6438,11 @@ class PropskitWheel extends HTMLElement {
       }
     });
     this.#observer.observe(this, { attributes: true });
-    this.#elasticObserver?.disconnect();
-    this.#elasticObserver = new MutationObserver(() => {
-      this.#syncElasticComposition();
-    });
-    if (this.#wheel) {
-      this.#elasticObserver.observe(this.#wheel, {
-        attributes: true,
-        attributeFilter: ["style", "data-fig-input-wheel-elastic-dragging"],
-      });
-    }
-    this.#syncElasticComposition();
   }
 
   disconnectedCallback() {
     this.#observer?.disconnect();
-    this.#elasticObserver?.disconnect();
-    this.#elasticObserver = null;
-    this.#clearElasticComposition();
+    this.#stopElasticTracking();
     this.#unbindEvents();
     this.#stopNumberTracking();
     clearTimeout(this.#numberClickResetTimer);
@@ -6455,6 +6455,9 @@ class PropskitWheel extends HTMLElement {
     if (oldValue === newValue || !this.#surface) return;
     if (name === "label") this.#syncLabel();
     if (name === "text") this.#syncText();
+    if (name === "elastic" && newValue === "false") {
+      this.#stopElasticTracking();
+    }
     if (
       [
         "units",
@@ -6542,7 +6545,7 @@ class PropskitWheel extends HTMLElement {
   #syncPrimitive() {
     if (!this.#wheel) return;
     this.#wheel.removeAttribute("units");
-    for (const name of ["min", "max", "elastic", "spin"]) {
+    for (const name of ["min", "max", "spin"]) {
       this.#mirrorAttribute(name);
     }
     if (this.hasAttribute("step")) this.#mirrorAttribute("step");
@@ -6560,34 +6563,6 @@ class PropskitWheel extends HTMLElement {
       this.#input?.setAttribute("value", normalized);
     }
     this.#syncPrimitiveAria();
-  }
-
-  #syncElasticComposition() {
-    if (!this.#wheel) return;
-    const active = this.#wheel.hasAttribute(
-      "data-fig-input-wheel-elastic-dragging",
-    );
-    if (!active) {
-      this.#clearElasticComposition();
-      return;
-    }
-    this.toggleAttribute("data-propskit-wheel-elastic-dragging", true);
-    this.style.setProperty(
-      "--propskit-wheel-elastic-scale",
-      this.#wheel.style.getPropertyValue("--fig-input-wheel-elastic-scale") ||
-        "1",
-    );
-    this.style.setProperty(
-      "--propskit-wheel-elastic-origin",
-      this.#wheel.style.getPropertyValue("--fig-input-wheel-elastic-origin") ||
-        "left center",
-    );
-  }
-
-  #clearElasticComposition() {
-    this.removeAttribute("data-propskit-wheel-elastic-dragging");
-    this.style.removeProperty("--propskit-wheel-elastic-scale");
-    this.style.removeProperty("--propskit-wheel-elastic-origin");
   }
 
   #getForwardedInputAttrNames() {
@@ -6685,6 +6660,9 @@ class PropskitWheel extends HTMLElement {
     this.#wheel?.addEventListener("change", this.#boundPrimitiveChange);
     this.#input?.addEventListener("input", this.#boundNumberInput);
     this.#input?.addEventListener("change", this.#boundNumberChange);
+    this.addEventListener("pointerdown", this.#boundElasticPointerDown, {
+      capture: true,
+    });
     this.addEventListener("pointerdown", this.#boundNumberPointerDown, {
       capture: true,
     });
@@ -6696,6 +6674,9 @@ class PropskitWheel extends HTMLElement {
     this.#wheel?.removeEventListener("change", this.#boundPrimitiveChange);
     this.#input?.removeEventListener("input", this.#boundNumberInput);
     this.#input?.removeEventListener("change", this.#boundNumberChange);
+    this.removeEventListener("pointerdown", this.#boundElasticPointerDown, {
+      capture: true,
+    });
     this.removeEventListener("pointerdown", this.#boundNumberPointerDown, {
       capture: true,
     });
@@ -6751,6 +6732,127 @@ class PropskitWheel extends HTMLElement {
     this.#emit(type, value);
   }
 
+  #handleElasticPointerDown(event) {
+    if (
+      event.button !== 0 ||
+      figLabBooleanAttribute(this, "disabled") ||
+      this.getAttribute("elastic") === "false" ||
+      !(event.target instanceof Element) ||
+      event.target.closest("fig-input-number") ||
+      !event.target.closest("fig-input-wheel")
+    ) {
+      return;
+    }
+    this.#startElasticTracking(event.pointerId);
+  }
+
+  #startElasticTracking(pointerId) {
+    this.#stopElasticTracking();
+    if (this.getAttribute("elastic") === "false") return;
+    this.#elasticPointerId = pointerId;
+    this.#elasticMaxPx = this.#readCssLength(
+      "--propskit-wheel-elastic-distance",
+    );
+    const rangeRect = this.#wheel?.getBoundingClientRect();
+    if (rangeRect) {
+      this.#elasticRangeRect = {
+        left: rangeRect.left,
+        right: rangeRect.right,
+      };
+    }
+    this.#elasticHostWidth = this.getBoundingClientRect().width;
+    window.addEventListener("pointermove", this.#boundElasticPointerMove, {
+      passive: true,
+    });
+    window.addEventListener("pointerup", this.#boundElasticPointerEnd);
+    window.addEventListener("pointercancel", this.#boundElasticPointerEnd);
+    window.addEventListener("blur", this.#boundElasticPointerEnd);
+  }
+
+  #handleElasticPointerMove(event) {
+    if (event.pointerId !== this.#elasticPointerId) return;
+    if (event.buttons === 0) {
+      this.#handleElasticPointerEnd(event);
+      return;
+    }
+    this.#updateElasticStretch(event.clientX);
+  }
+
+  #handleElasticPointerEnd(event) {
+    if (
+      event?.pointerId !== undefined &&
+      this.#elasticPointerId !== null &&
+      event.pointerId !== this.#elasticPointerId
+    ) {
+      return;
+    }
+    this.#stopElasticTracking();
+  }
+
+  #updateElasticStretch(pointerX) {
+    const rect = this.#elasticRangeRect;
+    if (!rect || !this.#elasticMaxPx) {
+      this.#clearElasticStretch();
+      return;
+    }
+    const overshoot =
+      pointerX < rect.left
+        ? pointerX - rect.left
+        : pointerX > rect.right
+          ? pointerX - rect.right
+          : 0;
+    if (!overshoot) {
+      this.#clearElasticStretch();
+      return;
+    }
+    const stretch = Math.min(this.#elasticMaxPx, Math.abs(overshoot) * 0.5);
+    const scale = this.#elasticHostWidth
+      ? (this.#elasticHostWidth + stretch) / this.#elasticHostWidth
+      : 1;
+    this.toggleAttribute("data-propskit-wheel-elastic-dragging", true);
+    this.style.setProperty("--propskit-wheel-elastic-scale", String(scale));
+    this.style.setProperty(
+      "--propskit-wheel-elastic-origin",
+      overshoot < 0 ? "right center" : "left center",
+    );
+  }
+
+  #readCssLength(propertyName) {
+    let raw = getComputedStyle(this).getPropertyValue(propertyName).trim();
+    if (raw.includes("var(") || !raw.endsWith("px")) {
+      const probe = document.createElement("div");
+      Object.assign(probe.style, {
+        position: "absolute",
+        visibility: "hidden",
+        pointerEvents: "none",
+        width: `var(${propertyName})`,
+      });
+      this.appendChild(probe);
+      raw = getComputedStyle(probe).width;
+      probe.remove();
+    }
+    const value = Number.parseFloat(raw);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+  }
+
+  #stopElasticTracking() {
+    window.removeEventListener("pointermove", this.#boundElasticPointerMove);
+    window.removeEventListener("pointerup", this.#boundElasticPointerEnd);
+    window.removeEventListener("pointercancel", this.#boundElasticPointerEnd);
+    window.removeEventListener("blur", this.#boundElasticPointerEnd);
+    this.#elasticPointerId = null;
+    this.#elasticMaxPx = 0;
+    this.#elasticRangeRect = null;
+    this.#elasticHostWidth = 0;
+    this.#clearElasticStretch();
+  }
+
+  #clearElasticStretch() {
+    this.removeAttribute("data-propskit-wheel-elastic-dragging");
+    this.style.removeProperty("--propskit-wheel-elastic-scale");
+    this.style.removeProperty("--propskit-wheel-elastic-origin");
+  }
+
   #handleNumberPointerDown(event) {
     if (
       event.button !== 0 ||
@@ -6795,6 +6897,7 @@ class PropskitWheel extends HTMLElement {
       if (distance < 4) return;
       this.#isNumberScrubbing = true;
       this.setAttribute("data-number-scrubbing", "");
+      this.#startElasticTracking(event.pointerId);
       this.#wheel?.beginScrub({
         clientX: this.#numberPointerStartX,
         pointerId: event.pointerId,
@@ -6802,6 +6905,7 @@ class PropskitWheel extends HTMLElement {
       });
     }
     this.#wheel?.updateScrub(event);
+    this.#updateElasticStretch(event.clientX);
   }
 
   #handleNumberPointerEnd(event) {
@@ -6813,6 +6917,7 @@ class PropskitWheel extends HTMLElement {
       return;
     }
     const wasScrubbing = this.#isNumberScrubbing;
+    this.#stopElasticTracking();
     this.#stopNumberTracking();
     if (wasScrubbing) {
       this.#wheel?.endScrub();

@@ -571,7 +571,6 @@ A standalone interactive SVG tick-and-handle control for scrubbing numeric value
 | `spin` | boolean/string | `true` | Keep ticks synchronized to `value`; set `"false"` to leave them stationary |
 | `min` | number | — | Inclusive lower bound; omit for no minimum |
 | `max` | number | — | Inclusive upper bound; omit for no maximum |
-| `elastic` | boolean/string | `true` | Resisted drag and spring return; set `"false"` to disable |
 | `disabled` | boolean | `false` | Disable interaction |
 
 The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-valuetext` is numeric. `spinTo(value)` animates to a new value when `spin` is enabled. `focus()`, `beginScrub()`, `updateScrub()`, and `endScrub()` expose the interaction lifecycle for imperative integrations.
@@ -603,7 +602,7 @@ Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that
 | `max` | number | — | Inclusive upper bound. Omit for no maximum |
 | `step` | number | `1`; `0.1` (`s`) / `100` (`ms`) | Drag, keyboard, and mouse wheel increment |
 | `precision` | number | `0`; `2` (`s`) / `0` (`ms`) | Displayed decimal places on the optional number field |
-| `elastic` | boolean/string | `true` | Resisted handle movement, edge stretch, and spring return while scrubbing; set `"false"` to disable |
+| `elastic` | boolean/string | `true` | Stretch the composed row past the wheel edges; set `"false"` to disable row stretch. The handle still pulls |
 | `spin` | boolean/string | `true` | Keep wheel ticks synchronized to `value`; set `"false"` to update only the value and number field |
 | `text` | boolean/string | `true` | Include the editable `fig-input-number`; set `"false"` for only `fig-input-wheel` |
 | `size` | string | default | Set to `"small"` for the compact layout |

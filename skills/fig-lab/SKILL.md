@@ -58,7 +58,7 @@ Shared:
 | `propskit-text` | `#propskit-text` | `fig-input-text` | `type`, `readonly` |
 | `propskit-number` | `#propskit-number` | `fig-input-number` | `min`, `max`, `step`, `precision`, `units`, `steppers` |
 | `propskit-slider` | `#propskit-slider` | `fig-slider` | `type` range/hue/delta/stepper/opacity; `elastic` default true |
-| `propskit-wheel` | `#propskit-wheel` | `fig-input-wheel` + optional `fig-input-number` | Labeled scrubber with `label`, `text`, `spin`, `precision`, `units`, `default`/reset, `size`, and `variant`; units stay on the wrapper/number field and the effective step is applied to the wheel |
+| `propskit-wheel` | `#propskit-wheel` | `fig-input-wheel` + optional `fig-input-number` | Labeled scrubber with `label`, `text`, `spin`, `elastic` row stretch, `precision`, `units`, `default`/reset, `size`, and `variant`; units stay on the wrapper/number field and the effective step is applied to the wheel |
 | `propskit-position` | `#propskit-position` | two numbers | `x`, `y`, `units="percent"` |
 | `propskit-color-point` | `#propskit-color-point` | color + position | JSON `value`; `collapsible`, `open` |
 | `propskit-point-radius` | `#propskit-point-radius` | position + radius | JSON `value` |
@@ -98,7 +98,7 @@ Rich select (requires editor):
 |---|---|---|
 | `fig-canvas-control` | `#canvas-control` | Overlay on a positioned parent. `type`: `point` (default), `color`, `point-radius`, `point-radius-angle`, `point-point`. `value` JSON `{x,y,radius?,angle?,x2?,y2?}`. `snapping="modifier\|true\|false"`, `name`, `tooltips`, `color` |
 | `fig-input-angle` | `#angle` | Dial + optional text. `text`, `dial` default true, `rotations`, `min`/`max`/`units` |
-| `fig-input-wheel` | `#input-wheel` | Standalone SVG tick + handle scrubber. Numeric `value`, optional `min`/`max`, `step` default 1, `spin` and `elastic` default true, `disabled` |
+| `fig-input-wheel` | `#input-wheel` | Standalone SVG tick + handle scrubber. Numeric `value`, optional `min`/`max`, `step` default 1, `spin` default true, `disabled` |
 | `fig-reorder` | `#reorder` | `display:contents` wrapper; drag-reorders **direct children**. `axis="vertical\|horizontal"`, `handle` CSS selector when rows contain nested controls. Event: `reorder` `{ oldIndex, newIndex, item }` |
 
 ```html

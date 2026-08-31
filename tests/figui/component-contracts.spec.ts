@@ -1191,6 +1191,13 @@ test.describe("fig-input-wheel", () => {
             ((trackRect?.left ?? 0) + (trackRect?.right ?? 0)) / 2,
         );
       };
+      const wheelRect = omitted.getBoundingClientRect();
+      const svgRect = omitted
+        .querySelector(".fig-input-wheel-svg")!
+        .getBoundingClientRect();
+      const svgStyle = getComputedStyle(
+        omitted.querySelector(".fig-input-wheel-svg")!,
+      );
       return {
         value: Number(omitted.value),
         step: omitted.step,
@@ -1218,10 +1225,11 @@ test.describe("fig-input-wheel", () => {
           omitted.querySelector(".fig-input-wheel-handle")?.getBoundingClientRect()
             .height ?? 0,
         handleCenterDelta: handleCenterDelta(),
+        svgInsetLeft: svgRect.left - wheelRect.left,
+        svgInsetRight: wheelRect.right - svgRect.right,
+        svgMarginInlineStart: Number.parseFloat(svgStyle.marginInlineStart),
         wheelMask:
-          getComputedStyle(
-            omitted.querySelector(".fig-input-wheel-svg")!,
-          ).maskImage,
+          svgStyle.maskImage,
         tickFill: tickPath ? getComputedStyle(tickPath).fill : "",
       };
     });
@@ -1243,6 +1251,8 @@ test.describe("fig-input-wheel", () => {
     expect(state.maxTickWidth).toBeLessThanOrEqual(2);
     expect(state.maxTickVisualHeight).toBeCloseTo(state.handleHeight - 4, 1);
     expect(state.handleCenterDelta).toBeCloseTo(0, 5);
+    expect(state.svgInsetLeft).toBeCloseTo(state.svgMarginInlineStart, 5);
+    expect(state.svgInsetRight).toBeCloseTo(state.svgMarginInlineStart, 5);
     expect(state.wheelMask).not.toBe("none");
     expect(state.wheelMask).toContain("rgba(0, 0, 0, 0.1)");
     expect(state.wheelMask).toContain("rgba(0, 0, 0, 0.5)");
@@ -1966,7 +1976,7 @@ test.describe("fig-input-wheel", () => {
     expect(state.inputSnapshots).toContain(100);
   });
 
-  test("handle follows drag while the control stretches and both spring back", async ({
+  test("handle pulls without stretching the host", async ({
     page,
   }) => {
     await page.evaluate(async () => {
@@ -1974,8 +1984,8 @@ test.describe("fig-input-wheel", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
       root.innerHTML = `
-        <fig-input-wheel id="elastic" value="0" step="0.1"></fig-input-wheel>
-        <fig-input-wheel id="rigid" value="0" step="0.1" elastic="false"></fig-input-wheel>
+        <fig-input-wheel id="default-wheel" value="0" step="0.1"></fig-input-wheel>
+        <fig-input-wheel id="legacy-elastic" value="0" step="0.1" elastic="false"></fig-input-wheel>
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
@@ -2000,7 +2010,7 @@ test.describe("fig-input-wheel", () => {
         const handleRect = handleEl.getBoundingClientRect();
         const hostTransform = getComputedStyle(element).transform;
         return {
-          elasticDragging: element.hasAttribute(
+          stretchMarker: element.hasAttribute(
             "data-fig-input-wheel-elastic-dragging",
           ),
           offset: Number.parseFloat(
@@ -2015,6 +2025,12 @@ test.describe("fig-input-wheel", () => {
           hostTransform,
           hostScale:
             hostTransform === "none" ? 1 : new DOMMatrix(hostTransform).a,
+          stretchScale: (element as HTMLElement).style.getPropertyValue(
+            "--fig-input-wheel-elastic-scale",
+          ),
+          stretchOrigin: (element as HTMLElement).style.getPropertyValue(
+            "--fig-input-wheel-elastic-origin",
+          ),
           cursor: getComputedStyle(element).cursor,
           bodyDragging: document.body.classList.contains(
             "fig-input-wheel-dragging",
@@ -2040,7 +2056,7 @@ test.describe("fig-input-wheel", () => {
         const handleRect = handle.getBoundingClientRect();
         const hostTransform = getComputedStyle(element).transform;
         return {
-          elasticDragging: element.hasAttribute(
+          stretchMarker: element.hasAttribute(
             "data-fig-input-wheel-elastic-dragging",
           ),
           offset: (element as HTMLElement).style.getPropertyValue(
@@ -2062,31 +2078,106 @@ test.describe("fig-input-wheel", () => {
       return { hoverCursor, dragging, releaseStartDelta, released };
     };
 
-    const elastic = await dragHandle("elastic");
-    const rigid = await dragHandle("rigid");
+    const defaultWheel = await dragHandle("default-wheel");
+    const legacyElastic = await dragHandle("legacy-elastic");
 
-    expect(elastic.hoverCursor).toBe("ew-resize");
-    expect(elastic.dragging.cursor).toBe("grabbing");
-    expect(elastic.dragging.bodyDragging).toBe(true);
-    expect(elastic.released.cursor).toBe("ew-resize");
-    expect(elastic.released.bodyDragging).toBe(false);
-    expect(elastic.dragging.elasticDragging).toBe(true);
-    expect(elastic.dragging.offset).toBeGreaterThan(0);
-    expect(elastic.dragging.offset).toBeLessThanOrEqual(8);
-    expect(elastic.dragging.centerDelta).toBeGreaterThan(0);
-    expect(elastic.dragging.centerDelta).toBeLessThanOrEqual(8.5);
-    expect(elastic.dragging.hostTransform).not.toBe("none");
-    expect(elastic.dragging.hostScale).toBeGreaterThan(1);
-    expect(elastic.releaseStartDelta).toBeGreaterThan(0);
-    expect(elastic.released.elasticDragging).toBe(false);
-    expect(elastic.released.offset).toBe("");
-    expect(elastic.released.centerDelta).toBeCloseTo(0, 1);
-    expect(elastic.released.transitionDuration).toBe("0.28s");
-    expect(elastic.released.hostScale).toBeCloseTo(1, 2);
-    expect(rigid.dragging.elasticDragging).toBe(false);
-    expect(rigid.dragging.offset).toBeNaN();
-    expect(rigid.dragging.centerDelta).toBeCloseTo(0, 1);
-    expect(rigid.dragging.hostScale).toBe(1);
+    expect(defaultWheel.hoverCursor).toBe("ew-resize");
+    expect(defaultWheel.dragging.cursor).toBe("grabbing");
+    expect(defaultWheel.dragging.bodyDragging).toBe(true);
+    expect(defaultWheel.released.cursor).toBe("ew-resize");
+    expect(defaultWheel.released.bodyDragging).toBe(false);
+    expect(defaultWheel.dragging.stretchMarker).toBe(false);
+    expect(defaultWheel.dragging.offset).toBeGreaterThan(0);
+    expect(defaultWheel.dragging.offset).toBeLessThanOrEqual(8);
+    expect(defaultWheel.dragging.centerDelta).toBeGreaterThan(0);
+    expect(defaultWheel.dragging.centerDelta).toBeLessThanOrEqual(8.5);
+    expect(defaultWheel.dragging.hostTransform).toBe("none");
+    expect(defaultWheel.dragging.hostScale).toBe(1);
+    expect(defaultWheel.dragging.stretchScale).toBe("");
+    expect(defaultWheel.dragging.stretchOrigin).toBe("");
+    expect(defaultWheel.releaseStartDelta).toBeGreaterThan(0);
+    expect(defaultWheel.released.stretchMarker).toBe(false);
+    expect(defaultWheel.released.offset).toBe("");
+    expect(defaultWheel.released.centerDelta).toBeCloseTo(0, 1);
+    expect(defaultWheel.released.transitionDuration).toBe("0.28s");
+    expect(defaultWheel.released.hostScale).toBeCloseTo(1, 2);
+    expect(legacyElastic.dragging.stretchMarker).toBe(false);
+    expect(legacyElastic.dragging.offset).toBeGreaterThan(0);
+    expect(legacyElastic.dragging.centerDelta).toBeGreaterThan(0);
+    expect(legacyElastic.dragging.hostScale).toBe(1);
+  });
+
+  test("slightly blurs ticks only during very fast movement", async ({
+    page,
+  }) => {
+    await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `<fig-input-wheel value="0" step="0.1"></fig-input-wheel>`;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+    });
+
+    const wheel = page.locator("fig-input-wheel");
+    await wheel.evaluate((element) => {
+      (
+        element as HTMLElement & {
+          beginScrub(start: { clientX: number }): boolean;
+        }
+      ).beginScrub({ clientX: 0 });
+    });
+    await page.waitForTimeout(100);
+    await wheel.evaluate((element) => {
+      (
+        element as HTMLElement & {
+          updateScrub(position: number): string;
+        }
+      ).updateScrub(1);
+    });
+    const slow = await wheel.evaluate((element) => ({
+      active: element.hasAttribute("data-fig-input-wheel-fast"),
+      filter: getComputedStyle(
+        element.querySelector(".fig-input-wheel-tick")!,
+      ).filter,
+    }));
+
+    await page.waitForTimeout(16);
+    await wheel.evaluate((element) => {
+      (
+        element as HTMLElement & {
+          updateScrub(position: number): string;
+        }
+      ).updateScrub(121);
+    });
+    const fast = await wheel.evaluate((element) => ({
+      active: element.hasAttribute("data-fig-input-wheel-fast"),
+      filter: getComputedStyle(
+        element.querySelector(".fig-input-wheel-tick")!,
+      ).filter,
+    }));
+
+    await page.waitForTimeout(220);
+    const settled = await wheel.evaluate((element) => ({
+      active: element.hasAttribute("data-fig-input-wheel-fast"),
+      filter: getComputedStyle(
+        element.querySelector(".fig-input-wheel-tick")!,
+      ).filter,
+    }));
+    await wheel.evaluate((element) => {
+      (
+        element as HTMLElement & {
+          endScrub(commit?: boolean): string;
+        }
+      ).endScrub(false);
+    });
+
+    expect(slow.active).toBe(false);
+    expect(slow.filter).toBe("none");
+    expect(fast.active).toBe(true);
+    expect(fast.filter).toBe("blur(2px)");
+    expect(settled.active).toBe(false);
+    expect(settled.filter).toBe("none");
   });
 
   test("wheel input honors shift and disabled blocks interaction", async ({
@@ -2512,7 +2603,7 @@ test.describe("propskit-wheel", () => {
     expect(state.withText.handleCenterDelta).toBeCloseTo(0, 5);
   });
 
-  test("delegates elastic feedback while stretching the composed row", async ({
+  test("keeps handle pull while toggling composed row stretch", async ({
     page,
   }) => {
     await page.evaluate(async () => {
@@ -2586,7 +2677,8 @@ test.describe("propskit-wheel", () => {
     expect(elastic.released.scale).toBeCloseTo(1, 2);
     expect(rigid.dragging.active).toBe(false);
     expect(rigid.dragging.hostScale).toBe(1);
-    expect(rigid.dragging.handleOffset).toBe(0);
+    expect(rigid.dragging.handleOffset).toBeGreaterThan(0);
+    expect(rigid.dragging.handleTransition).toBe("0s");
   });
 
   test("synchronizes both children, retargets events, and resets to default", async ({
