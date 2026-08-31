@@ -1,3 +1,12 @@
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/Inter%20(web)/Inter-roman.var.woff2?v=3.19")
+    format("woff2-variations");
+}
+
 * {
   box-sizing: border-box;
 }

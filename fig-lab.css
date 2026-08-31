@@ -1709,6 +1709,7 @@ propskit-wheel {
   fig-input-number {
     background-color: transparent;
     box-shadow: none !important;
+    font-variant-numeric: var(--font-variant-numeric);
     position: absolute;
     right: var(--propskit-wheel-number-right);
     top: 50%;
@@ -1732,7 +1733,6 @@ propskit-wheel {
 
     input {
       field-sizing: content;
-      font-variant-numeric: tabular-nums;
       width: auto;
       flex: 0 0 auto;
       text-align: right;

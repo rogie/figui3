@@ -211,6 +211,7 @@
   --font-family:
     AppleSystemUIFont, BlinkMacSystemFont, avenir next, avenir, segoe ui,
     helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
+  --font-variant-numeric: lining-nums tabular-nums slashed-zero;
   --body-medium-fontSize: 0.6875rem;
   --body-large-fontSize: 0.8125rem;
   --body-letter-spacing: 0.055px;

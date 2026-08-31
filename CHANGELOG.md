@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.35]
+
+### Added
+
+- Added the shared `--font-variant-numeric` token for lining, tabular, slashed-zero numerals.
+
+### Fixed
+
+- PropsKit wheel number fields now inherit the shared numeric typography features.
+- The playground now loads full Inter 3.19.3 so its slashed-zero OpenType glyph renders correctly.
+
 ## [8.9.34]
 
 ### Added
