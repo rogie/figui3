@@ -2621,13 +2621,32 @@ test.describe("propskit-wheel", () => {
     const dragRow = async (id: string) => {
       const wheel = page.locator(`#${id} fig-input-wheel`);
       const rect = await wheel.boundingBox();
+      const hostRect = await page.locator(`#${id}`).boundingBox();
       if (!rect) throw new Error(`Missing wheel bounds for #${id}`);
+      if (!hostRect) throw new Error(`Missing host bounds for #${id}`);
       await page.mouse.move(
         rect.x + rect.width / 2,
         rect.y + rect.height / 2,
       );
       await page.mouse.down();
-      await page.mouse.move(rect.x + rect.width + 24, rect.y + rect.height / 2);
+      await page.mouse.move(
+        Math.min(rect.x + rect.width + 12, hostRect.x + hostRect.width - 4),
+        rect.y + rect.height / 2,
+      );
+      await page.waitForTimeout(30);
+      const insideContainer = await page.locator(`#${id}`).evaluate((host) => {
+        const transform = getComputedStyle(host).transform;
+        return {
+          active: host.hasAttribute(
+            "data-propskit-wheel-elastic-dragging",
+          ),
+          scale: transform === "none" ? 1 : new DOMMatrix(transform).a,
+        };
+      });
+      await page.mouse.move(
+        hostRect.x + hostRect.width + 24,
+        rect.y + rect.height / 2,
+      );
       await page.waitForTimeout(30);
       const dragging = await page.locator(`#${id}`).evaluate((host) => {
         const wheel = host.querySelector("fig-input-wheel") as HTMLElement;
@@ -2662,12 +2681,14 @@ test.describe("propskit-wheel", () => {
           scale: transform === "none" ? 1 : new DOMMatrix(transform).a,
         };
       });
-      return { dragging, released };
+      return { insideContainer, dragging, released };
     };
 
     const elastic = await dragRow("elastic-row");
     const rigid = await dragRow("rigid-row");
 
+    expect(elastic.insideContainer.active).toBe(false);
+    expect(elastic.insideContainer.scale).toBe(1);
     expect(elastic.dragging.active).toBe(true);
     expect(elastic.dragging.hostScale).toBeGreaterThan(1);
     expect(elastic.dragging.wheelTransform).toBe("none");
@@ -2675,6 +2696,8 @@ test.describe("propskit-wheel", () => {
     expect(elastic.dragging.handleTransition).toBe("0s");
     expect(elastic.released.active).toBe(false);
     expect(elastic.released.scale).toBeCloseTo(1, 2);
+    expect(rigid.insideContainer.active).toBe(false);
+    expect(rigid.insideContainer.scale).toBe(1);
     expect(rigid.dragging.active).toBe(false);
     expect(rigid.dragging.hostScale).toBe(1);
     expect(rigid.dragging.handleOffset).toBeGreaterThan(0);

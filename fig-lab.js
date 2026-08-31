@@ -6753,7 +6753,7 @@ class PropskitWheel extends HTMLElement {
     this.#elasticMaxPx = this.#readCssLength(
       "--propskit-wheel-elastic-distance",
     );
-    const rangeRect = this.#wheel?.getBoundingClientRect();
+    const rangeRect = this.getBoundingClientRect();
     if (rangeRect) {
       this.#elasticRangeRect = {
         left: rangeRect.left,

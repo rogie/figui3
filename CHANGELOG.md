@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.38]
+
+### Fixed
+
+- `propskit-wheel` elastic stretching now begins at the composed row boundary instead of the inset child wheel boundary.
+
 ## [8.9.37]
 
 ### Added
