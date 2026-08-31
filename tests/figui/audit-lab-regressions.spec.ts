@@ -410,6 +410,71 @@ test.describe("fig-lab audit regressions", () => {
     });
   });
 
+  test("reorder leaves nested input-wheel scrubbing to the control", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <fig-reorder>
+          <div id="first"><fig-input-wheel value="0" style="width:200px"></fig-input-wheel></div>
+          <div id="second">Second</div>
+        </fig-reorder>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const reorder = root.querySelector("fig-reorder")!;
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement & {
+        value: string;
+      };
+      const rect = wheel.getBoundingClientRect();
+      wheel.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          buttons: 1,
+          pointerId: 1,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          buttons: 1,
+          pointerId: 1,
+          clientX: rect.left + rect.width / 2 + 24,
+          clientY: rect.top + rect.height / 2,
+        }),
+      );
+      const during = {
+        value: Number(wheel.value),
+        wheelDragging: wheel.hasAttribute("data-fig-input-wheel-active"),
+        reorderDragging: document.body.classList.contains(
+          "fig-reorder-dragging",
+        ),
+      };
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          pointerId: 1,
+          clientX: rect.left + rect.width / 2 + 24,
+          clientY: rect.top + rect.height / 2,
+        }),
+      );
+      return {
+        during,
+        order: [...reorder.children].map((child) => child.id),
+      };
+    });
+
+    expect(state.during.value).toBeGreaterThan(0);
+    expect(state.during.wheelDragging).toBe(true);
+    expect(state.during.reorderDragging).toBe(false);
+    expect(state.order).toEqual(["first", "second"]);
+  });
+
   test("select reconnect and selected mutations stay synchronized", async ({ page }) => {
     const state = await page.evaluate(async () => {
       const select = document.createElement("fig-select") as HTMLElement & {

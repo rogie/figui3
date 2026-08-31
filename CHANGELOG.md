@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.33]
+
+### Added
+
+- Added the experimental standalone `fig-input-wheel` numeric scrubber with projected ticks, centered handle, bounds, keyboard and pointer controls, and elastic feedback.
+- Added standalone Input Wheel playground examples, attribute controls, JSX support, and component documentation.
+
+### Changed
+
+- `propskit-wheel` now composes `fig-input-wheel` with an optional number field while preserving units, time defaults, reset behavior, event retargeting, and number-field scrubbing.
+- Wheel-only PropsKit layouts can omit both the label and number field, expanding the centered tick-and-handle area.
+
+### Fixed
+
+- Preserved `propskit-wheel` row stretch and spring-back while delegating elastic calculations to `fig-input-wheel`.
+
 ## [8.9.32]
 
 ### Added

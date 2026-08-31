@@ -1019,6 +1019,7 @@ test.describe("duplicate module registration", () => {
       const before = {
         button: customElements.get("fig-button"),
         switch: customElements.get("propskit-switch"),
+        inputWheel: customElements.get("fig-input-wheel"),
         fillPicker: customElements.get("fig-fill-picker"),
       };
 
@@ -1029,6 +1030,8 @@ test.describe("duplicate module registration", () => {
       return {
         button: before.button === customElements.get("fig-button"),
         switch: before.switch === customElements.get("propskit-switch"),
+        inputWheel:
+          before.inputWheel === customElements.get("fig-input-wheel"),
         fillPicker:
           before.fillPicker === customElements.get("fig-fill-picker"),
       };
@@ -1037,6 +1040,7 @@ test.describe("duplicate module registration", () => {
     expect(result).toEqual({
       button: true,
       switch: true,
+      inputWheel: true,
       fillPicker: true,
     });
   });
@@ -1100,18 +1104,18 @@ test.describe("propskit-number", () => {
   });
 });
 
-test.describe("propskit-wheel", () => {
+test.describe("fig-input-wheel", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.evaluate(async () => {
       await import("/fig-lab.js");
-      await customElements.whenDefined("propskit-wheel");
+      await customElements.whenDefined("fig-input-wheel");
     });
   });
 
-  test("defaults generic values and normalizes time unit aliases", async ({
+  test("defaults its numeric contract and renders wheel geometry", async ({
     page,
   }) => {
     const state = await page.evaluate(async () => {
@@ -1119,26 +1123,20 @@ test.describe("propskit-wheel", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
       root.innerHTML = `
-        <propskit-wheel id="omitted"></propskit-wheel>
-        <propskit-wheel id="named" label="Delay" value="240"></propskit-wheel>
-        <propskit-wheel id="blank" label="" value="240"></propskit-wheel>
-        <propskit-wheel id="seconds" units="s" value="1.5"></propskit-wheel>
-        <propskit-wheel id="seconds-long" units="seconds"></propskit-wheel>
-        <propskit-wheel id="milliseconds-long" units="milliseconds"></propskit-wheel>
-        <propskit-wheel id="arbitrary" units="px" value="12"></propskit-wheel>
+        <fig-input-wheel id="omitted"></fig-input-wheel>
+        <fig-input-number id="input-reference"></fig-input-number>
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
-      const omitted = root.querySelector("#omitted")!;
-      const named = root.querySelector("#named")!;
-      const blank = root.querySelector("#blank")!;
-      const seconds = root.querySelector("#seconds")!;
-      const secondsLong = root.querySelector("#seconds-long")!;
-      const millisecondsLong = root.querySelector("#milliseconds-long")!;
-      const arbitrary = root.querySelector("#arbitrary")!;
-      const surface = omitted.querySelector(".propskit-wheel-surface");
+      const omitted = root.querySelector("#omitted") as HTMLElement & {
+        value: string;
+        step: number;
+      };
+      const inputReference = root.querySelector("#input-reference")!;
+      const wheelStyle = getComputedStyle(omitted);
+      const inputStyle = getComputedStyle(inputReference);
       const tickPath = omitted.querySelector(
-        ".propskit-wheel-tick",
+        ".fig-input-wheel-tick",
       ) as SVGPathElement | null;
       const ticks = (tickPath?.getAttribute("d") ?? "")
         .split(" Z")
@@ -1153,7 +1151,7 @@ test.describe("propskit-wheel", () => {
           };
         });
       const xs = ticks.map((tick) => tick.x);
-      const mid = (surface?.clientWidth ?? 0) / 2;
+      const mid = omitted.clientWidth / 2;
       const tickExtent = Math.max(...xs.map((x) => Math.abs(x - mid)));
       const centerSpan = xs.filter((x) => Math.abs(x - mid) < tickExtent * 0.4);
       const edgeSpan = xs.filter((x) => Math.abs(x - mid) > tickExtent * 0.7);
@@ -1183,46 +1181,27 @@ test.describe("propskit-wheel", () => {
         values.length
           ? values.reduce((sum, value) => sum + value, 0) / values.length
           : 0;
+      const handleCenterDelta = () => {
+        const trackRect = omitted.getBoundingClientRect();
+        const handleRect = omitted
+          .querySelector(".fig-input-wheel-handle")
+          ?.getBoundingClientRect();
+        return Math.abs(
+          ((handleRect?.left ?? 0) + (handleRect?.right ?? 0)) / 2 -
+            ((trackRect?.left ?? 0) + (trackRect?.right ?? 0)) / 2,
+        );
+      };
       return {
-        omittedLabel: omitted.querySelector("label")?.textContent,
-        namedLabel: named.querySelector("label")?.textContent,
-        blankLabel: blank.querySelector("label")?.textContent,
-        hasField: Boolean(omitted.querySelector("fig-field, fig-slider")),
-        surfaceCount: omitted.querySelectorAll(".propskit-wheel-surface").length,
-        units: omitted.querySelector("fig-input-number")?.getAttribute("units"),
-        step: omitted.querySelector("fig-input-number")?.getAttribute("step"),
-        precision: omitted
-          .querySelector("fig-input-number")
-          ?.getAttribute("precision"),
-        value: Number((omitted as HTMLElement & { value: string }).value),
-        secondsUnits: seconds.querySelector("fig-input-number")?.getAttribute("units"),
-        secondsStep: seconds.querySelector("fig-input-number")?.getAttribute("step"),
-        secondsPrecision: seconds
-          .querySelector("fig-input-number")
-          ?.getAttribute("precision"),
-        secondsLongUnits: secondsLong
-          .querySelector("fig-input-number")
-          ?.getAttribute("units"),
-        millisecondsLongUnits: millisecondsLong
-          .querySelector("fig-input-number")
-          ?.getAttribute("units"),
-        millisecondsLongStep: millisecondsLong
-          .querySelector("fig-input-number")
-          ?.getAttribute("step"),
-        millisecondsLongPrecision: millisecondsLong
-          .querySelector("fig-input-number")
-          ?.getAttribute("precision"),
-        arbitraryUnits: arbitrary
-          .querySelector("fig-input-number")
-          ?.getAttribute("units"),
-        arbitraryStep: arbitrary
-          .querySelector("fig-input-number")
-          ?.getAttribute("step"),
-        arbitraryPrecision: arbitrary
-          .querySelector("fig-input-number")
-          ?.getAttribute("precision"),
-        wheelRole: omitted.querySelector(".propskit-wheel-wheel")?.getAttribute("role"),
-        tickElementCount: omitted.querySelectorAll(".propskit-wheel-tick").length,
+        value: Number(omitted.value),
+        step: omitted.step,
+        hasUnitsProperty: "units" in omitted,
+        wheelRole: omitted.getAttribute("role"),
+        ariaText: omitted.getAttribute("aria-valuetext"),
+        wheelBackground: wheelStyle.backgroundColor,
+        inputBackground: inputStyle.backgroundColor,
+        wheelRadius: wheelStyle.borderRadius,
+        inputRadius: inputStyle.borderRadius,
+        tickElementCount: omitted.querySelectorAll(".fig-input-wheel-tick").length,
         tickCount: ticks.length,
         centerGap: avg(centerGaps),
         edgeGap: avg(edgeGaps),
@@ -1236,55 +1215,38 @@ test.describe("propskit-wheel", () => {
           ...ticks.map((tick) => Math.abs(tick.y2 - tick.y1)),
         ),
         handleHeight:
-          omitted.querySelector(".propskit-wheel-handle")?.getBoundingClientRect()
+          omitted.querySelector(".fig-input-wheel-handle")?.getBoundingClientRect()
             .height ?? 0,
-        leftTickInset: Math.min(...xs),
-        rightTickInset: (surface?.clientWidth ?? 0) - Math.max(...xs),
-        expectedTickInset:
-          parseFloat(getComputedStyle(document.documentElement).fontSize) * 3,
+        handleCenterDelta: handleCenterDelta(),
         wheelMask:
           getComputedStyle(
-            omitted.querySelector(".propskit-wheel-wheel")!,
+            omitted.querySelector(".fig-input-wheel-svg")!,
           ).maskImage,
-        tickOpacity: tickPath ? getComputedStyle(tickPath).opacity : "",
+        tickFill: tickPath ? getComputedStyle(tickPath).fill : "",
       };
     });
 
-    expect(state.omittedLabel).toBe("Value");
-    expect(state.namedLabel).toBe("Delay");
-    expect(state.blankLabel).toBe("");
-    expect(state.hasField).toBe(false);
-    expect(state.surfaceCount).toBe(1);
-    expect(state.units).toBeNull();
-    expect(state.step).toBe("1");
-    expect(state.precision).toBe("0");
     expect(state.value).toBe(0);
-    expect(state.secondsUnits).toBe("s");
-    expect(state.secondsStep).toBe("0.1");
-    expect(state.secondsPrecision).toBe("2");
-    expect(state.secondsLongUnits).toBe("s");
-    expect(state.millisecondsLongUnits).toBe("ms");
-    expect(state.millisecondsLongStep).toBe("100");
-    expect(state.millisecondsLongPrecision).toBe("0");
-    expect(state.arbitraryUnits).toBe("px");
-    expect(state.arbitraryStep).toBe("1");
-    expect(state.arbitraryPrecision).toBe("0");
+    expect(state.step).toBe(1);
+    expect(state.hasUnitsProperty).toBe(false);
     expect(state.wheelRole).toBe("spinbutton");
+    expect(state.ariaText).toBe("0");
+    expect(state.wheelBackground).toBe(state.inputBackground);
+    expect(state.wheelRadius).toBe(state.inputRadius);
     expect(state.tickElementCount).toBe(1);
     expect(state.tickCount).toBe(11);
     expect(state.centerGap).toBeGreaterThan(0);
     expect(state.edgeGap).toBeGreaterThan(0);
-    expect(state.centerLength).toBeCloseTo(state.edgeLength, 1);
+    expect(state.centerLength).toBeGreaterThan(state.edgeLength);
     expect(state.centerWidth).toBeGreaterThan(state.edgeWidth);
     expect(state.minTickWidth).toBeGreaterThanOrEqual(1);
     expect(state.maxTickWidth).toBeLessThanOrEqual(2);
     expect(state.maxTickVisualHeight).toBeCloseTo(state.handleHeight - 4, 1);
-    expect(state.leftTickInset).toBeCloseTo(state.expectedTickInset, 0);
-    expect(state.rightTickInset).toBeCloseTo(state.expectedTickInset, 0);
+    expect(state.handleCenterDelta).toBeCloseTo(0, 5);
     expect(state.wheelMask).not.toBe("none");
     expect(state.wheelMask).toContain("rgba(0, 0, 0, 0.1)");
     expect(state.wheelMask).toContain("rgba(0, 0, 0, 0.5)");
-    expect(state.tickOpacity).toBe("1");
+    expect(state.tickFill).not.toBe("none");
   });
 
   test("coalesces tick rendering into one path update per frame", async ({
@@ -1294,12 +1256,12 @@ test.describe("propskit-wheel", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
-      root.innerHTML = `<propskit-wheel value="0"></propskit-wheel>`;
+      root.innerHTML = `<fig-input-wheel value="0"></fig-input-wheel>`;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
 
-      const host = root.querySelector("propskit-wheel")!;
-      const tickPath = host.querySelector(".propskit-wheel-tick")!;
+      const host = root.querySelector("fig-input-wheel")!;
+      const tickPath = host.querySelector(".fig-input-wheel-tick")!;
       let pathUpdates = 0;
       const observer = new MutationObserver((records) => {
         pathUpdates += records.filter(
@@ -1317,7 +1279,7 @@ test.describe("propskit-wheel", () => {
 
       return {
         pathUpdates,
-        tickElementCount: host.querySelectorAll(".propskit-wheel-tick").length,
+        tickElementCount: host.querySelectorAll(".fig-input-wheel-tick").length,
       };
     });
 
@@ -1330,13 +1292,12 @@ test.describe("propskit-wheel", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
-      root.innerHTML = `<propskit-wheel value="0" step="0.1" units="s"></propskit-wheel>`;
+      root.innerHTML = `<fig-input-wheel value="0" step="0.1"></fig-input-wheel>`;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
 
-      const host = root.querySelector("propskit-wheel")!;
-      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
-      const tickPath = host.querySelector(".propskit-wheel-tick")!;
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement;
+      const tickPath = wheel.querySelector(".fig-input-wheel-tick")!;
       const readCenterDelta = () => {
         const centerX = wheel.clientWidth / 2;
         const tickXs = [
@@ -1347,7 +1308,7 @@ test.describe("propskit-wheel", () => {
 
       const result = [readCenterDelta()];
       for (const value of ["0.1", "0.2", "-0.1", "1"]) {
-        host.setAttribute("value", value);
+        wheel.setAttribute("value", value);
         await new Promise(requestAnimationFrame);
         result.push(readCenterDelta());
       }
@@ -1362,15 +1323,14 @@ test.describe("propskit-wheel", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
-      root.innerHTML = `<propskit-wheel value="0" step="1"></propskit-wheel>`;
+      root.innerHTML = `<fig-input-wheel value="0" step="1"></fig-input-wheel>`;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
 
-      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement & {
         value: string;
       };
-      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
-      const tickPath = host.querySelector(".propskit-wheel-tick")!;
+      const tickPath = wheel.querySelector(".fig-input-wheel-tick")!;
       const rect = wheel.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
@@ -1395,7 +1355,7 @@ test.describe("propskit-wheel", () => {
       );
       await new Promise(requestAnimationFrame);
       const movingPath = tickPath.getAttribute("d");
-      const movingValue = Number(host.value);
+      const movingValue = Number(wheel.value);
 
       window.dispatchEvent(
         new PointerEvent("pointerup", {
@@ -1429,15 +1389,14 @@ test.describe("propskit-wheel", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
       root.innerHTML = `
-        <propskit-wheel value="0" step="0.25" precision="0" units="s"></propskit-wheel>
+        <fig-input-wheel value="0" step="0.25"></fig-input-wheel>
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
 
-      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement & {
         value: string;
       };
-      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
       const rect = wheel.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
@@ -1460,11 +1419,11 @@ test.describe("propskit-wheel", () => {
           clientY: centerY,
         }),
       );
-      const valueDuringInput = Number(host.value);
+      const valueDuringInput = Number(wheel.value);
       await new Promise(requestAnimationFrame);
       const centerTickX = Number([
         ...(
-          host.querySelector(".propskit-wheel-tick")?.getAttribute("d") ?? ""
+          wheel.querySelector(".fig-input-wheel-tick")?.getAttribute("d") ?? ""
         ).matchAll(/M ([^ ]+) /g),
       ][0]?.[1]);
       window.dispatchEvent(
@@ -1478,19 +1437,15 @@ test.describe("propskit-wheel", () => {
 
       return {
         valueDuringInput,
-        valueAfterChange: Number(host.value),
+        valueAfterChange: Number(wheel.value),
         centerTickX,
         wheelCenterX,
-        innerPrecision: host
-          .querySelector("fig-input-number")
-          ?.getAttribute("precision"),
       };
     });
 
     expect(state.valueDuringInput).toBe(-0.25);
     expect(state.valueAfterChange).toBe(-0.25);
     expect(state.centerTickX).toBeLessThan(state.wheelCenterX);
-    expect(state.innerPrecision).toBe("0");
   });
 
   test("shift-drag scrubs at ten times the step speed", async ({ page }) => {
@@ -1499,15 +1454,14 @@ test.describe("propskit-wheel", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
       root.innerHTML = `
-        <propskit-wheel value="0" step="0.25" units="s"></propskit-wheel>
+        <fig-input-wheel value="0" step="0.25"></fig-input-wheel>
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
 
-      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement & {
         value: string;
       };
-      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
       const rect = wheel.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
@@ -1540,7 +1494,7 @@ test.describe("propskit-wheel", () => {
           clientY: centerY,
         }),
       );
-      return Number(host.value);
+      return Number(wheel.value);
     });
 
     expect(state).toBe(2.5);
@@ -1553,25 +1507,41 @@ test.describe("propskit-wheel", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
-      root.innerHTML = `<propskit-wheel id="time" value="0" units="s"></propskit-wheel>`;
+      root.innerHTML = `<fig-input-wheel value="0" step="0.1"></fig-input-wheel>`;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
-      const host = root.querySelector("#time") as HTMLElement & { value: string };
-      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
-      const received: Array<{ type: string; detail: unknown }> = [];
-      host.addEventListener("input", (event) => {
-        received.push({ type: event.type, detail: (event as CustomEvent).detail });
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement & {
+        value: string;
+      };
+      const received: Array<{
+        type: string;
+        detail: unknown;
+        targetIsWheel: boolean;
+        composed: boolean;
+      }> = [];
+      wheel.addEventListener("input", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+          targetIsWheel: event.target === wheel,
+          composed: event.composed,
+        });
       });
-      host.addEventListener("change", (event) => {
-        received.push({ type: event.type, detail: (event as CustomEvent).detail });
+      wheel.addEventListener("change", (event) => {
+        received.push({
+          type: event.type,
+          detail: (event as CustomEvent).detail,
+          targetIsWheel: event.target === wheel,
+          composed: event.composed,
+        });
       });
-      host.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      const focusedAfterClick = document.activeElement === wheel;
+      wheel.focus();
+      const focusedAfterFocus = document.activeElement === wheel;
       const press = (key: string, shiftKey = false) => {
         wheel.dispatchEvent(
           new KeyboardEvent("keydown", { key, shiftKey, bubbles: true }),
         );
-        return Number(host.value);
+        return Number(wheel.value);
       };
       const arrows = {
         up: press("ArrowUp"),
@@ -1609,9 +1579,9 @@ test.describe("propskit-wheel", () => {
           clientY: startBox.top + startBox.height / 2,
         }),
       );
-      const afterDrag = Number(host.value);
+      const afterDrag = Number(wheel.value);
       const focusedAfterDrag = document.activeElement === wheel;
-      host.setAttribute("disabled", "");
+      wheel.setAttribute("disabled", "");
       const disabledEvents = received.length;
       wheel.dispatchEvent(
         new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
@@ -1619,10 +1589,13 @@ test.describe("propskit-wheel", () => {
       return {
         arrows,
         afterDrag,
-        focusedAfterClick,
+        focusedAfterFocus,
         focusedAfterDrag,
         emittedAfterDisable: received.length - disabledEvents,
         types: received.map((entry) => entry.type),
+        targetAndComposed: received.every(
+          (entry) => entry.targetIsWheel && entry.composed,
+        ),
       };
     });
 
@@ -1637,11 +1610,12 @@ test.describe("propskit-wheel", () => {
       shiftLeft: 0,
     });
     expect(events.afterDrag).toBeGreaterThan(0);
-    expect(events.focusedAfterClick).toBe(true);
+    expect(events.focusedAfterFocus).toBe(true);
     expect(events.focusedAfterDrag).toBe(true);
     expect(events.emittedAfterDisable).toBe(0);
     expect(events.types).toContain("input");
     expect(events.types).toContain("change");
+    expect(events.targetAndComposed).toBe(true);
   });
 
   test("keyboard travel rotates ticks and nudges the handle", async ({ page }) => {
@@ -1649,15 +1623,14 @@ test.describe("propskit-wheel", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
-      root.innerHTML = `<propskit-wheel value="0" step="1"></propskit-wheel>`;
+      root.innerHTML = `<fig-input-wheel value="0" step="1"></fig-input-wheel>`;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
 
-      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement & {
         value: string;
       };
-      const wheel = host.querySelector(".propskit-wheel-wheel") as HTMLElement;
-      const tickPath = host.querySelector(".propskit-wheel-tick")!;
+      const tickPath = wheel.querySelector(".fig-input-wheel-tick")!;
       const centerDelta = () => {
         const centerX = wheel.clientWidth / 2;
         const tickXs = [
@@ -1674,15 +1647,27 @@ test.describe("propskit-wheel", () => {
           bubbles: true,
         }),
       );
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      const movingRight = {
-        value: Number(host.value),
-        active: host.hasAttribute("data-keyboard-moving"),
-        centerDelta: centerDelta(),
-        handleOffset: Number.parseFloat(
-          host.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
-        ),
+      let movingRight = {
+        value: Number(wheel.value),
+        active: false,
+        centerDelta: 0,
+        handleOffset: 0,
       };
+      for (let frame = 0; frame < 8; frame += 1) {
+        await new Promise(requestAnimationFrame);
+        movingRight = {
+          value: Number(wheel.value),
+          active: wheel.hasAttribute("data-fig-input-wheel-keyboard-moving"),
+          centerDelta: centerDelta(),
+          handleOffset:
+            Number.parseFloat(
+              wheel.style.getPropertyValue(
+                "--fig-input-wheel-handle-drag-offset",
+              ),
+            ) || 0,
+        };
+        if (movingRight.centerDelta > 0.1 && movingRight.handleOffset > 0) break;
+      }
       wheel.dispatchEvent(
         new KeyboardEvent("keydown", {
           key: "ArrowRight",
@@ -1692,14 +1677,14 @@ test.describe("propskit-wheel", () => {
       );
       await new Promise((resolve) => setTimeout(resolve, 20));
       const repeatedRightOffset = Number.parseFloat(
-        host.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
+        wheel.style.getPropertyValue("--fig-input-wheel-handle-drag-offset"),
       );
       await new Promise((resolve) => setTimeout(resolve, 180));
       const settled = {
-        active: host.hasAttribute("data-keyboard-moving"),
+        active: wheel.hasAttribute("data-fig-input-wheel-keyboard-moving"),
         centerDelta: centerDelta(),
         hasHandleOffset: Boolean(
-          host.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
+          wheel.style.getPropertyValue("--fig-input-wheel-handle-drag-offset"),
         ),
       };
 
@@ -1712,7 +1697,7 @@ test.describe("propskit-wheel", () => {
       );
       await new Promise((resolve) => setTimeout(resolve, 50));
       const movingLeftOffset = Number.parseFloat(
-        host.style.getPropertyValue("--propskit-wheel-handle-drag-offset"),
+        wheel.style.getPropertyValue("--fig-input-wheel-handle-drag-offset"),
       );
 
       return { movingRight, repeatedRightOffset, settled, movingLeftOffset };
@@ -1739,8 +1724,8 @@ test.describe("propskit-wheel", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
       root.innerHTML = `
-        <propskit-wheel id="free" value="0" units="s"></propskit-wheel>
-        <propskit-wheel id="bounded" value="50" min="0" max="100" step="10" units="s"></propskit-wheel>
+        <fig-input-wheel id="free" value="0" step="0.1"></fig-input-wheel>
+        <fig-input-wheel id="bounded" value="50" min="0" max="100" step="10"></fig-input-wheel>
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
@@ -1754,37 +1739,33 @@ test.describe("propskit-wheel", () => {
         min: number | null;
         max: number | null;
       };
-      const freeWheel = free.querySelector(".propskit-wheel-wheel") as HTMLElement;
-      const boundedWheel = bounded.querySelector(
-        ".propskit-wheel-wheel",
-      ) as HTMLElement;
-      freeWheel.focus();
-      freeWheel.dispatchEvent(
+      free.focus();
+      free.dispatchEvent(
         new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }),
       );
       const freeAfterLeft = Number(free.value);
-      boundedWheel.focus();
+      bounded.focus();
       for (let index = 0; index < 20; index += 1) {
-        boundedWheel.dispatchEvent(
+        bounded.dispatchEvent(
           new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }),
         );
       }
       const atMin = Number(bounded.value);
       for (let index = 0; index < 30; index += 1) {
-        boundedWheel.dispatchEvent(
+        bounded.dispatchEvent(
           new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
         );
       }
       const atMax = Number(bounded.value);
-      boundedWheel.dispatchEvent(
+      bounded.dispatchEvent(
         new KeyboardEvent("keydown", { key: "Home", bubbles: true }),
       );
       const afterHome = Number(bounded.value);
-      boundedWheel.dispatchEvent(
+      bounded.dispatchEvent(
         new KeyboardEvent("keydown", { key: "End", bubbles: true }),
       );
       const afterEnd = Number(bounded.value);
-      boundedWheel.dispatchEvent(
+      bounded.dispatchEvent(
         new KeyboardEvent("keydown", { key: "Home", bubbles: true }),
       );
       bounded.min = 20;
@@ -1796,18 +1777,18 @@ test.describe("propskit-wheel", () => {
         freeAfterLeft,
         freeMin: free.min,
         freeMax: free.max,
-        freeAriaMin: freeWheel.getAttribute("aria-valuemin"),
-        freeAriaMax: freeWheel.getAttribute("aria-valuemax"),
+        freeAriaMin: free.getAttribute("aria-valuemin"),
+        freeAriaMax: free.getAttribute("aria-valuemax"),
         atMin,
         atMax,
         afterHome,
         afterEnd,
         afterRaiseMin,
         afterClearMax,
-        inputMin: bounded.querySelector("fig-input-number")?.getAttribute("min"),
-        inputMax: bounded.querySelector("fig-input-number")?.getAttribute("max"),
-        ariaMin: boundedWheel.getAttribute("aria-valuemin"),
-        ariaMax: boundedWheel.getAttribute("aria-valuemax"),
+        ariaMin: bounded.getAttribute("aria-valuemin"),
+        ariaMax: bounded.getAttribute("aria-valuemax"),
+        ariaNow: bounded.getAttribute("aria-valuenow"),
+        ariaText: bounded.getAttribute("aria-valuetext"),
         minProp: bounded.min,
       };
     });
@@ -1823,14 +1804,14 @@ test.describe("propskit-wheel", () => {
     expect(state.afterEnd).toBe(100);
     expect(state.afterRaiseMin).toBe(20);
     expect(state.afterClearMax).toBe(500);
-    expect(state.inputMin).toBe("20");
-    expect(state.inputMax).toBeNull();
     expect(state.ariaMin).toBe("20");
     expect(state.ariaMax).toBeNull();
+    expect(state.ariaNow).toBe("500");
+    expect(state.ariaText).toBe("500");
     expect(state.minProp).toBe(20);
   });
 
-  test("dragging stops at bounds and updates the number on input", async ({
+  test("dragging stops at bounds and emits bounded values", async ({
     page,
   }) => {
     const state = await page.evaluate(async () => {
@@ -1838,8 +1819,8 @@ test.describe("propskit-wheel", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
       root.innerHTML = `
-        <propskit-wheel id="min-time" value="50" min="0" max="100" step="1" units="ms"></propskit-wheel>
-        <propskit-wheel id="max-time" value="50" min="0" max="100" step="1" units="ms"></propskit-wheel>
+        <fig-input-wheel id="min-time" value="50" min="0" max="100" step="1"></fig-input-wheel>
+        <fig-input-wheel id="max-time" value="50" min="0" max="100" step="1"></fig-input-wheel>
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
@@ -1850,33 +1831,21 @@ test.describe("propskit-wheel", () => {
       const maxHost = root.querySelector("#max-time") as HTMLElement & {
         value: string;
       };
-      const minWheel = minHost.querySelector(
-        ".propskit-wheel-wheel",
-      ) as HTMLElement;
-      const maxWheel = maxHost.querySelector(
-        ".propskit-wheel-wheel",
-      ) as HTMLElement;
-      const minNumberInput = minHost.querySelector(
-        "fig-input-number input",
-      ) as HTMLInputElement;
-      const maxNumberInput = maxHost.querySelector(
-        "fig-input-number input",
-      ) as HTMLInputElement;
       const tickPath = minHost.querySelector(
-        ".propskit-wheel-tick",
+        ".fig-input-wheel-tick",
       ) as SVGPathElement;
-      const inputSnapshots: string[] = [];
-      minHost.addEventListener("input", () => {
-        inputSnapshots.push(minNumberInput.value);
+      const inputSnapshots: number[] = [];
+      minHost.addEventListener("input", (event) => {
+        inputSnapshots.push((event as CustomEvent<number>).detail);
       });
-      maxHost.addEventListener("input", () => {
-        inputSnapshots.push(maxNumberInput.value);
+      maxHost.addEventListener("input", (event) => {
+        inputSnapshots.push((event as CustomEvent<number>).detail);
       });
 
-      const minRect = minWheel.getBoundingClientRect();
+      const minRect = minHost.getBoundingClientRect();
       const minCenterX = minRect.left + minRect.width / 2;
       const minCenterY = minRect.top + minRect.height / 2;
-      minWheel.dispatchEvent(
+      minHost.dispatchEvent(
         new PointerEvent("pointerdown", {
           bubbles: true,
           button: 0,
@@ -1895,7 +1864,6 @@ test.describe("propskit-wheel", () => {
       );
       await new Promise(requestAnimationFrame);
       const minValue = Number(minHost.value);
-      const minInput = minNumberInput.value;
       const minPath = tickPath.getAttribute("d");
 
       window.dispatchEvent(
@@ -1917,7 +1885,7 @@ test.describe("propskit-wheel", () => {
         }),
       );
 
-      maxWheel.dispatchEvent(
+      maxHost.dispatchEvent(
         new KeyboardEvent("keydown", {
           bubbles: true,
           key: "End",
@@ -1925,13 +1893,10 @@ test.describe("propskit-wheel", () => {
       );
       await new Promise(requestAnimationFrame);
       const maxValue = Number(maxHost.value);
-      const maxInput = maxNumberInput.value;
 
       return {
         minValue,
-        minInput,
         maxValue,
-        maxInput,
         minPath,
         stoppedMinPath,
         inputSnapshots,
@@ -1939,12 +1904,10 @@ test.describe("propskit-wheel", () => {
     });
 
     expect(state.minValue).toBe(0);
-    expect(state.minInput).toBe("0ms");
     expect(state.maxValue).toBe(100);
-    expect(state.maxInput).toBe("100ms");
     expect(state.stoppedMinPath).toBe(state.minPath);
-    expect(state.inputSnapshots).toContain("0ms");
-    expect(state.inputSnapshots).toContain("100ms");
+    expect(state.inputSnapshots).toContain(0);
+    expect(state.inputSnapshots).toContain(100);
   });
 
   test("handle follows drag while the control stretches and both spring back", async ({
@@ -1955,16 +1918,15 @@ test.describe("propskit-wheel", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
       root.innerHTML = `
-        <propskit-wheel id="elastic" value="0" units="s"></propskit-wheel>
-        <propskit-wheel id="rigid" value="0" units="s" elastic="false"></propskit-wheel>
+        <fig-input-wheel id="elastic" value="0" step="0.1"></fig-input-wheel>
+        <fig-input-wheel id="rigid" value="0" step="0.1" elastic="false"></fig-input-wheel>
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
     });
 
     const dragHandle = async (id: string) => {
-      const host = page.locator(`#${id}`);
-      const wheel = host.locator(".propskit-wheel-wheel");
+      const wheel = page.locator(`#${id}`);
       const rect = await wheel.boundingBox();
       if (!rect) throw new Error(`Missing wheel bounds for #${id}`);
       await page.mouse.move(
@@ -1976,17 +1938,18 @@ test.describe("propskit-wheel", () => {
       );
       await page.mouse.down();
       await page.mouse.move(rect.x + rect.width + 40, rect.y + rect.height / 2);
-      const dragging = await host.evaluate((element) => {
-        const wheelEl = element.querySelector(".propskit-wheel-wheel")!;
-        const handleEl = element.querySelector(".propskit-wheel-handle")!;
-        const wheelRect = wheelEl.getBoundingClientRect();
+      const dragging = await wheel.evaluate((element) => {
+        const handleEl = element.querySelector(".fig-input-wheel-handle")!;
+        const wheelRect = element.getBoundingClientRect();
         const handleRect = handleEl.getBoundingClientRect();
         const hostTransform = getComputedStyle(element).transform;
         return {
-          elasticDragging: (element as HTMLElement).dataset.elasticDragging,
+          elasticDragging: element.hasAttribute(
+            "data-fig-input-wheel-elastic-dragging",
+          ),
           offset: Number.parseFloat(
             (element as HTMLElement).style.getPropertyValue(
-              "--propskit-wheel-handle-drag-offset",
+              "--fig-input-wheel-handle-drag-offset",
             ),
           ),
           centerDelta:
@@ -1996,22 +1959,17 @@ test.describe("propskit-wheel", () => {
           hostTransform,
           hostScale:
             hostTransform === "none" ? 1 : new DOMMatrix(hostTransform).a,
-          cursor: getComputedStyle(wheelEl).cursor,
+          cursor: getComputedStyle(element).cursor,
           bodyDragging: document.body.classList.contains(
-            "fig-propskit-wheel-dragging",
+            "fig-input-wheel-dragging",
           ),
-          forwardedElastic: element
-            .querySelector("fig-input-number")
-            ?.hasAttribute("elastic"),
         };
       });
       await page.mouse.up();
-      const releaseStartDelta = await host.evaluate((element) => {
-        const wheelRect = element
-          .querySelector(".propskit-wheel-wheel")!
-          .getBoundingClientRect();
+      const releaseStartDelta = await wheel.evaluate((element) => {
+        const wheelRect = element.getBoundingClientRect();
         const handleRect = element
-          .querySelector(".propskit-wheel-handle")!
+          .querySelector(".fig-input-wheel-handle")!
           .getBoundingClientRect();
         return (
           handleRect.left +
@@ -2020,17 +1978,17 @@ test.describe("propskit-wheel", () => {
         );
       });
       await page.waitForTimeout(350);
-      const released = await host.evaluate((element) => {
-        const wheelRect = element
-          .querySelector(".propskit-wheel-wheel")!
-          .getBoundingClientRect();
-        const handle = element.querySelector(".propskit-wheel-handle")!;
+      const released = await wheel.evaluate((element) => {
+        const wheelRect = element.getBoundingClientRect();
+        const handle = element.querySelector(".fig-input-wheel-handle")!;
         const handleRect = handle.getBoundingClientRect();
         const hostTransform = getComputedStyle(element).transform;
         return {
-          elasticDragging: (element as HTMLElement).dataset.elasticDragging,
+          elasticDragging: element.hasAttribute(
+            "data-fig-input-wheel-elastic-dragging",
+          ),
           offset: (element as HTMLElement).style.getPropertyValue(
-            "--propskit-wheel-handle-drag-offset",
+            "--fig-input-wheel-handle-drag-offset",
           ),
           centerDelta:
             handleRect.left +
@@ -2039,11 +1997,9 @@ test.describe("propskit-wheel", () => {
           transitionDuration: getComputedStyle(handle).transitionDuration,
           hostScale:
             hostTransform === "none" ? 1 : new DOMMatrix(hostTransform).a,
-          cursor: getComputedStyle(
-            element.querySelector(".propskit-wheel-wheel")!,
-          ).cursor,
+          cursor: getComputedStyle(element).cursor,
           bodyDragging: document.body.classList.contains(
-            "fig-propskit-wheel-dragging",
+            "fig-input-wheel-dragging",
           ),
         };
       });
@@ -2058,7 +2014,7 @@ test.describe("propskit-wheel", () => {
     expect(elastic.dragging.bodyDragging).toBe(true);
     expect(elastic.released.cursor).toBe("ew-resize");
     expect(elastic.released.bodyDragging).toBe(false);
-    expect(elastic.dragging.elasticDragging).toBe("true");
+    expect(elastic.dragging.elasticDragging).toBe(true);
     expect(elastic.dragging.offset).toBeGreaterThan(0);
     expect(elastic.dragging.offset).toBeLessThanOrEqual(8);
     expect(elastic.dragging.centerDelta).toBeGreaterThan(0);
@@ -2066,17 +2022,511 @@ test.describe("propskit-wheel", () => {
     expect(elastic.dragging.hostTransform).not.toBe("none");
     expect(elastic.dragging.hostScale).toBeGreaterThan(1);
     expect(elastic.releaseStartDelta).toBeGreaterThan(0);
-    expect(elastic.released.elasticDragging).toBeUndefined();
+    expect(elastic.released.elasticDragging).toBe(false);
     expect(elastic.released.offset).toBe("");
     expect(elastic.released.centerDelta).toBeCloseTo(0, 1);
     expect(elastic.released.transitionDuration).toBe("0.28s");
     expect(elastic.released.hostScale).toBeCloseTo(1, 2);
-    expect(elastic.dragging.forwardedElastic).toBe(false);
-    expect(rigid.dragging.elasticDragging).toBeUndefined();
+    expect(rigid.dragging.elasticDragging).toBe(false);
     expect(rigid.dragging.offset).toBeNaN();
     expect(rigid.dragging.centerDelta).toBeCloseTo(0, 1);
     expect(rigid.dragging.hostScale).toBe(1);
-    expect(rigid.dragging.forwardedElastic).toBe(false);
+  });
+
+  test("wheel input honors shift and disabled blocks interaction", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-wheel aria-label="Delay" value="1" step="0.1"
+          min="0" max="20"></fig-input-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      const wheel = root.querySelector("fig-input-wheel") as HTMLElement & {
+        value: string;
+      };
+      const events: Array<{ type: string; detail: number }> = [];
+      for (const type of ["input", "change"]) {
+        wheel.addEventListener(type, (event) => {
+          events.push({
+            type,
+            detail: (event as CustomEvent<number>).detail,
+          });
+        });
+      }
+      wheel.dispatchEvent(
+        new WheelEvent("wheel", { deltaY: 1, bubbles: true, cancelable: true }),
+      );
+      wheel.dispatchEvent(
+        new WheelEvent("wheel", {
+          deltaY: 1,
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      const beforeDisable = {
+        value: Number(wheel.value),
+        events: [...events],
+      };
+      wheel.setAttribute("disabled", "");
+      const disabledEventCount = events.length;
+      wheel.dispatchEvent(
+        new WheelEvent("wheel", { deltaY: 1, bubbles: true, cancelable: true }),
+      );
+      wheel.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      );
+      return {
+        beforeDisable,
+        finalValue: Number(wheel.value),
+        disabledEmits: events.length - disabledEventCount,
+        role: wheel.getAttribute("role"),
+        name: wheel.getAttribute("aria-label"),
+        now: wheel.getAttribute("aria-valuenow"),
+        text: wheel.getAttribute("aria-valuetext"),
+        min: wheel.getAttribute("aria-valuemin"),
+        max: wheel.getAttribute("aria-valuemax"),
+        disabled: wheel.getAttribute("aria-disabled"),
+        tabIndex: wheel.getAttribute("tabindex"),
+      };
+    });
+
+    expect(state.beforeDisable).toEqual({
+      value: 2.1,
+      events: [
+        { type: "input", detail: 1.1 },
+        { type: "change", detail: 1.1 },
+        { type: "input", detail: 2.1 },
+        { type: "change", detail: 2.1 },
+      ],
+    });
+    expect(state.finalValue).toBe(2.1);
+    expect(state.disabledEmits).toBe(0);
+    expect(state).toMatchObject({
+      role: "spinbutton",
+      name: "Delay",
+      now: "2.1",
+      text: "2.1",
+      min: "0",
+      max: "20",
+      disabled: "true",
+      tabIndex: "-1",
+    });
+  });
+});
+
+test.describe("propskit-wheel", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await customElements.whenDefined("propskit-wheel");
+    });
+  });
+
+  test("composes labels, wheel insets, number attributes, and centered handles", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel id="omitted"></propskit-wheel>
+        <propskit-wheel id="named" label="Delay" value="1.5" units="seconds"></propskit-wheel>
+        <propskit-wheel id="blank" label="" value="240" units="milliseconds"></propskit-wheel>
+        <propskit-wheel id="arbitrary" label="Width" value="12" units="px"
+          precision="3"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const omitted = root.querySelector("#omitted") as HTMLElement & {
+        value: string;
+      };
+      const named = root.querySelector("#named")!;
+      const blank = root.querySelector("#blank")!;
+      const arbitrary = root.querySelector("#arbitrary")!;
+      const readLayout = (host: Element) => {
+        const surfaceRect = host
+          .querySelector(".propskit-wheel-surface")!
+          .getBoundingClientRect();
+        const wheel = host.querySelector("fig-input-wheel")!;
+        const wheelRect = wheel.getBoundingClientRect();
+        const handleRect = wheel
+          .querySelector(".fig-input-wheel-handle")!
+          .getBoundingClientRect();
+        return {
+          leftInset: wheelRect.left - surfaceRect.left,
+          rightInset: surfaceRect.right - wheelRect.right,
+          handleCenterDelta: Math.abs(
+            (handleRect.left + handleRect.right) / 2 -
+              (wheelRect.left + wheelRect.right) / 2,
+          ),
+        };
+      };
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      return {
+        omittedLabel: omitted.querySelector("label")?.textContent,
+        namedLabel: named.querySelector("label")?.textContent,
+        blankLabel: blank.querySelector("label")?.textContent,
+        blankLabelState: blank.hasAttribute("data-label-empty"),
+        surfaceCount: omitted.querySelectorAll(".propskit-wheel-surface").length,
+        directChildren: [
+          ...(omitted.querySelector(".propskit-wheel-surface")?.children ?? []),
+        ].map((child) => child.tagName),
+        role: omitted.querySelector("fig-input-wheel")?.getAttribute("role"),
+        omittedValue: Number(omitted.value),
+        omittedStep: omitted
+          .querySelector("fig-input-number")
+          ?.getAttribute("step"),
+        omittedPrecision: omitted
+          .querySelector("fig-input-number")
+          ?.getAttribute("precision"),
+        namedUnits: named.querySelector("fig-input-number")?.getAttribute("units"),
+        namedStep: named.querySelector("fig-input-number")?.getAttribute("step"),
+        namedWheelUnits: named
+          .querySelector("fig-input-wheel")
+          ?.getAttribute("units"),
+        namedWheelStep: named
+          .querySelector("fig-input-wheel")
+          ?.getAttribute("step"),
+        namedWheelAriaText: named
+          .querySelector("fig-input-wheel")
+          ?.getAttribute("aria-valuetext"),
+        namedPrecision: named
+          .querySelector("fig-input-number")
+          ?.getAttribute("precision"),
+        blankUnits: blank.querySelector("fig-input-number")?.getAttribute("units"),
+        blankStep: blank.querySelector("fig-input-number")?.getAttribute("step"),
+        blankWheelUnits: blank
+          .querySelector("fig-input-wheel")
+          ?.getAttribute("units"),
+        blankWheelStep: blank
+          .querySelector("fig-input-wheel")
+          ?.getAttribute("step"),
+        blankWheelAriaText: blank
+          .querySelector("fig-input-wheel")
+          ?.getAttribute("aria-valuetext"),
+        arbitraryUnits: arbitrary
+          .querySelector("fig-input-number")
+          ?.getAttribute("units"),
+        arbitraryWheelUnits: arbitrary
+          .querySelector("fig-input-wheel")
+          ?.getAttribute("units"),
+        arbitraryPrecision: arbitrary
+          .querySelector("fig-input-number")
+          ?.getAttribute("precision"),
+        omittedLayout: readLayout(omitted),
+        blankLayout: readLayout(blank),
+        standardInset: rem * 3,
+        spacer2: rem * 0.5,
+      };
+    });
+
+    expect(state).toMatchObject({
+      omittedLabel: "Value",
+      namedLabel: "Delay",
+      blankLabel: "",
+      blankLabelState: true,
+      surfaceCount: 1,
+      directChildren: ["LABEL", "FIG-INPUT-WHEEL", "FIG-INPUT-NUMBER"],
+      role: "spinbutton",
+      omittedValue: 0,
+      omittedStep: "1",
+      omittedPrecision: "0",
+      namedUnits: "s",
+      namedStep: "0.1",
+      namedWheelUnits: null,
+      namedWheelStep: "0.1",
+      namedWheelAriaText: "1.5 seconds",
+      namedPrecision: "2",
+      blankUnits: "ms",
+      blankStep: "100",
+      blankWheelUnits: null,
+      blankWheelStep: "100",
+      blankWheelAriaText: "240 milliseconds",
+      arbitraryUnits: "px",
+      arbitraryWheelUnits: null,
+      arbitraryPrecision: "3",
+    });
+    expect(state.omittedLayout.leftInset).toBeCloseTo(state.standardInset, 0);
+    expect(state.omittedLayout.rightInset).toBeCloseTo(state.standardInset, 0);
+    expect(state.blankLayout.leftInset).toBeCloseTo(state.spacer2, 0);
+    expect(state.blankLayout.rightInset).toBeCloseTo(state.standardInset, 0);
+    expect(state.omittedLayout.handleCenterDelta).toBeCloseTo(0, 5);
+    expect(state.blankLayout.handleCenterDelta).toBeCloseTo(0, 5);
+  });
+
+  test("text false removes and reinserts the number while expanding the wheel", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel label="Frames" value="12" text="false"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+        value: string;
+      };
+      const wheel = host.querySelector("fig-input-wheel") as HTMLElement;
+      const readLayout = () => {
+        const surfaceRect = host
+          .querySelector(".propskit-wheel-surface")!
+          .getBoundingClientRect();
+        const wheelRect = wheel.getBoundingClientRect();
+        const handleRect = wheel
+          .querySelector(".fig-input-wheel-handle")!
+          .getBoundingClientRect();
+        return {
+          rightInset: surfaceRect.right - wheelRect.right,
+          handleCenterDelta: Math.abs(
+            (handleRect.left + handleRect.right) / 2 -
+              (wheelRect.left + wheelRect.right) / 2,
+          ),
+        };
+      };
+      const withoutText = {
+        inputCount: host.querySelectorAll("fig-input-number").length,
+        ...readLayout(),
+      };
+      wheel.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      );
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
+      host.removeAttribute("text");
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      return {
+        withoutText,
+        valueAfterKeyboard: Number(host.value),
+        withText: {
+          inputCount: host.querySelectorAll("fig-input-number").length,
+          inputValue: host.querySelector("fig-input-number")?.getAttribute("value"),
+          ...readLayout(),
+        },
+        rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
+      };
+    });
+
+    expect(state.withoutText.inputCount).toBe(0);
+    expect(state.withoutText.rightInset).toBeCloseTo(state.rem * 0.5, 0);
+    expect(state.withoutText.handleCenterDelta).toBeCloseTo(0, 5);
+    expect(state.valueAfterKeyboard).toBe(13);
+    expect(state.withText.inputCount).toBe(1);
+    expect(state.withText.inputValue).toBe("13");
+    expect(state.withText.rightInset).toBeCloseTo(state.rem * 3, 0);
+    expect(state.withText.handleCenterDelta).toBeCloseTo(0, 5);
+  });
+
+  test("delegates elastic feedback while stretching the composed row", async ({
+    page,
+  }) => {
+    await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel id="elastic-row" value="0"></propskit-wheel>
+        <propskit-wheel id="rigid-row" value="0" elastic="false"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+    });
+
+    const dragRow = async (id: string) => {
+      const wheel = page.locator(`#${id} fig-input-wheel`);
+      const rect = await wheel.boundingBox();
+      if (!rect) throw new Error(`Missing wheel bounds for #${id}`);
+      await page.mouse.move(
+        rect.x + rect.width / 2,
+        rect.y + rect.height / 2,
+      );
+      await page.mouse.down();
+      await page.mouse.move(rect.x + rect.width + 24, rect.y + rect.height / 2);
+      await page.waitForTimeout(30);
+      const dragging = await page.locator(`#${id}`).evaluate((host) => {
+        const wheel = host.querySelector("fig-input-wheel") as HTMLElement;
+        const handle = wheel.querySelector(
+          ".fig-input-wheel-handle",
+        ) as HTMLElement;
+        const hostTransform = getComputedStyle(host).transform;
+        return {
+          active: host.hasAttribute(
+            "data-propskit-wheel-elastic-dragging",
+          ),
+          hostScale:
+            hostTransform === "none" ? 1 : new DOMMatrix(hostTransform).a,
+          wheelTransform: getComputedStyle(wheel).transform,
+          handleOffset:
+            Number.parseFloat(
+              wheel.style.getPropertyValue(
+                "--fig-input-wheel-handle-drag-offset",
+              ),
+            ) || 0,
+          handleTransition: getComputedStyle(handle).transitionDuration,
+        };
+      });
+      await page.mouse.up();
+      await page.waitForTimeout(350);
+      const released = await page.locator(`#${id}`).evaluate((host) => {
+        const transform = getComputedStyle(host).transform;
+        return {
+          active: host.hasAttribute(
+            "data-propskit-wheel-elastic-dragging",
+          ),
+          scale: transform === "none" ? 1 : new DOMMatrix(transform).a,
+        };
+      });
+      return { dragging, released };
+    };
+
+    const elastic = await dragRow("elastic-row");
+    const rigid = await dragRow("rigid-row");
+
+    expect(elastic.dragging.active).toBe(true);
+    expect(elastic.dragging.hostScale).toBeGreaterThan(1);
+    expect(elastic.dragging.wheelTransform).toBe("none");
+    expect(elastic.dragging.handleOffset).toBeGreaterThan(0);
+    expect(elastic.dragging.handleTransition).toBe("0s");
+    expect(elastic.released.active).toBe(false);
+    expect(elastic.released.scale).toBeCloseTo(1, 2);
+    expect(rigid.dragging.active).toBe(false);
+    expect(rigid.dragging.hostScale).toBe(1);
+    expect(rigid.dragging.handleOffset).toBe(0);
+  });
+
+  test("synchronizes both children, retargets events, and resets to default", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-wheel label="Delay" value="5" default="3" units="s"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+        value: string;
+        defaultValue: string;
+        isDefault: boolean;
+        resetToDefault(): void;
+      };
+      const wheel = host.querySelector("fig-input-wheel") as HTMLElement & {
+        value: string;
+      };
+      const number = host.querySelector("fig-input-number") as HTMLElement & {
+        value: number;
+      };
+      const received: Array<{
+        type: string;
+        detail: number;
+        targetIsHost: boolean;
+        composed: boolean;
+      }> = [];
+      for (const type of ["input", "change"]) {
+        host.addEventListener(type, (event) => {
+          received.push({
+            type,
+            detail: (event as CustomEvent<number>).detail,
+            targetIsHost: event.target === host,
+            composed: event.composed,
+          });
+        });
+      }
+
+      host.value = "7";
+      const afterHostWrite = {
+        host: host.value,
+        wheel: wheel.value,
+        number: number.getAttribute("value"),
+      };
+      wheel.value = "8";
+      wheel.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          composed: true,
+          detail: 8,
+        }),
+      );
+      const afterWheelInput = {
+        host: host.value,
+        wheel: wheel.value,
+        number: number.getAttribute("value"),
+      };
+      number.value = 9;
+      number.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          composed: true,
+          detail: 9,
+        }),
+      );
+      const afterNumberChange = {
+        host: host.value,
+        wheel: wheel.value,
+        number: number.getAttribute("value"),
+      };
+      const dirtyBeforeReset = host.isDefault;
+      host.resetToDefault();
+      host.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      return {
+        afterHostWrite,
+        afterWheelInput,
+        afterNumberChange,
+        dirtyBeforeReset,
+        reset: {
+          host: host.value,
+          wheel: wheel.value,
+          number: number.getAttribute("value"),
+          defaultValue: host.defaultValue,
+          isDefault: host.isDefault,
+        },
+        events: received,
+        labelId: host.querySelector("label")?.id,
+        wheelLabelledBy: wheel.getAttribute("aria-labelledby"),
+        numberLabelledBy: number.getAttribute("aria-labelledby"),
+        clickDelegatedFocus: document.activeElement === wheel,
+      };
+    });
+
+    expect(state.afterHostWrite).toEqual({ host: "7", wheel: "7", number: "7" });
+    expect(state.afterWheelInput).toEqual({
+      host: "8",
+      wheel: "8",
+      number: "8",
+    });
+    expect(state.afterNumberChange).toEqual({
+      host: "9",
+      wheel: "9",
+      number: "9",
+    });
+    expect(state.dirtyBeforeReset).toBe(false);
+    expect(state.reset).toEqual({
+      host: "3",
+      wheel: "3",
+      number: "3",
+      defaultValue: "3",
+      isDefault: true,
+    });
+    expect(state.events).toEqual([
+      { type: "input", detail: 8, targetIsHost: true, composed: true },
+      { type: "change", detail: 9, targetIsHost: true, composed: true },
+      { type: "input", detail: 3, targetIsHost: true, composed: true },
+      { type: "change", detail: 3, targetIsHost: true, composed: true },
+    ]);
+    expect(state.wheelLabelledBy).toBe(state.labelId);
+    expect(state.numberLabelledBy).toBe(state.labelId);
+    expect(state.clickDelegatedFocus).toBe(true);
   });
 
   test("number field starts a scrub before focus and still clicks to edit", async ({
@@ -2125,14 +2575,14 @@ test.describe("propskit-wheel", () => {
       value: Number((element as HTMLElement & { value: string }).value),
       numberScrubbing: element.hasAttribute("data-number-scrubbing"),
       handleOffset: Number.parseFloat(
-        (element as HTMLElement).style.getPropertyValue(
-          "--propskit-wheel-handle-drag-offset",
-        ),
+        (
+          element.querySelector("fig-input-wheel") as HTMLElement
+        ).style.getPropertyValue("--fig-input-wheel-handle-drag-offset"),
       ),
       inputCount: Number((element as HTMLElement).dataset.inputCount),
       wheelFocused:
         document.activeElement ===
-        element.querySelector(".propskit-wheel-wheel"),
+        element.querySelector("fig-input-wheel"),
     }));
     await page.mouse.up();
     await page.waitForTimeout(20);
@@ -2158,7 +2608,7 @@ test.describe("propskit-wheel", () => {
     expect(focusedAfterClick).toBe(true);
   });
 
-  test("disabled does not emit and number stays the inner control", async ({
+  test("disabled forwards to both child controls and does not emit", async ({
     page,
   }) => {
     const state = await page.evaluate(async () => {
@@ -2168,21 +2618,26 @@ test.describe("propskit-wheel", () => {
       await new Promise(requestAnimationFrame);
       const host = root.querySelector("propskit-wheel") as HTMLElement;
       const input = host.querySelector("fig-input-number");
+      const wheel = host.querySelector("fig-input-wheel");
       let emitted = 0;
       host.addEventListener("input", () => {
         emitted += 1;
       });
-      host.querySelector(".propskit-wheel-wheel")?.dispatchEvent(
+      wheel?.dispatchEvent(
         new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
       );
       return {
         inputDisabled: input?.hasAttribute("disabled"),
-        wheelTabIndex: host.querySelector(".propskit-wheel-wheel")?.getAttribute("tabindex"),
+        wheelDisabled: wheel?.hasAttribute("disabled"),
+        wheelAriaDisabled: wheel?.getAttribute("aria-disabled"),
+        wheelTabIndex: wheel?.getAttribute("tabindex"),
         emitted,
       };
     });
 
     expect(state.inputDisabled).toBe(true);
+    expect(state.wheelDisabled).toBe(true);
+    expect(state.wheelAriaDisabled).toBe("true");
     expect(state.wheelTabIndex).toBe("-1");
     expect(state.emitted).toBe(0);
   });
@@ -2994,7 +3449,7 @@ test.describe("PropsKit disabled contract", () => {
         "propskit-number": "fig-input-number",
         "propskit-position": "fig-input-number",
         "propskit-slider": "fig-slider",
-        "propskit-wheel": "fig-input-number",
+        "propskit-wheel": ":is(fig-input-wheel, fig-input-number)",
       };
       const primitives = Object.fromEntries(
         Object.entries(innerSelectors).map(([tag, selector]) => {

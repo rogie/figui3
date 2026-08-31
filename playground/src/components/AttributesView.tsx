@@ -337,6 +337,7 @@ function withInterpolationSwatchGradientValue(
 function getNumberAttrDefault(
   controlTag: string,
   attrName: string,
+  units?: string,
 ): number | undefined {
   if (controlTag === "fig-tooltip" && attrName === "delay") return 500;
   if (
@@ -349,6 +350,18 @@ function getNumberAttrDefault(
     if (attrName === "max") return 100;
     if (attrName === "step") return 0.5;
   }
+  if (
+    (controlTag === "fig-input-wheel" ||
+      controlTag === "propskit-wheel") &&
+    attrName === "step"
+  ) {
+    const normalizedUnits = units?.trim().toLowerCase();
+    if (normalizedUnits === "seconds" || normalizedUnits === "s") return 0.1;
+    if (normalizedUnits === "milliseconds" || normalizedUnits === "ms")
+      return 100;
+    return 1;
+  }
+  if (controlTag === "fig-input-wheel" && attrName === "value") return 0;
   return undefined;
 }
 
@@ -787,11 +800,16 @@ export default function AttributesView({
               name === "perspective-distance";
             const fallback = isPerspectiveDistance
               ? 500
-              : (getNumberAttrDefault(target.controlTag, name) ??
+              : (getNumberAttrDefault(
+                  target.controlTag,
+                  name,
+                  target.controlAttributes.units,
+                ) ??
                 rule.min ??
                 0);
             const isOptionalWheelBound =
-              target.controlTag === "propskit-wheel" &&
+              (target.controlTag === "fig-input-wheel" ||
+                target.controlTag === "propskit-wheel") &&
               (name === "min" || name === "max");
             const numberValue =
               isShimmerLikeControl && name === "duration"

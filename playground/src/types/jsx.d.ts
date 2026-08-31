@@ -49,6 +49,7 @@ declare module "react" {
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-input-angle": FigAttrs;
+      "fig-input-wheel": FigAttrs;
       "propskit-oscillator": FigAttrs;
       "fig-input-number": FigAttrs;
       "fig-easing-curve": FigAttrs;

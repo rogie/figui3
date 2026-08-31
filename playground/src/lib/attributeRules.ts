@@ -691,7 +691,26 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
+    text: {
+      label: "Text",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     size: { label: "Size", type: "enum", options: ["", "small"] },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "fig-input-wheel": {
+    value: { label: "Value", type: "number", min: -10000, max: 10000, step: 1 },
+    min: { label: "Min", type: "number", step: 1 },
+    max: { label: "Max", type: "number", step: 1 },
+    step: { label: "Step", type: "number", min: 0.001, max: 1000, step: 0.001 },
+    elastic: {
+      label: "Elastic",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-fill": {

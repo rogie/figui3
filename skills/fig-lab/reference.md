@@ -31,6 +31,31 @@ Playground attrs: `type` (`range`, `hue`, `delta`, `stepper`, `opacity`), `color
 
 Inner `fig-slider` still needs `min` / `max` / `step` / `value` as forwarded attrs.
 
+## `fig-input-wheel`
+
+Standalone interactive SVG tick + handle scrubber in the lab bundle.
+
+- Attrs: `value` (default `0`), `step` (default `1`), optional `min`/`max`, `elastic` (default true), `disabled`
+- Props: `value`, `min`, `max`, `step`
+- Methods: `focus()`, `beginScrub()`, `updateScrub()`, `endScrub()`
+- Events: numeric `input` and `change`, bubbling and composed
+- ARIA value text is numeric
+- Not supported: `units`, `text`, `precision`, `label`, `size`, `variant`, `default`/reset, or a number field
+
+```html
+<fig-input-wheel value="50" min="0" max="100"></fig-input-wheel>
+<fig-input-wheel value="1.5" step="0.25"></fig-input-wheel>
+```
+
+## `propskit-wheel`
+
+Composes `fig-input-wheel` with an optional `fig-input-number`. It retains `label`, `text`, `precision`, `units`, `default`/reset, `size`, and `variant`. Units and time aliases are wrapper/number-field behavior: normalized `s` defaults to step `0.1` and precision `2`, normalized `ms` defaults to step `100` and precision `0`, and other units default to step `1` and precision `0`. The wrapper applies the effective step and unit-aware `aria-valuetext` to the child wheel, but never sets child `units`.
+
+```html
+<propskit-wheel label="Duration" value="1.5" units="seconds"></propskit-wheel>
+<propskit-wheel label="Frames" value="12" text="false"></propskit-wheel>
+```
+
 ## Point JSON shapes
 
 ```json

@@ -189,6 +189,7 @@ export default function ExampleView({
 
     const VALUE_SYNC_TAGS = new Set([
       "fig-3d-rotate",
+      "fig-input-wheel",
       "fig-origin-grid",
       "fig-joystick",
       "fig-segmented-control",
@@ -237,6 +238,7 @@ export default function ExampleView({
       const shouldSkipPersistForFocusedControl =
         tagName === "fig-segmented-control" ||
         tagName === "fig-joystick" ||
+        tagName === "fig-input-wheel" ||
         tagName === "fig-origin-grid" ||
         tagName === "propskit-wheel";
       if (shouldSkipPersistForFocusedControl) {
@@ -267,7 +269,7 @@ export default function ExampleView({
       let target: Element | null = null;
       if (fields.length && fields[fieldIndex]) {
         target = fields[fieldIndex].querySelector(
-          "fig-3d-rotate, fig-origin-grid, fig-joystick, fig-segmented-control",
+          "fig-3d-rotate, fig-input-wheel, fig-origin-grid, fig-joystick, fig-segmented-control",
         );
       } else if (controls) {
         target = controls[fieldIndex] ?? null;

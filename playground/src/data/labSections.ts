@@ -355,7 +355,7 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-wheel",
     name: "Wheel",
     description:
-      "A generic full-surface numeric scrubber with a projected tick wheel and optional units. These examples use time values.",
+      "A labeled numeric scrubber that composes fig-input-wheel with an optional fig-input-number.",
     examples: [
       {
         id: "default",
@@ -382,7 +382,43 @@ const ungroupedLabSections: Section[] = [
         id: "bounded",
         name: "Min / max",
         markup: `<div class="prop-panel">
-  <propskit-wheel label="Delay" value="240" default="0" min="0" max="1000" units="milliseconds"></propskit-wheel>
+  <propskit-wheel label="Delay" value="0" default="0" min="0" max="1000" units="milliseconds"></propskit-wheel>
+</div>`,
+      },
+      {
+        id: "wheel-only",
+        name: "Wheel only",
+        markup: `<div class="prop-panel">
+  <propskit-wheel label="" value="12" default="0" text="false"></propskit-wheel>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "input-wheel",
+    name: "Input Wheel",
+    description:
+      "A standalone interactive SVG tick-and-handle control for scrubbing numeric values.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-input-wheel></fig-input-wheel>
+</div>`,
+      },
+      {
+        id: "bounded",
+        name: "Bounded",
+        markup: `<div class="prop-panel">
+  <fig-input-wheel value="50" min="0" max="100"></fig-input-wheel>
+</div>`,
+      },
+      {
+        id: "stepped",
+        name: "Stepped",
+        markup: `<div class="prop-panel">
+  <fig-input-wheel value="1.5" step="0.25"></fig-input-wheel>
 </div>`,
       },
     ],

@@ -76,7 +76,7 @@ Agent skills ship in `.cursor/skills/` (included in the npm package):
 
 - `figui3` — core `fig.js` components
 - `fig-editor` — `fig-select` and `fig-fill-picker`
-- `fig-lab` — experimental `propskit-*`, canvas, AI, angle, reorder
+- `fig-lab` — experimental `propskit-*`, canvas, AI, angle, wheel, reorder
 - `propkit` — `/propskit` property-row composition
 
 Minimal example:
@@ -104,7 +104,8 @@ Minimal example:
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
 | [Propskit Slider](#propskit-slider) | `<propskit-slider>` | Labeled field + slider combo |
-| [Propskit Wheel](#propskit-wheel) | `<propskit-wheel>` | Generic numeric scrubber with tick wheel |
+| [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
+| [Propskit Wheel](#propskit-wheel) | `<propskit-wheel>` | Labeled input wheel with optional number field |
 | [Propskit Color](#propskit-color) | `<propskit-color>` | Full-surface labeled color control |
 | [Propskit Fill](#propskit-fill) | `<propskit-fill>` | Full-surface labeled fill control |
 | [Propskit Gradient](#propskit-gradient) | `<propskit-gradient>` | Full-surface labeled gradient control |
@@ -557,13 +558,40 @@ Double-click or right-click and choose **Reset** to restore `default`, falling b
 
 ---
 
+#### Input Wheel
+
+`<fig-input-wheel>`
+
+A standalone interactive SVG tick-and-handle control for scrubbing numeric values. It is experimental and requires `fig-lab.js` and `fig-lab.css`.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `value` | number | `0` | Current numeric value |
+| `step` | number | `1` | Scrub increment |
+| `min` | number | — | Inclusive lower bound; omit for no minimum |
+| `max` | number | — | Inclusive upper bound; omit for no maximum |
+| `elastic` | boolean/string | `true` | Resisted drag and spring return; set `"false"` to disable |
+| `disabled` | boolean | `false` | Disable interaction |
+
+The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-valuetext` is numeric. `focus()`, `beginScrub()`, `updateScrub()`, and `endScrub()` expose the interaction lifecycle for imperative integrations.
+
+**Events:** numeric `input` while scrubbing and `change` on commit. Both bubble across shadow boundaries.
+
+```html
+<fig-input-wheel></fig-input-wheel>
+<fig-input-wheel value="50" min="0" max="100"></fig-input-wheel>
+<fig-input-wheel value="1.5" step="0.25"></fig-input-wheel>
+```
+
+---
+
 #### Propskit Wheel
 
 `<propskit-wheel>`
 
-A generic numeric scrubber with optional arbitrary units. The host is the row chrome; an inner `.propskit-wheel-surface` holds a projected SVG tick wheel and a `fig-input-number`. There is no `fig-field` or `fig-slider`.
+A labeled numeric scrubber that composes `<fig-input-wheel>` with an optional `<fig-input-number>`. The host provides row chrome and reset behavior; there is no `fig-field` or `fig-slider`.
 
-Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that exact value is used. Units are omitted by default and arbitrary values such as `px` pass through unchanged. Time aliases receive time-focused defaults.
+Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that exact value is used. Units are omitted by default and arbitrary values such as `px` pass through unchanged. Units remain wrapper and number-field behavior: time aliases receive time-focused defaults, and the effective step is applied to the child wheel without setting a child `units` attribute.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -573,8 +601,9 @@ Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that
 | `min` | number | — | Inclusive lower bound. Omit for no minimum |
 | `max` | number | — | Inclusive upper bound. Omit for no maximum |
 | `step` | number | `1`; `0.1` (`s`) / `100` (`ms`) | Drag, keyboard, and mouse wheel increment |
-| `precision` | number | `0`; `2` (`s`) / `0` (`ms`) | Displayed decimal places on the inner number |
+| `precision` | number | `0`; `2` (`s`) / `0` (`ms`) | Displayed decimal places on the optional number field |
 | `elastic` | boolean/string | `true` | Resisted handle movement, edge stretch, and spring return while scrubbing; set `"false"` to disable |
+| `text` | boolean/string | `true` | Include the editable `fig-input-number`; set `"false"` for only `fig-input-wheel` |
 | `size` | string | default | Set to `"small"` for the compact layout |
 | `default` | number/string | initial `value` | Right-click reset target |
 | `disabled` | boolean | `false` | Disable wheel and number |
@@ -585,6 +614,7 @@ Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that
 ```html
 <propskit-wheel label="Duration" value="1.5" default="0" units="seconds"></propskit-wheel>
 <propskit-wheel label="Delay" value="240" default="0" min="0" max="1000" units="ms"></propskit-wheel>
+<propskit-wheel label="Frames" value="12" text="false"></propskit-wheel>
 ```
 
 ---

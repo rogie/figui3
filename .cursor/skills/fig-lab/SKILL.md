@@ -2,10 +2,11 @@
 name: fig-lab
 description: >-
   Guides FigUI3 lab bundle (`fig-lab.js` / `fig-lab.css`): experimental propskit-*
-  property controls, fig-canvas-control, fig-input-angle, fig-reorder, and AI composer
-  components (fig-ai-prompt, fig-ai-context, fig-chat-message, fig-attachment). Use when
-  building labeled property panels, canvas handles, oscillators, reorder lists, or AI
-  chat UIs. Playground: /propskit/lab. APIs are unstable.
+  property controls, fig-canvas-control, fig-input-angle, fig-input-wheel, fig-reorder,
+  and AI composer components (fig-ai-prompt, fig-ai-context, fig-chat-message,
+  fig-attachment). Use when building labeled property panels, canvas handles,
+  oscillators, scrubbers, reorder lists, or AI chat UIs. Playground: /propskit/lab.
+  APIs are unstable.
 user-invocable: false
 ---
 
@@ -45,7 +46,7 @@ Shared:
 - `default` — reset target (may differ from initial `value`)
 - Right-click **Reset** menu; `resetToDefault()`
 - `propskit-slider` also double-click resets
-- Forward remaining attrs to the inner control
+- Forward remaining attrs to the inner control except where a component note says otherwise
 - Rows are large by default; `propskit-group size="small"` applies compact sizing to children without an authored size
 
 | Tag | Playground | Inner control | Notes |
@@ -58,7 +59,7 @@ Shared:
 | `propskit-text` | `#propskit-text` | `fig-input-text` | `type`, `readonly` |
 | `propskit-number` | `#propskit-number` | `fig-input-number` | `min`, `max`, `step`, `precision`, `units`, `steppers` |
 | `propskit-slider` | `#propskit-slider` | `fig-slider` | `type` range/hue/delta/stepper/opacity; `elastic` default true |
-| `propskit-wheel` | `#propskit-wheel` | SVG wheel + `fig-input-number` | Generic numeric wheel with optional arbitrary `units`. Defaults: `value="0"`, no units, `label="Value"`, `step="1"`, `precision="0"`. Time aliases normalize to `s` / `ms` and default to `step="0.1"` / `precision="2"` for seconds or `step="100"` / `precision="0"` for milliseconds. Resisted handle drag + edge stretch + spring return (`elastic` default true). Optional `min`/`max` (omit = unbounded). No `fig-field` |
+| `propskit-wheel` | `#propskit-wheel` | `fig-input-wheel` + optional `fig-input-number` | Labeled scrubber with `label`, `text`, `precision`, `units`, `default`/reset, `size`, and `variant`; units stay on the wrapper/number field and the effective step is applied to the wheel |
 | `propskit-position` | `#propskit-position` | two numbers | `x`, `y`, `units="percent"` |
 | `propskit-color-point` | `#propskit-color-point` | color + position | JSON `value`; `collapsible`, `open` |
 | `propskit-point-radius` | `#propskit-point-radius` | position + radius | JSON `value` |
@@ -98,6 +99,7 @@ Rich select (requires editor):
 |---|---|---|
 | `fig-canvas-control` | `#canvas-control` | Overlay on a positioned parent. `type`: `point` (default), `color`, `point-radius`, `point-radius-angle`, `point-point`. `value` JSON `{x,y,radius?,angle?,x2?,y2?}`. `snapping="modifier\|true\|false"`, `name`, `tooltips`, `color` |
 | `fig-input-angle` | `#angle` | Dial + optional text. `text`, `dial` default true, `rotations`, `min`/`max`/`units` |
+| `fig-input-wheel` | `#input-wheel` | Standalone SVG tick + handle scrubber. Numeric `value`, optional `min`/`max`, `step` default 1, `elastic` default true, `disabled` |
 | `fig-reorder` | `#reorder` | `display:contents` wrapper; drag-reorders **direct children**. `axis="vertical\|horizontal"`, `handle` CSS selector when rows contain nested controls. Event: `reorder` `{ oldIndex, newIndex, item }` |
 
 ```html
@@ -143,7 +145,8 @@ These are layout shells. Wire behavior yourself.
 |---|---|
 | Labeled boolean | `propskit-switch` |
 | Labeled continuous number | `propskit-slider` |
-| Scrubbable number or time | `propskit-wheel` |
+| Standalone scrubbable number | `fig-input-wheel` |
+| Labeled scrubbable number or time | `propskit-wheel` |
 | Labeled exact number | `propskit-number` |
 | Labeled text | `propskit-text` |
 | Labeled discrete list | `propskit-select` (not `fig-dropdown`) |

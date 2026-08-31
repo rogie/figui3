@@ -5,7 +5,7 @@ description: >-
   Use when adding, using, or debugging fig-* elements from the core bundle—buttons,
   fields, overlays, menus, sliders, color/fill inputs, media, dialogs, popups, toasts—or
   when working in the /figui3 playground. Not for fig-select or fig-fill-picker
-  (fig-editor), propskit-* / AI / canvas / angle / reorder (fig-lab), or fig-layer.
+  (fig-editor), propskit-* / AI / canvas / angle / wheel / reorder (fig-lab), or fig-layer.
 user-invocable: false
 ---
 
@@ -36,7 +36,7 @@ import "@rogieking/figui3/fig.js";
 |---|---|---|
 | **Core** (this skill) | `fig.css` + `fig.js` | All `fig-*` below |
 | **Editor** | `fig-editor.css` + `fig-editor.js` | `fig-select*`, `fig-fill-picker`, `fig-interpolation-swatch` |
-| **Lab** (unstable) | `fig-lab.css` + `fig-lab.js` | `propskit-*`, `fig-ai-*`, `fig-canvas-control`, `fig-input-angle`, `fig-reorder` |
+| **Lab** (unstable) | `fig-lab.css` + `fig-lab.js` | `propskit-*`, `fig-ai-*`, `fig-canvas-control`, `fig-input-angle`, `fig-input-wheel`, `fig-reorder` |
 | **Layer** | `fig-layer.css` + `fig-layer.js` | `fig-layer` |
 
 `fig-editor.js` also imports `fig.js` and `fig-lab.js`. Lab CSS is still separate. `fig-layer` is **not** registered by `fig-editor.js`.
@@ -191,7 +191,7 @@ Playground hashes: `/figui3#{id}`. Full attrs: [reference.md](reference.md).
 | `fig-handle` | `#handle` | `type="default\|minimal\|color\|canvas"`, `drag`, `drag-snapping` |
 | `fig-spinner` / `fig-shimmer` / `fig-skeleton` | `#spinner` `#shimmer` | Loading |
 
-`fig-input-angle` is **lab**, not core.
+`fig-input-angle` and `fig-input-wheel` are **lab**, not core.
 
 ## Events
 

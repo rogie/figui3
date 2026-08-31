@@ -33,15 +33,29 @@ Playground attrs: `type` (`range`, `hue`, `delta`, `stepper`, `opacity`), `color
 
 Inner `fig-slider` still needs `min` / `max` / `step` / `value` as forwarded attrs.
 
+## `fig-input-wheel`
+
+Standalone interactive SVG tick + handle scrubber in the lab bundle.
+
+- Attrs: `value` (default `0`), `step` (default `1`), optional `min`/`max`, `elastic` (default true), `disabled`
+- Props: `value`, `min`, `max`, `step`
+- Methods: `focus()`, `beginScrub()`, `updateScrub()`, `endScrub()`
+- Events: numeric `input` and `change`, bubbling and composed
+- ARIA value text is numeric
+- Not supported: `units`, `text`, `precision`, `label`, `size`, `variant`, `default`/reset, or a number field
+
+```html
+<fig-input-wheel value="50" min="0" max="100"></fig-input-wheel>
+<fig-input-wheel value="1.5" step="0.25"></fig-input-wheel>
+```
+
 ## `propskit-wheel`
 
-Observed: `label`, `units` (optional arbitrary string; `seconds`, `s`, `milliseconds`, and `ms` time aliases), `value`, `default`, `step`, `precision`, `min`, `max`, `elastic` (default true), `size`, `disabled`, `variant`.
-
-No `fig-field` / `fig-slider`. Host + `.propskit-wheel-surface` + SVG tick wheel + `fig-input-number`. Omitted `label` → `"Value"`; authored `label` (including blank) is used as-is. Value defaults to `0`; units are omitted by default and arbitrary values such as `px` pass through unchanged. Generic/no-unit defaults are `step="1"` and `precision="0"`. Full time unit names normalize to `s` / `ms`; seconds default to `step="0.1"` and `precision="2"`, while milliseconds default to `step="100"` and `precision="0"`. `precision` only controls the inner number's displayed decimals; scrubbing moves by `step` on every `input`, or `10× step` while Shift is held. Omitted `min`/`max` are unbounded. Wheel is a `spinbutton`; arrows step, Shift+arrow is 10×. Home/End jump to min/max when set. During horizontal scrubbing, the center handle follows the pointer with resisted movement (8px maximum by default), while the whole control stretches when the pointer passes an edge; both spring back on release unless `elastic="false"`. An unfocused number field also starts scrubbing after 4px of pointer travel; clicking without dragging focuses it for text editing.
+Composes `fig-input-wheel` with an optional `fig-input-number`. It retains `label`, `text`, `precision`, `units`, `default`/reset, `size`, and `variant`. Units and time aliases are wrapper/number-field behavior: normalized `s` defaults to step `0.1` and precision `2`, normalized `ms` defaults to step `100` and precision `0`, and other units default to step `1` and precision `0`. The wrapper applies the effective step and unit-aware `aria-valuetext` to the child wheel, but never sets child `units`.
 
 ```html
 <propskit-wheel label="Duration" value="1.5" units="seconds"></propskit-wheel>
-<propskit-wheel label="Delay" value="240" units="ms"></propskit-wheel>
+<propskit-wheel label="Frames" value="12" text="false"></propskit-wheel>
 ```
 
 ## Point JSON shapes
