@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.36]
+
+### Changed
+
+- The default font stack now prefers Inter when the consuming app makes it available.
+
 ## [8.9.35]
 
 ### Added
