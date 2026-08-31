@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.39]
+
+### Fixed
+
+- `fig-input-number` now preserves trailing zeros when an explicit display precision is set, including through `propskit-wheel`.
+
 ## [8.9.38]
 
 ### Fixed

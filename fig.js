@@ -7000,6 +7000,7 @@ figDefineElement("fig-input-text", FigInputText);
  * @attr {number} max - Maximum value
  * @attr {number} step - Step increment
  * @attr {number} transform - A multiplier for displayed number values
+ * @attr {number} precision - Fixed decimal places when set
  * @attr {string} units - Unit string to append/prepend to displayed value (e.g., "%", "°", "$")
  * @attr {string} units-disallow - Comma-separated units to disallow (defaults to "px")
  * @attr {string} unit-position - Position of unit: "suffix" (default) or "prefix"
@@ -7175,7 +7176,7 @@ class FigInputNumber extends HTMLElement {
     this.#setUnitsFromAttributes();
     this.#unitPosition = this.getAttribute("unit-position") || "suffix";
     this.#precision = this.#normalizePrecision(
-      this.hasAttribute("precision") ? this.getAttribute("precision") : 2,
+      this.hasAttribute("precision") ? this.getAttribute("precision") : null,
     );
 
     if (this.getAttribute("step")) {
@@ -7565,21 +7566,27 @@ class FigInputNumber extends HTMLElement {
     if (typeof this.max === "number") {
       sanitized = Math.min(this.max, sanitized);
     }
-    sanitized = this.#formatNumber(sanitized);
+    sanitized = this.#roundNumber(sanitized);
     return sanitized;
   }
 
   #formatNumber(num) {
     const precision = this.#precision ?? 2;
-    const factor = Math.pow(10, precision);
-    const rounded = Math.round(num * factor) / factor;
-    // Only show decimals if needed and up to precision
+    const rounded = this.#roundNumber(num);
+    if (this.#precision !== null) return rounded.toFixed(precision);
     return Number.isInteger(rounded)
-      ? rounded
-      : parseFloat(rounded.toFixed(precision));
+      ? String(rounded)
+      : String(parseFloat(rounded.toFixed(precision)));
+  }
+
+  #roundNumber(num) {
+    const precision = this.#precision ?? 2;
+    const factor = Math.pow(10, precision);
+    return Math.round(num * factor) / factor;
   }
 
   #normalizePrecision(value) {
+    if (value === null || value === undefined || value === "") return null;
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return 2;
     return Math.max(0, Math.min(100, Math.trunc(parsed)));
@@ -7674,7 +7681,7 @@ class FigInputNumber extends HTMLElement {
         }
         case "precision":
           this.#precision = this.#normalizePrecision(
-            newValue !== null ? newValue : 2,
+            newValue,
           );
           this.input.value = this.#formatWithUnit(this.value);
           this.#syncSpinbuttonAria();

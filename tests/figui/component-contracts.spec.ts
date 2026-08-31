@@ -2349,6 +2349,9 @@ test.describe("propskit-wheel", () => {
         namedPrecision: named
           .querySelector("fig-input-number")
           ?.getAttribute("precision"),
+        namedDisplay: (
+          named.querySelector("fig-input-number input") as HTMLInputElement | null
+        )?.value,
         blankUnits: blank.querySelector("fig-input-number")?.getAttribute("units"),
         blankStep: blank.querySelector("fig-input-number")?.getAttribute("step"),
         blankWheelUnits: blank
@@ -2369,6 +2372,11 @@ test.describe("propskit-wheel", () => {
         arbitraryPrecision: arbitrary
           .querySelector("fig-input-number")
           ?.getAttribute("precision"),
+        arbitraryDisplay: (
+          arbitrary.querySelector(
+            "fig-input-number input",
+          ) as HTMLInputElement | null
+        )?.value,
         omittedLayout: readLayout(omitted),
         blankLayout: readLayout(blank),
         standardInset: rem * 3,
@@ -2393,6 +2401,7 @@ test.describe("propskit-wheel", () => {
       namedWheelStep: "0.1",
       namedWheelAriaText: "1.5 seconds",
       namedPrecision: "2",
+      namedDisplay: "1.50s",
       blankUnits: "ms",
       blankStep: "100",
       blankWheelUnits: null,
@@ -2401,6 +2410,7 @@ test.describe("propskit-wheel", () => {
       arbitraryUnits: "px",
       arbitraryWheelUnits: null,
       arbitraryPrecision: "3",
+      arbitraryDisplay: "12.000",
     });
     expect(state.omittedLayout.leftInset).toBeCloseTo(state.standardInset, 0);
     expect(state.omittedLayout.rightInset).toBeCloseTo(state.standardInset, 0);
@@ -7367,6 +7377,41 @@ test.describe("number input accessibility", () => {
       ariaValueNow: "75",
       ariaValueText: "75%",
     });
+  });
+
+  test("fig-input-number preserves authored precision in its display", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-number id="fixed" value="2" precision="2" units="s"></fig-input-number>
+        <fig-input-number id="omitted" value="2.5"></fig-input-number>
+      `;
+    });
+
+    const fixedInput = page.locator("#fixed input");
+    const omittedInput = page.locator("#omitted input");
+    await expect(fixedInput).toHaveValue("2.00s");
+    await expect(fixedInput).toHaveAttribute("aria-valuetext", "2.00s");
+    await expect(omittedInput).toHaveValue("2.5");
+
+    await page.locator("#fixed").evaluate((host) => {
+      host.setAttribute("value", "3.1");
+      host.setAttribute("precision", "3");
+    });
+    await expect(fixedInput).toHaveValue("3.100s");
+
+    await fixedInput.fill("4");
+    await fixedInput.blur();
+    await expect(fixedInput).toHaveValue("4.000s");
+    await expect(page.locator("#fixed")).toHaveJSProperty("value", 4);
+
+    await page.locator("#fixed").evaluate((host) => {
+      host.removeAttribute("precision");
+    });
+    await expect(fixedInput).toHaveValue("4s");
   });
 
   test("fig-input-number keeps slots visually around the input before steppers", async ({

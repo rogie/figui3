@@ -809,6 +809,7 @@ The internal group always has `compact`. `value` uses the same `{ x, y, x2, y2 }
 | `units-disallow` | string | `"px"` | Comma-separated unit disallow list (e.g. `"px,rem"`) |
 | `unit-position` | string | `"suffix"` | `"suffix"` or `"prefix"` |
 | `transform` | number | — | Display multiplier |
+| `precision` | number | — | Fixed displayed decimal places; omitted values use up to two places |
 | `steppers` | boolean | `false` | Show spin buttons |
 | `disabled` | boolean | `false` | Disabled state |
 
