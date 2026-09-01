@@ -93,6 +93,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "large", "compact"],
     },
+    align: {
+      label: "Align",
+      type: "enum",
+      options: ["", "start", "center", "end"],
+    },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     icon: { label: "Icon", type: "boolean", boolMode: "presence" },

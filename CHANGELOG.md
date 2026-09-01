@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.40]
+
+### Added
+
+- Added logical `start`, `center`, and `end` content alignment for `fig-button`.
+- Added button playground examples for alignment and prepended icons.
+
+### Changed
+
+- Refined `fig-button` padding when a prepended icon is present, including large buttons.
+
 ## [8.9.39]
 
 ### Fixed

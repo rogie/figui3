@@ -785,10 +785,14 @@ select,
 /* Button */
 button,
 fig-button {
+  --fig-button-content-alignment: center;
+  --fig-button-text-alignment: center;
+
   color: var(--figma-color-text-onbrand);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: var(--fig-button-content-alignment);
+  text-align: var(--fig-button-text-alignment);
   height: var(--spacer-4);
   padding: 0 var(--spacer-2);
   appearance: none;
@@ -1029,13 +1033,29 @@ fig-button {
   /* Block button */
   &[inline="false"],
   &[inline="false"] > button {
+    --fig-button-content-alignment: flex-start;
+    --fig-button-text-alignment: start;
+
     display: flex;
     width: 100%;
-    justify-content: left;
     height: auto;
-    text-align: left;
     align-items: center;
     padding: var(--spacer-1) var(--spacer-2);
+  }
+
+  &[align="start"] {
+    --fig-button-content-alignment: flex-start;
+    --fig-button-text-alignment: start;
+  }
+
+  &[align="center"] {
+    --fig-button-content-alignment: center;
+    --fig-button-text-alignment: center;
+  }
+
+  &[align="end"] {
+    --fig-button-content-alignment: flex-end;
+    --fig-button-text-alignment: end;
   }
 
   &[type="select"],
@@ -1099,6 +1119,12 @@ fig-button {
     fig-icon[slot="append"]{
       margin-right: calc(var(--spacer-1) * -1);
       margin-left: auto;
+    }
+  }
+  &:has(fig-icon[slot="prepend"]){
+    padding-left: var(--spacer-1);
+    &[size="large"]{
+      padding-left: var(--spacer-2);
     }
   }
 }

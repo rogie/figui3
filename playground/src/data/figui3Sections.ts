@@ -280,6 +280,27 @@ export const figui3Sections: Section[] = [
   <fig-button>Primary</fig-button>
 </div>`,
       },
+      {
+        id: "prepend",
+        name: "Prepend",
+        markup: `<div class="prop-panel">
+  <fig-button>
+    <fig-icon name="add" slot="prepend"></fig-icon>
+    Add item
+  </fig-button>
+</div>`,
+      },
+      {
+        id: "alignment",
+        name: "Alignment",
+        markup: `<div class="prop-panel">
+  <vstack style="width: 240px;">
+    <fig-button full align="start">Start</fig-button>
+    <fig-button full align="center">Center</fig-button>
+    <fig-button full align="end">End</fig-button>
+  </vstack>
+</div>`,
+      },
     ],
   },
   {

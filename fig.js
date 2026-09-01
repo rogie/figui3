@@ -595,6 +595,7 @@ function figSupportsPopover() {
  * @attr {string} type - The button type: "button" (default), "toggle", "submit", or "link"
  * @attr {boolean} selected - Whether the button is in a selected state
  * @attr {boolean} disabled - Whether the button is disabled
+ * @attr {string} align - Content alignment: "start", "center" (default), or "end"
  * @attr {string} href - URL for link type buttons
  * @attr {string} target - Target window for link type buttons (e.g., "_blank")
  */
@@ -637,9 +638,9 @@ class FigButton extends HTMLElement {
           display: flex;
           border: 0;
           flex: 1;
-          text-align: center;
+          text-align: var(--fig-button-text-alignment, center);
           align-items: stretch;
-          justify-content: center;
+          justify-content: var(--fig-button-content-alignment, center);
           font: inherit;
           color: inherit;
           outline: 0;

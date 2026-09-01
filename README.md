@@ -174,6 +174,7 @@ Minimal example:
 | `selected` | boolean | `false` | Selected state (toggle type) |
 | `disabled` | boolean | `false` | Disabled state |
 | `icon` | boolean | `false` | Icon-only styling |
+| `align` | string | `"center"` | Content alignment: `"start"`, `"center"`, or `"end"` |
 | `href` | string | — | URL for link buttons |
 | `target` | string | — | Link target (e.g. `"_blank"`) |
 
@@ -184,6 +185,7 @@ Minimal example:
 <fig-button variant="destructiveSecondary">Destructive secondary</fig-button>
 <fig-button variant="destructiveGhost">Destructive ghost</fig-button>
 <fig-button variant="destructiveLink">Destructive link</fig-button>
+<fig-button full align="start">Start aligned</fig-button>
 <fig-button type="toggle" selected="true">Toggle</fig-button>
 <fig-button variant="ghost" icon>
   <svg><!-- icon --></svg>

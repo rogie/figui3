@@ -6904,6 +6904,42 @@ test.describe("button accessibility", () => {
       selected: null,
     });
   });
+
+  test("button content supports logical alignment", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="default" full>Default</fig-button>
+        <fig-button id="start" full align="start">Start</fig-button>
+        <fig-button id="end" full align="end">End</fig-button>
+      `;
+    });
+
+    const alignment = (selector: string) =>
+      page.locator(selector).evaluate((host) => {
+        const control = host.shadowRoot?.querySelector("button");
+        if (!control) throw new Error(`Missing shadow button for ${host.id}`);
+        const style = getComputedStyle(control);
+        return {
+          justifyContent: style.justifyContent,
+          textAlign: style.textAlign,
+        };
+      });
+
+    await expect.poll(() => alignment("#default")).toEqual({
+      justifyContent: "center",
+      textAlign: "center",
+    });
+    await expect.poll(() => alignment("#start")).toEqual({
+      justifyContent: "flex-start",
+      textAlign: "start",
+    });
+    await expect.poll(() => alignment("#end")).toEqual({
+      justifyContent: "flex-end",
+      textAlign: "end",
+    });
+  });
 });
 
 test.describe("selection control accessibility", () => {
