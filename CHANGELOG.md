@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.42]
+
+### Changed
+
+- Removed soft shadows from `fig-input-wheel` and `propskit-slider` handles for sharper rendering.
+
 ## [8.9.41]
 
 ### Changed

@@ -1176,8 +1176,7 @@ propskit-slider {
           var(--propskit-slider-thumb-inset)
       );
       --slider-handle-shadow:
-        inset 0 0 0 var(--slider-thumb-height) var(--slider-thumb-color),
-        var(--handle-shadow) !important;
+        inset 0 0 0 var(--slider-thumb-height) var(--slider-thumb-color) !important;
       /* Fade handle toward track ends (0 at edges, 1 at center). Squared = sharper falloff. */
       --slider-thumb-edge-fade: calc(
         min(var(--slider-complete), calc(1 - var(--slider-complete))) * 2
@@ -1568,8 +1567,7 @@ fig-input-wheel {
     transition: transform var(--fig-input-wheel-handle-spring);
     box-shadow:
       inset 0 0 0 var(--fig-input-wheel-handle-height)
-        var(--fig-input-wheel-handle-color),
-      var(--handle-shadow);
+        var(--fig-input-wheel-handle-color);
   }
 
   &[data-fig-input-wheel-active] .fig-input-wheel-handle {
