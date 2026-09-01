@@ -1413,7 +1413,7 @@ propskit-slider {
         cursor: ew-resize;
         touch-action: none;
 
-        &:is(:focus, :active) {
+        &:focus {
           cursor: text;
           touch-action: auto;
         }
@@ -1471,6 +1471,14 @@ propskit-slider {
     transform: scaleX(var(--propskit-slider-elastic-scale));
     transition: none;
   }
+}
+
+propskit-slider input[type="range"]:active::-webkit-slider-thumb {
+  cursor: ew-resize;
+}
+
+propskit-slider input[type="range"]:active::-moz-range-thumb {
+  cursor: ew-resize;
 }
 
 fig-input-wheel {
@@ -1650,6 +1658,9 @@ propskit-wheel {
     border-radius: var(--radius-medium);
     background-color: var(--figma-color-bg-secondary);
     overflow: hidden;
+    cursor: ew-resize;
+    touch-action: none;
+    user-select: none;
 
     &:focus-within {
       outline: var(--figma-focus-outline);
@@ -1735,8 +1746,9 @@ propskit-wheel {
       text-align: right;
       cursor: ew-resize;
       touch-action: none;
+      user-select: text;
 
-      &:is(:focus, :active) {
+      &:focus {
         cursor: text;
         touch-action: auto;
       }
@@ -1750,7 +1762,9 @@ propskit-wheel {
 }
 
 body.fig-input-wheel-dragging,
-body.fig-input-wheel-dragging * {
+body.fig-input-wheel-dragging *,
+body.propskit-slider-dragging,
+body.propskit-slider-dragging * {
   cursor: grabbing !important;
   user-select: none !important;
   -webkit-user-select: none !important;
@@ -1960,10 +1974,15 @@ propskit-position {
 
 :is(
   propskit-number,
-  propskit-slider,
-  propskit-wheel,
   propskit-position
 ) fig-input-number:is(:focus-within, :active, :has(input:active)) {
+  background-color: var(--figma-color-bg);
+}
+
+:is(
+  propskit-slider,
+  propskit-wheel
+) fig-input-number:has(input:focus) {
   background-color: var(--figma-color-bg);
 }
 

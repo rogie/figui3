@@ -4629,6 +4629,9 @@ figLabDefineElement("propskit-group", PropskitGroup);
 
 /* Field + Slider wrapper */
 class PropskitSlider extends HTMLElement {
+  static #DRAG_THRESHOLD_PX = 4;
+  static #DRAGGING_BODY_CLASS = "propskit-slider-dragging";
+
   #field = null;
   #label = null;
   #slider = null;
@@ -4647,6 +4650,7 @@ class PropskitSlider extends HTMLElement {
   #elasticRangeRect = null;
   #elasticHostWidth = 0;
   #elasticPointerId = null;
+  #surfacePointerStartX = 0;
   #numberPointerId = null;
   #numberPointerStartX = 0;
   #numberPointerStartY = 0;
@@ -5172,6 +5176,7 @@ class PropskitSlider extends HTMLElement {
       if (distance < 4) return;
       this.#isNumberScrubbing = true;
       this.setAttribute("data-number-scrubbing", "");
+      this.#setDraggingCursor(true);
     }
     this.#setSliderValue(this.#valueFromPointer(event), "input");
   }
@@ -5208,11 +5213,11 @@ class PropskitSlider extends HTMLElement {
     this.#numberPointerId = null;
     this.#isNumberScrubbing = false;
     this.removeAttribute("data-number-scrubbing");
+    this.#setDraggingCursor(false);
   }
 
   #handleElasticPointerDown(event) {
     if (event.button !== 0 || figLabBooleanAttribute(this, "disabled")) return;
-    if (this.getAttribute("elastic") === "false") return;
     if (event.target?.closest?.("fig-input-number")) return;
     const rangeInput =
       this.#slider?.querySelector('input[type="range"]') ?? this.#rangeInput;
@@ -5222,7 +5227,11 @@ class PropskitSlider extends HTMLElement {
     this.#rangeInput = rangeInput;
     this.#isElasticTracking = true;
     this.#elasticPointerId = event.pointerId;
-    this.#elasticMaxPx = this.#readElasticDistance();
+    this.#surfacePointerStartX = event.clientX;
+    this.#elasticMaxPx =
+      this.getAttribute("elastic") === "false"
+        ? 0
+        : this.#readElasticDistance();
     const rect = rangeInput.getBoundingClientRect();
     const hostRect = this.getBoundingClientRect();
     this.#elasticRangeRect = {
@@ -5252,7 +5261,13 @@ class PropskitSlider extends HTMLElement {
       this.#handleElasticPointerEnd(event);
       return;
     }
-    this.#updateElasticPull(event.clientX);
+    if (
+      Math.abs(event.clientX - this.#surfacePointerStartX) >=
+      PropskitSlider.#DRAG_THRESHOLD_PX
+    ) {
+      this.#setDraggingCursor(true);
+    }
+    if (this.#elasticMaxPx) this.#updateElasticPull(event.clientX);
   }
 
   #handleElasticPointerEnd(event) {
@@ -5278,6 +5293,13 @@ class PropskitSlider extends HTMLElement {
     window.removeEventListener("blur", this.#boundHandleElasticPointerEnd);
     this.#isElasticTracking = false;
     this.#elasticPointerId = null;
+    this.#surfacePointerStartX = 0;
+    this.#setDraggingCursor(false);
+  }
+
+  #setDraggingCursor(active) {
+    this.toggleAttribute("data-propskit-slider-dragging", active);
+    document.body.classList.toggle(PropskitSlider.#DRAGGING_BODY_CLASS, active);
   }
 
   #handleContextMenu(event) {
@@ -5563,6 +5585,7 @@ class FigInputWheel extends HTMLElement {
   static #PERSPECTIVE_K = 0.55;
   static #FAST_MOTION_THRESHOLD_PX_PER_MS = 1.5;
   static #FAST_MOTION_TIMEOUT_MS = 80;
+  static #DRAG_THRESHOLD_PX = 4;
   static #DRAGGING_BODY_CLASS = "fig-input-wheel-dragging";
 
   #surface = null;
@@ -5582,6 +5605,7 @@ class FigInputWheel extends HTMLElement {
   #dragPointerId = null;
   #dragStartX = 0;
   #dragStartValue = 0;
+  #hasCrossedDragThreshold = false;
   #visualValue = null;
   #handleDragMaxPx = 0;
   #motionLastX = null;
@@ -5960,10 +5984,11 @@ class FigInputWheel extends HTMLElement {
     this.#dragStartValue = Number.isFinite(requestedStart)
       ? this.#clamp(requestedStart)
       : this.#numericValue();
+    this.#hasCrossedDragThreshold = false;
     this.#startTickMotionTracking(clientX);
     this.#startHandlePull();
     this.setAttribute("data-fig-input-wheel-active", "");
-    document.body.classList.add(FigInputWheel.#DRAGGING_BODY_CLASS);
+    document.body.classList.remove(FigInputWheel.#DRAGGING_BODY_CLASS);
     this.focus();
     return true;
   }
@@ -6000,6 +6025,14 @@ class FigInputWheel extends HTMLElement {
   }
 
   #updateDrag(clientX, speed = 1) {
+    if (
+      !this.#hasCrossedDragThreshold &&
+      Math.abs(clientX - this.#dragStartX) >=
+        FigInputWheel.#DRAG_THRESHOLD_PX
+    ) {
+      this.#hasCrossedDragThreshold = true;
+      document.body.classList.add(FigInputWheel.#DRAGGING_BODY_CLASS);
+    }
     const width = this.#wheel?.clientWidth || 1;
     const visibleSteps =
       FigInputWheel.#TICK_COUNT *
@@ -6033,6 +6066,7 @@ class FigInputWheel extends HTMLElement {
   #stopDrag() {
     this.#isDragging = false;
     this.#dragPointerId = null;
+    this.#hasCrossedDragThreshold = false;
     this.#visualValue = null;
     this.removeAttribute("data-fig-input-wheel-active");
     document.body.classList.remove(FigInputWheel.#DRAGGING_BODY_CLASS);
@@ -6291,7 +6325,7 @@ class FigInputWheel extends HTMLElement {
     this.#commitValue(Number.isFinite(parsed) ? parsed : 0);
   }
 
-  spinTo(nextValue) {
+  spinTo(nextValue, { animateHandle = false } = {}) {
     const previousValue = this.#numericValue();
     this.value = nextValue;
     const value = this.#numericValue();
@@ -6305,7 +6339,7 @@ class FigInputWheel extends HTMLElement {
       value,
       direction,
       Math.abs(value - previousValue) > this.#step() ? 10 : 1,
-      false,
+      animateHandle,
     );
     return value;
   }
@@ -6395,6 +6429,7 @@ class PropskitWheel extends HTMLElement {
   #elasticMaxPx = 0;
   #elasticRangeRect = null;
   #elasticHostWidth = 0;
+  #surfacePointerId = null;
   #numberPointerId = null;
   #numberPointerStartX = 0;
   #numberPointerStartY = 0;
@@ -6402,14 +6437,18 @@ class PropskitWheel extends HTMLElement {
   #isNumberScrubbing = false;
   #suppressNumberClick = false;
   #numberClickResetTimer = 0;
+  #animateNumberInputHandle = false;
   #boundPrimitiveInput = this.#handlePrimitiveEvent.bind(this, "input");
   #boundPrimitiveChange = this.#handlePrimitiveEvent.bind(this, "change");
   #boundNumberInput = this.#handleNumberEvent.bind(this, "input");
   #boundNumberChange = this.#handleNumberEvent.bind(this, "change");
+  #boundNumberKeyDown = this.#handleNumberKeyDown.bind(this);
   #boundNumberPointerDown = this.#handleNumberPointerDown.bind(this);
   #boundNumberPointerMove = this.#handleNumberPointerMove.bind(this);
   #boundNumberPointerEnd = this.#handleNumberPointerEnd.bind(this);
-  #boundElasticPointerDown = this.#handleElasticPointerDown.bind(this);
+  #boundSurfacePointerDown = this.#handleSurfacePointerDown.bind(this);
+  #boundSurfacePointerMove = this.#handleSurfacePointerMove.bind(this);
+  #boundSurfacePointerEnd = this.#handleSurfacePointerEnd.bind(this);
   #boundElasticPointerMove = this.#handleElasticPointerMove.bind(this);
   #boundElasticPointerEnd = this.#handleElasticPointerEnd.bind(this);
   #boundClick = this.#handleClick.bind(this);
@@ -6442,6 +6481,7 @@ class PropskitWheel extends HTMLElement {
 
   disconnectedCallback() {
     this.#observer?.disconnect();
+    this.#stopSurfaceTracking();
     this.#stopElasticTracking();
     this.#unbindEvents();
     this.#stopNumberTracking();
@@ -6660,7 +6700,10 @@ class PropskitWheel extends HTMLElement {
     this.#wheel?.addEventListener("change", this.#boundPrimitiveChange);
     this.#input?.addEventListener("input", this.#boundNumberInput);
     this.#input?.addEventListener("change", this.#boundNumberChange);
-    this.addEventListener("pointerdown", this.#boundElasticPointerDown, {
+    this.#input?.addEventListener("keydown", this.#boundNumberKeyDown, {
+      capture: true,
+    });
+    this.addEventListener("pointerdown", this.#boundSurfacePointerDown, {
       capture: true,
     });
     this.addEventListener("pointerdown", this.#boundNumberPointerDown, {
@@ -6674,7 +6717,10 @@ class PropskitWheel extends HTMLElement {
     this.#wheel?.removeEventListener("change", this.#boundPrimitiveChange);
     this.#input?.removeEventListener("input", this.#boundNumberInput);
     this.#input?.removeEventListener("change", this.#boundNumberChange);
-    this.removeEventListener("pointerdown", this.#boundElasticPointerDown, {
+    this.#input?.removeEventListener("keydown", this.#boundNumberKeyDown, {
+      capture: true,
+    });
+    this.removeEventListener("pointerdown", this.#boundSurfacePointerDown, {
       capture: true,
     });
     this.removeEventListener("pointerdown", this.#boundNumberPointerDown, {
@@ -6683,7 +6729,10 @@ class PropskitWheel extends HTMLElement {
     this.removeEventListener("click", this.#boundClick, true);
   }
 
-  #setSynchronizedValue(value, { spin = false } = {}) {
+  #setSynchronizedValue(
+    value,
+    { spin = false, animateHandle = false } = {},
+  ) {
     const parsed = Number(value);
     if (!this.#wheel) {
       const normalized = Number.isFinite(parsed) ? parsed : 0;
@@ -6691,7 +6740,7 @@ class PropskitWheel extends HTMLElement {
       return normalized;
     }
     const nextValue = Number.isFinite(parsed) ? parsed : 0;
-    if (spin) this.#wheel.spinTo(nextValue);
+    if (spin) this.#wheel.spinTo(nextValue, { animateHandle });
     else this.#wheel.value = nextValue;
     const normalized = this.#wheel.value;
     if (this.getAttribute("value") !== normalized) {
@@ -6728,22 +6777,78 @@ class PropskitWheel extends HTMLElement {
       event instanceof CustomEvent && event.detail !== undefined
         ? event.detail
         : this.#input?.value;
-    const value = this.#setSynchronizedValue(raw, { spin: type === "input" });
+    const value = this.#setSynchronizedValue(raw, {
+      spin: type === "input",
+      animateHandle: type === "input" && this.#animateNumberInputHandle,
+    });
+    if (type === "input") this.#animateNumberInputHandle = false;
     this.#emit(type, value);
   }
 
-  #handleElasticPointerDown(event) {
+  #handleNumberKeyDown(event) {
+    this.#animateNumberInputHandle =
+      !figLabBooleanAttribute(this, "disabled") &&
+      (event.key === "ArrowUp" || event.key === "ArrowDown");
+    window.setTimeout(() => {
+      this.#animateNumberInputHandle = false;
+    }, 0);
+  }
+
+  #handleSurfacePointerDown(event) {
     if (
       event.button !== 0 ||
       figLabBooleanAttribute(this, "disabled") ||
-      this.getAttribute("elastic") === "false" ||
       !(event.target instanceof Element) ||
       event.target.closest("fig-input-number") ||
-      !event.target.closest("fig-input-wheel")
+      event.target.closest(".propskit-wheel-surface") !== this.#surface
     ) {
       return;
     }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    this.#stopSurfaceTracking();
+    const started = this.#wheel?.beginScrub({
+      clientX: event.clientX,
+      pointerId: event.pointerId,
+      startValue: Number(this.#wheel.value),
+    });
+    if (!started) return;
+    this.#surfacePointerId = event.pointerId;
     this.#startElasticTracking(event.pointerId);
+    window.addEventListener("pointermove", this.#boundSurfacePointerMove);
+    window.addEventListener("pointerup", this.#boundSurfacePointerEnd);
+    window.addEventListener("pointercancel", this.#boundSurfacePointerEnd);
+    window.addEventListener("blur", this.#boundSurfacePointerEnd);
+  }
+
+  #handleSurfacePointerMove(event) {
+    if (event.pointerId !== this.#surfacePointerId) return;
+    if (event.buttons === 0) {
+      this.#handleSurfacePointerEnd(event);
+      return;
+    }
+    this.#wheel?.updateScrub(event);
+  }
+
+  #handleSurfacePointerEnd(event) {
+    if (
+      event?.pointerId !== undefined &&
+      this.#surfacePointerId !== null &&
+      event.pointerId !== this.#surfacePointerId
+    ) {
+      return;
+    }
+    this.#wheel?.endScrub();
+    this.#stopSurfaceTracking();
+    this.#stopElasticTracking();
+  }
+
+  #stopSurfaceTracking() {
+    window.removeEventListener("pointermove", this.#boundSurfacePointerMove);
+    window.removeEventListener("pointerup", this.#boundSurfacePointerEnd);
+    window.removeEventListener("pointercancel", this.#boundSurfacePointerEnd);
+    window.removeEventListener("blur", this.#boundSurfacePointerEnd);
+    this.#surfacePointerId = null;
   }
 
   #startElasticTracking(pointerId) {

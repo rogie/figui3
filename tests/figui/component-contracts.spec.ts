@@ -2003,6 +2003,12 @@ test.describe("fig-input-wheel", () => {
         (element) => getComputedStyle(element).cursor,
       );
       await page.mouse.down();
+      const pressed = await wheel.evaluate((element) => ({
+        cursor: getComputedStyle(element).cursor,
+        bodyDragging: document.body.classList.contains(
+          "fig-input-wheel-dragging",
+        ),
+      }));
       await page.mouse.move(rect.x + rect.width + 40, rect.y + rect.height / 2);
       const dragging = await wheel.evaluate((element) => {
         const handleEl = element.querySelector(".fig-input-wheel-handle")!;
@@ -2075,13 +2081,15 @@ test.describe("fig-input-wheel", () => {
           ),
         };
       });
-      return { hoverCursor, dragging, releaseStartDelta, released };
+      return { hoverCursor, pressed, dragging, releaseStartDelta, released };
     };
 
     const defaultWheel = await dragHandle("default-wheel");
     const legacyElastic = await dragHandle("legacy-elastic");
 
     expect(defaultWheel.hoverCursor).toBe("ew-resize");
+    expect(defaultWheel.pressed.cursor).toBe("ew-resize");
+    expect(defaultWheel.pressed.bodyDragging).toBe(false);
     expect(defaultWheel.dragging.cursor).toBe("grabbing");
     expect(defaultWheel.dragging.bodyDragging).toBe(true);
     expect(defaultWheel.released.cursor).toBe("ew-resize");
@@ -2484,8 +2492,8 @@ test.describe("propskit-wheel", () => {
     expect(state.afterInteraction.path).toBe(state.initialPath);
   });
 
-  test("number input visibly spins ticks when enabled", async ({ page }) => {
-    const state = await page.evaluate(async () => {
+  test("number arrow keys spin ticks and nudge the handle", async ({ page }) => {
+    const initialPath = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
@@ -2494,7 +2502,18 @@ test.describe("propskit-wheel", () => {
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
-      const host = root.querySelector("propskit-wheel") as HTMLElement & {
+      const wheel = root.querySelector("fig-input-wheel");
+      const tickPath = wheel?.querySelector(".fig-input-wheel-tick");
+      if (!tickPath) throw new Error("Missing wheel tick path");
+      return tickPath.getAttribute("d");
+    });
+
+    const input = page.locator("propskit-wheel fig-input-number input");
+    await input.focus();
+    await page.keyboard.press("ArrowUp");
+
+    const movingState = await page.evaluate(async () => {
+      const host = document.querySelector("propskit-wheel") as HTMLElement & {
         value: string;
       };
       const wheel = host.querySelector("fig-input-wheel") as HTMLElement & {
@@ -2502,8 +2521,12 @@ test.describe("propskit-wheel", () => {
       };
       const tickPath = wheel.querySelector(".fig-input-wheel-tick")!;
       const number = host.querySelector("fig-input-number")!;
-      const input = number.querySelector("input") as HTMLInputElement;
-      const initialPath = tickPath.getAttribute("d");
+      const handleOffset = () =>
+        Number.parseFloat(
+          wheel.style.getPropertyValue(
+            "--fig-input-wheel-handle-drag-offset",
+          ),
+        ) || 0;
       const centerDelta = () => {
         const centerX = wheel.clientWidth / 2;
         const tickXs = [
@@ -2512,11 +2535,10 @@ test.describe("propskit-wheel", () => {
         return Math.min(...tickXs.map((x) => Math.abs(x - centerX)));
       };
 
-      input.value = "4";
-      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
-      let movingPath = initialPath;
+      let movingPath = tickPath.getAttribute("d");
       let moving = false;
       let movingCenterDelta = 0;
+      let movingHandleOffset = 0;
       for (let frame = 0; frame < 8; frame += 1) {
         await new Promise(requestAnimationFrame);
         movingPath = tickPath.getAttribute("d");
@@ -2524,28 +2546,55 @@ test.describe("propskit-wheel", () => {
           "data-fig-input-wheel-keyboard-moving",
         );
         movingCenterDelta = centerDelta();
-        if (moving && movingCenterDelta > 0.1) break;
+        movingHandleOffset = handleOffset();
+        if (
+          moving &&
+          movingCenterDelta > 0.1 &&
+          movingHandleOffset > 0.1
+        ) {
+          break;
+        }
       }
-      await new Promise((resolve) => setTimeout(resolve, 180));
       return {
         hostValue: host.value,
         wheelValue: wheel.value,
         numberValue: number.getAttribute("value"),
-        initialPath,
         movingPath,
         moving,
         movingCenterDelta,
-        settledCenterDelta: centerDelta(),
+        movingHandleOffset,
       };
     });
 
-    expect(state.hostValue).toBe("4");
-    expect(state.wheelValue).toBe("4");
-    expect(state.numberValue).toBe("4");
-    expect(state.moving).toBe(true);
-    expect(state.movingPath).not.toBe(state.initialPath);
-    expect(state.movingCenterDelta).toBeGreaterThan(0.1);
-    expect(state.settledCenterDelta).toBeCloseTo(0, 5);
+    expect(movingState.hostValue).toBe("1");
+    expect(movingState.wheelValue).toBe("1");
+    expect(movingState.numberValue).toBe("1");
+    expect(movingState.moving).toBe(true);
+    expect(movingState.movingPath).not.toBe(initialPath);
+    expect(movingState.movingCenterDelta).toBeGreaterThan(0.1);
+    expect(movingState.movingHandleOffset).toBeGreaterThan(0.1);
+
+    await page.waitForTimeout(180);
+    const settledState = await page.locator("fig-input-wheel").evaluate((wheel) => {
+      const tickPath = wheel.querySelector(".fig-input-wheel-tick")!;
+      const centerX = (wheel as HTMLElement).clientWidth / 2;
+      const tickXs = [
+        ...(tickPath.getAttribute("d") ?? "").matchAll(/M ([^ ]+) /g),
+      ].map((match) => Number(match[1]));
+      return {
+        centerDelta: Math.min(
+          ...tickXs.map((x) => Math.abs(x - centerX)),
+        ),
+        handleOffset:
+          Number.parseFloat(
+            (wheel as HTMLElement).style.getPropertyValue(
+              "--fig-input-wheel-handle-drag-offset",
+            ),
+          ) || 0,
+      };
+    });
+    expect(settledState.centerDelta).toBeCloseTo(0, 5);
+    expect(settledState.handleOffset).toBe(0);
   });
 
   test("text false removes and reinserts the number while expanding the wheel", async ({
@@ -2611,6 +2660,82 @@ test.describe("propskit-wheel", () => {
     expect(state.withText.inputValue).toBe("13");
     expect(state.withText.rightInset).toBeCloseTo(state.rem * 3, 0);
     expect(state.withText.handleCenterDelta).toBeCloseTo(0, 5);
+  });
+
+  test("scrubs from the full surface without selecting its label", async ({
+    page,
+  }) => {
+    await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-wheel label="Duration" value="0" step="1"></propskit-wheel>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("propskit-wheel") as HTMLElement;
+      host.dataset.inputCount = "0";
+      host.dataset.changeCount = "0";
+      host.addEventListener("input", () => {
+        host.dataset.inputCount = String(Number(host.dataset.inputCount) + 1);
+      });
+      host.addEventListener("change", () => {
+        host.dataset.changeCount = String(Number(host.dataset.changeCount) + 1);
+      });
+    });
+
+    const host = page.locator("propskit-wheel");
+    const surface = host.locator(".propskit-wheel-surface");
+    const surfaceRect = await surface.boundingBox();
+    const wheelRect = await host.locator("fig-input-wheel").boundingBox();
+    if (!surfaceRect || !wheelRect) throw new Error("Missing wheel surface bounds");
+    const startX = surfaceRect.x + 8;
+    const startY = surfaceRect.y + surfaceRect.height / 2;
+    expect(startX).toBeLessThan(wheelRect.x);
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    const pressed = await host.evaluate((element) => ({
+      cursor: getComputedStyle(element.querySelector(".propskit-wheel-surface")!)
+        .cursor,
+      bodyDragging: document.body.classList.contains(
+        "fig-input-wheel-dragging",
+      ),
+    }));
+    await page.mouse.move(startX + 40, startY);
+    const dragging = await host.evaluate((element) => ({
+      value: Number((element as HTMLElement & { value: string }).value),
+      wheelActive: element
+        .querySelector("fig-input-wheel")
+        ?.hasAttribute("data-fig-input-wheel-active"),
+      bodyDragging: document.body.classList.contains(
+        "fig-input-wheel-dragging",
+      ),
+      selection: window.getSelection()?.toString() ?? "",
+      inputCount: Number((element as HTMLElement).dataset.inputCount),
+    }));
+    await page.mouse.up();
+    const released = await host.evaluate((element) => ({
+      wheelActive: element
+        .querySelector("fig-input-wheel")
+        ?.hasAttribute("data-fig-input-wheel-active"),
+      bodyDragging: document.body.classList.contains(
+        "fig-input-wheel-dragging",
+      ),
+      changeCount: Number((element as HTMLElement).dataset.changeCount),
+    }));
+
+    expect(pressed.cursor).toBe("ew-resize");
+    expect(pressed.bodyDragging).toBe(false);
+    expect(dragging.value).toBeGreaterThan(0);
+    expect(dragging.wheelActive).toBe(true);
+    expect(dragging.bodyDragging).toBe(true);
+    expect(dragging.selection).toBe("");
+    expect(dragging.inputCount).toBeGreaterThan(0);
+    expect(released.wheelActive).toBe(false);
+    expect(released.bodyDragging).toBe(false);
+    expect(released.changeCount).toBe(1);
   });
 
   test("keeps handle pull while toggling composed row stretch", async ({
@@ -4215,7 +4340,7 @@ test.describe("propskit sizes", () => {
     }
   });
 
-  test("PropsKit number inputs use focused backgrounds and scrub cursors", async ({
+  test("PropsKit number inputs separate focused and scrubbing styles", async ({
     page,
   }) => {
     const result = await page.evaluate(async () => {
@@ -4279,28 +4404,26 @@ test.describe("propskit sizes", () => {
       }
     }
 
-    const wheelInput = page.locator("propskit-wheel fig-input-number input");
-    await wheelInput.evaluate((input) => {
-      input.addEventListener("mousedown", (event) => event.preventDefault(), {
-        once: true,
-      });
-    });
-    await wheelInput.hover();
-    await page.mouse.down();
-    const activeState = await page
-      .locator("propskit-wheel fig-input-number")
-      .evaluate((number) => ({
-        active:
-          number.matches(":active") ||
-          Boolean(number.querySelector("input:active")),
-        background: getComputedStyle(number).backgroundColor,
-        cursor: getComputedStyle(number.querySelector("input")!).cursor,
-      }));
-    await page.mouse.up();
+    for (const tag of ["propskit-slider", "propskit-wheel"]) {
+      const input = page.locator(`${tag} fig-input-number input`);
+      await input.hover();
+      await page.mouse.down();
+      const activeState = await page
+        .locator(`${tag} fig-input-number`)
+        .evaluate((number) => ({
+          active:
+            number.matches(":active") ||
+            Boolean(number.querySelector("input:active")),
+          background: getComputedStyle(number).backgroundColor,
+          cursor: getComputedStyle(number.querySelector("input")!).cursor,
+        }));
+      await page.mouse.up();
+      await input.blur();
 
-    expect(activeState.active).toBe(true);
-    expect(activeState.background).toBe(result.expectedBackground);
-    expect(activeState.cursor).toBe("text");
+      expect(activeState.active, tag).toBe(true);
+      expect(activeState.background, tag).toBe("rgba(0, 0, 0, 0)");
+      expect(activeState.cursor, tag).toBe("ew-resize");
+    }
   });
 
   test("horizontal field labels span three quarters of the field", async ({
@@ -6416,12 +6539,37 @@ test.describe("propskit delegated click behavior", () => {
     await page.mouse.down();
     await page.waitForTimeout(50);
     await expect(slider).toHaveAttribute("data-focus-calls", "0");
+    await expect(slider).not.toHaveAttribute(
+      "data-propskit-slider-dragging",
+      "",
+    );
+    expect(
+      await page.evaluate(() =>
+        document.body.classList.contains("propskit-slider-dragging"),
+      ),
+    ).toBe(false);
+
+    await page.mouse.move(box.x + box.width * 0.25 + 2, box.y + box.height / 2);
+    await expect(slider).not.toHaveAttribute(
+      "data-propskit-slider-dragging",
+      "",
+    );
 
     await page.mouse.move(box.x + box.width * 0.75, box.y + box.height / 2, {
       steps: 5,
     });
+    await expect(slider).toHaveAttribute("data-propskit-slider-dragging", "");
+    expect(
+      await page.evaluate(() =>
+        document.body.classList.contains("propskit-slider-dragging"),
+      ),
+    ).toBe(true);
     await expect(slider).not.toHaveAttribute("value", "25");
     await page.mouse.up();
+    await expect(slider).not.toHaveAttribute(
+      "data-propskit-slider-dragging",
+      "",
+    );
   });
 
   test("number area drags the slider before focus and supports editing after click", async ({

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.41]
+
+### Changed
+
+- PropsKit slider and wheel controls now switch to the grabbing cursor only after crossing the drag threshold.
+- `propskit-wheel` supports scrubbing across its full surface without selecting the label.
+- Arrow keys in a `propskit-wheel` number field now spin the ticks and nudge the wheel handle.
+
+### Fixed
+
+- PropsKit slider and wheel number fields now reserve focused styling for text editing instead of pointer scrubbing.
+
 ## [8.9.40]
 
 ### Added
