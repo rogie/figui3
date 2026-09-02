@@ -4631,6 +4631,7 @@ figLabDefineElement("propskit-group", PropskitGroup);
 class PropskitSlider extends HTMLElement {
   static #DRAG_THRESHOLD_PX = 4;
   static #DRAGGING_BODY_CLASS = "propskit-slider-dragging";
+  static #TEXT_MEASURE_CANVAS = null;
 
   #field = null;
   #label = null;
@@ -4640,6 +4641,12 @@ class PropskitSlider extends HTMLElement {
   #managedSliderAttrs = new Set();
   #steppersSyncFrame = 0;
   #focusSyncFrame = 0;
+  #handleProximityFrame = 0;
+  #handleProximityObserver = null;
+  #handleProximityMetricsDirty = true;
+  #handleRadius = 0;
+  #handleFadeStartThreshold = 1;
+  #handleFadeEndThreshold = 0;
   #rangeInput = null;
   #contextMenu = null;
   #pendingClickTimer = 0;
@@ -4698,6 +4705,8 @@ class PropskitSlider extends HTMLElement {
     this.#syncSliderAttributes();
     this.#bindSliderEvents();
     this.#queueFocusDelegationSync();
+    this.#connectHandleProximityObserver();
+    this.#queueHandleProximitySync();
     this.removeEventListener("pointerdown", this.#boundHandleElasticPointerDown, {
       capture: true,
     });
@@ -4777,6 +4786,11 @@ class PropskitSlider extends HTMLElement {
       cancelAnimationFrame(this.#focusSyncFrame);
       this.#focusSyncFrame = 0;
     }
+    if (this.#handleProximityFrame) {
+      cancelAnimationFrame(this.#handleProximityFrame);
+      this.#handleProximityFrame = 0;
+    }
+    this.#handleProximityObserver?.disconnect();
     this.#clearPendingClick();
     this.#stopNumberTracking();
     clearTimeout(this.#numberClickResetTimer);
@@ -4881,6 +4895,7 @@ class PropskitSlider extends HTMLElement {
       "direction",
       this.getAttribute("direction") || "horizontal",
     );
+    this.#queueHandleProximitySync();
   }
 
   #syncSliderAttributes() {
@@ -4941,6 +4956,9 @@ class PropskitSlider extends HTMLElement {
     this.#managedSliderAttrs = nextManaged;
     this.#pushExternalValueToSlider();
     this.#queueSteppersSync();
+    this.#handleProximityMetricsDirty = true;
+    this.#connectHandleProximityObserver();
+    this.#queueHandleProximitySync();
   }
 
   #syncNumberTheme(sliderType) {
@@ -5006,6 +5024,207 @@ class PropskitSlider extends HTMLElement {
         : 0;
     this.style.setProperty("--propskit-slider-complete", String(complete));
     this.#syncNumberTheme((this.getAttribute("type") || "range").toLowerCase());
+    this.#queueHandleProximitySync();
+  }
+
+  #connectHandleProximityObserver() {
+    if (!globalThis.ResizeObserver) return;
+    if (!this.#handleProximityObserver) {
+      this.#handleProximityObserver = new ResizeObserver(() => {
+        this.#handleProximityMetricsDirty = true;
+        this.#queueHandleProximitySync();
+      });
+    }
+    this.#handleProximityObserver.disconnect();
+    for (const element of [
+      this,
+      this.#label,
+      this.#slider?.querySelector("fig-input-number"),
+      this.#slider?.querySelector("fig-input-number input"),
+      this.#slider?.querySelector('input[type="range"]'),
+    ]) {
+      if (element) this.#handleProximityObserver.observe(element);
+    }
+  }
+
+  #queueHandleProximitySync() {
+    if (this.#handleProximityFrame) {
+      cancelAnimationFrame(this.#handleProximityFrame);
+    }
+    this.#handleProximityFrame = requestAnimationFrame(() => {
+      this.#handleProximityFrame = 0;
+      this.#syncHandleProximity();
+    });
+  }
+
+  #syncHandleProximity() {
+    const rangeInput = this.#slider?.querySelector('input[type="range"]');
+    if (!rangeInput || !this.#slider) return;
+    const rangeRect = rangeInput.getBoundingClientRect();
+    if (!rangeRect.width) return;
+
+    const min = Number(rangeInput.min || 0);
+    const max = Number(rangeInput.max || 100);
+    const value = Number(rangeInput.value);
+    const complete =
+      Number.isFinite(min) &&
+      Number.isFinite(max) &&
+      max > min &&
+      Number.isFinite(value)
+        ? Math.max(0, Math.min(1, (value - min) / (max - min)))
+        : 0;
+    const handleCenter = rangeRect.left + complete * rangeRect.width;
+    if (this.#handleProximityMetricsDirty) {
+      this.#handleRadius =
+        this.#readCssLength("--slider-thumb-width", this.#slider) / 2;
+      this.#handleFadeStartThreshold = Math.max(
+        1,
+        this.#readCssLength(
+          "--propskit-slider-handle-fade-start-threshold",
+        ),
+      );
+      this.#handleFadeEndThreshold = Math.min(
+        this.#handleFadeStartThreshold,
+        this.#readCssLength(
+          "--propskit-slider-handle-fade-end-threshold",
+        ),
+      );
+      this.#handleProximityMetricsDirty = false;
+    }
+    const handleRadius = this.#handleRadius;
+    const distances = [];
+    const labelRect =
+      this.#label?.parentElement === this.#field
+        ? this.#contentRect(this.#label)
+        : null;
+    const numberInput = this.#slider.querySelector("fig-input-number input");
+    const numberRect = numberInput ? this.#inputTextRect(numberInput) : null;
+
+    if (
+      labelRect?.width &&
+      labelRect.bottom > rangeRect.top &&
+      labelRect.top < rangeRect.bottom
+    ) {
+      distances.push(handleCenter - handleRadius - labelRect.right);
+    }
+    if (
+      numberRect?.width &&
+      numberRect.bottom > rangeRect.top &&
+      numberRect.top < rangeRect.bottom
+    ) {
+      distances.push(numberRect.left - handleCenter - handleRadius);
+    }
+
+    const fadeStartThreshold = this.#handleFadeStartThreshold;
+    const fadeEndThreshold = this.#handleFadeEndThreshold;
+    const nearestDistance = distances.length
+      ? Math.min(...distances)
+      : fadeStartThreshold;
+    const fadeRange = Math.max(
+      0.001,
+      fadeStartThreshold - fadeEndThreshold,
+    );
+    const proximity = Math.max(
+      0,
+      Math.min(1, (nearestDistance - fadeEndThreshold) / fadeRange),
+    );
+    this.style.setProperty(
+      "--propskit-slider-handle-proximity",
+      String(proximity),
+    );
+  }
+
+  #contentRect(element) {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const rects = [...range.getClientRects()].filter(
+      (rect) => rect.width > 0 && rect.height > 0,
+    );
+    range.detach?.();
+    if (!rects.length) return null;
+    const left = Math.min(...rects.map((rect) => rect.left));
+    const right = Math.max(...rects.map((rect) => rect.right));
+    const top = Math.min(...rects.map((rect) => rect.top));
+    const bottom = Math.max(...rects.map((rect) => rect.bottom));
+    return {
+      left,
+      right,
+      top,
+      bottom,
+      width: right - left,
+      height: bottom - top,
+    };
+  }
+
+  #inputTextRect(input) {
+    const text = input.value || input.placeholder || "";
+    if (!text) return null;
+    const inputRect = input.getBoundingClientRect();
+    const style = getComputedStyle(input);
+    const textWidth = this.#measureTextWidth(text, style);
+    const contentLeft =
+      inputRect.left +
+      (Number.parseFloat(style.borderLeftWidth) || 0) +
+      (Number.parseFloat(style.paddingLeft) || 0);
+    const contentRight =
+      inputRect.right -
+      (Number.parseFloat(style.borderRightWidth) || 0) -
+      (Number.parseFloat(style.paddingRight) || 0);
+    const contentWidth = Math.max(0, contentRight - contentLeft);
+    const width = Math.min(contentWidth, textWidth);
+    const alignment = style.textAlign;
+    let left = contentLeft;
+    if (alignment === "right" || alignment === "end") {
+      left = contentRight - width;
+    } else if (alignment === "center") {
+      left = contentLeft + (contentWidth - width) / 2;
+    }
+    return {
+      left,
+      right: left + width,
+      top: inputRect.top,
+      bottom: inputRect.bottom,
+      width,
+      height: inputRect.height,
+    };
+  }
+
+  #measureTextWidth(text, style) {
+    if (!PropskitSlider.#TEXT_MEASURE_CANVAS) {
+      PropskitSlider.#TEXT_MEASURE_CANVAS = document.createElement("canvas");
+    }
+    const context = PropskitSlider.#TEXT_MEASURE_CANVAS.getContext("2d");
+    if (!context) return 0;
+    context.font =
+      style.font ||
+      `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    if ("fontKerning" in context) context.fontKerning = style.fontKerning;
+    if ("fontStretch" in context) context.fontStretch = style.fontStretch;
+    if ("fontVariantCaps" in context) {
+      context.fontVariantCaps = style.fontVariantCaps;
+    }
+    if ("letterSpacing" in context) {
+      context.letterSpacing = style.letterSpacing;
+    }
+    return context.measureText(text).width;
+  }
+
+  #readCssLength(property, context = this) {
+    const probe = document.createElement("div");
+    probe.style.setProperty(
+      property,
+      getComputedStyle(context).getPropertyValue(property),
+    );
+    Object.assign(probe.style, {
+      position: "absolute",
+      visibility: "hidden",
+      pointerEvents: "none",
+      width: `var(${property})`,
+    });
+    this.appendChild(probe);
+    const value = Number.parseFloat(getComputedStyle(probe).width);
+    probe.remove();
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
   }
 
   #pushExternalValueToSlider() {

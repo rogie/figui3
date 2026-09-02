@@ -6261,6 +6261,170 @@ test.describe("propskit delegated click behavior", () => {
     });
   });
 
+  test("fades and scales the slider handle near label and number content", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-slider id="labeled" label="Amount" value="50" step="0.01"
+          min="0" max="100"></propskit-slider>
+        <propskit-slider id="blank" label="" value="0"
+          min="0" max="100"></propskit-slider>
+        <propskit-slider id="wide" label="" value="50" step="1" precision="0"
+          min="0" max="100"></propskit-slider>
+        <style>
+          #wide fig-input-number,
+          #wide fig-input-number input {
+            width: 80px !important;
+            min-width: 80px !important;
+            max-width: 80px !important;
+          }
+        </style>
+      `;
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      const readAt = async (id: string, value: number) => {
+        const host = root.querySelector(`#${id}`) as
+          | (HTMLElement & { value: string })
+          | null;
+        if (!host) throw new Error(`Missing #${id}`);
+        host.value = String(value);
+        await new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        );
+        const style = getComputedStyle(host);
+        return {
+          proximity: Number.parseFloat(
+            style.getPropertyValue("--propskit-slider-handle-proximity"),
+          ),
+        };
+      };
+
+      const labeled = root.querySelector("#labeled")!;
+      const labeledSlider = labeled.querySelector("fig-slider")!;
+      const labeledRange = labeled.querySelector(
+        'input[type="range"]',
+      ) as HTMLInputElement;
+      const label = labeled.querySelector("label")!;
+      const labelRange = document.createRange();
+      labelRange.selectNodeContents(label);
+      const labelRect = labelRange.getBoundingClientRect();
+      labelRange.detach?.();
+      const resolveLength = (property: string, context: Element) => {
+        const probe = document.createElement("div");
+        probe.style.setProperty(
+          property,
+          getComputedStyle(context).getPropertyValue(property),
+        );
+        probe.style.width = `var(${property})`;
+        probe.style.position = "absolute";
+        probe.style.visibility = "hidden";
+        root.appendChild(probe);
+        const value = Number.parseFloat(getComputedStyle(probe).width);
+        probe.remove();
+        return value;
+      };
+      const fadeStartThreshold = resolveLength(
+        "--propskit-slider-handle-fade-start-threshold",
+        labeled,
+      );
+      const fadeEndThreshold = resolveLength(
+        "--propskit-slider-handle-fade-end-threshold",
+        labeled,
+      );
+      const handleRadius =
+        resolveLength("--slider-thumb-width", labeledSlider) / 2;
+      const labeledRangeRect = labeledRange.getBoundingClientRect();
+      const valueAtLabelGap = (gap: number) =>
+        ((labelRect.right + handleRadius + gap - labeledRangeRect.left) /
+          labeledRangeRect.width) *
+        100;
+
+      const wide = root.querySelector("#wide")!;
+      const wideRange = wide.querySelector(
+        'input[type="range"]',
+      ) as HTMLInputElement;
+      const wideNumber = wide.querySelector("fig-input-number")!;
+      const wideRangeRect = wideRange.getBoundingClientRect();
+      const wideNumberRect = wideNumber.getBoundingClientRect();
+      const wideContainerValue = Math.round(
+        ((wideNumberRect.left + 4 - wideRangeRect.left) / wideRangeRect.width) *
+          100,
+      );
+
+      return {
+        middle: await readAt("labeled", 50),
+        nearLabel: await readAt("labeled", 0),
+        labelMidFade: await readAt(
+          "labeled",
+          valueAtLabelGap(
+            (fadeStartThreshold + fadeEndThreshold) / 2,
+          ),
+        ),
+        labelFadeEnd: await readAt(
+          "labeled",
+          valueAtLabelGap(fadeEndThreshold),
+        ),
+        labelContact: await readAt("labeled", valueAtLabelGap(0)),
+        nearNumber: await readAt("labeled", 100),
+        blankStart: await readAt("blank", 0),
+        wideInsideContainer: await readAt("wide", wideContainerValue),
+        fadeStartThreshold,
+        fadeEndThreshold,
+        spacer3: resolveLength("--spacer-3", labeled),
+        spacer2: resolveLength("--spacer-2", labeled),
+      };
+    });
+
+    expect(state.middle.proximity).toBeCloseTo(1, 2);
+    expect(state.nearLabel.proximity).toBe(0);
+    expect(state.labelMidFade.proximity).toBeCloseTo(0.5, 1);
+    expect(state.labelFadeEnd.proximity).toBeCloseTo(0, 1);
+    expect(state.labelContact.proximity).toBeCloseTo(0, 1);
+    expect(state.nearNumber.proximity).toBe(0);
+    expect(state.blankStart.proximity).toBeCloseTo(1, 2);
+    expect(state.wideInsideContainer.proximity).toBeCloseTo(1, 2);
+    expect(state.fadeStartThreshold).toBe(state.spacer3);
+    expect(state.fadeEndThreshold).toBe(state.spacer2);
+  });
+
+  test("reveals the slider handle only on hover or focus", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-slider label="Amount" value="50"
+          min="0" max="100"></propskit-slider>
+      `;
+    });
+
+    const host = page.locator("propskit-slider");
+    const range = host.locator('input[type="range"]');
+    const reveal = () =>
+      host.evaluate((element) =>
+        getComputedStyle(element)
+          .getPropertyValue("--propskit-slider-handle-reveal")
+          .trim(),
+      );
+
+    await page.mouse.move(700, 500);
+    expect(await reveal()).toBe("0");
+    await host.hover();
+    expect(await reveal()).toBe("1");
+    await page.mouse.move(700, 500);
+    expect(await reveal()).toBe("0");
+    await range.focus();
+    expect(await reveal()).toBe("1");
+    await range.blur();
+    expect(await reveal()).toBe("0");
+  });
+
   test("delta slider keeps the number input in sync with a default value", async ({
     page,
   }) => {

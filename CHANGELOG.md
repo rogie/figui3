@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.43]
+
+### Changed
+
+- `propskit-slider` handles now reveal on hover or focus and scale/fade based on proximity to rendered label and number text.
+- Slider handle fading begins at `--spacer-3` and completes at `--spacer-2`.
+- Removed the inset border from avatar images.
+
+### Fixed
+
+- Header titles now truncate overflowing text with an ellipsis.
+
 ## [8.9.42]
 
 ### Changed
