@@ -1229,11 +1229,16 @@ test.describe("fig-lab audit regressions", () => {
       const header = group.querySelector(":scope > fig-header");
       if (!header) throw new Error(`Missing group header: ${group.outerHTML}`);
       const heading = header.querySelector(":scope > h3")!;
+      const chevron = header.querySelector(
+        ":scope > .propskit-group-chevron",
+      );
       const reset = header.querySelector(":scope > .propskit-group-reset-tooltip");
       const headerRect = header.getBoundingClientRect();
       const resetRect = reset
         ?.querySelector("fig-button")
         ?.getBoundingClientRect();
+      const headingRect = heading.getBoundingClientRect();
+      const chevronRect = chevron?.getBoundingClientRect();
       return {
         resetValue: slider.value,
         implicitResetValue: implicitSlider.value,
@@ -1243,6 +1248,16 @@ test.describe("fig-lab audit regressions", () => {
         headerRole: header.getAttribute("role"),
         headingTag: heading.tagName,
         headingIsDirectChild: heading.parentElement === header,
+        chevronIsSiblingBeforeHeading:
+          Boolean(chevron) && chevron?.nextElementSibling === heading,
+        nestedChevron: heading.querySelector(".propskit-group-chevron"),
+        headingDisplay: getComputedStyle(heading).display,
+        chevronCenterDelta: chevronRect
+          ? Math.abs(
+              (headingRect.top + headingRect.bottom) / 2 -
+                (chevronRect.top + chevronRect.bottom) / 2,
+            )
+          : null,
         disclosureButton: heading.querySelector(
           ".propskit-group-disclosure",
         ),
@@ -1262,6 +1277,10 @@ test.describe("fig-lab audit regressions", () => {
       headerRole: "button",
       headingTag: "H3",
       headingIsDirectChild: true,
+      chevronIsSiblingBeforeHeading: true,
+      nestedChevron: null,
+      headingDisplay: "block",
+      chevronCenterDelta: 0,
       disclosureButton: null,
       disclosureExpanded: "false",
       resetOnRight: true,

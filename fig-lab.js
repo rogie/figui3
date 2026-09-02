@@ -4589,10 +4589,7 @@ class PropskitGroup extends HTMLElement {
 
     if (!h3.id) h3.id = figLabUniqueId("propskit-group");
     if (this.#header.dataset.generated) {
-      // Preserve chevron while updating the title text node.
-      const chevron = h3.querySelector(".propskit-group-chevron");
       h3.textContent = label;
-      if (chevron) h3.prepend(chevron);
     }
     if (!this.hasAttribute("role")) this.setAttribute("role", "group");
     if (
@@ -4602,14 +4599,17 @@ class PropskitGroup extends HTMLElement {
       this.setAttribute("aria-labelledby", h3.id);
     }
 
-    if (!h3.querySelector(".propskit-group-chevron")) {
-      const chevron = document.createElement("fig-icon");
+    let chevron =
+      this.#header.querySelector(":scope > .propskit-group-chevron") ||
+      h3.querySelector(":scope > .propskit-group-chevron");
+    if (!chevron) {
+      chevron = document.createElement("fig-icon");
       chevron.setAttribute("name", "chevron");
       chevron.setAttribute("size", "small");
       chevron.className = "propskit-group-chevron";
-      h3.prepend(chevron);
     }
-    this.#chevron = h3.querySelector(".propskit-group-chevron");
+    this.#header.insertBefore(chevron, h3);
+    this.#chevron = chevron;
     this.#syncResetButton();
     this.#header.setAttribute("role", "button");
     this.#syncDisabled();

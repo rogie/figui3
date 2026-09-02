@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.44]
+
+### Changed
+
+- Collapsible `fig-group` and `propskit-group` chevrons now render as header siblings before their headings.
+
+### Fixed
+
+- Group headings retain ellipsis behavior while keeping disclosure chevrons vertically aligned.
+
 ## [8.9.43]
 
 ### Changed

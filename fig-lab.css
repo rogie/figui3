@@ -250,6 +250,7 @@ propskit-group {
   & > fig-header {
     cursor: default;
     padding-left: var(--spacer-3);
+    gap: 0;
 
     &:focus-visible {
       --figma-focus-outline-radius: var(--radius-medium);
@@ -258,19 +259,28 @@ propskit-group {
       border-radius: var(--figma-focus-outline-radius);
     }
 
-    h3 {
+    & > h3 {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: block;
       margin: 0;
+      padding-left: 0;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      max-width: 100%;
       user-select: none;
+    }
 
-      .propskit-group-chevron {
-        --icon: var(--icon-16-chevron);
-        --size: 1rem;
-        color: var(--figma-color-text-tertiary);
-        transform: rotate(-90deg);
-        transition: transform var(--transition-duration)
-          var(--transition-timing-function);
-        margin-left: calc(var(--spacer-3) * -1);
-      }
+    & > .propskit-group-chevron {
+      --icon: var(--icon-16-chevron);
+      --size: 1rem;
+      flex: 0 0 auto;
+      color: var(--figma-color-text-tertiary);
+      transform: rotate(-90deg);
+      transition: transform var(--transition-duration)
+        var(--transition-timing-function);
+      margin-left: calc(var(--spacer-2) * -1);
     }
   }
 

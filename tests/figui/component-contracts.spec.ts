@@ -9551,7 +9551,9 @@ test.describe("render timing composition", () => {
         fieldInputId: fieldNativeInput?.id || null,
         fieldInputLabelledBy: fieldNativeInput?.getAttribute("aria-labelledby"),
         fieldLabelId: fieldLabel?.id || null,
-        groupHeaderReady: !!group?.querySelector(":scope > fig-header h3 .fig-group-chevron"),
+        groupHeaderReady: !!group?.querySelector(
+          ":scope > fig-header > .fig-group-chevron + h3",
+        ),
         groupBodyStillProjected: group?.querySelector("#group-body")?.parentElement?.id,
       };
     });
@@ -9591,7 +9593,8 @@ test.describe("render timing composition", () => {
 
     const group = page.locator("#group");
     const header = page.locator("#group > fig-header");
-    const headingId = await page.locator("#group > fig-header h3").getAttribute("id");
+    const heading = page.locator("#group > fig-header h3");
+    const headingId = await heading.getAttribute("id");
     expect(headingId).toBeTruthy();
     await expect(group).toHaveAttribute("role", "group");
     await expect(group).toHaveAttribute("aria-labelledby", headingId || "");
@@ -9600,6 +9603,26 @@ test.describe("render timing composition", () => {
     await expect(header).toHaveAttribute("role", "button");
     await expect(header).toHaveAttribute("tabindex", "0");
     await expect(header).toHaveAttribute("aria-expanded", "false");
+    const headingLayout = await heading.evaluate((element) => {
+      const chevron = element.previousElementSibling;
+      if (!chevron) throw new Error("Missing group chevron");
+      if (!chevron.matches(".fig-group-chevron")) {
+        throw new Error("Chevron is not immediately before heading");
+      }
+      const headingRect = element.getBoundingClientRect();
+      const chevronRect = chevron.getBoundingClientRect();
+      return {
+        display: getComputedStyle(element).display,
+        chevronParent: chevron.parentElement?.tagName,
+        centerDelta: Math.abs(
+          (headingRect.top + headingRect.bottom) / 2 -
+            (chevronRect.top + chevronRect.bottom) / 2,
+        ),
+      };
+    });
+    expect(headingLayout.display).toBe("block");
+    expect(headingLayout.chevronParent).toBe("FIG-HEADER");
+    expect(headingLayout.centerDelta).toBeCloseTo(0, 5);
 
     await header.focus();
     const focusStyle = await header.evaluate((element) => {

@@ -16987,14 +16987,15 @@ class FigGroup extends HTMLElement {
     }
 
     if (isCollapsible) {
-      if (!h3.querySelector(".fig-group-chevron")) {
-        const chevron = createFigIcon("chevron", {
+      let chevron = this.#header.querySelector(".fig-group-chevron");
+      if (!chevron) {
+        chevron = createFigIcon("chevron", {
           size: "small",
           className: "fig-group-chevron",
         });
-        h3.prepend(chevron);
       }
-      this.#chevron = h3.querySelector(".fig-group-chevron");
+      this.#header.insertBefore(chevron, h3);
+      this.#chevron = chevron;
       h3.removeEventListener("click", this.#handleToggle);
       this.#header.removeEventListener("click", this.#handleToggle);
       this.#header.addEventListener("click", this.#handleToggle);
