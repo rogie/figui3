@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.46]
+
+### Changed
+
+- `fig-header` title styles now apply to all heading children, not only the first child.
+
 ## [8.9.45]
 
 ### Changed

@@ -3509,9 +3509,10 @@ fig-header {
     width: 100%;
   }
 
-  & > h1:first-child, 
-  & > h2:first-child, 
-  & > h3:first-child{
+  & > *:is(h1, h2, h3) {
+    &:first-child {
+      padding-left: var(--spacer-2);
+    }
     flex: 1 1 auto;
     min-width: 0;
     display: block;
