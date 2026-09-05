@@ -590,7 +590,7 @@ toastRef.current?.showToast();
 </div>
 ```
 
-- Attrs: `type` (`default` | `minimal` | `color` | `canvas`), `tip`, `size`, `color`, `selected`, `disabled`, `drag`, `drag-axes`, `drag-snapping`
+- Attrs: `type` (`default` | `minimal` | `color` | `canvas`), `tip`, `size`, `color`, `selected`, `disabled`, `drag`, `drag-axes`, `drag-snapping`, `precision` (percentage/pixel decimal places; default `2`, use `0` for whole numbers)
 
 ### `fig-spinner`
 

@@ -5815,6 +5815,55 @@ test("fig-select-options spaces its first option when overflow buttons are adjac
   await expect(options.nth(1)).toHaveCSS("margin-top", "0px");
 });
 
+test("fig-select-options keeps overflow controls at the edges after delayed option writes", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await customElements.whenDefined("fig-select-options");
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = "<fig-select-options></fig-select-options>";
+  });
+
+  const panel = page.locator("fig-select-options");
+  const appendOptions = (start: number, count: number) =>
+    panel.evaluate(
+      (element, { start, count }) => {
+        const fragment = document.createDocumentFragment();
+        for (let index = start; index < start + count; index += 1) {
+          const option = document.createElement("fig-select-option");
+          option.value = String(index);
+          option.textContent = `Option ${index}`;
+          fragment.append(option);
+        }
+        element.append(fragment);
+      },
+      { start, count },
+    );
+
+  await appendOptions(0, 20);
+  await expect(panel.locator(":scope > :first-child")).toHaveClass(
+    /fig-overflow-start/,
+  );
+  await expect(panel.locator(":scope > :last-child")).toHaveClass(
+    /fig-overflow-end/,
+  );
+
+  await appendOptions(20, 20);
+  await expect(panel.locator(":scope > fig-select-option")).toHaveCount(40);
+  await expect(panel).toHaveClass(/overflow-end/);
+  await expect(panel.locator(":scope > :first-child")).toHaveClass(
+    /fig-overflow-start/,
+  );
+  await expect(panel.locator(":scope > :last-child")).toHaveClass(
+    /fig-overflow-end/,
+  );
+});
+
 test("sticky fig-separator sits below overflow-start in select and menu lists", async ({
   page,
 }) => {
@@ -10018,6 +10067,51 @@ test.describe("remaining accessibility contracts", () => {
     ).toBe(0);
   });
 
+  test("fig-chooser keeps overflow controls at the edges after delayed choice writes", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-chooser id="delayed-chooser" layout="horizontal" style="width: 120px;">
+          <fig-choice value="choice-0">Choice 0</fig-choice>
+          <fig-choice value="choice-1">Choice 1</fig-choice>
+        </fig-chooser>
+      `;
+    });
+
+    const chooser = page.locator("#delayed-chooser");
+    await chooser.evaluate((element) => {
+      const fragment = document.createDocumentFragment();
+      for (let index = 2; index < 8; index += 1) {
+        const choice = document.createElement("fig-choice");
+        choice.setAttribute("value", `choice-${index}`);
+        choice.textContent = `Choice ${index}`;
+        fragment.append(choice);
+      }
+      element.append(fragment);
+    });
+
+    await expect
+      .poll(() =>
+        chooser.evaluate((element) => ({
+          choices: element.querySelectorAll(":scope > fig-choice").length,
+          startAtStart:
+            element.firstElementChild?.getAttribute("data-fig-chooser-nav") ===
+            "start",
+          endAtEnd:
+            element.lastElementChild?.getAttribute("data-fig-chooser-nav") ===
+            "end",
+        })),
+      )
+      .toEqual({
+        choices: 8,
+        startAtStart: true,
+        endAtEnd: true,
+      });
+  });
+
   test("fig-chooser restores light-DOM overflow buttons after choices are replaced", async ({
     page,
   }) => {
@@ -11166,6 +11260,11 @@ test.describe("remaining accessibility contracts", () => {
             legacyScroller: tabs.querySelectorAll(":scope > [data-fig-tabs-scroll]").length,
             navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
             sharedButtons: tabs.querySelectorAll(".fig-overflow").length,
+            startAtStart:
+              tabs.firstElementChild?.getAttribute("data-fig-tabs-nav") ===
+              "start",
+            endAtEnd:
+              tabs.lastElementChild?.getAttribute("data-fig-tabs-nav") === "end",
           };
         }),
       )
@@ -11175,6 +11274,8 @@ test.describe("remaining accessibility contracts", () => {
         legacyScroller: 0,
         navButtons: 2,
         sharedButtons: 2,
+        startAtStart: true,
+        endAtEnd: true,
       });
   });
 
@@ -12315,11 +12416,115 @@ test.describe("remaining accessibility contracts", () => {
     });
 
     await page.keyboard.press("ArrowRight");
-    await expect(handle).toHaveAttribute("value", "51% 50%");
+    await expect(handle).toHaveAttribute("value", "51.00% 50.00%");
     await page.keyboard.press("Shift+ArrowDown");
-    await expect(handle).toHaveAttribute("value", "51% 60%");
+    await expect(handle).toHaveAttribute("value", "51.00% 60.00%");
     await page.keyboard.press("Home");
-    await expect(handle).toHaveAttribute("value", "0% 0%");
+    await expect(handle).toHaveAttribute("value", "0.00% 0.00%");
+  });
+
+  test("fig-handle precision controls drag coordinates and serialized values", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="position: relative; width: 100px; height: 100px;">
+          <fig-handle id="whole-handle" drag="true" precision="0" value="50% 50%"></fig-handle>
+        </div>
+        <div style="position: relative; width: 100px; height: 100px;">
+          <fig-handle id="precise-handle" drag="true" value="50% 50%"></fig-handle>
+        </div>
+      `;
+    });
+
+    const dragTo = (selector: string, x: number, y: number) =>
+      page.locator(selector).evaluate(
+        (handle, target) => {
+          const surface = handle.parentElement;
+          if (!surface) throw new Error("Missing drag surface");
+          const surfaceRect = surface.getBoundingClientRect();
+          const handleRect = handle.getBoundingClientRect();
+          const startX = handleRect.left + handleRect.width / 2;
+          const startY = handleRect.top + handleRect.height / 2;
+          let inputDetail = null;
+          handle.addEventListener(
+            "input",
+            (event) => {
+              inputDetail = (event as CustomEvent).detail;
+            },
+            { once: true },
+          );
+          handle.dispatchEvent(
+            new PointerEvent("pointerdown", {
+              bubbles: true,
+              button: 0,
+              buttons: 1,
+              clientX: startX,
+              clientY: startY,
+              pointerId: 1,
+            }),
+          );
+          window.dispatchEvent(
+            new PointerEvent("pointermove", {
+              bubbles: true,
+              buttons: 1,
+              clientX: surfaceRect.left + target.x,
+              clientY: surfaceRect.top + target.y,
+              pointerId: 1,
+            }),
+          );
+          window.dispatchEvent(
+            new PointerEvent("pointerup", {
+              bubbles: true,
+              button: 0,
+              clientX: surfaceRect.left + target.x,
+              clientY: surfaceRect.top + target.y,
+              pointerId: 1,
+            }),
+          );
+          return {
+            value: handle.getAttribute("value"),
+            left: handle.style.left,
+            top: handle.style.top,
+            inputDetail,
+          };
+        },
+        { x, y },
+      );
+
+    const whole = await dragTo("#whole-handle", 60.25, 40.75);
+    expect(
+      await page.locator("#precise-handle").evaluate((handle) => handle.precision),
+    ).toBe(2);
+    const precise = await dragTo("#precise-handle", 60.25, 40.75);
+
+    expect(whole).toMatchObject({
+      value: "60% 41%",
+      left: "60%",
+      top: "41%",
+    });
+    expect(precise).toMatchObject({
+      value: "60.25% 40.75%",
+      left: "60.25%",
+      top: "40.75%",
+    });
+    expect(Number.isInteger(whole.inputDetail.x)).toBe(true);
+    expect(precise.inputDetail.x).toBeCloseTo(
+      Number(precise.inputDetail.x.toFixed(2)),
+      10,
+    );
+    expect(Number.isInteger(precise.inputDetail.x)).toBe(false);
+
+    await page.locator("#precise-handle").evaluate((handle) => {
+      handle.precision = 3;
+    });
+    await expect(page.locator("#precise-handle")).toHaveAttribute("precision", "3");
+    await expect(page.locator("#precise-handle")).toHaveAttribute(
+      "value",
+      "60.250% 40.750%",
+    );
   });
 
   test("fig-easing-curve handles are draggable and support keyboard movement", async ({

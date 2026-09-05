@@ -543,7 +543,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Precision",
       type: "number",
       min: 0,
-      max: 10,
+      max: 8,
       step: 1,
     },
     units: {
@@ -1115,6 +1115,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Snapping",
       type: "enum",
       options: ["false", "modifier", "true"],
+    },
+    precision: {
+      label: "Precision",
+      type: "number",
+      min: 0,
+      max: 10,
+      step: 1,
     },
   },
   "fig-chooser": {

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.47]
+
+### Added
+
+- `fig-handle` now supports `precision` for percentage values and pixel dragging, defaulting to two decimal places.
+
+### Fixed
+
+- Overflow navigation stays pinned to the edges when React appends delayed options, tabs, or choices.
+
 ## [8.9.46]
 
 ### Changed

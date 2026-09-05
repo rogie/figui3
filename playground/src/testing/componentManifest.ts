@@ -447,7 +447,10 @@ export const componentContracts: ComponentContract[] = [
     title: "Handle",
     group: "input",
     markup: `<div style="position:relative;width:120px;height:80px"><fig-handle value="50% 50%" drag="true"></fig-handle></div>`,
-    attributes: [{ name: "selected", attribute: "selected", value: "" }],
+    attributes: [
+      { name: "selected", attribute: "selected", value: "" },
+      { name: "precision", attribute: "precision", value: "2" },
+    ],
   },
   {
     tag: "fig-menu-item",

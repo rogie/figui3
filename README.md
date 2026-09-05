@@ -1333,6 +1333,7 @@ A draggable handle element. Positioned on a `drag-surface` container with axis c
 | `drag-surface` | string | — | CSS selector for drag container (defaults to parent) |
 | `drag-axes` | string | `"xy"` | Constrain axes: `"x"`, `"y"`, `"xy"` |
 | `drag-snapping` | string | — | Snapping behavior |
+| `precision` | number | `2` | Decimal places for percentage values and pixel coordinates; use `0` for whole numbers |
 | `type` | string | — | `"color"` for a color handle with direct picker activation |
 | `tip` | string | — | `"color"`, `"add"`, or `"remove"` to show a persistent `fig-color-tip` |
 | `hit-area` | string | — | Expanded interaction zone (unitless px). `"8"`, `"8 12"` (v h), or `"8 circle"` |

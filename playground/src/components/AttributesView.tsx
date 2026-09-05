@@ -826,6 +826,7 @@ export default function AttributesView({
               (target.controlTag === "fig-input-number" &&
                 (name === "min" || name === "max" || name === "step")) ||
               isOptionalWheelBound ||
+              (target.controlTag === "fig-handle" && name === "precision") ||
               (target.controlTag === "fig-chooser" && name === "columns");
             if (useNumberInputControl) {
               const handleNumberInput = (e: any) => {
@@ -2206,7 +2207,7 @@ export default function AttributesView({
 
                       if (
                         target.controlTag === "fig-handle" &&
-                        entry.name === "drag-snapping"
+                        entry.name === "precision"
                       ) {
                         const hitArea = getHandleHitArea(markup, target.fieldIndex);
                         const hitAreaMode = (() => {

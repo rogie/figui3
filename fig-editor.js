@@ -391,6 +391,7 @@ class FigSelectOptions extends HTMLElement {
   #navStart = null;
   #navEnd = null;
   #resizeObserver = null;
+  #mutationObserver = null;
   #boundSyncOverflow = this.syncOverflow.bind(this);
 
   connectedCallback() {
@@ -402,6 +403,13 @@ class FigSelectOptions extends HTMLElement {
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = new ResizeObserver(() => this.syncOverflow());
     this.#resizeObserver.observe(this);
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = new MutationObserver(() => {
+      if (!this.isConnected) return;
+      this.#ensureNavButtons();
+      this.syncOverflow();
+    });
+    this.#mutationObserver.observe(this, { childList: true });
     requestAnimationFrame(() => this.syncOverflow());
   }
 
@@ -409,6 +417,8 @@ class FigSelectOptions extends HTMLElement {
     this.removeEventListener("scroll", this.#boundSyncOverflow);
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = null;
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = null;
     this.#removeNavButtons();
   }
 
@@ -446,6 +456,7 @@ class FigSelectOptions extends HTMLElement {
       this.contains(this.#navStart) &&
       this.contains(this.#navEnd)
     ) {
+      this.#positionNavButtons();
       return;
     }
     this.#removeNavButtons();
@@ -458,8 +469,16 @@ class FigSelectOptions extends HTMLElement {
     });
     this.#navStart = buttons.start;
     this.#navEnd = buttons.end;
-    this.prepend(this.#navStart);
-    this.append(this.#navEnd);
+    this.#positionNavButtons();
+  }
+
+  #positionNavButtons() {
+    if (this.firstElementChild !== this.#navStart) {
+      this.prepend(this.#navStart);
+    }
+    if (this.lastElementChild !== this.#navEnd) {
+      this.append(this.#navEnd);
+    }
   }
 
   #removeNavButtons() {

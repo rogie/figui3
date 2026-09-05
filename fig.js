@@ -4522,6 +4522,7 @@ class FigTabs extends HTMLElement {
       this.contains(this.#navStart) &&
       this.contains(this.#navEnd)
     ) {
+      this.#positionNavButtons();
       return;
     }
 
@@ -4535,8 +4536,16 @@ class FigTabs extends HTMLElement {
     });
     this.#navStart = buttons.start;
     this.#navEnd = buttons.end;
-    this.prepend(this.#navStart);
-    this.append(this.#navEnd);
+    this.#positionNavButtons();
+  }
+
+  #positionNavButtons() {
+    if (this.firstElementChild !== this.#navStart) {
+      this.prepend(this.#navStart);
+    }
+    if (this.lastElementChild !== this.#navEnd) {
+      this.append(this.#navEnd);
+    }
   }
 
   #handleKeyDown(event) {
@@ -18261,6 +18270,7 @@ class FigChooser extends HTMLElement {
       this.contains(this.#navStart) &&
       this.contains(this.#navEnd)
     ) {
+      this.#positionNavButtons();
       return;
     }
 
@@ -18279,9 +18289,16 @@ class FigChooser extends HTMLElement {
     });
     this.#navStart = buttons.start;
     this.#navEnd = buttons.end;
+    this.#positionNavButtons();
+  }
 
-    this.prepend(this.#navStart);
-    this.append(this.#navEnd);
+  #positionNavButtons() {
+    if (this.firstElementChild !== this.#navStart) {
+      this.prepend(this.#navStart);
+    }
+    if (this.lastElementChild !== this.#navEnd) {
+      this.append(this.#navEnd);
+    }
   }
 
   #scrollByPage(direction) {
@@ -18403,6 +18420,10 @@ class FigChooser extends HTMLElement {
 figDefineElement("fig-chooser", FigChooser);
 
 /* Handle */
+/**
+ * A draggable handle positioned within a drag surface.
+ * @attr {number} precision - Decimal places for position values and pixel dragging (default 2).
+ */
 class FigHandle extends HTMLElement {
   static observedAttributes = [
     "color",
@@ -18413,6 +18434,7 @@ class FigHandle extends HTMLElement {
     "drag-axes",
     "drag-snapping",
     "value",
+    "precision",
     "type",
     "tip",
     "hit-area",
@@ -18495,11 +18517,35 @@ class FigHandle extends HTMLElement {
     const container = this.#getContainer();
     if (!container) return "0% 0%";
     const { px, py } = this.#positionDetail(container.getBoundingClientRect());
-    return `${Math.round(px * 100)}% ${Math.round(py * 100)}%`;
+    return `${(px * 100).toFixed(this.precision)}% ${(py * 100).toFixed(this.precision)}%`;
   }
 
   set value(v) {
     this.setAttribute("value", v ?? "0% 0%");
+  }
+
+  get precision() {
+    const parsed = Number(this.getAttribute("precision") ?? 2);
+    if (!Number.isFinite(parsed)) return 2;
+    return Math.max(0, Math.min(10, Math.trunc(parsed)));
+  }
+
+  set precision(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("precision");
+    } else {
+      const parsed = Number(value);
+      const precision = Number.isFinite(parsed)
+        ? Math.max(0, Math.min(10, Math.trunc(parsed)))
+        : 2;
+      this.setAttribute("precision", String(precision));
+    }
+  }
+
+  #roundCoordinate(value) {
+    const factor = 10 ** this.precision;
+    const rounded = Math.round(value * factor) / factor;
+    return Object.is(rounded, -0) ? 0 : rounded;
   }
 
   #parseValue(str) {
@@ -18541,7 +18587,7 @@ class FigHandle extends HTMLElement {
 
     const resolveResponsive = (token) => {
       const pct = typeof token === "number" ? token : 0;
-      return `${pct}%`;
+      return `${this.#roundCoordinate(pct)}%`;
     };
 
     const axes = this.#axes;
@@ -18549,12 +18595,16 @@ class FigHandle extends HTMLElement {
     if (axes.x) {
       const xPx = resolvePx(xToken, rect.width);
       this.style.left =
-        xPx === null ? resolveResponsive(xToken) : `${Math.round(xPx)}px`;
+        xPx === null
+          ? resolveResponsive(xToken)
+          : `${this.#roundCoordinate(xPx)}px`;
     }
     if (axes.y) {
       const yPx = resolvePx(yToken, rect.height);
       this.style.top =
-        yPx === null ? resolveResponsive(yToken) : `${Math.round(yPx)}px`;
+        yPx === null
+          ? resolveResponsive(yToken)
+          : `${this.#roundCoordinate(yPx)}px`;
     }
   }
 
@@ -18783,8 +18833,12 @@ class FigHandle extends HTMLElement {
     px = Math.max(0, Math.min(1, px));
     py = Math.max(0, Math.min(1, py));
     this.#syncPositionTranslate(axes);
-    if (axes.x) this.style.left = `${Math.round(px * rect.width)}px`;
-    if (axes.y) this.style.top = `${Math.round(py * rect.height)}px`;
+    if (axes.x) {
+      this.style.left = `${this.#roundCoordinate(px * rect.width)}px`;
+    }
+    if (axes.y) {
+      this.style.top = `${this.#roundCoordinate(py * rect.height)}px`;
+    }
     this.#syncValueAttribute();
     const detail = {
       ...this.#positionDetail(rect),
@@ -18823,6 +18877,15 @@ class FigHandle extends HTMLElement {
     }
     if (name === "value" && !this.#applyingValue && !this.#isDragging) {
       this.#applyValue(value);
+    }
+    if (
+      name === "precision" &&
+      this.isConnected &&
+      !this.#isDragging &&
+      this.hasAttribute("value")
+    ) {
+      this.#applyValue(this.getAttribute("value"));
+      this.#syncValueAttribute();
     }
     if (name === "tip") {
       this.#hideColorTip();
@@ -18926,10 +18989,14 @@ class FigHandle extends HTMLElement {
 
       this.#syncPositionTranslate(axes);
       if (axes.x) {
-        this.style.left = `${Math.round(Math.max(0, Math.min(rect.width, centerX * rect.width)))}px`;
+        this.style.left = `${this.#roundCoordinate(
+          Math.max(0, Math.min(rect.width, centerX * rect.width)),
+        )}px`;
       }
       if (axes.y) {
-        this.style.top = `${Math.round(Math.max(0, Math.min(rect.height, centerY * rect.height)))}px`;
+        this.style.top = `${this.#roundCoordinate(
+          Math.max(0, Math.min(rect.height, centerY * rect.height)),
+        )}px`;
       }
     };
 
@@ -19360,7 +19427,12 @@ class FigHandle extends HTMLElement {
     const centerY = y + hh;
     const px = rect.width > 0 ? centerX / rect.width : 0;
     const py = rect.height > 0 ? centerY / rect.height : 0;
-    return { x, y, px, py };
+    return {
+      x: this.#roundCoordinate(x),
+      y: this.#roundCoordinate(y),
+      px,
+      py,
+    };
   }
 }
 figDefineElement("fig-handle", FigHandle);
