@@ -1030,6 +1030,7 @@ export const FIG_ICON_SET_24 = [
   "globe",
   "warning",
   "copy",
+  "trash",
 ] as const;
 
 export const FIG_ICON_SET_16 = [
@@ -1048,6 +1049,7 @@ export const FIG_ICON_SET_16 = [
   "globe",
   "warning",
   "copy",
+  "trash",
 ] as const;
 
 export type FigIconPlaygroundSet = "16" | "24";

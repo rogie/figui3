@@ -1225,20 +1225,33 @@ test.describe("fig-lab audit regressions", () => {
       group.setAttribute("name", "Appearance");
       group.innerHTML = `<propskit-number value="1"></propskit-number>`;
       document.body.append(group);
+      const referenceGroup = document.createElement("fig-group");
+      referenceGroup.setAttribute("name", "Appearance");
+      referenceGroup.setAttribute("collapsible", "");
+      document.body.append(referenceGroup);
       await new Promise(requestAnimationFrame);
       const header = group.querySelector(":scope > fig-header");
       if (!header) throw new Error(`Missing group header: ${group.outerHTML}`);
+      const referenceHeader = referenceGroup.querySelector(":scope > fig-header");
+      if (!referenceHeader) throw new Error("Missing reference group header");
       const heading = header.querySelector(":scope > h3")!;
+      const referenceHeading = referenceHeader.querySelector(":scope > h3")!;
       const chevron = header.querySelector(
         ":scope > .propskit-group-chevron",
       );
+      const referenceChevron = referenceHeader.querySelector(
+        ":scope > .fig-group-chevron",
+      );
       const reset = header.querySelector(":scope > .propskit-group-reset-tooltip");
       const headerRect = header.getBoundingClientRect();
+      const referenceHeaderRect = referenceHeader.getBoundingClientRect();
       const resetRect = reset
         ?.querySelector("fig-button")
         ?.getBoundingClientRect();
       const headingRect = heading.getBoundingClientRect();
+      const referenceHeadingRect = referenceHeading.getBoundingClientRect();
       const chevronRect = chevron?.getBoundingClientRect();
+      const referenceChevronRect = referenceChevron?.getBoundingClientRect();
       return {
         resetValue: slider.value,
         implicitResetValue: implicitSlider.value,
@@ -1262,6 +1275,23 @@ test.describe("fig-lab audit regressions", () => {
           ".propskit-group-disclosure",
         ),
         disclosureExpanded: header.getAttribute("aria-expanded"),
+        headerLayoutMatchesFigGroup:
+          getComputedStyle(header).paddingLeft ===
+            getComputedStyle(referenceHeader).paddingLeft &&
+          Math.abs(
+            headingRect.left -
+              headerRect.left -
+              (referenceHeadingRect.left - referenceHeaderRect.left),
+          ) < 0.5 &&
+          Boolean(
+            chevronRect &&
+              referenceChevronRect &&
+              Math.abs(
+                chevronRect.left -
+                  headerRect.left -
+                  (referenceChevronRect.left - referenceHeaderRect.left),
+              ) < 0.5,
+          ),
         resetOnRight:
           Boolean(resetRect) &&
           (resetRect?.right ?? 0) > headerRect.left + headerRect.width * 0.75,
@@ -1283,6 +1313,7 @@ test.describe("fig-lab audit regressions", () => {
       chevronCenterDelta: 0,
       disclosureButton: null,
       disclosureExpanded: "false",
+      headerLayoutMatchesFigGroup: true,
       resetOnRight: true,
       resetIsSibling: true,
       nestedReset: null,

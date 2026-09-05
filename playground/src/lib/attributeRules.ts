@@ -951,6 +951,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "globe",
         "warning",
         "copy",
+        "trash",
       ],
     },
     dismiss: { label: "Dismiss", type: "boolean", boolMode: "string" },
@@ -990,6 +991,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "globe",
         "warning",
         "copy",
+        "trash",
       ],
     },
     size: {

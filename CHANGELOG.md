@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.49]
+
+### Added
+
+- Added `trash` to `fig-icon` at medium and small sizes, including playground icon and toast controls.
+
+### Changed
+
+- PropsKit group headers no longer add extra left padding, matching `fig-group` header alignment.
+
 ## [8.9.48]
 
 ### Added

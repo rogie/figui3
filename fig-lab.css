@@ -249,7 +249,6 @@ propskit-group {
 
   & > fig-header {
     cursor: default;
-    padding-left: var(--spacer-3);
     gap: 0;
 
     &:focus-visible {

@@ -410,6 +410,46 @@ test("fig-icon maps warning to size-specific tokens", async ({ page }) => {
   expect(resolved.small.startsWith('url("data:image/svg+xml,')).toBe(true);
 });
 
+test("fig-icon maps trash to size-specific tokens", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-icon id="medium-trash" name="trash"></fig-icon>
+      <fig-icon id="small-trash" name="trash" size="small"></fig-icon>
+    `;
+  });
+
+  const result = await page.evaluate(() => {
+    const styles = getComputedStyle(document.documentElement);
+    return {
+      iconVars: {
+        medium: (document.querySelector("#medium-trash") as HTMLElement).style
+          .getPropertyValue("--icon"),
+        small: (document.querySelector("#small-trash") as HTMLElement).style
+          .getPropertyValue("--icon"),
+      },
+      resolved: {
+        medium: styles.getPropertyValue("--icon-24-trash").trim(),
+        small: styles.getPropertyValue("--icon-16-trash").trim(),
+      },
+    };
+  });
+
+  expect(result.iconVars).toEqual({
+    medium: "var(--icon-24-trash)",
+    small: "var(--icon-16-trash)",
+  });
+  expect(result.resolved.medium.startsWith('url("data:image/svg+xml,')).toBe(
+    true,
+  );
+  expect(result.resolved.small.startsWith('url("data:image/svg+xml,')).toBe(
+    true,
+  );
+});
+
 test("fig-icon maps copy to size-specific tokens", async ({ page }) => {
   collectPageErrors(page);
   await bootFigFixture(page);

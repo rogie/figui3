@@ -17142,6 +17142,7 @@ const FIG_ICON_TOKENS = {
   globe: { medium: "--icon-24-globe", small: "--icon-16-globe" },
   warning: { medium: "--icon-24-warning", small: "--icon-16-warning" },
   copy: { medium: "--icon-24-copy", small: "--icon-16-copy" },
+  trash: { medium: "--icon-24-trash", small: "--icon-16-trash" },
 };
 
 function figIconCssVar(name, size = "medium") {
