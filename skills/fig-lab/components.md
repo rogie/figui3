@@ -254,7 +254,7 @@ Rich options (requires editor):
 ```
 
 - Parent must be positioned. Types: `point`, `color`, `point-radius`, `point-radius-angle`, `point-point`.
-- Attrs: `type`, `value` (JSON string), `color`, `name`, `tooltips`, `disabled`, `drag-surface`, `snapping` (`false` | `modifier` | `true`)
+- Attrs: `type`, `value` (JSON string), `color`, `name`, `tooltips`, `disabled`, `drag-surface`, `snapping` (`false` | `modifier` | `true`), `precision` (positions, radius, angle, and internal handles; default `2`)
 - React: JSON `value` as a string attr; do not remount during drag.
 
 ### `fig-input-angle`

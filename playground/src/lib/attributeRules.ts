@@ -1182,6 +1182,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["false", "modifier", "true"],
     },
+    precision: {
+      label: "Precision",
+      type: "number",
+      min: 0,
+      max: 8,
+      step: 1,
+    },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-separator": {

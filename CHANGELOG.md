@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.48]
+
+### Added
+
+- `fig-canvas-control` now supports configurable precision for positions, radius, angle, and internal handle dragging.
+
+### Changed
+
+- Canvas-control radius rings and point-to-point lines reveal their shared halo and thicker stroke on hover.
+- Added generic `--fig-canvas-control-stroke-halo` and `--fig-canvas-control-stroke-halo-hover` customization properties while preserving the previous radius halo property.
+
+### Fixed
+
+- Playground examples and attribute controls now reset reliably when navigating between examples.
+
 ## [8.9.47]
 
 ### Added

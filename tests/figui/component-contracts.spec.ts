@@ -4078,6 +4078,86 @@ test.describe("fig-canvas-control value synchronization", () => {
       handleColor: "#0D99FF",
     });
   });
+
+  test("precision passes through to canvas handles and rounds all numeric values", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div style="position:relative;width:200px;height:100px">
+          <fig-canvas-control id="point" precision="2"
+            value='{"x":20,"y":30}'></fig-canvas-control>
+          <fig-canvas-control id="angle" type="point-radius-angle" precision="3"
+            value='{"x":50.12345,"y":49.98765,"radius":30.12345,"angle":45.67891}'></fig-canvas-control>
+          <fig-canvas-control id="points" type="point-point" precision="0"
+            value='{"x":25,"y":25,"x2":75,"y2":75}'></fig-canvas-control>
+        </div>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const point = root.querySelector("#point") as HTMLElement & {
+        value: Record<string, unknown>;
+      };
+      const pointHandle = point.querySelector("fig-handle");
+      pointHandle?.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: { px: 0.123456, py: 0.654321 },
+        }),
+      );
+
+      const angle = root.querySelector("#angle");
+      const points = root.querySelector("#points");
+      const precisions = (control: Element | null) =>
+        Array.from(control?.querySelectorAll("fig-handle") ?? []).map((handle) =>
+          handle.getAttribute("precision"),
+        );
+      const angleValue = (angle as HTMLElement & {
+        value: Record<string, unknown>;
+      }).value;
+      const anglePrecisions = precisions(angle);
+      angle?.setAttribute("precision", "0");
+      const wholeAngleValue = (angle as HTMLElement & {
+        value: Record<string, unknown>;
+      }).value;
+
+      points?.setAttribute("precision", "4");
+      const updatedPointPrecisions = precisions(points);
+      points?.removeAttribute("precision");
+
+      return {
+        pointValue: point.value,
+        pointPrecisions: precisions(point),
+        angleValue,
+        anglePrecisions,
+        wholeAngleValue,
+        updatedPointPrecisions,
+        removedPointPrecisions: precisions(points),
+      };
+    });
+
+    expect(state).toEqual({
+      pointValue: { x: 12.35, y: 65.43 },
+      pointPrecisions: ["2"],
+      angleValue: {
+        x: 50.123,
+        y: 49.988,
+        radius: 30.123,
+        angle: 45.679,
+      },
+      anglePrecisions: ["3", "3"],
+      wholeAngleValue: {
+        x: 50,
+        y: 50,
+        radius: 30,
+        angle: 46,
+      },
+      updatedPointPrecisions: ["4", "4"],
+      removedPointPrecisions: [null, null],
+    });
+  });
 });
 
 test.describe("propskit sizes", () => {

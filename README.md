@@ -1377,6 +1377,7 @@ A composite point control with optional radius circle, angle handle, or second p
 | `disabled` | boolean | `false` | Disable all interaction |
 | `drag-surface` | string | `"parent"` | Forwarded to inner `fig-handle`s |
 | `snapping` | string | `"false"` | `"false"`, `"true"`, `"modifier"` — applies to all handles |
+| `precision` | number | `2` | Decimal places for positions, radius, angle, and internal handle dragging |
 
 **Value shapes by type:**
 

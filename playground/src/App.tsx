@@ -190,9 +190,18 @@ export default function App({ mode }: Props) {
   } = useNavigation(sections, basePath);
   const [editableMarkup, setEditableMarkup] = useState("");
   const defaultMarkupRef = useRef("");
+  const markupExampleKeyRef = useRef("");
   const initialParamsRef = useRef<Record<string, string> | null>(
     hasURLParams() ? readFromURL() : null,
   );
+  const activeExampleKey = `${activeSectionId}/${activeExampleId}`;
+  const activeDefaultMarkup = activeExample
+    ? getExampleSourceMarkup(activeExample.markup)
+    : "";
+  const renderedMarkup =
+    markupExampleKeyRef.current === activeExampleKey
+      ? editableMarkup
+      : activeDefaultMarkup;
 
   useEffect(() => {
     if (typeof customElements === "undefined") return;
@@ -217,11 +226,13 @@ export default function App({ mode }: Props) {
 
   useEffect(() => {
     if (!activeExample) {
+      markupExampleKeyRef.current = activeExampleKey;
       setEditableMarkup("");
       defaultMarkupRef.current = "";
       return;
     }
     const defaultMarkup = getExampleSourceMarkup(activeExample.markup);
+    markupExampleKeyRef.current = activeExampleKey;
     defaultMarkupRef.current = defaultMarkup;
 
     const initialParams = initialParamsRef.current;
@@ -232,7 +243,7 @@ export default function App({ mode }: Props) {
       setEditableMarkup(defaultMarkup);
       clearURLParams();
     }
-  }, [activeExample]);
+  }, [activeExample, activeExampleKey]);
 
   const handleMarkupChange = useCallback((nextMarkup: string) => {
     setEditableMarkup(nextMarkup);
@@ -368,7 +379,7 @@ export default function App({ mode }: Props) {
             <ExampleView
               key={`${activeSectionId}/${activeExampleId}`}
               example={activeExample}
-              markup={editableMarkup}
+              markup={renderedMarkup}
               onPersistImageSource={
                 mode === "figui3" || mode === "lab" ? handlePersistImageSource : undefined
               }
@@ -378,11 +389,12 @@ export default function App({ mode }: Props) {
             />
           </div>
         )}
-        <CodeView markup={editableMarkup} onMarkupChange={handleMarkupChange} />
+        <CodeView markup={renderedMarkup} onMarkupChange={handleMarkupChange} />
       </main>
       <aside className="attributes-sidebar">
         <AttributesView
-          markup={editableMarkup}
+          resetKey={activeExampleKey}
+          markup={renderedMarkup}
           onMarkupChange={handleMarkupChange}
           showFieldControls={mode === "propkit" || mode === "lab" || activeSectionId === "field"}
           includeFullControl={mode === "figui3" || mode === "lab"}

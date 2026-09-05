@@ -7351,6 +7351,10 @@ class PropskitWheel extends HTMLElement {
 figLabDefineElement("propskit-wheel", PropskitWheel);
 
 /* Canvas Control */
+/**
+ * A composite spatial control built from one or more fig-handle elements.
+ * @attr {number} precision - Decimal places for positions, radius, angle, and internal handle dragging (default 2).
+ */
 class FigCanvasControl extends HTMLElement {
   static observedAttributes = [
     "type",
@@ -7361,6 +7365,7 @@ class FigCanvasControl extends HTMLElement {
     "disabled",
     "drag-surface",
     "snapping",
+    "precision",
   ];
 
   #x = 50;
@@ -7429,6 +7434,31 @@ class FigCanvasControl extends HTMLElement {
     return "false";
   }
 
+  get #precision() {
+    const parsed = Number(this.getAttribute("precision") ?? 2);
+    if (!Number.isFinite(parsed)) return 2;
+    return Math.max(0, Math.min(8, Math.trunc(parsed)));
+  }
+
+  #roundPosition(value) {
+    const factor = 10 ** this.#precision;
+    const rounded = Math.round(value * factor) / factor;
+    return Object.is(rounded, -0) ? 0 : rounded;
+  }
+
+  #syncHandlePrecision() {
+    const precision = this.getAttribute("precision");
+    for (const handle of [
+      this.#pointHandle,
+      this.#angleHandle,
+      this.#secondHandle,
+    ]) {
+      if (!handle) continue;
+      if (precision === null) handle.removeAttribute("precision");
+      else handle.setAttribute("precision", String(this.#precision));
+    }
+  }
+
   #shouldSnap(shiftKey) {
     const mode = this.#snappingMode;
     if (mode === "true") return true;
@@ -7442,7 +7472,7 @@ class FigCanvasControl extends HTMLElement {
       const parts = name.split(",");
       return parts[0].trim();
     }
-    return `${Math.round(this.#x)}%, ${Math.round(this.#y)}%`;
+    return `${this.#roundPosition(this.#x)}%, ${this.#roundPosition(this.#y)}%`;
   }
 
   get #secondTipText() {
@@ -7451,7 +7481,7 @@ class FigCanvasControl extends HTMLElement {
       const parts = name.split(",");
       if (parts.length > 1) return parts[1].trim();
     }
-    return `${Math.round(this.#x2)}%, ${Math.round(this.#y2)}%`;
+    return `${this.#roundPosition(this.#x2)}%, ${this.#roundPosition(this.#y2)}%`;
   }
 
   get #dragSurface() {
@@ -7482,8 +7512,9 @@ class FigCanvasControl extends HTMLElement {
   }
 
   #formatRadius() {
-    if (this.#radiusIsPercent) return `Radius ${Math.round(this.#radius)}%`;
-    return `Radius ${Math.round(this.#radius)}`;
+    const radius = this.#roundPosition(this.#radius);
+    if (this.#radiusIsPercent) return `Radius ${radius}%`;
+    return `Radius ${radius}`;
   }
 
   connectedCallback() {
@@ -7534,6 +7565,18 @@ class FigCanvasControl extends HTMLElement {
       if (this.#secondHandle)
         this.#secondHandle.setAttribute("drag-snapping", newVal || "false");
     }
+    if (name === "precision") {
+      if (!this.isConnected) return;
+      this.#syncHandlePrecision();
+      this.#x = this.#roundPosition(this.#x);
+      this.#y = this.#roundPosition(this.#y);
+      this.#x2 = this.#roundPosition(this.#x2);
+      this.#y2 = this.#roundPosition(this.#y2);
+      this.#radius = this.#roundPosition(this.#radius);
+      this.#angle = this.#roundPosition(this.#angle);
+      this.#syncPositions();
+      this.#syncValueAttribute();
+    }
     if (name === "name") {
       if (this.#pointTooltip)
         this.#pointTooltip.setAttribute("text", this.#pointTipText);
@@ -7547,22 +7590,23 @@ class FigCanvasControl extends HTMLElement {
     if (!raw) return;
     try {
       const v = JSON.parse(raw);
-      if (typeof v.x === "number") this.#x = v.x;
-      if (typeof v.y === "number") this.#y = v.y;
+      if (typeof v.x === "number") this.#x = this.#roundPosition(v.x);
+      if (typeof v.y === "number") this.#y = this.#roundPosition(v.y);
       if (v.radius !== undefined) {
         const rs = String(v.radius);
         if (rs.endsWith("%")) {
           this.#radiusIsPercent = true;
-          this.#radius = parseFloat(rs);
+          this.#radius = this.#roundPosition(parseFloat(rs));
         } else {
           this.#radiusIsPercent = false;
-          this.#radius = parseFloat(rs);
+          this.#radius = this.#roundPosition(parseFloat(rs));
         }
         if (!Number.isFinite(this.#radius)) this.#radius = 0;
       }
-      if (typeof v.angle === "number") this.#angle = v.angle;
-      if (typeof v.x2 === "number") this.#x2 = v.x2;
-      if (typeof v.y2 === "number") this.#y2 = v.y2;
+      if (typeof v.angle === "number")
+        this.#angle = this.#roundPosition(v.angle);
+      if (typeof v.x2 === "number") this.#x2 = this.#roundPosition(v.x2);
+      if (typeof v.y2 === "number") this.#y2 = this.#roundPosition(v.y2);
       if (
         this.#type === "color" &&
         typeof v.color === "string" &&
@@ -7577,19 +7621,23 @@ class FigCanvasControl extends HTMLElement {
   }
 
   get value() {
-    const v = { x: this.#x, y: this.#y };
+    const v = {
+      x: this.#roundPosition(this.#x),
+      y: this.#roundPosition(this.#y),
+    };
     if (this.#type === "color") {
       const color =
         this.getAttribute("color") || this.#pointHandle?.getAttribute("color");
       if (color) v.color = color;
     }
     if (this.#hasRadius) {
-      v.radius = this.#radiusIsPercent ? `${this.#radius}%` : this.#radius;
+      const radius = this.#roundPosition(this.#radius);
+      v.radius = this.#radiusIsPercent ? `${radius}%` : radius;
     }
-    if (this.#hasAngle) v.angle = this.#angle;
+    if (this.#hasAngle) v.angle = this.#roundPosition(this.#angle);
     if (this.#hasSecondPoint) {
-      v.x2 = this.#x2;
-      v.y2 = this.#y2;
+      v.x2 = this.#roundPosition(this.#x2);
+      v.y2 = this.#roundPosition(this.#y2);
     }
     return v;
   }
@@ -7627,6 +7675,9 @@ class FigCanvasControl extends HTMLElement {
     handle.setAttribute("drag-axes", "x,y");
     handle.setAttribute("drag-snapping", this.#snappingMode);
     handle.setAttribute("value", `${this.#x}% ${this.#y}%`);
+    if (this.hasAttribute("precision")) {
+      handle.setAttribute("precision", String(this.#precision));
+    }
     if (disabled) handle.setAttribute("disabled", "");
     if (type === "color") {
       handle.setAttribute("type", "color");
@@ -7890,7 +7941,7 @@ class FigCanvasControl extends HTMLElement {
       this.#wireHoverTooltip(
         this.#angleHandle,
         () => this.#angleTooltip,
-        () => `Angle ${Math.round(this.#angle)}°`,
+        () => `Angle ${this.#roundPosition(this.#angle)}°`,
         () => this.#hasActiveInteraction(),
       );
     }
@@ -8049,10 +8100,10 @@ class FigCanvasControl extends HTMLElement {
         const maxDy = 100 - Math.max(y0, y20);
         const dxPct = Math.max(minDx, Math.min(maxDx, dxPctRaw));
         const dyPct = Math.max(minDy, Math.min(maxDy, dyPctRaw));
-        this.#x = x0 + dxPct;
-        this.#y = y0 + dyPct;
-        this.#x2 = x20 + dxPct;
-        this.#y2 = y20 + dyPct;
+        this.#x = this.#roundPosition(x0 + dxPct);
+        this.#y = this.#roundPosition(y0 + dyPct);
+        this.#x2 = this.#roundPosition(x20 + dxPct);
+        this.#y2 = this.#roundPosition(y20 + dyPct);
         this.#syncPositions();
         this.#emitInput();
       };
@@ -8087,6 +8138,9 @@ class FigCanvasControl extends HTMLElement {
     handle.setAttribute("size", "small");
     handle.setAttribute("hit-area", "12 circle");
     handle.setAttribute("hit-area-mode", "delegate");
+    if (this.hasAttribute("precision")) {
+      handle.setAttribute("precision", String(this.#precision));
+    }
     if (disabled) handle.setAttribute("disabled", "");
     this.#angleHandle = handle;
 
@@ -8095,7 +8149,7 @@ class FigCanvasControl extends HTMLElement {
       tip.setAttribute("action", "manual");
       tip.setAttribute("theme", "canvas");
       tip.setAttribute("pointer", "false");
-      tip.setAttribute("text", `${Math.round(this.#angle)}°`);
+      tip.setAttribute("text", `${this.#roundPosition(this.#angle)}°`);
       tip.appendChild(handle);
       this.appendChild(tip);
       this.#angleTooltip = tip;
@@ -8114,6 +8168,9 @@ class FigCanvasControl extends HTMLElement {
     handle.setAttribute("hit-area", "12 circle");
     handle.setAttribute("hit-area-mode", "delegate");
     handle.setAttribute("value", `${this.#x2}% ${this.#y2}%`);
+    if (this.hasAttribute("precision")) {
+      handle.setAttribute("precision", String(this.#precision));
+    }
     if (disabled) handle.setAttribute("disabled", "");
     this.#secondHandle = handle;
 
@@ -8305,8 +8362,12 @@ class FigCanvasControl extends HTMLElement {
       this.#isDragging = true;
       const px = e.detail?.px ?? this.#x / 100;
       const py = e.detail?.py ?? this.#y / 100;
-      this.#x = Math.round(Math.max(0, Math.min(100, px * 100)));
-      this.#y = Math.round(Math.max(0, Math.min(100, py * 100)));
+      this.#x = this.#roundPosition(
+        Math.max(0, Math.min(100, px * 100)),
+      );
+      this.#y = this.#roundPosition(
+        Math.max(0, Math.min(100, py * 100)),
+      );
       if (this.#pointTooltip) {
         this.#pointTooltip.removeAttribute("show");
         this.#pointTooltip.hidePopup?.();
@@ -8327,8 +8388,12 @@ class FigCanvasControl extends HTMLElement {
       }
       const px = e.detail?.px ?? this.#x / 100;
       const py = e.detail?.py ?? this.#y / 100;
-      this.#x = Math.round(Math.max(0, Math.min(100, px * 100)));
-      this.#y = Math.round(Math.max(0, Math.min(100, py * 100)));
+      this.#x = this.#roundPosition(
+        Math.max(0, Math.min(100, px * 100)),
+      );
+      this.#y = this.#roundPosition(
+        Math.max(0, Math.min(100, py * 100)),
+      );
       if (this.#pointTooltip) this.#pointTooltip.removeAttribute("show");
       this.#syncPositions();
       this.#syncValueAttribute();
@@ -8358,7 +8423,7 @@ class FigCanvasControl extends HTMLElement {
         if (this.#shouldSnap(e.detail?.shiftKey)) {
           angle = Math.round(angle / 15) * 15;
         }
-        this.#angle = angle;
+        this.#angle = this.#roundPosition(angle);
 
         let dist = Math.sqrt(dx * dx + dy * dy);
         if (this.#shouldSnap(e.detail?.shiftKey)) {
@@ -8372,15 +8437,17 @@ class FigCanvasControl extends HTMLElement {
           }
         }
         if (this.#radiusIsPercent) {
-          this.#radius = Math.max(0, (dist / rect.width) * 100);
+          this.#radius = this.#roundPosition(
+            Math.max(0, (dist / rect.width) * 100),
+          );
         } else {
-          this.#radius = Math.max(0, dist);
+          this.#radius = this.#roundPosition(Math.max(0, dist));
         }
 
         if (this.#angleTooltip) {
           this.#angleTooltip.setAttribute(
             "text",
-            `Angle ${Math.round(this.#angle)}°`,
+            `Angle ${this.#roundPosition(this.#angle)}°`,
           );
           this.#angleTooltip.setAttribute("show", "true");
           this.#angleTooltip.showPopup?.();
@@ -8427,11 +8494,11 @@ class FigCanvasControl extends HTMLElement {
           if (this.#shouldSnap(ev.shiftKey)) {
             angle = Math.round(angle / 15) * 15;
           }
-          this.#angle = angle;
+          this.#angle = this.#roundPosition(angle);
           if (this.#angleTooltip)
             this.#angleTooltip.setAttribute(
               "text",
-              `Angle ${Math.round(angle)}°`,
+              `Angle ${this.#roundPosition(angle)}°`,
             );
           this.#syncPositions();
           this.#emitInput();
@@ -8464,8 +8531,12 @@ class FigCanvasControl extends HTMLElement {
         this.#isSecondDragging = true;
         const px = e.detail?.px ?? this.#x2 / 100;
         const py = e.detail?.py ?? this.#y2 / 100;
-        this.#x2 = Math.round(Math.max(0, Math.min(100, px * 100)));
-        this.#y2 = Math.round(Math.max(0, Math.min(100, py * 100)));
+        this.#x2 = this.#roundPosition(
+          Math.max(0, Math.min(100, px * 100)),
+        );
+        this.#y2 = this.#roundPosition(
+          Math.max(0, Math.min(100, py * 100)),
+        );
         if (this.#secondTooltip) {
           this.#secondTooltip.removeAttribute("show");
           this.#secondTooltip.hidePopup?.();
@@ -8534,11 +8605,11 @@ class FigCanvasControl extends HTMLElement {
         const newPctX = Math.max(0, Math.min(100, (nx / r.width) * 100));
         const newPctY = Math.max(0, Math.min(100, (ny / r.height) * 100));
         if (isFirst) {
-          this.#x = newPctX;
-          this.#y = newPctY;
+          this.#x = this.#roundPosition(newPctX);
+          this.#y = this.#roundPosition(newPctY);
         } else {
-          this.#x2 = newPctX;
-          this.#y2 = newPctY;
+          this.#x2 = this.#roundPosition(newPctX);
+          this.#y2 = this.#roundPosition(newPctY);
         }
         this.#syncPositions();
         this.#emitInput();
@@ -8643,9 +8714,11 @@ class FigCanvasControl extends HTMLElement {
           }
         }
         if (this.#radiusIsPercent) {
-          this.#radius = Math.max(0, (dist / rect.width) * 100);
+          this.#radius = this.#roundPosition(
+            Math.max(0, (dist / rect.width) * 100),
+          );
         } else {
-          this.#radius = Math.max(0, dist);
+          this.#radius = this.#roundPosition(Math.max(0, dist));
         }
         if (this.#radiusTooltip) {
           this.#radiusTooltip.setAttribute("text", this.#formatRadius());

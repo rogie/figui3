@@ -2093,14 +2093,21 @@ fig-canvas-control {
     rgba(255, 255, 255, 0.5)
   );
   --fig-canvas-control-radius-stroke: #0D99FF;
-  --fig-canvas-control-radius-stroke-halo: #FFFFFF;
+  /* Deprecated compatibility alias. */
+  --fig-canvas-control-radius-stroke-halo: rgba(255,255,255,0);
+  --fig-canvas-control-stroke-halo: var(--fig-canvas-control-radius-stroke-halo);
+  --fig-canvas-control-stroke-halo-hover: rgba(255,255,255,1);
   --fig-canvas-control-line-stroke-hover: #0D99FF;
   --fig-canvas-control-line-stroke-active: #0D99FF;
   --fig-canvas-control-line-stroke-width: 1px;
   --fig-canvas-control-line-stroke-width-hover: 2px;
 
-  &:has(.fig-canvas-control-radius-hit:hover) {
+  &:has(
+    .fig-canvas-control-radius-hit:hover,
+    .fig-canvas-control-angle-line-hit:hover
+  ) {
      --fig-canvas-control-line-stroke-width: var(--fig-canvas-control-line-stroke-width-hover);
+     --fig-canvas-control-stroke-halo: var(--fig-canvas-control-stroke-halo-hover);
   }
 
   & > fig-handle,
@@ -2164,7 +2171,7 @@ fig-canvas-control {
     }
 
     .fig-canvas-control-radius-halo {
-      stroke: var(--fig-canvas-control-radius-stroke-halo);
+      stroke: var(--fig-canvas-control-stroke-halo);
       stroke-width: calc(var(--fig-canvas-control-line-stroke-width) + 2px);
       filter: none;
     }
@@ -2195,7 +2202,7 @@ fig-canvas-control {
   }
 
   .fig-canvas-control-angle-line-halo {
-    stroke: var(--fig-canvas-control-radius-stroke-halo);
+    stroke: var(--fig-canvas-control-stroke-halo);
     stroke-width: calc(var(--fig-canvas-control-line-stroke-width) + 2px);
     stroke-linecap: butt;
     filter: none;

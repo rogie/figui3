@@ -43,6 +43,7 @@ interface Props {
   onMarkupChange: (markup: string) => void;
   showFieldControls?: boolean;
   includeFullControl?: boolean;
+  resetKey?: string;
 }
 
 interface RuleEntry {
@@ -362,6 +363,12 @@ function getNumberAttrDefault(
     return 1;
   }
   if (controlTag === "fig-input-wheel" && attrName === "value") return 0;
+  if (
+    (controlTag === "fig-handle" ||
+      controlTag === "fig-canvas-control") &&
+    attrName === "precision"
+  )
+    return 2;
   return undefined;
 }
 
@@ -370,6 +377,7 @@ export default function AttributesView({
   onMarkupChange,
   showFieldControls = true,
   includeFullControl = false,
+  resetKey = "",
 }: Props) {
   const targets = useMemo(() => parseAttributeTargets(markup), [markup]);
   const labelMemoryRef = useRef<Record<number, string>>({});
@@ -826,7 +834,9 @@ export default function AttributesView({
               (target.controlTag === "fig-input-number" &&
                 (name === "min" || name === "max" || name === "step")) ||
               isOptionalWheelBound ||
-              (target.controlTag === "fig-handle" && name === "precision") ||
+              ((target.controlTag === "fig-handle" ||
+                target.controlTag === "fig-canvas-control") &&
+                name === "precision") ||
               (target.controlTag === "fig-chooser" && name === "columns");
             if (useNumberInputControl) {
               const handleNumberInput = (e: any) => {
@@ -1650,7 +1660,7 @@ export default function AttributesView({
         };
 
         return (
-          <Fragment key={target.fieldIndex}>
+          <Fragment key={`${resetKey}/${target.fieldIndex}`}>
             {showFieldControls && target.hasField && !target.controlTag.startsWith("propskit-") && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
