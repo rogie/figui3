@@ -1,7 +1,6 @@
 # FigUI3 core API reference
 
-Source of truth for live attrs: `playground/src/lib/attributeRules.ts` and `README.md`.
-Playground: `/figui3#{section}`.
+Public API: `README.md`. React recipes: [components.md](components.md).
 
 ## Option string formats
 
@@ -84,8 +83,8 @@ import "@rogieking/figui3/fig-layer.css";
 import "@rogieking/figui3/fig-layer.js";
 ```
 
-Attrs: `open`, `visible`, `disabled`. Markup: child `.fig-layer-row` plus nested `fig-layer`. Events: `openchange`, `visibilitychange`. Playground: `/figui3#layer` (behind Full editor).
+Attrs: `open`, `visible`, `disabled`. Markup: child `.fig-layer-row` plus nested `fig-layer`. Events: `openchange`, `visibilitychange`.
 
 ## Native elements
 
-`/figui3` also demos styled native `button`, `select`, `input`, `textarea`, `checkbox`, `.switch`, `radio`, `color`, `progress`, `fieldset`, `details`, `hr` under group “Native elements”. Use these when a custom element is unnecessary.
+Styled native `button`, `select`, `input`, `textarea`, `checkbox`, `.switch`, `radio`, `color`, `progress`, `fieldset`, `details`, `hr` when a custom element is unnecessary.

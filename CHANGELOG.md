@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.45]
+
+### Changed
+
+- Split FigUI3, fig-editor, fig-lab, and propkit skills into thinner entry files with separate component catalogs and React usage docs.
+
 ## [8.9.44]
 
 ### Changed

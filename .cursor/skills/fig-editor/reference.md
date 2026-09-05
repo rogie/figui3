@@ -1,7 +1,6 @@
 # FigUI3 editor API reference
 
-Playground: `/figui3#select`, `/figui3#fill-picker` (Full editor on).
-Rules: `playground/src/lib/attributeRules.ts`.
+React recipes: [components.md](components.md).
 
 ## `fig-select-option`
 
@@ -23,7 +22,7 @@ Observed: `value`, `disabled`, `selected`, `label`.
 
 `value`, `disabled`, `label`, `options`, `position`, `offset`, `closedby`, `open`, `variant`
 
-Position enum (playground):
+Position enum:
 
 - `bottom left`, `bottom right`, `top left`, `top right`, `bottom center`, `top center`
 

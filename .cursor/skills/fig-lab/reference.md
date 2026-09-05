@@ -1,6 +1,6 @@
 # FigUI3 lab API reference
 
-Playground: `/propskit/lab#{id}`. Rules: `playground/src/lib/attributeRules.ts`.
+React recipes: [components.md](components.md).
 
 ## Propskit reset
 
@@ -13,6 +13,8 @@ Playground: `/propskit/lab#{id}`. Rules: `playground/src/lib/attributeRules.ts`.
 ## Propskit variants
 
 `variant="minimal"` is available on switch, color, fill, gradient, select, text, number, slider, position, and wheel controls. It removes vertical host padding, keeps the inner field transparent at rest, and restores the secondary field background on hover.
+
+## Propskit sizes
 
 PropsKit rows are large by default; explicit `size="large"` remains supported.
 `propskit-group size="small"` applies `size="small"` to nested controls that do
@@ -29,7 +31,7 @@ Options attr: JSON array, comma, or newline. Authored `fig-select-options slot="
 
 ## `propskit-slider`
 
-Playground attrs: `type` (`range`, `hue`, `delta`, `stepper`, `opacity`), `color`, `label`, `default`, `units`, `elastic` (default true), `size`, `steppers`, `disabled`.
+Attrs: `type` (`range`, `hue`, `delta`, `stepper`, `opacity`), `color`, `label`, `default`, `units`, `elastic` (default true), `size`, `steppers`, `disabled`.
 
 Inner `fig-slider` still needs `min` / `max` / `step` / `value` as forwarded attrs.
 
@@ -75,7 +77,7 @@ Collapsible point groups: `collapsible` and `open` default true (string booleans
 
 Observed: `type`, `value`, `color`, `name`, `tooltips`, `disabled`, `drag-surface`, `snapping`.
 
-Parent must be `position: relative` (or similar) so the control can fill it. Playground wraps in an aspect-ratio box.
+Parent must be `position: relative` (or similar) so the control can fill it. Wrap in an aspect-ratio box.
 
 Types: `point`, `color`, `point-radius`, `point-radius-angle`, `point-point`.
 

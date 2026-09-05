@@ -1,10 +1,9 @@
 ---
 name: propkit
 description: >-
-  Guides Figma-style property panel composition in the /propskit playground using
-  fig-field rows and FigUI3 controls. Use when building or editing
-  playground/src/data/sections.ts, generating field prompts, or choosing between
-  raw fig-* rows and propskit-* wrappers (fig-lab).
+  Guides Figma-style property panel composition using fig-field rows and FigUI3
+  controls, including React JSX. Use when building labeled property panels or
+  choosing between raw fig-* rows and propskit-* wrappers (fig-lab).
 user-invocable: false
 ---
 
@@ -12,54 +11,47 @@ user-invocable: false
 
 Patterns for Figma property panels. Two layers:
 
-| Surface | Route | What to use |
-|---|---|---|
-| **PropsKit playground** | `/propskit` | Horizontal `fig-field` + core `fig-*` |
-| **Lab wrappers** | `/propskit/lab` | `propskit-*` (see `fig-lab` skill) |
+| Surface | What to use |
+|---|---|
+| **Core rows** | Horizontal `fig-field` + core `fig-*` |
+| **Lab wrappers** | `propskit-*` (see `fig-lab` skill) |
 
-Canonical `/propskit` examples: `playground/src/data/sections.ts`.
-Core control APIs: `figui3` skill. Select/fill picker: `fig-editor`. Labeled wrappers: `fig-lab`.
+Core tags: `figui3` skill + [../figui3/components.md](../figui3/components.md). React: [../figui3/react.md](../figui3/react.md). Select/fill picker: `fig-editor`. Labeled wrappers: `fig-lab`.
 
 ## Principles
 
 1. Default to horizontal `fig-field` rows.
 2. One concise label per control.
 3. For new labeled property controls in lab, prefer `propskit-*` over duplicating field chrome.
-4. In `/propskit` demos, keep composing from `fig-*` so examples stay core-only unless the section needs lab.
-5. Panel width ~240px. Match existing section density.
-
-## React bootstrap
-
-```tsx
-import "@rogieking/figui3/fig.css";
-
-const bootstrap = async () => {
-  await import("@rogieking/figui3/fig.js");
-  createRoot(document.getElementById("app")!).render(<App />);
-};
-bootstrap();
-```
-
-Add `fig-editor` when using `fig-select` / fill picker. Add `fig-lab` when using `propskit-*`.
-
-On `fig-*` and `<dialog is="fig-...">`, use `class` not `className`.
+4. Compose from `fig-*` unless the row needs lab wrappers.
+5. Panel width ~240px. Keep density tight.
 
 ## Field composition
 
-```html
+```tsx
 <fig-field direction="horizontal">
   <label>Opacity</label>
-  <fig-slider value="75" min="0" max="100" text="true" units="%" full></fig-slider>
+  <fig-slider
+    value={String(opacity)}
+    min="0"
+    max="100"
+    text="true"
+    units="%"
+    full
+    onInput={onInput}
+    onChange={onChange}
+  />
 </fig-field>
 ```
 
 - Put control attrs on the control, not a wrapper.
 - Use `full` when the control should stretch.
 - Do not mix unrelated controls in one row unless grouped on purpose.
+- Add `fig-editor` when using `fig-select` / fill picker. Add `fig-lab` when using `propskit-*`.
 
 ## Control heuristics
 
-| Intent | `/propskit` (core) | Lab wrapper |
+| Intent | Core | Lab wrapper |
 |---|---|---|
 | Boolean | `fig-switch` | `propskit-switch` |
 | Continuous number | `fig-slider` | `propskit-slider` |
@@ -100,7 +92,5 @@ Use a horizontal fig-field, with a fig-slider, min=0 max=100 text=true units=%. 
 1. Identify intent (boolean, discrete, continuous, color/fill, media, motion).
 2. Pick core vs lab wrapper.
 3. Compose the row; set defaults explicitly.
-4. Check `/propskit` or `/propskit/lab` for an existing example before inventing markup.
-5. Verify `input`/`change` and keyboard.
-
-Primary files: `playground/src/data/sections.ts`, `playground/src/data/labSections.ts`, `fig.js`, `fig-lab.js`.
+4. Wire `onInput` (live) and `onChange` (commit).
+5. Verify keyboard.
