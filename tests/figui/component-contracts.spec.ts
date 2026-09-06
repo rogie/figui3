@@ -78,7 +78,9 @@ test.describe("fig.js component contracts", () => {
         easingUsesSelect: Boolean(select),
         selectedValue: select?.getAttribute("value"),
         triggerHasIcon: Boolean(
-          select?.shadowRoot?.querySelector(".fig-select-prepend svg"),
+          select?.querySelector(
+            ':scope > [slot="prepend-trigger"][data-fig-select-generated] svg',
+          ),
         ),
       };
     });
@@ -622,7 +624,7 @@ test.describe("AI lab styling components", () => {
   });
 
   test("registers as a presentation-only prompt layout", async ({ page }) => {
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
@@ -1102,14 +1104,16 @@ test.describe("propskit-number", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML =
-        '<propskit-number label="Width" value="24" min="0" max="100" units="px"></propskit-number>';
+        '<propskit-number label="Width" name="width" value="24" min="0" max="100" units="px"></propskit-number>';
     });
 
     const control = page.locator("propskit-number");
-    await expect(control.locator("fig-field > label")).toHaveText("Width");
+    await expect(control.locator(".propskit-number-surface > label")).toHaveText(
+      "Width",
+    );
     await expect(control.locator("fig-input-number")).toHaveAttribute("units", "px");
     await expect(control.locator("input")).toHaveValue("24");
-    const fieldBox = await control.locator("fig-field").boundingBox();
+    const fieldBox = await control.locator(".propskit-number-surface").boundingBox();
     const inputBox = await control.locator("fig-input-number").boundingBox();
     expect(fieldBox?.height).toBe(32);
     expect(inputBox?.height).toBe(24);
@@ -1123,14 +1127,24 @@ test.describe("propskit-number", () => {
     ).toBe(4);
 
     const events = await control.evaluate((element) => {
-      const received: Array<{ type: string; detail: unknown }> = [];
+      const received: Array<{
+        type: string;
+        detail: unknown;
+        targetValue: unknown;
+        targetName: unknown;
+      }> = [];
       element.addEventListener("input", (event) => {
         received.push({
           type: event.type,
           detail: (event as CustomEvent).detail,
+          targetValue: (event.target as { value?: unknown }).value,
+          targetName: (event.target as { name?: unknown }).name,
         });
       });
-      const inner = element.querySelector("fig-input-number");
+      const inner = element.querySelector("fig-input-number") as
+        | (HTMLElement & { value: number })
+        | null;
+      if (inner) inner.value = 32;
       inner?.dispatchEvent(
         new CustomEvent("input", {
           detail: 32,
@@ -1140,7 +1154,96 @@ test.describe("propskit-number", () => {
       return received;
     });
 
-    expect(events).toEqual([{ type: "input", detail: 32 }]);
+    expect(events).toEqual([
+      {
+        type: "input",
+        detail: { control: "propskit-number", name: "width", value: 32 },
+        targetValue: 32,
+        targetName: "width",
+      },
+    ]);
+  });
+
+  test("keeps the number input focused after arrow-key changes", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-number label="Width" value="24" min="0" max="100" step="1"></propskit-number>';
+    });
+
+    const control = page.locator("propskit-number");
+    const input = control.locator("fig-input-number input");
+    await input.focus();
+    await page.keyboard.press("ArrowUp");
+    await expect(input).toBeFocused();
+    await expect(input).toHaveValue("25");
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await expect(input).toBeFocused();
+    await expect(control).toHaveAttribute("value", "25");
+
+    await page.keyboard.press("ArrowDown");
+    await expect(input).toBeFocused();
+    await expect(input).toHaveValue("24");
+  });
+
+  test("grows toward the label without overlap", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML =
+        '<propskit-number label="Width" value="1"></propskit-number>';
+    });
+
+    const control = page.locator("propskit-number");
+    const measure = () =>
+      control.evaluate((host) => {
+        const surface = host.querySelector(".propskit-number-surface")!;
+        const label = surface.querySelector(":scope > label")!;
+        const input = surface.querySelector(":scope > fig-input-number")!;
+        const surfaceStyle = getComputedStyle(surface);
+        const labelRect = label.getBoundingClientRect();
+        const inputRect = input.getBoundingClientRect();
+        return {
+          surfaceDisplay: surfaceStyle.display,
+          gap: Number.parseFloat(surfaceStyle.columnGap),
+          labelPosition: getComputedStyle(label).position,
+          labelFlex: getComputedStyle(label).flex,
+          inputFlex: getComputedStyle(input).flex,
+          labelRight: labelRect.right,
+          inputLeft: inputRect.left,
+          inputRight: inputRect.right,
+          inputWidth: inputRect.width,
+          inlineEndInset:
+            surface.getBoundingClientRect().right - inputRect.right,
+        };
+      });
+
+    const short = await measure();
+    await control.evaluate((host) => {
+      (host as HTMLElement & { value: number }).value = 123456789;
+    });
+    await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+    );
+    const long = await measure();
+
+    expect(long.surfaceDisplay).toBe("flex");
+    expect(long.labelPosition).toBe("relative");
+    expect(long.labelFlex).toMatch(/^0 0 /);
+    expect(long.inputFlex).toMatch(/^0 1 /);
+    expect(long.inputWidth).toBeGreaterThan(short.inputWidth);
+    expect(long.inputRight).toBeCloseTo(short.inputRight, 0);
+    expect(long.inputLeft).toBeGreaterThanOrEqual(
+      long.labelRight + long.gap - 0.5,
+    );
+    expect(long.inlineEndInset).toBeCloseTo(4, 0);
   });
 });
 
@@ -1169,7 +1272,7 @@ test.describe("fig-input-wheel", () => {
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const omitted = root.querySelector("#omitted") as HTMLElement & {
-        value: string;
+        value: number | null;
         step: number;
       };
       const inputReference = root.querySelector("#input-reference")!;
@@ -2333,6 +2436,7 @@ test.describe("propskit-wheel", () => {
       root.style.width = "240px";
       root.innerHTML = `
         <propskit-wheel id="omitted"></propskit-wheel>
+        <propskit-wheel id="zero" label="Time" value="0" default="0" units="seconds"></propskit-wheel>
         <propskit-wheel id="named" label="Delay" value="1.5" units="seconds"></propskit-wheel>
         <propskit-wheel id="blank" label="" value="240" units="milliseconds"></propskit-wheel>
         <propskit-wheel id="arbitrary" label="Width" value="12" units="px"
@@ -2344,6 +2448,7 @@ test.describe("propskit-wheel", () => {
       const omitted = root.querySelector("#omitted") as HTMLElement & {
         value: string;
       };
+      const zero = root.querySelector("#zero")!;
       const named = root.querySelector("#named")!;
       const blank = root.querySelector("#blank")!;
       const arbitrary = root.querySelector("#arbitrary")!;
@@ -2383,6 +2488,9 @@ test.describe("propskit-wheel", () => {
         omittedPrecision: omitted
           .querySelector("fig-input-number")
           ?.getAttribute("precision"),
+        zeroDisplay: (
+          zero.querySelector("fig-input-number input") as HTMLInputElement | null
+        )?.value,
         namedUnits: named.querySelector("fig-input-number")?.getAttribute("units"),
         namedStep: named.querySelector("fig-input-number")?.getAttribute("step"),
         namedWheelUnits: named
@@ -2433,9 +2541,9 @@ test.describe("propskit-wheel", () => {
     });
 
     expect(state).toMatchObject({
-      omittedLabel: "Value",
+      omittedLabel: "Label",
       namedLabel: "Delay",
-      blankLabel: "",
+      blankLabel: undefined,
       blankLabelState: true,
       surfaceCount: 1,
       directChildren: ["LABEL", "FIG-INPUT-WHEEL", "FIG-INPUT-NUMBER"],
@@ -2443,6 +2551,7 @@ test.describe("propskit-wheel", () => {
       omittedValue: 0,
       omittedStep: "1",
       omittedPrecision: "0",
+      zeroDisplay: "0.00s",
       namedUnits: "s",
       namedStep: "0.1",
       namedWheelUnits: null,
@@ -2481,7 +2590,7 @@ test.describe("propskit-wheel", () => {
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const host = root.querySelector("propskit-wheel") as HTMLElement & {
-        value: string;
+        value: number | null;
       };
       const wheel = host.querySelector("fig-input-wheel") as HTMLElement & {
         value: string;
@@ -2521,14 +2630,18 @@ test.describe("propskit-wheel", () => {
 
     expect(state.childSpin).toBe("false");
     expect(state.afterHostWrite).toEqual({
-      host: "0.5",
+      host: 0.5,
       wheel: "0.5",
       number: "0.5",
       path: state.initialPath,
     });
     expect(Number(state.afterInteraction.host)).toBeGreaterThan(0.5);
-    expect(state.afterInteraction.wheel).toBe(state.afterInteraction.host);
-    expect(state.afterInteraction.number).toBe(state.afterInteraction.host);
+    expect(Number(state.afterInteraction.wheel)).toBe(
+      state.afterInteraction.host,
+    );
+    expect(Number(state.afterInteraction.number)).toBe(
+      state.afterInteraction.host,
+    );
     expect(state.afterInteraction.path).toBe(state.initialPath);
   });
 
@@ -2554,7 +2667,7 @@ test.describe("propskit-wheel", () => {
 
     const movingState = await page.evaluate(async () => {
       const host = document.querySelector("propskit-wheel") as HTMLElement & {
-        value: string;
+        value: number | null;
       };
       const wheel = host.querySelector("fig-input-wheel") as HTMLElement & {
         value: string;
@@ -2606,7 +2719,7 @@ test.describe("propskit-wheel", () => {
       };
     });
 
-    expect(movingState.hostValue).toBe("1");
+    expect(movingState.hostValue).toBe(1);
     expect(movingState.wheelValue).toBe("1");
     expect(movingState.numberValue).toBe("1");
     expect(movingState.moving).toBe(true);
@@ -2650,7 +2763,7 @@ test.describe("propskit-wheel", () => {
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const host = root.querySelector("propskit-wheel") as HTMLElement & {
-        value: string;
+        value: number | null;
       };
       const wheel = host.querySelector("fig-input-wheel") as HTMLElement;
       const readLayout = () => {
@@ -2903,7 +3016,7 @@ test.describe("propskit-wheel", () => {
       };
       const received: Array<{
         type: string;
-        detail: number;
+        detail: { control: string; value: number | null };
         targetIsHost: boolean;
         composed: boolean;
       }> = [];
@@ -2911,7 +3024,9 @@ test.describe("propskit-wheel", () => {
         host.addEventListener(type, (event) => {
           received.push({
             type,
-            detail: (event as CustomEvent<number>).detail,
+            detail: (
+              event as CustomEvent<{ control: string; value: number | null }>
+            ).detail,
             targetIsHost: event.target === host,
             composed: event.composed,
           });
@@ -2973,30 +3088,50 @@ test.describe("propskit-wheel", () => {
       };
     });
 
-    expect(state.afterHostWrite).toEqual({ host: "7", wheel: "7", number: "7" });
+    expect(state.afterHostWrite).toEqual({ host: 7, wheel: "7", number: "7" });
     expect(state.afterWheelInput).toEqual({
-      host: "8",
+      host: 8,
       wheel: "8",
       number: "8",
     });
     expect(state.afterNumberChange).toEqual({
-      host: "9",
+      host: 9,
       wheel: "9",
       number: "9",
     });
     expect(state.dirtyBeforeReset).toBe(false);
     expect(state.reset).toEqual({
-      host: "3",
+      host: 3,
       wheel: "3",
       number: "3",
       defaultValue: "3",
       isDefault: true,
     });
     expect(state.events).toEqual([
-      { type: "input", detail: 8, targetIsHost: true, composed: true },
-      { type: "change", detail: 9, targetIsHost: true, composed: true },
-      { type: "input", detail: 3, targetIsHost: true, composed: true },
-      { type: "change", detail: 3, targetIsHost: true, composed: true },
+      {
+        type: "input",
+        detail: { control: "propskit-wheel", value: 8 },
+        targetIsHost: true,
+        composed: true,
+      },
+      {
+        type: "change",
+        detail: { control: "propskit-wheel", value: 9 },
+        targetIsHost: true,
+        composed: true,
+      },
+      {
+        type: "input",
+        detail: { control: "propskit-wheel", value: 3 },
+        targetIsHost: true,
+        composed: true,
+      },
+      {
+        type: "change",
+        detail: { control: "propskit-wheel", value: 3 },
+        targetIsHost: true,
+        composed: true,
+      },
     ]);
     expect(state.wheelLabelledBy).toBe(state.labelId);
     expect(state.numberLabelledBy).toBe(state.labelId);
@@ -3173,7 +3308,9 @@ test.describe("propskit-position", () => {
       host.units = "percent";
       const percentUnits = inputs.map((input) => input.getAttribute("units"));
       return {
-        label: host.querySelector(":scope > fig-field > label")?.textContent,
+        label: host.querySelector(
+          ":scope > .propskit-position-surface > label",
+        )?.textContent,
         axes: [
           ...host.querySelectorAll("[data-propskit-position-axis]"),
         ].map((input) => input.getAttribute("data-propskit-position-axis")),
@@ -3191,7 +3328,7 @@ test.describe("propskit-position", () => {
     });
 
     expect(state).toEqual({
-      label: "Position",
+      label: undefined,
       axes: ["x", "y"],
       prepends: ["X", "Y"],
       isDefaultAfterEdit: false,
@@ -3203,17 +3340,26 @@ test.describe("propskit-position", () => {
       events: [
         {
           type: "input",
-          detail: { x: 40, y: 75, units: "none" },
+          detail: {
+            control: "propskit-position",
+            value: { x: 40, y: 75 },
+          },
           composed: true,
         },
         {
           type: "input",
-          detail: { x: 25, y: 75, units: "none" },
+          detail: {
+            control: "propskit-position",
+            value: { x: 25, y: 75 },
+          },
           composed: true,
         },
         {
           type: "change",
-          detail: { x: 25, y: 75, units: "none" },
+          detail: {
+            control: "propskit-position",
+            value: { x: 25, y: 75 },
+          },
           composed: true,
         },
       ],
@@ -3267,6 +3413,678 @@ test.describe("propskit-position", () => {
   });
 });
 
+test.describe("propskit-joystick", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-lab.js");
+      await Promise.all([
+        customElements.whenDefined("fig-joystick"),
+        customElements.whenDefined("propskit-joystick"),
+      ]);
+    });
+  });
+
+  test("composes a square joystick with typed values and PropsKit events", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-joystick id="control" label="Position" name="position"
+          value='{"x":35,"y":65}' default='{"x":50,"y":50}'
+          axis-labels="X Y" coordinates="math" precision="2"
+          style="--propskit-bg-subfield: rgba(12, 34, 56, 0.5)">
+        </propskit-joystick>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("#control") as HTMLElement & {
+        value: { x: number; y: number };
+        defaultValue: { x: number; y: number };
+        isDefault: boolean;
+        resetToDefault(): void;
+      };
+      const joystick = host.querySelector("fig-joystick") as HTMLElement & {
+        value: string;
+      };
+      const events: Array<{
+        type: string;
+        detail: unknown;
+        targetParity: boolean;
+        composed: boolean;
+      }> = [];
+      for (const type of ["input", "change"]) {
+        host.addEventListener(type, (event) => {
+          const detail = (event as CustomEvent).detail;
+          events.push({
+            type,
+            detail,
+            targetParity:
+              event.target === host &&
+              JSON.stringify(
+                (event.target as typeof host).value,
+              ) === JSON.stringify(detail.value),
+            composed: event.composed,
+          });
+        });
+      }
+      const xInput = joystick.querySelector(
+        "fig-input-number[name='x']",
+      ) as HTMLElement & { value: number };
+      xInput.value = 70;
+      xInput.dispatchEvent(
+        new CustomEvent("input", {
+          detail: 70,
+          bubbles: true,
+        }),
+      );
+      joystick.dispatchEvent(
+        new CustomEvent("change", {
+          detail: { value: "10% 90%", x: 0.1, y: 0.9 },
+          bubbles: true,
+        }),
+      );
+      const edited = {
+        value: host.value,
+        valueAttribute: host.getAttribute("value"),
+        innerValue: joystick.getAttribute("value"),
+        isDefault: host.isDefault,
+      };
+      host.resetToDefault();
+      const plane = joystick.querySelector(
+        ".fig-input-joystick-plane-container",
+      ) as HTMLElement;
+      const planeRect = plane.getBoundingClientRect();
+      const labelRect = host.querySelector("label")!.getBoundingClientRect();
+      const labelRange = document.createRange();
+      labelRange.selectNodeContents(host.querySelector("label")!);
+      const labelTextRect = labelRange.getBoundingClientRect();
+      const joystickRect = joystick.getBoundingClientRect();
+      const surfaceRect = host
+        .querySelector(".propskit-joystick-surface")!
+        .getBoundingClientRect();
+      return {
+        directChildren: [
+          ...(host.querySelector(".propskit-joystick-surface")?.children ?? []),
+        ].map((child) => child.tagName),
+        figFieldCount: host.querySelectorAll("fig-field").length,
+        label: host.querySelector(
+          ":scope > .propskit-joystick-surface > label",
+        )?.textContent,
+        fields: joystick.getAttribute("fields"),
+        aspectRatio: joystick.getAttribute("aspect-ratio"),
+        axisLabels: joystick.getAttribute("axis-labels"),
+        coordinates: joystick.getAttribute("coordinates"),
+        precision: joystick.getAttribute("precision"),
+        numberFields: joystick.querySelectorAll("fig-input-number").length,
+        guidesBackground: getComputedStyle(
+          joystick.querySelector(".fig-input-joystick-guides")!,
+        ).backgroundColor,
+        numberBackgrounds: [...joystick.querySelectorAll("fig-input-number")].map(
+          (field) => getComputedStyle(field).backgroundColor,
+        ),
+        plane: { width: planeRect.width, height: planeRect.height },
+        labelInset: labelTextRect.left - surfaceRect.left,
+        verticalLayout: labelRect.bottom <= joystickRect.top,
+        edited,
+        value: host.value,
+        defaultValue: host.defaultValue,
+        isDefault: host.isDefault,
+        events,
+      };
+    });
+
+    expect(state.directChildren).toEqual(["LABEL", "FIG-JOYSTICK"]);
+    expect(state.figFieldCount).toBe(0);
+    expect(state.label).toBe("Position");
+    expect(state.fields).toBe("true");
+    expect(state.aspectRatio).toBe("1 / 1");
+    expect(state.axisLabels).toBe("X Y");
+    expect(state.coordinates).toBe("math");
+    expect(state.precision).toBe("2");
+    expect(state.numberFields).toBe(2);
+    expect(state.guidesBackground).toBe("rgba(12, 34, 56, 0.5)");
+    expect(state.numberBackgrounds).toEqual([
+      "rgba(12, 34, 56, 0.5)",
+      "rgba(12, 34, 56, 0.5)",
+    ]);
+    expect(state.plane.width).toBeCloseTo(state.plane.height, 4);
+    expect(state.labelInset).toBeCloseTo(12, 4);
+    expect(state.verticalLayout).toBe(true);
+    expect(state.edited).toEqual({
+      value: { x: 10, y: 90 },
+      valueAttribute: '{"x":10,"y":90}',
+      innerValue: "10% 90%",
+      isDefault: false,
+    });
+    expect(state.value).toEqual({ x: 50, y: 50 });
+    expect(state.defaultValue).toEqual({ x: 50, y: 50 });
+    expect(state.isDefault).toBe(true);
+    expect(state.events).toEqual([
+      {
+        type: "input",
+        detail: {
+          control: "propskit-joystick",
+          value: { x: 70, y: 65 },
+          name: "position",
+        },
+        targetParity: true,
+        composed: true,
+      },
+      {
+        type: "change",
+        detail: {
+          control: "propskit-joystick",
+          value: { x: 10, y: 90 },
+          name: "position",
+        },
+        targetParity: true,
+        composed: true,
+      },
+      {
+        type: "input",
+        detail: {
+          control: "propskit-joystick",
+          value: { x: 50, y: 50 },
+          name: "position",
+        },
+        targetParity: true,
+        composed: true,
+      },
+      {
+        type: "change",
+        detail: {
+          control: "propskit-joystick",
+          value: { x: 50, y: 50 },
+          name: "position",
+        },
+        targetParity: true,
+        composed: true,
+      },
+    ]);
+  });
+
+  test("supports label states, disabled descendants, focus, and reconnect", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-joystick id="omitted"></propskit-joystick>
+        <propskit-joystick id="blank" label=""></propskit-joystick>
+        <propskit-joystick id="disabled" label="Position" disabled>
+          <label>Custom position</label>
+        </propskit-joystick>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const omitted = root.querySelector("#omitted") as HTMLElement;
+      const blank = root.querySelector("#blank") as HTMLElement;
+      const disabled = root.querySelector("#disabled") as HTMLElement & {
+        focus(): void;
+      };
+      const joystick = disabled.querySelector("fig-joystick") as HTMLElement;
+      const handle = joystick.querySelector("fig-handle") as HTMLElement;
+      const inputs = [...joystick.querySelectorAll("fig-input-number")];
+      const disabledState = {
+        inert: joystick.inert,
+        handle: handle.hasAttribute("disabled"),
+        inputs: inputs.map((input) => input.hasAttribute("disabled")),
+      };
+      disabled.focus();
+      const activeAfterDisabledFocus = document.activeElement?.tagName;
+      disabled.removeAttribute("disabled");
+      await Promise.resolve();
+      disabled.focus();
+      const focusedTag = document.activeElement?.tagName;
+      const fragment = document.createDocumentFragment();
+      fragment.append(omitted);
+      root.append(omitted);
+      return {
+        omittedLabel: omitted.querySelector("label")?.textContent,
+        blankLabel: blank.querySelector("label")?.textContent,
+        blankState: blank.hasAttribute("data-label-empty"),
+        customLabel: disabled.querySelector("label")?.textContent,
+        disabledState,
+        disabledHandleAfterEnable: handle.hasAttribute("disabled"),
+        disabledInputsAfterEnable: inputs.map((input) =>
+          input.hasAttribute("disabled"),
+        ),
+        activeAfterDisabledFocus,
+        focusedTag,
+        surfaceCount: omitted.querySelectorAll(
+          ":scope > .propskit-joystick-surface",
+        ).length,
+        joystickCount: omitted.querySelectorAll("fig-joystick").length,
+      };
+    });
+
+    expect(state).toEqual({
+      omittedLabel: "Label",
+      blankLabel: undefined,
+      blankState: true,
+      customLabel: "Custom position",
+      disabledState: {
+        inert: true,
+        handle: true,
+        inputs: [true, true],
+      },
+      disabledHandleAfterEnable: false,
+      disabledInputsAfterEnable: [false, false],
+      activeAfterDisabledFocus: "BODY",
+      focusedTag: "FIG-HANDLE",
+      surfaceCount: 1,
+      joystickCount: 1,
+    });
+  });
+});
+
+test.describe("propskit origin, easing, and spring", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await import("/fig-lab.js");
+      await Promise.all([
+        customElements.whenDefined("propskit-origin"),
+        customElements.whenDefined("propskit-easing"),
+        customElements.whenDefined("propskit-spring"),
+      ]);
+    });
+  });
+
+  test("exposes typed values, constrained primitives, events, and reset", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-origin id="origin" label="Origin" name="origin"
+          value='{"x":25,"y":75}' default='{"x":50,"y":50}'></propskit-origin>
+        <propskit-easing id="easing" label="Easing" name="easing"
+          value='{"x1":0.25,"y1":0.1,"x2":0.75,"y2":0.9}'
+          default='{"x1":0.42,"y1":0,"x2":0.58,"y2":1}'></propskit-easing>
+        <propskit-spring id="spring" label="Spring" name="spring"
+          value='{"stiffness":250,"damping":18,"mass":1.2}'
+          default='{"stiffness":200,"damping":15,"mass":1}'></propskit-spring>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      type StructuredControl = HTMLElement & {
+        value: Record<string, number>;
+        defaultValue: Record<string, number>;
+        isDefault: boolean;
+        resetToDefault(): void;
+      };
+      const origin = root.querySelector("#origin") as StructuredControl;
+      const easing = root.querySelector("#easing") as StructuredControl;
+      const spring = root.querySelector("#spring") as StructuredControl;
+      const originPrimitive = origin.querySelector("fig-origin-grid")!;
+      const easingPrimitive = easing.querySelector("fig-easing-curve")!;
+      const springPrimitive = spring.querySelector("fig-easing-curve")!;
+      const events: Array<{
+        type: string;
+        control: string;
+        value: Record<string, number>;
+        name?: string;
+        targetParity: boolean;
+      }> = [];
+      for (const control of [origin, easing, spring]) {
+        for (const type of ["input", "change"]) {
+          control.addEventListener(type, (event) => {
+            const detail = (event as CustomEvent).detail;
+            events.push({
+              type,
+              ...detail,
+              targetParity:
+                event.target === control &&
+                JSON.stringify((event.target as StructuredControl).value) ===
+                  JSON.stringify(detail.value),
+            });
+          });
+        }
+      }
+
+      originPrimitive.dispatchEvent(
+        new CustomEvent("input", {
+          detail: { value: "10% 90%", x: 10, y: 90 },
+          bubbles: true,
+        }),
+      );
+      easingPrimitive.dispatchEvent(
+        new CustomEvent("change", {
+          detail: {
+            mode: "bezier",
+            value: "0.10, 0.20, 0.80, 0.90",
+          },
+          bubbles: true,
+        }),
+      );
+      springPrimitive
+        .querySelector(".fig-easing-curve-value-input")!
+        .dispatchEvent(
+        new CustomEvent("input", {
+          detail: "spring(320, 22, 0.8)",
+          bubbles: true,
+        }),
+      );
+
+      const edited = {
+        origin: origin.value,
+        easing: easing.value,
+        spring: spring.value,
+        attributes: {
+          origin: origin.getAttribute("value"),
+          easing: easing.getAttribute("value"),
+          spring: spring.getAttribute("value"),
+        },
+      };
+      origin.resetToDefault();
+      easing.resetToDefault();
+      spring.resetToDefault();
+
+      const optionLabels = (primitive: Element) =>
+        [...primitive.querySelectorAll("fig-select-option")].map(
+          (option) => option.getAttribute("label"),
+        );
+      return {
+        structure: {
+          origin: [
+            ...(origin.querySelector(".propskit-origin-surface")?.children ?? []),
+          ].map((element) => element.tagName),
+          easing: [
+            ...(easing.querySelector(".propskit-easing-surface")?.children ?? []),
+          ].map((element) => element.tagName),
+          spring: [
+            ...(spring.querySelector(".propskit-spring-surface")?.children ?? []),
+          ].map((element) => element.tagName),
+        },
+        primitiveAttributes: {
+          originFields: originPrimitive.getAttribute("fields"),
+          originAspectRatio: originPrimitive.getAttribute("aspect-ratio"),
+          easingMode: easingPrimitive.getAttribute("mode"),
+          easingAspectRatio: easingPrimitive.getAttribute("aspect-ratio"),
+          easingSelectVariant: easingPrimitive
+            .querySelector("fig-select")
+            ?.getAttribute("variant"),
+          springMode: springPrimitive.getAttribute("mode"),
+          springAspectRatio: springPrimitive.getAttribute("aspect-ratio"),
+          springSelectVariant: springPrimitive
+            .querySelector("fig-select")
+            ?.getAttribute("variant"),
+        },
+        optionLabels: {
+          easing: optionLabels(easingPrimitive),
+          spring: optionLabels(springPrimitive),
+        },
+        edited,
+        reset: {
+          origin: origin.value,
+          easing: easing.value,
+          spring: spring.value,
+          defaults: [
+            origin.defaultValue,
+            easing.defaultValue,
+            spring.defaultValue,
+          ],
+          isDefault: [origin.isDefault, easing.isDefault, spring.isDefault],
+        },
+        events,
+      };
+    });
+
+    expect(state.structure).toEqual({
+      origin: ["LABEL", "FIG-ORIGIN-GRID"],
+      easing: ["LABEL", "FIG-EASING-CURVE"],
+      spring: ["LABEL", "FIG-EASING-CURVE"],
+    });
+    expect(state.primitiveAttributes).toEqual({
+      originFields: "true",
+      originAspectRatio: "1 / 1",
+      easingMode: "bezier",
+      easingAspectRatio: "1 / 1",
+      easingSelectVariant: "ghost",
+      springMode: "spring",
+      springAspectRatio: "1 / 1",
+      springSelectVariant: "ghost",
+    });
+    expect(state.optionLabels.easing).toEqual([
+      "Linear",
+      "Ease in",
+      "Ease out",
+      "Ease in and out",
+      "Ease in back",
+      "Ease out back",
+      "Ease in and out back",
+      "Custom bezier",
+    ]);
+    expect(state.optionLabels.spring).toEqual([
+      "Gentle",
+      "Quick",
+      "Bouncy",
+      "Slow",
+      "Custom spring",
+    ]);
+    expect(state.edited).toEqual({
+      origin: { x: 10, y: 90 },
+      easing: { x1: 0.1, y1: 0.2, x2: 0.8, y2: 0.9 },
+      spring: { stiffness: 320, damping: 22, mass: 0.8 },
+      attributes: {
+        origin: '{"x":10,"y":90}',
+        easing: '{"x1":0.1,"y1":0.2,"x2":0.8,"y2":0.9}',
+        spring: '{"stiffness":320,"damping":22,"mass":0.8}',
+      },
+    });
+    expect(state.reset).toEqual({
+      origin: { x: 50, y: 50 },
+      easing: { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
+      spring: { stiffness: 200, damping: 15, mass: 1 },
+      defaults: [
+        { x: 50, y: 50 },
+        { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
+        { stiffness: 200, damping: 15, mass: 1 },
+      ],
+      isDefault: [true, true, true],
+    });
+    expect(state.events).toEqual([
+      {
+        type: "input",
+        control: "propskit-origin",
+        value: { x: 10, y: 90 },
+        name: "origin",
+        targetParity: true,
+      },
+      {
+        type: "change",
+        control: "propskit-easing",
+        value: { x1: 0.1, y1: 0.2, x2: 0.8, y2: 0.9 },
+        name: "easing",
+        targetParity: true,
+      },
+      {
+        type: "input",
+        control: "propskit-spring",
+        value: { stiffness: 320, damping: 22, mass: 0.8 },
+        name: "spring",
+        targetParity: true,
+      },
+      {
+        type: "input",
+        control: "propskit-origin",
+        value: { x: 50, y: 50 },
+        name: "origin",
+        targetParity: true,
+      },
+      {
+        type: "change",
+        control: "propskit-origin",
+        value: { x: 50, y: 50 },
+        name: "origin",
+        targetParity: true,
+      },
+      {
+        type: "input",
+        control: "propskit-easing",
+        value: { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
+        name: "easing",
+        targetParity: true,
+      },
+      {
+        type: "change",
+        control: "propskit-easing",
+        value: { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
+        name: "easing",
+        targetParity: true,
+      },
+      {
+        type: "input",
+        control: "propskit-spring",
+        value: { stiffness: 200, damping: 15, mass: 1 },
+        name: "spring",
+        targetParity: true,
+      },
+      {
+        type: "change",
+        control: "propskit-spring",
+        value: { stiffness: 200, damping: 15, mass: 1 },
+        name: "spring",
+        targetParity: true,
+      },
+    ]);
+  });
+
+  test("supports labels, disabled descendants, focus, styling, and reconnect", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <propskit-origin id="origin" label="Origin"
+          style="--propskit-bg-subfield: rgba(12, 34, 56, 0.5)"></propskit-origin>
+        <propskit-easing id="easing" label="" variant="minimal"
+          style="--propskit-bg-subfield: rgba(12, 34, 56, 0.5)"></propskit-easing>
+        <propskit-spring id="spring" disabled
+          style="--propskit-bg-subfield: rgba(12, 34, 56, 0.5)">
+          <label>Custom spring</label>
+        </propskit-spring>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const origin = root.querySelector("#origin") as HTMLElement & {
+        focus(): void;
+      };
+      const easing = root.querySelector("#easing") as HTMLElement & {
+        focus(): void;
+      };
+      const spring = root.querySelector("#spring") as HTMLElement & {
+        focus(): void;
+      };
+      const originPrimitive = origin.querySelector("fig-origin-grid")!;
+      const springPrimitive = spring.querySelector(
+        "fig-easing-curve",
+      ) as HTMLElement;
+      const springControls = [
+        ...springPrimitive.querySelectorAll(
+          "fig-handle, fig-select, fig-dropdown, fig-input-text",
+        ),
+      ];
+      const disabledBeforeEnable = {
+        inert: springPrimitive.inert,
+        controls: springControls.map((control) =>
+          control.hasAttribute("disabled"),
+        ),
+      };
+      spring.focus();
+      const activeAfterDisabledFocus = document.activeElement?.tagName;
+      spring.removeAttribute("disabled");
+      await Promise.resolve();
+      spring.focus();
+      const activeAfterEnabledFocus = document.activeElement?.tagName;
+      const labelRect = origin.querySelector("label")!.getBoundingClientRect();
+      const primitiveRect = originPrimitive.getBoundingClientRect();
+      const subfieldBackgrounds = [
+        originPrimitive.querySelector(".origin-grid"),
+        ...originPrimitive.querySelectorAll("fig-input-number"),
+      ].map((element) => getComputedStyle(element!).backgroundColor);
+      const fragment = document.createDocumentFragment();
+      fragment.append(origin);
+      root.append(origin);
+      return {
+        labels: {
+          origin: origin.querySelector("label")?.textContent,
+          easing: easing.querySelector("label")?.textContent,
+          easingEmpty: easing.hasAttribute("data-label-empty"),
+          spring: spring.querySelector("label")?.textContent,
+        },
+        disabled: {
+          inertBeforeEnable: disabledBeforeEnable.inert,
+          controlsBeforeEnable: disabledBeforeEnable.controls,
+          controlsAfterEnable: springControls.map((control) =>
+            control.hasAttribute("disabled"),
+          ),
+        },
+        activeAfterDisabledFocus,
+        activeAfterEnabledFocus,
+        verticalLayout: labelRect.bottom <= primitiveRect.top,
+        minimalBackground: getComputedStyle(
+          easing.querySelector(".propskit-easing-surface")!,
+        ).backgroundColor,
+        easingSelectBackground: getComputedStyle(
+          easing.querySelector("fig-select")!,
+        ).backgroundColor,
+        springSelectBackground: getComputedStyle(
+          spring.querySelector("fig-select")!,
+        ).backgroundColor,
+        subfieldBackgrounds,
+        reconnect: {
+          surfaceCount: origin.querySelectorAll(
+            ":scope > .propskit-origin-surface",
+          ).length,
+          primitiveCount: origin.querySelectorAll("fig-origin-grid").length,
+        },
+      };
+    });
+
+    expect(state.labels).toEqual({
+      origin: "Origin",
+      easing: undefined,
+      easingEmpty: true,
+      spring: "Custom spring",
+    });
+    expect(state.disabled.inertBeforeEnable).toBe(true);
+    expect(state.disabled.controlsBeforeEnable).not.toContain(false);
+    expect(state.disabled.controlsAfterEnable).not.toContain(true);
+    expect(state.activeAfterDisabledFocus).toBe("BODY");
+    expect(state.activeAfterEnabledFocus).toBe("FIG-SELECT");
+    expect(state.verticalLayout).toBe(true);
+    expect(state.minimalBackground).toBe("rgba(0, 0, 0, 0)");
+    expect(state.easingSelectBackground).toBe("rgba(12, 34, 56, 0.5)");
+    expect(state.springSelectBackground).toBe("rgba(12, 34, 56, 0.5)");
+    expect(state.subfieldBackgrounds).toEqual([
+      "rgba(12, 34, 56, 0.5)",
+      "rgba(12, 34, 56, 0.5)",
+      "rgba(12, 34, 56, 0.5)",
+    ]);
+    expect(state.reconnect).toEqual({
+      surfaceCount: 1,
+      primitiveCount: 1,
+    });
+  });
+});
+
 test.describe("propskit-color-point", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -3285,7 +4103,7 @@ test.describe("propskit-color-point", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-color-point id="control" label="Light" size="small"
+        <propskit-color-point id="control" label="Light"
           value='{"x":25,"y":75,"color":"#FF00BF"}'></propskit-color-point>
       `;
       await new Promise(requestAnimationFrame);
@@ -3309,7 +4127,6 @@ test.describe("propskit-color-point", () => {
         children: [...group.children]
           .filter((child) => child.hasAttribute("data-propskit-color-point-control"))
           .map((child) => child.tagName.toLowerCase()),
-        sizes: [color.getAttribute("size"), position.getAttribute("size")],
         color: color.value,
         position: position.value,
         positionUnits: position.getAttribute("units"),
@@ -3326,8 +4143,6 @@ test.describe("propskit-color-point", () => {
       host.setAttribute("collapsible", "true");
       host.setAttribute("open", "false");
       group.open = true;
-      host.removeAttribute("size");
-
       const events: Array<{ type: string; detail: unknown; composed: boolean }> = [];
       for (const type of ["input", "change"]) {
         host.addEventListener(type, (event) => {
@@ -3359,10 +4174,6 @@ test.describe("propskit-color-point", () => {
         initial,
         collapsedDisabled,
         hostOpenAfterGroupToggle: host.getAttribute("open"),
-        sizesAfterRemoval: [
-          color.getAttribute("size"),
-          position.getAttribute("size"),
-        ],
         value: host.value,
         valueAttribute: JSON.parse(host.getAttribute("value") || "{}"),
         events,
@@ -3376,7 +4187,6 @@ test.describe("propskit-color-point", () => {
         collapsible: true,
         open: "true",
         children: ["propskit-color", "propskit-position"],
-        sizes: ["small", "small"],
         color: "#FF00BF",
         position: { x: 25, y: 75 },
         positionUnits: "percent",
@@ -3388,27 +4198,22 @@ test.describe("propskit-color-point", () => {
         open: null,
       },
       hostOpenAfterGroupToggle: "true",
-      sizesAfterRemoval: [null, null],
       value: { x: 40, y: 60, color: "#0D99FF" },
       valueAttribute: { x: 40, y: 60, color: "#0D99FF" },
       events: [
         {
           type: "input",
           detail: {
-            x: 40,
-            y: 60,
-            color: "#FF00BF",
-            units: "percent",
+            control: "propskit-color-point",
+            value: { x: 40, y: 60, color: "#FF00BF" },
           },
           composed: true,
         },
         {
           type: "change",
           detail: {
-            x: 40,
-            y: 60,
-            color: "#0D99FF",
-            units: "percent",
+            control: "propskit-color-point",
+            value: { x: 40, y: 60, color: "#0D99FF" },
           },
           composed: true,
         },
@@ -3435,7 +4240,7 @@ test.describe("propskit-point-radius", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-point-radius id="control" label="Blur" size="small" units="percent"
+        <propskit-point-radius id="control" label="Blur" units="percent"
           value='{"x":25,"y":75,"radius":"25%"}'></propskit-point-radius>
       `;
       await new Promise(requestAnimationFrame);
@@ -3459,7 +4264,6 @@ test.describe("propskit-point-radius", () => {
         children: [...group.children]
           .filter((child) => child.hasAttribute("data-propskit-point-radius-control"))
           .map((child) => child.tagName.toLowerCase()),
-        sizes: [position.getAttribute("size"), radius.getAttribute("size")],
         position: position.value,
         positionUnits: position.getAttribute("units"),
         radius: radius.value,
@@ -3535,7 +4339,6 @@ test.describe("propskit-point-radius", () => {
         collapsible: true,
         open: "true",
         children: ["propskit-position", "propskit-number"],
-        sizes: ["small", "small"],
         position: { x: 25, y: 75 },
         positionUnits: "percent",
         radius: 25,
@@ -3559,12 +4362,18 @@ test.describe("propskit-point-radius", () => {
       events: [
         {
           type: "input",
-          detail: { x: 40, y: 60, radius: 25, units: "percent" },
+          detail: {
+            control: "propskit-point-radius",
+            value: { x: 40, y: 60, radius: "25%" },
+          },
           composed: true,
         },
         {
           type: "change",
-          detail: { x: 40, y: 60, radius: 35, units: "percent" },
+          detail: {
+            control: "propskit-point-radius",
+            value: { x: 40, y: 60, radius: "35%" },
+          },
           composed: true,
         },
       ],
@@ -3588,7 +4397,7 @@ test.describe("propskit-point-radius-angle", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-point-radius-angle id="control" label="Gradient" size="small" units="percent"
+        <propskit-point-radius-angle id="control" label="Gradient" units="percent"
           value='{"x":25,"y":75,"radius":"25%","angle":45}'></propskit-point-radius-angle>
       `;
       await new Promise(requestAnimationFrame);
@@ -3622,11 +4431,6 @@ test.describe("propskit-point-radius-angle", () => {
             child.hasAttribute("data-propskit-point-radius-angle-control"),
           )
           .map((child) => child.tagName.toLowerCase()),
-        sizes: [
-          position.getAttribute("size"),
-          radius.getAttribute("size"),
-          angle.getAttribute("size"),
-        ],
         positionUnits: position.getAttribute("units"),
         radiusUnits: radius.getAttribute("units"),
         angleUnits: angle.getAttribute("units"),
@@ -3700,7 +4504,6 @@ test.describe("propskit-point-radius-angle", () => {
           "propskit-number",
           "propskit-number",
         ],
-        sizes: ["small", "small", "small"],
         positionUnits: "percent",
         radiusUnits: "%",
         angleUnits: "°",
@@ -3717,33 +4520,24 @@ test.describe("propskit-point-radius-angle", () => {
         {
           type: "input",
           detail: {
-            x: 40,
-            y: 60,
-            radius: 25,
-            angle: 45,
-            units: "percent",
+            control: "propskit-point-radius-angle",
+            value: { x: 40, y: 60, radius: "25%", angle: 45 },
           },
           composed: true,
         },
         {
           type: "change",
           detail: {
-            x: 40,
-            y: 60,
-            radius: 35,
-            angle: 45,
-            units: "percent",
+            control: "propskit-point-radius-angle",
+            value: { x: 40, y: 60, radius: "35%", angle: 45 },
           },
           composed: true,
         },
         {
           type: "input",
           detail: {
-            x: 40,
-            y: 60,
-            radius: 35,
-            angle: 90,
-            units: "percent",
+            control: "propskit-point-radius-angle",
+            value: { x: 40, y: 60, radius: "35%", angle: 90 },
           },
           composed: true,
         },
@@ -3768,7 +4562,7 @@ test.describe("propskit-point-point", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <propskit-point-point id="control" label="Gradient" size="small" units="percent"
+        <propskit-point-point id="control" label="Gradient" units="percent"
           value='{"x":25,"y":30,"x2":75,"y2":70}'></propskit-point-point>
       `;
       await new Promise(requestAnimationFrame);
@@ -3789,7 +4583,6 @@ test.describe("propskit-point-point", () => {
         collapsible: group.hasAttribute("collapsible"),
         open: group.getAttribute("open"),
         labels: [start.getAttribute("label"), end.getAttribute("label")],
-        sizes: [start.getAttribute("size"), end.getAttribute("size")],
         units: [start.getAttribute("units"), end.getAttribute("units")],
         value: host.value,
       };
@@ -3841,7 +4634,6 @@ test.describe("propskit-point-point", () => {
         collapsible: true,
         open: "true",
         labels: ["Start", "End"],
-        sizes: ["small", "small"],
         units: ["percent", "percent"],
         value: { x: 25, y: 30, x2: 75, y2: 70 },
       },
@@ -3855,21 +4647,15 @@ test.describe("propskit-point-point", () => {
         {
           type: "input",
           detail: {
-            x: 10,
-            y: 20,
-            x2: 75,
-            y2: 70,
-            units: "none",
+            control: "propskit-point-point",
+            value: { x: 10, y: 20, x2: 75, y2: 70 },
           },
         },
         {
           type: "change",
           detail: {
-            x: 10,
-            y: 20,
-            x2: 80,
-            y2: 90,
-            units: "none",
+            control: "propskit-point-point",
+            value: { x: 10, y: 20, x2: 80, y2: 90 },
           },
         },
       ],
@@ -3898,10 +4684,15 @@ test.describe("PropsKit disabled contract", () => {
         <propskit-color disabled></propskit-color>
         <propskit-fill disabled></propskit-fill>
         <propskit-gradient disabled></propskit-gradient>
+        <propskit-palette disabled options='[["#0D99FF"]]'></propskit-palette>
         <propskit-select disabled options="One,Two"></propskit-select>
         <propskit-text disabled></propskit-text>
         <propskit-number disabled></propskit-number>
         <propskit-position disabled></propskit-position>
+        <propskit-joystick disabled></propskit-joystick>
+        <propskit-origin disabled></propskit-origin>
+        <propskit-easing disabled></propskit-easing>
+        <propskit-spring disabled></propskit-spring>
         <propskit-slider disabled></propskit-slider>
         <propskit-wheel disabled></propskit-wheel>
         <propskit-oscillator disabled></propskit-oscillator>
@@ -3914,14 +4705,22 @@ test.describe("PropsKit disabled contract", () => {
       await new Promise(requestAnimationFrame);
 
       const innerSelectors: Record<string, string> = {
-        "propskit-switch": "fig-segmented-control",
+        "propskit-switch": "fig-switch",
         "propskit-color": "fig-fill-picker",
         "propskit-fill": "fig-fill-picker",
         "propskit-gradient": "fig-input-gradient",
-        "propskit-select": "fig-select, fig-dropdown",
+        "propskit-palette": "fig-select",
+        "propskit-select": "fig-select",
         "propskit-text": "fig-input-text",
         "propskit-number": "fig-input-number",
         "propskit-position": "fig-input-number",
+        "propskit-joystick": ":is(fig-joystick, fig-handle, fig-input-number)",
+        "propskit-origin":
+          ":is(fig-origin-grid, fig-handle, fig-input-number)",
+        "propskit-easing":
+          ":is(fig-easing-curve, fig-handle, fig-dropdown, fig-input-text)",
+        "propskit-spring":
+          ":is(fig-easing-curve, fig-handle, fig-dropdown, fig-input-text)",
         "propskit-slider": "fig-slider",
         "propskit-wheel": ":is(fig-input-wheel, fig-input-number)",
       };
@@ -3980,10 +4779,15 @@ test.describe("PropsKit disabled contract", () => {
       "propskit-color": true,
       "propskit-fill": true,
       "propskit-gradient": true,
+      "propskit-palette": true,
       "propskit-select": true,
       "propskit-text": true,
       "propskit-number": true,
       "propskit-position": true,
+      "propskit-joystick": true,
+      "propskit-origin": true,
+      "propskit-easing": true,
+      "propskit-spring": true,
       "propskit-slider": true,
       "propskit-wheel": true,
     });
@@ -4200,7 +5004,7 @@ test.describe("fig-canvas-control value synchronization", () => {
   });
 });
 
-test.describe("propskit sizes", () => {
+test.describe("propskit input styles", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
@@ -4213,10 +5017,15 @@ test.describe("propskit sizes", () => {
           "propskit-color",
           "propskit-fill",
           "propskit-gradient",
+          "propskit-palette",
           "propskit-select",
           "propskit-text",
           "propskit-number",
           "propskit-position",
+          "propskit-joystick",
+          "propskit-origin",
+          "propskit-easing",
+          "propskit-spring",
           "propskit-slider",
           "propskit-wheel",
           "fig-select",
@@ -4225,239 +5034,60 @@ test.describe("propskit sizes", () => {
     });
   });
 
-  test("omitted size is large, small compacts, and explicit large stays compatible", async ({ page }) => {
-    const result = await page.evaluate(() => {
+  test("disables text selection across PropsKit while preserving text inputs", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
-      const fixtures: Record<string, string> = {
-        "propskit-switch": 'label="Enabled"',
-        "propskit-color": 'label="Fill" value="#0D99FF"',
-        "propskit-fill":
-          "label=\"Fill\" value='{\"type\":\"solid\",\"color\":\"#0D99FF\",\"alpha\":1}'",
-        "propskit-gradient":
-          "label=\"Gradient\" value='{\"type\":\"gradient\",\"gradient\":{\"type\":\"linear\",\"angle\":90,\"stops\":[{\"position\":0,\"color\":\"#0D99FF\",\"opacity\":100},{\"position\":100,\"color\":\"#9747FF\",\"opacity\":100}]}}'",
-        "propskit-select": 'label="Mode" value="A" options="A,B"',
-        "propskit-text": 'label="Name" value="Layer"',
-        "propskit-number": 'label="Width" value="24"',
-        "propskit-position": 'label="Position" x="25" y="75"',
-        "propskit-slider": 'label="Opacity" value="50" min="0" max="100"',
-        "propskit-wheel": 'label="Delay" value="240" units="ms"',
-      };
-      root.innerHTML = Object.entries(fixtures)
-        .flatMap(([tag, attrs]) => [
-          `<${tag} data-size-case="default" ${attrs}></${tag}>`,
-          `<${tag} data-size-case="small" size="small" ${attrs}></${tag}>`,
-          `<${tag} data-size-case="large" size="large" ${attrs}></${tag}>`,
-        ])
+      const tags = [
+        "propskit-switch",
+        "propskit-color",
+        "propskit-fill",
+        "propskit-gradient",
+        "propskit-palette",
+        "propskit-select",
+        "propskit-text",
+        "propskit-number",
+        "propskit-position",
+        "propskit-joystick",
+        "propskit-origin",
+        "propskit-easing",
+        "propskit-spring",
+        "propskit-color-point",
+        "propskit-point-radius",
+        "propskit-point-radius-angle",
+        "propskit-point-point",
+        "propskit-group",
+        "propskit-slider",
+        "propskit-wheel",
+        "propskit-oscillator",
+      ];
+      root.innerHTML = tags
+        .map((tag) => `<${tag} label="Label"></${tag}>`)
         .join("");
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
 
-      const signature = (element: Element) => {
-        const host = getComputedStyle(element);
-        const field = element.querySelector("fig-field");
-        const fieldStyle = field ? getComputedStyle(field) : null;
-        return {
-          height: host.height,
-          paddingTop: host.paddingTop,
-          paddingBottom: host.paddingBottom,
-          paddingLeft: host.paddingLeft,
-          paddingRight: host.paddingRight,
-          fieldPaddingLeft: fieldStyle?.paddingLeft ?? "",
-          fieldPaddingRight: fieldStyle?.paddingRight ?? "",
-        };
-      };
-
-      const styles = Object.keys(fixtures).map((tag) => {
-        const defaultElement = root.querySelector(
-          `${tag}[data-size-case="default"]`,
-        );
-        const largeElement = root.querySelector(
-          `${tag}[data-size-case="large"]`,
-        );
-        const smallElement = root.querySelector(
-          `${tag}[data-size-case="small"]`,
-        );
-        if (!defaultElement || !smallElement || !largeElement) {
-          throw new Error(`Missing ${tag} size fixtures`);
-        }
-        return {
-          tag,
-          defaultStyle: signature(defaultElement),
-          smallStyle: signature(smallElement),
-          largeStyle: signature(largeElement),
-        };
-      });
-
-      return {
-        styles,
-        numberForwardsSize: root
-          .querySelector('propskit-number[size="small"] fig-input-number')
-          ?.hasAttribute("size"),
-        gradientSizes: {
-          default: root
-            .querySelector(
-              'propskit-gradient[data-size-case="default"] fig-input-gradient',
-            )
-            ?.getAttribute("size"),
-          small: root
-            .querySelector(
-              'propskit-gradient[data-size-case="small"] fig-input-gradient',
-            )
-            ?.getAttribute("size"),
-          large: root
-            .querySelector(
-              'propskit-gradient[data-size-case="large"] fig-input-gradient',
-            )
-            ?.getAttribute("size"),
-        },
-        gradientHeights: {
-          default: root
-            .querySelector(
-              'propskit-gradient[data-size-case="default"] fig-input-gradient',
-            )
-            ?.getBoundingClientRect().height,
-          small: root
-            .querySelector(
-              'propskit-gradient[data-size-case="small"] fig-input-gradient',
-            )
-            ?.getBoundingClientRect().height,
-          large: root
-            .querySelector(
-              'propskit-gradient[data-size-case="large"] fig-input-gradient',
-            )
-            ?.getBoundingClientRect().height,
-        },
-        rightSpacing: {
-          defaultText: getComputedStyle(
-            root.querySelector(
-              'propskit-text[data-size-case="default"] fig-input-text',
-            )!,
-          ).marginRight,
-          defaultNumber: getComputedStyle(
-            root.querySelector(
-              'propskit-number[data-size-case="default"] fig-input-number',
-            )!,
-          ).marginRight,
-          defaultSelect: getComputedStyle(
-            root.querySelector(
-              'propskit-select[data-size-case="default"] fig-select',
-            )!,
-          ).paddingRight,
-          smallText: getComputedStyle(
-            root.querySelector(
-              'propskit-text[data-size-case="small"] fig-input-text',
-            )!,
-          ).marginRight,
-          smallNumber: getComputedStyle(
-            root.querySelector(
-              'propskit-number[data-size-case="small"] fig-input-number',
-            )!,
-          ).marginRight,
-          smallSelect: getComputedStyle(
-            root.querySelector(
-              'propskit-select[data-size-case="small"] fig-select',
-            )!,
-          ).paddingRight,
-        },
-        wheelLabelPadding: {
-          default: getComputedStyle(
-            root.querySelector(
-              'propskit-wheel[data-size-case="default"] .propskit-wheel-surface > label',
-            )!,
-          ).paddingLeft,
-          small: getComputedStyle(
-            root.querySelector(
-              'propskit-wheel[data-size-case="small"] .propskit-wheel-surface > label',
-            )!,
-          ).paddingLeft,
-          large: getComputedStyle(
-            root.querySelector(
-              'propskit-wheel[data-size-case="large"] .propskit-wheel-surface > label',
-            )!,
-          ).paddingLeft,
-        },
-        numberHeights: [
-          "propskit-number",
-          "propskit-position",
-          "propskit-slider",
-          "propskit-wheel",
-        ].flatMap((tag) =>
-          ["default", "small", "large"].map((sizeCase) => {
-            const number = root.querySelector(
-              `${tag}[data-size-case="${sizeCase}"] fig-input-number`,
-            );
-            const input = number?.querySelector("input");
-            return {
-              tag,
-              sizeCase,
-              host: number?.getBoundingClientRect().height ?? 0,
-              input: input?.getBoundingClientRect().height ?? 0,
-            };
-          }),
+      const textInputs = [
+        ...root.querySelectorAll(
+          'propskit-text input, propskit-text textarea, propskit-number input, propskit-origin input, propskit-easing input, propskit-spring input',
         ),
+      ];
+      return {
+        hosts: tags.map((tag) => ({
+          tag,
+          userSelect: getComputedStyle(root.querySelector(tag)!).userSelect,
+        })),
+        textInputs: textInputs.map((input) => getComputedStyle(input).userSelect),
       };
     });
 
-    const paddedFields = new Set([
-      "propskit-switch",
-      "propskit-color",
-      "propskit-fill",
-      "propskit-gradient",
-      "propskit-text",
-      "propskit-number",
-      "propskit-slider",
-    ]);
-    for (const entry of result.styles) {
-      expect(entry.defaultStyle.paddingTop, entry.tag).toBe("4px");
-      expect(entry.defaultStyle.paddingBottom, entry.tag).toBe("4px");
-      expect(entry.defaultStyle.height, entry.tag).toBe("40px");
-      expect(entry.smallStyle.paddingTop, entry.tag).toBe("4px");
-      expect(entry.smallStyle.paddingBottom, entry.tag).toBe("4px");
-      expect(entry.smallStyle.height, entry.tag).toBe("32px");
-      expect(entry.largeStyle.paddingTop, entry.tag).toBe("4px");
-      expect(entry.largeStyle.paddingBottom, entry.tag).toBe("4px");
-      expect(entry.largeStyle.height, entry.tag).toBe("40px");
-      if (paddedFields.has(entry.tag)) {
-        expect(entry.defaultStyle.fieldPaddingLeft, entry.tag).toBe("12px");
-        expect(entry.smallStyle.fieldPaddingLeft, entry.tag).toBe("8px");
-        expect(entry.largeStyle.fieldPaddingLeft, entry.tag).toBe("12px");
-      }
-    }
-    expect(result.numberForwardsSize).toBe(false);
-    expect(result.gradientSizes).toEqual({
-      default: null,
-      small: null,
-      large: null,
-    });
-    expect(result.gradientHeights).toEqual({
-      default: 32,
-      small: 24,
-      large: 32,
-    });
-    const gradientStyles = result.styles.find(
-      (entry) => entry.tag === "propskit-gradient",
+    expect(state.hosts).toEqual(
+      state.hosts.map(({ tag }) => ({ tag, userSelect: "none" })),
     );
-    expect(gradientStyles?.defaultStyle.fieldPaddingRight).toBe("0px");
-    expect(gradientStyles?.smallStyle.fieldPaddingRight).toBe("0px");
-    expect(gradientStyles?.largeStyle.fieldPaddingRight).toBe("0px");
-    expect(result.rightSpacing.defaultText).toBe(result.rightSpacing.defaultNumber);
-    expect(result.rightSpacing.defaultText).toBe(result.rightSpacing.defaultSelect);
-    expect(result.rightSpacing.smallText).toBe(result.rightSpacing.smallNumber);
-    expect(result.rightSpacing.smallText).toBe(result.rightSpacing.smallSelect);
-    expect(result.wheelLabelPadding).toEqual({
-      default: "12px",
-      small: "8px",
-      large: "12px",
-    });
-    const switchStyles = result.styles.find(
-      (entry) => entry.tag === "propskit-switch",
-    );
-    expect(switchStyles?.defaultStyle.fieldPaddingRight).toBe("4px");
-    expect(switchStyles?.smallStyle.fieldPaddingRight).toBe("0px");
-    expect(switchStyles?.largeStyle.fieldPaddingRight).toBe("4px");
-    for (const number of result.numberHeights) {
-      expect(number.host, `${number.tag} ${number.sizeCase} host`).toBe(24);
-      expect(number.input, `${number.tag} ${number.sizeCase} input`).toBe(24);
-    }
+    expect(state.textInputs.length).toBeGreaterThan(0);
+    expect(state.textInputs.every((value) => value === "text")).toBe(true);
   });
 
   test("PropsKit number inputs separate focused and scrubbing styles", async ({
@@ -4471,6 +5101,8 @@ test.describe("propskit sizes", () => {
         <propskit-slider label="Opacity" value="50" min="0" max="100"></propskit-slider>
         <propskit-wheel label="Delay" value="240" units="ms"></propskit-wheel>
         <propskit-position label="Position" x="25" y="75"></propskit-position>
+        <propskit-joystick label="Joystick" value='{"x":25,"y":75}'></propskit-joystick>
+        <propskit-origin label="Origin" value='{"x":25,"y":75}'></propskit-origin>
       `;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
@@ -4479,6 +5111,10 @@ test.describe("propskit sizes", () => {
       probe.style.backgroundColor = "var(--figma-color-bg)";
       root.append(probe);
       const expectedBackground = getComputedStyle(probe).backgroundColor;
+      probe.style.backgroundColor =
+        "var(--propskit-bg-subfield, rgba(255, 255, 255, 0.05))";
+      const expectedSubfieldBackground =
+        getComputedStyle(probe).backgroundColor;
       probe.remove();
 
       const tags = [
@@ -4486,6 +5122,8 @@ test.describe("propskit sizes", () => {
         "propskit-slider",
         "propskit-wheel",
         "propskit-position",
+        "propskit-joystick",
+        "propskit-origin",
       ];
       const states = tags.map((tag) => {
         const number = root.querySelector(
@@ -4510,11 +5148,17 @@ test.describe("propskit sizes", () => {
         };
       });
 
-      return { expectedBackground, states };
+      return { expectedBackground, expectedSubfieldBackground, states };
     });
 
     for (const state of result.states) {
-      expect(state.restingBackground, state.tag).toBe("rgba(0, 0, 0, 0)");
+      const usesSubfieldBackground =
+        state.tag === "propskit-joystick" || state.tag === "propskit-origin";
+      expect(state.restingBackground, state.tag).toBe(
+        usesSubfieldBackground
+          ? result.expectedSubfieldBackground
+          : "rgba(0, 0, 0, 0)",
+      );
       expect(state.focusedBackground, state.tag).toBe(
         result.expectedBackground,
       );
@@ -4546,7 +5190,7 @@ test.describe("propskit sizes", () => {
     }
   });
 
-  test("horizontal field labels span three quarters of the field", async ({
+  test("surface labels use component-specific logical widths", async ({
     page,
   }) => {
     const labels = await page.evaluate(() => {
@@ -4558,6 +5202,7 @@ test.describe("propskit sizes", () => {
         "propskit-color": 'value="#0D99FF"',
         "propskit-fill": 'value=\'{"type":"solid","color":"#0D99FF","alpha":1}\'',
         "propskit-gradient": "",
+        "propskit-palette": 'options=\'[["#0D99FF"],["#14AE5C"]]\'',
         "propskit-select": 'value="A" options="A,B"',
         "propskit-text": 'value="Layer"',
         "propskit-number": 'value="24"',
@@ -4571,10 +5216,11 @@ test.describe("propskit sizes", () => {
         .join("");
 
       return Object.keys(fixtures).map((tag) => {
-        const label = root.querySelector(`${tag} fig-field > label`);
-        const field = root.querySelector(`${tag} fig-field`);
+        const host = root.querySelector(tag);
+        const label = host?.querySelector(':scope > [class$="-surface"] > label');
+        const field = host?.querySelector(':scope > [class$="-surface"]');
         if (!label) throw new Error(`Missing ${tag} label`);
-        if (!field) throw new Error(`Missing ${tag} field`);
+        if (!field) throw new Error(`Missing ${tag} surface`);
         const style = getComputedStyle(label);
         return {
           tag,
@@ -4590,16 +5236,28 @@ test.describe("propskit sizes", () => {
       });
     });
 
+    const expectedWidths: Record<string, number> = {
+      "propskit-color": 0.4,
+      "propskit-fill": 0.4,
+      "propskit-gradient": 0.4,
+      "propskit-palette": 0.4,
+      "propskit-text": 0.5,
+    };
     for (const label of labels) {
+      const fraction = expectedWidths[label.tag] ?? 0.75;
       expect(label, label.tag).toMatchObject({
-        display: "block",
-        maxWidth: "75%",
+        maxWidth: `${fraction * 100}%`,
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
         isTruncated: true,
       });
-      expect(label.width, label.tag).toBeCloseTo(label.fieldWidth * 0.75, 4);
+      expect(label.width, label.tag).toBeLessThanOrEqual(
+        label.fieldWidth * fraction + 0.01,
+      );
+      expect(label.width, label.tag).toBeGreaterThan(
+        label.fieldWidth * fraction * 0.9,
+      );
     }
   });
 
@@ -4614,81 +5272,674 @@ test.describe("propskit sizes", () => {
         <propskit-text label="Alignment" value="Layer"></propskit-text>
         <propskit-select label="Alignment" value="Center" options="Left,Center,Right"></propskit-select>
       `;
-      const textLabel = root.querySelector("propskit-text fig-field > label");
-      const selectLabel = root.querySelector(
-        "propskit-select fig-field > label",
+      const textLabel = root.querySelector(
+        "propskit-text .propskit-text-surface > label",
       );
-      const selectField = root.querySelector("propskit-select fig-field");
-      if (!textLabel || !selectLabel || !selectField) {
+      const selectLabel = root.querySelector(
+        "propskit-select .propskit-select-surface > label",
+      );
+      const selectField = root.querySelector(
+        "propskit-select .propskit-select-surface",
+      );
+      const textField = root.querySelector(
+        "propskit-text .propskit-text-surface",
+      );
+      if (!textLabel || !selectLabel || !selectField || !textField) {
         throw new Error("Missing large propskit labels");
       }
       const textStyle = getComputedStyle(textLabel);
       const selectStyle = getComputedStyle(selectLabel);
       return {
-        textPaddingLeft: textStyle.paddingLeft,
-        selectPaddingLeft: selectStyle.paddingLeft,
+        textInset:
+          textLabel.getBoundingClientRect().left -
+          textField.getBoundingClientRect().left +
+          Number.parseFloat(textStyle.paddingLeft),
+        selectInset:
+          selectLabel.getBoundingClientRect().left -
+          selectField.getBoundingClientRect().left +
+          Number.parseFloat(selectStyle.paddingLeft),
         selectMaxWidth: selectStyle.maxWidth,
         selectWidth: selectLabel.getBoundingClientRect().width,
         fieldWidth: selectField.getBoundingClientRect().width,
       };
     });
 
-    expect(result.selectPaddingLeft).toBe(result.textPaddingLeft);
+    expect(result.selectInset).toBeCloseTo(result.textInset, 4);
     expect(result.selectMaxWidth).toBe("75%");
     expect(result.selectWidth).toBeCloseTo(result.fieldWidth * 0.75, 4);
   });
 
-  test("default and small propskit labels use matching max heights", async ({ page }) => {
-    const results = await page.evaluate(() => {
+  test("switch, text, and slider labels share one inline text inset", async ({
+    page,
+  }) => {
+    const insets = await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
-      const fixtures: Record<string, string> = {
-        "propskit-switch": 'label="Enabled"',
-        "propskit-color": 'label="Fill" value="#0D99FF"',
-        "propskit-fill":
-          "label=\"Fill\" value='{\"type\":\"solid\",\"color\":\"#0D99FF\",\"alpha\":1}'",
-        "propskit-gradient": "label=\"Gradient\"",
-        "propskit-select": 'label="Align" value="A" options="A,B"',
-        "propskit-text": 'label="Name" value="Layer"',
-        "propskit-number": 'label="Size" value="24"',
-        "propskit-slider": 'label="Amount" value="50" min="0" max="100"',
-      };
-      root.innerHTML = Object.entries(fixtures)
-        .flatMap(([tag, attrs]) => [
-          `<${tag} data-size-case="default" ${attrs}></${tag}>`,
-          `<${tag} data-size-case="small" size="small" ${attrs}></${tag}>`,
-        ])
-        .join("");
+      root.style.width = "300px";
+      root.innerHTML = `
+        <propskit-switch label="Visible"></propskit-switch>
+        <propskit-text label="Name" value="Layer 1"></propskit-text>
+        <propskit-slider label="Amount" value="50" min="0" max="100"></propskit-slider>
+      `;
 
-      return Object.keys(fixtures).flatMap((tag) =>
-        ["default", "small"].map((sizeCase) => {
+      return ["switch", "text", "slider"].map((name) => {
+        const surface = root.querySelector(`.propskit-${name}-surface`);
+        const label = surface?.querySelector(":scope > label");
+        if (!surface || !label) throw new Error(`Missing ${name} label`);
+        const surfaceBox = surface.getBoundingClientRect();
+        const labelBox = label.getBoundingClientRect();
+        const labelStyle = getComputedStyle(label);
+        return {
+          name,
+          inset:
+            labelBox.left -
+            surfaceBox.left +
+            Number.parseFloat(labelStyle.paddingInlineStart),
+        };
+      });
+    });
+
+    const expected = insets.find(({ name }) => name === "switch")?.inset;
+    expect(expected).toBeGreaterThan(0);
+    for (const { name, inset } of insets) {
+      expect(inset, name).toBeCloseTo(expected!, 4);
+    }
+  });
+
+  test("surface controls render one named surface and no fig-field", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const tags = [
+        "switch",
+        "color",
+        "fill",
+        "gradient",
+        "palette",
+        "select",
+        "text",
+        "number",
+        "position",
+        "joystick",
+        "origin",
+        "easing",
+        "spring",
+        "slider",
+        "wheel",
+      ];
+      root.innerHTML = tags
+        .map((name) => `<propskit-${name}></propskit-${name}>`)
+        .join("");
+      return tags.map((name) => {
+        const host = root.querySelector(`propskit-${name}`)!;
+        return {
+          name,
+          surfaces: host.querySelectorAll(
+            `:scope > .propskit-${name}-surface`,
+          ).length,
+          fields: host.querySelectorAll("fig-field").length,
+          borderRadius: getComputedStyle(
+            host.querySelector(`:scope > .propskit-${name}-surface`)!,
+          ).borderRadius,
+          innerRadius:
+            name === "slider"
+              ? getComputedStyle(
+                  host.querySelector(".fig-slider-input-container")!,
+                ).borderRadius
+              : null,
+        };
+      });
+    });
+
+    expect(result).toEqual(
+      result.map(({ name }) => ({
+        name,
+        surfaces: 1,
+        fields: 0,
+        borderRadius: "9px",
+        innerRadius: name === "slider" ? "9px" : null,
+      })),
+    );
+  });
+
+  test("propskit focus outlines follow the medium-large surface radius", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-slider id="slider" label="Amount" value="50"></propskit-slider>
+        <propskit-number id="number" label="Count" value="50"></propskit-number>
+        <propskit-text id="text" label="Name" value="Layer"></propskit-text>
+        <propskit-color id="color" label="Fill" value="#0D99FF"></propskit-color>
+      `;
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      const read = (id, focus) => {
+        const host = root.querySelector(`#${id}`)!;
+        const surface = host.querySelector(`[class$="-surface"]`)!;
+        focus(host);
+        const surfaceStyle = getComputedStyle(surface);
+        const slider = host.querySelector("fig-slider");
+        return {
+          id,
+          surfaceRadius: surfaceStyle.borderRadius,
+          surfaceOutline: surfaceStyle.outlineStyle,
+          focusOutlineRadius: surfaceStyle
+            .getPropertyValue("--figma-focus-outline-radius")
+            .trim(),
+          sliderRadius: slider ? getComputedStyle(slider).borderRadius : null,
+          sliderOutline: slider ? getComputedStyle(slider).outlineStyle : null,
+        };
+      };
+
+      return [
+        read("slider", (host) => {
+          host.querySelector("input[type='range']")?.focus();
+        }),
+        read("number", (host) => {
+          host.querySelector("input")?.focus();
+        }),
+        read("text", (host) => {
+          host.querySelector("input, textarea")?.focus();
+        }),
+        read("color", (host) => {
+          (host as HTMLElement).focus();
+        }),
+      ];
+    });
+
+    expect(result).toEqual([
+      {
+        id: "slider",
+        surfaceRadius: "9px",
+        surfaceOutline: "solid",
+        focusOutlineRadius: "0.5625rem",
+        sliderRadius: "9px",
+        sliderOutline: "none",
+      },
+      {
+        id: "number",
+        surfaceRadius: "9px",
+        surfaceOutline: "solid",
+        focusOutlineRadius: "0.5625rem",
+        sliderRadius: null,
+        sliderOutline: null,
+      },
+      {
+        id: "text",
+        surfaceRadius: "9px",
+        surfaceOutline: "solid",
+        focusOutlineRadius: "0.5625rem",
+        sliderRadius: null,
+        sliderOutline: null,
+      },
+      {
+        id: "color",
+        surfaceRadius: "9px",
+        surfaceOutline: "solid",
+        focusOutlineRadius: "0.5625rem",
+        sliderRadius: null,
+        sliderOutline: null,
+      },
+    ]);
+  });
+
+  test("color, fill, and gradient swatches use the medium radius", async ({
+    page,
+  }) => {
+    const radii = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-color value="#0D99FF"></propskit-color>
+        <propskit-fill value="#0D99FF"></propskit-fill>
+        <propskit-gradient value='{"type":"gradient","gradient":{"type":"linear","stops":[{"position":0,"color":"#0D99FF"},{"position":100,"color":"#9747FF"}]}}'></propskit-gradient>
+      `;
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+      return ["color", "fill", "gradient"].map((name) => {
+        const swatch = root.querySelector(`propskit-${name} fig-swatch`)!;
+        return {
+          name,
+          radius: getComputedStyle(swatch).borderRadius,
+          backgroundRadius: getComputedStyle(swatch, "::before").borderRadius,
+          borderRadius: getComputedStyle(swatch, "::after").borderRadius,
+          checkerboardRadius: getComputedStyle(
+            swatch.querySelector(":scope > div")!,
+          ).borderRadius,
+        };
+      });
+    });
+
+    expect(radii).toEqual([
+      {
+        name: "color",
+        radius: "5px",
+        backgroundRadius: "5px",
+        borderRadius: "5px",
+        checkerboardRadius: "5px",
+      },
+      {
+        name: "fill",
+        radius: "5px",
+        backgroundRadius: "5px",
+        borderRadius: "5px",
+        checkerboardRadius: "5px",
+      },
+      {
+        name: "gradient",
+        radius: "5px",
+        backgroundRadius: "5px",
+        borderRadius: "5px",
+        checkerboardRadius: "5px",
+      },
+    ]);
+  });
+
+  test("surface controls share the label and accessible-name contract", async ({
+    page,
+  }) => {
+    const states = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const tags = [
+        "propskit-switch",
+        "propskit-color",
+        "propskit-fill",
+        "propskit-gradient",
+        "propskit-palette",
+        "propskit-select",
+        "propskit-text",
+        "propskit-number",
+        "propskit-position",
+        "propskit-joystick",
+        "propskit-origin",
+        "propskit-easing",
+        "propskit-spring",
+        "propskit-slider",
+        "propskit-wheel",
+      ];
+      const variants = ["omitted", "authored", "custom", "blank"];
+      root.innerHTML = tags
+        .flatMap((tag) =>
+          variants.map((variant) => {
+            const label =
+              variant === "authored"
+                ? 'label="Authored"'
+                : variant === "blank"
+                  ? 'label=""'
+                  : "";
+            const custom =
+              variant === "custom"
+                ? "<label>Custom label</label>"
+                : "";
+            const options =
+              tag === "propskit-select"
+                ? '<fig-select-option value="one">One</fig-select-option>'
+                : "";
+            return `<${tag} data-variant="${variant}" ${label}>${custom}${options}</${tag}>`;
+          }),
+        )
+        .join("");
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      return tags.flatMap((tag) =>
+        variants.map((variant) => {
           const host = root.querySelector(
-            `${tag}[data-size-case="${sizeCase}"]`,
-          );
-          const field = host?.querySelector("fig-field") as HTMLElement;
-          const label = host?.querySelector("fig-field > label") as HTMLElement;
-          if (!field || !label) throw new Error(`Missing ${tag} ${sizeCase}`);
+            `${tag}[data-variant="${variant}"]`,
+          ) as HTMLElement;
+          const suffix = tag.replace("propskit-", "");
+          const surface = host.querySelector(
+            `:scope > .propskit-${suffix}-surface`,
+          ) as HTMLElement | null;
+          const label = surface?.querySelector(
+            ":scope > label",
+          ) as HTMLElement | null;
+          const namedControl =
+            tag === "propskit-position"
+              ? surface
+              : tag === "propskit-joystick"
+                ? host.querySelector("fig-joystick")
+                : tag === "propskit-origin"
+                  ? host.querySelector("fig-origin-grid")
+                  : tag === "propskit-easing" || tag === "propskit-spring"
+                    ? host.querySelector("fig-easing-curve")
+              : tag === "propskit-slider"
+                ? host.querySelector('input[type="range"]')
+                : surface?.querySelector(
+                    "fig-switch, fig-segmented-control, fig-fill-picker, fig-input-gradient, fig-interpolation-swatch, fig-select, fig-input-text, fig-input-number, fig-input-wheel",
+                  );
+          const labelledBy = namedControl?.getAttribute("aria-labelledby");
           return {
             tag,
-            sizeCase,
-            maxHeightVar: getComputedStyle(field)
-              .getPropertyValue("--fig-field-label-max-height")
-              .trim(),
-            labelHeight: label.getBoundingClientRect().height,
-            fieldHeight: field.getBoundingClientRect().height,
+            variant,
+            labelCount: surface?.querySelectorAll(
+              ":scope > label",
+            ).length,
+            labelText: label?.textContent?.trim(),
+            accessibleName:
+              namedControl?.getAttribute("aria-label") ||
+              (labelledBy
+                ? document.getElementById(labelledBy)?.textContent?.trim()
+                : null),
           };
         }),
       );
     });
 
-    for (const entry of results) {
-      const expectedHeight = entry.sizeCase === "small" ? 24 : 32;
-      expect(entry.maxHeightVar, entry.tag).toBe(
-        entry.sizeCase === "small" ? "1.5rem" : "2rem",
+    for (const state of states) {
+      if (state.variant === "blank") {
+        expect(state.labelCount, `${state.tag} blank label`).toBe(0);
+        continue;
+      }
+      const expected =
+        state.variant === "omitted"
+          ? "Label"
+          : state.variant === "authored"
+            ? "Authored"
+            : "Custom label";
+      expect(state.labelCount, `${state.tag} ${state.variant} label`).toBe(1);
+      expect(state.labelText, `${state.tag} ${state.variant} text`).toBe(
+        expected,
       );
-      expect(entry.labelHeight, entry.tag).toBe(entry.fieldHeight);
-      expect(entry.labelHeight, entry.tag).toBe(expectedHeight);
+      expect(
+        state.accessibleName,
+        `${state.tag} ${state.variant} accessible name`,
+      ).toBe(expected);
     }
+  });
+
+  test("shared and per-control surface variables cascade, including wheel", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-text id="shared-vars" label="Shared" value="Text" style="
+          --propskit-padding-block: 3px;
+          --propskit-padding-inline: 4px;
+          --propskit-background: rgb(1, 2, 3);
+          --propskit-border: 2px solid rgb(4, 5, 6);
+          --propskit-color: rgb(7, 8, 9);
+          --propskit-hover-background: rgb(10, 11, 12);
+          --propskit-hover-border: 3px solid rgb(13, 14, 15);
+          --propskit-hover-color: rgb(16, 17, 18);
+          --propskit-label-inline-size: 80px;
+          --propskit-input-inline-size: 90px;
+        "></propskit-text>
+        <propskit-text id="text-vars" label="Text override" value="Text" style="
+          --propskit-padding-block: 1px;
+          --propskit-padding-inline: 2px;
+          --propskit-background: rgb(20, 21, 22);
+          --propskit-border: 1px solid rgb(23, 24, 25);
+          --propskit-color: rgb(26, 27, 28);
+          --propskit-hover-background: rgb(29, 30, 31);
+          --propskit-hover-border: 1px solid rgb(32, 33, 34);
+          --propskit-hover-color: rgb(35, 36, 37);
+          --propskit-label-inline-size: 50px;
+          --propskit-input-inline-size: 60px;
+          --propskit-text-padding-block: 5px;
+          --propskit-text-padding-inline: 6px;
+          --propskit-text-background: rgb(40, 41, 42);
+          --propskit-text-border: 2px solid rgb(43, 44, 45);
+          --propskit-text-color: rgb(46, 47, 48);
+          --propskit-text-hover-background: rgb(49, 50, 51);
+          --propskit-text-hover-border: 3px solid rgb(52, 53, 54);
+          --propskit-text-hover-color: rgb(55, 56, 57);
+          --propskit-text-label-inline-size: 100px;
+          --propskit-text-input-inline-size: 110px;
+        "></propskit-text>
+        <propskit-wheel id="wheel-vars" label="Wheel override" value="5" style="
+          --propskit-padding-block: 1px;
+          --propskit-padding-inline: 2px;
+          --propskit-background: rgb(60, 61, 62);
+          --propskit-border: 1px solid rgb(63, 64, 65);
+          --propskit-color: rgb(66, 67, 68);
+          --propskit-hover-background: rgb(69, 70, 71);
+          --propskit-hover-border: 1px solid rgb(72, 73, 74);
+          --propskit-hover-color: rgb(75, 76, 77);
+          --propskit-label-inline-size: 50px;
+          --propskit-input-inline-size: 60px;
+          --propskit-wheel-padding-block: 7px;
+          --propskit-wheel-padding-inline: 8px;
+          --propskit-wheel-background: rgb(80, 81, 82);
+          --propskit-wheel-border: 2px solid rgb(83, 84, 85);
+          --propskit-wheel-color: rgb(86, 87, 88);
+          --propskit-wheel-hover-background: rgb(89, 90, 91);
+          --propskit-wheel-hover-border: 3px solid rgb(92, 93, 94);
+          --propskit-wheel-hover-color: rgb(95, 96, 97);
+          --propskit-wheel-label-inline-size: 120px;
+          --propskit-wheel-input-inline-size: 130px;
+        "></propskit-wheel>
+      `;
+    });
+
+    const readStyles = (id: string, suffix: string) =>
+      page.locator(`#${id}`).evaluate((host, componentSuffix) => {
+        const surface = host.querySelector(
+          `:scope > .propskit-${componentSuffix}-surface`,
+        );
+        if (!surface) throw new Error(`Missing ${componentSuffix} surface`);
+        const hostStyle = getComputedStyle(host);
+        const surfaceStyle = getComputedStyle(surface);
+        const borderStyle = getComputedStyle(surface, "::after");
+        return {
+          paddingBlock: hostStyle.paddingBlock,
+          paddingInline: hostStyle.paddingInline,
+          background: surfaceStyle.backgroundColor,
+          border: `${borderStyle.borderTopWidth} ${borderStyle.borderTopStyle} ${borderStyle.borderTopColor}`,
+          color: surfaceStyle.color,
+          labelSize: hostStyle
+            .getPropertyValue("--_propskit-label-inline-size")
+            .trim(),
+          inputSize: hostStyle
+            .getPropertyValue("--_propskit-input-inline-size")
+            .trim(),
+        };
+      }, suffix);
+
+    expect(await readStyles("shared-vars", "text")).toEqual({
+      paddingBlock: "3px",
+      paddingInline: "4px",
+      background: "rgb(1, 2, 3)",
+      border: "2px solid rgb(4, 5, 6)",
+      color: "rgb(7, 8, 9)",
+      labelSize: "80px",
+      inputSize: "90px",
+    });
+    expect(await readStyles("text-vars", "text")).toEqual({
+      paddingBlock: "5px",
+      paddingInline: "6px",
+      background: "rgb(40, 41, 42)",
+      border: "2px solid rgb(43, 44, 45)",
+      color: "rgb(46, 47, 48)",
+      labelSize: "100px",
+      inputSize: "110px",
+    });
+    expect(await readStyles("wheel-vars", "wheel")).toEqual({
+      paddingBlock: "7px",
+      paddingInline: "8px",
+      background: "rgb(80, 81, 82)",
+      border: "2px solid rgb(83, 84, 85)",
+      color: "rgb(86, 87, 88)",
+      labelSize: "120px",
+      inputSize: "130px",
+    });
+
+    await page.locator("#shared-vars > .propskit-text-surface").hover();
+    expect(await readStyles("shared-vars", "text")).toMatchObject({
+      background: "rgb(10, 11, 12)",
+      border: "3px solid rgb(13, 14, 15)",
+      color: "rgb(16, 17, 18)",
+    });
+    await page.locator("#text-vars > .propskit-text-surface").hover();
+    expect(await readStyles("text-vars", "text")).toMatchObject({
+      background: "rgb(49, 50, 51)",
+      border: "3px solid rgb(52, 53, 54)",
+      color: "rgb(55, 56, 57)",
+    });
+    await page.locator("#wheel-vars > .propskit-wheel-surface").hover();
+    expect(await readStyles("wheel-vars", "wheel")).toMatchObject({
+      background: "rgb(89, 90, 91)",
+      border: "3px solid rgb(92, 93, 94)",
+      color: "rgb(95, 96, 97)",
+    });
+  });
+
+  test("propskit event matrix keeps host, name, and typed value in sync", async ({
+    page,
+  }) => {
+    const events = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-text id="named-text" name="title" value="Before" default="Before"></propskit-text>
+        <propskit-number id="number" value="2"></propskit-number>
+        <propskit-number id="invalid-number" value="3"></propskit-number>
+        <propskit-point-point id="points" name="points" value='{"x":10,"y":20,"x2":80,"y2":90}'></propskit-point-point>
+      `;
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      type PropskitHost = HTMLElement & {
+        name: string;
+        value: unknown;
+        resetToDefault?: () => void;
+      };
+      const hosts = Array.from(
+        root.querySelectorAll<HTMLElement>(
+          "#named-text, #number, #invalid-number, #points",
+        ),
+      ) as PropskitHost[];
+      const received: Array<Record<string, unknown>> = [];
+      for (const host of hosts) {
+        for (const type of ["input", "change"]) {
+          host.addEventListener(type, (event) => {
+            if (event.target !== host) return;
+            const detail = (event as CustomEvent).detail;
+            received.push({
+              id: host.id,
+              type,
+              targetIsHost: event.target === host,
+              targetValue: host.value,
+              targetName: host.name,
+              detail,
+              detailHasName: Object.hasOwn(detail, "name"),
+            });
+          });
+        }
+      }
+
+      const text = root.querySelector("#named-text") as PropskitHost;
+      const textInput = text.querySelector("fig-input-text") as HTMLElement & {
+        value: string;
+      };
+      textInput.value = "After";
+      textInput.dispatchEvent(
+        new CustomEvent("input", {
+          detail: "After",
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      text.resetToDefault?.();
+
+      const number = root.querySelector("#number") as PropskitHost;
+      const numberInput = number.querySelector(
+        "fig-input-number",
+      ) as HTMLElement & { value: number | null };
+      numberInput.value = 7;
+      numberInput.dispatchEvent(
+        new CustomEvent("change", {
+          detail: 7,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      const invalid = root.querySelector("#invalid-number") as PropskitHost;
+      const invalidInput = invalid.querySelector(
+        "fig-input-number",
+      ) as HTMLElement & { value: number | string | null };
+      invalidInput.value = "";
+      invalidInput.dispatchEvent(
+        new CustomEvent("input", {
+          detail: null,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      const points = root.querySelector("#points") as PropskitHost;
+      const start = points.querySelector(
+        '[data-propskit-point-point-control="start"]',
+      ) as PropskitHost;
+      start.value = { x: 25, y: 35 };
+      start.dispatchEvent(
+        new CustomEvent("input", {
+          detail: {
+            control: "propskit-position",
+            value: start.value,
+          },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      return received;
+    });
+
+    for (const event of events) {
+      expect(event.targetIsHost, `${event.id} ${event.type} target`).toBe(true);
+      expect(event.targetValue, `${event.id} ${event.type} value`).toEqual(
+        (event.detail as { value: unknown }).value,
+      );
+      expect((event.detail as { control: string }).control).toBe(
+        event.id === "named-text"
+          ? "propskit-text"
+          : event.id === "points"
+            ? "propskit-point-point"
+            : "propskit-number",
+      );
+      const named = event.id === "named-text" || event.id === "points";
+      expect(event.detailHasName, `${event.id} ${event.type} detail name`).toBe(
+        named,
+      );
+      expect(event.targetName, `${event.id} ${event.type} target name`).toBe(
+        event.id === "named-text"
+          ? "title"
+          : event.id === "points"
+            ? "points"
+            : "",
+      );
+    }
+    expect(
+      events.find((event) => event.id === "invalid-number")?.targetValue,
+    ).toBeNull();
+    expect(
+      events.find((event) => event.id === "number")?.targetValue,
+    ).toBe(7);
+    expect(
+      events.filter((event) => event.id === "named-text").map((event) => ({
+        type: event.type,
+        value: event.targetValue,
+      })),
+    ).toEqual([
+      { type: "input", value: "After" },
+      { type: "input", value: "Before" },
+      { type: "change", value: "Before" },
+    ]);
   });
 });
 
@@ -4717,10 +5968,12 @@ test.describe("propskit-color", () => {
     );
 
     const control = page.locator("propskit-color");
-    const field = control.locator("fig-field");
+    const field = control.locator(".propskit-color-surface");
     const picker = control.locator("fig-fill-picker");
     const swatch = picker.locator("fig-swatch");
-    await expect(control.locator("fig-field > label")).toHaveText("Fill");
+    await expect(control.locator(".propskit-color-surface > label")).toHaveText(
+      "Fill",
+    );
     await expect(control.locator("fig-input-color")).toHaveCount(0);
     await expect(control.locator(".fig-field-chevron")).toHaveCount(0);
     await expect(picker).toHaveAttribute("mode", "solid");
@@ -4757,7 +6010,10 @@ test.describe("propskit-color", () => {
     });
 
     expect(events).toEqual([
-      { type: "input", detail: { color: "#FF00FF", alpha: 1, opacity: 100 } },
+      {
+        type: "input",
+        detail: { control: "propskit-color", value: "#FF00FF" },
+      },
     ]);
     await expect(control).toHaveAttribute("value", "#FF00FF");
     await control.evaluate((element) => (element as HTMLElement).focus());
@@ -4789,7 +6045,9 @@ test.describe("propskit-color", () => {
       () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
     );
 
-    await page.locator("propskit-color fig-field").click({ position: { x: 12, y: 12 } });
+    await page
+      .locator("propskit-color .propskit-color-surface")
+      .click({ position: { x: 12, y: 12 } });
     await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
       "open",
       "true",
@@ -4806,7 +6064,9 @@ test.describe("propskit-color", () => {
           hostOpen: host?.classList.contains("has-popup-open"),
           hostOutline: getComputedStyle(host).outlineStyle,
           fieldOutline: host
-            ? getComputedStyle(host.querySelector("fig-field") as Element)
+            ? getComputedStyle(
+                host.querySelector(".propskit-color-surface") as Element,
+              )
                 .outlineStyle
             : "",
           swatchOutline: swatch ? getComputedStyle(swatch).outlineStyle : "",
@@ -4854,10 +6114,12 @@ test.describe("propskit-fill", () => {
     );
 
     const control = page.locator("propskit-fill");
-    const field = control.locator("fig-field");
+    const field = control.locator(".propskit-fill-surface");
     const picker = control.locator("fig-fill-picker");
     const swatch = picker.locator("fig-swatch");
-    await expect(control.locator("fig-field > label")).toHaveText("Fill");
+    await expect(control.locator(".propskit-fill-surface > label")).toHaveText(
+      "Fill",
+    );
     await expect(control.locator("fig-input-fill")).toHaveCount(0);
     await expect(control.locator(".fig-input-fill-hex")).toHaveCount(0);
     await expect(control.locator(".fig-field-chevron")).toHaveCount(0);
@@ -4905,9 +6167,11 @@ test.describe("propskit-fill", () => {
     });
 
     expect(events.received[0]?.type).toBe("input");
-    expect((events.received[0]?.detail as { type?: string })?.type).toBe(
-      "gradient",
-    );
+    expect(
+      JSON.parse(
+        (events.received[0]?.detail as { value?: string })?.value ?? "{}",
+      ).type,
+    ).toBe("gradient");
     expect(events.background).toContain("linear-gradient");
     expect(events.value).toContain('"type":"gradient"');
     await control.evaluate((element) => (element as HTMLElement).focus());
@@ -4939,7 +6203,9 @@ test.describe("propskit-fill", () => {
       () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
     );
 
-    await page.locator("propskit-fill fig-field").click({ position: { x: 12, y: 12 } });
+    await page
+      .locator("propskit-fill .propskit-fill-surface")
+      .click({ position: { x: 12, y: 12 } });
     await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
       "open",
       "true",
@@ -4956,7 +6222,9 @@ test.describe("propskit-fill", () => {
           hostOpen: host?.classList.contains("has-popup-open"),
           hostOutline: getComputedStyle(host).outlineStyle,
           fieldOutline: host
-            ? getComputedStyle(host.querySelector("fig-field") as Element)
+            ? getComputedStyle(
+                host.querySelector(".propskit-fill-surface") as Element,
+              )
                 .outlineStyle
             : "",
           swatchOutline: swatch ? getComputedStyle(swatch).outlineStyle : "",
@@ -5114,16 +6382,22 @@ test.describe("propskit-gradient", () => {
 
     const control = page.locator("propskit-gradient");
     const gradient = control.locator("fig-input-gradient");
-    await expect(control.locator("fig-field > label")).toHaveText("Fill");
+    const label = control.locator(".propskit-gradient-surface > label");
+    await expect(label).toHaveText("Fill");
     await expect(gradient).toHaveAttribute("edit", "picker");
     await expect(gradient).toHaveAttribute("mode", "tip");
     await expect(gradient).not.toHaveAttribute("size");
-    await expect(gradient).toHaveAttribute("aria-label", "Fill");
+    await expect(gradient).toHaveAttribute(
+      "aria-labelledby",
+      (await label.getAttribute("id")) ?? "",
+    );
     await expect(gradient.locator("fig-fill-picker")).toHaveCount(1);
     await expect(gradient.locator("fig-handle:not(.fig-input-gradient-ghost)")).toHaveCount(
       0,
     );
-    const fieldBox = await control.locator("fig-field").boundingBox();
+    const fieldBox = await control
+      .locator(".propskit-gradient-surface")
+      .boundingBox();
     const gradientBox = await gradient.boundingBox();
     expect(gradientBox?.height).toBe(32);
     expect(gradientBox?.width).toBeGreaterThan((fieldBox?.width ?? 0) * 0.28);
@@ -5164,7 +6438,15 @@ test.describe("propskit-gradient", () => {
       return events;
     }, next);
 
-    expect(received).toEqual([{ type: "input", detail: next }]);
+    expect(received).toEqual([
+      {
+        type: "input",
+        detail: {
+          control: "propskit-gradient",
+          value: JSON.stringify(next),
+        },
+      },
+    ]);
     await expect(control).toHaveAttribute("value", JSON.stringify(next));
     await control.evaluate((element) => (element as HTMLElement).focus());
     await expect(gradient).toBeFocused();
@@ -5172,7 +6454,9 @@ test.describe("propskit-gradient", () => {
       await control.evaluate((element) => getComputedStyle(element).outlineStyle),
     ).toBe("none");
     expect(
-      await control.locator("fig-field").evaluate((element) => getComputedStyle(element).outlineStyle),
+      await control
+        .locator(".propskit-gradient-surface")
+        .evaluate((element) => getComputedStyle(element).outlineStyle),
     ).toBe("solid");
     expect(
       await gradient.evaluate((element) => getComputedStyle(element).outlineStyle),
@@ -5332,7 +6616,9 @@ test.describe("propskit-gradient", () => {
       () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
     );
 
-    await page.locator("propskit-gradient fig-field").click({ position: { x: 12, y: 12 } });
+    await page
+      .locator("propskit-gradient .propskit-gradient-surface")
+      .click({ position: { x: 12, y: 12 } });
     await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
       "open",
       "true",
@@ -5349,7 +6635,9 @@ test.describe("propskit-gradient", () => {
           hostOpen: host?.classList.contains("has-popup-open"),
           hostOutline: getComputedStyle(host).outlineStyle,
           fieldOutline: host
-            ? getComputedStyle(host.querySelector("fig-field") as Element)
+            ? getComputedStyle(
+                host.querySelector(".propskit-gradient-surface") as Element,
+              )
                 .outlineStyle
             : "",
           swatchOutline: swatch ? getComputedStyle(swatch).outlineStyle : "",
@@ -5370,6 +6658,453 @@ test.describe("propskit-gradient", () => {
   });
 });
 
+test.describe("propskit-palette", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await Promise.all([
+        customElements.whenDefined("propskit-palette"),
+        customElements.whenDefined("fig-select"),
+        customElements.whenDefined("fig-input-palette"),
+      ]);
+    });
+  });
+
+  test("stretches fig-select across the full palette surface", async ({ page }) => {
+    await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-palette
+          label="Palette"
+          style="width: 420px"
+          options='[["#0D99FF","#14AE5C"],["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]]'
+        ></propskit-palette>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+    });
+
+    const control = page.locator("propskit-palette");
+    const surfaceBox = await control
+      .locator(".propskit-palette-surface")
+      .boundingBox();
+    const selectBox = await control.locator("fig-select").boundingBox();
+    await expect(control.locator("fig-select")).toHaveAttribute("subtle", "");
+    const triggerPreviewBox = await control
+      .locator(
+        'fig-select > fig-input-palette[slot="trigger"]',
+      )
+      .boundingBox();
+    const colorsTrackBox = await control
+      .locator(
+        'fig-select > fig-input-palette[slot="trigger"] .palette-colors',
+      )
+      .boundingBox();
+    const prependBox = await control.locator("fig-select").evaluate((select) => {
+      const prepend = select.shadowRoot?.querySelector(".fig-select-prepend");
+      const rect = prepend?.getBoundingClientRect();
+      return rect
+        ? { x: rect.x, width: rect.width }
+        : null;
+    });
+
+    expect(selectBox?.x).toBe(surfaceBox?.x);
+    expect(selectBox?.width).toBe(surfaceBox?.width);
+    expect(triggerPreviewBox?.x).toBeCloseTo(prependBox?.x ?? 0, 4);
+    expect(colorsTrackBox?.x).toBeCloseTo(triggerPreviewBox?.x ?? 0, 4);
+    expect(colorsTrackBox?.width).toBeCloseTo(
+      triggerPreviewBox?.width ?? 0,
+      4,
+    );
+    expect(
+      (selectBox?.x ?? 0) +
+        (selectBox?.width ?? 0) -
+        ((triggerPreviewBox?.x ?? 0) + (triggerPreviewBox?.width ?? 0)),
+    ).toBeLessThanOrEqual(40);
+  });
+
+  test("sizes its popup the same way as propskit-select", async ({ page }) => {
+    const widths = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-select
+          id="select"
+          style="width: 120px"
+          label="Mode"
+          value="A"
+          options="A,B"
+        ></propskit-select>
+        <propskit-palette
+          id="palette"
+          style="width: 120px"
+          label="Palette"
+          options='[["#0D99FF"],["#14AE5C"]]'
+        ></propskit-palette>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const popupWidth = async (selector: string) => {
+        const select = root.querySelector(`${selector} fig-select`) as
+          | (HTMLElement & { open: boolean })
+          | null;
+        if (!select) throw new Error(`Missing ${selector} fig-select`);
+        select.open = true;
+        await new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        );
+        const width =
+          select.shadowRoot
+            ?.querySelector('dialog[is="fig-popup"]')
+            ?.getBoundingClientRect().width ?? 0;
+        select.open = false;
+        return width;
+      };
+
+      return {
+        select: await popupWidth("#select"),
+        palette: await popupWidth("#palette"),
+      };
+    });
+
+    expect(widths.palette).toBeCloseTo(widths.select, 4);
+  });
+
+  test("parses palette options, falls back to the first, and renders selection-only previews", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-palette
+          id="palette"
+          label="Theme colors"
+          options='[["#0D99FF","#14AE5C"],[{"color":"#FFCD29","alpha":0.5},"#F24822"],["#9747FF"]]'
+        ></propskit-palette>
+        <propskit-palette
+          id="disabled"
+          label="Disabled"
+          disabled
+          options='[["#0D99FF","#14AE5C"]]'
+        ></propskit-palette>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const palette = root.querySelector("#palette") as HTMLElement & {
+        value: Array<{ color: string; alpha: number }>;
+      };
+      const disabled = root.querySelector("#disabled") as HTMLElement;
+      const select = palette.querySelector("fig-select")!;
+      const label = palette.querySelector(":scope .propskit-palette-surface > label")!;
+      const previews = [
+        ...palette.querySelectorAll(
+          "fig-select-option fig-input-palette.propskit-palette-preview",
+        ),
+      ];
+      return {
+        value: palette.value,
+        valueAttribute: JSON.parse(palette.getAttribute("value") || "null"),
+        selectedIndex: select.getAttribute("value"),
+        optionCount: palette.querySelectorAll("fig-select-option").length,
+        previews: previews.map((preview) => ({
+          fixed: preview.hasAttribute("fixed"),
+          disabled: preview.hasAttribute("disabled"),
+          borderRadius: getComputedStyle(preview).borderRadius,
+          colorsBorderRadius: getComputedStyle(
+            preview.querySelector(".palette-colors")!,
+          ).borderRadius,
+          colors: preview.querySelectorAll(
+            ".palette-colors-inline fig-input-color",
+          ).length,
+        })),
+        selectedPreview: (() => {
+          const preview = select.querySelector(
+            ':scope > fig-input-palette[slot="trigger"][data-propskit-palette-trigger]',
+          );
+          const trigger = select.shadowRoot?.querySelector(
+            ".fig-select-trigger",
+          );
+          const inline = preview?.querySelector(".palette-colors-inline");
+          const previewRect = preview?.getBoundingClientRect();
+          const triggerRect = trigger?.getBoundingClientRect();
+          return {
+            exists: Boolean(preview),
+            fixed: preview?.hasAttribute("fixed") ?? false,
+            disabled: preview?.hasAttribute("disabled") ?? false,
+            hasAddButton: Boolean(preview?.querySelector(".palette-add-btn")),
+            borderRadius: preview
+              ? getComputedStyle(preview).borderRadius
+              : "",
+            display: preview ? getComputedStyle(preview).display : "",
+            inlineDisplay: inline ? getComputedStyle(inline).display : "",
+            height: previewRect?.height ?? 0,
+            topInset:
+              previewRect && triggerRect ? previewRect.top - triggerRect.top : 0,
+            bottomInset:
+              previewRect && triggerRect
+                ? triggerRect.bottom - previewRect.bottom
+                : 0,
+          };
+        })(),
+        labelledBy: select.getAttribute("aria-labelledby"),
+        labelId: label.id,
+        defaultHeight: getComputedStyle(palette).height,
+        disabled: disabled
+          .querySelector("fig-select")
+          ?.hasAttribute("disabled"),
+      };
+    });
+
+    expect(state).toEqual({
+      value: [
+        { color: "#0D99FF", alpha: 1 },
+        { color: "#14AE5C", alpha: 1 },
+      ],
+      valueAttribute: [
+        { color: "#0D99FF", alpha: 1 },
+        { color: "#14AE5C", alpha: 1 },
+      ],
+      selectedIndex: "0",
+      optionCount: 3,
+      previews: [
+        {
+          fixed: true,
+          disabled: true,
+          borderRadius: "5px",
+          colorsBorderRadius: "5px",
+          colors: 2,
+        },
+        {
+          fixed: true,
+          disabled: true,
+          borderRadius: "5px",
+          colorsBorderRadius: "5px",
+          colors: 2,
+        },
+        {
+          fixed: true,
+          disabled: true,
+          borderRadius: "5px",
+          colorsBorderRadius: "5px",
+          colors: 1,
+        },
+      ],
+      selectedPreview: {
+        exists: true,
+        fixed: true,
+        disabled: true,
+        hasAddButton: false,
+        borderRadius: "5px",
+        display: "grid",
+        inlineDisplay: "flex",
+        height: 24,
+        topInset: 4,
+        bottomInset: 4,
+      },
+      labelledBy: state.labelId,
+      labelId: state.labelId,
+      defaultHeight: "40px",
+      disabled: true,
+    });
+  });
+
+  test("forwards typed selection and hover values, preserves target parity, and resets", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-palette
+          id="palette"
+          label="Palette"
+          name="palette"
+          value='["#0D99FF","#14AE5C"]'
+          default='["#0D99FF","#14AE5C"]'
+          options='[["#0D99FF","#14AE5C"],[{"color":"#FFCD29","alpha":0.5},"#F24822"]]'
+        ></propskit-palette>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const palette = root.querySelector("#palette") as HTMLElement & {
+        value: Array<{ color: string; alpha: number }>;
+        defaultValue: Array<{ color: string; alpha: number }>;
+        isDefault: boolean;
+        resetToDefault: () => void;
+      };
+      const select = palette.querySelector("fig-select") as HTMLElement & {
+        open: boolean;
+      };
+      const events: Array<{
+        type: string;
+        detail: unknown;
+        targetParity: boolean;
+      }> = [];
+      for (const type of ["input", "change", "optionhover"]) {
+        palette.addEventListener(type, (event) => {
+          const detail = (event as CustomEvent).detail;
+          events.push({
+            type,
+            detail,
+            targetParity:
+              (event.target as typeof palette).value === detail.value,
+          });
+        });
+      }
+
+      select.open = true;
+      palette
+        .querySelector('fig-select-option[value="1"]')
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
+      const dirty = palette.isDefault;
+      select.dispatchEvent(
+        new CustomEvent("optionhover", {
+          detail: "0",
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      const valueAfterHover = palette.value;
+      palette.resetToDefault();
+
+      return {
+        events,
+        dirty,
+        isDefault: palette.isDefault,
+        defaultValue: palette.defaultValue,
+        valueAfterHover,
+        value: palette.value,
+        valueAttribute: JSON.parse(palette.getAttribute("value") || "null"),
+      };
+    });
+
+    const first = [
+      { color: "#0D99FF", alpha: 1 },
+      { color: "#14AE5C", alpha: 1 },
+    ];
+    const second = [
+      { color: "#FFCD29", alpha: 0.5 },
+      { color: "#F24822", alpha: 1 },
+    ];
+    expect(state.dirty).toBe(false);
+    expect(state.isDefault).toBe(true);
+    expect(state.defaultValue).toEqual(first);
+    expect(state.valueAfterHover).toEqual(second);
+    expect(state.value).toEqual(first);
+    expect(state.valueAttribute).toEqual(first);
+    expect(state.events).toEqual([
+      {
+        type: "input",
+        detail: {
+          control: "propskit-palette",
+          name: "palette",
+          value: second,
+        },
+        targetParity: true,
+      },
+      {
+        type: "change",
+        detail: {
+          control: "propskit-palette",
+          name: "palette",
+          value: second,
+        },
+        targetParity: true,
+      },
+      {
+        type: "optionhover",
+        detail: {
+          control: "propskit-palette",
+          name: "palette",
+          value: first,
+        },
+        targetParity: true,
+      },
+      {
+        type: "input",
+        detail: {
+          control: "propskit-palette",
+          name: "palette",
+          value: first,
+        },
+        targetParity: true,
+      },
+      {
+        type: "change",
+        detail: {
+          control: "propskit-palette",
+          name: "palette",
+          value: first,
+        },
+        targetParity: true,
+      },
+    ]);
+  });
+
+  test("opens from the full surface, delegates focus, and responds to runtime updates", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-palette
+          id="palette"
+          label="Palette"
+          options='[["#0D99FF"],["#14AE5C"]]'
+        ></propskit-palette>
+      `;
+    });
+
+    const palette = page.locator("#palette");
+    await palette
+      .locator(".propskit-palette-surface")
+      .click({ position: { x: 12, y: 12 } });
+    await expect(palette.locator("fig-select")).toHaveAttribute("open", "");
+
+    const state = await palette.evaluate(async (element) => {
+      const palette = element as HTMLElement & {
+        value: Array<{ color: string; alpha: number }>;
+        focus: () => void;
+      };
+      const select = palette.querySelector("fig-select") as HTMLElement & {
+        open: boolean;
+      };
+      select.open = false;
+      palette.focus();
+      palette.value = [{ color: "#14AE5C", alpha: 1 }];
+      const selectedAfterValue = select.getAttribute("value");
+      palette.setAttribute("options", '[["#9747FF"],["#F24822"]]');
+      await new Promise(requestAnimationFrame);
+      return {
+        focused:
+          select.shadowRoot?.activeElement?.classList.contains(
+            "fig-select-trigger",
+          ) ?? false,
+        selectedAfterValue,
+        selectedAfterOptions: select.getAttribute("value"),
+        value: palette.value,
+        optionCount: palette.querySelectorAll("fig-select-option").length,
+      };
+    });
+
+    expect(state).toEqual({
+      focused: true,
+      selectedAfterValue: "1",
+      selectedAfterOptions: "0",
+      value: [{ color: "#9747FF", alpha: 1 }],
+      optionCount: 2,
+    });
+  });
+});
+
 test.describe("propskit-switch", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -5381,7 +7116,9 @@ test.describe("propskit-switch", () => {
     });
   });
 
-  test("composes and forwards switch state, events, and focus", async ({ page }) => {
+  test("defaults to a full-surface fig-switch with host events and focus", async ({
+    page,
+  }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -5390,43 +7127,117 @@ test.describe("propskit-switch", () => {
     });
 
     const control = page.locator("propskit-switch");
-    const field = control.locator("fig-field");
-    const innerSwitch = control.locator("fig-segmented-control");
-    const offSegment = innerSwitch.locator('fig-segment[value="off"]');
-    const onSegment = innerSwitch.locator('fig-segment[value="on"]');
-    await expect(control.locator("fig-field > label")).toHaveText("Visible");
+    const surface = control.locator(".propskit-switch-surface");
+    const innerSwitch = control.locator("fig-switch");
+    const nativeSwitch = innerSwitch.locator('input[role="switch"]');
+    await expect(control.locator(".propskit-switch-surface > label")).toHaveText(
+      "Visible",
+    );
     await expect(innerSwitch).toHaveAttribute("name", "visibility");
-    await expect(onSegment).toHaveAttribute("selected", "true");
+    await expect(nativeSwitch).toBeChecked();
+    await expect(control.locator("fig-segmented-control")).toHaveCount(0);
+    await expect(surface).toHaveCSS("cursor", "default");
 
-    const fieldBox = await field.boundingBox();
+    const fieldBox = await surface.boundingBox();
     const switchBox = await innerSwitch.boundingBox();
     expect(switchBox?.width).toBeLessThan(fieldBox?.width ?? 0);
     expect(switchBox?.x).toBeGreaterThan(
       (fieldBox?.x ?? 0) + (fieldBox?.width ?? 0) / 2,
     );
+    expect(
+      (fieldBox?.x ?? 0) +
+        (fieldBox?.width ?? 0) -
+        ((switchBox?.x ?? 0) + (switchBox?.width ?? 0)),
+    ).toBeCloseTo(8, 4);
 
-    const eventDetail = await control.evaluate((element) => {
+    const eventState = await control.evaluate((element) => {
       return new Promise((resolve) => {
         element.addEventListener(
           "input",
-          (event) => resolve((event as CustomEvent).detail),
+          (event) =>
+            resolve({
+              detail: (event as CustomEvent).detail,
+              value: (event.target as HTMLElement & { value: boolean }).value,
+              valueType: typeof (
+                event.target as HTMLElement & { value: boolean }
+              ).value,
+            }),
           { once: true },
         );
-        (element.querySelector('fig-segment[value="off"]') as HTMLElement)?.click();
+        (
+          element.querySelector(".propskit-switch-surface") as HTMLElement
+        )?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
     });
 
-    expect(eventDetail).toEqual({ checked: false, value: "" });
+    expect(eventState).toEqual({
+      detail: {
+        control: "propskit-switch",
+        name: "visibility",
+        value: false,
+      },
+      value: false,
+      valueType: "boolean",
+    });
+    await expect(control).not.toHaveAttribute("checked", "");
+    await expect(nativeSwitch).not.toBeChecked();
+    await control.evaluate((element) => {
+      (element as HTMLElement & { value: boolean }).value = true;
+    });
+    await expect(nativeSwitch).toBeChecked();
+    expect(
+      await control.evaluate(
+        (element) => (element as HTMLElement & { value: boolean }).value,
+      ),
+    ).toBe(true);
+    await control.evaluate((element) => (element as HTMLElement).focus());
+    await expect(nativeSwitch).toBeFocused();
+    expect(
+      await surface.evaluate((element) => getComputedStyle(element).outlineStyle),
+    ).toBe("none");
+  });
+
+  test("renders the Off/On control for variant segmented-control", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<propskit-switch variant="segmented-control" label="Visible" checked></propskit-switch>';
+    });
+
+    const control = page.locator("propskit-switch");
+    const innerSwitch = control.locator("fig-segmented-control");
+    const offSegment = innerSwitch.locator('fig-segment[value="off"]');
+    const onSegment = innerSwitch.locator('fig-segment[value="on"]');
+    await expect(control.locator("fig-switch")).toHaveCount(0);
+    await expect(onSegment).toHaveAttribute("selected", "true");
+    const surfaceBox = await control.locator(".propskit-switch-surface").boundingBox();
+    const segmentedBox = await innerSwitch.boundingBox();
+    expect(
+      (surfaceBox?.x ?? 0) +
+        (surfaceBox?.width ?? 0) -
+        ((segmentedBox?.x ?? 0) + (segmentedBox?.width ?? 0)),
+    ).toBeCloseTo(4, 4);
+
+    await offSegment.click();
+
     await expect(control).not.toHaveAttribute("checked", "");
     await expect(offSegment).toHaveAttribute("selected", "true");
-    await offSegment.focus();
-    await expect(offSegment).toBeFocused();
-    expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
-      .toBe("none");
+    expect(
+      await control.evaluate(
+        (element) => (element as HTMLElement & { value: boolean }).value,
+      ),
+    ).toBe(false);
+
+    await control.evaluate((element) => element.setAttribute("variant", "switch"));
+    await expect(control.locator("fig-segmented-control")).toHaveCount(0);
+    await expect(control.locator("fig-switch input[role='switch']")).not.toBeChecked();
   });
 });
 
-test.describe("propskit-select without fig-editor", () => {
+test.describe("propskit-select delayed fig-editor registration", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
@@ -5437,7 +7248,7 @@ test.describe("propskit-select without fig-editor", () => {
     });
   });
 
-  test("falls back to fig-dropdown when fig-select is unavailable", async ({
+  test("keeps fig-select markup and upgrades when fig-editor loads", async ({
     page,
   }) => {
     const result = await page.evaluate(async () => {
@@ -5450,70 +7261,44 @@ test.describe("propskit-select without fig-editor", () => {
           options="Left,Center,Right"
         ></propskit-select>
       `;
-      // Allow fig-dropdown slotchange to clone options into the native select.
-      await Promise.resolve();
-      await new Promise((r) => requestAnimationFrame(r));
       const control = root.querySelector("propskit-select");
-      const dropdown = control?.querySelector("fig-dropdown");
-      const nativeSelect = dropdown?.querySelector(":scope > select") as
-        | HTMLSelectElement
-        | null
-        | undefined;
-      return {
+      const select = control?.querySelector("fig-select") as
+        | (HTMLElement & { value?: string })
+        | null;
+      const before = {
         selectRegistered: Boolean(customElements.get("fig-select")),
-        usesDropdown: Boolean(dropdown),
-        usesSelect: Boolean(control?.querySelector("fig-select")),
-        hasNativeSelect: Boolean(nativeSelect),
-        full: dropdown?.hasAttribute("full") ?? false,
-        value: dropdown?.getAttribute("value"),
-        nativeValue: nativeSelect?.value ?? null,
-        nativeOptionCount: nativeSelect?.options.length ?? 0,
-        optionCount: dropdown?.querySelectorAll(":scope > option").length,
+        usesDropdown: Boolean(control?.querySelector("fig-dropdown")),
+        usesSelect: Boolean(select),
+        value: select?.getAttribute("value"),
+        options: select?.getAttribute("options"),
+      };
+      await import("/fig-editor.js");
+      await customElements.whenDefined("fig-select");
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+      return {
+        before,
+        upgraded: select instanceof customElements.get("fig-select")!,
+        value: select?.value,
+        optionCount: select?.querySelectorAll("fig-select-option").length,
+        dropdownCount: control?.querySelectorAll("fig-dropdown").length,
       };
     });
 
     expect(result).toEqual({
-      selectRegistered: false,
-      usesDropdown: true,
-      usesSelect: false,
-      hasNativeSelect: true,
-      full: true,
+      before: {
+        selectRegistered: false,
+        usesDropdown: false,
+        usesSelect: true,
+        value: "Center",
+        options: "Left,Center,Right",
+      },
+      upgraded: true,
       value: "Center",
-      nativeValue: "Center",
-      nativeOptionCount: 3,
       optionCount: 3,
+      dropdownCount: 0,
     });
-  });
-
-  test("fig-dropdown native select stretches to the field height", async ({
-    page,
-  }) => {
-    const result = await page.evaluate(async () => {
-      const root = document.querySelector("#fixture-root");
-      if (!root) throw new Error("Missing #fixture-root");
-      root.innerHTML = `
-        <propskit-select
-          label="Alignment"
-          value="Center"
-          options="Left,Center,Right"
-        ></propskit-select>
-      `;
-      await Promise.resolve();
-      await new Promise((r) => requestAnimationFrame(r));
-      const dropdown = root.querySelector("propskit-select fig-dropdown");
-      const nativeSelect = dropdown?.querySelector(
-        ":scope > select",
-      ) as HTMLSelectElement | null;
-      if (!dropdown || !nativeSelect) throw new Error("Missing dropdown select");
-      return {
-        dropdownHeight: dropdown.getBoundingClientRect().height,
-        selectHeight: nativeSelect.getBoundingClientRect().height,
-        selectHeightCss: getComputedStyle(nativeSelect).height,
-      };
-    });
-
-    expect(result.dropdownHeight).toBe(32);
-    expect(result.selectHeight).toBe(result.dropdownHeight);
   });
 });
 
@@ -5545,11 +7330,13 @@ test.describe("propskit-select", () => {
     });
 
     const control = page.locator("propskit-select");
-    const field = control.locator("fig-field");
+    const field = control.locator(".propskit-select-surface");
     const select = control.locator("fig-select");
     const optionsDialog = select.locator('dialog[is="fig-popup"]');
     const trigger = select.locator("fig-button.fig-select-trigger");
-    await expect(control.locator("fig-field > label")).toHaveText("Alignment");
+    await expect(control.locator(".propskit-select-surface > label")).toHaveText(
+      "Alignment",
+    );
     await expect(select).toHaveAttribute("value", "Center");
     await expect(optionsDialog).toHaveCount(1);
     // Options are generated from the options attribute into the panel.
@@ -5607,14 +7394,20 @@ test.describe("propskit-select", () => {
     });
 
     expect(events).toEqual([
-      { type: "input", detail: "Right" },
-      { type: "change", detail: "Right" },
+      {
+        type: "input",
+        detail: { control: "propskit-select", value: "Right" },
+      },
+      {
+        type: "change",
+        detail: { control: "propskit-select", value: "Right" },
+      },
     ]);
     await expect(control).toHaveAttribute("value", "Right");
     await trigger.focus();
     await expect(trigger).toBeFocused();
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
-      .toBe("none");
+      .toBe("solid");
   });
 
   test("accepts JSON array options", async ({ page }) => {
@@ -5864,7 +7657,7 @@ test.describe("propskit-select", () => {
         (element: HTMLElement & { hoverEvents?: unknown[] }) =>
           element.hoverEvents,
       ),
-    ).toEqual(["Right"]);
+    ).toEqual([{ control: "propskit-select", value: "Right" }]);
     await expect(propskit).toHaveAttribute("value", "Left");
   });
 
@@ -6306,21 +8099,30 @@ test.describe("propskit-text", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML =
-        '<propskit-text label="Name" value="Layer 1" placeholder="Enter a name"></propskit-text>';
+        '<propskit-text label="Name" value="Layer 1" placeholder="Enter a name" type="password"></propskit-text>';
     });
 
     const control = page.locator("propskit-text");
-    const field = control.locator("fig-field");
+    const field = control.locator(".propskit-text-surface");
     const textInput = control.locator("fig-input-text");
-    const input = textInput.locator("input");
-    await expect(control.locator("fig-field > label")).toHaveText("Name");
+    const input = textInput.locator("textarea");
+    const label = control.locator(".propskit-text-surface > label");
+    await expect(label).toHaveText("Name");
     await expect(textInput).toHaveAttribute("placeholder", "Enter a name");
+    await expect(control).toHaveAttribute("type", "password");
+    await expect(textInput).toHaveAttribute("type", "text");
+    await expect(textInput).toHaveAttribute("multiline", "");
+    await expect(textInput).toHaveAttribute("autoresize", "");
     await expect(input).toHaveValue("Layer 1");
-    await expect(input).toHaveAttribute("aria-label", "Name");
+    await expect(input).toHaveAttribute(
+      "aria-labelledby",
+      (await label.getAttribute("id")) ?? "",
+    );
 
     const fieldBox = await field.boundingBox();
     const inputBox = await textInput.boundingBox();
-    expect(inputBox?.height).toBe(fieldBox?.height);
+    expect(inputBox?.height).toBe(24);
+    expect(fieldBox?.height).toBe(32);
     expect(inputBox?.width).toBeLessThan(fieldBox?.width ?? 0);
     expect(
       Math.abs(
@@ -6344,9 +8146,9 @@ test.describe("propskit-text", () => {
           detail: (event as CustomEvent).detail,
         });
       });
-      const nativeInput = element.querySelector("input");
-      if (!(nativeInput instanceof HTMLInputElement)) {
-        throw new Error("Missing native input");
+      const nativeInput = element.querySelector("textarea");
+      if (!(nativeInput instanceof HTMLTextAreaElement)) {
+        throw new Error("Missing native textarea");
       }
       nativeInput.value = "Layer 2";
       nativeInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -6355,19 +8157,197 @@ test.describe("propskit-text", () => {
     });
 
     expect(events).toEqual([
-      { type: "input", detail: "Layer 2" },
-      { type: "change", detail: "Layer 2" },
+      {
+        type: "input",
+        detail: { control: "propskit-text", value: "Layer 2" },
+      },
+      {
+        type: "change",
+        detail: { control: "propskit-text", value: "Layer 2" },
+      },
     ]);
     await expect(control).toHaveAttribute("value", "Layer 2");
     await input.focus();
     await expect(input).toBeFocused();
     expect(await field.evaluate((element) => getComputedStyle(element).outlineStyle))
-      .toBe("none");
+      .toBe("solid");
 
     await input.fill("A very long layer name that cannot overlap the label");
     await input.blur();
-    expect(await input.evaluate((element) => getComputedStyle(element).textOverflow))
-      .toBe("ellipsis");
+    expect(await input.evaluate((element) => getComputedStyle(element).whiteSpace))
+      .toBe("pre-wrap");
+    await control.evaluate((element) => element.setAttribute("type", "search"));
+    await expect(textInput).toHaveAttribute("type", "text");
+  });
+
+  test("matches propskit-number input chrome", async ({ page }) => {
+    const styles = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-text label="Name" value="24"></propskit-text>
+        <propskit-number label="Width" value="24"></propskit-number>
+      `;
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      const read = (tag: "text" | "number") => {
+        const control = root.querySelector(
+          `propskit-${tag} fig-input-${tag}`,
+        ) as HTMLElement;
+        const surface = root.querySelector(
+          `propskit-${tag} .propskit-${tag}-surface`,
+        ) as HTMLElement;
+        const input = control.querySelector("input, textarea") as HTMLElement;
+        const chrome = () => {
+          const style = getComputedStyle(control);
+          return {
+            background: style.backgroundColor,
+            borderRadius: style.borderRadius,
+            boxShadow: style.boxShadow,
+            outline: style.outlineStyle,
+            surfaceOutline: getComputedStyle(surface).outlineStyle,
+            height: control.getBoundingClientRect().height,
+            inputHeight: input.getBoundingClientRect().height,
+          };
+        };
+        const resting = chrome();
+        input.focus();
+        const focused = chrome();
+        input.blur();
+        return { resting, focused };
+      };
+
+      return { text: read("text"), number: read("number") };
+    });
+
+    expect(styles.text).toEqual(styles.number);
+  });
+
+  test("grows toward the label, then wraps without overlap", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML =
+        '<propskit-text label="Name" value="Short"></propskit-text>';
+    });
+
+    const textarea = page.locator("propskit-text textarea");
+    const measure = () =>
+      page.locator("propskit-text").evaluate((host) => {
+        const surface = host.querySelector(".propskit-text-surface")!;
+        const label = surface.querySelector(":scope > label")!;
+        const input = surface.querySelector(":scope > fig-input-text")!;
+        const textarea = input.querySelector("textarea")!;
+        const surfaceStyle = getComputedStyle(surface);
+        const labelRect = label.getBoundingClientRect();
+        const surfaceRect = surface.getBoundingClientRect();
+        const inputRect = input.getBoundingClientRect();
+        return {
+          surfaceDisplay: surfaceStyle.display,
+          gap: Number.parseFloat(surfaceStyle.columnGap),
+          labelPosition: getComputedStyle(label).position,
+          labelTop: labelRect.top,
+          labelRight: labelRect.right,
+          inputLeft: inputRect.left,
+          inputRight: inputRect.right,
+          inputWidth: inputRect.width,
+          blockStartInset: inputRect.top - surfaceRect.top,
+          blockEndInset: surfaceRect.bottom - inputRect.bottom,
+          inlineEndInset: surfaceRect.right - inputRect.right,
+          textareaHeight: textarea.getBoundingClientRect().height,
+        };
+      });
+
+    const short = await measure();
+    await textarea.fill("A longer value that grows until it reaches the label");
+    const long = await measure();
+
+    expect(long.surfaceDisplay).toBe("flex");
+    expect(long.labelPosition).toBe("relative");
+    expect(long.labelTop).toBeCloseTo(short.labelTop, 0);
+    expect(long.inputWidth).toBeGreaterThan(short.inputWidth);
+    expect(long.inputRight).toBeCloseTo(short.inputRight, 0);
+    expect(long.inputLeft).toBeGreaterThanOrEqual(
+      long.labelRight + long.gap - 0.5,
+    );
+    expect(long.textareaHeight).toBeGreaterThan(short.textareaHeight);
+    for (const state of [short, long]) {
+      expect(state.blockStartInset).toBeCloseTo(4, 0);
+      expect(state.blockEndInset).toBeCloseTo(4, 0);
+      expect(state.inlineEndInset).toBeCloseTo(4, 0);
+    }
+  });
+
+  test("starts at one line and autoresizes through four lines", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "300px";
+      root.innerHTML =
+        '<propskit-text label="Notes" value="One"></propskit-text>';
+    });
+
+    const textarea = page.locator("propskit-text textarea");
+    const control = page.locator("propskit-text");
+    const surface = control.locator(".propskit-text-surface");
+    const measure = async () => {
+      await page.evaluate(
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          ),
+      );
+      return textarea.evaluate((element) => {
+        const style = getComputedStyle(element);
+        const surface = element.closest(".propskit-text-surface");
+        const host = element.closest("propskit-text");
+        return {
+          textareaHeight: element.getBoundingClientRect().height,
+          surfaceHeight: surface?.getBoundingClientRect().height ?? 0,
+          hostHeight: host?.getBoundingClientRect().height ?? 0,
+          scrollHeight: element.scrollHeight,
+          lineHeight: Number.parseFloat(style.lineHeight),
+          padding:
+            Number.parseFloat(style.paddingTop) +
+            Number.parseFloat(style.paddingBottom),
+          maxHeight: style.maxHeight,
+          fieldSizing: style.fieldSizing,
+          overflowY: style.overflowY,
+        };
+      });
+    };
+
+    const oneLine = await measure();
+    await textarea.fill("One\nTwo\nThree\nFour");
+    const fourLines = await measure();
+    await textarea.fill("One\nTwo\nThree\nFour\nFive\nSix");
+    const sixLines = await measure();
+
+    expect(oneLine.fieldSizing).toBe("content");
+    expect(oneLine.maxHeight).toBe("72px");
+    expect(oneLine.textareaHeight).toBe(24);
+    expect(oneLine.surfaceHeight).toBe(32);
+    expect(fourLines.textareaHeight).toBeCloseTo(
+      fourLines.lineHeight * 4 + fourLines.padding,
+      0,
+    );
+    expect(fourLines.surfaceHeight).toBeCloseTo(
+      fourLines.textareaHeight + 8,
+      0,
+    );
+    expect(sixLines.textareaHeight).toBeCloseTo(fourLines.textareaHeight, 0);
+    expect(sixLines.surfaceHeight).toBeCloseTo(fourLines.surfaceHeight, 0);
+    expect(sixLines.hostHeight).toBeCloseTo(fourLines.hostHeight, 0);
+    expect(sixLines.scrollHeight).toBeGreaterThan(sixLines.textareaHeight);
+    expect(sixLines.overflowY).toBe("auto");
+    expect(fourLines.surfaceHeight).toBeGreaterThan(oneLine.surfaceHeight);
   });
 });
 
@@ -6393,7 +8373,7 @@ test.describe("propskit delegated click behavior", () => {
         ></propskit-slider>
       `;
       const host = root.querySelector("propskit-slider") as
-        | (HTMLElement & { value: string })
+        | (HTMLElement & { value: number | null })
         | null;
       if (!host) throw new Error("Missing propskit-slider");
       host.value = "0";
@@ -6421,7 +8401,7 @@ test.describe("propskit delegated click behavior", () => {
 
     expect(state).toEqual({
       hostAttribute: "0",
-      hostValue: "0",
+      hostValue: 0,
       sliderAttribute: "0",
       sliderValue: "0",
       numberAttribute: "0",
@@ -6668,7 +8648,7 @@ test.describe("propskit delegated click behavior", () => {
       );
 
       type PropskitSliderElement = HTMLElement & {
-        value: string;
+        value: number | null;
         defaultValue: string;
         isDefault: boolean;
         resetToDefault(): void;
@@ -6724,7 +8704,7 @@ test.describe("propskit delegated click behavior", () => {
         innerDefault: "0",
         resolvedDefault: 0,
         publicDefault: "2",
-        value: "5",
+        value: 5,
         isDefault: false,
       },
       initial: {
@@ -6732,7 +8712,7 @@ test.describe("propskit delegated click behavior", () => {
         innerDefault: "10",
         resolvedDefault: 10,
         publicDefault: "5",
-        value: "5",
+        value: 5,
         isDefault: true,
       },
     });
@@ -6742,7 +8722,7 @@ test.describe("propskit delegated click behavior", () => {
         innerDefault: "0",
         resolvedDefault: 0,
         publicDefault: "2",
-        value: "8",
+        value: 8,
         isDefault: false,
       },
       initial: {
@@ -6750,7 +8730,7 @@ test.describe("propskit delegated click behavior", () => {
         innerDefault: "10",
         resolvedDefault: 10,
         publicDefault: "5",
-        value: "8",
+        value: 8,
         isDefault: false,
       },
     });
@@ -6759,7 +8739,7 @@ test.describe("propskit delegated click behavior", () => {
       innerDefault: "20",
       resolvedDefault: 20,
       publicDefault: "5",
-      value: "8",
+      value: 8,
       isDefault: false,
     });
     expect(state.after).toEqual({
@@ -6768,7 +8748,7 @@ test.describe("propskit delegated click behavior", () => {
         innerDefault: "0",
         resolvedDefault: 0,
         publicDefault: "2",
-        value: "2",
+        value: 2,
         isDefault: true,
       },
       initial: {
@@ -6776,7 +8756,7 @@ test.describe("propskit delegated click behavior", () => {
         innerDefault: "20",
         resolvedDefault: 20,
         publicDefault: "5",
-        value: "5",
+        value: 5,
         isDefault: true,
       },
     });
@@ -6797,14 +8777,16 @@ test.describe("propskit delegated click behavior", () => {
     });
 
     const clickField = async (tag: string) => {
-      await page.locator(`${tag} fig-field`).dispatchEvent("click");
+      await page
+        .locator(`${tag} > [class$="-surface"]`)
+        .dispatchEvent("click");
     };
 
     await clickField("propskit-number");
     await expect(page.locator("propskit-number input")).toBeFocused();
 
     await clickField("propskit-text");
-    await expect(page.locator("propskit-text input")).toBeFocused();
+    await expect(page.locator("propskit-text textarea")).toBeFocused();
 
     await clickField("propskit-color");
     await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
@@ -6816,7 +8798,9 @@ test.describe("propskit delegated click behavior", () => {
       "open",
     );
 
-    await page.locator("propskit-slider fig-field").click({ position: { x: 12, y: 12 } });
+    await page
+      .locator("propskit-slider > .propskit-slider-surface")
+      .click({ position: { x: 12, y: 12 } });
     await expect(page.locator('propskit-slider input[type="range"]')).toBeFocused();
 
     await clickField("propskit-select");
@@ -6827,7 +8811,9 @@ test.describe("propskit delegated click behavior", () => {
 
     // Second click on the field closes (toggle), and must not reopen after
     // fig-popup light-dismiss on pointerdown.
-    await page.locator("propskit-select fig-field").click({ position: { x: 12, y: 12 } });
+    await page
+      .locator("propskit-select > .propskit-select-surface")
+      .click({ position: { x: 12, y: 12 } });
     await expect(page.locator("propskit-select fig-select")).not.toHaveAttribute(
       "open",
     );
@@ -6838,8 +8824,8 @@ test.describe("propskit delegated click behavior", () => {
     await clickField("propskit-switch");
     await expect(page.locator("propskit-switch")).not.toHaveAttribute("checked", "");
     await expect(
-      page.locator('propskit-switch fig-segment[value="off"]'),
-    ).toHaveAttribute("selected", "true");
+      page.locator('propskit-switch fig-switch input[role="switch"]'),
+    ).not.toBeChecked();
   });
 
   test("does not interrupt native propskit slider dragging with delayed focus", async ({
@@ -7221,6 +9207,64 @@ test("fig-dropdown and fig-select ghost variant drop the border and use secondar
   );
 });
 
+test("fig-select supports subtle hover fill per option and from the host", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await customElements.whenDefined("fig-select");
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-select id="select" value="one">
+        <fig-select-options>
+          <fig-select-option id="regular" value="one">One</fig-select-option>
+          <fig-select-option id="subtle" value="two" subtle>Two</fig-select-option>
+        </fig-select-options>
+      </fig-select>
+    `;
+  });
+
+  const select = page.locator("#select");
+  const regular = page.locator("#regular");
+  const subtle = page.locator("#subtle");
+  await select.click();
+  const colors = await subtle.evaluate((element) => {
+    const probe = document.createElement("div");
+    element.append(probe);
+    const resolve = (token: string) => {
+      probe.style.backgroundColor = `var(${token})`;
+      return getComputedStyle(probe).backgroundColor;
+    };
+    const result = {
+      menuHover: resolve("--figma-color-bg-menu-hover"),
+      secondary: resolve("--figma-color-bg-secondary"),
+    };
+    probe.remove();
+    return result;
+  });
+  const hoverFill = (locator: typeof regular) =>
+    locator.evaluate(
+      (element) => getComputedStyle(element, "::before").backgroundColor,
+    );
+
+  await regular.hover();
+  expect(await hoverFill(regular)).toBe(colors.menuHover);
+  await subtle.hover();
+  expect(await hoverFill(subtle)).toBe(colors.secondary);
+
+  await select.evaluate((element) => element.setAttribute("subtle", ""));
+  await regular.hover();
+  expect(await hoverFill(regular)).toBe(colors.secondary);
+
+  await regular.evaluate((element) => element.setAttribute("subtle", "false"));
+  await regular.hover();
+  expect(await hoverFill(regular)).toBe(colors.menuHover);
+});
+
 test.describe("joystick axis labels", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -7256,10 +9300,12 @@ test.describe("joystick axis labels", () => {
           right: labelText("right"),
           top: labelText("top"),
           bottom: labelText("bottom"),
-          leftNoRotate:
-            host
-              .querySelector(".fig-joystick-axis-label.left")
-              ?.classList.contains("no-rotate") ?? false,
+        leftIsRotated: (() => {
+          const label = host.querySelector(".fig-joystick-axis-label.left");
+          if (!label) return false;
+          const transform = new DOMMatrix(getComputedStyle(label).transform);
+          return transform.b !== 0 && transform.c !== 0;
+        })(),
         };
       });
 
@@ -7268,21 +9314,21 @@ test.describe("joystick axis labels", () => {
       right: "",
       top: "",
       bottom: "Y",
-      leftNoRotate: true,
+      leftIsRotated: true,
     });
     await expect.poll(() => labelsFor("#comma-labels")).toEqual({
       left: "X",
       right: "",
       top: "",
       bottom: "Y",
-      leftNoRotate: true,
+      leftIsRotated: true,
     });
     await expect.poll(() => labelsFor("#comma-four-labels")).toEqual({
       left: "Left",
       right: "Right",
       top: "Top",
       bottom: "Bottom",
-      leftNoRotate: false,
+      leftIsRotated: true,
     });
   });
 
@@ -11397,6 +13443,36 @@ test.describe("remaining accessibility contracts", () => {
         startAtStart: true,
         endAtEnd: true,
       });
+  });
+
+  test("fig-input-palette color strip uses the same 1px inner highlight as fig-swatch", async ({
+    page,
+  }) => {
+    const styles = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-swatch id="swatch" background="#0D99FF"></fig-swatch>
+        <fig-input-palette
+          id="palette"
+          value='["#0D99FF","#14AE5C","#FFCD29"]'
+        ></fig-input-palette>
+      `;
+      const swatch = root.querySelector("#swatch");
+      const strip = root.querySelector("#palette .palette-colors");
+      if (!swatch || !strip) throw new Error("Missing swatch or palette strip");
+      const swatchAfter = getComputedStyle(swatch, "::after");
+      const stripAfter = getComputedStyle(strip, "::after");
+      return {
+        swatchBoxShadow: swatchAfter.boxShadow,
+        stripBoxShadow: stripAfter.boxShadow,
+        stripPointerEvents: stripAfter.pointerEvents,
+      };
+    });
+
+    expect(styles.stripBoxShadow).toBe(styles.swatchBoxShadow);
+    expect(styles.stripPointerEvents).toBe("none");
+    expect(styles.stripBoxShadow).toContain("inset");
   });
 
   test("fig-input-palette uses tokenized focus outline on the visible swatch row", async ({

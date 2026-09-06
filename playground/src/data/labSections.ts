@@ -34,13 +34,13 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-reorder>
     <fig-group name="Fill" collapsible open="true">
-      <propskit-slider label="Opacity" direction="horizontal" type="opacity" value="100" default="100" min="0" max="100" units="%"></propskit-slider>
+      <propskit-slider label="Opacity" type="opacity" value="100" default="100" min="0" max="100" units="%"></propskit-slider>
     </fig-group>
     <fig-group name="Stroke" collapsible open="false">
-      <propskit-slider label="Width" direction="horizontal" value="2" default="2" min="0" max="24" units="px"></propskit-slider>
+      <propskit-slider label="Width" value="2" default="2" min="0" max="24" units="px"></propskit-slider>
     </fig-group>
     <fig-group name="Effects" collapsible open="false">
-      <propskit-slider label="Blur" direction="horizontal" value="4" default="4" min="0" max="64" units="px"></propskit-slider>
+      <propskit-slider label="Blur" value="4" default="4" min="0" max="64" units="px"></propskit-slider>
     </fig-group>
   </fig-reorder>
 </div>`,
@@ -51,13 +51,13 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-color",
     name: "Color",
     description:
-      "A full-surface color field with a large fill-picker swatch, matching propskit-gradient. Clicking the field opens the color picker.",
+      "A horizontal color property surface with a fill-picker swatch. Import the editor bundle; clicking the surface opens the picker.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-color label="Background" value="#0D99FF" default="#0D99FF" alpha="true"></propskit-color>
+  <propskit-color label="Background" name="background" value="#0D99FF" default="#0D99FF" alpha="true"></propskit-color>
 </div>`,
       },
     ],
@@ -66,13 +66,13 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-fill",
     name: "Fill",
     description:
-      "A labeled fill field. Click the bar to open the picker and set solid, gradient, image, video, webcam, or a custom mode.",
+      "A horizontal fill property surface. Import the editor bundle; click the surface to edit solid, gradient, image, video, webcam, or custom fills.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-fill label="Fill" value="${DEMO_FILL_VIDEO.src}" default="${DEMO_FILL_VIDEO.src}"></propskit-fill>
+  <propskit-fill label="Fill" name="fill" value="${DEMO_FILL_VIDEO.src}" default="${DEMO_FILL_VIDEO.src}"></propskit-fill>
 </div>`,
       },
     ],
@@ -81,13 +81,33 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-gradient",
     name: "Gradient",
     description:
-      "A full-surface gradient field. Clicking the field opens the fill picker.",
+      "A horizontal gradient property surface. Clicking it opens the fill picker; its public value remains the serialized gradient string.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-gradient label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
+  <propskit-gradient label="Gradient" name="gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-palette",
+    name: "Palette",
+    description:
+      "A labeled palette selector that previews the selected colors on the right. Import fig-editor.js and fig-editor.css for the fig-select menu.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <propskit-palette
+    label="Palette"
+    name="palette"
+    options='[["#0D99FF","#14AE5C","#FFCD29","#FFA629","#F24822","#9747FF"],["#083D77","#0D6EFD","#0D99FF","#62B6FF","#A9D8FF","#E3F2FF"],["#1B4332","#2D6A4F","#52B788","#95D5B2","#D4A373","#FAEDCD"],["#7C2D12","#EA580C","#F97316","#FB923C","#FCD34D","#FEF3C7"],["#A5D8FF","#B2F2BB","#FFF3BF","#FFD8A8","#FFC9C9","#D0BFFF"],["#000000","#1E1E1E","#555555","#999999","#D9D9D9","#FFFFFF"],["#6B21A8","#9333EA","#DB2777","#FB7185","#F9A8D4","#FCE7F3"],["#0B1220","#1E293B","#334155","#7AA2F7","#34D399","#F472B6"]]'
+    default='["#0D99FF","#14AE5C","#FFCD29","#FFA629","#F24822","#9747FF"]'
+  ></propskit-palette>
 </div>`,
       },
     ],
@@ -96,13 +116,13 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-text",
     name: "Text",
     description:
-      "A full-surface text field that composes fig-field and fig-input-text into a single property control.",
+      "A horizontal property surface with a label and an autoresizing multiline fig-input-text. It starts at one line and grows to four.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-text label="Name" value="Layer 1" default="Layer 1" placeholder="Enter a name"></propskit-text>
+  <propskit-text label="Name" name="layerName" value="Layer 1" default="Layer 1" placeholder="Enter a name"></propskit-text>
 </div>`,
       },
     ],
@@ -111,13 +131,13 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-select",
     name: "Select",
     description:
-      "A full-surface select field that composes fig-field and fig-select. Pass choices via the options attribute (comma-separated or JSON array).",
+      "A horizontal property surface that always composes fig-select. Import fig-editor.js and fig-editor.css; pass choices via the options attribute or authored option elements.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-select label="Alignment" value="Center" default="Center" options="Left,Center,Right"></propskit-select>
+  <propskit-select label="Alignment" name="alignment" value="Center" default="Center" options="Left,Center,Right"></propskit-select>
 </div>`,
       },
       {
@@ -197,7 +217,7 @@ const ungroupedLabSections: Section[] = [
     <propskit-gradient label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"interpolationSpace":"srgb","hueInterpolation":"shorter","stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
     <propskit-text label="Name" value="Layer 1" default="Layer 1" placeholder="Enter a name"></propskit-text>
     <propskit-select label="Blend" value="Normal" default="Normal" options="Normal,Multiply,Screen,Overlay"></propskit-select>
-    <propskit-slider label="Opacity" direction="horizontal" type="opacity" value="100" default="100" min="0" max="100" units="%"></propskit-slider>
+    <propskit-slider label="Opacity" type="opacity" value="100" default="100" min="0" max="100" units="%"></propskit-slider>
     <propskit-number label="Corner" value="8" default="8" min="0" max="100" units="px"></propskit-number>
   </propskit-group>
   <propskit-group name="Advanced" open>
@@ -209,7 +229,7 @@ const ungroupedLabSections: Section[] = [
   </propskit-group>
   <propskit-group name="Misc">
     <propskit-text label="Notes" value="" default="" placeholder="Optional notes"></propskit-text>
-    <propskit-slider label="Blur" direction="horizontal" value="4" default="4" min="0" max="64" units="px"></propskit-slider>
+    <propskit-slider label="Blur" value="4" default="4" min="0" max="64" units="px"></propskit-slider>
     <propskit-switch label="Visible" default="false"></propskit-switch>
   </propskit-group>
 </div>`,
@@ -220,34 +240,13 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <propskit-group name="Fill" open compact>
     <propskit-color label="Color" value="#14AE5C" default="#14AE5C" alpha="true"></propskit-color>
-    <propskit-slider label="Opacity" direction="horizontal" type="opacity" value="80" default="80" min="0" max="100" units="%"></propskit-slider>
+    <propskit-slider label="Opacity" type="opacity" value="80" default="80" min="0" max="100" units="%"></propskit-slider>
     <propskit-select label="Type" value="Solid" default="Solid" options="Solid,Gradient,Image"></propskit-select>
   </propskit-group>
   <propskit-group name="Stroke" open compact>
     <propskit-color label="Color" value="#FF7262" default="#FF7262"></propskit-color>
     <propskit-number label="Width" value="2" default="2" min="0" max="24" units="px"></propskit-number>
     <propskit-text label="Dash" value="4, 2" default="4, 2"></propskit-text>
-  </propskit-group>
-</div>`,
-      },
-      {
-        id: "minimal",
-        name: "Minimal",
-        markup: `<div class="prop-panel">
-  <propskit-group name="Minimal controls" open>
-    <propskit-color variant="minimal" label="Fill" value="#0D99FF" default="#0D99FF"></propskit-color>
-    <propskit-fill variant="minimal" label="Paint" value='{"type":"solid","color":"#9747FF","alpha":1}' default='{"type":"solid","color":"#9747FF","alpha":1}'></propskit-fill>
-    <propskit-gradient variant="minimal" label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
-    <propskit-text variant="minimal" label="Name" value="Layer 1" default="Layer 1"></propskit-text>
-    <propskit-select variant="minimal" label="Blend" value="Normal" default="Normal" options="Normal,Multiply,Screen"></propskit-select>
-    <propskit-slider variant="minimal" label="Amount" type="range" value="50" default="50" min="0" max="100"></propskit-slider>
-    <propskit-slider variant="minimal" label="Hue" type="hue" value="180" default="180" min="0" max="360" units="°"></propskit-slider>
-    <propskit-slider variant="minimal" label="Opacity" type="opacity" value="80" default="80" min="0" max="100" units="%"></propskit-slider>
-    <propskit-slider variant="minimal" label="Offset" type="delta" value="50" default="50" min="0" max="100"></propskit-slider>
-    <propskit-slider variant="minimal" label="Step" type="stepper" value="50" default="50" min="0" max="100" step="10"></propskit-slider>
-    <propskit-number variant="minimal" label="Corner" value="8" default="8" min="0" max="100" units="px"></propskit-number>
-    <propskit-position variant="minimal" label="Position" x="50" y="50" units="percent"></propskit-position>
-    <propskit-switch variant="minimal" label="Visible" checked default="true"></propskit-switch>
   </propskit-group>
 </div>`,
       },
@@ -267,13 +266,20 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-switch",
     name: "Switch",
     description:
-      "A full-surface boolean field that composes fig-field and an Off/On segmented control.",
+      "A full-surface boolean row that defaults to fig-switch. Use variant=\"segmented-control\" for explicit Off/On choices.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-switch label="Visible" checked default="true"></propskit-switch>
+  <propskit-switch label="Visible" name="visible" checked default="true"></propskit-switch>
+</div>`,
+      },
+      {
+        id: "segmented-control",
+        name: "Segmented control",
+        markup: `<div class="prop-panel">
+  <propskit-switch variant="segmented-control" label="Visible" name="visible" checked default="true"></propskit-switch>
 </div>`,
       },
     ],
@@ -282,13 +288,13 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-number",
     name: "Number",
     description:
-      "A full-surface number field that composes fig-field and fig-input-number into a single property control.",
+      "A horizontal numeric property surface. Its public value and event value are finite numbers, or null when empty or invalid.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-number label="Width" value="24" default="24" min="0" max="100" units="px"></propskit-number>
+  <propskit-number label="Width" name="width" value="24" default="24" min="0" max="100" units="px"></propskit-number>
 </div>`,
       },
       {
@@ -303,20 +309,20 @@ const ungroupedLabSections: Section[] = [
   {
     id: "propskit-slider",
     name: "Slider",
-    description: "A modern, full surface slider that composes fig-field and fig-slider into a single &lt;propskit-slider&gt; element.",
+    description: "A horizontal slider property surface. Its public value and event value are finite numbers, or null when empty or invalid.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-slider label="Amount" direction="horizontal" value="50" default="50" min="0" max="100"></propskit-slider>
+  <propskit-slider label="Amount" name="amount" value="50" default="50" min="0" max="100"></propskit-slider>
 </div>`,
       },
       {
         id: "iconographic",
         name: "Iconographic",
         markup: `<div class="prop-panel">
-  <propskit-slider direction="horizontal" value="50" default="50" min="0" max="100">
+  <propskit-slider value="50" default="50" min="0" max="100">
     <label><fig-tooltip text="Font size"><fig-icon><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15.75 10C15.9624 10.0001 16.1515 10.1345 16.2217 10.335L17.9717 15.335C18.0628 15.5955 17.9255 15.8804 17.665 15.9717C17.4044 16.0628 17.1195 15.9256 17.0283 15.665L16.6211 14.5H14.3789L13.9717 15.665C13.8805 15.9256 13.5955 16.0627 13.3349 15.9717C13.0744 15.8804 12.9372 15.5955 13.0283 15.335L14.7783 10.335L14.8096 10.2627C14.8957 10.1027 15.0642 10 15.25 10H15.75ZM9.24998 8C9.46694 8.0001 9.65901 8.1402 9.72557 8.34668L11.9756 15.3467C12.06 15.6093 11.9158 15.8908 11.6533 15.9756C11.3906 16.06 11.1091 15.9159 11.0244 15.6533L10.4931 14H7.50682L6.97557 15.6533C6.89093 15.9159 6.60936 16.0599 6.34666 15.9756C6.08403 15.8909 5.93994 15.6094 6.0244 15.3467L8.2744 8.34668L8.30467 8.27246C8.38904 8.10728 8.56006 8 8.74998 8H9.24998ZM14.7295 13.5H16.2705L15.5 11.2979L14.7295 13.5ZM7.82811 13H10.1719L8.99998 9.35449L7.82811 13Z" fill="currentColor"/></svg></fig-icon></fig-tooltip></label>
   </propskit-slider>
 </div>`,
@@ -325,28 +331,28 @@ const ungroupedLabSections: Section[] = [
         id: "hue",
         name: "Hue",
         markup: `<div class="prop-panel">
-  <propskit-slider label="Hue" direction="horizontal" type="hue" value="180" default="180" min="0" max="360" units="°"></propskit-slider>
+  <propskit-slider label="Hue" type="hue" value="180" default="180" min="0" max="360" units="°"></propskit-slider>
 </div>`,
       },
       {
         id: "opacity",
         name: "Opacity",
         markup: `<div class="prop-panel">
-  <propskit-slider label="Opacity" direction="horizontal" type="opacity" color="#0D99FF" value="100" default="100" min="0" max="100" units="%"></propskit-slider>
+  <propskit-slider label="Opacity" type="opacity" color="#0D99FF" value="100" default="100" min="0" max="100" units="%"></propskit-slider>
 </div>`,
       },
       {
         id: "delta",
         name: "Delta",
         markup: `<div class="prop-panel">
-  <propskit-slider label="Offset" direction="horizontal" type="delta" value="50" min="0" max="100" default="50"></propskit-slider>
+  <propskit-slider label="Offset" type="delta" value="50" min="0" max="100" default="50"></propskit-slider>
 </div>`,
       },
       {
         id: "stepper",
         name: "Stepper",
         markup: `<div class="prop-panel">
-  <propskit-slider label="Step" direction="horizontal" type="stepper" value="50" min="0" max="100" step="10" default="50"></propskit-slider>
+  <propskit-slider label="Step" type="stepper" value="50" min="0" max="100" step="10" default="50"></propskit-slider>
 </div>`,
       },
     ],
@@ -355,13 +361,13 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-wheel",
     name: "Wheel",
     description:
-      "A labeled numeric scrubber that composes fig-input-wheel with an optional fig-input-number.",
+      "A horizontal numeric scrubber surface with an optional number input. Its public and event values are finite numbers or null.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <propskit-wheel label="Time" units="seconds" default="0"></propskit-wheel>
+  <propskit-wheel label="Time" name="time" value="0" units="seconds" default="0"></propskit-wheel>
 </div>`,
       },
       {
@@ -369,13 +375,6 @@ const ungroupedLabSections: Section[] = [
         name: "Seconds",
         markup: `<div class="prop-panel">
   <propskit-wheel label="Duration" value="1.5" default="0" units="seconds"></propskit-wheel>
-</div>`,
-      },
-      {
-        id: "small",
-        name: "Small",
-        markup: `<div class="prop-panel">
-  <propskit-wheel label="Delay" value="240" default="0" units="milliseconds" size="small"></propskit-wheel>
 </div>`,
       },
       {
@@ -434,13 +433,94 @@ const ungroupedLabSections: Section[] = [
     id: "propskit-position",
     name: "Position",
     description:
-      "A compact X/Y editor with optional percentage units.",
+      "A horizontal X/Y property surface with optional percentage units and a structured public value.",
     examples: [
       {
         id: "default",
         name: "Position",
         markup: `<div class="prop-panel">
-  <propskit-position label="Position" x="50" y="50" units="percent" default='{"x":50,"y":50}'></propskit-position>
+  <propskit-position label="Position" name="position" x="50" y="50" units="percent" default='{"x":50,"y":50}'></propskit-position>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-joystick",
+    name: "Joystick",
+    description:
+      "A labeled two-axis control with a square joystick plane, X/Y fields, and a typed percentage value.",
+    examples: [
+      {
+        id: "default",
+        name: "Joystick",
+        markup: `<div class="prop-panel">
+  <propskit-joystick
+    label="Position"
+    name="position"
+    value='{"x":35,"y":65}'
+    default='{"x":50,"y":50}'
+    axis-labels="X Y"
+  ></propskit-joystick>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-origin",
+    name: "Origin",
+    description:
+      "A labeled transform-origin control with a square origin grid, X/Y fields, and a typed percentage value.",
+    examples: [
+      {
+        id: "default",
+        name: "Origin",
+        markup: `<div class="prop-panel">
+  <propskit-origin
+    label="Transform origin"
+    name="origin"
+    value='{"x":50,"y":50}'
+    default='{"x":50,"y":50}'
+  ></propskit-origin>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-easing",
+    name: "Easing",
+    description:
+      "A labeled cubic-bezier editor with easing-only presets and a typed control-point value.",
+    examples: [
+      {
+        id: "default",
+        name: "Easing",
+        markup: `<div class="prop-panel">
+  <propskit-easing
+    label="Easing"
+    name="easing"
+    value='{"x1":0.42,"y1":0,"x2":0.58,"y2":1}'
+    default='{"x1":0.42,"y1":0,"x2":0.58,"y2":1}'
+  ></propskit-easing>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "propskit-spring",
+    name: "Spring",
+    description:
+      "A labeled spring editor with spring-only presets and typed stiffness, damping, and mass values.",
+    examples: [
+      {
+        id: "default",
+        name: "Spring",
+        markup: `<div class="prop-panel">
+  <propskit-spring
+    label="Spring"
+    name="spring"
+    value='{"stiffness":200,"damping":15,"mass":1}'
+    default='{"stiffness":200,"damping":15,"mass":1}'
+  ></propskit-spring>
 </div>`,
       },
     ],

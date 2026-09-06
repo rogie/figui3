@@ -197,12 +197,16 @@ export default function ExampleView({
       "propskit-color",
       "propskit-fill",
       "propskit-gradient",
+      "propskit-easing",
+      "propskit-joystick",
       "propskit-number",
+      "propskit-origin",
       "propskit-point-point",
       "propskit-point-radius",
       "propskit-point-radius-angle",
       "propskit-select",
       "propskit-slider",
+      "propskit-spring",
       "propskit-text",
       "propskit-wheel",
     ]);
@@ -238,6 +242,10 @@ export default function ExampleView({
       const shouldSkipPersistForFocusedControl =
         tagName === "fig-segmented-control" ||
         tagName === "fig-joystick" ||
+        tagName === "propskit-joystick" ||
+        tagName === "propskit-origin" ||
+        tagName === "propskit-easing" ||
+        tagName === "propskit-spring" ||
         tagName === "fig-input-wheel" ||
         tagName === "fig-origin-grid" ||
         tagName === "propskit-wheel";

@@ -8,6 +8,7 @@ Observed: `value`, `disabled`, `selected`, `label`.
 
 - `value` falls back to trimmed `textContent` if the attr is omitted
 - `label` is the closed-trigger string when option content is rich
+- `subtle` uses the secondary hover/focus fill
 - `role="option"`, `aria-selected`, `aria-disabled`
 
 ## `fig-select-options`
@@ -21,6 +22,8 @@ Observed: `value`, `disabled`, `selected`, `label`.
 ## `fig-select` observed
 
 `value`, `disabled`, `label`, `options`, `position`, `offset`, `closedby`, `open`, `variant`
+
+- `subtle` applies the secondary hover/focus fill to every option
 
 Position enum:
 

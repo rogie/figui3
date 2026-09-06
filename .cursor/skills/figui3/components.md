@@ -562,6 +562,9 @@ toastRef.current?.showToast();
 <fig-easing-curve value="ease-in-out" onInput={onInput} onChange={onChange} />
 ```
 
+Set `mode="bezier"` or `mode="spring"` to constrain the editor and preset list
+to one curve type.
+
 ### `fig-3d-rotate`
 
 ```tsx

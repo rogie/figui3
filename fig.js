@@ -633,7 +633,7 @@ class FigButton extends HTMLElement {
       const style = document.createElement("style");
       style.textContent = `
         button, button:hover, button:active, .fig-button-control {
-          padding: 0 var(--spacer-2);
+          padding: var(--fig-button-control-padding, 0 var(--spacer-2));
           appearance: none;
           display: flex;
           border: 0;
@@ -646,7 +646,7 @@ class FigButton extends HTMLElement {
           outline: 0;
           place-items: center;
           background: transparent;
-          margin: calc(var(--spacer-2)*-1);
+          margin: var(--fig-button-control-margin, calc(var(--spacer-2)*-1));
           height: var(--spacer-4);
           white-space: nowrap;
           overflow: hidden;
@@ -14054,6 +14054,7 @@ figDefineElement("fig-input-file", FigInputFile);
 /**
  * A bezier / spring easing curve editor with draggable control points.
  * @attr {string} value - Bezier: "0.42, 0, 0.58, 1" or Spring: "spring(200, 15, 1)"
+ * @attr {string} mode - Optional editor constraint: "bezier" or "spring".
  * @attr {number} precision - Decimal places for output values (default 2)
  * @attr {boolean} edit - Show the editor and custom preset options (default true; set "false" for presets only)
  */
@@ -14153,14 +14154,17 @@ class FigEasingCurve extends HTMLElement {
   ];
 
   static get observedAttributes() {
-    return ["value", "precision", "aspect-ratio", "edit"];
+    return ["value", "mode", "precision", "aspect-ratio", "edit"];
   }
 
   connectedCallback() {
     this.#precision = parseInt(this.getAttribute("precision") || "2");
     figSyncCssVar(this, "--aspect-ratio", this.getAttribute("aspect-ratio"));
+    const constrainedMode = this.#constrainedMode();
+    if (constrainedMode) this.#mode = constrainedMode;
     const val = this.getAttribute("value");
     if (val) this.#parseValue(val);
+    this.#applyModeConstraint();
     this.#presetName = this.#matchPreset();
     this.#render();
     this.#setupResizeObserver();
@@ -14187,6 +14191,13 @@ class FigEasingCurve extends HTMLElement {
     }
 
     if (name === "edit") {
+      if (this.isConnected) this.#render();
+      return;
+    }
+
+    if (name === "mode") {
+      this.#applyModeConstraint();
+      this.#presetName = this.#matchPreset();
       if (this.isConnected) this.#render();
       return;
     }
@@ -14242,11 +14253,26 @@ class FigEasingCurve extends HTMLElement {
     this.setAttribute("value", v);
   }
 
+  #constrainedMode() {
+    const mode = this.getAttribute("mode")?.trim().toLowerCase();
+    return mode === "bezier" || mode === "spring" ? mode : null;
+  }
+
+  #applyModeConstraint() {
+    const mode = this.#constrainedMode();
+    if (mode) this.#mode = mode;
+  }
+
+  #allowsPreset(preset) {
+    const mode = this.#constrainedMode();
+    return !mode || preset.type === mode;
+  }
+
   #parseValue(str) {
     const springMatch = str.match(
       /^spring\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/,
     );
-    if (springMatch) {
+    if (springMatch && this.#constrainedMode() !== "bezier") {
       this.#mode = "spring";
       this.#spring.stiffness = parseFloat(springMatch[1]);
       this.#spring.damping = parseFloat(springMatch[2]);
@@ -14254,7 +14280,11 @@ class FigEasingCurve extends HTMLElement {
       return true;
     }
     const parts = str.split(",").map((s) => parseFloat(s.trim()));
-    if (parts.length >= 4 && parts.every((n) => !isNaN(n))) {
+    if (
+      parts.length >= 4 &&
+      parts.every((n) => !isNaN(n)) &&
+      this.#constrainedMode() !== "spring"
+    ) {
       this.#mode = "bezier";
       this.#cp1.x = parts[0];
       this.#cp1.y = parts[1];
@@ -14473,6 +14503,7 @@ class FigEasingCurve extends HTMLElement {
     let currentGroup = undefined;
     let parent = dropdown;
     for (const preset of FigEasingCurve.PRESETS) {
+      if (!this.#allowsPreset(preset)) continue;
       if (!this.#isEditEnabled() && !preset.value && !preset.spring) continue;
       if (preset.group !== currentGroup) {
         currentGroup = preset.group;
@@ -14494,6 +14525,7 @@ class FigEasingCurve extends HTMLElement {
     const options = document.createElement("fig-select-options");
     let currentGroup = undefined;
     for (const p of FigEasingCurve.PRESETS) {
+      if (!this.#allowsPreset(p)) continue;
       if (!this.#isEditEnabled() && !p.value && !p.spring) continue;
       if (p.group !== currentGroup) {
         if (p.group) {
@@ -14962,19 +14994,41 @@ class FigEasingCurve extends HTMLElement {
     return parts;
   }
 
+  #parseManualSpringValue(value) {
+    const match = value.match(
+      /^spring\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/,
+    );
+    if (!match) return null;
+    const spring = {
+      stiffness: Number(match[1]),
+      damping: Number(match[2]),
+      mass: Number(match[3]),
+    };
+    return Object.values(spring).every((part) => part > 0) ? spring : null;
+  }
+
   #applyManualValue(value, eventType) {
-    const parts = this.#parseManualBezierValue(value);
-    if (!parts) {
+    const constrainedMode = this.#constrainedMode();
+    const spring =
+      constrainedMode === "bezier" ? null : this.#parseManualSpringValue(value);
+    const bezier =
+      constrainedMode === "spring" ? null : this.#parseManualBezierValue(value);
+    if (!spring && !bezier) {
       if (eventType === "change") this.#syncValueInput();
       return;
     }
 
     const prevMode = this.#mode;
-    this.#mode = "bezier";
-    this.#cp1.x = parts[0];
-    this.#cp1.y = parts[1];
-    this.#cp2.x = parts[2];
-    this.#cp2.y = parts[3];
+    if (spring) {
+      this.#mode = "spring";
+      this.#spring = spring;
+    } else {
+      this.#mode = "bezier";
+      this.#cp1.x = bezier[0];
+      this.#cp1.y = bezier[1];
+      this.#cp2.x = bezier[2];
+      this.#cp2.y = bezier[3];
+    }
 
     this.#presetName = this.#matchPreset();
     if (prevMode !== this.#mode) {
@@ -16453,18 +16507,12 @@ class FigInputJoystick extends HTMLElement {
     const planeContainer = figCreateElement("div", {
       className: "fig-input-joystick-plane-container",
     });
-    const createAxisLabel = (position, text, noRotate = false) =>
+    const createAxisLabel = (position, text) =>
       text
         ? figCreateElement(
             "label",
             {
-              className: [
-                "fig-joystick-axis-label",
-                position,
-                noRotate ? "no-rotate" : "",
-              ]
-                .filter(Boolean)
-                .join(" "),
+              className: ["fig-joystick-axis-label", position].join(" "),
               "aria-hidden": "true",
             },
             text,
@@ -16472,11 +16520,7 @@ class FigInputJoystick extends HTMLElement {
         : null;
     planeContainer.append(
       ...[
-        createAxisLabel(
-          "left",
-          axisLabels.left,
-          axisLabels.leftNoRotate,
-        ),
+        createAxisLabel("left", axisLabels.left),
         createAxisLabel("right", axisLabels.right),
         createAxisLabel("top", axisLabels.top),
         createAxisLabel("bottom", axisLabels.bottom),
@@ -16548,7 +16592,7 @@ class FigInputJoystick extends HTMLElement {
   #getAxisLabels() {
     const raw = (this.getAttribute("axis-labels") || "").trim();
     if (!raw) {
-      return { left: "", right: "", top: "", bottom: "", leftNoRotate: false };
+      return { left: "", right: "", top: "", bottom: "" };
     }
     const tokens = raw.split(/[\s,]+/).filter(Boolean);
     if (tokens.length === 1) {
@@ -16557,18 +16601,17 @@ class FigInputJoystick extends HTMLElement {
         right: "",
         top: tokens[0],
         bottom: "",
-        leftNoRotate: false,
       };
     }
     if (tokens.length === 2) {
       const [x, y] = tokens;
-      return { left: x, right: "", top: "", bottom: y, leftNoRotate: true };
+      return { left: x, right: "", top: "", bottom: y };
     }
     if (tokens.length === 4) {
       const [left, right, top, bottom] = tokens;
-      return { left, right, top, bottom, leftNoRotate: false };
+      return { left, right, top, bottom };
     }
-    return { left: "", right: "", top: "", bottom: "", leftNoRotate: false };
+    return { left: "", right: "", top: "", bottom: "" };
   }
 
   #setupListeners() {

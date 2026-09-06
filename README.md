@@ -103,14 +103,19 @@ Minimal example:
 | [Radio](#radio) | `<fig-radio>` | Radio button |
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
-| [Propskit Slider](#propskit-slider) | `<propskit-slider>` | Labeled field + slider combo |
+| [Propskit Slider](#propskit-slider) | `<propskit-slider>` | Labeled slider surface |
 | [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
 | [Propskit Wheel](#propskit-wheel) | `<propskit-wheel>` | Labeled input wheel with optional number field |
 | [Propskit Color](#propskit-color) | `<propskit-color>` | Full-surface labeled color control |
 | [Propskit Fill](#propskit-fill) | `<propskit-fill>` | Full-surface labeled fill control |
 | [Propskit Gradient](#propskit-gradient) | `<propskit-gradient>` | Full-surface labeled gradient control |
+| [Propskit Palette](#propskit-palette) | `<propskit-palette>` | Labeled palette selector |
 | [Propskit Number](#propskit-number) | `<propskit-number>` | Full-surface labeled number control |
 | [Propskit Position](#propskit-position) | `<propskit-position>` | Compact X/Y control |
+| [Propskit Joystick](#propskit-joystick) | `<propskit-joystick>` | Labeled two-axis joystick |
+| [Propskit Origin](#propskit-origin) | `<propskit-origin>` | Labeled transform-origin grid |
+| [Propskit Easing](#propskit-easing) | `<propskit-easing>` | Labeled cubic-bezier editor |
+| [Propskit Spring](#propskit-spring) | `<propskit-spring>` | Labeled spring editor |
 | [Propskit Color Point](#propskit-color-point) | `<propskit-color-point>` | Collapsible color and position group |
 | [Propskit Point Point](#propskit-point-point) | `<propskit-point-point>` | Collapsible start and end position group |
 | [Propskit Point Radius](#propskit-point-radius) | `<propskit-point-radius>` | Collapsible position and radius group |
@@ -231,11 +236,12 @@ Custom listbox select with overflow chevrons, grouped options, and sticky separa
 | `label` | string | — | Closed-state / accessible label |
 | `options` | string | — | Comma, newline, or JSON options if no authored `fig-select-option` children |
 | `variant` | string | — | `"ghost"` for a borderless control with secondary hover fill |
+| `subtle` | boolean | `false` | Use the secondary hover/focus fill for every option |
 | `full` | boolean | `false` | Stretch to available width |
 | `position` | string | `"bottom left"` | Popup position |
 | `disabled` | boolean | `false` | Disabled state |
 
-Author options in `<fig-select-options>`, or pass `options`. Use `label` on `<fig-select-option>` when the option content is rich. `fig-separator` with `sticky` pins group labels while scrolling.
+Author options in `<fig-select-options>`, or pass `options`. Add `subtle` to one `<fig-select-option>` for the secondary hover/focus fill, or to `<fig-select>` to apply it to every option. Use `label` on `<fig-select-option>` when the option content is rich. `fig-separator` with `sticky` pins group labels while scrolling.
 
 ```html
 <fig-select value="center" label="Align">
@@ -359,36 +365,45 @@ Author options in `<fig-select-options>`, or pass `options`. Use `label` on `<fi
 
 For `type="range"`, omitting `value` follows native range behavior and starts at the midpoint of `min` and `max`. Arrow keys move by `step`; hold Shift to move by a larger step.
 
-Full-surface `propskit-*` controls support `variant="minimal"`. The minimal variant removes vertical row padding and keeps the field background transparent until hover. It is available on switch, color, fill, gradient, select, text, number, slider, position, and wheel controls.
-
 ---
 
 #### Propskit Number
 
 `<propskit-number>`
 
-Composes a `<fig-field>` and `<fig-input-number>` into a full-surface property control. Number attributes are forwarded to the inner input.
-
-PropsKit controls use the 40px large layout when `size` is omitted. Set
-`size="small"` for the compact 32px row layout. Explicit `size="large"`
-remains supported as an alias for the default layout.
+Uses a plain horizontal surface with `<fig-input-number>`. Number attributes are forwarded to the inner input.
 
 All PropsKit inputs expose `defaultValue`, `isDefault`, and `resetToDefault()`. A
 `propskit-group` uses this shared contract to track its `dirty` state and reset
-each nested input to its own current `default`. Set `size="small"` on a
-`propskit-group` to apply the compact layout to nested controls that do not
-define their own size.
+each nested input to its own current `default`.
+
+Surface labels default to `"Label"` when omitted; `label=""` removes the visible
+label. PropsKit `input` and `change` events dispatch from the outer control with
+`detail: { control, value, name? }`, and `event.target.value` is the same typed
+value. `name` is included only when a non-empty `name` attribute is authored.
+Switch values are boolean. Number, slider, and wheel values are finite numbers
+or `null`; structured and
+serialized controls expose their exact public `.value`. Select `optionhover`
+uses the same envelope. `openchange` and group `reset` keep their semantic
+details.
+
+Shared surface variables are `--propskit-padding-block`,
+`--propskit-padding-inline`, `--propskit-background`, `--propskit-border`,
+`--propskit-color`, `--propskit-hover-background`, `--propskit-hover-border`,
+`--propskit-hover-color`, `--propskit-label-inline-size`, and
+`--propskit-input-inline-size`. Override one component with the matching prefix,
+such as `--propskit-select-background` or
+`--propskit-number-input-inline-size`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `label` | string | `"Label"` | Field label text; use an empty value to hide it |
-| `direction` | string | `"horizontal"` | Field layout direction |
-| `size` | string | default | Set to `"small"` for the compact layout |
+| `name` | string | — | Optional event payload name |
 | `default` | number/string | initial `value` | Right-click reset target |
 | `disabled` | boolean | `false` | Disable interaction |
 | *number attrs* | — | — | All `<fig-input-number>` attributes are forwarded |
 
-**Events:** `input`, `change` — forwarded from the inner number input.
+**Events:** `input`, `change` — shared PropsKit envelope with `value: number | null`.
 
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` (falling back to the initial value).
 
@@ -402,11 +417,11 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-color>`
 
-Composes a `<fig-field>` and a solid `fig-fill-picker` swatch into a full-surface property control. Clicking the field opens the color picker. There is no hex/opacity text field.
+Uses a plain horizontal surface with a solid `fig-fill-picker` swatch. Clicking the surface opens the color picker. There is no hex/opacity text field.
 
-**Attributes:** `label`, `value`, `default`, `alpha`, `disabled`, `size`
+**Attributes:** `label`, `value`, `default`, `alpha`, `disabled`
 
-**Events:** `input`, `change` — `{ color, alpha, opacity }` from the fill picker.
+**Events:** `input`, `change` — shared PropsKit envelope; `value` is the public color string.
 
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial color.
 
@@ -420,11 +435,11 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-fill>`
 
-Composes a `<fig-field>` and a `fig-fill-picker` swatch into a full-surface property control, same chrome as `propskit-color`. Clicking the field opens the fill picker for solid, gradient, image, video, webcam, and custom modes. There is no hex/opacity text field.
+Uses a plain horizontal surface with a `fig-fill-picker` swatch, sharing chrome with `propskit-color`. Clicking the surface opens the fill picker for solid, gradient, image, video, webcam, and custom modes. There is no hex/opacity text field.
 
-**Attributes:** `label`, `value` (fill JSON), `default`, `mode`, `alpha`, `webcam-mode`, `default-video`, `disabled`, `size`
+**Attributes:** `label`, `value` (fill JSON), `default`, `mode`, `alpha`, `webcam-mode`, `default-video`, `disabled`
 
-**Events:** `input`, `change` — fill object in `event.detail` (`{ type, ... }`).
+**Events:** `input`, `change` — shared PropsKit envelope; `value` is the host's serialized fill value.
 
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial fill. Slot `mode-*` children onto the host to add custom picker tabs.
 
@@ -441,7 +456,7 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-gradient>`
 
-Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property control. Defaults to `edit="picker"` — click the field to open the fill picker.
+Uses a plain horizontal surface with `<fig-input-gradient>`. Defaults to `edit="picker"` — click the surface to open the fill picker.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -451,9 +466,8 @@ Composes a `<fig-field>` and `<fig-input-gradient>` into a full-surface property
 | `edit` | boolean/string | `"picker"` | `true` (inline stops), `false`, or `"picker"` |
 | `mode` | string | `"handle"` | `"handle"` or `"tip"` stop presentation |
 | `disabled` | boolean | `false` | Disabled state |
-| `size` | string | default | Set to `"small"` for the compact layout |
 
-**Events:** `input`, `change` — bubbling, composed events with `{ type: "gradient", gradient }` in `event.detail`.
+**Events:** `input`, `change` — shared PropsKit envelope; `value` is the host's serialized gradient value.
 
 **Methods and state:** `defaultValue`, `isDefault`, and `resetToDefault()`. JSON defaults use structural equality, so object key order does not affect dirty state.
 
@@ -469,15 +483,40 @@ Click the field to open the fill picker. With `edit="true"`, the first stop rece
 
 ---
 
+#### Propskit Palette
+
+`<propskit-palette>`
+
+Uses a plain horizontal surface with a selection-only `<fig-input-palette>` preview inside `<fig-select>`. Import `fig-editor.js` and `fig-editor.css`. Clicking anywhere on the surface opens the palette menu.
+
+`options` is a JSON array of palettes. Each palette accepts color strings or `{ "color", "alpha" }` objects. The first palette is selected when `value` is omitted.
+
+**Attributes:** `label`, `name`, `value` (palette JSON), `default` (palette JSON), `options`, `disabled`
+
+**Events:** `input`, `change`, `optionhover` — shared PropsKit envelope with a typed `Array<{ color, alpha }>` value. `optionhover` does not change the selection.
+
+**Methods and state:** `defaultValue`, `isDefault`, and `resetToDefault()`.
+
+```html
+<propskit-palette
+  label="Palette"
+  options='[["#0D99FF","#14AE5C"],[{"color":"#FFCD29","alpha":0.5},"#F24822"]]'
+></propskit-palette>
+```
+
+---
+
 #### Propskit Switch
 
 `<propskit-switch>`
 
-Composes a `<fig-field>` and an Off/On `<fig-segmented-control>` into a full-surface boolean property control.
+Uses a plain horizontal surface with `<fig-switch>` by default. The entire
+surface toggles the switch. Set `variant="segmented-control"` to render an
+Off/On `<fig-segmented-control>` instead.
 
-**Attributes:** `label`, `checked`, `default`, `disabled`, `name`, `value`, `size`
+**Attributes:** `label`, `checked`, `default`, `disabled`, `name`, `value`, `variant` (`switch` | `segmented-control`)
 
-**Events:** `input`, `change` — forwarded from the inner switch.
+**Events:** `input`, `change` — shared PropsKit envelope with the public boolean value.
 
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore the default checked state.
 
@@ -491,11 +530,11 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore the def
 
 `<propskit-select>`
 
-Composes a `<fig-field>` and `<fig-select>` into a full-surface property control. Requires `fig-editor.js` (which registers `fig-select`). Options can come from the `options` attribute (same formats as `fig-options`: comma-separated, newline-delimited, or a JSON array), or from an authored `<fig-select-options>` child for rich option content.
+Uses a plain horizontal surface and always composes `<fig-select>`. Import `fig-editor.js` and `fig-editor.css`; delayed registration upgrades the authored select. Options can come from the `options` attribute (same formats as `fig-options`: comma-separated, newline-delimited, or a JSON array), or from an authored `<fig-select-options>` child for rich option content.
 
-**Attributes:** `label`, `value`, `default`, `options`, `disabled`, `size`
+**Attributes:** `label`, `value`, `default`, `options`, `disabled`
 
-**Events:** `input`, `change`, `optionhover` — forwarded from the inner select. `optionhover` fires once when the pointer enters an enabled option, with the option value in `event.detail`, without changing the selection.
+**Events:** `input`, `change`, `optionhover` — shared PropsKit envelope. `optionhover` uses the hovered option as `detail.value` without changing the selection.
 
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial selection.
 
@@ -519,11 +558,11 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-text>`
 
-Composes a `<fig-field>` and `<fig-input-text>` into a full-surface, single-line property control. Text input attributes and adornment slots are forwarded to the inner control.
+Uses a plain horizontal surface with `<fig-input-text type="text">`. The inner input defaults to `multiline` and `autoresize`, starts at one line, and grows to a maximum of four lines. Set either attribute to `"false"` to disable that behavior. Other text input attributes and adornment slots are forwarded to the inner control; `type` is not forwarded.
 
-**Attributes:** `label`, `value`, `default`, `placeholder`, `type`, `disabled`, `readonly`, `autoresize`, `size`
+**Attributes:** `label`, `value`, `default`, `placeholder`, `disabled`, `readonly`, `multiline`, `autoresize`
 
-**Events:** `input`, `change` — forwarded from the inner text input.
+**Events:** `input`, `change` — shared PropsKit envelope with the public string value.
 
 Right-click and choose **Reset**, or call `resetToDefault()`, to restore `default` or the initial text.
 
@@ -537,18 +576,17 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
 
 `<propskit-slider>`
 
-Wraps a `<fig-field>` and `<fig-slider>` into a single labeled control. All slider attributes (except `label`, `direction`) are forwarded to the inner slider.
+Uses a plain horizontal surface with `<fig-slider>`. Slider attributes except host-only PropsKit attributes are forwarded to the inner slider.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `label` | string | — | Field label text |
-| `direction` | string | `"column"` | Layout direction |
-| `size` | string | default | Set to `"small"` for the compact layout |
+| `label` | string | `"Label"` | Field label text; use an empty value to hide it |
+| `name` | string | — | Optional event payload name |
 | `default` | number/string | initial `value` | Double-click and right-click reset target |
 | `disabled` | boolean | `false` | Disable interaction |
 | *slider attrs* | — | — | All `<fig-slider>` attributes except host-only PropsKit attributes are forwarded |
 
-**Events:** `input`, `change` — forwarded from the inner slider.
+**Events:** `input`, `change` — shared PropsKit envelope with `value: number | null`.
 
 Double-click or right-click and choose **Reset** to restore `default`, falling back to the initial value.
 
@@ -593,11 +631,12 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 
 A labeled numeric scrubber that composes `<fig-input-wheel>` with an optional `<fig-input-number>`. The host provides row chrome and reset behavior; there is no `fig-field` or `fig-slider`.
 
-Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that exact value is used. Units are omitted by default and arbitrary values such as `px` pass through unchanged. Units remain wrapper and number-field behavior: time aliases receive time-focused defaults, and the effective step is applied to the child wheel without setting a child `units` attribute.
+Omitted `label` renders `"Label"`; `label=""` removes the visible label. Units are omitted by default and arbitrary values such as `px` pass through unchanged. Units remain wrapper and number-field behavior: time aliases receive time-focused defaults, and the effective step is applied to the child wheel without setting a child `units` attribute.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `label` | string | `"Value"` when omitted | Authored values (including blank) are used as-is |
+| `label` | string | `"Label"` | Empty removes the visible label |
+| `name` | string | — | Optional event payload name |
 | `units` | string | — | Optional arbitrary units. `seconds` / `milliseconds` normalize to `s` / `ms` |
 | `value` | number | `0` | Numeric value in `units`. Unbounded unless `min`/`max` are set |
 | `min` | number | — | Inclusive lower bound. Omit for no minimum |
@@ -607,12 +646,10 @@ Omitted `label` renders `"Value"`. If `label` is set, including `label=""`, that
 | `elastic` | boolean/string | `true` | Stretch the composed row past the wheel edges; set `"false"` to disable row stretch. The handle still pulls |
 | `spin` | boolean/string | `true` | Keep wheel ticks synchronized to `value`; set `"false"` to update only the value and number field |
 | `text` | boolean/string | `true` | Include the editable `fig-input-number`; set `"false"` for only `fig-input-wheel` |
-| `size` | string | default | Set to `"small"` for the compact layout |
 | `default` | number/string | initial `value` | Right-click reset target |
 | `disabled` | boolean | `false` | Disable wheel and number |
-| `variant` | string | — | `"minimal"` removes vertical padding |
 
-**Events:** `input` while dragging or typing; `change` on commit. Dragging moves by `step` on every `input`; hold Shift to scrub at `10× step`. `precision` only formats the displayed number. Arrow keys on the focused wheel move by `step`; Shift+arrow moves by `10× step`.
+**Events:** `input` while dragging or typing; `change` on commit. Both use the shared PropsKit envelope with `value: number | null`. Dragging moves by `step` on every `input`; hold Shift to scrub at `10× step`. `precision` only formats the displayed number. Arrow keys on the focused wheel move by `step`; Shift+arrow moves by `10× step`.
 
 ```html
 <propskit-wheel label="Duration" value="1.5" default="0" units="seconds"></propskit-wheel>
@@ -634,14 +671,13 @@ A compact X/Y field with optional percentage units.
 | `x` | number | `50` | Horizontal value |
 | `y` | number | `50` | Vertical value |
 | `default` | JSON string | initial `{ x, y }` | Right-click and group reset target |
-| `label` | string | `"Position"` | Field label; empty values use the semantic default |
+| `label` | string | `"Label"` | Field label; empty removes the visible label |
 | `units` | string | — | `"percent"` shows `%`; omit for no units |
-| `size` | string | default | Set to `"small"` for the compact row |
 | `disabled` | boolean | `false` | Disable both number inputs |
 
 **Properties and methods:** `x`, `y`, and `value` expose the current coordinates; `defaultValue` returns the normalized reset object; `isDefault` compares both coordinates; `resetToDefault()` restores both values.
 
-**Events:** `input` and `change` bubble across shadow boundaries with numeric `{ x, y, units }` in `event.detail`.
+**Events:** `input` and `change` use the shared PropsKit envelope with the public `{ x, y, units }` value.
 
 ```html
 <propskit-position
@@ -652,6 +688,87 @@ A compact X/Y field with optional percentage units.
   default='{"x":50,"y":50}'
 ></propskit-position>
 ```
+
+---
+
+#### Propskit Joystick
+
+`<propskit-joystick>`
+
+A vertical PropsKit surface with a label above a square `fig-joystick` and its X/Y percentage fields.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `value` | JSON string | `{"x":50,"y":50}` | Current percentage coordinates |
+| `default` | JSON string | initial value | Right-click and group reset target |
+| `label` | string | `"Label"` | Field label; empty removes the visible label |
+| `axis-labels` | string | — | One, two, or four labels forwarded to the joystick |
+| `coordinates` | string | `"screen"` | `"screen"` or `"math"` coordinate mode |
+| `precision` | number | `3` | X/Y field display precision |
+| `disabled` | boolean | `false` | Disable the joystick and both fields |
+
+The inner joystick always uses `fields="true"` and `aspect-ratio="1 / 1"`. The `.value`, `defaultValue`, and event values are typed `{ x, y }` percentage objects. `isDefault` compares both axes and `resetToDefault()` restores the reset value.
+
+```html
+<propskit-joystick
+  label="Position"
+  value='{"x":35,"y":65}'
+  default='{"x":50,"y":50}'
+  axis-labels="X Y"
+></propskit-joystick>
+```
+
+---
+
+#### Propskit Origin
+
+`<propskit-origin>`
+
+A vertical PropsKit surface with a label above a square `fig-origin-grid` and its X/Y percentage fields. The inner grid always uses `fields="true"` and `aspect-ratio="1 / 1"`.
+
+Its `.value`, `defaultValue`, and event values are typed `{ x, y }` objects. The `value` and `default` attributes serialize that shape as JSON. `precision` and `drag` pass through to the grid.
+
+```html
+<propskit-origin
+  label="Transform origin"
+  value='{"x":50,"y":50}'
+  default='{"x":50,"y":50}'
+></propskit-origin>
+```
+
+---
+
+#### Propskit Easing
+
+`<propskit-easing>`
+
+A vertical PropsKit surface around `fig-easing-curve`, constrained to cubic-bezier presets. Its typed value is `{ x1, y1, x2, y2 }`; `value` and `default` serialize that shape as JSON.
+
+```html
+<propskit-easing
+  label="Easing"
+  value='{"x1":0.42,"y1":0,"x2":0.58,"y2":1}'
+  default='{"x1":0.42,"y1":0,"x2":0.58,"y2":1}'
+></propskit-easing>
+```
+
+---
+
+#### Propskit Spring
+
+`<propskit-spring>`
+
+A vertical PropsKit surface around `fig-easing-curve`, constrained to spring presets. Its typed value is `{ stiffness, damping, mass }`; `value` and `default` serialize that shape as JSON.
+
+```html
+<propskit-spring
+  label="Spring"
+  value='{"stiffness":200,"damping":15,"mass":1}'
+  default='{"stiffness":200,"damping":15,"mass":1}'
+></propskit-spring>
+```
+
+Both curve controls forward `precision` and `edit`, support `disabled` and `variant="minimal"`, expose `isDefault`, and implement `resetToDefault()`. Their `input` and `change` events use the shared PropsKit envelope.
 
 ---
 
@@ -667,12 +784,11 @@ A compact `<fig-group>` wrapper that combines `<propskit-color>` and `<propskit-
 | `value` | JSON string | `{"x":50,"y":50,"color":"#D9D9D9"}` | Current color-point value |
 | `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
 | `open` | boolean | `true` | Passed to the internal `fig-group` |
-| `size` | string | default | Passed to both internal PropsKit controls |
 | `disabled` | boolean | `false` | Disable both internal controls |
 
 The internal group always has `compact`. `value` uses the same `{ x, y, color }` shape as `<fig-canvas-control type="color">`.
 
-**Events:** `input` and `change` bubble with numeric coordinates and `units` in `event.detail`. `openchange` mirrors the internal group's expanded state.
+**Events:** `input` and `change` use the shared PropsKit envelope with the public color-point value. `openchange` mirrors the internal group's expanded state.
 
 ```html
 <propskit-color-point
@@ -696,12 +812,11 @@ A compact `<fig-group>` wrapper that combines `<propskit-position>` and `<propsk
 | `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
 | `open` | boolean | `true` | Passed to the internal `fig-group` |
 | `units` | string | — | `"percent"` passes percentage units to position and radius; omit for no units |
-| `size` | string | default | Passed to both internal PropsKit controls |
 | `disabled` | boolean | `false` | Disable both internal controls |
 
 The internal group always has `compact`. `value` uses the same `{ x, y, radius }` shape as `<fig-canvas-control type="point-radius">`. Numeric radius values use pixels; percentage strings preserve `%`.
 
-**Events:** `input` and `change` bubble with numeric `{ x, y, radius, units }` in `event.detail`. `openchange` mirrors the internal group's expanded state.
+**Events:** `input` and `change` use the shared PropsKit envelope with the public point-radius value. `openchange` mirrors the internal group's expanded state.
 
 ```html
 <propskit-point-radius
@@ -726,12 +841,11 @@ A compact `<fig-group>` wrapper combining `<propskit-position>` with radius and 
 | `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
 | `open` | boolean | `true` | Passed to the internal `fig-group` |
 | `units` | string | — | `"percent"` passes percentage units to position and radius; omit for no units |
-| `size` | string | default | Passed to every internal PropsKit control |
 | `disabled` | boolean | `false` | Disable every internal control |
 
 The internal group always has `compact`. `value` uses the same `{ x, y, radius, angle }` shape as `<fig-canvas-control type="point-radius-angle">`. Numeric radius values use pixels; percentage strings preserve `%`. Angles are degrees.
 
-**Events:** `input` and `change` bubble with numeric `{ x, y, radius, angle, units }` in `event.detail`. `openchange` mirrors the internal group's expanded state.
+**Events:** `input` and `change` use the shared PropsKit envelope with the public point-radius-angle value. `openchange` mirrors the internal group's expanded state.
 
 ```html
 <propskit-point-radius-angle
@@ -756,12 +870,11 @@ A compact `<fig-group>` wrapper combining start and end `<propskit-position>` co
 | `collapsible` | boolean | `true` | Passed to the internal `fig-group` |
 | `open` | boolean | `true` | Passed to the internal `fig-group` |
 | `units` | string | — | `"percent"` passes percentage units to both positions; omit for no units |
-| `size` | string | default | Passed to both position controls |
 | `disabled` | boolean | `false` | Disable both position controls |
 
 The internal group always has `compact`. `value` uses the same `{ x, y, x2, y2 }` shape as `<fig-canvas-control type="point-point">`.
 
-**Events:** `input` and `change` bubble with numeric `{ x, y, x2, y2, units }` in `event.detail`. `openchange` mirrors the internal group's expanded state.
+**Events:** `input` and `change` use the shared PropsKit envelope with the public point-point value. `openchange` mirrors the internal group's expanded state.
 
 ```html
 <propskit-point-point
@@ -858,6 +971,7 @@ Waveform oscillator input with composable wave functions, live SVG waveform prev
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | JSON string | — | `{"waves":[{"type":"sine","frequency":1,"amplitude":1,"phase":0,"offset":0}]}` |
+| `name` | string | — | Optional event payload name |
 | `default` | JSON string | initial `value` | Right-click reset target |
 | `precision` | number | `2` | Decimal places |
 | `aspect-ratio` | string | `"2 / 1"` | Editor aspect ratio |
@@ -874,8 +988,8 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore the osc
 
 | Event | Detail |
 |---|---|
-| `input` | `{ value, data, preset }` — while dragging or editing |
-| `change` | `{ value, data, preset }` — on release or committed edit |
+| `input` | Shared PropsKit `{ control, value, name? }` envelope while dragging or editing |
+| `change` | Shared PropsKit `{ control, value, name? }` envelope on release or committed edit |
 
 ```html
 <propskit-oscillator
@@ -1264,6 +1378,7 @@ An interactive bezier or spring easing curve editor with a preset dropdown and m
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | string | — | Bezier: `"0.42, 0, 0.58, 1"` or Spring: `"spring(200, 15, 1)"` |
+| `mode` | string | — | Optional `"bezier"` or `"spring"` constraint; filters presets and rejects the other value type |
 | `precision` | number | `2` | Decimal places |
 | `aspect-ratio` | string | — | Editor aspect ratio |
 | `edit` | boolean | `true` | Show the editor and custom bezier/spring options; set to `"false"` for preset-only |

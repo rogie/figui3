@@ -29,7 +29,7 @@ Data-driven (no authored options):
 />
 ```
 
-- Attrs: `value`, `label`, `options` (comma / newline / JSON), `variant` (`ghost`), `full`, `disabled`, `position` (`bottom left` default, also `bottom right`, `top left`, `top right`, `bottom center`, `top center`), `offset`, `closedby`, `open`
+- Attrs: `value`, `label`, `options` (comma / newline / JSON), `variant` (`ghost`), `subtle` (applies the secondary hover/focus fill to every option), `full`, `disabled`, `position` (`bottom left` default, also `bottom right`, `top left`, `top right`, `bottom center`, `top center`), `offset`, `closedby`, `open`
 - Events: `input` / `change` on commit; `optionhover` with the option value in `detail` (does not change selection). Use a native listener for `optionhover`.
 - Do not `stopPropagation` on option click — React light-DOM handlers must run.
 - Internal popup uses `popover="manual"` so the list works inside `fig-popup variant="popover"`.
@@ -63,7 +63,7 @@ Data-driven (no authored options):
 </fig-select-option>
 ```
 
-- Attrs: `value` (falls back to trimmed `textContent`), `label` (closed-trigger text when content is rich), `selected`, `disabled`
+- Attrs: `value` (falls back to trimmed `textContent`), `label` (closed-trigger text when content is rich), `selected`, `disabled`, `subtle` (secondary hover/focus fill)
 - `role="option"`, `aria-selected`, `aria-disabled`
 
 ## `fig-fill-picker`

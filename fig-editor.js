@@ -499,6 +499,9 @@ class FigSelect extends HTMLElement {
   #button = null;
   #popup = null;
   #prependEl = null;
+  #prependSlot = null;
+  #prependFallback = null;
+  #customTriggerSlot = null;
   #labelEl = null;
   #panelSlot = null;
   #observer = null;
@@ -534,6 +537,7 @@ class FigSelect extends HTMLElement {
       "closedby",
       "open",
       "variant",
+      "aria-label",
     ];
   }
 
@@ -581,7 +585,7 @@ class FigSelect extends HTMLElement {
       this.#syncValue();
       return;
     }
-    if (name === "value" || name === "label") {
+    if (name === "value" || name === "label" || name === "aria-label") {
       this.#syncValue();
       return;
     }
@@ -728,7 +732,7 @@ class FigSelect extends HTMLElement {
           text-overflow: ellipsis;
           cursor: default;
         }
-        .fig-select-trigger:has(.fig-select-prepend:not(:empty)) {
+        .fig-select-trigger:has(.fig-select-prepend.has-content) {
           padding-left: 0;
         }
         .fig-select-trigger:hover,
@@ -763,7 +767,20 @@ class FigSelect extends HTMLElement {
           margin-right: var(--spacer-1, 0.25rem);
           pointer-events: none;
         }
-        .fig-select-prepend:empty {
+        .fig-select-prepend:not(.has-content) {
+          display: none;
+        }
+        .fig-select-prepend > slot,
+        .fig-select-prepend-fallback,
+        slot[name="trigger"] {
+          display: contents;
+        }
+        slot[name="prepend-trigger"]::slotted([data-fig-select-generated]) {
+          display: contents;
+        }
+        .fig-select-label[hidden],
+        .fig-select-prepend[hidden],
+        slot[name="trigger"][hidden] {
           display: none;
         }
         /* Listbox chrome from document fig-select::part(listbox).
@@ -795,11 +812,20 @@ class FigSelect extends HTMLElement {
     prependEl.className = "fig-select-prepend";
     prependEl.setAttribute("part", "prepend");
     prependEl.setAttribute("aria-hidden", "true");
+    const prependSlot = document.createElement("slot");
+    prependSlot.setAttribute("name", "prepend-trigger");
+    prependSlot.hidden = true;
+    const prependFallback = document.createElement("span");
+    prependFallback.className = "fig-select-prepend-fallback";
+    prependEl.append(prependSlot, prependFallback);
 
     const labelEl = document.createElement("span");
     labelEl.className = "fig-select-label";
     labelEl.setAttribute("part", "label");
-    button.append(prependEl, labelEl);
+    const customTriggerSlot = document.createElement("slot");
+    customTriggerSlot.setAttribute("name", "trigger");
+    customTriggerSlot.hidden = true;
+    button.append(prependEl, labelEl, customTriggerSlot);
 
     const popup = document.createElement("dialog", { is: "fig-popup" });
     popup.setAttribute("is", "fig-popup");
@@ -823,6 +849,9 @@ class FigSelect extends HTMLElement {
 
     this.#button = button;
     this.#prependEl = prependEl;
+    this.#prependSlot = prependSlot;
+    this.#prependFallback = prependFallback;
+    this.#customTriggerSlot = customTriggerSlot;
     this.#labelEl = labelEl;
     this.#popup = popup;
     this.#panelSlot = panelSlot;
@@ -871,8 +900,20 @@ class FigSelect extends HTMLElement {
     return { top: 8, right: 8, bottom: 8, left: 8 };
   }
 
+  #getTriggerAlignmentRect() {
+    const labelRect = this.#labelEl?.getBoundingClientRect();
+    if (labelRect?.width && labelRect?.height) return labelRect;
+    const customTriggerRect = this.querySelector(
+      ':scope > [slot="trigger"]',
+    )?.getBoundingClientRect();
+    if (customTriggerRect?.width && customTriggerRect?.height) {
+      return customTriggerRect;
+    }
+    return this.#prependEl?.getBoundingClientRect() ?? null;
+  }
+
   #readLabelRectSnapshot() {
-    const rect = this.#labelEl?.getBoundingClientRect();
+    const rect = this.#getTriggerAlignmentRect();
     if (!rect) return null;
     return {
       x: rect.x,
@@ -959,7 +1000,7 @@ class FigSelect extends HTMLElement {
     this.#originalPositionPopup?.();
 
     const popupRect = popup.getBoundingClientRect();
-    const labelRect = label.getBoundingClientRect();
+    const labelRect = this.#getTriggerAlignmentRect();
     const optionTextRect = this.#getOptionTextRect(selected);
     if (
       !popupRect.width ||
@@ -1146,11 +1187,57 @@ class FigSelect extends HTMLElement {
   }
 
   #syncPrepend(option) {
-    if (!this.#prependEl) return;
-    const source = option?.querySelector?.(':scope > [slot="prepend"]');
-    this.#prependEl.replaceChildren(
-      ...Array.from(source?.childNodes ?? [], (node) => node.cloneNode(true)),
+    if (
+      !this.#prependEl ||
+      !this.#prependSlot ||
+      !this.#prependFallback ||
+      !this.#customTriggerSlot
+    ) {
+      return;
+    }
+    const customTrigger = this.querySelector(':scope > [slot="trigger"]');
+    const generatedTrigger = this.querySelector(
+      ':scope > [slot="prepend-trigger"][data-fig-select-generated]',
     );
+    let triggerPrepend = this.querySelector(
+      ':scope > [slot="prepend-trigger"]:not([data-fig-select-generated])',
+    );
+    const source = option?.querySelector?.(':scope > [slot="prepend"]');
+    this.#customTriggerSlot.hidden = !customTrigger;
+    this.#labelEl.hidden = Boolean(customTrigger);
+    this.#prependEl.hidden = Boolean(customTrigger);
+    if (customTrigger) {
+      generatedTrigger?.remove();
+      this.#prependEl.classList.remove("has-content");
+      this.#prependSlot.hidden = true;
+      this.#prependFallback.replaceChildren();
+      return;
+    }
+    if (!triggerPrepend && source?.childNodes.length) {
+      const generated = generatedTrigger || document.createElement("span");
+      generated.setAttribute("slot", "prepend-trigger");
+      generated.setAttribute("data-fig-select-generated", "");
+      generated.replaceChildren(
+        ...Array.from(source.childNodes, (node) => node.cloneNode(true)),
+      );
+      if (generated.parentElement !== this) this.append(generated);
+      triggerPrepend = generated;
+    } else if (triggerPrepend) {
+      generatedTrigger?.remove();
+    } else {
+      generatedTrigger?.remove();
+    }
+    const hasContent = Boolean(
+      triggerPrepend,
+    );
+    this.#prependEl.classList.toggle("has-content", hasContent);
+    this.#prependSlot.hidden = !triggerPrepend;
+    this.#prependFallback.hidden = Boolean(triggerPrepend);
+    if (triggerPrepend) {
+      this.#prependFallback.replaceChildren();
+      return;
+    }
+    this.#prependFallback.replaceChildren();
   }
 
   #syncPopupAttrs() {
@@ -1266,7 +1353,10 @@ class FigSelect extends HTMLElement {
       if (this.#labelEl) this.#labelEl.textContent = label;
       this.#syncPrepend(match);
 
-      const ariaLabel = this.getAttribute("label") || "Select";
+      const ariaLabel =
+        this.getAttribute("aria-label") ||
+        this.getAttribute("label") ||
+        "Select";
       this.#button?.setAttribute("aria-label", ariaLabel);
 
       // Don't scrollToOption while open — reposition/sync would fight overflow paging.

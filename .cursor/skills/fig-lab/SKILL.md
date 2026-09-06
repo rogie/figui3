@@ -27,33 +27,42 @@ import "@rogieking/figui3/fig-lab.css";
 import "@rogieking/figui3/fig-lab.js";
 ```
 
-`propskit-select` prefers `fig-select` (import `fig-editor.js` + `fig-editor.css`). Without editor, it falls back.
+`propskit-select` and `propskit-palette` render `fig-select`; import `fig-editor.js` + `fig-editor.css` to register and style them.
 
 `fig-editor.js` already imports `fig-lab.js`; lab **CSS** is still required for lab visuals.
 
 ## Shared propskit
 
-- `label`, `direction` (`horizontal` default), `size` (`""` | `small`; `large` remains an alias for the default), `disabled`
-- `variant="minimal"` — removes vertical row padding and reveals the field background on hover
+- Plain labeled component surfaces; joystick, origin, easing, and spring use a
+  vertical label-above-control layout
+- `label` (omitted renders `"Label"`; `label=""` hides it), `disabled`
+- Optional `name` reflects to the host and appears in event details only when non-empty
 - `default` — reset target (may differ from initial `value`)
 - Right-click **Reset** menu; `resetToDefault()` on a ref
 - `propskit-slider` also double-click resets
 - Forward remaining attrs to the inner control except where a component note says otherwise
-- Rows are large by default; `propskit-group size="small"` applies compact sizing to children without an authored size
+- `input` / `change`: `{ control, value, name? }`, dispatched from the outer host; `event.target.value === event.detail.value`. Select `optionhover` uses the same envelope
+- Switch values are boolean; numeric number/slider/wheel values are finite numbers or `null`; structured and serialized values exactly match the host `.value`
+- Shared style variables use `--propskit-{padding-block,padding-inline,background,border,color,hover-background,hover-border,hover-color,label-inline-size,input-inline-size}`; use a tag prefix such as `--propskit-select-background` for one control
 
 ## Control choice
 
 | Intent | Use |
 |---|---|
-| Labeled boolean | `propskit-switch` |
+| Labeled boolean | `propskit-switch` (`fig-switch` by default; `variant="segmented-control"` for Off/On choices) |
 | Labeled continuous number | `propskit-slider` |
 | Standalone scrubbable number | `fig-input-wheel` |
 | Labeled scrubbable number or time | `propskit-wheel` |
 | Labeled exact number | `propskit-number` |
 | Labeled text | `propskit-text` |
 | Labeled discrete list | `propskit-select` (not `fig-dropdown`) |
+| Labeled palette choice | `propskit-palette` |
 | Labeled color / fill / gradient | `propskit-color` / `propskit-fill` / `propskit-gradient` |
 | X/Y | `propskit-position` |
+| Interactive X/Y plane | `propskit-joystick` |
+| Transform origin | `propskit-origin` |
+| Cubic-bezier easing | `propskit-easing` |
+| Spring motion | `propskit-spring` |
 | Spatial on a canvas | `fig-canvas-control` |
 | Angle | `fig-input-angle` |
 | Section of props | `propskit-group` or core `fig-group` |

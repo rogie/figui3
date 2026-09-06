@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.10.0]
+
+### Added
+
+- Added `propskit-palette` with typed palette values, fixed previews, `fig-select` options, hover events, defaults, and reset support.
+- Added `propskit-joystick` and `propskit-origin` with typed `{ x, y }` values and forced square X/Y controls.
+- Added `propskit-easing` and `propskit-spring` with typed curve values and constrained `fig-easing-curve` modes.
+- Added `mode="bezier|spring"` to `fig-easing-curve`, including filtered presets and constrained manual entry.
+- Added `subtle`, `aria-label`, `slot="trigger"`, and `slot="prepend-trigger"` support to `fig-select`.
+- Added shared PropsKit `name`, event-envelope, focus, reset, disabled, label, and logical styling-variable contracts.
+- Added body typography tokens, `--radius-medium-large`, `--fig-swatch-border-radius`, and button-control spacing variables.
+
+### Changed
+
+- Refactored PropsKit surfaces to remove internal `fig-field` wrappers and standardize their DOM, styling, labels, accessible names, and value synchronization.
+- `propskit-select` now always uses `fig-select`; lab playground mode loads the editor bundle automatically.
+- `propskit-switch` now defaults to `fig-switch`, returns boolean values, toggles from its full surface, and supports `variant="segmented-control"`.
+- `propskit-text` now uses a text-only, multiline autoresizing input that grows from one to four lines while preserving label position and surface insets.
+- PropsKit controls now suppress text selection outside editable fields and consistently use medium-large surface radii, medium swatch radii, and configurable subfield backgrounds and borders.
+- Removed obsolete horizontal PropsKit `direction`, `size`, and minimal-variant styling; spatial and curve controls retain `variant="minimal"`.
+- Refined `fig-input-palette` borders, `fig-joystick` axis-label layout, and small body typography.
+- Expanded playground examples, attribute controls, JSX types, README documentation, and bundled skills for the new contracts and components.
+
+### Fixed
+
+- Rich `fig-select` prepend and custom triggers now render, update after selection, preserve accessible names, and align their menus correctly.
+- `propskit-number` retains input focus when using arrow keys.
+- `propskit-wheel` initializes its visible number value before interaction.
+- PropsKit text and slider labels now share the correct inset and alignment.
+- `propskit-text` now grows without overlapping its label or losing its input padding and margins.
+- Corrected palette trigger sizing, PropsKit switch spacing and cursor behavior, and color, fill, gradient, and palette preview radii.
+
 ## [8.9.49]
 
 ### Added

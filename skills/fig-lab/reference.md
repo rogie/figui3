@@ -10,28 +10,65 @@ React recipes: [components.md](components.md).
 - Slider: double-click also resets
 - Equality helpers treat booleans and JSON objects
 
-## Propskit variants
+## Propskit switch variants
 
-`variant="minimal"` is available on switch, color, fill, gradient, select, text, number, slider, position, and wheel controls. It removes vertical host padding, keeps the inner field transparent at rest, and restores the secondary field background on hover.
+`propskit-switch` accepts `variant="switch|segmented-control"`.
+`switch` is the default and renders `fig-switch`; `segmented-control` renders
+explicit Off/On choices. The full surface toggles either variant. Its `.value`
+and `input` / `change` event values are boolean.
 
-## Propskit sizes
+## Propskit surfaces and events
 
-PropsKit rows are large by default; explicit `size="large"` remains supported.
-`propskit-group size="small"` applies `size="small"` to nested controls that do
-not define their own size and removes generated sizes when the group returns to
-the default size.
+Surface controls are horizontal and do not compose `fig-field`. Omitted `label`
+renders `"Label"` and `label=""` hides the visible label. Optional non-empty
+`name` reflects on the host.
+
+`input` and `change` dispatch from the outer host with
+`{ control, value, name? }`; `event.target.value` equals `detail.value`.
+`propskit-select` and `propskit-palette` use the same envelope for
+`optionhover`. Switch values are boolean. Number, slider, and wheel values are
+finite numbers or `null`. Structured and serialized values are exactly the
+host's public `.value`.
+
+Shared style variables use the suffixes `padding-block`, `padding-inline`,
+`background`, `border`, `color`, `hover-background`, `hover-border`,
+`hover-color`, `label-inline-size`, and `input-inline-size` under the
+`--propskit-*` prefix. A per-control prefix, such as
+`--propskit-select-background`, overrides the shared value.
+
+## `propskit-palette`
+
+Observed: `label`, `aria-label`, `options`, `value`, `disabled`.
+
+Always renders `fig-select` with fixed, disabled `fig-input-palette` previews.
+Import `fig-editor.js` and `fig-editor.css`.
+
+- `options`: JSON array of palette arrays
+- Palette entries: color strings or `{ "color": string, "alpha": number }`
+- `.value`, `defaultValue`, and event `detail.value`: typed `{ color, alpha }[]`
+- First option is the fallback when `value` is omitted or does not match
+- `input`, `change`, and `optionhover` use the shared PropsKit envelope
+- `isDefault` uses structural equality; `resetToDefault()` restores `default`
 
 ## `propskit-select`
 
-Observed: `label`, `direction`, `aria-label`, `options`, `value`.
+Observed: `label`, `aria-label`, `options`, `value`.
 
-Uses `fig-select` when `fig-select`, `fig-select-options`, and `fig-select-option` are registered; otherwise a fallback control.
+Always renders `fig-select`. Import `fig-editor.js` and `fig-editor.css`; delayed registration upgrades the authored element.
 
 Options attr: JSON array, comma, or newline. Authored `fig-select-options slot="panel"` wins for rich menus.
 
+## `propskit-text`
+
+Composes `fig-input-text` with `multiline` and `autoresize` enabled by default.
+The textarea starts at one line, grows with its content, and scrolls after four
+lines. Set `multiline="false"` or `autoresize="false"` to disable either
+default. The inner control is always `type="text"`; a host `type` attribute is
+ignored rather than forwarded.
+
 ## `propskit-slider`
 
-Attrs: `type` (`range`, `hue`, `delta`, `stepper`, `opacity`), `color`, `label`, `default`, `units`, `elastic` (default true), `size`, `steppers`, `disabled`.
+Attrs: `type` (`range`, `hue`, `delta`, `stepper`, `opacity`), `color`, `label`, `default`, `units`, `elastic` (default true), `steppers`, `disabled`.
 
 Inner `fig-slider` still needs `min` / `max` / `step` / `value` as forwarded attrs.
 
@@ -53,12 +90,71 @@ Standalone interactive SVG tick + handle scrubber in the lab bundle.
 
 ## `propskit-wheel`
 
-Composes `fig-input-wheel` with an optional `fig-input-number`. It retains `label`, `text`, `spin`, `precision`, `units`, `default`/reset, `size`, and `variant`. `elastic` defaults to true and controls stretching of the composed row; the child wheel's handle pull remains active when row stretching is disabled. Set `spin="false"` to update the value and number field while leaving wheel ticks stationary. Units and time aliases are wrapper/number-field behavior: normalized `s` defaults to step `0.1` and precision `2`, normalized `ms` defaults to step `100` and precision `0`, and other units default to step `1` and precision `0`. The wrapper applies the effective step and unit-aware `aria-valuetext` to the child wheel, but never sets child `units`.
+Composes `fig-input-wheel` with an optional `fig-input-number`. It retains `label`, `text`, `spin`, `precision`, `units`, and `default`/reset. `elastic` defaults to true and controls stretching of the composed row; the child wheel's handle pull remains active when row stretching is disabled. Set `spin="false"` to update the value and number field while leaving wheel ticks stationary. Units and time aliases are wrapper/number-field behavior: normalized `s` defaults to step `0.1` and precision `2`, normalized `ms` defaults to step `100` and precision `0`, and other units default to step `1` and precision `0`. The wrapper applies the effective step and unit-aware `aria-valuetext` to the child wheel, but never sets child `units`.
 
 ```html
 <propskit-wheel label="Duration" value="1.5" units="seconds"></propskit-wheel>
 <propskit-wheel label="Frames" value="12" text="false"></propskit-wheel>
 ```
+
+## `propskit-joystick`
+
+Composes a PropsKit label above `fig-joystick`. The plane always uses
+`aspect-ratio="1 / 1"` and the X/Y fields are always enabled.
+
+- Observed: `value`, `default`, `label`, `aria-label`, `axis-labels`,
+  `coordinates`, `precision`, `disabled`
+- `value` and `default`: serialized `{ "x": number, "y": number }` percentages
+- `.value`, `defaultValue`, and event `detail.value`: typed `{ x, y }`
+- `input` and `change` use the shared PropsKit envelope
+- `isDefault` compares both axes; `resetToDefault()` restores `default`
+
+```html
+<propskit-joystick
+  label="Position"
+  value='{"x":35,"y":65}'
+  default='{"x":50,"y":50}'
+  axis-labels="X Y"
+></propskit-joystick>
+```
+
+## `propskit-origin`
+
+Composes a PropsKit label above `fig-origin-grid`. The grid always uses
+`aspect-ratio="1 / 1"` and its X/Y fields are always enabled.
+
+- Observed: `value`, `default`, `label`, `aria-label`, `precision`, `drag`,
+  `disabled`
+- `value` and `default`: serialized `{ "x": number, "y": number }` percentages
+- `.value`, `defaultValue`, and event `detail.value`: typed `{ x, y }`
+- `input` and `change` use the shared PropsKit envelope
+
+## `propskit-easing`
+
+Composes a PropsKit label above `fig-easing-curve`, constrained to bezier mode.
+
+- Observed: `value`, `default`, `label`, `aria-label`, `precision`, `edit`,
+  `disabled`
+- `value` and `default`: serialized `{ "x1", "y1", "x2", "y2" }` objects
+- `.value`, `defaultValue`, and event `detail.value`: typed
+  `{ x1, y1, x2, y2 }`
+- X coordinates are clamped to `0–1`; Y coordinates may overshoot
+
+## `propskit-spring`
+
+Composes a PropsKit label above `fig-easing-curve`, constrained to spring mode.
+
+- Observed: `value`, `default`, `label`, `aria-label`, `precision`, `edit`,
+  `disabled`
+- `value` and `default`: serialized `{ "stiffness", "damping", "mass" }`
+  objects
+- `.value`, `defaultValue`, and event `detail.value`: typed
+  `{ stiffness, damping, mass }`
+- Spring values must be positive
+
+All three controls force a square primitive, support `variant="minimal"`,
+participate in PropsKit group reset, and delegate focus to their first
+interactive descendant.
 
 ## Point JSON shapes
 

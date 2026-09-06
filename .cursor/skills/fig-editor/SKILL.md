@@ -32,9 +32,9 @@ Registered tags:
 
 | Tag | Role |
 |---|---|
-| `fig-select` | Trigger + popup listbox |
+| `fig-select` | Trigger + popup listbox (`subtle` applies to all options) |
 | `fig-select-options` | Scrollable panel (`slot="panel"`), overflow chevrons |
-| `fig-select-option` | Option (`value`, `label`, `selected`, `disabled`) |
+| `fig-select-option` | Option (`value`, `label`, `selected`, `disabled`, `subtle`) |
 | `fig-fill-picker` | Full fill editor dialog (solid, gradient, image, video, webcam, custom modes) |
 | `fig-interpolation-swatch` | Gradient interpolation preview swatch |
 
@@ -42,7 +42,7 @@ Registered tags:
 
 - `fig-dropdown` (core): native `<select>`.
 - `fig-select` (this skill): custom listbox. Use this for Figma-style menus.
-- `propskit-select` (lab): labeled `fig-field` wrapping `fig-select` (falls back if select is not registered).
+- `propskit-select` (lab): labeled horizontal surface that always renders `fig-select`; this editor bundle is required to register and style it.
 
 Author options as React children, or pass `options`. Do not `stopPropagation` on option click. `optionhover` is a native listener.
 

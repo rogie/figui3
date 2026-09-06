@@ -2,17 +2,21 @@
 
 Experimental. APIs may change. React contract: [../figui3/react.md](../figui3/react.md). Attrs: [reference.md](reference.md).
 
-Install `fig-lab.css` + `fig-lab.js`. `propskit-select` prefers `fig-select` — also import `fig-editor.js` + `fig-editor.css` for rich menus. `fig-editor.js` already imports `fig-lab.js`; lab **CSS** is still required.
+Install `fig-lab.css` + `fig-lab.js`. `propskit-select` and `propskit-palette` use `fig-select`, so also import `fig-editor.js` + `fig-editor.css`. `fig-editor.js` already imports `fig-lab.js`; lab **CSS** is still required.
 
 Handlers below assume `onInput` / `onChange` from the React contract.
 
 ## Shared propskit
 
-Full-surface `fig-field` wrappers. Prefer these over hand-rolled label+control rows.
+Plain horizontal component surfaces. Prefer these over hand-rolled label+control rows.
 
-Shared attrs: `label`, `direction` (`horizontal` default), `size` (`""` | `small`; `large` is an alias for default), `disabled`, `variant="minimal"` (no vertical padding; field background on hover), `default` (reset target, may differ from initial `value`).
+Shared attrs: `label` (omitted renders `"Label"`; `label=""` hides it), optional `name`, `disabled`, `default` (reset target, may differ from initial `value`).
 
-Right-click **Reset**; `resetToDefault()` on a ref. `propskit-slider` also double-click resets. Remaining attrs forward to the inner control. Rows are large by default; `propskit-group size="small"` applies compact sizing to children without an authored size.
+Right-click **Reset**; `resetToDefault()` on a ref. `propskit-slider` also double-click resets. Remaining attrs forward to the inner control.
+
+`input` and `change` dispatch from the outer host with `{ control, value, name? }`; `event.target.value` matches `detail.value`. `optionhover` uses the same envelope. Numeric number/slider/wheel values are finite numbers or `null`.
+
+Shared CSS variables: `--propskit-padding-block`, `--propskit-padding-inline`, `--propskit-background`, `--propskit-border`, `--propskit-color`, `--propskit-hover-background`, `--propskit-hover-border`, `--propskit-hover-color`, `--propskit-label-inline-size`, and `--propskit-input-inline-size`. Prefix the control name for one row, for example `--propskit-select-background`.
 
 ```tsx
 const rowRef = useRef<HTMLElement>(null);
@@ -26,13 +30,14 @@ rowRef.current?.resetToDefault();
 ```tsx
 <propskit-switch
   label="Visible"
+  variant="switch"
   checked={on ? "true" : undefined}
   default="true"
   onInput={onInput}
 />
 ```
 
-- Inner: `fig-switch`. `checked` / `default` boolean.
+- Inner: `fig-switch` by default. `variant="segmented-control"` renders the Off/On `fig-segmented-control`. The full surface toggles either control. `checked`, `default`, `.value`, and event values are boolean.
 
 ### `propskit-color`
 
@@ -46,7 +51,7 @@ rowRef.current?.resetToDefault();
 />
 ```
 
-- Inner: `fig-fill-picker` + `fig-swatch`. Clicking the field opens the picker anchored to the host. Focus ring on the field, not the swatch.
+- Inner: `fig-fill-picker` + `fig-swatch`. Clicking the surface opens the picker anchored to the host. Focus ring on the surface, not the swatch.
 
 ### `propskit-fill`
 
@@ -76,7 +81,22 @@ rowRef.current?.resetToDefault();
 />
 ```
 
-- Inner: `fig-input-gradient`. Default `edit="picker"`. `mode="handle|tip"` for inline edit. Clicking the field opens the picker anchored to the host.
+- Inner: `fig-input-gradient`. Default `edit="picker"`. `mode="handle|tip"` for inline edit. Clicking the surface opens the picker anchored to the host.
+
+### `propskit-palette`
+
+```tsx
+<propskit-palette
+  label="Palette"
+  options='[["#0D99FF","#14AE5C"],[{"color":"#FFCD29","alpha":0.5},"#F24822"]]'
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Inner: `fig-select` with fixed, disabled `fig-input-palette` previews. Requires the editor bundle.
+- `options` is an array of palette arrays. Public and event values are typed `{ color, alpha }[]`; omission of `value` selects the first palette.
+- Supports `optionhover`, typed `defaultValue`, `isDefault`, and `resetToDefault()`.
 
 ### `propskit-select`
 
@@ -101,7 +121,7 @@ Rich options (requires editor):
 </propskit-select>
 ```
 
-- Inner: `fig-select` when registered; otherwise a fallback. Authored `fig-select-options slot="panel"` wins. Options stay in light DOM.
+- Inner: always `fig-select`; editor registration is required. Authored `fig-select-options slot="panel"` wins. Options stay in light DOM.
 
 ### `propskit-text`
 
@@ -114,7 +134,10 @@ Rich options (requires editor):
 />
 ```
 
-- Inner: `fig-input-text`. `type`, `readonly`.
+- Inner: `fig-input-text` with `multiline` and `autoresize` enabled by default.
+  It starts at one line and grows through four lines. Use `"false"` to disable
+  either default. The inner control is always `type="text"`; the host `type`
+  attribute is not forwarded. `readonly` is forwarded.
 
 ### `propskit-number`
 
@@ -138,7 +161,6 @@ Rich options (requires editor):
 ```tsx
 <propskit-slider
   label="Opacity"
-  direction="horizontal"
   type="opacity"
   value="100"
   default="100"
@@ -163,7 +185,7 @@ Rich options (requires editor):
 />
 ```
 
-- Inner: `fig-input-wheel` + optional `fig-input-number`. Attrs: `label`, `text`, `spin`, `elastic` (row stretch, default true), `precision`, `units`, `default`, `size`, `variant`. Units stay on the wrapper; effective step is applied to the wheel. `spin="false"` updates value without moving ticks.
+- Inner: `fig-input-wheel` + optional `fig-input-number`. Attrs: `label`, `text`, `spin`, `elastic` (row stretch, default true), `precision`, `units`, `default`. Units stay on the wrapper; effective step is applied to the wheel. `spin="false"` updates value without moving ticks.
 
 ### `propskit-position`
 
@@ -172,6 +194,62 @@ Rich options (requires editor):
 ```
 
 - Two numbers. Attrs: `x`, `y`, `units`.
+
+### `propskit-joystick`
+
+```tsx
+<propskit-joystick
+  label="Position"
+  value='{"x":35,"y":65}'
+  default='{"x":50,"y":50}'
+  axis-labels="X Y"
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Inner: `fig-joystick` with forced `fields="true"` and `aspect-ratio="1 / 1"`.
+- `.value`, `defaultValue`, and event values are typed `{ x, y }` percentage objects.
+
+### `propskit-origin`
+
+```tsx
+<propskit-origin
+  label="Transform origin"
+  value='{"x":50,"y":50}'
+  default='{"x":50,"y":50}'
+  onInput={onInput}
+/>
+```
+
+- Inner: `fig-origin-grid` with forced `fields="true"` and `aspect-ratio="1 / 1"`.
+- `.value`, `defaultValue`, and event values are typed `{ x, y }` percentage objects.
+
+### `propskit-easing`
+
+```tsx
+<propskit-easing
+  label="Easing"
+  value='{"x1":0.42,"y1":0,"x2":0.58,"y2":1}'
+  onChange={onChange}
+/>
+```
+
+- Inner: `fig-easing-curve` constrained to bezier mode.
+- Typed value: `{ x1, y1, x2, y2 }`.
+
+### `propskit-spring`
+
+```tsx
+<propskit-spring
+  label="Spring"
+  value='{"stiffness":200,"damping":15,"mass":1}'
+  onChange={onChange}
+/>
+```
+
+- Inner: `fig-easing-curve` constrained to spring mode.
+- Typed value: `{ stiffness, damping, mass }`.
 
 ### `propskit-color-point`
 
@@ -221,7 +299,7 @@ Rich options (requires editor):
 </propskit-group>
 ```
 
-- Attrs: `name`, `open`, `show-reset`, `size`. Children are React nodes.
+- Attrs: `name`, `open`, `show-reset`. Children are React nodes.
 
 ### `propskit-oscillator`
 

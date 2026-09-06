@@ -21,6 +21,8 @@ declare module "react" {
       "propskit-fill": FigAttrs;
       "propskit-color-point": FigAttrs;
       "propskit-gradient": FigAttrs;
+      "propskit-joystick": FigAttrs;
+      "propskit-palette": FigAttrs;
       "propskit-number": FigAttrs;
       "propskit-point-point": FigAttrs;
       "propskit-point-radius": FigAttrs;
@@ -31,6 +33,9 @@ declare module "react" {
       "propskit-switch": FigAttrs;
       "propskit-text": FigAttrs;
       "propskit-wheel": FigAttrs;
+      "propskit-origin": FigAttrs;
+      "propskit-easing": FigAttrs;
+      "propskit-spring": FigAttrs;
       "propskit-group": FigAttrs;
       "fig-select": FigAttrs;
       "fig-select-options": FigAttrs;
@@ -46,6 +51,7 @@ declare module "react" {
       "fig-card": FigAttrs;
       "fig-video": FigAttrs;
       "fig-input-color": FigAttrs;
+      "fig-input-palette": FigAttrs;
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-input-angle": FigAttrs;

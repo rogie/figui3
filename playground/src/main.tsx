@@ -111,7 +111,10 @@ const bootstrap = async () => {
     await import("../../fig-layer.css");
     // @ts-expect-error runtime side-effect import for layer navigation registration
     await import("../../fig-layer.js");
-    if (localStorage.getItem("includeEditorControls") === "true") {
+    if (
+      mode === "lab" ||
+      localStorage.getItem("includeEditorControls") === "true"
+    ) {
       await import("../../fig-editor.css");
       // @ts-expect-error runtime side-effect import for optional editor component registration
       await import("../../fig-editor.js");

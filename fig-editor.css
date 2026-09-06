@@ -849,6 +849,16 @@ fig-select-option {
     }
   }
 
+  &[subtle]:not([subtle="false"]),
+  fig-select[subtle]:not([subtle="false"]) &:not([subtle="false"]) {
+    &:hover,
+    &:focus-visible {
+      &::before {
+        background-color: var(--figma-color-bg-secondary);
+      }
+    }
+  }
+
   &[selected]:not([selected="false"])::after,
   &[aria-selected="true"]::after {
     visibility: visible;

@@ -212,13 +212,18 @@
     Inter, AppleSystemUIFont, BlinkMacSystemFont, avenir next, avenir, segoe ui,
     helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
   --font-variant-numeric: lining-nums tabular-nums slashed-zero;
-  --body-medium-fontSize: 0.6875rem;
-  --body-large-fontSize: 0.8125rem;
+  --text-body-medium-font-size: 0.6875rem;
+  --text-body-small-font-size: 0.5625rem;
+  --text-body-large-font-size: 0.8125rem;
+  --body-medium-fontSize: var(--text-body-medium-font-size);
+  --font-size-small: var(--text-body-small-font-size);
+  --body-small-fontSize: var(--text-body-small-font-size);
+  --body-large-fontSize: var(--text-body-large-font-size);
   --body-letter-spacing: 0.055px;
   --body-medium-strong-fontWeight: 550;
   --body-large-strong-fontWeight: 500;
   --body-medium-fontWeight: 450;
-  --font-size-small: var(--body-medium-fontSize);
+
   --line-height: 1rem;
 
   /* Spacing */
@@ -235,10 +240,12 @@
   --radius-none: 0;
   --radius-small: 0.125rem;
   --radius-medium: 0.3125rem;
+  --radius-medium-large: 0.5625rem;
   --radius-large: 0.8125rem;
   --figma-radius-none: var(--radius-none);
   --figma-radius-small: var(--radius-small);
   --figma-radius-medium: var(--radius-medium);
+  --figma-radius-medium-large: var(--radius-medium-large);
   --figma-radius-large: var(--radius-large);
 
   /* Transitions */
@@ -1535,7 +1542,10 @@ input[type="color"] {
     content: "";
     width: calc(var(--width) - var(--padding) * 2);
     height: calc(var(--height) - var(--padding) * 2);
-    border-radius: calc(var(--border-radius) - (var(--padding) / 2));
+    border-radius: var(
+      --fig-swatch-border-radius,
+      calc(var(--border-radius) - (var(--padding) / 2))
+    );
     grid-area: 1/1;
     place-self: center;
     pointer-events: none;
@@ -1551,7 +1561,10 @@ input[type="color"] {
     background-size: var(--swatch-bg-size);
     background-position: var(--swatch-bg-position);
     background-repeat: no-repeat;
-    border-radius: calc(var(--border-radius) - (var(--padding) / 2));
+    border-radius: var(
+      --fig-swatch-border-radius,
+      calc(var(--border-radius) - (var(--padding) / 2))
+    );
     mask-image: linear-gradient(
       to right,
       black 0%,
@@ -1563,7 +1576,10 @@ input[type="color"] {
   }
   &[size="medium"]::before,
   &[size="large"]::before {
-    border-radius: calc(var(--border-radius) - var(--padding));
+    border-radius: var(
+      --fig-swatch-border-radius,
+      calc(var(--border-radius) - var(--padding))
+    );
   }
   &:focus,
   &:active {
@@ -4176,6 +4192,17 @@ fig-input-palette {
     grid-area: inputs;
     min-width: 0;
     width: 100%;
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+      pointer-events: none;
+      z-index: 2;
+    }
   }
 
   .palette-add-btn {
@@ -4709,7 +4736,7 @@ fig-joystick {
     pointer-events: none;
     user-select: none;
     color: var(--figma-color-text-tertiary);
-    font-size: 10px;
+    font-size: var(--text-body-small-font-size);
     line-height: 1;
     letter-spacing: 0.01em;
     font-weight: 700;
@@ -4737,11 +4764,6 @@ fig-joystick {
       top: 50%;
       transform: translate(-50%, -50%) rotate(-90deg);
       transform-origin: center;
-
-      &.no-rotate {
-        left: var(--spacer-2);
-        transform: translateY(-50%);
-      }
     }
 
     &.right {

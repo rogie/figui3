@@ -12,201 +12,6 @@ test.describe("fig-lab audit regressions", () => {
     await bootLab(page);
   });
 
-  test("minimal propskit controls remove row padding and reveal backgrounds on hover", async ({
-    page,
-  }) => {
-    const controlIds = await page.evaluate(async () => {
-      const root = document.querySelector("#fixture-root")!;
-      root.innerHTML = `
-        <div id="minimal-background-reference" style="background-color:var(--figma-color-bg-secondary)"></div>
-        <div id="minimal-stack">
-          <propskit-switch id="minimal-switch" variant="minimal" label="Switch" checked></propskit-switch>
-          <propskit-color id="minimal-color" variant="minimal" label="Color" value="#0D99FF"></propskit-color>
-          <propskit-fill id="minimal-fill" variant="minimal" label="Fill" value='{"type":"solid","color":"#0D99FF","alpha":1}'></propskit-fill>
-          <propskit-gradient id="minimal-gradient" variant="minimal" label="Gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'></propskit-gradient>
-          <propskit-select id="minimal-select" variant="minimal" label="Select" value="One" options="One,Two"></propskit-select>
-          <propskit-text id="minimal-text" variant="minimal" label="Text" value="Value"></propskit-text>
-          <propskit-number id="minimal-number" variant="minimal" label="Number" value="10"></propskit-number>
-          <propskit-slider id="minimal-slider" variant="minimal" label="Slider" value="50" min="0" max="100"></propskit-slider>
-          <propskit-wheel id="minimal-wheel" variant="minimal" label="Time" value="240" units="ms"></propskit-wheel>
-          <propskit-position id="minimal-position" variant="minimal" label="Position" x="50" y="50"></propskit-position>
-        </div>
-      `;
-      await new Promise(requestAnimationFrame);
-      await new Promise(requestAnimationFrame);
-      return [
-        "minimal-switch",
-        "minimal-color",
-        "minimal-fill",
-        "minimal-gradient",
-        "minimal-select",
-        "minimal-text",
-        "minimal-number",
-        "minimal-slider",
-        "minimal-wheel",
-        "minimal-position",
-      ];
-    });
-
-    const initial = await page.evaluate((ids) => {
-      return {
-        expectedHover: getComputedStyle(
-          document.querySelector("#minimal-background-reference")!,
-        ).backgroundColor,
-        controls: ids.map((id) => {
-          const host = document.querySelector(`#${id}`)!;
-          const field = host.querySelector(
-            ":scope > fig-field, :scope > .propskit-wheel-surface",
-          )!;
-          const sliderSurface = host.querySelector(".fig-slider-input-container");
-          const gradientInput = host.querySelector("fig-input-gradient");
-          const swatch = host.querySelector("fig-swatch");
-          const hostStyle = getComputedStyle(host);
-          return {
-            id,
-            paddingTop: hostStyle.paddingTop,
-            paddingBottom: hostStyle.paddingBottom,
-            fieldBackground: getComputedStyle(field).backgroundColor,
-            sliderBackground: sliderSurface
-              ? getComputedStyle(sliderSurface).backgroundColor
-              : null,
-            gradientInputBackground: gradientInput
-              ? getComputedStyle(gradientInput).backgroundColor
-              : null,
-            swatchBackground: swatch
-              ? getComputedStyle(swatch).backgroundColor
-              : null,
-            forwardedVariant: host.querySelector("[variant]")?.getAttribute("variant") ?? null,
-          };
-        }),
-      };
-    }, controlIds);
-
-    for (const control of initial.controls) {
-      expect(control).toMatchObject({
-        paddingTop: "0px",
-        paddingBottom: "0px",
-        fieldBackground: "rgba(0, 0, 0, 0)",
-        forwardedVariant: null,
-      });
-      if (control.id === "minimal-slider") {
-        expect(control.sliderBackground).toBe("rgba(0, 0, 0, 0)");
-      }
-      if (
-        control.id === "minimal-color" ||
-        control.id === "minimal-fill" ||
-        control.id === "minimal-gradient"
-      ) {
-        expect(control.swatchBackground).toBe("rgba(0, 0, 0, 0)");
-      }
-      if (control.id === "minimal-gradient") {
-        expect(control.gradientInputBackground).toBe("rgba(0, 0, 0, 0)");
-      }
-    }
-
-    for (const id of controlIds) {
-      const host = page.locator(`#minimal-stack > #${id}`);
-      await host.hover();
-      await expect
-        .poll(() =>
-          host.evaluate((element) => {
-            const field = element.querySelector(
-              ":scope > fig-field, :scope > .propskit-wheel-surface",
-            )!;
-            const sliderSurface = element.querySelector(
-              ".fig-slider-input-container",
-            );
-            return {
-              background: getComputedStyle(field).backgroundColor,
-              borderShadow: getComputedStyle(field, "::after").boxShadow,
-              sliderBorderShadow: sliderSurface
-                ? getComputedStyle(sliderSurface, "::after").boxShadow
-                : "none",
-            };
-          }),
-        )
-        .toEqual({
-          background: initial.expectedHover,
-          borderShadow: "none",
-          sliderBorderShadow: "none",
-        });
-    }
-  });
-
-  test("propskit group small size applies to unsized child controls", async ({
-    page,
-  }) => {
-    const state = await page.evaluate(async () => {
-      const root = document.querySelector("#fixture-root")!;
-      root.innerHTML = `
-        <propskit-group id="sized-group" name="Minimal controls" size="small" open>
-          <propskit-text id="group-sized-text" variant="minimal" label="Text" value="Value"></propskit-text>
-          <propskit-number id="authored-sized-number" variant="minimal" size="large" label="Number" value="10"></propskit-number>
-        </propskit-group>
-      `;
-      await new Promise(requestAnimationFrame);
-      await new Promise(requestAnimationFrame);
-
-      const group = root.querySelector("#sized-group")!;
-      const text = root.querySelector("#group-sized-text")!;
-      const number = root.querySelector("#authored-sized-number")!;
-      const initial = {
-        textSize: text.getAttribute("size"),
-        textGenerated: text.hasAttribute("data-propskit-group-size"),
-        numberSize: number.getAttribute("size"),
-        numberGenerated: number.hasAttribute("data-propskit-group-size"),
-      };
-
-      const added = document.createElement("propskit-switch");
-      added.id = "dynamic-group-sized-switch";
-      added.setAttribute("variant", "minimal");
-      added.setAttribute("label", "Switch");
-      group.append(added);
-      await new Promise(requestAnimationFrame);
-      await new Promise(requestAnimationFrame);
-      const dynamic = {
-        size: added.getAttribute("size"),
-        generated: added.hasAttribute("data-propskit-group-size"),
-      };
-
-      group.removeAttribute("size");
-      await new Promise(requestAnimationFrame);
-      return {
-        initial,
-        dynamic,
-        restored: {
-          textSize: text.getAttribute("size"),
-          textGenerated: text.hasAttribute("data-propskit-group-size"),
-          numberSize: number.getAttribute("size"),
-          numberGenerated: number.hasAttribute("data-propskit-group-size"),
-          dynamicSize: added.getAttribute("size"),
-          dynamicGenerated: added.hasAttribute("data-propskit-group-size"),
-        },
-      };
-    });
-
-    expect(state).toEqual({
-      initial: {
-        textSize: "small",
-        textGenerated: true,
-        numberSize: "large",
-        numberGenerated: false,
-      },
-      dynamic: {
-        size: "small",
-        generated: true,
-      },
-      restored: {
-        textSize: null,
-        textGenerated: false,
-        numberSize: "large",
-        numberGenerated: false,
-        dynamicSize: null,
-        dynamicGenerated: false,
-      },
-    });
-  });
-
   test("point-point hit line tracks the visible line", async ({ page }) => {
     const coordinates = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root")!;
@@ -542,7 +347,7 @@ test.describe("fig-lab audit regressions", () => {
         value: number;
       };
       const slider = group.querySelector("propskit-slider") as HTMLElement & {
-        value: string;
+        value: number | null;
       };
       toggle.checked = true;
       text.value = "new";
@@ -554,7 +359,9 @@ test.describe("fig-lab audit regressions", () => {
       const inner = slider.querySelector("fig-slider") as HTMLElement & { value: string };
       inner.value = "75";
       inner.dispatchEvent(new CustomEvent("input", { bubbles: true, detail: "75" }));
-      const sliderField = slider.querySelector("fig-field") as HTMLElement;
+      const sliderField = slider.querySelector(
+        ".propskit-slider-surface",
+      ) as HTMLElement;
       sliderField.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       const range = slider.querySelector('input[type="range"]') as HTMLInputElement;
       await new Promise(requestAnimationFrame);
@@ -569,7 +376,10 @@ test.describe("fig-lab audit regressions", () => {
         rangeFocused:
           document.activeElement === slider.querySelector('input[type="range"]'),
         rangeHidden: range.getAttribute("aria-hidden"),
-        rangeLabel: range.getAttribute("aria-label"),
+        rangeLabel:
+          range.getAttribute("aria-label") ||
+          document.getElementById(range.getAttribute("aria-labelledby") || "")
+            ?.textContent,
       };
     });
 
@@ -577,7 +387,7 @@ test.describe("fig-lab audit regressions", () => {
       checked: true,
       text: "new",
       number: 7,
-      slider: "75",
+      slider: 75,
       seenHostValue: "75",
       dirty: true,
       rangeFocused: true,
@@ -1191,7 +1001,7 @@ test.describe("fig-lab audit regressions", () => {
   }) => {
     const state = await page.evaluate(async () => {
       const slider = document.createElement("propskit-slider") as HTMLElement & {
-        value: string;
+        value: number | null;
       };
       slider.setAttribute("value", "70");
       slider.setAttribute("default", "25");
@@ -1209,7 +1019,7 @@ test.describe("fig-lab audit regressions", () => {
 
       const implicitSlider = document.createElement(
         "propskit-slider",
-      ) as HTMLElement & { value: string };
+      ) as HTMLElement & { value: number | null };
       implicitSlider.setAttribute("value", "70");
       document.body.append(implicitSlider);
       await new Promise(requestAnimationFrame);
@@ -1301,8 +1111,8 @@ test.describe("fig-lab audit regressions", () => {
     });
 
     expect(state).toEqual({
-      resetValue: "25",
-      implicitResetValue: "70",
+      resetValue: 25,
+      implicitResetValue: 70,
       resetMenuText: "Reset",
       headerRole: "button",
       headingTag: "H3",
@@ -1488,6 +1298,10 @@ test.describe("fig-lab audit regressions", () => {
         <propskit-number value="1" default="2"></propskit-number>
         <propskit-slider value="10" default="20" min="0" max="100"></propskit-slider>
         <propskit-wheel value="10" default="20"></propskit-wheel>
+        <propskit-joystick value='{"x":10,"y":20}' default='{"x":50,"y":50}'></propskit-joystick>
+        <propskit-origin value='{"x":10,"y":20}' default='{"x":50,"y":50}'></propskit-origin>
+        <propskit-easing value='{"x1":0.1,"y1":0.2,"x2":0.8,"y2":0.9}' default='{"x1":0.42,"y1":0,"x2":0.58,"y2":1}'></propskit-easing>
+        <propskit-spring value='{"stiffness":250,"damping":18,"mass":1.2}' default='{"stiffness":200,"damping":15,"mass":1}'></propskit-spring>
       `;
       const oscillator = document.createElement("propskit-oscillator");
       const oscillatorDefault = JSON.stringify({
@@ -1506,12 +1320,12 @@ test.describe("fig-lab audit regressions", () => {
 
       const controls = [
         ...group.querySelectorAll(
-          ":scope > propskit-switch, :scope > propskit-color, :scope > propskit-select, :scope > propskit-text, :scope > propskit-number, :scope > propskit-slider, :scope > propskit-wheel, :scope > propskit-oscillator",
+          ":scope > propskit-switch, :scope > propskit-color, :scope > propskit-select, :scope > propskit-text, :scope > propskit-number, :scope > propskit-slider, :scope > propskit-wheel, :scope > propskit-joystick, :scope > propskit-origin, :scope > propskit-easing, :scope > propskit-spring, :scope > propskit-oscillator",
         ),
       ] as Array<
         HTMLElement & {
           checked?: boolean;
-          value: string;
+          value: unknown;
           defaultValue: unknown;
           isDefault: boolean;
           resetToDefault(): void;
@@ -1536,7 +1350,11 @@ test.describe("fig-lab audit regressions", () => {
       controls[4].value = "2";
       controls[5].value = "20";
       controls[6].value = "20";
-      controls[7].value = oscillatorDefault;
+      controls[7].value = { x: 50, y: 50 };
+      controls[8].value = { x: 50, y: 50 };
+      controls[9].value = { x1: 0.42, y1: 0, x2: 0.58, y2: 1 };
+      controls[10].value = { stiffness: 200, damping: 15, mass: 1 };
+      controls[11].value = oscillatorDefault;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const dirtyAtDefaults = group.dirty;
@@ -1548,7 +1366,11 @@ test.describe("fig-lab audit regressions", () => {
       controls[4].value = "3";
       controls[5].value = "30";
       controls[6].value = "30";
-      controls[7].value = JSON.stringify({ type: "triangle", frequency: 4 });
+      controls[7].value = { x: 70, y: 30 };
+      controls[8].value = { x: 70, y: 30 };
+      controls[9].value = { x1: 0.2, y1: -0.1, x2: 0.7, y2: 1.2 };
+      controls[10].value = { stiffness: 300, damping: 20, mass: 0.8 };
+      controls[11].value = JSON.stringify({ type: "triangle", frequency: 4 });
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const dirtyAfterChanges = group.dirty;
@@ -1579,14 +1401,44 @@ test.describe("fig-lab audit regressions", () => {
         "2",
         "20",
         "20",
+        { x: 50, y: 50 },
+        { x: 50, y: 50 },
+        { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
+        { stiffness: 200, damping: 15, mass: 1 },
         expect.any(String),
       ],
-      initialDefaultStates: [false, false, false, false, false, false, false, false],
+      initialDefaultStates: [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+      ],
       dirtyAtDefaults: false,
       dirtyAfterChanges: true,
       dirtyAfterReset: false,
-      resetCalls: [1, 1, 1, 1, 1, 1, 1, 1],
-      defaultStatesAfterReset: [true, true, true, true, true, true, true, true],
+      resetCalls: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      defaultStatesAfterReset: [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+      ],
     });
   });
 
@@ -1681,11 +1533,14 @@ test.describe("fig-lab audit regressions", () => {
         '<propskit-slider label="Amount" value="50" min="0" max="100"></propskit-slider>';
     });
     await page.waitForTimeout(50);
-    const field = page.locator("propskit-slider fig-field");
+    const field = page.locator("propskit-slider .propskit-slider-surface");
     await field.click({ position: { x: 12, y: 12 } });
     const range = page.locator('propskit-slider input[type="range"]');
+    const label = page.locator("propskit-slider .propskit-slider-surface > label");
+    const labelId = await label.getAttribute("id");
+    expect(labelId).toBeTruthy();
     await expect(range).toBeFocused();
-    await expect(range).toHaveAttribute("aria-label", "Amount");
+    await expect(range).toHaveAttribute("aria-labelledby", labelId!);
     await expect(range).not.toHaveAttribute("aria-hidden", "true");
   });
 });

@@ -22,16 +22,33 @@ export default function EventView() {
         "value" in target
           ? (target as unknown as { value?: unknown }).value ?? null
           : null;
-      const detail = ce.detail ?? null;
-      const detailType =
-        ce.detail === null ? "null" : ce.detail === undefined ? "undefined" : typeof ce.detail;
-      const payload = {
-        eventType: e.type,
-        controlTag: target.tagName.toLowerCase(),
+      const detail = ce.detail;
+      const envelope =
+        detail && typeof detail === "object" && !Array.isArray(detail)
+          ? (detail as Record<string, unknown>)
+          : null;
+      const payload: Record<string, unknown> = {
+        event: e.type,
+        control:
+          typeof envelope?.control === "string" ? envelope.control : tag,
         value,
-        detail,
-        detailType,
       };
+      const name =
+        typeof envelope?.name === "string"
+          ? envelope.name
+          : target.getAttribute("name");
+      if (name) payload.name = name;
+
+      if (envelope) {
+        const extraDetail = Object.fromEntries(
+          Object.entries(envelope).filter(
+            ([key]) => !["control", "name", "value"].includes(key),
+          ),
+        );
+        if (Object.keys(extraDetail).length) payload.detail = extraDetail;
+      } else if (detail !== undefined && detail !== value) {
+        payload.detail = detail;
+      }
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => setLatest(payload));
     };
@@ -43,6 +60,8 @@ export default function EventView() {
       "optionhover",
       "reorder",
       "remove",
+      "openchange",
+      "reset",
     ];
     for (const type of types) container.addEventListener(type, handler);
     return () => {

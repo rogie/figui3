@@ -451,6 +451,70 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "subtle",
+        name: "Subtle options",
+        markup: `<div class="prop-panel">
+  <fig-select label="Align" value="Center" options="Left,Center,Right" subtle></fig-select>
+</div>`,
+      },
+      {
+        id: "palette-content",
+        name: "Prepend trigger",
+        markup: `<div class="prop-panel">
+  <fig-select label="Palette" value="ocean-drive" full subtle>
+    <fig-select-options slot="panel">
+      <fig-select-option value="ocean-drive" label="Ocean Drive">
+        <span slot="prepend">
+          <fig-input-palette value='["#0D99FF","#14AE5C"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+        </span>
+        Ocean Drive
+      </fig-select-option>
+      <fig-select-option value="citrus-pop" label="Citrus Pop">
+        <span slot="prepend">
+          <fig-input-palette value='["#FFCD29","#FF7262","#14AE5C"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+        </span>
+        Citrus Pop
+      </fig-select-option>
+      <fig-select-option value="sunset-sorbet" label="Sunset Sorbet">
+        <span slot="prepend">
+          <fig-input-palette value='["#FF7262","#F24822","#9747FF"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+        </span>
+        Sunset Sorbet
+      </fig-select-option>
+      <fig-select-option value="cosmic-grape" label="Cosmic Grape">
+        <span slot="prepend">
+          <fig-input-palette value='["#9747FF","#5C37CC","#0D99FF"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+        </span>
+        Cosmic Grape
+      </fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
+        id: "visual-trigger",
+        name: "Custom trigger",
+        markup: `<div class="prop-panel">
+  <fig-select aria-label="Palette" value="palette" full subtle>
+    <fig-input-palette slot="trigger" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+    <fig-select-options slot="panel">
+      <fig-select-option value="palette" label="Palette">
+        <fig-input-palette slot="prepend" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+      </fig-select-option>
+      <fig-select-option value="ocean-drive" label="Ocean Drive">
+        <fig-input-palette slot="prepend" value='["#0D99FF","#14AE5C"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+      </fig-select-option>
+      <fig-select-option value="citrus-pop" label="Citrus Pop">
+        <fig-input-palette slot="prepend" value='["#FFCD29","#FF7262","#14AE5C"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+      </fig-select-option>
+      <fig-select-option value="cosmic-grape" label="Cosmic Grape">
+        <fig-input-palette slot="prepend" value='["#9747FF","#5C37CC","#0D99FF"]' full fixed disabled aria-hidden="true"></fig-input-palette>
+      </fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
         id: "verbose-options",
         name: "Verbose options",
         markup: `<div class="prop-panel">
