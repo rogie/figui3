@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.10.1]
+
+### Fixed
+
+- Inset `propskit-position` number fields from the surface edge and removed the negative margin that caused the X and Y fields to overlap.
+
 ## [8.10.0]
 
 ### Added

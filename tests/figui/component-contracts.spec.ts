@@ -3366,6 +3366,45 @@ test.describe("propskit-position", () => {
     });
   });
 
+  test("spaces the number fields within the surface edges", async ({ page }) => {
+    const spacing = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-position label="Position" x="25" y="75"></propskit-position>
+      `;
+      await new Promise(requestAnimationFrame);
+      const surface = root.querySelector(
+        ".propskit-position-surface",
+      ) as HTMLElement | null;
+      const xInput = root.querySelector(
+        'fig-input-number[data-propskit-position-axis="x"]',
+      ) as HTMLElement | null;
+      const yInput = root.querySelector(
+        'fig-input-number[data-propskit-position-axis="y"]',
+      ) as HTMLElement | null;
+      if (!surface || !xInput || !yInput) {
+        throw new Error("Missing propskit-position fields");
+      }
+      const surfaceBox = surface.getBoundingClientRect();
+      const xBox = xInput.getBoundingClientRect();
+      const yBox = yInput.getBoundingClientRect();
+      return {
+        axisGap: yBox.left - xBox.right,
+        inlineEnd: surfaceBox.right - yBox.right,
+        blockStart: xBox.top - surfaceBox.top,
+        blockEnd: surfaceBox.bottom - xBox.bottom,
+      };
+    });
+
+    expect(spacing).toEqual({
+      axisGap: 0,
+      inlineEnd: 4,
+      blockStart: 4,
+      blockEnd: 4,
+    });
+  });
+
   test("removes disabled text and number input chrome", async ({ page }) => {
     const styles = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");

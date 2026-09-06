@@ -2540,7 +2540,7 @@ propskit-position {
     min-width: 0;
     height: var(--propskit-position-height);
     min-height: var(--propskit-position-height);
-    padding-inline-start: var(--spacer-2-5);
+    padding-inline: var(--spacer-2-5) var(--spacer-1);
     border-radius: var(--radius-medium-large);
     background: var(--_propskit-background);
     color: var(--_propskit-color);
@@ -2605,9 +2605,6 @@ propskit-position {
     }
   }
 
-  fig-input-number[data-propskit-position-axis="y"] {
-    margin-left: calc(-1 * var(--spacer-2));
-  }
 }
 
 propskit-joystick {
