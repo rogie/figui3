@@ -6372,6 +6372,7 @@ figDefineElement("fig-slider", FigSlider);
  * @attr {string} type - Input type: "text" (default) or "number"
  * @attr {string} value - The current input value
  * @attr {string} placeholder - Placeholder text
+ * @attr {string} size - Input size: default or "large"
  * @attr {boolean} disabled - Whether the input is disabled
  * @attr {boolean} multiline - Whether to use a textarea instead of input
  * @attr {number} min - Minimum value (for number type)
@@ -17153,7 +17154,10 @@ figDefineElement("fig-preview", FigPreview);
 /** @type {Record<string, string | { medium: string, small: string }>} */
 const FIG_ICON_TOKENS = {
   chevron: { medium: "--icon-24-chevron", small: "--icon-16-chevron" },
-  checkmark: "--icon-16-checkmark",
+  checkmark: {
+    medium: "--icon-24-checkmark",
+    small: "--icon-16-checkmark",
+  },
   reset: { medium: "--icon-24-reset", small: "--icon-16-reset" },
   "arrow-left": {
     medium: "--icon-24-arrow-left",

@@ -19,9 +19,10 @@ and `input` / `change` event values are boolean.
 
 ## Propskit surfaces and events
 
-Surface controls are horizontal and do not compose `fig-field`. Omitted `label`
-renders `"Label"` and `label=""` hides the visible label. Optional non-empty
-`name` reflects on the host.
+Surface controls do not compose `fig-field`. Most are horizontal; spatial,
+curve, and image controls use vertical layouts. Omitted `label` renders
+`"Label"` and `label=""` hides the visible label. Optional non-empty `name`
+reflects on the host.
 
 `input` and `change` dispatch from the outer host with
 `{ control, value, name? }`; `event.target.value` equals `detail.value`.
@@ -47,8 +48,32 @@ Import `fig-editor.js` and `fig-editor.css`.
 - Palette entries: color strings or `{ "color": string, "alpha": number }`
 - `.value`, `defaultValue`, and event `detail.value`: typed `{ color, alpha }[]`
 - First option is the fallback when `value` is omitted or does not match
-- `input`, `change`, and `optionhover` use the shared PropsKit envelope
+- `input`, `change`, and `optionhover` extend the shared PropsKit envelope with
+  `label`; `value` remains the stable option value
 - `isDefault` uses structural equality; `resetToDefault()` restores `default`
+
+## `propskit-image`
+
+Observed: `options`, `value`, `default`, `label`, `aria-label`, `disabled`.
+
+Renders a label and permanent ghost upload button above a conditional
+`fig-chooser`. The chooser always uses `layout="grid"` and `columns="2"`;
+each `fig-choice` contains a square, cover-fit `fig-image` and an
+attachment-style remove control.
+
+- `options`: optional JSON string array of image URLs
+- `.options`: normalized, de-duplicated URL array
+- `.value`, `defaultValue`, and event `detail.value`: selected URL string
+- First option is the fallback when `value` is omitted or does not match
+- Selecting one or more image files appends object URLs and selects the first
+  new image; applications own durable upload and URL replacement
+- Removing a choice reflects the reduced `options` array and revokes an object
+  URL when needed; removing the selected choice falls back to the first option
+  and emits `input` and `change`
+- Delete and Backspace remove the focused choice
+- `input` and `change` use the shared PropsKit envelope
+- Supports `variant="minimal"`, `isDefault`, `resetToDefault()`, and focus
+  delegation
 
 ## `propskit-select`
 
@@ -57,6 +82,34 @@ Observed: `label`, `aria-label`, `options`, `value`.
 Always renders `fig-select`. Import `fig-editor.js` and `fig-editor.css`; delayed registration upgrades the authored element.
 
 Options attr: JSON array, comma, or newline. Authored `fig-select-options slot="panel"` wins for rich menus.
+
+## `propskit-editable-select`
+
+Observed: `options`, `value`, `default`, `aria-label`, `disabled`.
+
+Renders a label-free, always-subtle, content-width `fig-select` on the left,
+with default-size secondary edit and add buttons on the right inside one
+full-row PropsKit surface. The row uses the standard PropsKit padding,
+background, border, color, hover, and focus variables.
+
+- `options` accepts comma, newline, or JSON values supported by `fig-select`
+- `.options` returns normalized `{ value, label }[]` entries
+- Clicking the host opens the select except when edit or add is clicked
+- The options menu is positioned and sized to the full PropsKit row
+- Add creates an `item-{index}` value using its zero-based array index with the
+  label `"New item"`, selects it, and opens rename mode
+- Edit replaces the select with a default-size, full-width `fig-input-text`;
+  checkmark, Enter, or moving focus outside the input commits, while Escape
+  cancels
+- Each menu option has an appended ghost trash action; Delete or Backspace
+  removes the focused option
+- Edit/save, add, and trash icon buttons include descriptive tooltips
+- At one remaining item, the select and trash action are disabled; add and edit
+  remain available
+- Renaming updates the reflected options JSON while preserving the option value
+- `input`, `change`, and `optionhover` use the shared PropsKit envelope
+- Supports `defaultValue`, `isDefault`, `editing`, `resetToDefault()`, disabled
+  state propagation, and focus delegation
 
 ## `propskit-text`
 

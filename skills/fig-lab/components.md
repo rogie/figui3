@@ -8,7 +8,8 @@ Handlers below assume `onInput` / `onChange` from the React contract.
 
 ## Shared propskit
 
-Plain horizontal component surfaces. Prefer these over hand-rolled label+control rows.
+Plain labeled component surfaces. Most are horizontal; spatial, curve, and
+image controls are vertical. Prefer these over hand-rolled label+control rows.
 
 Shared attrs: `label` (omitted renders `"Label"`; `label=""` hides it), optional `name`, `disabled`, `default` (reset target, may differ from initial `value`).
 
@@ -98,6 +99,28 @@ rowRef.current?.resetToDefault();
 - `options` is an array of palette arrays. Public and event values are typed `{ color, alpha }[]`; omission of `value` selects the first palette.
 - Supports `optionhover`, typed `defaultValue`, `isDefault`, and `resetToDefault()`.
 
+### `propskit-image`
+
+```tsx
+<propskit-image
+  label="Image"
+  options='["/images/one.webp","/images/two.webp"]'
+  default="/images/one.webp"
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Inner: a permanent ghost icon upload button plus a conditional
+  `fig-chooser layout="grid" columns="2"`.
+- Every `fig-choice` contains a square, cover-fit `fig-image` with an
+  attachment-style remove control. Delete and Backspace remove a focused choice.
+- `options` and `.options` are URL arrays; `.value`, `defaultValue`, and event
+  values are the selected URL. Omitted or unmatched values select the first.
+- File selection appends local object URLs and selects the first new image.
+  Removing a choice updates `options` and revokes its object URL when needed;
+  removing the selection falls back to the first remaining image.
+
 ### `propskit-select`
 
 ```tsx
@@ -122,6 +145,38 @@ Rich options (requires editor):
 ```
 
 - Inner: always `fig-select`; editor registration is required. Authored `fig-select-options slot="panel"` wins. Options stay in light DOM.
+
+### `propskit-editable-select`
+
+```tsx
+<propskit-editable-select
+  aria-label="Layer style"
+  name="style"
+  value="primary"
+  options='[{"value":"primary","label":"Primary"},{"value":"secondary","label":"Secondary"}]'
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Label-free, always-subtle, content-width `fig-select` on the left in one
+  full-row PropsKit surface with default-size secondary edit and add buttons on
+  the right.
+- The entire host opens the select except for the edit and add actions.
+- The options menu aligns to and spans the full PropsKit row.
+- Add creates and selects an `item-{index}` value using its zero-based array
+  index with the label `"New item"`, then enters rename mode.
+- Edit swaps in a default-size, full-width `fig-input-text`; checkmark, Enter,
+  or moving focus outside the input saves, while Escape cancels.
+- Each option has an appended ghost trash action. Delete or Backspace removes
+  the focused option from the keyboard.
+- Edit/save, add, and trash icon buttons include descriptive tooltips.
+- The select and trash action disable at one remaining item; edit and add stay
+  available.
+- `.options` is normalized `{ value, label }[]`. Renaming changes the label
+  while preserving its stable value.
+- `input`, `change`, and `optionhover` detail includes both the stable `value`
+  and current `label`.
 
 ### `propskit-text`
 

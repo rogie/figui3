@@ -1005,6 +1005,7 @@ export const FIG_ICON_SET_24 = [
   "add",
   "send",
   "chevron",
+  "checkmark",
   "adjust",
   "minus",
   "close",

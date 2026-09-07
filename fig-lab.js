@@ -173,10 +173,19 @@ function figLabPropskitEventDetail(host, value = host.value) {
   return detail;
 }
 
-function figLabDispatchPropskitEvent(host, type, value = host.value) {
+function figLabDispatchPropskitEvent(
+  host,
+  type,
+  value = host.value,
+  additionalDetail = null,
+) {
+  const detail = figLabPropskitEventDetail(host, value);
+  if (additionalDetail && typeof additionalDetail === "object") {
+    Object.assign(detail, additionalDetail);
+  }
   host.dispatchEvent(
     new CustomEvent(type, {
-      detail: figLabPropskitEventDetail(host, value),
+      detail,
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -2579,6 +2588,836 @@ class PropskitSelect extends FigLabPropskitElement {
 }
 figLabDefineElement("propskit-select", PropskitSelect);
 
+/**
+ * Compact selectable list with built-in add, rename, and delete actions.
+ *
+ * Options accept the same comma, newline, or JSON formats as fig-select.
+ * Mutations normalize the options attribute to { value, label } objects so
+ * labels can be renamed without changing stable option values.
+ *
+ * @attr {string} options - Select choices.
+ * @attr {string} value - Selected option value.
+ * @attr {string} default - Reset option value.
+ * @attr {string} aria-label - Accessible control label.
+ * @attr {boolean|string} disabled - Disables selection and list mutations.
+ * @fires input - Shared PropsKit event with selected value and label.
+ * @fires change - Shared PropsKit event with selected value and label.
+ * @fires optionhover - Shared PropsKit event with hovered value and label.
+ */
+class PropskitEditableSelect extends FigLabPropskitElement {
+  static observedAttributes = [
+    "options",
+    "value",
+    "default",
+    "aria-label",
+    "disabled",
+  ];
+
+  #field = null;
+  #select = null;
+  #optionsPanel = null;
+  #input = null;
+  #editButton = null;
+  #addButton = null;
+  #editingValue = "";
+  #initialValue = "";
+  #eventValue = undefined;
+  #reflecting = false;
+  #suppressSelectEvents = false;
+  #observer = null;
+  #menuResizeObserver = null;
+  #menuFrame = 0;
+  #managedSelectAttrs = new Set();
+  #renderedOptionsSignature = null;
+  #boundSelectInput = this.#forwardSelectEvent.bind(this, "input");
+  #boundSelectChange = this.#forwardSelectEvent.bind(this, "change");
+  #boundSelectOptionHover = this.#forwardSelectEvent.bind(
+    this,
+    "optionhover",
+  );
+  #boundEditClick = this.#handleEditClick.bind(this);
+  #boundAddClick = this.#handleAddClick.bind(this);
+  #boundHostClick = this.#handleHostClick.bind(this);
+  #boundDeletePointerDown = this.#handleDeletePointerDown.bind(this);
+  #boundDeleteClick = this.#handleDeleteClick.bind(this);
+  #boundOptionKeydown = this.#handleOptionKeydown.bind(this);
+  #boundPopupToggle = this.#handlePopupToggle.bind(this);
+  #boundEditKeydown = this.#handleEditKeydown.bind(this);
+  #boundEditFocusOut = this.#handleEditFocusOut.bind(this);
+  #boundStopEditEvent = (event) => event.stopImmediatePropagation();
+
+  connectedCallback() {
+    if (!this.#field) this.#initialize();
+    this.#syncFromAttributes();
+    this.#bindEvents();
+    figLabConnectPropskitResetMenu(this);
+
+    if (!this.#observer) {
+      this.#observer = new MutationObserver((mutations) => {
+        if (
+          mutations.some(
+            (mutation) =>
+              mutation.type === "attributes" &&
+              mutation.attributeName !== "direction" &&
+              mutation.attributeName !== "aria-disabled" &&
+              !mutation.attributeName?.startsWith("data-") &&
+              !PropskitEditableSelect.observedAttributes.includes(
+                mutation.attributeName,
+              ),
+          )
+        ) {
+          this.#syncSelectAttributes();
+        }
+      });
+    }
+    this.#observer.observe(this, { attributes: true });
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#unbindEvents();
+    figLabDisconnectPropskitResetMenu(this);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#field) return;
+    if (name === "value" && this.#reflecting) return;
+    if (name === "disabled") {
+      this.#syncDisabled();
+      return;
+    }
+    this.#syncFromAttributes();
+  }
+
+  #initialize() {
+    this.#initialValue = this.#resolveValue(this.getAttribute("value"));
+    const field = figLabCreateElement("div", {
+      className: "propskit-editable-select-surface",
+    });
+    const select = figLabCreateElement("fig-select", {
+      subtle: true,
+    });
+    const optionsPanel = figLabCreateElement("fig-select-options", {
+      className: "propskit-editable-select-options",
+      slot: "panel",
+    });
+    select.append(optionsPanel);
+    const editButton = this.#createActionButton(
+      "propskit-editable-select-edit",
+      "Edit item",
+      "edit",
+    );
+    const addButton = this.#createActionButton(
+      "propskit-editable-select-add",
+      "Add item",
+      "add",
+    );
+    const editTooltip = figLabCreateElement(
+      "fig-tooltip",
+      {
+        className: "propskit-editable-select-edit-tooltip",
+        text: "Edit item",
+      },
+      editButton,
+    );
+    const addTooltip = figLabCreateElement(
+      "fig-tooltip",
+      {
+        className: "propskit-editable-select-add-tooltip",
+        text: "Add item",
+      },
+      addButton,
+    );
+    field.append(select, editTooltip, addTooltip);
+    this.#field = field;
+    this.#select = select;
+    this.#optionsPanel = optionsPanel;
+    this.#editButton = editButton;
+    this.#addButton = addButton;
+    this.replaceChildren(field);
+    this.#reflectValue(this.#initialValue);
+  }
+
+  #createActionButton(className, label, iconName) {
+    return figLabCreateElement(
+      "fig-button",
+      {
+        className,
+        variant: "secondary",
+        icon: true,
+        "aria-label": label,
+      },
+      figLabCreateElement("fig-icon", {
+        name: iconName,
+        size: "medium",
+        "aria-hidden": "true",
+      }),
+    );
+  }
+
+  #parseOptions(value = this.getAttribute("options")) {
+    let parsed = value;
+    if (typeof value === "string") {
+      const text = value.trim();
+      if (text.startsWith("[")) {
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          parsed = [];
+        }
+      } else {
+        const delimiter = text.includes("\n") ? "\n" : ",";
+        parsed = text
+          .split(delimiter)
+          .map((entry) => entry.trim())
+          .filter(Boolean);
+      }
+    }
+    if (!Array.isArray(parsed)) return [];
+
+    const seen = new Set();
+    const options = [];
+    for (const option of parsed) {
+      const objectOption =
+        option && typeof option === "object" && !Array.isArray(option);
+      const optionValue = objectOption
+        ? option.value ?? option.label ?? ""
+        : option;
+      const optionLabel = objectOption
+        ? option.label ?? option.value ?? ""
+        : option;
+      const normalizedValue = String(optionValue ?? "").trim();
+      const normalizedLabel = String(optionLabel ?? "").trim();
+      if (!normalizedValue || seen.has(normalizedValue)) continue;
+      seen.add(normalizedValue);
+      options.push({
+        value: normalizedValue,
+        label: normalizedLabel || normalizedValue,
+      });
+    }
+    return options;
+  }
+
+  #resolveValue(value) {
+    const options = this.#parseOptions();
+    const requested = String(value ?? "").trim();
+    if (requested && options.some((option) => option.value === requested)) {
+      return requested;
+    }
+    return options[0]?.value || "";
+  }
+
+  #reflectValue(value) {
+    const resolved = this.#resolveValue(value);
+    const current = this.getAttribute("value");
+    this.#reflecting = true;
+    try {
+      if (resolved) {
+        if (current !== resolved) this.setAttribute("value", resolved);
+      } else if (current !== null) {
+        this.removeAttribute("value");
+      }
+    } finally {
+      this.#reflecting = false;
+    }
+    if (this.#select) this.#select.value = resolved;
+    return resolved;
+  }
+
+  #getForwardedSelectAttrNames() {
+    const reserved = new Set([
+      "options",
+      "value",
+      "default",
+      "disabled",
+      "name",
+      "label",
+      "aria-label",
+      "aria-disabled",
+      "direction",
+      "oninput",
+      "onchange",
+      "onoptionhover",
+      "class",
+      "style",
+      "id",
+      "size",
+      "variant",
+      "full",
+      "subtle",
+      "data-editing",
+    ]);
+    return this.getAttributeNames().filter(
+      (name) => !reserved.has(name) && !name.startsWith("data-"),
+    );
+  }
+
+  #syncFromAttributes() {
+    const resolved = this.#reflectValue(this.getAttribute("value"));
+    if (
+      this.#input &&
+      (!this.#editingValue || resolved !== this.#editingValue)
+    ) {
+      this.#cancelEditing(false);
+    }
+    this.#syncSelectAttributes();
+    this.#syncDisabled();
+  }
+
+  #syncSelectAttributes() {
+    if (!this.#select) return;
+    const selectAttrs = this.#getForwardedSelectAttrNames();
+    const nextManaged = new Set(selectAttrs);
+    for (const name of this.#managedSelectAttrs) {
+      if (!nextManaged.has(name)) this.#select.removeAttribute(name);
+    }
+    for (const name of selectAttrs) {
+      this.#select.setAttribute(name, this.getAttribute(name) ?? "");
+    }
+    this.#managedSelectAttrs = nextManaged;
+
+    this.#syncOptionElements();
+    const label = this.getAttribute("aria-label")?.trim() || "Select item";
+    this.#select.setAttribute("label", label);
+    this.#select.setAttribute("aria-label", label);
+    this.#select.setAttribute("subtle", "");
+    this.#select.setAttribute("options", JSON.stringify(this.options));
+    this.#select.value = this.#resolveValue(this.getAttribute("value"));
+  }
+
+  #syncOptionElements() {
+    if (!this.#optionsPanel) return;
+    const options = this.options;
+    const signature = JSON.stringify(options);
+    if (signature === this.#renderedOptionsSignature) return;
+    this.#renderedOptionsSignature = signature;
+
+    for (const option of this.#optionsPanel.querySelectorAll(
+      ":scope > fig-select-option",
+    )) {
+      option.remove();
+    }
+    const endButton = this.#optionsPanel.querySelector(
+      ":scope > .fig-overflow-end",
+    );
+    for (const entry of options) {
+      const option = figLabCreateElement("fig-select-option", {
+        value: entry.value,
+        label: entry.label,
+        "aria-label": `${entry.label}. Press Delete to remove this item.`,
+      });
+      const label = figLabCreateElement(
+        "span",
+        { className: "propskit-editable-select-option-label" },
+        entry.label,
+      );
+      const deleteButton = figLabCreateElement(
+        "fig-button",
+        {
+          className: "propskit-editable-select-delete",
+          variant: "ghost",
+          icon: true,
+          "aria-label": `Delete ${entry.label}`,
+          "aria-hidden": "true",
+          "data-value": entry.value,
+        },
+        figLabCreateElement("fig-icon", {
+          name: "trash",
+          size: "small",
+          "aria-hidden": "true",
+        }),
+      );
+      const deleteTooltip = figLabCreateElement(
+        "fig-tooltip",
+        {
+          className: "propskit-editable-select-delete-tooltip",
+          slot: "append",
+          text: `Delete ${entry.label}`,
+        },
+        deleteButton,
+      );
+      option.append(label, deleteTooltip);
+      if (endButton) this.#optionsPanel.insertBefore(option, endButton);
+      else this.#optionsPanel.append(option);
+      const innerButton =
+        deleteButton.button ||
+        deleteButton.shadowRoot?.querySelector("button, [role='button']");
+      if (innerButton instanceof HTMLElement) {
+        innerButton.inert = true;
+        innerButton.style.pointerEvents = "none";
+      }
+    }
+  }
+
+  #syncDisabled() {
+    if (!this.#select || !this.#editButton || !this.#addButton) return;
+    const disabled = figLabBooleanAttribute(this, "disabled");
+    const listLocked = this.options.length <= 1;
+    this.setAttribute("aria-disabled", String(disabled));
+    this.#select.toggleAttribute("disabled", disabled || listLocked);
+    this.#input?.toggleAttribute("disabled", disabled);
+    for (const deleteButton of this.#optionsPanel?.querySelectorAll(
+      ".propskit-editable-select-delete",
+    ) || []) {
+      deleteButton.toggleAttribute("disabled", disabled || listLocked);
+    }
+    this.#addButton.toggleAttribute("disabled", disabled || Boolean(this.#input));
+    this.#editButton.toggleAttribute(
+      "disabled",
+      disabled || (!this.#input && !this.value),
+    );
+  }
+
+  #syncEditButton() {
+    if (!this.#editButton) return;
+    const editing = Boolean(this.#input);
+    this.toggleAttribute("data-editing", editing);
+    this.#editButton.setAttribute(
+      "aria-label",
+      editing ? "Save item" : "Edit item",
+    );
+    this.#editButton
+      .closest("fig-tooltip")
+      ?.setAttribute("text", editing ? "Save item" : "Edit item");
+    this.#editButton.setAttribute("variant", editing ? "primary" : "secondary");
+    const icon = this.#editButton.querySelector("fig-icon");
+    icon?.setAttribute("name", editing ? "checkmark" : "edit");
+    this.#syncDisabled();
+  }
+
+  #bindEvents() {
+    this.#unbindEvents();
+    this.#select?.addEventListener("input", this.#boundSelectInput);
+    this.#select?.addEventListener("change", this.#boundSelectChange);
+    this.#select?.addEventListener(
+      "optionhover",
+      this.#boundSelectOptionHover,
+    );
+    this.#editButton?.addEventListener("click", this.#boundEditClick);
+    this.#addButton?.addEventListener("click", this.#boundAddClick);
+    this.#optionsPanel?.addEventListener(
+      "pointerdown",
+      this.#boundDeletePointerDown,
+    );
+    this.#optionsPanel?.addEventListener("click", this.#boundDeleteClick);
+    this.#optionsPanel?.addEventListener("keydown", this.#boundOptionKeydown);
+    this.addEventListener("click", this.#boundHostClick);
+    const popup = this.#getSelectPopup();
+    popup?.addEventListener("toggle", this.#boundPopupToggle);
+    this.#installMenuPositioning();
+    if (!this.#menuResizeObserver && typeof ResizeObserver === "function") {
+      this.#menuResizeObserver = new ResizeObserver(() => {
+        if (this.#select?.open) this.#queueMenuSurfaceSync();
+      });
+    }
+    if (this.#field) this.#menuResizeObserver?.observe(this.#field);
+  }
+
+  #unbindEvents() {
+    this.#select?.removeEventListener("input", this.#boundSelectInput);
+    this.#select?.removeEventListener("change", this.#boundSelectChange);
+    this.#select?.removeEventListener(
+      "optionhover",
+      this.#boundSelectOptionHover,
+    );
+    this.#editButton?.removeEventListener("click", this.#boundEditClick);
+    this.#addButton?.removeEventListener("click", this.#boundAddClick);
+    this.#optionsPanel?.removeEventListener(
+      "pointerdown",
+      this.#boundDeletePointerDown,
+    );
+    this.#optionsPanel?.removeEventListener("click", this.#boundDeleteClick);
+    this.#optionsPanel?.removeEventListener(
+      "keydown",
+      this.#boundOptionKeydown,
+    );
+    this.removeEventListener("click", this.#boundHostClick);
+    this.#getSelectPopup()?.removeEventListener(
+      "toggle",
+      this.#boundPopupToggle,
+    );
+    this.#menuResizeObserver?.disconnect();
+    this.#menuResizeObserver = null;
+    cancelAnimationFrame(this.#menuFrame);
+    this.#menuFrame = 0;
+  }
+
+  #getSelectPopup() {
+    return this.#select?.shadowRoot?.querySelector('dialog[is="fig-popup"]');
+  }
+
+  #installMenuPositioning() {
+    const popup = this.#getSelectPopup();
+    if (
+      !popup ||
+      popup.__propskitEditableSelectPositioning ||
+      typeof popup.positionPopup !== "function"
+    ) {
+      return;
+    }
+    const positionPopup = popup.positionPopup.bind(popup);
+    popup.positionPopup = (...args) => {
+      const result = positionPopup(...args);
+      this.#queueMenuSurfaceSync();
+      return result;
+    };
+    popup.__propskitEditableSelectPositioning = true;
+  }
+
+  #handlePopupToggle(event) {
+    if (event.newState === "open" || this.#select?.open) {
+      this.#queueMenuSurfaceSync();
+    }
+  }
+
+  #queueMenuSurfaceSync() {
+    cancelAnimationFrame(this.#menuFrame);
+    this.#menuFrame = requestAnimationFrame(() => {
+      this.#syncMenuToSurface();
+      this.#menuFrame = requestAnimationFrame(() => {
+        this.#menuFrame = 0;
+        this.#syncMenuToSurface();
+      });
+    });
+  }
+
+  #syncMenuToSurface() {
+    const popup = this.#getSelectPopup();
+    if (!popup || !this.#field || !this.#select?.open) return;
+    const surfaceRect = this.#field.getBoundingClientRect();
+    if (!surfaceRect.width) return;
+    popup.style.setProperty("box-sizing", "border-box", "important");
+    popup.style.setProperty("left", `${surfaceRect.left}px`, "important");
+    popup.style.setProperty("width", `${surfaceRect.width}px`, "important");
+    popup.style.setProperty("min-width", `${surfaceRect.width}px`, "important");
+    popup.style.setProperty("max-width", `${surfaceRect.width}px`, "important");
+  }
+
+  #forwardSelectEvent(type, event) {
+    if (event.target !== this.#select) return;
+    event.stopImmediatePropagation();
+    if (this.#suppressSelectEvents) return;
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    const eventValue =
+      type === "optionhover" && event instanceof CustomEvent
+        ? String(event.detail ?? "")
+        : this.#reflectValue(this.#select.value);
+    this.#dispatchOptionEvent(type, eventValue);
+  }
+
+  #dispatchOptionEvent(type, value = this.value) {
+    const eventValue = String(value ?? "");
+    const label =
+      this.options.find((option) => option.value === eventValue)?.label || "";
+    this.#eventValue = eventValue;
+    try {
+      figLabDispatchPropskitEvent(this, type, eventValue, { label });
+    } finally {
+      this.#eventValue = undefined;
+    }
+  }
+
+  #handleEditClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    if (this.#input) this.#commitEditing();
+    else this.#startEditing();
+  }
+
+  #handleHostClick(event) {
+    if (
+      this.#input ||
+      !this.#select ||
+      figLabBooleanAttribute(this, "disabled") ||
+      figLabBooleanAttribute(this.#select, "disabled") ||
+      (event.target instanceof Element &&
+        event.target.closest(
+          ".propskit-editable-select-edit, .propskit-editable-select-add, fig-menu",
+        ))
+    ) {
+      return;
+    }
+    if (event.target instanceof Element && event.target.closest("fig-select")) {
+      return;
+    }
+    event.preventDefault();
+    this.#select.open = true;
+  }
+
+  #handleAddClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (figLabBooleanAttribute(this, "disabled") || this.#input) return;
+
+    const options = this.options;
+    const value = `item-${options.length}`;
+    this.options = [...options, { value, label: "New item" }];
+    this.#reflectValue(value);
+    this.#syncSelectAttributes();
+    for (const type of ["input", "change"]) {
+      this.#dispatchOptionEvent(type);
+    }
+    this.#startEditing();
+  }
+
+  #handleDeletePointerDown(event) {
+    if (
+      !(event.target instanceof Element) ||
+      !event.target.closest(".propskit-editable-select-delete")
+    ) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  #handleDeleteClick(event) {
+    if (!(event.target instanceof Element)) return;
+    const button = event.target.closest(".propskit-editable-select-delete");
+    if (!button || !this.#optionsPanel?.contains(button)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    if (
+      figLabBooleanAttribute(this, "disabled") ||
+      figLabBooleanAttribute(button, "disabled")
+    ) {
+      return;
+    }
+    this.#deleteOption(button.getAttribute("data-value") || "");
+  }
+
+  #handleOptionKeydown(event) {
+    if (
+      (event.key !== "Delete" && event.key !== "Backspace") ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      !(event.target instanceof Element)
+    ) {
+      return;
+    }
+    const option = event.target.closest("fig-select-option");
+    if (!option || option.parentElement !== this.#optionsPanel) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    this.#deleteOption(option.getAttribute("value") || "");
+  }
+
+  #deleteOption(value) {
+    if (
+      !this.#select ||
+      !this.#optionsPanel ||
+      figLabBooleanAttribute(this, "disabled")
+    ) {
+      return;
+    }
+    const options = this.options;
+    if (options.length <= 1) return;
+    const index = options.findIndex((option) => option.value === value);
+    if (index < 0) return;
+
+    const wasOpen = this.#select.open;
+    const selectedValue = this.value;
+    const nextOptions = options.filter((option) => option.value !== value);
+    const nextFocusIndex = Math.min(index, nextOptions.length - 1);
+    const nextValue =
+      selectedValue === value
+        ? nextOptions[Math.max(0, nextFocusIndex)]?.value || ""
+        : selectedValue;
+
+    this.#suppressSelectEvents = true;
+    try {
+      if (nextValue) this.#reflectValue(nextValue);
+      this.options = nextOptions;
+      this.#reflectValue(nextValue);
+      this.#syncSelectAttributes();
+    } finally {
+      this.#suppressSelectEvents = false;
+    }
+    for (const type of ["input", "change"]) {
+      this.#dispatchOptionEvent(type);
+    }
+
+    queueMicrotask(() => {
+      if (nextOptions.length > 1) {
+        if (wasOpen) this.#select.open = true;
+        const optionElements = [
+          ...this.#optionsPanel.querySelectorAll(
+            ":scope > fig-select-option",
+          ),
+        ];
+        optionElements[Math.max(0, nextFocusIndex)]?.focus();
+      } else {
+        this.#select.open = false;
+        requestAnimationFrame(() => this.#addButton?.focus());
+      }
+    });
+  }
+
+  #startEditing() {
+    if (
+      !this.#field ||
+      !this.value ||
+      figLabBooleanAttribute(this, "disabled")
+    ) {
+      return;
+    }
+    const entry = this.options.find((option) => option.value === this.value);
+    if (!entry) return;
+    const input = figLabCreateElement("fig-input-text", {
+      type: "text",
+      full: true,
+      value: entry.label,
+      "aria-label": `Rename ${entry.label}`,
+    });
+    input.addEventListener("input", this.#boundStopEditEvent);
+    input.addEventListener("change", this.#boundStopEditEvent);
+    input.addEventListener("keydown", this.#boundEditKeydown);
+    input.addEventListener("focusout", this.#boundEditFocusOut);
+    this.#editingValue = entry.value;
+    this.#input = input;
+    this.#select.replaceWith(input);
+    this.#syncEditButton();
+    queueMicrotask(() => {
+      input.focus();
+      input.input?.select?.();
+    });
+  }
+
+  #handleEditKeydown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      this.#commitEditing();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      this.#cancelEditing();
+    }
+  }
+
+  #handleEditFocusOut(event) {
+    if (!this.#input) return;
+    const next = event.relatedTarget;
+    if (next instanceof Node && this.#input.contains(next)) return;
+    if (
+      next instanceof Node &&
+      (next === this.#editButton ||
+        this.#editButton?.contains(next) ||
+        next.getRootNode() instanceof ShadowRoot &&
+          next.getRootNode().host === this.#editButton)
+    ) {
+      return;
+    }
+    this.#commitEditing(false);
+  }
+
+  #finishEditing(focus = true) {
+    if (!this.#field || !this.#select) return;
+    const input = this.#input;
+    this.#input = null;
+    this.#editingValue = "";
+    if (input?.parentElement === this.#field) input.replaceWith(this.#select);
+    else if (this.#select.parentElement !== this.#field) {
+      this.#field.prepend(this.#select);
+    }
+    this.#syncSelectAttributes();
+    this.#syncEditButton();
+    if (focus) queueMicrotask(() => this.#select?.focus());
+  }
+
+  #commitEditing(focus = true) {
+    if (!this.#input || !this.#editingValue) return;
+    const editingValue = this.#editingValue;
+    const options = this.options;
+    const index = options.findIndex(
+      (option) => option.value === editingValue,
+    );
+    if (index < 0) {
+      this.#cancelEditing(focus);
+      return;
+    }
+    const label = String(this.#input.value ?? "").trim() || options[index].label;
+    const changed = label !== options[index].label;
+    this.#finishEditing(false);
+    if (changed) {
+      options[index] = { ...options[index], label };
+      this.options = options;
+    }
+    this.#reflectValue(editingValue);
+    this.#syncSelectAttributes();
+    if (changed) {
+      for (const type of ["input", "change"]) {
+        this.#dispatchOptionEvent(type);
+      }
+    }
+    if (focus) queueMicrotask(() => this.#select?.focus());
+  }
+
+  #cancelEditing(focus = true) {
+    this.#finishEditing(focus);
+  }
+
+  get options() {
+    return this.#parseOptions();
+  }
+
+  set options(value) {
+    if (value === null || value === undefined) {
+      this.removeAttribute("options");
+      return;
+    }
+    this.setAttribute("options", JSON.stringify(this.#parseOptions(value)));
+  }
+
+  get value() {
+    return (
+      this.#eventValue ??
+      this.#resolveValue(
+        this.getAttribute("value") ?? this.#select?.value ?? "",
+      )
+    );
+  }
+
+  set value(value) {
+    this.#reflectValue(value);
+    this.#syncSelectAttributes();
+  }
+
+  get defaultValue() {
+    const requested = this.hasAttribute("default")
+      ? this.getAttribute("default")
+      : this.#initialValue;
+    return this.#resolveValue(requested);
+  }
+
+  get isDefault() {
+    return figLabPropskitValuesEqual(this.value, this.defaultValue);
+  }
+
+  get editing() {
+    return Boolean(this.#input);
+  }
+
+  resetToDefault() {
+    this.#cancelEditing(false);
+    this.value = this.defaultValue;
+    for (const type of ["input", "change"]) {
+      this.#dispatchOptionEvent(type);
+    }
+  }
+
+  focus(options) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    if (this.#input) this.#input.focus(options);
+    else this.#select?.focus(options);
+  }
+}
+figLabDefineElement("propskit-editable-select", PropskitEditableSelect);
+
 /* PropsKit text surface */
 class PropskitText extends FigLabPropskitElement {
   #surface = null;
@@ -4187,6 +5026,455 @@ class PropskitSpring extends PropskitCurve {}
 figLabDefineElement("propskit-spring", PropskitSpring);
 
 /**
+ * Labeled image chooser with built-in upload and per-image removal actions.
+ *
+ * @attr {string} options - JSON array of image URLs.
+ * @attr {string} value - Selected image URL.
+ * @attr {string} default - Reset image URL.
+ * @attr {string} label - Surface label. Omitted values use "Label"; empty hides it.
+ * @attr {boolean|string} disabled - Disables uploading and image selection.
+ * @fires input - Shared PropsKit event with the selected image URL.
+ * @fires change - Shared PropsKit event with the selected image URL.
+ */
+class PropskitImage extends FigLabPropskitElement {
+  static observedAttributes = [
+    "options",
+    "value",
+    "default",
+    "label",
+    "aria-label",
+    "disabled",
+  ];
+
+  #surface = null;
+  #header = null;
+  #label = null;
+  #hasCustomLabel = false;
+  #uploadButton = null;
+  #fileInput = null;
+  #chooser = null;
+  #chooserObserver = null;
+  #initialValue = "";
+  #reflecting = false;
+  #blobUrls = new Set();
+  #uploadLabels = new Map();
+  #boundChooserInput = this.#handleChooserEvent.bind(this, "input");
+  #boundChooserChange = this.#handleChooserEvent.bind(this, "change");
+  #boundFileInput = (event) => event.stopImmediatePropagation();
+  #boundFileChange = this.#handleFileChange.bind(this);
+
+  connectedCallback() {
+    if (!this.#surface) {
+      this.#initialValue = this.#resolveValue(this.getAttribute("value"));
+      this.#reflectValue(this.#initialValue);
+      this.#render();
+    }
+    this.#syncLabel();
+    this.#syncChoices();
+    this.#syncDisabled();
+    this.#bindEvents();
+    this.#chooserObserver?.observe(this.#chooser, { childList: true });
+    this.#syncNavigationAccessibility();
+    figLabConnectPropskitResetMenu(this);
+  }
+
+  disconnectedCallback() {
+    this.#unbindEvents();
+    this.#chooserObserver?.disconnect();
+    figLabDisconnectPropskitResetMenu(this);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#surface) return;
+    if (name === "options") {
+      this.#releaseRemovedBlobUrls();
+      this.#syncChoices();
+    } else if (name === "value" && !this.#reflecting) {
+      this.#reflectValue(newValue);
+    } else if (name === "label" || name === "aria-label") {
+      this.#syncLabel();
+    } else if (name === "disabled") {
+      this.#syncDisabled();
+    }
+  }
+
+  #parseOptions(value = this.getAttribute("options")) {
+    let parsed = value;
+    if (typeof value === "string") {
+      try {
+        parsed = JSON.parse(value || "[]");
+      } catch {
+        return [];
+      }
+    }
+    if (!Array.isArray(parsed)) return [];
+    const unique = new Set();
+    for (const option of parsed) {
+      if (typeof option !== "string") continue;
+      const url = option.trim();
+      if (url) unique.add(url);
+    }
+    return [...unique];
+  }
+
+  #resolveValue(value) {
+    const options = this.#parseOptions();
+    const requested = String(value ?? "").trim();
+    if (requested && options.includes(requested)) return requested;
+    return options[0] || "";
+  }
+
+  #reflectValue(value) {
+    const resolved = this.#resolveValue(value);
+    const current = this.getAttribute("value");
+    if (resolved) {
+      if (current !== resolved) {
+        this.#reflecting = true;
+        this.setAttribute("value", resolved);
+        this.#reflecting = false;
+      }
+    } else if (current !== null) {
+      this.#reflecting = true;
+      this.removeAttribute("value");
+      this.#reflecting = false;
+    }
+    if (this.#chooser) this.#chooser.value = resolved;
+    return resolved;
+  }
+
+  #render() {
+    const customLabel = this.querySelector(":scope > label");
+    const surface = figLabCreateElement("div", {
+      className: "propskit-image-surface",
+      role: "group",
+    });
+    const header = figLabCreateElement("div", {
+      className: "propskit-image-header",
+    });
+    const label = customLabel || document.createElement("label");
+    const uploadTooltip = figLabCreateElement("fig-tooltip", {
+      className: "propskit-image-upload-tooltip",
+      text: "Upload image",
+    });
+    const uploadButton = figLabCreateElement("fig-button", {
+      className: "propskit-image-upload",
+      variant: "ghost",
+      type: "upload",
+      icon: true,
+      "aria-label": "Upload images",
+    });
+    const uploadIcon = figLabCreateElement("fig-icon", {
+      name: "upload",
+      "aria-hidden": "true",
+    });
+    const fileInput = figLabCreateElement("input", {
+      type: "file",
+      accept: "image/*",
+      multiple: true,
+      "aria-label": "Upload images",
+    });
+    const chooser = figLabCreateElement("fig-chooser", {
+      className: "propskit-image-chooser",
+      layout: "grid",
+      columns: "2",
+      overflow: "buttons",
+      full: true,
+    });
+    uploadButton.append(uploadIcon, fileInput);
+    uploadTooltip.append(uploadButton);
+    header.append(label, uploadTooltip);
+    surface.append(header, chooser);
+    this.#surface = surface;
+    this.#header = header;
+    this.#label = label;
+    this.#hasCustomLabel = Boolean(customLabel);
+    this.#uploadButton = uploadButton;
+    this.#fileInput = fileInput;
+    this.#chooser = chooser;
+    this.#chooserObserver = new MutationObserver(() =>
+      this.#syncNavigationAccessibility(),
+    );
+    this.replaceChildren(surface);
+  }
+
+  #syncLabel() {
+    if (!this.#header || !this.#label || !this.#chooser || !this.#surface) {
+      return;
+    }
+    const labelId = figLabSyncPropskitLabel(
+      this,
+      this.#header,
+      this.#label,
+      this.#hasCustomLabel,
+    );
+    figLabSyncPropskitControlLabel(this, this.#chooser, labelId, "Images");
+    const explicitLabel = this.getAttribute("aria-label")?.trim();
+    if (explicitLabel) {
+      this.#surface.setAttribute("aria-label", explicitLabel);
+      this.#surface.removeAttribute("aria-labelledby");
+    } else if (labelId) {
+      this.#surface.setAttribute("aria-labelledby", labelId);
+      this.#surface.removeAttribute("aria-label");
+    } else {
+      this.#surface.setAttribute("aria-label", "Images");
+      this.#surface.removeAttribute("aria-labelledby");
+    }
+  }
+
+  #imageLabel(url, index) {
+    const uploadedLabel = this.#uploadLabels.get(url);
+    if (uploadedLabel) return uploadedLabel;
+    try {
+      const filename = new URL(url, document.baseURI).pathname
+        .split("/")
+        .filter(Boolean)
+        .pop();
+      if (filename) return decodeURIComponent(filename);
+    } catch {}
+    return `Image ${index + 1}`;
+  }
+
+  #syncChoices() {
+    if (!this.#chooser) return;
+    const options = this.#parseOptions();
+    const selected = this.#resolveValue(this.getAttribute("value"));
+    const choices = options.map((url, index) => {
+      const label = this.#imageLabel(url, index);
+      const choice = figLabCreateElement("fig-choice", {
+        value: url,
+        "aria-label": label,
+        selected: url === selected,
+      });
+      const image = figLabCreateElement("fig-image", {
+        src: url,
+        alt: "",
+        full: true,
+        "aspect-ratio": "1 / 1",
+        fit: "cover",
+      });
+      const removeTooltip = figLabCreateElement("fig-tooltip", {
+        className: "propskit-image-remove-tooltip",
+        text: "Remove image",
+      });
+      const removeButton = figLabCreateElement("span", {
+        className: "propskit-image-remove",
+        "aria-hidden": "true",
+        "data-propskit-image-remove": "",
+      });
+      const removeIcon = figLabCreateElement("fig-icon", {
+        name: "close",
+        size: "small",
+        "aria-hidden": "true",
+      });
+      removeButton.append(removeIcon);
+      removeButton.addEventListener("click", (event) =>
+        this.#removeOption(url, index, event),
+      );
+      choice.addEventListener("keydown", (event) => {
+        if (event.key !== "Delete" && event.key !== "Backspace") return;
+        this.#removeOption(url, index, event);
+      });
+      removeTooltip.append(removeButton);
+      choice.dataset.propskitImageLabel = label;
+      choice.append(image, removeTooltip);
+      return choice;
+    });
+    this.#chooser.replaceChildren(...choices);
+    this.#chooser.setAttribute("layout", "grid");
+    this.#chooser.setAttribute("columns", "2");
+    this.#chooser.setAttribute("overflow", "buttons");
+    this.#chooser.toggleAttribute("hidden", choices.length === 0);
+    this.#reflectValue(selected);
+    this.#syncChoiceRemovalState();
+    queueMicrotask(() => this.#syncNavigationAccessibility());
+  }
+
+  #syncChoiceRemovalState() {
+    const disabled = figLabBooleanAttribute(this, "disabled");
+    for (const choice of this.#chooser?.querySelectorAll(
+      ":scope > fig-choice",
+    ) || []) {
+      if (disabled) {
+        choice.removeAttribute("aria-description");
+        choice.removeAttribute("aria-keyshortcuts");
+      } else {
+        choice.setAttribute(
+          "aria-description",
+          "Press Delete or Backspace to remove this image.",
+        );
+        choice.setAttribute("aria-keyshortcuts", "Delete Backspace");
+      }
+      const removeButton = choice.querySelector(
+        ":scope > .propskit-image-remove-tooltip > .propskit-image-remove",
+      );
+      removeButton?.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  #syncNavigationAccessibility() {
+    for (const button of this.#chooser?.querySelectorAll(
+      ":scope > [data-fig-chooser-nav]",
+    ) || []) {
+      button.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  #syncDisabled() {
+    if (
+      !this.#surface ||
+      !this.#uploadButton ||
+      !this.#fileInput ||
+      !this.#chooser
+    ) {
+      return;
+    }
+    const disabled = figLabBooleanAttribute(this, "disabled");
+    this.#surface.setAttribute("aria-disabled", String(disabled));
+    this.#uploadButton.toggleAttribute("disabled", disabled);
+    this.#fileInput.disabled = disabled;
+    this.#chooser.toggleAttribute("disabled", disabled);
+    this.#chooser.inert = disabled;
+    this.#syncChoiceRemovalState();
+  }
+
+  #bindEvents() {
+    this.#unbindEvents();
+    this.#chooser?.addEventListener("input", this.#boundChooserInput);
+    this.#chooser?.addEventListener("change", this.#boundChooserChange);
+    this.#fileInput?.addEventListener("input", this.#boundFileInput);
+    this.#fileInput?.addEventListener("change", this.#boundFileChange);
+  }
+
+  #unbindEvents() {
+    this.#chooser?.removeEventListener("input", this.#boundChooserInput);
+    this.#chooser?.removeEventListener("change", this.#boundChooserChange);
+    this.#fileInput?.removeEventListener("input", this.#boundFileInput);
+    this.#fileInput?.removeEventListener("change", this.#boundFileChange);
+  }
+
+  #handleChooserEvent(type, event) {
+    if (event.target !== this.#chooser) return;
+    event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    const value = this.#reflectValue(this.#chooser.value);
+    figLabDispatchPropskitEvent(this, type, value);
+  }
+
+  #handleFileChange(event) {
+    if (event.target !== this.#fileInput) return;
+    event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    const files = [...(this.#fileInput.files || [])].filter(
+      (file) => !file.type || file.type.startsWith("image/"),
+    );
+    if (!files.length) return;
+    const urls = files.map((file) => {
+      const url = URL.createObjectURL(file);
+      this.#blobUrls.add(url);
+      this.#uploadLabels.set(url, file.name);
+      return url;
+    });
+    this.options = [...this.options, ...urls];
+    this.value = urls[0];
+    this.#fileInput.value = "";
+    for (const type of ["input", "change"]) {
+      figLabDispatchPropskitEvent(this, type, this.value);
+    }
+  }
+
+  #removeOption(url, index, event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    const options = this.options;
+    if (!options.includes(url)) return;
+    const previousValue = this.value;
+    const removedSelected = previousValue === url;
+    this.options = options.filter((option) => option !== url);
+    const value = this.value;
+    if (value !== previousValue) {
+      for (const type of ["input", "change"]) {
+        figLabDispatchPropskitEvent(this, type, value);
+      }
+    }
+    queueMicrotask(() => {
+      const choices = [
+        ...(this.#chooser?.querySelectorAll(":scope > fig-choice") || []),
+      ];
+      const target = removedSelected
+        ? this.#chooser?.selectedChoice
+        : choices[Math.min(index, choices.length - 1)];
+      if (target instanceof HTMLElement) {
+        target.focus();
+      } else {
+        this.#fileInput?.focus();
+      }
+    });
+  }
+
+  #releaseRemovedBlobUrls() {
+    const options = new Set(this.#parseOptions());
+    for (const url of this.#blobUrls) {
+      if (options.has(url)) continue;
+      URL.revokeObjectURL(url);
+      this.#blobUrls.delete(url);
+      this.#uploadLabels.delete(url);
+    }
+  }
+
+  get options() {
+    return this.#parseOptions();
+  }
+
+  set options(value) {
+    if (value === null || value === undefined) {
+      this.removeAttribute("options");
+      return;
+    }
+    this.setAttribute("options", JSON.stringify(this.#parseOptions(value)));
+  }
+
+  get value() {
+    return this.#resolveValue(
+      this.#chooser?.value ?? this.getAttribute("value"),
+    );
+  }
+
+  set value(value) {
+    this.#reflectValue(value);
+  }
+
+  get defaultValue() {
+    const fallback = this.#initialValue || this.#resolveValue(null);
+    return this.#resolveValue(
+      this.hasAttribute("default") ? this.getAttribute("default") : fallback,
+    );
+  }
+
+  get isDefault() {
+    return figLabPropskitValuesEqual(this.value, this.defaultValue);
+  }
+
+  resetToDefault() {
+    this.value = this.defaultValue;
+    figLabEmitPropskitReset(this);
+  }
+
+  focus(options) {
+    if (figLabBooleanAttribute(this, "disabled")) return;
+    const choice =
+      this.#chooser?.selectedChoice ||
+      this.#chooser?.querySelector("fig-choice");
+    if (choice instanceof HTMLElement) {
+      choice.focus(options);
+    } else {
+      this.#fileInput?.focus(options);
+    }
+  }
+}
+figLabDefineElement("propskit-image", PropskitImage);
+
+/**
  * Collapsible color-point group composed from color and position controls.
  *
  * @attr {string} label - Passed to the internal fig-group name.
@@ -5330,6 +6618,7 @@ class PropskitGroup extends FigLabPropskitElement {
     "propskit-fill",
     "propskit-gradient",
     "propskit-easing",
+    "propskit-image",
     "propskit-joystick",
     "propskit-number",
     "propskit-origin",
@@ -5338,6 +6627,7 @@ class PropskitGroup extends FigLabPropskitElement {
     "propskit-point-radius",
     "propskit-point-radius-angle",
     "propskit-point-point",
+    "propskit-editable-select",
     "propskit-select",
     "propskit-slider",
     "propskit-spring",
@@ -11614,13 +12904,16 @@ class FigReorder extends HTMLElement {
     "fig-input-wheel",
     "fig-joystick",
     "fig-origin-grid",
+    "fig-chooser",
     "fig-canvas-control",
     "propskit-color-point",
+    "propskit-image",
     "propskit-number",
     "propskit-point-point",
     "propskit-point-radius",
     "propskit-point-radius-angle",
     "propskit-position",
+    "propskit-editable-select",
     "propskit-slider",
     "propskit-oscillator",
   ];

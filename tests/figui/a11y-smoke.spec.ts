@@ -19,6 +19,8 @@ test.describe("axe accessibility smoke", () => {
         customElements.whenDefined("fig-input-number"),
         customElements.whenDefined("fig-slider"),
         customElements.whenDefined("fig-toast"),
+        customElements.whenDefined("propskit-editable-select"),
+        customElements.whenDefined("propskit-image"),
       ]);
     });
   });
@@ -41,11 +43,31 @@ test.describe("axe accessibility smoke", () => {
         ></fig-combo-input>
         <fig-input-fill aria-label="Layer fill" value="#0D99FF"></fig-input-fill>
         <fig-slider aria-label="Opacity" min="0" max="100" value="75" text="true"></fig-slider>
+        <propskit-editable-select
+          aria-label="Layer style"
+          value="primary"
+          options='[{"value":"primary","label":"Primary"},{"value":"secondary","label":"Secondary"}]'
+        ></propskit-editable-select>
+        <propskit-editable-select
+          id="renaming-style"
+          aria-label="Rename layer style"
+          value="secondary"
+          options='[{"value":"primary","label":"Primary"},{"value":"secondary","label":"Secondary"}]'
+        ></propskit-editable-select>
+        <propskit-image
+          label="Reference image"
+          options='["/images/attachments/gradient-01.webp","/images/attachments/gradient-02.webp"]'
+        ></propskit-image>
         <div aria-label="Color position" role="group" style="position: relative; width: 160px; height: 80px;">
           <fig-handle aria-label="Color position handle" drag="true" value="50% 50%"></fig-handle>
         </div>
         <dialog is="fig-toast">Saved</dialog>
       `;
+      root
+        .querySelector(
+          "#renaming-style .propskit-editable-select-edit",
+        )
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
     await page.waitForTimeout(150);
 

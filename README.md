@@ -110,6 +110,7 @@ Minimal example:
 | [Propskit Fill](#propskit-fill) | `<propskit-fill>` | Full-surface labeled fill control |
 | [Propskit Gradient](#propskit-gradient) | `<propskit-gradient>` | Full-surface labeled gradient control |
 | [Propskit Palette](#propskit-palette) | `<propskit-palette>` | Labeled palette selector |
+| [Propskit Image](#propskit-image) | `<propskit-image>` | Labeled image chooser with upload |
 | [Propskit Number](#propskit-number) | `<propskit-number>` | Full-surface labeled number control |
 | [Propskit Position](#propskit-position) | `<propskit-position>` | Compact X/Y control |
 | [Propskit Joystick](#propskit-joystick) | `<propskit-joystick>` | Labeled two-axis joystick |
@@ -121,6 +122,7 @@ Minimal example:
 | [Propskit Point Radius](#propskit-point-radius) | `<propskit-point-radius>` | Collapsible position and radius group |
 | [Propskit Point Radius Angle](#propskit-point-radius-angle) | `<propskit-point-radius-angle>` | Collapsible position, radius, and angle group |
 | [Propskit Select](#propskit-select) | `<propskit-select>` | Full-surface labeled select control |
+| [Propskit Editable Select](#propskit-editable-select) | `<propskit-editable-select>` | Addable and renameable select control |
 | [Propskit Switch](#propskit-switch) | `<propskit-switch>` | Full-surface labeled switch control |
 | [Propskit Text](#propskit-text) | `<propskit-text>` | Full-surface labeled text control |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
@@ -395,6 +397,11 @@ Shared surface variables are `--propskit-padding-block`,
 such as `--propskit-select-background` or
 `--propskit-number-input-inline-size`.
 
+Nested subfields use `--propskit-bg-subfield` and
+`--propskit-color-border-subfield`. Secondary `fig-button` controls inside any
+PropsKit component use the same borderless subfield background, including
+hover and disabled states.
+
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `label` | string | `"Label"` | Field label text; use an empty value to hide it |
@@ -506,6 +513,46 @@ Uses a plain horizontal surface with a selection-only `<fig-input-palette>` prev
 
 ---
 
+#### Propskit Image
+
+`<propskit-image>`
+
+A vertical PropsKit surface with a label and permanent ghost upload button in
+the header. When images exist, it renders a two-column `fig-chooser`; every
+choice contains a square, cover-fit `fig-image` and an attachment-style remove
+control.
+
+`options` is an optional JSON array of image URLs. `.options` returns the
+normalized URL array, while `.value`, `defaultValue`, and event values are the
+selected URL string. An omitted or unmatched value falls back to the first
+image.
+
+Selecting files appends browser object URLs to `options` and selects the first
+new image. The component previews local files; applications remain responsible
+for uploading and replacing object URLs with durable URLs. Removing an image
+updates the reflected `options` array and revokes its object URL when needed.
+Removing the selected image falls back to the first remaining image and emits
+`input` and `change`; focused choices also support Delete and Backspace.
+
+**Attributes:** `label`, `name`, `value`, `default`, `options`, `disabled`,
+`variant="minimal"`
+
+**Events:** `input`, `change` — shared PropsKit envelope with the selected URL.
+
+**Methods and state:** `defaultValue`, `isDefault`, `resetToDefault()`, and
+focus delegation to the current choice or upload input.
+
+```html
+<propskit-image
+  label="Image"
+  name="image"
+  options='["/images/one.webp","/images/two.webp"]'
+  default="/images/one.webp"
+></propskit-image>
+```
+
+---
+
 #### Propskit Switch
 
 `<propskit-switch>`
@@ -550,6 +597,53 @@ Right-click and choose **Reset**, or call `resetToDefault()`, to restore `defaul
     </fig-select-option>
   </fig-select-options>
 </propskit-select>
+```
+
+---
+
+#### Propskit Editable Select
+
+`<propskit-editable-select>`
+
+A compact, label-free, subtle `fig-select` aligned to the left at its intrinsic
+width inside one full-row PropsKit surface. Default-size secondary edit and add
+buttons sit on the right within the same row.
+Clicking anywhere on the host opens the select, except the edit and add actions.
+The options menu spans and aligns to the full PropsKit row.
+Edit replaces the select with a default-size, full-width `fig-input-text`; the
+checkmark, Enter, or moving focus outside the input saves, while Escape cancels.
+Add creates a choice with an `item-{index}` value using its zero-based array
+index and a `"New item"` label, selects it, and immediately
+opens rename mode. Every menu
+option includes an appended ghost trash action. Delete removes the item;
+keyboard users can press Delete or Backspace while its option is focused.
+Edit/save, add, and delete icon buttons include descriptive tooltips.
+
+`options` accepts the same comma, newline, and JSON formats as `fig-select`.
+`.options` returns normalized `{ value, label }[]` entries. Add, rename, and
+delete mutations reflect this normalized JSON back to `options`. Renaming
+changes only the label, preserving the stable selected value. Deleting the
+selected item falls forward to the next option, then backward at the end. With
+one item remaining, the select and trash action are disabled so the final item
+cannot be deleted; edit and add remain available.
+
+**Attributes:** `name`, `value`, `default`, `options`, `aria-label`, `disabled`
+
+**Events:** `input`, `change`, `optionhover` — the shared PropsKit envelope is
+extended to `{ control, name?, value, label }`. `value` is the stable option
+value and `label` is its current display label. Add, delete, and successful
+rename actions emit `input` and `change`.
+
+**Methods and state:** `.options`, `defaultValue`, `isDefault`, `editing`,
+`resetToDefault()`, and focus delegation.
+
+```html
+<propskit-editable-select
+  aria-label="Layer style"
+  name="style"
+  value="primary"
+  options='[{"value":"primary","label":"Primary"},{"value":"secondary","label":"Secondary"}]'
+></propskit-editable-select>
 ```
 
 ---
@@ -895,6 +989,7 @@ The internal group always has `compact`. `value` uses the same `{ x, y, x2, y2 }
 | `value` | string | — | Input value |
 | `placeholder` | string | — | Placeholder text |
 | `type` | string | `"text"` | `"text"` or `"number"` |
+| `size` | string | — | Set to `"large"` for a 32px-tall input |
 | `disabled` | boolean | `false` | Disabled state |
 | `multiline` | boolean | `false` | Use textarea |
 | `min` | number | — | Min (number type) |
@@ -904,6 +999,7 @@ The internal group always has `compact`. `value` uses the same `{ x, y, x2, y2 }
 
 ```html
 <fig-input-text value="Hello" placeholder="Enter text..."></fig-input-text>
+<fig-input-text size="large" placeholder="Large input"></fig-input-text>
 <fig-input-text multiline placeholder="Enter description..."></fig-input-text>
 ```
 

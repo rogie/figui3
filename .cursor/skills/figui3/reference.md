@@ -17,6 +17,13 @@ Shared by `fig-dropdown`/`fig-options`/`fig-select`/`propskit-select` `options`:
 - `size`: `""`, `large`, `compact`
 - `selected`, `disabled`, `icon` (presence)
 
+## `fig-input-text`
+
+- `type`: `text`, `email`, `password`, `search`, `url`
+- `size`: `""`, `large` (32px tall)
+- `value`, `placeholder`, `multiline`, `autoresize`, `resizable`, `disabled`, `readonly`, `full`
+- Adornments: `slot="prepend"` and `slot="append"`
+
 ## `fig-dropdown`
 
 - `value`, `type="select|dropdown"`, `variant="ghost"`, `full`, `disabled`

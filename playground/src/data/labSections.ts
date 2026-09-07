@@ -113,6 +113,33 @@ const ungroupedLabSections: Section[] = [
     ],
   },
   {
+    id: "propskit-image",
+    name: "Image",
+    description:
+      "A labeled image selector with a removable two-column chooser and a built-in upload action.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <propskit-image
+    label="Image"
+    name="image"
+    options='["/images/attachments/gradient-01.webp","/images/attachments/gradient-02.webp","/images/attachments/gradient-03.webp","/images/attachments/gradient-04.webp"]'
+    default="/images/attachments/gradient-01.webp"
+  ></propskit-image>
+</div>`,
+      },
+      {
+        id: "upload",
+        name: "Upload",
+        markup: `<div class="prop-panel">
+  <propskit-image label="Reference" name="reference"></propskit-image>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "propskit-text",
     name: "Text",
     description:
@@ -202,6 +229,38 @@ const ungroupedLabSections: Section[] = [
     ],
   },
   {
+    id: "propskit-editable-select",
+    name: "Editable select",
+    description:
+      "A compact full-row control with a content-width select on the left, default-size secondary edit and add actions on the right, and an appended trash action for each menu option. The last item cannot be deleted. Add creates a new selected item in rename mode; edit renames the current label while preserving its value.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <propskit-editable-select
+    aria-label="Layer style"
+    name="style"
+    value="primary"
+    default="primary"
+    options='[{"value":"primary","label":"Primary"},{"value":"secondary","label":"Secondary"},{"value":"outline","label":"Outline"}]'
+  ></propskit-editable-select>
+</div>`,
+      },
+      {
+        id: "string-options",
+        name: "String options",
+        markup: `<div class="prop-panel">
+  <propskit-editable-select
+    aria-label="Collection"
+    value="Favorites"
+    options="Favorites,Recent,Archived"
+  ></propskit-editable-select>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "propskit-group",
     name: "Group",
     description:
@@ -219,6 +278,11 @@ const ungroupedLabSections: Section[] = [
     <propskit-select label="Blend" value="Normal" default="Normal" options="Normal,Multiply,Screen,Overlay"></propskit-select>
     <propskit-slider label="Opacity" type="opacity" value="100" default="100" min="0" max="100" units="%"></propskit-slider>
     <propskit-number label="Corner" value="8" default="8" min="0" max="100" units="px"></propskit-number>
+    <propskit-image
+      label="Image"
+      options='["/images/attachments/gradient-01.webp","/images/attachments/gradient-02.webp","/images/attachments/gradient-03.webp","/images/attachments/gradient-04.webp"]'
+      default="/images/attachments/gradient-01.webp"
+    ></propskit-image>
   </propskit-group>
   <propskit-group name="Advanced" open>
     <propskit-color label="Stroke" value="#000000" default="#000000" alpha="true"></propskit-color>

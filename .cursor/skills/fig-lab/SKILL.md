@@ -33,8 +33,9 @@ import "@rogieking/figui3/fig-lab.js";
 
 ## Shared propskit
 
-- Plain labeled component surfaces; joystick, origin, easing, and spring use a
-  vertical label-above-control layout
+- Plain labeled component surfaces; joystick, origin, easing, spring, and image
+  use a vertical label-above-control layout. Editable select is intentionally
+  label-free with separate edit and add actions.
 - `label` (omitted renders `"Label"`; `label=""` hides it), `disabled`
 - Optional `name` reflects to the host and appears in event details only when non-empty
 - `default` — reset target (may differ from initial `value`)
@@ -56,7 +57,9 @@ import "@rogieking/figui3/fig-lab.js";
 | Labeled exact number | `propskit-number` |
 | Labeled text | `propskit-text` |
 | Labeled discrete list | `propskit-select` (not `fig-dropdown`) |
+| Editable / removable discrete list | `propskit-editable-select` |
 | Labeled palette choice | `propskit-palette` |
+| Labeled image choice/upload | `propskit-image` |
 | Labeled color / fill / gradient | `propskit-color` / `propskit-fill` / `propskit-gradient` |
 | X/Y | `propskit-position` |
 | Interactive X/Y plane | `propskit-joystick` |

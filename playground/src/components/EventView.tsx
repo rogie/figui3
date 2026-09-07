@@ -38,11 +38,14 @@ export default function EventView() {
           ? envelope.name
           : target.getAttribute("name");
       if (name) payload.name = name;
+      if (typeof envelope?.label === "string") {
+        payload.label = envelope.label;
+      }
 
       if (envelope) {
         const extraDetail = Object.fromEntries(
           Object.entries(envelope).filter(
-            ([key]) => !["control", "name", "value"].includes(key),
+            ([key]) => !["control", "name", "value", "label"].includes(key),
           ),
         );
         if (Object.keys(extraDetail).length) payload.detail = extraDetail;

@@ -198,12 +198,14 @@ export default function ExampleView({
       "propskit-fill",
       "propskit-gradient",
       "propskit-easing",
+      "propskit-image",
       "propskit-joystick",
       "propskit-number",
       "propskit-origin",
       "propskit-point-point",
       "propskit-point-radius",
       "propskit-point-radius-angle",
+      "propskit-editable-select",
       "propskit-select",
       "propskit-slider",
       "propskit-spring",
@@ -245,13 +247,15 @@ export default function ExampleView({
         tagName === "propskit-joystick" ||
         tagName === "propskit-origin" ||
         tagName === "propskit-easing" ||
+        tagName === "propskit-editable-select" ||
+        tagName === "propskit-image" ||
         tagName === "propskit-spring" ||
         tagName === "fig-input-wheel" ||
         tagName === "fig-origin-grid" ||
         tagName === "propskit-wheel";
       if (shouldSkipPersistForFocusedControl) {
-        // Avoid full example markup refresh after keyboard interaction; preserving DOM state
-        // keeps focus on roving segments and draggable handles.
+        // Avoid full example markup refresh after stateful interactions; preserving DOM
+        // keeps focus on controls and retains locally uploaded image options.
         return;
       }
       onPersistControlValue?.(fieldIndex, value);

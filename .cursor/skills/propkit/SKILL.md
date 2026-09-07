@@ -59,16 +59,21 @@ Core tags: `figui3` skill + [../figui3/components.md](../figui3/components.md). 
 | Text | `fig-input-text` | `propskit-text` |
 | Small discrete set (2–5) | `fig-segmented-control` | — |
 | Larger / rich list | `fig-select` (editor) | `propskit-select` |
+| Addable / renameable / removable list | `fig-select` + action buttons | `propskit-editable-select` |
 | Native select only | `fig-dropdown` | — |
 | Color | `fig-input-color` `text="true"` | `propskit-color` (fill-picker swatch) |
 | Fill | `fig-input-fill` | `propskit-fill` (fill-picker swatch) |
 | Gradient | `fig-input-gradient` | `propskit-gradient` |
-| Image | `fig-image` `upload` | — |
+| Image | `fig-image` `upload` | `propskit-image` |
 | Easing | `fig-easing-curve` | — |
 | Angle | `fig-input-angle` (**lab**) | — |
 | X/Y | `fig-joystick` or two numbers | `propskit-position` |
 
 Do not use dropdown/slider for pure on/off. Do not use `fig-dropdown` for Figma-style property selects when `fig-select` is available.
+
+Secondary `fig-button` controls nested in PropsKit use the same borderless
+`--propskit-bg-subfield` treatment as ghost subfield selects. This treatment
+persists on hover and while disabled.
 
 ## Slider rules
 

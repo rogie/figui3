@@ -1294,6 +1294,7 @@ test.describe("fig-lab audit regressions", () => {
         <propskit-switch checked default="false"></propskit-switch>
         <propskit-color value="#111111" default="#222222"></propskit-color>
         <propskit-select value="A" default="B" options="A,B,C"></propskit-select>
+        <propskit-editable-select value="A" default="B" options="A,B,C"></propskit-editable-select>
         <propskit-text value="A" default="B"></propskit-text>
         <propskit-number value="1" default="2"></propskit-number>
         <propskit-slider value="10" default="20" min="0" max="100"></propskit-slider>
@@ -1302,6 +1303,7 @@ test.describe("fig-lab audit regressions", () => {
         <propskit-origin value='{"x":10,"y":20}' default='{"x":50,"y":50}'></propskit-origin>
         <propskit-easing value='{"x1":0.1,"y1":0.2,"x2":0.8,"y2":0.9}' default='{"x1":0.42,"y1":0,"x2":0.58,"y2":1}'></propskit-easing>
         <propskit-spring value='{"stiffness":250,"damping":18,"mass":1.2}' default='{"stiffness":200,"damping":15,"mass":1}'></propskit-spring>
+        <propskit-image options='["/one.webp","/two.webp"]' value="/one.webp" default="/two.webp"></propskit-image>
       `;
       const oscillator = document.createElement("propskit-oscillator");
       const oscillatorDefault = JSON.stringify({
@@ -1320,7 +1322,7 @@ test.describe("fig-lab audit regressions", () => {
 
       const controls = [
         ...group.querySelectorAll(
-          ":scope > propskit-switch, :scope > propskit-color, :scope > propskit-select, :scope > propskit-text, :scope > propskit-number, :scope > propskit-slider, :scope > propskit-wheel, :scope > propskit-joystick, :scope > propskit-origin, :scope > propskit-easing, :scope > propskit-spring, :scope > propskit-oscillator",
+          ":scope > propskit-switch, :scope > propskit-color, :scope > propskit-select, :scope > propskit-editable-select, :scope > propskit-text, :scope > propskit-number, :scope > propskit-slider, :scope > propskit-wheel, :scope > propskit-joystick, :scope > propskit-origin, :scope > propskit-easing, :scope > propskit-spring, :scope > propskit-image, :scope > propskit-oscillator",
         ),
       ] as Array<
         HTMLElement & {
@@ -1347,14 +1349,16 @@ test.describe("fig-lab audit regressions", () => {
       controls[1].value = "#222222";
       controls[2].value = "B";
       controls[3].value = "B";
-      controls[4].value = "2";
-      controls[5].value = "20";
+      controls[4].value = "B";
+      controls[5].value = "2";
       controls[6].value = "20";
-      controls[7].value = { x: 50, y: 50 };
+      controls[7].value = "20";
       controls[8].value = { x: 50, y: 50 };
-      controls[9].value = { x1: 0.42, y1: 0, x2: 0.58, y2: 1 };
-      controls[10].value = { stiffness: 200, damping: 15, mass: 1 };
-      controls[11].value = oscillatorDefault;
+      controls[9].value = { x: 50, y: 50 };
+      controls[10].value = { x1: 0.42, y1: 0, x2: 0.58, y2: 1 };
+      controls[11].value = { stiffness: 200, damping: 15, mass: 1 };
+      controls[12].value = "/two.webp";
+      controls[13].value = oscillatorDefault;
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const dirtyAtDefaults = group.dirty;
@@ -1363,14 +1367,16 @@ test.describe("fig-lab audit regressions", () => {
       controls[1].value = "#333333";
       controls[2].value = "C";
       controls[3].value = "C";
-      controls[4].value = "3";
-      controls[5].value = "30";
+      controls[4].value = "C";
+      controls[5].value = "3";
       controls[6].value = "30";
-      controls[7].value = { x: 70, y: 30 };
+      controls[7].value = "30";
       controls[8].value = { x: 70, y: 30 };
-      controls[9].value = { x1: 0.2, y1: -0.1, x2: 0.7, y2: 1.2 };
-      controls[10].value = { stiffness: 300, damping: 20, mass: 0.8 };
-      controls[11].value = JSON.stringify({ type: "triangle", frequency: 4 });
+      controls[9].value = { x: 70, y: 30 };
+      controls[10].value = { x1: 0.2, y1: -0.1, x2: 0.7, y2: 1.2 };
+      controls[11].value = { stiffness: 300, damping: 20, mass: 0.8 };
+      controls[12].value = "/one.webp";
+      controls[13].value = JSON.stringify({ type: "triangle", frequency: 4 });
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
       const dirtyAfterChanges = group.dirty;
@@ -1398,6 +1404,7 @@ test.describe("fig-lab audit regressions", () => {
         "#222222",
         "B",
         "B",
+        "B",
         "2",
         "20",
         "20",
@@ -1405,9 +1412,12 @@ test.describe("fig-lab audit regressions", () => {
         { x: 50, y: 50 },
         { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
         { stiffness: 200, damping: 15, mass: 1 },
+        "/two.webp",
         expect.any(String),
       ],
       initialDefaultStates: [
+        false,
+        false,
         false,
         false,
         false,
@@ -1424,8 +1434,10 @@ test.describe("fig-lab audit regressions", () => {
       dirtyAtDefaults: false,
       dirtyAfterChanges: true,
       dirtyAfterReset: false,
-      resetCalls: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      resetCalls: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       defaultStatesAfterReset: [
+        true,
+        true,
         true,
         true,
         true,

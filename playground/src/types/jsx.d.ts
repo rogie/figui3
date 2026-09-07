@@ -21,6 +21,7 @@ declare module "react" {
       "propskit-fill": FigAttrs;
       "propskit-color-point": FigAttrs;
       "propskit-gradient": FigAttrs;
+      "propskit-image": FigAttrs;
       "propskit-joystick": FigAttrs;
       "propskit-palette": FigAttrs;
       "propskit-number": FigAttrs;
@@ -28,6 +29,7 @@ declare module "react" {
       "propskit-point-radius": FigAttrs;
       "propskit-point-radius-angle": FigAttrs;
       "propskit-position": FigAttrs;
+      "propskit-editable-select": FigAttrs;
       "propskit-select": FigAttrs;
       "propskit-slider": FigAttrs;
       "propskit-switch": FigAttrs;

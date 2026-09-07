@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.11.0]
+
+### Added
+
+- Added `propskit-image` with JSON image options, uploads, removable two-column choices, overflow navigation, defaults, reset support, and standard PropsKit events.
+- Added `propskit-editable-select` with stable values, add, rename, blur-to-save, delete, tooltips, full-row menus, defaults, reset support, and value/label event details.
+- Added the medium checkmark icon and `size="large"` support to `fig-input-text`.
+
+### Changed
+
+- Refined easing-curve sizing, icon mask rendering, and `fig-choice` selection rings.
+- Expanded playground controls, JSX types, documentation, bundled skills, accessibility coverage, and component contracts for the new components.
+
 ## [8.10.1]
 
 ### Fixed

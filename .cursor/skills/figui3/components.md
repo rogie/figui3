@@ -68,7 +68,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 />
 ```
 
-- Attrs: `type` (`text`, `email`, `password`, `search`, `url`), `multiline`, `autoresize`, `resizable`, `disabled`, `readonly`, `placeholder`, `full`
+- Attrs: `type` (`text`, `email`, `password`, `search`, `url`), `size` (`large`), `multiline`, `autoresize`, `resizable`, `disabled`, `readonly`, `placeholder`, `full`
 
 ### `fig-input-number`
 
