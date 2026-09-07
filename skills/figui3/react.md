@@ -112,28 +112,6 @@ type FigTag =
   | "fig-tooltip"
   | "fig-truncate"
   | "fig-video"
-  | "propskit-color"
-  | "propskit-color-point"
-  | "propskit-fill"
-  | "propskit-gradient"
-  | "propskit-group"
-  | "propskit-easing"
-  | "propskit-image"
-  | "propskit-number"
-  | "propskit-oscillator"
-  | "propskit-point-point"
-  | "propskit-point-radius"
-  | "propskit-point-radius-angle"
-  | "propskit-position"
-  | "propskit-joystick"
-  | "propskit-origin"
-  | "propskit-editable-select"
-  | "propskit-select"
-  | "propskit-slider"
-  | "propskit-spring"
-  | "propskit-switch"
-  | "propskit-text"
-  | "propskit-wheel";
 
 declare module "react" {
   namespace JSX {
@@ -150,7 +128,6 @@ declare module "react" {
 
 ## Host JSX
 
-Render the custom elements as tags. Children are React nodes (`key` on lists). `className` works on `fig-*`, `propskit-*`, and `<dialog is="fig-…">`.
 
 ```tsx
 <fig-field direction="horizontal">

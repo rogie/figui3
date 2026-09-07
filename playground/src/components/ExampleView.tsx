@@ -13,7 +13,7 @@ interface Props {
 }
 
 function isComponentTag(tag: string): boolean {
-  return tag.startsWith("fig-") || tag.startsWith("propskit-");
+  return tag.startsWith("fig-");
 }
 
 export default function ExampleView({
@@ -171,7 +171,7 @@ export default function ExampleView({
     const handleInput = (event: Event) => {
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName.toLowerCase();
-      if (!target || (tag !== "fig-switch" && tag !== "propskit-switch")) return;
+      if (!target || tag !== "fig-switch") return;
       syncSwitchCheckedState(target);
     };
 
@@ -193,24 +193,6 @@ export default function ExampleView({
       "fig-origin-grid",
       "fig-joystick",
       "fig-segmented-control",
-      "propskit-color-point",
-      "propskit-color",
-      "propskit-fill",
-      "propskit-gradient",
-      "propskit-easing",
-      "propskit-image",
-      "propskit-joystick",
-      "propskit-number",
-      "propskit-origin",
-      "propskit-point-point",
-      "propskit-point-radius",
-      "propskit-point-radius-angle",
-      "propskit-editable-select",
-      "propskit-select",
-      "propskit-slider",
-      "propskit-spring",
-      "propskit-text",
-      "propskit-wheel",
     ]);
 
     const resolveFieldIndex = (target: HTMLElement): number => {
@@ -244,15 +226,8 @@ export default function ExampleView({
       const shouldSkipPersistForFocusedControl =
         tagName === "fig-segmented-control" ||
         tagName === "fig-joystick" ||
-        tagName === "propskit-joystick" ||
-        tagName === "propskit-origin" ||
-        tagName === "propskit-easing" ||
-        tagName === "propskit-editable-select" ||
-        tagName === "propskit-image" ||
-        tagName === "propskit-spring" ||
         tagName === "fig-input-wheel" ||
-        tagName === "fig-origin-grid" ||
-        tagName === "propskit-wheel";
+        tagName === "fig-origin-grid";
       if (shouldSkipPersistForFocusedControl) {
         // Avoid full example markup refresh after stateful interactions; preserving DOM
         // keeps focus on controls and retains locally uploaded image options.

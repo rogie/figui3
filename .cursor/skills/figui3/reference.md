@@ -4,7 +4,6 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 
 ## Option string formats
 
-Shared by `fig-dropdown`/`fig-options`/`fig-select`/`propskit-select` `options`:
 
 - Comma-separated: `Left,Center,Right`
 - Newline-delimited

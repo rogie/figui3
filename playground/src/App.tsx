@@ -73,7 +73,7 @@ function getRequiredCustomElements(markup: string): string[] {
 
   doc.body.querySelectorAll("*").forEach((node) => {
     const tag = node.tagName.toLowerCase();
-    if (tag.startsWith("fig-") || tag.startsWith("propskit-")) {
+    if (tag.startsWith("fig-")) {
       required.add(tag);
       return;
     }
@@ -362,7 +362,7 @@ export default function App({ mode }: Props) {
         navigateTo={navigateTo}
         sections={sections}
         appTitle={appTitle}
-        groupOrder={mode === "lab" ? ["Propskit", "AI", "Misc"] : undefined}
+        groupOrder={mode === "lab" ? ["AI", "Misc"] : undefined}
       />
       <main className={mode === "figui3" ? "mode-figui3" : undefined}>
         {activeSection && (

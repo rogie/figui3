@@ -127,16 +127,7 @@ function toSentenceCaseLabel(value: string): string {
 
 function isDefaultLargeSizeControl(controlTag: string): boolean {
   return (
-    controlTag === "fig-input-gradient" || controlTag.startsWith("propskit-")
-  );
-}
-
-function isPropskitSpatialUnitsControl(controlTag: string): boolean {
-  return (
-    controlTag === "propskit-position" ||
-    controlTag === "propskit-point-radius" ||
-    controlTag === "propskit-point-radius-angle" ||
-    controlTag === "propskit-point-point"
+    controlTag === "fig-input-gradient"
   );
 }
 
@@ -200,26 +191,6 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-swatch": "Swatch",
     "fig-radio": "Radio",
     "fig-field": "Field",
-    "propskit-color": "Propskit color",
-    "propskit-fill": "Propskit fill",
-    "propskit-color-point": "Propskit color point",
-    "propskit-gradient": "Propskit gradient",
-    "propskit-image": "Propskit image",
-    "propskit-joystick": "Propskit joystick",
-    "propskit-number": "Propskit number",
-    "propskit-point-point": "Propskit point point",
-    "propskit-point-radius": "Propskit point radius",
-    "propskit-point-radius-angle": "Propskit point radius angle",
-    "propskit-position": "Propskit position",
-    "propskit-origin": "Propskit origin",
-    "propskit-easing": "Propskit easing",
-    "propskit-spring": "Propskit spring",
-    "propskit-editable-select": "Propskit editable select",
-    "propskit-select": "Propskit select",
-    "propskit-slider": "Propskit slider",
-    "propskit-switch": "Propskit switch",
-    "propskit-text": "Propskit text",
-    "propskit-wheel": "Propskit wheel",
     "fig-combo-input": "Combo input",
     "fig-media": "Media",
     "fig-media-controls": "Media controls",
@@ -241,7 +212,6 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-3d-rotate": "3D rotate",
     "fig-origin-grid": "Origin grid",
     "fig-input-angle": "Angle input",
-    "propskit-oscillator": "Oscillator input",
     "fig-joystick": "Joystick",
     "fig-toast": "Toast",
     "fig-icon": "Icon",
@@ -358,8 +328,7 @@ function getNumberAttrDefault(
     if (attrName === "step") return 0.5;
   }
   if (
-    (controlTag === "fig-input-wheel" ||
-      controlTag === "propskit-wheel") &&
+    controlTag === "fig-input-wheel" &&
     attrName === "step"
   ) {
     const normalizedUnits = units?.trim().toLowerCase();
@@ -473,7 +442,6 @@ export default function AttributesView({
           "fig-3d-rotate",
           "fig-origin-grid",
           "fig-input-angle",
-          "propskit-oscillator",
           "fig-combo-input",
           "fig-joystick",
           "fig-radio",
@@ -587,12 +555,6 @@ export default function AttributesView({
                 entry.name === "placeholder" &&
                 target.controlTag === "fig-slider" &&
                 !sliderTextEnabled
-              ) &&
-              !(
-                entry.name === "color" &&
-                target.controlTag === "propskit-slider" &&
-                (target.controlAttributes.type ?? "range").toLowerCase() !==
-                  "opacity"
               ) &&
               !(
                 entry.name === "units" &&
@@ -822,8 +784,7 @@ export default function AttributesView({
                 rule.min ??
                 0);
             const isOptionalWheelBound =
-              (target.controlTag === "fig-input-wheel" ||
-                target.controlTag === "propskit-wheel") &&
+              target.controlTag === "fig-input-wheel" &&
               (name === "min" || name === "max");
             const numberValue =
               isShimmerLikeControl && name === "duration"
@@ -953,9 +914,6 @@ export default function AttributesView({
               (isDefaultLargeSizeControl(target.controlTag) &&
                 scope === "control" &&
                 name === "size") ||
-              (isPropskitSpatialUnitsControl(target.controlTag) &&
-                scope === "control" &&
-                name === "units") ||
               (target.controlTag === "fig-handle" &&
                 scope === "control" &&
                 (name === "drag-axes" ||
@@ -988,12 +946,6 @@ export default function AttributesView({
                   return option === ""
                     ? "Default"
                     : toSentenceCaseLabel(option);
-                }
-                if (
-                  isPropskitSpatialUnitsControl(target.controlTag) &&
-                  name === "units"
-                ) {
-                  return option === "" ? "Default" : "Percent";
                 }
                 if (target.controlTag === "fig-handle" && name === "drag-axes") {
                   return option === "x,y" ? "X & Y" : option.toUpperCase();
@@ -1072,18 +1024,6 @@ export default function AttributesView({
                 if (
                   isDefaultLargeSizeControl(target.controlTag) &&
                   name === "size"
-                ) {
-                  applyChange(
-                    target.fieldIndex,
-                    scope,
-                    name,
-                    option === "" ? null : option,
-                  );
-                  return;
-                }
-                if (
-                  isPropskitSpatialUnitsControl(target.controlTag) &&
-                  name === "units"
                 ) {
                   applyChange(
                     target.fieldIndex,
@@ -1180,7 +1120,6 @@ export default function AttributesView({
             const needsCustomHandler =
               (target.controlTag === "fig-button" && name === "type") ||
               (target.controlTag === "fig-chooser" && name === "layout") ||
-              (target.controlTag === "propskit-slider" && name === "type") ||
               (target.controlTag === "fig-handle" && name === "tip") ||
               (target.controlTag === "fig-color-tip" && name === "control") ||
               options.includes("");
@@ -1196,25 +1135,6 @@ export default function AttributesView({
                     return "Default";
                   }
                   if (target.controlTag === "fig-avatar" && name === "size") {
-                    return "Default";
-                  }
-                  if (
-                    (target.controlTag === "propskit-slider" ||
-                      target.controlTag === "propskit-color" ||
-                      target.controlTag === "propskit-color-point" ||
-                      target.controlTag === "propskit-gradient" ||
-                      target.controlTag === "propskit-group" ||
-                      target.controlTag === "propskit-number" ||
-                      target.controlTag === "propskit-point-point" ||
-                      target.controlTag === "propskit-point-radius" ||
-                      target.controlTag === "propskit-point-radius-angle" ||
-                      target.controlTag === "propskit-position" ||
-                      target.controlTag === "propskit-select" ||
-                      target.controlTag === "propskit-switch" ||
-                      target.controlTag === "propskit-text" ||
-                      target.controlTag === "propskit-wheel") &&
-                    name === "size"
-                  ) {
                     return "Default";
                   }
                   if (
@@ -1359,60 +1279,11 @@ export default function AttributesView({
                       return;
                     }
                     if (
-                      (target.controlTag === "propskit-slider" ||
-                        target.controlTag === "propskit-color" ||
-                        target.controlTag === "propskit-color-point" ||
-                        target.controlTag === "propskit-gradient" ||
-                        target.controlTag === "propskit-group" ||
-                        target.controlTag === "propskit-number" ||
-                        target.controlTag === "propskit-point-point" ||
-                        target.controlTag === "propskit-point-radius" ||
-                        target.controlTag === "propskit-point-radius-angle" ||
-                        target.controlTag === "propskit-position" ||
-                        target.controlTag === "propskit-select" ||
-                        target.controlTag === "propskit-switch" ||
-                        target.controlTag === "propskit-text" ||
-                        target.controlTag === "propskit-wheel") &&
-                      name === "size" &&
-                      resolvedValue === ""
-                    ) {
-                      applyChange(target.fieldIndex, scope, name, null);
-                      return;
-                    }
-                    if (
                       target.controlTag === "fig-input-gradient" &&
                       name === "size" &&
                       resolvedValue === ""
                     ) {
                       applyChange(target.fieldIndex, scope, name, null);
-                      return;
-                    }
-                    if (
-                      target.controlTag === "propskit-slider" &&
-                      name === "type"
-                    ) {
-                      let updated = applyAttributeMutation(markup, {
-                        fieldIndex: target.fieldIndex,
-                        target: "control",
-                        name: "type",
-                        value: resolvedValue,
-                      });
-                      updated = applyAttributeMutation(updated, {
-                        fieldIndex: target.fieldIndex,
-                        target: "control",
-                        name: "default",
-                        value:
-                          resolvedValue === "delta" || resolvedValue === "stepper"
-                            ? "50"
-                            : null,
-                      });
-                      updated = applyAttributeMutation(updated, {
-                        fieldIndex: target.fieldIndex,
-                        target: "control",
-                        name: "step",
-                        value: resolvedValue === "stepper" ? "10" : null,
-                      });
-                      onMarkupChange(updated);
                       return;
                     }
                     if (
@@ -1626,28 +1497,6 @@ export default function AttributesView({
             );
           }
 
-          if (
-            target.controlTag === "propskit-slider" &&
-            scope === "control" &&
-            name === "color"
-          ) {
-            const handleColorChange = (e: any) => {
-              const nextValue = readColorInputEventValue(e);
-              if (typeof nextValue !== "string") return;
-              applyChange(target.fieldIndex, scope, name, nextValue || null);
-            };
-            return (
-              <fig-input-color
-                value={value || "#F5F5F5"}
-                text="true"
-                alpha="false"
-                full
-                onInput={handleColorChange}
-                onChange={handleColorChange}
-              ></fig-input-color>
-            );
-          }
-
           const handleTextInput = (e: any) => {
             const host = e.currentTarget as HTMLElement & { value?: string };
             const nextValue = host.value ?? (e as CustomEvent).detail?.value;
@@ -1667,7 +1516,7 @@ export default function AttributesView({
 
         return (
           <Fragment key={`${resetKey}/${target.fieldIndex}`}>
-            {showFieldControls && target.hasField && !target.controlTag.startsWith("propskit-") && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
+            {showFieldControls && target.hasField && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
               <div className="propkit-attributes-view">
                 <fig-header borderless>
                   <h3>Field</h3>

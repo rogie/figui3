@@ -15,7 +15,6 @@ Custom select and full fill-picker. Not in core `fig.js`.
 
 React: [../figui3/react.md](../figui3/react.md). Per-tag JSX: [components.md](components.md). Attrs: [reference.md](reference.md).
 
-See also: `figui3` (core), `fig-lab` (`propskit-select` wraps this select).
 
 ## Install
 
@@ -38,11 +37,9 @@ Registered tags:
 | `fig-fill-picker` | Full fill editor dialog (solid, gradient, image, video, webcam, custom modes) |
 | `fig-interpolation-swatch` | Gradient interpolation preview swatch |
 
-## `fig-select` vs `fig-dropdown` vs `propskit-select`
 
 - `fig-dropdown` (core): native `<select>`.
 - `fig-select` (this skill): custom listbox. Use this for Figma-style menus.
-- `propskit-select` (lab): labeled horizontal surface that always renders `fig-select`; this editor bundle is required to register and style it.
 
 Author options as React children, or pass `options`. Do not `stopPropagation` on option click. `optionhover` is a native listener.
 

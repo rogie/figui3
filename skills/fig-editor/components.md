@@ -35,7 +35,6 @@ Data-driven (no authored options):
 - Internal popup uses `popover="manual"` so the list works inside `fig-popup variant="popover"`.
 - List `min-width` matches the trigger; `max-width` is `min(20rem, calc(100vw - 1rem))`. Overflow: chevron buttons, not a native scrollbar.
 
-`fig-dropdown` (core) is a native `<select>`. `propskit-select` (lab) wraps this select.
 
 ## `fig-select-options`
 

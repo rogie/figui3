@@ -187,7 +187,7 @@ function isTextNode(node: ChildNode): node is Text {
 
 function isFigTag(element: Element): boolean {
   const tag = element.tagName.toLowerCase();
-  if (tag.startsWith("fig-") || tag.startsWith("propskit-")) return true;
+  if (tag.startsWith("fig-")) return true;
   if (element.tagName.toLowerCase() !== "dialog") return false;
   const isName = element.getAttribute("is")?.toLowerCase() ?? "";
   return isName.startsWith("fig-");

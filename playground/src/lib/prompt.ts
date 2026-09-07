@@ -87,7 +87,7 @@ export function buildPrompt(codeMarkup: string): string {
 
   const topLevel = Array.from(root.children).filter((c) => {
     const tag = c.tagName.toLowerCase();
-    return tag.startsWith("fig-") || tag.startsWith("propskit-");
+    return tag.startsWith("fig-");
   });
   if (topLevel.length === 1) return buildStandalonePrompt(topLevel[0]);
   if (topLevel.length > 1) {

@@ -6,7 +6,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `optionschange` events to `propskit-editable-select` for add, rename, and delete mutations, including the affected option, index, updated options, and selected value.
 
 ### Changed
 
@@ -17,8 +16,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `propskit-image` with JSON image options, uploads, removable two-column choices, overflow navigation, defaults, reset support, and standard PropsKit events.
-- Added `propskit-editable-select` with stable values, add, rename, blur-to-save, delete, tooltips, full-row menus, defaults, reset support, and value/label event details.
 - Added the medium checkmark icon and `size="large"` support to `fig-input-text`.
 
 ### Changed
@@ -30,39 +27,23 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Inset `propskit-position` number fields from the surface edge and removed the negative margin that caused the X and Y fields to overlap.
 
 ## [8.10.0]
 
 ### Added
 
-- Added `propskit-palette` with typed palette values, fixed previews, `fig-select` options, hover events, defaults, and reset support.
-- Added `propskit-joystick` and `propskit-origin` with typed `{ x, y }` values and forced square X/Y controls.
-- Added `propskit-easing` and `propskit-spring` with typed curve values and constrained `fig-easing-curve` modes.
 - Added `mode="bezier|spring"` to `fig-easing-curve`, including filtered presets and constrained manual entry.
 - Added `subtle`, `aria-label`, `slot="trigger"`, and `slot="prepend-trigger"` support to `fig-select`.
-- Added shared PropsKit `name`, event-envelope, focus, reset, disabled, label, and logical styling-variable contracts.
 - Added body typography tokens, `--radius-medium-large`, `--fig-swatch-border-radius`, and button-control spacing variables.
 
 ### Changed
 
-- Refactored PropsKit surfaces to remove internal `fig-field` wrappers and standardize their DOM, styling, labels, accessible names, and value synchronization.
-- `propskit-select` now always uses `fig-select`; lab playground mode loads the editor bundle automatically.
-- `propskit-switch` now defaults to `fig-switch`, returns boolean values, toggles from its full surface, and supports `variant="segmented-control"`.
-- `propskit-text` now uses a text-only, multiline autoresizing input that grows from one to four lines while preserving label position and surface insets.
-- PropsKit controls now suppress text selection outside editable fields and consistently use medium-large surface radii, medium swatch radii, and configurable subfield backgrounds and borders.
-- Removed obsolete horizontal PropsKit `direction`, `size`, and minimal-variant styling; spatial and curve controls retain `variant="minimal"`.
 - Refined `fig-input-palette` borders, `fig-joystick` axis-label layout, and small body typography.
 - Expanded playground examples, attribute controls, JSX types, README documentation, and bundled skills for the new contracts and components.
 
 ### Fixed
 
 - Rich `fig-select` prepend and custom triggers now render, update after selection, preserve accessible names, and align their menus correctly.
-- `propskit-number` retains input focus when using arrow keys.
-- `propskit-wheel` initializes its visible number value before interaction.
-- PropsKit text and slider labels now share the correct inset and alignment.
-- `propskit-text` now grows without overlapping its label or losing its input padding and margins.
-- Corrected palette trigger sizing, PropsKit switch spacing and cursor behavior, and color, fill, gradient, and palette preview radii.
 
 ## [8.9.49]
 
@@ -72,7 +53,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- PropsKit group headers no longer add extra left padding, matching `fig-group` header alignment.
 
 ## [8.9.48]
 
@@ -115,7 +95,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Collapsible `fig-group` and `propskit-group` chevrons now render as header siblings before their headings.
 
 ### Fixed
 
@@ -125,7 +104,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `propskit-slider` handles now reveal on hover or focus and scale/fade based on proximity to rendered label and number text.
 - Slider handle fading begins at `--spacer-3` and completes at `--spacer-2`.
 - Removed the inset border from avatar images.
 
@@ -137,19 +115,14 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Removed soft shadows from `fig-input-wheel` and `propskit-slider` handles for sharper rendering.
 
 ## [8.9.41]
 
 ### Changed
 
-- PropsKit slider and wheel controls now switch to the grabbing cursor only after crossing the drag threshold.
-- `propskit-wheel` supports scrubbing across its full surface without selecting the label.
-- Arrow keys in a `propskit-wheel` number field now spin the ticks and nudge the wheel handle.
 
 ### Fixed
 
-- PropsKit slider and wheel number fields now reserve focused styling for text editing instead of pointer scrubbing.
 
 ## [8.9.40]
 
@@ -166,13 +139,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- `fig-input-number` now preserves trailing zeros when an explicit display precision is set, including through `propskit-wheel`.
 
 ## [8.9.38]
 
 ### Fixed
 
-- `propskit-wheel` elastic stretching now begins at the composed row boundary instead of the inset child wheel boundary.
 
 ## [8.9.37]
 
@@ -182,7 +153,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `fig-input-wheel` keeps resisted handle pull without stretching its host; `propskit-wheel` retains optional elastic row stretching.
 - Doubled the horizontal inset around `fig-input-wheel` ticks.
 
 ## [8.9.36]
@@ -199,19 +169,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- PropsKit wheel number fields now inherit the shared numeric typography features.
 - The playground now loads full Inter 3.19.3 so its slashed-zero OpenType glyph renders correctly.
 
 ## [8.9.34]
 
 ### Added
 
-- Added `spin` to `fig-input-wheel` and `propskit-wheel`; set `spin="false"` to update values while keeping ticks stationary.
 - Added `fig-input-wheel.spinTo(value)` plus playground controls and a static-wheel example.
 
 ### Fixed
 
-- Editing a `propskit-wheel` number field now visibly spins the wheel to the new value when spinning is enabled.
 
 ## [8.9.33]
 
@@ -222,26 +189,17 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `propskit-wheel` now composes `fig-input-wheel` with an optional number field while preserving units, time defaults, reset behavior, event retargeting, and number-field scrubbing.
-- Wheel-only PropsKit layouts can omit both the label and number field, expanding the centered tick-and-handle area.
 
 ### Fixed
 
-- Preserved `propskit-wheel` row stretch and spring-back while delegating elastic calculations to `fig-input-wheel`.
 
 ## [8.9.32]
 
 ### Added
 
-- Added `propskit-wheel`, a generic numeric scrubber with projected ticks, arbitrary and time units, bounds, keyboard and pointer controls, and elastic edge feedback.
-- Added `variant="minimal"` to full-surface PropsKit controls.
 
 ### Changed
 
-- PropsKit rows now use the 40px large layout by default and support `size="small"` for the compact layout; groups propagate compact sizing while explicit `size="large"` remains compatible.
-- PropsKit number fields retain the standard 24px input height, use the default background while focused or active, and show scrub cursors before text editing.
-- Refined PropsKit hue and opacity slider fills, borders, and adaptive text contrast.
-- Playground attachment examples now use bundled gradient previews and expose the new PropsKit size, variant, group, and wheel APIs.
 
 ## [8.9.31]
 
@@ -267,8 +225,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `propskit-slider` keeps its reset default separate while giving inner delta sliders a midpoint baseline.
-- `propskit-oscillator` uses the same minimal handles as `fig-easing-curve`.
 
 ## [8.9.29]
 
@@ -326,7 +282,6 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Automatic video poster capture paints the swatch without emitting `input`. The still is derived UI, not a fill change.
-- `fig-input-gradient` / `propskit-gradient` picker swatches follow linear, radial, and angular types instead of staying a left-to-right strip.
 
 ## [8.9.22]
 
@@ -347,22 +302,18 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `propskit-color`, `propskit-fill`, and `propskit-gradient` open the fill picker anchored on the host, not the swatch.
 - `fig-swatch` uses the same focus-inside split as `fig-input-gradient` (`:focus-within:not(:focus)`). Nested color inputs no longer draw their own ring.
 
 ### Fixed
 
-- Propskit color/fill focus outline sits on `fig-field` only. The host, swatch, and inner color input stay ringless — matching gradient.
 
 ## [8.9.20]
 
 ### Added
 
-- `propskit-fill`: labeled large swatch that opens the full fill picker (solid, gradient, image, video, webcam, custom `mode-*` slots). Same chrome as `propskit-color`.
 
 ### Changed
 
-- `fig-input-fill` no longer draws its own hover/focus outline; the inner combo still does. Propskit color/fill/gradient fields take the focus ring so nested swatches stay clean.
 
 ### Fixed
 
@@ -440,10 +391,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `propskit-color` is a large fill-picker swatch like `propskit-gradient`, with no hex or opacity text field.
-- `propskit-gradient` defaults to `edit="picker"`.
-- `propskit-color` and `propskit-gradient` field rows have no right padding.
-- `propskit-gradient size="large"` makes `fig-input-gradient` 2rem, matching `--propskit-color-height`.
 
 ### Fixed
 
@@ -525,8 +472,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `propskit-select` now supports authored `fig-select-options` children for rich option content.
-- Added a Rich menu example to the Propskit Lab Select section.
 
 ## [8.9.5]
 
@@ -701,16 +646,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added consistent `disabled` support across every PropsKit control, including composed controls and groups.
 
 ### Changed
 
 - Generated image loading indicators use the small spinner size.
-- Documented the package imports required for Lab and PropsKit components.
 
 ### Fixed
 
-- Disabled PropsKit text and number inputs render without input chrome.
 - Disabled oscillators stop and resume their playhead animation correctly.
 - Attachments keep a stable square size while loading, and loading spinners are no longer constrained by overlay sizing.
 
@@ -718,13 +660,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `propskit-position`, `propskit-color-point`, `propskit-point-radius`, `propskit-point-radius-angle`, and `propskit-point-point` spatial property controls.
 - Added numeric spatial control event details with explicit `units`.
 
 ### Changed
 
-- Spatial PropsKit controls pass optional percentage units through to their composed inputs.
-- PropsKit playground navigation uses compact groups and shorter example names.
 - Lab CSS loads only on lab-enabled playground routes instead of through `fig-editor.css`.
 
 ## [8.0.3]
@@ -737,22 +676,17 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Large PropsKit labels use `--fig-field-label-max-height: var(--spacer-5)` so they fill the control height.
-- `propskit-select` and `propskit-number` large labels follow the shared horizontal label padding rules.
-- `propskit-select` fig-dropdown fallback stretches the native `<select>` to the field height.
 
 ## [8.0.1]
 
 ### Fixed
 
-- `propskit-select` fig-dropdown fallback no longer wipes the native `<select>`, and matches fig-select field layout CSS.
 
 ## [8.0.0]
 
 ### Changed
 
 - Moved `fig-select`, `fig-select-option`, and `fig-select-options` from core into the editor bundle (`fig-editor.js` / `fig-editor.css`).
-- `propskit-select` and `fig-easing-curve` fall back to `fig-dropdown` when `fig-select` is not registered.
 - Select playground docs now live under Editor components.
 
 ### Breaking
@@ -804,19 +738,16 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Horizontal PropsKit labels now span 75% of their field while preserving ellipsis truncation.
 
 ## [6.39.0]
 
 ### Changed
 
-- Unfocused PropsKit slider number fields now drag the slider, while clicks focus the field for editing and Alt-drag scrubbing.
 
 ## [6.38.0]
 
 ### Changed
 
-- Horizontal PropsKit field labels now truncate at a maximum width of 40%.
 
 ### Fixed
 
@@ -949,13 +880,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- PropsKit controls now use a compact default size and expand to a 40px row with `size="large"`.
 
 ## [6.29.0]
 
 ### Added
 
-- Added `propskit-gradient`, an inline-editable gradient field with shared PropsKit defaults, reset behavior, and group dirty-state integration.
 
 ### Changed
 
@@ -975,26 +904,20 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `optionhover` events to `fig-select` and `propskit-select`, exposing the hovered enabled option value without changing selection.
 - Added `optionhover` support to the playground event output.
 
 ## [6.27.0]
 
 ### Added
 
-- Added shared `defaultValue`, `isDefault`, `resetToDefault()`, and right-click reset support across PropsKit inputs.
-- Added an opacity color control to the PropsKit slider playground attributes.
 
 ### Changed
 
-- `propskit-group` now derives dirty and reset state from each nested input's default contract, including oscillators.
-- `propskit-slider[type="opacity"]` now uses a stable full-width color gradient revealed with progress and contrast-aware number text.
 - Refined oscillator wave controls with a menu-based add action, zero-centered delta fields, and stronger waveform styling.
 
 ### Fixed
 
 - Opacity slider number fields remain directly editable above the range surface.
-- Programmatic PropsKit value and default changes now update group dirty state predictably.
 
 ## [6.26.0]
 
@@ -1020,7 +943,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - `fig-reorder` now drags from any child surface while preserving nested controls with their own drag behavior.
-- `propskit-group` now matches `fig-group` header structure and keeps reset controls right-aligned.
 
 ## [6.24.5]
 
@@ -1071,27 +993,23 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Replaced `fig-menu-separator` with `fig-separator` throughout the runtime, docs, and examples.
-- Grouped the Lab navigation into Propskit, AI, and Misc sections.
 - Improved avatar initials and shimmer text defaults for chat compositions.
 
 ## [6.23.4]
 
 ### Fixed
 
-- `propskit-slider` now reflects scrub values without re-running full attribute and focus synchronization.
 - `fig-slider` updates bounds and units in place and defers structural regeneration until pointer release.
 
 ## [6.23.3]
 
 ### Fixed
 
-- `propskit-slider` now defers delegated focus until pointer release so Chrome’s native range drag remains active.
 
 ## [6.23.2]
 
 ### Changed
 
-- Clarified that the PropsKit dropdown field uses the native dropdown menu.
 
 ## [6.23.1]
 
@@ -1127,7 +1045,6 @@ All notable changes to this project will be documented in this file.
 
 - Refined `fig-easing-curve` with 2px strokes, horizontal bounds, cleaner endpoints, improved layer order, preset selection via `fig-select`, and dynamic scaling for overshooting Bézier handles.
 - Improved select menu spacing, non-wrapping labels, checkmark geometry, viewport clamping, and selected-option presentation.
-- Improved PropsKit field sizing and gutters, header/content padding, 3D rotation inputs, and origin-grid value layout.
 - Migrated rich oscillator options to `fig-select`.
 - Removed legacy `experimental` dropdown styling and no-op fill/color picker attribute passthroughs.
 
@@ -1152,7 +1069,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Gradient interpolation options are grouped in `fig-fill-picker` with live swatch previews and keyboard preview behavior.
-- PropsKit controls with a size option now default to the large layout, with consistent field insets.
 - Select option panels size to their content up to the viewport and improve edge positioning, keyboard navigation, and disabled-option handling.
 
 ### Fixed
@@ -1174,12 +1090,9 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Propskit `size="large"`: more left field padding (`spacer-2-5`); trailing numbers inset with `spacer-1`; `propskit-select` insets label/trigger left and `fig-select` padding-right + chevron.
-- Focus rings move to the field/slider chrome (`fig-slider`, `propskit-number` / `propskit-slider` field) instead of the range thumb or nested number.
 
 ### Fixed
 
-- `propskit-slider` progress tracks percent to 0; thumb keeps a constant inset from the progress edge (`delta` / `stepper` / `hue` use zero inset).
 
 ## [6.20.0]
 
@@ -1196,19 +1109,15 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Restored `propskit-slider` handle edge fade (opacity falls off toward track ends; sharper squared curve).
 
 ## [6.19.0]
 
 ### Added
 
-- `propskit-group` — always-collapsible property group with optional header reset (`show-reset`, default true). Reset appears only while child propskit fields are dirty and restores them to captured defaults.
-- Lab examples for `propskit-group` (default, compact, no-reset).
 - `--icon-24-reset` token; `fig-icon name="reset"` resolves medium/small sizes.
 
 ### Fixed
 
-- `propskit-color` value forwarding uses live color from input events (stale `value` attribute no longer blocks edits or breaks group reset).
 
 ## [6.18.4]
 
@@ -1219,19 +1128,16 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `propskit-select` nested `fig-select` spans the full field width (value right-aligned over the label).
 
 ## [6.18.3]
 
 ### Fixed
 
-- `propskit-select` field click toggles the menu closed when already open (no reopen after popup light-dismiss).
 
 ## [6.18.2]
 
 ### Fixed
 
-- `propskit-color` no longer shows a hover outline on nested `fig-input-color` (field row hover chrome only).
 
 ## [6.18.1]
 
@@ -1244,12 +1150,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added optional `options` attribute on `fig-select` and `propskit-select` (comma / newline / JSON array, same as `fig-options`); builds `fig-select-options` when no authored options exist.
-- Added lab examples for Select / Propskit Select options attribute formats.
 
 ### Changed
 
-- `propskit-select` is attribute-driven (`value` + `options`); child `fig-select-option` authoring is no longer supported on the propskit wrapper.
 
 ### Fixed
 
@@ -1266,7 +1169,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `propskit-select` now composes `fig-select` with a slotted options panel (React-safe; options stay in light DOM).
 - `fig-popup` outside dismiss uses `composedPath()` so slotted menu/select clicks are not treated as outside.
 
 ### Fixed
@@ -1278,25 +1180,17 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `propskit-color`, a full-surface labeled color control with playground, documentation, JSX, and browser test coverage.
 
 ### Changed
 
-- Propskit field surfaces now focus inputs, toggle switches, and open selects when clicked.
-- Propskit color uses stable hex and opacity widths with an auto-width color control.
 
 ## [6.15.0]
 
 ### Added
 
-- Added `propskit-number`, `propskit-select`, `propskit-switch`, and `propskit-text` full-surface property controls.
-- Added playground examples, attribute editing, value persistence, JSX types, documentation, and browser contract tests for Propskit controls.
 
 ### Changed
 
-- Renamed `fig-field-slider` to `propskit-slider` across the library and playground.
-- Updated playground component discovery, prompts, events, and parsing to support `propskit-*` elements.
-- Changed `propskit-switch` to use an Off/On segmented control.
 
 ## [6.14.1]
 
@@ -1717,7 +1611,6 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added `columns` support for `fig-chooser layout="grid"` to control grid column count.
-- Added `/figui3` chooser examples copied from PropsKit without field wrappers.
 
 ### Changed
 
@@ -1731,7 +1624,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Moved `/figui3` container examples below core and editor components, reusing the PropsKit container examples.
 
 ## [6.5.0]
 
@@ -1795,7 +1687,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added a PropsKit horizontal fields stress test dialog with generated property labels and multiple slider types.
 
 ### Changed
 
@@ -1813,16 +1704,12 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added PropsKit video examples after the image examples.
 
 ### Changed
 
-- PropsKit image examples now start with a default image example and include explicit fit settings.
-- PropsKit preview examples now hide field labels by default, and the image preview uses varied aspect ratio images.
 
 ### Fixed
 
-- PropsKit attributes now always expose `fit` for image, video, and media controls.
 
 ## [6.1.1]
 
@@ -1834,11 +1721,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `/propskit` as the canonical PropsKit playground route, with `/propkit` redirecting to it.
 
 ### Changed
 
-- Renamed the playground header and document title from Propkit to PropsKit.
 - Refined lab field slider styling.
 
 ## [6.0.0]

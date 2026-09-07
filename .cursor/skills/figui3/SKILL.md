@@ -5,7 +5,6 @@ description: >-
   including React JSX usage. Use when adding, using, or debugging fig-* elements from
   the core bundle—buttons, fields, overlays, menus, sliders, color/fill inputs, media,
   dialogs, popups, toasts. Not for fig-select or fig-fill-picker (fig-editor),
-  propskit-* / AI / canvas / angle / wheel / reorder (fig-lab), or fig-layer.
 user-invocable: false
 ---
 
@@ -15,7 +14,6 @@ Zero-dependency web components for Figma UI3 plugin and widget UIs.
 
 Public API: `README.md`. React: [react.md](react.md). Per-tag JSX: [components.md](components.md). Attrs: [reference.md](reference.md).
 
-Related skills: `fig-editor` (`fig-select`, `fig-fill-picker`), `fig-lab` (`propskit-*`, AI, canvas), `propkit` (property-row composition).
 
 ## Bundles
 
@@ -30,7 +28,6 @@ import "@rogieking/figui3/fig.js";
 |---|---|---|
 | **Core** (this skill) | `fig.css` + `fig.js` | All `fig-*` in [components.md](components.md) |
 | **Editor** | `fig-editor.css` + `fig-editor.js` | `fig-select*`, `fig-fill-picker`, `fig-interpolation-swatch` |
-| **Lab** (unstable) | `fig-lab.css` + `fig-lab.js` | `propskit-*`, `fig-ai-*`, `fig-canvas-control`, `fig-input-angle`, `fig-input-wheel`, `fig-reorder` |
 | **Layer** | `fig-layer.css` + `fig-layer.js` | `fig-layer` |
 
 `fig-editor.js` also imports `fig.js` and `fig-lab.js`. Lab CSS is still separate. `fig-layer` is **not** registered by `fig-editor.js`. Toast is core; layer is `fig-layer.js`.
@@ -71,7 +68,6 @@ import "@rogieking/figui3/fig.js";
 </fig-field>
 ```
 
-Labeled property wrappers (`propskit-*`) are lab. See the `propkit` and `fig-lab` skills.
 
 ## Select vs dropdown
 
@@ -79,7 +75,6 @@ Labeled property wrappers (`propskit-*`) are lab. See the `propkit` and `fig-lab
 |---|---|---|
 | `fig-dropdown` | core | Native `<select>` wrapper. `type="select\|dropdown"`, `variant="ghost"` |
 | `fig-select` | editor | Custom listbox: groups, overflow chevrons, sticky separators, rich options |
-| `propskit-select` | lab | Full-surface labeled field around `fig-select` |
 
 Prefer `fig-select` for Figma-style menus. Use `fig-dropdown` only for a native select.
 

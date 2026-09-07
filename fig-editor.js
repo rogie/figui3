@@ -283,7 +283,7 @@ function figEditorScrollElementToCenter(
 
 
 /* Select — dropdown-styled trigger + fig-popup listbox */
-/** Parse options attr — same formats as fig-options / propskit-select. */
+/** Parse options attr — same formats as fig-options. */
 function figSelectParseOptionsAttribute(raw) {
   const text = raw || "";
   if (text.startsWith("[")) {
