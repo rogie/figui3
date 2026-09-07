@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.0]
+
+### Changed
+
+- Removed the legacy Lab property-control wrappers and their examples, tests, JSX types, and documentation.
+- Removed the unused standalone editor scaffold.
+
 ## [8.11.1]
 
 ### Added
