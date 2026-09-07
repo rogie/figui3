@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.11.1]
+
+### Added
+
+- Added `optionschange` events to `propskit-editable-select` for add, rename, and delete mutations, including the affected option, index, updated options, and selected value.
+
+### Changed
+
+- Deleting an unselected editable-select option no longer emits unchanged `input` and `change` events.
+- Added `optionschange` output to the playground, React guidance, README, bundled skills, and component contracts.
+
 ## [8.11.0]
 
 ### Added

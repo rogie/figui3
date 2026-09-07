@@ -108,6 +108,10 @@ background, border, color, hover, and focus variables.
   remain available
 - Renaming updates the reflected options JSON while preserving the option value
 - `input`, `change`, and `optionhover` use the shared PropsKit envelope
+- `optionschange` fires after every add, rename, or delete with
+  `{ control, name?, value, label, action, option, index, options }`
+- Deleting an unselected option emits `optionschange` without `input` or
+  `change`
 - Supports `defaultValue`, `isDefault`, `editing`, `resetToDefault()`, disabled
   state propagation, and focus delegation
 

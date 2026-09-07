@@ -2603,6 +2603,7 @@ figLabDefineElement("propskit-select", PropskitSelect);
  * @fires input - Shared PropsKit event with selected value and label.
  * @fires change - Shared PropsKit event with selected value and label.
  * @fires optionhover - Shared PropsKit event with hovered value and label.
+ * @fires optionschange - Option mutation with action, option, index, and options.
  */
 class PropskitEditableSelect extends FigLabPropskitElement {
   static observedAttributes = [
@@ -3117,6 +3118,27 @@ class PropskitEditableSelect extends FigLabPropskitElement {
     }
   }
 
+  #dispatchOptionsChange(action, option, index) {
+    const value = this.value;
+    const options = this.options.map((entry) => ({ ...entry }));
+    const label =
+      options.find((entry) => entry.value === value)?.label || "";
+    this.dispatchEvent(
+      new CustomEvent("optionschange", {
+        detail: {
+          ...figLabPropskitEventDetail(this, value),
+          label,
+          action,
+          option: { ...option },
+          index,
+          options,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   #handleEditClick(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -3151,10 +3173,13 @@ class PropskitEditableSelect extends FigLabPropskitElement {
     if (figLabBooleanAttribute(this, "disabled") || this.#input) return;
 
     const options = this.options;
-    const value = `item-${options.length}`;
-    this.options = [...options, { value, label: "New item" }];
+    const index = options.length;
+    const option = { value: `item-${index}`, label: "New item" };
+    this.options = [...options, option];
+    const value = option.value;
     this.#reflectValue(value);
     this.#syncSelectAttributes();
+    this.#dispatchOptionsChange("add", option, index);
     for (const type of ["input", "change"]) {
       this.#dispatchOptionEvent(type);
     }
@@ -3218,6 +3243,7 @@ class PropskitEditableSelect extends FigLabPropskitElement {
     if (options.length <= 1) return;
     const index = options.findIndex((option) => option.value === value);
     if (index < 0) return;
+    const removedOption = { ...options[index] };
 
     const wasOpen = this.#select.open;
     const selectedValue = this.value;
@@ -3237,8 +3263,11 @@ class PropskitEditableSelect extends FigLabPropskitElement {
     } finally {
       this.#suppressSelectEvents = false;
     }
-    for (const type of ["input", "change"]) {
-      this.#dispatchOptionEvent(type);
+    this.#dispatchOptionsChange("delete", removedOption, index);
+    if (selectedValue !== nextValue) {
+      for (const type of ["input", "change"]) {
+        this.#dispatchOptionEvent(type);
+      }
     }
 
     queueMicrotask(() => {
@@ -3344,8 +3373,10 @@ class PropskitEditableSelect extends FigLabPropskitElement {
     const changed = label !== options[index].label;
     this.#finishEditing(false);
     if (changed) {
-      options[index] = { ...options[index], label };
+      const option = { ...options[index], label };
+      options[index] = option;
       this.options = options;
+      this.#dispatchOptionsChange("rename", option, index);
     }
     this.#reflectValue(editingValue);
     this.#syncSelectAttributes();

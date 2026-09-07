@@ -632,7 +632,11 @@ cannot be deleted; edit and add remain available.
 **Events:** `input`, `change`, `optionhover` — the shared PropsKit envelope is
 extended to `{ control, name?, value, label }`. `value` is the stable option
 value and `label` is its current display label. Add, delete, and successful
-rename actions emit `input` and `change`.
+rename actions emit `input` and `change` when the selected output changes.
+Every list mutation emits `optionschange` with
+`{ control, name?, value, label, action, option, index, options }`, where
+`action` is `"add"`, `"rename"`, or `"delete"`. Deleting an unselected option
+emits only `optionschange`.
 
 **Methods and state:** `.options`, `defaultValue`, `isDefault`, `editing`,
 `resetToDefault()`, and focus delegation.

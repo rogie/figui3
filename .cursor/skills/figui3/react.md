@@ -208,7 +208,7 @@ function readValue(event: Event) {
 
 Native `addEventListener` only when React does not map the event: dialog `close` / `cancel`, delegated host clicks, imperative APIs.
 
-Common events: `input`, `change`, `loaded`, `optionhover`, `reorder`, `remove`, `modeready`, `webcamstream`, `close`.
+Common events: `input`, `change`, `loaded`, `optionhover`, `optionschange`, `reorder`, `remove`, `modeready`, `webcamstream`, `close`.
 
 ## Customized built-ins
 

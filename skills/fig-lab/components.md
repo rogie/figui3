@@ -177,6 +177,9 @@ Rich options (requires editor):
   while preserving its stable value.
 - `input`, `change`, and `optionhover` detail includes both the stable `value`
   and current `label`.
+- Every add, rename, or delete emits `optionschange` with
+  `{ control, name?, value, label, action, option, index, options }`. Deleting
+  an unselected option does not emit `input` or `change`.
 
 ### `propskit-text`
 

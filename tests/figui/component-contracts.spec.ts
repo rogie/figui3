@@ -8998,6 +8998,124 @@ test.describe("propskit-editable-select", () => {
     });
   });
 
+  test("emits optionschange for add, rename, and delete mutations", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <propskit-editable-select
+          id="control"
+          name="collection"
+          value="primary"
+          options='[{"value":"primary","label":"Primary"},{"value":"secondary","label":"Secondary"}]'
+        ></propskit-editable-select>
+      `;
+      const control = root.querySelector("#control") as HTMLElement & {
+        mutationLog: unknown[];
+        selectionLog: string[];
+      };
+      control.mutationLog = [];
+      control.selectionLog = [];
+      control.addEventListener("optionschange", (event) => {
+        const customEvent = event as CustomEvent;
+        control.mutationLog.push({
+          detail: structuredClone(customEvent.detail),
+          targetParity:
+            event.target === control &&
+            (event.target as HTMLElement & { value: string }).value ===
+              customEvent.detail.value,
+          cancelable: event.cancelable,
+        });
+      });
+      for (const type of ["input", "change"]) {
+        control.addEventListener(type, () => control.selectionLog.push(type));
+      }
+    });
+
+    const control = page.locator("#control");
+    await control.locator(".propskit-editable-select-add").click();
+    await control.locator("fig-input-text input").fill("Tertiary");
+    await control.locator("fig-input-text input").press("Enter");
+    await control.locator("fig-button.fig-select-trigger").click();
+    await control
+      .locator(
+        'fig-select-option[value="secondary"] .propskit-editable-select-delete',
+      )
+      .click();
+
+    expect(
+      await control.evaluate((host) => {
+        const element = host as HTMLElement & {
+          mutationLog: unknown[];
+          selectionLog: string[];
+        };
+        return {
+          mutations: element.mutationLog,
+          selectionEvents: element.selectionLog,
+        };
+      }),
+    ).toEqual({
+      mutations: [
+        {
+          detail: {
+            control: "propskit-editable-select",
+            name: "collection",
+            value: "item-2",
+            label: "New item",
+            action: "add",
+            option: { value: "item-2", label: "New item" },
+            index: 2,
+            options: [
+              { value: "primary", label: "Primary" },
+              { value: "secondary", label: "Secondary" },
+              { value: "item-2", label: "New item" },
+            ],
+          },
+          targetParity: true,
+          cancelable: false,
+        },
+        {
+          detail: {
+            control: "propskit-editable-select",
+            name: "collection",
+            value: "item-2",
+            label: "Tertiary",
+            action: "rename",
+            option: { value: "item-2", label: "Tertiary" },
+            index: 2,
+            options: [
+              { value: "primary", label: "Primary" },
+              { value: "secondary", label: "Secondary" },
+              { value: "item-2", label: "Tertiary" },
+            ],
+          },
+          targetParity: true,
+          cancelable: false,
+        },
+        {
+          detail: {
+            control: "propskit-editable-select",
+            name: "collection",
+            value: "item-2",
+            label: "Tertiary",
+            action: "delete",
+            option: { value: "secondary", label: "Secondary" },
+            index: 1,
+            options: [
+              { value: "primary", label: "Primary" },
+              { value: "item-2", label: "Tertiary" },
+            ],
+          },
+          targetParity: true,
+          cancelable: false,
+        },
+      ],
+      selectionEvents: ["input", "change", "input", "change"],
+    });
+  });
+
   test("deletes options from appended ghost menu actions", async ({ page }) => {
     await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
@@ -9095,10 +9213,7 @@ test.describe("propskit-editable-select", () => {
         { value: "archived", label: "Archived" },
       ],
       value: "recent",
-      events: [
-        { type: "input", value: "recent", label: "Recent" },
-        { type: "change", value: "recent", label: "Recent" },
-      ],
+      events: [],
     });
 
     await page.keyboard.press("Delete");
@@ -9146,8 +9261,6 @@ test.describe("propskit-editable-select", () => {
       options: [{ value: "archived", label: "Archived" }],
       value: "archived",
       events: [
-        { type: "input", value: "recent", label: "Recent" },
-        { type: "change", value: "recent", label: "Recent" },
         { type: "input", value: "archived", label: "Archived" },
         { type: "change", value: "archived", label: "Archived" },
       ],

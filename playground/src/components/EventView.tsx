@@ -59,6 +59,7 @@ export default function EventView() {
     const types = [
       "input",
       "change",
+      "optionschange",
       "loaded",
       "optionhover",
       "reorder",
