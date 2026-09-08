@@ -546,6 +546,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
+    presets: {
+      label: "Presets",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    text: {
+      label: "Text",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     "aspect-ratio": aspectRatioRule,
   },
   "fig-3d-rotate": {

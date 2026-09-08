@@ -14054,15 +14054,18 @@ figDefineElement("fig-input-file", FigInputFile);
 
 /**
  * A bezier / spring easing curve editor with draggable control points.
- * @attr {string} value - Bezier: "0.42, 0, 0.58, 1" or Spring: "spring(200, 15, 1)"
+ * @attr {string} value - Bezier/spring shorthand or a serialized easing object
  * @attr {string} mode - Optional editor constraint: "bezier" or "spring".
  * @attr {number} precision - Decimal places for output values (default 2)
  * @attr {boolean} edit - Show the editor and custom preset options (default true; set "false" for presets only)
+ * @attr {boolean} presets - Show the preset selector (default true)
+ * @attr {boolean} text - Show the manual value input (default true)
+ * @property {object|null} spring - Structured spring configuration when in spring mode
  */
 class FigEasingCurve extends HTMLElement {
   #cp1 = { x: 0.42, y: 0 };
   #cp2 = { x: 0.58, y: 1 };
-  #spring = { stiffness: 200, damping: 15, mass: 1 };
+  #spring = { stiffness: 200, damping: 15, mass: 1, initialVelocity: 0 };
   #mode = "bezier";
   #precision = 2;
   #isDragging = null;
@@ -14155,7 +14158,15 @@ class FigEasingCurve extends HTMLElement {
   ];
 
   static get observedAttributes() {
-    return ["value", "mode", "precision", "aspect-ratio", "edit"];
+    return [
+      "value",
+      "mode",
+      "precision",
+      "aspect-ratio",
+      "edit",
+      "presets",
+      "text",
+    ];
   }
 
   connectedCallback() {
@@ -14191,12 +14202,15 @@ class FigEasingCurve extends HTMLElement {
       return;
     }
 
-    if (name === "edit") {
+    if (name === "edit" || name === "presets" || name === "text") {
       if (this.isConnected) this.#render();
       return;
     }
 
     if (name === "mode") {
+      this.#applyModeConstraint();
+      const value = this.getAttribute("value");
+      if (value) this.#parseValue(value);
       this.#applyModeConstraint();
       this.#presetName = this.#matchPreset();
       if (this.isConnected) this.#render();
@@ -14222,8 +14236,9 @@ class FigEasingCurve extends HTMLElement {
 
   get value() {
     if (this.#mode === "spring") {
-      const { stiffness, damping, mass } = this.#spring;
-      return `spring(${stiffness}, ${damping}, ${mass})`;
+      const { stiffness, damping, mass, initialVelocity = 0 } = this.#spring;
+      const velocity = initialVelocity ? `, ${initialVelocity}` : "";
+      return `spring(${stiffness}, ${damping}, ${mass}${velocity})`;
     }
     const p = this.#precision;
     return `${this.#cp1.x.toFixed(p)}, ${this.#cp1.y.toFixed(p)}, ${this.#cp2.x.toFixed(p)}, ${this.#cp2.y.toFixed(p)}`;
@@ -14251,7 +14266,37 @@ class FigEasingCurve extends HTMLElement {
   }
 
   set value(v) {
+    if (v && typeof v === "object") {
+      const normalized = this.#normalizeStructuredValue(v);
+      if (!normalized) {
+        throw new TypeError("Invalid easing value or mode/type mismatch");
+      }
+      const serialized =
+        normalized.type === "spring"
+          ? { type: "spring", ...normalized.spring }
+          : {
+              type: "bezier",
+              x1: normalized.bezier[0],
+              y1: normalized.bezier[1],
+              x2: normalized.bezier[2],
+              y2: normalized.bezier[3],
+            };
+      this.setAttribute("value", JSON.stringify(serialized));
+      return;
+    }
     this.setAttribute("value", v);
+  }
+
+  get spring() {
+    if (this.#mode !== "spring") return null;
+    return { ...this.#spring, initialVelocity: this.#spring.initialVelocity ?? 0 };
+  }
+
+  set spring(value) {
+    if (!value || typeof value !== "object") {
+      throw new TypeError("spring must be an object");
+    }
+    this.value = { ...value, type: "spring" };
   }
 
   #constrainedMode() {
@@ -14269,15 +14314,114 @@ class FigEasingCurve extends HTMLElement {
     return !mode || preset.type === mode;
   }
 
-  #parseValue(str) {
-    const springMatch = str.match(
-      /^spring\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/,
-    );
-    if (springMatch && this.#constrainedMode() !== "bezier") {
+  #normalizeStructuredValue(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const constrainedMode = this.#constrainedMode();
+    const declaredType =
+      typeof value.type === "string" ? value.type.trim().toLowerCase() : null;
+    if (declaredType && declaredType !== "bezier" && declaredType !== "spring") {
+      return null;
+    }
+    if (declaredType && constrainedMode && declaredType !== constrainedMode) {
+      return null;
+    }
+    const type = declaredType || constrainedMode;
+    if (!type) return null;
+
+    if (type === "spring") {
+      const spring = {
+        mass: Number(value.mass),
+        stiffness: Number(value.stiffness),
+        damping: Number(value.damping),
+        initialVelocity:
+          value.initialVelocity === undefined
+            ? 0
+            : Number(value.initialVelocity),
+      };
+      if (
+        !Number.isFinite(spring.mass) ||
+        spring.mass <= 0 ||
+        !Number.isFinite(spring.stiffness) ||
+        spring.stiffness <= 0 ||
+        !Number.isFinite(spring.damping) ||
+        spring.damping < 0 ||
+        !Number.isFinite(spring.initialVelocity)
+      ) {
+        return null;
+      }
+      return { type, spring };
+    }
+
+    const bezier = [value.x1, value.y1, value.x2, value.y2].map(Number);
+    if (
+      bezier.some((part) => !Number.isFinite(part)) ||
+      bezier[0] < 0 ||
+      bezier[0] > 1 ||
+      bezier[2] < 0 ||
+      bezier[2] > 1
+    ) {
+      return null;
+    }
+    return { type, bezier };
+  }
+
+  #applyStructuredValue(value) {
+    if (value.type === "spring") {
       this.#mode = "spring";
-      this.#spring.stiffness = parseFloat(springMatch[1]);
-      this.#spring.damping = parseFloat(springMatch[2]);
-      this.#spring.mass = parseFloat(springMatch[3]);
+      this.#spring = { ...value.spring };
+    } else {
+      this.#mode = "bezier";
+      [this.#cp1.x, this.#cp1.y, this.#cp2.x, this.#cp2.y] = value.bezier;
+    }
+  }
+
+  #parseSpringString(str) {
+    const match = str.match(/^spring\(\s*(.*?)\s*\)$/i);
+    if (!match) return null;
+    const parts = match[1].split(",").map((part) => Number(part.trim()));
+    if (
+      (parts.length !== 3 && parts.length !== 4) ||
+      parts.some((part) => !Number.isFinite(part))
+    ) {
+      return null;
+    }
+    const spring = {
+      stiffness: parts[0],
+      damping: parts[1],
+      mass: parts[2],
+      initialVelocity: parts[3] ?? 0,
+    };
+    if (
+      spring.stiffness <= 0 ||
+      spring.damping < 0 ||
+      spring.mass <= 0
+    ) {
+      return null;
+    }
+    return spring;
+  }
+
+  #parseValue(input) {
+    if (input && typeof input === "object") {
+      const normalized = this.#normalizeStructuredValue(input);
+      if (!normalized) return false;
+      this.#applyStructuredValue(normalized);
+      return true;
+    }
+    if (typeof input !== "string") return false;
+    const str = input.trim();
+    if (str.startsWith("{")) {
+      try {
+        return this.#parseValue(JSON.parse(str));
+      } catch {
+        return false;
+      }
+    }
+
+    const spring = this.#parseSpringString(str);
+    if (spring && this.#constrainedMode() !== "bezier") {
+      this.#mode = "spring";
+      this.#spring = spring;
       return true;
     }
     const parts = str.split(",").map((s) => parseFloat(s.trim()));
@@ -14316,7 +14460,8 @@ class FigEasingCurve extends HTMLElement {
       if (
         Math.abs(this.#spring.stiffness - p.spring.stiffness) < ep &&
         Math.abs(this.#spring.damping - p.spring.damping) < ep &&
-        Math.abs(this.#spring.mass - p.spring.mass) < ep
+        Math.abs(this.#spring.mass - p.spring.mass) < ep &&
+        Math.abs(this.#spring.initialVelocity ?? 0) < ep
       )
         return p.name;
     }
@@ -14326,12 +14471,12 @@ class FigEasingCurve extends HTMLElement {
   // --- Spring simulation ---
 
   #simulateSpring() {
-    const { stiffness, damping, mass } = this.#spring;
+    const { stiffness, damping, mass, initialVelocity = 0 } = this.#spring;
     const dt = 0.004;
     const maxTime = 5;
     const points = [];
     let pos = 0,
-      vel = 0;
+      vel = initialVelocity;
     for (let t = 0; t <= maxTime; t += dt) {
       const force = -stiffness * (pos - 1) - damping * vel;
       vel += (force / mass) * dt;
@@ -14344,12 +14489,12 @@ class FigEasingCurve extends HTMLElement {
   }
 
   static #springIcon(spring, size = 24) {
-    const { stiffness, damping, mass } = spring;
+    const { stiffness, damping, mass, initialVelocity = 0 } = spring;
     const dt = 0.004;
     const maxTime = 5;
     const pts = [];
     let pos = 0,
-      vel = 0;
+      vel = initialVelocity;
     for (let t = 0; t <= maxTime; t += dt) {
       const force = -stiffness * (pos - 1) - damping * vel;
       vel += (force / mass) * dt;
@@ -14465,6 +14610,14 @@ class FigEasingCurve extends HTMLElement {
 
   #isEditEnabled() {
     return this.getAttribute("edit") !== "false";
+  }
+
+  #isPresetsEnabled() {
+    return this.getAttribute("presets") !== "false";
+  }
+
+  #isTextEnabled() {
+    return this.getAttribute("text") !== "false";
   }
 
   #render() {
@@ -14594,13 +14747,26 @@ class FigEasingCurve extends HTMLElement {
 
   #createContent() {
     const size = 200;
-    const select = this.#createSelect();
-    if (!this.#isEditEnabled()) return [select];
-    const valueInput = figCreateElement("fig-input-text", {
-      className: "fig-easing-curve-value-input",
-      value: this.value,
-      full: true,
-    });
+    const select = this.#isPresetsEnabled() ? this.#createSelect() : null;
+    if (!this.#isEditEnabled()) return select ? [select] : [];
+    const valueInput = this.#isTextEnabled()
+      ? this.#mode === "spring"
+        ? figCreateElement("fig-input-number", {
+            className: "fig-easing-curve-value-input",
+            value: this.#springBounce().toFixed(2),
+            min: "0",
+            max: "1",
+            step: "0.01",
+            precision: "2",
+            "aria-label": "Spring bounce",
+            full: true,
+          })
+        : figCreateElement("fig-input-text", {
+            className: "fig-easing-curve-value-input",
+            value: this.value,
+            full: true,
+          })
+      : null;
     const svgChildren = [
       figCreateSvgElement("rect", {
         className: "fig-easing-curve-bounds",
@@ -14686,13 +14852,13 @@ class FigEasingCurve extends HTMLElement {
       svgChildren,
     );
     return [
-      select,
+      ...(select ? [select] : []),
       figCreateElement(
         "div",
         { className: "fig-easing-curve-svg-container" },
         svg,
       ),
-      valueInput,
+      ...(valueInput ? [valueInput] : []),
     ];
   }
 
@@ -14981,7 +15147,43 @@ class FigEasingCurve extends HTMLElement {
 
   #syncValueInput() {
     if (!this.#valueInput) return;
-    this.#valueInput.setAttribute("value", this.value);
+    const value =
+      this.#mode === "spring"
+        ? this.#springBounce().toFixed(2)
+        : this.value;
+    this.#valueInput.setAttribute("value", value);
+  }
+
+  #springBounce() {
+    const { stiffness, damping, mass } = this.#spring;
+    const criticalDamping = 2 * Math.sqrt(stiffness * mass);
+    if (!Number.isFinite(criticalDamping) || criticalDamping <= 0) return 0;
+    return Math.max(0, Math.min(1, 1 - damping / criticalDamping));
+  }
+
+  #setSpringBounce(value) {
+    const bounce = Math.max(0, Math.min(1, Number(value)));
+    const criticalDamping = 2 * Math.sqrt(
+      this.#spring.stiffness * this.#spring.mass,
+    );
+    this.#spring.damping = Number(
+      (criticalDamping * (1 - bounce)).toFixed(4),
+    );
+  }
+
+  #applySpringBounce(value, eventType) {
+    const bounce = Number(value);
+    if (!Number.isFinite(bounce)) {
+      if (eventType === "change") this.#syncValueInput();
+      return;
+    }
+
+    this.#setSpringBounce(bounce);
+    this.#presetName = this.#matchPreset();
+    this.#updatePaths();
+    this.#syncSelect();
+    if (eventType === "change") this.#syncValueInput();
+    this.#emit(eventType);
   }
 
   #parseManualBezierValue(value) {
@@ -14996,16 +15198,7 @@ class FigEasingCurve extends HTMLElement {
   }
 
   #parseManualSpringValue(value) {
-    const match = value.match(
-      /^spring\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/,
-    );
-    if (!match) return null;
-    const spring = {
-      stiffness: Number(match[1]),
-      damping: Number(match[2]),
-      mass: Number(match[3]),
-    };
-    return Object.values(spring).every((part) => part > 0) ? spring : null;
+    return this.#parseSpringString(value);
   }
 
   #applyManualValue(value, eventType) {
@@ -15115,18 +15308,19 @@ class FigEasingCurve extends HTMLElement {
     const unit = event.shiftKey ? 10 : 1;
 
     if (handleType === "bounce") {
+      const step = unit / 100;
       switch (event.key) {
         case "ArrowUp":
-          this.#spring.damping = Math.max(1, Math.round(this.#spring.damping - unit));
+          this.#setSpringBounce(this.#springBounce() + step);
           break;
         case "ArrowDown":
-          this.#spring.damping = Math.max(1, Math.round(this.#spring.damping + unit));
+          this.#setSpringBounce(this.#springBounce() - step);
           break;
         case "Home":
-          this.#spring.damping = 1;
+          this.#setSpringBounce(0);
           break;
         case "End":
-          this.#spring.damping = 50;
+          this.#setSpringBounce(1);
           break;
         default:
           return false;
@@ -15201,6 +15395,7 @@ class FigEasingCurve extends HTMLElement {
   // --- Events ---
 
   #emit(type) {
+    const spring = this.spring;
     this.dispatchEvent(
       new CustomEvent(type, {
         bubbles: true,
@@ -15209,6 +15404,7 @@ class FigEasingCurve extends HTMLElement {
           value: this.value,
           cssValue: this.cssValue,
           preset: this.#presetName,
+          ...(spring ? { spring } : {}),
         },
       }),
     );
@@ -15260,7 +15456,14 @@ class FigEasingCurve extends HTMLElement {
     }
 
     if (this.#select) {
+      this.#select.addEventListener("input", (e) => {
+        e.stopPropagation();
+      });
+      this.#select.addEventListener("optionhover", (e) => {
+        e.stopPropagation();
+      });
       this.#select.addEventListener("change", (e) => {
+        e.stopPropagation();
         const name = e.detail;
         const preset = FigEasingCurve.PRESETS.find((p) => p.name === name);
         if (!preset) return;
@@ -15282,7 +15485,7 @@ class FigEasingCurve extends HTMLElement {
           }
         } else if (preset.type === "spring") {
           if (preset.spring) {
-            this.#spring = { ...preset.spring };
+            this.#spring = { ...preset.spring, initialVelocity: 0 };
           }
           this.#presetName = name;
           if (this.#mode !== "spring") {
@@ -15302,14 +15505,20 @@ class FigEasingCurve extends HTMLElement {
       this.#valueInput.addEventListener("input", (e) => {
         e.stopPropagation();
         const value = e.detail ?? e.target?.value;
-        if (typeof value !== "string") return;
-        this.#applyManualValue(value, "input");
+        if (this.#mode === "spring") {
+          this.#applySpringBounce(value, "input");
+        } else if (typeof value === "string") {
+          this.#applyManualValue(value, "input");
+        }
       });
       this.#valueInput.addEventListener("change", (e) => {
         e.stopPropagation();
         const value = e.detail ?? e.target?.value;
-        if (typeof value !== "string") return;
-        this.#applyManualValue(value, "change");
+        if (this.#mode === "spring") {
+          this.#applySpringBounce(value, "change");
+        } else if (typeof value === "string") {
+          this.#applyManualValue(value, "change");
+        }
       });
     }
   }
@@ -15397,7 +15606,7 @@ class FigEasingCurve extends HTMLElement {
     this.#isDragging = handleType;
     this.classList.toggle("spring-bounce-dragging", handleType === "bounce");
 
-    const startDamping = this.#spring.damping;
+    const startBounce = this.#springBounce();
     const startStiffness = this.#spring.stiffness;
     const startDuration = this.#springDuration;
     const startY = e.clientY;
@@ -15408,10 +15617,7 @@ class FigEasingCurve extends HTMLElement {
 
       if (handleType === "bounce") {
         const dy = e.clientY - startY;
-        this.#spring.damping = Math.max(
-          1,
-          Math.round(startDamping + dy * 0.15),
-        );
+        this.#setSpringBounce(startBounce - dy / 200);
       } else {
         const dx = e.clientX - startX;
         this.#springDuration = Math.max(

@@ -870,6 +870,16 @@ export const propkitSections: Section[] = [
   </fig-field>
 </div>`,
       },
+      {
+        id: "editor-only",
+        name: "Editor only",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Easing</label>
+    <fig-easing-curve value="0.42, 0, 0.58, 1" presets="false" text="false"></fig-easing-curve>
+  </fig-field>
+</div>`,
+      },
     ],
   },
   {

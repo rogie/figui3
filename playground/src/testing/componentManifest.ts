@@ -328,7 +328,11 @@ export const componentContracts: ComponentContract[] = [
     title: "Easing Curve",
     group: "data",
     markup: `<fig-easing-curve value="ease-in-out"></fig-easing-curve>`,
-    attributes: [{ name: "precision", attribute: "precision", value: "2" }],
+    attributes: [
+      { name: "precision", attribute: "precision", value: "2" },
+      { name: "presets", attribute: "presets", value: "false" },
+      { name: "text", attribute: "text", value: "false" },
+    ],
   },
   {
     tag: "fig-3d-rotate",

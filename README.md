@@ -829,11 +829,41 @@ An interactive bezier or spring easing curve editor with a preset dropdown and m
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `value` | string | — | Bezier: `"0.42, 0, 0.58, 1"` or Spring: `"spring(200, 15, 1)"` |
+| `value` | string | — | Bezier/spring shorthand or a serialized easing object |
 | `mode` | string | — | Optional `"bezier"` or `"spring"` constraint; filters presets and rejects the other value type |
 | `precision` | number | `2` | Decimal places |
 | `aspect-ratio` | string | — | Editor aspect ratio |
 | `edit` | boolean | `true` | Show the editor and custom bezier/spring options; set to `"false"` for preset-only |
+| `presets` | boolean | `true` | Show the preset selector; set to `"false"` to hide it |
+| `text` | boolean | `true` | Show the bezier value or normalized spring bounce input; set to `"false"` to hide it |
+
+The `value` property also accepts a structured object. Structured values require a `type` unless the `mode` attribute supplies it. If both are present, they must agree.
+
+```js
+curve.value = {
+  type: "spring",
+  mass: 1,
+  stiffness: 200,
+  damping: 12,
+  initialVelocity: 0,
+};
+
+curve.spring; // A cloned { mass, stiffness, damping, initialVelocity } object
+curve.value;  // "spring(200, 12, 1)"
+```
+
+The same data can be supplied declaratively. With `mode="spring"`, `type` is optional:
+
+```html
+<fig-easing-curve
+  mode="spring"
+  value='{"mass":1,"stiffness":200,"damping":12,"initialVelocity":0}'
+></fig-easing-curve>
+```
+
+Bezier objects use `{ type: "bezier", x1, y1, x2, y2 }`. Spring shorthand accepts an optional fourth initial-velocity value: `spring(stiffness, damping, mass, initialVelocity)`.
+
+In spring mode, the compact number input edits normalized bounce from `0` (critically damped) to `1` (undamped). Bounce is converted to the equivalent damping value in the structured spring configuration.
 
 **Static:** `FigEasingCurve.PRESETS` — built-in preset array. `FigEasingCurve.curveIcon(value)` — SVG icon helper.
 
@@ -841,12 +871,13 @@ An interactive bezier or spring easing curve editor with a preset dropdown and m
 
 | Event | Detail |
 |---|---|
-| `input` | `{ mode, value, cssValue, preset }` — while dragging |
-| `change` | `{ mode, value, cssValue, preset }` — on release |
+| `input` | `{ mode, value, cssValue, preset, spring? }` — while dragging |
+| `change` | `{ mode, value, cssValue, preset, spring? }` — on release |
 
 ```html
 <fig-easing-curve value="0.42, 0, 0.58, 1"></fig-easing-curve>
 <fig-easing-curve value="spring(200, 15, 1)" edit="false"></fig-easing-curve>
+<fig-easing-curve value="0.42, 0, 0.58, 1" presets="false" text="false"></fig-easing-curve>
 ```
 
 Editable bezier and spring handles are keyboard operable. Bezier handles keep tab order aligned with the visual handle order.

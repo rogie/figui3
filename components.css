@@ -1924,8 +1924,9 @@ fig-easing-curve {
 
   width: 100%;
   .fig-easing-curve-svg {
+    display: block;
     width: 100%;
-    aspect-ratio: var(--aspect-ratio);
+    height: 100%;
     overflow: visible;
   }
   .fig-easing-curve-svg-container {

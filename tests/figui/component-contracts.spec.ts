@@ -127,6 +127,310 @@ test.describe("fig.js component contracts", () => {
     });
   });
 
+  test("fig-easing-curve independently controls presets, text, and editor visibility", async ({
+    page,
+  }) => {
+    const states = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<fig-easing-curve value="0.42, 0, 0.58, 1"></fig-easing-curve>';
+      const easing = root.querySelector("fig-easing-curve");
+      if (!easing) throw new Error("Missing easing curve");
+
+      const readState = () => ({
+        presets: Boolean(easing.querySelector(".fig-easing-curve-select")),
+        editor: Boolean(
+          easing.querySelector(".fig-easing-curve-svg-container"),
+        ),
+        text: Boolean(easing.querySelector(".fig-easing-curve-value-input")),
+      });
+
+      const initial = readState();
+      easing.setAttribute("presets", "false");
+      easing.setAttribute("text", "false");
+      const editorOnly = readState();
+      easing.setAttribute("presets", "true");
+      easing.setAttribute("text", "true");
+      const restored = readState();
+      easing.setAttribute("edit", "false");
+      const presetOnly = readState();
+      return { initial, editorOnly, restored, presetOnly };
+    });
+
+    expect(states).toEqual({
+      initial: { presets: true, editor: true, text: true },
+      editorOnly: { presets: false, editor: true, text: false },
+      restored: { presets: true, editor: true, text: true },
+      presetOnly: { presets: true, editor: false, text: false },
+    });
+  });
+
+  test("fig-easing-curve accepts structured JSON with mode-aware type handling", async ({
+    page,
+  }) => {
+    const states = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-easing-curve
+          id="spring-with-mode"
+          mode="spring"
+          value='{"mass":1,"stiffness":200,"damping":12,"initialVelocity":2}'
+        ></fig-easing-curve>
+        <fig-easing-curve
+          id="self-describing-spring"
+          value='{"type":"spring","mass":2,"stiffness":150,"damping":18}'
+        ></fig-easing-curve>
+        <fig-easing-curve
+          id="bezier-with-mode"
+          mode="bezier"
+          value='{"x1":0.25,"y1":-0.1,"x2":0.75,"y2":1.1}'
+        ></fig-easing-curve>
+        <fig-easing-curve
+          id="missing-type"
+          value='{"mass":1,"stiffness":200,"damping":12}'
+        ></fig-easing-curve>
+        <fig-easing-curve
+          id="mode-mismatch"
+          mode="bezier"
+          value='{"type":"spring","mass":1,"stiffness":200,"damping":12}'
+        ></fig-easing-curve>
+      `;
+      const read = (id) => {
+        const easing = root.querySelector(`#${id}`);
+        return { value: easing?.value, spring: easing?.spring ?? null };
+      };
+      return {
+        springWithMode: read("spring-with-mode"),
+        selfDescribingSpring: read("self-describing-spring"),
+        bezierWithMode: read("bezier-with-mode"),
+        missingType: read("missing-type"),
+        modeMismatch: read("mode-mismatch"),
+      };
+    });
+
+    expect(states).toEqual({
+      springWithMode: {
+        value: "spring(200, 12, 1, 2)",
+        spring: {
+          mass: 1,
+          stiffness: 200,
+          damping: 12,
+          initialVelocity: 2,
+        },
+      },
+      selfDescribingSpring: {
+        value: "spring(150, 18, 2)",
+        spring: {
+          mass: 2,
+          stiffness: 150,
+          damping: 18,
+          initialVelocity: 0,
+        },
+      },
+      bezierWithMode: { value: "0.25, -0.10, 0.75, 1.10", spring: null },
+      missingType: { value: "0.42, 0.00, 0.58, 1.00", spring: null },
+      modeMismatch: { value: "0.42, 0.00, 0.58, 1.00", spring: null },
+    });
+  });
+
+  test("fig-easing-curve value and spring properties accept structured objects", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = '<fig-easing-curve mode="spring"></fig-easing-curve>';
+      const easing = root.querySelector("fig-easing-curve");
+      if (!easing) throw new Error("Missing easing curve");
+
+      easing.value = {
+        mass: 2,
+        stiffness: 150,
+        damping: 18,
+        initialVelocity: -1,
+      };
+      const fromValue = {
+        value: easing.value,
+        spring: easing.spring,
+        attribute: JSON.parse(easing.getAttribute("value")),
+      };
+
+      easing.spring = { mass: 1, stiffness: 120, damping: 14 };
+      let changeDetail = null;
+      easing.addEventListener("change", (event) => {
+        changeDetail = event.detail;
+      });
+      const select = easing.querySelector(".fig-easing-curve-select");
+      select?.dispatchEvent(
+        new CustomEvent("change", {
+          detail: "Gentle",
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return {
+        fromValue,
+        fromSpring: { value: easing.value, spring: easing.spring },
+        changeDetail,
+      };
+    });
+
+    expect(state.fromValue).toEqual({
+      value: "spring(150, 18, 2, -1)",
+      spring: {
+        mass: 2,
+        stiffness: 150,
+        damping: 18,
+        initialVelocity: -1,
+      },
+      attribute: {
+        type: "spring",
+        mass: 2,
+        stiffness: 150,
+        damping: 18,
+        initialVelocity: -1,
+      },
+    });
+    expect(state.fromSpring).toEqual({
+      value: "spring(120, 14, 1)",
+      spring: {
+        mass: 1,
+        stiffness: 120,
+        damping: 14,
+        initialVelocity: 0,
+      },
+    });
+    expect(state.changeDetail).toMatchObject({
+      mode: "spring",
+      value: "spring(120, 14, 1)",
+      preset: "Gentle",
+      spring: {
+        mass: 1,
+        stiffness: 120,
+        damping: 14,
+        initialVelocity: 0,
+      },
+    });
+  });
+
+  test("fig-easing-curve uses a single numeric bounce input in spring mode", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-easing-curve
+          id="spring-bounce"
+          mode="spring"
+          value="spring(200, 12, 1)"
+        ></fig-easing-curve>
+        <fig-easing-curve
+          id="bezier-values"
+          mode="bezier"
+          value="0.42, 0, 0.58, 1"
+        ></fig-easing-curve>
+      `;
+
+      const spring = root.querySelector("#spring-bounce");
+      const bounceInput = spring?.querySelector(
+        ".fig-easing-curve-value-input",
+      );
+      if (!spring || !bounceInput) throw new Error("Missing spring input");
+
+      bounceInput.setAttribute("value", "0.42");
+      bounceInput.dispatchEvent(
+        new CustomEvent("input", { detail: 0.42, bubbles: true }),
+      );
+
+      return {
+        springInputTag: bounceInput.tagName.toLowerCase(),
+        springInputCount: spring.querySelectorAll(
+          ".fig-easing-curve-value-input",
+        ).length,
+        springTextInputCount: spring.querySelectorAll("fig-input-text").length,
+        springInputValue: bounceInput.getAttribute("value"),
+        springInputMin: bounceInput.getAttribute("min"),
+        springInputMax: bounceInput.getAttribute("max"),
+        springInputLabel: bounceInput.getAttribute("aria-label"),
+        springInputSlots: bounceInput.querySelectorAll("[slot]").length,
+        springValue: spring.value,
+        springDamping: spring.spring?.damping,
+        bezierInputTag: root
+          .querySelector("#bezier-values .fig-easing-curve-value-input")
+          ?.tagName.toLowerCase(),
+      };
+    });
+
+    expect(state).toEqual({
+      springInputTag: "fig-input-number",
+      springInputCount: 1,
+      springTextInputCount: 0,
+      springInputValue: "0.42",
+      springInputMin: "0",
+      springInputMax: "1",
+      springInputLabel: "Spring bounce",
+      springInputSlots: 0,
+      springValue: "spring(200, 16.4049, 1)",
+      springDamping: 16.4049,
+      bezierInputTag: "fig-input-text",
+    });
+  });
+
+  for (const selectorCase of [
+    { name: "fallback dropdown", selector: "fig-dropdown", loadEditor: false },
+    { name: "internal fig-select", selector: "fig-select", loadEditor: true },
+  ]) {
+    test(`fig-easing-curve normalizes ${selectorCase.name} events at the host`, async ({
+      page,
+    }) => {
+      const events = await page.evaluate(async ({ selector, loadEditor }) => {
+        if (loadEditor) {
+          await import("/fig-editor.js");
+          await customElements.whenDefined("fig-select");
+        }
+        const root = document.querySelector("#fixture-root");
+        if (!root) throw new Error("Missing #fixture-root");
+        root.innerHTML =
+          '<fig-easing-curve value="0, 0, 1, 1"></fig-easing-curve>';
+        const select = root.querySelector(`fig-easing-curve ${selector}`);
+        if (!select) throw new Error(`Missing internal ${selector}`);
+
+        const received = [];
+        for (const type of ["input", "optionhover", "change"]) {
+          root.addEventListener(type, (event) => {
+            received.push({
+              type: event.type,
+              target: event.target?.tagName,
+              detail: event.detail,
+            });
+          });
+          select.dispatchEvent(
+            new CustomEvent(type, {
+              detail: "Ease in",
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }
+        return received;
+      }, selectorCase);
+
+      const detail = {
+        mode: "bezier",
+        value: "0.42, 0.00, 1.00, 1.00",
+        cssValue: "cubic-bezier(0.42, 0.00, 1.00, 1.00)",
+        preset: "Ease in",
+      };
+      expect(events).toEqual([
+        { type: "input", target: "FIG-EASING-CURVE", detail },
+        { type: "change", target: "FIG-EASING-CURVE", detail },
+      ]);
+    });
+  }
+
   for (const contract of componentContracts) {
     test(`${contract.tag}: mounts without runtime errors`, async ({ page }) => {
       const errors = collectPageErrors(page);
@@ -8519,6 +8823,56 @@ test.describe("remaining accessibility contracts", () => {
       value: "0.26, 0.25, 0.75, 0.75",
       inputValue: "0.26, 0.25, 0.75, 0.75",
     });
+  });
+
+  test("fig-easing-curve SVG fits inside padded non-square aspect ratios", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-easing-curve
+          id="wide-curve"
+          value="0.42, 0, 0.58, 1"
+          aspect-ratio="16 / 9"
+          style="width: 320px"
+        ></fig-easing-curve>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    const geometry = await page.locator("#wide-curve").evaluate((host) => {
+      const container = host.querySelector(".fig-easing-curve-svg-container");
+      const svg = host.querySelector(".fig-easing-curve-svg");
+      if (!container || !svg) throw new Error("Missing easing preview");
+      const containerRect = container.getBoundingClientRect();
+      const svgRect = svg.getBoundingClientRect();
+      const styles = getComputedStyle(container);
+      const paddingLeft = Number.parseFloat(styles.paddingLeft);
+      const paddingRight = Number.parseFloat(styles.paddingRight);
+      const paddingTop = Number.parseFloat(styles.paddingTop);
+      const paddingBottom = Number.parseFloat(styles.paddingBottom);
+      return {
+        availableWidth: containerRect.width - paddingLeft - paddingRight,
+        availableHeight: containerRect.height - paddingTop - paddingBottom,
+        svgWidth: svgRect.width,
+        svgHeight: svgRect.height,
+        svgRight: svgRect.right,
+        svgBottom: svgRect.bottom,
+        contentRight: containerRect.right - paddingRight,
+        contentBottom: containerRect.bottom - paddingBottom,
+        viewBoxWidth: svg.viewBox.baseVal.width,
+        viewBoxHeight: svg.viewBox.baseVal.height,
+      };
+    });
+
+    expect(geometry.svgWidth).toBeCloseTo(geometry.availableWidth, 1);
+    expect(geometry.svgHeight).toBeCloseTo(geometry.availableHeight, 1);
+    expect(geometry.svgRight).toBeLessThanOrEqual(geometry.contentRight + 0.5);
+    expect(geometry.svgBottom).toBeLessThanOrEqual(geometry.contentBottom + 0.5);
+    expect(geometry.viewBoxWidth).toBe(Math.round(geometry.svgWidth));
+    expect(geometry.viewBoxHeight).toBe(Math.round(geometry.svgHeight));
   });
 
   test("fig-easing-curve shift-drag locks horizontally to the handle boundary", async ({

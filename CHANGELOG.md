@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.2]
+
+### Added
+
+- Added structured object and serialized JSON values, initial velocity, and a `spring` property to `fig-easing-curve`.
+- Added independent `presets` and `text` visibility controls to `fig-easing-curve`.
+
+### Changed
+
+- Spring curves now use a normalized bounce number input linked to their damping ratio.
+- Easing-curve events now include structured spring detail without leaking internal selector events.
+
+### Fixed
+
+- Fixed easing SVG clipping at non-square aspect ratios while preserving the editor container padding.
+
 ## [9.0.1]
 
 ### Added
