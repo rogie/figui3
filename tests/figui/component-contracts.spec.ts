@@ -3228,6 +3228,12 @@ test('fig-dropdown and fig-select size="large" match large control height', asyn
       <fig-dropdown id="dropdown-large" size="large"><option>Large</option></fig-dropdown>
       <fig-select id="select-default" value="default" options="Default"></fig-select>
       <fig-select id="select-large" size="large" value="large" options="Large"></fig-select>
+      <fig-select id="select-large-icon" size="large" value="large">
+        <fig-icon name="add" slot="prepend-trigger"></fig-icon>
+        <fig-select-options>
+          <fig-select-option value="large">Large</fig-select-option>
+        </fig-select-options>
+      </fig-select>
       <fig-button id="button-large" size="large">Large</fig-button>
     `;
   });
@@ -3236,9 +3242,24 @@ test('fig-dropdown and fig-select size="large" match large control height', asyn
     const rectHeight = (selector: string) =>
       document.querySelector(selector)?.getBoundingClientRect().height ?? 0;
     const largeSelect = document.querySelector("#select-large");
+    const largeIconSelect = document.querySelector("#select-large-icon");
     const trigger = largeSelect?.shadowRoot?.querySelector(
       ".fig-select-trigger",
     );
+    const prepend = largeIconSelect?.shadowRoot?.querySelector(
+      ".fig-select-prepend",
+    );
+    const prependIcon = largeIconSelect?.querySelector(
+      ':scope > fig-icon[slot="prepend-trigger"]',
+    );
+    const leadingInset = (controlSelector: string, iconSelector: string) => {
+      const control = document.querySelector(controlSelector);
+      const icon = document.querySelector(iconSelector);
+      if (!control || !icon) return 0;
+      return (
+        icon.getBoundingClientRect().left - control.getBoundingClientRect().left
+      );
+    };
     return {
       dropdownDefault: rectHeight("#dropdown-default"),
       dropdownLarge: rectHeight("#dropdown-large"),
@@ -3248,6 +3269,19 @@ test('fig-dropdown and fig-select size="large" match large control height', asyn
       selectTriggerLarge: trigger?.getBoundingClientRect().height ?? 0,
       selectTriggerSize: trigger?.getAttribute("size"),
       buttonLarge: rectHeight("#button-large"),
+      selectLargePrependHeight: prepend?.getBoundingClientRect().height ?? 0,
+      selectLargePrependWidth: prepend?.getBoundingClientRect().width ?? 0,
+      selectLargeIconInset: leadingInset(
+        "#select-large-icon",
+        '#select-large-icon > fig-icon[slot="prepend-trigger"]',
+      ),
+      selectLargeIconCenterOffset:
+        prepend && prependIcon
+          ? prependIcon.getBoundingClientRect().left +
+            prependIcon.getBoundingClientRect().width / 2 -
+            (prepend.getBoundingClientRect().left +
+              prepend.getBoundingClientRect().width / 2)
+          : null,
     };
   });
 
@@ -3260,6 +3294,10 @@ test('fig-dropdown and fig-select size="large" match large control height', asyn
     selectTriggerLarge: 32,
     selectTriggerSize: "large",
     buttonLarge: 32,
+    selectLargePrependHeight: 32,
+    selectLargePrependWidth: 32,
+    selectLargeIconInset: 4,
+    selectLargeIconCenterOffset: 0,
   });
 
   const reactiveDimensions = await page.evaluate(() => {

@@ -777,9 +777,14 @@ class FigSelect extends HTMLElement {
         .fig-select-prepend {
           display: inline-flex;
           flex: 0 0 auto;
+          justify-content: center;
           align-items: center;
-          margin-right: var(--spacer-1, 0.25rem);
+          min-width: var(--spacer-4, 1.5rem);
+          height: 100%;
           pointer-events: none;
+        }
+        :host([size="large"]) .fig-select-prepend {
+          min-width: var(--spacer-5, 2rem);
         }
         .fig-select-prepend:not(.has-content) {
           display: none;

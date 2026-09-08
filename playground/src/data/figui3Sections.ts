@@ -482,6 +482,20 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "prepend-icon",
+        name: "Prepend icon",
+        markup: `<div class="prop-panel">
+  <fig-select value="add" label="Action">
+    <fig-icon name="add" slot="prepend-trigger" aria-hidden="true"></fig-icon>
+    <fig-select-options>
+      <fig-select-option value="add">Add item</fig-select-option>
+      <fig-select-option value="duplicate">Duplicate item</fig-select-option>
+      <fig-select-option value="remove">Remove item</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
         id: "palette-content",
         name: "Prepend trigger",
         markup: `<div class="prop-panel">

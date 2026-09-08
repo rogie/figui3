@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.4]
+
+### Added
+
+- Added a `fig-select` playground example with a prepended icon.
+
+### Changed
+
+- Select prepend regions now span the trigger height, maintain a matching minimum width, and center their content at default and large sizes.
+
 ## [9.0.3]
 
 ### Added
