@@ -190,10 +190,11 @@ Minimal example:
 | `type` | string | `"select"` | `"select"` or `"dropdown"` |
 | `label` | string | — | Accessible label for the generated native `<select>` |
 | `variant` | string | — | `"ghost"` for a borderless control with secondary hover fill |
+| `size` | string | — | `"large"` for a 32px-tall control |
 | `disabled` | boolean | `false` | Disabled state |
 
 ```html
-<fig-dropdown value="2">
+<fig-dropdown value="2" size="large">
   <option value="1">Option 1</option>
   <option value="2">Option 2</option>
 </fig-dropdown>
@@ -215,6 +216,7 @@ Custom listbox select with overflow chevrons, grouped options, and sticky separa
 | `label` | string | — | Closed-state / accessible label |
 | `options` | string | — | Comma, newline, or JSON options if no authored `fig-select-option` children |
 | `variant` | string | — | `"ghost"` for a borderless control with secondary hover fill |
+| `size` | string | — | `"large"` for a 32px-tall trigger |
 | `subtle` | boolean | `false` | Use the secondary hover/focus fill for every option |
 | `full` | boolean | `false` | Stretch to available width |
 | `position` | string | `"bottom left"` | Popup position |
@@ -223,7 +225,7 @@ Custom listbox select with overflow chevrons, grouped options, and sticky separa
 Author options in `<fig-select-options>`, or pass `options`. Add `subtle` to one `<fig-select-option>` for the secondary hover/focus fill, or to `<fig-select>` to apply it to every option. Use `label` on `<fig-select-option>` when the option content is rich. `fig-separator` with `sticky` pins group labels while scrolling.
 
 ```html
-<fig-select value="center" label="Align">
+<fig-select value="center" label="Align" size="large">
   <fig-select-options>
     <fig-select-option value="left">Left</fig-select-option>
     <fig-select-option value="center">Center</fig-select-option>

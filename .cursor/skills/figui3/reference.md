@@ -25,7 +25,7 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 
 ## `fig-dropdown`
 
-- `value`, `type="select|dropdown"`, `variant="ghost"`, `full`, `disabled`
+- `value`, `type="select|dropdown"`, `variant="ghost"`, `size="large"` (32px), `full`, `disabled`
 - Children: native `<option>` / `<optgroup>`
 
 ## `fig-slider`

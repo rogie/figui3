@@ -406,6 +406,17 @@ export const figui3Sections: Section[] = [
 </div>`,
       },
       {
+        id: "large",
+        name: "Large",
+        markup: `<div class="prop-panel">
+  <fig-dropdown size="large">
+    <option value="default" selected>Default</option>
+    <option value="minimal">Minimal</option>
+    <option value="neue">Neue</option>
+  </fig-dropdown>
+</div>`,
+      },
+      {
         id: "labelled-groups",
         name: "Labelled groups",
         markup: `<div class="prop-panel">
@@ -448,6 +459,19 @@ export const figui3Sections: Section[] = [
         name: "Options attribute",
         markup: `<div class="prop-panel">
   <fig-select label="Align" value="Center" options="Left,Center,Right"></fig-select>
+</div>`,
+      },
+      {
+        id: "large",
+        name: "Large",
+        markup: `<div class="prop-panel">
+  <fig-select size="large" value="center" label="Align">
+    <fig-select-options>
+      <fig-select-option value="left">Left</fig-select-option>
+      <fig-select-option value="center">Center</fig-select-option>
+      <fig-select-option value="right">Right</fig-select-option>
+    </fig-select-options>
+  </fig-select>
 </div>`,
       },
       {

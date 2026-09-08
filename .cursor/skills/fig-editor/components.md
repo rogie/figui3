@@ -9,7 +9,7 @@ Install `fig-editor.css` + `fig-editor.js` (pulls in `fig.js` and `fig-lab.js`).
 Figma-style listbox. Prefer this over core `fig-dropdown`.
 
 ```tsx
-<fig-select value={align} label="Align" full onChange={onChange}>
+<fig-select value={align} label="Align" size="large" full onChange={onChange}>
   <fig-select-options>
     <fig-select-option value="left">Left</fig-select-option>
     <fig-select-option value="center">Center</fig-select-option>
@@ -29,7 +29,7 @@ Data-driven (no authored options):
 />
 ```
 
-- Attrs: `value`, `label`, `options` (comma / newline / JSON), `variant` (`ghost`), `subtle` (applies the secondary hover/focus fill to every option), `full`, `disabled`, `position` (`bottom left` default, also `bottom right`, `top left`, `top right`, `bottom center`, `top center`), `offset`, `closedby`, `open`
+- Attrs: `value`, `label`, `options` (comma / newline / JSON), `variant` (`ghost`), `size` (`large`, 32px trigger), `subtle` (applies the secondary hover/focus fill to every option), `full`, `disabled`, `position` (`bottom left` default, also `bottom right`, `top left`, `top right`, `bottom center`, `top center`), `offset`, `closedby`, `open`
 - Events: `input` / `change` on commit; `optionhover` with the option value in `detail` (does not change selection). Use a native listener for `optionhover`.
 - Do not `stopPropagation` on option click — React light-DOM handlers must run.
 - Internal popup uses `popover="manual"` so the list works inside `fig-popup variant="popover"`.

@@ -21,9 +21,10 @@ Observed: `value`, `disabled`, `selected`, `label`.
 
 ## `fig-select` observed
 
-`value`, `disabled`, `label`, `options`, `position`, `offset`, `closedby`, `open`, `variant`
+`value`, `disabled`, `label`, `options`, `position`, `offset`, `closedby`, `open`, `variant`, `size`
 
 - `subtle` applies the secondary hover/focus fill to every option
+- `size="large"` sets a 32px trigger
 
 Position enum:
 

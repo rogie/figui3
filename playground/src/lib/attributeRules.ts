@@ -98,6 +98,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-dropdown": {
     value: { label: "Value", type: "string" },
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["", "large"],
+    },
     type: {
       label: "Type",
       type: "enum",
@@ -423,6 +428,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     value: { label: "Value", type: "string" },
     label: { label: "Label", type: "string" },
     options: { label: "Options", type: "string" },
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["", "large"],
+    },
     variant: {
       label: "Variant",
       type: "enum",

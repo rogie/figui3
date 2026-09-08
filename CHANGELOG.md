@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.3]
+
+### Added
+
+- Added `size="large"` support to `fig-dropdown` and `fig-select`, including reactive sizing, playground examples, documentation, and component coverage.
+
 ## [9.0.2]
 
 ### Added

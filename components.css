@@ -686,7 +686,7 @@ input[type="text"][list] {
   
 
   &:not([multiple]) {
-    height: var(--spacer-4);
+    height: var(--fig-dropdown-height, var(--spacer-4));
     padding: 0 var(--spacer-4) 0 var(--spacer-2);
     background: calc(100% - var(--spacer-1)) 50% / 1rem no-repeat
     var(--icon-16-chevron);
@@ -3458,6 +3458,10 @@ fig-input-palette {
 }
 
 fig-dropdown {
+  &[size="large"] {
+    --fig-dropdown-height: var(--spacer-5);
+  }
+
   &[full]:not([full="false"]) {
     display: flex;
     width: 100%;

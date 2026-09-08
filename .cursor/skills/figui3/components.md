@@ -31,13 +31,13 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 ### `fig-dropdown`
 
 ```tsx
-<fig-dropdown value={value} variant="ghost" full onChange={onChange}>
+<fig-dropdown value={value} variant="ghost" size="large" full onChange={onChange}>
   <option value="left">Left</option>
   <option value="center">Center</option>
 </fig-dropdown>
 ```
 
-- Attrs: `value`, `type` (`select` | `dropdown`), `variant` (`ghost`), `full`, `disabled`
+- Attrs: `value`, `type` (`select` | `dropdown`), `variant` (`ghost`), `size` (`large`), `full`, `disabled`
 - Events: `input` / `change` → `currentTarget.value`
 - Prefer `fig-select` (editor) for Figma-style menus.
 

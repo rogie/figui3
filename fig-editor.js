@@ -494,6 +494,7 @@ figEditorDefineElement("fig-select-options", FigSelectOptions);
 /**
  * A dropdown-styled select.
  * @attr {string} variant - Visual style. Use `ghost` for a borderless control.
+ * @attr {string} size - Control size. Use `large` for a 32px-tall control.
  */
 class FigSelect extends HTMLElement {
   #button = null;
@@ -537,6 +538,7 @@ class FigSelect extends HTMLElement {
       "closedby",
       "open",
       "variant",
+      "size",
       "aria-label",
     ];
   }
@@ -564,6 +566,7 @@ class FigSelect extends HTMLElement {
     this.#ensurePanelSlotAttrs();
     this.#syncOptionsFromAttribute();
     this.#syncDisabled();
+    this.#syncSize();
     this.#syncPopupAttrs();
     this.#syncValue();
     this.#setupListeners();
@@ -593,6 +596,10 @@ class FigSelect extends HTMLElement {
       this.#syncDisabled();
       return;
     }
+    if (name === "size") {
+      this.#syncSize();
+      return;
+    }
     if (name === "open") {
       if (newValue === null || newValue === "false") this.#closeList();
       else this.#openList();
@@ -609,6 +616,13 @@ class FigSelect extends HTMLElement {
 
   blur() {
     this.#button?.blur();
+  }
+
+  #syncSize() {
+    if (!this.#button) return;
+    const size = this.getAttribute("size");
+    if (size) this.#button.setAttribute("size", size);
+    else this.#button.removeAttribute("size");
   }
 
   #isMenuChild(node) {

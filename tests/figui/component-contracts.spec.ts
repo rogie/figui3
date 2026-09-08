@@ -3209,6 +3209,79 @@ test("fig-dropdown and fig-select ghost variant drop the border and use secondar
   );
 });
 
+test('fig-dropdown and fig-select size="large" match large control height', async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await Promise.all([
+      customElements.whenDefined("fig-dropdown"),
+      customElements.whenDefined("fig-select"),
+    ]);
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-dropdown id="dropdown-default"><option>Default</option></fig-dropdown>
+      <fig-dropdown id="dropdown-large" size="large"><option>Large</option></fig-dropdown>
+      <fig-select id="select-default" value="default" options="Default"></fig-select>
+      <fig-select id="select-large" size="large" value="large" options="Large"></fig-select>
+      <fig-button id="button-large" size="large">Large</fig-button>
+    `;
+  });
+
+  const dimensions = await page.evaluate(() => {
+    const rectHeight = (selector: string) =>
+      document.querySelector(selector)?.getBoundingClientRect().height ?? 0;
+    const largeSelect = document.querySelector("#select-large");
+    const trigger = largeSelect?.shadowRoot?.querySelector(
+      ".fig-select-trigger",
+    );
+    return {
+      dropdownDefault: rectHeight("#dropdown-default"),
+      dropdownLarge: rectHeight("#dropdown-large"),
+      dropdownNativeLarge: rectHeight("#dropdown-large > select"),
+      selectDefault: rectHeight("#select-default"),
+      selectLarge: rectHeight("#select-large"),
+      selectTriggerLarge: trigger?.getBoundingClientRect().height ?? 0,
+      selectTriggerSize: trigger?.getAttribute("size"),
+      buttonLarge: rectHeight("#button-large"),
+    };
+  });
+
+  expect(dimensions).toEqual({
+    dropdownDefault: 24,
+    dropdownLarge: 32,
+    dropdownNativeLarge: 32,
+    selectDefault: 24,
+    selectLarge: 32,
+    selectTriggerLarge: 32,
+    selectTriggerSize: "large",
+    buttonLarge: 32,
+  });
+
+  const reactiveDimensions = await page.evaluate(() => {
+    const dropdown = document.querySelector("#dropdown-default");
+    const select = document.querySelector("#select-default");
+    dropdown?.setAttribute("size", "large");
+    select?.setAttribute("size", "large");
+    const trigger = select?.shadowRoot?.querySelector(".fig-select-trigger");
+    return {
+      dropdown: dropdown?.getBoundingClientRect().height ?? 0,
+      select: select?.getBoundingClientRect().height ?? 0,
+      triggerSize: trigger?.getAttribute("size"),
+    };
+  });
+
+  expect(reactiveDimensions).toEqual({
+    dropdown: 32,
+    select: 32,
+    triggerSize: "large",
+  });
+});
+
 test("fig-select supports subtle hover fill per option and from the host", async ({
   page,
 }) => {

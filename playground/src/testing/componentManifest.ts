@@ -59,6 +59,7 @@ export const componentContracts: ComponentContract[] = [
     group: "input",
     markup: `<fig-dropdown value="two"><option value="one">One</option><option value="two">Two</option></fig-dropdown>`,
     properties: [{ name: "value property", property: "value", value: "one", expected: "one" }],
+    attributes: [{ name: "size", attribute: "size", value: "large" }],
   },
   {
     tag: "fig-tooltip",
