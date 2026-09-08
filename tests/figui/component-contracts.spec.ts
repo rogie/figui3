@@ -8610,7 +8610,7 @@ test.describe("remaining accessibility contracts", () => {
     });
 
     expect(state.controlY).toBeGreaterThan(1);
-    expect(state.containerPadding).toBe("45px");
+    expect(state.containerPadding).toBe("24px");
     expect(state.handleY).toBeLessThan(0);
     expect(state.handleY + state.handleHeight / 2).toBe(0);
     expect(state.topBoundaryY).toBeGreaterThan(state.handleY);

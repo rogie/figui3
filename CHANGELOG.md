@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.1]
+
+### Added
+
+- Added a repository-native Codex publish skill with release verification for GitHub and npm.
+
+### Changed
+
+- Easing-curve SVG containers now keep overflow clipped during hover, active, and focus states.
+- Removed the stale nested Cursor publish-rule duplicate.
+
 ## [9.0.0]
 
 ### Changed
