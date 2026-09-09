@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.6]
+
+### Added
+
+- Added `.fig-overflow-fade` and `.fig-overflow-fade-horizontal`, CSS-only scroll utilities with tokenized, eased, direction-aware edge fades gated behind scroll-timeline support, plus vertical and horizontal playground examples.
+
 ## [9.0.5]
 
 ### Changed

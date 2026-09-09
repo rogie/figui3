@@ -1014,6 +1014,42 @@ For `point-point`, both handles support direct drag (with a dynamic directional 
 
 ### Layout & Feedback
 
+#### Overflow Fade
+
+`.fig-overflow-fade` — [demo](https://rog.ie/figui3/#overflow-fade)
+
+A progressively enhanced scroll utility that fades its edges when more content
+is available in that direction. Apply the class to a height-constrained
+container for vertical scrolling. Add `.fig-overflow-fade-horizontal` for
+horizontal scrolling.
+
+| Custom property | Default | Description |
+|---|---|---|---|
+| `--fig-overflow-fade-size` | `var(--spacer-5)` | Size of each fade edge |
+| `--fig-overflow-fade-clear-top` | `0px` | Fully visible area reserved for a sticky header |
+| `--fig-overflow-fade-clear-left` | `0px` | Fully visible area reserved at the start of a horizontal scroller |
+
+The mask and animations are applied only when the browser supports self scroll
+timelines. Unsupported browsers retain ordinary scrolling without a fade.
+
+```html
+<div class="fig-overflow-fade" style="max-height: 12rem;">
+  <fig-content>
+    <!-- Long content -->
+  </fig-content>
+</div>
+```
+
+```html
+<div class="fig-overflow-fade fig-overflow-fade-horizontal">
+  <div style="display: flex; width: max-content;">
+    <!-- Wide content -->
+  </div>
+</div>
+```
+
+---
+
 #### Field
 
 `<fig-field>` — [demo](https://rog.ie/figui3/#field)

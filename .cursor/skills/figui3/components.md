@@ -416,6 +416,21 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 - Attrs: `position` (`right` | `left` | `middle`), `tooltip`, `tail`
 
+### `.fig-overflow-fade`
+
+```tsx
+<div className="fig-overflow-fade" style={{ maxHeight: "12rem" }}>
+  {content}
+</div>
+```
+
+- Apply the class directly to a height-constrained vertical scroll container.
+- Add `fig-overflow-fade-horizontal` for a horizontal scroll container.
+- CSS custom property: `--fig-overflow-fade-size` (default: `var(--spacer-5)`).
+- CSS custom property: `--fig-overflow-fade-clear-top` (default: `0px`) keeps a sticky header fully visible.
+- CSS custom property: `--fig-overflow-fade-clear-left` (default: `0px`) reserves a visible area at the start of a horizontal scroller.
+- The direction-aware mask is enabled only when self scroll timelines are supported; other browsers retain normal scrolling without fades.
+
 ## Overlays
 
 ### `dialog is="fig-dialog"`

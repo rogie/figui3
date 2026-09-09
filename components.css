@@ -5027,6 +5027,347 @@ fig-skeleton {
 
 /* Utilities */
 
+@property --fig-overflow-fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fig-overflow-fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fig-overflow-fade-left {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fig-overflow-fade-right {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+.fig-overflow-fade {
+  --fig-overflow-fade-size: var(--spacer-5);
+  --fig-overflow-fade-clear-top: 0px;
+
+  overflow-y: auto;
+}
+
+.fig-overflow-fade.fig-overflow-fade-horizontal {
+  --fig-overflow-fade-clear-left: 0px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+@supports (animation-timeline: scroll(self block)) {
+  .fig-overflow-fade:not(.fig-overflow-fade-horizontal) {
+    mask-image: linear-gradient(
+      to bottom,
+      black 0,
+      black var(--fig-overflow-fade-clear-top),
+      transparent var(--fig-overflow-fade-clear-top),
+      rgba(0, 0, 0, 0.04)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.125
+        ),
+      rgba(0, 0, 0, 0.16)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.25
+        ),
+      rgba(0, 0, 0, 0.32)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.375
+        ),
+      rgba(0, 0, 0, 0.5)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.5
+        ),
+      rgba(0, 0, 0, 0.68)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.625
+        ),
+      rgba(0, 0, 0, 0.84)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.75
+        ),
+      rgba(0, 0, 0, 0.96)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-top) + var(--fig-overflow-fade-top)
+      ),
+      black calc(100% - var(--fig-overflow-fade-bottom)),
+      rgba(0, 0, 0, 0.96)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.875),
+      rgba(0, 0, 0, 0.84)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.75),
+      rgba(0, 0, 0, 0.68)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.625),
+      rgba(0, 0, 0, 0.5)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.5),
+      rgba(0, 0, 0, 0.32)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.375),
+      rgba(0, 0, 0, 0.16)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.25),
+      rgba(0, 0, 0, 0.04)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.125),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 0,
+      black var(--fig-overflow-fade-clear-top),
+      transparent var(--fig-overflow-fade-clear-top),
+      rgba(0, 0, 0, 0.04)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.125
+        ),
+      rgba(0, 0, 0, 0.16)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.25
+        ),
+      rgba(0, 0, 0, 0.32)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.375
+        ),
+      rgba(0, 0, 0, 0.5)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.5
+        ),
+      rgba(0, 0, 0, 0.68)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.625
+        ),
+      rgba(0, 0, 0, 0.84)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.75
+        ),
+      rgba(0, 0, 0, 0.96)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-top) + var(--fig-overflow-fade-top)
+      ),
+      black calc(100% - var(--fig-overflow-fade-bottom)),
+      rgba(0, 0, 0, 0.96)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.875),
+      rgba(0, 0, 0, 0.84)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.75),
+      rgba(0, 0, 0, 0.68)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.625),
+      rgba(0, 0, 0, 0.5)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.5),
+      rgba(0, 0, 0, 0.32)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.375),
+      rgba(0, 0, 0, 0.16)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.25),
+      rgba(0, 0, 0, 0.04)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.125),
+      transparent 100%
+    );
+
+    animation:
+      fig-overflow-fade-in-top 1ms linear both,
+      fig-overflow-fade-out-bottom 1ms linear both;
+    animation-timeline: scroll(self block);
+    animation-range:
+      0 var(--fig-overflow-fade-size),
+      calc(100% - var(--fig-overflow-fade-size)) 100%;
+  }
+
+}
+
+@supports (animation-timeline: scroll(self inline)) {
+  .fig-overflow-fade.fig-overflow-fade-horizontal {
+    mask-image: linear-gradient(
+      to right,
+      black 0,
+      black var(--fig-overflow-fade-clear-left),
+      transparent var(--fig-overflow-fade-clear-left),
+      rgba(0, 0, 0, 0.04)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.125
+        ),
+      rgba(0, 0, 0, 0.16)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.25
+        ),
+      rgba(0, 0, 0, 0.32)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.375
+        ),
+      rgba(0, 0, 0, 0.5)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.5
+        ),
+      rgba(0, 0, 0, 0.68)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.625
+        ),
+      rgba(0, 0, 0, 0.84)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.75
+        ),
+      rgba(0, 0, 0, 0.96)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-left) + var(--fig-overflow-fade-left)
+      ),
+      black calc(100% - var(--fig-overflow-fade-right)),
+      rgba(0, 0, 0, 0.96)
+        calc(100% - var(--fig-overflow-fade-right) * 0.875),
+      rgba(0, 0, 0, 0.84)
+        calc(100% - var(--fig-overflow-fade-right) * 0.75),
+      rgba(0, 0, 0, 0.68)
+        calc(100% - var(--fig-overflow-fade-right) * 0.625),
+      rgba(0, 0, 0, 0.5)
+        calc(100% - var(--fig-overflow-fade-right) * 0.5),
+      rgba(0, 0, 0, 0.32)
+        calc(100% - var(--fig-overflow-fade-right) * 0.375),
+      rgba(0, 0, 0, 0.16)
+        calc(100% - var(--fig-overflow-fade-right) * 0.25),
+      rgba(0, 0, 0, 0.04)
+        calc(100% - var(--fig-overflow-fade-right) * 0.125),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black 0,
+      black var(--fig-overflow-fade-clear-left),
+      transparent var(--fig-overflow-fade-clear-left),
+      rgba(0, 0, 0, 0.04)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.125
+        ),
+      rgba(0, 0, 0, 0.16)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.25
+        ),
+      rgba(0, 0, 0, 0.32)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.375
+        ),
+      rgba(0, 0, 0, 0.5)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.5
+        ),
+      rgba(0, 0, 0, 0.68)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.625
+        ),
+      rgba(0, 0, 0, 0.84)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.75
+        ),
+      rgba(0, 0, 0, 0.96)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-left) + var(--fig-overflow-fade-left)
+      ),
+      black calc(100% - var(--fig-overflow-fade-right)),
+      rgba(0, 0, 0, 0.96)
+        calc(100% - var(--fig-overflow-fade-right) * 0.875),
+      rgba(0, 0, 0, 0.84)
+        calc(100% - var(--fig-overflow-fade-right) * 0.75),
+      rgba(0, 0, 0, 0.68)
+        calc(100% - var(--fig-overflow-fade-right) * 0.625),
+      rgba(0, 0, 0, 0.5)
+        calc(100% - var(--fig-overflow-fade-right) * 0.5),
+      rgba(0, 0, 0, 0.32)
+        calc(100% - var(--fig-overflow-fade-right) * 0.375),
+      rgba(0, 0, 0, 0.16)
+        calc(100% - var(--fig-overflow-fade-right) * 0.25),
+      rgba(0, 0, 0, 0.04)
+        calc(100% - var(--fig-overflow-fade-right) * 0.125),
+      transparent 100%
+    );
+
+    animation:
+      fig-overflow-fade-in-left 1ms linear both,
+      fig-overflow-fade-out-right 1ms linear both;
+    animation-timeline: scroll(self inline);
+    animation-range:
+      0 var(--fig-overflow-fade-size),
+      calc(100% - var(--fig-overflow-fade-size)) 100%;
+  }
+}
+
+@keyframes fig-overflow-fade-in-top {
+  from {
+    --fig-overflow-fade-top: 0px;
+  }
+  to {
+    --fig-overflow-fade-top: var(--fig-overflow-fade-size);
+  }
+}
+
+@keyframes fig-overflow-fade-out-bottom {
+  from {
+    --fig-overflow-fade-bottom: var(--fig-overflow-fade-size);
+  }
+  to {
+    --fig-overflow-fade-bottom: 0px;
+  }
+}
+
+@keyframes fig-overflow-fade-in-left {
+  from {
+    --fig-overflow-fade-left: 0px;
+  }
+  to {
+    --fig-overflow-fade-left: var(--fig-overflow-fade-size);
+  }
+}
+
+@keyframes fig-overflow-fade-out-right {
+  from {
+    --fig-overflow-fade-right: var(--fig-overflow-fade-size);
+  }
+  to {
+    --fig-overflow-fade-right: 0px;
+  }
+}
+
 .fig-mask-icon,
 fig-icon {
   /* size only — paint containment skips mask-image when `name` / `--icon` updates

@@ -44,6 +44,14 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 - `direction="horizontal|vertical"`
 - `label` or a child `<label>`
 
+## `.fig-overflow-fade`
+
+- Apply the class to a vertical scroll container and constrain its height; add `fig-overflow-fade-horizontal` for horizontal scrolling.
+- Fade size: `--fig-overflow-fade-size` (default `var(--spacer-5)`).
+- Sticky-header clearance: `--fig-overflow-fade-clear-top` (default `0px`).
+- Horizontal start clearance: `--fig-overflow-fade-clear-left` (default `0px`).
+- Direction-aware fades require self scroll timeline support; unsupported browsers scroll normally without a mask.
+
 ## `fig-popup` vs `fig-dialog`
 
 Dialog: `modal`, `drag`, `resizable`, `autoresize`, `handle`, `closedby="any|closerequest|none"`, `position` (viewport: `top left` … `bottom right`).

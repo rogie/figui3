@@ -424,6 +424,7 @@ Fill value examples:
 
 ### Layout, Containers, And Feedback
 
+- `.fig-overflow-fade`: progressively enhanced scroll container with direction-aware edge fades. It is vertical by default; add `.fig-overflow-fade-horizontal` for horizontal scrolling. Customize it with `--fig-overflow-fade-size`, `--fig-overflow-fade-clear-top`, and `--fig-overflow-fade-clear-left`.
 - `fig-group`: group fields into named sections. Attrs/modifiers: `name`, `collapsible`, `open`, `borderless`.
 - `fig-field`: label/control row and accessibility wrapper. Attrs/modifiers: `label`, `direction="horizontal|vertical"`, `columns="half|2/5"`, child `[full]`.
 - `fig-header`, `fig-content`, `fig-footer`: dialog or panel structure. Attrs/modifiers: header/footer `borderless`, header `dialog-header`, content `fit`.

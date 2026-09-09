@@ -1861,6 +1861,45 @@ ${versionHistoryGroup("August 11", [
     ],
   },
   {
+    id: "overflow-fade",
+    name: "Overflow Fade",
+    group: "Utilities",
+    description:
+      "A progressively enhanced scroll utility that fades edges only when more content is available in that direction.",
+    examples: [
+      {
+        id: "default",
+        name: "Vertical",
+        markup: `<div class="prop-panel">
+  <div class="fig-overflow-fade" style="width: 100%; max-height: 12rem; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
+    <fig-content>
+      <p>Design systems turn repeated decisions into shared foundations.</p>
+      <p>Components encode interaction, accessibility, and visual behavior.</p>
+      <p>Tokens keep color, spacing, and typography consistent.</p>
+      <p>Patterns show how components work together in real interfaces.</p>
+      <p>Documentation makes those decisions understandable and reusable.</p>
+      <p>Good systems evolve as product needs and platform capabilities change.</p>
+    </fig-content>
+  </div>
+</div>`,
+      },
+      {
+        id: "horizontal",
+        name: "Horizontal",
+        markup: `<div class="prop-panel">
+  <div class="fig-overflow-fade fig-overflow-fade-horizontal" style="width: 100%; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
+    <div style="display: flex; width: max-content; gap: var(--spacer-2); padding: var(--spacer-3);">
+      <div style="display: grid; place-items: center; width: 10rem; min-height: 6rem; flex: none; border: 1px solid var(--figma-color-border); border-radius: var(--radius-medium);">Foundations</div>
+      <div style="display: grid; place-items: center; width: 10rem; min-height: 6rem; flex: none; border: 1px solid var(--figma-color-border); border-radius: var(--radius-medium);">Components</div>
+      <div style="display: grid; place-items: center; width: 10rem; min-height: 6rem; flex: none; border: 1px solid var(--figma-color-border); border-radius: var(--radius-medium);">Patterns</div>
+      <div style="display: grid; place-items: center; width: 10rem; min-height: 6rem; flex: none; border: 1px solid var(--figma-color-border); border-radius: var(--radius-medium);">Resources</div>
+    </div>
+  </div>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "handle",
     name: "Handle",
     group: "Utilities",
