@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.5]
+
+### Changed
+
+- Refined padded `fig-choice` spacing, corner radius, and selected-state outline treatment.
+- Added padding to every choice in the image chooser playground example.
+
+### Fixed
+
+- Playground-only action controls now retain their original position and remain available after example markup updates.
+
 ## [9.0.4]
 
 ### Added

@@ -571,7 +571,7 @@ export const propkitSections: Section[] = [
       <fig-choice value="option-h" padding>Option H</fig-choice>
     </fig-chooser>
   </fig-field>
-  <div style="display: flex; gap: var(--spacer-2)">
+  <div data-playground-ignore-controls="true" style="display: flex; gap: var(--spacer-2)">
     <fig-button variant="secondary" data-playground-ignore-controls="true" onclick="const r=this.closest('.prop-panel')||this.closest('.propkit-example');r.querySelector('fig-chooser').value='option-h'">Select last</fig-button>
     <fig-button data-playground-ignore-controls="true" onclick="const r=this.closest('.prop-panel')||this.closest('.propkit-example');r.querySelector('fig-chooser').scrollSelectionIntoView()">Scroll to selection</fig-button>
   </div>
@@ -604,12 +604,12 @@ export const propkitSections: Section[] = [
   <fig-field direction="vertical">
     <label>Style</label>
     <fig-chooser layout="horizontal" value="img-a" full drag style="max-width: 100%">
-      <fig-choice value="img-a" aria-label="Image A" selected><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-b" aria-label="Image B"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-c" aria-label="Image C"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-d" aria-label="Image D"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-e" aria-label="Image E"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-f" aria-label="Image F"><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-a" aria-label="Image A" selected padding><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-b" aria-label="Image B" padding><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-c" aria-label="Image C" padding><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-d" aria-label="Image D" padding><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-e" aria-label="Image E" padding><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-f" aria-label="Image F" padding><fig-image src="${landscapeUrl()}" alt="" size="small" aspect-ratio="1/1" full></fig-image></fig-choice>
     </fig-chooser>
   </fig-field>
 </div>`,

@@ -5457,7 +5457,8 @@ fig-choice {
   }
 
   &[padding]:not([padding="false"]) {
-    --fig-choice-padding: var(--spacer-2);
+    --fig-choice-padding: var(--spacer-1);
+    --fig-choice-border-radius: var(--radius-medium-large);
   }
 
   &[selected]:not([selected="false"]) {
@@ -5467,11 +5468,10 @@ fig-choice {
       position: absolute;
       inset: 0;
       border-radius: calc(
-        var(--fig-choice-border-radius) + var(--fig-choice-selection-ring-width)
+        var(--fig-choice-border-radius)
       );
       pointer-events: none;
       z-index: 1;
-      box-shadow: inset 0 0 0 calc(var(--fig-choice-selection-ring-width)*2) var(--figma-color-bg);
       outline: var(--fig-choice-selection-ring-width) solid
         var(--figma-color-border-selected);
       outline-offset: calc(var(--fig-choice-selection-ring-width) * -1);

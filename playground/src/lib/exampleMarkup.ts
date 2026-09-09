@@ -201,8 +201,21 @@ export function mergePreviewOnlyElements(
     const previewOnlyTopLevel = Array.from(originalRoot.children).filter(
       (el) => el.getAttribute("data-playground-ignore-controls") === "true",
     );
-    previewOnlyTopLevel.reverse().forEach((el) => {
-      editedRoot.prepend(el.cloneNode(true));
+    previewOnlyTopLevel.forEach((el) => {
+      const precedingContentCount = Array.from(originalRoot.children)
+        .slice(0, Array.from(originalRoot.children).indexOf(el))
+        .filter(
+          (sibling) =>
+            sibling.getAttribute("data-playground-ignore-controls") !== "true",
+        ).length;
+      const contentChildren = Array.from(editedRoot.children).filter(
+        (child) =>
+          child.getAttribute("data-playground-ignore-controls") !== "true",
+      );
+      editedRoot.insertBefore(
+        el.cloneNode(true),
+        contentChildren[precedingContentCount] ?? null,
+      );
     });
   }
 
