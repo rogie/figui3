@@ -847,6 +847,13 @@ export const figui3Sections: Section[] = [
   <fig-input-number value="16" min="0" max="512" step="1" units="px"></fig-input-number>
 </div>`,
       },
+      {
+        id: "large",
+        name: "Large",
+        markup: `<div class="prop-panel">
+  <fig-input-number size="large" value="16" min="0" max="512" step="1" units="px"></fig-input-number>
+</div>`,
+      },
     ],
   },
   ...(propkitColorSection

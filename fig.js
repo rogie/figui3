@@ -7007,6 +7007,7 @@ figDefineElement("fig-input-text", FigInputText);
  * Supports units display and all standard number input attributes.
  * @attr {string} value - The current numeric value
  * @attr {string} placeholder - Placeholder text
+ * @attr {string} size - Input size: default or "large"
  * @attr {boolean} disabled - Whether the input is disabled
  * @attr {number} min - Minimum value
  * @attr {number} max - Maximum value

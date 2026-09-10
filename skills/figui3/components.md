@@ -86,7 +86,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 />
 ```
 
-- Attrs: `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `disabled`, `full`
+- Attrs: `size` (`large`), `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `disabled`, `full`
 
 ### `fig-input-combo`
 

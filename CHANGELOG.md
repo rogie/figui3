@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.7]
+
+### Added
+
+- Added `size="large"` support to `fig-input-number`, including large prepend spacing, playground controls and examples, documentation, and component coverage.
+
 ## [9.0.6]
 
 ### Added

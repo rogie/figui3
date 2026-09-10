@@ -635,6 +635,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     readonly: { label: "Readonly", type: "boolean", boolMode: "presence" },
   },
   "fig-input-number": {
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["", "large"],
+    },
     min: { label: "Min", type: "number", min: -1000, max: 1000, step: 1 },
     max: { label: "Max", type: "number", min: -1000, max: 1000, step: 1 },
     step: { label: "Step", type: "number", min: 0.001, max: 100, step: 0.001 },

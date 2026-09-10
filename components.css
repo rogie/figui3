@@ -3812,10 +3812,14 @@ fig-input-number {
     flex: 1;
     width: 100%;
   }
-  &:where(fig-input-text)[size="large"] {
+  &[size="large"] {
     & > input,
     & > textarea {
       padding: var(--spacer-2);
+    }
+
+    & > [slot="prepend"] {
+      min-width: var(--spacer-5);
     }
   }
   &[multiline]:not([multiline="false"]) {
@@ -3856,10 +3860,6 @@ fig-input-number {
     order: 0;
     padding-right: 0;
     margin-right: calc(var(--spacer-2) * -1);
-    &[size="large"] {
-      height: var(--spacer-6);
-      min-width: var(--spacer-6);
-    }
   }
 
   & [slot="append"] {

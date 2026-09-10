@@ -408,6 +408,7 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 |---|---|---|---|
 | `value` | string | — | Numeric value |
 | `placeholder` | string | — | Placeholder text |
+| `size` | string | — | Set to `"large"` for a 32px-tall input |
 | `min` | number | — | Minimum |
 | `max` | number | — | Maximum |
 | `step` | number | — | Step increment |
@@ -421,6 +422,7 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 
 ```html
 <fig-input-number value="100" units="px"></fig-input-number>
+<fig-input-number size="large" value="100" units="px"></fig-input-number>
 <fig-input-number value="50" units="%" min="0" max="100"></fig-input-number>
 ```
 

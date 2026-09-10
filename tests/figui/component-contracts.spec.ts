@@ -4095,6 +4095,98 @@ test.describe("number input accessibility", () => {
     });
   });
 
+  test('fig-input-number size="large" matches large text input and button height', async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-number id="default-number" value="12">
+          <fig-icon id="default-number-prepend" slot="prepend" name="add"></fig-icon>
+        </fig-input-number>
+        <fig-input-number id="large-number" size="large" value="12">
+          <fig-icon id="number-prepend" slot="prepend" name="add"></fig-icon>
+        </fig-input-number>
+        <fig-input-text id="large-text" size="large" value="Large">
+          <fig-icon id="text-prepend" slot="prepend" name="add"></fig-icon>
+        </fig-input-text>
+        <fig-button id="large-button" size="large">Large</fig-button>
+      `;
+    });
+
+    const dimensions = await page.evaluate(() => {
+      const defaultNumber = document.querySelector("#default-number");
+      const largeNumber = document.querySelector("#large-number");
+      const largeText = document.querySelector("#large-text");
+      const largeButton = document.querySelector("#large-button");
+      const defaultNumberPrepend = document.querySelector(
+        "#default-number-prepend",
+      );
+      const numberPrepend = document.querySelector("#number-prepend");
+      const textPrepend = document.querySelector("#text-prepend");
+      const nativeLargeInput = largeNumber?.querySelector("input");
+      const nativeLargeTextInput = largeText?.querySelector("input");
+      if (
+        !defaultNumber ||
+        !largeNumber ||
+        !largeText ||
+        !largeButton ||
+        !defaultNumberPrepend ||
+        !numberPrepend ||
+        !textPrepend ||
+        !nativeLargeInput ||
+        !nativeLargeTextInput
+      ) {
+        throw new Error("Missing large number input test nodes");
+      }
+      const inputStyle = getComputedStyle(nativeLargeInput);
+      const textInputStyle = getComputedStyle(nativeLargeTextInput);
+      const numberBox = largeNumber.getBoundingClientRect();
+      const textBox = largeText.getBoundingClientRect();
+      return {
+        defaultHeight: defaultNumber.getBoundingClientRect().height,
+        largeHeight: numberBox.height,
+        textHeight: textBox.height,
+        buttonHeight: largeButton.getBoundingClientRect().height,
+        defaultPrependWidth:
+          defaultNumberPrepend.getBoundingClientRect().width,
+        numberPrependWidth: numberPrepend.getBoundingClientRect().width,
+        textPrependWidth: textPrepend.getBoundingClientRect().width,
+        paddingBlock: [inputStyle.paddingTop, inputStyle.paddingBottom],
+        paddingInline: [inputStyle.paddingLeft, inputStyle.paddingRight],
+        numberPrependInset:
+          numberPrepend.getBoundingClientRect().left - numberBox.left,
+        textPrependInset:
+          textPrepend.getBoundingClientRect().left - textBox.left,
+        numberContentInset:
+          nativeLargeInput.getBoundingClientRect().left -
+          numberBox.left +
+          parseFloat(inputStyle.paddingLeft),
+        textContentInset:
+          nativeLargeTextInput.getBoundingClientRect().left -
+          textBox.left +
+          parseFloat(textInputStyle.paddingLeft),
+      };
+    });
+
+    expect(dimensions).toEqual({
+      defaultHeight: 24,
+      largeHeight: 32,
+      textHeight: 32,
+      buttonHeight: 32,
+      defaultPrependWidth: 24,
+      numberPrependWidth: 32,
+      textPrependWidth: 32,
+      paddingBlock: ["8px", "8px"],
+      paddingInline: ["8px", "8px"],
+      numberPrependInset: 0,
+      textPrependInset: 0,
+      numberContentInset: 32,
+      textContentInset: 32,
+    });
+  });
+
   test("fig-input-number preserves authored precision in its display", async ({
     page,
   }) => {

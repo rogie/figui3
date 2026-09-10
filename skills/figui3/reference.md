@@ -23,6 +23,12 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 - `value`, `placeholder`, `multiline`, `autoresize`, `resizable`, `disabled`, `readonly`, `full`
 - Adornments: `slot="prepend"` and `slot="append"`
 
+## `fig-input-number`
+
+- `size`: `""`, `large` (32px tall)
+- `value`, `placeholder`, `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `disabled`, `full`
+- Adornments: `slot="prepend"` and `slot="append"`
+
 ## `fig-dropdown`
 
 - `value`, `type="select|dropdown"`, `variant="ghost"`, `full`, `disabled`
