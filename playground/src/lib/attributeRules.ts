@@ -46,6 +46,23 @@ const aspectRatioRule: AttributeRule = {
   options: ["1/1", "4/3", "16/9"],
 };
 
+const fillPickerPositionOptions = [
+  "left",
+  "top",
+  "right",
+  "bottom",
+  "center",
+  "top left",
+  "top center",
+  "top right",
+  "center left",
+  "center center",
+  "center right",
+  "bottom left",
+  "bottom center",
+  "bottom right",
+];
+
 export const fieldAttributeRules: AttributeRuleSet = {
   direction: {
     label: "Direction",
@@ -216,6 +233,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
   },
   "fig-fill-picker": {
+    mode: { label: "Mode", type: "string" },
     alpha: {
       label: "Alpha",
       type: "boolean",
@@ -223,10 +241,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
-    mode: {
-      label: "Mode",
+    "dialog-position": {
+      label: "Dialog position",
       type: "enum",
-      options: ["", "solid", "gradient", "image", "video", "webcam"],
+      options: fillPickerPositionOptions,
     },
     "webcam-mode": {
       label: "Webcam mode",
@@ -467,6 +485,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-fill": {
+    mode: { label: "Mode", type: "string" },
     alpha: {
       label: "Alpha",
       type: "boolean",
@@ -474,6 +493,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+    "picker-dialog-position": {
+      label: "Picker position",
+      type: "enum",
+      options: fillPickerPositionOptions,
+    },
     "webcam-mode": {
       label: "Webcam mode",
       type: "enum",
@@ -531,6 +555,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Sizing",
       type: "enum",
       options: ["equal", "auto"],
+    },
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["", "large"],
     },
   },
   "fig-options": {

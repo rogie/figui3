@@ -9,61 +9,43 @@ function avatarServiceUrl(size: number): string {
   return `https://i.pravatar.cc/${size}?img=${randomAvatarId}`;
 }
 
-const SHADER_SOURCE = `@fragment
-fn main() -> vec4f {
-  return vec4f(0.05, 0.62, 1.0, 1.0);
-}`;
-
-function fillPickerShaderMarkup(): string {
-  const value = JSON.stringify({
-    type: "shader",
-    source: SHADER_SOURCE,
-    language: "wgsl",
-  }).replace(/'/g, "&#39;");
-  return `<div class="prop-panel">
-  <fig-input-fill mode="solid,gradient,image,video,webcam,shader" value='${value}' full>
-    <div slot="mode-shader" label="Shader">
+function fillPickerShaderSlotMarkup(): string {
+  return `<div slot="mode-shader" label="Shader" data-playground-ignore-controls="true" data-playground-show-source="true">
       <fig-content>
         <fig-field>
           <fig-preview full aspect-ratio="16/9">
-            <canvas width="100%" height="320" aria-label="Generated shader preview" style="width: 100%; height: 100%; background: radial-gradient(circle at 20% 25%, #FFFFFFAA 0 8%, transparent 20%), radial-gradient(circle at 78% 35%, #7AEA66 0 12%, transparent 32%), radial-gradient(circle at 42% 72%, #FFCD29 0 10%, transparent 30%), conic-gradient(from 210deg at 52% 48%, #0D99FF, #9747FF, #FF00BF, #FF7262, #7AEA66, #0D99FF); filter: saturate(1.35) contrast(1.1);"></canvas>
+            <canvas width="640" height="360" aria-label="Live WebGPU shader preview" data-playground-webgpu-shader style="display: block; width: 100%; height: 100%;"></canvas>
           </fig-preview>
         </fig-field>
         <fig-field>
           <label>Source</label>
-          <fig-input-text multiline data-shader-source></fig-input-text>
+          <fig-input-text multiline data-playground-shader-source></fig-input-text>
         </fig-field>
       </fig-content>
-    </div>
+    </div>`;
+}
+
+function fillPickerShaderValue(): string {
+  return JSON.stringify({
+    type: "shader",
+    language: "wgsl",
+  }).replace(/'/g, "&#39;");
+}
+
+function fillPickerShaderMarkup(): string {
+  return `<div class="prop-panel">
+  <fig-input-fill mode="solid,gradient,image,video,webcam,shader" value='${fillPickerShaderValue()}' full data-playground-shader-fill>
+    ${fillPickerShaderSlotMarkup()}
   </fig-input-fill>
-  <script>
-    (() => {
-      const fill = document.currentScript && document.currentScript.previousElementSibling;
-      const slot = fill && fill.querySelector('[slot="mode-shader"]');
-      const source = fill && fill.querySelector("[data-shader-source]");
-      if (!fill || !slot || !source) return;
-      const initial = ${JSON.stringify(SHADER_SOURCE)};
-      const emit = (type) => {
-        source.dispatchEvent(new CustomEvent(type, {
-          bubbles: true,
-          detail: { source: source.value || "", language: "wgsl" },
-        }));
-      };
-      const bind = () => {
-        source.value = initial;
-        source.addEventListener("input", (event) => {
-          event.stopPropagation();
-          emit("input");
-        });
-        source.addEventListener("change", (event) => {
-          event.stopPropagation();
-          emit("change");
-        });
-      };
-      if (customElements.get("fig-input-text")) bind();
-      else customElements.whenDefined("fig-input-text").then(bind);
-    })();
-  </script>
+</div>`;
+}
+
+function standaloneFillPickerShaderMarkup(): string {
+  return `<div class="prop-panel">
+  <fig-fill-picker mode="solid,gradient,image,video,webcam,shader" value='${fillPickerShaderValue()}' dialog-position="left" data-playground-shader-fill>
+    ${fillPickerShaderSlotMarkup()}
+    <fig-swatch></fig-swatch>
+  </fig-fill-picker>
 </div>`;
 }
 
@@ -120,11 +102,42 @@ const propkitChooserSection = propkitSections.find(
 const propkitColorSection = propkitSections.find(
   (section) => section.id === "color",
 );
+const propkitPaletteSection = propkitSections.find(
+  (section) => section.id === "palette",
+);
+const propkitGradientSection = propkitSections.find(
+  (section) => section.id === "gradient",
+);
+const INPUT_GROUP_NAME = "Inputs";
+const MEDIA_GROUP_NAME = "Media";
+
+function clusterGroup(
+  sections: Section[],
+  groupName: string,
+  afterGroup = "Core components",
+): Section[] {
+  const grouped = sections.filter((section) => section.group === groupName);
+  if (!grouped.length) return sections;
+  const rest = sections.filter((section) => section.group !== groupName);
+  const insertAt =
+    rest.reduce(
+      (last, section, index) => (section.group === afterGroup ? index : last),
+      -1,
+    ) + 1;
+  return [...rest.slice(0, insertAt), ...grouped, ...rest.slice(insertAt)];
+}
+
+function clusterPlaygroundGroups(sections: Section[]): Section[] {
+  const inputs = sections.filter((section) => section.group === INPUT_GROUP_NAME);
+  const rest = sections.filter((section) => section.group !== INPUT_GROUP_NAME);
+  return [...inputs, ...clusterGroup(rest, MEDIA_GROUP_NAME)];
+}
+
 const figui3ChooserSections: Section[] = propkitChooserSection
   ? [
       {
         ...propkitChooserSection,
-        group: "Core components",
+        group: INPUT_GROUP_NAME,
         examples: propkitChooserSection.examples.map((example) => ({
           ...example,
           markup:
@@ -265,11 +278,11 @@ ${body}
 </div>`;
 }
 
-export const figui3Sections: Section[] = [
+export const figui3Sections: Section[] = clusterPlaygroundGroups([
   {
     id: "button",
     name: "Button",
-    group: "Core components",
+    group: INPUT_GROUP_NAME,
     description:
       "Buttons with variants and advanced behaviors like select menus.",
     examples: [
@@ -375,7 +388,7 @@ export const figui3Sections: Section[] = [
   {
     id: "dropdown",
     name: "Dropdown",
-    group: "Core components",
+    group: INPUT_GROUP_NAME,
     description: "Native select controls with FigUI styling.",
     examples: [
       {
@@ -670,59 +683,71 @@ export const figui3Sections: Section[] = [
   },
   {
     id: "fill-picker",
-    name: "Fill Picker",
+    name: "Fill picker",
     group: "Core components",
     description:
-      "Comprehensive fill editor for solid, gradient, image, video, webcam, and custom slotted modes.",
+      "Standalone fill picker dialog for solid, gradient, image, video, webcam, and custom slotted modes.",
     examples: [
       {
         id: "all-modes",
         name: "All modes",
         markup: `<div class="prop-panel">
-  <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":85}' full></fig-input-fill>
+  <fig-fill-picker value='{"type":"solid","color":"#0D99FF","opacity":85}' dialog-position="left">
+    <fig-swatch></fig-swatch>
+  </fig-fill-picker>
 </div>`,
       },
       {
         id: "solid",
         name: "Solid",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="solid" value='{"type":"solid","color":"#FF24BD","opacity":72}' full></fig-input-fill>
+  <fig-fill-picker mode="solid" value='{"type":"solid","color":"#FF24BD","opacity":72}' dialog-position="left">
+    <fig-swatch></fig-swatch>
+  </fig-fill-picker>
 </div>`,
       },
       {
         id: "gradient",
         name: "Gradient",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' full></fig-input-fill>
+  <fig-fill-picker mode="gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' dialog-position="left">
+    <fig-swatch></fig-swatch>
+  </fig-fill-picker>
 </div>`,
       },
       {
         id: "image",
         name: "Image",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="image" value='{"type":"image","image":{"url":"https://picsum.photos/320/320?random=41","scaleMode":"fill","scale":50}}' full></fig-input-fill>
+  <fig-fill-picker mode="image" value='{"type":"image","image":{"url":"https://picsum.photos/320/320?random=41","scaleMode":"fill","scale":50}}' dialog-position="left">
+    <fig-swatch></fig-swatch>
+  </fig-fill-picker>
 </div>`,
       },
       {
         id: "video",
         name: "Video",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="video" default-video="${DEMO_FILL_VIDEO.src}" value='{"type":"video","video":{"url":"${DEMO_FILL_VIDEO.src}","poster":"${DEMO_FILL_VIDEO.poster}","scaleMode":"fill","scale":50}}' full></fig-input-fill>
+  <fig-fill-picker mode="video" default-video="${DEMO_FILL_VIDEO.src}" value='{"type":"video","video":{"url":"${DEMO_FILL_VIDEO.src}","poster":"${DEMO_FILL_VIDEO.poster}","scaleMode":"fill","scale":50}}' dialog-position="left">
+    <fig-swatch></fig-swatch>
+  </fig-fill-picker>
 </div>`,
       },
       {
         id: "webcam",
         name: "Webcam",
         markup: `<div class="prop-panel">
-  <fig-input-fill picker-mode="webcam" webcam-mode="live" value='{"type":"webcam"}' full></fig-input-fill>
+  <fig-fill-picker mode="webcam" webcam-mode="live" value='{"type":"webcam"}' dialog-position="left">
+    <fig-swatch></fig-swatch>
+  </fig-fill-picker>
 </div>`,
       },
       {
         id: "shader",
         name: "Custom",
         description:
-          "Put a custom type in <code>mode</code> and slot markup with <code>slot=\"mode-&lt;name&gt;\"</code> on <code>fig-input-fill</code> (this example is <code>mode-shader</code>). <code>label</code> is the type-select option; children become the tab. The closed control uses the same chrome as image fills. Dispatch <code>input</code>/<code>change</code> with a <code>detail</code> object so the picker stores <code>{ type: \"shader\", …detail }</code>. In React, listen for <code>modeready</code> and mount into <code>e.detail.container</code>.",
-        markup: fillPickerShaderMarkup(),
+          "Put a custom type in <code>mode</code> and slot markup with <code>slot=\"mode-&lt;name&gt;\"</code> on <code>fig-fill-picker</code> (this example is <code>mode-shader</code>). <code>label</code> is the type-select option; children become the tab. Dispatch <code>input</code>/<code>change</code> with a <code>detail</code> object so the picker stores <code>{ type: \"shader\", …detail }</code>. In React, listen for <code>modeready</code> and mount into <code>e.detail.container</code>.",
+        markup: standaloneFillPickerShaderMarkup(),
       },
     ],
   },
@@ -744,7 +769,7 @@ export const figui3Sections: Section[] = [
   {
     id: "slider",
     name: "Slider",
-    group: "Core components",
+    group: INPUT_GROUP_NAME,
     description:
       "Range controls with PropKit-style examples across slider types.",
     examples: [
@@ -800,7 +825,7 @@ export const figui3Sections: Section[] = [
   {
     id: "combo-input",
     name: "Combo Input",
-    group: "Core components",
+    group: INPUT_GROUP_NAME,
     description: "Input with suggestion dropdown from a fixed options list.",
     examples: [
       {
@@ -814,8 +839,8 @@ export const figui3Sections: Section[] = [
   },
   {
     id: "text-input",
-    name: "Text Input",
-    group: "Core components",
+    name: "Text",
+    group: INPUT_GROUP_NAME,
     description: "Single-line and multiline text inputs for direct entry.",
     examples: [
       {
@@ -836,8 +861,8 @@ export const figui3Sections: Section[] = [
   },
   {
     id: "number-input",
-    name: "Number Input",
-    group: "Core components",
+    name: "Number",
+    group: INPUT_GROUP_NAME,
     description: "Precise numeric inputs with steppers, units, and bounds.",
     examples: [
       {
@@ -857,48 +882,76 @@ export const figui3Sections: Section[] = [
     ],
   },
   ...(propkitColorSection
-    ? [{ ...propkitColorSection, group: "Core components" }]
+    ? [{ ...propkitColorSection, group: INPUT_GROUP_NAME }]
+    : []),
+  ...(propkitPaletteSection
+    ? [{ ...propkitPaletteSection, group: INPUT_GROUP_NAME }]
+    : []),
+  ...(propkitGradientSection
+    ? [{ ...propkitGradientSection, group: INPUT_GROUP_NAME }]
     : []),
   {
     id: "fill-input",
-    name: "Fill Input",
-    group: "Core components",
-    description: "Fill controls for solid, gradient, image, and video fills.",
+    name: "Fill",
+    group: INPUT_GROUP_NAME,
+    description:
+      "Fill controls for solid, gradient, image, video, webcam, and custom slotted modes.",
     examples: [
+      {
+        id: "all-modes",
+        name: "All modes",
+        markup: `<div class="prop-panel">
+  <fig-input-fill value='{"type":"solid","color":"#0D99FF","opacity":85}' full></fig-input-fill>
+</div>`,
+      },
       {
         id: "solid",
         name: "Solid",
         markup: `<div class="prop-panel">
-  <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
+  <fig-input-fill mode="solid" value='{"type":"solid","color":"#FF24BD","opacity":72}' full></fig-input-fill>
 </div>`,
       },
       {
         id: "gradient",
         name: "Gradient",
         markup: `<div class="prop-panel">
-  <fig-input-fill value='{"type":"gradient","gradient":{"type":"linear","angle":180,"stops":[{"color":"#667eea","position":0,"opacity":100},{"color":"#764ba2","position":100,"opacity":100}]}}'></fig-input-fill>
+  <fig-input-fill mode="gradient" value='{"type":"gradient","gradient":{"type":"linear","angle":135,"stops":[{"position":0,"color":"#00F5A0","opacity":100},{"position":45,"color":"#00D4FF","opacity":100},{"position":100,"color":"#4B00E0","opacity":100}]}}' full></fig-input-fill>
 </div>`,
       },
       {
         id: "image",
         name: "Image",
         markup: `<div class="prop-panel">
-  <fig-input-fill value='{"type":"image","image":{"url":"https://picsum.photos/id/10/200/200","scaleMode":"fill","scale":100}}'></fig-input-fill>
+  <fig-input-fill mode="image" value='{"type":"image","image":{"url":"https://picsum.photos/320/320?random=41","scaleMode":"fill","scale":50}}' full></fig-input-fill>
 </div>`,
       },
       {
         id: "video",
         name: "Video",
         markup: `<div class="prop-panel">
-  <fig-input-fill value="${DEMO_FILL_VIDEO.src}"></fig-input-fill>
+  <fig-input-fill mode="video" default-video="${DEMO_FILL_VIDEO.src}" value='{"type":"video","video":{"url":"${DEMO_FILL_VIDEO.src}","poster":"${DEMO_FILL_VIDEO.poster}","scaleMode":"fill","scale":50}}' full></fig-input-fill>
 </div>`,
+      },
+      {
+        id: "webcam",
+        name: "Webcam",
+        markup: `<div class="prop-panel">
+  <fig-input-fill mode="webcam" webcam-mode="live" value='{"type":"webcam"}' full></fig-input-fill>
+</div>`,
+      },
+      {
+        id: "shader",
+        name: "Custom",
+        description:
+          "Put a custom type in <code>mode</code> and slot markup with <code>slot=\"mode-&lt;name&gt;\"</code> on <code>fig-input-fill</code> (this example is <code>mode-shader</code>). <code>label</code> is the type-select option; children become the tab. The closed control uses the same chrome as image fills. Dispatch <code>input</code>/<code>change</code> with a <code>detail</code> object so the picker stores <code>{ type: \"shader\", …detail }</code>. In React, listen for <code>modeready</code> and mount into <code>e.detail.container</code>.",
+        markup: fillPickerShaderMarkup(),
       },
     ],
   },
   {
     id: "file-input",
-    name: "File Input",
-    group: "Core components",
+    name: "File",
+    group: INPUT_GROUP_NAME,
     description:
       "File upload input with filename display, clear button, and drag-and-drop support.",
     examples: [
@@ -928,7 +981,7 @@ export const figui3Sections: Section[] = [
   {
     id: "switch",
     name: "Switch",
-    group: "Core components",
+    group: INPUT_GROUP_NAME,
     description: "Boolean toggle controls for on/off states.",
     examples: [
       {
@@ -943,7 +996,7 @@ export const figui3Sections: Section[] = [
   {
     id: "checkbox",
     name: "Checkbox",
-    group: "Core components",
+    group: INPUT_GROUP_NAME,
     description: "Checkbox controls with checked and indeterminate states.",
     examples: [
       {
@@ -985,7 +1038,7 @@ export const figui3Sections: Section[] = [
   {
     id: "radio",
     name: "Radio",
-    group: "Core components",
+    group: INPUT_GROUP_NAME,
     description: "Radio input for mutually exclusive option selection.",
     examples: [
       {
@@ -1069,7 +1122,7 @@ export const figui3Sections: Section[] = [
   {
     id: "segmented-control",
     name: "Segmented Control",
-    group: "Core components",
+    group: INPUT_GROUP_NAME,
     description:
       "Segmented options for mutually exclusive selections using radio-group semantics and arrow-key navigation.",
     examples: [
@@ -1078,6 +1131,17 @@ export const figui3Sections: Section[] = [
         name: "Text",
         markup: `<div class="prop-panel">
   <fig-segmented-control sizing="equal" data-playground-hide-attrs="value,name">
+    <fig-segment value="left" selected>Left</fig-segment>
+    <fig-segment value="center">Center</fig-segment>
+    <fig-segment value="right">Right</fig-segment>
+  </fig-segmented-control>
+</div>`,
+      },
+      {
+        id: "large",
+        name: "Large",
+        markup: `<div class="prop-panel">
+  <fig-segmented-control size="large" sizing="equal" data-playground-hide-attrs="value,name">
     <fig-segment value="left" selected>Left</fig-segment>
     <fig-segment value="center">Center</fig-segment>
     <fig-segment value="right">Right</fig-segment>
@@ -1290,7 +1354,7 @@ export const figui3Sections: Section[] = [
   {
     id: "image",
     name: "Image",
-    group: "Core components",
+    group: MEDIA_GROUP_NAME,
     description:
       "Image previews rendered inside fig-preview with optional keyboard-reachable upload overlay.",
     examples: [
@@ -1404,7 +1468,7 @@ export const figui3Sections: Section[] = [
   {
     id: "media",
     name: "Media",
-    group: "Core components",
+    group: MEDIA_GROUP_NAME,
     description:
       "Shared media host that renders image/video content inside fig-preview and attaches generated controls below the preview.",
     examples: [
@@ -1427,7 +1491,7 @@ export const figui3Sections: Section[] = [
   {
     id: "media-controls",
     name: "Media controls",
-    group: "Core components",
+    group: MEDIA_GROUP_NAME,
     description: "Standalone playback controls UI (play/pause, scrubber, time) with self-contained state via `playing`, `duration`, and `time` attributes.",
     examples: [
       {
@@ -1449,7 +1513,7 @@ export const figui3Sections: Section[] = [
   {
     id: "video",
     name: "Video",
-    group: "Core components",
+    group: MEDIA_GROUP_NAME,
     description:
       "Video previews rendered inside fig-preview with playback controls attached below the preview and optional upload overlay.",
     examples: [
@@ -2190,4 +2254,4 @@ ${versionHistoryGroup("August 11", [
       },
     ],
   },
-];
+]);

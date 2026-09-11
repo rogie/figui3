@@ -1138,6 +1138,12 @@ export default function AttributesView({
                     return "Default";
                   }
                   if (
+                    target.controlTag === "fig-segmented-control" &&
+                    name === "size"
+                  ) {
+                    return "Default (small)";
+                  }
+                  if (
                     target.controlTag === "fig-input-gradient" &&
                     name === "size"
                   ) {

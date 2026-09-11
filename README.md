@@ -702,6 +702,7 @@ Tabs use `role="tablist"` / `role="tab"` and roving focus. Use `content="#panel-
 | `value` | string | — | Selected segment value |
 | `animated` | boolean | `false` | Animate indicator transitions |
 | `sizing` | string | `"equal"` | `"equal"` or `"auto"` width mode |
+| `size` | string | — | Set to `"large"` for a 32px-tall control |
 
 **Events:** `input`, `change` — detail contains the selected value.
 

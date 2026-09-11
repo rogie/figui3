@@ -4776,6 +4776,7 @@ figDefineElement("fig-segment", FigSegment);
  * @attr {string} value - Selected segment value
  * @attr {boolean} animated - Enables animated selection indicator
  * @attr {"equal"|"auto"} sizing - Segment sizing mode
+ * @attr {string} size - Control size. Use `large` for a 32px-tall control.
  */
 class FigSegmentedControl extends HTMLElement {
   #selectedSegment = null;
@@ -18042,11 +18043,20 @@ class FigChooser extends HTMLElement {
   #syncGridColumns() {
     const raw = this.getAttribute("columns");
     const columns = raw === null ? NaN : Number(raw);
-    if (Number.isInteger(columns) && columns > 0) {
-      this.style.setProperty("--fig-chooser-grid-columns", String(columns));
+    const validColumns = Number.isInteger(columns) && columns > 0;
+    const effectiveColumns = validColumns ? columns : 2;
+    if (validColumns) {
+      this.style.setProperty("--fig-chooser-grid-columns", String(effectiveColumns));
     } else {
       this.style.removeProperty("--fig-chooser-grid-columns");
     }
+    const isGrid = this.getAttribute("layout") === "grid";
+    this.choices.forEach((choice, index) => {
+      choice.toggleAttribute(
+        "data-fig-chooser-first-row",
+        isGrid && index < effectiveColumns,
+      );
+    });
   }
 
   get choices() {
@@ -18169,7 +18179,10 @@ class FigChooser extends HTMLElement {
       this.#syncDisabledChoices();
     }
     if (name === "choice-element") {
-      requestAnimationFrame(() => this.#syncSelection());
+      requestAnimationFrame(() => {
+        this.#syncGridColumns();
+        this.#syncSelection();
+      });
     }
     if (name === "columns") {
       this.#syncGridColumns();
@@ -18187,6 +18200,7 @@ class FigChooser extends HTMLElement {
       requestAnimationFrame(() => this.#syncOverflow());
     }
     if (name === "layout") {
+      this.#syncGridColumns();
       this.#applyOverflowMode();
       if (newValue === "horizontal") {
         this.scrollTop = 0;
@@ -18506,8 +18520,14 @@ class FigChooser extends HTMLElement {
   #applyOverflowMode() {
     if (this.#overflowMode === "scrollbar") {
       this.#removeNavButtons();
+      this.classList.add("fig-overflow-fade");
+      this.classList.toggle(
+        "fig-overflow-fade-horizontal",
+        this.getAttribute("layout") === "horizontal",
+      );
     } else {
       this.#createNavButtons();
+      this.classList.remove("fig-overflow-fade", "fig-overflow-fade-horizontal");
     }
   }
 
@@ -18659,6 +18679,7 @@ class FigChooser extends HTMLElement {
     this.#mutationObserver = new MutationObserver(() => {
       if (this.#isUnwrapping) return;
       this.#removeLegacyScroller();
+      this.#syncGridColumns();
       this.#applyOverflowMode();
       this.#syncDisabledChoices();
       const choices = this.choices;

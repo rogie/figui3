@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import type { Example } from "../data/sections";
 import { getInjectedExampleMarkup } from "../lib/exampleMarkup";
 import { gradientValueToCss } from "../lib/gradientPreview";
+import { setupWebGpuShaderPreviews } from "../lib/webgpuShaderPreview";
 
 interface Props {
   example: Example;
@@ -279,6 +280,12 @@ export default function ExampleView({
       script.textContent = oldScript.textContent;
       oldScript.replaceWith(script);
     }
+  }, [markup, example.id]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    return setupWebGpuShaderPreviews(container);
   }, [markup, example.id]);
 
   useEffect(() => {

@@ -2984,6 +2984,60 @@ test.describe("fig-select viewport edge repositioning", () => {
     expect(state.right).toBeLessThanOrEqual(state.viewportWidth - 7.5);
   });
 
+  test("truncates a clamped option label with ellipsis", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 480 });
+    await page.addStyleTag({ url: "/fig-editor.css" });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select
+          id="wide-edge-select"
+          label="Wide"
+          value="Short"
+          style="position:fixed;right:4px;top:40%;width:4rem"
+        >
+          <fig-select-options slot="panel">
+            <fig-select-option value="Short">Short</fig-select-option>
+            <fig-select-option value="Wide">
+              Extremely long option label that should force horizontal clamp
+            </fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      `;
+    });
+
+    const select = page.locator("#wide-edge-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+    await page.waitForTimeout(50);
+
+    const option = select.locator('fig-select-option[value="Wide"]');
+    await expect(option).toHaveCSS("text-overflow", "ellipsis");
+    await expect(option).toHaveCSS("overflow-x", "hidden");
+    await expect(option).toHaveCSS("white-space", "nowrap");
+
+    const state = await select.evaluate((host) => {
+      const optionEl = host.querySelector('fig-select-option[value="Wide"]');
+      const popup = host.shadowRoot?.querySelector("dialog");
+      if (!(optionEl instanceof HTMLElement) || !(popup instanceof HTMLElement)) {
+        throw new Error("Missing option or popup");
+      }
+      const optionRect = optionEl.getBoundingClientRect();
+      const popupRect = popup.getBoundingClientRect();
+      return {
+        optionWidth: optionRect.width,
+        popupWidth: popupRect.width,
+        scrollWidth: optionEl.scrollWidth,
+        clientWidth: optionEl.clientWidth,
+      };
+    });
+
+    expect(state.popupWidth).toBeGreaterThan(0);
+    expect(state.optionWidth).toBeLessThanOrEqual(state.popupWidth + 0.5);
+    expect(state.scrollWidth).toBeGreaterThan(state.clientWidth);
+  });
+
   test("repositions open listbox when the window is resized", async ({
     page,
   }) => {
@@ -7368,6 +7422,65 @@ test.describe("remaining accessibility contracts", () => {
         directChoices: 12,
         legacyScroller: 0,
       });
+  });
+
+  test("segmented controls support large sizing", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-segmented-control id="segmented-default">
+          <fig-segment value="left" selected>Left</fig-segment>
+          <fig-segment value="right">Right</fig-segment>
+          <fig-segment value="icon" data-icon-only>
+            <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
+          </fig-segment>
+        </fig-segmented-control>
+        <fig-segmented-control id="segmented-large" size="large">
+          <fig-segment value="left" selected>Left</fig-segment>
+          <fig-segment value="right">Right</fig-segment>
+          <fig-segment value="icon" data-icon-only>
+            <fig-icon name="add"></fig-icon>
+          </fig-segment>
+        </fig-segmented-control>
+      `;
+    });
+
+    const getSizing = (selector: string) =>
+      page.locator(selector).evaluate((control) => {
+        const segment = control.querySelector("fig-segment");
+        if (!segment) throw new Error("Missing fig-segment");
+        const iconSegment = control.querySelector("[data-icon-only]");
+        if (!iconSegment) throw new Error("Missing icon-only fig-segment");
+        const controlStyle = getComputedStyle(control);
+        const segmentStyle = getComputedStyle(segment);
+        const iconSegmentStyle = getComputedStyle(iconSegment);
+        return {
+          height: controlStyle.height,
+          minWidth: segmentStyle.minWidth,
+          paddingLeft: segmentStyle.paddingLeft,
+          paddingRight: segmentStyle.paddingRight,
+          iconPaddingLeft: iconSegmentStyle.paddingLeft,
+          iconPaddingRight: iconSegmentStyle.paddingRight,
+        };
+      });
+
+    expect(await getSizing("#segmented-default")).toEqual({
+      height: "24px",
+      minWidth: "24px",
+      paddingLeft: "8px",
+      paddingRight: "8px",
+      iconPaddingLeft: "0px",
+      iconPaddingRight: "0px",
+    });
+    expect(await getSizing("#segmented-large")).toEqual({
+      height: "32px",
+      minWidth: "32px",
+      paddingLeft: "8px",
+      paddingRight: "8px",
+      iconPaddingLeft: "0px",
+      iconPaddingRight: "0px",
+    });
   });
 
   test("tabs and segmented controls expose roving selection semantics", async ({ page }) => {

@@ -363,7 +363,9 @@ test.describe("fig.js audit core regressions", () => {
       menu.setAttribute("open", "");
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
-      const popup = menu.querySelector('dialog[is="fig-popup"]') as HTMLDialogElement;
+      const popup = menu.shadowRoot?.querySelector(
+        'dialog[is="fig-popup"]',
+      ) as HTMLDialogElement;
       return {
         closedOnDisable,
         open: menu.open,

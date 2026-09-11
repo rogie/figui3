@@ -101,10 +101,6 @@ fig-ai-context {
   }
 }
 
-fig-ai-context:has(+ fig-ai-prompt) {
-  margin-bottom: calc(-1 * var(--spacer-3));
-}
-
 fig-attachments {
   display: flex;
   flex-wrap: wrap;

@@ -56,7 +56,6 @@ fig-interpolation-swatch {
 dialog[is="fig-toast"] {
   --fig-toast-bg-color: var(--figma-color-bg);
   --z-index: 999999;
-  contain: none;
   z-index: var(--z-index);
   box-shadow: var(--figma-elevation-100);
   border-radius: var(--radius-large);
@@ -150,7 +149,6 @@ fig-fill-picker {
 }
 
 .fig-fill-picker-dialog {
-  contain: layout;
   width: 240px;
   padding: 0;
 
@@ -781,6 +779,9 @@ fig-select-option {
   align-items: center;
   gap: 0;
   position: relative;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
   min-height: var(--spacer-4);
   height: auto;
   padding: var(--spacer-1) var(--spacer-2);
@@ -789,10 +790,24 @@ fig-select-option {
   color: var(--figma-color-text-menu);
   cursor: default;
   user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+
+  /* Anonymous flex items cannot ellipsize; text-only options stay a block. */
+  &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) {
+    display: block;
+  }
 
   h3{
     margin: 0 0 var(--spacer-1) 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  label {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &::before {
@@ -808,6 +823,7 @@ fig-select-option {
   &::after {
     content: "";
     display: block;
+    float: left;
     flex: 0 0 1rem;
     order: -1;
     width: 1rem;
@@ -832,10 +848,20 @@ fig-select-option {
     margin-right: var(--spacer-1);
   }
 
+  &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) > [slot="prepend"] {
+    display: inline-flex;
+    vertical-align: middle;
+  }
+
+  &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) > [slot="append"] {
+    float: right;
+  }
 
   & > :not([slot="prepend"]):not([slot="append"]) {
     flex: 1 1 auto;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   & > [slot="append"] {

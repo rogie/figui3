@@ -20,6 +20,7 @@ import { propkitSections } from "./data/sections";
 import { figui3Sections } from "./data/figui3Sections";
 import { labSections } from "./data/labSections";
 import type { Section } from "./data/sections";
+import { sortSectionsWithinGroups } from "./lib/sectionOrder";
 
 function toSentenceCase(text: string): string {
   const trimmed = text.trim();
@@ -108,7 +109,14 @@ const EDITOR_SECTION_IDS = new Set([
   "layer",
   "toast",
 ]);
+const EDITOR_GATED_SECTION_IDS = new Set(["fill-input"]);
 const EDITOR_GROUP_NAME = "Editor components";
+
+function requiresEditorControls(sectionId: string): boolean {
+  return (
+    EDITOR_SECTION_IDS.has(sectionId) || EDITOR_GATED_SECTION_IDS.has(sectionId)
+  );
+}
 
 function filterAvailableSections(
   sections: Section[],
@@ -116,7 +124,9 @@ function filterAvailableSections(
 ): Section[] {
   const visibleSections = sections
     .filter((section) => {
-      if (EDITOR_SECTION_IDS.has(section.id)) return options.includeEditorControls;
+      if (requiresEditorControls(section.id)) {
+        return options.includeEditorControls;
+      }
       return true;
     })
     .map((section) => ({
@@ -136,7 +146,11 @@ function filterAvailableSections(
   );
   const lastCoreIndex = otherSections.reduce(
     (lastIndex, section, index) =>
-      section.group === "Core components" ? index : lastIndex,
+      section.group === "Core components" ||
+      section.group === "Inputs" ||
+      section.group === "Media"
+        ? index
+        : lastIndex,
     -1,
   );
   const insertIndex = lastCoreIndex + 1;
@@ -170,15 +184,18 @@ export default function App({ mode }: Props) {
   } = useTheme();
   const allSections: Section[] = sectionsForMode(mode);
   const [customElementsVersion, setCustomElementsVersion] = useState(0);
-  const sections = useMemo(
-    () => filterAvailableSections(allSections, { includeEditorControls }),
-    [
-      allSections,
-      customElementsVersion,
-      editorComponentsVersion,
+  const sections = useMemo(() => {
+    const visible = filterAvailableSections(allSections, {
       includeEditorControls,
-    ],
-  );
+    });
+    return mode === "figui3" ? sortSectionsWithinGroups(visible) : visible;
+  }, [
+    allSections,
+    customElementsVersion,
+    editorComponentsVersion,
+    includeEditorControls,
+    mode,
+  ]);
   const basePath = basePathForMode(mode);
   const appTitle = titleForMode(mode);
   const {

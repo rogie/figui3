@@ -88,12 +88,9 @@ nav {
   flex-direction: column;
   z-index: 1000;
 
-  .nav-links {
-    --nav-fade-size: var(--spacer-3);
-    --nav-fade-surface: var(--figma-color-bg);
+  .nav-links.fig-overflow-fade {
     flex: 1;
     position: relative;
-    overflow-y: auto;
     padding: 0;
     padding-top: var(--spacer-2);
     padding-bottom: var(--spacer-2);
@@ -111,7 +108,6 @@ nav {
       }
     }
 
-
     &::-webkit-scrollbar {
       width: 6px;
     }
@@ -123,53 +119,6 @@ nav {
     &::-webkit-scrollbar-thumb {
       background: var(--figma-color-border);
       border-radius: 999px;
-    }
-
-    &::before,
-    &::after {
-      content: "";
-      display: block;
-      position: sticky;
-      left: var(--spacer-3);
-      right: var(--spacer-3);
-      height: var(--nav-fade-size);
-      z-index: 2;
-      pointer-events: none;
-    }
-
-    &::before {
-      top: calc(var(--spacer-2) * -1);
-      margin-bottom: calc(var(--nav-fade-size) * -1);
-      background: linear-gradient(
-        to bottom,
-        var(--nav-fade-surface),
-        transparent
-      );
-      opacity: 0;
-    }
-
-    &::after {
-      bottom: calc(var(--spacer-2) * -1);
-      margin-top: calc(var(--nav-fade-size) * -1);
-      background: linear-gradient(to top, var(--nav-fade-surface), transparent);
-      opacity: 0;
-    }
-
-    @supports (animation-timeline: scroll()) {
-      scroll-timeline-name: --nav-scroll-fade;
-      scroll-timeline-axis: block;
-
-      &::before {
-        animation: navFadeTop linear both;
-        animation-timeline: --nav-scroll-fade;
-        animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      &::after {
-        animation: navFadeBottom linear both;
-        animation-timeline: --nav-scroll-fade;
-        animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-      }
     }
   }
 
@@ -232,26 +181,6 @@ nav {
     margin-top: 0;
     border: none;
     border-radius: 0;
-  }
-}
-
-@keyframes navFadeTop {
-  0% {
-    opacity: 0;
-  }
-  12%,
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes navFadeBottom {
-  0%,
-  88% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
   }
 }
 

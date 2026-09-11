@@ -1365,7 +1365,6 @@ fig-tabs,
 /* Avatar */
 fig-avatar,
 .fig-avatar {
-  contain: layout paint;
   --size: 1.5rem;
   width: var(--size);
   flex-shrink: 0;
@@ -1871,10 +1870,6 @@ fig-media-controls {
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
-  }
-
-  fig-icon {
-    contain: none;
   }
 
   &[overlay]:not([overlay="false"]) {
@@ -2479,7 +2474,6 @@ input[type="checkbox"].switch {
   --width: 2rem;
   --height: 1rem;
   --figma-focus-outline-offset: 1px;
-  contain: strict;
   display: inline-flex;
   margin: 0;
   vertical-align: middle;
@@ -2642,7 +2636,6 @@ label.checkbox:has([type="checkbox"]) {
 
 /* Radio */
 input[type="radio"] {
-  contain: strict;
   --figma-focus-outline-offset: 1px;
   appearance: none;
   border-radius: 0.5rem;
@@ -4520,13 +4513,13 @@ fig-spinner {
 /* Segmented control */
 .segmented-control,
 fig-segmented-control {
-  contain: layout paint;
   display: inline-flex;
   user-select: none;
   background-color: var(--figma-color-bg-secondary);
   border: 0;
   border-radius: var(--radius-medium);
-  height: 1.5rem;
+  --fig-segmented-control-height: 1.5rem;
+  height: var(--fig-segmented-control-height);
   padding: 1px;
   gap: 0;
   align-items: stretch;
@@ -4560,7 +4553,7 @@ fig-segmented-control {
   & fig-segment {
     --figma-focus-outline-offset: 0;
     flex: 1 1 0;
-    min-width: 0;
+    min-width: var(--fig-segmented-control-height);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4576,6 +4569,10 @@ fig-segmented-control {
     white-space: nowrap;
     transition: none;
     text-transform: capitalize;
+
+    &:has(> :is(svg, fig-icon):only-child) {
+      padding: 0;
+    }
 
     &[selected]:not([selected="false"]),
     &[selected="true"] {
@@ -4603,8 +4600,17 @@ fig-segmented-control {
   &:not([sizing]),
   &[sizing=""],
   &[sizing="equal"] {
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+
     & fig-segment {
-      flex: 1 1 0;
+      flex: none;
+    }
+
+    &[full]:not([full="false"]) {
+      display: grid;
+      grid-auto-columns: minmax(0, 1fr);
     }
   }
 
@@ -4637,11 +4643,7 @@ fig-segmented-control {
   }
 
   &[size="large"] {
-    height: var(--spacer-5);
-
-    & fig-segment {
-      padding: 0 var(--spacer-3);
-    }
+    --fig-segmented-control-height: var(--spacer-5);
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -5370,9 +5372,6 @@ fig-skeleton {
 
 .fig-mask-icon,
 fig-icon {
-  /* size only — paint containment skips mask-image when `name` / `--icon` updates
-     until a sibling hover (e.g. fig-preview) forces a repaint. */
-  contain: size;
   --size: var(--spacer-4);
   --icon: var(--icon-24-add);
 
@@ -5568,7 +5567,8 @@ fig-chooser {
 
   &[layout="grid"] {
     display: grid;
-    gap: var(--fig-chooser-gap);
+    column-gap: var(--fig-chooser-gap);
+    row-gap: 0;
     grid-template-columns: repeat(
       var(--fig-chooser-grid-columns, 2),
       minmax(0, 1fr)
@@ -5578,15 +5578,11 @@ fig-chooser {
 
     > :not(.fig-overflow) {
       margin: 0;
+      margin-block-start: var(--fig-chooser-gap);
     }
 
-    > :not(.fig-overflow) + :not(.fig-overflow) {
-      margin: 0;
-    }
-
-    > .fig-overflow-start + :not(.fig-overflow),
-    > :not(.fig-overflow):has(+ .fig-overflow-end) {
-      margin: 0;
+    > [data-fig-chooser-first-row] {
+      margin-block-start: 0;
     }
 
     > .fig-overflow {
@@ -5694,7 +5690,6 @@ fig-card {
   }
 
   .fig-card-label {
-    font-size: var(--font-size-small);
     line-height: var(--line-height);
     color: var(--figma-color-text);
     min-width: 0;
@@ -5716,7 +5711,6 @@ fig-card {
   .fig-card-sublabel {
     box-sizing: border-box;
     display: block;
-    font-size: var(--font-size-small);
     line-height: var(--line-height);
     color: var(--figma-color-text-secondary);
     padding-inline: var(--spacer-1);
@@ -5995,7 +5989,6 @@ fig-color-tip {
   --tip-selection-scale: 1;
   --beak-offset: 50%;
 
-  contain: layout;
   inset: unset;
   display: inline-grid;
   place-items: center;
@@ -6087,7 +6080,7 @@ fig-menu::part(listbox) {
 }
 
 fig-menu-item {
-  --fig-menu-item-padding: var(--spacer-1) var(--spacer-4);
+  --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-4,1rem);
   box-sizing: border-box;
   display: flex;
   flex-shrink: 0;
@@ -6161,14 +6154,14 @@ fig-menu-item {
 :is(fig-separator, fig-menu-separator) {
   --fig-separator-color: var(--figma-color-border);
   --fig-separator-label-color: var(--figma-color-text-secondary);
-  --fig-separator-padding: 0 var(--spacer-3);
+  --fig-separator-padding: 0 var(--spacer-4,1rem);
 
   display: block;
   box-sizing: border-box;
   flex-shrink: 0;
   width: 100%;
   height: 1px;
-  margin: var(--spacer-2) 0;
+  margin: var(--spacer-2,0.5rem) 0;
   padding: var(--fig-separator-padding);
   border: 0;
   background: var(--fig-separator-color);
@@ -6199,17 +6192,17 @@ fig-menu-item {
   &[label]:not([label=""]) {
     display: flex;
     flex-direction: column;
-    gap: var(--spacer-2);
+    gap: var(--spacer-2,0.5rem);
     height: auto;
-    margin: var(--spacer-2) 0;
-    margin-bottom: var(--spacer-1);
+    margin: var(--spacer-2,0.5rem) 0;
+    margin-bottom: var(--spacer-1,0.25rem);
     background: transparent;
 
     &::before {
       content: "";
       display: block;
       height: 1px;
-      margin-inline: calc(-1 * var(--spacer-3));
+      margin-inline: calc(-1 * var(--spacer-4,1rem));
       background: var(--fig-separator-color);
     }
 
@@ -6217,14 +6210,8 @@ fig-menu-item {
       content: attr(label);
       display: block;
       color: var(--fig-separator-label-color);
-      line-height: var(--spacer-4);
-      min-height: var(--spacer-4);
-    }
-
-    &:first-child{
-      &::before {
-        display: none;
-      }
+      line-height: var(--spacer-4,1rem);
+      min-height: var(--spacer-4,1rem);
     }
 
     &[sticky]:not([sticky="false"]) {
@@ -6234,14 +6221,14 @@ fig-menu-item {
       background: var(--fig-popup-bg-color, var(--figma-color-bg));
 
       &[stuck] {
-        --fig-separator-padding: var(--spacer-2) var(--spacer-3);
+        --fig-separator-padding: var(--spacer-2,0.5rem) var(--spacer-4,1rem);
         &::before {
           display: none;
         }
       }
 
       :is(fig-select-options, .fig-menu-options, fig-menu).overflow-start > & {
-        top: var(--fig-vertical-overflow-size, var(--spacer-4));
+        top: var(--fig-vertical-overflow-size, var(--spacer-4,1rem));
       }
     }
   }

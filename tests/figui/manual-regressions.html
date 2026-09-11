@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FigUI Manual Regression Checks</title>
+    <link rel="stylesheet" href="/fig.css" />
+    <link rel="stylesheet" href="/fig-lab.css" />
+    <link rel="stylesheet" href="/fig-editor.css" />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--figma-color-bg);
+        color: var(--figma-color-text);
+        font: 13px/1.4 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(760px, calc(100vw - 64px));
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
+
+      .intro {
+        margin: 0 0 24px;
+        color: var(--figma-color-text-secondary);
+      }
+
+      .checks {
+        display: grid;
+        gap: 16px;
+      }
+
+      .check {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid var(--figma-color-border);
+        border-radius: var(--radius-large);
+        background: var(--figma-color-bg-secondary);
+      }
+
+      .check h2 {
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .expected {
+        margin: 0;
+        color: var(--figma-color-text-secondary);
+      }
+
+      .demo-surface {
+        min-width: 0;
+        padding: 16px;
+        border-radius: var(--radius-medium);
+        background: var(--figma-color-bg);
+      }
+
+      .status {
+        width: fit-content;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--figma-color-bg-tertiary);
+        color: var(--figma-color-text-secondary);
+      }
+
+      .status[data-state="pass"] {
+        background: var(--figma-color-bg-success-tertiary);
+        color: var(--figma-color-text-success);
+      }
+
+      .status[data-state="fail"] {
+        background: var(--figma-color-bg-danger-tertiary);
+        color: var(--figma-color-text-danger);
+      }
+
+      #sticky-options {
+        width: 240px;
+        height: 144px;
+        overflow-y: auto;
+      }
+
+      .edge-rig {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      .edge-rig fig-select {
+        position: fixed;
+        width: 112px;
+        pointer-events: auto;
+      }
+
+      #edge-top-left {
+        top: 8px;
+        left: 8px;
+      }
+
+      #edge-top-right {
+        top: 8px;
+        right: 8px;
+      }
+
+      #edge-bottom-left {
+        bottom: 8px;
+        left: 8px;
+      }
+
+      #edge-bottom-right {
+        right: 8px;
+        bottom: 8px;
+      }
+
+      #edge-mid-left {
+        top: calc(50% - 12px);
+        left: 8px;
+      }
+
+      #edge-mid-right {
+        top: calc(50% - 12px);
+        right: 8px;
+      }
+
+      #wide-edge-select {
+        position: fixed;
+        z-index: 101;
+        top: calc(50% + 48px);
+        right: 4px;
+        width: 64px;
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 72px 24px;
+        }
+
+        main {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Manual regression checks</h1>
+      <p class="intro">
+        Open and interact with each control. Floating edge selects exercise the actual browser viewport.
+      </p>
+
+      <div class="checks">
+        <section class="check">
+          <h2>1. Sticky separator below overflow control</h2>
+          <p class="expected">
+            Expected: the “Models” separator remains below the top overflow button while scrolling.
+          </p>
+          <div class="demo-surface">
+            <fig-select-options id="sticky-options">
+              <fig-separator sticky label="Models"></fig-separator>
+              <fig-select-option value="one">Model one</fig-select-option>
+              <fig-select-option value="two">Model two</fig-select-option>
+              <fig-select-option value="three">Model three</fig-select-option>
+              <fig-select-option value="four">Model four</fig-select-option>
+              <fig-select-option value="five">Model five</fig-select-option>
+              <fig-select-option value="six">Model six</fig-select-option>
+              <fig-select-option value="seven">Model seven</fig-select-option>
+              <fig-select-option value="eight">Model eight</fig-select-option>
+            </fig-select-options>
+          </div>
+          <output class="status" id="sticky-status">Scroll the panel to inspect</output>
+        </section>
+
+        <section class="check">
+          <h2>2. Select viewport edges</h2>
+          <p class="expected">
+            Expected: each floating Greek select opens fully inside an 8px viewport margin.
+          </p>
+          <output class="status" id="edge-status">Open any floating Greek select</output>
+        </section>
+
+        <section class="check">
+          <h2>3. Wide select at the far right</h2>
+          <p class="expected">
+            Expected: the narrow floating “Wide” trigger opens its long menu inside both viewport edges, and the long option label truncates with an ellipsis.
+          </p>
+          <output class="status" id="wide-status">Open the floating Wide select</output>
+        </section>
+
+        <section class="check">
+          <h2>4. Long-menu separator padding</h2>
+          <p class="expected">
+            Expected: “Commands” aligns with menu item text, its rule is visible, and the popup stays inside the viewport.
+          </p>
+          <div class="demo-surface">
+            <fig-menu id="long-menu">
+              <fig-button fig-menu-trigger>Commands</fig-button>
+              <fig-menu-item value="1">Command 1</fig-menu-item>
+              <fig-menu-item value="2">Command 2</fig-menu-item>
+              <fig-menu-item value="3">Command 3</fig-menu-item>
+              <fig-menu-item value="4">Command 4</fig-menu-item>
+              <fig-menu-item value="5">Command 5</fig-menu-item>
+              <fig-menu-item value="6">Command 6</fig-menu-item>
+              <fig-menu-item value="7">Command 7</fig-menu-item>
+              <fig-menu-item value="8">Command 8</fig-menu-item>
+              <fig-menu-item value="9">Command 9</fig-menu-item>
+              <fig-menu-item value="10">Command 10</fig-menu-item>
+              <fig-menu-item value="11">Command 11</fig-menu-item>
+              <fig-menu-item value="12">Command 12</fig-menu-item>
+              <fig-menu-item value="13">Command 13</fig-menu-item>
+              <fig-menu-item value="14">Command 14</fig-menu-item>
+              <fig-menu-item value="15">Command 15</fig-menu-item>
+              <fig-menu-item value="16">Command 16</fig-menu-item>
+              <fig-menu-item value="17">Command 17</fig-menu-item>
+              <fig-menu-item value="18">Command 18</fig-menu-item>
+              <fig-menu-item value="19">Command 19</fig-menu-item>
+              <fig-menu-item value="20">Command 20</fig-menu-item>
+              <fig-menu-item value="21">Command 21</fig-menu-item>
+              <fig-menu-item value="22">Command 22</fig-menu-item>
+              <fig-menu-item value="23">Command 23</fig-menu-item>
+              <fig-menu-item value="24">Command 24</fig-menu-item>
+              <fig-separator label="Commands"></fig-separator>
+            </fig-menu>
+          </div>
+          <output class="status" id="menu-status">Open Commands to measure</output>
+        </section>
+
+        <section class="check">
+          <h2>5. Select wrapped by a tooltip</h2>
+          <p class="expected">
+            Expected: opening the select and hovering “Two” does not open the wrapping tooltip.
+          </p>
+          <div class="demo-surface">
+            <fig-tooltip text="Choose an option" delay="0">
+              <fig-select id="tooltip-select" value="one">
+                <fig-select-options slot="panel">
+                  <fig-select-option value="one">One</fig-select-option>
+                  <fig-select-option value="two">Two</fig-select-option>
+                </fig-select-options>
+              </fig-select>
+            </fig-tooltip>
+          </div>
+          <output class="status" id="tooltip-status">Open the select, then hover Two</output>
+        </section>
+      </div>
+    </main>
+
+    <div class="edge-rig" aria-label="Viewport edge select checks">
+      <fig-select id="edge-top-left" data-edge="top-left" label="Greek" value="Omega"></fig-select>
+      <fig-select id="edge-top-right" data-edge="top-right" label="Greek" value="Omega"></fig-select>
+      <fig-select id="edge-bottom-left" data-edge="bottom-left" label="Greek" value="Alpha"></fig-select>
+      <fig-select id="edge-bottom-right" data-edge="bottom-right" label="Greek" value="Alpha"></fig-select>
+      <fig-select id="edge-mid-left" data-edge="mid-left" label="Greek" value="Mu"></fig-select>
+      <fig-select id="edge-mid-right" data-edge="mid-right" label="Greek" value="Mu"></fig-select>
+    </div>
+
+    <fig-select id="wide-edge-select" label="Wide" value="Short">
+      <fig-select-options slot="panel">
+        <fig-select-option value="Short">Short</fig-select-option>
+        <fig-select-option value="Wide">
+          Extremely long option label that should force horizontal clamp
+        </fig-select-option>
+      </fig-select-options>
+    </fig-select>
+
+    <script type="module">
+      import "/fig-editor.js";
+
+      const greekOptions = [
+        "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta",
+        "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi", "Rho",
+        "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega",
+      ].join(",");
+
+      const setStatus = (id, pass, message) => {
+        const status = document.getElementById(id);
+        if (!status) return;
+        status.dataset.state = pass ? "pass" : "fail";
+        status.textContent = `${pass ? "Pass" : "Fail"}: ${message}`;
+      };
+
+      const measurePopup = (select, statusId, label) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const popup = select.querySelector('dialog[is="fig-popup"]');
+            if (!popup?.open) return;
+            const rect = popup.getBoundingClientRect();
+            const margin = 8;
+            const width = window.visualViewport?.width ?? window.innerWidth;
+            const height = window.visualViewport?.height ?? window.innerHeight;
+            const pass =
+              rect.left >= margin - 0.5 &&
+              rect.top >= margin - 0.5 &&
+              rect.right <= width - margin + 0.5 &&
+              rect.bottom <= height - margin + 0.5;
+            setStatus(
+              statusId,
+              pass,
+              `${label} bounds ${Math.round(rect.left)}, ${Math.round(rect.top)} → ${Math.round(rect.right)}, ${Math.round(rect.bottom)}`,
+            );
+          });
+        });
+      };
+
+      await Promise.all([
+        customElements.whenDefined("fig-select"),
+        customElements.whenDefined("fig-select-options"),
+        customElements.whenDefined("fig-menu"),
+      ]);
+
+      document.querySelectorAll("[data-edge]").forEach((select) => {
+        select.setAttribute("options", greekOptions);
+        new MutationObserver(() => {
+          if (select.hasAttribute("open")) {
+            measurePopup(select, "edge-status", select.dataset.edge);
+          }
+        }).observe(select, { attributes: true, attributeFilter: ["open"] });
+      });
+
+      const wideSelect = document.getElementById("wide-edge-select");
+      new MutationObserver(() => {
+        if (wideSelect.hasAttribute("open")) {
+          measurePopup(wideSelect, "wide-status", "wide menu");
+        }
+      }).observe(wideSelect, { attributes: true, attributeFilter: ["open"] });
+
+      const stickyOptions = document.getElementById("sticky-options");
+      stickyOptions.addEventListener("scroll", () => {
+        const separator = stickyOptions.querySelector("fig-separator");
+        const navStart = stickyOptions.querySelector('[data-fig-select-nav="start"]');
+        if (!separator || !navStart) return;
+        const separatorRect = separator.getBoundingClientRect();
+        const navRect = navStart.getBoundingClientRect();
+        const pass = separatorRect.top >= navRect.bottom - 1;
+        setStatus(
+          "sticky-status",
+          pass,
+          `separator top ${Math.round(separatorRect.top)}, overflow bottom ${Math.round(navRect.bottom)}`,
+        );
+      });
+
+      const menu = document.getElementById("long-menu");
+      new MutationObserver(() => {
+        if (!menu.hasAttribute("open")) return;
+        requestAnimationFrame(() => {
+          const item = menu.querySelector("fig-menu-item");
+          const separator = menu.querySelector("fig-separator");
+          if (!item || !separator) return;
+          const itemPadding = getComputedStyle(item).paddingLeft;
+          const separatorPadding = getComputedStyle(separator).paddingLeft;
+          const ruleVisible =
+            getComputedStyle(separator, "::before").display !== "none";
+          setStatus(
+            "menu-status",
+            itemPadding === separatorPadding && ruleVisible,
+            `item ${itemPadding}, separator ${separatorPadding}, rule ${ruleVisible ? "visible" : "hidden"}`,
+          );
+        });
+      }).observe(menu, { attributes: true, attributeFilter: ["open"] });
+
+      const tooltipStatus = document.getElementById("tooltip-status");
+      const updateTooltipStatus = () => {
+        const tooltipOpen = Boolean(
+          document.querySelector('dialog[is="fig-popup"][data-tooltip-managed]'),
+        );
+        tooltipStatus.dataset.state = tooltipOpen ? "fail" : "pass";
+        tooltipStatus.textContent = tooltipOpen
+          ? "Fail: wrapping tooltip opened"
+          : "Pass: wrapping tooltip remains closed";
+      };
+      document.getElementById("tooltip-select").addEventListener(
+        "pointerover",
+        () => requestAnimationFrame(updateTooltipStatus),
+      );
+    </script>
+  </body>
+</html>

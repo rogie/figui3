@@ -188,7 +188,7 @@ export default function Nav({
           setIncludeEditorControls={setIncludeEditorControls}
         />
       </fig-header>
-      <div className="nav-links" ref={navRef}>
+      <div className="nav-links fig-overflow-fade" ref={navRef}>
         {(() => {
           const groups: { group: string | undefined; sections: Section[] }[] =
             [];

@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.8]
+
+### Added
+
+- Added `size="large"` support to `fig-segmented-control`, including height-matched segment minimum widths, playground controls, documentation, and component coverage.
+- Added dedicated Inputs and Media groups to `/figui3`, with sections and examples sorted alphabetically within each group.
+- Added standalone `fig-fill-picker` mode examples and expanded `fig-input-fill` examples, including a live WebGPU custom shader preview.
+
+### Changed
+
+- Removed CSS containment declarations from core, lab, and editor component styles.
+- Applied overflow fades to playground navigation and scrollbar-overflow choosers.
+- Updated icon-only segments to remove inline padding and card labels to inherit font size.
+- Limited the fill input playground section to sessions with editor components enabled.
+
+### Fixed
+
+- Truncated long `fig-select-option` labels with ellipsis when the menu is width-clamped.
+- Fixed equal segmented-control sizing so every segment remains the same width without clipping its padding.
+- Fixed grid chooser spacing around injected overflow navigation buttons.
+- Fixed labeled separators outside menus and selects hiding their rule, and stopped AI context panels from overlapping prompts.
+
 ## [9.0.7]
 
 ### Added
