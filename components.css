@@ -5427,9 +5427,13 @@ fig-chooser {
   --fig-chooser-gap: var(--spacer-2);
   --fig-chooser-inline-padding: var(--spacer-2);
   --fig-chooser-block-padding: var(--spacer-2);
-  --fig-chooser-inline-margin: var(--spacer-3);
+  --fig-chooser-inline-margin: 0px;
+  --fig-choice-selection-ring-width: 2px;
+  --fig-choice-selection-ring-gutter: calc(
+    var(--fig-choice-selection-ring-width) * 2
+  );
 
-  box-sizing: border-box;
+  box-sizing: content-box;
   display: flex;
   flex-direction: column;
   gap: var(--fig-chooser-gap);
@@ -5438,8 +5442,12 @@ fig-chooser {
   max-width: inherit;
   min-width: 0;
   overflow: hidden auto;
-  padding: 0;
-  margin: 0 var(--fig-chooser-inline-margin);
+  padding: var(--fig-choice-selection-ring-gutter);
+  margin: calc(var(--fig-choice-selection-ring-gutter) * -1)
+    calc(
+      var(--fig-chooser-inline-margin) -
+        var(--fig-choice-selection-ring-gutter)
+    );
   scroll-behavior: smooth;
   scrollbar-width: none;
   width: calc(100% - var(--fig-chooser-inline-margin) * 2);
@@ -5453,7 +5461,7 @@ fig-chooser {
   }
 
   fig-field > &{
-    --fig-chooser-inline-margin:0;
+    --fig-chooser-inline-margin: 0px;
   }
 
   > :not(.fig-overflow) {
@@ -5516,15 +5524,17 @@ fig-chooser {
       flex: 0 0 var(--chooser-fade-size);
       height: auto;
       width: var(--chooser-fade-size);
-      margin-top: 0;
-      margin-bottom: 0;
+      margin-top: calc(var(--fig-choice-selection-ring-gutter) * -1);
+      margin-bottom: calc(var(--fig-choice-selection-ring-gutter) * -1);
     }
 
     > .fig-overflow-start {
       box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
-      inset-inline-start: 0;
-      left: 0;
-      margin-block-end: 0;
+      inset-inline-start: calc(
+        var(--fig-choice-selection-ring-gutter) * -1
+      );
+      left: calc(var(--fig-choice-selection-ring-gutter) * -1);
+      margin-block-end: calc(var(--fig-choice-selection-ring-gutter) * -1);
       margin-inline-end: calc(-1 * var(--chooser-fade-size));
       right: auto;
       top: 0;
@@ -5541,11 +5551,11 @@ fig-chooser {
     > .fig-overflow-end {
       bottom: auto;
       box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
-      inset-inline-end: 0;
+      inset-inline-end: calc(var(--fig-choice-selection-ring-gutter) * -1);
       left: auto;
-      margin-block-start: 0;
+      margin-block-start: calc(var(--fig-choice-selection-ring-gutter) * -1);
       margin-inline-start: calc(-1 * var(--chooser-fade-size));
-      right: 0;
+      right: calc(var(--fig-choice-selection-ring-gutter) * -1);
       top: 0;
 
       &:before {
@@ -5557,11 +5567,20 @@ fig-chooser {
       }
     }
   }
+  &:not([layout]),
+  &[layout=""],
   &[layout="vertical"], 
   &[layout="grid"]{
    &>.fig-overflow{
-    margin-left:0;
-    margin-right:0;
+    margin-left: calc(var(--fig-choice-selection-ring-gutter) * -1);
+    margin-right: calc(var(--fig-choice-selection-ring-gutter) * -1);
+    width: calc(100% + var(--fig-choice-selection-ring-gutter) * 2);
+   }
+   &>.fig-overflow-start {
+    top: calc(var(--fig-choice-selection-ring-gutter) * -1);
+   }
+   &>.fig-overflow-end {
+    bottom: calc(var(--fig-choice-selection-ring-gutter) * -1);
    }
   }
 
@@ -5587,7 +5606,6 @@ fig-chooser {
 
     > .fig-overflow {
       grid-column: 1 / -1;
-      margin-inline: 0;
     }
 
     > .fig-overflow-start {
@@ -5759,7 +5777,6 @@ fig-card {
 }
 
 fig-choice {
-  --fig-choice-selection-ring-width: 2px;
   --fig-choice-padding: 0px;
   --fig-choice-text-padding-inline: var(--spacer-2);
   --fig-choice-border-radius: var(--radius-medium);
@@ -5807,9 +5824,9 @@ fig-choice {
       );
       pointer-events: none;
       z-index: 1;
-      outline: var(--fig-choice-selection-ring-width) solid
+      outline: var(--fig-choice-selection-ring-width, 2px) solid
         var(--figma-color-border-selected);
-      outline-offset: calc(var(--fig-choice-selection-ring-width) * -1);
+      outline-offset: var(--fig-choice-selection-ring-width, 2px);
     }
     background-color: var(--figma-color-bg-secondary);
   }
@@ -5894,6 +5911,11 @@ fig-handle {
     --figma-focus-outline-offset: 1px;
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &[data-fig-pointer-focus]:focus-visible {
+    outline: var(--fig-handle-outline);
+    outline-offset: var(--fig-handle-outline-offset);
   }
 
   /* Default handle (no type) hover/selected */

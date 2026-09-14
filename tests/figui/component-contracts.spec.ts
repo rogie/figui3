@@ -6677,12 +6677,16 @@ test.describe("remaining accessibility contracts", () => {
           return {
             scrollLeft: chooser.scrollLeft,
             navEndRightDelta: Math.round(navEndRect.right - chooserRect.right),
+            navEndTopDelta: Math.round(navEndRect.top - chooserRect.top),
+            navEndBottomDelta: Math.round(navEndRect.bottom - chooserRect.bottom),
           };
         }),
       )
       .toMatchObject({
         scrollLeft: expect.any(Number),
         navEndRightDelta: 0,
+        navEndTopDelta: 0,
+        navEndBottomDelta: 0,
       });
 
     await page.evaluate(() => {
@@ -6800,16 +6804,22 @@ test.describe("remaining accessibility contracts", () => {
         page.locator("#panel-chooser").evaluate((chooser) => {
           const panel = document.querySelector("#panel");
           if (!panel) return null;
+          const chooserRect = chooser.getBoundingClientRect();
+          const chooserStyle = getComputedStyle(chooser);
           return {
             panelWidth: Math.round(panel.getBoundingClientRect().width),
-            chooserWidth: Math.round(chooser.getBoundingClientRect().width),
+            chooserInlineFootprint: Math.round(
+              chooserRect.width +
+                parseFloat(chooserStyle.marginLeft) +
+                parseFloat(chooserStyle.marginRight),
+            ),
             scrollsHorizontally: chooser.scrollWidth > chooser.clientWidth,
           };
         }),
       )
       .toEqual({
         panelWidth: 240,
-        chooserWidth: 240,
+        chooserInlineFootprint: 240,
         scrollsHorizontally: true,
       });
 
@@ -7334,8 +7344,13 @@ test.describe("remaining accessibility contracts", () => {
           if (!selected) return null;
           const chooserRect = chooser.getBoundingClientRect();
           const selectedRect = selected.getBoundingClientRect();
+          const chooserStyle = getComputedStyle(chooser);
           return {
-            width: Math.round(chooserRect.width),
+            contentWidth: Math.round(
+              chooserRect.width -
+                parseFloat(chooserStyle.paddingLeft) -
+                parseFloat(chooserStyle.paddingRight),
+            ),
             centerDelta: Math.round(
               selectedRect.left +
                 selectedRect.width / 2 -
@@ -7345,7 +7360,7 @@ test.describe("remaining accessibility contracts", () => {
         }),
       )
       .toEqual({
-        width: 180,
+        contentWidth: 180,
         centerDelta: 0,
       });
 
@@ -7422,6 +7437,64 @@ test.describe("remaining accessibility contracts", () => {
         directChoices: 12,
         legacyScroller: 0,
       });
+  });
+
+  test("fig-chooser reserves selection-ring overflow without moving choices", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="chooser-wrap" style="width: 340px;">
+          <fig-chooser
+            id="ring-chooser"
+            layout="grid"
+            columns="2"
+            value="one"
+            style="width: 300px; --fig-chooser-inline-margin: 20px; --fig-choice-selection-ring-width: 3px;"
+          >
+            <fig-choice value="one" style="height: 48px;">One</fig-choice>
+            <fig-choice value="two" style="height: 48px;">Two</fig-choice>
+          </fig-chooser>
+        </div>
+      `;
+    });
+
+    const geometry = await page.locator("#ring-chooser").evaluate((chooser) => {
+      const wrap = chooser.parentElement;
+      const choice = chooser.querySelector("fig-choice");
+      if (!wrap || !choice) throw new Error("Missing chooser gutter fixture");
+      const wrapRect = wrap.getBoundingClientRect();
+      const chooserRect = chooser.getBoundingClientRect();
+      const choiceRect = choice.getBoundingClientRect();
+      const chooserStyle = getComputedStyle(chooser);
+      const ringStyle = getComputedStyle(choice, "::after");
+      const ringExtent =
+        parseFloat(ringStyle.outlineWidth) +
+        parseFloat(ringStyle.outlineOffset);
+      return {
+        gutter: parseFloat(chooserStyle.paddingLeft),
+        inlineMargin: parseFloat(chooserStyle.marginLeft),
+        blockMargin: parseFloat(chooserStyle.marginTop),
+        choiceInlinePosition: choiceRect.left - wrapRect.left,
+        choiceBlockPosition: choiceRect.top - wrapRect.top,
+        ringLeftClearance: choiceRect.left - chooserRect.left,
+        ringTopClearance: choiceRect.top - chooserRect.top,
+        ringExtent,
+      };
+    });
+
+    expect(geometry).toEqual({
+      gutter: 6,
+      inlineMargin: 14,
+      blockMargin: -6,
+      choiceInlinePosition: 20,
+      choiceBlockPosition: 0,
+      ringLeftClearance: 6,
+      ringTopClearance: 6,
+      ringExtent: 6,
+    });
   });
 
   test("segmented controls support large sizing", async ({ page }) => {
@@ -8014,6 +8087,34 @@ test.describe("remaining accessibility contracts", () => {
       outlineWidth: "1px",
       outlineOffset: "-1px",
     });
+  });
+
+  test("fig-input-gradient hides pointer focus during tip dragging", async ({
+    page,
+  }) => {
+    const value =
+      '{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":50,"color":"#9747FF","opacity":100},{"position":100,"color":"#FF00BF","opacity":100}]}}';
+    await page.evaluate((gradientValue) => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-input-gradient id="gradient" mode="tip" value='${gradientValue}' style="width:320px"></fig-input-gradient>`;
+    }, value);
+
+    const handle = page.locator("#gradient fig-handle").nth(1);
+    const box = await handle.boundingBox();
+    if (!box) throw new Error("Missing gradient handle bounds");
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 20, box.y + box.height / 2);
+    await page.mouse.up();
+
+    await expect(handle).toBeFocused();
+    await expect(handle).toHaveAttribute("data-fig-pointer-focus", "");
+    await expect(handle).toHaveCSS("outline-style", "none");
+
+    await page.keyboard.press("ArrowRight");
+    await expect(handle).not.toHaveAttribute("data-fig-pointer-focus");
+    await expect(handle).toHaveCSS("outline-style", "solid");
   });
 
   test("fig-input-gradient handle mode deletes the selected stop", async ({

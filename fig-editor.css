@@ -318,7 +318,7 @@ fig-fill-picker {
     grid-template-columns: unset;
     grid-template-areas: unset;
     padding-right: var(--spacer-2);
-    padding-left: var(--spacer-3);
+    padding-left: var(--spacer-2);
     gap: var(--spacer-2);
 
     > *:not(.fig-field-chevron):not(label) {

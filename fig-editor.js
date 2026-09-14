@@ -3505,6 +3505,7 @@ class FigFillPicker extends HTMLElement {
         className: "fig-fill-picker-gradient-type",
         label: "Gradient type",
         value: this.#gradient.type,
+        variant: "ghost",
       },
       figEditorCreateElement(
         "fig-select-options",
@@ -3591,7 +3592,7 @@ class FigFillPicker extends HTMLElement {
             className: "fig-fill-picker-gradient-stops-header",
             borderless: true,
           },
-          [figEditorCreateElement("span", {}, "Stops"), addButton],
+          [figEditorCreateElement("h3", {}, "Stops"), addButton],
         ),
         figEditorCreateElement(
           "div",

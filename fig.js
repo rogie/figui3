@@ -18978,6 +18978,7 @@ class FigHandle extends HTMLElement {
     this.#syncDrag();
     this.#syncHitArea();
     this.addEventListener("click", this.#handleSelect);
+    this.addEventListener("blur", this.#handleBlur);
     document.addEventListener("pointerdown", this.#handleDeselect);
     document.addEventListener("keydown", this.#handleKeyDown);
     const initial = this.getAttribute("value");
@@ -18995,6 +18996,7 @@ class FigHandle extends HTMLElement {
       this.#hitAreaEl = null;
     }
     this.removeEventListener("click", this.#handleSelect);
+    this.removeEventListener("blur", this.#handleBlur);
     document.removeEventListener("pointerdown", this.#handleDeselect);
     document.removeEventListener("keydown", this.#handleKeyDown);
   }
@@ -19029,7 +19031,12 @@ class FigHandle extends HTMLElement {
     this.deselect();
   };
 
+  #handleBlur = () => {
+    this.removeAttribute("data-fig-pointer-focus");
+  };
+
   #handleKeyDown = (e) => {
+    this.removeAttribute("data-fig-pointer-focus");
     if (e.defaultPrevented) return;
     if (
       e.target === this &&
@@ -19215,6 +19222,7 @@ class FigHandle extends HTMLElement {
   #onPointerDown(e) {
     if (!this.#dragEnabled || figBooleanAttribute(this, "disabled")) return;
     e.preventDefault();
+    this.setAttribute("data-fig-pointer-focus", "");
     this.focus();
     this.select();
     const container = this.#getContainer();

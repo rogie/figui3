@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.9]
+
+### Changed
+
+- Refined the gradient fill picker with a semantic Stops heading, compact header padding, and a ghost gradient-type select.
+- Added a selection-ring gutter to `fig-chooser` while preserving choice alignment and overflow navigation geometry.
+
+### Fixed
+
+- Prevented pointer-dragged gradient stop handles from displaying keyboard focus outlines.
+- Prevented selected `fig-choice` rings from being clipped by scrollable choosers.
+
 ## [9.0.8]
 
 ### Added
