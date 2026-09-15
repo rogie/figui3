@@ -151,7 +151,7 @@ nav {
   position: fixed;
   right: var(--spacer-4);
   top: var(--spacer-4);
-  overflow-y: auto;
+  overflow: hidden;
 
   /* 8rem + 760px = spacer-4 × 6 + nav + playground-min + sidebar */
   @media (max-width: 904px) {
@@ -164,17 +164,26 @@ nav {
   scrollbar-width: thin;
   scrollbar-color: var(--figma-color-border) transparent;
 
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
+  .attributes-sidebar-content {
+    max-height: calc(
+      100vh - calc(var(--spacer-4) * 2) - 2px
+    );
+    border-radius: inherit;
+    scrollbar-width: thin;
+    scrollbar-color: var(--figma-color-border) transparent;
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
 
-  &::-webkit-scrollbar-thumb {
-    background: var(--figma-color-border);
-    border-radius: 999px;
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--figma-color-border);
+      border-radius: 999px;
+    }
   }
 
   .propkit-attributes-view {

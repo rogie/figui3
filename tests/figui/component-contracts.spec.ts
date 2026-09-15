@@ -6672,6 +6672,67 @@ test.describe("remaining accessibility contracts", () => {
       });
   });
 
+  test("fig-chooser drag-to-scroll takes priority over native image dragging", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const image =
+        "data:image/svg+xml," +
+        encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="40"><rect width="80" height="40" fill="red"/></svg>',
+        );
+      const choices = Array.from({ length: 4 }, (_, index) => `
+        <fig-choice value="${index}" style="min-width: 96px;">
+          <fig-image src="${image}" alt="" style="width: 80px;"></fig-image>
+        </fig-choice>
+      `).join("");
+      root.innerHTML = `
+        <fig-chooser
+          id="image-chooser"
+          layout="horizontal"
+          overflow="scrollbar"
+          style="width: 120px; max-width: 120px;"
+        >${choices}</fig-chooser>
+        <fig-chooser
+          id="native-image-chooser"
+          layout="horizontal"
+          drag="false"
+          style="width: 120px; max-width: 120px;"
+        >${choices}</fig-chooser>
+      `;
+    });
+
+    const chooser = page.locator("#image-chooser");
+    const image = chooser.locator("img").first();
+    const imageRect = await image.boundingBox();
+    if (!imageRect) throw new Error("Missing chooser image bounds");
+
+    await image.hover();
+    await page.mouse.down();
+    await page.mouse.move(
+      imageRect.x + imageRect.width / 2 - 80,
+      imageRect.y + imageRect.height / 2,
+      { steps: 5 },
+    );
+    await page.mouse.up();
+
+    await expect
+      .poll(() => chooser.evaluate((element) => element.scrollLeft))
+      .toBeGreaterThan(0);
+
+    const nativeDragAllowed = await page
+      .locator("#native-image-chooser img")
+      .first()
+      .evaluate((element) =>
+        element.dispatchEvent(
+          new DragEvent("dragstart", { bubbles: true, cancelable: true }),
+        ),
+      );
+    expect(nativeDragAllowed).toBe(true);
+  });
+
   test("fig-chooser restores light-DOM overflow buttons after choices are replaced", async ({
     page,
   }) => {

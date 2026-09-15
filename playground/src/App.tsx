@@ -409,16 +409,18 @@ export default function App({ mode }: Props) {
         <CodeView markup={renderedMarkup} onMarkupChange={handleMarkupChange} />
       </main>
       <aside className="attributes-sidebar">
-        <AttributesView
-          resetKey={activeExampleKey}
-          markup={renderedMarkup}
-          onMarkupChange={handleMarkupChange}
-          showFieldControls={mode === "propkit" || mode === "lab" || activeSectionId === "field"}
-          includeFullControl={mode === "figui3" || mode === "lab"}
-        />
-        {((mode === "propkit" || mode === "lab" || mode === "figui3") && activeSectionId !== "skeleton") && (
-          <EventView key={`${activeSectionId}/${activeExampleId}`} />
-        )}
+        <div className="attributes-sidebar-content fig-overflow-fade">
+          <AttributesView
+            resetKey={activeExampleKey}
+            markup={renderedMarkup}
+            onMarkupChange={handleMarkupChange}
+            showFieldControls={mode === "propkit" || mode === "lab" || activeSectionId === "field"}
+            includeFullControl={mode === "figui3" || mode === "lab"}
+          />
+          {((mode === "propkit" || mode === "lab" || mode === "figui3") && activeSectionId !== "skeleton") && (
+            <EventView key={`${activeSectionId}/${activeExampleId}`} />
+          )}
+        </div>
       </aside>
     </>
   );

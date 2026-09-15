@@ -18464,6 +18464,12 @@ class FigChooser extends HTMLElement {
       }
     };
 
+    const onDragStart = (e) => {
+      if (this.#dragState?.active) {
+        e.preventDefault();
+      }
+    };
+
     this.#dragState = {
       active: false,
       didDrag: false,
@@ -18478,6 +18484,7 @@ class FigChooser extends HTMLElement {
       onPointerUp,
       onClick,
       onPointerUpCapture,
+      onDragStart,
     };
 
     this.addEventListener("pointerdown", onPointerDown);
@@ -18485,6 +18492,7 @@ class FigChooser extends HTMLElement {
     window.addEventListener("pointerup", onPointerUp);
     this.addEventListener("pointerup", onPointerUpCapture, true);
     this.addEventListener("click", onClick, true);
+    this.addEventListener("dragstart", onDragStart);
   }
 
   #teardownDrag() {
@@ -18498,6 +18506,7 @@ class FigChooser extends HTMLElement {
       true,
     );
     this.removeEventListener("click", this.#dragState.onClick, true);
+    this.removeEventListener("dragstart", this.#dragState.onDragStart);
     this.style.cursor = "";
     this.style.userSelect = "";
     this.#dragState = null;

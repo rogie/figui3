@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.11]
+
+### Changed
+
+- Applied playground overflow fading to the sidebar’s inner scroll content so its border remains visible.
+
+### Fixed
+
+- Prevented native image dragging from overriding `fig-chooser` drag-to-scroll behavior.
+
 ## [9.0.10]
 
 ### Added
