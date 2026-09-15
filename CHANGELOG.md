@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.10]
+
+### Added
+
+- Added an `optionfocus` event to `fig-select` for previewing keyboard-focused options without changing selection, including playground event output and documentation.
+
 ## [9.0.9]
 
 ### Changed

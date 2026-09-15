@@ -3432,6 +3432,101 @@ test("fig-select supports subtle hover fill per option and from the host", async
   expect(await hoverFill(regular)).toBe(colors.menuHover);
 });
 
+test("fig-select emits optionfocus only for open-menu keyboard navigation", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await customElements.whenDefined("fig-select");
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-select id="select" value="one">
+        <fig-select-options>
+          <fig-select-option value="one">One</fig-select-option>
+          <fig-select-option value="two" disabled>Two</fig-select-option>
+          <fig-select-option value="three">Three</fig-select-option>
+        </fig-select-options>
+      </fig-select>
+    `;
+    const target = window as Window & {
+      __optionFocusEvents?: Array<{
+        detail: unknown;
+        target: string | undefined;
+        bubbles: boolean;
+        composed: boolean;
+      }>;
+    };
+    target.__optionFocusEvents = [];
+    root.addEventListener("optionfocus", (event) => {
+      target.__optionFocusEvents?.push({
+        detail: (event as CustomEvent).detail,
+        target: (event.target as Element | null)?.tagName,
+        bubbles: event.bubbles,
+        composed: event.composed,
+      });
+    });
+  });
+
+  const select = page.locator("#select");
+  const trigger = select.locator("fig-button.fig-select-trigger");
+  await trigger.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(select).toHaveAttribute("open");
+  await expect(select.locator('fig-select-option[value="one"]')).toBeFocused();
+  expect(
+    await page.evaluate(
+      () =>
+        (
+          window as Window & {
+            __optionFocusEvents?: unknown[];
+          }
+        ).__optionFocusEvents,
+    ),
+  ).toEqual([]);
+
+  await page.keyboard.press("ArrowDown");
+  await expect(select.locator('fig-select-option[value="three"]')).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(select.locator('fig-select-option[value="one"]')).toBeFocused();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("End");
+  await expect(select.locator('fig-select-option[value="three"]')).toBeFocused();
+
+  expect(
+    await page.evaluate(
+      () =>
+        (
+          window as Window & {
+            __optionFocusEvents?: unknown[];
+          }
+        ).__optionFocusEvents,
+    ),
+  ).toEqual([
+    {
+      detail: "three",
+      target: "FIG-SELECT",
+      bubbles: true,
+      composed: true,
+    },
+    {
+      detail: "one",
+      target: "FIG-SELECT",
+      bubbles: true,
+      composed: true,
+    },
+    {
+      detail: "three",
+      target: "FIG-SELECT",
+      bubbles: true,
+      composed: true,
+    },
+  ]);
+});
+
 test.describe("joystick axis labels", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);

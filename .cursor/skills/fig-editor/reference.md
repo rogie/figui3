@@ -30,7 +30,7 @@ Position enum:
 
 - `bottom left`, `bottom right`, `top left`, `top right`, `bottom center`, `top center`
 
-Events: `input`, `change`, `optionhover`.
+Events: `input`, `change`, `optionhover`, `optionfocus`.
 
 ## Fill picker modes
 

@@ -234,7 +234,7 @@ Author options in `<fig-select-options>`, or pass `options`. Add `subtle` to one
 </fig-select>
 ```
 
-**Events:** `input`, `change`, `optionhover` (`detail` is the hovered option value).
+**Events:** `input`, `change`, `optionhover` (`detail` is the hovered option value), `optionfocus` (`detail` is the keyboard-focused option value while the menu is open).
 
 ---
 

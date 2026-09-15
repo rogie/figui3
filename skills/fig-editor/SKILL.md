@@ -41,7 +41,7 @@ Registered tags:
 - `fig-dropdown` (core): native `<select>`.
 - `fig-select` (this skill): custom listbox. Use this for Figma-style menus.
 
-Author options as React children, or pass `options`. Do not `stopPropagation` on option click. `optionhover` is a native listener.
+Author options as React children, or pass `options`. Do not `stopPropagation` on option click. `optionhover` and `optionfocus` are native preview listeners.
 
 ## Fill picker
 

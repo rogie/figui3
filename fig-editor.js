@@ -495,6 +495,7 @@ figEditorDefineElement("fig-select-options", FigSelectOptions);
  * A dropdown-styled select.
  * @attr {string} variant - Visual style. Use `ghost` for a borderless control.
  * @attr {string} size - Control size. Use `large` for a 32px-tall control.
+ * @event optionfocus - Fires with the focused option value during open-menu keyboard navigation.
  */
 class FigSelect extends HTMLElement {
   #button = null;
@@ -1467,20 +1468,20 @@ class FigSelect extends HTMLElement {
       case "ArrowDown":
         e.preventDefault();
         this.#syncFocusedIndex();
-        this.#focusOptionAt(this.#focusedIndex + 1);
+        this.#focusOptionAt(this.#focusedIndex + 1, true);
         break;
       case "ArrowUp":
         e.preventDefault();
         this.#syncFocusedIndex();
-        this.#focusOptionAt(this.#focusedIndex - 1);
+        this.#focusOptionAt(this.#focusedIndex - 1, true);
         break;
       case "Home":
         e.preventDefault();
-        this.#focusOptionAt(0);
+        this.#focusOptionAt(0, true);
         break;
       case "End":
         e.preventDefault();
-        this.#focusOptionAt(options.length - 1);
+        this.#focusOptionAt(options.length - 1, true);
         break;
       case "Escape":
         e.preventDefault();
@@ -1529,12 +1530,23 @@ class FigSelect extends HTMLElement {
     this.#focusedIndex = index >= 0 ? index : this.#focusedIndex;
   }
 
-  #focusOptionAt(index) {
+  #focusOptionAt(index, emitEvent = false) {
     const options = this.#getEnabledOptions();
     if (!options.length) return;
     const next = ((index % options.length) + options.length) % options.length;
+    const option = options[next];
+    const changed = document.activeElement !== option;
     this.#focusedIndex = next;
-    options[next]?.focus();
+    option?.focus();
+    if (emitEvent && changed) {
+      this.dispatchEvent(
+        new CustomEvent("optionfocus", {
+          detail: this.#optionValue(option),
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
   }
 
   #syncPopupWidth() {

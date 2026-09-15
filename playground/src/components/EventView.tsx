@@ -61,6 +61,7 @@ export default function EventView() {
       "change",
       "optionschange",
       "loaded",
+      "optionfocus",
       "optionhover",
       "reorder",
       "remove",

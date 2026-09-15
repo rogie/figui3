@@ -30,7 +30,7 @@ Data-driven (no authored options):
 ```
 
 - Attrs: `value`, `label`, `options` (comma / newline / JSON), `variant` (`ghost`), `size` (`large`, 32px trigger), `subtle` (applies the secondary hover/focus fill to every option), `full`, `disabled`, `position` (`bottom left` default, also `bottom right`, `top left`, `top right`, `bottom center`, `top center`), `offset`, `closedby`, `open`
-- Events: `input` / `change` on commit; `optionhover` with the option value in `detail` (does not change selection). Use a native listener for `optionhover`.
+- Events: `input` / `change` on commit; `optionhover` for pointer previews; `optionfocus` for open-menu keyboard previews. Both preview events provide the option value in `detail` without changing selection and require native listeners.
 - Do not `stopPropagation` on option click — React light-DOM handlers must run.
 - Internal popup uses `popover="manual"` so the list works inside `fig-popup variant="popover"`.
 - List `min-width` matches the trigger; `max-width` is `min(20rem, calc(100vw - 1rem))`. Overflow: chevron buttons, not a native scrollbar.
