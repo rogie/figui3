@@ -950,7 +950,7 @@ class FigSelect extends HTMLElement {
     return { top: 8, right: 8, bottom: 8, left: 8 };
   }
 
-  #resolveMenuAnchor() {
+  #resolveExplicitMenuAnchor() {
     if (this.#menuAnchorRef?.isConnected) return this.#menuAnchorRef;
 
     const selector = this.getAttribute("menu-anchor");
@@ -977,26 +977,34 @@ class FigSelect extends HTMLElement {
       } catch {}
     }
 
-    return this.#button;
+    return null;
+  }
+
+  #resolveMenuAnchor() {
+    return this.#resolveExplicitMenuAnchor() || this.#button;
+  }
+
+  #hasMenuAnchor() {
+    return Boolean(this.#resolveExplicitMenuAnchor());
+  }
+
+  #usesMenuAnchorOverlayGeometry() {
+    return !this.#usesExplicitPosition() && this.#hasMenuAnchor();
   }
 
   #syncMenuAnchor() {
     if (!this.#popup) return;
     this.#popup.anchor = this.#resolveMenuAnchor();
+    this.#syncPopupWidth();
     if (!this.open) return;
     this.#freezeMenuPosition = false;
     this.#frozenLabelRect = null;
     this.#frozenViewport = null;
+    this.#popup.setupObservers?.();
     this.#popup.queueReposition?.();
   }
 
   #getTriggerAlignmentRect() {
-    const menuAnchor = this.#resolveMenuAnchor();
-    if (menuAnchor && menuAnchor !== this.#button) {
-      const anchorRect = menuAnchor.getBoundingClientRect();
-      if (anchorRect?.width && anchorRect?.height) return anchorRect;
-    }
-
     const labelRect = this.#labelEl?.getBoundingClientRect();
     if (labelRect?.width && labelRect?.height) return labelRect;
     const customTriggerRect = this.querySelector(
@@ -1009,7 +1017,11 @@ class FigSelect extends HTMLElement {
   }
 
   #readLabelRectSnapshot() {
-    const rect = this.#getTriggerAlignmentRect();
+    const anchor = this.#usesMenuAnchorOverlayGeometry()
+      ? this.#resolveExplicitMenuAnchor()
+      : null;
+    const rect = anchor?.getBoundingClientRect() ??
+      this.#getTriggerAlignmentRect();
     if (!rect) return null;
     return {
       x: rect.x,
@@ -1089,12 +1101,55 @@ class FigSelect extends HTMLElement {
       this.#freezeMenuPosition = false;
       this.#frozenLabelRect = null;
       this.#frozenViewport = null;
+      this.#syncPopupWidth();
       this.#clearOverlayPositionStyles();
+      if (this.#positionExplicitMenuAnchor()) return;
       this.#originalPositionPopup?.();
       this.#clampMenuToViewport();
       return;
     }
     this.#positionPopupOverSelected();
+  }
+
+  #positionExplicitMenuAnchor() {
+    const popup = this.#popup;
+    const menuAnchor = this.#resolveExplicitMenuAnchor();
+    if (
+      !popup ||
+      !menuAnchor ||
+      typeof popup.parsePosition !== "function" ||
+      typeof popup.parseOffset !== "function" ||
+      typeof popup.computeCoords !== "function"
+    ) {
+      return false;
+    }
+
+    const popupRect = popup.getBoundingClientRect();
+    const anchorRect = menuAnchor.getBoundingClientRect();
+    if (!popupRect.width || !popupRect.height) return false;
+    const { vertical, horizontal, shorthand } = popup.parsePosition();
+    const offset = popup.parseOffset();
+    let { left, top } = popup.computeCoords(
+      anchorRect,
+      popupRect,
+      vertical,
+      horizontal,
+      offset,
+      shorthand,
+    );
+    const margins = this.#getViewportMargins();
+    if (typeof popup.clampToViewport === "function") {
+      ({ left, top } = popup.clampToViewport(
+        { left, top },
+        popupRect,
+        margins,
+      ));
+    }
+    popup.style.setProperty("right", "auto", "important");
+    popup.style.setProperty("bottom", "auto", "important");
+    popup.style.setProperty("left", `${Math.round(left)}px`, "important");
+    popup.style.setProperty("top", `${Math.round(top)}px`, "important");
+    return true;
   }
 
   #clampMenuToViewport() {
@@ -1138,30 +1193,46 @@ class FigSelect extends HTMLElement {
       return;
     }
 
+    const menuAnchor = this.#usesMenuAnchorOverlayGeometry()
+      ? this.#resolveExplicitMenuAnchor()
+      : null;
+    if (menuAnchor) this.#syncPopupWidth();
+
     // Lay out with the default positioning first so option metrics are valid.
     this.#originalPositionPopup?.();
 
     const popupRect = popup.getBoundingClientRect();
-    const labelRect = this.#getTriggerAlignmentRect();
-    const optionTextRect = this.#getOptionTextRect(selected);
-    if (
-      !popupRect.width ||
-      !popupRect.height ||
-      !labelRect.width ||
-      !optionTextRect
-    ) {
+    const selectedOptionRect = selected.getBoundingClientRect();
+    if (!popupRect.width || !popupRect.height || !selectedOptionRect.height) {
       return;
     }
 
-    const selectedOffsetX = optionTextRect.left - popupRect.left;
-    const selectedOffsetY = optionTextRect.top - popupRect.top;
-    const full = figEditorBooleanAttribute(this, "full");
-    // [full]: pin menu to host width/edges. Otherwise overlay selected
-    // option text on the trigger label (blend-mode style).
-    let left = full
-      ? this.getBoundingClientRect().left
-      : labelRect.left - selectedOffsetX;
-    let top = labelRect.top - selectedOffsetY;
+    let left;
+    let top;
+    let alignmentRect;
+    if (menuAnchor) {
+      const anchorRect = menuAnchor.getBoundingClientRect();
+      alignmentRect = anchorRect;
+      left = anchorRect.left + (anchorRect.width - popupRect.width) / 2;
+      top =
+        anchorRect.top +
+        (anchorRect.height - selectedOptionRect.height) / 2 -
+        (selectedOptionRect.top - popupRect.top);
+    } else {
+      const labelRect = this.#getTriggerAlignmentRect();
+      const optionTextRect = this.#getOptionTextRect(selected);
+      if (!labelRect?.width || !optionTextRect) return;
+      alignmentRect = labelRect;
+      const selectedOffsetX = optionTextRect.left - popupRect.left;
+      const selectedOffsetY = optionTextRect.top - popupRect.top;
+      const full = figEditorBooleanAttribute(this, "full");
+      // [full]: pin menu to host width/edges. Otherwise overlay selected
+      // option text on the trigger label (blend-mode style).
+      left = full
+        ? this.getBoundingClientRect().left
+        : labelRect.left - selectedOffsetX;
+      top = labelRect.top - selectedOffsetY;
+    }
 
     // Keep the whole menu in-view when aligning over the selected option
     // would otherwise push it past a viewport edge (corners / far sides).
@@ -1184,15 +1255,24 @@ class FigSelect extends HTMLElement {
     popup.style.setProperty("left", `${Math.round(left)}px`, "important");
     popup.style.setProperty("top", `${Math.round(top)}px`, "important");
 
-    // Nudge the panel scroller so the selected label stays over the trigger.
+    // If the panel scrolls, keep the selected row centered over a menu anchor.
+    // Standard selects retain text-to-trigger alignment.
     const panel = this.#getPanel();
-    const alignedTextRect = this.#getOptionTextRect(selected);
+    const alignedOptionRect = selected.getBoundingClientRect();
+    const alignedTextRect = menuAnchor
+      ? null
+      : this.#getOptionTextRect(selected);
     if (
-      alignedTextRect &&
       panel &&
       panel.scrollHeight > panel.clientHeight + 1
     ) {
-      const deltaY = alignedTextRect.top - labelRect.top;
+      const deltaY = menuAnchor
+        ? alignedOptionRect.top +
+          alignedOptionRect.height / 2 -
+          (alignmentRect.top + alignmentRect.height / 2)
+        : alignedTextRect
+          ? alignedTextRect.top - alignmentRect.top
+          : 0;
       if (Math.abs(deltaY) > 0.5) {
         panel.scrollTop += deltaY;
       }
@@ -1674,6 +1754,9 @@ class FigSelect extends HTMLElement {
     const hostWidth = Math.ceil(this.getBoundingClientRect().width);
     const triggerWidth = Math.ceil(this.#button.getBoundingClientRect().width);
     const anchorWidth = Math.max(hostWidth, triggerWidth, 96);
+    const menuAnchor = this.#hasMenuAnchor()
+      ? this.#resolveExplicitMenuAnchor()
+      : null;
 
     // Use !important — fig-select::part(listbox) width rules beat element.style.
     // Menus size to their options while remaining at least as wide as the trigger.
@@ -1690,21 +1773,40 @@ class FigSelect extends HTMLElement {
     this.#popup.style.setProperty("padding", "0", "important");
     this.#popup.style.setProperty("border", "0", "important");
     this.#popup.style.setProperty("margin", "0", "important");
-    this.#popup.style.setProperty(
-      "width",
-      `min(max-content, ${maxWidth}px)`,
-      "important",
-    );
-    this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
-    this.#popup.style.setProperty("max-width", `${maxWidth}px`, "important");
+    if (menuAnchor) {
+      const requestedWidth = menuAnchor.getBoundingClientRect().width;
+      // Match a normal anchor exactly. If that would make the menu narrower
+      // than its usable trigger/content width, keep the wider menu. Default
+      // overlay centers it; explicit position applies its requested alignment.
+      this.#popup.style.setProperty("width", "max-content", "important");
+      this.#popup.style.setProperty("min-width", "0", "important");
+      this.#popup.style.setProperty("max-width", `${maxWidth}px`, "important");
+      const intrinsicWidth = this.#popup.getBoundingClientRect().width;
+      const minimumWidth = Math.min(
+        maxWidth,
+        Math.max(anchorWidth, intrinsicWidth),
+      );
+      const width = Math.max(requestedWidth, minimumWidth);
+      this.#popup.style.setProperty("width", `${width}px`, "important");
+      this.#popup.style.setProperty("min-width", `${width}px`, "important");
+      this.#popup.style.setProperty("max-width", `${width}px`, "important");
+    } else {
+      this.#popup.style.setProperty(
+        "width",
+        "max-content",
+        "important",
+      );
+      this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
+      this.#popup.style.setProperty("max-width", `${maxWidth}px`, "important");
+    }
     this.#popup.style.setProperty("max-height", `${maxHeight}px`, "important");
-    this.#popup.style.setProperty("height", "auto", "important");
+    this.#popup.style.setProperty("height", "max-content", "important");
     this.#popup.style.setProperty("overflow", "hidden", "important");
     const used = this.#popup.getBoundingClientRect();
     if (used.height > maxHeight) {
       this.#popup.style.setProperty("height", `${maxHeight}px`, "important");
     }
-    if (used.width > maxWidth) {
+    if (!menuAnchor && used.width > maxWidth) {
       this.#popup.style.setProperty("width", `${maxWidth}px`, "important");
     }
   }

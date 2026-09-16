@@ -235,7 +235,7 @@ Author options in `<fig-select-options>`, or pass `options`. Add `subtle` to one
 </fig-select>
 ```
 
-Set `menu-anchor` to a selector, or assign an element to the `menuAnchor` property. The selected option aligns against the alternate anchor; removing it restores alignment to the select trigger.
+Set `menu-anchor` to a selector, or assign an element to the `menuAnchor` property. The menu matches the anchor width and centers its selected row over the anchor. If the anchor is narrower than the menu’s usable minimum, the wider menu is centered over it in the default overlay mode. Removing the anchor restores trigger-text alignment. An explicit `position` keeps the anchor-derived width while applying normal popup placement and edge alignment relative to the menu anchor.
 
 ```js
 document.querySelector("fig-select").menuAnchor =

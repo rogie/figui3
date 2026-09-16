@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.13]
+
+### Fixed
+
+- Corrected `fig-select` `menuAnchor` sizing and alignment, including selected-row overlay geometry, small anchors, viewport clamping, live anchor changes, and all explicit `position` values.
+
 ## [9.0.12]
 
 ### Added

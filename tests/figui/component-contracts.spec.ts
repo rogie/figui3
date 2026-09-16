@@ -914,6 +914,7 @@ test.describe("AI lab styling components", () => {
     collectPageErrors(page);
     await bootFigFixture(page);
     await page.addStyleTag({ url: "/fig-lab.css" });
+    await page.addStyleTag({ url: "/fig-editor.css" });
     await page.evaluate(async () => {
       await import("/fig-editor.js");
       await Promise.all([
@@ -2823,7 +2824,7 @@ test.describe("fig-select viewport edge repositioning", () => {
     });
   });
 
-  test("supports selector and element menu anchors with trigger fallback", async ({
+  test("menu-anchor selector matches anchor width and aligns its selected row", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 640, height: 480 });
@@ -2831,15 +2832,14 @@ test.describe("fig-select viewport edge repositioning", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <span id="menu-anchor-a" style="position:fixed;left:180px;top:120px;width:80px;height:24px">Anchor A</span>
-        <span id="menu-anchor-b" style="position:fixed;left:360px;top:240px;width:80px;height:24px">Anchor B</span>
+        <span id="menu-anchor" style="position:fixed;left:180px;top:120px;width:220px;height:36px">Anchor</span>
         <fig-select
           id="anchored-select"
           label="Greek"
           value="Beta"
           options="Alpha,Beta,Gamma"
-          menu-anchor="#menu-anchor-a"
-          style="position:fixed;left:24px;top:180px;width:7rem"
+          menu-anchor="#menu-anchor"
+          style="position:fixed;left:24px;top:220px;width:6rem"
         ></fig-select>
       `;
     });
@@ -2848,105 +2848,43 @@ test.describe("fig-select viewport edge repositioning", () => {
     await select.locator("fig-button.fig-select-trigger").click();
     await expect(select).toHaveAttribute("open");
 
-    const alignmentState = () =>
-      select.evaluate((host) => {
-        const popup = host.shadowRoot?.querySelector("dialog");
-        const selected = host.querySelector("fig-select-option[selected]");
-        const triggerLabel = host.shadowRoot?.querySelector(".fig-select-label");
-        if (
-          !(popup instanceof HTMLElement) ||
-          !(selected instanceof HTMLElement) ||
-          !(triggerLabel instanceof HTMLElement)
-        ) {
-          return null;
-        }
-        const range = document.createRange();
-        range.selectNodeContents(selected);
-        const selectedRect =
-          [...range.getClientRects()].find(
-            (rect) => rect.width > 0 && rect.height > 0,
-          ) ?? selected.getBoundingClientRect();
-        const popupAnchor = (popup as HTMLElement & { anchor?: Element }).anchor;
-        const target =
-          popupAnchor === triggerLabel.parentElement
-            ? triggerLabel
-            : popupAnchor;
-        const targetRect = target?.getBoundingClientRect();
-        return {
-          popupAnchorId: popupAnchor?.id ?? "",
-          attr: host.getAttribute("menu-anchor"),
-          propertyIsElement:
-            (host as HTMLElement & { menuAnchor?: Element | string })
-              .menuAnchor instanceof Element,
-          aligned:
-            Boolean(targetRect) &&
-            Math.abs(selectedRect.left - targetRect!.left) <= 1.5 &&
-            Math.abs(selectedRect.top - targetRect!.top) <= 1.5,
-        };
-      });
-
-    await expect.poll(alignmentState).toEqual({
-      popupAnchorId: "menu-anchor-a",
-      attr: "#menu-anchor-a",
-      propertyIsElement: false,
-      aligned: true,
+    const geometry = await select.evaluate((host) => {
+      const popup = host.shadowRoot?.querySelector("dialog");
+      const selected = host.querySelector("fig-select-option[selected]");
+      const anchor = document.querySelector("#menu-anchor");
+      if (
+        !(popup instanceof HTMLElement) ||
+        !(selected instanceof HTMLElement) ||
+        !(anchor instanceof HTMLElement)
+      ) {
+        throw new Error("Missing menu geometry");
+      }
+      const menuRect = popup.getBoundingClientRect();
+      const selectedRect = selected.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+      return {
+        attr: host.getAttribute("menu-anchor"),
+        menuWidth: menuRect.width,
+        anchorWidth: anchorRect.width,
+        menuLeft: menuRect.left,
+        anchorLeft: anchorRect.left,
+        selectedCenter:
+          selectedRect.top + selectedRect.height / 2,
+        anchorCenter: anchorRect.top + anchorRect.height / 2,
+        triggerWidth: host.getBoundingClientRect().width,
+      };
     });
 
-    await select.evaluate((host) =>
-      host.setAttribute("menu-anchor", "#menu-anchor-b"),
-    );
-    await expect.poll(alignmentState).toEqual({
-      popupAnchorId: "menu-anchor-b",
-      attr: "#menu-anchor-b",
-      propertyIsElement: false,
-      aligned: true,
-    });
-
-    await select.evaluate((host) => {
-      const anchor = document.querySelector("#menu-anchor-a");
-      if (!(anchor instanceof Element)) throw new Error("Missing menu anchor A");
-      (host as HTMLElement & { menuAnchor?: Element | string | null }).menuAnchor =
-        anchor;
-    });
-    await expect.poll(alignmentState).toEqual({
-      popupAnchorId: "menu-anchor-a",
-      attr: null,
-      propertyIsElement: true,
-      aligned: true,
-    });
-
-    await select.evaluate((host) => {
-      (host as HTMLElement & { menuAnchor?: Element | string | null }).menuAnchor =
-        "#menu-anchor-b";
-    });
-    await expect.poll(alignmentState).toEqual({
-      popupAnchorId: "menu-anchor-b",
-      attr: "#menu-anchor-b",
-      propertyIsElement: false,
-      aligned: true,
-    });
-
-    await select.evaluate((host) => {
-      (host as HTMLElement & { menuAnchor?: Element | string | null }).menuAnchor =
-        null;
-    });
-    await expect.poll(alignmentState).toEqual({
-      popupAnchorId: "",
-      attr: null,
-      propertyIsElement: false,
-      aligned: true,
-    });
-
-    await select.evaluate((host) => host.setAttribute("menu-anchor", "[invalid"));
-    await expect.poll(alignmentState).toEqual({
-      popupAnchorId: "",
-      attr: "[invalid",
-      propertyIsElement: false,
-      aligned: true,
-    });
+    expect(geometry.attr).toBe("#menu-anchor");
+    expect(geometry.triggerWidth).toBeLessThan(geometry.anchorWidth);
+    expect(Math.abs(geometry.menuWidth - geometry.anchorWidth)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(geometry.menuLeft - geometry.anchorLeft)).toBeLessThanOrEqual(0.5);
+    expect(
+      Math.abs(geometry.selectedCenter - geometry.anchorCenter),
+    ).toBeLessThanOrEqual(1);
   });
 
-  test("honors explicit position instead of overlaying the selected option", async ({
+  test("menuAnchor property keeps a wider menu centered over a small anchor", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 640, height: 480 });
@@ -2954,13 +2892,254 @@ test.describe("fig-select viewport edge repositioning", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
+        <span id="small-menu-anchor" style="position:fixed;left:280px;top:140px;width:48px;height:32px">Anchor</span>
+        <fig-select
+          id="small-anchor-select"
+          label="Greek"
+          value="Beta"
+          options="Alpha,Beta,Gamma"
+          style="position:fixed;left:24px;top:220px;width:7rem"
+        ></fig-select>
+      `;
+      const select = root.querySelector("#small-anchor-select");
+      const anchor = root.querySelector("#small-menu-anchor");
+      if (!(select instanceof HTMLElement) || !(anchor instanceof Element)) {
+        throw new Error("Missing select or anchor");
+      }
+      (select as HTMLElement & { menuAnchor?: Element }).menuAnchor = anchor;
+    });
+
+    const select = page.locator("#small-anchor-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+
+    const geometry = await select.evaluate((host) => {
+      const popup = host.shadowRoot?.querySelector("dialog");
+      const selected = host.querySelector("fig-select-option[selected]");
+      const anchor = document.querySelector("#small-menu-anchor");
+      if (
+        !(popup instanceof HTMLElement) ||
+        !(selected instanceof HTMLElement) ||
+        !(anchor instanceof HTMLElement)
+      ) {
+        throw new Error("Missing menu geometry");
+      }
+      const menuRect = popup.getBoundingClientRect();
+      const selectedRect = selected.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+      return {
+        propertyIsElement:
+          (host as HTMLElement & { menuAnchor?: Element }).menuAnchor instanceof
+          Element,
+        menuWidth: menuRect.width,
+        anchorWidth: anchorRect.width,
+        menuCenter: menuRect.left + menuRect.width / 2,
+        anchorCenterX: anchorRect.left + anchorRect.width / 2,
+        selectedCenter: selectedRect.top + selectedRect.height / 2,
+        anchorCenterY: anchorRect.top + anchorRect.height / 2,
+      };
+    });
+
+    expect(geometry.propertyIsElement).toBe(true);
+    expect(geometry.menuWidth).toBeGreaterThan(geometry.anchorWidth);
+    expect(
+      Math.abs(geometry.menuCenter - geometry.anchorCenterX),
+    ).toBeLessThanOrEqual(0.5);
+    expect(
+      Math.abs(geometry.selectedCenter - geometry.anchorCenterY),
+    ).toBeLessThanOrEqual(1);
+  });
+
+  test("menuAnchor follows anchor movement and resizing, then restores trigger alignment", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 720, height: 520 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <span id="moving-menu-anchor" style="position:fixed;left:160px;top:120px;width:180px;height:36px">Anchor</span>
+        <fig-select
+          id="moving-anchor-select"
+          label="Greek"
+          value="Beta"
+          options="Alpha,Beta,Gamma"
+          style="position:fixed;left:24px;top:300px;width:7rem"
+        ></fig-select>
+      `;
+      const select = root.querySelector("#moving-anchor-select");
+      const anchor = root.querySelector("#moving-menu-anchor");
+      if (!(select instanceof HTMLElement) || !(anchor instanceof Element)) {
+        throw new Error("Missing select or anchor");
+      }
+      (select as HTMLElement & { menuAnchor?: Element | null }).menuAnchor =
+        anchor;
+    });
+
+    const select = page.locator("#moving-anchor-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+
+    const anchorGeometry = () =>
+      select.evaluate((host) => {
+        const popup = host.shadowRoot?.querySelector("dialog");
+        const selected = host.querySelector("fig-select-option[selected]");
+        const anchor = document.querySelector("#moving-menu-anchor");
+        if (
+          !(popup instanceof HTMLElement) ||
+          !(selected instanceof HTMLElement) ||
+          !(anchor instanceof HTMLElement)
+        ) {
+          return null;
+        }
+        const menuRect = popup.getBoundingClientRect();
+        const selectedRect = selected.getBoundingClientRect();
+        const anchorRect = anchor.getBoundingClientRect();
+        return {
+          menuWidth: Math.round(menuRect.width),
+          anchorWidth: Math.round(anchorRect.width),
+          menuLeft: Math.round(menuRect.left),
+          anchorLeft: Math.round(anchorRect.left),
+          centerDelta: Math.round(
+            selectedRect.top +
+              selectedRect.height / 2 -
+              (anchorRect.top + anchorRect.height / 2),
+          ),
+        };
+      });
+
+    await expect.poll(anchorGeometry).toEqual({
+      menuWidth: 180,
+      anchorWidth: 180,
+      menuLeft: 160,
+      anchorLeft: 160,
+      centerDelta: 0,
+    });
+
+    await page.locator("#moving-menu-anchor").evaluate((anchor) => {
+      (anchor as HTMLElement).style.left = "300px";
+      (anchor as HTMLElement).style.top = "210px";
+      (anchor as HTMLElement).style.width = "230px";
+    });
+
+    await expect.poll(anchorGeometry).toEqual({
+      menuWidth: 230,
+      anchorWidth: 230,
+      menuLeft: 300,
+      anchorLeft: 300,
+      centerDelta: 0,
+    });
+
+    await select.evaluate((host) => {
+      (host as HTMLElement & { menuAnchor?: Element | string | null }).menuAnchor =
+        null;
+    });
+
+    await expect
+      .poll(() =>
+        select.evaluate((host) => {
+          const popup = host.shadowRoot?.querySelector("dialog");
+          const label = host.shadowRoot?.querySelector(".fig-select-label");
+          const selected = host.querySelector("fig-select-option[selected]");
+          if (
+            !(popup instanceof HTMLElement) ||
+            !(label instanceof HTMLElement) ||
+            !(selected instanceof HTMLElement)
+          ) {
+            return null;
+          }
+          const range = document.createRange();
+          range.selectNodeContents(selected);
+          const textRect =
+            [...range.getClientRects()].find(
+              (rect) => rect.width > 0 && rect.height > 0,
+            ) ?? selected.getBoundingClientRect();
+          const labelRect = label.getBoundingClientRect();
+          return {
+            property: (host as HTMLElement & { menuAnchor?: unknown })
+              .menuAnchor,
+            textLeftDelta: Math.round(textRect.left - labelRect.left),
+            textTopDelta: Math.round(textRect.top - labelRect.top),
+            exactAnchorWidthStillApplied:
+              popup.style.width === "230px" ||
+              popup.style.minWidth === "230px" ||
+              popup.style.maxWidth === "230px",
+          };
+        }),
+      )
+      .toEqual({
+        property: null,
+        textLeftDelta: 0,
+        textTopDelta: 0,
+        exactAnchorWidthStillApplied: false,
+      });
+  });
+
+  test("menu-anchor geometry clamps at viewport edges after alignment", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 320 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <span id="edge-menu-anchor" style="position:fixed;left:330px;top:2px;width:120px;height:32px">Anchor</span>
+        <fig-select
+          id="edge-anchor-select"
+          value="Beta"
+          options="Alpha,Beta,Gamma"
+          menu-anchor="#edge-menu-anchor"
+          style="position:fixed;left:24px;top:180px;width:6rem"
+        ></fig-select>
+      `;
+    });
+
+    const select = page.locator("#edge-anchor-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+
+    const geometry = await select.evaluate((host) => {
+      const popup = host.shadowRoot?.querySelector("dialog");
+      const anchor = document.querySelector("#edge-menu-anchor");
+      if (!(popup instanceof HTMLElement) || !(anchor instanceof HTMLElement)) {
+        throw new Error("Missing menu geometry");
+      }
+      const menuRect = popup.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+      return {
+        menuWidth: menuRect.width,
+        anchorWidth: anchorRect.width,
+        menuLeft: menuRect.left,
+        anchorLeft: anchorRect.left,
+        menuTop: menuRect.top,
+        menuRight: menuRect.right,
+      };
+    });
+
+    expect(Math.abs(geometry.menuWidth - geometry.anchorWidth)).toBeLessThanOrEqual(0.5);
+    expect(geometry.menuLeft).toBeGreaterThanOrEqual(7.5);
+    expect(geometry.menuTop).toBeGreaterThanOrEqual(7.5);
+    expect(geometry.menuRight).toBeLessThanOrEqual(352.5);
+    expect(geometry.menuLeft).not.toBe(geometry.anchorLeft);
+  });
+
+  test("explicit position keeps popup placement when menu-anchor is present", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 640, height: 480 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <span id="position-anchor" style="position:fixed;left:220px;top:260px;width:220px;height:32px">Anchor</span>
         <fig-select
           id="positioned-select"
           label="Greek"
           value="Beta"
           options="Alpha,Beta,Gamma"
+          menu-anchor="#position-anchor"
           position="top center"
-          style="position:fixed;left:240px;top:240px;width:8rem"
+          style="position:fixed;left:24px;top:360px;width:8rem"
         ></fig-select>
       `;
     });
@@ -2973,25 +3152,112 @@ test.describe("fig-select viewport edge repositioning", () => {
       .poll(async () =>
         select.evaluate((host) => {
           const popup = host.shadowRoot?.querySelector("dialog");
-          if (!(popup instanceof HTMLElement)) return null;
-          const trigger = host.getBoundingClientRect();
+          const anchor = document.querySelector("#position-anchor");
+          if (
+            !(popup instanceof HTMLElement) ||
+            !(anchor instanceof HTMLElement)
+          ) {
+            return null;
+          }
+          const anchorRect = anchor.getBoundingClientRect();
           const menu = popup.getBoundingClientRect();
-          const triggerCenter = (trigger.left + trigger.right) / 2;
+          const anchorCenter = (anchorRect.left + anchorRect.right) / 2;
           const menuCenter = (menu.left + menu.right) / 2;
           return {
-            aboveTrigger: menu.bottom <= trigger.top + 2,
-            centered: Math.abs(menuCenter - triggerCenter) <= 8,
-            overlayed:
-              Math.abs(menu.top - trigger.top) <= 2 &&
-              Math.abs(menu.left - trigger.left) <= 2,
+            aboveAnchor: menu.bottom <= anchorRect.top + 2,
+            centered: Math.abs(menuCenter - anchorCenter) <= 1,
+            inheritedAnchorWidth:
+              Math.abs(menu.width - anchorRect.width) <= 0.5,
           };
         }),
       )
       .toEqual({
-        aboveTrigger: true,
+        aboveAnchor: true,
         centered: true,
-        overlayed: false,
+        inheritedAnchorWidth: true,
       });
+  });
+
+  test("all explicit position values place a wider menu against menuAnchor", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 720, height: 600 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <span id="position-matrix-anchor" style="position:fixed;left:300px;top:250px;width:48px;height:32px">Anchor</span>
+        <fig-select
+          id="position-matrix-select"
+          label="Greek"
+          value="Beta"
+          options="Alpha,Beta,Gamma"
+          menu-anchor="#position-matrix-anchor"
+          position="bottom left"
+          style="position:fixed;left:24px;top:420px;width:7rem"
+        ></fig-select>
+      `;
+    });
+
+    const select = page.locator("#position-matrix-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+
+    const positions = [
+      "top left",
+      "top center",
+      "top right",
+      "bottom left",
+      "bottom center",
+      "bottom right",
+    ] as const;
+
+    for (const position of positions) {
+      await select.evaluate((host, value) => {
+        host.setAttribute("position", value);
+      }, position);
+
+      await page.waitForTimeout(50);
+      const geometry = await select.evaluate((host, value) => {
+            const popup = host.shadowRoot?.querySelector("dialog");
+            const anchor = document.querySelector("#position-matrix-anchor");
+            if (
+              !(popup instanceof HTMLElement) ||
+              !(anchor instanceof HTMLElement)
+            ) {
+              return null;
+            }
+            const menu = popup.getBoundingClientRect();
+            const target = anchor.getBoundingClientRect();
+            const [vertical, horizontal] = value.split(" ");
+            const verticalDelta =
+              vertical === "top"
+                ? menu.bottom - target.top
+                : menu.top - target.bottom;
+            const horizontalDelta =
+              horizontal === "left"
+                ? menu.left - target.left
+                : horizontal === "right"
+                  ? menu.right - target.right
+                  : menu.left +
+                    menu.width / 2 -
+                    (target.left + target.width / 2);
+            return {
+              position: value,
+              menuTop: Math.round(menu.top),
+              menuBottom: Math.round(menu.bottom),
+              targetTop: Math.round(target.top),
+              targetBottom: Math.round(target.bottom),
+              widerThanAnchor: menu.width > target.width,
+              verticalDelta: Math.round(verticalDelta),
+              horizontalDelta: Math.round(horizontalDelta),
+            };
+          }, position);
+      expect(geometry).not.toBeNull();
+      expect(geometry!.widerThanAnchor).toBe(true);
+      expect(geometry!.horizontalDelta, JSON.stringify(geometry)).toBe(0);
+      expect(geometry!.verticalDelta, JSON.stringify(geometry)).toBe(0);
+    }
   });
 
   const edgeCases = [
