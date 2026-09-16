@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.14]
+
+### Fixed
+
+- Restored `fig-ai-context` tucking under a following `fig-ai-prompt` so the composer stacks as one surface.
+
 ## [9.0.13]
 
 ### Fixed

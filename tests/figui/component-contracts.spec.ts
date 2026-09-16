@@ -1100,9 +1100,15 @@ test.describe("AI lab styling components", () => {
         attachmentsVisible: Boolean(
           attachments && (attachments as HTMLElement).offsetHeight > 0,
         ),
-        abovePrompt:
+        startsAbovePrompt:
           Boolean(contextRect && promptRect) &&
-          (contextRect?.bottom ?? 0) <= (promptRect?.top ?? 0) + 2,
+          (contextRect?.top ?? 0) < (promptRect?.top ?? 0),
+        tucksUnderPrompt:
+          Boolean(contextRect && promptRect) &&
+          (contextRect?.bottom ?? 0) > (promptRect?.top ?? 0) + 8,
+        negativeMargin: context
+          ? parseFloat(getComputedStyle(context).marginBottom) < 0
+          : false,
       };
     });
 
@@ -1112,7 +1118,9 @@ test.describe("AI lab styling components", () => {
       display: "flex",
       flexDirection: "column",
       attachmentsVisible: true,
-      abovePrompt: true,
+      startsAbovePrompt: true,
+      tucksUnderPrompt: true,
+      negativeMargin: true,
     });
   });
 
