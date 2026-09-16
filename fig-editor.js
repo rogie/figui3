@@ -495,6 +495,8 @@ figEditorDefineElement("fig-select-options", FigSelectOptions);
  * A dropdown-styled select.
  * @attr {string} variant - Visual style. Use `ghost` for a borderless control.
  * @attr {string} size - Control size. Use `large` for a 32px-tall control.
+ * @attr {string} menu-anchor - CSS selector for an alternate menu anchor.
+ * @property {Element|string|null} menuAnchor - Alternate menu anchor element or selector.
  * @event optionfocus - Fires with the focused option value during open-menu keyboard navigation.
  */
 class FigSelect extends HTMLElement {
@@ -521,6 +523,7 @@ class FigSelect extends HTMLElement {
   #frozenLabelRect = null;
   #frozenViewport = null;
   #syncingOptions = false;
+  #menuAnchorRef = null;
   #boundTriggerClick = this.#handleTriggerClick.bind(this);
   #boundOptionClick = this.#handleOptionClick.bind(this);
   #boundOptionPointerOver = this.#handleOptionPointerOver.bind(this);
@@ -540,6 +543,7 @@ class FigSelect extends HTMLElement {
       "open",
       "variant",
       "size",
+      "menu-anchor",
       "aria-label",
     ];
   }
@@ -560,6 +564,26 @@ class FigSelect extends HTMLElement {
   set open(val) {
     if (val) this.setAttribute("open", "");
     else this.removeAttribute("open");
+  }
+
+  get menuAnchor() {
+    return this.#menuAnchorRef ?? this.getAttribute("menu-anchor");
+  }
+
+  set menuAnchor(value) {
+    if (value instanceof Element) {
+      if (this.hasAttribute("menu-anchor")) {
+        this.removeAttribute("menu-anchor");
+      }
+      this.#menuAnchorRef = value;
+    } else if (typeof value === "string" && value.trim()) {
+      this.#menuAnchorRef = null;
+      this.setAttribute("menu-anchor", value);
+    } else {
+      this.#menuAnchorRef = null;
+      this.removeAttribute("menu-anchor");
+    }
+    this.#syncMenuAnchor();
   }
 
   connectedCallback() {
@@ -606,8 +630,14 @@ class FigSelect extends HTMLElement {
       else this.#openList();
       return;
     }
+    if (name === "menu-anchor") {
+      this.#menuAnchorRef = null;
+      this.#syncMenuAnchor();
+      return;
+    }
     if (name === "position" || name === "offset" || name === "closedby") {
       this.#syncPopupAttrs();
+      if (this.open) this.#placeOpenMenu();
     }
   }
 
@@ -875,7 +905,7 @@ class FigSelect extends HTMLElement {
     this.#labelEl = labelEl;
     this.#popup = popup;
     this.#panelSlot = panelSlot;
-    popup.anchor = button;
+    this.#syncMenuAnchor();
 
     this.#ensurePanelSlotAttrs();
     this.#installPopupPositioning();
@@ -897,7 +927,7 @@ class FigSelect extends HTMLElement {
         this.#originalPositionPopup?.();
         return;
       }
-      this.#positionPopupOverSelected();
+      this.#placeOpenMenu();
     };
     this.#popupPositionPatched = true;
   }
@@ -920,7 +950,53 @@ class FigSelect extends HTMLElement {
     return { top: 8, right: 8, bottom: 8, left: 8 };
   }
 
+  #resolveMenuAnchor() {
+    if (this.#menuAnchorRef?.isConnected) return this.#menuAnchorRef;
+
+    const selector = this.getAttribute("menu-anchor");
+    if (selector) {
+      try {
+        const localMatch = this.parentElement?.querySelector(selector);
+        if (
+          localMatch &&
+          localMatch !== this &&
+          !this.contains(localMatch)
+        ) {
+          return localMatch;
+        }
+
+        const root = this.getRootNode();
+        const rootMatch = root?.querySelector?.(selector);
+        if (
+          rootMatch &&
+          rootMatch !== this &&
+          !this.contains(rootMatch)
+        ) {
+          return rootMatch;
+        }
+      } catch {}
+    }
+
+    return this.#button;
+  }
+
+  #syncMenuAnchor() {
+    if (!this.#popup) return;
+    this.#popup.anchor = this.#resolveMenuAnchor();
+    if (!this.open) return;
+    this.#freezeMenuPosition = false;
+    this.#frozenLabelRect = null;
+    this.#frozenViewport = null;
+    this.#popup.queueReposition?.();
+  }
+
   #getTriggerAlignmentRect() {
+    const menuAnchor = this.#resolveMenuAnchor();
+    if (menuAnchor && menuAnchor !== this.#button) {
+      const anchorRect = menuAnchor.getBoundingClientRect();
+      if (anchorRect?.width && anchorRect?.height) return anchorRect;
+    }
+
     const labelRect = this.#labelEl?.getBoundingClientRect();
     if (labelRect?.width && labelRect?.height) return labelRect;
     const customTriggerRect = this.querySelector(
@@ -995,10 +1071,56 @@ class FigSelect extends HTMLElement {
     this.#frozenViewport = this.#readViewportSnapshot();
   }
 
+  #usesExplicitPosition() {
+    const value = this.getAttribute("position");
+    return Boolean(value && value.trim());
+  }
+
+  #clearOverlayPositionStyles() {
+    if (!this.#popup) return;
+    this.#popup.style.removeProperty("left");
+    this.#popup.style.removeProperty("top");
+    this.#popup.style.removeProperty("right");
+    this.#popup.style.removeProperty("bottom");
+  }
+
+  #placeOpenMenu() {
+    if (this.#usesExplicitPosition()) {
+      this.#freezeMenuPosition = false;
+      this.#frozenLabelRect = null;
+      this.#frozenViewport = null;
+      this.#clearOverlayPositionStyles();
+      this.#originalPositionPopup?.();
+      this.#clampMenuToViewport();
+      return;
+    }
+    this.#positionPopupOverSelected();
+  }
+
+  #clampMenuToViewport() {
+    const popup = this.#popup;
+    if (!popup || typeof popup.clampToViewport !== "function") return;
+    const popupRect = popup.getBoundingClientRect();
+    if (!popupRect.width || !popupRect.height) return;
+    const margins = this.#getViewportMargins();
+    const { left, top } = popup.clampToViewport(
+      { left: popupRect.left, top: popupRect.top },
+      popupRect,
+      margins,
+    );
+    popup.style.setProperty("right", "auto", "important");
+    popup.style.setProperty("bottom", "auto", "important");
+    popup.style.setProperty("left", `${Math.round(left)}px`, "important");
+    popup.style.setProperty("top", `${Math.round(top)}px`, "important");
+  }
+
   #positionPopupOverSelected() {
     // Content ResizeObserver / overflow scroll re-enter here; keep the
     // open-time alignment unless the trigger or viewport actually changed.
-    if (this.#shouldSkipFrozenPositionPass()) return;
+    if (this.#shouldSkipFrozenPositionPass()) {
+      this.#clampMenuToViewport();
+      return;
+    }
 
     const popup = this.#popup;
     const label = this.#labelEl;
@@ -1395,9 +1517,7 @@ class FigSelect extends HTMLElement {
     e.preventDefault();
     e.stopPropagation();
     const nextOpen = !this.open;
-    if (nextOpen && this.#popup && this.#button) {
-      this.#popup.anchor = this.#button;
-    }
+    if (nextOpen) this.#syncMenuAnchor();
     this.open = nextOpen;
   }
 
@@ -1448,7 +1568,7 @@ class FigSelect extends HTMLElement {
         (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
       ) {
         e.preventDefault();
-        if (this.#popup && this.#button) this.#popup.anchor = this.#button;
+        this.#syncMenuAnchor();
         this.open = true;
         requestAnimationFrame(() => {
           const options = this.#getOptions({ enabledOnly: true });
@@ -1557,18 +1677,41 @@ class FigSelect extends HTMLElement {
 
     // Use !important — fig-select::part(listbox) width rules beat element.style.
     // Menus size to their options while remaining at least as wide as the trigger.
-    this.#popup.style.setProperty("width", "max-content", "important");
-    this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const rem =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const maxWidth = Math.max(
+      0,
+      Math.min(Math.floor(20 * rem), Math.floor(viewportWidth - 16)),
+    );
+    const maxHeight = Math.max(0, Math.floor(viewportHeight - 16));
+    this.#popup.style.setProperty("box-sizing", "border-box", "important");
+    this.#popup.style.setProperty("padding", "0", "important");
+    this.#popup.style.setProperty("border", "0", "important");
+    this.#popup.style.setProperty("margin", "0", "important");
     this.#popup.style.setProperty(
-      "max-width",
-      "min(20rem, calc(100vw - 1rem))",
+      "width",
+      `min(max-content, ${maxWidth}px)`,
       "important",
     );
+    this.#popup.style.setProperty("min-width", `${anchorWidth}px`, "important");
+    this.#popup.style.setProperty("max-width", `${maxWidth}px`, "important");
+    this.#popup.style.setProperty("max-height", `${maxHeight}px`, "important");
+    this.#popup.style.setProperty("height", "auto", "important");
+    this.#popup.style.setProperty("overflow", "hidden", "important");
+    const used = this.#popup.getBoundingClientRect();
+    if (used.height > maxHeight) {
+      this.#popup.style.setProperty("height", `${maxHeight}px`, "important");
+    }
+    if (used.width > maxWidth) {
+      this.#popup.style.setProperty("width", `${maxWidth}px`, "important");
+    }
   }
 
   #openList() {
     if (!this.#popup || figEditorBooleanAttribute(this, "disabled")) return;
-    if (this.#button) this.#popup.anchor = this.#button;
+    this.#syncMenuAnchor();
     this.#installPopupPositioning();
     this.#freezeMenuPosition = false;
     this.#frozenLabelRect = null;
@@ -1580,26 +1723,33 @@ class FigSelect extends HTMLElement {
     this.#button?.setAttribute("aria-expanded", "true");
     this.#focusedIndex = -1;
     requestAnimationFrame(() => {
-      this.#syncPopupWidth();
-      this.#positionPopupOverSelected();
-      const panel = this.#getPanel();
-      const options = this.#getEnabledOptions();
-      const selectedIndex = options.findIndex(
-        (opt) => this.#optionValue(opt) === this.value,
-      );
-      if (selectedIndex >= 0) {
-        this.#focusOptionAt(selectedIndex);
-      } else if (
-        this.#button?.hasAttribute("data-focus-visible") ||
-        this.#button?.matches?.(":focus-visible")
-      ) {
-        this.#focusOptionAt(0);
-      }
-      panel?.syncOverflow?.();
-      // Freeze after open align so later positionPopup passes don't undo scroll.
-      // Window resize / trigger movement still realigns via geometry checks.
-      this.#freezeMenuPosition = true;
-      this.#rememberFrozenGeometry();
+      requestAnimationFrame(() => {
+        this.#syncPopupWidth();
+        this.#placeOpenMenu();
+        this.#syncPopupWidth();
+        this.#clampMenuToViewport();
+        const panel = this.#getPanel();
+        const options = this.#getEnabledOptions();
+        const selectedIndex = options.findIndex(
+          (opt) => this.#optionValue(opt) === this.value,
+        );
+        if (selectedIndex >= 0) {
+          this.#focusOptionAt(selectedIndex);
+        } else if (
+          this.#button?.hasAttribute("data-focus-visible") ||
+          this.#button?.matches?.(":focus-visible")
+        ) {
+          this.#focusOptionAt(0);
+        }
+        panel?.syncOverflow?.();
+        // Freeze overlay after layout settles so later positionPopup passes
+        // don't undo scroll. Still clamp if content grows past the viewport.
+        // Explicit position stays live so the popup can follow the anchor.
+        if (!this.#usesExplicitPosition()) {
+          this.#freezeMenuPosition = true;
+          this.#rememberFrozenGeometry();
+        }
+      });
     });
   }
 

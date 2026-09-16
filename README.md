@@ -215,11 +215,12 @@ Custom listbox select with overflow chevrons, grouped options, and sticky separa
 | `value` | string | — | Selected option value |
 | `label` | string | — | Closed-state / accessible label |
 | `options` | string | — | Comma, newline, or JSON options if no authored `fig-select-option` children |
+| `menu-anchor` | CSS selector | — | Alternate element to align the open menu against |
 | `variant` | string | — | `"ghost"` for a borderless control with secondary hover fill |
 | `size` | string | — | `"large"` for a 32px-tall trigger |
 | `subtle` | boolean | `false` | Use the secondary hover/focus fill for every option |
 | `full` | boolean | `false` | Stretch to available width |
-| `position` | string | `"bottom left"` | Popup position |
+| `position` | string | — | Omit to overlay the selected option on the trigger; set `bottom left`, `bottom right`, `top left`, `top right`, `bottom center`, or `top center` to place the menu like a popup |
 | `disabled` | boolean | `false` | Disabled state |
 
 Author options in `<fig-select-options>`, or pass `options`. Add `subtle` to one `<fig-select-option>` for the secondary hover/focus fill, or to `<fig-select>` to apply it to every option. Use `label` on `<fig-select-option>` when the option content is rich. `fig-separator` with `sticky` pins group labels while scrolling.
@@ -232,6 +233,13 @@ Author options in `<fig-select-options>`, or pass `options`. Add `subtle` to one
     <fig-select-option value="right">Right</fig-select-option>
   </fig-select-options>
 </fig-select>
+```
+
+Set `menu-anchor` to a selector, or assign an element to the `menuAnchor` property. The selected option aligns against the alternate anchor; removing it restores alignment to the select trigger.
+
+```js
+document.querySelector("fig-select").menuAnchor =
+  document.querySelector("#menu-anchor");
 ```
 
 **Events:** `input`, `change`, `optionhover` (`detail` is the hovered option value), `optionfocus` (`detail` is the keyboard-focused option value while the menu is open).

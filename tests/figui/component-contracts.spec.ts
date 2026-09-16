@@ -2771,13 +2771,13 @@ test("sticky fig-separator sits below overflow-start in select and menu lists", 
     const root = document.querySelector("#fixture-root");
     if (!root) throw new Error("Missing #fixture-root");
     root.innerHTML = `
-      <fig-select-options>
+      <fig-select-options style="height:96px">
         <fig-separator sticky label="Models"></fig-separator>
-        <fig-select-option value="one">One</fig-select-option>
+        ${Array.from({ length: 16 }, (_, index) => `<fig-select-option value="${index}">Item ${index}</fig-select-option>`).join("")}
       </fig-select-options>
-      <div class="fig-menu-options">
+      <div class="fig-menu-options" style="height:96px;overflow:auto">
         <fig-separator sticky label="Actions"></fig-separator>
-        <fig-menu-item value="copy">Copy</fig-menu-item>
+        ${Array.from({ length: 16 }, (_, index) => `<fig-menu-item value="${index}">Item ${index}</fig-menu-item>`).join("")}
       </div>
     `;
   });
@@ -2790,8 +2790,14 @@ test("sticky fig-separator sits below overflow-start in select and menu lists", 
   await expect(selectSeparator).toHaveCSS("top", "0px");
   await expect(menuSeparator).toHaveCSS("top", "0px");
 
-  await selectPanel.evaluate((panel) => panel.classList.add("overflow-start"));
-  await menuPanel.evaluate((panel) => panel.classList.add("overflow-start"));
+  await selectPanel.evaluate((panel) => {
+    panel.scrollTop = 48;
+    panel.syncOverflow?.();
+  });
+  await menuPanel.evaluate((panel) => {
+    panel.scrollTop = 48;
+    panel.classList.add("overflow-start");
+  });
 
   const expectedTop = await selectPanel.evaluate((panel) => {
     const probe = document.createElement("div");
@@ -2815,6 +2821,177 @@ test.describe("fig-select viewport edge repositioning", () => {
       await import("/fig-editor.js");
       await customElements.whenDefined("fig-select");
     });
+  });
+
+  test("supports selector and element menu anchors with trigger fallback", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 640, height: 480 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <span id="menu-anchor-a" style="position:fixed;left:180px;top:120px;width:80px;height:24px">Anchor A</span>
+        <span id="menu-anchor-b" style="position:fixed;left:360px;top:240px;width:80px;height:24px">Anchor B</span>
+        <fig-select
+          id="anchored-select"
+          label="Greek"
+          value="Beta"
+          options="Alpha,Beta,Gamma"
+          menu-anchor="#menu-anchor-a"
+          style="position:fixed;left:24px;top:180px;width:7rem"
+        ></fig-select>
+      `;
+    });
+
+    const select = page.locator("#anchored-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+
+    const alignmentState = () =>
+      select.evaluate((host) => {
+        const popup = host.shadowRoot?.querySelector("dialog");
+        const selected = host.querySelector("fig-select-option[selected]");
+        const triggerLabel = host.shadowRoot?.querySelector(".fig-select-label");
+        if (
+          !(popup instanceof HTMLElement) ||
+          !(selected instanceof HTMLElement) ||
+          !(triggerLabel instanceof HTMLElement)
+        ) {
+          return null;
+        }
+        const range = document.createRange();
+        range.selectNodeContents(selected);
+        const selectedRect =
+          [...range.getClientRects()].find(
+            (rect) => rect.width > 0 && rect.height > 0,
+          ) ?? selected.getBoundingClientRect();
+        const popupAnchor = (popup as HTMLElement & { anchor?: Element }).anchor;
+        const target =
+          popupAnchor === triggerLabel.parentElement
+            ? triggerLabel
+            : popupAnchor;
+        const targetRect = target?.getBoundingClientRect();
+        return {
+          popupAnchorId: popupAnchor?.id ?? "",
+          attr: host.getAttribute("menu-anchor"),
+          propertyIsElement:
+            (host as HTMLElement & { menuAnchor?: Element | string })
+              .menuAnchor instanceof Element,
+          aligned:
+            Boolean(targetRect) &&
+            Math.abs(selectedRect.left - targetRect!.left) <= 1.5 &&
+            Math.abs(selectedRect.top - targetRect!.top) <= 1.5,
+        };
+      });
+
+    await expect.poll(alignmentState).toEqual({
+      popupAnchorId: "menu-anchor-a",
+      attr: "#menu-anchor-a",
+      propertyIsElement: false,
+      aligned: true,
+    });
+
+    await select.evaluate((host) =>
+      host.setAttribute("menu-anchor", "#menu-anchor-b"),
+    );
+    await expect.poll(alignmentState).toEqual({
+      popupAnchorId: "menu-anchor-b",
+      attr: "#menu-anchor-b",
+      propertyIsElement: false,
+      aligned: true,
+    });
+
+    await select.evaluate((host) => {
+      const anchor = document.querySelector("#menu-anchor-a");
+      if (!(anchor instanceof Element)) throw new Error("Missing menu anchor A");
+      (host as HTMLElement & { menuAnchor?: Element | string | null }).menuAnchor =
+        anchor;
+    });
+    await expect.poll(alignmentState).toEqual({
+      popupAnchorId: "menu-anchor-a",
+      attr: null,
+      propertyIsElement: true,
+      aligned: true,
+    });
+
+    await select.evaluate((host) => {
+      (host as HTMLElement & { menuAnchor?: Element | string | null }).menuAnchor =
+        "#menu-anchor-b";
+    });
+    await expect.poll(alignmentState).toEqual({
+      popupAnchorId: "menu-anchor-b",
+      attr: "#menu-anchor-b",
+      propertyIsElement: false,
+      aligned: true,
+    });
+
+    await select.evaluate((host) => {
+      (host as HTMLElement & { menuAnchor?: Element | string | null }).menuAnchor =
+        null;
+    });
+    await expect.poll(alignmentState).toEqual({
+      popupAnchorId: "",
+      attr: null,
+      propertyIsElement: false,
+      aligned: true,
+    });
+
+    await select.evaluate((host) => host.setAttribute("menu-anchor", "[invalid"));
+    await expect.poll(alignmentState).toEqual({
+      popupAnchorId: "",
+      attr: "[invalid",
+      propertyIsElement: false,
+      aligned: true,
+    });
+  });
+
+  test("honors explicit position instead of overlaying the selected option", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 640, height: 480 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-select
+          id="positioned-select"
+          label="Greek"
+          value="Beta"
+          options="Alpha,Beta,Gamma"
+          position="top center"
+          style="position:fixed;left:240px;top:240px;width:8rem"
+        ></fig-select>
+      `;
+    });
+
+    const select = page.locator("#positioned-select");
+    await select.locator("fig-button.fig-select-trigger").click();
+    await expect(select).toHaveAttribute("open");
+
+    await expect
+      .poll(async () =>
+        select.evaluate((host) => {
+          const popup = host.shadowRoot?.querySelector("dialog");
+          if (!(popup instanceof HTMLElement)) return null;
+          const trigger = host.getBoundingClientRect();
+          const menu = popup.getBoundingClientRect();
+          const triggerCenter = (trigger.left + trigger.right) / 2;
+          const menuCenter = (menu.left + menu.right) / 2;
+          return {
+            aboveTrigger: menu.bottom <= trigger.top + 2,
+            centered: Math.abs(menuCenter - triggerCenter) <= 8,
+            overlayed:
+              Math.abs(menu.top - trigger.top) <= 2 &&
+              Math.abs(menu.left - trigger.left) <= 2,
+          };
+        }),
+      )
+      .toEqual({
+        aboveTrigger: true,
+        centered: true,
+        overlayed: false,
+      });
   });
 
   const edgeCases = [
@@ -8378,7 +8555,7 @@ test.describe("remaining accessibility contracts", () => {
         paddingLeft: getComputedStyle(element).paddingLeft,
         ruleDisplay: getComputedStyle(element, "::before").display,
       })),
-    ).toEqual({ width: 240, paddingLeft: "16px", ruleDisplay: "block" });
+    ).toEqual({ width: 240, paddingLeft: "24px", ruleDisplay: "block" });
 
     await separator.evaluate((element) => {
       (element as HTMLElement & { label: string }).label = "";
@@ -9571,7 +9748,10 @@ test.describe("remaining accessibility contracts", () => {
   test("select option hover does not reopen a wrapping tooltip", async ({
     page,
   }) => {
-    await page.evaluate(() => {
+    await page.addStyleTag({ url: "/fig-editor.css" });
+    await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await customElements.whenDefined("fig-select");
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `

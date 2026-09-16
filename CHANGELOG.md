@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.0.12]
+
+### Added
+
+- Added `menu-anchor` / `menuAnchor` on `fig-select` so the open menu can align against another element.
+
+### Fixed
+
+- Honored `fig-select` `position` for popup placement instead of always overlaying the selected option on the trigger.
+- Kept `fig-select` menus inside the viewport by capping listbox height and clamping after overlay alignment.
+- Prevented `fig-popup` clamping from pushing oversized menus past the viewport start edge.
+
 ## [9.0.11]
 
 ### Changed

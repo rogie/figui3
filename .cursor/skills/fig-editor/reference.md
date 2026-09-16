@@ -21,12 +21,13 @@ Observed: `value`, `disabled`, `selected`, `label`.
 
 ## `fig-select` observed
 
-`value`, `disabled`, `label`, `options`, `position`, `offset`, `closedby`, `open`, `variant`, `size`
+`value`, `disabled`, `label`, `options`, `menu-anchor`, `position`, `offset`, `closedby`, `open`, `variant`, `size`
 
 - `subtle` applies the secondary hover/focus fill to every option
 - `size="large"` sets a 32px trigger
+- `menu-anchor` accepts an alternate anchor selector; the `menuAnchor` property accepts an `Element`, selector string, or `null`
 
-Position enum:
+Position: omit to overlay the selected option on the trigger. Set to place the menu like a popup:
 
 - `bottom left`, `bottom right`, `top left`, `top right`, `bottom center`, `top center`
 

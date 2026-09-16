@@ -6248,12 +6248,13 @@ fig-menu-item {
           display: none;
         }
       }
-
-      :is(fig-select-options, .fig-menu-options, fig-menu).overflow-start > & {
-        top: var(--fig-vertical-overflow-size, var(--spacer-4,1rem));
-      }
     }
   }
+}
+
+:is(fig-select-options, .fig-menu-options, fig-menu).overflow-start
+  > :is(fig-separator, fig-menu-separator)[label]:not([label=""])[sticky]:not([sticky="false"]) {
+  top: var(--fig-vertical-overflow-size, var(--spacer-4, 1rem)) !important;
 }
 
 dialog[is="fig-popup"][theme="menu"]

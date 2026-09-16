@@ -318,6 +318,10 @@ fig-select-options > .fig-overflow-end::before,
 .fig-menu-options > .fig-overflow-end::before {
   border-radius: 0 0 var(--radius-large) var(--radius-large);
 }
+fig-select-options.overflow-start > :is(fig-separator, fig-menu-separator)[sticky]:not([sticky="false"]),
+.fig-menu-options.overflow-start > :is(fig-separator, fig-menu-separator)[sticky]:not([sticky="false"]) {
+  top: var(--fig-vertical-overflow-size, var(--spacer-4)) !important;
+}
 `;
 
 const FIG_SHADOW_ICON_CSS = `
@@ -3933,10 +3937,12 @@ class FigPopup extends HTMLDialogElement {
     const bounds = this.getViewportBounds(m);
     const maxLeft = bounds.maxRight - popupRect.width;
     const maxTop = bounds.maxBottom - popupRect.height;
+    const clampLeftMax = Math.max(bounds.minLeft, maxLeft);
+    const clampTopMax = Math.max(bounds.minTop, maxTop);
 
     return {
-      left: Math.min(maxLeft, Math.max(bounds.minLeft, coords.left)),
-      top: Math.min(maxTop, Math.max(bounds.minTop, coords.top)),
+      left: Math.min(clampLeftMax, Math.max(bounds.minLeft, coords.left)),
+      top: Math.min(clampTopMax, Math.max(bounds.minTop, coords.top)),
     };
   }
 

@@ -1155,6 +1155,12 @@ export default function AttributesView({
                   ) {
                     return "Default";
                   }
+                  if (
+                    target.controlTag === "fig-select" &&
+                    name === "position"
+                  ) {
+                    return "Default (overlay)";
+                  }
                   return "None";
                 }
                 if (
@@ -1223,6 +1229,14 @@ export default function AttributesView({
                     }
                     if (
                       target.controlTag === "fig-dialog" &&
+                      name === "position" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-select" &&
                       name === "position" &&
                       resolvedValue === ""
                     ) {

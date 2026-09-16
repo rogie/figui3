@@ -456,12 +456,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "ghost"],
     },
+    "menu-anchor": { label: "Menu anchor", type: "string" },
     full: { label: "Full", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     position: {
       label: "Position",
       type: "enum",
       options: [
+        "",
         "bottom left",
         "bottom right",
         "top left",

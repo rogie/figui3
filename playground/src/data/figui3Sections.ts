@@ -468,6 +468,23 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "alternate-menu-anchor",
+        name: "Alternate menu anchor",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Align</label>
+    <fig-select value="center" label="Align" menu-anchor="#select-menu-anchor-target">
+      <fig-select-options>
+        <fig-select-option value="left">Left</fig-select-option>
+        <fig-select-option value="center">Center</fig-select-option>
+        <fig-select-option value="right">Right</fig-select-option>
+      </fig-select-options>
+    </fig-select>
+  </fig-field>
+  <fig-button id="select-menu-anchor-target" style="margin-top: 100px">Anchor</fig-button>
+</div>`,
+      },
+      {
         id: "options-attr",
         name: "Options attribute",
         markup: `<div class="prop-panel">

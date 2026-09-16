@@ -29,7 +29,8 @@ Data-driven (no authored options):
 />
 ```
 
-- Attrs: `value`, `label`, `options` (comma / newline / JSON), `variant` (`ghost`), `subtle` (applies the secondary hover/focus fill to every option), `full`, `disabled`, `position` (`bottom left` default, also `bottom right`, `top left`, `top right`, `bottom center`, `top center`), `offset`, `closedby`, `open`
+- Attrs: `value`, `label`, `options` (comma / newline / JSON), `menu-anchor` (alternate anchor selector), `variant` (`ghost`), `subtle` (applies the secondary hover/focus fill to every option), `full`, `disabled`, `position` (omit to overlay the selected option on the trigger; set `bottom left`, `bottom right`, `top left`, `top right`, `bottom center`, or `top center` to place the menu like a popup), `offset`, `closedby`, `open`
+- Property: `menuAnchor` accepts an `Element`, selector string, or `null`. Alternate anchors preserve selected-option alignment; clear it to restore trigger alignment.
 - Events: `input` / `change` on commit; `optionhover` for pointer previews; `optionfocus` for open-menu keyboard previews. Both preview events provide the option value in `detail` without changing selection and require native listeners.
 - Do not `stopPropagation` on option click — React light-DOM handlers must run.
 - Internal popup uses `popover="manual"` so the list works inside `fig-popup variant="popover"`.
