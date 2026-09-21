@@ -420,12 +420,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["default", "classic"],
     },
-    text: {
-      label: "Text",
-      type: "boolean",
-      boolMode: "string",
-      defaultChecked: true,
-    },
+    text: { label: "Text", type: "boolean", boolMode: "string" },
     placeholder: { label: "Placeholder", type: "string" },
     units: {
       label: "Units",
@@ -529,7 +524,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       boolMode: "string",
       defaultChecked: true,
     },
-    text: { label: "Text", type: "boolean", boolMode: "string" },
+    text: {
+      label: "Text",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-switch": {
@@ -629,8 +629,23 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     drag: { label: "Drag", type: "boolean", boolMode: "string" },
     fields: { label: "Fields", type: "boolean", boolMode: "string" },
   },
-  "fig-input-angle": {
-    text: { label: "Text", type: "boolean", boolMode: "string" },
+  "fig-angle": {
+    default: {
+      label: "Default",
+      type: "number",
+      min: -1080,
+      max: 1080,
+      step: 1,
+    },
+    min: { label: "Min", type: "number", min: -1080, max: 1080, step: 1 },
+    max: { label: "Max", type: "number", min: -1080, max: 1080, step: 1 },
+    precision: {
+      label: "Precision",
+      type: "number",
+      min: 0,
+      max: 6,
+      step: 1,
+    },
     dial: {
       label: "Dial",
       type: "boolean",
@@ -641,6 +656,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Rotations",
       type: "boolean",
       boolMode: "presence",
+    },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["deg", "rad", "turn", "grad"],
+    },
+    step: {
+      label: "Step",
+      type: "number",
+      min: 0.001,
+      max: 45,
+      step: 0.001,
     },
   },
   "fig-joystick": {
@@ -671,6 +698,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "large"],
     },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["", "ghost"],
+    },
     min: { label: "Min", type: "number", min: -1000, max: 1000, step: 1 },
     max: { label: "Max", type: "number", min: -1000, max: 1000, step: 1 },
     step: { label: "Step", type: "number", min: 0.001, max: 100, step: 0.001 },
@@ -684,6 +716,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "string",
     },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
+    tabular: { label: "Tabular", type: "boolean", boolMode: "presence" },
   },
   "fig-toast": {
     duration: {

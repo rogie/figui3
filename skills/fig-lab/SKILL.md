@@ -1,7 +1,7 @@
 ---
 name: fig-lab
 description: >-
-  Guides FigUI3 experimental Lab components: fig-canvas-control, fig-input-angle,
+  Guides FigUI3 experimental Lab components: fig-canvas-control,
   fig-input-wheel, fig-reorder, and AI composer components, including React JSX usage.
   APIs are unstable.
 user-invocable: false
@@ -22,4 +22,4 @@ import "@rogieking/figui3/fig-lab.css";
 import "@rogieking/figui3/fig-lab.js";
 ```
 
-Use Lab for canvas handles, angle/wheel inputs, reorder behavior, and AI composition surfaces. Keep Lab out of `fig.js`.
+Use Lab for canvas handles, wheel inputs, reorder behavior, and AI composition surfaces. Keep Lab out of `fig.js`.

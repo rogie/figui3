@@ -323,23 +323,6 @@ const ungroupedLabSections: Section[] = [
       },
     ],
   },
-  {
-    id: "angle",
-    name: "Angle",
-    description: "An angle input with a visual dial and numeric text field.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <label>Rotation</label>
-    <fig-input-angle value="45" text="true" full></fig-input-angle>
-  </fig-field>
-</div>`,
-      },
-    ],
-  },
 ];
 
 const isAiSection = (section: Section) => section.id.startsWith("ai-");

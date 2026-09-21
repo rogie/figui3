@@ -512,6 +512,25 @@ export const propkitSections: Section[] = [
     ],
   },
   {
+    id: "angle",
+    name: "Angle",
+    group: "Field controls",
+    description:
+      "An instrument-style angle dial with multi-unit values, continuous winding, and precise snapping.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Rotation</label>
+    <fig-angle value="15"></fig-angle>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "chooser",
     name: "Chooser",
     group: "Field controls",
@@ -1164,6 +1183,26 @@ export const propkitSections: Section[] = [
   <fig-field>
     <label>Amount</label>
     <fig-input-number value="50" min="0" max="100" step="0.5" steppers></fig-input-number>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "ghost",
+        name: "Ghost",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Amount</label>
+    <fig-input-number variant="ghost" value="50" min="0" max="100" step="0.5" steppers></fig-input-number>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "tabular",
+        name: "Tabular",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Amount</label>
+    <fig-input-number tabular value="1111" min="0" max="9999" step="1"></fig-input-number>
   </fig-field>
 </div>`,
       },

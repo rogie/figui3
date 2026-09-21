@@ -2136,7 +2136,9 @@ class FigFillPicker extends HTMLElement {
     this.#discardDialog({ stopWebcam: true });
     this.#cancelFrames();
     this.#revokeOwnedBlobUrls();
-    if (this.#swatch) this.#swatch.removeAttribute("selected");
+    if (this.#isNativeSwatch(this.#swatch)) {
+      this.#swatch.removeAttribute("selected");
+    }
     if (this.#trigger) {
       this.#trigger.removeEventListener("click", this.#boundTriggerClick);
       this.#trigger.removeEventListener("keydown", this.#boundTriggerKeydown);
@@ -2398,6 +2400,17 @@ class FigFillPicker extends HTMLElement {
     keep.forEach((url) => this.#ownedBlobUrls.add(url));
   }
 
+  #isNativeSwatch(element) {
+    return element?.matches("fig-swatch, fig-chit") ?? false;
+  }
+
+  #isPreviewSwatch(element) {
+    return (
+      this.#isNativeSwatch(element) ||
+      (element?.matches("[data-fig-fill-picker-swatch]") ?? false)
+    );
+  }
+
   #setupTrigger() {
     const child = Array.from(this.children).find(
       (el) => !el.getAttribute("slot")?.startsWith("mode-"),
@@ -2409,7 +2422,7 @@ class FigFillPicker extends HTMLElement {
       this.#swatch.setAttribute("background", "#D9D9D9");
       this.appendChild(this.#swatch);
       this.#trigger = this.#swatch;
-    } else if (child.matches("fig-swatch, fig-chit")) {
+    } else if (this.#isPreviewSwatch(child)) {
       // Scenario 2: Has swatch - use and populate it
       this.#swatch = child;
       this.#trigger = child;
@@ -2426,7 +2439,7 @@ class FigFillPicker extends HTMLElement {
     this.#trigger.addEventListener("keydown", this.#boundTriggerKeydown);
 
     // Prevent the swatch's internal color input from opening system picker
-    if (this.#swatch) {
+    if (this.#isNativeSwatch(this.#swatch)) {
       this.#scheduleFrame(() => {
         const input = this.#swatch.querySelector('input[type="color"]');
         if (input) {
@@ -2659,7 +2672,9 @@ class FigFillPicker extends HTMLElement {
     this.#valueAtOpen = JSON.stringify(this.value);
     this.#lastChangeValue = this.#valueAtOpen;
 
-    if (this.#swatch) this.#swatch.setAttribute("selected", "true");
+    if (this.#isNativeSwatch(this.#swatch)) {
+      this.#swatch.setAttribute("selected", "true");
+    }
 
     this.#dialog.open = true;
     this.#syncTriggerA11y();
@@ -2903,7 +2918,9 @@ class FigFillPicker extends HTMLElement {
       });
 
     const onDialogClose = () => {
-      if (this.#swatch) this.#swatch.removeAttribute("selected");
+      if (this.#isNativeSwatch(this.#swatch)) {
+        this.#swatch.removeAttribute("selected");
+      }
       if (this.#shouldKeepWebcamLive()) this.#detachWebcamPreview();
       else this.#stopWebcam();
       const closingValue = JSON.stringify(this.value);

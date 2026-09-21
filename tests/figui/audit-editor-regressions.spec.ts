@@ -65,6 +65,247 @@ test.describe("fig-fill-picker audit regressions", () => {
     expect(state.controls).toBe(state.dialogId);
   });
 
+  test("marked custom swatches receive fill previews and remain accessible triggers", async ({
+    page,
+  }) => {
+    const previews = await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, any>;
+        close(): void;
+      };
+      picker.id = "custom-swatch-picker";
+      picker.setAttribute("aria-label", "Canvas fill");
+      picker.innerHTML = `
+        <custom-fill-swatch
+          id="custom-fill-swatch"
+          data-fig-fill-picker-swatch
+        >Custom swatch</custom-fill-swatch>
+      `;
+      picker.value = {
+        type: "solid",
+        color: "#336699",
+        alpha: 0.4,
+      };
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const swatch = picker.querySelector("#custom-fill-swatch") as HTMLElement;
+      let selectedMutations = 0;
+      new MutationObserver((records) => {
+        selectedMutations += records.length;
+      }).observe(swatch, { attributes: true, attributeFilter: ["selected"] });
+      (window as any).__customSwatchSelectedMutations = () => selectedMutations;
+
+      const initial = {
+        background: swatch.getAttribute("background"),
+        alpha: swatch.getAttribute("alpha"),
+      };
+
+      picker.value = {
+        type: "solid",
+        color: "#123456",
+        alpha: 0.25,
+      };
+      const solid = {
+        background: swatch.getAttribute("background"),
+        alpha: swatch.getAttribute("alpha"),
+      };
+
+      picker.value = {
+        type: "gradient",
+        gradient: {
+          type: "linear",
+          angle: 90,
+          stops: [
+            { position: 0, color: "#FF0000", opacity: 100 },
+            { position: 100, color: "#0000FF", opacity: 50 },
+          ],
+        },
+      };
+      const gradient = {
+        background: swatch.getAttribute("background"),
+        alpha: swatch.getAttribute("alpha"),
+      };
+
+      picker.value = {
+        type: "image",
+        image: {
+          url: "https://example.com/image.png",
+          scaleMode: "fit",
+          scale: 50,
+        },
+      };
+      const image = swatch.getAttribute("background");
+
+      picker.value = {
+        type: "video",
+        video: {
+          url: "https://example.com/video.mp4",
+          poster: "https://example.com/poster.jpg",
+          scaleMode: "fill",
+        },
+      };
+      const video = swatch.getAttribute("background");
+
+      picker.value = {
+        type: "webcam",
+        webcam: {
+          snapshot: "blob:custom-webcam-snapshot",
+          scaleMode: "fill",
+        },
+      };
+      const webcam = swatch.getAttribute("background");
+
+      picker.value = { type: "solid", color: "#ABCDEF", alpha: 1 };
+      return {
+        initial,
+        solid,
+        gradient,
+        image,
+        video,
+        webcam,
+        a11y: {
+          role: swatch.getAttribute("role"),
+          tabindex: swatch.getAttribute("tabindex"),
+          disabled: swatch.getAttribute("aria-disabled"),
+          haspopup: swatch.getAttribute("aria-haspopup"),
+          expanded: swatch.getAttribute("aria-expanded"),
+          label: swatch.getAttribute("aria-label"),
+        },
+      };
+    });
+
+    expect(previews.initial).toEqual({
+      background: "#336699",
+      alpha: "0.4",
+    });
+    expect(previews.solid).toEqual({
+      background: "#123456",
+      alpha: "0.25",
+    });
+    expect(previews.gradient.background).toContain("gradient(");
+    expect(previews.gradient.alpha).toBeNull();
+    expect(previews.image).toBe('url("https://example.com/image.png")');
+    expect(previews.video).toBe('url("https://example.com/poster.jpg")');
+    expect(previews.webcam).toBe('url("blob:custom-webcam-snapshot")');
+    expect(previews.a11y).toEqual({
+      role: "button",
+      tabindex: "0",
+      disabled: "false",
+      haspopup: "dialog",
+      expanded: "false",
+      label: "Open Canvas fill",
+    });
+
+    const picker = page.locator("#custom-swatch-picker");
+    const swatch = page.locator("#custom-fill-swatch");
+    const dialog = page.locator("dialog.fig-fill-picker-dialog");
+
+    await swatch.click();
+    await expect(dialog).toHaveAttribute("open", "true");
+    await expect(swatch).toHaveAttribute("aria-expanded", "true");
+    await expect(swatch).not.toHaveAttribute("selected");
+
+    await picker.evaluate((element: HTMLElement & { close(): void }) =>
+      element.close(),
+    );
+    await expect(dialog).not.toHaveAttribute("open");
+    await swatch.focus();
+    await page.keyboard.press("Enter");
+    await expect(dialog).toHaveAttribute("open", "true");
+    await expect(swatch).not.toHaveAttribute("selected");
+
+    await picker.evaluate((element: HTMLElement & { close(): void }) =>
+      element.close(),
+    );
+    await expect(dialog).not.toHaveAttribute("open");
+    await swatch.focus();
+    await page.keyboard.press("Space");
+    await expect(dialog).toHaveAttribute("open", "true");
+    await expect(swatch).not.toHaveAttribute("selected");
+
+    const selectedMutations = await page.evaluate(
+      () => (window as any).__customSwatchSelectedMutations(),
+    );
+    expect(selectedMutations).toBe(0);
+  });
+
+  test("keeps native swatches selected and unmarked custom triggers preview-free", async ({
+    page,
+  }) => {
+    const initial = await page.evaluate(async () => {
+      const nativePicker = document.createElement(
+        "fig-fill-picker",
+      ) as HTMLElement & { value: Record<string, any> };
+      nativePicker.id = "native-swatch-picker";
+      nativePicker.innerHTML = `<fig-swatch id="native-fill-swatch"></fig-swatch>`;
+      nativePicker.value = {
+        type: "solid",
+        color: "#14AE5C",
+        alpha: 0.5,
+      };
+
+      const customPicker = document.createElement(
+        "fig-fill-picker",
+      ) as HTMLElement & { value: Record<string, any> };
+      customPicker.id = "unmarked-trigger-picker";
+      customPicker.innerHTML = `
+        <custom-fill-trigger
+          id="unmarked-fill-trigger"
+          background="keep-me"
+          alpha="0.7"
+        >Custom trigger</custom-fill-trigger>
+      `;
+      customPicker.value = {
+        type: "solid",
+        color: "#FF0000",
+        alpha: 0.25,
+      };
+      document.body.append(nativePicker, customPicker);
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+
+      const native = nativePicker.querySelector("#native-fill-swatch");
+      const custom = customPicker.querySelector("#unmarked-fill-trigger");
+      customPicker.value = {
+        type: "image",
+        image: { url: "https://example.com/replacement.png" },
+      };
+      return {
+        nativeBackground: native?.getAttribute("background"),
+        nativeAlpha: native?.getAttribute("alpha"),
+        customBackground: custom?.getAttribute("background"),
+        customAlpha: custom?.getAttribute("alpha"),
+        customRole: custom?.getAttribute("role"),
+      };
+    });
+
+    expect(initial).toEqual({
+      nativeBackground: "#14ae5c",
+      nativeAlpha: "0.5",
+      customBackground: "keep-me",
+      customAlpha: "0.7",
+      customRole: "button",
+    });
+
+    const nativePicker = page.locator("#native-swatch-picker");
+    const nativeSwatch = page.locator("#native-fill-swatch");
+    await nativeSwatch.click();
+    await expect(nativeSwatch).toHaveAttribute("selected", "true");
+    await nativePicker.evaluate((element: HTMLElement & { close(): void }) =>
+      element.close(),
+    );
+    await expect(nativeSwatch).not.toHaveAttribute("selected");
+
+    const customTrigger = page.locator("#unmarked-fill-trigger");
+    await customTrigger.click();
+    await expect(customTrigger).toHaveAttribute("aria-expanded", "true");
+    await expect(customTrigger).toHaveAttribute("background", "keep-me");
+    await expect(customTrigger).toHaveAttribute("alpha", "0.7");
+    await expect(customTrigger).not.toHaveAttribute("selected");
+  });
+
   test("round-trips canonical alpha and legacy opacity", async ({ page }) => {
     const state = await page.evaluate(async () => {
       const picker = document.createElement("fig-fill-picker") as HTMLElement & {

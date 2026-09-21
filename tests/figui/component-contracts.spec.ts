@@ -95,6 +95,62 @@ test.describe("fig.js component contracts", () => {
     });
   });
 
+  test("fig-easing-curve preset icons include a tertiary dot grid", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await customElements.whenDefined("fig-select");
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<fig-easing-curve value="0, 0, 1, 1"></fig-easing-curve>';
+      const easing = root.querySelector("fig-easing-curve");
+      const bezierIcon = easing?.querySelector(
+        'fig-select-option[value="Linear"] [slot="prepend"] svg',
+      );
+      const springIcon = easing?.querySelector(
+        'fig-select-option[value="Gentle"] [slot="prepend"] svg',
+      );
+      const dots = Array.from(bezierIcon?.querySelectorAll("circle") || []);
+      const springDots = Array.from(
+        springIcon?.querySelectorAll("circle") || [],
+      );
+      return {
+        dotCount: dots.length,
+        firstDot: dots[0]
+          ? {
+              cx: dots[0].getAttribute("cx"),
+              cy: dots[0].getAttribute("cy"),
+              fill: dots[0].getAttribute("fill"),
+            }
+          : null,
+        lastDot: dots.at(-1)
+          ? {
+              cx: dots.at(-1)?.getAttribute("cx"),
+              cy: dots.at(-1)?.getAttribute("cy"),
+            }
+          : null,
+        path: bezierIcon?.querySelector("path")?.getAttribute("d"),
+        springDotCount: springDots.length,
+        springDotFill: springDots[0]?.getAttribute("fill"),
+      };
+    });
+
+    expect(result).toEqual({
+      dotCount: 16,
+      firstDot: {
+        cx: "6.5",
+        cy: "6.5",
+        fill: "var(--figma-color-icon-tertiary)",
+      },
+      lastDot: { cx: "17.5", cy: "17.5" },
+      path: expect.stringMatching(/^M6\.5,17\.5.*L17\.5,6\.5$/),
+      springDotCount: 16,
+      springDotFill: "var(--figma-color-icon-tertiary)",
+    });
+  });
+
   test("fig-easing-curve falls back to fig-dropdown without fig-editor", async ({
     page,
   }) => {
@@ -4879,6 +4935,71 @@ test.describe("number input accessibility", () => {
     expect(order.prependLeft).toBeLessThan(order.inputLeft);
     expect(order.inputLeft).toBeLessThan(order.appendLeft);
     expect(order.appendLeft).toBeLessThan(order.steppersLeft);
+  });
+
+  test('fig-input-number variant="ghost" drops the fill and uses secondary hover fill', async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-number id="number-default" value="16"></fig-input-number>
+        <fig-input-number id="number-ghost" variant="ghost" value="16"></fig-input-number>
+      `;
+    });
+
+    const secondary = await page.evaluate(() => {
+      const probe = document.createElement("div");
+      probe.style.backgroundColor = "var(--figma-color-bg-secondary)";
+      document.body.append(probe);
+      const color = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return color;
+    });
+
+    await expect(page.locator("#number-default")).toHaveCSS(
+      "background-color",
+      secondary,
+    );
+    await expect(page.locator("#number-ghost")).toHaveCSS(
+      "background-color",
+      "rgba(0, 0, 0, 0)",
+    );
+
+    await page.locator("#number-ghost").hover();
+    await expect(page.locator("#number-ghost")).toHaveCSS(
+      "background-color",
+      secondary,
+    );
+    await expect(page.locator("#number-ghost")).toHaveCSS("box-shadow", "none");
+  });
+
+  test("fig-input-number tabular uses tabular-nums on the inner input", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-number id="number-default" value="1111"></fig-input-number>
+        <fig-input-number id="number-tabular" tabular value="1111"></fig-input-number>
+        <fig-input-number id="number-tabular-off" tabular="false" value="1111"></fig-input-number>
+      `;
+    });
+
+    await expect(page.locator("#number-tabular input")).toHaveCSS(
+      "font-variant-numeric",
+      "tabular-nums",
+    );
+    await expect(page.locator("#number-default input")).not.toHaveCSS(
+      "font-variant-numeric",
+      "tabular-nums",
+    );
+    await expect(page.locator("#number-tabular-off input")).not.toHaveCSS(
+      "font-variant-numeric",
+      "tabular-nums",
+    );
   });
 });
 

@@ -26,8 +26,20 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 ## `fig-input-number`
 
 - `size`: `""`, `large` (32px tall)
-- `value`, `placeholder`, `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `disabled`, `full`
+- `variant`: `""`, `ghost`
+- `value`, `placeholder`, `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `tabular`, `disabled`, `full`
 - Adornments: `slot="prepend"` and `slot="append"`
+
+## `fig-angle`
+
+- `value`, `default`, `precision` (defaults: deg/grad `0`, rad `2`, turn `3`), `dial`, optional `min`/`max`, `step` (defaults: deg/° `1`, rad `0.01`, turn `0.001`, grad `0.1`), `rotations`, `disabled`, `full`
+- `defaultValue`: resolved numeric default; values are otherwise unbounded
+- `units`: `deg` (default; `°` alias), `rad`, `turn`, or `grad`. Degree units display as `°` in the number field.
+- Changing `units` converts `value`, `default`, `min`, `max`, and `step`.
+- Shared surface focus outline for dial/input focus and dragging; dial Arrow keys use `step`, Shift-drag/dial Shift+Arrow move by 15°, and the number input retains built-in Up/Down, Shift×10, and Alt-drag scrubbing
+- An inset reset button appears when `value` differs from `default`
+- Events: `input` while editing; `change` on commit; detail `{ value, angle, units }`, rounded to `precision` while stored values remain high precision
+- Static `rotationIcon(angle, size)` returns the centered SVG arc/arrow swept from zero to the signed angle; `size` defaults to `48`.
 
 ## `fig-dropdown`
 

@@ -381,7 +381,7 @@ Expose the smallest set that creates meaningful tuning. Do not expose values tha
 Use these first for most property panels:
 
 - `fig-slider`: continuous numeric values. Attrs/modifiers: `type="range|opacity|hue|stepper|delta"`, `value`, `min`, `max`, `step`, `default`, `precision`, `text`, `placeholder`, `units`, `transform`, `color`, `variant`, `disabled`, `full`.
-- `fig-input-number`: exact numeric entry for size, coordinates, counts, or values where scrubbing is less useful. Attrs/modifiers: `value`, `placeholder`, `min`, `max`, `step`, `transform`, `units`, `units-disallow`, `unit-position`, `name`, `disabled`, `steppers`, `readonly`, `full`.
+- `fig-input-number`: exact numeric entry for size, coordinates, counts, or values where scrubbing is less useful. Attrs/modifiers: `value`, `placeholder`, `min`, `max`, `step`, `transform`, `units`, `units-disallow`, `unit-position`, `name`, `disabled`, `steppers`, `tabular`, `readonly`, `full`.
 - `fig-input-text`: labels, copy, prompt text, URLs, names, and multiline descriptions. Attrs/modifiers: `type`, `value`, `placeholder`, `disabled`, `readonly`, `multiline`, `autoresize`, `resizable`, `min`, `max`, `step`, `transform`, `full`, slots `prepend`/`append`.
 - `fig-switch`: boolean state. Attrs/modifiers: `checked`, `disabled`, `label`, `name`, `value`, `indeterminate`.
 - `fig-dropdown`: compact enum selection with native `<option>` and `<optgroup>` support. Attrs/modifiers: `value`, `type="select|dropdown"`, `label`, `disabled`, `full`.

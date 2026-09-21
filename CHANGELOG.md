@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.1.0]
+
+### Added
+
+- Added `variant="ghost"` to `fig-input-number` for a borderless control with secondary hover/focus fill.
+- Added a `tabular` presence attribute to `fig-input-number` that applies Inter tabular numerals (`font-variant-numeric: tabular-nums`).
+- Added core `fig-angle`, replacing the experimental Lab `fig-input-angle` with an instrument-style dial, unit conversion, unbounded winding, reset control, keyboard/scrub input, and reusable rotation icon.
+- Added tertiary dot grids to easing preset icons.
+- Added marked custom fill-picker swatches via `data-fig-fill-picker-swatch`, including solid, gradient, image, video, and webcam previews.
+- Added extra-large and full radius tokens.
+
+### Changed
+
+- Updated semantic UI3 colors, strong heading weight, and elevation contrast.
+- `fig-angle` now always shows a centered ghost number input, uses a default degree step of `1`, and supports `deg`, `°`, `rad`, `turn`, and `grad`.
+
 ## [9.0.14]
 
 ### Fixed

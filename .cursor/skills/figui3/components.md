@@ -86,7 +86,26 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 />
 ```
 
-- Attrs: `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `disabled`, `full`
+- Attrs: `variant` (`ghost`), `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `tabular`, `disabled`, `full`
+
+### `fig-angle`
+
+```tsx
+<fig-angle
+  value={String(angle)}
+  units="deg"
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Attrs: `value`, `default`, `precision` (defaults: deg/grad 0, rad 2, turn 3), `dial` (default true), optional `min`/`max`, `step` (defaults: deg/° 1, rad 0.01, turn 0.001, grad 0.1), `units` (`deg`, `°`, `rad`, `turn`, `grad`; degrees display as `°`), `rotations`, `disabled`, `full`
+- Property: `defaultValue` returns the resolved default; values are unbounded unless `min`/`max` are authored.
+- Changing `units` converts `value`, `default`, `min`, `max`, and `step` to preserve physical angles.
+- The surface shows the shared focus outline for dial/input focus and dragging. Dial Arrow keys use `step`; Shift-drag and dial Shift+Arrow move in 15° increments. The internal number input retains built-in Up/Down, Shift×10, and Alt-drag scrubbing.
+- An inset reset button appears when `value` differs from `default`; activating it emits `input` and `change`.
+- Events: `input` while editing and `change` on commit, with `{ value, angle, units }`; event values are rounded to `precision` without reducing stored precision
+- The arrow sweeps from zero to the signed angle directly over the outer dial boundary. `customElements.get("fig-angle").rotationIcon(angle, size)` returns a standalone SVG string (`size` defaults to 48).
 
 ### `fig-input-combo`
 

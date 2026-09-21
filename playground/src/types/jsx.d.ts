@@ -34,7 +34,7 @@ declare module "react" {
       "fig-input-palette": FigAttrs;
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
-      "fig-input-angle": FigAttrs;
+      "fig-angle": FigAttrs;
       "fig-input-wheel": FigAttrs;
       "fig-input-number": FigAttrs;
       "fig-easing-curve": FigAttrs;

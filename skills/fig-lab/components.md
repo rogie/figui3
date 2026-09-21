@@ -26,19 +26,6 @@ Handlers below assume `onInput` / `onChange` from the React contract.
 - Attrs: `type`, `value` (JSON string), `color`, `name`, `tooltips`, `disabled`, `drag-surface`, `snapping` (`false` | `modifier` | `true`), `precision` (positions, radius, angle, and internal handles; default `2`)
 - React: JSON `value` as a string attr; do not remount during drag.
 
-### `fig-input-angle`
-
-```tsx
-<fig-input-angle
-  value={String(deg)}
-  text="true"
-  units="°"
-  onInput={onInput}
-/>
-```
-
-- Attrs: `value`, `precision`, `text`, `min`, `max`, `units`, `dial` (default true), `rotations`, `disabled`
-
 ### `fig-input-wheel`
 
 ```tsx

@@ -211,7 +211,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-easing-curve": "Easing curve",
     "fig-3d-rotate": "3D rotate",
     "fig-origin-grid": "Origin grid",
-    "fig-input-angle": "Angle input",
+    "fig-angle": "Angle",
     "fig-joystick": "Joystick",
     "fig-toast": "Toast",
     "fig-icon": "Icon",
@@ -338,6 +338,7 @@ function getNumberAttrDefault(
     return 1;
   }
   if (controlTag === "fig-input-wheel" && attrName === "value") return 0;
+  if (controlTag === "fig-angle" && attrName === "default") return 0;
   if (
     (controlTag === "fig-handle" ||
       controlTag === "fig-canvas-control") &&
@@ -345,6 +346,27 @@ function getNumberAttrDefault(
   )
     return 2;
   return undefined;
+}
+
+function convertAngleUnits(
+  value: string,
+  fromUnit: string | undefined,
+  toUnit: string,
+): string {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return value;
+  const from = (fromUnit || "deg").trim().toLowerCase();
+  const to = toUnit.trim().toLowerCase();
+  let degrees = numericValue;
+  if (from === "rad") degrees = (numericValue * 180) / Math.PI;
+  else if (from === "turn") degrees = numericValue * 360;
+  else if (from === "grad") degrees = numericValue * 0.9;
+
+  let converted = degrees;
+  if (to === "rad") converted = (degrees * Math.PI) / 180;
+  else if (to === "turn") converted = degrees / 360;
+  else if (to === "grad") converted = degrees / 0.9;
+  return String(Number(converted.toPrecision(12)));
 }
 
 export default function AttributesView({
@@ -368,6 +390,43 @@ export default function AttributesView({
       const currentTarget = targets.find(
         (entry) => entry.fieldIndex === fieldIndex,
       );
+      if (
+        currentTarget?.controlTag === "fig-angle" &&
+        target === "control" &&
+        name === "units" &&
+        value
+      ) {
+        let nextMarkup = markup;
+        for (const angleAttribute of [
+          "value",
+          "default",
+          "min",
+          "max",
+          "step",
+        ]) {
+          const currentValue =
+            currentTarget.controlAttributes[angleAttribute];
+          if (currentValue === undefined || currentValue === "") continue;
+          nextMarkup = applyAttributeMutation(nextMarkup, {
+            fieldIndex,
+            target,
+            name: angleAttribute,
+            value: convertAngleUnits(
+              currentValue,
+              currentTarget.controlAttributes.units,
+              value,
+            ),
+          });
+        }
+        nextMarkup = applyAttributeMutation(nextMarkup, {
+          fieldIndex,
+          target,
+          name,
+          value,
+        });
+        onMarkupChange(nextMarkup);
+        return;
+      }
       const nextValue =
         name === "direction" &&
         value?.toLowerCase() === "horizontal" &&
@@ -441,11 +500,10 @@ export default function AttributesView({
           "fig-easing-curve",
           "fig-3d-rotate",
           "fig-origin-grid",
-          "fig-input-angle",
+          "fig-angle",
           "fig-combo-input",
           "fig-joystick",
           "fig-radio",
-          "fig-input-angle",
           "fig-chooser",
         ]);
         const mergedControlRules = { ...controlRules };

@@ -35,12 +35,6 @@ Parent must be `position: relative` (or similar) so the control can fill it. Wra
 
 Types: `point`, `color`, `point-radius`, `point-radius-angle`, `point-point`.
 
-## `fig-input-angle`
-
-Observed include `value`, `precision`, `text`, `min`, `max`, `units`, `dial`, plus `rotations`.
-
-`dial` defaults true. `text="true"` shows the numeric field.
-
 ## `fig-reorder`
 
 Observed: `axis`, `handle`, `disabled`.

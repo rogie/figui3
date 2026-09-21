@@ -88,7 +88,7 @@ fig-menu            change → detail { value }
 fig-dialog/popup    native dialog close plus FigUI3 positioning attrs
 ```
 
-`fig-input-angle` and `fig-input-wheel` are **lab**, not core.
+`fig-angle` is core. `fig-input-wheel` remains **lab**.
 
 ## Maintainer workflow
 

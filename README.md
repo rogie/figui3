@@ -105,7 +105,7 @@ Minimal example:
 | [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
-| [Input Angle](#input-angle) | `<fig-input-angle>` | Angle/rotation dial and text input |
+| [Angle](#angle) | `<fig-angle>` | Instrument-style angle/rotation dial |
 | [Swatch](#swatch) | `<fig-swatch>` | Color/gradient/image swatch |
 | [Color Tip](#color-tip) | `<fig-color-tip>` | Compact color tip with picker |
 | [Color Input](#color-input) | `<fig-input-color>` | Color picker with hex/alpha |
@@ -344,7 +344,7 @@ document.querySelector("fig-select").menuAnchor =
 | `precision` | number | — | Decimal places for output |
 | `disabled` | boolean | `false` | Disabled state |
 
-**Events:** `input` (continuous), `change` (on release).
+**Events:** `input` (continuous), `change` (on release), with detail `{ value, angle, units }`. Event values are rounded to `precision`; the component retains its higher-precision internal value.
 
 ```html
 <fig-slider min="0" max="100" value="50" units="%"></fig-slider>
@@ -417,6 +417,7 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 | `value` | string | — | Numeric value |
 | `placeholder` | string | — | Placeholder text |
 | `size` | string | — | Set to `"large"` for a 32px-tall input |
+| `variant` | string | — | Set to `"ghost"` for a borderless control |
 | `min` | number | — | Minimum |
 | `max` | number | — | Maximum |
 | `step` | number | — | Step increment |
@@ -426,39 +427,48 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 | `transform` | number | — | Display multiplier |
 | `precision` | number | — | Fixed displayed decimal places; omitted values use up to two places |
 | `steppers` | boolean | `false` | Show spin buttons |
+| `tabular` | boolean | `false` | Tabular numerals (`font-variant-numeric: tabular-nums`) |
 | `disabled` | boolean | `false` | Disabled state |
 
 ```html
 <fig-input-number value="100" units="px"></fig-input-number>
 <fig-input-number size="large" value="100" units="px"></fig-input-number>
+<fig-input-number variant="ghost" value="100" units="px"></fig-input-number>
+<fig-input-number tabular value="100" units="px"></fig-input-number>
 <fig-input-number value="50" units="%" min="0" max="100"></fig-input-number>
 ```
 
 ---
 
-#### Input Angle
+#### Angle
 
-`<fig-input-angle>` — [demo](https://rog.ie/figui3/#angle-input)
+`<fig-angle>` — [demo](https://rog.ie/figui3/#angle)
 
-Angle/rotation input with circular dial, optional text input, multi-unit support, and unbounded winding past 360deg. Accepts unit suffixes in text input (`90deg`, `3.14rad`, `0.5turn`).
+Instrument-style angle/rotation control with an interactive dial, text input, CSS angle units, 15-degree Shift snapping, and unbounded positive/negative winding by default. Degree units display as `°` in the number field. Accepts unit suffixes in text input (`90°`, `90deg`, `3.14rad`, `0.5turn`, `100grad`). Add `min` and/or `max` to clamp the value. Changing `units` preserves the physical angle and converts `value`, `default`, `min`, `max`, and `step` (for example, `90deg` becomes `0.250turn`). When the value differs from `default`, an inset reset button restores the default and emits `input` and `change`.
+
+The rotation arrow starts at zero and sweeps along the outer dial boundary to the current angle, clockwise for positive values and counterclockwise for negative values. The surface receives the shared focus outline when the dial or number input is focused or dragged. Dial Arrow keys move by `step`, with Shift+Arrow moving by 15°. The internal number input keeps its built-in Up/Down stepping, Shift×10 stepping, and Alt-drag scrubbing. `customElements.get("fig-angle").rotationIcon(angle, size)` returns a standalone SVG version for reuse elsewhere; `size` defaults to `48`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | number | `0` | Angle value |
-| `precision` | number | `1` | Decimal places |
-| `text` | boolean | `false` | Show text input |
+| `default` | number | `0` | Default/reset value, clamped to bounds |
+| `precision` | number | unit-dependent | Decimal places (`0` deg/grad, `2` rad, `3` turn) |
 | `dial` | boolean | `true` | Show circular dial |
 | `min` | number | — | Minimum (omit for unbounded) |
 | `max` | number | — | Maximum (omit for unbounded) |
-| `units` | string | `"°"` | `"°"` / `"deg"`, `"rad"`, `"turn"` |
+| `step` | number | unit-dependent | Keyboard and text-input step (`1` deg/°, `0.01` rad, `0.001` turn, `0.1` grad) |
+| `units` | string | `"deg"` | `"deg"` / `"°"`, `"rad"`, `"turn"`, `"grad"` |
 | `rotations` | boolean | `false` | Show rotation counter |
+
+The `defaultValue` property returns the resolved numeric default in the active unit.
 
 **Events:** `input` (continuous), `change` (on release).
 
 ```html
-<fig-input-angle value="90" text="true"></fig-input-angle>
-<fig-input-angle text="true" units="rad" value="3.14159"></fig-input-angle>
-<fig-input-angle text="true" rotations value="1080"></fig-input-angle>
+<fig-angle value="90"></fig-angle>
+<fig-angle units="rad" value="3.14159"></fig-angle>
+<fig-angle units="grad" value="100"></fig-angle>
+<fig-angle rotations value="1080"></fig-angle>
 ```
 
 ---

@@ -44,6 +44,7 @@ type FigAttrs = React.DetailedHTMLProps<
 
 type FigTag =
   | "fig-3d-rotate"
+  | "fig-angle"
   | "fig-ai-context"
   | "fig-ai-prompt"
   | "fig-attachment"
@@ -71,7 +72,6 @@ type FigTag =
   | "fig-header"
   | "fig-icon"
   | "fig-image"
-  | "fig-input-angle"
   | "fig-input-color"
   | "fig-input-combo"
   | "fig-input-file"

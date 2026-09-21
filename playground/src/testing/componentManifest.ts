@@ -343,6 +343,16 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "fields", attribute: "fields", value: "x,y" }],
   },
   {
+    tag: "fig-angle",
+    title: "Angle",
+    group: "data",
+    markup: `<fig-angle value="15"></fig-angle>`,
+    attributes: [
+      { name: "default", attribute: "default", value: "30" },
+      { name: "units", attribute: "units", value: "rad" },
+    ],
+  },
+  {
     tag: "fig-origin-grid",
     title: "Origin Grid",
     group: "data",

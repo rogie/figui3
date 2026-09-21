@@ -896,6 +896,21 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   <fig-input-number size="large" value="16" min="0" max="512" step="1" units="px"></fig-input-number>
 </div>`,
       },
+      {
+        id: "ghost",
+        name: "Ghost",
+        markup: `<div class="prop-panel">
+  <fig-input-number variant="ghost" value="16" min="0" max="512" step="1" units="px"></fig-input-number>
+</div>`,
+      },
+      {
+        id: "tabular",
+        name: "Tabular",
+        markup: `<div class="prop-panel">
+  <fig-input-number tabular value="1111" min="0" max="9999" step="1"></fig-input-number>
+  <fig-input-number tabular value="8888" min="0" max="9999" step="1"></fig-input-number>
+</div>`,
+      },
     ],
   },
   ...(propkitColorSection

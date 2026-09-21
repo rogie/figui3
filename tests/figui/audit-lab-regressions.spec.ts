@@ -3,7 +3,7 @@ import { collectPageErrors } from "./helpers";
 
 async function bootLab(page: import("@playwright/test").Page) {
   await page.goto("/tests/figui/fixture-lab.html");
-  await page.waitForFunction(() => customElements.get("fig-input-angle"));
+  await page.waitForFunction(() => customElements.get("fig-canvas-control"));
 }
 
 test.describe("fig-lab audit regressions", () => {
@@ -83,94 +83,6 @@ test.describe("fig-lab audit regressions", () => {
       ],
       wrapperColor: "rgba(255, 0, 191, 0.35)",
     });
-  });
-
-  test("angle dial exposes slider semantics, clamps, reflects, and separates input/change", async ({
-    page,
-  }) => {
-    const state = await page.evaluate(async () => {
-      const angle = document.createElement("fig-input-angle") as HTMLElement & {
-        value: number;
-      };
-      angle.setAttribute("aria-label", "Rotation");
-      angle.setAttribute("min", "10");
-      angle.setAttribute("max", "20");
-      angle.setAttribute("value", "15");
-      document.body.append(angle);
-      await new Promise(requestAnimationFrame);
-      const plane = angle.querySelector(".fig-input-angle-plane") as HTMLElement;
-      const events = { input: 0, change: 0 };
-      angle.addEventListener("input", () => events.input++);
-      angle.addEventListener("change", () => events.change++);
-
-      plane.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
-      const afterEnd = {
-        value: angle.value,
-        attr: angle.getAttribute("value"),
-        now: plane.getAttribute("aria-valuenow"),
-        events: { ...events },
-      };
-      angle.value = 100;
-      const clamped = { value: angle.value, attr: angle.getAttribute("value") };
-      angle.setAttribute("disabled", "");
-      const disabledPlane = angle.querySelector(
-        ".fig-input-angle-plane",
-      ) as HTMLElement;
-      disabledPlane.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Home", bubbles: true }),
-      );
-      return {
-        role: disabledPlane.getAttribute("role"),
-        name: disabledPlane.getAttribute("aria-label"),
-        min: disabledPlane.getAttribute("aria-valuemin"),
-        max: disabledPlane.getAttribute("aria-valuemax"),
-        disabled: disabledPlane.getAttribute("aria-disabled"),
-        tabIndex: disabledPlane.tabIndex,
-        afterEnd,
-        clamped,
-        finalValue: angle.value,
-      };
-    });
-
-    expect(state).toMatchObject({
-      role: "slider",
-      name: "Rotation",
-      min: "10",
-      max: "20",
-      disabled: "true",
-      tabIndex: -1,
-      afterEnd: {
-        value: 20,
-        attr: "20",
-        now: "20",
-        events: { input: 1, change: 1 },
-      },
-      clamped: { value: 20, attr: "20" },
-      finalValue: 20,
-    });
-  });
-
-  test("angle text input emits live input without a live change", async ({ page }) => {
-    const events = await page.evaluate(async () => {
-      const angle = document.createElement("fig-input-angle");
-      angle.setAttribute("text", "true");
-      document.body.append(angle);
-      await new Promise(requestAnimationFrame);
-      const input = angle.querySelector("fig-input-number") as HTMLElement & {
-        value: number;
-      };
-      const counts = { input: 0, change: 0 };
-      angle.addEventListener("input", () => counts.input++);
-      angle.addEventListener("change", () => counts.change++);
-      input.value = 12;
-      input.dispatchEvent(new CustomEvent("input", { bubbles: true, detail: 12 }));
-      const live = { ...counts };
-      input.dispatchEvent(new CustomEvent("change", { bubbles: true, detail: 12 }));
-      return { live, committed: counts };
-    });
-
-    expect(events.live).toEqual({ input: 1, change: 0 });
-    expect(events.committed).toEqual({ input: 1, change: 1 });
   });
 
   test("reorder handles support keyboard moves and polite announcements", async ({
@@ -325,7 +237,7 @@ test.describe("fig-lab audit regressions", () => {
     });
   });
 
-  test("canvas and angle gestures stop after disable or disconnect", async ({ page }) => {
+  test("canvas gestures stop after disable", async ({ page }) => {
     const state = await page.evaluate(async () => {
       const surface = document.createElement("div");
       surface.style.cssText = "position:relative;width:200px;height:100px";
@@ -356,31 +268,9 @@ test.describe("fig-lab audit regressions", () => {
         }),
       );
 
-      const angle = document.createElement("fig-input-angle");
-      document.body.append(angle);
-      await new Promise(requestAnimationFrame);
-      let angleInputs = 0;
-      angle.addEventListener("input", () => angleInputs++);
-      const plane = angle.querySelector(".fig-input-angle-plane") as HTMLElement;
-      plane.dispatchEvent(
-        new MouseEvent("mousedown", {
-          bubbles: true,
-          button: 0,
-          clientX: 10,
-          clientY: 10,
-        }),
-      );
-      angle.remove();
-      const beforeMove = angleInputs;
-      window.dispatchEvent(
-        new MouseEvent("mousemove", { clientX: 100, clientY: 100 }),
-      );
-      return {
-        canvasStable: canvas.getAttribute("value") === canvasValue,
-        angleStable: angleInputs === beforeMove,
-      };
+      return canvas.getAttribute("value") === canvasValue;
     });
 
-    expect(state).toEqual({ canvasStable: true, angleStable: true });
+    expect(state).toBe(true);
   });
 });
