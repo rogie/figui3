@@ -14774,6 +14774,11 @@ class FigEasingCurve extends HTMLElement {
   }
 
   #createHandle(className, dataHandle, label) {
+    const handle = figCreateElement("fig-handle", {
+      size: "small",
+      type: "minimal",
+      "aria-label": label,
+    });
     return figCreateSvgElement(
       "foreignObject",
       {
@@ -14782,12 +14787,47 @@ class FigEasingCurve extends HTMLElement {
         width: "20",
         height: "20",
       },
-      figCreateElement("fig-handle", {
-        size: "small",
-        type: "minimal",
-        "aria-label": label,
-      }),
+      figCreateElement(
+        "fig-tooltip",
+        { text: this.#handleTooltipText(dataHandle) },
+        handle,
+      ),
     );
+  }
+
+  #formatHandleTooltipNumber(value) {
+    if (!Number.isFinite(value)) return "0";
+    return String(Number(value.toFixed(this.#precision)));
+  }
+
+  #handleTooltipText(handle) {
+    if (this.#mode === "spring") {
+      if (handle === "bounce") {
+        return `Bounce ${this.#formatHandleTooltipNumber(this.#springBounce())}`;
+      }
+      return `Duration ${Math.round(this.#springDuration * 100)}%`;
+    }
+
+    const point = handle === "1" ? this.#cp1 : this.#cp2;
+    const label = handle === "1" ? "Start" : "End";
+    return `${label} ${this.#formatHandleTooltipNumber(point.x)}, ${this.#formatHandleTooltipNumber(point.y)}`;
+  }
+
+  #syncHandleTooltips() {
+    for (const [container, handle] of [
+      [this.#handle1, this.#mode === "spring" ? "bounce" : "1"],
+      [this.#handle2, this.#mode === "spring" ? "duration" : "2"],
+    ]) {
+      const tooltip = container?.querySelector("fig-tooltip");
+      if (tooltip) tooltip.text = this.#handleTooltipText(handle);
+    }
+  }
+
+  #toggleHandleTooltip(container, show) {
+    const tooltip = container?.querySelector("fig-tooltip");
+    if (!tooltip) return;
+    if (show) tooltip.setAttribute("show", "true");
+    else tooltip.removeAttribute("show");
   }
 
   #createContent() {
@@ -15038,6 +15078,7 @@ class FigEasingCurve extends HTMLElement {
     } else {
       this.#updateBezierPaths();
     }
+    this.#syncHandleTooltips();
   }
 
   #syncActiveBezierArm() {
@@ -15134,7 +15175,7 @@ class FigEasingCurve extends HTMLElement {
       totalTime,
     };
 
-    const durationNorm = Math.max(0.05, Math.min(0.95, this.#springDuration));
+    const durationNorm = Math.max(0.05, Math.min(1, this.#springDuration));
     let d = "";
     for (let i = 0; i < points.length; i++) {
       const nt = (points[i].t / totalTime) * durationNorm;
@@ -15173,10 +15214,21 @@ class FigEasingCurve extends HTMLElement {
   #findPeakOvershoot(points) {
     let peak = { t: 0, value: 1 };
     let passedTarget = false;
-    for (const p of points) {
-      if (p.value >= 0.99) passedTarget = true;
-      if (passedTarget && p.value > peak.value) {
-        peak = { t: p.t, value: p.value };
+    for (let i = 1; i < points.length - 1; i++) {
+      const previous = points[i - 1];
+      const current = points[i];
+      const next = points[i + 1];
+      if (current.value >= 0.99) passedTarget = true;
+      if (passedTarget && current.value > peak.value) {
+        peak = { t: current.t, value: current.value };
+      }
+      if (
+        passedTarget &&
+        current.value > 1 &&
+        current.value >= previous.value &&
+        current.value >= next.value
+      ) {
+        return { t: current.t, value: current.value };
       }
     }
     return peak;
@@ -15378,14 +15430,14 @@ class FigEasingCurve extends HTMLElement {
           this.#spring.stiffness = Math.max(10, Math.round(this.#spring.stiffness + dx * 1.5));
           break;
         case "ArrowRight":
-          this.#springDuration = Math.min(0.95, this.#springDuration + dx / 200);
+          this.#springDuration = Math.min(1, this.#springDuration + dx / 200);
           this.#spring.stiffness = Math.max(10, Math.round(this.#spring.stiffness - dx * 1.5));
           break;
         case "Home":
           this.#springDuration = 0.05;
           break;
         case "End":
-          this.#springDuration = 0.95;
+          this.#springDuration = 1;
           break;
         default:
           return false;
@@ -15587,6 +15639,8 @@ class FigEasingCurve extends HTMLElement {
     e.preventDefault();
     this.#isDragging = handle;
     this.#syncActiveBezierArm();
+    const activeHandle = handle === 1 ? this.#handle1 : this.#handle2;
+    this.#toggleHandleTooltip(activeHandle, true);
     const svgRect = this.#svg.getBoundingClientRect();
     const startClientX = e.clientX;
     const startClientY = e.clientY;
@@ -15637,6 +15691,7 @@ class FigEasingCurve extends HTMLElement {
     const onUp = () => {
       this.#isDragging = null;
       this.#syncActiveBezierArm();
+      this.#toggleHandleTooltip(activeHandle, false);
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
       this.#emit("change");
@@ -15650,6 +15705,9 @@ class FigEasingCurve extends HTMLElement {
     e.preventDefault();
     this.#isDragging = handleType;
     this.classList.toggle("spring-bounce-dragging", handleType === "bounce");
+    const activeHandle =
+      handleType === "bounce" ? this.#handle1 : this.#handle2;
+    this.#toggleHandleTooltip(activeHandle, true);
 
     const startBounce = this.#springBounce();
     const startStiffness = this.#spring.stiffness;
@@ -15667,7 +15725,7 @@ class FigEasingCurve extends HTMLElement {
         const dx = e.clientX - startX;
         this.#springDuration = Math.max(
           0.05,
-          Math.min(0.95, startDuration + dx / 200),
+          Math.min(1, startDuration + dx / 200),
         );
         this.#spring.stiffness = Math.max(
           10,
@@ -15685,6 +15743,7 @@ class FigEasingCurve extends HTMLElement {
     const onUp = () => {
       this.#isDragging = null;
       this.classList.remove("spring-bounce-dragging");
+      this.#toggleHandleTooltip(activeHandle, false);
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
       this.#emit("change");

@@ -435,6 +435,81 @@ test.describe("fig.js component contracts", () => {
     });
   });
 
+  test("fig-easing-curve keeps the bounce handle at the first peak at full bounce", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-easing-curve
+          mode="spring"
+          value="spring(200, 0.2828, 1)"
+          style="width: 240px"
+        ></fig-easing-curve>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const easing = root.querySelector("fig-easing-curve");
+      const bounce = easing?.querySelector(
+        '[data-handle="bounce"]',
+      ) as SVGForeignObjectElement | null;
+      const duration = easing?.querySelector(
+        '[data-handle="duration"]',
+      ) as SVGForeignObjectElement | null;
+      const handle = bounce?.querySelector("fig-handle");
+      if (!easing || !bounce || !duration || !handle) {
+        throw new Error("Missing spring handles");
+      }
+
+      const rect = handle.getBoundingClientRect();
+      handle.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          buttons: 1,
+          pointerId: 91,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+        }),
+      );
+      document.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          buttons: 1,
+          pointerId: 91,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2 - 10,
+        }),
+      );
+      const duringX = Number(bounce.getAttribute("x"));
+      document.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          button: 0,
+          buttons: 0,
+          pointerId: 91,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2 - 10,
+        }),
+      );
+
+      return {
+        bounce: easing.querySelector(
+          ".fig-easing-curve-value-input",
+        )?.getAttribute("value"),
+        duringX,
+        afterX: Number(bounce.getAttribute("x")),
+        durationX: Number(duration.getAttribute("x")),
+      };
+    });
+
+    expect(state.bounce).toBe("1.00");
+    expect(state.afterX).toBe(state.duringX);
+    expect(state.afterX).toBeLessThan(state.durationX / 2);
+  });
+
   for (const selectorCase of [
     { name: "fallback dropdown", selector: "fig-dropdown", loadEditor: false },
     { name: "internal fig-select", selector: "fig-select", loadEditor: true },
@@ -9921,6 +9996,11 @@ test.describe("remaining accessibility contracts", () => {
           id="curve"
           value="0.25, 0.25, 0.75, 0.75"
         ></fig-easing-curve>
+        <fig-easing-curve
+          id="spring-curve"
+          mode="spring"
+          value="spring(200, 15, 1)"
+        ></fig-easing-curve>
       `;
     });
     await page.waitForTimeout(100);
@@ -9952,6 +10032,77 @@ test.describe("remaining accessibility contracts", () => {
 
     const firstHandle = page.locator('#curve [data-handle="1"] fig-handle');
     await expect(firstHandle).toHaveAttribute("type", "minimal");
+    const handleColors = await firstHandle.evaluate((handle) => {
+      const styles = getComputedStyle(handle);
+      return {
+        inner: styles.getPropertyValue("--fig-handle-inner-bg").trim(),
+        secondary: styles.getPropertyValue("--figma-color-bg-secondary").trim(),
+      };
+    });
+    expect(handleColors.inner).toBe(handleColors.secondary);
+
+    const handleTooltips = await page.locator("#curve").evaluate((host) =>
+      Object.fromEntries(
+        Array.from(host.querySelectorAll(".fig-easing-curve-handle")).map(
+          (handle) => [
+            handle.getAttribute("data-handle"),
+            {
+              wrapper: handle.firstElementChild?.tagName,
+              text: handle
+                .querySelector("fig-tooltip")
+                ?.getAttribute("text"),
+            },
+          ],
+        ),
+      ),
+    );
+    expect(handleTooltips).toEqual({
+      "1": { wrapper: "FIG-TOOLTIP", text: "Start 0.25, 0.25" },
+      "2": { wrapper: "FIG-TOOLTIP", text: "End 0.75, 0.75" },
+    });
+
+    const springTooltips = await page
+      .locator("#spring-curve")
+      .evaluate((host) =>
+        Object.fromEntries(
+          Array.from(host.querySelectorAll(".fig-easing-curve-handle")).map(
+            (handle) => [
+              handle.getAttribute("data-handle"),
+              handle.querySelector("fig-tooltip")?.getAttribute("text"),
+            ],
+          ),
+        ),
+      );
+    expect(springTooltips).toEqual({
+      bounce: "Bounce 0.47",
+      duration: "Duration 80%",
+    });
+
+    const durationHandle = page.locator(
+      '#spring-curve [data-handle="duration"] fig-handle',
+    );
+    await durationHandle.focus();
+    await page.keyboard.press("End");
+    const durationEndState = await page
+      .locator("#spring-curve")
+      .evaluate((host) => {
+        const svg = host.querySelector(".fig-easing-curve-svg");
+        const handle = host.querySelector('[data-handle="duration"]');
+        const x = Number(handle?.getAttribute("x"));
+        const width = Number(handle?.getAttribute("width"));
+        return {
+          text: handle
+            ?.querySelector("fig-tooltip")
+            ?.getAttribute("text"),
+          handleCenter: x + width / 2,
+          svgWidth: svg?.viewBox.baseVal.width,
+        };
+      });
+    expect(durationEndState.text).toBe("Duration 100%");
+    expect(durationEndState.handleCenter).toBeCloseTo(
+      durationEndState.svgWidth ?? 0,
+      5,
+    );
 
     await firstHandle.focus();
     await page.keyboard.press("ArrowRight");
@@ -9961,13 +10112,31 @@ test.describe("remaining accessibility contracts", () => {
       return {
         value: host.value,
         inputValue: input?.getAttribute("value"),
+        tooltip: host
+          .querySelector('[data-handle="1"] fig-tooltip')
+          ?.getAttribute("text"),
       };
     });
 
     expect(state).toEqual({
       value: "0.26, 0.25, 0.75, 0.75",
       inputValue: "0.26, 0.25, 0.75, 0.75",
+      tooltip: "Start 0.26, 0.25",
     });
+
+    const firstHandleBox = await firstHandle.boundingBox();
+    if (!firstHandleBox) throw new Error("Missing easing handle bounds");
+    await page.mouse.move(
+      firstHandleBox.x + firstHandleBox.width / 2,
+      firstHandleBox.y + firstHandleBox.height / 2,
+    );
+    await page.mouse.down();
+    const firstTooltip = page.locator(
+      '#curve [data-handle="1"] fig-tooltip',
+    );
+    await expect(firstTooltip).toHaveAttribute("show", "true");
+    await page.mouse.up();
+    await expect(firstTooltip).not.toHaveAttribute("show", "true");
   });
 
   test("fig-easing-curve SVG fits inside padded non-square aspect ratios", async ({

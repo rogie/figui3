@@ -1995,6 +1995,9 @@ fig-easing-curve {
     pointer-events: all;
     cursor: default;
   }
+  fig-handle[type="minimal"] {
+    --fig-handle-inner-bg: var(--figma-color-bg-secondary);
+  }
   &.spring-mode .fig-easing-curve-handle[data-handle="bounce"],
   &.spring-mode .fig-easing-curve-handle[data-handle="bounce"] fig-handle,
   &.spring-mode .fig-easing-curve-handle[data-handle="bounce"] .fig-handle-hit-area {
@@ -3913,6 +3916,9 @@ fig-content {
   }
   &>p{
     padding-inline: var(--spacer-3);
+  }
+  &:empty{
+    padding: 0;
   }
 }
 
