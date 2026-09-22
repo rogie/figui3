@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.1.2]
+
+### Added
+
+- Added a Menu playground example with icon-leading actions.
+
+### Changed
+
+- Scoped secondary `fig-header` text styling to direct `span` and `label` children.
+
 ## [9.1.1]
 
 ### Changed

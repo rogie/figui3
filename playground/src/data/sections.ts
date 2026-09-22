@@ -2887,6 +2887,32 @@ export const propkitSections: Section[] = [
   </fig-menu>
 </div>`,
       },
+      {
+        id: "icons",
+        name: "With icons",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left">
+    <fig-button variant="secondary" fig-menu-trigger>Actions</fig-button>
+    <fig-menu-item value="duplicate">
+      <fig-icon name="copy" size="small"></fig-icon>
+      Duplicate
+    </fig-menu-item>
+    <fig-menu-item value="rename">
+      <fig-icon name="edit" size="small"></fig-icon>
+      Rename
+    </fig-menu-item>
+    <fig-menu-item value="settings">
+      <fig-icon name="settings" size="small"></fig-icon>
+      Settings
+    </fig-menu-item>
+    <fig-separator></fig-separator>
+    <fig-menu-item value="delete">
+      <fig-icon name="trash" size="small"></fig-icon>
+      Delete
+    </fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
     ],
   },
   {

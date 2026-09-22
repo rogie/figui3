@@ -3730,7 +3730,8 @@ fig-header {
     max-width: 100%;
   }
 
-  span, label{
+  &>span,
+  &>label{
     color: var(--figma-color-text-secondary);
   }
 
