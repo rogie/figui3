@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.1.4]
+
+### Fixed
+
+- Restored the inset outline on color handles with a valid outline value and offset.
+
 ## [9.1.3]
 
 ### Changed

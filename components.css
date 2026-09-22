@@ -6180,7 +6180,8 @@ fig-handle {
   &[tip="remove"] {
     --fig-handle-inner-bg: linear-gradient(var(--fill), var(--fill)), var(--fig-handle-checkerboard);
     --fig-handle-padding: calc(0.25rem - 1px);
-    --fig-handle-inner-outline: transparent;
+    --fig-handle-inner-outline: 1px solid rgba(0,0,0,0.1);
+    --fig-handle-inner-outline-offset: -1px;
     position: relative;
     overflow: visible;
 
