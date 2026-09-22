@@ -2894,20 +2894,20 @@ export const propkitSections: Section[] = [
   <fig-menu position="bottom left">
     <fig-button variant="secondary" fig-menu-trigger>Actions</fig-button>
     <fig-menu-item value="duplicate">
-      <fig-icon name="copy" size="small"></fig-icon>
+      <fig-icon name="copy" slot="prepend"></fig-icon>
       Duplicate
     </fig-menu-item>
     <fig-menu-item value="rename">
-      <fig-icon name="edit" size="small"></fig-icon>
+      <fig-icon name="edit" slot="prepend"></fig-icon>
       Rename
     </fig-menu-item>
     <fig-menu-item value="settings">
-      <fig-icon name="settings" size="small"></fig-icon>
+      <fig-icon name="settings" slot="prepend"></fig-icon>
       Settings
     </fig-menu-item>
     <fig-separator></fig-separator>
     <fig-menu-item value="delete">
-      <fig-icon name="trash" size="small"></fig-icon>
+      <fig-icon name="trash" slot="prepend"></fig-icon>
       Delete
     </fig-menu-item>
   </fig-menu>

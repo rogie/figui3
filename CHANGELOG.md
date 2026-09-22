@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.1.3]
+
+### Changed
+
+- Refined menu-item padding, icon spacing, and prepend-slot alignment.
+- Aligned menu separator labels and rules with menu-item content.
+- Updated the icon Menu example to use full-size prepend icons.
+
 ## [9.1.2]
 
 ### Added

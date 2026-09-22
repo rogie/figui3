@@ -6322,12 +6322,12 @@ fig-menu::part(listbox) {
 }
 
 fig-menu-item {
-  --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-4,1rem);
+  --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-4,1rem) var(--spacer-1,0.25rem) var(--spacer-3,0.75rem);
   box-sizing: border-box;
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: var(--spacer-2);
+  gap: var(--spacer-1);
   width: 100%;
   padding: var(--fig-menu-item-padding);
   min-height: var(--spacer-4);
@@ -6375,6 +6375,16 @@ fig-menu-item {
     &::before {
       background-color: var(--figma-color-bg-menu-hover);
     }
+  }
+
+  & > [slot="prepend"] {
+    margin-top: calc(var(--spacer-1) * -1);
+    margin-bottom: calc(var(--spacer-1) * -1);
+  }
+
+  &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) > [slot="prepend"] {
+    display: inline-flex;
+    vertical-align: middle;
   }
 
   &[subtle]:not([subtle="false"]) {
@@ -6488,4 +6498,13 @@ fig-menu > :is(fig-separator, fig-menu-separator),
 fig-select-options > :is(fig-separator, fig-menu-separator) {
   --fig-separator-color: var(--figma-color-border-menu);
   --fig-separator-label-color: var(--figma-color-text-menu-secondary);
+}
+
+fig-menu > :is(fig-separator, fig-menu-separator) {
+  --fig-separator-padding: 0 var(--spacer-4,1rem) 0 var(--spacer-3,0.75rem);
+
+  &[label]:not([label=""])::before {
+    margin-inline-start: calc(-1 * var(--spacer-3,0.75rem));
+    margin-inline-end: calc(-1 * var(--spacer-4,1rem));
+  }
 }
