@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.1.1]
+
+### Changed
+
+- Added live value tooltips to Bézier and spring easing handles, labeled Bézier handles as Start and End, and allowed spring duration to reach 100%.
+- Matched easing-curve handle interiors to the secondary background token.
+
+### Fixed
+
+- Kept the spring bounce handle on the first overshoot peak at full bounce.
+- Kept the fill-picker saturation and brightness handle above the preview edge highlight.
+- Removed padding from empty `fig-content` containers.
+
 ## [9.1.0]
 
 ### Added

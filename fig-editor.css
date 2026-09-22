@@ -199,7 +199,7 @@ fig-fill-picker {
   }
 
   .fig-fill-picker-color-area fig-handle {
-    z-index: 1;
+    z-index: 3;
   }
 
   .fig-fill-picker-sliders {

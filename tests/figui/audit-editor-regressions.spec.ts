@@ -454,6 +454,7 @@ test.describe("fig-fill-picker audit regressions", () => {
   test("exposes saturation/brightness state without toggle semantics", async ({
     page,
   }) => {
+    await page.addStyleTag({ url: "/fig-editor.css" });
     const state = await page.evaluate(async () => {
       const picker = document.createElement("fig-fill-picker") as HTMLElement & {
         value: Record<string, any>;
@@ -470,11 +471,17 @@ test.describe("fig-fill-picker audit regressions", () => {
       const handle = document.querySelector(
         ".fig-fill-picker-color-area fig-handle",
       ) as HTMLElement;
+      const preview = handle.closest(".fig-fill-picker-color-area");
+      const handleZIndex = Number(getComputedStyle(handle).zIndex);
+      const edgeZIndex = preview
+        ? Number(getComputedStyle(preview, "::after").zIndex)
+        : Number.NaN;
       return {
         role: handle.getAttribute("role"),
         valueNow: handle.getAttribute("aria-valuenow"),
         valueText: handle.getAttribute("aria-valuetext"),
         pressed: handle.getAttribute("aria-pressed"),
+        handleAboveEdge: handleZIndex > edgeZIndex,
       };
     });
 
@@ -483,6 +490,7 @@ test.describe("fig-fill-picker audit regressions", () => {
       valueNow: "60",
       valueText: "Saturation 40%, brightness 60%",
       pressed: null,
+      handleAboveEdge: true,
     });
   });
 
