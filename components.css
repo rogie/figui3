@@ -2134,7 +2134,11 @@ fig-angle {
     }
   }
 
-  .fig-angle-rotations {
+  .fig-angle-input > .fig-angle-rotations {
+    flex: 0 0 auto;
+    width: max-content;
+    min-width: max-content;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
     color: var(--figma-color-text-secondary);
   }

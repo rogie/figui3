@@ -446,7 +446,7 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 
 Instrument-style angle/rotation control with an interactive dial, text input, CSS angle units, 15-degree Shift snapping, and unbounded positive/negative winding by default. Degree units display as `°` in the number field. Accepts unit suffixes in text input (`90°`, `90deg`, `3.14rad`, `0.5turn`, `100grad`). Add `min` and/or `max` to clamp the value. Changing `units` preserves the physical angle and converts `value`, `default`, `min`, `max`, and `step` (for example, `90deg` becomes `0.250turn`). When the value differs from `default`, an inset reset button restores the default and emits `input` and `change`.
 
-The rotation arrow starts at zero and sweeps along the outer dial boundary to the current angle, clockwise for positive values and counterclockwise for negative values. The surface receives the shared focus outline when the dial or number input is focused or dragged. Dial Arrow keys move by `step`, with Shift+Arrow moving by 15°. The internal number input keeps its built-in Up/Down stepping, Shift×10 stepping, and Alt-drag scrubbing. `customElements.get("fig-angle").rotationIcon(angle, size)` returns a standalone SVG version for reuse elsewhere; `size` defaults to `48`.
+The rotation arrow starts at `default` (or zero when omitted) and sweeps along the outer dial boundary to the current angle. Positive deltas run clockwise, negative deltas run counterclockwise, and complete turns remain visible. With `rotations`, the number field displays the remainder modulo one turn while a signed `×N` suffix preserves complete rotations. The surface receives the shared focus outline when the dial or number input is focused or dragged. Dial Arrow keys move by `step`, with Shift+Arrow moving by 15°. The internal number input keeps its built-in Up/Down stepping, Shift×10 stepping, and Alt-drag scrubbing. `customElements.get("fig-angle").rotationIcon(angle, size)` returns a standalone zero-origin SVG version for reuse elsewhere; `size` defaults to `48`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -458,7 +458,7 @@ The rotation arrow starts at zero and sweeps along the outer dial boundary to th
 | `max` | number | — | Maximum (omit for unbounded) |
 | `step` | number | unit-dependent | Keyboard and text-input step (`1` deg/°, `0.01` rad, `0.001` turn, `0.1` grad) |
 | `units` | string | `"deg"` | `"deg"` / `"°"`, `"rad"`, `"turn"`, `"grad"` |
-| `rotations` | boolean | `false` | Show rotation counter |
+| `rotations` | boolean | `false` | Show a signed full-rotation counter and modulo the displayed angle |
 
 The `defaultValue` property returns the resolved numeric default in the active unit.
 
@@ -466,7 +466,9 @@ The `defaultValue` property returns the resolved numeric default in the active u
 
 ```html
 <fig-angle value="90"></fig-angle>
+<fig-angle value="180" default="90"></fig-angle>
 <fig-angle units="rad" value="3.14159"></fig-angle>
+<fig-angle units="turn" value="0.5" default="0.25"></fig-angle>
 <fig-angle units="grad" value="100"></fig-angle>
 <fig-angle rotations value="1080"></fig-angle>
 ```

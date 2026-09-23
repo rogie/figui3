@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.1.5]
+
+### Changed
+
+- Made `fig-angle` sweeps originate from `default`, preserve signed complete turns, and retain the endpoint arrowhead across all angle units.
+- Made `rotations` display the modulo angle with a signed full-turn counter while preserving the authored value during edits.
+
+### Fixed
+
+- Kept multi-digit `fig-angle` rotation counts such as `×8` visible in the number input append slot.
+
 ## [9.1.4]
 
 ### Fixed

@@ -15799,48 +15799,83 @@ class FigAngle extends HTMLElement {
     centerY = 12,
     radius = 7,
     arrowSize = 3,
+    startAngle = 0,
   ) {
-    const value = Number(angle);
-    const safeValue = Number.isFinite(value) ? value : 0;
-    const direction = safeValue < 0 ? "counterclockwise" : "clockwise";
-    const absoluteSweep = Math.abs(safeValue);
-    const fullSweep = absoluteSweep >= 360;
-    const sweep = absoluteSweep % 360;
-    if (sweep < 0.001 && !fullSweep) {
+    const endValue = Number(angle);
+    const startValue = Number(startAngle);
+    const endDegrees = Number.isFinite(endValue) ? endValue : 0;
+    const startDegrees = Number.isFinite(startValue) ? startValue : 0;
+    const delta = endDegrees - startDegrees;
+    const direction = delta < 0 ? "counterclockwise" : "clockwise";
+    const absoluteSweep = Math.abs(delta);
+    if (absoluteSweep < 0.001) {
       return { direction, arc: "", arrow: "" };
     }
 
-    const signedSweep = direction === "clockwise" ? sweep : -sweep;
-    const radians = (signedSweep * Math.PI) / 180;
-    const end = {
-      x: centerX + Math.cos(radians) * radius,
-      y: centerY + Math.sin(radians) * radius,
-    };
-    const tangent =
-      radians + (direction === "clockwise" ? Math.PI / 2 : -Math.PI / 2);
-    const back = tangent + Math.PI;
-    const spread = Math.PI / 4;
-    const arm = (offset) => ({
-      x: end.x + Math.cos(back + offset) * arrowSize,
-      y: end.y + Math.sin(back + offset) * arrowSize,
-    });
-    const firstArm = arm(-spread);
-    const secondArm = arm(spread);
     const point = (pointValue) =>
       `${Number(pointValue.x.toFixed(3))} ${Number(pointValue.y.toFixed(3))}`;
+    const pointAt = (degrees) => {
+      const radians = (degrees * Math.PI) / 180;
+      return {
+        x: centerX + Math.cos(radians) * radius,
+        y: centerY + Math.sin(radians) * radius,
+      };
+    };
+    const sweepSign = delta >= 0 ? 1 : -1;
     const sweepFlag = direction === "clockwise" ? 1 : 0;
-    const arc = fullSweep
-      ? `M ${centerX + radius} ${centerY} A ${radius} ${radius} 0 0 ${sweepFlag} ${centerX - radius} ${centerY} A ${radius} ${radius} 0 0 ${sweepFlag} ${centerX + radius} ${centerY}`
-      : `M ${centerX + radius} ${centerY} A ${radius} ${radius} 0 ${sweep > 180 ? 1 : 0} ${sweepFlag} ${point(end)}`;
+    const arc = [`M ${point(pointAt(startDegrees))}`];
+    let currentDegrees = startDegrees;
+    const completeTurns = Math.floor(absoluteSweep / 360);
+    for (let turn = 0; turn < completeTurns; turn++) {
+      currentDegrees += sweepSign * 180;
+      arc.push(
+        `A ${radius} ${radius} 0 0 ${sweepFlag} ${point(pointAt(currentDegrees))}`,
+      );
+      currentDegrees += sweepSign * 180;
+      arc.push(
+        `A ${radius} ${radius} 0 0 ${sweepFlag} ${point(pointAt(currentDegrees))}`,
+      );
+    }
+    const remainder = absoluteSweep - completeTurns * 360;
+    if (remainder >= 0.001) {
+      currentDegrees += sweepSign * remainder;
+      arc.push(
+        `A ${radius} ${radius} 0 ${remainder > 180 ? 1 : 0} ${sweepFlag} ${point(pointAt(currentDegrees))}`,
+      );
+    }
+
+    const end = pointAt(endDegrees);
+    const radians = (endDegrees * Math.PI) / 180;
+    const tangent =
+      delta >= 0
+        ? { x: -Math.sin(radians), y: Math.cos(radians) }
+        : { x: Math.sin(radians), y: -Math.cos(radians) };
+    const normal = { x: -tangent.y, y: tangent.x };
+    const wing = arrowSize / Math.SQRT2;
+    const firstArm = {
+      x: end.x - tangent.x * wing + normal.x * wing,
+      y: end.y - tangent.y * wing + normal.y * wing,
+    };
+    const secondArm = {
+      x: end.x - tangent.x * wing - normal.x * wing,
+      y: end.y - tangent.y * wing - normal.y * wing,
+    };
     return {
       direction,
-      arc,
+      arc: arc.join(" "),
       arrow: `M ${point(firstArm)} L ${point(end)} L ${point(secondArm)}`,
     };
   }
 
-  static #createRotationIcon(angle = 0) {
-    const geometry = FigAngle.#rotationGeometry(angle, 50, 50, 47, 4);
+  static #createRotationIcon(angle = 0, startAngle = 0) {
+    const geometry = FigAngle.#rotationGeometry(
+      angle,
+      50,
+      50,
+      47,
+      4,
+      startAngle,
+    );
     return figCreateSvgElement(
       "svg",
       {
@@ -16109,6 +16144,29 @@ class FigAngle extends HTMLElement {
     return this.#units === "deg" ? "°" : this.#units;
   }
 
+  #rotationParts() {
+    const degrees = this.#toDegrees(this.#angle);
+    const quotient = degrees / 360;
+    const roundedQuotient = Math.round(quotient);
+    const rotations =
+      Math.abs(quotient - roundedQuotient) < 1e-10
+        ? roundedQuotient
+        : Math.trunc(quotient);
+    const remainderDegrees = degrees - rotations * 360;
+    return {
+      rotations,
+      remainder: this.#fromDegrees(
+        Math.abs(remainderDegrees) < 1e-10 ? 0 : remainderDegrees,
+      ),
+    };
+  }
+
+  #displayValue() {
+    return this.#readBoolean("rotations")
+      ? this.#rotationParts().remainder
+      : this.#angle;
+  }
+
   #defaultStep() {
     switch (this.#units) {
       case "rad":
@@ -16138,10 +16196,16 @@ class FigAngle extends HTMLElement {
     this.#teardownEvents();
     const children = [];
     const rotations = this.#readBoolean("rotations")
-      ? figCreateElement("span", {
-          slot: "append",
-          className: "fig-angle-rotations",
-        })
+      ? figCreateElement(
+          "span",
+          {
+            slot: "append",
+            className: "fig-angle-rotations",
+          },
+          figCreateElement("span", {
+            className: "fig-angle-rotation-value",
+          }),
+        )
       : null;
     const showDial = this.#readBoolean("dial", true);
     const angleInput = figCreateElement(
@@ -16151,7 +16215,7 @@ class FigAngle extends HTMLElement {
         variant: showDial ? "ghost" : undefined,
         tabular: true,
         name: "angle",
-        value: this.#angle,
+        value: this.#displayValue(),
         min: this.#minimum(),
         max: this.#maximum(),
         step: this.#step(),
@@ -16227,7 +16291,10 @@ class FigAngle extends HTMLElement {
             r: "47",
           }),
           ...ticks,
-          FigAngle.#createRotationIcon(this.#toDegrees(this.#angle)),
+          FigAngle.#createRotationIcon(
+            this.#toDegrees(this.#angle),
+            this.#toDegrees(this.#resolveDefaultValue()),
+          ),
           figCreateSvgElement("line", {
             class: "fig-angle-indicator-halo",
             x1: "75",
@@ -16315,12 +16382,14 @@ class FigAngle extends HTMLElement {
     const transform = `rotate(${normalized} 50 50)`;
     this.#indicator?.setAttribute("transform", transform);
     this.#indicatorHalo?.setAttribute("transform", transform);
+    const defaultDegrees = this.#toDegrees(this.#resolveDefaultValue());
     const referenceGeometry = FigAngle.#rotationGeometry(
       degrees,
       50,
       50,
       47,
       4,
+      defaultDegrees,
     );
     this.#reference?.setAttribute(
       "data-direction",
@@ -16354,15 +16423,20 @@ class FigAngle extends HTMLElement {
       );
     }
     if (this.#angleInput) {
-      const value = this.#angle.toFixed(this.#precision);
+      const value = this.#displayValue().toFixed(this.#precision);
       if (this.#angleInput.getAttribute("value") !== value) {
         this.#angleInput.setAttribute("value", value);
       }
     }
     if (this.#rotationSpan) {
-      const rotations = Math.floor(Math.abs(degrees) / 360);
-      this.#rotationSpan.textContent = rotations > 1 ? `×${rotations}` : "";
-      this.#rotationSpan.hidden = rotations <= 1;
+      const { rotations } = this.#rotationParts();
+      const rotationValue = this.#rotationSpan.querySelector(
+        ".fig-angle-rotation-value",
+      );
+      if (rotationValue) {
+        rotationValue.textContent = rotations ? `×${rotations}` : "";
+      }
+      this.#rotationSpan.hidden = rotations === 0;
     }
     if (this.#resetButton) {
       this.#resetButton.hidden =
@@ -16483,7 +16557,14 @@ class FigAngle extends HTMLElement {
     if (this.#isDisabled()) return;
     const value = Number(event.currentTarget.value);
     if (!Number.isFinite(value)) return;
-    this.#setValue(value);
+    if (this.#readBoolean("rotations")) {
+      const { rotations } = this.#rotationParts();
+      this.#setValue(
+        this.#fromDegrees(rotations * 360 + this.#toDegrees(value)),
+      );
+    } else {
+      this.#setValue(value);
+    }
     this.#emit(event.type);
   }
 

@@ -330,6 +330,8 @@ test.describe("fig-angle", () => {
       const full450 = readReference();
       angle.value = 540;
       const full540 = readReference();
+      angle.value = -450;
+      const negativeFull = readReference();
       angle.value = 0;
       const zero = {
         hidden: path.hasAttribute("hidden"),
@@ -341,6 +343,7 @@ test.describe("fig-angle", () => {
         negative,
         full450,
         full540,
+        negativeFull,
         zero,
         clockwiseIcon: Angle.rotationIcon(90, 16),
         counterclockwiseIcon: Angle.rotationIcon(-90, 16),
@@ -372,9 +375,13 @@ test.describe("fig-angle", () => {
     });
     expect(state.negative.arc).toMatch(/^M 97 50 A 47 47 0 0 0 /);
     expect(state.negative.arrow).not.toBe(state.positive.arrow);
-    expect(state.full450.arc.match(/A 47 47/g)).toHaveLength(2);
-    expect(state.full540.arc).toBe(state.full450.arc);
+    expect(state.full450.arc.match(/A 47 47/g)).toHaveLength(3);
+    expect(state.full540.arc.match(/A 47 47/g)).toHaveLength(3);
+    expect(state.full540.arc).not.toBe(state.full450.arc);
     expect(state.full540.arrow).not.toBe(state.full450.arrow);
+    expect(state.negativeFull.direction).toBe("counterclockwise");
+    expect(state.negativeFull.arc.match(/A 47 47/g)).toHaveLength(3);
+    expect(state.negativeFull.arc).toMatch(/^M 97 50 A 47 47 0 0 0 /);
     expect(state.clockwiseIcon).toContain('width="16"');
     expect(state.clockwiseIcon).toContain('viewBox="0 0 24 24"');
     expect(state.clockwiseIcon).toContain('data-direction="clockwise"');
@@ -392,6 +399,61 @@ test.describe("fig-angle", () => {
       pathCount: 1,
     });
     expect(state.zeroIcon).not.toContain("<path");
+  });
+
+  test("starts the sweep at default across values and units", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const read = (angle: Element) => {
+        const path = angle.querySelector(".fig-angle-reference-path");
+        const d = path?.getAttribute("d") || "";
+        const arrowStart = d.indexOf(" M ", 1);
+        return {
+          arc: arrowStart < 0 ? d : d.slice(0, arrowStart),
+          hidden: path?.hasAttribute("hidden") ?? false,
+        };
+      };
+
+      const angle = document.createElement("fig-angle") as HTMLElement & {
+        value: number;
+        defaultValue: number;
+      };
+      angle.setAttribute("units", "turn");
+      angle.setAttribute("default", "0.25");
+      angle.setAttribute("value", "0.5");
+      document.body.append(angle);
+      const initial = read(angle);
+
+      angle.value = 0.75;
+      const afterValue = read(angle);
+      angle.defaultValue = 0.5;
+      const afterDefault = read(angle);
+      angle.setAttribute("units", "rad");
+      const afterUnits = read(angle);
+      angle.value = angle.defaultValue;
+      const zeroDelta = read(angle);
+
+      const withoutDefault = document.createElement("fig-angle");
+      withoutDefault.setAttribute("value", "90");
+      document.body.append(withoutDefault);
+
+      return {
+        initial,
+        afterValue,
+        afterDefault,
+        afterUnits,
+        zeroDelta,
+        withoutDefault: read(withoutDefault),
+      };
+    });
+
+    expect(state.initial.arc).toBe("M 50 97 A 47 47 0 0 1 3 50");
+    expect(state.afterValue.arc).toBe("M 50 97 A 47 47 0 0 1 50 3");
+    expect(state.afterDefault.arc).toBe("M 3 50 A 47 47 0 0 1 50 3");
+    expect(state.afterUnits.arc).toBe(state.afterDefault.arc);
+    expect(state.zeroDelta).toEqual({ arc: "", hidden: true });
+    expect(state.withoutDefault.arc).toBe("M 97 50 A 47 47 0 0 1 50 97");
   });
 
   test("uses easing surface tokens and keeps the dial circular", async ({
@@ -782,6 +844,53 @@ test.describe("fig-angle", () => {
     expect(state.snappedValue).toBe(15);
   });
 
+  test("modulos the displayed angle while preserving signed rotations", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const angle = document.createElement("fig-angle") as HTMLElement & {
+        value: number;
+      };
+      angle.setAttribute("rotations", "");
+      document.body.append(angle);
+      const read = () => ({
+        value: angle.value,
+        input: (
+          angle.querySelector(".fig-angle-input input") as HTMLInputElement
+        ).value,
+        rotations: angle.querySelector(".fig-angle-rotations")?.textContent,
+      });
+
+      angle.value = 450;
+      const positive = read();
+      angle.value = -720;
+      const negative = read();
+
+      angle.setAttribute("units", "turn");
+      angle.value = 2.25;
+      const turns = read();
+      const input = angle.querySelector(
+        ".fig-angle-input input",
+      ) as HTMLInputElement;
+      input.value = "0.5turn";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+
+      return {
+        positive,
+        negative,
+        turns,
+        edited: read(),
+      };
+    });
+
+    expect(state).toEqual({
+      positive: { value: 450, input: "90°", rotations: "×1" },
+      negative: { value: -720, input: "0°", rotations: "×-2" },
+      turns: { value: 2.25, input: "0.250turn", rotations: "×2" },
+      edited: { value: 2.5, input: "0.500turn", rotations: "×2" },
+    });
+  });
+
   test("keeps the number input and dial linked in both directions", async ({
     page,
   }) => {
@@ -790,7 +899,7 @@ test.describe("fig-angle", () => {
         value: number;
       };
       angle.setAttribute("rotations", "");
-      angle.setAttribute("value", "720");
+      angle.setAttribute("value", "2160");
       document.body.append(angle);
       const input = angle.querySelector("fig-input-number") as HTMLElement & {
         value: number;
@@ -806,7 +915,20 @@ test.describe("fig-angle", () => {
         counts.change++;
         details.change = (event as CustomEvent).detail;
       });
-      const rotations = angle.querySelector(".fig-angle-rotations")?.textContent;
+      const rotationElement = angle.querySelector(
+        ".fig-angle-rotations",
+      ) as HTMLElement;
+      const rotations = {
+        text: rotationElement.textContent,
+        childCount: rotationElement.children.length,
+        normalizedFullText:
+          rotationElement.dataset.figInputSlotFullText ?? null,
+        clientWidth: rotationElement.clientWidth,
+        scrollWidth: rotationElement.scrollWidth,
+        whiteSpace: getComputedStyle(rotationElement).whiteSpace,
+        flexShrink: getComputedStyle(rotationElement).flexShrink,
+      };
+      const inputBefore = nativeInput.value;
       const ariaMax = angle
         .querySelector(".fig-angle-svg")
         ?.getAttribute("aria-valuemax");
@@ -840,6 +962,7 @@ test.describe("fig-angle", () => {
         live,
         committed,
         rotations,
+        inputBefore,
         ariaMax,
         details,
         defaultPrecisionValue,
@@ -851,19 +974,31 @@ test.describe("fig-angle", () => {
     expect(state).toEqual({
       live: {
         counts: { input: 1, change: 0 },
-        value: 42,
+        value: 2202,
         indicator: "rotate(42 50 50)",
       },
       committed: { input: 1, change: 1 },
-      rotations: "×2",
-      ariaMax: "720",
+      rotations: {
+        text: "×6",
+        childCount: 1,
+        normalizedFullText: null,
+        clientWidth: expect.any(Number),
+        scrollWidth: expect.any(Number),
+        whiteSpace: "nowrap",
+        flexShrink: "0",
+      },
+      inputBefore: "0°",
+      ariaMax: "2160",
       details: {
-        input: { value: 42, angle: 42, units: "deg" },
-        change: { value: 42, angle: 42, units: "deg" },
+        input: { value: 2202, angle: 2202, units: "deg" },
+        change: { value: 2202, angle: 2202, units: "deg" },
       },
       defaultPrecisionValue: "90°",
       overriddenPrecisionValue: "90.00°",
       stableWhenDisabled: true,
     });
+    expect(state.rotations.clientWidth).toBeGreaterThanOrEqual(
+      state.rotations.scrollWidth,
+    );
   });
 });
