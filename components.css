@@ -2510,6 +2510,7 @@ fig-origin-grid {
       mask-position: center;
       -webkit-mask-size: 24px 24px;
       mask-size: 24px 24px;
+      background-color: var(--figma-color-icon-brand);
       --fig-handle-inner-bg: transparent !important;
       --fig-handle-outline-color: transparent !important;
       --fig-handle-inner-outline: none;

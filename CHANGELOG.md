@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.1.6]
+
+### Fixed
+
+- Restored the brand icon color on out-of-bounds `fig-origin-grid` handles.
+
 ## [9.1.5]
 
 ### Changed
