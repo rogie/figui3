@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.2.2]
+
+### Added
+
+- Added authored `slot="prepend"` icon support to `fig-property-button`, taking precedence over its generated `icon`.
+
 ## [9.2.1]
 
 ### Changed

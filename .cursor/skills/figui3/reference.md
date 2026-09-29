@@ -18,7 +18,7 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 
 ## `fig-property-button`
 
-- `icon`: required `fig-icon` name
+- `icon`: generated `fig-icon` name; optional when authoring custom `slot="prepend"` content
 - `selected`, `disabled`
 - `aria-haspopup`, `aria-expanded`, `aria-controls`
 - Fixed secondary, full-width, start-aligned presentation

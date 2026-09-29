@@ -1150,7 +1150,10 @@ fig-property-button {
   }
 }
 
-fig-property-button[icon]:not([icon="false"]) {
+fig-property-button:is(
+    [icon]:not([icon="false"]),
+    :has(> [slot="prepend"])
+  ) {
   width: 100%;
   flex: 1 1 auto;
   padding: 0 calc(var(--spacer-2) - 1px) 0 0;

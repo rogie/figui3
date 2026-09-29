@@ -30,7 +30,8 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 </fig-property-button>
 ```
 
-- Attrs: `icon` (required fig-icon name), `selected`, `disabled`, `aria-haspopup`, `aria-expanded`, `aria-controls`
+- Attrs: `icon` (generated fig-icon name), `selected`, `disabled`, `aria-haspopup`, `aria-expanded`, `aria-controls`
+- Custom icon: author an element with `slot="prepend"` instead of `icon`; authored prepend content takes precedence
 - Fixed presentation: secondary, full width, start aligned, leading icon
 - Trigger only: the consumer owns and positions the corresponding popup/dialog
 - Events: `click`

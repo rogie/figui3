@@ -392,6 +392,16 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   </dialog>
 </div>`,
       },
+      {
+        id: "custom-icon",
+        name: "Custom icon",
+        markup: `<div class="prop-panel">
+  <fig-property-button>
+    <fig-icon name="sun" slot="prepend"></fig-icon>
+    Lighting effect
+  </fig-property-button>
+</div>`,
+      },
     ],
   },
   {

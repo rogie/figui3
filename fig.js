@@ -918,7 +918,8 @@ figDefineElement("fig-button", FigButton);
 
 /**
  * A full-width secondary button for opening a property editor or flyout.
- * @attr {string} icon - Required fig-icon name shown before the button label.
+ * @attr {string} icon - Optional fig-icon name shown before the button label.
+ * Author a custom child with slot="prepend" instead when needed.
  * @attr {boolean} disabled - Whether the trigger is disabled.
  */
 class FigPropertyButton extends FigButton {
@@ -973,6 +974,14 @@ class FigPropertyButton extends FigButton {
         ':scope > fig-icon[slot="prepend"][data-generated="property-button-icon"]',
       ),
     );
+    const authoredPrepend = this.querySelector(
+      ':scope > [slot="prepend"]:not([data-generated="property-button-icon"])',
+    );
+    if (authoredPrepend) {
+      generated.forEach((icon) => icon.remove());
+      return;
+    }
+
     const iconName = this.icon.trim();
     if (!iconName) {
       generated.forEach((icon) => icon.remove());

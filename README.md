@@ -185,11 +185,12 @@ Minimal example:
 
 `<fig-property-button>` — [demo](https://rog.ie/figui3/#property-button)
 
-A full-width secondary trigger for opening an effect editor, binding editor, preset picker, or other property-specific flyout. The component supplies the surface and generated leading icon but does not create or position a popup.
+A full-width secondary trigger for opening an effect editor, binding editor, preset picker, or other property-specific flyout. The component supplies the surface and can generate a leading icon from `icon`, or accept custom prepend content, but does not create or position a popup.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `icon` | string | required | `fig-icon` name rendered in the prepend slot |
+| `icon` | string | — | `fig-icon` name rendered in the prepend slot |
+| `slot="prepend"` | element | — | Custom leading icon/content; takes precedence over `icon` |
 | `selected` | boolean | `false` | Selected styling, typically while the editor is open |
 | `disabled` | boolean | `false` | Disabled state |
 | `aria-haspopup` | string | — | Popup type exposed to assistive technology |
@@ -204,6 +205,11 @@ A full-width secondary trigger for opening an effect editor, binding editor, pre
   aria-controls="effects-editor"
 >
   Effects
+</fig-property-button>
+
+<fig-property-button>
+  <fig-icon name="sun" slot="prepend"></fig-icon>
+  Lighting effect
 </fig-property-button>
 
 <dialog

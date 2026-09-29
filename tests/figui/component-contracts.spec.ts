@@ -43,6 +43,10 @@ test.describe("fig.js component contracts", () => {
           >
             Effects
           </fig-property-button>
+          <fig-property-button id="custom-property-button">
+            <fig-icon name="sun" slot="prepend"></fig-icon>
+            Lighting effect
+          </fig-property-button>
         </div>
       `;
       const property = root.querySelector(
@@ -90,11 +94,27 @@ test.describe("fig.js component contracts", () => {
 
       property.setAttribute("selected", "");
       const selectedBoxShadow = getComputedStyle(property).boxShadow;
+      const custom = root.querySelector(
+        "#custom-property-button",
+      ) as HTMLElement;
+      const customStyles = getComputedStyle(custom);
       property.setAttribute("disabled", "");
       native.click();
       return {
         ...beforeDisabled,
         selectedBoxShadow,
+        custom: {
+          icon: custom
+            .querySelector(':scope > [slot="prepend"]')
+            ?.getAttribute("name"),
+          generatedCount: custom.querySelectorAll(
+            ':scope > [data-generated="property-button-icon"]',
+          ).length,
+          variant: custom.getAttribute("variant"),
+          full: custom.hasAttribute("full"),
+          align: custom.getAttribute("align"),
+          paddingLeft: customStyles.paddingLeft,
+        },
         clicksAfterDisabled: clicks,
         disabled: native.disabled,
       };
@@ -116,6 +136,14 @@ test.describe("fig.js component contracts", () => {
       hasPopup: "dialog",
       expanded: "false",
       controls: "property-editor",
+      custom: {
+        icon: "sun",
+        generatedCount: 0,
+        variant: "secondary",
+        full: true,
+        align: "start",
+        paddingLeft: "0px",
+      },
       clicksAfterDisabled: 1,
       disabled: true,
     });
