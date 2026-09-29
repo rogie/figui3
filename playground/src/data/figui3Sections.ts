@@ -933,6 +933,51 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
     ],
   },
   {
+    id: "input-combo",
+    name: "Input Combo",
+    group: INPUT_GROUP_NAME,
+    description:
+      "A visually grouped input and action button for compact submission controls.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-input-combo>
+    <fig-input-text value="Search query"></fig-input-text>
+    <fig-button>Go</fig-button>
+  </fig-input-combo>
+</div>`,
+      },
+      {
+        id: "fields",
+        name: "Fields",
+        markup: `<div class="prop-panel">
+  <fig-input-combo>
+    <fig-input-number value="0">
+      <span slot="prepend">X</span>
+    </fig-input-number>
+    <fig-input-number value="0">
+      <span slot="prepend">Y</span>
+    </fig-input-number>
+  </fig-input-combo>
+</div>`,
+      },
+      {
+        id: "property-action",
+        name: "Property action",
+        markup: `<div class="prop-panel">
+  <fig-input-combo>
+    <fig-property-button icon="settings">Drop shadow</fig-property-button>
+    <fig-button variant="secondary" icon aria-label="Remove effect">
+      <fig-icon name="close"></fig-icon>
+    </fig-button>
+  </fig-input-combo>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "text-input",
     name: "Text",
     group: INPUT_GROUP_NAME,

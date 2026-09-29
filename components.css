@@ -1169,6 +1169,9 @@ fig-input-combo {
   flex-wrap: nowrap;
   align-items: center;
   gap: 0px;
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
   & > * {
     &:first-child,
     &:first-child > * {
@@ -1192,18 +1195,36 @@ fig-input-combo {
 fig-input-combo {
   gap: 1px;
 }
+
+:is(.fig-button-combo, fig-button-combo, .fig-input-combo, fig-input-combo):not(
+    :has(> :not([variant="secondary"]))
+  ) {
+  gap: 0;
+  border-radius: var(--radius-medium);
+  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+
+  > [variant="secondary"] {
+    box-shadow: none;
+  }
+
+  > [variant="secondary"] + [variant="secondary"] {
+    box-shadow: none;
+    background-image: linear-gradient(
+      var(--figma-color-bordertranslucent),
+      var(--figma-color-bordertranslucent)
+    );
+    background-position: left 1px;
+    background-repeat: no-repeat;
+    background-size: 1px calc(100% - 2px);
+  }
+}
+
 .fig-button-combo,
 fig-button-combo {
   > *:not([variant="secondary"]):not(:first-child) {
     box-shadow: inset 1px 0 0 0 var(--figma-color-bg-brand-hover);
     &[disabled]:not([disabled="false"]) {
       box-shadow: inset 1px 0 0 0 var(--figma-color-border-disabled);
-    }
-  }
-  > *[variant="secondary"]:not(:first-child) {
-    border-left-width: 0 !important;
-    &[disabled]:not([disabled="false"]) {
-      border-left-width: 0 !important;
     }
   }
 }

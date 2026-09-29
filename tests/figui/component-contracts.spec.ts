@@ -123,6 +123,46 @@ test.describe("fig.js component contracts", () => {
     expect(state.selectedBoxShadow).toBe("none");
   });
 
+  test("secondary combo controls share one outer border and one divider", async ({
+    page,
+  }) => {
+    const styles = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-combo id="secondary-combo">
+          <fig-property-button icon="settings" selected>Drop shadow</fig-property-button>
+          <fig-button variant="secondary" icon aria-label="Remove effect">
+            <fig-icon name="close"></fig-icon>
+          </fig-button>
+        </fig-input-combo>
+      `;
+      const combo = root.querySelector("#secondary-combo") as HTMLElement;
+      const first = combo.firstElementChild as HTMLElement;
+      const last = combo.lastElementChild as HTMLElement;
+      const comboStyle = getComputedStyle(combo);
+      const firstStyle = getComputedStyle(first);
+      const lastStyle = getComputedStyle(last);
+      return {
+        gap: comboStyle.gap,
+        outerShadow: comboStyle.boxShadow,
+        firstShadow: firstStyle.boxShadow,
+        lastShadow: lastStyle.boxShadow,
+        lastBackgroundImage: lastStyle.backgroundImage,
+        firstTopRightRadius: firstStyle.borderTopRightRadius,
+        lastTopLeftRadius: lastStyle.borderTopLeftRadius,
+      };
+    });
+
+    expect(styles.gap).toBe("0px");
+    expect(styles.outerShadow).not.toBe("none");
+    expect(styles.firstShadow).toBe("none");
+    expect(styles.lastShadow).toBe("none");
+    expect(styles.lastBackgroundImage).not.toBe("none");
+    expect(styles.firstTopRightRadius).toBe("0px");
+    expect(styles.lastTopLeftRadius).toBe("0px");
+  });
+
   test("fig.js alone does not register fig-select", async ({ page }) => {
     const registered = await page.evaluate(() => Boolean(customElements.get("fig-select")));
     expect(registered).toBe(false);

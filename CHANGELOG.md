@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.2.1]
+
+### Changed
+
+- Made all-secondary button and input combos share one outer border and a non-overlapping internal divider.
+- Added `full` width support to button and input combo wrappers.
+- Added FigUI3 playground examples for `fig-input-combo` fields and property actions.
+
 ## [9.2.0]
 
 ### Added
