@@ -95,6 +95,7 @@ Minimal example:
 | Component | Tag | Description |
 |---|---|---|
 | [Button](#button) | `<fig-button>` | Buttons with variants, toggle, select, upload |
+| [Property Button](#property-button) | `<fig-property-button>` | Full-width secondary trigger for property editors |
 | [Dropdown](#dropdown) | `<fig-dropdown>` | Native select wrapper with Figma styling |
 | [Select](#select) | `<fig-select>` | Custom listbox select (requires `fig-editor.js`) |
 | [Combo Input](#combo-input) | `<fig-combo-input>` | Text input with dropdown suggestions |
@@ -177,6 +178,45 @@ Minimal example:
 ```
 
 `type="select"` and `type="upload"` are visual wrappers for native select/file controls. They avoid nested native buttons, show the shared focus outline on the wrapper, and open the native picker from keyboard activation where supported.
+
+---
+
+#### Property Button
+
+`<fig-property-button>` — [demo](https://rog.ie/figui3/#property-button)
+
+A full-width secondary trigger for opening an effect editor, binding editor, preset picker, or other property-specific flyout. The component supplies the surface and generated leading icon but does not create or position a popup.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `icon` | string | required | `fig-icon` name rendered in the prepend slot |
+| `selected` | boolean | `false` | Selected styling, typically while the editor is open |
+| `disabled` | boolean | `false` | Disabled state |
+| `aria-haspopup` | string | — | Popup type exposed to assistive technology |
+| `aria-expanded` | boolean | — | Whether the controlled flyout is open |
+| `aria-controls` | string | — | ID of the controlled flyout |
+
+```html
+<fig-property-button
+  id="effects-trigger"
+  icon="settings"
+  aria-haspopup="dialog"
+  aria-controls="effects-editor"
+>
+  Effects
+</fig-property-button>
+
+<dialog
+  is="fig-popup"
+  id="effects-editor"
+  anchor="#effects-trigger"
+  position="bottom left"
+>
+  <fig-content>Effect controls</fig-content>
+</dialog>
+```
+
+Wire click/open state in application code. `variant="secondary"`, `full`, and start alignment are enforced by the component.
 
 ---
 
@@ -1069,6 +1109,41 @@ timelines. Unsupported browsers retain ordinary scrolling without a fade.
     <!-- Wide content -->
   </div>
 </div>
+```
+
+---
+
+#### Stack
+
+`<fig-stack>` — [demo](https://rog.ie/figui3/#stack)
+
+A layout primitive for rows, columns, and grids. Replaces the deprecated `hstack` / `vstack` tags, which still render as aliases.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `direction` | string | `"horizontal"` | `"horizontal"`, `"vertical"`, `"grid"` |
+| `gap` | string | `"2"` | Spacer token (`"0"`–`"6"`, `"2-5"`, `"half"`) or any CSS length |
+| `align` | string | `"center"` (horizontal), `"start"` (vertical), `"stretch"` (grid) | `"start"`, `"center"`, `"end"`, `"stretch"`, `"baseline"` |
+| `justify` | string | `"start"` | `"start"`, `"center"`, `"end"`, `"between"`, `"around"`, `"stretch"` |
+| `wrap` | boolean | `false` | Wrap items onto multiple lines |
+| `full` | boolean | `false` | Fill the parent's width |
+| `columns` | string | auto-fill | Grid only: column count (`"3"`) or a `grid-template-columns` value |
+| `min-width` | string | `"5rem"` | Grid only: minimum auto-fill column width |
+
+Adjacent `fig-field` children in a horizontal stack share compact gutters.
+
+```html
+<fig-stack direction="vertical" gap="3">
+  <fig-stack justify="between" full>
+    <label>Layers</label>
+    <fig-button variant="ghost" icon><fig-icon name="add"></fig-icon></fig-button>
+  </fig-stack>
+  <fig-stack direction="grid" columns="3">
+    <fig-swatch value="#0D99FF"></fig-swatch>
+    <fig-swatch value="#FFC700"></fig-swatch>
+    <fig-swatch value="#14AE5C"></fig-swatch>
+  </fig-stack>
+</fig-stack>
 ```
 
 ---

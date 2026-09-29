@@ -17,6 +17,24 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 - Attrs: `variant` (`""` primary, `secondary`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`, `compact`), `align`, `selected`, `disabled`, `icon`, `close-dialog`
 - Events: `click`; toggle also reflects `selected`
 
+### `fig-property-button`
+
+```tsx
+<fig-property-button
+  icon="settings"
+  aria-haspopup="dialog"
+  aria-controls="effects-editor"
+  onClick={onClick}
+>
+  Effects
+</fig-property-button>
+```
+
+- Attrs: `icon` (required fig-icon name), `selected`, `disabled`, `aria-haspopup`, `aria-expanded`, `aria-controls`
+- Fixed presentation: secondary, full width, start aligned, leading icon
+- Trigger only: the consumer owns and positions the corresponding popup/dialog
+- Events: `click`
+
 ### `fig-button-combo`
 
 ```tsx

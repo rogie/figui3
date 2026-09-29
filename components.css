@@ -804,7 +804,8 @@ select,
 
 /* Button */
 button,
-fig-button {
+fig-button,
+fig-property-button {
   --fig-button-content-alignment: center;
   --fig-button-text-alignment: center;
 
@@ -1146,6 +1147,16 @@ fig-button {
     &[size="large"]{
       padding-left: var(--spacer-2);
     }
+  }
+}
+
+fig-property-button[icon]:not([icon="false"]) {
+  width: 100%;
+  flex: 1 1 auto;
+  padding: 0 calc(var(--spacer-2) - 1px) 0 0;
+
+  &[selected]:not([selected="false"]) {
+    box-shadow: none;
   }
 }
 
@@ -3625,6 +3636,7 @@ fig-preview {
 
 /* Web Components */
 fig-button,
+fig-property-button,
 fig-content,
 fig-slider,
 fig-switch,
@@ -3941,47 +3953,111 @@ fig-content{
   }
 }
 
-vstack,
-.vstack,
-[vstack] {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  gap: var(--spacer-2);
-  flex-wrap: wrap;
-}
-
 :root [hidden],
 [hidden] {
   display: none !important;
 }
 
+fig-stack,
 hstack,
-.hstack{
+.hstack,
+vstack,
+.vstack,
+[vstack] {
   display: flex;
-  gap: var(--hstack-gap, var(--spacer-2));
-  align-items: var(--hstack-align, center);
-  justify-content: var(--hstack-justify, flex-start);
-  flex-wrap: var(--hstack-wrap, nowrap);
+  flex-direction: row;
+  gap: var(--fig-stack-gap, var(--hstack-gap, var(--spacer-2)));
+  align-items: var(--fig-stack-align, var(--hstack-align, center));
+  justify-content: var(--fig-stack-justify, var(--hstack-justify, flex-start));
+  flex-wrap: var(--fig-stack-wrap, var(--hstack-wrap, nowrap));
+  min-width: 0;
+
+  &:where(fig-stack[direction="vertical"], vstack, .vstack, [vstack]) {
+    flex-direction: column;
+    --fig-stack-align: flex-start;
+  }
+
+  &:where(vstack, .vstack, [vstack]) {
+    --fig-stack-wrap: wrap;
+  }
+
+  &:where([direction="grid"]) {
+    display: grid;
+    grid-template-columns: var(
+      --fig-stack-columns,
+      repeat(auto-fill, minmax(min(var(--fig-stack-min-width, 5rem), 100%), 1fr))
+    );
+    --fig-stack-align: stretch;
+    justify-items: var(--fig-stack-justify-items, stretch);
+  }
 
   &[align="start"] {
-    --hstack-align: flex-start;
+    --fig-stack-align: flex-start;
+  }
+
+  &[align="center"] {
+    --fig-stack-align: center;
   }
 
   &[align="end"] {
-    --hstack-align: flex-end;
+    --fig-stack-align: flex-end;
   }
 
   &[align="stretch"] {
-    --hstack-align: stretch;
+    --fig-stack-align: stretch;
   }
 
-  & > fig-field:has(+ fig-field) {
-    --fig-field-right-padding: var(--spacer-1);
+  &[align="baseline"] {
+    --fig-stack-align: baseline;
   }
 
-  & > fig-field + fig-field {
-    --fig-field-left-padding: var(--spacer-1);
+  &[justify="start"] {
+    --fig-stack-justify: flex-start;
+    --fig-stack-justify-items: start;
+  }
+
+  &[justify="center"] {
+    --fig-stack-justify: center;
+    --fig-stack-justify-items: center;
+  }
+
+  &[justify="end"] {
+    --fig-stack-justify: flex-end;
+    --fig-stack-justify-items: end;
+  }
+
+  &[justify="between"] {
+    --fig-stack-justify: space-between;
+  }
+
+  &[justify="around"] {
+    --fig-stack-justify: space-around;
+  }
+
+  &[justify="stretch"] {
+    --fig-stack-justify-items: stretch;
+  }
+
+  &[wrap]:not([wrap="false"]) {
+    --fig-stack-wrap: wrap;
+  }
+
+  &[wrap="false"] {
+    --fig-stack-wrap: nowrap;
+  }
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &:is(fig-stack:not([direction]), fig-stack[direction="horizontal"], hstack, .hstack) {
+    & > fig-field:has(+ fig-field) {
+      --fig-field-right-padding: var(--spacer-1);
+    }
+
+    & > fig-field + fig-field {
+      --fig-field-left-padding: var(--spacer-1);
+    }
   }
 }
 

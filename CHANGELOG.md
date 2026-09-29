@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.2.0]
+
+### Added
+
+- `fig-stack` layout element with `direction="horizontal|vertical|grid"`, token-aware `gap`, `align`, `justify`, `wrap`, `full`, and grid `columns` / `min-width`.
+- `fig-property-button`, a full-width secondary trigger with an explicit generated icon, selected/disabled states, and popup ARIA forwarding.
+
+### Changed
+
+- Deprecated `hstack` / `vstack`; they remain as styling aliases of `fig-stack`. Playground and tests now use `fig-stack`.
+- Changed the default `fig-popup` radius from large to medium.
+
 ## [9.1.6]
 
 ### Fixed

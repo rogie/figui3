@@ -95,7 +95,7 @@ const ungroupedLabSections: Section[] = [
       <fig-button variant="ghost" icon aria-label="Add attachment">
         <fig-icon name="add"></fig-icon>
       </fig-button>
-      <hstack>
+      <fig-stack>
         <fig-select value="auto" aria-label="Model">
           <fig-select-options>
             <fig-select-option value="auto">Auto</fig-select-option>
@@ -106,7 +106,7 @@ const ungroupedLabSections: Section[] = [
         <fig-button icon aria-label="Send prompt">
           <fig-icon name="send"></fig-icon>
         </fig-button>
-      </hstack>
+      </fig-stack>
     </fig-footer>
   </fig-ai-prompt>
 </div>`,
@@ -121,7 +121,7 @@ const ungroupedLabSections: Section[] = [
       <fig-button variant="ghost" icon disabled aria-label="Add attachment">
         <fig-icon name="add"></fig-icon>
       </fig-button>
-      <hstack>
+      <fig-stack>
         <fig-select value="auto" disabled aria-label="Model">
           <fig-select-options>
             <fig-select-option value="auto">Auto</fig-select-option>
@@ -132,7 +132,7 @@ const ungroupedLabSections: Section[] = [
         <fig-button variant="ghost" icon disabled aria-label="Sending prompt">
           <fig-spinner></fig-spinner>
         </fig-button>
-      </hstack>
+      </fig-stack>
     </fig-footer>
   </fig-ai-prompt>
 </div>`,
@@ -153,7 +153,7 @@ const ungroupedLabSections: Section[] = [
       <fig-button variant="ghost" icon aria-label="Add attachment">
         <fig-icon name="add"></fig-icon>
       </fig-button>
-      <hstack>
+      <fig-stack>
         <fig-select value="auto" aria-label="Model">
           <fig-select-options>
             <fig-select-option value="auto">Auto</fig-select-option>
@@ -164,7 +164,7 @@ const ungroupedLabSections: Section[] = [
         <fig-button icon aria-label="Send prompt">
           <fig-icon name="send"></fig-icon>
         </fig-button>
-      </hstack>
+      </fig-stack>
     </fig-footer>
   </fig-ai-prompt>
 </div>`,
@@ -182,7 +182,7 @@ const ungroupedLabSections: Section[] = [
       <fig-button variant="ghost" icon aria-label="Add attachment">
         <fig-icon name="add"></fig-icon>
       </fig-button>
-      <hstack>
+      <fig-stack>
         <fig-select value="auto" aria-label="Model">
           <fig-select-options>
             <fig-select-option value="auto">Auto</fig-select-option>
@@ -193,7 +193,7 @@ const ungroupedLabSections: Section[] = [
         <fig-button icon aria-label="Send prompt">
           <fig-icon name="send"></fig-icon>
         </fig-button>
-      </hstack>
+      </fig-stack>
     </fig-footer>
   </fig-ai-prompt>
 </div>`,
@@ -203,10 +203,10 @@ const ungroupedLabSections: Section[] = [
         name: "Action needed",
         markup: `<div class="prop-panel">
   <fig-ai-context aria-label="Prompt context">
-    <hstack>
+    <fig-stack>
       <span>Connect provider</span>
       <fig-button variant="secondary">Add API keys</fig-button>
-    </hstack>
+    </fig-stack>
   </fig-ai-context>
   <fig-ai-prompt>
     <fig-input-text multiline placeholder="Describe your idea" aria-label="Describe your idea"></fig-input-text>
@@ -214,7 +214,7 @@ const ungroupedLabSections: Section[] = [
       <fig-button variant="ghost" icon aria-label="Add attachment">
         <fig-icon name="add"></fig-icon>
       </fig-button>
-      <hstack>
+      <fig-stack>
         <fig-select value="auto" aria-label="Model">
           <fig-select-options>
             <fig-select-option value="auto">Auto</fig-select-option>
@@ -225,7 +225,7 @@ const ungroupedLabSections: Section[] = [
         <fig-button icon aria-label="Send prompt">
           <fig-icon name="send"></fig-icon>
         </fig-button>
-      </hstack>
+      </fig-stack>
     </fig-footer>
   </fig-ai-prompt>
 </div>`,

@@ -307,11 +307,89 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
         id: "alignment",
         name: "Alignment",
         markup: `<div class="prop-panel">
-  <vstack style="width: 240px;">
+  <fig-stack direction="vertical" style="width: 240px;">
     <fig-button full align="start">Start</fig-button>
     <fig-button full align="center">Center</fig-button>
     <fig-button full align="end">End</fig-button>
-  </vstack>
+  </fig-stack>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "property-button",
+    name: "Property button",
+    group: INPUT_GROUP_NAME,
+    description:
+      "A full-width secondary trigger for opening a typed property editor or flyout.",
+    examples: [
+      {
+        id: "effect",
+        name: "Effect",
+        markup: `<div class="prop-panel">
+  <fig-property-button
+    id="property-effect-trigger"
+    icon="settings"
+    aria-haspopup="dialog"
+    aria-expanded="false"
+    aria-controls="property-effect-editor"
+    onclick="const p=document.getElementById('property-effect-editor');p.open=!p.open;this.setAttribute('aria-expanded',String(p.open));this.toggleAttribute('selected',p.open);"
+  >
+    Drop shadow
+  </fig-property-button>
+  <dialog
+    is="fig-popup"
+    id="property-effect-editor"
+    title="Drop shadow"
+    anchor="#property-effect-trigger"
+    position="left"
+    offset="0 8"
+    closedby="any"
+    theme="dark"
+    onclose="const t=document.getElementById('property-effect-trigger');t?.setAttribute('aria-expanded','false');t?.removeAttribute('selected')"
+    style="width: 15rem;"
+  >
+    <fig-header dialog-header>
+      <fig-select
+        variant="ghost"
+        value="Drop shadow"
+        label="Effect type"
+        options="Drop shadow,Inner shadow,Layer blur,Background blur"
+      ></fig-select>
+      <fig-button variant="ghost" icon close-dialog aria-label="Close effect editor">
+        <fig-icon name="close"></fig-icon>
+      </fig-button>
+    </fig-header>
+    <fig-content>
+      <fig-field>
+        <label>Position</label>
+        <fig-stack direction="vertical" full>
+          <fig-input-number value="0" full>
+            <span slot="prepend">X</span>
+          </fig-input-number>
+          <fig-input-number value="4" full>
+            <span slot="prepend">Y</span>
+          </fig-input-number>
+        </fig-stack>
+      </fig-field>
+      <fig-field>
+        <label>Blur</label>
+        <fig-input-number value="4" min="0" full>
+          <fig-icon name="adjust" slot="prepend"></fig-icon>
+        </fig-input-number>
+      </fig-field>
+      <fig-field>
+        <label>Spread</label>
+        <fig-input-number value="0" full>
+          <fig-icon name="sun" slot="prepend"></fig-icon>
+        </fig-input-number>
+      </fig-field>
+      <fig-field>
+        <label>Color</label>
+        <fig-input-color value="#00000040" text="true" alpha="true" full></fig-input-color>
+      </fig-field>
+    </fig-content>
+  </dialog>
 </div>`,
       },
     ],
@@ -1959,6 +2037,52 @@ ${versionHistoryGroup("August 11", [
         name: "Middle",
         markup: `<div class="prop-panel">
   <fig-truncate position="middle" tail=".mp3" tooltip style="max-width: 50%;">Stateside_feat_Bladee_and_Mechatok.mp3</fig-truncate>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "stack",
+    name: "Stack",
+    group: "Utilities",
+    description:
+      "Layout primitive for horizontal rows, vertical columns, and grids with token-based gaps.",
+    examples: [
+      {
+        id: "horizontal",
+        name: "Horizontal",
+        markup: `<div class="prop-panel">
+  <fig-stack justify="between" full>
+    <label>Layers</label>
+    <fig-button variant="ghost" icon aria-label="Add layer"><fig-icon name="add"></fig-icon></fig-button>
+  </fig-stack>
+</div>`,
+      },
+      {
+        id: "vertical",
+        name: "Vertical",
+        markup: `<div class="prop-panel">
+  <fig-stack direction="vertical" gap="1">
+    <fig-button>First</fig-button>
+    <fig-button variant="secondary">Second</fig-button>
+    <fig-button variant="ghost">Third</fig-button>
+  </fig-stack>
+</div>`,
+      },
+      {
+        id: "grid",
+        name: "Grid",
+        markup: `<div class="prop-panel">
+  <fig-stack direction="grid" columns="4" gap="1" style="width: 160px;">
+    <fig-swatch value="#0D99FF"></fig-swatch>
+    <fig-swatch value="#FFC700"></fig-swatch>
+    <fig-swatch value="#14AE5C"></fig-swatch>
+    <fig-swatch value="#F24822"></fig-swatch>
+    <fig-swatch value="#9747FF"></fig-swatch>
+    <fig-swatch value="#FF24BD"></fig-swatch>
+    <fig-swatch value="#1BC47D"></fig-swatch>
+    <fig-swatch value="#000000"></fig-swatch>
+  </fig-stack>
 </div>`,
       },
     ],

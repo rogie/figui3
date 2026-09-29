@@ -13,6 +13,7 @@ declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
       "fig-button": FigAttrs;
+      "fig-property-button": FigAttrs;
       "fig-switch": FigAttrs;
       "fig-layer": FigAttrs;
       "fig-field": FigAttrs;
@@ -63,7 +64,7 @@ declare module "react" {
         theme?: string;
         [key: string]: any;
       };
-      hstack: FigAttrs;
+      "fig-stack": FigAttrs;
     }
   }
 }

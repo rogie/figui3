@@ -1645,7 +1645,7 @@ export const propkitSections: Section[] = [
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Column Fields</fig-button>
   <dialog is="fig-dialog" title="Contact details" open handle="fig-header" position="center center" data-playground-hide-field style="width: 360px;">
     <fig-content>
-      <hstack align="stretch" style="width: 100%;">
+      <fig-stack align="stretch" style="width: 100%;">
         <fig-field direction="vertical" style="flex: 1; min-width: 0;">
           <label>First name</label>
           <fig-input-text value="Rogie" full></fig-input-text>
@@ -1654,8 +1654,8 @@ export const propkitSections: Section[] = [
           <label>Last name</label>
           <fig-input-text value="King" full></fig-input-text>
         </fig-field>
-      </hstack>
-      <hstack align="stretch" style="width: 100%;">
+      </fig-stack>
+      <fig-stack align="stretch" style="width: 100%;">
         <fig-field direction="vertical" style="flex: 1; min-width: 0;">
           <label>City</label>
           <fig-input-text value="Austin" full></fig-input-text>
@@ -1668,7 +1668,7 @@ export const propkitSections: Section[] = [
             <option>New York</option>
           </fig-dropdown>
         </fig-field>
-      </hstack>
+      </fig-stack>
     </fig-content>
     <fig-footer>
       <fig-button variant="secondary" close-dialog>Cancel</fig-button>
@@ -2732,10 +2732,10 @@ export const propkitSections: Section[] = [
       <p>Animated Melty GIF is a tiny goo machine for turning perfectly respectable artwork into wobbly little puddles. Drop in a frame from <a href="https://www.figma.com/" target="_blank" rel="noreferrer">Figma</a>, crank the wobble, and watch it drip like it just heard a really good bass line.</p>
       <p>It is best for reaction stickers, fake loading states, and sending your design system on a quick vacation to <a href="https://giphy.com/" target="_blank" rel="noreferrer">GIPHY</a>. For maximum scientific accuracy, adjust the slime until it feels like warm cheese but still respects the grid.</p>
       <p>
-        <hstack>
+        <fig-stack>
           <fig-avatar name="Mina Melt"></fig-avatar>
           <span>Made by Mina Melt</span>
-        </hstack>
+        </fig-stack>
       </p>
     </fig-group>
     </fig-content>
@@ -2761,14 +2761,14 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Position</label>
-    <hstack style="width: 100%;">
+    <fig-stack style="width: 100%;">
       <fig-input-number value="50" min="0" max="100" step="1" units="%">
         <span slot="prepend">X</span>
       </fig-input-number>
       <fig-input-number value="50" min="0" max="100" step="1" units="%">
         <span slot="prepend">Y</span>
       </fig-input-number>
-    </hstack>
+    </fig-stack>
   </fig-field>
 </div>`,
       },

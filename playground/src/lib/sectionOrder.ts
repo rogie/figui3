@@ -4,10 +4,19 @@ function compareNames(a: string, b: string): number {
   return a.localeCompare(b, undefined, { sensitivity: "base" });
 }
 
+function compareExampleNames(a: string, b: string): number {
+  const aIsDefault = a.toLowerCase() === "default";
+  const bIsDefault = b.toLowerCase() === "default";
+  if (aIsDefault !== bIsDefault) return aIsDefault ? -1 : 1;
+  return compareNames(a, b);
+}
+
 function sortExamples(section: Section): Section {
   return {
     ...section,
-    examples: [...section.examples].sort((a, b) => compareNames(a.name, b.name)),
+    examples: [...section.examples].sort((a, b) =>
+      compareExampleNames(a.name, b.name),
+    ),
   };
 }
 

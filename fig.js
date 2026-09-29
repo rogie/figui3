@@ -607,7 +607,15 @@ class FigButton extends HTMLElement {
   type;
   #selected;
   #slottedDisabledStates = new WeakMap();
-  #a11yAttributes = ["aria-label", "aria-labelledby", "aria-describedby", "title"];
+  #a11yAttributes = [
+    "aria-label",
+    "aria-labelledby",
+    "aria-describedby",
+    "aria-haspopup",
+    "aria-expanded",
+    "aria-controls",
+    "title",
+  ];
   #boundHandleControlKeydown = this.#handleControlKeydown.bind(this);
   #boundHandleClick = this.#handleClick.bind(this);
   #boundHandleSlotChange = () => {
@@ -867,6 +875,9 @@ class FigButton extends HTMLElement {
       "aria-label",
       "aria-labelledby",
       "aria-describedby",
+      "aria-haspopup",
+      "aria-expanded",
+      "aria-controls",
       "title",
     ];
   }
@@ -904,6 +915,96 @@ class FigButton extends HTMLElement {
   }
 }
 figDefineElement("fig-button", FigButton);
+
+/**
+ * A full-width secondary button for opening a property editor or flyout.
+ * @attr {string} icon - Required fig-icon name shown before the button label.
+ * @attr {boolean} disabled - Whether the trigger is disabled.
+ */
+class FigPropertyButton extends FigButton {
+  #syncingContract = false;
+
+  static get observedAttributes() {
+    return [
+      ...super.observedAttributes,
+      "icon",
+      "variant",
+      "full",
+      "align",
+    ];
+  }
+
+  connectedCallback() {
+    this.#enforceContract();
+    super.connectedCallback();
+    this.#syncIcon();
+  }
+
+  get icon() {
+    return this.getAttribute("icon") || "";
+  }
+
+  set icon(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("icon");
+    } else {
+      this.setAttribute("icon", String(value));
+    }
+  }
+
+  #enforceContract() {
+    if (this.#syncingContract) return;
+    this.#syncingContract = true;
+    if (this.getAttribute("variant") !== "secondary") {
+      this.setAttribute("variant", "secondary");
+    }
+    if (!this.hasAttribute("full") || this.getAttribute("full") === "false") {
+      this.setAttribute("full", "");
+    }
+    if (this.getAttribute("align") !== "start") {
+      this.setAttribute("align", "start");
+    }
+    this.#syncingContract = false;
+  }
+
+  #syncIcon() {
+    const generated = Array.from(
+      this.querySelectorAll(
+        ':scope > fig-icon[slot="prepend"][data-generated="property-button-icon"]',
+      ),
+    );
+    const iconName = this.icon.trim();
+    if (!iconName) {
+      generated.forEach((icon) => icon.remove());
+      return;
+    }
+
+    let icon = generated.shift();
+    generated.forEach((duplicate) => duplicate.remove());
+    if (!icon) {
+      icon = createFigIcon(iconName);
+      icon.setAttribute("slot", "prepend");
+      icon.setAttribute("data-generated", "property-button-icon");
+      this.prepend(icon);
+    } else if (icon.getAttribute("name") !== iconName) {
+      icon.setAttribute("name", iconName);
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name === "icon") {
+      this.#syncIcon();
+      return;
+    }
+    if (name === "variant" || name === "full" || name === "align") {
+      this.#enforceContract();
+      return;
+    }
+    super.attributeChangedCallback(name, oldValue, newValue);
+  }
+}
+figDefineElement("fig-property-button", FigPropertyButton);
 
 /**
  * A custom dropdown/select element.
@@ -18445,6 +18546,59 @@ figDefineElement("fig-button-combo", FigButtonCombo);
 
 class FigInputCombo extends HTMLElement {}
 figDefineElement("fig-input-combo", FigInputCombo);
+
+/**
+ * A layout primitive for horizontal, vertical, and grid stacks.
+ * @element fig-stack
+ * @attr {string} direction - "horizontal" (default), "vertical", or "grid"
+ * @attr {string} gap - Spacer token ("0"–"6", "2-5", "half" → var(--spacer-*)) or any CSS length
+ * @attr {string} align - Cross-axis alignment: "start", "center", "end", "stretch", "baseline"
+ * @attr {string} justify - Main-axis alignment: "start", "center", "end", "between", "around", "stretch"
+ * @attr {boolean} wrap - Wrap items onto multiple lines (flex directions only)
+ * @attr {boolean} full - Fill the parent's width
+ * @attr {string} columns - Grid only: column count (e.g. "3") or a grid-template-columns value
+ * @attr {string} min-width - Grid only: minimum auto-fill column width (default 5rem)
+ */
+class FigStack extends HTMLElement {
+  static get observedAttributes() {
+    return ["gap", "columns", "min-width"];
+  }
+
+  connectedCallback() {
+    this.#syncStyles();
+  }
+
+  attributeChangedCallback() {
+    this.#syncStyles();
+  }
+
+  #syncStyles() {
+    const gap = this.getAttribute("gap")?.trim();
+    this.#setProperty(
+      "--fig-stack-gap",
+      gap && /^(\d+(-5)?|half)$/.test(gap) ? `var(--spacer-${gap})` : gap,
+    );
+
+    const columns = this.getAttribute("columns")?.trim();
+    this.#setProperty(
+      "--fig-stack-columns",
+      columns && /^\d+$/.test(columns)
+        ? `repeat(${columns}, minmax(0, 1fr))`
+        : columns,
+    );
+
+    this.#setProperty(
+      "--fig-stack-min-width",
+      this.getAttribute("min-width")?.trim(),
+    );
+  }
+
+  #setProperty(name, value) {
+    if (value) this.style.setProperty(name, value);
+    else this.style.removeProperty(name);
+  }
+}
+figDefineElement("fig-stack", FigStack);
 
 
 

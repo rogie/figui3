@@ -26,6 +26,103 @@ test.describe("fig.js component contracts", () => {
     expect(missing).toEqual([]);
   });
 
+  test("fig-property-button enforces its surface and syncs its icon and trigger semantics", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="property-button-container" style="width:240px">
+          <fig-property-button
+            id="property-button"
+            icon="settings"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls="property-editor"
+          >
+            Effects
+          </fig-property-button>
+        </div>
+      `;
+      const property = root.querySelector(
+        "#property-button",
+      ) as HTMLElement & { icon: string };
+      const native = property.shadowRoot?.querySelector(
+        "button",
+      ) as HTMLButtonElement;
+      let clicks = 0;
+      property.addEventListener("click", () => clicks++);
+      native.click();
+      native.focus();
+
+      property.icon = "adjust";
+      property.setAttribute("variant", "primary");
+      property.removeAttribute("full");
+      property.setAttribute("align", "center");
+
+      const icon = property.querySelector(
+        ':scope > fig-icon[slot="prepend"][data-generated="property-button-icon"]',
+      );
+      const styles = getComputedStyle(property);
+      const beforeDisabled = {
+        clicks,
+        focused:
+          property.matches(":focus") ||
+          property.shadowRoot?.activeElement === native,
+        variant: property.getAttribute("variant"),
+        full: property.hasAttribute("full"),
+        align: property.getAttribute("align"),
+        icon: icon?.getAttribute("name"),
+        iconCount: property.querySelectorAll(
+          ':scope > fig-icon[data-generated="property-button-icon"]',
+        ).length,
+        width: Math.round(property.getBoundingClientRect().width),
+        boxShadow: styles.boxShadow,
+        paddingLeft: styles.paddingLeft,
+        paddingRight: styles.paddingRight,
+        flexGrow: styles.flexGrow,
+        flexBasis: styles.flexBasis,
+        hasPopup: native.getAttribute("aria-haspopup"),
+        expanded: native.getAttribute("aria-expanded"),
+        controls: native.getAttribute("aria-controls"),
+      };
+
+      property.setAttribute("selected", "");
+      const selectedBoxShadow = getComputedStyle(property).boxShadow;
+      property.setAttribute("disabled", "");
+      native.click();
+      return {
+        ...beforeDisabled,
+        selectedBoxShadow,
+        clicksAfterDisabled: clicks,
+        disabled: native.disabled,
+      };
+    });
+
+    expect(state).toMatchObject({
+      clicks: 1,
+      focused: true,
+      variant: "secondary",
+      full: true,
+      align: "start",
+      icon: "adjust",
+      iconCount: 1,
+      width: 240,
+      paddingLeft: "0px",
+      paddingRight: "7px",
+      flexGrow: "1",
+      flexBasis: "auto",
+      hasPopup: "dialog",
+      expanded: "false",
+      controls: "property-editor",
+      clicksAfterDisabled: 1,
+      disabled: true,
+    });
+    expect(state.boxShadow).not.toBe("none");
+    expect(state.selectedBoxShadow).toBe("none");
+  });
+
   test("fig.js alone does not register fig-select", async ({ page }) => {
     const registered = await page.evaluate(() => Boolean(customElements.get("fig-select")));
     expect(registered).toBe(false);
@@ -1071,7 +1168,7 @@ test.describe("AI lab styling components", () => {
               <fig-button variant="ghost" icon aria-label="Add attachment">
                 <fig-icon name="add"></fig-icon>
               </fig-button>
-              <hstack>
+              <fig-stack>
                 <fig-select value="auto" aria-label="Model">
                   <fig-select-options>
                     <fig-select-option value="auto">Auto</fig-select-option>
@@ -1081,7 +1178,7 @@ test.describe("AI lab styling components", () => {
                 <fig-button icon aria-label="Send prompt">
                   <fig-icon name="send"></fig-icon>
                 </fig-button>
-              </hstack>
+              </fig-stack>
             </fig-footer>
           </fig-ai-prompt>
         </div>
@@ -1198,10 +1295,10 @@ test.describe("AI lab styling components", () => {
               <fig-attachment name="reference.png"></fig-attachment>
               <fig-attachment name="brief.pdf"></fig-attachment>
             </fig-attachments>
-            <hstack>
+            <fig-stack>
               <fig-icon name="checkmark"></fig-icon>
               <span>Indexed 24 files</span>
-            </hstack>
+            </fig-stack>
           </fig-ai-context>
           <fig-ai-prompt>
             <fig-input-text multiline aria-label="Describe your idea"></fig-input-text>
@@ -5462,22 +5559,22 @@ test.describe("content layout", () => {
     expect(padding.none).toEqual({ top: "0px", left: "0px", right: "0px" });
   });
 
-  test("adjacent hstack fields compact only their shared gutters", async ({
+  test("adjacent horizontal fig-stack fields compact only their shared gutters", async ({
     page,
   }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <hstack id="paired-fields" style="width:400px">
+        <fig-stack id="paired-fields" style="width:400px">
           <fig-field direction="vertical" style="flex:1"><label>First</label><fig-input-text full></fig-input-text></fig-field>
           <fig-field direction="vertical" style="flex:1"><label>Last</label><fig-input-text full></fig-input-text></fig-field>
-        </hstack>
-        <hstack id="mixed-fields" style="width:400px">
+        </fig-stack>
+        <fig-stack id="mixed-fields" style="width:400px">
           <fig-field direction="vertical" style="flex:1"><label>First</label><fig-input-text full></fig-input-text></fig-field>
           <span>Between</span>
           <fig-field direction="vertical" style="flex:1"><label>Last</label><fig-input-text full></fig-input-text></fig-field>
-        </hstack>
+        </fig-stack>
         <fig-field id="standalone-field" direction="vertical" style="width:200px">
           <label>Name</label><fig-input-text full></fig-input-text>
         </fig-field>
@@ -5515,6 +5612,48 @@ test.describe("content layout", () => {
     expect(gutters.mixedLast.at(-1)).toBeCloseTo(16, 5);
     expect(gutters.standalone[0]).toBeCloseTo(16, 5);
     expect(gutters.standalone.at(-1)).toBeCloseTo(16, 5);
+  });
+
+  test("fig-stack lays out horizontal, vertical, and grid directions", async ({
+    page,
+  }) => {
+    const layout = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-stack id="h"><span>A</span><span>B</span></fig-stack>
+        <fig-stack id="v" direction="vertical" gap="4" align="center"><span>A</span></fig-stack>
+        <fig-stack id="g" direction="grid" columns="3" gap="0" style="width:300px">
+          <span>A</span><span>B</span><span>C</span>
+        </fig-stack>
+        <fig-stack id="g2" direction="grid" columns="80px 1fr"><span>A</span></fig-stack>
+      `;
+      const style = (id: string) => getComputedStyle(document.getElementById(id)!);
+      const h = style("h");
+      const v = style("v");
+      const g = style("g");
+      return {
+        defined: !!customElements.get("fig-stack"),
+        h: { display: h.display, direction: h.flexDirection, align: h.alignItems, gap: h.columnGap },
+        v: { direction: v.flexDirection, align: v.alignItems, gap: v.rowGap },
+        g: { display: g.display, columns: g.gridTemplateColumns },
+        g2: style("g2").gridTemplateColumns.split(" ")[0],
+      };
+    });
+
+    expect(layout.defined).toBe(true);
+    expect(layout.h).toEqual({ display: "flex", direction: "row", align: "center", gap: "8px" });
+    expect(layout.v).toEqual({ direction: "column", align: "center", gap: "24px" });
+    expect(layout.g.display).toBe("grid");
+    expect(layout.g.columns).toBe("100px 100px 100px");
+    expect(layout.g2).toBe("80px");
+
+    const cleared = await page.evaluate(() => {
+      const v = document.getElementById("v")!;
+      v.removeAttribute("gap");
+      return v.style.getPropertyValue("--fig-stack-gap");
+    });
+    expect(cleared).toBe("");
   });
 });
 

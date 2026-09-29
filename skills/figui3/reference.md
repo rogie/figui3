@@ -16,6 +16,14 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 - `size`: `""`, `large`, `compact`
 - `selected`, `disabled`, `icon` (presence)
 
+## `fig-property-button`
+
+- `icon`: required `fig-icon` name
+- `selected`, `disabled`
+- `aria-haspopup`, `aria-expanded`, `aria-controls`
+- Fixed secondary, full-width, start-aligned presentation
+- Trigger only; consumers manage the popup/dialog
+
 ## `fig-input-text`
 
 - `type`: `text`, `email`, `password`, `search`, `url`
