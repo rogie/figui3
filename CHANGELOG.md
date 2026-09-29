@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.2.3]
+
+### Fixed
+
+- Secondary button and input combos keep one outer border and divider when controls are wrapped in `fig-tooltip`.
+
+### Changed
+
+- FigUI3 playground Input Combo Fields example uses `fig-input-combo full`.
+
 ## [9.2.2]
 
 ### Added

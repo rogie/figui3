@@ -963,7 +963,7 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
         id: "fields",
         name: "Fields",
         markup: `<div class="prop-panel">
-  <fig-input-combo>
+  <fig-input-combo full>
     <fig-input-number value="0">
       <span slot="prepend">X</span>
     </fig-input-number>

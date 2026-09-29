@@ -1200,25 +1200,29 @@ fig-input-combo {
 }
 
 :is(.fig-button-combo, fig-button-combo, .fig-input-combo, fig-input-combo):not(
-    :has(> :not([variant="secondary"]))
-  ) {
+    :has(> :not([variant="secondary"]):not(fig-tooltip))
+  ):not(:has(> fig-tooltip > :not([variant="secondary"]))) {
   gap: 0;
   border-radius: var(--radius-medium);
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 
-  > [variant="secondary"] {
+  > [variant="secondary"],
+  > fig-tooltip > [variant="secondary"] {
     box-shadow: none;
   }
 
-  > [variant="secondary"] + [variant="secondary"] {
-    box-shadow: none;
-    background-image: linear-gradient(
-      var(--figma-color-bordertranslucent),
-      var(--figma-color-bordertranslucent)
-    );
-    background-position: left 1px;
-    background-repeat: no-repeat;
-    background-size: 1px calc(100% - 2px);
+  > :is([variant="secondary"], fig-tooltip:has(> [variant="secondary"])) {
+    + [variant="secondary"],
+    + fig-tooltip > [variant="secondary"] {
+      box-shadow: none;
+      background-image: linear-gradient(
+        var(--figma-color-bordertranslucent),
+        var(--figma-color-bordertranslucent)
+      );
+      background-position: left 1px;
+      background-repeat: no-repeat;
+      background-size: 1px calc(100% - 2px);
+    }
   }
 }
 

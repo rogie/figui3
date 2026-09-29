@@ -191,6 +191,67 @@ test.describe("fig.js component contracts", () => {
     expect(styles.lastTopLeftRadius).toBe("0px");
   });
 
+  test("secondary combo controls keep one outer border inside fig-tooltip", async ({
+    page,
+  }) => {
+    const styles = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-combo id="tooltip-combo">
+          <fig-tooltip text="Effect">
+            <fig-property-button icon="settings" selected>Drop shadow</fig-property-button>
+          </fig-tooltip>
+          <fig-tooltip text="Remove">
+            <fig-button variant="secondary" icon aria-label="Remove effect">
+              <fig-icon name="close"></fig-icon>
+            </fig-button>
+          </fig-tooltip>
+        </fig-input-combo>
+        <fig-input-combo id="mixed-combo">
+          <fig-property-button icon="settings" selected>Drop shadow</fig-property-button>
+          <fig-tooltip text="Remove">
+            <fig-button variant="secondary" icon aria-label="Remove effect">
+              <fig-icon name="close"></fig-icon>
+            </fig-button>
+          </fig-tooltip>
+        </fig-input-combo>
+      `;
+      const read = (id: string) => {
+        const combo = root.querySelector(`#${id}`) as HTMLElement;
+        const controls = [...combo.querySelectorAll("[variant='secondary']")] as HTMLElement[];
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        const comboStyle = getComputedStyle(combo);
+        const firstStyle = getComputedStyle(first);
+        const lastStyle = getComputedStyle(last);
+        return {
+          gap: comboStyle.gap,
+          outerShadow: comboStyle.boxShadow,
+          firstShadow: firstStyle.boxShadow,
+          lastShadow: lastStyle.boxShadow,
+          lastBackgroundImage: lastStyle.backgroundImage,
+          firstTopRightRadius: firstStyle.borderTopRightRadius,
+          lastTopLeftRadius: lastStyle.borderTopLeftRadius,
+        };
+      };
+      return {
+        wrapped: read("tooltip-combo"),
+        mixed: read("mixed-combo"),
+      };
+    });
+
+    for (const combo of [styles.wrapped, styles.mixed]) {
+      expect(combo.gap).toBe("0px");
+      expect(combo.outerShadow).not.toBe("none");
+      expect(combo.firstShadow).toBe("none");
+      expect(combo.lastShadow).toBe("none");
+      expect(combo.lastBackgroundImage).not.toBe("none");
+      expect(combo.firstTopRightRadius).toBe("0px");
+      expect(combo.lastTopLeftRadius).toBe("0px");
+    }
+  });
+
   test("fig.js alone does not register fig-select", async ({ page }) => {
     const registered = await page.evaluate(() => Boolean(customElements.get("fig-select")));
     expect(registered).toBe(false);
