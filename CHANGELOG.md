@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.3.0]
+
+### Changed
+
+- Merged all PropsKit examples into the FigUI3 playground with redirects for old `/propskit` routes; Lab now lives at `/lab`.
+- Reorganized playground navigation into focused groups and ordered inputs from common to specialized controls.
+- `fig-reorder` uses the secondary background color for the actively dragged item.
+- Refined migrated examples with clearer names, full-width input fields, and simpler dialog content.
+
+### Fixed
+
+- Prevented `fig-property-button` from receiving generic leading-SVG padding.
+
 ## [9.2.3]
 
 ### Fixed

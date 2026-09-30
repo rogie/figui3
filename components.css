@@ -1120,7 +1120,7 @@ fig-property-button {
       stroke: currentColor;
     }
   }
-  &:has(svg:first-child):not([icon]) {
+  &:not(fig-property-button):has(svg:first-child):not([icon]) {
     padding-left: var(--spacer-1);
   }
 

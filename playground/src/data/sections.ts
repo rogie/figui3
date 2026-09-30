@@ -12,6 +12,7 @@ export interface Example {
   markup: string;
   title?: string;
   description?: string;
+  fieldControls?: boolean;
 }
 
 export interface Section {
@@ -22,7 +23,7 @@ export interface Section {
   group?: string;
 }
 
-export const propkitSections: Section[] = [
+export const legacyPropsKitSections: Section[] = [
   {
     id: "atom-tabs",
     name: "Tabs",
@@ -1623,7 +1624,7 @@ export const propkitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open About</fig-button>
   <dialog is="fig-dialog" title="About PropsKit" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
-    <fig-content padding>
+    <fig-content>
       <p>PropsKit is a collection of composable property controls for building compact, Figma-style interfaces with FigUI3.</p>
     </fig-content>
   </dialog>
@@ -3156,5 +3157,3 @@ export const propkitSections: Section[] = [
     ],
   },
 ];
-
-export const sections = propkitSections;

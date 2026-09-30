@@ -81,6 +81,80 @@ test.describe("fig-reorder", () => {
     expect(result.order).toEqual(["item-b", "item-c", "item-a"]);
   });
 
+  test("uses the secondary background while dragging", async ({ page }) => {
+    const colors = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-reorder id="reorder-host">
+          <div id="item-a">A</div>
+          <div id="item-b">B</div>
+        </fig-reorder>
+        <div id="secondary-probe" style="background: var(--figma-color-bg-secondary)"></div>
+        <div id="selected-probe" style="background: var(--figma-color-bg-selected)"></div>
+      `;
+
+      await customElements.whenDefined("fig-reorder");
+      const item = document.querySelector("#item-a");
+      if (!(item instanceof HTMLElement)) throw new Error("Missing item");
+      const rect = item.getBoundingClientRect();
+      item.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+          button: 0,
+          pointerId: 1,
+          pointerType: "mouse",
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.bottom + 20,
+          button: 0,
+          pointerId: 1,
+          pointerType: "mouse",
+        }),
+      );
+
+      const secondaryProbe = document.querySelector("#secondary-probe");
+      const selectedProbe = document.querySelector("#selected-probe");
+      if (
+        !(secondaryProbe instanceof HTMLElement) ||
+        !(selectedProbe instanceof HTMLElement)
+      ) {
+        throw new Error("Missing color probes");
+      }
+      const result = {
+        dragging: item.classList.contains("dragging"),
+        item: getComputedStyle(item).backgroundColor,
+        secondary: getComputedStyle(secondaryProbe).backgroundColor,
+        selected: getComputedStyle(selectedProbe).backgroundColor,
+      };
+
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.bottom + 20,
+          button: 0,
+          pointerId: 1,
+          pointerType: "mouse",
+        }),
+      );
+      return result;
+    });
+
+    expect(colors.dragging).toBe(true);
+    expect(colors.item).toBe(colors.secondary);
+    expect(colors.item).not.toBe(colors.selected);
+  });
+
   test("drags from nested surfaces but preserves nested drag controls", async ({
     page,
   }) => {

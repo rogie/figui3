@@ -2,10 +2,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import SandboxApp from "./SandboxApp";
 import TestApp from "./TestApp";
+import { getPropsKitMigration } from "./data/propkitMigration";
 import "./App.css";
 
 type PlaygroundMode =
-  | "propkit"
   | "figui3"
   | "lab"
   | "sandbox"
@@ -20,16 +20,8 @@ function normalizePathname(pathname: string): string {
 
 function resolveModeFromPath(pathname: string): PlaygroundMode {
   const normalized = normalizePathname(pathname);
-  if (normalized === "/propkit/lab" || normalized === "/propskit/lab") {
+  if (normalized === "/lab" || normalized.startsWith("/lab/")) {
     return "lab";
-  }
-  if (
-    normalized === "/propkit" ||
-    normalized.startsWith("/propkit/") ||
-    normalized === "/propskit" ||
-    normalized.startsWith("/propskit/")
-  ) {
-    return "propkit";
   }
   if (normalized === "/sandbox" || normalized.startsWith("/sandbox/")) {
     return "sandbox";
@@ -41,11 +33,6 @@ function resolveModeFromPath(pathname: string): PlaygroundMode {
 }
 
 function applyTitleForMode(mode: PlaygroundMode) {
-  if (mode === "propkit") {
-    document.title =
-      "PropsKit playground: A framework-agnostic, opinionated set of property controls for Figma plugins";
-    return;
-  }
   if (mode === "lab") {
     document.title = "Lab playground: Experimental FigUI3 components";
     return;
@@ -62,6 +49,16 @@ function applyTitleForMode(mode: PlaygroundMode) {
     "FigUI3 playground: A framework-agnostic set of Figma web components";
 }
 
+function migratePropsKitHash(hash: string): string {
+  const route = hash.replace(/^#/, "");
+  const [sectionId, exampleId] = route.split("/");
+  if (!sectionId || !exampleId) return hash;
+  const migration = getPropsKitMigration(sectionId, exampleId);
+  return migration
+    ? `#${migration.sectionId}/${migration.exampleId}`
+    : hash;
+}
+
 function ensureSupportedRoute() {
   const pathname = window.location.pathname;
   const normalized = normalizePathname(pathname);
@@ -72,23 +69,35 @@ function ensureSupportedRoute() {
     return;
   }
 
-  if (normalized === "/lab" || normalized.startsWith("/lab/")) {
-    const migratedPath = normalized.replace(/^\/lab(?=\/|$)/, "/propskit/lab");
-    window.history.replaceState(null, "", `${migratedPath}${search}${hash}`);
+  if (
+    normalized === "/propkit/lab" ||
+    normalized.startsWith("/propkit/lab/") ||
+    normalized === "/propskit/lab" ||
+    normalized.startsWith("/propskit/lab/")
+  ) {
+    window.history.replaceState(null, "", `/lab${search}${hash}`);
     return;
   }
 
-  if (normalized === "/propkit" || normalized.startsWith("/propkit/")) {
-    const migratedPath = normalized.replace(/^\/propkit(?=\/|$)/, "/propskit");
-    window.history.replaceState(null, "", `${migratedPath}${search}${hash}`);
+  if (
+    normalized === "/propkit" ||
+    normalized.startsWith("/propkit/") ||
+    normalized === "/propskit" ||
+    normalized.startsWith("/propskit/")
+  ) {
+    window.history.replaceState(
+      null,
+      "",
+      `/figui3${search}${migratePropsKitHash(hash)}`,
+    );
     return;
   }
 
   const supported =
     normalized === "/figui3" ||
     normalized.startsWith("/figui3/") ||
-    normalized === "/propskit" ||
-    normalized.startsWith("/propskit/") ||
+    normalized === "/lab" ||
+    normalized.startsWith("/lab/") ||
     normalized === "/sandbox" ||
     normalized.startsWith("/sandbox/") ||
     normalized === "/tests" ||
@@ -122,7 +131,7 @@ const bootstrap = async () => {
     if (mode === "lab") {
       await import("../../fig-lab.css");
     }
-    if (mode === "lab" || mode === "propkit") {
+    if (mode === "lab") {
       // @ts-expect-error runtime side-effect import for lab component registration
       await import("../../fig-lab.js");
     }

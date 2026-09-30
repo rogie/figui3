@@ -16,7 +16,6 @@ import {
   hasURLParams,
   applyParamsToMarkup,
 } from "./lib/urlState";
-import { propkitSections } from "./data/sections";
 import { figui3Sections } from "./data/figui3Sections";
 import { labSections } from "./data/labSections";
 import type { Section } from "./data/sections";
@@ -58,13 +57,12 @@ function buildExampleDescription(
 }
 
 interface Props {
-  mode: "propkit" | "figui3" | "lab";
+  mode: "figui3" | "lab";
 }
 
 function sectionsForMode(mode: Props["mode"]): Section[] {
   if (mode === "lab") return labSections;
-  if (mode === "figui3") return figui3Sections;
-  return propkitSections;
+  return figui3Sections;
 }
 
 function getRequiredCustomElements(markup: string): string[] {
@@ -164,14 +162,12 @@ function filterAvailableSections(
 
 function titleForMode(mode: Props["mode"]): string {
   if (mode === "lab") return "Lab";
-  if (mode === "figui3") return "FigUI3";
-  return "PropsKit";
+  return "FigUI3";
 }
 
 function basePathForMode(mode: Props["mode"]): string {
-  if (mode === "figui3") return "/figui3";
-  if (mode === "lab") return "/propskit/lab";
-  return "/propskit";
+  if (mode === "lab") return "/lab";
+  return "/figui3";
 }
 
 export default function App({ mode }: Props) {
@@ -397,9 +393,7 @@ export default function App({ mode }: Props) {
               key={`${activeSectionId}/${activeExampleId}`}
               example={activeExample}
               markup={renderedMarkup}
-              onPersistImageSource={
-                mode === "figui3" || mode === "lab" ? handlePersistImageSource : undefined
-              }
+              onPersistImageSource={handlePersistImageSource}
               onPersistDialogOpenState={handlePersistDialogOpenState}
               onPersistSwitchCheckedState={handlePersistSwitchCheckedState}
               onPersistControlValue={handlePersistControlValue}
@@ -414,10 +408,13 @@ export default function App({ mode }: Props) {
             resetKey={activeExampleKey}
             markup={renderedMarkup}
             onMarkupChange={handleMarkupChange}
-            showFieldControls={mode === "propkit" || mode === "lab" || activeSectionId === "field"}
-            includeFullControl={mode === "figui3" || mode === "lab"}
+            showFieldControls={
+              activeExample?.fieldControls ??
+              renderedMarkup.includes("<fig-field")
+            }
+            includeFullControl
           />
-          {((mode === "propkit" || mode === "lab" || mode === "figui3") && activeSectionId !== "skeleton") && (
+          {activeSectionId !== "skeleton" && (
             <EventView key={`${activeSectionId}/${activeExampleId}`} />
           )}
         </div>

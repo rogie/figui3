@@ -76,7 +76,7 @@ Agent skills ship in `.cursor/skills/` (included in the npm package):
 
 - `figui3` — core `fig.js` components
 - `fig-editor` — `fig-select` and `fig-fill-picker`
-- `propkit` — `/propskit` property-row composition
+- `propkit` — property-row composition; examples are included in `/figui3`
 
 Minimal example:
 
@@ -1780,7 +1780,7 @@ git clone https://github.com/rogie/figui3.git
 cd figui3
 bun install
 bun dev                # Component docs at http://localhost:3000
-npm run dev:playground # Playground at http://localhost:5173 (/figui3, /propkit, /sandbox)
+npm run dev:playground # Playground at http://localhost:6600 (/figui3, /lab, /sandbox)
 npm run build          # Build minified dist/ (JS + CSS)
 npm run build:css      # Build minified CSS only
 ```
@@ -1809,8 +1809,8 @@ import "@rogieking/figui3/src/fig.css";  // unminified source
 
 The playground is the fastest way to explore and validate component markup:
 
-- **`/figui3`** — component examples with attribute controls
-- **`/propkit`** — property panel patterns
+- **`/figui3`** — component examples and property panel patterns with attribute controls
+- **`/lab`** — experimental component examples
 - **`/sandbox`** — styled React sample app
 
 ---

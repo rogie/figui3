@@ -1,5 +1,5 @@
-import { propkitSections, type Section } from "./sections";
-import { buildFigIconExampleMarkup } from "../lib/attributeParser";
+import { legacyPropsKitSections, type Section } from "./sections";
+import { mergePropsKitSections } from "./propkitMigration";
 import { landscapeUrl } from "../lib/images";
 import { DEMO_FILL_VIDEO, videoExampleAttrs } from "../lib/videos";
 
@@ -7,6 +7,16 @@ const randomAvatarId = Math.floor(Math.random() * 70) + 1;
 
 function avatarServiceUrl(size: number): string {
   return `https://i.pravatar.cc/${size}?img=${randomAvatarId}`;
+}
+
+function buildFigIconExampleMarkup(
+  set: "16" | "24",
+  name = set === "16" ? "chevron" : "add",
+): string {
+  const sizeAttr = set === "16" ? ' size="small"' : "";
+  return `<div class="prop-panel">
+  <fig-icon name="${name}"${sizeAttr} data-playground-hide-field data-playground-hide-attrs="name,size,color" data-playground-icon-set="${set}"></fig-icon>
+</div>`;
 }
 
 function fillPickerShaderSlotMarkup(): string {
@@ -96,16 +106,16 @@ ${images}
 </div>`;
 }
 
-const propkitChooserSection = propkitSections.find(
+const propkitChooserSection = legacyPropsKitSections.find(
   (section) => section.id === "chooser",
 );
-const propkitColorSection = propkitSections.find(
+const propkitColorSection = legacyPropsKitSections.find(
   (section) => section.id === "color",
 );
-const propkitPaletteSection = propkitSections.find(
+const propkitPaletteSection = legacyPropsKitSections.find(
   (section) => section.id === "palette",
 );
-const propkitGradientSection = propkitSections.find(
+const propkitGradientSection = legacyPropsKitSections.find(
   (section) => section.id === "gradient",
 );
 const INPUT_GROUP_NAME = "Inputs";
@@ -278,7 +288,7 @@ ${body}
 </div>`;
 }
 
-export const figui3Sections: Section[] = clusterPlaygroundGroups([
+const figui3BaseSections: Section[] = clusterPlaygroundGroups([
   {
     id: "button",
     name: "Button",
@@ -422,7 +432,7 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   {
     id: "tooltip",
     name: "Tooltip",
-    group: "Core components",
+    group: "Dialogs, Menus & Popups",
     description: "Contextual tooltip with hover or click trigger behavior.",
     examples: [
       {
@@ -448,7 +458,7 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   {
     id: "dialog",
     name: "Dialog",
-    group: "Core components",
+    group: "Dialogs, Menus & Popups",
     description: "Modal dialog surface with optional drag and positioning.",
     examples: [
       {
@@ -973,18 +983,6 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   </fig-input-combo>
 </div>`,
       },
-      {
-        id: "property-action",
-        name: "Property action",
-        markup: `<div class="prop-panel">
-  <fig-input-combo>
-    <fig-property-button icon="settings">Drop shadow</fig-property-button>
-    <fig-button variant="secondary" icon aria-label="Remove effect">
-      <fig-icon name="close"></fig-icon>
-    </fig-button>
-  </fig-input-combo>
-</div>`,
-      },
     ],
   },
   {
@@ -1337,7 +1335,7 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   {
     id: "tabs",
     name: "Tabs",
-    group: "Core components",
+    group: "Navigation & Containers",
     description:
       "Tab interfaces for organizing grouped content panes with roving focus and tab panel associations.",
     examples: [
@@ -1752,7 +1750,7 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   {
     id: "popup",
     name: "Popup",
-    group: "Core components",
+    group: "Dialogs, Menus & Popups",
     description:
       "Anchored popup surface for contextual floating content. Try clicking then dragging the anchor.",
     examples: [
@@ -1840,7 +1838,7 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   {
     id: "spinner",
     name: "Spinner",
-    group: "Core components",
+    group: "Load indicators",
     description:
       "Loading spinner indicator for async operations with status semantics and a default accessible label.",
     examples: [
@@ -1856,7 +1854,7 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   {
     id: "shimmer",
     name: "Shimmer",
-    group: "Core components",
+    group: "Load indicators",
     description:
       "Animated loading placeholder skeleton that stays hidden from assistive tech unless explicitly named.",
     examples: [
@@ -1902,7 +1900,7 @@ export const figui3Sections: Section[] = clusterPlaygroundGroups([
   {
     id: "menu",
     name: "Menu",
-    group: "Core components",
+    group: "Dialogs, Menus & Popups",
     description:
       "Context menu triggered by a button with ARIA trigger state, roving item focus, Escape close, and disabled item handling. fig-menu-item also works as a list row in fig-popup.",
     examples: [
@@ -2050,7 +2048,6 @@ ${versionHistoryGroup("August 11", [
       },
     ],
   },
-  ...propkitSections.filter((section) => section.group === "Containers"),
   {
     id: "color-tip",
     name: "Color Tip",
@@ -2466,3 +2463,6 @@ ${versionHistoryGroup("August 11", [
     ],
   },
 ]);
+
+export const figui3Sections: Section[] =
+  mergePropsKitSections(figui3BaseSections);

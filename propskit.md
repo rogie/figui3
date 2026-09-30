@@ -17,6 +17,8 @@ The final result must include:
 
 Use the FigUI3 property-panel pattern as the source of truth: `fig-group` sections containing `fig-field` rows with one primary control per row.
 
+PropsKit examples are included with the component examples in the `/figui3` playground.
+
 ## Install
 
 PropsKit uses `@rogieking/figui3`.

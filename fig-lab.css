@@ -504,7 +504,7 @@ fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reord
 }
 
 fig-reorder > .dragging {
-  background-color: var(--figma-color-bg-selected);
+  background-color: var(--figma-color-bg-secondary);
 }
 
 [data-reorder-handle] {
