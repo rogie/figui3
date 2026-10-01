@@ -1934,31 +1934,58 @@ figDefineElement("fig-tooltip", FigTooltip);
 
 /* Text Truncation */
 class FigTruncate extends HTMLElement {
-  static observedAttributes = ["position", "tail"];
+  static observedAttributes = ["position", "tail", "tooltip"];
 
   #originalText = null;
   #boundEnter = null;
   #boundLeave = null;
+  #observer = null;
 
   connectedCallback() {
     this.#originalText = this.textContent;
+    this.#observer ??= new MutationObserver(() => {
+      this.#originalText = this.textContent;
+      this.#render();
+    });
+    this.#observe();
     figNextFrame(this, () => {
       this.#render();
+      this.#teardownTooltip();
       this.#setupTooltip();
     });
   }
 
   disconnectedCallback() {
+    this.#observer?.disconnect();
     this.#teardownTooltip();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     if (this.#originalText === null) return;
+    if (name === "tooltip") {
+      this.#teardownTooltip();
+      if (this.isConnected) this.#setupTooltip();
+      return;
+    }
     this.#render();
   }
 
+  #observe() {
+    this.#observer?.observe(this, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  }
+
   #render() {
+    this.#observer?.disconnect();
+    this.#renderContent();
+    if (this.isConnected) this.#observe();
+  }
+
+  #renderContent() {
     const position = this.getAttribute("position") || "right";
     const text = this.#originalText || "";
     if (position === "middle") {
@@ -1991,7 +2018,7 @@ class FigTruncate extends HTMLElement {
     )
       return;
     this.#boundEnter = () => {
-      if (this.scrollWidth <= this.clientWidth) return;
+      if (!this.#isTruncated()) return;
       FigTooltip.show(this, this.#originalText);
     };
     this.#boundLeave = () => {
@@ -2001,11 +2028,21 @@ class FigTruncate extends HTMLElement {
     this.addEventListener("pointerleave", this.#boundLeave);
   }
 
+  #isTruncated() {
+    const overflows = (el) => el.scrollWidth > el.clientWidth;
+    if (overflows(this)) return true;
+    return [...this.querySelectorAll(":scope > .start, :scope > .end")].some(
+      overflows,
+    );
+  }
+
   #teardownTooltip() {
     if (this.#boundEnter)
       this.removeEventListener("pointerenter", this.#boundEnter);
     if (this.#boundLeave)
       this.removeEventListener("pointerleave", this.#boundLeave);
+    this.#boundEnter = null;
+    this.#boundLeave = null;
     FigTooltip.hide(this);
   }
 }
@@ -18698,23 +18735,29 @@ figDefineElement("fig-skeleton", FigSkeleton);
 
 // FigGroup
 class FigGroup extends HTMLElement {
-  static observedAttributes = ["name", "collapsible", "open"];
+  static observedAttributes = ["name", "collapsible", "open", "compact"];
 
   #header = null;
   #chevron = null;
+  #toggle = null;
+  #compactHeader = null;
+  #compactHeaderValue = null;
 
   connectedCallback() {
     this.#render();
   }
 
   disconnectedCallback() {
-    if (this.#chevron) {
-      this.#chevron.removeEventListener("click", this.#handleToggle);
-    }
+    this.#removeToggleListeners();
+  }
+
+  #removeToggleListeners() {
+    this.#chevron?.removeEventListener("click", this.#handleToggle);
+    this.#toggle?.removeEventListener("click", this.#handleToggle);
+    this.#toggle?.removeEventListener("keydown", this.#handleToggleKeyDown);
     if (this.#header) {
       this.#header.removeEventListener("click", this.#handleToggle);
-      this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
-      this.#header.querySelector("h3")?.removeEventListener("click", this.#handleToggle);
+      this.#header.removeEventListener("keydown", this.#handleToggleKeyDown);
     }
   }
 
@@ -18722,7 +18765,7 @@ class FigGroup extends HTMLElement {
     if (oldValue === newValue) return;
     if (!this.isConnected) return;
     if (name === "open") {
-      this.#header?.setAttribute("aria-expanded", String(this.open));
+      this.#syncExpanded();
       return;
     }
     this.#render();
@@ -18740,7 +18783,7 @@ class FigGroup extends HTMLElement {
     } else {
       this.setAttribute("open", "false");
     }
-    this.#header?.setAttribute("aria-expanded", String(!!value));
+    this.#syncExpanded();
     if (was !== !!value) {
       this.dispatchEvent(
         new CustomEvent("openchange", {
@@ -18751,12 +18794,46 @@ class FigGroup extends HTMLElement {
     }
   }
 
+  #syncExpanded() {
+    if (this.hasAttribute("collapsible")) {
+      this.#toggle?.setAttribute("aria-expanded", String(this.open));
+    } else {
+      this.#toggle?.removeAttribute("aria-expanded");
+    }
+  }
+
+  #restoreHeaderCompact() {
+    if (!this.#compactHeader) return;
+    if (this.#compactHeaderValue === null) {
+      this.#compactHeader.removeAttribute("compact");
+    } else {
+      this.#compactHeader.setAttribute("compact", this.#compactHeaderValue);
+    }
+    this.#compactHeader = null;
+    this.#compactHeaderValue = null;
+  }
+
+  #syncHeaderCompact() {
+    const compact =
+      this.hasAttribute("compact") && this.getAttribute("compact") !== "false";
+    if (!compact) {
+      this.#restoreHeaderCompact();
+      return;
+    }
+    if (this.#compactHeader !== this.#header) {
+      this.#restoreHeaderCompact();
+      this.#compactHeader = this.#header;
+      this.#compactHeaderValue = this.#header?.getAttribute("compact") ?? null;
+    }
+    this.#header?.setAttribute("compact", "");
+  }
+
   #handleToggle = (e) => {
     e.stopPropagation();
     this.open = !this.open;
   };
 
-  #handleHeaderKeyDown = (e) => {
+  #handleToggleKeyDown = (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
     e.preventDefault();
     e.stopPropagation();
@@ -18764,6 +18841,7 @@ class FigGroup extends HTMLElement {
   };
 
   #render() {
+    this.#removeToggleListeners();
     const isCollapsible = this.hasAttribute("collapsible");
     const nameAttr = this.getAttribute("name");
     const label = nameAttr || (isCollapsible ? "Group" : null);
@@ -18775,9 +18853,11 @@ class FigGroup extends HTMLElement {
 
     if (!label && !isCollapsible && !userHeader) {
       if (this.#header && this.#header.dataset.generated) {
+        this.#restoreHeaderCompact();
         this.#header.remove();
         this.#header = null;
         this.#chevron = null;
+        this.#toggle = null;
       }
       return;
     }
@@ -18793,6 +18873,7 @@ class FigGroup extends HTMLElement {
       this.#header.dataset.generated = "true";
       this.prepend(this.#header);
     }
+    this.#syncHeaderCompact();
 
     // Ensure h3 exists inside header
     let h3 = this.#header.querySelector("h3");
@@ -18800,6 +18881,7 @@ class FigGroup extends HTMLElement {
       h3 = document.createElement("h3");
       this.#header.prepend(h3);
     }
+    this.#toggle = h3;
     if (!h3.id) h3.id = figUniqueId();
     if (this.#header.dataset.generated) {
       h3.textContent = label;
@@ -18819,26 +18901,27 @@ class FigGroup extends HTMLElement {
       }
       this.#header.insertBefore(chevron, h3);
       this.#chevron = chevron;
-      h3.removeEventListener("click", this.#handleToggle);
-      this.#header.removeEventListener("click", this.#handleToggle);
-      this.#header.addEventListener("click", this.#handleToggle);
-      this.#header.setAttribute("role", "button");
-      this.#header.setAttribute("tabindex", "0");
-      this.#header.setAttribute("aria-expanded", String(this.open));
-      this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
-      this.#header.addEventListener("keydown", this.#handleHeaderKeyDown);
-
-      if (!this.hasAttribute("open")) {
-        this.setAttribute("open", "false");
-        this.#header.setAttribute("aria-expanded", "false");
-      }
-    } else {
-      h3.removeEventListener("click", this.#handleToggle);
-      this.#header.removeEventListener("click", this.#handleToggle);
       this.#header.removeAttribute("role");
       this.#header.removeAttribute("tabindex");
       this.#header.removeAttribute("aria-expanded");
-      this.#header.removeEventListener("keydown", this.#handleHeaderKeyDown);
+      h3.setAttribute("role", "button");
+      h3.setAttribute("tabindex", "0");
+      h3.setAttribute("aria-expanded", String(this.open));
+      h3.addEventListener("click", this.#handleToggle);
+      h3.addEventListener("keydown", this.#handleToggleKeyDown);
+      chevron.addEventListener("click", this.#handleToggle);
+
+      if (!this.hasAttribute("open")) {
+        this.setAttribute("open", "false");
+        h3.setAttribute("aria-expanded", "false");
+      }
+    } else {
+      h3.removeAttribute("role");
+      h3.removeAttribute("tabindex");
+      h3.removeAttribute("aria-expanded");
+      this.#header.removeAttribute("role");
+      this.#header.removeAttribute("tabindex");
+      this.#header.removeAttribute("aria-expanded");
       if (this.#chevron) {
         this.#chevron.remove();
         this.#chevron = null;

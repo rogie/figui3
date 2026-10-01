@@ -652,4 +652,75 @@ test.describe("fig.js audit core regressions", () => {
     expect(state.during.up).toBeGreaterThan(0);
     expect(state.after).toEqual({ move: 0, up: 0 });
   });
+
+  test("fig-truncate re-renders on text changes and syncs tooltip attribute", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <div style="width:40px">
+          <fig-truncate id="trunc" position="middle" tail=".png">
+            original-name.png
+          </fig-truncate>
+        </div>
+      `;
+      const frame = () => new Promise(requestAnimationFrame);
+      const tick = () => new Promise((r) => setTimeout(r, 0));
+      await frame();
+      await frame();
+      const el = root.querySelector("#trunc") as HTMLElement;
+      const parts = () => ({
+        start: el.querySelector(".start")?.textContent ?? null,
+        end: el.querySelector(".end")?.textContent ?? null,
+      });
+
+      const Tooltip = customElements.get("fig-tooltip") as any;
+      const shown: string[] = [];
+      const show = Tooltip.show;
+      Tooltip.show = (_anchor: Element, text: string) => shown.push(text);
+      const hover = () => {
+        el.dispatchEvent(new PointerEvent("pointerenter"));
+        el.dispatchEvent(new PointerEvent("pointerleave"));
+      };
+
+      try {
+        el.textContent = "replaced-file.png";
+        await tick();
+        const afterTextContent = parts();
+
+        el.firstChild!.firstChild!.nodeValue = "edited-";
+        await tick();
+        const afterCharacterData = parts();
+
+        el.setAttribute("tail", "-");
+        const afterTail = parts();
+
+        hover();
+        el.setAttribute("tooltip", "");
+        hover();
+        el.setAttribute("tooltip", "false");
+        hover();
+
+        el.setAttribute("tooltip", "");
+        (el.parentElement as HTMLElement).style.width = "400px";
+        hover();
+
+        return { afterTextContent, afterCharacterData, afterTail, shown };
+      } finally {
+        Tooltip.show = show;
+      }
+    });
+
+    expect(state.afterTextContent).toEqual({
+      start: "replaced-file",
+      end: ".png",
+    });
+    expect(state.afterCharacterData).toEqual({
+      start: "edited-",
+      end: ".png",
+    });
+    expect(state.afterTail).toEqual({ start: "edited", end: "-.png" });
+    expect(state.shown).toEqual(["edited-.png"]);
+  });
 });

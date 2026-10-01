@@ -4039,18 +4039,11 @@ fig-group {
     }
   }
 
-  &[compact]:not([compact="false"]) {
-    & > fig-header{
-      --fig-header-height: var(--spacer-5);
-    }
-  }
-
-
   & > fig-header {
     cursor: default;
     gap: 0;
       
-    &:focus-visible {
+    &:has(> h3:focus-visible) {
       --figma-focus-outline-radius: var(--radius-medium);
       outline: var(--figma-focus-outline);
       outline-offset: var(--figma-focus-outline-offset);
@@ -4062,10 +4055,12 @@ fig-group {
       display: block;
       margin:0;
       padding-left: 0;
+      outline: none;
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
       max-width: 100%;
+      cursor: default;
     }
     & > .fig-group-chevron {
       --icon: var(--icon-16-chevron);
@@ -4076,6 +4071,7 @@ fig-group {
       transition: transform var(--transition-duration)
         var(--transition-timing-function);
       margin-left: calc(var(--spacer-2) * -1);
+      cursor: default;
     }
   }
 
@@ -4088,7 +4084,7 @@ fig-group {
     margin-bottom: 0;
     fig-header {
       color: var(--figma-color-text-secondary);
-      &:hover {
+      &:has(> h3:hover, > .fig-group-chevron:hover) {
         color: var(--figma-color-text);
         .fig-group-chevron {
           color: inherit;
@@ -4106,10 +4102,6 @@ fig-group {
     display: none;
   }
 
-  &[compact]:not([compact="false"]) > fig-header {
-    --fig-header-height: var(--spacer-5);
-    height: var(--fig-header-height);
-  }
 }
 
 fig-footer {

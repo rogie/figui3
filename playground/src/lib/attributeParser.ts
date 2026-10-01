@@ -411,6 +411,26 @@ export function applyAttributeMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export function applyAttributeMutationToMatchingControls(
+  markup: string,
+  controlTag: string,
+  name: string,
+  value: string | null,
+): string {
+  let nextMarkup = markup;
+  for (const target of parseAttributeTargets(markup).filter(
+    (entry) => entry.controlTag === controlTag,
+  )) {
+    nextMarkup = applyAttributeMutation(nextMarkup, {
+      fieldIndex: target.fieldIndex,
+      target: "control",
+      name,
+      value,
+    });
+  }
+  return nextMarkup;
+}
+
 export function applyTooltipActionMutation(
   markup: string,
   fieldIndex: number,

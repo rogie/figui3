@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.1]
+
+### Added
+
+- Added a playground example for authored `fig-group` headers with independent actions.
+
+### Changed
+
+- Collapsible `fig-group` titles and chevrons now own toggle behavior, leaving header actions independent and keeping focus and hover feedback scoped to the toggle.
+- `fig-group compact` now propagates to its direct `fig-header`; playground Compact controls update every group in an example.
+
+### Fixed
+
+- `fig-truncate` now re-renders when its text changes and keeps tooltip behavior synchronized with content, overflow, and the `tooltip` attribute.
+
 ## [9.4.0]
 
 ### Added

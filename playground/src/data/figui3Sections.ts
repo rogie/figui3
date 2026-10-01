@@ -1,4 +1,8 @@
-import { legacyPropsKitSections, type Section } from "./sections";
+import {
+  legacyPropsKitSections,
+  type Example,
+  type Section,
+} from "./sections";
 import { mergePropsKitSections } from "./propkitMigration";
 import { landscapeUrl } from "../lib/images";
 import { DEMO_FILL_VIDEO, videoExampleAttrs } from "../lib/videos";
@@ -2625,5 +2629,62 @@ ${versionHistoryGroup("August 11", [
   },
 ]);
 
-export const figui3Sections: Section[] =
-  mergePropsKitSections(figui3BaseSections);
+const groupCustomHeaderExample: Example = {
+  id: "custom-header",
+  name: "Custom header",
+  title: "Groups with a custom header",
+  description:
+    "Add a fig-header as a direct child to replace the generated header. Include an h3 for the group's accessible name, and add actions alongside it.",
+  markup: `<div class="prop-panel">
+  <fig-group>
+    <fig-header borderless>
+      <h3>Fill</h3>
+      <fig-button variant="ghost" icon="true" aria-label="Add fill">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+    </fig-header>
+    <fig-field>
+      <label>Background</label>
+      <fig-input-color value="#FFFFFF" text="true" full></fig-input-color>
+    </fig-field>
+  </fig-group>
+  <fig-group collapsible open compact>
+    <fig-header borderless>
+      <h3>Export</h3>
+      <fig-button variant="ghost" icon="true" aria-label="Add export">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+    </fig-header>
+    <fig-field>
+      <label>Format</label>
+      <fig-dropdown full>
+        <option selected>PNG</option>
+        <option>JPG</option>
+        <option>SVG</option>
+      </fig-dropdown>
+    </fig-field>
+  </fig-group>
+</div>`,
+};
+
+function insertExampleAfter(
+  sections: Section[],
+  sectionId: string,
+  afterExampleId: string,
+  example: Example,
+): Section[] {
+  return sections.map((section) => {
+    if (section.id !== sectionId) return section;
+    const examples = [...section.examples];
+    const index = examples.findIndex((entry) => entry.id === afterExampleId);
+    examples.splice(index === -1 ? examples.length : index + 1, 0, example);
+    return { ...section, examples };
+  });
+}
+
+export const figui3Sections: Section[] = insertExampleAfter(
+  mergePropsKitSections(figui3BaseSections),
+  "group",
+  "no-names",
+  groupCustomHeaderExample,
+);

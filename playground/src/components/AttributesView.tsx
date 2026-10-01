@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   applyAttributeMutation,
+  applyAttributeMutationToMatchingControls,
   applyButtonIconMutation,
   applyButtonTypeMutation,
   applyButtonVariantMutation,
@@ -391,6 +392,21 @@ export default function AttributesView({
       const currentTarget = targets.find(
         (entry) => entry.fieldIndex === fieldIndex,
       );
+      if (
+        currentTarget?.controlTag === "fig-group" &&
+        target === "control" &&
+        name === "compact"
+      ) {
+        onMarkupChange(
+          applyAttributeMutationToMatchingControls(
+            markup,
+            "fig-group",
+            name,
+            value,
+          ),
+        );
+        return;
+      }
       if (
         currentTarget?.controlTag === "fig-angle" &&
         target === "control" &&

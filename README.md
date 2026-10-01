@@ -121,6 +121,7 @@ Minimal example:
 | [Segmented Control](#segmented-control) | `<fig-segmented-control>` / `<fig-segment>` | Segmented button group |
 | [Chooser](#chooser) | `<fig-chooser>` / `<fig-choice>` | Selection list with drag scroll |
 | [Field](#field) | `<fig-field>` | Form field wrapper with layout |
+| [Group](#group) | `<fig-group>` | Named or collapsible section group |
 | [Joystick](#joystick) | `<fig-joystick>` | 2D position input |
 | [Origin Grid](#origin-grid) | `<fig-origin-grid>` | Transform-origin grid |
 | [Easing Curve](#easing-curve) | `<fig-easing-curve>` | Bezier/spring curve editor |
@@ -1236,6 +1237,33 @@ A form field wrapper with flexible layout. Automatically links `<label>` to the 
   <label>Opacity</label>
   <fig-slider value="50" units="%"></fig-slider>
 </fig-field>
+```
+
+---
+
+#### Group
+
+`<fig-group>` — [demo](https://rog.ie/figui3/#group)
+
+A section group with an optional generated or authored header. In collapsible groups, the `h3` is the keyboard-accessible toggle and the chevron is clickable; controls placed beside the `h3` in an authored `fig-header` remain independent.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `name` | string | — | Generated header text |
+| `collapsible` | boolean | `false` | Enables collapse behavior |
+| `open` | boolean | `false` | Expanded state |
+| `compact` | boolean | `false` | Adds `compact` to the direct `fig-header` |
+
+```html
+<fig-group collapsible open>
+  <fig-header borderless>
+    <h3>Export</h3>
+    <fig-button variant="ghost" icon aria-label="Add export">
+      <fig-icon name="add"></fig-icon>
+    </fig-button>
+  </fig-header>
+  <fig-field>...</fig-field>
+</fig-group>
 ```
 
 ---

@@ -341,6 +341,8 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 ```
 
 - Attrs: `name`, `collapsible`, `open`, `compact`
+- Group `compact` is propagated to the direct `fig-header`.
+- In a collapsible group, the `h3` is the keyboard-accessible toggle and the chevron is clickable. For custom headers, place independent actions beside the `h3`, not inside it.
 
 ### `fig-header`
 

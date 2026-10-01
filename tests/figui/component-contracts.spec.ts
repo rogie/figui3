@@ -7101,6 +7101,93 @@ test.describe("render timing composition", () => {
     expect(state.groupBodyStillProjected).toBe("group");
   });
 
+  test("fig-group custom header actions do not toggle collapsible group", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-group id="group" collapsible open>
+          <fig-header borderless>
+            <h3>Export</h3>
+            <fig-button id="action" variant="ghost" icon="true" aria-label="Add export">+</fig-button>
+          </fig-header>
+          <p>Body</p>
+        </fig-group>
+      `;
+    });
+
+    const group = page.locator("#group");
+    const header = group.locator(":scope > fig-header");
+    const heading = header.locator("h3");
+    const chevron = header.locator(".fig-group-chevron");
+    const action = page.locator("#action");
+    await expect(group.locator(":scope > fig-header[data-generated]")).toHaveCount(0);
+    await expect(header).not.toHaveAttribute("role");
+    await expect(heading).toHaveAttribute("role", "button");
+    await expect(group).toHaveAttribute("open", "");
+    await action.click();
+    await action.press("Enter");
+    await expect(group).toHaveAttribute("open", "");
+    await heading.click();
+    await expect(group).toHaveAttribute("open", "false");
+
+    await action.hover();
+    const secondaryColor = await heading.evaluate(
+      (element) => getComputedStyle(element).color,
+    );
+    await heading.hover();
+    const primaryColor = await heading.evaluate(
+      (element) => getComputedStyle(element).color,
+    );
+    expect(primaryColor).not.toBe(secondaryColor);
+    await chevron.hover();
+    await expect(heading).toHaveCSS("color", primaryColor);
+    await action.hover();
+    await expect(heading).toHaveCSS("color", secondaryColor);
+
+    await chevron.click();
+    await expect(group).toHaveAttribute("open", "true");
+  });
+
+  test("fig-group propagates compact to generated and custom headers", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-group id="generated" name="Generated" compact>
+          <p>Body</p>
+        </fig-group>
+        <fig-group id="custom" compact>
+          <fig-header compact="false"><h3>Custom</h3></fig-header>
+          <p>Body</p>
+        </fig-group>
+      `;
+    });
+
+    const generatedGroup = page.locator("#generated");
+    const generatedHeader = generatedGroup.locator(":scope > fig-header");
+    const customGroup = page.locator("#custom");
+    const customHeader = customGroup.locator(":scope > fig-header");
+    await expect(generatedHeader).toHaveAttribute("compact", "");
+    await expect(customHeader).toHaveAttribute("compact", "");
+    await expect(generatedHeader).toHaveCSS("height", "32px");
+
+    await generatedGroup.evaluate((group) => group.removeAttribute("compact"));
+    await customGroup.evaluate((group) => group.removeAttribute("compact"));
+    await expect(generatedHeader).not.toHaveAttribute("compact");
+    await expect(customHeader).toHaveAttribute("compact", "false");
+    await expect(generatedHeader).toHaveCSS("height", "40px");
+
+    await generatedGroup.evaluate((group) => group.setAttribute("compact", ""));
+    await customGroup.evaluate((group) => group.setAttribute("compact", ""));
+    await expect(generatedHeader).toHaveAttribute("compact", "");
+    await expect(customHeader).toHaveAttribute("compact", "");
+  });
+
   test("fig-group applies tokenized focus outline to collapsible header", async ({
     page,
   }) => {
@@ -7124,9 +7211,12 @@ test.describe("render timing composition", () => {
     await expect(group).toHaveAttribute("aria-labelledby", headingId || "");
     await expect(page.getByRole("group", { name: "Advanced" })).toHaveCount(1);
     await expect(page.getByRole("button", { name: "Advanced" })).toHaveCount(1);
-    await expect(header).toHaveAttribute("role", "button");
-    await expect(header).toHaveAttribute("tabindex", "0");
-    await expect(header).toHaveAttribute("aria-expanded", "false");
+    await expect(header).not.toHaveAttribute("role");
+    await expect(header).not.toHaveAttribute("tabindex");
+    await expect(header).not.toHaveAttribute("aria-expanded");
+    await expect(heading).toHaveAttribute("role", "button");
+    await expect(heading).toHaveAttribute("tabindex", "0");
+    await expect(heading).toHaveAttribute("aria-expanded", "false");
     const headingLayout = await heading.evaluate((element) => {
       const chevron = element.previousElementSibling;
       if (!chevron) throw new Error("Missing group chevron");
@@ -7148,7 +7238,7 @@ test.describe("render timing composition", () => {
     expect(headingLayout.chevronParent).toBe("FIG-HEADER");
     expect(headingLayout.centerDelta).toBeCloseTo(0, 5);
 
-    await header.focus();
+    await heading.focus();
     const focusStyle = await header.evaluate((element) => {
       const style = getComputedStyle(element);
       return {
@@ -7166,9 +7256,10 @@ test.describe("render timing composition", () => {
       focusOutlineRadius: "0.3125rem",
       borderRadius: "5px",
     });
+    await expect(heading).toHaveCSS("outline-style", "none");
 
     await page.keyboard.press("Enter");
-    await expect(header).toHaveAttribute("aria-expanded", "true");
+    await expect(heading).toHaveAttribute("aria-expanded", "true");
     await expect(group).toHaveAttribute("open", "true");
   });
 });
