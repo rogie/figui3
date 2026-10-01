@@ -110,6 +110,9 @@ type FigTag =
   | "fig-tab"
   | "fig-tab-content"
   | "fig-tabs"
+  | "fig-toolbelt"
+  | "fig-toolbelt-group"
+  | "fig-toolbelt-item"
   | "fig-tooltip"
   | "fig-truncate"
   | "fig-video"
@@ -240,7 +243,7 @@ React owns child nodes. Components slot; they do not relocate children.
 
 - `fig-menu` items; trigger gets `slot="trigger"`
 - `fig-select-options slot="panel"`
-- `fig-tabs` / `fig-chooser` children
+- `fig-tabs` / `fig-toolbelt` / `fig-chooser` children
 - media `slot="overlay"`
 - fill custom `slot="mode-*"`
 

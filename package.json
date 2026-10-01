@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "9.3.0",
+  "version": "9.4.0",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "SEE LICENSE IN LICENSE",
@@ -45,6 +45,7 @@
     "dist/",
     ".cursor/skills/",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "sideEffects": [
@@ -108,8 +109,5 @@
     "lightningcss": "^1.32.0",
     "lightningcss-cli": "^1.32.0",
     "playwright": "^1.58.2"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
   }
 }

@@ -476,4 +476,223 @@ test.describe("fig-reorder", () => {
 
     expect(order).toEqual(["item-a", "item-b"]);
   });
+
+  test.describe("items selector", () => {
+    const mountItems = async (
+      page: import("@playwright/test").Page,
+      attrs = 'items=".row"',
+    ) => {
+      await page.evaluate((hostAttrs) => {
+        const root = document.querySelector("#fixture-root");
+        if (!root) throw new Error("Missing fixture root");
+        root.innerHTML = `
+          <fig-reorder id="reorder-host" ${hostAttrs}>
+            <div id="header">Header</div>
+            <div id="row-a" class="row"><span class="grip">::</span>A</div>
+            <div id="row-b" class="row"><span class="grip">::</span>B</div>
+            <div id="row-c" class="row"><span class="grip">::</span>C</div>
+            <div id="footer" role="note">Footer</div>
+          </fig-reorder>
+        `;
+      }, attrs);
+      await page.waitForFunction(() =>
+        document.querySelector("#row-a")?.hasAttribute("data-reorder-item"),
+      );
+    };
+
+    const snapshot = (page: import("@playwright/test").Page) =>
+      page.evaluate(() =>
+        [...document.querySelector("#reorder-host")!.children]
+          .filter((child) => child.id)
+          .map((child) => ({
+            id: child.id,
+            item: child.hasAttribute("data-reorder-item"),
+            role: child.getAttribute("role"),
+            tabindex: child.getAttribute("tabindex"),
+          })),
+      );
+
+    test("marks only matching children as items", async ({ page }) => {
+      await mountItems(page);
+      expect(await snapshot(page)).toEqual([
+        { id: "header", item: false, role: "none", tabindex: null },
+        { id: "row-a", item: true, role: "listitem", tabindex: "0" },
+        { id: "row-b", item: true, role: "listitem", tabindex: "0" },
+        { id: "row-c", item: true, role: "listitem", tabindex: "0" },
+        { id: "footer", item: false, role: "note", tabindex: null },
+      ]);
+    });
+
+    test("keyboard moves stay within items and report item indices", async ({
+      page,
+    }) => {
+      await mountItems(page);
+      const result = await page.evaluate(() => {
+        const host = document.querySelector("#reorder-host")!;
+        const events: Array<{ oldIndex: number; newIndex: number }> = [];
+        host.addEventListener("reorder", (event) => {
+          const { oldIndex, newIndex } = (event as CustomEvent).detail;
+          events.push({ oldIndex, newIndex });
+        });
+        const press = (id: string, key: string) =>
+          document
+            .querySelector(id)!
+            .dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+        press("#row-a", "End");
+        press("#row-c", "Home");
+        press("#row-c", "ArrowUp");
+        return {
+          events,
+          order: [...host.children].filter((c) => c.id).map((c) => c.id),
+        };
+      });
+      expect(result.events).toEqual([
+        { oldIndex: 0, newIndex: 2 },
+        { oldIndex: 1, newIndex: 0 },
+      ]);
+      expect(result.order).toEqual(["header", "row-c", "row-b", "row-a", "footer"]);
+    });
+
+    test("pointer drag to end keeps trailing non-items last", async ({ page }) => {
+      await mountItems(page);
+      const order = await page.evaluate(() => {
+        const host = document.querySelector("#reorder-host")!;
+        const rowA = document.querySelector("#row-a") as HTMLElement;
+        const footer = document.querySelector("#footer") as HTMLElement;
+        const rect = rowA.getBoundingClientRect();
+        const y = footer.getBoundingClientRect().bottom + 200;
+        const init = (clientY: number) => ({
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + 4,
+          clientY,
+          button: 0,
+          pointerId: 21,
+          pointerType: "mouse",
+        });
+        rowA.dispatchEvent(new PointerEvent("pointerdown", init(rect.top + 4)));
+        window.dispatchEvent(new PointerEvent("pointermove", init(y)));
+        window.dispatchEvent(new PointerEvent("pointerup", init(y)));
+        return [...host.children].filter((c) => c.id).map((c) => c.id);
+      });
+      expect(order).toEqual(["header", "row-b", "row-c", "row-a", "footer"]);
+    });
+
+    test("works with handle", async ({ page }) => {
+      await mountItems(page, 'items=".row" handle=".grip"');
+      const result = await page.evaluate(() => {
+        const grips = [...document.querySelectorAll("#reorder-host .grip")];
+        return {
+          handles: grips.map((grip) => grip.hasAttribute("data-reorder-handle")),
+          tabbable: grips.map((grip) => grip.getAttribute("tabindex")),
+          headerHandle: document.querySelector("#header [data-reorder-handle]"),
+        };
+      });
+      expect(result).toEqual({
+        handles: [true, true, true],
+        tabbable: ["0", "0", "0"],
+        headerHandle: null,
+      });
+    });
+
+    test("changing or removing items re-syncs marks", async ({ page }) => {
+      await mountItems(page);
+      await page.evaluate(() => {
+        document.querySelector("#reorder-host")!.setAttribute("items", "#row-a, #row-b");
+      });
+      const narrowed = await snapshot(page);
+      expect(narrowed.find((c) => c.id === "row-c")).toEqual({
+        id: "row-c",
+        item: false,
+        role: "none",
+        tabindex: null,
+      });
+
+      await page.evaluate(() => {
+        document.querySelector("#reorder-host")!.removeAttribute("items");
+      });
+      const all = await snapshot(page);
+      expect(all.map((c) => c.item)).toEqual([true, true, true, true, true]);
+      expect(all.find((c) => c.id === "header")?.role).toBe("listitem");
+      expect(all.find((c) => c.id === "footer")?.role).toBe("note");
+    });
+
+    test("child class changes re-sync automatically and via refresh()", async ({
+      page,
+    }) => {
+      await mountItems(page);
+      await page.evaluate(() => {
+        document.querySelector("#header")!.classList.add("row");
+      });
+      await expect(page.locator("#header")).toHaveAttribute("data-reorder-item", "");
+
+      await page.evaluate(() => {
+        document.querySelector("#header")!.classList.remove("row");
+      });
+      await expect(page.locator("#header")).not.toHaveAttribute("data-reorder-item");
+
+      const refreshed = await page.evaluate(() => {
+        const host = document.querySelector("#reorder-host") as HTMLElement & {
+          refresh(): void;
+        };
+        document.querySelector("#footer")!.classList.add("row");
+        host.refresh();
+        return document.querySelector("#footer")!.hasAttribute("data-reorder-item");
+      });
+      expect(refreshed).toBe(true);
+    });
+
+    test("dragging does not trigger re-sync loops", async ({ page }) => {
+      await mountItems(page);
+      const result = await page.evaluate(async () => {
+        const host = document.querySelector("#reorder-host")!;
+        const rowA = document.querySelector("#row-a") as HTMLElement;
+        let mutations = 0;
+        const observer = new MutationObserver((records) => {
+          mutations += records.length;
+        });
+        const rect = rowA.getBoundingClientRect();
+        const init = (clientY: number) => ({
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + 4,
+          clientY,
+          button: 0,
+          pointerId: 22,
+          pointerType: "mouse",
+        });
+        rowA.dispatchEvent(new PointerEvent("pointerdown", init(rect.top + 4)));
+        window.dispatchEvent(new PointerEvent("pointermove", init(rect.bottom + 20)));
+        await new Promise((r) => setTimeout(r, 30));
+        observer.observe(host, { subtree: true, attributes: true });
+        await new Promise((r) => setTimeout(r, 60));
+        const during = mutations;
+        window.dispatchEvent(new PointerEvent("pointerup", init(rect.bottom + 20)));
+        observer.disconnect();
+        return { during, dragging: rowA.classList.contains("dragging") };
+      });
+      expect(result).toEqual({ during: 0, dragging: false });
+    });
+
+    test("invalid selector matches nothing without throwing", async ({ page }) => {
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.evaluate(() => {
+        const root = document.querySelector("#fixture-root")!;
+        root.innerHTML = `
+          <fig-reorder id="reorder-host" items="[[">
+            <div id="row-a">A</div>
+            <div id="row-b">B</div>
+          </fig-reorder>
+        `;
+      });
+      const marked = await page.evaluate(() =>
+        [...document.querySelectorAll("#reorder-host > div")].map((c) =>
+          c.hasAttribute("data-reorder-item"),
+        ),
+      );
+      expect(marked).toEqual([false, false]);
+      expect(errors).toEqual([]);
+    });
+  });
 });

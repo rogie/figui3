@@ -2,6 +2,24 @@
 
 React recipes: [components.md](components.md).
 
+## `fig-input-audio`
+
+Single-audio upload with a responsive, preview-only waveform.
+
+- Attrs: `url`, `filename`, `label` (default `Upload audio`), `accepts` (default `audio/*`), `variant`, `disabled`, `full`
+- Props: `files`, `value`
+- Method: `clear()`
+- Events: `input` and `change`, bubbling and composed, with `{ files }` and optional `cleared`
+- Clicking the waveform replaces the file; the minus action removes it
+- URL decoding requires CORS; fetch and decode failures fall back quietly
+- CSS: `--fig-input-audio-waveform-stroke-width` controls bar thickness (default `2px`)
+- Not supported: multiple files, playback, or seeking
+
+```html
+<fig-input-audio></fig-input-audio>
+<fig-input-audio url="https://example.com/audio.wav" filename="audio.wav" full></fig-input-audio>
+```
+
 ## `fig-input-wheel`
 
 Standalone interactive SVG tick + handle scrubber in the lab bundle.
@@ -37,9 +55,11 @@ Types: `point`, `color`, `point-radius`, `point-radius-angle`, `point-point`.
 
 ## `fig-reorder`
 
-Observed: `axis`, `handle`, `disabled`.
+Observed: `axis`, `handle`, `items`, `disabled`.
 
-Event `reorder`: `{ oldIndex, newIndex, item }`.
+`items`: CSS selector for which direct children are reorderable (default: all). Non-matching children stay in place and get `role="none"` unless they have a role. Class/attribute changes on children re-sync automatically; call `refresh()` to force it.
+
+Event `reorder`: `{ oldIndex, newIndex, item }`. Indices count matching items, not DOM positions.
 
 Nested drag is ignored for sliders, handles, and canvas controls so inner gestures still work. If a row is still stolen, set `handle` to a drag-affordance selector.
 

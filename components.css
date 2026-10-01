@@ -1290,6 +1290,70 @@ fig-tab {
     cursor: default;
   }
 }
+
+
+
+fig-toolbelt-item {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  height: var(--fig-toolbelt-item-height, var(--control-height));
+  padding-inline: var(--fig-toolbelt-item-padding, var(--spacer-2));
+  border-radius: var(--radius-medium);
+  color: var(--figma-color-text-secondary);
+  line-height: var(--line-height);
+  cursor: default;
+  user-select: none;
+
+  &:has(> fig-tooltip > fig-button[icon]:not([icon="false"])) {
+    padding-inline: 0;
+  }
+
+  &[selected]:not([selected="false"]) {
+    color: var(--figma-color-text);
+    background-color: var(--figma-color-bg-secondary);
+
+    fig-button{
+      color: var(--figma-color-icon-onbrand);
+      background-color: var(--figma-color-bg-brand);
+    }
+  }
+
+  &:hover {
+    background-color: var(--figma-color-bg-secondary);
+  }
+
+  &:focus-visible,
+  &[data-focus-visible] {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+}
+
+fig-toolbelt-group {
+  display: inline-flex;
+  flex-flow: row nowrap;
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: var(--fig-toolbelt-gap);
+  min-width: 0;
+
+  & + fig-toolbelt-group {
+    margin-inline-start: calc(
+      var(--fig-toolbelt-group-gap) - var(--fig-toolbelt-gap)
+    );
+    padding-inline-start: var(--fig-toolbelt-group-gap);
+    border-inline-start: 1px solid
+      var(--fig-toolbelt-group-separator-color);
+  }
+}
+
 fig-tab-content {
   display: block;
   width: 100%;
@@ -1406,6 +1470,171 @@ fig-tabs,
 
     .fig-overflow-chevron {
       rotate: -90deg;
+    }
+  }
+}
+
+fig-toolbelt {
+  --fig-toolbelt-gap: var(--spacer-1);
+  --fig-toolbelt-group-gap: var(--spacer-2);
+  --fig-toolbelt-group-separator-color: var(--figma-color-border);
+  --fig-toolbelt-overflow-fade-size: calc(var(--spacer-6) + var(--spacer-2));
+  --fig-toolbelt-padding-block: var(--spacer-2);
+  --fig-toolbelt-padding-inline: var(--spacer-2);
+
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  background: var(--figma-color-bg) !important;
+  border-radius: var(--radius-large);
+
+  &::after{
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: var(--figma-elevation-100-canvas);
+    border-radius: var(--radius-large);
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+  }
+
+  &::part(frame) {
+    position: relative;
+    display: flex;
+    flex-flow: row nowrap;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  &::part(viewport) {
+    display: flex;
+    flex: 1 1 auto;
+    flex-flow: row nowrap;
+    box-sizing: border-box;
+    gap: var(--fig-toolbelt-gap);
+    width: 100%;
+    min-width: 0;
+    padding: var(--fig-toolbelt-padding-block)
+      var(--fig-toolbelt-padding-inline);
+    overflow: auto hidden;
+    scrollbar-width: none;
+  }
+
+  &::part(viewport)::-webkit-scrollbar {
+    display: none;
+  }
+
+  > .fig-overflow {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 3;
+    width: var(--control-height);
+    height: auto;
+    margin: 0;
+  }
+
+  > .fig-overflow-start {
+    left: 0;
+    right: auto;
+    box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
+
+    &::before {
+      border-radius: var(--radius-medium) 0 0 var(--radius-medium);
+    }
+
+    .fig-overflow-chevron {
+      rotate: 90deg;
+    }
+  }
+
+  > .fig-overflow-end {
+    right: 0;
+    left: auto;
+    box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
+
+    &::before {
+      border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+    }
+
+    .fig-overflow-chevron {
+      rotate: -90deg;
+    }
+  }
+
+  &[layout="vertical"] {
+    width: fit-content;
+    max-width: 100%;
+
+    &::part(frame),
+    &::part(viewport) {
+      flex-flow: column nowrap;
+    }
+
+    &::part(viewport) {
+      overflow: hidden auto;
+    }
+
+    fig-toolbelt-group {
+      flex-flow: column nowrap;
+      width: 100%;
+
+      & + fig-toolbelt-group {
+        margin-block-start: calc(
+          var(--fig-toolbelt-group-gap) - var(--fig-toolbelt-gap)
+        );
+        margin-inline-start: 0;
+        padding-block-start: var(--fig-toolbelt-group-gap);
+        padding-inline-start: 0;
+        border-block-start: 1px solid
+          var(--fig-toolbelt-group-separator-color);
+        border-inline-start: 0;
+      }
+    }
+
+    > .fig-overflow {
+      top: auto;
+      right: 0;
+      left: 0;
+      width: auto;
+      height: var(--control-height);
+    }
+
+    > .fig-overflow-start {
+      top: 0;
+      bottom: auto;
+      box-shadow: 0 1px 0 0 var(--figma-color-bordertranslucent);
+
+      &::before {
+        border-radius: var(--radius-medium) var(--radius-medium) 0 0;
+      }
+
+      .fig-overflow-chevron {
+        rotate: 180deg;
+      }
+    }
+
+    > .fig-overflow-end {
+      top: auto;
+      bottom: 0;
+      box-shadow: 0 -1px 0 0 var(--figma-color-bordertranslucent);
+
+      &::before {
+        border-radius: 0 0 var(--radius-medium) var(--radius-medium);
+      }
+
+      .fig-overflow-chevron {
+        rotate: 0deg;
+      }
     }
   }
 }
@@ -5389,6 +5618,13 @@ fig-skeleton {
   overflow-y: auto;
 }
 
+fig-toolbelt::part(viewport) {
+  --fig-overflow-fade-size: var(--fig-toolbelt-overflow-fade-size);
+  --fig-overflow-fade-clear-top: 0px;
+
+  overflow-y: auto;
+}
+
 .fig-overflow-fade.fig-overflow-fade-horizontal {
   --fig-overflow-fade-clear-left: 0px;
 
@@ -5396,8 +5632,16 @@ fig-skeleton {
   overflow-y: hidden;
 }
 
+fig-toolbelt:not([layout="vertical"])::part(viewport) {
+  --fig-overflow-fade-clear-left: 0px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 @supports (animation-timeline: scroll(self block)) {
-  .fig-overflow-fade:not(.fig-overflow-fade-horizontal) {
+  .fig-overflow-fade:not(.fig-overflow-fade-horizontal),
+  fig-toolbelt[layout="vertical"]::part(viewport) {
     mask-image: linear-gradient(
       to bottom,
       black 0,
@@ -5531,7 +5775,8 @@ fig-skeleton {
 }
 
 @supports (animation-timeline: scroll(self inline)) {
-  .fig-overflow-fade.fig-overflow-fade-horizontal {
+  .fig-overflow-fade.fig-overflow-fade-horizontal,
+  fig-toolbelt:not([layout="vertical"])::part(viewport) {
     mask-image: linear-gradient(
       to right,
       black 0,

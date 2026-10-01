@@ -25,6 +25,9 @@ declare module "react" {
       "fig-options": FigAttrs;
       "fig-segmented-control": FigAttrs;
       "fig-segment": FigAttrs;
+      "fig-toolbelt": FigAttrs;
+      "fig-toolbelt-group": FigAttrs;
+      "fig-toolbelt-item": FigAttrs;
       "fig-group": FigAttrs;
       "fig-content": FigAttrs;
       "fig-media": FigAttrs;
@@ -36,6 +39,7 @@ declare module "react" {
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-angle": FigAttrs;
+      "fig-input-audio": FigAttrs;
       "fig-input-wheel": FigAttrs;
       "fig-input-number": FigAttrs;
       "fig-easing-curve": FigAttrs;

@@ -5,6 +5,26 @@ Experimental. APIs may change. React contract: [../figui3/react.md](../figui3/re
 
 Handlers below assume `onInput` / `onChange` from the React contract.
 
+## Inputs
+
+### `fig-input-audio`
+
+```tsx
+<fig-input-audio
+  accepts="audio/*"
+  label="Upload audio"
+  full
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Single-file waveform preview; no playback or seeking.
+- Attrs: `url`, `filename`, `label`, `accepts`, `variant`, `disabled`, `full`.
+- Props: `files`, `value`. Method: `clear()`.
+- `input` and `change` bubble with `{ files }`; clear adds `{ cleared: true }`.
+- URL previews require CORS access.
+
 ## Spatial
 
 ### `fig-canvas-control`
@@ -62,8 +82,8 @@ useEffect(() => {
 }, [onReorder]);
 ```
 
-- `display: contents`. Reorders **direct children**. `axis` `vertical` | `horizontal`. Omit `handle` to drag whole rows; set it when rows contain sliders/handles.
-- Event `reorder`: `{ oldIndex, newIndex, item }`. Nested drag is ignored for sliders, handles, and canvas controls.
+- `display: contents`. Reorders **direct children**. `axis` `vertical` | `horizontal`. `items` selector limits which children reorder (e.g. `items=".row"` to skip headers); `refresh()` re-syncs. Omit `handle` to drag whole rows; set it when rows contain sliders/handles.
+- Event `reorder`: `{ oldIndex, newIndex, item }` (indices among matching items). Nested drag is ignored for sliders, handles, and canvas controls.
 
 ## AI composer
 

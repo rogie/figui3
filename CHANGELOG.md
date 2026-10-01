@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.0]
+
+### Added
+
+- Added `fig-toolbelt`, `fig-toolbelt-group`, and `fig-toolbelt-item`: a selectable horizontal or vertical toolbar with grouped separators, roving keyboard navigation, overflow fades, and optional paging buttons.
+- Added experimental Lab `fig-input-audio` for single-audio uploads with a responsive waveform preview.
+- Added `items` selector support to `fig-reorder` so only matching children are reorderable.
+- Added playground examples and skill docs for toolbelt, audio input, and reorder items.
+
+### Changed
+
+- Removed the unused `typescript` peer dependency so installs no longer require `--legacy-peer-deps`.
+- `CHANGELOG.md` now ships in the npm package.
+- Lab playground navigation adds an Inputs group and merges same-named nav groups.
+
 ## [9.3.0]
 
 ### Changed

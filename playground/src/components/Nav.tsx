@@ -193,9 +193,13 @@ export default function Nav({
           const groups: { group: string | undefined; sections: Section[] }[] =
             [];
           for (const section of sections) {
-            const last = groups[groups.length - 1];
-            if (last && last.group === section.group) {
-              last.sections.push(section);
+            const existing = section.group
+              ? groups.find((entry) => entry.group === section.group)
+              : groups[groups.length - 1]?.group === undefined
+                ? groups[groups.length - 1]
+                : undefined;
+            if (existing) {
+              existing.sections.push(section);
             } else {
               groups.push({ group: section.group, sections: [section] });
             }

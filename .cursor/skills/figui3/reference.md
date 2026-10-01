@@ -70,6 +70,16 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 - `direction="horizontal|vertical"`
 - `label` or a child `<label>`
 
+## `fig-toolbelt`
+
+- Attrs: `value`, `disabled`, `layout="horizontal|vertical"`, `overflow="buttons|scrollbar"`; role `toolbar`
+- Direct `fig-toolbelt-item` or `fig-toolbelt-group` children; groups wrap related items and use role `group`
+- Items: `value`, `selected`, `disabled`; role `button`, `aria-pressed`
+- ArrowLeft/ArrowRight navigate horizontal layouts; ArrowUp/ArrowDown navigate vertical layouts; Home/End move roving focus; Enter/Space select
+- Events: bubbling `input` and `change` with the selected value
+- `overflow="scrollbar"` is the default and uses buttonless scrolling with the scrollbar hidden; `overflow="buttons"` adds direction-aware paging controls
+- Internal `part="viewport"` owns scrolling and fades; authored items remain direct light-DOM children
+
 ## `.fig-overflow-fade`
 
 - Apply the class to a vertical scroll container and constrain its height; add `fig-overflow-fade-horizontal` for horizontal scrolling.

@@ -4798,6 +4798,513 @@ class FigTabs extends HTMLElement {
 }
 figDefineElement("fig-tabs", FigTabs);
 
+/* Toolbelt */
+/**
+ * A semantic item group for use within FigToolbelt.
+ */
+class FigToolbeltGroup extends HTMLElement {
+  connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "group");
+  }
+}
+figDefineElement("fig-toolbelt-group", FigToolbeltGroup);
+
+/**
+ * A selectable item for use within FigToolbelt.
+ * @attr {string} value - The value associated with the item
+ * @attr {boolean} selected - Whether the item is currently selected
+ * @attr {boolean} disabled - Whether the item is unavailable
+ */
+class FigToolbeltItem extends HTMLElement {
+  static get observedAttributes() {
+    return ["selected", "disabled"];
+  }
+
+  connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "button");
+    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
+    this.#syncA11yState();
+  }
+
+  get value() {
+    const value = this.getAttribute("value");
+    return value !== null ? value : this.textContent?.trim() || "";
+  }
+
+  set value(value) {
+    this.setAttribute("value", value ?? "");
+  }
+
+  get selected() {
+    return figBooleanAttribute(this, "selected");
+  }
+
+  set selected(value) {
+    this.toggleAttribute("selected", Boolean(value));
+  }
+
+  get disabled() {
+    return figBooleanAttribute(this, "disabled");
+  }
+
+  set disabled(value) {
+    this.toggleAttribute("disabled", Boolean(value));
+  }
+
+  attributeChangedCallback() {
+    this.#syncA11yState();
+  }
+
+  #syncA11yState() {
+    const selected = figBooleanAttribute(this, "selected");
+    const disabled = figBooleanAttribute(this, "disabled");
+    this.setAttribute("aria-pressed", selected ? "true" : "false");
+    if (disabled) {
+      this.setAttribute("aria-disabled", "true");
+      this.setAttribute("tabindex", "-1");
+    } else {
+      this.removeAttribute("aria-disabled");
+    }
+  }
+}
+figDefineElement("fig-toolbelt-item", FigToolbeltItem);
+
+/**
+ * A selectable toolbar with configurable layout and overflow controls.
+ * @attr {string} value - The selected item value
+ * @attr {boolean} disabled - Disables all items
+ * @attr {"horizontal"|"vertical"} layout - Item direction (default: horizontal)
+ * @attr {"buttons"|"scrollbar"} overflow - Overflow controls (default: scrollbar)
+ * @fires input - Selected value
+ * @fires change - Selected value
+ */
+class FigToolbelt extends HTMLElement {
+  #boundHandleClick = this.#handleClick.bind(this);
+  #boundHandleKeyDown = this.#handleKeyDown.bind(this);
+  #boundSyncOverflow = this.#syncOverflow.bind(this);
+  #viewport = null;
+  #mutationObserver = null;
+  #resizeObserver = null;
+  #navStart = null;
+  #navEnd = null;
+  #parentDisabledItems = new WeakSet();
+  #syncingValue = false;
+
+  constructor() {
+    super();
+    const shadow = this.attachShadow({ mode: "open" });
+    const frame = document.createElement("div");
+    frame.setAttribute("part", "frame");
+
+    const startSlot = document.createElement("slot");
+    startSlot.name = "start";
+    startSlot.style.display = "contents";
+
+    this.#viewport = document.createElement("div");
+    this.#viewport.className = "fig-overflow-fade";
+    this.#viewport.setAttribute("part", "viewport");
+    const itemSlot = document.createElement("slot");
+    itemSlot.style.display = "contents";
+    this.#viewport.append(itemSlot);
+
+    const endSlot = document.createElement("slot");
+    endSlot.name = "end";
+    endSlot.style.display = "contents";
+
+    frame.append(startSlot, this.#viewport, endSlot);
+    shadow.append(frame);
+  }
+
+  static get observedAttributes() {
+    return ["value", "disabled", "layout", "overflow"];
+  }
+
+  get #isVertical() {
+    return this.getAttribute("layout") === "vertical";
+  }
+
+  get #overflowMode() {
+    return this.getAttribute("overflow") === "buttons"
+      ? "buttons"
+      : "scrollbar";
+  }
+
+  connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "toolbar");
+    this.#syncOrientation();
+    this.addEventListener("click", this.#boundHandleClick);
+    this.addEventListener("keydown", this.#boundHandleKeyDown);
+    this.#viewport.addEventListener("scroll", this.#boundSyncOverflow);
+    this.#applyOverflowMode();
+    this.#startObserver();
+    this.#startResizeObserver();
+    figNextFrame(this, () => {
+      this.#syncSelection();
+      this.#applyDisabled(figBooleanAttribute(this, "disabled"));
+      this.#syncTabIndexes();
+      this.#syncOverflow();
+      this.#scrollSelectedItemIntoView(undefined, "auto");
+    });
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("click", this.#boundHandleClick);
+    this.removeEventListener("keydown", this.#boundHandleKeyDown);
+    this.#viewport.removeEventListener("scroll", this.#boundSyncOverflow);
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = null;
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+    this.#removeNavButtons();
+  }
+
+  get value() {
+    return this.selectedItem?.value || "";
+  }
+
+  set value(value) {
+    if (value === null || value === undefined) {
+      this.removeAttribute("value");
+    } else {
+      this.setAttribute("value", String(value));
+    }
+  }
+
+  get selectedItem() {
+    return this.#items().find((item) => figBooleanAttribute(item, "selected")) || null;
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name === "value" && !this.#syncingValue) {
+      this.#selectByValue(newValue);
+    }
+    if (name === "disabled") {
+      this.#applyDisabled(newValue !== null && newValue !== "false");
+    }
+    if (name === "overflow") {
+      this.#applyOverflowMode();
+      requestAnimationFrame(() => this.#syncOverflow());
+    }
+    if (name === "layout") {
+      this.#syncOrientation();
+      if (this.#isVertical) this.#viewport.scrollLeft = 0;
+      else this.#viewport.scrollTop = 0;
+      this.#applyOverflowMode();
+      requestAnimationFrame(() => {
+        this.#syncOverflow();
+        this.#scrollSelectedItemIntoView(undefined, "auto");
+      });
+    }
+  }
+
+  #items() {
+    return Array.from(this.querySelectorAll("fig-toolbelt-item")).filter(
+      (item) => item.closest("fig-toolbelt") === this,
+    );
+  }
+
+  #availableItems() {
+    return this.#items().filter((item) => !figBooleanAttribute(item, "disabled"));
+  }
+
+  #applyDisabled(disabled) {
+    if (disabled) this.setAttribute("aria-disabled", "true");
+    else this.removeAttribute("aria-disabled");
+    for (const item of this.#items()) {
+      if (disabled) {
+        if (!figBooleanAttribute(item, "disabled")) {
+          this.#parentDisabledItems.add(item);
+          item.setAttribute("disabled", "");
+        }
+      } else if (this.#parentDisabledItems.has(item)) {
+        this.#parentDisabledItems.delete(item);
+        item.removeAttribute("disabled");
+      }
+    }
+    this.#syncTabIndexes();
+  }
+
+  #syncSelection() {
+    const declaredValue = this.getAttribute("value");
+    if (declaredValue !== null) {
+      this.#selectByValue(declaredValue);
+      return;
+    }
+
+    const selectedItems = this.#items().filter((item) =>
+      figBooleanAttribute(item, "selected"),
+    );
+    const selected = selectedItems[0] || null;
+    for (const item of selectedItems.slice(1)) {
+      item.removeAttribute("selected");
+    }
+    if (selected) this.#reflectValue(selected.value);
+  }
+
+  #selectByValue(value) {
+    const target =
+      value === null
+        ? null
+        : this.#items().find((item) => item.value === value) || null;
+    for (const item of this.#items()) {
+      item.toggleAttribute("selected", item === target);
+    }
+    this.#syncTabIndexes(target);
+    if (target) this.#scrollSelectedItemIntoView(target);
+  }
+
+  #selectItem(target, { emit = false, focus = false } = {}) {
+    if (!target || figBooleanAttribute(target, "disabled")) return false;
+    const previousItem = this.selectedItem;
+    const previousValue = this.value;
+    for (const item of this.#items()) {
+      item.toggleAttribute("selected", item === target);
+    }
+    this.#reflectValue(target.value);
+    this.#syncTabIndexes(target);
+    if (focus) target.focus();
+    this.#scrollSelectedItemIntoView(target);
+    if (emit && (previousItem !== target || previousValue !== target.value)) {
+      this.#emitSelectionEvents();
+    }
+    return true;
+  }
+
+  #reflectValue(value) {
+    this.#syncingValue = true;
+    this.setAttribute("value", value);
+    this.#syncingValue = false;
+  }
+
+  #syncTabIndexes(preferredItem) {
+    const items = this.#items();
+    const availableItems = this.#availableItems();
+    const active =
+      (preferredItem && availableItems.includes(preferredItem) && preferredItem) ||
+      (availableItems.includes(document.activeElement) && document.activeElement) ||
+      (availableItems.includes(this.selectedItem) && this.selectedItem) ||
+      availableItems[0] ||
+      null;
+    for (const item of items) {
+      item.setAttribute("tabindex", item === active ? "0" : "-1");
+    }
+  }
+
+  #handleClick(event) {
+    if (figBooleanAttribute(this, "disabled")) return;
+    const target = event.target.closest?.("fig-toolbelt-item");
+    if (!target || target.closest("fig-toolbelt") !== this) return;
+    this.#selectItem(target, { emit: true });
+  }
+
+  #handleKeyDown(event) {
+    if (figBooleanAttribute(this, "disabled")) return;
+    const target = event.target.closest?.("fig-toolbelt-item");
+    if (!target || target.closest("fig-toolbelt") !== this) return;
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.#selectItem(target, { emit: true });
+      return;
+    }
+
+    const items = this.#availableItems();
+    if (!items.length) return;
+    const currentIndex = Math.max(0, items.indexOf(target));
+    let nextIndex = currentIndex;
+    switch (event.key) {
+      case "ArrowLeft":
+        if (this.#isVertical) return;
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        break;
+      case "ArrowUp":
+        if (!this.#isVertical) return;
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        break;
+      case "ArrowRight":
+        if (this.#isVertical) return;
+        nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        break;
+      case "ArrowDown":
+        if (!this.#isVertical) return;
+        nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = items.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    this.#syncTabIndexes(items[nextIndex]);
+    items[nextIndex].focus();
+    this.#scrollItemIntoView(items[nextIndex]);
+  }
+
+  #emitSelectionEvents() {
+    const detail = this.value;
+    this.dispatchEvent(new CustomEvent("input", { detail, bubbles: true }));
+    this.dispatchEvent(new CustomEvent("change", { detail, bubbles: true }));
+  }
+
+  #startObserver() {
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = new MutationObserver((records) => {
+      const authoredChange = records.some(
+        (record) =>
+          record.type === "childList" ||
+          (record.target instanceof Element &&
+            record.target.matches("fig-toolbelt-item") &&
+            record.target.closest("fig-toolbelt") === this),
+      );
+      if (!authoredChange) return;
+      this.#applyOverflowMode();
+      this.#syncSelection();
+      this.#applyDisabled(figBooleanAttribute(this, "disabled"));
+      this.#syncTabIndexes();
+      requestAnimationFrame(() => {
+        this.#syncOverflow();
+        this.#scrollSelectedItemIntoView();
+      });
+    });
+    this.#mutationObserver.observe(this, {
+      childList: true,
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["value", "selected", "disabled"],
+    });
+  }
+
+  #startResizeObserver() {
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = new ResizeObserver(() => this.#syncOverflow());
+    this.#resizeObserver.observe(this);
+    this.#resizeObserver.observe(this.#viewport);
+  }
+
+  #syncOverflow() {
+    if (this.#overflowMode === "scrollbar") return;
+    figSyncOverflowState(
+      this,
+      this.#viewport,
+      this.#isVertical ? "y" : "x",
+    );
+  }
+
+  #syncOrientation() {
+    this.setAttribute(
+      "aria-orientation",
+      this.#isVertical ? "vertical" : "horizontal",
+    );
+    this.#viewport.classList.add("fig-overflow-fade");
+    this.#viewport.classList.toggle(
+      "fig-overflow-fade-horizontal",
+      !this.#isVertical,
+    );
+  }
+
+  #applyOverflowMode() {
+    if (this.#overflowMode === "scrollbar") {
+      this.#removeNavButtons();
+    } else {
+      this.#createNavButtons();
+    }
+  }
+
+  #createNavButtons() {
+    if (
+      this.#navStart &&
+      this.#navEnd &&
+      this.contains(this.#navStart) &&
+      this.contains(this.#navEnd)
+    ) {
+      this.#positionNavButtons();
+      return;
+    }
+    this.#navStart?.remove();
+    this.#navEnd?.remove();
+    const buttons = createFigOverflowButtons({
+      owner: "toolbelt",
+      onStart: () => this.#scrollByPage(-1),
+      onEnd: () => this.#scrollByPage(1),
+    });
+    this.#navStart = buttons.start;
+    this.#navEnd = buttons.end;
+    this.#navStart.setAttribute("slot", "start");
+    this.#navEnd.setAttribute("slot", "end");
+    this.#positionNavButtons();
+  }
+
+  #positionNavButtons() {
+    if (this.firstElementChild !== this.#navStart) this.prepend(this.#navStart);
+    if (this.lastElementChild !== this.#navEnd) this.append(this.#navEnd);
+  }
+
+  #removeNavButtons() {
+    this.#navStart?.remove();
+    this.#navEnd?.remove();
+    this.#navStart = null;
+    this.#navEnd = null;
+    this.classList.remove("overflow-start", "overflow-end");
+  }
+
+  #scrollByPage(direction) {
+    figScrollOverflowPage(
+      this.#viewport,
+      this.#isVertical ? "y" : "x",
+      direction,
+    );
+  }
+
+  #scrollSelectedItemIntoView(
+    item = this.selectedItem,
+    behavior = "smooth",
+  ) {
+    if (item) this.#scrollItemIntoView(item, behavior);
+  }
+
+  #scrollItemIntoView(item, behavior = "smooth") {
+    if (!item) return;
+    requestAnimationFrame(() => {
+      if (!this.isConnected || !item.isConnected) return;
+      const isVertical = this.#isVertical;
+      const hasOverflow = isVertical
+        ? this.#viewport.scrollHeight > this.#viewport.clientHeight
+        : this.#viewport.scrollWidth > this.#viewport.clientWidth;
+      if (!hasOverflow) return;
+      const containerRect = this.#viewport.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      if (isVertical) {
+        const itemCenter =
+          itemRect.top -
+          containerRect.top +
+          this.#viewport.scrollTop +
+          itemRect.height / 2;
+        this.#viewport.scrollTo({
+          top: itemCenter - this.#viewport.clientHeight / 2,
+          behavior,
+        });
+      } else {
+        const itemCenter =
+          itemRect.left -
+          containerRect.left +
+          this.#viewport.scrollLeft +
+          itemRect.width / 2;
+        this.#viewport.scrollTo({
+          left: itemCenter - this.#viewport.clientWidth / 2,
+          behavior,
+        });
+      }
+      this.#syncOverflow();
+    });
+  }
+}
+figDefineElement("fig-toolbelt", FigToolbelt);
+
 /* Segmented Control */
 /**
  * A custom segment element for use within FigSegmentedControl.

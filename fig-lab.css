@@ -217,6 +217,121 @@ fig-chat-message {
   }
 }
 
+fig-input-audio {
+  --fig-input-audio-waveform-fade: 1rem;
+  --fig-input-audio-waveform-opacity: 0.5;
+  --fig-input-audio-waveform-opacity-min: 0.1;
+  --fig-input-audio-waveform-stroke-width: 1.5px;
+
+  position: relative;
+  display: inline-flex;
+  box-sizing: border-box;
+  max-width: 100%;
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  .fig-input-audio-waveform {
+    display: none;
+  }
+
+  &[data-has-audio] {
+    width: 18rem;
+    height: var(--control-height);
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg-secondary);
+
+    &[full]:not([full="false"]) {
+      width: 100%;
+    }
+
+    .fig-input-audio-waveform {
+      position: absolute;
+      inset: 0;
+      display: block;
+      overflow: hidden;
+      border-radius: inherit;
+      color: var(--figma-color-icon-secondary);
+      pointer-events: none;
+    }
+
+    .fig-input-audio-waveform > svg {
+      display: block;
+      width: calc(100% - var(--spacer-3));
+      height: 100%;
+      margin-inline: var(--spacer-2);
+      overflow: visible;
+      mask-image: linear-gradient(
+        to right,
+        rgb(0 0 0 / var(--fig-input-audio-waveform-opacity-min)) 0,
+        rgb(0 0 0 / var(--fig-input-audio-waveform-opacity))
+          var(--fig-input-audio-waveform-fade),
+        rgb(0 0 0 / var(--fig-input-audio-waveform-opacity))
+          calc(100% - var(--fig-input-audio-waveform-fade)),
+        rgb(0 0 0 / var(--fig-input-audio-waveform-opacity-min)) 100%
+      );
+    }
+
+    .fig-input-audio-waveform path {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .fig-input-audio-file {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    .fig-input-audio-file > fig-tooltip:has(.fig-input-file-filename) {
+      width: 100%;
+      height: 100%;
+    }
+
+    .fig-input-audio-file .fig-input-file-filename {
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+    }
+
+    .fig-input-audio-file .fig-input-file-clear {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    &:hover .fig-input-file-clear,
+    &:focus-within .fig-input-file-clear {
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    &:hover .fig-input-file-clear {
+      background-color: var(--figma-color-bg-secondary);
+    }
+
+    &:has(.fig-input-audio-file input[type="file"]:focus-visible)
+      .fig-input-audio-waveform,
+    &:has(.fig-input-file-clear:focus) .fig-input-audio-waveform {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+
+    &:has(.fig-input-audio-file[dragover]) .fig-input-audio-waveform {
+      outline: 1px dashed var(--figma-color-border-brand);
+      outline-offset: -1px;
+    }
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
 fig-input-wheel {
   --fig-input-wheel-handle-drag-max: 0.5rem;
   --fig-input-wheel-handle-drag-offset: 0px;

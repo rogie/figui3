@@ -356,6 +356,33 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 <fig-content>Body</fig-content>
 ```
 
+### `fig-toolbelt` / `fig-toolbelt-group` / `fig-toolbelt-item`
+
+```tsx
+<fig-toolbelt
+  layout="horizontal"
+  overflow="buttons"
+  value={tool}
+  aria-label="Design tools"
+  onChange={onChange}
+>
+  <fig-toolbelt-group aria-label="Transform tools">
+    <fig-toolbelt-item value="move" selected={tool === "move" || undefined}>
+      Move
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="frame">Frame</fig-toolbelt-item>
+  </fig-toolbelt-group>
+</fig-toolbelt>
+```
+
+- Toolbelt attrs: `value`, `disabled`, `layout="horizontal|vertical"`, `overflow="buttons|scrollbar"`
+- Group: wraps related items; adjacent groups receive direction-aware separators
+- Item attrs: `value`, `selected`, `disabled`
+- ArrowLeft/ArrowRight move focus horizontally; ArrowUp/ArrowDown move focus vertically; Enter/Space selects
+- Items stay in light DOM; the internal `part="viewport"` owns scrolling and overflow fades
+- Overflow buttons are generated outside the viewport for `overflow="buttons"`
+- Events: `input` / `change` → `currentTarget.value`
+
 ### `fig-tabs` / `fig-tab` / `fig-tab-content`
 
 ```tsx

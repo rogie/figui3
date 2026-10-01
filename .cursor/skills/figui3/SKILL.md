@@ -3,8 +3,8 @@ name: figui3
 description: >-
   Guides FigUI3 core (`fig.js` / `fig.css`) web components for Figma-style plugin UIs,
   including React JSX usage. Use when adding, using, or debugging fig-* elements from
-  the core bundle—buttons, fields, overlays, menus, sliders, color/fill inputs, media,
-  dialogs, popups, toasts. Not for fig-select or fig-fill-picker (fig-editor),
+  the core bundle—buttons, fields, overlays, menus, toolbelts, sliders, color/fill inputs,
+  media, dialogs, popups, toasts. Not for fig-select or fig-fill-picker (fig-editor),
 user-invocable: false
 ---
 

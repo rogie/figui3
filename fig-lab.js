@@ -288,6 +288,375 @@ class FigAttachments extends HTMLElement {
   }
 }
 figLabDefineElement("fig-attachments", FigAttachments);
+
+/**
+ * Audio file input with a responsive waveform preview.
+ *
+ * @attr {string} url - Audio URL to preview when CORS permits.
+ * @attr {string} filename - Display filename for URL-backed audio.
+ * @attr {string} label - Empty-state upload label. Defaults to "Upload audio".
+ * @attr {string} accepts - Accepted file types. Defaults to "audio/*".
+ * @attr {string} variant - Forwarded fig-input-file button variant.
+ * @attr {boolean|string} disabled - Disables upload, replacement, and removal.
+ * @attr {boolean|string} full - Makes the input fill its container.
+ * @fires input - Composed file input event.
+ * @fires change - Composed file change event.
+ */
+class FigInputAudio extends HTMLElement {
+  static observedAttributes = [
+    "url",
+    "filename",
+    "label",
+    "accepts",
+    "variant",
+    "disabled",
+    "full",
+  ];
+
+  #fileInput = null;
+  #surface = null;
+  #svg = null;
+  #waveformPath = null;
+  #resizeObserver = null;
+  #abortController = null;
+  #audioContext = null;
+  #peaks = [];
+  #generation = 0;
+  #layoutFrame = 0;
+
+  get files() {
+    return this.#fileInput?.files ?? null;
+  }
+
+  get value() {
+    return this.#fileInput?.value ?? "";
+  }
+
+  connectedCallback() {
+    if (!this.#fileInput) this.#render();
+    this.#observeWaveform();
+    this.#syncAttributes();
+    this.#syncSource();
+  }
+
+  disconnectedCallback() {
+    this.#cancelDecode();
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+    if (this.#layoutFrame) cancelAnimationFrame(this.#layoutFrame);
+    this.#layoutFrame = 0;
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.#fileInput) return;
+    this.#syncAttributes();
+    if (name === "url") this.#syncSource();
+  }
+
+  clear() {
+    this.removeAttribute("url");
+    this.removeAttribute("filename");
+    this.#fileInput?.clear();
+  }
+
+  #render() {
+    this.#surface = document.createElement("div");
+    this.#surface.className = "fig-input-audio-waveform";
+    this.#surface.setAttribute("aria-hidden", "true");
+
+    this.#svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    this.#svg.setAttribute("aria-hidden", "true");
+    this.#svg.setAttribute("preserveAspectRatio", "none");
+    this.#waveformPath = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path",
+    );
+    this.#svg.appendChild(this.#waveformPath);
+    this.#surface.appendChild(this.#svg);
+
+    this.#fileInput = document.createElement("fig-input-file");
+    this.#fileInput.className = "fig-input-audio-file";
+    this.#fileInput.addEventListener("input", this.#onFileEvent);
+    this.#fileInput.addEventListener("change", this.#onFileEvent);
+
+    this.replaceChildren(this.#surface, this.#fileInput);
+
+    this.#observeWaveform();
+  }
+
+  #observeWaveform() {
+    if (this.#resizeObserver || !this.#svg) return;
+    this.#resizeObserver = new ResizeObserver(() => this.#queueWaveformLayout());
+    this.#resizeObserver.observe(this.#svg);
+  }
+
+  #syncAttributes() {
+    const forwarded = ["url", "filename", "variant"];
+    for (const name of forwarded) {
+      const value = this.getAttribute(name);
+      if (value === null) this.#fileInput.removeAttribute(name);
+      else this.#fileInput.setAttribute(name, value);
+    }
+
+    this.#fileInput.setAttribute("accepts", this.getAttribute("accepts") || "audio/*");
+    this.#fileInput.setAttribute("label", this.getAttribute("label") || "Upload audio");
+    this.#toggleBooleanAttribute(this.#fileInput, "disabled", this.#isDisabled());
+    this.#toggleBooleanAttribute(this.#fileInput, "full", this.#isTruthyAttribute("full"));
+    this.#syncInteractiveLabels();
+    this.#syncLoadedState();
+  }
+
+  #toggleBooleanAttribute(element, name, enabled) {
+    if (enabled) element.setAttribute(name, "");
+    else element.removeAttribute(name);
+  }
+
+  #isTruthyAttribute(name) {
+    return this.hasAttribute(name) && this.getAttribute(name) !== "false";
+  }
+
+  #isDisabled() {
+    return this.#isTruthyAttribute("disabled");
+  }
+
+  #syncLoadedState() {
+    const hasAudio =
+      (this.#fileInput?.files && this.#fileInput.files.length > 0) ||
+      !!this.getAttribute("url");
+    this.toggleAttribute("data-has-audio", hasAudio);
+    this.#syncInteractiveLabels();
+  }
+
+  #syncInteractiveLabels() {
+    const nativeInput = this.#fileInput?.querySelector('input[type="file"]');
+    if (nativeInput) {
+      nativeInput.setAttribute(
+        "aria-label",
+        this.hasAttribute("data-has-audio") ? "Replace audio" : "Upload audio",
+      );
+    }
+    const clearButton = this.#fileInput?.querySelector(".fig-input-file-clear");
+    clearButton?.setAttribute("aria-label", "Remove audio");
+  }
+
+  #onFileEvent = (event) => {
+    event.stopPropagation();
+    if (event.target !== this.#fileInput) return;
+    const detail = event.detail || { files: this.#fileInput.files };
+
+    if (event.type === "input") {
+      const file = this.#fileInput.files?.[0] || null;
+      if (file) {
+        const replacedUrl = this.hasAttribute("url");
+        if (replacedUrl) this.removeAttribute("url");
+        this.#syncLoadedState();
+        if (!replacedUrl) this.#decodeSource(() => file.arrayBuffer());
+      } else {
+        if (detail.cleared) {
+          this.removeAttribute("url");
+          this.removeAttribute("filename");
+        }
+        this.#clearWaveform();
+        this.#syncLoadedState();
+      }
+      this.#syncInteractiveLabels();
+    }
+
+    this.dispatchEvent(
+      new CustomEvent(event.type, {
+        bubbles: true,
+        composed: true,
+        detail,
+      }),
+    );
+  };
+
+  #syncSource() {
+    const file = this.#fileInput?.files?.[0];
+    if (file) {
+      this.#syncLoadedState();
+      this.#decodeSource(() => file.arrayBuffer());
+      return;
+    }
+
+    const url = this.getAttribute("url");
+    this.#syncLoadedState();
+    if (!url) {
+      this.#clearWaveform();
+      return;
+    }
+
+    this.#decodeSource(async (signal) => {
+      const response = await fetch(url, { signal });
+      if (!response.ok) throw new Error(`Audio request failed: ${response.status}`);
+      return response.arrayBuffer();
+    });
+  }
+
+  async #decodeSource(loadArrayBuffer) {
+    this.#cancelDecode();
+    const generation = ++this.#generation;
+    const controller = new AbortController();
+    this.#abortController = controller;
+    this.setAttribute("data-waveform-state", "loading");
+    this.setAttribute("aria-busy", "true");
+    this.#peaks = [];
+    this.#queueWaveformLayout();
+
+    let context = null;
+    try {
+      const arrayBuffer = await loadArrayBuffer(controller.signal);
+      if (generation !== this.#generation || !this.isConnected) return;
+
+      const AudioContextConstructor =
+        window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextConstructor) throw new Error("Web Audio is unavailable");
+      context = new AudioContextConstructor();
+      this.#audioContext = context;
+      const audioBuffer = await context.decodeAudioData(arrayBuffer);
+      if (generation !== this.#generation || !this.isConnected) return;
+
+      this.#peaks = this.#extractPeaks(audioBuffer);
+      this.setAttribute("data-waveform-state", "ready");
+      this.#queueWaveformLayout();
+    } catch (error) {
+      if (generation !== this.#generation || error?.name === "AbortError") return;
+      this.#peaks = new Array(256).fill(0);
+      this.setAttribute("data-waveform-state", "unavailable");
+      this.#queueWaveformLayout();
+    } finally {
+      if (context) {
+        try {
+          await context.close();
+        } catch {
+          // Closing is best-effort in browsers with suspended audio contexts.
+        }
+      }
+      if (this.#audioContext === context) this.#audioContext = null;
+      if (this.#abortController === controller) this.#abortController = null;
+      if (generation === this.#generation) this.removeAttribute("aria-busy");
+    }
+  }
+
+  #extractPeaks(audioBuffer) {
+    const binCount = 256;
+    const peaks = new Array(binCount).fill(0);
+    const channelCount = audioBuffer.numberOfChannels;
+    const frameCount = audioBuffer.length;
+    const sampleStride = Math.max(1, Math.ceil(frameCount / 500000));
+    let maximum = 0;
+
+    for (let channel = 0; channel < channelCount; channel += 1) {
+      const samples = audioBuffer.getChannelData(channel);
+      for (let bin = 0; bin < binCount; bin += 1) {
+        const start = Math.floor((bin / binCount) * frameCount);
+        const end = Math.max(start + 1, Math.floor(((bin + 1) / binCount) * frameCount));
+        let peak = peaks[bin];
+        for (let index = start; index < end; index += sampleStride) {
+          const magnitude = Math.abs(samples[index] || 0);
+          if (Number.isFinite(magnitude)) peak = Math.max(peak, magnitude);
+        }
+        peaks[bin] = peak;
+        maximum = Math.max(maximum, peak);
+      }
+    }
+
+    if (!Number.isFinite(maximum) || maximum <= 0) return peaks.fill(0);
+    return peaks.map((peak) => {
+      const normalized = Math.sqrt(peak / maximum);
+      return Number.isFinite(normalized) ? normalized : 0;
+    });
+  }
+
+  #clearWaveform() {
+    this.#cancelDecode();
+    this.#peaks = [];
+    this.removeAttribute("data-waveform-state");
+    this.removeAttribute("aria-busy");
+    this.#queueWaveformLayout();
+  }
+
+  #cancelDecode() {
+    this.#generation += 1;
+    this.#abortController?.abort();
+    this.#abortController = null;
+    if (this.#audioContext) {
+      try {
+        this.#audioContext.close();
+      } catch {
+        // Closing is best-effort during teardown and source replacement.
+      }
+      this.#audioContext = null;
+    }
+  }
+
+  #queueWaveformLayout() {
+    if (this.#layoutFrame) return;
+    this.#layoutFrame = requestAnimationFrame(() => {
+      this.#layoutFrame = 0;
+      this.#layoutWaveform();
+    });
+  }
+
+  #layoutWaveform() {
+    if (!this.#svg || !this.#waveformPath) return;
+    const bounds = this.#svg.getBoundingClientRect();
+    const width = Math.max(1, Math.round(bounds.width));
+    const height = Math.max(1, Math.round(bounds.height));
+    this.#svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+    if (this.#peaks.length === 0) {
+      this.#waveformPath.setAttribute("d", "");
+      return;
+    }
+
+    const barCount = Math.min(
+      this.#peaks.length,
+      Math.max(12, Math.floor(width / 4)),
+    );
+    const cellWidth = width / barCount;
+    const configuredStrokeWidth = Number.parseFloat(
+      getComputedStyle(this).getPropertyValue(
+        "--fig-input-audio-waveform-stroke-width",
+      ),
+    );
+    const strokeWidth =
+      Number.isFinite(configuredStrokeWidth) && configuredStrokeWidth > 0
+        ? configuredStrokeWidth
+        : 2;
+    const barWidth = Math.max(0.5, Math.min(strokeWidth, cellWidth * 0.75));
+    const halfWidth = barWidth / 2;
+    const centerY = height / 2;
+    const maxBarHeight = Math.max(2, height - 12);
+    const commands = [];
+
+    for (let index = 0; index < barCount; index += 1) {
+      const peakIndex = Math.min(
+        this.#peaks.length - 1,
+        Math.floor((index / barCount) * this.#peaks.length),
+      );
+      const barHeight = Math.max(barWidth, this.#peaks[peakIndex] * maxBarHeight);
+      const x = (index + 0.5) * cellWidth;
+      const top = centerY - barHeight / 2;
+      const bottom = centerY + barHeight / 2;
+      const left = x - halfWidth;
+      const right = x + halfWidth;
+      commands.push(
+        `M ${x} ${top}` +
+          ` Q ${right} ${top} ${right} ${top + halfWidth}` +
+          ` V ${bottom - halfWidth}` +
+          ` Q ${right} ${bottom} ${x} ${bottom}` +
+          ` Q ${left} ${bottom} ${left} ${bottom - halfWidth}` +
+          ` V ${top + halfWidth}` +
+          ` Q ${left} ${top} ${x} ${top} Z`,
+      );
+    }
+
+    this.#waveformPath.setAttribute("d", commands.join(" "));
+  }
+}
+figLabDefineElement("fig-input-audio", FigInputAudio);
+
 /**
  * Standalone interactive numeric wheel.
  *
@@ -2535,7 +2904,7 @@ class FigCanvasControl extends HTMLElement {
 figLabDefineElement("fig-canvas-control", FigCanvasControl);
 /* Reorder wrapper */
 class FigReorder extends HTMLElement {
-  static observedAttributes = ["axis", "handle", "disabled"];
+  static observedAttributes = ["axis", "handle", "items", "disabled"];
 
   static #DRAG_THRESHOLD = 6;
 
@@ -2550,6 +2919,7 @@ class FigReorder extends HTMLElement {
     "fig-input-gradient",
     "fig-easing-curve",
     "fig-angle",
+    "fig-input-audio",
     "fig-input-wheel",
     "fig-joystick",
     "fig-origin-grid",
@@ -2557,7 +2927,19 @@ class FigReorder extends HTMLElement {
     "fig-canvas-control",
   ];
 
+  static #OWNED_ATTRIBUTES = new Set([
+    "data-reorder-item",
+    "data-reorder-generated-role",
+    "data-reorder-handle",
+    "role",
+    "tabindex",
+    "aria-label",
+    "aria-roledescription",
+  ]);
+
   #childObserver = null;
+  #attributeObserver = null;
+  #attributeSyncQueued = false;
   #bindings = new Map();
   #drag = null;
   #indicator = null;
@@ -2573,11 +2955,14 @@ class FigReorder extends HTMLElement {
     this.#syncChildren();
     this.#childObserver = new MutationObserver(() => this.#syncChildren());
     this.#childObserver.observe(this, { childList: true });
+    this.#syncAttributeObserver();
   }
 
   disconnectedCallback() {
     this.#childObserver?.disconnect();
     this.#childObserver = null;
+    this.#attributeObserver?.disconnect();
+    this.#attributeObserver = null;
     this.#unbindAll();
     this.#cancelDrag();
     this.#removeIndicator();
@@ -2588,8 +2973,37 @@ class FigReorder extends HTMLElement {
   attributeChangedCallback() {
     if (this.isConnected) {
       if (this.#disabled) this.#cancelDrag();
+      this.#syncAttributeObserver();
       this.#syncChildren();
     }
+  }
+
+  refresh() {
+    if (this.isConnected) this.#syncChildren();
+  }
+
+  #syncAttributeObserver() {
+    if (!this.#itemsSelector) {
+      this.#attributeObserver?.disconnect();
+      this.#attributeObserver = null;
+      return;
+    }
+    if (this.#attributeObserver) return;
+    this.#attributeObserver = new MutationObserver((records) => {
+      const relevant = records.some(
+        (record) =>
+          record.target.parentElement === this &&
+          !FigReorder.#OWNED_ATTRIBUTES.has(record.attributeName) &&
+          !(record.attributeName === "class" && record.target === this.#drag?.item),
+      );
+      if (!relevant || this.#attributeSyncQueued) return;
+      this.#attributeSyncQueued = true;
+      queueMicrotask(() => {
+        this.#attributeSyncQueued = false;
+        if (this.isConnected) this.#syncChildren();
+      });
+    });
+    this.#attributeObserver.observe(this, { subtree: true, attributes: true });
   }
 
   get #disabled() {
@@ -2607,7 +3021,11 @@ class FigReorder extends HTMLElement {
     return (this.getAttribute("handle") || "").trim();
   }
 
-  #getElementChildren() {
+  get #itemsSelector() {
+    return (this.getAttribute("items") || "").trim();
+  }
+
+  #getAllElementChildren() {
     return [...this.children].filter(
       (node) =>
         node.nodeType === Node.ELEMENT_NODE &&
@@ -2615,7 +3033,19 @@ class FigReorder extends HTMLElement {
     );
   }
 
+  #getElementChildren() {
+    const children = this.#getAllElementChildren();
+    const selector = this.#itemsSelector;
+    if (!selector) return children;
+    try {
+      return children.filter((child) => child.matches(selector));
+    } catch {
+      return [];
+    }
+  }
+
   #syncChildren() {
+    const allChildren = this.#getAllElementChildren();
     const children = this.#getElementChildren();
     const childSet = new Set(children);
 
@@ -2632,8 +3062,9 @@ class FigReorder extends HTMLElement {
       }
     }
 
-    this.#clearHandleMarks(children);
-    this.#clearReorderItemMarks(children);
+    this.#clearHandleMarks(allChildren);
+    this.#clearReorderItemMarks(allChildren);
+    this.#markNonItems(allChildren.filter((child) => !childSet.has(child)));
 
     if (this.#disabled || children.length < 2) {
       this.#unbindAll();
@@ -2675,6 +3106,15 @@ class FigReorder extends HTMLElement {
       child.setAttribute("data-reorder-item", "");
       if (!child.hasAttribute("role")) {
         child.setAttribute("role", "listitem");
+        child.setAttribute("data-reorder-generated-role", "");
+      }
+    }
+  }
+
+  #markNonItems(children) {
+    for (const child of children) {
+      if (!child.hasAttribute("role")) {
+        child.setAttribute("role", "none");
         child.setAttribute("data-reorder-generated-role", "");
       }
     }
@@ -3031,7 +3471,8 @@ class FigReorder extends HTMLElement {
     const clamped = Math.max(0, Math.min(index, items.length));
 
     if (clamped >= items.length) {
-      if (items[items.length - 1] !== item) this.appendChild(item);
+      const last = items[items.length - 1];
+      if (last && last !== item) last.after(item);
       return;
     }
 
@@ -3043,6 +3484,7 @@ class FigReorder extends HTMLElement {
     const items = this.#getElementChildren().filter((candidate) => candidate !== item);
     const ref = items[newIndex] ?? null;
     if (ref) this.insertBefore(item, ref);
+    else if (items.length) items[items.length - 1].after(item);
     else this.appendChild(item);
   }
 

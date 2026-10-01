@@ -117,6 +117,7 @@ test.describe("PropsKit playground migration", () => {
       "group",
       "header",
       "tabs",
+      "toolbelt",
     ]);
   });
 

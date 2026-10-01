@@ -440,6 +440,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["vertical", "horizontal"],
     },
     handle: { label: "Handle", type: "string" },
+    items: { label: "Items", type: "string" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-select": {
@@ -485,6 +486,19 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "fig-input-audio": {
+    url: { label: "URL", type: "string" },
+    filename: { label: "Filename", type: "string" },
+    label: { label: "Label", type: "string" },
+    accepts: { label: "Accepts", type: "string" },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["input", "primary", "secondary", "ghost", "link", "overlay"],
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
   },
   "fig-input-fill": {
     mode: { label: "Mode", type: "string" },
@@ -895,6 +909,25 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     visible: { label: "Visible", type: "boolean", boolMode: "string" },
   },
   "fig-tabs": {
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "fig-toolbelt": {
+    layout: {
+      label: "Layout",
+      type: "enum",
+      options: ["horizontal", "vertical"],
+    },
+    overflow: {
+      label: "Overflow",
+      type: "enum",
+      options: ["buttons", "scrollbar"],
+    },
+    value: { label: "Value", type: "string" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "fig-toolbelt-item": {
+    value: { label: "Value", type: "string" },
+    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-header": {

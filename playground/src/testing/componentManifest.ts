@@ -118,6 +118,38 @@ export const componentContracts: ComponentContract[] = [
     properties: [{ name: "value property", property: "value", value: "two", expected: "two" }],
   },
   {
+    tag: "fig-toolbelt-group",
+    title: "Toolbelt Group",
+    group: "input",
+    markup: `<fig-toolbelt-group aria-label="Transform tools"><fig-toolbelt-item value="move">Move</fig-toolbelt-item></fig-toolbelt-group>`,
+  },
+  {
+    tag: "fig-toolbelt-item",
+    title: "Toolbelt Item",
+    group: "input",
+    markup: `<fig-toolbelt-item value="move">Move</fig-toolbelt-item>`,
+    attributes: [{ name: "selected", attribute: "selected", value: "" }],
+  },
+  {
+    tag: "fig-toolbelt",
+    title: "Toolbelt",
+    group: "input",
+    markup: `<fig-toolbelt value="move"><fig-toolbelt-item value="move">Move</fig-toolbelt-item><fig-toolbelt-item value="frame">Frame</fig-toolbelt-item></fig-toolbelt>`,
+    attributes: [
+      { name: "layout", attribute: "layout", value: "vertical" },
+      { name: "overflow", attribute: "overflow", value: "scrollbar" },
+    ],
+    properties: [{ name: "value property", property: "value", value: "frame", expected: "frame" }],
+    events: [
+      {
+        name: "toolbelt item click emits change",
+        event: "change",
+        action: { type: "click", selector: `fig-toolbelt-item[value="frame"]` },
+        expectedDetail: "frame",
+      },
+    ],
+  },
+  {
     tag: "fig-segment",
     title: "Segment",
     group: "input",

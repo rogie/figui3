@@ -271,6 +271,82 @@ const ungroupedLabSections: Section[] = [
     ],
   },
   {
+    id: "input-audio",
+    name: "Audio input",
+    description:
+      "A single-audio upload control with a responsive waveform preview. Select a file or provide a CORS-enabled URL.",
+    examples: [
+      {
+        id: "upload",
+        name: "Upload",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Audio</label>
+    <fig-input-audio full></fig-input-audio>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "url",
+        name: "URL",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Audio</label>
+    <fig-input-audio url="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" filename="t-rex-roar.mp3" full></fig-input-audio>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "input-wheel",
+    name: "Wheel",
+    description:
+      "A tick-and-handle scrubber for numeric values. Drag to scrub; optional min/max clamp the range and spin animates value changes.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Value</label>
+    <fig-input-wheel value="0"></fig-input-wheel>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "range",
+        name: "Range",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Amount</label>
+    <fig-input-wheel value="50" min="0" max="100"></fig-input-wheel>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "step",
+        name: "Step",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Scale</label>
+    <fig-input-wheel value="1.5" step="0.25"></fig-input-wheel>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "disabled",
+        name: "Disabled",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Value</label>
+    <fig-input-wheel value="25" disabled></fig-input-wheel>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "canvas-control",
     name: "Canvas Control",
     description:
@@ -326,8 +402,10 @@ const ungroupedLabSections: Section[] = [
 ];
 
 const isAiSection = (section: Section) => section.id.startsWith("ai-");
+const isInputSection = (section: Section) =>
+  section.id === "input-audio" || section.id === "input-wheel";
 
 export const labSections: Section[] = ungroupedLabSections.map((section) => ({
   ...section,
-  group: isAiSection(section) ? "AI" : "Misc",
+  group: isInputSection(section) ? "Inputs" : isAiSection(section) ? "AI" : "Misc",
 }));

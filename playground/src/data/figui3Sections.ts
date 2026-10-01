@@ -1333,6 +1333,167 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
   },
   ...figui3ChooserSections,
   {
+    id: "toolbelt",
+    name: "Toolbelt",
+    group: "Navigation & Containers",
+    description:
+      "A selectable horizontal or vertical tool container with button or buttonless overflow.",
+    examples: [
+      {
+        id: "overflow",
+        name: "Overflow",
+        markup: `<div class="prop-panel">
+  <fig-toolbelt value="edit" aria-label="Design tools" data-playground-hide-field>
+    <fig-toolbelt-group aria-label="Create tools">
+    <fig-toolbelt-item value="add" aria-label="Add">
+      <fig-tooltip text="Add">
+        <fig-button variant="ghost" icon aria-label="Add" tabindex="-1"><fig-icon name="add"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="edit" aria-label="Edit" selected>
+      <fig-tooltip text="Edit">
+        <fig-button variant="ghost" icon aria-label="Edit" tabindex="-1"><fig-icon name="edit"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    </fig-toolbelt-group>
+    <fig-toolbelt-group aria-label="View tools">
+    <fig-toolbelt-item value="search" aria-label="Search">
+      <fig-tooltip text="Search">
+        <fig-button variant="ghost" icon aria-label="Search" tabindex="-1"><fig-icon name="search"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="preview" aria-label="Preview">
+      <fig-tooltip text="Preview">
+        <fig-button variant="ghost" icon aria-label="Preview" tabindex="-1"><fig-icon name="visible"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="hide" aria-label="Hide">
+      <fig-tooltip text="Hide">
+        <fig-button variant="ghost" icon aria-label="Hide" tabindex="-1"><fig-icon name="hidden"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    </fig-toolbelt-group>
+    <fig-toolbelt-group aria-label="File tools">
+    <fig-toolbelt-item value="duplicate" aria-label="Duplicate">
+      <fig-tooltip text="Duplicate">
+        <fig-button variant="ghost" icon aria-label="Duplicate" tabindex="-1"><fig-icon name="copy"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="upload" aria-label="Upload">
+      <fig-tooltip text="Upload">
+        <fig-button variant="ghost" icon aria-label="Upload" tabindex="-1"><fig-icon name="upload"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="download" aria-label="Download">
+      <fig-tooltip text="Download">
+        <fig-button variant="ghost" icon aria-label="Download" tabindex="-1"><fig-icon name="download"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    </fig-toolbelt-group>
+    <fig-toolbelt-group aria-label="Playback and settings">
+    <fig-toolbelt-item value="play" aria-label="Play">
+      <fig-tooltip text="Play">
+        <fig-button variant="ghost" icon aria-label="Play" tabindex="-1"><fig-icon name="play"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="pause" aria-label="Pause">
+      <fig-tooltip text="Pause">
+        <fig-button variant="ghost" icon aria-label="Pause" tabindex="-1"><fig-icon name="pause"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="adjust" aria-label="Adjust">
+      <fig-tooltip text="Adjust">
+        <fig-button variant="ghost" icon aria-label="Adjust" tabindex="-1"><fig-icon name="adjust"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="settings" aria-label="Settings">
+      <fig-tooltip text="Settings">
+        <fig-button variant="ghost" icon aria-label="Settings" tabindex="-1"><fig-icon name="settings"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    </fig-toolbelt-group>
+  </fig-toolbelt>
+</div>`,
+      },
+      {
+        id: "vertical",
+        name: "Vertical",
+        markup: `<div class="prop-panel">
+  <fig-toolbelt layout="vertical" value="edit" aria-label="Design tools" data-playground-hide-field>
+    <fig-toolbelt-item value="add" aria-label="Add">
+      <fig-tooltip text="Add">
+        <fig-button variant="ghost" icon aria-label="Add" tabindex="-1"><fig-icon name="add"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="edit" aria-label="Edit" selected>
+      <fig-tooltip text="Edit">
+        <fig-button variant="ghost" icon aria-label="Edit" tabindex="-1"><fig-icon name="edit"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="search" aria-label="Search">
+      <fig-tooltip text="Search">
+        <fig-button variant="ghost" icon aria-label="Search" tabindex="-1"><fig-icon name="search"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="settings" aria-label="Settings">
+      <fig-tooltip text="Settings">
+        <fig-button variant="ghost" icon aria-label="Settings" tabindex="-1"><fig-icon name="settings"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+  </fig-toolbelt>
+</div>`,
+      },
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-toolbelt layout="horizontal" overflow="buttons" value="edit" aria-label="Design tools" data-playground-hide-field>
+    <fig-toolbelt-item value="add" aria-label="Add">
+      <fig-tooltip text="Add">
+        <fig-button variant="ghost" icon aria-label="Add" tabindex="-1"><fig-icon name="add"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="edit" aria-label="Edit" selected>
+      <fig-tooltip text="Edit">
+        <fig-button variant="ghost" icon aria-label="Edit" tabindex="-1"><fig-icon name="edit"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="search" aria-label="Search">
+      <fig-tooltip text="Search">
+        <fig-button variant="ghost" icon aria-label="Search" tabindex="-1"><fig-icon name="search"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="preview" aria-label="Preview">
+      <fig-tooltip text="Preview">
+        <fig-button variant="ghost" icon aria-label="Preview" tabindex="-1"><fig-icon name="visible"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="duplicate" aria-label="Duplicate">
+      <fig-tooltip text="Duplicate">
+        <fig-button variant="ghost" icon aria-label="Duplicate" tabindex="-1"><fig-icon name="copy"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="upload" aria-label="Upload">
+      <fig-tooltip text="Upload">
+        <fig-button variant="ghost" icon aria-label="Upload" tabindex="-1"><fig-icon name="upload"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="download" aria-label="Download">
+      <fig-tooltip text="Download">
+        <fig-button variant="ghost" icon aria-label="Download" tabindex="-1"><fig-icon name="download"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+    <fig-toolbelt-item value="settings" aria-label="Settings">
+      <fig-tooltip text="Settings">
+        <fig-button variant="ghost" icon aria-label="Settings" tabindex="-1"><fig-icon name="settings"></fig-icon></fig-button>
+      </fig-tooltip>
+    </fig-toolbelt-item>
+  </fig-toolbelt>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "tabs",
     name: "Tabs",
     group: "Navigation & Containers",

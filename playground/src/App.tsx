@@ -375,7 +375,7 @@ export default function App({ mode }: Props) {
         navigateTo={navigateTo}
         sections={sections}
         appTitle={appTitle}
-        groupOrder={mode === "lab" ? ["AI", "Misc"] : undefined}
+        groupOrder={mode === "lab" ? ["Inputs", "AI", "Misc"] : undefined}
       />
       <main className={mode === "figui3" ? "mode-figui3" : undefined}>
         {activeSection && (

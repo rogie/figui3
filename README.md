@@ -76,6 +76,7 @@ Agent skills ship in `.cursor/skills/` (included in the npm package):
 
 - `figui3` — core `fig.js` components
 - `fig-editor` — `fig-select` and `fig-fill-picker`
+- `fig-lab` — experimental audio, wheel, reorder, canvas, and AI components
 - `propkit` — property-row composition; examples are included in `/figui3`
 
 Minimal example:
@@ -103,6 +104,7 @@ Minimal example:
 | [Radio](#radio) | `<fig-radio>` | Radio button |
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
+| [Audio Input](#audio-input) | `<fig-input-audio>` | Audio upload with responsive waveform preview |
 | [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
@@ -114,6 +116,7 @@ Minimal example:
 | [Gradient Input](#gradient-input) | `<fig-input-gradient>` | Gradient editor with stops |
 | [Fill Input](#fill-input) | `<fig-input-fill>` | Solid, gradient, image, video fill |
 | [Fill Picker](#fill-picker) | `<fig-fill-picker>` | Full fill picker dialog |
+| [Toolbelt](#toolbelt) | `<fig-toolbelt>` / `<fig-toolbelt-group>` / `<fig-toolbelt-item>` | Groupable selectable toolbar with directional overflow |
 | [Tabs](#tabs) | `<fig-tabs>` / `<fig-tab>` | Tabbed navigation |
 | [Segmented Control](#segmented-control) | `<fig-segmented-control>` / `<fig-segment>` | Segmented button group |
 | [Chooser](#chooser) | `<fig-chooser>` / `<fig-choice>` | Selection list with drag scroll |
@@ -399,6 +402,37 @@ document.querySelector("fig-select").menuAnchor =
 ```
 
 For `type="range"`, omitting `value` follows native range behavior and starts at the midpoint of `min` and `max`. Arrow keys move by `step`; hold Shift to move by a larger step.
+
+---
+
+#### Audio Input
+
+`<fig-input-audio>`
+
+An experimental single-audio upload control with a responsive waveform preview. Requires `fig-lab.js` and `fig-lab.css`. The waveform is preview-only and has no playback or seeking controls.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `url` | string | — | CORS-enabled audio URL to decode and preview |
+| `filename` | string | URL filename | Display filename for URL-backed audio |
+| `label` | string | `"Upload audio"` | Empty-state upload label |
+| `accepts` | string | `"audio/*"` | Native file accept filter |
+| `variant` | string | `"input"` | Upload button variant |
+| `disabled` | boolean | `false` | Disable upload, replacement, and removal |
+| `full` | boolean | `false` | Fill the available width |
+
+Set `--fig-input-audio-waveform-stroke-width` (default `2px`) to control waveform bar thickness.
+
+`files` and `value` mirror the composed file input. `clear()` removes the current source. The component emits bubbling, composed `input` and `change` events with `{ files }` and `{ files, cleared: true }` when cleared. URL fetch or decode failures render a quiet flat waveform fallback.
+
+```html
+<fig-input-audio></fig-input-audio>
+<fig-input-audio
+  url="https://example.com/audio.wav"
+  filename="audio.wav"
+  full
+></fig-input-audio>
+```
 
 ---
 
@@ -734,6 +768,37 @@ Webcam JSON is `{ type: "webcam", webcam: { live, snapshot, deviceId, scaleMode,
 ---
 
 ### Selection
+
+#### Toolbelt
+
+`<fig-toolbelt>` / `<fig-toolbelt-group>` / `<fig-toolbelt-item>`
+
+A selectable horizontal or vertical toolbar that keeps authored items in the light DOM. Its internal `part="viewport"` owns scrolling and overflow fades, while generated paging buttons remain outside the masked viewport.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `value` | string | — | Selected item value |
+| `disabled` | boolean | `false` | Disable all items |
+| `layout` | `horizontal` \| `vertical` | `horizontal` | Item and keyboard-navigation direction |
+| `overflow` | `buttons` \| `scrollbar` | `scrollbar` | Generated paging buttons or buttonless scrolling; scrollbars remain hidden |
+
+Wrap related items in `fig-toolbelt-group`; adjacent groups receive a direction-aware separator. Add `aria-label` to groups when the grouping has a meaningful name. Items support `value`, `selected`, and `disabled`. `input` and `change` bubble from the toolbelt with the selected value. ArrowLeft/ArrowRight navigate horizontal toolbelts; ArrowUp/ArrowDown navigate vertical toolbelts. Home and End move to the edges; Enter or Space selects the focused item.
+
+Use `--fig-toolbelt-gap`, `--fig-toolbelt-group-gap`, `--fig-toolbelt-group-separator-color`, `--fig-toolbelt-overflow-fade-size`, `--fig-toolbelt-padding-block`, `--fig-toolbelt-padding-inline`, `--fig-toolbelt-item-height`, and `--fig-toolbelt-item-padding` to customize layout. The toolbelt fade defaults to `calc(var(--spacer-6) + var(--spacer-2))`.
+
+```html
+<fig-toolbelt layout="horizontal" overflow="buttons" value="move" aria-label="Design tools">
+  <fig-toolbelt-group aria-label="Transform tools">
+    <fig-toolbelt-item value="move" selected>Move</fig-toolbelt-item>
+    <fig-toolbelt-item value="frame">Frame</fig-toolbelt-item>
+  </fig-toolbelt-group>
+  <fig-toolbelt-group aria-label="Shape tools">
+    <fig-toolbelt-item value="shape">Shape</fig-toolbelt-item>
+  </fig-toolbelt-group>
+</fig-toolbelt>
+```
+
+---
 
 #### Tabs
 
