@@ -1245,17 +1245,18 @@ A form field wrapper with flexible layout. Automatically links `<label>` to the 
 
 `<fig-group>` — [demo](https://rog.ie/figui3/#group)
 
-A section group with an optional generated or authored header. In collapsible groups, the `h3` is the keyboard-accessible toggle and the chevron is clickable; controls placed beside the `h3` in an authored `fig-header` remain independent.
+A section group with an optional generated or authored header. In collapsible groups, the `h3` is the keyboard-accessible toggle and the chevron is clickable; controls placed beside the `h3` in an authored `fig-header` remain independent. Start chevrons use the compact 16px icon; end chevrons use the larger 24px icon.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `name` | string | — | Generated header text |
 | `collapsible` | boolean | `false` | Enables collapse behavior |
 | `open` | boolean | `false` | Expanded state |
+| `chevron` | string | `"start"` | Chevron placement: `"start"` or `"end"` |
 | `compact` | boolean | `false` | Adds `compact` to the direct `fig-header` |
 
 ```html
-<fig-group collapsible open>
+<fig-group collapsible open chevron="end">
   <fig-header borderless>
     <h3>Export</h3>
     <fig-button variant="ghost" icon aria-label="Add export">

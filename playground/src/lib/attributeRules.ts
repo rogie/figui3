@@ -942,6 +942,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     name: { label: "Name", type: "string" },
     collapsible: { label: "Collapsible", type: "boolean", boolMode: "presence" },
     open: { label: "Open", type: "boolean", boolMode: "presence" },
+    chevron: {
+      label: "Chevron",
+      type: "enum",
+      options: ["start", "end"],
+    },
     compact: { label: "Compact", type: "boolean", boolMode: "string" },
   },
   "fig-handle": {

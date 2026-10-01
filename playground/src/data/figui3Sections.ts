@@ -2648,7 +2648,7 @@ const groupCustomHeaderExample: Example = {
       <fig-input-color value="#FFFFFF" text="true" full></fig-input-color>
     </fig-field>
   </fig-group>
-  <fig-group collapsible open compact>
+  <fig-group collapsible open compact chevron="end">
     <fig-header borderless>
       <h3>Export</h3>
       <fig-button variant="ghost" icon="true" aria-label="Add export">

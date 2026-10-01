@@ -433,8 +433,11 @@ export const componentContracts: ComponentContract[] = [
     tag: "fig-group",
     title: "Group",
     group: "layout",
-    markup: `<fig-group name="Group"><fig-field><label>Opacity</label><fig-slider value="50"></fig-slider></fig-field></fig-group>`,
-    attributes: [{ name: "open", attribute: "open", value: "" }],
+    markup: `<fig-group name="Group" collapsible><fig-field><label>Opacity</label><fig-slider value="50"></fig-slider></fig-field></fig-group>`,
+    attributes: [
+      { name: "open", attribute: "open", value: "" },
+      { name: "chevron", attribute: "chevron", value: "end" },
+    ],
   },
   {
     tag: "fig-header",

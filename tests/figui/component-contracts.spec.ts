@@ -7108,7 +7108,7 @@ test.describe("render timing composition", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <fig-group id="group" collapsible open>
+        <fig-group id="group" collapsible open chevron="end">
           <fig-header borderless>
             <h3>Export</h3>
             <fig-button id="action" variant="ghost" icon="true" aria-label="Add export">+</fig-button>
@@ -7126,7 +7126,50 @@ test.describe("render timing composition", () => {
     await expect(group.locator(":scope > fig-header[data-generated]")).toHaveCount(0);
     await expect(header).not.toHaveAttribute("role");
     await expect(heading).toHaveAttribute("role", "button");
+    expect(
+      await header.evaluate((element) =>
+        Array.from(element.children).map((child) => {
+          if (child.matches("h3")) return "heading";
+          if (child.matches(".fig-group-chevron")) return "chevron";
+          return child.id;
+        }),
+      ),
+    ).toEqual(["heading", "chevron", "action"]);
+    await expect(chevron).toHaveAttribute("size", "medium");
+    await expect(chevron).toHaveCSS("width", "24px");
     await expect(group).toHaveAttribute("open", "");
+
+    const originalChevron = await chevron.elementHandle();
+    await group.evaluate((element) => element.setAttribute("chevron", "start"));
+    expect(
+      await header.evaluate((element) =>
+        Array.from(element.children).map((child) => {
+          if (child.matches("h3")) return "heading";
+          if (child.matches(".fig-group-chevron")) return "chevron";
+          return child.id;
+        }),
+      ),
+    ).toEqual(["chevron", "heading", "action"]);
+    await expect(chevron).toHaveAttribute("size", "small");
+    await expect(chevron).toHaveCSS("width", "16px");
+    expect(await originalChevron?.evaluate((element) => element.isConnected)).toBe(
+      true,
+    );
+
+    await group.evaluate((element) =>
+      element.setAttribute("chevron", "unsupported"),
+    );
+    await expect(heading.locator("xpath=preceding-sibling::*[1]")).toHaveClass(
+      /fig-group-chevron/,
+    );
+    await expect(chevron).toHaveAttribute("size", "small");
+
+    await group.evaluate((element) => element.setAttribute("chevron", "end"));
+    await expect(heading.locator("xpath=following-sibling::*[1]")).toHaveClass(
+      /fig-group-chevron/,
+    );
+    await expect(chevron).toHaveAttribute("size", "medium");
+
     await action.click();
     await action.press("Enter");
     await expect(group).toHaveAttribute("open", "");
@@ -7228,6 +7271,8 @@ test.describe("render timing composition", () => {
       return {
         display: getComputedStyle(element).display,
         chevronParent: chevron.parentElement?.tagName,
+        chevronSize: chevron.getAttribute("size"),
+        chevronWidth: getComputedStyle(chevron).width,
         centerDelta: Math.abs(
           (headingRect.top + headingRect.bottom) / 2 -
             (chevronRect.top + chevronRect.bottom) / 2,
@@ -7236,6 +7281,8 @@ test.describe("render timing composition", () => {
     });
     expect(headingLayout.display).toBe("block");
     expect(headingLayout.chevronParent).toBe("FIG-HEADER");
+    expect(headingLayout.chevronSize).toBe("small");
+    expect(headingLayout.chevronWidth).toBe("16px");
     expect(headingLayout.centerDelta).toBeCloseTo(0, 5);
 
     await heading.focus();

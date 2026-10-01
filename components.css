@@ -4063,16 +4063,18 @@ fig-group {
       cursor: default;
     }
     & > .fig-group-chevron {
-      --icon: var(--icon-16-chevron);
-      --size: 1rem;
       flex: 0 0 auto;
       color: var(--figma-color-text-tertiary);
       transform: rotate(-90deg);
       transition: transform var(--transition-duration)
         var(--transition-timing-function);
-      margin-left: calc(var(--spacer-2) * -1);
+      margin-inline-start: calc(var(--spacer-2) * -1);
       cursor: default;
     }
+  }
+
+  &[chevron="end"] > fig-header > .fig-group-chevron {
+    margin-inline-start: 0;
   }
 
   &[collapsible] > fig-header h3 {

@@ -680,7 +680,7 @@ export default function AttributesView({
                 colorTipControlMode !== "color"
               ) &&
               !(
-                entry.name === "open" &&
+                (entry.name === "open" || entry.name === "chevron") &&
                 target.controlTag === "fig-group" &&
                 target.controlAttributes.collapsible === undefined
               ) &&

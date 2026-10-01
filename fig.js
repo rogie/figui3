@@ -18735,7 +18735,13 @@ figDefineElement("fig-skeleton", FigSkeleton);
 
 // FigGroup
 class FigGroup extends HTMLElement {
-  static observedAttributes = ["name", "collapsible", "open", "compact"];
+  static observedAttributes = [
+    "name",
+    "collapsible",
+    "open",
+    "compact",
+    "chevron",
+  ];
 
   #header = null;
   #chevron = null;
@@ -18899,7 +18905,15 @@ class FigGroup extends HTMLElement {
           className: "fig-group-chevron",
         });
       }
-      this.#header.insertBefore(chevron, h3);
+      const chevronAtEnd = this.getAttribute("chevron") === "end";
+      chevron.setAttribute("size", chevronAtEnd ? "medium" : "small");
+      if (chevronAtEnd) {
+        if (h3.nextSibling !== chevron) {
+          this.#header.insertBefore(chevron, h3.nextSibling);
+        }
+      } else if (h3.previousSibling !== chevron) {
+        this.#header.insertBefore(chevron, h3);
+      }
       this.#chevron = chevron;
       this.#header.removeAttribute("role");
       this.#header.removeAttribute("tabindex");

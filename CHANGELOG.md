@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.3]
+
+### Added
+
+- Added `chevron="start|end"` placement to collapsible `fig-group`; end placement uses the larger 24px chevron before header actions.
+
 ## [9.4.2]
 
 ### Fixed
