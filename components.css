@@ -4017,9 +4017,7 @@ fig-header {
 fig-group {
   display: block;
   width: 100%;
-  margin-bottom: var(--spacer-2-5);
-
-  
+  padding-bottom: var(--spacer-2-5);
 
   p{
     margin: 0 var(--spacer-3) var(--spacer-2) var(--spacer-3);
@@ -4083,7 +4081,7 @@ fig-group {
 
   &[collapsible]:not([open]):not([open="true"]),
   &[collapsible][open="false"] {
-    margin-bottom: 0;
+    padding-bottom: 0;
     fig-header {
       color: var(--figma-color-text-secondary);
       &:has(> h3:hover, > .fig-group-chevron:hover) {

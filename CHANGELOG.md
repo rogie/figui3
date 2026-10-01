@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.4]
+
+### Changed
+
+- `fig-group` now uses bottom padding instead of margin for section spacing, keeping spacing inside its own layout box and removing it when collapsed.
+
 ## [9.4.3]
 
 ### Added
