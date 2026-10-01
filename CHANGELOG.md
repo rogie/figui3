@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.2]
+
+### Fixed
+
+- Prevented adjacent `fig-group` elements with authored headers from receiving the extra spacing reserved for headerless groups.
+
 ## [9.4.1]
 
 ### Added
