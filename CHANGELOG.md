@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.5]
+
+### Fixed
+
+- Avatar images now participate in normal layout instead of using absolute positioning.
+
 ## [9.4.4]
 
 ### Changed

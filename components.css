@@ -1657,7 +1657,6 @@ fig-avatar,
   img {
     width: var(--size);
     height: var(--size);
-    position: absolute;
     border-radius: 100%;
     &:not([src]) {
       background: var(--checkerboard);
