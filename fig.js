@@ -5256,7 +5256,11 @@ class FigToolbelt extends HTMLElement {
     for (const slot of [this.#prependSlot, this.#appendSlot]) {
       const hidden = slot.assignedElements({ flatten: true }).length === 0;
       slot.hidden = hidden;
-      slot.style.display = hidden ? "none" : "";
+      if (hidden) {
+        slot.style.setProperty("display", "none", "important");
+      } else {
+        slot.style.removeProperty("display");
+      }
     }
   }
 

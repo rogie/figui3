@@ -920,7 +920,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     overflow: {
       label: "Overflow",
       type: "enum",
-      options: ["buttons", "scrollbar"],
+      options: ["scrollbar", "buttons"],
     },
     value: { label: "Value", type: "string" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.7]
+
+### Fixed
+
+- Empty `fig-toolbelt` prepend and append slots no longer reserve inline space.
+- The playground now reflects `scrollbar` as the default toolbelt overflow mode.
+
 ## [9.4.6]
 
 ### Added

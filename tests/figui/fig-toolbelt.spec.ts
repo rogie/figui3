@@ -42,10 +42,26 @@ test.describe("fig-toolbelt", () => {
 
     const tools = page.locator("#tools");
     const viewport = tools.locator('[part="viewport"]');
+    const prepend = tools.locator('[part="prepend"]');
+    const append = tools.locator('[part="append"]');
     await expect(tools).toHaveAttribute("role", "toolbar");
     await expect(viewport).toHaveClass(/fig-overflow-fade/);
     await expect(viewport).toHaveClass(/fig-overflow-fade-horizontal/);
+    await expect(prepend).toHaveCSS("display", "none");
+    await expect(append).toHaveCSS("display", "none");
     await expect(tools.locator("[data-fig-toolbelt-nav]")).toHaveCount(0);
+    expect(
+      await tools.evaluate((element) => {
+        const host = element.getBoundingClientRect();
+        const viewport = element.shadowRoot!
+          .querySelector('[part="viewport"]')!
+          .getBoundingClientRect();
+        return {
+          leftInset: viewport.left - host.left,
+          rightInset: host.right - viewport.right,
+        };
+      }),
+    ).toEqual({ leftInset: 0, rightInset: 0 });
     expect(
       await viewport.evaluate((element) => {
         const style = getComputedStyle(element);
