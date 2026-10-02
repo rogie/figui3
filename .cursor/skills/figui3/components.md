@@ -380,12 +380,18 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
   aria-label="Design tools"
   onChange={onChange}
 >
+  <fig-toolbelt-item slot="prepend" value="select">
+    Select
+  </fig-toolbelt-item>
   <fig-toolbelt-group aria-label="Transform tools">
     <fig-toolbelt-item value="move" selected={tool === "move" || undefined}>
       Move
     </fig-toolbelt-item>
     <fig-toolbelt-item value="frame">Frame</fig-toolbelt-item>
   </fig-toolbelt-group>
+  <fig-toolbelt-item slot="append" value="settings">
+    Settings
+  </fig-toolbelt-item>
 </fig-toolbelt>
 ```
 
@@ -394,6 +400,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 - Item attrs: `value`, `selected`, `disabled`
 - ArrowLeft/ArrowRight move focus horizontally; ArrowUp/ArrowDown move focus vertically; Enter/Space selects
 - Items stay in light DOM; the internal `part="viewport"` owns scrolling and overflow fades
+- `slot="prepend"` and `slot="append"` keep authored content fixed outside the viewport; slotted items remain selectable and keyboard-navigable
 - Overflow buttons are generated outside the viewport for `overflow="buttons"`
 - Events: `input` / `change` → `currentTarget.value`
 

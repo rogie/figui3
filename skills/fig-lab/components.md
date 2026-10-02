@@ -83,6 +83,7 @@ useEffect(() => {
 ```
 
 - `display: contents`. Reorders **direct children**. `axis` `vertical` | `horizontal`. `items` selector limits which children reorder (e.g. `items=".row"` to skip headers); `refresh()` re-syncs. Omit `handle` to drag whole rows; set it when rows contain sliders/handles.
+- With fewer than two matching items, children keep `role="listitem"` but drag cursors, handles, focus, and move labels stay inactive until another item is added.
 - Event `reorder`: `{ oldIndex, newIndex, item }` (indices among matching items). Nested drag is ignored for sliders, handles, and canvas controls.
 
 ## AI composer

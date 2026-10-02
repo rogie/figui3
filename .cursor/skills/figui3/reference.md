@@ -79,6 +79,7 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 - Events: bubbling `input` and `change` with the selected value
 - `overflow="scrollbar"` is the default and uses buttonless scrolling with the scrollbar hidden; `overflow="buttons"` adds direction-aware paging controls
 - Internal `part="viewport"` owns scrolling and fades; authored items remain direct light-DOM children
+- `slot="prepend"` and `slot="append"` keep authored items, groups, or custom content fixed outside the viewport; slotted items remain in selection and roving keyboard order
 
 ## `.fig-overflow-fade`
 

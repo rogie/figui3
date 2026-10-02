@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.6]
+
+### Added
+
+- Added fixed `prepend` and `append` slots to `fig-toolbelt`; slotted items remain selectable and keyboard-navigable outside the scrolling fade viewport.
+
+### Changed
+
+- Toolbelt items now delegate horizontal padding to nested controls and preserve variant-aware selected button colors.
+- Toolbelt paging controls honor padding tokens, and slotted groups receive direction-aware separator borders.
+
+### Fixed
+
+- Single-item `fig-reorder` lists retain list semantics without exposing inactive drag handles, cursors, focus, or move labels.
+
 ## [9.4.5]
 
 ### Fixed

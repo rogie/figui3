@@ -4912,14 +4912,20 @@ figDefineElement("fig-toolbelt-item", FigToolbeltItem);
  * @attr {boolean} disabled - Disables all items
  * @attr {"horizontal"|"vertical"} layout - Item direction (default: horizontal)
  * @attr {"buttons"|"scrollbar"} overflow - Overflow controls (default: scrollbar)
+ * @slot prepend - Fixed content before the scrolling viewport
+ * @slot append - Fixed content after the scrolling viewport
  * @fires input - Selected value
  * @fires change - Selected value
  */
 class FigToolbelt extends HTMLElement {
   #boundHandleClick = this.#handleClick.bind(this);
   #boundHandleKeyDown = this.#handleKeyDown.bind(this);
+  #boundHandleSlotChange = this.#handleSlotChange.bind(this);
   #boundSyncOverflow = this.#syncOverflow.bind(this);
   #viewport = null;
+  #itemSlot = null;
+  #prependSlot = null;
+  #appendSlot = null;
   #mutationObserver = null;
   #resizeObserver = null;
   #navStart = null;
@@ -4933,6 +4939,15 @@ class FigToolbelt extends HTMLElement {
     const frame = document.createElement("div");
     frame.setAttribute("part", "frame");
 
+    this.#prependSlot = document.createElement("slot");
+    this.#prependSlot.name = "prepend";
+    this.#prependSlot.setAttribute("part", "prepend");
+    this.#prependSlot.hidden = true;
+    this.#prependSlot.style.display = "none";
+
+    const scrollRegion = document.createElement("div");
+    scrollRegion.setAttribute("part", "scroll-region");
+
     const startSlot = document.createElement("slot");
     startSlot.name = "start";
     startSlot.style.display = "contents";
@@ -4940,16 +4955,31 @@ class FigToolbelt extends HTMLElement {
     this.#viewport = document.createElement("div");
     this.#viewport.className = "fig-overflow-fade";
     this.#viewport.setAttribute("part", "viewport");
-    const itemSlot = document.createElement("slot");
-    itemSlot.style.display = "contents";
-    this.#viewport.append(itemSlot);
+    this.#itemSlot = document.createElement("slot");
+    this.#itemSlot.style.display = "contents";
+    this.#viewport.append(this.#itemSlot);
 
     const endSlot = document.createElement("slot");
     endSlot.name = "end";
     endSlot.style.display = "contents";
 
-    frame.append(startSlot, this.#viewport, endSlot);
+    this.#appendSlot = document.createElement("slot");
+    this.#appendSlot.name = "append";
+    this.#appendSlot.setAttribute("part", "append");
+    this.#appendSlot.hidden = true;
+    this.#appendSlot.style.display = "none";
+
+    scrollRegion.append(startSlot, this.#viewport, endSlot);
+    frame.append(this.#prependSlot, scrollRegion, this.#appendSlot);
     shadow.append(frame);
+
+    for (const slot of [
+      this.#prependSlot,
+      this.#itemSlot,
+      this.#appendSlot,
+    ]) {
+      slot.addEventListener("slotchange", this.#boundHandleSlotChange);
+    }
   }
 
   static get observedAttributes() {
@@ -4968,6 +4998,7 @@ class FigToolbelt extends HTMLElement {
 
   connectedCallback() {
     if (!this.hasAttribute("role")) this.setAttribute("role", "toolbar");
+    this.#syncFixedSlots();
     this.#syncOrientation();
     this.addEventListener("click", this.#boundHandleClick);
     this.addEventListener("keydown", this.#boundHandleKeyDown);
@@ -5036,9 +5067,32 @@ class FigToolbelt extends HTMLElement {
   }
 
   #items() {
-    return Array.from(this.querySelectorAll("fig-toolbelt-item")).filter(
-      (item) => item.closest("fig-toolbelt") === this,
-    );
+    const itemsByRegion = {
+      prepend: [],
+      viewport: [],
+      append: [],
+    };
+    for (const item of this.querySelectorAll("fig-toolbelt-item")) {
+      if (item.closest("fig-toolbelt") !== this) continue;
+      const region = this.#itemRegion(item);
+      if (region) itemsByRegion[region].push(item);
+    }
+    return [
+      ...itemsByRegion.prepend,
+      ...itemsByRegion.viewport,
+      ...itemsByRegion.append,
+    ];
+  }
+
+  #itemRegion(item) {
+    let topLevelChild = item;
+    while (topLevelChild.parentElement && topLevelChild.parentElement !== this) {
+      topLevelChild = topLevelChild.parentElement;
+    }
+    if (topLevelChild.parentElement !== this) return null;
+    const slot = topLevelChild.getAttribute("slot") || "";
+    if (slot === "prepend" || slot === "append") return slot;
+    return slot ? null : "viewport";
   }
 
   #availableItems() {
@@ -5188,6 +5242,24 @@ class FigToolbelt extends HTMLElement {
     this.dispatchEvent(new CustomEvent("change", { detail, bubbles: true }));
   }
 
+  #handleSlotChange() {
+    this.#syncFixedSlots();
+    this.#syncSelection();
+    this.#syncTabIndexes();
+    requestAnimationFrame(() => {
+      this.#syncOverflow();
+      this.#scrollSelectedItemIntoView();
+    });
+  }
+
+  #syncFixedSlots() {
+    for (const slot of [this.#prependSlot, this.#appendSlot]) {
+      const hidden = slot.assignedElements({ flatten: true }).length === 0;
+      slot.hidden = hidden;
+      slot.style.display = hidden ? "none" : "";
+    }
+  }
+
   #startObserver() {
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = new MutationObserver((records) => {
@@ -5305,7 +5377,7 @@ class FigToolbelt extends HTMLElement {
   }
 
   #scrollItemIntoView(item, behavior = "smooth") {
-    if (!item) return;
+    if (!item || this.#itemRegion(item) !== "viewport") return;
     requestAnimationFrame(() => {
       if (!this.isConnected || !item.isConnected) return;
       const isVertical = this.#isVertical;

@@ -3065,8 +3065,10 @@ class FigReorder extends HTMLElement {
     this.#clearHandleMarks(allChildren);
     this.#clearReorderItemMarks(allChildren);
     this.#markNonItems(allChildren.filter((child) => !childSet.has(child)));
+    const reorderable = !this.#disabled && children.length >= 2;
+    this.#markReorderItems(children, reorderable);
 
-    if (this.#disabled || children.length < 2) {
+    if (!reorderable) {
       this.#unbindAll();
       return;
     }
@@ -3088,7 +3090,6 @@ class FigReorder extends HTMLElement {
     }
 
     this.#markHandles(children);
-    this.#markReorderItems(children);
   }
 
   #clearReorderItemMarks(children) {
@@ -3101,9 +3102,9 @@ class FigReorder extends HTMLElement {
     }
   }
 
-  #markReorderItems(children) {
+  #markReorderItems(children, reorderable = true) {
     for (const child of children) {
-      child.setAttribute("data-reorder-item", "");
+      if (reorderable) child.setAttribute("data-reorder-item", "");
       if (!child.hasAttribute("role")) {
         child.setAttribute("role", "listitem");
         child.setAttribute("data-reorder-generated-role", "");

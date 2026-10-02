@@ -202,7 +202,7 @@ test.describe("fig-toolbelt", () => {
           layout="vertical"
           overflow="buttons"
           value="one"
-          style="height: 72px;"
+          style="height: 72px; --fig-toolbelt-padding-inline: 6px;"
         >
           <fig-toolbelt-group aria-label="Primary tools">
             <fig-toolbelt-item value="one">One</fig-toolbelt-item>
@@ -224,6 +224,14 @@ test.describe("fig-toolbelt", () => {
     await expect(viewport).not.toHaveClass(/fig-overflow-fade-horizontal/);
     await expect(tools).toHaveAttribute("aria-orientation", "vertical");
     await expect(tools).toHaveClass(/overflow-end/);
+    expect(
+      await tools
+        .locator('[data-fig-toolbelt-nav="end"]')
+        .evaluate((element) => {
+          const style = getComputedStyle(element);
+          return { left: style.left, right: style.right };
+        }),
+    ).toEqual({ left: "6px", right: "6px" });
     const widths = await tools.evaluate((element) => ({
       width: element.getBoundingClientRect().width,
       viewportWidth:
@@ -325,7 +333,13 @@ test.describe("fig-toolbelt", () => {
     await page.locator("#fixture-root").evaluate((root) => {
       root.innerHTML = `
         <div style="width: 140px">
-          <fig-toolbelt id="tools" value="one" overflow="buttons" aria-label="Overflow tools">
+          <fig-toolbelt
+            id="tools"
+            value="one"
+            overflow="buttons"
+            aria-label="Overflow tools"
+            style="--fig-toolbelt-padding-block: 6px"
+          >
             <fig-toolbelt-item value="one">One</fig-toolbelt-item>
             <fig-toolbelt-item value="two">Two</fig-toolbelt-item>
             <fig-toolbelt-item value="three">Three</fig-toolbelt-item>
@@ -342,6 +356,12 @@ test.describe("fig-toolbelt", () => {
     await expect(end).toBeVisible();
     await expect(start).toHaveAttribute("slot", "start");
     await expect(end).toHaveAttribute("slot", "end");
+    expect(
+      await end.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { top: style.top, bottom: style.bottom };
+      }),
+    ).toEqual({ top: "6px", bottom: "6px" });
     await end.click();
     const viewport = tools.locator('[part="viewport"]');
     await expect
@@ -363,6 +383,269 @@ test.describe("fig-toolbelt", () => {
       ),
     ).toBe(true);
     await expect(tools.locator('[data-fig-toolbelt-nav="end"]')).toHaveCount(1);
+  });
+
+  test("keeps prepend and append items fixed outside horizontal overflow", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <div style="width: 180px">
+          <fig-toolbelt id="tools" value="pin" overflow="buttons" aria-label="Fixed tools">
+            <fig-toolbelt-group slot="append" aria-label="Trailing tools">
+              <fig-toolbelt-item value="settings">Settings</fig-toolbelt-item>
+            </fig-toolbelt-group>
+            <fig-toolbelt-group slot="prepend" aria-label="Leading tools">
+              <fig-toolbelt-item value="pin">Pin</fig-toolbelt-item>
+            </fig-toolbelt-group>
+            <fig-toolbelt-group id="scrolling-group" aria-label="Scrolling tools">
+              <fig-toolbelt-item value="one">One</fig-toolbelt-item>
+              <fig-toolbelt-item value="two">Two</fig-toolbelt-item>
+              <fig-toolbelt-item value="three">Three</fig-toolbelt-item>
+              <fig-toolbelt-item value="four">Four</fig-toolbelt-item>
+              <fig-toolbelt-item value="five">Five</fig-toolbelt-item>
+            </fig-toolbelt-group>
+          </fig-toolbelt>
+        </div>`;
+    });
+
+    const tools = page.locator("#tools");
+    const viewport = tools.locator('[part="viewport"]');
+    const prepend = tools.locator('[part="prepend"]');
+    const append = tools.locator('[part="append"]');
+    const pin = tools.locator('[value="pin"]');
+    const settings = tools.locator('[value="settings"]');
+
+    await expect(prepend).not.toHaveAttribute("hidden", "");
+    await expect(append).not.toHaveAttribute("hidden", "");
+    await expect(tools).toHaveClass(/overflow-end/);
+    expect(
+      await tools.evaluate((element) => {
+        const shadow = element.shadowRoot!;
+        const prependSlot = shadow.querySelector(
+          'slot[name="prepend"]',
+        ) as HTMLSlotElement;
+        const itemSlot = shadow.querySelector(
+          'div[part="viewport"] > slot',
+        ) as HTMLSlotElement;
+        const appendSlot = shadow.querySelector(
+          'slot[name="append"]',
+        ) as HTMLSlotElement;
+        return {
+          prepend: prependSlot.assignedElements().map((item) => item.tagName),
+          scrolling: itemSlot.assignedElements().map((item) => item.id),
+          append: appendSlot.assignedElements().map((item) => item.tagName),
+        };
+      }),
+    ).toEqual({
+      prepend: ["FIG-TOOLBELT-GROUP"],
+      scrolling: ["scrolling-group"],
+      append: ["FIG-TOOLBELT-GROUP"],
+    });
+
+    const before = await tools.evaluate((element) => {
+      const shadow = element.shadowRoot!;
+      const viewportElement = shadow.querySelector(
+        '[part="viewport"]',
+      ) as HTMLElement;
+      const prependElement = element.querySelector('[slot="prepend"]')!;
+      const appendElement = element.querySelector('[slot="append"]')!;
+      const start = element.querySelector('[data-fig-toolbelt-nav="start"]')!;
+      const end = element.querySelector('[data-fig-toolbelt-nav="end"]')!;
+      const rect = (target: Element) => {
+        const box = target.getBoundingClientRect();
+        return { left: box.left, right: box.right };
+      };
+      return {
+        prepend: rect(prependElement),
+        append: rect(appendElement),
+        start: rect(start),
+        end: rect(end),
+        viewport: rect(viewportElement),
+        clientWidth: viewportElement.clientWidth,
+        scrollWidth: viewportElement.scrollWidth,
+        viewportMask: getComputedStyle(viewportElement).maskImage,
+        prependMask: getComputedStyle(prependElement).maskImage,
+      };
+    });
+    expect(before.scrollWidth).toBeGreaterThan(before.clientWidth);
+    expect(before.prepend.right).toBeLessThanOrEqual(before.start.left + 1);
+    expect(before.end.right).toBeLessThanOrEqual(before.append.left + 1);
+    expect(before.viewportMask).not.toBe("none");
+    expect(before.prependMask).toBe("none");
+    expect(
+      await tools
+        .locator('fig-toolbelt-group[slot="prepend"]')
+        .evaluate((element) => getComputedStyle(element).borderInlineEndWidth),
+    ).toBe("1px");
+    expect(
+      await tools
+        .locator('fig-toolbelt-group[slot="append"]')
+        .evaluate((element) => getComputedStyle(element).borderInlineStartWidth),
+    ).toBe("1px");
+
+    await viewport.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth;
+      element.dispatchEvent(new Event("scroll"));
+    });
+    const fixedAfterScroll = await tools.evaluate((element) => {
+      const prependBox = element
+        .querySelector('[slot="prepend"]')!
+        .getBoundingClientRect();
+      const appendBox = element
+        .querySelector('[slot="append"]')!
+        .getBoundingClientRect();
+      return {
+        prependLeft: prependBox.left,
+        appendRight: appendBox.right,
+      };
+    });
+    expect(fixedAfterScroll.prependLeft).toBeCloseTo(before.prepend.left, 1);
+    expect(fixedAfterScroll.appendRight).toBeCloseTo(before.append.right, 1);
+
+    const scrollAtEnd = await viewport.evaluate((element) => element.scrollLeft);
+    await settings.click();
+    await expect(tools).toHaveAttribute("value", "settings");
+    expect(await viewport.evaluate((element) => element.scrollLeft)).toBe(
+      scrollAtEnd,
+    );
+
+    await pin.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(tools.locator('[value="one"]')).toBeFocused();
+    await page.keyboard.press("End");
+    await expect(settings).toBeFocused();
+    expect(
+      await tools
+        .locator("#scrolling-group")
+        .evaluate((element) => getComputedStyle(element).borderInlineStartWidth),
+    ).toBe("0px");
+  });
+
+  test("keeps prepend and append items fixed outside vertical overflow", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <fig-toolbelt
+          id="tools"
+          layout="vertical"
+          overflow="buttons"
+          value="top"
+          aria-label="Vertical fixed tools"
+          style="height: 190px"
+        >
+          <fig-toolbelt-group slot="prepend" aria-label="Top tools">
+            <fig-toolbelt-item value="top">Top</fig-toolbelt-item>
+          </fig-toolbelt-group>
+          <fig-toolbelt-group aria-label="Scrolling tools">
+            <fig-toolbelt-item value="one">One</fig-toolbelt-item>
+            <fig-toolbelt-item value="two">Two</fig-toolbelt-item>
+            <fig-toolbelt-item value="three">Three</fig-toolbelt-item>
+            <fig-toolbelt-item value="four">Four</fig-toolbelt-item>
+            <fig-toolbelt-item value="five">Five</fig-toolbelt-item>
+          </fig-toolbelt-group>
+          <fig-toolbelt-group slot="append" aria-label="Bottom tools">
+            <fig-toolbelt-item value="bottom">Bottom</fig-toolbelt-item>
+          </fig-toolbelt-group>
+        </fig-toolbelt>`;
+    });
+
+    const tools = page.locator("#tools");
+    const viewport = tools.locator('[part="viewport"]');
+    const before = await tools.evaluate((element) => {
+      const viewportElement = element.shadowRoot!.querySelector(
+        '[part="viewport"]',
+      ) as HTMLElement;
+      const prepend = element.querySelector('[slot="prepend"]')!;
+      const append = element.querySelector('[slot="append"]')!;
+      const start = element.querySelector('[data-fig-toolbelt-nav="start"]')!;
+      const end = element.querySelector('[data-fig-toolbelt-nav="end"]')!;
+      const rect = (target: Element) => {
+        const box = target.getBoundingClientRect();
+        return { top: box.top, bottom: box.bottom };
+      };
+      return {
+        prepend: rect(prepend),
+        append: rect(append),
+        start: rect(start),
+        end: rect(end),
+        clientHeight: viewportElement.clientHeight,
+        scrollHeight: viewportElement.scrollHeight,
+      };
+    });
+    expect(before.scrollHeight).toBeGreaterThan(before.clientHeight);
+    expect(before.prepend.bottom).toBeLessThanOrEqual(before.start.top + 1);
+    expect(before.end.bottom).toBeLessThanOrEqual(before.append.top + 1);
+    expect(
+      await tools
+        .locator('fig-toolbelt-group[slot="prepend"]')
+        .evaluate((element) => getComputedStyle(element).borderBlockEndWidth),
+    ).toBe("1px");
+    expect(
+      await tools
+        .locator('fig-toolbelt-group[slot="append"]')
+        .evaluate((element) => getComputedStyle(element).borderBlockStartWidth),
+    ).toBe("1px");
+
+    await viewport.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+      element.dispatchEvent(new Event("scroll"));
+    });
+    const after = await tools.evaluate((element) => {
+      const prepend = element
+        .querySelector('[slot="prepend"]')!
+        .getBoundingClientRect();
+      const append = element
+        .querySelector('[slot="append"]')!
+        .getBoundingClientRect();
+      return { prependTop: prepend.top, appendBottom: append.bottom };
+    });
+    expect(after.prependTop).toBeCloseTo(before.prepend.top, 1);
+    expect(after.appendBottom).toBeCloseTo(before.append.bottom, 1);
+
+    await tools.locator('[value="top"]').focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(tools.locator('[value="one"]')).toBeFocused();
+    await page.keyboard.press("End");
+    await expect(tools.locator('[value="bottom"]')).toBeFocused();
+  });
+
+  test("updates fixed regions when slot assignments change", async ({ page }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <div style="width: 180px">
+          <fig-toolbelt id="tools" value="one">
+            <fig-toolbelt-item id="dynamic" value="one">One</fig-toolbelt-item>
+            <fig-toolbelt-item value="two">Two</fig-toolbelt-item>
+          </fig-toolbelt>
+        </div>`;
+    });
+
+    const tools = page.locator("#tools");
+    const prepend = tools.locator('[part="prepend"]');
+    const dynamic = tools.locator("#dynamic");
+    await expect(prepend).toHaveAttribute("hidden", "");
+
+    await dynamic.evaluate((element) => element.setAttribute("slot", "prepend"));
+    await expect(prepend).not.toHaveAttribute("hidden", "");
+    expect(
+      await prepend.evaluate((element) =>
+        (element as HTMLSlotElement)
+          .assignedElements()
+          .map((item) => item.id),
+      ),
+    ).toEqual(["dynamic"]);
+
+    await dynamic.evaluate((element) => element.removeAttribute("slot"));
+    await expect(prepend).toHaveAttribute("hidden", "");
+    expect(
+      await tools.locator('[part="viewport"] > slot').evaluate((element) =>
+        (element as HTMLSlotElement)
+          .assignedElements()
+          .map((item) => item.id),
+      ),
+    ).toContain("dynamic");
   });
 
   test("centers programmatically selected overflow items without moving the page", async ({

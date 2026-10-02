@@ -1420,6 +1420,55 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "fixed-slots",
+        name: "Fixed prepend + append",
+        markup: `<div class="prop-panel">
+  <fig-toolbelt overflow="buttons" value="play" aria-label="Design tools" data-playground-hide-field>
+    <fig-toolbelt-group slot="prepend" aria-label="Primary tool">
+      <fig-toolbelt-item value="play" aria-label="Play" selected>
+        <fig-tooltip text="Play">
+          <fig-button variant="ghost" icon aria-label="Play" tabindex="-1"><fig-icon name="play"></fig-icon></fig-button>
+        </fig-tooltip>
+      </fig-toolbelt-item>
+    </fig-toolbelt-group>
+    <fig-toolbelt-group aria-label="Create tools">
+      <fig-toolbelt-item value="add" aria-label="Add">
+        <fig-tooltip text="Add">
+          <fig-button variant="ghost" aria-label="Add" tabindex="-1"><fig-icon name="add" slot="prepend"></fig-icon>Add</fig-button>
+        </fig-tooltip>
+      </fig-toolbelt-item>
+      <fig-toolbelt-item value="edit" aria-label="Edit">
+        <fig-tooltip text="Edit">
+          <fig-button variant="ghost" aria-label="Edit" tabindex="-1"><fig-icon name="edit" slot="prepend"></fig-icon>Edit</fig-button>
+        </fig-tooltip>
+      </fig-toolbelt-item>
+      <fig-toolbelt-item value="search" aria-label="Search">
+        <fig-tooltip text="Search">
+          <fig-button variant="ghost" aria-label="Search" tabindex="-1"><fig-icon name="search" slot="prepend"></fig-icon>Search</fig-button>
+        </fig-tooltip>
+      </fig-toolbelt-item>
+      <fig-toolbelt-item value="preview" aria-label="Preview">
+        <fig-tooltip text="Preview">
+          <fig-button variant="ghost" aria-label="Preview" tabindex="-1"><fig-icon name="visible" slot="prepend"></fig-icon>Preview</fig-button>
+        </fig-tooltip>
+      </fig-toolbelt-item>
+      <fig-toolbelt-item value="duplicate" aria-label="Duplicate">
+        <fig-tooltip text="Duplicate">
+          <fig-button variant="ghost" aria-label="Duplicate" tabindex="-1"><fig-icon name="copy" slot="prepend"></fig-icon>Duplicate</fig-button>
+        </fig-tooltip>
+      </fig-toolbelt-item>
+    </fig-toolbelt-group>
+    <fig-toolbelt-group slot="append" aria-label="Settings">
+      <fig-toolbelt-item value="settings" aria-label="Settings">
+        <fig-tooltip text="Settings">
+          <fig-button variant="ghost" icon aria-label="Settings" tabindex="-1"><fig-icon name="settings"></fig-icon></fig-button>
+        </fig-tooltip>
+      </fig-toolbelt-item>
+    </fig-toolbelt-group>
+  </fig-toolbelt>
+</div>`,
+      },
+      {
         id: "vertical",
         name: "Vertical",
         markup: `<div class="prop-panel">
@@ -1451,7 +1500,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-toolbelt layout="horizontal" overflow="buttons" value="edit" aria-label="Design tools" data-playground-hide-field>
+  <fig-toolbelt layout="horizontal" value="edit" aria-label="Design tools" data-playground-hide-field>
     <fig-toolbelt-item value="add" aria-label="Add">
       <fig-tooltip text="Add">
         <fig-button variant="ghost" icon aria-label="Add" tabindex="-1"><fig-icon name="add"></fig-icon></fig-button>

@@ -81,6 +81,47 @@ test.describe("fig-reorder", () => {
     expect(result.order).toEqual(["item-b", "item-c", "item-a"]);
   });
 
+  test("keeps one item semantic but enables affordances only with peers", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <fig-reorder id="reorder-host">
+          <div id="item-a">A</div>
+        </fig-reorder>
+      `;
+    });
+
+    const host = page.locator("#reorder-host");
+    const itemA = page.locator("#item-a");
+    await expect(host).toHaveAttribute("role", "list");
+    await expect(itemA).toHaveAttribute("role", "listitem");
+    await expect(itemA).not.toHaveAttribute("data-reorder-item");
+    await expect(itemA).not.toHaveAttribute("tabindex");
+    await expect(itemA).not.toHaveAttribute("aria-label");
+    await expect(itemA).toHaveCSS("cursor", "auto");
+
+    await host.evaluate((element) => {
+      const item = document.createElement("div");
+      item.id = "item-b";
+      item.textContent = "B";
+      element.appendChild(item);
+    });
+    const itemB = page.locator("#item-b");
+    await expect(itemA).toHaveAttribute("data-reorder-item", "");
+    await expect(itemB).toHaveAttribute("data-reorder-item", "");
+    await expect(itemA).toHaveAttribute("tabindex", "0");
+    await expect(itemA).toHaveAttribute("aria-label", "Move A");
+    await expect(itemA).toHaveCSS("cursor", "grab");
+
+    await itemB.evaluate((element) => element.remove());
+    await expect(itemA).toHaveAttribute("role", "listitem");
+    await expect(itemA).not.toHaveAttribute("data-reorder-item");
+    await expect(itemA).not.toHaveAttribute("tabindex");
+    await expect(itemA).not.toHaveAttribute("aria-label");
+    await expect(itemA).toHaveCSS("cursor", "auto");
+  });
+
   test("uses the secondary background while dragging", async ({ page }) => {
     const colors = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");

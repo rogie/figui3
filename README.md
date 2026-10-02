@@ -785,17 +785,20 @@ A selectable horizontal or vertical toolbar that keeps authored items in the lig
 
 Wrap related items in `fig-toolbelt-group`; adjacent groups receive a direction-aware separator. Add `aria-label` to groups when the grouping has a meaningful name. Items support `value`, `selected`, and `disabled`. `input` and `change` bubble from the toolbelt with the selected value. ArrowLeft/ArrowRight navigate horizontal toolbelts; ArrowUp/ArrowDown navigate vertical toolbelts. Home and End move to the edges; Enter or Space selects the focused item.
 
+Place an item, group, or custom element in `slot="prepend"` or `slot="append"` to keep it fixed outside the scrolling and faded viewport. Slotted toolbelt items remain part of selection and keyboard navigation.
+
 Use `--fig-toolbelt-gap`, `--fig-toolbelt-group-gap`, `--fig-toolbelt-group-separator-color`, `--fig-toolbelt-overflow-fade-size`, `--fig-toolbelt-padding-block`, `--fig-toolbelt-padding-inline`, `--fig-toolbelt-item-height`, and `--fig-toolbelt-item-padding` to customize layout. The toolbelt fade defaults to `calc(var(--spacer-6) + var(--spacer-2))`.
 
 ```html
 <fig-toolbelt layout="horizontal" overflow="buttons" value="move" aria-label="Design tools">
+  <fig-toolbelt-item slot="prepend" value="move" selected>Move</fig-toolbelt-item>
   <fig-toolbelt-group aria-label="Transform tools">
-    <fig-toolbelt-item value="move" selected>Move</fig-toolbelt-item>
     <fig-toolbelt-item value="frame">Frame</fig-toolbelt-item>
   </fig-toolbelt-group>
   <fig-toolbelt-group aria-label="Shape tools">
     <fig-toolbelt-item value="shape">Shape</fig-toolbelt-item>
   </fig-toolbelt-group>
+  <fig-toolbelt-item slot="append" value="settings">Settings</fig-toolbelt-item>
 </fig-toolbelt>
 ```
 
