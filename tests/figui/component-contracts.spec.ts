@@ -4182,6 +4182,56 @@ test('fig-dropdown and fig-select size="large" match large control height', asyn
   });
 });
 
+test("fig-select icon mode renders a square chevron-only trigger", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await customElements.whenDefined("fig-select");
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <div style="display: block">
+        <fig-select id="select" icon variant="ghost" value="duplicate" aria-label="More actions">
+          <fig-select-options>
+            <fig-select-option value="add">Add item</fig-select-option>
+            <fig-select-option value="duplicate">Duplicate item</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      </div>
+    `;
+  });
+
+  const layout = await page.locator("#select").evaluate((element) => {
+    const trigger = element.shadowRoot!.querySelector(
+      '[part="trigger"]',
+    ) as HTMLElement;
+    const label = element.shadowRoot!.querySelector(
+      '[part="label"]',
+    ) as HTMLElement;
+    const hostBox = element.getBoundingClientRect();
+    const triggerBox = trigger.getBoundingClientRect();
+    return {
+      host: [hostBox.width, hostBox.height],
+      trigger: [triggerBox.width, triggerBox.height],
+      triggerPadding: getComputedStyle(trigger).padding,
+      labelDisplay: getComputedStyle(label).display,
+      ariaLabel: trigger.getAttribute("aria-label"),
+    };
+  });
+
+  expect(layout).toEqual({
+    host: [24, 24],
+    trigger: [24, 24],
+    triggerPadding: "0px",
+    labelDisplay: "none",
+    ariaLabel: "More actions",
+  });
+});
+
 test("fig-select supports subtle hover fill per option and from the host", async ({
   page,
 }) => {

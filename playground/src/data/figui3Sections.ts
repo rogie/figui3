@@ -628,6 +628,19 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "icon-button",
+        name: "Chevron button",
+        markup: `<div class="prop-panel">
+  <fig-select value="duplicate" variant="ghost" icon aria-label="More actions">
+    <fig-select-options>
+      <fig-select-option value="add">Add item</fig-select-option>
+      <fig-select-option value="duplicate">Duplicate item</fig-select-option>
+      <fig-select-option value="remove">Remove item</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
         id: "palette-content",
         name: "Prepend trigger",
         markup: `<div class="prop-panel">

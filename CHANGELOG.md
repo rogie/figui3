@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.8]
+
+### Added
+
+- Added `icon` mode to `fig-select` for square chevron-only triggers, with playground and documentation examples.
+
 ## [9.4.7]
 
 ### Fixed

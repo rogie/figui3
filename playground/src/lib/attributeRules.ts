@@ -457,6 +457,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "ghost"],
     },
+    icon: { label: "Icon", type: "boolean", boolMode: "presence" },
     "menu-anchor": { label: "Menu anchor", type: "string" },
     full: { label: "Full", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },

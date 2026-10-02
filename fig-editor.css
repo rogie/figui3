@@ -693,6 +693,35 @@ fig-select {
     width: 100%;
   }
 
+  &[icon]:not([icon="false"]) {
+    --fig-select-icon-size: var(--spacer-4);
+
+    flex: 0 0 var(--fig-select-icon-size);
+    width: var(--fig-select-icon-size);
+
+    &[size="large"] {
+      --fig-select-icon-size: var(--spacer-5);
+    }
+
+    &::part(trigger) {
+      flex: 0 0 var(--fig-select-icon-size);
+      justify-content: center;
+      width: var(--fig-select-icon-size);
+      padding: 0;
+    }
+
+    &::part(label),
+    &::part(prepend) {
+      display: none;
+    }
+
+    &::after {
+      right: auto;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
   &[disabled]:not([disabled="false"]) {
     pointer-events: none;
     color: var(--figma-color-text-tertiary);

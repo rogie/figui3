@@ -268,6 +268,7 @@ Custom listbox select with overflow chevrons, grouped options, and sticky separa
 | `menu-anchor` | CSS selector | — | Alternate element to align the open menu against |
 | `variant` | string | — | `"ghost"` for a borderless control with secondary hover fill |
 | `size` | string | — | `"large"` for a 32px-tall trigger |
+| `icon` | boolean | `false` | Render a square chevron-only trigger; provide `aria-label` |
 | `subtle` | boolean | `false` | Use the secondary hover/focus fill for every option |
 | `full` | boolean | `false` | Stretch to available width |
 | `position` | string | — | Omit to overlay the selected option on the trigger; set `bottom left`, `bottom right`, `top left`, `top right`, `bottom center`, or `top center` to place the menu like a popup |

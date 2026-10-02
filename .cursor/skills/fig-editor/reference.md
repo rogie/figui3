@@ -23,6 +23,7 @@ Observed: `value`, `disabled`, `selected`, `label`.
 
 `value`, `disabled`, `label`, `options`, `menu-anchor`, `position`, `offset`, `closedby`, `open`, `variant`, `size`
 
+- `icon` renders a square chevron-only trigger; provide `aria-label`
 - `subtle` applies the secondary hover/focus fill to every option
 - `size="large"` sets a 32px trigger
 - `menu-anchor` accepts an alternate anchor selector; the `menuAnchor` property accepts an `Element`, selector string, or `null`
