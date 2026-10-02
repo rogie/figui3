@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.9]
+
+### Fixed
+
+- Select option text remains left-aligned regardless of inherited alignment.
+
 ## [9.4.8]
 
 ### Added

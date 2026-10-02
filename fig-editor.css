@@ -822,6 +822,7 @@ fig-select-option {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 
   /* Anonymous flex items cannot ellipsize; text-only options stay a block. */
   &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) {
