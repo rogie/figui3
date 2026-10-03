@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.10]
+
+### Added
+
+- Added a collapsible fields popup example and an `autoresize` playground control.
+
+### Changed
+
+- Popup autoresizing now preserves the current position while content fits, minimally shifts to remain in the viewport, and realigns only when required by anchored beaks.
+
+### Fixed
+
+- Popup documentation now reflects `autoresize` being enabled by default.
+- The fields popup example can be closed and reopened while keeping its trigger state synchronized.
+
 ## [9.4.9]
 
 ### Fixed

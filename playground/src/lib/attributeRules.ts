@@ -226,6 +226,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     offset: { label: "Offset", type: "string" },
     "viewport-margin": { label: "Viewport margin", type: "string" },
     title: { label: "Title", type: "string" },
+    autoresize: {
+      label: "Auto resize",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: null,
+      falseValue: "false",
+      defaultChecked: true,
+    },
     theme: {
       label: "Theme",
       type: "enum",

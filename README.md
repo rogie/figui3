@@ -1319,7 +1319,7 @@ An anchored floating surface built on `<dialog>` with collision-aware positionin
 | `open` | boolean | `false` | Open state |
 | `drag` | boolean | `false` | Draggable |
 | `handle` | string | — | CSS selector for drag handle |
-| `autoresize` | boolean | `false` | Auto-resize to content |
+| `autoresize` | boolean | `true` | Observe content size changes; preserve position while in bounds and minimally shift when needed |
 | `title` | string | — | Auto-generated header (same as `fig-dialog`) |
 
 ```html

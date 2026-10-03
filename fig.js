@@ -2987,9 +2987,11 @@ class FigPopup extends HTMLDialogElement {
   _lastAnchorRect = null;
   _isPopupActive = false;
   _boundReposition;
+  _boundContentReposition;
   _boundScroll;
   _boundOutsidePointerDown;
   _rafId = null;
+  _pendingFullReposition = false;
   _anchorRef = null;
 
   _isDragging = false;
@@ -3007,7 +3009,9 @@ class FigPopup extends HTMLDialogElement {
 
   constructor() {
     super();
-    this._boundReposition = this.queueReposition.bind(this);
+    this._boundReposition = () => this.queueReposition();
+    this._boundContentReposition = () =>
+      this.queueReposition({ preserveCurrentPosition: true });
     this._boundScroll = (e) => {
       const target = e.target;
       if (
@@ -3042,6 +3046,8 @@ class FigPopup extends HTMLDialogElement {
       this._lastAnchorRect = null;
     if (typeof this._isPopupActive === "undefined") this._isPopupActive = false;
     if (typeof this._rafId === "undefined") this._rafId = null;
+    if (typeof this._pendingFullReposition === "undefined")
+      this._pendingFullReposition = false;
     if (typeof this._anchorRef === "undefined") this._anchorRef = null;
     if (typeof this._isDragging === "undefined") this._isDragging = false;
     if (typeof this._dragPending === "undefined") this._dragPending = false;
@@ -3054,7 +3060,11 @@ class FigPopup extends HTMLDialogElement {
     if (typeof this._previousFocus === "undefined") this._previousFocus = null;
 
     if (typeof this._boundReposition !== "function") {
-      this._boundReposition = this.queueReposition.bind(this);
+      this._boundReposition = () => this.queueReposition();
+    }
+    if (typeof this._boundContentReposition !== "function") {
+      this._boundContentReposition = () =>
+        this.queueReposition({ preserveCurrentPosition: true });
     }
     if (typeof this._boundScroll !== "function") {
       this._boundScroll = (e) => {
@@ -3416,11 +3426,15 @@ class FigPopup extends HTMLDialogElement {
 
     if (this.autoresize) {
       if ("ResizeObserver" in window) {
-        this._contentObserver = new ResizeObserver(this._boundReposition);
+        this._contentObserver = new ResizeObserver(
+          this._boundContentReposition,
+        );
         this._contentObserver.observe(this);
       }
 
-      this._mutationObserver = new MutationObserver(this._boundReposition);
+      this._mutationObserver = new MutationObserver(
+        this._boundContentReposition,
+      );
       this._mutationObserver.observe(this, {
         childList: true,
         subtree: true,
@@ -4291,14 +4305,64 @@ class FigPopup extends HTMLDialogElement {
     );
   }
 
-  positionPopup() {
+  currentPlacementSide() {
+    const beakSide = this.getAttribute("data-beak-side");
+    if (beakSide) return this.oppositeSide(beakSide);
+    const { vertical, horizontal, shorthand } = this.parsePosition();
+    return this.getPlacementSide(vertical, horizontal, shorthand);
+  }
+
+  preservePopupPosition(popupRect, anchor, m) {
+    const current = {
+      left: popupRect.left,
+      top: popupRect.top,
+    };
+    const next = this.fits(current, popupRect, m)
+      ? current
+      : this.clampToViewport(current, popupRect, m);
+    const anchorRect = anchor ? anchor.getBoundingClientRect() : null;
+    const placementSide = this.currentPlacementSide();
+
+    if (
+      anchorRect &&
+      this.tracksAnchorBeak() &&
+      !this.canPointAtAnchor(
+        anchorRect,
+        popupRect,
+        next.left,
+        next.top,
+        placementSide,
+      )
+    ) {
+      return false;
+    }
+
+    this.style.left = `${next.left}px`;
+    this.style.top = `${next.top}px`;
+    this.updatePopoverBeak(
+      anchorRect,
+      popupRect,
+      next.left,
+      next.top,
+      placementSide,
+    );
+    return true;
+  }
+
+  positionPopup({ preserveCurrentPosition = false } = {}) {
     if (!this.open) return;
 
     const popupRect = this.getBoundingClientRect();
-    const offset = this.parseOffset();
-    const { vertical, horizontal, shorthand } = this.parsePosition();
     const anchor = this.resolveAnchor();
     const m = this.parseViewportMargins();
+    if (
+      preserveCurrentPosition &&
+      this.preservePopupPosition(popupRect, anchor, m)
+    ) {
+      return;
+    }
+    const offset = this.parseOffset();
+    const { vertical, horizontal, shorthand } = this.parsePosition();
 
     if (!anchor) {
       this.updatePopoverBeak(null, popupRect, 0, 0, "top");
@@ -4383,15 +4447,18 @@ class FigPopup extends HTMLDialogElement {
     );
   }
 
-  queueReposition() {
+  queueReposition({ preserveCurrentPosition = false } = {}) {
     if (!this.open || !this.isPopupDisplayed() || !this.shouldAutoReposition()) {
       return;
     }
+    if (!preserveCurrentPosition) this._pendingFullReposition = true;
     if (this._rafId !== null) return;
 
     this._rafId = requestAnimationFrame(() => {
       this._rafId = null;
-      this.positionPopup();
+      const preservePosition = !this._pendingFullReposition;
+      this._pendingFullReposition = false;
+      this.positionPopup({ preserveCurrentPosition: preservePosition });
     });
   }
 

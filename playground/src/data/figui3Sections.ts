@@ -1996,6 +1996,39 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
   </dialog>
 </div>`,
       },
+      {
+        id: "fields",
+        name: "Fields",
+        markup: `<div class="prop-panel">
+  <fig-button id="popup-fields-anchor" variant="secondary" data-playground-ignore-controls="true" aria-haspopup="dialog" aria-expanded="true" aria-controls="popup-fields" onclick="const p=document.getElementById('popup-fields');p.open=!p.open;this.setAttribute('aria-expanded',String(p.open));">Appearance</fig-button>
+  <dialog is="fig-popup" id="popup-fields" open anchor="#popup-fields-anchor" position="left" offset="8 8" viewport-margin="8" onclose="document.getElementById('popup-fields-anchor')?.setAttribute('aria-expanded','false')" style="width: 240px;">
+    <fig-header>
+      <h3>Appearance</h3>
+    </fig-header>
+    <fig-content padding="none">
+      <fig-group name="Appearance" collapsible open>
+        <fig-field>
+          <label>Opacity</label>
+          <fig-slider value="80" min="0" max="100" units="%" full></fig-slider>
+        </fig-field>
+        <fig-field>
+          <label>Visible</label>
+          <fig-switch checked></fig-switch>
+        </fig-field>
+        <fig-field>
+          <label>Blend mode</label>
+          <fig-dropdown full>
+            <option selected>Pass through</option>
+            <option>Normal</option>
+            <option>Multiply</option>
+            <option>Screen</option>
+          </fig-dropdown>
+        </fig-field>
+      </fig-group>
+    </fig-content>
+  </dialog>
+</div>`,
+      },
     ],
   },
   {

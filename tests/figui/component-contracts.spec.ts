@@ -9927,6 +9927,178 @@ test.describe("remaining accessibility contracts", () => {
     expect(state.openAfterClose).toBe(false);
   });
 
+  test("fig-popup preserves an in-viewport position when content resizes and still tracks its anchor", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 720, height: 520 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="stable-anchor" style="position:fixed;left:120px;top:220px;width:80px">Anchor</fig-button>
+        <dialog is="fig-popup" id="stable-popup" open anchor="#stable-anchor" position="center right" offset="8 8" viewport-margin="8" style="width:180px">
+          <div id="stable-content" style="height:40px">Content</div>
+        </dialog>
+      `;
+    });
+
+    const popup = page.locator("#stable-popup");
+    await expect(popup).toHaveAttribute("open");
+    await page.waitForTimeout(100);
+    const before = await popup.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, top: rect.top, height: rect.height };
+    });
+
+    await page.locator("#stable-content").evaluate((element) => {
+      element.style.height = "120px";
+    });
+    await expect
+      .poll(() =>
+        popup.evaluate((element) => element.getBoundingClientRect().height),
+      )
+      .toBeGreaterThan(before.height + 60);
+
+    const resized = await popup.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, top: rect.top };
+    });
+    expect(resized.left).toBeCloseTo(before.left, 1);
+    expect(resized.top).toBeCloseTo(before.top, 1);
+
+    await page.locator("#stable-anchor").evaluate((element) => {
+      element.style.left = "160px";
+    });
+    await expect
+      .poll(() =>
+        popup.evaluate((element) => element.getBoundingClientRect().left),
+      )
+      .toBeGreaterThan(resized.left + 30);
+  });
+
+  test("fig-popup minimally shifts resized content back inside the viewport", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 640, height: 400 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="edge-popup-anchor" style="position:fixed;left:100px;top:300px;width:80px">Anchor</fig-button>
+        <dialog is="fig-popup" id="edge-popup" open anchor="#edge-popup-anchor" position="center right" offset="8 8" viewport-margin="8" style="width:180px">
+          <div id="edge-popup-content" style="height:40px">Content</div>
+        </dialog>
+      `;
+    });
+
+    const popup = page.locator("#edge-popup");
+    await expect(popup).toHaveAttribute("open");
+    await page.waitForTimeout(100);
+    const before = await popup.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, top: rect.top, height: rect.height };
+    });
+
+    await page.locator("#edge-popup-content").evaluate((element) => {
+      element.style.height = "140px";
+    });
+    await expect
+      .poll(() =>
+        popup.evaluate((element) => element.getBoundingClientRect().height),
+      )
+      .toBeGreaterThan(before.height + 80);
+
+    const resized = await popup.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      return {
+        left: rect.left,
+        top: rect.top,
+        height: rect.height,
+        viewportBottom:
+          (viewport?.offsetTop ?? 0) +
+          (viewport?.height ?? window.innerHeight),
+      };
+    });
+    const expectedTop = resized.viewportBottom - 8 - resized.height;
+    await expect
+      .poll(() =>
+        popup.evaluate((element) => element.getBoundingClientRect().top),
+      )
+      .toBeCloseTo(expectedTop, 1);
+    expect(
+      await popup.evaluate((element) => element.getBoundingClientRect().left),
+    ).toBeCloseTo(before.left, 1);
+    expect(expectedTop).toBeGreaterThan(before.top - resized.height);
+  });
+
+  test("fig-popup realigns resized popovers when preserving position would break the anchor beak", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 720, height: 520 });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="beak-anchor" style="position:fixed;left:180px;top:240px;width:80px">Anchor</fig-button>
+        <dialog is="fig-popup" id="beak-popup" open variant="popover" anchor="#beak-anchor" position="center right" offset="8 8" viewport-margin="8" style="width:180px">
+          <div id="beak-content" style="height:160px">Content</div>
+        </dialog>
+      `;
+    });
+
+    const popup = page.locator("#beak-popup");
+    await expect(popup).toHaveAttribute("data-beak-side", "left");
+    await page.waitForTimeout(100);
+    const before = await popup.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top, height: rect.height };
+    });
+
+    await page.locator("#beak-content").evaluate((element) => {
+      element.style.height = "40px";
+    });
+    await expect
+      .poll(() =>
+        popup.evaluate((element) => element.getBoundingClientRect().height),
+      )
+      .toBeLessThan(before.height - 100);
+    await expect
+      .poll(() =>
+        popup.evaluate(
+          (element, previousTop) =>
+            Math.abs(element.getBoundingClientRect().top - previousTop) > 5,
+          before.top,
+        ),
+      )
+      .toBe(true);
+
+    const alignment = await popup.evaluate((element) => {
+      const anchor = document.querySelector("#beak-anchor");
+      if (!(anchor instanceof HTMLElement)) {
+        throw new Error("Missing beak anchor");
+      }
+      const popupRect = element.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+      const beakOffset = parseFloat(
+        getComputedStyle(element).getPropertyValue("--fig-popup-beak-offset"),
+      );
+      const beakSide = element.getAttribute("data-beak-side");
+      const beakPosition =
+        beakSide === "top" || beakSide === "bottom"
+          ? popupRect.left + beakOffset
+          : popupRect.top + beakOffset;
+      const anchorPosition =
+        beakSide === "top" || beakSide === "bottom"
+          ? anchorRect.left + anchorRect.width / 2
+          : anchorRect.top + anchorRect.height / 2;
+      return {
+        delta: Math.abs(beakPosition - anchorPosition),
+      };
+    });
+    expect(alignment.delta).toBeLessThan(1.5);
+  });
+
   test("fill, loading, handle, color-tip, and toast expose accessible state", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
