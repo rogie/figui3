@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.1]
+
+### Changed
+
+- Refined the hue slider handle with an inset thumb-color ring and layered shadow.
+
 ## [10.0.0]
 
 ### Added

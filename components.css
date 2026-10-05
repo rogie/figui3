@@ -3346,6 +3346,13 @@ fig-slider {
     --slider-checkerboard: var(--checkerboard-slider);
     --slider-track-color: var(--figma-color-bg-tertiary);
 
+    &[type="hue"]{
+      --slider-handle-shadow:
+      inset 0 0 0 3px var(--slider-thumb-color),
+      0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
+      var(--figma-elevation-100);
+    }
+
     background-color: var(--figma-color-bg-secondary);
     border-radius: var(--radius-medium);
     padding-left: var(--spacer-2);
