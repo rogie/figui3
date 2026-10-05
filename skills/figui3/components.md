@@ -443,7 +443,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 <fig-separator label="Darken" sticky />
 ```
 
-- Attrs: `label`, `sticky`, `borderless`. First separator in a panel is auto-`borderless`.
+- Attrs: `label`, `sticky`.
 
 ### `fig-menu` / `fig-menu-item`
 

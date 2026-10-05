@@ -103,7 +103,7 @@ Toast: `theme`, `duration`, `offset`, `dismiss`, `live="polite|assertive"`, `ico
 - `position`, `offset`, `closedby="auto|any|none"`, `open`
 - Items stay in light DOM and slot into the popup (do not relocate)
 - Items: `fig-menu-item` (`value`, `disabled`, `subtle`). Also a list row outside `fig-menu` (popup, sticky separators, nested row `fig-menu`).
-- Dividers: `fig-separator` / `fig-menu-separator` (`label`, `sticky`, `borderless`)
+- Dividers: `fig-separator` / `fig-menu-separator` (`label`, `sticky`)
 - Popup uses `popover="manual"` (top layer) and stays in the menu shadow so slots keep working
 
 ## Color / fill values

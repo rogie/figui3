@@ -15,7 +15,7 @@ Observed: `value`, `disabled`, `selected`, `label`.
 
 - Auto `slot="panel"` if missing
 - Unwraps a legacy nested `fig-chooser`
-- First `fig-separator` child gets `borderless`
+- A leading labeled `fig-separator` omits its rule
 - Overflow nav buttons: `data-fig-select-nav`, classes `overflow-start` / `overflow-end`
 - Methods: `syncOverflow()`, `scrollToOption(option, behavior)`
 

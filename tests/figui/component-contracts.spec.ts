@@ -964,29 +964,6 @@ test("fig-button destructive variants use danger colors", async ({ page }) => {
   await page.mouse.up();
 });
 
-test("fig-separator borderless hides the separator line", async ({ page }) => {
-  collectPageErrors(page);
-  await bootFigFixture(page);
-  await page.evaluate(() => {
-    const root = document.querySelector("#fixture-root");
-    if (!root) throw new Error("Missing #fixture-root");
-    root.innerHTML = `
-      <fig-separator id="default-separator" label="Group"></fig-separator>
-      <fig-separator id="borderless-separator" label="Group" borderless></fig-separator>
-      <fig-separator id="false-separator" label="Group" borderless="false"></fig-separator>
-    `;
-  });
-
-  const beforeDisplay = (selector: string) =>
-    page.locator(selector).evaluate((element) => {
-      return getComputedStyle(element, "::before").display;
-    });
-
-  expect(await beforeDisplay("#default-separator")).not.toBe("none");
-  expect(await beforeDisplay("#borderless-separator")).toBe("none");
-  expect(await beforeDisplay("#false-separator")).not.toBe("none");
-});
-
 test("fig-icon maps chevron to size-specific tokens", async ({ page }) => {
   collectPageErrors(page);
   await bootFigFixture(page);
@@ -3152,6 +3129,27 @@ test("sticky fig-separator sits below overflow-start in select and menu lists", 
   const menuPanel = page.locator(".fig-menu-options");
   const selectSeparator = selectPanel.locator("fig-separator");
   const menuSeparator = menuPanel.locator("fig-separator");
+
+  const leadingSelectSeparator = await selectSeparator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      previousNav:
+        element.previousElementSibling?.getAttribute("data-fig-select-nav"),
+      borderTopColor: style.borderTopColor,
+      paddingTop: style.paddingTop,
+      marginTop: style.marginTop,
+      marginVariable: style
+        .getPropertyValue("--fig-separator-margin-block")
+        .trim(),
+    };
+  });
+  expect(leadingSelectSeparator).toEqual({
+    previousNav: "start",
+    borderTopColor: "rgba(0, 0, 0, 0)",
+    paddingTop: "0px",
+    marginTop: "0px",
+    marginVariable: "0",
+  });
 
   await expect(selectSeparator).toHaveCSS("top", "0px");
   await expect(menuSeparator).toHaveCSS("top", "0px");
@@ -9475,19 +9473,23 @@ test.describe("remaining accessibility contracts", () => {
     const separator = page.locator("#separator");
     await expect(separator).toHaveAttribute("role", "separator");
     await expect(separator).toHaveAttribute("aria-label", "Commands");
+    await expect(
+      separator.locator(":scope > label[data-fig-separator-generated]"),
+    ).toHaveText("Commands");
     expect(
       await separator.evaluate((element) => ({
         width: element.getBoundingClientRect().width,
         paddingLeft: getComputedStyle(element).paddingLeft,
-        ruleDisplay: getComputedStyle(element, "::before").display,
+        borderTopWidth: getComputedStyle(element).borderTopWidth,
       })),
-    ).toEqual({ width: 240, paddingLeft: "24px", ruleDisplay: "block" });
+    ).toEqual({ width: 240, paddingLeft: "24px", borderTopWidth: "1px" });
 
     await separator.evaluate((element) => {
       (element as HTMLElement & { label: string }).label = "";
     });
     await expect(separator).not.toHaveAttribute("label");
     await expect(separator).not.toHaveAttribute("aria-label");
+    await expect(separator.locator(":scope > label")).toHaveCount(0);
 
     const vertical = await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -9514,6 +9516,59 @@ test.describe("remaining accessibility contracts", () => {
       paddingLeft: "0px",
       paddingRight: "0px",
     });
+  });
+
+  test("fig-separator preserves authored labels instead of generating duplicates", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-separator id="authored-separator" label="Commands">
+          <label>Custom commands</label>
+        </fig-separator>
+      `;
+    });
+
+    const separator = page.locator("#authored-separator");
+    await expect(separator.locator(":scope > label")).toHaveCount(1);
+    await expect(separator.locator(":scope > label")).toHaveText(
+      "Custom commands",
+    );
+    await expect(
+      separator.locator(":scope > label[data-fig-separator-generated]"),
+    ).toHaveCount(0);
+    await expect(separator).toHaveAttribute("aria-label", "Custom commands");
+
+    await separator.locator(":scope > label").evaluate((label) => {
+      label.remove();
+    });
+    await expect(
+      separator.locator(":scope > label[data-fig-separator-generated]"),
+    ).toHaveText("Commands");
+    await expect(separator).toHaveAttribute("aria-label", "Commands");
+
+    await separator.evaluate((element) => {
+      element.setAttribute("label", "Updated commands");
+    });
+    await expect(
+      separator.locator(":scope > label[data-fig-separator-generated]"),
+    ).toHaveText("Updated commands");
+
+    await separator.evaluate((element) => {
+      const label = document.createElement("label");
+      label.textContent = "Authored later";
+      element.appendChild(label);
+    });
+    await expect(separator.locator(":scope > label")).toHaveCount(1);
+    await expect(separator.locator(":scope > label")).toHaveText(
+      "Authored later",
+    );
+    await expect(
+      separator.locator(":scope > label[data-fig-separator-generated]"),
+    ).toHaveCount(0);
+    await expect(separator).toHaveAttribute("aria-label", "Authored later");
   });
 
   test("fig-menu-separator remains a backwards-compatible fig-separator alias", async ({
@@ -9648,13 +9703,13 @@ test.describe("remaining accessibility contracts", () => {
       return {
         item: item ? getComputedStyle(item).paddingLeft : null,
         separator: separator ? getComputedStyle(separator).paddingLeft : null,
-        separatorRule: separator
-          ? getComputedStyle(separator, "::before").display
+        separatorBorderWidth: separator
+          ? getComputedStyle(separator).borderTopWidth
           : null,
       };
     });
     expect(leftPadding.separator).toBe(leftPadding.item);
-    expect(leftPadding.separatorRule).toBe("block");
+    expect(leftPadding.separatorBorderWidth).toBe("1px");
 
     const bounds = await popup.evaluate((dialog) => {
       const rect = dialog.getBoundingClientRect();
@@ -9883,7 +9938,7 @@ test.describe("remaining accessibility contracts", () => {
         overflowed: content.scrollHeight - content.clientHeight > 8,
         contentPadding: getComputedStyle(content).padding,
         stuck: later.hasAttribute("stuck"),
-        ruleDisplay: getComputedStyle(later, "::before").display,
+        borderTopColor: style.borderTopColor,
       };
     });
 
@@ -9892,7 +9947,7 @@ test.describe("remaining accessibility contracts", () => {
     expect(sticky.pinned).toBe(true);
     expect(sticky.contentPadding).toBe("0px");
     expect(sticky.stuck).toBe(true);
-    expect(sticky.ruleDisplay).toBe("none");
+    expect(sticky.borderTopColor).toBe("rgba(0, 0, 0, 0)");
   });
 
   test("fig-popup title generates a header like fig-dialog", async ({ page }) => {

@@ -397,7 +397,6 @@ class FigSelectOptions extends HTMLElement {
   connectedCallback() {
     if (!this.hasAttribute("slot")) this.setAttribute("slot", "panel");
     this.#unwrapLegacyChooser();
-    this.#markFirstSeparatorBorderless();
     this.#ensureNavButtons();
     this.addEventListener("scroll", this.#boundSyncOverflow, { passive: true });
     this.#resizeObserver?.disconnect();
@@ -423,7 +422,6 @@ class FigSelectOptions extends HTMLElement {
   }
 
   syncOverflow() {
-    this.#markFirstSeparatorBorderless();
     return figEditorSyncOverflowState(this, this, "y");
   }
 
@@ -438,15 +436,6 @@ class FigSelectOptions extends HTMLElement {
       this.insertBefore(chooser.firstChild, chooser);
     }
     chooser.remove();
-  }
-
-  #markFirstSeparatorBorderless() {
-    const firstContent = Array.from(this.children).find(
-      (child) => !child.hasAttribute("data-fig-select-nav"),
-    );
-    if (firstContent?.tagName === "FIG-SEPARATOR") {
-      firstContent.setAttribute("borderless", "");
-    }
   }
 
   #ensureNavButtons() {

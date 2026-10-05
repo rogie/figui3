@@ -2159,6 +2159,15 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "vertical",
+        name: "Vertical",
+        markup: `<div class="prop-panel" style="display: flex; align-items: center; gap: var(--spacer-2); height: 2rem;">
+  <span>Before</span>
+  <fig-separator direction="vertical"></fig-separator>
+  <span>After</span>
+</div>`,
+      },
+      {
         id: "menu-alias",
         name: "Menu alias",
         markup: `<div class="prop-panel">

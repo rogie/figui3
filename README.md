@@ -1386,12 +1386,11 @@ Escape dismisses an open tooltip and returns focus to its trigger.
 
 `<fig-separator>` — [demo](https://rog.ie/figui3/#separator)
 
-A visual divider between content groups. The optional `label` attribute adds a group label and accessible name. Add `borderless` to hide the separator line. `<fig-menu-separator>` is a backwards-compatible alias.
+A visual divider between content groups. The optional `label` attribute adds a group label and accessible name. `<fig-menu-separator>` is a backwards-compatible alias.
 
 ```html
 <fig-separator></fig-separator>
 <fig-separator label="More"></fig-separator>
-<fig-separator label="First group" borderless></fig-separator>
 <fig-menu-separator></fig-menu-separator>
 ```
 
@@ -1451,7 +1450,7 @@ Popup list (no wrapping `fig-menu`):
 </dialog>
 ```
 
-`fig-separator` and `fig-menu-separator` accept optional `label` — renders the rule, then secondary group text underneath.
+`fig-separator` and `fig-menu-separator` accept optional `label` — renders the rule, then a generated `<label>` with secondary group text underneath. An authored child `<label>` takes precedence and is preserved.
 
 ---
 

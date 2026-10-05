@@ -1061,20 +1061,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-separator": {
     label: { label: "Label", type: "string" },
-    borderless: {
-      label: "Borderless",
-      type: "boolean",
-      boolMode: "presence",
-    },
     sticky: { label: "Sticky", type: "boolean", boolMode: "presence" },
   },
   "fig-menu-separator": {
     label: { label: "Label", type: "string" },
-    borderless: {
-      label: "Borderless",
-      type: "boolean",
-      boolMode: "presence",
-    },
     sticky: { label: "Sticky", type: "boolean", boolMode: "presence" },
   },
   "fig-attachment": {

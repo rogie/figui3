@@ -49,7 +49,7 @@ Data-driven (no authored options):
 ```
 
 - Auto `slot="panel"` if missing. Use `slot="panel"` when the panel is slotted (rich / verbose options).
-- First `fig-separator` child is auto-`borderless`. `sticky` pins the label while scrolling.
+- A leading labeled `fig-separator` omits its rule. `sticky` pins the label while scrolling.
 - Overflow adds `.overflow-start` / `.overflow-end`. Sticky `top` sits below the overflow chevron (`--fig-vertical-overflow-size`).
 - Methods: `syncOverflow()`, `scrollToOption(option, behavior)`.
 - Options stay in light DOM. Author them as React children.

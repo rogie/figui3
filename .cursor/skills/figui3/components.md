@@ -455,7 +455,8 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 <fig-separator label="Darken" sticky />
 ```
 
-- Attrs: `label`, `sticky`, `borderless`. First separator in a panel is auto-`borderless`.
+- Attrs: `label`, `sticky`.
+- `label` generates a child `<label>`; an authored child `<label>` is preserved instead.
 
 ### `fig-menu` / `fig-menu-item`
 

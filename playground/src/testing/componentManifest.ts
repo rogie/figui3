@@ -524,20 +524,14 @@ export const componentContracts: ComponentContract[] = [
     title: "Separator",
     group: "display",
     markup: `<fig-separator></fig-separator>`,
-    attributes: [
-      { name: "label", attribute: "label", value: "Group" },
-      { name: "borderless", attribute: "borderless", value: "" },
-    ],
+    attributes: [{ name: "label", attribute: "label", value: "Group" }],
   },
   {
     tag: "fig-menu-separator",
     title: "Menu separator",
     group: "display",
     markup: `<fig-menu-separator></fig-menu-separator>`,
-    attributes: [
-      { name: "label", attribute: "label", value: "Group" },
-      { name: "borderless", attribute: "borderless", value: "" },
-    ],
+    attributes: [{ name: "label", attribute: "label", value: "Group" }],
   },
   {
     tag: "fig-menu",

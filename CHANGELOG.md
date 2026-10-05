@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.0]
+
+### Added
+
+- Added a vertical separator playground example.
+
+### Changed
+
+- `fig-separator` labels now render as child `<label>` elements and preserve authored labels.
+- Removed the `borderless` separator attribute; leading labeled menu and select separators now omit their rule automatically.
+- Refined separator spacing and sticky behavior, and reduced chooser selection-ring thickness.
+
+### Fixed
+
+- Visual-only `fig-select-option` rows no longer render stray ellipses or extra height.
+
 ## [9.4.13]
 
 ### Changed

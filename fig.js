@@ -229,8 +229,8 @@ fig-select-options > :not(.fig-overflow),
 .fig-menu-options > :not(.fig-overflow) {
   flex-shrink: 0;
 }
-fig-select-options > :nth-child(1 of :not(.fig-overflow)),
-.fig-menu-options > :nth-child(1 of :not(.fig-overflow)) {
+fig-select-options > :nth-child(1 of :not(.fig-overflow)):not(:is(fig-separator, fig-menu-separator):has(> label)),
+.fig-menu-options > :nth-child(1 of :not(.fig-overflow)):not(:is(fig-separator, fig-menu-separator):has(> label)) {
   margin-top: var(--spacer-2);
 }
 fig-select-options > :not(.fig-overflow):last-child,
@@ -21637,12 +21637,12 @@ figDefineElement("fig-menu-item", FigMenuItem);
  * Visual divider between content groups.
  * @attr {string} label - Optional group label shown in secondary text under the line.
  * @attr {string} direction - Orientation: "vertical" for a tall rule; default is horizontal.
- * @attr {boolean} borderless - Hides the separator line when present or "true".
  * @attr {boolean} sticky - Stick to the top of the nearest scrollport while scrolling.
  */
 class FigSeparator extends HTMLElement {
   #scrollRoot = null;
   #resizeObserver = null;
+  #labelObserver = null;
   #boundSyncStuck = this.#syncStuck.bind(this);
 
   static get observedAttributes() {
@@ -21660,10 +21660,13 @@ class FigSeparator extends HTMLElement {
 
   connectedCallback() {
     this.#sync();
+    this.#bindLabelObserver();
     this.#bindStuck();
   }
 
   disconnectedCallback() {
+    this.#labelObserver?.disconnect();
+    this.#labelObserver = null;
     this.#unbindStuck();
   }
 
@@ -21684,8 +21687,44 @@ class FigSeparator extends HTMLElement {
       this.setAttribute("aria-orientation", "horizontal");
     }
     const label = this.label.trim();
-    if (label) this.setAttribute("aria-label", label);
+    const childLabels = Array.from(this.children).filter(
+      (child) => child.localName === "label",
+    );
+    const authoredLabel = childLabels.find(
+      (child) => !child.hasAttribute("data-fig-separator-generated"),
+    );
+    const generatedLabels = childLabels.filter((child) =>
+      child.hasAttribute("data-fig-separator-generated"),
+    );
+
+    if (authoredLabel) {
+      generatedLabels.forEach((child) => child.remove());
+    } else if (label) {
+      const generatedLabel =
+        generatedLabels[0] ?? document.createElement("label");
+      generatedLabels.slice(1).forEach((child) => child.remove());
+      generatedLabel.setAttribute("data-fig-separator-generated", "");
+      if (generatedLabel.textContent !== label) {
+        generatedLabel.textContent = label;
+      }
+      if (!generatedLabel.parentElement) this.appendChild(generatedLabel);
+    } else {
+      generatedLabels.forEach((child) => child.remove());
+    }
+
+    const accessibleLabel = authoredLabel?.textContent?.trim() || label;
+    if (accessibleLabel) this.setAttribute("aria-label", accessibleLabel);
     else this.removeAttribute("aria-label");
+  }
+
+  #bindLabelObserver() {
+    this.#labelObserver?.disconnect();
+    this.#labelObserver = new MutationObserver(() => this.#sync());
+    this.#labelObserver.observe(this, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
   }
 
   #isSticky() {
@@ -22060,15 +22099,7 @@ class FigMenu extends HTMLElement {
     this.#removeNavButtons();
   }
 
-  #markFirstSeparatorBorderless() {
-    const first = Array.from(this.children).find((child) => figIsMenuChild(child));
-    if (first && (first.tagName === "FIG-SEPARATOR" || first.tagName === "FIG-MENU-SEPARATOR")) {
-      first.setAttribute("borderless", "");
-    }
-  }
-
   #syncOverflow() {
-    this.#markFirstSeparatorBorderless();
     const scrollable = figSyncOverflowState(this.#panel, this.#panel, "y");
     this.classList.toggle(
       "overflow-start",
