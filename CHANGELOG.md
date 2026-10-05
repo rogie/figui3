@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.13]
+
+### Changed
+
+- `fig-menu-item` append content now aligns directly to the trailing edge without requiring a wrapper.
+- Simplified the standalone menu-item checkbox example to slot the checkbox directly.
+
 ## [9.4.12]
 
 ### Added

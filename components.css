@@ -6811,6 +6811,10 @@ fig-menu-item {
     margin-top: calc(var(--spacer-1) * -1);
     margin-bottom: calc(var(--spacer-1) * -1);
   }
+  & > [slot="append"] {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
 
   &:has(> [slot="append"]) {
     --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-3,0.75rem) var(--spacer-1,0.25rem) var(--spacer-3,0.75rem);

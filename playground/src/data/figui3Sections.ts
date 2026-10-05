@@ -1212,9 +1212,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-menu-item value="animated" role="menuitemcheckbox" aria-checked="true">
     Animated
-    <span slot="append" style="display: flex; justify-content: flex-end;">
-      <fig-checkbox></fig-checkbox>
-    </span>
+    <fig-checkbox slot="append"></fig-checkbox>
   </fig-menu-item>
 </div>`,
       },
