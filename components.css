@@ -6751,7 +6751,7 @@ fig-menu-item {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: var(--spacer-1);
+  gap: 0;
   width: 100%;
   padding: var(--fig-menu-item-padding);
   min-height: var(--spacer-4);
@@ -6801,12 +6801,23 @@ fig-menu-item {
     }
   }
 
-  & > [slot="prepend"] {
+  & > [slot="prepend"],
+  & > [slot="append"] {
     margin-top: calc(var(--spacer-1) * -1);
     margin-bottom: calc(var(--spacer-1) * -1);
   }
 
-  &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) > [slot="prepend"] {
+  &:has(> [slot="append"]) {
+    --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-3,0.75rem) var(--spacer-1,0.25rem) var(--spacer-3,0.75rem);
+  }
+  &:has(> [slot="prepend"]) {
+    --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-3,0.75rem) var(--spacer-1,0.25rem) var(--spacer-2,0.5rem);
+  }
+  &:has(> [slot="prepend"]):has(> [slot="append"]) {
+    --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-3,0.75rem) var(--spacer-1,0.25rem) var(--spacer-2,0.5rem);
+  }
+
+  &:not(:has(> :not([slot="prepend"], [slot="append"]))) > [slot="prepend"] {
     display: inline-flex;
     vertical-align: middle;
   }
@@ -6873,6 +6884,11 @@ fig-menu-item {
     margin: var(--spacer-2,0.5rem) 0;
     margin-bottom: var(--spacer-1,0.25rem);
     background: transparent;
+
+    &:first-of-type,
+    &:first-child {
+      margin-top: 0;
+    }
 
     &::before {
       content: "";

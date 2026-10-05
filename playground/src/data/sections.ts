@@ -2914,6 +2914,49 @@ export const legacyPropsKitSections: Section[] = [
   </fig-menu>
 </div>`,
       },
+      {
+        id: "filter",
+        name: "Filter",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left" onchange="const item=event.detail.item;const role=item.getAttribute('role');if(role==='menuitemradio'){this.querySelectorAll('[role=menuitemradio]').forEach((candidate)=>{const selected=candidate===item;candidate.setAttribute('aria-checked',String(selected));candidate.querySelector('fig-icon').style.visibility=selected?'':'hidden';});}else if(role==='menuitemcheckbox'){const checked=item.getAttribute('aria-checked')!=='true';item.setAttribute('aria-checked',String(checked));item.querySelector('fig-checkbox').checked=checked;}">
+    <fig-button variant="secondary" fig-menu-trigger>Filter</fig-button>
+    <fig-separator label="Source"></fig-separator>
+    <fig-menu-item value="all-sources" role="menuitemradio" aria-checked="true">
+      <fig-icon name="checkmark" slot="prepend"></fig-icon>
+      All sources
+    </fig-menu-item>
+    <fig-menu-item value="created-by-you" role="menuitemradio" aria-checked="false">
+      <fig-icon name="checkmark" slot="prepend" aria-hidden="true" style="visibility: hidden;"></fig-icon>
+      Created by you
+    </fig-menu-item>
+    <fig-menu-item value="in-this-file" role="menuitemradio" aria-checked="false">
+      <fig-icon name="checkmark" slot="prepend" aria-hidden="true" style="visibility: hidden;"></fig-icon>
+      In this file
+    </fig-menu-item>
+    <fig-menu-item value="from-figma" role="menuitemradio" aria-checked="false">
+      <fig-icon name="checkmark" slot="prepend" aria-hidden="true" style="visibility: hidden;"></fig-icon>
+      From Figma
+    </fig-menu-item>
+    <fig-menu-item value="from-weyland-yutani" role="menuitemradio" aria-checked="false">
+      <fig-icon name="checkmark" slot="prepend" aria-hidden="true" style="visibility: hidden;"></fig-icon>
+      From Weyland Yutani
+    </fig-menu-item>
+    <fig-separator label="Features"></fig-separator>
+    <fig-menu-item value="animated" role="menuitemcheckbox" aria-checked="true">
+      Animated
+      <span slot="append" style="display: flex; justify-content: flex-end;">
+        <fig-checkbox checked tabindex="-1" aria-hidden="true" style="pointer-events: none;"></fig-checkbox>
+      </span>
+    </fig-menu-item>
+    <fig-menu-item value="interactive" role="menuitemcheckbox" aria-checked="false">
+      Interactive
+      <span slot="append" style="display: flex; justify-content: flex-end;">
+        <fig-checkbox tabindex="-1" aria-hidden="true" style="pointer-events: none;"></fig-checkbox>
+      </span>
+    </fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
     ],
   },
   {

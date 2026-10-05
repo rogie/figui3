@@ -22,6 +22,12 @@ interface Props {
 const INSTALL_COMMAND = "npm i @rogieking/figui3";
 const INSTALL_PROMPT =
   "Install the npm package @rogieking/figui3. Then use the included .cursor/skills files (figui3 and playground) for implementation guidance.";
+const COLLAPSED_GROUPS = new Set([
+  "Utilities",
+  "Native elements",
+  "Editor components",
+  "Dialog examples",
+]);
 
 function toSentenceCase(text: string): string {
   const trimmed = text.trim();
@@ -220,6 +226,12 @@ export default function Nav({
               .forEach((entry) => orderedGroups.push(entry));
             groups.splice(0, groups.length, ...orderedGroups);
           }
+          const nativeElementsIndex = groups.findIndex(
+            (entry) => entry.group === "Native elements",
+          );
+          if (nativeElementsIndex >= 0) {
+            groups.push(...groups.splice(nativeElementsIndex, 1));
+          }
 
           return groups.map((g, gi) => {
             const layers = g.sections.map((section) => {
@@ -251,8 +263,7 @@ export default function Nav({
             });
 
             if (g.group) {
-              const collapsed =
-                g.group === "Utilities" || g.group === "Native elements";
+              const collapsed = COLLAPSED_GROUPS.has(g.group);
               return (
                 <fig-group
                   key={g.group}

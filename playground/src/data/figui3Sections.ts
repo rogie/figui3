@@ -2252,6 +2252,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-menu position="bottom left">
     <fig-button variant="secondary" fig-menu-trigger>Arrange</fig-button>
+    <fig-separator label="Bring"></fig-separator>
     <fig-menu-item value="bring-to-front">Bring to front</fig-menu-item>
     <fig-menu-item value="bring-forward">Bring forward</fig-menu-item>
     <fig-separator label="Send"></fig-separator>

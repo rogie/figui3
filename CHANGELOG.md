@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.11]
+
+### Added
+
+- Added a filter menu playground example with radio and checkbox states.
+- Added a leading label to the labeled-separator menu example.
+
+### Changed
+
+- Menu items now adjust edge padding for prepend and append content, and first separators sit flush at the top of menus.
+- Utility, editor, dialog-example, and native-element navigation groups now start collapsed, with native elements ordered last.
+
 ## [9.4.10]
 
 ### Added

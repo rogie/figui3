@@ -27,7 +27,7 @@ test.describe("PropsKit playground migration", () => {
     );
 
     expect(legacyPropsKitSections).toHaveLength(54);
-    expect(oldKeys).toHaveLength(125);
+    expect(oldKeys).toHaveLength(126);
     expect(Object.keys(propkitMigration).sort()).toEqual(oldKeys.sort());
     for (const oldKey of oldKeys) {
       expect(
