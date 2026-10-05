@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [9.4.12]
+
+### Added
+
+- Added a stronger translucent border token and a standalone menu-item checkbox example.
+
+### Changed
+
+- Unchecked checkboxes now use the stronger translucent border and transparent background tokens.
+
+### Fixed
+
+- Standalone `fig-menu-item` hover backgrounds now render within the correct stacking context.
+
 ## [9.4.11]
 
 ### Added
