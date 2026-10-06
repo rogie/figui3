@@ -13126,6 +13126,7 @@ const FIG_MEDIA_FORWARDED_EVENTS = [
  * @attr {string} src - Media source URL
  * @attr {string} type - "image" (default) or "video" (for fig-media)
  * @attr {string} alt - Alt text for the generated image (default "")
+ * @attr {boolean} loaded - Read-only reflected state when an image has loaded successfully
  * @attr {boolean} upload - Show upload overlay (generates fig-input-file)
  * @attr {boolean} loading-indicator - Set to `false` to disable the generated image loading spinner
  * @attr {string} label - Upload button label (default "Upload")
@@ -13344,6 +13345,7 @@ class FigMedia extends HTMLElement {
   }
 
   #syncImageLoadingState() {
+    this.#syncImageLoadedState();
     const src = this.#currentMediaSrc();
     if (!src || !this.#usesDefaultImageLoadingIndicator()) {
       this.#finishImageLoading();
@@ -13381,6 +13383,18 @@ class FigMedia extends HTMLElement {
       this.append(spinner);
       this.#loadingSpinner = spinner;
     }, 150);
+  }
+
+  #syncImageLoadedState() {
+    const image = this.#mediaEl?.tagName === "IMG" ? this.#mediaEl : null;
+    const src =
+      image?.currentSrc ||
+      image?.getAttribute("src") ||
+      this.#currentMediaSrc();
+    this.toggleAttribute(
+      "loaded",
+      Boolean(src && image?.complete && image.naturalWidth > 0),
+    );
   }
 
   #finishImageLoading() {
@@ -13553,6 +13567,7 @@ class FigMedia extends HTMLElement {
     if (!this.#mediaEl.hasAttribute("data-generated")) return;
     const src = this.#currentMediaSrc();
     if (this.#mediaEl.getAttribute("src") !== src) {
+      this.removeAttribute("loaded");
       if (src) {
         this.#mediaEl.setAttribute("src", src);
       } else {
@@ -13880,6 +13895,7 @@ class FigMedia extends HTMLElement {
       media.tagName === "IMG" &&
       (event.type === "load" || event.type === "error")
     ) {
+      this.toggleAttribute("loaded", event.type === "load");
       this.#finishImageLoading();
     }
     const detail = {
@@ -19788,6 +19804,8 @@ figDefineElement("fig-color-tip", FigColorTip);
  * @attr {boolean} disabled - Whether this choice is disabled
  */
 class FigChoice extends HTMLElement {
+  #childObserver = null;
+
   static get observedAttributes() {
     return ["selected", "disabled"];
   }
@@ -19797,21 +19815,34 @@ class FigChoice extends HTMLElement {
     if (!this.hasAttribute("tabindex")) {
       this.setAttribute("tabindex", "0");
     }
-    this.setAttribute(
-      "aria-selected",
-      figBooleanAttribute(this, "selected") ? "true" : "false",
-    );
+    this.#syncSelectedState();
     if (figBooleanAttribute(this, "disabled")) {
       this.setAttribute("aria-disabled", "true");
     }
   }
 
+  disconnectedCallback() {
+    this.#childObserver?.disconnect();
+  }
+
+  #syncSelectedState() {
+    const selected = figBooleanAttribute(this, "selected");
+    this.setAttribute("aria-selected", selected ? "true" : "false");
+    for (const child of this.children) {
+      child.toggleAttribute("selected", selected);
+    }
+    this.#childObserver?.disconnect();
+    if (selected && this.isConnected) {
+      this.#childObserver ??= new MutationObserver(() =>
+        this.#syncSelectedState(),
+      );
+      this.#childObserver.observe(this, { childList: true });
+    }
+  }
+
   attributeChangedCallback(name) {
     if (name === "selected") {
-      this.setAttribute(
-        "aria-selected",
-        figBooleanAttribute(this, "selected") ? "true" : "false",
-      );
+      this.#syncSelectedState();
     }
     if (name === "disabled") {
       const isDisabled =
@@ -19914,19 +19945,11 @@ class FigChooser extends HTMLElement {
     const raw = this.getAttribute("columns");
     const columns = raw === null ? NaN : Number(raw);
     const validColumns = Number.isInteger(columns) && columns > 0;
-    const effectiveColumns = validColumns ? columns : 2;
     if (validColumns) {
-      this.style.setProperty("--fig-chooser-grid-columns", String(effectiveColumns));
+      this.style.setProperty("--fig-chooser-grid-columns", String(columns));
     } else {
       this.style.removeProperty("--fig-chooser-grid-columns");
     }
-    const isGrid = this.getAttribute("layout") === "grid";
-    this.choices.forEach((choice, index) => {
-      choice.toggleAttribute(
-        "data-fig-chooser-first-row",
-        isGrid && index < effectiveColumns,
-      );
-    });
   }
 
   get choices() {
@@ -20176,7 +20199,8 @@ class FigChooser extends HTMLElement {
         !c.hasAttribute("disabled") || c.getAttribute("disabled") === "false",
     );
     if (!choices.length) return;
-    const currentIndex = choices.indexOf(this.#selectedChoice);
+    const focusedChoice = this.#findChoiceFromTarget(event.target);
+    const currentIndex = choices.indexOf(focusedChoice);
     let nextIndex = currentIndex;
 
     const loop = this.hasAttribute("loop");
@@ -20211,12 +20235,9 @@ class FigChooser extends HTMLElement {
       case "Enter":
       case " ":
         event.preventDefault();
-        if (document.activeElement?.matches(this.#choiceSelector)) {
-          const focused = this.#findChoiceFromTarget(document.activeElement);
-          if (focused && focused !== this.#selectedChoice) {
-            this.selectedChoice = focused;
-            this.#emitEvents();
-          }
+        if (focusedChoice && focusedChoice !== this.#selectedChoice) {
+          this.selectedChoice = focusedChoice;
+          this.#emitEvents();
         }
         return;
       default:
@@ -20224,9 +20245,9 @@ class FigChooser extends HTMLElement {
     }
 
     if (nextIndex !== currentIndex && choices[nextIndex]) {
-      this.selectedChoice = choices[nextIndex];
-      choices[nextIndex].focus({ preventScroll: !this.autoScroll });
-      this.#emitEvents();
+      const nextChoice = choices[nextIndex];
+      nextChoice.focus({ preventScroll: true });
+      if (this.autoScroll) this.#scrollToChoice(nextChoice);
     }
   }
 
@@ -20397,12 +20418,14 @@ class FigChooser extends HTMLElement {
   }
 
   #applyOverflowMode() {
-    if (this.#overflowMode === "scrollbar") {
+    const usesScrollbar = this.#overflowMode === "scrollbar";
+    const isGrid = this.getAttribute("layout") === "grid";
+    if (usesScrollbar || isGrid) {
       this.#removeNavButtons();
-      this.classList.add("fig-overflow-fade");
+      this.classList.toggle("fig-overflow-fade", usesScrollbar);
       this.classList.toggle(
         "fig-overflow-fade-horizontal",
-        this.getAttribute("layout") === "horizontal",
+        usesScrollbar && this.getAttribute("layout") === "horizontal",
       );
     } else {
       this.#createNavButtons();

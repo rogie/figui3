@@ -89,8 +89,10 @@
   --figma-color-border-slot: light-dark(#ff24bd, #f316b0);
 
   /* Focus */
-  --figma-focus-outline: 1px solid var(--figma-color-border-selected);
-  --figma-focus-outline-offset: -1px;
+  --figma-focus-outline-width: 1.5px;
+  --figma-focus-outline-color: var(--figma-color-border-selected);
+  --figma-focus-outline: var(--figma-focus-outline-width) solid var(--figma-focus-outline-color);
+  --figma-focus-outline-offset: var(--figma-focus-outline-width);
   --figma-focus-outline-radius: inherit;
 
   /* Icon Colors */
@@ -6241,7 +6243,7 @@ fig-chooser {
   &[layout="grid"] {
     display: grid;
     column-gap: var(--fig-chooser-gap);
-    row-gap: 0;
+    row-gap: var(--fig-chooser-gap);
     grid-template-columns: repeat(
       var(--fig-chooser-grid-columns, 2),
       minmax(0, 1fr)
@@ -6251,11 +6253,6 @@ fig-chooser {
 
     > :not(.fig-overflow) {
       margin: 0;
-      margin-block-start: var(--fig-chooser-gap);
-    }
-
-    > [data-fig-chooser-first-row] {
-      margin-block-start: 0;
     }
 
     > .fig-overflow {
@@ -6305,6 +6302,11 @@ fig-card {
   padding: var(--fig-card-padding);
   border-radius: 0.5625rem;
   box-sizing: border-box;
+
+  &:focus-visible{
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
 
   &[full]:not([full="false"]) {
     width: 100%;
@@ -6378,6 +6380,9 @@ fig-card {
     max-width: none;
     border-radius: var(--fig-card-media-radius);
     min-height: auto;
+    &::after{
+      visibility: hidden;
+    }
   }
 
   > fig-footer {
@@ -6461,14 +6466,7 @@ fig-card {
 
   &[selected]:not([selected="false"]) > :is(fig-image, fig-media, fig-preview) {
     outline: var(--figma-focus-outline);
-    outline-offset: var(--figma-focus-outline-offset);
-  }
-
-  &[selected]:not([selected="false"])
-    > :is(fig-image, fig-media)
-    > fig-preview::after,
-  &[selected]:not([selected="false"]) > fig-preview::after {
-    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+    outline-offset: 0;
   }
 
   &[disabled]:not([disabled="false"]),
@@ -6484,6 +6482,7 @@ fig-choice {
   --fig-choice-border-radius: var(--radius-medium);
   --fig-choice-min-height: 1.5rem;
   --fig-choice-min-width: 1.5rem;
+  --fig-choice-selection-ring-width: 1.5px;
 
   min-height: var(--fig-choice-min-height);
   min-width: var(--fig-choice-min-width);
@@ -6505,32 +6504,24 @@ fig-choice {
     background-color: var(--figma-color-bg-secondary);
   }
 
-  &:focus-visible {
-    outline: var(--figma-focus-outline);
-    outline-offset: var(--figma-focus-outline-offset);
-  }
-
   &[padding]:not([padding="false"]) {
     --fig-choice-padding: var(--spacer-1);
     --fig-choice-border-radius: var(--radius-medium-large);
   }
 
-  &[selected]:not([selected="false"]) {
-    position: relative;
-    &::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: calc(
-        var(--fig-choice-border-radius)
-      );
-      pointer-events: none;
-      z-index: 1;
-      outline: var(--fig-choice-selection-ring-width, 2px) solid
+  &:focus-visible,
+  &[selected]:not([selected="false"]){
+    outline: var(--fig-choice-selection-ring-width) solid
         var(--figma-color-border-selected);
-      outline-offset: var(--fig-choice-selection-ring-width, 2px);
+    outline-offset: var(--fig-choice-selection-ring-width);
+  }
+
+  &[selected]:not([selected="false"]) {
+    background-color: var(--figma-color-bg-selected);
+    &>*,
+    &:hover{
+      background-color: transparent;
     }
-    background-color: var(--figma-color-bg-secondary);
   }
 
   &[disabled]:not([disabled="false"]),

@@ -4784,7 +4784,7 @@ test.describe("text input accessibility", () => {
     expect(searchFocusStyles).toEqual({
       hostOutlineStyle: "solid",
       hostOutlineWidth: "1px",
-      hostOutlineOffset: "-1px",
+      hostOutlineOffset: "1px",
       inputOutlineStyle: "none",
       inputOutlineWidth: "0px",
       inputBoxShadow: "none",
@@ -4794,7 +4794,7 @@ test.describe("text input accessibility", () => {
     expect(multilineFocusStyles).toEqual({
       hostOutlineStyle: "solid",
       hostOutlineWidth: "1px",
-      hostOutlineOffset: "-1px",
+      hostOutlineOffset: "1px",
       inputOutlineStyle: "none",
       inputOutlineWidth: "0px",
       inputBoxShadow: "none",
@@ -7587,7 +7587,7 @@ test.describe("render timing composition", () => {
     expect(focusStyle).toEqual({
       outlineStyle: "solid",
       outlineWidth: "1px",
-      outlineOffset: "-1px",
+      outlineOffset: "1px",
       focusOutlineRadius: "0.3125rem",
       borderRadius: "5px",
     });
@@ -7966,6 +7966,68 @@ test.describe("remaining accessibility contracts", () => {
     expect(
       await clearable.evaluate((chooser) => chooser.querySelectorAll("fig-choice[selected]").length),
     ).toBe(0);
+  });
+
+  test("fig-chooser arrows move focus while Enter and clicks select", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-chooser id="keyboard-chooser" value="">
+          <fig-choice value="a"><span>A</span></fig-choice>
+          <fig-choice value="b"><span>B</span></fig-choice>
+          <fig-choice value="c"><span>C</span></fig-choice>
+        </fig-chooser>
+      `;
+      const chooser = document.querySelector("#keyboard-chooser");
+      chooser.__events = [];
+      chooser.addEventListener("input", (event) => {
+        chooser.__events.push(["input", event.detail]);
+      });
+      chooser.addEventListener("change", (event) => {
+        chooser.__events.push(["change", event.detail]);
+      });
+    });
+
+    const chooser = page.locator("#keyboard-chooser");
+    const first = chooser.locator('fig-choice[value="a"]');
+    const second = chooser.locator('fig-choice[value="b"]');
+    const third = chooser.locator('fig-choice[value="c"]');
+
+    await first.focus();
+    await first.press("ArrowDown");
+    await expect(second).toBeFocused();
+    await expect(chooser).toHaveAttribute("value", "");
+    await expect(chooser.locator("fig-choice[selected]")).toHaveCount(0);
+    expect(await chooser.evaluate((element) => element.__events)).toEqual([]);
+
+    await second.press("Enter");
+    await expect(second).toHaveAttribute("selected", "");
+    await expect(second.locator(":scope > span")).toHaveAttribute("selected", "");
+    await expect(chooser).toHaveAttribute("value", "b");
+    expect(await chooser.evaluate((element) => element.__events)).toEqual([
+      ["input", "b"],
+      ["change", "b"],
+    ]);
+    await second.evaluate((choice) => {
+      choice.append(document.createElement("em"));
+    });
+    await expect(second.locator(":scope > em")).toHaveAttribute("selected", "");
+
+    await third.click();
+    await expect(third).toHaveAttribute("selected", "");
+    await expect(third.locator(":scope > span")).toHaveAttribute("selected", "");
+    await expect(second.locator(":scope > span")).not.toHaveAttribute("selected");
+    await expect(second.locator(":scope > em")).not.toHaveAttribute("selected");
+    await expect(chooser).toHaveAttribute("value", "c");
+    expect(await chooser.evaluate((element) => element.__events)).toEqual([
+      ["input", "b"],
+      ["change", "b"],
+      ["input", "c"],
+      ["change", "c"],
+    ]);
   });
 
   test("fig-chooser keeps overflow controls at the edges after delayed choice writes", async ({
@@ -8394,13 +8456,18 @@ test.describe("remaining accessibility contracts", () => {
           const columnCount = (selector: string) => {
             const chooser = document.querySelector(selector);
             if (!chooser) return null;
+            const style = getComputedStyle(chooser);
             return {
-              columns: getComputedStyle(chooser).gridTemplateColumns
+              columns: style.gridTemplateColumns
                 .split(" ")
                 .filter(Boolean).length,
-              columnVar: getComputedStyle(chooser)
+              columnVar: style
                 .getPropertyValue("--fig-chooser-grid-columns")
                 .trim(),
+              rowGap: style.rowGap,
+              hasFirstRowMarkers: Boolean(
+                chooser.querySelector("[data-fig-chooser-first-row]"),
+              ),
             };
           };
 
@@ -8412,13 +8479,28 @@ test.describe("remaining accessibility contracts", () => {
         }),
       )
       .toEqual({
-        defaultGrid: { columns: 2, columnVar: "" },
-        threeGrid: { columns: 3, columnVar: "3" },
-        invalidGrid: { columns: 2, columnVar: "" },
+        defaultGrid: {
+          columns: 2,
+          columnVar: "",
+          rowGap: "8px",
+          hasFirstRowMarkers: false,
+        },
+        threeGrid: {
+          columns: 3,
+          columnVar: "3",
+          rowGap: "8px",
+          hasFirstRowMarkers: false,
+        },
+        invalidGrid: {
+          columns: 2,
+          columnVar: "",
+          rowGap: "8px",
+          hasFirstRowMarkers: false,
+        },
       });
   });
 
-  test("fig-chooser centers selected choices on click and keyboard", async ({ page }) => {
+  test("fig-chooser centers clicked choices and keyboard focus", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -8496,13 +8578,21 @@ test.describe("remaining accessibility contracts", () => {
           return {
             value: chooser.getAttribute("value"),
             centerDelta,
+            active: document.activeElement === selected,
           };
         }),
       )
       .toEqual({
-        value: "choice-3",
+        value: "choice-2",
         centerDelta: 0,
+        active: true,
       });
+
+    await page.locator('#selection-scroll-chooser fig-choice[value="choice-3"]').press("Enter");
+    await expect(page.locator("#selection-scroll-chooser")).toHaveAttribute(
+      "value",
+      "choice-3",
+    );
   });
 
   test("fig-chooser separates selection from scrolling when auto-scroll is disabled", async ({
@@ -8697,13 +8787,10 @@ test.describe("remaining accessibility contracts", () => {
     });
 
     expect(state).toEqual({
-      value: "choice-1",
+      value: "choice-0",
       scrollLeft: 0,
       focusOptions: { preventScroll: true },
-      events: [
-        ["input", "choice-1"],
-        ["change", "choice-1"],
-      ],
+      events: [],
     });
   });
 
@@ -8898,7 +8985,7 @@ test.describe("remaining accessibility contracts", () => {
       .toBeGreaterThan(0);
   });
 
-  test("fig-chooser grid overflow keeps scrollTop at start with sticky nav", async ({
+  test("fig-chooser grid overflow keeps controls out of grid flow", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -8917,11 +9004,12 @@ test.describe("remaining accessibility contracts", () => {
     await expect
       .poll(() =>
         page.locator("#grid-overflow").evaluate((chooser) => {
-          const navStart = chooser.querySelector('[data-fig-chooser-nav="start"]');
           return {
             scrollTop: chooser.scrollTop,
+            scrollable: chooser.scrollHeight > chooser.clientHeight,
             hasEndOverflow: chooser.classList.contains("overflow-end"),
-            navStartOpacity: navStart ? getComputedStyle(navStart).opacity : null,
+            navControls: chooser.querySelectorAll("[data-fig-chooser-nav]")
+              .length,
             directChoices: chooser.querySelectorAll(":scope > fig-choice").length,
             legacyScroller: chooser.querySelectorAll(":scope > [data-fig-chooser-scroll]").length,
           };
@@ -8929,14 +9017,15 @@ test.describe("remaining accessibility contracts", () => {
       )
       .toEqual({
         scrollTop: 0,
+        scrollable: true,
         hasEndOverflow: true,
-        navStartOpacity: "0",
+        navControls: 0,
         directChoices: 12,
         legacyScroller: 0,
       });
   });
 
-  test("fig-chooser reserves selection-ring overflow without moving choices", async ({
+  test("fig-chooser preserves its gutter without moving choices", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -8966,10 +9055,6 @@ test.describe("remaining accessibility contracts", () => {
       const chooserRect = chooser.getBoundingClientRect();
       const choiceRect = choice.getBoundingClientRect();
       const chooserStyle = getComputedStyle(chooser);
-      const ringStyle = getComputedStyle(choice, "::after");
-      const ringExtent =
-        parseFloat(ringStyle.outlineWidth) +
-        parseFloat(ringStyle.outlineOffset);
       return {
         gutter: parseFloat(chooserStyle.paddingLeft),
         inlineMargin: parseFloat(chooserStyle.marginLeft),
@@ -8978,7 +9063,6 @@ test.describe("remaining accessibility contracts", () => {
         choiceBlockPosition: choiceRect.top - wrapRect.top,
         ringLeftClearance: choiceRect.left - chooserRect.left,
         ringTopClearance: choiceRect.top - chooserRect.top,
-        ringExtent,
       };
     });
 
@@ -8990,7 +9074,6 @@ test.describe("remaining accessibility contracts", () => {
       choiceBlockPosition: 0,
       ringLeftClearance: 6,
       ringTopClearance: 6,
-      ringExtent: 6,
     });
   });
 
@@ -9094,7 +9177,7 @@ test.describe("remaining accessibility contracts", () => {
     expect(tabFocusStyle).toEqual({
       outlineStyle: "solid",
       outlineWidth: "1px",
-      outlineOffset: "-1px",
+      outlineOffset: "1px",
     });
 
     await page.locator('fig-segment[value="left"]').focus();
@@ -9438,7 +9521,7 @@ test.describe("remaining accessibility contracts", () => {
       hostOutlineStyle: "none",
       rowOutlineStyle: "solid",
       rowOutlineWidth: "1px",
-      rowOutlineOffset: "-1px",
+      rowOutlineOffset: "1px",
     });
 
     const row = page.locator("#palette .palette-colors-inline");
@@ -9582,7 +9665,7 @@ test.describe("remaining accessibility contracts", () => {
     expect(staticFocusStyle).toEqual({
       outlineStyle: "solid",
       outlineWidth: "1px",
-      outlineOffset: "-1px",
+      outlineOffset: "1px",
     });
   });
 
@@ -12231,6 +12314,7 @@ test.describe("media accessibility", () => {
               targetIsHost: event.target === host,
               bubbles: event.bubbles,
               composed: event.composed,
+              loaded: host.hasAttribute("loaded"),
               mediaTag: customEvent.detail?.media?.tagName,
               originalTargetTag:
                 customEvent.detail?.originalEvent?.target?.tagName,
@@ -12266,6 +12350,7 @@ test.describe("media accessibility", () => {
         targetIsHost: true,
         bubbles: true,
         composed: true,
+        loaded: true,
         mediaTag: "IMG",
         originalTargetTag: "IMG",
       },
@@ -12275,6 +12360,7 @@ test.describe("media accessibility", () => {
         targetIsHost: true,
         bubbles: true,
         composed: true,
+        loaded: false,
         mediaTag: "IMG",
         originalTargetTag: "IMG",
       },
@@ -12285,11 +12371,43 @@ test.describe("media accessibility", () => {
           targetIsHost: true,
           bubbles: true,
           composed: true,
+          loaded: false,
           mediaTag: "VIDEO",
           originalTargetTag: "VIDEO",
         }),
       ),
     ]);
+  });
+
+  test("fig-image reflects loaded state and resets it for a new source", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-image id="loaded-image"></fig-image>`;
+      const image = root.querySelector("#loaded-image")!;
+      const nativeImage = image.querySelector("img")!;
+      const initial = image.hasAttribute("loaded");
+      nativeImage.dispatchEvent(new Event("load"));
+      const afterLoad = image.hasAttribute("loaded");
+      image.setAttribute("src", "/next-image.png");
+      const afterSourceChange = image.hasAttribute("loaded");
+      nativeImage.dispatchEvent(new Event("error"));
+      return {
+        initial,
+        afterLoad,
+        afterSourceChange,
+        afterError: image.hasAttribute("loaded"),
+      };
+    });
+
+    expect(state).toEqual({
+      initial: false,
+      afterLoad: true,
+      afterSourceChange: false,
+      afterError: false,
+    });
   });
 
   test("generated images show a delayed loading spinner with an opt-out", async ({
@@ -12371,6 +12489,8 @@ test.describe("media accessibility", () => {
     ).toHaveCount(0);
 
     releaseRequests();
+    await expect(page.locator("#loading-image")).toHaveAttribute("loaded", "");
+    await expect(page.locator("#loading-media")).toHaveAttribute("loaded", "");
     await expect(page.locator("#loading-media")).not.toHaveAttribute(
       "aria-busy",
       "true",

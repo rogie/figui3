@@ -447,6 +447,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 - Attrs (chooser): `value`, `layout` (`vertical` | `horizontal` | `grid`), `columns`, `drag`, `loop`, `auto-scroll`, `scroll-behavior`
 - Choice: always set `value`. Omit chooser `value` to select first; `value=""` means none.
+- A selected choice reflects `selected` to its direct element children.
 - Children stay in light DOM.
 
 ### `fig-separator` / `fig-menu-separator`
@@ -610,7 +611,7 @@ toastRef.current?.showToast();
 />
 ```
 
-- Attrs: `type`, `src`, `caption`, `aspect-ratio`, `fit`, `upload`, `loading-indicator`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `poster`
+- Attrs: `type`, `src`, read-only `loaded` (image mode), `caption`, `aspect-ratio`, `fit`, `upload`, `loading-indicator`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `poster`
 - Events: `loaded` (`detail.src`), `input` / `change`
 
 ### `fig-image`
@@ -619,7 +620,8 @@ toastRef.current?.showToast();
 <fig-image src={src} fit="cover" upload checkerboard="true" onChange={onChange} />
 ```
 
-- Attrs: same media surface attrs. `loaded` → `detail.src`
+- Attrs: same media surface attrs. The read-only `loaded` attribute supports CSS loaded-state selectors.
+- Events: `load`, `error`, and `loaded` (`detail.src`)
 
 ### `fig-video`
 

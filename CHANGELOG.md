@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.3]
+
+### Added
+
+- Added a read-only `loaded` state to `fig-image` and image-mode `fig-media` for CSS styling.
+- Selected `fig-choice` elements now reflect `selected` to their direct element children.
+
+### Changed
+
+- Arrow keys now move chooser focus without selecting; Enter, Space, and clicks commit selection.
+- Chooser card and color examples now use `fig-card` and `fig-swatch` directly as custom choices.
+- Refined chooser and card focus and selection outlines.
+
+### Fixed
+
+- Replaced fragile grid first-row markers with native row gaps and kept overflow controls out of chooser grid flow.
+
 ## [10.0.2]
 
 ### Added

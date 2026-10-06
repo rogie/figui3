@@ -881,7 +881,7 @@ When app code rebuilds a chooser by setting `fig-chooser.innerHTML`, the chooser
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | string | — | Choice identifier |
-| `selected` | boolean | `false` | Selected state |
+| `selected` | boolean | `false` | Selected state; reflected to direct element children |
 | `disabled` | boolean | `false` | Disabled state |
 
 **Events (on fig-chooser):** `input`, `change` — detail is the selected value string.
@@ -1535,6 +1535,7 @@ Unified media component that supports image/video modes and shared sizing/upload
 | `type` | string | `"image"` | `"image"` or `"video"` |
 | `src` | string | — | Media URL |
 | `alt` | string | `""` | Alt text forwarded to the generated `<img>` (image mode) |
+| `loaded` | boolean | `false` | Read-only reflected state after an image loads successfully |
 | `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
 | `loading-indicator` | boolean | `true` | Set to `"false"` to disable the delayed loading spinner for generated images |
 | `label` | string | `"Upload"` | Upload button label |
@@ -1579,6 +1580,7 @@ An image display component with optional upload, aspect ratio, and object-fit co
 |---|---|---|---|
 | `src` | string | — | Image URL |
 | `alt` | string | `""` | Alt text forwarded to the generated `<img>` |
+| `loaded` | boolean | `false` | Read-only reflected state after the image loads successfully |
 | `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
 | `loading-indicator` | boolean | `true` | Set to `"false"` to disable the delayed loading spinner |
 | `label` | string | `"Upload"` | Upload button label |
@@ -1591,6 +1593,7 @@ An image display component with optional upload, aspect ratio, and object-fit co
 Use meaningful `alt` text for informative images. Use `alt=""` for decorative previews, thumbnails with visible labels, or upload placeholders.
 
 The generated image's native `load` and `error` events are re-emitted from `fig-image` as bubbling, composed `CustomEvent`s with `src`, `media`, and `originalEvent` in `event.detail`.
+The `loaded` attribute is removed when `src` changes or loading fails, so it can be used as a CSS state selector such as `fig-image[loaded]`.
 
 ```html
 <fig-image src="photo.jpg" alt="Selected image"></fig-image>

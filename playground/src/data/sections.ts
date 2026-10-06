@@ -640,13 +640,13 @@ export const legacyPropsKitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="vertical">
     <label>Style</label>
-    <fig-chooser layout="horizontal" value="amber-dusk" full drag style="max-width: 100%">
-      <fig-choice value="amber-dusk" selected><fig-card src="${landscapeUrl()}" label="Amber dusk" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
-      <fig-choice value="soft-fog"><fig-card src="${landscapeUrl()}" label="Soft fog" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
-      <fig-choice value="salt-light"><fig-card src="${landscapeUrl()}" label="Salt light" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
-      <fig-choice value="pine-glow"><fig-card src="${landscapeUrl()}" label="Pine glow" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
-      <fig-choice value="river-glass"><fig-card src="${landscapeUrl()}" label="River glass" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
-      <fig-choice value="quiet-cove"><fig-card src="${landscapeUrl()}" label="Quiet cove" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card></fig-choice>
+    <fig-chooser choice-element="fig-card" layout="horizontal" value="amber-dusk" full drag style="max-width: 100%">
+      <fig-card value="amber-dusk" selected src="${landscapeUrl()}" label="Amber dusk" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card>
+      <fig-card value="soft-fog" src="${landscapeUrl()}" label="Soft fog" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card>
+      <fig-card value="salt-light" src="${landscapeUrl()}" label="Salt light" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card>
+      <fig-card value="pine-glow" src="${landscapeUrl()}" label="Pine glow" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card>
+      <fig-card value="river-glass" src="${landscapeUrl()}" label="River glass" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card>
+      <fig-card value="quiet-cove" src="${landscapeUrl()}" label="Quiet cove" aspect-ratio="1/1" fit="fill" style="width: 5.5rem"></fig-card>
     </fig-chooser>
   </fig-field>
 </div>`,
@@ -657,15 +657,15 @@ export const legacyPropsKitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field direction="vertical">
     <label>Color</label>
-    <fig-chooser layout="horizontal" value="red" full drag style="max-width: 100%">
-      <fig-choice value="red" selected><fig-swatch background="#FF0000" size="large" disabled></fig-swatch></fig-choice>
-      <fig-choice value="blue"><fig-swatch background="#0D99FF" size="large" disabled></fig-swatch></fig-choice>
-      <fig-choice value="green"><fig-swatch background="#14AE5C" size="large" disabled></fig-swatch></fig-choice>
-      <fig-choice value="orange"><fig-swatch background="#FF8C00" size="large" disabled></fig-swatch></fig-choice>
-      <fig-choice value="purple"><fig-swatch background="#9747FF" size="large" disabled></fig-swatch></fig-choice>
-      <fig-choice value="pink"><fig-swatch background="#E84BA5" size="large" disabled></fig-swatch></fig-choice>
-      <fig-choice value="teal"><fig-swatch background="#24B5A8" size="large" disabled></fig-swatch></fig-choice>
-      <fig-choice value="yellow"><fig-swatch background="#FFCD29" size="large" disabled></fig-swatch></fig-choice>
+    <fig-chooser choice-element="fig-swatch" layout="horizontal" value="red" full drag style="max-width: 100%">
+      <fig-swatch value="red" selected background="linear-gradient(#FF0000, #FF0000)" size="large" aria-label="Red"></fig-swatch>
+      <fig-swatch value="blue" background="linear-gradient(#0D99FF, #0D99FF)" size="large" aria-label="Blue"></fig-swatch>
+      <fig-swatch value="green" background="linear-gradient(#14AE5C, #14AE5C)" size="large" aria-label="Green"></fig-swatch>
+      <fig-swatch value="orange" background="linear-gradient(#FF8C00, #FF8C00)" size="large" aria-label="Orange"></fig-swatch>
+      <fig-swatch value="purple" background="linear-gradient(#9747FF, #9747FF)" size="large" aria-label="Purple"></fig-swatch>
+      <fig-swatch value="pink" background="linear-gradient(#E84BA5, #E84BA5)" size="large" aria-label="Pink"></fig-swatch>
+      <fig-swatch value="teal" background="linear-gradient(#24B5A8, #24B5A8)" size="large" aria-label="Teal"></fig-swatch>
+      <fig-swatch value="yellow" background="linear-gradient(#FFCD29, #FFCD29)" size="large" aria-label="Yellow"></fig-swatch>
     </fig-chooser>
   </fig-field>
 </div>`,

@@ -511,7 +511,7 @@ test.describe("fig.js audit core regressions", () => {
         ariaDisabled: "false",
       },
       focusedTrigger: true,
-      focusOutline: { style: "solid", width: "1px", offset: "-1px" },
+      focusOutline: { style: "solid", width: "1px", offset: "1px" },
       disabledTabindex: "-1",
       disabledAria: "true",
       focusedWhileDisabled: false,
