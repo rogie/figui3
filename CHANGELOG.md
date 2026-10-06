@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.4]
+
+### Changed
+
+- Refined selected `fig-card` media to use a 1px selection outline.
+
 ## [10.0.3]
 
 ### Added

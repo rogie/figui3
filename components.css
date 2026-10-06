@@ -6465,7 +6465,7 @@ fig-card {
   }
 
   &[selected]:not([selected="false"]) > :is(fig-image, fig-media, fig-preview) {
-    outline: var(--figma-focus-outline);
+    outline: 1px solid var(--figma-focus-outline-color);
     outline-offset: 0;
   }
 
