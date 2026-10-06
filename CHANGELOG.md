@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.5]
+
+### Changed
+
+- Reduced the shared focus outline width to 1px.
+
 ## [10.0.4]
 
 ### Changed

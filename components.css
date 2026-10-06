@@ -89,7 +89,7 @@
   --figma-color-border-slot: light-dark(#ff24bd, #f316b0);
 
   /* Focus */
-  --figma-focus-outline-width: 1.5px;
+  --figma-focus-outline-width: 1px;
   --figma-focus-outline-color: var(--figma-color-border-selected);
   --figma-focus-outline: var(--figma-focus-outline-width) solid var(--figma-focus-outline-color);
   --figma-focus-outline-offset: var(--figma-focus-outline-width);
