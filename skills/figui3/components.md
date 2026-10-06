@@ -628,7 +628,10 @@ toastRef.current?.showToast();
 />
 ```
 
-- Attrs: `src`, `label`, `sublabel`, `selected`, `disabled`, `full`, `size`, `aspect-ratio`, `fit`, `label-line-clamp`
+- Attrs: `src`, `label`, `sublabel`, `selected`, `disabled`, `full`, `size`, `direction`, `aspect-ratio`, `fit`, `label-line-clamp`, `label-overflow`
+- `direction="horizontal"` uses a 40px media preview on the left (`56px` with `size="large"`) and stacks label/sublabel content on the right.
+- `label-overflow="fade"` adds `fig-overflow-fade fig-overflow-fade-horizontal` to both labels; the default is `ellipsis`.
+- Thumbnail vars: `--fig-card-thumbnail-width` (`2.5rem`, or `3.5rem` when large), `--fig-card-thumbnail-height` (`auto`).
 
 ### `fig-media-controls`
 

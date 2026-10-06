@@ -343,6 +343,8 @@ export const componentContracts: ComponentContract[] = [
     attributes: [
       { name: "selected", attribute: "selected", value: "" },
       { name: "large size", attribute: "size", value: "large" },
+      { name: "horizontal", attribute: "direction", value: "horizontal" },
+      { name: "fade overflow", attribute: "label-overflow", value: "fade" },
     ],
   },
   {

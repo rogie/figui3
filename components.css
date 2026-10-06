@@ -6295,6 +6295,8 @@ fig-card {
   --fig-card-label-line-clamp: 1;
   --fig-card-media-radius: var(--radius-medium);
   --fig-card-padding: var(--spacer-1);
+  --fig-card-thumbnail-width: 2.5rem;
+  --fig-card-thumbnail-height: auto;
   display: flex;
   flex-direction: column;
   gap: var(--spacer-1);
@@ -6310,6 +6312,7 @@ fig-card {
 
   &[size="large"] {
     --fig-card-padding: var(--spacer-2);
+    --fig-card-thumbnail-width: 3.5rem;
 
     > fig-footer {
       margin-top: var(--spacer-1);
@@ -6319,6 +6322,40 @@ fig-card {
     .fig-card-sublabel {
       padding-inline: 0;
     }
+  }
+
+  &[direction="horizontal"] {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacer-2);
+
+    > :is(fig-image, fig-media, fig-preview) {
+      flex: 0 0 var(--fig-card-thumbnail-width);
+      width: var(--fig-card-thumbnail-width);
+      max-width: var(--fig-card-thumbnail-width);
+      height: var(--fig-card-thumbnail-height);
+    }
+
+    > :is(fig-image, fig-media) > fig-preview,
+    > fig-preview {
+      height: var(--fig-card-thumbnail-height);
+    }
+
+    > fig-footer {
+      flex: 1 1 0;
+      width: auto;
+      margin-top: 0;
+    }
+
+    .fig-card-label,
+    .fig-card-sublabel {
+      padding-inline: 0;
+    }
+  }
+
+  &[direction="horizontal"]:not([size]),
+  &[direction="horizontal"][size=""] {
+    padding-right: var(--spacer-2);
   }
 
   > fig-image,
@@ -6399,6 +6436,17 @@ fig-card {
 
   .fig-card-sublabel[hidden] {
     display: none;
+  }
+
+  :is(.fig-card-label, .fig-card-sublabel).fig-overflow-fade-horizontal {
+    display: block;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-overflow: clip;
+    word-break: normal;
   }
 
   &:hover:not(

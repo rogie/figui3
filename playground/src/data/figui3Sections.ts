@@ -1800,6 +1800,20 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<fig-card src="${landscapeUrl()}" label="Autumn field" fit="fill" style="width: 10rem"></fig-card>`,
       },
       {
+        id: "horizontal",
+        name: "Horizontal",
+        description:
+          "direction=\"horizontal\" creates a list-style card with a 40px media preview (56px with size=\"large\") to the left of the label and sublabel.",
+        markup: `<fig-card src="${landscapeUrl()}" label="Autumn field" sublabel="Landscape photography" direction="horizontal" fit="fill" full></fig-card>`,
+      },
+      {
+        id: "fade-overflow",
+        name: "Fade overflow",
+        description:
+          "label-overflow=\"fade\" applies a horizontal overflow fade to both the label and sublabel.",
+        markup: `<fig-card src="${landscapeUrl()}" label="A long landscape photography collection" sublabel="Generative tools and effects library" direction="horizontal" label-overflow="fade" fit="fill" full></fig-card>`,
+      },
+      {
         id: "large",
         name: "Large",
         description:

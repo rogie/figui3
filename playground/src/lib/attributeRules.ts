@@ -336,6 +336,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     full: { label: "Full", type: "boolean", boolMode: "presence" },
     size: { label: "Size", type: "enum", options: ["", "large"] },
+    direction: {
+      label: "Direction",
+      type: "enum",
+      options: ["vertical", "horizontal"],
+    },
     "aspect-ratio": aspectRatioRule,
     fit: {
       label: "Fit",
@@ -346,6 +351,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Label lines",
       type: "enum",
       options: ["1", "2"],
+    },
+    "label-overflow": {
+      label: "Label overflow",
+      type: "enum",
+      options: ["ellipsis", "fade"],
     },
   },
   "fig-media": {

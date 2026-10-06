@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.2]
+
+### Added
+
+- Added `direction="horizontal"` list layouts to `fig-card` with size-aware thumbnails and configurable thumbnail dimensions.
+- Added `label-overflow="fade"` for horizontal label and sublabel fades.
+
+### Changed
+
+- Horizontal cards use 40px thumbnails by default, 56px thumbnails when large, and extra trailing padding at the default size.
+
 ## [10.0.1]
 
 ### Changed

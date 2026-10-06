@@ -14057,9 +14057,11 @@ figDefineElement("fig-video", FigVideo);
  * @attr {boolean} disabled - Dim + non-interactive
  * @attr {boolean} full - Stretch to available width (CSS; default width is already 100%)
  * @attr {string} size - Set to `large` for spacer-2 card padding and spacer-1 label spacing
+ * @attr {string} direction - `vertical` (default) or `horizontal` list layout
  * @attr {string} aspect-ratio - Forwarded to fig-image (default `1/1`)
  * @attr {string} fit - Forwarded to fig-image (default `contain`)
  * @attr {string} label-line-clamp - `1` (default) or `2`
+ * @attr {string} label-overflow - `ellipsis` (default) or horizontal `fade`
  */
 class FigCard extends HTMLElement {
   static get observedAttributes() {
@@ -14073,9 +14075,11 @@ class FigCard extends HTMLElement {
       "disabled",
       "full",
       "size",
+      "direction",
       "aspect-ratio",
       "fit",
       "label-line-clamp",
+      "label-overflow",
     ];
   }
 
@@ -14273,6 +14277,16 @@ class FigCard extends HTMLElement {
     this.appendChild(this.#footerEl);
   }
 
+  #syncLabelOverflow() {
+    const fade = this.getAttribute("label-overflow") === "fade";
+    this.querySelectorAll(
+      ":scope > fig-footer > :is(.fig-card-label, .fig-card-sublabel)",
+    ).forEach((element) => {
+      element.classList.toggle("fig-overflow-fade", fade);
+      element.classList.toggle("fig-overflow-fade-horizontal", fade);
+    });
+  }
+
   #sync() {
     if (!this.#usesGeneratedMedia()) {
       this.#syncManual();
@@ -14329,6 +14343,7 @@ class FigCard extends HTMLElement {
     if (this.#footerEl) {
       this.#footerEl.hidden = !label && !sublabel;
     }
+    this.#syncLabelOverflow();
   }
 
   #syncManual() {
@@ -14352,6 +14367,7 @@ class FigCard extends HTMLElement {
       this.#labelEl.hidden = !label;
     }
     if (this.#sublabelEl) this.#sublabelEl.textContent = sublabel;
+    this.#syncLabelOverflow();
   }
 }
 figDefineElement("fig-card", FigCard);

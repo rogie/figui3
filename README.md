@@ -1623,12 +1623,18 @@ A media card with a truncated label and attribute-only selection chrome. With `s
 | `disabled` | boolean | `false` | Dim + non-interactive |
 | `full` | boolean | `false` | Stretch to the available width (cards are already `width: 100%` by default) |
 | `size` | string | default | Set to `"large"` for `--spacer-2` card padding and `--spacer-1` label spacing |
+| `direction` | string | `"vertical"` | Set to `"horizontal"` for a list layout with 40px media on the left (56px with `size="large"`) and stacked labels on the right |
 | `aspect-ratio` | string | `"1/1"` | Forwarded to generated `fig-image` |
 | `fit` | string | `"contain"` | Forwarded to generated `fig-image` |
 | `label-line-clamp` | string | `"1"` | `"1"` or `"2"` line clamp for the label |
+| `label-overflow` | string | `"ellipsis"` | Set to `"fade"` to apply horizontal overflow fades to the label and sublabel |
+
+Horizontal thumbnail sizing uses `--fig-card-thumbnail-width` (`2.5rem` by default, `3.5rem` with `size="large"`) and `--fig-card-thumbnail-height` (`auto` by default). Leaving height at `auto` preserves the media `aspect-ratio`.
 
 ```html
 <fig-card src="photo.jpg" label="Autumn field"></fig-card>
+<fig-card src="photo.jpg" label="Autumn field" sublabel="Landscape photography" direction="horizontal"></fig-card>
+<fig-card src="photo.jpg" label="A long card label" sublabel="A long card sublabel" direction="horizontal" label-overflow="fade"></fig-card>
 <fig-card src="photo.jpg" label="Large card" size="large"></fig-card>
 <fig-card src="photo.jpg" label="Shader pill" sublabel="Generative tools/effects" selected></fig-card>
 <fig-card src="photo.jpg" label="Wide card" aspect-ratio="16/9" full></fig-card>
@@ -1640,6 +1646,8 @@ A media card with a truncated label and attribute-only selection chrome. With `s
   <fig-footer><label>Authored footer</label></fig-footer>
 </fig-card>
 ```
+
+`label-overflow="fade"` adds both `fig-overflow-fade` and `fig-overflow-fade-horizontal` to generated or authored `.fig-card-label` and `.fig-card-sublabel` elements. Any other value uses the default ellipsis behavior.
 
 When `src` is omitted, authored direct children such as `fig-image`, `fig-media`, or `fig-preview` remain direct children of the card. An authored `fig-footer` is preserved; when no `label`, `text`, or `sublabel` attributes are present, the card does not generate another footer.
 

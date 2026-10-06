@@ -6626,6 +6626,246 @@ test.describe("reconnect resilience", () => {
       .toBe("16 / 9");
   });
 
+  test("fig-card lays out generated and authored horizontal content as list rows", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const src =
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+      root.innerHTML = `
+        <fig-card
+          id="vertical-card"
+          src="${src}"
+          label="Vertical"
+          style="width: 12rem"
+        ></fig-card>
+        <fig-card
+          id="generated-horizontal"
+          src="${src}"
+          label="Generated"
+          sublabel="Horizontal card"
+          direction="horizontal"
+          aspect-ratio="16/9"
+          size="large"
+          style="width: 12rem"
+        ></fig-card>
+        <fig-card
+          id="authored-horizontal"
+          direction="horizontal"
+          style="width: 12rem; --fig-card-thumbnail-width: 4rem; --fig-card-thumbnail-height: 2rem"
+        >
+          <fig-preview aspect-ratio="1/1"></fig-preview>
+          <fig-footer>
+            <label class="fig-card-label">Authored</label>
+            <label class="fig-card-sublabel">Horizontal card</label>
+          </fig-footer>
+        </fig-card>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const layout = (id: string) => {
+        const card = root.querySelector(`#${id}`);
+        const media = card?.querySelector(
+          ":scope > fig-image, :scope > fig-media, :scope > fig-preview",
+        );
+        const preview =
+          media?.tagName === "FIG-PREVIEW"
+            ? media
+            : media?.querySelector("fig-preview");
+        const footer = card?.querySelector(":scope > fig-footer");
+        const label = footer?.querySelector(".fig-card-label");
+        const sublabel = footer?.querySelector(".fig-card-sublabel");
+        if (!card || !media || !preview || !footer || !label || !sublabel) {
+          throw new Error(`Missing horizontal card structure for ${id}`);
+        }
+        const mediaRect = media.getBoundingClientRect();
+        const footerRect = footer.getBoundingClientRect();
+        const labelRect = label.getBoundingClientRect();
+        const sublabelRect = sublabel.getBoundingClientRect();
+        return {
+          direction: getComputedStyle(card).flexDirection,
+          mediaWidth: mediaRect.width,
+          mediaHeight: mediaRect.height,
+          mediaBeforeFooter: mediaRect.right <= footerRect.left,
+          labelBeforeSublabel: labelRect.bottom <= sublabelRect.top,
+          aspectRatio: getComputedStyle(preview).aspectRatio,
+          footerMarginTop: getComputedStyle(footer).marginTop,
+        };
+      };
+
+      const verticalCard = root.querySelector("#vertical-card");
+      if (!verticalCard) throw new Error("Missing vertical card");
+      const verticalDirection = getComputedStyle(verticalCard).flexDirection;
+      const verticalPaddingRight = getComputedStyle(verticalCard).paddingRight;
+      verticalCard.setAttribute("direction", "horizontal");
+      await new Promise(requestAnimationFrame);
+      const updatedMedia = verticalCard.querySelector(
+        ":scope > fig-image, :scope > fig-media, :scope > fig-preview",
+      );
+      if (!updatedMedia) throw new Error("Missing updated horizontal media");
+
+      return {
+        observesDirection: (
+          customElements.get("fig-card") as
+            | (CustomElementConstructor & { observedAttributes?: string[] })
+            | undefined
+        )?.observedAttributes?.includes("direction"),
+        verticalDirection,
+        verticalPaddingRight,
+        updatedDirection: getComputedStyle(verticalCard).flexDirection,
+        updatedPaddingRight: getComputedStyle(verticalCard).paddingRight,
+        updatedMediaWidth: updatedMedia.getBoundingClientRect().width,
+        generated: layout("generated-horizontal"),
+        authored: layout("authored-horizontal"),
+      };
+    });
+
+    expect(state.observesDirection).toBe(true);
+    expect(state.verticalDirection).toBe("column");
+    expect(state.verticalPaddingRight).toBe("4px");
+    expect(state.updatedDirection).toBe("row");
+    expect(state.updatedPaddingRight).toBe("8px");
+    expect(state.updatedMediaWidth).toBe(40);
+    expect(state.generated).toEqual({
+      direction: "row",
+      mediaWidth: 56,
+      mediaHeight: 31.5,
+      mediaBeforeFooter: true,
+      labelBeforeSublabel: true,
+      aspectRatio: "16 / 9",
+      footerMarginTop: "0px",
+    });
+    expect(state.authored).toEqual({
+      direction: "row",
+      mediaWidth: 64,
+      mediaHeight: 32,
+      mediaBeforeFooter: true,
+      labelBeforeSublabel: true,
+      aspectRatio: "1 / 1",
+      footerMarginTop: "0px",
+    });
+  });
+
+  test("fig-card applies horizontal fade classes to generated and authored labels", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const src =
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+      root.innerHTML = `
+        <fig-card
+          id="default-overflow"
+          src="${src}"
+          label="Default long label"
+          sublabel="Default long sublabel"
+          style="width: 8rem"
+        ></fig-card>
+        <fig-card
+          id="generated-fade"
+          src="${src}"
+          label="Generated long label"
+          sublabel="Generated long sublabel"
+          label-overflow="fade"
+          direction="horizontal"
+          style="width: 8rem"
+        ></fig-card>
+        <fig-card
+          id="authored-fade"
+          label-overflow="fade"
+          direction="horizontal"
+          style="width: 8rem"
+        >
+          <fig-preview aspect-ratio="1/1"></fig-preview>
+          <fig-footer>
+            <label class="fig-card-label">Authored long label</label>
+            <label class="fig-card-sublabel">Authored long sublabel</label>
+          </fig-footer>
+        </fig-card>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const labelState = (cardId: string) => {
+        const card = root.querySelector(`#${cardId}`);
+        const label = card?.querySelector(".fig-card-label");
+        const sublabel = card?.querySelector(".fig-card-sublabel");
+        if (!label || !sublabel) {
+          throw new Error(`Missing card labels for ${cardId}`);
+        }
+        const signature = (element: Element) => {
+          const style = getComputedStyle(element);
+          return {
+            verticalFade: element.classList.contains("fig-overflow-fade"),
+            horizontalFade: element.classList.contains(
+              "fig-overflow-fade-horizontal",
+            ),
+            overflowX: style.overflowX,
+            overflowY: style.overflowY,
+            textOverflow: style.textOverflow,
+            whiteSpace: style.whiteSpace,
+          };
+        };
+        return {
+          label: signature(label),
+          sublabel: signature(sublabel),
+        };
+      };
+
+      const defaultState = labelState("default-overflow");
+      const generatedState = labelState("generated-fade");
+      const authoredState = labelState("authored-fade");
+
+      const generatedCard = root.querySelector("#generated-fade");
+      if (!generatedCard) throw new Error("Missing generated fade card");
+      generatedCard.setAttribute("label-overflow", "ellipsis");
+      await new Promise(requestAnimationFrame);
+
+      return {
+        observesLabelOverflow: (
+          customElements.get("fig-card") as
+            | (CustomElementConstructor & { observedAttributes?: string[] })
+            | undefined
+        )?.observedAttributes?.includes("label-overflow"),
+        defaultState,
+        generatedState,
+        authoredState,
+        restoredState: labelState("generated-fade"),
+      };
+    });
+
+    const ellipsisSublabel = {
+      verticalFade: false,
+      horizontalFade: false,
+      overflowX: "hidden",
+      overflowY: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    };
+    const fadeLabel = {
+      verticalFade: true,
+      horizontalFade: true,
+      overflowX: "auto",
+      overflowY: "hidden",
+      textOverflow: "clip",
+      whiteSpace: "nowrap",
+    };
+
+    expect(state.observesLabelOverflow).toBe(true);
+    expect(state.defaultState.sublabel).toEqual(ellipsisSublabel);
+    expect(state.defaultState.label.verticalFade).toBe(false);
+    expect(state.defaultState.label.horizontalFade).toBe(false);
+    expect(state.generatedState.label).toEqual(fadeLabel);
+    expect(state.generatedState.sublabel).toEqual(fadeLabel);
+    expect(state.authoredState.label).toEqual(fadeLabel);
+    expect(state.authoredState.sublabel).toEqual(fadeLabel);
+    expect(state.restoredState.sublabel).toEqual(ellipsisSublabel);
+    expect(state.restoredState.label.verticalFade).toBe(false);
+    expect(state.restoredState.label.horizontalFade).toBe(false);
+  });
+
   test("fig-card large size increases generated and authored padding", async ({
     page,
   }) => {
