@@ -928,6 +928,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     visible: { label: "Visible", type: "boolean", boolMode: "string" },
   },
   "fig-tabs": {
+    overflow: {
+      label: "Overflow",
+      type: "enum",
+      options: ["buttons", "fade"],
+    },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-toolbelt": {

@@ -1580,7 +1580,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "No content",
         markup: `<div class="prop-panel">
-  <fig-tabs data-playground-hide-field>
+  <fig-tabs overflow="buttons" data-playground-hide-field>
     <fig-tab selected>General</fig-tab>
     <fig-tab>Advanced</fig-tab>
     <fig-tab>Export</fig-tab>
@@ -1591,7 +1591,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "tab-content",
         name: "Tab content",
         markup: `<div class="prop-panel">
-  <fig-tabs data-playground-hide-field>
+  <fig-tabs overflow="buttons" data-playground-hide-field>
     <fig-tab selected content="#tabs-general">General</fig-tab>
     <fig-tab content="#tabs-advanced">Advanced</fig-tab>
     <fig-tab content="#tabs-export">Export</fig-tab>
@@ -1645,9 +1645,26 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
       },
       {
         id: "overflow",
-        name: "Overflow",
+        name: "Button overflow",
         markup: `<div class="prop-panel">
-  <fig-tabs data-playground-hide-field>
+  <fig-tabs overflow="buttons" data-playground-hide-field>
+    <fig-tab value="all" selected>All</fig-tab>
+    <fig-tab value="ascii">ASCII</fig-tab>
+    <fig-tab value="latin">Latin</fig-tab>
+    <fig-tab value="punctuation">Punctuation</fig-tab>
+    <fig-tab value="math">Math</fig-tab>
+    <fig-tab value="arrows">Arrows</fig-tab>
+    <fig-tab value="currency">Currency</fig-tab>
+    <fig-tab value="symbols">Symbols</fig-tab>
+    <fig-tab value="emoji">Emoji</fig-tab>
+  </fig-tabs>
+</div>`,
+      },
+      {
+        id: "overflow-fade",
+        name: "Fade overflow",
+        markup: `<div class="prop-panel">
+  <fig-tabs overflow="fade" data-playground-hide-field>
     <fig-tab value="all" selected>All</fig-tab>
     <fig-tab value="ascii">ASCII</fig-tab>
     <fig-tab value="latin">Latin</fig-tab>
@@ -1664,7 +1681,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "overflow-content",
         name: "Overflow with content",
         markup: `<div class="prop-panel">
-  <fig-tabs data-playground-hide-field>
+  <fig-tabs overflow="buttons" data-playground-hide-field>
     <fig-tab value="all" content="#overflow-tabs-all" selected>All</fig-tab>
     <fig-tab value="ascii" content="#overflow-tabs-ascii">ASCII</fig-tab>
     <fig-tab value="latin" content="#overflow-tabs-latin">Latin</fig-tab>

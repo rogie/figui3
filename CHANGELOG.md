@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.6]
+
+### Added
+
+- Added `overflow="buttons|fade"` to `fig-tabs`, with paging buttons by default and buttonless horizontal fades as an option.
+
+### Fixed
+
+- Removed overflow-button layout gaps from tab strips.
+
 ## [10.0.5]
 
 ### Changed

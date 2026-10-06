@@ -406,7 +406,9 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 <fig-tab-content id="export">…</fig-tab-content>
 ```
 
+- Tabs attrs: `value`, `name`, `disabled`, `overflow="buttons|fade"` (`buttons` by default)
 - Tabs: roving tabindex, `aria-controls` via `content="#id"`
+- `overflow="fade"` removes paging buttons and adds `fig-overflow-fade fig-overflow-fade-horizontal` to the tabs container
 - Children stay in light DOM (overflow chrome must not steal them)
 - Events: `input` / `change` → `currentTarget.value`
 

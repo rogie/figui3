@@ -81,6 +81,12 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 - Internal `part="viewport"` owns scrolling and fades; authored items remain direct light-DOM children
 - `slot="prepend"` and `slot="append"` keep authored items, groups, or custom content fixed outside the viewport; slotted items remain in selection and roving keyboard order
 
+## `fig-tabs`
+
+- Attrs: `value`, `name`, `disabled`, `overflow="buttons|fade"`
+- `overflow="buttons"` is the default and adds direction-aware paging controls
+- `overflow="fade"` removes paging controls and applies the shared horizontal overflow fade
+
 ## `.fig-overflow-fade`
 
 - Apply the class to a vertical scroll container and constrain its height; add `fig-overflow-fade-horizontal` for horizontal scrolling.

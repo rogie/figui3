@@ -814,13 +814,20 @@ Use `--fig-toolbelt-gap`, `--fig-toolbelt-group-gap`, `--fig-toolbelt-group-sepa
 | `value` | string | — | Selected tab value |
 | `name` | string | — | Tabs group identifier |
 | `disabled` | boolean | `false` | Disable all tabs |
+| `overflow` | string | `"buttons"` | `"buttons"` adds paging controls; `"fade"` uses horizontal edge fades without buttons |
 
 **Events:** `input`, `change` with selected tab value.
 
 Tabs use `role="tablist"` / `role="tab"` and roving focus. Use `content="#panel-id"` on each `<fig-tab>` to associate generated tab panels. Focus-visible tabs use the shared focus outline tokens.
+Overflow buttons are enabled by default. Set `overflow="fade"` for buttonless scrolling with `fig-overflow-fade fig-overflow-fade-horizontal` applied to the tabs container.
 
 ```html
 <fig-tabs value="tab1">
+  <fig-tab value="tab1">General</fig-tab>
+  <fig-tab value="tab2">Advanced</fig-tab>
+</fig-tabs>
+
+<fig-tabs value="tab1" overflow="fade">
   <fig-tab value="tab1">General</fig-tab>
   <fig-tab value="tab2">Advanced</fig-tab>
 </fig-tabs>

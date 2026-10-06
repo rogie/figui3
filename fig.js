@@ -4566,6 +4566,7 @@ figDefineElement("fig-tab", FigTab);
 /**
  * A custom tabs container element.
  * @attr {string} name - Identifier for the tabs group
+ * @attr {"buttons"|"fade"} overflow - Overflow treatment (default: buttons)
  */
 class FigTabs extends HTMLElement {
   #boundHandleClick;
@@ -4585,7 +4586,11 @@ class FigTabs extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "name", "disabled"];
+    return ["value", "name", "disabled", "overflow"];
+  }
+
+  get #overflowMode() {
+    return this.getAttribute("overflow") === "fade" ? "fade" : "buttons";
   }
 
   connectedCallback() {
@@ -4596,7 +4601,7 @@ class FigTabs extends HTMLElement {
     this.addEventListener("click", this.#boundHandleClick);
     this.addEventListener("keydown", this.#boundHandleKeyDown);
     this.addEventListener("scroll", this.#boundSyncOverflow);
-    this.#createNavButtons();
+    this.#applyOverflowMode();
     this.#startObserver();
     this.#startResizeObserver();
     figNextFrame(this, () => {
@@ -4715,10 +4720,18 @@ class FigTabs extends HTMLElement {
 
   #startObserver() {
     this.#mutationObserver?.disconnect();
-    this.#mutationObserver = new MutationObserver(() => {
+    this.#mutationObserver = new MutationObserver((records) => {
       if (this.#isUnwrapping) return;
+      const authoredChange = records.some((record) =>
+        [...record.addedNodes, ...record.removedNodes].some(
+          (node) =>
+            !(node instanceof Element) ||
+            !node.matches("[data-fig-tabs-nav]"),
+        ),
+      );
+      if (!authoredChange) return;
       this.#removeLegacyScroller();
-      this.#createNavButtons();
+      this.#applyOverflowMode();
       this.#syncTabIndexes();
       requestAnimationFrame(() => {
         this.#syncOverflow();
@@ -4734,6 +4747,17 @@ class FigTabs extends HTMLElement {
     this.#navStart = null;
     this.#navEnd = null;
     this.classList.remove("overflow-start", "overflow-end");
+  }
+
+  #applyOverflowMode() {
+    const fade = this.#overflowMode === "fade";
+    this.classList.toggle("fig-overflow-fade", fade);
+    this.classList.toggle("fig-overflow-fade-horizontal", fade);
+    if (fade) {
+      this.#removeNavButtons();
+    } else {
+      this.#createNavButtons();
+    }
   }
 
   #createNavButtons() {
@@ -4862,6 +4886,10 @@ class FigTabs extends HTMLElement {
         break;
       case "disabled":
         this.#applyDisabled(newValue !== null && newValue !== "false");
+        break;
+      case "overflow":
+        this.#applyOverflowMode();
+        requestAnimationFrame(() => this.#syncOverflow());
         break;
     }
   }

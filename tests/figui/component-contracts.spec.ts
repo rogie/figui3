@@ -9316,6 +9316,46 @@ test.describe("remaining accessibility contracts", () => {
       });
 
     await page.locator("#overflow-tabs").evaluate((tabs) => {
+      tabs.setAttribute("overflow", "fade");
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => ({
+          navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
+          hasFade: tabs.classList.contains("fig-overflow-fade"),
+          hasHorizontalFade: tabs.classList.contains(
+            "fig-overflow-fade-horizontal",
+          ),
+        })),
+      )
+      .toEqual({
+        navButtons: 0,
+        hasFade: true,
+        hasHorizontalFade: true,
+      });
+
+    await page.locator("#overflow-tabs").evaluate((tabs) => {
+      tabs.setAttribute("overflow", "buttons");
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#overflow-tabs").evaluate((tabs) => ({
+          navButtons: tabs.querySelectorAll("[data-fig-tabs-nav]").length,
+          hasFade: tabs.classList.contains("fig-overflow-fade"),
+          hasHorizontalFade: tabs.classList.contains(
+            "fig-overflow-fade-horizontal",
+          ),
+        })),
+      )
+      .toEqual({
+        navButtons: 2,
+        hasFade: false,
+        hasHorizontalFade: false,
+      });
+
+    await page.locator("#overflow-tabs").evaluate((tabs) => {
       const navEnd = tabs.querySelector('[data-fig-tabs-nav="end"]');
       navEnd?.dispatchEvent(
         new MouseEvent("click", {

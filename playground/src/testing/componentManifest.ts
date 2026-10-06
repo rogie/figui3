@@ -115,6 +115,7 @@ export const componentContracts: ComponentContract[] = [
     title: "Tabs",
     group: "input",
     markup: `<fig-tabs value="one"><fig-tab value="one">One</fig-tab><fig-tab value="two">Two</fig-tab></fig-tabs>`,
+    attributes: [{ name: "overflow", attribute: "overflow", value: "fade" }],
     properties: [{ name: "value property", property: "value", value: "two", expected: "two" }],
   },
   {
