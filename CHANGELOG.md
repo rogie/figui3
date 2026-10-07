@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.11]
+
+### Fixed
+
+- Updated search-input icons to use the secondary icon color while unfocused and the primary icon color while focused.
+
 ## [10.0.10]
 
 ### Changed

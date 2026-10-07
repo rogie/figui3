@@ -4195,6 +4195,14 @@ fig-input-number {
     pointer-events: none;
   }
 
+  &[type="search"] > fig-icon[data-generated="search-prefix"] {
+    color: var(--figma-color-icon-secondary);
+  }
+
+  &[type="search"]:focus-within > fig-icon[data-generated="search-prefix"] {
+    color: var(--figma-color-icon);
+  }
+
   & [slot="prepend"],
   & [slot="append"] {
     svg {

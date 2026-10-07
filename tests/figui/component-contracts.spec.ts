@@ -4963,6 +4963,56 @@ test.describe("text input accessibility", () => {
     });
   });
 
+  test("fig-input-text search icon is secondary while unfocused", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-text
+          id="search-icon-color"
+          type="search"
+          style="
+            --figma-color-icon-secondary: rgb(1, 2, 3);
+            --figma-color-icon: rgb(4, 5, 6);
+          "
+        ></fig-input-text>
+      `;
+    });
+
+    const host = page.locator("#search-icon-color");
+    const icon = host.locator(
+      'fig-icon[name="search"][data-generated="search-prefix"]',
+    );
+    const iconState = () =>
+      icon.evaluate((element) => ({
+        colorAttribute: element.getAttribute("color"),
+        color: getComputedStyle(element).color,
+        backgroundColor: getComputedStyle(element).backgroundColor,
+      }));
+
+    await expect.poll(iconState).toEqual({
+      colorAttribute: null,
+      color: "rgb(1, 2, 3)",
+      backgroundColor: "rgb(1, 2, 3)",
+    });
+
+    await host.locator("input").focus();
+    await expect.poll(iconState).toEqual({
+      colorAttribute: null,
+      color: "rgb(4, 5, 6)",
+      backgroundColor: "rgb(4, 5, 6)",
+    });
+
+    await host.locator("input").blur();
+    await expect.poll(iconState).toEqual({
+      colorAttribute: null,
+      color: "rgb(1, 2, 3)",
+      backgroundColor: "rgb(1, 2, 3)",
+    });
+  });
+
   test('fig-input-text size="large" matches large button height and padding', async ({
     page,
   }) => {

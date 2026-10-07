@@ -7446,13 +7446,13 @@ class FigInputText extends HTMLElement {
       if (icon && icon.getAttribute("name") !== "search") {
         icon.setAttribute("name", "search");
       }
+      icon?.removeAttribute("color");
       return;
     }
 
     const icon = createFigIcon("search");
     icon.setAttribute("slot", "prepend");
     icon.setAttribute("data-generated", "search-prefix");
-    icon.setAttribute("color", "var(--figma-color-icon)");
     icon.addEventListener("click", this.#boundFocusControl);
     this.prepend(icon);
   }
