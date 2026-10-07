@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.7]
+
+### Added
+
+- Added a single-tab playground example.
+
+### Changed
+
+- Unified `fig-select-option` and `fig-menu-item` row styles.
+- Replaced select-option pseudo-element checkmarks with slotted small `fig-icon` checkmarks.
+
+### Fixed
+
+- Prevented selected tabs from emitting redundant `input` and `change` events when clicked again.
+
 ## [10.0.6]
 
 ### Added

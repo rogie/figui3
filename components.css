@@ -1372,6 +1372,13 @@ fig-tabs,
   > fig-tab {
     flex-shrink: 0;
 
+    /* Single tab */
+    &:first-of-type:last-of-type{
+      background-color: transparent;
+      padding-inline: 0;
+      margin-inline: 0;
+    }
+
     & + fig-tab {
       margin-left: var(--spacer-1);
     }
@@ -6800,7 +6807,7 @@ fig-menu::part(listbox) {
   height: max-content;
 }
 
-fig-menu-item {
+:is(fig-menu-item, fig-select-option) {
   --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-4,1rem) var(--spacer-1,0.25rem) var(--spacer-3,0.75rem);
   box-sizing: border-box;
   display: flex;
@@ -6817,6 +6824,10 @@ fig-menu-item {
   font-weight: var(--body-medium-fontWeight);
   position: relative;
   isolation: isolate;
+
+  &:has(fig-icon[slot="prepend"]){
+    --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-4,1rem) var(--spacer-1,0.25rem) var(--spacer-2,0.5rem);
+  }
 
   h3{
     margin: 0 0 var(--spacer-1) 0;
@@ -6870,16 +6881,11 @@ fig-menu-item {
   &:has(> [slot="append"]) {
     --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-3,0.75rem) var(--spacer-1,0.25rem) var(--spacer-3,0.75rem);
   }
-  &:has(> [slot="prepend"]) {
+  &:has(> [slot="prepend"]:not([data-fig-select-checkmark])) {
     --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-3,0.75rem) var(--spacer-1,0.25rem) var(--spacer-2,0.5rem);
   }
-  &:has(> [slot="prepend"]):has(> [slot="append"]) {
+  &:has(> [slot="prepend"]:not([data-fig-select-checkmark])):has(> [slot="append"]) {
     --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-3,0.75rem) var(--spacer-1,0.25rem) var(--spacer-2,0.5rem);
-  }
-
-  &:not(:has(> :not([slot="prepend"], [slot="append"]))) > [slot="prepend"] {
-    display: inline-flex;
-    vertical-align: middle;
   }
 
   &[subtle]:not([subtle="false"]) {

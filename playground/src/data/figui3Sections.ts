@@ -1588,6 +1588,15 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "single-tab",
+        name: "Single tab",
+        markup: `<div class="prop-panel">
+  <fig-tabs overflow="buttons" data-playground-hide-field>
+    <fig-tab selected>General</fig-tab>
+  </fig-tabs>
+</div>`,
+      },
+      {
         id: "tab-content",
         name: "Tab content",
         markup: `<div class="prop-panel">

@@ -315,6 +315,22 @@ function figSelectOptionEntryLabel(opt) {
   return String(opt ?? "");
 }
 
+function figSelectOptionEnsureCheckmark(option) {
+  let icon = option.querySelector(
+    ":scope > fig-icon[data-fig-select-checkmark]",
+  );
+  if (icon) return icon;
+  icon = figEditorCreateIcon("checkmark", {
+    size: "small",
+    className: "fig-select-option-checkmark",
+  });
+  icon.setAttribute("slot", "prepend");
+  icon.setAttribute("aria-hidden", "true");
+  icon.setAttribute("data-fig-select-checkmark", "");
+  option.append(icon);
+  return icon;
+}
+
 /**
  * A selectable option for fig-select.
  * Supports light-DOM slots: `slot="prepend"` (leading) and `slot="append"` (trailing).
@@ -365,6 +381,7 @@ class FigSelectOption extends HTMLElement {
   connectedCallback() {
     if (!this.hasAttribute("role")) this.setAttribute("role", "option");
     if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
+    figSelectOptionEnsureCheckmark(this);
     this.#syncDisabled();
   }
 
@@ -1414,7 +1431,9 @@ class FigSelect extends HTMLElement {
     let triggerPrepend = this.querySelector(
       ':scope > [slot="prepend-trigger"]:not([data-fig-select-generated])',
     );
-    const source = option?.querySelector?.(':scope > [slot="prepend"]');
+    const source = option?.querySelector?.(
+      ':scope > [slot="prepend"]:not([data-fig-select-checkmark])',
+    );
     this.#customTriggerSlot.hidden = !customTrigger;
     this.#labelEl.hidden = Boolean(customTrigger);
     this.#prependEl.hidden = Boolean(customTrigger);
@@ -1554,6 +1573,7 @@ class FigSelect extends HTMLElement {
       }
 
       for (const opt of options) {
+        figSelectOptionEnsureCheckmark(opt);
         const selected = opt === match;
         opt.setAttribute("aria-selected", selected ? "true" : "false");
         if (selected) opt.setAttribute("selected", "");

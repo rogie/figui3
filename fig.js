@@ -4907,9 +4907,11 @@ class FigTabs extends HTMLElement {
       target.getAttribute("disabled") !== "false"
     )
       return;
-    const previousTab = this.selectedTab;
-    const previousValue = this.value;
     const tabs = this.querySelectorAll("fig-tab");
+    const previousTab =
+      Array.from(tabs).find((tab) => figBooleanAttribute(tab, "selected")) ||
+      this.selectedTab;
+    const previousValue = this.#resolveTabValue(previousTab);
     for (const tab of tabs) {
       if (tab === target) {
         this.selectedTab = tab;

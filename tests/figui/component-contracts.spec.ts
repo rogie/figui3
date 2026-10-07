@@ -3053,6 +3053,164 @@ test("fig-select-options spaces its first option when overflow buttons are adjac
   await expect(options.nth(1)).toHaveCSS("margin-top", "0px");
 });
 
+test("fig-select-option and fig-menu-item share canonical row styles", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.evaluate(async () => {
+    await import("/fig-editor.js");
+    await Promise.all([
+      customElements.whenDefined("fig-select-option"),
+      customElements.whenDefined("fig-menu-item"),
+    ]);
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <div style="width:240px;color:var(--figma-color-text-menu)">
+        <fig-menu-item id="menu-row" value="menu">
+          <fig-icon name="add" slot="prepend"></fig-icon>
+          <div><h3>Menu title</h3><label>Menu label</label></div>
+          <fig-icon name="chevron" slot="append"></fig-icon>
+        </fig-menu-item>
+        <fig-select-option id="select-row" value="select">
+          <fig-icon name="add" slot="prepend"></fig-icon>
+          <div><h3>Select title</h3><label>Select label</label></div>
+          <fig-icon name="chevron" slot="append"></fig-icon>
+        </fig-select-option>
+      </div>
+    `;
+  });
+
+  const menuRow = page.locator("#menu-row");
+  const selectRow = page.locator("#select-row");
+  const sharedSignature = (selector: string) =>
+    page.locator(selector).evaluate((element) => {
+      const style = getComputedStyle(element);
+      const before = getComputedStyle(element, "::before");
+      const prepend = element.querySelector('[slot="prepend"]');
+      const append = element.querySelector('[slot="append"]');
+      const heading = element.querySelector("h3");
+      const label = element.querySelector("label");
+      const prependStyle = prepend ? getComputedStyle(prepend) : null;
+      const appendStyle = append ? getComputedStyle(append) : null;
+      const headingStyle = heading ? getComputedStyle(heading) : null;
+      const labelStyle = label ? getComputedStyle(label) : null;
+      return {
+        display: style.display,
+        boxSizing: style.boxSizing,
+        flexShrink: style.flexShrink,
+        alignItems: style.alignItems,
+        gap: style.gap,
+        width: style.width,
+        padding: [
+          style.paddingTop,
+          style.paddingRight,
+          style.paddingBottom,
+          style.paddingLeft,
+        ],
+        minHeight: style.minHeight,
+        height: style.height,
+        borderRadius: style.borderRadius,
+        cursor: style.cursor,
+        fontWeight: style.fontWeight,
+        position: style.position,
+        isolation: style.isolation,
+        before: {
+          inset: [
+            before.top,
+            before.right,
+            before.bottom,
+            before.left,
+          ],
+          borderRadius: before.borderRadius,
+          backgroundColor: before.backgroundColor,
+        },
+        prepend: prependStyle
+          ? {
+              marginTop: prependStyle.marginTop,
+              marginBottom: prependStyle.marginBottom,
+            }
+          : null,
+        append: appendStyle
+          ? {
+              marginTop: appendStyle.marginTop,
+              marginRight: appendStyle.marginRight,
+              marginBottom: appendStyle.marginBottom,
+              marginLeft: appendStyle.marginLeft,
+              flex: appendStyle.flex,
+            }
+          : null,
+        headingMargin: headingStyle?.margin,
+        labelColor: labelStyle?.color,
+      };
+    });
+
+  expect(await sharedSignature("#select-row")).toEqual(
+    await sharedSignature("#menu-row"),
+  );
+
+  await menuRow.hover();
+  const menuHover = await menuRow.evaluate(
+    (element) => getComputedStyle(element, "::before").backgroundColor,
+  );
+  await selectRow.hover();
+  const selectHover = await selectRow.evaluate(
+    (element) => getComputedStyle(element, "::before").backgroundColor,
+  );
+  expect(selectHover).toBe(menuHover);
+
+  await menuRow.focus();
+  const menuFocus = await menuRow.evaluate((element) => ({
+    outline: getComputedStyle(element).outline,
+    background: getComputedStyle(element, "::before").backgroundColor,
+  }));
+  await selectRow.focus();
+  const selectFocus = await selectRow.evaluate((element) => ({
+    outline: getComputedStyle(element).outline,
+    background: getComputedStyle(element, "::before").backgroundColor,
+  }));
+  expect(selectFocus).toEqual(menuFocus);
+
+  await menuRow.evaluate((element) => element.setAttribute("subtle", ""));
+  await selectRow.evaluate((element) => element.setAttribute("subtle", ""));
+  await menuRow.hover();
+  const menuSubtle = await menuRow.evaluate(
+    (element) => getComputedStyle(element, "::before").backgroundColor,
+  );
+  await selectRow.hover();
+  const selectSubtle = await selectRow.evaluate(
+    (element) => getComputedStyle(element, "::before").backgroundColor,
+  );
+  expect(selectSubtle).toBe(menuSubtle);
+
+  await menuRow.evaluate((element) => element.setAttribute("disabled", ""));
+  await selectRow.evaluate((element) => element.setAttribute("disabled", ""));
+  const disabledSignature = (selector: string) =>
+    page.locator(selector).evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        opacity: style.opacity,
+        pointerEvents: style.pointerEvents,
+      };
+    });
+  expect(await disabledSignature("#select-row")).toEqual(
+    await disabledSignature("#menu-row"),
+  );
+
+  const checkmark = selectRow.locator(
+    ':scope > fig-icon[data-fig-select-checkmark]',
+  );
+  await expect(checkmark).toHaveCount(1);
+  await expect(checkmark).toHaveAttribute("name", "checkmark");
+  await expect(checkmark).toHaveAttribute("size", "small");
+  await expect(checkmark).toHaveAttribute("slot", "prepend");
+  await expect(checkmark).toHaveCSS("visibility", "hidden");
+  await selectRow.evaluate((element) => element.setAttribute("selected", ""));
+  await expect(checkmark).toHaveCSS("visibility", "visible");
+});
+
 test("fig-select-options keeps overflow controls at the edges after delayed option writes", async ({
   page,
 }) => {
@@ -4142,6 +4300,9 @@ test('fig-dropdown and fig-select size="large" match large control height', asyn
             (prepend.getBoundingClientRect().left +
               prepend.getBoundingClientRect().width / 2)
           : null,
+      generatedCheckmarkTriggerCount: document.querySelectorAll(
+        "#select-large > [slot='prepend-trigger'][data-fig-select-generated]",
+      ).length,
     };
   });
 
@@ -4158,6 +4319,7 @@ test('fig-dropdown and fig-select size="large" match large control height', asyn
     selectLargePrependWidth: 32,
     selectLargeIconInset: 4,
     selectLargeIconCenterOffset: 0,
+    generatedCheckmarkTriggerCount: 0,
   });
 
   const reactiveDimensions = await page.evaluate(() => {
@@ -9261,6 +9423,10 @@ test.describe("remaining accessibility contracts", () => {
       tabs.addEventListener("input", record as EventListener);
       tabs.addEventListener("change", record as EventListener);
     });
+    await page.locator("#text-tabs fig-tab").first().click();
+    expect(await page.evaluate(() => (window as any).__textTabEvents)).toEqual(
+      [],
+    );
     await page.locator("#text-tabs fig-tab").nth(1).click();
     await expect
       .poll(() => page.evaluate(() => (window as any).__textTabEvents))

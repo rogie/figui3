@@ -804,20 +804,8 @@ fig-select-options > :is(fig-separator, fig-menu-separator) {
 }
 
 fig-select-option {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  position: relative;
-  box-sizing: border-box;
-  min-width: 0;
   max-width: 100%;
-  min-height: var(--spacer-4);
-  height: auto;
-  padding: var(--spacer-1) var(--spacer-2);
-  padding-right: var(--spacer-3);
-  border-radius: var(--radius-medium);
   color: var(--figma-color-text-menu);
-  cursor: default;
   user-select: none;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -825,7 +813,6 @@ fig-select-option {
   text-align: left;
 
   h3{
-    margin: 0 0 var(--spacer-1) 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -835,47 +822,10 @@ fig-select-option {
     text-overflow: ellipsis;
   }
 
-  &::before {
-    content: "";
-    display: block;
-    position: absolute;
-    inset: 0 var(--spacer-2);
-    border-radius: var(--radius-medium);
-    z-index: -1;
-    background-color: transparent;
-  }
-
-  &::after {
-    content: "";
-    display: block;
-    float: left;
-    flex: 0 0 1rem;
+  & > fig-icon[data-fig-select-checkmark] {
     order: -1;
-    width: 1rem;
-    height: 1rem;
-    margin-left: var(--spacer-1);
-    margin-right: var(--spacer-1);
-    background-color: currentColor;
-    -webkit-mask-image: var(--icon-16-checkmark);
-    mask-image: var(--icon-16-checkmark);
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-size: contain;
-    mask-size: contain;
+    margin: 0 var(--spacer-1);
     visibility: hidden;
-  }
-
-  & > [slot="prepend"] {
-    margin-top: calc(var(--spacer-1) * -1);
-    margin-bottom: calc(var(--spacer-1) * -1);
-    margin-right: var(--spacer-1);
-  }
-
-  &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) > [slot="prepend"] {
-    display: inline-flex;
-    vertical-align: middle;
   }
 
   &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) > [slot="append"] {
@@ -883,28 +833,14 @@ fig-select-option {
   }
 
   & > :not([slot="prepend"]):not([slot="append"]) {
-    flex: 1 1 auto;
-    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   & > [slot="append"] {
-    flex: 0 0 auto;
-    margin-inline-start: auto;
     color: var(--figma-color-text-tertiary);
   }
 
-  &:hover,
-  &:focus-visible {
-    outline: none;
-
-    &::before {
-      background-color: var(--figma-color-bg-menu-hover);
-    }
-  }
-
-  &[subtle]:not([subtle="false"]),
   fig-select[subtle]:not([subtle="false"]) &:not([subtle="false"]) {
     &:hover,
     &:focus-visible {
@@ -914,14 +850,8 @@ fig-select-option {
     }
   }
 
-  &[selected]:not([selected="false"])::after,
-  &[aria-selected="true"]::after {
+  &[selected]:not([selected="false"]) > fig-icon[data-fig-select-checkmark],
+  &[aria-selected="true"] > fig-icon[data-fig-select-checkmark] {
     visibility: visible;
-  }
-
-  &[disabled]:not([disabled="false"]),
-  &[aria-disabled="true"] {
-    opacity: 0.4;
-    pointer-events: none;
   }
 }
