@@ -2464,7 +2464,7 @@ ${versionHistoryGroup("August 11", [
     name: "Overflow Fade",
     group: "Utilities",
     description:
-      "A progressively enhanced scroll utility that fades edges only when more content is available in that direction.",
+      "A progressively enhanced scroll utility that fades edges only when more content is available in that direction. Use the Fade control to preview both edges or either edge independently.",
     examples: [
       {
         id: "default",

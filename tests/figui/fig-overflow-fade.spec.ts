@@ -79,6 +79,15 @@ test.describe("fig-overflow-fade utility", () => {
       });
 
     await expect.poll(readFadeLengths).toEqual({ top: "0px", bottom: "32px" });
+    const defaultMasks = await fade.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        maskImage: style.maskImage,
+        webkitMaskImage: style.webkitMaskImage,
+      };
+    });
+    expect(defaultMasks.maskImage).toContain("rgba(0, 0, 0, 0.04)");
+    expect(defaultMasks.webkitMaskImage).toBe(defaultMasks.maskImage);
 
     await fade.evaluate((element) => {
       element.scrollTop = 60;
@@ -157,6 +166,9 @@ test.describe("fig-overflow-fade utility", () => {
         <div id="bottom" class="fig-overflow-fade fig-overflow-fade-bottom" style="width:180px;height:80px">
           <div style="height:240px"></div>
         </div>
+        <div id="bottom-fit" class="fig-overflow-fade fig-overflow-fade-bottom" style="width:180px;height:80px">
+          <div style="height:40px"></div>
+        </div>
       `;
     });
 
@@ -170,32 +182,83 @@ test.describe("fig-overflow-fade utility", () => {
           bottom: style
             .getPropertyValue("--fig-overflow-fade-bottom")
             .trim(),
+          topOpacity: style
+            .getPropertyValue("--fig-overflow-fade-top-opacity")
+            .trim(),
+          bottomOpacity: style
+            .getPropertyValue("--fig-overflow-fade-bottom-opacity")
+            .trim(),
+          maskImage: style.maskImage,
+          webkitMaskImage: style.webkitMaskImage,
         };
       });
+    const readFadeValues = async (selector: string) => {
+      const { maskImage, webkitMaskImage, ...values } =
+        await readFadeLengths(selector);
+      return values;
+    };
 
-    await expect.poll(() => readFadeLengths("#top")).toEqual({
+    await expect.poll(() => readFadeValues("#top")).toEqual({
       top: "0px",
       bottom: "0px",
+      topOpacity: "1",
+      bottomOpacity: "1",
     });
+    let masks = await readFadeLengths("#top");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).not.toContain("rgba");
+
     await top.evaluate((element) => {
       element.scrollTop = 60;
     });
-    await expect.poll(() => readFadeLengths("#top")).toEqual({
+    await expect.poll(() => readFadeValues("#top")).toEqual({
       top: "32px",
       bottom: "0px",
+      topOpacity: "0",
+      bottomOpacity: "1",
     });
+    masks = await readFadeLengths("#top");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).toContain("rgba(0, 0, 0, 0.04)");
+    expect(masks.maskImage).toMatch(/rgb\(0, 0, 0\) 100%\)$/);
 
-    await expect.poll(() => readFadeLengths("#bottom")).toEqual({
+    await expect.poll(() => readFadeValues("#bottom")).toEqual({
       top: "0px",
       bottom: "32px",
+      topOpacity: "1",
+      bottomOpacity: "0",
     });
+    masks = await readFadeLengths("#bottom");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).toMatch(
+      /^linear-gradient\(rgb\(0, 0, 0\) 0px, rgb\(0, 0, 0\) calc\(100% - 32px\),/,
+    );
+    expect(masks.maskImage).not.toContain("rgba(0, 0, 0, 0) 0px");
+    expect(masks.maskImage).toContain("rgba(0, 0, 0, 0.04)");
+    expect(masks.maskImage).toMatch(/rgba\(0, 0, 0, 0\) 100%\)$/);
+
     await bottom.evaluate((element) => {
       element.scrollTop = element.scrollHeight;
     });
-    await expect.poll(() => readFadeLengths("#bottom")).toEqual({
+    await expect.poll(() => readFadeValues("#bottom")).toEqual({
       top: "0px",
       bottom: "0px",
+      topOpacity: "1",
+      bottomOpacity: "1",
     });
+    masks = await readFadeLengths("#bottom");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).not.toContain("rgba");
+
+    await expect.poll(() => readFadeValues("#bottom-fit")).toEqual({
+      top: "0px",
+      bottom: "0px",
+      topOpacity: "1",
+      bottomOpacity: "1",
+    });
+    masks = await readFadeLengths("#bottom-fit");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).not.toContain("rgba");
   });
 
   test("single-edge left and right fades imply horizontal overflow", async ({
@@ -221,35 +284,82 @@ test.describe("fig-overflow-fade utility", () => {
         return {
           left: style.getPropertyValue("--fig-overflow-fade-left").trim(),
           right: style.getPropertyValue("--fig-overflow-fade-right").trim(),
+          leftOpacity: style
+            .getPropertyValue("--fig-overflow-fade-left-opacity")
+            .trim(),
+          rightOpacity: style
+            .getPropertyValue("--fig-overflow-fade-right-opacity")
+            .trim(),
           overflowX: style.overflowX,
           overflowY: style.overflowY,
+          maskImage: style.maskImage,
+          webkitMaskImage: style.webkitMaskImage,
         };
       });
+    const readFadeValues = async (selector: string) => {
+      const { maskImage, webkitMaskImage, ...values } =
+        await readFadeState(selector);
+      return values;
+    };
+
+    await expect.poll(() => readFadeValues("#left")).toEqual({
+      left: "0px",
+      right: "0px",
+      leftOpacity: "1",
+      rightOpacity: "1",
+      overflowX: "auto",
+      overflowY: "hidden",
+    });
+    let masks = await readFadeState("#left");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).not.toContain("rgba");
 
     await left.evaluate((element) => {
       element.scrollLeft = 120;
     });
-    await expect.poll(() => readFadeState("#left")).toEqual({
+    await expect.poll(() => readFadeValues("#left")).toEqual({
       left: "32px",
       right: "0px",
+      leftOpacity: "0",
+      rightOpacity: "1",
       overflowX: "auto",
       overflowY: "hidden",
     });
+    masks = await readFadeState("#left");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).toContain("rgba(0, 0, 0, 0.04)");
+    expect(masks.maskImage).toMatch(/rgb\(0, 0, 0\) 100%\)$/);
 
-    await expect.poll(() => readFadeState("#right")).toEqual({
+    await expect.poll(() => readFadeValues("#right")).toEqual({
       left: "0px",
       right: "32px",
+      leftOpacity: "1",
+      rightOpacity: "0",
       overflowX: "auto",
       overflowY: "hidden",
     });
+    masks = await readFadeState("#right");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).toMatch(
+      /^linear-gradient\(to right, rgb\(0, 0, 0\) 0px, rgb\(0, 0, 0\) calc\(100% - 32px\),/,
+    );
+    expect(masks.maskImage).not.toContain("rgba(0, 0, 0, 0) 0px");
+    expect(masks.maskImage).toContain("rgba(0, 0, 0, 0.04)");
+    expect(masks.maskImage).toMatch(/rgba\(0, 0, 0, 0\) 100%\)$/);
+
     await right.evaluate((element) => {
       element.scrollLeft = element.scrollWidth;
     });
-    await expect.poll(() => readFadeState("#right")).toEqual({
+    await expect.poll(() => readFadeValues("#right")).toEqual({
       left: "0px",
       right: "0px",
+      leftOpacity: "1",
+      rightOpacity: "1",
       overflowX: "auto",
       overflowY: "hidden",
     });
+    masks = await readFadeState("#right");
+    expect(masks.webkitMaskImage).toBe(masks.maskImage);
+    expect(masks.maskImage).not.toContain("rgba");
   });
 });

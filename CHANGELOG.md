@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.9]
+
+### Changed
+
+- Restored standard inline spacing for single-tab tab lists.
+
+### Fixed
+
+- Fixed one-sided overflow-fade masks so inactive and opposite edges remain fully visible.
+- Ensured end-edge fades disappear when no overflow remains.
+
 ## [10.0.8]
 
 ### Added
