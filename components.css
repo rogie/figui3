@@ -6368,8 +6368,11 @@ fig-chooser {
         var(--fig-choice-selection-ring-gutter)
     );
   scroll-behavior: smooth;
-  scrollbar-width: none;
   width: calc(100% - var(--fig-chooser-inline-margin) * 2);
+
+  &:not([overflow="scrollbar"]) {
+    scrollbar-width: none;
+  }
 
   &[scroll-behavior="auto"] {
     scroll-behavior: auto;
@@ -6422,11 +6425,6 @@ fig-chooser {
     &:before {
       border-radius: 0 0 var(--radius-medium) var(--radius-medium);
     }
-  }
-
-  &[overflow="scrollbar"] {
-    scrollbar-width: thin;
-    scrollbar-color: var(--figma-color-border) transparent;
   }
 
   &[layout="horizontal"] {

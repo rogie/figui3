@@ -8298,6 +8298,60 @@ test.describe("remaining accessibility contracts", () => {
     expect(nativeDragAllowed).toBe(true);
   });
 
+  test("fig-chooser does not override user scrolling when descendant media loads", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+
+      const chooser = document.createElement("fig-chooser");
+      chooser.setAttribute("layout", "horizontal");
+      chooser.setAttribute("overflow", "scrollbar");
+      chooser.setAttribute("scroll-behavior", "auto");
+      chooser.setAttribute("value", "choice-0");
+      chooser.style.width = "120px";
+      chooser.style.maxWidth = "120px";
+
+      const image = document.createElement("img");
+      Object.defineProperty(image, "complete", {
+        configurable: true,
+        value: false,
+      });
+
+      for (let index = 0; index < 4; index += 1) {
+        const choice = document.createElement("fig-choice");
+        choice.setAttribute("value", `choice-${index}`);
+        choice.style.width = "96px";
+        choice.textContent = `Choice ${index}`;
+        if (index === 3) choice.append(image);
+        chooser.append(choice);
+      }
+      root.append(chooser);
+
+      for (let frame = 0; frame < 5; frame += 1) {
+        await new Promise(requestAnimationFrame);
+      }
+
+      chooser.scrollLeft = 80;
+      await new Promise(requestAnimationFrame);
+      const beforeLoad = chooser.scrollLeft;
+
+      image.dispatchEvent(new Event("load"));
+      for (let frame = 0; frame < 3; frame += 1) {
+        await new Promise(requestAnimationFrame);
+      }
+
+      return {
+        beforeLoad,
+        afterLoad: chooser.scrollLeft,
+      };
+    });
+
+    expect(state.beforeLoad).toBeGreaterThan(0);
+    expect(state.afterLoad).toBe(state.beforeLoad);
+  });
+
   test("fig-chooser restores light-DOM overflow buttons after choices are replaced", async ({
     page,
   }) => {

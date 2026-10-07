@@ -88,16 +88,23 @@ iframe{
   background-color: var(--figma-color-text-selection);
 }
 
-/* helper classes/defaults */
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--figma-color-border) transparent;
+}
+
 ::-webkit-scrollbar {
   width: var(--spacer-1);
-  /* Width of the vertical scrollbar */
   height: var(--spacer-1);
-  /* Height of the horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--figma-color-bg-tertiary);
+  background-color: var(--figma-color-border);
   border-radius: calc(var(--spacer-1) / 2);
 }
 
@@ -105,13 +112,7 @@ iframe{
   background-color: var(--figma-color-bg-secondary);
 }
 
-/* For Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--figma-color-bg-tertiary)
-    var(--figma-color-bg-secondary);
-}
-
+/* helper classes/defaults */
 .subtle {
   color: var(--figma-color-text-tertiary);
 }

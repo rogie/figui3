@@ -45,26 +45,10 @@ body {
   );
   height: 100vh;
   overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--figma-color-border) transparent;
   padding: calc(var(--spacer-4) + var(--spacer-2))
     calc(var(--spacer-4) + var(--sidebar-width) + var(--spacer-4))
     calc(var(--spacer-4) + var(--spacer-2))
     calc(var(--spacer-4) + var(--nav-width) + var(--spacer-4));
-
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--figma-color-border);
-    border-radius: 999px;
-  }
 
   .propkit-attributes-view {
     & + .propkit-attributes-view {
@@ -94,8 +78,6 @@ nav {
     padding: 0;
     padding-top: var(--spacer-2);
     padding-bottom: var(--spacer-2);
-    scrollbar-width: thin;
-    scrollbar-color: var(--figma-color-border) transparent;
 
     &:has(fig-group) {
       padding-top: 0;
@@ -106,19 +88,6 @@ nav {
       > .fig-layer-row > label{
         color: var(--figma-color-text-secondary);
       }
-    }
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: var(--figma-color-border);
-      border-radius: 999px;
     }
   }
 
@@ -161,29 +130,12 @@ nav {
   border: 1px solid var(--figma-color-border);
   border-radius: var(--radius-large);
   z-index: 1000;
-  scrollbar-width: thin;
-  scrollbar-color: var(--figma-color-border) transparent;
 
   .attributes-sidebar-content {
     max-height: calc(
       100vh - calc(var(--spacer-4) * 2) - 2px
     );
     border-radius: inherit;
-    scrollbar-width: thin;
-    scrollbar-color: var(--figma-color-border) transparent;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: var(--figma-color-border);
-      border-radius: 999px;
-    }
   }
 
   .propkit-attributes-view {

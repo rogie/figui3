@@ -20049,30 +20049,11 @@ class FigChooser extends HTMLElement {
   }
 
   #scheduleInitialScrollSettle() {
-    const resettle = () => {
+    requestAnimationFrame(() => {
       if (!this.isConnected || !this.autoScroll) return;
       if (this.#selectedChoice) {
         this.#scrollToChoice(this.#selectedChoice);
       }
-    };
-    const wireImages = () => {
-      const imgs = this.querySelectorAll("img, video");
-      for (const m of imgs) {
-        if (m.tagName === "IMG" ? m.complete : m.readyState >= 1) continue;
-        const done = () => {
-          m.removeEventListener("load", done);
-          m.removeEventListener("loadedmetadata", done);
-          m.removeEventListener("error", done);
-          resettle();
-        };
-        m.addEventListener("load", done);
-        m.addEventListener("loadedmetadata", done);
-        m.addEventListener("error", done);
-      }
-    };
-    requestAnimationFrame(() => {
-      wireImages();
-      resettle();
     });
   }
 

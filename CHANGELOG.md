@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.10]
+
+### Changed
+
+- Unified thin scrollbar colors and styling across the base stylesheet and playground.
+
+### Fixed
+
+- Prevented delayed chooser media loads from overriding the user’s scroll position.
+
 ## [10.0.9]
 
 ### Changed
