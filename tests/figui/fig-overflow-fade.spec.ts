@@ -146,4 +146,110 @@ test.describe("fig-overflow-fade utility", () => {
       maskImage: expect.stringContaining("linear-gradient"),
     });
   });
+
+  test("supports single-edge vertical fades", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <div id="top" class="fig-overflow-fade fig-overflow-fade-top" style="width:180px;height:80px">
+          <div style="height:240px"></div>
+        </div>
+        <div id="bottom" class="fig-overflow-fade fig-overflow-fade-bottom" style="width:180px;height:80px">
+          <div style="height:240px"></div>
+        </div>
+      `;
+    });
+
+    const top = page.locator("#top");
+    const bottom = page.locator("#bottom");
+    const readFadeLengths = (selector: string) =>
+      page.locator(selector).evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          top: style.getPropertyValue("--fig-overflow-fade-top").trim(),
+          bottom: style
+            .getPropertyValue("--fig-overflow-fade-bottom")
+            .trim(),
+        };
+      });
+
+    await expect.poll(() => readFadeLengths("#top")).toEqual({
+      top: "0px",
+      bottom: "0px",
+    });
+    await top.evaluate((element) => {
+      element.scrollTop = 60;
+    });
+    await expect.poll(() => readFadeLengths("#top")).toEqual({
+      top: "32px",
+      bottom: "0px",
+    });
+
+    await expect.poll(() => readFadeLengths("#bottom")).toEqual({
+      top: "0px",
+      bottom: "32px",
+    });
+    await bottom.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await expect.poll(() => readFadeLengths("#bottom")).toEqual({
+      top: "0px",
+      bottom: "0px",
+    });
+  });
+
+  test("single-edge left and right fades imply horizontal overflow", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <div id="left" class="fig-overflow-fade fig-overflow-fade-left" style="width:180px;height:80px">
+          <div style="width:540px;height:80px"></div>
+        </div>
+        <div id="right" class="fig-overflow-fade fig-overflow-fade-right" style="width:180px;height:80px">
+          <div style="width:540px;height:80px"></div>
+        </div>
+      `;
+    });
+
+    const left = page.locator("#left");
+    const right = page.locator("#right");
+    const readFadeState = (selector: string) =>
+      page.locator(selector).evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          left: style.getPropertyValue("--fig-overflow-fade-left").trim(),
+          right: style.getPropertyValue("--fig-overflow-fade-right").trim(),
+          overflowX: style.overflowX,
+          overflowY: style.overflowY,
+        };
+      });
+
+    await left.evaluate((element) => {
+      element.scrollLeft = 120;
+    });
+    await expect.poll(() => readFadeState("#left")).toEqual({
+      left: "32px",
+      right: "0px",
+      overflowX: "auto",
+      overflowY: "hidden",
+    });
+
+    await expect.poll(() => readFadeState("#right")).toEqual({
+      left: "0px",
+      right: "32px",
+      overflowX: "auto",
+      overflowY: "hidden",
+    });
+    await right.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth;
+    });
+    await expect.poll(() => readFadeState("#right")).toEqual({
+      left: "0px",
+      right: "0px",
+      overflowX: "auto",
+      overflowY: "hidden",
+    });
+  });
 });

@@ -13,6 +13,7 @@ import {
   applyHandleHitAreaDebugMutation,
   applyHandleHitAreaMutation,
   applyHeaderIconMutation,
+  applyOverflowFadeEdgeMutation,
   applyPrependSlotMutation,
   applySelectSeparatorStickyMutation,
   applyTooltipActionMutation,
@@ -227,6 +228,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-chooser": "Chooser",
     "fig-handle": "Handle",
     "fig-menu": "Menu",
+    "fig-overflow-fade": "Overflow fade",
     "fig-input-palette": "Palette",
     "fig-canvas-control": "Canvas control",
     progress: "Progress",
@@ -1744,6 +1746,7 @@ export default function AttributesView({
 
             {(visibleControlEntries.length > 0 ||
               target.controlTag === "fig-interpolation-swatch" ||
+              target.controlTag === "fig-overflow-fade" ||
               (target.controlTag === "fig-icon" &&
                 (target.controlAttributes["data-playground-icon-set"] === "16" ||
                   target.controlAttributes["data-playground-icon-set"] === "24"))) && (
@@ -1753,6 +1756,60 @@ export default function AttributesView({
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
+                    {target.controlTag === "fig-overflow-fade" &&
+                      (() => {
+                        const classes = new Set(
+                          (target.controlAttributes.class ?? "")
+                            .split(/\s+/)
+                            .filter(Boolean),
+                        );
+                        const horizontal =
+                          classes.has("fig-overflow-fade-horizontal") ||
+                          classes.has("fig-overflow-fade-left") ||
+                          classes.has("fig-overflow-fade-right");
+                        const edgeOptions = horizontal
+                          ? (["both", "left", "right"] as const)
+                          : (["both", "top", "bottom"] as const);
+                        const currentEdge = edgeOptions.find((edge) =>
+                          edge === "both"
+                            ? !classes.has("fig-overflow-fade-left") &&
+                              !classes.has("fig-overflow-fade-right") &&
+                              !classes.has("fig-overflow-fade-top") &&
+                              !classes.has("fig-overflow-fade-bottom")
+                            : classes.has(`fig-overflow-fade-${edge}`),
+                        ) ?? "both";
+                        return (
+                          <fig-field
+                            columns="2/5"
+                            key={`control-overflow-fade-edge-${target.fieldIndex}`}
+                          >
+                            <label>Fade</label>
+                            <fig-options
+                              full
+                              options={edgeOptions
+                                .map((edge) => sentenceCase(edge))
+                                .join(",")}
+                              value={sentenceCase(currentEdge)}
+                              onChange={(e: any) => {
+                                const label =
+                                  (e as CustomEvent).detail ?? e.target?.value;
+                                const edge = edgeOptions.find(
+                                  (option) =>
+                                    sentenceCase(option) === label,
+                                );
+                                if (!edge) return;
+                                onMarkupChange(
+                                  applyOverflowFadeEdgeMutation(
+                                    markup,
+                                    target.fieldIndex,
+                                    edge,
+                                  ),
+                                );
+                              }}
+                            ></fig-options>
+                          </fig-field>
+                        );
+                      })()}
                     {target.controlTag === "fig-interpolation-swatch" &&
                       (() => {
                         const valueAttr = target.controlAttributes.value;

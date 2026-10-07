@@ -1167,7 +1167,10 @@ For `point-point`, both handles support direct drag (with a dynamic directional 
 A progressively enhanced scroll utility that fades its edges when more content
 is available in that direction. Apply the class to a height-constrained
 container for vertical scrolling. Add `.fig-overflow-fade-horizontal` for
-horizontal scrolling.
+horizontal scrolling. Add `.fig-overflow-fade-top` or
+`.fig-overflow-fade-bottom` to limit a vertical fade to one edge. Use
+`.fig-overflow-fade-left` or `.fig-overflow-fade-right` for a single horizontal
+edge; these modifiers imply horizontal scrolling.
 
 | Custom property | Default | Description |
 |---|---|---|---|
@@ -1191,6 +1194,16 @@ timelines. Unsupported browsers retain ordinary scrolling without a fade.
   <div style="display: flex; width: max-content;">
     <!-- Wide content -->
   </div>
+</div>
+```
+
+```html
+<div class="fig-overflow-fade fig-overflow-fade-bottom">
+  <!-- Long content that fades only at the bottom -->
+</div>
+
+<div class="fig-overflow-fade fig-overflow-fade-right">
+  <!-- Wide content that fades only at the right -->
 </div>
 ```
 

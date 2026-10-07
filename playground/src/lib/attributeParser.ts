@@ -194,10 +194,18 @@ function isFigTag(element: Element): boolean {
 }
 
 function isSupportedControl(element: Element): boolean {
-  return isFigTag(element) || element.tagName.toLowerCase() === "progress";
+  return (
+    isFigTag(element) ||
+    element.tagName.toLowerCase() === "progress" ||
+    Boolean(element.getAttribute("data-playground-control"))
+  );
 }
 
 function getControlTag(element: Element): string {
+  const playgroundControl = element
+    .getAttribute("data-playground-control")
+    ?.toLowerCase();
+  if (playgroundControl) return playgroundControl;
   if (element.tagName.toLowerCase() === "dialog") {
     const isName = element.getAttribute("is")?.toLowerCase() ?? "";
     if (isName.startsWith("fig-")) return isName;
@@ -222,10 +230,10 @@ function getFieldControl(field: Element): Element | null {
   return search.find((child) => isSupportedControl(child)) ?? null;
 }
 
-function hasFigAncestor(element: Element): boolean {
+function hasSupportedControlAncestor(element: Element): boolean {
   let current = element.parentElement;
   while (current) {
-    if (isFigTag(current)) return true;
+    if (isSupportedControl(current)) return true;
     current = current.parentElement;
   }
   return false;
@@ -245,7 +253,10 @@ function getTopLevelFields(root: HTMLElement): Element[] {
 
 function getPrimaryControls(root: HTMLElement): Element[] {
   return Array.from(root.querySelectorAll("*")).filter(
-    (el) => isSupportedControl(el) && !hasFigAncestor(el) && !shouldIgnoreControl(el),
+    (el) =>
+      isSupportedControl(el) &&
+      !hasSupportedControlAncestor(el) &&
+      !shouldIgnoreControl(el),
   );
 }
 
@@ -429,6 +440,42 @@ export function applyAttributeMutationToMatchingControls(
     });
   }
   return nextMarkup;
+}
+
+export function applyOverflowFadeEdgeMutation(
+  markup: string,
+  fieldIndex: number,
+  edge: "both" | "top" | "bottom" | "left" | "right",
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, {
+    fieldIndex,
+    target: "control",
+  });
+  if (!element || getControlTag(element) !== "fig-overflow-fade") return markup;
+
+  const directionalClasses = [
+    "fig-overflow-fade-top",
+    "fig-overflow-fade-bottom",
+    "fig-overflow-fade-left",
+    "fig-overflow-fade-right",
+  ];
+  const wasHorizontal =
+    element.classList.contains("fig-overflow-fade-horizontal") ||
+    element.classList.contains("fig-overflow-fade-left") ||
+    element.classList.contains("fig-overflow-fade-right");
+
+  element.classList.remove(...directionalClasses);
+  element.classList.toggle(
+    "fig-overflow-fade-horizontal",
+    edge === "both" && wasHorizontal,
+  );
+  if (edge !== "both") {
+    element.classList.remove("fig-overflow-fade-horizontal");
+    element.classList.add(`fig-overflow-fade-${edge}`);
+  }
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
 export function applyTooltipActionMutation(

@@ -5405,7 +5405,11 @@ fig-skeleton {
   overflow-y: auto;
 }
 
-.fig-overflow-fade.fig-overflow-fade-horizontal {
+.fig-overflow-fade:is(
+  .fig-overflow-fade-horizontal,
+  .fig-overflow-fade-left,
+  .fig-overflow-fade-right
+) {
   --fig-overflow-fade-clear-left: 0px;
 
   overflow-x: auto;
@@ -5734,7 +5738,13 @@ fig-toolbelt {
 }
 
 @supports (animation-timeline: scroll(self block)) {
-  .fig-overflow-fade:not(.fig-overflow-fade-horizontal),
+  .fig-overflow-fade:not(
+    :is(
+      .fig-overflow-fade-horizontal,
+      .fig-overflow-fade-left,
+      .fig-overflow-fade-right
+    )
+  ),
   fig-toolbelt[layout="vertical"]::part(viewport) {
     mask-image: linear-gradient(
       to bottom,
@@ -5866,10 +5876,41 @@ fig-toolbelt {
       calc(100% - var(--fig-overflow-fade-size)) 100%;
   }
 
+  .fig-overflow-fade.fig-overflow-fade-top:not(
+    .fig-overflow-fade-bottom
+  ):not(
+    :is(
+      .fig-overflow-fade-horizontal,
+      .fig-overflow-fade-left,
+      .fig-overflow-fade-right
+    )
+  ) {
+    animation: fig-overflow-fade-in-top 1ms linear both;
+    animation-timeline: scroll(self block);
+    animation-range: 0 var(--fig-overflow-fade-size);
+  }
+
+  .fig-overflow-fade.fig-overflow-fade-bottom:not(
+    .fig-overflow-fade-top
+  ):not(
+    :is(
+      .fig-overflow-fade-horizontal,
+      .fig-overflow-fade-left,
+      .fig-overflow-fade-right
+    )
+  ) {
+    animation: fig-overflow-fade-out-bottom 1ms linear both;
+    animation-timeline: scroll(self block);
+    animation-range: calc(100% - var(--fig-overflow-fade-size)) 100%;
+  }
 }
 
 @supports (animation-timeline: scroll(self inline)) {
-  .fig-overflow-fade.fig-overflow-fade-horizontal,
+  .fig-overflow-fade:is(
+    .fig-overflow-fade-horizontal,
+    .fig-overflow-fade-left,
+    .fig-overflow-fade-right
+  ),
   fig-toolbelt:not([layout="vertical"])::part(viewport) {
     mask-image: linear-gradient(
       to right,
@@ -5999,6 +6040,18 @@ fig-toolbelt {
     animation-range:
       0 var(--fig-overflow-fade-size),
       calc(100% - var(--fig-overflow-fade-size)) 100%;
+  }
+
+  .fig-overflow-fade.fig-overflow-fade-left:not(.fig-overflow-fade-right) {
+    animation: fig-overflow-fade-in-left 1ms linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: 0 var(--fig-overflow-fade-size);
+  }
+
+  .fig-overflow-fade.fig-overflow-fade-right:not(.fig-overflow-fade-left) {
+    animation: fig-overflow-fade-out-right 1ms linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: calc(100% - var(--fig-overflow-fade-size)) 100%;
   }
 }
 

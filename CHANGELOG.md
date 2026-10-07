@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.8]
+
+### Added
+
+- Added single-edge top, bottom, left, and right modifiers to the overflow-fade utility.
+
+### Changed
+
+- Added edge controls to the vertical and horizontal overflow-fade playground examples.
+
 ## [10.0.7]
 
 ### Added

@@ -2470,7 +2470,7 @@ ${versionHistoryGroup("August 11", [
         id: "default",
         name: "Vertical",
         markup: `<div class="prop-panel">
-  <div class="fig-overflow-fade" style="width: 100%; max-height: 12rem; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
+  <div class="fig-overflow-fade" data-playground-control="fig-overflow-fade" style="width: 100%; max-height: 12rem; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
     <fig-content>
       <p>Design systems turn repeated decisions into shared foundations.</p>
       <p>Components encode interaction, accessibility, and visual behavior.</p>
@@ -2486,7 +2486,7 @@ ${versionHistoryGroup("August 11", [
         id: "horizontal",
         name: "Horizontal",
         markup: `<div class="prop-panel">
-  <div class="fig-overflow-fade fig-overflow-fade-horizontal" style="width: 100%; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
+  <div class="fig-overflow-fade fig-overflow-fade-horizontal" data-playground-control="fig-overflow-fade" style="width: 100%; border-radius: var(--radius-medium); background: var(--figma-color-bg-secondary);">
     <div style="display: flex; width: max-content; gap: var(--spacer-2); padding: var(--spacer-3);">
       <div style="display: grid; place-items: center; width: 10rem; min-height: 6rem; flex: none; border: 1px solid var(--figma-color-border); border-radius: var(--radius-medium);">Foundations</div>
       <div style="display: grid; place-items: center; width: 10rem; min-height: 6rem; flex: none; border: 1px solid var(--figma-color-border); border-radius: var(--radius-medium);">Components</div>
