@@ -328,29 +328,21 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
   </fig-stack>
 </div>`,
       },
-    ],
-  },
-  {
-    id: "property-button",
-    name: "Property button",
-    group: INPUT_GROUP_NAME,
-    description:
-      "A full-width secondary trigger for opening a typed property editor or flyout.",
-    examples: [
       {
-        id: "effect",
-        name: "Effect",
+        id: "property",
+        name: "Property",
         markup: `<div class="prop-panel">
-  <fig-property-button
+  <fig-button
     id="property-effect-trigger"
-    icon="settings"
+    variant="property"
     aria-haspopup="dialog"
     aria-expanded="false"
     aria-controls="property-effect-editor"
     onclick="const p=document.getElementById('property-effect-editor');p.open=!p.open;this.setAttribute('aria-expanded',String(p.open));this.toggleAttribute('selected',p.open);"
   >
+    <fig-icon name="settings" slot="prepend"></fig-icon>
     Drop shadow
-  </fig-property-button>
+  </fig-button>
   <dialog
     is="fig-popup"
     id="property-effect-editor"
@@ -407,13 +399,66 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
-        id: "custom-icon",
-        name: "Custom icon",
+        id: "property-custom-icon",
+        name: "Property custom icon",
         markup: `<div class="prop-panel">
-  <fig-property-button>
+  <fig-button variant="property">
     <fig-icon name="sun" slot="prepend"></fig-icon>
     Lighting effect
-  </fig-property-button>
+  </fig-button>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "button-combo",
+    name: "Button Combo",
+    group: INPUT_GROUP_NAME,
+    description: "Visually grouped buttons for related actions.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button-combo>
+    <fig-button>Save</fig-button>
+    <fig-button>Cancel</fig-button>
+  </fig-button-combo>
+</div>`,
+      },
+      {
+        id: "button-menu",
+        name: "Button menu",
+        markup: `<div class="prop-panel">
+  <fig-button-combo>
+    <fig-button variant="secondary">Drop shadow</fig-button>
+    <fig-select value="duplicate" icon aria-label="More property actions">
+      <fig-select-options>
+        <fig-select-option value="edit">Edit</fig-select-option>
+        <fig-select-option value="duplicate">Duplicate</fig-select-option>
+        <fig-select-option value="delete">Delete</fig-select-option>
+      </fig-select-options>
+    </fig-select>
+  </fig-button-combo>
+</div>`,
+      },
+      {
+        id: "property-menu",
+        name: "Property menu",
+        markup: `<div class="prop-panel">
+  <fig-button-combo full>
+    <fig-button variant="property">
+      <fig-icon name="settings" slot="prepend"></fig-icon>
+      Drop shadow
+    </fig-button>
+    <fig-select value="duplicate" icon aria-label="More property actions">
+      <fig-select-options>
+        <fig-select-option value="edit">Edit</fig-select-option>
+        <fig-select-option value="duplicate">Duplicate</fig-select-option>
+        <fig-select-option value="delete">Delete</fig-select-option>
+      </fig-select-options>
+    </fig-select>
+  </fig-button-combo>
 </div>`,
       },
     ],

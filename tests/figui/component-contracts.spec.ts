@@ -26,7 +26,7 @@ test.describe("fig.js component contracts", () => {
     expect(missing).toEqual([]);
   });
 
-  test("fig-property-button enforces its surface and syncs its icon and trigger semantics", async ({
+  test("fig-button property variant preserves its surface and trigger semantics", async ({
     page,
   }) => {
     const state = await page.evaluate(() => {
@@ -34,24 +34,28 @@ test.describe("fig.js component contracts", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <div id="property-button-container" style="width:240px">
-          <fig-property-button
+          <fig-button
             id="property-button"
-            icon="settings"
+            variant="property"
             aria-haspopup="dialog"
             aria-expanded="false"
             aria-controls="property-editor"
           >
+            <fig-icon name="settings" slot="prepend"></fig-icon>
             Effects
-          </fig-property-button>
-          <fig-property-button id="custom-property-button">
+          </fig-button>
+          <fig-button id="secondary-button" variant="secondary">
+            <fig-icon name="settings" slot="prepend"></fig-icon>
+            Effects
+          </fig-button>
+          <fig-button id="custom-property-button" variant="property">
             <fig-icon name="sun" slot="prepend"></fig-icon>
             Lighting effect
-          </fig-property-button>
+          </fig-button>
         </div>
       `;
-      const property = root.querySelector(
-        "#property-button",
-      ) as HTMLElement & { icon: string };
+      const property = root.querySelector("#property-button") as HTMLElement;
+      const secondary = root.querySelector("#secondary-button") as HTMLElement;
       const native = property.shadowRoot?.querySelector(
         "button",
       ) as HTMLButtonElement;
@@ -60,27 +64,21 @@ test.describe("fig.js component contracts", () => {
       native.click();
       native.focus();
 
-      property.icon = "adjust";
-      property.setAttribute("variant", "primary");
-      property.removeAttribute("full");
-      property.setAttribute("align", "center");
-
-      const icon = property.querySelector(
-        ':scope > fig-icon[slot="prepend"][data-generated="property-button-icon"]',
-      );
+      const icon = property.querySelector(':scope > fig-icon[slot="prepend"]');
       const styles = getComputedStyle(property);
+      const secondaryStyles = getComputedStyle(secondary);
       const beforeDisabled = {
+        registered: Boolean(customElements.get("fig-property-button")),
         clicks,
         focused:
           property.matches(":focus") ||
           property.shadowRoot?.activeElement === native,
         variant: property.getAttribute("variant"),
         full: property.hasAttribute("full"),
-        align: property.getAttribute("align"),
+        align: styles.getPropertyValue("--fig-button-content-alignment").trim(),
         icon: icon?.getAttribute("name"),
-        iconCount: property.querySelectorAll(
-          ':scope > fig-icon[data-generated="property-button-icon"]',
-        ).length,
+        iconCount: property.querySelectorAll(':scope > fig-icon[slot="prepend"]')
+          .length,
         width: Math.round(property.getBoundingClientRect().width),
         boxShadow: styles.boxShadow,
         paddingLeft: styles.paddingLeft,
@@ -90,6 +88,20 @@ test.describe("fig.js component contracts", () => {
         hasPopup: native.getAttribute("aria-haspopup"),
         expanded: native.getAttribute("aria-expanded"),
         controls: native.getAttribute("aria-controls"),
+        surface: {
+          backgroundColor: styles.backgroundColor,
+          color: styles.color,
+          boxShadow: styles.boxShadow,
+          borderRadius: styles.borderRadius,
+          height: styles.height,
+        },
+        secondarySurface: {
+          backgroundColor: secondaryStyles.backgroundColor,
+          color: secondaryStyles.color,
+          boxShadow: secondaryStyles.boxShadow,
+          borderRadius: secondaryStyles.borderRadius,
+          height: secondaryStyles.height,
+        },
       };
 
       property.setAttribute("selected", "");
@@ -107,12 +119,11 @@ test.describe("fig.js component contracts", () => {
           icon: custom
             .querySelector(':scope > [slot="prepend"]')
             ?.getAttribute("name"),
-          generatedCount: custom.querySelectorAll(
-            ':scope > [data-generated="property-button-icon"]',
-          ).length,
           variant: custom.getAttribute("variant"),
           full: custom.hasAttribute("full"),
-          align: custom.getAttribute("align"),
+          align: customStyles
+            .getPropertyValue("--fig-button-content-alignment")
+            .trim(),
           paddingLeft: customStyles.paddingLeft,
         },
         clicksAfterDisabled: clicks,
@@ -121,12 +132,13 @@ test.describe("fig.js component contracts", () => {
     });
 
     expect(state).toMatchObject({
+      registered: false,
       clicks: 1,
       focused: true,
-      variant: "secondary",
-      full: true,
-      align: "start",
-      icon: "adjust",
+      variant: "property",
+      full: false,
+      align: "flex-start",
+      icon: "settings",
       iconCount: 1,
       width: 240,
       paddingLeft: "0px",
@@ -138,15 +150,15 @@ test.describe("fig.js component contracts", () => {
       controls: "property-editor",
       custom: {
         icon: "sun",
-        generatedCount: 0,
-        variant: "secondary",
-        full: true,
-        align: "start",
+        variant: "property",
+        full: false,
+        align: "flex-start",
         paddingLeft: "0px",
       },
       clicksAfterDisabled: 1,
       disabled: true,
     });
+    expect(state.surface).toEqual(state.secondarySurface);
     expect(state.boxShadow).not.toBe("none");
     expect(state.selectedBoxShadow).toBe("none");
   });
@@ -159,7 +171,10 @@ test.describe("fig.js component contracts", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <fig-input-combo id="secondary-combo">
-          <fig-property-button icon="settings" selected>Drop shadow</fig-property-button>
+          <fig-button variant="property" selected>
+            <fig-icon name="settings" slot="prepend"></fig-icon>
+            Drop shadow
+          </fig-button>
           <fig-button variant="secondary" icon aria-label="Remove effect">
             <fig-icon name="close"></fig-icon>
           </fig-button>
@@ -200,7 +215,10 @@ test.describe("fig.js component contracts", () => {
       root.innerHTML = `
         <fig-input-combo id="tooltip-combo">
           <fig-tooltip text="Effect">
-            <fig-property-button icon="settings" selected>Drop shadow</fig-property-button>
+            <fig-button variant="property" selected>
+              <fig-icon name="settings" slot="prepend"></fig-icon>
+              Drop shadow
+            </fig-button>
           </fig-tooltip>
           <fig-tooltip text="Remove">
             <fig-button variant="secondary" icon aria-label="Remove effect">
@@ -209,7 +227,10 @@ test.describe("fig.js component contracts", () => {
           </fig-tooltip>
         </fig-input-combo>
         <fig-input-combo id="mixed-combo">
-          <fig-property-button icon="settings" selected>Drop shadow</fig-property-button>
+          <fig-button variant="property" selected>
+            <fig-icon name="settings" slot="prepend"></fig-icon>
+            Drop shadow
+          </fig-button>
           <fig-tooltip text="Remove">
             <fig-button variant="secondary" icon aria-label="Remove effect">
               <fig-icon name="close"></fig-icon>
@@ -219,7 +240,11 @@ test.describe("fig.js component contracts", () => {
       `;
       const read = (id: string) => {
         const combo = root.querySelector(`#${id}`) as HTMLElement;
-        const controls = [...combo.querySelectorAll("[variant='secondary']")] as HTMLElement[];
+        const controls = [
+          ...combo.querySelectorAll(
+            ":is([variant='secondary'], [variant='property'])",
+          ),
+        ] as HTMLElement[];
         const first = controls[0];
         const last = controls[controls.length - 1];
         const comboStyle = getComputedStyle(combo);
@@ -250,6 +275,143 @@ test.describe("fig.js component contracts", () => {
       expect(combo.firstTopRightRadius).toBe("0px");
       expect(combo.lastTopLeftRadius).toBe("0px");
     }
+  });
+
+  test("button combos preserve select and dropdown chrome", async ({
+    page,
+  }) => {
+    await page.addStyleTag({ url: "/fig-editor.css" });
+    const styles = await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await Promise.all([
+        customElements.whenDefined("fig-select"),
+        customElements.whenDefined("fig-dropdown"),
+      ]);
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button-combo id="direct-combo">
+          <fig-button>First</fig-button>
+          <fig-button id="direct-second">Second</fig-button>
+        </fig-button-combo>
+        <fig-button-combo>
+          <fig-button variant="property">
+            <fig-icon name="settings" slot="prepend"></fig-icon>
+            Property
+          </fig-button>
+          <fig-select id="direct-select" value="one" options="One,Two"></fig-select>
+        </fig-button-combo>
+        <fig-button-combo>
+          <fig-button variant="property">
+            <fig-icon name="settings" slot="prepend"></fig-icon>
+            Property
+          </fig-button>
+          <fig-dropdown id="direct-dropdown">
+            <option value="one">One</option>
+            <option value="two">Two</option>
+          </fig-dropdown>
+        </fig-button-combo>
+        <fig-button-combo id="tooltip-button-combo">
+          <fig-tooltip text="First"><fig-button>First</fig-button></fig-tooltip>
+          <fig-tooltip id="second-tooltip" text="Second"><fig-button id="wrapped-second">Second</fig-button></fig-tooltip>
+        </fig-button-combo>
+        <fig-button-combo>
+          <fig-tooltip text="Property">
+            <fig-button variant="property">
+              <fig-icon name="settings" slot="prepend"></fig-icon>
+              Property
+            </fig-button>
+          </fig-tooltip>
+          <fig-tooltip text="Select">
+            <fig-select id="wrapped-select" value="one" options="One,Two"></fig-select>
+          </fig-tooltip>
+        </fig-button-combo>
+        <fig-button-combo>
+          <fig-tooltip text="Property">
+            <fig-button variant="property">
+              <fig-icon name="settings" slot="prepend"></fig-icon>
+              Property
+            </fig-button>
+          </fig-tooltip>
+          <fig-tooltip text="Dropdown">
+            <fig-dropdown id="wrapped-dropdown">
+              <option value="one">One</option>
+              <option value="two">Two</option>
+            </fig-dropdown>
+          </fig-tooltip>
+        </fig-button-combo>
+        <fig-select id="base-select" value="one" options="One,Two"></fig-select>
+        <fig-dropdown id="base-dropdown">
+          <option value="one">One</option>
+          <option value="two">Two</option>
+        </fig-dropdown>
+      `;
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      const directSecond = document.querySelector("#direct-second");
+      const wrappedSecond = document.querySelector("#wrapped-second");
+      const secondTooltip = document.querySelector("#second-tooltip");
+      const directSelect = document.querySelector("#direct-select");
+      const wrappedSelect = document.querySelector("#wrapped-select");
+      const baseSelect = document.querySelector("#base-select");
+      const directDropdownHost = document.querySelector("#direct-dropdown");
+      const wrappedDropdownHost = document.querySelector("#wrapped-dropdown");
+      const directDropdown = document.querySelector(
+        "#direct-dropdown > select",
+      );
+      const wrappedDropdown = document.querySelector(
+        "#wrapped-dropdown > select",
+      );
+      const baseDropdown = document.querySelector("#base-dropdown > select");
+      if (
+        !directSecond ||
+        !wrappedSecond ||
+        !secondTooltip ||
+        !directSelect ||
+        !wrappedSelect ||
+        !baseSelect ||
+        !directDropdownHost ||
+        !wrappedDropdownHost ||
+        !directDropdown ||
+        !wrappedDropdown ||
+        !baseDropdown
+      ) {
+        throw new Error("Missing button combo controls");
+      }
+      return {
+        direct: getComputedStyle(directSecond).boxShadow,
+        wrapped: getComputedStyle(wrappedSecond).boxShadow,
+        wrapper: getComputedStyle(secondTooltip).boxShadow,
+        directSelect: getComputedStyle(directSelect).boxShadow,
+        wrappedSelect: getComputedStyle(wrappedSelect).boxShadow,
+        baseSelect: getComputedStyle(baseSelect).boxShadow,
+        directSelectDivider: getComputedStyle(directSelect).backgroundImage,
+        wrappedSelectDivider: getComputedStyle(wrappedSelect).backgroundImage,
+        directDropdown: getComputedStyle(directDropdown).boxShadow,
+        wrappedDropdown: getComputedStyle(wrappedDropdown).boxShadow,
+        baseDropdown: getComputedStyle(baseDropdown).boxShadow,
+        directDropdownDivider:
+          getComputedStyle(directDropdownHost).backgroundImage,
+        wrappedDropdownDivider:
+          getComputedStyle(wrappedDropdownHost).backgroundImage,
+      };
+    });
+
+    expect(styles.direct).not.toBe("none");
+    expect(styles.wrapped).toBe(styles.direct);
+    expect(styles.wrapper).toBe("none");
+    expect(styles.directSelect).toBe(styles.baseSelect);
+    expect(styles.wrappedSelect).toBe(styles.baseSelect);
+    expect(styles.directSelect).not.toBe("none");
+    expect(styles.directSelectDivider).not.toBe("none");
+    expect(styles.wrappedSelectDivider).not.toBe("none");
+    expect(styles.directDropdown).toBe(styles.baseDropdown);
+    expect(styles.wrappedDropdown).toBe(styles.baseDropdown);
+    expect(styles.directDropdown).not.toBe("none");
+    expect(styles.directDropdownDivider).not.toBe("none");
+    expect(styles.wrappedDropdownDivider).not.toBe("none");
   });
 
   test("fig.js alone does not register fig-select", async ({ page }) => {

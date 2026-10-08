@@ -54,16 +54,6 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
   },
   {
-    tag: "fig-property-button",
-    title: "Property Button",
-    group: "input",
-    markup: `<fig-property-button icon="settings">Effects</fig-property-button>`,
-    attributes: [
-      { name: "icon", attribute: "icon", value: "adjust" },
-      { name: "disabled", attribute: "disabled", value: "" },
-    ],
-  },
-  {
     tag: "fig-dropdown",
     title: "Dropdown",
     group: "input",

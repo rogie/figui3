@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.0.0]
+
+### Added
+
+- Added `variant="property"` to `fig-button` with secondary styling and property-trigger layout.
+- Added Button Combo playground examples for grouped buttons and action menus.
+
+### Changed
+
+- Removed `fig-property-button`; use `fig-button variant="property"` with an explicit prepend icon.
+- Updated button combos to support property buttons, selects, dropdowns, and tooltip-wrapped controls.
+
+### Fixed
+
+- Preserved `fig-select` and `fig-dropdown` chrome when grouped in button combos.
+
 ## [10.0.14]
 
 ### Changed

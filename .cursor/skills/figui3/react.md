@@ -51,7 +51,6 @@ type FigTag =
   | "fig-attachments"
   | "fig-avatar"
   | "fig-button"
-  | "fig-property-button"
   | "fig-button-combo"
   | "fig-canvas-control"
   | "fig-card"

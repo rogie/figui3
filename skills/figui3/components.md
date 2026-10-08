@@ -12,29 +12,22 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 <fig-button variant="ghost" icon aria-label="Close" onClick={onClick}>
   <fig-icon name="close" />
 </fig-button>
-```
 
-- Attrs: `variant` (`""` primary, `secondary`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`, `compact`), `align`, `selected`, `disabled`, `icon`, `close-dialog`
-- Events: `click`; toggle also reflects `selected`
-
-### `fig-property-button`
-
-```tsx
-<fig-property-button
-  icon="settings"
+<fig-button
+  variant="property"
   aria-haspopup="dialog"
   aria-controls="effects-editor"
   onClick={onClick}
 >
+  <fig-icon name="settings" slot="prepend" />
   Effects
-</fig-property-button>
+</fig-button>
 ```
 
-- Attrs: `icon` (generated fig-icon name), `selected`, `disabled`, `aria-haspopup`, `aria-expanded`, `aria-controls`
-- Custom icon: author an element with `slot="prepend"` instead of `icon`; authored prepend content takes precedence
-- Fixed presentation: secondary, full width, start aligned, leading icon
-- Trigger only: the consumer owns and positions the corresponding popup/dialog
-- Events: `click`
+- Attrs: `variant` (`""` primary, `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`, `compact`), `align`, `selected`, `disabled`, `icon`, `close-dialog`
+- `variant="property"` shares secondary styling and adds full-width, start-aligned property-trigger layout; use `slot="prepend"` for its leading icon
+- Property triggers own no popup behavior; consumers manage the popup/dialog and reflect `selected`, `aria-haspopup`, `aria-expanded`, and `aria-controls`
+- Events: `click`; toggle also reflects `selected`
 
 ### `fig-button-combo`
 

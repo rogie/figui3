@@ -96,7 +96,6 @@ Minimal example:
 | Component | Tag | Description |
 |---|---|---|
 | [Button](#button) | `<fig-button>` | Buttons with variants, toggle, select, upload |
-| [Property Button](#property-button) | `<fig-property-button>` | Full-width secondary trigger for property editors |
 | [Dropdown](#dropdown) | `<fig-dropdown>` | Native select wrapper with Figma styling |
 | [Select](#select) | `<fig-select>` | Custom listbox select (requires `fig-editor.js`) |
 | [Combo Input](#combo-input) | `<fig-combo-input>` | Text input with dropdown suggestions |
@@ -157,7 +156,7 @@ Minimal example:
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `variant` | string | `"primary"` | `"primary"`, `"secondary"`, `"destructive"`, `"destructiveSecondary"`, `"destructiveGhost"`, `"destructiveLink"`, `"ghost"`, `"link"` |
+| `variant` | string | `"primary"` | `"primary"`, `"secondary"`, `"property"`, `"destructive"`, `"destructiveSecondary"`, `"destructiveGhost"`, `"destructiveLink"`, `"ghost"`, `"link"` |
 | `type` | string | `"button"` | `"button"`, `"toggle"`, `"submit"`, `"select"`, `"upload"` |
 | `size` | string | — | `"large"`, `"compact"` |
 | `selected` | boolean | `false` | Selected state (toggle type) |
@@ -175,6 +174,10 @@ Minimal example:
 <fig-button variant="destructiveGhost">Destructive ghost</fig-button>
 <fig-button variant="destructiveLink">Destructive link</fig-button>
 <fig-button full align="start">Start aligned</fig-button>
+<fig-button variant="property">
+  <fig-icon name="settings" slot="prepend"></fig-icon>
+  Effects
+</fig-button>
 <fig-button type="toggle" selected="true">Toggle</fig-button>
 <fig-button variant="ghost" icon>
   <svg><!-- icon --></svg>
@@ -183,50 +186,7 @@ Minimal example:
 
 `type="select"` and `type="upload"` are visual wrappers for native select/file controls. They avoid nested native buttons, show the shared focus outline on the wrapper, and open the native picker from keyboard activation where supported.
 
----
-
-#### Property Button
-
-`<fig-property-button>` — [demo](https://rog.ie/figui3/#property-button)
-
-A full-width secondary trigger for opening an effect editor, binding editor, preset picker, or other property-specific flyout. The component supplies the surface and can generate a leading icon from `icon`, or accept custom prepend content, but does not create or position a popup.
-
-| Attribute | Type | Default | Description |
-|---|---|---|---|
-| `icon` | string | — | `fig-icon` name rendered in the prepend slot |
-| `slot="prepend"` | element | — | Custom leading icon/content; takes precedence over `icon` |
-| `selected` | boolean | `false` | Selected styling, typically while the editor is open |
-| `disabled` | boolean | `false` | Disabled state |
-| `aria-haspopup` | string | — | Popup type exposed to assistive technology |
-| `aria-expanded` | boolean | — | Whether the controlled flyout is open |
-| `aria-controls` | string | — | ID of the controlled flyout |
-
-```html
-<fig-property-button
-  id="effects-trigger"
-  icon="settings"
-  aria-haspopup="dialog"
-  aria-controls="effects-editor"
->
-  Effects
-</fig-property-button>
-
-<fig-property-button>
-  <fig-icon name="sun" slot="prepend"></fig-icon>
-  Lighting effect
-</fig-property-button>
-
-<dialog
-  is="fig-popup"
-  id="effects-editor"
-  anchor="#effects-trigger"
-  position="bottom left"
->
-  <fig-content>Effect controls</fig-content>
-</dialog>
-```
-
-Wire click/open state in application code. `variant="secondary"`, `full`, and start alignment are enforced by the component.
+`variant="property"` shares the secondary visual treatment and adds the full-width, start-aligned property-trigger layout. Author a leading icon with `slot="prepend"`. The consumer owns any corresponding popup or dialog and can use `selected`, `aria-haspopup`, `aria-expanded`, and `aria-controls` on the button.
 
 ---
 

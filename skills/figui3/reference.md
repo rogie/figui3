@@ -11,18 +11,12 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 
 ## `fig-button`
 
-- `variant`: `""` (primary), `secondary`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`
+- `variant`: `""` (primary), `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`
 - `type`: `button`, `toggle`, `submit`, `select`, `upload`
 - `size`: `""`, `large`, `compact`
 - `selected`, `disabled`, `icon` (presence)
-
-## `fig-property-button`
-
-- `icon`: generated `fig-icon` name; optional when authoring custom `slot="prepend"` content
-- `selected`, `disabled`
-- `aria-haspopup`, `aria-expanded`, `aria-controls`
-- Fixed secondary, full-width, start-aligned presentation
-- Trigger only; consumers manage the popup/dialog
+- `variant="property"` shares secondary styling and adds full-width, start-aligned layout
+- Property icons use authored `slot="prepend"` content; consumers manage the popup/dialog
 
 ## `fig-input-text`
 

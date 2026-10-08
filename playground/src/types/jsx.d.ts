@@ -13,7 +13,6 @@ declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
       "fig-button": FigAttrs;
-      "fig-property-button": FigAttrs;
       "fig-switch": FigAttrs;
       "fig-layer": FigAttrs;
       "fig-field": FigAttrs;

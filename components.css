@@ -810,8 +810,7 @@ select,
 
 /* Button */
 button,
-fig-button,
-fig-property-button {
+fig-button {
   --fig-button-content-alignment: center;
   --fig-button-text-alignment: center;
 
@@ -947,8 +946,9 @@ fig-property-button {
   &[variant="ghost"][disabled]:not([disabled="false"]) {
     background-color: transparent;
   }
-  /* Variant: Secondary */
-  &[variant="secondary"] {
+  /* Variants: Secondary and Property */
+  &[variant="secondary"],
+  &[variant="property"] {
     box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
     padding: 0 calc(var(--spacer-2) - 1px);
     background: none;
@@ -1018,7 +1018,7 @@ fig-property-button {
     background-color: var(--figma-color-bg-disabled);
     pointer-events: none;
     cursor: not-allowed;
-    &:not([variant="secondary"]):not([variant="destructiveSecondary"]):not(
+    &:not([variant="secondary"]):not([variant="property"]):not([variant="destructiveSecondary"]):not(
         [variant="destructiveGhost"]
       ):not(
         [variant="destructiveLink"]
@@ -1029,6 +1029,7 @@ fig-property-button {
       box-shadow: none;
     }
     &[variant="secondary"],
+    &[variant="property"],
     &[variant="destructiveSecondary"],
     &[variant="destructiveGhost"],
     &[variant="destructiveLink"],
@@ -1126,7 +1127,7 @@ fig-property-button {
       stroke: currentColor;
     }
   }
-  &:not(fig-property-button):has(svg:first-child):not([icon]) {
+  &:has(svg:first-child):not([icon]) {
     padding-left: var(--spacer-1);
   }
 
@@ -1156,16 +1157,19 @@ fig-property-button {
   }
 }
 
-fig-property-button:is(
-    [icon]:not([icon="false"]),
-    :has(> [slot="prepend"])
-  ) {
+fig-button[variant="property"] {
+  --fig-button-content-alignment: flex-start;
+  --fig-button-text-alignment: start;
+
   width: 100%;
-  flex: 1 1 auto;
-  padding: 0 calc(var(--spacer-2) - 1px) 0 0;
 
   &[selected]:not([selected="false"]) {
     box-shadow: none;
+  }
+
+  &:has(> [slot="prepend"]) {
+    flex: 1 1 auto;
+    padding: 0 calc(var(--spacer-2) - 1px) 0 0;
   }
 }
 
@@ -1206,21 +1210,32 @@ fig-input-combo {
 }
 
 :is(.fig-button-combo, fig-button-combo, .fig-input-combo, fig-input-combo):not(
-    :has(> :not([variant="secondary"]):not(fig-tooltip))
-  ):not(:has(> fig-tooltip > :not([variant="secondary"]))) {
+    :has(
+      > :not(:is([variant="secondary"], [variant="property"], fig-dropdown, fig-select)):not(fig-tooltip)
+    )
+  ):not(
+    :has(
+      > fig-tooltip > :not(:is([variant="secondary"], [variant="property"], fig-dropdown, fig-select))
+    )
+  ) {
   gap: 0;
   border-radius: var(--radius-medium);
   box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
 
-  > [variant="secondary"],
-  > fig-tooltip > [variant="secondary"] {
+  > :is([variant="secondary"], [variant="property"]),
+  > fig-tooltip > :is([variant="secondary"], [variant="property"]) {
     box-shadow: none;
   }
 
-  > :is([variant="secondary"], fig-tooltip:has(> [variant="secondary"])) {
-    + [variant="secondary"],
-    + fig-tooltip > [variant="secondary"] {
-      box-shadow: none;
+  > :is(
+      [variant="secondary"],
+      [variant="property"],
+      fig-tooltip:has(
+          > :is([variant="secondary"], [variant="property"], fig-dropdown, fig-select)
+        )
+    ) {
+    + :is([variant="secondary"], [variant="property"], fig-dropdown, fig-select),
+      + fig-tooltip > :is([variant="secondary"], [variant="property"], fig-dropdown, fig-select) {
       background-image: linear-gradient(
         var(--figma-color-bordertranslucent),
         var(--figma-color-bordertranslucent)
@@ -1234,7 +1249,8 @@ fig-input-combo {
 
 .fig-button-combo,
 fig-button-combo {
-  > *:not([variant="secondary"]):not(:first-child) {
+  > :not(fig-tooltip):not([variant="secondary"]):not([variant="property"]):not(fig-select):not(fig-dropdown):not(:first-child),
+  > fig-tooltip:not(:first-child) > :not([variant="secondary"]):not([variant="property"]):not(fig-select):not(fig-dropdown){
     box-shadow: inset 1px 0 0 0 var(--figma-color-bg-brand-hover);
     &[disabled]:not([disabled="false"]) {
       box-shadow: inset 1px 0 0 0 var(--figma-color-border-disabled);
@@ -3680,7 +3696,6 @@ fig-preview {
 
 /* Web Components */
 fig-button,
-fig-property-button,
 fig-content,
 fig-slider,
 fig-switch,

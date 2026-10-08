@@ -84,6 +84,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: [
         "",
         "secondary",
+        "property",
         "destructive",
         "destructiveSecondary",
         "destructiveGhost",
@@ -112,11 +113,6 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     icon: { label: "Icon", type: "boolean", boolMode: "presence" },
-  },
-  "fig-property-button": {
-    icon: { label: "Icon", type: "string" },
-    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
-    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-dropdown": {
     value: { label: "Value", type: "string" },

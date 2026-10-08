@@ -183,7 +183,6 @@ function readColorInputEventValue(event: unknown): string | undefined {
 function getInputPanelTitle(controlTag: string): string {
   const titles: Record<string, string> = {
     "fig-button": "Button",
-    "fig-property-button": "Property button",
     "fig-avatar": "Avatar",
     "fig-tooltip": "Tooltip",
     "fig-dialog": "Dialog",
