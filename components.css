@@ -3874,10 +3874,14 @@ fig-group {
       &:has(> h3:hover, > .fig-group-chevron:hover) {
         color: var(--figma-color-text);
         .fig-group-chevron {
-          color: inherit;
+          color: var(--figma-color-icon);
         }
       }
     }
+  }
+
+  & > fig-header:hover > .fig-group-chevron {
+    color: var(--figma-color-icon);
   }
 
   &[open]:not([open="false"]) > fig-header .fig-group-chevron {

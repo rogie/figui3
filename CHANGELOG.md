@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.14]
+
+### Changed
+
+- Simplified the custom group-header example to one group with several fields.
+
+### Fixed
+
+- Updated group chevrons to use the default icon color when hovering the header.
+
 ## [10.0.13]
 
 ### Changed

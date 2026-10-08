@@ -7677,6 +7677,15 @@ test.describe("render timing composition", () => {
     await expect(group).toHaveAttribute("open", "false");
 
     await action.hover();
+    const defaultIconColor = await chevron.evaluate(() => {
+      const probe = document.createElement("span");
+      probe.style.color = "var(--figma-color-icon)";
+      document.body.append(probe);
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return color;
+    });
+    await expect(chevron).toHaveCSS("color", defaultIconColor);
     const secondaryColor = await heading.evaluate(
       (element) => getComputedStyle(element).color,
     );

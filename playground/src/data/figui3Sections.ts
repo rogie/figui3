@@ -2817,7 +2817,7 @@ ${versionHistoryGroup("August 11", [
 const groupCustomHeaderExample: Example = {
   id: "custom-header",
   name: "Custom header",
-  title: "Groups with a custom header",
+  title: "Group with a custom header",
   description:
     "Add a fig-header as a direct child to replace the generated header. Include an h3 for the group's accessible name, and add actions alongside it.",
   markup: `<div class="prop-panel">
@@ -2832,21 +2832,21 @@ const groupCustomHeaderExample: Example = {
       <label>Background</label>
       <fig-input-color value="#FFFFFF" text="true" full></fig-input-color>
     </fig-field>
-  </fig-group>
-  <fig-group collapsible open compact chevron="end">
-    <fig-header borderless>
-      <h3>Export</h3>
-      <fig-button variant="ghost" icon="true" aria-label="Add export">
-        <fig-icon name="add"></fig-icon>
-      </fig-button>
-    </fig-header>
     <fig-field>
-      <label>Format</label>
+      <label>Opacity</label>
+      <fig-slider value="100" min="0" max="100" units="%" full></fig-slider>
+    </fig-field>
+    <fig-field>
+      <label>Blend mode</label>
       <fig-dropdown full>
-        <option selected>PNG</option>
-        <option>JPG</option>
-        <option>SVG</option>
+        <option selected>Normal</option>
+        <option>Multiply</option>
+        <option>Screen</option>
       </fig-dropdown>
+    </fig-field>
+    <fig-field>
+      <label>Visible</label>
+      <fig-switch checked></fig-switch>
     </fig-field>
   </fig-group>
 </div>`,
