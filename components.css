@@ -1127,9 +1127,6 @@ fig-button {
       stroke: currentColor;
     }
   }
-  &:has(svg:first-child):not([icon]) {
-    padding-left: var(--spacer-1);
-  }
 
   &[type="select"]{
     &[icon]:not([icon="false"]){

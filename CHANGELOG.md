@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.0.2]
+
+### Fixed
+
+- Removed legacy first-child SVG padding from `fig-button`.
+
 ## [11.0.1]
 
 ### Fixed
