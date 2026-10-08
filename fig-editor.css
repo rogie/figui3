@@ -740,6 +740,15 @@ fig-select {
     }
   }
 
+  &[open]:not([open="false"]) {
+    color: var(--figma-color-text-selected);
+    background-color: var(--figma-color-bg-selected);
+    box-shadow: none;
+    &::after {
+      background-color: var(--figma-color-icon-selected);
+    }
+  }
+
   &::after {
     content: "";
     position: absolute;

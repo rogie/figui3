@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.0.1]
+
+### Fixed
+
+- Updated open `fig-select` controls to use selected colors and remove the default shadow.
+
 ## [11.0.0]
 
 ### Added
