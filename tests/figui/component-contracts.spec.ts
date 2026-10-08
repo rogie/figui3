@@ -10583,6 +10583,76 @@ test.describe("remaining accessibility contracts", () => {
     expect(sticky.borderTopColor).toBe("rgba(0, 0, 0, 0)");
   });
 
+  test("fig-popup keeps tabbed chooser content inside its column layout", async ({
+    page,
+  }) => {
+    const layout = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="chooser-popup-anchor">Choose</fig-button>
+        <dialog is="fig-popup" id="chooser-popup" open anchor="#chooser-popup-anchor" style="width:240px;height:180px">
+          <fig-header><h3>Choose a style</h3></fig-header>
+          <fig-tab-content id="chooser-tab" style="height:100%;min-height:0;overflow:hidden">
+            <fig-content id="chooser-content" padding="none" style="height:100%;overflow:hidden">
+              <fig-chooser id="popup-chooser" layout="vertical" overflow="scrollbar" style="box-sizing:border-box;height:100%;max-height:100%">
+                ${Array.from({ length: 12 }, (_, index) => `<fig-choice value="${index}">Choice ${index + 1}</fig-choice>`).join("")}
+              </fig-chooser>
+            </fig-content>
+          </fig-tab-content>
+        </dialog>
+      `;
+      await customElements.whenDefined("fig-popup");
+      await customElements.whenDefined("fig-chooser");
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      const popup = document.querySelector("#chooser-popup");
+      const header = popup?.querySelector("fig-header");
+      const tab = document.querySelector("#chooser-tab");
+      const content = document.querySelector("#chooser-content");
+      const chooser = document.querySelector("#popup-chooser");
+      if (!popup || !header || !tab || !content || !chooser) {
+        throw new Error("Missing popup layout elements");
+      }
+
+      const popupRect = popup.getBoundingClientRect();
+      const headerRect = header.getBoundingClientRect();
+      const tabRect = tab.getBoundingClientRect();
+      const contentRect = content.getBoundingClientRect();
+      const chooserRect = chooser.getBoundingClientRect();
+      const popupStyle = getComputedStyle(popup);
+      return {
+        display: popupStyle.display,
+        flexDirection: popupStyle.flexDirection,
+        popupHeight: popupRect.height,
+        headerHeight: headerRect.height,
+        tabTop: tabRect.top,
+        tabBottom: tabRect.bottom,
+        contentBottom: contentRect.bottom,
+        chooserBottom: chooserRect.bottom,
+        popupBottom: popupRect.bottom,
+        chooserClientHeight: chooser.clientHeight,
+        chooserScrollHeight: chooser.scrollHeight,
+      };
+    });
+
+    expect(layout.display).toBe("flex");
+    expect(layout.flexDirection).toBe("column");
+    expect(layout.popupHeight).toBeCloseTo(180, 0);
+    expect(layout.headerHeight).toBeGreaterThan(0);
+    expect(layout.tabTop).toBeGreaterThanOrEqual(
+      layout.popupBottom - layout.popupHeight + layout.headerHeight - 1,
+    );
+    expect(layout.tabBottom).toBeLessThanOrEqual(layout.popupBottom + 1);
+    expect(layout.contentBottom).toBeLessThanOrEqual(layout.popupBottom + 1);
+    expect(layout.chooserBottom).toBeLessThanOrEqual(layout.popupBottom + 1);
+    expect(layout.chooserScrollHeight).toBeGreaterThan(
+      layout.chooserClientHeight,
+    );
+  });
+
   test("fig-popup title generates a header like fig-dialog", async ({ page }) => {
     const state = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");

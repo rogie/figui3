@@ -3485,13 +3485,7 @@ dialog[is="fig-popup"] {
     max-height: calc(100vh - var(--spacer-4));
   }
 
-  &[open]:not([open="false"]) {
-    display: block;
-  }
-
   &[open]:not([open="false"]):has(> fig-content) {
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
   }
 

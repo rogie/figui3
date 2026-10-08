@@ -1012,7 +1012,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-input-text value="Text here" placeholder="Placeholder text"></fig-input-text>
+  <fig-input-text placeholder="Placeholder text"></fig-input-text>
 </div>`,
       },
       {
@@ -2076,6 +2076,36 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         </fig-field>
       </fig-group>
     </fig-content>
+  </dialog>
+</div>`,
+      },
+      {
+        id: "tabbed-chooser",
+        name: "Tabbed chooser",
+        markup: `<div class="prop-panel">
+  <fig-button id="popup-chooser-anchor" variant="secondary" data-playground-ignore-controls="true" aria-haspopup="dialog" aria-expanded="true" aria-controls="popup-chooser" onclick="const p=document.getElementById('popup-chooser');p.open=!p.open;this.setAttribute('aria-expanded',String(p.open));">Choose style</fig-button>
+  <dialog is="fig-popup" id="popup-chooser" open anchor="#popup-chooser-anchor" position="left" offset="8 8" viewport-margin="8" onclose="document.getElementById('popup-chooser-anchor')?.setAttribute('aria-expanded','false')" style="width: 240px; height: 220px;">
+    <fig-header>
+      <h3>Choose style</h3>
+    </fig-header>
+    <fig-tab-content style="height: 100%; min-height: 0; overflow: hidden;">
+      <fig-content padding="none" style="height: 100%; overflow: hidden;">
+        <fig-chooser layout="vertical" overflow="scrollbar" value="soft-light" style="box-sizing: border-box; height: 100%; max-height: 100%;">
+          <fig-choice value="soft-light">Soft light</fig-choice>
+          <fig-choice value="hard-light">Hard light</fig-choice>
+          <fig-choice value="multiply">Multiply</fig-choice>
+          <fig-choice value="screen">Screen</fig-choice>
+          <fig-choice value="overlay">Overlay</fig-choice>
+          <fig-choice value="darken">Darken</fig-choice>
+          <fig-choice value="lighten">Lighten</fig-choice>
+          <fig-choice value="color-dodge">Color dodge</fig-choice>
+          <fig-choice value="color-burn">Color burn</fig-choice>
+          <fig-choice value="difference">Difference</fig-choice>
+          <fig-choice value="exclusion">Exclusion</fig-choice>
+          <fig-choice value="luminosity">Luminosity</fig-choice>
+        </fig-chooser>
+      </fig-content>
+    </fig-tab-content>
   </dialog>
 </div>`,
       },

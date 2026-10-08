@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.12]
+
+### Added
+
+- Added a tabbed chooser popup example.
+
+### Changed
+
+- Updated the default text-input example to demonstrate its placeholder state.
+
+### Fixed
+
+- Made open popups use column flex sizing regardless of direct child type, keeping nested tab content and scrollable choosers constrained.
+
 ## [10.0.11]
 
 ### Fixed
