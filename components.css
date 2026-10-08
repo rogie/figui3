@@ -6354,6 +6354,8 @@ fig-chooser {
     var(--fig-choice-selection-ring-width) * 2
   );
 
+  align-content: start;
+  align-items: start;
   box-sizing: content-box;
   display: flex;
   flex-direction: column;

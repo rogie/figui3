@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.0.13]
+
+### Changed
+
+- Aligned chooser content and items to the start edge.
+
 ## [10.0.12]
 
 ### Added
