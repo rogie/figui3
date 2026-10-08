@@ -1183,14 +1183,14 @@ fig-input-combo {
     width: 100%;
   }
   & > * {
-    &:first-child,
-    &:first-child > * {
+    &:first-child:not(:last-child),
+    &:first-child:not(:last-child) > * {
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
     }
 
-    &:last-child,
-    &:last-child > * {
+    &:last-child:not(:first-child),
+    &:last-child:not(:first-child) > * {
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
     }

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.0.3]
+
+### Fixed
+
+- Preserved all corner radii when `fig-input-combo` contains only one control.
+
 ## [11.0.2]
 
 ### Fixed
