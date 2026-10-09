@@ -6586,6 +6586,7 @@ class FigSlider extends HTMLElement {
           value: this.value,
           units: this.units || null,
           precision: this.precision,
+          disabled: this.disabled,
         }),
       );
     }
@@ -7025,8 +7026,7 @@ class FigSlider extends HTMLElement {
           this.disabled = this.input.disabled =
             newValue !== null && newValue !== "false";
           if (this.figInputNumber) {
-            this.figInputNumber.disabled = this.disabled;
-            this.figInputNumber.setAttribute("disabled", this.disabled);
+            this.figInputNumber.toggleAttribute("disabled", this.disabled);
           }
           break;
         case "value":

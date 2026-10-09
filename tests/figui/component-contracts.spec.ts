@@ -6572,6 +6572,44 @@ test.describe("slider accessibility", () => {
     });
   });
 
+  test("fig-slider forwards disabled to its internal controls", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider id="slider" disabled value="50"></fig-slider>
+      `;
+    });
+
+    const readState = () =>
+      page.locator("#slider").evaluate((host) => {
+        const range = host.querySelector('input[type="range"]');
+        const number = host.querySelector("fig-input-number");
+        const numberInput = number?.querySelector("input");
+        return {
+          rangeDisabled: (range as HTMLInputElement | null)?.disabled,
+          numberDisabledAttribute: number?.hasAttribute("disabled"),
+          numberInputDisabled: (numberInput as HTMLInputElement | null)?.disabled,
+        };
+      });
+
+    expect(await readState()).toEqual({
+      rangeDisabled: true,
+      numberDisabledAttribute: true,
+      numberInputDisabled: true,
+    });
+
+    await page.locator("#slider").evaluate((host) => {
+      host.removeAttribute("disabled");
+    });
+
+    expect(await readState()).toEqual({
+      rangeDisabled: false,
+      numberDisabledAttribute: false,
+      numberInputDisabled: false,
+    });
+  });
+
   test("fig-slider text input updates the range value", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

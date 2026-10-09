@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.1.1]
+
+### Changed
+
+- Added missing disabled controls to the playground Attributes view.
+
+### Fixed
+
+- Forwarded the `fig-slider` disabled state to its internal `fig-input-number`.
+
 ## [11.1.0]
 
 ### Added

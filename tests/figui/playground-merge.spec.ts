@@ -6,7 +6,10 @@ import {
 } from "../../playground/src/data/propkitMigration";
 import { legacyPropsKitSections } from "../../playground/src/data/sections";
 import { sortSectionsWithinGroups } from "../../playground/src/lib/sectionOrder";
-import { getSplitInputTypePreset } from "../../playground/src/lib/attributeRules";
+import {
+  controlAttributeRules,
+  getSplitInputTypePreset,
+} from "../../playground/src/lib/attributeRules";
 
 function sourceKeys(): string[] {
   return legacyPropsKitSections.flatMap((section) =>
@@ -170,5 +173,28 @@ test("split input type control uses matching example presets", () => {
   });
   expect(textPreset.values).toEqual(
     new Set(["House", "Apartment", "Condo", "Townhouse", "Other"]),
+  );
+});
+
+test("disabled components expose an Attributes view toggle", () => {
+  const auditedControls = [
+    "fig-input-number",
+    "fig-segmented-control",
+    "fig-angle",
+    "fig-layer",
+    "fig-chooser",
+    "fig-menu-item",
+  ];
+
+  for (const tag of auditedControls) {
+    expect(controlAttributeRules[tag]?.disabled).toMatchObject({
+      label: "Disabled",
+      type: "boolean",
+      boolMode: "presence",
+    });
+  }
+
+  expect(Object.keys(controlAttributeRules["fig-input-number"]).at(-1)).toBe(
+    "disabled",
   );
 });

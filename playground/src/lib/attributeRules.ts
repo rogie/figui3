@@ -474,6 +474,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "%", "px", "°"],
     },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-reorder": {
     axis: {
@@ -625,6 +626,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["", "large"],
     },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-options": {
     options: { label: "Options", type: "string" },
@@ -731,6 +733,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       max: 45,
       step: 0.001,
     },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-joystick": {
     "aspect-ratio": aspectRatioRule,
@@ -779,6 +782,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
     tabular: { label: "Tabular", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-toast": {
     duration: {
@@ -950,6 +954,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-layer": {
     open: { label: "Open", type: "boolean", boolMode: "presence" },
     visible: { label: "Visible", type: "boolean", boolMode: "string" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-tabs": {
     overflow: {
@@ -1066,6 +1071,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["smooth", "auto"],
     },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   progress: {
     value: { label: "Value", type: "number", min: 0, max: 100, step: 1 },
@@ -1144,6 +1150,10 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     open: { label: "Open", type: "boolean", boolMode: "presence" },
+  },
+  "fig-menu-item": {
+    value: { label: "Value", type: "string" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-truncate": {
     position: { label: "Position", type: "enum", options: ["right", "left", "middle"] },
