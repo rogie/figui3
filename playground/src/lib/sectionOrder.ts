@@ -14,7 +14,7 @@ const INPUT_SECTION_ORDER = [
   "file-input",
   "color",
   "fill-input",
-  "combo-input",
+  "split-input",
   "input-combo",
   "options",
   "chooser",

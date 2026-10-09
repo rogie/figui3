@@ -40,6 +40,26 @@ export type AttributeRule =
 
 export type AttributeRuleSet = Record<string, AttributeRule>;
 
+export function getSplitInputTypePreset(type: "text" | "number") {
+  return type === "number"
+    ? {
+        options: "2,4,8,16,32",
+        placeholder: "Padding",
+        values: new Set(["2", "4", "8", "16", "32"]),
+      }
+    : {
+        options: "House, Apartment, Condo, Townhouse, Other",
+        placeholder: "Type of residence",
+        values: new Set([
+          "House",
+          "Apartment",
+          "Condo",
+          "Townhouse",
+          "Other",
+        ]),
+      };
+}
+
 const aspectRatioRule: AttributeRule = {
   label: "Aspect ratio",
   type: "enum",
@@ -74,6 +94,18 @@ export const fieldAttributeRules: AttributeRuleSet = {
     type: "enum",
     options: ["thirds", "half"],
   },
+};
+
+const splitInputAttributeRules: AttributeRuleSet = {
+  type: {
+    label: "Type",
+    type: "enum",
+    options: ["text", "number"],
+  },
+  options: { label: "Options", type: "string" },
+  placeholder: { label: "Placeholder", type: "string" },
+  value: { label: "Value", type: "string" },
+  disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
 };
 
 export const controlAttributeRules: Record<string, AttributeRuleSet> = {
@@ -296,12 +328,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     label: { label: "Label", type: "string" },
   },
-  "fig-combo-input": {
-    options: { label: "Options", type: "string" },
-    placeholder: { label: "Placeholder", type: "string" },
-    value: { label: "Value", type: "string" },
-    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
-  },
+  "fig-split-input": splitInputAttributeRules,
+  "fig-combo-input": splitInputAttributeRules,
   "fig-image": {
     caption: { label: "Caption", type: "string" },
     "aspect-ratio": aspectRatioRule,
@@ -469,7 +497,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     variant: {
       label: "Variant",
       type: "enum",
-      options: ["", "ghost"],
+      options: ["", "ghost", "input"],
     },
     icon: { label: "Icon", type: "boolean", boolMode: "presence" },
     "menu-anchor": { label: "Menu anchor", type: "string" },

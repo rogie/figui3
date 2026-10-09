@@ -53,12 +53,13 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 - Events: `input` / `change` → `currentTarget.value`
 - Prefer `fig-select` (editor) for Figma-style menus.
 
-### `fig-combo-input`
+### `fig-split-input`
 
 ```tsx
-<fig-combo-input
+<fig-split-input
+  type="number"
   value={value}
-  options="Small,Medium,Large"
+  options="8,16,24"
   placeholder="Size"
   full
   onInput={onInput}
@@ -66,7 +67,9 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 />
 ```
 
-- Attrs: `value`, `options`, `placeholder`, `disabled`, `full`
+- Attrs: `type` (`text` | `number`, default `text`), `value`, `options`, `placeholder`, `disabled`, `full`
+- Uses `fig-select` when the editor bundle is registered; otherwise uses core `fig-dropdown`.
+- Legacy alias: `fig-combo-input`
 
 ### `fig-input-text`
 

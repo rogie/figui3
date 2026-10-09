@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.1.0]
+
+### Added
+
+- Added `fig-split-input` with text and number modes, full-width layout, and custom selector support; `fig-combo-input` remains as a legacy alias.
+- Added `variant="input"` to `fig-select`.
+
+### Changed
+
+- Updated split inputs to prefer `fig-select` when available, fall back to `fig-dropdown`, and anchor select menus to the full split input.
+- Added matching split-input playground examples, type presets, typings, and documentation.
+
+### Fixed
+
+- Prevented hover styles from overriding the open state of `fig-select`.
+- Preserved split-input values, accessibility attributes, events, and generated controls across updates and reconnects.
+
 ## [11.0.3]
 
 ### Fixed

@@ -735,7 +735,31 @@ fig-select {
     box-shadow: none;
     background-color: transparent;
 
-    &:hover:not([disabled]):not([disabled="false"]) {
+    &:hover:not([disabled]):not([disabled="false"]):not(
+        [open]:not([open="false"])
+      ) {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
+
+  &[variant="input"] {
+    box-shadow: none;
+    background-color: var(--figma-color-bg-secondary);
+    color: var(--figma-color-text);
+
+    &:hover:not([disabled]):not([disabled="false"]):not(
+        [open]:not([open="false"])
+      ) {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+      background-color: var(--figma-color-bg-transparent);
+    }
+
+    &:active:not([disabled]):not([disabled="false"]) {
+      background-color: var(--figma-color-bg-transparent-pressed);
+      color: var(--figma-color-text);
+    }
+
+    &:focus-within {
       background-color: var(--figma-color-bg-secondary);
     }
   }

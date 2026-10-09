@@ -57,6 +57,7 @@ declare global {
       "fig-choice": WCProps;
       "fig-chooser": WCProps;
       "fig-swatch": WCProps;
+      "fig-split-input": WCProps;
       "fig-combo-input": WCProps;
       "fig-content": WCProps;
       "fig-dropdown": WCProps;

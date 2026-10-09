@@ -32,6 +32,7 @@ import {
 } from "../lib/attributeParser";
 import {
   getRuleSetForTarget,
+  getSplitInputTypePreset,
   type AttributeRule,
   type BoolMode,
 } from "../lib/attributeRules";
@@ -193,7 +194,8 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-swatch": "Swatch",
     "fig-radio": "Radio",
     "fig-field": "Field",
-    "fig-combo-input": "Combo input",
+    "fig-split-input": "Split input",
+    "fig-combo-input": "Combo input (alias)",
     "fig-media": "Media",
     "fig-media-controls": "Media controls",
     "fig-preview": "Preview",
@@ -409,6 +411,44 @@ export default function AttributesView({
         return;
       }
       if (
+        (currentTarget?.controlTag === "fig-split-input" ||
+          currentTarget?.controlTag === "fig-combo-input") &&
+        target === "control" &&
+        name === "type" &&
+        (value === "text" || value === "number")
+      ) {
+        const preset = getSplitInputTypePreset(value);
+        let nextMarkup = applyAttributeMutation(markup, {
+          fieldIndex,
+          target,
+          name,
+          value,
+        });
+        nextMarkup = applyAttributeMutation(nextMarkup, {
+          fieldIndex,
+          target,
+          name: "options",
+          value: preset.options,
+        });
+        nextMarkup = applyAttributeMutation(nextMarkup, {
+          fieldIndex,
+          target,
+          name: "placeholder",
+          value: preset.placeholder,
+        });
+        const currentValue = currentTarget.controlAttributes.value;
+        if (currentValue !== undefined && !preset.values.has(currentValue)) {
+          nextMarkup = applyAttributeMutation(nextMarkup, {
+            fieldIndex,
+            target,
+            name: "value",
+            value: null,
+          });
+        }
+        onMarkupChange(nextMarkup);
+        return;
+      }
+      if (
         currentTarget?.controlTag === "fig-angle" &&
         target === "control" &&
         name === "units" &&
@@ -519,6 +559,7 @@ export default function AttributesView({
           "fig-3d-rotate",
           "fig-origin-grid",
           "fig-angle",
+          "fig-split-input",
           "fig-combo-input",
           "fig-joystick",
           "fig-radio",

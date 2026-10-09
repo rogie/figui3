@@ -6,6 +6,7 @@ import {
 } from "../../playground/src/data/propkitMigration";
 import { legacyPropsKitSections } from "../../playground/src/data/sections";
 import { sortSectionsWithinGroups } from "../../playground/src/lib/sectionOrder";
+import { getSplitInputTypePreset } from "../../playground/src/lib/attributeRules";
 
 function sourceKeys(): string[] {
   return legacyPropsKitSections.flatMap((section) =>
@@ -91,7 +92,7 @@ test.describe("PropsKit playground migration", () => {
       "file-input",
       "color",
       "fill-input",
-      "combo-input",
+      "split-input",
       "input-combo",
       "options",
       "chooser",
@@ -152,4 +153,22 @@ test.describe("PropsKit playground migration", () => {
     expect(labelInputExamples).toHaveLength(6);
     expect(oldDefaultFieldNames).toHaveLength(0);
   });
+});
+
+test("split input type control uses matching example presets", () => {
+  const numberPreset = getSplitInputTypePreset("number");
+  expect(numberPreset).toMatchObject({
+    options: "2,4,8,16,32",
+    placeholder: "Padding",
+  });
+  expect(numberPreset.values).toEqual(new Set(["2", "4", "8", "16", "32"]));
+
+  const textPreset = getSplitInputTypePreset("text");
+  expect(textPreset).toMatchObject({
+    options: "House, Apartment, Condo, Townhouse, Other",
+    placeholder: "Type of residence",
+  });
+  expect(textPreset.values).toEqual(
+    new Set(["House", "Apartment", "Condo", "Townhouse", "Other"]),
+  );
 });

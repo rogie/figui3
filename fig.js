@@ -12469,16 +12469,19 @@ class FigSwitch extends FigCheckbox {
 }
 figDefineElement("fig-switch", FigSwitch);
 
-/* Combo Input */
+/* Split Input */
 /**
- * A custom combo input with text and dropdown.
+ * A split input with text and dropdown controls.
+ * @attr {string} type - Main input type: "text" (default) or "number"
  * @attr {string} options - Comma-separated list of dropdown options
  * @attr {string} placeholder - Placeholder text for the input
  * @attr {string} value - The current input value
  * @attr {boolean} disabled - Disables the input and dropdown button
+ * @attr {boolean} full - Expands the split input to the available width
  */
-class FigComboInput extends HTMLElement {
+class FigSplitInput extends HTMLElement {
   static observedAttributes = [
+    "type",
     "options",
     "placeholder",
     "value",
@@ -12490,11 +12493,11 @@ class FigComboInput extends HTMLElement {
     "aria-required",
   ];
 
-  #usesCustomDropdown = false;
+  #usesCustomSelector = false;
   #input = null;
-  #dropdown = null;
+  #selector = null;
   #button = null;
-  #customDropdown = null;
+  #customSelector = null;
   #internalUpdate = false;
   #a11yAttributes = [
     "aria-label",
@@ -12504,10 +12507,10 @@ class FigComboInput extends HTMLElement {
     "aria-required",
   ];
 
-  #boundHandleDropdownInput = this.#handleDropdownInput.bind(this);
-  #boundHandleDropdownChange = this.#handleDropdownChange.bind(this);
-  #boundHandleTextInput = this.#handleTextInput.bind(this);
-  #boundHandleTextChange = this.#handleTextChange.bind(this);
+  #boundHandleSelectorInput = this.#handleSelectorInput.bind(this);
+  #boundHandleSelectorChange = this.#handleSelectorChange.bind(this);
+  #boundHandleMainInput = this.#handleMainInput.bind(this);
+  #boundHandleMainChange = this.#handleMainChange.bind(this);
 
   get value() {
     return this.getAttribute("value") || "";
@@ -12517,14 +12520,38 @@ class FigComboInput extends HTMLElement {
     this.setAttribute("value", val ?? "");
   }
 
+  #inputTagName() {
+    return this.getAttribute("type") === "number"
+      ? "fig-input-number"
+      : "fig-input-text";
+  }
+
+  #createInput() {
+    return figCreateElement(this.#inputTagName(), {
+      placeholder: this.getAttribute("placeholder") || "",
+      value: this.value,
+    });
+  }
+
   #canReuseMarkup() {
-    return !!this.querySelector(":scope > .input-combo");
+    const input = this.querySelector(
+      ":scope > .input-combo > :is(fig-input-text, fig-input-number)",
+    );
+    return input?.localName === this.#inputTagName();
   }
 
   #refreshMarkup() {
-    this.#input = this.querySelector("fig-input-text");
+    this.#input = this.querySelector(
+      ":scope > .input-combo > :is(fig-input-text, fig-input-number)",
+    );
     this.#button = this.querySelector("fig-button");
-    this.#dropdown = this.querySelector("fig-dropdown");
+    this.#selector = this.querySelector("fig-select, fig-dropdown");
+    if (
+      this.#selector?.localName === "fig-select" &&
+      customElements.get("fig-select")
+    ) {
+      this.#selector.menuAnchor = this;
+    }
     if (this.#input) {
       this.#input.setAttribute("value", this.value);
       this.#input.setAttribute(
@@ -12536,17 +12563,24 @@ class FigComboInput extends HTMLElement {
   }
 
   connectedCallback() {
-    this.#customDropdown =
+    this.#customSelector =
       Array.from(this.children).find(
-        (child) => child.tagName === "FIG-DROPDOWN",
+        (child) =>
+          child.tagName === "FIG-SELECT" || child.tagName === "FIG-DROPDOWN",
       ) || null;
-    this.#usesCustomDropdown = this.#customDropdown !== null;
-    if (this.#customDropdown) {
-      this.#customDropdown.remove();
+    this.#usesCustomSelector = this.#customSelector !== null;
+    if (this.#customSelector) {
+      this.#customSelector.remove();
     }
 
     if (this.#canReuseMarkup()) {
       this.#refreshMarkup();
+      if (!this.#customSelector) {
+        this.#usesCustomSelector =
+          !!this.#selector &&
+          !this.#selector.hasAttribute("data-fig-split-generated");
+        this.#customSelector = this.#usesCustomSelector ? this.#selector : null;
+      }
       this.#setupListeners();
     } else {
       this.#render();
@@ -12562,93 +12596,112 @@ class FigComboInput extends HTMLElement {
 
   #render() {
     const options = this.#getOptions();
-    const placeholder = this.getAttribute("placeholder") || "";
-    const currentValue = this.value;
     const dropdownLabel = this.#dropdownLabel();
 
-    const input = figCreateElement("fig-input-text", {
-      placeholder,
-      value: currentValue,
-    });
-    const button = figCreateElement(
-      "fig-button",
-      {
-        type: "select",
-        variant: "input",
+    const input = this.#createInput();
+    let selector = this.#customSelector;
+    if (!selector && customElements.get("fig-select")) {
+      selector = figCreateElement("fig-select", {
         icon: true,
-      },
-    );
-    if (!this.#usesCustomDropdown) {
-      button.appendChild(
-        figCreateElement(
-          "fig-dropdown",
-          {
-            type: "dropdown",
-            label: dropdownLabel,
-          },
-          options.map((option) =>
-            figCreateElement("option", {}, option.trim()),
-          ),
+        variant: "input",
+        options: options.join(","),
+        label: dropdownLabel,
+        "aria-label": dropdownLabel,
+        "data-fig-split-generated": true,
+      });
+    }
+    if (!selector) {
+      selector = figCreateElement(
+        "fig-dropdown",
+        {
+          type: "dropdown",
+          label: dropdownLabel,
+          "data-fig-split-generated": true,
+        },
+        options.map((option) =>
+          figCreateElement("option", {}, option.trim()),
         ),
       );
     }
+
+    let action = selector;
+    let button = null;
+    if (selector.localName === "fig-dropdown") {
+      if (!selector.hasAttribute("type")) {
+        selector.setAttribute("type", "dropdown");
+      }
+      button = figCreateElement(
+        "fig-button",
+        {
+          type: "select",
+          variant: "input",
+          icon: true,
+        },
+        figCreateElement("fig-icon", {
+          name: "chevron",
+          size: "small",
+          slot: "append",
+        }),
+      );
+      button.append(selector);
+      action = button;
+    }
+    if (!selector.hasAttribute("label")) {
+      selector.setAttribute("label", dropdownLabel);
+    }
+
     this.replaceChildren(
-      figCreateElement("div", { className: "input-combo" }, [input, button]),
+      figCreateElement("div", { className: "input-combo" }, [input, action]),
     );
 
     this.#input = input;
     this.#button = button;
-
-    if (this.#usesCustomDropdown && this.#customDropdown && this.#button) {
-      if (!this.#customDropdown.hasAttribute("type")) {
-        this.#customDropdown.setAttribute("type", "dropdown");
-      }
-      if (!this.#customDropdown.hasAttribute("label")) {
-        this.#customDropdown.setAttribute("label", dropdownLabel);
-      }
-      this.#button.append(this.#customDropdown);
+    this.#selector = selector;
+    if (
+      selector.localName === "fig-select" &&
+      customElements.get("fig-select")
+    ) {
+      selector.menuAnchor = this;
     }
-
-    this.#dropdown = this.querySelector("fig-dropdown");
     this.#syncA11yAttributes();
   }
 
   #setupListeners() {
     this.#teardownListeners();
-    this.#dropdown?.addEventListener("input", this.#boundHandleDropdownInput);
-    this.#dropdown?.addEventListener("change", this.#boundHandleDropdownChange);
-    this.#input?.addEventListener("input", this.#boundHandleTextInput);
-    this.#input?.addEventListener("change", this.#boundHandleTextChange);
+    this.#selector?.addEventListener("input", this.#boundHandleSelectorInput);
+    this.#selector?.addEventListener("change", this.#boundHandleSelectorChange);
+    this.#input?.addEventListener("input", this.#boundHandleMainInput);
+    this.#input?.addEventListener("change", this.#boundHandleMainChange);
   }
 
   #teardownListeners() {
-    this.#dropdown?.removeEventListener("input", this.#boundHandleDropdownInput);
-    this.#dropdown?.removeEventListener("change", this.#boundHandleDropdownChange);
-    this.#input?.removeEventListener("input", this.#boundHandleTextInput);
-    this.#input?.removeEventListener("change", this.#boundHandleTextChange);
+    this.#selector?.removeEventListener("input", this.#boundHandleSelectorInput);
+    this.#selector?.removeEventListener("change", this.#boundHandleSelectorChange);
+    this.#input?.removeEventListener("input", this.#boundHandleMainInput);
+    this.#input?.removeEventListener("change", this.#boundHandleMainChange);
   }
 
-  #handleDropdownInput(e) {
+  #handleSelectorInput(e) {
     e.stopPropagation();
-    this.#syncDropdownValue(e);
+    this.#syncSelectorValue(e);
     this.#emitInput();
   }
 
-  #handleDropdownChange(e) {
+  #handleSelectorChange(e) {
     e.stopPropagation();
-    this.#syncDropdownValue(e);
+    this.#syncSelectorValue(e);
     this.#emitChange();
   }
 
-  #syncDropdownValue(e) {
-    const val = e.target.closest("fig-dropdown")?.value ?? "";
+  #syncSelectorValue(e) {
+    const val = e.target.closest("fig-select, fig-dropdown")?.value ?? "";
     this.#internalUpdate = true;
     this.setAttribute("value", val);
     this.#internalUpdate = false;
     if (this.#input) this.#input.setAttribute("value", val);
   }
 
-  #handleTextInput(e) {
+  #handleMainInput(e) {
     e.stopPropagation();
     const val = e.target.value ?? "";
     this.#internalUpdate = true;
@@ -12657,7 +12710,7 @@ class FigComboInput extends HTMLElement {
     this.#emitInput();
   }
 
-  #handleTextChange(e) {
+  #handleMainChange(e) {
     e.stopPropagation();
     const val = e.target.value ?? "";
     this.#internalUpdate = true;
@@ -12697,7 +12750,7 @@ class FigComboInput extends HTMLElement {
     return (
       this.getAttribute("aria-label") ||
       this.getAttribute("placeholder") ||
-      "Combo input"
+      "Split input"
     ).trim();
   }
 
@@ -12713,8 +12766,19 @@ class FigComboInput extends HTMLElement {
         else this.#input.setAttribute(name, value);
       });
     }
-    if (this.#dropdown && !this.#dropdown.hasAttribute("aria-label")) {
-      this.#dropdown.setAttribute("label", this.#dropdownLabel());
+    if (this.#selector) {
+      const label = this.#dropdownLabel();
+      if (!this.#usesCustomSelector) {
+        this.#selector.setAttribute("label", label);
+        if (this.#selector.localName === "fig-select") {
+          this.#selector.setAttribute("aria-label", label);
+        }
+      } else if (
+        !this.#selector.hasAttribute("aria-label") &&
+        !this.#selector.hasAttribute("label")
+      ) {
+        this.#selector.setAttribute("label", label);
+      }
     }
   }
 
@@ -12727,9 +12791,9 @@ class FigComboInput extends HTMLElement {
       if (disabled) this.#button.setAttribute("disabled", "");
       else this.#button.removeAttribute("disabled");
     }
-    if (this.#dropdown) {
-      if (disabled) this.#dropdown.setAttribute("disabled", "");
-      else this.#dropdown.removeAttribute("disabled");
+    if (this.#selector) {
+      if (disabled) this.#selector.setAttribute("disabled", "");
+      else this.#selector.removeAttribute("disabled");
     }
   }
 
@@ -12740,16 +12804,33 @@ class FigComboInput extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     switch (name) {
+      case "type": {
+        if (!this.#input || this.#input.localName === this.#inputTagName()) break;
+        const restoreFocus = this.#input.matches(":focus-within");
+        this.#teardownListeners();
+        const input = this.#createInput();
+        this.#input.replaceWith(input);
+        this.#input = input;
+        this.#syncA11yAttributes();
+        this.#applyDisabled(figBooleanAttribute(this, "disabled"));
+        this.#setupListeners();
+        if (restoreFocus) this.focus();
+        break;
+      }
       case "options":
-        if (this.#dropdown && !this.#usesCustomDropdown) {
-          const options = this.#getOptions();
-          this.#dropdown.replaceChildren(
-            ...options.map((value) => {
-              const option = document.createElement("option");
-              option.textContent = value;
-              return option;
-            }),
-          );
+        if (this.#selector && !this.#usesCustomSelector) {
+          if (this.#selector.localName === "fig-select") {
+            this.#selector.setAttribute("options", newValue || "");
+          } else {
+            const options = this.#getOptions();
+            this.#selector.replaceChildren(
+              ...options.map((value) => {
+                const option = document.createElement("option");
+                option.textContent = value;
+                return option;
+              }),
+            );
+          }
         }
         break;
       case "placeholder":
@@ -12774,6 +12855,10 @@ class FigComboInput extends HTMLElement {
     }
   }
 }
+figDefineElement("fig-split-input", FigSplitInput);
+
+/** @deprecated Use fig-split-input. */
+class FigComboInput extends FigSplitInput {}
 figDefineElement("fig-combo-input", FigComboInput);
 
 /* Swatch */

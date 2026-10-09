@@ -98,7 +98,7 @@ Minimal example:
 | [Button](#button) | `<fig-button>` | Buttons with variants, toggle, select, upload |
 | [Dropdown](#dropdown) | `<fig-dropdown>` | Native select wrapper with Figma styling |
 | [Select](#select) | `<fig-select>` | Custom listbox select (requires `fig-editor.js`) |
-| [Combo Input](#combo-input) | `<fig-combo-input>` | Text input with dropdown suggestions |
+| [Split Input](#split-input) | `<fig-split-input>` | Text or number input with dropdown suggestions |
 | [Checkbox](#checkbox) | `<fig-checkbox>` | Checkbox with indeterminate state |
 | [Radio](#radio) | `<fig-radio>` | Radio button |
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
@@ -226,7 +226,7 @@ Custom listbox select with overflow chevrons, grouped options, and sticky separa
 | `label` | string | — | Closed-state / accessible label |
 | `options` | string | — | Comma, newline, or JSON options if no authored `fig-select-option` children |
 | `menu-anchor` | CSS selector | — | Alternate element to align the open menu against |
-| `variant` | string | — | `"ghost"` for a borderless control with secondary hover fill |
+| `variant` | string | — | `"ghost"` for a borderless control or `"input"` for input-style fill and interaction states |
 | `size` | string | — | `"large"` for a 32px-tall trigger |
 | `icon` | boolean | `false` | Render a square chevron-only trigger; provide `aria-label` |
 | `subtle` | boolean | `false` | Use the secondary hover/focus fill for every option |
@@ -257,20 +257,28 @@ document.querySelector("fig-select").menuAnchor =
 
 ---
 
-#### Combo Input
+<a id="combo-input"></a>
 
-`<fig-combo-input>` — [demo](https://rog.ie/figui3/#combo-input)
+#### Split Input
+
+`<fig-split-input>` — [demo](https://rog.ie/figui3/#split-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
+| `type` | `text` \| `number` | `text` | Main input control |
 | `options` | string | — | Comma-separated suggestion list |
 | `placeholder` | string | — | Placeholder text |
 | `value` | string | — | Current value |
 | `disabled` | boolean | `false` | Disabled state |
+| `full` | boolean | `false` | Expand to the available width |
 
 ```html
-<fig-combo-input options="House, Apartment, Condo" placeholder="Residence type"></fig-combo-input>
+<fig-split-input options="House, Apartment, Condo" placeholder="Residence type"></fig-split-input>
+<fig-split-input type="number" options="8, 16, 24, 32" value="16"></fig-split-input>
 ```
+
+`<fig-combo-input>` remains available as a legacy alias.
+The suggestion trigger uses `fig-select` when `fig-editor.js` is registered and falls back to core `fig-dropdown`.
 
 ---
 

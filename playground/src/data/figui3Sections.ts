@@ -1000,16 +1000,24 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     ],
   },
   {
-    id: "combo-input",
-    name: "Combo Input",
+    id: "split-input",
+    name: "Split Input",
     group: INPUT_GROUP_NAME,
-    description: "Input with suggestion dropdown from a fixed options list.",
+    description:
+      "Text or number input with a fig-select suggestion trigger when available and a fig-dropdown fallback.",
     examples: [
       {
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-combo-input options="House, Apartment, Condo, Townhouse, Other" placeholder="Type of residence"></fig-combo-input>
+  <fig-split-input options="House, Apartment, Condo, Townhouse, Other" placeholder="Type of residence"></fig-split-input>
+</div>`,
+      },
+      {
+        id: "number",
+        name: "Number",
+        markup: `<div class="prop-panel">
+  <fig-split-input type="number" options="8, 16, 24, 32, 64" value="16" placeholder="Size"></fig-split-input>
 </div>`,
       },
     ],

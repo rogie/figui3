@@ -10,7 +10,7 @@ test.describe("axe accessibility smoke", () => {
     await page.evaluate(async () => {
       await Promise.all([
         customElements.whenDefined("fig-button"),
-        customElements.whenDefined("fig-combo-input"),
+        customElements.whenDefined("fig-split-input"),
         customElements.whenDefined("fig-field"),
         customElements.whenDefined("fig-fill-picker"),
         customElements.whenDefined("fig-handle"),
@@ -32,7 +32,7 @@ test.describe("axe accessibility smoke", () => {
           <label>Layer name</label>
           <fig-input-text value="Button"></fig-input-text>
         </fig-field>
-        <fig-combo-input aria-label="Font family" options="Inter, Roboto" value="Inter"></fig-combo-input>
+        <fig-split-input aria-label="Font family" options="Inter, Roboto" value="Inter"></fig-split-input>
         <fig-input-fill aria-label="Layer fill" value="#0D99FF"></fig-input-fill>
         <fig-slider aria-label="Opacity" min="0" max="100" value="75" text="true"></fig-slider>
         <div aria-label="Color position" role="group" style="position: relative; width: 160px; height: 80px;">

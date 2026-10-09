@@ -48,6 +48,8 @@ declare module "react" {
       "fig-shimmer": FigAttrs;
       "fig-skeleton": FigAttrs;
       "fig-input-text": FigAttrs;
+      "fig-split-input": FigAttrs;
+      "fig-combo-input": FigAttrs;
       "fig-joystick": FigAttrs;
       "fig-header": FigAttrs;
       "fig-toast": FigAttrs;

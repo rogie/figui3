@@ -292,11 +292,20 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "theme", attribute: "theme", value: "brand" }],
   },
   {
+    tag: "fig-split-input",
+    title: "Split Input",
+    group: "data",
+    markup: `<fig-split-input value="Small" options="Small,Medium,Large"></fig-split-input>`,
+    properties: [{ name: "value property", property: "value", value: "Medium", expected: "Medium" }],
+    attributes: [{ name: "number type", attribute: "type", value: "number" }],
+  },
+  {
     tag: "fig-combo-input",
-    title: "Combo Input",
+    title: "Combo Input (legacy alias)",
     group: "data",
     markup: `<fig-combo-input value="Small" options="Small,Medium,Large"></fig-combo-input>`,
     properties: [{ name: "value property", property: "value", value: "Medium", expected: "Medium" }],
+    attributes: [{ name: "number type", attribute: "type", value: "number" }],
   },
   {
     tag: "fig-swatch",

@@ -60,6 +60,7 @@ type FigTag =
   | "fig-choice"
   | "fig-chooser"
   | "fig-color-tip"
+  | "fig-split-input"
   | "fig-combo-input"
   | "fig-content"
   | "fig-dropdown"

@@ -4328,7 +4328,7 @@ test.describe("dropdown keyboard behavior", () => {
   });
 });
 
-test("fig-dropdown and fig-select ghost variant drop the border and use secondary hover fill", async ({
+test("fig-dropdown and fig-select variants apply ghost and input styling", async ({
   page,
 }) => {
   collectPageErrors(page);
@@ -4351,16 +4351,24 @@ test("fig-dropdown and fig-select ghost variant drop the border and use secondar
       </fig-dropdown>
       <fig-select id="select-default" value="one" options="One,Two"></fig-select>
       <fig-select id="select-ghost" variant="ghost" value="one" options="One,Two"></fig-select>
+      <fig-select id="select-input" variant="input" value="one" options="One,Two"></fig-select>
     `;
   });
 
-  const secondary = await page.evaluate(() => {
-    const probe = document.createElement("div");
-    probe.style.backgroundColor = "var(--figma-color-bg-secondary)";
-    document.body.append(probe);
-    const color = getComputedStyle(probe).backgroundColor;
-    probe.remove();
-    return color;
+  const colors = await page.evaluate(() => {
+    const resolve = (token: string) => {
+      const probe = document.createElement("div");
+      probe.style.backgroundColor = `var(${token})`;
+      document.body.append(probe);
+      const color = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return color;
+    };
+    return {
+      secondary: resolve("--figma-color-bg-secondary"),
+      transparent: resolve("--figma-color-bg-transparent"),
+      selected: resolve("--figma-color-bg-selected"),
+    };
   });
 
   await expect(page.locator("#dropdown-default select")).not.toHaveCSS(
@@ -4374,7 +4382,7 @@ test("fig-dropdown and fig-select ghost variant drop the border and use secondar
   await page.locator("#dropdown-ghost").hover();
   await expect(page.locator("#dropdown-ghost")).toHaveCSS(
     "background-color",
-    secondary,
+    colors.secondary,
   );
 
   await expect(page.locator("#select-default")).not.toHaveCSS(
@@ -4385,7 +4393,40 @@ test("fig-dropdown and fig-select ghost variant drop the border and use secondar
   await page.locator("#select-ghost").hover();
   await expect(page.locator("#select-ghost")).toHaveCSS(
     "background-color",
-    secondary,
+    colors.secondary,
+  );
+  await page.locator("#select-ghost").evaluate((select) => {
+    select.setAttribute("open", "");
+  });
+  await expect(page.locator("#select-ghost")).toHaveCSS(
+    "background-color",
+    colors.selected,
+  );
+  await page.locator("#select-ghost").evaluate((select) => {
+    select.removeAttribute("open");
+  });
+
+  await expect(page.locator("#select-input")).toHaveCSS("box-shadow", "none");
+  await expect(page.locator("#select-input")).toHaveCSS(
+    "background-color",
+    colors.secondary,
+  );
+  await page.locator("#select-input").hover();
+  await expect(page.locator("#select-input")).not.toHaveCSS(
+    "box-shadow",
+    "none",
+  );
+  await expect(page.locator("#select-input")).toHaveCSS(
+    "background-color",
+    colors.transparent,
+  );
+  await page.locator("#select-input").evaluate((select) => {
+    select.setAttribute("open", "");
+  });
+  await expect(page.locator("#select-input")).toHaveCSS("box-shadow", "none");
+  await expect(page.locator("#select-input")).toHaveCSS(
+    "background-color",
+    colors.selected,
   );
 });
 
@@ -5726,18 +5767,224 @@ test.describe("number input accessibility", () => {
   });
 });
 
-test.describe("combo input accessibility", () => {
+test.describe("split input accessibility", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
     await page.evaluate(async () => {
       await Promise.all([
+        customElements.whenDefined("fig-split-input"),
         customElements.whenDefined("fig-combo-input"),
         customElements.whenDefined("fig-input-text"),
         customElements.whenDefined("fig-button"),
         customElements.whenDefined("fig-dropdown"),
       ]);
     });
+  });
+
+  test("keeps fig-combo-input as a legacy alias", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-combo-input
+          id="combo-alias"
+          options="Inter, Roboto"
+          value="Inter"
+        ></fig-combo-input>
+      `;
+      await new Promise(requestAnimationFrame);
+      const host = root.querySelector("#combo-alias");
+      return {
+        tagName: host?.tagName,
+        value: host?.getAttribute("value"),
+        controls: host?.querySelectorAll(":scope > .input-combo").length,
+      };
+    });
+
+    expect(state).toEqual({
+      tagName: "FIG-COMBO-INPUT",
+      value: "Inter",
+      controls: 1,
+    });
+  });
+
+  test("prefers fig-select when the editor component is registered", async ({
+    page,
+  }) => {
+    await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+    const state = await page.evaluate(async () => {
+      await customElements.whenDefined("fig-select");
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-split-input
+          id="split-editor-select"
+          options="Inter,Roboto"
+          aria-label="Font family"
+        ></fig-split-input>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const host = root.querySelector("#split-editor-select");
+      const events = [];
+      for (const type of ["input", "change"]) {
+        host?.addEventListener(type, (event) => {
+          events.push({
+            type: event.type,
+            target: event.target?.tagName,
+            detail: event.detail,
+          });
+        });
+      }
+
+      const select = host?.querySelector(
+        ":scope > .input-combo > fig-select",
+      );
+      select
+        ?.querySelector('fig-select-option[value="Roboto"]')
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
+
+      return {
+        selectCount: host?.querySelectorAll(
+          ":scope > .input-combo > fig-select",
+        ).length,
+        dropdownCount: host?.querySelectorAll("fig-dropdown").length,
+        generated: select?.hasAttribute("data-fig-split-generated"),
+        icon: select?.hasAttribute("icon"),
+        variant: select?.getAttribute("variant"),
+        menuAnchorIsHost: select?.menuAnchor === host,
+        options: select?.querySelectorAll("fig-select-option").length,
+        value: host?.getAttribute("value"),
+        inputValue: host
+          ?.querySelector("fig-input-text")
+          ?.getAttribute("value"),
+        events,
+      };
+    });
+
+    expect(state).toEqual({
+      selectCount: 1,
+      dropdownCount: 0,
+      generated: true,
+      icon: true,
+      variant: "input",
+      menuAnchorIsHost: true,
+      options: 2,
+      value: "Roboto",
+      inputValue: "Roboto",
+      events: [
+        {
+          type: "input",
+          target: "FIG-SPLIT-INPUT",
+          detail: { value: "Roboto" },
+        },
+        {
+          type: "change",
+          target: "FIG-SPLIT-INPUT",
+          detail: { value: "Roboto" },
+        },
+      ],
+    });
+  });
+
+  test("uses text by default and supports number inputs", async ({ page }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-split-input
+          id="split-default"
+          value="12"
+          placeholder="Quantity"
+          aria-label="Quantity"
+          disabled
+        ></fig-split-input>
+        <fig-split-input
+          id="split-number"
+          type="number"
+          value="16"
+          options="8,16,24"
+        ></fig-split-input>
+        <fig-split-input id="split-fallback" type="unsupported"></fig-split-input>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const defaultHost = root.querySelector("#split-default");
+      const numberHost = root.querySelector("#split-number");
+      const fallbackHost = root.querySelector("#split-fallback");
+      const initial = {
+        defaultText: defaultHost?.querySelectorAll("fig-input-text").length,
+        defaultNumber: defaultHost?.querySelectorAll("fig-input-number").length,
+        numberText: numberHost?.querySelectorAll("fig-input-text").length,
+        numberNumber: numberHost?.querySelectorAll("fig-input-number").length,
+        fallbackText: fallbackHost?.querySelectorAll("fig-input-text").length,
+      };
+
+      defaultHost?.setAttribute("type", "number");
+      const replacement = defaultHost?.querySelector("fig-input-number");
+      const switched = {
+        text: defaultHost?.querySelectorAll("fig-input-text").length,
+        number: defaultHost?.querySelectorAll("fig-input-number").length,
+        value: replacement?.getAttribute("value"),
+        placeholder: replacement?.getAttribute("placeholder"),
+        label: replacement?.getAttribute("aria-label"),
+        disabled: replacement?.hasAttribute("disabled"),
+      };
+
+      defaultHost?.removeAttribute("type");
+      return {
+        initial,
+        switched,
+        restoredText: defaultHost?.querySelectorAll("fig-input-text").length,
+      };
+    });
+
+    expect(state).toEqual({
+      initial: {
+        defaultText: 1,
+        defaultNumber: 0,
+        numberText: 0,
+        numberNumber: 1,
+        fallbackText: 1,
+      },
+      switched: {
+        text: 0,
+        number: 1,
+        value: "12",
+        placeholder: "Quantity",
+        label: "Quantity",
+        disabled: true,
+      },
+      restoredText: 1,
+    });
+  });
+
+  test("full expands to the available width", async ({ page }) => {
+    const widths = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <div id="split-width-container" style="width: 400px">
+          <fig-split-input id="split-full" full></fig-split-input>
+          <fig-split-input id="split-default"></fig-split-input>
+        </div>
+      `;
+      await new Promise(requestAnimationFrame);
+      return {
+        container: root
+          .querySelector("#split-width-container")
+          ?.getBoundingClientRect().width,
+        full: root.querySelector("#split-full")?.getBoundingClientRect().width,
+        default: root
+          .querySelector("#split-default")
+          ?.getBoundingClientRect().width,
+      };
+    });
+
+    expect(widths.container).toBe(400);
+    expect(widths.full).toBe(400);
+    expect(widths.default).toBeLessThan(400);
   });
 
   test("forwards accessible name and state to generated controls", async ({
@@ -5748,14 +5995,14 @@ test.describe("combo input accessibility", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <p id="combo-help">Choose or enter a font.</p>
-        <fig-combo-input
+        <fig-split-input
           id="combo"
           options="Inter, Roboto"
           placeholder="Font"
           aria-label="Font family"
           aria-describedby="combo-help"
           aria-required="true"
-        ></fig-combo-input>
+        ></fig-split-input>
       `;
     });
     await page.waitForTimeout(100);
@@ -5763,12 +6010,20 @@ test.describe("combo input accessibility", () => {
     const state = await page.locator("#combo").evaluate((host) => {
       const input = host.querySelector("fig-input-text input");
       const button = host.querySelector('fig-button[type="select"]');
+      const chevron = button?.querySelector(':scope > fig-icon[name="chevron"]');
       const dropdown = host.querySelector("fig-dropdown select");
       return {
         inputLabel: input?.getAttribute("aria-label"),
         inputDescribedBy: input?.getAttribute("aria-describedby"),
         inputRequired: input?.getAttribute("aria-required"),
         selectButtons: host.querySelectorAll('fig-button[type="select"]').length,
+        buttonVariant: button?.getAttribute("variant"),
+        buttonIcon: button?.hasAttribute("icon"),
+        chevronSize: chevron?.getAttribute("size"),
+        chevronSlot: chevron?.getAttribute("slot"),
+        generatedChevrons: button?.querySelectorAll(
+          'fig-icon[data-generated="select-chevron"]',
+        ).length,
         nativeButtonInSelect: button?.shadowRoot?.querySelector("button") !== null,
         dropdownLabel: dropdown?.getAttribute("aria-label"),
       };
@@ -5779,6 +6034,11 @@ test.describe("combo input accessibility", () => {
       inputDescribedBy: "combo-help",
       inputRequired: "true",
       selectButtons: 1,
+      buttonVariant: "input",
+      buttonIcon: true,
+      chevronSize: "small",
+      chevronSlot: "append",
+      generatedChevrons: 0,
       nativeButtonInSelect: false,
       dropdownLabel: "Font family options",
     });
@@ -5823,18 +6083,18 @@ test.describe("combo input accessibility", () => {
     });
   });
 
-  test("broadcasts dropdown input and change from the combo host only", async ({
+  test("broadcasts dropdown input and change from the split input host only", async ({
     page,
   }) => {
     const events = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <fig-combo-input
+        <fig-split-input
           id="combo-events"
           options="Inter, Roboto"
           value="Inter"
-        ></fig-combo-input>
+        ></fig-split-input>
       `;
       await new Promise(requestAnimationFrame);
 
@@ -5859,12 +6119,12 @@ test.describe("combo input accessibility", () => {
     expect(events).toEqual([
       {
         type: "input",
-        target: "FIG-COMBO-INPUT",
+        target: "FIG-SPLIT-INPUT",
         detail: { value: "Roboto" },
       },
       {
         type: "change",
-        target: "FIG-COMBO-INPUT",
+        target: "FIG-SPLIT-INPUT",
         detail: { value: "Roboto" },
       },
     ]);
@@ -6705,17 +6965,17 @@ test.describe("reconnect resilience", () => {
     });
   });
 
-  test("fig-combo-input keeps a single combo on reconnect", async ({ page }) => {
+  test("fig-split-input keeps a single split input on reconnect", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <fig-combo-input
+        <fig-split-input
           id="combo-reconnect"
           options="Alpha,Beta"
           value="Beta"
           placeholder="Type..."
-        ></fig-combo-input>
+        ></fig-split-input>
       `;
     });
     await page.waitForTimeout(50);

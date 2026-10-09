@@ -2652,11 +2652,16 @@ fig-origin-grid {
   }
 }
 
-/* Combo input */
+/* Split input */
+fig-split-input,
 fig-combo-input {
   display: inline-flex;
   flex: 1;
   min-width: 0;
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
 
   > .input-combo {
     flex: 1 1 auto;
@@ -2664,13 +2669,20 @@ fig-combo-input {
     min-width: 0;
   }
 
-  fig-input-text {
+  fig-input-text,
+  fig-input-number {
     flex: 1 1 auto;
     min-width: 0;
   }
 }
 
+fig-split-input fig-button[type="select"],
 fig-combo-input fig-button[type="select"] {
+  &[icon]:not([icon="false"]) {
+    width: var(--spacer-4);
+    padding: 0;
+  }
+
   > fig-dropdown,
   > fig-dropdown > select {
     width: 100%;
