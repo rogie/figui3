@@ -8660,6 +8660,47 @@ test.describe("fill picker accessibility", () => {
     });
   });
 
+  test("default angular gradient swatch uses the upright angle", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-fill-picker id="angular-default" mode="gradient">
+          <fig-swatch></fig-swatch>
+        </fig-fill-picker>
+      `;
+    });
+    await page.waitForTimeout(100);
+
+    await page.locator("#angular-default fig-swatch").click();
+    const state = await page.locator("#angular-default").evaluate((picker) => {
+      const typeSelect = document.querySelector(
+        "dialog.fig-fill-picker-dialog .fig-fill-picker-gradient-type",
+      );
+      if (!(typeSelect instanceof HTMLElement)) {
+        throw new Error("Missing gradient type select");
+      }
+      typeSelect.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: "angular",
+        }),
+      );
+
+      return {
+        angle: picker.value.gradient.angle,
+        background: picker
+          .querySelector("fig-swatch")
+          ?.getAttribute("background"),
+      };
+    });
+
+    expect(state.angle).toBe(180);
+    expect(state.background).toMatch(/^conic-gradient\(from 180deg,/);
+  });
+
   test("fig-input-gradient picker mode opens fill picker on Enter", async ({
     page,
   }) => {

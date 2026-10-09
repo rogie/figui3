@@ -2070,7 +2070,7 @@ class FigFillPicker extends HTMLElement {
   #colorInputMode = "hex";
   #gradient = {
     type: "linear",
-    angle: 0,
+    angle: 180,
     centerX: 50,
     centerY: 50,
     interpolationSpace: "srgb",

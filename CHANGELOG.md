@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.1.3]
+
+### Fixed
+
+- Corrected the default Angular gradient swatch orientation in `fig-fill-picker`.
+
 ## [11.1.2]
 
 ### Added
