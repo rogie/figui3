@@ -6368,7 +6368,12 @@ class FigSlider extends HTMLElement {
     hue: { min: 0, max: 255, step: 1 },
     delta: { min: -100, max: 100, step: 1 },
     stepper: { min: 0, max: 100, step: 25 },
-    opacity: { min: 0, max: 100, step: 0.1, color: "#FF0000" },
+    opacity: {
+      min: 0,
+      max: 100,
+      step: 0.1,
+      color: "var(--figma-color-icon)",
+    },
   };
 
   #boundHandleInput;

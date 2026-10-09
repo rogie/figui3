@@ -3395,6 +3395,7 @@ fig-slider {
     --slider-checkerboard: var(--checkerboard-slider);
     --slider-track-color: var(--figma-color-bg-tertiary);
 
+    &[type="opacity"],
     &[type="hue"]{
       --slider-handle-shadow:
       inset 0 0 0 3px var(--slider-thumb-color),

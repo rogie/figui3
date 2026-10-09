@@ -6863,6 +6863,29 @@ test.describe("slider accessibility", () => {
     }
   });
 
+  test("fig-slider opacity defaults to the icon color", async ({ page }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider id="default-opacity" type="opacity"></fig-slider>
+        <fig-slider id="custom-opacity" type="opacity" color="#0D99FF"></fig-slider>
+      `;
+
+      return {
+        defaultColor: (root.querySelector("#default-opacity") as HTMLElement)
+          .style.getPropertyValue("--color"),
+        customColor: (root.querySelector("#custom-opacity") as HTMLElement)
+          .style.getPropertyValue("--color"),
+      };
+    });
+
+    expect(state).toEqual({
+      defaultColor: "var(--figma-color-icon)",
+      customColor: "#0D99FF",
+    });
+  });
+
   test("fig-slider ignores invalid defaults and keeps runtime defaults in range", async ({
     page,
   }) => {

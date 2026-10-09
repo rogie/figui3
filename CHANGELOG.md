@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.1.4]
+
+### Fixed
+
+- Updated `fig-slider type="opacity"` to use the default icon color and hue-style handle when no color is specified.
+
 ## [11.1.3]
 
 ### Fixed
