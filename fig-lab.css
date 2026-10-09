@@ -603,51 +603,77 @@ fig-canvas-control {
   }
 }
 
-/* Oscillator Input */
-fig-reorder {
-  display: contents;
-}
+/* Drag to Reorder */
+  fig-reorder {
+    display: contents;
 
-fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reorder-item] {
-  cursor: grab;
-}
+    &:not([handle]):is(:not([disabled]), [disabled="false"])
+      > [data-reorder-item] {
+      cursor: grab;
 
-fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reorder-item] > fig-header,
-fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reorder-item] > fig-header *,
-fig-reorder:not([handle]):is(:not([disabled]), [disabled="false"]) > [data-reorder-item] > label {
-  cursor: grab;
-}
+      > fig-header,
+      > fig-header *,
+      > label {
+        cursor: grab;
+      }
+    }
 
-fig-reorder > .dragging {
-  background-color: var(--figma-color-bg-secondary);
-}
+    > .dragging {
+      background-color: var(--figma-color-bg-secondary);
+    }
 
-[data-reorder-handle] {
-  cursor: grab;
-}
+    &[disabled]:not([disabled="false"]) [data-reorder-handle] {
+      cursor: inherit;
+    }
+  }
 
-fig-reorder[disabled]:not([disabled="false"]) [data-reorder-handle] {
-  cursor: inherit;
-}
+  [data-reorder-handle] {
+    cursor: grab;
+  }
 
-body.fig-reorder-dragging,
-body.fig-reorder-dragging * {
-  user-select: none !important;
-  -webkit-user-select: none !important;
-  cursor: grabbing !important;
-}
+  body.fig-reorder-dragging {
+    &,
+    & * {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      cursor: grabbing !important;
+    }
+  }
 
-.fig-reorder-indicator {
-  position: fixed;
-  pointer-events: none;
-  z-index: 1000000;
-  background: var(--figma-color-border-strong);
-}
+  .fig-reorder-indicator {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000000;
+    border-radius: 1px;
+    &::before{
+      content: "";
+      position: absolute;
+      top: 0;
+      left: var(--spacer-1);
+      width: 100%;
+      height: 100%;
+      background: var(--figma-color-border-selected);
+    }
 
-.fig-reorder-indicator[data-axis="vertical"] {
-  height: 2px;
-}
+    &.fig-reorder-indicator-ring {
+      &::after{
+        content: "";
+        position: absolute;
+        top: 1px;
+        left: 0;
+        transform: translate(-50%, -50%);
+        width: var(--spacer-2);
+        height: var(--spacer-2);
+        border: 2px solid var(--figma-color-border-selected);
+        border-radius: 50%;
+      }
+    }
 
-.fig-reorder-indicator[data-axis="horizontal"] {
-  width: 2px;
-}
+    &[data-axis="vertical"] {
+      height: 2px;
+    }
+
+    &[data-axis="horizontal"] {
+      width: 2px;
+    }
+  }

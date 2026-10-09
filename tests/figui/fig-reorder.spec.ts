@@ -360,6 +360,80 @@ test.describe("fig-reorder", () => {
     expect(Number.parseFloat(indicator?.width ?? "0")).toBeGreaterThan(0);
   });
 
+  test("indicator toggles the drop indicator ring", async ({ page }) => {
+    const states = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-reorder id="reorder-host" indicator="ring">
+          <div id="item-a">A</div>
+          <div id="item-b">B</div>
+        </fig-reorder>
+      `;
+
+      await customElements.whenDefined("fig-reorder");
+      const host = document.querySelector("#reorder-host");
+      const itemA = document.querySelector("#item-a");
+      const itemB = document.querySelector("#item-b");
+      if (
+        !(host instanceof HTMLElement) ||
+        !(itemA instanceof HTMLElement) ||
+        !(itemB instanceof HTMLElement)
+      ) {
+        throw new Error("Missing reorder fixture");
+      }
+
+      const rectA = itemA.getBoundingClientRect();
+      const rectB = itemB.getBoundingClientRect();
+      itemA.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          clientX: rectA.left + rectA.width / 2,
+          clientY: rectA.top + rectA.height / 2,
+          button: 0,
+          pointerId: 30,
+          pointerType: "mouse",
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", {
+          bubbles: true,
+          cancelable: true,
+          clientX: rectB.left + rectB.width / 2,
+          clientY: rectB.top + rectB.height / 2,
+          button: 0,
+          pointerId: 30,
+          pointerType: "mouse",
+        }),
+      );
+
+      const indicator = document.querySelector(".fig-reorder-indicator");
+      if (!(indicator instanceof HTMLElement)) {
+        throw new Error("Missing reorder indicator");
+      }
+      const hasRing = () =>
+        indicator.classList.contains("fig-reorder-indicator-ring");
+
+      const ring = hasRing();
+      host.setAttribute("indicator", "default");
+      const defaultStyle = hasRing();
+      host.setAttribute("indicator", "ring");
+      const ringAgain = hasRing();
+      host.removeAttribute("indicator");
+      const omitted = hasRing();
+
+      return { ring, defaultStyle, ringAgain, omitted };
+    });
+
+    expect(states).toEqual({
+      ring: true,
+      defaultStyle: false,
+      ringAgain: true,
+      omitted: false,
+    });
+  });
+
   test("hides drop indicator when position is unchanged", async ({ page }) => {
     const indicator = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");

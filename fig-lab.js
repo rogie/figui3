@@ -2903,8 +2903,21 @@ class FigCanvasControl extends HTMLElement {
 }
 figLabDefineElement("fig-canvas-control", FigCanvasControl);
 /* Reorder wrapper */
+/**
+ * @attr {string} axis - Reorder direction: "vertical" (default) or "horizontal"
+ * @attr {string} handle - Selector for the drag handle within each item
+ * @attr {string} items - Selector limiting which direct children are reorderable
+ * @attr {string} indicator - Drop indicator style: "default" or "ring"
+ * @attr {boolean} disabled - Disable reordering
+ */
 class FigReorder extends HTMLElement {
-  static observedAttributes = ["axis", "handle", "items", "disabled"];
+  static observedAttributes = [
+    "axis",
+    "handle",
+    "items",
+    "indicator",
+    "disabled",
+  ];
 
   static #DRAG_THRESHOLD = 6;
 
@@ -2970,9 +2983,10 @@ class FigReorder extends HTMLElement {
     this.#liveRegion = null;
   }
 
-  attributeChangedCallback() {
+  attributeChangedCallback(name) {
     if (this.isConnected) {
       if (this.#disabled) this.#cancelDrag();
+      if (name === "indicator") this.#syncIndicatorStyle();
       this.#syncAttributeObserver();
       this.#syncChildren();
     }
@@ -3023,6 +3037,10 @@ class FigReorder extends HTMLElement {
 
   get #itemsSelector() {
     return (this.getAttribute("items") || "").trim();
+  }
+
+  get #indicatorStyle() {
+    return (this.getAttribute("indicator") || "default").trim().toLowerCase();
   }
 
   #getAllElementChildren() {
@@ -3409,9 +3427,20 @@ class FigReorder extends HTMLElement {
     const indicator = document.createElement("div");
     indicator.className = "fig-reorder-indicator";
     indicator.setAttribute("data-axis", this.#axis);
+    indicator.classList.toggle(
+      "fig-reorder-indicator-ring",
+      this.#indicatorStyle === "ring",
+    );
     document.body.appendChild(indicator);
     this.#indicator = indicator;
     return indicator;
+  }
+
+  #syncIndicatorStyle() {
+    this.#indicator?.classList.toggle(
+      "fig-reorder-indicator-ring",
+      this.#indicatorStyle === "ring",
+    );
   }
 
   #updateIndicator(index, item) {

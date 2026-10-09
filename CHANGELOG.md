@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.1.2]
+
+### Added
+
+- Added `indicator="default|ring"` to `fig-reorder`, including a playground control.
+
+### Changed
+
+- Standardized input focus rings around one tokenized ring on each visible control.
+- Updated and nested `fig-reorder` drag-indicator styles.
+
+### Fixed
+
+- Removed duplicate native focus outlines from wrapped inputs.
+- Restored keyboard focus rings for `fig-input-fill` and `fig-3d-rotate`.
+- Reflected keyboard focus state through `fig-select`.
+
 ## [11.1.1]
 
 ### Changed

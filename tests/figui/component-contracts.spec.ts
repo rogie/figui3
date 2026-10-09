@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { componentContracts } from "../../playground/src/testing/componentManifest";
 import {
   bootFigFixture,
@@ -5438,6 +5438,150 @@ test.describe("text input accessibility", () => {
     });
 
     expect(layout.inputWidth).toBeCloseTo(layout.availableWidth, 5);
+  });
+});
+
+test.describe("input focus ring consistency", () => {
+  test.beforeEach(async ({ page }) => {
+    collectPageErrors(page);
+    await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-editor.css" });
+    await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+    await page.evaluate(async () => {
+      await Promise.all([
+        customElements.whenDefined("fig-input-text"),
+        customElements.whenDefined("fig-input-number"),
+        customElements.whenDefined("fig-dropdown"),
+        customElements.whenDefined("fig-checkbox"),
+        customElements.whenDefined("fig-radio"),
+        customElements.whenDefined("fig-switch"),
+        customElements.whenDefined("fig-slider"),
+        customElements.whenDefined("fig-input-file"),
+        customElements.whenDefined("fig-input-fill"),
+        customElements.whenDefined("fig-3d-rotate"),
+        customElements.whenDefined("fig-select"),
+      ]);
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <button id="focus-start">Start</button>
+        <fig-input-text id="focus-text" aria-label="Text"></fig-input-text>
+        <fig-input-number id="focus-number" aria-label="Number"></fig-input-number>
+        <fig-dropdown id="focus-dropdown" label="Dropdown">
+          <option>One</option>
+        </fig-dropdown>
+        <fig-checkbox id="focus-checkbox" label="Checkbox"></fig-checkbox>
+        <fig-radio id="focus-radio" label="Radio"></fig-radio>
+        <fig-switch id="focus-switch" label="Switch"></fig-switch>
+        <fig-slider id="focus-slider" text="false" aria-label="Slider"></fig-slider>
+        <fig-input-file id="focus-file" label="Upload"></fig-input-file>
+        <fig-3d-rotate id="focus-rotate"></fig-3d-rotate>
+        <fig-select id="focus-select" label="Select" options="One,Two"></fig-select>
+      `;
+    });
+  });
+
+  const expectTokenRing = async (locator: Locator) => {
+    await expect(locator).toHaveCSS("outline-style", "solid");
+    await expect(locator).toHaveCSS("outline-width", "1px");
+    await expect(locator).toHaveCSS("outline-offset", "1px");
+  };
+
+  const expectNoRing = async (locator: Locator) => {
+    await expect(locator).toHaveCSS("outline-style", "none");
+  };
+
+  test("keyboard focus uses one tokenized ring on each visual owner", async ({
+    page,
+  }) => {
+    await page.locator("#focus-start").focus();
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(page.locator("#focus-text"));
+    await expectNoRing(page.locator("#focus-text input"));
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(page.locator("#focus-number"));
+    await expectNoRing(page.locator("#focus-number input"));
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(page.locator("#focus-dropdown select"));
+    await expectNoRing(page.locator("#focus-dropdown"));
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(page.locator("#focus-checkbox input"));
+    await expectNoRing(page.locator("#focus-checkbox"));
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(page.locator("#focus-radio input"));
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(page.locator("#focus-switch input"));
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(page.locator("#focus-slider"));
+    await expectNoRing(page.locator('#focus-slider input[type="range"]'));
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(page.locator("#focus-file fig-button"));
+    await expectNoRing(page.locator('#focus-file input[type="file"]'));
+
+    await page.keyboard.press("Tab");
+    await expectTokenRing(
+      page.locator("#focus-rotate .fig-3d-rotate-container"),
+    );
+
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#focus-select")).toHaveAttribute(
+      "data-focus-visible",
+      "",
+    );
+    await expectTokenRing(
+      page.locator("#focus-select").locator(".fig-select-trigger"),
+    );
+    await expectNoRing(page.locator("#focus-select"));
+  });
+
+  test("pointer focus does not add rings to button-like inputs", async ({
+    page,
+  }) => {
+    await page.locator("#focus-checkbox input").click();
+    await expectNoRing(page.locator("#focus-checkbox input"));
+
+    await page.locator("#focus-switch input").click();
+    await expectNoRing(page.locator("#focus-switch input"));
+
+    await page.locator("#focus-select").locator(".fig-select-trigger").click();
+    await expect(page.locator("#focus-select")).not.toHaveAttribute(
+      "data-focus-visible",
+      "",
+    );
+    await expectNoRing(
+      page.locator("#focus-select").locator(".fig-select-trigger"),
+    );
+  });
+
+  test("fig-input-fill uses one host ring for each internal focus target", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = '<fig-input-fill id="focus-fill"></fig-input-fill>';
+    });
+
+    const fill = page.locator("#focus-fill");
+    const targets = [
+      fill.locator("fig-swatch"),
+      fill.locator("fig-input-text input"),
+      fill.locator("fig-input-number input"),
+    ];
+
+    for (const target of targets) {
+      await target.focus();
+      await expectTokenRing(fill);
+      await expectNoRing(target);
+    }
   });
 });
 
@@ -11551,7 +11695,7 @@ test.describe("remaining accessibility contracts", () => {
     expect(cleared).toEqual({ buttonCount: 0, separatorCount: 0 });
   });
 
-  test("fig-input-fill has no host outline on hover, focus, or popup-open", async ({
+  test("fig-input-fill reserves its host outline for visible focus", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -11572,8 +11716,11 @@ test.describe("remaining accessibility contracts", () => {
     expect(await outlineStyleOf()).toBe("none");
 
     await fill.locator("fig-input-text input").focus();
-    expect(await outlineStyleOf()).toBe("none");
+    await expect(fill).toHaveCSS("outline-style", "solid");
+    await expect(fill).toHaveCSS("outline-width", "1px");
+    await expect(fill).toHaveCSS("outline-offset", "1px");
 
+    await fill.locator("fig-input-text input").evaluate((element) => element.blur());
     await fill.evaluate((element) => element.classList.add("has-popup-open"));
     expect(await outlineStyleOf()).toBe("none");
   });

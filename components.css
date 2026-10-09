@@ -528,7 +528,7 @@ input[type="tel"],
   appearance: textfield;
   -moz-appearance: textfield;
 
-  &:focus {
+  &:focus-visible {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
@@ -736,7 +736,7 @@ input[type="text"][list] {
   white-space: nowrap;
   text-overflow: ellipsis;
 
-  &:focus {
+  &:focus-visible {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
@@ -1495,12 +1495,12 @@ input[type="color"] {
   background-color: var(--figma-color-bg-secondary);
   display: inline-grid;
 
-  &:focus {
+  &:focus-visible {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
 
-  :is(fig-swatch, fig-chit):focus-within:not(:focus) & {
+  :is(fig-swatch, fig-chit):focus-within & {
     outline: 0;
   }
 
@@ -1658,14 +1658,10 @@ input[type="color"] {
       calc(var(--border-radius) - var(--padding))
     );
   }
-  &:focus,
-  &:active {
+  &:focus-visible,
+  &:has(> input[type="color"]:focus-visible) {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
-  }
-
-  &:focus-within:not(:focus) {
-    outline: 0;
   }
 
   input[type="color"] {
@@ -1772,6 +1768,14 @@ fig-input-file {
   fig-button:has(> input[type="file"]:focus-visible) {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  fig-button > input[type="file"] {
+    &:focus,
+    &:focus-visible {
+      outline: 0;
+      box-shadow: none;
+    }
   }
 
   &[dragover] fig-button {
@@ -2100,7 +2104,10 @@ fig-angle {
     background: var(--figma-color-bg-secondary);
     overflow: hidden;
 
-    &:has(.fig-angle-svg:focus, .fig-angle-input:focus-within),
+    &:has(
+      .fig-angle-svg:focus-visible,
+      .fig-angle-input :focus-visible
+    ),
     &.dragging {
       outline: var(--figma-focus-outline);
       outline-offset: var(--figma-focus-outline-offset);
@@ -2177,7 +2184,7 @@ fig-angle {
     left: 50%;
     width: fit-content;
     transform: translate(-50%, -50%);
-    outline: 0;
+    outline: 0 !important;
 
     input {
       field-sizing: content;
@@ -2314,6 +2321,11 @@ fig-3d-rotate {
     }
     &:focus {
       outline: 0;
+    }
+
+    &:focus-visible {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
     }
   }
 
@@ -2824,7 +2836,7 @@ input[type="checkbox"].switch {
     }
   }
 
-  &:focus, &:focus-within {
+  &:focus-visible {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
@@ -2866,7 +2878,7 @@ input[type="checkbox"]:not(.switch) {
     }
   }
 
-  &:focus {
+  &:focus-visible {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
 
@@ -2932,7 +2944,7 @@ input[type="radio"] {
     }
   }
 
-  &:focus {
+  &:focus-visible {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
@@ -4244,6 +4256,7 @@ fig-input-number {
     flex: 1;
 
     &:focus,
+    &:focus-visible,
     &:active {
       outline: 0 !important;
       box-shadow: none !important;
@@ -4251,6 +4264,7 @@ fig-input-number {
   }
 
   & input[type="text"]:focus,
+  & input[type="text"]:focus-visible,
   & input[type="text"]:active {
     outline: 0 !important;
     box-shadow: none !important;
@@ -4267,7 +4281,9 @@ fig-input-number {
     }
   }
 
-  &:has(:is(input, textarea):focus) {
+  &:focus,
+  &:focus-visible,
+  &:has(:is(input, textarea):focus-visible) {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
@@ -4388,14 +4404,25 @@ fig-input-fill {
   }
 }
 
-fig-input-color,
-fig-input-gradient {
-  &:focus,
-  &:focus-within,
+fig-input-color {
+  &:focus-visible,
+  &:has(:focus-visible),
   &.has-popup-open {
     outline: var(--figma-focus-outline) !important;
     outline-offset: var(--figma-focus-outline-offset) !important;
   }
+}
+
+fig-input-gradient {
+  &:focus-visible,
+  &.has-popup-open {
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
+  }
+}
+
+fig-input-color,
+fig-input-gradient {
   &:hover {
     outline: 1px solid var(--figma-color-border);
     outline-offset: -1px !important;
@@ -4415,6 +4442,11 @@ fig-input-fill {
   &:is(:hover, :focus, :focus-visible, :focus-within),
   &.has-popup-open {
     outline: none !important;
+  }
+
+  &:has(:focus-visible) {
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
   }
 
   & > [slot^="mode-"] {
@@ -4473,13 +4505,9 @@ fig-input-gradient {
    
   }
 
-  &:focus,
-  &:active {
+  &:focus-visible {
     outline: var(--figma-focus-outline) !important;
     outline-offset: var(--figma-focus-outline-offset) !important;
-  }
-  &:focus-within:not(:focus) {
-    outline: 0 !important;
   }
   &[mode="tip"]{
     fig-handle[type="color"]{

@@ -394,7 +394,7 @@ fig-fill-picker {
       background-color: var(--figma-color-bg-transparent-hover);
     }
 
-    &:has(.fig-fill-picker-gradient-space:focus-within) > fig-button {
+    &:has(.fig-fill-picker-gradient-space[data-focus-visible]) > fig-button {
       outline: var(--figma-focus-outline);
       outline-offset: var(--figma-focus-outline-offset);
     }

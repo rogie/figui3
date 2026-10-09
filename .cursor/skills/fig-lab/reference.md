@@ -55,9 +55,11 @@ Types: `point`, `color`, `point-radius`, `point-radius-angle`, `point-point`.
 
 ## `fig-reorder`
 
-Observed: `axis`, `handle`, `items`, `disabled`.
+Observed: `axis`, `handle`, `items`, `indicator`, `disabled`.
 
 `items`: CSS selector for which direct children are reorderable (default: all). Non-matching children stay in place and get `role="none"` unless they have a role. Class/attribute changes on children re-sync automatically; call `refresh()` to force it.
+
+`indicator`: Drop indicator style, either `default` or `ring`.
 
 With fewer than two matching items, matching children retain `role="listitem"` but remain non-draggable and receive no generated focus or move label.
 

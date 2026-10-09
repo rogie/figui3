@@ -484,6 +484,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     handle: { label: "Handle", type: "string" },
     items: { label: "Items", type: "string" },
+    indicator: {
+      label: "Indicator",
+      type: "enum",
+      options: ["default", "ring"],
+    },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-select": {

@@ -532,6 +532,17 @@ class FigSelect extends HTMLElement {
   #syncingOptions = false;
   #menuAnchorRef = null;
   #boundTriggerClick = this.#handleTriggerClick.bind(this);
+  #boundTriggerFocus = () => {
+    queueMicrotask(() => {
+      if (!this.#button?.matches(":focus-within")) return;
+      this.toggleAttribute(
+        "data-focus-visible",
+        this.#button.hasAttribute("data-focus-visible") ||
+          this.#button.matches(":focus-visible"),
+      );
+    });
+  };
+  #boundTriggerBlur = () => this.removeAttribute("data-focus-visible");
   #boundOptionClick = this.#handleOptionClick.bind(this);
   #boundOptionPointerOver = this.#handleOptionPointerOver.bind(this);
   #boundKeydown = this.#handleKeydown.bind(this);
@@ -1294,6 +1305,8 @@ class FigSelect extends HTMLElement {
   #setupListeners() {
     this.#button?.addEventListener("click", this.#boundTriggerClick);
     this.#button?.addEventListener("keydown", this.#boundKeydown);
+    this.#button?.addEventListener("focus", this.#boundTriggerFocus);
+    this.#button?.addEventListener("blur", this.#boundTriggerBlur);
     // Host click: slotted options stay in light DOM (not dialog.contains).
     this.addEventListener("click", this.#boundOptionClick);
     this.addEventListener("pointerover", this.#boundOptionPointerOver);
@@ -1305,6 +1318,9 @@ class FigSelect extends HTMLElement {
   #teardownListeners() {
     this.#button?.removeEventListener("click", this.#boundTriggerClick);
     this.#button?.removeEventListener("keydown", this.#boundKeydown);
+    this.#button?.removeEventListener("focus", this.#boundTriggerFocus);
+    this.#button?.removeEventListener("blur", this.#boundTriggerBlur);
+    this.removeAttribute("data-focus-visible");
     this.removeEventListener("click", this.#boundOptionClick);
     this.removeEventListener("pointerover", this.#boundOptionPointerOver);
     this.#popup?.removeEventListener("keydown", this.#boundKeydown);
