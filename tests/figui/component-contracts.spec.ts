@@ -3466,7 +3466,7 @@ test("sticky fig-separator sits below overflow-start in select and menu lists", 
   expect(leadingSelectSeparator).toEqual({
     previousNav: "start",
     borderTopColor: "rgba(0, 0, 0, 0)",
-    paddingTop: "0px",
+    paddingTop: "8px",
     marginTop: "0px",
     marginVariable: "0",
   });

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.1.5]
+
+### Fixed
+
+- Decoupled first-group separator spacing for `fig-select` and `fig-menu`.
+- Updated separators to use the translucent border token.
+
 ## [11.1.4]
 
 ### Fixed

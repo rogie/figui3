@@ -7215,7 +7215,7 @@ fig-menu::part(listbox) {
 }
 
 :is(fig-separator, fig-menu-separator) {
-  --fig-separator-color: var(--figma-color-border);
+  --fig-separator-color: var(--figma-color-bordertranslucent);
   --fig-separator-label-color: var(--figma-color-text-secondary);
   --fig-separator-margin-block: var(--spacer-2,0.5rem);
   --fig-separator-padding-block: 0;
@@ -7291,7 +7291,11 @@ fig-menu > :is(fig-separator, fig-menu-separator) {
 }
 
 fig-select-options > :is(fig-separator, fig-menu-separator):has(> label):first-child,
-fig-select-options > [data-fig-select-nav="start"] + :is(fig-separator, fig-menu-separator):has(> label),
+fig-select-options > [data-fig-select-nav="start"] + :is(fig-separator, fig-menu-separator):has(> label) {
+  --fig-separator-color: transparent;
+  --fig-separator-margin-block: 0;
+}
+
 fig-menu > [slot="trigger"] + :is(fig-separator, fig-menu-separator):has(> label) {
   --fig-separator-padding-block: 0;
   --fig-separator-stuck-padding-block: 0;
