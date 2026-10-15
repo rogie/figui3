@@ -826,7 +826,8 @@ fig-select::part(listbox) {
 fig-select-options > :is(fig-separator, fig-menu-separator) {
   /* Align labels with select option text after the checkmark column. */
   &[label]:not([label=""]) {
-    --fig-menu-inline-padding: 0 var(--spacer-2) 0 var(--spacer-5);
+    --fig-menu-inline-padding: var(--spacer-3);
+    --fig-separator-padding-inline: var(--spacer-3,0.75rem);
 
     &::before {
       margin-inline: unset;

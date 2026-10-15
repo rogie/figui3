@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.1.6]
+
+### Fixed
+
+- Corrected labeled separator alignment and padding in `fig-select`.
+
 ## [11.1.5]
 
 ### Fixed
