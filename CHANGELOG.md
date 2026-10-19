@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.2.1]
+
+### Changed
+
+- Positioned the palette editor popup to the left of its input and tightened its header, content, and gradient preview spacing.
+
+### Fixed
+
+- Kept gradient bar handles synchronized when removing a stop that was added directly from the bar.
+
 ## [11.2.0]
 
 ### Added

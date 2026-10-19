@@ -4283,13 +4283,10 @@ class FigFillPicker extends HTMLElement {
       if (!gradientBarInput) return;
       this.#syncingGradientBar = true;
       try {
-        gradientBarInput.setAttribute(
-          "value",
-          JSON.stringify({
-            type: "gradient",
-            gradient: gradientToValueShape(gradient),
-          }),
-        );
+        gradientBarInput.value = {
+          type: "gradient",
+          gradient: gradientToValueShape(gradient),
+        };
       } finally {
         this.#syncingGradientBar = false;
       }
@@ -4772,13 +4769,10 @@ class FigFillPicker extends HTMLElement {
     );
     if (barInput) {
       this.#syncingGradientBar = true;
-      barInput.setAttribute(
-        "value",
-        JSON.stringify({
-          type: "gradient",
-          gradient: gradientToValueShape(this.#gradient),
-        }),
-      );
+      barInput.value = {
+        type: "gradient",
+        gradient: gradientToValueShape(this.#gradient),
+      };
       this.#syncingGradientBar = false;
     }
 
