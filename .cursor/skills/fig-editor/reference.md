@@ -35,6 +35,24 @@ Position: omit to overlay the selected option on the trigger. Set to place the m
 
 Events: `input`, `change`, `optionhover`, `optionfocus`.
 
+## Reorder
+
+`fig-reorder` observes `axis`, `handle`, `items`, `indicator`, and `disabled`.
+
+- `items`: selector for reorderable direct children; non-matching children remain in place.
+- `indicator`: `default` or `ring`.
+- `refresh()`: force child/selector synchronization.
+- Event `reorder`: `{ oldIndex, newIndex, item }`; indices count matching items.
+- Nested drag controls are ignored unless an explicit `handle` is configured.
+
+## Palette editor
+
+`fig-palette-editor` observes `value`, `min`, `max`, `fixed`, and `disabled`. An omitted `max` allows unlimited colors.
+
+- `value`: JSON array of hex strings or `{ color, alpha }` objects, or comma-separated hex
+- `value` property and `input` / `change` event `detail`: normalized ordered `{ color, alpha }[]`
+- Rows are direct `fig-reorder` items and support pointer or keyboard reordering.
+
 ## Fill picker modes
 
 Built-in: `solid`, `gradient`, `image`, `video`, `webcam`.

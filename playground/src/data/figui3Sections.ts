@@ -595,6 +595,68 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     ],
   },
   {
+    id: "reorder",
+    name: "Reorder",
+    group: "Editor components",
+    description:
+      "A display:contents wrapper that drag-reorders direct children. Omit handle to drag whole rows; use handle when rows contain nested controls (requires <code>fig-editor.js</code>).",
+    examples: [
+      {
+        id: "default",
+        name: "Rows",
+        markup: `<div class="prop-panel">
+  <fig-reorder>
+    <fig-field>
+      <label>Number</label>
+      <fig-input-number value="16" min="0" max="100" units="px"></fig-input-number>
+    </fig-field>
+    <fig-field>
+      <label>Text</label>
+      <fig-input-text value="Rows" full></fig-input-text>
+    </fig-field>
+    <fig-field>
+      <label>Color</label>
+      <fig-input-color value="#0D99FF"></fig-input-color>
+    </fig-field>
+  </fig-reorder>
+</div>`,
+      },
+      {
+        id: "groups",
+        name: "Groups",
+        markup: `<div class="prop-panel">
+  <fig-reorder>
+    <fig-group name="Fill" collapsible open="true">
+      <fig-field><label>Opacity</label><fig-slider type="opacity" value="100" min="0" max="100" units="%" text="true" full></fig-slider></fig-field>
+    </fig-group>
+    <fig-group name="Stroke" collapsible open="false">
+      <fig-field><label>Width</label><fig-slider value="2" min="0" max="24" units="px" text="true" full></fig-slider></fig-field>
+    </fig-group>
+    <fig-group name="Effects" collapsible open="false">
+      <fig-field><label>Blur</label><fig-slider value="4" min="0" max="64" units="px" text="true" full></fig-slider></fig-field>
+    </fig-group>
+  </fig-reorder>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "palette-editor",
+    name: "Palette Editor",
+    group: "Editor components",
+    description:
+      "A reusable ordered palette editor with pointer and keyboard reordering (requires <code>fig-editor.js</code>).",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-palette-editor value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]'></fig-palette-editor>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "select",
     name: "Select",
     group: "Editor components",

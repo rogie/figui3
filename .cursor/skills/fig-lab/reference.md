@@ -53,20 +53,6 @@ Parent must be `position: relative` (or similar) so the control can fill it. Wra
 
 Types: `point`, `color`, `point-radius`, `point-radius-angle`, `point-point`.
 
-## `fig-reorder`
-
-Observed: `axis`, `handle`, `items`, `indicator`, `disabled`.
-
-`items`: CSS selector for which direct children are reorderable (default: all). Non-matching children stay in place and get `role="none"` unless they have a role. Class/attribute changes on children re-sync automatically; call `refresh()` to force it.
-
-`indicator`: Drop indicator style, either `default` or `ring`.
-
-With fewer than two matching items, matching children retain `role="listitem"` but remain non-draggable and receive no generated focus or move label.
-
-Event `reorder`: `{ oldIndex, newIndex, item }`. Indices count matching items, not DOM positions.
-
-Nested drag is ignored for sliders, handles, and canvas controls so inner gestures still work. If a row is still stolen, set `handle` to a drag-affordance selector.
-
 ## AI shells
 
 `fig-ai-prompt`, `fig-ai-context`, `fig-chat-message` are empty custom elements (presentation CSS only).

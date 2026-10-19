@@ -263,7 +263,23 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 />
 ```
 
-- Attrs: `value`, `fixed`, `open`, `disabled`
+- Attrs: `value`, `edit` (`true` | `false` | `picker`), `fixed`, `open`, `disabled`, `min`, `max`
+- `edit="true"` keeps the inline expandable editor, `edit="false"` renders a compact preview, and `edit="picker"` opens `fig-palette-editor` from the editor bundle.
+
+### `fig-palette-editor`
+
+```tsx
+<fig-palette-editor
+  value='["#0D99FF","#14AE5C"]'
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Editor-bundle component for reusable palette editing with drag and keyboard reordering.
+- Attrs: `value`, `fixed`, `disabled`, `min`, `max`
+- `max` is unbounded when omitted.
+- Events: `input` / `change` with the normalized ordered color array in `detail`
 
 ### `fig-input-gradient`
 

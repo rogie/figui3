@@ -1,15 +1,17 @@
 import { expect, test } from "@playwright/test";
 import { collectPageErrors } from "./helpers";
 
-async function bootLabFixture(page: import("@playwright/test").Page) {
-  await page.goto("/tests/figui/fixture-lab.html");
+async function bootEditorFixture(page: import("@playwright/test").Page) {
+  await page.goto("/tests/figui/fixture.html");
+  await page.addStyleTag({ url: "/fig-editor.css" });
+  await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
   await page.waitForFunction(() => customElements.get("fig-reorder"));
 }
 
 test.describe("fig-reorder", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
-    await bootLabFixture(page);
+    await bootEditorFixture(page);
   });
 
   test("reorders children and dispatches reorder event", async ({ page }) => {
@@ -358,6 +360,70 @@ test.describe("fig-reorder", () => {
     expect(indicator).not.toBeNull();
     expect(indicator?.height).toBe("2px");
     expect(Number.parseFloat(indicator?.width ?? "0")).toBeGreaterThan(0);
+  });
+
+  test("mounts the drop indicator in an active top-layer ancestor", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <div id="top-layer" popover="manual">
+          <fig-reorder id="reorder-host">
+            <div id="item-a">A</div>
+            <div id="item-b">B</div>
+          </fig-reorder>
+        </div>
+      `;
+
+      await customElements.whenDefined("fig-reorder");
+      const topLayer = document.querySelector("#top-layer");
+      const itemA = document.querySelector("#item-a");
+      const itemB = document.querySelector("#item-b");
+      if (
+        !(topLayer instanceof HTMLElement) ||
+        !(itemA instanceof HTMLElement) ||
+        !(itemB instanceof HTMLElement)
+      ) {
+        throw new Error("Missing top-layer reorder fixture");
+      }
+      topLayer.showPopover();
+
+      const rectA = itemA.getBoundingClientRect();
+      const rectB = itemB.getBoundingClientRect();
+      const init = (clientY: number) => ({
+        bubbles: true,
+        cancelable: true,
+        clientX: rectA.left + rectA.width / 2,
+        clientY,
+        button: 0,
+        pointerId: 31,
+        pointerType: "mouse",
+      });
+      itemA.dispatchEvent(
+        new PointerEvent("pointerdown", init(rectA.top + rectA.height / 2)),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointermove", init(rectB.bottom + 20)),
+      );
+
+      const indicator = document.querySelector(".fig-reorder-indicator");
+      const result = {
+        parentId: indicator?.parentElement?.id ?? null,
+        topLayerOpen: topLayer.matches(":popover-open"),
+      };
+
+      window.dispatchEvent(
+        new PointerEvent("pointerup", init(rectB.bottom + 20)),
+      );
+      return result;
+    });
+
+    expect(result).toEqual({
+      parentId: "top-layer",
+      topLayerOpen: true,
+    });
   });
 
   test("indicator toggles the drop indicator ring", async ({ page }) => {
@@ -810,4 +876,20 @@ test.describe("fig-reorder", () => {
       expect(errors).toEqual([]);
     });
   });
+});
+
+test("is registered by the editor bundle, not the lab bundle", async ({
+  page,
+}) => {
+  await page.goto("/tests/figui/fixture.html");
+  await page.addScriptTag({ type: "module", url: "/fig-lab.js" });
+  expect(
+    await page.evaluate(() => Boolean(customElements.get("fig-reorder"))),
+  ).toBe(false);
+
+  await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+  await page.evaluate(() => customElements.whenDefined("fig-reorder"));
+  expect(
+    await page.evaluate(() => Boolean(customElements.get("fig-reorder"))),
+  ).toBe(true);
 });

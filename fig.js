@@ -8526,6 +8526,7 @@ class FigField extends HTMLElement {
   #boundLabelEnter = null;
   #boundLabelLeave = null;
   #childrenObserver = null;
+  #inputObserver = null;
 
   constructor() {
     super();
@@ -8570,16 +8571,22 @@ class FigField extends HTMLElement {
       node.nodeName.toLowerCase().startsWith("fig-") &&
       !(node instanceof Element && node.classList.contains("fig-field-chevron")),
     );
+    this.#observeInputAttributes();
 
     // Popup/menu hosts also expose `open`, but that is overlay state — not a
     // fig-field disclosure. Only treat true expand/collapse children as toggleable.
     const inputTag = this.input?.localName ?? "";
+    const paletteEditMode = this.input?.getAttribute?.("edit");
+    const nonInlinePalette =
+      inputTag === "fig-input-palette" &&
+      (paletteEditMode === "false" || paletteEditMode === "picker");
     const popupOpenHost =
       inputTag === "fig-select" ||
       inputTag === "fig-menu" ||
       inputTag === "fig-dropdown" ||
       inputTag === "fig-tooltip" ||
       inputTag === "fig-fill-picker" ||
+      nonInlinePalette ||
       (this.input instanceof HTMLDialogElement);
     this.#toggleable = !!(
       this.input &&
@@ -8629,9 +8636,27 @@ class FigField extends HTMLElement {
     }
   }
 
+  #observeInputAttributes() {
+    this.#inputObserver?.disconnect();
+    this.#inputObserver = null;
+    if (
+      this.input?.localName !== "fig-input-palette" ||
+      typeof MutationObserver === "undefined"
+    ) {
+      return;
+    }
+    this.#inputObserver = new MutationObserver(() => this.#setup());
+    this.#inputObserver.observe(this.input, {
+      attributes: true,
+      attributeFilter: ["edit"],
+    });
+  }
+
   disconnectedCallback() {
     this.#childrenObserver?.disconnect();
     this.#childrenObserver = null;
+    this.#inputObserver?.disconnect();
+    this.#inputObserver = null;
     if (this.label) FigTooltip.hide(this.label);
     if (this.label && this.#boundToggle) {
       this.label.removeEventListener("click", this.#boundToggle);
@@ -10732,6 +10757,7 @@ figDefineElement("fig-input-fill", FigInputFill);
  * @attr {boolean} fixed - When set (or `fixed="true"`), palette length is locked — no add or remove
  * @attr {number} min - Minimum number of colors (default: 2)
  * @attr {number} max - Maximum number of colors (default: 8); add button hidden at max
+ * @attr {string} edit - Editing mode: "true" (inline, default), "false" (preview), or "picker"
  * @fires input - During color editing (detail: full color array)
  * @fires change - On committed color edits or add (detail: full color array)
  */
@@ -10740,11 +10766,26 @@ class FigInputPalette extends HTMLElement {
   #inlinePickers = [];
   #expandedPickers = [];
   #renderRAF = null;
+  #pickerDefinitionPromise = null;
+  #pickerPopup = null;
+  #pickerEditor = null;
+  #syncingValueAttribute = false;
   #boundHandleKeyDown = this.#handleKeyDown.bind(this);
   #boundHandleHostFocus = () => this.focus();
+  #boundPickerClosed = () => {
+    if (!this.#pickerPopup) return;
+    if (
+      this.#pickerPopup.hasAttribute("open") ||
+      this.#pickerPopup.matches?.(":open") ||
+      this.#pickerPopup.matches?.(":popover-open")
+    ) {
+      return;
+    }
+    if (this.open) this.open = false;
+  };
 
   static get observedAttributes() {
-    return ["value", "disabled", "min", "max", "open", "fixed"];
+    return ["value", "disabled", "min", "max", "open", "fixed", "edit"];
   }
 
   get open() {
@@ -10753,15 +10794,16 @@ class FigInputPalette extends HTMLElement {
 
   set open(value) {
     const was = this.open;
-    if (value) {
+    if (value && this.#editMode !== "false") {
       this.setAttribute("open", "");
     } else {
       this.removeAttribute("open");
     }
-    if (was !== !!value) {
+    const next = this.open;
+    if (was !== next) {
       this.dispatchEvent(
         new CustomEvent("openchange", {
-          detail: { open: !!value },
+          detail: { open: next },
           bubbles: true,
         }),
       );
@@ -10772,6 +10814,13 @@ class FigInputPalette extends HTMLElement {
     return (
       this.hasAttribute("fixed") && this.getAttribute("fixed") !== "false"
     );
+  }
+
+  get #editMode() {
+    const value = this.getAttribute("edit");
+    if (value === "false") return "false";
+    if (value === "picker") return "picker";
+    return "true";
   }
 
   get #min() {
@@ -10796,6 +10845,7 @@ class FigInputPalette extends HTMLElement {
       if (!this.isConnected) return;
       this.#parseValue();
       this.#render();
+      this.#renderPickerWhenAvailable();
     });
   }
 
@@ -10808,25 +10858,27 @@ class FigInputPalette extends HTMLElement {
     this.removeEventListener("focus", this.#boundHandleHostFocus);
     this.#inlinePickers = [];
     this.#expandedPickers = [];
+    this.#destroyPickerPopup();
   }
 
   #handleKeyDown(event) {
     if (event.key !== "Enter" && event.key !== " ") return;
     if (event.target !== this.querySelector(".palette-colors-inline")) return;
     if (this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") return;
+    if (this.#editMode === "false") return;
     event.preventDefault();
     event.stopPropagation();
     this.open = true;
-    this.querySelector(".palette-colors-inline")?.setAttribute("aria-expanded", "true");
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue) return;
+    if (oldValue === newValue || this.#syncingValueAttribute) return;
 
     switch (name) {
       case "value":
         this.#parseValue();
         this.#syncPickers();
+        this.#syncPickerEditor();
         break;
       case "disabled":
         this.#syncDisabled();
@@ -10835,9 +10887,17 @@ class FigInputPalette extends HTMLElement {
       case "max":
       case "fixed":
         this.#render();
+        this.#syncPickerEditor();
         break;
       case "open":
         this.#syncTriggerState();
+        this.#syncPickerOpenState();
+        break;
+      case "edit":
+        if (this.#editMode === "false" && this.open) this.open = false;
+        if (this.#editMode !== "picker") this.#destroyPickerPopup();
+        this.#render();
+        this.#renderPickerWhenAvailable();
         break;
     }
   }
@@ -10925,6 +10985,8 @@ class FigInputPalette extends HTMLElement {
     const disabled =
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false";
+    const editMode = this.#editMode;
+    const interactive = editMode !== "false";
 
     this.replaceChildren();
     this.#inlinePickers = [];
@@ -10932,10 +10994,16 @@ class FigInputPalette extends HTMLElement {
 
     const inlineWrap = document.createElement("div");
     inlineWrap.className = "palette-colors-inline";
-    inlineWrap.setAttribute("role", "button");
-    inlineWrap.setAttribute("tabindex", disabled ? "-1" : "+0");
-    inlineWrap.setAttribute("aria-expanded", String(this.open));
-    inlineWrap.setAttribute("aria-label", "Edit palette colors");
+    if (interactive) {
+      inlineWrap.setAttribute("role", "button");
+      inlineWrap.setAttribute("tabindex", disabled ? "-1" : "+0");
+      inlineWrap.setAttribute("aria-expanded", String(this.open));
+      inlineWrap.setAttribute("aria-label", "Edit palette colors");
+      if (editMode === "picker") inlineWrap.setAttribute("aria-haspopup", "dialog");
+    } else {
+      inlineWrap.setAttribute("role", "img");
+      inlineWrap.setAttribute("aria-label", "Palette colors");
+    }
     inlineWrap.addEventListener("blur", () => {
       inlineWrap.style.removeProperty("outline");
       inlineWrap.style.removeProperty("outline-offset");
@@ -10947,9 +11015,8 @@ class FigInputPalette extends HTMLElement {
       )
         return;
       this.open = true;
-      inlineWrap.setAttribute("aria-expanded", "true");
     };
-    inlineWrap.addEventListener("click", openPalette);
+    if (interactive) inlineWrap.addEventListener("click", openPalette);
 
     const wrap = document.createElement("div");
     wrap.className = "palette-colors";
@@ -10962,17 +11029,143 @@ class FigInputPalette extends HTMLElement {
     this.appendChild(inlineWrap);
     this.#syncTriggerState();
 
-    if (!this.#isFixed) this.#createAddButton(disabled, this);
+    if (editMode === "true") {
+      if (!this.#isFixed) this.#createAddButton(disabled, this);
 
-    const expandedWrap = document.createElement("div");
-    expandedWrap.className = "palette-colors-expanded";
-    this.#colors.forEach((entry, i) => {
-      expandedWrap.appendChild(this.#createPicker(entry, i, disabled));
-      if (!this.#isFixed) {
-        expandedWrap.appendChild(this.#createRemoveButton(i, disabled));
-      }
-    });
-    this.appendChild(expandedWrap);
+      const expandedWrap = document.createElement("div");
+      expandedWrap.className = "palette-colors-expanded";
+      this.#colors.forEach((entry, i) => {
+        expandedWrap.appendChild(this.#createPicker(entry, i, disabled));
+        if (!this.#isFixed) {
+          expandedWrap.appendChild(this.#createRemoveButton(i, disabled));
+        }
+      });
+      this.appendChild(expandedWrap);
+    }
+  }
+
+  #renderPickerWhenAvailable() {
+    if (
+      this.#editMode !== "picker" ||
+      customElements.get("fig-palette-editor")
+    ) {
+      this.#syncPickerOpenState();
+      return;
+    }
+    this.#pickerDefinitionPromise ??= customElements
+      .whenDefined("fig-palette-editor")
+      .then(() => {
+        if (!this.isConnected || this.#editMode !== "picker") return;
+        this.#syncPickerOpenState();
+      });
+  }
+
+  #ensurePickerPopup() {
+    if (this.#pickerPopup?.isConnected) return this.#pickerPopup;
+    if (!customElements.get("fig-palette-editor")) return null;
+
+    const popup = document.createElement("dialog", { is: "fig-popup" });
+    popup.setAttribute("is", "fig-popup");
+    popup.setAttribute("title", "Edit palette");
+    popup.setAttribute("position", "bottom left");
+    popup.setAttribute("offset", "0 8");
+    popup.setAttribute("viewport-margin", "8");
+    popup.setAttribute("popover", "manual");
+    popup.className = "fig-palette-editor-popup";
+    popup.id = figUniqueId();
+    popup.anchor = this;
+
+    const editor = document.createElement("fig-palette-editor");
+    const content = figCreateElement(
+      "fig-content",
+      { className: "fig-palette-editor-content" },
+      editor,
+    );
+    popup.append(content);
+
+    const handleEditorEvent = (event) => {
+      event.stopPropagation();
+      if (!Array.isArray(event.detail)) return;
+      this.#colors = event.detail.map((entry) => ({
+        color: entry?.color || "#D9D9D9",
+        alpha: Number.isFinite(Number(entry?.alpha))
+          ? Math.max(0, Math.min(1, Number(entry.alpha)))
+          : 1,
+      }));
+      this.#syncingValueAttribute = true;
+      this.setAttribute("value", JSON.stringify(this.#colors));
+      this.#syncingValueAttribute = false;
+      this.#syncPickers();
+      this.dispatchEvent(
+        new CustomEvent(event.type, {
+          bubbles: true,
+          detail: this.value,
+        }),
+      );
+    };
+    editor.addEventListener("input", handleEditorEvent);
+    editor.addEventListener("change", handleEditorEvent);
+    popup.addEventListener("close", this.#boundPickerClosed);
+    popup.addEventListener("toggle", this.#boundPickerClosed);
+
+    (figGetOverlayRoot() ?? document.body).append(popup);
+    this.#pickerPopup = popup;
+    this.#pickerEditor = editor;
+    this.querySelector(".palette-colors-inline")?.setAttribute(
+      "aria-controls",
+      popup.id,
+    );
+    this.#syncPickerEditor();
+    return popup;
+  }
+
+  #syncPickerEditor() {
+    const editor = this.#pickerEditor;
+    if (!editor) return;
+    editor.setAttribute("value", JSON.stringify(this.#colors));
+    editor.setAttribute("min", String(this.#min));
+    editor.setAttribute("max", String(this.#max));
+    editor.toggleAttribute("fixed", this.#isFixed);
+    const disabled =
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false";
+    editor.toggleAttribute("disabled", disabled);
+  }
+
+  #syncPickerOpenState() {
+    if (!this.isConnected || this.#editMode !== "picker") return;
+    if (!customElements.get("fig-palette-editor")) {
+      this.#renderPickerWhenAvailable();
+      return;
+    }
+    if (!this.open) {
+      if (this.#pickerPopup) this.#pickerPopup.open = false;
+      return;
+    }
+    const disabled =
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false";
+    if (disabled) {
+      this.open = false;
+      return;
+    }
+    const popup = this.#ensurePickerPopup();
+    if (!popup) return;
+    this.#syncPickerEditor();
+    popup.open = true;
+  }
+
+  #destroyPickerPopup() {
+    if (!this.#pickerPopup) return;
+    this.#pickerPopup.removeEventListener("close", this.#boundPickerClosed);
+    this.#pickerPopup.removeEventListener("toggle", this.#boundPickerClosed);
+    this.#pickerPopup.open = false;
+    this.#pickerPopup.remove();
+    this.querySelector(".palette-colors-inline")?.removeAttribute(
+      "aria-controls",
+    );
+    this.#pickerPopup = null;
+    this.#pickerEditor = null;
   }
 
   #createPicker(entry, index, disabled, { inline = false } = {}) {
@@ -11158,6 +11351,10 @@ class FigInputPalette extends HTMLElement {
     }
     this.#syncRemoveButtons(disabled);
     this.#syncTriggerState();
+    this.#syncPickerEditor();
+    if (disabled && this.#editMode === "picker" && this.open) {
+      this.open = false;
+    }
   }
 
   #syncTriggerState() {
@@ -11166,13 +11363,26 @@ class FigInputPalette extends HTMLElement {
     const disabled =
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false";
+    if (this.#editMode === "false") {
+      trigger.removeAttribute("tabindex");
+      trigger.removeAttribute("aria-disabled");
+      trigger.removeAttribute("aria-expanded");
+      trigger.removeAttribute("aria-haspopup");
+      return;
+    }
     trigger.setAttribute("tabindex", disabled ? "-1" : "+0");
     trigger.setAttribute("aria-disabled", String(disabled));
     trigger.setAttribute("aria-expanded", String(this.open));
+    if (this.#editMode === "picker") {
+      trigger.setAttribute("aria-haspopup", "dialog");
+    } else {
+      trigger.removeAttribute("aria-haspopup");
+    }
   }
 
   focus() {
     if (
+      this.#editMode === "false" ||
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false"
     )

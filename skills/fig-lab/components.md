@@ -54,38 +54,6 @@ Handlers below assume `onInput` / `onChange` from the React contract.
 
 - Methods: `focus()`, `spinTo(value)`, `beginScrub()`, `updateScrub()`, `endScrub()`.
 
-### `fig-reorder`
-
-```tsx
-<fig-reorder axis="vertical" handle=".drag">
-  {items.map((item) => (
-    <div key={item.id} className="row">
-      <button className="drag" type="button" aria-label="Reorder" />
-      {item.label}
-    </div>
-  ))}
-</fig-reorder>
-```
-
-Listen for `reorder` on a ref (`onReorder` is not a React-mapped event):
-
-```tsx
-useEffect(() => {
-  const el = ref.current;
-  if (!el) return;
-  const handler = (event: Event) => {
-    const { oldIndex, newIndex, item } = (event as CustomEvent).detail;
-    onReorder({ oldIndex, newIndex, item });
-  };
-  el.addEventListener("reorder", handler);
-  return () => el.removeEventListener("reorder", handler);
-}, [onReorder]);
-```
-
-- `display: contents`. Reorders **direct children**. `axis` `vertical` | `horizontal`. `items` selector limits which children reorder (e.g. `items=".row"` to skip headers); `refresh()` re-syncs. Omit `handle` to drag whole rows; set it when rows contain sliders/handles.
-- With fewer than two matching items, children keep `role="listitem"` but drag cursors, handles, focus, and move labels stay inactive until another item is added.
-- Event `reorder`: `{ oldIndex, newIndex, item }` (indices among matching items). Nested drag is ignored for sliders, handles, and canvas controls.
-
 ## AI composer
 
 Layout shells. Wire behavior yourself. Children are React nodes.

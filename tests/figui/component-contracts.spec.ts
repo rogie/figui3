@@ -1412,7 +1412,10 @@ test.describe("AI lab styling components", () => {
     await page.addStyleTag({ url: "/fig-lab.css" });
     await page.addStyleTag({ url: "/fig-editor.css" });
     await page.evaluate(async () => {
-      await import("/fig-editor.js");
+      await Promise.all([
+        import("/fig-editor.js"),
+        import("/fig-lab.js"),
+      ]);
       await Promise.all([
         customElements.whenDefined("fig-ai-prompt"),
         customElements.whenDefined("fig-ai-context"),

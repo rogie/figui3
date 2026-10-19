@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.2.0]
+
+### Added
+
+- Added the reusable `fig-palette-editor` with color editing, add/remove controls, and pointer or keyboard reordering.
+- Added palette editor and reorder examples, controls, typings, tests, and documentation.
+
+### Changed
+
+- Added inline, preview, and popup picker modes to `fig-input-palette`.
+- Moved `fig-reorder` from the Lab bundle to the Editor bundle and expanded its item, handle, indicator, and accessibility behavior.
+- Updated labelless `fig-field` layouts to support flexible groups of controls.
+- Refined palette and gradient editor structure and spacing with standard fields, headers, and stacks.
+
+### Fixed
+
+- Kept reorder indicators visible inside popovers, modal dialogs, and fullscreen elements.
+- Allowed color tips to inherit the active light or dark theme.
+
 ## [11.1.6]
 
 ### Fixed

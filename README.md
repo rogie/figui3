@@ -112,6 +112,8 @@ Minimal example:
 | [Color Tip](#color-tip) | `<fig-color-tip>` | Compact color tip with picker |
 | [Color Input](#color-input) | `<fig-input-color>` | Color picker with hex/alpha |
 | [Input Palette](#input-palette) | `<fig-input-palette>` | Editable multi-color palette |
+| [Palette Editor](#palette-editor) | `<fig-palette-editor>` | Reusable reorderable palette editor |
+| [Reorder](#reorder) | `<fig-reorder>` | Pointer- and keyboard-reorderable list |
 | [Gradient Input](#gradient-input) | `<fig-input-gradient>` | Gradient editor with stops |
 | [Fill Input](#fill-input) | `<fig-input-fill>` | Solid, gradient, image, video fill |
 | [Fill Picker](#fill-picker) | `<fig-fill-picker>` | Full fill picker dialog |
@@ -622,6 +624,7 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 | `max` | number | `8` | Maximum (add button hidden at max) |
 | `open` | boolean | `false` | Expanded rows with text inputs per color |
 | `fixed` | boolean | `false` | Lock palette length — no add or remove (`fixed` or `fixed="true"`) |
+| `edit` | `"true"` \| `"false"` \| `"picker"` | `"true"` | Inline editor, compact preview, or popup palette editor |
 
 **Events:**
 
@@ -632,10 +635,36 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 
 ```html
 <fig-input-palette value='["#FF0000","#00FF00","#0000FF"]'></fig-input-palette>
-<fig-input-palette value='[{"color":"#FF0000","alpha":0.5},{"color":"#00FF00","alpha":1}]' open></fig-input-palette>
+<fig-input-palette edit="false" value='["#FF0000","#00FF00","#0000FF"]'></fig-input-palette>
+<fig-input-palette edit="picker" value='[{"color":"#FF0000","alpha":0.5},{"color":"#00FF00","alpha":1}]'></fig-input-palette>
 ```
 
-The collapsed palette is a single tab stop. Enter or Space expands it, and focus styling uses the shared focus outline tokens on the visible swatch row.
+The editable palette is a single tab stop. Enter or Space expands inline mode or opens picker mode. `edit="false"` renders only the compact preview. Picker mode requires `fig-editor.js`.
+
+#### Palette Editor
+
+`<fig-palette-editor>`
+
+A reusable editor-bundle component for ordered color arrays. It uses `<fig-reorder>` for pointer and keyboard reordering and emits normalized color arrays from `input` and `change`. It supports `value`, `min`, `max`, `fixed`, and `disabled`; omit `max` for an unlimited number of colors.
+
+```html
+<fig-palette-editor value='["#94BD00","#83AD00","#1A632A","#003905"]'></fig-palette-editor>
+```
+
+#### Reorder
+
+`<fig-reorder>`
+
+An editor-bundle wrapper for reordering direct children with pointer or keyboard controls. Use `handle` for rows containing interactive controls, and `items` to limit which direct children participate.
+
+```html
+<fig-reorder axis="vertical" handle=".drag-handle">
+  <div><button class="drag-handle" aria-label="Reorder">Move</button>First</div>
+  <div><button class="drag-handle" aria-label="Reorder">Move</button>Second</div>
+</fig-reorder>
+```
+
+Attributes: `axis`, `handle`, `items`, `indicator`, and `disabled`. The bubbling `reorder` event includes `{ oldIndex, newIndex, item }`.
 
 ---
 

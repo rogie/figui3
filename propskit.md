@@ -75,6 +75,7 @@ declare global {
       "fig-input-gradient": WCProps;
       "fig-input-number": WCProps;
       "fig-input-palette": WCProps;
+      "fig-palette-editor": WCProps;
       "fig-input-text": WCProps;
       "fig-joystick": WCProps;
       "fig-media": WCProps;
@@ -396,7 +397,9 @@ Use these first for most property panels:
 
 - `fig-input-color`: one solid color. Attrs/modifiers: `value`, `alpha`, `text`, `disabled`, `swatch-disabled`, `full`, plus ARIA passthrough attrs. Use `text="true"` for hex entry and `alpha="true"` when opacity matters.
 - `fig-swatch`: display-only swatch for colors, gradients, images, and fill previews. Attrs/modifiers: `background`, `size="small|large"`, `selected`, `disabled`, `alpha`, plus ARIA label attrs.
-- `fig-input-palette`: editable list of colors. Attrs/modifiers: `value`, `disabled`, `min`, `max`, `open`, `fixed`, `full`. Good for chart series, card accents, generated palettes, and theme ramps.
+- `fig-input-palette`: list of colors with `edit="true|false|picker"` (`true` by default). Inline mode expands in place, `false` is a compact preview, and `picker` opens the reusable palette editor. Other attrs/modifiers: `value`, `disabled`, `min`, `max`, `open`, `fixed`, `full`.
+- `fig-palette-editor`: reusable ordered palette editor from the editor bundle. Attrs/modifiers: `value`, `disabled`, `min`, `max` (unbounded when omitted), `fixed`; emits `input` and `change` with the normalized color array and supports drag/keyboard reordering.
+- `fig-reorder`: editor-bundle wrapper for pointer and keyboard reordering of direct children. Attrs/modifiers: `axis`, `handle`, `items`, `indicator`, `disabled`; emits `reorder` with `{ oldIndex, newIndex, item }`.
 - `fig-input-gradient`: focused gradient stop editor. Attrs/modifiers: `value`, `disabled`, `edit="true|false"`, `mode="handle|tip"`, `size="large"`, `full`. Use `edit="false"` for preset previews inside `fig-choice`.
 - `fig-input-fill`: best default for fills. Attrs/modifiers: `value`, `disabled`, `mode`, `alpha`, `full`, plus ARIA passthrough attrs. Supports solid, gradient, image, video, and webcam fill shapes depending on value type.
 

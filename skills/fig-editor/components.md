@@ -2,7 +2,7 @@
 
 React contract: [../figui3/react.md](../figui3/react.md). Attrs: [reference.md](reference.md).
 
-Install `fig-editor.css` + `fig-editor.js` (pulls in `fig.js` and `fig-lab.js`). Still import `fig-editor.css`. Import `fig-lab.css` if lab visuals are needed.
+Install `fig-editor.css` + `fig-editor.js` (pulls in `fig.js`). Still import `fig-editor.css`.
 
 ## `fig-select`
 
@@ -65,6 +65,57 @@ Data-driven (no authored options):
 
 - Attrs: `value` (falls back to trimmed `textContent`), `label` (closed-trigger text when content is rich), `selected`, `disabled`, `subtle` (secondary hover/focus fill)
 - `role="option"`, `aria-selected`, `aria-disabled`
+
+## `fig-palette-editor`
+
+Reusable ordered palette editor used by `fig-input-palette edit="picker"`.
+
+```tsx
+<fig-palette-editor
+  value='["#94BD00","#83AD00","#1A632A","#003905"]'
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Attrs: `value`, `min`, `max`, `fixed`, `disabled`
+- `max` is unbounded when omitted.
+- Events: `input` / `change` with the normalized ordered color array in `detail`
+- Uses `fig-reorder` for pointer and keyboard reordering.
+
+## `fig-reorder`
+
+```tsx
+<fig-reorder axis="vertical" handle=".drag">
+  {items.map((item) => (
+    <div key={item.id} className="row">
+      <button className="drag" type="button" aria-label="Reorder" />
+      {item.label}
+    </div>
+  ))}
+</fig-reorder>
+```
+
+Listen for `reorder` on a ref (`onReorder` is not a React-mapped event):
+
+```tsx
+useEffect(() => {
+  const el = ref.current;
+  if (!el) return;
+  const handler = (event: Event) => {
+    const { oldIndex, newIndex, item } = (event as CustomEvent).detail;
+    onReorder({ oldIndex, newIndex, item });
+  };
+  el.addEventListener("reorder", handler);
+  return () => el.removeEventListener("reorder", handler);
+}, [onReorder]);
+```
+
+- `display: contents`. Reorders direct children.
+- Attrs: `axis` (`vertical` | `horizontal`), `handle`, `items`, `indicator` (`default` | `ring`), `disabled`.
+- `items` limits which direct children reorder; `refresh()` forces a re-sync.
+- Event `reorder`: `{ oldIndex, newIndex, item }`.
+- With fewer than two matching items, list semantics remain but drag and keyboard affordances stay inactive.
 
 ## `fig-fill-picker`
 

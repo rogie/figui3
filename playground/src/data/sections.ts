@@ -1241,17 +1241,27 @@ export const legacyPropsKitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Palette</label>
-    <fig-input-palette value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+    <fig-input-palette edit="true" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
   </fig-field>
 </div>`,
       },
       {
-        id: "minimal",
-        name: "Minimal",
+        id: "preview",
+        name: "Preview",
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Palette</label>
-    <fig-input-palette value='["#D9D9D9","#FFFFFF"]' full></fig-input-palette>
+    <fig-input-palette edit="false" value='["#94BD00","#83AD00","#1A632A","#003905"]' full></fig-input-palette>
+  </fig-field>
+</div>`,
+      },
+      {
+        id: "picker",
+        name: "Picker",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Palette</label>
+    <fig-input-palette edit="picker" value='["#94BD00","#83AD00","#1A632A","#003905"]' full></fig-input-palette>
   </fig-field>
 </div>`,
       },

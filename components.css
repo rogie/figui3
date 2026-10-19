@@ -4682,7 +4682,15 @@ fig-input-palette {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
-  &[open]:not([open="false"]):not([edit="false"]) {
+  &:is([edit="false"], [edit="picker"]) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+
+    > .palette-colors-inline {
+      grid-column: 1 / -1;
+    }
+  }
+  &[open]:not([open="false"]):not([edit="false"]):not([edit="picker"]) {
     grid-template-areas:
     "inline    button"
     "expanded  expanded";
@@ -4853,24 +4861,19 @@ fig-field {
     transform: rotate(0deg);
   }
 
-  /* labelless fields can have a few inputs */
+  /* Labelless fields support any number of controls between the side padding. */
   &:not([direction="vertical"]):not(:has(> label)) {
-    grid-template-columns:
-      var(--fig-field-left-padding) minmax(0, var(--fig-field-label-ratio))
-      var(--spacer-2)
-      minmax(0, var(--fig-field-input-ratio)) var(--fig-field-right-padding);
-    grid-template-areas: "chevron input1 gap input2 pad";
+    display: flex;
+    gap: var(--fig-field-gap);
+    padding-inline: var(--fig-field-left-padding) var(--fig-field-right-padding);
 
-    & > *:first-child {
-      grid-area: input1;
+    &:has(fig-button[icon]:not([icon="false"])[variant="ghost"]) {
+      padding-inline: var(--fig-field-left-padding) calc(var(--fig-field-right-padding) * 0.5);
     }
 
-    & > *:last-child {
-      grid-area: input2;
-    }
-
-    & > *:only-child {
-      grid-column: input1 / -2;
+    & > *:not(fig-button):not(.fig-field-chevron) {
+      flex: 1 1 0;
+      min-width: 0;
     }
   }
 
@@ -7033,7 +7036,6 @@ fig-color-tip {
   overflow: visible;
   position: relative;
   color: var(--figma-color-text);
-  color-scheme: light only;
   width: var(--size);
   height: var(--size);
   aspect-ratio: 1 / 1;

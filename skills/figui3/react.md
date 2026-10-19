@@ -80,6 +80,7 @@ type FigTag =
   | "fig-input-gradient"
   | "fig-input-number"
   | "fig-input-palette"
+  | "fig-palette-editor"
   | "fig-input-text"
   | "fig-input-wheel"
   | "fig-interpolation-swatch"

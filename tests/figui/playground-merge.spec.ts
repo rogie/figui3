@@ -10,6 +10,7 @@ import {
   controlAttributeRules,
   getSplitInputTypePreset,
 } from "../../playground/src/lib/attributeRules";
+import { labSections } from "../../playground/src/data/labSections";
 
 function sourceKeys(): string[] {
   return legacyPropsKitSections.flatMap((section) =>
@@ -31,7 +32,7 @@ test.describe("PropsKit playground migration", () => {
     );
 
     expect(legacyPropsKitSections).toHaveLength(54);
-    expect(oldKeys).toHaveLength(126);
+    expect(oldKeys).toHaveLength(127);
     expect(Object.keys(propkitMigration).sort()).toEqual(oldKeys.sort());
     for (const oldKey of oldKeys) {
       expect(
@@ -197,4 +198,32 @@ test("disabled components expose an Attributes view toggle", () => {
   expect(Object.keys(controlAttributeRules["fig-input-number"]).at(-1)).toBe(
     "disabled",
   );
+});
+
+test("palette editor exposes a maximum color control", () => {
+  const section = figui3Sections.find(
+    (entry) => entry.id === "palette-editor",
+  );
+  expect(section?.examples.some((example) => example.id === "default")).toBe(
+    true,
+  );
+  expect(controlAttributeRules["fig-palette-editor"]?.max).toMatchObject({
+    label: "Max",
+    type: "number",
+    min: 2,
+    step: 1,
+  });
+});
+
+test("reorder examples live with editor components, not lab", () => {
+  expect(
+    figui3Sections.find((section) => section.id === "reorder"),
+  ).toMatchObject({
+    group: "Editor components",
+    examples: [
+      { id: "default", name: "Rows" },
+      { id: "groups", name: "Groups" },
+    ],
+  });
+  expect(labSections.some((section) => section.id === "reorder")).toBe(false);
 });

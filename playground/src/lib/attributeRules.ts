@@ -571,9 +571,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     "default-video": { label: "Default video", type: "string" },
   },
   "fig-input-palette": {
+    edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
     fixed: { label: "Fixed", type: "boolean", boolMode: "presence" },
     open: { label: "Open", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "fig-palette-editor": {
+    max: { label: "Max", type: "number", min: 2, step: 1 },
   },
   "fig-input-gradient": {
     edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },

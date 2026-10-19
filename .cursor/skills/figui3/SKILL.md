@@ -27,10 +27,10 @@ import "@rogieking/figui3/fig.js";
 | Bundle | CSS + JS | Components |
 |---|---|---|
 | **Core** (this skill) | `fig.css` + `fig.js` | All `fig-*` in [components.md](components.md) |
-| **Editor** | `fig-editor.css` + `fig-editor.js` | `fig-select*`, `fig-fill-picker`, `fig-interpolation-swatch` |
+| **Editor** | `fig-editor.css` + `fig-editor.js` | `fig-select*`, `fig-fill-picker`, `fig-palette-editor`, `fig-reorder`, `fig-interpolation-swatch` |
 | **Layer** | `fig-layer.css` + `fig-layer.js` | `fig-layer` |
 
-`fig-editor.js` also imports `fig.js` and `fig-lab.js`. Lab CSS is still separate. `fig-layer` is **not** registered by `fig-editor.js`. Toast is core; layer is `fig-layer.js`.
+`fig-editor.js` also imports `fig.js`. Lab remains a separate JS/CSS bundle. `fig-layer` is **not** registered by `fig-editor.js`. Toast is core; layer is `fig-layer.js`.
 
 ## Principles
 

@@ -244,7 +244,10 @@ export const componentContracts: ComponentContract[] = [
     title: "Palette Input",
     group: "data",
     markup: `<fig-input-palette value='["#0D99FF","#14AE5C"]'></fig-input-palette>`,
-    attributes: [{ name: "open", attribute: "open", value: "" }],
+    attributes: [
+      { name: "open", attribute: "open", value: "" },
+      { name: "edit", attribute: "edit", value: "picker" },
+    ],
   },
   {
     tag: "fig-input-gradient",

@@ -102,6 +102,8 @@ function isExampleAvailable(example: Section["examples"][number]) {
 }
 
 const EDITOR_SECTION_IDS = new Set([
+  "palette-editor",
+  "reorder",
   "select",
   "fill-picker",
   "layer",

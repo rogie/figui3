@@ -35,6 +35,7 @@ declare module "react" {
       "fig-video": FigAttrs;
       "fig-input-color": FigAttrs;
       "fig-input-palette": FigAttrs;
+      "fig-palette-editor": FigAttrs;
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-angle": FigAttrs;

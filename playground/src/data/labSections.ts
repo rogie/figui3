@@ -2,51 +2,6 @@ import type { Section } from "./sections";
 
 const ungroupedLabSections: Section[] = [
   {
-    id: "reorder",
-    name: "Reorder",
-    description:
-      "A display:contents wrapper that drag-reorders direct children. Omit handle to drag whole rows; use handle when rows contain nested controls.",
-    examples: [
-      {
-        id: "default",
-        name: "Rows",
-        markup: `<div class="prop-panel">
-  <fig-reorder>
-    <fig-field>
-      <label>Number</label>
-      <fig-input-number value="16" min="0" max="100" units="px"></fig-input-number>
-    </fig-field>
-    <fig-field>
-      <label>Text</label>
-      <fig-input-text value="Rows" full></fig-input-text>
-    </fig-field>
-    <fig-field>
-      <label>Color</label>
-      <fig-input-color value="#0D99FF"></fig-input-color>
-    </fig-field>
-  </fig-reorder>
-</div>`,
-      },
-      {
-        id: "groups",
-        name: "Groups",
-        markup: `<div class="prop-panel">
-  <fig-reorder>
-    <fig-group name="Fill" collapsible open="true">
-      <fig-field><label>Opacity</label><fig-slider type="opacity" value="100" min="0" max="100" units="%" text="true" full></fig-slider></fig-field>
-    </fig-group>
-    <fig-group name="Stroke" collapsible open="false">
-      <fig-field><label>Width</label><fig-slider value="2" min="0" max="24" units="px" text="true" full></fig-slider></fig-field>
-    </fig-group>
-    <fig-group name="Effects" collapsible open="false">
-      <fig-field><label>Blur</label><fig-slider value="4" min="0" max="64" units="px" text="true" full></fig-slider></fig-field>
-    </fig-group>
-  </fig-reorder>
-</div>`,
-      },
-    ],
-  },
-  {
     id: "ai-attachments",
     name: "Attachments",
     description:

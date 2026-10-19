@@ -2,9 +2,11 @@
 name: fig-editor
 description: >-
   Guides FigUI3 editor bundle (`fig-editor.js` / `fig-editor.css`): fig-select,
-  fig-select-options, fig-select-option, fig-fill-picker, and fig-interpolation-swatch,
+  fig-select-options, fig-select-option, fig-fill-picker, fig-palette-editor,
+  fig-reorder, and fig-interpolation-swatch,
   including React JSX usage. Use when building custom selects, grouped option lists,
-  sticky separators, ghost selects, fill picker dialogs, or interpolation swatches.
+  sticky separators, ghost selects, fill picker dialogs, reorderable lists, or
+  interpolation swatches.
   Requires fig.js.
 user-invocable: false
 ---
@@ -25,7 +27,7 @@ import "@rogieking/figui3/fig-editor.css";
 import "@rogieking/figui3/fig-editor.js";
 ```
 
-`fig-editor.js` imports `fig.js` and `fig-lab.js`. Still import `fig-editor.css`. Import `fig-lab.css` if lab visuals are needed.
+`fig-editor.js` imports `fig.js`. Still import `fig-editor.css`.
 
 Registered tags:
 
@@ -35,6 +37,8 @@ Registered tags:
 | `fig-select-options` | Scrollable panel (`slot="panel"`), overflow chevrons |
 | `fig-select-option` | Option (`value`, `label`, `selected`, `disabled`, `subtle`) |
 | `fig-fill-picker` | Full fill editor dialog (solid, gradient, image, video, webcam, custom modes) |
+| `fig-palette-editor` | Ordered palette editor |
+| `fig-reorder` | Pointer- and keyboard-reorderable direct-child list |
 | `fig-interpolation-swatch` | Gradient interpolation preview swatch |
 
 

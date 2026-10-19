@@ -903,6 +903,8 @@ export default function AttributesView({
             const isOptionalWheelBound =
               target.controlTag === "fig-input-wheel" &&
               (name === "min" || name === "max");
+            const isOptionalPaletteMax =
+              target.controlTag === "fig-palette-editor" && name === "max";
             const numberValue =
               isShimmerLikeControl && name === "duration"
                 ? toNumberValue((value ?? "").replace(/s$/i, ""), fallback)
@@ -911,13 +913,15 @@ export default function AttributesView({
                       (value ?? "").replace(/[a-z]+$/i, ""),
                       fallback,
                     )
-                  : isOptionalWheelBound && (value === undefined || value === "")
+                  : (isOptionalWheelBound || isOptionalPaletteMax) &&
+                      (value === undefined || value === "")
                     ? ""
                     : toNumberValue(value, fallback);
             const useNumberInputControl =
               (target.controlTag === "fig-input-number" &&
                 (name === "min" || name === "max" || name === "step")) ||
               isOptionalWheelBound ||
+              isOptionalPaletteMax ||
               ((target.controlTag === "fig-handle" ||
                 target.controlTag === "fig-canvas-control") &&
                 name === "precision") ||
@@ -930,7 +934,10 @@ export default function AttributesView({
                 const nextValue =
                   host.value ?? (e as CustomEvent).detail?.value;
                 if (nextValue === undefined || nextValue === null) return;
-                if (isOptionalWheelBound && nextValue === "") {
+                if (
+                  (isOptionalWheelBound || isOptionalPaletteMax) &&
+                  nextValue === ""
+                ) {
                   applyChange(target.fieldIndex, scope, name, null);
                   return;
                 }
@@ -942,7 +949,8 @@ export default function AttributesView({
                   step={name === "step" ? "0.1" : "1"}
                   min={rule.min === undefined ? undefined : String(rule.min)}
                   max={rule.max === undefined ? undefined : String(rule.max)}
-                  steppers="true"
+                  steppers={isOptionalPaletteMax ? undefined : "true"}
+                  placeholder={isOptionalPaletteMax ? "Infinity" : undefined}
                   full
                   onInput={handleNumberInput}
                   onChange={handleNumberInput}
