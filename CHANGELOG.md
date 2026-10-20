@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.2.2]
+
+### Changed
+
+- Moved color-tip selection styling from the nested swatch to the full tip surface and beak.
+
+### Fixed
+
+- Restored a consistent tokenized selection outline for `fig-color-tip` and removed conflicting nested swatch and gradient tip-handle focus rings.
+
 ## [11.2.1]
 
 ### Changed

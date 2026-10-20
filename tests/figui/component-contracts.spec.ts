@@ -8067,6 +8067,48 @@ test.describe("reconnect resilience", () => {
     });
   });
 
+  test("selected color tips outline the body", async ({ page }) => {
+    const styles = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-color-tip id="unselected-tip" value="#0D99FF"></fig-color-tip>
+        <fig-color-tip id="selected-tip" value="#0D99FF" selected></fig-color-tip>
+      `;
+      const unselected = getComputedStyle(
+        root.querySelector("#unselected-tip")!,
+      );
+      const selectedTip = root.querySelector("#selected-tip")!;
+      const selected = getComputedStyle(selectedTip);
+      const selectedSwatch = getComputedStyle(
+        selectedTip.querySelector("fig-swatch")!,
+      );
+      const selectedBefore = getComputedStyle(selectedTip, "::before");
+      const selectedAfter = getComputedStyle(selectedTip, "::after");
+      const tipHeight = selectedTip.getBoundingClientRect().height;
+      return {
+        unselectedStyle: unselected.outlineStyle,
+        selectedStyle: selected.outlineStyle,
+        selectedWidth: selected.outlineWidth,
+        selectedOffset: selected.outlineOffset,
+        selectedSwatchBackground: selectedSwatch.backgroundColor,
+        selectedBeakOutlineOffset:
+          parseFloat(selectedBefore.top) - tipHeight,
+        selectedBeakFillOffset: parseFloat(selectedAfter.top) - tipHeight,
+      };
+    });
+
+    expect(styles).toEqual({
+      unselectedStyle: "none",
+      selectedStyle: "solid",
+      selectedWidth: "1px",
+      selectedOffset: "0px",
+      selectedSwatchBackground: "rgba(0, 0, 0, 0)",
+      selectedBeakOutlineOffset: 1,
+      selectedBeakFillOffset: -0.5,
+    });
+  });
+
   test("color tips, handles, and gradient adapters share alpha aliases", async ({
     page,
   }) => {
@@ -10659,7 +10701,7 @@ test.describe("remaining accessibility contracts", () => {
     });
   });
 
-  test("fig-input-gradient hides pointer focus during tip dragging", async ({
+  test("fig-input-gradient hides focus rings on tip handles", async ({
     page,
   }) => {
     const value =
@@ -10684,7 +10726,7 @@ test.describe("remaining accessibility contracts", () => {
 
     await page.keyboard.press("ArrowRight");
     await expect(handle).not.toHaveAttribute("data-fig-pointer-focus");
-    await expect(handle).toHaveCSS("outline-style", "solid");
+    await expect(handle).toHaveCSS("outline-style", "none");
   });
 
   test("fig-input-gradient handle mode deletes the selected stop", async ({

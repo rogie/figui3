@@ -1559,7 +1559,6 @@ input[type="color"] {
   --swatch-background: linear-gradient(#d9d9d9, #d9d9d9);
   --swatch-bg-size: cover;
   --swatch-bg-position: center;
-  --selected: 0;
   --alpha: 1;
 
   display: inline-grid;
@@ -1567,8 +1566,6 @@ input[type="color"] {
   height: var(--size);
   border-radius: var(--border-radius);
   background-color: var(--figma-color-bg-secondary);
-  box-shadow: inset 0 0 0 calc(var(--selected) * 1px)
-    var(--figma-color-border-selected);
   flex-shrink: 0;
 
   &::before,
@@ -1580,12 +1577,6 @@ input[type="color"] {
   & > div {
     background: var(--checkerboard-swatch);
     border-radius: var(--border-radius);
-  }
-
-  /* Selection ring */
-  &[selected]:not([selected="false"]) {
-    --selected: 1;
-    background-color: transparent;
   }
 
   &[size="medium"],
@@ -2574,7 +2565,6 @@ fig-origin-grid {
     touch-action: none;
 
     &:focus-visible {
-      --figma-focus-outline-offset: 1px;
       outline: var(--figma-focus-outline);
       outline-offset: var(--figma-focus-outline-offset);
     }
@@ -4525,6 +4515,11 @@ fig-input-gradient {
     }
     .fig-input-gradient-track {
       inset: 0 calc(var(--fig-input-gradient-padding) + 2px);
+
+      fig-handle:focus-visible {
+        outline: none !important;
+        border: none !important;
+      }
     }
     --fig-input-gradient-swatch-border-radius: var(--radius-medium);
   }
@@ -7026,7 +7021,7 @@ fig-handle {
 
 fig-color-tip {
   --size: 1.5rem;
-  --tip-selection-width: 1px;
+  --tip-selection-width: var(--figma-focus-outline-width);
   --tip-selection-scale: 1;
   --beak-offset: 50%;
 
@@ -7042,7 +7037,6 @@ fig-color-tip {
   flex-shrink: 0;
   background-color: var(--figma-color-bg);
   border-radius: var(--radius-medium, 0.3125rem);
-  box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
   filter: var(--fig-popover-shadow);
 
   &[control="add"],
@@ -7050,25 +7044,36 @@ fig-color-tip {
     cursor: pointer;
   }
 
-  :is(fig-swatch, fig-chit) {
-    input[type="color"] {
-      background: transparent;
+  fig-swatch{
+    &, & > input{
+      background-color: transparent;
+      outline: none !important;
     }
   }
 
-  &[selected]:not([selected="false"]):before {
-    content: "";
-    background: var(--figma-color-border-selected);
-    clip-path: var(--tip-pointer);
-    width: 1rem;
-    height: 6px;
-    position: absolute;
-    top: 100%;
-    left: var(--beak-offset, 50%);
-    z-index: 1;
-    pointer-events: none;
-    transform: translate(-50%, 0) scale(var(--tip-selection-scale));
-    transform-origin: 50% 0;
+  &[selected]:not([selected="false"]){
+    outline: var(--tip-selection-width) solid
+      var(--figma-focus-outline-color);
+    outline-offset: 0px;
+    &:after {
+      top: calc(
+        100% + var(--figma-focus-outline-offset) - var(--tip-selection-width) * 1.5
+      );
+    }
+    &:before {
+      content: "";
+      background: var(--figma-focus-outline-color);
+      clip-path: var(--tip-pointer);
+      width: 1rem;
+      height: 6px;
+      position: absolute;
+      top: calc(100% + var(--tip-selection-width) * 1);
+      left: var(--beak-offset, 50%);
+      z-index: 1;
+      pointer-events: none;
+      transform: translate(-50%, 0) scale(var(--tip-selection-scale));
+      transform-origin: 50% 0;
+    }
   }
 
   &:after {
@@ -7078,13 +7083,11 @@ fig-color-tip {
     width: 1rem;
     height: 6px;
     position: absolute;
-    top: calc(100% - 1px);
+    top: calc(100% - var(--tip-selection-width) * 1.5);
     left: var(--beak-offset, 50%);
     z-index: 3;
     transform: translate(-50%);
   }
-
-  
 }
 
 /* Menu */
