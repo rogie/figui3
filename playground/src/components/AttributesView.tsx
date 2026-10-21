@@ -917,6 +917,12 @@ export default function AttributesView({
               (name === "min" || name === "max");
             const isOptionalPaletteMax =
               target.controlTag === "fig-palette-editor" && name === "max";
+            const isOptionalSliderDefault =
+              target.controlTag === "fig-slider" && name === "default";
+            const isOptionalNumberValue =
+              isOptionalWheelBound ||
+              isOptionalPaletteMax ||
+              isOptionalSliderDefault;
             const numberValue =
               isShimmerLikeControl && name === "duration"
                 ? toNumberValue((value ?? "").replace(/s$/i, ""), fallback)
@@ -925,7 +931,7 @@ export default function AttributesView({
                       (value ?? "").replace(/[a-z]+$/i, ""),
                       fallback,
                     )
-                  : (isOptionalWheelBound || isOptionalPaletteMax) &&
+                  : isOptionalNumberValue &&
                       (value === undefined || value === "")
                     ? ""
                     : toNumberValue(value, fallback);
@@ -934,6 +940,7 @@ export default function AttributesView({
                 (name === "min" || name === "max" || name === "step")) ||
               isOptionalWheelBound ||
               isOptionalPaletteMax ||
+              isOptionalSliderDefault ||
               ((target.controlTag === "fig-handle" ||
                 target.controlTag === "fig-canvas-control") &&
                 name === "precision") ||
@@ -947,7 +954,7 @@ export default function AttributesView({
                   host.value ?? (e as CustomEvent).detail?.value;
                 if (nextValue === undefined || nextValue === null) return;
                 if (
-                  (isOptionalWheelBound || isOptionalPaletteMax) &&
+                  isOptionalNumberValue &&
                   nextValue === ""
                 ) {
                   applyChange(target.fieldIndex, scope, name, null);
@@ -958,9 +965,27 @@ export default function AttributesView({
               return (
                 <fig-input-number
                   value={numberValue === "" ? "" : String(numberValue)}
-                  step={name === "step" ? "0.1" : "1"}
-                  min={rule.min === undefined ? undefined : String(rule.min)}
-                  max={rule.max === undefined ? undefined : String(rule.max)}
+                  step={
+                    isOptionalSliderDefault
+                      ? target.controlAttributes.step || "1"
+                      : name === "step"
+                        ? "0.1"
+                        : "1"
+                  }
+                  min={
+                    isOptionalSliderDefault
+                      ? target.controlAttributes.min
+                      : rule.min === undefined
+                        ? undefined
+                        : String(rule.min)
+                  }
+                  max={
+                    isOptionalSliderDefault
+                      ? target.controlAttributes.max
+                      : rule.max === undefined
+                        ? undefined
+                        : String(rule.max)
+                  }
                   steppers={isOptionalPaletteMax ? undefined : "true"}
                   placeholder={isOptionalPaletteMax ? "Infinity" : undefined}
                   full

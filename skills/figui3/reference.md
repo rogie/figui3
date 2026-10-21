@@ -55,6 +55,7 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 - Always set `min`, `max`, `step`; `units` when displayed
 - `transform` when internal scale ≠ UI scale
 - `variant="classic"` for the older appearance
+- Valid explicit `default` values add a tick and native snap target for range, opacity, and hue; inferred defaults do not
 - Opacity: set `color` and usually `units="%"`
 - Delta: include `default` and typically symmetric min/max
 - Stepper: include a `<datalist>` of stops

@@ -219,6 +219,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 ```
 
 - Attrs: `type` (`range`, `opacity`, `hue`, `stepper`, `delta`), `min`, `max`, `step`, `text`, `units`, `transform`, `color`, `default`, `variant` (`classic`), `placeholder`, `full`, `disabled`
+- A valid explicit `default` adds a tick and native snap target for range, opacity, and hue sliders. Inferred defaults do not render a tick.
 - Events: `input` / `change` → `currentTarget.value`
 - React: keep `value` a string; do not remount during drag. Opacity: set `color`. Delta: set `default`. Stepper: include a `<datalist>` of stops.
 

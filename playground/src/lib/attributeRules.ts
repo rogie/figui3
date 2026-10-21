@@ -462,6 +462,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
   },
   "fig-slider": {
+    default: { label: "Default", type: "number" },
     variant: {
       label: "Variant",
       type: "enum",

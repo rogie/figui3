@@ -215,6 +215,13 @@ test("palette editor exposes a maximum color control", () => {
   });
 });
 
+test("slider exposes an optional default control", () => {
+  expect(controlAttributeRules["fig-slider"]?.default).toEqual({
+    label: "Default",
+    type: "number",
+  });
+});
+
 test("reorder examples live with editor components, not lab", () => {
   expect(
     figui3Sections.find((section) => section.id === "reorder"),

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.3.1]
+
+### Added
+
+- Added explicit `fig-slider` default ticks and native snap targets for valid range, hue, and opacity defaults.
+- Added an optional slider default control to the playground.
+
+### Changed
+
+- Made `fig-input-number` steppers repeat while held, emitting continuous input updates and one change event on release.
+
+### Fixed
+
+- Kept generated slider default ticks within variant-specific track endpoints.
+
 ## [11.3.0]
 
 ### Added

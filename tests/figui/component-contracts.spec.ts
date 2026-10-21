@@ -6236,6 +6236,79 @@ test.describe("number input accessibility", () => {
     expect(order.appendLeft).toBeLessThan(order.steppersLeft);
   });
 
+  test("fig-input-number steppers repeat while pressed and commit on release", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-number
+          id="repeating-number"
+          value="10"
+          min="0"
+          max="100"
+          step="2"
+          steppers
+        ></fig-input-number>
+      `;
+      const host = root.querySelector("#repeating-number");
+      if (!host) throw new Error("Missing repeating number input");
+      const events: string[] = [];
+      (window as typeof window & { stepperEvents: string[] }).stepperEvents =
+        events;
+      host.addEventListener("input", () => events.push("input"));
+      host.addEventListener("change", () => events.push("change"));
+    });
+
+    const host = page.locator("#repeating-number");
+    const up = host.locator(".fig-stepper-up");
+    await up.hover();
+    await page.mouse.down();
+    await page.waitForTimeout(550);
+    await page.mouse.up();
+    const increasedValue = await host.evaluate(
+      (element: HTMLElement & { value: number }) => element.value,
+    );
+    expect(increasedValue).toBeGreaterThan(12);
+
+    const firstEvents = await page.evaluate(
+      () =>
+        (window as typeof window & { stepperEvents: string[] }).stepperEvents,
+    );
+    expect(firstEvents.filter((event) => event === "input").length).toBeGreaterThan(
+      1,
+    );
+    expect(firstEvents.filter((event) => event === "change")).toHaveLength(1);
+    expect(firstEvents.at(-1)).toBe("change");
+
+    await page.waitForTimeout(150);
+    await expect(host).toHaveJSProperty("value", increasedValue);
+
+    const down = host.locator(".fig-stepper-down");
+    await down.hover();
+    await page.mouse.down();
+    await page.waitForTimeout(550);
+    await page.mouse.up();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (
+              window as typeof window & { stepperEvents: string[] }
+            ).stepperEvents.at(-1),
+        ),
+      )
+      .toBe("change");
+    await expect
+      .poll(() =>
+        host.evaluate(
+          (element: HTMLElement & { value: number }) => element.value,
+        ),
+      )
+      .toBeLessThan(increasedValue);
+  });
+
   test('fig-input-number variant="ghost" drops the fill and uses secondary hover fill', async ({
     page,
   }) => {
@@ -7418,6 +7491,104 @@ test.describe("slider accessibility", () => {
       },
     });
     expect(state.normalizationEvents).toEqual([]);
+  });
+
+  test("fig-slider renders and natively snaps to explicit defaults", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider id="range-default" text="false" value="0" default="50" min="0" max="100" step="1" style="width:240px"></fig-slider>
+        <fig-slider id="range-inferred" text="false" value="50" min="0" max="100"></fig-slider>
+        <fig-slider id="hue-default" type="hue" text="false" value="0" default="180" min="0" max="360"></fig-slider>
+        <fig-slider id="opacity-default" type="opacity" text="false" value="0" default="25" min="0" max="100"></fig-slider>
+        <fig-slider id="off-step-default" text="false" value="0" default="35" min="0" max="100" step="10"></fig-slider>
+      `;
+    });
+
+    const readDefaultTick = (id: string) =>
+      page.locator(id).evaluate((host) => {
+        const input = host.querySelector('input[type="range"]');
+        const listId = input?.getAttribute("list");
+        const datalist = host.querySelector(
+          'datalist[data-generated="slider-default"]',
+        );
+        const option = datalist?.querySelector("option");
+        return {
+          listId,
+          datalistId: datalist?.id ?? null,
+          value: option?.getAttribute("value") ?? null,
+          isDefault: option?.hasAttribute("default") ?? false,
+        };
+      });
+
+    await expect
+      .poll(() => readDefaultTick("#range-default"))
+      .toEqual({
+        listId: expect.any(String),
+        datalistId: expect.any(String),
+        value: "50",
+        isDefault: true,
+      });
+    const rangeState = await readDefaultTick("#range-default");
+    expect(rangeState.listId).toBe(rangeState.datalistId);
+    const defaultPosition = await page
+      .locator("#range-default")
+      .evaluate((host) => {
+        const track = host.querySelector(".fig-slider-input-container");
+        const tick = host.querySelector(
+          'datalist[data-generated="slider-default"] option',
+        );
+        const trackRect = track?.getBoundingClientRect();
+        const tickRect = tick?.getBoundingClientRect();
+        if (!trackRect || !tickRect) return null;
+        return (
+          (tickRect.left + tickRect.width / 2 - trackRect.left) /
+          trackRect.width
+        );
+      });
+    expect(defaultPosition).toBeCloseTo(0.5, 2);
+    await expect
+      .poll(() => readDefaultTick("#hue-default"))
+      .toMatchObject({ value: "180", isDefault: true });
+    await expect
+      .poll(() => readDefaultTick("#opacity-default"))
+      .toMatchObject({ value: "25", isDefault: true });
+    expect(await readDefaultTick("#range-inferred")).toEqual({
+      listId: null,
+      datalistId: null,
+      value: null,
+      isDefault: false,
+    });
+    expect(await readDefaultTick("#off-step-default")).toEqual({
+      listId: null,
+      datalistId: null,
+      value: null,
+      isDefault: false,
+    });
+
+    const range = page.locator("#range-default");
+    const input = range.locator('input[type="range"]');
+    const box = await input.boundingBox();
+    if (!box) throw new Error("Missing range input bounds");
+    await page.mouse.click(box.x + box.width * 0.48, box.y + box.height / 2);
+    await expect(range).toHaveAttribute("value", "50");
+
+    await range.evaluate((host) => host.setAttribute("default", "60"));
+    await expect
+      .poll(() => readDefaultTick("#range-default"))
+      .toMatchObject({ value: "60", isDefault: true });
+    await range.evaluate((host) => host.removeAttribute("default"));
+    await expect
+      .poll(() => readDefaultTick("#range-default"))
+      .toEqual({
+        listId: null,
+        datalistId: null,
+        value: null,
+        isDefault: false,
+      });
   });
 
   test("fig-slider range supports Shift arrow key stepping", async ({ page }) => {

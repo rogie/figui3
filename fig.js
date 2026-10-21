@@ -6342,6 +6342,7 @@ figDefineElement("fig-options", FigOptions);
  * @attr {number} min - The minimum value
  * @attr {number} max - The maximum value
  * @attr {number} step - The step increment
+ * @attr {number} default - Explicit tick and native snap target
  * @attr {boolean} text - Whether to show a text input alongside the slider (default true)
  * @attr {string} placeholder - Placeholder for the number input when text is enabled
  * @attr {string} units - The units to display after the value
@@ -6634,6 +6635,8 @@ class FigSlider extends HTMLElement {
       this.datalist.append(option);
       this.inputContainer.append(this.datalist);
       this.input.setAttribute("list", this.datalist.getAttribute("id"));
+    } else if (this.#hasExplicitValidDefault()) {
+      this.#createDefaultDatalist();
     }
     this.#syncDefaultDatalist();
     this.#syncValue();
@@ -6753,6 +6756,25 @@ class FigSlider extends HTMLElement {
     const nearest = Math.round(steps);
     const tolerance = Number.EPSILON * Math.max(1, Math.abs(steps)) * 16;
     return Math.abs(steps - nearest) <= tolerance;
+  }
+  #supportsGeneratedDefaultDatalist() {
+    return ["range", "hue", "opacity"].includes(this.type);
+  }
+  #hasExplicitValidDefault() {
+    if (
+      !this.hasAttribute("default") ||
+      !this.#supportsGeneratedDefaultDatalist()
+    ) {
+      return false;
+    }
+    const { min, max } = this.#getBounds();
+    const parsed = this.#toFiniteNumber(this.getAttribute("default"));
+    return (
+      parsed !== null &&
+      parsed >= min &&
+      parsed <= max &&
+      this.#isStepAligned(parsed)
+    );
   }
   #resolveDefaultValue(rawDefault = this.getAttribute("default")) {
     const { min, max } = this.#getBounds();
@@ -6959,8 +6981,24 @@ class FigSlider extends HTMLElement {
   }
 
   #syncDefaultDatalist() {
+    const generatedDefault =
+      this.datalist?.getAttribute("data-generated") === "slider-default";
+    const shouldGenerateDefault = this.#hasExplicitValidDefault();
+    if (generatedDefault && !shouldGenerateDefault) {
+      this.datalist.remove();
+      this.datalist = null;
+      this.input?.removeAttribute("list");
+    } else if (!this.datalist && shouldGenerateDefault) {
+      this.#createDefaultDatalist();
+    }
     if (!this.datalist) return;
     const defaultValue = String(this.default);
+    if (generatedDefault) {
+      const option =
+        this.datalist.querySelector("option") ?? document.createElement("option");
+      option.value = defaultValue;
+      this.datalist.replaceChildren(option);
+    }
     const options = [...this.datalist.querySelectorAll("option")];
     options.forEach((option) => option.removeAttribute("default"));
     let defaultOption = options.find((option) => option.value === defaultValue);
@@ -6974,6 +7012,17 @@ class FigSlider extends HTMLElement {
       this.datalist.replaceChildren(defaultOption);
     }
     defaultOption?.setAttribute("default", "true");
+  }
+
+  #createDefaultDatalist() {
+    this.datalist = document.createElement("datalist");
+    this.datalist.setAttribute("data-generated", "slider-default");
+    this.datalist.setAttribute("id", figUniqueId());
+    const option = document.createElement("option");
+    option.value = String(this.default);
+    this.datalist.append(option);
+    this.inputContainer.append(this.datalist);
+    this.input.setAttribute("list", this.datalist.id);
   }
 
   #regenerateWhenIdle() {
@@ -7779,6 +7828,12 @@ class FigInputNumber extends HTMLElement {
   #precision;
   #isInteracting = false;
   #stepperEl = null;
+  #stepperPointerId = null;
+  #stepperRepeatTimeout = 0;
+  #stepperRepeatInterval = 0;
+  #stepperDidChange = false;
+  #boundStepperPointerEnd;
+  #boundStepperWindowBlur;
   #mutationObserver = null;
   #syncRaf = 0;
   #previousUserSelect = "";
@@ -7791,6 +7846,8 @@ class FigInputNumber extends HTMLElement {
     "aria-required",
   ];
   static #DEFAULT_UNITS_DISALLOW = "px";
+  static #STEPPER_REPEAT_DELAY = 350;
+  static #STEPPER_REPEAT_INTERVAL = 60;
 
   #parseUnitsDisallowList(value) {
     return (value || "")
@@ -7832,11 +7889,12 @@ class FigInputNumber extends HTMLElement {
         const btn = e.target.closest("button");
         if (!btn || this.disabled || btn.disabled) return;
         const dir = btn.classList.contains("fig-stepper-up") ? 1 : -1;
-        this.#stepValue(dir);
+        this.#startStepperRepeat(e, dir);
         this.input.focus();
       });
       this.append(this.#stepperEl);
     } else if (!hasSteppers && this.#stepperEl) {
+      this.#stopStepperRepeat();
       this.#stepperEl.remove();
       this.#stepperEl = null;
     }
@@ -7867,13 +7925,60 @@ class FigInputNumber extends HTMLElement {
     down.disabled = disabled || atMin;
   }
 
+  #startStepperRepeat(event, direction) {
+    this.#stopStepperRepeat();
+    this.#stepperPointerId = event.pointerId;
+    this.#stepperDidChange = this.#stepValue(direction);
+    window.addEventListener("pointerup", this.#boundStepperPointerEnd);
+    window.addEventListener("pointercancel", this.#boundStepperPointerEnd);
+    window.addEventListener("blur", this.#boundStepperWindowBlur);
+    if (!this.#stepperDidChange) return;
+
+    this.#stepperRepeatTimeout = window.setTimeout(() => {
+      this.#stepperRepeatTimeout = 0;
+      this.#stepperRepeatInterval = window.setInterval(() => {
+        const changed = this.#stepValue(direction);
+        this.#stepperDidChange ||= changed;
+        if (!changed) this.#clearStepperRepeatTimers();
+      }, FigInputNumber.#STEPPER_REPEAT_INTERVAL);
+    }, FigInputNumber.#STEPPER_REPEAT_DELAY);
+  }
+
+  #clearStepperRepeatTimers() {
+    if (this.#stepperRepeatTimeout) {
+      clearTimeout(this.#stepperRepeatTimeout);
+      this.#stepperRepeatTimeout = 0;
+    }
+    if (this.#stepperRepeatInterval) {
+      clearInterval(this.#stepperRepeatInterval);
+      this.#stepperRepeatInterval = 0;
+    }
+  }
+
+  #stopStepperRepeat(commit = true) {
+    this.#clearStepperRepeatTimers();
+    window.removeEventListener("pointerup", this.#boundStepperPointerEnd);
+    window.removeEventListener("pointercancel", this.#boundStepperPointerEnd);
+    window.removeEventListener("blur", this.#boundStepperWindowBlur);
+    this.#stepperPointerId = null;
+    if (commit && this.#stepperDidChange) {
+      this.dispatchEvent(
+        new CustomEvent("change", { detail: this.value, bubbles: true }),
+      );
+    }
+    this.#stepperDidChange = false;
+  }
+
   #stepValue(direction) {
+    if (this.disabled) return false;
     const step = this.step || 1;
+    const previousValue = this.value;
     let numericValue = this.#getNumericValue(this.input.value);
     let value =
       (numericValue !== "" ? Number(numericValue) / (this.transform || 1) : 0) +
       step * direction;
     value = this.#sanitizeInput(value, false);
+    if (value === previousValue) return false;
     this.value = value;
     this.input.value = this.#formatWithUnit(this.value);
     this.#syncStepperState();
@@ -7881,9 +7986,7 @@ class FigInputNumber extends HTMLElement {
     this.dispatchEvent(
       new CustomEvent("input", { detail: this.value, bubbles: true }),
     );
-    this.dispatchEvent(
-      new CustomEvent("change", { detail: this.value, bubbles: true }),
-    );
+    return true;
   }
 
   constructor() {
@@ -7910,6 +8013,16 @@ class FigInputNumber extends HTMLElement {
     this.#boundKeyDown = (e) => {
       this.#handleKeyDown(e);
     };
+    this.#boundStepperPointerEnd = (e) => {
+      if (
+        this.#stepperPointerId !== null &&
+        e.pointerId !== this.#stepperPointerId
+      ) {
+        return;
+      }
+      this.#stopStepperRepeat();
+    };
+    this.#boundStepperWindowBlur = () => this.#stopStepperRepeat();
     this.#boundFocusControl = this.focus.bind(this);
     this.#boundAdornmentClick = this.#handleAdornmentClick.bind(this);
   }
@@ -8001,6 +8114,7 @@ class FigInputNumber extends HTMLElement {
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
     window.removeEventListener("blur", this.#boundWindowBlur);
+    this.#stopStepperRepeat(false);
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = null;
     if (this.#syncRaf) {
@@ -8375,6 +8489,7 @@ class FigInputNumber extends HTMLElement {
         case "disabled":
           this.disabled = this.input.disabled =
             newValue !== null && newValue !== "false";
+          if (this.disabled) this.#stopStepperRepeat();
           this.#syncStepperState();
           break;
         case "units":

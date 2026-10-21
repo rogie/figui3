@@ -356,7 +356,7 @@ The suggestion trigger uses `fig-select` when `fig-editor.js` is registered and 
 | `min` | number | `0` | Minimum |
 | `max` | number | `100` | Maximum |
 | `step` | number | `1` | Step increment |
-| `default` | number | — | Default/reset value (shown as marker) |
+| `default` | number | — | Explicit reference value; adds a tick and native snap target when valid |
 | `text` | boolean | `true` | Show text input; set `text="false"` to hide |
 | `placeholder` | string | `"##"` | Text input placeholder |
 | `units` | string | — | Unit label (e.g. `"%"`, `"px"`) |
@@ -369,12 +369,12 @@ The suggestion trigger uses `fig-select` when `fig-editor.js` is registered and 
 **Events:** `input` (continuous), `change` (on release), with detail `{ value, angle, units }`. Event values are rounded to `precision`; the component retains its higher-precision internal value.
 
 ```html
-<fig-slider min="0" max="100" value="50" units="%"></fig-slider>
+<fig-slider min="0" max="100" value="50" default="25" units="%"></fig-slider>
 <fig-slider type="hue" value="180" text="false"></fig-slider>
 <fig-slider type="opacity" value="75" color="#FF5733" units="%"></fig-slider>
 ```
 
-For `type="range"`, omitting `value` follows native range behavior and starts at the midpoint of `min` and `max`. Arrow keys move by `step`; hold Shift to move by a larger step.
+For `type="range"`, omitting `value` follows native range behavior and starts at the midpoint of `min` and `max`. An explicitly authored, in-range, step-aligned `default` renders a tick and is passed to the native range input as a snap target; internally inferred defaults do not. Arrow keys move by `step`; hold Shift to move by a larger step.
 
 ---
 

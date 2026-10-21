@@ -3157,8 +3157,9 @@ fig-slider {
   --slider-tick-radius: 100%;
   --slider-border-radius: calc(var(--slider-height) / 2);
   --slider-stepper-padding: calc(
-    (var(--slider-height) / 2) - var(--slider-tick-width) / 2
+    (var(--slider-thumb-size) / 2) - var(--slider-tick-width) / 2
   );
+  --slider-default-tick-end-inset: calc(var(--slider-stepper-padding) * 2);
   --slider-track-color: var(--figma-color-bg-secondary);
   --slider-percent: calc(var(--slider-complete) * 100%);
   --start-percent: calc(var(--default, 0) * 100%);
@@ -3449,11 +3450,25 @@ fig-slider {
     }
   }
 
+  datalist[data-generated="slider-default"] option:first-child:last-child {
+    position: absolute;
+    margin: 0;
+    left: clamp(
+      var(--slider-stepper-padding),
+      calc(var(--start-percent) - var(--slider-tick-width) / 2),
+      calc(100% - var(--slider-default-tick-end-inset))
+    );
+    top: calc(50% - var(--slider-tick-height) / 2);
+  }
+
   &:not([variant="classic"]) {
     --slider-height: 0.375rem;
     --slider-thumb-size: 0.75rem;
     --slider-tick-width: calc(var(--slider-height) / 2);
     --slider-tick-height: calc(var(--slider-height) / 2);
+    --slider-default-tick-end-inset: calc(
+      var(--slider-thumb-size) / 2 + var(--slider-tick-width) / 2 - 0.125rem
+    );
     --slider-number-width: var(--input-opacity-width);
     --handle-transition: none;
     --slider-transition: none;
