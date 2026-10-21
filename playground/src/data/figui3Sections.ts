@@ -1248,20 +1248,44 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     name: "File",
     group: INPUT_GROUP_NAME,
     description:
-      "File upload input with filename display, clear button, and drag-and-drop support.",
+      "File upload input with filename display, clear button, drag-and-drop support, image previews, and audio playback waveforms.",
     examples: [
       {
         id: "default",
-        name: "Default",
+        name: "Any",
         markup: `<div class="prop-panel">
-  <fig-input-file label="Upload file"></fig-input-file>
+  <fig-input-file></fig-input-file>
+</div>`,
+      },
+      {
+        id: "image",
+        name: "Image",
+        markup: `<div class="prop-panel">
+  <fig-input-file accepts="image/*" preview></fig-input-file>
+</div>`,
+      },
+      {
+        id: "audio",
+        name: "Audio (no fig field)",
+        markup: `<div class="prop-panel">
+  <fig-input-file accepts="audio/*" preview full></fig-input-file>
+</div>`,
+      },
+      {
+        id: "audio-url",
+        name: "Audio (with URL)",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Audio</label>
+    <fig-input-file accepts="audio/*" preview url="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" filename="t-rex-roar.mp3" full></fig-input-file>
+  </fig-field>
 </div>`,
       },
       {
         id: "accepts",
-        name: "Accepts filter",
+        name: "Custom accepts",
         markup: `<div class="prop-panel">
-  <fig-input-file label="Upload image" accepts="image/*"></fig-input-file>
+  <fig-input-file accepts=".mp3,.opus" label="Choose audio"></fig-input-file>
 </div>`,
       },
       {
@@ -2554,6 +2578,22 @@ ${versionHistoryGroup("August 11", [
         name: "Middle",
         markup: `<div class="prop-panel">
   <fig-truncate position="middle" tail=".mp3" tooltip style="max-width: 50%;">Stateside_feat_Bladee_and_Mechatok.mp3</fig-truncate>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "audio-waveform",
+    name: "Audio waveform",
+    group: "Utilities",
+    description:
+      "A responsive waveform generated from a CORS-enabled audio URL.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-audio-waveform url="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" progress="0.35" full></fig-audio-waveform>
 </div>`,
       },
     ],

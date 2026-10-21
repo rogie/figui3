@@ -39,7 +39,7 @@ declare module "react" {
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-angle": FigAttrs;
-      "fig-input-audio": FigAttrs;
+      "fig-audio-waveform": FigAttrs;
       "fig-input-wheel": FigAttrs;
       "fig-input-number": FigAttrs;
       "fig-easing-curve": FigAttrs;
@@ -49,6 +49,7 @@ declare module "react" {
       "fig-shimmer": FigAttrs;
       "fig-skeleton": FigAttrs;
       "fig-input-text": FigAttrs;
+      "fig-input-file": FigAttrs;
       "fig-split-input": FigAttrs;
       "fig-combo-input": FigAttrs;
       "fig-joystick": FigAttrs;

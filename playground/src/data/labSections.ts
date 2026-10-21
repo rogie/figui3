@@ -226,34 +226,6 @@ const ungroupedLabSections: Section[] = [
     ],
   },
   {
-    id: "input-audio",
-    name: "Audio input",
-    description:
-      "A single-audio upload control with a responsive waveform preview. Select a file or provide a CORS-enabled URL.",
-    examples: [
-      {
-        id: "upload",
-        name: "Upload",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <label>Audio</label>
-    <fig-input-audio full></fig-input-audio>
-  </fig-field>
-</div>`,
-      },
-      {
-        id: "url",
-        name: "URL",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <label>Audio</label>
-    <fig-input-audio url="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" filename="t-rex-roar.mp3" full></fig-input-audio>
-  </fig-field>
-</div>`,
-      },
-    ],
-  },
-  {
     id: "input-wheel",
     name: "Wheel",
     description:
@@ -358,7 +330,7 @@ const ungroupedLabSections: Section[] = [
 
 const isAiSection = (section: Section) => section.id.startsWith("ai-");
 const isInputSection = (section: Section) =>
-  section.id === "input-audio" || section.id === "input-wheel";
+  section.id === "input-wheel";
 
 export const labSections: Section[] = ungroupedLabSections.map((section) => ({
   ...section,

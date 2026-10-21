@@ -6443,7 +6443,7 @@ class FigReorder extends HTMLElement {
     "fig-input-gradient",
     "fig-easing-curve",
     "fig-angle",
-    "fig-input-audio",
+    "fig-audio-waveform",
     "fig-input-wheel",
     "fig-joystick",
     "fig-origin-grid",

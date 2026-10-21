@@ -365,11 +365,26 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "playing", attribute: "playing", value: "" }],
   },
   {
+    tag: "fig-audio-waveform",
+    title: "Audio Waveform",
+    group: "display",
+    markup: `<fig-audio-waveform></fig-audio-waveform>`,
+    attributes: [
+      { name: "progress", attribute: "progress", value: "0.5" },
+      { name: "polarization", attribute: "polarization", value: "3" },
+      { name: "full", attribute: "full", value: "" },
+    ],
+  },
+  {
     tag: "fig-input-file",
     title: "File Input",
     group: "input",
-    markup: `<fig-input-file label="Upload" accepts="image/*"></fig-input-file>`,
-    attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
+    markup: `<fig-input-file label="Upload"></fig-input-file>`,
+    attributes: [
+      { name: "accepts", attribute: "accepts", value: ".opus" },
+      { name: "preview", attribute: "preview", value: "" },
+      { name: "disabled", attribute: "disabled", value: "" },
+    ],
   },
   {
     tag: "fig-easing-curve",

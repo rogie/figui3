@@ -343,6 +343,9 @@ function getNumberAttrDefault(
     return 1;
   }
   if (controlTag === "fig-input-wheel" && attrName === "value") return 0;
+  if (controlTag === "fig-audio-waveform" && attrName === "progress") return 0;
+  if (controlTag === "fig-audio-waveform" && attrName === "polarization")
+    return 1.5;
   if (controlTag === "fig-angle" && attrName === "default") return 0;
   if (
     (controlTag === "fig-handle" ||
@@ -383,7 +386,16 @@ export default function AttributesView({
 }: Props) {
   const targets = useMemo(() => parseAttributeTargets(markup), [markup]);
   const labelMemoryRef = useRef<Record<number, string>>({});
+  const audioObjectUrlRef = useRef<string | null>(null);
 
+  useEffect(
+    () => () => {
+      if (audioObjectUrlRef.current) {
+        URL.revokeObjectURL(audioObjectUrlRef.current);
+      }
+    },
+    [],
+  );
 
   const applyChange = useCallback(
     (
@@ -1639,6 +1651,46 @@ export default function AttributesView({
                 onInput={handleColorChange}
                 onChange={handleColorChange}
               ></fig-input-color>
+            );
+          }
+
+          if (
+            target.controlTag === "fig-audio-waveform" &&
+            scope === "control" &&
+            name === "url"
+          ) {
+            const handleAudioFileChange = (e: any) => {
+              if (e.target !== e.currentTarget) return;
+              const detail = (e as CustomEvent<{
+                files?: FileList | null;
+                cleared?: boolean;
+              }>).detail;
+              if (detail?.cleared) {
+                if (audioObjectUrlRef.current) {
+                  URL.revokeObjectURL(audioObjectUrlRef.current);
+                  audioObjectUrlRef.current = null;
+                }
+                applyChange(target.fieldIndex, scope, name, null);
+                return;
+              }
+              const host = e.currentTarget as HTMLElement & {
+                files?: FileList | null;
+              };
+              const file = detail?.files?.[0] ?? host.files?.[0];
+              if (!file) return;
+              if (audioObjectUrlRef.current) {
+                URL.revokeObjectURL(audioObjectUrlRef.current);
+              }
+              const objectUrl = URL.createObjectURL(file);
+              audioObjectUrlRef.current = objectUrl;
+              applyChange(target.fieldIndex, scope, name, objectUrl);
+            };
+            return (
+              <fig-input-file
+                accepts="audio/*"
+                full
+                onChange={handleAudioFileChange}
+              ></fig-input-file>
             );
           }
 

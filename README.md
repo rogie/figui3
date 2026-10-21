@@ -103,10 +103,11 @@ Minimal example:
 | [Radio](#radio) | `<fig-radio>` | Radio button |
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
-| [Audio Input](#audio-input) | `<fig-input-audio>` | Audio upload with responsive waveform preview |
+| [Audio Waveform](#audio-waveform) | `<fig-audio-waveform>` | Responsive waveform generated from an audio URL |
 | [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
+| [File Input](#file-input) | `<fig-input-file>` | File upload with image previews and audio playback waveforms |
 | [Angle](#angle) | `<fig-angle>` | Instrument-style angle/rotation dial |
 | [Swatch](#swatch) | `<fig-swatch>` | Color/gradient/image swatch |
 | [Color Tip](#color-tip) | `<fig-color-tip>` | Compact color tip with picker |
@@ -377,33 +378,26 @@ For `type="range"`, omitting `value` follows native range behavior and starts at
 
 ---
 
-#### Audio Input
+#### Audio Waveform
 
-`<fig-input-audio>`
+`<fig-audio-waveform>`
 
-An experimental single-audio upload control with a responsive waveform preview. Requires `fig-lab.js` and `fig-lab.css`. The waveform is preview-only and has no playback or seeking controls.
+A responsive waveform generated from an audio URL. Included in `fig.js` and `fig.css`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `url` | string | — | CORS-enabled audio URL to decode and preview |
-| `filename` | string | URL filename | Display filename for URL-backed audio |
-| `label` | string | `"Upload audio"` | Empty-state upload label |
-| `accepts` | string | `"audio/*"` | Native file accept filter |
-| `variant` | string | `"input"` | Upload button variant |
-| `disabled` | boolean | `false` | Disable upload, replacement, and removal |
+| `url` | string | — | CORS-enabled audio URL to fetch, decode, and render |
+| `progress` | number | `0` | Completed fraction from `0` to `1`; values are clamped |
+| `polarization` | number | `1.5` | Waveform contrast factor around half-height (`1` is neutral) |
 | `full` | boolean | `false` | Fill the available width |
 
-Set `--fig-input-audio-waveform-stroke-width` (default `2px`) to control waveform bar thickness.
-
-`files` and `value` mirror the composed file input. `clear()` removes the current source. The component emits bubbling, composed `input` and `change` events with `{ files }` and `{ files, cleared: true }` when cleared. URL fetch or decode failures render a quiet flat waveform fallback.
+Set `--fig-audio-waveform-stroke-width` (default `1px`) to control waveform bar thickness. The responsive waveform targets one bar per 3px. URL fetch or decode failures render a quiet flat waveform fallback.
 
 ```html
-<fig-input-audio></fig-input-audio>
-<fig-input-audio
+<fig-audio-waveform
   url="https://example.com/audio.wav"
-  filename="audio.wav"
-  full
-></fig-input-audio>
+  progress="0.42"
+></fig-audio-waveform>
 ```
 
 ---
@@ -488,6 +482,30 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 <fig-input-number variant="ghost" value="100" units="px"></fig-input-number>
 <fig-input-number tabular value="100" units="px"></fig-input-number>
 <fig-input-number value="50" units="%" min="0" max="100"></fig-input-number>
+```
+
+---
+
+#### File Input
+
+`<fig-input-file>` — [demo](https://rog.ie/figui3/#file-input)
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `accepts` | string | — | Native file chooser filter |
+| `preview` | boolean | `false` | Preview supported images or enable button playback for supported audio files |
+| `label` | string | generated | Empty-state button label; defaults to `Upload audio`, `Upload image`, or `Upload file` from the known file type |
+| `multiple` | boolean | `false` | Allow multiple files |
+| `disabled` | boolean | `false` | Disabled state |
+| `variant` | string | `"property"` | Internal button variant |
+
+Known image and audio files use the image or sound icon; unmatched files retain the upload icon. With `preview`, image files render in a full-width 4:3 `fig-image`, while an audio file becomes a play/pause button with a polarized waveform, synchronized playback progress, and its filename in a tooltip. Image preview supports `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, and `.avif`; audio playback supports `.mp3`, `.wav`, `.aac`, `.m4a`, `.ogg`, and `.flac`.
+
+```html
+<fig-input-file accepts="image/*"></fig-input-file>
+<fig-input-file accepts="image/*" preview></fig-input-file>
+<fig-input-file accepts="audio/*"></fig-input-file>
+<fig-input-file accepts=".mp3,.opus" label="Choose audio"></fig-input-file>
 ```
 
 ---

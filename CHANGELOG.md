@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.3.0]
+
+### Added
+
+- Added the core `fig-audio-waveform` component with URL decoding, RMS energy rendering, polarization, fractional progress, and full-width support.
+
+### Changed
+
+- Enhanced `fig-input-file` with generated type-aware labels and previewable audio playback using synchronized waveform progress.
+- Moved the audio waveform example and documentation from Lab into the main FigUI3 Utilities section.
+- Updated playground attribute editing to patch live component attributes without remounting unchanged component structures.
+
+### Fixed
+
+- Prevented waveform progress updates from rebuilding waveform geometry and flickering.
+- Reset audio waveform progress and playback selection styling when playback ends.
+
 ## [11.2.2]
 
 ### Changed

@@ -2,24 +2,6 @@
 
 React recipes: [components.md](components.md).
 
-## `fig-input-audio`
-
-Single-audio upload with a responsive, preview-only waveform.
-
-- Attrs: `url`, `filename`, `label` (default `Upload audio`), `accepts` (default `audio/*`), `variant`, `disabled`, `full`
-- Props: `files`, `value`
-- Method: `clear()`
-- Events: `input` and `change`, bubbling and composed, with `{ files }` and optional `cleared`
-- Clicking the waveform replaces the file; the minus action removes it
-- URL decoding requires CORS; fetch and decode failures fall back quietly
-- CSS: `--fig-input-audio-waveform-stroke-width` controls bar thickness (default `2px`)
-- Not supported: multiple files, playback, or seeking
-
-```html
-<fig-input-audio></fig-input-audio>
-<fig-input-audio url="https://example.com/audio.wav" filename="audio.wav" full></fig-input-audio>
-```
-
 ## `fig-input-wheel`
 
 Standalone interactive SVG tick + handle scrubber in the lab bundle.

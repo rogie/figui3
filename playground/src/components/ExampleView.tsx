@@ -1,8 +1,10 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useLayoutEffect } from "react";
 import type { Example } from "../data/sections";
 import { getInjectedExampleMarkup } from "../lib/exampleMarkup";
 import { gradientValueToCss } from "../lib/gradientPreview";
 import { setupWebGpuShaderPreviews } from "../lib/webgpuShaderPreview";
+
+const SYNC_ID_ATTRIBUTE = "data-playground-sync-id";
 
 interface Props {
   example: Example;
@@ -17,6 +19,111 @@ function isComponentTag(tag: string): boolean {
   return tag.startsWith("fig-");
 }
 
+function createSyncSource(markup: string): HTMLElement | null {
+  const template = document.createElement("template");
+  template.innerHTML = getInjectedExampleMarkup(markup);
+  const root = template.content.firstElementChild as HTMLElement | null;
+  if (!root) return null;
+  [root, ...Array.from(root.querySelectorAll("*"))].forEach((element, index) => {
+    element.setAttribute(SYNC_ID_ATTRIBUTE, String(index));
+  });
+  return root;
+}
+
+function structureSignature(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) return "text";
+  if (node.nodeType === Node.COMMENT_NODE) return "comment";
+  if (!(node instanceof Element)) return String(node.nodeType);
+  const tag = node.tagName.toLowerCase();
+  const customizedBuiltIn = node.getAttribute("is") ?? "";
+  return `${tag}:${customizedBuiltIn}[${Array.from(node.childNodes)
+    .map(structureSignature)
+    .join(",")}]`;
+}
+
+function syncAttributes(
+  liveElement: Element,
+  previousElement: Element,
+  nextElement: Element,
+) {
+  for (const attribute of Array.from(previousElement.attributes)) {
+    if (
+      attribute.name !== SYNC_ID_ATTRIBUTE &&
+      !nextElement.hasAttribute(attribute.name)
+    ) {
+      liveElement.removeAttribute(attribute.name);
+    }
+  }
+  for (const attribute of Array.from(nextElement.attributes)) {
+    if (
+      attribute.name !== SYNC_ID_ATTRIBUTE &&
+      liveElement.getAttribute(attribute.name) !== attribute.value
+    ) {
+      liveElement.setAttribute(attribute.name, attribute.value);
+    }
+  }
+}
+
+function syncTextNode(
+  liveElement: Element,
+  previousText: Text,
+  nextText: Text,
+): boolean {
+  if (previousText.data === nextText.data) return true;
+  const liveText = Array.from(liveElement.childNodes).find(
+    (node): node is Text =>
+      node.nodeType === Node.TEXT_NODE && node.textContent === previousText.data,
+  );
+  if (!liveText) return false;
+  liveText.data = nextText.data;
+  return true;
+}
+
+function patchPreview(
+  liveRoot: HTMLElement,
+  previousRoot: HTMLElement,
+  nextRoot: HTMLElement,
+): boolean {
+  const previousElements = [
+    previousRoot,
+    ...Array.from(previousRoot.querySelectorAll("*")),
+  ];
+  const nextElements = [nextRoot, ...Array.from(nextRoot.querySelectorAll("*"))];
+  if (previousElements.length !== nextElements.length) return false;
+
+  for (let index = 0; index < nextElements.length; index += 1) {
+    const previousElement = previousElements[index];
+    const nextElement = nextElements[index];
+    const syncId = nextElement.getAttribute(SYNC_ID_ATTRIBUTE);
+    const liveElement =
+      syncId === "0"
+        ? liveRoot
+        : liveRoot.querySelector(`[${SYNC_ID_ATTRIBUTE}="${syncId}"]`);
+    if (!liveElement) return false;
+
+    syncAttributes(liveElement, previousElement, nextElement);
+    const previousTextNodes = Array.from(previousElement.childNodes).filter(
+      (node): node is Text => node.nodeType === Node.TEXT_NODE,
+    );
+    const nextTextNodes = Array.from(nextElement.childNodes).filter(
+      (node): node is Text => node.nodeType === Node.TEXT_NODE,
+    );
+    if (previousTextNodes.length !== nextTextNodes.length) return false;
+    for (let textIndex = 0; textIndex < nextTextNodes.length; textIndex += 1) {
+      if (
+        !syncTextNode(
+          liveElement,
+          previousTextNodes[textIndex],
+          nextTextNodes[textIndex],
+        )
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 export default function ExampleView({
   example,
   markup,
@@ -26,6 +133,7 @@ export default function ExampleView({
   onPersistControlValue,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const sourceRootRef = useRef<HTMLElement | null>(null);
 
   const getPrimaryControls = (container: HTMLElement) =>
     Array.from(container.querySelectorAll("*")).filter((node) => {
@@ -38,6 +146,28 @@ export default function ExampleView({
       }
       return true;
     });
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const nextSourceRoot = createSyncSource(markup);
+    if (!container || !nextSourceRoot) return;
+
+    const previousSourceRoot = sourceRootRef.current;
+    const liveRoot = container.querySelector(
+      `:scope > [${SYNC_ID_ATTRIBUTE}="0"]`,
+    ) as HTMLElement | null;
+    const canPatch =
+      previousSourceRoot &&
+      liveRoot &&
+      structureSignature(previousSourceRoot) ===
+        structureSignature(nextSourceRoot) &&
+      patchPreview(liveRoot, previousSourceRoot, nextSourceRoot);
+
+    if (!canPatch) {
+      container.replaceChildren(nextSourceRoot.cloneNode(true));
+    }
+    sourceRootRef.current = nextSourceRoot;
+  }, [example.id, markup]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -334,11 +464,7 @@ export default function ExampleView({
 
   return (
     <div>
-      <div
-        ref={containerRef}
-        key={example.id}
-        dangerouslySetInnerHTML={{ __html: getInjectedExampleMarkup(markup) }}
-      />
+      <div ref={containerRef} />
     </div>
   );
 }

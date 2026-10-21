@@ -133,18 +133,34 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 - Children stay in light DOM.
 
+### `fig-audio-waveform`
+
+```tsx
+<fig-audio-waveform url="https://example.com/audio.wav" progress="0.42" />
+```
+
+- Responsive waveform generated from the `url` attribute.
+- `progress` is a clamped `0`–`1` fraction; the completed waveform uses the selected icon color.
+- `polarization` controls waveform contrast around half-height; default `1.5`, `1` is neutral.
+- `full` fills the available width.
+- URL decoding requires CORS access.
+- No upload, playback, label, or button UI.
+
 ### `fig-input-file`
 
 ```tsx
 <fig-input-file
-  label="Upload"
   accepts="image/*"
+  preview
   multiple
   onChange={onChange}
 />
 ```
 
-- Attrs: `label`, `accepts`, `multiple`, `disabled`, `variant` (`input`, `primary`, `secondary`, `ghost`, `link`, `overlay`)
+- Attrs: `preview`, `label`, `accepts`, `multiple`, `disabled`, `variant` (forwards `fig-button` variants; defaults to `property`)
+- Blank or omitted `label` defaults to `Upload audio`, `Upload image`, or `Upload file` based on the known file type. An explicit label overrides it.
+- `preview` renders supported image extensions in a full-width checkerboard `fig-image` at `4/3`, or turns known audio files into play/pause buttons with a waveform and filename tooltip.
+- `accepts` controls the native chooser filter; file icons and previews are detected independently.
 - Events: `change` / `input` with files on the host
 
 ### `fig-checkbox`

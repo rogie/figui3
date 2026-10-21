@@ -2,29 +2,6 @@
 
 Experimental. APIs may change. React contract: [../figui3/react.md](../figui3/react.md). Attrs: [reference.md](reference.md).
 
-
-Handlers below assume `onInput` / `onChange` from the React contract.
-
-## Inputs
-
-### `fig-input-audio`
-
-```tsx
-<fig-input-audio
-  accepts="audio/*"
-  label="Upload audio"
-  full
-  onInput={onInput}
-  onChange={onChange}
-/>
-```
-
-- Single-file waveform preview; no playback or seeking.
-- Attrs: `url`, `filename`, `label`, `accepts`, `variant`, `disabled`, `full`.
-- Props: `files`, `value`. Method: `clear()`.
-- `input` and `change` bubble with `{ files }`; clear adds `{ cleared: true }`.
-- URL previews require CORS access.
-
 ## Spatial
 
 ### `fig-canvas-control`

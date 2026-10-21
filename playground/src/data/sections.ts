@@ -1558,11 +1558,11 @@ export const legacyPropsKitSections: Section[] = [
       },
       {
         id: "audio",
-        name: "Audio",
+        name: "Audio (field)",
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Audio</label>
-    <fig-input-file label="Upload audio" accepts=".wav,.mp3,.aac" full></fig-input-file>
+    <fig-input-file accepts="audio/*" preview full></fig-input-file>
   </fig-field>
 </div>`,
       },

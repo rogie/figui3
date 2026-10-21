@@ -5564,6 +5564,394 @@ test.describe("input focus ring consistency", () => {
     );
   });
 
+  test("fig-input-file uses a property upload button by default", async ({
+    page,
+  }) => {
+    const file = page.locator("#focus-file");
+    const button = file.locator('fig-button[type="upload"]');
+    const uploadIcon = button.locator(
+      'fig-icon[slot="prepend"][name="upload"]',
+    );
+
+    await expect(button).toHaveAttribute("variant", "property");
+    await expect(button).toHaveAttribute("full", "");
+    await expect(button).toHaveAttribute("type", "upload");
+    await expect(uploadIcon).toHaveCount(1);
+
+    await file.evaluate((host) => host.setAttribute("filename", "asset.png"));
+    await expect(button).toHaveAttribute("variant", "property");
+    await expect(button).toHaveAttribute("full", "");
+    await expect(button).toHaveAttribute("type", "upload");
+    await expect(uploadIcon).toHaveCount(0);
+    await expect(
+      button.locator('fig-icon[slot="prepend"][name="image"]'),
+    ).toHaveCount(1);
+  });
+
+  test("fig-input-file generates type-aware labels unless one is specified", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-file id="default-label"></fig-input-file>
+        <fig-input-file id="audio-label" accepts="audio/*"></fig-input-file>
+        <fig-input-file id="audio-extensions-label" accepts=".wav,.mp3,.aac"></fig-input-file>
+        <fig-input-file id="image-label" accepts="image/*"></fig-input-file>
+        <fig-input-file id="image-extensions-label" accepts=".png,.jpg"></fig-input-file>
+        <fig-input-file id="mixed-label" accepts="audio/*,image/*"></fig-input-file>
+        <fig-input-file id="blank-label" accepts="audio/*" label="  "></fig-input-file>
+        <fig-input-file id="custom-label" accepts="audio/*" label="Choose sound"></fig-input-file>
+      `;
+    });
+
+    const uploadButton = (id: string) =>
+      page.locator(`${id} fig-button[type="upload"]`);
+    await expect(uploadButton("#default-label")).toContainText("Upload file");
+    await expect(uploadButton("#audio-label")).toContainText("Upload audio");
+    await expect(uploadButton("#audio-extensions-label")).toContainText(
+      "Upload audio",
+    );
+    await expect(uploadButton("#image-label")).toContainText("Upload image");
+    await expect(uploadButton("#image-extensions-label")).toContainText(
+      "Upload image",
+    );
+    await expect(uploadButton("#mixed-label")).toContainText("Upload file");
+    await expect(uploadButton("#blank-label")).toContainText("Upload audio");
+    await expect(uploadButton("#custom-label")).toContainText("Choose sound");
+  });
+
+  test("fig-input-file applies only explicit accept filters", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-file id="unfiltered-file"></fig-input-file>
+        <fig-input-file id="filtered-file" accepts=".opus,audio/ogg"></fig-input-file>
+        <fig-input-file id="empty-filter" accepts></fig-input-file>
+      `;
+    });
+
+    await expect(
+      page.locator("#unfiltered-file input[type=file]"),
+    ).not.toHaveAttribute("accept");
+    await expect(
+      page.locator("#filtered-file input[type=file]"),
+    ).toHaveAttribute("accept", ".opus,audio/ogg");
+    await expect(
+      page.locator("#empty-filter input[type=file]"),
+    ).not.toHaveAttribute("accept");
+
+    const filtered = page.locator("#filtered-file");
+    await filtered.evaluate((host) => host.removeAttribute("accepts"));
+    await expect(filtered.locator("input[type=file]")).not.toHaveAttribute(
+      "accept",
+    );
+  });
+
+  test("fig-input-file uses file-aware icons for selected files", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-file id="detected-audio"></fig-input-file>
+        <fig-input-file id="detected-image"></fig-input-file>
+        <fig-input-file id="extension-audio"></fig-input-file>
+        <fig-input-file id="extension-image"></fig-input-file>
+      `;
+    });
+
+    const detectedAudio = page.locator("#detected-audio");
+    await detectedAudio.locator("input[type=file]").setInputFiles({
+      name: "recording.bin",
+      mimeType: "audio/webm",
+      buffer: Buffer.from("audio"),
+    });
+    await expect(
+      detectedAudio.locator('fig-icon[slot="prepend"]'),
+    ).toHaveAttribute("name", "sound");
+    await expect(detectedAudio.locator("fig-audio-waveform")).toHaveCount(0);
+
+    const detectedImage = page.locator("#detected-image");
+    await detectedImage.locator("input[type=file]").setInputFiles({
+      name: "artwork.bin",
+      mimeType: "image/png",
+      buffer: Buffer.from("image"),
+    });
+    await expect(
+      detectedImage.locator('fig-icon[slot="prepend"]'),
+    ).toHaveAttribute("name", "image");
+
+    const audio = page.locator("#extension-audio");
+    await audio.locator("input[type=file]").setInputFiles({
+      name: "track.MP3",
+      mimeType: "application/octet-stream",
+      buffer: Buffer.from("audio"),
+    });
+    const audioIcon = audio.locator('fig-icon[slot="prepend"]');
+    await expect(audioIcon).toHaveAttribute("name", "sound");
+    await expect
+      .poll(() =>
+        audioIcon.evaluate((icon) => icon.style.getPropertyValue("--icon")),
+      )
+      .toBe("var(--icon-24-sound)");
+
+    const image = page.locator("#extension-image");
+    await image.locator("input[type=file]").setInputFiles({
+      name: "notes.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("notes"),
+    });
+    await expect(
+      image.locator('fig-icon[slot="prepend"]'),
+    ).toHaveAttribute("name", "upload");
+
+    await image.locator("input[type=file]").setInputFiles({
+      name: "photo.avif",
+      mimeType: "application/octet-stream",
+      buffer: Buffer.from("image"),
+    });
+    const imageIcon = image.locator('fig-icon[slot="prepend"]');
+    await expect(imageIcon).toHaveAttribute("name", "image");
+    await expect
+      .poll(() =>
+        imageIcon.evaluate((icon) => icon.style.getPropertyValue("--icon")),
+      )
+      .toBe("var(--icon-24-image)");
+  });
+
+  test("fig-input-file renders and synchronizes an image preview", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-file id="preview-file" preview></fig-input-file>
+      `;
+      window.__previewFileEvents = [];
+      const input = document.querySelector("#preview-file");
+      for (const type of ["input", "change"]) {
+        input.addEventListener(type, (event) => {
+          if (event.target !== input) return;
+          window.__previewFileEvents.push({
+            type,
+            name: event.detail?.files?.[0]?.name || "",
+            cleared: event.detail?.cleared === true,
+          });
+        });
+      }
+    });
+
+    const input = page.locator("#preview-file");
+    const image = input.locator(":scope > fig-image");
+    const regularButton = input.locator(":scope > fig-button");
+    await expect(image).toHaveCount(0);
+    await expect(regularButton).toHaveCount(1);
+
+    await regularButton.locator('input[type="file"]').setInputFiles({
+      name: "preview.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+        "base64",
+      ),
+    });
+
+    await expect(image).toHaveAttribute("full", "");
+    await expect(image).toHaveAttribute("checkerboard", "");
+    await expect(image).toHaveAttribute("upload", "");
+    await expect(image).toHaveAttribute("aspect-ratio", "4/3");
+    const previewBox = await image.boundingBox();
+    expect(previewBox?.width).toBeGreaterThan(100);
+    expect(previewBox!.width / previewBox!.height).toBeCloseTo(4 / 3, 1);
+    await expect(regularButton).toHaveCount(0);
+    await expect(input.locator(":scope > .fig-input-file-clear")).toHaveCount(0);
+
+    await expect(image.locator("img[data-generated]")).toHaveAttribute(
+      "src",
+      /^blob:/,
+    );
+    await expect
+      .poll(() =>
+        image
+          .locator("img[data-generated]")
+          .evaluate((element) => element.naturalWidth),
+      )
+      .toBeGreaterThan(0);
+    await expect
+      .poll(() =>
+        input.evaluate((element) => element.files?.[0]?.name || ""),
+      )
+      .toBe("preview.png");
+    expect(await page.evaluate(() => window.__previewFileEvents)).toEqual([
+      { type: "input", name: "preview.png", cleared: false },
+      { type: "change", name: "preview.png", cleared: false },
+    ]);
+
+    await image.hover();
+    await image.locator(".fig-input-file-clear").click();
+    await expect(image).toHaveCount(0);
+    await expect(regularButton).toHaveCount(1);
+    await expect.poll(() => input.evaluate((element) => element.files)).toBeNull();
+    expect(await page.evaluate(() => window.__previewFileEvents)).toEqual([
+      { type: "input", name: "preview.png", cleared: false },
+      { type: "change", name: "preview.png", cleared: false },
+      { type: "input", name: "", cleared: true },
+      { type: "change", name: "", cleared: true },
+    ]);
+  });
+
+  test("fig-input-file uses its audio icon button for playback", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-file id="audio-preview" preview accepts="audio/*"></fig-input-file>
+      `;
+    });
+
+    const input = page.locator("#audio-preview");
+    await input.locator('input[type="file"]').setInputFiles({
+      name: "song.bin",
+      mimeType: "audio/mpeg",
+      buffer: Buffer.from("audio"),
+    });
+
+    const button = input.locator(
+      ":scope > fig-tooltip > .fig-input-file-filename",
+    );
+    const tooltip = input.locator(":scope > fig-tooltip").first();
+    const icon = button.locator("fig-icon");
+    const waveform = button.locator(
+      ":scope > fig-audio-waveform.fig-input-file-audio-waveform",
+    );
+    const audio = input.locator(":scope > audio");
+    await expect(input.locator(":scope > fig-media-controls")).toHaveCount(0);
+    await expect(audio).toHaveAttribute("src", /^blob:/);
+    await expect(button.locator("fig-truncate")).toHaveCount(0);
+    await expect(tooltip).toHaveAttribute("text", "song.bin");
+    await expect(icon).toHaveAttribute("name", "play");
+    await expect(icon).toHaveAttribute("slot", "prepend");
+    await expect(waveform).toHaveAttribute("url", /^blob:/);
+    await expect(waveform).toHaveAttribute("polarization", "3");
+    await expect(waveform).toHaveAttribute("progress", "0");
+    await expect(button).toHaveAttribute("aria-label", "Play audio");
+    await expect(button).not.toHaveAttribute("icon");
+    await expect(button).not.toHaveAttribute("selected");
+    expect(
+      await button.evaluate((element) =>
+        Array.from(element.children).map((child) => child.tagName),
+      ),
+    ).toEqual(["FIG-ICON", "FIG-AUDIO-WAVEFORM"]);
+    await expect
+      .poll(async () => (await waveform.boundingBox())?.width ?? 0)
+      .toBeGreaterThan(40);
+
+    await audio.evaluate((media) => {
+      window.__audioPreviewPlayed = false;
+      window.__audioPreviewPaused = false;
+      Object.defineProperty(media, "duration", {
+        configurable: true,
+        value: 8,
+      });
+      Object.defineProperty(media, "currentTime", {
+        configurable: true,
+        value: 0,
+        writable: true,
+      });
+      media.play = () => {
+        window.__audioPreviewPlayed = true;
+        media.dispatchEvent(new Event("play"));
+        return Promise.resolve();
+      };
+      media.pause = () => {
+        window.__audioPreviewPaused = true;
+        media.dispatchEvent(new Event("pause"));
+      };
+    });
+
+    await button.click();
+    await expect(icon).toHaveAttribute("name", "pause");
+    await expect(button).toHaveAttribute("aria-label", "Pause audio");
+    await expect(button).toHaveAttribute("selected", "");
+    const playingColors = await waveform.evaluate((host) => {
+      const basePath = host.querySelector(".fig-audio-waveform-path");
+      const progressPath = host.querySelector(".fig-audio-waveform-progress");
+      const strokeProbe = document.createElement("div");
+      const progressProbe = document.createElement("div");
+      strokeProbe.style.color = "var(--figma-color-bordertranslucentstrong)";
+      progressProbe.style.color = "var(--figma-color-icon-selected)";
+      document.body.append(strokeProbe, progressProbe);
+      const colors = {
+        stroke: getComputedStyle(basePath!).fill,
+        expectedStroke: getComputedStyle(strokeProbe).color,
+        progress: getComputedStyle(progressPath!).fill,
+        expectedProgress: getComputedStyle(progressProbe).color,
+      };
+      strokeProbe.remove();
+      progressProbe.remove();
+      return colors;
+    });
+    expect(playingColors.stroke).toBe(playingColors.expectedStroke);
+    expect(playingColors.progress).toBe(playingColors.expectedProgress);
+    expect(await page.evaluate(() => window.__audioPreviewPlayed)).toBe(true);
+
+    await audio.evaluate((media) => {
+      media.currentTime = 2;
+      media.dispatchEvent(new Event("timeupdate"));
+    });
+    await expect(waveform).toHaveAttribute("progress", "0.25");
+
+    await button.click();
+    await expect(icon).toHaveAttribute("name", "play");
+    await expect(button).toHaveAttribute("aria-label", "Play audio");
+    await expect(button).not.toHaveAttribute("selected");
+    expect(await page.evaluate(() => window.__audioPreviewPaused)).toBe(true);
+
+    await audio.evaluate((media) => {
+      media.currentTime = 8;
+      media.dispatchEvent(new Event("ended"));
+    });
+    await expect(waveform).toHaveAttribute("progress", "0");
+  });
+
+  test("fig-input-file only lays out its remove button on hover", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-file id="standalone-file" filename="asset.png"></fig-input-file>
+        <fig-field id="file-field">
+          <label>File</label>
+          <fig-input-file filename="asset.png"></fig-input-file>
+        </fig-field>
+      `;
+    });
+
+    const standalone = page.locator("#standalone-file");
+    const standaloneClear = standalone.locator(".fig-input-file-clear");
+    await expect(standaloneClear).toHaveCSS("display", "none");
+    await standalone.hover();
+    await expect(standaloneClear).toHaveCSS("display", "flex");
+
+    await page.mouse.move(0, 0);
+    const field = page.locator("#file-field");
+    const fieldClear = field.locator(".fig-input-file-clear");
+    await expect(fieldClear).toHaveCSS("display", "none");
+    await field.hover();
+    await expect(fieldClear).toHaveCSS("display", "flex");
+  });
+
   test("fig-input-fill uses one host ring for each internal focus target", async ({
     page,
   }) => {
