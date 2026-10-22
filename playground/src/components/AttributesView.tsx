@@ -13,6 +13,7 @@ import {
   applyHandleHitAreaDebugMutation,
   applyHandleHitAreaMutation,
   applyHeaderIconMutation,
+  applyIconCharacterMutation,
   applyOverflowFadeEdgeMutation,
   applyPrependSlotMutation,
   applySelectSeparatorStickyMutation,
@@ -24,6 +25,7 @@ import {
   getHandleHitArea,
   getHandleHitAreaDebug,
   getHeaderIconEnabled,
+  getIconCharacter,
   getPrependSlotMode,
   getSelectSeparatorStickyEnabled,
   parseAttributeTargets,
@@ -40,6 +42,7 @@ import {
   gradientValueToCss,
   withGradientPreviewBackground,
 } from "../lib/gradientPreview";
+import { landscapeUrl } from "../lib/images";
 
 interface Props {
   markup: string;
@@ -196,6 +199,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-field": "Field",
     "fig-split-input": "Split input",
     "fig-combo-input": "Combo input (alias)",
+    "fig-audio": "Audio",
     "fig-media": "Media",
     "fig-media-controls": "Media controls",
     "fig-preview": "Preview",
@@ -623,6 +627,13 @@ export default function AttributesView({
             .map((value) => value.trim())
             .filter(Boolean),
         );
+        if (
+          target.controlTag === "fig-icon" &&
+          target.controlAttributes.name === undefined &&
+          target.controlAttributes["data-playground-icon-set"] === undefined
+        ) {
+          hiddenControlAttrs.add("name");
+        }
         if (target.controlTag === "fig-segmented-control") {
           hiddenControlAttrs.add("value");
           hiddenControlAttrs.add("name");
@@ -1060,6 +1071,10 @@ export default function AttributesView({
               ? value !== undefined && value !== null
                 ? "label"
                 : "none"
+              : target.controlTag === "fig-input-file" &&
+                  name === "preview" &&
+                  value === ""
+                ? "true"
               : isColorPickerMode && value === "false"
                 ? "native"
                 : (value ??
@@ -1073,6 +1088,9 @@ export default function AttributesView({
             const useSegmentedControl =
               isCheckRadioLabel ||
               isColorPickerMode ||
+              (target.controlTag === "fig-icon" &&
+                scope === "control" &&
+                name === "size") ||
               (isDefaultLargeSizeControl(target.controlTag) &&
                 scope === "control" &&
                 name === "size") ||
@@ -1100,6 +1118,9 @@ export default function AttributesView({
                 }
                 if (target.controlTag === "fig-handle" && name === "size") {
                   return option === "" ? "Default" : "Small";
+                }
+                if (target.controlTag === "fig-icon" && name === "size") {
+                  return option === "medium" ? "Default" : "Small";
                 }
                 if (
                   isDefaultLargeSizeControl(target.controlTag) &&
@@ -1180,6 +1201,15 @@ export default function AttributesView({
                     scope,
                     name,
                     option === "" ? null : option,
+                  );
+                  return;
+                }
+                if (target.controlTag === "fig-icon" && name === "size") {
+                  applyChange(
+                    target.fieldIndex,
+                    scope,
+                    name,
+                    option === "medium" ? null : option,
                   );
                   return;
                 }
@@ -1299,6 +1329,9 @@ export default function AttributesView({
                   if (target.controlTag === "fig-avatar" && name === "size") {
                     return "Default";
                   }
+                  if (target.controlTag === "fig-icon" && name === "color") {
+                    return "Default";
+                  }
                   if (
                     target.controlTag === "fig-segmented-control" &&
                     name === "size"
@@ -1408,6 +1441,14 @@ export default function AttributesView({
                     if (
                       target.controlTag === "fig-button" &&
                       name === "size" &&
+                      resolvedValue === ""
+                    ) {
+                      applyChange(target.fieldIndex, scope, name, null);
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-icon" &&
+                      name === "color" &&
                       resolvedValue === ""
                     ) {
                       applyChange(target.fieldIndex, scope, name, null);
@@ -1605,7 +1646,7 @@ export default function AttributesView({
                   onInput={handleOffsetInput("x")}
                   onChange={handleOffsetInput("x")}
                 >
-                  <span slot="prepend">X</span>
+                  <fig-icon slot="prepend"><label>X</label></fig-icon>
                 </fig-input-number>
                 <fig-input-number
                   value={currentY}
@@ -1614,7 +1655,7 @@ export default function AttributesView({
                   onInput={handleOffsetInput("y")}
                   onChange={handleOffsetInput("y")}
                 >
-                  <span slot="prepend">Y</span>
+                  <fig-icon slot="prepend"><label>Y</label></fig-icon>
                 </fig-input-number>
               </div>
             );
@@ -1994,6 +2035,40 @@ export default function AttributesView({
                         );
                       })()}
                     {target.controlTag === "fig-icon" &&
+                      target.controlAttributes.name === undefined &&
+                      target.controlAttributes["data-playground-icon-set"] ===
+                        undefined && (
+                        <fig-field
+                          columns="2/5"
+                          key={`control-icon-character-${target.fieldIndex}`}
+                        >
+                          <label>Character</label>
+                          <fig-input-text
+                            full
+                            value={getIconCharacter(
+                              markup,
+                              target.fieldIndex,
+                            )}
+                            onInput={(e: any) => {
+                              const host = e.currentTarget as HTMLElement & {
+                                value?: string;
+                              };
+                              const nextValue =
+                                host.value ??
+                                (e as CustomEvent).detail?.value;
+                              if (typeof nextValue !== "string") return;
+                              onMarkupChange(
+                                applyIconCharacterMutation(
+                                  markup,
+                                  target.fieldIndex,
+                                  nextValue,
+                                ),
+                              );
+                            }}
+                          ></fig-input-text>
+                        </fig-field>
+                      )}
+                    {target.controlTag === "fig-icon" &&
                       (() => {
                         const set = target.controlAttributes[
                           "data-playground-icon-set"
@@ -2002,6 +2077,10 @@ export default function AttributesView({
                         const names = getFigIconPlaygroundNames(set);
                         const currentName =
                           target.controlAttributes.name ?? names[0];
+                        const currentSize =
+                          target.controlAttributes.size === "small"
+                            ? "Small"
+                            : "Default";
                         const currentColorLabel = getFigIconColorOptionLabel(
                           target.controlAttributes.color,
                         );
@@ -2013,6 +2092,53 @@ export default function AttributesView({
                         ).join(",");
                         return (
                           <>
+                            <fig-field
+                              columns="2/5"
+                              key={`control-icon-size-${target.fieldIndex}`}
+                            >
+                              <label>Size</label>
+                              <fig-options
+                                full
+                                options="Default,Small"
+                                value={currentSize}
+                                onChange={(e: any) => {
+                                  const nextLabel =
+                                    (e as CustomEvent).detail ?? e.target?.value;
+                                  if (
+                                    nextLabel !== "Default" &&
+                                    nextLabel !== "Small"
+                                  ) {
+                                    return;
+                                  }
+                                  const nextSet: FigIconPlaygroundSet =
+                                    nextLabel === "Small" ? "16" : "24";
+                                  const nextNames =
+                                    getFigIconPlaygroundNames(nextSet);
+                                  let updated = applyAttributeMutation(markup, {
+                                    fieldIndex: target.fieldIndex,
+                                    target: "control",
+                                    name: "size",
+                                    value:
+                                      nextLabel === "Small" ? "small" : null,
+                                  });
+                                  updated = applyAttributeMutation(updated, {
+                                    fieldIndex: target.fieldIndex,
+                                    target: "control",
+                                    name: "data-playground-icon-set",
+                                    value: nextSet,
+                                  });
+                                  if (!nextNames.includes(currentName)) {
+                                    updated = applyAttributeMutation(updated, {
+                                      fieldIndex: target.fieldIndex,
+                                      target: "control",
+                                      name: "name",
+                                      value: nextNames[0],
+                                    });
+                                  }
+                                  onMarkupChange(updated);
+                                }}
+                              ></fig-options>
+                            </fig-field>
                             <fig-field
                               columns="2/5"
                               key={`control-icon-name-${target.fieldIndex}`}
@@ -2061,7 +2187,7 @@ export default function AttributesView({
                                     target.fieldIndex,
                                     "control",
                                     "color",
-                                    match.value,
+                                    match.value || null,
                                   );
                                 }}
                               ></fig-options>
@@ -2141,7 +2267,11 @@ export default function AttributesView({
                     {target.controlTag === "fig-swatch" &&
                       (() => {
                         const bg = (target.controlAttributes.background ?? "").toLowerCase();
-                        const currentFill = bg.includes("gradient") ? "gradient" : "solid";
+                        const currentFill = bg.includes("url(")
+                          ? "Image"
+                          : bg.includes("gradient")
+                            ? "Gradient"
+                            : "Solid";
                         return (
                           <fig-field
                             columns="2/5"
@@ -2150,8 +2280,8 @@ export default function AttributesView({
                             <label>Fill</label>
                             <fig-options
                               full
-                              options="Solid,Gradient"
-                              value={currentFill === "gradient" ? "Gradient" : "Solid"}
+                              options="Solid,Gradient,Image"
+                              value={currentFill}
                               onChange={(e: any) => {
                                 const val = (e as CustomEvent).detail ?? e.target?.value;
                                 applyChange(
@@ -2160,6 +2290,8 @@ export default function AttributesView({
                                   "background",
                                   val === "Gradient"
                                     ? "linear-gradient(135deg, #667eea, #764ba2)"
+                                    : val === "Image"
+                                      ? `url("${landscapeUrl()}")`
                                     : "#0D99FF",
                                 );
                               }}

@@ -72,6 +72,7 @@ type FigTag =
   | "fig-handle"
   | "fig-header"
   | "fig-icon"
+  | "fig-audio"
   | "fig-image"
   | "fig-input-color"
   | "fig-input-combo"

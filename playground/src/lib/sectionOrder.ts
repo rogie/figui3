@@ -58,9 +58,16 @@ function compareExampleNames(a: string, b: string): number {
 function sortExamples(section: Section): Section {
   return {
     ...section,
-    examples: [...section.examples].sort((a, b) =>
-      compareExampleNames(a.name, b.name),
-    ),
+    examples: [...section.examples].sort((a, b) => {
+      if (section.id === "file-input") {
+        const aIsCustomAccepts = a.id === "accepts";
+        const bIsCustomAccepts = b.id === "accepts";
+        if (aIsCustomAccepts !== bIsCustomAccepts) {
+          return aIsCustomAccepts ? 1 : -1;
+        }
+      }
+      return compareExampleNames(a.name, b.name);
+    }),
   };
 }
 

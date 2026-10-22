@@ -15300,6 +15300,351 @@ class FigAudioWaveform extends HTMLElement {
 }
 figDefineElement("fig-audio-waveform", FigAudioWaveform);
 
+/**
+ * Audio player composed from a waveform and shared media controls.
+ *
+ * @attr {string} src - Audio source URL
+ * @attr {boolean} autoplay - Audio autoplay
+ * @attr {boolean} controls - Show playback controls (default false)
+ * @attr {boolean} muted - Mute audio playback
+ * @attr {boolean} loop - Loop audio playback
+ */
+class FigAudio extends HTMLElement {
+  #src = "";
+  #audioEl = null;
+  #waveformEl = null;
+  #controlsEl = null;
+  #controlsWiredFor = null;
+  #controlsWiredControls = null;
+  #controlsSync = null;
+  #controlsOnPlay = null;
+  #controlsOnPause = null;
+  #controlsOnSeek = null;
+
+  static get observedAttributes() {
+    return ["src", "autoplay", "controls", "muted", "loop"];
+  }
+
+  connectedCallback() {
+    this.#src = this.getAttribute("src") || "";
+    this.#ensureAudioElement();
+    this.#ensureWaveform();
+    this.#syncAudioElement();
+    this.#syncControlsVisibility();
+    this.#syncPlaybackUi();
+  }
+
+  disconnectedCallback() {
+    this.#unwireControls();
+  }
+
+  get src() {
+    return this.#src;
+  }
+
+  set src(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("src");
+    } else {
+      this.setAttribute("src", String(value));
+    }
+  }
+
+  get audioEl() {
+    return this.#audioEl;
+  }
+
+  #isEnabledAttr(name) {
+    return this.hasAttribute(name) && this.getAttribute(name) !== "false";
+  }
+
+  #ensureAudioElement() {
+    const authored = this.querySelector(":scope > audio:not([data-generated])");
+    if (authored) {
+      this.#audioEl = authored;
+      return;
+    }
+
+    const generated = Array.from(
+      this.querySelectorAll(":scope > audio[data-generated]"),
+    );
+    const audio = generated[0] || document.createElement("audio");
+    generated.slice(1).forEach((duplicate) => duplicate.remove());
+    if (!audio.hasAttribute("data-generated")) {
+      audio.setAttribute("data-generated", "");
+      audio.preload = "metadata";
+      this.append(audio);
+    }
+    this.#audioEl = audio;
+  }
+
+  #ensureWaveform() {
+    const authored = this.querySelector(
+      ":scope > fig-audio-waveform:not([data-generated])",
+    );
+    if (authored) {
+      this.querySelectorAll(
+        ":scope > fig-audio-waveform[data-generated]",
+      ).forEach((waveform) => waveform.remove());
+      this.#waveformEl = authored;
+    } else {
+      const generated = Array.from(
+        this.querySelectorAll(":scope > fig-audio-waveform[data-generated]"),
+      );
+      const waveform = generated[0] || document.createElement("fig-audio-waveform");
+      generated.slice(1).forEach((duplicate) => duplicate.remove());
+      if (!waveform.hasAttribute("data-generated")) {
+        waveform.setAttribute("data-generated", "");
+        waveform.setAttribute("full", "");
+        this.prepend(waveform);
+      }
+      this.#waveformEl = waveform;
+    }
+    this.#syncWaveformSource();
+  }
+
+  #syncWaveformSource() {
+    if (!this.#waveformEl) return;
+    if (this.#src) this.#waveformEl.setAttribute("url", this.#src);
+    else this.#waveformEl.removeAttribute("url");
+  }
+
+  #syncAudioElement() {
+    if (!this.#audioEl) return;
+    if (this.#audioEl.getAttribute("src") !== this.#src) {
+      if (this.#src) this.#audioEl.setAttribute("src", this.#src);
+      else {
+        this.#audioEl.removeAttribute("src");
+        this.#audioEl.load?.();
+      }
+    }
+    this.#audioEl.controls = false;
+    this.#audioEl.removeAttribute("controls");
+    this.#audioEl.autoplay = this.#isEnabledAttr("autoplay");
+    this.#audioEl.muted = this.#isEnabledAttr("muted");
+    this.#audioEl.loop = this.#isEnabledAttr("loop");
+    this.#syncWaveformSource();
+    this.#syncControlsDisabled();
+  }
+
+  #hasPlayableAudio() {
+    return Boolean(this.#src);
+  }
+
+  #syncControlsVisibility() {
+    const authored = this.querySelector(
+      ":scope > fig-media-controls:not([data-generated])",
+    );
+    if (authored) {
+      if (this.#controlsEl !== authored) {
+        this.#removeControls();
+        this.#controlsEl = authored;
+      }
+      this.#wireControlsToAudio();
+      this.#syncControlsDisabled();
+      return;
+    }
+
+    if (this.#isEnabledAttr("controls")) {
+      this.#ensureControls();
+    } else {
+      this.#removeControls();
+    }
+  }
+
+  #ensureControls() {
+    const generated = Array.from(
+      this.querySelectorAll(":scope > fig-media-controls[data-generated]"),
+    );
+    const controls = generated[0] || document.createElement("fig-media-controls");
+    generated.slice(1).forEach((duplicate) => duplicate.remove());
+    if (!controls.hasAttribute("data-generated")) {
+      controls.setAttribute("data-generated", "");
+      this.append(controls);
+    }
+    this.#controlsEl = controls;
+    this.#wireControlsToAudio();
+    this.#syncControlsDisabled();
+  }
+
+  #syncControlsDisabled() {
+    if (!this.#controlsEl) return;
+    if (this.#hasPlayableAudio()) {
+      if (this.#controlsEl.hasAttribute("data-fig-empty-disabled")) {
+        this.#controlsEl.removeAttribute("disabled");
+        this.#controlsEl.removeAttribute("data-fig-empty-disabled");
+      }
+      return;
+    }
+    this.#controlsEl.setAttribute("disabled", "");
+    this.#controlsEl.setAttribute("data-fig-empty-disabled", "");
+    this.#controlsEl.removeAttribute("playing");
+    this.#controlsEl.setAttribute("time", "0");
+    this.#controlsEl.setAttribute("duration", "0");
+    this.#syncWaveformProgress(0, 0);
+  }
+
+  #syncWaveformProgress(time, duration) {
+    if (!this.#waveformEl) return;
+    const progress =
+      Number.isFinite(time) && Number.isFinite(duration) && duration > 0
+        ? Math.max(0, Math.min(time / duration, 1))
+        : 0;
+    this.#waveformEl.setAttribute("progress", String(progress));
+  }
+
+  #syncPlaybackUi() {
+    const audio = this.#audioEl;
+    if (!audio) return;
+    const time = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+    if (this.#controlsEl) {
+      this.#controlsEl.toggleAttribute("playing", !audio.paused && !audio.ended);
+      this.#controlsEl.setAttribute("time", String(time));
+      this.#controlsEl.setAttribute("duration", String(duration));
+    }
+    this.#syncWaveformProgress(time, duration);
+  }
+
+  #wireControlsToAudio() {
+    if (!this.#controlsEl || !this.#audioEl) return;
+    if (
+      this.#controlsWiredFor === this.#audioEl &&
+      this.#controlsWiredControls === this.#controlsEl
+    ) {
+      this.#syncControlsDisabled();
+      this.#syncPlaybackUi();
+      return;
+    }
+    this.#unwireControls();
+
+    const controls = this.#controlsEl;
+    const audio = this.#audioEl;
+    let pendingSeekTime = null;
+    const syncFromAudio = () => {
+      this.#syncControlsDisabled();
+      if (!this.#hasPlayableAudio()) return;
+      const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+      const time = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+      controls.toggleAttribute("playing", !audio.paused && !audio.ended);
+      controls.setAttribute("duration", String(duration));
+      if (pendingSeekTime !== null) {
+        if (Math.abs(time - pendingSeekTime) < 0.25) pendingSeekTime = null;
+        else {
+          this.#syncWaveformProgress(time, duration);
+          return;
+        }
+      }
+      controls.setAttribute("time", String(time));
+      this.#syncWaveformProgress(time, duration);
+    };
+    const onPlay = () => this.play();
+    const onPause = () => this.pause();
+    const onSeek = (event) => {
+      if (!this.#hasPlayableAudio()) return;
+      const next = Number(event?.detail?.time);
+      if (!Number.isFinite(next)) return;
+      pendingSeekTime = next;
+      try {
+        audio.currentTime = next;
+      } catch {}
+      this.#syncWaveformProgress(next, audio.duration);
+    };
+
+    this.#controlsWiredFor = audio;
+    this.#controlsWiredControls = controls;
+    this.#controlsSync = syncFromAudio;
+    this.#controlsOnPlay = onPlay;
+    this.#controlsOnPause = onPause;
+    this.#controlsOnSeek = onSeek;
+
+    [
+      "play",
+      "pause",
+      "ended",
+      "timeupdate",
+      "loadedmetadata",
+      "durationchange",
+      "seeked",
+      "emptied",
+    ].forEach((type) => audio.addEventListener(type, syncFromAudio));
+    controls.addEventListener("play", onPlay);
+    controls.addEventListener("pause", onPause);
+    controls.addEventListener("seek", onSeek);
+    syncFromAudio();
+  }
+
+  #unwireControls() {
+    const audio = this.#controlsWiredFor;
+    const controls = this.#controlsWiredControls;
+    if (audio && this.#controlsSync) {
+      [
+        "play",
+        "pause",
+        "ended",
+        "timeupdate",
+        "loadedmetadata",
+        "durationchange",
+        "seeked",
+        "emptied",
+      ].forEach((type) => audio.removeEventListener(type, this.#controlsSync));
+    }
+    if (controls) {
+      if (this.#controlsOnPlay) {
+        controls.removeEventListener("play", this.#controlsOnPlay);
+      }
+      if (this.#controlsOnPause) {
+        controls.removeEventListener("pause", this.#controlsOnPause);
+      }
+      if (this.#controlsOnSeek) {
+        controls.removeEventListener("seek", this.#controlsOnSeek);
+      }
+    }
+    this.#controlsWiredFor = null;
+    this.#controlsWiredControls = null;
+    this.#controlsSync = null;
+    this.#controlsOnPlay = null;
+    this.#controlsOnPause = null;
+    this.#controlsOnSeek = null;
+  }
+
+  #removeControls() {
+    this.#unwireControls();
+    this.querySelectorAll(
+      ":scope > fig-media-controls[data-generated]",
+    ).forEach((controls) => controls.remove());
+    this.#controlsEl = null;
+  }
+
+  play() {
+    if (!this.#audioEl || !this.#hasPlayableAudio()) return;
+    const promise = this.#audioEl.play?.();
+    if (promise && typeof promise.catch === "function") promise.catch(() => {});
+  }
+
+  pause() {
+    this.#audioEl?.pause?.();
+  }
+
+  toggle() {
+    if (!this.#audioEl || !this.#hasPlayableAudio()) return;
+    if (this.#audioEl.paused || this.#audioEl.ended) this.play();
+    else this.pause();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    if (name === "src") this.#src = newValue || "";
+    if (!this.isConnected) return;
+    if (name === "controls") this.#syncControlsVisibility();
+    if (["src", "autoplay", "muted", "loop"].includes(name)) {
+      this.#syncAudioElement();
+      this.#syncPlaybackUi();
+    }
+  }
+}
+figDefineElement("fig-audio", FigAudio);
+
 /* File Upload Input */
 const FIG_INPUT_FILE_IMAGE_EXTENSIONS = [
   ".png",
@@ -15318,11 +15663,23 @@ const FIG_INPUT_FILE_AUDIO_EXTENSIONS = [
   ".ogg",
   ".flac",
 ];
+const FIG_INPUT_FILE_VIDEO_EXTENSIONS = [
+  ".mp4",
+  ".webm",
+  ".mov",
+  ".m4v",
+  ".avi",
+  ".mkv",
+  ".ogv",
+  ".mpeg",
+  ".mpg",
+  ".3gp",
+];
 
 /**
  * File upload input with file-aware icons, image previews, and audio playback waveforms.
  * @attr {string} accepts - Native file chooser filter.
- * @attr {boolean} preview - Preview selected files with a supported image extension.
+ * @attr {boolean} preview - Preview supported files or show their media-specific icon.
  * @attr {string} label - Upload button label. Defaults by known file type.
  */
 class FigInputFile extends HTMLElement {
@@ -15334,13 +15691,12 @@ class FigInputFile extends HTMLElement {
   #tooltipEl = null;
   #uploadBtn = null;
   #files = null;
-  #previewImage = null;
+  #imageBlobUrl = null;
   #audioPreview = null;
   #audioIcon = null;
   #audioWaveform = null;
   #audioPlaying = false;
   #audioBlobUrl = null;
-  #syncingPreview = false;
   #suppressAttributeRender = false;
 
   get files() {
@@ -15378,6 +15734,10 @@ class FigInputFile extends HTMLElement {
       this.hasAttribute("preview") &&
       this.getAttribute("preview") !== "false"
     );
+  }
+
+  get #largePreviewEnabled() {
+    return this.getAttribute("preview")?.toLowerCase() === "large";
   }
 
   #hasKnownExtension(filename, extensions) {
@@ -15467,9 +15827,10 @@ class FigInputFile extends HTMLElement {
 
   #hasPreviewableImage() {
     if (this.#files?.length) {
-      return this.#hasKnownExtension(
-        this.#files[0].name,
+      return this.#isKnownFile(
+        this.#files[0],
         FIG_INPUT_FILE_IMAGE_EXTENSIONS,
+        "image/",
       );
     }
     return (
@@ -15498,9 +15859,90 @@ class FigInputFile extends HTMLElement {
     );
   }
 
+  #largePreviewKind() {
+    const file = this.#files?.[0];
+    if (file) {
+      if (
+        this.#isKnownFile(
+          file,
+          FIG_INPUT_FILE_VIDEO_EXTENSIONS,
+          "video/",
+        )
+      ) {
+        return "video";
+      }
+      if (
+        this.#isKnownFile(
+          file,
+          FIG_INPUT_FILE_IMAGE_EXTENSIONS,
+          "image/",
+        )
+      ) {
+        return "image";
+      }
+      return null;
+    }
+
+    if (
+      this.#hasKnownExtension(
+        this.#urlFilename,
+        FIG_INPUT_FILE_VIDEO_EXTENSIONS,
+      )
+    ) {
+      return "video";
+    }
+    if (
+      this.#hasKnownExtension(
+        this.#urlFilename,
+        FIG_INPUT_FILE_IMAGE_EXTENSIONS,
+      )
+    ) {
+      return "image";
+    }
+
+    const acceptedKinds = this.#effectiveAccepts
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean)
+      .map((value) => {
+        if (
+          value.startsWith("video/") ||
+          FIG_INPUT_FILE_VIDEO_EXTENSIONS.includes(value)
+        ) {
+          return "video";
+        }
+        if (
+          value.startsWith("image/") ||
+          FIG_INPUT_FILE_IMAGE_EXTENSIONS.includes(value)
+        ) {
+          return "image";
+        }
+        return null;
+      });
+    if (
+      acceptedKinds.length > 0 &&
+      acceptedKinds.every((kind) => kind === acceptedKinds[0])
+    ) {
+      return acceptedKinds[0];
+    }
+    return null;
+  }
+
   #selectedFileIcon() {
     if (this.#files && this.#files.length > 0) {
       const files = Array.from(this.#files);
+      if (
+        this.#previewEnabled &&
+        files.every((file) =>
+          this.#isKnownFile(
+            file,
+            FIG_INPUT_FILE_VIDEO_EXTENSIONS,
+            "video/",
+          ),
+        )
+      ) {
+        return "video";
+      }
       if (
         files.every((file) =>
           this.#isKnownFile(
@@ -15523,6 +15965,15 @@ class FigInputFile extends HTMLElement {
       ) {
         return "image";
       }
+    }
+    if (
+      this.#previewEnabled &&
+      this.#hasKnownExtension(
+        this.#urlFilename,
+        FIG_INPUT_FILE_VIDEO_EXTENSIONS,
+      )
+    ) {
+      return "video";
     }
     if (
       this.#hasKnownExtension(
@@ -15553,7 +16004,7 @@ class FigInputFile extends HTMLElement {
   disconnectedCallback() {
     this.#fileInput?.removeEventListener("change", this.#onFileChange);
     this.#clearBtn?.removeEventListener("click", this.#onClear);
-    this.#disconnectPreview();
+    this.#disconnectImagePreview();
     this.#disconnectAudioPreview();
     this.removeEventListener("dragover", this.#onDragOver);
     this.removeEventListener("dragleave", this.#onDragLeave);
@@ -15581,10 +16032,17 @@ class FigInputFile extends HTMLElement {
     this.dispatchEvent(new CustomEvent("change", { detail, bubbles: true }));
   }
 
+  #removeExternalFileAttributes() {
+    this.#suppressAttributeRender = true;
+    this.removeAttribute("url");
+    this.removeAttribute("filename");
+    this.#suppressAttributeRender = false;
+  }
+
   #onFileChange = () => {
     if (this.#fileInput.files.length > 0) {
       this.#files = this.#fileInput.files;
-      this.removeAttribute("url");
+      this.#removeExternalFileAttributes();
       this.#render();
       this.#emitEvents();
     }
@@ -15596,7 +16054,6 @@ class FigInputFile extends HTMLElement {
   };
 
   #onDragOver = (e) => {
-    if (this.#previewImage) return;
     if (
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false"
@@ -15613,7 +16070,6 @@ class FigInputFile extends HTMLElement {
   };
 
   #onDragLeave = () => {
-    if (this.#previewImage) return;
     this.removeAttribute("dragover");
     if (this.#uploadBtn && this.#uploadBtn.dataset.prevText !== undefined) {
       this.#uploadBtn.textContent = this.#uploadBtn.dataset.prevText;
@@ -15622,7 +16078,6 @@ class FigInputFile extends HTMLElement {
   };
 
   #onDrop = (e) => {
-    if (this.#previewImage) return;
     e.preventDefault();
     this.removeAttribute("dragover");
     if (this.#uploadBtn && this.#uploadBtn.dataset.prevText !== undefined) {
@@ -15664,59 +16119,15 @@ class FigInputFile extends HTMLElement {
     if (this.#fileInput) {
       this.#fileInput.files = dt.files;
     }
-    this.removeAttribute("url");
+    this.#removeExternalFileAttributes();
     this.#render();
     this.#emitEvents();
   };
 
-  #stopPreviewInputEvent = (e) => {
-    e.stopPropagation();
-  };
-
-  #removeExternalFileAttributes() {
-    this.#suppressAttributeRender = true;
-    this.removeAttribute("url");
-    this.removeAttribute("filename");
-    this.#suppressAttributeRender = false;
-  }
-
-  #onPreviewLoaded = (e) => {
-    if (e.currentTarget !== this.#previewImage) return;
-    e.stopPropagation();
-    const file = e.detail?.file;
-    if (!file || this.#files?.[0] === file) return;
-
-    const dt = new DataTransfer();
-    const selectedFiles =
-      this.#previewImage.querySelector("fig-input-file[data-generated]")?.files;
-    if (selectedFiles?.length) {
-      Array.from(selectedFiles).forEach((selectedFile) =>
-        dt.items.add(selectedFile),
-      );
-    } else {
-      dt.items.add(file);
-    }
-    this.#files = dt.files;
-    this.#removeExternalFileAttributes();
-    if (!this.#syncingPreview) this.#emitEvents();
-  };
-
-  #onPreviewChange = (e) => {
-    if (e.currentTarget !== this.#previewImage) return;
-    e.stopPropagation();
-    if (this.#previewImage.file || (!this.#files && !this.#urlFilename)) return;
-
-    this.#files = null;
-    this.#removeExternalFileAttributes();
-    this.#render();
-    if (!this.#syncingPreview) this.#emitEvents({ cleared: true });
-  };
-
-  #disconnectPreview() {
-    if (!this.#previewImage) return;
-    this.#previewImage.removeEventListener("loaded", this.#onPreviewLoaded);
-    this.#previewImage.removeEventListener("change", this.#onPreviewChange);
-    this.#previewImage = null;
+  #disconnectImagePreview() {
+    if (!this.#imageBlobUrl) return;
+    URL.revokeObjectURL(this.#imageBlobUrl);
+    this.#imageBlobUrl = null;
   }
 
   #disconnectAudioPreview() {
@@ -15801,38 +16212,69 @@ class FigInputFile extends HTMLElement {
     this.append(audio);
   }
 
-  #renderImagePreview({ accepts, label, disabled, multiple }) {
-    const image = document.createElement("fig-image");
-    image.setAttribute("full", "");
-    image.setAttribute("checkerboard", "");
-    image.setAttribute("upload", "");
-    image.setAttribute("aspect-ratio", "4/3");
-    image.setAttribute("label", label);
-    const url = this.getAttribute("url");
-    if (url) image.setAttribute("src", url);
+  #createImagePreviewSwatch() {
+    const swatch = document.createElement("fig-swatch");
+    const file = this.#files?.[0];
+    const url = file
+      ? (this.#imageBlobUrl = URL.createObjectURL(file))
+      : this.getAttribute("url") || "";
+    swatch.setAttribute("background", `url(${JSON.stringify(url)})`);
+    swatch.setAttribute("slot", "prepend");
+    return swatch;
+  }
 
-    this.#previewImage = image;
-    image.addEventListener("loaded", this.#onPreviewLoaded);
-    image.addEventListener("change", this.#onPreviewChange);
-    this.appendChild(image);
+  #createMultipleFileIcon(count) {
+    const icon = document.createElement("fig-icon");
+    icon.setAttribute("slot", "prepend");
+    const label = document.createElement("label");
+    label.textContent = String(count);
+    icon.append(label);
+    return icon;
+  }
 
-    const nestedInput = image.querySelector("fig-input-file[data-generated]");
-    if (!nestedInput) return;
-    nestedInput.addEventListener("input", this.#stopPreviewInputEvent);
-    nestedInput.addEventListener("change", this.#stopPreviewInputEvent);
-    nestedInput.setAttribute("accepts", accepts);
-    if (disabled) nestedInput.setAttribute("disabled", "");
-    if (multiple) nestedInput.setAttribute("multiple", "");
-
-    if (this.#files?.length) {
-      const nativeInput = nestedInput.querySelector('input[type="file"]');
-      if (nativeInput) {
-        this.#syncingPreview = true;
-        nativeInput.files = this.#files;
-        nativeInput.dispatchEvent(new Event("change", { bubbles: true }));
-        this.#syncingPreview = false;
-      }
+  #onLargePreviewChange = (event) => {
+    if (event.target !== event.currentTarget) {
+      event.stopPropagation();
+      return;
     }
+    event.stopPropagation();
+    const media = event.currentTarget;
+    const file = media.file;
+    if (file) {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      this.#files = dataTransfer.files;
+      this.#removeExternalFileAttributes();
+      this.#render();
+      this.#emitEvents();
+      return;
+    }
+
+    this.#files = null;
+    this.#removeExternalFileAttributes();
+    this.#render();
+    this.#emitEvents({ cleared: true });
+  };
+
+  #renderLargePreview(kind, disabled) {
+    const media = document.createElement(
+      kind === "video" ? "fig-video" : "fig-image",
+    );
+    media.setAttribute("upload", "");
+    media.setAttribute("full", "");
+    media.setAttribute("checkerboard", "");
+    const file = this.#files?.[0];
+    const url = file
+      ? (this.#imageBlobUrl = URL.createObjectURL(file))
+      : this.getAttribute("url") || "";
+    if (url) media.setAttribute("src", url);
+    media.addEventListener("change", this.#onLargePreviewChange);
+    this.append(media);
+    const nestedInput = media.querySelector(
+      ":scope > fig-preview > fig-input-file[data-generated]",
+    );
+    if (disabled) nestedInput?.setAttribute("disabled", "");
+    this.setAttribute("data-previewing", "large");
   }
 
   #render() {
@@ -15849,28 +16291,46 @@ class FigInputFile extends HTMLElement {
       (this.#files && this.#files.length > 0) ||
       !!this.getAttribute("url") ||
       !!this.getAttribute("filename");
+    const showsMultiplePreview =
+      this.#previewEnabled &&
+      multiple &&
+      (this.#files?.length ?? 0) > 1;
     const showsImagePreview =
-      this.#previewEnabled && this.#hasPreviewableImage();
+      !showsMultiplePreview &&
+      this.#previewEnabled &&
+      this.#hasPreviewableImage();
     const showsAudioPreview =
-      this.#previewEnabled && this.#hasPreviewableAudio();
+      !showsMultiplePreview &&
+      this.#previewEnabled &&
+      this.#hasPreviewableAudio();
 
-    this.#disconnectPreview();
+    this.#disconnectImagePreview();
     this.#disconnectAudioPreview();
     this.replaceChildren();
     this.#fileInput = null;
     this.#uploadBtn = null;
     this.#clearBtn = null;
     this.#tooltipEl = null;
-    this.toggleAttribute("data-previewing", showsImagePreview);
+    this.removeAttribute("data-previewing");
 
-    if (showsImagePreview) {
-      this.#renderImagePreview({ accepts, label, disabled, multiple });
+    const largePreviewKind =
+      this.#largePreviewEnabled && !showsMultiplePreview
+      ? this.#largePreviewKind()
+      : null;
+    if (largePreviewKind) {
+      this.#renderLargePreview(largePreviewKind, disabled);
       return;
     }
 
     if (hasFile) {
       const filename = this.value;
-      const tooltipText = showsAudioPreview
+      const selectedFileNames =
+        multiple && this.#files?.length
+          ? Array.from(this.#files, (file) => file.name).join(", ")
+          : "";
+      const tooltipText = selectedFileNames
+        ? selectedFileNames
+        : showsAudioPreview
         ? filename
         : accepts
         ? `Accepts ${accepts
@@ -15884,9 +16344,13 @@ class FigInputFile extends HTMLElement {
       if (variant === "property") this.#uploadBtn.setAttribute("full", "");
       this.#uploadBtn.className = "fig-input-file-filename";
       if (disabled) this.#uploadBtn.setAttribute("disabled", "");
-      const fileIcon = createFigIcon(
-        showsAudioPreview ? "play" : this.#selectedFileIcon(),
-      );
+      const fileIcon = showsMultiplePreview
+        ? this.#createMultipleFileIcon(this.#files.length)
+        : showsImagePreview
+          ? this.#createImagePreviewSwatch()
+          : createFigIcon(
+              showsAudioPreview ? "play" : this.#selectedFileIcon(),
+            );
       if (showsAudioPreview) {
         this.#audioIcon = fileIcon;
         fileIcon.setAttribute("slot", "prepend");
@@ -15895,9 +16359,14 @@ class FigInputFile extends HTMLElement {
         const truncEl = document.createElement("fig-truncate");
         truncEl.setAttribute("position", "middle");
         truncEl.setAttribute("tooltip", "");
-        const dotIdx = filename.lastIndexOf(".");
-        if (dotIdx > 0) truncEl.setAttribute("tail", filename.slice(dotIdx));
-        truncEl.textContent = filename;
+        const buttonLabel = showsMultiplePreview
+          ? "Multiple files"
+          : filename;
+        const dotIdx = buttonLabel.lastIndexOf(".");
+        if (!showsMultiplePreview && dotIdx > 0) {
+          truncEl.setAttribute("tail", buttonLabel.slice(dotIdx));
+        }
+        truncEl.textContent = buttonLabel;
         fileIcon.setAttribute("slot", "prepend");
         this.#uploadBtn.append(fileIcon, truncEl);
       }
@@ -20310,6 +20779,7 @@ const FIG_ICON_TOKENS = {
   download: "--icon-24-download",
   upload: "--icon-24-upload",
   image: "--icon-24-image",
+  video: { medium: "--icon-24-video", small: "--icon-16-video" },
   sound: { medium: "--icon-24-sound", small: "--icon-16-sound" },
   "sound-off": {
     medium: "--icon-24-sound-off",

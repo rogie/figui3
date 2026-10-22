@@ -431,6 +431,8 @@
   --icon-24-sound-off: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.1465 11.9746C12.4615 11.6597 13 11.8827 13 12.3281V17.999C13 18.4034 12.7564 18.768 12.3828 18.9229C12.0092 19.0776 11.579 18.992 11.293 18.7061L8.58887 16.002C8.58705 16.0001 8.5846 15.9991 8.58203 15.999C8.41225 15.999 8.32734 15.794 8.44727 15.6738L8.78516 15.335C8.93708 15.1829 9.18394 15.183 9.33594 15.335L11.9834 17.9824C11.9897 17.988 12 17.9833 12 17.9746V12.3281C12 12.1955 12.0527 12.0684 12.1465 11.9746ZM15.1465 6.14648C15.3417 5.95122 15.6583 5.95122 15.8535 6.14648C16.0487 6.34176 16.0487 6.65829 15.8535 6.85352L4.85352 17.8535C4.65828 18.0486 4.34172 18.0486 4.14648 17.8535C3.95126 17.6583 3.95133 17.3418 4.14648 17.1465L15.1465 6.14648ZM11.293 5.29199C11.579 5.00601 12.0091 4.92042 12.3828 5.0752C12.7564 5.23001 13 5.59463 13 5.99902V6.67188C13 6.80445 12.9473 6.93165 12.8535 7.02539C12.5386 7.34027 12.0001 7.11723 12 6.67188V6.02344C12 6.01475 11.9897 6.01001 11.9834 6.01562L9.00293 8.99609C9.00111 8.9979 8.99865 8.99896 8.99609 8.99902H6.5C6.22387 8.99902 6.00002 9.22289 6 9.49902V13.6719C5.99993 13.8045 5.9473 13.9317 5.85352 14.0254L5.28125 14.5967C5.17556 14.7019 5.00003 14.6483 5 14.499V9.49902C5.00002 8.67061 5.67158 7.99902 6.5 7.99902H8.58203C8.58459 7.99896 8.58705 7.9979 8.58887 7.99609L11.293 5.29199Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
   --icon-16-sound-off: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.1465 3.14648C12.3417 2.95139 12.6583 2.95139 12.8535 3.14648C13.0487 3.3417 13.0487 3.65824 12.8535 3.85352L3.85352 12.8535C3.65825 13.0488 3.34175 13.0488 3.14648 12.8535C2.95135 12.6582 2.95126 12.3417 3.14648 12.1465L12.1465 3.14648ZM10 12C9.99999 12.4044 9.7564 12.769 9.38281 12.9238C9.00916 13.0786 8.57895 12.993 8.29297 12.707L6.85352 11.2676L7.56055 10.5605L9 12V9.12109L10 8.12109V12ZM8.29297 3.29297C8.57896 3.00699 9.00915 2.92142 9.38281 3.07617C9.72107 3.21634 9.95041 3.52875 9.99121 3.88672L9 4.87891V4L7 6H5.5C5.22389 6.00002 5.00002 6.22388 5 6.5V8.87891L4.03906 9.83887C4.01389 9.72993 4 9.61658 4 9.5V6.5C4.00002 5.6716 4.6716 5.00002 5.5 5H6.58594L8.29297 3.29297Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
   --icon-24-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.5 6C6.67157 6 6 6.67157 6 7.5V16.5C6 17.3284 6.67157 18 7.5 18H16.5C17.3284 18 18 17.3284 18 16.5V7.5C18 6.67157 17.3284 6 16.5 6H7.5ZM7 7.5C7 7.22386 7.22386 7 7.5 7H16.5C16.7761 7 17 7.22386 17 7.5V14.793L14.3536 12.1464C14.1583 11.9512 13.8417 11.9512 13.6464 12.1464L12 13.7929L9.85355 11.6464C9.65829 11.4512 9.34171 11.4512 9.14645 11.6464L7 13.7929V7.5ZM7 15.2071V16.5C7 16.7761 7.22386 17 7.5 17H16.5C16.7761 17 17 16.7761 17 16.5V16.2071L14 13.2071L12.3536 14.8536C12.1583 15.0488 11.8417 15.0488 11.6464 14.8536L9.5 12.7071L7 15.2071ZM13.5 8C14.3284 8 15 8.67157 15 9.5C15 10.3284 14.3284 11 13.5 11C12.6716 11 12 10.3284 12 9.5C12 8.67157 12.6716 8 13.5 8ZM13.5 9C13.2239 9 13 9.22386 13 9.5C13 9.77614 13.2239 10 13.5 10C13.7761 10 14 9.77614 14 9.5C14 9.22386 13.7761 9 13.5 9Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
+  --icon-24-video: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16 6C17.1046 6 18 6.89543 18 8V16C18 17.1046 17.1046 18 16 18H8C6.89543 18 6 17.1046 6 16V8C6 6.89543 6.89543 6 8 6H16ZM8 7C7.44772 7 7 7.44772 7 8V16C7 16.5523 7.44772 17 8 17H16C16.5523 17 17 16.5523 17 16V8C17 7.44772 16.5523 7 16 7H8ZM9.99805 9.13477C10.3063 8.95591 10.6866 8.955 10.9961 9.13184L14.4961 11.1318C14.8077 11.3099 15 11.6411 15 12C15 12.3589 14.8077 12.6901 14.4961 12.8682L10.9961 14.8682C10.6866 15.045 10.3063 15.0441 9.99805 14.8652C9.68973 14.6863 9.5 14.3565 9.5 14V10C9.5 9.64353 9.68973 9.31369 9.99805 9.13477ZM10.5 14L14 12L10.5 10V14Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
+  --icon-16-video: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.5 3C12.3284 3 13 3.67157 13 4.5V11.5C13 12.3284 12.3284 13 11.5 13H4.5L4.34668 12.9922C3.59028 12.9154 3 12.2767 3 11.5V4.5C3 3.67157 3.67157 3 4.5 3H11.5ZM4.5 4C4.22386 4 4 4.22386 4 4.5V11.5C4 11.7761 4.22386 12 4.5 12H11.5C11.7761 12 12 11.7761 12 11.5V4.5C12 4.22386 11.7761 4 11.5 4H4.5ZM6.50684 5.62988C6.82034 5.45238 7.20572 5.45722 7.51465 5.64258L10.0146 7.14258C10.3158 7.32332 10.5 7.64879 10.5 8C10.5 8.35121 10.3158 8.67668 10.0146 8.85742L7.51465 10.3574C7.20572 10.5428 6.82034 10.5476 6.50684 10.3701C6.19356 10.1926 6 9.86012 6 9.5V6.5C6 6.13988 6.19356 5.80744 6.50684 5.62988ZM7 9.5L9.5 8L7 6.5V9.5Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
   --tip-pointer: path("M8 6L2 0H14L8 6Z");
 
 
@@ -1673,14 +1675,7 @@ input[type="color"] {
     }
   }
 
-  /* Gradient/Image types - inset thumbnail with hidden input */
-  &[data-type="gradient"],
-  &[data-type="image"] {
-    background-color: var(--figma-color-bg-secondary);
-    input[type="color"] {
-      display: none;
-    }
-  }
+
 }
 
 /* Fig Image */
@@ -1749,7 +1744,7 @@ fig-audio-waveform {
 
   .fig-audio-waveform-surface {
     display: block;
-    width: calc(100% - var(--spacer-3));
+    width: 100%;
     height: 100%;
   }
 
@@ -1768,6 +1763,29 @@ fig-audio-waveform {
 
   .fig-audio-waveform-progress {
     fill: var(--fig-audio-waveform-progress-color);
+  }
+}
+
+fig-audio {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacer-2);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  > audio {
+    display: none;
+  }
+
+  > fig-audio-waveform,
+  > fig-media-controls {
+    width: 100%;
+    min-width: 0;
+  }
+  > fig-audio-waveform{
+    padding: 0 var(--spacer-2);
   }
 }
 
@@ -1847,6 +1865,10 @@ fig-input-file {
       outline: 0;
       box-shadow: none;
     }
+  }
+
+  :is(fig-swatch, fig-chit) {
+    background-color: transparent;
   }
 
   &[dragover] fig-button {
@@ -6466,7 +6488,7 @@ fig-toolbelt {
 .fig-mask-icon,
 fig-icon {
   --size: var(--spacer-4);
-  --icon: var(--icon-24-add);
+  --icon: none;
 
   &[size="small"] {
     --size: var(--spacer-3);
@@ -6475,24 +6497,39 @@ fig-icon {
   display: inline-flex;
   width: var(--size);
   height: var(--size);
+  align-items: center;
+  justify-content: center;
   background: currentColor;
-  mask-image: var(--icon);
-  mask-size: auto;
-  mask-repeat: no-repeat;
-  mask-position: center;
   flex-shrink: 0;
+  /* Safari still requires the prefix; other engines use the standard form. */
   -webkit-mask-image: var(--icon);
   -webkit-mask-size: auto;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
+  mask-image: var(--icon);
+  mask-size: auto;
+  mask-repeat: no-repeat;
+  mask-position: center;
 
-  /* Slotted SVGs paint themselves, so the mask/background pipeline must be
+  /* Slotted SVGs/character icons paint themselves, so the mask/background pipeline must be
      fully disabled — including the inline background-color set by [color]. */
-  &:has(> svg) {
+  &:has(> *),
+  &:not([name]) {
     background: transparent !important;
     color: var(--icon-color, inherit);
-    mask-image: none;
     -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  &:not([name]) {
+    align-items: center;
+    justify-content: center;
+  }
+
+  & > label {
+    color: inherit;
+    font: inherit;
+    line-height: 1;
   }
 
   & > svg {

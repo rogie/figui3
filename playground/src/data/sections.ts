@@ -1547,32 +1547,12 @@ export const legacyPropsKitSections: Section[] = [
       "A file upload input with filename display, clear button, accepted types tooltip, and drag-and-drop support.",
     examples: [
       {
-        id: "any-file",
-        name: "Any",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <label>File</label>
-    <fig-input-file label="Upload file" full></fig-input-file>
-  </fig-field>
-</div>`,
-      },
-      {
         id: "audio",
-        name: "Audio (field)",
+        name: "Audio",
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Audio</label>
     <fig-input-file accepts="audio/*" preview full></fig-input-file>
-  </fig-field>
-</div>`,
-      },
-      {
-        id: "image",
-        name: "Image",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <label>Image</label>
-    <fig-input-file label="Upload image" accepts="image/*" full></fig-input-file>
   </fig-field>
 </div>`,
       },
@@ -1582,7 +1562,7 @@ export const legacyPropsKitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Video</label>
-    <fig-input-file label="Upload video" accepts="video/*" full></fig-input-file>
+    <fig-input-file label="Upload video" accepts="video/*" preview full></fig-input-file>
   </fig-field>
 </div>`,
       },
@@ -1591,7 +1571,7 @@ export const legacyPropsKitSections: Section[] = [
         name: "Spreadsheet",
         markup: `<div class="prop-panel">
   <fig-field>
-    <label>Spreadsheet</label>
+    <label>CSV</label>
     <fig-input-file label="Upload spreadsheet" accepts=".xls,.xlsx,.csv" full></fig-input-file>
   </fig-field>
 </div>`,
@@ -2774,10 +2754,10 @@ export const legacyPropsKitSections: Section[] = [
     <label>Position</label>
     <fig-stack style="width: 100%;">
       <fig-input-number value="50" min="0" max="100" step="1" units="%">
-        <span slot="prepend">X</span>
+        <fig-icon slot="prepend"><label>X</label></fig-icon>
       </fig-input-number>
       <fig-input-number value="50" min="0" max="100" step="1" units="%">
-        <span slot="prepend">Y</span>
+        <fig-icon slot="prepend"><label>Y</label></fig-icon>
       </fig-input-number>
     </fig-stack>
   </fig-field>

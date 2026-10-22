@@ -358,6 +358,16 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "fit", attribute: "fit", value: "contain" }],
   },
   {
+    tag: "fig-audio",
+    title: "Audio",
+    group: "media",
+    markup: `<fig-audio src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" controls></fig-audio>`,
+    attributes: [
+      { name: "muted", attribute: "muted", value: "" },
+      { name: "loop", attribute: "loop", value: "" },
+    ],
+  },
+  {
     tag: "fig-media-controls",
     title: "Media Controls",
     group: "media",

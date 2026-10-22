@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.4.0]
+
+### Added
+
+- Added `fig-audio`, composing synchronized waveform and playback controls with autoplay, muted, and loop support.
+- Added 16px and 24px video icons.
+- Added `preview="large"` image and video upload previews and multi-file summaries to `fig-input-file`.
+
+### Changed
+
+- Refined compact file previews with image swatches, audio waveforms, video detection, and explicit preview modes.
+- Updated `fig-icon` to support authored SVG or character content without an implicit default icon.
+- Expanded playground controls and examples for audio, file previews, and icon size, color, and character content.
+
 ## [11.3.3]
 
 ### Changed

@@ -31,6 +31,7 @@ declare module "react" {
       "fig-content": FigAttrs;
       "fig-media": FigAttrs;
       "fig-image": FigAttrs;
+      "fig-icon": FigAttrs;
       "fig-card": FigAttrs;
       "fig-video": FigAttrs;
       "fig-input-color": FigAttrs;
@@ -39,6 +40,7 @@ declare module "react" {
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-angle": FigAttrs;
+      "fig-audio": FigAttrs;
       "fig-audio-waveform": FigAttrs;
       "fig-input-wheel": FigAttrs;
       "fig-input-number": FigAttrs;

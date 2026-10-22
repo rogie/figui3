@@ -371,10 +371,10 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         <label>Position</label>
         <fig-stack direction="vertical" full>
           <fig-input-number value="0" full>
-            <span slot="prepend">X</span>
+            <fig-icon slot="prepend"><label>X</label></fig-icon>
           </fig-input-number>
           <fig-input-number value="4" full>
-            <span slot="prepend">Y</span>
+            <fig-icon slot="prepend"><label>Y</label></fig-icon>
           </fig-input-number>
         </fig-stack>
       </fig-field>
@@ -1107,10 +1107,10 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-input-combo full>
     <fig-input-number value="0">
-      <span slot="prepend">X</span>
+      <fig-icon slot="prepend"><label>X</label></fig-icon>
     </fig-input-number>
     <fig-input-number value="0">
-      <span slot="prepend">Y</span>
+      <fig-icon slot="prepend"><label>Y</label></fig-icon>
     </fig-input-number>
   </fig-input-combo>
 </div>`,
@@ -1251,24 +1251,23 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
       "File upload input with filename display, clear button, drag-and-drop support, image previews, and audio playback waveforms.",
     examples: [
       {
-        id: "default",
-        name: "Any",
-        markup: `<div class="prop-panel">
-  <fig-input-file></fig-input-file>
-</div>`,
-      },
-      {
         id: "image",
         name: "Image",
         markup: `<div class="prop-panel">
-  <fig-input-file accepts="image/*" preview></fig-input-file>
+  <fig-field>
+    <label>Image</label>
+    <fig-input-file accepts="image/*" preview full></fig-input-file>
+  </fig-field>
 </div>`,
       },
       {
-        id: "audio",
-        name: "Audio (no fig field)",
+        id: "image-url",
+        name: "Image (with URL)",
         markup: `<div class="prop-panel">
-  <fig-input-file accepts="audio/*" preview full></fig-input-file>
+  <fig-field>
+    <label>Image</label>
+    <fig-input-file accepts="image/*" preview url="${landscapeUrl()}" filename="image.webp" full></fig-input-file>
+  </fig-field>
 </div>`,
       },
       {
@@ -1282,17 +1281,33 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "video-url",
+        name: "Video (with url)",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Video</label>
+    <fig-input-file accepts="video/*" preview url="${DEMO_FILL_VIDEO.src}" filename="flower.mp4" full></fig-input-file>
+  </fig-field>
+</div>`,
+      },
+      {
         id: "accepts",
         name: "Custom accepts",
         markup: `<div class="prop-panel">
-  <fig-input-file accepts=".mp3,.opus" label="Choose audio"></fig-input-file>
+  <fig-field>
+    <label>Audio</label>
+    <fig-input-file accepts=".mp3,.opus" label="Choose audio" full></fig-input-file>
+  </fig-field>
 </div>`,
       },
       {
         id: "multiple",
         name: "Multiple",
         markup: `<div class="prop-panel">
-  <fig-input-file label="Upload files" multiple></fig-input-file>
+  <fig-field>
+    <label>Files</label>
+    <fig-input-file label="Upload files" multiple full></fig-input-file>
+  </fig-field>
 </div>`,
       },
     ],
@@ -2068,6 +2083,29 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     ],
   },
   {
+    id: "audio",
+    name: "Audio",
+    group: MEDIA_GROUP_NAME,
+    description:
+      "Audio playback composed from a synchronized waveform and shared media controls.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-audio src="/audio/skrillex-ft-elliphant.mp3" controls></fig-audio>
+</div>`,
+      },
+      {
+        id: "looping",
+        name: "Looping",
+        markup: `<div class="prop-panel">
+  <fig-audio src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" controls loop></fig-audio>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "media-controls",
     name: "Media controls",
     group: MEDIA_GROUP_NAME,
@@ -2306,11 +2344,13 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: buildFigIconExampleMarkup("24"),
       },
       {
-        id: "small",
-        name: "Small",
+        id: "character",
+        name: "Character",
         description:
-          "Masked icons from --icon-16-* design tokens at 1rem display size. Set size=\"small\" on &lt;fig-icon&gt; for the compact 1rem size.<br><br>The color attribute accepts aliases like color=\"secondary\", color=\"warning\", or color=\"onbrand\".",
-        markup: buildFigIconExampleMarkup("16"),
+          "Single character label icon, often used in prepended input fields",
+        markup: `<div class="prop-panel">
+  <fig-icon>X</fig-icon>
+</div>`,
       },
     ],
   },

@@ -5663,6 +5663,9 @@ test.describe("input focus ring consistency", () => {
         <fig-input-file id="detected-image"></fig-input-file>
         <fig-input-file id="extension-audio"></fig-input-file>
         <fig-input-file id="extension-image"></fig-input-file>
+        <fig-input-file id="detected-video" preview></fig-input-file>
+        <fig-input-file id="extension-video" preview></fig-input-file>
+        <fig-input-file id="video-without-preview"></fig-input-file>
       `;
     });
 
@@ -5723,9 +5726,131 @@ test.describe("input focus ring consistency", () => {
         imageIcon.evaluate((icon) => icon.style.getPropertyValue("--icon")),
       )
       .toBe("var(--icon-24-image)");
+
+    const detectedVideo = page.locator("#detected-video");
+    await detectedVideo.locator("input[type=file]").setInputFiles({
+      name: "clip.bin",
+      mimeType: "video/mp4",
+      buffer: Buffer.from("video"),
+    });
+    const detectedVideoIcon = detectedVideo.locator(
+      'fig-icon[slot="prepend"]',
+    );
+    await expect(detectedVideoIcon).toHaveAttribute("name", "video");
+    await expect
+      .poll(() =>
+        detectedVideoIcon.evaluate((icon) =>
+          icon.style.getPropertyValue("--icon"),
+        ),
+      )
+      .toBe("var(--icon-24-video)");
+
+    const extensionVideo = page.locator("#extension-video");
+    await extensionVideo.locator("input[type=file]").setInputFiles({
+      name: "clip.MOV",
+      mimeType: "application/octet-stream",
+      buffer: Buffer.from("video"),
+    });
+    await expect(
+      extensionVideo.locator('fig-icon[slot="prepend"]'),
+    ).toHaveAttribute("name", "video");
+
+    const videoWithoutPreview = page.locator("#video-without-preview");
+    await videoWithoutPreview.locator("input[type=file]").setInputFiles({
+      name: "clip.mp4",
+      mimeType: "video/mp4",
+      buffer: Buffer.from("video"),
+    });
+    await expect(
+      videoWithoutPreview.locator('fig-icon[slot="prepend"]'),
+    ).toHaveAttribute("name", "upload");
   });
 
-  test("fig-input-file renders and synchronizes an image preview", async ({
+  test("fig-input-file summarizes multiple preview files and lists their names", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-file id="multiple-preview" multiple preview></fig-input-file>
+        <fig-input-file id="multiple-no-preview" multiple></fig-input-file>
+        <fig-input-file id="multiple-single" multiple preview></fig-input-file>
+      `;
+    });
+
+    const multiplePreview = page.locator("#multiple-preview");
+    await multiplePreview.locator("input[type=file]").setInputFiles([
+      {
+        name: "first.png",
+        mimeType: "image/png",
+        buffer: Buffer.from("first"),
+      },
+      {
+        name: "second.png",
+        mimeType: "image/png",
+        buffer: Buffer.from("second"),
+      },
+    ]);
+    await expect(
+      multiplePreview.locator(
+        ':scope > fig-tooltip[text="first.png, second.png"]',
+      ),
+    ).toHaveAttribute("text", "first.png, second.png");
+    await expect(
+      multiplePreview.locator(
+        ':scope > fig-tooltip fig-icon[slot="prepend"]:not([name]) > label',
+      ),
+    ).toHaveText("2");
+    await expect(
+      multiplePreview.locator(":scope > fig-tooltip fig-truncate"),
+    ).toHaveText("Multiple files");
+    await expect(
+      multiplePreview.locator(":scope > fig-image, :scope > fig-video"),
+    ).toHaveCount(0);
+
+    const multipleNoPreview = page.locator("#multiple-no-preview");
+    await multipleNoPreview.locator("input[type=file]").setInputFiles([
+      {
+        name: "notes.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("notes"),
+      },
+      {
+        name: "report.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("report"),
+      },
+    ]);
+    await expect(
+      multipleNoPreview.locator(
+        ':scope > fig-tooltip[text="notes.txt, report.pdf"]',
+      ),
+    ).toHaveAttribute("text", "notes.txt, report.pdf");
+    await expect(
+      multipleNoPreview.locator('fig-icon[slot="prepend"][name="upload"]'),
+    ).toHaveCount(1);
+
+    const multipleSingle = page.locator("#multiple-single");
+    await multipleSingle.locator("input[type=file]").setInputFiles({
+      name: "only.png",
+      mimeType: "image/png",
+      buffer: Buffer.from("only"),
+    });
+    await expect(
+      multipleSingle.locator(':scope > fig-tooltip[text="only.png"]'),
+    ).toHaveAttribute("text", "only.png");
+    await expect(
+      multipleSingle.locator(
+        ':scope > fig-tooltip fig-swatch[slot="prepend"]',
+      ),
+    ).toHaveCount(1);
+    await expect(
+      multipleSingle.locator(":scope > fig-tooltip fig-truncate"),
+    ).toHaveText("only.png");
+  });
+
+  test("fig-input-file renders an image preview swatch in its property button", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -5733,6 +5858,7 @@ test.describe("input focus ring consistency", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <fig-input-file id="preview-file" preview></fig-input-file>
+        <fig-input-file id="url-preview" preview url="https://example.com/image.webp" filename="image.webp"></fig-input-file>
       `;
       window.__previewFileEvents = [];
       const input = document.querySelector("#preview-file");
@@ -5750,9 +5876,21 @@ test.describe("input focus ring consistency", () => {
 
     const input = page.locator("#preview-file");
     const image = input.locator(":scope > fig-image");
-    const regularButton = input.locator(":scope > fig-button");
+    const regularButton = input.locator(
+      ':scope > fig-button[variant="property"]',
+    );
+    const urlPreview = page.locator("#url-preview");
     await expect(image).toHaveCount(0);
     await expect(regularButton).toHaveCount(1);
+    await expect(urlPreview.locator(":scope > fig-image")).toHaveCount(0);
+    await expect(
+      urlPreview.locator(
+        ':scope > fig-button[variant="property"] fig-swatch[slot="prepend"]',
+      ),
+    ).toHaveAttribute(
+      "background",
+      'url("https://example.com/image.webp")',
+    );
 
     await regularButton.locator('input[type="file"]').setInputFiles({
       name: "preview.png",
@@ -5763,27 +5901,16 @@ test.describe("input focus ring consistency", () => {
       ),
     });
 
-    await expect(image).toHaveAttribute("full", "");
-    await expect(image).toHaveAttribute("checkerboard", "");
-    await expect(image).toHaveAttribute("upload", "");
-    await expect(image).toHaveAttribute("aspect-ratio", "4/3");
-    const previewBox = await image.boundingBox();
-    expect(previewBox?.width).toBeGreaterThan(100);
-    expect(previewBox!.width / previewBox!.height).toBeCloseTo(4 / 3, 1);
-    await expect(regularButton).toHaveCount(0);
-    await expect(input.locator(":scope > .fig-input-file-clear")).toHaveCount(0);
-
-    await expect(image.locator("img[data-generated]")).toHaveAttribute(
-      "src",
-      /^blob:/,
+    await expect(image).toHaveCount(0);
+    await expect(regularButton).toHaveCount(1);
+    const swatch = regularButton.locator('fig-swatch[slot="prepend"]');
+    await expect(swatch).toHaveAttribute("background", /^url\("blob:/);
+    await expect(
+      regularButton.locator('fig-icon[slot="prepend"]'),
+    ).toHaveCount(0);
+    await expect(regularButton.locator("fig-truncate")).toHaveText(
+      "preview.png",
     );
-    await expect
-      .poll(() =>
-        image
-          .locator("img[data-generated]")
-          .evaluate((element) => element.naturalWidth),
-      )
-      .toBeGreaterThan(0);
     await expect
       .poll(() =>
         input.evaluate((element) => element.files?.[0]?.name || ""),
@@ -5794,9 +5921,9 @@ test.describe("input focus ring consistency", () => {
       { type: "change", name: "preview.png", cleared: false },
     ]);
 
-    await image.hover();
-    await image.locator(".fig-input-file-clear").click();
-    await expect(image).toHaveCount(0);
+    await input.hover();
+    await input.locator(".fig-input-file-clear").click();
+    await expect(swatch).toHaveCount(0);
     await expect(regularButton).toHaveCount(1);
     await expect.poll(() => input.evaluate((element) => element.files)).toBeNull();
     expect(await page.evaluate(() => window.__previewFileEvents)).toEqual([
@@ -5805,6 +5932,100 @@ test.describe("input focus ring consistency", () => {
       { type: "input", name: "", cleared: true },
       { type: "change", name: "", cleared: true },
     ]);
+  });
+
+  test("fig-input-file renders large image and video upload previews", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-file id="large-image" accepts="image/*" preview="large"></fig-input-file>
+        <fig-input-file id="large-video" accepts="video/*" preview="large"></fig-input-file>
+        <fig-input-file id="large-image-url" preview="large" url="https://example.com/photo.webp" filename="photo.webp"></fig-input-file>
+        <fig-input-file id="large-video-url" preview="large" url="https://example.com/clip.mp4" filename="clip.mp4"></fig-input-file>
+        <fig-input-file id="large-audio" accepts="audio/*" preview="large"></fig-input-file>
+        <fig-input-file id="large-unknown" accepts=".pdf" preview="large"></fig-input-file>
+        <fig-input-file id="preview-false" preview="false" url="https://example.com/photo.webp" filename="photo.webp"></fig-input-file>
+      `;
+      window.__largePreviewEvents = [];
+      const input = document.querySelector("#large-image");
+      for (const type of ["input", "change"]) {
+        input.addEventListener(type, (event) => {
+          if (event.target !== input) return;
+          window.__largePreviewEvents.push({
+            type,
+            name: event.detail?.files?.[0]?.name || "",
+          });
+        });
+      }
+    });
+
+    const largeImage = page.locator("#large-image");
+    const image = largeImage.locator(
+      ":scope > fig-image[upload][full][checkerboard]",
+    );
+    await expect(image).toHaveCount(1);
+    await expect(
+      image.locator(
+        ":scope > fig-preview > fig-input-file[data-generated][accepts='image/*']",
+      ),
+    ).toHaveCount(1);
+
+    const largeVideo = page.locator("#large-video");
+    await expect(
+      largeVideo.locator(":scope > fig-video[upload][full][checkerboard]"),
+    ).toHaveCount(1);
+    await expect(
+      largeVideo.locator(
+        ":scope > fig-video > fig-preview > fig-input-file[data-generated][accepts='video/*']",
+      ),
+    ).toHaveCount(1);
+
+    await expect(
+      page.locator("#large-image-url > fig-image"),
+    ).toHaveAttribute("src", "https://example.com/photo.webp");
+    await expect(
+      page.locator("#large-video-url > fig-video"),
+    ).toHaveAttribute("src", "https://example.com/clip.mp4");
+
+    await expect(
+      page.locator("#large-unknown fig-button[type='upload']"),
+    ).toHaveCount(1);
+    await expect(
+      page.locator("#preview-false > fig-button fig-swatch"),
+    ).toHaveCount(0);
+
+    const nestedImageInput = image.locator(
+      ":scope > fig-preview > fig-input-file input[type=file]",
+    );
+    await nestedImageInput.setInputFiles({
+      name: "replacement.png",
+      mimeType: "image/png",
+      buffer: Buffer.from("image"),
+    });
+    await expect(
+      largeImage.locator(":scope > fig-image[src^='blob:']"),
+    ).toHaveCount(1);
+    await expect
+      .poll(() =>
+        largeImage.evaluate((element) => element.files?.[0]?.name || ""),
+      )
+      .toBe("replacement.png");
+    expect(await page.evaluate(() => window.__largePreviewEvents)).toEqual([
+      { type: "input", name: "replacement.png" },
+      { type: "change", name: "replacement.png" },
+    ]);
+
+    const largeAudio = page.locator("#large-audio");
+    await largeAudio.locator("input[type=file]").setInputFiles({
+      name: "song.mp3",
+      mimeType: "audio/mpeg",
+      buffer: Buffer.from("audio"),
+    });
+    await expect(largeAudio.locator("fig-audio-waveform")).toHaveCount(1);
+    await expect(largeAudio.locator(":scope > fig-image, :scope > fig-video")).toHaveCount(0);
   });
 
   test("fig-input-file uses its audio icon button for playback", async ({
@@ -13640,6 +13861,8 @@ test.describe("media accessibility", () => {
     await bootFigFixture(page);
     await page.evaluate(async () => {
       await Promise.all([
+        customElements.whenDefined("fig-audio"),
+        customElements.whenDefined("fig-audio-waveform"),
         customElements.whenDefined("fig-button"),
         customElements.whenDefined("fig-image"),
         customElements.whenDefined("fig-media"),
@@ -13648,6 +13871,195 @@ test.describe("media accessibility", () => {
         customElements.whenDefined("fig-input-file"),
       ]);
     });
+  });
+
+  test("fig-audio composes waveform and optional controls from audio attributes", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-audio
+          id="audio"
+          src="https://example.com/track.mp3"
+          autoplay
+          controls
+          muted
+          loop
+        ></fig-audio>
+      `;
+    });
+
+    const state = await page.locator("#audio").evaluate((host) => {
+      const audio = host.querySelector(":scope > audio") as HTMLAudioElement | null;
+      const waveform = host.querySelector(
+        ":scope > fig-audio-waveform",
+      );
+      const controls = host.querySelector(":scope > fig-media-controls");
+      return {
+        audioSrc: audio?.getAttribute("src"),
+        autoplay: audio?.autoplay,
+        muted: audio?.muted,
+        loop: audio?.loop,
+        nativeControls: audio?.controls,
+        waveformUrl: waveform?.getAttribute("url"),
+        waveformGenerated: waveform?.hasAttribute("data-generated"),
+        controlsGenerated: controls?.hasAttribute("data-generated"),
+        controlsDisabled: controls?.hasAttribute("disabled"),
+        audioGetterMatches:
+          (host as HTMLElement & { audioEl?: HTMLAudioElement }).audioEl === audio,
+      };
+    });
+
+    expect(state).toEqual({
+      audioSrc: "https://example.com/track.mp3",
+      autoplay: true,
+      muted: true,
+      loop: true,
+      nativeControls: false,
+      waveformUrl: "https://example.com/track.mp3",
+      waveformGenerated: true,
+      controlsGenerated: true,
+      controlsDisabled: false,
+      audioGetterMatches: true,
+    });
+
+    await page.locator("#audio").evaluate((host) => {
+      host.setAttribute("src", "https://example.com/replacement.wav");
+      host.setAttribute("autoplay", "false");
+      host.setAttribute("muted", "false");
+      host.setAttribute("loop", "false");
+      host.setAttribute("controls", "false");
+    });
+
+    await expect(page.locator("#audio > audio")).toHaveAttribute(
+      "src",
+      "https://example.com/replacement.wav",
+    );
+    await expect(page.locator("#audio > fig-audio-waveform")).toHaveAttribute(
+      "url",
+      "https://example.com/replacement.wav",
+    );
+    await expect(page.locator("#audio > fig-media-controls")).toHaveCount(0);
+    await expect
+      .poll(() =>
+        page.locator("#audio > audio").evaluate((audio: HTMLAudioElement) => ({
+          autoplay: audio.autoplay,
+          muted: audio.muted,
+          loop: audio.loop,
+        })),
+      )
+      .toEqual({ autoplay: false, muted: false, loop: false });
+  });
+
+  test("fig-audio reuses authored composition and synchronizes playback", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-audio id="audio-sync" src="track.mp3">
+          <fig-audio-waveform id="authored-waveform"></fig-audio-waveform>
+          <fig-media-controls id="authored-controls"></fig-media-controls>
+          <fig-media-controls data-generated></fig-media-controls>
+        </fig-audio>
+      `;
+    });
+
+    await page.locator("#audio-sync").evaluate((host) => {
+      const typedHost = host as HTMLElement & {
+        play(): void;
+        pause(): void;
+        toggle(): void;
+      };
+      const audio = typedHost.querySelector("audio") as HTMLAudioElement;
+      let currentTime = 15;
+      let paused = false;
+      let ended = false;
+      Object.defineProperties(audio, {
+        duration: { configurable: true, get: () => 60 },
+        currentTime: {
+          configurable: true,
+          get: () => currentTime,
+          set: (value) => {
+            currentTime = Number(value);
+          },
+        },
+        paused: { configurable: true, get: () => paused },
+        ended: { configurable: true, get: () => ended },
+      });
+      (typedHost as HTMLElement & { _calls?: string[] })._calls = [];
+      audio.play = () => {
+        paused = false;
+        (typedHost as HTMLElement & { _calls: string[] })._calls.push("play");
+        audio.dispatchEvent(new Event("play"));
+        return Promise.resolve();
+      };
+      audio.pause = () => {
+        paused = true;
+        (typedHost as HTMLElement & { _calls: string[] })._calls.push("pause");
+        audio.dispatchEvent(new Event("pause"));
+      };
+      Object.defineProperty(typedHost, "_setEnded", {
+        configurable: true,
+        value: (value: boolean) => {
+          ended = value;
+        },
+      });
+      audio.dispatchEvent(new Event("loadedmetadata"));
+      audio.dispatchEvent(new Event("timeupdate"));
+    });
+
+    await expect(page.locator("#audio-sync > #authored-waveform")).toHaveCount(1);
+    await expect(
+      page.locator("#audio-sync > fig-audio-waveform[data-generated]"),
+    ).toHaveCount(0);
+    await expect(page.locator("#audio-sync > #authored-controls")).toHaveCount(1);
+    await expect(
+      page.locator("#audio-sync > fig-media-controls[data-generated]"),
+    ).toHaveCount(0);
+    await expect(page.locator("#authored-controls")).toHaveAttribute("duration", "60");
+    await expect(page.locator("#authored-controls")).toHaveAttribute("time", "15");
+    await expect(page.locator("#authored-controls")).toHaveAttribute("playing", "");
+    await expect(page.locator("#authored-waveform")).toHaveAttribute(
+      "progress",
+      "0.25",
+    );
+
+    await page.locator("#authored-controls").evaluate((controls) => {
+      controls.dispatchEvent(
+        new CustomEvent("seek", {
+          bubbles: true,
+          composed: true,
+          detail: { time: 30 },
+        }),
+      );
+      controls.dispatchEvent(new CustomEvent("pause", { bubbles: true }));
+      controls.dispatchEvent(new CustomEvent("play", { bubbles: true }));
+    });
+
+    const playbackState = await page.locator("#audio-sync").evaluate((host) => {
+      const audio = host.querySelector("audio") as HTMLAudioElement;
+      return {
+        currentTime: audio.currentTime,
+        calls: (host as HTMLElement & { _calls?: string[] })._calls,
+        progress: host
+          .querySelector("fig-audio-waveform")
+          ?.getAttribute("progress"),
+      };
+    });
+    expect(playbackState).toEqual({
+      currentTime: 30,
+      calls: ["pause", "play"],
+      progress: "0.5",
+    });
+
+    await page.locator("#audio-sync").evaluate((host) => host.removeAttribute("src"));
+    await expect(page.locator("#authored-controls")).toHaveAttribute("disabled", "");
+    await expect(page.locator("#authored-controls")).toHaveAttribute("time", "0");
+    await expect(page.locator("#authored-waveform")).toHaveAttribute("progress", "0");
   });
 
   test("fig-image forwards host alt to generated and slotted images", async ({ page }) => {

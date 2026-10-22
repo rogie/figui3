@@ -422,6 +422,30 @@ export function applyAttributeMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export function getIconCharacter(markup: string, fieldIndex: number): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, {
+    fieldIndex,
+    target: "control",
+  });
+  return element?.textContent?.trim() || "X";
+}
+
+export function applyIconCharacterMutation(
+  markup: string,
+  fieldIndex: number,
+  character: string,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, {
+    fieldIndex,
+    target: "control",
+  });
+  if (!element) return markup;
+  element.textContent = Array.from(character.trim())[0] || "X";
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export function applyAttributeMutationToMatchingControls(
   markup: string,
   controlTag: string,
@@ -744,10 +768,12 @@ export function applyPrependSlotMutation(
   if (existing) existing.remove();
 
   if (mode === "label") {
-    const span = root.ownerDocument.createElement("span");
-    span.setAttribute("slot", "prepend");
-    span.textContent = "X";
-    element.prepend(span);
+    const icon = root.ownerDocument.createElement("fig-icon");
+    icon.setAttribute("slot", "prepend");
+    const label = root.ownerDocument.createElement("label");
+    label.textContent = "X";
+    icon.append(label);
+    element.prepend(icon);
   } else if (mode === "icon") {
     const span = root.ownerDocument.createElement("span");
     span.setAttribute("slot", "prepend");
@@ -1086,6 +1112,7 @@ export const FIG_ICON_SET_24 = [
   "download",
   "upload",
   "image",
+  "video",
   "sound",
   "sound-off",
   "sun",
@@ -1117,6 +1144,7 @@ export const FIG_ICON_SET_16 = [
   "edit",
   "settings",
   "more",
+  "video",
   "sound",
   "sound-off",
   "globe",
@@ -1143,6 +1171,7 @@ export function getFigIconPlaygroundNames(set: FigIconPlaygroundSet): string[] {
 }
 
 export const FIG_ICON_COLOR_OPTIONS = [
+  { label: "Default", value: "" },
   { label: "Primary", value: "primary" },
   { label: "Secondary", value: "secondary" },
   { label: "Tertiary", value: "tertiary" },
@@ -1189,12 +1218,12 @@ const FIG_ICON_COLOR_ALIASES: Record<string, string> = {
 };
 
 export function getFigIconColorOptionLabel(colorAttr: string | undefined): string {
-  if (!colorAttr) return FIG_ICON_COLOR_OPTIONS[0].label;
+  if (!colorAttr) return "Default";
   const normalized =
     FIG_ICON_COLOR_ALIASES[colorAttr] ?? colorAttr.toLowerCase();
   return (
     FIG_ICON_COLOR_OPTIONS.find((option) => option.value === normalized)?.label ??
-    FIG_ICON_COLOR_OPTIONS[0].label
+    "Default"
   );
 }
 

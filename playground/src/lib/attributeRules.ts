@@ -447,6 +447,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     duration: { label: "Duration", type: "number", min: 0, max: 600, step: 1 },
     time: { label: "Time", type: "number", min: 0, max: 600, step: 1 },
   },
+  "fig-audio": {
+    src: { label: "Audio file", type: "string" },
+    autoplay: { label: "Autoplay", type: "boolean", boolMode: "string" },
+    controls: {
+      label: "Controls",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: false,
+    },
+    muted: { label: "Muted", type: "boolean", boolMode: "string" },
+    loop: { label: "Loop", type: "boolean", boolMode: "string" },
+  },
   "fig-preview": {
     "aspect-ratio": aspectRatioRule,
     fit: {
@@ -904,6 +916,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Color",
       type: "enum",
       options: [
+        "",
         "primary",
         "secondary",
         "tertiary",
@@ -1201,7 +1214,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       ],
     },
     accepts: { label: "Accepts", type: "string" },
-    preview: { label: "Preview", type: "boolean", boolMode: "presence" },
+    preview: {
+      label: "Preview",
+      type: "enum",
+      options: ["true", "false", "large"],
+    },
     multiple: { label: "Multiple", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },

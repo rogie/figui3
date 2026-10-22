@@ -69,6 +69,7 @@ declare global {
       "fig-header": WCProps;
       "fig-icon": WCProps;
       "fig-image": WCProps;
+      "fig-audio": WCProps;
       "fig-input-color": WCProps;
       "fig-input-file": WCProps;
       "fig-input-fill": WCProps;
@@ -416,6 +417,7 @@ Fill value examples:
 - `fig-preview`: generic preview surface for images, canvas, SVG, shader output, and generated visuals. Attrs/modifiers: `fit`, `full`, `checkerboard`.
 - `fig-image`: image display and upload. Attrs/modifiers: `src`, `alt`, `upload`, `label`, `size="small|medium|large|auto"`, `aspect-ratio`, `fit`, `checkerboard`, `full`.
 - `fig-video`: video display, poster, upload, autoplay, muted, controls, and checkerboard previews. Attrs/modifiers: `src`, `poster`, `upload`, `label`, `size`, `aspect-ratio`, `fit`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `full`, ARIA label attrs.
+- `fig-audio`: waveform audio player with synchronized shared playback controls. Attrs/modifiers: `src`, `controls`, `autoplay`, `loop`, `muted`.
 - `fig-media`: shared image/video host when the type can switch. Attrs/modifiers: `type="image|video"`, `src`, `poster`, `alt`, `upload`, `label`, `size`, `aspect-ratio`, `fit`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `full`, ARIA label attrs.
 - `fig-media-controls`: standalone playback controls for custom media surfaces. Attrs/modifiers: `playing`, `duration`, `time`.
 - `fig-input-file`: file upload input with filename display. Attrs/modifiers: `accepts`, `label`, `disabled`, `multiple`, `variant="button|overlay"`, `url`, `filename`, `full`.

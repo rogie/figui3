@@ -133,6 +133,17 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 - Children stay in light DOM.
 
+### `fig-audio`
+
+```tsx
+<fig-audio src="track.mp3" controls loop />
+```
+
+- Attrs: `src`, `autoplay`, `controls`, `muted`, `loop`
+- Composes a synchronized `fig-audio-waveform` and `fig-media-controls`.
+- Authored direct waveform and controls children are preserved.
+- Methods: `play()`, `pause()`, `toggle()`; `audioEl` exposes the native audio element.
+
 ### `fig-audio-waveform`
 
 ```tsx

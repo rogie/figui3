@@ -103,6 +103,7 @@ Minimal example:
 | [Radio](#radio) | `<fig-radio>` | Radio button |
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
+| [Audio](#audio) | `<fig-audio>` | Waveform audio player with shared media controls |
 | [Audio Waveform](#audio-waveform) | `<fig-audio-waveform>` | Responsive waveform generated from an audio URL |
 | [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
@@ -378,6 +379,29 @@ For `type="range"`, omitting `value` follows native range behavior and starts at
 
 ---
 
+#### Audio
+
+`<fig-audio>`
+
+An audio player that composes `fig-audio-waveform` with the shared `fig-media-controls`. The waveform progress and playback controls stay synchronized with an internal native audio element.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `src` | string | — | Audio URL used for playback and waveform generation |
+| `autoplay` | boolean | `false` | Start playback automatically when allowed by the browser |
+| `controls` | boolean | `false` | Show generated playback controls |
+| `muted` | boolean | `false` | Mute audio playback |
+| `loop` | boolean | `false` | Restart playback automatically when it ends |
+
+Authored direct `fig-audio-waveform` and `fig-media-controls` children are preserved and synchronized. The `audioEl` property exposes the native audio element; `play()`, `pause()`, and `toggle()` control playback.
+
+```html
+<fig-audio src="track.mp3" controls></fig-audio>
+<fig-audio src="ambience.wav" autoplay muted loop></fig-audio>
+```
+
+---
+
 #### Audio Waveform
 
 `<fig-audio-waveform>`
@@ -493,17 +517,18 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `accepts` | string | — | Native file chooser filter |
-| `preview` | boolean | `false` | Preview supported images or enable button playback for supported audio files |
+| `preview` | `"true"` \| `"false"` \| `"large"` | `false` | Show compact media previews, or use `large` for an upload-enabled `fig-image`/`fig-video` preview |
 | `label` | string | generated | Empty-state button label; defaults to `Upload audio`, `Upload image`, or `Upload file` from the known file type |
 | `multiple` | boolean | `false` | Allow multiple files |
 | `disabled` | boolean | `false` | Disabled state |
 | `variant` | string | `"property"` | Internal button variant |
 
-Known image and audio files use the image or sound icon; unmatched files retain the upload icon. With `preview`, image files render in a full-width 4:3 `fig-image`, while an audio file becomes a play/pause button with a polarized waveform, synchronized playback progress, and its filename in a tooltip. Image preview supports `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, and `.avif`; audio playback supports `.mp3`, `.wav`, `.aac`, `.m4a`, `.ogg`, and `.flac`.
+Known image and audio files use media-specific icons; unmatched files retain the upload icon. A present or `"true"` `preview` uses the compact image swatch, audio waveform playback, or video icon. `preview="large"` renders known images and videos as upload-enabled `fig-image` or `fig-video` previews; audio and other formats retain their compact preview behavior. `preview="false"` disables previews. Image preview supports `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, and `.avif`; audio playback supports `.mp3`, `.wav`, `.aac`, `.m4a`, `.ogg`, and `.flac`; video detection supports common formats including `.mp4`, `.webm`, `.mov`, `.m4v`, `.avi`, `.mkv`, `.ogv`, `.mpeg`, `.mpg`, and `.3gp`.
 
 ```html
 <fig-input-file accepts="image/*"></fig-input-file>
 <fig-input-file accepts="image/*" preview></fig-input-file>
+<fig-input-file accepts="video/*" preview="large"></fig-input-file>
 <fig-input-file accepts="audio/*"></fig-input-file>
 <fig-input-file accepts=".mp3,.opus" label="Choose audio"></fig-input-file>
 ```

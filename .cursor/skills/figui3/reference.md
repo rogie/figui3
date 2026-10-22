@@ -118,6 +118,7 @@ Without `fig-fill-picker`, fill/color render a preview. With the picker register
 ## Media
 
 - Surface lives in `fig-preview`
+- `fig-audio`: `src`, `autoplay`, `controls`, `muted`, `loop`; composes waveform and shared controls
 - `fig-image` / `fig-video`: `upload`, `fit`, `aspect-ratio`, `checkerboard`, `loading-indicator`
 - Video controls render **below** the preview, not as an overlay
 - Slotted image overlays stay in light DOM
