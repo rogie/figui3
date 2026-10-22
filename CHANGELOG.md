@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.4.1]
+
+### Changed
+
+- Anchored the palette editor popup below its palette trigger, removed its header, and reduced its width.
+- Focused and selected newly added palette color values for immediate editing.
+
 ## [11.4.0]
 
 ### Added

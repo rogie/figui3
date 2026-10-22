@@ -141,13 +141,9 @@ dialog[is="fig-toast"] {
 
 /* Palette Editor */
 .fig-palette-editor-popup {
-  width: 15rem;
+  width: 12rem;
   padding: 0;
   pointer-events: auto;
-
-  & > fig-content {
-    padding-top: 0;
-  }
 }
 
 fig-palette-editor {

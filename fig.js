@@ -11181,9 +11181,9 @@ class FigInputPalette extends HTMLElement {
 
     const popup = document.createElement("dialog", { is: "fig-popup" });
     popup.setAttribute("is", "fig-popup");
-    popup.setAttribute("title", "Edit palette");
-    popup.setAttribute("position", "center left");
-    popup.setAttribute("offset", "8 0");
+    popup.setAttribute("aria-label", "Edit palette");
+    popup.setAttribute("position", "bottom left");
+    popup.setAttribute("offset", "0 8");
     popup.setAttribute("viewport-margin", "8");
     popup.setAttribute("popover", "manual");
     popup.className = "fig-palette-editor-popup";
@@ -11224,9 +11224,6 @@ class FigInputPalette extends HTMLElement {
     popup.addEventListener("toggle", this.#boundPickerClosed);
 
     (figGetOverlayRoot() ?? document.body).append(popup);
-    popup
-      .querySelector(":scope > fig-header")
-      ?.setAttribute("borderless", "");
     this.#pickerPopup = popup;
     this.#pickerEditor = editor;
     this.querySelector(".palette-colors-inline")?.setAttribute(

@@ -539,6 +539,17 @@ class FigPaletteEditor extends HTMLElement {
     this.#emit("change");
   };
 
+  #focusColorValue(index) {
+    requestAnimationFrame(() => {
+      if (!this.isConnected) return;
+      const input = this.querySelector(
+        `.fig-palette-editor-color-row[data-index="${index}"] .fig-palette-editor-color fig-input-text input`,
+      );
+      input?.focus();
+      input?.select();
+    });
+  }
+
   #render() {
     const reorder = figEditorCreateElement(
       "fig-reorder",
@@ -567,6 +578,7 @@ class FigPaletteEditor extends HTMLElement {
       );
       addButton.addEventListener("click", () => {
         if (this.#disabled || this.#colors.length >= this.#max) return;
+        const addedIndex = this.#colors.length;
         this.#colors.push(
           figEditorAveragePaletteEntries(
             this.#colors.at(-2),
@@ -577,6 +589,7 @@ class FigPaletteEditor extends HTMLElement {
         this.#render();
         this.#emit("input");
         this.#emit("change");
+        this.#focusColorValue(addedIndex);
       });
       children.push(figEditorCreateElement("fig-field", {}, addButton));
     }

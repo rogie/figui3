@@ -49,13 +49,33 @@ test.describe("fig-input-palette edit modes", () => {
 
     const popup = page.locator("dialog.fig-palette-editor-popup");
     await expect(popup).toHaveAttribute("open");
-    await expect(popup.locator("fig-header h3")).toHaveText("Edit palette");
+    await expect(popup).toHaveAttribute("position", "bottom left");
+    await expect(popup).toHaveAttribute("offset", "0 8");
+    await expect(popup).toHaveAttribute("aria-label", "Edit palette");
+    await expect(popup.locator(":scope > fig-header")).toHaveCount(0);
     await expect(popup.locator("fig-palette-editor")).toHaveCount(1);
     await expect(pickerTrigger).toHaveAttribute("aria-expanded", "true");
     await expect(pickerTrigger).toHaveAttribute(
       "aria-controls",
       await popup.getAttribute("id"),
     );
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const trigger = document.querySelector(
+            "#picker .palette-colors-inline",
+          );
+          const popup = document.querySelector(
+            "dialog.fig-palette-editor-popup",
+          );
+          if (!trigger || !popup) return false;
+          return (
+            popup.getBoundingClientRect().top >=
+            trigger.getBoundingClientRect().bottom
+          );
+        }),
+      )
+      .toBe(true);
 
     await popup.locator("fig-palette-editor").evaluate((editor) => {
       editor.dispatchEvent(
@@ -74,7 +94,7 @@ test.describe("fig-input-palette edit modes", () => {
     );
     await expect(picker.locator(".palette-colors fig-input-color")).toHaveCount(2);
 
-    await popup.locator("fig-button[close-dialog]").click();
+    await page.keyboard.press("Escape");
     await expect(picker).not.toHaveAttribute("open");
     await expect(pickerTrigger).toHaveAttribute("aria-expanded", "false");
     await expect(pickerTrigger).toBeFocused();
@@ -257,6 +277,24 @@ test.describe("fig-palette-editor", () => {
         { color: "#FFFFFF", alpha: 0.75 },
         { color: "#808080", alpha: 0.5 },
       ]);
+
+    const addedInput = page.locator(
+      '#averaged .fig-palette-editor-color-row[data-index="3"] fig-input-color fig-input-text input',
+    );
+    await expect(addedInput).toBeFocused();
+    await expect
+      .poll(() =>
+        addedInput.evaluate((input: HTMLInputElement) => ({
+          value: input.value,
+          selectionStart: input.selectionStart,
+          selectionEnd: input.selectionEnd,
+        })),
+      )
+      .toEqual({
+        value: "808080",
+        selectionStart: 0,
+        selectionEnd: 6,
+      });
   });
 
   test("honors min, max, fixed, and disabled controls", async ({ page }) => {
