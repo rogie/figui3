@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.3.2]
+
+### Changed
+
+- Refined the default slider track, thumb, and tick proportions.
+
+### Fixed
+
+- Aligned generated default ticks with snapped slider values and variant-specific endpoints.
+
 ## [11.3.1]
 
 ### Added

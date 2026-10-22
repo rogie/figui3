@@ -3159,7 +3159,6 @@ fig-slider {
   --slider-stepper-padding: calc(
     (var(--slider-thumb-size) / 2) - var(--slider-tick-width) / 2
   );
-  --slider-default-tick-end-inset: calc(var(--slider-stepper-padding) * 2);
   --slider-track-color: var(--figma-color-bg-secondary);
   --slider-percent: calc(var(--slider-complete) * 100%);
   --start-percent: calc(var(--default, 0) * 100%);
@@ -3333,6 +3332,7 @@ fig-slider {
       cursor: default;
       box-shadow: var(--slider-handle-shadow);
       opacity: var(--slider-thumb-opacity);
+      transform: translateX(calc(var(--slider-complete) * 50% - 25%));
     }
 
     &:disabled::-webkit-slider-thumb {
@@ -3384,6 +3384,7 @@ fig-slider {
       cursor: default;
       box-shadow: var(--slider-handle-shadow);
       opacity: var(--slider-thumb-opacity);
+      transform: translateX(calc(var(--slider-complete) * 50% - 25%));
     }
 
     &:disabled::-moz-range-thumb {
@@ -3423,11 +3424,13 @@ fig-slider {
     margin: 0;
     border: 0;
     appearance: none;
-    padding: 0 var(--slider-stepper-padding);
+    padding: 0;
     height: var(--slider-height);
     pointer-events: none;
     justify-content: space-between;
-    width: 100%;
+    width: auto;
+    left: calc(var(--slider-height) / 2);
+    right: calc(var(--slider-height) / 2);
 
     & option {
       appearance: none;
@@ -3439,6 +3442,7 @@ fig-slider {
       font-size: 0;
       background: var(--figma-color-icon-tertiary);
       opacity: var(--slider-tick-opacity);
+      box-shadow: 0 0 0 0.75px rgba(0, 0, 0, 0.075);
       display: block;
       &[default] {
         background: var(--figma-color-icon);
@@ -3450,30 +3454,37 @@ fig-slider {
     }
   }
 
-  datalist[data-generated="slider-default"] option:first-child:last-child {
-    position: absolute;
-    margin: 0;
-    left: clamp(
-      var(--slider-stepper-padding),
-      calc(var(--start-percent) - var(--slider-tick-width) / 2),
-      calc(100% - var(--slider-default-tick-end-inset))
-    );
-    top: calc(50% - var(--slider-tick-height) / 2);
+  datalist[data-generated="slider-default"] {
+    left: calc(var(--slider-height) / 2);
+    right: calc(var(--slider-height) / 2);
+    width: auto;
+    padding-inline: 0;
+
+    option:first-child:last-child {
+      position: absolute;
+      margin: 0;
+      left: var(--start-percent);
+      top: calc(50% - var(--slider-tick-height) / 2);
+      transform: translateX(-50%);
+    }
+  }
+
+  &:not([variant="classic"]):is(:not([min]), [min="0"])
+    datalist[data-generated="slider-default"]
+    option[value="0"] {
+    transform: translateX(-0.125rem);
   }
 
   &:not([variant="classic"]) {
-    --slider-height: 0.375rem;
-    --slider-thumb-size: 0.75rem;
-    --slider-tick-width: calc(var(--slider-height) / 2);
-    --slider-tick-height: calc(var(--slider-height) / 2);
-    --slider-default-tick-end-inset: calc(
-      var(--slider-thumb-size) / 2 + var(--slider-tick-width) / 2 - 0.125rem
-    );
+    --slider-height: 0.5rem;
+    --slider-thumb-size: 0.875rem;
+    --slider-tick-width: calc(var(--slider-height) - 4px);
+    --slider-tick-height: calc(var(--slider-height) - 4px);
     --slider-number-width: var(--input-opacity-width);
     --handle-transition: none;
     --slider-transition: none;
     --slider-handle-shadow:
-      inset 0 0 0 calc(6px + 0.5rem * var(--unchanged))
+      inset 0 0 0 calc(var(--slider-thumb-size) / 2 + 0.5rem * var(--unchanged))
         var(--slider-thumb-color),
       0 0 0 0.75px rgba(0, 0, 0, 0.075), inset 0 0 0 5px rgba(0, 0, 0, 0.1),
       var(--figma-elevation-100);

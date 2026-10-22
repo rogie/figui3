@@ -7503,6 +7503,8 @@ test.describe("slider accessibility", () => {
         <fig-slider id="range-default" text="false" value="0" default="50" min="0" max="100" step="1" style="width:240px"></fig-slider>
         <fig-slider id="range-inferred" text="false" value="50" min="0" max="100"></fig-slider>
         <fig-slider id="hue-default" type="hue" text="false" value="0" default="180" min="0" max="360"></fig-slider>
+        <fig-slider id="hue-snapped" type="hue" text="false" value="180" default="180"></fig-slider>
+        <fig-slider id="hue-zero" type="hue" text="false" value="180" default="0"></fig-slider>
         <fig-slider id="opacity-default" type="opacity" text="false" value="0" default="25" min="0" max="100"></fig-slider>
         <fig-slider id="off-step-default" text="false" value="0" default="35" min="0" max="100" step="10"></fig-slider>
       `;
@@ -7553,6 +7555,43 @@ test.describe("slider accessibility", () => {
     await expect
       .poll(() => readDefaultTick("#hue-default"))
       .toMatchObject({ value: "180", isDefault: true });
+    const hueAlignment = await page.locator("#hue-snapped").evaluate((host) => {
+      const input = host.querySelector('input[type="range"]');
+      const tick = host.querySelector(
+        'datalist[data-generated="slider-default"] option',
+      );
+      if (!input || !tick) throw new Error("Missing hue slider geometry");
+      const probe = document.createElement("span");
+      probe.style.cssText =
+        "position:absolute;width:var(--slider-thumb-size);height:0";
+      host.append(probe);
+      const thumbWidth = probe.getBoundingClientRect().width;
+      probe.remove();
+      const inputRect = input.getBoundingClientRect();
+      const tickRect = tick.getBoundingClientRect();
+      const ratio = 180 / 255;
+      const expectedCenter =
+        inputRect.left +
+        thumbWidth / 2 +
+        ratio * (inputRect.width - thumbWidth) +
+        (ratio * 0.5 - 0.25) * thumbWidth;
+      return tickRect.left + tickRect.width / 2 - expectedCenter;
+    });
+    expect(Math.abs(hueAlignment)).toBeLessThan(0.25);
+    const zeroInset = await page.locator("#hue-zero").evaluate((host) => {
+      const track = host.querySelector(".fig-slider-input-container");
+      const tick = host.querySelector(
+        'datalist[data-generated="slider-default"] option',
+      );
+      if (!track || !tick) throw new Error("Missing zero tick geometry");
+      const trackRect = track.getBoundingClientRect();
+      const tickRect = tick.getBoundingClientRect();
+      return {
+        actual: tickRect.left + tickRect.width / 2 - trackRect.left,
+        expected: trackRect.height / 2,
+      };
+    });
+    expect(zeroInset.actual).toBeCloseTo(zeroInset.expected, 1);
     await expect
       .poll(() => readDefaultTick("#opacity-default"))
       .toMatchObject({ value: "25", isDefault: true });
