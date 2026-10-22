@@ -1646,7 +1646,7 @@ export default function AttributesView({
                   onInput={handleOffsetInput("x")}
                   onChange={handleOffsetInput("x")}
                 >
-                  <fig-icon slot="prepend"><label>X</label></fig-icon>
+                  <fig-icon slot="prepend">X</fig-icon>
                 </fig-input-number>
                 <fig-input-number
                   value={currentY}
@@ -1655,7 +1655,7 @@ export default function AttributesView({
                   onInput={handleOffsetInput("y")}
                   onChange={handleOffsetInput("y")}
                 >
-                  <fig-icon slot="prepend"><label>Y</label></fig-icon>
+                  <fig-icon slot="prepend">Y</fig-icon>
                 </fig-input-number>
               </div>
             );

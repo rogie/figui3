@@ -770,9 +770,7 @@ export function applyPrependSlotMutation(
   if (mode === "label") {
     const icon = root.ownerDocument.createElement("fig-icon");
     icon.setAttribute("slot", "prepend");
-    const label = root.ownerDocument.createElement("label");
-    label.textContent = "X";
-    icon.append(label);
+    icon.textContent = "X";
     element.prepend(icon);
   } else if (mode === "icon") {
     const span = root.ownerDocument.createElement("span");

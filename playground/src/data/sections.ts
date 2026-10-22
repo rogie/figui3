@@ -2754,10 +2754,10 @@ export const legacyPropsKitSections: Section[] = [
     <label>Position</label>
     <fig-stack style="width: 100%;">
       <fig-input-number value="50" min="0" max="100" step="1" units="%">
-        <fig-icon slot="prepend"><label>X</label></fig-icon>
+        <fig-icon slot="prepend">X</fig-icon>
       </fig-input-number>
       <fig-input-number value="50" min="0" max="100" step="1" units="%">
-        <fig-icon slot="prepend"><label>Y</label></fig-icon>
+        <fig-icon slot="prepend">Y</fig-icon>
       </fig-input-number>
     </fig-stack>
   </fig-field>

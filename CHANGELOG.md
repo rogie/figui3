@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.4.2]
+
+### Changed
+
+- Simplified character prepend icons in number inputs to use direct text content.
+- Refined prepend icon color inheritance and number-input secondary coloring.
+
 ## [11.4.1]
 
 ### Changed

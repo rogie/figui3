@@ -371,10 +371,10 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         <label>Position</label>
         <fig-stack direction="vertical" full>
           <fig-input-number value="0" full>
-            <fig-icon slot="prepend"><label>X</label></fig-icon>
+            <fig-icon slot="prepend">X</fig-icon>
           </fig-input-number>
           <fig-input-number value="4" full>
-            <fig-icon slot="prepend"><label>Y</label></fig-icon>
+            <fig-icon slot="prepend">Y</fig-icon>
           </fig-input-number>
         </fig-stack>
       </fig-field>
@@ -1107,10 +1107,10 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-input-combo full>
     <fig-input-number value="0">
-      <fig-icon slot="prepend"><label>X</label></fig-icon>
+      <fig-icon slot="prepend">X</fig-icon>
     </fig-input-number>
     <fig-input-number value="0">
-      <fig-icon slot="prepend"><label>Y</label></fig-icon>
+      <fig-icon slot="prepend">Y</fig-icon>
     </fig-input-number>
   </fig-input-combo>
 </div>`,

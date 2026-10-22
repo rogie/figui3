@@ -4341,6 +4341,7 @@ fig-input-number {
   & [slot="prepend"] {
     order: 0;
     padding-right: 0;
+    color: var(--figma-color-text-secondary);
     margin-right: calc(var(--spacer-2) * -1);
   }
 
@@ -6489,6 +6490,7 @@ fig-toolbelt {
 fig-icon {
   --size: var(--spacer-4);
   --icon: none;
+  color: var(--icon-color, inherit);
 
   &[size="small"] {
     --size: var(--spacer-3);
@@ -6516,7 +6518,7 @@ fig-icon {
   &:has(> *),
   &:not([name]) {
     background: transparent !important;
-    color: var(--icon-color, inherit);
+
     -webkit-mask-image: none;
     mask-image: none;
   }
@@ -6524,6 +6526,7 @@ fig-icon {
   &:not([name]) {
     align-items: center;
     justify-content: center;
+    line-height: 1;
   }
 
   & > label {
