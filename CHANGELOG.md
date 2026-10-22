@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.3.3]
+
+### Changed
+
+- Refined default slider track and tick sizing and limited thumb endpoint compensation to the default variant.
+
+### Fixed
+
+- Restored inset borders over hue and opacity slider tracks.
+
 ## [11.3.2]
 
 ### Changed
