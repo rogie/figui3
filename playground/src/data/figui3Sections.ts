@@ -626,6 +626,18 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
   </fig-property>
 </div>`,
       },
+      {
+        id: "custom-accessory",
+        name: "Custom accessory",
+        markup: `<div class="prop-panel">
+  <fig-property label="Opacity" show-trailing>
+    <fig-slider slot="input" value="75" min="0" max="100" units="%" text="true" full></fig-slider>
+    <fig-button slot="trailing" variant="ghost" icon aria-label="Reset opacity">
+      <fig-icon name="reset"></fig-icon>
+    </fig-button>
+  </fig-property>
+</div>`,
+      },
     ],
   },
   {
@@ -690,6 +702,44 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-palette-editor value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]'></fig-palette-editor>
 </div>`,
+      },
+      {
+        id: "popup",
+        name: "Popup",
+        markup: `<fig-button id="palette-popup-anchor">Palette</fig-button>
+<dialog
+  is="fig-popup-palette"
+  anchor="#palette-popup-anchor"
+  value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]'
+  open
+></dialog>`,
+      },
+    ],
+  },
+  {
+    id: "gradient-editor",
+    name: "Gradient Editor",
+    group: "Editor components",
+    description:
+      "A reusable full gradient editor with type controls, stop handles, and reorderable stop rows (requires <code>fig-editor.js</code>).",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-gradient-editor value='{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":50,"color":"#9747FF","opacity":100},{"position":100,"color":"#FF7262","opacity":100}]}'></fig-gradient-editor>
+</div>`,
+      },
+      {
+        id: "popup",
+        name: "Popup",
+        markup: `<fig-button id="gradient-popup-anchor">Gradient</fig-button>
+<dialog
+  is="fig-popup-gradient"
+  anchor="#gradient-popup-anchor"
+  value='{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}'
+  open
+></dialog>`,
       },
     ],
   },

@@ -900,6 +900,17 @@ export const legacyPropsKitSections: Section[] = [
   </fig-field>
 </div>`,
       },
+      {
+        id: "popup",
+        name: "Popup",
+        markup: `<fig-button id="easing-popup-anchor">Easing</fig-button>
+<dialog
+  is="fig-popup-easing"
+  anchor="#easing-popup-anchor"
+  value="0.42, 0, 0.58, 1"
+  open
+></dialog>`,
+      },
     ],
   },
   {

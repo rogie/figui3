@@ -10889,7 +10889,6 @@ class FigInputPalette extends HTMLElement {
   #renderRAF = null;
   #pickerDefinitionPromise = null;
   #pickerPopup = null;
-  #pickerEditor = null;
   #syncingValueAttribute = false;
   #boundHandleKeyDown = this.#handleKeyDown.bind(this);
   #boundHandleHostFocus = () => this.focus();
@@ -11168,13 +11167,13 @@ class FigInputPalette extends HTMLElement {
   #renderPickerWhenAvailable() {
     if (
       this.#editMode !== "picker" ||
-      customElements.get("fig-palette-editor")
+      customElements.get("fig-popup-palette")
     ) {
       this.#syncPickerOpenState();
       return;
     }
     this.#pickerDefinitionPromise ??= customElements
-      .whenDefined("fig-palette-editor")
+      .whenDefined("fig-popup-palette")
       .then(() => {
         if (!this.isConnected || this.#editMode !== "picker") return;
         this.#syncPickerOpenState();
@@ -11183,28 +11182,16 @@ class FigInputPalette extends HTMLElement {
 
   #ensurePickerPopup() {
     if (this.#pickerPopup?.isConnected) return this.#pickerPopup;
-    if (!customElements.get("fig-palette-editor")) return null;
+    if (!customElements.get("fig-popup-palette")) return null;
 
-    const popup = document.createElement("dialog", { is: "fig-popup" });
-    popup.setAttribute("is", "fig-popup");
-    popup.setAttribute("aria-label", "Edit palette");
-    popup.setAttribute("position", "bottom left");
-    popup.setAttribute("offset", "0 8");
-    popup.setAttribute("viewport-margin", "8");
-    popup.setAttribute("popover", "manual");
-    popup.className = "fig-palette-editor-popup";
+    const popup = document.createElement("dialog", {
+      is: "fig-popup-palette",
+    });
+    popup.setAttribute("is", "fig-popup-palette");
     popup.id = figUniqueId();
     popup.anchor = this;
 
-    const editor = document.createElement("fig-palette-editor");
-    const content = figCreateElement(
-      "fig-content",
-      { className: "fig-palette-editor-content" },
-      editor,
-    );
-    popup.append(content);
-
-    const handleEditorEvent = (event) => {
+    const handlePopupEvent = (event) => {
       event.stopPropagation();
       if (!Array.isArray(event.detail)) return;
       this.#colors = event.detail.map((entry) => ({
@@ -11224,14 +11211,13 @@ class FigInputPalette extends HTMLElement {
         }),
       );
     };
-    editor.addEventListener("input", handleEditorEvent);
-    editor.addEventListener("change", handleEditorEvent);
+    popup.addEventListener("input", handlePopupEvent);
+    popup.addEventListener("change", handlePopupEvent);
     popup.addEventListener("close", this.#boundPickerClosed);
     popup.addEventListener("toggle", this.#boundPickerClosed);
 
     (figGetOverlayRoot() ?? document.body).append(popup);
     this.#pickerPopup = popup;
-    this.#pickerEditor = editor;
     this.querySelector(".palette-colors-inline")?.setAttribute(
       "aria-controls",
       popup.id,
@@ -11241,21 +11227,21 @@ class FigInputPalette extends HTMLElement {
   }
 
   #syncPickerEditor() {
-    const editor = this.#pickerEditor;
-    if (!editor) return;
-    editor.setAttribute("value", JSON.stringify(this.#colors));
-    editor.setAttribute("min", String(this.#min));
-    editor.setAttribute("max", String(this.#max));
-    editor.toggleAttribute("fixed", this.#isFixed);
+    const popup = this.#pickerPopup;
+    if (!popup) return;
+    popup.setAttribute("value", JSON.stringify(this.#colors));
+    popup.setAttribute("min", String(this.#min));
+    popup.setAttribute("max", String(this.#max));
+    popup.toggleAttribute("fixed", this.#isFixed);
     const disabled =
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false";
-    editor.toggleAttribute("disabled", disabled);
+    popup.toggleAttribute("disabled", disabled);
   }
 
   #syncPickerOpenState() {
     if (!this.isConnected || this.#editMode !== "picker") return;
-    if (!customElements.get("fig-palette-editor")) {
+    if (!customElements.get("fig-popup-palette")) {
       this.#renderPickerWhenAvailable();
       return;
     }
@@ -11286,7 +11272,6 @@ class FigInputPalette extends HTMLElement {
       "aria-controls",
     );
     this.#pickerPopup = null;
-    this.#pickerEditor = null;
   }
 
   #createPicker(entry, index, disabled, { inline = false } = {}) {
@@ -11545,10 +11530,11 @@ figDefineElement("fig-input-palette", FigInputPalette);
 
 /* Input Gradient */
 /**
- * A gradient-only fill input built on top of fig-fill-picker.
+ * A gradient-only fill input with inline and reusable popup editing modes.
  * @attr {string} value - JSON string with gradient fill data
  * @attr {string} size - Passed through to the internal fig-swatch (e.g. "large")
  * @attr {boolean} disabled - Whether the input is disabled
+ * @attr {string} edit - `"true"` for inline stops, `"false"` for preview, or `"picker"` for fig-popup-gradient
  * @fires input - When the gradient value changes
  * @fires change - When the gradient value is committed
  */
@@ -11561,7 +11547,20 @@ class FigInputGradient extends HTMLElement {
   #colorObserver = null;
   #repositionRAF = null;
   #pickerDefinitionPromise = null;
+  #pickerPopup = null;
+  #syncingValueAttribute = false;
   anchorElement = null;
+  #boundPickerClosed = () => {
+    if (!this.#pickerPopup) return;
+    if (
+      this.#pickerPopup.hasAttribute("open") ||
+      this.#pickerPopup.matches?.(":open") ||
+      this.#pickerPopup.matches?.(":popover-open")
+    ) {
+      return;
+    }
+    this.classList.remove("has-popup-open");
+  };
   #gradient = {
     type: "linear",
     angle: 90,
@@ -11660,15 +11659,22 @@ class FigInputGradient extends HTMLElement {
     this.#parseValue();
     this.#render();
     this.#renderPickerWhenAvailable();
+    this.removeEventListener("click", this.#onPickerClick);
+    this.addEventListener("click", this.#onPickerClick);
     this.removeEventListener("keydown", this.#onPickerKeyDown);
     this.addEventListener("keydown", this.#onPickerKeyDown);
     if (this.#isEditable) document.addEventListener("keydown", this.#onKeyDown);
   }
 
   #renderPickerWhenAvailable() {
-    if (this.#editMode !== "picker" || hasFigFillPicker()) return;
+    if (
+      this.#editMode !== "picker" ||
+      customElements.get("fig-popup-gradient")
+    ) {
+      return;
+    }
     this.#pickerDefinitionPromise ??= customElements
-      .whenDefined("fig-fill-picker")
+      .whenDefined("fig-popup-gradient")
       .then(() => {
         if (!this.isConnected || this.#editMode !== "picker") return;
         this.#render();
@@ -11677,7 +11683,9 @@ class FigInputGradient extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener("keydown", this.#onKeyDown);
+    this.removeEventListener("click", this.#onPickerClick);
     this.removeEventListener("keydown", this.#onPickerKeyDown);
+    this.#destroyPickerPopup();
     if (this.#colorObserver) {
       this.#colorObserver.disconnect();
       this.#colorObserver = null;
@@ -11785,10 +11793,18 @@ class FigInputGradient extends HTMLElement {
     if (e.key !== "Enter" && e.key !== " ") return;
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (figBooleanAttribute(this, "disabled")) return;
-    const picker = this.querySelector("fig-fill-picker");
-    if (!picker || typeof picker.open !== "function") return;
     e.preventDefault();
-    picker.open();
+    this.#openPickerPopup();
+  };
+
+  #onPickerClick = () => {
+    if (
+      this.#editMode !== "picker" ||
+      figBooleanAttribute(this, "disabled")
+    ) {
+      return;
+    }
+    this.#openPickerPopup();
   };
 
   #parseValue() {
@@ -11900,25 +11916,16 @@ class FigInputGradient extends HTMLElement {
       disabled,
     });
 
-    if (mode === "picker" && hasFigFillPicker()) {
-      const gradientValue = JSON.stringify(this.value);
-      const picker = figCreateElement(
-        "fig-fill-picker",
-        {
-          mode: "gradient",
-          value: gradientValue,
-          disabled,
-        },
-        swatch,
-      );
-      this.replaceChildren(picker);
+    if (mode === "picker") {
+      this.setAttribute("aria-haspopup", "dialog");
+      this.replaceChildren(swatch);
       this.#swatch = swatch;
       this.#track = null;
-      this.#setupPickerEvents();
       this.#syncFocusTarget();
       return;
     }
 
+    this.removeAttribute("aria-haspopup");
     const editable = mode === "true" || mode === "picker";
     const track = editable
       ? figCreateElement(
@@ -11938,36 +11945,83 @@ class FigInputGradient extends HTMLElement {
     this.#syncFocusTarget();
   }
 
-  #setupPickerEvents() {
-    const picker = this.querySelector("fig-fill-picker");
-    if (!picker) return;
-    picker.anchorElement = this.anchorElement || this;
+  #ensurePickerPopup() {
+    if (this.#pickerPopup?.isConnected) return this.#pickerPopup;
+    if (!customElements.get("fig-popup-gradient")) return null;
 
-    const syncFromPicker = (e) => {
-      e.stopPropagation();
-      const detail = e.detail;
-      if (!detail?.gradient) return;
+    const popup = document.createElement("dialog", {
+      is: "fig-popup-gradient",
+    });
+    popup.setAttribute("is", "fig-popup-gradient");
+    popup.id = figUniqueId();
+    popup.anchor = this.anchorElement || this;
+
+    const handlePopupEvent = (event) => {
+      event.stopPropagation();
+      if (!event.detail?.gradient) return;
       this.#gradient = this.#normalizeGradient({
         ...this.#gradient,
-        ...detail.gradient,
+        ...event.detail.gradient,
       });
-      if (this.#editMode === "picker" && typeof detail.css === "string" && detail.css) {
-        this.#swatch?.setAttribute("background", detail.css);
+      this.#syncingValueAttribute = true;
+      this.setAttribute("value", JSON.stringify(this.value));
+      this.#syncingValueAttribute = false;
+      if (typeof event.detail.css === "string" && event.detail.css) {
+        this.#swatch?.setAttribute("background", event.detail.css);
         this.#syncSwatchSize();
-        return;
+      } else {
+        this.#syncSwatch();
       }
-      this.#syncSwatch();
+      this.dispatchEvent(
+        new CustomEvent(event.type, {
+          bubbles: true,
+          composed: true,
+          detail: this.value,
+        }),
+      );
     };
+    popup.addEventListener("input", handlePopupEvent);
+    popup.addEventListener("change", handlePopupEvent);
+    popup.addEventListener("close", this.#boundPickerClosed);
+    popup.addEventListener("toggle", this.#boundPickerClosed);
 
-    picker.addEventListener("input", (e) => {
-      syncFromPicker(e);
-      this.#emitInput();
-    });
+    (figGetOverlayRoot() ?? document.body).append(popup);
+    this.#pickerPopup = popup;
+    this.setAttribute("aria-controls", popup.id);
+    this.#syncPickerPopup();
+    return popup;
+  }
 
-    picker.addEventListener("change", (e) => {
-      syncFromPicker(e);
-      this.#emitChange();
-    });
+  #syncPickerPopup() {
+    if (!this.#pickerPopup) return;
+    this.#pickerPopup.setAttribute("value", JSON.stringify(this.#gradient));
+    this.#pickerPopup.toggleAttribute(
+      "disabled",
+      figBooleanAttribute(this, "disabled"),
+    );
+    this.#pickerPopup.anchor = this.anchorElement || this;
+  }
+
+  #openPickerPopup() {
+    const popup = this.#ensurePickerPopup();
+    if (!popup) {
+      this.#renderPickerWhenAvailable();
+      return;
+    }
+    this.#syncPickerPopup();
+    popup.open = true;
+    this.classList.add("has-popup-open");
+  }
+
+  #destroyPickerPopup() {
+    if (!this.#pickerPopup) return;
+    this.#pickerPopup.removeEventListener("close", this.#boundPickerClosed);
+    this.#pickerPopup.removeEventListener("toggle", this.#boundPickerClosed);
+    this.#pickerPopup.open = false;
+    this.#pickerPopup.remove();
+    this.#pickerPopup = null;
+    this.removeAttribute("aria-controls");
+    this.classList.remove("has-popup-open");
   }
 
   #sampleGradientColor(position) {
@@ -12487,17 +12541,20 @@ class FigInputGradient extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue) return;
+    if (oldValue === newValue || this.#syncingValueAttribute) return;
     switch (name) {
       case "value":
         this.#parseValue();
         this.#syncSwatch();
         this.#syncHandles();
+        this.#syncPickerPopup();
         break;
       case "disabled":
         this.#syncDisabled();
+        this.#syncPickerPopup();
         break;
       case "edit":
+        if (this.#editMode !== "picker") this.#destroyPickerPopup();
         this.#render();
         this.#renderPickerWhenAvailable();
         if (this.#isEditable) {
@@ -15955,7 +16012,7 @@ class FigInputFile extends HTMLElement {
           ),
         )
       ) {
-        return "sound";
+        return "audio";
       }
       if (
         files.every((file) =>
@@ -15984,7 +16041,7 @@ class FigInputFile extends HTMLElement {
         FIG_INPUT_FILE_AUDIO_EXTENSIONS,
       )
     ) {
-      return "sound";
+      return "audio";
     }
     if (
       this.#hasKnownExtension(
@@ -16143,11 +16200,13 @@ class FigInputFile extends HTMLElement {
     this.#audioIcon = null;
     this.#audioWaveform = null;
     this.#audioPlaying = false;
+    this.removeAttribute("data-audio-playing");
   }
 
   #setAudioPlaybackUi(playing) {
     this.#audioPlaying = playing;
     this.#audioIcon?.setAttribute("name", playing ? "pause" : "play");
+    this.toggleAttribute("data-audio-playing", playing);
     this.#uploadBtn?.toggleAttribute("selected", playing);
     this.#uploadBtn?.setAttribute(
       "aria-label",
@@ -16351,26 +16410,27 @@ class FigInputFile extends HTMLElement {
         ? this.#createMultipleFileIcon(this.#files.length)
         : showsImagePreview
           ? this.#createImagePreviewSwatch()
-          : createFigIcon(
-              showsAudioPreview ? "play" : this.#selectedFileIcon(),
-            );
+          : createFigIcon(this.#selectedFileIcon());
+      const truncEl = document.createElement("fig-truncate");
+      truncEl.setAttribute("position", "middle");
+      truncEl.setAttribute("tooltip", "");
+      const buttonLabel = showsMultiplePreview
+        ? "Multiple files"
+        : filename;
+      const dotIdx = buttonLabel.lastIndexOf(".");
+      if (!showsMultiplePreview && dotIdx > 0) {
+        truncEl.setAttribute("tail", buttonLabel.slice(dotIdx));
+      }
+      truncEl.textContent = buttonLabel;
+      fileIcon.setAttribute("slot", "prepend");
       if (showsAudioPreview) {
-        this.#audioIcon = fileIcon;
-        fileIcon.setAttribute("slot", "prepend");
-        this.#uploadBtn.append(fileIcon);
+        fileIcon.classList.add("fig-input-file-audio-icon");
+        truncEl.classList.add("fig-input-file-audio-label");
+        this.#audioIcon = createFigIcon("play");
+        this.#audioIcon.classList.add("fig-input-file-audio-control");
+        this.#audioIcon.setAttribute("slot", "prepend");
+        this.#uploadBtn.append(fileIcon, this.#audioIcon, truncEl);
       } else {
-        const truncEl = document.createElement("fig-truncate");
-        truncEl.setAttribute("position", "middle");
-        truncEl.setAttribute("tooltip", "");
-        const buttonLabel = showsMultiplePreview
-          ? "Multiple files"
-          : filename;
-        const dotIdx = buttonLabel.lastIndexOf(".");
-        if (!showsMultiplePreview && dotIdx > 0) {
-          truncEl.setAttribute("tail", buttonLabel.slice(dotIdx));
-        }
-        truncEl.textContent = buttonLabel;
-        fileIcon.setAttribute("slot", "prepend");
         this.#uploadBtn.append(fileIcon, truncEl);
       }
 
@@ -16489,6 +16549,8 @@ class FigEasingCurve extends HTMLElement {
   #durationBarWidth = 10;
   #durationBarHeight = 10;
   #durationBarRadius = 3;
+  #pickerDefinitionPromise = null;
+  #pickerPopup = null;
 
   static PRESETS = [
     { group: null, name: "Linear", type: "bezier", value: [0, 0, 1, 1] },
@@ -16587,6 +16649,7 @@ class FigEasingCurve extends HTMLElement {
       this.#resizeObserver.disconnect();
       this.#resizeObserver = null;
     }
+    this.#destroyPickerPopup();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -16602,6 +16665,9 @@ class FigEasingCurve extends HTMLElement {
     }
 
     if (name === "edit" || name === "presets" || name === "text") {
+      if (name === "edit" && newValue !== "false") {
+        this.#destroyPickerPopup();
+      }
       if (this.isConnected) this.#render();
       return;
     }
@@ -16613,6 +16679,7 @@ class FigEasingCurve extends HTMLElement {
       this.#applyModeConstraint();
       this.#presetName = this.#matchPreset();
       if (this.isConnected) this.#render();
+      this.#syncPickerPopup();
       return;
     }
 
@@ -16630,6 +16697,9 @@ class FigEasingCurve extends HTMLElement {
     }
     if (name === "precision") {
       this.#precision = parseInt(newValue || "2");
+    }
+    if (name === "value" || name === "mode" || name === "precision") {
+      this.#syncPickerPopup();
     }
   }
 
@@ -17092,7 +17162,14 @@ class FigEasingCurve extends HTMLElement {
     let parent = dropdown;
     for (const preset of FigEasingCurve.PRESETS) {
       if (!this.#allowsPreset(preset)) continue;
-      if (!this.#isEditEnabled() && !preset.value && !preset.spring) continue;
+      if (
+        !this.#isEditEnabled() &&
+        !customElements.get("fig-popup-easing") &&
+        !preset.value &&
+        !preset.spring
+      ) {
+        continue;
+      }
       if (preset.group !== currentGroup) {
         currentGroup = preset.group;
         parent = currentGroup
@@ -17114,7 +17191,14 @@ class FigEasingCurve extends HTMLElement {
     let currentGroup = undefined;
     for (const p of FigEasingCurve.PRESETS) {
       if (!this.#allowsPreset(p)) continue;
-      if (!this.#isEditEnabled() && !p.value && !p.spring) continue;
+      if (
+        !this.#isEditEnabled() &&
+        !customElements.get("fig-popup-easing") &&
+        !p.value &&
+        !p.spring
+      ) {
+        continue;
+      }
       if (p.group !== currentGroup) {
         if (p.group) {
           options.appendChild(
@@ -17733,7 +17817,12 @@ class FigEasingCurve extends HTMLElement {
 
   #refreshCustomPresetIcons() {
     if (!this.#select) return;
-    if (!this.#isEditEnabled()) return;
+    if (
+      !this.#isEditEnabled() &&
+      !customElements.get("fig-popup-easing")
+    ) {
+      return;
+    }
     const bezierIcon = FigEasingCurve.#createCurveIcon(
       this.#cp1.x,
       this.#cp1.y,
@@ -17942,6 +18031,22 @@ class FigEasingCurve extends HTMLElement {
     }
 
     if (this.#select) {
+      if (!this.#isEditEnabled() && this.#select.tagName === "FIG-SELECT") {
+        const openPicker = (event) => {
+          if (!customElements.get("fig-popup-easing")) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          this.#openPickerPopup();
+        };
+        this.#select.addEventListener("click", openPicker, true);
+        this.#select.addEventListener(
+          "keydown",
+          (event) => {
+            if (event.key === "Enter" || event.key === " ") openPicker(event);
+          },
+          true,
+        );
+      }
       this.#select.addEventListener("input", (e) => {
         e.stopPropagation();
       });
@@ -18007,6 +18112,59 @@ class FigEasingCurve extends HTMLElement {
         }
       });
     }
+  }
+
+  #openPickerPopup() {
+    if (!customElements.get("fig-popup-easing")) {
+      this.#pickerDefinitionPromise ??= customElements
+        .whenDefined("fig-popup-easing")
+        .then(() => {
+          if (!this.isConnected || this.#isEditEnabled()) return;
+          this.#openPickerPopup();
+        });
+      return;
+    }
+
+    let popup = this.#pickerPopup;
+    if (!popup?.isConnected) {
+      popup = document.createElement("dialog", { is: "fig-popup-easing" });
+      popup.setAttribute("is", "fig-popup-easing");
+      popup.id = figUniqueId();
+      popup.anchor = this.#select;
+      const handlePopupEvent = (event) => {
+        event.stopPropagation();
+        this.value = popup.value;
+        this.#emit(event.type);
+      };
+      popup.addEventListener("input", handlePopupEvent);
+      popup.addEventListener("change", handlePopupEvent);
+      (figGetOverlayRoot() ?? document.body).append(popup);
+      this.#pickerPopup = popup;
+      this.#select?.setAttribute("aria-controls", popup.id);
+    }
+
+    this.#syncPickerPopup();
+    popup.open = true;
+  }
+
+  #syncPickerPopup() {
+    const popup = this.#pickerPopup;
+    if (!popup) return;
+    popup.anchor = this.#select;
+    popup.setAttribute("value", this.value);
+    for (const name of ["mode", "precision"]) {
+      const value = this.getAttribute(name);
+      if (value === null) popup.removeAttribute(name);
+      else popup.setAttribute(name, value);
+    }
+  }
+
+  #destroyPickerPopup() {
+    if (!this.#pickerPopup) return;
+    this.#pickerPopup.open = false;
+    this.#pickerPopup.remove();
+    this.#select?.removeAttribute("aria-controls");
+    this.#pickerPopup = null;
   }
 
   #clientToSVG(e) {
@@ -20783,6 +20941,7 @@ const FIG_ICON_TOKENS = {
   upload: "--icon-24-upload",
   image: "--icon-24-image",
   video: { medium: "--icon-24-video", small: "--icon-16-video" },
+  audio: "--icon-24-audio",
   sound: { medium: "--icon-24-sound", small: "--icon-16-sound" },
   "sound-off": {
     medium: "--icon-24-sound-off",

@@ -1,0 +1,76 @@
+/* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
+fig-gradient-editor {
+  display: block;
+  width: 100%;
+  min-width: 0;
+
+  .fig-fill-picker-gradient-preview {
+    aspect-ratio: auto;
+    width: calc(100% - var(--spacer-3) * 2);
+    margin: var(--spacer-3) var(--spacer-3) 0;
+    background: transparent;
+    overflow: visible;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  fig-header.fig-fill-picker-gradient-header {
+    .fig-fill-picker-gradient-type {
+      display: flex;
+      flex: 0 1 auto;
+      min-width: 0;
+      width: auto;
+    }
+
+    .fig-fill-picker-gradient-actions {
+      flex: 0 0 auto;
+    }
+  }
+
+  .fig-fill-picker-gradient-stops {
+    .fig-fill-picker-gradient-stops-header > span {
+      flex: 1;
+    }
+  }
+
+  .fig-fill-picker-gradient-stops-list {
+    display: flex;
+    flex-direction: column;
+
+    fig-reorder {
+      display: contents;
+    }
+  }
+
+  .fig-fill-picker-gradient-stop-row {
+    &.dragging {
+      background-color: var(--figma-color-bg-selected);
+    }
+
+    .fig-fill-picker-gradient-stop-inputs {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .fig-fill-picker-stop-position {
+      flex: 0 0 3rem;
+      min-width: 0;
+      width: 3rem;
+    }
+
+    .fig-fill-picker-stop-color {
+      flex: 1;
+      min-width: 0;
+
+      fig-input-text {
+        min-width: 0;
+      }
+    }
+
+    .fig-fill-picker-stop-remove {
+      flex-shrink: 0;
+    }
+  }
+}

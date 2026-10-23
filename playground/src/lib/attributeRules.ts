@@ -630,6 +630,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-palette-editor": {
     max: { label: "Max", type: "number", min: 2, step: 1 },
   },
+  "fig-gradient-editor": {
+    "color-space": {
+      label: "Color space",
+      type: "enum",
+      options: ["srgb", "display-p3"],
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-input-gradient": {
     edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
     mode: { label: "Mode", type: "enum", options: ["handle", "tip"] },
@@ -882,6 +890,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "download",
         "upload",
         "image",
+        "audio",
         "sound",
         "sound-off",
         "sun",
@@ -923,6 +932,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "download",
         "upload",
         "image",
+        "audio",
         "sound",
         "sound-off",
         "sun",

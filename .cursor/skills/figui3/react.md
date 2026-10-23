@@ -83,6 +83,7 @@ type FigTag =
   | "fig-input-point"
   | "fig-input-palette"
   | "fig-palette-editor"
+  | "fig-gradient-editor"
   | "fig-property"
   | "fig-input-text"
   | "fig-input-wheel"

@@ -170,7 +170,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 - Attrs: `preview`, `label`, `accepts`, `multiple`, `disabled`, `variant` (forwards `fig-button` variants; defaults to `property`)
 - Blank or omitted `label` defaults to `Upload audio`, `Upload image`, or `Upload file` based on the known file type. An explicit label overrides it.
-- `preview` renders supported image extensions in a full-width checkerboard `fig-image` at `4/3`, or turns known audio files into play/pause buttons with a waveform and filename tooltip.
+- For known audio files, `preview` shows the audio icon and filename at rest, reveals play and waveform controls on hover/focus, and keeps pause plus waveform visible while playing.
 - `accepts` controls the native chooser filter; file icons and previews are detected independently.
 - Events: `change` / `input` with files on the host
 
@@ -321,6 +321,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 ```
 
 - Attrs: `value`, `edit`, `mode` (`handle` | `tip`), `disabled`
+- `edit="picker"` opens `dialog[is="fig-popup-gradient"]` when `fig-editor.js` is loaded.
 
 ### `fig-swatch`
 
@@ -712,6 +713,10 @@ toastRef.current?.showToast();
 
 Set `mode="bezier"` or `mode="spring"` to constrain the editor and preset list
 to one curve type.
+
+With `edit="false"`, the compact preset control opens `fig-popup-easing` when
+`fig-editor.js` is loaded; without the editor bundle it retains the preset
+dropdown fallback.
 
 ### `fig-3d-rotate`
 

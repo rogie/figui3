@@ -1,0 +1,8 @@
+/* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
+dialog[is="fig-popup-easing"] {
+  width: 12rem;
+  min-width: 0;
+  padding: 0;
+  pointer-events: auto;
+  padding: 0 var(--spacer-2-5);
+}

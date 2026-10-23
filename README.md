@@ -117,6 +117,9 @@ Minimal example:
 | [Input Palette](#input-palette) | `<fig-input-palette>` | Editable multi-color palette |
 | [Property](#property) | `<fig-property>` | Composable editor property row |
 | [Palette Editor](#palette-editor) | `<fig-palette-editor>` | Reusable reorderable palette editor |
+| [Gradient Editor](#gradient-editor) | `<fig-gradient-editor>` | Full gradient editor with reorderable stops |
+| [Gradient Popup](#gradient-popup) | `<dialog is="fig-popup-gradient">` | Reusable full gradient editor popup |
+| [Palette Popup](#palette-popup) | `<dialog is="fig-popup-palette">` | Reusable palette editor popup |
 | [Reorder](#reorder) | `<fig-reorder>` | Pointer- and keyboard-reorderable list |
 | [Gradient Input](#gradient-input) | `<fig-input-gradient>` | Gradient editor with stops |
 | [Fill Input](#fill-input) | `<fig-input-fill>` | Solid, gradient, image, video fill |
@@ -130,6 +133,7 @@ Minimal example:
 | [Joystick](#joystick) | `<fig-joystick>` | 2D position input |
 | [Origin Grid](#origin-grid) | `<fig-origin-grid>` | Transform-origin grid |
 | [Easing Curve](#easing-curve) | `<fig-easing-curve>` | Bezier/spring curve editor |
+| [Easing Popup](#easing-popup) | `<dialog is="fig-popup-easing">` | Reusable easing editor popup |
 | [3D Rotate](#3d-rotate) | `<fig-3d-rotate>` | 3D cube rotation control |
 | [Handle](#handle) | `<fig-handle>` | Draggable handle on a surface |
 | [Canvas Control](#canvas-control) | `<fig-canvas-control>` | Point with optional radius, angle, or second point |
@@ -546,7 +550,7 @@ Requires `fig-editor.js` and `fig-editor.css`.
 | `disabled` | boolean | `false` | Disabled state |
 | `variant` | string | `"property"` | Internal button variant |
 
-Known image and audio files use media-specific icons; unmatched files retain the upload icon. A present or `"true"` `preview` uses the compact image swatch, audio waveform playback, or video icon. `preview="large"` renders known images and videos as upload-enabled `fig-image` or `fig-video` previews; audio and other formats retain their compact preview behavior. `preview="false"` disables previews. Image preview supports `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, and `.avif`; audio playback supports `.mp3`, `.wav`, `.aac`, `.m4a`, `.ogg`, and `.flac`; video detection supports common formats including `.mp4`, `.webm`, `.mov`, `.m4v`, `.avi`, `.mkv`, `.ogv`, `.mpeg`, `.mpg`, and `.3gp`.
+Known image and audio files use media-specific icons; unmatched files retain the upload icon. A present or `"true"` `preview` uses the compact image swatch, audio playback preview, or video icon. Audio previews show the audio icon and filename at rest, reveal play and waveform controls on hover or focus, and keep the pause control and waveform visible while playing. `preview="large"` renders known images and videos as upload-enabled `fig-image` or `fig-video` previews; audio and other formats retain their compact preview behavior. `preview="false"` disables previews. Image preview supports `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, and `.avif`; audio playback supports `.mp3`, `.wav`, `.aac`, `.m4a`, `.ogg`, and `.flac`; video detection supports common formats including `.mp4`, `.webm`, `.mov`, `.m4v`, `.avi`, `.mkv`, `.ogv`, `.mpeg`, `.mpg`, and `.3gp`.
 
 ```html
 <fig-input-file accepts="image/*"></fig-input-file>
@@ -731,6 +735,61 @@ A reusable editor-bundle component for ordered color arrays. It uses `<fig-reord
 <fig-palette-editor value='["#94BD00","#83AD00","#1A632A","#003905"]'></fig-palette-editor>
 ```
 
+#### Gradient Editor
+
+`<fig-gradient-editor>`
+
+A reusable editor-bundle component for gradient type, direction, stop handles,
+and reorderable stop rows. It supports `value`, `color-space`, and `disabled`;
+its `value` property is the normalized gradient config. Bubbling `input` and
+`change` events include `{ type, gradient, css }`.
+
+```html
+<fig-gradient-editor
+  value='{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}'
+></fig-gradient-editor>
+```
+
+`fig-fill-picker` uses this component for its Gradient tab.
+
+#### Gradient Popup
+
+`<dialog is="fig-popup-gradient">`
+
+A reusable `fig-popup` subclass that owns a `<fig-gradient-editor>`. It
+supports `value`, `color-space`, and `disabled`, plus inherited popup
+positioning. Its bubbling `input` and `change` events include
+`{ type, gradient, css }`.
+
+```html
+<fig-button id="gradient-trigger">Edit gradient</fig-button>
+<dialog
+  is="fig-popup-gradient"
+  anchor="#gradient-trigger"
+  value='{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}'
+  open
+></dialog>
+```
+
+#### Palette Popup
+
+`<dialog is="fig-popup-palette">`
+
+A reusable `fig-popup` subclass that owns a `<fig-palette-editor>`. It supports
+`value`, `min`, `max`, `fixed`, and `disabled`, plus the standard popup
+positioning attributes. Its `value` property and bubbling `input` / `change`
+events use normalized `{ color, alpha }[]` values.
+
+```html
+<fig-button id="palette-trigger">Edit palette</fig-button>
+<dialog
+  is="fig-popup-palette"
+  anchor="#palette-trigger"
+  value='["#94BD00","#83AD00","#1A632A","#003905"]'
+  open
+></dialog>
+```
+
 #### Reorder
 
 `<fig-reorder>`
@@ -752,7 +811,7 @@ Attributes: `axis`, `handle`, `items`, `indicator`, and `disabled`. The bubbling
 
 `<fig-input-gradient>`
 
-A gradient editor with draggable stops. With `edit="picker"` and the optional picker registered, it opens `<fig-fill-picker>` locked to gradient mode; otherwise it falls back to inline stop editing.
+A gradient editor with draggable stops. With `edit="picker"` and the editor bundle registered, it opens the reusable `dialog[is="fig-popup-gradient"]`; otherwise it renders the gradient swatch without opening a picker.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1058,7 +1117,7 @@ An interactive bezier or spring easing curve editor with a preset dropdown and m
 | `mode` | string | — | Optional `"bezier"` or `"spring"` constraint; filters presets and rejects the other value type |
 | `precision` | number | `2` | Decimal places |
 | `aspect-ratio` | string | — | Editor aspect ratio |
-| `edit` | boolean | `true` | Show the editor and custom bezier/spring options; set to `"false"` for preset-only |
+| `edit` | boolean | `true` | Show the inline editor; `"false"` uses the compact preset control and opens `fig-popup-easing` when `fig-editor.js` is loaded |
 | `presets` | boolean | `true` | Show the preset selector; set to `"false"` to hide it |
 | `text` | boolean | `true` | Show the bezier value or normalized spring bounce input; set to `"false"` to hide it |
 
@@ -1106,6 +1165,24 @@ In spring mode, the compact number input edits normalized bounce from `0` (criti
 ```
 
 Editable bezier and spring handles are keyboard operable. Bezier handles keep tab order aligned with the visual handle order.
+
+#### Easing Popup
+
+`<dialog is="fig-popup-easing">`
+
+A reusable `fig-popup` subclass containing a
+`<fig-easing-curve aspect-ratio="4/3">`. Easing attributes and events are
+forwarded through the popup.
+
+```html
+<fig-button id="easing-trigger">Edit easing</fig-button>
+<dialog
+  is="fig-popup-easing"
+  anchor="#easing-trigger"
+  value="0.42, 0, 0.58, 1"
+  open
+></dialog>
+```
 
 ---
 

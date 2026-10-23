@@ -1258,6 +1258,27 @@ test("fig-icon maps chevron to size-specific tokens", async ({ page }) => {
   });
 });
 
+test("fig-icon maps audio to its 24px token", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `<fig-icon id="audio-icon" name="audio"></fig-icon>`;
+  });
+
+  const result = await page.evaluate(() => ({
+    iconVar: (document.querySelector("#audio-icon") as HTMLElement).style
+      .getPropertyValue("--icon"),
+    token: getComputedStyle(document.documentElement)
+      .getPropertyValue("--icon-24-audio")
+      .trim(),
+  }));
+
+  expect(result.iconVar).toBe("var(--icon-24-audio)");
+  expect(result.token.startsWith('url("data:image/svg+xml,')).toBe(true);
+});
+
 test("fig-icon maps globe to size-specific tokens", async ({ page }) => {
   collectPageErrors(page);
   await bootFigFixture(page);
@@ -5784,7 +5805,7 @@ test.describe("input focus ring consistency", () => {
     });
     await expect(
       detectedAudio.locator('fig-icon[slot="prepend"]'),
-    ).toHaveAttribute("name", "sound");
+    ).toHaveAttribute("name", "audio");
     await expect(detectedAudio.locator("fig-audio-waveform")).toHaveCount(0);
 
     const detectedImage = page.locator("#detected-image");
@@ -5804,12 +5825,12 @@ test.describe("input focus ring consistency", () => {
       buffer: Buffer.from("audio"),
     });
     const audioIcon = audio.locator('fig-icon[slot="prepend"]');
-    await expect(audioIcon).toHaveAttribute("name", "sound");
+    await expect(audioIcon).toHaveAttribute("name", "audio");
     await expect
       .poll(() =>
         audioIcon.evaluate((icon) => icon.style.getPropertyValue("--icon")),
       )
-      .toBe("var(--icon-24-sound)");
+      .toBe("var(--icon-24-audio)");
 
     const image = page.locator("#extension-image");
     await image.locator("input[type=file]").setInputFiles({
@@ -6157,20 +6178,26 @@ test.describe("input focus ring consistency", () => {
       ":scope > fig-tooltip > .fig-input-file-filename",
     );
     const tooltip = input.locator(":scope > fig-tooltip").first();
-    const icon = button.locator("fig-icon");
+    const fileIcon = button.locator(".fig-input-file-audio-icon");
+    const icon = button.locator(".fig-input-file-audio-control");
+    const filename = button.locator(".fig-input-file-audio-label");
     const waveform = button.locator(
       ":scope > fig-audio-waveform.fig-input-file-audio-waveform",
     );
     const audio = input.locator(":scope > audio");
     await expect(input.locator(":scope > fig-media-controls")).toHaveCount(0);
     await expect(audio).toHaveAttribute("src", /^blob:/);
-    await expect(button.locator("fig-truncate")).toHaveCount(0);
+    await expect(filename).toHaveText("song.bin");
     await expect(tooltip).toHaveAttribute("text", "song.bin");
+    await expect(fileIcon).toHaveAttribute("name", "audio");
+    await expect(fileIcon).toBeVisible();
     await expect(icon).toHaveAttribute("name", "play");
     await expect(icon).toHaveAttribute("slot", "prepend");
+    await expect(icon).toBeHidden();
     await expect(waveform).toHaveAttribute("url", /^blob:/);
     await expect(waveform).toHaveAttribute("polarization", "3");
     await expect(waveform).toHaveAttribute("progress", "0");
+    await expect(waveform).toBeHidden();
     await expect(button).toHaveAttribute("aria-label", "Play audio");
     await expect(button).not.toHaveAttribute("icon");
     await expect(button).not.toHaveAttribute("selected");
@@ -6178,7 +6205,18 @@ test.describe("input focus ring consistency", () => {
       await button.evaluate((element) =>
         Array.from(element.children).map((child) => child.tagName),
       ),
-    ).toEqual(["FIG-ICON", "FIG-AUDIO-WAVEFORM"]);
+    ).toEqual([
+      "FIG-ICON",
+      "FIG-ICON",
+      "FIG-TRUNCATE",
+      "FIG-AUDIO-WAVEFORM",
+    ]);
+
+    await input.hover();
+    await expect(fileIcon).toBeHidden();
+    await expect(filename).toBeHidden();
+    await expect(icon).toBeVisible();
+    await expect(waveform).toBeVisible();
     await expect
       .poll(async () => (await waveform.boundingBox())?.width ?? 0)
       .toBeGreaterThan(40);
@@ -6210,6 +6248,13 @@ test.describe("input focus ring consistency", () => {
     await expect(icon).toHaveAttribute("name", "pause");
     await expect(button).toHaveAttribute("aria-label", "Pause audio");
     await expect(button).toHaveAttribute("selected", "");
+    await expect(input).toHaveAttribute("data-audio-playing", "");
+    await expectTokenRing(button);
+    await page.mouse.move(700, 500);
+    await expect(icon).toBeVisible();
+    await expect(waveform).toBeVisible();
+    await expect(fileIcon).toBeHidden();
+    await expect(filename).toBeHidden();
     const playingColors = await waveform.evaluate((host) => {
       const basePath = host.querySelector(".fig-audio-waveform-path");
       const progressPath = host.querySelector(".fig-audio-waveform-progress");
@@ -6242,6 +6287,13 @@ test.describe("input focus ring consistency", () => {
     await expect(icon).toHaveAttribute("name", "play");
     await expect(button).toHaveAttribute("aria-label", "Play audio");
     await expect(button).not.toHaveAttribute("selected");
+    await expect(input).not.toHaveAttribute("data-audio-playing");
+    await button.evaluate((element: HTMLElement) => element.blur());
+    await page.mouse.move(700, 500);
+    await expect(icon).toBeHidden();
+    await expect(waveform).toBeHidden();
+    await expect(fileIcon).toBeVisible();
+    await expect(filename).toBeVisible();
     expect(await page.evaluate(() => window.__audioPreviewPaused)).toBe(true);
 
     await audio.evaluate((media) => {
@@ -9561,16 +9613,17 @@ test.describe("color input accessibility", () => {
   });
 });
 
-test.describe("gradient picker availability", () => {
+test.describe("gradient popup availability", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-editor.css" });
     await page.evaluate(() =>
       customElements.whenDefined("fig-input-gradient"),
     );
   });
 
-  test("upgrades picker edit mode when fig-fill-picker registers later", async ({
+  test("opens fig-popup-gradient when the editor bundle registers later", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -9586,19 +9639,64 @@ test.describe("gradient picker availability", () => {
     });
 
     const gradient = page.locator("#late-gradient");
-    await expect(gradient.locator("fig-fill-picker")).toHaveCount(0);
+    await expect(page.locator('dialog[is="fig-popup-gradient"]')).toHaveCount(0);
 
     await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
-    await page.evaluate(() => customElements.whenDefined("fig-fill-picker"));
-    await expect(gradient.locator('fig-fill-picker[mode="gradient"]')).toHaveCount(
-      1,
-    );
+    await page.evaluate(() => customElements.whenDefined("fig-popup-gradient"));
+    await expect(gradient.locator("fig-swatch")).toHaveCount(1);
+    await expect(gradient.locator("fig-fill-picker")).toHaveCount(0);
 
     await gradient.locator("fig-swatch").click();
-    const dialog = page.locator("dialog.fig-fill-picker-dialog");
-    await expect(dialog).toHaveAttribute("open", "true");
-    await expect(dialog.locator('[data-tab="gradient"]')).toBeVisible();
-    await expect(dialog.locator('[data-tab="solid"]')).toHaveCount(0);
+    const popup = page.locator('dialog[is="fig-popup-gradient"]');
+    await expect(popup).toHaveAttribute("open", "true");
+    await expect(popup.locator("fig-gradient-editor")).toHaveCount(1);
+    await expect
+      .poll(() =>
+        popup.evaluate((element: any) => element.value.type),
+      )
+      .toBe("linear");
+  });
+
+  test("syncs popup edits back to fig-input-gradient", async ({ page }) => {
+    await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-gradient
+          id="gradient"
+          edit="picker"
+          value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#14AE5C","opacity":100}]}}'
+        ></fig-input-gradient>
+      `;
+      root.querySelector("#gradient")?.addEventListener("input", (event) => {
+        event.currentTarget?.setAttribute(
+          "data-detail",
+          JSON.stringify((event as CustomEvent).detail),
+        );
+      });
+    });
+
+    const gradient = page.locator("#gradient");
+    await gradient.locator("fig-swatch").click();
+    const popup = page.locator('dialog[is="fig-popup-gradient"]');
+    await popup.locator(".fig-fill-picker-gradient-rotate").click();
+
+    await expect
+      .poll(() =>
+        gradient.evaluate((element: any) => element.value.gradient.angle),
+      )
+      .toBe(180);
+    await expect
+      .poll(() =>
+        gradient.evaluate((element) =>
+          JSON.parse(element.getAttribute("data-detail") || "{}"),
+        ),
+      )
+      .toMatchObject({
+        type: "gradient",
+        gradient: { angle: 180 },
+      });
   });
 });
 
@@ -9722,7 +9820,7 @@ test.describe("fill picker accessibility", () => {
     expect(state.background).toMatch(/^conic-gradient\(from 180deg,/);
   });
 
-  test("fig-input-gradient picker mode opens fill picker on Enter", async ({
+  test("fig-input-gradient picker mode opens gradient popup on Enter", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -9744,7 +9842,7 @@ test.describe("fill picker accessibility", () => {
     await expect(gradient).toBeFocused();
 
     await page.keyboard.press("Enter");
-    await expect(page.locator("dialog.fig-fill-picker-dialog")).toHaveAttribute(
+    await expect(page.locator('dialog[is="fig-popup-gradient"]')).toHaveAttribute(
       "open",
       "true",
     );

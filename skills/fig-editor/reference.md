@@ -60,6 +60,15 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 - Generated trailing events bubble across shadow roots with `detail: { input }`.
 - Child control events are not normalized or re-emitted.
 
+## Easing popup
+
+`dialog[is="fig-popup-easing"]` extends `fig-popup` and owns a
+`fig-easing-curve` with `aspect-ratio="4/3"`.
+
+- Observes and forwards `value`, `mode`, `precision`, `edit`, `presets`, and `text`.
+- Forwards bubbling `input` / `change` events and reflects the current easing value.
+- Defaults: `position="bottom left"`, `offset="0 8"`, `viewport-margin="8"`, and `popover="manual"`.
+
 ## Reorder
 
 `fig-reorder` observes `axis`, `handle`, `items`, `indicator`, and `disabled`.
@@ -77,6 +86,34 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 - `value`: JSON array of hex strings or `{ color, alpha }` objects, or comma-separated hex
 - `value` property and `input` / `change` event `detail`: normalized ordered `{ color, alpha }[]`
 - Rows are direct `fig-reorder` items and support pointer or keyboard reordering.
+
+## Gradient editor
+
+`fig-gradient-editor` observes `value`, `color-space`, and `disabled`.
+
+- `value` accepts a gradient config or `{ type: "gradient", gradient }` and returns a normalized gradient config.
+- `cssValue` returns the current CSS gradient.
+- `pickerAnchor` anchors nested stop color pickers.
+- Bubbling `input` / `change` detail is `{ type: "gradient", gradient, css }`.
+- Interpolation remains locked to sRGB to match the fill picker’s current behavior.
+
+## Gradient popup
+
+`dialog[is="fig-popup-gradient"]` extends `fig-popup`, owns a
+`fig-gradient-editor`, and observes `value`, `color-space`, and `disabled`.
+
+- Defaults: `position="bottom left"`, `offset="0 8"`, `viewport-margin="8"`, and `popover="manual"`.
+- Bubbling `input` / `change` detail is `{ type: "gradient", gradient, css }`.
+
+## Palette popup
+
+`dialog[is="fig-popup-palette"]` extends `fig-popup`, owns a
+`fig-palette-editor`, and observes `value`, `min`, `max`, `fixed`, and
+`disabled` in addition to inherited popup attributes.
+
+- `value` property and bubbling `input` / `change` detail are normalized `{ color, alpha }[]`.
+- Defaults: `position="bottom left"`, `offset="0 8"`, `viewport-margin="8"`, and `popover="manual"`.
+- Import through `fig-editor.js`; create it with `document.createElement("dialog", { is: "fig-popup-palette" })` or matching HTML.
 
 ## Fill picker modes
 

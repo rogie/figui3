@@ -27,8 +27,23 @@ const INPUT_SECTION_ORDER = [
   "easing",
 ] as const;
 
+const EDITOR_SECTION_ORDER = [
+  "fill-picker",
+  "input-point",
+  "layer",
+  "palette-editor",
+  "gradient-editor",
+  "property",
+  "reorder",
+  "select",
+  "toast",
+] as const;
+
 const inputSectionRank = new Map<string, number>(
   INPUT_SECTION_ORDER.map((id, index) => [id, index]),
+);
+const editorSectionRank = new Map<string, number>(
+  EDITOR_SECTION_ORDER.map((id, index) => [id, index]),
 );
 
 function compareNames(a: string, b: string): number {
@@ -43,6 +58,11 @@ function compareSections(
   if (group === "Inputs") {
     const aRank = inputSectionRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
     const bRank = inputSectionRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    if (aRank !== bRank) return aRank - bRank;
+  }
+  if (group === "Editor components") {
+    const aRank = editorSectionRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const bRank = editorSectionRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
     if (aRank !== bRank) return aRank - bRank;
   }
   return compareNames(a.name, b.name);

@@ -2,6 +2,7 @@ export const EDITOR_SECTION_IDS = new Set([
   "input-point",
   "property",
   "palette-editor",
+  "gradient-editor",
   "reorder",
   "select",
   "fill-picker",

@@ -38,6 +38,7 @@ declare module "react" {
       "fig-input-color": FigAttrs;
       "fig-input-palette": FigAttrs;
       "fig-palette-editor": FigAttrs;
+      "fig-gradient-editor": FigAttrs;
       "fig-input-gradient": FigAttrs;
       "fig-input-fill": FigAttrs;
       "fig-angle": FigAttrs;

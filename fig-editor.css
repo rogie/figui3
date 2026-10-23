@@ -1,6 +1,10 @@
 /* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
 @import url("fig-layer.css");
 @import url("fig-property.css");
+@import url("fig-gradient-editor.css");
+@import url("fig-popup-easing.css");
+@import url("fig-popup-gradient.css");
+@import url("fig-popup-palette.css");
 
 fig-input-point {
   display: inline-flex;
@@ -159,12 +163,6 @@ dialog[is="fig-toast"] {
 }
 
 /* Palette Editor */
-.fig-palette-editor-popup {
-  width: 12rem;
-  padding: 0;
-  pointer-events: auto;
-}
-
 fig-palette-editor {
   display: flex;
   flex-direction: column;
@@ -327,168 +325,6 @@ fig-fill-picker {
         flex: 0 0 2.75rem;
         min-width: 2.75rem;
       }
-    }
-  }
-
-  /* Gradient Tab */
-  .fig-fill-picker-gradient-preview {
-    aspect-ratio: auto;
-    width: calc(100% - var(--spacer-3) * 2);
-    margin: var(--spacer-2) var(--spacer-3);
-    margin-top: var(--spacer-4);
-    margin-bottom:0;
-    background: transparent;
-    &::after{
-      display: none;
-    }
-  }
-
-  fig-header.fig-fill-picker-gradient-header {
-    .fig-fill-picker-gradient-type {
-      display: flex;
-      flex: 0 1 auto;
-      min-width: 0;
-      width: auto;
-    }
-
-    .fig-fill-picker-gradient-actions {
-      flex: 0 0 auto;
-    }
-  }
-
-  .fig-fill-picker-gradient-stops {
-    .fig-fill-picker-gradient-stops-header {
-      > span {
-        flex: 1;
-      }
-    }
-  }
-
-  fig-field.fig-fill-picker-gradient-interpolation-field {
-    display: flex;
-    align-items: center;
-    grid-template-columns: unset;
-    grid-template-areas: unset;
-    padding-left: var(--spacer-3);
-    padding-right: var(--spacer-2);
-    gap: var(--spacer-1);
-
-    > *:not([slot="leading"]):not([slot="trailing"]):not(label) {
-      grid-area: unset;
-    }
-  }
-
-  .fig-fill-picker-gradient-interpolation-modes {
-    flex: 1 1 auto;
-    min-width: 0;
-
-    fig-interpolation-swatch {
-      pointer-events: none;
-    }
-  }
-
-  /* Transparent select trigger sits on the icon button so its menu anchors here. */
-  .fig-fill-picker-gradient-interpolation-more {
-    position: relative;
-    display: inline-flex;
-    flex: 0 0 auto;
-
-    > fig-button {
-      pointer-events: none;
-    }
-
-    .fig-fill-picker-gradient-space {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      opacity: 0;
-    }
-
-    &:has(.fig-fill-picker-gradient-space:hover) > fig-button,
-    &:has(.fig-fill-picker-gradient-space[open]) > fig-button {
-      background-color: var(--figma-color-bg-transparent-hover);
-    }
-
-    &:has(.fig-fill-picker-gradient-space[data-focus-visible]) > fig-button {
-      outline: var(--figma-focus-outline);
-      outline-offset: var(--figma-focus-outline-offset);
-    }
-  }
-
-  .fig-fill-picker-gradient-space {
-    &::part(prepend) {
-      display: none;
-    }
-
-    fig-select-option {
-      min-height: 3rem;
-
-      &:hover::before,
-      &:focus-visible::before {
-        background-color: var(--figma-color-bg-tertiary);
-      }
-    }
-
-    .fig-fill-picker-gradient-interpolation-label {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-width: 0;
-      line-height: 1.25;
-    }
-
-    .fig-fill-picker-gradient-interpolation-title,
-    .fig-fill-picker-gradient-interpolation-subtitle {
-      display: block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .fig-fill-picker-gradient-interpolation-subtitle {
-      color: var(--figma-color-text-tertiary);
-    }
-
-    fig-select-options.fig-fill-picker-gradient-interpolation-collapsed {
-      overflow: hidden;
-    }
-  }
-
-  .fig-fill-picker-gradient-stops-list {
-    display: flex;
-    flex-direction: column;
-
-    fig-reorder {
-      display: contents;
-    }
-  }
-
-  .fig-fill-picker-gradient-stop-row {
-    &.dragging {
-      background-color: var(--figma-color-bg-selected);
-    }
-
-    .fig-fill-picker-gradient-stop-inputs {
-      width: 100%;
-      min-width: 0;
-    }
-
-    .fig-fill-picker-stop-position {
-      flex: 0;
-      flex-basis: 3rem;
-      min-width: 0;
-      width: 3rem;
-    }
-
-    .fig-fill-picker-stop-color {
-      flex: 1;
-      min-width: 0;
-      fig-input-text {
-        min-width: 0;
-      }
-    }
-
-    .fig-fill-picker-stop-remove {
-      flex-shrink: 0;
     }
   }
 

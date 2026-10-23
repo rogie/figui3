@@ -574,6 +574,60 @@ export const componentContracts: ComponentContract[] = [
 
 export const editorComponentContracts: ComponentContract[] = [
   {
+    tag: "fig-popup-gradient",
+    title: "Gradient Popup",
+    group: "overlay",
+    kind: "customized-built-in",
+    selector: `dialog[is="fig-popup-gradient"]`,
+    markup: `<dialog is="fig-popup-gradient" value='{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}'></dialog>`,
+    attributes: [
+      {
+        name: "color space",
+        attribute: "color-space",
+        value: "display-p3",
+      },
+    ],
+  },
+  {
+    tag: "fig-gradient-editor",
+    title: "Gradient Editor",
+    group: "input",
+    markup: `<fig-gradient-editor value='{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}'></fig-gradient-editor>`,
+    attributes: [
+      {
+        name: "color space",
+        attribute: "color-space",
+        value: "display-p3",
+      },
+      { name: "disabled", attribute: "disabled", value: "" },
+    ],
+  },
+  {
+    tag: "fig-popup-easing",
+    title: "Easing Popup",
+    group: "overlay",
+    kind: "customized-built-in",
+    selector: `dialog[is="fig-popup-easing"]`,
+    markup: `<dialog is="fig-popup-easing" value="0.42, 0, 0.58, 1"></dialog>`,
+    attributes: [
+      { name: "value", attribute: "value", value: "0, 0, 1, 1" },
+      { name: "mode", attribute: "mode", value: "bezier" },
+    ],
+  },
+  {
+    tag: "fig-popup-palette",
+    title: "Palette Popup",
+    group: "overlay",
+    kind: "customized-built-in",
+    selector: `dialog[is="fig-popup-palette"]`,
+    markup: `<dialog is="fig-popup-palette" value='["#0D99FF","#14AE5C"]'></dialog>`,
+    attributes: [
+      { name: "value", attribute: "value", value: '["#FF7262","#9747FF"]' },
+      { name: "min", attribute: "min", value: "1" },
+      { name: "max", attribute: "max", value: "6" },
+    ],
+  },
+  {
     tag: "fig-input-point",
     title: "Input Point",
     group: "input",

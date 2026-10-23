@@ -66,11 +66,12 @@ test.describe("fig-fill-picker audit regressions", () => {
   });
 
   test("composes hex and alpha fields in fig-input-combo", async ({ page }) => {
-    await page.evaluate(async () => {
+    await page.evaluate(() => {
       const picker = document.createElement("fig-fill-picker") as HTMLElement & {
         value: Record<string, unknown>;
         open(): void;
       };
+      picker.id = "combo-picker";
       picker.innerHTML = `<fig-swatch></fig-swatch>`;
       picker.value = {
         type: "solid",
@@ -78,9 +79,8 @@ test.describe("fig-fill-picker audit regressions", () => {
         alpha: 0.5,
       };
       document.body.append(picker);
-      await new Promise(requestAnimationFrame);
-      picker.open();
     });
+    await page.locator("#combo-picker").evaluate((picker: any) => picker.open());
 
     const combo = page.locator(
       "dialog.fig-fill-picker-dialog .fig-fill-picker-ci-hex-row",

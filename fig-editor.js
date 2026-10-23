@@ -1,6 +1,10 @@
 /* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
 import "./fig.js";
 import "./fig-property.js";
+import { figGradientCSS } from "./fig-gradient-editor.js";
+import "./fig-popup-easing.js";
+import "./fig-popup-gradient.js";
+import "./fig-popup-palette.js";
 
 function figEditorDefineElement(name, constructor) {
   if (!customElements.get(name)) {
@@ -4240,6 +4244,29 @@ class FigFillPicker extends HTMLElement {
 
   // ============ GRADIENT TAB ============
   #initGradientTab() {
+    {
+      const container = this.#dialog.querySelector('[data-tab="gradient"]');
+      const editor = document.createElement("fig-gradient-editor");
+      editor.value = gradientToValueShape(this.#gradient);
+      editor.setAttribute("color-space", this.#gamut);
+      editor.toggleAttribute("disabled", this.#isDisabled());
+      editor.pickerAnchor = this.#dialog;
+      const syncFromEditor = (event) => {
+        event.stopPropagation();
+        if (!event.detail?.gradient) return;
+        this.#gradient = lockFillPickerGradientInterpolation(
+          event.detail.gradient,
+        );
+        this.#updateSwatch();
+        if (event.type === "change") this.#emitChange();
+        else this.#emitInput();
+      };
+      editor.addEventListener("input", syncFromEditor);
+      editor.addEventListener("change", syncFromEditor);
+      container.replaceChildren(editor);
+      return;
+    }
+
     const container = this.#dialog.querySelector('[data-tab="gradient"]');
     const gradientType = figEditorCreateElement(
       "fig-select",
@@ -4817,6 +4844,14 @@ class FigFillPicker extends HTMLElement {
     const container = this.#dialog.querySelector('[data-tab="gradient"]');
     if (!container) return;
     this.#gradient = lockFillPickerGradientInterpolation(this.#gradient);
+    const editor = container.querySelector("fig-gradient-editor");
+    if (editor) {
+      editor.value = this.#gradient;
+      editor.setAttribute("color-space", this.#gamut);
+      editor.toggleAttribute("disabled", this.#isDisabled());
+      editor.pickerAnchor = this.#dialog;
+      return;
+    }
 
     const interpolationValue = gradientInterpolationSelectValue(this.#gradient);
     const interpolationSelect = container.querySelector(
@@ -4894,6 +4929,16 @@ class FigFillPicker extends HTMLElement {
 
   #updateGradientPreview() {
     if (!this.#dialog) return;
+
+    const editor = this.#dialog.querySelector(
+      '[data-tab="gradient"] > fig-gradient-editor',
+    );
+    if (editor) {
+      editor.value = this.#gradient;
+      editor.setAttribute("color-space", this.#gamut);
+      this.#updateSwatch();
+      return;
+    }
 
     const barInput = this.#dialog.querySelector(
       ".fig-fill-picker-gradient-bar-input",
@@ -5093,13 +5138,7 @@ class FigFillPicker extends HTMLElement {
   }
 
   #getGradientCSS() {
-    const preferred = this.#buildGradientCSS(undefined, true);
-    if (this.#testGradientSupport(preferred)) return preferred;
-
-    const oklabFallback = this.#buildGradientCSS("oklab", true);
-    if (this.#testGradientSupport(oklabFallback)) return oklabFallback;
-
-    return this.#buildGradientCSS("oklab", false);
+    return figGradientCSS(this.#gradient, { colorSpace: this.#gamut });
   }
 
   // ============ IMAGE TAB ============

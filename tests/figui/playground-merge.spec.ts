@@ -32,7 +32,7 @@ test.describe("PropsKit playground migration", () => {
     );
 
     expect(legacyPropsKitSections).toHaveLength(54);
-    expect(oldKeys).toHaveLength(125);
+    expect(oldKeys).toHaveLength(126);
     expect(Object.keys(propkitMigration).sort()).toEqual(oldKeys.sort());
     for (const oldKey of oldKeys) {
       expect(
@@ -233,4 +233,13 @@ test("reorder examples live with editor components, not lab", () => {
     ],
   });
   expect(labSections.some((section) => section.id === "reorder")).toBe(false);
+});
+
+test("gradient editor follows palette editor in navigation", () => {
+  const editorIds = sortSectionsWithinGroups(figui3Sections)
+    .filter((section) => section.group === "Editor components")
+    .map((section) => section.id);
+  const paletteIndex = editorIds.indexOf("palette-editor");
+  expect(paletteIndex).toBeGreaterThanOrEqual(0);
+  expect(editorIds[paletteIndex + 1]).toBe("gradient-editor");
 });

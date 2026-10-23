@@ -45,9 +45,14 @@ test.describe("fig-input-palette edit modes", () => {
 
     await page.addStyleTag({ url: "/fig-editor.css" });
     await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
-    await page.evaluate(() => customElements.whenDefined("fig-palette-editor"));
+    await page.evaluate(() =>
+      Promise.all([
+        customElements.whenDefined("fig-palette-editor"),
+        customElements.whenDefined("fig-popup-palette"),
+      ]),
+    );
 
-    const popup = page.locator("dialog.fig-palette-editor-popup");
+    const popup = page.locator('dialog[is="fig-popup-palette"]');
     await expect(popup).toHaveAttribute("open");
     await expect(popup).toHaveAttribute("position", "bottom left");
     await expect(popup).toHaveAttribute("offset", "0 8");
@@ -66,7 +71,7 @@ test.describe("fig-input-palette edit modes", () => {
             "#picker .palette-colors-inline",
           );
           const popup = document.querySelector(
-            "dialog.fig-palette-editor-popup",
+            'dialog[is="fig-popup-palette"]',
           );
           if (!trigger || !popup) return false;
           return (
@@ -102,7 +107,7 @@ test.describe("fig-input-palette edit modes", () => {
     await picker.locator(".palette-colors-inline").click();
     await expect(popup).toHaveAttribute("open");
     await picker.evaluate((host) => host.setAttribute("edit", "false"));
-    await expect(page.locator("dialog.fig-palette-editor-popup")).toHaveCount(0);
+    await expect(page.locator('dialog[is="fig-popup-palette"]')).toHaveCount(0);
     await expect(picker).not.toHaveAttribute("open");
     await expect(picker.locator(".palette-colors-expanded")).toHaveCount(0);
 
@@ -115,7 +120,9 @@ test.describe("fig-input-palette edit modes", () => {
     page,
   }) => {
     await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
-    await page.evaluate(() => customElements.whenDefined("fig-palette-editor"));
+    await page.evaluate(() =>
+      customElements.whenDefined("fig-popup-palette"),
+    );
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -275,6 +282,53 @@ test.describe("fig-palette-editor", () => {
       inputDetail: expected,
       changeDetail: expected,
     });
+  });
+
+  test("fig-popup-palette inherits popup behavior and synchronizes its editor", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="palette-anchor">Palette</fig-button>
+        <dialog
+          is="fig-popup-palette"
+          id="palette-popup"
+          anchor="#palette-anchor"
+          value='["#112233","#44556680"]'
+          min="1"
+          max="4"
+          open
+        ></dialog>
+      `;
+    });
+
+    const popup = page.locator("#palette-popup");
+    const editor = popup.locator("fig-palette-editor");
+    await expect(popup).toHaveAttribute("role", "dialog");
+    await expect(popup).toHaveAttribute("position", "bottom left");
+    await expect(popup).toHaveAttribute("offset", "0 8");
+    await expect(popup).toHaveAttribute("aria-label", "Edit palette");
+    await expect(editor).toHaveAttribute("min", "1");
+    await expect(editor).toHaveAttribute("max", "4");
+    await expect(editor).toHaveAttribute("value", '["#112233","#44556680"]');
+
+    await editor.evaluate((element) => {
+      element.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: [{ color: "#AABBCC", alpha: 0.5 }],
+        }),
+      );
+    });
+    await expect(popup).toHaveAttribute(
+      "value",
+      '[{"color":"#AABBCC","alpha":0.5}]',
+    );
+    await expect
+      .poll(() => popup.evaluate((element: any) => element.value))
+      .toEqual([{ color: "#AABBCC", alpha: 0.5 }]);
   });
 
   test("adds the average of the previous two colors", async ({ page }) => {

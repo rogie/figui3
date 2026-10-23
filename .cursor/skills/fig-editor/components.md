@@ -113,6 +113,17 @@ Generated accessories:
 </fig-property>
 ```
 
+Authored trailing accessory (`/figui3#property/custom-accessory`):
+
+```html
+<fig-property label="Opacity" show-trailing>
+  <fig-slider slot="input" value="75" min="0" max="100" units="%" text="true" full></fig-slider>
+  <fig-button slot="trailing" variant="ghost" icon aria-label="Reset opacity">
+    <fig-icon name="reset"></fig-icon>
+  </fig-button>
+</fig-property>
+```
+
 - Attrs: `label`, `leading` (`drag` | `chevron`), `trailing` (`remove` | `add` | `bind`), `show-leading`, `show-trailing`
 - Slots: `input` (one direct primary control), `label`, `leading`, `trailing`
 - Authored label markup overrides the `label` attribute.
@@ -120,6 +131,25 @@ Generated accessories:
 - Omitted or `"hover"` show attributes use hover visibility; `"false"` never shows the slot; an empty/present attribute always shows it.
 - Generated trailing controls emit bubbling, composed `remove`, `add`, or `bind` events with the slotted control in `detail.input`.
 - Child input events bubble unchanged.
+
+## `fig-popup-easing`
+
+Reusable easing dialog with an internal
+`<fig-easing-curve aspect-ratio="4/3">`.
+
+```html
+<fig-button id="easing-trigger">Edit easing</fig-button>
+<dialog
+  is="fig-popup-easing"
+  anchor="#easing-trigger"
+  value="0.42, 0, 0.58, 1"
+  open
+></dialog>
+```
+
+- Attrs: `value`, `mode`, `precision`, `edit`, `presets`, `text`, plus inherited `fig-popup` attributes.
+- Events: bubbling `input` / `change` forwarded from the easing curve.
+- Create it as `<dialog is="fig-popup-easing">`, not `<fig-popup-easing>`.
 
 ## `fig-palette-editor`
 
@@ -137,6 +167,63 @@ Reusable ordered palette editor used by `fig-input-palette edit="picker"`.
 - `max` is unbounded when omitted.
 - Events: `input` / `change` with the normalized ordered color array in `detail`
 - Uses `fig-reorder` for pointer and keyboard reordering.
+
+## `fig-gradient-editor`
+
+Reusable full gradient editor used by the Gradient tab in `fig-fill-picker`.
+
+```tsx
+<fig-gradient-editor
+  value='{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}'
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Attrs: `value`, `color-space` (`srgb` | `display-p3`), `disabled`.
+- Property: `value` is the normalized gradient config; `cssValue` is the rendered CSS gradient.
+- Property: `pickerAnchor` accepts an element used to anchor nested stop color pickers.
+- Events: `input` / `change` with `{ type: "gradient", gradient, css }`.
+- Includes type, flip/rotate, stop bar, add/remove, and pointer/keyboard reorder controls.
+
+## `fig-popup-gradient`
+
+Reusable popup containing one `fig-gradient-editor`. It is the picker opened by
+`fig-input-gradient edit="picker"`.
+
+```html
+<fig-button id="gradient-trigger">Edit gradient</fig-button>
+<dialog
+  is="fig-popup-gradient"
+  anchor="#gradient-trigger"
+  value='{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}'
+  open
+></dialog>
+```
+
+- Attrs: `value`, `color-space`, `disabled`, plus inherited `fig-popup` attributes.
+- Events: bubbling `input` / `change` with `{ type: "gradient", gradient, css }`.
+- Create it as `<dialog is="fig-popup-gradient">`.
+
+## `fig-popup-palette`
+
+Reusable palette dialog used by `fig-input-palette edit="picker"`. It extends
+`fig-popup` and owns its `fig-palette-editor`.
+
+```html
+<fig-button id="palette-trigger">Edit palette</fig-button>
+<dialog
+  is="fig-popup-palette"
+  anchor="#palette-trigger"
+  value='["#94BD00","#83AD00","#1A632A","#003905"]'
+  open
+></dialog>
+```
+
+- Attrs: `value`, `min`, `max`, `fixed`, `disabled`, plus inherited `fig-popup` attributes.
+- Property: `value` returns the normalized `{ color, alpha }[]`.
+- Events: bubbling `input` / `change` with the normalized color array in `detail`.
+- Create it as `<dialog is="fig-popup-palette">`, not `<fig-popup-palette>`.
 
 ## `fig-reorder`
 

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.0]
+
+### Added
+
+- Added reusable `fig-gradient-editor`, `fig-popup-gradient`, `fig-popup-palette`, and `fig-popup-easing` editor components.
+- Added package source files, playground examples, tests, manifests, typings, and skill documentation for the new editor components.
+
+### Changed
+
+- Rebuilt the fill picker’s gradient tab with `fig-gradient-editor`.
+- Routed gradient, palette, and compact easing picker modes through their dedicated reusable popups.
+- Refined audio file previews to show the filename at rest, waveform controls on hover, and persistent playback state with focus styling.
+
+### Fixed
+
+- Kept gradient and easing popup values, trigger previews, and selected preset labels synchronized while editing.
+
 ## [11.5.0]
 
 ### Added

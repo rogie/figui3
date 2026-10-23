@@ -1216,6 +1216,7 @@ export const FIG_ICON_SET_24 = [
   "upload",
   "image",
   "video",
+  "audio",
   "sound",
   "sound-off",
   "sun",
