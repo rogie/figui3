@@ -66,6 +66,61 @@ Data-driven (no authored options):
 - Attrs: `value` (falls back to trimmed `textContent`), `label` (closed-trigger text when content is rich), `selected`, `disabled`, `subtle` (secondary hover/focus fill)
 - `role="option"`, `aria-selected`, `aria-disabled`
 
+## `fig-input-point`
+
+```tsx
+<fig-input-point
+  x={String(point.x)}
+  y={String(point.y)}
+  units="%"
+  full
+  onInput={onInput}
+  onChange={onChange}
+/>
+```
+
+- Attrs: `x`, `y`, `units` (forwarded to both number inputs), `full`
+- Renders two equally sized `fig-input-number` controls in a `fig-input-combo`.
+- Events: `input` while editing and `change` on commit, with `{ x, y }`.
+
+## `fig-property`
+
+Default playground example (`/figui3#property/default`):
+
+```html
+<fig-property label="Size">
+  <fig-input-number
+    slot="input"
+    value="16"
+    units="px"
+    steppers="true"
+    full
+  ></fig-input-number>
+</fig-property>
+```
+
+Generated accessories:
+
+```html
+<fig-property
+  label="Color"
+  leading="drag"
+  trailing="remove"
+  show-leading="hover"
+  show-trailing
+>
+  <fig-input-color slot="input" value="#0D99FF" text="true" full></fig-input-color>
+</fig-property>
+```
+
+- Attrs: `label`, `leading` (`drag` | `chevron`), `trailing` (`remove` | `add` | `bind`), `show-leading`, `show-trailing`
+- Slots: `input` (one direct primary control), `label`, `leading`, `trailing`
+- Authored label markup overrides the `label` attribute.
+- Authored accessory slots override generated shortcuts.
+- Omitted or `"hover"` show attributes use hover visibility; `"false"` never shows the slot; an empty/present attribute always shows it.
+- Generated trailing controls emit bubbling, composed `remove`, `add`, or `bind` events with the slotted control in `detail.input`.
+- Child input events bubble unchanged.
+
 ## `fig-palette-editor`
 
 Reusable ordered palette editor used by `fig-input-palette edit="picker"`.

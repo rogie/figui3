@@ -8,6 +8,7 @@ import {
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
+  applyPropertyControlMutation,
   applyChooserMaxSizeMutation,
   applyChooserPaletteLabelsMutation,
   applyHandleHitAreaDebugMutation,
@@ -27,9 +28,11 @@ import {
   getHeaderIconEnabled,
   getIconCharacter,
   getPrependSlotMode,
+  getPropertyControlTag,
   getSelectSeparatorStickyEnabled,
   parseAttributeTargets,
   type FigIconPlaygroundSet,
+  type PropertyControlTag,
   type PrependSlotMode,
 } from "../lib/attributeParser";
 import {
@@ -81,6 +84,23 @@ const FIELD_INPUT_OPTIONS: Array<{ tag: FieldInputTag; label: string }> = [
   { tag: "fig-slider", label: "Slider" },
   { tag: "fig-switch", label: "Switch" },
   { tag: "fig-input-text", label: "Text" },
+];
+
+const PROPERTY_CONTROL_OPTIONS: Array<{
+  tag: PropertyControlTag;
+  label: string;
+}> = [
+  { tag: "fig-input-number", label: "Number" },
+  { tag: "fig-slider", label: "Slider" },
+  { tag: "fig-input-text", label: "String" },
+  { tag: "fig-input-color", label: "Color" },
+  { tag: "fig-select", label: "Select" },
+  { tag: "fig-input-point", label: "Point" },
+  { tag: "fig-easing-curve", label: "Easing" },
+  { tag: "fig-input-gradient", label: "Gradient" },
+  { tag: "fig-input-palette", label: "Palette" },
+  { tag: "fig-3d-rotate", label: "Transform" },
+  { tag: "fig-input-file", label: "File" },
 ];
 
 function resolveFieldInputTag(value: string): FieldInputTag | undefined {
@@ -212,6 +232,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-input-fill": "Fill",
     "fig-slider": "Slider",
     "fig-input-number": "Number",
+    "fig-input-point": "Input point",
     "fig-input-text": "Text input",
     "fig-switch": "Switch",
     "fig-dropdown": "Dropdown",
@@ -641,14 +662,25 @@ export default function AttributesView({
 
         const controlEntries: RuleEntry[] = suppressControlAttributes
           ? []
-          : Object.entries(mergedControlRules).map(([name, rule]) => ({
-              name,
-              value:
-                name === "perspective-distance"
-                  ? target.controlAttributes.perspective
-                  : target.controlAttributes[name],
-              rule,
-            }));
+          : Object.entries(mergedControlRules)
+              .filter(([name]) => {
+                if (target.controlTag !== "fig-property") return true;
+                if (name === "show-leading") {
+                  return Boolean(target.controlAttributes.leading?.trim());
+                }
+                if (name === "show-trailing") {
+                  return Boolean(target.controlAttributes.trailing?.trim());
+                }
+                return true;
+              })
+              .map(([name, rule]) => ({
+                name,
+                value:
+                  name === "perspective-distance"
+                    ? target.controlAttributes.perspective
+                    : target.controlAttributes[name],
+                rule,
+              }));
         const sliderTextEnabled =
           target.controlTag === "fig-slider" &&
           (target.controlAttributes.text ?? "true").toLowerCase() !== "false";
@@ -1319,6 +1351,12 @@ export default function AttributesView({
             if (needsCustomHandler) {
               const enumOptionLabel = (option: string): string => {
                 if (option === "") {
+                  if (
+                    target.controlTag === "fig-property" &&
+                    (name === "show-leading" || name === "show-trailing")
+                  ) {
+                    return "Always";
+                  }
                   if (isShimmerLikeControl && name === "direction") return "Default";
                   if (target.controlTag === "fig-button" && name === "variant") {
                     return "Default (primary)";
@@ -1922,6 +1960,56 @@ export default function AttributesView({
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
+                    {target.controlTag === "fig-property" &&
+                      (() => {
+                        const currentTag = getPropertyControlTag(
+                          markup,
+                          target.fieldIndex,
+                        );
+                        return (
+                          <fig-field
+                            columns="2/5"
+                            key={`property-control-${target.fieldIndex}-${currentTag}`}
+                          >
+                            <label>Control</label>
+                            <fig-dropdown
+                              full
+                              label="Control"
+                              value={currentTag}
+                              onChange={(e: any) => {
+                                const detail = (e as CustomEvent).detail;
+                                const value =
+                                  (typeof detail === "string"
+                                    ? detail
+                                    : detail?.value) ??
+                                  (e.currentTarget as HTMLElement & {
+                                    value?: string;
+                                  }).value;
+                                if (
+                                  !PROPERTY_CONTROL_OPTIONS.some(
+                                    (option) => option.tag === value,
+                                  )
+                                ) {
+                                  return;
+                                }
+                                onMarkupChange(
+                                  applyPropertyControlMutation(
+                                    markup,
+                                    target.fieldIndex,
+                                    value as PropertyControlTag,
+                                  ),
+                                );
+                              }}
+                            >
+                              {PROPERTY_CONTROL_OPTIONS.map((option) => (
+                                <option key={option.tag} value={option.tag}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </fig-dropdown>
+                          </fig-field>
+                        );
+                      })()}
                     {target.controlTag === "fig-overflow-fade" &&
                       (() => {
                         const classes = new Set(

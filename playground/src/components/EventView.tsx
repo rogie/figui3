@@ -41,11 +41,15 @@ export default function EventView() {
       if (typeof envelope?.label === "string") {
         payload.label = envelope.label;
       }
+      if (envelope?.input instanceof HTMLElement) {
+        payload.input = envelope.input;
+      }
 
       if (envelope) {
         const extraDetail = Object.fromEntries(
           Object.entries(envelope).filter(
-            ([key]) => !["control", "name", "value", "label"].includes(key),
+            ([key]) =>
+              !["control", "name", "value", "label", "input"].includes(key),
           ),
         );
         if (Object.keys(extraDetail).length) payload.detail = extraDetail;
@@ -65,6 +69,8 @@ export default function EventView() {
       "optionhover",
       "reorder",
       "remove",
+      "add",
+      "bind",
       "openchange",
       "reset",
     ];

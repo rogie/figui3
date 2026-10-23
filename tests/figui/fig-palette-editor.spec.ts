@@ -160,19 +160,29 @@ test.describe("fig-input-palette edit modes", () => {
     });
     await page.waitForTimeout(50);
 
-    await expect(page.locator("#inline-field > .fig-field-chevron")).toHaveCount(1);
-    await expect(page.locator("#preview-field > .fig-field-chevron")).toHaveCount(0);
-    await expect(page.locator("#picker-field > .fig-field-chevron")).toHaveCount(0);
+    await expect(
+      page.locator('#inline-field > .fig-field-chevron[slot="leading"]'),
+    ).toHaveCount(1);
+    await expect(
+      page.locator('#preview-field > .fig-field-chevron[slot="leading"]'),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('#picker-field > .fig-field-chevron[slot="leading"]'),
+    ).toHaveCount(0);
 
     await page
       .locator("#inline-field fig-input-palette")
       .evaluate((palette) => palette.setAttribute("edit", "false"));
-    await expect(page.locator("#inline-field > .fig-field-chevron")).toHaveCount(0);
+    await expect(
+      page.locator('#inline-field > .fig-field-chevron[slot="leading"]'),
+    ).toHaveCount(0);
 
     await page
       .locator("#preview-field fig-input-palette")
       .evaluate((palette) => palette.setAttribute("edit", "true"));
-    await expect(page.locator("#preview-field > .fig-field-chevron")).toHaveCount(1);
+    await expect(
+      page.locator('#preview-field > .fig-field-chevron[slot="leading"]'),
+    ).toHaveCount(1);
   });
 });
 
@@ -233,6 +243,16 @@ test.describe("fig-palette-editor", () => {
       indexes: Array.from(
         element.querySelectorAll(".fig-palette-editor-color-row"),
       ).map((row: any) => row.dataset.index),
+      rowContracts: Array.from(
+        element.querySelectorAll(".fig-palette-editor-color-row"),
+      ).map((row: any) => ({
+        tag: row.tagName,
+        leading: row.getAttribute("leading"),
+        trailing: row.getAttribute("trailing"),
+        showTrailing: row.hasAttribute("show-trailing"),
+        inputSlot:
+          row.querySelector(":scope > .fig-palette-editor-color")?.slot,
+      })),
       inputDetail: JSON.parse(element.getAttribute("data-input-detail")),
       changeDetail: JSON.parse(element.getAttribute("data-change-detail")),
     }));
@@ -245,6 +265,13 @@ test.describe("fig-palette-editor", () => {
       value: expected,
       domValues: ["#222222", "#111111", "#333333"],
       indexes: ["0", "1", "2"],
+      rowContracts: Array.from({ length: 3 }, () => ({
+        tag: "FIG-PROPERTY",
+        leading: "drag",
+        trailing: "remove",
+        showTrailing: true,
+        inputSlot: "input",
+      })),
       inputDetail: expected,
       changeDetail: expected,
     });

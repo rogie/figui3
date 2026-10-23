@@ -1,5 +1,6 @@
 /* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
 import "./fig.js";
+import "./fig-property.js";
 
 function figEditorDefineElement(name, constructor) {
   if (!customElements.get(name)) {
@@ -81,6 +82,114 @@ function figEditorCreateElement(tagName, attributes, children) {
   figEditorSetAttributes(element, attributes);
   return figEditorAppendChildren(element, children);
 }
+
+/**
+ * Paired X/Y number inputs for editing a point.
+ *
+ * @element fig-input-point
+ * @attr {number} x - Horizontal coordinate
+ * @attr {number} y - Vertical coordinate
+ * @attr {string} units - Unit string forwarded to both coordinate inputs
+ * @fires input - Emitted while either coordinate is edited with `{ x, y }`
+ * @fires change - Emitted when either coordinate is committed with `{ x, y }`
+ */
+class FigInputPoint extends HTMLElement {
+  #inputs = {};
+
+  static get observedAttributes() {
+    return ["x", "y", "units"];
+  }
+
+  connectedCallback() {
+    this.#render();
+    this.#sync();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue || !this.isConnected) return;
+    if (name === "units") this.#syncUnits();
+    else this.#syncAxis(name);
+  }
+
+  get value() {
+    return {
+      x: this.#axisValue("x"),
+      y: this.#axisValue("y"),
+    };
+  }
+
+  #render() {
+    if (this.#inputs.x && this.#inputs.y) return;
+
+    const createInput = (axis) => {
+      const label = axis.toUpperCase();
+      const input = figEditorCreateElement(
+        "fig-input-number",
+        {
+          full: true,
+          "aria-label": `${label} coordinate`,
+          "data-axis": axis,
+        },
+        figEditorCreateElement("span", { slot: "prepend" }, label),
+      );
+      input.addEventListener("input", (event) =>
+        this.#handleInput(axis, event),
+      );
+      input.addEventListener("change", (event) =>
+        this.#handleInput(axis, event),
+      );
+      this.#inputs[axis] = input;
+      return input;
+    };
+
+    this.replaceChildren(
+      figEditorCreateElement(
+        "fig-input-combo",
+        { full: true },
+        ["x", "y"].map(createInput),
+      ),
+    );
+  }
+
+  #sync() {
+    this.#syncAxis("x");
+    this.#syncAxis("y");
+    this.#syncUnits();
+  }
+
+  #syncAxis(axis) {
+    const input = this.#inputs[axis];
+    if (!input) return;
+    const value = String(this.#axisValue(axis));
+    if (input.getAttribute("value") !== value) input.setAttribute("value", value);
+  }
+
+  #syncUnits() {
+    const units = this.getAttribute("units");
+    for (const input of Object.values(this.#inputs)) {
+      if (units === null) input.removeAttribute("units");
+      else input.setAttribute("units", units);
+    }
+  }
+
+  #axisValue(axis) {
+    const value = Number(this.getAttribute(axis));
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  #handleInput(axis, event) {
+    event.stopPropagation();
+    const value = Number(event.detail);
+    this.setAttribute(axis, String(Number.isFinite(value) ? value : 0));
+    this.dispatchEvent(
+      new CustomEvent(event.type, {
+        bubbles: true,
+        detail: this.value,
+      }),
+    );
+  }
+}
+figEditorDefineElement("fig-input-point", FigInputPoint);
 
 function figEditorNormalizePaletteValue(value) {
   let entries = value;
@@ -429,42 +538,27 @@ class FigPaletteEditor extends HTMLElement {
     this.#emit(type);
   }
 
-  #createRemoveButton(index) {
-    const button = figEditorCreateElement(
-      "fig-button",
-      {
-        className: "fig-palette-editor-remove",
-        variant: "ghost",
-        icon: true,
-        "aria-label": `Remove color ${index + 1}`,
-        disabled:
-          this.#disabled || this.#colors.length <= this.#min || null,
-      },
-      figEditorCreateIcon("minus"),
-    );
-    button.addEventListener("click", () => {
-      const row = button.closest(".fig-palette-editor-color-row");
-      const currentIndex = Number.parseInt(row?.dataset.index ?? "", 10);
-      if (
-        this.#disabled ||
-        this.#fixed ||
-        this.#colors.length <= this.#min ||
-        !Number.isInteger(currentIndex)
-      ) {
-        return;
-      }
-      this.#colors.splice(currentIndex, 1);
-      this.#reflectValue();
-      this.#render();
-      this.#emit("input");
-      this.#emit("change");
-    });
-    return button;
+  #removeRow(row) {
+    const currentIndex = Number.parseInt(row?.dataset.index ?? "", 10);
+    if (
+      this.#disabled ||
+      this.#fixed ||
+      this.#colors.length <= this.#min ||
+      !Number.isInteger(currentIndex)
+    ) {
+      return;
+    }
+    this.#colors.splice(currentIndex, 1);
+    this.#reflectValue();
+    this.#render();
+    this.#emit("input");
+    this.#emit("change");
   }
 
   #createRow(entry, index) {
     const colorInput = figEditorCreateElement("fig-input-color", {
       className: "fig-palette-editor-color",
+      slot: "input",
       value: figEditorPaletteEntryValue(entry),
       text: true,
       alpha: true,
@@ -494,17 +588,22 @@ class FigPaletteEditor extends HTMLElement {
       syncColor(event, "change"),
     );
 
-    return figEditorCreateElement(
-      "fig-field",
+    const row = figEditorCreateElement(
+      "fig-property",
       {
         className: "fig-palette-editor-color-row",
         "data-index": index,
+        leading: "drag",
+        trailing: this.#fixed ? null : "remove",
+        "show-trailing": this.#fixed ? null : true,
       },
-      [
-        colorInput,
-        ...(this.#fixed ? [] : [this.#createRemoveButton(index)]),
-      ],
+      colorInput,
     );
+    row.addEventListener("remove", (event) => {
+      event.stopPropagation();
+      this.#removeRow(row);
+    });
+    return row;
   }
 
   #handleReorder = (event) => {
@@ -594,6 +693,20 @@ class FigPaletteEditor extends HTMLElement {
       children.push(figEditorCreateElement("fig-field", {}, addButton));
     }
     this.replaceChildren(...children);
+    this.querySelectorAll(".fig-palette-editor-color-row").forEach(
+      (row, index) => {
+        const remove = row.querySelector(
+          ':scope > [data-fig-property-action="remove"]',
+        );
+        if (!remove) return;
+        remove.classList.add("fig-palette-editor-remove");
+        remove.setAttribute("aria-label", `Remove color ${index + 1}`);
+        remove.toggleAttribute(
+          "disabled",
+          this.#disabled || this.#colors.length <= this.#min,
+        );
+      },
+    );
   }
 }
 figEditorDefineElement("fig-palette-editor", FigPaletteEditor);
@@ -3460,7 +3573,6 @@ class FigFillPicker extends HTMLElement {
         eyedropperControl,
         figEditorCreateElement("fig-slider", {
           type: "hue",
-          variant: "classic",
           text: "false",
           min: "0",
           max: "360",
@@ -3470,7 +3582,6 @@ class FigFillPicker extends HTMLElement {
         showAlpha
           ? figEditorCreateElement("fig-slider", {
               type: "opacity",
-              variant: "classic",
               text: "false",
               min: "0",
               max: "100",
@@ -3929,7 +4040,14 @@ class FigFillPicker extends HTMLElement {
             placeholder: "FFFFFF",
           });
           content = showAlpha
-            ? combo([hexInput, alphaField()], "fig-fill-picker-ci-hex-row")
+            ? figEditorCreateElement(
+                "fig-input-combo",
+                {
+                  className: "input-combo fig-fill-picker-ci-hex-row",
+                  full: true,
+                },
+                [hexInput, alphaField()],
+              )
             : hexInput;
         }
         break;
@@ -4834,41 +4952,44 @@ class FigFillPicker extends HTMLElement {
 
     const rows = this.#gradient.stops.map((stop, index) =>
       figEditorCreateElement(
-        "fig-field",
+        "fig-property",
         {
           className: "fig-fill-picker-gradient-stop-row",
           "data-index": index,
+          leading: "drag",
+          trailing: "remove",
+          "show-leading": "hover",
+          "show-trailing": true,
         },
-        [
-          figEditorCreateElement("fig-input-number", {
-            className: "fig-fill-picker-stop-position",
-            "aria-label": "Gradient stop position",
-            min: "0",
-            max: "100",
-            value: stop.position,
-            units: "%",
-          }),
-          figEditorCreateElement("fig-input-color", {
-            className: "fig-fill-picker-stop-color",
-            "aria-label": "Gradient stop color",
-            text: "true",
-            alpha: "true",
-            picker: "figma",
-            "picker-dialog-position": "right",
-            value: this.#formatStopColorValue(stop),
-          }),
-          figEditorCreateElement(
-            "fig-button",
-            {
-              icon: true,
-              variant: "ghost",
-              className: "fig-fill-picker-stop-remove",
-              disabled: this.#gradient.stops.length <= 2,
-              "aria-label": "Remove gradient stop",
-            },
-            figEditorCreateIcon("minus"),
-          ),
-        ],
+        figEditorCreateElement(
+          "fig-stack",
+          {
+            className: "fig-fill-picker-gradient-stop-inputs",
+            slot: "input",
+            direction: "horizontal",
+            gap: "2",
+            full: true,
+          },
+          [
+            figEditorCreateElement("fig-input-number", {
+              className: "fig-fill-picker-stop-position",
+              "aria-label": "Gradient stop position",
+              min: "0",
+              max: "100",
+              value: stop.position,
+              units: "%",
+            }),
+            figEditorCreateElement("fig-input-color", {
+              className: "fig-fill-picker-stop-color",
+              "aria-label": "Gradient stop color",
+              text: "true",
+              alpha: "true",
+              picker: "figma",
+              "picker-dialog-position": "right",
+              value: this.#formatStopColorValue(stop),
+            }),
+          ],
+        ),
       ),
     );
     reorder.replaceChildren(...rows);
@@ -4911,16 +5032,21 @@ class FigFillPicker extends HTMLElement {
         stopColor.addEventListener("input", syncStopColor);
         stopColor.addEventListener("change", syncStopColor);
 
-        row
-          .querySelector(".fig-fill-picker-stop-remove")
-          .addEventListener("click", () => {
-            const index = parseInt(row.dataset.index, 10);
-            if (this.#gradient.stops.length > 2) {
-              this.#gradient.stops.splice(index, 1);
-              this.#updateGradientUI();
-              this.#emitInput();
-            }
-          });
+        const remove = row.querySelector(
+          ':scope > [data-fig-property-action="remove"]',
+        );
+        remove.classList.add("fig-fill-picker-stop-remove");
+        remove.setAttribute("aria-label", "Remove gradient stop");
+        remove.toggleAttribute("disabled", this.#gradient.stops.length <= 2);
+        row.addEventListener("remove", (event) => {
+          event.stopPropagation();
+          const index = parseInt(row.dataset.index, 10);
+          if (this.#gradient.stops.length > 2) {
+            this.#gradient.stops.splice(index, 1);
+            this.#updateGradientUI();
+            this.#emitInput();
+          }
+        });
       });
   }
 

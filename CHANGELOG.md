@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.5.0]
+
+### Added
+
+- Added the composable `fig-property` editor row with generated leading/trailing accessories, visibility controls, accessible labels, and action events.
+- Added `fig-input-point` for paired X/Y numeric values.
+- Added standalone `fig-property.js` and `fig-property.css` package exports and editor skill guidance.
+
+### Changed
+
+- Rebuilt palette editor rows and fill-picker gradient stop rows with `fig-property`.
+- Expanded playground editor controls, property examples, event output, and direct hash loading.
+- Updated easing preset artwork to use `fig-icon` prepend content and added the drag-handle icon token.
+- Refined `fig-field` leading/trailing slot handling and property-row hover layout.
+
+### Fixed
+
+- Kept hover-only trailing property actions from reserving space or shifting the input.
+- Made generated property actions bubble across shadow roots with their slotted input in event detail.
+
 ## [11.4.2]
 
 ### Changed

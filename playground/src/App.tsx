@@ -20,6 +20,11 @@ import { figui3Sections } from "./data/figui3Sections";
 import { labSections } from "./data/labSections";
 import type { Section } from "./data/sections";
 import { sortSectionsWithinGroups } from "./lib/sectionOrder";
+import {
+  EDITOR_SECTION_IDS,
+  hashRequiresEditorControls,
+  requiresEditorControls,
+} from "./lib/editorSections";
 
 function toSentenceCase(text: string): string {
   const trimmed = text.trim();
@@ -101,22 +106,7 @@ function isExampleAvailable(example: Section["examples"][number]) {
   );
 }
 
-const EDITOR_SECTION_IDS = new Set([
-  "palette-editor",
-  "reorder",
-  "select",
-  "fill-picker",
-  "layer",
-  "toast",
-]);
-const EDITOR_GATED_SECTION_IDS = new Set(["fill-input"]);
 const EDITOR_GROUP_NAME = "Editor components";
-
-function requiresEditorControls(sectionId: string): boolean {
-  return (
-    EDITOR_SECTION_IDS.has(sectionId) || EDITOR_GATED_SECTION_IDS.has(sectionId)
-  );
-}
 
 function filterAvailableSections(
   sections: Section[],
@@ -196,6 +186,18 @@ export default function App({ mode }: Props) {
   ]);
   const basePath = basePathForMode(mode);
   const appTitle = titleForMode(mode);
+
+  useEffect(() => {
+    if (mode !== "figui3") return;
+    const showHashSection = () => {
+      if (hashRequiresEditorControls(window.location.hash)) {
+        setIncludeEditorControls(true);
+      }
+    };
+    window.addEventListener("hashchange", showHashSection);
+    return () => window.removeEventListener("hashchange", showHashSection);
+  }, [mode, setIncludeEditorControls]);
+
   const {
     activeSectionId,
     activeExampleId,

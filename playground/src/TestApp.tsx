@@ -1,12 +1,22 @@
-import { componentContracts, componentGroups } from "./testing/componentManifest";
+import {
+  allComponentContracts,
+  componentContracts,
+  componentGroups,
+} from "./testing/componentManifest";
 
 function formatMarkup(markup: string) {
   return markup.trim();
 }
 
 export default function TestApp() {
+  const visibleContracts = allComponentContracts.filter(
+    (contract) =>
+      componentContracts.includes(contract) || customElements.get(contract.tag),
+  );
   const registered = new Set(
-    componentContracts.filter((contract) => customElements.get(contract.tag)).map((contract) => contract.tag),
+    visibleContracts
+      .filter((contract) => customElements.get(contract.tag))
+      .map((contract) => contract.tag),
   );
 
   return (
@@ -21,7 +31,9 @@ export default function TestApp() {
       </header>
 
       {componentGroups.map((group) => {
-        const contracts = componentContracts.filter((contract) => contract.group === group);
+        const contracts = visibleContracts.filter(
+          (contract) => contract.group === group,
+        );
         return (
           <section className="tests-group" key={group}>
             <fig-header borderless>

@@ -1,0 +1,116 @@
+/* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
+
+fig-property {
+  --fig-property-gap: var(--spacer-2);
+  --fig-property-left-padding: var(--spacer-3);
+  --fig-property-right-padding: var(--spacer-3);
+  --fig-property-top-padding: var(--spacer-1);
+  --fig-property-bottom-padding: var(--spacer-1);
+  --fig-property-label-ratio: 1fr;
+  --fig-property-input-ratio: 2fr;
+  --fig-property-trailing-gap: 0;
+  --fig-property-trailing-size: 0;
+  display: grid;
+  grid-template-columns:
+    var(--fig-property-left-padding)
+    var(
+      --fig-property-label-track,
+      minmax(0, var(--fig-property-label-ratio))
+    )
+    minmax(0, var(--fig-property-input-ratio))
+    var(--fig-property-trailing-gap)
+    var(--fig-property-trailing-size)
+    var(--fig-property-right-padding);
+  grid-template-areas: "leading label input . trailing pad";
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: var(--fig-property-top-padding) 0
+    var(--fig-property-bottom-padding);
+
+  &[show-trailing]:not([show-trailing="hover"]):has(> fig-button[slot="trailing"][variant="ghost"]),
+  &[show-trailing]:not([show-trailing="hover"]):has(> [slot="trailing"] fig-button[variant="ghost"]) {
+    --fig-property-right-padding: var(--spacer-2);
+  }
+
+  > :is(label, [slot="label"]) {
+    grid-area: label;
+    display: block;
+    min-width: 0;
+    height: min(100%, var(--spacer-4));
+    margin-right: var(--fig-property-gap);
+    padding: 0;
+    align-content: center;
+    overflow: hidden;
+    font: inherit;
+    line-height: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  > [slot="leading"] {
+    grid-area: leading;
+    height: 100%;
+    visibility: hidden;
+    color: var(--figma-color-text-secondary);
+  }
+
+  &:has(> [slot="trailing"]) {
+    --fig-property-label-track: minmax(
+      0,
+      calc(
+        (
+            100% - var(--fig-property-left-padding) -
+              var(--fig-property-right-padding)
+          ) /
+          3
+      )
+    );
+  }
+
+  > [slot="input"] {
+    grid-area: input;
+    width: 100%;
+    min-width: 0;
+  }
+
+  > [slot="trailing"] {
+    grid-area: trailing;
+    min-width: 0;
+    overflow: hidden;
+    visibility: hidden;
+  }
+
+  &:is(:hover) > [slot="leading"],
+  &:hover > [slot="trailing"],
+  &[show-leading]:not([show-leading="hover"]):not([show-leading="false"])
+    > [slot="leading"],
+  &[show-trailing]:not([show-trailing="hover"]):not([show-trailing="false"])
+    > [slot="trailing"] {
+    visibility: visible;
+  }
+
+  &:hover:has(> [slot="trailing"]):not([show-trailing="false"]),
+  &[show-trailing]:not([show-trailing="hover"]):not([show-trailing="false"])
+  {
+    --fig-property-trailing-gap: var(--fig-property-gap);
+    --fig-property-trailing-size: max-content;
+  }
+
+  &:hover > [slot="trailing"],
+  &[show-trailing]:not([show-trailing="hover"]):not([show-trailing="false"])
+    > [slot="trailing"] {
+    overflow: visible;
+  }
+
+  &[show-leading="false"] > [slot="leading"],
+  &[show-trailing="false"] > [slot="trailing"] {
+    display: none;
+  }
+
+  &:not(:has(> :is(label, [slot="label"]))) > [slot="input"] {
+    grid-column: label-start / input-end;
+  }
+}

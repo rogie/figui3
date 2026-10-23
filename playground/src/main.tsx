@@ -3,6 +3,7 @@ import App from "./App";
 import SandboxApp from "./SandboxApp";
 import TestApp from "./TestApp";
 import { getPropsKitMigration } from "./data/propkitMigration";
+import { hashRequiresEditorControls } from "./lib/editorSections";
 import "./App.css";
 
 type PlaygroundMode =
@@ -112,6 +113,11 @@ const bootstrap = async () => {
   const mode = resolveModeFromPath(window.location.pathname);
   const appRoot = document.getElementById("app")!;
   appRoot.dataset.mode = mode;
+  const hashNeedsEditorControls =
+    mode === "figui3" && hashRequiresEditorControls(window.location.hash);
+  if (hashNeedsEditorControls) {
+    localStorage.setItem("includeEditorControls", "true");
+  }
 
   if (mode !== "sandbox") {
     await import("../../fig.css");
@@ -122,7 +128,8 @@ const bootstrap = async () => {
     await import("../../fig-layer.js");
     if (
       mode === "lab" ||
-      localStorage.getItem("includeEditorControls") === "true"
+      localStorage.getItem("includeEditorControls") === "true" ||
+      hashNeedsEditorControls
     ) {
       await import("../../fig-editor.css");
       // @ts-expect-error runtime side-effect import for optional editor component registration

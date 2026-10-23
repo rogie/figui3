@@ -358,6 +358,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 ```
 
 - Attrs: `direction` (`horizontal` | `vertical`), `label`, `columns`
+- Slots: `leading` for an accessory before the label; `trailing` for an end action.
 - Put control attrs on the control, not the field.
 
 ### `fig-group`

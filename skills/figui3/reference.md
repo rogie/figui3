@@ -64,6 +64,8 @@ Public API: `README.md`. React recipes: [components.md](components.md).
 
 - `direction="horizontal|vertical"`
 - `label` or a child `<label>`
+- `slot="leading"` places an accessory before the label
+- `slot="trailing"` places an end action in the input area
 
 ## `fig-toolbelt`
 

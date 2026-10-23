@@ -2,18 +2,18 @@
 name: fig-editor
 description: >-
   Guides FigUI3 editor bundle (`fig-editor.js` / `fig-editor.css`): fig-select,
-  fig-select-options, fig-select-option, fig-fill-picker, fig-palette-editor,
-  fig-reorder, and fig-interpolation-swatch,
+  fig-select-options, fig-select-option, fig-property, fig-input-point,
+  fig-fill-picker, fig-palette-editor, fig-reorder, and fig-interpolation-swatch,
   including React JSX usage. Use when building custom selects, grouped option lists,
-  sticky separators, ghost selects, fill picker dialogs, reorderable lists, or
-  interpolation swatches.
+  sticky separators, ghost selects, composable property rows, fill picker dialogs,
+  reorderable lists, or interpolation swatches.
   Requires fig.js.
 user-invocable: false
 ---
 
 # FigUI3 editor (`fig-editor.js`)
 
-Custom select and full fill-picker. Not in core `fig.js`.
+Custom selects, property rows, point inputs, and full fill editing. Not in core `fig.js`.
 
 React: [../figui3/react.md](../figui3/react.md). Per-tag JSX: [components.md](components.md). Attrs: [reference.md](reference.md).
 
@@ -37,6 +37,8 @@ Registered tags:
 | `fig-select-options` | Scrollable panel (`slot="panel"`), overflow chevrons |
 | `fig-select-option` | Option (`value`, `label`, `selected`, `disabled`, `subtle`) |
 | `fig-fill-picker` | Full fill editor dialog (solid, gradient, image, video, webcam, custom modes) |
+| `fig-property` | Composable property row with leading, input, and trailing slots |
+| `fig-input-point` | Paired X/Y numeric point input |
 | `fig-palette-editor` | Ordered palette editor |
 | `fig-reorder` | Pointer- and keyboard-reorderable direct-child list |
 | `fig-interpolation-swatch` | Gradient interpolation preview swatch |
@@ -55,7 +57,7 @@ Do not use `picker` or `picker-anchor` on `fig-input-color`. Forward picker chro
 
 ## Maintainer notes
 
-- Implementation: `fig-editor.js`, styles: `fig-editor.css`
+- Implementation: `fig-editor.js` / `fig-editor.css`; property row: `fig-property.js` / `fig-property.css` (imported by the editor bundle)
 - Do not move fill-picker or select into `fig.js`
 - Nested overlay positioning: keep `popover="manual"` on the select popup
 - Tests: `tests/figui/component-contracts.spec.ts` (ghost variant, sticky separator vs overflow-start)

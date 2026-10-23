@@ -61,7 +61,7 @@ const hasSelectorFixtures = [
     name: "field-child-open",
     markup: `
       <fig-field id="has-open-field">
-        <fig-icon class="fig-field-chevron" name="chevron"></fig-icon>
+        <fig-icon class="fig-field-chevron" slot="leading" name="chevron"></fig-icon>
         <label>Advanced</label>
         <fig-group id="has-open-child" name="Advanced"><fig-input-text value="Value"></fig-input-text></fig-group>
       </fig-field>
@@ -537,7 +537,7 @@ function hasSelectorMarkup() {
       <fig-input-text multiline resizable value="Resizable text"></fig-input-text>
     </fig-field>
     <fig-field id="has-open-field">
-      <fig-icon class="fig-field-chevron" name="chevron"></fig-icon>
+      <fig-icon class="fig-field-chevron" slot="leading" name="chevron"></fig-icon>
       <label>Disclosure</label>
       <fig-group id="has-open-child" name="Disclosure"><fig-input-text value="Open state"></fig-input-text></fig-group>
     </fig-field>

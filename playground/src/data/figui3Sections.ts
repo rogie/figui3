@@ -595,6 +595,40 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     ],
   },
   {
+    id: "input-point",
+    name: "Input Point",
+    group: "Editor components",
+    description:
+      "Paired X and Y number fields for editing a point (requires <code>fig-editor.js</code>).",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-input-point x="24" y="16" units="%" full></fig-input-point>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "property",
+    name: "Property",
+    group: "Editor components",
+    description:
+      "A composable property row with named leading, input, and trailing slots plus optional accessory shortcuts (requires <code>fig-editor.js</code>).",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-property label="Size">
+    <fig-input-number slot="input" value="16" units="px" steppers="true" full></fig-input-number>
+  </fig-property>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "reorder",
     name: "Reorder",
     group: "Editor components",
@@ -607,14 +641,17 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-reorder>
     <fig-field>
+      <fig-icon slot="leading" name="drag-handle" size="small"></fig-icon>
       <label>Number</label>
       <fig-input-number value="16" min="0" max="100" units="px"></fig-input-number>
     </fig-field>
     <fig-field>
+      <fig-icon slot="leading" name="drag-handle" size="small"></fig-icon>
       <label>Text</label>
       <fig-input-text value="Rows" full></fig-input-text>
     </fig-field>
     <fig-field>
+      <fig-icon slot="leading" name="drag-handle" size="small"></fig-icon>
       <label>Color</label>
       <fig-input-color value="#0D99FF"></fig-input-color>
     </fig-field>

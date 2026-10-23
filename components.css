@@ -433,6 +433,7 @@
   --icon-24-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.5 6C6.67157 6 6 6.67157 6 7.5V16.5C6 17.3284 6.67157 18 7.5 18H16.5C17.3284 18 18 17.3284 18 16.5V7.5C18 6.67157 17.3284 6 16.5 6H7.5ZM7 7.5C7 7.22386 7.22386 7 7.5 7H16.5C16.7761 7 17 7.22386 17 7.5V14.793L14.3536 12.1464C14.1583 11.9512 13.8417 11.9512 13.6464 12.1464L12 13.7929L9.85355 11.6464C9.65829 11.4512 9.34171 11.4512 9.14645 11.6464L7 13.7929V7.5ZM7 15.2071V16.5C7 16.7761 7.22386 17 7.5 17H16.5C16.7761 17 17 16.7761 17 16.5V16.2071L14 13.2071L12.3536 14.8536C12.1583 15.0488 11.8417 15.0488 11.6464 14.8536L9.5 12.7071L7 15.2071ZM13.5 8C14.3284 8 15 8.67157 15 9.5C15 10.3284 14.3284 11 13.5 11C12.6716 11 12 10.3284 12 9.5C12 8.67157 12.6716 8 13.5 8ZM13.5 9C13.2239 9 13 9.22386 13 9.5C13 9.77614 13.2239 10 13.5 10C13.7761 10 14 9.77614 14 9.5C14 9.22386 13.7761 9 13.5 9Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
   --icon-24-video: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16 6C17.1046 6 18 6.89543 18 8V16C18 17.1046 17.1046 18 16 18H8C6.89543 18 6 17.1046 6 16V8C6 6.89543 6.89543 6 8 6H16ZM8 7C7.44772 7 7 7.44772 7 8V16C7 16.5523 7.44772 17 8 17H16C16.5523 17 17 16.5523 17 16V8C17 7.44772 16.5523 7 16 7H8ZM9.99805 9.13477C10.3063 8.95591 10.6866 8.955 10.9961 9.13184L14.4961 11.1318C14.8077 11.3099 15 11.6411 15 12C15 12.3589 14.8077 12.6901 14.4961 12.8682L10.9961 14.8682C10.6866 15.045 10.3063 15.0441 9.99805 14.8652C9.68973 14.6863 9.5 14.3565 9.5 14V10C9.5 9.64353 9.68973 9.31369 9.99805 9.13477ZM10.5 14L14 12L10.5 10V14Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
   --icon-16-video: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.5 3C12.3284 3 13 3.67157 13 4.5V11.5C13 12.3284 12.3284 13 11.5 13H4.5L4.34668 12.9922C3.59028 12.9154 3 12.2767 3 11.5V4.5C3 3.67157 3.67157 3 4.5 3H11.5ZM4.5 4C4.22386 4 4 4.22386 4 4.5V11.5C4 11.7761 4.22386 12 4.5 12H11.5C11.7761 12 12 11.7761 12 11.5V4.5C12 4.22386 11.7761 4 11.5 4H4.5ZM6.50684 5.62988C6.82034 5.45238 7.20572 5.45722 7.51465 5.64258L10.0146 7.14258C10.3158 7.32332 10.5 7.64879 10.5 8C10.5 8.35121 10.3158 8.67668 10.0146 8.85742L7.51465 10.3574C7.20572 10.5428 6.82034 10.5476 6.50684 10.3701C6.19356 10.1926 6 9.86012 6 9.5V6.5C6 6.13988 6.19356 5.80744 6.50684 5.62988ZM7 9.5L9.5 8L7 6.5V9.5Z' fill='black' fill-opacity='0.9'/%3E%3C/svg%3E");
+  --icon-16-drag-handle: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 11.5C11 11.7761 10.7761 12 10.5 12H5.5C5.22386 12 5 11.7761 5 11.5C5 11.2239 5.22386 11 5.5 11H10.5C10.7761 11 11 11.2239 11 11.5ZM11 8C11 8.27614 10.7761 8.5 10.5 8.5H5.5C5.22386 8.5 5 8.27614 5 8C5 7.72386 5.22386 7.5 5.5 7.5H10.5C10.7761 7.5 11 7.72386 11 8ZM11 4.5C11 4.77614 10.7761 5 10.5 5H5.5C5.22386 5 5 4.77614 5 4.5C5 4.22386 5.22386 4 5.5 4H10.5C10.7761 4 11 4.22386 11 4.5Z' fill='black' fill-opacity='0.5'/%3E%3C/svg%3E");
   --tip-pointer: path("M8 6L2 0H14L8 6Z");
 
 
@@ -4890,32 +4891,32 @@ fig-field {
   grid-template-columns:
     var(--fig-field-left-padding) minmax(0, var(--fig-field-label-ratio))
     minmax(0, var(--fig-field-input-ratio)) var(--fig-field-right-padding);
-  grid-template-areas: "chevron label input pad";
+  grid-template-areas: "leading label input pad";
   margin: 0;
   padding: var(--fig-field-top-padding) 0 var(--fig-field-bottom-padding) 0;
   gap: 0;
   align-items: start;
 
   &:not([direction="vertical"]):has(> label):has(
-      > :not(label):not(.fig-field-chevron):not(
+      > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
           fig-button[icon]:not([icon="false"])
         )
         + fig-button[icon]:not([icon="false"])
     ) {
-    & > :not(label):not(.fig-field-chevron):not(
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
         fig-button[icon]:not([icon="false"])
       ):has(+ fig-button[icon]:not([icon="false"])) {
       justify-self: start;
       width: calc(100% - var(--spacer-4) - var(--spacer-1));
     }
 
-    & > :not(label):not(.fig-field-chevron):not(
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
         fig-button[icon]:not([icon="false"])
       ):has(+ fig-button[icon]:not([icon="false"])[variant="ghost"]) {
       width: calc(100% - var(--spacer-4));
     }
 
-    & > :not(label):not(.fig-field-chevron):not(
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
         fig-button[icon]:not([icon="false"])
       )
       + fig-button[icon]:not([icon="false"]) {
@@ -4924,11 +4925,23 @@ fig-field {
       z-index: 1;
     }
 
-    & > :not(label):not(.fig-field-chevron):not(
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
         fig-button[icon]:not([icon="false"])
       )
       + fig-button[icon]:not([icon="false"])[variant="ghost"] {
       margin-right: calc(var(--spacer-1) * -1);
+    }
+  }
+
+  &:has(> label):has(> [slot="trailing"]) {
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]) {
+      justify-self: start;
+      width: calc(100% - var(--spacer-4) - var(--spacer-1));
+    }
+
+    &:has(> [slot="trailing"][variant="ghost"])
+      > :not(label):not([slot="leading"]):not([slot="trailing"]) {
+      width: calc(100% - var(--spacer-4));
     }
   }
 
@@ -4972,8 +4985,32 @@ fig-field {
     padding-block: 0;
   }
 
-  & > *:not(.fig-field-chevron):not(label) {
+  & > *:not([slot="leading"]):not([slot="trailing"]):not(label) {
     grid-area: input;
+  }
+
+  & > [slot="leading"] {
+    grid-area: leading;
+    &[size="small"]{
+      margin-top: var(--spacer-1);
+    }
+
+    &[name="drag-handle"]{
+      visibility: hidden;
+    }
+  }
+  &:hover > [slot="leading"][name="drag-handle"]{
+    visibility: visible;
+  }
+
+  & > [slot="trailing"] {
+    grid-area: input;
+    justify-self: end;
+    z-index: 1;
+
+    &[variant="ghost"] {
+      margin-right: calc(var(--spacer-1) * -1);
+    }
   }
 
   & > progress {
@@ -4988,7 +5025,6 @@ fig-field {
     transition: transform var(--transition-duration)
       var(--transition-timing-function);
     flex-shrink: 0;
-    grid-area: chevron;
     margin-top: var(--spacer-1);
   }
 
@@ -5006,9 +5042,18 @@ fig-field {
       padding-inline: var(--fig-field-left-padding) calc(var(--fig-field-right-padding) * 0.5);
     }
 
-    & > *:not(fig-button):not(.fig-field-chevron) {
+    & > *:not(fig-button):not([slot="leading"]):not([slot="trailing"]) {
       flex: 1 1 0;
       min-width: 0;
+    }
+
+    & > [slot="leading"] {
+      order: -1;
+    }
+
+    & > [slot="trailing"] {
+      order: 1;
+      margin-left: auto;
     }
   }
 
@@ -5018,7 +5063,7 @@ fig-field {
       );
     grid-template-rows: auto auto;
     grid-template-areas:
-      "chevron label pad"
+      "leading label pad"
       ".       input pad";
 
     & > label {
@@ -7285,6 +7330,7 @@ fig-menu::part(listbox) {
   display: flex;
   flex-shrink: 0;
   align-items: center;
+  text-align: left;
   gap: 0;
   width: 100%;
   padding: var(--fig-menu-item-padding);

@@ -23,6 +23,7 @@ function createFigIcon(name, options = {}) {
   const icon = document.createElement("fig-icon");
   if (name) icon.setAttribute("name", name);
   if (options.size) icon.setAttribute("size", options.size);
+  if (options.slot) icon.setAttribute("slot", options.slot);
   if (options.className) icon.className = options.className;
   return icon;
 }
@@ -8684,7 +8685,11 @@ class FigField extends HTMLElement {
     this.input = Array.from(this.childNodes).find((node) =>
       node.nodeType === Node.ELEMENT_NODE &&
       node.nodeName.toLowerCase().startsWith("fig-") &&
-      !(node instanceof Element && node.classList.contains("fig-field-chevron")),
+      !(
+        node instanceof Element &&
+        (node.classList.contains("fig-field-chevron") ||
+          ["leading", "trailing"].includes(node.getAttribute("slot")))
+      ),
     );
     this.#observeInputAttributes();
 
@@ -8714,6 +8719,7 @@ class FigField extends HTMLElement {
       if (!this.#chevron || !this.#chevron.isConnected) {
         this.#chevron = createFigIcon("chevron", {
           size: "small",
+          slot: "leading",
           className: "fig-field-chevron",
         });
         this.insertBefore(this.#chevron, this.label);
@@ -17138,7 +17144,7 @@ class FigEasingCurve extends HTMLElement {
             label: p.name,
           },
           [
-            figCreateElement("span", { slot: "prepend" }, icon),
+            figCreateElement("fig-icon", { slot: "prepend" }, icon),
             figCreateElement("span", {}, p.name),
           ],
         ),
@@ -20793,6 +20799,7 @@ const FIG_ICON_TOKENS = {
   warning: { medium: "--icon-24-warning", small: "--icon-16-warning" },
   copy: { medium: "--icon-24-copy", small: "--icon-16-copy" },
   trash: { medium: "--icon-24-trash", small: "--icon-16-trash" },
+  "drag-handle": "--icon-16-drag-handle",
 };
 
 function figIconCssVar(name, size = "medium") {

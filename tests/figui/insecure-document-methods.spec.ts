@@ -3,7 +3,13 @@ import { readFile } from "node:fs/promises";
 import { bootFigFixture, collectPageErrors } from "./helpers";
 
 test("shipped source contains no HTML parsing sinks", async () => {
-  const files = ["fig.js", "fig-editor.js", "fig-layer.js", "fig-lab.js"];
+  const files = [
+    "fig.js",
+    "fig-editor.js",
+    "fig-layer.js",
+    "fig-property.js",
+    "fig-lab.js",
+  ];
   const forbidden = [
     /\binnerHTML\b/,
     /\bouterHTML\b/,

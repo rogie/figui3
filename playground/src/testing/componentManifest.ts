@@ -572,6 +572,25 @@ export const componentContracts: ComponentContract[] = [
   },
 ];
 
+export const editorComponentContracts: ComponentContract[] = [
+  {
+    tag: "fig-input-point",
+    title: "Input Point",
+    group: "input",
+    markup: `<fig-input-point x="12" y="24" units="%"></fig-input-point>`,
+    attributes: [
+      { name: "x", attribute: "x", value: "32" },
+      { name: "y", attribute: "y", value: "48" },
+      { name: "units", attribute: "units", value: "rem" },
+    ],
+  },
+];
+
+export const allComponentContracts = [
+  ...componentContracts,
+  ...editorComponentContracts,
+];
+
 export const componentGroups = Array.from(
-  new Set(componentContracts.map((contract) => contract.group)),
+  new Set(allComponentContracts.map((contract) => contract.group)),
 );

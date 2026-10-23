@@ -40,6 +40,19 @@ export interface FieldControlMutation {
     | "fig-switch";
 }
 
+export type PropertyControlTag =
+  | "fig-input-number"
+  | "fig-slider"
+  | "fig-input-text"
+  | "fig-input-color"
+  | "fig-select"
+  | "fig-input-point"
+  | "fig-easing-curve"
+  | "fig-input-gradient"
+  | "fig-input-palette"
+  | "fig-3d-rotate"
+  | "fig-input-file";
+
 function getButtonDefaultText(type: string | null): string {
   switch (type) {
     case "select":
@@ -73,9 +86,58 @@ function createButtonIcon(doc: Document): HTMLElement {
 
 function createDefaultFieldControl(
   doc: Document,
-  controlTag: FieldControlMutation["controlTag"],
+  controlTag: FieldControlMutation["controlTag"] | PropertyControlTag,
 ): Element {
   const element = doc.createElement(controlTag);
+  if (controlTag === "fig-select") {
+    element.setAttribute("options", "Small,Medium,Large");
+    element.setAttribute("value", "Medium");
+    return element;
+  }
+
+  if (controlTag === "fig-input-point") {
+    element.setAttribute("x", "24");
+    element.setAttribute("y", "16");
+    element.setAttribute("units", "%");
+    element.setAttribute("full", "");
+    return element;
+  }
+
+  if (controlTag === "fig-easing-curve") {
+    element.setAttribute("value", "0.42, 0, 0.58, 1");
+    element.setAttribute("edit", "false");
+    return element;
+  }
+
+  if (controlTag === "fig-input-gradient") {
+    element.setAttribute("edit", "picker");
+    element.setAttribute(
+      "value",
+      '{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":100,"color":"#4700FF","opacity":100}]}}',
+    );
+    return element;
+  }
+
+  if (controlTag === "fig-input-palette") {
+    element.setAttribute("edit", "picker");
+    element.setAttribute("value", '["#0D99FF","#14AE5C","#FFCD29"]');
+    return element;
+  }
+
+  if (controlTag === "fig-3d-rotate") {
+    element.setAttribute(
+      "value",
+      "rotateX(0deg) rotateY(0deg) rotateZ(0deg)",
+    );
+    return element;
+  }
+
+  if (controlTag === "fig-input-file") {
+    element.setAttribute("label", "Choose file");
+    element.setAttribute("full", "");
+    return element;
+  }
+
   if (controlTag === "fig-dropdown") {
     ["Option 1", "Option 2", "Option 3"].forEach((label, idx) => {
       const option = doc.createElement("option");
@@ -101,6 +163,16 @@ function createDefaultFieldControl(
   if (controlTag === "fig-input-number") {
     element.setAttribute("value", "16");
     element.setAttribute("placeholder", "0");
+    element.setAttribute("steppers", "true");
+    return element;
+  }
+
+  if (controlTag === "fig-slider") {
+    element.setAttribute("value", "50");
+    element.setAttribute("min", "0");
+    element.setAttribute("max", "100");
+    element.setAttribute("text", "true");
+    element.setAttribute("full", "");
     return element;
   }
 
@@ -1024,6 +1096,39 @@ export function applyFieldControlMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export function getPropertyControlTag(
+  markup: string,
+  propertyIndex: number,
+): PropertyControlTag {
+  const root = parseSourceRoot(markup);
+  const property = getPrimaryControls(root).filter(
+    (control) => getControlTag(control) === "fig-property",
+  )[propertyIndex];
+  const input = property?.querySelector(':scope > [slot="input"]');
+  return (input?.tagName.toLowerCase() as PropertyControlTag) || "fig-input-number";
+}
+
+export function applyPropertyControlMutation(
+  markup: string,
+  propertyIndex: number,
+  controlTag: PropertyControlTag,
+): string {
+  const root = parseSourceRoot(markup);
+  const property = getPrimaryControls(root).filter(
+    (control) => getControlTag(control) === "fig-property",
+  )[propertyIndex];
+  if (!property) return markup;
+
+  property.querySelectorAll(':scope > [slot="input"]').forEach((input) => {
+    input.remove();
+  });
+
+  const nextControl = createDefaultFieldControl(root.ownerDocument, controlTag);
+  nextControl.setAttribute("slot", "input");
+  property.append(nextControl);
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export function getHandleHitAreaDebug(markup: string, fieldIndex: number): number {
   const root = parseSourceRoot(markup);
   const controls = getPrimaryControls(root);
@@ -1149,6 +1254,7 @@ export const FIG_ICON_SET_16 = [
   "warning",
   "copy",
   "trash",
+  "drag-handle",
 ] as const;
 
 export type FigIconPlaygroundSet = "16" | "24";

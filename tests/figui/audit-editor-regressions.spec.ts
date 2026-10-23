@@ -65,6 +65,44 @@ test.describe("fig-fill-picker audit regressions", () => {
     expect(state.controls).toBe(state.dialogId);
   });
 
+  test("composes hex and alpha fields in fig-input-combo", async ({ page }) => {
+    await page.evaluate(async () => {
+      const picker = document.createElement("fig-fill-picker") as HTMLElement & {
+        value: Record<string, unknown>;
+        open(): void;
+      };
+      picker.innerHTML = `<fig-swatch></fig-swatch>`;
+      picker.value = {
+        type: "solid",
+        color: "#336699",
+        alpha: 0.5,
+      };
+      document.body.append(picker);
+      await new Promise(requestAnimationFrame);
+      picker.open();
+    });
+
+    const combo = page.locator(
+      "dialog.fig-fill-picker-dialog .fig-fill-picker-ci-hex-row",
+    );
+    await expect(combo).toHaveJSProperty("tagName", "FIG-INPUT-COMBO");
+    await expect(combo).toHaveAttribute("full", "");
+    await expect(combo.locator(":scope > fig-input-text")).toHaveCount(1);
+    await expect(combo.locator(":scope > fig-tooltip fig-input-number")).toHaveCount(
+      1,
+    );
+
+    const sliders = page.locator(
+      "dialog.fig-fill-picker-dialog .fig-fill-picker-sliders > fig-slider",
+    );
+    await expect(sliders).toHaveCount(2);
+    await expect(sliders.first()).not.toHaveAttribute("variant");
+    await expect(sliders.first()).toHaveAttribute("text", "false");
+    await expect(sliders.nth(1)).not.toHaveAttribute("variant");
+    await expect(sliders.nth(1)).toHaveAttribute("text", "false");
+    await expect(sliders.locator("fig-input-number")).toHaveCount(0);
+  });
+
   test("marked custom swatches receive fill previews and remain accessible triggers", async ({
     page,
   }) => {

@@ -16,6 +16,7 @@ declare module "react" {
       "fig-switch": FigAttrs;
       "fig-layer": FigAttrs;
       "fig-field": FigAttrs;
+      "fig-property": FigAttrs;
       "fig-slider": FigAttrs;
       "fig-select": FigAttrs;
       "fig-select-options": FigAttrs;
@@ -44,6 +45,7 @@ declare module "react" {
       "fig-audio-waveform": FigAttrs;
       "fig-input-wheel": FigAttrs;
       "fig-input-number": FigAttrs;
+      "fig-input-point": FigAttrs;
       "fig-easing-curve": FigAttrs;
       "fig-3d-rotate": FigAttrs;
       "fig-origin-grid": FigAttrs;

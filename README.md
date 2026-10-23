@@ -108,12 +108,14 @@ Minimal example:
 | [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
+| [Input Point](#input-point) | `<fig-input-point>` | Paired X/Y numeric input |
 | [File Input](#file-input) | `<fig-input-file>` | File upload with image previews and audio playback waveforms |
 | [Angle](#angle) | `<fig-angle>` | Instrument-style angle/rotation dial |
 | [Swatch](#swatch) | `<fig-swatch>` | Color/gradient/image swatch |
 | [Color Tip](#color-tip) | `<fig-color-tip>` | Compact color tip with picker |
 | [Color Input](#color-input) | `<fig-input-color>` | Color picker with hex/alpha |
 | [Input Palette](#input-palette) | `<fig-input-palette>` | Editable multi-color palette |
+| [Property](#property) | `<fig-property>` | Composable editor property row |
 | [Palette Editor](#palette-editor) | `<fig-palette-editor>` | Reusable reorderable palette editor |
 | [Reorder](#reorder) | `<fig-reorder>` | Pointer- and keyboard-reorderable list |
 | [Gradient Input](#gradient-input) | `<fig-input-gradient>` | Gradient editor with stops |
@@ -510,6 +512,27 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 
 ---
 
+#### Input Point
+
+`<fig-input-point>` — [demo](https://rog.ie/figui3/#input-point)
+
+An editor-bundle point control that renders two equally sized `<fig-input-number>` controls inside `<fig-input-combo>`. User edits reflect to the `x` and `y` attributes, and `units` is forwarded to both fields. Its `input` and `change` events provide numeric `{ x, y }` in `detail`.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `x` | number | `0` | Horizontal coordinate |
+| `y` | number | `0` | Vertical coordinate |
+| `units` | string | — | Unit string forwarded to both number inputs |
+| `full` | boolean | `false` | Fill the parent width |
+
+```html
+<fig-input-point x="24" y="16" units="%"></fig-input-point>
+```
+
+Requires `fig-editor.js` and `fig-editor.css`.
+
+---
+
 #### File Input
 
 `<fig-input-file>` — [demo](https://rog.ie/figui3/#file-input)
@@ -683,6 +706,20 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 ```
 
 The editable palette is a single tab stop. Enter or Space expands inline mode or opens picker mode. `edit="false"` renders only the compact preview. Picker mode requires `fig-editor.js`.
+
+#### Property
+
+`<fig-property>`
+
+An editor-bundle property row. Supply one control in `slot="input"` and optionally author `slot="label"`, `slot="leading"`, or `slot="trailing"` content. Authored label markup takes precedence over the `label` attribute. The `leading="drag|chevron"` and `trailing="remove|add|bind"` attributes generate common accessories; authored slot content takes precedence. Leading and trailing content appears on hover or focus by default. Set `show-leading="false"` or `show-trailing="false"` to hide it, or add an empty `show-leading` or `show-trailing` attribute to always show it. Generated trailing actions emit bubbling, composed events named `remove`, `add`, or `bind` with the slotted control in `detail.input`. Input events bubble directly from the supplied control.
+
+```html
+<fig-property label="Size" leading="drag" trailing="remove">
+  <fig-input-number slot="input" value="16" units="px" full></fig-input-number>
+</fig-property>
+```
+
+Import `fig-property.js` and `fig-property.css` directly, or use the `fig-editor` bundle, which includes both.
 
 #### Palette Editor
 
@@ -1290,6 +1327,8 @@ Adjacent `fig-field` children in a horizontal stack share compact gutters.
 
 A form field wrapper with flexible layout. Automatically links `<label>` to the first `fig-*` child for accessibility.
 
+Use `slot="leading"` for an accessory before the label, such as a disclosure or drag handle. Use `slot="trailing"` for an action at the end of the input area, such as reset or remove.
+
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `direction` | string | `"column"` | `"column"`, `"row"`, `"horizontal"` |
@@ -1298,8 +1337,12 @@ A form field wrapper with flexible layout. Automatically links `<label>` to the 
 
 ```html
 <fig-field direction="horizontal" columns="thirds">
+  <fig-icon slot="leading" name="drag-handle" size="small"></fig-icon>
   <label>Opacity</label>
   <fig-slider value="50" units="%"></fig-slider>
+  <fig-button slot="trailing" variant="ghost" icon aria-label="Reset">
+    <fig-icon name="reset"></fig-icon>
+  </fig-button>
 </fig-field>
 ```
 

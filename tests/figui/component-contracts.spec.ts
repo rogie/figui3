@@ -428,6 +428,110 @@ test.describe("fig.js component contracts", () => {
     expect(registered).toBe(false);
   });
 
+  test("fig.js alone does not register fig-input-point", async ({ page }) => {
+    const registered = await page.evaluate(() =>
+      Boolean(customElements.get("fig-input-point")),
+    );
+    expect(registered).toBe(false);
+  });
+
+  test("fig-editor registers and synchronizes fig-input-point", async ({
+    page,
+  }) => {
+    await page.addStyleTag({ url: "/fig-editor.css" });
+    const initial = await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await Promise.all([
+        customElements.whenDefined("fig-input-point"),
+        customElements.whenDefined("fig-input-number"),
+      ]);
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML =
+        '<fig-input-point id="point" x="12.5" y="-4" units="rem" full></fig-input-point>';
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
+      const point = root.querySelector("#point") as HTMLElement;
+      point.addEventListener("input", (event) => {
+        point.dataset.lastInput = JSON.stringify(
+          (event as CustomEvent).detail,
+        );
+      });
+      point.addEventListener("change", (event) => {
+        point.dataset.lastChange = JSON.stringify(
+          (event as CustomEvent).detail,
+        );
+      });
+      const inputs = [
+        ...point.querySelectorAll(":scope > fig-input-combo > fig-input-number"),
+      ];
+      return {
+        registered: Boolean(customElements.get("fig-input-point")),
+        comboCount: point.querySelectorAll(":scope > fig-input-combo").length,
+        inputCount: inputs.length,
+        axes: inputs.map((input) => input.getAttribute("data-axis")),
+        labels: inputs.map((input) => input.getAttribute("aria-label")),
+        values: inputs.map((input) => input.getAttribute("value")),
+        units: inputs.map((input) => input.getAttribute("units")),
+        equalWidths:
+          Math.round(inputs[0].getBoundingClientRect().width) ===
+          Math.round(inputs[1].getBoundingClientRect().width),
+      };
+    });
+
+    expect(initial).toEqual({
+      registered: true,
+      comboCount: 1,
+      inputCount: 2,
+      axes: ["x", "y"],
+      labels: ["X coordinate", "Y coordinate"],
+      values: ["12.5", "-4"],
+      units: ["rem", "rem"],
+      equalWidths: true,
+    });
+
+    const fields = page.locator("#point fig-input-number input");
+    await fields.nth(0).fill("24");
+    await expect(page.locator("#point")).toHaveAttribute("x", "24");
+    await expect(page.locator("#point")).toHaveAttribute(
+      "data-last-input",
+      '{"x":24,"y":-4}',
+    );
+
+    await fields.nth(1).fill("-8");
+    await fields.nth(1).press("Tab");
+    await expect(page.locator("#point")).toHaveAttribute("y", "-8");
+    await expect(page.locator("#point")).toHaveAttribute(
+      "data-last-change",
+      '{"x":24,"y":-8}',
+    );
+
+    const synced = await page.locator("#point").evaluate((point) => {
+      point.setAttribute("x", "3.5");
+      point.setAttribute("y", "7");
+      point.setAttribute("units", "%");
+      const inputs = [
+        ...point.querySelectorAll(":scope > fig-input-combo > fig-input-number"),
+      ];
+      const state = {
+        values: inputs.map((input) => input.getAttribute("value")),
+        units: inputs.map((input) => input.getAttribute("units")),
+      };
+      point.removeAttribute("units");
+      return {
+        ...state,
+        unitsAfterRemove: inputs.map((input) => input.getAttribute("units")),
+      };
+    });
+    expect(synced).toEqual({
+      values: ["3.5", "7"],
+      units: ["%", "%"],
+      unitsAfterRemove: [null, null],
+    });
+  });
+
   test("fig-editor registers fig-interpolation-swatch", async ({ page }) => {
     const state = await page.evaluate(async () => {
       await import("/fig-editor.js");
@@ -497,6 +601,7 @@ test.describe("fig.js component contracts", () => {
       const bezierIcon = easing?.querySelector(
         'fig-select-option[value="Linear"] [slot="prepend"] svg',
       );
+      const prepend = bezierIcon?.parentElement;
       const springIcon = easing?.querySelector(
         'fig-select-option[value="Gentle"] [slot="prepend"] svg',
       );
@@ -505,6 +610,7 @@ test.describe("fig.js component contracts", () => {
         springIcon?.querySelectorAll("circle") || [],
       );
       return {
+        prependTag: prepend?.tagName,
         dotCount: dots.length,
         firstDot: dots[0]
           ? {
@@ -526,6 +632,7 @@ test.describe("fig.js component contracts", () => {
     });
 
     expect(result).toEqual({
+      prependTag: "FIG-ICON",
       dotCount: 16,
       firstDot: {
         cx: "6.5",
@@ -7026,7 +7133,7 @@ test.describe("field accessibility", () => {
     expect(imageAssociation.hostLabelledBy).toBe(imageAssociation.labelId);
   });
 
-  test("fig-field reserves input space only for trailing icon buttons", async ({
+  test("fig-field supports accessory slots and legacy trailing icon buttons", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -7051,6 +7158,12 @@ test.describe("field accessibility", () => {
           <fig-input-fill value='{"type":"solid","color":"#667eea"}'></fig-input-fill>
           <fig-button icon variant="ghost" aria-label="Action"><fig-icon name="add"></fig-icon></fig-button>
         </fig-field>
+        <fig-field id="slotted-accessory-field" style="width:320px">
+          <fig-icon slot="leading" name="drag-handle" size="small"></fig-icon>
+          <label>Name</label>
+          <fig-input-text value="Layer"></fig-input-text>
+          <fig-button slot="trailing" icon variant="ghost" aria-label="Reset"><fig-icon name="reset"></fig-icon></fig-button>
+        </fig-field>
       `;
     });
 
@@ -7059,6 +7172,7 @@ test.describe("field accessibility", () => {
         const field = document.querySelector(id);
         const input = field?.querySelector("fig-input-text, fig-input-fill");
         const button = field?.querySelector("fig-button");
+        const leading = field?.querySelector('[slot="leading"]');
         if (!field) throw new Error(`Missing ${id}`);
         const fieldStyle = getComputedStyle(field);
         const fieldBox = field.getBoundingClientRect();
@@ -7072,6 +7186,7 @@ test.describe("field accessibility", () => {
             .map((value) => parseFloat(value)),
           inputArea: input ? getComputedStyle(input).gridArea : null,
           buttonArea: button ? getComputedStyle(button).gridArea : null,
+          leadingArea: leading ? getComputedStyle(leading).gridArea : null,
           labelWidth: labelBox?.width ?? null,
           inputLeft: inputBox?.left ?? null,
           gap:
@@ -7084,18 +7199,19 @@ test.describe("field accessibility", () => {
         primaryIcon: measure("#primary-icon-field"),
         secondary: measure("#secondary-accessory-field"),
         ghost: measure("#ghost-accessory-field"),
+        slotted: measure("#slotted-accessory-field"),
       };
     });
 
-    expect(layout.plain.areas).toBe('"chevron label input pad"');
+    expect(layout.plain.areas).toBe('"leading label input pad"');
     expect(layout.plain.inputArea).toBe("input");
     expect(layout.plain.columns).toHaveLength(4);
     expect(layout.plain.columns.at(-1)).toBeCloseTo(16, 5);
-    expect(layout.primaryIcon.areas).toBe('"chevron label input pad"');
+    expect(layout.primaryIcon.areas).toBe('"leading label input pad"');
     expect(layout.primaryIcon.buttonArea).toBe("input");
     expect(layout.primaryIcon.columns).toHaveLength(4);
     expect(layout.primaryIcon.columns.at(-1)).toBeCloseTo(16, 5);
-    expect(layout.secondary.areas).toBe('"chevron label input pad"');
+    expect(layout.secondary.areas).toBe('"leading label input pad"');
     expect(layout.secondary.columns).toEqual(layout.plain.columns);
     expect(layout.secondary.inputArea).toBe("input");
     expect(layout.secondary.buttonArea).toBe("input");
@@ -7115,6 +7231,24 @@ test.describe("field accessibility", () => {
     expect(layout.ghost.inputLeft).toBeCloseTo(layout.plain.inputLeft ?? 0, 5);
     expect(layout.ghost.gap).toBeCloseTo(4, 5);
     expect(layout.ghost.rightPad).toBeCloseTo(12, 5);
+    expect(layout.slotted.areas).toBe('"leading label input pad"');
+    expect(layout.slotted.leadingArea).toBe("leading");
+    expect(layout.slotted.inputArea).toBe("input");
+    expect(layout.slotted.buttonArea).toBe("input");
+    expect(layout.slotted.gap).toBeCloseTo(4, 5);
+    expect(layout.slotted.rightPad).toBeCloseTo(12, 5);
+
+    const association = await page
+      .locator("#slotted-accessory-field")
+      .evaluate((field) => {
+        const label = field.querySelector("label");
+        const input = field.querySelector("fig-input-text input");
+        return {
+          labelFor: label?.getAttribute("for"),
+          inputId: input?.id,
+        };
+      });
+    expect(association.labelFor).toBe(association.inputId);
   });
 
   test("fig-field shows a tooltip for labels inserted after connection", async ({

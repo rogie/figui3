@@ -135,13 +135,20 @@ export default function Nav({
     );
     if (!activeLayer) return;
 
-    const containerRect = el.getBoundingClientRect();
-    const layerRect = activeLayer.getBoundingClientRect();
-    const isAbove = layerRect.top < containerRect.top;
-    const isBelow = layerRect.bottom > containerRect.bottom;
-    if (isAbove || isBelow) {
-      activeLayer.scrollIntoView({ block: "nearest", inline: "nearest" });
-    }
+    activeLayer
+      .closest<HTMLElement>("fig-group[collapsible]")
+      ?.setAttribute("open", "true");
+
+    const frame = requestAnimationFrame(() => {
+      const containerRect = el.getBoundingClientRect();
+      const layerRect = activeLayer.getBoundingClientRect();
+      const isAbove = layerRect.top < containerRect.top;
+      const isBelow = layerRect.bottom > containerRect.bottom;
+      if (isAbove || isBelow) {
+        activeLayer.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   }, [activeSectionId, activeExampleId]);
 
   const handleArrowKeyNavigation = useCallback(

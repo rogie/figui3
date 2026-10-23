@@ -95,6 +95,18 @@ test.describe("fill picker gradient stop reorder", () => {
         [...dialog.querySelectorAll(".fig-fill-picker-gradient-stop-row")];
       const row0 = rows()[0];
       if (!(row0 instanceof HTMLElement)) throw new Error("Missing stop row");
+      const inputStack = row0.querySelector(
+        ":scope > .fig-fill-picker-gradient-stop-inputs",
+      );
+      const rowContract = {
+        tag: row0.tagName,
+        leading: row0.getAttribute("leading"),
+        trailing: row0.getAttribute("trailing"),
+        showLeading: row0.getAttribute("show-leading"),
+        showTrailing: row0.hasAttribute("show-trailing"),
+        inputTag: inputStack?.tagName,
+        inputSlot: inputStack?.getAttribute("slot"),
+      };
       const lastRect = rows()[2].getBoundingClientRect();
       const startRect = row0.getBoundingClientRect();
 
@@ -136,12 +148,22 @@ test.describe("fill picker gradient stop reorder", () => {
       const stops = value?.gradient?.stops ?? [];
       return {
         afterInput,
+        rowContract,
         colors: stops.map((stop: { color: string }) => stop.color.toUpperCase()),
         lastColor: stops[stops.length - 1]?.color?.toUpperCase() ?? "",
       };
     });
 
     expect(result.afterInput).toBe("#FF0000");
+    expect(result.rowContract).toEqual({
+      tag: "FIG-PROPERTY",
+      leading: "drag",
+      trailing: "remove",
+      showLeading: "hover",
+      showTrailing: true,
+      inputTag: "FIG-STACK",
+      inputSlot: "input",
+    });
     expect(result.lastColor).toBe("#FF0000");
     expect(result.colors).toContain("#FF0000");
   });

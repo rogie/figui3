@@ -63,6 +63,7 @@ declare global {
       "fig-dropdown": WCProps;
       "fig-easing-curve": WCProps;
       "fig-field": WCProps;
+      "fig-property": WCProps;
       "fig-footer": WCProps;
       "fig-group": WCProps;
       "fig-handle": WCProps;
@@ -214,6 +215,17 @@ The canonical PropKit row is `fig-field` with a label and one primary control.
 ```
 
 Do not set `direction="horizontal"` on normal rows. The default `fig-field` grid already gives the label/control layout. Use `full` on controls that should fill the control column.
+
+Use editor-bundle `fig-property` when a row needs declarative leading/trailing accessories around a supplied control:
+
+```html
+<fig-property label="Opacity" leading="drag" trailing="bind">
+  <fig-slider slot="input" value="75" units="%" full></fig-slider>
+</fig-property>
+```
+
+Use `slot="label"` for custom label markup; it takes precedence over the `label` attribute.
+Leading and trailing property accessories appear on hover or focus by default. Use `show-leading="false"` or `show-trailing="false"` to hide them, or empty `show-leading` / `show-trailing` attributes to keep them visible.
 
 Use `fig-group` for panel sections. Name the group when the label helps scanning; leave `name` off for tiny anonymous groups.
 

@@ -35,6 +35,31 @@ Position: omit to overlay the selected option on the trigger. Set to place the m
 
 Events: `input`, `change`, `optionhover`, `optionfocus`.
 
+## Input point
+
+`fig-input-point` observes `x`, `y`, and `units`.
+
+- Missing or invalid coordinates resolve to `0`.
+- The generated X/Y `fig-input-number` controls stay synchronized with the host attributes.
+- `units` is forwarded to both generated number inputs and removed from both when omitted.
+- `input` and `change` events provide numeric `{ x, y }` in `detail`.
+- `full` makes the host fill its parent.
+
+## Property
+
+`fig-property` observes `label`, `leading`, `trailing`, `show-leading`, and `show-trailing`.
+
+- Direct slots: `input`, `label`, `leading`, `trailing`
+- Authored `slot="label"` markup takes precedence over the `label` attribute.
+- `leading`: `drag` or `chevron`
+- `trailing`: `remove`, `add`, or `bind`
+- `show-leading` / `show-trailing`: omitted or `hover` reveals on hover, `false` hides, and an empty attribute always shows
+- Authored accessory slots override generated shortcuts.
+- `input` returns the direct `slot="input"` element.
+- Generated labels associate to the input with `aria-labelledby` unless it already has an accessible name.
+- Generated trailing events bubble across shadow roots with `detail: { input }`.
+- Child control events are not normalized or re-emitted.
+
 ## Reorder
 
 `fig-reorder` observes `axis`, `handle`, `items`, `indicator`, and `disabled`.

@@ -504,6 +504,39 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  "fig-property": {
+    label: { label: "Label", type: "string" },
+    leading: {
+      label: "Leading",
+      type: "enum",
+      options: ["", "drag", "chevron"],
+    },
+    "show-leading": {
+      label: "Show leading",
+      type: "enum",
+      options: ["hover", "false", ""],
+    },
+    trailing: {
+      label: "Trailing",
+      type: "enum",
+      options: ["", "remove", "add", "bind"],
+    },
+    "show-trailing": {
+      label: "Show trailing",
+      type: "enum",
+      options: ["hover", "false", ""],
+    },
+  },
+  "fig-input-point": {
+    x: { label: "X", type: "number", step: 1 },
+    y: { label: "Y", type: "number", step: 1 },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["", "%", "px", "°"],
+    },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
+  },
   "fig-select": {
     value: { label: "Value", type: "string" },
     label: { label: "Label", type: "string" },
