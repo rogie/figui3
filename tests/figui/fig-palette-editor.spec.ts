@@ -391,6 +391,55 @@ test.describe("fig-palette-editor", () => {
     });
   });
 
+  test("selects the first row and deletes the focused selection with Backspace", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-palette-editor
+          id="delete-editor"
+          value='["#111111","#222222","#333333"]'
+        ></fig-palette-editor>
+      `;
+    });
+
+    const editor = page.locator("#delete-editor");
+    const rows = editor.locator(".fig-palette-editor-color-row");
+    await expect(rows.first()).toHaveAttribute("selected");
+    await expect(
+      editor.locator(".fig-palette-editor-color-row[selected]"),
+    ).toHaveCount(1);
+
+    const colorInput = rows.first().locator("fig-input-text input");
+    await colorInput.focus();
+    await colorInput.evaluate((input: HTMLInputElement) =>
+      input.setSelectionRange(0, 1),
+    );
+    await page.keyboard.press("Delete");
+    await expect(rows).toHaveCount(3);
+    await expect(colorInput).not.toHaveValue("111111");
+
+    await rows.first().click({ position: { x: 4, y: 16 } });
+    await expect(rows.first()).toBeFocused();
+    await page.keyboard.press("Backspace");
+
+    await expect(rows).toHaveCount(2);
+    await expect(rows.first()).toHaveAttribute("selected");
+    await expect(rows.first()).toBeFocused();
+    await expect
+      .poll(() =>
+        editor.evaluate((element: any) =>
+          element.value.map((entry: any) => entry.color),
+        ),
+      )
+      .toEqual(["#222222", "#333333"]);
+
+    await page.keyboard.press("Delete");
+    await expect(rows).toHaveCount(2);
+  });
+
   test("preserves active rows under controlled value feedback", async ({
     page,
   }) => {

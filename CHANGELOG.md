@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.3]
+
+### Added
+
+- Added keyboard selection and deletion for palette colors and gradient stops.
+
+### Fixed
+
+- Preserved normal Delete and Backspace editing inside color and position inputs.
+- Supported macOS Backspace deletion while respecting minimum, fixed, and disabled editor constraints.
+
 ## [11.6.2]
 
 ### Added

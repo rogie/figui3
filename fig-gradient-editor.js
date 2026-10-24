@@ -469,7 +469,12 @@ class FigGradientEditor extends HTMLElement {
       this.#handleBarStopSelection,
     );
     this.#gradientBar.addEventListener("click", this.#handleBarStopSelection);
+    this.#gradientBar.addEventListener(
+      "keydown",
+      this.#handleDeleteSelectedStop,
+    );
     this.#reorder.addEventListener("reorder", this.#handleReorder);
+    this.#reorder.addEventListener("keydown", this.#handleDeleteSelectedStop);
     this.addEventListener("pointerdown", this.#handlePointerDown, true);
     this.addEventListener(
       "lostpointercapture",
@@ -580,7 +585,19 @@ class FigGradientEditor extends HTMLElement {
     row.addEventListener("pointerdown", (event) => {
       if (event.button === 0) this.#selectStopRow(row);
     });
-    row.addEventListener("click", () => this.#selectStopRow(row));
+    row.addEventListener("click", (event) => {
+      this.#selectStopRow(row);
+      const fromEditableControl = event.composedPath().some(
+        (target) =>
+          target instanceof Element &&
+          target.matches(
+            'input, textarea, select, fig-input-number, fig-input-color, fig-input-text, [contenteditable]:not([contenteditable="false"])',
+          ),
+      );
+      if (!fromEditableControl && row.isConnected) {
+        row.focus({ preventScroll: true });
+      }
+    });
     row.addEventListener("focusin", () => this.#selectStopRow(row));
     return row;
   }
@@ -837,6 +854,45 @@ class FigGradientEditor extends HTMLElement {
     const index = Number(handle?.dataset.stopIndex);
     if (!Number.isInteger(index)) return;
     this.#selectStopRow(this.#stopRows[index]);
+  };
+
+  #handleDeleteSelectedStop = (event) => {
+    if (
+      event.defaultPrevented ||
+      !["Delete", "Backspace"].includes(event.key) ||
+      this.#disabled() ||
+      this.#gradient.stops.length <= 2
+    ) {
+      return;
+    }
+    const handle = event.target?.closest?.(
+      "fig-handle[selected]:not(.fig-input-gradient-ghost)",
+    );
+    const row = event.target?.closest?.(
+      ".fig-fill-picker-gradient-stop-row[selected]",
+    );
+    const fromSelectedHandle =
+      handle && this.#gradientBar.contains(handle);
+    const fromEditableControl = event.composedPath().some(
+      (target) =>
+        target instanceof Element &&
+        target.matches(
+          'input, textarea, select, fig-input-number, fig-input-color, fig-input-text, [contenteditable]:not([contenteditable="false"])',
+        ),
+    );
+    const fromSelectedRow =
+      row === this.#selectedStopRow && !fromEditableControl;
+    if (!fromSelectedHandle && !fromSelectedRow) return;
+    event.preventDefault();
+    this.#removeStopRow(this.#selectedStopRow);
+    requestAnimationFrame(() => {
+      const selectedIndex = this.#stopRows.indexOf(this.#selectedStopRow);
+      this.#gradientBar
+        ?.querySelectorAll(
+          ".fig-input-gradient-track fig-handle:not(.fig-input-gradient-ghost)",
+        )
+        [selectedIndex]?.focus();
+    });
   };
 
   #handleReorder = (event) => {

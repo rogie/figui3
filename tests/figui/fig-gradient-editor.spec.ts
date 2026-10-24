@@ -215,6 +215,90 @@ test.describe("fig-gradient-editor", () => {
       .toBeGreaterThan(0);
   });
 
+  test("deletes the focused selected stop with Delete", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-gradient-editor
+          id="delete-editor"
+          value='{"type":"linear","angle":90,"stops":[
+            {"position":0,"color":"#FF0000","opacity":100},
+            {"position":50,"color":"#00FF00","opacity":100},
+            {"position":100,"color":"#0000FF","opacity":100}
+          ]}'
+        ></fig-gradient-editor>
+      `;
+    });
+
+    const editor = page.locator("#delete-editor");
+    const rows = editor.locator(".fig-fill-picker-gradient-stop-row");
+    const handles = editor.locator(
+      "fig-handle:not(.fig-input-gradient-ghost)",
+    );
+
+    await handles.nth(1).click();
+    await expect(handles.nth(1)).toHaveAttribute("selected");
+    await page.keyboard.press("Delete");
+
+    await expect(rows).toHaveCount(2);
+    await expect(handles).toHaveCount(2);
+    await expect(handles.nth(1)).toHaveAttribute("selected");
+    await expect(handles.nth(1)).toBeFocused();
+    await expect
+      .poll(() =>
+        editor.evaluate((element: any) =>
+          element.value.stops.map((stop: any) => stop.position),
+        ),
+      )
+      .toEqual([0, 100]);
+
+    await page.keyboard.press("Delete");
+    await expect(rows).toHaveCount(2);
+  });
+
+  test("deletes a selected stop row with Backspace", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-gradient-editor
+          id="delete-row-editor"
+          value='{"type":"linear","angle":90,"stops":[
+            {"position":0,"color":"#FF0000","opacity":100},
+            {"position":50,"color":"#00FF00","opacity":100},
+            {"position":100,"color":"#0000FF","opacity":100}
+          ]}'
+        ></fig-gradient-editor>
+      `;
+    });
+
+    const editor = page.locator("#delete-row-editor");
+    const rows = editor.locator(".fig-fill-picker-gradient-stop-row");
+    const positionInput = rows.first().locator(
+      ".fig-fill-picker-stop-position input",
+    );
+    await positionInput.focus();
+    await positionInput.selectText();
+    await page.keyboard.press("Delete");
+    await expect(rows).toHaveCount(3);
+    await expect(positionInput).toHaveValue("");
+
+    await rows.first().click({ position: { x: 4, y: 16 } });
+    await expect(rows.first()).toHaveAttribute("selected");
+    await expect(rows.first()).toBeFocused();
+    await page.keyboard.press("Backspace");
+
+    await expect(rows).toHaveCount(2);
+    await expect
+      .poll(() =>
+        editor.evaluate((element: any) =>
+          element.value.stops.map((stop: any) => stop.position),
+        ),
+      )
+      .toEqual([50, 100]);
+  });
+
   test("renders the extracted gradient controls and emits normalized edits", async ({
     page,
   }) => {

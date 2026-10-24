@@ -307,6 +307,7 @@ class FigPaletteEditor extends HTMLElement {
   #addButton = null;
   #rows = [];
   #renderedColors = [];
+  #selectedRow = null;
   #pointerInteractionActive = false;
   #deferredExternalColors = null;
 
@@ -427,7 +428,7 @@ class FigPaletteEditor extends HTMLElement {
     if (focusIndex !== null) this.#focusColorValue(focusIndex);
   }
 
-  #removeRow(row) {
+  #removeRow(row, { focusSelection = false } = {}) {
     const currentIndex = this.#rows.indexOf(row);
     if (
       this.#disabled ||
@@ -438,10 +439,19 @@ class FigPaletteEditor extends HTMLElement {
     ) {
       return;
     }
-    if (row.contains(document.activeElement)) this.#addButton.focus();
+    if (row === this.#selectedRow) {
+      this.#selectedRow =
+        this.#rows[currentIndex + 1] ?? this.#rows[currentIndex - 1] ?? null;
+    }
+    if (!focusSelection && row.contains(document.activeElement)) {
+      this.#addButton.focus();
+    }
     const colors = clonePalette(this.#colors);
     colors.splice(currentIndex, 1);
     this.#applyInternalColors(colors, ["input", "change"]);
+    if (focusSelection) {
+      requestAnimationFrame(() => this.#selectedRow?.focus());
+    }
   }
 
   #createRow() {
@@ -492,8 +502,61 @@ class FigPaletteEditor extends HTMLElement {
       event.stopPropagation();
       this.#removeRow(row);
     });
+    row.addEventListener("pointerdown", (event) => {
+      if (event.button === 0) this.#selectRow(row);
+    });
+    row.addEventListener("click", (event) => {
+      this.#selectRow(row);
+      const fromEditableControl = event.composedPath().some(
+        (target) =>
+          target instanceof Element &&
+          target.matches(
+            'input, textarea, select, fig-input-color, fig-input-text, [contenteditable]:not([contenteditable="false"])',
+          ),
+      );
+      if (!fromEditableControl && row.isConnected) {
+        row.focus({ preventScroll: true });
+      }
+    });
+    row.addEventListener("focusin", () => this.#selectRow(row));
     return row;
   }
+
+  #selectRow(row) {
+    if (!row || !this.#rows.includes(row)) return;
+    this.#selectedRow = row;
+    this.#rows.forEach((colorRow) => {
+      colorRow.toggleAttribute("selected", colorRow === row);
+    });
+    row.scrollIntoView({ block: "nearest" });
+  }
+
+  #handleDeleteSelectedRow = (event) => {
+    if (
+      event.defaultPrevented ||
+      !["Delete", "Backspace"].includes(event.key)
+    ) {
+      return;
+    }
+    const row = event.target?.closest?.(".fig-palette-editor-color-row");
+    const fromEditableControl = event.composedPath().some(
+      (target) =>
+        target instanceof Element &&
+        target.matches(
+          'input, textarea, select, fig-input-color, fig-input-text, [contenteditable]:not([contenteditable="false"])',
+        ),
+    );
+    if (!row || row !== this.#selectedRow || fromEditableControl) return;
+    if (
+      this.#disabled ||
+      this.#fixed ||
+      this.#colors.length <= this.#min
+    ) {
+      return;
+    }
+    event.preventDefault();
+    this.#removeRow(row, { focusSelection: true });
+  };
 
   #handleReorder = (event) => {
     const oldIndex = Number(event.detail?.oldIndex);
@@ -547,6 +610,7 @@ class FigPaletteEditor extends HTMLElement {
     this.#addField = createElement("fig-field", {}, this.#addButton);
     this.replaceChildren(this.#reorder);
     this.#reorder.addEventListener("reorder", this.#handleReorder);
+    this.#reorder.addEventListener("keydown", this.#handleDeleteSelectedRow);
     this.#addButton.addEventListener("click", this.#handleAdd);
     this.addEventListener("pointerdown", this.#handlePointerDown, true);
     this.addEventListener(
@@ -605,6 +669,12 @@ class FigPaletteEditor extends HTMLElement {
     this.#rows.forEach((row, index) =>
       this.#syncRow(row, this.#colors[index], index),
     );
+    if (!this.#rows.includes(this.#selectedRow)) {
+      this.#selectedRow = this.#rows[0] ?? null;
+    }
+    this.#rows.forEach((row) => {
+      row.toggleAttribute("selected", row === this.#selectedRow);
+    });
     this.#renderedColors = clonePalette(this.#colors);
     queueMicrotask(() => this.#syncRemoveActions());
   }
