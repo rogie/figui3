@@ -1508,7 +1508,10 @@ An anchored floating surface built on `<dialog>` with collision-aware positionin
 </dialog>
 ```
 
-Popups restore focus on close. Escape dismissal is scoped so nested menu and overlay behavior can keep its own keyboard handling.
+Popups restore focus on close. Escape dismissal is scoped so nested menu and
+overlay behavior can keep its own keyboard handling. Anchored popups may be
+rendered in the global overlay root; interacting with a child popup keeps every
+owning ancestor popup open, including recursively nested chains.
 
 ---
 

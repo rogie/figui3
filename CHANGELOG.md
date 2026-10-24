@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.1]
+
+### Changed
+
+- Refined color tips with the tooltip surface color and inset highlight in dark mode.
+
+### Fixed
+
+- Kept recursively nested and portaled popups open while interacting with their owning popup chain.
+- Ensured gradient editors keep only one color-stop handle selected at a time.
+
 ## [11.6.0]
 
 ### Added

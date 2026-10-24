@@ -11780,6 +11780,50 @@ test.describe("remaining accessibility contracts", () => {
     await expect(handle).toHaveCSS("outline-style", "none");
   });
 
+  test("fig-input-gradient keeps only one tip handle selected inside a dialog", async ({
+    page,
+  }) => {
+    const value =
+      '{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":50,"color":"#9747FF","opacity":100},{"position":100,"color":"#FF00BF","opacity":100}]}}';
+    await page.evaluate((gradientValue) => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<dialog open><fig-input-gradient id="gradient" mode="tip" value='${gradientValue}' style="width:320px"></fig-input-gradient></dialog>`;
+    }, value);
+
+    const handles = page.locator(
+      "#gradient fig-handle:not(.fig-input-gradient-ghost)",
+    );
+    const selectHandle = async (index: number) => {
+      await handles.nth(index).evaluate((handle) => {
+        const rect = handle.getBoundingClientRect();
+        handle.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            button: 0,
+            buttons: 1,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+          }),
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointerup", { bubbles: true, button: 0 }),
+        );
+      });
+    };
+
+    await selectHandle(0);
+    await selectHandle(1);
+
+    await expect(
+      page.locator(
+        "#gradient fig-handle:not(.fig-input-gradient-ghost)[selected]",
+      ),
+    ).toHaveCount(1);
+    await expect(handles.nth(0)).not.toHaveAttribute("selected");
+    await expect(handles.nth(1)).toHaveAttribute("selected", "");
+  });
+
   test("fig-input-gradient handle mode deletes the selected stop", async ({
     page,
   }) => {

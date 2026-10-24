@@ -7264,8 +7264,10 @@ fig-color-tip {
   height: var(--size);
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
-  background-color: var(--figma-color-bg);
+  background-color: light-dark(var(--figma-color-bg), var(--bg-tooltip));
   border-radius: var(--radius-medium, 0.3125rem);
+  box-shadow: inset 0 0.5px 0 0
+    light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
   filter: var(--fig-popover-shadow);
 
   &[control="add"],
