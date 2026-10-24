@@ -2,6 +2,14 @@
 
 Public API: `README.md`. React recipes: [components.md](components.md).
 
+## Color utilities
+
+Import pure color math from `@rogieking/figui3/fig-color.js`.
+
+- RGB channels: `0–255`; HSL/HSV percentages: `0–100`; OKLab/OKLCH lightness: `0–1`; hue: normalized degrees.
+- Supports sRGB and true Display-P3 conversion, OKLab distance, hue interpolation, gamut testing, and OKLCH chroma-reduction gamut mapping.
+- Achromatic OKLCH colors use hue `0`.
+
 ## Option string formats
 
 

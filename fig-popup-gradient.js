@@ -2,7 +2,13 @@
 import "./fig.js";
 import "./fig-gradient-editor.js";
 
-const GRADIENT_ATTRIBUTES = ["value", "color-space", "disabled"];
+const GRADIENT_ATTRIBUTES = [
+  "value",
+  "color-space",
+  "disabled",
+  "overflow",
+  "show-rows",
+];
 
 customElements.whenDefined("fig-popup").then(() => {
   if (customElements.get("fig-popup-gradient")) return;
@@ -16,6 +22,8 @@ customElements.whenDefined("fig-popup").then(() => {
    * @attr {string} value - JSON gradient config or full gradient fill value
    * @attr {string} color-space - `srgb` or `display-p3`
    * @attr {boolean} disabled - Disables gradient editing
+   * @attr {"fade"|"visible"} overflow - Stop-list overflow mode
+   * @attr {number} show-rows - Visible stop rows before overflow
    * @fires input - During gradient edits
    * @fires change - On committed gradient edits
    */

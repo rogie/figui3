@@ -208,6 +208,113 @@ test.describe("fig-palette-editor", () => {
     });
   });
 
+  test("defaults to a vertical fade and switches overflow modes in place", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-palette-editor
+          id="overflow-editor"
+          show-rows="2"
+          value='["#111111","#222222","#333333","#444444","#555555"]'
+        ></fig-palette-editor>
+      `;
+      const editor = root.querySelector("#overflow-editor");
+      (window as any).__paletteOverflowRefs = {
+        reorder: editor?.querySelector("fig-reorder"),
+        rows: Array.from(
+          editor?.querySelectorAll(".fig-palette-editor-color-row") ?? [],
+        ),
+      };
+    });
+
+    const overflowState = () =>
+      page.locator("#overflow-editor").evaluate((editor) => {
+        const refs = (window as any).__paletteOverflowRefs;
+        const reorder = editor.querySelector("fig-reorder");
+        const rows = Array.from(
+          editor.querySelectorAll(".fig-palette-editor-color-row"),
+        );
+        const style = getComputedStyle(reorder!);
+        return {
+          fade: reorder?.classList.contains("fig-overflow-fade"),
+          bottom: reorder?.classList.contains("fig-overflow-fade-bottom"),
+          maxHeight: style.maxHeight,
+          showRows: style
+            .getPropertyValue("--fig-palette-editor-overflow-show-rows")
+            .trim(),
+          overflowY: style.overflowY,
+          overflowing: reorder!.scrollHeight > reorder!.clientHeight,
+          sameReorder: refs.reorder === reorder,
+          sameRows: refs.rows.every((row: Element, index: number) =>
+            row === rows[index]
+          ),
+        };
+      });
+
+    expect(await overflowState()).toEqual({
+      fade: true,
+      bottom: false,
+      maxHeight: "64px",
+      showRows: "2",
+      overflowY: "auto",
+      overflowing: true,
+      sameReorder: true,
+      sameRows: true,
+    });
+
+    await page.locator("#overflow-editor").evaluate((editor) => {
+      editor.setAttribute("overflow", "visible");
+    });
+    expect(await overflowState()).toEqual({
+      fade: false,
+      bottom: false,
+      maxHeight: "none",
+      showRows: "2",
+      overflowY: "visible",
+      overflowing: false,
+      sameReorder: true,
+      sameRows: true,
+    });
+
+    await page.locator("#overflow-editor").evaluate((editor) => {
+      editor.setAttribute("overflow", "fade");
+    });
+    expect(await overflowState()).toMatchObject({
+      fade: true,
+      bottom: false,
+      maxHeight: "64px",
+      showRows: "2",
+      overflowY: "auto",
+      sameReorder: true,
+      sameRows: true,
+    });
+
+    await page.locator("#overflow-editor").evaluate((editor) => {
+      editor.setAttribute("show-rows", "3");
+    });
+    expect(await overflowState()).toMatchObject({
+      maxHeight: "96px",
+      showRows: "3",
+      overflowing: true,
+      sameReorder: true,
+      sameRows: true,
+    });
+
+    await page.locator("#overflow-editor").evaluate((editor) => {
+      editor.removeAttribute("show-rows");
+    });
+    expect(await overflowState()).toMatchObject({
+      maxHeight: "208px",
+      showRows: "6.5",
+      overflowing: false,
+      sameReorder: true,
+      sameRows: true,
+    });
+  });
+
   test("reorders fields and keeps DOM, value, and events aligned", async ({
     page,
   }) => {
@@ -284,6 +391,309 @@ test.describe("fig-palette-editor", () => {
     });
   });
 
+  test("preserves active rows under controlled value feedback", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-palette-editor
+          id="controlled"
+          value='[{"color":"#111111","alpha":1},{"color":"#222222","alpha":0.5},{"color":"#333333","alpha":1}]'
+        ></fig-palette-editor>
+      `;
+      const editor = root.querySelector<any>("#controlled");
+      const row = editor.querySelectorAll(".fig-palette-editor-color-row")[1];
+      const input = row.querySelector(".fig-palette-editor-color");
+      const state = { editor, row, input, inputCount: 0, changeCount: 0 };
+      (window as any).__paletteControlledState = state;
+      editor.addEventListener("input", (event: CustomEvent) => {
+        state.inputCount += 1;
+        editor.value = event.detail.map((entry: any) => ({
+          color: String(entry.color).toLowerCase(),
+          alpha: Number(entry.alpha),
+        }));
+      });
+      editor.addEventListener("change", () => {
+        state.changeCount += 1;
+      });
+
+      input.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          buttons: 1,
+          pointerId: 1,
+        }),
+      );
+      for (const color of ["#445566", "#778899"]) {
+        input.hexOpaque = color;
+        input.rgba = { r: 0, g: 0, b: 0, a: 128 / 255 };
+        input.dispatchEvent(
+          new CustomEvent("input", {
+            bubbles: true,
+            detail: { color, alpha: 128 / 255 },
+          }),
+        );
+      }
+      const accepted = editor.value;
+      editor.value = [
+        { color: "#AAAAAA", alpha: 1 },
+        ...accepted.slice(1),
+      ];
+      editor.value = accepted;
+    });
+
+    const active = await page.evaluate(() => {
+      const state = (window as any).__paletteControlledState;
+      return {
+        rowConnected: state.row.isConnected,
+        inputConnected: state.input.isConnected,
+        sameRow:
+          state.row ===
+          state.editor.querySelectorAll(".fig-palette-editor-color-row")[1],
+        sameInput:
+          state.input ===
+          state.editor.querySelectorAll(".fig-palette-editor-color")[1],
+        inputCount: state.inputCount,
+      };
+    });
+    expect(active).toEqual({
+      rowConnected: true,
+      inputConnected: true,
+      sameRow: true,
+      sameInput: true,
+      inputCount: 2,
+    });
+
+    await page.evaluate(() => {
+      const state = (window as any).__paletteControlledState;
+      state.input.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: { color: "#778899", alpha: 128 / 255 },
+        }),
+      );
+      window.dispatchEvent(
+        new PointerEvent("pointerup", {
+          bubbles: true,
+          button: 0,
+          pointerId: 1,
+        }),
+      );
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const state = (window as any).__paletteControlledState;
+          return {
+            sameRow:
+              state.row ===
+              state.editor.querySelectorAll(
+                ".fig-palette-editor-color-row",
+              )[1],
+            sameInput:
+              state.input ===
+              state.editor.querySelectorAll(".fig-palette-editor-color")[1],
+            changeCount: state.changeCount,
+            color: state.editor.value[1].color,
+            alpha: state.editor.value[1].alpha,
+          };
+        }),
+      )
+      .toEqual({
+        sameRow: true,
+        sameInput: true,
+        changeCount: 1,
+        color: "#778899",
+        alpha: 0.5,
+      });
+  });
+
+  test("synchronizes idle palette updates without replacing controls or unaffected rows", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-palette-editor
+          id="stable"
+          value='["#111111","#333333"]'
+        ></fig-palette-editor>
+      `;
+      const editor = root.querySelector<any>("#stable");
+      (window as any).__paletteStableRefs = {
+        reorder: editor.querySelector("fig-reorder"),
+        add: editor.querySelector(".fig-palette-editor-add"),
+        rows: Array.from(
+          editor.querySelectorAll(".fig-palette-editor-color-row"),
+        ),
+        inputs: Array.from(
+          editor.querySelectorAll(".fig-palette-editor-color"),
+        ),
+      };
+      editor.value = [
+        { color: "#111111", alpha: 1 },
+        { color: "#333333", alpha: 1 },
+      ];
+    });
+
+    const identity = async () =>
+      page.locator("#stable").evaluate((editor: any) => {
+        const refs = (window as any).__paletteStableRefs;
+        const rows = Array.from(
+          editor.querySelectorAll(".fig-palette-editor-color-row"),
+        );
+        const inputs = Array.from(
+          editor.querySelectorAll(".fig-palette-editor-color"),
+        );
+        return {
+          reorder: refs.reorder === editor.querySelector("fig-reorder"),
+          add: refs.add === editor.querySelector(".fig-palette-editor-add"),
+          firstRow: refs.rows[0] === rows[0],
+          lastRow: refs.rows[1] === rows[rows.length - 1],
+          firstInput: refs.inputs[0] === inputs[0],
+          lastInput: refs.inputs[1] === inputs[inputs.length - 1],
+          rowCount: rows.length,
+        };
+      });
+
+    expect(await identity()).toEqual({
+      reorder: true,
+      add: true,
+      firstRow: true,
+      lastRow: true,
+      firstInput: true,
+      lastInput: true,
+      rowCount: 2,
+    });
+
+    await page
+      .locator(
+        "#stable .fig-palette-editor-color-row:first-child fig-input-text input",
+      )
+      .evaluate((input: HTMLInputElement) => {
+        input.focus();
+        input.setSelectionRange(1, 3);
+      });
+    await page.locator("#stable").evaluate((editor: any) => {
+      editor.value = [
+        { color: "#AAAAAA", alpha: 0.5 },
+        { color: "#333333", alpha: 1 },
+      ];
+    });
+    expect(await identity()).toMatchObject({
+      reorder: true,
+      add: true,
+      firstRow: true,
+      lastRow: true,
+      rowCount: 2,
+    });
+    await expect
+      .poll(() =>
+        page
+          .locator(
+            "#stable .fig-palette-editor-color-row:first-child fig-input-text input",
+          )
+          .evaluate((input: HTMLInputElement) => ({
+            focused: input === document.activeElement,
+            start: input.selectionStart,
+            end: input.selectionEnd,
+          })),
+      )
+      .toEqual({ focused: true, start: 1, end: 3 });
+
+    await page.locator("#stable").evaluate((editor: any) => {
+      editor.value = [
+        { color: "#AAAAAA", alpha: 0.5 },
+        { color: "#222222", alpha: 1 },
+        { color: "#333333", alpha: 1 },
+      ];
+    });
+    expect(await identity()).toMatchObject({
+      firstRow: true,
+      lastRow: true,
+      rowCount: 3,
+    });
+
+    await page.locator("#stable").evaluate((editor: any) => {
+      editor.value = [
+        { color: "#AAAAAA", alpha: 0.5 },
+        { color: "#333333", alpha: 1 },
+      ];
+      editor.setAttribute("disabled", "");
+    });
+    expect(await identity()).toMatchObject({
+      firstRow: true,
+      lastRow: true,
+      rowCount: 2,
+    });
+    await expect(
+      page.locator("#stable .fig-palette-editor-color").first(),
+    ).toHaveAttribute("disabled");
+    await expect(
+      page.locator("#stable .fig-palette-editor-add"),
+    ).toHaveAttribute("disabled");
+
+    await page.locator("#stable").evaluate((editor) => {
+      editor.removeAttribute("disabled");
+      editor.setAttribute("fixed", "");
+    });
+    await expect(
+      page.locator("#stable .fig-palette-editor-add"),
+    ).toHaveCount(0);
+    expect(await identity()).toMatchObject({
+      firstRow: true,
+      lastRow: true,
+      rowCount: 2,
+    });
+
+    await page.locator("#stable").evaluate((editor) =>
+      editor.removeAttribute("fixed"),
+    );
+    await expect(
+      page.locator("#stable .fig-palette-editor-add"),
+    ).toHaveCount(1);
+    expect(await identity()).toMatchObject({
+      add: true,
+      firstRow: true,
+      lastRow: true,
+    });
+
+    const firstColor = page
+      .locator("#stable .fig-palette-editor-color")
+      .first();
+    await firstColor.locator("fig-swatch").click();
+    const nestedPicker = page.locator("dialog.fig-fill-picker-dialog");
+    await expect(nestedPicker).toHaveAttribute("open");
+    await page.locator("#stable").evaluate((editor: any) => {
+      const color = editor.querySelector(".fig-palette-editor-color");
+      const picker = color.querySelector("fig-fill-picker");
+      (window as any).__paletteNestedRefs = { color, picker };
+      editor.value = [
+        editor.value[0],
+        { color: "#AAAAAA", alpha: 1 },
+      ];
+    });
+    const nestedState = await page.locator("#stable").evaluate((editor) => {
+      const refs = (window as any).__paletteNestedRefs;
+      const color = editor.querySelector(".fig-palette-editor-color");
+      return {
+        sameColor: refs.color === color,
+        samePicker: refs.picker === color.querySelector("fig-fill-picker"),
+        pickerConnected: refs.picker?.isConnected,
+      };
+    });
+    expect(nestedState).toEqual({
+      sameColor: true,
+      samePicker: true,
+      pickerConnected: true,
+    });
+    await expect(nestedPicker).toHaveAttribute("open");
+  });
+
   test("fig-popup-palette inherits popup behavior and synchronizes its editor", async ({
     page,
   }) => {
@@ -299,6 +709,8 @@ test.describe("fig-palette-editor", () => {
           value='["#112233","#44556680"]'
           min="1"
           max="4"
+          overflow="visible"
+          show-rows="4.5"
           open
         ></dialog>
       `;
@@ -312,7 +724,14 @@ test.describe("fig-palette-editor", () => {
     await expect(popup).toHaveAttribute("aria-label", "Edit palette");
     await expect(editor).toHaveAttribute("min", "1");
     await expect(editor).toHaveAttribute("max", "4");
+    await expect(editor).toHaveAttribute("overflow", "visible");
+    await expect(editor).toHaveAttribute("show-rows", "4.5");
     await expect(editor).toHaveAttribute("value", '["#112233","#44556680"]');
+
+    await popup.evaluate((element) => element.setAttribute("overflow", "fade"));
+    await expect(editor).toHaveAttribute("overflow", "fade");
+    await popup.evaluate((element) => element.setAttribute("show-rows", "3"));
+    await expect(editor).toHaveAttribute("show-rows", "3");
 
     await editor.evaluate((element) => {
       element.dispatchEvent(
@@ -331,13 +750,23 @@ test.describe("fig-palette-editor", () => {
       .toEqual([{ color: "#AABBCC", alpha: 0.5 }]);
   });
 
-  test("adds the average of the previous two colors", async ({ page }) => {
+  test("adds a deterministic, harmonious, perceptually distinct color", async ({
+    page,
+  }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <fig-palette-editor
-          id="averaged"
+          id="harmonious"
+          value='[
+            {"color":"#FF0000","alpha":1},
+            {"color":"#000000","alpha":0.25},
+            {"color":"#FFFFFF","alpha":0.75}
+          ]'
+        ></fig-palette-editor>
+        <fig-palette-editor
+          id="harmonious-copy"
           value='[
             {"color":"#FF0000","alpha":1},
             {"color":"#000000","alpha":0.25},
@@ -346,21 +775,49 @@ test.describe("fig-palette-editor", () => {
         ></fig-palette-editor>
       `;
     });
-    await page.locator("#averaged .fig-palette-editor-add").click();
+    await page.locator("#harmonious-copy .fig-palette-editor-add").click();
+    await page.locator("#harmonious .fig-palette-editor-add").click();
 
-    await expect
-      .poll(() =>
-        page.locator("#averaged").evaluate((element: any) => element.value),
-      )
-      .toEqual([
-        { color: "#FF0000", alpha: 1 },
-        { color: "#000000", alpha: 0.25 },
-        { color: "#FFFFFF", alpha: 0.75 },
-        { color: "#808080", alpha: 0.5 },
-      ]);
+    const result = await page.evaluate(async () => {
+      const color = await import("/fig-color.js");
+      const editor = document.querySelector<any>("#harmonious");
+      const copy = document.querySelector<any>("#harmonious-copy");
+      const generated = editor.value.at(-1);
+      const generatedRgb = color.figHexToRGB(generated.color);
+      const generatedLab = color.figRGBToOklab(
+        generatedRgb.r,
+        generatedRgb.g,
+        generatedRgb.b,
+      );
+      const minimumDistance = Math.min(
+        ...editor.value.slice(0, -1).map((entry: any) => {
+          const rgb = color.figHexToRGB(entry.color);
+          return color.figOklabDistance(
+            generatedLab,
+            color.figRGBToOklab(rgb.r, rgb.g, rgb.b),
+          );
+        }),
+      );
+      return {
+        value: editor.value,
+        generated,
+        deterministic:
+          generated.color === copy.value.at(-1).color &&
+          generated.alpha === copy.value.at(-1).alpha,
+        minimumDistance,
+      };
+    });
+
+    expect(result.value).toHaveLength(4);
+    expect(result.generated.color).not.toBe("#FF0000");
+    expect(result.generated.color).not.toBe("#000000");
+    expect(result.generated.color).not.toBe("#FFFFFF");
+    expect(result.generated.alpha).toBe(0.75);
+    expect(result.deterministic).toBe(true);
+    expect(result.minimumDistance).toBeGreaterThan(0.1);
 
     const addedInput = page.locator(
-      '#averaged .fig-palette-editor-color-row[data-index="3"] fig-input-color fig-input-text input',
+      '#harmonious .fig-palette-editor-color-row[data-index="3"] fig-input-color fig-input-text input',
     );
     await expect(addedInput).toBeFocused();
     await expect
@@ -372,10 +829,55 @@ test.describe("fig-palette-editor", () => {
         })),
       )
       .toEqual({
-        value: "808080",
+        value: result.generated.color.slice(1),
         selectionStart: 0,
         selectionEnd: 6,
       });
+  });
+
+  test("extends neutral and sequential palettes within their color character", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-palette-editor id="neutral" value='["#202020","#808080","#E0E0E0"]'></fig-palette-editor>
+        <fig-palette-editor id="sequential" value='["#072B45","#0D5E91","#159FE0"]'></fig-palette-editor>
+      `;
+    });
+    await page.locator("#neutral .fig-palette-editor-add").click();
+    await page.locator("#sequential .fig-palette-editor-add").click();
+
+    const result = await page.evaluate(async () => {
+      const color = await import("/fig-color.js");
+      const neutral =
+        document.querySelector<any>("#neutral").value.at(-1).color;
+      const sequential =
+        document.querySelector<any>("#sequential").value.at(-1).color;
+      const neutralRgb = color.figHexToRGB(neutral);
+      const sequentialLch = color.figHexToOklch(sequential);
+      const sourceLch = color.figHexToOklch("#159FE0");
+      const hueDifference = Math.abs(sequentialLch.h - sourceLch.h);
+      return {
+        neutral,
+        neutralChannelSpread:
+          Math.max(neutralRgb.r, neutralRgb.g, neutralRgb.b) -
+          Math.min(neutralRgb.r, neutralRgb.g, neutralRgb.b),
+        sequential,
+        sequentialHueDifference: Math.min(
+          hueDifference,
+          360 - hueDifference,
+        ),
+      };
+    });
+
+    expect(["#202020", "#808080", "#E0E0E0"]).not.toContain(result.neutral);
+    expect(result.neutralChannelSpread).toBeLessThanOrEqual(1);
+    expect(["#072B45", "#0D5E91", "#159FE0"]).not.toContain(
+      result.sequential,
+    );
+    expect(result.sequentialHueDifference).toBeLessThan(25);
   });
 
   test("honors min, max, fixed, and disabled controls", async ({ page }) => {

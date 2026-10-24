@@ -348,6 +348,12 @@ function getNumberAttrDefault(
 ): number | undefined {
   if (controlTag === "fig-tooltip" && attrName === "delay") return 500;
   if (
+    (controlTag === "fig-palette-editor" ||
+      controlTag === "fig-gradient-editor") &&
+    attrName === "show-rows"
+  )
+    return 6.5;
+  if (
     (controlTag === "fig-shimmer" || controlTag === "fig-skeleton") &&
     attrName === "duration"
   )
@@ -960,6 +966,10 @@ export default function AttributesView({
               (name === "min" || name === "max");
             const isOptionalPaletteMax =
               target.controlTag === "fig-palette-editor" && name === "max";
+            const isEditorShowRows =
+              (target.controlTag === "fig-palette-editor" ||
+                target.controlTag === "fig-gradient-editor") &&
+              name === "show-rows";
             const isOptionalSliderDefault =
               target.controlTag === "fig-slider" && name === "default";
             const isOptionalNumberValue =
@@ -983,6 +993,7 @@ export default function AttributesView({
                 (name === "min" || name === "max" || name === "step")) ||
               isOptionalWheelBound ||
               isOptionalPaletteMax ||
+              isEditorShowRows ||
               isOptionalSliderDefault ||
               ((target.controlTag === "fig-handle" ||
                 target.controlTag === "fig-canvas-control") &&
@@ -1011,9 +1022,11 @@ export default function AttributesView({
                   step={
                     isOptionalSliderDefault
                       ? target.controlAttributes.step || "1"
-                      : name === "step"
-                        ? "0.1"
-                        : "1"
+                      : isEditorShowRows
+                        ? String(rule.step ?? 0.5)
+                        : name === "step"
+                          ? "0.1"
+                          : "1"
                   }
                   min={
                     isOptionalSliderDefault

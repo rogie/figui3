@@ -526,6 +526,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["hover", "false", ""],
     },
+    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
   },
   "fig-input-point": {
     x: { label: "X", type: "number", step: 1 },
@@ -629,12 +630,34 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-palette-editor": {
     max: { label: "Max", type: "number", min: 2, step: 1 },
+    "show-rows": {
+      label: "Show rows",
+      type: "number",
+      min: 0.5,
+      step: 0.5,
+    },
+    overflow: {
+      label: "Overflow",
+      type: "enum",
+      options: ["fade", "visible"],
+    },
   },
   "fig-gradient-editor": {
     "color-space": {
       label: "Color space",
       type: "enum",
       options: ["srgb", "display-p3"],
+    },
+    "show-rows": {
+      label: "Show rows",
+      type: "number",
+      min: 0.5,
+      step: 0.5,
+    },
+    overflow: {
+      label: "Overflow",
+      type: "enum",
+      options: ["fade", "visible"],
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },

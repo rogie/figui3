@@ -1,7 +1,16 @@
 /* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
 import "./fig.js";
+import "./fig-palette-editor.js";
 
-const PALETTE_ATTRIBUTES = ["value", "min", "max", "fixed", "disabled"];
+const PALETTE_ATTRIBUTES = [
+  "value",
+  "min",
+  "max",
+  "fixed",
+  "disabled",
+  "overflow",
+  "show-rows",
+];
 
 function normalizePaletteValue(value) {
   let entries = value;
@@ -56,6 +65,8 @@ customElements.whenDefined("fig-popup").then(() => {
    * @attr {number} max - Maximum number of colors
    * @attr {boolean} fixed - Locks the palette length
    * @attr {boolean} disabled - Disables palette editing
+   * @attr {"fade"|"visible"} overflow - Vertical overflow mode
+   * @attr {number} show-rows - Visible rows before overflow
    * @fires input - During editing with the normalized color array in detail
    * @fires change - On committed edits with the normalized color array in detail
    */

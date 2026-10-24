@@ -715,7 +715,7 @@ The editable palette is a single tab stop. Enter or Space expands inline mode or
 
 `<fig-property>`
 
-An editor-bundle property row. Supply one control in `slot="input"` and optionally author `slot="label"`, `slot="leading"`, or `slot="trailing"` content. Authored label markup takes precedence over the `label` attribute. The `leading="drag|chevron"` and `trailing="remove|add|bind"` attributes generate common accessories; authored slot content takes precedence. Leading and trailing content appears on hover or focus by default. Set `show-leading="false"` or `show-trailing="false"` to hide it, or add an empty `show-leading` or `show-trailing` attribute to always show it. Generated trailing actions emit bubbling, composed events named `remove`, `add`, or `bind` with the slotted control in `detail.input`. Input events bubble directly from the supplied control.
+An editor-bundle property row. Supply one control in `slot="input"` and optionally author `slot="label"`, `slot="leading"`, or `slot="trailing"` content. Authored label markup takes precedence over the `label` attribute. The `leading="drag|chevron"` and `trailing="remove|add|bind"` attributes generate common accessories; authored slot content takes precedence. Leading and trailing content appears on hover or focus by default. Set `show-leading="false"` or `show-trailing="false"` to hide it, or add an empty `show-leading` or `show-trailing` attribute to always show it. Add `selected` or `selected="true"` for the selected background; `selected="false"` leaves the row unselected. Generated trailing actions emit bubbling, composed events named `remove`, `add`, or `bind` with the slotted control in `detail.input`. Input events bubble directly from the supplied control.
 
 ```html
 <fig-property label="Size" leading="drag" trailing="remove">
@@ -725,11 +725,26 @@ An editor-bundle property row. Supply one control in `slot="input"` and optional
 
 Import `fig-property.js` and `fig-property.css` directly, or use the `fig-editor` bundle, which includes both.
 
+#### Color Utilities
+
+`fig-color.js` is a side-effect-free color math entry point shared by core and editor components.
+
+```js
+import {
+  figHexToOklch,
+  figOklchToHex,
+  figOklabDistance,
+  figMapOklchToGamut,
+} from "@rogieking/figui3/fig-color.js";
+```
+
+RGB channels use `0–255`; HSL/HSV saturation, lightness, and value use `0–100`; OKLab/OKLCH lightness uses `0–1`, chroma is unbounded, and hue uses normalized degrees. Achromatic colors return hue `0`. `figHexToRGB()` returns alpha and `figRGBToHex()` accepts optional alpha; color-space conversion otherwise leaves alpha to the caller. Converters support `colorSpace: "srgb" | "display-p3"`, and `figMapOklchToGamut()` reduces chroma while preserving lightness and hue.
+
 #### Palette Editor
 
 `<fig-palette-editor>`
 
-A reusable editor-bundle component for ordered color arrays. It uses `<fig-reorder>` for pointer and keyboard reordering and emits normalized color arrays from `input` and `change`. It supports `value`, `min`, `max`, `fixed`, and `disabled`; omit `max` for an unlimited number of colors.
+A reusable editor-bundle component for ordered color arrays. It uses `<fig-reorder>` for pointer and keyboard reordering and emits normalized color arrays from `input` and `change`. New colors are selected deterministically in OKLCH to remain perceptually distinct while matching the palette’s lightness and chroma. It supports `value`, `min`, `max`, `fixed`, `disabled`, `overflow="fade|visible"`, and `show-rows`; omit `max` for an unlimited number of colors. Overflow defaults to a bounded list showing 6.5 rows with vertical fades. Set `show-rows` to change that height or use `overflow="visible"` to show every row. `show-rows` maps to `--fig-palette-editor-overflow-show-rows`.
 
 ```html
 <fig-palette-editor value='["#94BD00","#83AD00","#1A632A","#003905"]'></fig-palette-editor>
@@ -740,9 +755,15 @@ A reusable editor-bundle component for ordered color arrays. It uses `<fig-reord
 `<fig-gradient-editor>`
 
 A reusable editor-bundle component for gradient type, direction, stop handles,
-and reorderable stop rows. It supports `value`, `color-space`, and `disabled`;
-its `value` property is the normalized gradient config. Bubbling `input` and
-`change` events include `{ type, gradient, css }`.
+and reorderable stop rows. It supports `value`, `color-space`, `disabled`,
+`overflow="fade|visible"`, and `show-rows`. Stops default to a bounded list
+showing 6.5 rows with vertical fades; `show-rows` maps to
+`--fig-gradient-editor-overflow-show-rows`, and `overflow="visible"` shows every
+stop. Stop row and bar-handle selection stay synchronized and scroll the
+selected row into view. The first stop is selected initially. Selecting another
+row makes Add Stop insert midway between it and the following stop; the new stop
+is selected and focused. Its `value` property is the normalized gradient config.
+Bubbling `input` and `change` events include `{ type, gradient, css }`.
 
 ```html
 <fig-gradient-editor
@@ -757,8 +778,8 @@ its `value` property is the normalized gradient config. Bubbling `input` and
 `<dialog is="fig-popup-gradient">`
 
 A reusable `fig-popup` subclass that owns a `<fig-gradient-editor>`. It
-supports `value`, `color-space`, and `disabled`, plus inherited popup
-positioning. Its bubbling `input` and `change` events include
+supports `value`, `color-space`, `disabled`, `overflow`, and `show-rows`, plus
+inherited popup positioning. Its bubbling `input` and `change` events include
 `{ type, gradient, css }`.
 
 ```html

@@ -124,10 +124,11 @@ Authored trailing accessory (`/figui3#property/custom-accessory`):
 </fig-property>
 ```
 
-- Attrs: `label`, `leading` (`drag` | `chevron`), `trailing` (`remove` | `add` | `bind`), `show-leading`, `show-trailing`
+- Attrs: `label`, `leading` (`drag` | `chevron`), `trailing` (`remove` | `add` | `bind`), `show-leading`, `show-trailing`, `selected`
 - Slots: `input` (one direct primary control), `label`, `leading`, `trailing`
 - Authored label markup overrides the `label` attribute.
 - Authored accessory slots override generated shortcuts.
+- `selected` and `selected="true"` use the selected background; `selected="false"` does not.
 - Omitted or `"hover"` show attributes use hover visibility; `"false"` never shows the slot; an empty/present attribute always shows it.
 - Generated trailing controls emit bubbling, composed `remove`, `add`, or `bind` events with the slotted control in `detail.input`.
 - Child input events bubble unchanged.
@@ -163,8 +164,10 @@ Reusable ordered palette editor used by `fig-input-palette edit="picker"`.
 />
 ```
 
-- Attrs: `value`, `min`, `max`, `fixed`, `disabled`
+- Attrs: `value`, `min`, `max`, `fixed`, `disabled`, `overflow="fade|visible"`, `show-rows`
 - `max` is unbounded when omitted.
+- Overflow defaults to 6.5 rows with vertical fades; `show-rows` maps to `--fig-palette-editor-overflow-show-rows`, and `visible` shows every row.
+- Additions use shared OKLCH utilities to choose a deterministic, perceptually distinct color that matches the palette.
 - Events: `input` / `change` with the normalized ordered color array in `detail`
 - Uses `fig-reorder` for pointer and keyboard reordering.
 
@@ -180,7 +183,9 @@ Reusable full gradient editor used by the Gradient tab in `fig-fill-picker`.
 />
 ```
 
-- Attrs: `value`, `color-space` (`srgb` | `display-p3`), `disabled`.
+- Attrs: `value`, `color-space` (`srgb` | `display-p3`), `disabled`, `overflow="fade|visible"`, `show-rows`.
+- Stop overflow defaults to 6.5 rows with vertical fades; `show-rows` maps to `--fig-gradient-editor-overflow-show-rows`, and `visible` shows every stop.
+- Stop row and bar-handle selection stay synchronized and scroll the selected row into view. The first stop starts selected. Add Stop inserts midway after the selected row, then selects and focuses the new row.
 - Property: `value` is the normalized gradient config; `cssValue` is the rendered CSS gradient.
 - Property: `pickerAnchor` accepts an element used to anchor nested stop color pickers.
 - Events: `input` / `change` with `{ type: "gradient", gradient, css }`.
@@ -201,7 +206,7 @@ Reusable popup containing one `fig-gradient-editor`. It is the picker opened by
 ></dialog>
 ```
 
-- Attrs: `value`, `color-space`, `disabled`, plus inherited `fig-popup` attributes.
+- Attrs: `value`, `color-space`, `disabled`, `overflow`, `show-rows`, plus inherited `fig-popup` attributes.
 - Events: bubbling `input` / `change` with `{ type: "gradient", gradient, css }`.
 - Create it as `<dialog is="fig-popup-gradient">`.
 
@@ -220,7 +225,7 @@ Reusable palette dialog used by `fig-input-palette edit="picker"`. It extends
 ></dialog>
 ```
 
-- Attrs: `value`, `min`, `max`, `fixed`, `disabled`, plus inherited `fig-popup` attributes.
+- Attrs: `value`, `min`, `max`, `fixed`, `disabled`, `overflow`, `show-rows`, plus inherited `fig-popup` attributes.
 - Property: `value` returns the normalized `{ color, alpha }[]`.
 - Events: bubbling `input` / `change` with the normalized color array in `detail`.
 - Create it as `<dialog is="fig-popup-palette">`, not `<fig-popup-palette>`.

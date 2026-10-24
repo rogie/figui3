@@ -117,6 +117,43 @@ test.describe("fig-property", () => {
     );
   });
 
+  test("uses the selected background unless selected is false", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="present" selected></fig-property>
+        <fig-property id="true" selected="true"></fig-property>
+        <fig-property id="false" selected="false"></fig-property>
+        <fig-property id="unset"></fig-property>
+      `;
+    });
+
+    const colors = await page.evaluate(() => {
+      const background = (selector: string) =>
+        getComputedStyle(document.querySelector(selector)!).backgroundColor;
+      const probe = document.createElement("div");
+      probe.style.backgroundColor = "var(--figma-color-bg-selected)";
+      document.body.append(probe);
+      const token = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return {
+        token,
+        present: background("#present"),
+        true: background("#true"),
+        false: background("#false"),
+        unset: background("#unset"),
+      };
+    });
+
+    expect(colors.present).toBe(colors.token);
+    expect(colors.true).toBe(colors.token);
+    expect(colors.false).toBe(colors.unset);
+    expect(colors.false).not.toBe(colors.token);
+  });
+
   test("updates generated accessories and emits action events", async ({
     page,
   }) => {

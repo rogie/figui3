@@ -1,4 +1,16 @@
 import "./fig-layer.js";
+import {
+  figHexToRGB,
+  figHslToRGB,
+  figInterpolateHue,
+  figLinearToSRGB,
+  figOklabToOklch,
+  figOklabToRGB,
+  figOklchToOklab,
+  figRGBToHsl as figRgbToHsl,
+  figRGBToLinear,
+  figRGBToOklab,
+} from "./fig-color.js";
 
 /**
  * Generates a unique ID string using timestamp and random values
@@ -9809,96 +9821,6 @@ function figLooksLikeVideoUrl(raw) {
   }
 }
 
-function figHexToRGB(hex) {
-  const h = hex.replace(/^#/, "");
-  return {
-    r: parseInt(h.substring(0, 2), 16),
-    g: parseInt(h.substring(2, 4), 16),
-    b: parseInt(h.substring(4, 6), 16),
-  };
-}
-
-function figRGBToLinear(c) {
-  const s = c / 255;
-  return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-}
-
-function figLinearToSRGB(c) {
-  const v = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
-  return Math.round(Math.max(0, Math.min(1, v)) * 255);
-}
-
-function figRGBToOklab(r, g, b) {
-  const lr = figRGBToLinear(r);
-  const lg = figRGBToLinear(g);
-  const lb = figRGBToLinear(b);
-  const l_ = Math.cbrt(
-    0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb,
-  );
-  const m_ = Math.cbrt(
-    0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb,
-  );
-  const s_ = Math.cbrt(
-    0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb,
-  );
-  return {
-    l: 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
-    a: 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
-    b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
-  };
-}
-
-function figOklabToRGB(L, a, b) {
-  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
-  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
-  const s_ = L - 0.0894841775 * a - 1.291485548 * b;
-  const l = l_ * l_ * l_;
-  const m = m_ * m_ * m_;
-  const s = s_ * s_ * s_;
-  return {
-    r: figLinearToSRGB(+4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
-    g: figLinearToSRGB(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
-    b: figLinearToSRGB(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
-  };
-}
-
-function figOklabToOklch(L, a, b) {
-  return {
-    l: L,
-    c: Math.sqrt(a * a + b * b),
-    h: (Math.atan2(b, a) * 180) / Math.PI,
-  };
-}
-
-function figOklchToOklab(l, c, h) {
-  const hRad = (h * Math.PI) / 180;
-  return { l, a: c * Math.cos(hRad), b: c * Math.sin(hRad) };
-}
-
-function figInterpolateHue(h1, h2, t, mode) {
-  let a = ((h1 % 360) + 360) % 360;
-  let b = ((h2 % 360) + 360) % 360;
-  let diff = b - a;
-  switch (mode) {
-    case "longer":
-      if (diff > 0 && diff < 180) diff -= 360;
-      else if (diff < 0 && diff > -180) diff += 360;
-      else if (diff === 0) diff = 0;
-      break;
-    case "increasing":
-      if (diff < 0) diff += 360;
-      break;
-    case "decreasing":
-      if (diff > 0) diff -= 360;
-      break;
-    default:
-      if (diff > 180) diff -= 360;
-      else if (diff < -180) diff += 360;
-      break;
-  }
-  return (((a + diff * t) % 360) + 360) % 360;
-}
-
 function figSampleGradientAt(
   stops,
   position,
@@ -9964,10 +9886,10 @@ function figSampleGradientAt(
     );
     const S = hsl1.s + (hsl2.s - hsl1.s) * t;
     const L = hsl1.l + (hsl2.l - hsl1.l) * t;
-    const rgb = hslToSRGB(H, S, L);
-    r = rgb[0];
-    g = rgb[1];
-    b = rgb[2];
+    const rgb = figHslToRGB(H, S, L);
+    r = rgb.r;
+    g = rgb.g;
+    b = rgb.b;
   } else if (space === "srgb") {
     r = Math.round(c1.r + (c2.r - c1.r) * t);
     g = Math.round(c1.g + (c2.g - c1.g) * t);
@@ -9985,77 +9907,6 @@ function figSampleGradientAt(
   }
 
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`.toUpperCase();
-}
-
-function figRgbToHsl(r, g, b) {
-  const R = r / 255;
-  const G = g / 255;
-  const B = b / 255;
-  const max = Math.max(R, G, B);
-  const min = Math.min(R, G, B);
-  const l = (max + min) / 2;
-  if (max === min) {
-    return { h: 0, s: 0, l: l * 100 };
-  }
-  const d = max - min;
-  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let h;
-  switch (max) {
-    case R:
-      h = ((G - B) / d + (G < B ? 6 : 0)) / 6;
-      break;
-    case G:
-      h = ((B - R) / d + 2) / 6;
-      break;
-    default:
-      h = ((R - G) / d + 4) / 6;
-      break;
-  }
-  return { h: h * 360, s: s * 100, l: l * 100 };
-}
-
-function hslToP3(h, s, l) {
-  const sRGB = hslToSRGB(h, s, l);
-  return sRGB.map((c) => +(c / 255).toFixed(4));
-}
-
-function hslToSRGB(h, s, l) {
-  s /= 100;
-  l /= 100;
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = l - c / 2;
-  let r, g, b;
-  if (h < 60) {
-    r = c;
-    g = x;
-    b = 0;
-  } else if (h < 120) {
-    r = x;
-    g = c;
-    b = 0;
-  } else if (h < 180) {
-    r = 0;
-    g = c;
-    b = x;
-  } else if (h < 240) {
-    r = 0;
-    g = x;
-    b = c;
-  } else if (h < 300) {
-    r = x;
-    g = 0;
-    b = c;
-  } else {
-    r = c;
-    g = 0;
-    b = x;
-  }
-  return [
-    Math.round((r + m) * 255),
-    Math.round((g + m) * 255),
-    Math.round((b + m) * 255),
-  ];
 }
 
 /**

@@ -1720,8 +1720,8 @@ export const legacyPropsKitSections: Section[] = [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open All Fields</fig-button>
-  <dialog is="fig-dialog" title="All Fields" open handle="fig-header" position="center center" data-playground-hide-field style="width: 300px;">
+  <fig-button id="all-fields-anchor" data-playground-ignore-controls="true" aria-haspopup="dialog" aria-expanded="true" aria-controls="all-fields-popup" onclick="const p=document.getElementById('all-fields-popup');p.open=!p.open;this.setAttribute('aria-expanded',String(p.open));">Open All Fields</fig-button>
+  <dialog is="fig-popup" id="all-fields-popup" title="All Fields" open anchor="#all-fields-anchor" position="left" offset="8 8" viewport-margin="8" onclose="document.getElementById('all-fields-anchor')?.setAttribute('aria-expanded','false')" data-playground-hide-field style="width: 300px;">
     <fig-content>
       <fig-group name="Inputs" collapsible open>
         <fig-field>
@@ -1746,11 +1746,11 @@ export const legacyPropsKitSections: Section[] = [
         </fig-field>
         <fig-field>
           <label>Gradient</label>
-          <fig-input-gradient value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
+          <fig-input-gradient edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#7AEA66","opacity":100},{"position":67,"color":"#4700FF","opacity":53},{"position":100,"color":"#FF00BF","opacity":100}]}}'></fig-input-gradient>
         </fig-field>
         <fig-field>
           <label>Palette</label>
-          <fig-input-palette value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+          <fig-input-palette edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
         </fig-field>
       </fig-group>
       <fig-group name="Choices" collapsible open>

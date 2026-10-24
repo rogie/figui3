@@ -1,0 +1,20 @@
+/* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
+fig-palette-editor {
+  --fig-palette-editor-overflow-show-rows: 6.5;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+
+  > fig-reorder {
+    display: block !important;
+  }
+
+  > fig-reorder.fig-overflow-fade {
+    max-height: calc(var(--fig-palette-editor-overflow-show-rows) * 2rem);
+  }
+
+  .fig-palette-editor-add {
+    width: 100%;
+  }
+}

@@ -29,6 +29,10 @@ fig-property {
   padding: var(--fig-property-top-padding) 0
     var(--fig-property-bottom-padding);
 
+  &[selected]:not([selected="false"]) {
+    background-color: var(--figma-color-bg-selected);
+  }
+
   &[show-trailing]:not([show-trailing="hover"]):has(> fig-button[slot="trailing"][variant="ghost"]),
   &[show-trailing]:not([show-trailing="hover"]):has(> [slot="trailing"] fig-button[variant="ghost"]) {
     --fig-property-right-padding: var(--spacer-2);

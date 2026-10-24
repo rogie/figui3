@@ -1,5 +1,6 @@
 /* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
 fig-gradient-editor {
+  --fig-gradient-editor-overflow-show-rows: 6.5;
   display: block;
   width: 100%;
   min-width: 0;
@@ -40,7 +41,11 @@ fig-gradient-editor {
     flex-direction: column;
 
     fig-reorder {
-      display: contents;
+      display: block !important;
+    }
+
+    fig-reorder.fig-overflow-fade {
+      max-height: calc(var(--fig-gradient-editor-overflow-show-rows) * 2rem);
     }
   }
 

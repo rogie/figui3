@@ -2,6 +2,7 @@
 @import url("fig-layer.css");
 @import url("fig-property.css");
 @import url("fig-gradient-editor.css");
+@import url("fig-palette-editor.css");
 @import url("fig-popup-easing.css");
 @import url("fig-popup-gradient.css");
 @import url("fig-popup-palette.css");
@@ -159,22 +160,6 @@ dialog[is="fig-toast"] {
   &[theme="success"] {
     background-color: var(--figma-color-bg-success);
     color-scheme: dark;
-  }
-}
-
-/* Palette Editor */
-fig-palette-editor {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-width: 0;
-
-  > fig-reorder {
-    display: contents;
-  }
-
-  .fig-palette-editor-add {
-    width: 100%;
   }
 }
 

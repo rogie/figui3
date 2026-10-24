@@ -54,6 +54,7 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 - `leading`: `drag` or `chevron`
 - `trailing`: `remove`, `add`, or `bind`
 - `show-leading` / `show-trailing`: omitted or `hover` reveals on hover, `false` hides, and an empty attribute always shows
+- `selected`: present or `true` uses `--figma-color-bg-selected`; `false` leaves the row unselected
 - Authored accessory slots override generated shortcuts.
 - `input` returns the direct `slot="input"` element.
 - Generated labels associate to the input with `aria-labelledby` unless it already has an accessible name.
@@ -81,26 +82,31 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 
 ## Palette editor
 
-`fig-palette-editor` observes `value`, `min`, `max`, `fixed`, and `disabled`. An omitted `max` allows unlimited colors.
+`fig-palette-editor` observes `value`, `min`, `max`, `fixed`, `disabled`, `overflow`, and `show-rows`. An omitted `max` allows unlimited colors.
 
 - `value`: JSON array of hex strings or `{ color, alpha }` objects, or comma-separated hex
 - `value` property and `input` / `change` event `detail`: normalized ordered `{ color, alpha }[]`
+- `overflow="fade|visible"`: defaults to a bounded list with vertical fades; `visible` shows every row.
+- `show-rows`: defaults to `6.5` and maps to `--fig-palette-editor-overflow-show-rows`.
 - Rows are direct `fig-reorder` items and support pointer or keyboard reordering.
 
 ## Gradient editor
 
-`fig-gradient-editor` observes `value`, `color-space`, and `disabled`.
+`fig-gradient-editor` observes `value`, `color-space`, `disabled`, `overflow`, and `show-rows`.
 
 - `value` accepts a gradient config or `{ type: "gradient", gradient }` and returns a normalized gradient config.
 - `cssValue` returns the current CSS gradient.
 - `pickerAnchor` anchors nested stop color pickers.
+- `overflow="fade|visible"`: stop rows default to a bounded list with vertical fades; `visible` shows every stop.
+- `show-rows`: defaults to `6.5` and maps to `--fig-gradient-editor-overflow-show-rows`.
 - Bubbling `input` / `change` detail is `{ type: "gradient", gradient, css }`.
 - Interpolation remains locked to sRGB to match the fill picker’s current behavior.
 
 ## Gradient popup
 
 `dialog[is="fig-popup-gradient"]` extends `fig-popup`, owns a
-`fig-gradient-editor`, and observes `value`, `color-space`, and `disabled`.
+`fig-gradient-editor`, and observes `value`, `color-space`, `disabled`,
+`overflow`, and `show-rows`.
 
 - Defaults: `position="bottom left"`, `offset="0 8"`, `viewport-margin="8"`, and `popover="manual"`.
 - Bubbling `input` / `change` detail is `{ type: "gradient", gradient, css }`.
@@ -109,7 +115,7 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 
 `dialog[is="fig-popup-palette"]` extends `fig-popup`, owns a
 `fig-palette-editor`, and observes `value`, `min`, `max`, `fixed`, and
-`disabled` in addition to inherited popup attributes.
+`disabled`, `overflow`, and `show-rows` in addition to inherited popup attributes.
 
 - `value` property and bubbling `input` / `change` detail are normalized `{ color, alpha }[]`.
 - Defaults: `position="bottom left"`, `offset="0 8"`, `viewport-margin="8"`, and `popover="manual"`.

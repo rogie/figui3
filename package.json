@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "11.6.1",
+  "version": "11.6.2",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "SEE LICENSE IN LICENSE",
@@ -10,6 +10,7 @@
   "exports": {
     ".": "./dist/fig.js",
     "./fig.js": "./dist/fig.js",
+    "./fig-color.js": "./dist/fig-color.js",
     "./fig-layer.js": "./dist/fig-layer.js",
     "./fig-property.js": "./dist/fig-property.js",
     "./fig-editor.js": "./dist/fig-editor.js",
@@ -22,6 +23,7 @@
     "./base.css": "./dist/base.css",
     "./components.css": "./dist/components.css",
     "./src/fig.js": "./fig.js",
+    "./src/fig-color.js": "./fig-color.js",
     "./src/fig-layer.js": "./fig-layer.js",
     "./src/fig-property.js": "./fig-property.js",
     "./src/fig-editor.js": "./fig-editor.js",
@@ -36,9 +38,11 @@
   },
   "files": [
     "fig.js",
+    "fig-color.js",
     "fig-layer.js",
     "fig-property.js",
     "fig-gradient-editor.js",
+    "fig-palette-editor.js",
     "fig-popup-easing.js",
     "fig-popup-gradient.js",
     "fig-popup-palette.js",
@@ -48,6 +52,7 @@
     "fig-layer.css",
     "fig-property.css",
     "fig-gradient-editor.css",
+    "fig-palette-editor.css",
     "fig-popup-easing.css",
     "fig-popup-gradient.css",
     "fig-popup-palette.css",
@@ -71,7 +76,7 @@
   ],
   "scripts": {
     "dev": "bun --hot server.ts",
-    "build": "bun build fig.js --minify --outdir dist && bun build fig-layer.js --minify --outdir dist && bun build fig-property.js --minify --outdir dist --external ./fig.js && bun build fig-editor.js --minify --outdir dist --external ./fig.js --external ./fig-property.js --external ./fig-lab.js && bun build fig-lab.js --minify --outdir dist --external ./fig.js --external ./fig-editor.js && npm run build:css",
+    "build": "bun build fig-color.js --minify --outdir dist && bun build fig.js --minify --outdir dist --external ./fig-color.js && bun build fig-layer.js --minify --outdir dist && bun build fig-property.js --minify --outdir dist --external ./fig.js && bun build fig-editor.js --minify --outdir dist --external ./fig.js --external ./fig-color.js --external ./fig-property.js --external ./fig-lab.js && bun build fig-lab.js --minify --outdir dist --external ./fig.js --external ./fig-editor.js && npm run build:css",
     "build:css": "node scripts/build-css.mjs",
     "dev:playground": "node playground/dev.mjs",
     "build:playground": "cd playground && npm run build",

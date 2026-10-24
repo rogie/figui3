@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.2]
+
+### Added
+
+- Added shared `fig-color.js` color parsing, conversion, interpolation, contrast, and palette-generation utilities.
+- Added `overflow` and `show-rows` controls for palette and gradient editor stop lists.
+- Added selected-state styling and playground controls for `fig-property`.
+
+### Changed
+
+- Refactored palette and gradient editors to synchronize mounted controls and rows in place, preserving focus, popups, drag state, and controlled-value feedback.
+- Extracted the palette editor into dedicated source and stylesheet modules.
+- Improved palette additions with deterministic, harmonious OKLCH colors.
+- Synchronized gradient stop row and handle selection, scrolled selections into view, and inserted new stops after the selected stop.
+- Expanded editor playground examples, controls, tests, and skill documentation.
+
+### Fixed
+
+- Prevented semantically equivalent editor updates from replacing active controls or interrupting pointer interactions.
+- Kept gradient stop selection singular and stable across adding, removing, reordering, and external updates.
+
 ## [11.6.1]
 
 ### Changed

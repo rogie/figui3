@@ -1,7 +1,21 @@
 /* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
 import "./fig.js";
 import "./fig-property.js";
+import {
+  figConvertRGB,
+  figHexToRGB as figEditorHexToRgb,
+  figHslToRGB,
+  figHsvToRGB,
+  figOklabToOklch as figEditorOklabToOklch,
+  figOklabToRGB,
+  figOklchToRGB,
+  figRGBToHsl as figEditorRgbToHsl,
+  figRGBToHsv,
+  figRGBToOklab as figEditorRgbToOklab,
+  figRGBToOklch,
+} from "./fig-color.js";
 import { figGradientCSS } from "./fig-gradient-editor.js";
+import "./fig-palette-editor.js";
 import "./fig-popup-easing.js";
 import "./fig-popup-gradient.js";
 import "./fig-popup-palette.js";
@@ -195,73 +209,6 @@ class FigInputPoint extends HTMLElement {
 }
 figEditorDefineElement("fig-input-point", FigInputPoint);
 
-function figEditorNormalizePaletteValue(value) {
-  let entries = value;
-  if (typeof entries === "string") {
-    const raw = entries.trim();
-    if (!raw) return [];
-    try {
-      entries = JSON.parse(raw);
-    } catch {
-      entries = raw.includes(",") ? raw.split(",") : [raw];
-    }
-  }
-  if (!Array.isArray(entries)) return [];
-  return entries.map((entry) => {
-    if (typeof entry === "string") {
-      const color = entry.trim();
-      return {
-        color: color.slice(0, 7) || "#D9D9D9",
-        alpha:
-          color.length > 7
-            ? Math.max(0, Math.min(1, parseInt(color.slice(7, 9), 16) / 255))
-            : 1,
-      };
-    }
-    if (entry && typeof entry === "object") {
-      const alpha =
-        entry.alpha !== undefined
-          ? Number(entry.alpha)
-          : entry.opacity !== undefined
-            ? Number(entry.opacity) / 100
-            : 1;
-      return {
-        color: String(entry.color || "#D9D9D9").slice(0, 7),
-        alpha: Number.isFinite(alpha) ? Math.max(0, Math.min(1, alpha)) : 1,
-      };
-    }
-    return { color: "#D9D9D9", alpha: 1 };
-  });
-}
-
-function figEditorPaletteEntryValue(entry) {
-  const color = String(entry?.color || "#D9D9D9").slice(0, 7);
-  const alpha = Math.max(0, Math.min(1, Number(entry?.alpha ?? 1)));
-  if (alpha >= 1) return color;
-  return `${color}${Math.round(alpha * 255)
-    .toString(16)
-    .padStart(2, "0")}`;
-}
-
-function figEditorAveragePaletteEntries(first, second) {
-  if (!first && !second) return { color: "#D9D9D9", alpha: 1 };
-  if (!first || !second) return { ...(first || second) };
-  const firstRgb = figEditorHexToRgb(first.color);
-  const secondRgb = figEditorHexToRgb(second.color);
-  const color = `#${["r", "g", "b"]
-    .map((channel) =>
-      Math.round((firstRgb[channel] + secondRgb[channel]) / 2)
-        .toString(16)
-        .padStart(2, "0"),
-    )
-    .join("")
-    .toUpperCase()}`;
-  return {
-    color,
-    alpha: (Number(first.alpha ?? 1) + Number(second.alpha ?? 1)) / 2,
-  };
-}
-
 const FIG_EDITOR_SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
 function figEditorCreateSvgElement(tagName, attributes, children) {
@@ -277,73 +224,6 @@ function figEditorCreateSvgElement(tagName, attributes, children) {
     }
   }
   return figEditorAppendChildren(element, children);
-}
-
-function figEditorHexToRgb(hex) {
-  const h = String(hex || "").replace(/^#/, "");
-  return {
-    r: parseInt(h.substring(0, 2), 16) || 0,
-    g: parseInt(h.substring(2, 4), 16) || 0,
-    b: parseInt(h.substring(4, 6), 16) || 0,
-  };
-}
-
-function figEditorRgbToHsl(r, g, b) {
-  const R = r / 255;
-  const G = g / 255;
-  const B = b / 255;
-  const max = Math.max(R, G, B);
-  const min = Math.min(R, G, B);
-  const l = (max + min) / 2;
-  if (max === min) return { h: 0, s: 0, l: l * 100 };
-  const d = max - min;
-  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let h;
-  switch (max) {
-    case R:
-      h = ((G - B) / d + (G < B ? 6 : 0)) / 6;
-      break;
-    case G:
-      h = ((B - R) / d + 2) / 6;
-      break;
-    default:
-      h = ((R - G) / d + 4) / 6;
-      break;
-  }
-  return { h: h * 360, s: s * 100, l: l * 100 };
-}
-
-function figEditorRgbToLinear(c) {
-  const s = c / 255;
-  return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-}
-
-function figEditorRgbToOklab(r, g, b) {
-  const lr = figEditorRgbToLinear(r);
-  const lg = figEditorRgbToLinear(g);
-  const lb = figEditorRgbToLinear(b);
-  const l_ = Math.cbrt(
-    0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb,
-  );
-  const m_ = Math.cbrt(
-    0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb,
-  );
-  const s_ = Math.cbrt(
-    0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb,
-  );
-  return {
-    l: 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
-    a: 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
-    b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
-  };
-}
-
-function figEditorOklabToOklch(L, a, b) {
-  return {
-    l: L,
-    c: Math.sqrt(a * a + b * b),
-    h: (Math.atan2(b, a) * 180) / Math.PI,
-  };
 }
 
 function figEditorCreateOverflowButtons({
@@ -459,262 +339,6 @@ function figEditorScrollElementToCenter(
     figEditorSyncOverflowState(scrollEl, scrollEl, axis);
   });
 }
-
-
-/**
- * A reusable editor for an ordered palette of solid colors.
- * @attr {string} value - JSON array of hex strings or {color,alpha} objects, or comma-separated hex
- * @attr {number} min - Minimum number of colors (default: 2)
- * @attr {number} max - Maximum number of colors (unbounded when omitted)
- * @attr {boolean} fixed - Locks palette length while preserving color editing and reordering
- * @attr {boolean} disabled - Disables editing and reordering
- * @fires input - During color editing or reordering (detail: normalized color array)
- * @fires change - On committed color edits, add, remove, or reorder
- */
-class FigPaletteEditor extends HTMLElement {
-  #colors = [];
-  #syncingValueAttribute = false;
-
-  static get observedAttributes() {
-    return ["value", "min", "max", "fixed", "disabled"];
-  }
-
-  get #min() {
-    const value = Number.parseInt(this.getAttribute("min"), 10);
-    return Number.isFinite(value) ? Math.max(0, value) : 2;
-  }
-
-  get #max() {
-    const value = Number.parseInt(this.getAttribute("max"), 10);
-    return Number.isFinite(value) ? Math.max(this.#min, value) : Infinity;
-  }
-
-  get #fixed() {
-    return figEditorBooleanAttribute(this, "fixed");
-  }
-
-  get #disabled() {
-    return figEditorBooleanAttribute(this, "disabled");
-  }
-
-  get value() {
-    return this.#colors.map((entry) => ({ ...entry }));
-  }
-
-  set value(value) {
-    this.setAttribute(
-      "value",
-      typeof value === "string" ? value : JSON.stringify(value ?? []),
-    );
-  }
-
-  connectedCallback() {
-    this.#colors = figEditorNormalizePaletteValue(this.getAttribute("value"));
-    this.#render();
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue || this.#syncingValueAttribute) return;
-    if (name === "value") {
-      this.#colors = figEditorNormalizePaletteValue(newValue);
-    }
-    if (this.isConnected) this.#render();
-  }
-
-  #reflectValue() {
-    this.#syncingValueAttribute = true;
-    this.setAttribute("value", JSON.stringify(this.#colors));
-    this.#syncingValueAttribute = false;
-  }
-
-  #emit(type) {
-    this.dispatchEvent(
-      new CustomEvent(type, {
-        bubbles: true,
-        detail: this.value,
-      }),
-    );
-  }
-
-  #commit(type, { rerender = false } = {}) {
-    this.#reflectValue();
-    if (rerender) this.#render();
-    this.#emit(type);
-  }
-
-  #removeRow(row) {
-    const currentIndex = Number.parseInt(row?.dataset.index ?? "", 10);
-    if (
-      this.#disabled ||
-      this.#fixed ||
-      this.#colors.length <= this.#min ||
-      !Number.isInteger(currentIndex)
-    ) {
-      return;
-    }
-    this.#colors.splice(currentIndex, 1);
-    this.#reflectValue();
-    this.#render();
-    this.#emit("input");
-    this.#emit("change");
-  }
-
-  #createRow(entry, index) {
-    const colorInput = figEditorCreateElement("fig-input-color", {
-      className: "fig-palette-editor-color",
-      slot: "input",
-      value: figEditorPaletteEntryValue(entry),
-      text: true,
-      alpha: true,
-      full: true,
-      disabled: this.#disabled || null,
-      "aria-label": `Palette color ${index + 1}`,
-    });
-    const syncColor = (event, type) => {
-      event.stopPropagation();
-      const row = colorInput.closest(".fig-palette-editor-color-row");
-      const currentIndex = Number.parseInt(row?.dataset.index ?? "", 10);
-      if (!Number.isInteger(currentIndex) || !this.#colors[currentIndex]) return;
-      this.#colors[currentIndex] = {
-        color:
-          colorInput.hexOpaque ||
-          this.#colors[currentIndex]?.color ||
-          "#D9D9D9",
-        alpha:
-          colorInput.rgba?.a ?? this.#colors[currentIndex]?.alpha ?? 1,
-      };
-      this.#commit(type);
-    };
-    colorInput.addEventListener("input", (event) =>
-      syncColor(event, "input"),
-    );
-    colorInput.addEventListener("change", (event) =>
-      syncColor(event, "change"),
-    );
-
-    const row = figEditorCreateElement(
-      "fig-property",
-      {
-        className: "fig-palette-editor-color-row",
-        "data-index": index,
-        leading: "drag",
-        trailing: this.#fixed ? null : "remove",
-        "show-trailing": this.#fixed ? null : true,
-      },
-      colorInput,
-    );
-    row.addEventListener("remove", (event) => {
-      event.stopPropagation();
-      this.#removeRow(row);
-    });
-    return row;
-  }
-
-  #handleReorder = (event) => {
-    const oldIndex = Number(event.detail?.oldIndex);
-    const newIndex = Number(event.detail?.newIndex);
-    if (
-      !Number.isInteger(oldIndex) ||
-      !Number.isInteger(newIndex) ||
-      oldIndex === newIndex ||
-      oldIndex < 0 ||
-      newIndex < 0 ||
-      oldIndex >= this.#colors.length ||
-      newIndex >= this.#colors.length
-    ) {
-      return;
-    }
-    const [entry] = this.#colors.splice(oldIndex, 1);
-    this.#colors.splice(newIndex, 0, entry);
-    this.querySelectorAll(".fig-palette-editor-color-row").forEach(
-      (row, index) => {
-        row.dataset.index = String(index);
-        row
-          .querySelector(".fig-palette-editor-color")
-          ?.setAttribute("aria-label", `Palette color ${index + 1}`);
-        row
-          .querySelector(".fig-palette-editor-remove")
-          ?.setAttribute("aria-label", `Remove color ${index + 1}`);
-      },
-    );
-    this.#reflectValue();
-    this.#emit("input");
-    this.#emit("change");
-  };
-
-  #focusColorValue(index) {
-    requestAnimationFrame(() => {
-      if (!this.isConnected) return;
-      const input = this.querySelector(
-        `.fig-palette-editor-color-row[data-index="${index}"] .fig-palette-editor-color fig-input-text input`,
-      );
-      input?.focus();
-      input?.select();
-    });
-  }
-
-  #render() {
-    const reorder = figEditorCreateElement(
-      "fig-reorder",
-      {
-        axis: "vertical",
-        items: ".fig-palette-editor-color-row",
-        "aria-label": "Palette colors",
-        disabled: this.#disabled || null,
-      },
-      this.#colors.map((entry, index) => this.#createRow(entry, index)),
-    );
-    reorder.addEventListener("reorder", this.#handleReorder);
-
-    const children = [reorder];
-    if (!this.#fixed) {
-      const addButton = figEditorCreateElement(
-        "fig-button",
-        {
-          className: "fig-palette-editor-add",
-          variant: "secondary",
-          full: true,
-          disabled:
-            this.#disabled || this.#colors.length >= this.#max || null,
-        },
-        "Add color",
-      );
-      addButton.addEventListener("click", () => {
-        if (this.#disabled || this.#colors.length >= this.#max) return;
-        const addedIndex = this.#colors.length;
-        this.#colors.push(
-          figEditorAveragePaletteEntries(
-            this.#colors.at(-2),
-            this.#colors.at(-1),
-          ),
-        );
-        this.#reflectValue();
-        this.#render();
-        this.#emit("input");
-        this.#emit("change");
-        this.#focusColorValue(addedIndex);
-      });
-      children.push(figEditorCreateElement("fig-field", {}, addButton));
-    }
-    this.replaceChildren(...children);
-    this.querySelectorAll(".fig-palette-editor-color-row").forEach(
-      (row, index) => {
-        const remove = row.querySelector(
-          ':scope > [data-fig-property-action="remove"]',
-        );
-        if (!remove) return;
-        remove.classList.add("fig-palette-editor-remove");
-        remove.setAttribute("aria-label", `Remove color ${index + 1}`);
-        remove.toggleAttribute(
-          "disabled",
-          this.#disabled || this.#colors.length <= this.#min,
-        );
-      },
-    );
-  }
-}
-figEditorDefineElement("fig-palette-editor", FigPaletteEditor);
-
 
 /* Select — dropdown-styled trigger + fig-popup listbox */
 /** Parse options attr — same formats as fig-options. */
@@ -3745,8 +3369,15 @@ class FigFillPicker extends HTMLElement {
     const gradH = ctx.createLinearGradient(0, 0, width, 0);
     if (isP3) {
       gradH.addColorStop(0, "color(display-p3 1 1 1)");
-      const [r, g, b] = hslToP3(hue, 100, 50);
-      gradH.addColorStop(1, `color(display-p3 ${r} ${g} ${b})`);
+      const srgb = figHslToRGB(hue, 100, 50);
+      const p3 = figConvertRGB(srgb.r, srgb.g, srgb.b, {
+        from: "srgb",
+        to: "display-p3",
+      });
+      gradH.addColorStop(
+        1,
+        `color(display-p3 ${p3.r / 255} ${p3.g / 255} ${p3.b / 255})`,
+      );
     } else {
       gradH.addColorStop(0, "#FFFFFF");
       gradH.addColorStop(1, `hsl(${hue}, 100%, 50%)`);
@@ -5838,91 +5469,11 @@ class FigFillPicker extends HTMLElement {
 
   // ============ COLOR CONVERSION UTILITIES ============
   #hsvToRGB(hsv) {
-    const h = hsv.h / 360;
-    const s = hsv.s / 100;
-    const v = hsv.v / 100;
-
-    let r, g, b;
-    const i = Math.floor(h * 6);
-    const f = h * 6 - i;
-    const p = v * (1 - s);
-    const q = v * (1 - f * s);
-    const t = v * (1 - (1 - f) * s);
-
-    switch (i % 6) {
-      case 0:
-        r = v;
-        g = t;
-        b = p;
-        break;
-      case 1:
-        r = q;
-        g = v;
-        b = p;
-        break;
-      case 2:
-        r = p;
-        g = v;
-        b = t;
-        break;
-      case 3:
-        r = p;
-        g = q;
-        b = v;
-        break;
-      case 4:
-        r = t;
-        g = p;
-        b = v;
-        break;
-      case 5:
-        r = v;
-        g = p;
-        b = q;
-        break;
-    }
-
-    return {
-      r: Math.round(r * 255),
-      g: Math.round(g * 255),
-      b: Math.round(b * 255),
-    };
+    return figHsvToRGB(hsv.h, hsv.s, hsv.v);
   }
 
   #rgbToHSV(rgb) {
-    const r = rgb.r / 255;
-    const g = rgb.g / 255;
-    const b = rgb.b / 255;
-
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const d = max - min;
-
-    let h = 0;
-    const s = max === 0 ? 0 : d / max;
-    const v = max;
-
-    if (max !== min) {
-      switch (max) {
-        case r:
-          h = (g - b) / d + (g < b ? 6 : 0);
-          break;
-        case g:
-          h = (b - r) / d + 2;
-          break;
-        case b:
-          h = (r - g) / d + 4;
-          break;
-      }
-      h /= 6;
-    }
-
-    return {
-      h: h * 360,
-      s: s * 100,
-      v: v * 100,
-      a: 1,
-    };
+    return { ...figRGBToHsv(rgb.r, rgb.g, rgb.b), a: 1 };
   }
 
   #hsvToHex(hsv) {
@@ -6007,145 +5558,39 @@ class FigFillPicker extends HTMLElement {
   }
 
   #hexToP3(hex, alpha = 1) {
-    const r = +(parseInt(hex.slice(1, 3), 16) / 255).toFixed(4);
-    const g = +(parseInt(hex.slice(3, 5), 16) / 255).toFixed(4);
-    const b = +(parseInt(hex.slice(5, 7), 16) / 255).toFixed(4);
+    const srgb = figEditorHexToRgb(hex);
+    const p3 = figConvertRGB(srgb.r, srgb.g, srgb.b, {
+      from: "srgb",
+      to: "display-p3",
+    });
+    const r = +(p3.r / 255).toFixed(4);
+    const g = +(p3.g / 255).toFixed(4);
+    const b = +(p3.b / 255).toFixed(4);
     return `color(display-p3 ${r} ${g} ${b} / ${alpha})`;
   }
 
   #rgbToHSL(rgb) {
-    const r = rgb.r / 255;
-    const g = rgb.g / 255;
-    const b = rgb.b / 255;
-
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h, s;
-    const l = (max + min) / 2;
-
-    if (max === min) {
-      h = s = 0;
-    } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-      switch (max) {
-        case r:
-          h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-          break;
-        case g:
-          h = ((b - r) / d + 2) / 6;
-          break;
-        case b:
-          h = ((r - g) / d + 4) / 6;
-          break;
-      }
-    }
-
-    return { h: h * 360, s: s * 100, l: l * 100 };
+    return figEditorRgbToHsl(rgb.r, rgb.g, rgb.b);
   }
 
   #hslToRGB(hsl) {
-    const h = hsl.h / 360;
-    const s = hsl.s / 100;
-    const l = hsl.l / 100;
-
-    let r, g, b;
-
-    if (s === 0) {
-      r = g = b = l;
-    } else {
-      const hue2rgb = (p, q, t) => {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1 / 6) return p + (q - p) * 6 * t;
-        if (t < 1 / 2) return q;
-        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-        return p;
-      };
-
-      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-      const p = 2 * l - q;
-
-      r = hue2rgb(p, q, h + 1 / 3);
-      g = hue2rgb(p, q, h);
-      b = hue2rgb(p, q, h - 1 / 3);
-    }
-
-    return {
-      r: Math.round(r * 255),
-      g: Math.round(g * 255),
-      b: Math.round(b * 255),
-    };
+    return figHslToRGB(hsl.h, hsl.s, hsl.l);
   }
 
-  // OKLAB/OKLCH conversions (simplified)
   #rgbToOKLAB(rgb) {
-    // Convert to linear sRGB
-    const toLinear = (c) => {
-      c = c / 255;
-      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-    };
-
-    const r = toLinear(rgb.r);
-    const g = toLinear(rgb.g);
-    const b = toLinear(rgb.b);
-
-    // Convert to LMS
-    const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
-    const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
-    const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
-
-    // Convert to Oklab
-    const l_ = Math.cbrt(l);
-    const m_ = Math.cbrt(m);
-    const s_ = Math.cbrt(s);
-
-    return {
-      l: 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
-      a: 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
-      b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
-    };
+    return figEditorRgbToOklab(rgb.r, rgb.g, rgb.b);
   }
 
   #rgbToOKLCH(rgb) {
-    const lab = this.#rgbToOKLAB(rgb);
-    return {
-      l: lab.l,
-      c: Math.sqrt(lab.a * lab.a + lab.b * lab.b),
-      h: ((Math.atan2(lab.b, lab.a) * 180) / Math.PI + 360) % 360,
-    };
+    return figRGBToOklch(rgb.r, rgb.g, rgb.b);
   }
 
   #oklabToRGB(lab) {
-    const l_ = lab.l + 0.3963377774 * lab.a + 0.2158037573 * lab.b;
-    const m_ = lab.l - 0.1055613458 * lab.a - 0.0638541728 * lab.b;
-    const s_ = lab.l - 0.0894841775 * lab.a - 1.291485548 * lab.b;
-
-    const l = l_ * l_ * l_;
-    const m = m_ * m_ * m_;
-    const s = s_ * s_ * s_;
-
-    const toSRGB = (c) => {
-      const v =
-        c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
-      return Math.round(Math.max(0, Math.min(1, v)) * 255);
-    };
-
-    return {
-      r: toSRGB(+4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
-      g: toSRGB(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
-      b: toSRGB(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
-    };
+    return figOklabToRGB(lab.l, lab.a, lab.b);
   }
 
   #oklchToRGB(lch) {
-    const hRad = (lch.h * Math.PI) / 180;
-    return this.#oklabToRGB({
-      l: lch.l,
-      a: lch.c * Math.cos(hRad),
-      b: lch.c * Math.sin(hRad),
-    });
+    return figOklchToRGB(lch.l, lch.c, lch.h);
   }
 
   // ============ EVENT EMITTERS ============

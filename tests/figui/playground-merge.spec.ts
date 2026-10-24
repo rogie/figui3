@@ -200,7 +200,15 @@ test("disabled components expose an Attributes view toggle", () => {
   );
 });
 
-test("palette editor exposes a maximum color control", () => {
+test("property exposes a selected attribute toggle", () => {
+  expect(controlAttributeRules["fig-property"]?.selected).toEqual({
+    label: "Selected",
+    type: "boolean",
+    boolMode: "presence",
+  });
+});
+
+test("palette editor exposes maximum and overflow controls", () => {
   const section = figui3Sections.find(
     (entry) => entry.id === "palette-editor",
   );
@@ -212,6 +220,31 @@ test("palette editor exposes a maximum color control", () => {
     type: "number",
     min: 2,
     step: 1,
+  });
+  expect(controlAttributeRules["fig-palette-editor"]?.overflow).toEqual({
+    label: "Overflow",
+    type: "enum",
+    options: ["fade", "visible"],
+  });
+  expect(controlAttributeRules["fig-palette-editor"]?.["show-rows"]).toEqual({
+    label: "Show rows",
+    type: "number",
+    min: 0.5,
+    step: 0.5,
+  });
+});
+
+test("gradient editor exposes stop overflow controls", () => {
+  expect(controlAttributeRules["fig-gradient-editor"]?.overflow).toEqual({
+    label: "Overflow",
+    type: "enum",
+    options: ["fade", "visible"],
+  });
+  expect(controlAttributeRules["fig-gradient-editor"]?.["show-rows"]).toEqual({
+    label: "Show rows",
+    type: "number",
+    min: 0.5,
+    step: 0.5,
   });
 });
 
