@@ -512,6 +512,8 @@ test.describe("fig-gradient-editor", () => {
           )[1],
         dragging: state.handle.classList.contains("dragging"),
         selected: state.handle.hasAttribute("selected"),
+        percentageTooltipShown:
+          state.handle.closest("fig-tooltip")?.hasAttribute("show") ?? false,
         inputCount: state.inputCount,
       };
     });
@@ -520,6 +522,7 @@ test.describe("fig-gradient-editor", () => {
       sameHandle: true,
       dragging: true,
       selected: true,
+      percentageTooltipShown: false,
     });
     expect(activeState.inputCount).toBeGreaterThan(0);
 

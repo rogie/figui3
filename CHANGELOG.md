@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.5]
+
+### Changed
+
+- Replaced selected color-tip outlines with brand backgrounds in both color modes.
+- Updated the playground color-tip example to demonstrate translucent color.
+
+### Fixed
+
+- Hid percentage tooltips while dragging persistent gradient color tips.
+- Kept the fill-picker input mode selector aligned to the eyedropper width.
+
 ## [11.6.4]
 
 ### Fixed

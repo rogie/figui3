@@ -7283,8 +7283,9 @@ fig-color-tip {
   }
 
   &[selected]:not([selected="false"]){
+    background-color: var(--figma-color-bg-brand);
     outline: var(--tip-selection-width) solid
-      var(--figma-focus-outline-color);
+      transparent;
     outline-offset: 0px;
     &:after {
       top: calc(
@@ -7293,7 +7294,7 @@ fig-color-tip {
     }
     &:before {
       content: "";
-      background: var(--figma-focus-outline-color);
+      background: transparent;
       clip-path: var(--tip-pointer);
       width: 1rem;
       height: 6px;

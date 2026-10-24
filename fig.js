@@ -12390,7 +12390,7 @@ class FigInputGradient extends HTMLElement {
         handle.style.left = `${(position / 100) * trackW}px`;
       }
       const tooltip = handle.closest("fig-tooltip");
-      if (tooltip) {
+      if (tooltip && this.#stopHandleMode !== "tip") {
         tooltip.text = `${Math.round(position)}%`;
         if (!tooltip.hasAttribute("show")) {
           tooltip.setAttribute("show", "true");

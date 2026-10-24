@@ -9072,7 +9072,9 @@ test.describe("reconnect resilience", () => {
     });
   });
 
-  test("selected color tips outline the body", async ({ page }) => {
+  test("selected color tips use the brand background without a visible outline", async ({
+    page,
+  }) => {
     const styles = await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -9080,37 +9082,48 @@ test.describe("reconnect resilience", () => {
         <fig-color-tip id="unselected-tip" value="#0D99FF"></fig-color-tip>
         <fig-color-tip id="selected-tip" value="#0D99FF" selected></fig-color-tip>
       `;
-      const unselected = getComputedStyle(
-        root.querySelector("#unselected-tip")!,
-      );
       const selectedTip = root.querySelector("#selected-tip")!;
-      const selected = getComputedStyle(selectedTip);
-      const selectedSwatch = getComputedStyle(
-        selectedTip.querySelector("fig-swatch")!,
-      );
-      const selectedBefore = getComputedStyle(selectedTip, "::before");
-      const selectedAfter = getComputedStyle(selectedTip, "::after");
-      const tipHeight = selectedTip.getBoundingClientRect().height;
-      return {
-        unselectedStyle: unselected.outlineStyle,
-        selectedStyle: selected.outlineStyle,
-        selectedWidth: selected.outlineWidth,
-        selectedOffset: selected.outlineOffset,
-        selectedSwatchBackground: selectedSwatch.backgroundColor,
-        selectedBeakOutlineOffset:
-          parseFloat(selectedBefore.top) - tipHeight,
-        selectedBeakFillOffset: parseFloat(selectedAfter.top) - tipHeight,
+      const read = (colorScheme: "light" | "dark") => {
+        document.documentElement.style.colorScheme = colorScheme;
+        const selected = getComputedStyle(selectedTip);
+        const selectedSwatch = getComputedStyle(
+          selectedTip.querySelector("fig-swatch")!,
+        );
+        const selectedBefore = getComputedStyle(selectedTip, "::before");
+        const selectedAfter = getComputedStyle(selectedTip, "::after");
+        const tipHeight = selectedTip.getBoundingClientRect().height;
+        return {
+          background: selected.backgroundColor,
+          outlineColor: selected.outlineColor,
+          selectedStyle: selected.outlineStyle,
+          selectedWidth: selected.outlineWidth,
+          selectedOffset: selected.outlineOffset,
+          selectedSwatchBackground: selectedSwatch.backgroundColor,
+          selectedBeakOutline: selectedBefore.backgroundColor,
+          selectedBeakOutlineOffset:
+            parseFloat(selectedBefore.top) - tipHeight,
+          selectedBeakFillOffset: parseFloat(selectedAfter.top) - tipHeight,
+        };
       };
+      const result = { light: read("light"), dark: read("dark") };
+      document.documentElement.style.colorScheme = "";
+      return result;
     });
 
-    expect(styles).toEqual({
-      unselectedStyle: "none",
+    expect(styles.light).toEqual({
+      background: "rgb(13, 153, 255)",
+      outlineColor: "rgba(0, 0, 0, 0)",
       selectedStyle: "solid",
       selectedWidth: "1px",
       selectedOffset: "0px",
       selectedSwatchBackground: "rgba(0, 0, 0, 0)",
+      selectedBeakOutline: "rgba(0, 0, 0, 0)",
       selectedBeakOutlineOffset: 1,
       selectedBeakFillOffset: -0.5,
+    });
+    expect(styles.dark).toEqual({
+      ...styles.light,
+      background: "rgb(12, 140, 233)",
     });
   });
 
@@ -9704,6 +9717,7 @@ test.describe("fill picker accessibility", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
     await bootFigFixture(page);
+    await page.addStyleTag({ url: "/fig-editor.css" });
     await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
     await page.evaluate(async () => {
       await Promise.all([
@@ -9754,6 +9768,7 @@ test.describe("fill picker accessibility", () => {
       const nativeEyedropper = eyedropper?.shadowRoot?.querySelector("button");
       const fillType = dialog?.querySelector(".fig-fill-picker-type");
       const fillTypeTrigger = fillType?.shadowRoot?.querySelector("fig-button");
+      const inputMode = dialog?.querySelector(".fig-fill-picker-input-mode");
       const handle = dialog?.querySelector("fig-handle");
       const hue = dialog?.querySelector('fig-slider[type="hue"] input[type="range"]');
       const opacity = dialog?.querySelector(
@@ -9763,6 +9778,8 @@ test.describe("fill picker accessibility", () => {
         closeLabel: nativeClose?.getAttribute("aria-label"),
         eyedropperLabel: nativeEyedropper?.getAttribute("aria-label"),
         fillTypeLabel: fillTypeTrigger?.getAttribute("aria-label"),
+        eyedropperWidth: eyedropper?.getBoundingClientRect().width,
+        inputModeWidth: inputMode?.getBoundingClientRect().width,
         handleLabel: handle?.getAttribute("aria-label"),
         hueLabel: hue?.getAttribute("aria-label"),
         opacityLabel: opacity?.getAttribute("aria-label"),
@@ -9773,6 +9790,8 @@ test.describe("fill picker accessibility", () => {
       closeLabel: "Close fill picker",
       eyedropperLabel: "Sample color",
       fillTypeLabel: "Fill type",
+      eyedropperWidth: 56,
+      inputModeWidth: 56,
       handleLabel: "Color saturation and brightness",
       hueLabel: "Hue",
       opacityLabel: "Opacity",

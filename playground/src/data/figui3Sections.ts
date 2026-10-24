@@ -2644,7 +2644,7 @@ ${versionHistoryGroup("August 11", [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-color-tip value="#0D99FF"></fig-color-tip>
+  <fig-color-tip value="#FF4EF099"></fig-color-tip>
 </div>`,
       },
     ],
