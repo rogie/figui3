@@ -907,8 +907,12 @@ class FigGradientEditor extends HTMLElement {
     }
     this.#flushRows();
     const stops = cloneStops(this.#gradient.stops);
+    const positions = stops.map((stop) => stop.position);
     const [stop] = stops.splice(oldIndex, 1);
     stops.splice(newIndex, 0, stop);
+    stops.forEach((reorderedStop, index) => {
+      reorderedStop.position = positions[index];
+    });
     const [row] = this.#stopRows.splice(oldIndex, 1);
     this.#stopRows.splice(newIndex, 0, row);
     this.#applyInternalGradient({ ...this.#gradient, stops }, "input");

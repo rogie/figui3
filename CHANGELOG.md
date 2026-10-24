@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.4]
+
+### Fixed
+
+- Remapped gradient stop positions to their new ordered slots when reordering stops.
+
 ## [11.6.3]
 
 ### Added

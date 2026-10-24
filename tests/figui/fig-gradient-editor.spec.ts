@@ -368,7 +368,7 @@ test.describe("fig-gradient-editor", () => {
     );
   });
 
-  test("does not expose internal reorder or optionhover events", async ({
+  test("remaps stop positions without exposing internal reorder events", async ({
     page,
   }) => {
     const result = await page.evaluate(() => {
@@ -392,7 +392,7 @@ test.describe("fig-gradient-editor", () => {
         new CustomEvent("reorder", {
           bubbles: true,
           composed: true,
-          detail: { oldIndex: 0, newIndex: 1 },
+          detail: { oldIndex: 1, newIndex: 0 },
         }),
       );
       editor
@@ -405,6 +405,7 @@ test.describe("fig-gradient-editor", () => {
         reorderCount,
         optionHoverCount,
         positions: editor.value.stops.map((stop: any) => stop.position),
+        colors: editor.value.stops.map((stop: any) => stop.color),
       };
     });
 
@@ -412,7 +413,8 @@ test.describe("fig-gradient-editor", () => {
       inputCount: 1,
       reorderCount: 0,
       optionHoverCount: 0,
-      positions: [50, 0, 100],
+      positions: [0, 50, 100],
+      colors: ["#14AE5C", "#0D99FF", "#9747FF"],
     });
   });
 
