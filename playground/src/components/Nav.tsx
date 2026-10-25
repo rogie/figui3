@@ -1,4 +1,10 @@
-import React, { useRef, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import type { Section } from "../data/sections";
 import ThemeToggle from "./ThemeToggle";
 import { copyText } from "../lib/prompt";
@@ -53,15 +59,55 @@ export default function Nav({
   const commandCopyTooltipRef = useRef<HTMLElement>(null);
   const promptCopyTooltipRef = useRef<HTMLElement>(null);
   const { showCopyTooltip } = useCopyTooltip();
+  const [searchQuery, setSearchQuery] = useState("");
+  const normalizedSearch = searchQuery.trim().toLocaleLowerCase();
+  const filteredSections = useMemo(() => {
+    if (!normalizedSearch) return sections;
+
+    const matches = (...values: Array<string | undefined>) =>
+      values.some((value) =>
+        value?.toLocaleLowerCase().includes(normalizedSearch),
+      );
+
+    return sections.flatMap((section) => {
+      const sectionMatches = matches(
+        section.id,
+        section.name,
+        section.group,
+        section.description,
+      );
+      const examples = sectionMatches
+        ? section.examples
+        : section.examples.filter((example) =>
+            matches(
+              example.id,
+              example.name,
+              example.title,
+              example.description,
+            ),
+          );
+
+      return examples.length ? [{ ...section, examples }] : [];
+    });
+  }, [normalizedSearch, sections]);
+  const singleExampleSectionIds = useMemo(
+    () =>
+      new Set(
+        sections
+          .filter((section) => section.examples.length === 1)
+          .map((section) => section.id),
+      ),
+    [sections],
+  );
   const orderedExamples = useMemo(
     () =>
-      sections.flatMap((section) =>
+      filteredSections.flatMap((section) =>
         section.examples.map((example) => ({
           sectionId: section.id,
           exampleId: example.id,
         })),
       ),
-    [sections],
+    [filteredSections],
   );
 
   const handleCopyInstallCommand = useCallback(async () => {
@@ -201,11 +247,29 @@ export default function Nav({
           setIncludeEditorControls={setIncludeEditorControls}
         />
       </fig-header>
+      <fig-header className="nav-search-header" compact>
+        <fig-input-text
+          type="search"
+          value={searchQuery}
+          placeholder="Search examples..."
+          aria-label="Search examples"
+          full
+          onInput={(event: React.FormEvent<HTMLElement>) => {
+            const input = event.currentTarget as HTMLElement & {
+              value?: string;
+            };
+            setSearchQuery(input.value ?? "");
+          }}
+        ></fig-input-text>
+      </fig-header>
       <div className="nav-links fig-overflow-fade" ref={navRef}>
+        {filteredSections.length === 0 && (
+          <div className="nav-search-empty">No examples found</div>
+        )}
         {(() => {
           const groups: { group: string | undefined; sections: Section[] }[] =
             [];
-          for (const section of sections) {
+          for (const section of filteredSections) {
             const existing = section.group
               ? groups.find((entry) => entry.group === section.group)
               : groups[groups.length - 1]?.group === undefined
@@ -242,7 +306,7 @@ export default function Nav({
 
           return groups.map((g, gi) => {
             const layers = g.sections.map((section) => {
-              const isSingleExample = section.examples.length === 1;
+              const isSingleExample = singleExampleSectionIds.has(section.id);
               const onlyExample = section.examples[0];
               return (
                 <fig-layer
@@ -277,7 +341,7 @@ export default function Nav({
                   name={g.group}
                   compact
                   collapsible
-                  open={collapsed ? undefined : true}
+                  open={normalizedSearch ? true : collapsed ? undefined : true}
                 >
                   {layers}
                 </fig-group>

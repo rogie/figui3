@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.6]
+
+### Added
+
+- Added playground navigation search with filtered examples and groups.
+
+### Changed
+
+- Remapped logical color tokens to selected-state equivalents within selected components.
+- Stretched choices across vertical chooser layouts.
+
+### Fixed
+
+- Preserved specialized selected colors for tabs and segmented controls.
+
 ## [11.6.5]
 
 ### Changed

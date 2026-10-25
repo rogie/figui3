@@ -91,6 +91,21 @@ nav {
     }
   }
 
+  .nav-search-header {
+    flex-shrink: 0;
+
+    fig-input-text {
+      width: 100%;
+    }
+  }
+
+  .nav-search-empty {
+    padding: var(--spacer-3);
+    color: var(--figma-color-text-secondary);
+    font-size: var(--font-size-small);
+    text-align: center;
+  }
+
   .nav-footer {
     border-top: 1px solid var(--figma-color-border);
     padding: var(--spacer-2);

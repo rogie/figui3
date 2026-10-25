@@ -499,6 +499,30 @@
   }
 }
 
+[selected]:not([selected="false"]):not(fig-tabs):not(fig-tab):not(fig-segmented-control):not(fig-segment) {
+  --figma-color-bg: var(--figma-color-bg-selected);
+  --figma-color-bg-hover: var(--figma-color-bg-selected-hover);
+  --figma-color-bg-active: var(--figma-color-bg-selected-pressed);
+  --figma-color-bg-pressed: var(--figma-color-bg-selected-pressed);
+  --figma-color-bg-secondary: var(--figma-color-bg-selected-secondary);
+  --figma-color-bg-tertiary: var(--figma-color-bg-selected-tertiary);
+  --figma-color-border: var(--figma-color-border-onselected);
+  --figma-color-border-strong: var(--figma-color-border-onselected-strong);
+  --figma-color-icon: var(--figma-color-icon-onselected);
+  --figma-color-icon-hover: var(--figma-color-icon-onselected);
+  --figma-color-icon-pressed: var(--figma-color-icon-onselected);
+  --figma-color-icon-secondary: var(--figma-color-icon-onselected-secondary);
+  --figma-color-icon-secondary-hover: var(--figma-color-icon-onselected);
+  --figma-color-icon-tertiary: var(--figma-color-icon-onselected-tertiary);
+  --figma-color-icon-tertiary-hover: var(--figma-color-icon-onselected);
+  --figma-color-text: var(--figma-color-text-onselected);
+  --figma-color-text-hover: var(--figma-color-text-onselected);
+  --figma-color-text-secondary: var(--figma-color-text-onselected-secondary);
+  --figma-color-text-secondary-hover: var(--figma-color-text-onselected);
+  --figma-color-text-tertiary: var(--figma-color-text-onselected-tertiary);
+  --figma-color-text-tertiary-hover: var(--figma-color-text-onselected);
+}
+
 
 button,
 select,
@@ -6772,6 +6796,12 @@ fig-chooser {
       }
     }
   }
+  &:not([layout]),
+  &[layout=""],
+  &[layout="vertical"] {
+    align-items: stretch;
+  }
+
   &:not([layout]),
   &[layout=""],
   &[layout="vertical"], 

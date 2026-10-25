@@ -117,7 +117,7 @@ test.describe("fig-property", () => {
     );
   });
 
-  test("uses the selected background unless selected is false", async ({
+  test("remaps logical colors when selected unless selected is false", async ({
     page,
   }) => {
     await page.evaluate(() => {
@@ -132,6 +132,7 @@ test.describe("fig-property", () => {
     });
 
     const colors = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root")!;
       const background = (selector: string) =>
         getComputedStyle(document.querySelector(selector)!).backgroundColor;
       const probe = document.createElement("div");
@@ -139,12 +140,44 @@ test.describe("fig-property", () => {
       document.body.append(probe);
       const token = getComputedStyle(probe).backgroundColor;
       probe.remove();
+      const selected = root.querySelector("#present")!;
+      const mappings = [
+        ["--figma-color-bg", "--figma-color-bg-selected"],
+        ["--figma-color-bg-hover", "--figma-color-bg-selected-hover"],
+        ["--figma-color-bg-active", "--figma-color-bg-selected-pressed"],
+        ["--figma-color-bg-pressed", "--figma-color-bg-selected-pressed"],
+        ["--figma-color-bg-secondary", "--figma-color-bg-selected-secondary"],
+        ["--figma-color-bg-tertiary", "--figma-color-bg-selected-tertiary"],
+        ["--figma-color-border", "--figma-color-border-onselected"],
+        ["--figma-color-border-strong", "--figma-color-border-onselected-strong"],
+        ["--figma-color-icon", "--figma-color-icon-onselected"],
+        ["--figma-color-icon-secondary", "--figma-color-icon-onselected-secondary"],
+        ["--figma-color-icon-tertiary", "--figma-color-icon-onselected-tertiary"],
+        ["--figma-color-text", "--figma-color-text-onselected"],
+        ["--figma-color-text-secondary", "--figma-color-text-onselected-secondary"],
+        ["--figma-color-text-tertiary", "--figma-color-text-onselected-tertiary"],
+      ];
+      const remaps = mappings.map(([logical, selectedToken]) => {
+        const actual = document.createElement("span");
+        const expected = document.createElement("span");
+        actual.style.backgroundColor = `var(${logical})`;
+        expected.style.backgroundColor = `var(${selectedToken})`;
+        selected.append(actual);
+        root.append(expected);
+        const matches =
+          getComputedStyle(actual).backgroundColor ===
+          getComputedStyle(expected).backgroundColor;
+        actual.remove();
+        expected.remove();
+        return matches;
+      });
       return {
         token,
         present: background("#present"),
         true: background("#true"),
         false: background("#false"),
         unset: background("#unset"),
+        remaps,
       };
     });
 
@@ -152,6 +185,7 @@ test.describe("fig-property", () => {
     expect(colors.true).toBe(colors.token);
     expect(colors.false).toBe(colors.unset);
     expect(colors.false).not.toBe(colors.token);
+    expect(colors.remaps).toEqual(Array(14).fill(true));
   });
 
   test("updates generated accessories and emits action events", async ({

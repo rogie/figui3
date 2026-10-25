@@ -4761,6 +4761,7 @@ test("fig-select supports subtle hover fill per option and from the host", async
     const result = {
       menuHover: resolve("--figma-color-bg-menu-hover"),
       secondary: resolve("--figma-color-bg-secondary"),
+      selectedSecondary: resolve("--figma-color-bg-selected-secondary"),
     };
     probe.remove();
     return result;
@@ -4777,7 +4778,7 @@ test("fig-select supports subtle hover fill per option and from the host", async
 
   await select.evaluate((element) => element.setAttribute("subtle", ""));
   await regular.hover();
-  expect(await hoverFill(regular)).toBe(colors.secondary);
+  expect(await hoverFill(regular)).toBe(colors.selectedSecondary);
 
   await regular.evaluate((element) => element.setAttribute("subtle", "false"));
   await regular.hover();
@@ -10034,6 +10035,44 @@ test.describe("remaining accessibility contracts", () => {
     ]);
   });
 
+  test("fig-chooser stretches choices in vertical layouts", async ({ page }) => {
+    const widths = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-chooser id="vertical-stretch-chooser" layout="vertical" style="width: 240px;">
+          <fig-choice value="palette">
+            <fig-input-palette value="#FF6B6B,#FFA07A,#FFD700,#FF4500" fixed disabled full></fig-input-palette>
+          </fig-choice>
+        </fig-chooser>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const chooser = root.querySelector<HTMLElement>(
+        "#vertical-stretch-chooser",
+      )!;
+      const choice = chooser.querySelector<HTMLElement>("fig-choice")!;
+      const palette =
+        choice.querySelector<HTMLElement>("fig-input-palette")!;
+      const style = getComputedStyle(chooser);
+      return {
+        content: Math.round(
+          chooser.clientWidth -
+            parseFloat(style.paddingLeft) -
+            parseFloat(style.paddingRight),
+        ),
+        choice: Math.round(choice.getBoundingClientRect().width),
+        palette: Math.round(palette.getBoundingClientRect().width),
+      };
+    });
+
+    expect(widths).toEqual({
+      content: 240,
+      choice: 240,
+      palette: 240,
+    });
+  });
+
   test("fig-chooser keeps overflow controls at the edges after delayed choice writes", async ({
     page,
   }) => {
@@ -11192,6 +11231,58 @@ test.describe("remaining accessibility contracts", () => {
       iconPaddingLeft: "0px",
       iconPaddingRight: "0px",
     });
+  });
+
+  test("tabs and segmented controls keep their specialized selected colors", async ({
+    page,
+  }) => {
+    const colors = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-tabs>
+          <fig-tab id="selected-tab" selected>Tab</fig-tab>
+          <fig-tab>Other</fig-tab>
+        </fig-tabs>
+        <fig-segmented-control>
+          <fig-segment id="selected-segment" selected>Segment</fig-segment>
+        </fig-segmented-control>
+      `;
+
+      const resolveColor = (
+        property: "backgroundColor" | "color",
+        token: string,
+      ) => {
+        const probe = document.createElement("span");
+        probe.style[property] = `var(${token})`;
+        document.body.append(probe);
+        const value = getComputedStyle(probe)[property];
+        probe.remove();
+        return value;
+      };
+      const tab = getComputedStyle(root.querySelector("#selected-tab")!);
+      const segment = getComputedStyle(root.querySelector("#selected-segment")!);
+      return {
+        tabBackground: tab.backgroundColor,
+        tabText: tab.color,
+        segmentBackground: segment.backgroundColor,
+        segmentText: segment.color,
+        expectedTabBackground: resolveColor(
+          "backgroundColor",
+          "--figma-color-bg-secondary",
+        ),
+        expectedSegmentBackground: resolveColor(
+          "backgroundColor",
+          "--figma-color-bg",
+        ),
+        expectedText: resolveColor("color", "--figma-color-text"),
+      };
+    });
+
+    expect(colors.tabBackground).toBe(colors.expectedTabBackground);
+    expect(colors.tabText).toBe(colors.expectedText);
+    expect(colors.segmentBackground).toBe(colors.expectedSegmentBackground);
+    expect(colors.segmentText).toBe(colors.expectedText);
   });
 
   test("tabs and segmented controls expose roving selection semantics", async ({ page }) => {
