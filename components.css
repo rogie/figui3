@@ -499,7 +499,7 @@
   }
 }
 
-[selected]:not([selected="false"]):not(fig-tabs):not(fig-tab):not(fig-segmented-control):not(fig-segment) {
+[selected]:not([selected="false"]):not(:is(fig-tabs, fig-tab, fig-segmented-control, fig-segment, fig-select-option, fig-menu-item)) {
   --figma-color-bg: var(--figma-color-bg-selected);
   --figma-color-bg-hover: var(--figma-color-bg-selected-hover);
   --figma-color-bg-active: var(--figma-color-bg-selected-pressed);
@@ -521,6 +521,8 @@
   --figma-color-text-secondary-hover: var(--figma-color-text-onselected);
   --figma-color-text-tertiary: var(--figma-color-text-onselected-tertiary);
   --figma-color-text-tertiary-hover: var(--figma-color-text-onselected);
+
+  color: var(--figma-color-text-selected);
 }
 
 
@@ -728,14 +730,16 @@ textarea {
 select,
 input[type="text"][list] {
   padding: var(--spacer-2);
-  background-color: var(--figma-color-bg);
   
 
   &:not([multiple]) {
     height: var(--fig-dropdown-height, var(--spacer-4));
     padding: 0 var(--spacer-4) 0 var(--spacer-2);
-    background: calc(100% - var(--spacer-1)) 50% / 1rem no-repeat
-    var(--icon-16-chevron);
+    background-color: var(--figma-color-bg);
+    background-image: var(--icon-16-chevron);
+    background-position: calc(100% - var(--spacer-1)) 50%;
+    background-size: 1rem;
+    background-repeat: no-repeat;
   }
   &[multiple] {
     overflow: auto;

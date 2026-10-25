@@ -942,6 +942,13 @@ class FigDropdown extends HTMLElement {
   #boundHandleSelectInput;
   #boundHandleSelectChange;
   #boundHandleSelectKeydown;
+  #boundHandleSelectPointerDown;
+  #boundHandleSelectBlur;
+  #openButton = null;
+  #openButtonWasSelected = false;
+  #openSelectWasSelected = false;
+  #openStateActive = false;
+  #openStateFrame = 0;
 
   get label() {
     return this.#label;
@@ -958,6 +965,9 @@ class FigDropdown extends HTMLElement {
     this.#boundHandleSelectInput = this.#handleSelectInput.bind(this);
     this.#boundHandleSelectChange = this.#handleSelectChange.bind(this);
     this.#boundHandleSelectKeydown = this.#handleSelectKeydown.bind(this);
+    this.#boundHandleSelectPointerDown =
+      this.#handleSelectPointerDown.bind(this);
+    this.#boundHandleSelectBlur = this.#clearOpenState.bind(this);
     this.#boundSlotChange = this.slotChange.bind(this);
   }
 
@@ -965,6 +975,87 @@ class FigDropdown extends HTMLElement {
     this.select.addEventListener("input", this.#boundHandleSelectInput);
     this.select.addEventListener("change", this.#boundHandleSelectChange);
     this.select.addEventListener("keydown", this.#boundHandleSelectKeydown);
+    this.select.addEventListener(
+      "pointerdown",
+      this.#boundHandleSelectPointerDown,
+    );
+    this.select.addEventListener("blur", this.#boundHandleSelectBlur);
+  }
+
+  #markOpenState() {
+    const button = this.closest('fig-button[type="select"]');
+    if (this.#openStateActive && this.#openButton !== button) {
+      this.#clearOpenState();
+    }
+    if (!this.#openStateActive) {
+      this.#openSelectWasSelected =
+        this.select.hasAttribute("selected") &&
+        this.select.getAttribute("selected") !== "false";
+      this.#openStateActive = true;
+    }
+    this.select.setAttribute("selected", "");
+    if (!button) return;
+    if (this.#openButton !== button) {
+      this.#openButton = button;
+      this.#openButtonWasSelected =
+        button.hasAttribute("selected") &&
+        button.getAttribute("selected") !== "false";
+    }
+    button.setAttribute("selected", "");
+  }
+
+  #clearOpenState() {
+    if (this.#openStateFrame) {
+      cancelAnimationFrame(this.#openStateFrame);
+      this.#openStateFrame = 0;
+    }
+    if (this.#openButton && !this.#openButtonWasSelected) {
+      this.#openButton.removeAttribute("selected");
+    }
+    if (this.#openStateActive && !this.#openSelectWasSelected) {
+      this.select.removeAttribute("selected");
+    }
+    this.#openButton = null;
+    this.#openButtonWasSelected = false;
+    this.#openSelectWasSelected = false;
+    this.#openStateActive = false;
+  }
+
+  #watchOpenState() {
+    if (this.#openStateFrame) cancelAnimationFrame(this.#openStateFrame);
+    let attempts = 0;
+    let sawOpen = false;
+    const check = () => {
+      this.#openStateFrame = 0;
+      if (!this.isConnected) {
+        this.#clearOpenState();
+        return;
+      }
+      let open = false;
+      try {
+        open = this.select.matches(":open");
+      } catch {
+        return;
+      }
+      if (open) sawOpen = true;
+      if (sawOpen && !open) {
+        this.#clearOpenState();
+        return;
+      }
+      attempts += 1;
+      if (sawOpen || attempts < 4) {
+        this.#openStateFrame = requestAnimationFrame(check);
+      } else {
+        this.#clearOpenState();
+      }
+    };
+    this.#openStateFrame = requestAnimationFrame(check);
+  }
+
+  #handleSelectPointerDown(e) {
+    if (e.button !== 0 || this.select.disabled) return;
+    this.#markOpenState();
+    this.#watchOpenState();
   }
 
   #hasPersistentControl(optionEl) {
@@ -1081,6 +1172,7 @@ class FigDropdown extends HTMLElement {
       this.#keepPickerOpen();
       return;
     }
+    this.#clearOpenState();
 
     // Get the value before resetting (use stored value for dropdown type)
     const selectedValue =
@@ -1099,16 +1191,19 @@ class FigDropdown extends HTMLElement {
   }
 
   #handleSelectKeydown(e) {
-    if (this.closest('fig-button[type="select"]')) return;
     if (e.key !== "Enter" || e.defaultPrevented) return;
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
     if (this.select.disabled || this.select.multiple) return;
+    this.#markOpenState();
+    this.#watchOpenState();
+    if (this.closest('fig-button[type="select"]')) return;
     if (typeof this.select.showPicker !== "function") return;
     e.preventDefault();
     try {
       this.select.showPicker();
     } catch {
       // showPicker can be unavailable during non-user-initiated key events.
+      this.#clearOpenState();
     }
   }
 
@@ -1169,6 +1264,12 @@ class FigDropdown extends HTMLElement {
     this.select.removeEventListener("input", this.#boundHandleSelectInput);
     this.select.removeEventListener("change", this.#boundHandleSelectChange);
     this.select.removeEventListener("keydown", this.#boundHandleSelectKeydown);
+    this.select.removeEventListener(
+      "pointerdown",
+      this.#boundHandleSelectPointerDown,
+    );
+    this.select.removeEventListener("blur", this.#boundHandleSelectBlur);
+    this.#clearOpenState();
   }
 }
 

@@ -4412,6 +4412,89 @@ test.describe("dropdown keyboard behavior", () => {
     );
   });
 
+  test("marks a wrapping select button as selected while the picker is open", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="wrapper" type="select">
+          Choose
+          <fig-dropdown>
+            <option>One</option>
+            <option>Two</option>
+          </fig-dropdown>
+        </fig-button>
+        <fig-button id="authored" type="select" selected>
+          Choose
+          <fig-dropdown><option>One</option></fig-dropdown>
+        </fig-button>
+      `;
+
+      const readLifecycle = (buttonSelector: string) => {
+        const button = root.querySelector(buttonSelector)!;
+        const select = button.querySelector("select")!;
+        select.dispatchEvent(
+          new PointerEvent("pointerdown", { bubbles: true, button: 0 }),
+        );
+        const whileOpen = button.hasAttribute("selected");
+        const selectWhileOpen = select.hasAttribute("selected");
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        const afterClose = button.hasAttribute("selected");
+        const selectAfterClose = select.hasAttribute("selected");
+        select.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            bubbles: true,
+            cancelable: true,
+            key: "Enter",
+          }),
+        );
+        const whileKeyboardOpen = button.hasAttribute("selected");
+        const selectWhileKeyboardOpen = select.hasAttribute("selected");
+        select.dispatchEvent(new FocusEvent("blur"));
+        return {
+          whileOpen,
+          selectWhileOpen,
+          afterClose,
+          selectAfterClose,
+          whileKeyboardOpen,
+          selectWhileKeyboardOpen,
+          afterKeyboardClose: button.hasAttribute("selected"),
+          selectAfterKeyboardClose: select.hasAttribute("selected"),
+        };
+      };
+
+      return {
+        generated: readLifecycle("#wrapper"),
+        authored: readLifecycle("#authored"),
+      };
+    });
+
+    expect(state).toEqual({
+      generated: {
+        whileOpen: true,
+        selectWhileOpen: true,
+        afterClose: false,
+        selectAfterClose: false,
+        whileKeyboardOpen: true,
+        selectWhileKeyboardOpen: true,
+        afterKeyboardClose: false,
+        selectAfterKeyboardClose: false,
+      },
+      authored: {
+        whileOpen: true,
+        selectWhileOpen: true,
+        afterClose: true,
+        selectAfterClose: false,
+        whileKeyboardOpen: true,
+        selectWhileKeyboardOpen: true,
+        afterKeyboardClose: true,
+        selectAfterKeyboardClose: false,
+      },
+    });
+  });
+
   test("fig-dropdown keeps a single select on reconnect", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -4761,7 +4844,6 @@ test("fig-select supports subtle hover fill per option and from the host", async
     const result = {
       menuHover: resolve("--figma-color-bg-menu-hover"),
       secondary: resolve("--figma-color-bg-secondary"),
-      selectedSecondary: resolve("--figma-color-bg-selected-secondary"),
     };
     probe.remove();
     return result;
@@ -4778,7 +4860,7 @@ test("fig-select supports subtle hover fill per option and from the host", async
 
   await select.evaluate((element) => element.setAttribute("subtle", ""));
   await regular.hover();
-  expect(await hoverFill(regular)).toBe(colors.selectedSecondary);
+  expect(await hoverFill(regular)).toBe(colors.secondary);
 
   await regular.evaluate((element) => element.setAttribute("subtle", "false"));
   await regular.hover();

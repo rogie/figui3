@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.7]
+
+### Changed
+
+- Applied selected text styling while preserving specialized tab, segment, menu-item, and select-option states.
+- Preserved dropdown background colors when rendering native chevron images.
+
+### Fixed
+
+- Marked native dropdown selects and wrapping select buttons as selected only while their picker is open.
+
 ## [11.6.6]
 
 ### Added
