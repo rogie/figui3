@@ -9,6 +9,7 @@ const repoRoot = path.resolve(
 const assetNames = [
   "fig.css",
   "fig.js",
+  "fig-color.js",
   "fig-layer.css",
   "fig-layer.js",
   "base.css",

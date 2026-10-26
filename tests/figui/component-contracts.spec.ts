@@ -6394,6 +6394,7 @@ test.describe("input focus ring consistency", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
         <fig-input-file id="standalone-file" filename="asset.png"></fig-input-file>
+        <fig-input-file id="fixed-file" filename="fixed.png" remove="false"></fig-input-file>
         <fig-field id="file-field">
           <label>File</label>
           <fig-input-file filename="asset.png"></fig-input-file>
@@ -6403,9 +6404,16 @@ test.describe("input focus ring consistency", () => {
 
     const standalone = page.locator("#standalone-file");
     const standaloneClear = standalone.locator(".fig-input-file-clear");
+    const fixed = page.locator("#fixed-file");
     await expect(standaloneClear).toHaveCSS("display", "none");
+    await expect(fixed.locator(".fig-input-file-clear")).toHaveCount(0);
     await standalone.hover();
     await expect(standaloneClear).toHaveCSS("display", "flex");
+
+    await fixed.evaluate((element) => element.setAttribute("remove", "true"));
+    await expect(fixed.locator(".fig-input-file-clear")).toHaveCount(1);
+    await fixed.evaluate((element) => element.setAttribute("remove", "false"));
+    await expect(fixed.locator(".fig-input-file-clear")).toHaveCount(0);
 
     await page.mouse.move(0, 0);
     const field = page.locator("#file-field");
@@ -14870,6 +14878,28 @@ test.describe("media accessibility", () => {
         ),
       )
       .toBe("00:30 of 02:00");
+  });
+
+  test("fig-media-controls selects its play button while playing", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-media-controls></fig-media-controls>`;
+    });
+
+    const controls = page.locator("fig-media-controls");
+    const playButton = controls.locator("fig-button");
+    await expect(playButton).not.toHaveAttribute("selected");
+
+    await playButton.click();
+    await expect(controls).toHaveAttribute("playing", "");
+    await expect(playButton).toHaveAttribute("selected", "");
+
+    await playButton.click();
+    await expect(controls).not.toHaveAttribute("playing");
+    await expect(playButton).not.toHaveAttribute("selected");
   });
 
   test("fig-image and fig-media forward native load lifecycle events", async ({

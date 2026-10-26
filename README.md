@@ -547,6 +547,7 @@ Requires `fig-editor.js` and `fig-editor.css`.
 | `preview` | `"true"` \| `"false"` \| `"large"` | `false` | Show compact media previews, or use `large` for an upload-enabled `fig-image`/`fig-video` preview |
 | `label` | string | generated | Empty-state button label; defaults to `Upload audio`, `Upload image`, or `Upload file` from the known file type |
 | `multiple` | boolean | `false` | Allow multiple files |
+| `remove` | boolean | `true` | Show the remove button when a file is selected; set to `"false"` to omit it |
 | `disabled` | boolean | `false` | Disabled state |
 | `variant` | string | `"property"` | Internal button variant |
 

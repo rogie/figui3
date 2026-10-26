@@ -1286,6 +1286,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       options: ["true", "false", "large"],
     },
     multiple: { label: "Multiple", type: "boolean", boolMode: "presence" },
+    remove: {
+      label: "Remove",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
 };

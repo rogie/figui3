@@ -15078,6 +15078,7 @@ class FigMediaControls extends HTMLElement {
     if (!this.#playBtn) return;
     const playing = this.playing;
     this.#playBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
+    this.#playBtn.toggleAttribute("selected", playing);
     this.#playTooltip?.setAttribute("text", playing ? "Pause" : "Play");
     const icon = this.#playBtn.querySelector("fig-icon");
     if (icon) {
@@ -15829,9 +15830,10 @@ const FIG_INPUT_FILE_VIDEO_EXTENSIONS = [
  * @attr {string} accepts - Native file chooser filter.
  * @attr {boolean} preview - Preview supported files or show their media-specific icon.
  * @attr {string} label - Upload button label. Defaults by known file type.
+ * @attr {boolean} remove - Show the remove button for a selected file. Defaults to true.
  */
 class FigInputFile extends HTMLElement {
-  static observedAttributes = ["accepts", "preview", "label", "disabled", "multiple", "variant", "url", "filename"];
+  static observedAttributes = ["accepts", "preview", "label", "disabled", "multiple", "variant", "url", "filename", "remove"];
 
   #fileInput = null;
   #filenameEl = null;
@@ -15882,6 +15884,10 @@ class FigInputFile extends HTMLElement {
       this.hasAttribute("preview") &&
       this.getAttribute("preview") !== "false"
     );
+  }
+
+  get #removeEnabled() {
+    return this.getAttribute("remove") !== "false";
   }
 
   get #largePreviewEnabled() {
@@ -16543,18 +16549,20 @@ class FigInputFile extends HTMLElement {
         this.appendChild(this.#uploadBtn);
       }
 
-      const clearTooltip = document.createElement("fig-tooltip");
-      clearTooltip.setAttribute("text", "Remove");
-      this.#clearBtn = document.createElement("fig-button");
-      this.#clearBtn.setAttribute("variant", variant === "overlay" ? "overlay" : "ghost");
-      this.#clearBtn.setAttribute("icon", "true");
-      this.#clearBtn.setAttribute("aria-label", "Remove");
-      this.#clearBtn.className = "fig-input-file-clear";
-      if (disabled) this.#clearBtn.setAttribute("disabled", "");
-      this.#clearBtn.replaceChildren(createFigIcon("minus"));
-      this.#clearBtn.addEventListener("click", this.#onClear);
-      clearTooltip.appendChild(this.#clearBtn);
-      this.appendChild(clearTooltip);
+      if (this.#removeEnabled) {
+        const clearTooltip = document.createElement("fig-tooltip");
+        clearTooltip.setAttribute("text", "Remove");
+        this.#clearBtn = document.createElement("fig-button");
+        this.#clearBtn.setAttribute("variant", variant === "overlay" ? "overlay" : "ghost");
+        this.#clearBtn.setAttribute("icon", "true");
+        this.#clearBtn.setAttribute("aria-label", "Remove");
+        this.#clearBtn.className = "fig-input-file-clear";
+        if (disabled) this.#clearBtn.setAttribute("disabled", "");
+        this.#clearBtn.replaceChildren(createFigIcon("minus"));
+        this.#clearBtn.addEventListener("click", this.#onClear);
+        clearTooltip.appendChild(this.#clearBtn);
+        this.appendChild(clearTooltip);
+      }
       if (showsAudioPreview) this.#renderAudioPreview();
     } else {
       const tooltipText = accepts

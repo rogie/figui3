@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.8]
+
+### Added
+
+- Added a default-enabled `remove` attribute to `fig-input-file` for omitting the selected-file remove button.
+
+### Changed
+
+- Marked the `fig-media-controls` play button as selected while playing.
+
+### Fixed
+
+- Restored component registration inside playground plugin iframes by serving the color helper module.
+
 ## [11.6.7]
 
 ### Changed

@@ -168,7 +168,8 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 />
 ```
 
-- Attrs: `preview`, `label`, `accepts`, `multiple`, `disabled`, `variant` (forwards `fig-button` variants; defaults to `property`)
+- Attrs: `preview`, `label`, `accepts`, `multiple`, `remove`, `disabled`, `variant` (forwards `fig-button` variants; defaults to `property`)
+- `remove` defaults to true; set `remove="false"` to omit the selected file's remove button.
 - Blank or omitted `label` defaults to `Upload audio`, `Upload image`, or `Upload file` based on the known file type. An explicit label overrides it.
 - For known audio files, `preview` shows the audio icon and filename at rest, reveals play and waveform controls on hover/focus, and keeps pause plus waveform visible while playing.
 - `accepts` controls the native chooser filter; file icons and previews are detected independently.
