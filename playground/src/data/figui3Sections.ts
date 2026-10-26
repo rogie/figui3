@@ -3009,6 +3009,25 @@ ${versionHistoryGroup("August 11", [
     ],
   },
   {
+    id: "native-meter",
+    name: "<meter>",
+    group: "Native elements",
+    description:
+      "Native meter displaying a scalar value within a known range.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label for="storage-meter">Storage</label>
+    <meter id="storage-meter" min="0" max="100" low="30" high="80" optimum="50" value="64">64%</meter>
+  </fig-field>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "native-fieldset",
     name: "<fieldset>",
     group: "Native elements",

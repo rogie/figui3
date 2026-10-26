@@ -666,6 +666,49 @@ progress {
   }
 }
 
+meter {
+  --meter-height: 0.375rem;
+  --meter-radius: calc(var(--meter-height) / 2);
+  --meter-color: var(--figma-color-bg-brand);
+
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: var(--meter-height);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  overflow: hidden;
+  background: var(--figma-color-bg-secondary);
+  border-radius: var(--meter-radius);
+
+  &::-webkit-meter-bar {
+    height: var(--meter-height);
+    border: 0;
+    background: var(--figma-color-bg-secondary);
+    border-radius: var(--meter-radius);
+    box-shadow: none;
+  }
+
+  &::-webkit-meter-optimum-value,
+  &::-webkit-meter-suboptimum-value,
+  &::-webkit-meter-even-less-good-value {
+    background: var(--meter-color);
+    border-radius: var(--meter-radius);
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    min-width: var(--meter-height);
+  }
+
+  &::-moz-meter-bar {
+    background: var(--meter-color);
+    border-radius: var(--meter-radius);
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    min-width: var(--meter-height);
+  }
+}
+
 fig-input-number .fig-steppers {
   order: 3;
   display: flex;
@@ -5068,7 +5111,7 @@ fig-field {
     }
   }
 
-  & > progress {
+  & > :is(progress, meter) {
     align-self: center;
   }
 

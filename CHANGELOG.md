@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.9]
+
+### Added
+
+- Added a native `<meter>` playground example.
+- Added token-driven native `<meter>` styling with customizable `--meter-color`.
+
+### Changed
+
+- Vertically centered native meters inside `fig-field`, matching progress elements.
+
 ## [11.6.8]
 
 ### Added
