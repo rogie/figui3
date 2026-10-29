@@ -236,7 +236,7 @@ Custom listbox select with overflow chevrons, grouped options, and sticky separa
 | `label` | string | — | Closed-state / accessible label |
 | `options` | string | — | Comma, newline, or JSON options if no authored `fig-select-option` children |
 | `menu-anchor` | CSS selector | — | Alternate element to align the open menu against |
-| `variant` | string | — | `"ghost"` for a borderless control or `"input"` for input-style fill and interaction states |
+| `variant` | string | — | `"primary"` for brand emphasis, `"ghost"` for a borderless control, or `"input"` for input-style fill and interaction states |
 | `size` | string | — | `"large"` for a 32px-tall trigger |
 | `icon` | boolean | `false` | Render a square chevron-only trigger; provide `aria-label` |
 | `subtle` | boolean | `false` | Use the secondary hover/focus fill for every option |

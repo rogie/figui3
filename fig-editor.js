@@ -557,7 +557,7 @@ figEditorDefineElement("fig-select-options", FigSelectOptions);
 
 /**
  * A dropdown-styled select.
- * @attr {string} variant - Visual style: `ghost` or input-like `input`.
+ * @attr {string} variant - Visual style: `primary`, `ghost`, or input-like `input`.
  * @attr {string} size - Control size. Use `large` for a 32px-tall control.
  * @attr {boolean} icon - Shows a square chevron-only trigger.
  * @attr {string} menu-anchor - CSS selector for an alternate menu anchor.

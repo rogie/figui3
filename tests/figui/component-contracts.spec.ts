@@ -4542,7 +4542,7 @@ test.describe("dropdown keyboard behavior", () => {
   });
 });
 
-test("fig-dropdown and fig-select variants apply ghost and input styling", async ({
+test("fig-dropdown and fig-select variants apply primary, ghost, and input styling", async ({
   page,
 }) => {
   collectPageErrors(page);
@@ -4564,6 +4564,7 @@ test("fig-dropdown and fig-select variants apply ghost and input styling", async
         <option>One</option>
       </fig-dropdown>
       <fig-select id="select-default" value="one" options="One,Two"></fig-select>
+      <fig-select id="select-primary" variant="primary" value="one" options="One,Two"></fig-select>
       <fig-select id="select-ghost" variant="ghost" value="one" options="One,Two"></fig-select>
       <fig-select id="select-input" variant="input" value="one" options="One,Two"></fig-select>
     `;
@@ -4579,6 +4580,14 @@ test("fig-dropdown and fig-select variants apply ghost and input styling", async
       return color;
     };
     return {
+      brand: resolve("--figma-color-bg-brand"),
+      brandHover: resolve("--figma-color-bg-brand-hover"),
+      brandPressed: resolve("--figma-color-bg-brand-pressed"),
+      disabled: resolve("--figma-color-bg-disabled"),
+      iconOnBrand: resolve("--figma-color-icon-onbrand"),
+      iconOnDisabled: resolve("--figma-color-icon-ondisabled"),
+      textOnBrand: resolve("--figma-color-text-onbrand"),
+      textOnDisabled: resolve("--figma-color-text-ondisabled"),
       secondary: resolve("--figma-color-bg-secondary"),
       transparent: resolve("--figma-color-bg-transparent"),
       selected: resolve("--figma-color-bg-selected"),
@@ -4603,6 +4612,35 @@ test("fig-dropdown and fig-select variants apply ghost and input styling", async
     "box-shadow",
     "none",
   );
+  const primary = page.locator("#select-primary");
+  await expect(primary).toHaveCSS("box-shadow", "none");
+  await expect(primary).toHaveCSS("background-color", colors.brand);
+  await expect(primary).toHaveCSS("color", colors.textOnBrand);
+  await expect
+    .poll(() =>
+      primary.evaluate(
+        (select) => getComputedStyle(select, "::after").backgroundColor,
+      ),
+    )
+    .toBe(colors.iconOnBrand);
+  await primary.hover();
+  await expect(primary).toHaveCSS("background-color", colors.brandHover);
+  await primary.evaluate((select) => select.setAttribute("open", ""));
+  await expect(primary).toHaveCSS("background-color", colors.brandPressed);
+  await primary.evaluate((select) => {
+    select.removeAttribute("open");
+    select.setAttribute("disabled", "");
+  });
+  await expect(primary).toHaveCSS("background-color", colors.disabled);
+  await expect(primary).toHaveCSS("color", colors.textOnDisabled);
+  await expect
+    .poll(() =>
+      primary.evaluate(
+        (select) => getComputedStyle(select, "::after").backgroundColor,
+      ),
+    )
+    .toBe(colors.iconOnDisabled);
+
   await expect(page.locator("#select-ghost")).toHaveCSS("box-shadow", "none");
   await page.locator("#select-ghost").hover();
   await expect(page.locator("#select-ghost")).toHaveCSS(

@@ -764,6 +764,19 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "primary",
+        name: "Primary",
+        markup: `<div class="prop-panel">
+  <fig-select variant="primary" value="center" label="Align">
+    <fig-select-options>
+      <fig-select-option value="left">Left</fig-select-option>
+      <fig-select-option value="center">Center</fig-select-option>
+      <fig-select-option value="right">Right</fig-select-option>
+    </fig-select-options>
+  </fig-select>
+</div>`,
+      },
+      {
         id: "alternate-menu-anchor",
         name: "Alternate menu anchor",
         markup: `<div class="prop-panel">

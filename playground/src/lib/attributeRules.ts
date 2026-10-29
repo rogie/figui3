@@ -550,7 +550,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     variant: {
       label: "Variant",
       type: "enum",
-      options: ["", "ghost", "input"],
+      options: ["", "primary", "ghost", "input"],
     },
     icon: { label: "Icon", type: "boolean", boolMode: "presence" },
     "menu-anchor": { label: "Menu anchor", type: "string" },

@@ -24,6 +24,7 @@ Observed: `value`, `disabled`, `selected`, `label`.
 `value`, `disabled`, `label`, `options`, `menu-anchor`, `position`, `offset`, `closedby`, `open`, `variant`, `size`
 
 - `icon` renders a square chevron-only trigger; provide `aria-label`
+- `variant="primary"` uses brand button colors for emphasis
 - `variant="input"` matches input-style fill, hover, press, and focus states
 - `subtle` applies the secondary hover/focus fill to every option
 - `size="large"` sets a 32px trigger

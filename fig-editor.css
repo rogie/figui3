@@ -609,6 +609,42 @@ fig-select {
     }
   }
 
+  &[variant="primary"] {
+    color: var(--figma-color-text-onbrand);
+    background-color: var(--figma-color-bg-brand);
+    box-shadow: none;
+    font-weight: 500;
+
+    &::after {
+      background-color: var(--figma-color-icon-onbrand);
+    }
+
+    &:hover:not([disabled]):not([disabled="false"]):not(
+        [open]:not([open="false"])
+      ) {
+      background-color: var(--figma-color-bg-brand-hover);
+    }
+
+    &:active:not([disabled]):not([disabled="false"]),
+    &[open]:not([open="false"]) {
+      color: var(--figma-color-text-onbrand-secondary);
+      background-color: var(--figma-color-bg-brand-pressed);
+
+      &::after {
+        background-color: var(--figma-color-icon-onbrand);
+      }
+    }
+
+    &[disabled]:not([disabled="false"]) {
+      color: var(--figma-color-text-ondisabled);
+      background-color: var(--figma-color-bg-disabled);
+
+      &::after {
+        background-color: var(--figma-color-icon-ondisabled);
+      }
+    }
+  }
+
   &::after {
     content: "";
     position: absolute;

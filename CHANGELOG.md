@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.10]
+
+### Added
+
+- Added a `primary` variant to `fig-select` with brand, interaction, open, and disabled states.
+
 ## [11.6.9]
 
 ### Added
