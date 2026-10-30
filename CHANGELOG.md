@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.14]
+
+### Fixed
+
+- Prevented `fig-property` from reserving trailing space when no trailing control exists.
+
 ## [11.6.13]
 
 ### Added

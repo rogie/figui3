@@ -97,7 +97,7 @@ fig-property {
   }
 
   &:hover:has(> [slot="trailing"]):not([show-trailing="false"]),
-  &[show-trailing]:not([show-trailing="hover"]):not([show-trailing="false"])
+  &[show-trailing]:not([show-trailing="hover"]):not([show-trailing="false"]):has([slot="trailing"])
   {
     --fig-property-trailing-gap: var(--fig-property-gap);
     --fig-property-trailing-size: max-content;
