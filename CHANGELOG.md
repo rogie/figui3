@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.12]
+
+### Changed
+
+- Preserved all JavaScript registration modules and CSS files during bundler tree-shaking.
+- Documented editor registration diagnosis and a temporary Vite workaround for older affected releases.
+
 ## [11.6.11]
 
 ### Fixed

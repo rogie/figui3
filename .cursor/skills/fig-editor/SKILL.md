@@ -29,6 +29,35 @@ import "@rogieking/figui3/fig-editor.js";
 
 `fig-editor.js` imports `fig.js`. Still import `fig-editor.css`.
 
+### Bundler registration
+
+Editor internals include registration-only modules: importing them defines custom
+elements even when they export no values. Bundlers must preserve those module
+side effects.
+
+If core controls render but palette or gradient editors do not open, check:
+
+```js
+customElements.get("fig-popup-palette");
+```
+
+An `undefined` result after importing `fig-editor.js` means the editor
+registration module was removed, usually by tree-shaking. Upgrade FigUI3 first.
+For affected older releases, use this temporary Vite workaround:
+
+```ts
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  optimizeDeps: { esbuildOptions: { treeShaking: false } },
+  build: { rollupOptions: { treeshake: false } },
+});
+```
+
+Remove the workaround after upgrading to a release whose package metadata marks
+all JavaScript and CSS files as side-effectful. See the shared
+[React guide](../figui3/react.md#bundler-registration) for details.
+
 Registered tags:
 
 | Tag | Role |

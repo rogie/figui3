@@ -32,6 +32,41 @@ await import("@rogieking/figui3/fig-lab.js");
 
 SSR (Next/Remix/Astro): import the JS only on the client.
 
+## Bundler registration
+
+FigUI3 JavaScript includes registration-only modules. Their imports define
+custom elements even when they export no values, so bundlers must preserve
+their side effects.
+
+When core components work but an editor is missing, diagnose registration after
+importing `fig-editor.js`:
+
+```js
+customElements.get("fig-popup-palette");
+```
+
+An `undefined` result means a registration module was not evaluated, usually
+because an affected FigUI3 package version let the bundler tree-shake it.
+Upgrade FigUI3 first. As a temporary Vite workaround for affected versions,
+disable dependency and production tree-shaking:
+
+```ts
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  optimizeDeps: { esbuildOptions: { treeShaking: false } },
+  build: { rollupOptions: { treeshake: false } },
+});
+```
+
+Remove this workaround after upgrading. Corrected releases declare:
+
+```json
+{
+  "sideEffects": ["**/*.js", "**/*.css"]
+}
+```
+
 ## JSX types
 
 ```ts
