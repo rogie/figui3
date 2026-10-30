@@ -93,6 +93,7 @@ const PROPERTY_CONTROL_OPTIONS: Array<{
   { tag: "fig-input-number", label: "Number" },
   { tag: "fig-slider", label: "Slider" },
   { tag: "fig-input-text", label: "String" },
+  { tag: "fig-switch", label: "Boolean" },
   { tag: "fig-input-color", label: "Color" },
   { tag: "fig-select", label: "Select" },
   { tag: "fig-input-point", label: "Point" },

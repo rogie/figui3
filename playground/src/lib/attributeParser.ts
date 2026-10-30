@@ -51,7 +51,8 @@ export type PropertyControlTag =
   | "fig-input-gradient"
   | "fig-input-palette"
   | "fig-3d-rotate"
-  | "fig-input-file";
+  | "fig-input-file"
+  | "fig-switch";
 
 function getButtonDefaultText(type: string | null): string {
   switch (type) {

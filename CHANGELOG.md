@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.13]
+
+### Added
+
+- Added a Boolean control option for `fig-property` playground examples.
+
 ## [11.6.12]
 
 ### Changed
