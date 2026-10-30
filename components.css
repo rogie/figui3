@@ -4145,6 +4145,14 @@ fig-group {
     }
   }
 
+  &[open="false"],
+  &:has(> fig-header:only-child) {
+    padding-bottom: 0;
+    > fig-header {
+      color: var(--figma-color-text-secondary);
+    }
+  }
+
   & > fig-header:hover > .fig-group-chevron {
     color: var(--figma-color-icon);
   }

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.15]
+
+### Added
+
+- Added a header-only `fig-group` playground example with an add action.
+
+### Changed
+
+- Removed bottom padding and muted the header for header-only groups.
+
 ## [11.6.14]
 
 ### Fixed

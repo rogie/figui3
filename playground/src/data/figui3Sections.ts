@@ -3098,6 +3098,21 @@ ${versionHistoryGroup("August 11", [
   },
 ]);
 
+const groupNoChildrenExample: Example = {
+  id: "no-children",
+  name: "No children",
+  markup: `<div class="prop-panel">
+  <fig-group>
+    <fig-header borderless>
+      <h3>Group name</h3>
+      <fig-button variant="ghost" icon="true" aria-label="Add item">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+    </fig-header>
+  </fig-group>
+</div>`,
+};
+
 const groupCustomHeaderExample: Example = {
   id: "custom-header",
   name: "Custom header",
@@ -3152,7 +3167,12 @@ function insertExampleAfter(
 }
 
 export const figui3Sections: Section[] = insertExampleAfter(
-  mergePropsKitSections(figui3BaseSections),
+  insertExampleAfter(
+    mergePropsKitSections(figui3BaseSections),
+    "group",
+    "default",
+    groupNoChildrenExample,
+  ),
   "group",
   "no-names",
   groupCustomHeaderExample,
