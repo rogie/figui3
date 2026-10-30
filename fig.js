@@ -8949,6 +8949,7 @@ class FigField extends HTMLElement {
       inputTag === "fig-dropdown" ||
       inputTag === "fig-tooltip" ||
       inputTag === "fig-fill-picker" ||
+      inputTag === "fig-input-rotate" ||
       nonInlinePalette ||
       (this.input instanceof HTMLDialogElement);
     this.#toggleable = !!(

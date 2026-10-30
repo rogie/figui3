@@ -1,5 +1,6 @@
 /* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
 import "./fig.js";
+import "./fig-input-rotate.js";
 import "./fig-property.js";
 import {
   figConvertRGB,

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.7.0]
+
+### Added
+
+- Added `fig-input-rotate`, a compact X/Y/Z rotation property control with an anchored 3D editor popup.
+- Added a grouped all-properties playground example and a 3D Rotate property control option.
+
+### Changed
+
+- Automatically show full `fig-property` label text in a tooltip when the label is truncated.
+
+### Fixed
+
+- Raised focused controls inside `fig-input-combo` so focus outlines stay above adjacent controls.
+
 ## [11.6.15]
 
 ### Added

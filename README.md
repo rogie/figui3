@@ -108,6 +108,7 @@ Minimal example:
 | [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
+| [Input Rotate](#input-rotate) | `<fig-input-rotate>` | Compact X/Y/Z rotation trigger |
 | [Input Point](#input-point) | `<fig-input-point>` | Paired X/Y numeric input |
 | [File Input](#file-input) | `<fig-input-file>` | File upload with image previews and audio playback waveforms |
 | [Angle](#angle) | `<fig-angle>` | Instrument-style angle/rotation dial |
@@ -513,6 +514,31 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 <fig-input-number tabular value="100" units="px"></fig-input-number>
 <fig-input-number value="50" units="%" min="0" max="100"></fig-input-number>
 ```
+
+---
+
+#### Input Rotate
+
+`<fig-input-rotate>` — [demo](https://rog.ie/figui3/#input-rotate)
+
+An editor-bundle property button that summarizes X, Y, and Z rotation values with up to one decimal place, matching the popup fields. Clicking it opens an anchored `fig-popup` containing `<fig-3d-rotate fields="rotateX,rotateY,rotateZ" aspect-ratio="4/3">`.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `x` | number | `0` | X-axis rotation |
+| `y` | number | `0` | Y-axis rotation |
+| `z` | number | `0` | Z-axis rotation |
+| `units` | string | `"deg"` | Unit suffix; `"deg"` and `"°"` display as `°` |
+| `open` | boolean | `false` | Open the rotation popup |
+| `full` | boolean | `false` | Fill the parent width |
+
+```html
+<fig-input-rotate x="0" y="0" z="0"></fig-input-rotate>
+```
+
+Popup edits update `x`, `y`, and `z` and emit `input` and `change` with `{ x, y, z }` in `detail`.
+
+Requires `fig-editor.js` and `fig-editor.css`.
 
 ---
 

@@ -1282,6 +1282,11 @@ fig-input-combo {
 .fig-input-combo,
 fig-input-combo {
   gap: 1px;
+
+  > :focus-within,
+  > fig-tooltip > :focus-within {
+    z-index: 1;
+  }
 }
 
 :is(.fig-button-combo, fig-button-combo, .fig-input-combo, fig-input-combo):not(

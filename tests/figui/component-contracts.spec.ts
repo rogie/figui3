@@ -277,6 +277,65 @@ test.describe("fig.js component contracts", () => {
     }
   });
 
+  test("input combos raise focused controls above adjacent siblings", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-combo id="direct-input-combo">
+          <fig-input-text id="direct-first" value="First"></fig-input-text>
+          <fig-input-number id="direct-second" value="2"></fig-input-number>
+        </fig-input-combo>
+        <div class="fig-input-combo" id="wrapped-input-combo">
+          <fig-tooltip text="Wrapped input">
+            <fig-input-text id="wrapped-first" value="Wrapped"></fig-input-text>
+          </fig-tooltip>
+          <fig-input-text id="wrapped-second" value="Second"></fig-input-text>
+        </div>
+      `;
+    });
+
+    const readZIndexes = () =>
+      page.evaluate(() => {
+        const zIndex = (selector: string) =>
+          getComputedStyle(
+            document.querySelector(selector) as HTMLElement,
+          ).zIndex;
+        return {
+          directFirst: zIndex("#direct-first"),
+          directSecond: zIndex("#direct-second"),
+          wrappedFirst: zIndex("#wrapped-first"),
+          wrappedSecond: zIndex("#wrapped-second"),
+        };
+      });
+
+    await page.locator("#direct-first input").focus();
+    await expect.poll(readZIndexes).toEqual({
+      directFirst: "1",
+      directSecond: "auto",
+      wrappedFirst: "auto",
+      wrappedSecond: "auto",
+    });
+
+    await page.locator("#direct-second input").focus();
+    await expect.poll(readZIndexes).toEqual({
+      directFirst: "auto",
+      directSecond: "1",
+      wrappedFirst: "auto",
+      wrappedSecond: "auto",
+    });
+
+    await page.locator("#wrapped-first input").focus();
+    await expect.poll(readZIndexes).toEqual({
+      directFirst: "auto",
+      directSecond: "auto",
+      wrappedFirst: "1",
+      wrappedSecond: "auto",
+    });
+  });
+
   test("button combos preserve select and dropdown chrome", async ({
     page,
   }) => {

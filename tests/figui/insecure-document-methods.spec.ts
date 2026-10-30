@@ -6,6 +6,7 @@ test("shipped source contains no HTML parsing sinks", async () => {
   const files = [
     "fig.js",
     "fig-editor.js",
+    "fig-input-rotate.js",
     "fig-layer.js",
     "fig-property.js",
     "fig-lab.js",

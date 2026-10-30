@@ -2,7 +2,7 @@
 name: fig-editor
 description: >-
   Guides FigUI3 editor bundle (`fig-editor.js` / `fig-editor.css`): fig-select,
-  fig-select-options, fig-select-option, fig-property, fig-input-point,
+  fig-select-options, fig-select-option, fig-property, fig-input-rotate, fig-input-point,
   fig-fill-picker, fig-palette-editor, fig-gradient-editor, fig-reorder, and fig-interpolation-swatch,
   including React JSX usage. Use when building custom selects, grouped option lists,
   sticky separators, ghost selects, composable property rows, fill picker dialogs,
@@ -67,6 +67,7 @@ Registered tags:
 | `fig-select-option` | Option (`value`, `label`, `selected`, `disabled`, `subtle`) |
 | `fig-fill-picker` | Full fill editor dialog (solid, gradient, image, video, webcam, custom modes) |
 | `fig-property` | Composable property row with leading, input, and trailing slots |
+| `fig-input-rotate` | Compact X/Y/Z rotation property button |
 | `fig-input-point` | Paired X/Y numeric point input |
 | `fig-palette-editor` | Ordered palette editor |
 | `fig-gradient-editor` | Full gradient editor with reorderable stops |

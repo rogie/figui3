@@ -1,0 +1,39 @@
+/* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
+
+fig-input-rotate {
+  display: inline-flex;
+  width: 8.9375rem;
+  min-width: 0;
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  > fig-button {
+    min-width: 0;
+  }
+
+  .fig-input-rotate-value {
+    min-width: 0;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .fig-input-rotate-axis,
+  .fig-input-rotate-separator {
+    color: var(--figma-color-text-secondary);
+  }
+}
+
+dialog[is="fig-popup"].fig-input-rotate-popup {
+  width: 12rem;
+  min-width: 0;
+  padding: 0;
+  pointer-events: auto;
+
+  .fig-input-rotate-popup-content{
+    padding-inline: var(--spacer-2-5);
+  }
+}

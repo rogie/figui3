@@ -46,6 +46,7 @@ declare module "react" {
       "fig-audio-waveform": FigAttrs;
       "fig-input-wheel": FigAttrs;
       "fig-input-number": FigAttrs;
+      "fig-input-rotate": FigAttrs;
       "fig-input-point": FigAttrs;
       "fig-easing-curve": FigAttrs;
       "fig-3d-rotate": FigAttrs;

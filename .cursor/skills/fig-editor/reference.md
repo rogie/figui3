@@ -36,6 +36,18 @@ Position: omit to overlay the selected option on the trigger. Set to place the m
 
 Events: `input`, `change`, `optionhover`, `optionfocus`.
 
+## Input rotate
+
+`fig-input-rotate` observes `x`, `y`, `z`, `units`, and `open`.
+
+- Missing or invalid axis values resolve to `0`.
+- Units default to `deg`; `deg` and `°` display as `°`.
+- Other unit strings display literally.
+- `value` returns numeric `{ x, y, z }`.
+- Clicking opens an anchored popup containing `fig-3d-rotate` with all three rotation fields.
+- Popup edits update the axis attributes and emit `input` and `change` with `{ x, y, z }`.
+- `full` makes the host fill its parent.
+
 ## Input point
 
 `fig-input-point` observes `x`, `y`, and `units`.

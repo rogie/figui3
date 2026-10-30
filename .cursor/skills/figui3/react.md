@@ -115,6 +115,7 @@ type FigTag =
   | "fig-input-fill"
   | "fig-input-gradient"
   | "fig-input-number"
+  | "fig-input-rotate"
   | "fig-input-point"
   | "fig-input-palette"
   | "fig-palette-editor"

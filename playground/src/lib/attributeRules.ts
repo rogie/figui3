@@ -528,6 +528,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
   },
+  "fig-input-rotate": {
+    x: { label: "X", type: "number", step: 1 },
+    y: { label: "Y", type: "number", step: 1 },
+    z: { label: "Z", type: "number", step: 1 },
+    units: {
+      label: "Units",
+      type: "enum",
+      options: ["deg", "°", "rad", "turn", "grad"],
+    },
+    open: { label: "Open", type: "boolean", boolMode: "presence" },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
+  },
   "fig-input-point": {
     x: { label: "X", type: "number", step: 1 },
     y: { label: "Y", type: "number", step: 1 },

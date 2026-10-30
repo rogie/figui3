@@ -100,7 +100,7 @@ const PROPERTY_CONTROL_OPTIONS: Array<{
   { tag: "fig-easing-curve", label: "Easing" },
   { tag: "fig-input-gradient", label: "Gradient" },
   { tag: "fig-input-palette", label: "Palette" },
-  { tag: "fig-3d-rotate", label: "Transform" },
+  { tag: "fig-input-rotate", label: "3D Rotate" },
   { tag: "fig-input-file", label: "File" },
 ];
 
@@ -233,6 +233,7 @@ function getInputPanelTitle(controlTag: string): string {
     "fig-input-fill": "Fill",
     "fig-slider": "Slider",
     "fig-input-number": "Number",
+    "fig-input-rotate": "Input Rotate",
     "fig-input-point": "Input point",
     "fig-input-text": "Text input",
     "fig-switch": "Switch",
@@ -598,6 +599,7 @@ export default function AttributesView({
           "fig-input-number",
           "fig-input-color",
           "fig-input-fill",
+          "fig-input-rotate",
           "fig-segmented-control",
           "fig-easing-curve",
           "fig-3d-rotate",

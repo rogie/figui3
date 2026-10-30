@@ -595,6 +595,22 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     ],
   },
   {
+    id: "input-rotate",
+    name: "Input Rotate",
+    group: "Editor components",
+    description:
+      "Compact X/Y/Z rotation property button with an anchored 3D editor popup (requires <code>fig-editor.js</code>).",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-input-rotate full></fig-input-rotate>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "input-point",
     name: "Input Point",
     group: "Editor components",
@@ -624,6 +640,54 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
   <fig-property label="Size">
     <fig-input-number slot="input" value="16" units="px" steppers="true" full></fig-input-number>
   </fig-property>
+</div>`,
+      },
+      {
+        id: "all-properties",
+        name: "All properties",
+        markup: `<div class="prop-panel">
+  <fig-group name="Values">
+    <fig-property label="Number">
+      <fig-input-number slot="input" value="16" units="px" steppers="true" full></fig-input-number>
+    </fig-property>
+    <fig-property label="Slider">
+      <fig-slider slot="input" value="75" min="0" max="100" units="%" text="true" full></fig-slider>
+    </fig-property>
+    <fig-property label="String">
+      <fig-input-text slot="input" value="Hello" full></fig-input-text>
+    </fig-property>
+    <fig-property label="Boolean">
+      <fig-switch slot="input" checked></fig-switch>
+    </fig-property>
+  </fig-group>
+  <fig-group name="Pickers">
+    <fig-property label="Color">
+      <fig-input-color slot="input" value="#0D99FF" text="true" full></fig-input-color>
+    </fig-property>
+    <fig-property label="Select">
+      <fig-select slot="input" value="Medium" options="Small,Medium,Large" full></fig-select>
+    </fig-property>
+    <fig-property label="Point">
+      <fig-input-point slot="input" x="24" y="16" units="%" full></fig-input-point>
+    </fig-property>
+    <fig-property label="Easing">
+      <fig-easing-curve slot="input" value="0.42, 0, 0.58, 1" edit="false"></fig-easing-curve>
+    </fig-property>
+  </fig-group>
+  <fig-group name="Advanced">
+    <fig-property label="Gradient">
+      <fig-input-gradient slot="input" edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' full></fig-input-gradient>
+    </fig-property>
+    <fig-property label="Palette">
+      <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+    </fig-property>
+    <fig-property label="Transform">
+      <fig-input-rotate slot="input"></fig-input-rotate>
+    </fig-property>
+    <fig-property label="File">
+      <fig-input-file slot="input" label="Choose file" full></fig-input-file>
+    </fig-property>
+  </fig-group>
 </div>`,
       },
       {

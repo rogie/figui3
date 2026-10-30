@@ -208,6 +208,37 @@ test("property exposes a selected attribute toggle", () => {
   });
 });
 
+test("property all-properties example covers every supported control", () => {
+  const section = figui3Sections.find((entry) => entry.id === "property");
+  const example = section?.examples.find(
+    (entry) => entry.id === "all-properties",
+  );
+  const controlTags = [
+    "fig-input-number",
+    "fig-slider",
+    "fig-input-text",
+    "fig-switch",
+    "fig-input-color",
+    "fig-select",
+    "fig-input-point",
+    "fig-easing-curve",
+    "fig-input-gradient",
+    "fig-input-palette",
+    "fig-input-rotate",
+    "fig-input-file",
+  ];
+
+  expect(example).toMatchObject({ name: "All properties" });
+  for (const tag of controlTags) {
+    expect(example?.markup).toContain(`<${tag}`);
+  }
+  expect(section?.examples.map((entry) => entry.id)).toEqual([
+    "default",
+    "all-properties",
+    "custom-accessory",
+  ]);
+});
+
 test("palette editor exposes maximum and overflow controls", () => {
   const section = figui3Sections.find(
     (entry) => entry.id === "palette-editor",

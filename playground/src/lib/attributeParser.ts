@@ -46,6 +46,7 @@ export type PropertyControlTag =
   | "fig-input-text"
   | "fig-input-color"
   | "fig-select"
+  | "fig-input-rotate"
   | "fig-input-point"
   | "fig-easing-curve"
   | "fig-input-gradient"
@@ -101,6 +102,13 @@ function createDefaultFieldControl(
     element.setAttribute("y", "16");
     element.setAttribute("units", "%");
     element.setAttribute("full", "");
+    return element;
+  }
+
+  if (controlTag === "fig-input-rotate") {
+    element.setAttribute("x", "0");
+    element.setAttribute("y", "0");
+    element.setAttribute("z", "0");
     return element;
   }
 

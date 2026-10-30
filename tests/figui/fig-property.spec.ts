@@ -71,6 +71,87 @@ test.describe("fig-property", () => {
     expect(result.labelId).toBeTruthy();
   });
 
+  test("tooltips truncated labels and cleans up when labels are replaced", async ({
+    page,
+  }) => {
+    const originalText = "A very long property label that must show in full";
+    const replacementText =
+      "A replacement property label that must also show in full";
+    await page.evaluate(
+      ({ originalText }) => {
+        const root = document.querySelector("#fixture-root");
+        if (!root) throw new Error("Missing fixture root");
+        root.innerHTML = `
+          <fig-property id="truncated" label="${originalText}" style="width: 180px">
+            <fig-input-number slot="input" value="16"></fig-input-number>
+          </fig-property>
+          <fig-property id="fits" label="Name" style="width: 600px">
+            <fig-input-text slot="input"></fig-input-text>
+          </fig-property>
+        `;
+      },
+      { originalText },
+    );
+    await page.waitForTimeout(50);
+
+    const tooltip = page.locator(
+      'dialog[is="fig-popup"][data-tooltip-managed]',
+    );
+    const truncatedLabel = page.locator("#truncated > label");
+    await expect
+      .poll(() =>
+        truncatedLabel.evaluate(
+          (label) => label.scrollWidth > label.clientWidth,
+        ),
+      )
+      .toBe(true);
+
+    await truncatedLabel.hover();
+    await expect(tooltip).toHaveText(originalText);
+
+    await page.locator("#fits > label").hover();
+    await expect(tooltip).toHaveCount(0);
+    await page.waitForTimeout(550);
+    await expect(tooltip).toHaveCount(0);
+
+    await truncatedLabel.hover();
+    await expect(tooltip).toHaveText(originalText);
+    await page.evaluate(
+      () => {
+        const label = document.querySelector("#truncated > label");
+        if (!label) throw new Error("Missing property label");
+        const replacement = document.createElement("label");
+        replacement.slot = "label";
+        replacement.textContent = "New";
+        label.replaceWith(replacement);
+      },
+    );
+    await expect(tooltip).toHaveCount(0);
+
+    const replacementLabel = page.locator(
+      '#truncated > label[slot="label"]',
+    );
+    await page.locator("#fits > label").hover();
+    await replacementLabel.evaluate(
+      (label, text) => {
+        label.textContent = text;
+      },
+      replacementText,
+    );
+    await expect
+      .poll(() =>
+        replacementLabel.evaluate(
+          (label) => label.scrollWidth > label.clientWidth,
+        ),
+      )
+      .toBe(true);
+    await replacementLabel.hover();
+    await expect(tooltip).toHaveText(replacementText);
+
+    await page.locator("#truncated").evaluate((property) => property.remove());
+    await expect(tooltip).toHaveCount(0);
+  });
+
   test("shows accessories on hover by default, supports always, and honors false", async ({
     page,
   }) => {

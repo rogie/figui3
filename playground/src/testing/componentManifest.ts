@@ -628,6 +628,19 @@ export const editorComponentContracts: ComponentContract[] = [
     ],
   },
   {
+    tag: "fig-input-rotate",
+    title: "Input Rotate",
+    group: "input",
+    markup: `<fig-input-rotate x="10" y="20" z="30"></fig-input-rotate>`,
+    attributes: [
+      { name: "x", attribute: "x", value: "45" },
+      { name: "y", attribute: "y", value: "90" },
+      { name: "z", attribute: "z", value: "180" },
+      { name: "units", attribute: "units", value: "rad" },
+      { name: "open", attribute: "open", value: "" },
+    ],
+  },
+  {
     tag: "fig-input-point",
     title: "Input Point",
     group: "input",

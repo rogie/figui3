@@ -66,6 +66,18 @@ Data-driven (no authored options):
 - Attrs: `value` (falls back to trimmed `textContent`), `label` (closed-trigger text when content is rich), `selected`, `disabled`, `subtle` (secondary hover/focus fill)
 - `role="option"`, `aria-selected`, `aria-disabled`
 
+## `fig-input-rotate`
+
+```tsx
+<fig-input-rotate x="0" y="45" z="90" units="deg" full />
+```
+
+- Attrs: `x`, `y`, `z`, `units` (defaults to `deg`), `open`, `full`
+- Missing or invalid axis values display as `0`.
+- `deg` and `°` display with the degree symbol; other units display literally.
+- `value` returns numeric `{ x, y, z }`.
+- Clicking opens an anchored popup with a `fig-3d-rotate` editor; popup edits emit `input` and `change` with `{ x, y, z }`.
+
 ## `fig-input-point`
 
 ```tsx

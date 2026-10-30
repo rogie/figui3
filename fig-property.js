@@ -131,12 +131,19 @@ class FigProperty extends HTMLElement {
     }
 
     label.addEventListener("click", this.#focusInput);
+    label.addEventListener("pointerenter", this.#showLabelTooltip);
+    label.addEventListener("pointerleave", this.#hideLabelTooltip);
     this.#labelElement = label;
     this.#associatedInput = input;
   }
 
   #clearLabelAssociation() {
-    this.#labelElement?.removeEventListener("click", this.#focusInput);
+    const label = this.#labelElement;
+    label?.removeEventListener("click", this.#focusInput);
+    label?.removeEventListener("pointerenter", this.#showLabelTooltip);
+    label?.removeEventListener("pointerleave", this.#hideLabelTooltip);
+    const Tooltip = customElements.get("fig-tooltip");
+    if (label && typeof Tooltip?.hide === "function") Tooltip.hide(label);
     if (this.#associatedInput?.hasAttribute("data-fig-property-labelledby")) {
       this.#associatedInput.removeAttribute("aria-labelledby");
       this.#associatedInput.removeAttribute("data-fig-property-labelledby");
@@ -144,6 +151,28 @@ class FigProperty extends HTMLElement {
     this.#labelElement = null;
     this.#associatedInput = null;
   }
+
+  #showLabelTooltip = (event) => {
+    const label = event.currentTarget;
+    if (
+      !(label instanceof HTMLElement) ||
+      label.scrollWidth <= label.clientWidth
+    ) {
+      return;
+    }
+    const Tooltip = customElements.get("fig-tooltip");
+    if (typeof Tooltip?.show === "function") {
+      Tooltip.show(label, label.textContent.trim());
+    }
+  };
+
+  #hideLabelTooltip = (event) => {
+    const label = event.currentTarget;
+    const Tooltip = customElements.get("fig-tooltip");
+    if (label instanceof HTMLElement && typeof Tooltip?.hide === "function") {
+      Tooltip.hide(label);
+    }
+  };
 
   #focusInput = () => {
     const input = this.input;
