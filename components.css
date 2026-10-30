@@ -4155,7 +4155,7 @@ fig-group {
 
   &[collapsible]:not([open]):not([open="true"]) > :not(fig-header),
   &[collapsible][open="false"] > :not(fig-header) {
-    display: none;
+    display: none !important;
   }
 
 }

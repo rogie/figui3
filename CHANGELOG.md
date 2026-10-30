@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.6.11]
+
+### Fixed
+
+- Kept collapsed `fig-group` content hidden when child component display rules compete.
+
 ## [11.6.10]
 
 ### Added
