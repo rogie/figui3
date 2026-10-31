@@ -168,15 +168,19 @@ fig-property[activation="row"] {
       fig-input-color,
       fig-input-gradient,
       fig-input-palette,
-      fig-input-slider,
-      fig-input-point
+      .fig-input-slider,
+      fig-input-point,
+      fig-input-file,
+      fig-input-rotate
     )[slot="input"],
   > :is(
       fig-input-color,
       fig-input-gradient,
       fig-input-palette,
-      fig-input-slider,
-      fig-input-point
+      .fig-input-slider,
+      fig-input-point,
+      fig-input-file,
+      fig-input-rotate
     )[slot="input"][full]:not([full="false"]) {
     width: var(--fig-property-row-input-width, 8rem);
     max-width: 100%;
@@ -205,6 +209,7 @@ fig-property[activation="row"] {
   &:focus-within{
     --figma-color-bg-secondary: var(--figma-color-bg-selected-secondary);
     --figma-color-text-secondary: var(--figma-color-text);
+    --figma-color-icon-tertiary: var(--figma-color-icon-onselected);
   }
   &:focus-within::before {
     background-color: var(--figma-color-bg-selected);
@@ -214,7 +219,7 @@ fig-property[activation="row"] {
 }
 
 fig-property[activation="row"]{
-  fig-input-slider[slot="input"] {
+  .fig-input-slider[slot="input"] {
     position: absolute;
     grid-area: auto;
     inset:
@@ -241,26 +246,30 @@ fig-property[activation="row"]{
     }
   }
 
-  > :where(fig-input-slider[slot="input"]) {
+  > :where(.fig-input-slider[slot="input"]) {
     --fig-input-slider-tray-background: transparent;
     --fig-input-slider-tray-background-hover: var(--figma-color-bg-hover);
   }
 
+  > fig-input-slider-wheel[slot="input"] {
+    --fig-input-slider-ticks-inset-inline: calc(var(--spacer-4) * 2);
+  }
+
   &:is(:hover, :focus-within, :active)
-    > fig-input-slider[slot="input"],
-  &:has(> fig-input-slider[slot="input"][data-dragging])
-    > fig-input-slider[slot="input"] {
+    > .fig-input-slider[slot="input"],
+  &:has(> .fig-input-slider[slot="input"][data-dragging])
+    > .fig-input-slider[slot="input"] {
     .fig-input-slider-tray{
       visibility: visible;
     }
   }
 
-  fig-input-slider[slot="input"]:focus-within
+  .fig-input-slider[slot="input"]:focus-within
     > .fig-input-slider-tray {
     outline: none;
   }
 
-  &:has(> fig-input-slider[slot="input"]) > :is(label, [slot="label"]) {
+  &:has(> .fig-input-slider[slot="input"]) > :is(label, [slot="label"]) {
     position: relative;
     z-index: 1;
     pointer-events: none;

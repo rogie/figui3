@@ -691,6 +691,56 @@ test.describe("fig-property", () => {
     );
   });
 
+  test('activation="row" pins every fig-input-slider variant to the row surface', async ({
+    page,
+  }) => {
+    await page.addStyleTag({ url: "/fig-input-slider.css" });
+    await page.addScriptTag({ type: "module", url: "/fig-input-slider.js" });
+    const sliderTags = [
+      "fig-input-slider-hue",
+      "fig-input-slider-opacity",
+      "fig-input-slider-delta",
+      "fig-input-slider-stepper",
+      "fig-input-slider-wheel",
+    ];
+    await page.evaluate(async (tags) => {
+      await Promise.all(tags.map((tag) => customElements.whenDefined(tag)));
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = tags
+        .map(
+          (tag, index) => `
+            <fig-property label="${tag}" activation="row" style="width: 240px">
+              <${tag} id="slider-variant-${index}" slot="input" value="50"></${tag}>
+            </fig-property>
+          `,
+        )
+        .join("");
+    }, sliderTags);
+
+    const geometry = await page
+      .locator("#fixture-root > fig-property")
+      .evaluateAll((properties) =>
+        properties.map((property) => {
+          const slider = property.querySelector('[slot="input"]');
+          if (!slider) throw new Error("Missing slider variant");
+          return {
+            position: getComputedStyle(slider).position,
+            propertyWidth: property.getBoundingClientRect().width,
+            sliderWidth: slider.getBoundingClientRect().width,
+          };
+        }),
+      );
+
+    expect(geometry).toHaveLength(sliderTags.length);
+    for (const variant of geometry) {
+      expect(variant.position).toBe("absolute");
+      expect(variant.sliderWidth).toBeGreaterThan(
+        variant.propertyWidth / 2,
+      );
+    }
+  });
+
   test('activation="row" manages its label as a slider occlusion target', async ({
     page,
   }) => {

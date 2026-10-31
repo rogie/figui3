@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.8.1]
+
+### Changed
+
+- Expanded the Lab all-properties example with every `fig-input-slider` variant and synchronized number fields.
+- Applied row-activation slider layout to every variant and increased wheel tick inset within `fig-property`.
+- Refined slider tick colors with a stronger translucent interaction token.
+
 ## [11.8.0]
 
 ### Added

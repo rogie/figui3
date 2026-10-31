@@ -155,7 +155,7 @@
     --fig-input-slider-tick-stroke-width,
     0.125rem
   );
-  --fig-input-slider-tick-stroke-color: light-dark(#999, #777);
+  --fig-input-slider-tick-stroke-color: var(--figma-color-icon-tertiary);
   --fig-input-slider-tick-active-stroke-color: var(--figma-color-text);
   --fig-input-slider-tick-border-radius: var(--radius-medium);
   --fig-input-slider-tick-opacity: 0.5;
@@ -238,7 +238,9 @@
 
 .fig-input-slider:is(:active, :focus-within, [data-dragging]) {
   --fig-input-slider-fill-background: var(--figma-color-bg-brand);
-  --fig-input-slider-tick-stroke-color: var(--figma-color-bordertranslucent-strong);
+  --fig-input-slider-tick-stroke-color: var(--figma-color-bordertranslucentstronger);
+  --fig-input-slider-wheel-tick-color: var(--figma-color-bordertranslucentstronger);
+
 }
 
 .fig-input-slider:is(:hover, :focus-within) .fig-input-slider-tray {

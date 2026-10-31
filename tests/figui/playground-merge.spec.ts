@@ -235,6 +235,13 @@ test("property all-properties example covers every supported control", () => {
     "fig-input-rotate",
     "fig-input-file",
   ];
+  const sliderVariantTags = [
+    "fig-input-slider-hue",
+    "fig-input-slider-opacity",
+    "fig-input-slider-delta",
+    "fig-input-slider-stepper",
+    "fig-input-slider-wheel",
+  ];
 
   expect(example).toMatchObject({ name: "All properties" });
   expect(rowExample).toMatchObject({
@@ -246,9 +253,21 @@ test("property all-properties example covers every supported control", () => {
       `<${tag === "fig-slider" ? "fig-input-slider" : tag}`,
     );
   }
+  for (const tag of sliderVariantTags) {
+    expect(rowExample?.markup).toContain(`<${tag}`);
+  }
+  for (const tag of ["fig-input-slider", ...sliderVariantTags]) {
+    expect(rowExample?.markup).toMatch(
+      new RegExp(
+        `<${tag}\\b[^>]*>[\\s\\S]*?<fig-input-number\\b[^>]*>[\\s\\S]*?</${tag}>`,
+      ),
+    );
+  }
   const rowProperties =
     rowExample?.markup.match(/<fig-property\b[^>]*>/g) ?? [];
-  expect(rowProperties).toHaveLength(controlTags.length + 1);
+  expect(rowProperties).toHaveLength(
+    controlTags.length + sliderVariantTags.length + 1,
+  );
   expect(
     rowProperties.every((property) =>
       property.includes('activation="row"'),

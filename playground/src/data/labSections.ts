@@ -145,16 +145,43 @@ const ungroupedLabSections: Section[] = [
     <fig-property label="Number" activation="row">
       <fig-input-number slot="input" value="16" units="px" steppers="true" full></fig-input-number>
     </fig-property>
-    <fig-property label="Slider" activation="row">
-      <fig-input-slider slot="input" value="50" default="50" min="0" max="100">
-        <fig-input-number value="50" units="%"></fig-input-number>
-      </fig-input-slider>
-    </fig-property>
     <fig-property label="String" activation="row">
       <fig-input-text slot="input" value="Hello" full></fig-input-text>
     </fig-property>
     <fig-property label="Boolean" activation="row">
       <fig-switch slot="input" checked></fig-switch>
+    </fig-property>
+  </fig-group>
+  <fig-group name="Sliders" compact>
+    <fig-property label="Slider" activation="row">
+      <fig-input-slider slot="input" value="50" default="50" min="0" max="100">
+        <fig-input-number value="50" min="0" max="100" step="1" units="%"></fig-input-number>
+      </fig-input-slider>
+    </fig-property>
+    <fig-property label="Hue" activation="row">
+      <fig-input-slider-hue slot="input" value="180" default="180">
+        <fig-input-number value="180" min="0" max="360" step="1" units="°"></fig-input-number>
+      </fig-input-slider-hue>
+    </fig-property>
+    <fig-property label="Opacity" activation="row">
+      <fig-input-slider-opacity slot="input" color="#0D99FF" value="75" default="75">
+        <fig-input-number value="75" min="0" max="100" step="1" units="%"></fig-input-number>
+      </fig-input-slider-opacity>
+    </fig-property>
+    <fig-property label="Delta" activation="row">
+      <fig-input-slider-delta slot="input" value="0" default="0">
+        <fig-input-number value="0" min="-100" max="100" step="1" units="px"></fig-input-number>
+      </fig-input-slider-delta>
+    </fig-property>
+    <fig-property label="Stepper" activation="row">
+      <fig-input-slider-stepper slot="input" value="50" default="50">
+        <fig-input-number value="50" min="0" max="100" step="10" units="%"></fig-input-number>
+      </fig-input-slider-stepper>
+    </fig-property>
+    <fig-property label="Wheel" activation="row">
+      <fig-input-slider-wheel slot="input" value="0" default="0" step="1">
+        <fig-input-number value="0" step="1"></fig-input-number>
+      </fig-input-slider-wheel>
     </fig-property>
   </fig-group>
   <fig-group name="Pickers" compact>
