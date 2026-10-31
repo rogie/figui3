@@ -906,6 +906,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: [
         "add",
+        "angle",
         "send",
         "adjust",
         "minus",
@@ -918,6 +919,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "steppers",
         "eyedropper",
         "rotate",
+        "rotate3d",
         "swap",
         "play",
         "pause",
@@ -949,6 +951,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: [
         "add",
+        "angle",
         "send",
         "adjust",
         "minus",
@@ -960,6 +963,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
         "reset",
         "arrow-left",
         "rotate",
+        "rotate3d",
         "swap",
         "play",
         "pause",

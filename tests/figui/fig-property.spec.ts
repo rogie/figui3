@@ -71,6 +71,75 @@ test.describe("fig-property", () => {
     expect(result.labelId).toBeTruthy();
   });
 
+  test("label clicks delegate focus to composite editor controls", async ({
+    page,
+  }) => {
+    await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+    await page.evaluate(() =>
+      Promise.all([
+        customElements.whenDefined("fig-input-rotate"),
+        customElements.whenDefined("fig-select"),
+      ]),
+    );
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      const gradient =
+        '{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}';
+      root.innerHTML = `
+        <fig-property id="rotate-property" label="Rotate">
+          <fig-input-rotate id="rotate" slot="input"></fig-input-rotate>
+        </fig-property>
+        <fig-property id="easing-property" label="Easing">
+          <fig-easing-curve id="easing" slot="input" edit="false"></fig-easing-curve>
+        </fig-property>
+        <fig-property id="gradient-property" label="Gradient">
+          <fig-input-gradient id="gradient" slot="input" value='${gradient}'></fig-input-gradient>
+        </fig-property>
+        <fig-property id="gradient-picker-property" label="Gradient picker">
+          <fig-input-gradient id="gradient-picker" slot="input" edit="picker" value='${gradient}'></fig-input-gradient>
+        </fig-property>
+        <fig-property id="slider-property" label="Slider">
+          <fig-slider id="slider" slot="input" value="50" text="true"></fig-slider>
+        </fig-property>
+        <fig-property id="switch-property" label="Switch">
+          <fig-switch id="switch" slot="input"></fig-switch>
+        </fig-property>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    await page.locator("#rotate-property > label").click();
+    await expect(page.locator("#rotate > fig-button")).toBeFocused();
+
+    await page.locator("#easing-property > label").click();
+    await expect(page.locator("#easing fig-select")).toBeFocused();
+
+    await page.locator("#gradient-property > label").click();
+    await expect(
+      page
+        .locator("#gradient fig-handle:not(.fig-input-gradient-ghost)")
+        .first(),
+    ).toBeFocused();
+
+    await page.locator("#gradient-picker-property > label").click();
+    await expect(page.locator("#gradient-picker")).toBeFocused();
+    await expect(page.locator("#gradient-picker")).toHaveCSS(
+      "outline-style",
+      "solid",
+    );
+
+    await page.locator("#slider-property > label").click();
+    await expect(page.locator("#slider fig-input-number input")).toBeFocused();
+
+    await page.locator("#switch-property > label").click();
+    await expect(page.locator("#switch input.switch")).toBeFocused();
+    await expect(page.locator("#switch input.switch")).toHaveCSS(
+      "outline-style",
+      "solid",
+    );
+  });
+
   test("tooltips truncated labels and cleans up when labels are replaced", async ({
     page,
   }) => {

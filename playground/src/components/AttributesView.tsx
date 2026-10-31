@@ -91,6 +91,7 @@ const PROPERTY_CONTROL_OPTIONS: Array<{
   label: string;
 }> = [
   { tag: "fig-input-number", label: "Number" },
+  { tag: "angle", label: "Angle" },
   { tag: "fig-slider", label: "Slider" },
   { tag: "fig-input-text", label: "String" },
   { tag: "fig-switch", label: "Boolean" },

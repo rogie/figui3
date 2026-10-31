@@ -27,6 +27,7 @@ class FigProperty extends HTMLElement {
   #observer = null;
   #labelElement = null;
   #associatedInput = null;
+  #labelFocusTarget = null;
   #syncQueued = false;
 
   connectedCallback() {
@@ -138,6 +139,7 @@ class FigProperty extends HTMLElement {
   }
 
   #clearLabelAssociation() {
+    this.#clearLabelFocusTarget();
     const label = this.#labelElement;
     label?.removeEventListener("click", this.#focusInput);
     label?.removeEventListener("pointerenter", this.#showLabelTooltip);
@@ -178,9 +180,33 @@ class FigProperty extends HTMLElement {
     const input = this.input;
     if (!(input instanceof HTMLElement)) return;
     input.focus();
-    if (document.activeElement !== input) {
+    if (
+      document.activeElement !== input &&
+      !input.contains(document.activeElement) &&
+      !input.matches(":focus-within")
+    ) {
       input.querySelector("input, select, textarea, button")?.focus();
     }
+    const focused = input.matches(":focus")
+      ? input
+      : input.querySelector(":focus");
+    if (focused instanceof HTMLElement) {
+      this.#clearLabelFocusTarget();
+      this.#labelFocusTarget = focused;
+      focused.setAttribute("data-fig-property-focus", "");
+      focused.addEventListener("blur", this.#clearLabelFocusTarget, {
+        once: true,
+      });
+    }
+  };
+
+  #clearLabelFocusTarget = () => {
+    this.#labelFocusTarget?.removeEventListener(
+      "blur",
+      this.#clearLabelFocusTarget,
+    );
+    this.#labelFocusTarget?.removeAttribute("data-fig-property-focus");
+    this.#labelFocusTarget = null;
   };
 
   #syncLeading() {

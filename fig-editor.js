@@ -683,6 +683,10 @@ class FigSelect extends HTMLElement {
     this.#observer = null;
   }
 
+  focus(options) {
+    this.#button?.focus(options);
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue || !this.#initialized) return;
     if (name === "options") {

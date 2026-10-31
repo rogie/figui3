@@ -29,7 +29,7 @@ test.describe("fig-input-rotate", () => {
     await expect(button).toHaveAttribute("variant", "property");
     await expect(button).toHaveAttribute("full", "");
     await expect(
-      button.locator(':scope > fig-icon[slot="prepend"][name="rotate"]'),
+      button.locator(':scope > fig-icon[slot="prepend"][name="rotate3d"]'),
     ).toHaveCount(1);
     await expect(button.locator(".fig-input-rotate-value")).toHaveText(
       "X 0° · Y 0° · Z 0°",

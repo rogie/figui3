@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.7.1]
+
+### Added
+
+- Added Angle to the `fig-property` control picker.
+- Added `angle` and `rotate3d` icon tokens.
+
+### Changed
+
+- Updated `fig-input-rotate` to use the `rotate3d` icon.
+- Used secondary icon colors for property-button and input prepend icons.
+
+### Fixed
+
+- Made `fig-property` label clicks focus composite controls including rotation, easing, gradient, slider, and switch inputs.
+- Added visible programmatic focus outlines for gradient picker and switch controls.
+
 ## [11.7.0]
 
 ### Added

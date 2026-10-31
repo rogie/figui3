@@ -16865,6 +16865,18 @@ class FigEasingCurve extends HTMLElement {
     this.value = { ...value, type: "spring" };
   }
 
+  focus(options) {
+    const target =
+      this.#select ||
+      this.#valueInput ||
+      this.querySelector("fig-handle:not([disabled])");
+    if (target) {
+      target.focus(options);
+      return;
+    }
+    HTMLElement.prototype.focus.call(this, options);
+  }
+
   #constrainedMode() {
     const mode = this.getAttribute("mode")?.trim().toLowerCase();
     return mode === "bezier" || mode === "spring" ? mode : null;
@@ -21023,6 +21035,7 @@ const FIG_ICON_TOKENS = {
   steppers: "--icon-24-steppers",
   eyedropper: "--icon-24-eyedropper",
   add: "--icon-24-add",
+  angle: "--icon-24-angle",
   send: { medium: "--icon-24-send", small: "--icon-16-send" },
   adjust: { medium: "--icon-24-adjust", small: "--icon-16-adjust" },
   minus: "--icon-24-minus",
@@ -21030,6 +21043,7 @@ const FIG_ICON_TOKENS = {
   forward: "--icon-24-forward",
   close: { medium: "--icon-24-close", small: "--icon-16-close" },
   rotate: "--icon-24-rotate",
+  rotate3d: "--icon-24-rotate3d",
   swap: "--icon-24-swap",
   play: "--icon-24-play",
   pause: "--icon-24-pause",

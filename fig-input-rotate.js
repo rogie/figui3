@@ -107,11 +107,15 @@ class FigInputRotate extends HTMLElement {
     }
   }
 
+  focus(options) {
+    this.#button?.focus(options);
+  }
+
   #render() {
     if (this.#button?.isConnected) return;
 
     const icon = document.createElement("fig-icon");
-    icon.setAttribute("name", "rotate");
+    icon.setAttribute("name", "rotate3d");
     icon.setAttribute("slot", "prepend");
     icon.setAttribute("aria-hidden", "true");
 

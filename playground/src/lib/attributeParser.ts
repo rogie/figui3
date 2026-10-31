@@ -42,6 +42,7 @@ export interface FieldControlMutation {
 
 export type PropertyControlTag =
   | "fig-input-number"
+  | "angle"
   | "fig-slider"
   | "fig-input-text"
   | "fig-input-color"
@@ -90,6 +91,18 @@ function createDefaultFieldControl(
   doc: Document,
   controlTag: FieldControlMutation["controlTag"] | PropertyControlTag,
 ): Element {
+  if (controlTag === "angle") {
+    const input = doc.createElement("fig-input-number");
+    input.setAttribute("value", "0");
+    input.setAttribute("units", "°");
+    input.setAttribute("full", "");
+    const icon = doc.createElement("fig-icon");
+    icon.setAttribute("name", "angle");
+    icon.setAttribute("slot", "prepend");
+    input.append(icon);
+    return input;
+  }
+
   const element = doc.createElement(controlTag);
   if (controlTag === "fig-select") {
     element.setAttribute("options", "Small,Medium,Large");
@@ -1114,6 +1127,13 @@ export function getPropertyControlTag(
     (control) => getControlTag(control) === "fig-property",
   )[propertyIndex];
   const input = property?.querySelector(':scope > [slot="input"]');
+  if (
+    input?.tagName.toLowerCase() === "fig-input-number" &&
+    input.getAttribute("units") === "°" &&
+    input.querySelector(':scope > fig-icon[slot="prepend"][name="angle"]')
+  ) {
+    return "angle";
+  }
   return (input?.tagName.toLowerCase() as PropertyControlTag) || "fig-input-number";
 }
 
@@ -1208,6 +1228,7 @@ export function applyHandleHitAreaMutation(
 
 export const FIG_ICON_SET_24 = [
   "add",
+  "angle",
   "send",
   "chevron",
   "checkmark",
@@ -1217,6 +1238,7 @@ export const FIG_ICON_SET_24 = [
   "back",
   "forward",
   "rotate",
+  "rotate3d",
   "swap",
   "play",
   "pause",

@@ -67,6 +67,13 @@ test.describe("fig.js component contracts", () => {
       const icon = property.querySelector(':scope > fig-icon[slot="prepend"]');
       const styles = getComputedStyle(property);
       const secondaryStyles = getComputedStyle(secondary);
+      const iconColorProbe = document.createElement("span");
+      iconColorProbe.style.color = "var(--figma-color-icon-secondary)";
+      root.append(iconColorProbe);
+      const iconUsesSecondaryColor =
+        Boolean(icon) &&
+        getComputedStyle(icon).color === getComputedStyle(iconColorProbe).color;
+      iconColorProbe.remove();
       const beforeDisabled = {
         registered: Boolean(customElements.get("fig-property-button")),
         clicks,
@@ -77,6 +84,7 @@ test.describe("fig.js component contracts", () => {
         full: property.hasAttribute("full"),
         align: styles.getPropertyValue("--fig-button-content-alignment").trim(),
         icon: icon?.getAttribute("name"),
+        iconUsesSecondaryColor,
         iconCount: property.querySelectorAll(':scope > fig-icon[slot="prepend"]')
           .length,
         width: Math.round(property.getBoundingClientRect().width),
@@ -139,6 +147,7 @@ test.describe("fig.js component contracts", () => {
       full: false,
       align: "flex-start",
       icon: "settings",
+      iconUsesSecondaryColor: true,
       iconCount: 1,
       width: 240,
       paddingLeft: "0px",
@@ -1335,6 +1344,48 @@ test("fig-icon maps audio to its 24px token", async ({ page }) => {
   }));
 
   expect(result.iconVar).toBe("var(--icon-24-audio)");
+  expect(result.token.startsWith('url("data:image/svg+xml,')).toBe(true);
+});
+
+test("fig-icon maps angle to its 24px token", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `<fig-icon id="angle-icon" name="angle"></fig-icon>`;
+  });
+
+  const result = await page.evaluate(() => ({
+    iconVar: (document.querySelector("#angle-icon") as HTMLElement).style
+      .getPropertyValue("--icon"),
+    token: getComputedStyle(document.documentElement)
+      .getPropertyValue("--icon-24-angle")
+      .trim(),
+  }));
+
+  expect(result.iconVar).toBe("var(--icon-24-angle)");
+  expect(result.token.startsWith('url("data:image/svg+xml,')).toBe(true);
+});
+
+test("fig-icon maps rotate3d to its 24px token", async ({ page }) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(() => {
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `<fig-icon id="rotate3d-icon" name="rotate3d"></fig-icon>`;
+  });
+
+  const result = await page.evaluate(() => ({
+    iconVar: (document.querySelector("#rotate3d-icon") as HTMLElement).style
+      .getPropertyValue("--icon"),
+    token: getComputedStyle(document.documentElement)
+      .getPropertyValue("--icon-24-rotate3d")
+      .trim(),
+  }));
+
+  expect(result.iconVar).toBe("var(--icon-24-rotate3d)");
   expect(result.token.startsWith('url("data:image/svg+xml,')).toBe(true);
 });
 
@@ -6743,6 +6794,36 @@ test.describe("number input accessibility", () => {
       host.removeAttribute("precision");
     });
     await expect(fixedInput).toHaveValue("4s");
+  });
+
+  test("fig-input-number uses the secondary icon color for prepend icons", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-number id="number-with-icon" value="45" units="°">
+          <fig-icon name="angle" slot="prepend"></fig-icon>
+        </fig-input-number>
+      `;
+    });
+
+    const usesSecondaryColor = await page
+      .locator("#number-with-icon")
+      .evaluate((host) => {
+        const icon = host.querySelector('fig-icon[slot="prepend"]');
+        if (!icon) throw new Error("Missing prepend icon");
+        const probe = document.createElement("span");
+        probe.style.color = "var(--figma-color-icon-secondary)";
+        host.append(probe);
+        const matches =
+          getComputedStyle(icon).color === getComputedStyle(probe).color;
+        probe.remove();
+        return matches;
+      });
+
+    expect(usesSecondaryColor).toBe(true);
   });
 
   test("fig-input-number keeps slots visually around the input before steppers", async ({
