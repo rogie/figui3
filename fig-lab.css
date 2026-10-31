@@ -9,6 +9,8 @@
  *   <link rel="stylesheet" href="fig-lab.css">
  */
 
+@import url("fig-input-slider.css");
+
 fig-ai-prompt {
   --fig-ai-prompt-margin-inline: var(--spacer-3);
 

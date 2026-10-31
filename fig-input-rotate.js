@@ -111,6 +111,11 @@ class FigInputRotate extends HTMLElement {
     this.#button?.focus(options);
   }
 
+  activate(options) {
+    this.focus(options);
+    this.#button?.click();
+  }
+
   #render() {
     if (this.#button?.isConnected) return;
 

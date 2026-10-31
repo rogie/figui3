@@ -238,7 +238,7 @@ export default function Nav({
 
   return (
     <nav>
-      <fig-header>
+      <fig-header borderless>
         <h1>{appTitle}</h1>
         <ThemeToggle
           isDark={isDark}
@@ -247,7 +247,7 @@ export default function Nav({
           setIncludeEditorControls={setIncludeEditorControls}
         />
       </fig-header>
-      <fig-header className="nav-search-header" compact>
+      <fig-header className="nav-search-header">
         <fig-input-text
           type="search"
           value={searchQuery}

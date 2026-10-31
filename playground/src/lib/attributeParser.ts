@@ -43,6 +43,8 @@ export interface FieldControlMutation {
 export type PropertyControlTag =
   | "fig-input-number"
   | "angle"
+  | "audio"
+  | "fig-input-slider"
   | "fig-slider"
   | "fig-input-text"
   | "fig-input-color"
@@ -54,7 +56,34 @@ export type PropertyControlTag =
   | "fig-input-palette"
   | "fig-3d-rotate"
   | "fig-input-file"
+  | "fig-audio"
   | "fig-switch";
+
+const PROPERTY_CONTROL_TAGS = new Set<PropertyControlTag>([
+  "fig-input-number",
+  "angle",
+  "audio",
+  "fig-input-slider",
+  "fig-slider",
+  "fig-input-text",
+  "fig-input-color",
+  "fig-select",
+  "fig-input-rotate",
+  "fig-input-point",
+  "fig-easing-curve",
+  "fig-input-gradient",
+  "fig-input-palette",
+  "fig-3d-rotate",
+  "fig-input-file",
+  "fig-audio",
+  "fig-switch",
+]);
+
+export function isPropertyControlTag(
+  value: string,
+): value is PropertyControlTag {
+  return PROPERTY_CONTROL_TAGS.has(value as PropertyControlTag);
+}
 
 function getButtonDefaultText(type: string | null): string {
   switch (type) {
@@ -100,6 +129,26 @@ function createDefaultFieldControl(
     icon.setAttribute("name", "angle");
     icon.setAttribute("slot", "prepend");
     input.append(icon);
+    return input;
+  }
+
+  if (controlTag === "audio" || controlTag === "fig-audio") {
+    const input = doc.createElement("fig-input-file");
+    input.setAttribute("accepts", "audio/*");
+    input.setAttribute("label", "Choose audio");
+    input.setAttribute("preview", "");
+    input.setAttribute("url", "/audio/skrillex-ft-elliphant.mp3");
+    input.setAttribute("filename", "skrillex-ft-elliphant.mp3");
+    input.setAttribute("full", "");
+    return input;
+  }
+
+  if (controlTag === "fig-input-slider") {
+    const input = doc.createElement("fig-input-slider");
+    input.setAttribute("value", "50");
+    input.setAttribute("default", "50");
+    input.setAttribute("min", "0");
+    input.setAttribute("max", "100");
     return input;
   }
 
@@ -156,6 +205,7 @@ function createDefaultFieldControl(
 
   if (controlTag === "fig-input-file") {
     element.setAttribute("label", "Choose file");
+    element.setAttribute("preview", "");
     element.setAttribute("full", "");
     return element;
   }
@@ -1133,6 +1183,12 @@ export function getPropertyControlTag(
     input.querySelector(':scope > fig-icon[slot="prepend"][name="angle"]')
   ) {
     return "angle";
+  }
+  if (
+    input?.tagName.toLowerCase() === "fig-input-file" &&
+    input.getAttribute("accepts") === "audio/*"
+  ) {
+    return "audio";
   }
   return (input?.tagName.toLowerCase() as PropertyControlTag) || "fig-input-number";
 }

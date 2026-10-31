@@ -2,6 +2,197 @@ import type { Section } from "./sections";
 
 const ungroupedLabSections: Section[] = [
   {
+    id: "property",
+    name: "Property",
+    description:
+      "Experimental whole-row activation for composable property controls.",
+    examples: [
+      {
+        id: "default",
+        name: "Number",
+        markup: `<div class="prop-panel">
+  <fig-property label="Number" activation="row">
+    <fig-input-number slot="input" value="16" units="px" steppers="true" full></fig-input-number>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "angle",
+        name: "Angle",
+        markup: `<div class="prop-panel">
+  <fig-property label="Angle" activation="row">
+    <fig-input-number slot="input" value="0" units="°" full>
+      <fig-icon name="angle" slot="prepend"></fig-icon>
+    </fig-input-number>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "slider",
+        name: "Slider",
+        markup: `<div class="prop-panel">
+  <fig-property label="Slider" activation="row">
+    <fig-input-slider slot="input" value="50" default="50" min="0" max="100">
+      <fig-input-number value="50" units="%"></fig-input-number>
+    </fig-input-slider>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "string",
+        name: "String",
+        markup: `<div class="prop-panel">
+  <fig-property label="String" activation="row">
+    <fig-input-text slot="input" value="Hello" full></fig-input-text>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "boolean",
+        name: "Boolean",
+        markup: `<div class="prop-panel">
+  <fig-property label="Boolean" activation="row">
+    <fig-switch slot="input" checked></fig-switch>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "color",
+        name: "Color",
+        markup: `<div class="prop-panel">
+  <fig-property label="Color" activation="row">
+    <fig-input-color slot="input" value="#0D99FF" text="true" full></fig-input-color>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "select",
+        name: "Select",
+        markup: `<div class="prop-panel">
+  <fig-property label="Select" activation="row">
+    <fig-select slot="input" value="Medium" options="Small,Medium,Large" full></fig-select>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "point",
+        name: "Point",
+        markup: `<div class="prop-panel">
+  <fig-property label="Point" activation="row">
+    <fig-input-point slot="input" x="24" y="16" units="%" full></fig-input-point>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "easing",
+        name: "Easing",
+        markup: `<div class="prop-panel">
+  <fig-property label="Easing" activation="row">
+    <fig-easing-curve slot="input" value="0.42, 0, 0.58, 1" edit="false"></fig-easing-curve>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "gradient",
+        name: "Gradient",
+        markup: `<div class="prop-panel">
+  <fig-property label="Gradient" activation="row">
+    <fig-input-gradient slot="input" edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' full></fig-input-gradient>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "palette",
+        name: "Palette",
+        markup: `<div class="prop-panel">
+  <fig-property label="Palette" activation="row">
+    <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "rotate",
+        name: "3D Rotate",
+        markup: `<div class="prop-panel">
+  <fig-property label="3D Rotate" activation="row">
+    <fig-input-rotate slot="input"></fig-input-rotate>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "file",
+        name: "File",
+        markup: `<div class="prop-panel">
+  <fig-property label="File" activation="row">
+    <fig-input-file slot="input" label="Choose file" preview full></fig-input-file>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "audio",
+        name: "Audio",
+        markup: `<div class="prop-panel">
+  <fig-property label="Audio" activation="row">
+    <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
+  </fig-property>
+</div>`,
+      },
+      {
+        id: "all-properties-row",
+        name: "All properties",
+        markup: `<div class="prop-panel">
+  <fig-group name="Values" compact>
+    <fig-property label="Number" activation="row">
+      <fig-input-number slot="input" value="16" units="px" steppers="true" full></fig-input-number>
+    </fig-property>
+    <fig-property label="Slider" activation="row">
+      <fig-input-slider slot="input" value="50" default="50" min="0" max="100">
+        <fig-input-number value="50" units="%"></fig-input-number>
+      </fig-input-slider>
+    </fig-property>
+    <fig-property label="String" activation="row">
+      <fig-input-text slot="input" value="Hello" full></fig-input-text>
+    </fig-property>
+    <fig-property label="Boolean" activation="row">
+      <fig-switch slot="input" checked></fig-switch>
+    </fig-property>
+  </fig-group>
+  <fig-group name="Pickers" compact>
+    <fig-property label="Color" activation="row">
+      <fig-input-color slot="input" value="#0D99FF" text="true" full></fig-input-color>
+    </fig-property>
+    <fig-property label="Select" activation="row">
+      <fig-select slot="input" value="Medium" options="Small,Medium,Large" full></fig-select>
+    </fig-property>
+    <fig-property label="Point" activation="row">
+      <fig-input-point slot="input" x="24" y="16" units="%" full></fig-input-point>
+    </fig-property>
+    <fig-property label="Easing" activation="row">
+      <fig-easing-curve slot="input" value="0.42, 0, 0.58, 1" edit="false"></fig-easing-curve>
+    </fig-property>
+  </fig-group>
+  <fig-group name="Advanced" compact>
+    <fig-property label="Gradient" activation="row">
+      <fig-input-gradient slot="input" edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' full></fig-input-gradient>
+    </fig-property>
+    <fig-property label="Palette" activation="row">
+      <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+    </fig-property>
+    <fig-property label="Transform" activation="row">
+      <fig-input-rotate slot="input"></fig-input-rotate>
+    </fig-property>
+    <fig-property label="File" activation="row">
+      <fig-input-file slot="input" label="Choose file" full></fig-input-file>
+    </fig-property>
+    <fig-property label="Audio" activation="row">
+      <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
+    </fig-property>
+  </fig-group>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "ai-attachments",
     name: "Attachments",
     description:
@@ -226,6 +417,65 @@ const ungroupedLabSections: Section[] = [
     ],
   },
   {
+    id: "input-slider",
+    name: "Input Slider",
+    description:
+      "Experimental extensible slider primitives with range, color, delta, stepper, and wheel presentations.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-input-slider name="amount" value="50" default="50" min="0" max="100"></fig-input-slider>
+</div>`,
+      },
+      {
+        id: "with-number",
+        name: "With number",
+        markup: `<div class="prop-panel">
+  <fig-input-slider name="amount" value="50" default="50" min="0" max="100">
+    <fig-input-number value="50" units="%"></fig-input-number>
+  </fig-input-slider>
+</div>`,
+      },
+      {
+        id: "hue",
+        name: "Hue",
+        markup: `<div class="prop-panel">
+  <fig-input-slider-hue name="hue" value="180" default="180"></fig-input-slider-hue>
+</div>`,
+      },
+      {
+        id: "opacity",
+        name: "Opacity",
+        markup: `<div class="prop-panel">
+  <fig-input-slider-opacity name="opacity" color="#0D99FF" value="75" default="75"></fig-input-slider-opacity>
+</div>`,
+      },
+      {
+        id: "delta",
+        name: "Delta",
+        markup: `<div class="prop-panel">
+  <fig-input-slider-delta name="offset" value="0" default="0"></fig-input-slider-delta>
+</div>`,
+      },
+      {
+        id: "stepper",
+        name: "Stepper",
+        markup: `<div class="prop-panel">
+  <fig-input-slider-stepper name="step" value="50" default="50"></fig-input-slider-stepper>
+</div>`,
+      },
+      {
+        id: "wheel",
+        name: "Wheel",
+        markup: `<div class="prop-panel">
+  <fig-input-slider-wheel name="rotation" value="0" default="0" step="1"></fig-input-slider-wheel>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "input-wheel",
     name: "Wheel",
     description:
@@ -330,7 +580,7 @@ const ungroupedLabSections: Section[] = [
 
 const isAiSection = (section: Section) => section.id.startsWith("ai-");
 const isInputSection = (section: Section) =>
-  section.id === "input-wheel";
+  section.id === "input-slider" || section.id === "input-wheel";
 
 export const labSections: Section[] = ungroupedLabSections.map((section) => ({
   ...section,

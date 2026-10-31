@@ -11956,7 +11956,7 @@ test.describe("remaining accessibility contracts", () => {
       root.innerHTML = `
         <fig-input-palette
           id="palette"
-          value='["#0D99FF","#14AE5C","#FFCD29"]'
+          value='["#0D99FF","#14AE5C","#FFCD29","#F24822"]'
           aria-label="Palette"
         ></fig-input-palette>
       `;
@@ -11997,26 +11997,18 @@ test.describe("remaining accessibility contracts", () => {
     await page.keyboard.press("Tab");
     await expect(row).not.toBeFocused();
 
-    await page.locator("#palette .palette-colors-inline fig-input-color").first().focus();
-    const inlineSwatchStyle = await page
-      .locator("#palette .palette-colors-inline fig-input-color")
-      .first()
-      .evaluate((element) => {
-        const style = getComputedStyle(element);
-        const rowStyle = getComputedStyle(element.closest(".palette-colors-inline") as Element);
-        return {
-          outlineStyle: style.outlineStyle,
-          rowOutlineStyle: rowStyle.outlineStyle,
-          rowOutlineWidth: rowStyle.outlineWidth,
-          rowOutlineOffset: rowStyle.outlineOffset,
-        };
-      });
-    expect(inlineSwatchStyle).toEqual({
-      outlineStyle: "none",
-      rowOutlineStyle: "none",
-      rowOutlineWidth: "3px",
-      rowOutlineOffset: "0px",
-    });
+    const swatch = page.locator(
+      "#palette .palette-colors-inline fig-swatch.palette-colors",
+    );
+    await expect(swatch).toHaveCount(1);
+    await expect(swatch).toHaveAttribute("aria-hidden", "true");
+    await expect(swatch).toHaveAttribute(
+      "background",
+      "linear-gradient(to right, #0D99FF 0%, #0D99FF 25%, #14AE5C 25%, #14AE5C 50%, #FFCD29 50%, #FFCD29 75%, #F24822 75%, #F24822 100%)",
+    );
+    await expect(
+      page.locator("#palette .palette-colors-inline fig-input-color"),
+    ).toHaveCount(0);
   });
 
   test("fig-input-gradient swatch always previews left-to-right linear", async ({

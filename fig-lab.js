@@ -9,6 +9,8 @@
  *   <script src="fig-lab.js"></script>
  */
 
+import "./fig-input-slider.js";
+
 function figLabDefineElement(name, constructor) {
   if (!customElements.get(name)) {
     customElements.define(name, constructor);

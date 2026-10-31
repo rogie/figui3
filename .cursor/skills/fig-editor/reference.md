@@ -36,6 +36,9 @@ Position: omit to overlay the selected option on the trigger. Set to place the m
 
 Events: `input`, `change`, `optionhover`, `optionfocus`.
 
+Methods: `focus(options)` focuses the trigger. `activate(options)` focuses the
+trigger and opens the menu unless the select is disabled.
+
 ## Input rotate
 
 `fig-input-rotate` observes `x`, `y`, `z`, `units`, and `open`.
@@ -45,6 +48,7 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 - Other unit strings display literally.
 - `value` returns numeric `{ x, y, z }`.
 - Clicking opens an anchored popup containing `fig-3d-rotate` with all three rotation fields.
+- `focus(options)` focuses the trigger; `activate(options)` focuses and clicks it.
 - Popup edits update the axis attributes and emit `input` and `change` with `{ x, y, z }`.
 - `full` makes the host fill its parent.
 
@@ -68,8 +72,12 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 - `trailing`: `remove`, `add`, or `bind`
 - `show-leading` / `show-trailing`: omitted or `hover` reveals on hover, `false` hides, and an empty attribute always shows
 - `selected`: present or `true` uses `--figma-color-bg-selected`; `false` leaves the row unselected
+- `activation="row"` activates the slotted control from the label or unused row surface; input and accessory clicks remain native, while focus moves the outline to the row and applies `--figma-color-bg-selected`. A slotted `fig-select` anchors its menu to the property row.
+- Row activation overrides `full` sizing; color, gradient, palette, and point inputs use the standard compact width.
 - Authored accessory slots override generated shortcuts.
 - `input` returns the direct `slot="input"` element.
+- `focus(options)` delegates focus to the slotted control and falls back to its first native focus target.
+- `activate(options)` delegates to the slotted control's `activate()` method and falls back to `focus()`.
 - Generated labels associate to the input with `aria-labelledby` unless it already has an accessible name.
 - Generated trailing events bubble across shadow roots with `detail: { input }`.
 - Child control events are not normalized or re-emitted.

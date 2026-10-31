@@ -97,7 +97,12 @@ test.describe("fig-input-palette edit modes", () => {
       "value",
       '[{"color":"#112233","alpha":1},{"color":"#445566","alpha":0.5}]',
     );
-    await expect(picker.locator(".palette-colors fig-input-color")).toHaveCount(2);
+    await expect(
+      picker.locator("fig-swatch.palette-colors"),
+    ).toHaveAttribute(
+      "background",
+      "linear-gradient(to right, #112233 0%, #112233 50%, #44556680 50%, #44556680 100%)",
+    );
 
     await page.keyboard.press("Escape");
     await expect(picker).not.toHaveAttribute("open");

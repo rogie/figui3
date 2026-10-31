@@ -23,6 +23,28 @@ Experimental. APIs may change. React contract: [../figui3/react.md](../figui3/re
 - Attrs: `type`, `value` (JSON string), `color`, `name`, `tooltips`, `disabled`, `drag-surface`, `snapping` (`false` | `modifier` | `true`), `precision` (positions, radius, angle, and internal handles; default `2`)
 - React: JSON `value` as a string attr; do not remount during drag.
 
+### `fig-input-slider` variants
+
+```tsx
+<fig-input-slider value="50" default="50" min="0" max="100" />
+<fig-input-slider value="50">
+  <fig-input-number value="50" units="%" />
+</fig-input-slider>
+<fig-input-slider-hue value="180" />
+<fig-input-slider-opacity color="#0D99FF" value="75" />
+<fig-input-slider-delta value="0" default="0" />
+<fig-input-slider-stepper value="50" />
+<fig-input-slider-wheel value="0" step="1" />
+```
+
+- Shared attrs: `name`, `value`, `default`, `occlusion-targets` (parent-scoped CSS selector list), `min`, `max`, `step`, `precision`, `ghost`, `disabled`
+- Base slider accepts JSON arrays such as `value="[20,80]"` for multiple handles.
+- A direct-child `fig-input-number` synchronizes bidirectionally for scalar values. Configure it with its own attrs; slider attrs are not forwarded. It is hidden for array values.
+- `occlusionTargets` accepts additional `Element[]` targets and returns a defensive copy. Selector, programmatic, direct-number, and row-property label targets are additive.
+- Occlusion CSS: `--fig-input-slider-handle-occlusion-target-overlap-opacity` and `--fig-input-slider-handle-occlusion-target-overlap-fade-threshold`.
+- Hue and opacity add `color`. Wheel is single-value and exposes `spinTo()`, `beginScrub()`, `updateScrub()`, and `endScrub()`.
+- Events: bubbling, composed `input` and `change` with `{ control, name?, value, handleIndex }`.
+
 ### `fig-input-wheel`
 
 ```tsx

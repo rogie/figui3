@@ -103,6 +103,7 @@ const PROPERTY_CONTROL_OPTIONS: Array<{
   { tag: "fig-input-palette", label: "Palette" },
   { tag: "fig-input-rotate", label: "3D Rotate" },
   { tag: "fig-input-file", label: "File" },
+  { tag: "audio", label: "Audio" },
 ];
 
 function resolveFieldInputTag(value: string): FieldInputTag | undefined {
@@ -1979,10 +1980,14 @@ export default function AttributesView({
                   <div className="propkit-attributes-group">
                     {target.controlTag === "fig-property" &&
                       (() => {
-                        const currentTag = getPropertyControlTag(
+                        const propertyControlTag = getPropertyControlTag(
                           markup,
                           target.fieldIndex,
                         );
+                        const currentTag =
+                          propertyControlTag === "fig-input-slider"
+                            ? "fig-slider"
+                            : propertyControlTag;
                         return (
                           <fig-field
                             columns="2/5"
@@ -2002,19 +2007,29 @@ export default function AttributesView({
                                   (e.currentTarget as HTMLElement & {
                                     value?: string;
                                   }).value;
-                                if (
-                                  !PROPERTY_CONTROL_OPTIONS.some(
+                                const selectedOption =
+                                  PROPERTY_CONTROL_OPTIONS.find(
                                     (option) => option.tag === value,
-                                  )
-                                ) {
-                                  return;
-                                }
-                                onMarkupChange(
+                                  );
+                                if (!selectedOption) return;
+                                const controlTag =
+                                  selectedOption.tag === "fig-slider" &&
+                                  target.controlAttributes.activation === "row"
+                                    ? "fig-input-slider"
+                                    : selectedOption.tag;
+                                const nextMarkup =
                                   applyPropertyControlMutation(
                                     markup,
                                     target.fieldIndex,
-                                    value as PropertyControlTag,
-                                  ),
+                                    controlTag,
+                                  );
+                                onMarkupChange(
+                                  applyAttributeMutation(nextMarkup, {
+                                    fieldIndex: target.fieldIndex,
+                                    target: "control",
+                                    name: "label",
+                                    value: selectedOption.label,
+                                  }),
                                 );
                               }}
                             >

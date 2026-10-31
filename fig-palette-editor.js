@@ -450,7 +450,11 @@ class FigPaletteEditor extends HTMLElement {
     colors.splice(currentIndex, 1);
     this.#applyInternalColors(colors, ["input", "change"]);
     if (focusSelection) {
-      requestAnimationFrame(() => this.#selectedRow?.focus());
+      requestAnimationFrame(() => {
+        if (this.#selectedRow) {
+          HTMLElement.prototype.focus.call(this.#selectedRow);
+        }
+      });
     }
   }
 
@@ -515,7 +519,7 @@ class FigPaletteEditor extends HTMLElement {
           ),
       );
       if (!fromEditableControl && row.isConnected) {
-        row.focus({ preventScroll: true });
+        HTMLElement.prototype.focus.call(row, { preventScroll: true });
       }
     });
     row.addEventListener("focusin", () => this.#selectRow(row));

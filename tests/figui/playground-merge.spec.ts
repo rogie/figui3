@@ -200,7 +200,8 @@ test("disabled components expose an Attributes view toggle", () => {
   );
 });
 
-test("property exposes a selected attribute toggle", () => {
+test("property exposes selected without experimental activation controls", () => {
+  expect(controlAttributeRules["fig-property"]?.activation).toBeUndefined();
   expect(controlAttributeRules["fig-property"]?.selected).toEqual({
     label: "Selected",
     type: "boolean",
@@ -212,6 +213,13 @@ test("property all-properties example covers every supported control", () => {
   const section = figui3Sections.find((entry) => entry.id === "property");
   const example = section?.examples.find(
     (entry) => entry.id === "all-properties",
+  );
+  const rowSection = labSections.find((entry) => entry.id === "property");
+  const labDefault = rowSection?.examples.find(
+    (entry) => entry.id === "default",
+  );
+  const rowExample = rowSection?.examples.find(
+    (entry) => entry.id === "all-properties-row",
   );
   const controlTags = [
     "fig-input-number",
@@ -229,14 +237,139 @@ test("property all-properties example covers every supported control", () => {
   ];
 
   expect(example).toMatchObject({ name: "All properties" });
+  expect(rowExample).toMatchObject({
+    name: "All properties",
+  });
   for (const tag of controlTags) {
     expect(example?.markup).toContain(`<${tag}`);
+    expect(rowExample?.markup).toContain(
+      `<${tag === "fig-slider" ? "fig-input-slider" : tag}`,
+    );
   }
+  const rowProperties =
+    rowExample?.markup.match(/<fig-property\b[^>]*>/g) ?? [];
+  expect(rowProperties).toHaveLength(controlTags.length + 1);
+  expect(
+    rowProperties.every((property) =>
+      property.includes('activation="row"'),
+    ),
+  ).toBe(true);
+  expect(rowExample?.markup).toContain(
+    '<fig-property label="Audio" activation="row">',
+  );
+  expect(rowExample?.markup).toContain(
+    'accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3"',
+  );
   expect(section?.examples.map((entry) => entry.id)).toEqual([
     "default",
     "all-properties",
     "custom-accessory",
   ]);
+  expect(rowSection).toMatchObject({
+    name: "Property",
+    group: "Misc",
+  });
+  expect(labDefault?.markup).toContain(
+    '<fig-property label="Number" activation="row">',
+  );
+  expect(rowSection?.examples.map((entry) => entry.id)).toEqual([
+    "default",
+    "angle",
+    "slider",
+    "string",
+    "boolean",
+    "color",
+    "select",
+    "point",
+    "easing",
+    "gradient",
+    "palette",
+    "rotate",
+    "file",
+    "audio",
+    "all-properties-row",
+  ]);
+  const individualControls = [
+    ["default", "Number", "fig-input-number"],
+    ["angle", "Angle", "fig-input-number"],
+    ["slider", "Slider", "fig-input-slider"],
+    ["string", "String", "fig-input-text"],
+    ["boolean", "Boolean", "fig-switch"],
+    ["color", "Color", "fig-input-color"],
+    ["select", "Select", "fig-select"],
+    ["point", "Point", "fig-input-point"],
+    ["easing", "Easing", "fig-easing-curve"],
+    ["gradient", "Gradient", "fig-input-gradient"],
+    ["palette", "Palette", "fig-input-palette"],
+    ["rotate", "3D Rotate", "fig-input-rotate"],
+    ["file", "File", "fig-input-file"],
+    ["audio", "Audio", "fig-input-file"],
+  ] as const;
+  for (const [id, name, tag] of individualControls) {
+    const controlExample = rowSection?.examples.find(
+      (entry) => entry.id === id,
+    );
+    expect(controlExample).toMatchObject({ name });
+    expect(controlExample?.markup).toContain(
+      `<fig-property label="${name}" activation="row">`,
+    );
+    expect(controlExample?.markup).toContain(`<${tag} slot="input"`);
+  }
+  const sliderExample = rowSection?.examples.find(
+    (entry) => entry.id === "slider",
+  );
+  expect(sliderExample?.markup).toContain("<fig-input-number");
+  expect(sliderExample?.markup).not.toContain("occlusion-targets");
+});
+
+test("input slider variants live in the Lab Inputs group", () => {
+  const section = labSections.find((entry) => entry.id === "input-slider");
+  const tags = [
+    "fig-input-slider",
+    "fig-input-slider-hue",
+    "fig-input-slider-opacity",
+    "fig-input-slider-delta",
+    "fig-input-slider-stepper",
+    "fig-input-slider-wheel",
+  ];
+
+  expect(section).toMatchObject({
+    name: "Input Slider",
+    group: "Inputs",
+  });
+  expect(section?.examples.map((example) => example.id)).toEqual([
+    "default",
+    "with-number",
+    "hue",
+    "opacity",
+    "delta",
+    "stepper",
+    "wheel",
+  ]);
+  expect(
+    section?.examples.find((example) => example.id === "with-number")?.markup,
+  ).toContain("<fig-input-number");
+  for (const tag of tags) {
+    expect(
+      section?.examples.some((example) =>
+        example.markup.includes(`<${tag}`),
+      ),
+    ).toBe(true);
+    expect(controlAttributeRules[tag]).toBeDefined();
+    expect(
+      figui3Sections.some((stableSection) =>
+        stableSection.examples.some((example) =>
+          example.markup.includes(`<${tag}`),
+        ),
+      ),
+    ).toBe(false);
+  }
+  expect(
+    controlAttributeRules["fig-input-slider"]["occlusion-targets"],
+  ).toMatchObject({
+    label: "Occlusion targets",
+    type: "string",
+  });
 });
 
 test("palette editor exposes maximum and overflow controls", () => {

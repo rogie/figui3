@@ -683,10 +683,6 @@ class FigSelect extends HTMLElement {
     this.#observer = null;
   }
 
-  focus(options) {
-    this.#button?.focus(options);
-  }
-
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue || !this.#initialized) return;
     if (name === "options") {
@@ -724,6 +720,12 @@ class FigSelect extends HTMLElement {
 
   focus(options) {
     this.#button?.focus(options);
+  }
+
+  activate(options) {
+    if (figEditorBooleanAttribute(this, "disabled")) return;
+    this.focus(options);
+    this.open = true;
   }
 
   blur() {

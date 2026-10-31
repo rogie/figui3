@@ -108,6 +108,27 @@ const splitInputAttributeRules: AttributeRuleSet = {
   disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
 };
 
+const inputSliderAttributeRules: AttributeRuleSet = {
+  name: { label: "Name", type: "string" },
+  value: { label: "Value", type: "string" },
+  default: { label: "Default", type: "string" },
+  "occlusion-targets": {
+    label: "Occlusion targets",
+    type: "string",
+  },
+  min: { label: "Min", type: "number", step: 1 },
+  max: { label: "Max", type: "number", step: 1 },
+  step: { label: "Step", type: "number", min: 0.001, max: 100, step: 0.001 },
+  precision: { label: "Precision", type: "number", min: 0, max: 8, step: 1 },
+  ghost: {
+    label: "Ghost",
+    type: "boolean",
+    boolMode: "string",
+    defaultChecked: false,
+  },
+  disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+};
+
 export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-button": {
     variant: {
@@ -582,6 +603,18 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       ],
     },
   },
+  "fig-input-slider": inputSliderAttributeRules,
+  "fig-input-slider-hue": {
+    ...inputSliderAttributeRules,
+    color: { label: "Color", type: "string" },
+  },
+  "fig-input-slider-opacity": {
+    ...inputSliderAttributeRules,
+    color: { label: "Color", type: "string" },
+  },
+  "fig-input-slider-delta": inputSliderAttributeRules,
+  "fig-input-slider-stepper": inputSliderAttributeRules,
+  "fig-input-slider-wheel": inputSliderAttributeRules,
   "fig-input-wheel": {
     value: { label: "Value", type: "number", min: -10000, max: 10000, step: 1 },
     min: { label: "Min", type: "number", step: 1 },

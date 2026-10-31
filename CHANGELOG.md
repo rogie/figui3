@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.8.0]
+
+### Added
+
+- Added experimental `fig-input-slider` range, hue, opacity, delta, stepper, and wheel controls to the Lab bundle and standalone exports.
+- Added optional synchronized `fig-input-number` composition, multi-handle values, and configurable handle occlusion targets to `fig-input-slider`.
+- Added whole-row `fig-property` activation with automatic label occlusion, control-specific activation, and dedicated Lab examples.
+- Added the `/figui3/lab` playground route with split property-control and audio examples.
+
+### Changed
+
+- Replaced the compact `fig-input-palette` segments with a single gradient-backed `fig-swatch`.
+- Content-sized row-property labels and controls within equal label/input grid tracks.
+- Expanded `focus()` and `activate()` behavior across select, switch, file, gradient, easing, palette, and rotation controls.
+- Updated compact group spacing and switch background styling.
+
+### Fixed
+
+- Preserved focus and drag behavior for composed slider number fields, including progressive handle fading near overlapping controls.
+- Made row-activated properties correctly toggle switches and open menus, pickers, uploads, and editor popups.
+
 ## [11.7.1]
 
 ### Added

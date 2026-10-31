@@ -22,4 +22,4 @@ import "@rogieking/figui3/fig-lab.css";
 import "@rogieking/figui3/fig-lab.js";
 ```
 
-Use Lab for wheel inputs, canvas handles, and AI composition surfaces. Keep Lab out of `fig.js`.
+Use Lab for slider primitives, wheel inputs, canvas handles, and AI composition surfaces. Keep Lab out of `fig.js`.

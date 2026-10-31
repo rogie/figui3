@@ -173,6 +173,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 - Blank or omitted `label` defaults to `Upload audio`, `Upload image`, or `Upload file` based on the known file type. An explicit label overrides it.
 - For known audio files, `preview` shows the audio icon and filename at rest, reveals play and waveform controls on hover/focus, and keeps pause plus waveform visible while playing.
 - `accepts` controls the native chooser filter; file icons and previews are detected independently.
+- Methods: `focus(options)`, `activate(options)` (native chooser or current preview action; disabled-safe)
 - Events: `change` / `input` with files on the host
 
 ### `fig-checkbox`
@@ -213,6 +214,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 - Attrs: `checked`, `disabled`, `label`, `indeterminate`
 - Events: `input` / `change` → `detail.checked` ?? `host.checked`
+- Methods: `focus(options)`, `activate()` (native toggle; disabled-safe)
 
 ### `fig-slider`
 
@@ -294,6 +296,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 - Attrs: `value`, `edit` (`true` | `false` | `picker`), `fixed`, `open`, `disabled`, `min`, `max`
 - `edit="true"` keeps the inline expandable editor, `edit="false"` renders a compact preview, and `edit="picker"` opens `fig-palette-editor` from the editor bundle.
+- Methods: `focus(options)`, `activate(options)` (expands inline mode or opens picker mode; disabled-safe)
 
 ### `fig-palette-editor`
 
@@ -323,6 +326,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 - Attrs: `value`, `edit`, `mode` (`handle` | `tip`), `disabled`
 - `edit="picker"` opens `dialog[is="fig-popup-gradient"]` when `fig-editor.js` is loaded.
+- Methods: `focus(options)`, `activate(options)` (opens picker mode like a click)
 
 ### `fig-swatch`
 
@@ -718,6 +722,8 @@ to one curve type.
 With `edit="false"`, the compact preset control opens `fig-popup-easing` when
 `fig-editor.js` is loaded; without the editor bundle it retains the preset
 dropdown fallback.
+
+- Methods: `focus(options)`, `activate(options)` (opens the compact popup or activates the preset control)
 
 ### `fig-3d-rotate`
 

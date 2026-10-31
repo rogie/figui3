@@ -10954,7 +10954,7 @@ figDefineElement("fig-input-fill", FigInputFill);
 
 /* Input Palette */
 /**
- * A palette of solid colors, each rendered as a fig-input-color swatch.
+ * A palette of solid colors rendered as a segmented fig-swatch preview.
  * Manages an internal array of colors with optional add/remove support.
  * @attr {string} value - JSON array of hex strings or {color,alpha} objects, or comma-separated hex
  * @attr {boolean} disabled - Whether the palette is disabled
@@ -10967,7 +10967,6 @@ figDefineElement("fig-input-fill", FigInputFill);
  */
 class FigInputPalette extends HTMLElement {
   #colors = [];
-  #inlinePickers = [];
   #expandedPickers = [];
   #renderRAF = null;
   #pickerDefinitionPromise = null;
@@ -11059,7 +11058,6 @@ class FigInputPalette extends HTMLElement {
     }
     this.removeEventListener("keydown", this.#boundHandleKeyDown);
     this.removeEventListener("focus", this.#boundHandleHostFocus);
-    this.#inlinePickers = [];
     this.#expandedPickers = [];
     this.#destroyPickerPopup();
   }
@@ -11192,7 +11190,6 @@ class FigInputPalette extends HTMLElement {
     const interactive = editMode !== "false";
 
     this.replaceChildren();
-    this.#inlinePickers = [];
     this.#expandedPickers = [];
 
     const inlineWrap = document.createElement("div");
@@ -11221,13 +11218,9 @@ class FigInputPalette extends HTMLElement {
     };
     if (interactive) inlineWrap.addEventListener("click", openPalette);
 
-    const wrap = document.createElement("div");
+    const wrap = document.createElement("fig-swatch");
     wrap.className = "palette-colors";
-    this.#colors.forEach((entry, i) => {
-      wrap.appendChild(
-        this.#createPicker(entry, i, disabled, { inline: true }),
-      );
-    });
+    wrap.setAttribute("background", this.#paletteGradient());
     inlineWrap.appendChild(wrap);
     this.appendChild(inlineWrap);
     this.#syncTriggerState();
@@ -11357,7 +11350,36 @@ class FigInputPalette extends HTMLElement {
     this.#pickerPopup = null;
   }
 
-  #createPicker(entry, index, disabled, { inline = false } = {}) {
+  #paletteGradient() {
+    if (!this.#colors.length) {
+      return "linear-gradient(to right, transparent 0%, transparent 100%)";
+    }
+    const formatPercent = (value) =>
+      `${Number(value.toFixed(4))}%`;
+    const stops = this.#colors.flatMap((entry, index) => {
+      const start = formatPercent((index / this.#colors.length) * 100);
+      const end = formatPercent(((index + 1) / this.#colors.length) * 100);
+      const alpha = Math.max(0, Math.min(1, Number(entry.alpha)));
+      const color =
+        alpha < 1
+          ? `${entry.color}${Math.round(alpha * 255)
+              .toString(16)
+              .padStart(2, "0")
+              .toUpperCase()}`
+          : entry.color;
+      return [`${color} ${start}`, `${color} ${end}`];
+    });
+    return `linear-gradient(to right, ${stops.join(", ")})`;
+  }
+
+  #syncPaletteSwatch() {
+    this.querySelector("fig-swatch.palette-colors")?.setAttribute(
+      "background",
+      this.#paletteGradient(),
+    );
+  }
+
+  #createPicker(entry, index, disabled) {
     const hexAlpha =
       entry.alpha < 1
         ? entry.color +
@@ -11367,18 +11389,10 @@ class FigInputPalette extends HTMLElement {
         : entry.color;
     const ic = document.createElement("fig-input-color");
     ic.setAttribute("value", hexAlpha);
-    if (inline) {
-      ic.setAttribute("text", "false");
-      ic.setAttribute("alpha", "true");
-      ic.setAttribute("swatch-disabled", "");
-    } else {
-      ic.setAttribute("text", "true");
-      ic.setAttribute("alpha", "true");
-      ic.setAttribute("full", "");
-    }
+    ic.setAttribute("text", "true");
+    ic.setAttribute("alpha", "true");
+    ic.setAttribute("full", "");
     if (disabled) ic.setAttribute("disabled", "");
-
-    const siblingList = inline ? this.#expandedPickers : this.#inlinePickers;
 
     const updateFromPicker = (e) => {
       e.stopPropagation();
@@ -11387,18 +11401,7 @@ class FigInputPalette extends HTMLElement {
         color: el.hexOpaque || this.#colors[index].color,
         alpha: el.rgba ? el.rgba.a : this.#colors[index].alpha,
       };
-      const sibling = siblingList[index];
-      if (sibling) {
-        const entry = this.#colors[index];
-        const hex =
-          entry.alpha < 1
-            ? entry.color +
-              Math.round(entry.alpha * 255)
-                .toString(16)
-                .padStart(2, "0")
-            : entry.color;
-        sibling.setAttribute("value", hex);
-      }
+      this.#syncPaletteSwatch();
     };
 
     ic.addEventListener("input", (e) => {
@@ -11411,8 +11414,7 @@ class FigInputPalette extends HTMLElement {
       this.#emitChange();
     });
 
-    if (inline) this.#inlinePickers.push(ic);
-    else this.#expandedPickers.push(ic);
+    this.#expandedPickers.push(ic);
     return ic;
   }
 
@@ -11439,7 +11441,6 @@ class FigInputPalette extends HTMLElement {
     if (index < 0 || index >= this.#colors.length) return;
     if (this.#colors.length <= this.#min) return;
     this.#colors.splice(index, 1);
-    this.#inlinePickers = [];
     this.#expandedPickers = [];
     this.#render();
     this.#emitChange();
@@ -11477,12 +11478,7 @@ class FigInputPalette extends HTMLElement {
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false";
     const index = this.#colors.length - 1;
-
-    const inlineIc = this.#createPicker(entry, index, disabled, {
-      inline: true,
-    });
-    const wrap = this.querySelector(".palette-colors");
-    if (wrap) wrap.appendChild(inlineIc);
+    this.#syncPaletteSwatch();
 
     const expandedIc = this.#createPicker(entry, index, disabled);
     const expandedWrap = this.querySelector(".palette-colors-expanded");
@@ -11509,14 +11505,16 @@ class FigInputPalette extends HTMLElement {
             .toString(16)
             .padStart(2, "0")
         : entry.color;
-    const inl = this.#inlinePickers[index];
-    if (inl) inl.setAttribute("value", hexAlpha);
     const exp = this.#expandedPickers[index];
     if (exp) exp.setAttribute("value", hexAlpha);
+    this.#syncPaletteSwatch();
   }
 
   #syncPickers() {
-    if (this.#inlinePickers.length !== this.#colors.length) {
+    if (
+      this.#editMode === "true" &&
+      this.#expandedPickers.length !== this.#colors.length
+    ) {
       this.#render();
       return;
     }
@@ -11529,7 +11527,7 @@ class FigInputPalette extends HTMLElement {
     const disabled =
       this.hasAttribute("disabled") &&
       this.getAttribute("disabled") !== "false";
-    [...this.#inlinePickers, ...this.#expandedPickers].forEach((fp) => {
+    this.#expandedPickers.forEach((fp) => {
       if (disabled) fp.setAttribute("disabled", "");
       else fp.removeAttribute("disabled");
     });
@@ -11569,7 +11567,7 @@ class FigInputPalette extends HTMLElement {
     }
   }
 
-  focus() {
+  focus(options) {
     if (
       this.#editMode === "false" ||
       this.hasAttribute("disabled") &&
@@ -11580,7 +11578,17 @@ class FigInputPalette extends HTMLElement {
     if (!trigger) return;
     trigger.style.outline = "var(--figma-focus-outline)";
     trigger.style.outlineOffset = "var(--figma-focus-outline-offset)";
-    trigger.focus();
+    trigger.focus(options);
+  }
+
+  activate(options) {
+    if (
+      this.#editMode === "false" ||
+      figBooleanAttribute(this, "disabled")
+    )
+      return;
+    this.focus(options);
+    this.querySelector(".palette-colors-inline")?.click();
   }
 
   #syncRemoveButtons(disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false") {
@@ -12629,6 +12637,12 @@ class FigInputGradient extends HTMLElement {
     HTMLElement.prototype.focus.call(this, options);
   }
 
+  activate(options) {
+    if (figBooleanAttribute(this, "disabled")) return;
+    this.focus(options);
+    if (this.#editMode === "picker") this.click();
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue || this.#syncingValueAttribute) return;
     switch (name) {
@@ -12810,8 +12824,12 @@ class FigCheckbox extends HTMLElement {
     this.#syncAriaChecked();
   }
 
-  focus() {
-    this.input.focus();
+  focus(options) {
+    this.input.focus(options);
+  }
+
+  activate() {
+    this.input.click();
   }
 
   get value() {
@@ -16172,6 +16190,38 @@ class FigInputFile extends HTMLElement {
     this.#render();
   }
 
+  focus(options) {
+    const nestedInput = this.querySelector(
+      ":scope > fig-image fig-input-file[data-generated], :scope > fig-video fig-input-file[data-generated]",
+    );
+    if (nestedInput) {
+      nestedInput.focus(options);
+      return;
+    }
+    if (this.#fileInput) {
+      this.#fileInput.focus(options);
+      return;
+    }
+    this.#uploadBtn?.focus(options);
+  }
+
+  activate(options) {
+    if (figBooleanAttribute(this, "disabled")) return;
+    const nestedInput = this.querySelector(
+      ":scope > fig-image fig-input-file[data-generated], :scope > fig-video fig-input-file[data-generated]",
+    );
+    if (nestedInput) {
+      nestedInput.activate(options);
+      return;
+    }
+    this.focus(options);
+    if (this.#fileInput) {
+      this.#fileInput.click();
+      return;
+    }
+    this.#uploadBtn?.click();
+  }
+
   clear() {
     this.#files = null;
     if (this.#fileInput) this.#fileInput.value = "";
@@ -16875,6 +16925,25 @@ class FigEasingCurve extends HTMLElement {
       return;
     }
     HTMLElement.prototype.focus.call(this, options);
+  }
+
+  activate(options) {
+    if (!this.#isEditEnabled()) {
+      this.focus(options);
+      this.#openPickerPopup();
+      return;
+    }
+    const target =
+      this.#select ||
+      this.#valueInput ||
+      this.querySelector("fig-handle:not([disabled])");
+    if (!target) return;
+    if (typeof target.activate === "function") {
+      target.activate(options);
+      return;
+    }
+    target.focus(options);
+    target.click();
   }
 
   #constrainedMode() {

@@ -7,11 +7,14 @@ import {
   applyChooserContentMutation,
   applyChooserMaxSizeMutation,
   applyFieldLabelMutation,
+  applyPropertyControlMutation,
   applyPrependSlotMutation,
   applySelectSeparatorStickyMutation,
   getChooserContentMode,
   getPrependSlotMode,
+  getPropertyControlTag,
   getSelectSeparatorStickyEnabled,
+  isPropertyControlTag,
   type ChooserContentMode,
   type PrependSlotMode,
 } from "./attributeParser";
@@ -83,6 +86,27 @@ export function diffFromDefault(
       const defContent = getChooserContentMode(defaultMarkup, i);
       if (curContent !== defContent) {
         params[`${idx}${SPECIAL_PREFIX}content`] = curContent;
+      }
+    }
+
+    if (
+      cur.controlTag === "fig-property" &&
+      def.controlTag === "fig-property"
+    ) {
+      const propertyIndex =
+        currentTargets
+          .slice(0, i + 1)
+          .filter((target) => target.controlTag === "fig-property").length - 1;
+      const curPropertyControl = getPropertyControlTag(
+        currentMarkup,
+        propertyIndex,
+      );
+      const defPropertyControl = getPropertyControlTag(
+        defaultMarkup,
+        propertyIndex,
+      );
+      if (curPropertyControl !== defPropertyControl) {
+        params[`${idx}${SPECIAL_PREFIX}control`] = curPropertyControl;
       }
     }
 
@@ -180,6 +204,23 @@ export function applyParamsToMarkup(
   for (const { idx, key, val } of specialEntries) {
     if (key === "_content" && val) {
       markup = applyChooserContentMutation(markup, idx, val as ChooserContentMode);
+    } else if (key === "_control" && isPropertyControlTag(val)) {
+      const propertyIndex =
+        defaultTargets
+          .slice(0, idx + 1)
+          .filter((target) => target.controlTag === "fig-property").length - 1;
+      if (propertyIndex >= 0) {
+        const controlTag =
+          val === "fig-slider" &&
+          defaultTargets[idx]?.controlAttributes.activation === "row"
+            ? "fig-input-slider"
+            : val;
+        markup = applyPropertyControlMutation(
+          markup,
+          propertyIndex,
+          controlTag,
+        );
+      }
     } else if (key === "_prepend" && val) {
       markup = applyPrependSlotMutation(markup, idx, val as PrependSlotMode);
     } else if (key === "_sticky") {

@@ -5,6 +5,7 @@ const jobs = [
   { mode: "bundle", input: "fig.css", output: "dist/fig.css" },
   { mode: "bundle", input: "fig-layer.css", output: "dist/fig-layer.css" },
   { mode: "bundle", input: "fig-input-rotate.css", output: "dist/fig-input-rotate.css" },
+  { mode: "bundle", input: "fig-input-slider.css", output: "dist/fig-input-slider.css" },
   { mode: "bundle", input: "fig-property.css", output: "dist/fig-property.css" },
   { mode: "bundle", input: "fig-editor.css", output: "dist/fig-editor.css" },
   { mode: "bundle", input: "fig-lab.css", output: "dist/fig-lab.css" },

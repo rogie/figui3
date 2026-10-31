@@ -93,6 +93,7 @@ nav {
 
   .nav-search-header {
     flex-shrink: 0;
+    margin-top: calc(-1 * var(--spacer-2));
 
     fig-input-text {
       width: 100%;

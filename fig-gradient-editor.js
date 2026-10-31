@@ -595,7 +595,7 @@ class FigGradientEditor extends HTMLElement {
           ),
       );
       if (!fromEditableControl && row.isConnected) {
-        row.focus({ preventScroll: true });
+        HTMLElement.prototype.focus.call(row, { preventScroll: true });
       }
     });
     row.addEventListener("focusin", () => this.#selectStopRow(row));

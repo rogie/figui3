@@ -105,6 +105,7 @@ Minimal example:
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
 | [Audio](#audio) | `<fig-audio>` | Waveform audio player with shared media controls |
 | [Audio Waveform](#audio-waveform) | `<fig-audio-waveform>` | Responsive waveform generated from an audio URL |
+| [Input Slider](#input-slider) | `<fig-input-slider>` | Experimental standalone slider primitives |
 | [Input Wheel](#input-wheel) | `<fig-input-wheel>` | Standalone SVG tick-and-handle numeric scrubber |
 | [Text Input](#text-input) | `<fig-input-text>` | Styled text/textarea input |
 | [Number Input](#number-input) | `<fig-input-number>` | Numeric input with units |
@@ -266,6 +267,8 @@ document.querySelector("fig-select").menuAnchor =
 
 **Events:** `input`, `change`, `optionhover` (`detail` is the hovered option value), `optionfocus` (`detail` is the keyboard-focused option value while the menu is open).
 
+**Methods:** `focus(options)` focuses the trigger. `activate(options)` focuses the trigger and opens the menu; disabled selects remain closed.
+
 ---
 
 <a id="combo-input"></a>
@@ -349,6 +352,10 @@ The suggestion trigger uses `fig-select` when `fig-editor.js` is registered and 
 <fig-switch checked>Active feature</fig-switch>
 ```
 
+Checkboxes, radios, and switches expose `focus(options)` and `activate()`.
+`activate()` uses the native input behavior, including its disabled state and
+normal `input` / `change` events.
+
 ---
 
 ### Inputs
@@ -430,6 +437,36 @@ Set `--fig-audio-waveform-stroke-width` (default `1px`) to control waveform bar 
   progress="0.42"
 ></fig-audio-waveform>
 ```
+
+---
+
+#### Input Slider
+
+`<fig-input-slider>` and variant elements
+
+Experimental standalone slider primitives. Import `fig-input-slider.js` and `fig-input-slider.css` directly, or use the `fig-lab` bundle.
+
+```html
+<fig-input-slider value="50" default="50"></fig-input-slider>
+<fig-input-slider value="50">
+  <fig-input-number value="50" units="%"></fig-input-number>
+</fig-input-slider>
+<fig-input-slider-hue value="180"></fig-input-slider-hue>
+<fig-input-slider-opacity color="#0D99FF" value="75"></fig-input-slider-opacity>
+<fig-input-slider-delta value="0" default="0"></fig-input-slider-delta>
+<fig-input-slider-stepper value="50"></fig-input-slider-stepper>
+<fig-input-slider-wheel value="0" step="1"></fig-input-slider-wheel>
+```
+
+All variants support `name`, `value`, `default`, `min`, `max`, `step`, `precision`, `ghost`, and `disabled`. Hue and opacity also support `color`. The base slider supports multiple handles with JSON arrays such as `value="[20,80]"`.
+
+An authored direct-child `<fig-input-number>` is preserved and synchronized with a single slider value in both directions. Its own attributes configure its display; slider attributes are not forwarded. The number input is hidden while the slider has multiple values.
+
+Use `occlusion-targets` with a CSS selector list to fade handles beneath matching elements in the slider’s parent scope. Parent matches, siblings, and children are supported. Assign an array of elements to `occlusionTargets` for additional programmatic targets; the getter returns a defensive copy. Attribute, programmatic, and automatic targets are additive. A direct number child is automatic, as is the label of a containing `fig-property[activation="row"]`.
+
+Set `--fig-input-slider-handle-occlusion-target-overlap-opacity` (default `0`) for the fully occluded opacity and `--fig-input-slider-handle-occlusion-target-overlap-fade-threshold` (default `var(--spacer-2)`) for the distance where fading begins.
+
+**Events:** bubbling, composed `input` and `change` with `{ control, name?, value, handleIndex }`. Double-click resets to the default. The wheel variant also provides `spinTo()`, `beginScrub()`, `updateScrub()`, and `endScrub()`.
 
 ---
 
@@ -536,7 +573,7 @@ An editor-bundle property button that summarizes X, Y, and Z rotation values wit
 <fig-input-rotate x="0" y="0" z="0"></fig-input-rotate>
 ```
 
-Popup edits update `x`, `y`, and `z` and emit `input` and `change` with `{ x, y, z }` in `detail`.
+Popup edits update `x`, `y`, and `z` and emit `input` and `change` with `{ x, y, z }` in `detail`. `focus(options)` focuses the trigger; `activate(options)` focuses and clicks it to open the popup.
 
 Requires `fig-editor.js` and `fig-editor.css`.
 
@@ -576,6 +613,8 @@ Requires `fig-editor.js` and `fig-editor.css`.
 | `remove` | boolean | `true` | Show the remove button when a file is selected; set to `"false"` to omit it |
 | `disabled` | boolean | `false` | Disabled state |
 | `variant` | string | `"property"` | Internal button variant |
+
+`focus(options)` focuses the upload control. `activate(options)` triggers its native file chooser, preview action, or playback button and does nothing when disabled.
 
 Known image and audio files use media-specific icons; unmatched files retain the upload icon. A present or `"true"` `preview` uses the compact image swatch, audio playback preview, or video icon. Audio previews show the audio icon and filename at rest, reveal play and waveform controls on hover or focus, and keep the pause control and waveform visible while playing. `preview="large"` renders known images and videos as upload-enabled `fig-image` or `fig-video` previews; audio and other formats retain their compact preview behavior. `preview="false"` disables previews. Image preview supports `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, and `.avif`; audio playback supports `.mp3`, `.wav`, `.aac`, `.m4a`, `.ogg`, and `.flac`; video detection supports common formats including `.mp4`, `.webm`, `.mov`, `.m4v`, `.avi`, `.mkv`, `.ogv`, `.mpeg`, `.mpg`, and `.3gp`.
 
@@ -736,13 +775,13 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 <fig-input-palette edit="picker" value='[{"color":"#FF0000","alpha":0.5},{"color":"#00FF00","alpha":1}]'></fig-input-palette>
 ```
 
-The editable palette is a single tab stop. Enter or Space expands inline mode or opens picker mode. `edit="false"` renders only the compact preview. Picker mode requires `fig-editor.js`.
+The editable palette is a single tab stop. Enter or Space expands inline mode or opens picker mode. `activate(options)` performs the same action after focusing the trigger. `edit="false"` renders only the compact preview. Picker mode requires `fig-editor.js`.
 
 #### Property
 
 `<fig-property>`
 
-An editor-bundle property row. Supply one control in `slot="input"` and optionally author `slot="label"`, `slot="leading"`, or `slot="trailing"` content. Authored label markup takes precedence over the `label` attribute. The `leading="drag|chevron"` and `trailing="remove|add|bind"` attributes generate common accessories; authored slot content takes precedence. Leading and trailing content appears on hover or focus by default. Set `show-leading="false"` or `show-trailing="false"` to hide it, or add an empty `show-leading` or `show-trailing` attribute to always show it. Add `selected` or `selected="true"` for the selected background; `selected="false"` leaves the row unselected. Generated trailing actions emit bubbling, composed events named `remove`, `add`, or `bind` with the slotted control in `detail.input`. Input events bubble directly from the supplied control.
+An editor-bundle property row. Supply one control in `slot="input"` and optionally author `slot="label"`, `slot="leading"`, or `slot="trailing"` content. Authored label markup takes precedence over the `label` attribute. The `leading="drag|chevron"` and `trailing="remove|add|bind"` attributes generate common accessories; authored slot content takes precedence. Leading and trailing content appears on hover or focus by default. Set `show-leading="false"` or `show-trailing="false"` to hide it, or add an empty `show-leading` or `show-trailing` attribute to always show it. Add `selected` or `selected="true"` for the selected background; `selected="false"` leaves the row unselected. Generated trailing actions emit bubbling, composed events named `remove`, `add`, or `bind` with the slotted control in `detail.input`. Input events bubble directly from the supplied control. `focus(options)` delegates focus to the slotted control, while `activate(options)` delegates to its `activate()` method and falls back to focus when that method is unavailable. Set `activation="row"` to activate from the label or unused row surface; direct input and accessory clicks keep their native behavior. Focus within the control moves the shared outline to the row and applies the selected background. Row activation content-sizes slotted controls even when they have `full`; color, gradient, palette, and point controls use the standard compact input width.
 
 ```html
 <fig-property label="Size" leading="drag" trailing="remove">
@@ -859,7 +898,7 @@ Attributes: `axis`, `handle`, `items`, `indicator`, and `disabled`. The bubbling
 
 `<fig-input-gradient>`
 
-A gradient editor with draggable stops. With `edit="picker"` and the editor bundle registered, it opens the reusable `dialog[is="fig-popup-gradient"]`; otherwise it renders the gradient swatch without opening a picker.
+A gradient editor with draggable stops. With `edit="picker"` and the editor bundle registered, it opens the reusable `dialog[is="fig-popup-gradient"]`; otherwise it renders the gradient swatch without opening a picker. `activate(options)` opens picker mode like a click and focuses inline mode.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1157,7 +1196,7 @@ The internal handle uses the shared focus outline and supports Arrow, Shift+Arro
 
 `<fig-easing-curve>`
 
-An interactive bezier or spring easing curve editor with a preset dropdown and manual value input.
+An interactive bezier or spring easing curve editor with a preset dropdown and manual value input. `activate(options)` opens the compact easing popup when `edit="false"` or activates the preset control in editable mode.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -2119,7 +2158,7 @@ git clone https://github.com/rogie/figui3.git
 cd figui3
 bun install
 bun dev                # Component docs at http://localhost:3000
-npm run dev:playground # Playground at http://localhost:6600 (/figui3, /lab, /sandbox)
+npm run dev:playground # Playground at http://localhost:6600 (/figui3, /figui3/lab, /sandbox)
 npm run build          # Build minified dist/ (JS + CSS)
 npm run build:css      # Build minified CSS only
 ```
@@ -2149,7 +2188,7 @@ import "@rogieking/figui3/src/fig.css";  // unminified source
 The playground is the fastest way to explore and validate component markup:
 
 - **`/figui3`** — component examples and property panel patterns with attribute controls
-- **`/lab`** — experimental component examples
+- **`/figui3/lab`** — experimental component examples
 - **`/sandbox`** — styled React sample app
 
 ---

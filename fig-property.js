@@ -2,6 +2,9 @@
 import "./fig.js";
 
 let figPropertyId = 0;
+const FIG_INPUT_SLIDER_MANAGED_OCCLUSION_TARGETS = Symbol.for(
+  "figui.fig-input-slider.managed-occlusion-targets",
+);
 
 function defineElement(name, constructor) {
   if (!customElements.get(name)) customElements.define(name, constructor);
@@ -22,15 +25,22 @@ class FigProperty extends HTMLElement {
     "trailing",
     "show-leading",
     "show-trailing",
+    "activation",
   ];
 
   #observer = null;
   #labelElement = null;
   #associatedInput = null;
   #labelFocusTarget = null;
+  #menuAnchoredSelect = null;
+  #previousSelectMenuAnchor = null;
+  #waitingForSelectDefinition = false;
+  #managedOcclusionSlider = null;
+  #waitingForSliderDefinition = false;
   #syncQueued = false;
 
   connectedCallback() {
+    this.addEventListener("click", this.#activateFromRow);
     this.#sync();
     this.#observer = new MutationObserver(() => this.#queueSync());
     this.#observer.observe(this, {
@@ -41,8 +51,11 @@ class FigProperty extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.removeEventListener("click", this.#activateFromRow);
     this.#observer?.disconnect();
     this.#observer = null;
+    this.#restoreSelectMenuAnchor();
+    this.#clearSliderOcclusionTarget();
     this.#clearLabelAssociation();
   }
 
@@ -52,6 +65,31 @@ class FigProperty extends HTMLElement {
 
   get input() {
     return this.querySelector(':scope > [slot="input"]');
+  }
+
+  /** Focus the slotted input, including its first native focus target as a fallback. */
+  focus(options) {
+    const input = this.input;
+    if (!(input instanceof HTMLElement)) return;
+    input.focus(options);
+    if (
+      document.activeElement !== input &&
+      !input.contains(document.activeElement) &&
+      !input.matches(":focus-within")
+    ) {
+      input.querySelector("input, select, textarea, button")?.focus(options);
+    }
+  }
+
+  /** Activate the slotted input, falling back to focus when it has no activate method. */
+  activate(options) {
+    this.#syncSelectMenuAnchor();
+    const input = this.input;
+    if (!(input instanceof HTMLElement)) return;
+    if (typeof input.activate === "function") {
+      return input.activate(options);
+    }
+    this.focus();
   }
 
   #queueSync() {
@@ -79,6 +117,92 @@ class FigProperty extends HTMLElement {
     this.#syncLabel();
     this.#syncLeading();
     this.#syncTrailing();
+    this.#syncSelectMenuAnchor();
+    this.#syncSliderOcclusionTarget();
+  }
+
+  #syncSliderOcclusionTarget() {
+    const input = this.input;
+    const slider =
+      this.getAttribute("activation") === "row" &&
+      input?.localName.startsWith("fig-input-slider")
+        ? input
+        : null;
+
+    if (this.#managedOcclusionSlider && this.#managedOcclusionSlider !== slider) {
+      this.#clearSliderOcclusionTarget();
+    }
+    if (!(slider instanceof HTMLElement)) return;
+
+    const setManagedTargets =
+      slider[FIG_INPUT_SLIDER_MANAGED_OCCLUSION_TARGETS];
+    if (typeof setManagedTargets !== "function") {
+      if (!this.#waitingForSliderDefinition) {
+        this.#waitingForSliderDefinition = true;
+        customElements.whenDefined(slider.localName).then(() => {
+          this.#waitingForSliderDefinition = false;
+          if (this.isConnected) this.#queueSync();
+        });
+      }
+      return;
+    }
+
+    this.#managedOcclusionSlider = slider;
+    setManagedTargets.call(
+      slider,
+      this,
+      this.#labelElement ? [this.#labelElement] : [],
+    );
+  }
+
+  #clearSliderOcclusionTarget() {
+    const slider = this.#managedOcclusionSlider;
+    const setManagedTargets =
+      slider?.[FIG_INPUT_SLIDER_MANAGED_OCCLUSION_TARGETS];
+    if (typeof setManagedTargets === "function") {
+      setManagedTargets.call(slider, this, []);
+    }
+    this.#managedOcclusionSlider = null;
+  }
+
+  #syncSelectMenuAnchor() {
+    const input = this.input;
+    const select =
+      this.getAttribute("activation") === "row" &&
+      input?.matches("fig-select")
+        ? input
+        : null;
+
+    if (this.#menuAnchoredSelect !== select) {
+      this.#restoreSelectMenuAnchor();
+    }
+    if (!(select instanceof HTMLElement) || this.#menuAnchoredSelect === select) {
+      return;
+    }
+    if (!("menuAnchor" in select)) {
+      if (!this.#waitingForSelectDefinition) {
+        this.#waitingForSelectDefinition = true;
+        customElements.whenDefined("fig-select").then(() => {
+          this.#waitingForSelectDefinition = false;
+          if (this.isConnected) this.#queueSync();
+        });
+      }
+      return;
+    }
+    if (select.menuAnchor === this) return;
+
+    this.#previousSelectMenuAnchor = select.menuAnchor;
+    this.#menuAnchoredSelect = select;
+    select.menuAnchor = this;
+  }
+
+  #restoreSelectMenuAnchor() {
+    const select = this.#menuAnchoredSelect;
+    if (select?.menuAnchor === this) {
+      select.menuAnchor = this.#previousSelectMenuAnchor;
+    }
+    this.#menuAnchoredSelect = null;
+    this.#previousSelectMenuAnchor = null;
   }
 
   #syncLabel() {
@@ -177,16 +301,10 @@ class FigProperty extends HTMLElement {
   };
 
   #focusInput = () => {
+    if (this.getAttribute("activation") === "row") return;
+    this.focus();
     const input = this.input;
     if (!(input instanceof HTMLElement)) return;
-    input.focus();
-    if (
-      document.activeElement !== input &&
-      !input.contains(document.activeElement) &&
-      !input.matches(":focus-within")
-    ) {
-      input.querySelector("input, select, textarea, button")?.focus();
-    }
     const focused = input.matches(":focus")
       ? input
       : input.querySelector(":focus");
@@ -207,6 +325,28 @@ class FigProperty extends HTMLElement {
     );
     this.#labelFocusTarget?.removeAttribute("data-fig-property-focus");
     this.#labelFocusTarget = null;
+  };
+
+  #activateFromRow = (event) => {
+    if (
+      this.getAttribute("activation") !== "row" ||
+      event.defaultPrevented
+    ) {
+      return;
+    }
+
+    const blockedSlots = new Set(["input", "leading", "trailing"]);
+    const fromBlockedSlot = event.composedPath().some(
+      (node) =>
+        node instanceof Element &&
+        node.parentElement === this &&
+        blockedSlots.has(node.getAttribute("slot")),
+    );
+    if (fromBlockedSlot) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.activate();
   };
 
   #syncLeading() {

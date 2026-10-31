@@ -320,6 +320,12 @@ export default function ExampleView({
 
     const VALUE_SYNC_TAGS = new Set([
       "fig-3d-rotate",
+      "fig-input-slider",
+      "fig-input-slider-hue",
+      "fig-input-slider-opacity",
+      "fig-input-slider-delta",
+      "fig-input-slider-stepper",
+      "fig-input-slider-wheel",
       "fig-input-wheel",
       "fig-origin-grid",
       "fig-joystick",
@@ -357,6 +363,7 @@ export default function ExampleView({
       const shouldSkipPersistForFocusedControl =
         tagName === "fig-segmented-control" ||
         tagName === "fig-joystick" ||
+        tagName.startsWith("fig-input-slider") ||
         tagName === "fig-input-wheel" ||
         tagName === "fig-origin-grid";
       if (shouldSkipPersistForFocusedControl) {
@@ -387,7 +394,7 @@ export default function ExampleView({
       let target: Element | null = null;
       if (fields.length && fields[fieldIndex]) {
         target = fields[fieldIndex].querySelector(
-          "fig-3d-rotate, fig-input-wheel, fig-origin-grid, fig-joystick, fig-segmented-control",
+          "fig-3d-rotate, fig-input-slider, fig-input-slider-hue, fig-input-slider-opacity, fig-input-slider-delta, fig-input-slider-stepper, fig-input-slider-wheel, fig-input-wheel, fig-origin-grid, fig-joystick, fig-segmented-control",
         );
       } else if (controls) {
         target = controls[fieldIndex] ?? null;

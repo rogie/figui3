@@ -1,0 +1,1060 @@
+/**
+ * Standalone FigUI3 slider styles.
+ * Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE.
+ */
+
+.fig-input-slider {
+  /* Host layout */
+  --fig-input-slider-block-size: var(--control-height);
+  --fig-input-slider-padding-block: 0px;
+  --fig-input-slider-padding-inline: 0;
+  --fig-input-slider-cursor: default;
+  --fig-input-slider-cursor-dragging: grabbing;
+
+  /* Tray */
+  --fig-input-slider-tray-block-size: calc(
+    var(--fig-input-slider-block-size) -
+      var(--fig-input-slider-padding-block) * 2
+  );
+  --fig-input-slider-tray-padding-block: 0;
+  --fig-input-slider-tray-padding-inline: 0;
+  --fig-input-slider-tray-gap: var(--spacer-2);
+  --fig-input-slider-tray-background: var(--figma-color-bg-secondary);
+  --fig-input-slider-tray-background-hover: var(--figma-color-bg-hover);
+  --fig-input-slider-tray-outline-width: 0;
+  --fig-input-slider-tray-outline-style: solid;
+  --fig-input-slider-tray-outline-color: var(
+    --figma-color-bordertranslucent
+  );
+  --fig-input-slider-tray-outline-color-hover: var(
+    --figma-color-bordertranslucent
+  );
+  --fig-input-slider-tray-outline-offset: calc(
+    -1 * var(--fig-input-slider-tray-outline-width, 0px)
+  );
+  --fig-input-slider-tray-border-radius: var(--radius-medium);
+  --fig-input-slider-tray-corner-shape: round;
+  --fig-input-slider-tray-box-shadow: none;
+  --fig-input-slider-focus-outline-width: var(--figma-focus-outline-width);
+  --fig-input-slider-focus-outline-color: var(--figma-focus-outline-color);
+  --fig-input-slider-focus-outline-offset: var(--figma-focus-outline-offset);
+
+  /* Track */
+  --fig-input-slider-track-height: 100%;
+  --fig-input-slider-track-inset-inline: 0;
+  --fig-input-slider-track-background: light-dark(transparent, transparent);
+  --fig-input-slider-track-border-width: 0;
+  --fig-input-slider-track-border-style: solid;
+  --fig-input-slider-track-border-color: light-dark(
+    transparent,
+    transparent
+  );
+  --fig-input-slider-track-border-radius: var(--radius-medium);
+  --fig-input-slider-track-corner-shape: round;
+  --fig-input-slider-track-box-shadow: none;
+  --fig-input-slider-track-opacity: 1;
+
+  /* Fills */
+  --fig-input-slider-fills-inset-inline: var(
+    --fig-input-slider-track-inset-inline,
+    0
+  );
+  --fig-input-slider-fill-background: var(--figma-color-bg-tertiary);
+  --fig-input-slider-fill-border-width: 0;
+  --fig-input-slider-fill-border-style: solid;
+  --fig-input-slider-fill-border-color: light-dark(
+    transparent,
+    transparent
+  );
+  --fig-input-slider-fill-border-radius: var(
+    --fig-input-slider-track-border-radius,
+    var(--radius-medium-large)
+  );
+  --fig-input-slider-fill-corner-shape: var(
+    --fig-input-slider-track-corner-shape,
+    round
+  );
+  --fig-input-slider-fill-box-shadow: none;
+  --fig-input-slider-fill-opacity: 1;
+
+  /* Handles */
+  --fig-input-slider-handle-track-inset-inline: 0.5rem;
+  --fig-input-slider-handle-width: var(--spacer-1);
+  --fig-input-slider-handle-height: calc(
+    var(--fig-input-slider-tray-block-size, 2rem) - var(--spacer-2-5)
+  );
+  --fig-input-slider-handle-background: light-dark(#ffffff, #ffffff);
+  --fig-input-slider-handle-border-width: 0;
+  --fig-input-slider-handle-border-style: solid;
+  --fig-input-slider-handle-border-color: light-dark(
+    transparent,
+    transparent
+  );
+  --fig-input-slider-handle-border-radius: var(--radius-medium-large);
+  --fig-input-slider-handle-corner-shape: round;
+  --fig-input-slider-handle-box-shadow:
+    0 0 0 1px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)),
+    0 1px 1px light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05));
+  --fig-input-slider-handle-opacity-rest: 1;
+  --fig-input-slider-handle-opacity-interactive: 1;
+  --fig-input-slider-handle-occlusion-target-overlap-opacity: 0;
+  --fig-input-slider-handle-occlusion-target-overlap-fade-threshold: var(
+    --spacer-2
+  );
+  --fig-input-slider-handle-scale-rest: 1;
+  --fig-input-slider-handle-scale-interactive: 1;
+  --fig-input-slider-handle-transition:
+    opacity var(--transition-duration) var(--transition-timing-function),
+    transform var(--transition-duration) var(--transition-timing-function);
+  --fig-input-slider-handle-hit-size: 2rem;
+
+  /* Ghost handle */
+  --fig-input-slider-ghost-handle-width: var(
+    --fig-input-slider-handle-width,
+    0.25rem
+  );
+  --fig-input-slider-ghost-handle-height: var(
+    --fig-input-slider-handle-height,
+    1rem
+  );
+  --fig-input-slider-ghost-handle-background: var(
+    --fig-input-slider-tick-stroke-color,
+    light-dark(#222222, #ffffff)
+  );
+  --fig-input-slider-ghost-handle-border-width: var(
+    --fig-input-slider-handle-border-width,
+    0
+  );
+  --fig-input-slider-ghost-handle-border-style: var(
+    --fig-input-slider-handle-border-style,
+    solid
+  );
+  --fig-input-slider-ghost-handle-border-color: var(
+    --fig-input-slider-handle-border-color,
+    light-dark(transparent, transparent)
+  );
+  --fig-input-slider-ghost-handle-border-radius: var(
+    --fig-input-slider-handle-border-radius,
+    var(--radius-medium-large)
+  );
+  --fig-input-slider-ghost-handle-corner-shape: var(
+    --fig-input-slider-handle-corner-shape,
+    round
+  );
+  --fig-input-slider-ghost-handle-box-shadow: none;
+  --fig-input-slider-ghost-handle-opacity: 1;
+  --fig-input-slider-ghost-handle-transition: opacity
+    var(--transition-duration) var(--transition-timing-function);
+
+  /* Ticks */
+  --fig-input-slider-ticks-inset-inline: 0;
+  --fig-input-slider-tick-offset-inline: 0px;
+  --fig-input-slider-tick-length: var(--spacer-2);
+  --fig-input-slider-tick-stroke-width: 0.15625rem;
+  --fig-input-slider-tick-width: var(
+    --fig-input-slider-tick-stroke-width,
+    0.125rem
+  );
+  --fig-input-slider-tick-stroke-color: light-dark(#999, #777);
+  --fig-input-slider-tick-active-stroke-color: var(--figma-color-text);
+  --fig-input-slider-tick-border-radius: var(--radius-medium);
+  --fig-input-slider-tick-opacity: 0.5;
+  --fig-input-slider-tick-active-opacity: 1;
+
+  /* Interaction */
+  --fig-input-slider-disabled-opacity: 0.5;
+  --fig-input-slider-disabled-filter: grayscale(1);
+  --fig-input-slider-touch-action: none;
+  --fig-input-slider-progress: 0;
+  --fig-input-slider-default-progress: 0;
+
+  display: block;
+  position: relative;
+  box-sizing: border-box;
+  inline-size: 100%;
+  block-size: var(--fig-input-slider-block-size, 2.5rem);
+  padding-block: var(--fig-input-slider-padding-block, 0.25rem);
+  padding-inline: var(--fig-input-slider-padding-inline, 0);
+  outline: none;
+  font:
+    var(--body-medium-fontWeight, 450)
+      var(--text-body-medium-font-size, 0.6875rem) /
+      var(--line-height, 1rem)
+      var(
+        --font-family,
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif
+      );
+  letter-spacing: var(--body-letter-spacing, 0.055px);
+}
+
+.fig-input-slider .fig-input-slider-tray {
+  position: relative;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--fig-input-slider-tray-gap, 0.5rem);
+  inline-size: 100%;
+  block-size: var(--fig-input-slider-tray-block-size, 2rem);
+  min-inline-size: 0;
+  padding-block: var(--fig-input-slider-tray-padding-block, 0);
+  padding-inline: var(--fig-input-slider-tray-padding-inline, 0);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(
+    --fig-input-slider-tray-border-radius,
+    var(--radius-medium-large, 0.5625rem)
+  );
+  corner-shape: var(--fig-input-slider-tray-corner-shape, round);
+  outline:
+    var(--fig-input-slider-tray-outline-width, 0)
+      var(--fig-input-slider-tray-outline-style, solid)
+      var(
+        --fig-input-slider-tray-outline-color,
+        var(--figma-color-bordertranslucent)
+      );
+  outline-offset: var(--fig-input-slider-tray-outline-offset, 0);
+  background: var(
+    --fig-input-slider-tray-background,
+    var(--figma-color-bg-secondary)
+  );
+  box-shadow: var(--fig-input-slider-tray-box-shadow, none);
+  cursor: var(--fig-input-slider-cursor, default);
+  touch-action: var(--fig-input-slider-touch-action, none);
+  transition:
+    background-color var(--transition-duration)
+      var(--transition-timing-function),
+    outline-color var(--transition-duration)
+      var(--transition-timing-function);
+}
+
+.fig-input-slider[data-dragging],
+.fig-input-slider[data-dragging] .fig-input-slider-tray {
+  cursor: var(--fig-input-slider-cursor-dragging, grabbing);
+}
+
+.fig-input-slider:is(:active, :focus-within, [data-dragging]) {
+  --fig-input-slider-fill-background: var(--figma-color-bg-brand);
+  --fig-input-slider-tick-stroke-color: var(--figma-color-bordertranslucent-strong);
+}
+
+.fig-input-slider:is(:hover, :focus-within) .fig-input-slider-tray {
+  background: var(
+    --fig-input-slider-tray-background-hover,
+    var(
+      --fig-input-slider-tray-background,
+      var(--figma-color-bg-secondary)
+    )
+  );
+  outline-color: var(
+    --fig-input-slider-tray-outline-color-hover,
+    var(--figma-color-bordertranslucent)
+  );
+}
+
+.fig-input-slider:focus-within .fig-input-slider-tray {
+  outline:
+    var(--fig-input-slider-focus-outline-width, 1px) solid
+      var(
+        --fig-input-slider-focus-outline-color,
+        var(--figma-color-border-selected)
+      );
+  outline-offset: var(--fig-input-slider-focus-outline-offset, 1px);
+  overflow: visible;
+}
+
+.fig-input-slider:focus-within {
+  --fig-input-slider-tray-background: var(--figma-color-bg-selected);
+  --fig-input-slider-tray-background-hover: var(--figma-color-bg-selected);
+}
+
+.fig-input-slider > fig-input-number {
+  position: absolute;
+  z-index: 4;
+  inset-block-start: 50%;
+  inset-inline-end: var(--fig-input-slider-number-inset-inline-end, 0);
+  inline-size: max-content;
+  max-inline-size: var(--fig-input-slider-number-max-inline-size, 50%);
+  background: transparent;
+  box-shadow: none;
+  transform: translateY(-50%);
+}
+
+.fig-input-slider
+  > fig-input-number:is(:hover, :focus, :focus-visible, :focus-within) {
+  outline: 0;
+  box-shadow: none;
+}
+
+.fig-input-slider > fig-input-number > input {
+  inline-size: auto;
+  field-sizing: content;
+}
+
+.fig-input-slider[disabled]:not([disabled="false"]) > fig-input-number {
+  pointer-events: none;
+}
+
+.fig-input-slider[data-multiple-values] > fig-input-number {
+  display: none;
+}
+
+.fig-input-slider .fig-input-slider-track {
+  position: absolute;
+  z-index: 0;
+  inset-block-start: 50%;
+  inset-inline: var(--fig-input-slider-track-inset-inline, 0);
+  block-size: var(--fig-input-slider-track-height, 100%);
+  overflow: hidden;
+  border:
+    var(--fig-input-slider-track-border-width, 0)
+      var(--fig-input-slider-track-border-style, solid)
+      var(
+        --fig-input-slider-track-border-color,
+        light-dark(transparent, transparent)
+      );
+  border-radius: var(
+    --fig-input-slider-track-border-radius,
+    var(--radius-medium-large, 0.5625rem)
+  );
+  corner-shape: var(--fig-input-slider-track-corner-shape, round);
+  background: var(
+    --fig-input-slider-track-background,
+    light-dark(transparent, transparent)
+  );
+  box-shadow: var(--fig-input-slider-track-box-shadow, none);
+  opacity: var(--fig-input-slider-track-opacity, 1);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.fig-input-slider .fig-input-slider-fills {
+  position: absolute;
+  z-index: 0;
+  inset-block-start: 50%;
+  inset-inline: var(
+    --fig-input-slider-fills-inset-inline,
+    var(--fig-input-slider-track-inset-inline, 0)
+  );
+  block-size: var(--fig-input-slider-track-height, 100%);
+  overflow: hidden;
+  border-radius: var(
+    --fig-input-slider-track-border-radius,
+    var(--radius-medium-large, 0.5625rem)
+  );
+  corner-shape: var(--fig-input-slider-track-corner-shape, round);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.fig-input-slider .fig-input-slider-fill {
+  position: absolute;
+  box-sizing: border-box;
+  inset-block: 0;
+  inset-inline-start: calc(var(--fig-input-slider-fill-start, 0) * 100%);
+  inline-size: calc(
+    (
+        var(--fig-input-slider-fill-end, 0) -
+          var(--fig-input-slider-fill-start, 0)
+      ) *
+      100%
+  );
+  min-inline-size: 0;
+  border:
+    var(--fig-input-slider-fill-border-width, 0)
+      var(--fig-input-slider-fill-border-style, solid)
+      var(
+        --fig-input-slider-fill-border-color,
+        light-dark(transparent, transparent)
+      );
+  border-radius: var(
+    --fig-input-slider-fill-border-radius,
+    var(--radius-medium-large, 0.5625rem)
+  );
+  corner-shape: var(--fig-input-slider-fill-corner-shape, round);
+  background: var(
+    --fig-input-slider-fill-background,
+    var(--figma-color-bg-tertiary)
+  );
+  box-shadow: var(--fig-input-slider-fill-box-shadow, none);
+  opacity: var(--fig-input-slider-fill-opacity, 1);
+}
+
+fig-input-slider.fig-input-slider .fig-input-slider-fill {
+  inset-inline-start: 0;
+  inline-size: calc(
+    2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+      var(--fig-input-slider-handle-width, 0.25rem) +
+      var(--fig-input-slider-fill-end, 0) *
+      (
+        100% -
+          2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
+          var(--fig-input-slider-handle-width, 0.25rem)
+      )
+  );
+}
+
+.fig-input-slider .fig-input-slider-handles,
+.fig-input-slider .fig-input-slider-ticks {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fig-input-slider .fig-input-slider-handle {
+  --_fig-input-slider-rendered-handle-width: var(
+    --fig-input-slider-handle-width,
+    0.25rem
+  );
+
+  position: absolute;
+  inset-inline-start: calc(
+    var(--fig-input-slider-handle-track-inset-inline, 0.25rem) +
+      var(--fig-input-slider-handle-x, 0) *
+      (
+        100% -
+          2 * var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+          var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+      )
+  );
+  inset-block-start: calc(var(--fig-input-slider-handle-y, 0.5) * 100%);
+  box-sizing: border-box;
+  inline-size: var(--fig-input-slider-handle-width, 0.25rem);
+  block-size: var(--fig-input-slider-handle-height, 1rem);
+  border:
+    var(--fig-input-slider-handle-border-width, 0)
+      var(--fig-input-slider-handle-border-style, solid)
+      var(
+        --fig-input-slider-handle-border-color,
+        light-dark(transparent, transparent)
+      );
+  border-radius: var(
+    --fig-input-slider-handle-border-radius,
+    var(--radius-medium-large, 0.5625rem)
+  );
+  corner-shape: var(--fig-input-slider-handle-corner-shape, round);
+  background: var(
+    --fig-input-slider-handle-background,
+    light-dark(#222222, #ffffff)
+  );
+  box-shadow: var(--fig-input-slider-handle-box-shadow, none);
+  opacity: calc(
+    (
+        var(--fig-input-slider-handle-opacity-rest, 1) +
+          (
+            var(--fig-input-slider-handle-opacity-interactive, 1) -
+              var(--fig-input-slider-handle-opacity-rest, 1)
+          ) *
+          var(--_fig-input-slider-interactive, 0)
+      ) *
+      calc(
+        1 -
+          var(--_fig-input-slider-handle-occlusion-progress, 0) *
+          (
+            1 -
+              var(
+                --fig-input-slider-handle-occlusion-target-overlap-opacity,
+                0
+              )
+          )
+      )
+  );
+  transform:
+    translateY(-50%)
+    scale(
+      calc(
+        var(--fig-input-slider-handle-scale-rest, 1) +
+          (
+            var(--fig-input-slider-handle-scale-interactive, 1) -
+              var(--fig-input-slider-handle-scale-rest, 1)
+          ) *
+          var(--_fig-input-slider-interactive, 0)
+      )
+    );
+  transform-origin: 50% 50%;
+  transition: var(
+    --fig-input-slider-handle-transition,
+    opacity 0.08s ease-out,
+    transform 0.08s ease-out
+  );
+}
+
+.fig-input-slider .fig-input-slider-handle::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: var(--fig-input-slider-handle-hit-size, 2rem);
+  block-size: var(--fig-input-slider-handle-hit-size, 2rem);
+  transform: translate(-50%, -50%);
+}
+
+.fig-input-slider:dir(rtl) .fig-input-slider-handle {
+  transform:
+    translateY(-50%)
+    scale(
+      calc(
+        var(--fig-input-slider-handle-scale-rest, 1) +
+          (
+            var(--fig-input-slider-handle-scale-interactive, 1) -
+              var(--fig-input-slider-handle-scale-rest, 1)
+          ) *
+          var(--_fig-input-slider-interactive, 0)
+      )
+    );
+  transform-origin: 50% 50%;
+}
+
+.fig-input-slider .fig-input-slider-ghost-handle {
+  --_fig-input-slider-rendered-handle-width: var(
+    --fig-input-slider-ghost-handle-width,
+    var(--fig-input-slider-handle-width, 0.25rem)
+  );
+
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: calc(
+    var(--fig-input-slider-handle-track-inset-inline, 0.25rem) +
+      var(--fig-input-slider-handle-x, 0) *
+      (
+        100% -
+          2 * var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+          var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+      )
+  );
+  inset-block-start: calc(var(--fig-input-slider-handle-y, 0.5) * 100%);
+  box-sizing: border-box;
+  inline-size: var(
+    --fig-input-slider-ghost-handle-width,
+    var(--fig-input-slider-handle-width, 0.25rem)
+  );
+  block-size: var(
+    --fig-input-slider-ghost-handle-height,
+    var(--fig-input-slider-handle-height, 1rem)
+  );
+  border:
+    var(--fig-input-slider-ghost-handle-border-width, 0)
+      var(--fig-input-slider-ghost-handle-border-style, solid)
+      var(
+        --fig-input-slider-ghost-handle-border-color,
+        light-dark(transparent, transparent)
+      );
+  border-radius: var(
+    --fig-input-slider-ghost-handle-border-radius,
+    var(--radius-medium-large, 0.5625rem)
+  );
+  corner-shape: var(--fig-input-slider-ghost-handle-corner-shape, round);
+  background: var(
+    --fig-input-slider-ghost-handle-background,
+    var(--fig-input-slider-handle-background, light-dark(#222222, #ffffff))
+  );
+  box-shadow: var(--fig-input-slider-ghost-handle-box-shadow, none);
+  opacity: 0;
+  transform: translateY(-50%);
+  transform-origin: 50% 50%;
+  transition: var(
+    --fig-input-slider-ghost-handle-transition,
+    opacity 0.08s ease-out
+  );
+  pointer-events: none;
+}
+
+.fig-input-slider .fig-input-slider-ghost-handle[data-visible] {
+  opacity: var(--fig-input-slider-ghost-handle-opacity, 0.35);
+}
+
+.fig-input-slider:dir(rtl) .fig-input-slider-ghost-handle {
+  transform-origin: 50% 50%;
+}
+
+.fig-input-slider
+  :is(
+    .fig-input-slider-handle,
+    .fig-input-slider-ghost-handle
+  )[data-inset-toward-end] {
+  inset-inline-start: clamp(
+    var(--fig-input-slider-handle-track-inset-inline, 0.25rem),
+    calc(
+      var(--fig-input-slider-handle-x, 0) * 100% +
+        var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+    ),
+    calc(
+      100% -
+        var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+        var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+    )
+  );
+  transform-origin: 0 50%;
+}
+
+.fig-input-slider:dir(rtl)
+  :is(
+    .fig-input-slider-handle,
+    .fig-input-slider-ghost-handle
+  )[data-inset-toward-end] {
+  transform-origin: 100% 50%;
+}
+
+.fig-input-slider:is(:hover, :focus-within, [data-dragging]) {
+  --_fig-input-slider-interactive: 1;
+}
+
+.fig-input-slider .fig-input-slider-ticks {
+  inset-inline: var(--fig-input-slider-ticks-inset-inline, 0);
+  padding-inline: 0;
+  opacity: 0;
+  transition: opacity var(--transition-duration)
+    var(--transition-timing-function);
+}
+
+.fig-input-slider:is(:hover, :focus-within) .fig-input-slider-ticks {
+  opacity: 1;
+}
+
+.fig-input-slider .fig-input-slider-tick {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: calc(
+    var(--fig-input-slider-tick-progress, 0) * 100% +
+      var(--fig-input-slider-tick-offset-inline, 0px)
+  );
+  inline-size: var(
+    --fig-input-slider-tick-width,
+    var(--fig-input-slider-tick-stroke-width, 0.125rem)
+  );
+  block-size: var(--fig-input-slider-tick-length, 0.5rem);
+  border-radius: var(
+    --fig-input-slider-tick-border-radius,
+    var(--radius-medium, 0.3125rem)
+  );
+  background: var(
+    --fig-input-slider-tick-stroke-color,
+    light-dark(#00000099, #ffffffcc)
+  );
+  opacity: var(--fig-input-slider-tick-opacity, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+.fig-input-slider:dir(rtl) .fig-input-slider-tick {
+  transform: translate(50%, -50%);
+}
+
+.fig-input-slider .fig-input-slider-tick[data-active] {
+  background: var(
+    --fig-input-slider-tick-active-stroke-color,
+    var(--figma-color-text)
+  );
+  opacity: var(--fig-input-slider-tick-active-opacity, 1);
+}
+
+.fig-input-slider[disabled]:not([disabled="false"]),
+.fig-input-slider[data-disabled] {
+  pointer-events: none;
+  opacity: var(--fig-input-slider-disabled-opacity, 0.5);
+  filter: var(--fig-input-slider-disabled-filter, grayscale(1));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fig-input-slider,
+  .fig-input-slider .fig-input-slider-tray,
+  .fig-input-slider .fig-input-slider-handle,
+  .fig-input-slider .fig-input-slider-ghost-handle,
+  .fig-input-slider .fig-input-slider-ticks {
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .fig-input-slider {
+    --fig-input-slider-tray-background: Canvas;
+    --fig-input-slider-tray-background-hover: Canvas;
+    --fig-input-slider-tray-outline-color: CanvasText;
+    --fig-input-slider-tray-outline-color-hover: Highlight;
+    --fig-input-slider-fill-background: Highlight;
+    --fig-input-slider-handle-background: CanvasText;
+    --fig-input-slider-tick-stroke-color: CanvasText;
+  }
+}
+
+fig-input-slider-hue.fig-input-slider {
+  --fig-input-slider-hue-handle-width: calc(2 * var(--spacer-1));
+  --fig-input-slider-hue-handle-border-radius: 0.25rem;
+  --fig-input-slider-handle-border-radius: var(
+    --fig-input-slider-hue-handle-border-radius,
+    0.125rem
+  );
+  --fig-input-slider-hue-gradient-opacity-rest: 1;
+  --fig-input-slider-hue-gradient-opacity-hover: 1;
+  --fig-input-slider-hue-gradient: linear-gradient(
+    to right,
+    #f00,
+    #ff0,
+    #0f0,
+    #0ff,
+    #00f,
+    #f0f,
+    #f00
+  );
+  --fig-input-slider-hue-handle-shadow-offset: 0.125rem;
+  --fig-input-slider-hue-handle-shadow-color: light-dark(#ffffff, #ffffff);
+
+  & .fig-input-slider-track::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(
+      --fig-input-slider-hue-gradient,
+      linear-gradient(
+        to right,
+        #f00,
+        #ff0,
+        #0f0,
+        #0ff,
+        #00f,
+        #f0f,
+        #f00
+      )
+    );
+    opacity: var(--fig-input-slider-hue-gradient-opacity-rest, 0);
+    transition: opacity var(--transition-duration)
+      var(--transition-timing-function);
+  }
+
+  &:hover .fig-input-slider-track::after {
+    opacity: var(--fig-input-slider-hue-gradient-opacity-hover, 1);
+  }
+
+  & :is(.fig-input-slider-handle, .fig-input-slider-ghost-handle) {
+    background: var(
+      --fig-input-slider-color,
+      hsl(
+        calc(var(--fig-input-slider-handle-progress, 0) * 360deg) 100% 50%
+      )
+    );
+  }
+
+  & .fig-input-slider-handle {
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+      0 0 0 var(--fig-input-slider-hue-handle-shadow-offset, 0.125rem)
+        var(
+          --fig-input-slider-hue-handle-shadow-color,
+          light-dark(#ffffff, #ffffff)
+        ),
+      var(
+        --fig-input-slider-handle-box-shadow,
+        0 0 0 1px rgba(0, 0, 0, 0.1),
+        0 1px 1px rgba(0, 0, 0, 0.05)
+      );
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    & .fig-input-slider-track::after {
+      transition-duration: 0.001ms;
+    }
+  }
+}
+
+fig-input-slider-opacity.fig-input-slider {
+  --fig-input-slider-opacity-color: var(--figma-color-bg-brand);
+  --fig-input-slider-opacity-checkerboard:
+    repeating-conic-gradient(#0001 0 25%, #fff1 0 50%) 0 / 0.5rem 0.5rem;
+
+  & .fig-input-slider-fill {
+    background:
+      linear-gradient(
+        to right,
+        color-mix(
+          in srgb,
+          var(
+              --fig-input-slider-color,
+              var(
+                --fig-input-slider-opacity-color,
+                var(--figma-color-bg-brand)
+              )
+            )
+            0%,
+          transparent
+        ),
+        var(
+          --fig-input-slider-color,
+          var(
+            --fig-input-slider-opacity-color,
+            var(--figma-color-bg-brand)
+          )
+        )
+      ),
+      var(
+        --fig-input-slider-opacity-checkerboard,
+        repeating-conic-gradient(#0001 0 25%, #fff1 0 50%) 0 / 0.5rem
+          0.5rem
+      );
+  }
+}
+
+fig-input-slider-delta.fig-input-slider {
+  & .fig-input-slider-fill[data-after-default] {
+    inset-inline-start: calc(
+      var(--fig-input-slider-fill-start, 0) * 100% -
+        var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+    );
+    inline-size: calc(
+      (
+          var(--fig-input-slider-fill-end, 0) -
+            var(--fig-input-slider-fill-start, 0)
+        ) *
+        100% +
+        var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+    );
+  }
+
+  & .fig-input-slider-fill[data-before-default] {
+    inline-size: calc(
+      (
+          var(--fig-input-slider-fill-end, 0) -
+            var(--fig-input-slider-fill-start, 0)
+        ) *
+        100% +
+        var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+    );
+  }
+
+  & :is(.fig-input-slider-handle, .fig-input-slider-ghost-handle) {
+    --_fig-input-slider-delta-crossing-position: calc(
+      (
+          var(--fig-input-slider-handle-x, 0) +
+            var(--fig-input-slider-handle-default-progress, 0)
+        ) *
+        50% -
+        var(--_fig-input-slider-rendered-handle-width, 0.25rem) /
+        2
+    );
+  }
+
+  &
+    :is(.fig-input-slider-handle, .fig-input-slider-ghost-handle):not(
+      [data-inset-toward-end]
+    ) {
+    inset-inline-start: clamp(
+      var(--fig-input-slider-handle-track-inset-inline, 0.25rem),
+      max(
+        var(--_fig-input-slider-delta-crossing-position),
+        calc(
+          var(--fig-input-slider-handle-x, 0) * 100% -
+            var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+            var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+        )
+      ),
+      calc(
+        100% -
+          var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+          var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+      )
+    );
+  }
+
+  &
+    :is(
+      .fig-input-slider-handle,
+      .fig-input-slider-ghost-handle
+    )[data-inset-toward-end] {
+    inset-inline-start: clamp(
+      var(--fig-input-slider-handle-track-inset-inline, 0.25rem),
+      min(
+        var(--_fig-input-slider-delta-crossing-position),
+        calc(
+          var(--fig-input-slider-handle-x, 0) * 100% +
+            var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+        )
+      ),
+      calc(
+        100% -
+          var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+          var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+      )
+    );
+  }
+}
+
+fig-input-slider-stepper.fig-input-slider {
+  --fig-input-slider-tick-active-stroke-color: var(
+    --fig-input-slider-tick-stroke-color
+  );
+  --fig-input-slider-tick-active-opacity: var(
+    --fig-input-slider-tick-opacity
+  );
+
+  & .fig-input-slider-fill {
+    inline-size: calc(
+      2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+        var(--fig-input-slider-handle-width, 0.25rem) +
+        var(--fig-input-slider-fill-end, 0) *
+        (
+          100% -
+            2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
+            var(--fig-input-slider-handle-width, 0.25rem)
+        )
+    );
+  }
+
+  & :is(.fig-input-slider-handle, .fig-input-slider-ghost-handle) {
+    inset-inline-start: calc(
+      var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+        var(--fig-input-slider-handle-progress, 0) *
+        (
+          100% -
+            2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
+            var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+        )
+    );
+    transform-origin: 50% 50%;
+  }
+
+  & .fig-input-slider-tick {
+    inset-inline-start: calc(
+      var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+        0.5 * var(--fig-input-slider-handle-width, 0.25rem) +
+        var(--fig-input-slider-tick-progress, 0) *
+        (
+          100% -
+            2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
+            var(--fig-input-slider-handle-width, 0.25rem)
+        )
+    );
+  }
+}
+
+fig-input-slider-wheel.fig-input-slider {
+  --fig-input-slider-cursor: default;
+  --fig-input-slider-cursor-dragging: grabbing;
+  --fig-input-slider-wheel-tick-count: 33;
+  --fig-input-slider-wheel-field-of-view: 120;
+  --fig-input-slider-wheel-perspective: 0.55;
+  --fig-input-slider-wheel-radius-ratio: 0.84;
+  --fig-input-slider-wheel-tick-height: 12;
+  --fig-input-slider-wheel-tick-height-min: 4;
+  --fig-input-slider-wheel-tick-width-min-scale: 0.5;
+  --fig-input-slider-wheel-tick-opacity-min-scale: 0;
+  --fig-input-slider-wheel-tick-color: var(
+    --fig-input-slider-tick-stroke-color,
+    light-dark(#999, #777)
+  );
+  --fig-input-slider-wheel-tick-opacity: var(
+    --fig-input-slider-tick-opacity,
+    0.5
+  );
+  --fig-input-slider-wheel-handle-drag-max: 4px;
+  --fig-input-slider-wheel-handle-drag-offset: 0px;
+  --fig-input-slider-wheel-animation-duration: 160;
+  --fig-input-slider-wheel-animation-easing: var(
+    --transition-timing-function,
+    ease-out
+  );
+  --fig-input-slider-wheel-fast-motion-threshold: 1.5;
+  --fig-input-slider-wheel-fast-motion-timeout: 80;
+  --fig-input-slider-wheel-fast-motion-blur: 1.5;
+  --fig-input-slider-ticks-inset-inline: calc(
+    var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+      0.5 * var(--fig-input-slider-handle-width, 0.25rem)
+  );
+
+  & .fig-input-slider-track,
+  & .fig-input-slider-fills,
+  & .fig-input-slider-ghost-handle {
+    display: none;
+  }
+
+  & .fig-input-slider-ticks {
+    z-index: 1;
+    display: block;
+    inline-size: calc(
+      100% - 2 * var(--fig-input-slider-ticks-inset-inline, 0)
+    );
+    block-size: 100%;
+    overflow: hidden;
+    opacity: 1;
+  }
+
+  & .fig-input-slider-wheel-tick-path {
+    fill: none;
+    stroke: var(
+      --fig-input-slider-wheel-tick-color,
+      var(--fig-input-slider-tick-stroke-color, light-dark(#999, #777))
+    );
+    stroke-width: var(
+      --fig-input-slider-tick-width,
+      var(--fig-input-slider-tick-stroke-width, 0.125rem)
+    );
+    stroke-linecap: round;
+    opacity: var(
+      --fig-input-slider-wheel-tick-opacity,
+      var(--fig-input-slider-tick-opacity, 0.5)
+    );
+  }
+
+  & .fig-input-slider-wheel-tick {
+    stroke-width: calc(
+      var(
+          --fig-input-slider-tick-width,
+          var(--fig-input-slider-tick-stroke-width, 0.125rem)
+        ) *
+        (
+          var(--fig-input-slider-wheel-tick-width-min-scale, 0.5) +
+            (
+              1 -
+                var(--fig-input-slider-wheel-tick-width-min-scale, 0.5)
+            ) *
+            var(--fig-input-slider-wheel-tick-scale, 1)
+        )
+    );
+    vector-effect: non-scaling-stroke;
+    opacity: calc(
+      var(--fig-input-slider-wheel-tick-opacity-min-scale, 0) +
+        (
+          1 - var(--fig-input-slider-wheel-tick-opacity-min-scale, 0)
+        ) *
+        var(--fig-input-slider-wheel-tick-scale, 1)
+    );
+  }
+
+  & .fig-input-slider-handle {
+    z-index: 2;
+    inset-inline-start: 50%;
+    transform:
+      translate(
+        calc(
+          -50% + var(--fig-input-slider-wheel-handle-drag-offset, 0px)
+        ),
+        -50%
+      )
+      scale(
+        calc(
+          var(--fig-input-slider-handle-scale-rest, 1) +
+            (
+              var(--fig-input-slider-handle-scale-interactive, 1) -
+                var(--fig-input-slider-handle-scale-rest, 1)
+            ) *
+            var(--_fig-input-slider-interactive, 0)
+        )
+      );
+    transform-origin: 50% 50%;
+    transition:
+      transform
+      calc(var(--fig-input-slider-wheel-animation-duration, 160) * 1ms)
+      var(--fig-input-slider-wheel-animation-easing, ease-out);
+  }
+
+  &[data-wheel-active] .fig-input-slider-handle {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  fig-input-slider-wheel.fig-input-slider .fig-input-slider-handle {
+    transition: none;
+  }
+}

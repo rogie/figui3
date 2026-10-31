@@ -158,7 +158,7 @@ function titleForMode(mode: Props["mode"]): string {
 }
 
 function basePathForMode(mode: Props["mode"]): string {
-  if (mode === "lab") return "/lab";
+  if (mode === "lab") return "/figui3/lab";
   return "/figui3";
 }
 
@@ -174,7 +174,7 @@ export default function App({ mode }: Props) {
   const [customElementsVersion, setCustomElementsVersion] = useState(0);
   const sections = useMemo(() => {
     const visible = filterAvailableSections(allSections, {
-      includeEditorControls,
+      includeEditorControls: mode === "lab" || includeEditorControls,
     });
     return mode === "figui3" ? sortSectionsWithinGroups(visible) : visible;
   }, [

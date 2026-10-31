@@ -42,7 +42,7 @@ fig-property {
     grid-area: label;
     display: block;
     min-width: 0;
-    height: min(100%, var(--spacer-4));
+    height:  var(--spacer-4);
     margin-right: var(--fig-property-gap);
     padding: 0;
     align-content: center;
@@ -116,5 +116,153 @@ fig-property {
 
   &:not(:has(> :is(label, [slot="label"]))) > [slot="input"] {
     grid-column: label-start / input-end;
+  }
+}
+
+fig-property[activation="row"] {
+  --fig-property-label-track: minmax(0, 1fr);
+  --fig-property-input-ratio: 1fr;
+  --fig-property-right-padding: var(--spacer-2);
+  --fig-property-row-input-width: 100%;
+  position: relative;
+  isolation: isolate;
+
+  &:has(> [slot="trailing"]) {
+    --fig-property-label-track: minmax(0, 1fr);
+  }
+
+  > :is(label, [slot="label"]) {
+    width: fit-content;
+    max-width: calc(100% - var(--fig-property-gap));
+    justify-self: start;
+  }
+
+  > [slot="input"],
+  > [slot="input"][full]:not([full="false"]) {
+    width: fit-content;
+    flex: 0 0 auto;
+    justify-self: end;
+    --figma-color-bg-secondary: transparent;
+    --figma-color-bg: transparent;
+    --figma-color-border: transparent;
+    --figma-focus-outline: none;
+  }
+
+  > :is(fig-input-number, fig-input-text)[slot="input"]
+    > :is(input, textarea) {
+    field-sizing: content;
+    flex: 0 1 auto;
+  }
+
+  :is(fig-button){
+    --figma-color-border: transparent;
+    --figma-color-bordertranslucent: transparent;
+    --figma-color-bg-transparent-pressed: transparent;
+  }
+
+  > fig-switch[slot="input"] {
+    margin-right: var(--spacer-1);
+  }
+
+  > :is(
+      fig-input-color,
+      fig-input-gradient,
+      fig-input-palette,
+      fig-input-slider,
+      fig-input-point
+    )[slot="input"],
+  > :is(
+      fig-input-color,
+      fig-input-gradient,
+      fig-input-palette,
+      fig-input-slider,
+      fig-input-point
+    )[slot="input"][full]:not([full="false"]) {
+    width: var(--fig-property-row-input-width, 8rem);
+    max-width: 100%;
+  }
+
+  > fig-input-point[slot="input"] > fig-input-combo {
+    min-width: 0;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset:
+      calc(var(--fig-property-top-padding)/1)
+      var(--fig-property-right-padding)
+      calc(var(--fig-property-bottom-padding)/1)
+      calc(var(--fig-property-left-padding) - var(--spacer-2));
+    background-color: transparent;
+    z-index: -1;
+    border-radius: var(--radius-medium);
+    pointer-events: none;
+  }
+  &:hover::before {
+    background-color: var(--figma-color-bg-secondary);
+  }
+  &:focus-within{
+    --figma-color-bg-secondary: var(--figma-color-bg-selected-secondary);
+    --figma-color-text-secondary: var(--figma-color-text);
+  }
+  &:focus-within::before {
+    background-color: var(--figma-color-bg-selected);
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+}
+
+fig-property[activation="row"]{
+  fig-input-slider[slot="input"] {
+    position: absolute;
+    grid-area: auto;
+    inset:
+      calc(var(--fig-property-top-padding)/1)
+      calc(var(--fig-property-right-padding))
+      calc(var(--fig-property-bottom-padding)/1)
+      calc(var(--fig-property-left-padding) - var(--spacer-2));
+    width: auto;
+    height: auto;
+    block-size: auto;
+    max-width: none;
+    justify-self: stretch;
+    align-self: stretch;
+    --fig-input-slider-tray-block-size: 100%;
+    z-index: 0;
+    --fig-input-slider-tray-outline-color: var(--figma-color-bordertranslucent);
+    --fig-input-slider-tray-outline-color-hover: var(--figma-color-bordertranslucent);
+    --fig-input-slider-tray-outline-offset: calc(-1 * var(--fig-input-slider-tray-outline-width, 0px));
+    --fig-input-slider-tray-border-radius: var(--radius-medium);
+    --fig-input-slider-tray-corner-shape: round;
+
+    .fig-input-slider-tray{
+      visibility: hidden;
+    }
+  }
+
+  > :where(fig-input-slider[slot="input"]) {
+    --fig-input-slider-tray-background: transparent;
+    --fig-input-slider-tray-background-hover: var(--figma-color-bg-hover);
+  }
+
+  &:is(:hover, :focus-within, :active)
+    > fig-input-slider[slot="input"],
+  &:has(> fig-input-slider[slot="input"][data-dragging])
+    > fig-input-slider[slot="input"] {
+    .fig-input-slider-tray{
+      visibility: visible;
+    }
+  }
+
+  fig-input-slider[slot="input"]:focus-within
+    > .fig-input-slider-tray {
+    outline: none;
+  }
+
+  &:has(> fig-input-slider[slot="input"]) > :is(label, [slot="label"]) {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
   }
 }

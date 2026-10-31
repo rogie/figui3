@@ -44,6 +44,12 @@ declare module "react" {
       "fig-angle": FigAttrs;
       "fig-audio": FigAttrs;
       "fig-audio-waveform": FigAttrs;
+      "fig-input-slider": FigAttrs;
+      "fig-input-slider-hue": FigAttrs;
+      "fig-input-slider-opacity": FigAttrs;
+      "fig-input-slider-delta": FigAttrs;
+      "fig-input-slider-stepper": FigAttrs;
+      "fig-input-slider-wheel": FigAttrs;
       "fig-input-wheel": FigAttrs;
       "fig-input-number": FigAttrs;
       "fig-input-rotate": FigAttrs;

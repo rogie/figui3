@@ -21,7 +21,10 @@ function normalizePathname(pathname: string): string {
 
 function resolveModeFromPath(pathname: string): PlaygroundMode {
   const normalized = normalizePathname(pathname);
-  if (normalized === "/lab" || normalized.startsWith("/lab/")) {
+  if (
+    normalized === "/figui3/lab" ||
+    normalized.startsWith("/figui3/lab/")
+  ) {
     return "lab";
   }
   if (normalized === "/sandbox" || normalized.startsWith("/sandbox/")) {
@@ -74,9 +77,11 @@ function ensureSupportedRoute() {
     normalized === "/propkit/lab" ||
     normalized.startsWith("/propkit/lab/") ||
     normalized === "/propskit/lab" ||
-    normalized.startsWith("/propskit/lab/")
+    normalized.startsWith("/propskit/lab/") ||
+    normalized === "/lab" ||
+    normalized.startsWith("/lab/")
   ) {
-    window.history.replaceState(null, "", `/lab${search}${hash}`);
+    window.history.replaceState(null, "", `/figui3/lab${search}${hash}`);
     return;
   }
 
@@ -97,8 +102,6 @@ function ensureSupportedRoute() {
   const supported =
     normalized === "/figui3" ||
     normalized.startsWith("/figui3/") ||
-    normalized === "/lab" ||
-    normalized.startsWith("/lab/") ||
     normalized === "/sandbox" ||
     normalized.startsWith("/sandbox/") ||
     normalized === "/tests" ||
