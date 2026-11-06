@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.8.4]
+
+### Fixed
+
+- Added reflected property setters for React 19 assignment to point and rotation units, layer disabled state, wheel step, and dialog autoresize.
+
 ## [11.8.3]
 
 ### Changed

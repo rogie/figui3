@@ -164,6 +164,14 @@ class FigInputRotate extends HTMLElement {
     return this.getAttribute("units") || "deg";
   }
 
+  set units(value) {
+    if (value === null || value === undefined) {
+      this.removeAttribute("units");
+    } else {
+      this.setAttribute("units", String(value));
+    }
+  }
+
   get variant() {
     return this.getAttribute("variant") === "simple" ? "simple" : "default";
   }

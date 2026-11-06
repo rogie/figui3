@@ -11,6 +11,85 @@ import {
   waitForComponentDefinitions,
 } from "./helpers";
 
+test("attribute-backed public getters accept reflected property writes", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  const state = await page.evaluate(async () => {
+    await Promise.all([import("/fig-layer.js"), import("/fig-lab.js")]);
+    await Promise.all([
+      customElements.whenDefined("fig-layer"),
+      customElements.whenDefined("fig-input-wheel"),
+      customElements.whenDefined("fig-dialog"),
+    ]);
+
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-layer id="layer"><div class="fig-layer-row">Layer</div></fig-layer>
+      <fig-input-wheel id="wheel"></fig-input-wheel>
+      <dialog is="fig-dialog" id="dialog"></dialog>
+    `;
+
+    const layer = root.querySelector("#layer") as HTMLElement & {
+      disabled: boolean;
+    };
+    const wheel = root.querySelector("#wheel") as HTMLElement & {
+      step: number | null;
+    };
+    const dialog = root.querySelector("#dialog") as HTMLDialogElement & {
+      autoresize: boolean;
+    };
+
+    layer.disabled = true;
+    wheel.step = 0.25;
+    dialog.autoresize = true;
+    const reflected = {
+      layerDisabled: layer.disabled,
+      layerAttribute: layer.getAttribute("disabled"),
+      wheelStep: wheel.step,
+      wheelAttribute: wheel.getAttribute("step"),
+      dialogAutoresize: dialog.autoresize,
+      dialogAttribute: dialog.getAttribute("autoresize"),
+    };
+
+    layer.disabled = false;
+    wheel.step = null;
+    dialog.autoresize = false;
+    return {
+      reflected,
+      removed: {
+        layerDisabled: layer.disabled,
+        layerAttribute: layer.getAttribute("disabled"),
+        wheelStep: wheel.step,
+        wheelAttribute: wheel.getAttribute("step"),
+        dialogAutoresize: dialog.autoresize,
+        dialogAttribute: dialog.getAttribute("autoresize"),
+      },
+    };
+  });
+
+  expect(state).toEqual({
+    reflected: {
+      layerDisabled: true,
+      layerAttribute: "",
+      wheelStep: 0.25,
+      wheelAttribute: "0.25",
+      dialogAutoresize: true,
+      dialogAttribute: "",
+    },
+    removed: {
+      layerDisabled: false,
+      layerAttribute: null,
+      wheelStep: 1,
+      wheelAttribute: null,
+      dialogAutoresize: false,
+      dialogAttribute: null,
+    },
+  });
+});
+
 test.describe("fig.js component contracts", () => {
   test.beforeEach(async ({ page }) => {
     collectPageErrors(page);
@@ -595,24 +674,29 @@ test.describe("fig.js component contracts", () => {
     const synced = await page.locator("#point").evaluate((point) => {
       point.setAttribute("x", "3.5");
       point.setAttribute("y", "7");
-      point.setAttribute("units", "%");
+      const pointInput = point as HTMLElement & { units: string | null };
+      pointInput.units = "%";
       const state = {
         buttonText: point.querySelector("fig-button")?.textContent?.trim(),
         editorValue: document
           .querySelector("dialog.fig-input-point-popup fig-origin-grid")
           ?.getAttribute("value"),
+        unitsAttribute: point.getAttribute("units"),
       };
-      point.removeAttribute("units");
+      pointInput.units = null;
       return {
         ...state,
         buttonTextAfterUnitsRemove:
           point.querySelector("fig-button")?.textContent?.trim(),
+        unitsAttributeAfterRemove: point.getAttribute("units"),
       };
     });
     expect(synced).toEqual({
       buttonText: "X 3.5% · Y 7%",
       editorValue: "3.5% 7.0%",
+      unitsAttribute: "%",
       buttonTextAfterUnitsRemove: "X 3.5 · Y 7",
+      unitsAttributeAfterRemove: null,
     });
   });
 

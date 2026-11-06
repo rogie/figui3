@@ -2177,6 +2177,18 @@ class FigDialog extends HTMLDialogElement {
     );
   }
 
+  set autoresize(value) {
+    if (value === false || value === "false" || value === null) {
+      this.removeAttribute("autoresize");
+    } else if (value === true || value === "") {
+      this.setAttribute("autoresize", "");
+    } else if (value === undefined) {
+      this.removeAttribute("autoresize");
+    } else {
+      this.setAttribute("autoresize", String(value));
+    }
+  }
+
   connectedCallback() {
     this._figInit();
     this.modal =

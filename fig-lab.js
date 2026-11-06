@@ -1088,6 +1088,14 @@ class FigInputWheel extends HTMLElement {
     return this.#step();
   }
 
+  set step(nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.removeAttribute("step");
+    } else {
+      this.setAttribute("step", String(nextValue));
+    }
+  }
+
   focus(options) {
     HTMLElement.prototype.focus.call(this, options);
   }

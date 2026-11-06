@@ -272,6 +272,14 @@ class FigInputPoint extends HTMLElement {
     return this.getAttribute("units") || "";
   }
 
+  set units(value) {
+    if (value === null || value === undefined) {
+      this.removeAttribute("units");
+    } else {
+      this.setAttribute("units", String(value));
+    }
+  }
+
   get open() {
     return figEditorBooleanAttribute(this, "open");
   }

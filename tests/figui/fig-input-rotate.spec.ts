@@ -107,19 +107,21 @@ test.describe("fig-input-rotate", () => {
       input.setAttribute("x", "1.234");
       input.setAttribute("y", "2");
       input.setAttribute("z", "invalid");
-      input.setAttribute("units", "rad");
+      input.units = "%";
       return {
         text: input.querySelector(".fig-input-rotate-value")?.textContent,
         sameButton: button === input.querySelector(":scope > fig-button"),
         units: input.units,
+        unitsAttribute: input.getAttribute("units"),
         value: input.value,
       };
     });
 
     expect(result).toEqual({
-      text: "X 1.2rad · Y 2rad · Z 0rad",
+      text: "X 1.2% · Y 2% · Z 0%",
       sameButton: true,
-      units: "rad",
+      units: "%",
+      unitsAttribute: "%",
       value: { x: 1.234, y: 2, z: 0 },
     });
   });

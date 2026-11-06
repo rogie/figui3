@@ -119,6 +119,11 @@ class FigLayer extends HTMLElement {
     return attr !== null && attr !== "false";
   }
 
+  set disabled(value) {
+    if (value) this.setAttribute("disabled", "");
+    else this.removeAttribute("disabled");
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
 
