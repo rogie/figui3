@@ -17,6 +17,13 @@ Import pure color math from `@rogieking/figui3/fig-color.js`.
 - Newline-delimited
 - JSON array: `["Left","Center"]` or `[{"value":"left","label":"Left"}]`
 
+## Shared input defaults
+
+- Property-compatible controls expose parsed `.default` / `.defaultValue` aliases, `.isDefault`, and `.resetToDefault()`.
+- Scalar inputs use `default`; checkbox/switch use `default-checked`; file uses `default-url` and `default-filename`.
+- Reset is a disabled-safe no-op when already default. Otherwise it follows the normal value path and emits `input`, then `change`.
+- Missing authored defaults resolve by type: numeric `0` (clamped), empty text/file/palette, unchecked boolean, `#D9D9D9` color, and built-in gradient/easing values.
+
 ## `fig-button`
 
 - `variant`: `""` (primary), `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`

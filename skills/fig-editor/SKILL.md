@@ -68,7 +68,7 @@ Registered tags:
 | `fig-fill-picker` | Full fill editor dialog (solid, gradient, image, video, webcam, custom modes) |
 | `fig-property` | Composable property row with leading, input, and trailing slots |
 | `fig-input-rotate` | Compact X/Y/Z rotation property button |
-| `fig-input-point` | Paired X/Y numeric point input |
+| `fig-input-point` | Compact X/Y point trigger with origin-grid popup |
 | `fig-palette-editor` | Ordered palette editor |
 | `fig-gradient-editor` | Full gradient editor with reorderable stops |
 | `fig-reorder` | Pointer- and keyboard-reorderable direct-child list |

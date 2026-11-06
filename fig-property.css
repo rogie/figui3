@@ -166,28 +166,39 @@ fig-property[activation="row"] {
 
   > :is(
       fig-input-color,
-      fig-input-gradient,
-      fig-input-palette,
       .fig-input-slider,
       fig-input-point,
       fig-input-file,
-      fig-input-rotate
+      fig-input-rotate,
+      fig-button
     )[slot="input"],
   > :is(
       fig-input-color,
-      fig-input-gradient,
-      fig-input-palette,
       .fig-input-slider,
       fig-input-point,
       fig-input-file,
-      fig-input-rotate
+      fig-input-rotate,
+      fig-button
     )[slot="input"][full]:not([full="false"]) {
-    width: var(--fig-property-row-input-width, 8rem);
-    max-width: 100%;
+    min-width: 0;
+    width: min-content;
+    max-width: 8rem;
+  }
+  > :is(fig-input-gradient, fig-input-palette)[slot="input"],
+  > :is(fig-input-gradient, fig-input-palette)[slot="input"][full]:not(
+      [full="false"]
+    ) {
+    width: 4rem;
+    max-width: 8rem;
   }
 
-  > fig-input-point[slot="input"] > fig-input-combo {
+  > fig-input-file[slot="input"][preview][accepts="audio/*"],
+  > fig-input-file[slot="input"][preview][accepts="audio/*"][full]:not(
+      [full="false"]
+    ) {
+    width: min(8rem, 100%);
     min-width: 0;
+    max-width: 100%;
   }
 
   &::before {

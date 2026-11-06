@@ -6,6 +6,8 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 
 ## Buttons and inputs
 
+Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, and `.resetToDefault()`. Scalar controls author `default`; checkbox/switch use `default-checked`; files use `default-url` and `default-filename`. Reset is disabled-safe, emits `input` then `change`, and does nothing when already at default.
+
 ### `fig-button`
 
 ```tsx
@@ -83,7 +85,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 />
 ```
 
-- Attrs: `type` (`text`, `email`, `password`, `search`, `url`), `size` (`large`), `multiline`, `autoresize`, `resizable`, `disabled`, `readonly`, `placeholder`, `full`
+- Attrs: `type` (`text`, `email`, `password`, `search`, `url`), `value`, `default`, `size` (`large`), `multiline`, `autoresize`, `resizable`, `disabled`, `readonly`, `placeholder`, `full`
 
 ### `fig-input-number`
 
@@ -101,7 +103,7 @@ Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.m
 />
 ```
 
-- Attrs: `size` (`large`), `variant` (`ghost`), `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `tabular`, `disabled`, `full`
+- Attrs: `value`, `default`, `size` (`large`), `variant` (`ghost`), `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `tabular`, `disabled`, `full`
 
 ### `fig-angle`
 

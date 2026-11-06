@@ -4,7 +4,7 @@ export type BoolMode = "presence" | "string" | "custom";
 
 export interface BaseAttributeRule {
   label: string;
-  type: "boolean" | "number" | "enum" | "string";
+  type: "boolean" | "number" | "enum" | "string" | "color";
 }
 
 export interface BooleanAttributeRule extends BaseAttributeRule {
@@ -32,11 +32,17 @@ export interface StringAttributeRule extends BaseAttributeRule {
   type: "string";
 }
 
+export interface ColorAttributeRule extends BaseAttributeRule {
+  type: "color";
+  defaultValue?: string;
+}
+
 export type AttributeRule =
   | BooleanAttributeRule
   | NumberAttributeRule
   | EnumAttributeRule
-  | StringAttributeRule;
+  | StringAttributeRule
+  | ColorAttributeRule;
 
 export type AttributeRuleSet = Record<string, AttributeRule>;
 
@@ -334,6 +340,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-checkbox": {
     label: { label: "Label", type: "enum", options: ["none", "label"] },
     checked: { label: "Checked", type: "boolean", boolMode: "presence" },
+    "default-checked": {
+      label: "Default checked",
+      type: "boolean",
+      boolMode: "presence",
+    },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-radio": {
@@ -550,9 +561,17 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
   },
   "fig-input-rotate": {
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["default", "simple"],
+    },
     x: { label: "X", type: "number", step: 1 },
     y: { label: "Y", type: "number", step: 1 },
     z: { label: "Z", type: "number", step: 1 },
+    "default-x": { label: "Default X", type: "number", step: 1 },
+    "default-y": { label: "Default Y", type: "number", step: 1 },
+    "default-z": { label: "Default Z", type: "number", step: 1 },
     units: {
       label: "Units",
       type: "enum",
@@ -564,15 +583,20 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-input-point": {
     x: { label: "X", type: "number", step: 1 },
     y: { label: "Y", type: "number", step: 1 },
+    "default-x": { label: "Default X", type: "number", step: 1 },
+    "default-y": { label: "Default Y", type: "number", step: 1 },
     units: {
       label: "Units",
       type: "enum",
       options: ["", "%", "px", "°"],
     },
+    open: { label: "Open", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     full: { label: "Full", type: "boolean", boolMode: "presence" },
   },
   "fig-select": {
     value: { label: "Value", type: "string" },
+    default: { label: "Default", type: "string" },
     label: { label: "Label", type: "string" },
     options: { label: "Options", type: "string" },
     size: {
@@ -606,11 +630,23 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-input-slider": inputSliderAttributeRules,
   "fig-input-slider-hue": {
     ...inputSliderAttributeRules,
-    color: { label: "Color", type: "string" },
+    color: { label: "Color", type: "color", defaultValue: "#0D99FF" },
+    "color-space": {
+      label: "Color space",
+      type: "enum",
+      options: [
+        "srgb",
+        "srgb-linear",
+        "display-p3",
+        "oklab",
+        "oklch",
+        "hsl",
+      ],
+    },
   },
   "fig-input-slider-opacity": {
     ...inputSliderAttributeRules,
-    color: { label: "Color", type: "string" },
+    color: { label: "Color", type: "color", defaultValue: "#808080" },
   },
   "fig-input-slider-delta": inputSliderAttributeRules,
   "fig-input-slider-stepper": inputSliderAttributeRules,
@@ -668,6 +704,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     "default-video": { label: "Default video", type: "string" },
   },
   "fig-input-palette": {
+    default: { label: "Default", type: "string" },
     edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
     fixed: { label: "Fixed", type: "boolean", boolMode: "presence" },
     open: { label: "Open", type: "boolean", boolMode: "presence" },
@@ -707,6 +744,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-input-gradient": {
+    default: { label: "Default", type: "string" },
     edit: { label: "Edit", type: "enum", options: ["true", "false", "picker"] },
     mode: { label: "Mode", type: "enum", options: ["handle", "tip"] },
     size: { label: "Size", type: "enum", options: ["", "large"] },
@@ -717,6 +755,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     size: { label: "Size", type: "enum", options: ["small", "large"] },
   },
   "fig-input-color": {
+    default: { label: "Default", type: "string" },
     alpha: {
       label: "Alpha",
       type: "boolean",
@@ -734,6 +773,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-switch": {
     checked: {
       label: "Checked",
+      type: "boolean",
+      boolMode: "presence",
+    },
+    "default-checked": {
+      label: "Default checked",
       type: "boolean",
       boolMode: "presence",
     },
@@ -776,6 +820,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     full: { label: "Full width", type: "boolean" },
   },
   "fig-easing-curve": {
+    default: { label: "Default", type: "string" },
     mode: {
       label: "Mode",
       type: "enum",
@@ -877,6 +922,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     fields: { label: "Fields", type: "boolean", boolMode: "string" },
   },
   "fig-input-text": {
+    default: { label: "Default", type: "string" },
     type: {
       label: "Type",
       type: "enum",
@@ -894,6 +940,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     readonly: { label: "Readonly", type: "boolean", boolMode: "presence" },
   },
   "fig-input-number": {
+    default: { label: "Default", type: "number", step: 1 },
     size: {
       label: "Size",
       type: "enum",
@@ -1311,6 +1358,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-input-file": {
     label: { label: "Label", type: "string" },
+    "default-url": { label: "Default URL", type: "string" },
+    "default-filename": { label: "Default filename", type: "string" },
     variant: {
       label: "Variant",
       type: "enum",

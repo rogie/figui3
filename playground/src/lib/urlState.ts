@@ -6,16 +6,19 @@ import {
   applyButtonVariantMutation,
   applyChooserContentMutation,
   applyChooserMaxSizeMutation,
+  applyAppendSlotMutation,
   applyFieldLabelMutation,
   applyPropertyControlMutation,
   applyPrependSlotMutation,
   applySelectSeparatorStickyMutation,
   getChooserContentMode,
+  getAppendSlotMode,
   getPrependSlotMode,
   getPropertyControlTag,
   getSelectSeparatorStickyEnabled,
   isPropertyControlTag,
   type ChooserContentMode,
+  type AppendSlotMode,
   type PrependSlotMode,
 } from "./attributeParser";
 
@@ -127,6 +130,11 @@ export function diffFromDefault(
       if (curPrepend !== defPrepend) {
         params[`${idx}${SPECIAL_PREFIX}prepend`] = curPrepend;
       }
+      const curAppend = getAppendSlotMode(currentMarkup, i);
+      const defAppend = getAppendSlotMode(defaultMarkup, i);
+      if (curAppend !== defAppend) {
+        params[`${idx}${SPECIAL_PREFIX}append`] = curAppend;
+      }
     }
 
     if (cur.hasLabel !== def.hasLabel) {
@@ -223,6 +231,8 @@ export function applyParamsToMarkup(
       }
     } else if (key === "_prepend" && val) {
       markup = applyPrependSlotMutation(markup, idx, val as PrependSlotMode);
+    } else if (key === "_append" && val) {
+      markup = applyAppendSlotMutation(markup, idx, val as AppendSlotMode);
     } else if (key === "_sticky") {
       markup = applySelectSeparatorStickyMutation(markup, idx, val !== "0");
     } else if (key === "_label") {

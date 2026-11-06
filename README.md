@@ -451,14 +451,18 @@ Experimental standalone slider primitives. Import `fig-input-slider.js` and `fig
 <fig-input-slider value="50">
   <fig-input-number value="50" units="%"></fig-input-number>
 </fig-input-slider>
-<fig-input-slider-hue value="180"></fig-input-slider-hue>
+<fig-input-slider-hue
+  value="180"
+  color="#336699"
+  color-space="oklch">
+</fig-input-slider-hue>
 <fig-input-slider-opacity color="#0D99FF" value="75"></fig-input-slider-opacity>
 <fig-input-slider-delta value="0" default="0"></fig-input-slider-delta>
 <fig-input-slider-stepper value="50"></fig-input-slider-stepper>
 <fig-input-slider-wheel value="0" step="1"></fig-input-slider-wheel>
 ```
 
-All variants support `name`, `value`, `default`, `min`, `max`, `step`, `precision`, `ghost`, and `disabled`. Hue and opacity also support `color`. The base slider supports multiple handles with JSON arrays such as `value="[20,80]"`.
+All variants support `name`, `value`, `default`, `min`, `max`, `step`, `precision`, `ghost`, and `disabled`. Hue and opacity also support `color`. Hue supports `color-space="srgb|srgb-linear|display-p3|oklab|oklch|hsl"`; it defaults to `srgb`, and `oklch`/`hsl` use shorter-hue interpolation. The base slider supports multiple handles with JSON arrays such as `value="[20,80]"`.
 
 An authored direct-child `<fig-input-number>` is preserved and synchronized with a single slider value in both directions. Its own attributes configure its display; slider attributes are not forwarded. The number input is hidden while the slider has multiple values.
 
@@ -497,6 +501,12 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 
 ---
 
+#### Input defaults and reset
+
+Property-compatible controls expose the same reset contract: parsed `default` and `defaultValue` aliases, boolean `isDefault`, and `resetToDefault()`. Reset is a no-op while disabled or already at default; otherwise it emits the control’s normal `input` event followed by `change`.
+
+Scalar controls author `default`. Checkbox and switch use `default-checked`. Point and rotate use `default-x`, `default-y`, and `default-z` where applicable. File inputs use `default-url` and `default-filename`; browser-selected local files are cleared but never restored. Without authored defaults, controls use their type fallback: numeric axes `0` (clamped), empty text/file/palette, unchecked boolean, first valid select option, `#D9D9D9` color, and built-in gradient/easing values.
+
 #### Text Input
 
 `<fig-input-text>` — [demo](https://rog.ie/figui3/#text-input)
@@ -504,6 +514,7 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | string | — | Input value |
+| `default` | string | `""` | Default/reset value |
 | `placeholder` | string | — | Placeholder text |
 | `type` | string | `"text"` | `"text"` or `"number"` |
 | `size` | string | — | Set to `"large"` for a 32px-tall input |
@@ -529,6 +540,7 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | string | — | Numeric value |
+| `default` | number | `0` | Default/reset value, clamped to bounds |
 | `placeholder` | string | — | Placeholder text |
 | `size` | string | — | Set to `"large"` for a 32px-tall input |
 | `variant` | string | — | Set to `"ghost"` for a borderless control |
@@ -558,19 +570,23 @@ The `value`, `min`, `max`, and `step` properties mirror their attributes. `aria-
 
 `<fig-input-rotate>` — [demo](https://rog.ie/figui3/#input-rotate)
 
-An editor-bundle property button that summarizes X, Y, and Z rotation values with up to one decimal place, matching the popup fields. Clicking it opens an anchored `fig-popup` containing `<fig-3d-rotate fields="rotateX,rotateY,rotateZ" aspect-ratio="4/3">`.
+An editor-bundle property button that summarizes X, Y, and Z rotation values with up to one decimal place, matching the popup fields. `variant="simple"` omits the prepend icon and X/Y/Z labels. Clicking it opens an anchored `fig-popup` containing `<fig-3d-rotate fields="rotateX,rotateY,rotateZ" aspect-ratio="4/3">`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `x` | number | `0` | X-axis rotation |
 | `y` | number | `0` | Y-axis rotation |
 | `z` | number | `0` | Z-axis rotation |
+| `default-x` | number | `0` | Default X-axis rotation |
+| `default-y` | number | `0` | Default Y-axis rotation |
+| `default-z` | number | `0` | Default Z-axis rotation |
 | `units` | string | `"deg"` | Unit suffix; `"deg"` and `"°"` display as `°` |
+| `variant` | `"default"` \| `"simple"` | `"default"` | `simple` omits the prepend icon and axis labels |
 | `open` | boolean | `false` | Open the rotation popup |
 | `full` | boolean | `false` | Fill the parent width |
 
 ```html
-<fig-input-rotate x="0" y="0" z="0"></fig-input-rotate>
+<fig-input-rotate x="10" y="20" z="30" default-x="0" default-y="0" default-z="0"></fig-input-rotate>
 ```
 
 Popup edits update `x`, `y`, and `z` and emit `input` and `change` with `{ x, y, z }` in `detail`. `focus(options)` focuses the trigger; `activate(options)` focuses and clicks it to open the popup.
@@ -583,18 +599,24 @@ Requires `fig-editor.js` and `fig-editor.css`.
 
 `<fig-input-point>` — [demo](https://rog.ie/figui3/#input-point)
 
-An editor-bundle point control that renders two equally sized `<fig-input-number>` controls inside `<fig-input-combo>`. User edits reflect to the `x` and `y` attributes, and `units` is forwarded to both fields. Its `input` and `change` events provide numeric `{ x, y }` in `detail`.
+An editor-bundle property button that summarizes X and Y values with up to one decimal place. Clicking it opens an anchored popup containing `<fig-origin-grid fields aspect-ratio="4/3">`. Popup edits reflect to the `x` and `y` attributes and emit numeric `{ x, y }` in `detail`.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `x` | number | `0` | Horizontal coordinate |
 | `y` | number | `0` | Vertical coordinate |
-| `units` | string | — | Unit string forwarded to both number inputs |
+| `default-x` | number | `0` | Default horizontal coordinate |
+| `default-y` | number | `0` | Default vertical coordinate |
+| `units` | string | — | Unit suffix displayed in the trigger |
+| `open` | boolean | `false` | Open the point editor popup |
+| `disabled` | boolean | `false` | Disable the trigger and popup editing |
 | `full` | boolean | `false` | Fill the parent width |
 
 ```html
-<fig-input-point x="24" y="16" units="%"></fig-input-point>
+<fig-input-point x="24" y="16" default-x="0" default-y="0" units="%"></fig-input-point>
 ```
+
+`focus(options)` focuses the trigger; `activate(options)` focuses and clicks it to open the popup.
 
 Requires `fig-editor.js` and `fig-editor.css`.
 
@@ -613,6 +635,8 @@ Requires `fig-editor.js` and `fig-editor.css`.
 | `remove` | boolean | `true` | Show the remove button when a file is selected; set to `"false"` to omit it |
 | `disabled` | boolean | `false` | Disabled state |
 | `variant` | string | `"property"` | Internal button variant |
+| `default-url` | string | `""` | External URL restored by `resetToDefault()` |
+| `default-filename` | string | `""` | Filename restored by `resetToDefault()` |
 
 `focus(options)` focuses the upload control. `activate(options)` triggers its native file chooser, preview action, or playback button and does nothing when disabled.
 
@@ -723,6 +747,7 @@ A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | string | — | Hex color (e.g. `"#FF5733"` or `"#FF573380"`) |
+| `default` | string | `"#D9D9D9"` | Default/reset color |
 | `text` | boolean | `false` | Show hex text input |
 | `alpha` | boolean | `true` | Show alpha slider; set `alpha="false"` to hide opacity controls |
 | `mode` | string | — | Color mode (`"hex"`, `"rgb"`, `"hsl"`) |
@@ -755,6 +780,7 @@ An editable palette of solid colors, each rendered as a `<fig-input-color>` swat
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `value` | string | — | JSON array of hex strings or `{color, alpha}` objects |
+| `default` | string | `"[]"` | Default/reset palette |
 | `disabled` | boolean | `false` | Disabled state |
 | `min` | number | `2` | Minimum number of colors |
 | `max` | number | `8` | Maximum (add button hidden at max) |
@@ -781,7 +807,7 @@ The editable palette is a single tab stop. Enter or Space expands inline mode or
 
 `<fig-property>`
 
-An editor-bundle property row. Supply one control in `slot="input"` and optionally author `slot="label"`, `slot="leading"`, or `slot="trailing"` content. Authored label markup takes precedence over the `label` attribute. The `leading="drag|chevron"` and `trailing="remove|add|bind"` attributes generate common accessories; authored slot content takes precedence. Leading and trailing content appears on hover or focus by default. Set `show-leading="false"` or `show-trailing="false"` to hide it, or add an empty `show-leading` or `show-trailing` attribute to always show it. Add `selected` or `selected="true"` for the selected background; `selected="false"` leaves the row unselected. Generated trailing actions emit bubbling, composed events named `remove`, `add`, or `bind` with the slotted control in `detail.input`. Input events bubble directly from the supplied control. `focus(options)` delegates focus to the slotted control, while `activate(options)` delegates to its `activate()` method and falls back to focus when that method is unavailable. Set `activation="row"` to activate from the label or unused row surface; direct input and accessory clicks keep their native behavior. Focus within the control moves the shared outline to the row and applies the selected background. Row activation content-sizes slotted controls even when they have `full`; color, gradient, palette, and point controls use the standard compact input width.
+An editor-bundle property row. Supply one control in `slot="input"` and optionally author `slot="label"`, `slot="leading"`, or `slot="trailing"` content. Authored label markup takes precedence over the `label` attribute. The `leading="drag|chevron"` and `trailing="remove|add|bind"` attributes generate common accessories; authored slot content takes precedence. Leading and trailing content appears on hover or focus by default. Set `show-leading="false"` or `show-trailing="false"` to hide it, or add an empty `show-leading` or `show-trailing` attribute to always show it. Add `selected` or `selected="true"` for the selected background; `selected="false"` leaves the row unselected. Generated trailing actions emit bubbling, composed events named `remove`, `add`, or `bind` with the slotted control in `detail.input`. Input events bubble directly from the supplied control. `focus(options)` delegates focus to the slotted control, while `activate(options)` delegates to its `activate()` method and falls back to focus when that method is unavailable. Right-clicking the row opens a context menu with “Reset to default”; the action delegates through `resetToDefault()` and is disabled when the slotted control does not implement that method, is disabled, or reports `isDefault === true`. Set `activation="row"` to activate from the label or unused row surface; direct input and accessory clicks keep their native behavior. Focus within the control moves the shared outline to the row and applies the selected background. Row activation content-sizes slotted controls even when they have `full`; color, gradient, palette, and point controls use the standard compact input width.
 
 ```html
 <fig-property label="Size" leading="drag" trailing="remove">

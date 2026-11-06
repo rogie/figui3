@@ -272,6 +272,7 @@ test.describe("fig-input-slider", () => {
       type Slider = HTMLElement & {
         name: string;
         value: number;
+        default: number;
         defaultValue: number;
         isDefault: boolean;
         resetToDefault(): void;
@@ -287,6 +288,7 @@ test.describe("fig-input-slider", () => {
         name: slider.name,
         nameAttribute: slider.getAttribute("name"),
         value: slider.value,
+        default: slider.default,
         defaultValue: slider.defaultValue,
         isDefault: slider.isDefault,
       };
@@ -300,6 +302,7 @@ test.describe("fig-input-slider", () => {
       slider.addEventListener("change", (event) => {
         events.push({ type: event.type, detail: (event as CustomEvent).detail });
       });
+      slider.resetToDefault();
       slider.resetToDefault();
 
       return {
@@ -318,6 +321,7 @@ test.describe("fig-input-slider", () => {
       name: "Gain",
       nameAttribute: "Gain",
       value: 25,
+      default: 10,
       defaultValue: 10,
       isDefault: false,
     });
@@ -347,6 +351,82 @@ test.describe("fig-input-slider", () => {
         },
       },
     ]);
+  });
+
+  test("renders authored scalar and array defaults as ticks", async ({
+    page,
+  }) => {
+    await loadSlider(page);
+    const result = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-slider id="scalar-default" value="50" default="25"></fig-input-slider>
+        <fig-input-slider id="array-default" value="[30,70]" default="[20,80]"></fig-input-slider>
+        <fig-input-slider id="implicit-default" value="50"></fig-input-slider>
+      `;
+      const tickProgresses = (id: string) =>
+        [
+          ...root.querySelectorAll<HTMLElement>(
+            `#${id} .fig-input-slider-tick`,
+          ),
+        ].map((tick) =>
+          tick.style.getPropertyValue("--fig-input-slider-tick-progress"),
+        );
+      const scalar = root.querySelector("#scalar-default")!;
+      const before = {
+        scalar: tickProgresses("scalar-default"),
+        array: tickProgresses("array-default"),
+        implicit: tickProgresses("implicit-default"),
+      };
+      scalar.removeAttribute("default");
+      const afterRemoval = tickProgresses("scalar-default");
+      scalar.setAttribute("default", "75");
+      const afterUpdate = tickProgresses("scalar-default");
+      return { before, afterRemoval, afterUpdate };
+    });
+
+    expect(result).toEqual({
+      before: {
+        scalar: ["0.25"],
+        array: ["0.2", "0.8"],
+        implicit: [],
+      },
+      afterRemoval: [],
+      afterUpdate: ["0.75"],
+    });
+  });
+
+  test("snaps pointer interaction to authored default ticks", async ({
+    page,
+  }) => {
+    await loadSlider(page);
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-slider
+          id="snap-default"
+          style="width:200px"
+          min="0"
+          max="100"
+          value="10"
+          default="50">
+        </fig-input-slider>
+      `;
+    });
+
+    const slider = page.locator("#snap-default");
+    const tray = slider.locator(".fig-input-slider-tray");
+    const box = await tray.boundingBox();
+    if (!box) throw new Error("Missing slider tray bounds");
+    const y = box.y + box.height / 2;
+
+    await page.mouse.click(box.x + box.width * 0.51, y);
+    await expect(slider).toHaveAttribute("value", "50");
+
+    await page.mouse.click(box.x + box.width * 0.6, y);
+    await expect(slider).toHaveAttribute("value", "60");
   });
 
   test("supports JSON values with stable multiple-handle geometry", async ({
@@ -610,6 +690,82 @@ test.describe("fig-input-slider", () => {
     expect(valueAfterDetachedInput).toBe(45);
   });
 
+  test("allows a zero-width fill and fades the handle toward the minimum edge", async ({
+    page,
+  }) => {
+    await loadSlider(page);
+    const result = await page.evaluate(() => {
+      type Slider = HTMLElement & { value: number };
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.style.width = "240px";
+      root.innerHTML = `
+        <fig-input-slider id="minimum-edge" min="0" max="100" value="0"></fig-input-slider>
+      `;
+      const slider = root.querySelector<Slider>("#minimum-edge")!;
+      const fill = slider.querySelector<HTMLElement>(
+        ".fig-input-slider-fill",
+      )!;
+      const handle = slider.querySelector<HTMLElement>(
+        ".fig-input-slider-handle",
+      )!;
+      const handlesLayer = slider.querySelector<HTMLElement>(
+        ".fig-input-slider-handles",
+      )!;
+      slider.style.setProperty(
+        "--fig-input-slider-handle-transition",
+        "none",
+      );
+      slider.style.setProperty(
+        "--fig-input-slider-handle-occlusion-target-overlap-opacity",
+        "0.2",
+      );
+      slider.style.setProperty(
+        "--fig-input-slider-handle-occlusion-target-overlap-fade-threshold",
+        "40px",
+      );
+      const handleInsets = [0, 25, 50, 100].map((value) => {
+        slider.value = value;
+        const fillRect = fill.getBoundingClientRect();
+        const handleRect = handle.getBoundingClientRect();
+        return Math.round((fillRect.right - handleRect.right) * 100) / 100;
+      });
+      slider.value = 0;
+      const minimum = {
+        fillWidth: fill.getBoundingClientRect().width,
+        opacity: getComputedStyle(handle).opacity,
+      };
+
+      let approaching = null;
+      for (let value = 1; value < 50; value++) {
+        slider.value = value;
+        const opacity = Number(getComputedStyle(handle).opacity);
+        if (opacity > 0.2 && opacity < 1) {
+          approaching = { value, opacity };
+          break;
+        }
+      }
+
+      slider.value = 50;
+      const clear = getComputedStyle(handle).opacity;
+      return {
+        minimum,
+        approaching,
+        clear,
+        handleInsets,
+        handlesOverflow: getComputedStyle(handlesLayer).overflow,
+      };
+    });
+
+    expect(result.minimum).toEqual({ fillWidth: 0, opacity: "0.2" });
+    expect(result.handleInsets).toEqual([8, 8, 8, 8]);
+    expect(result.handlesOverflow).toBe("hidden");
+    expect(result.approaching).not.toBeNull();
+    expect(result.approaching!.opacity).toBeGreaterThan(0.2);
+    expect(result.approaching!.opacity).toBeLessThan(1);
+    expect(result.clear).toBe("1");
+  });
+
   test("progressively fades the handle as it approaches a composed number input", async ({
     page,
   }) => {
@@ -620,8 +776,8 @@ test.describe("fig-input-slider", () => {
       if (!root) throw new Error("Missing #fixture-root");
       root.style.width = "240px";
       root.innerHTML = `
-        <fig-input-slider id="overlap" value="0">
-          <fig-input-number value="0" units="%"></fig-input-number>
+        <fig-input-slider id="overlap" value="50">
+          <fig-input-number value="50" units="%"></fig-input-number>
         </fig-input-slider>
       `;
       const slider = root.querySelector<Slider>("#overlap")!;
@@ -651,7 +807,7 @@ test.describe("fig-input-slider", () => {
         "40px",
       );
       let approaching = null;
-      for (let value = 1; value < 100; value++) {
+      for (let value = 50; value < 100; value++) {
         slider.value = value;
         const opacity = Number(getComputedStyle(handle).opacity);
         if (
@@ -671,11 +827,11 @@ test.describe("fig-input-slider", () => {
       };
 
       slider.value = 0;
-      const restored = {
+      const minimumEdge = {
         overlaps: handle.hasAttribute("data-overlaps-occlusion-target"),
         opacity: getComputedStyle(handle).opacity,
       };
-      return { rest, defaultThreshold, approaching, overlap, restored };
+      return { rest, defaultThreshold, approaching, overlap, minimumEdge };
     });
 
     expect(result.rest).toEqual({ overlaps: false, opacity: "1" });
@@ -684,7 +840,7 @@ test.describe("fig-input-slider", () => {
     expect(result.approaching!.opacity).toBeGreaterThan(0.25);
     expect(result.approaching!.opacity).toBeLessThan(1);
     expect(result.overlap).toEqual({ overlaps: true, opacity: "0.25" });
-    expect(result.restored).toEqual({ overlaps: false, opacity: "1" });
+    expect(result.minimumEdge.opacity).toBe("0.25");
   });
 
   test("combines selector and programmatic occlusion targets", async ({
@@ -762,7 +918,7 @@ test.describe("fig-input-slider", () => {
       defensiveGetterLength: 1,
       programmaticLeftOpacity: "0.2",
       attributeRightOpacity: "0.2",
-      clearedProgrammaticOpacity: "1",
+      clearedProgrammaticOpacity: "0.2",
       parentTargetOpacity: "0.2",
       invalidSelectorOpacity: "1",
     });
@@ -1021,6 +1177,83 @@ test.describe("fig-input-slider", () => {
     expect(colors.opacityColor).toBe("#ff0000");
     expect(colors.opacityBackground).toContain("linear-gradient");
     expect(colors.opacityBackground).toContain("repeating-conic-gradient");
+  });
+
+  test("renders hue gradients in each supported color space", async ({
+    page,
+  }) => {
+    await loadSlider(page);
+
+    const result = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const spaces = [
+        "srgb",
+        "srgb-linear",
+        "display-p3",
+        "oklab",
+        "oklch",
+        "hsl",
+      ];
+      root.innerHTML = spaces
+        .map(
+          (space) =>
+            `<fig-input-slider-hue data-space="${space}" color="#336699" color-space="${space}" value="120"></fig-input-slider-hue>`,
+        )
+        .join("");
+
+      const gradientFor = (element: HTMLElement) =>
+        element.style
+          .getPropertyValue("--fig-input-slider-hue-gradient")
+          .trim();
+      const gradients = Object.fromEntries(
+        spaces.map((space) => {
+          const slider = root.querySelector(
+            `[data-space="${space}"]`,
+          ) as HTMLElement;
+          return [space, gradientFor(slider)];
+        }),
+      );
+
+      const dynamic = root.querySelector(
+        '[data-space="srgb"]',
+      ) as HTMLElement;
+      dynamic.setAttribute("color-space", "oklch");
+      const dynamicOklch = gradientFor(dynamic);
+      dynamic.setAttribute("color-space", "unsupported-space");
+      const invalidFallback = gradientFor(dynamic);
+      dynamic.removeAttribute("color-space");
+      const missingFallback = gradientFor(dynamic);
+
+      return {
+        gradients,
+        dynamicOklch,
+        invalidFallback,
+        missingFallback,
+        handleColor: dynamic.style
+          .getPropertyValue("--fig-input-slider-color")
+          .trim(),
+      };
+    });
+
+    expect(result.gradients.srgb).toMatch(/^linear-gradient\(to right,/);
+    expect(result.gradients["srgb-linear"]).toContain(
+      "to right in srgb-linear,",
+    );
+    expect(result.gradients["display-p3"]).toContain(
+      "to right in display-p3,",
+    );
+    expect(result.gradients.oklab).toContain("to right in oklab,");
+    expect(result.gradients.oklch).toContain(
+      "to right in oklch shorter hue,",
+    );
+    expect(result.gradients.hsl).toContain("to right in hsl shorter hue,");
+    expect(result.dynamicOklch).toContain("to right in oklch shorter hue,");
+    expect(result.invalidFallback).toMatch(/^linear-gradient\(to right,/);
+    expect(result.invalidFallback).not.toContain(" in ");
+    expect(result.missingFallback).toMatch(/^linear-gradient\(to right,/);
+    expect(result.missingFallback).not.toContain(" in ");
+    expect(result.handleColor).toBe("rgb(51, 153, 51)");
   });
 
   test("exposes the wheel role and public spin and scrub methods", async ({

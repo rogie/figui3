@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.8.2]
+
+### Added
+
+- Added shared authored-default, `isDefault`, and `resetToDefault()` contracts across property-compatible controls, plus a `Reset to default` context menu for `fig-property`.
+- Added default ticks and snapping to `fig-input-slider`, and six configurable interpolation spaces to `fig-input-slider-hue`.
+- Added a simple `fig-input-rotate` variant and redesigned `fig-input-point` as a compact property button with an origin-grid popup.
+
+### Changed
+
+- Anchored row-property select and editor popups to the full property surface and synchronized their width and offset.
+- Expanded Lab property examples and Attributes controls for defaults, slider variants, rotation variants, and hue color spaces.
+- Refined one-character joystick axis labels and bundled the playground font locally.
+
+### Fixed
+
+- Kept slider fills at zero width at their minimum while fading handles before host-edge clipping.
+- Preserved file-input hover and audio-waveform visibility inside row-activated properties.
+
 ## [11.8.1]
 
 ### Changed

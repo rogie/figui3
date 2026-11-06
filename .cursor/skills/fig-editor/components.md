@@ -70,13 +70,15 @@ Data-driven (no authored options):
 ## `fig-input-rotate`
 
 ```tsx
-<fig-input-rotate x="0" y="45" z="90" units="deg" full />
+<fig-input-rotate x="0" y="45" z="90" default-x="0" default-y="0" default-z="0" units="deg" variant="simple" full />
 ```
 
-- Attrs: `x`, `y`, `z`, `units` (defaults to `deg`), `open`, `full`
+- Attrs: `x`, `y`, `z`, `default-x`, `default-y`, `default-z`, `units` (defaults to `deg`), `variant` (`default` | `simple`), `open`, `disabled`, `full`
+- `variant="simple"` omits the prepend icon and X/Y/Z labels.
 - Missing or invalid axis values display as `0`.
 - `deg` and `°` display with the degree symbol; other units display literally.
 - `value` returns numeric `{ x, y, z }`.
+- `.default` / `.defaultValue` return `{ x, y, z }`; `.isDefault` and `.resetToDefault()` use all three axes and emit one host event pair.
 - Clicking opens an anchored popup with a `fig-3d-rotate` editor; popup edits emit `input` and `change` with `{ x, y, z }`.
 - Methods: `focus(options)`, `activate(options)` (focuses and clicks the trigger)
 
@@ -86,6 +88,8 @@ Data-driven (no authored options):
 <fig-input-point
   x={String(point.x)}
   y={String(point.y)}
+  default-x="0"
+  default-y="0"
   units="%"
   full
   onInput={onInput}
@@ -93,9 +97,12 @@ Data-driven (no authored options):
 />
 ```
 
-- Attrs: `x`, `y`, `units` (forwarded to both number inputs), `full`
-- Renders two equally sized `fig-input-number` controls in a `fig-input-combo`.
-- Events: `input` while editing and `change` on commit, with `{ x, y }`.
+- Attrs: `x`, `y`, `default-x`, `default-y`, `units`, `open`, `disabled`, `full`
+- Renders a compact property button labeled `X … · Y …`.
+- Clicking opens an anchored popup with `fig-origin-grid fields aspect-ratio="4/3"`.
+- Events: popup `input` and `change` edits emit `{ x, y }`.
+- `.default` / `.defaultValue` return `{ x, y }`; `.isDefault` compares both axes and reset emits one host event pair.
+- Methods: `focus(options)`, `activate(options)` (focuses and clicks the trigger)
 
 ## `fig-property`
 
@@ -147,6 +154,7 @@ Authored trailing accessory (`/figui3#property/custom-accessory`):
 - `activation="row"` activates from the label or unused row surface without intercepting direct input or accessory clicks; focus moves the shared outline to the row and applies the selected background. A slotted `fig-select` uses the property row as its menu anchor.
 - Row activation content-sizes slotted controls even when `full` is present; color, gradient, palette, and point inputs use the standard compact width.
 - `focus(options)` delegates focus to the slotted control; `activate(options)` delegates activation and falls back to focus.
+- Right-click opens a generated “Reset to default” menu. `resetToDefault()` delegates to the same method on the slotted control; the item stays synchronized while open and is disabled when unsupported, disabled, or already at its default.
 - Generated trailing controls emit bubbling, composed `remove`, `add`, or `bind` events with the slotted control in `detail.input`.
 - Child input events bubble unchanged.
 

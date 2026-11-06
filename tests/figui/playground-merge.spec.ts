@@ -32,7 +32,7 @@ test.describe("PropsKit playground migration", () => {
     );
 
     expect(legacyPropsKitSections).toHaveLength(54);
-    expect(oldKeys).toHaveLength(126);
+    expect(oldKeys).toHaveLength(125);
     expect(Object.keys(propkitMigration).sort()).toEqual(oldKeys.sort());
     for (const oldKey of oldKeys) {
       expect(
@@ -209,6 +209,40 @@ test("property exposes selected without experimental activation controls", () =>
   });
 });
 
+test("property controls expose authored default attributes", () => {
+  expect(controlAttributeRules["fig-input-number"]?.default).toMatchObject({
+    label: "Default",
+    type: "number",
+  });
+  expect(controlAttributeRules["fig-switch"]?.["default-checked"]).toMatchObject({
+    label: "Default checked",
+    type: "boolean",
+  });
+  expect(controlAttributeRules["fig-input-point"]?.["default-x"]).toMatchObject({
+    label: "Default X",
+    type: "number",
+  });
+  expect(controlAttributeRules["fig-input-rotate"]?.["default-z"]).toMatchObject({
+    label: "Default Z",
+    type: "number",
+  });
+  expect(controlAttributeRules["fig-input-file"]?.["default-url"]).toMatchObject({
+    label: "Default URL",
+    type: "string",
+  });
+  expect(controlAttributeRules["fig-input-rotate"]?.variant).toMatchObject({
+    label: "Variant",
+    type: "enum",
+    options: ["default", "simple"],
+  });
+  const rotateSection = figui3Sections.find(
+    (section) => section.id === "input-rotate",
+  );
+  expect(
+    rotateSection?.examples.find((example) => example.id === "simple")?.markup,
+  ).toContain('<fig-input-rotate variant="simple"');
+});
+
 test("property all-properties example covers every supported control", () => {
   const section = figui3Sections.find((entry) => entry.id === "property");
   const example = section?.examples.find(
@@ -259,10 +293,35 @@ test("property all-properties example covers every supported control", () => {
   for (const tag of ["fig-input-slider", ...sliderVariantTags]) {
     expect(rowExample?.markup).toMatch(
       new RegExp(
-        `<${tag}\\b[^>]*>[\\s\\S]*?<fig-input-number\\b[^>]*>[\\s\\S]*?</${tag}>`,
+        `<${tag}\\b[^>]*\\bdefault=["'][^"']*["'][^>]*>[\\s\\S]*?<fig-input-number\\b[^>]*\\bdefault=["'][^"']*["'][^>]*>[\\s\\S]*?</${tag}>`,
       ),
     );
   }
+  expect(rowExample?.markup).toContain(
+    '<fig-property label="Time" activation="row">',
+  );
+  expect(rowExample?.markup).toContain(
+    '<fig-input-number value="0" default="0" step="1" units="s"></fig-input-number>',
+  );
+  expect(rowExample?.markup).toContain(
+    '<fig-input-file slot="input" label="Choose file" default-url="" default-filename="" full>',
+  );
+  for (const matchingDefault of [
+    'value="16" default="16"',
+    'value="Hello" default="Hello"',
+    "checked default-checked",
+    'value="#0D99FF" default="#0D99FF"',
+    'value="Medium" default="Medium"',
+    'x="24" y="16" default-x="24" default-y="16"',
+    'default=\'["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]\'',
+  ]) {
+    expect(rowExample?.markup).toContain(matchingDefault);
+  }
+  const rowGradient =
+    rowExample?.markup.match(/<fig-input-gradient\b[^>]*>/)?.[0] ?? "";
+  expect(rowGradient.match(/\bvalue='([^']*)'/)?.[1]).toBe(
+    rowGradient.match(/\bdefault='([^']*)'/)?.[1],
+  );
   const rowProperties =
     rowExample?.markup.match(/<fig-property\b[^>]*>/g) ?? [];
   expect(rowProperties).toHaveLength(
@@ -339,6 +398,9 @@ test("property all-properties example covers every supported control", () => {
   );
   expect(sliderExample?.markup).toContain("<fig-input-number");
   expect(sliderExample?.markup).not.toContain("occlusion-targets");
+  expect(
+    rowSection?.examples.find((entry) => entry.id === "rotate")?.markup,
+  ).toContain('<fig-input-rotate slot="input" variant="default"');
 });
 
 test("input slider variants live in the Lab Inputs group", () => {
@@ -388,6 +450,33 @@ test("input slider variants live in the Lab Inputs group", () => {
   ).toMatchObject({
     label: "Occlusion targets",
     type: "string",
+  });
+  expect(
+    controlAttributeRules["fig-input-slider-hue"].color,
+  ).toMatchObject({
+    label: "Color",
+    type: "color",
+  });
+  expect(
+    controlAttributeRules["fig-input-slider-hue"]["color-space"],
+  ).toEqual({
+    label: "Color space",
+    type: "enum",
+    options: [
+      "srgb",
+      "srgb-linear",
+      "display-p3",
+      "oklab",
+      "oklch",
+      "hsl",
+    ],
+  });
+  expect(
+    controlAttributeRules["fig-input-slider-opacity"].color,
+  ).toMatchObject({
+    label: "Color",
+    type: "color",
+    defaultValue: "#808080",
   });
 });
 

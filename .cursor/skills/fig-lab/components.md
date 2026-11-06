@@ -30,7 +30,11 @@ Experimental. APIs may change. React contract: [../figui3/react.md](../figui3/re
 <fig-input-slider value="50">
   <fig-input-number value="50" units="%" />
 </fig-input-slider>
-<fig-input-slider-hue value="180" />
+<fig-input-slider-hue
+  value="180"
+  color="#336699"
+  color-space="oklch"
+/>
 <fig-input-slider-opacity color="#0D99FF" value="75" />
 <fig-input-slider-delta value="0" default="0" />
 <fig-input-slider-stepper value="50" />
@@ -38,6 +42,7 @@ Experimental. APIs may change. React contract: [../figui3/react.md](../figui3/re
 ```
 
 - Shared attrs: `name`, `value`, `default`, `occlusion-targets` (parent-scoped CSS selector list), `min`, `max`, `step`, `precision`, `ghost`, `disabled`
+- Hue attrs: `color`, `color-space="srgb|srgb-linear|display-p3|oklab|oklch|hsl"` (defaults to `srgb`; `oklch` and `hsl` use shorter-hue interpolation)
 - Base slider accepts JSON arrays such as `value="[20,80]"` for multiple handles.
 - A direct-child `fig-input-number` synchronizes bidirectionally for scalar values. Configure it with its own attrs; slider attrs are not forwarded. It is hidden for array values.
 - `occlusionTargets` accepts additional `Element[]` targets and returns a defensive copy. Selector, programmatic, direct-number, and row-property label targets are additive.

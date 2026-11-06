@@ -8,6 +8,8 @@ import {
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
+  applyGroupHeaderControlMutation,
+  applyPropertyControlAttributeMutation,
   applyPropertyControlMutation,
   applyChooserMaxSizeMutation,
   applyChooserPaletteLabelsMutation,
@@ -15,8 +17,8 @@ import {
   applyHandleHitAreaMutation,
   applyHeaderIconMutation,
   applyIconCharacterMutation,
+  applyInputAdornmentSlotMutation,
   applyOverflowFadeEdgeMutation,
-  applyPrependSlotMutation,
   applySelectSeparatorStickyMutation,
   applyTooltipActionMutation,
   getChooserPaletteLabelsEnabled,
@@ -27,13 +29,16 @@ import {
   getHandleHitAreaDebug,
   getHeaderIconEnabled,
   getIconCharacter,
-  getPrependSlotMode,
+  getInputAdornmentSlotMode,
+  getGroupHeaderControl,
+  getPropertyControlAttribute,
   getPropertyControlTag,
   getSelectSeparatorStickyEnabled,
   parseAttributeTargets,
   type FigIconPlaygroundSet,
+  type InputAdornmentSlot,
+  type InputAdornmentSlotMode,
   type PropertyControlTag,
-  type PrependSlotMode,
 } from "../lib/attributeParser";
 import {
   getRuleSetForTarget,
@@ -1100,6 +1105,25 @@ export default function AttributesView({
             );
           }
 
+          if (rule.type === "color") {
+            const colorValue = value || rule.defaultValue || "#0D99FF";
+            const handleColorChange = (e: unknown) => {
+              const nextValue = readColorInputEventValue(e);
+              if (typeof nextValue !== "string") return;
+              applyChange(target.fieldIndex, scope, name, nextValue || null);
+            };
+            return (
+              <fig-input-color
+                value={colorValue}
+                text="true"
+                alpha="true"
+                full
+                onInput={handleColorChange}
+                onChange={handleColorChange}
+              ></fig-input-color>
+            );
+          }
+
           if (rule.type === "enum") {
             const isMediaLikeControl =
               target.controlTag === "fig-image" ||
@@ -1978,6 +2002,55 @@ export default function AttributesView({
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <div className="propkit-attributes-group">
+                    {target.controlTag === "fig-group" &&
+                      (() => {
+                        const currentControl = getGroupHeaderControl(
+                          markup,
+                          target.fieldIndex,
+                        );
+                        if (!currentControl) return null;
+                        return (
+                          <fig-field
+                            columns="2/5"
+                            key={`group-header-control-${target.fieldIndex}`}
+                          >
+                            <label>Control</label>
+                            <fig-dropdown
+                              full
+                              label="Control"
+                              value={currentControl}
+                              onChange={(e: any) => {
+                                const detail = (e as CustomEvent).detail;
+                                const value =
+                                  (typeof detail === "string"
+                                    ? detail
+                                    : detail?.value) ??
+                                  (e.currentTarget as HTMLElement & {
+                                    value?: string;
+                                  }).value;
+                                if (
+                                  value !== "button" &&
+                                  value !== "switch" &&
+                                  value !== "select"
+                                ) {
+                                  return;
+                                }
+                                onMarkupChange(
+                                  applyGroupHeaderControlMutation(
+                                    markup,
+                                    target.fieldIndex,
+                                    value,
+                                  ),
+                                );
+                              }}
+                            >
+                              <option value="button">Button</option>
+                              <option value="switch">Switch</option>
+                              <option value="select">Select</option>
+                            </fig-dropdown>
+                          </fig-field>
+                        );
+                      })()}
                     {target.controlTag === "fig-property" &&
                       (() => {
                         const propertyControlTag = getPropertyControlTag(
@@ -1988,58 +2061,108 @@ export default function AttributesView({
                           propertyControlTag === "fig-input-slider"
                             ? "fig-slider"
                             : propertyControlTag;
+                        const rotateVariant =
+                          getPropertyControlAttribute(
+                            markup,
+                            target.fieldIndex,
+                            "variant",
+                          ) === "simple"
+                            ? "simple"
+                            : "default";
                         return (
-                          <fig-field
-                            columns="2/5"
-                            key={`property-control-${target.fieldIndex}-${currentTag}`}
-                          >
-                            <label>Control</label>
-                            <fig-dropdown
-                              full
-                              label="Control"
-                              value={currentTag}
-                              onChange={(e: any) => {
-                                const detail = (e as CustomEvent).detail;
-                                const value =
-                                  (typeof detail === "string"
-                                    ? detail
-                                    : detail?.value) ??
-                                  (e.currentTarget as HTMLElement & {
-                                    value?: string;
-                                  }).value;
-                                const selectedOption =
-                                  PROPERTY_CONTROL_OPTIONS.find(
-                                    (option) => option.tag === value,
-                                  );
-                                if (!selectedOption) return;
-                                const controlTag =
-                                  selectedOption.tag === "fig-slider" &&
-                                  target.controlAttributes.activation === "row"
-                                    ? "fig-input-slider"
-                                    : selectedOption.tag;
-                                const nextMarkup =
-                                  applyPropertyControlMutation(
-                                    markup,
-                                    target.fieldIndex,
-                                    controlTag,
-                                  );
-                                onMarkupChange(
-                                  applyAttributeMutation(nextMarkup, {
-                                    fieldIndex: target.fieldIndex,
-                                    target: "control",
-                                    name: "label",
-                                    value: selectedOption.label,
-                                  }),
-                                );
-                              }}
+                          <>
+                            <fig-field
+                              columns="2/5"
+                              key={`property-control-${target.fieldIndex}-${currentTag}`}
                             >
-                              {PROPERTY_CONTROL_OPTIONS.map((option) => (
-                                <option key={option.tag} value={option.tag}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </fig-dropdown>
-                          </fig-field>
+                              <label>Control</label>
+                              <fig-dropdown
+                                full
+                                label="Control"
+                                value={currentTag}
+                                onChange={(e: any) => {
+                                  const detail = (e as CustomEvent).detail;
+                                  const value =
+                                    (typeof detail === "string"
+                                      ? detail
+                                      : detail?.value) ??
+                                    (e.currentTarget as HTMLElement & {
+                                      value?: string;
+                                    }).value;
+                                  const selectedOption =
+                                    PROPERTY_CONTROL_OPTIONS.find(
+                                      (option) => option.tag === value,
+                                    );
+                                  if (!selectedOption) return;
+                                  const controlTag =
+                                    selectedOption.tag === "fig-slider" &&
+                                    target.controlAttributes.activation === "row"
+                                      ? "fig-input-slider"
+                                      : selectedOption.tag;
+                                  const nextMarkup =
+                                    applyPropertyControlMutation(
+                                      markup,
+                                      target.fieldIndex,
+                                      controlTag,
+                                    );
+                                  onMarkupChange(
+                                    applyAttributeMutation(nextMarkup, {
+                                      fieldIndex: target.fieldIndex,
+                                      target: "control",
+                                      name: "label",
+                                      value: selectedOption.label,
+                                    }),
+                                  );
+                                }}
+                              >
+                                {PROPERTY_CONTROL_OPTIONS.map((option) => (
+                                  <option key={option.tag} value={option.tag}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </fig-dropdown>
+                            </fig-field>
+                            {propertyControlTag === "fig-input-rotate" && (
+                              <fig-field
+                                columns="2/5"
+                                key={`property-rotate-variant-${target.fieldIndex}`}
+                              >
+                                <label>Variant</label>
+                                <fig-dropdown
+                                  full
+                                  label="Variant"
+                                  value={rotateVariant}
+                                  onChange={(e: any) => {
+                                    const detail = (e as CustomEvent).detail;
+                                    const value =
+                                      (typeof detail === "string"
+                                        ? detail
+                                        : detail?.value) ??
+                                      (e.currentTarget as HTMLElement & {
+                                        value?: string;
+                                      }).value;
+                                    if (
+                                      value !== "default" &&
+                                      value !== "simple"
+                                    ) {
+                                      return;
+                                    }
+                                    onMarkupChange(
+                                      applyPropertyControlAttributeMutation(
+                                        markup,
+                                        target.fieldIndex,
+                                        "variant",
+                                        value,
+                                      ),
+                                    );
+                                  }}
+                                >
+                                  <option value="default">Default</option>
+                                  <option value="simple">Simple</option>
+                                </fig-dropdown>
+                              </fig-field>
+                            )}
+                          </>
                         );
                       })()}
                     {target.controlTag === "fig-overflow-fade" &&
@@ -2419,7 +2542,7 @@ export default function AttributesView({
                           </fig-field>
                         );
                       })()}
-                    {visibleControlEntries.flatMap((entry, entryIndex) => {
+                    {visibleControlEntries.flatMap((entry) => {
                       const field = (
                         <fig-field
                           columns="2/5"
@@ -2714,57 +2837,7 @@ export default function AttributesView({
                         return [field, hitAreaSeparator, hitAreaLabel, hitAreaModeField, hitAreaSizeField, hitAreaShapeField, hitAreaDebugField];
                       }
 
-                      const prependBefore =
-                        target.controlTag === "fig-input-number" &&
-                        entryIndex === 0;
-                      const prependAfter =
-                        target.controlTag === "fig-input-text" &&
-                        entry.name === "type";
-                      const showPrepend =
-                        (prependBefore || prependAfter) &&
-                        !hiddenControlAttrs.has("prepend");
-                      if (!showPrepend) return [field];
-                      const prependMode = getPrependSlotMode(
-                        markup,
-                        target.fieldIndex,
-                      );
-                      const prependOptions: {
-                        value: PrependSlotMode;
-                        label: string;
-                      }[] = [
-                        { value: "none", label: "None" },
-                        { value: "label", label: "Label" },
-                        { value: "icon", label: "Icon" },
-                      ];
-                      const prependField = (
-                        <fig-field
-                          columns="2/5"
-                          key={`control-prepend-${target.fieldIndex}`}
-                        >
-                          <label>Prepend</label>
-                          <fig-options
-                            full
-                            options={prependOptions.map((o) => o.label).join(",")}
-                            value={prependOptions.find((o) => o.value === prependMode)?.label ?? "None"}
-                            onChange={(e: any) => {
-                              const label = (e as CustomEvent).detail ?? e.target?.value;
-                              const match = prependOptions.find((o) => o.label === label);
-                              if (match) {
-                                onMarkupChange(
-                                  applyPrependSlotMutation(
-                                    markup,
-                                    target.fieldIndex,
-                                    match.value,
-                                  ),
-                                );
-                              }
-                            }}
-                          ></fig-options>
-                        </fig-field>
-                      );
-                      return prependBefore
-                        ? [prependField, field]
-                        : [field, prependField];
+                      return [field];
                     })}
                     {target.controlTag === "fig-select" &&
                       markup.includes("<fig-separator") &&
@@ -2837,6 +2910,64 @@ export default function AttributesView({
                         </fig-field>
                       );
                     })()}
+                    {(target.controlTag === "fig-input-number" ||
+                      target.controlTag === "fig-input-text") &&
+                      (["prepend", "append"] as InputAdornmentSlot[])
+                        .filter((slot) => !hiddenControlAttrs.has(slot))
+                        .map((slot) => {
+                          const mode = getInputAdornmentSlotMode(
+                            markup,
+                            target.fieldIndex,
+                            slot,
+                          );
+                          const options: {
+                            value: InputAdornmentSlotMode;
+                            label: string;
+                          }[] = [
+                            { value: "none", label: "None" },
+                            { value: "label", label: "Label" },
+                            { value: "icon", label: "Icon" },
+                          ];
+                          return (
+                            <fig-field
+                              columns="2/5"
+                              key={`control-${slot}-${target.fieldIndex}`}
+                            >
+                              <label>
+                                {slot === "prepend" ? "Prepend" : "Append"}
+                              </label>
+                              <fig-options
+                                full
+                                options={options
+                                  .map((option) => option.label)
+                                  .join(",")}
+                                value={
+                                  options.find(
+                                    (option) => option.value === mode,
+                                  )?.label ?? "None"
+                                }
+                                onChange={(e: any) => {
+                                  const label =
+                                    (e as CustomEvent).detail ??
+                                    e.target?.value;
+                                  const match = options.find(
+                                    (option) => option.label === label,
+                                  );
+                                  if (match) {
+                                    onMarkupChange(
+                                      applyInputAdornmentSlotMutation(
+                                        markup,
+                                        target.fieldIndex,
+                                        slot,
+                                        match.value,
+                                      ),
+                                    );
+                                  }
+                                }}
+                              ></fig-options>
+                            </fig-field>
+                          );
+                        })}
                   </div>
                 </section>
               </div>

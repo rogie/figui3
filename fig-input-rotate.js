@@ -18,12 +18,27 @@ function getOverlayRoot() {
 }
 
 class FigInputRotate extends HTMLElement {
-  static observedAttributes = ["x", "y", "z", "units", "open"];
+  static observedAttributes = [
+    "x",
+    "y",
+    "z",
+    "default-x",
+    "default-y",
+    "default-z",
+    "units",
+    "variant",
+    "open",
+    "disabled",
+  ];
 
   #button = null;
+  #icon = null;
   #editor = null;
   #popup = null;
+  #popupAnchor = null;
+  #popupAnchorResizeObserver = null;
   #syncingFromPopup = false;
+  #axisLabels = {};
   #values = {};
   #boundOpen = () => {
     this.open = true;
@@ -73,6 +88,8 @@ class FigInputRotate extends HTMLElement {
       this.#syncOpenState();
       return;
     }
+    if (name === "disabled") this.#syncTriggerState();
+    if (name === "variant") this.#syncVariant();
     this.#sync();
     if (!this.#syncingFromPopup) this.#syncEditor();
   }
@@ -85,8 +102,75 @@ class FigInputRotate extends HTMLElement {
     };
   }
 
+  get default() {
+    return {
+      x: this.#defaultAxisValue("x"),
+      y: this.#defaultAxisValue("y"),
+      z: this.#defaultAxisValue("z"),
+    };
+  }
+
+  set default(value) {
+    const next = value && typeof value === "object" ? value : {};
+    for (const axis of ["x", "y", "z"]) {
+      const axisValue = next[axis];
+      if (axisValue === null || axisValue === undefined || axisValue === "") {
+        this.removeAttribute(`default-${axis}`);
+      } else {
+        this.setAttribute(`default-${axis}`, String(axisValue));
+      }
+    }
+  }
+
+  get defaultValue() {
+    return { ...this.default };
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    if (this.#editor) return this.#editor.isDefault;
+    const value = this.value;
+    const defaults = this.default;
+    return (
+      value.x === defaults.x &&
+      value.y === defaults.y &&
+      value.z === defaults.z
+    );
+  }
+
+  resetToDefault() {
+    if (this.#isDisabled || this.isDefault) return;
+    const defaults = this.default;
+    for (const axis of ["x", "y", "z"]) {
+      this.setAttribute(axis, String(defaults[axis]));
+    }
+    this.#sync();
+    this.#syncEditor();
+    for (const type of ["input", "change"]) {
+      this.dispatchEvent(
+        new CustomEvent(type, {
+          bubbles: true,
+          composed: true,
+          detail: this.value,
+        }),
+      );
+    }
+  }
+
   get units() {
     return this.getAttribute("units") || "deg";
+  }
+
+  get variant() {
+    return this.getAttribute("variant") === "simple" ? "simple" : "default";
+  }
+
+  set variant(value) {
+    if (value === "simple") this.setAttribute("variant", "simple");
+    else this.removeAttribute("variant");
   }
 
   get open() {
@@ -112,6 +196,7 @@ class FigInputRotate extends HTMLElement {
   }
 
   activate(options) {
+    if (this.#isDisabled) return;
     this.focus(options);
     this.#button?.click();
   }
@@ -138,10 +223,11 @@ class FigInputRotate extends HTMLElement {
       axisValue.setAttribute("data-axis", axis);
       const axisLabel = document.createElement("span");
       axisLabel.className = "fig-input-rotate-axis";
-      axisLabel.textContent = axis.toUpperCase();
+      axisLabel.textContent = `${axis.toUpperCase()} `;
       const valueText = document.createElement("span");
-      axisValue.append(axisLabel, " ", valueText);
+      axisValue.append(axisLabel, valueText);
       value.append(axisValue);
+      this.#axisLabels[axis] = axisLabel;
       this.#values[axis] = valueText;
     });
 
@@ -155,7 +241,30 @@ class FigInputRotate extends HTMLElement {
 
     this.replaceChildren(button);
     this.#button = button;
+    this.#icon = icon;
+    this.#syncVariant();
     this.#syncTriggerState();
+  }
+
+  #syncVariant() {
+    if (!this.#button) return;
+    const simple = this.variant === "simple";
+    const value = this.#button.querySelector(".fig-input-rotate-value");
+    if (simple) {
+      this.#icon?.remove();
+    } else if (this.#icon && !this.#icon.isConnected && value) {
+      this.#button.insertBefore(this.#icon, value);
+    }
+    for (const axis of ["x", "y", "z"]) {
+      const axisLabel = this.#axisLabels[axis];
+      const valueText = this.#values[axis];
+      if (!axisLabel || !valueText) continue;
+      if (simple) {
+        axisLabel.remove();
+      } else if (!axisLabel.isConnected) {
+        valueText.parentElement?.insertBefore(axisLabel, valueText);
+      }
+    }
   }
 
   #sync() {
@@ -182,7 +291,6 @@ class FigInputRotate extends HTMLElement {
     popup.setAttribute("offset", "0 8");
     popup.setAttribute("viewport-margin", "8");
     popup.setAttribute("popover", "manual");
-    popup.anchor = this;
 
     const content = document.createElement("fig-content");
     content.className = "fig-input-rotate-popup-content";
@@ -200,12 +308,50 @@ class FigInputRotate extends HTMLElement {
     this.#popup = popup;
     this.#editor = editor;
     this.#button?.setAttribute("aria-controls", popup.id);
+    this.#syncPopupAnchor();
     this.#syncEditor();
     return popup;
   }
 
+  #resolvePopupAnchor() {
+    const parent = this.parentElement;
+    return parent?.matches('fig-property[activation="row"]') ? parent : this;
+  }
+
+  #syncPopupAnchor() {
+    if (!this.#popup) return;
+    const anchor = this.#resolvePopupAnchor();
+    this.#popupAnchor = anchor;
+    this.#popup.anchor = anchor;
+    this.#popup.setAttribute("offset", anchor === this ? "0 8" : "0 0");
+    this.#popupAnchorResizeObserver ??= new ResizeObserver(() =>
+      this.#syncPopupWidth(),
+    );
+    this.#popupAnchorResizeObserver.disconnect();
+    this.#popupAnchorResizeObserver.observe(anchor);
+    this.#syncPopupWidth();
+  }
+
+  #syncPopupWidth() {
+    if (!this.#popup) return;
+    if (this.#popupAnchor === this) {
+      this.#popup.style.removeProperty("width");
+      return;
+    }
+    const width = this.#popupAnchor?.getBoundingClientRect().width;
+    if (Number.isFinite(width) && width > 0) {
+      this.#popup.style.width = `${width}px`;
+    }
+  }
+
   #syncEditor() {
     if (!this.#editor) return;
+    for (const axis of ["x", "y", "z"]) {
+      this.#editor.setAttribute(
+        `default-${axis}`,
+        String(this.#defaultAxisValue(axis)),
+      );
+    }
     this.#editor.setAttribute(
       "value",
       `rotateX(${this.#axisValue("x")}deg) rotateY(${this.#axisValue(
@@ -218,17 +364,19 @@ class FigInputRotate extends HTMLElement {
     if (!this.isConnected) return;
     if (!this.open) {
       if (this.#popup) this.#popup.open = false;
+      this.#popupAnchorResizeObserver?.disconnect();
       return;
     }
     const popup = this.#ensurePopup();
     if (!popup) return;
     this.#syncEditor();
-    popup.anchor = this;
+    this.#syncPopupAnchor();
     popup.open = true;
   }
 
   #syncTriggerState() {
     this.#button?.setAttribute("aria-expanded", String(this.open));
+    this.#button?.toggleAttribute("disabled", this.#isDisabled);
   }
 
   #destroyPopup() {
@@ -240,12 +388,25 @@ class FigInputRotate extends HTMLElement {
     this.#popup.open = false;
     this.#popup.remove();
     this.#button?.removeAttribute("aria-controls");
+    this.#popupAnchorResizeObserver?.disconnect();
+    this.#popupAnchor = null;
     this.#popup = null;
     this.#editor = null;
   }
 
   #axisValue(axis) {
     return this.#numericValue(this.getAttribute(axis));
+  }
+
+  #defaultAxisValue(axis) {
+    return this.#numericValue(this.getAttribute(`default-${axis}`));
+  }
+
+  get #isDisabled() {
+    return (
+      this.hasAttribute("disabled") &&
+      this.getAttribute("disabled") !== "false"
+    );
   }
 
   #formatAxisValue(axis) {

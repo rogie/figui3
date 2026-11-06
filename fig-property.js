@@ -38,9 +38,17 @@ class FigProperty extends HTMLElement {
   #managedOcclusionSlider = null;
   #waitingForSliderDefinition = false;
   #syncQueued = false;
+  #resetMenu = null;
+  #resetMenuItem = null;
+  #resetInputObserver = null;
+  #observedResetInput = null;
+  #pendingContextMenuCleanup = null;
 
   connectedCallback() {
     this.addEventListener("click", this.#activateFromRow);
+    this.addEventListener("contextmenu", this.#openResetMenu);
+    this.addEventListener("input", this.#handleInputStateChange);
+    this.addEventListener("change", this.#handleInputStateChange);
     this.#sync();
     this.#observer = new MutationObserver(() => this.#queueSync());
     this.#observer.observe(this, {
@@ -52,8 +60,15 @@ class FigProperty extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListener("click", this.#activateFromRow);
+    this.removeEventListener("contextmenu", this.#openResetMenu);
+    this.removeEventListener("input", this.#handleInputStateChange);
+    this.removeEventListener("change", this.#handleInputStateChange);
+    this.#cancelPendingContextMenu();
     this.#observer?.disconnect();
     this.#observer = null;
+    this.#resetInputObserver?.disconnect();
+    this.#resetInputObserver = null;
+    this.#observedResetInput = null;
     this.#restoreSelectMenuAnchor();
     this.#clearSliderOcclusionTarget();
     this.#clearLabelAssociation();
@@ -92,6 +107,21 @@ class FigProperty extends HTMLElement {
     this.focus();
   }
 
+  /** Reset the slotted input through its resetToDefault contract. */
+  resetToDefault() {
+    const input = this.input;
+    if (
+      !(input instanceof HTMLElement) ||
+      this.#inputIsDisabled(input) ||
+      typeof input.resetToDefault !== "function"
+    ) {
+      return;
+    }
+    const result = input.resetToDefault();
+    queueMicrotask(() => this.#syncResetMenuState());
+    return result;
+  }
+
   #queueSync() {
     if (this.#syncQueued) return;
     this.#syncQueued = true;
@@ -119,6 +149,166 @@ class FigProperty extends HTMLElement {
     this.#syncTrailing();
     this.#syncSelectMenuAnchor();
     this.#syncSliderOcclusionTarget();
+    this.#syncResetInputObserver();
+    this.#syncResetMenuState();
+  }
+
+  #inputIsDisabled(input) {
+    return (
+      input?.disabled === true ||
+      (input?.hasAttribute?.("disabled") &&
+        input.getAttribute("disabled") !== "false")
+    );
+  }
+
+  #ensureResetMenu() {
+    let menu = this.querySelector(
+      ':scope > fig-menu[data-fig-property-reset-menu]',
+    );
+    if (!(menu instanceof HTMLElement)) {
+      menu = document.createElement("fig-menu");
+      menu.setAttribute("position", "bottom left");
+      menu.setAttribute("data-fig-property-reset-menu", "");
+
+      const item = document.createElement("fig-menu-item");
+      item.setAttribute("value", "reset-to-default");
+      item.textContent = "Reset to default";
+      menu.append(item);
+      this.append(menu);
+    }
+
+    if (this.#resetMenu !== menu) {
+      this.#resetMenu?.removeEventListener(
+        "change",
+        this.#handleResetMenuChange,
+      );
+      this.#resetMenu = menu;
+    }
+    this.#resetMenu.removeEventListener(
+      "change",
+      this.#handleResetMenuChange,
+    );
+    this.#resetMenu.addEventListener("change", this.#handleResetMenuChange);
+    this.#resetMenuItem = this.#resetMenu.querySelector(
+      ':scope > fig-menu-item[value="reset-to-default"]',
+    );
+    this.#syncResetMenuState();
+  }
+
+  #syncResetMenuState() {
+    const input = this.input;
+    const disabled =
+      !(input instanceof HTMLElement) ||
+      typeof input.resetToDefault !== "function" ||
+      this.#inputIsDisabled(input) ||
+      input.isDefault === true;
+    this.#resetMenuItem?.toggleAttribute("disabled", disabled);
+    this.#resetMenuItem?.setAttribute("aria-disabled", String(disabled));
+  }
+
+  #syncResetInputObserver() {
+    const input = this.input;
+    if (this.#observedResetInput === input) return;
+    this.#resetInputObserver?.disconnect();
+    this.#observedResetInput =
+      input instanceof HTMLElement ? input : null;
+    if (!this.#observedResetInput) return;
+    this.#resetInputObserver ??= new MutationObserver(() =>
+      this.#syncResetMenuState(),
+    );
+    this.#resetInputObserver.observe(this.#observedResetInput, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: [
+        "disabled",
+        "default",
+        "default-checked",
+        "default-x",
+        "default-y",
+        "default-z",
+        "value",
+        "checked",
+        "indeterminate",
+        "url",
+        "filename",
+        "x",
+        "y",
+        "z",
+      ],
+    });
+  }
+
+  #handleInputStateChange = () => {
+    this.#syncResetMenuState();
+  };
+
+  #handleResetMenuChange = (event) => {
+    if (event.detail?.value !== "reset-to-default") return;
+    event.stopPropagation();
+    this.resetToDefault();
+    this.#syncResetMenuState();
+  };
+
+  #openResetMenu = (event) => {
+    if (
+      event.defaultPrevented ||
+      this.#resetMenu?.contains(event.target) ||
+      event.composedPath().includes(this.#resetMenu)
+    ) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.#ensureResetMenu();
+    this.#syncResetMenuState();
+
+    let { clientX: x, clientY: y } = event;
+    if (x === 0 && y === 0) {
+      const rect = this.getBoundingClientRect();
+      x = rect.left + Math.min(rect.width, 16);
+      y = rect.bottom;
+    }
+    this.#showResetMenuAfterPointerRelease(x, y, event.buttons === 0);
+  };
+
+  #showResetMenuAfterPointerRelease(x, y, openImmediately) {
+    this.#cancelPendingContextMenu();
+    const menu = this.#resetMenu;
+    if (!menu || typeof menu.showAt !== "function") return;
+
+    let timer = 0;
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerup", open, true);
+      window.removeEventListener("pointercancel", cancel, true);
+      if (this.#pendingContextMenuCleanup === cleanup) {
+        this.#pendingContextMenuCleanup = null;
+      }
+    };
+    const open = () => {
+      cleanup();
+      requestAnimationFrame(() => {
+        if (this.isConnected && menu.isConnected) menu.showAt(x, y);
+      });
+    };
+    const cancel = () => cleanup();
+
+    this.#pendingContextMenuCleanup = cleanup;
+    if (openImmediately) {
+      open();
+      return;
+    }
+    window.addEventListener("pointerup", open, { once: true, capture: true });
+    window.addEventListener("pointercancel", cancel, {
+      once: true,
+      capture: true,
+    });
+    timer = window.setTimeout(open, 180);
+  }
+
+  #cancelPendingContextMenu() {
+    this.#pendingContextMenuCleanup?.();
+    this.#pendingContextMenuCleanup = null;
   }
 
   #syncSliderOcclusionTarget() {

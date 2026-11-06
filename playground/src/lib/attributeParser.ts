@@ -1,5 +1,4 @@
 import { getExampleSourceMarkup } from "./exampleMarkup";
-import sunSvgRaw from "../icons/sun.svg?raw";
 import { landscapeUrl } from "./images";
 
 export interface ParsedAttributeTarget {
@@ -39,6 +38,8 @@ export interface FieldControlMutation {
     | "fig-slider"
     | "fig-switch";
 }
+
+export type GroupHeaderControl = "button" | "switch" | "select";
 
 export type PropertyControlTag =
   | "fig-input-number"
@@ -884,19 +885,69 @@ export function applyFieldLabelMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
-export type PrependSlotMode = "none" | "label" | "icon";
+export type InputAdornmentSlot = "prepend" | "append";
+export type InputAdornmentSlotMode = "none" | "label" | "icon";
+export type PrependSlotMode = InputAdornmentSlotMode;
+export type AppendSlotMode = InputAdornmentSlotMode;
+
+export function getInputAdornmentSlotMode(
+  markup: string,
+  fieldIndex: number,
+  slot: InputAdornmentSlot,
+): InputAdornmentSlotMode {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return "none";
+  const adornment = element.querySelector(`[slot="${slot}"]`);
+  if (!adornment) return "none";
+  if (
+    adornment.matches("fig-icon[name]") ||
+    adornment.querySelector("svg, fig-icon[name]")
+  ) {
+    return "icon";
+  }
+  return "label";
+}
+
+export function applyInputAdornmentSlotMutation(
+  markup: string,
+  fieldIndex: number,
+  slot: InputAdornmentSlot,
+  mode: InputAdornmentSlotMode,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element) return markup;
+
+  const existing = element.querySelector(`[slot="${slot}"]`);
+  if (existing) existing.remove();
+
+  if (mode === "label") {
+    const icon = root.ownerDocument.createElement("fig-icon");
+    icon.setAttribute("slot", slot);
+    icon.textContent = "X";
+    element[slot === "prepend" ? "prepend" : "append"](icon);
+  } else if (mode === "icon") {
+    const icon = root.ownerDocument.createElement("fig-icon");
+    const iconName =
+      element.tagName.toLowerCase() === "fig-input-text"
+        ? slot === "prepend"
+          ? "search"
+          : "close"
+        : "sun";
+    icon.setAttribute("name", iconName);
+    icon.setAttribute("slot", slot);
+    element[slot === "prepend" ? "prepend" : "append"](icon);
+  }
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
 
 export function getPrependSlotMode(
   markup: string,
   fieldIndex: number,
 ): PrependSlotMode {
-  const root = parseSourceRoot(markup);
-  const element = getTargetElement(root, { fieldIndex, target: "control" });
-  if (!element) return "none";
-  const prepend = element.querySelector('[slot="prepend"]');
-  if (!prepend) return "none";
-  if (prepend.querySelector("svg")) return "icon";
-  return "label";
+  return getInputAdornmentSlotMode(markup, fieldIndex, "prepend");
 }
 
 export function applyPrependSlotMutation(
@@ -904,26 +955,22 @@ export function applyPrependSlotMutation(
   fieldIndex: number,
   mode: PrependSlotMode,
 ): string {
-  const root = parseSourceRoot(markup);
-  const element = getTargetElement(root, { fieldIndex, target: "control" });
-  if (!element) return markup;
+  return applyInputAdornmentSlotMutation(markup, fieldIndex, "prepend", mode);
+}
 
-  const existing = element.querySelector('[slot="prepend"]');
-  if (existing) existing.remove();
+export function getAppendSlotMode(
+  markup: string,
+  fieldIndex: number,
+): AppendSlotMode {
+  return getInputAdornmentSlotMode(markup, fieldIndex, "append");
+}
 
-  if (mode === "label") {
-    const icon = root.ownerDocument.createElement("fig-icon");
-    icon.setAttribute("slot", "prepend");
-    icon.textContent = "X";
-    element.prepend(icon);
-  } else if (mode === "icon") {
-    const span = root.ownerDocument.createElement("span");
-    span.setAttribute("slot", "prepend");
-    span.innerHTML = sunSvgRaw;
-    element.prepend(span);
-  }
-
-  return getExampleSourceMarkup(serializeSourceMarkup(root));
+export function applyAppendSlotMutation(
+  markup: string,
+  fieldIndex: number,
+  mode: AppendSlotMode,
+): string {
+  return applyInputAdornmentSlotMutation(markup, fieldIndex, "append", mode);
 }
 
 export function getHeaderIconEnabled(
@@ -1193,6 +1240,37 @@ export function getPropertyControlTag(
   return (input?.tagName.toLowerCase() as PropertyControlTag) || "fig-input-number";
 }
 
+export function getPropertyControlAttribute(
+  markup: string,
+  propertyIndex: number,
+  name: string,
+): string | null {
+  const root = parseSourceRoot(markup);
+  const property = getPrimaryControls(root).filter(
+    (control) => getControlTag(control) === "fig-property",
+  )[propertyIndex];
+  return property
+    ?.querySelector(':scope > [slot="input"]')
+    ?.getAttribute(name) ?? null;
+}
+
+export function applyPropertyControlAttributeMutation(
+  markup: string,
+  propertyIndex: number,
+  name: string,
+  value: string | null,
+): string {
+  const root = parseSourceRoot(markup);
+  const property = getPrimaryControls(root).filter(
+    (control) => getControlTag(control) === "fig-property",
+  )[propertyIndex];
+  const input = property?.querySelector(':scope > [slot="input"]');
+  if (!input) return markup;
+  if (value === null) input.removeAttribute(name);
+  else input.setAttribute(name, value);
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export function applyPropertyControlMutation(
   markup: string,
   propertyIndex: number,
@@ -1211,6 +1289,61 @@ export function applyPropertyControlMutation(
   const nextControl = createDefaultFieldControl(root.ownerDocument, controlTag);
   nextControl.setAttribute("slot", "input");
   property.append(nextControl);
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
+export function getGroupHeaderControl(
+  markup: string,
+  groupIndex: number,
+): GroupHeaderControl | null {
+  const root = parseSourceRoot(markup);
+  const group = getPrimaryControls(root).filter(
+    (control) => getControlTag(control) === "fig-group",
+  )[groupIndex];
+  const header = group?.querySelector(":scope > fig-header");
+  if (!header) return null;
+  if (header.querySelector(":scope > fig-switch")) return "switch";
+  if (header.querySelector(":scope > fig-select")) return "select";
+  return "button";
+}
+
+export function applyGroupHeaderControlMutation(
+  markup: string,
+  groupIndex: number,
+  control: GroupHeaderControl,
+): string {
+  const root = parseSourceRoot(markup);
+  const group = getPrimaryControls(root).filter(
+    (element) => getControlTag(element) === "fig-group",
+  )[groupIndex];
+  const header = group?.querySelector(":scope > fig-header");
+  if (!header) return markup;
+  header
+    .querySelectorAll(":scope > fig-button, :scope > fig-switch, :scope > fig-select")
+    .forEach((element) => element.remove());
+
+  const document = root.ownerDocument;
+  let nextControl: Element;
+  if (control === "switch") {
+    nextControl = document.createElement("fig-switch");
+    nextControl.setAttribute("checked", "");
+    nextControl.setAttribute("aria-label", "Toggle fill visibility");
+  } else if (control === "select") {
+    nextControl = document.createElement("fig-select");
+    nextControl.setAttribute("variant", "ghost");
+    nextControl.setAttribute("value", "Solid");
+    nextControl.setAttribute("options", "Solid,Gradient,Image");
+    nextControl.setAttribute("aria-label", "Fill type");
+  } else {
+    nextControl = document.createElement("fig-button");
+    nextControl.setAttribute("variant", "ghost");
+    nextControl.setAttribute("icon", "true");
+    nextControl.setAttribute("aria-label", "Add fill");
+    const icon = document.createElement("fig-icon");
+    icon.setAttribute("name", "add");
+    nextControl.append(icon);
+  }
+  header.append(nextControl);
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 

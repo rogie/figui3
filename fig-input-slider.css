@@ -385,26 +385,18 @@
   opacity: var(--fig-input-slider-fill-opacity, 1);
 }
 
-fig-input-slider.fig-input-slider .fig-input-slider-fill {
-  inset-inline-start: 0;
-  inline-size: calc(
-    2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
-      var(--fig-input-slider-handle-width, 0.25rem) +
-      var(--fig-input-slider-fill-end, 0) *
-      (
-        100% -
-          2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
-          var(--fig-input-slider-handle-width, 0.25rem)
-      )
-  );
-}
-
 .fig-input-slider .fig-input-slider-handles,
 .fig-input-slider .fig-input-slider-ticks {
   position: absolute;
   z-index: 1;
   inset: 0;
   pointer-events: none;
+}
+
+.fig-input-slider .fig-input-slider-handles {
+  overflow: hidden;
+  border-radius: inherit;
+  corner-shape: inherit;
 }
 
 .fig-input-slider .fig-input-slider-handle {
@@ -482,6 +474,15 @@ fig-input-slider.fig-input-slider .fig-input-slider-fill {
     --fig-input-slider-handle-transition,
     opacity 0.08s ease-out,
     transform 0.08s ease-out
+  );
+}
+
+fig-input-slider.fig-input-slider:not([data-multiple-values])
+  .fig-input-slider-handle {
+  inset-inline-start: calc(
+    var(--fig-input-slider-progress, 0) * 100% -
+      var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
+      var(--_fig-input-slider-rendered-handle-width, 0.25rem)
   );
 }
 
@@ -762,7 +763,7 @@ fig-input-slider-hue.fig-input-slider {
 }
 
 fig-input-slider-opacity.fig-input-slider {
-  --fig-input-slider-opacity-color: var(--figma-color-bg-brand);
+  --fig-input-slider-opacity-color: #808080;
   --fig-input-slider-opacity-checkerboard:
     repeating-conic-gradient(#0001 0 25%, #fff1 0 50%) 0 / 0.5rem 0.5rem;
 

@@ -21,7 +21,7 @@ Observed: `value`, `disabled`, `selected`, `label`.
 
 ## `fig-select` observed
 
-`value`, `disabled`, `label`, `options`, `menu-anchor`, `position`, `offset`, `closedby`, `open`, `variant`, `size`
+`value`, `default`, `disabled`, `label`, `options`, `menu-anchor`, `position`, `offset`, `closedby`, `open`, `variant`, `size`
 
 - `icon` renders a square chevron-only trigger; provide `aria-label`
 - `variant="primary"` uses brand button colors for emphasis
@@ -29,6 +29,7 @@ Observed: `value`, `disabled`, `selected`, `label`.
 - `subtle` applies the secondary hover/focus fill to every option
 - `size="large"` sets a 32px trigger
 - `menu-anchor` accepts an alternate anchor selector; the `menuAnchor` property accepts an `Element`, selector string, or `null`
+- `.default` / `.defaultValue` resolve to the authored default or existing fallback option; `.isDefault` and `.resetToDefault()` use that option.
 
 Position: omit to overlay the selected option on the trigger. Set to place the menu like a popup:
 
@@ -41,25 +42,29 @@ trigger and opens the menu unless the select is disabled.
 
 ## Input rotate
 
-`fig-input-rotate` observes `x`, `y`, `z`, `units`, and `open`.
+`fig-input-rotate` observes `x`, `y`, `z`, `default-x`, `default-y`, `default-z`, `units`, `variant`, `open`, and `disabled`.
 
 - Missing or invalid axis values resolve to `0`.
 - Units default to `deg`; `deg` and `°` display as `°`.
 - Other unit strings display literally.
+- `variant="simple"` omits the prepend icon and X/Y/Z labels; the default variant includes both.
 - `value` returns numeric `{ x, y, z }`.
 - Clicking opens an anchored popup containing `fig-3d-rotate` with all three rotation fields.
 - `focus(options)` focuses the trigger; `activate(options)` focuses and clicks it.
 - Popup edits update the axis attributes and emit `input` and `change` with `{ x, y, z }`.
+- `.default` / `.defaultValue` return `{ x, y, z }`; `.isDefault` and `.resetToDefault()` aggregate all three popup number fields.
 - `full` makes the host fill its parent.
 
 ## Input point
 
-`fig-input-point` observes `x`, `y`, and `units`.
+`fig-input-point` observes `x`, `y`, `default-x`, `default-y`, `units`, `open`, and `disabled`.
 
 - Missing or invalid coordinates resolve to `0`.
-- The generated X/Y `fig-input-number` controls stay synchronized with the host attributes.
-- `units` is forwarded to both generated number inputs and removed from both when omitted.
-- `input` and `change` events provide numeric `{ x, y }` in `detail`.
+- The trigger displays `X … · Y …` with up to one decimal place and the authored unit suffix.
+- Clicking opens an anchored `fig-origin-grid` popup with X/Y fields.
+- Popup `input` and `change` events update the host attributes and provide numeric `{ x, y }` in `detail`.
+- `.default` / `.defaultValue` return `{ x, y }`; `.isDefault` compares both axes and reset emits one host `input` / `change` pair.
+- `focus(options)` focuses the trigger; `activate(options)` focuses and clicks it.
 - `full` makes the host fill its parent.
 
 ## Property
@@ -78,6 +83,7 @@ trigger and opens the menu unless the select is disabled.
 - `input` returns the direct `slot="input"` element.
 - `focus(options)` delegates focus to the slotted control and falls back to its first native focus target.
 - `activate(options)` delegates to the slotted control's `activate()` method and falls back to `focus()`.
+- `resetToDefault()` delegates to the slotted control's method. The generated right-click menu updates from control events, default/value attributes, and input replacement while keeping “Reset to default” disabled when unavailable, disabled, or `isDefault === true`.
 - Generated labels associate to the input with `aria-labelledby` unless it already has an accessible name.
 - Generated trailing events bubble across shadow roots with `detail: { input }`.
 - Child control events are not normalized or re-emitted.

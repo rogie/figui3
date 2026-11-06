@@ -7,13 +7,13 @@ React recipes: [components.md](components.md).
 Standalone extensible slider primitives imported by the Lab bundle:
 
 - `fig-input-slider`: range slider; supports one value or JSON arrays for multiple handles
-- `fig-input-slider-hue`: 0–360 hue track; adds `color`
+- `fig-input-slider-hue`: 0–360 hue track; adds `color` and `color-space`
 - `fig-input-slider-opacity`: opacity track over a checkerboard; adds `color`
 - `fig-input-slider-delta`: defaults to −100…100 with a centered default tick and fill
 - `fig-input-slider-stepper`: renders step ticks; default step is `10`
 - `fig-input-slider-wheel`: unbounded single-value wheel with `role="spinbutton"`
 
-Shared attrs: `name`, `value`, `default`, `occlusion-targets` (CSS selector list resolved against the parent scope), `min`, `max`, `step` (`any` disables snapping), `precision`, `ghost`, `disabled`. Hue and opacity also observe `color`.
+Shared attrs: `name`, `value`, `default`, `occlusion-targets` (CSS selector list resolved against the parent scope), `min`, `max`, `step` (`any` disables snapping), `precision`, `ghost`, `disabled`. Hue and opacity also observe `color`. Hue accepts `color-space="srgb|srgb-linear|display-p3|oklab|oklch|hsl"` and defaults missing or invalid values to `srgb`; `oklch` and `hsl` use shorter-hue interpolation.
 
 Props: `name`, `value`, `defaultValue`, `isDefault`, `occlusionTargets` (`Element[]`, defensive getter). Attribute and programmatic occlusion targets are additive. Methods: `focus()`, `getSliderState()`, `setInteractionValue()`, `commitInteractionChange()`, `requestRender()`, `resetToDefault()`. Wheel also provides `spinTo()`, `beginScrub()`, `updateScrub()`, and `endScrub()`.
 

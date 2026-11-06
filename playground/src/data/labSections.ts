@@ -12,7 +12,7 @@ const ungroupedLabSections: Section[] = [
         name: "Number",
         markup: `<div class="prop-panel">
   <fig-property label="Number" activation="row">
-    <fig-input-number slot="input" value="16" units="px" steppers="true" full></fig-input-number>
+    <fig-input-number slot="input" value="16" default="0" units="px" steppers="true" full></fig-input-number>
   </fig-property>
 </div>`,
       },
@@ -21,7 +21,7 @@ const ungroupedLabSections: Section[] = [
         name: "Angle",
         markup: `<div class="prop-panel">
   <fig-property label="Angle" activation="row">
-    <fig-input-number slot="input" value="0" units="°" full>
+    <fig-input-number slot="input" value="0" default="0" units="°" full>
       <fig-icon name="angle" slot="prepend"></fig-icon>
     </fig-input-number>
   </fig-property>
@@ -43,7 +43,7 @@ const ungroupedLabSections: Section[] = [
         name: "String",
         markup: `<div class="prop-panel">
   <fig-property label="String" activation="row">
-    <fig-input-text slot="input" value="Hello" full></fig-input-text>
+    <fig-input-text slot="input" value="Hello" default="" full></fig-input-text>
   </fig-property>
 </div>`,
       },
@@ -52,7 +52,7 @@ const ungroupedLabSections: Section[] = [
         name: "Boolean",
         markup: `<div class="prop-panel">
   <fig-property label="Boolean" activation="row">
-    <fig-switch slot="input" checked></fig-switch>
+    <fig-switch slot="input" checked default-checked="false"></fig-switch>
   </fig-property>
 </div>`,
       },
@@ -61,7 +61,7 @@ const ungroupedLabSections: Section[] = [
         name: "Color",
         markup: `<div class="prop-panel">
   <fig-property label="Color" activation="row">
-    <fig-input-color slot="input" value="#0D99FF" text="true" full></fig-input-color>
+    <fig-input-color slot="input" value="#0D99FF" default="#D9D9D9" text="true" full></fig-input-color>
   </fig-property>
 </div>`,
       },
@@ -70,7 +70,7 @@ const ungroupedLabSections: Section[] = [
         name: "Select",
         markup: `<div class="prop-panel">
   <fig-property label="Select" activation="row">
-    <fig-select slot="input" value="Medium" options="Small,Medium,Large" full></fig-select>
+    <fig-select slot="input" value="Medium" default="Small" options="Small,Medium,Large" full></fig-select>
   </fig-property>
 </div>`,
       },
@@ -79,7 +79,7 @@ const ungroupedLabSections: Section[] = [
         name: "Point",
         markup: `<div class="prop-panel">
   <fig-property label="Point" activation="row">
-    <fig-input-point slot="input" x="24" y="16" units="%" full></fig-input-point>
+    <fig-input-point slot="input" x="24" y="16" default-x="0" default-y="0" units="%" full></fig-input-point>
   </fig-property>
 </div>`,
       },
@@ -88,7 +88,7 @@ const ungroupedLabSections: Section[] = [
         name: "Easing",
         markup: `<div class="prop-panel">
   <fig-property label="Easing" activation="row">
-    <fig-easing-curve slot="input" value="0.42, 0, 0.58, 1" edit="false"></fig-easing-curve>
+    <fig-easing-curve slot="input" value="0.42, 0, 0.58, 1" default="0.42, 0, 0.58, 1" edit="false"></fig-easing-curve>
   </fig-property>
 </div>`,
       },
@@ -97,7 +97,7 @@ const ungroupedLabSections: Section[] = [
         name: "Gradient",
         markup: `<div class="prop-panel">
   <fig-property label="Gradient" activation="row">
-    <fig-input-gradient slot="input" edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' full></fig-input-gradient>
+    <fig-input-gradient slot="input" edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#D9D9D9","opacity":100},{"position":100,"color":"#737373","opacity":100}]}}' full></fig-input-gradient>
   </fig-property>
 </div>`,
       },
@@ -106,7 +106,7 @@ const ungroupedLabSections: Section[] = [
         name: "Palette",
         markup: `<div class="prop-panel">
   <fig-property label="Palette" activation="row">
-    <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+    <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' default='[]' full></fig-input-palette>
   </fig-property>
 </div>`,
       },
@@ -115,7 +115,7 @@ const ungroupedLabSections: Section[] = [
         name: "3D Rotate",
         markup: `<div class="prop-panel">
   <fig-property label="3D Rotate" activation="row">
-    <fig-input-rotate slot="input"></fig-input-rotate>
+    <fig-input-rotate slot="input" variant="default" default-x="0" default-y="0" default-z="0"></fig-input-rotate>
   </fig-property>
 </div>`,
       },
@@ -133,7 +133,7 @@ const ungroupedLabSections: Section[] = [
         name: "Audio",
         markup: `<div class="prop-panel">
   <fig-property label="Audio" activation="row">
-    <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
+    <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" default-url="/audio/skrillex-ft-elliphant.mp3" default-filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
   </fig-property>
 </div>`,
       },
@@ -143,76 +143,76 @@ const ungroupedLabSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-group name="Values" compact>
     <fig-property label="Number" activation="row">
-      <fig-input-number slot="input" value="16" units="px" steppers="true" full></fig-input-number>
+      <fig-input-number slot="input" value="16" default="16" units="px" steppers="true" full></fig-input-number>
     </fig-property>
     <fig-property label="String" activation="row">
-      <fig-input-text slot="input" value="Hello" full></fig-input-text>
+      <fig-input-text slot="input" value="Hello" default="Hello" full></fig-input-text>
     </fig-property>
     <fig-property label="Boolean" activation="row">
-      <fig-switch slot="input" checked></fig-switch>
+      <fig-switch slot="input" checked default-checked></fig-switch>
     </fig-property>
   </fig-group>
   <fig-group name="Sliders" compact>
     <fig-property label="Slider" activation="row">
       <fig-input-slider slot="input" value="50" default="50" min="0" max="100">
-        <fig-input-number value="50" min="0" max="100" step="1" units="%"></fig-input-number>
+        <fig-input-number value="50" default="50" min="0" max="100" step="1" units="%"></fig-input-number>
       </fig-input-slider>
     </fig-property>
     <fig-property label="Hue" activation="row">
       <fig-input-slider-hue slot="input" value="180" default="180">
-        <fig-input-number value="180" min="0" max="360" step="1" units="°"></fig-input-number>
+        <fig-input-number value="180" default="180" min="0" max="360" step="1" units="°"></fig-input-number>
       </fig-input-slider-hue>
     </fig-property>
     <fig-property label="Opacity" activation="row">
-      <fig-input-slider-opacity slot="input" color="#0D99FF" value="75" default="75">
-        <fig-input-number value="75" min="0" max="100" step="1" units="%"></fig-input-number>
+      <fig-input-slider-opacity slot="input" value="75" default="75">
+        <fig-input-number value="75" default="75" min="0" max="100" step="1" units="%"></fig-input-number>
       </fig-input-slider-opacity>
     </fig-property>
     <fig-property label="Delta" activation="row">
       <fig-input-slider-delta slot="input" value="0" default="0">
-        <fig-input-number value="0" min="-100" max="100" step="1" units="px"></fig-input-number>
+        <fig-input-number value="0" default="0" min="-100" max="100" step="1" units="px"></fig-input-number>
       </fig-input-slider-delta>
     </fig-property>
     <fig-property label="Stepper" activation="row">
       <fig-input-slider-stepper slot="input" value="50" default="50">
-        <fig-input-number value="50" min="0" max="100" step="10" units="%"></fig-input-number>
+        <fig-input-number value="50" default="50" min="0" max="100" step="10" units="%"></fig-input-number>
       </fig-input-slider-stepper>
     </fig-property>
-    <fig-property label="Wheel" activation="row">
+    <fig-property label="Time" activation="row">
       <fig-input-slider-wheel slot="input" value="0" default="0" step="1">
-        <fig-input-number value="0" step="1"></fig-input-number>
+        <fig-input-number value="0" default="0" step="1" units="s"></fig-input-number>
       </fig-input-slider-wheel>
     </fig-property>
   </fig-group>
   <fig-group name="Pickers" compact>
     <fig-property label="Color" activation="row">
-      <fig-input-color slot="input" value="#0D99FF" text="true" full></fig-input-color>
+      <fig-input-color slot="input" value="#0D99FF" default="#0D99FF" text="true" full></fig-input-color>
     </fig-property>
     <fig-property label="Select" activation="row">
-      <fig-select slot="input" value="Medium" options="Small,Medium,Large" full></fig-select>
+      <fig-select slot="input" value="Medium" default="Medium" options="Small,Medium,Large" full></fig-select>
     </fig-property>
     <fig-property label="Point" activation="row">
-      <fig-input-point slot="input" x="24" y="16" units="%" full></fig-input-point>
+      <fig-input-point slot="input" x="24" y="16" default-x="24" default-y="16" units="%" full></fig-input-point>
     </fig-property>
     <fig-property label="Easing" activation="row">
-      <fig-easing-curve slot="input" value="0.42, 0, 0.58, 1" edit="false"></fig-easing-curve>
+      <fig-easing-curve slot="input" value="0.42, 0, 0.58, 1" default="0.42, 0, 0.58, 1" edit="false"></fig-easing-curve>
     </fig-property>
   </fig-group>
   <fig-group name="Advanced" compact>
     <fig-property label="Gradient" activation="row">
-      <fig-input-gradient slot="input" edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' full></fig-input-gradient>
+      <fig-input-gradient slot="input" edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' full></fig-input-gradient>
     </fig-property>
     <fig-property label="Palette" activation="row">
-      <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
+      <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' default='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
     </fig-property>
     <fig-property label="Transform" activation="row">
-      <fig-input-rotate slot="input"></fig-input-rotate>
+      <fig-input-rotate slot="input" variant="simple" default-x="0" default-y="0" default-z="0"></fig-input-rotate>
     </fig-property>
     <fig-property label="File" activation="row">
-      <fig-input-file slot="input" label="Choose file" full></fig-input-file>
+      <fig-input-file slot="input" label="Choose file" default-url="" default-filename="" full></fig-input-file>
     </fig-property>
     <fig-property label="Audio" activation="row">
-      <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
+      <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" default-url="/audio/skrillex-ft-elliphant.mp3" default-filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
     </fig-property>
   </fig-group>
 </div>`,
@@ -476,7 +476,7 @@ const ungroupedLabSections: Section[] = [
         id: "opacity",
         name: "Opacity",
         markup: `<div class="prop-panel">
-  <fig-input-slider-opacity name="opacity" color="#0D99FF" value="75" default="75"></fig-input-slider-opacity>
+  <fig-input-slider-opacity name="opacity" value="75" default="75"></fig-input-slider-opacity>
 </div>`,
       },
       {

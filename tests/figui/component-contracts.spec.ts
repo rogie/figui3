@@ -503,7 +503,7 @@ test.describe("fig.js component contracts", () => {
     expect(registered).toBe(false);
   });
 
-  test("fig-editor registers and synchronizes fig-input-point", async ({
+  test("fig-editor registers and synchronizes the fig-input-point popup", async ({
     page,
   }) => {
     await page.addStyleTag({ url: "/fig-editor.css" });
@@ -511,7 +511,7 @@ test.describe("fig.js component contracts", () => {
       await import("/fig-editor.js");
       await Promise.all([
         customElements.whenDefined("fig-input-point"),
-        customElements.whenDefined("fig-input-number"),
+        customElements.whenDefined("fig-origin-grid"),
       ]);
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
@@ -532,44 +532,60 @@ test.describe("fig.js component contracts", () => {
           (event as CustomEvent).detail,
         );
       });
-      const inputs = [
-        ...point.querySelectorAll(":scope > fig-input-combo > fig-input-number"),
-      ];
+      (point as HTMLElement & { activate(): void }).activate();
+      await new Promise(requestAnimationFrame);
+      const popup = document.querySelector(
+        "dialog.fig-input-point-popup",
+      ) as HTMLDialogElement & { anchor?: Element };
+      const editor = popup?.querySelector("fig-origin-grid");
       return {
         registered: Boolean(customElements.get("fig-input-point")),
-        comboCount: point.querySelectorAll(":scope > fig-input-combo").length,
-        inputCount: inputs.length,
-        axes: inputs.map((input) => input.getAttribute("data-axis")),
-        labels: inputs.map((input) => input.getAttribute("aria-label")),
-        values: inputs.map((input) => input.getAttribute("value")),
-        units: inputs.map((input) => input.getAttribute("units")),
-        equalWidths:
-          Math.round(inputs[0].getBoundingClientRect().width) ===
-          Math.round(inputs[1].getBoundingClientRect().width),
+        buttonText: point.querySelector("fig-button")?.textContent?.trim(),
+        popupOpen: popup?.hasAttribute("open"),
+        popupAnchorIsPoint: popup?.anchor === point,
+        popupOffset: popup?.getAttribute("offset"),
+        editorValue: editor?.getAttribute("value"),
+        editorFields: editor?.hasAttribute("fields"),
+        editorAspectRatio: editor?.getAttribute("aspect-ratio"),
       };
     });
 
     expect(initial).toEqual({
       registered: true,
-      comboCount: 1,
-      inputCount: 2,
-      axes: ["x", "y"],
-      labels: ["X coordinate", "Y coordinate"],
-      values: ["12.5", "-4"],
-      units: ["rem", "rem"],
-      equalWidths: true,
+      buttonText: "X 12.5rem · Y -4rem",
+      popupOpen: true,
+      popupAnchorIsPoint: true,
+      popupOffset: "0 8",
+      editorValue: "12.5% -4.0%",
+      editorFields: true,
+      editorAspectRatio: "4/3",
     });
 
-    const fields = page.locator("#point fig-input-number input");
-    await fields.nth(0).fill("24");
+    const editor = page.locator(
+      "dialog.fig-input-point-popup fig-origin-grid",
+    );
+    await editor.evaluate((element) => {
+      element.dispatchEvent(
+        new CustomEvent("input", {
+          bubbles: true,
+          detail: { value: "24% -4%", x: 24, y: -4 },
+        }),
+      );
+    });
     await expect(page.locator("#point")).toHaveAttribute("x", "24");
     await expect(page.locator("#point")).toHaveAttribute(
       "data-last-input",
       '{"x":24,"y":-4}',
     );
 
-    await fields.nth(1).fill("-8");
-    await fields.nth(1).press("Tab");
+    await editor.evaluate((element) => {
+      element.dispatchEvent(
+        new CustomEvent("change", {
+          bubbles: true,
+          detail: { value: "24% -8%", x: 24, y: -8 },
+        }),
+      );
+    });
     await expect(page.locator("#point")).toHaveAttribute("y", "-8");
     await expect(page.locator("#point")).toHaveAttribute(
       "data-last-change",
@@ -580,23 +596,23 @@ test.describe("fig.js component contracts", () => {
       point.setAttribute("x", "3.5");
       point.setAttribute("y", "7");
       point.setAttribute("units", "%");
-      const inputs = [
-        ...point.querySelectorAll(":scope > fig-input-combo > fig-input-number"),
-      ];
       const state = {
-        values: inputs.map((input) => input.getAttribute("value")),
-        units: inputs.map((input) => input.getAttribute("units")),
+        buttonText: point.querySelector("fig-button")?.textContent?.trim(),
+        editorValue: document
+          .querySelector("dialog.fig-input-point-popup fig-origin-grid")
+          ?.getAttribute("value"),
       };
       point.removeAttribute("units");
       return {
         ...state,
-        unitsAfterRemove: inputs.map((input) => input.getAttribute("units")),
+        buttonTextAfterUnitsRemove:
+          point.querySelector("fig-button")?.textContent?.trim(),
       };
     });
     expect(synced).toEqual({
-      values: ["3.5", "7"],
-      units: ["%", "%"],
-      unitsAfterRemove: [null, null],
+      buttonText: "X 3.5% · Y 7%",
+      editorValue: "3.5% 7.0%",
+      buttonTextAfterUnitsRemove: "X 3.5 · Y 7",
     });
   });
 
@@ -1325,6 +1341,285 @@ test("fig-icon maps chevron to size-specific tokens", async ({ page }) => {
     small: "var(--icon-16-chevron)",
   });
 });
+
+test("core scalar controls share the authored default contract", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider id="slider" value="75" default="25"></fig-slider>
+        <fig-input-number id="number" value="16" default="4"></fig-input-number>
+        <fig-input-text id="text" value="Hello" default="Untitled"></fig-input-text>
+        <fig-checkbox id="checkbox" checked default-checked="false"></fig-checkbox>
+        <fig-switch id="switch" checked default-checked="false"></fig-switch>
+        <fig-input-color id="color" value="#0D99FF" default="#D9D9D9"></fig-input-color>
+        <fig-angle id="angle" value="90" default="15"></fig-angle>
+      `;
+      const results: Record<string, unknown> = {};
+      for (const id of [
+        "slider",
+        "number",
+        "text",
+        "checkbox",
+        "switch",
+        "color",
+        "angle",
+      ]) {
+        const control = root.querySelector(`#${id}`) as HTMLElement & {
+          value: unknown;
+          checked?: boolean;
+          default: unknown;
+          defaultValue: unknown;
+          isDefault: boolean;
+          resetToDefault(): void;
+        };
+        const events: Array<{ type: string; detail: unknown }> = [];
+        control.addEventListener("input", (event) =>
+          events.push({
+            type: event.type,
+            detail: (event as CustomEvent).detail,
+          }),
+        );
+        control.addEventListener("change", (event) =>
+          events.push({
+            type: event.type,
+            detail: (event as CustomEvent).detail,
+          }),
+        );
+        const before = {
+          value: control.value,
+          checked: control.checked,
+          default: control.default,
+          defaultValue: control.defaultValue,
+          isDefault: control.isDefault,
+        };
+        control.resetToDefault();
+        results[id] = {
+          before,
+          after: {
+            value: control.value,
+            checked: control.checked,
+            isDefault: control.isDefault,
+          },
+          events,
+        };
+      }
+
+      const number = root.querySelector("#number") as HTMLElement & {
+        value: unknown;
+        default: number;
+        resetToDefault(): void;
+      };
+      number.setAttribute("value", "8");
+      number.setAttribute("default", "6");
+      const runtimeDefault = {
+        value: number.value,
+        default: number.default,
+      };
+      number.setAttribute("disabled", "");
+      const disabledEvents: string[] = [];
+      number.addEventListener("input", () => disabledEvents.push("input"));
+      number.addEventListener("change", () => disabledEvents.push("change"));
+      number.resetToDefault();
+      results.runtimeDefault = {
+        ...runtimeDefault,
+        afterDisabledReset: number.value,
+        disabledEvents,
+      };
+      number.removeAttribute("disabled");
+      number.setAttribute("min", "5");
+      number.setAttribute("default", "invalid");
+      results.invalidNumericDefault = {
+        value: number.value,
+        default: number.default,
+      };
+      return results;
+    });
+
+    expect(state.slider).toMatchObject({
+      before: { value: "75", default: 25, defaultValue: 25, isDefault: false },
+      after: { value: "25", isDefault: true },
+    });
+    expect(state.number).toMatchObject({
+      before: { value: 16, default: 4, defaultValue: 4, isDefault: false },
+      after: { value: 4, isDefault: true },
+    });
+    expect(state.text).toMatchObject({
+      before: {
+        value: "Hello",
+        default: "Untitled",
+        defaultValue: "Untitled",
+        isDefault: false,
+      },
+      after: { value: "Untitled", isDefault: true },
+    });
+    expect(state.switch).toMatchObject({
+      before: { checked: true, default: false, defaultValue: false },
+      after: { checked: false, isDefault: true },
+    });
+    expect(state.checkbox).toMatchObject({
+      before: { checked: true, default: false, defaultValue: false },
+      after: { checked: false, isDefault: true },
+    });
+    expect(state.color).toMatchObject({
+      before: {
+        value: "#0D99FF",
+        default: "#D9D9D9",
+        defaultValue: "#D9D9D9",
+      },
+      after: { value: "#D9D9D9", isDefault: true },
+    });
+    expect(state.angle).toMatchObject({
+      before: { value: 90, default: 15, defaultValue: 15 },
+      after: { value: 15, isDefault: true },
+    });
+    for (const id of [
+      "slider",
+      "number",
+      "text",
+      "checkbox",
+      "switch",
+      "color",
+      "angle",
+    ]) {
+      expect(
+        (state[id] as { events: Array<{ type: string }> }).events.map(
+          (event) => event.type,
+        ),
+      ).toEqual(["input", "change"]);
+    }
+    expect(state.runtimeDefault).toEqual({
+      value: 8,
+      default: 6,
+      afterDisabledReset: 8,
+      disabledEvents: [],
+    });
+    expect(state.invalidNumericDefault).toEqual({
+      value: 8,
+      default: 5,
+    });
+  });
+
+test("serialized controls reset canonically and file resets clear local files", async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-palette id="palette" value='["#0D99FF"]' default='["#D9D9D9"]'></fig-input-palette>
+        <fig-input-gradient id="gradient"
+          value='{"type":"gradient","gradient":{"type":"linear","angle":45,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}'
+          default='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#D9D9D9","opacity":100},{"position":100,"color":"#737373","opacity":100}]}}'>
+        </fig-input-gradient>
+        <fig-easing-curve id="easing" value="0, 0, 1, 1" default="0.42, 0, 0.58, 1"></fig-easing-curve>
+        <fig-input-file id="file"
+          url="/current.png"
+          filename="current.png"
+          default-url="/default.png"
+          default-filename="default.png">
+        </fig-input-file>
+      `;
+    });
+    await page.waitForTimeout(80);
+
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const results: Record<string, unknown> = {};
+      for (const id of ["palette", "gradient", "easing"]) {
+        const control = root.querySelector(`#${id}`) as HTMLElement & {
+          value: unknown;
+          default: unknown;
+          defaultValue: unknown;
+          isDefault: boolean;
+          resetToDefault(): void;
+        };
+        const defaultValue = control.defaultValue;
+        if (Array.isArray(defaultValue)) defaultValue.push("mutation");
+        if (defaultValue && typeof defaultValue === "object") {
+          Object.assign(defaultValue, { mutation: true });
+        }
+        const events: string[] = [];
+        control.addEventListener("input", () => events.push("input"));
+        control.addEventListener("change", () => events.push("change"));
+        const before = {
+          isDefault: control.isDefault,
+          aliasUnaffected:
+            JSON.stringify(control.default) ===
+            JSON.stringify(control.defaultValue),
+        };
+        control.resetToDefault();
+        results[id] = {
+          before,
+          isDefault: control.isDefault,
+          events,
+        };
+      }
+
+      const file = root.querySelector("#file") as HTMLElement & {
+        files: FileList | null;
+        default: { url: string; filename: string };
+        defaultValue: { url: string; filename: string };
+        isDefault: boolean;
+        resetToDefault(): void;
+      };
+      const nativeInput = file.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+      const transfer = new DataTransfer();
+      transfer.items.add(new File(["local"], "local.png", { type: "image/png" }));
+      nativeInput.files = transfer.files;
+      nativeInput.dispatchEvent(new Event("change", { bubbles: true }));
+      const fileEvents: string[] = [];
+      file.addEventListener("input", () => fileEvents.push("input"));
+      file.addEventListener("change", () => fileEvents.push("change"));
+      const beforeFileReset = {
+        value: (file as unknown as { value: string }).value,
+        isDefault: file.isDefault,
+        defaultsEqual:
+          JSON.stringify(file.default) === JSON.stringify(file.defaultValue),
+      };
+      file.resetToDefault();
+      results.file = {
+        beforeFileReset,
+        files: file.files,
+        url: file.getAttribute("url"),
+        filename: file.getAttribute("filename"),
+        isDefault: file.isDefault,
+        events: fileEvents,
+      };
+      return results;
+    });
+
+    for (const id of ["palette", "gradient", "easing"]) {
+      expect(state[id]).toEqual({
+        before: { isDefault: false, aliasUnaffected: true },
+        isDefault: true,
+        events: ["input", "change"],
+      });
+    }
+    expect(state.file).toEqual({
+      beforeFileReset: {
+        value: "local.png",
+        isDefault: false,
+        defaultsEqual: true,
+      },
+      files: null,
+      url: "/default.png",
+      filename: "default.png",
+      isDefault: true,
+      events: ["input", "change"],
+    });
+  });
 
 test("fig-icon maps audio to its 24px token", async ({ page }) => {
   collectPageErrors(page);
@@ -5159,14 +5454,14 @@ test.describe("joystick axis labels", () => {
       right: "",
       top: "",
       bottom: "Y",
-      leftIsRotated: true,
+      leftIsRotated: false,
     });
     await expect.poll(() => labelsFor("#comma-labels")).toEqual({
       left: "X",
       right: "",
       top: "",
       bottom: "Y",
-      leftIsRotated: true,
+      leftIsRotated: false,
     });
     await expect.poll(() => labelsFor("#comma-four-labels")).toEqual({
       left: "Left",

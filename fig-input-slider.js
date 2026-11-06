@@ -21,6 +21,11 @@ const booleanAttribute = (
   boolMode,
   ...(defaultChecked === undefined ? {} : { defaultChecked }),
 });
+const enumAttribute = (label, options) => ({
+  label,
+  type: "enum",
+  options,
+});
 const nameAttribute = stringAttribute("Name");
 
 function deepFreeze(value) {
@@ -395,8 +400,7 @@ export class FigInputSlider extends HTMLElement {
     const precision = this.#precisionFor(step);
     const rawValue = this.getAttribute("value") ?? this.#initialValue;
     const fallbackValue = this.getFallbackValue(bounds);
-    const rawDefault =
-      this.getAttribute("default") ?? this.#initialValue ?? fallbackValue;
+    const rawDefault = this.getAttribute("default") ?? fallbackValue;
     const values = this.#parseValues(
       rawValue,
       rawDefault,
@@ -447,13 +451,32 @@ export class FigInputSlider extends HTMLElement {
         (String(rawValue ?? "").trim().startsWith("[") ||
           Array.isArray(rawValue)),
     });
-    const ticks = Array.from(this.getTicks(baseState) || [], (tick, index) =>
-      Object.freeze({
-        index,
-        value: finite(tick.value, min),
-        progress: clamp(finite(tick.progress, 0), 0, 1),
-        active: Boolean(tick.active),
-      }),
+    const tickValues = Array.from(this.getTicks(baseState) || [], (tick) => ({
+      value: finite(tick.value, min),
+      progress: clamp(finite(tick.progress, 0), 0, 1),
+      active: Boolean(tick.active),
+    }));
+    if (this.hasAttribute("default")) {
+      defaultValues.forEach((value, index) => {
+        if (
+          tickValues.some(
+            (tick) =>
+              Math.abs(tick.value - value) <=
+              Number.EPSILON * Math.max(1, Math.abs(value)) * 16,
+          )
+        ) {
+          return;
+        }
+        tickValues.push({
+          value,
+          progress: defaultPercentages[index] ?? defaultPercentages[0] ?? 0,
+          active: false,
+        });
+      });
+      tickValues.sort((left, right) => left.progress - right.progress);
+    }
+    const ticks = tickValues.map((tick, index) =>
+      Object.freeze({ index, ...tick }),
     );
     Object.freeze(ticks);
     const stateWithTicks = Object.freeze({ ...baseState, ticks });
@@ -741,11 +764,24 @@ export class FigInputSlider extends HTMLElement {
         rect: target.getBoundingClientRect(),
       }))
       .filter(({ rect }) => rect.width > 0 && rect.height > 0);
-    const threshold = targets.length ? this.#getOcclusionFadeThreshold() : 0;
+    const threshold = this.#getOcclusionFadeThreshold();
+    const surfaceRect = this.#tray?.getBoundingClientRect();
+    const isRtl = getComputedStyle(this).direction === "rtl";
     for (const handle of this.#handles) {
       let overlaps = false;
-      let fadeProgress = 0;
       const handleRect = handle.getBoundingClientRect();
+      const minimumDistance =
+        surfaceRect == null
+          ? Number.POSITIVE_INFINITY
+          : isRtl
+            ? surfaceRect.right - handleRect.right
+            : handleRect.left - surfaceRect.left;
+      let fadeProgress =
+        minimumDistance <= 0
+          ? 1
+          : threshold > 0
+            ? clamp(1 - minimumDistance / threshold, 0, 1)
+            : 0;
       for (const { rect: targetRect } of targets) {
         const verticallyAligned =
           handleRect.top < targetRect.bottom &&
@@ -1398,12 +1434,14 @@ export class FigInputSlider extends HTMLElement {
     return "start";
   }
 
-  getSnapValues(_state, _index = 0) {
-    return [];
+  getSnapValues(state, _index = 0) {
+    return this.hasAttribute("default") ? [...state.defaultValues] : [];
   }
 
-  getSnapThreshold(_state, _index = 0) {
-    return 0;
+  getSnapThreshold(state, _index = 0) {
+    return this.hasAttribute("default")
+      ? (state.max - state.min) * 0.02
+      : 0;
   }
 
   valueFromPoint(point, state, _index = 0) {
@@ -1581,21 +1619,48 @@ export class FigInputSlider extends HTMLElement {
     );
   }
 
-  get defaultValue() {
+  get default() {
     const state = this.#state || this.#resolveState();
-    const rawDefault = this.getAttribute("default") ?? this.#initialValue;
+    const rawDefault = this.getAttribute("default") ?? this.getFallbackValue({
+      min: state.min,
+      max: state.max,
+      hasMin: state.hasMin,
+      hasMax: state.hasMax,
+    });
     const isArray =
       Array.isArray(rawDefault) ||
       String(rawDefault ?? "").trim().startsWith("[");
     return isArray ? [...state.defaultValues] : state.defaultValues[0];
   }
 
+  set default(nextValue) {
+    if (nextValue === null || nextValue === undefined || nextValue === "") {
+      this.removeAttribute("default");
+    } else {
+      this.setAttribute(
+        "default",
+        Array.isArray(nextValue)
+          ? JSON.stringify(nextValue)
+          : String(nextValue),
+      );
+    }
+  }
+
+  get defaultValue() {
+    return this.default;
+  }
+
+  set defaultValue(nextValue) {
+    this.default = nextValue;
+  }
+
   get isDefault() {
-    return jsonValuesEqual(this.value, this.defaultValue);
+    return jsonValuesEqual(this.value, this.default);
   }
 
   resetToDefault() {
-    const next = this.defaultValue;
+    if (booleanAttributeValue(this, "disabled") || this.isDefault) return;
+    const next = this.default;
     this.value = next;
     this.#render();
     for (const type of ["input", "change"]) {
@@ -1607,11 +1672,24 @@ export class FigInputSlider extends HTMLElement {
 }
 
 const FIG_INPUT_SLIDER_MAX_TICKS = 200;
+const FIG_INPUT_SLIDER_HUE_COLOR_SPACES = [
+  "srgb",
+  "srgb-linear",
+  "display-p3",
+  "oklab",
+  "oklch",
+  "hsl",
+];
+const FIG_INPUT_SLIDER_HUE_POLAR_COLOR_SPACES = new Set(["oklch", "hsl"]);
 
 export const figInputSliderHueSchema = deepFreeze({
   ...figInputSliderSchema,
   ghost: booleanAttribute("Ghost", "string", false),
   color: stringAttribute("Color"),
+  "color-space": enumAttribute(
+    "Color space",
+    FIG_INPUT_SLIDER_HUE_COLOR_SPACES,
+  ),
 });
 
 export const figInputSliderOpacitySchema = deepFreeze({
@@ -1698,12 +1776,33 @@ function hsvForCssColor(value) {
   return rgb ? rgbToHsv(rgb) : null;
 }
 
-function hueGradientForHsv({ saturation, value: brightness }) {
+function normalizeHueColorSpace(value) {
+  const normalized = String(value || "srgb").toLowerCase();
+  return FIG_INPUT_SLIDER_HUE_COLOR_SPACES.includes(normalized)
+    ? normalized
+    : "srgb";
+}
+
+function hueGradientInterpolationClause(colorSpace) {
+  if (colorSpace === "srgb") return "";
+  if (FIG_INPUT_SLIDER_HUE_POLAR_COLOR_SPACES.has(colorSpace)) {
+    return ` in ${colorSpace} shorter hue`;
+  }
+  return ` in ${colorSpace}`;
+}
+
+function hueGradientForHsv(
+  { saturation, value: brightness },
+  colorSpace = "srgb",
+) {
   const stops = [0, 60, 120, 180, 240, 300, 360].map((hue) => {
     const [r, g, b] = hsvToRgb(hue, saturation, brightness);
     return `rgb(${r}, ${g}, ${b})`;
   });
-  return `linear-gradient(to right, ${stops.join(", ")})`;
+  const interpolation = hueGradientInterpolationClause(
+    normalizeHueColorSpace(colorSpace),
+  );
+  return `linear-gradient(to right${interpolation}, ${stops.join(", ")})`;
 }
 
 function cssNumber(element, name, fallback) {
@@ -1804,21 +1903,30 @@ export class FigInputSliderHue extends FigInputSlider {
 
   syncSliderStyles(state) {
     super.syncSliderStyles(state);
-    const hsv = hsvForCssColor(this.getAttribute("color"));
-    if (hsv) {
+    const authoredHsv = hsvForCssColor(this.getAttribute("color"));
+    const hsv = authoredHsv ?? { hue: 0, saturation: 1, value: 1 };
+    const colorSpace = normalizeHueColorSpace(
+      this.getAttribute("color-space"),
+    );
+    const gradient = hueGradientForHsv(hsv, colorSpace);
+    if (
+      typeof CSS === "undefined" ||
+      typeof CSS.supports !== "function" ||
+      CSS.supports("background-image", gradient)
+    ) {
+      this.style.setProperty("--fig-input-slider-hue-gradient", gradient);
+    } else {
+      this.style.removeProperty("--fig-input-slider-hue-gradient");
+    }
+    if (authoredHsv) {
       const hue = state.values[0] ?? hsv.hue;
       const [r, g, b] = hsvToRgb(hue, hsv.saturation, hsv.value);
       this.style.setProperty(
         "--fig-input-slider-color",
         `rgb(${r}, ${g}, ${b})`,
       );
-      this.style.setProperty(
-        "--fig-input-slider-hue-gradient",
-        hueGradientForHsv(hsv),
-      );
     } else {
       this.style.removeProperty("--fig-input-slider-color");
-      this.style.removeProperty("--fig-input-slider-hue-gradient");
     }
   }
 

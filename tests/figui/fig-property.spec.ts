@@ -125,6 +125,247 @@ test.describe("fig-property", () => {
     });
   });
 
+  test("opens a context menu and delegates resetToDefault to the slotted input", async ({
+    page,
+  }) => {
+    await page.addStyleTag({ url: "/fig-input-slider.css" });
+    await page.addScriptTag({ type: "module", url: "/fig-input-slider.js" });
+    await page.evaluate(async () => {
+      await customElements.whenDefined("fig-input-slider");
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="reset-property" label="Amount">
+          <fig-input-slider
+            id="reset-slider"
+            slot="input"
+            value="75"
+            default="50"
+          ></fig-input-slider>
+        </fig-property>
+      `;
+      const slider = root.querySelector("#reset-slider");
+      slider.addEventListener("input", () => {
+        slider.dataset.inputEvents = String(
+          Number(slider.dataset.inputEvents || 0) + 1,
+        );
+      });
+      slider.addEventListener("change", () => {
+        slider.dataset.changeEvents = String(
+          Number(slider.dataset.changeEvents || 0) + 1,
+        );
+      });
+    });
+
+    const property = page.locator("#reset-property");
+    const menu = property.locator(
+      ':scope > fig-menu[data-fig-property-reset-menu]',
+    );
+    const item = menu.locator(
+      ':scope > fig-menu-item[value="reset-to-default"]',
+    );
+    await property.dispatchEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      clientX: 80,
+      clientY: 80,
+    });
+    await expect(menu).toHaveAttribute("open", "");
+    await expect(item).not.toHaveAttribute("disabled", "");
+
+    await item.click();
+
+    await expect(page.locator("#reset-slider")).toHaveAttribute("value", "50");
+    await expect(page.locator("#reset-slider")).toHaveAttribute(
+      "data-input-events",
+      "1",
+    );
+    await expect(page.locator("#reset-slider")).toHaveAttribute(
+      "data-change-events",
+      "1",
+    );
+    await expect(item).toHaveAttribute("disabled", "");
+    await expect(menu).not.toHaveAttribute("open", "");
+  });
+
+  test("disables Reset to default when the input cannot reset", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="unsupported-reset-property" label="Name">
+          <fig-button slot="input">Action</fig-button>
+        </fig-property>
+      `;
+    });
+
+    const property = page.locator("#unsupported-reset-property");
+    await property.dispatchEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      clientX: 80,
+      clientY: 80,
+    });
+    await expect(
+      property.locator(
+        ':scope > fig-menu > fig-menu-item[value="reset-to-default"]',
+      ),
+    ).toHaveAttribute("disabled", "");
+  });
+
+  test("keeps the reset menu state live across events, attributes, and replacement", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="live-reset-property" label="Amount">
+          <fig-input-number
+            id="live-reset-input"
+            slot="input"
+            value="10"
+            default="0">
+          </fig-input-number>
+        </fig-property>
+      `;
+    });
+
+    const property = page.locator("#live-reset-property");
+    await property.dispatchEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      clientX: 80,
+      clientY: 80,
+    });
+    const item = property.locator(
+      ':scope > fig-menu > fig-menu-item[value="reset-to-default"]',
+    );
+    await expect(item).not.toHaveAttribute("disabled", "");
+
+    await page.locator("#live-reset-input").evaluate((input) => {
+      input.setAttribute("value", "0");
+      input.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+    });
+    await expect(item).toHaveAttribute("disabled", "");
+
+    await page.locator("#live-reset-input").evaluate((input) => {
+      input.setAttribute("value", "5");
+      input.dispatchEvent(new CustomEvent("change", { bubbles: true }));
+    });
+    await expect(item).not.toHaveAttribute("disabled", "");
+
+    await page.locator("#live-reset-input").evaluate((input) =>
+      input.setAttribute("disabled", ""),
+    );
+    await expect(item).toHaveAttribute("disabled", "");
+
+    await page.locator("#live-reset-input").evaluate((input) =>
+      input.removeAttribute("disabled"),
+    );
+    await expect(item).not.toHaveAttribute("disabled", "");
+
+    await property.evaluate((element) => {
+      const replacement = document.createElement("fig-button");
+      replacement.setAttribute("slot", "input");
+      replacement.textContent = "Action";
+      element.querySelector(':scope > [slot="input"]')?.replaceWith(replacement);
+    });
+    await expect(item).toHaveAttribute("disabled", "");
+  });
+
+  test("select and point implement normalized default resets", async ({
+    page,
+  }) => {
+    await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+    const state = await page.evaluate(async () => {
+      await Promise.all([
+        customElements.whenDefined("fig-select"),
+        customElements.whenDefined("fig-input-point"),
+      ]);
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-select id="select" value="Large" default="Medium" options="Small,Medium,Large"></fig-select>
+        <fig-input-point
+          id="point"
+          x="24"
+          y="16"
+          default-x="4"
+          default-y="8">
+        </fig-input-point>
+      `;
+      const results: Record<string, unknown> = {};
+      for (const id of ["select", "point"]) {
+        const control = root.querySelector(`#${id}`) as HTMLElement & {
+          value: unknown;
+          default: unknown;
+          defaultValue: unknown;
+          isDefault: boolean;
+          resetToDefault(): void;
+        };
+        const events: Array<{ type: string; detail: unknown }> = [];
+        control.addEventListener("input", (event) =>
+          events.push({
+            type: event.type,
+            detail: (event as CustomEvent).detail,
+          }),
+        );
+        control.addEventListener("change", (event) =>
+          events.push({
+            type: event.type,
+            detail: (event as CustomEvent).detail,
+          }),
+        );
+        const before = {
+          value: control.value,
+          default: control.default,
+          defaultValue: control.defaultValue,
+          isDefault: control.isDefault,
+        };
+        control.resetToDefault();
+        results[id] = {
+          before,
+          value: control.value,
+          isDefault: control.isDefault,
+          events,
+        };
+      }
+      return results;
+    });
+
+    expect(state.select).toEqual({
+      before: {
+        value: "Large",
+        default: "Medium",
+        defaultValue: "Medium",
+        isDefault: false,
+      },
+      value: "Medium",
+      isDefault: true,
+      events: [
+        { type: "input", detail: "Medium" },
+        { type: "change", detail: "Medium" },
+      ],
+    });
+    expect(state.point).toEqual({
+      before: {
+        value: { x: 24, y: 16 },
+        default: { x: 4, y: 8 },
+        defaultValue: { x: 4, y: 8 },
+        isDefault: false,
+      },
+      value: { x: 4, y: 8 },
+      isDefault: true,
+      events: [
+        { type: "input", detail: { x: 4, y: 8 } },
+        { type: "change", detail: { x: 4, y: 8 } },
+      ],
+    });
+  });
+
   test('activation="row" activates only from the label or row surface', async ({
     page,
   }) => {
@@ -396,6 +637,7 @@ test.describe("fig-property", () => {
     await page.evaluate(async () => {
       await Promise.all([
         customElements.whenDefined("fig-input-rotate"),
+        customElements.whenDefined("fig-input-point"),
         customElements.whenDefined("fig-input-file"),
         customElements.whenDefined("fig-input-gradient"),
         customElements.whenDefined("fig-input-palette"),
@@ -409,13 +651,16 @@ test.describe("fig-property", () => {
       const gradient =
         '{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}';
       root.innerHTML = `
-        <fig-property id="activate-rotate-property" label="Rotate" activation="row">
+        <fig-property id="activate-rotate-property" label="Rotate" activation="row" style="width:240px">
           <fig-input-rotate id="activate-rotate" slot="input"></fig-input-rotate>
+        </fig-property>
+        <fig-property id="activate-point-property" label="Point" activation="row" style="width:240px">
+          <fig-input-point id="activate-point" slot="input" x="24" y="16" units="%"></fig-input-point>
         </fig-property>
         <fig-property id="activate-file-property" label="File" activation="row">
           <fig-input-file id="activate-file" slot="input"></fig-input-file>
         </fig-property>
-        <fig-property id="activate-gradient-property" label="Gradient" activation="row">
+        <fig-property id="activate-gradient-property" label="Gradient" activation="row" style="width:240px">
           <fig-input-gradient
             id="activate-gradient"
             slot="input"
@@ -423,7 +668,7 @@ test.describe("fig-property", () => {
             value='${gradient}'
           ></fig-input-gradient>
         </fig-property>
-        <fig-property id="activate-palette-property" label="Palette" activation="row">
+        <fig-property id="activate-palette-property" label="Palette" activation="row" style="width:240px">
           <fig-input-palette
             id="activate-palette"
             slot="input"
@@ -431,7 +676,7 @@ test.describe("fig-property", () => {
             value='["#0D99FF","#14AE5C","#FFCD29"]'
           ></fig-input-palette>
         </fig-property>
-        <fig-property id="activate-easing-property" label="Easing" activation="row">
+        <fig-property id="activate-easing-property" label="Easing" activation="row" style="width:240px">
           <fig-easing-curve
             id="activate-easing"
             slot="input"
@@ -457,6 +702,55 @@ test.describe("fig-property", () => {
       "open",
       /^(|true)$/,
     );
+    const rotatePopupGeometry = await page
+      .locator("dialog.fig-input-rotate-popup")
+      .evaluate((popup: any) => {
+        const property = document.querySelector("#activate-rotate-property")!;
+        return {
+          anchorIsProperty: popup.anchor === property,
+          offset: popup.getAttribute("offset"),
+          popupWidth: popup.getBoundingClientRect().width,
+          propertyWidth: property.getBoundingClientRect().width,
+        };
+      });
+    expect(rotatePopupGeometry.anchorIsProperty).toBe(true);
+    expect(rotatePopupGeometry.offset).toBe("0 0");
+    expect(rotatePopupGeometry.popupWidth).toBe(
+      rotatePopupGeometry.propertyWidth,
+    );
+    await page.locator("#activate-rotate").evaluate((element: any) => {
+      element.open = false;
+    });
+
+    await page.locator("#activate-point-property > label").click();
+    await expect(page.locator("#activate-point")).toHaveAttribute("open", "");
+    const pointPopupGeometry = await page
+      .locator("dialog.fig-input-point-popup")
+      .evaluate((popup: any) => {
+        const property = document.querySelector("#activate-point-property")!;
+        const editor = popup.querySelector("fig-origin-grid");
+        return {
+          anchorIsProperty: popup.anchor === property,
+          offset: popup.getAttribute("offset"),
+          popupWidth: popup.getBoundingClientRect().width,
+          propertyWidth: property.getBoundingClientRect().width,
+          editorValue: editor?.getAttribute("value"),
+          editorFields: editor?.hasAttribute("fields"),
+          editorAspectRatio: editor?.getAttribute("aspect-ratio"),
+        };
+      });
+    expect(pointPopupGeometry).toEqual({
+      anchorIsProperty: true,
+      offset: "0 0",
+      popupWidth: pointPopupGeometry.propertyWidth,
+      propertyWidth: 240,
+      editorValue: "24.0% 16.0%",
+      editorFields: true,
+      editorAspectRatio: "4/3",
+    });
+    await page.locator("#activate-point").evaluate((element: any) => {
+      element.open = false;
+    });
 
     await page.locator("#activate-file-property > label").click();
     await expect(
@@ -470,17 +764,76 @@ test.describe("fig-property", () => {
     await expect(
       page.locator('dialog[is="fig-popup-gradient"]'),
     ).toHaveAttribute("open", /^(|true)$/);
+    const gradientPopupGeometry = await page
+      .locator('dialog[is="fig-popup-gradient"]')
+      .evaluate((popup: any) => {
+        const property = document.querySelector("#activate-gradient-property")!;
+        return {
+          anchorIsProperty: popup.anchor === property,
+          offset: popup.getAttribute("offset"),
+          popupWidth: popup.getBoundingClientRect().width,
+          propertyWidth: property.getBoundingClientRect().width,
+        };
+      });
+    expect(gradientPopupGeometry).toEqual({
+      anchorIsProperty: true,
+      offset: "0 0",
+      popupWidth: gradientPopupGeometry.propertyWidth,
+      propertyWidth: 240,
+    });
+    await page
+      .locator('dialog[is="fig-popup-gradient"]')
+      .evaluate((popup: any) => {
+        popup.open = false;
+      });
 
     await page.locator("#activate-palette-property > label").click();
     await expect(page.locator("#activate-palette")).toHaveAttribute("open", "");
     await expect(
       page.locator('dialog[is="fig-popup-palette"]'),
     ).toHaveAttribute("open", /^(|true)$/);
+    const palettePopupGeometry = await page
+      .locator('dialog[is="fig-popup-palette"]')
+      .evaluate((popup: any) => {
+        const property = document.querySelector("#activate-palette-property")!;
+        return {
+          anchorIsProperty: popup.anchor === property,
+          offset: popup.getAttribute("offset"),
+          popupWidth: popup.getBoundingClientRect().width,
+          propertyWidth: property.getBoundingClientRect().width,
+        };
+      });
+    expect(palettePopupGeometry).toEqual({
+      anchorIsProperty: true,
+      offset: "0 0",
+      popupWidth: palettePopupGeometry.propertyWidth,
+      propertyWidth: 240,
+    });
+    await page.locator("#activate-palette").evaluate((element: any) => {
+      element.open = false;
+    });
 
     await page.locator("#activate-easing-property > label").click();
     await expect(
       page.locator('dialog[is="fig-popup-easing"]'),
     ).toHaveAttribute("open", /^(|true)$/);
+    const easingPopupGeometry = await page
+      .locator('dialog[is="fig-popup-easing"]')
+      .evaluate((popup: any) => {
+        const property = document.querySelector("#activate-easing-property")!;
+        return {
+          anchorIsProperty: popup.anchor === property,
+          offset: popup.getAttribute("offset"),
+          popupWidth: popup.getBoundingClientRect().width,
+          propertyWidth: property.getBoundingClientRect().width,
+        };
+      });
+    expect(easingPopupGeometry).toEqual({
+      anchorIsProperty: true,
+      offset: "0 0",
+      popupWidth: easingPopupGeometry.propertyWidth,
+      propertyWidth: 240,
+    });
   });
 
   test('activation="row" keeps the slotted input at its natural width', async ({
@@ -803,7 +1156,7 @@ test.describe("fig-property", () => {
     expect(result).toEqual({
       labelOpacity: "0",
       numberOpacity: "0",
-      cleanedUpOpacity: "1",
+      cleanedUpOpacity: "0",
     });
   });
 
@@ -1000,7 +1353,7 @@ test.describe("fig-property", () => {
         color: "#row-color > .input-combo",
         gradient: "#row-gradient :is(fig-swatch, fig-chit)",
         palette: "#row-palette > .palette-colors-inline",
-        point: "#row-point > fig-input-combo",
+        point: "#row-point > fig-button .fig-input-point-value",
       };
       return Object.fromEntries(
         Object.entries(visibleContent).map(([name, selector]) => {
@@ -1019,7 +1372,7 @@ test.describe("fig-property", () => {
               contained:
                 inputRect.left >= propertyRect.left &&
                 inputRect.right <= propertyRect.right,
-              contentVisible: contentRect.width > 100,
+              contentVisible: contentRect.width > 0,
               contentWithinInput:
                 contentRect.left >= inputRect.left - 1 &&
                 contentRect.right <= inputRect.right + 1,
@@ -1031,13 +1384,57 @@ test.describe("fig-property", () => {
     });
 
     for (const layout of Object.values(result)) {
-      expect(layout).toEqual({
+      expect(layout).toMatchObject({
         contained: true,
         contentVisible: true,
         contentWithinInput: true,
-        width: 107,
       });
+      expect(layout.width).toBeGreaterThan(0);
+      expect(layout.width).toBeLessThanOrEqual(128);
     }
+  });
+
+  test('activation="row" keeps audio file hover stable and reveals its waveform', async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <div style="width:238px">
+          <fig-property label="Audio" activation="row">
+            <fig-input-file
+              id="row-audio-file"
+              slot="input"
+              accepts="audio/*"
+              preview
+              url="/audio/skrillex-ft-elliphant.mp3"
+              filename="skrillex-ft-elliphant.mp3"
+              full>
+            </fig-input-file>
+          </fig-property>
+        </div>
+      `;
+    });
+
+    const property = page.locator('fig-property[label="Audio"]');
+    const file = page.locator("#row-audio-file");
+    const waveform = file.locator(".fig-input-file-audio-waveform");
+    const beforeWidth = await file.evaluate(
+      (element) => element.getBoundingClientRect().width,
+    );
+    await property.hover();
+    await expect(waveform).toBeVisible();
+    await expect
+      .poll(() =>
+        waveform.evaluate((element) => element.getBoundingClientRect().width),
+      )
+      .toBeGreaterThan(0);
+    await page.waitForTimeout(250);
+    await expect(waveform).toBeVisible();
+    expect(
+      await file.evaluate((element) => element.getBoundingClientRect().width),
+    ).toBe(beforeWidth);
   });
 
   test("label clicks delegate focus to composite editor controls", async ({

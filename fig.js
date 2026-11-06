@@ -97,6 +97,45 @@ function figBooleanAttribute(element, name) {
   return element.hasAttribute(name) && element.getAttribute(name) !== "false";
 }
 
+function figCloneValue(value) {
+  if (Array.isArray(value)) return value.map((entry) => figCloneValue(entry));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, figCloneValue(entry)]),
+    );
+  }
+  return value;
+}
+
+function figValuesEqual(left, right) {
+  if (Object.is(left, right)) return true;
+  if (typeof left === "number" && typeof right === "number") {
+    return (
+      Number.isFinite(left) &&
+      Number.isFinite(right) &&
+      Math.abs(left - right) <=
+        Number.EPSILON * Math.max(1, Math.abs(left), Math.abs(right)) * 16
+    );
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((entry, index) => figValuesEqual(entry, right[index]))
+    );
+  }
+  if (left && right && typeof left === "object" && typeof right === "object") {
+    const leftKeys = Object.keys(left).sort();
+    const rightKeys = Object.keys(right).sort();
+    return (
+      figValuesEqual(leftKeys, rightKeys) &&
+      leftKeys.every((key) => figValuesEqual(left[key], right[key]))
+    );
+  }
+  return false;
+}
+
 function figColorEventAliases(color, alpha, opacity) {
   const numericAlpha = Number(alpha);
   const numericOpacity = Number(opacity);
@@ -6701,7 +6740,6 @@ class FigSlider extends HTMLElement {
     this.step = readNumber("step", defaults.step);
     if (!(this.step > 0)) this.step = defaults.step > 0 ? defaults.step : 1;
     this.color = this.getAttribute("color") || defaults?.color;
-    this.default = this.#resolveDefaultValue();
     this.value = this.#normalizeSliderValue(rawValue);
   }
 
@@ -6928,8 +6966,39 @@ class FigSlider extends HTMLElement {
     if (this.input) this.#syncProperties();
   }
 
-  get defaultValue() {
+  get default() {
     return this.#resolveDefaultValue();
+  }
+
+  set default(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("default");
+    } else {
+      this.setAttribute("default", String(value));
+    }
+  }
+
+  get defaultValue() {
+    return this.default;
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    return figValuesEqual(Number(this.value), this.default);
+  }
+
+  resetToDefault() {
+    if (this.disabled || this.isDefault) return;
+    this.value = this.default;
+    this.#syncValue();
+    for (const type of ["input", "change"]) {
+      this.dispatchEvent(
+        new CustomEvent(type, { detail: this.value, bubbles: true }),
+      );
+    }
   }
 
   disconnectedCallback() {
@@ -7029,9 +7098,7 @@ class FigSlider extends HTMLElement {
       parsed <= max &&
       (this.type !== "stepper" || this.#isStepAligned(parsed));
     if (isValid) return parsed;
-    return this.type === "delta"
-      ? Math.min(max, Math.max(min, 0))
-      : min;
+    return Math.min(max, Math.max(min, 0));
   }
   #getFallbackValue() {
     if (this.type === "delta") {
@@ -7196,11 +7263,6 @@ class FigSlider extends HTMLElement {
     if (this.figInputNumber) {
       this.figInputNumber.setAttribute(name, String(next));
     }
-    if (!this.hasAttribute("default") && this.type !== "delta") {
-      this.default = this.min;
-    } else {
-      this.default = this.#resolveDefaultValue();
-    }
     this.value = this.#normalizeSliderValue(this.value);
     this.#syncProperties();
     this.#syncStepperDatalist();
@@ -7355,7 +7417,6 @@ class FigSlider extends HTMLElement {
           }
           break;
         case "default":
-          this.default = this.#resolveDefaultValue(newValue);
           this.#syncProperties();
           this.#syncDefaultDatalist();
           break;
@@ -7902,6 +7963,47 @@ class FigInputText extends HTMLElement {
     this.#syncRenderedValue(value);
   }
 
+  #resolveDefaultValue() {
+    const raw = this.getAttribute("default");
+    if (this.type !== "number") return raw ?? "";
+    const parsed = raw === null || raw.trim() === "" ? 0 : Number(raw);
+    return this.#sanitizeInput(Number.isFinite(parsed) ? parsed : 0, false);
+  }
+
+  get default() {
+    return this.#resolveDefaultValue();
+  }
+
+  set default(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("default");
+    } else {
+      this.setAttribute("default", String(value));
+    }
+  }
+
+  get defaultValue() {
+    return this.default;
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    return figValuesEqual(this.value, this.default);
+  }
+
+  resetToDefault() {
+    if (this.disabled || this.readonly || this.isDefault) return;
+    this.value = this.default;
+    for (const type of ["input", "change"]) {
+      this.dispatchEvent(
+        new CustomEvent(type, { detail: this.value, bubbles: true }),
+      );
+    }
+  }
+
   #syncRenderedValue(value) {
     if (!this.input || this.#isInteracting) return;
     const rendered =
@@ -7913,6 +8015,7 @@ class FigInputText extends HTMLElement {
   static get observedAttributes() {
     return [
       "value",
+      "default",
       "placeholder",
       "label",
       "disabled",
@@ -8367,6 +8470,49 @@ class FigInputNumber extends HTMLElement {
     }
   }
 
+  #resolveDefaultValue() {
+    const raw = this.getAttribute("default");
+    const parsed = raw === null || raw.trim() === "" ? 0 : Number(raw);
+    return this.#sanitizeInput(Number.isFinite(parsed) ? parsed : 0, false);
+  }
+
+  get default() {
+    return this.#resolveDefaultValue();
+  }
+
+  set default(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("default");
+    } else {
+      this.setAttribute("default", String(value));
+    }
+  }
+
+  get defaultValue() {
+    return this.default;
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    return figValuesEqual(this.value, this.default);
+  }
+
+  resetToDefault() {
+    if (this.disabled || this.isDefault) return;
+    this.value = this.default;
+    if (this.input) this.input.value = this.#formatWithUnit(this.value);
+    this.#syncStepperState();
+    this.#syncSpinbuttonAria();
+    for (const type of ["input", "change"]) {
+      this.dispatchEvent(
+        new CustomEvent(type, { detail: this.value, bubbles: true }),
+      );
+    }
+  }
+
   focus() {
     this.input.focus();
   }
@@ -8707,6 +8853,7 @@ class FigInputNumber extends HTMLElement {
   static get observedAttributes() {
     return [
       "value",
+      "default",
       "placeholder",
       "disabled",
       "step",
@@ -9432,6 +9579,23 @@ class FigInputColor extends HTMLElement {
     this.#cancelNativeColorEvent(event);
   }
 
+  #normalizeColorValue(value) {
+    const fallback = { r: 217, g: 217, b: 217, a: 1 };
+    const rgba =
+      typeof value === "string" && value.trim()
+        ? this.convertToRGBA(value.trim())
+        : fallback;
+    const normalized =
+      rgba &&
+      Number.isFinite(rgba.r) &&
+      Number.isFinite(rgba.g) &&
+      Number.isFinite(rgba.b) &&
+      Number.isFinite(rgba.a)
+        ? rgba
+        : fallback;
+    return this.rgbAlphaToHex(normalized, normalized.a);
+  }
+
   #setValues(hexValue) {
     let colorValue =
       typeof hexValue === "string" && hexValue.trim()
@@ -9650,6 +9814,7 @@ class FigInputColor extends HTMLElement {
   static get observedAttributes() {
     return [
       "value",
+      "default",
       "style",
       "mode",
       "alpha",
@@ -9668,6 +9833,37 @@ class FigInputColor extends HTMLElement {
   }
   set mode(value) {
     this.setAttribute("mode", value);
+  }
+
+  get default() {
+    return this.#normalizeColorValue(this.getAttribute("default"));
+  }
+
+  set default(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("default");
+    } else {
+      this.setAttribute("default", String(value));
+    }
+  }
+
+  get defaultValue() {
+    return this.default;
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    return this.#normalizeColorValue(this.value) === this.default;
+  }
+
+  resetToDefault() {
+    if (this.#disabled || this.isDefault) return;
+    this.setAttribute("value", this.default);
+    this.#emitInputEvent();
+    this.#emitChangeEvent();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -10971,6 +11167,8 @@ class FigInputPalette extends HTMLElement {
   #renderRAF = null;
   #pickerDefinitionPromise = null;
   #pickerPopup = null;
+  #pickerPopupAnchor = null;
+  #pickerPopupAnchorResizeObserver = null;
   #syncingValueAttribute = false;
   #boundHandleKeyDown = this.#handleKeyDown.bind(this);
   #boundHandleHostFocus = () => this.focus();
@@ -10987,7 +11185,16 @@ class FigInputPalette extends HTMLElement {
   };
 
   static get observedAttributes() {
-    return ["value", "disabled", "min", "max", "open", "fixed", "edit"];
+    return [
+      "value",
+      "default",
+      "disabled",
+      "min",
+      "max",
+      "open",
+      "fixed",
+      "edit",
+    ];
   }
 
   get open() {
@@ -11104,40 +11311,44 @@ class FigInputPalette extends HTMLElement {
   }
 
   #parseValue() {
-    const raw = this.getAttribute("value");
-    if (!raw) {
-      this.#colors = [];
-      return;
-    }
+    this.#colors = this.#parseColors(this.getAttribute("value"));
+  }
 
+  #normalizePaletteEntry(entry) {
+    const source =
+      typeof entry === "string"
+        ? { color: entry.slice(0, 7), alpha: entry.length > 7
+            ? parseInt(entry.slice(7, 9), 16) / 255
+            : 1 }
+        : entry && typeof entry === "object"
+          ? {
+              color: entry.color || "#D9D9D9",
+              alpha:
+                entry.alpha !== undefined
+                  ? Number(entry.alpha)
+                  : entry.opacity !== undefined
+                    ? Number(entry.opacity) / 100
+                    : 1,
+            }
+          : { color: "#D9D9D9", alpha: 1 };
+    const alpha = Number.isFinite(source.alpha)
+      ? Math.max(0, Math.min(1, source.alpha))
+      : 1;
+    return {
+      color: String(source.color || "#D9D9D9").slice(0, 7).toUpperCase(),
+      alpha,
+    };
+  }
+
+  #parseColors(raw) {
+    if (!raw) return [];
     const trimmed = raw.trim();
 
     // Try JSON first
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed)) {
-        this.#colors = parsed.map((entry) => {
-          if (typeof entry === "string") {
-            return {
-              color: entry.slice(0, 7),
-              alpha:
-                entry.length > 7 ? parseInt(entry.slice(7, 9), 16) / 255 : 1,
-            };
-          }
-          if (entry && typeof entry === "object") {
-            return {
-              color: entry.color || "#D9D9D9",
-              alpha:
-                entry.alpha !== undefined
-                  ? entry.alpha
-                  : entry.opacity !== undefined
-                    ? entry.opacity / 100
-                    : 1,
-            };
-          }
-          return { color: "#D9D9D9", alpha: 1 };
-        });
-        return;
+        return parsed.map((entry) => this.#normalizePaletteEntry(entry));
       }
     } catch (e) {
       // Not JSON — try comma-separated hex
@@ -11145,33 +11356,21 @@ class FigInputPalette extends HTMLElement {
 
     // Comma-separated hex
     if (trimmed.includes(",")) {
-      this.#colors = trimmed.split(",").map((s) => {
-        const hex = s.trim();
-        return {
-          color: hex.slice(0, 7),
-          alpha: hex.length > 7 ? parseInt(hex.slice(7, 9), 16) / 255 : 1,
-        };
+      return trimmed.split(",").map((s) => {
+        return this.#normalizePaletteEntry(s.trim());
       });
-      return;
     }
 
     // Single hex
     if (trimmed.startsWith("#")) {
-      this.#colors = [
-        {
-          color: trimmed.slice(0, 7),
-          alpha:
-            trimmed.length > 7 ? parseInt(trimmed.slice(7, 9), 16) / 255 : 1,
-        },
-      ];
-      return;
+      return [this.#normalizePaletteEntry(trimmed)];
     }
 
-    this.#colors = [];
+    return [];
   }
 
   get value() {
-    return this.#colors.map((c) => ({ ...c }));
+    return this.#colors.map((c) => this.#normalizePaletteEntry(c));
   }
 
   set value(val) {
@@ -11180,6 +11379,46 @@ class FigInputPalette extends HTMLElement {
     } else {
       this.setAttribute("value", JSON.stringify(val));
     }
+  }
+
+  get default() {
+    return this.#parseColors(this.getAttribute("default")).map((c) => ({
+      ...c,
+    }));
+  }
+
+  set default(val) {
+    if (val === null || val === undefined || val === "") {
+      this.removeAttribute("default");
+    } else if (typeof val === "string") {
+      this.setAttribute("default", val);
+    } else {
+      this.setAttribute("default", JSON.stringify(val));
+    }
+  }
+
+  get defaultValue() {
+    return this.default;
+  }
+
+  set defaultValue(val) {
+    this.default = val;
+  }
+
+  get isDefault() {
+    return figValuesEqual(this.value, this.default);
+  }
+
+  resetToDefault() {
+    if (
+      (this.hasAttribute("disabled") &&
+        this.getAttribute("disabled") !== "false") ||
+      this.isDefault
+    )
+      return;
+    this.value = this.default;
+    this.#emitInput();
+    this.#emitChange();
   }
 
   #render() {
@@ -11265,7 +11504,6 @@ class FigInputPalette extends HTMLElement {
     });
     popup.setAttribute("is", "fig-popup-palette");
     popup.id = figUniqueId();
-    popup.anchor = this;
 
     const handlePopupEvent = (event) => {
       event.stopPropagation();
@@ -11294,12 +11532,47 @@ class FigInputPalette extends HTMLElement {
 
     (figGetOverlayRoot() ?? document.body).append(popup);
     this.#pickerPopup = popup;
+    this.#syncPickerPopupAnchor();
     this.querySelector(".palette-colors-inline")?.setAttribute(
       "aria-controls",
       popup.id,
     );
     this.#syncPickerEditor();
     return popup;
+  }
+
+  #resolvePickerPopupAnchor() {
+    const parent = this.parentElement;
+    return parent?.matches('fig-property[activation="row"]') ? parent : this;
+  }
+
+  #syncPickerPopupAnchor() {
+    if (!this.#pickerPopup) return;
+    const anchor = this.#resolvePickerPopupAnchor();
+    this.#pickerPopupAnchor = anchor;
+    this.#pickerPopup.anchor = anchor;
+    this.#pickerPopup.setAttribute(
+      "offset",
+      anchor === this ? "0 8" : "0 0",
+    );
+    this.#pickerPopupAnchorResizeObserver ??= new ResizeObserver(() =>
+      this.#syncPickerPopupWidth(),
+    );
+    this.#pickerPopupAnchorResizeObserver.disconnect();
+    this.#pickerPopupAnchorResizeObserver.observe(anchor);
+    this.#syncPickerPopupWidth();
+  }
+
+  #syncPickerPopupWidth() {
+    if (!this.#pickerPopup) return;
+    if (this.#pickerPopupAnchor === this) {
+      this.#pickerPopup.style.removeProperty("width");
+      return;
+    }
+    const width = this.#pickerPopupAnchor?.getBoundingClientRect().width;
+    if (Number.isFinite(width) && width > 0) {
+      this.#pickerPopup.style.width = `${width}px`;
+    }
   }
 
   #syncPickerEditor() {
@@ -11323,6 +11596,7 @@ class FigInputPalette extends HTMLElement {
     }
     if (!this.open) {
       if (this.#pickerPopup) this.#pickerPopup.open = false;
+      this.#pickerPopupAnchorResizeObserver?.disconnect();
       return;
     }
     const disabled =
@@ -11335,6 +11609,7 @@ class FigInputPalette extends HTMLElement {
     const popup = this.#ensurePickerPopup();
     if (!popup) return;
     this.#syncPickerEditor();
+    this.#syncPickerPopupAnchor();
     popup.open = true;
   }
 
@@ -11347,6 +11622,8 @@ class FigInputPalette extends HTMLElement {
     this.querySelector(".palette-colors-inline")?.removeAttribute(
       "aria-controls",
     );
+    this.#pickerPopupAnchorResizeObserver?.disconnect();
+    this.#pickerPopupAnchor = null;
     this.#pickerPopup = null;
   }
 
@@ -11639,6 +11916,8 @@ class FigInputGradient extends HTMLElement {
   #repositionRAF = null;
   #pickerDefinitionPromise = null;
   #pickerPopup = null;
+  #pickerPopupAnchor = null;
+  #pickerPopupAnchorResizeObserver = null;
   #syncingValueAttribute = false;
   anchorElement = null;
   #boundPickerClosed = () => {
@@ -11651,6 +11930,7 @@ class FigInputGradient extends HTMLElement {
       return;
     }
     this.classList.remove("has-popup-open");
+    this.#pickerPopupAnchorResizeObserver?.disconnect();
   };
   #gradient = {
     type: "linear",
@@ -11668,7 +11948,7 @@ class FigInputGradient extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "disabled", "edit", "mode", "size"];
+    return ["value", "default", "disabled", "edit", "mode", "size"];
   }
 
   get #editMode() {
@@ -11729,10 +12009,25 @@ class FigInputGradient extends HTMLElement {
 
   #normalizeGradient(gradient) {
     const normalized = normalizeGradientConfig(gradient);
+    const stops = Array.isArray(normalized.stops)
+      ? normalized.stops
+          .map((stop) => ({
+            position: Number.isFinite(Number(stop?.position))
+              ? Math.max(0, Math.min(100, Number(stop.position)))
+              : 0,
+            color: String(stop?.color || "#D9D9D9").toUpperCase(),
+            opacity: Number.isFinite(Number(stop?.opacity))
+              ? Math.max(0, Math.min(100, Number(stop.opacity)))
+              : 100,
+          }))
+          .sort((left, right) => left.position - right.position)
+      : [];
     return {
       ...normalized,
-      type: ["linear", "radial", "angular"].includes(normalized.type)
-        ? normalized.type
+      type: ["linear", "radial", "angular"].includes(
+        String(normalized.type).toLowerCase(),
+      )
+        ? String(normalized.type).toLowerCase()
         : "linear",
       angle: Number.isFinite(Number(normalized.angle))
         ? Number(normalized.angle)
@@ -11743,6 +12038,7 @@ class FigInputGradient extends HTMLElement {
       centerY: Number.isFinite(Number(normalized.centerY))
         ? Number(normalized.centerY)
         : 50,
+      stops,
     };
   }
 
@@ -11901,24 +12197,43 @@ class FigInputGradient extends HTMLElement {
   #parseValue() {
     const valueAttr = this.getAttribute("value");
     if (!valueAttr) return;
+    const parsedGradient = this.#gradientFromRaw(valueAttr);
+    if (parsedGradient) this.#gradient = parsedGradient;
+  }
+
+  #gradientFromRaw(raw) {
+    const fallback = {
+      type: "linear",
+      angle: 90,
+      interpolationSpace: "srgb",
+      hueInterpolation: "shorter",
+      stops: [
+        { position: 0, color: "#D9D9D9", opacity: 100 },
+        { position: 100, color: "#737373", opacity: 100 },
+      ],
+    };
+    if (!raw) return this.#normalizeGradient(fallback);
     try {
-      const parsed = JSON.parse(valueAttr);
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
       if (parsed?.type === "gradient" && parsed.gradient) {
-        this.#gradient = this.#normalizeGradient({
-          ...this.#gradient,
+        return this.#normalizeGradient({
+          ...fallback,
           ...parsed.gradient,
         });
-        return;
       }
       if (parsed?.gradient) {
-        this.#gradient = this.#normalizeGradient({
-          ...this.#gradient,
+        return this.#normalizeGradient({
+          ...fallback,
           ...parsed.gradient,
         });
       }
+      if (parsed && typeof parsed === "object") {
+        return this.#normalizeGradient({ ...fallback, ...parsed });
+      }
     } catch (e) {
-      // Ignore invalid JSON and keep current/default gradient.
+      // Use the built-in fallback for invalid defaults.
     }
+    return this.#normalizeGradient(fallback);
   }
 
   #buildGradientCSS() {
@@ -12045,7 +12360,6 @@ class FigInputGradient extends HTMLElement {
     });
     popup.setAttribute("is", "fig-popup-gradient");
     popup.id = figUniqueId();
-    popup.anchor = this.anchorElement || this;
 
     const handlePopupEvent = (event) => {
       event.stopPropagation();
@@ -12090,7 +12404,51 @@ class FigInputGradient extends HTMLElement {
       "disabled",
       figBooleanAttribute(this, "disabled"),
     );
-    this.#pickerPopup.anchor = this.anchorElement || this;
+    this.#syncPickerPopupAnchor();
+  }
+
+  #resolvePickerPopupAnchor() {
+    if (this.anchorElement instanceof Element) return this.anchorElement;
+    const parent = this.parentElement;
+    return parent?.matches('fig-property[activation="row"]') ? parent : this;
+  }
+
+  #syncPickerPopupAnchor() {
+    if (!this.#pickerPopup) return;
+    const anchor = this.#resolvePickerPopupAnchor();
+    const rowAnchor =
+      this.anchorElement == null &&
+      anchor !== this &&
+      anchor.matches?.('fig-property[activation="row"]');
+    this.#pickerPopupAnchor = anchor;
+    this.#pickerPopup.anchor = anchor;
+    this.#pickerPopup.setAttribute("offset", rowAnchor ? "0 0" : "0 8");
+    this.#pickerPopupAnchorResizeObserver ??= new ResizeObserver(() =>
+      this.#syncPickerPopupWidth(),
+    );
+    this.#pickerPopupAnchorResizeObserver.disconnect();
+    if (rowAnchor) {
+      this.#pickerPopupAnchorResizeObserver.observe(anchor);
+    }
+    this.#syncPickerPopupWidth();
+  }
+
+  #syncPickerPopupWidth() {
+    if (!this.#pickerPopup) return;
+    const rowAnchor =
+      this.anchorElement == null &&
+      this.#pickerPopupAnchor !== this &&
+      this.#pickerPopupAnchor?.matches?.(
+        'fig-property[activation="row"]',
+      );
+    if (!rowAnchor) {
+      this.#pickerPopup.style.removeProperty("width");
+      return;
+    }
+    const width = this.#pickerPopupAnchor?.getBoundingClientRect().width;
+    if (Number.isFinite(width) && width > 0) {
+      this.#pickerPopup.style.width = `${width}px`;
+    }
   }
 
   #openPickerPopup() {
@@ -12110,6 +12468,8 @@ class FigInputGradient extends HTMLElement {
     this.#pickerPopup.removeEventListener("toggle", this.#boundPickerClosed);
     this.#pickerPopup.open = false;
     this.#pickerPopup.remove();
+    this.#pickerPopupAnchorResizeObserver?.disconnect();
+    this.#pickerPopupAnchor = null;
     this.#pickerPopup = null;
     this.removeAttribute("aria-controls");
     this.classList.remove("has-popup-open");
@@ -12621,6 +12981,45 @@ class FigInputGradient extends HTMLElement {
     this.setAttribute("value", serialized);
   }
 
+  get default() {
+    return {
+      type: "gradient",
+      gradient: gradientToValueShape(
+        this.#gradientFromRaw(this.getAttribute("default")),
+      ),
+    };
+  }
+
+  set default(val) {
+    if (val === null || val === undefined || val === "") {
+      this.removeAttribute("default");
+    } else {
+      this.setAttribute(
+        "default",
+        typeof val === "string" ? val : JSON.stringify(val),
+      );
+    }
+  }
+
+  get defaultValue() {
+    return figCloneValue(this.default);
+  }
+
+  set defaultValue(val) {
+    this.default = val;
+  }
+
+  get isDefault() {
+    return figValuesEqual(this.value, this.default);
+  }
+
+  resetToDefault() {
+    if (figBooleanAttribute(this, "disabled") || this.isDefault) return;
+    this.value = this.default;
+    this.#emitInput();
+    this.#emitChange();
+  }
+
   focus(options) {
     if (
       this.hasAttribute("disabled") &&
@@ -12772,7 +13171,15 @@ class FigCheckbox extends HTMLElement {
     this.render();
   }
   static get observedAttributes() {
-    return ["disabled", "label", "checked", "name", "value", "indeterminate"];
+    return [
+      "disabled",
+      "label",
+      "checked",
+      "default-checked",
+      "name",
+      "value",
+      "indeterminate",
+    ];
   }
 
   #createLabel() {
@@ -12854,6 +13261,44 @@ class FigCheckbox extends HTMLElement {
     }
   }
 
+  get default() {
+    return this.#isAttrOn("default-checked");
+  }
+
+  set default(value) {
+    this.toggleAttribute("default-checked", Boolean(value));
+  }
+
+  get defaultValue() {
+    return this.default;
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    return !this.input.indeterminate && this.checked === this.default;
+  }
+
+  resetToDefault() {
+    if (this.#isAttrOn("disabled") || this.isDefault) return;
+    this.removeAttribute("indeterminate");
+    this.input.indeterminate = false;
+    this.checked = this.default;
+    this.#syncInputState();
+    const detail = { checked: this.checked, value: this.value };
+    for (const type of ["input", "change"]) {
+      this.dispatchEvent(
+        new CustomEvent(type, {
+          bubbles: true,
+          composed: true,
+          detail,
+        }),
+      );
+    }
+  }
+
   disconnectedCallback() {
     this.input.removeEventListener("input", this.#boundHandleInput);
     this.input.removeEventListener("change", this.#boundHandleChange);
@@ -12880,6 +13325,8 @@ class FigCheckbox extends HTMLElement {
         break;
       case "indeterminate":
         this.#syncInputState();
+        break;
+      case "default-checked":
         break;
       case "disabled":
         this.#syncInputState();
@@ -15852,7 +16299,19 @@ const FIG_INPUT_FILE_VIDEO_EXTENSIONS = [
  * @attr {boolean} remove - Show the remove button for a selected file. Defaults to true.
  */
 class FigInputFile extends HTMLElement {
-  static observedAttributes = ["accepts", "preview", "label", "disabled", "multiple", "variant", "url", "filename", "remove"];
+  static observedAttributes = [
+    "accepts",
+    "preview",
+    "label",
+    "disabled",
+    "multiple",
+    "variant",
+    "url",
+    "filename",
+    "default-url",
+    "default-filename",
+    "remove",
+  ];
 
   #fileInput = null;
   #filenameEl = null;
@@ -15892,6 +16351,59 @@ class FigInputFile extends HTMLElement {
       return `${this.#files.length} files`;
     }
     return this.#urlFilename;
+  }
+
+  get default() {
+    return {
+      url: this.getAttribute("default-url") || "",
+      filename: this.getAttribute("default-filename") || "",
+    };
+  }
+
+  set default(value) {
+    const next =
+      value && typeof value === "object"
+        ? value
+        : { url: value == null ? "" : String(value), filename: "" };
+    this.#suppressAttributeRender = true;
+    if (next.url) this.setAttribute("default-url", String(next.url));
+    else this.removeAttribute("default-url");
+    if (next.filename)
+      this.setAttribute("default-filename", String(next.filename));
+    else this.removeAttribute("default-filename");
+    this.#suppressAttributeRender = false;
+  }
+
+  get defaultValue() {
+    return { ...this.default };
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    if (this.#files?.length) return false;
+    const current = {
+      url: this.getAttribute("url") || "",
+      filename: this.getAttribute("filename") || "",
+    };
+    return figValuesEqual(current, this.default);
+  }
+
+  resetToDefault() {
+    if (figBooleanAttribute(this, "disabled") || this.isDefault) return;
+    const next = this.default;
+    this.#files = null;
+    if (this.#fileInput) this.#fileInput.value = "";
+    this.#suppressAttributeRender = true;
+    if (next.url) this.setAttribute("url", next.url);
+    else this.removeAttribute("url");
+    if (next.filename) this.setAttribute("filename", next.filename);
+    else this.removeAttribute("filename");
+    this.#suppressAttributeRender = false;
+    this.#render();
+    this.#emitEvents();
   }
 
   get #effectiveAccepts() {
@@ -16698,6 +17210,19 @@ class FigEasingCurve extends HTMLElement {
   #durationBarRadius = 3;
   #pickerDefinitionPromise = null;
   #pickerPopup = null;
+  #pickerPopupAnchor = null;
+  #pickerPopupAnchorResizeObserver = null;
+  #boundPickerClosed = () => {
+    if (!this.#pickerPopup) return;
+    if (
+      this.#pickerPopup.hasAttribute("open") ||
+      this.#pickerPopup.matches?.(":open") ||
+      this.#pickerPopup.matches?.(":popover-open")
+    ) {
+      return;
+    }
+    this.#pickerPopupAnchorResizeObserver?.disconnect();
+  };
 
   static PRESETS = [
     { group: null, name: "Linear", type: "bezier", value: [0, 0, 1, 1] },
@@ -16768,6 +17293,7 @@ class FigEasingCurve extends HTMLElement {
   static get observedAttributes() {
     return [
       "value",
+      "default",
       "mode",
       "precision",
       "aspect-ratio",
@@ -16901,6 +17427,90 @@ class FigEasingCurve extends HTMLElement {
       return;
     }
     this.setAttribute("value", v);
+  }
+
+  #normalizedDefault() {
+    const fallback =
+      this.#constrainedMode() === "spring"
+        ? {
+            type: "spring",
+            spring: {
+              stiffness: 200,
+              damping: 15,
+              mass: 1,
+              initialVelocity: 0,
+            },
+          }
+        : { type: "bezier", bezier: [0.42, 0, 0.58, 1] };
+    const raw = this.getAttribute("default");
+    if (!raw?.trim()) return fallback;
+    const text = raw.trim();
+    if (text.startsWith("{")) {
+      try {
+        return this.#normalizeStructuredValue(JSON.parse(text)) || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+    const spring = this.#parseSpringString(text);
+    if (spring && this.#constrainedMode() !== "bezier") {
+      return { type: "spring", spring };
+    }
+    const bezier = text.split(",").map((part) => Number(part.trim()));
+    if (
+      bezier.length === 4 &&
+      bezier.every(Number.isFinite) &&
+      bezier[0] >= 0 &&
+      bezier[0] <= 1 &&
+      bezier[2] >= 0 &&
+      bezier[2] <= 1 &&
+      this.#constrainedMode() !== "spring"
+    ) {
+      return { type: "bezier", bezier };
+    }
+    return fallback;
+  }
+
+  get default() {
+    const normalized = this.#normalizedDefault();
+    if (normalized.type === "spring") {
+      const { stiffness, damping, mass, initialVelocity = 0 } =
+        normalized.spring;
+      const velocity = initialVelocity ? `, ${initialVelocity}` : "";
+      return `spring(${stiffness}, ${damping}, ${mass}${velocity})`;
+    }
+    return normalized.bezier
+      .map((part) => Number(part).toFixed(this.#precision))
+      .join(", ");
+  }
+
+  set default(value) {
+    if (value === null || value === undefined || value === "") {
+      this.removeAttribute("default");
+    } else if (typeof value === "object") {
+      this.setAttribute("default", JSON.stringify(value));
+    } else {
+      this.setAttribute("default", String(value));
+    }
+  }
+
+  get defaultValue() {
+    return this.default;
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    return this.value === this.default;
+  }
+
+  resetToDefault() {
+    if (figBooleanAttribute(this, "disabled") || this.isDefault) return;
+    this.value = this.default;
+    this.#emit("input");
+    this.#emit("change");
   }
 
   get spring() {
@@ -18308,7 +18918,6 @@ class FigEasingCurve extends HTMLElement {
       popup = document.createElement("dialog", { is: "fig-popup-easing" });
       popup.setAttribute("is", "fig-popup-easing");
       popup.id = figUniqueId();
-      popup.anchor = this.#select;
       const handlePopupEvent = (event) => {
         event.stopPropagation();
         this.value = popup.value;
@@ -18316,6 +18925,8 @@ class FigEasingCurve extends HTMLElement {
       };
       popup.addEventListener("input", handlePopupEvent);
       popup.addEventListener("change", handlePopupEvent);
+      popup.addEventListener("close", this.#boundPickerClosed);
+      popup.addEventListener("toggle", this.#boundPickerClosed);
       (figGetOverlayRoot() ?? document.body).append(popup);
       this.#pickerPopup = popup;
       this.#select?.setAttribute("aria-controls", popup.id);
@@ -18328,7 +18939,7 @@ class FigEasingCurve extends HTMLElement {
   #syncPickerPopup() {
     const popup = this.#pickerPopup;
     if (!popup) return;
-    popup.anchor = this.#select;
+    this.#syncPickerPopupAnchor();
     popup.setAttribute("value", this.value);
     for (const name of ["mode", "precision"]) {
       const value = this.getAttribute(name);
@@ -18337,11 +18948,58 @@ class FigEasingCurve extends HTMLElement {
     }
   }
 
+  #resolvePickerPopupAnchor() {
+    const parent = this.parentElement;
+    return parent?.matches('fig-property[activation="row"]')
+      ? parent
+      : this.#select;
+  }
+
+  #syncPickerPopupAnchor() {
+    if (!this.#pickerPopup) return;
+    const anchor = this.#resolvePickerPopupAnchor();
+    const rowAnchor =
+      anchor !== this.#select &&
+      anchor?.matches?.('fig-property[activation="row"]');
+    this.#pickerPopupAnchor = anchor;
+    this.#pickerPopup.anchor = anchor;
+    this.#pickerPopup.setAttribute("offset", rowAnchor ? "0 0" : "0 8");
+    this.#pickerPopupAnchorResizeObserver ??= new ResizeObserver(() =>
+      this.#syncPickerPopupWidth(),
+    );
+    this.#pickerPopupAnchorResizeObserver.disconnect();
+    if (rowAnchor) {
+      this.#pickerPopupAnchorResizeObserver.observe(anchor);
+    }
+    this.#syncPickerPopupWidth();
+  }
+
+  #syncPickerPopupWidth() {
+    if (!this.#pickerPopup) return;
+    const rowAnchor =
+      this.#pickerPopupAnchor !== this.#select &&
+      this.#pickerPopupAnchor?.matches?.(
+        'fig-property[activation="row"]',
+      );
+    if (!rowAnchor) {
+      this.#pickerPopup.style.removeProperty("width");
+      return;
+    }
+    const width = this.#pickerPopupAnchor?.getBoundingClientRect().width;
+    if (Number.isFinite(width) && width > 0) {
+      this.#pickerPopup.style.width = `${width}px`;
+    }
+  }
+
   #destroyPickerPopup() {
     if (!this.#pickerPopup) return;
+    this.#pickerPopup.removeEventListener("close", this.#boundPickerClosed);
+    this.#pickerPopup.removeEventListener("toggle", this.#boundPickerClosed);
     this.#pickerPopup.open = false;
     this.#pickerPopup.remove();
     this.#select?.removeAttribute("aria-controls");
+    this.#pickerPopupAnchorResizeObserver?.disconnect();
+    this.#pickerPopupAnchor = null;
     this.#pickerPopup = null;
   }
 
@@ -18721,8 +19379,16 @@ class FigAngle extends HTMLElement {
     this.#setValue(next);
   }
 
-  get defaultValue() {
+  get default() {
     return this.#resolveDefaultValue();
+  }
+
+  set default(value) {
+    this.defaultValue = value;
+  }
+
+  get defaultValue() {
+    return this.default;
   }
 
   set defaultValue(value) {
@@ -18732,6 +19398,14 @@ class FigAngle extends HTMLElement {
     }
     const next = Number(value);
     if (Number.isFinite(next)) this.setAttribute("default", String(next));
+  }
+
+  get isDefault() {
+    return figValuesEqual(this.value, this.default);
+  }
+
+  resetToDefault() {
+    this.#resetToDefault();
   }
 
   get adjacent() {
@@ -19170,7 +19844,7 @@ class FigAngle extends HTMLElement {
   }
 
   #resetToDefault() {
-    if (this.#isDisabled()) return;
+    if (this.#isDisabled() || this.isDefault) return;
     this.#setValue(this.#resolveDefaultValue());
     this.#emit("input");
     this.#emit("change");
@@ -19350,6 +20024,9 @@ class Fig3DRotate extends HTMLElement {
   static get observedAttributes() {
     return [
       "value",
+      "default-x",
+      "default-y",
+      "default-z",
       "precision",
       "aspect-ratio",
       "fields",
@@ -19482,6 +20159,10 @@ class Fig3DRotate extends HTMLElement {
       if (this.#cube) this.#render();
       return;
     }
+    if (name === "default-x" || name === "default-y" || name === "default-z") {
+      this.#syncFieldDefaults();
+      return;
+    }
     if (!this.#cube) return;
     if (name === "value" && newValue) {
       if (this.#isDragging) return;
@@ -19501,6 +20182,64 @@ class Fig3DRotate extends HTMLElement {
 
   set value(v) {
     this.setAttribute("value", v);
+  }
+
+  get default() {
+    return {
+      x: this.#defaultAxisValue("x"),
+      y: this.#defaultAxisValue("y"),
+      z: this.#defaultAxisValue("z"),
+    };
+  }
+
+  set default(value) {
+    const next = value && typeof value === "object" ? value : {};
+    for (const axis of ["x", "y", "z"]) {
+      const axisValue = next[axis];
+      if (axisValue === null || axisValue === undefined || axisValue === "") {
+        this.removeAttribute(`default-${axis}`);
+      } else {
+        this.setAttribute(`default-${axis}`, String(axisValue));
+      }
+    }
+  }
+
+  get defaultValue() {
+    return { ...this.default };
+  }
+
+  set defaultValue(value) {
+    this.default = value;
+  }
+
+  get isDefault() {
+    const axisInputs = [
+      this.#fieldInputs.rotateX,
+      this.#fieldInputs.rotateY,
+      this.#fieldInputs.rotateZ,
+    ];
+    if (axisInputs.every(Boolean)) {
+      return axisInputs.every((input) => input.isDefault);
+    }
+    const defaults = this.default;
+    return (
+      figValuesEqual(this.#rx, defaults.x) &&
+      figValuesEqual(this.#ry, defaults.y) &&
+      figValuesEqual(this.#rz, defaults.z)
+    );
+  }
+
+  resetToDefault() {
+    if (figBooleanAttribute(this, "disabled") || this.isDefault) return;
+    const defaults = this.default;
+    this.#rx = defaults.x;
+    this.#ry = defaults.y;
+    this.#rz = defaults.z;
+    this.setAttribute("value", this.value);
+    this.#updateCube();
+    this.#syncFieldInputs();
+    this.#emit("input");
+    this.#emit("change");
   }
 
   get rotateX() {
@@ -19558,6 +20297,7 @@ class Fig3DRotate extends HTMLElement {
           step: "1",
           precision: "1",
           value: axisValues[axis],
+          default: this.#defaultAxisValue(axis.at(-1).toLowerCase()),
           units: "°",
         },
         figCreateElement("span", { slot: "prepend" }, axisLabels[axis]),
@@ -19596,6 +20336,7 @@ class Fig3DRotate extends HTMLElement {
       input.addEventListener("input", handler);
       input.addEventListener("change", handler);
     }
+    this.#syncFieldDefaults();
   }
 
   #syncFieldInputs() {
@@ -19608,6 +20349,22 @@ class Fig3DRotate extends HTMLElement {
       const input = this.#fieldInputs[axis];
       if (input)
         input.setAttribute("value", axisValues[axis].toFixed(this.#precision));
+    }
+  }
+
+  #defaultAxisValue(axis) {
+    const value = Number(this.getAttribute(`default-${axis}`));
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  #syncFieldDefaults() {
+    for (const [field, axis] of [
+      ["rotateX", "x"],
+      ["rotateY", "y"],
+      ["rotateZ", "z"],
+    ]) {
+      const input = this.#fieldInputs[field];
+      if (input) input.default = this.#defaultAxisValue(axis);
     }
   }
 
@@ -20393,7 +21150,13 @@ class FigInputJoystick extends HTMLElement {
         ? figCreateElement(
             "label",
             {
-              className: ["fig-joystick-axis-label", position].join(" "),
+              className: [
+                "fig-joystick-axis-label",
+                position,
+                Array.from(text).length === 1 ? "single-character" : "",
+              ]
+                .filter(Boolean)
+                .join(" "),
               "aria-hidden": "true",
             },
             text,

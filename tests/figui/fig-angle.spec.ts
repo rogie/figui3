@@ -1001,4 +1001,44 @@ test.describe("fig-angle", () => {
       state.rotations.scrollWidth,
     );
   });
+
+  test("exposes default aliases and a public no-op-aware reset contract", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `<fig-angle id="angle" value="90" default="15"></fig-angle>`;
+      const angle = root.querySelector("#angle") as HTMLElement & {
+        value: number;
+        default: number;
+        defaultValue: number;
+        isDefault: boolean;
+        resetToDefault(): void;
+      };
+      const events: string[] = [];
+      angle.addEventListener("input", () => events.push("input"));
+      angle.addEventListener("change", () => events.push("change"));
+      const before = {
+        default: angle.default,
+        defaultValue: angle.defaultValue,
+        isDefault: angle.isDefault,
+      };
+      angle.resetToDefault();
+      angle.resetToDefault();
+      return {
+        before,
+        value: angle.value,
+        isDefault: angle.isDefault,
+        events,
+      };
+    });
+
+    expect(state).toEqual({
+      before: { default: 15, defaultValue: 15, isDefault: false },
+      value: 15,
+      isDefault: true,
+      events: ["input", "change"],
+    });
+  });
 });
