@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.8.3]
+
+### Changed
+
+- Added subtle inset borders to hue and opacity slider tracks.
+
 ## [11.8.2]
 
 ### Added

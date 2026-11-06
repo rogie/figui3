@@ -705,6 +705,16 @@ fig-input-slider-hue.fig-input-slider {
   --fig-input-slider-hue-handle-shadow-offset: 0.125rem;
   --fig-input-slider-hue-handle-shadow-color: light-dark(#ffffff, #ffffff);
 
+  & .fig-input-slider-track::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucentstrong);
+    pointer-events: none;
+  }
+
   & .fig-input-slider-track::after {
     content: "";
     position: absolute;
@@ -796,6 +806,7 @@ fig-input-slider-opacity.fig-input-slider {
         repeating-conic-gradient(#0001 0 25%, #fff1 0 50%) 0 / 0.5rem
           0.5rem
       );
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
   }
 }
 
