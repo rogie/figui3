@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.8.5]
+
+### Added
+
+- Added configurable label-to-input ratios to `fig-property`, including reflected React assignment and CSS overrides.
+- Added suggestion-backed string controls and property-ratio examples to the playground.
+
+### Fixed
+
+- Kept hue and opacity track outlines behind slider handles and default slider ticks white.
+
 ## [11.8.4]
 
 ### Fixed

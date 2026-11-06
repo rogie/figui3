@@ -6,8 +6,14 @@ fig-property {
   --fig-property-right-padding: var(--spacer-3);
   --fig-property-top-padding: var(--spacer-1);
   --fig-property-bottom-padding: var(--spacer-1);
-  --fig-property-label-ratio: 1fr;
-  --fig-property-input-ratio: 2fr;
+  --fig-property-label-ratio: var(
+    --fig-property-attribute-label-ratio,
+    1fr
+  );
+  --fig-property-input-ratio: var(
+    --fig-property-attribute-input-ratio,
+    2fr
+  );
   --fig-property-trailing-gap: 0;
   --fig-property-trailing-size: 0;
   display: grid;
@@ -15,7 +21,10 @@ fig-property {
     var(--fig-property-left-padding)
     var(
       --fig-property-label-track,
-      minmax(0, var(--fig-property-label-ratio))
+      var(
+        --fig-property-ratio-label-track,
+        minmax(0, var(--fig-property-label-ratio))
+      )
     )
     minmax(0, var(--fig-property-input-ratio))
     var(--fig-property-trailing-gap)
@@ -62,14 +71,17 @@ fig-property {
   }
 
   &:has(> [slot="trailing"]) {
-    --fig-property-label-track: minmax(
+    --fig-property-ratio-label-track: minmax(
       0,
-      calc(
-        (
-            100% - var(--fig-property-left-padding) -
-              var(--fig-property-right-padding)
-          ) /
-          3
+      var(
+        --fig-property-attribute-label-track,
+        calc(
+          (
+              100% - var(--fig-property-left-padding) -
+                var(--fig-property-right-padding)
+            ) /
+            3
+        )
       )
     );
   }

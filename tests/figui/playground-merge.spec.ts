@@ -243,6 +243,22 @@ test("property controls expose authored default attributes", () => {
   ).toContain('<fig-input-rotate variant="simple"');
 });
 
+test("property exposes ratio controls and examples", () => {
+  expect(controlAttributeRules["fig-property"]?.ratio).toEqual({
+    label: "Ratio",
+    type: "string",
+    options: ["1:3", "1:2", "2:3", "1:1"],
+    placeholder: "1:2",
+    defaultValue: "1:2",
+  });
+  const section = figui3Sections.find((entry) => entry.id === "property");
+  const example = section?.examples.find((entry) => entry.id === "ratio");
+  expect(example).toMatchObject({ name: "Ratio" });
+  expect(example?.markup).toContain('ratio="1:2"');
+  expect(example?.markup).toContain('ratio="1:1"');
+  expect(example?.markup).toContain('ratio="2:3"');
+});
+
 test("property all-properties example covers every supported control", () => {
   const section = figui3Sections.find((entry) => entry.id === "property");
   const example = section?.examples.find(
@@ -340,6 +356,7 @@ test("property all-properties example covers every supported control", () => {
   );
   expect(section?.examples.map((entry) => entry.id)).toEqual([
     "default",
+    "ratio",
     "all-properties",
     "custom-accessory",
   ]);

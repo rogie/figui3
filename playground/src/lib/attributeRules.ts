@@ -30,6 +30,9 @@ export interface EnumAttributeRule extends BaseAttributeRule {
 
 export interface StringAttributeRule extends BaseAttributeRule {
   type: "string";
+  options?: string[];
+  placeholder?: string;
+  defaultValue?: string;
 }
 
 export interface ColorAttributeRule extends BaseAttributeRule {
@@ -538,6 +541,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-property": {
     label: { label: "Label", type: "string" },
+    ratio: {
+      label: "Ratio",
+      type: "string",
+      options: ["1:3", "1:2", "2:3", "1:1"],
+      placeholder: "1:2",
+      defaultValue: "1:2",
+    },
     leading: {
       label: "Leading",
       type: "enum",

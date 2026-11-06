@@ -71,6 +71,117 @@ test.describe("fig-property", () => {
     expect(result.labelId).toBeTruthy();
   });
 
+  test("applies reflected label-to-input ratios with stable fallbacks and overrides", async ({
+    page,
+  }) => {
+    await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="default-ratio" label="Default" style="width: 300px">
+          <fig-input-text slot="input" value="Default" full></fig-input-text>
+        </fig-property>
+        <fig-property id="equal-ratio" label="Equal" ratio="1:1" style="width: 300px">
+          <fig-input-text slot="input" value="Equal" full></fig-input-text>
+        </fig-property>
+        <fig-property id="decimal-ratio" label="Decimal" ratio="2.5:3" style="width: 300px">
+          <fig-input-text slot="input" value="Decimal" full></fig-input-text>
+        </fig-property>
+        <fig-property id="invalid-ratio" label="Invalid" ratio="0:nope" style="width: 300px">
+          <fig-input-text slot="input" value="Invalid" full></fig-input-text>
+        </fig-property>
+        <fig-property
+          id="css-ratio"
+          label="CSS override"
+          ratio="1:1"
+          style="width: 300px; --fig-property-label-ratio: 1fr; --fig-property-input-ratio: 3fr"
+        >
+          <fig-input-text slot="input" value="CSS" full></fig-input-text>
+        </fig-property>
+        <fig-property
+          id="row-ratio"
+          label="Row ignores ratio"
+          ratio="3:1"
+          activation="row"
+          style="width: 300px"
+        >
+          <fig-input-number slot="input" value="16"></fig-input-number>
+        </fig-property>
+        <fig-property
+          id="trailing-ratio"
+          label="Trailing"
+          ratio="1:1"
+          trailing="remove"
+          style="width: 300px"
+        >
+          <fig-input-number slot="input" value="16" full></fig-input-number>
+        </fig-property>
+      `;
+      await Promise.resolve();
+    });
+
+    const readRatio = (selector: string) =>
+      page.locator(selector).evaluate((element: any) => {
+        const tracks = [
+          ...getComputedStyle(element).gridTemplateColumns.matchAll(
+            /-?\d+(?:\.\d+)?px/g,
+          ),
+        ].map((match) => Number.parseFloat(match[0]));
+        return {
+          attribute: element.getAttribute("ratio"),
+          property: element.ratio,
+          trackRatio: tracks[1] / tracks[2],
+          labelTrack: tracks[1],
+        };
+      });
+
+    expect((await readRatio("#default-ratio")).trackRatio).toBeCloseTo(0.5, 2);
+    expect((await readRatio("#equal-ratio")).trackRatio).toBeCloseTo(1, 2);
+    expect((await readRatio("#decimal-ratio")).trackRatio).toBeCloseTo(
+      2.5 / 3,
+      2,
+    );
+    const invalid = await readRatio("#invalid-ratio");
+    expect(invalid.property).toBe("1:2");
+    expect(invalid.trackRatio).toBeCloseTo(0.5, 2);
+    expect((await readRatio("#css-ratio")).trackRatio).toBeCloseTo(1 / 3, 2);
+    expect((await readRatio("#row-ratio")).trackRatio).toBeCloseTo(1, 2);
+
+    const trailingBefore = await readRatio("#trailing-ratio");
+    await page.locator("#trailing-ratio").hover();
+    const trailingAfter = await readRatio("#trailing-ratio");
+    expect(trailingBefore.trackRatio).toBeCloseTo(1, 2);
+    expect(trailingAfter.labelTrack).toBeCloseTo(
+      trailingBefore.labelTrack,
+      1,
+    );
+
+    const reflected = await page.locator("#equal-ratio").evaluate(
+      async (element: any) => {
+        element.ratio = "3:1";
+        await Promise.resolve();
+        const assigned = {
+          attribute: element.getAttribute("ratio"),
+          property: element.ratio,
+        };
+        element.ratio = null;
+        await Promise.resolve();
+        return {
+          assigned,
+          removed: {
+            attribute: element.getAttribute("ratio"),
+            property: element.ratio,
+          },
+        };
+      },
+    );
+    expect(reflected).toEqual({
+      assigned: { attribute: "3:1", property: "3:1" },
+      removed: { attribute: null, property: "1:2" },
+    });
+    expect((await readRatio("#equal-ratio")).trackRatio).toBeCloseTo(0.5, 2);
+  });
+
   test("focus and activate delegate to the slotted input contract", async ({
     page,
   }) => {

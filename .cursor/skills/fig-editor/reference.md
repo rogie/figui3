@@ -69,15 +69,18 @@ trigger and opens the menu unless the select is disabled.
 
 ## Property
 
-`fig-property` observes `label`, `leading`, `trailing`, `show-leading`, and `show-trailing`.
+`fig-property` observes `label`, `ratio`, `leading`, `trailing`, `show-leading`, and `show-trailing`.
 
 - Direct slots: `input`, `label`, `leading`, `trailing`
 - Authored `slot="label"` markup takes precedence over the `label` attribute.
+- `ratio="label:input"` changes the default `1:2` grid split; both sides must be positive numbers. Invalid or missing values resolve to `1:2`, and the reflected `ratio` property supports React assignment.
+- `--fig-property-label-ratio`, `--fig-property-input-ratio`, and `--fig-property-label-track` provide lower-level CSS overrides.
 - `leading`: `drag` or `chevron`
 - `trailing`: `remove`, `add`, or `bind`
 - `show-leading` / `show-trailing`: omitted or `hover` reveals on hover, `false` hides, and an empty attribute always shows
 - `selected`: present or `true` uses `--figma-color-bg-selected`; `false` leaves the row unselected
 - `activation="row"` activates the slotted control from the label or unused row surface; input and accessory clicks remain native, while focus moves the outline to the row and applies `--figma-color-bg-selected`. A slotted `fig-select` anchors its menu to the property row.
+- Row activation keeps content-sized tracks and ignores `ratio`.
 - Row activation overrides `full` sizing; color, gradient, palette, and point inputs use the standard compact width.
 - Authored accessory slots override generated shortcuts.
 - `input` returns the direct `slot="input"` element.

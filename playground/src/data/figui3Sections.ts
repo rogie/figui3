@@ -650,6 +650,23 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "ratio",
+        name: "Ratio",
+        markup: `<div class="prop-panel">
+  <fig-group name="Label / input ratios">
+    <fig-property label="Default 1:2" ratio="1:2">
+      <fig-input-number slot="input" value="16" units="px" full></fig-input-number>
+    </fig-property>
+    <fig-property label="Equal 1:1" ratio="1:1">
+      <fig-input-text slot="input" value="Equal tracks" full></fig-input-text>
+    </fig-property>
+    <fig-property label="Custom 2:3" ratio="2:3">
+      <fig-input-number slot="input" value="40" units="%" full></fig-input-number>
+    </fig-property>
+  </fig-group>
+</div>`,
+      },
+      {
         id: "all-properties",
         name: "All properties",
         markup: `<div class="prop-panel">

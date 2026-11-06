@@ -5,6 +5,35 @@ let figPropertyId = 0;
 const FIG_INPUT_SLIDER_MANAGED_OCCLUSION_TARGETS = Symbol.for(
   "figui.fig-input-slider.managed-occlusion-targets",
 );
+const FIG_PROPERTY_DEFAULT_RATIO = Object.freeze({
+  label: 1,
+  input: 2,
+  value: "1:2",
+});
+
+function parseFigPropertyRatio(value) {
+  const parts = String(value ?? "")
+    .trim()
+    .split(":");
+  if (parts.length !== 2 || parts.some((part) => part.trim() === "")) {
+    return FIG_PROPERTY_DEFAULT_RATIO;
+  }
+  const [label, input] = parts.map((part) => Number(part.trim()));
+  if (
+    !Number.isFinite(label) ||
+    !Number.isFinite(input) ||
+    label <= 0 ||
+    input <= 0 ||
+    !Number.isFinite(label + input)
+  ) {
+    return FIG_PROPERTY_DEFAULT_RATIO;
+  }
+  return {
+    label,
+    input,
+    value: `${label}:${input}`,
+  };
+}
 
 function defineElement(name, constructor) {
   if (!customElements.get(name)) customElements.define(name, constructor);
@@ -26,6 +55,7 @@ class FigProperty extends HTMLElement {
     "show-leading",
     "show-trailing",
     "activation",
+    "ratio",
   ];
 
   #observer = null;
@@ -80,6 +110,18 @@ class FigProperty extends HTMLElement {
 
   get input() {
     return this.querySelector(':scope > [slot="input"]');
+  }
+
+  get ratio() {
+    return parseFigPropertyRatio(this.getAttribute("ratio")).value;
+  }
+
+  set ratio(value) {
+    if (value === null || value === undefined) {
+      this.removeAttribute("ratio");
+    } else {
+      this.setAttribute("ratio", String(value));
+    }
   }
 
   /** Focus the slotted input, including its first native focus target as a fallback. */
@@ -144,6 +186,7 @@ class FigProperty extends HTMLElement {
   }
 
   #sync() {
+    this.#syncRatio();
     this.#syncLabel();
     this.#syncLeading();
     this.#syncTrailing();
@@ -151,6 +194,22 @@ class FigProperty extends HTMLElement {
     this.#syncSliderOcclusionTarget();
     this.#syncResetInputObserver();
     this.#syncResetMenuState();
+  }
+
+  #syncRatio() {
+    const ratio = parseFigPropertyRatio(this.getAttribute("ratio"));
+    this.style.setProperty(
+      "--fig-property-attribute-label-ratio",
+      `${ratio.label}fr`,
+    );
+    this.style.setProperty(
+      "--fig-property-attribute-input-ratio",
+      `${ratio.input}fr`,
+    );
+    this.style.setProperty(
+      "--fig-property-attribute-label-track",
+      `calc((100% - var(--fig-property-left-padding) - var(--fig-property-right-padding)) / ${(ratio.label + ratio.input) / ratio.label})`,
+    );
   }
 
   #inputIsDisabled(input) {

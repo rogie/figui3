@@ -1846,6 +1846,19 @@ export default function AttributesView({
             if (typeof nextValue !== "string") return;
             applyChange(target.fieldIndex, scope, name, nextValue);
           };
+          if (rule.type === "string" && rule.options?.length) {
+            return (
+              <fig-split-input
+                key={`${scope}-${name}`}
+                value={value ?? rule.defaultValue ?? ""}
+                options={rule.options.join(",")}
+                placeholder={rule.placeholder}
+                full
+                onInput={handleTextInput}
+                onChange={handleTextInput}
+              ></fig-split-input>
+            );
+          }
           return (
             <fig-input-text
               key={`${scope}-${name}`}

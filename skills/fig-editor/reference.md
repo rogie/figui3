@@ -64,14 +64,17 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 
 ## Property
 
-`fig-property` observes `label`, `leading`, `trailing`, `show-leading`, and `show-trailing`.
+`fig-property` observes `label`, `ratio`, `leading`, `trailing`, `show-leading`, and `show-trailing`.
 
 - Direct slots: `input`, `label`, `leading`, `trailing`
 - Authored `slot="label"` markup takes precedence over the `label` attribute.
+- `ratio="label:input"` changes the default `1:2` grid split; both sides must be positive numbers. Invalid or missing values resolve to `1:2`, and the reflected `ratio` property supports React assignment.
+- `--fig-property-label-ratio`, `--fig-property-input-ratio`, and `--fig-property-label-track` provide lower-level CSS overrides.
 - `leading`: `drag` or `chevron`
 - `trailing`: `remove`, `add`, or `bind`
 - `show-leading` / `show-trailing`: omitted or `hover` reveals on hover, `false` hides, and an empty attribute always shows
 - `selected`: present or `true` uses `--figma-color-bg-selected`; `false` leaves the row unselected
+- `activation="row"` keeps content-sized tracks and ignores `ratio`.
 - Authored accessory slots override generated shortcuts.
 - `input` returns the direct `slot="input"` element.
 - `resetToDefault()` delegates to the slotted control's method. The generated right-click menu updates from control events, default/value attributes, and input replacement while keeping “Reset to default” disabled when unavailable, disabled, or `isDefault === true`.

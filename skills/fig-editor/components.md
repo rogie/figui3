@@ -107,7 +107,7 @@ Data-driven (no authored options):
 Default playground example (`/figui3#property/default`):
 
 ```html
-<fig-property label="Size">
+<fig-property label="Size" ratio="1:2">
   <fig-input-number
     slot="input"
     value="16"
@@ -143,7 +143,9 @@ Authored trailing accessory (`/figui3#property/custom-accessory`):
 </fig-property>
 ```
 
-- Attrs: `label`, `leading` (`drag` | `chevron`), `trailing` (`remove` | `add` | `bind`), `show-leading`, `show-trailing`, `selected`
+- Attrs: `label`, `ratio` (`label:input`, default `1:2`), `leading` (`drag` | `chevron`), `trailing` (`remove` | `add` | `bind`), `show-leading`, `show-trailing`, `selected`
+- `ratio` accepts positive numeric pairs such as `1:1` and `2.5:3`; its reflected property supports React assignment. Invalid values fall back to `1:2`. Row activation ignores it.
+- CSS overrides: `--fig-property-label-ratio`, `--fig-property-input-ratio`, and `--fig-property-label-track`.
 - Slots: `input` (one direct primary control), `label`, `leading`, `trailing`
 - Authored label markup overrides the `label` attribute.
 - Authored accessory slots override generated shortcuts.
