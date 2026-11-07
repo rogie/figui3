@@ -165,12 +165,137 @@ nav {
   gap: var(--spacer-1);
 }
 
+.nav-title-info {
+  padding: 0;
+  gap: var(--spacer-1);
+  align-items: center;
+}
+
+/* Single hit-target for title + about icon (shared hover/press). */
+.nav-title-trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacer-1);
+  margin: 0;
+  padding: 0 var(--spacer-1) 0 var(--spacer-2);
+  border: 0;
+  border-radius: var(--radius-medium);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+
+  h1 {
+    margin: 0;
+  }
+
+  svg {
+    width: var(--spacer-4);
+    height: var(--spacer-4);
+    flex-shrink: 0;
+
+    *[fill]:not([fill="none"]) {
+      fill: currentColor;
+    }
+
+    *[stroke]:not([stroke="none"]) {
+      stroke: currentColor;
+    }
+  }
+
+  &:hover {
+    background-color: var(--figma-color-bg-transparent-hover);
+  }
+
+  &:active {
+    background-color: var(--figma-color-bg-transparent-pressed);
+  }
+}
+
 .preferences-popup {
   width: 180px;
   padding: var(--spacer-2);
 
   fig-field {
     width: 100%;
+  }
+}
+
+.info-popup {
+  /* Narrower than default field popups; still fits version + credit lines. */
+  width: 240px;
+  padding: var(--spacer-2);
+
+  .info-popup-intro {
+    padding-inline: var(--spacer-3);
+    margin-bottom: var(--spacer-2);
+
+    p {
+      margin: 0;
+      color: var(--figma-color-text-secondary);
+      line-height: 1.4;
+    }
+  }
+
+  .info-popup-credit {
+    margin: 0;
+    padding-inline: var(--spacer-3);
+    color: var(--figma-color-text-secondary);
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .info-popup-credit-link {
+    appearance: none;
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--figma-color-text-brand);
+    font: inherit;
+    line-height: inherit;
+    cursor: pointer;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  fig-field {
+    width: 100%;
+
+    --fig-field-top-padding: 0;
+    --fig-field-bottom-padding: 0;
+
+    /* Version is the field label; branch is the secondary value. */
+    > label {
+      padding-block: 0;
+      font-size: var(--font-size-small);
+      font-variant-numeric: tabular-nums;
+    }
+
+    > span {
+      color: var(--figma-color-text-secondary);
+      font-size: var(--font-size-small);
+    }
+  }
+
+  .info-popup-links {
+    /* Same horizontal inset as intro text / fig-field (spacer-3). */
+    padding-inline: var(--spacer-3);
+    margin-block: var(--spacer-2);
+    gap: var(--spacer-1);
+    align-items: center;
+
+    fig-button[icon] svg {
+      width: var(--spacer-4);
+      height: var(--spacer-4);
+      display: block;
+      flex-shrink: 0;
+    }
   }
 }
 

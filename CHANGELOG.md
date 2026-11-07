@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Added a playground About popup with package/git build metadata, author credit, and GitHub/npm/playground links.
+
 ## [11.8.5]
 
 ### Added

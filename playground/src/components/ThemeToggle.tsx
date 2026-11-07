@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import SunIcon from "../icons/sun.svg?react";
 import MoonIcon from "../icons/moon.svg?react";
 import AdjustIcon from "../icons/icon.24.adjust.svg?react";
+import { useFigPopupAnchor } from "../hooks/useFigPopupAnchor";
 
 interface Props {
   isDark: boolean;
@@ -29,19 +30,9 @@ export default function ThemeToggle({
     theme: isDark ? "light" : "dark",
   } as any;
 
-  useEffect(() => {
-    const popup = popupRef.current;
-    if (!popup) return;
-    (popup as any).anchor = settingsButtonRef.current;
-    const handleClose = () => setPreferencesOpen(false);
-    popup.addEventListener("close", handleClose);
-    return () => popup.removeEventListener("close", handleClose);
-  }, []);
-
-  useEffect(() => {
-    if (!popupRef.current || !settingsButtonRef.current) return;
-    (popupRef.current as any).anchor = settingsButtonRef.current;
-  }, [preferencesOpen]);
+  useFigPopupAnchor(popupRef, settingsButtonRef, preferencesOpen, () =>
+    setPreferencesOpen(false),
+  );
 
   const handleModeChange = (event: any) => {
     const nextMode = (event as CustomEvent).detail ?? event.target?.value;
@@ -74,19 +65,24 @@ export default function ThemeToggle({
           variant="ghost"
           icon
           aria-label="Preferences"
+          aria-haspopup="dialog"
+          aria-controls="preferences-popup"
+          aria-expanded={preferencesOpen}
           onClick={() => setPreferencesOpen((open) => !open)}
         >
           <AdjustIcon />
         </fig-button>
       </fig-tooltip>
       <dialog
+        id="preferences-popup"
         ref={popupRef}
         {...popupAttrs}
         open={preferencesOpen ? true : undefined}
         className="preferences-popup"
+        aria-labelledby="preferences-popup-title"
       >
         <fig-header>
-          <h3>Preferences</h3>
+          <h3 id="preferences-popup-title">Preferences</h3>
         </fig-header>
         <fig-content>
           <fig-field columns="half">
