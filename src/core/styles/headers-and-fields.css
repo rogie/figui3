@@ -1,0 +1,643 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Ordered shared selectors and cascade overrides. */
+fig-header {
+  --fig-header-height: var(--spacer-6);
+  height: var(--fig-header-height);
+  flex-shrink: 0;
+  width: 100%;
+  margin: 0;
+  padding: var(--spacer-1) var(--spacer-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: inset 0 -1px 0 0 var(--figma-color-border);
+  gap: var(--spacer-2);
+  user-select: none;
+
+  &[compact]:not([compact="false"]) {
+    --fig-header-height: var(--spacer-5);
+  }
+
+  & > fig-input-text:only-child {
+    width: 100%;
+  }
+
+  & > *:is(h1, h2, h3) {
+    &:first-child {
+      padding-left: var(--spacer-2);
+    }
+    flex: 1 1 auto;
+    min-width: 0;
+    display: block;
+    padding-left: var(--spacer-2);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  &>span,
+  &>label{
+    color: var(--figma-color-text-secondary);
+  }
+
+  &[borderless]:not([borderless="false"]) {
+    box-shadow: none;
+  }
+}
+
+fig-group {
+  display: block;
+  width: 100%;
+  padding-bottom: var(--spacer-2-5);
+
+  p{
+    margin: 0 var(--spacer-3) var(--spacer-2) var(--spacer-3);
+  }
+  &[compact]:not([compact="false"]) {
+    padding-top: var(--spacer-1);
+  }
+
+  /* Sibling groups  */
+  & + fig-group {
+    box-shadow: inset 0 1px 0 0 var(--figma-color-border);
+    &:not(:has(fig-header)) {
+      padding-top: var(--spacer-2-5);
+    }
+  }
+  &[borderless]:not([borderless="false"]) + fig-group{
+    box-shadow: none;
+    &:not([name]) {
+      padding-top: 0;
+    }
+  }
+
+  & > fig-header {
+    cursor: default;
+    gap: 0;
+      
+    &:has(> h3:focus-visible) {
+      --figma-focus-outline-radius: var(--radius-medium);
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+      border-radius: var(--figma-focus-outline-radius);
+    }
+    & > h3 {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: block;
+      margin:0;
+      padding-left: 0;
+      outline: none;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      max-width: 100%;
+      cursor: default;
+    }
+    & > .fig-group-chevron {
+      flex: 0 0 auto;
+      color: var(--figma-color-text-tertiary);
+      transform: rotate(-90deg);
+      transition: transform var(--transition-duration)
+        var(--transition-timing-function);
+      margin-inline-start: calc(var(--spacer-2) * -1);
+      cursor: default;
+    }
+  }
+
+  &[chevron="end"] > fig-header > .fig-group-chevron {
+    margin-inline-start: 0;
+  }
+
+  &[collapsible] > fig-header h3 {
+    user-select: none;
+  }
+
+  &[collapsible]:not([open]):not([open="true"]),
+  &[collapsible][open="false"] {
+    padding-bottom: 0;
+    fig-header {
+      color: var(--figma-color-text-secondary);
+      &:has(> h3:hover, > .fig-group-chevron:hover) {
+        color: var(--figma-color-text);
+        .fig-group-chevron {
+          color: var(--figma-color-icon);
+        }
+      }
+    }
+  }
+
+  &[open="false"],
+  &:has(> fig-header:only-child) {
+    padding-bottom: 0;
+    > fig-header {
+      color: var(--figma-color-text-secondary);
+    }
+  }
+
+  & > fig-header:hover > .fig-group-chevron {
+    color: var(--figma-color-icon);
+  }
+
+  &[open]:not([open="false"]) > fig-header .fig-group-chevron {
+    transform: rotate(0deg);
+  }
+
+  &[collapsible]:not([open]):not([open="true"]) > :not(fig-header),
+  &[collapsible][open="false"] > :not(fig-header) {
+    display: none !important;
+  }
+
+}
+
+fig-footer {
+  display: flex;
+  flex-shrink: 0;
+  width: 100%;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: var(--spacer-2);
+  padding: var(--spacer-2-5);
+  box-shadow: 0 -1px 0 0 var(--figma-color-border);
+
+  & h3 {
+    font-weight: var(--body-medium-strong-fontWeight);
+    flex-grow: 1;
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacer-half);
+  }
+
+  & > label {
+    flex-grow: 1;
+    align-items: baseline;
+    gap: var(--spacer-half);
+    min-height: var(--spacer-4);
+    display: flex;
+    align-items: center;
+    text-wrap: pretty;
+  }
+
+  & > fig-button {
+    flex-shrink: 0;
+  }
+
+  &:not(:has(> fig-button)) > :is(label, h3) {
+    flex-grow: 1;
+    justify-content: center;
+    text-align: center;
+  }
+
+  &:has(> :is(fig-button, fig-tooltip) ~ :is(fig-button, fig-tooltip)) {
+    flex-wrap: wrap;
+
+    & > :is(label, h3) {
+      flex-grow: 1;
+      width: 100%;
+      justify-content: flex-start;
+      text-align: start;
+      
+    }
+  }
+
+  &[borderless]:not([borderless="false"]) {
+    box-shadow: none;
+  }
+
+  &[sticky]:not([sticky="false"]) {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-top: auto;
+    background: var(--figma-color-bg);
+    border-radius: 0 0 var(--radius-large) var(--radius-large)
+  }
+}
+
+main,
+fig-content {
+  padding: var(--spacer-2-5) 0;
+  display: block;
+  width: 100%;
+  gap: 0;
+  &:has(>fig-group[name]:first-child){
+    padding-top: 0;
+  }
+  &:has(>fig-group[name]:last-child){
+    padding-bottom: 0;
+  }
+  &>p{
+    padding-inline: var(--spacer-3);
+  }
+  &:empty{
+    padding: 0;
+  }
+}
+
+fig-content{
+  &[padding]:not([padding="false"]):not([padding="none"]):not(:empty) {
+    padding-inline: var(--spacer-3);
+  }
+  &:empty,
+  &::not(:has(*)) {
+    padding: 0;
+  }
+  &[padding="none"]{
+    padding: 0;
+  }
+}
+
+:root [hidden],
+[hidden] {
+  display: none !important;
+}
+
+fig-stack,
+hstack,
+.hstack,
+vstack,
+.vstack,
+[vstack] {
+  display: flex;
+  flex-direction: row;
+  gap: var(--fig-stack-gap, var(--hstack-gap, var(--spacer-2)));
+  align-items: var(--fig-stack-align, var(--hstack-align, center));
+  justify-content: var(--fig-stack-justify, var(--hstack-justify, flex-start));
+  flex-wrap: var(--fig-stack-wrap, var(--hstack-wrap, nowrap));
+  min-width: 0;
+
+  &:where(fig-stack[direction="vertical"], vstack, .vstack, [vstack]) {
+    flex-direction: column;
+    --fig-stack-align: flex-start;
+  }
+
+  &:where(vstack, .vstack, [vstack]) {
+    --fig-stack-wrap: wrap;
+  }
+
+  &:where([direction="grid"]) {
+    display: grid;
+    grid-template-columns: var(
+      --fig-stack-columns,
+      repeat(auto-fill, minmax(min(var(--fig-stack-min-width, 5rem), 100%), 1fr))
+    );
+    --fig-stack-align: stretch;
+    justify-items: var(--fig-stack-justify-items, stretch);
+  }
+
+  &[align="start"] {
+    --fig-stack-align: flex-start;
+  }
+
+  &[align="center"] {
+    --fig-stack-align: center;
+  }
+
+  &[align="end"] {
+    --fig-stack-align: flex-end;
+  }
+
+  &[align="stretch"] {
+    --fig-stack-align: stretch;
+  }
+
+  &[align="baseline"] {
+    --fig-stack-align: baseline;
+  }
+
+  &[justify="start"] {
+    --fig-stack-justify: flex-start;
+    --fig-stack-justify-items: start;
+  }
+
+  &[justify="center"] {
+    --fig-stack-justify: center;
+    --fig-stack-justify-items: center;
+  }
+
+  &[justify="end"] {
+    --fig-stack-justify: flex-end;
+    --fig-stack-justify-items: end;
+  }
+
+  &[justify="between"] {
+    --fig-stack-justify: space-between;
+  }
+
+  &[justify="around"] {
+    --fig-stack-justify: space-around;
+  }
+
+  &[justify="stretch"] {
+    --fig-stack-justify-items: stretch;
+  }
+
+  &[wrap]:not([wrap="false"]) {
+    --fig-stack-wrap: wrap;
+  }
+
+  &[wrap="false"] {
+    --fig-stack-wrap: nowrap;
+  }
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &:is(fig-stack:not([direction]), fig-stack[direction="horizontal"], hstack, .hstack) {
+    & > fig-field:has(+ fig-field) {
+      --fig-field-right-padding: var(--spacer-1);
+    }
+
+    & > fig-field + fig-field {
+      --fig-field-left-padding: var(--spacer-1);
+    }
+  }
+}
+
+fig-input-text,
+fig-input-number {
+  background-color: var(--figma-color-bg-secondary);
+  border: 0;
+  border-radius: var(--radius-medium);
+  display: inline-flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  user-select: all;
+  gap: 0;
+  min-width: 0;
+  flex: 0 1 auto;
+  color: var(--figma-color-text);
+
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    flex: 1;
+    width: 100%;
+  }
+  &[tabular]:not([tabular="false"]) {
+    font-variant-numeric: tabular-nums;
+
+    & input {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+  &[size="large"] {
+    & > input,
+    & > textarea {
+      padding: var(--spacer-2);
+    }
+
+    & > [slot="prepend"] {
+      min-width: var(--spacer-5);
+    }
+  }
+  &[multiline]:not([multiline="false"]) {
+    display: flex;
+    width: 100%;
+  }
+  &[autoresize]:not([autoresize="false"]) input,
+  &[autoresize]:not([autoresize="false"]) textarea {
+    field-sizing: content;
+  }
+  &[resizable]:not([resizable="false"]) input,
+  &[resizable]:not([resizable="false"]) textarea {
+    resize: both;
+  }
+  &[resizable]:not([resizable="false"]):has(textarea[style*="width"]),
+  &[resizable]:not([resizable="false"]):has(textarea[style*="height"]),
+  &[resizable]:not([resizable="false"]):has(input[style*="width"]),
+  &[resizable]:not([resizable="false"]):has(input[style*="height"]) {
+    flex: unset;
+  }
+
+  & label,
+  & [slot] {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  & [slot] {
+    user-select: none;
+    width: 1.5rem;
+    color: var(--figma-color-text-secondary);
+  }
+
+  & [slot="prepend"] {
+    order: 0;
+    padding-right: 0;
+    color: var(--figma-color-text-secondary);
+    margin-right: calc(var(--spacer-2) * -1);
+  }
+
+  & > fig-icon[slot="prepend"] {
+    color: var(--figma-color-icon-secondary);
+  }
+
+  & [slot="append"] {
+    order: 2;
+    padding-left: 0;
+    margin-left: calc(var(--spacer-2) * -1);
+    &[size="large"] {
+      height: var(--spacer-5);
+      min-width: var(--spacer-5);
+    }
+  }
+
+  &[type="search"]:not([data-search-has-value]) [data-generated="search-clear"] {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  &[type="search"] > fig-icon[data-generated="search-prefix"] {
+    color: var(--figma-color-icon-secondary);
+  }
+
+  &[type="search"]:focus-within > fig-icon[data-generated="search-prefix"] {
+    color: var(--figma-color-icon);
+  }
+
+  & [slot="prepend"],
+  & [slot="append"] {
+    svg {
+      *[fill]:not([fill="none"]) {
+        fill: currentColor;
+      }
+      *[stroke]:not([stroke="none"]) {
+        stroke: currentColor;
+      }
+    }
+  }
+
+  & input,
+  & textarea {
+    order: 1;
+    background-color: transparent !important;
+    flex: 1;
+
+    &:focus,
+    &:focus-visible,
+    &:active {
+      outline: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
+  & input[type="text"]:focus,
+  & input[type="text"]:focus-visible,
+  & input[type="text"]:active {
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  & input[type="search"] {
+    appearance: textfield;
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration,
+    &::-webkit-search-results-button,
+    &::-webkit-search-results-decoration {
+      appearance: none;
+      display: none;
+    }
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:has(:is(input, textarea):focus-visible) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+  &:hover {
+    box-shadow: inset 0 0 0 1px var(--figma-color-border);
+  }
+  /* Disabled */
+  &[disabled]:not([disabled="false"]) {
+    background-color: var(--figma-color-bg);
+    pointer-events: none;
+    cursor: not-allowed;
+    color: var(--figma-color-text-disabled);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-disabled);
+    & [slot] {
+      color: var(--figma-color-text-disabled);
+    }
+  }
+  &[readonly]{
+    background-color: var(--figma-color-bg);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-disabled);
+  }
+
+  &:is(fig-input-number)[variant="ghost"] {
+    background-color: transparent;
+    box-shadow: none;
+
+    &:hover {
+      box-shadow: none;
+    }
+
+    &:is(:hover, :focus-within):not([disabled]):not([disabled="false"]) {
+      background-color: var(--figma-color-bg-secondary);
+    }
+
+    &[disabled]:not([disabled="false"]) {
+      background-color: transparent;
+      box-shadow: none;
+    }
+  }
+}
+
+fig-input-number > [slot],
+fig-input-text[type="number"] > [slot] {
+  cursor: ew-resize !important;
+}
+
+fig-input-color,
+fig-input-gradient,
+fig-input-fill {
+  background-color: var(--figma-color-bg-secondary);
+  border-radius: var(--radius-medium);
+  box-shadow: none !important;
+
+  & > .input-combo > :is(fig-swatch, fig-chit):not(:only-child),
+  & > .input-combo > :is(fig-swatch, fig-chit):not(:only-child) input,
+  & > .input-combo > fig-fill-picker:not(:only-child),
+  & > .input-combo > fig-fill-picker:not(:only-child) > :is(fig-swatch, fig-chit) > input,
+  & > .input-combo > label,
+  & fig-fill-picker:not(:only-child),
+  fig-input-text,
+  :is(fig-swatch, fig-chit) {
+    &,
+    &:focus,
+    &:hover {
+      background-color: transparent !important;
+      box-shadow: none !important;
+      outline: 0 !important;
+      border: 0 !important;
+      --selected: 0;
+    }
+  }
+  :is(fig-swatch, fig-chit) ~ fig-input-text > input,
+  :is(fig-swatch, fig-chit) ~ label,
+  fig-fill-picker ~ fig-input-text > input {
+    padding-left: 0 !important;
+  }
+
+  & > .input-combo > fig-input-text > input {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & > .input-combo {
+    flex: 1;
+    min-width: 0;
+  }
+
+  & > .input-combo > fig-tooltip {
+    display: contents;
+  }
+
+  & > .input-combo > fig-tooltip > .fig-input-fill-opacity {
+    flex: 0 0 var(--input-opacity-width);
+    width: var(--input-opacity-width);
+    min-width: var(--input-opacity-width);
+  }
+
+  fig-input-number {
+    flex: 0;
+    flex-basis: var(--input-opacity-width);
+    box-shadow: inset 1px 0 0 0 var(--figma-color-bg) !important;
+    background-color: transparent !important;
+    outline: 0 !important;
+
+    &:focus,
+    &:focus-within,
+    &:hover {
+      outline: 0 !important;
+    }
+  }
+
+  fig-field:not([direction="vertical"]) & {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+fig-input-color {
+  &:focus-visible,
+  &:has(:focus-visible),
+  &.has-popup-open {
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
+  }
+}

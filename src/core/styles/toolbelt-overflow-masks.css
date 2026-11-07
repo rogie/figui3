@@ -1,0 +1,468 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+@supports (animation-timeline: scroll(self block)) {
+  .fig-overflow-fade:not(
+    :is(
+      .fig-overflow-fade-horizontal,
+      .fig-overflow-fade-left,
+      .fig-overflow-fade-right
+    )
+  ),
+  fig-toolbelt[layout="vertical"]::part(viewport) {
+    mask-image: linear-gradient(
+      to bottom,
+      black 0,
+      black var(--fig-overflow-fade-clear-top),
+      transparent var(--fig-overflow-fade-clear-top),
+      rgba(0, 0, 0, 0.04)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.125
+        ),
+      rgba(0, 0, 0, 0.16)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.25
+        ),
+      rgba(0, 0, 0, 0.32)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.375
+        ),
+      rgba(0, 0, 0, 0.5)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.5
+        ),
+      rgba(0, 0, 0, 0.68)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.625
+        ),
+      rgba(0, 0, 0, 0.84)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.75
+        ),
+      rgba(0, 0, 0, 0.96)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-top) + var(--fig-overflow-fade-top)
+      ),
+      black calc(100% - var(--fig-overflow-fade-bottom)),
+      rgba(0, 0, 0, 0.96)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.875),
+      rgba(0, 0, 0, 0.84)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.75),
+      rgba(0, 0, 0, 0.68)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.625),
+      rgba(0, 0, 0, 0.5)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.5),
+      rgba(0, 0, 0, 0.32)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.375),
+      rgba(0, 0, 0, 0.16)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.25),
+      rgba(0, 0, 0, 0.04)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.125),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 0,
+      black var(--fig-overflow-fade-clear-top),
+      transparent var(--fig-overflow-fade-clear-top),
+      rgba(0, 0, 0, 0.04)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.125
+        ),
+      rgba(0, 0, 0, 0.16)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.25
+        ),
+      rgba(0, 0, 0, 0.32)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.375
+        ),
+      rgba(0, 0, 0, 0.5)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.5
+        ),
+      rgba(0, 0, 0, 0.68)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.625
+        ),
+      rgba(0, 0, 0, 0.84)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.75
+        ),
+      rgba(0, 0, 0, 0.96)
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-top) + var(--fig-overflow-fade-top)
+      ),
+      black calc(100% - var(--fig-overflow-fade-bottom)),
+      rgba(0, 0, 0, 0.96)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.875),
+      rgba(0, 0, 0, 0.84)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.75),
+      rgba(0, 0, 0, 0.68)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.625),
+      rgba(0, 0, 0, 0.5)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.5),
+      rgba(0, 0, 0, 0.32)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.375),
+      rgba(0, 0, 0, 0.16)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.25),
+      rgba(0, 0, 0, 0.04)
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.125),
+      transparent 100%
+    );
+
+    animation:
+      fig-overflow-fade-in-top 1ms linear both,
+      fig-overflow-fade-out-bottom 1ms linear both;
+    animation-timeline: scroll(self block);
+    animation-range:
+      0 var(--fig-overflow-fade-size),
+      calc(100% - var(--fig-overflow-fade-size)) 100%;
+  }
+
+  .fig-overflow-fade.fig-overflow-fade-top:not(
+    .fig-overflow-fade-bottom
+  ):not(
+    :is(
+      .fig-overflow-fade-horizontal,
+      .fig-overflow-fade-left,
+      .fig-overflow-fade-right
+    )
+  ) {
+    --fig-overflow-fade-edge-opacity: var(--fig-overflow-fade-top-opacity);
+    --fig-overflow-fade-single-edge-mask: linear-gradient(
+      to bottom,
+      black 0,
+      black var(--fig-overflow-fade-clear-top),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-opacity))
+        var(--fig-overflow-fade-clear-top),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-04))
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.125
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-16))
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.25
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-32))
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.375
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-50))
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.5
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-68))
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.625
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-84))
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.75
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-96))
+        calc(
+          var(--fig-overflow-fade-clear-top) +
+            var(--fig-overflow-fade-top) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-top) +
+          var(--fig-overflow-fade-top)
+      ),
+      black 100%
+    );
+    mask-image: var(--fig-overflow-fade-single-edge-mask);
+    -webkit-mask-image: var(--fig-overflow-fade-single-edge-mask);
+    animation: fig-overflow-fade-in-top 1ms linear both;
+    animation-timeline: scroll(self block);
+    animation-range: 0 var(--fig-overflow-fade-size);
+  }
+
+  .fig-overflow-fade.fig-overflow-fade-bottom:not(
+    .fig-overflow-fade-top
+  ):not(
+    :is(
+      .fig-overflow-fade-horizontal,
+      .fig-overflow-fade-left,
+      .fig-overflow-fade-right
+    )
+  ) {
+    --fig-overflow-fade-edge-opacity: var(--fig-overflow-fade-bottom-opacity);
+    --fig-overflow-fade-single-edge-mask: linear-gradient(
+      to bottom,
+      black 0,
+      black calc(100% - var(--fig-overflow-fade-bottom)),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-96))
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.875),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-84))
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.75),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-68))
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.625),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-50))
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.5),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-32))
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.375),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-16))
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.25),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-04))
+        calc(100% - var(--fig-overflow-fade-bottom) * 0.125),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-opacity)) 100%
+    );
+    mask-image: var(--fig-overflow-fade-single-edge-mask);
+    -webkit-mask-image: var(--fig-overflow-fade-single-edge-mask);
+    animation: fig-overflow-fade-out-bottom 1ms linear both;
+    animation-timeline: scroll(self block);
+    animation-range: calc(100% - var(--fig-overflow-fade-size)) 100%;
+  }
+}
+
+@supports (animation-timeline: scroll(self inline)) {
+  .fig-overflow-fade:is(
+    .fig-overflow-fade-horizontal,
+    .fig-overflow-fade-left,
+    .fig-overflow-fade-right
+  ),
+  fig-toolbelt:not([layout="vertical"])::part(viewport) {
+    mask-image: linear-gradient(
+      to right,
+      black 0,
+      black var(--fig-overflow-fade-clear-left),
+      transparent var(--fig-overflow-fade-clear-left),
+      rgba(0, 0, 0, 0.04)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.125
+        ),
+      rgba(0, 0, 0, 0.16)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.25
+        ),
+      rgba(0, 0, 0, 0.32)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.375
+        ),
+      rgba(0, 0, 0, 0.5)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.5
+        ),
+      rgba(0, 0, 0, 0.68)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.625
+        ),
+      rgba(0, 0, 0, 0.84)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.75
+        ),
+      rgba(0, 0, 0, 0.96)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-left) + var(--fig-overflow-fade-left)
+      ),
+      black calc(100% - var(--fig-overflow-fade-right)),
+      rgba(0, 0, 0, 0.96)
+        calc(100% - var(--fig-overflow-fade-right) * 0.875),
+      rgba(0, 0, 0, 0.84)
+        calc(100% - var(--fig-overflow-fade-right) * 0.75),
+      rgba(0, 0, 0, 0.68)
+        calc(100% - var(--fig-overflow-fade-right) * 0.625),
+      rgba(0, 0, 0, 0.5)
+        calc(100% - var(--fig-overflow-fade-right) * 0.5),
+      rgba(0, 0, 0, 0.32)
+        calc(100% - var(--fig-overflow-fade-right) * 0.375),
+      rgba(0, 0, 0, 0.16)
+        calc(100% - var(--fig-overflow-fade-right) * 0.25),
+      rgba(0, 0, 0, 0.04)
+        calc(100% - var(--fig-overflow-fade-right) * 0.125),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black 0,
+      black var(--fig-overflow-fade-clear-left),
+      transparent var(--fig-overflow-fade-clear-left),
+      rgba(0, 0, 0, 0.04)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.125
+        ),
+      rgba(0, 0, 0, 0.16)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.25
+        ),
+      rgba(0, 0, 0, 0.32)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.375
+        ),
+      rgba(0, 0, 0, 0.5)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.5
+        ),
+      rgba(0, 0, 0, 0.68)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.625
+        ),
+      rgba(0, 0, 0, 0.84)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.75
+        ),
+      rgba(0, 0, 0, 0.96)
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-left) + var(--fig-overflow-fade-left)
+      ),
+      black calc(100% - var(--fig-overflow-fade-right)),
+      rgba(0, 0, 0, 0.96)
+        calc(100% - var(--fig-overflow-fade-right) * 0.875),
+      rgba(0, 0, 0, 0.84)
+        calc(100% - var(--fig-overflow-fade-right) * 0.75),
+      rgba(0, 0, 0, 0.68)
+        calc(100% - var(--fig-overflow-fade-right) * 0.625),
+      rgba(0, 0, 0, 0.5)
+        calc(100% - var(--fig-overflow-fade-right) * 0.5),
+      rgba(0, 0, 0, 0.32)
+        calc(100% - var(--fig-overflow-fade-right) * 0.375),
+      rgba(0, 0, 0, 0.16)
+        calc(100% - var(--fig-overflow-fade-right) * 0.25),
+      rgba(0, 0, 0, 0.04)
+        calc(100% - var(--fig-overflow-fade-right) * 0.125),
+      transparent 100%
+    );
+
+    animation:
+      fig-overflow-fade-in-left 1ms linear both,
+      fig-overflow-fade-out-right 1ms linear both;
+    animation-timeline: scroll(self inline);
+    animation-range:
+      0 var(--fig-overflow-fade-size),
+      calc(100% - var(--fig-overflow-fade-size)) 100%;
+  }
+
+  .fig-overflow-fade.fig-overflow-fade-left:not(.fig-overflow-fade-right) {
+    --fig-overflow-fade-edge-opacity: var(--fig-overflow-fade-left-opacity);
+    --fig-overflow-fade-single-edge-mask: linear-gradient(
+      to right,
+      black 0,
+      black var(--fig-overflow-fade-clear-left),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-opacity))
+        var(--fig-overflow-fade-clear-left),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-04))
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.125
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-16))
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.25
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-32))
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.375
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-50))
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.5
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-68))
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.625
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-84))
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.75
+        ),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-96))
+        calc(
+          var(--fig-overflow-fade-clear-left) +
+            var(--fig-overflow-fade-left) * 0.875
+        ),
+      black calc(
+        var(--fig-overflow-fade-clear-left) +
+          var(--fig-overflow-fade-left)
+      ),
+      black 100%
+    );
+    mask-image: var(--fig-overflow-fade-single-edge-mask);
+    -webkit-mask-image: var(--fig-overflow-fade-single-edge-mask);
+    animation: fig-overflow-fade-in-left 1ms linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: 0 var(--fig-overflow-fade-size);
+  }
+
+  .fig-overflow-fade.fig-overflow-fade-right:not(.fig-overflow-fade-left) {
+    --fig-overflow-fade-edge-opacity: var(--fig-overflow-fade-right-opacity);
+    --fig-overflow-fade-single-edge-mask: linear-gradient(
+      to right,
+      black 0,
+      black calc(100% - var(--fig-overflow-fade-right)),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-96))
+        calc(100% - var(--fig-overflow-fade-right) * 0.875),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-84))
+        calc(100% - var(--fig-overflow-fade-right) * 0.75),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-68))
+        calc(100% - var(--fig-overflow-fade-right) * 0.625),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-50))
+        calc(100% - var(--fig-overflow-fade-right) * 0.5),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-32))
+        calc(100% - var(--fig-overflow-fade-right) * 0.375),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-16))
+        calc(100% - var(--fig-overflow-fade-right) * 0.25),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-alpha-04))
+        calc(100% - var(--fig-overflow-fade-right) * 0.125),
+      rgba(0, 0, 0, var(--fig-overflow-fade-edge-opacity)) 100%
+    );
+    mask-image: var(--fig-overflow-fade-single-edge-mask);
+    -webkit-mask-image: var(--fig-overflow-fade-single-edge-mask);
+    animation: fig-overflow-fade-out-right 1ms linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: calc(100% - var(--fig-overflow-fade-size)) 100%;
+  }
+}

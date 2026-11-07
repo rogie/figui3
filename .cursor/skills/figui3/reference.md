@@ -140,14 +140,16 @@ Without `fig-fill-picker`, fill/color render a preview. With the picker register
 - Video controls render **below** the preview, not as an overlay
 - Slotted image overlays stay in light DOM
 
-## `fig-layer` (separate bundle)
+## `fig-layer` (core registration, standalone styles)
 
 ```js
 import "@rogieking/figui3/fig-layer.css";
-import "@rogieking/figui3/fig-layer.js";
 ```
 
-Attrs: `open`, `visible`, `disabled`. Markup: child `.fig-layer-row` plus nested `fig-layer`. Events: `openchange`, `visibilitychange`.
+`fig.js` registers the element. The standalone `fig-layer.js` entry can be
+used when Core is not otherwise loaded. Attrs: `open`, `visible`, `disabled`.
+Markup: child `.fig-layer-row` plus nested `fig-layer`. Events: `openchange`,
+`visibilitychange`.
 
 ## Native elements
 

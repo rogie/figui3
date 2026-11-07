@@ -484,6 +484,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-audio": {
     src: { label: "Audio file", type: "string" },
+    variant: {
+      label: "Waveform",
+      type: "enum",
+      options: ["bars", "ribbon"],
+    },
     autoplay: { label: "Autoplay", type: "boolean", boolMode: "string" },
     controls: {
       label: "Controls",
@@ -676,6 +681,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-audio-waveform": {
     url: { label: "Audio file", type: "string" },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["bars", "ribbon"],
+    },
     progress: {
       label: "Progress",
       type: "number",

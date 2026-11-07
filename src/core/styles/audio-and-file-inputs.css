@@ -1,0 +1,610 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Ordered shared selectors and cascade overrides. */
+fig-audio {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacer-2);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  > audio {
+    display: none;
+  }
+
+  > fig-audio-waveform,
+  > fig-media-controls {
+    width: 100%;
+    min-width: 0;
+  }
+  > fig-audio-waveform{
+    padding: 0 var(--spacer-2);
+  }
+}
+
+fig-input-file {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-2);
+  min-width: 0;
+  max-width: 100%;
+
+  &[data-previewing] {
+    width: 100%;
+  }
+
+  &[full]:not([full="false"]) {
+    flex: 1 1 auto;
+    width: 100%;
+
+    & > fig-tooltip,
+    & > fig-button {
+      flex: 1;
+      min-width: 0;
+    }
+
+    & > fig-tooltip > fig-button {
+      width: 100%;
+    }
+  }
+
+  .fig-input-file-filename {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .fig-input-file-filename:has(> .fig-input-file-audio-waveform) {
+    column-gap: var(--spacer-1);
+    overflow: hidden;
+
+    &:is(:focus, :focus-within) {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+  }
+
+  .fig-input-file-audio-control,
+  .fig-input-file-audio-waveform {
+    display: none;
+  }
+
+  .fig-input-file-audio-waveform {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    pointer-events: none;
+
+    .fig-audio-waveform-surface {
+      width: 100%;
+    }
+  }
+
+  &:is(:hover, :focus-within, [data-audio-playing])
+    .fig-input-file-filename,
+  fig-property[activation="row"]:is(:hover, :focus-within)
+    & .fig-input-file-filename {
+    > .fig-input-file-audio-icon,
+    > .fig-input-file-audio-label {
+      display: none;
+    }
+
+    > .fig-input-file-audio-control {
+      display: inline-flex;
+    }
+
+    > .fig-input-file-audio-waveform {
+      display: block;
+    }
+  }
+
+  .fig-input-file-filename[selected]:not([selected="false"])
+    > .fig-input-file-audio-waveform {
+    --fig-audio-waveform-stroke-color: var(
+      --figma-color-bordertranslucentstrong
+    );
+    --fig-audio-waveform-progress-color: var(--figma-color-icon-selected);
+  }
+
+  .fig-input-file-clear {
+    display: none;
+    flex-shrink: 0;
+  }
+
+  &:is(:hover, :focus-within) .fig-input-file-clear,
+  fig-property[activation="row"]:is(:hover, :focus-within)
+    & .fig-input-file-clear,
+  fig-field:hover & .fig-input-file-clear {
+    display: flex;
+  }
+
+  fig-button:has(> input[type="file"]:focus-visible) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  fig-button > input[type="file"] {
+    &:focus,
+    &:focus-visible {
+      outline: 0;
+      box-shadow: none;
+    }
+  }
+
+  :is(fig-swatch, fig-chit) {
+    background-color: transparent;
+  }
+
+  &[dragover] fig-button {
+    outline: 1px dashed var(--figma-color-border-brand);
+    outline-offset: -1px;
+  }
+}
+
+fig-media,
+fig-image,
+fig-video {
+  --fig-media-fit: contain;
+  --fig-media-aspect-ratio: 4/3;
+  --fig-media-size: 100%;
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  max-width: var(--fig-media-size);
+  align-items: stretch;
+  position: relative;
+
+  &:has(> :is([slot="overlay"], fig-input-file[variant="overlay"])) {
+    display: inline-grid;
+    grid-template-areas: "media-preview";
+  }
+
+  &[size="small"] {
+    --fig-media-size: 2rem;
+    width: var(--fig-media-size);
+  }
+  &[size="medium"] {
+    --fig-media-size: 4rem;
+    width: var(--fig-media-size);
+  }
+  &[size="large"] {
+    --fig-media-size: 6rem;
+    width: var(--fig-media-size);
+  }
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &[aspect-ratio] {
+    width: 100%;
+  }
+
+  /* An explicit size wins over full/aspect-ratio stretching, which would
+     otherwise collapse to 0 inside a shrink-to-fit parent (e.g. fig-choice). */
+  &[size]:not([size=""]):not([size="auto"]) {
+    width: var(--fig-media-size);
+  }
+
+  > fig-preview {
+    --fig-preview-fit: var(--fig-media-fit);
+    width: 100%;
+    max-width: var(--fig-media-size);
+    aspect-ratio: var(--fig-media-aspect-ratio);
+    min-height: 4rem;
+  }
+
+  &[size="small"] > fig-preview,
+  &[size="medium"] > fig-preview,
+  &[size="large"] > fig-preview,
+  &[aspect-ratio] > fig-preview {
+    min-height: auto;
+  }
+
+  &[checkerboard]:not([checkerboard="false"]) > fig-preview {
+    background: var(--checkerboard);
+  }
+
+  > :is(fig-preview, [slot="overlay"], fig-input-file[variant="overlay"]) {
+    grid-area: media-preview;
+  }
+
+  > fig-preview > video,
+  > fig-preview > img,
+  > fig-preview > .fig-media-element[data-generated] {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: var(--fig-preview-fit);
+    object-position: center;
+    z-index: 0;
+  }
+
+  > fig-spinner[slot="overlay"][data-loading-indicator][data-generated] {
+    place-self: center;
+    max-width: none;
+    z-index: 1;
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  &:not(:has(> fig-preview > video.fig-media-element[data-generated][src]:not([src=""]))):is(:not([poster]), [poster=""])
+    > fig-preview > video.fig-media-element[data-generated] {
+    opacity: 0;
+    pointer-events: none;
+  }
+  &:not(:has(> fig-preview > img.fig-media-element[data-generated][src]:not([src=""]))) > fig-preview > img.fig-media-element[data-generated] {
+    opacity: 0;
+    pointer-events: none;
+  }
+  > fig-preview > fig-input-file:is([data-generated], [variant="overlay"]) {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    max-width: calc(100% - var(--spacer-4));
+  }
+  &:not(:has(> fig-preview > :is(img, video).fig-media-element[data-generated][src]:not([src=""]))) > fig-preview > fig-input-file:is([data-generated], [variant="overlay"]),
+  > fig-preview:hover > fig-input-file:is([data-generated], [variant="overlay"]),
+  > fig-preview:focus-within > fig-input-file:is([data-generated], [variant="overlay"]) {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  > :is([slot="overlay"], fig-input-file[variant="overlay"]) {
+    place-self: center;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    max-width: calc(100% - var(--spacer-4));
+  }
+
+  &:not(:has(> fig-preview > :is(img, video).fig-media-element[data-generated][src]:not([src=""]))) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> fig-preview:hover) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> fig-preview:focus-within) > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> [slot="overlay"]:is(:focus, :focus-within, :active)) > [slot="overlay"],
+  &:has(> fig-input-file[variant="overlay"]:is(:focus, :focus-within, :active)) > fig-input-file[variant="overlay"],
+  > [slot="overlay"]:focus-within,
+  > fig-input-file[variant="overlay"]:focus-within,
+  /* The overlay is a sibling of fig-preview, so hovering it drops the
+     preview's :hover. Keep it shown to avoid a show/hide flicker loop. */
+  > [slot="overlay"]:hover,
+  > fig-input-file[variant="overlay"]:hover {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  > fig-media-controls[data-generated] {
+    position: static;
+    width: 100%;
+    pointer-events: auto;
+  }
+
+  > figcaption {
+    display: block;
+    width: 100%;
+    color: var(--figma-color-text-secondary);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height);
+    text-align: left;
+    white-space: normal;
+  }
+}
+
+fig-media-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-1);
+  width: 100%;
+
+  /* display:contents on fig-tooltip drops the play button out of this flex
+     row until hover/reflow. Keep a real box so the control is always visible. */
+  > fig-tooltip {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+  }
+
+  &[overlay]:not([overlay="false"]) {
+    border-radius: var(--radius-medium);
+    background-color: var(--figma-color-bg);
+    color: var(--figma-color-text);
+    color-scheme: light;
+    padding: var(--spacer-1);
+    box-shadow: 0 0 0 1px var(--figma-color-bordertranslucent);
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+    color: var(--figma-color-text-disabled);
+
+    .fig-media-controls-time {
+      color: var(--figma-color-text-disabled);
+    }
+  }
+
+  > fig-slider {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .fig-media-controls-time {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    padding-right: var(--spacer-2);
+    padding-left: var(--spacer-1);
+  }
+}
+/* Easing Curve */
+fig-easing-curve {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  --stroke-width: 2;
+  --easing-bezier-handle-radius: 5;
+  --easing-spring-handle-radius: 5;
+  --easing-handle-fill: var(--figma-color-border-strong);
+  --easing-duration-bar-width: 7;
+  --easing-duration-bar-height: 16;
+  --easing-duration-bar-radius: 4;
+  --aspect-ratio: 1 / 1;
+
+  width: 100%;
+  .fig-easing-curve-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .fig-easing-curve-svg-container {
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg-secondary);
+    padding: var(--spacer-4);
+    aspect-ratio: var(--aspect-ratio);
+    overflow: hidden;
+  }
+  &.spring-mode {
+    .fig-easing-curve-svg-container,
+    .fig-easing-curve-svg {
+      cursor: ew-resize;
+    }
+  }
+  &.spring-mode.spring-bounce-dragging {
+    .fig-easing-curve-svg-container,
+    .fig-easing-curve-svg,
+    .fig-easing-curve-handle[data-handle="bounce"],
+    .fig-easing-curve-handle[data-handle="bounce"] fig-handle,
+    .fig-easing-curve-handle[data-handle="bounce"] .fig-handle-hit-area {
+      cursor: ns-resize;
+    }
+  }
+  .fig-easing-curve-boundary,
+  .fig-easing-curve-bounds,
+  .fig-easing-curve-arm,
+  .fig-easing-curve-path,
+  .fig-easing-curve-target {
+    pointer-events: none;
+  }
+  .fig-easing-curve-boundary {
+    stroke: var(--figma-color-bordertranslucent);
+    stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .fig-easing-curve-bounds {
+    fill: transparent;
+  }
+  .fig-easing-curve-arm {
+    stroke: var(--figma-color-border-brand-strong);
+    stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .fig-easing-curve-path {
+    fill: none;
+    stroke: var(--figma-color-text);
+    stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .fig-easing-curve-target {
+    stroke: var(--figma-color-bordertranslucent);
+    stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .fig-easing-curve-handle {
+    overflow: visible;
+    pointer-events: all;
+    cursor: default;
+  }
+  fig-handle[type="minimal"] {
+    --fig-handle-inner-bg: var(--figma-color-bg-secondary);
+  }
+  &.spring-mode .fig-easing-curve-handle[data-handle="bounce"],
+  &.spring-mode .fig-easing-curve-handle[data-handle="bounce"] fig-handle,
+  &.spring-mode .fig-easing-curve-handle[data-handle="bounce"] .fig-handle-hit-area {
+    cursor: ns-resize;
+  }
+  .fig-easing-curve-select {
+    [slot="prepend"] svg {
+      vertical-align: middle;
+    }
+  }
+}
+
+/* Angle */
+fig-angle {
+  --stroke-width: 1.5;
+  --aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  width: 100%;
+  min-width: 0;
+  user-select: none;
+
+  .fig-angle-surface {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: var(--aspect-ratio);
+    display: grid;
+    place-items: center;
+    padding: var(--spacer-3);
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg-secondary);
+    overflow: hidden;
+
+    &:has(
+      .fig-angle-svg:focus-visible,
+      .fig-angle-input :focus-visible
+    ),
+    &.dragging {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+
+    &.dragging .fig-angle-svg {
+      cursor: grabbing;
+    }
+  }
+
+  .fig-angle-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+    cursor: grab;
+    touch-action: none;
+    pointer-events: auto;
+
+    &:focus {
+      outline: 0;
+    }
+  }
+
+  .fig-angle-boundary,
+  .fig-angle-tick,
+  .fig-angle-indicator,
+  .fig-angle-indicator-halo,
+  .fig-angle-reference-path {
+    vector-effect: non-scaling-stroke;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+    stroke-width: var(--stroke-width);
+  }
+
+  .fig-angle-boundary {
+    fill: none;
+    stroke: var(--figma-color-bordertranslucent);
+    stroke-width: var(--stroke-width);
+  }
+
+  .fig-angle-tick {
+    stroke: var(--figma-color-icon-tertiary);
+    stroke-width: var(--stroke-width);
+  }
+
+  .fig-angle-reference {
+    color: var(--figma-color-icon-secondary);
+    pointer-events: none;
+  }
+
+  .fig-angle-indicator-halo {
+    stroke: var(--figma-color-border);
+    stroke-width: calc(var(--stroke-width) * 3);
+  }
+
+  .fig-angle-indicator {
+    stroke: var(--figma-color-icon);
+    stroke-width: calc(var(--stroke-width) * 2);
+  }
+
+  .fig-angle-input {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .fig-angle-surface > .fig-angle-input {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    width: fit-content;
+    transform: translate(-50%, -50%);
+    outline: 0 !important;
+
+    input {
+      field-sizing: content;
+      flex: 0 0 auto;
+    }
+  }
+
+  .fig-angle-reset {
+    position: absolute;
+    right: var(--spacer-1);
+    bottom: var(--spacer-1);
+    z-index: 3;
+    background-color: var(--figma-color-bg-secondary) !important;
+
+    &:hover fig-icon {
+      background-color: var(--figma-color-text);
+    }
+
+    fig-icon {
+      background-color: var(--figma-color-text-tertiary);
+    }
+  }
+
+  .fig-angle-input > .fig-angle-rotations {
+    flex: 0 0 auto;
+    width: max-content;
+    min-width: max-content;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--figma-color-text-secondary);
+  }
+
+  &[full] {
+    display: flex;
+    width: 100%;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    .fig-angle-surface {
+      .fig-angle-svg {
+        cursor: default;
+      }
+    }
+
+    .fig-angle-boundary,
+    .fig-angle-tick,
+    .fig-angle-indicator-halo {
+      stroke: var(--figma-color-border-disabled-strong);
+    }
+
+    .fig-angle-reference {
+      color: var(--figma-color-icon-disabled);
+    }
+
+    .fig-angle-indicator {
+      stroke: var(--figma-color-icon-disabled);
+    }
+  }
+
+  fig-field:not([direction="vertical"]) & {
+    flex: 1;
+  }
+}

@@ -2,7 +2,11 @@
 
 React contract: [react.md](react.md). Attrs: [reference.md](reference.md).
 
-Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.md).
+Handlers below follow [react.md](react.md). JSX `onChange` examples target React
+19; React 18 consumers must attach `change` through `addEventListener`.
+
+Public events that bubble are composed, so they cross ancestor shadow roots.
+Cancelability is event-specific; check `event.cancelable` before preventing one.
 
 ## Buttons and inputs
 
@@ -71,6 +75,7 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 
 - Attrs: `type` (`text` | `number`, default `text`), `value`, `options`, `placeholder`, `disabled`, `full`
 - Uses `fig-select` when the editor bundle is registered; otherwise uses core `fig-dropdown`.
+- Exact typed option matches are selected and checked; unmatched values clear the option selection.
 - Legacy alias: `fig-combo-input`
 
 ### `fig-input-text`
@@ -141,8 +146,9 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 <fig-audio src="track.mp3" controls loop />
 ```
 
-- Attrs: `src`, `autoplay`, `controls`, `muted`, `loop`
+- Attrs: `src`, `variant="bars|ribbon"`, `autoplay`, `controls`, `muted`, `loop`
 - Composes a synchronized `fig-audio-waveform` and `fig-media-controls`.
+- `variant` is forwarded to the generated or authored waveform and defaults to `bars`.
 - Authored direct waveform and controls children are preserved.
 - Methods: `play()`, `pause()`, `toggle()`; `audioEl` exposes the native audio element.
 
@@ -153,6 +159,7 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 ```
 
 - Responsive waveform generated from the `url` attribute.
+- `variant="bars|ribbon"` selects rounded bars or a smooth mirrored ribbon; defaults to `bars`.
 - `progress` is a clamped `0`–`1` fraction; the completed waveform uses the selected icon color.
 - `polarization` controls waveform contrast around half-height; default `1.5`, `1` is neutral.
 - `full` fills the available width.
@@ -534,6 +541,8 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 ```
 
 - Attrs: `name`, `size` (`medium` | `small`), `color` (token)
+- `fig.css` includes all generated icon tokens. Use `@rogieking/figui3/icons.css` only when consuming the `--icon-*` variables without the full component stylesheet.
+- Add icons through `icons/<size>/<name>.svg` and `icons/manifest.js`; `npm run build:icons` generates `icons.css`.
 
 ### `fig-avatar`
 
@@ -786,9 +795,10 @@ dropdown fallback.
 
 - Attrs: `duration`, `direction`, `playing`
 
-## `fig-layer` (separate bundle)
+## `fig-layer` (core registration, standalone styles)
 
-Not registered by `fig.js`. Import `fig-layer.css` + `fig-layer.js`.
+Registered by `fig.js`. Import `fig-layer.css` for layer-list styling.
+`fig-layer.js` remains available as a standalone registration entry.
 
 ```tsx
 <fig-layer data-section="button" open>

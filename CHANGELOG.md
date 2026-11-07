@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.9.0]
+
+### Added
+
+- Added generated icon sources, a shared icon manifest, and standalone `icons.css`.
+- Added SSR-safe explicit registration, complete DOM and React declarations, and React runtime guidance.
+- Added generated bundle inventories, browser-support CI, and Chromium, Firefox, and WebKit contract coverage.
+
+### Changed
+
+- Split all core, Editor, and Lab custom elements into per-tag JavaScript and CSS source pairs under `src/` while retaining the existing aggregate package and `dist/` entrypoints.
+- Bundled complete Editor and Lab aggregates while preserving standalone component imports.
+- Reorganized playground navigation, package builds, licensing checks, and source packaging around the new component structure.
+
+### Fixed
+
+- Hardened component lifecycle, reconnect, event propagation, and registration behavior across core, Editor, and Lab controls.
+- Removed unsafe HTML parsing paths and improved WebKit customized built-in support.
+- Expanded regression coverage for audio waveforms, property controls, disabled states, and source/package contracts.
+
 ## [11.8.5]
 
 ### Added

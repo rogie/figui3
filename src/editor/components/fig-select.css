@@ -1,0 +1,190 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+/* Select — host chrome; trigger/listbox live in shadow (options slotted) */
+fig-select {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  min-width: 0;
+  height: var(--spacer-4);
+  border-radius: var(--radius-medium);
+  background-color: var(--figma-color-bg);
+  color: var(--figma-color-text);
+  box-shadow: inset 0 0 0 1px var(--figma-color-border);
+
+  &[size="large"] {
+    height: var(--spacer-5);
+  }
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &[icon]:not([icon="false"]) {
+    --fig-select-icon-size: var(--spacer-4);
+
+    flex: 0 0 var(--fig-select-icon-size);
+    width: var(--fig-select-icon-size);
+
+    &[size="large"] {
+      --fig-select-icon-size: var(--spacer-5);
+    }
+
+    &::part(trigger) {
+      flex: 0 0 var(--fig-select-icon-size);
+      justify-content: center;
+      width: var(--fig-select-icon-size);
+      padding: 0;
+    }
+
+    &::part(label),
+    &::part(prepend) {
+      display: none;
+    }
+
+    &::after {
+      right: auto;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+    color: var(--figma-color-text-tertiary);
+
+    &::after {
+      background-color: var(--figma-color-icon-disabled);
+    }
+  }
+
+  &[variant="ghost"] {
+    box-shadow: none;
+    background-color: transparent;
+
+    &:hover:not([disabled]):not([disabled="false"]):not(
+        [open]:not([open="false"])
+      ) {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
+
+  &[variant="input"] {
+    box-shadow: none;
+    background-color: var(--figma-color-bg-secondary);
+    color: var(--figma-color-text);
+
+    &:hover:not([disabled]):not([disabled="false"]):not(
+        [open]:not([open="false"])
+      ) {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+      background-color: var(--figma-color-bg-transparent);
+    }
+
+    &:active:not([disabled]):not([disabled="false"]) {
+      background-color: var(--figma-color-bg-transparent-pressed);
+      color: var(--figma-color-text);
+    }
+
+    &:focus-within {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
+
+  &[open]:not([open="false"]) {
+    color: var(--figma-color-text-selected);
+    background-color: var(--figma-color-bg-selected);
+    box-shadow: none;
+    &::after {
+      background-color: var(--figma-color-icon-selected);
+    }
+  }
+
+  &[variant="primary"] {
+    color: var(--figma-color-text-onbrand);
+    background-color: var(--figma-color-bg-brand);
+    box-shadow: none;
+    font-weight: 500;
+
+    &::after {
+      background-color: var(--figma-color-icon-onbrand);
+    }
+
+    &:hover:not([disabled]):not([disabled="false"]):not(
+        [open]:not([open="false"])
+      ) {
+      background-color: var(--figma-color-bg-brand-hover);
+    }
+
+    &:active:not([disabled]):not([disabled="false"]),
+    &[open]:not([open="false"]) {
+      color: var(--figma-color-text-onbrand-secondary);
+      background-color: var(--figma-color-bg-brand-pressed);
+
+      &::after {
+        background-color: var(--figma-color-icon-onbrand);
+      }
+    }
+
+    &[disabled]:not([disabled="false"]) {
+      color: var(--figma-color-text-ondisabled);
+      background-color: var(--figma-color-bg-disabled);
+
+      &::after {
+        background-color: var(--figma-color-icon-ondisabled);
+      }
+    }
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    mask-image: var(--icon-16-chevron);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    background-color: var(--figma-color-icon);
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+/*
+ * Internal listbox is a fig-popup inside fig-select's shadow, so document
+ * dialog[is="fig-popup"] rules don't apply. Expose part=listbox and mirror
+ * the menu-theme popup chrome (same tokens as components.css).
+ */
+fig-select::part(listbox) {
+  --z-index: 999999;
+  --fig-popup-radius: var(--radius-large);
+  --fig-popup-bg-color: var(--figma-color-bg-menu);
+
+  z-index: var(--z-index);
+  position: fixed;
+  /* Do not set inset here — ::part inset beats inline left/top and
+     prevents edge clamping from moving the menu back into view. */
+  margin: 0;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--fig-popup-radius);
+  background-color: var(--fig-popup-bg-color);
+  color: var(--figma-color-text-menu);
+  color-scheme: dark;
+  box-shadow: var(--figma-elevation-400-menu-panel);
+  /* width/min/max set in JS — ::part width rules override element.style. */
+  max-height: calc(100vh - 1rem);
+  height: max-content;
+}

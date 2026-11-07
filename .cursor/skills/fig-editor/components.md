@@ -1,6 +1,15 @@
+<!--
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+-->
+
 # FigUI3 editor components (`fig-editor.js`)
 
 React contract: [../figui3/react.md](../figui3/react.md). Attrs: [reference.md](reference.md).
+JSX `onChange` examples target React 19; React 18 consumers must attach
+`change` through `addEventListener`.
 
 Install `fig-editor.css` + `fig-editor.js` (pulls in `fig.js`). Still import `fig-editor.css`.
 

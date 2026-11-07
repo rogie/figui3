@@ -1,0 +1,43 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-input-fill {
+  outline: none !important;
+
+  &:is(:hover, :focus, :focus-visible, :focus-within),
+  &.has-popup-open {
+    outline: none !important;
+  }
+
+  &:has(:focus-visible) {
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
+  }
+
+  & > [slot^="mode-"] {
+    display: none;
+  }
+
+  & > .input-combo > fig-fill-picker {
+    display: contents;
+  }
+
+  & > .input-combo > :is(.fig-input-fill-hex, .fig-input-fill-label) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  & > .input-combo > .fig-input-fill-label {
+    height: auto;
+    margin-left: 0;
+    overflow: hidden;
+    padding: var(--spacer-1) var(--spacer-2);
+    padding-left: 0 !important;
+    font: inherit;
+    line-height: 1rem !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

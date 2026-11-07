@@ -1,0 +1,22 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+@media (forced-colors: active) {
+  fig-angle {
+    .fig-angle-boundary,
+    .fig-angle-tick,
+    .fig-angle-indicator-halo {
+      stroke: CanvasText;
+    }
+
+    .fig-angle-reference {
+      color: CanvasText;
+    }
+
+    .fig-angle-indicator {
+      stroke: Highlight;
+    }
+  }
+}

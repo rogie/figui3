@@ -17,8 +17,11 @@ export function collectPageErrors(page: Page): PageErrors {
   return errors;
 }
 
-export async function bootFigFixture(page: Page) {
-  await page.goto("/tests/figui/fixture.html");
+export async function bootFigFixture(
+  page: Page,
+  path = "/tests/figui/fixture.html",
+) {
+  await page.goto(path);
   await page.waitForFunction(() => customElements.get("fig-button"));
 }
 

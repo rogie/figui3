@@ -1,89 +1,33 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* The playground has its own React installation; reuse the package tag map
+   while augmenting that local React module. */
 import "react";
+import type { FigTagNameMap } from "../../../types/index";
 
-type FigAttrs = React.DetailedHTMLProps<
-  React.HTMLAttributes<HTMLElement>,
-  HTMLElement
+type PlaygroundFigProps<T extends HTMLElement> = Omit<
+  React.DetailedHTMLProps<React.HTMLAttributes<T>, T>,
+  "ref"
 > & {
-  [key: string]: any;
+  ref?: React.Ref<T> | React.Ref<HTMLElement>;
+  [attribute: string]: unknown;
+};
+
+type PlaygroundFigElements = {
+  [K in keyof FigTagNameMap]: PlaygroundFigProps<FigTagNameMap[K]>;
 };
 
 declare module "react" {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
-    interface IntrinsicElements {
-      "fig-button": FigAttrs;
-      "fig-switch": FigAttrs;
-      "fig-layer": FigAttrs;
-      "fig-field": FigAttrs;
-      "fig-property": FigAttrs;
-      "fig-slider": FigAttrs;
-      "fig-select": FigAttrs;
-      "fig-select-options": FigAttrs;
-      "fig-select-option": FigAttrs;
-      "fig-dropdown": FigAttrs;
-      "fig-options": FigAttrs;
-      "fig-segmented-control": FigAttrs;
-      "fig-segment": FigAttrs;
-      "fig-toolbelt": FigAttrs;
-      "fig-toolbelt-group": FigAttrs;
-      "fig-toolbelt-item": FigAttrs;
-      "fig-group": FigAttrs;
-      "fig-content": FigAttrs;
-      "fig-media": FigAttrs;
-      "fig-image": FigAttrs;
-      "fig-icon": FigAttrs;
-      "fig-card": FigAttrs;
-      "fig-video": FigAttrs;
-      "fig-input-color": FigAttrs;
-      "fig-input-palette": FigAttrs;
-      "fig-palette-editor": FigAttrs;
-      "fig-gradient-editor": FigAttrs;
-      "fig-input-gradient": FigAttrs;
-      "fig-input-fill": FigAttrs;
-      "fig-angle": FigAttrs;
-      "fig-audio": FigAttrs;
-      "fig-audio-waveform": FigAttrs;
-      "fig-input-slider": FigAttrs;
-      "fig-input-slider-hue": FigAttrs;
-      "fig-input-slider-opacity": FigAttrs;
-      "fig-input-slider-delta": FigAttrs;
-      "fig-input-slider-stepper": FigAttrs;
-      "fig-input-slider-wheel": FigAttrs;
-      "fig-input-wheel": FigAttrs;
-      "fig-input-number": FigAttrs;
-      "fig-input-rotate": FigAttrs;
-      "fig-input-point": FigAttrs;
-      "fig-easing-curve": FigAttrs;
-      "fig-3d-rotate": FigAttrs;
-      "fig-origin-grid": FigAttrs;
-      "fig-avatar": FigAttrs;
-      "fig-shimmer": FigAttrs;
-      "fig-skeleton": FigAttrs;
-      "fig-input-text": FigAttrs;
-      "fig-input-file": FigAttrs;
-      "fig-split-input": FigAttrs;
-      "fig-combo-input": FigAttrs;
-      "fig-joystick": FigAttrs;
-      "fig-header": FigAttrs;
-      "fig-toast": FigAttrs;
-      "fig-tooltip": FigAttrs;
-      "fig-handle": FigAttrs;
-      "fig-ai-prompt": FigAttrs;
-      "fig-ai-context": FigAttrs;
-      "fig-attachment": FigAttrs;
-      "fig-attachments": FigAttrs;
-      "fig-chat-message": FigAttrs;
-      dialog: React.DetailedHTMLProps<
-        React.DialogHTMLAttributes<HTMLDialogElement>,
-        HTMLDialogElement
-      > & {
-        is?: string;
-        duration?: string;
-        theme?: string;
-        [key: string]: any;
-      };
-      "fig-stack": FigAttrs;
-    }
+    interface IntrinsicElements extends PlaygroundFigElements {}
+  }
+
+  interface HTMLAttributes<T> {
+    is?: string;
+  }
+
+  interface DialogHTMLAttributes<T> {
+    position?: string;
+    offset?: string;
+    duration?: string | number;
+    theme?: string;
   }
 }

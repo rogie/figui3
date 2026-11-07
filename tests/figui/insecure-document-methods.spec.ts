@@ -1,16 +1,27 @@
 import { expect, test } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { bootFigFixture, collectPageErrors } from "./helpers";
 
-test("shipped source contains no HTML parsing sinks", async () => {
+async function sourceFiles() {
   const files = [
     "fig.js",
     "fig-editor.js",
-    "fig-input-rotate.js",
-    "fig-layer.js",
-    "fig-property.js",
     "fig-lab.js",
   ];
+  const visit = async (path: string) => {
+    const entries = await readdir(path, { withFileTypes: true });
+    for (const entry of entries) {
+      const child = `${path}/${entry.name}`;
+      if (entry.isDirectory()) await visit(child);
+      else if (entry.name.endsWith(".js")) files.push(child);
+    }
+  };
+  await visit("src");
+  return files.sort();
+}
+
+test("shipped source contains no HTML parsing sinks", async () => {
+  const files = await sourceFiles();
   const forbidden = [
     /\binnerHTML\b/,
     /\bouterHTML\b/,

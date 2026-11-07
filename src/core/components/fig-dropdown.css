@@ -1,0 +1,58 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Dropdown */
+fig-dropdown {
+  & > *:not(select) {
+    display: none !important;
+  }
+}
+
+/* Native select popups in Chromium webviews do not reliably inherit themed
+   option colors. Style only the popup rows so the closed control continues
+   to resolve FigUI's light-dark tokens from the application color scheme. */
+fig-dropdown > select {
+  color: inherit;
+
+  option,
+  optgroup {
+    color: #1e1e1e;
+    background-color: #ffffff;
+  }
+}
+fig-dropdown,
+select,
+.fig-dropdown {
+  display: inline-flex;
+  position: relative;
+  > select {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    width: 100%;
+  }
+
+  /* Chevron icon using mask-image for light-dark support */
+  &:not([multiple])::after {
+    content: "";
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    mask-image: var(--icon-16-chevron);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    background-color: var(--figma-color-icon);
+    pointer-events: none;
+  }
+
+  /* Autoresize to content width */
+  &[autoresize]:not([autoresize="false"]) select {
+    field-sizing: content;
+  }
+}

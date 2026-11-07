@@ -1,0 +1,37 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-toolbelt-group {
+  display: inline-flex;
+  flex-flow: row nowrap;
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: var(--fig-toolbelt-gap);
+  min-width: 0;
+
+  &:is(:not([slot]), [slot=""])
+    + fig-toolbelt-group:is(:not([slot]), [slot=""]),
+  &[slot="prepend"] + fig-toolbelt-group[slot="prepend"],
+  &[slot="append"] + fig-toolbelt-group[slot="append"] {
+    margin-inline-start: calc(
+      var(--fig-toolbelt-group-gap) - var(--fig-toolbelt-gap)
+    );
+    padding-inline-start: var(--fig-toolbelt-group-gap);
+    border-inline-start: 1px solid
+      var(--fig-toolbelt-group-separator-color);
+  }
+
+  &[slot="prepend"] {
+    padding-inline-end: var(--fig-toolbelt-group-gap);
+    border-inline-end: 1px solid
+      var(--fig-toolbelt-group-separator-color);
+  }
+
+  &[slot="append"] {
+    padding-inline-start: var(--fig-toolbelt-group-gap);
+    border-inline-start: 1px solid
+      var(--fig-toolbelt-group-separator-color);
+  }
+}

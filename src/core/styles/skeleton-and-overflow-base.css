@@ -1,0 +1,232 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Ordered shared selectors and cascade overrides. */
+/* Skeleton */
+fig-skeleton {
+  display: contents;
+  pointer-events: none;
+  user-select: none;
+  --fig-skeleton-angle: 90deg;
+  --fig-skeleton-bg-color: var(--figma-color-bg-secondary);
+  --fig-skeleton-bright-mask-color: rgba(0, 0, 0, 1);
+  --fig-skeleton-duration: 1.5s;
+  --fig-skeleton-mask-from: 100% 0%;
+  --fig-skeleton-mask-to: 0% 0%;
+  --fig-skeleton-size: 250% 100%;
+  --fig-skeleton-subtle-mask-color: rgba(0, 0, 0, 0.75);
+
+  &[direction="vertical"] {
+    --fig-skeleton-angle: 180deg;
+    --fig-skeleton-size: 100% 400%;
+    --fig-skeleton-mask-from: 0% 100%;
+  }
+  &[direction="diagonal"] {
+    --fig-skeleton-angle: 135deg;
+    --fig-skeleton-size: 250% 250%;
+  }
+
+  &:not([playing="false"]) * {
+    mask: linear-gradient(
+      var(--fig-skeleton-angle),
+      var(--fig-skeleton-subtle-mask-color) 0%,
+      var(--fig-skeleton-subtle-mask-color) 40%,
+      var(--fig-skeleton-bright-mask-color) 50%,
+      var(--fig-skeleton-subtle-mask-color) 60%,
+      var(--fig-skeleton-subtle-mask-color) 100%
+    );
+    mask-size: var(--fig-skeleton-size);
+    animation: fig-shimmer-mask var(--fig-skeleton-duration) linear infinite;
+    * {
+      color: transparent;
+    }
+  }
+  label,
+  h3,
+  h2,
+  p,
+  span {
+    background: var(--fig-skeleton-bg-color);
+    border-radius: var(--radius-medium);
+  }
+  img,video{
+    opacity: 0
+  }
+  fig-field{
+    & > label{
+      padding-top:0;
+      padding-bottom:0;
+      border-radius: 0.5rem;
+    }
+  }
+
+  *:not(fig-field, fig-header) {
+    background: var(--fig-skeleton-bg-color) !important;
+    box-shadow: none !important;
+    border-radius: var(--radius-medium);
+    color: var(--fig-skeleton-bg-color) !important;
+    pointer-events: none;
+    user-select: none;
+  }
+  *::placeholder {
+    color: transparent !important;
+  }
+  *::after,
+  *::before,
+  *::marker,
+  *::picker-icon,
+  *::-webkit-slider-thumb,
+  *::-webkit-slider-runnable-track,
+  *::-webkit-color-swatch,
+  *::-webkit-color-swatch-wrapper,
+  *::-webkit-details-marker,
+  *::-webkit-inner-spin-button,
+  *::-webkit-outer-spin-button,
+  *::-webkit-calendar-picker-indicator {
+    display: none !important;
+  }
+}
+
+/* Utilities */
+
+@property --fig-overflow-fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fig-overflow-fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fig-overflow-fade-left {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fig-overflow-fade-right {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fig-overflow-fade-top-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --fig-overflow-fade-bottom-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --fig-overflow-fade-left-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --fig-overflow-fade-right-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+.fig-overflow-fade {
+  --fig-overflow-fade-size: var(--spacer-5);
+  --fig-overflow-fade-clear-top: 0px;
+  --fig-overflow-fade-edge-opacity: 0;
+  --fig-overflow-fade-edge-alpha-04: calc(
+    0.04 + var(--fig-overflow-fade-edge-opacity) * 0.96
+  );
+  --fig-overflow-fade-edge-alpha-16: calc(
+    0.16 + var(--fig-overflow-fade-edge-opacity) * 0.84
+  );
+  --fig-overflow-fade-edge-alpha-32: calc(
+    0.32 + var(--fig-overflow-fade-edge-opacity) * 0.68
+  );
+  --fig-overflow-fade-edge-alpha-50: calc(
+    0.5 + var(--fig-overflow-fade-edge-opacity) * 0.5
+  );
+  --fig-overflow-fade-edge-alpha-68: calc(
+    0.68 + var(--fig-overflow-fade-edge-opacity) * 0.32
+  );
+  --fig-overflow-fade-edge-alpha-84: calc(
+    0.84 + var(--fig-overflow-fade-edge-opacity) * 0.16
+  );
+  --fig-overflow-fade-edge-alpha-96: calc(
+    0.96 + var(--fig-overflow-fade-edge-opacity) * 0.04
+  );
+
+  overflow-y: auto;
+}
+
+.fig-overflow-fade:is(
+  .fig-overflow-fade-horizontal,
+  .fig-overflow-fade-left,
+  .fig-overflow-fade-right
+) {
+  --fig-overflow-fade-clear-left: 0px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Toolbelt */
+fig-toolbelt-item {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  height: var(--fig-toolbelt-item-height, var(--control-height));
+  padding-inline: 0;
+  border-radius: var(--radius-medium);
+  color: var(--figma-color-text-secondary);
+  line-height: var(--line-height);
+  cursor: default;
+  user-select: none;
+
+  &:has(> fig-tooltip > fig-button[icon]:not([icon="false"])) {
+    padding-inline: 0;
+  }
+
+  &[selected]:not([selected="false"]) {
+    color: var(--figma-color-text);
+    background-color: var(--figma-color-bg-secondary);
+
+    fig-button,
+    fig-button:hover {
+      color: var(--figma-color-icon-onbrand);
+      background-color: var(--figma-color-bg-brand);
+    }
+    fig-button[variant="secondary"],
+    fig-button[variant="ghost"],
+    fig-button[variant="secondary"]:hover,
+    fig-button[variant="ghost"]:hover {
+      color: var(--figma-color-icon-selected);
+      background-color: var(--figma-color-bg-selected);
+    }
+  }
+
+  &:hover {
+    background-color: var(--figma-color-bg-secondary);
+  }
+
+  &:focus-visible,
+  &[data-focus-visible] {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+}

@@ -254,7 +254,7 @@ test.describe("fig.js component contracts", () => {
   test("secondary combo controls share one outer border and one divider", async ({
     page,
   }) => {
-    const styles = await page.evaluate(() => {
+    const styles = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
@@ -421,6 +421,43 @@ test.describe("fig.js component contracts", () => {
       directSecond: "auto",
       wrappedFirst: "1",
       wrappedSecond: "auto",
+    });
+  });
+
+  test("split inputs raise focused controls above adjacent siblings", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-split-input
+          id="split-input"
+          value="Center"
+          options="Left,Center,Right"
+        ></fig-split-input>
+      `;
+    });
+
+    const readZIndexes = () =>
+      page.locator("#split-input").evaluate((split) => {
+        const controls = split.querySelectorAll(":scope > .input-combo > *");
+        return {
+          input: getComputedStyle(controls[0] as HTMLElement).zIndex,
+          selector: getComputedStyle(controls[1] as HTMLElement).zIndex,
+        };
+      });
+
+    await page.locator("#split-input fig-input-text input").focus();
+    await expect.poll(readZIndexes).toEqual({
+      input: "1",
+      selector: "auto",
+    });
+
+    await page.locator("#split-input fig-dropdown select").focus();
+    await expect.poll(readZIndexes).toEqual({
+      input: "auto",
+      selector: "1",
     });
   });
 
@@ -7445,6 +7482,68 @@ test.describe("split input accessibility", () => {
     });
   });
 
+  test("matches manually entered values to native dropdown options", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-split-input
+          id="split-native-match"
+          options="Inter,Roboto"
+          value="Inter"
+        ></fig-split-input>
+      `;
+    });
+    const host = page.locator("#split-native-match");
+    const readSelection = () =>
+      host.evaluate((element) => {
+        const dropdown = element.querySelector("fig-dropdown");
+        const select = dropdown?.querySelector("select");
+        return {
+          value: element.getAttribute("value"),
+          selectorValue: dropdown?.getAttribute("value"),
+          selectedValues: select
+            ? Array.from(select.selectedOptions, (option) => option.value)
+            : [],
+        };
+      });
+    const typeValue = (value: string) =>
+      host.evaluate((element: any, nextValue) => {
+        const input = element.querySelector("fig-input-text");
+        input.value = nextValue;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }, value);
+
+    await expect.poll(readSelection).toEqual({
+      value: "Inter",
+      selectorValue: "Inter",
+      selectedValues: ["Inter"],
+    });
+
+    await typeValue("Roboto");
+    await expect.poll(readSelection).toEqual({
+      value: "Roboto",
+      selectorValue: "Roboto",
+      selectedValues: ["Roboto"],
+    });
+
+    await typeValue("Custom");
+    await expect.poll(readSelection).toEqual({
+      value: "Custom",
+      selectorValue: null,
+      selectedValues: [],
+    });
+
+    await host.evaluate((element) => element.setAttribute("value", "Inter"));
+    await expect.poll(readSelection).toEqual({
+      value: "Inter",
+      selectorValue: "Inter",
+      selectedValues: ["Inter"],
+    });
+  });
+
   test("prefers fig-select when the editor component is registered", async ({
     page,
   }) => {
@@ -7521,6 +7620,64 @@ test.describe("split input accessibility", () => {
           detail: { value: "Roboto" },
         },
       ],
+    });
+  });
+
+  test("matches manually entered values to editor select options", async ({
+    page,
+  }) => {
+    await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
+    await page.evaluate(async () => {
+      await customElements.whenDefined("fig-select");
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-split-input
+          id="split-editor-match"
+          options="Inter,Roboto"
+          value="Inter"
+        ></fig-split-input>
+      `;
+      await new Promise(requestAnimationFrame);
+    });
+    const host = page.locator("#split-editor-match");
+    const readSelection = () =>
+      host.evaluate((element) => {
+        const select = element.querySelector("fig-select");
+        return {
+          value: element.getAttribute("value"),
+          selectorValue: select?.getAttribute("value"),
+          selectedValues: Array.from(
+            select?.querySelectorAll("fig-select-option[selected]") || [],
+            (option) => option.getAttribute("value"),
+          ),
+        };
+      });
+    const typeValue = (value: string) =>
+      host.evaluate((element: any, nextValue) => {
+        const input = element.querySelector("fig-input-text");
+        input.value = nextValue;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }, value);
+
+    await expect.poll(readSelection).toEqual({
+      value: "Inter",
+      selectorValue: "Inter",
+      selectedValues: ["Inter"],
+    });
+
+    await typeValue("Roboto");
+    await expect.poll(readSelection).toEqual({
+      value: "Roboto",
+      selectorValue: "Roboto",
+      selectedValues: ["Roboto"],
+    });
+
+    await typeValue("Custom");
+    await expect.poll(readSelection).toEqual({
+      value: "Custom",
+      selectorValue: null,
+      selectedValues: [],
     });
   });
 
@@ -9899,6 +10056,9 @@ test.describe("render timing composition", () => {
       const fieldNativeInput = field?.querySelector("fig-input-text input");
       const sliderInput = slider?.querySelector('input[type="range"]');
       const sliderDatalist = slider?.querySelector("datalist");
+      const sliderAuthoredDatalist = slider?.querySelector(
+        ":scope > #slider-ticks",
+      );
 
       return {
         textChildren: Array.from(text?.children ?? []).map((child) => child.id || child.tagName.toLowerCase()),
@@ -9909,6 +10069,7 @@ test.describe("render timing composition", () => {
         sliderInputReady: !!sliderInput,
         sliderList: sliderInput?.getAttribute("list"),
         sliderDatalistParent: sliderDatalist?.parentElement?.className,
+        sliderAuthoredDatalistParent: sliderAuthoredDatalist?.parentElement?.tagName,
         fieldLabelFor: fieldLabel?.getAttribute("for"),
         fieldInputId: fieldNativeInput?.id || null,
         fieldInputLabelledBy: fieldNativeInput?.getAttribute("aria-labelledby"),
@@ -9933,10 +10094,116 @@ test.describe("render timing composition", () => {
     expect(state.sliderInputReady).toBe(true);
     expect(state.sliderList).toBe("slider-ticks");
     expect(state.sliderDatalistParent).toContain("fig-slider-input-container");
+    expect(state.sliderAuthoredDatalistParent).toBe("FIG-SLIDER");
     expect(state.fieldLabelFor).toBe(state.fieldInputId);
     expect(state.fieldInputLabelledBy).toBe(state.fieldLabelId);
     expect(state.groupHeaderReady).toBe(true);
     expect(state.groupBodyStillProjected).toBe("group");
+  });
+
+  test("fig-slider preserves React-owned datalists across regeneration", async ({
+    page,
+  }) => {
+    const errors = collectPageErrors(page);
+    const initial = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider id="react-slider" text="false" value="50">
+          <datalist id="react-slider-ticks">
+            <option value="0"></option>
+            <option value="50"></option>
+            <option value="100"></option>
+          </datalist>
+        </fig-slider>
+      `;
+
+      const slider = root.querySelector("#react-slider");
+      const authored = slider?.querySelector(
+        ":scope > #react-slider-ticks",
+      );
+      slider?.setAttribute("variant", "classic");
+      const rendered = slider?.querySelector(
+        'datalist[data-generated="slider-authored"]',
+      );
+      return {
+        authoredParent: authored?.parentElement?.tagName,
+        authoredPreserved:
+          authored === slider?.querySelector(":scope > #react-slider-ticks"),
+        renderedParent: rendered?.parentElement?.className,
+        list: slider
+          ?.querySelector('input[type="range"]')
+          ?.getAttribute("list"),
+      };
+    });
+
+    expect(initial).toEqual({
+      authoredParent: "FIG-SLIDER",
+      authoredPreserved: true,
+      renderedParent: "fig-slider-input-container",
+      list: "react-slider-ticks",
+    });
+
+    const updated = await page.evaluate(async () => {
+      const slider = document.querySelector("#react-slider");
+      const authored = slider?.querySelector(
+        ":scope > #react-slider-ticks",
+      );
+      authored?.remove();
+      slider?.setAttribute("type", "hue");
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+      const afterRemoval = {
+        authoredCount: slider?.querySelectorAll(
+          ":scope > datalist:not([data-generated])",
+        ).length,
+        renderedCount: slider?.querySelectorAll(
+          'datalist[data-generated="slider-authored"]',
+        ).length,
+        list: slider
+          ?.querySelector('input[type="range"]')
+          ?.getAttribute("list"),
+      };
+
+      const replacement = document.createElement("datalist");
+      replacement.id = "replacement-ticks";
+      const option = document.createElement("option");
+      option.value = "25";
+      replacement.append(option);
+      slider?.append(replacement);
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+      option.value = "75";
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      const rendered = slider?.querySelector(
+        'datalist[data-generated="slider-authored"]',
+      );
+      return {
+        afterRemoval,
+        replacementParent: replacement.parentElement?.tagName,
+        replacementPreserved:
+          replacement ===
+          slider?.querySelector(":scope > #replacement-ticks"),
+        renderedValue: rendered?.querySelector("option")?.value,
+        list: slider
+          ?.querySelector('input[type="range"]')
+          ?.getAttribute("list"),
+      };
+    });
+
+    expect(updated).toEqual({
+      afterRemoval: {
+        authoredCount: 0,
+        renderedCount: 0,
+        list: null,
+      },
+      replacementParent: "FIG-SLIDER",
+      replacementPreserved: true,
+      renderedValue: "75",
+      list: "replacement-ticks",
+    });
+    expect(errors.pageErrors).toEqual([]);
+    expect(errors.consoleErrors).toEqual([]);
   });
 
   test("fig-group custom header actions do not toggle collapsible group", async ({
@@ -12299,7 +12566,7 @@ test.describe("remaining accessibility contracts", () => {
   test("fig-input-palette color strip uses the same 1px inner highlight as fig-swatch", async ({
     page,
   }) => {
-    const styles = await page.evaluate(() => {
+    const styles = await page.evaluate(async () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
@@ -12309,6 +12576,7 @@ test.describe("remaining accessibility contracts", () => {
           value='["#0D99FF","#14AE5C","#FFCD29"]'
         ></fig-input-palette>
       `;
+      await new Promise(requestAnimationFrame);
       const swatch = root.querySelector("#swatch");
       const strip = root.querySelector("#palette .palette-colors");
       if (!swatch || !strip) throw new Error("Missing swatch or palette strip");
@@ -14908,6 +15176,7 @@ test.describe("media accessibility", () => {
         <fig-audio
           id="audio"
           src="https://example.com/track.mp3"
+          variant="ribbon"
           autoplay
           controls
           muted
@@ -14929,6 +15198,8 @@ test.describe("media accessibility", () => {
         loop: audio?.loop,
         nativeControls: audio?.controls,
         waveformUrl: waveform?.getAttribute("url"),
+        waveformVariant: waveform?.getAttribute("variant"),
+        hostVariant: (host as HTMLElement & { variant?: string }).variant,
         waveformGenerated: waveform?.hasAttribute("data-generated"),
         controlsGenerated: controls?.hasAttribute("data-generated"),
         controlsDisabled: controls?.hasAttribute("disabled"),
@@ -14944,6 +15215,8 @@ test.describe("media accessibility", () => {
       loop: true,
       nativeControls: false,
       waveformUrl: "https://example.com/track.mp3",
+      waveformVariant: "ribbon",
+      hostVariant: "ribbon",
       waveformGenerated: true,
       controlsGenerated: true,
       controlsDisabled: false,
@@ -14956,6 +15229,7 @@ test.describe("media accessibility", () => {
       host.setAttribute("muted", "false");
       host.setAttribute("loop", "false");
       host.setAttribute("controls", "false");
+      (host as HTMLElement & { variant?: string }).variant = "bars";
     });
 
     await expect(page.locator("#audio > audio")).toHaveAttribute(
@@ -14965,6 +15239,10 @@ test.describe("media accessibility", () => {
     await expect(page.locator("#audio > fig-audio-waveform")).toHaveAttribute(
       "url",
       "https://example.com/replacement.wav",
+    );
+    await expect(page.locator("#audio > fig-audio-waveform")).toHaveAttribute(
+      "variant",
+      "bars",
     );
     await expect(page.locator("#audio > fig-media-controls")).toHaveCount(0);
     await expect
@@ -14985,7 +15263,7 @@ test.describe("media accessibility", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <fig-audio id="audio-sync" src="track.mp3">
+        <fig-audio id="audio-sync" src="track.mp3" variant="ribbon">
           <fig-audio-waveform id="authored-waveform"></fig-audio-waveform>
           <fig-media-controls id="authored-controls"></fig-media-controls>
           <fig-media-controls data-generated></fig-media-controls>
@@ -15051,6 +15329,10 @@ test.describe("media accessibility", () => {
     await expect(page.locator("#authored-waveform")).toHaveAttribute(
       "progress",
       "0.25",
+    );
+    await expect(page.locator("#authored-waveform")).toHaveAttribute(
+      "variant",
+      "ribbon",
     );
 
     await page.locator("#authored-controls").evaluate((controls) => {

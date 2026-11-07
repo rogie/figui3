@@ -1,0 +1,20 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Ordered shared selectors and cascade overrides. */
+fig-input-color,
+fig-input-gradient {
+  &:hover {
+    outline: 1px solid var(--figma-color-border);
+    outline-offset: -1px !important;
+  }
+}
+
+fig-input-color,
+fig-input-fill,
+fig-input-text,
+fig-input-number {
+  width: 8.9375rem;
+}

@@ -1,0 +1,53 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-audio-waveform {
+  --fig-audio-waveform-stroke-width: 1px;
+  --fig-audio-waveform-stroke-color: var(--figma-color-bordertranslucentstrong);
+  --fig-audio-waveform-progress-color: var(
+    --figma-color-icon-selected-secondary
+  );
+
+  &[variant="ribbon"] {
+    --fig-audio-waveform-progress-color: var(
+      --figma-color-icon-selected-tertiary
+    );
+  }
+
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: var(--spacer-4);
+  height: var(--control-height);
+  overflow: hidden;
+  color: var(--fig-audio-waveform-stroke-color);
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  .fig-audio-waveform-surface {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .fig-audio-waveform-surface > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .fig-audio-waveform-path,
+  .fig-audio-waveform-progress {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .fig-audio-waveform-progress {
+    fill: var(--fig-audio-waveform-progress-color);
+  }
+}

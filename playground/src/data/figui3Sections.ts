@@ -2791,7 +2791,14 @@ ${versionHistoryGroup("August 11", [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-audio-waveform url="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" progress="0.35" full></fig-audio-waveform>
+  <fig-audio-waveform url="/audio/skrillex-ft-elliphant.mp3" progress="0.35" full></fig-audio-waveform>
+</div>`,
+      },
+      {
+        id: "ribbon",
+        name: "Ribbon",
+        markup: `<div class="prop-panel">
+  <fig-audio-waveform variant="ribbon" url="/audio/skrillex-ft-elliphant.mp3" progress="0.35" full></fig-audio-waveform>
 </div>`,
       },
     ],

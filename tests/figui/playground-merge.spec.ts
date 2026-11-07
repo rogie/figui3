@@ -177,6 +177,29 @@ test("split input type control uses matching example presets", () => {
   );
 });
 
+test("audio waveform exposes bar and ribbon variants", () => {
+  expect(controlAttributeRules["fig-audio"]?.variant).toEqual({
+    label: "Waveform",
+    type: "enum",
+    options: ["bars", "ribbon"],
+  });
+  expect(controlAttributeRules["fig-audio-waveform"]?.variant).toEqual({
+    label: "Variant",
+    type: "enum",
+    options: ["bars", "ribbon"],
+  });
+  const section = figui3Sections.find(
+    (entry) => entry.id === "audio-waveform",
+  );
+  expect(section?.examples.map((example) => example.id)).toEqual([
+    "default",
+    "ribbon",
+  ]);
+  expect(
+    section?.examples.find((example) => example.id === "ribbon")?.markup,
+  ).toContain('variant="ribbon"');
+});
+
 test("disabled components expose an Attributes view toggle", () => {
   const auditedControls = [
     "fig-input-number",

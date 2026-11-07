@@ -1,0 +1,63 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Ordered shared selectors and cascade overrides. */
+/* Web Components */
+fig-button,
+fig-content,
+fig-slider,
+fig-switch,
+fig-input-color,
+fig-input-gradient,
+fig-input-fill,
+fig-checkbox,
+fig-radio,
+fig-tab,
+fig-segmented-control,
+fig-input-palette {
+  display: inline-flex;
+  gap: var(--spacer-2);
+  user-select: none;
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+}
+
+fig-dropdown {
+  &[size="large"] {
+    --fig-dropdown-height: var(--spacer-5);
+  }
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &[variant="ghost"] {
+    border-radius: var(--radius-medium);
+    background: transparent;
+
+    > select {
+      box-shadow: none;
+      background: transparent;
+    }
+
+    &:hover:not([disabled]):not([disabled="false"]) {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
+}
+
+fig-checkbox,
+fig-radio {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+
+  & label span {
+    vertical-align: middle;
+  }
+}

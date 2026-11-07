@@ -44,11 +44,11 @@ import "@rogieking/figui3/fig.css";
 import "@rogieking/figui3/fig.js";
 ```
 
-Opt into `<fig-layer>` when you need collapsible layer lists:
+`fig.js` registers `<fig-layer>` with the other core elements. Add its standalone
+stylesheet when you need the layer-list presentation:
 
 ```js
 import "@rogieking/figui3/fig-layer.css";
-import "@rogieking/figui3/fig-layer.js";
 ```
 
 Opt into editor components like `<fig-select>` and the full Figma-style fill picker when you need them:
@@ -65,6 +65,26 @@ import "@rogieking/figui3/fig-lab.css";
 import "@rogieking/figui3/fig-lab.js";
 ```
 
+For server-rendered apps, use the SSR-safe registration entry point. Call it
+after hydration from a React effect instead of statically importing the
+side-effect JavaScript bundles:
+
+```jsx
+import { useEffect } from "react";
+import { register } from "@rogieking/figui3/register.js";
+
+function RegisterFigUI() {
+  useEffect(() => {
+    void register({ editor: true, lab: true });
+  }, []);
+  return null;
+}
+```
+
+Render `<RegisterFigUI />` inside the hydrated root. The direct `fig.js`,
+`fig-editor.js`, and `fig-lab.js` imports remain convenient for client-only
+apps, but register immediately when evaluated in a browser.
+
 Or use a CDN:
 
 ```html
@@ -78,6 +98,9 @@ Agent skills ship in `.cursor/skills/` (included in the npm package):
 - `fig-editor` — `fig-select` and `fig-fill-picker`
 - `fig-lab` — experimental audio, wheel, reorder, canvas, and AI components
 - `propkit` — property-row composition; examples are included in `/figui3`
+
+See the generated [bundle registration inventory](BUNDLES.md) for the exact
+tags registered by Core, Editor, and Lab.
 
 Minimal example:
 
@@ -146,7 +169,7 @@ Minimal example:
 | [Separator](#separator) | `<fig-separator>` / `<fig-menu-separator>` | Visual divider with an optional label |
 | [Menu](#menu) | `<fig-menu>` | Triggered menu with keyboard navigation |
 | [Header](#header) | `<fig-header>` | Section header |
-| [Layer](#layer) | `<fig-layer>` | Collapsible layer list item from `fig-layer.js` |
+| [Layer](#layer) | `<fig-layer>` | Core-registered collapsible layer list item; styled by `fig-layer.css` |
 | [Preview](#preview) | `<fig-preview>` | Thin visual preview layer |
 | [Media](#media) | `<fig-media>` | Shared media host for image/video |
 | [Image](#image) | `<fig-image>` | Image display/upload |
@@ -293,6 +316,7 @@ document.querySelector("fig-select").menuAnchor =
 
 `<fig-combo-input>` remains available as a legacy alias.
 The suggestion trigger uses `fig-select` when `fig-editor.js` is registered and falls back to core `fig-dropdown`.
+Typed values that exactly match an option select and check it; unmatched values clear the option selection.
 
 ---
 
@@ -402,6 +426,7 @@ An audio player that composes `fig-audio-waveform` with the shared `fig-media-co
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `src` | string | — | Audio URL used for playback and waveform generation |
+| `variant` | `bars` \| `ribbon` | `bars` | Forwarded to the generated or authored waveform |
 | `autoplay` | boolean | `false` | Start playback automatically when allowed by the browser |
 | `controls` | boolean | `false` | Show generated playback controls |
 | `muted` | boolean | `false` | Mute audio playback |
@@ -411,7 +436,7 @@ Authored direct `fig-audio-waveform` and `fig-media-controls` children are prese
 
 ```html
 <fig-audio src="track.mp3" controls></fig-audio>
-<fig-audio src="ambience.wav" autoplay muted loop></fig-audio>
+<fig-audio src="ambience.wav" variant="ribbon" autoplay muted loop></fig-audio>
 ```
 
 ---
@@ -425,15 +450,17 @@ A responsive waveform generated from an audio URL. Included in `fig.js` and `fig
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `url` | string | — | CORS-enabled audio URL to fetch, decode, and render |
+| `variant` | `bars` \| `ribbon` | `bars` | Render rounded bars or a smooth mirrored ribbon |
 | `progress` | number | `0` | Completed fraction from `0` to `1`; values are clamped |
 | `polarization` | number | `1.5` | Waveform contrast factor around half-height (`1` is neutral) |
 | `full` | boolean | `false` | Fill the available width |
 
-Set `--fig-audio-waveform-stroke-width` (default `1px`) to control waveform bar thickness. The responsive waveform targets one bar per 3px. URL fetch or decode failures render a quiet flat waveform fallback.
+Set `--fig-audio-waveform-stroke-width` (default `1px`) to control waveform bar thickness and the ribbon's minimum thickness. The responsive waveform targets one sample per 3px. URL fetch or decode failures render a quiet flat waveform fallback.
 
 ```html
 <fig-audio-waveform
   url="https://example.com/audio.wav"
+  variant="ribbon"
   progress="0.42"
 ></fig-audio-waveform>
 ```
@@ -1767,7 +1794,9 @@ A section header component.
 `<fig-layer>` — [demo](https://rog.ie/figui3/#layer)
 
 A collapsible layer list item with expand/collapse and visibility toggling. Supports nesting and exposes `role="treeitem"`, `aria-expanded`, `aria-hidden`, `aria-disabled`, and a keyboard-toggleable chevron button.
-Import `fig-layer.js` and `fig-layer.css` to register and style it.
+`fig.js` already registers `fig-layer`. Import `fig-layer.css` to style it.
+The standalone `fig-layer.js` entry remains available when layer registration
+is needed without the rest of Core.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -2027,6 +2056,19 @@ Masked icon using `--icon-16-*` and `--icon-24-*` design tokens (SVG artboard si
 
 Legacy: `<span class="fig-mask-icon" style="--icon: var(--icon-24-add)"></span>` still works.
 
+Icon tokens are included by `fig.css`. To consume only the generated token
+variables, import `@rogieking/figui3/icons.css` (or
+`@rogieking/figui3/src/icons.css` for the unminified source). Override any
+glyph by redefining its custom property after that import:
+
+```css
+@import "@rogieking/figui3/icons.css";
+
+:root {
+  --icon-24-add: url("./icons/custom-add.svg");
+}
+```
+
 ---
 
 #### Spinner
@@ -2113,35 +2155,96 @@ Focus indicators are controlled with shared tokens:
 
 ## Framework Integration
 
+Public FigUI events that bubble are also composed. Events such as `input`,
+`change`, `openchange`, and `reorder` therefore cross shadow DOM boundaries and
+can be handled by an ancestor component or application. Cancelability remains
+event-specific; check `event.cancelable` before relying on `preventDefault()`.
+
 ### React
 
+Event handling differs between React 18 and React 19:
+
+| Event | React 19 | React 18 |
+|---|---|---|
+| `click` | `onClick` | `onClick` |
+| `input` | `onInput`; read `event.nativeEvent.detail` | `onInput`; read `event.nativeEvent.detail` |
+| `change` | `onChange`; read `event.nativeEvent.detail` | Use `addEventListener` |
+| Named events such as `loaded` or `reorder` | Use `addEventListener` for portable code | Use `addEventListener` |
+
+React handlers receive a `SyntheticEvent`, so their custom-event payload is at
+`event.nativeEvent.detail`, not `event.detail`. Native listeners receive the
+`CustomEvent` directly and use `event.detail`.
+
+The native-listener pattern works in both React versions:
+
 ```jsx
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useLayoutEffect } from 'react';
+import '@rogieking/figui3/react';
 import '@rogieking/figui3/fig.css';
 import '@rogieking/figui3/fig.js';
 
-function ColorPicker({ value, onChange }) {
+function ColorPicker({ value, onChange, isAllowed }) {
   const ref = useRef(null);
+  const committed = useRef(value);
+  committed.current = value;
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const handleChange = (e) => onChange(e.detail);
+    const handleChange = (e) => {
+      const next = e.detail.value ?? e.detail;
+      if (isAllowed && !isAllowed(next)) {
+        el.setAttribute('value', committed.current);
+        return;
+      }
+      onChange(next);
+    };
     el.addEventListener('change', handleChange);
     return () => el.removeEventListener('change', handleChange);
-  }, [onChange]);
+  }, [isAllowed, onChange]);
 
-  useEffect(() => {
-    if (ref.current) ref.current.setAttribute('value', value);
-  }, [value]);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && el.getAttribute('value') !== value) {
+      el.setAttribute('value', value);
+    }
+  });
 
   return <fig-input-color ref={ref} text="true" alpha="true" />;
 }
 ```
 
-> **Note:** Avoid setting `value` directly in JSX during re-renders — use refs to prevent infinite loops from `attributeChangedCallback`.
+The React subpath supplies JSX tags, typed refs and imperative methods, and
+typed `nativeEvent.detail` payloads for every core, editor, and Lab component.
+DOM consumers receive the same element types through
+`HTMLElementTagNameMap`.
+
+In React 19, JSX handlers can be used for `input` and `change`:
+
+```jsx
+function onChange(event) {
+  const detail = event.nativeEvent.detail;
+  console.log('Final:', detail);
+}
+
+<fig-input-color onChange={onChange} text="true" alpha="true" />
+```
+
+In React 18, do not rely on JSX `onChange` for custom elements. Use the
+native-listener pattern above for `change` and named custom events.
+
+> **Controlled state:** FigUI3 controls are event-driven/uncontrolled from
+> React's perspective. React does not restore an unchanged JSX `value` or
+> `checked` prop after a rejected edit. Synchronize through a ref after every
+> committed render and immediately restore rejected edits in the event
+> handler. For checked controls, set `.checked` and call
+> `.toggleAttribute("checked", checked)`.
 >
-> **SSR (Next.js/Remix/Astro):** Import `fig.js` only on the client to keep server rendering safe.
+> **SSR (Next.js/Remix/Astro):** The JavaScript bundles can be imported by the
+> server without throwing, but browser-side registration must happen after
+> hydration. Use `@rogieking/figui3/register.js` from a post-hydration effect;
+> do not statically import `fig.js`, `fig-editor.js`, or `fig-lab.js` in a
+> hydrating client bundle.
 
 ### Vue
 
@@ -2186,8 +2289,32 @@ bun install
 bun dev                # Component docs at http://localhost:3000
 npm run dev:playground # Playground at http://localhost:6600 (/figui3, /figui3/lab, /sandbox)
 npm run build          # Build minified dist/ (JS + CSS)
+npm run build:icons    # Regenerate icons.css from icons/ SVG sources
+npm run check:icons    # Verify the manifest, SVGs, and generated CSS agree
 npm run build:css      # Build minified CSS only
 ```
+
+To add an icon, place its mask-safe monochrome SVG in `icons/<size>/<name>.svg`
+and add the name, sizes, and optional `<fig-icon>` mapping to
+`icons/manifest.js`. Do not edit `icons.css` directly.
+
+Component implementations live under `src/`:
+
+- `src/core/` — MIT core components and styles
+- `src/editor/` — PolyForm editor components and styles
+- `src/lab/` — PolyForm experimental components and styles
+- `src/shared/` — MIT runtime helpers shared across bundles
+
+Each registered custom element owns a matching
+`components/fig-<name>.js` / `components/fig-<name>.css` pair. Shared runtime
+and selector primitives live outside `components/`; they must not register a
+tag themselves.
+
+The aggregate `fig.*`, `fig-editor.*`, and `fig-lab.*` barrels remain at the
+repository root. Standalone component source entrypoints live in each domain's
+`entrypoints/` directory; their npm and `dist/` import names remain unchanged.
+Add or edit component implementation in its `src/` domain; do not move
+consumer imports to internal paths.
 
 ### Build Output
 
@@ -2195,11 +2322,14 @@ npm run build:css      # Build minified CSS only
 
 | Source | Minified | Tool |
 |---|---|---|
-| `fig.js` (413 KB) | `dist/fig.js` (223 KB) | Bun `--minify` |
-| `fig-editor.js` (67 KB) | `dist/fig-editor.js` (37 KB) | Bun `--minify` |
-| `fig.css` | `dist/fig.css` (102 KB) | lightningcss `--minify --nesting --bundle` |
-| `components.css` (130 KB) | `dist/components.css` (100 KB) | lightningcss |
-| `fig-editor.css` (6 KB) | `dist/fig-editor.css` (4 KB) | lightningcss |
+| `fig.js` + `src/core/` | `dist/fig.js` (395 KB) | Bun `--minify` |
+| `fig-editor.js` + `src/editor/` | `dist/fig-editor.js` (154 KB) | Bun `--minify` |
+| `fig-lab.js` + `src/lab/` | `dist/fig-lab.js` (81 KB) | Bun `--minify` |
+| `fig.css` + imported source CSS | `dist/fig.css` (218 KB) | lightningcss `--minify --nesting --bundle` |
+| `components.css` + `src/core/` CSS | `dist/components.css` (216 KB) | lightningcss |
+| `icons.css` (generated) | `dist/icons.css` | `scripts/build-icons.mjs` + lightningcss |
+| `fig-editor.css` + `src/editor/` CSS | `dist/fig-editor.css` (24 KB) | lightningcss |
+| `fig-lab.css` + `src/lab/` CSS | `dist/fig-lab.css` (46 KB) | lightningcss |
 | `base.css` (2 KB) | `dist/base.css` (2 KB) | lightningcss |
 
 Default imports resolve to minified `dist/` files. Unminified source is available via `@rogieking/figui3/src/*`:
@@ -2221,9 +2351,17 @@ The playground is the fastest way to explore and validate component markup:
 
 ## Browser Support
 
-- Chrome/Edge 67+
-- Firefox 63+
-- Safari 10.1+
+- Chrome/Edge 123+
+- Firefox 120+
+- Safari 17.5+
+
+These floors match the modern CSS baseline used by the distributed styles,
+including CSS nesting, `:has()`, and `light-dark()`. Releases run the full
+suite in Playwright Chromium plus a core, editor, Lab, events, and customized
+built-ins smoke suite in current Playwright Firefox and WebKit. Older browser
+versions are not supported; FigUI3 does not transpile JavaScript or polyfill
+general platform features. Safari's customized built-in elements use the
+included WebKit polyfill.
 
 ---
 
@@ -2231,7 +2369,8 @@ The playground is the fastest way to explore and validate component markup:
 
 Split license. See [LICENSE](LICENSE).
 
-- **MIT:** `fig.js`, `fig-layer.js`, core CSS, `polyfills/`
-- **PolyForm Shield 1.0.0 (not OSI open source):** `fig-editor.js`, `fig-lab.js`, and their CSS
+- **MIT:** Core, including `fig.js`, `fig-layer.js`, `fig-color.js`, and core CSS
+- **PolyForm Shield 1.0.0 (not OSI open source):** Editor and Lab entry points, helper modules, CSS, and skill docs enumerated in `LICENSE`
+- **ISC:** Vendored `@ungap/custom-elements-builtin` WebKit polyfill
 
 &copy; Rogie King

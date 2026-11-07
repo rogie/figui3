@@ -115,7 +115,7 @@ test.describe("fig.css render performance", () => {
 
   test.beforeEach(async ({ page }) => {
     errors = collectPageErrors(page);
-    await bootFigFixture(page);
+    await bootFigFixture(page, "/tests/figui/perf-fixture.html");
     await waitForFigReady(page, renderTags);
   });
 

@@ -1,0 +1,49 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Fig Image */
+fig-truncate {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: bottom;
+
+  &[position="left"] {
+    display: block;
+    direction: rtl;
+    text-align: left;
+  }
+
+  &[position="middle"] {
+    display: inline-flex;
+    text-overflow: clip;
+    gap: 0;
+
+    & > .start,
+    & > .end {
+      flex: 0 1 auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    & > .end {
+      direction: rtl; /* technique #2 on right half */
+      text-align: left;
+      text-overflow: ellipsis;
+    }
+    &[tail] {
+      & > .end {
+        direction: ltr;
+        text-align: right;
+        flex-shrink: 0;
+      }
+    }
+  }
+}

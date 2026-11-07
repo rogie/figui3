@@ -1,0 +1,31 @@
+name: Browser tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  components:
+    name: ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser:
+          - chromium
+          - firefox
+          - webkit
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run test:types
+      - run: npx playwright test --project=${{ matrix.browser }}

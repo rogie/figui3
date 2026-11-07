@@ -1,0 +1,23 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+dialog[is="fig-dialog"] {
+  /* Non-modal stacking is assigned in FigDialog.show() via figGetHighestZIndex. */
+
+  &[autoresize]:not([autoresize="false"]) {
+    height: max-content;
+  }
+
+  &[resizable]:not([resizable="false"]) {
+    resize: both;
+    overflow: auto;
+    min-height: 6rem;
+  }
+  & > iframe{
+    border-radius: 0 0 var(--dialog-radius) var(--dialog-radius);
+    overflow: hidden;
+    border: none;
+  }
+}

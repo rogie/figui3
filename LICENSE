@@ -1,13 +1,21 @@
-FigUI3 is split-licensed. Core is MIT. Editor and Lab are PolyForm Shield 1.0.0
-(not OSI open source). SPDX: LicenseRef-PolyForm-Shield-1.0.0
+FigUI3 is split-licensed. Core is MIT. Editor and Lab are PolyForm Shield
+1.0.0 (not OSI open source). One vendored polyfill is ISC.
+
+SPDX identifiers:
+- MIT
+- ISC
+- LicenseRef-PolyForm-Shield-1.0.0 (custom license reference)
 
 ==============================================================================
 MIT License — FigUI3 Core
 ==============================================================================
 
-Applies to: fig.js, fig-layer.js, fig.css, fig-layer.css, base.css,
-components.css, polyfills/, and the matching files under dist/ for those
-names.
+Unless a file is listed under PolyForm Shield or Third-Party Software below,
+all first-party files in this repository are licensed under MIT.
+
+The MIT core entry points are: fig.js, register.js, fig-layer.js, fig-color.js,
+fig.css, fig-layer.css, base.css, components.css, icons.css, all files under
+icons/, src/shared/, src/core/, and their matching files under dist/.
 
 Copyright (c) 2026 Rogie King
 
@@ -30,12 +38,54 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
+ISC License — Third-Party Software
+==============================================================================
+
+Applies to: polyfills/custom-elements-webkit.js, the copy bundled into
+dist/fig.js, and matching standalone copies under dist/polyfills/.
+
+Vendored from @ungap/custom-elements-builtin@0.6.5.
+
+Copyright (c) 2018, Andrea Giammarchi, @WebReflection
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+==============================================================================
 PolyForm Shield License 1.0.0 — FigUI3 Editor and Lab
 https://polyformproject.org/licenses/shield/1.0.0
 ==============================================================================
 
-Applies to: fig-editor.js, fig-lab.js, fig-editor.css, fig-lab.css, the
-matching files under dist/, and the fig-editor / fig-lab skill docs.
+Applies to these source files and their matching files under dist/:
+
+- fig-editor.js and fig-editor.css
+- fig-lab.js and fig-lab.css
+- fig-input-rotate.js and fig-input-rotate.css
+- fig-input-slider.js and fig-input-slider.css
+- fig-property.js and fig-property.css
+- fig-gradient-editor.js and fig-gradient-editor.css
+- fig-palette-editor.js and fig-palette-editor.css
+- fig-popup-easing.js and fig-popup-easing.css
+- fig-popup-gradient.js and fig-popup-gradient.css
+- fig-popup-palette.js and fig-popup-palette.css
+
+Also applies to all files under:
+
+- src/editor/
+- src/lab/
+- .cursor/skills/fig-editor/
+- .cursor/skills/fig-lab/
+- skills/fig-editor/
+- skills/fig-lab/
 
 Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)

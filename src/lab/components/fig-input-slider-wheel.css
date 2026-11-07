@@ -1,0 +1,137 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+fig-input-slider-wheel.fig-input-slider {
+  --fig-input-slider-cursor: default;
+  --fig-input-slider-cursor-dragging: grabbing;
+  --fig-input-slider-wheel-tick-count: 33;
+  --fig-input-slider-wheel-field-of-view: 120;
+  --fig-input-slider-wheel-perspective: 0.55;
+  --fig-input-slider-wheel-radius-ratio: 0.84;
+  --fig-input-slider-wheel-tick-height: 12;
+  --fig-input-slider-wheel-tick-height-min: 4;
+  --fig-input-slider-wheel-tick-width-min-scale: 0.5;
+  --fig-input-slider-wheel-tick-opacity-min-scale: 0;
+  --fig-input-slider-wheel-tick-color: var(
+    --fig-input-slider-tick-stroke-color,
+    light-dark(#999, #777)
+  );
+  --fig-input-slider-wheel-tick-opacity: var(
+    --fig-input-slider-tick-opacity,
+    0.5
+  );
+  --fig-input-slider-wheel-handle-drag-max: 4px;
+  --fig-input-slider-wheel-handle-drag-offset: 0px;
+  --fig-input-slider-wheel-animation-duration: 160;
+  --fig-input-slider-wheel-animation-easing: var(
+    --transition-timing-function,
+    ease-out
+  );
+  --fig-input-slider-wheel-fast-motion-threshold: 1.5;
+  --fig-input-slider-wheel-fast-motion-timeout: 80;
+  --fig-input-slider-wheel-fast-motion-blur: 1.5;
+  --fig-input-slider-ticks-inset-inline: calc(
+    var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+      0.5 * var(--fig-input-slider-handle-width, 0.25rem)
+  );
+
+  & .fig-input-slider-track,
+  & .fig-input-slider-fills,
+  & .fig-input-slider-ghost-handle {
+    display: none;
+  }
+
+  & .fig-input-slider-ticks {
+    z-index: 1;
+    display: block;
+    inline-size: calc(
+      100% - 2 * var(--fig-input-slider-ticks-inset-inline, 0)
+    );
+    block-size: 100%;
+    overflow: hidden;
+    opacity: 1;
+  }
+
+  & .fig-input-slider-wheel-tick-path {
+    fill: none;
+    stroke: var(
+      --fig-input-slider-wheel-tick-color,
+      var(--fig-input-slider-tick-stroke-color, light-dark(#999, #777))
+    );
+    stroke-width: var(
+      --fig-input-slider-tick-width,
+      var(--fig-input-slider-tick-stroke-width, 0.125rem)
+    );
+    stroke-linecap: round;
+    opacity: var(
+      --fig-input-slider-wheel-tick-opacity,
+      var(--fig-input-slider-tick-opacity, 0.5)
+    );
+  }
+
+  & .fig-input-slider-wheel-tick {
+    stroke-width: calc(
+      var(
+          --fig-input-slider-tick-width,
+          var(--fig-input-slider-tick-stroke-width, 0.125rem)
+        ) *
+        (
+          var(--fig-input-slider-wheel-tick-width-min-scale, 0.5) +
+            (
+              1 -
+                var(--fig-input-slider-wheel-tick-width-min-scale, 0.5)
+            ) *
+            var(--fig-input-slider-wheel-tick-scale, 1)
+        )
+    );
+    vector-effect: non-scaling-stroke;
+    opacity: calc(
+      var(--fig-input-slider-wheel-tick-opacity-min-scale, 0) +
+        (
+          1 - var(--fig-input-slider-wheel-tick-opacity-min-scale, 0)
+        ) *
+        var(--fig-input-slider-wheel-tick-scale, 1)
+    );
+  }
+
+  & .fig-input-slider-handle {
+    z-index: 2;
+    inset-inline-start: 50%;
+    transform:
+      translate(
+        calc(
+          -50% + var(--fig-input-slider-wheel-handle-drag-offset, 0px)
+        ),
+        -50%
+      )
+      scale(
+        calc(
+          var(--fig-input-slider-handle-scale-rest, 1) +
+            (
+              var(--fig-input-slider-handle-scale-interactive, 1) -
+                var(--fig-input-slider-handle-scale-rest, 1)
+            ) *
+            var(--_fig-input-slider-interactive, 0)
+        )
+      );
+    transform-origin: 50% 50%;
+    transition:
+      transform
+      calc(var(--fig-input-slider-wheel-animation-duration, 160) * 1ms)
+      var(--fig-input-slider-wheel-animation-easing, ease-out);
+  }
+
+  &[data-wheel-active] .fig-input-slider-handle {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  fig-input-slider-wheel.fig-input-slider .fig-input-slider-handle {
+    transition: none;
+  }
+}

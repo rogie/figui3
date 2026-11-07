@@ -1,0 +1,11 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+@media (prefers-reduced-motion: reduce) {
+  .segmented-control::before,
+  fig-segmented-control::before {
+    transition: none !important;
+  }
+}

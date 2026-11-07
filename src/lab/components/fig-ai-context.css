@@ -1,0 +1,34 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+fig-ai-context {
+  --fig-ai-context-margin-inline: var(--spacer-3);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  box-sizing: border-box;
+  width: calc(
+    100% - var(--fig-ai-context-margin-inline) -
+      var(--fig-ai-context-margin-inline)
+  );
+  margin-inline: var(--fig-ai-context-margin-inline);
+  padding: var(--spacer-2) var(--spacer-2-5);
+  padding-bottom: var(--spacer-4);
+  border: 1px solid var(--figma-color-border);
+  border-bottom: none;
+  border-radius: var(--radius-large) var(--radius-large) 0 0;
+  color: var(--figma-color-text);
+
+  &>fig-attachments{
+    margin-inline: calc(-1 * var(--spacer-1));
+  }
+}
+
+fig-ai-context:has(+ fig-ai-prompt) {
+  margin-bottom: calc(-1 * var(--spacer-3));
+}

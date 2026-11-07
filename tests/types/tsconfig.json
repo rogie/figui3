@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "preserve",
+    "strict": true,
+    "skipLibCheck": false,
+    "noEmit": true,
+    "types": ["react"]
+  },
+  "include": ["consumer.tsx"]
+}

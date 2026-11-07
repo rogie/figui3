@@ -1,0 +1,43 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Popovers/Dialogs */
+.dialog,
+dialog,
+.popover,
+[popover] {
+  --dialog-radius: var(--radius-large, 0.8125rem);
+  --dialog-max-width: calc(100vw - var(--spacer-4));
+  padding: 0;
+  outline: 0;
+  border: 0;
+  inset: auto;
+  
+  color: var(--figma-color-text);
+  border-radius: var(--dialog-radius);
+  background: var(--figma-color-bg);
+  min-width: min(var(--popover-min-width), var(--dialog-max-width));
+  box-shadow: var(--figma-elevation-500-modal-window);
+  max-height: calc(100vh - var(--spacer-4) * 2);
+  max-width: min(var(--dialog-max-width), 30rem);
+  height: max-content;
+  & > fig-content,
+  &> main {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  &:popover-open {
+    display: block;
+    outline: none !important;
+  }
+
+  &[open]:not([open="false"]){
+    display: flex;
+    flex-direction: column;
+  }
+}

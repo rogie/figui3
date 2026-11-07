@@ -1,0 +1,73 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Shimmer */
+fig-shimmer {
+  display: contents;
+  color: var(--figma-color-text-secondary);
+  --fig-shimmer-angle: 90deg;
+  --fig-shimmer-bright-fill-color: var(--figma-color-bg-tertiary);
+  --fig-shimmer-bright-text-color: var(--figma-color-text);
+  --fig-shimmer-duration: 1.5s;
+  --fig-shimmer-mask-from: 100% 0%;
+  --fig-shimmer-mask-to: 0% 0%;
+  --fig-shimmer-size: 250% 100%;
+  --fig-shimmer-subtle-fill-color: var(--figma-color-bg-transparent);
+  --fig-shimmer-subtle-text-color: var(--figma-color-text-tertiary);
+  --fig-shimmer-text-from: 100% 0%;
+  --fig-shimmer-text-to: 0% 0%;
+
+  &[direction="vertical"] {
+    --fig-shimmer-angle: 180deg;
+    --fig-shimmer-size: 100% 250%;
+    --fig-shimmer-mask-from: 0% 100%;
+    --fig-shimmer-text-from: 0% 100%;
+  }
+  &[direction="diagonal"] {
+    --fig-shimmer-angle: 135deg;
+    --fig-shimmer-size: 250% 250%;
+  }
+
+  /* When not playing, remove shimmer effect entirely */
+  &[playing="false"] * {
+    background: none;
+    background-size: unset;
+    animation: none;
+  }
+  &[playing="false"] :where(*:not(:has(*)):not(:empty)) {
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    -webkit-text-fill-color: unset;
+  }
+  /* Only apply shimmer when playing (default) or playing="true" */
+  &:not([playing="false"]) :where(*:has(*), *:empty) {
+    mask: linear-gradient(
+      var(--fig-shimmer-angle),
+      var(--fig-shimmer-subtle-fill-color) 0%,
+      var(--fig-shimmer-subtle-fill-color) 40%,
+      var(--fig-shimmer-bright-fill-color) 50%,
+      var(--fig-shimmer-subtle-fill-color) 60%,
+      var(--fig-shimmer-subtle-fill-color) 100%
+    );
+    mask-size: var(--fig-shimmer-size);
+    animation: fig-shimmer-mask var(--fig-shimmer-duration) linear infinite;
+  }
+  &:not([playing="false"]) :where(*:not(:has(*)):not(:empty)) {
+    mask: none;
+    background: linear-gradient(
+      var(--fig-shimmer-angle),
+      var(--fig-shimmer-subtle-text-color) 0%,
+      var(--fig-shimmer-subtle-text-color) 40%,
+      var(--fig-shimmer-bright-text-color) 50%,
+      var(--fig-shimmer-subtle-text-color) 60%,
+      var(--fig-shimmer-subtle-text-color) 100%
+    );
+    background-size: var(--fig-shimmer-size);
+    animation: fig-shimmer-text var(--fig-shimmer-duration) linear infinite;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+}

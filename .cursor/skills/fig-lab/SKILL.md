@@ -7,6 +7,13 @@ description: >-
 user-invocable: false
 ---
 
+<!--
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+-->
+
 # FigUI3 lab (`fig-lab.js`)
 
 Experimental components. May change or be removed without notice.
@@ -23,3 +30,9 @@ import "@rogieking/figui3/fig-lab.js";
 ```
 
 Use Lab for slider primitives, wheel inputs, canvas handles, and AI composition surfaces. Keep Lab out of `fig.js`.
+
+## Maintainer notes
+
+Implement each Lab tag in its matching `src/lab/components/fig-*.js` /
+`fig-*.css` pair. Aggregate `fig-lab.*` stays at the root; the standalone
+slider source barrel lives in `src/lab/entrypoints/`.

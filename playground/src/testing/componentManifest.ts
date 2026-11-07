@@ -363,6 +363,7 @@ export const componentContracts: ComponentContract[] = [
     group: "media",
     markup: `<fig-audio src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" controls></fig-audio>`,
     attributes: [
+      { name: "variant", attribute: "variant", value: "ribbon" },
       { name: "muted", attribute: "muted", value: "" },
       { name: "loop", attribute: "loop", value: "" },
     ],
@@ -380,6 +381,7 @@ export const componentContracts: ComponentContract[] = [
     group: "display",
     markup: `<fig-audio-waveform></fig-audio-waveform>`,
     attributes: [
+      { name: "variant", attribute: "variant", value: "ribbon" },
       { name: "progress", attribute: "progress", value: "0.5" },
       { name: "polarization", attribute: "polarization", value: "3" },
       { name: "full", attribute: "full", value: "" },
@@ -573,6 +575,67 @@ export const componentContracts: ComponentContract[] = [
 ];
 
 export const editorComponentContracts: ComponentContract[] = [
+  {
+    tag: "fig-select-option",
+    title: "Select Option",
+    group: "input",
+    markup: `<fig-select-option value="one">One</fig-select-option>`,
+    attributes: [{ name: "selected", attribute: "selected", value: "" }],
+  },
+  {
+    tag: "fig-select-options",
+    title: "Select Options",
+    group: "input",
+    markup: `<fig-select-options><fig-select-option value="one">One</fig-select-option></fig-select-options>`,
+  },
+  {
+    tag: "fig-select",
+    title: "Select",
+    group: "input",
+    markup: `<fig-select value="one"><fig-select-options><fig-select-option value="one">One</fig-select-option><fig-select-option value="two">Two</fig-select-option></fig-select-options></fig-select>`,
+    properties: [
+      {
+        name: "value property",
+        property: "value",
+        value: "two",
+        expected: "two",
+      },
+    ],
+  },
+  {
+    tag: "fig-fill-picker",
+    title: "Fill Picker",
+    group: "input",
+    markup: `<fig-fill-picker value="#0D99FF"></fig-fill-picker>`,
+    attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
+  },
+  {
+    tag: "fig-property",
+    title: "Property",
+    group: "layout",
+    markup: `<fig-property label="Opacity"><fig-input-number slot="input" value="50"></fig-input-number></fig-property>`,
+    attributes: [{ name: "ratio", attribute: "ratio", value: "1:1" }],
+  },
+  {
+    tag: "fig-palette-editor",
+    title: "Palette Editor",
+    group: "input",
+    markup: `<fig-palette-editor value='["#0D99FF","#14AE5C"]'></fig-palette-editor>`,
+    attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
+  },
+  {
+    tag: "fig-interpolation-swatch",
+    title: "Interpolation Swatch",
+    group: "display",
+    markup: `<fig-interpolation-swatch></fig-interpolation-swatch>`,
+  },
+  {
+    tag: "fig-reorder",
+    title: "Reorder",
+    group: "layout",
+    markup: `<fig-reorder><div>One</div><div>Two</div></fig-reorder>`,
+    attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
+  },
   {
     tag: "fig-popup-gradient",
     title: "Gradient Popup",

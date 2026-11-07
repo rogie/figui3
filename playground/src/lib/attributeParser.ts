@@ -1,5 +1,11 @@
+import {
+  FIG_ICON_SET_16,
+  FIG_ICON_SET_24,
+} from "../../../icons/manifest.js";
 import { getExampleSourceMarkup } from "./exampleMarkup";
 import { landscapeUrl } from "./images";
+
+export { FIG_ICON_SET_16, FIG_ICON_SET_24 };
 
 export interface ParsedAttributeTarget {
   fieldIndex: number;
@@ -1414,69 +1420,6 @@ export function applyHandleHitAreaMutation(
   }
   return serializeSourceMarkup(root);
 }
-
-export const FIG_ICON_SET_24 = [
-  "add",
-  "angle",
-  "send",
-  "chevron",
-  "checkmark",
-  "adjust",
-  "minus",
-  "close",
-  "back",
-  "forward",
-  "rotate",
-  "rotate3d",
-  "swap",
-  "play",
-  "pause",
-  "search",
-  "download",
-  "upload",
-  "image",
-  "video",
-  "audio",
-  "sound",
-  "sound-off",
-  "sun",
-  "moon",
-  "visible",
-  "hidden",
-  "edit",
-  "settings",
-  "more",
-  "steppers",
-  "eyedropper",
-  "reset",
-  "globe",
-  "warning",
-  "copy",
-  "trash",
-] as const;
-
-export const FIG_ICON_SET_16 = [
-  "send",
-  "chevron",
-  "checkmark",
-  "reset",
-  "arrow-left",
-  "adjust",
-  "close",
-  "visible",
-  "hidden",
-  "edit",
-  "settings",
-  "more",
-  "video",
-  "sound",
-  "sound-off",
-  "globe",
-  "warning",
-  "copy",
-  "trash",
-  "drag-handle",
-] as const;
 
 export type FigIconPlaygroundSet = "16" | "24";
 

@@ -1,0 +1,90 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+fig-input-slider-delta.fig-input-slider {
+  & .fig-input-slider-fill[data-after-default] {
+    inset-inline-start: calc(
+      var(--fig-input-slider-fill-start, 0) * 100% -
+        var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+    );
+    inline-size: calc(
+      (
+          var(--fig-input-slider-fill-end, 0) -
+            var(--fig-input-slider-fill-start, 0)
+        ) *
+        100% +
+        var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+    );
+  }
+
+  & .fig-input-slider-fill[data-before-default] {
+    inline-size: calc(
+      (
+          var(--fig-input-slider-fill-end, 0) -
+            var(--fig-input-slider-fill-start, 0)
+        ) *
+        100% +
+        var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+    );
+  }
+
+  & :is(.fig-input-slider-handle, .fig-input-slider-ghost-handle) {
+    --_fig-input-slider-delta-crossing-position: calc(
+      (
+          var(--fig-input-slider-handle-x, 0) +
+            var(--fig-input-slider-handle-default-progress, 0)
+        ) *
+        50% -
+        var(--_fig-input-slider-rendered-handle-width, 0.25rem) /
+        2
+    );
+  }
+
+  &
+    :is(.fig-input-slider-handle, .fig-input-slider-ghost-handle):not(
+      [data-inset-toward-end]
+    ) {
+    inset-inline-start: clamp(
+      var(--fig-input-slider-handle-track-inset-inline, 0.25rem),
+      max(
+        var(--_fig-input-slider-delta-crossing-position),
+        calc(
+          var(--fig-input-slider-handle-x, 0) * 100% -
+            var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+            var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+        )
+      ),
+      calc(
+        100% -
+          var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+          var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+      )
+    );
+  }
+
+  &
+    :is(
+      .fig-input-slider-handle,
+      .fig-input-slider-ghost-handle
+    )[data-inset-toward-end] {
+    inset-inline-start: clamp(
+      var(--fig-input-slider-handle-track-inset-inline, 0.25rem),
+      min(
+        var(--_fig-input-slider-delta-crossing-position),
+        calc(
+          var(--fig-input-slider-handle-x, 0) * 100% +
+            var(--fig-input-slider-handle-track-inset-inline, 0.25rem)
+        )
+      ),
+      calc(
+        100% -
+          var(--fig-input-slider-handle-track-inset-inline, 0.25rem) -
+          var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+      )
+    );
+  }
+}

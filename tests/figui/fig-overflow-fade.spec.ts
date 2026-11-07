@@ -11,7 +11,12 @@ test.describe("fig-overflow-fade utility", () => {
   test("uses a normal element and gates its mask behind scroll-timeline support", async ({
     page,
   }) => {
-    const source = readFileSync("components.css", "utf8");
+    const source = [
+      "src/core/styles/skeleton-and-overflow-base.css",
+      "src/core/styles/toolbelt-overflow-masks.css",
+    ]
+      .map((path) => readFileSync(path, "utf8"))
+      .join("\n");
     const utilityStart = source.indexOf(".fig-overflow-fade {");
     const supportStart = source.indexOf(
       "@supports (animation-timeline: scroll(self block))",
