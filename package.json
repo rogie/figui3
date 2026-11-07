@@ -91,6 +91,7 @@
     "build:playground": "cd playground && npm run build",
     "test": "npm run test:components",
     "test:components": "playwright test",
+    "test:unit": "playwright test --config=playwright.unit.config.ts",
     "test:perf": "playwright test --config=playwright.perf.config.ts",
     "test:all": "npm run test:components && npm run test:perf"
   },

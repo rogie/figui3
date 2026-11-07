@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import type { Section } from "../data/sections";
 import ThemeToggle from "./ThemeToggle";
+import InfoPopup from "./InfoPopup";
 import { copyText } from "../lib/prompt";
 import { useCopyTooltip } from "../hooks/useCopyTooltip";
 import ClipboardIcon from "../icons/icon.24.clipboard.svg?react";
@@ -239,7 +240,7 @@ export default function Nav({
   return (
     <nav>
       <fig-header borderless>
-        <h1>{appTitle}</h1>
+        <InfoPopup appTitle={appTitle} isDark={isDark} />
         <ThemeToggle
           isDark={isDark}
           setTheme={setTheme}
