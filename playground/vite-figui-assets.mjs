@@ -24,6 +24,7 @@ const assetSources = new Map([
   ...rootAssetNames.map((name) => [name, name]),
   ...Object.entries(publicAliases),
   ...listSourceAssets().map((name) => [name, name]),
+  ...listSourceAssets("dist").map((name) => [name, name]),
 ]);
 
 const mimeTypes = {

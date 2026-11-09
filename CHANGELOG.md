@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.10.3]
+
+### Changed
+
+- Adjusted padding in the alternate plugin character chooser.
+- Made chooser and tab strips stretch to their available width.
+
+### Fixed
+
+- Loaded bundled distribution assets in standalone playground iframe examples.
+
 ## [11.10.2]
 
 ### Changed

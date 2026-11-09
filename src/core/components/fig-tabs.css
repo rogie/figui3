@@ -24,6 +24,7 @@ fig-tabs,
   position: relative;
   scrollbar-width: none;
   width: calc(100% - var(--fig-tabs-margin-left) - var(--fig-tabs-margin-right));
+  width: stretch;
 
   > fig-tab {
     flex-shrink: 0;

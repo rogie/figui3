@@ -33,6 +33,7 @@ fig-chooser {
     );
   scroll-behavior: smooth;
   width: calc(100% - var(--fig-chooser-inline-margin) * 2);
+  width: stretch;
 
   &:not([overflow="scrollbar"]) {
     scrollbar-width: none;
