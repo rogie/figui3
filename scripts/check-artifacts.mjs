@@ -53,6 +53,13 @@ for (const file of obsoleteDistFiles) {
   if (existsSync(`dist/${file}`)) fail(`obsolete standalone output dist/${file}`);
 }
 
+for (const file of ["fig.js", "fig-editor.js"]) {
+  const output = readFileSync(`dist/${file}`, "utf8");
+  if (/["']\.\/fig-color\.js["']/.test(output)) {
+    fail(`${file} must bundle fig-color.js instead of importing it`);
+  }
+}
+
 for (const { file } of rootArtifacts) {
   assertFile(file);
   if (!manifest.files.includes(file)) {

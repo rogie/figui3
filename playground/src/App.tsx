@@ -185,7 +185,7 @@ function filterAvailableSections(
 }
 
 function titleForMode(mode: Props["mode"]): string {
-  if (mode === "lab") return "Lab";
+  if (mode === "lab") return "PropsKit Lab";
   return "Figma PropsKit";
 }
 

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.10.1]
+
+### Changed
+
+- Renamed the PropsKit Lab playground heading for clarity.
+
+### Fixed
+
+- Bundled color utilities into the core and Editor aggregate JavaScript outputs so they no longer depend on an adjacent `fig-color.js` file.
+- Added an artifact contract preventing aggregate bundles from reintroducing the external color dependency.
+
 ## [11.10.0]
 
 ### Added

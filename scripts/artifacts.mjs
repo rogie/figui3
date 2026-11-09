@@ -27,7 +27,6 @@ export const jsArtifacts = [
     input: "fig.js",
     output: "fig.js",
     license: LICENSE_MIT,
-    external: ["fig-color.js"],
   },
   {
     input: "src/editor/entrypoints/fig-input-rotate.js",
@@ -51,7 +50,7 @@ export const jsArtifacts = [
     input: "fig-editor.js",
     output: "fig-editor.js",
     license: LICENSE_POLYFORM,
-    external: ["fig.js", "fig-color.js"],
+    external: ["fig.js"],
   },
   {
     input: "fig-lab.js",
