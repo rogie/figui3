@@ -3,4 +3,74 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+:is(fig-separator, fig-menu-separator) {
+  --fig-separator-color: var(--figma-color-bordertranslucent);
+  --fig-separator-label-color: var(--figma-color-text-secondary);
+  --fig-separator-margin-block: var(--spacer-2,0.5rem);
+  --fig-separator-padding-block: 0;
+  --fig-separator-padding-inline: var(--spacer-4,1rem);
+
+  display: block;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 100%;
+  height: 1px;
+  margin-block: var(--fig-separator-margin-block);
+  margin-inline: 0;
+  padding-block: var(--fig-separator-padding-block);
+  padding-inline: var(--fig-separator-padding-inline);
+  border: 0;
+  border-block-start: 1px solid var(--fig-separator-color);
+  background: transparent;
+  color: var(--fig-separator-label-color);
+  font-weight: var(--body-medium-fontWeight);
+  pointer-events: none;
+  user-select: none;
+
+  &[direction="vertical"] {
+    --fig-separator-margin-block: 0;
+    align-self: stretch;
+    width: 1px;
+    max-width: 1px;
+    height: auto;
+    min-height: var(--spacer-3);
+    padding: 0;
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--fig-separator-color);
+  }
+
+  & > label {
+    display: block;
+    line-height: var(--spacer-4,1rem);
+    min-height: var(--spacer-4,1rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Labeled: rule, then secondary group label (same pattern as menu optgroups). */
+  &:has(> label) {
+    --fig-separator-margin-block: var(--spacer-2,0.5rem) var(--spacer-1,0.25rem);
+    --fig-separator-padding-block: var(--spacer-2,0.5rem) 0;
+    height: auto;
+
+    &:first-child{
+      --fig-separator-padding-block: 0;
+      --fig-separator-color: transparent;
+      --fig-separator-margin-block: 0;
+    }
+
+    &[sticky]:not([sticky="false"]) {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      background: var(--fig-popup-bg-color, var(--figma-color-bg));
+
+      &[stuck] {
+        --fig-separator-padding-block: var(--fig-separator-stuck-padding-block, var(--spacer-2,0.5rem));
+        --fig-separator-padding-inline: var(--spacer-4,1rem);
+        --fig-separator-color: transparent;
+      }
+    }
+  }
+}

@@ -9,7 +9,7 @@ fig-choice {
   --fig-choice-border-radius: var(--radius-medium);
   --fig-choice-min-height: 1.5rem;
   --fig-choice-min-width: 1.5rem;
-  --fig-choice-selection-ring-width: 1.5px;
+  --fig-choice-selection-ring-width: var(--figma-focus-outline-width);
 
   min-height: var(--fig-choice-min-height);
   min-width: var(--fig-choice-min-width);

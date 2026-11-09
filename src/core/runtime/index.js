@@ -33,11 +33,11 @@ import {
   HTMLDialogElement,
   HTMLElement,
 } from "../../shared/platform.js";
+import {
+  figDefineCustomElement,
+  figInvariantId,
+} from "../../shared/invariants.js";
 
-/**
- * Generates a unique ID string using timestamp and random values
- * @returns {string} A unique identifier
- */
 function figIsWebKitOrIOSBrowser() {
   if (typeof navigator === "undefined") {
     return false;
@@ -401,7 +401,7 @@ function figSupportsCustomizedBuiltIns() {
     return false;
   }
 
-  const testName = `fig-builtin-probe-${Math.random().toString(36).slice(2)}`;
+  const testName = figInvariantId("fig-builtin-probe");
   class FigCustomizedBuiltInProbe extends HTMLButtonElement {}
 
   try {
@@ -429,11 +429,7 @@ const figBuiltInPolyfillReady = (
 
 function figDefineCustomizedBuiltIn(name, constructor, options) {
   if (typeof customElements === "undefined") return;
-  const define = () => {
-    if (!customElements.get(name)) {
-      customElements.define(name, constructor, options);
-    }
-  };
+  const define = () => figDefineCustomElement(name, constructor, options);
 
   if (!figNeedsBuiltInPolyfill) {
     define();
@@ -449,14 +445,11 @@ function figDefineCustomizedBuiltIn(name, constructor, options) {
 }
 
 function figDefineElement(name, constructor) {
-  if (typeof customElements === "undefined") return;
-  if (!customElements.get(name)) {
-    customElements.define(name, constructor);
-  }
+  figDefineCustomElement(name, constructor);
 }
 
 function figUniqueId() {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  return figInvariantId("fig");
 }
 
 /** Zero-size portal for fixed overlays so they never affect body layout metrics. */

@@ -38,16 +38,15 @@ class FigInputPalette extends HTMLElement {
   #syncingValueAttribute = false;
   #boundHandleKeyDown = this.#handleKeyDown.bind(this);
   #boundHandleHostFocus = () => this.focus();
-  #boundPickerClosed = () => {
-    if (!this.#pickerPopup) return;
-    if (
-      this.#pickerPopup.hasAttribute("open") ||
-      this.#pickerPopup.matches?.(":open") ||
-      this.#pickerPopup.matches?.(":popover-open")
-    ) {
-      return;
+  #boundPickerLifecycle = (event) => {
+    if (event.target !== this.#pickerPopup) return;
+    const state = event.detail?.state;
+    const expanded = state === "opening" || state === "open";
+    this.#syncTriggerState();
+    if (!expanded && this.open) this.open = false;
+    if (state === "closed") {
+      this.#pickerPopupAnchorResizeObserver?.disconnect();
     }
-    if (this.open) this.open = false;
   };
   static get observedAttributes() {
     return [
@@ -95,6 +94,11 @@ class FigInputPalette extends HTMLElement {
     if (value === "false") return "false";
     if (value === "picker") return "picker";
     return "true";
+  }
+
+  #pickerExpanded() {
+    const state = this.#pickerPopup?.lifecycleState;
+    return state === "opening" || state === "open";
   }
 
   get #min() {
@@ -301,7 +305,10 @@ class FigInputPalette extends HTMLElement {
     if (interactive) {
       inlineWrap.setAttribute("role", "button");
       inlineWrap.setAttribute("tabindex", disabled ? "-1" : "+0");
-      inlineWrap.setAttribute("aria-expanded", String(this.open));
+      inlineWrap.setAttribute(
+        "aria-expanded",
+        String(editMode === "picker" ? this.#pickerExpanded() : this.open),
+      );
       inlineWrap.setAttribute("aria-label", "Edit palette colors");
       if (editMode === "picker") inlineWrap.setAttribute("aria-haspopup", "dialog");
     } else {
@@ -392,8 +399,10 @@ class FigInputPalette extends HTMLElement {
     };
     popup.addEventListener("input", handlePopupEvent);
     popup.addEventListener("change", handlePopupEvent);
-    popup.addEventListener("close", this.#boundPickerClosed);
-    popup.addEventListener("toggle", this.#boundPickerClosed);
+    popup.addEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPickerLifecycle,
+    );
 
     (figGetOverlayRoot() ?? document.body).append(popup);
     this.#pickerPopup = popup;
@@ -480,8 +489,10 @@ class FigInputPalette extends HTMLElement {
 
   #destroyPickerPopup() {
     if (!this.#pickerPopup) return;
-    this.#pickerPopup.removeEventListener("close", this.#boundPickerClosed);
-    this.#pickerPopup.removeEventListener("toggle", this.#boundPickerClosed);
+    this.#pickerPopup.removeEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPickerLifecycle,
+    );
     this.#pickerPopup.open = false;
     this.#pickerPopup.remove();
     this.querySelector(".palette-colors-inline")?.removeAttribute(
@@ -701,7 +712,12 @@ class FigInputPalette extends HTMLElement {
     }
     trigger.setAttribute("tabindex", disabled ? "-1" : "+0");
     trigger.setAttribute("aria-disabled", String(disabled));
-    trigger.setAttribute("aria-expanded", String(this.open));
+    trigger.setAttribute(
+      "aria-expanded",
+      String(
+        this.#editMode === "picker" ? this.#pickerExpanded() : this.open,
+      ),
+    );
     if (this.#editMode === "picker") {
       trigger.setAttribute("aria-haspopup", "dialog");
     } else {

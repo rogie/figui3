@@ -11,6 +11,15 @@ import {
   waitForComponentDefinitions,
 } from "./helpers";
 
+let automaticErrors: ReturnType<typeof collectPageErrors>;
+test.beforeEach(async ({ page }) => {
+  automaticErrors = collectPageErrors(page);
+});
+test.afterEach(async () => {
+  expect(automaticErrors.pageErrors).toEqual([]);
+  expect(automaticErrors.consoleErrors).toEqual([]);
+});
+
 test("attribute-backed public getters accept reflected property writes", async ({
   page,
 }) => {
@@ -7301,6 +7310,32 @@ test.describe("number input accessibility", () => {
     expect(order.appendLeft).toBeLessThan(order.steppersLeft);
   });
 
+  test('fig-input-number shows steppers by default and supports steppers="false"', async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-input-number id="default-steppers" value="12"></fig-input-number>
+        <fig-input-number id="hidden-steppers" value="12" steppers="false"></fig-input-number>
+      `;
+    });
+
+    const defaultInput = page.locator("#default-steppers");
+    const hiddenInput = page.locator("#hidden-steppers");
+    await expect(defaultInput.locator(".fig-steppers")).toHaveCount(1);
+    await expect(hiddenInput.locator(".fig-steppers")).toHaveCount(0);
+
+    await hiddenInput.evaluate((host) => host.removeAttribute("steppers"));
+    await expect(hiddenInput.locator(".fig-steppers")).toHaveCount(1);
+
+    await defaultInput.evaluate((host) =>
+      host.setAttribute("steppers", "false"),
+    );
+    await expect(defaultInput.locator(".fig-steppers")).toHaveCount(0);
+  });
+
   test("fig-input-number steppers repeat while pressed and commit on release", async ({
     page,
   }) => {
@@ -8300,6 +8335,20 @@ test.describe("slider accessibility", () => {
     });
   });
 
+  test("fig-slider hides steppers on its internal number input", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-slider id="slider" value="50"></fig-slider>`;
+    });
+
+    const number = page.locator("#slider > fig-input-number");
+    await expect(number).toHaveAttribute("steppers", "false");
+    await expect(number.locator(".fig-steppers")).toHaveCount(0);
+  });
+
   test("fig-slider labels the keyboard-operable control", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -9049,6 +9098,26 @@ test.describe("reconnect resilience", () => {
     expect(heights).toEqual([24, 24, 24]);
   });
 
+  test("fig-3d-rotate fields hide number input steppers", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-3d-rotate
+          id="rotate-fields"
+          fields="rotateX,rotateY,rotateZ"
+        ></fig-3d-rotate>
+      `;
+    });
+
+    const inputs = page.locator("#rotate-fields fig-input-number");
+    await expect(inputs).toHaveCount(3);
+    for (let index = 0; index < 3; index += 1) {
+      await expect(inputs.nth(index)).toHaveAttribute("steppers", "false");
+    }
+    await expect(inputs.locator(".fig-steppers")).toHaveCount(0);
+  });
+
   test("fig-origin-grid keeps a single handle on reconnect", async ({
     page,
   }) => {
@@ -9124,6 +9193,22 @@ test.describe("reconnect resilience", () => {
     expect(layout.yLeft - layout.xRight).toBeCloseTo(8, 5);
   });
 
+  test("fig-origin-grid fields hide number input steppers", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-origin-grid id="origin-fields" value="50% 50%" fields></fig-origin-grid>
+      `;
+    });
+
+    const inputs = page.locator("#origin-fields fig-input-number");
+    await expect(inputs).toHaveCount(2);
+    await expect(inputs.nth(0)).toHaveAttribute("steppers", "false");
+    await expect(inputs.nth(1)).toHaveAttribute("steppers", "false");
+    await expect(inputs.locator(".fig-steppers")).toHaveCount(0);
+  });
+
   test("fig-joystick keeps a single plane on reconnect", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
@@ -9155,6 +9240,23 @@ test.describe("reconnect resilience", () => {
       handleCount: 1,
       value: "50% 50%",
     });
+  });
+
+  test("fig-joystick fields hide number input steppers", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-joystick id="joystick-fields" value="50% 50%" fields></fig-joystick>
+      `;
+    });
+    await page.waitForTimeout(50);
+
+    const inputs = page.locator("#joystick-fields fig-input-number");
+    await expect(inputs).toHaveCount(2);
+    await expect(inputs.nth(0)).toHaveAttribute("steppers", "false");
+    await expect(inputs.nth(1)).toHaveAttribute("steppers", "false");
+    await expect(inputs.locator(".fig-steppers")).toHaveCount(0);
   });
 
   test("fig-input-color strips hash from hex text display", async ({ page }) => {
@@ -11030,6 +11132,48 @@ test.describe("remaining accessibility contracts", () => {
         startAtStart: true,
         endAtEnd: true,
       });
+  });
+
+  test("fig-chooser only applies drag styles after pointer movement", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-chooser
+          id="drag-cursor-chooser"
+          layout="horizontal"
+          overflow="scrollbar"
+          style="width: 120px; max-width: 120px;"
+        >
+          <fig-choice value="a" style="min-width: 96px;">A</fig-choice>
+          <fig-choice value="b" style="min-width: 96px;">B</fig-choice>
+        </fig-chooser>
+      `;
+    });
+
+    const chooser = page.locator("#drag-cursor-chooser");
+    const bounds = await chooser.boundingBox();
+    if (!bounds) throw new Error("Missing chooser bounds");
+    const startX = bounds.x + bounds.width / 2;
+    const startY = bounds.y + bounds.height / 2;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await expect(chooser).not.toHaveAttribute("style", /cursor/);
+    await expect(chooser).not.toHaveAttribute("style", /user-select/);
+
+    await page.mouse.move(startX + 2, startY);
+    await expect(chooser).not.toHaveAttribute("style", /cursor/);
+
+    await page.mouse.move(startX + 8, startY);
+    await expect(chooser).toHaveCSS("cursor", "grabbing");
+    await expect(chooser).toHaveCSS("user-select", "none");
+
+    await page.mouse.up();
+    await expect(chooser).not.toHaveAttribute("style", /cursor/);
+    await expect(chooser).not.toHaveAttribute("style", /user-select/);
   });
 
   test("fig-chooser drag-to-scroll takes priority over native image dragging", async ({
@@ -15175,7 +15319,7 @@ test.describe("media accessibility", () => {
       root.innerHTML = `
         <fig-audio
           id="audio"
-          src="https://example.com/track.mp3"
+          src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=#track"
           variant="ribbon"
           autoplay
           controls
@@ -15209,12 +15353,12 @@ test.describe("media accessibility", () => {
     });
 
     expect(state).toEqual({
-      audioSrc: "https://example.com/track.mp3",
+      audioSrc: "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=#track",
       autoplay: true,
       muted: true,
       loop: true,
       nativeControls: false,
-      waveformUrl: "https://example.com/track.mp3",
+      waveformUrl: "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=#track",
       waveformVariant: "ribbon",
       hostVariant: "ribbon",
       waveformGenerated: true,
@@ -15224,7 +15368,7 @@ test.describe("media accessibility", () => {
     });
 
     await page.locator("#audio").evaluate((host) => {
-      host.setAttribute("src", "https://example.com/replacement.wav");
+      host.setAttribute("src", "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=#replacement");
       host.setAttribute("autoplay", "false");
       host.setAttribute("muted", "false");
       host.setAttribute("loop", "false");
@@ -15234,11 +15378,11 @@ test.describe("media accessibility", () => {
 
     await expect(page.locator("#audio > audio")).toHaveAttribute(
       "src",
-      "https://example.com/replacement.wav",
+      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=#replacement",
     );
     await expect(page.locator("#audio > fig-audio-waveform")).toHaveAttribute(
       "url",
-      "https://example.com/replacement.wav",
+      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=#replacement",
     );
     await expect(page.locator("#audio > fig-audio-waveform")).toHaveAttribute(
       "variant",
@@ -15263,7 +15407,7 @@ test.describe("media accessibility", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <fig-audio id="audio-sync" src="track.mp3" variant="ribbon">
+        <fig-audio id="audio-sync" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" variant="ribbon">
           <fig-audio-waveform id="authored-waveform"></fig-audio-waveform>
           <fig-media-controls id="authored-controls"></fig-media-controls>
           <fig-media-controls data-generated></fig-media-controls>
@@ -15611,6 +15755,73 @@ test.describe("media accessibility", () => {
       controlsDisabled: false,
       playDisabled: false,
     });
+  });
+
+  test("fig-media propagates multiple uploads and reports every file", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-image id="image-multiple" upload multiple></fig-image>
+        <fig-video id="video-multiple" upload multiple muted></fig-video>
+      `;
+      const image = root.querySelector("#image-multiple");
+      image?.addEventListener("loaded", (event) => {
+        const detail = (event as CustomEvent).detail;
+        (window as typeof window & { __mediaLoaded?: unknown }).__mediaLoaded = {
+          file: detail.file?.name,
+          files: Array.from(detail.files ?? [], (file: File) => file.name),
+        };
+      });
+    });
+
+    for (const id of ["image-multiple", "video-multiple"]) {
+      await expect(
+        page.locator(`#${id} > fig-preview > fig-input-file[multiple]`),
+      ).toHaveCount(1);
+      await expect(page.locator(`#${id} input[type="file"]`)).toHaveAttribute(
+        "multiple",
+        "",
+      );
+    }
+
+    await page.locator('#image-multiple input[type="file"]').setInputFiles([
+      {
+        name: "first.png",
+        mimeType: "image/png",
+        buffer: Buffer.from("first"),
+      },
+      {
+        name: "second.png",
+        mimeType: "image/png",
+        buffer: Buffer.from("second"),
+      },
+    ]);
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (window as typeof window & { __mediaLoaded?: unknown })
+              .__mediaLoaded,
+        ),
+      )
+      .toEqual({
+        file: "first.png",
+        files: ["first.png", "second.png"],
+      });
+
+    await page.locator("#image-multiple").evaluate((host) => {
+      host.removeAttribute("multiple");
+    });
+    await expect(
+      page.locator("#image-multiple > fig-preview > fig-input-file[multiple]"),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('#image-multiple input[type="file"]'),
+    ).not.toHaveAttribute("multiple", "");
   });
 
   test("fig-media preserves direct child captions over generated captions", async ({
@@ -15973,6 +16184,128 @@ test.describe("media accessibility", () => {
     });
 
     expect(labels).toEqual({ icon: "Rotate", clear: "Remove" });
+  });
+
+  test("fig-image and fig-video support icon upload controls", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-image id="empty-image" upload="icon" label="Add image"></fig-image>
+        <fig-video id="empty-video" upload="icon" label="Add video" muted></fig-video>
+        <fig-image
+          id="loaded-image"
+          upload="icon"
+          label="Add image"
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          alt=""
+        ></fig-image>
+        <fig-video
+          id="loaded-video"
+          upload="icon"
+          label="Add video"
+          src="data:video/mp4;base64,AAAA"
+          muted
+        ></fig-video>
+        <fig-video
+          id="poster-video"
+          upload="icon"
+          label="Add video"
+          poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          muted
+        ></fig-video>
+        <fig-image id="dynamic-image" upload label="Upload image"></fig-image>
+      `;
+      const loadedImage = root.querySelector("#loaded-image");
+      (window as typeof window & { __iconUploadEvents?: unknown[] })
+        .__iconUploadEvents = [];
+      loadedImage?.addEventListener("change", (event) => {
+        if (event.target !== loadedImage) return;
+        const detail = (event as CustomEvent).detail;
+        (
+          window as typeof window & { __iconUploadEvents: unknown[] }
+        ).__iconUploadEvents.push({
+          cleared: detail?.cleared === true,
+          src: loadedImage.getAttribute("src"),
+        });
+      });
+    });
+
+    for (const [id, label, accepts] of [
+      ["empty-image", "Add image", "image/*"],
+      ["empty-video", "Add video", "video/*"],
+      ["poster-video", "Add video", "video/*"],
+    ]) {
+      const input = page.locator(`#${id} fig-input-file[upload="icon"]`);
+      const tooltip = input.locator(`:scope > fig-tooltip[text="${label}"]`);
+      const button = tooltip.locator(
+        ':scope > fig-button[type="upload"][icon]',
+      );
+      await expect(tooltip).toHaveCount(1);
+      await expect(button).toHaveAttribute("aria-label", label);
+      await expect(button.locator('fig-icon[name="add"]')).toHaveCount(1);
+      await expect(button.locator('input[type="file"]')).toHaveAttribute(
+        "accept",
+        accepts,
+      );
+      await expect(button.locator('input[type="file"]')).toHaveAttribute(
+        "aria-label",
+        label,
+      );
+    }
+
+    for (const id of ["loaded-image", "loaded-video"]) {
+      const input = page.locator(`#${id} fig-input-file[upload="icon"]`);
+      await expect(input.locator('fig-button[type="upload"]')).toHaveCount(0);
+      await expect(
+        input.locator(':scope > fig-tooltip[text="Remove"]'),
+      ).toHaveCount(1);
+      await expect(input.locator(".fig-input-file-clear")).toHaveAttribute(
+        "aria-label",
+        "Remove",
+      );
+      await expect
+        .poll(() =>
+          input
+            .locator(".fig-input-file-clear")
+            .evaluate((button) => getComputedStyle(button).display),
+        )
+        .toBe("flex");
+    }
+
+    await page
+      .locator("#loaded-image .fig-input-file-clear")
+      .evaluate((button: HTMLElement) => button.click());
+    await expect(page.locator("#loaded-image")).not.toHaveAttribute("src");
+    await expect(
+      page.locator(
+        '#loaded-image fig-input-file[upload="icon"] fig-button[type="upload"][icon] fig-icon[name="add"]',
+      ),
+    ).toHaveCount(1);
+    expect(
+      await page.evaluate(
+        () =>
+          (window as typeof window & { __iconUploadEvents?: unknown[] })
+            .__iconUploadEvents,
+      ),
+    ).toEqual([{ cleared: false, src: null }]);
+
+    const dynamic = page.locator("#dynamic-image");
+    await expect(
+      dynamic.locator('fig-input-file fig-button[type="upload"][icon]'),
+    ).toHaveCount(0);
+    await dynamic.evaluate((host) => host.setAttribute("upload", "icon"));
+    await expect(
+      dynamic.locator(
+        'fig-input-file[upload="icon"] fig-button[type="upload"][icon] fig-icon[name="add"]',
+      ),
+    ).toHaveCount(1);
+    await dynamic.evaluate((host) => host.setAttribute("upload", "false"));
+    await expect(dynamic.locator("fig-input-file[data-generated]")).toHaveCount(
+      0,
+    );
   });
 
   test("loaded media upload overlay remains visible on keyboard focus", async ({

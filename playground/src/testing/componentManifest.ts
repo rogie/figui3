@@ -472,6 +472,16 @@ export const componentContracts: ComponentContract[] = [
     ],
   },
   {
+    tag: "fig-stack",
+    title: "Stack",
+    group: "layout",
+    markup: `<fig-stack direction="horizontal" gap="2"><span>One</span><span>Two</span></fig-stack>`,
+    attributes: [
+      { name: "direction", attribute: "direction", value: "vertical" },
+      { name: "gap", attribute: "gap", value: "3" },
+    ],
+  },
+  {
     tag: "fig-header",
     title: "Header",
     group: "layout",
@@ -572,6 +582,13 @@ export const componentContracts: ComponentContract[] = [
     markup: `<fig-menu><fig-button slot="trigger">Menu</fig-button><fig-menu-item>Item</fig-menu-item><fig-separator></fig-separator><fig-menu-item>Other</fig-menu-item></fig-menu>`,
     attributes: [{ name: "open", attribute: "open", value: "" }],
   },
+  {
+    tag: "fig-property",
+    title: "Property",
+    group: "layout",
+    markup: `<fig-property label="Opacity"><fig-input-number slot="input" value="50"></fig-input-number></fig-property>`,
+    attributes: [{ name: "ratio", attribute: "ratio", value: "1:1" }],
+  },
 ];
 
 export const editorComponentContracts: ComponentContract[] = [
@@ -608,13 +625,6 @@ export const editorComponentContracts: ComponentContract[] = [
     group: "input",
     markup: `<fig-fill-picker value="#0D99FF"></fig-fill-picker>`,
     attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
-  },
-  {
-    tag: "fig-property",
-    title: "Property",
-    group: "layout",
-    markup: `<fig-property label="Opacity"><fig-input-number slot="input" value="50"></fig-input-number></fig-property>`,
-    attributes: [{ name: "ratio", attribute: "ratio", value: "1:1" }],
   },
   {
     tag: "fig-palette-editor",

@@ -180,6 +180,7 @@ class FigInputJoystick extends HTMLElement {
             value,
             min: "0",
             max: "100",
+            steppers: "false",
             units: "%",
           },
           figCreateElement("span", { slot: "prepend" }, name.toUpperCase()),
@@ -230,6 +231,8 @@ class FigInputJoystick extends HTMLElement {
     this.cursor = this.querySelector("fig-handle");
     this.xInput = this.querySelector("fig-input-number[name='x']");
     this.yInput = this.querySelector("fig-input-number[name='y']");
+    this.xInput?.setAttribute("steppers", "false");
+    this.yInput?.setAttribute("steppers", "false");
     this.plane?.addEventListener("pointerdown", this.#boundPlanePointerDown);
     this.cursor?.addEventListener("pointerdown", this.#boundHandlePointerDown);
     this.cursor?.addEventListener("input", this.#boundHandleInput);

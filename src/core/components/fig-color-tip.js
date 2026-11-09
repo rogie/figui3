@@ -230,6 +230,7 @@ class FigColorTip extends HTMLElement {
 
     try {
       const { ctx } = figGetSharedCanvas(1, 1);
+      if (!ctx) return value;
       ctx.fillStyle = "#000000";
       ctx.fillStyle = value;
       const resolved = ctx.fillStyle;

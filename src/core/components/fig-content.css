@@ -3,4 +3,38 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+fig-content {
+  padding: var(--spacer-2-5) 0;
+  display: block;
+  width: 100%;
+  gap: 0;
+
+  &:has(> fig-group[name]:first-child) {
+    padding-top: 0;
+  }
+
+  &:has(> fig-group[name]:last-child) {
+    padding-bottom: 0;
+  }
+
+  & > p {
+    padding-inline: var(--spacer-3);
+  }
+
+  &:empty {
+    padding: 0;
+  }
+
+  &[padding]:not([padding="false"]):not([padding="none"]):not(:empty) {
+    padding-inline: var(--spacer-3);
+  }
+
+  &:empty,
+  &::not(:has(*)) {
+    padding: 0;
+  }
+
+  &[padding="none"] {
+    padding: 0;
+  }
+}

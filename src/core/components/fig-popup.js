@@ -4,13 +4,46 @@ Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 import {
+  CustomEvent,
   HTMLDialogElement,
   HTMLElement,
   figDefineCustomizedBuiltIn,
   figGetHighestZIndex,
 } from "../runtime/index.js";
+import { figCreateStateMachine } from "../../shared/state-machine.js";
+import { figCreatePointerSession } from "../../shared/pointer-session.js";
+import {
+  figQuerySelector,
+  figWarnInvariant,
+} from "../../shared/invariants.js";
 import { figEnsureAutoDialogHeader } from "./fig-dialog.js";
 import { FigTooltip } from "./fig-tooltip.js";
+
+function figDialogIsTopLayer(dialog) {
+  for (const selector of [":modal", ":popover-open"]) {
+    try {
+      if (dialog.matches(selector)) return true;
+    } catch {}
+  }
+  return false;
+}
+
+function figPopupTransition(state, event) {
+  switch (event.type) {
+    case "REQUEST_OPEN":
+      return state === "open" || state === "opening" ? state : "opening";
+    case "REQUEST_CLOSE":
+      return state === "closed" || state === "closing" ? state : "closing";
+    case "NATIVE_OPENED":
+      return event.requestedOpen ? "open" : "closing";
+    case "NATIVE_CLOSED":
+    case "OPEN_FAILED":
+    case "DISCONNECT":
+      return "closed";
+    default:
+      return state;
+  }
+}
 
 /* Popup */
 /**
@@ -22,6 +55,7 @@ import { FigTooltip } from "./fig-tooltip.js";
  * @attr {string} theme - Visual theme: "light", "dark", or "menu".
  * @attr {string} title - Title text for the auto-generated header (same as fig-dialog).
  * @attr {boolean|string} open - Open when present and not "false".
+ * @event fig-popup-lifecycle - Emitted for closed/opening/open/closing transitions.
  */
 class FigPopup extends HTMLDialogElement {
   _anchorObserver = null;
@@ -29,7 +63,6 @@ class FigPopup extends HTMLDialogElement {
   _mutationObserver = null;
   _anchorTrackRAF = null;
   _lastAnchorRect = null;
-  _isPopupActive = false;
   _boundReposition;
   _boundContentReposition;
   _boundScroll;
@@ -43,6 +76,7 @@ class FigPopup extends HTMLDialogElement {
   _dragStartPos = { x: 0, y: 0 };
   _dragOffset = { x: 0, y: 0 };
   _dragThreshold = 3;
+  _dragSession = null;
   _boundPointerDown;
   _boundPointerMove;
   _boundPointerUp;
@@ -54,6 +88,8 @@ class FigPopup extends HTMLDialogElement {
   _boundNativeCancel;
   _suppressNativeCancel = false;
   _nativeCancelResetTimer = null;
+  _lifecycle = null;
+  _boundNativeToggle;
 
   constructor() {
     super();
@@ -79,9 +115,20 @@ class FigPopup extends HTMLDialogElement {
       this.handleDocumentPointerUp.bind(this);
     this._boundNativeClose = this.handleNativeClose.bind(this);
     this._boundNativeCancel = this.handleNativeCancel.bind(this);
+    this._boundNativeToggle = this.handleNativeToggle.bind(this);
     this._boundAutoClose = () => {
       this.open = false;
     };
+    this.ensureLifecycle();
+  }
+
+  ensureLifecycle() {
+    if (this._lifecycle) return;
+    this._lifecycle = figCreateStateMachine({
+      initialState: "closed",
+      transition: figPopupTransition,
+      effect: (transition) => this.applyLifecycleTransition(transition),
+    });
   }
 
   ensureInitialized() {
@@ -95,7 +142,6 @@ class FigPopup extends HTMLDialogElement {
       this._anchorTrackRAF = null;
     if (typeof this._lastAnchorRect === "undefined")
       this._lastAnchorRect = null;
-    if (typeof this._isPopupActive === "undefined") this._isPopupActive = false;
     if (typeof this._rafId === "undefined") this._rafId = null;
     if (typeof this._pendingFullReposition === "undefined")
       this._pendingFullReposition = false;
@@ -107,12 +153,23 @@ class FigPopup extends HTMLDialogElement {
     if (typeof this._dragOffset === "undefined")
       this._dragOffset = { x: 0, y: 0 };
     if (typeof this._dragThreshold !== "number") this._dragThreshold = 3;
+    if (!this._dragSession) {
+      this._dragSession = figCreatePointerSession({
+        threshold: this._dragThreshold,
+        listenerTarget: document,
+        capture: true,
+        onActivate: ({ event }) => this.activateDrag(event),
+        onMove: ({ event }) => this.updateDrag(event),
+        onFinish: ({ event }) => this.finishDrag(event),
+      });
+    }
     if (typeof this._wasDragged === "undefined") this._wasDragged = false;
     if (typeof this._previousFocus === "undefined") this._previousFocus = null;
     if (typeof this._suppressNativeCancel === "undefined")
       this._suppressNativeCancel = false;
     if (typeof this._nativeCancelResetTimer === "undefined")
       this._nativeCancelResetTimer = null;
+    this.ensureLifecycle();
 
     if (typeof this._boundReposition !== "function") {
       this._boundReposition = () => this.queueReposition();
@@ -158,6 +215,9 @@ class FigPopup extends HTMLDialogElement {
     if (typeof this._boundNativeCancel !== "function") {
       this._boundNativeCancel = this.handleNativeCancel.bind(this);
     }
+    if (typeof this._boundNativeToggle !== "function") {
+      this._boundNativeToggle = this.handleNativeToggle.bind(this);
+    }
     if (typeof this._boundAutoClose !== "function") {
       this._boundAutoClose = () => {
         this.open = false;
@@ -187,15 +247,17 @@ class FigPopup extends HTMLDialogElement {
 
   set open(value) {
     if (value === false || value === "false" || value === null) {
-      const isActuallyOpen =
-        this.matches?.(":open") || this.matches?.(":popover-open");
-      if (!isActuallyOpen && !this.hasAttribute("open")) return;
-      this.hidePopup();
       if (this.hasAttribute("open")) this.removeAttribute("open");
+      else this._lifecycle?.dispatch({ type: "REQUEST_CLOSE" });
       return;
     }
     if (this.open) return;
     this.setAttribute("open", "true");
+  }
+
+  get lifecycleState() {
+    this.ensureInitialized();
+    return this._lifecycle.state;
   }
 
   get anchor() {
@@ -254,40 +316,27 @@ class FigPopup extends HTMLDialogElement {
     this.addEventListener("close", this._boundNativeClose);
     this.removeEventListener("cancel", this._boundNativeCancel);
     this.addEventListener("cancel", this._boundNativeCancel);
+    this.removeEventListener("toggle", this._boundNativeToggle);
+    this.addEventListener("toggle", this._boundNativeToggle);
 
     requestAnimationFrame(() => {
-      this.setupDragListeners();
+      if (this.isConnected) this.setupDragListeners();
     });
 
     if (this.open) {
-      this.showPopup();
+      this._lifecycle.dispatch({ type: "REQUEST_OPEN" });
     } else {
-      this.hidePopup();
+      this._lifecycle.dispatch({ type: "REQUEST_CLOSE" });
     }
   }
 
   disconnectedCallback() {
     this.ensureInitialized();
-    this.teardownObservers();
+    this._lifecycle.dispatch({ type: "DISCONNECT" });
     this.removeDragListeners();
-    document.removeEventListener(
-      "pointerdown",
-      this._boundOutsidePointerDown,
-      true,
-    );
-    document.removeEventListener("keydown", this._boundDocumentKeydown, true);
-    document.removeEventListener(
-      "pointerup",
-      this._boundDocumentPointerUp,
-      true,
-    );
-    document.removeEventListener(
-      "pointercancel",
-      this._boundDocumentPointerUp,
-      true,
-    );
     this.removeEventListener("close", this._boundNativeClose);
     this.removeEventListener("cancel", this._boundNativeCancel);
+    this.removeEventListener("toggle", this._boundNativeToggle);
     if (this._nativeCancelResetTimer !== null) {
       clearTimeout(this._nativeCancelResetTimer);
       this._nativeCancelResetTimer = null;
@@ -304,14 +353,14 @@ class FigPopup extends HTMLDialogElement {
 
     if (name === "open") {
       if (newValue === "false") {
-        this.open = false;
+        this.removeAttribute("open");
         return;
       }
       if (newValue === null) {
-        this.hidePopup();
+        this._lifecycle.dispatch({ type: "REQUEST_CLOSE" });
         return;
       }
-      this.showPopup();
+      this._lifecycle.dispatch({ type: "REQUEST_OPEN" });
       return;
     }
 
@@ -332,50 +381,85 @@ class FigPopup extends HTMLDialogElement {
       return;
     }
 
-    if (this.open) {
+    if (this.lifecycleState === "open" || this.lifecycleState === "opening") {
       this.queueReposition();
       this.setupObservers();
     }
   }
 
   showPopup() {
-    if (this._isPopupActive) {
+    if (!this.open) this.setAttribute("open", "true");
+    else this._lifecycle.dispatch({ type: "REQUEST_OPEN" });
+  }
+
+  applyLifecycleTransition({ event, from, to, generation }) {
+    if (to === "opening") {
+      this.beginOpening(from);
+    } else if (to === "open") {
+      this.startAnchorTracking();
       this.queueReposition();
-      return;
+    } else if (to === "closing") {
+      this.beginClosing();
+    } else if (to === "closed") {
+      this.finishClosed(event, from, generation);
     }
 
+    this.dispatchEvent(
+      new CustomEvent("fig-popup-lifecycle", {
+        detail: {
+          state: to,
+          previousState: from,
+          requestedOpen: this.open,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  beginOpening(from) {
+    if (!this.isConnected) {
+      this._lifecycle.dispatch({ type: "OPEN_FAILED" });
+      return;
+    }
     this.style.position = "fixed";
     this.style.inset = "auto";
     this.style.margin = "0";
     this.style.zIndex = String(figGetHighestZIndex() + 1);
-    this.captureFocusBeforeOpen();
+    if (from === "closed") this.captureFocusBeforeOpen();
 
     // When the popup opts into the native popover API, prefer showPopover()
     // so the element is promoted into the browser's top layer (above any
     // modal dialogs) without needing showModal().
     let usePopover =
       this.hasAttribute("popover") &&
-      typeof this.showPopover === "function" &&
-      !this.matches?.(":popover-open");
+      typeof this.showPopover === "function";
     const positionBeforeReveal = this.shouldAutoReposition();
     if (positionBeforeReveal) {
       this.style.visibility = "hidden";
     }
-    if (usePopover) {
+    if (usePopover && !this.nativePopoverOpen()) {
       try {
         this.showPopover();
       } catch (e) {
         usePopover = false;
       }
     }
-    if (!usePopover && !super.open) {
+    if (!usePopover && !this.nativeDialogOpen()) {
       try {
         this.show();
       } catch (e) {
-        // Ignore when dialog cannot be shown yet.
+        this.style.visibility = "";
+        this._lifecycle.dispatch({ type: "OPEN_FAILED" });
+        return;
       }
     }
-    if (positionBeforeReveal && (this.matches?.(":open") || this.matches?.(":popover-open"))) {
+    if (!this.nativeDisplayed()) {
+      this.style.visibility = "";
+      this._lifecycle.dispatch({ type: "OPEN_FAILED" });
+      return;
+    }
+    if (positionBeforeReveal) {
       this.positionPopup();
       this.style.visibility = "";
     }
@@ -399,7 +483,6 @@ class FigPopup extends HTMLDialogElement {
     );
     this._wasDragged = false;
     this.queueReposition();
-    this._isPopupActive = true;
 
     const anchor = this.resolveAnchor();
     if (anchor?.classList) anchor.classList.add("has-popup-open");
@@ -408,18 +491,50 @@ class FigPopup extends HTMLDialogElement {
     if (this.getAttribute("variant") !== "tooltip") {
       FigTooltip.dismissHoverTooltips();
     }
+    this._lifecycle.dispatch({
+      type: "NATIVE_OPENED",
+      requestedOpen: this.open,
+    });
   }
 
   hidePopup() {
-    const wasActive =
-      this._isPopupActive ||
-      this.matches?.(":open") ||
-      this.matches?.(":popover-open");
+    if (this.hasAttribute("open")) this.removeAttribute("open");
+    else this._lifecycle.dispatch({ type: "REQUEST_CLOSE" });
+  }
+
+  beginClosing() {
+    this.teardownActivePopup();
+    let requestedNativeClose = false;
+    if (
+      this.hasAttribute("popover") &&
+      typeof this.hidePopover === "function" &&
+      this.nativePopoverOpen()
+    ) {
+      try {
+        requestedNativeClose = true;
+        this.hidePopover();
+      } catch (e) {
+        requestedNativeClose = false;
+      }
+    }
+    if (this.nativeDialogOpen()) {
+      try {
+        requestedNativeClose = true;
+        this.close();
+      } catch (e) {
+        requestedNativeClose = false;
+      }
+    }
+    if (!requestedNativeClose && !this.nativeDisplayed()) {
+      this._lifecycle.dispatch({ type: "NATIVE_CLOSED" });
+    }
+  }
+
+  teardownActivePopup() {
     const anchor = this.resolveAnchor();
     if (anchor?.classList) anchor.classList.remove("has-popup-open");
 
     this.style.visibility = "";
-    this._isPopupActive = false;
     this._wasDragged = false;
     this.teardownObservers();
     document.removeEventListener(
@@ -443,29 +558,27 @@ class FigPopup extends HTMLDialogElement {
       clearTimeout(this._nativeCancelResetTimer);
       this._nativeCancelResetTimer = null;
     }
+  }
 
-    if (
-      this.hasAttribute("popover") &&
-      typeof this.hidePopover === "function" &&
-      this.matches?.(":popover-open")
-    ) {
-      try {
-        this.hidePopover();
-      } catch (e) {
-        // Ignore.
+  finishClosed(event, from, generation) {
+    this.teardownActivePopup();
+    if (event.type === "DISCONNECT") {
+      if (this.nativePopoverOpen()) {
+        try {
+          this.hidePopover();
+        } catch {}
+      }
+      if (this.nativeDialogOpen()) {
+        try {
+          this.close();
+        } catch {}
       }
     }
-  // Use :open, not super.open — the custom open getter reads the attribute
-  // removed just before hidePopup(), so super.open can be false while the
-  // native dialog is still open and no "close" event fires.
-    if (this.matches?.(":open")) {
-      try {
-        this.close();
-      } catch (e) {
-        // Ignore when dialog is not in an open state.
-      }
+    if (event.type !== "DISCONNECT" && this.hasAttribute("open")) {
+      this.removeAttribute("open");
     }
-    if (wasActive) this.restoreFocusAfterClose();
+    if (event.type === "DISCONNECT" || from === "closed") return;
+    this.restoreFocusAfterClose({ generation, state: "closed" });
   }
 
   shouldRestoreFocus() {
@@ -481,7 +594,7 @@ class FigPopup extends HTMLDialogElement {
         : null;
   }
 
-  restoreFocusAfterClose() {
+  restoreFocusAfterClose(token = this._lifecycle.capture()) {
     if (!this.shouldRestoreFocus()) {
       this._previousFocus = null;
       return;
@@ -497,7 +610,10 @@ class FigPopup extends HTMLDialogElement {
     if (!target?.isConnected) return;
     const active = document.activeElement;
     if (active && active !== document.body && !this.contains(active)) return;
-    requestAnimationFrame(() => target.focus?.());
+    requestAnimationFrame(() => {
+      if (!this._lifecycle.isCurrent(token, "closed")) return;
+      target.focus?.();
+    });
   }
 
   get autoresize() {
@@ -515,8 +631,8 @@ class FigPopup extends HTMLDialogElement {
   }
 
   handleNativeClose() {
-    this.teardownObservers();
-    if (this.hasAttribute("open")) this.removeAttribute("open");
+    if (this.nativeDisplayed()) return;
+    this._lifecycle.dispatch({ type: "NATIVE_CLOSED" });
   }
 
   handleNativeCancel(event) {
@@ -526,6 +642,41 @@ class FigPopup extends HTMLDialogElement {
     ) {
       event.preventDefault();
     }
+    const token = this._lifecycle.capture();
+    queueMicrotask(() => {
+      if (event.defaultPrevented || !this._lifecycle.isCurrent(token)) return;
+      if (this.nativeDisplayed()) {
+        this.open = false;
+      } else {
+        this._lifecycle.dispatch({ type: "NATIVE_CLOSED" });
+      }
+    });
+  }
+
+  handleNativeToggle(event) {
+    const opened =
+      event.newState === "open" ||
+      (event.newState === undefined && this.nativeDisplayed());
+    if (opened) {
+      this._lifecycle.dispatch({
+        type: "NATIVE_OPENED",
+        requestedOpen: this.open,
+      });
+    } else if (!this.nativeDisplayed()) {
+      this._lifecycle.dispatch({ type: "NATIVE_CLOSED" });
+    }
+  }
+
+  nativeDialogOpen() {
+    return this.matches?.(":open") ?? false;
+  }
+
+  nativePopoverOpen() {
+    return this.matches?.(":popover-open") ?? false;
+  }
+
+  nativeDisplayed() {
+    return this.nativeDialogOpen() || this.nativePopoverOpen();
   }
 
   setupObservers() {
@@ -608,10 +759,16 @@ class FigPopup extends HTMLDialogElement {
 
   startAnchorTracking() {
     this.stopAnchorTracking();
-    if (!this.open) return;
+    if (this.lifecycleState !== "open" && this.lifecycleState !== "opening")
+      return;
+    const token = this._lifecycle.capture();
 
     const tick = () => {
-      if (!this.open) {
+      if (
+        !this._lifecycle.isCurrent(token) ||
+        (this.lifecycleState !== "open" &&
+          this.lifecycleState !== "opening")
+      ) {
         this._anchorTrackRAF = null;
         return;
       }
@@ -660,8 +817,7 @@ class FigPopup extends HTMLDialogElement {
 
   handleOutsidePointerDown(event) {
     if (
-      !this.open ||
-      !(this.matches?.(":open") || this.matches?.(":popover-open"))
+      this.lifecycleState !== "open"
     )
       return;
     const closedby = this.getAttribute("closedby");
@@ -720,16 +876,22 @@ class FigPopup extends HTMLDialogElement {
     if (this.getAttribute("role") === "menu") return;
     const closedby = this.getAttribute("closedby");
     if (closedby === "none") return;
-    const openPopups = Array.from(document.querySelectorAll("dialog[open]"))
-      .filter((popup) => popup instanceof FigPopup && popup.open);
-    const topPopup = openPopups
-      .map((popup) => ({
-        popup,
-        z: Number.parseInt(getComputedStyle(popup).zIndex || "0", 10) || 0,
+    const openDialogs = Array.from(document.querySelectorAll("dialog[open]"));
+    const topDialog = openDialogs
+      .map((dialog, index) => ({
+        dialog,
+        topLayer: figDialogIsTopLayer(dialog) ? 1 : 0,
+        z: Number.parseInt(getComputedStyle(dialog).zIndex || "0", 10) || 0,
+        index,
       }))
-      .sort((a, b) => a.z - b.z)
-      .at(-1)?.popup;
-    if (topPopup && topPopup !== this) return;
+      .sort(
+        (a, b) =>
+          a.topLayer - b.topLayer ||
+          a.z - b.z ||
+          a.index - b.index,
+      )
+      .at(-1)?.dialog;
+    if (topDialog && topDialog !== this) return;
     event.preventDefault();
     this.open = false;
   }
@@ -792,9 +954,7 @@ class FigPopup extends HTMLDialogElement {
 
   removeDragListeners() {
     this.removeEventListener("pointerdown", this._boundPointerDown);
-    document.removeEventListener("pointermove", this._boundPointerMove);
-    document.removeEventListener("pointerup", this._boundPointerUp);
-    document.removeEventListener("pointercancel", this._boundPointerUp);
+    this._dragSession?.abort("disabled-or-disconnected");
   }
 
   isInteractiveElement(element) {
@@ -859,55 +1019,48 @@ class FigPopup extends HTMLDialogElement {
     const rect = this.getBoundingClientRect();
     this._dragOffset.x = e.clientX - rect.left;
     this._dragOffset.y = e.clientY - rect.top;
-
-    document.addEventListener("pointermove", this._boundPointerMove);
-    document.addEventListener("pointerup", this._boundPointerUp);
-    document.addEventListener("pointercancel", this._boundPointerUp);
+    this._dragSession.start(e, {
+      target: document,
+      captureTarget: this,
+    });
   }
 
-  handlePointerMove(e) {
-    if (this._dragPending && !this._isDragging) {
-      const dx = Math.abs(e.clientX - this._dragStartPos.x);
-      const dy = Math.abs(e.clientY - this._dragStartPos.y);
+  activateDrag() {
+    this._isDragging = true;
+    this._dragPending = false;
+    this._wasDragged = true;
+    this.style.cursor = "grabbing";
+    const rect = this.getBoundingClientRect();
+    this.style.top = `${rect.top}px`;
+    this.style.left = `${rect.left}px`;
+    this.style.bottom = "auto";
+    this.style.right = "auto";
+    this.style.margin = "0";
+  }
 
-      if (dx > this._dragThreshold || dy > this._dragThreshold) {
-        this._isDragging = true;
-        this._dragPending = false;
-        this._wasDragged = true;
-        this.setPointerCapture(e.pointerId);
-        this.style.cursor = "grabbing";
-
-        const rect = this.getBoundingClientRect();
-        this.style.top = `${rect.top}px`;
-        this.style.left = `${rect.left}px`;
-        this.style.bottom = "auto";
-        this.style.right = "auto";
-        this.style.margin = "0";
-      }
-    }
-
-    if (!this._isDragging) return;
-
+  updateDrag(e) {
     this.style.left = `${e.clientX - this._dragOffset.x}px`;
     this.style.top = `${e.clientY - this._dragOffset.y}px`;
     e.preventDefault();
   }
 
-  handlePointerUp(e) {
-    if (this._isDragging) {
-      if (this.hasPointerCapture?.(e.pointerId)) {
-        this.releasePointerCapture(e.pointerId);
-      }
-      this.style.cursor = "";
-    }
-
+  finishDrag(e) {
+    this.style.cursor = "";
     this._isDragging = false;
     this._dragPending = false;
+    e?.preventDefault?.();
+  }
 
-    document.removeEventListener("pointermove", this._boundPointerMove);
-    document.removeEventListener("pointerup", this._boundPointerUp);
-    document.removeEventListener("pointercancel", this._boundPointerUp);
-    e.preventDefault();
+  handlePointerMove(e) {
+    this._dragSession?.move(e);
+  }
+
+  handlePointerUp(e) {
+    if (e.type === "pointercancel") {
+      this._dragSession?.cancel("pointercancel", e);
+    } else {
+      this._dragSession?.commit(e);
+    }
   }
 
   // ---- Anchor resolution ----
@@ -920,17 +1073,27 @@ class FigPopup extends HTMLDialogElement {
 
     // Local-first: nearest parent subtree.
     const localScope = this.parentElement;
-    try {
-      if (localScope?.querySelector) {
-        const localMatch = localScope.querySelector(selector);
-        if (localMatch && !this.contains(localMatch)) return localMatch;
-      }
+    const localMatch = figQuerySelector(
+      localScope,
+      selector,
+      "fig-popup anchor",
+      { warnMissing: false },
+    );
+    if (localMatch && !this.contains(localMatch)) return localMatch;
 
-      // Fallback: global document query.
-      return document.querySelector(selector);
-    } catch {
+    const rootMatch = figQuerySelector(
+      this.getRootNode(),
+      selector,
+      "fig-popup anchor",
+    );
+    if (rootMatch && this.contains(rootMatch)) {
+      figWarnInvariant(
+        `popup-anchor-descendant:${selector}`,
+        `fig-popup anchor "${selector}" resolves inside the popup.`,
+      );
       return null;
     }
+    return rootMatch;
   }
 
   parsePosition() {
@@ -1524,7 +1687,8 @@ class FigPopup extends HTMLDialogElement {
   }
 
   positionPopup({ preserveCurrentPosition = false } = {}) {
-    if (!this.open) return;
+    if (this.lifecycleState !== "open" && this.lifecycleState !== "opening")
+      return;
 
     const popupRect = this.getBoundingClientRect();
     const anchor = this.resolveAnchor();
@@ -1627,9 +1791,11 @@ class FigPopup extends HTMLDialogElement {
     }
     if (!preserveCurrentPosition) this._pendingFullReposition = true;
     if (this._rafId !== null) return;
+    const token = this._lifecycle.capture();
 
     this._rafId = requestAnimationFrame(() => {
       this._rafId = null;
+      if (!this._lifecycle.isCurrent(token)) return;
       const preservePosition = !this._pendingFullReposition;
       this._pendingFullReposition = false;
       this.positionPopup({ preserveCurrentPosition: preservePosition });
@@ -1642,10 +1808,9 @@ class FigPopup extends HTMLDialogElement {
   }
 
   isPopupDisplayed() {
-    return Boolean(
-      this._isPopupActive ||
-        this.matches?.(":open") ||
-        this.matches?.(":popover-open"),
+    return (
+      this.lifecycleState === "opening" ||
+      this.lifecycleState === "open"
     );
   }
 }

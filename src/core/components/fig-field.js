@@ -10,6 +10,7 @@ import {
   figDefineElement,
   figUniqueId,
 } from "../runtime/index.js";
+import { figWarnInvariant } from "../../shared/invariants.js";
 import { FigTooltip } from "./fig-tooltip.js";
 
 /* Form Field */
@@ -61,7 +62,7 @@ class FigField extends HTMLElement {
     previousChevron?.removeEventListener("click", this.#boundToggle);
 
     this.label = this.querySelector(":scope>label");
-    this.input = Array.from(this.childNodes).find((node) =>
+    const inputCandidates = Array.from(this.childNodes).filter((node) =>
       node.nodeType === Node.ELEMENT_NODE &&
       node.nodeName.toLowerCase().startsWith("fig-") &&
       !(
@@ -70,6 +71,13 @@ class FigField extends HTMLElement {
           ["leading", "trailing"].includes(node.getAttribute("slot")))
       ),
     );
+    this.input = inputCandidates[0];
+    if (inputCandidates.length !== 1) {
+      figWarnInvariant(
+        `fig-field-inputs:${inputCandidates.length}`,
+        `fig-field expects exactly one direct FigUI input child; found ${inputCandidates.length}.`,
+      );
+    }
     this.#observeInputAttributes();
 
     // Popup/menu hosts also expose `open`, but that is overlay state — not a

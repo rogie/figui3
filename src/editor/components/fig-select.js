@@ -111,7 +111,7 @@ class FigSelect extends HTMLElement {
   #boundOptionClick = this.#handleOptionClick.bind(this);
   #boundOptionPointerOver = this.#handleOptionPointerOver.bind(this);
   #boundKeydown = this.#handleKeydown.bind(this);
-  #boundPopupClose = this.#handlePopupClose.bind(this);
+  #boundPopupLifecycle = this.#handlePopupLifecycle.bind(this);
   #boundSlotChange = this.#handleSlotChange.bind(this);
 
   static get observedAttributes() {
@@ -187,6 +187,11 @@ class FigSelect extends HTMLElement {
   set open(val) {
     if (val) this.setAttribute("open", "");
     else this.removeAttribute("open");
+  }
+
+  #popupExpanded() {
+    const state = this.#popup?.lifecycleState;
+    return state === "opening" || state === "open";
   }
 
   get menuAnchor() {
@@ -552,7 +557,7 @@ class FigSelect extends HTMLElement {
     if (typeof this.#popup.positionPopup !== "function") return;
     this.#originalPositionPopup = this.#popup.positionPopup.bind(this.#popup);
     this.#popup.positionPopup = () => {
-      if (!this.open) {
+      if (!this.#popupExpanded()) {
         this.#originalPositionPopup?.();
         return;
       }
@@ -625,7 +630,7 @@ class FigSelect extends HTMLElement {
     if (!this.#popup) return;
     this.#popup.anchor = this.#resolveMenuAnchor();
     this.#syncPopupWidth();
-    if (!this.open) return;
+    if (!this.#popupExpanded()) return;
     this.#freezeMenuPosition = false;
     this.#frozenLabelRect = null;
     this.#frozenViewport = null;
@@ -908,7 +913,7 @@ class FigSelect extends HTMLElement {
       panel.syncOverflow?.();
     }
 
-    if (this.#freezeMenuPosition || this.open) {
+    if (this.#freezeMenuPosition || this.#popupExpanded()) {
       this.#rememberFrozenGeometry();
     }
   }
@@ -922,7 +927,10 @@ class FigSelect extends HTMLElement {
     this.addEventListener("click", this.#boundOptionClick);
     this.addEventListener("pointerover", this.#boundOptionPointerOver);
     this.#popup?.addEventListener("keydown", this.#boundKeydown);
-    this.#popup?.addEventListener("close", this.#boundPopupClose);
+    this.#popup?.addEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPopupLifecycle,
+    );
     this.#panelSlot?.addEventListener("slotchange", this.#boundSlotChange);
   }
 
@@ -935,7 +943,10 @@ class FigSelect extends HTMLElement {
     this.removeEventListener("click", this.#boundOptionClick);
     this.removeEventListener("pointerover", this.#boundOptionPointerOver);
     this.#popup?.removeEventListener("keydown", this.#boundKeydown);
-    this.#popup?.removeEventListener("close", this.#boundPopupClose);
+    this.#popup?.removeEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPopupLifecycle,
+    );
     this.#panelSlot?.removeEventListener("slotchange", this.#boundSlotChange);
   }
 
@@ -1233,7 +1244,7 @@ class FigSelect extends HTMLElement {
     if (figEditorBooleanAttribute(this, "disabled")) return;
     e.preventDefault();
     e.stopPropagation();
-    const nextOpen = !this.open;
+    const nextOpen = !this.#popupExpanded();
     if (nextOpen) this.#syncMenuAnchor();
     this.open = nextOpen;
   }
@@ -1278,7 +1289,7 @@ class FigSelect extends HTMLElement {
   #handleKeydown(e) {
     if (e.currentTarget === document && e.key !== "Escape") return;
 
-    const listOpen = this.open && (this.#popup?.matches?.(":open") ?? false);
+    const listOpen = this.#popupExpanded();
     if (!listOpen) {
       if (
         this.#button?.contains(e.target) &&
@@ -1337,9 +1348,14 @@ class FigSelect extends HTMLElement {
     }
   }
 
-  #handlePopupClose() {
-    if (this.hasAttribute("open")) this.removeAttribute("open");
-    this.#button?.setAttribute("aria-expanded", "false");
+  #handlePopupLifecycle(event) {
+    if (event.target !== this.#popup) return;
+    const state = event.detail?.state;
+    const expanded = state === "opening" || state === "open";
+    this.#button?.setAttribute("aria-expanded", String(expanded));
+    if (expanded) return;
+    if (this.open) this.open = false;
+    if (state !== "closed") return;
     this.#button?.focus();
     this.#focusedIndex = -1;
   }
@@ -1459,7 +1475,6 @@ class FigSelect extends HTMLElement {
     this.#syncPopupWidth();
     this.#popup.open = true;
     document.addEventListener("keydown", this.#boundKeydown, true);
-    this.#button?.setAttribute("aria-expanded", "true");
     this.#focusedIndex = -1;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -1499,7 +1514,6 @@ class FigSelect extends HTMLElement {
     this.#frozenViewport = null;
     document.removeEventListener("keydown", this.#boundKeydown, true);
     this.#popup.open = false;
-    this.#button?.setAttribute("aria-expanded", "false");
   }
 }
 figEditorDefineElement("fig-select", FigSelect);

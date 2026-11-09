@@ -117,6 +117,17 @@ export interface FigCheckedElement extends FigValueElement<
   defaultChecked?: boolean;
 }
 
+export type FigOption =
+  | string
+  | {
+      value: string;
+      label: string;
+    };
+
+export interface FigOptionsElement extends FigValueElement<string> {
+  options: FigOption[];
+}
+
 export interface FigTextInputElement extends FigValueElement<
   string,
   string
@@ -310,7 +321,7 @@ export interface FigTagNameMap {
   "fig-menu": FigMenuElement;
   "fig-menu-item": FigValueElement;
   "fig-menu-separator": FigHTMLElement;
-  "fig-options": FigValueElement;
+  "fig-options": FigOptionsElement;
   "fig-origin-grid": FigValueElement;
   "fig-palette-editor": FigValueElement;
   "fig-preview": FigHTMLElement;

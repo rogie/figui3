@@ -113,7 +113,7 @@ Data-driven (no authored options):
 
 ## `fig-property`
 
-Default playground example (`/figui3#property/default`):
+Default playground example (`/propskit#property/default`):
 
 ```html
 <fig-property label="Size" ratio="1:2">
@@ -141,7 +141,7 @@ Generated accessories:
 </fig-property>
 ```
 
-Authored trailing accessory (`/figui3#property/custom-accessory`):
+Authored trailing accessory (`/propskit#property/custom-accessory`):
 
 ```html
 <fig-property label="Opacity" show-trailing>

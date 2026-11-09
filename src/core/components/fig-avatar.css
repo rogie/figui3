@@ -3,4 +3,44 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+fig-avatar,
+.fig-avatar {
+  --size: 1.5rem;
+  width: var(--size);
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  height: var(--size);
+  border-radius: 100%;
+  border: 0;
+  background: var(--figma-color-bg-brand);
+  overflow: hidden;
+  color: var(--figma-color-icon-onbrand);
+
+  img {
+    width: var(--size);
+    height: var(--size);
+    border-radius: 100%;
+
+    &:not([src]) {
+      background: var(--checkerboard);
+    }
+  }
+
+  &[borderless] img {
+    box-shadow: none;
+  }
+
+  &:has(img[src]) {
+    background: none;
+  }
+
+  &::after {
+    content: attr(initials);
+    font-size: var(--body-medium-fontSize);
+  }
+
+  &:where(fig-input-text)[size="large"] {
+    --size: 3rem;
+  }
+}

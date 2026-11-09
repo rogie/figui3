@@ -66,15 +66,18 @@ test("React 19 preserves DOM ownership and receives native event detail", async 
   await expect(page.locator("#react-slider")).toHaveCount(1);
 
   await page.locator("#react-checkbox input").click();
+  await page.locator("#react-number input").fill("42");
   const state = await page.evaluate(() => {
     const session = (window as any).__figuiReactSession;
     return {
       inputDetails: session.inputDetails,
+      numberDetails: session.numberDetails,
       recoverableErrors: session.recoverableErrors,
     };
   });
   expect(state).toEqual({
     inputDetails: [{ checked: true, value: "yes" }],
+    numberDetails: [42],
     recoverableErrors: [],
   });
 

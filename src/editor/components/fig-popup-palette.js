@@ -5,6 +5,7 @@ Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
 import "./fig-palette-editor.js";
+import { figDefineCustomizedBuiltIn } from "../../core/runtime/index.js";
 
 const PALETTE_ATTRIBUTES = [
   "value",
@@ -183,7 +184,7 @@ if (typeof customElements !== "undefined") {
     };
   }
 
-  customElements.define("fig-popup-palette", FigPopupPalette, {
+  figDefineCustomizedBuiltIn("fig-popup-palette", FigPopupPalette, {
     extends: "dialog",
   });
   });

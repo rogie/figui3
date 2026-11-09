@@ -9,12 +9,16 @@ All notable changes to this project will be documented in this file.
 - Added generated icon sources, a shared icon manifest, and standalone `icons.css`.
 - Added SSR-safe explicit registration, complete DOM and React declarations, and React runtime guidance.
 - Added generated bundle inventories, browser-support CI, and Chromium, Firefox, and WebKit contract coverage.
+- Added `upload="icon"` Add/Remove controls for image and video uploads; PropsKit media chooser grids use this mode with a 12rem maximum height and native scrollbar overflow.
 
 ### Changed
 
 - Split all core, Editor, and Lab custom elements into per-tag JavaScript and CSS source pairs under `src/` while retaining the existing aggregate package and `dist/` entrypoints.
 - Bundled complete Editor and Lab aggregates while preserving standalone component imports.
 - Reorganized playground navigation, package builds, licensing checks, and source packaging around the new component structure.
+- Made `fig-input-number` steppers visible by default; use `steppers="false"` to hide them. Internal `fig-slider` number inputs remain stepper-free.
+- Replaced PropsKit’s `variant: "stepper"` schema with `stepper: true` for slider stepper mode. Exact number inputs use the same option to hide default steppers with `stepper: false`.
+- **Breaking:** Replaced PropsKit image/video `multiple` arrays with selectable `options`; multiple candidates render in `fig-chooser` and resolve to one selected source string. Audio retains `multiple` / `maxItems`.
 
 ### Fixed
 

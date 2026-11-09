@@ -3,7 +3,7 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 const outputPath = new URL("../BUNDLES.md", import.meta.url);
 const check = process.argv.includes("--check");
 const registrationPattern =
-  /(?:figDefineElement|figDefineCustomizedBuiltIn|figEditorDefineElement|figLabDefineElement|defineElement|customElements\.define)\(\s*["']([^"']+)["']/g;
+  /(?:figDefineElement|figDefineCustomizedBuiltIn|figDefineCustomElement|figEditorDefineElement|figLabDefineElement|defineElement|customElements\.define)\(\s*["']([^"']+)["']/g;
 
 const bundles = [
   {

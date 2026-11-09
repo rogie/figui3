@@ -4,8 +4,10 @@ https://polyformproject.org/licenses/shield/1.0.0
 Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
-import "./fig-property.js";
+import "../../../fig.js";
 import { figConvertRGB, figHexToRGB } from "../../../fig-color.js";
+import { figEditorDefineElement } from "../runtime/helpers.js";
+import { figCreatePointerSession } from "../../shared/pointer-session.js";
 
 const HTMLElement = globalThis.HTMLElement ?? class {};
 
@@ -225,6 +227,7 @@ class FigGradientEditor extends HTMLElement {
   #renderedStops = [];
   #selectedStopRow = null;
   #pointerInteractionActive = false;
+  #pointerSession = null;
   #deferredExternalGradient = null;
 
   static get observedAttributes() {
@@ -268,6 +271,9 @@ class FigGradientEditor extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue || this.#syncingValue) return;
+    if (name === "disabled" && newValue !== null && newValue !== "false") {
+      this.#pointerSession?.abort("disabled");
+    }
     if (name === "value") {
       const incoming = normalizeGradientEditorValue(newValue);
       if (gradientsSemanticallyEqual(this.#gradient, incoming)) {
@@ -287,7 +293,7 @@ class FigGradientEditor extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.#endPointerInteraction({ reconcile: false });
+    this.#pointerSession?.abort("disconnect");
     if (this.#deferredExternalGradient) {
       this.#gradient = this.#deferredExternalGradient;
       this.#deferredExternalGradient = null;
@@ -949,24 +955,32 @@ class FigGradientEditor extends HTMLElement {
   #handlePointerDown = (event) => {
     if (event.button !== 0 || this.#pointerInteractionActive) return;
     this.#pointerInteractionActive = true;
-    window.addEventListener("pointerup", this.#handlePointerEnd, true);
-    window.addEventListener("pointercancel", this.#handlePointerEnd, true);
-    window.addEventListener("blur", this.#handlePointerEnd, true);
+    const session = figCreatePointerSession({
+      listenerTarget: window,
+      onFinish: ({ reason }) => {
+        if (this.#pointerSession === session) this.#pointerSession = null;
+        const reconcile = reason !== "disconnect";
+        if (reconcile) {
+          queueMicrotask(() =>
+            this.#endPointerInteraction({ reconcile: true }),
+          );
+        } else {
+          this.#endPointerInteraction({ reconcile: false });
+        }
+      },
+    });
+    this.#pointerSession = session;
+    session.start(event, {
+      target: window,
+      listenerOptions: { capture: true },
+    });
   };
 
-  #handlePointerEnd = () => {
-    window.removeEventListener("pointerup", this.#handlePointerEnd, true);
-    window.removeEventListener("pointercancel", this.#handlePointerEnd, true);
-    window.removeEventListener("blur", this.#handlePointerEnd, true);
-    queueMicrotask(() =>
-      this.#endPointerInteraction({ reconcile: true }),
-    );
+  #handlePointerEnd = (event) => {
+    this.#pointerSession?.cancel(event.type, event);
   };
 
   #endPointerInteraction({ reconcile }) {
-    window.removeEventListener("pointerup", this.#handlePointerEnd, true);
-    window.removeEventListener("pointercancel", this.#handlePointerEnd, true);
-    window.removeEventListener("blur", this.#handlePointerEnd, true);
     const wasActive = this.#pointerInteractionActive;
     this.#pointerInteractionActive = false;
     if (!reconcile || !wasActive || !this.#deferredExternalGradient) return;
@@ -988,9 +1002,4 @@ class FigGradientEditor extends HTMLElement {
   }
 }
 
-if (
-  typeof customElements !== "undefined" &&
-  !customElements.get("fig-gradient-editor")
-) {
-  customElements.define("fig-gradient-editor", FigGradientEditor);
-}
+figEditorDefineElement("fig-gradient-editor", FigGradientEditor);

@@ -3,6 +3,11 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
+import {
+  figDefineCustomElement,
+  figWarnInvariant,
+} from "../../shared/invariants.js";
+
 // FigLayer
 const HTMLElement = globalThis.HTMLElement ?? class {};
 const CustomEvent = class extends (globalThis.CustomEvent ?? class {}) {
@@ -49,7 +54,13 @@ class FigLayer extends HTMLElement {
 
   #injectChevron() {
     const row = this.querySelector(":scope > .fig-layer-row");
-    if (!row) return;
+    if (!row) {
+      figWarnInvariant(
+        "fig-layer-row",
+        "fig-layer requires a direct .fig-layer-row child.",
+      );
+      return;
+    }
 
     this.#chevron = row.querySelector(".fig-layer-chevron");
     if (!this.#chevron) {
@@ -171,11 +182,6 @@ class FigLayer extends HTMLElement {
   }
 }
 
-if (
-  typeof customElements !== "undefined" &&
-  !customElements.get("fig-layer")
-) {
-  customElements.define("fig-layer", FigLayer);
-}
+figDefineCustomElement("fig-layer", FigLayer);
 
 export { FigLayer };

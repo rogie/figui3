@@ -101,14 +101,13 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
   max="100"
   step="1"
   units="%"
-  steppers="true"
   full
   onInput={onInput}
   onChange={onChange}
 />
 ```
 
-- Attrs: `value`, `default`, `variant` (`ghost`), `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `tabular`, `disabled`, `full`
+- Attrs: `value`, `default`, `variant` (`ghost`), `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers` (defaults to `true`; set `"false"` to hide), `tabular`, `disabled`, `full`
 
 ### `fig-angle`
 
@@ -669,8 +668,10 @@ toastRef.current?.showToast();
 />
 ```
 
-- Attrs: `type`, `src`, read-only `loaded` (image mode), `caption`, `aspect-ratio`, `fit`, `upload`, `loading-indicator`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `poster`
-- Events: `loaded` (`detail.src`), `input` / `change`
+- Attrs: `type`, `src`, read-only `loaded` (image mode), `caption`, `aspect-ratio`, `fit`, `upload`, `multiple`, `loading-indicator`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `poster`
+- Use `upload="icon"` for an Add icon while empty and only Remove when populated; `label` supplies the Add tooltip and accessible name.
+- With `upload multiple`, the generated file input accepts multiple files and displays the first selection.
+- Events: `loaded` (`detail.src`, first `detail.file`, and all `detail.files`), `input` / `change`
 
 ### `fig-image`
 
@@ -679,7 +680,7 @@ toastRef.current?.showToast();
 ```
 
 - Attrs: same media surface attrs. The read-only `loaded` attribute supports CSS loaded-state selectors.
-- Events: `load`, `error`, and `loaded` (`detail.src`)
+- Events: `load`, `error`, and `loaded` (same upload detail as `fig-media`)
 
 ### `fig-video`
 

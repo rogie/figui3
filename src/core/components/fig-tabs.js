@@ -20,6 +20,7 @@ import {
  * @attr {"buttons"|"fade"} overflow - Overflow treatment (default: buttons)
  */
 class FigTabs extends HTMLElement {
+  #boundBeginClick;
   #boundHandleClick;
   #boundHandleKeyDown;
   #boundSyncOverflow = this.#syncOverflow.bind(this);
@@ -27,11 +28,13 @@ class FigTabs extends HTMLElement {
   #resizeObserver = null;
   #navStart = null;
   #navEnd = null;
+  #clickInProgress = false;
   #isUnwrapping = false;
   #parentDisabledTabs = new WeakSet();
 
   constructor() {
     super();
+    this.#boundBeginClick = this.#beginClick.bind(this);
     this.#boundHandleClick = this.handleClick.bind(this);
     this.#boundHandleKeyDown = this.#handleKeyDown.bind(this);
   }
@@ -49,6 +52,7 @@ class FigTabs extends HTMLElement {
     this.setAttribute("role", "tablist");
     if (this.shadowRoot) this.shadowRoot.replaceChildren();
     this.#removeLegacyScroller();
+    this.addEventListener("click", this.#boundBeginClick, true);
     this.addEventListener("click", this.#boundHandleClick);
     this.addEventListener("keydown", this.#boundHandleKeyDown);
     this.addEventListener("scroll", this.#boundSyncOverflow);
@@ -59,6 +63,15 @@ class FigTabs extends HTMLElement {
       const value = this.getAttribute("value");
       if (value) {
         this.#selectByValue(value);
+      } else {
+        const selected = this.querySelector(
+          'fig-tab[selected]:not([selected="false"])',
+        );
+        if (selected) {
+          this.selectedTab = selected;
+          const selectedValue = this.#resolveTabValue(selected);
+          if (selectedValue) this.setAttribute("value", selectedValue);
+        }
       }
       if (figBooleanAttribute(this, "disabled")) {
         this.#applyDisabled(true);
@@ -135,6 +148,7 @@ class FigTabs extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.removeEventListener("click", this.#boundBeginClick, true);
     this.removeEventListener("click", this.#boundHandleClick);
     this.removeEventListener("keydown", this.#boundHandleKeyDown);
     this.removeEventListener("scroll", this.#boundSyncOverflow);
@@ -142,6 +156,7 @@ class FigTabs extends HTMLElement {
     this.#mutationObserver = null;
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = null;
+    this.#clickInProgress = false;
     this.#removeNavButtons();
   }
 
@@ -173,14 +188,35 @@ class FigTabs extends HTMLElement {
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = new MutationObserver((records) => {
       if (this.#isUnwrapping) return;
+      const tabStateChanged = records.some(
+        (record) =>
+          record.type === "attributes" &&
+          record.target instanceof Element &&
+          record.target.matches("fig-tab"),
+      );
+      if (tabStateChanged) {
+        const selectedRecord = [...records].reverse().find(
+          (record) =>
+            record.type === "attributes" &&
+            record.attributeName === "selected" &&
+            record.target instanceof Element &&
+            record.target.matches(
+              'fig-tab[selected]:not([selected="false"])',
+            ),
+        );
+        if (!this.#clickInProgress) {
+          this.#reconcileTabState(selectedRecord?.target);
+        }
+      }
       const authoredChange = records.some((record) =>
+        record.type === "childList" &&
         [...record.addedNodes, ...record.removedNodes].some(
           (node) =>
             !(node instanceof Element) ||
             !node.matches("[data-fig-tabs-nav]"),
         ),
       );
-      if (!authoredChange) return;
+      if (!authoredChange && !tabStateChanged) return;
       this.#removeLegacyScroller();
       this.#applyOverflowMode();
       this.#syncTabIndexes();
@@ -189,7 +225,39 @@ class FigTabs extends HTMLElement {
         this.#scrollSelectedTabIntoView();
       });
     });
-    this.#mutationObserver.observe(this, { childList: true, subtree: false });
+    this.#mutationObserver.observe(this, {
+      childList: true,
+      attributes: true,
+      attributeFilter: ["disabled", "selected", "value"],
+      subtree: true,
+    });
+  }
+
+  #reconcileTabState(preferred) {
+    const selected =
+      preferred?.isConnected && figBooleanAttribute(preferred, "selected")
+        ? preferred
+        : this.querySelector('fig-tab[selected]:not([selected="false"])');
+    if (selected) {
+      this.querySelectorAll("fig-tab").forEach((tab) => {
+        if (tab !== selected) tab.removeAttribute("selected");
+      });
+      this.selectedTab = selected;
+      const value = this.#resolveTabValue(selected);
+      if (this.getAttribute("value") !== value) {
+        if (value) this.setAttribute("value", value);
+        else this.removeAttribute("value");
+      }
+    }
+    this.#syncTabIndexes();
+  }
+
+  #beginClick(event) {
+    if (!event.target?.closest?.("fig-tab")) return;
+    this.#clickInProgress = true;
+    setTimeout(() => {
+      this.#clickInProgress = false;
+    }, 0);
   }
 
   #removeNavButtons() {
@@ -359,10 +427,9 @@ class FigTabs extends HTMLElement {
     )
       return;
     const tabs = this.querySelectorAll("fig-tab");
-    const previousTab =
-      Array.from(tabs).find((tab) => figBooleanAttribute(tab, "selected")) ||
-      this.selectedTab;
-    const previousValue = this.#resolveTabValue(previousTab);
+    const previousTab = this.selectedTab;
+    const previousValue =
+      this.getAttribute("value") ?? this.#resolveTabValue(previousTab);
     for (const tab of tabs) {
       if (tab === target) {
         this.selectedTab = tab;

@@ -13,6 +13,8 @@ import {
   figHexToRGB,
   hasFigFillPicker,
 } from "../runtime/index.js";
+import { figClosest } from "../../shared/invariants.js";
+import { figCreatePointerSession } from "../../shared/pointer-session.js";
 
 /* Handle */
 /**
@@ -42,6 +44,7 @@ class FigHandle extends HTMLElement {
   #didDrag = false;
   #boundPointerDown = null;
   #activeDragCleanup = null;
+  #pointerSession = null;
   #applyingValue = false;
   #colorTip = null;
   #directColorPicker = null;
@@ -105,7 +108,7 @@ class FigHandle extends HTMLElement {
   #getContainer() {
     const attr = this.getAttribute("drag-surface");
     if (!attr || attr === "parent") return this.parentElement;
-    return this.closest(attr);
+    return figClosest(this, attr, "fig-handle drag-surface");
   }
 
   get value() {
@@ -465,6 +468,12 @@ class FigHandle extends HTMLElement {
       this.#syncDirectColorPickerValue();
     }
     if (name === "drag") this.#syncDrag();
+    if (
+      name === "disabled" &&
+      (value === "" || (value !== null && value !== "false"))
+    ) {
+      this.#pointerSession?.abort("disabled");
+    }
     if (name === "hit-area") this.#syncHitArea();
     if (name === "selected") this.#syncColorTipSelected();
     if (
@@ -527,6 +536,8 @@ class FigHandle extends HTMLElement {
   }
 
   #teardownDrag() {
+    this.#pointerSession?.abort("teardown");
+    this.#pointerSession = null;
     this.#activeDragCleanup?.();
     this.#activeDragCleanup = null;
     if (this.#boundPointerDown) {
@@ -546,7 +557,7 @@ class FigHandle extends HTMLElement {
     const container = this.#getContainer();
     if (!container) return;
 
-    this.#activeDragCleanup?.();
+    this.#pointerSession?.abort("replaced");
     this.#isDragging = true;
     const axes = this.#axes;
     let lastRect = null;
@@ -603,69 +614,75 @@ class FigHandle extends HTMLElement {
       }
     };
 
-    const onMove = (e) => {
-      if (!this.#isDragging) return;
-      if (!this.#didDrag) {
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        if (dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return;
+    const session = figCreatePointerSession({
+      threshold: DRAG_THRESHOLD,
+      listenerTarget: window,
+      onActivate: () => {
         this.#closeColorPickerForDrag();
         this.classList.add("dragging");
         this.style.cursor = "grabbing";
         if (!figBooleanAttribute(this, "selected")) this.select();
-      }
-      this.#didDrag = true;
-      clampAndApply(e.clientX, e.clientY, e.shiftKey);
-      this.dispatchEvent(
-        new CustomEvent("input", {
-          bubbles: true,
-          detail: {
-            ...this.#positionDetail(lastRect),
-            shiftKey: e.shiftKey,
-          },
-        }),
-      );
-    };
-
-    const onUp = (e) => {
-      cleanup();
-      if (this.#didDrag) {
-        clampAndApply(e.clientX, e.clientY, e.shiftKey);
-        this.#syncValueAttribute();
-        this.#applyValue(this.getAttribute("value"));
+        this.#didDrag = true;
+      },
+      onMove: ({ event: moveEvent }) => {
+        clampAndApply(
+          moveEvent.clientX,
+          moveEvent.clientY,
+          moveEvent.shiftKey,
+        );
         this.dispatchEvent(
-          new CustomEvent("change", {
+          new CustomEvent("input", {
             bubbles: true,
-            detail: this.#positionDetail(lastRect),
+            detail: {
+              ...this.#positionDetail(lastRect),
+              shiftKey: moveEvent.shiftKey,
+            },
           }),
         );
-        const swallowClick = (evt) => {
-          evt.stopPropagation();
-          evt.preventDefault();
-        };
-        this.addEventListener("click", swallowClick, {
-          capture: true,
-          once: true,
-        });
-      } else {
-        this.#syncValueAttribute();
-      }
-      this.#didDrag = false;
-    };
+      },
+      onCommit: ({ event: endEvent, active }) => {
+        if (active) {
+          clampAndApply(
+            endEvent.clientX,
+            endEvent.clientY,
+            endEvent.shiftKey,
+          );
+          this.#syncValueAttribute();
+          this.#applyValue(this.getAttribute("value"));
+          this.dispatchEvent(
+            new CustomEvent("change", {
+              bubbles: true,
+              detail: this.#positionDetail(lastRect),
+            }),
+          );
+          const swallowClick = (clickEvent) => {
+            clickEvent.stopPropagation();
+            clickEvent.preventDefault();
+          };
+          this.addEventListener("click", swallowClick, {
+            capture: true,
+            once: true,
+          });
+        } else {
+          this.#syncValueAttribute();
+        }
+      },
+      onFinish: () => {
+        this.#isDragging = false;
+        this.style.cursor = "";
+        this.classList.remove("dragging");
+        this.#didDrag = false;
+        if (this.#pointerSession === session) {
+          this.#pointerSession = null;
+          this.#activeDragCleanup = null;
+        }
+      },
+    });
 
-    const cleanup = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      this.#isDragging = false;
-      this.style.cursor = "";
-      this.classList.remove("dragging");
-      if (this.#activeDragCleanup === cleanup) {
-        this.#activeDragCleanup = null;
-      }
-    };
+    this.#pointerSession = session;
+    const cleanup = () => session.abort("cleanup");
     this.#activeDragCleanup = cleanup;
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+    session.start(e, { target: window, captureTarget: this });
   }
 
   showColorTip() {
@@ -720,6 +737,7 @@ class FigHandle extends HTMLElement {
 
     try {
       const { ctx } = figGetSharedCanvas(1, 1);
+      if (!ctx) return value;
       ctx.fillStyle = "#000000";
       ctx.fillStyle = value;
       const resolved = ctx.fillStyle;

@@ -29,6 +29,7 @@ import { figNormalizeTextOnlyInputSlots } from "../runtime/input-slots.js";
  * @attr {string} units - Unit string to append/prepend to displayed value (e.g., "%", "°", "$")
  * @attr {string} units-disallow - Comma-separated units to disallow (defaults to "px")
  * @attr {string} unit-position - Position of unit: "suffix" (default) or "prefix"
+ * @attr {boolean} steppers - Whether to show spin buttons (defaults to true)
  * @attr {string} name - Form field name
  */
 class FigInputNumber extends HTMLElement {
@@ -286,9 +287,7 @@ class FigInputNumber extends HTMLElement {
     }
     this.transform = Number(this.getAttribute("transform") || 1);
 
-    const hasSteppers =
-      this.hasAttribute("steppers") &&
-      this.getAttribute("steppers") !== "false";
+    const hasSteppers = this.getAttribute("steppers") !== "false";
 
     this.input = this.#ensureInputControl();
     this.#syncInputA11yAttributes();
@@ -456,9 +455,7 @@ class FigInputNumber extends HTMLElement {
       this.input.addEventListener("blur", this.#boundBlur);
       this.input.addEventListener("keydown", this.#boundKeyDown);
     }
-    const hasSteppers =
-      this.hasAttribute("steppers") &&
-      this.getAttribute("steppers") !== "false";
+    const hasSteppers = this.getAttribute("steppers") !== "false";
     if (this.#stepperEl && !this.contains(this.#stepperEl)) {
       this.#stepperEl = null;
     }
@@ -838,6 +835,8 @@ class FigInputNumber extends HTMLElement {
           this.#syncStepperState();
           this.#syncSpinbuttonAria();
           break;
+        case "default":
+          break;
         case "min":
         case "max":
         case "step":
@@ -852,7 +851,7 @@ class FigInputNumber extends HTMLElement {
           this.#syncSpinbuttonAria();
           break;
         case "steppers": {
-          const hasSteppers = newValue !== null && newValue !== "false";
+          const hasSteppers = newValue !== "false";
           this.#syncSteppers(hasSteppers);
           break;
         }

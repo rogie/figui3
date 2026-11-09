@@ -6,8 +6,10 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
 import {
   CustomEvent,
   HTMLElement,
+  figBooleanAttribute,
   figDefineElement,
 } from "../runtime/index.js";
+import { AsyncOperationOwner } from "../../internal/async-operation-owner.js";
 
 /* Media */
 const FIG_IMAGE_FORWARDED_EVENTS = ["load", "error"];
@@ -45,7 +47,7 @@ const FIG_MEDIA_FORWARDED_EVENTS = [
  * @attr {string} type - "image" (default) or "video" (for fig-media)
  * @attr {string} alt - Alt text for the generated image (default "")
  * @attr {boolean} loaded - Read-only reflected state when an image has loaded successfully
- * @attr {boolean} upload - Show upload overlay (generates fig-input-file)
+ * @attr {boolean|string} upload - Show upload overlay; use "icon" for Add/Remove icon buttons
  * @attr {boolean} loading-indicator - Set to `false` to disable the generated image loading spinner
  * @attr {string} label - Upload button label (default "Upload")
  * @attr {string} size - small | medium | large | auto (token-sized square)
@@ -101,6 +103,10 @@ class FigMedia extends HTMLElement {
   #controlsOnPlay = null;
   #controlsOnPause = null;
   #controlsOnSeek = null;
+  #sourceOwner = new AsyncOperationOwner();
+  #sourceOperation = null;
+  #imageLoadOwner = new AsyncOperationOwner();
+  #blobOwner = new AsyncOperationOwner();
 
   static get observedAttributes() {
     return [
@@ -108,6 +114,7 @@ class FigMedia extends HTMLElement {
       "type",
       "alt",
       "upload",
+      "multiple",
       "loading-indicator",
       "label",
       "aspect-ratio",
@@ -157,31 +164,71 @@ class FigMedia extends HTMLElement {
    */
   async getBase64() {
     if (this.mediaKind !== "image") return null;
-    if (!this.#currentMediaSrc()) return null;
-    if (!this.#mediaEl) return null;
+    const src = this.#currentMediaSrc();
+    const media = this.#mediaEl;
+    if (!src || !media) return null;
+    const operation =
+      this.#sourceOperation || this.#beginMediaSourceOperation();
     try {
-      if (typeof this.#mediaEl.decode === "function") {
-        await this.#mediaEl.decode();
-      } else if (!this.#mediaEl.complete) {
+      if (typeof media.decode === "function") {
+        await media.decode();
+      } else if (!media.complete) {
         await new Promise((resolve, reject) => {
-          this.#mediaEl.addEventListener("load", resolve, { once: true });
-          this.#mediaEl.addEventListener("error", reject, { once: true });
+          let settled = false;
+          const finish = (callback) => (event) => {
+            if (settled) return;
+            settled = true;
+            listeners.dispose();
+            callback(event);
+          };
+          const onLoad = finish(resolve);
+          const onError = finish(reject);
+          const listeners = operation.own(() => {
+            media.removeEventListener("load", onLoad);
+            media.removeEventListener("error", onError);
+            if (!settled) {
+              settled = true;
+              resolve();
+            }
+          });
+          media.addEventListener("load", onLoad, { once: true });
+          media.addEventListener("error", onError, { once: true });
         });
       }
     } catch {
       // continue; canvas draw will throw if image truly unusable
     }
-    const w = this.#mediaEl.naturalWidth;
-    const h = this.#mediaEl.naturalHeight;
+    if (
+      !operation.isCurrent() ||
+      !this.isConnected ||
+      this.#mediaEl !== media ||
+      this.#currentMediaSrc() !== src
+    ) {
+      return null;
+    }
+    const w = media.naturalWidth;
+    const h = media.naturalHeight;
     if (!(w > 0) || !(h > 0)) return null;
     const canvas = document.createElement("canvas");
     canvas.width = w;
     canvas.height = h;
-    canvas.getContext("2d").drawImage(this.#mediaEl, 0, 0);
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.drawImage(media, 0, 0);
     return canvas.toDataURL();
   }
 
   connectedCallback() {
+    if (this.#sourceOwner.disposed) {
+      this.#sourceOwner = new AsyncOperationOwner();
+    }
+    if (this.#imageLoadOwner.disposed) {
+      this.#imageLoadOwner = new AsyncOperationOwner();
+    }
+    if (this.#blobOwner.disposed) {
+      this.#blobOwner = new AsyncOperationOwner();
+    }
+    this.#beginMediaSourceOperation();
     this.#src = this.getAttribute("src") || "";
 
     const ar = this.getAttribute("aspect-ratio");
@@ -209,20 +256,43 @@ class FigMedia extends HTMLElement {
       this.#createFileInput();
     }
     this.#fileInput = this.querySelector("fig-input-file[data-generated]");
+    this.#syncFileInputUploadMode();
     this.#fileInput?.removeEventListener("change", this.#boundHandleFileInput);
     this.#fileInput?.addEventListener("change", this.#boundHandleFileInput);
   }
 
   disconnectedCallback() {
     this.#fileInput?.removeEventListener("change", this.#boundHandleFileInput);
+    this.#sourceOwner.dispose();
+    this.#sourceOperation = null;
+    this.#imageLoadOwner.dispose();
+    this.#blobOwner.dispose();
     this.#finishImageLoading();
     this.#removeMediaElementListeners();
     this.#removeControls();
-    if (this.#blobUrl) {
-      URL.revokeObjectURL(this.#blobUrl);
-      this.#blobUrl = null;
-    }
+    this.#blobUrl = null;
     this.#previewSrc = null;
+  }
+
+  #beginMediaSourceOperation() {
+    this.#sourceOperation = this.#sourceOwner.begin();
+    return this.#sourceOperation;
+  }
+
+  #releaseBlobUrl() {
+    this.#blobOwner.cancel();
+    this.#blobUrl = null;
+  }
+
+  #createBlobUrl(file) {
+    const operation = this.#blobOwner.begin();
+    const url = URL.createObjectURL(file);
+    this.#blobUrl = url;
+    operation.own(() => {
+      URL.revokeObjectURL(url);
+      if (this.#blobUrl === url) this.#blobUrl = null;
+    });
+    return url;
   }
 
   #removeMediaElementListeners() {
@@ -280,12 +350,14 @@ class FigMedia extends HTMLElement {
     if (this.#loadingSource === src) return;
 
     this.#finishImageLoading();
+    const operation = this.#imageLoadOwner.begin();
     this.#loadingSource = src;
     this.#ariaBusyBeforeLoading = this.getAttribute("aria-busy");
     this.setAttribute("aria-busy", "true");
-    this.#loadingTimer = setTimeout(() => {
-      this.#loadingTimer = null;
+    const timer = setTimeout(() => {
+      timerResource.dispose();
       if (
+        !operation.isCurrent() ||
         this.#loadingSource !== src ||
         !this.isConnected ||
         !this.#usesDefaultImageLoadingIndicator()
@@ -301,6 +373,11 @@ class FigMedia extends HTMLElement {
       this.append(spinner);
       this.#loadingSpinner = spinner;
     }, 150);
+    this.#loadingTimer = timer;
+    const timerResource = operation.own(() => {
+      clearTimeout(timer);
+      if (this.#loadingTimer === timer) this.#loadingTimer = null;
+    });
   }
 
   #syncImageLoadedState() {
@@ -316,10 +393,8 @@ class FigMedia extends HTMLElement {
   }
 
   #finishImageLoading() {
-    if (this.#loadingTimer !== null) {
-      clearTimeout(this.#loadingTimer);
-      this.#loadingTimer = null;
-    }
+    this.#imageLoadOwner.cancel();
+    this.#loadingTimer = null;
     this.#loadingSpinner?.remove();
     this.#loadingSpinner = null;
     this.#loadingSource = null;
@@ -361,6 +436,7 @@ class FigMedia extends HTMLElement {
           this.#mediaEl.remove();
         }
       }
+      if (this.#mediaEl !== userEl) this.#beginMediaSourceOperation();
       this.#mediaEl = userEl;
       if (this.#previewEl && userEl.parentElement !== this.#previewEl) {
         this.#previewEl.append(userEl);
@@ -373,6 +449,7 @@ class FigMedia extends HTMLElement {
     this.#ensurePreviewElement();
     const expectedTag = this.mediaKind === "video" ? "VIDEO" : "IMG";
     if (this.#mediaEl && this.#mediaEl.tagName !== expectedTag) {
+      this.#beginMediaSourceOperation();
       this.#removeMediaElementListeners();
       if (this.#mediaEl.hasAttribute("data-generated")) {
         this.#mediaEl.remove();
@@ -382,6 +459,7 @@ class FigMedia extends HTMLElement {
     if (this.#mediaEl) return;
 
     if (this.mediaKind === "video") {
+      this.#beginMediaSourceOperation();
       const video = document.createElement("video");
       video.setAttribute("data-generated", "");
       video.className = "fig-media-element";
@@ -397,6 +475,7 @@ class FigMedia extends HTMLElement {
       };
       this.#mediaEl.addEventListener("loadedmetadata", seekToFirstFrame, { once: true });
     } else {
+      this.#beginMediaSourceOperation();
       const img = document.createElement("img");
       img.setAttribute("data-generated", "");
       img.className = "fig-media-element";
@@ -485,6 +564,7 @@ class FigMedia extends HTMLElement {
     if (!this.#mediaEl.hasAttribute("data-generated")) return;
     const src = this.#currentMediaSrc();
     if (this.#mediaEl.getAttribute("src") !== src) {
+      this.#beginMediaSourceOperation();
       this.removeAttribute("loaded");
       if (src) {
         this.#mediaEl.setAttribute("src", src);
@@ -712,6 +792,12 @@ class FigMedia extends HTMLElement {
     fi.setAttribute("data-generated", "");
     fi.setAttribute("accepts", this.mediaKind === "video" ? "video/*" : "image/*");
     fi.setAttribute("variant", "overlay");
+    if (this.getAttribute("upload")?.toLowerCase() === "icon") {
+      fi.setAttribute("upload", "icon");
+    }
+    if (figBooleanAttribute(this, "multiple")) {
+      fi.setAttribute("multiple", "");
+    }
     const defaultLabel = this.getAttribute("label") || "Upload";
     fi.setAttribute("label", this.#src ? "Replace" : defaultLabel);
     if (this.#file?.name) {
@@ -725,6 +811,15 @@ class FigMedia extends HTMLElement {
     this.#fileInput = fi;
   }
 
+  #syncFileInputUploadMode() {
+    if (!this.#fileInput) return;
+    if (this.getAttribute("upload")?.toLowerCase() === "icon") {
+      this.#fileInput.setAttribute("upload", "icon");
+    } else {
+      this.#fileInput.removeAttribute("upload");
+    }
+  }
+
   #removeFileInput() {
     if (this.#fileInput) {
       this.#fileInput.removeEventListener("change", this.#boundHandleFileInput);
@@ -735,14 +830,12 @@ class FigMedia extends HTMLElement {
 
   #handleFileInput(e) {
     if (e.target !== this.#fileInput) return;
-    const file = e.detail?.files?.[0];
+    const files = Array.from(e.detail?.files ?? []);
+    const file = files[0];
     const cleared = e.detail?.cleared === true;
 
     if (!file) {
-      if (this.#blobUrl) {
-        URL.revokeObjectURL(this.#blobUrl);
-        this.#blobUrl = null;
-      }
+      if (this.#blobUrl) this.#releaseBlobUrl();
       this.#file = null;
       this.#previewSrc = null;
       if (cleared) this.src = "";
@@ -763,11 +856,9 @@ class FigMedia extends HTMLElement {
       return;
     }
 
-    if (this.#blobUrl) {
-      URL.revokeObjectURL(this.#blobUrl);
-    }
+    if (this.#blobUrl) this.#releaseBlobUrl();
     this.#file = file;
-    this.#blobUrl = URL.createObjectURL(file);
+    this.#blobUrl = this.#createBlobUrl(file);
     this.#previewSrc = this.#blobUrl;
 
     this.#syncGeneratedMediaElement();
@@ -776,7 +867,7 @@ class FigMedia extends HTMLElement {
       new CustomEvent("loaded", {
         bubbles: true,
         cancelable: true,
-        detail: { file, src: this.#blobUrl },
+        detail: { file, files, src: this.#blobUrl },
       }),
     );
     this.dispatchEvent(
@@ -876,8 +967,7 @@ class FigMedia extends HTMLElement {
         nextSrc && (nextSrc === this.#previewSrc || nextSrc === this.#blobUrl);
       this.#src = nextSrc;
       if (this.#blobUrl && !isCurrentPreviewBlob) {
-        URL.revokeObjectURL(this.#blobUrl);
-        this.#blobUrl = null;
+        this.#releaseBlobUrl();
         this.#previewSrc = null;
         this.#file = null;
       }
@@ -921,7 +1011,16 @@ class FigMedia extends HTMLElement {
         this.#createFileInput();
       } else if (!on) {
         this.#removeFileInput();
+      } else {
+        this.#syncFileInputUploadMode();
       }
+    }
+
+    if (name === "multiple" && this.#fileInput) {
+      this.#fileInput.toggleAttribute(
+        "multiple",
+        newValue !== null && newValue !== "false",
+      );
     }
 
     if (name === "loading-indicator") {

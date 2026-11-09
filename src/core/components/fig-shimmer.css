@@ -71,3 +71,29 @@ fig-shimmer {
     -webkit-text-fill-color: transparent !important;
   }
 }
+
+@keyframes fig-shimmer-text {
+  from {
+    background-position: var(--fig-shimmer-text-from, 100% 0%);
+  }
+
+  to {
+    background-position: var(--fig-shimmer-text-to, 0% 0%);
+  }
+}
+
+@keyframes fig-shimmer-mask {
+  from {
+    mask-position: var(
+      --fig-skeleton-mask-from,
+      var(--fig-shimmer-mask-from, 100% 0%)
+    );
+  }
+
+  to {
+    mask-position: var(
+      --fig-skeleton-mask-to,
+      var(--fig-shimmer-mask-to, 0% 0%)
+    );
+  }
+}

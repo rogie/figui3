@@ -3,4 +3,80 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+fig-tabs,
+.tabs {
+  --fig-overflow-size: calc(var(--spacer-4) + var(--spacer-2));
+  --fig-tabs-inline-padding: 0;
+  --fig-tabs-margin-left: var(--spacer-1);
+  --fig-tabs-margin-right: var(--spacer-2);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0;
+  min-width: 0;
+  overflow: auto hidden;
+  padding: var(--spacer-1) 0;
+  padding-inline: var(--fig-tabs-inline-padding);
+  margin: 0;
+  margin-left: var(--fig-tabs-margin-left);
+  margin-right: var(--fig-tabs-margin-right);
+  position: relative;
+  scrollbar-width: none;
+  width: calc(100% - var(--fig-tabs-margin-left) - var(--fig-tabs-margin-right));
+
+  > fig-tab {
+    flex-shrink: 0;
+
+    &:first-of-type:last-of-type {
+      background-color: transparent;
+    }
+
+    & + fig-tab {
+      margin-left: var(--spacer-1);
+    }
+  }
+
+  > .fig-overflow {
+    align-self: stretch;
+    height: auto;
+    margin-block: 0;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    width: var(--spacer-4);
+    margin-inline: 0;
+  }
+
+  > .fig-overflow-start {
+    left: 0;
+    margin-right: calc(var(--spacer-4) * -1);
+    order: -1;
+    right: auto;
+    box-shadow: 1px 0 0 0 var(--figma-color-bordertranslucent);
+
+    &::before {
+      border-radius: var(--radius-medium) 0 0 var(--radius-medium);
+    }
+
+    .fig-overflow-chevron {
+      rotate: 90deg;
+    }
+  }
+
+  > .fig-overflow-end {
+    left: auto;
+    margin-left: calc(var(--spacer-4) * -1);
+    order: 1;
+    right: 0;
+    box-shadow: -1px 0 0 0 var(--figma-color-bordertranslucent);
+
+    &::before {
+      border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+    }
+
+    .fig-overflow-chevron {
+      rotate: -90deg;
+    }
+  }
+}

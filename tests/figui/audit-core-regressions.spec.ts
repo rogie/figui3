@@ -969,10 +969,7 @@ test.describe("fig.js audit core regressions", () => {
     page,
   }) => {
     const events = await page.evaluate(async () => {
-      await Promise.all([
-        import("/fig-palette-editor.js"),
-        import("/fig-input-rotate.js"),
-      ]);
+      await import("/fig-editor.js");
       await Promise.all([
         customElements.whenDefined("fig-input-color"),
         customElements.whenDefined("fig-palette-editor"),
@@ -1335,5 +1332,323 @@ test.describe("fig.js audit core regressions", () => {
       native: true,
       nativeDefault: true,
     });
+  });
+
+  test("popup transitions keep the latest open state and synchronize native closes", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <button id="rapid-anchor">Rapid anchor</button>
+        <dialog id="rapid-popup" is="fig-popup" anchor="#rapid-anchor">
+          <button id="rapid-inside">Inside</button>
+        </dialog>
+        <button id="native-anchor">Native anchor</button>
+        <dialog id="native-popup" is="fig-popup" anchor="#native-anchor">
+          <button id="native-inside">Inside</button>
+        </dialog>
+      `;
+      const frame = () => new Promise(requestAnimationFrame);
+      const task = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+      const rapidAnchor = root.querySelector("#rapid-anchor") as HTMLElement;
+      const rapidPopup = root.querySelector("#rapid-popup") as HTMLDialogElement & {
+        open: boolean;
+      };
+      const rapidInside = root.querySelector("#rapid-inside") as HTMLElement;
+      rapidAnchor.focus();
+      rapidPopup.open = true;
+      rapidInside.focus();
+      rapidPopup.open = false;
+      rapidPopup.open = true;
+      rapidInside.focus();
+      await task();
+      await frame();
+      await frame();
+      const rapid = {
+        attributeOpen: rapidPopup.getAttribute("open"),
+        nativeOpen: rapidPopup.matches(":open"),
+        focusInside: rapidPopup.contains(document.activeElement),
+      };
+
+      const nativeAnchor = root.querySelector("#native-anchor") as HTMLElement;
+      const nativePopup = root.querySelector("#native-popup") as HTMLDialogElement & {
+        open: boolean;
+        requestClose?: () => void;
+      };
+      const nativeInside = root.querySelector("#native-inside") as HTMLElement;
+      let closes = 0;
+      let cancels = 0;
+      nativePopup.addEventListener("close", () => closes++);
+      nativePopup.addEventListener("cancel", () => cancels++);
+
+      nativeAnchor.focus();
+      nativePopup.open = true;
+      nativeInside.focus();
+      nativePopup.close();
+      await task();
+      await frame();
+      const afterClose = {
+        attributeOpen: nativePopup.hasAttribute("open"),
+        nativeOpen: nativePopup.matches(":open"),
+        focusRestored: document.activeElement === nativeAnchor,
+        closes,
+      };
+
+      nativeAnchor.focus();
+      nativePopup.open = true;
+      nativeInside.focus();
+      const supportsRequestClose =
+        typeof nativePopup.requestClose === "function";
+      nativePopup.requestClose?.();
+      await task();
+      await frame();
+      return {
+        rapid,
+        afterClose,
+        afterRequestClose: {
+          supportsRequestClose,
+          attributeOpen: nativePopup.hasAttribute("open"),
+          nativeOpen: nativePopup.matches(":open"),
+          focusRestored: document.activeElement === nativeAnchor,
+          closes,
+          cancels,
+        },
+      };
+    });
+
+    expect(state).toEqual({
+      rapid: {
+        attributeOpen: "true",
+        nativeOpen: true,
+        focusInside: true,
+      },
+      afterClose: {
+        attributeOpen: false,
+        nativeOpen: false,
+        focusRestored: true,
+        closes: 1,
+      },
+      afterRequestClose: {
+        supportsRequestClose: true,
+        attributeOpen: false,
+        nativeOpen: false,
+        focusRestored: true,
+        closes: 2,
+        cancels: 1,
+      },
+    });
+  });
+
+  test("menu transition races honor the latest close or disabled state", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const createMenu = (id: string) => {
+        const menu = document.createElement("fig-menu") as HTMLElement & {
+          open: boolean;
+          showAt(x: number, y: number): void;
+        };
+        menu.id = id;
+        menu.innerHTML = `
+          <button fig-menu-trigger>Actions</button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+        `;
+        document.body.append(menu);
+        return menu;
+      };
+      const settle = async () => {
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+      };
+      const read = (menu: HTMLElement & { open: boolean }) => {
+        const popup = menu.shadowRoot?.querySelector(
+          'dialog[is="fig-popup"]',
+        ) as HTMLDialogElement;
+        const trigger = menu.querySelector(
+          "[fig-menu-trigger]",
+        ) as HTMLElement;
+        return {
+          hostOpen: menu.open,
+          popupOpen: popup.matches(":open"),
+          expanded: trigger.getAttribute("aria-expanded"),
+        };
+      };
+
+      const closed = createMenu("scheduled-close");
+      closed.showAt(20, 20);
+      closed.open = false;
+      await settle();
+
+      const disabled = createMenu("scheduled-disabled");
+      disabled.showAt(30, 30);
+      disabled.setAttribute("disabled", "");
+      await settle();
+
+      const rapid = createMenu("rapid-menu");
+      rapid.open = true;
+      rapid.open = false;
+      rapid.open = true;
+      await settle();
+
+      return {
+        closed: read(closed),
+        disabled: read(disabled),
+        rapid: read(rapid),
+      };
+    });
+
+    expect(state).toEqual({
+      closed: { hostOpen: false, popupOpen: false, expanded: "false" },
+      disabled: { hostOpen: false, popupOpen: false, expanded: "false" },
+      rapid: { hostOpen: true, popupOpen: true, expanded: "true" },
+    });
+  });
+
+  test("handle pointer cancellation aborts and a completed drag commits once", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const surface = document.createElement("div");
+      surface.style.cssText =
+        "position:relative;width:200px;height:120px;margin:20px";
+      const handle = document.createElement("fig-handle");
+      handle.setAttribute("drag", "true");
+      handle.setAttribute("value", "25% 25%");
+      surface.append(handle);
+      document.body.append(surface);
+      await new Promise(requestAnimationFrame);
+
+      let inputs = 0;
+      let changes = 0;
+      handle.addEventListener("input", () => inputs++);
+      handle.addEventListener("change", () => changes++);
+      const rect = handle.getBoundingClientRect();
+      const dispatch = (
+        target: EventTarget,
+        type: string,
+        pointerId: number,
+        x: number,
+        y: number,
+      ) =>
+        target.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            buttons: type === "pointerup" || type === "pointercancel" ? 0 : 1,
+            pointerId,
+            clientX: x,
+            clientY: y,
+          }),
+        );
+
+      dispatch(handle, "pointerdown", 41, rect.left, rect.top);
+      dispatch(window, "pointermove", 41, rect.left + 30, rect.top + 20);
+      const beforeCancel = { inputs, changes };
+      dispatch(window, "pointercancel", 41, rect.left + 30, rect.top + 20);
+      dispatch(window, "pointermove", 41, rect.left + 60, rect.top + 40);
+      dispatch(window, "pointerup", 41, rect.left + 60, rect.top + 40);
+      const afterCancel = {
+        inputs,
+        changes,
+        dragging: handle.classList.contains("dragging"),
+      };
+
+      inputs = 0;
+      changes = 0;
+      const next = handle.getBoundingClientRect();
+      dispatch(handle, "pointerdown", 42, next.left, next.top);
+      dispatch(window, "pointermove", 42, next.left + 25, next.top + 15);
+      dispatch(window, "pointerup", 42, next.left + 25, next.top + 15);
+      dispatch(window, "pointerup", 42, next.left + 25, next.top + 15);
+
+      return {
+        beforeCancel,
+        afterCancel,
+        completed: { inputs, changes },
+      };
+    });
+
+    expect(state.beforeCancel.inputs).toBeGreaterThan(0);
+    expect(state.beforeCancel.changes).toBe(0);
+    expect.soft(state.afterCancel).toEqual({
+      ...state.beforeCancel,
+      dragging: false,
+    });
+    expect(state.completed.inputs).toBeGreaterThan(0);
+    expect(state.completed.changes).toBe(1);
+  });
+
+  test("disabling or disconnecting a handle aborts its active gesture", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const run = async (transition: "disable" | "disconnect") => {
+        const surface = document.createElement("div");
+        surface.style.cssText =
+          "position:relative;width:200px;height:120px;margin:20px";
+        const handle = document.createElement("fig-handle");
+        handle.setAttribute("drag", "true");
+        handle.setAttribute("value", "25% 25%");
+        surface.append(handle);
+        document.body.append(surface);
+        await new Promise(requestAnimationFrame);
+
+        let inputs = 0;
+        let changes = 0;
+        handle.addEventListener("input", () => inputs++);
+        handle.addEventListener("change", () => changes++);
+        const rect = handle.getBoundingClientRect();
+        const event = (type: string, x: number, y: number) =>
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            buttons: type === "pointerup" ? 0 : 1,
+            pointerId: transition === "disable" ? 51 : 52,
+            clientX: x,
+            clientY: y,
+          });
+        handle.dispatchEvent(event("pointerdown", rect.left, rect.top));
+        window.dispatchEvent(
+          event("pointermove", rect.left + 25, rect.top + 15),
+        );
+        const beforeTransition = { inputs, changes };
+
+        if (transition === "disable") handle.setAttribute("disabled", "");
+        else handle.remove();
+
+        window.dispatchEvent(
+          event("pointermove", rect.left + 50, rect.top + 30),
+        );
+        window.dispatchEvent(
+          event("pointerup", rect.left + 50, rect.top + 30),
+        );
+        return {
+          beforeTransition,
+          afterTransition: {
+            inputs,
+            changes,
+            dragging: handle.classList.contains("dragging"),
+          },
+        };
+      };
+
+      return {
+        disabled: await run("disable"),
+        disconnected: await run("disconnect"),
+      };
+    });
+
+    for (const result of [state.disabled, state.disconnected]) {
+      expect(result.beforeTransition.inputs).toBeGreaterThan(0);
+      expect(result.beforeTransition.changes).toBe(0);
+      expect.soft(result.afterTransition).toEqual({
+        ...result.beforeTransition,
+        dragging: false,
+      });
+    }
   });
 });

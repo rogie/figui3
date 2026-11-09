@@ -3,4 +3,115 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+fig-easing-curve {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  --stroke-width: 2;
+  --easing-bezier-handle-radius: 5;
+  --easing-spring-handle-radius: 5;
+  --easing-handle-fill: var(--figma-color-border-strong);
+  --easing-duration-bar-width: 7;
+  --easing-duration-bar-height: 16;
+  --easing-duration-bar-radius: 4;
+  --aspect-ratio: 1 / 1;
+
+  width: 100%;
+
+  .fig-easing-curve-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .fig-easing-curve-svg-container {
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg-secondary);
+    padding: var(--spacer-4);
+    aspect-ratio: var(--aspect-ratio);
+    overflow: hidden;
+  }
+
+  &.spring-mode {
+    .fig-easing-curve-svg-container,
+    .fig-easing-curve-svg {
+      cursor: ew-resize;
+    }
+  }
+
+  &.spring-mode.spring-bounce-dragging {
+    .fig-easing-curve-svg-container,
+    .fig-easing-curve-svg,
+    .fig-easing-curve-handle[data-handle="bounce"],
+    .fig-easing-curve-handle[data-handle="bounce"] fig-handle,
+    .fig-easing-curve-handle[data-handle="bounce"] .fig-handle-hit-area {
+      cursor: ns-resize;
+    }
+  }
+
+  .fig-easing-curve-boundary,
+  .fig-easing-curve-bounds,
+  .fig-easing-curve-arm,
+  .fig-easing-curve-path,
+  .fig-easing-curve-target {
+    pointer-events: none;
+  }
+
+  .fig-easing-curve-boundary {
+    stroke: var(--figma-color-bordertranslucent);
+    stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .fig-easing-curve-bounds {
+    fill: transparent;
+  }
+
+  .fig-easing-curve-arm {
+    stroke: var(--figma-color-border-brand-strong);
+    stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .fig-easing-curve-path {
+    fill: none;
+    stroke: var(--figma-color-text);
+    stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .fig-easing-curve-target {
+    stroke: var(--figma-color-bordertranslucent);
+    stroke-width: var(--stroke-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .fig-easing-curve-handle {
+    overflow: visible;
+    pointer-events: all;
+    cursor: default;
+  }
+
+  fig-handle[type="minimal"] {
+    --fig-handle-inner-bg: var(--figma-color-bg-secondary);
+  }
+
+  &.spring-mode .fig-easing-curve-handle[data-handle="bounce"],
+  &.spring-mode .fig-easing-curve-handle[data-handle="bounce"] fig-handle,
+  &.spring-mode
+    .fig-easing-curve-handle[data-handle="bounce"]
+    .fig-handle-hit-area {
+    cursor: ns-resize;
+  }
+
+  .fig-easing-curve-select {
+    [slot="prepend"] svg {
+      vertical-align: middle;
+    }
+  }
+}

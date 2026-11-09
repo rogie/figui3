@@ -52,17 +52,14 @@ class FigInputGradient extends HTMLElement {
   #pickerPopupAnchorResizeObserver = null;
   #syncingValueAttribute = false;
   anchorElement = null;
-  #boundPickerClosed = () => {
-    if (!this.#pickerPopup) return;
-    if (
-      this.#pickerPopup.hasAttribute("open") ||
-      this.#pickerPopup.matches?.(":open") ||
-      this.#pickerPopup.matches?.(":popover-open")
-    ) {
-      return;
+  #boundPickerLifecycle = (event) => {
+    if (event.target !== this.#pickerPopup) return;
+    const state = event.detail?.state;
+    const expanded = state === "opening" || state === "open";
+    this.classList.toggle("has-popup-open", expanded);
+    if (state === "closed") {
+      this.#pickerPopupAnchorResizeObserver?.disconnect();
     }
-    this.classList.remove("has-popup-open");
-    this.#pickerPopupAnchorResizeObserver?.disconnect();
   };
   #gradient = {
     type: "linear",
@@ -519,8 +516,10 @@ class FigInputGradient extends HTMLElement {
     };
     popup.addEventListener("input", handlePopupEvent);
     popup.addEventListener("change", handlePopupEvent);
-    popup.addEventListener("close", this.#boundPickerClosed);
-    popup.addEventListener("toggle", this.#boundPickerClosed);
+    popup.addEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPickerLifecycle,
+    );
 
     (figGetOverlayRoot() ?? document.body).append(popup);
     this.#pickerPopup = popup;
@@ -591,13 +590,14 @@ class FigInputGradient extends HTMLElement {
     }
     this.#syncPickerPopup();
     popup.open = true;
-    this.classList.add("has-popup-open");
   }
 
   #destroyPickerPopup() {
     if (!this.#pickerPopup) return;
-    this.#pickerPopup.removeEventListener("close", this.#boundPickerClosed);
-    this.#pickerPopup.removeEventListener("toggle", this.#boundPickerClosed);
+    this.#pickerPopup.removeEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPickerLifecycle,
+    );
     this.#pickerPopup.open = false;
     this.#pickerPopup.remove();
     this.#pickerPopupAnchorResizeObserver?.disconnect();

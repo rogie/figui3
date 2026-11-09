@@ -170,6 +170,7 @@ class FigSlider extends HTMLElement {
 
     this.figInputNumber = this.querySelector("fig-input-number");
     if (this.figInputNumber) {
+      this.figInputNumber.setAttribute("steppers", "false");
       this.figInputNumber.setAttribute("placeholder", this.placeholder);
       this.figInputNumber.setAttribute("min", String(this.min));
       this.figInputNumber.setAttribute("max", String(this.max));
@@ -307,6 +308,7 @@ class FigSlider extends HTMLElement {
         value: this.value,
         units: this.units || null,
         precision: this.precision,
+        steppers: "false",
         disabled: this.disabled,
         "data-generated": "slider-number",
       });

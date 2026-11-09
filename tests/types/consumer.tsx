@@ -10,6 +10,10 @@ import {
   figInputSliderSchema,
 } from "@rogieking/figui3/fig-input-slider.js";
 import { register } from "@rogieking/figui3/register.js";
+import {
+  figCreateProps,
+  figCreatePropsRoot,
+} from "@rogieking/figui3/propskit.js";
 import "@rogieking/figui3/react";
 
 const slider = document.querySelector("fig-slider");
@@ -31,6 +35,33 @@ void SliderConstructor;
 void schemaLabel;
 void red;
 void register({ editor: true, lab: true });
+
+const props = figCreateProps("Typed", {
+  opacity: 50,
+  columns: { type: "number", control: "number", stepper: true, default: 3 },
+  width: { type: "number", control: "number", default: 320 },
+  gallery: {
+    type: "image",
+    options: [
+      "one.webp",
+      { value: "two.webp", label: "Two" },
+    ],
+  },
+  joystick: { type: "joystick", unitScale: 1 },
+  save: { type: "action", onClick: ({ values }) => void values.opacity },
+});
+const opacity: number = props.values.opacity;
+const columns: number = props.values.columns;
+const gallery: string = props.values.gallery;
+const joystickX: number = props.values.joystick.x;
+props.setValues({ width: 640 });
+const unnamedProps = figCreateProps(null, { title: "Untitled" });
+const propsRoot = figCreatePropsRoot({ panelIds: [props.id, unnamedProps.id] });
+void opacity;
+void columns;
+void gallery;
+void joystickX;
+void propsRoot;
 
 const sliderRef = null as React.Ref<FigSliderElement>;
 const onSliderInput = (

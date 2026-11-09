@@ -5,7 +5,7 @@ A lightweight, zero-dependency web components library for building Figma plugin 
 [![npm version](https://img.shields.io/npm/v/@rogieking/figui3.svg)](https://www.npmjs.com/package/@rogieking/figui3)
 [![License](https://img.shields.io/badge/License-split-lightgrey.svg)](LICENSE)
 
-**[Live Playground & Demos](https://rog.ie/figui3/)**
+**[Live Playground & Demos](https://rog.ie/propskit/)**
 
 ## Features
 
@@ -97,7 +97,7 @@ Agent skills ship in `.cursor/skills/` (included in the npm package):
 - `figui3` — core `fig.js` components
 - `fig-editor` — `fig-select` and `fig-fill-picker`
 - `fig-lab` — experimental audio, wheel, reorder, canvas, and AI components
-- `propkit` — property-row composition; examples are included in `/figui3`
+- `propkit` — property-row composition; examples are included in `/propskit`
 
 See the generated [bundle registration inventory](BUNDLES.md) for the exact
 tags registered by Core, Editor, and Lab.
@@ -111,6 +111,75 @@ Minimal example:
 </fig-field>
 <fig-button variant="primary">Save</fig-button>
 ```
+
+### PropsKit
+
+PropsKit renders declarative property controls using only the Core bundle:
+
+```js
+import "@rogieking/figui3/fig.css";
+import {
+  figCreateProps,
+  figCreatePropsRoot,
+} from "@rogieking/figui3/propskit.js";
+
+const kit = figCreateProps("Appearance", {
+  opacity: 75,
+  width: {
+    type: "number",
+    control: "number",
+    default: 320,
+    units: "px",
+  },
+  visible: true,
+  title: "Hello",
+  layout: {
+    _collapsed: true,
+    alignment: {
+      type: "options",
+      default: "Center",
+      options: ["Left", "Center", "Right"],
+    },
+  },
+});
+
+const root = figCreatePropsRoot({
+  target: document.querySelector("#properties"),
+  panelIds: [kit.id],
+});
+
+const unsubscribe = kit.subscribe((values) => {
+  console.log(values);
+});
+```
+
+Numbers render as `fig-slider` by default. Use `control: "number"` for
+`fig-input-number` or `variant: "delta"` for a delta slider. On sliders,
+`stepper: true` enables stepper mode. Exact number inputs show steppers by
+default; set `stepper: false` to hide them.
+Nested objects become static `fig-group` sections. Add `_collapsed: false` for
+an initially open collapsible group or `_collapsed: true` for an initially
+closed one. Supported controls include text, switch, color, gradient, palette,
+options, easing, rotate, point, joystick, file, image, video, audio, and
+actions.
+Image and video definitions accept `options` as source strings or
+`{ value, label }` entries. Multiple options render in a `fig-chooser`; the
+resolved value is the selected source string, defaulting to the first option.
+Omit `options` for an upload-only control. Audio keeps its optional
+`multiple` / `maxItems` array model.
+Pass `null`, an empty string, or whitespace as the name to mount controls
+directly without an outer panel or generated header.
+
+Joystick definitions store coordinates on a `0…100` scale by default. Set
+`unitScale: 1` to store the component's normalized `0…1` coordinates instead.
+
+Call `unsubscribe()`, `root.destroy()`, and `kit.destroy()` when the owning
+view unmounts. Interactive examples are available at `/propskit` in the
+playground.
+
+`onInput` and `onChange` report user interactions only. Programmatic
+`setValue()`, `setValues()`, and `resetValues()` calls update subscribers
+without echoing through those interaction callbacks.
 
 ---
 
@@ -187,7 +256,7 @@ Minimal example:
 
 #### Button
 
-`<fig-button>` — [demo](https://rog.ie/figui3/#button)
+`<fig-button>` — [demo](https://rog.ie/propskit/#button)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -227,7 +296,7 @@ Minimal example:
 
 #### Dropdown
 
-`<fig-dropdown>` — [demo](https://rog.ie/figui3/#dropdown)
+`<fig-dropdown>` — [demo](https://rog.ie/propskit/#dropdown)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -251,7 +320,7 @@ Keyboard activation follows the native select pattern. Enter opens the closed pi
 
 #### Select
 
-`<fig-select>` — [demo](https://rog.ie/figui3/#select)
+`<fig-select>` — [demo](https://rog.ie/propskit/#select)
 
 Custom listbox select with overflow chevrons, grouped options, and sticky separators. Import `fig-editor.js` and `fig-editor.css`. Prefer this over `fig-dropdown` for Figma-style menus.
 
@@ -298,7 +367,7 @@ document.querySelector("fig-select").menuAnchor =
 
 #### Split Input
 
-`<fig-split-input>` — [demo](https://rog.ie/figui3/#split-input)
+`<fig-split-input>` — [demo](https://rog.ie/propskit/#split-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -322,7 +391,7 @@ Typed values that exactly match an option select and check it; unmatched values 
 
 #### Checkbox
 
-`<fig-checkbox>` — [demo](https://rog.ie/figui3/#checkbox)
+`<fig-checkbox>` — [demo](https://rog.ie/propskit/#checkbox)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -343,7 +412,7 @@ Typed values that exactly match an option select and check it; unmatched values 
 
 #### Radio
 
-`<fig-radio>` — [demo](https://rog.ie/figui3/#radio)
+`<fig-radio>` — [demo](https://rog.ie/propskit/#radio)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -362,7 +431,7 @@ Typed values that exactly match an option select and check it; unmatched values 
 
 #### Switch
 
-`<fig-switch>` — [demo](https://rog.ie/figui3/#switch)
+`<fig-switch>` — [demo](https://rog.ie/propskit/#switch)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -386,7 +455,7 @@ normal `input` / `change` events.
 
 #### Slider
 
-`<fig-slider>` — [demo](https://rog.ie/figui3/#slider)
+`<fig-slider>` — [demo](https://rog.ie/propskit/#slider)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -536,7 +605,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 
 #### Text Input
 
-`<fig-input-text>` — [demo](https://rog.ie/figui3/#text-input)
+`<fig-input-text>` — [demo](https://rog.ie/propskit/#text-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -562,7 +631,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 
 #### Number Input
 
-`<fig-input-number>` — [demo](https://rog.ie/figui3/#number-input)
+`<fig-input-number>` — [demo](https://rog.ie/propskit/#number-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -579,7 +648,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 | `unit-position` | string | `"suffix"` | `"suffix"` or `"prefix"` |
 | `transform` | number | — | Display multiplier |
 | `precision` | number | — | Fixed displayed decimal places; omitted values use up to two places |
-| `steppers` | boolean | `false` | Show spin buttons |
+| `steppers` | boolean | `true` | Show spin buttons; set to `"false"` to hide |
 | `tabular` | boolean | `false` | Tabular numerals (`font-variant-numeric: tabular-nums`) |
 | `disabled` | boolean | `false` | Disabled state |
 
@@ -595,7 +664,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 
 #### Input Rotate
 
-`<fig-input-rotate>` — [demo](https://rog.ie/figui3/#input-rotate)
+`<fig-input-rotate>` — [demo](https://rog.ie/propskit/#input-rotate)
 
 An editor-bundle property button that summarizes X, Y, and Z rotation values with up to one decimal place, matching the popup fields. `variant="simple"` omits the prepend icon and X/Y/Z labels. Clicking it opens an anchored `fig-popup` containing `<fig-3d-rotate fields="rotateX,rotateY,rotateZ" aspect-ratio="4/3">`.
 
@@ -624,7 +693,7 @@ Requires `fig-editor.js` and `fig-editor.css`.
 
 #### Input Point
 
-`<fig-input-point>` — [demo](https://rog.ie/figui3/#input-point)
+`<fig-input-point>` — [demo](https://rog.ie/propskit/#input-point)
 
 An editor-bundle property button that summarizes X and Y values with up to one decimal place. Clicking it opens an anchored popup containing `<fig-origin-grid fields aspect-ratio="4/3">`. Popup edits reflect to the `x` and `y` attributes and emit numeric `{ x, y }` in `detail`.
 
@@ -651,13 +720,14 @@ Requires `fig-editor.js` and `fig-editor.css`.
 
 #### File Input
 
-`<fig-input-file>` — [demo](https://rog.ie/figui3/#file-input)
+`<fig-input-file>` — [demo](https://rog.ie/propskit/#file-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `accepts` | string | — | Native file chooser filter |
 | `preview` | `"true"` \| `"false"` \| `"large"` | `false` | Show compact media previews, or use `large` for an upload-enabled `fig-image`/`fig-video` preview |
 | `label` | string | generated | Empty-state button label; defaults to `Upload audio`, `Upload image`, or `Upload file` from the known file type |
+| `upload` | `"icon"` | — | Render an Add icon button while empty and only a Remove icon button when populated |
 | `multiple` | boolean | `false` | Allow multiple files |
 | `remove` | boolean | `true` | Show the remove button when a file is selected; set to `"false"` to omit it |
 | `disabled` | boolean | `false` | Disabled state |
@@ -671,6 +741,7 @@ Known image and audio files use media-specific icons; unmatched files retain the
 
 ```html
 <fig-input-file accepts="image/*"></fig-input-file>
+<fig-input-file accepts="image/*" upload="icon" label="Add image"></fig-input-file>
 <fig-input-file accepts="image/*" preview></fig-input-file>
 <fig-input-file accepts="video/*" preview="large"></fig-input-file>
 <fig-input-file accepts="audio/*"></fig-input-file>
@@ -681,7 +752,7 @@ Known image and audio files use media-specific icons; unmatched files retain the
 
 #### Angle
 
-`<fig-angle>` — [demo](https://rog.ie/figui3/#angle)
+`<fig-angle>` — [demo](https://rog.ie/propskit/#angle)
 
 Instrument-style angle/rotation control with an interactive dial, text input, CSS angle units, 15-degree Shift snapping, and unbounded positive/negative winding by default. Degree units display as `°` in the number field. Accepts unit suffixes in text input (`90°`, `90deg`, `3.14rad`, `0.5turn`, `100grad`). Add `min` and/or `max` to clamp the value. Changing `units` preserves the physical angle and converts `value`, `default`, `min`, `max`, and `step` (for example, `90deg` becomes `0.250turn`). When the value differs from `default`, an inset reset button restores the default and emits `input` and `change`.
 
@@ -718,7 +789,7 @@ The `defaultValue` property returns the resolved numeric default in the active u
 
 #### Swatch
 
-`<fig-swatch>` — [demo](https://rog.ie/figui3/#swatch)
+`<fig-swatch>` — [demo](https://rog.ie/propskit/#swatch)
 
 A color/gradient/image swatch element with checkerboard background for alpha.
 
@@ -739,7 +810,7 @@ A color/gradient/image swatch element with checkerboard background for alpha.
 
 #### Color Tip
 
-`<fig-color-tip>` — [demo](https://rog.ie/figui3/#color-tip)
+`<fig-color-tip>` — [demo](https://rog.ie/propskit/#color-tip)
 
 A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker is registered, otherwise falls back to the native color input.
 
@@ -769,7 +840,7 @@ A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker 
 
 #### Color Input
 
-`<fig-input-color>` — [demo](https://rog.ie/figui3/#color-input)
+`<fig-input-color>` — [demo](https://rog.ie/propskit/#color-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -980,7 +1051,7 @@ Supported interpolation spaces: `srgb`, `srgb-linear`, `display-p3`, `oklab`, `o
 
 #### Fill Input
 
-`<fig-input-fill>` — [demo](https://rog.ie/figui3/#fill-input)
+`<fig-input-fill>` — [demo](https://rog.ie/propskit/#fill-input)
 
 A comprehensive fill input supporting solid, gradient, image, video, and webcam fills. Without the optional picker, it renders a passive preview.
 
@@ -1014,7 +1085,7 @@ Solid `alpha` is 0–1 (canonical). `opacity` 0–100 is also emitted for compat
 
 #### Fill Picker
 
-`<fig-fill-picker>` — [demo](https://rog.ie/figui3/#fill-picker)
+`<fig-fill-picker>` — [demo](https://rog.ie/propskit/#fill-picker)
 
 Optional full fill picker dialog supporting solid, gradient, image, video, and webcam. Import `fig-editor.js` and `fig-editor.css` to register and style it.
 
@@ -1083,7 +1154,7 @@ Use `--fig-toolbelt-gap`, `--fig-toolbelt-group-gap`, `--fig-toolbelt-group-sepa
 
 #### Tabs
 
-`<fig-tabs>` / `<fig-tab>` — [demo](https://rog.ie/figui3/#tabs)
+`<fig-tabs>` / `<fig-tab>` — [demo](https://rog.ie/propskit/#tabs)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1113,7 +1184,7 @@ Overflow buttons are enabled by default. Set `overflow="fade"` for buttonless sc
 
 #### Segmented Control
 
-`<fig-segmented-control>` / `<fig-segment>` — [demo](https://rog.ie/figui3/#segmented-control)
+`<fig-segmented-control>` / `<fig-segment>` — [demo](https://rog.ie/propskit/#segmented-control)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1403,7 +1474,7 @@ When `drag="true"`, focused handles support Arrow key movement, Home/End jumps, 
 
 #### Canvas Control
 
-`<fig-canvas-control>` — [demo](https://rog.ie/figui3/#canvas-control)
+`<fig-canvas-control>` — [demo](https://rog.ie/propskit/#canvas-control)
 
 A composite point control with optional radius circle, angle handle, or second point. Place inside a positioned container; the component uses `display: contents` and does not create its own box.
 
@@ -1456,7 +1527,7 @@ For `point-point`, both handles support direct drag (with a dynamic directional 
 
 #### Overflow Fade
 
-`.fig-overflow-fade` — [demo](https://rog.ie/figui3/#overflow-fade)
+`.fig-overflow-fade` — [demo](https://rog.ie/propskit/#overflow-fade)
 
 A progressively enhanced scroll utility that fades its edges when more content
 is available in that direction. Apply the class to a height-constrained
@@ -1505,7 +1576,7 @@ timelines. Unsupported browsers retain ordinary scrolling without a fade.
 
 #### Stack
 
-`<fig-stack>` — [demo](https://rog.ie/figui3/#stack)
+`<fig-stack>` — [demo](https://rog.ie/propskit/#stack)
 
 A layout primitive for rows, columns, and grids. Replaces the deprecated `hstack` / `vstack` tags, which still render as aliases.
 
@@ -1540,7 +1611,7 @@ Adjacent `fig-field` children in a horizontal stack share compact gutters.
 
 #### Field
 
-`<fig-field>` — [demo](https://rog.ie/figui3/#field)
+`<fig-field>` — [demo](https://rog.ie/propskit/#field)
 
 A form field wrapper with flexible layout. Automatically links `<label>` to the first `fig-*` child for accessibility.
 
@@ -1567,7 +1638,7 @@ Use `slot="leading"` for an accessory before the label, such as a disclosure or 
 
 #### Group
 
-`<fig-group>` — [demo](https://rog.ie/figui3/#group)
+`<fig-group>` — [demo](https://rog.ie/propskit/#group)
 
 A section group with an optional generated or authored header. In collapsible groups, the `h3` is the keyboard-accessible toggle and the chevron is clickable; controls placed beside the `h3` in an authored `fig-header` remain independent. Start chevrons use the compact 16px icon; end chevrons use the larger 24px icon.
 
@@ -1595,7 +1666,7 @@ A section group with an optional generated or authored header. In collapsible gr
 
 #### Dialog
 
-`<fig-dialog>` — [demo](https://rog.ie/figui3/#dialog)
+`<fig-dialog>` — [demo](https://rog.ie/propskit/#dialog)
 
 A modal/non-modal dialog. Uses `is="fig-dialog"` on a native `<dialog>` element.
 
@@ -1623,7 +1694,7 @@ Dialog close paths restore focus to the element that opened the dialog.
 
 #### Popup
 
-`<fig-popup>` — [demo](https://rog.ie/figui3/#popup)
+`<fig-popup>` — [demo](https://rog.ie/propskit/#popup)
 
 An anchored floating surface built on `<dialog>` with collision-aware positioning.
 
@@ -1657,7 +1728,7 @@ owning ancestor popup open, including recursively nested chains.
 
 #### Toast
 
-`<fig-toast>` — [demo](https://rog.ie/figui3/#toast)
+`<fig-toast>` — [demo](https://rog.ie/propskit/#toast)
 
 A toast notification. Uses `is="fig-toast"` on a native `<dialog>`.
 Defaults to `role="status"`, `aria-live="polite"`, and `aria-atomic="true"`. Use `live="assertive"` or `theme="danger"` for assertive announcements.
@@ -1682,7 +1753,7 @@ Defaults to `role="status"`, `aria-live="polite"`, and `aria-atomic="true"`. Use
 
 #### Tooltip
 
-`<fig-tooltip>` — [demo](https://rog.ie/figui3/#tooltip)
+`<fig-tooltip>` — [demo](https://rog.ie/propskit/#tooltip)
 
 Contextual tooltip on hover or click. Auto-repositions when the child element moves.
 
@@ -1707,7 +1778,7 @@ Escape dismisses an open tooltip and returns focus to its trigger.
 
 #### Separator
 
-`<fig-separator>` — [demo](https://rog.ie/figui3/#separator)
+`<fig-separator>` — [demo](https://rog.ie/propskit/#separator)
 
 A visual divider between content groups. The optional `label` attribute adds a group label and accessible name. `<fig-menu-separator>` is a backwards-compatible alias.
 
@@ -1721,7 +1792,7 @@ A visual divider between content groups. The optional `label` attribute adds a g
 
 #### Menu
 
-`<fig-menu>` / `<fig-menu-item>` / `<fig-separator>` / `<fig-menu-separator>` — [demo](https://rog.ie/figui3/#menu)
+`<fig-menu>` / `<fig-menu-item>` / `<fig-separator>` / `<fig-menu-separator>` — [demo](https://rog.ie/propskit/#menu)
 
 Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="menu"`, `aria-expanded`, and `aria-controls`; menu items use `role="menuitem"` and disabled items are skipped by keyboard navigation.
 
@@ -1779,7 +1850,7 @@ Popup list (no wrapping `fig-menu`):
 
 #### Header
 
-`<fig-header>` — [demo](https://rog.ie/figui3/#header)
+`<fig-header>` — [demo](https://rog.ie/propskit/#header)
 
 A section header component.
 
@@ -1791,7 +1862,7 @@ A section header component.
 
 #### Layer
 
-`<fig-layer>` — [demo](https://rog.ie/figui3/#layer)
+`<fig-layer>` — [demo](https://rog.ie/propskit/#layer)
 
 A collapsible layer list item with expand/collapse and visibility toggling. Supports nesting and exposes `role="treeitem"`, `aria-expanded`, `aria-hidden`, `aria-disabled`, and a keyboard-toggleable chevron button.
 `fig.js` already registers `fig-layer`. Import `fig-layer.css` to style it.
@@ -1861,7 +1932,7 @@ Unified media component that supports image/video modes and shared sizing/upload
 | `src` | string | — | Media URL |
 | `alt` | string | `""` | Alt text forwarded to the generated `<img>` (image mode) |
 | `loaded` | boolean | `false` | Read-only reflected state after an image loads successfully |
-| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `upload` | boolean \| `"icon"` | `false` | Show upload overlay; `"icon"` uses Add while empty and only Remove when populated |
 | `loading-indicator` | boolean | `true` | Set to `"false"` to disable the delayed loading spinner for generated images |
 | `label` | string | `"Upload"` | Upload button label |
 | `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
@@ -1877,9 +1948,11 @@ Unified media component that supports image/video modes and shared sizing/upload
 | `aria-label` | string | — | Accessible label forwarded to generated videos |
 
 Use meaningful `alt` text for informative images. Use `alt=""` only when the image is decorative or already described by nearby text.
+With `upload="icon"`, `label` supplies the Add button tooltip and accessible name.
 
 ```html
 <fig-media type="image" src="photo.jpg" alt="Selected image"></fig-media>
+<fig-media type="image" upload="icon" label="Add image" alt=""></fig-media>
 <fig-media type="image" src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover"></fig-media>
 <fig-media type="video" src="clip.mp4" aria-label="Product demo video" caption="Looping product demo" controls muted></fig-media>
 <fig-media type="image" src="photo.jpg" alt="Selected image">
@@ -1897,7 +1970,7 @@ For generated images, a spinner appears when loading exceeds 150ms and is remove
 
 #### Image
 
-`<fig-image>` — [demo](https://rog.ie/figui3/#image)
+`<fig-image>` — [demo](https://rog.ie/propskit/#image)
 
 An image display component with optional upload, aspect ratio, and object-fit control. Renders a real `<img>` inside a `fig-preview`.
 
@@ -1906,7 +1979,7 @@ An image display component with optional upload, aspect ratio, and object-fit co
 | `src` | string | — | Image URL |
 | `alt` | string | `""` | Alt text forwarded to the generated `<img>` |
 | `loaded` | boolean | `false` | Read-only reflected state after the image loads successfully |
-| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `upload` | boolean \| `"icon"` | `false` | Show upload overlay; `"icon"` uses Add while empty and only Remove when populated |
 | `loading-indicator` | boolean | `true` | Set to `"false"` to disable the delayed loading spinner |
 | `label` | string | `"Upload"` | Upload button label |
 | `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
@@ -1924,6 +1997,7 @@ The `loaded` attribute is removed when `src` changes or loading fails, so it can
 <fig-image src="photo.jpg" alt="Selected image"></fig-image>
 <fig-image src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover" caption="Cover image"></fig-image>
 <fig-image upload label="Upload Image" alt=""></fig-image>
+<fig-image upload="icon" label="Add image" alt=""></fig-image>
 <fig-image src="photo.jpg" alt="Selected image">
   <figcaption>Selected image from the current document.</figcaption>
   <fig-input-file slot="overlay" variant="overlay" label="Change image"></fig-input-file>
@@ -1936,7 +2010,7 @@ Use `slot="overlay"` for custom overlay controls. Slotted overlays stay as direc
 
 #### Card
 
-`<fig-card>` — [demo](https://rog.ie/figui3/#card)
+`<fig-card>` — [demo](https://rog.ie/propskit/#card)
 
 A media card with a truncated label and attribute-only selection chrome. With `src`, it composes a generated `fig-image`. The `label` and `sublabel` attributes render inside a generated `fig-footer`.
 
@@ -1992,7 +2066,7 @@ Video display/upload component with the same preview styling model as `fig-image
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `src` | string | — | Video URL |
-| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `upload` | boolean \| `"icon"` | `false` | Show upload overlay; `"icon"` uses Add while empty and only Remove when populated |
 | `label` | string | `"Upload"` | Upload button label |
 | `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
 | `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
@@ -2010,6 +2084,7 @@ Prefer `controls` for videos that play motion. Use native `<track>` text tracks 
 ```html
 <fig-video src="clip.mp4" aria-label="Product demo video" caption="Product demo" controls></fig-video>
 <fig-video src="clip.mp4" aria-label="Product demo video" aspect-ratio="16 / 9" controls></fig-video>
+<fig-video upload="icon" label="Add video" aria-label="Uploaded video preview" muted></fig-video>
 <fig-video upload label="Upload Video" aria-label="Uploaded video preview" controls muted>
   <figcaption>Uploaded video preview.</figcaption>
 </fig-video>
@@ -2019,7 +2094,7 @@ Prefer `controls` for videos that play motion. Use native `<track>` text tracks 
 
 #### Avatar
 
-`<fig-avatar>` — [demo](https://rog.ie/figui3/#avatar)
+`<fig-avatar>` — [demo](https://rog.ie/propskit/#avatar)
 
 Profile image or initials fallback.
 
@@ -2038,7 +2113,7 @@ Profile image or initials fallback.
 
 #### Icon
 
-`<fig-icon>` — [demo](https://rog.ie/figui3/#icon)
+`<fig-icon>` — [demo](https://rog.ie/propskit/#icon)
 
 Masked icon using `--icon-16-*` and `--icon-24-*` design tokens (SVG artboard size). Display size is controlled separately via the `size` attribute.
 
@@ -2073,7 +2148,7 @@ glyph by redefining its custom property after that import:
 
 #### Spinner
 
-`<fig-spinner>` — [demo](https://rog.ie/figui3/#spinner)
+`<fig-spinner>` — [demo](https://rog.ie/propskit/#spinner)
 
 A loading spinner.
 
@@ -2087,7 +2162,7 @@ Defaults to `role="status"` and `aria-label="Loading"`; override the label when 
 
 #### Shimmer
 
-`<fig-shimmer>` — [demo](https://rog.ie/figui3/#shimmer)
+`<fig-shimmer>` — [demo](https://rog.ie/propskit/#shimmer)
 
 A shimmer loading placeholder.
 
@@ -2287,7 +2362,7 @@ git clone https://github.com/rogie/figui3.git
 cd figui3
 bun install
 bun dev                # Component docs at http://localhost:3000
-npm run dev:playground # Playground at http://localhost:6600 (/figui3, /figui3/lab, /sandbox)
+npm run dev:playground # Playground at http://localhost:6600 (/propskit, /propskit/lab, /sandbox)
 npm run build          # Build minified dist/ (JS + CSS)
 npm run build:icons    # Regenerate icons.css from icons/ SVG sources
 npm run check:icons    # Verify the manifest, SVGs, and generated CSS agree
@@ -2343,8 +2418,8 @@ import "@rogieking/figui3/src/fig.css";  // unminified source
 
 The playground is the fastest way to explore and validate component markup:
 
-- **`/figui3`** — component examples and property panel patterns with attribute controls
-- **`/figui3/lab`** — experimental component examples
+- **`/propskit`** — component examples and property panel patterns with attribute controls
+- **`/propskit/lab`** — experimental component examples
 - **`/sandbox`** — styled React sample app
 
 ---

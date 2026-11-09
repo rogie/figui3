@@ -139,6 +139,39 @@ const inputSliderAttributeRules: AttributeRuleSet = {
 };
 
 export const controlAttributeRules: Record<string, AttributeRuleSet> = {
+  "fig-stack": {
+    direction: {
+      label: "Direction",
+      type: "enum",
+      options: ["horizontal", "vertical", "grid"],
+    },
+    gap: { label: "Gap", type: "string" },
+    align: {
+      label: "Align",
+      type: "enum",
+      options: ["", "start", "center", "end", "stretch", "baseline"],
+    },
+    justify: {
+      label: "Justify",
+      type: "enum",
+      options: ["", "start", "center", "end", "between", "around", "stretch"],
+    },
+    wrap: { label: "Wrap", type: "boolean", boolMode: "presence" },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
+    columns: { label: "Columns", type: "string" },
+    "min-width": { label: "Minimum width", type: "string" },
+  },
+  "fig-tab": {
+    value: { label: "Value", type: "string" },
+    content: { label: "Content selector", type: "string" },
+    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "fig-choice": {
+    value: { label: "Value", type: "string" },
+    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-button": {
     variant: {
       label: "Variant",
@@ -375,9 +408,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     upload: {
       label: "Upload",
-      type: "boolean",
-      boolMode: "presence",
-      defaultChecked: false,
+      type: "enum",
+      options: ["", "true", "icon", "false"],
     },
     "loading-indicator": {
       label: "Loading indicator",
@@ -427,9 +459,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     upload: {
       label: "Upload",
-      type: "boolean",
-      boolMode: "presence",
-      defaultChecked: false,
+      type: "enum",
+      options: ["", "true", "icon", "false"],
     },
     "loading-indicator": {
       label: "Loading indicator",
@@ -459,9 +490,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     upload: {
       label: "Upload",
-      type: "boolean",
-      boolMode: "presence",
-      defaultChecked: false,
+      type: "enum",
+      options: ["", "true", "icon", "false"],
     },
     checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
     controls: {

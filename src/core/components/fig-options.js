@@ -10,6 +10,7 @@ import {
   figDefineElement,
   figNextFrame,
 } from "../runtime/index.js";
+import { figWarnInvariant } from "../../shared/invariants.js";
 
 /* Options */
 /**
@@ -30,6 +31,7 @@ class FigOptions extends HTMLElement {
   #naturalWidth = 0;
   #resizeObserver = null;
   #parsedOptions = [];
+  #propertyOptions = null;
   #childControl = null;
   #suppressEvents = false;
 
@@ -49,7 +51,9 @@ class FigOptions extends HTMLElement {
       const opts = segments.querySelectorAll("fig-segment");
       if (opts.length !== this.#parsedOptions.length) return false;
       return Array.from(opts).every(
-        (seg, i) => seg.getAttribute("value") === this.#parsedOptions[i],
+        (seg, i) =>
+          seg.getAttribute("value") === this.#parsedOptions[i].value &&
+          seg.textContent === this.#parsedOptions[i].label,
       );
     }
     const dropdown = this.querySelector(":scope > fig-dropdown");
@@ -58,7 +62,9 @@ class FigOptions extends HTMLElement {
       return (
         opts.length === this.#parsedOptions.length &&
         Array.from(opts).every(
-          (opt, i) => opt.textContent?.trim() === this.#parsedOptions[i],
+          (opt, i) =>
+            opt.value === this.#parsedOptions[i].value &&
+            opt.textContent === this.#parsedOptions[i].label,
         )
       );
     }
@@ -108,23 +114,37 @@ class FigOptions extends HTMLElement {
   }
 
   get options() {
-    return this.#parsedOptions.slice();
+    return this.#parsedOptions.map(({ value, label }) =>
+      value === label ? value : { value, label },
+    );
   }
 
   set options(val) {
     if (Array.isArray(val)) {
-      const hasComma = val.some((v) => String(v).includes(","));
-      const str = hasComma ? JSON.stringify(val) : val.join(",");
-      this.setAttribute("options", str);
+      this.#propertyOptions = val.map((option) =>
+        typeof option === "object" && option !== null
+          ? {
+              value: String(option.value ?? ""),
+              label: String(option.label ?? option.value ?? ""),
+            }
+          : String(option),
+      );
     } else {
-      this.setAttribute("options", String(val || ""));
+      this.#propertyOptions = null;
+      if (val !== null && val !== undefined) {
+        this.setAttribute("options", String(val));
+        return;
+      }
     }
+    this.#parseOptions();
+    if (this.isConnected) this.#rebuildCurrentControl();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
 
     if (name === "options") {
+      this.#propertyOptions = null;
       this.#parseOptions();
       this.#rebuildCurrentControl();
       return;
@@ -152,12 +172,45 @@ class FigOptions extends HTMLElement {
   }
 
   #parseOptions() {
+    const normalize = (options) => {
+      const normalized = (Array.isArray(options) ? options : []).map((option) => {
+        if (typeof option === "object" && option !== null) {
+          return {
+            value: String(option.value ?? ""),
+            label: String(option.label ?? option.value ?? ""),
+          };
+        }
+        const value = String(option);
+        return { value, label: value };
+      });
+      const seen = new Set();
+      return normalized.filter((option) => {
+        if (!seen.has(option.value)) {
+          seen.add(option.value);
+          return true;
+        }
+        figWarnInvariant(
+          `fig-options-duplicate:${option.value}`,
+          `fig-options ignored duplicate value "${option.value}".`,
+        );
+        return false;
+      });
+    };
+    if (this.#propertyOptions) {
+      this.#parsedOptions = normalize(this.#propertyOptions);
+      return;
+    }
     const raw = this.getAttribute("options") || "";
     if (raw.startsWith("[")) {
-      try { this.#parsedOptions = JSON.parse(raw); return; } catch {}
+      try {
+        this.#parsedOptions = normalize(JSON.parse(raw));
+        return;
+      } catch {}
     }
     const delimiter = raw.includes("\n") ? "\n" : ",";
-    this.#parsedOptions = raw.split(delimiter).map((s) => s.trim()).filter(Boolean);
+    this.#parsedOptions = normalize(
+      raw.split(delimiter).map((s) => s.trim()).filter(Boolean),
+    );
   }
 
   #renderSegments() {
@@ -174,9 +227,9 @@ class FigOptions extends HTMLElement {
 
     for (const opt of this.#parsedOptions) {
       const seg = document.createElement("fig-segment");
-      seg.setAttribute("value", opt);
-      seg.textContent = opt;
-      if (currentValue === opt) {
+      seg.setAttribute("value", opt.value);
+      seg.textContent = opt.label;
+      if (currentValue === opt.value) {
         seg.setAttribute("selected", "true");
       }
       sc.appendChild(seg);
@@ -230,9 +283,9 @@ class FigOptions extends HTMLElement {
 
     for (const opt of this.#parsedOptions) {
       const option = document.createElement("option");
-      option.value = opt;
-      option.textContent = opt;
-      if (currentValue === opt) option.selected = true;
+      option.value = opt.value;
+      option.textContent = opt.label;
+      if (currentValue === opt.value) option.selected = true;
       dd.appendChild(option);
     }
 

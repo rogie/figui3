@@ -69,6 +69,7 @@ import "./components/fig-menu-item.js";
 import "./components/fig-separator.js";
 import "./components/fig-menu-separator.js";
 import "./components/fig-menu.js";
+import "./components/fig-property.js";
 
 export * from "./runtime/index.js";
 export * from "./components/fig-layer.js";
@@ -137,3 +138,4 @@ export * from "./components/fig-menu-item.js";
 export * from "./components/fig-separator.js";
 export * from "./components/fig-menu-separator.js";
 export * from "./components/fig-menu.js";
+export * from "./components/fig-property.js";

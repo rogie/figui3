@@ -9,7 +9,7 @@ already registered by `fig.js`.
 
 Import: `fig.css` + `fig.js`
 
-Core registrations, including `fig-layer`. 66 registrations:
+Core registrations, including `fig-layer`. 67 registrations:
 
 - `<fig-3d-rotate>`
 - `<fig-angle>`
@@ -55,6 +55,7 @@ Core registrations, including `fig-layer`. 66 registrations:
 - `<fig-origin-grid>`
 - `<fig-popup>`
 - `<fig-preview>`
+- `<fig-property>`
 - `<fig-radio>`
 - `<fig-segment>`
 - `<fig-segmented-control>`
@@ -82,7 +83,7 @@ Core registrations, including `fig-layer`. 66 registrations:
 
 Import: `fig-editor.css` + `fig-editor.js`
 
-Editor registrations; JavaScript also imports Core. 14 registrations:
+Editor registrations; JavaScript also imports Core. 13 registrations:
 
 - `<fig-fill-picker>`
 - `<fig-gradient-editor>`
@@ -93,7 +94,6 @@ Editor registrations; JavaScript also imports Core. 14 registrations:
 - `<fig-popup-easing>`
 - `<fig-popup-gradient>`
 - `<fig-popup-palette>`
-- `<fig-property>`
 - `<fig-reorder>`
 - `<fig-select>`
 - `<fig-select-option>`

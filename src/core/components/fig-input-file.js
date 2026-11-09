@@ -49,6 +49,7 @@ const FIG_INPUT_FILE_VIDEO_EXTENSIONS = [
  * @attr {boolean} preview - Preview supported files or show their media-specific icon.
  * @attr {string} label - Upload button label. Defaults by known file type.
  * @attr {boolean} remove - Show the remove button for a selected file. Defaults to true.
+ * @attr {string} upload - Set to "icon" for an icon-only Add/Remove control.
  */
 class FigInputFile extends HTMLElement {
   static observedAttributes = [
@@ -63,6 +64,7 @@ class FigInputFile extends HTMLElement {
     "default-url",
     "default-filename",
     "remove",
+    "upload",
   ];
 
   #fileInput = null;
@@ -171,6 +173,10 @@ class FigInputFile extends HTMLElement {
 
   get #removeEnabled() {
     return this.getAttribute("remove") !== "false";
+  }
+
+  get #iconUploadEnabled() {
+    return this.getAttribute("upload")?.toLowerCase() === "icon";
   }
 
   get #largePreviewEnabled() {
@@ -466,7 +472,11 @@ class FigInputFile extends HTMLElement {
       this.#fileInput.focus(options);
       return;
     }
-    this.#uploadBtn?.focus(options);
+    if (this.#uploadBtn) {
+      this.#uploadBtn.focus(options);
+      return;
+    }
+    this.#clearBtn?.focus(options);
   }
 
   activate(options) {
@@ -531,7 +541,7 @@ class FigInputFile extends HTMLElement {
     e.preventDefault();
     if (!this.hasAttribute("dragover")) {
       this.setAttribute("dragover", "");
-      if (this.#uploadBtn) {
+      if (this.#uploadBtn && !this.#iconUploadEnabled) {
         this.#uploadBtn.dataset.prevText = this.#uploadBtn.textContent;
         this.#uploadBtn.textContent = "Drop file";
       }
@@ -727,11 +737,12 @@ class FigInputFile extends HTMLElement {
     this.#emitEvents({ cleared: true });
   };
 
-  #renderLargePreview(kind, disabled) {
+  #renderLargePreview(kind, disabled, label) {
     const media = document.createElement(
       kind === "video" ? "fig-video" : "fig-image",
     );
-    media.setAttribute("upload", "");
+    media.setAttribute("upload", this.#iconUploadEnabled ? "icon" : "");
+    media.setAttribute("label", label);
     media.setAttribute("full", "");
     media.setAttribute("checkerboard", "");
     const file = this.#files?.[0];
@@ -746,6 +757,25 @@ class FigInputFile extends HTMLElement {
     );
     if (disabled) nestedInput?.setAttribute("disabled", "");
     this.setAttribute("data-previewing", "large");
+  }
+
+  #renderClearButton(variant, disabled) {
+    if (!this.#removeEnabled) return;
+    const clearTooltip = document.createElement("fig-tooltip");
+    clearTooltip.setAttribute("text", "Remove");
+    this.#clearBtn = document.createElement("fig-button");
+    this.#clearBtn.setAttribute(
+      "variant",
+      variant === "overlay" ? "overlay" : "ghost",
+    );
+    this.#clearBtn.setAttribute("icon", "true");
+    this.#clearBtn.setAttribute("aria-label", "Remove");
+    this.#clearBtn.className = "fig-input-file-clear";
+    if (disabled) this.#clearBtn.setAttribute("disabled", "");
+    this.#clearBtn.replaceChildren(createFigIcon("minus"));
+    this.#clearBtn.addEventListener("click", this.#onClear);
+    clearTooltip.appendChild(this.#clearBtn);
+    this.appendChild(clearTooltip);
   }
 
   #render() {
@@ -789,7 +819,12 @@ class FigInputFile extends HTMLElement {
       ? this.#largePreviewKind()
       : null;
     if (largePreviewKind) {
-      this.#renderLargePreview(largePreviewKind, disabled);
+      this.#renderLargePreview(largePreviewKind, disabled, label);
+      return;
+    }
+
+    if (hasFile && this.#iconUploadEnabled) {
+      this.#renderClearButton(variant, disabled);
       return;
     }
 
@@ -864,28 +899,17 @@ class FigInputFile extends HTMLElement {
         this.appendChild(this.#uploadBtn);
       }
 
-      if (this.#removeEnabled) {
-        const clearTooltip = document.createElement("fig-tooltip");
-        clearTooltip.setAttribute("text", "Remove");
-        this.#clearBtn = document.createElement("fig-button");
-        this.#clearBtn.setAttribute("variant", variant === "overlay" ? "overlay" : "ghost");
-        this.#clearBtn.setAttribute("icon", "true");
-        this.#clearBtn.setAttribute("aria-label", "Remove");
-        this.#clearBtn.className = "fig-input-file-clear";
-        if (disabled) this.#clearBtn.setAttribute("disabled", "");
-        this.#clearBtn.replaceChildren(createFigIcon("minus"));
-        this.#clearBtn.addEventListener("click", this.#onClear);
-        clearTooltip.appendChild(this.#clearBtn);
-        this.appendChild(clearTooltip);
-      }
+      this.#renderClearButton(variant, disabled);
       if (showsAudioPreview) this.#renderAudioPreview();
     } else {
-      const tooltipText = accepts
-        ? `Accepts ${accepts
-            .split(",")
-            .map((s) => s.trim())
-            .join(", ")}`
-        : "";
+      const tooltipText = this.#iconUploadEnabled
+        ? label
+        : accepts
+          ? `Accepts ${accepts
+              .split(",")
+              .map((s) => s.trim())
+              .join(", ")}`
+          : "";
 
       if (tooltipText) {
         this.#tooltipEl = document.createElement("fig-tooltip");
@@ -894,17 +918,26 @@ class FigInputFile extends HTMLElement {
 
       this.#uploadBtn = document.createElement("fig-button");
       this.#uploadBtn.setAttribute("variant", variant);
-      if (variant === "property") this.#uploadBtn.setAttribute("full", "");
       this.#uploadBtn.setAttribute("type", "upload");
-      this.#uploadBtn.textContent = label;
-      const uploadIcon = createFigIcon("upload");
-      uploadIcon.setAttribute("slot", "prepend");
-      this.#uploadBtn.prepend(uploadIcon);
+      if (this.#iconUploadEnabled) {
+        this.#uploadBtn.setAttribute("icon", "");
+        this.#uploadBtn.setAttribute("aria-label", label);
+        this.#uploadBtn.append(createFigIcon("add"));
+      } else {
+        if (variant === "property") this.#uploadBtn.setAttribute("full", "");
+        this.#uploadBtn.textContent = label;
+        const uploadIcon = createFigIcon("upload");
+        uploadIcon.setAttribute("slot", "prepend");
+        this.#uploadBtn.prepend(uploadIcon);
+      }
       if (disabled) this.#uploadBtn.setAttribute("disabled", "");
 
       this.#fileInput = document.createElement("input");
       this.#fileInput.type = "file";
       this.#fileInput.title = "";
+      if (this.#iconUploadEnabled) {
+        this.#fileInput.setAttribute("aria-label", label);
+      }
       this.#fileInput.disabled = disabled;
       if (accepts) this.#fileInput.setAttribute("accept", accepts);
       if (multiple) this.#fileInput.setAttribute("multiple", "");

@@ -4,6 +4,7 @@ import { createRoot } from "../../playground/node_modules/react-dom/client.js";
 window.__figuiReactRuntime = {
   mount(container) {
     const inputDetails = [];
+    const numberDetails = [];
     const recoverableErrors = [];
     const root = createRoot(container, {
       onRecoverableError(error) {
@@ -34,6 +35,13 @@ window.__figuiReactRuntime = {
               inputDetails.push(event.nativeEvent.detail);
             },
           }),
+          React.createElement("fig-input-number", {
+            id: "react-number",
+            value: "12",
+            onInput(event) {
+              numberDetails.push(event.nativeEvent.detail);
+            },
+          }),
         ),
       );
     };
@@ -43,6 +51,7 @@ window.__figuiReactRuntime = {
       render,
       unmount: () => root.unmount(),
       inputDetails,
+      numberDetails,
       recoverableErrors,
     };
   },

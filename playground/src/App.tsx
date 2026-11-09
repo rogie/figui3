@@ -4,6 +4,8 @@ import ExampleView from "./components/ExampleView";
 import AttributesView from "./components/AttributesView";
 import CodeView from "./components/CodeView";
 import EventView from "./components/EventView";
+import PropsKitExampleView from "./components/PropsKitExampleView";
+import StateOutputView from "./components/StateOutputView";
 import { useTheme } from "./hooks/useTheme";
 import { useNavigation } from "./hooks/useNavigation";
 import { getExampleSourceMarkup } from "./lib/exampleMarkup";
@@ -18,6 +20,10 @@ import {
 } from "./lib/urlState";
 import { figui3Sections } from "./data/figui3Sections";
 import { labSections } from "./data/labSections";
+import {
+  propskitSections,
+  type PropsKitExample,
+} from "./data/propskitSections";
 import type { Section } from "./data/sections";
 import { sortSectionsWithinGroups } from "./lib/sectionOrder";
 import {
@@ -67,7 +73,33 @@ interface Props {
 
 function sectionsForMode(mode: Props["mode"]): Section[] {
   if (mode === "lab") return labSections;
-  return figui3Sections;
+  return [...propskitSections, ...figui3Sections];
+}
+
+function isPropsKitExample(
+  example: Section["examples"][number] | undefined,
+): example is PropsKitExample {
+  return Boolean(example && "createConfig" in example);
+}
+
+function displayJson(value: unknown) {
+  return JSON.stringify(
+    value,
+    (_key, entry) => {
+      if (entry instanceof File) {
+        return {
+          name: entry.name,
+          size: entry.size,
+          type: entry.type,
+        };
+      }
+      if (entry instanceof Event) {
+        return { type: entry.type };
+      }
+      return entry;
+    },
+    2,
+  );
 }
 
 function getRequiredCustomElements(markup: string): string[] {
@@ -154,12 +186,12 @@ function filterAvailableSections(
 
 function titleForMode(mode: Props["mode"]): string {
   if (mode === "lab") return "Lab";
-  return "FigUI3";
+  return "Figma PropsKit";
 }
 
 function basePathForMode(mode: Props["mode"]): string {
-  if (mode === "lab") return "/figui3/lab";
-  return "/figui3";
+  if (mode === "lab") return "/propskit/lab";
+  return "/propskit";
 }
 
 export default function App({ mode }: Props) {
@@ -206,6 +238,8 @@ export default function App({ mode }: Props) {
     navigateTo,
   } = useNavigation(sections, basePath);
   const [editableMarkup, setEditableMarkup] = useState("");
+  const [propsKitValues, setPropsKitValues] = useState<unknown>({});
+  const [propsKitEvent, setPropsKitEvent] = useState<unknown>(null);
   const defaultMarkupRef = useRef("");
   const markupExampleKeyRef = useRef("");
   const initialParamsRef = useRef<Record<string, string> | null>(
@@ -219,6 +253,14 @@ export default function App({ mode }: Props) {
     markupExampleKeyRef.current === activeExampleKey
       ? editableMarkup
       : activeDefaultMarkup;
+  const activePropsKitExample = isPropsKitExample(activeExample)
+    ? activeExample
+    : null;
+
+  useEffect(() => {
+    if (!activePropsKitExample) return;
+    setPropsKitEvent(null);
+  }, [activeExampleKey, activePropsKitExample]);
 
   useEffect(() => {
     if (typeof customElements === "undefined") return;
@@ -381,7 +423,14 @@ export default function App({ mode }: Props) {
         appTitle={appTitle}
         groupOrder={mode === "lab" ? ["Inputs", "AI", "Misc"] : undefined}
       />
-      <main className={mode === "figui3" ? "mode-figui3" : undefined}>
+      <main
+        className={[
+          mode === "figui3" ? "mode-figui3" : "",
+          activePropsKitExample ? "mode-propskit" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {activeSection && (
           <div className="example-header">
             <h2>{activeTitle}</h2>
@@ -391,7 +440,14 @@ export default function App({ mode }: Props) {
             />
           </div>
         )}
-        {activeExample && (
+        {activePropsKitExample ? (
+          <PropsKitExampleView
+            key={activeExampleKey}
+            example={activePropsKitExample}
+            onValuesChange={setPropsKitValues}
+            onEventChange={setPropsKitEvent}
+          />
+        ) : activeExample ? (
           <div className="example-view-container">
             <ExampleView
               key={`${activeSectionId}/${activeExampleId}`}
@@ -403,23 +459,51 @@ export default function App({ mode }: Props) {
               onPersistControlValue={handlePersistControlValue}
             />
           </div>
+        ) : null}
+        {!activePropsKitExample && (
+          <CodeView markup={renderedMarkup} onMarkupChange={handleMarkupChange} />
         )}
-        <CodeView markup={renderedMarkup} onMarkupChange={handleMarkupChange} />
       </main>
-      <aside className="attributes-sidebar">
+      <aside
+        className={`attributes-sidebar${
+          activePropsKitExample ? " propskit-state-sidebar" : ""
+        }`}
+      >
         <div className="attributes-sidebar-content fig-overflow-fade">
-          <AttributesView
-            resetKey={activeExampleKey}
-            markup={renderedMarkup}
-            onMarkupChange={handleMarkupChange}
-            showFieldControls={
-              activeExample?.fieldControls ??
-              renderedMarkup.includes("<fig-field")
-            }
-            includeFullControl
-          />
-          {activeSectionId !== "skeleton" && (
-            <EventView key={`${activeSectionId}/${activeExampleId}`} />
+          {activePropsKitExample ? (
+            <>
+              <StateOutputView
+                kind="values"
+                title="Values"
+                json={displayJson(propsKitValues)}
+              />
+              <StateOutputView
+                kind="event"
+                title="Latest event"
+                json={
+                  propsKitEvent === null
+                    ? undefined
+                    : displayJson(propsKitEvent)
+                }
+                emptyText="Interact with a control to see event output"
+              />
+            </>
+          ) : (
+            <>
+              <AttributesView
+                resetKey={activeExampleKey}
+                markup={renderedMarkup}
+                onMarkupChange={handleMarkupChange}
+                showFieldControls={
+                  activeExample?.fieldControls ??
+                  renderedMarkup.includes("<fig-field")
+                }
+                includeFullControl
+              />
+              {activeSectionId !== "skeleton" && (
+                <EventView key={`${activeSectionId}/${activeExampleId}`} />
+              )}
+            </>
           )}
         </div>
       </aside>

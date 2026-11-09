@@ -21,6 +21,11 @@ fig-tab {
   color: var(--figma-color-text-secondary);
   position: relative;
 
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
   &[label] {
     &::after {
       content: attr(label);

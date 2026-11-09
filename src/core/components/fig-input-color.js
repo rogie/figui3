@@ -209,6 +209,7 @@ class FigInputColor extends HTMLElement {
               max: "100",
               value: this.#alphaPercent,
               units: "%",
+              steppers: "false",
               disabled,
             }),
           ),

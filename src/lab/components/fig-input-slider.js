@@ -15,6 +15,8 @@ import {
   numberAttribute,
   stringAttribute,
 } from "../runtime/input-slider-schema.js";
+import { figLabDefineElement } from "../runtime/dom.js";
+import { figWarnInvariant } from "../../shared/invariants.js";
 
 const HTMLElement = globalThis.HTMLElement ?? class {};
 
@@ -79,8 +81,7 @@ function jsonValuesEqual(value, defaultValue) {
 }
 
 function defineElement(name, constructor) {
-  if (typeof customElements === "undefined") return;
-  if (!customElements.get(name)) customElements.define(name, constructor);
+  figLabDefineElement(name, constructor);
 }
 
 export const figInputSliderSchema = deepFreeze({
@@ -714,8 +715,18 @@ export class FigInputSlider extends HTMLElement {
     try {
       const targets = [...scope.querySelectorAll(selectors)];
       if (scope.matches(selectors)) targets.unshift(scope);
+      if (!targets.length) {
+        figWarnInvariant(
+          `fig-input-slider-occlusion:${selectors}`,
+          `fig-input-slider occlusion-targets "${selectors}" did not match within its parent.`,
+        );
+      }
       return targets;
     } catch {
+      figWarnInvariant(
+        `fig-input-slider-occlusion-invalid:${selectors}`,
+        `fig-input-slider occlusion-targets "${selectors}" is not a valid selector.`,
+      );
       return [];
     }
   }

@@ -4,7 +4,16 @@ Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 fig-input-fill {
+  display: inline-flex;
+  gap: var(--spacer-2);
+  user-select: none;
+  width: 8.9375rem;
   outline: none !important;
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
 
   &:is(:hover, :focus, :focus-visible, :focus-within),
   &.has-popup-open {
@@ -40,4 +49,18 @@ fig-input-fill {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+.fig-input-fill-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--spacer-2) 0 var(--spacer-1);
+  height: var(--control-height);
+  font-size: var(--font-size-small);
+  color: var(--figma-color-text-secondary);
+  background: var(--figma-color-bg-secondary);
+  flex: 1;
+  min-width: 0;
+  user-select: none;
+  margin-left: -1px;
 }

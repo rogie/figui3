@@ -5,7 +5,7 @@ Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
 export * from "./components/fig-input-rotate.js";
-export * from "./components/fig-property.js";
+export { FigProperty } from "../../fig.js";
 export * from "./components/fig-gradient-editor.js";
 export * from "./components/fig-palette-editor.js";
 export * from "./components/fig-popup-easing.js";

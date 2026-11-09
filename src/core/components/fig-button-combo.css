@@ -3,4 +3,117 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+:is(.fig-button-combo, fig-button-combo) {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0;
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  & > * {
+    &:first-child:not(:last-child),
+    &:first-child:not(:last-child) > * {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &:last-child:not(:first-child),
+    &:last-child:not(:first-child) > * {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &:not(:last-child):not(:first-child),
+    &:not(:last-child):not(:first-child) > * {
+      border-radius: 0;
+    }
+  }
+}
+
+:is(.fig-button-combo, fig-button-combo, .fig-input-combo, fig-input-combo):not(
+    :has(
+        > :not(
+            :is(
+                [variant="secondary"],
+                [variant="property"],
+                fig-dropdown,
+                fig-select
+              )
+          ):not(fig-tooltip)
+      )
+  ):not(
+    :has(
+        > fig-tooltip
+          > :not(
+              :is(
+                  [variant="secondary"],
+                  [variant="property"],
+                  fig-dropdown,
+                  fig-select
+                )
+            )
+      )
+  ) {
+  gap: 0;
+  border-radius: var(--radius-medium);
+  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+
+  > :is([variant="secondary"], [variant="property"]),
+  > fig-tooltip > :is([variant="secondary"], [variant="property"]) {
+    box-shadow: none;
+  }
+
+  > :is(
+      [variant="secondary"],
+      [variant="property"],
+      fig-tooltip:has(
+          > :is(
+              [variant="secondary"],
+              [variant="property"],
+              fig-dropdown,
+              fig-select
+            )
+        )
+    ) {
+    + :is(
+        [variant="secondary"],
+        [variant="property"],
+        fig-dropdown,
+        fig-select
+      ),
+    + fig-tooltip
+      > :is(
+          [variant="secondary"],
+          [variant="property"],
+          fig-dropdown,
+          fig-select
+        ) {
+      background-image: linear-gradient(
+        var(--figma-color-bordertranslucent),
+        var(--figma-color-bordertranslucent)
+      );
+      background-position: left 1px;
+      background-repeat: no-repeat;
+      background-size: 1px calc(100% - 2px);
+    }
+  }
+}
+
+:is(.fig-button-combo, fig-button-combo) {
+  > :not(fig-tooltip):not([variant="secondary"]):not(
+      [variant="property"]
+    ):not(fig-select):not(fig-dropdown):not(:first-child),
+  > fig-tooltip:not(:first-child)
+    > :not([variant="secondary"]):not([variant="property"]):not(
+      fig-select
+    ):not(fig-dropdown) {
+    box-shadow: inset 1px 0 0 0 var(--figma-color-bg-brand-hover);
+
+    &[disabled]:not([disabled="false"]) {
+      box-shadow: inset 1px 0 0 0 var(--figma-color-border-disabled);
+    }
+  }
+}

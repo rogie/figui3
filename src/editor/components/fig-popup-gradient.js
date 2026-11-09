@@ -5,6 +5,7 @@ Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
 import "./fig-gradient-editor.js";
+import { figDefineCustomizedBuiltIn } from "../../core/runtime/index.js";
 
 const GRADIENT_ATTRIBUTES = [
   "value",
@@ -145,7 +146,7 @@ if (typeof customElements !== "undefined") {
     };
   }
 
-  customElements.define("fig-popup-gradient", FigPopupGradient, {
+  figDefineCustomizedBuiltIn("fig-popup-gradient", FigPopupGradient, {
     extends: "dialog",
   });
   });

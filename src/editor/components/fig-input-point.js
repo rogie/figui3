@@ -39,6 +39,7 @@ class FigInputPoint extends HTMLElement {
   #button = null;
   #editor = null;
   #popup = null;
+  #popupDefinitionPromise = null;
   #popupAnchor = null;
   #popupAnchorResizeObserver = null;
   #syncingFromPopup = false;
@@ -46,16 +47,15 @@ class FigInputPoint extends HTMLElement {
   #boundOpen = () => {
     this.open = true;
   };
-  #boundPopupClosed = () => {
-    if (!this.#popup) return;
-    if (
-      this.#popup.hasAttribute("open") ||
-      this.#popup.matches?.(":open") ||
-      this.#popup.matches?.(":popover-open")
-    ) {
-      return;
+  #boundPopupLifecycle = (event) => {
+    if (event.target !== this.#popup) return;
+    const state = event.detail?.state;
+    const expanded = state === "opening" || state === "open";
+    this.#button?.setAttribute("aria-expanded", String(expanded));
+    if (!expanded && this.open) this.open = false;
+    if (state === "closed") {
+      this.#popupAnchorResizeObserver?.disconnect();
     }
-    if (this.open) this.open = false;
   };
   #boundPopupEvent = (event) => {
     event.stopPropagation();
@@ -277,7 +277,15 @@ class FigInputPoint extends HTMLElement {
 
   #ensurePopup() {
     if (this.#popup?.isConnected) return this.#popup;
-    if (!customElements.get("fig-popup")) return null;
+    if (!customElements.get("fig-popup")) {
+      this.#popupDefinitionPromise ??= customElements
+        .whenDefined("fig-popup")
+        .then(() => {
+          this.#popupDefinitionPromise = null;
+          this.#syncOpenState();
+        });
+      return null;
+    }
 
     const popup = document.createElement("dialog", { is: "fig-popup" });
     popup.setAttribute("is", "fig-popup");
@@ -299,8 +307,10 @@ class FigInputPoint extends HTMLElement {
     editor.addEventListener("change", this.#boundPopupEvent);
     content.append(editor);
     popup.append(content);
-    popup.addEventListener("close", this.#boundPopupClosed);
-    popup.addEventListener("toggle", this.#boundPopupClosed);
+    popup.addEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPopupLifecycle,
+    );
 
     (figEditorGetOverlayRoot() ?? document.body)?.append(popup);
     this.#popup = popup;
@@ -373,14 +383,18 @@ class FigInputPoint extends HTMLElement {
   }
 
   #syncTriggerState() {
-    this.#button?.setAttribute("aria-expanded", String(this.open));
+    const state = this.#popup?.lifecycleState;
+    const expanded = state === "opening" || state === "open";
+    this.#button?.setAttribute("aria-expanded", String(expanded));
     this.#button?.toggleAttribute("disabled", this.#isDisabled);
   }
 
   #destroyPopup() {
     if (!this.#popup) return;
-    this.#popup.removeEventListener("close", this.#boundPopupClosed);
-    this.#popup.removeEventListener("toggle", this.#boundPopupClosed);
+    this.#popup.removeEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPopupLifecycle,
+    );
     this.#editor?.removeEventListener("input", this.#boundPopupEvent);
     this.#editor?.removeEventListener("change", this.#boundPopupEvent);
     this.#popup.open = false;

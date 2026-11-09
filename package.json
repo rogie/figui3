@@ -5,6 +5,10 @@
   "author": "Rogie King",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
+  "engines": {
+    "bun": ">=1.3.0",
+    "node": ">=22"
+  },
   "main": "dist/fig.js",
   "module": "dist/fig.js",
   "types": "types/index.d.ts",
@@ -49,6 +53,10 @@
       "types": "./types/register.d.ts",
       "default": "./dist/register.js"
     },
+    "./propskit.js": {
+      "types": "./types/propskit.d.ts",
+      "default": "./dist/propskit.js"
+    },
     "./react": {
       "types": "./types/react.d.ts",
       "default": "./types/react.js"
@@ -68,15 +76,16 @@
     "./src/fig-layer.js": "./src/core/entrypoints/fig-layer.js",
     "./src/fig-input-rotate.js": "./src/editor/entrypoints/fig-input-rotate.js",
     "./src/fig-input-slider.js": "./src/lab/entrypoints/fig-input-slider.js",
-    "./src/fig-property.js": "./src/editor/entrypoints/fig-property.js",
+    "./src/fig-property.js": "./src/core/entrypoints/fig-property.js",
     "./src/fig-editor.js": "./fig-editor.js",
     "./src/fig-lab.js": "./fig-lab.js",
     "./src/register.js": "./register.js",
+    "./src/propskit.js": "./propskit.js",
     "./src/fig.css": "./fig.css",
     "./src/fig-layer.css": "./src/core/entrypoints/fig-layer.css",
     "./src/fig-input-rotate.css": "./src/editor/entrypoints/fig-input-rotate.css",
     "./src/fig-input-slider.css": "./src/lab/entrypoints/fig-input-slider.css",
-    "./src/fig-property.css": "./src/editor/entrypoints/fig-property.css",
+    "./src/fig-property.css": "./src/core/entrypoints/fig-property.css",
     "./src/fig-editor.css": "./fig-editor.css",
     "./src/fig-lab.css": "./fig-lab.css",
     "./src/base.css": "./base.css",
@@ -89,6 +98,7 @@
     "fig-editor.js",
     "fig-lab.js",
     "register.js",
+    "propskit.js",
     "fig.css",
     "fig-editor.css",
     "fig-lab.css",
@@ -113,20 +123,24 @@
   ],
   "scripts": {
     "dev": "bun --hot server.ts",
-    "build": "npm run build:icons && npm run build:bundle-docs && npm run build:js && npm run build:css && npm run check:licenses",
+    "build": "npm run build:icons && npm run build:bundle-docs && npm run build:js && npm run build:css && npm run check:artifacts && npm run check:licenses",
+    "prepack": "npm run build",
     "build:icons": "node scripts/build-icons.mjs",
     "build:bundle-docs": "node scripts/build-bundle-docs.mjs",
     "build:js": "bun scripts/build-js.mjs",
     "build:css": "node scripts/build-css.mjs",
     "check:icons": "node scripts/build-icons.mjs --check",
+    "check:artifacts": "node scripts/check-artifacts.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",
     "dev:playground": "node playground/dev.mjs",
     "build:playground": "cd playground && npm run build",
-    "test": "npm run check:icons && npm run check:bundle-docs && npm run test:types && npm run test:components",
+    "test": "npm run test:checks && npm run test:unit && npm run test:components",
+    "test:checks": "npm run check:icons && npm run check:bundle-docs && npm run test:types",
+    "test:unit": "bun test tests/unit",
     "check:bundle-docs": "node scripts/build-bundle-docs.mjs --check",
     "test:types": "tsc -p tests/types/tsconfig.json",
     "test:components": "playwright test",
-    "test:perf": "playwright test --config=playwright.perf.config.ts",
+    "test:perf": "npm run build && playwright test --config=playwright.perf.config.ts",
     "test:all": "npm run test:components && npm run test:perf"
   },
   "repository": {
@@ -168,12 +182,9 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0",
-    "@types/bun": "latest",
+    "@types/bun": "1.3.10",
     "@types/react": "^19.3.0",
-    "clean-css-cli": "^5.6.3",
     "lightningcss": "^1.32.0",
-    "lightningcss-cli": "^1.32.0",
-    "playwright": "^1.58.2",
     "typescript": "^5.9.3"
   }
 }

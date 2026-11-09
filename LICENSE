@@ -13,9 +13,10 @@ MIT License — FigUI3 Core
 Unless a file is listed under PolyForm Shield or Third-Party Software below,
 all first-party files in this repository are licensed under MIT.
 
-The MIT core entry points are: fig.js, register.js, fig-layer.js, fig-color.js,
-fig.css, fig-layer.css, base.css, components.css, icons.css, all files under
-icons/, src/shared/, src/core/, and their matching files under dist/.
+The MIT core entry points are: fig.js, register.js, propskit.js, fig-layer.js,
+fig-property.js, fig-color.js, fig.css, fig-layer.css, fig-property.css,
+base.css, components.css, icons.css, all files under icons/, src/shared/,
+src/core/, src/propskit/, and their matching files under dist/.
 
 Copyright (c) 2026 Rogie King
 
@@ -41,8 +42,8 @@ SOFTWARE.
 ISC License — Third-Party Software
 ==============================================================================
 
-Applies to: polyfills/custom-elements-webkit.js, the copy bundled into
-dist/fig.js, and matching standalone copies under dist/polyfills/.
+Applies to: polyfills/custom-elements-webkit.js and the copy bundled into
+dist/fig.js.
 
 Vendored from @ungap/custom-elements-builtin@0.6.5.
 
@@ -71,12 +72,6 @@ Applies to these source files and their matching files under dist/:
 - fig-lab.js and fig-lab.css
 - fig-input-rotate.js and fig-input-rotate.css
 - fig-input-slider.js and fig-input-slider.css
-- fig-property.js and fig-property.css
-- fig-gradient-editor.js and fig-gradient-editor.css
-- fig-palette-editor.js and fig-palette-editor.css
-- fig-popup-easing.js and fig-popup-easing.css
-- fig-popup-gradient.js and fig-popup-gradient.css
-- fig-popup-palette.js and fig-popup-palette.css
 
 Also applies to all files under:
 

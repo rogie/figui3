@@ -430,8 +430,6 @@ class FigChooser extends HTMLElement {
       this.#dragState.startY = e.clientY;
       this.#dragState.scrollLeft = this.scrollLeft;
       this.#dragState.scrollTop = this.scrollTop;
-      this.style.cursor = "grab";
-      this.style.userSelect = "none";
     };
 
     const onPointerMove = (e) => {
@@ -443,6 +441,7 @@ class FigChooser extends HTMLElement {
       if (!this.#dragState.didDrag && Math.abs(isHorizontal ? dx : dy) > 3) {
         this.#dragState.didDrag = true;
         this.style.cursor = "grabbing";
+        this.style.userSelect = "none";
         this.setPointerCapture(e.pointerId);
       }
 

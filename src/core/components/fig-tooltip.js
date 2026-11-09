@@ -5,6 +5,7 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 import {
   HTMLElement,
+  figBuiltInPolyfillReady,
   figDefineElement,
   figGetOverlayRoot,
   figUniqueId,
@@ -42,6 +43,7 @@ class FigTooltip extends HTMLElement {
   #boundHandleTouchEnd;
   #boundHandleTouchCancel;
   #boundHandleDialogClose;
+  #boundHandlePopupLifecycle;
   #boundHandleEscape;
   #parentDialog = null;
   #triggerEl = null;
@@ -49,6 +51,7 @@ class FigTooltip extends HTMLElement {
   #suppressFocusOpen = false;
   #touchTimeout;
   #isTouching = false;
+  #requestGeneration = 0;
   constructor() {
     super();
     this.action = this.getAttribute("action") || "hover";
@@ -71,6 +74,13 @@ class FigTooltip extends HTMLElement {
     this.#boundHandleTouchEnd = this.#handleTouchEnd.bind(this);
     this.#boundHandleTouchCancel = this.#handleTouchCancel.bind(this);
     this.#boundHandleEscape = this.#handleEscape.bind(this);
+    this.#boundHandlePopupLifecycle = (event) => {
+      const state = event.detail?.state;
+      this.isOpen = state === "opening" || state === "open";
+      if (state === "closed" && FigTooltip.#hoverOpen === this) {
+        FigTooltip.#hoverOpen = null;
+      }
+    };
     this.#boundHandleDialogClose = () => {
       clearTimeout(this.timeout);
       this.destroy();
@@ -211,6 +221,10 @@ class FigTooltip extends HTMLElement {
     this.popup.setAttribute("data-tooltip-managed", "");
     this.popup.setAttribute("role", "tooltip");
     this.popup.setAttribute("closedby", "closerequest");
+    this.popup.addEventListener(
+      "fig-popup-lifecycle",
+      this.#boundHandlePopupLifecycle,
+    );
     if (supportsPopover) this.popup.setAttribute("popover", "manual");
 
     const tooltipId = figUniqueId();
@@ -262,10 +276,15 @@ class FigTooltip extends HTMLElement {
   destroy() {
     if (this.popup) {
       this.#removeDescribedBy(this.popup.id);
-      this.popup.hidePopup?.();
+      this.popup.removeEventListener(
+        "fig-popup-lifecycle",
+        this.#boundHandlePopupLifecycle,
+      );
+      this.popup.open = false;
       this.popup.remove();
       this.popup = null;
     }
+    this.isOpen = false;
   }
   #removeDescribedBy(id) {
     const trigger = this.firstElementChild;
@@ -322,17 +341,19 @@ class FigTooltip extends HTMLElement {
       if (openSelect) return;
     }
     if (this.#isWarmSession()) {
-      this.render();
       this.showPopup();
       return;
     }
     this.timeout = setTimeout(() => {
-      this.render();
       this.showPopup();
     }, this.delay);
   }
 
-  showPopup() {
+  async showPopup() {
+    const generation = ++this.#requestGeneration;
+    await figBuiltInPolyfillReady;
+    await customElements.whenDefined("fig-popup");
+    if (generation !== this.#requestGeneration || !this.isConnected) return;
     if (this.#parentDialog && !this.#parentDialog.open) return;
     if (!this.firstElementChild) return;
     if (
@@ -343,18 +364,19 @@ class FigTooltip extends HTMLElement {
       FigTooltip.#hoverOpen.hidePopup();
     }
     if (!this.popup) this.render();
+    if (!this.popup) return;
     // Keep anchor in sync in case the trigger child was swapped between
     // creation and show.
     this.popup.anchor = this.firstElementChild;
     this.popup.open = true;
 
-    this.isOpen = true;
     if (this.action === "hover") FigTooltip.#hoverOpen = this;
     FigTooltip.#lastShownAt = Date.now();
   }
 
   hidePopup() {
     if (this.#showPersisted) return;
+    this.#requestGeneration += 1;
     clearTimeout(this.timeout);
     clearTimeout(this.#touchTimeout);
     const wasShowing = this.isOpen;
@@ -480,12 +502,23 @@ class FigTooltip extends HTMLElement {
       this.delay = !isNaN(delay) ? delay : 500;
     }
     if (name === "open") {
+      const generation = ++this.#requestGeneration;
       if (newValue !== null && newValue !== "false") {
         requestAnimationFrame(() => {
+          if (
+            generation !== this.#requestGeneration ||
+            !this.open
+          )
+            return;
           this.showDelayedPopup();
         });
       } else {
         requestAnimationFrame(() => {
+          if (
+            generation !== this.#requestGeneration ||
+            this.open
+          )
+            return;
           this.hidePopup();
         });
       }

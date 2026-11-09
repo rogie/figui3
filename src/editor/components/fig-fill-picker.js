@@ -38,6 +38,7 @@ import {
   figRGBToOklab as figEditorRgbToOklab,
   figRGBToOklch,
 } from "../../../fig-color.js";
+import { AsyncOperationOwner } from "../../internal/async-operation-owner.js";
 import { figGradientCSS } from "./fig-gradient-editor.js";
 // FigFillPicker
 const GRADIENT_INTERPOLATION_SPACES = [
@@ -270,6 +271,41 @@ class FigFillPicker extends HTMLElement {
   #ownedBlobUrls = new Set();
   #videoPosterCapturing = null;
   #videoPosterSrc = null;
+  #webcamAcquireOwner = new AsyncOperationOwner();
+  #webcamSnapshotOwner = new AsyncOperationOwner();
+  #videoPosterOwner = new AsyncOperationOwner();
+  #boundDialogLifecycle = (event) => {
+    if (event.target !== this.#dialog) return;
+    this.#syncTriggerA11y();
+    if (event.detail?.state !== "closed") return;
+
+    const dialog = this.#dialog;
+    if (this.#isNativeSwatch(this.#swatch)) {
+      this.#swatch.removeAttribute("selected");
+    }
+    if (this.#shouldKeepWebcamLive()) this.#detachWebcamPreview();
+    else this.#stopWebcam();
+    const closingValue = JSON.stringify(this.value);
+    if (
+      this.#lastChangeValue !== null &&
+      this.#lastChangeValue !== closingValue
+    ) {
+      this.#emitChange();
+    }
+    this.#valueAtOpen = null;
+    this.#lastChangeValue = null;
+    const returnTarget = this.#trigger;
+    this.#scheduleFrame(() => {
+      if (
+        this.#dialog === dialog &&
+        dialog?.lifecycleState === "closed" &&
+        returnTarget?.isConnected
+      ) {
+        HTMLElement.prototype.focus.call(returnTarget);
+      }
+    });
+    this.dispatchEvent(new CustomEvent("close"));
+  };
 
   constructor() {
     super();
@@ -292,6 +328,15 @@ class FigFillPicker extends HTMLElement {
   }
 
   connectedCallback() {
+    if (this.#webcamAcquireOwner.disposed) {
+      this.#webcamAcquireOwner = new AsyncOperationOwner();
+    }
+    if (this.#webcamSnapshotOwner.disposed) {
+      this.#webcamSnapshotOwner = new AsyncOperationOwner();
+    }
+    if (this.#videoPosterOwner.disposed) {
+      this.#videoPosterOwner = new AsyncOperationOwner();
+    }
     // Use display: contents
     this.style.display = "contents";
 
@@ -304,6 +349,10 @@ class FigFillPicker extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.#webcamAcquireOwner.dispose();
+    this.#webcamSnapshotOwner.dispose();
+    this.#videoPosterOwner.dispose();
+    this.#videoPosterCapturing = null;
     this.#discardDialog({ stopWebcam: true });
     this.#cancelFrames();
     this.#revokeOwnedBlobUrls();
@@ -433,7 +482,7 @@ class FigFillPicker extends HTMLElement {
     return max <= 40 || lit / samples < 0.04;
   }
 
-  async #webcamFrameSources(video) {
+  async #webcamFrameSources(video, operation) {
     const sources = [];
     const track = this.#webcam.stream?.getVideoTracks?.()?.[0];
     if (track && typeof ImageCapture === "function") {
@@ -441,14 +490,24 @@ class FigFillPicker extends HTMLElement {
         if (this.#webcamImageCapture?.track !== track) {
           this.#webcamImageCapture = new ImageCapture(track);
         }
-        sources.push(await this.#webcamImageCapture.grabFrame());
+        const frame = await this.#webcamImageCapture.grabFrame();
+        if (!operation.isCurrent()) {
+          frame?.close?.();
+          return sources;
+        }
+        sources.push(frame);
       } catch {
-        this.#webcamImageCapture = null;
+        if (operation.isCurrent()) this.#webcamImageCapture = null;
       }
     }
     if (typeof createImageBitmap === "function") {
       try {
-        sources.push(await createImageBitmap(video));
+        const bitmap = await createImageBitmap(video);
+        if (!operation.isCurrent()) {
+          bitmap?.close?.();
+          return sources;
+        }
+        sources.push(bitmap);
       } catch {
         /* video not readable yet */
       }
@@ -457,37 +516,65 @@ class FigFillPicker extends HTMLElement {
     return sources.filter(Boolean);
   }
 
-  async #paintWebcamFrame(ctx, video, width, height) {
-    const sources = await this.#webcamFrameSources(video);
-    for (const source of sources) {
-      try {
-        ctx.drawImage(source, 0, 0, width, height);
-      } catch {
-        continue;
-      } finally {
-        source.close?.();
+  async #paintWebcamFrame(ctx, video, width, height, operation) {
+    const sources = await this.#webcamFrameSources(video, operation);
+    try {
+      for (const source of sources) {
+        if (!operation.isCurrent()) return false;
+        try {
+          ctx.drawImage(source, 0, 0, width, height);
+        } catch {
+          continue;
+        }
+        if (!this.#webcamFrameIsBlank(ctx, width, height)) return true;
       }
-      if (!this.#webcamFrameIsBlank(ctx, width, height)) return true;
+      return false;
+    } finally {
+      sources.forEach((source) => source?.close?.());
     }
-    return false;
   }
 
-  #waitForNextVideoFrame(video) {
+  #waitForNextVideoFrame(video, operation) {
     return new Promise((resolve) => {
+      let settled = false;
+      let timer = null;
+      let frameId = null;
+      const finish = (ready) => {
+        if (settled) return;
+        settled = true;
+        resource.dispose();
+        resolve(ready);
+      };
+      const resource = operation.own(() => {
+        if (timer !== null) clearTimeout(timer);
+        if (
+          frameId !== null &&
+          typeof video.cancelVideoFrameCallback === "function"
+        ) {
+          video.cancelVideoFrameCallback(frameId);
+        }
+        if (!settled) {
+          settled = true;
+          resolve(false);
+        }
+      });
       if (typeof video.requestVideoFrameCallback === "function") {
-        const timer = setTimeout(() => resolve(false), 400);
-        video.requestVideoFrameCallback(() => {
-          clearTimeout(timer);
-          resolve(true);
-        });
+        timer = setTimeout(() => finish(false), 400);
+        frameId = video.requestVideoFrameCallback(() => finish(true));
         return;
       }
-      setTimeout(() => resolve(false), 200);
+      timer = setTimeout(() => finish(false), 200);
     });
   }
 
-  async #snapshotWebcamVideo(video) {
-    if (!video?.videoWidth || !video.videoHeight) return null;
+  async #snapshotWebcamVideo(video, operation) {
+    if (
+      !operation.isCurrent() ||
+      !video?.videoWidth ||
+      !video.videoHeight
+    ) {
+      return null;
+    }
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -498,11 +585,13 @@ class FigFillPicker extends HTMLElement {
       video,
       canvas.width,
       canvas.height,
+      operation,
     );
-    if (!painted) return null;
+    if (!painted || !operation.isCurrent()) return null;
     const blob = await new Promise((resolve) =>
       canvas.toBlob(resolve, "image/png"),
     );
+    if (!blob || !operation.isCurrent()) return null;
     return this.#writeWebcamSnapshot(blob);
   }
 
@@ -515,32 +604,36 @@ class FigFillPicker extends HTMLElement {
       return;
     }
     if (this.#webcamSnapshotting) return;
+    const operation = this.#webcamSnapshotOwner.begin();
     this.#webcamSnapshotting = true;
 
-    const finish = (url) => {
-      this.#webcamSnapshotting = false;
-      if (!url || this.#fillType !== "webcam" || this.#webcam.stream !== stream) {
-        return;
-      }
-      this.#webcamPosterStream = stream;
-      this.#updateSwatch();
-    };
-
     const attempt = async () => {
-      const url = await this.#snapshotWebcamVideo(video);
-      if (url) {
-        finish(url);
-        return;
+      try {
+        while (
+          operation.isCurrent() &&
+          this.#fillType === "webcam" &&
+          this.#webcam.stream === stream
+        ) {
+          const url = await this.#snapshotWebcamVideo(video, operation);
+          if (url) {
+            if (
+              operation.isCurrent() &&
+              this.#fillType === "webcam" &&
+              this.#webcam.stream === stream
+            ) {
+              this.#webcamPosterStream = stream;
+              this.#updateSwatch();
+            }
+            return;
+          }
+          await this.#waitForNextVideoFrame(video, operation);
+        }
+      } finally {
+        if (operation.isCurrent()) this.#webcamSnapshotting = false;
       }
-      if (this.#fillType !== "webcam" || this.#webcam.stream !== stream) {
-        this.#webcamSnapshotting = false;
-        return;
-      }
-      await this.#waitForNextVideoFrame(video);
-      return attempt();
     };
 
-    attempt();
+    void attempt();
   }
 
   #scheduleFrame(callback) {
@@ -633,7 +726,10 @@ class FigFillPicker extends HTMLElement {
     this.#trigger.setAttribute("tabindex", disabled ? "-1" : "0");
     this.#trigger.setAttribute("aria-disabled", disabled ? "true" : "false");
     this.#trigger.setAttribute("aria-haspopup", "dialog");
-    this.#trigger.setAttribute("aria-expanded", this.#dialog?.open ? "true" : "false");
+    this.#trigger.setAttribute(
+      "aria-expanded",
+      this.#dialogExpanded() ? "true" : "false",
+    );
     this.#trigger.setAttribute("aria-controls", this.#dialogId);
     this.#trigger.removeAttribute("aria-hidden");
     if (labelledBy) {
@@ -848,7 +944,6 @@ class FigFillPicker extends HTMLElement {
     }
 
     this.#dialog.open = true;
-    this.#syncTriggerA11y();
 
     this.#scheduleFrame(() => {
       const focusTarget = this.#dialog?.querySelector(
@@ -869,8 +964,12 @@ class FigFillPicker extends HTMLElement {
   close() {
     if (this.#dialog) {
       this.#dialog.open = false;
-      this.#syncTriggerA11y();
     }
+  }
+
+  #dialogExpanded() {
+    const state = this.#dialog?.lifecycleState;
+    return state === "opening" || state === "open";
   }
 
   #restoreCustomSlotContent() {
@@ -894,6 +993,10 @@ class FigFillPicker extends HTMLElement {
     if (!stopWebcam && this.#shouldKeepWebcamLive()) this.#detachWebcamPreview();
     else this.#stopWebcam();
     if (!this.#dialog) return;
+    this.#dialog.removeEventListener(
+      "fig-popup-lifecycle",
+      this.#boundDialogLifecycle,
+    );
     this.#restoreCustomSlotContent();
     this.#dialog.remove();
     this.#dialog = null;
@@ -910,6 +1013,9 @@ class FigFillPicker extends HTMLElement {
 
   #detachWebcamPreview() {
     this.#webcamRequestId += 1;
+    this.#webcamAcquireOwner.cancel();
+    this.#webcamSnapshotOwner.cancel();
+    this.#webcamSnapshotting = false;
     const video = this.#dialog?.querySelector(
       ".fig-fill-picker-webcam-video",
     );
@@ -918,6 +1024,8 @@ class FigFillPicker extends HTMLElement {
 
   #stopWebcam({ emit = true } = {}) {
     this.#webcamRequestId += 1;
+    this.#webcamAcquireOwner.cancel();
+    this.#webcamSnapshotOwner.cancel();
     const hadStream = Boolean(this.#webcam.stream);
     if (this.#webcam.stream) {
       this.#webcam.stream.getTracks().forEach((track) => track.stop());
@@ -1088,28 +1196,10 @@ class FigFillPicker extends HTMLElement {
         this.#dialog.open = false;
       });
 
-    const onDialogClose = () => {
-      if (this.#isNativeSwatch(this.#swatch)) {
-        this.#swatch.removeAttribute("selected");
-      }
-      if (this.#shouldKeepWebcamLive()) this.#detachWebcamPreview();
-      else this.#stopWebcam();
-      const closingValue = JSON.stringify(this.value);
-      if (this.#lastChangeValue !== null && this.#lastChangeValue !== closingValue) {
-        this.#emitChange();
-      }
-      this.#valueAtOpen = null;
-      this.#lastChangeValue = null;
-      this.#syncTriggerA11y();
-      const returnTarget = this.#trigger;
-      this.#scheduleFrame(() => {
-        if (returnTarget?.isConnected) {
-          HTMLElement.prototype.focus.call(returnTarget);
-        }
-      });
-      this.dispatchEvent(new CustomEvent("close"));
-    };
-    this.#dialog.addEventListener("close", onDialogClose);
+    this.#dialog.addEventListener(
+      "fig-popup-lifecycle",
+      this.#boundDialogLifecycle,
+    );
 
     // Initialize built-in tabs (skip any overridden by custom slots)
     const builtinInits = {
@@ -1205,7 +1295,7 @@ class FigFillPicker extends HTMLElement {
   }
 
   #refreshDialogUI() {
-    if (!this.#dialog?.open) return;
+    if (!this.#dialogExpanded()) return;
     this.#switchTab(this.#fillType, { emit: false });
 
     this.#drawColorArea();
@@ -3114,7 +3204,11 @@ class FigFillPicker extends HTMLElement {
     this.#applyDefaultVideo({ emit: false });
   }
 
-  #revokeVideoPoster() {
+  #revokeVideoPoster({ cancelCapture = true } = {}) {
+    if (cancelCapture) {
+      this.#videoPosterOwner.cancel();
+      this.#videoPosterCapturing = null;
+    }
     if (this.#video.poster?.startsWith("blob:")) {
       URL.revokeObjectURL(this.#video.poster);
       this.#ownedBlobUrls.delete(this.#video.poster);
@@ -3165,15 +3259,42 @@ class FigFillPicker extends HTMLElement {
     this.#captureVideoPoster(src);
   }
 
-  async #videoFrameBitmap(video) {
+  #waitForVideoFrame(video, operation) {
+    return new Promise((resolve) => {
+      let settled = false;
+      let timer = null;
+      let frameId = null;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        resource.dispose();
+        resolve();
+      };
+      const resource = operation.own(() => {
+        if (timer !== null) clearTimeout(timer);
+        if (
+          frameId !== null &&
+          typeof video.cancelVideoFrameCallback === "function"
+        ) {
+          video.cancelVideoFrameCallback(frameId);
+        }
+        if (!settled) {
+          settled = true;
+          resolve();
+        }
+      });
+      timer = setTimeout(finish, 80);
+      frameId = video.requestVideoFrameCallback(finish);
+    });
+  }
+
+  async #videoFrameBitmap(video, operation) {
     if (typeof video.requestVideoFrameCallback === "function") {
-      await Promise.race([
-        new Promise((resolve) => video.requestVideoFrameCallback(() => resolve())),
-        new Promise((resolve) => setTimeout(resolve, 80)),
-      ]);
+      await this.#waitForVideoFrame(video, operation);
     } else {
       try {
         await video.play();
+        if (!operation.isCurrent()) return null;
         video.pause();
       } catch {
         /* use the current decoded frame */
@@ -3181,7 +3302,12 @@ class FigFillPicker extends HTMLElement {
     }
     if (typeof createImageBitmap === "function") {
       try {
-        return await createImageBitmap(video);
+        const bitmap = await createImageBitmap(video);
+        if (!operation.isCurrent()) {
+          bitmap?.close?.();
+          return null;
+        }
+        return bitmap;
       } catch {
         /* tainted or undecoded — fall back to drawImage(video) */
       }
@@ -3189,8 +3315,12 @@ class FigFillPicker extends HTMLElement {
     return null;
   }
 
-  async #blobFromVideoFrame(video) {
-    const bitmap = await this.#videoFrameBitmap(video);
+  async #blobFromVideoFrame(video, operation) {
+    const bitmap = await this.#videoFrameBitmap(video, operation);
+    if (!operation.isCurrent()) {
+      bitmap?.close?.();
+      return null;
+    }
     const width = bitmap?.width || video.videoWidth;
     const height = bitmap?.height || video.videoHeight;
     if (!width || !height) {
@@ -3211,30 +3341,69 @@ class FigFillPicker extends HTMLElement {
     } finally {
       bitmap?.close?.();
     }
-    return canvas.convertToBlob
+    const blob = await (canvas.convertToBlob
       ? canvas.convertToBlob({ type: "image/jpeg", quality: 0.85 })
-      : new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+      : new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85)));
+    return operation.isCurrent() ? blob : null;
   }
 
   async #captureVideoPoster(src, { emit = false } = {}) {
     if (!src || this.#videoPosterCapturing === src) return;
+    const operation = this.#videoPosterOwner.begin();
+    if (!operation.isCurrent()) return;
     this.#videoPosterCapturing = src;
     const video = document.createElement("video");
     video.muted = true;
     video.playsInline = true;
     video.preload = "auto";
     video.crossOrigin = "anonymous";
+    const videoResource = operation.own(() => {
+      video.pause?.();
+      video.removeAttribute("src");
+      video.load();
+    });
     try {
-      await new Promise((resolve, reject) => {
-        const fail = () => reject(new Error("video poster failed"));
+      const loaded = await new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = (callback, value) => {
+          if (settled) return;
+          settled = true;
+          listeners.dispose();
+          callback(value);
+        };
+        const fail = () =>
+          finish(reject, new Error("video poster failed"));
+        const ready = () => finish(resolve, true);
+        const listeners = operation.own(() => {
+          video.removeEventListener("error", fail);
+          video.removeEventListener("loadeddata", ready);
+          if (!settled) {
+            settled = true;
+            resolve(false);
+          }
+        });
         video.addEventListener("error", fail, { once: true });
-        video.addEventListener("loadeddata", resolve, { once: true });
+        video.addEventListener("loadeddata", ready, { once: true });
         video.src = src;
       });
-      if (!video.videoWidth || !video.videoHeight) return;
-      const blob = await this.#blobFromVideoFrame(video);
-      if (!blob || this.#video.url !== src) return;
-      this.#revokeVideoPoster();
+      if (
+        !loaded ||
+        !operation.isCurrent() ||
+        !video.videoWidth ||
+        !video.videoHeight
+      ) {
+        return;
+      }
+      const blob = await this.#blobFromVideoFrame(video, operation);
+      if (
+        !blob ||
+        !operation.isCurrent() ||
+        !this.isConnected ||
+        this.#video.url !== src
+      ) {
+        return;
+      }
+      this.#revokeVideoPoster({ cancelCapture: false });
       this.#video.poster = URL.createObjectURL(blob);
       this.#videoPosterSrc = src;
       this.#ownedBlobUrls.add(this.#video.poster);
@@ -3244,9 +3413,13 @@ class FigFillPicker extends HTMLElement {
     } catch {
       // Cross-origin or decode failures leave the swatch empty until a poster exists.
     } finally {
-      video.removeAttribute("src");
-      video.load();
-      if (this.#videoPosterCapturing === src) this.#videoPosterCapturing = null;
+      videoResource.dispose();
+      if (
+        operation.isCurrent() &&
+        this.#videoPosterCapturing === src
+      ) {
+        this.#videoPosterCapturing = null;
+      }
     }
   }
 
@@ -3408,9 +3581,15 @@ class FigFillPicker extends HTMLElement {
       updateFrameReadiness();
     };
 
-    const populateCameras = async (requestId, selectedId) => {
+    const populateCameras = async (requestId, selectedId, operation = null) => {
       const devices = await navigator.mediaDevices.enumerateDevices();
-      if (requestId != null && requestId !== this.#webcamRequestId) return;
+      if (
+        (requestId != null && requestId !== this.#webcamRequestId) ||
+        (operation && !operation.isCurrent()) ||
+        !container.isConnected
+      ) {
+        return;
+      }
       const cameras = devices.filter((d) => d.kind === "videoinput");
 
       if (cameras.length > 1) {
@@ -3462,12 +3641,13 @@ class FigFillPicker extends HTMLElement {
         if (!requested || requested === liveId) {
           attachPreview(existing);
           this.#emitWebcamStream();
-          populateCameras(null, requested || liveId);
+          void populateCameras(null, requested || liveId);
           return;
         }
       }
 
       this.#stopWebcam({ emit: Boolean(existing) });
+      const operation = this.#webcamAcquireOwner.begin();
       const requestId = this.#webcamRequestId;
       setCaptureReady(false);
       status.querySelector("span").textContent = "Starting camera";
@@ -3479,9 +3659,11 @@ class FigFillPicker extends HTMLElement {
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (
+          !operation.isCurrent() ||
           requestId !== this.#webcamRequestId ||
           !this.isConnected ||
-          this.#activeTab !== "webcam"
+          this.#activeTab !== "webcam" ||
+          !container.isConnected
         ) {
           stream.getTracks().forEach((track) => track.stop());
           return;
@@ -3493,9 +3675,15 @@ class FigFillPicker extends HTMLElement {
         this.#webcam.live = this.#webcamMode() === "live";
         attachPreview(stream);
         this.#emitWebcamStream();
-        await populateCameras(requestId, requested);
+        await populateCameras(requestId, requested, operation);
       } catch (err) {
-        if (requestId !== this.#webcamRequestId) return;
+        if (
+          !operation.isCurrent() ||
+          requestId !== this.#webcamRequestId ||
+          !container.isConnected
+        ) {
+          return;
+        }
         console.error("Webcam error:", err.name, err.message);
         let message = "Camera access denied";
         if (err.name === "NotAllowedError") {
@@ -3528,9 +3716,21 @@ class FigFillPicker extends HTMLElement {
     });
 
     captureBtn.addEventListener("click", async () => {
-      if (!this.#webcam.stream) return;
-      const snapshot = await this.#snapshotWebcamVideo(video);
-      if (!snapshot) return;
+      const stream = this.#webcam.stream;
+      if (!stream) return;
+      const dialog = this.#dialog;
+      const operation = this.#webcamSnapshotOwner.begin();
+      this.#webcamSnapshotting = false;
+      const snapshot = await this.#snapshotWebcamVideo(video, operation);
+      if (
+        !snapshot ||
+        !operation.isCurrent() ||
+        this.#webcam.stream !== stream ||
+        this.#dialog !== dialog ||
+        !dialog?.isConnected
+      ) {
+        return;
+      }
 
       this.#image.url = snapshot;
       this.#webcam.live = false;
@@ -3757,19 +3957,19 @@ class FigFillPicker extends HTMLElement {
         this.#parseValue();
         this.#updateSwatch();
         this.#ensureVideoPoster();
-        if (this.#dialog?.open && !this.#isDraggingColor) {
+        if (this.#dialogExpanded() && !this.#isDraggingColor) {
           this.#refreshDialogUI();
           this.#lastChangeValue = JSON.stringify(this.value);
         }
         break;
       case "disabled":
         this.#syncTriggerA11y();
-        if (this.#isDisabled() && this.#dialog?.open) this.close();
+        if (this.#isDisabled() && this.#dialogExpanded()) this.close();
         break;
       case "alpha":
       case "mode": {
         if (!this.#dialog) break;
-        const wasOpen = this.#dialog.open;
+        const wasOpen = this.#dialogExpanded();
         this.#discardDialog();
         if (wasOpen && this.isConnected) this.#openDialog();
         break;

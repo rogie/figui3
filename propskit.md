@@ -17,7 +17,7 @@ The final result must include:
 
 Use the FigUI3 property-panel pattern as the source of truth: `fig-group` sections containing `fig-field` rows with one primary control per row.
 
-PropsKit examples are included with the component examples in the `/figui3` playground.
+PropsKit examples are included with the component examples in the `/propskit` playground.
 
 ## Install
 
@@ -427,12 +427,14 @@ Fill value examples:
 ### Media And Preview
 
 - `fig-preview`: generic preview surface for images, canvas, SVG, shader output, and generated visuals. Attrs/modifiers: `fit`, `full`, `checkerboard`.
-- `fig-image`: image display and upload. Attrs/modifiers: `src`, `alt`, `upload`, `label`, `size="small|medium|large|auto"`, `aspect-ratio`, `fit`, `checkerboard`, `full`.
-- `fig-video`: video display, poster, upload, autoplay, muted, controls, and checkerboard previews. Attrs/modifiers: `src`, `poster`, `upload`, `label`, `size`, `aspect-ratio`, `fit`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `full`, ARIA label attrs.
+- `fig-image`: image display and upload. Attrs/modifiers: `src`, `alt`, `upload` (including `"icon"`), `label`, `size="small|medium|large|auto"`, `aspect-ratio`, `fit`, `checkerboard`, `full`.
+- `fig-video`: video display, poster, upload, autoplay, muted, controls, and checkerboard previews. Attrs/modifiers: `src`, `poster`, `upload` (including `"icon"`), `label`, `size`, `aspect-ratio`, `fit`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `full`, ARIA label attrs.
 - `fig-audio`: waveform audio player with synchronized shared playback controls. Attrs/modifiers: `src`, `controls`, `autoplay`, `loop`, `muted`.
 - `fig-media`: shared image/video host when the type can switch. Attrs/modifiers: `type="image|video"`, `src`, `poster`, `alt`, `upload`, `label`, `size`, `aspect-ratio`, `fit`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `full`, ARIA label attrs.
 - `fig-media-controls`: standalone playback controls for custom media surfaces. Attrs/modifiers: `playing`, `duration`, `time`.
 - `fig-input-file`: file upload input with filename display. Attrs/modifiers: `accepts`, `label`, `disabled`, `multiple`, `variant="button|overlay"`, `url`, `filename`, `full`.
+
+PropsKit image and video choosers use `upload="icon"` for their generated upload tile, cap their grid at 12rem high, and use native scrollbar overflow. Audio controls retain their standard file-input presentation.
 
 ### Motion And Spatial
 

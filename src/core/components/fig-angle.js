@@ -495,6 +495,7 @@ class FigAngle extends HTMLElement {
         max: this.#maximum(),
         step: this.#step(),
         precision: this.#precision,
+        steppers: "false",
         units: this.#unitSuffix(),
         disabled: this.#isDisabled(),
         "aria-label": this.#name(),

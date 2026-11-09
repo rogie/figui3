@@ -4,6 +4,7 @@ https://polyformproject.org/licenses/shield/1.0.0
 Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
+import { figDefineCustomizedBuiltIn } from "../../core/runtime/index.js";
 
 const EASING_ATTRIBUTES = [
   "value",
@@ -140,7 +141,7 @@ if (typeof customElements !== "undefined") {
     };
   }
 
-  customElements.define("fig-popup-easing", FigPopupEasing, {
+  figDefineCustomizedBuiltIn("fig-popup-easing", FigPopupEasing, {
     extends: "dialog",
   });
   });

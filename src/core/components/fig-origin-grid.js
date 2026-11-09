@@ -10,6 +10,7 @@ import {
   figDefineElement,
   figSyncCssVar,
 } from "../runtime/index.js";
+import { figCreatePointerSession } from "../../shared/pointer-session.js";
 
 /**
  * A transform-origin grid control with draggable handle.
@@ -30,8 +31,7 @@ class FigOriginGrid extends HTMLElement {
   #isDragging = false;
   #isSyncingValueAttr = false;
   #activePointerId = null;
-  #boundHandlePointerMove = null;
-  #boundHandlePointerEnd = null;
+  #pointerSession = null;
 
   static SNAP_POINTS = [0, 16.6667, 33.3333, 50, 66.6667, 83.3333, 100];
 
@@ -45,6 +45,8 @@ class FigOriginGrid extends HTMLElement {
     this.#handle = this.querySelector("fig-handle");
     this.#xInput = this.querySelector('fig-input-number[name="x"]');
     this.#yInput = this.querySelector('fig-input-number[name="y"]');
+    this.#xInput?.setAttribute("steppers", "false");
+    this.#yInput?.setAttribute("steppers", "false");
     this.#syncHandlePosition();
     this.#syncOverflowState();
     this.#syncValueInputs();
@@ -66,7 +68,6 @@ class FigOriginGrid extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.#isDragging = false;
     this.#detachHandleDragListeners();
     this.#teardownEvents();
   }
@@ -86,6 +87,9 @@ class FigOriginGrid extends HTMLElement {
       return;
     }
     if (name === "drag") {
+      if (newValue !== null && newValue.toLowerCase() === "false") {
+        this.#detachHandleDragListeners();
+      }
       this.#syncDragState();
       return;
     }
@@ -218,6 +222,7 @@ class FigOriginGrid extends HTMLElement {
             name,
             value,
             step: "1",
+            steppers: "false",
             units: "%",
           },
           figCreateElement("span", { slot: "prepend" }, name.toUpperCase()),
@@ -432,24 +437,12 @@ class FigOriginGrid extends HTMLElement {
   }
 
   #detachHandleDragListeners() {
-    if (
-      !this.#grid ||
-      !this.#boundHandlePointerMove ||
-      !this.#boundHandlePointerEnd
-    )
-      return;
-    this.#grid.removeEventListener("pointermove", this.#boundHandlePointerMove);
-    this.#grid.removeEventListener("pointerup", this.#boundHandlePointerEnd);
-    this.#grid.removeEventListener(
-      "pointercancel",
-      this.#boundHandlePointerEnd,
-    );
-    this.#grid.removeEventListener(
-      "lostpointercapture",
-      this.#boundHandlePointerEnd,
-    );
-    this.#boundHandlePointerMove = null;
-    this.#boundHandlePointerEnd = null;
+    this.#pointerSession?.abort("disabled-or-disconnected");
+    this.#pointerSession = null;
+    this.#isDragging = false;
+    this.#activePointerId = null;
+    this.#grid?.classList.remove("is-dragging");
+    this.#clearHoveredCells();
   }
 
   #startGridDrag(e) {
@@ -460,51 +453,43 @@ class FigOriginGrid extends HTMLElement {
     const startClientX = e.clientX;
     const startClientY = e.clientY;
     const dragThresholdPx = 3;
-    let didDrag = false;
-    this.#grid.setPointerCapture(e.pointerId);
-
-    this.#boundHandlePointerMove = (moveEvent) => {
-      if (!this.#isDragging || moveEvent.pointerId !== this.#activePointerId)
-        return;
-      const dx = moveEvent.clientX - startClientX;
-      const dy = moveEvent.clientY - startClientY;
-      const distance = Math.hypot(dx, dy);
-      if (!didDrag && distance < dragThresholdPx) return;
-      if (!didDrag) {
-        didDrag = true;
+    const session = figCreatePointerSession({
+      threshold: dragThresholdPx,
+      listenerTarget: this.#grid,
+      capture: true,
+      onActivate: () => {
         this.#grid.classList.add("is-dragging");
         this.#clearHoveredCells();
-      }
-      const nextPoint = this.#maybeSnapPoint(
-        this.#clientToPercent(moveEvent.clientX, moveEvent.clientY),
-        moveEvent.shiftKey,
-      );
-      this.#setFromPercent(nextPoint.x, nextPoint.y, "input");
-    };
-
-    this.#boundHandlePointerEnd = (endEvent) => {
-      if (!this.#isDragging || endEvent.pointerId !== this.#activePointerId)
-        return;
-      this.#isDragging = false;
-      this.#activePointerId = null;
-      this.#grid.classList.remove("is-dragging");
-      this.#clearHoveredCells();
-      this.#detachHandleDragListeners();
-      if (!didDrag) {
-        // Click behavior: snap to the center of the clicked cell.
-        const center = this.#cellCenterFromClient(startClientX, startClientY);
-        this.#setFromPercent(center.x, center.y, "input");
-      }
-      this.#emit("change");
-    };
-
-    this.#grid.addEventListener("pointermove", this.#boundHandlePointerMove);
-    this.#grid.addEventListener("pointerup", this.#boundHandlePointerEnd);
-    this.#grid.addEventListener("pointercancel", this.#boundHandlePointerEnd);
-    this.#grid.addEventListener(
-      "lostpointercapture",
-      this.#boundHandlePointerEnd,
-    );
+      },
+      onMove: ({ event: moveEvent }) => {
+        const nextPoint = this.#maybeSnapPoint(
+          this.#clientToPercent(moveEvent.clientX, moveEvent.clientY),
+          moveEvent.shiftKey,
+        );
+        this.#setFromPercent(nextPoint.x, nextPoint.y, "input");
+      },
+      onCommit: ({ active }) => {
+        if (!active) {
+          // Click behavior: snap to the center of the clicked cell.
+          const center = this.#cellCenterFromClient(startClientX, startClientY);
+          this.#setFromPercent(center.x, center.y, "input");
+        }
+        this.#emit("change");
+      },
+      onFinish: () => {
+        this.#isDragging = false;
+        this.#activePointerId = null;
+        this.#grid?.classList.remove("is-dragging");
+        this.#clearHoveredCells();
+        if (this.#pointerSession === session) this.#pointerSession = null;
+      },
+    });
+    this.#pointerSession?.abort("replaced");
+    this.#pointerSession = session;
+    session.start(e, {
+      target: this.#grid,
+      captureTarget: this.#grid,
+    });
   }
 
   #eventAbort = null;

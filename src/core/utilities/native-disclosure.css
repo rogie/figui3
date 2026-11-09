@@ -1,0 +1,78 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border: 0;
+  align-items: start;
+  padding: var(--spacer-2) 0;
+
+  & > legend {
+    padding: 0;
+  }
+
+  & > label {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 4rem 1fr;
+    column-gap: var(--spacer-2);
+    align-items: center;
+  }
+}
+
+details {
+  padding: 0 var(--spacer-3);
+  display: block;
+  width: 100%;
+
+  & > summary {
+    font-weight: var(--body-medium-strong-fontWeight);
+    cursor: default;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem 0 0;
+    height: var(--spacer-5);
+    user-select: none;
+    color: var(--figma-color-text-secondary);
+    margin-left: calc(var(--spacer-3) * -1);
+
+    &::before {
+      content: "";
+      mask-image: var(--icon-16-chevron);
+      display: inline-flex;
+      background: var(--figma-color-text-secondary);
+      align-items: start;
+      justify-content: center;
+      width: 1rem;
+      height: 1rem;
+      transform: rotate(-90deg);
+      transition: transform var(--transition-duration)
+        var(--transition-timing-function);
+    }
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::marker {
+      content: "";
+    }
+  }
+
+  & > summary:hover,
+  &[open] > summary {
+    color: inherit;
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  &[open] > summary::before {
+    transform: rotate(0deg);
+  }
+}

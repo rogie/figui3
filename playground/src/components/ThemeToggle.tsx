@@ -33,9 +33,14 @@ export default function ThemeToggle({
     const popup = popupRef.current;
     if (!popup) return;
     (popup as any).anchor = settingsButtonRef.current;
-    const handleClose = () => setPreferencesOpen(false);
-    popup.addEventListener("close", handleClose);
-    return () => popup.removeEventListener("close", handleClose);
+    const handleLifecycle = (event: Event) => {
+      if (event.target !== popup) return;
+      const state = (event as CustomEvent<{ state?: string }>).detail?.state;
+      setPreferencesOpen(state === "opening" || state === "open");
+    };
+    popup.addEventListener("fig-popup-lifecycle", handleLifecycle);
+    return () =>
+      popup.removeEventListener("fig-popup-lifecycle", handleLifecycle);
   }, []);
 
   useEffect(() => {
@@ -74,6 +79,9 @@ export default function ThemeToggle({
           variant="ghost"
           icon
           aria-label="Preferences"
+          aria-haspopup="dialog"
+          aria-expanded={preferencesOpen}
+          aria-controls="preferences-popup"
           onClick={() => setPreferencesOpen((open) => !open)}
         >
           <AdjustIcon />
@@ -82,6 +90,7 @@ export default function ThemeToggle({
       <dialog
         ref={popupRef}
         {...popupAttrs}
+        id="preferences-popup"
         open={preferencesOpen ? true : undefined}
         className="preferences-popup"
       >

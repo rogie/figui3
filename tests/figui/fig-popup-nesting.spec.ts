@@ -174,4 +174,83 @@ test.describe("fig-popup nested light dismissal", () => {
     await page.keyboard.press("Escape");
     await expect(none).toHaveAttribute("open", "true");
   });
+
+  test("closes a nested stack one level at a time and restores owned focus", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <button id="root-anchor">Root anchor</button>
+        <dialog id="root-popup" is="fig-popup" anchor="#root-anchor" closedby="any">
+          <button id="child-anchor">Child anchor</button>
+        </dialog>
+      `;
+
+      const overlayRoot =
+        document.querySelector("[data-figui-overlay-root]") ??
+        document.body.appendChild(document.createElement("div"));
+      overlayRoot.setAttribute("data-figui-overlay-root", "");
+      const createPopup = (id: string, anchor: Element, content: string) => {
+        const popup = document.createElement("dialog", {
+          is: "fig-popup",
+        }) as HTMLDialogElement & { anchor: Element; open: boolean };
+        popup.id = id;
+        popup.setAttribute("is", "fig-popup");
+        popup.setAttribute("closedby", "any");
+        popup.anchor = anchor;
+        popup.innerHTML = content;
+        overlayRoot.append(popup);
+        return popup;
+      };
+
+      const rootAnchor = root.querySelector("#root-anchor") as HTMLElement;
+      const rootPopup = root.querySelector("#root-popup") as HTMLElement & {
+        open: boolean;
+      };
+      rootAnchor.focus();
+      rootPopup.open = true;
+
+      const childAnchor = root.querySelector("#child-anchor") as HTMLElement;
+      childAnchor.focus();
+      const child = createPopup(
+        "child-popup",
+        childAnchor,
+        '<button id="grandchild-anchor">Grandchild anchor</button>',
+      );
+      child.open = true;
+
+      const grandchildAnchor = child.querySelector(
+        "#grandchild-anchor",
+      ) as HTMLElement;
+      grandchildAnchor.focus();
+      const grandchild = createPopup(
+        "grandchild-popup",
+        grandchildAnchor,
+        '<button id="grandchild-action">Action</button>',
+      );
+      grandchild.open = true;
+      (grandchild.querySelector("#grandchild-action") as HTMLElement).focus();
+    });
+
+    const root = page.locator("#root-popup");
+    const child = page.locator("#child-popup");
+    const grandchild = page.locator("#grandchild-popup");
+
+    await page.keyboard.press("Escape");
+    await expect(grandchild).not.toHaveAttribute("open");
+    await expect(child).toHaveAttribute("open", "true");
+    await expect(root).toHaveAttribute("open", "true");
+    await expect(page.locator("#grandchild-anchor")).toBeFocused();
+
+    await child.evaluate((popup: HTMLDialogElement) => popup.close());
+    await expect(child).not.toHaveAttribute("open");
+    await expect(root).toHaveAttribute("open", "true");
+    await expect(page.locator("#child-anchor")).toBeFocused();
+
+    await page.keyboard.press("Escape");
+    await expect(root).not.toHaveAttribute("open");
+    await expect(page.locator("#root-anchor")).toBeFocused();
+  });
 });

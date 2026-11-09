@@ -4,7 +4,7 @@ https://polyformproject.org/licenses/shield/1.0.0
 Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
-import "./fig-property.js";
+import "../../../fig.js";
 import {
   figHexToOklch,
   figMapOklchToGamut,
@@ -12,6 +12,8 @@ import {
   figOklchToHex,
   figOklchToOklab,
 } from "../../../fig-color.js";
+import { figEditorDefineElement } from "../runtime/helpers.js";
+import { figCreatePointerSession } from "../../shared/pointer-session.js";
 
 const HTMLElement = globalThis.HTMLElement ?? class {};
 
@@ -315,6 +317,7 @@ class FigPaletteEditor extends HTMLElement {
   #renderedColors = [];
   #selectedRow = null;
   #pointerInteractionActive = false;
+  #pointerSession = null;
   #deferredExternalColors = null;
 
   static get observedAttributes() {
@@ -378,6 +381,9 @@ class FigPaletteEditor extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue || this.#syncingValueAttribute) return;
+    if (name === "disabled" && newValue !== null && newValue !== "false") {
+      this.#pointerSession?.abort("disabled");
+    }
     if (name === "value") {
       const incoming = normalizePaletteEditorValue(newValue);
       if (paletteEntriesEqual(this.#colors, incoming)) {
@@ -397,7 +403,7 @@ class FigPaletteEditor extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.#endPointerInteraction({ reconcile: false });
+    this.#pointerSession?.abort("disconnect");
     if (this.#deferredExternalColors) {
       this.#colors = this.#deferredExternalColors;
       this.#deferredExternalColors = null;
@@ -793,24 +799,32 @@ class FigPaletteEditor extends HTMLElement {
   #handlePointerDown = (event) => {
     if (event.button !== 0 || this.#pointerInteractionActive) return;
     this.#pointerInteractionActive = true;
-    window.addEventListener("pointerup", this.#handlePointerEnd, true);
-    window.addEventListener("pointercancel", this.#handlePointerEnd, true);
-    window.addEventListener("blur", this.#handlePointerEnd, true);
+    const session = figCreatePointerSession({
+      listenerTarget: window,
+      onFinish: ({ reason }) => {
+        if (this.#pointerSession === session) this.#pointerSession = null;
+        const reconcile = reason !== "disconnect";
+        if (reconcile) {
+          queueMicrotask(() =>
+            this.#endPointerInteraction({ reconcile: true }),
+          );
+        } else {
+          this.#endPointerInteraction({ reconcile: false });
+        }
+      },
+    });
+    this.#pointerSession = session;
+    session.start(event, {
+      target: window,
+      listenerOptions: { capture: true },
+    });
   };
 
-  #handlePointerEnd = () => {
-    window.removeEventListener("pointerup", this.#handlePointerEnd, true);
-    window.removeEventListener("pointercancel", this.#handlePointerEnd, true);
-    window.removeEventListener("blur", this.#handlePointerEnd, true);
-    queueMicrotask(() =>
-      this.#endPointerInteraction({ reconcile: true }),
-    );
+  #handlePointerEnd = (event) => {
+    this.#pointerSession?.cancel(event.type, event);
   };
 
   #endPointerInteraction({ reconcile }) {
-    window.removeEventListener("pointerup", this.#handlePointerEnd, true);
-    window.removeEventListener("pointercancel", this.#handlePointerEnd, true);
-    window.removeEventListener("blur", this.#handlePointerEnd, true);
     const wasActive = this.#pointerInteractionActive;
     this.#pointerInteractionActive = false;
     if (!reconcile || !wasActive || !this.#deferredExternalColors) return;
@@ -821,9 +835,4 @@ class FigPaletteEditor extends HTMLElement {
   }
 }
 
-if (
-  typeof customElements !== "undefined" &&
-  !customElements.get("fig-palette-editor")
-) {
-  customElements.define("fig-palette-editor", FigPaletteEditor);
-}
+figEditorDefineElement("fig-palette-editor", FigPaletteEditor);

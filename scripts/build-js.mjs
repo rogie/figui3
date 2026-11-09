@@ -6,44 +6,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, join } from "node:path";
-
-const jobs = [
-  { input: "fig-color.js" },
-  { input: "src/core/entrypoints/fig-layer.js" },
-  { input: "fig.js", external: ["fig-color.js"] },
-  { input: "src/editor/entrypoints/fig-input-rotate.js", external: ["fig.js"] },
-  { input: "src/lab/entrypoints/fig-input-slider.js", external: ["fig.js"] },
-  { input: "src/editor/entrypoints/fig-property.js", external: ["fig.js"] },
-  {
-    input: "src/editor/entrypoints/fig-gradient-editor.js",
-    external: ["fig.js", "fig-color.js"],
-  },
-  {
-    input: "src/editor/entrypoints/fig-palette-editor.js",
-    external: ["fig.js", "fig-color.js"],
-  },
-  { input: "src/editor/entrypoints/fig-popup-easing.js", external: ["fig.js"] },
-  {
-    input: "src/editor/entrypoints/fig-popup-gradient.js",
-    external: ["fig.js", "fig-color.js"],
-  },
-  {
-    input: "src/editor/entrypoints/fig-popup-palette.js",
-    external: ["fig.js", "fig-color.js"],
-  },
-  {
-    input: "fig-editor.js",
-    external: ["fig.js", "fig-color.js"],
-  },
-  {
-    input: "fig-lab.js",
-    external: ["fig.js"],
-  },
-  {
-    input: "register.js",
-    external: ["fig.js", "fig-editor.js", "fig-lab.js"],
-  },
-];
+import { jsArtifacts, obsoleteDistFiles } from "./artifacts.mjs";
 
 function externalPlugin(files = []) {
   const externalFiles = new Set(files);
@@ -71,10 +34,12 @@ function normalizeExternalPaths(path, files = []) {
   writeFileSync(path, output);
 }
 
-rmSync("dist", { recursive: true, force: true });
 mkdirSync("dist", { recursive: true });
+for (const file of [...jsArtifacts.map(({ output }) => output), ...obsoleteDistFiles]) {
+  rmSync(join("dist", file), { force: true });
+}
 
-for (const job of jobs) {
+for (const job of jsArtifacts) {
   const result = await Bun.build({
     entrypoints: [job.input],
     outdir: "dist",
@@ -89,6 +54,11 @@ for (const job of jobs) {
   }
 
   for (const output of result.outputs) {
+    if (basename(output.path) !== job.output) {
+      throw new Error(
+        `${job.input} emitted ${basename(output.path)}; expected ${job.output}`,
+      );
+    }
     normalizeExternalPaths(output.path, job.external);
     console.log(`${output.path} ${output.size} bytes`);
   }

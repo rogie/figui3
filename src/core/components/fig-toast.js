@@ -9,6 +9,24 @@ import {
   figBooleanAttribute,
   figDefineCustomizedBuiltIn,
 } from "../runtime/index.js";
+import { figCreateStateMachine } from "../../shared/state-machine.js";
+
+function figToastTransition(state, event) {
+  switch (event.type) {
+    case "REQUEST_OPEN":
+      return state === "open" || state === "opening" ? state : "opening";
+    case "REQUEST_CLOSE":
+      return state === "closed" || state === "closing" ? state : "closing";
+    case "NATIVE_OPENED":
+      return "open";
+    case "NATIVE_CLOSED":
+    case "OPEN_FAILED":
+    case "DISCONNECT":
+      return "closed";
+    default:
+      return state;
+  }
+}
 
 /* Toast */
 /* Toast */
@@ -33,7 +51,6 @@ class FigToast extends HTMLDialogElement {
     this._figInitialized = true;
     this._defaultOffset = 16;
     this._autoCloseTimer = null;
-    this._toastVisible = false;
     this._syncingOpen = false;
     this._managedRole = null;
     this._managedLive = null;
@@ -41,6 +58,14 @@ class FigToast extends HTMLDialogElement {
     this._managedDismiss = null;
     this._managedDismissSeparator = null;
     this._boundHandleClose = this.handleClose.bind(this);
+    this._boundNativeClose = () => {
+      this._toastLifecycle.dispatch({ type: "NATIVE_CLOSED" });
+    };
+    this._toastLifecycle = figCreateStateMachine({
+      initialState: "closed",
+      transition: figToastTransition,
+      effect: (transition) => this.applyLifecycleTransition(transition),
+    });
   }
 
   connectedCallback() {
@@ -50,6 +75,8 @@ class FigToast extends HTMLDialogElement {
     this.syncIcon();
     this.syncDismiss();
     this.addCloseListeners();
+    this.removeEventListener("close", this._boundNativeClose);
+    this.addEventListener("close", this._boundNativeClose);
     this.applyPosition();
     if (this.hasAttribute("open") && this.getAttribute("open") !== "false") {
       this.showToast();
@@ -59,13 +86,14 @@ class FigToast extends HTMLDialogElement {
         this.removeAttribute("open");
         this._syncingOpen = false;
       }
-      this._toastVisible = false;
+      this._toastLifecycle.dispatch({ type: "REQUEST_CLOSE" });
     }
   }
 
   disconnectedCallback() {
     this._figInit();
-    this.clearAutoClose();
+    this._toastLifecycle.dispatch({ type: "DISCONNECT" });
+    this.removeEventListener("close", this._boundNativeClose);
   }
 
   addCloseListeners() {
@@ -215,7 +243,11 @@ class FigToast extends HTMLDialogElement {
     this.clearAutoClose();
     const duration = parseInt(this.getAttribute("duration") ?? "5000");
     if (duration > 0) {
-      this._autoCloseTimer = setTimeout(() => this.hideToast(), duration);
+      const token = this._toastLifecycle.capture();
+      this._autoCloseTimer = setTimeout(() => {
+        if (!this._toastLifecycle.isCurrent(token, "open")) return;
+        this.hideToast();
+      }, duration);
     }
   }
 
@@ -234,7 +266,14 @@ class FigToast extends HTMLDialogElement {
   }
 
   showToast() {
-    const wasVisible = this._toastVisible;
+    if (!this.hasAttribute("open")) {
+      this.setAttribute("open", "");
+      return;
+    }
+    this._toastLifecycle.dispatch({ type: "REQUEST_OPEN" });
+  }
+
+  beginOpening() {
     this.syncLiveRegion();
     this.syncIcon();
     this.syncDismiss();
@@ -242,31 +281,72 @@ class FigToast extends HTMLDialogElement {
     this._syncingOpen = true;
     try {
       if (!this.open) this.show();
+      this._toastLifecycle.dispatch({ type: "NATIVE_OPENED" });
+    } catch {
+      this._toastLifecycle.dispatch({ type: "OPEN_FAILED" });
     } finally {
       this._syncingOpen = false;
     }
-    this._toastVisible = true;
+  }
+
+  finishOpening() {
     this.applyPosition();
     this.startAutoClose();
-    if (!wasVisible) {
-      this.dispatchEvent(new CustomEvent("toast-show", { bubbles: true }));
-    }
+    this.dispatchEvent(new CustomEvent("toast-show", { bubbles: true }));
   }
 
   hideToast() {
-    const wasVisible = this._toastVisible || this.open;
+    if (this.hasAttribute("open")) {
+      this.removeAttribute("open");
+      return;
+    }
+    this._toastLifecycle.dispatch({ type: "REQUEST_CLOSE" });
+  }
+
+  beginClosing() {
     this.clearAutoClose();
     this._syncingOpen = true;
     try {
       if (this.open) this.close();
-      else if (this.hasAttribute("open")) this.removeAttribute("open");
     } finally {
       this._syncingOpen = false;
     }
-    this._toastVisible = false;
-    if (wasVisible) {
+    if (!this.open) {
+      this._toastLifecycle.dispatch({ type: "NATIVE_CLOSED" });
+    }
+  }
+
+  finishClosed(event, from) {
+    this.clearAutoClose();
+    if (event.type !== "DISCONNECT" && this.hasAttribute("open")) {
+      this._syncingOpen = true;
+      this.removeAttribute("open");
+      this._syncingOpen = false;
+    }
+    if (event.type !== "DISCONNECT" && from !== "closed") {
       this.dispatchEvent(new CustomEvent("toast-hide", { bubbles: true }));
     }
+  }
+
+  applyLifecycleTransition({ event, from, to }) {
+    if (to === "opening") this.beginOpening();
+    else if (to === "open") this.finishOpening();
+    else if (to === "closing") this.beginClosing();
+    else if (to === "closed") this.finishClosed(event, from);
+
+    this.dispatchEvent(
+      new CustomEvent("fig-toast-lifecycle", {
+        detail: {
+          state: to,
+          previousState: from,
+          requestedOpen:
+            this.hasAttribute("open") &&
+            this.getAttribute("open") !== "false",
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   static get observedAttributes() {
@@ -283,7 +363,9 @@ class FigToast extends HTMLDialogElement {
       if (newValue !== null && newValue !== "false") this.showToast();
       else this.hideToast();
     }
-    if (name === "duration" && this._toastVisible) this.startAutoClose();
+    if (name === "duration" && this._toastLifecycle.state === "open") {
+      this.startAutoClose();
+    }
     if (name === "theme") {
       if (newValue === "auto") this._resolveAutoTheme();
       else this.style.removeProperty("color-scheme");

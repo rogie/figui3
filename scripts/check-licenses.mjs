@@ -4,49 +4,33 @@ import {
   readdirSync,
 } from "node:fs";
 import { basename, join } from "node:path";
+import {
+  LICENSE_MIT,
+  LICENSE_POLYFORM,
+  distArtifacts,
+  rootArtifacts,
+} from "./artifacts.mjs";
 
-const ROOT_MIT_FILES = new Set([
-  "fig.js",
-  "register.js",
-  "fig-color.js",
-  "fig.css",
-  "base.css",
-  "components.css",
-  "icons.css",
-]);
-
-const ROOT_POLYFORM_FILES = new Set([
-  "fig-editor.js",
-  "fig-editor.css",
-  "fig-lab.js",
-  "fig-lab.css",
-]);
-
-const DIST_MIT_FILES = new Set([
-  ...ROOT_MIT_FILES,
-  "fig-layer.js",
-  "fig-layer.css",
-]);
-
-const DIST_POLYFORM_FILES = new Set([
-  ...ROOT_POLYFORM_FILES,
-  "fig-input-rotate.js",
-  "fig-input-rotate.css",
-  "fig-input-slider.js",
-  "fig-input-slider.css",
-  "fig-property.js",
-  "fig-property.css",
-  "fig-gradient-editor.js",
-  "fig-gradient-editor.css",
-  "fig-palette-editor.js",
-  "fig-palette-editor.css",
-  "fig-popup-easing.js",
-  "fig-popup-easing.css",
-  "fig-popup-gradient.js",
-  "fig-popup-gradient.css",
-  "fig-popup-palette.js",
-  "fig-popup-palette.css",
-]);
+const ROOT_MIT_FILES = new Set(
+  rootArtifacts
+    .filter(({ license }) => license === LICENSE_MIT)
+    .map(({ file }) => file),
+);
+const ROOT_POLYFORM_FILES = new Set(
+  rootArtifacts
+    .filter(({ license }) => license === LICENSE_POLYFORM)
+    .map(({ file }) => file),
+);
+const DIST_MIT_FILES = new Set(
+  distArtifacts
+    .filter(({ license }) => license === LICENSE_MIT)
+    .map(({ file }) => file),
+);
+const DIST_POLYFORM_FILES = new Set(
+  distArtifacts
+    .filter(({ license }) => license === LICENSE_POLYFORM)
+    .map(({ file }) => file),
+);
 
 const MIT_NOTICE = [
   "MIT License",
@@ -127,7 +111,7 @@ function licensePathIsDeclared(path) {
 }
 
 const sourceLicenseGroups = [
-  { paths: ["src/shared/", "src/core/"], notice: MIT_NOTICE },
+  { paths: ["src/shared/", "src/core/", "src/propskit/"], notice: MIT_NOTICE },
   { paths: ["src/editor/", "src/lab/"], notice: POLYFORM_NOTICE },
 ];
 const nestedSourceFiles = [];

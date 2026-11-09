@@ -6,7 +6,6 @@ Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
 @import url("../core/entrypoints/fig-layer.css");
 @import url("components/fig-input-rotate.css");
-@import url("components/fig-property.css");
 @import url("components/fig-gradient-editor.css");
 @import url("components/fig-palette-editor.css");
 @import url("components/fig-popup-easing.css");

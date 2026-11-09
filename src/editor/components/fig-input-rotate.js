@@ -4,12 +4,15 @@ https://polyformproject.org/licenses/shield/1.0.0
 Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
+import {
+  figDefineCustomElement,
+  figInvariantId,
+} from "../../shared/invariants.js";
 
 const HTMLElement = globalThis.HTMLElement ?? class {};
 
 function defineElement(name, constructor) {
-  if (typeof customElements === "undefined") return;
-  if (!customElements.get(name)) customElements.define(name, constructor);
+  figDefineCustomElement(name, constructor);
 }
 
 function getOverlayRoot() {
@@ -42,6 +45,7 @@ class FigInputRotate extends HTMLElement {
   #icon = null;
   #editor = null;
   #popup = null;
+  #popupDefinitionPromise = null;
   #popupAnchor = null;
   #popupAnchorResizeObserver = null;
   #syncingFromPopup = false;
@@ -50,16 +54,15 @@ class FigInputRotate extends HTMLElement {
   #boundOpen = () => {
     this.open = true;
   };
-  #boundPopupClosed = () => {
-    if (!this.#popup) return;
-    if (
-      this.#popup.hasAttribute("open") ||
-      this.#popup.matches?.(":open") ||
-      this.#popup.matches?.(":popover-open")
-    ) {
-      return;
+  #boundPopupLifecycle = (event) => {
+    if (event.target !== this.#popup) return;
+    const state = event.detail?.state;
+    const expanded = state === "opening" || state === "open";
+    this.#button?.setAttribute("aria-expanded", String(expanded));
+    if (!expanded && this.open) this.open = false;
+    if (state === "closed") {
+      this.#popupAnchorResizeObserver?.disconnect();
     }
-    if (this.open) this.open = false;
   };
   #boundPopupEvent = (event) => {
     event.stopPropagation();
@@ -294,14 +297,20 @@ class FigInputRotate extends HTMLElement {
 
   #ensurePopup() {
     if (this.#popup?.isConnected) return this.#popup;
-    if (!customElements.get("fig-popup")) return null;
+    if (!customElements.get("fig-popup")) {
+      this.#popupDefinitionPromise ??= customElements
+        .whenDefined("fig-popup")
+        .then(() => {
+          this.#popupDefinitionPromise = null;
+          this.#syncOpenState();
+        });
+      return null;
+    }
 
     const popup = document.createElement("dialog", { is: "fig-popup" });
     popup.setAttribute("is", "fig-popup");
     popup.className = "fig-input-rotate-popup";
-    popup.id = `fig-input-rotate-${Date.now().toString(36)}-${Math.random()
-      .toString(36)
-      .slice(2)}`;
+    popup.id = figInvariantId("fig-input-rotate");
     popup.setAttribute("aria-label", "Edit 3D rotation");
     popup.setAttribute("position", "bottom left");
     popup.setAttribute("offset", "0 8");
@@ -317,8 +326,10 @@ class FigInputRotate extends HTMLElement {
     editor.addEventListener("change", this.#boundPopupEvent);
     content.append(editor);
     popup.append(content);
-    popup.addEventListener("close", this.#boundPopupClosed);
-    popup.addEventListener("toggle", this.#boundPopupClosed);
+    popup.addEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPopupLifecycle,
+    );
 
     (getOverlayRoot() ?? document.body)?.append(popup);
     this.#popup = popup;
@@ -391,14 +402,18 @@ class FigInputRotate extends HTMLElement {
   }
 
   #syncTriggerState() {
-    this.#button?.setAttribute("aria-expanded", String(this.open));
+    const state = this.#popup?.lifecycleState;
+    const expanded = state === "opening" || state === "open";
+    this.#button?.setAttribute("aria-expanded", String(expanded));
     this.#button?.toggleAttribute("disabled", this.#isDisabled);
   }
 
   #destroyPopup() {
     if (!this.#popup) return;
-    this.#popup.removeEventListener("close", this.#boundPopupClosed);
-    this.#popup.removeEventListener("toggle", this.#boundPopupClosed);
+    this.#popup.removeEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPopupLifecycle,
+    );
     this.#editor?.removeEventListener("input", this.#boundPopupEvent);
     this.#editor?.removeEventListener("change", this.#boundPopupEvent);
     this.#popup.open = false;

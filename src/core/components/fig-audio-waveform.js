@@ -7,6 +7,7 @@ import {
   HTMLElement,
   figDefineElement,
 } from "../runtime/index.js";
+import { AsyncOperationOwner } from "../../internal/async-operation-owner.js";
 
 /**
  * Responsive waveform generated from an audio URL.
@@ -27,10 +28,8 @@ class FigAudioWaveform extends HTMLElement {
   #progressPath = null;
   #progressClipRect = null;
   #resizeObserver = null;
-  #abortController = null;
-  #audioContext = null;
   #levels = [];
-  #generation = 0;
+  #decodeOwner = new AsyncOperationOwner();
   #layoutFrame = 0;
 
   get variant() {
@@ -49,13 +48,16 @@ class FigAudioWaveform extends HTMLElement {
   }
 
   connectedCallback() {
+    if (this.#decodeOwner.disposed) {
+      this.#decodeOwner = new AsyncOperationOwner();
+    }
     if (!this.#surface) this.#render();
     this.#observeWaveform();
     this.#syncSource();
   }
 
   disconnectedCallback() {
-    this.#cancelDecode();
+    this.#decodeOwner.dispose();
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = null;
     if (this.#layoutFrame) cancelAnimationFrame(this.#layoutFrame);
@@ -132,47 +134,40 @@ class FigAudioWaveform extends HTMLElement {
   }
 
   async #decodeSource(loadArrayBuffer) {
-    this.#cancelDecode();
-    const generation = ++this.#generation;
+    const operation = this.#decodeOwner.begin();
     const controller = new AbortController();
-    this.#abortController = controller;
+    const abortResource = operation.own(() => controller.abort());
     this.setAttribute("data-waveform-state", "loading");
     this.setAttribute("aria-busy", "true");
     this.#levels = [];
     this.#queueWaveformLayout();
 
     let context = null;
+    let contextResource = null;
     try {
       const arrayBuffer = await loadArrayBuffer(controller.signal);
-      if (generation !== this.#generation || !this.isConnected) return;
+      if (!operation.isCurrent() || !this.isConnected) return;
 
       const AudioContextConstructor =
         window.AudioContext || window.webkitAudioContext;
       if (!AudioContextConstructor) throw new Error("Web Audio is unavailable");
       context = new AudioContextConstructor();
-      this.#audioContext = context;
+      contextResource = operation.own(() => context.close());
       const audioBuffer = await context.decodeAudioData(arrayBuffer);
-      if (generation !== this.#generation || !this.isConnected) return;
+      if (!operation.isCurrent() || !this.isConnected) return;
 
       this.#levels = this.#extractLevels(audioBuffer);
       this.setAttribute("data-waveform-state", "ready");
       this.#queueWaveformLayout();
     } catch (error) {
-      if (generation !== this.#generation || error?.name === "AbortError") return;
+      if (!operation.isCurrent() || error?.name === "AbortError") return;
       this.#levels = new Array(256).fill(0);
       this.setAttribute("data-waveform-state", "unavailable");
       this.#queueWaveformLayout();
     } finally {
-      if (context) {
-        try {
-          await context.close();
-        } catch {
-          // Closing is best-effort in browsers with suspended audio contexts.
-        }
-      }
-      if (this.#audioContext === context) this.#audioContext = null;
-      if (this.#abortController === controller) this.#abortController = null;
-      if (generation === this.#generation) this.removeAttribute("aria-busy");
+      contextResource?.dispose();
+      abortResource.dispose();
+      if (operation.isCurrent()) this.removeAttribute("aria-busy");
     }
   }
 
@@ -219,7 +214,7 @@ class FigAudioWaveform extends HTMLElement {
   }
 
   #clearWaveform() {
-    this.#cancelDecode();
+    this.#decodeOwner.cancel();
     this.#levels = [];
     this.removeAttribute("data-waveform-state");
     this.removeAttribute("aria-busy");
@@ -253,24 +248,11 @@ class FigAudioWaveform extends HTMLElement {
     this.#progressClipRect.setAttribute("height", String(height));
   }
 
-  #cancelDecode() {
-    this.#generation += 1;
-    this.#abortController?.abort();
-    this.#abortController = null;
-    if (this.#audioContext) {
-      try {
-        this.#audioContext.close();
-      } catch {
-        // Closing is best-effort during teardown and source replacement.
-      }
-      this.#audioContext = null;
-    }
-  }
-
   #queueWaveformLayout() {
     if (this.#layoutFrame) return;
     this.#layoutFrame = requestAnimationFrame(() => {
       this.#layoutFrame = 0;
+      if (!this.isConnected) return;
       this.#layoutWaveform();
     });
   }

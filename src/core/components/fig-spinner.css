@@ -3,6 +3,16 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
+@keyframes fig-spinner-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 fig-spinner {
   width: var(--spacer-4);
   height: var(--spacer-4);

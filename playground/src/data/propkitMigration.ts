@@ -3,6 +3,7 @@ import {
   type Example,
   type Section,
 } from "./sections";
+import { propskitDialogExamples } from "./propskitDialogExamples";
 
 export interface PropsKitMigrationEntry {
   sectionId: string;
@@ -204,10 +205,18 @@ export function mergePropsKitSections(baseSections: Section[]): Section[] {
     for (const example of sourceSection.examples) {
       const migration = getPropsKitMigration(sourceSection.id, example.id);
       if (!migration || migration.duplicate) continue;
+      const propskitDialogExample =
+        example.id === "default"
+          ? propskitDialogExamples[sourceSection.id]
+          : undefined;
       targetSection.examples.push({
         ...example,
+        ...propskitDialogExample,
         id: migration.exampleId,
         name: migratedName(example, sourceSection, targetSection),
+        ...(propskitDialogExample
+          ? { description: example.description ?? sourceSection.description }
+          : {}),
       });
     }
   }

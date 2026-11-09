@@ -12,8 +12,11 @@ import {
   figLabColorEventAliases,
   figLabDefineElement,
 } from "../runtime/dom.js";
+import { figClosest } from "../../shared/invariants.js";
 
 /* Canvas Control */
+const canvasSurfaceOwners = new WeakMap();
+
 /**
  * A composite spatial control built from one or more fig-handle elements.
  * @attr {number} precision - Decimal places for positions, radius, angle, and internal handle dragging (default 2).
@@ -38,6 +41,7 @@ class FigCanvasControl extends HTMLElement {
   #radius = 0;
   #radiusIsPercent = false;
   #angle = 0;
+  #markedSurface = null;
   #pointHandle = null;
   #secondHandle = null;
   #angleHandle = null;
@@ -155,7 +159,7 @@ class FigCanvasControl extends HTMLElement {
   get #container() {
     const surface = this.#dragSurface;
     if (surface === "parent") return this.parentElement;
-    return this.closest(surface);
+    return figClosest(this, surface, "fig-canvas-control drag-surface");
   }
 
   get #handleDragSurface() {
@@ -163,11 +167,32 @@ class FigCanvasControl extends HTMLElement {
     if (surface === "parent") {
       const container = this.parentElement;
       if (container) {
+        if (this.#markedSurface !== container) {
+          this.#releaseSurfaceMarker();
+          canvasSurfaceOwners.set(
+            container,
+            (canvasSurfaceOwners.get(container) ?? 0) + 1,
+          );
+          this.#markedSurface = container;
+        }
         container.setAttribute("data-fig-canvas-control-surface", "");
         return "[data-fig-canvas-control-surface]";
       }
     }
     return surface;
+  }
+
+  #releaseSurfaceMarker() {
+    const container = this.#markedSurface;
+    if (!container) return;
+    const owners = (canvasSurfaceOwners.get(container) ?? 1) - 1;
+    if (owners <= 0) {
+      canvasSurfaceOwners.delete(container);
+      container.removeAttribute("data-fig-canvas-control-surface");
+    } else {
+      canvasSurfaceOwners.set(container, owners);
+    }
+    this.#markedSurface = null;
   }
 
   #resolveRadius(containerWidth) {
@@ -195,6 +220,7 @@ class FigCanvasControl extends HTMLElement {
     this.#deactivateRotateCursor();
     document.body.classList.remove("fig-lab-move-active");
     document.body.classList.remove("fig-lab-rotate-active");
+    this.#releaseSurfaceMarker();
   }
 
   attributeChangedCallback(name, oldVal, newVal) {

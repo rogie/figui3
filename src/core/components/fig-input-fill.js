@@ -364,6 +364,7 @@ class FigInputFill extends HTMLElement {
         max: "100",
         value,
         units: "%",
+        steppers: "false",
         disabled,
       }),
     );

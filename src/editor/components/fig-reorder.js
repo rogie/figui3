@@ -25,6 +25,7 @@ import {
   figEditorScrollOverflowPage,
   figEditorScrollElementToCenter,
 } from "../runtime/helpers.js";
+import { figCreatePointerSession } from "../../shared/pointer-session.js";
 /* Reorder wrapper */
 /**
  * @attr {string} axis - Reorder direction: "vertical" (default) or "horizontal"
@@ -432,61 +433,47 @@ class FigReorder extends HTMLElement {
     const state = {
       item,
       target,
-      pointerId: event.pointerId,
       oldIndex: this.#getElementChildren().indexOf(item),
       targetIndex: this.#getElementChildren().indexOf(item),
-      startX: event.clientX,
-      startY: event.clientY,
       active: false,
-      onMove: null,
-      onUp: null,
-      onKeyDown: null,
+      session: null,
     };
 
-    state.onMove = (moveEvent) => {
-      if (moveEvent.pointerId !== state.pointerId) return;
-
-      const dx = moveEvent.clientX - state.startX;
-      const dy = moveEvent.clientY - state.startY;
-
-      if (!state.active) {
-        if (dx * dx + dy * dy < FigReorder.#DRAG_THRESHOLD * FigReorder.#DRAG_THRESHOLD) {
-          return;
-        }
+    state.session = figCreatePointerSession({
+      threshold: FigReorder.#DRAG_THRESHOLD,
+      listenerTarget: window,
+      capture: true,
+      onActivate: ({ event: moveEvent }) => {
         state.active = true;
-        event.preventDefault();
-        event.stopPropagation();
+        moveEvent.preventDefault();
+        moveEvent.stopPropagation();
         item.classList.add("dragging");
         FigReorder.#setDocumentDragging(true);
-        try {
-          target.setPointerCapture(state.pointerId);
-        } catch {}
-      }
+      },
+      onMove: ({ event: moveEvent }) => {
+        moveEvent.preventDefault();
+        const pointer =
+          this.#axis === "horizontal" ? moveEvent.clientX : moveEvent.clientY;
+        const index = this.#getInsertIndex(pointer);
+        state.targetIndex = index;
+        this.#updateIndicator(index, item);
+      },
+      onCommit: () => this.#finishDrag(state, false),
+      onCancel: () => this.#finishDrag(state, true),
+    });
 
-      moveEvent.preventDefault();
-      const pointer =
-        this.#axis === "horizontal" ? moveEvent.clientX : moveEvent.clientY;
-      const index = this.#getInsertIndex(pointer);
-      state.targetIndex = index;
-      this.#updateIndicator(index, item);
-    };
-
-    state.onKeyDown = (keyEvent) => {
+    const onKeyDown = (keyEvent) => {
       if (keyEvent.key !== "Escape" || !state.active) return;
       keyEvent.preventDefault();
-      this.#finishDrag(state, true);
-    };
-
-    state.onUp = (upEvent) => {
-      if (upEvent.pointerId !== state.pointerId) return;
-      this.#finishDrag(state, upEvent.type === "pointercancel");
+      state.session.cancel("escape");
     };
 
     this.#drag = state;
-    window.addEventListener("pointermove", state.onMove);
-    window.addEventListener("pointerup", state.onUp);
-    window.addEventListener("pointercancel", state.onUp);
-    window.addEventListener("keydown", state.onKeyDown);
+    state.session.start(event, {
+      target: window,
+      captureTarget: target,
+    });
+    state.session.listen(window, "keydown", onKeyDown);
   }
 
   #getInsertIndex(pointer) {
@@ -662,12 +649,7 @@ class FigReorder extends HTMLElement {
   }
 
   #finishDrag(state, revert) {
-    const { item, oldIndex, active, onMove, onUp, onKeyDown } = state;
-
-    window.removeEventListener("pointermove", onMove);
-    window.removeEventListener("pointerup", onUp);
-    window.removeEventListener("pointercancel", onUp);
-    window.removeEventListener("keydown", onKeyDown);
+    const { item, oldIndex, active } = state;
 
     if (active) {
       if (!revert) {
@@ -712,7 +694,7 @@ class FigReorder extends HTMLElement {
 
   #cancelDrag() {
     if (!this.#drag) return;
-    this.#finishDrag(this.#drag, true);
+    this.#drag.session.abort("cancelled");
   }
 }
 

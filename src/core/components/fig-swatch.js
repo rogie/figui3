@@ -70,6 +70,7 @@ class FigSwatch extends HTMLElement {
     if (color.startsWith("#")) return color.slice(0, 7);
     try {
       const { ctx } = figGetSharedCanvas(1, 1);
+      if (!ctx) return color;
       ctx.fillStyle = color;
       return ctx.fillStyle;
     } catch {

@@ -10,6 +10,7 @@ import {
   figNextFrame,
   figUniqueId,
 } from "../runtime/index.js";
+import { figQuerySelector } from "../../shared/invariants.js";
 
 /* Tabs */
 /**
@@ -27,14 +28,22 @@ class FigTab extends HTMLElement {
     this.#boundHandleClick = this.handleClick.bind(this);
   }
   connectedCallback() {
-    this.setAttribute("label", this.innerText);
+    if (!this.hasAttribute("label")) {
+      this.setAttribute("label", this.innerText);
+    }
     this.setAttribute("role", "tab");
     if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
     this.addEventListener("click", this.#boundHandleClick);
 
     figNextFrame(this, () => {
       if (typeof this.getAttribute("content") === "string") {
-        this.content = document.querySelector(this.getAttribute("content"));
+        const scope =
+          this.closest("fig-tabs")?.parentElement ?? this.getRootNode();
+        this.content = figQuerySelector(
+          scope,
+          this.getAttribute("content"),
+          "fig-tab content",
+        );
         if (this.content) {
           const tabId = this.getAttribute("id") || figUniqueId();
           const panelId = this.content.getAttribute("id") || figUniqueId();

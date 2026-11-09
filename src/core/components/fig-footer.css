@@ -3,4 +3,65 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+fig-footer {
+  display: flex;
+  flex-shrink: 0;
+  width: 100%;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: var(--spacer-2);
+  padding: var(--spacer-2-5);
+  box-shadow: 0 -1px 0 0 var(--figma-color-border);
+
+  & h3 {
+    font-weight: var(--body-medium-strong-fontWeight);
+    flex-grow: 1;
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacer-half);
+  }
+
+  & > label {
+    flex-grow: 1;
+    gap: var(--spacer-half);
+    min-height: var(--spacer-4);
+    display: flex;
+    align-items: center;
+    text-wrap: pretty;
+  }
+
+  & > fig-button {
+    flex-shrink: 0;
+  }
+
+  &:not(:has(> fig-button)) > :is(label, h3) {
+    flex-grow: 1;
+    justify-content: center;
+    text-align: center;
+  }
+
+  &:has(> :is(fig-button, fig-tooltip) ~ :is(fig-button, fig-tooltip)) {
+    flex-wrap: wrap;
+
+    & > :is(label, h3) {
+      flex-grow: 1;
+      width: 100%;
+      justify-content: flex-start;
+      text-align: start;
+    }
+  }
+
+  &[borderless]:not([borderless="false"]) {
+    box-shadow: none;
+  }
+
+  &[sticky]:not([sticky="false"]) {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-top: auto;
+    background: var(--figma-color-bg);
+    border-radius: 0 0 var(--radius-large) var(--radius-large);
+  }
+}

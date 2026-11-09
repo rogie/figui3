@@ -8,12 +8,15 @@ import {
   HTMLElement,
   createFigOverflowButtons,
   figAdoptVerticalOverflowStyles,
+  figBuiltInPolyfillReady,
   figDefineElement,
+  figNeedsBuiltInPolyfill,
   figScrollOverflowPage,
   figSyncOverflowState,
   figUniqueId,
   figVerticalOverflowSheet,
 } from "../runtime/index.js";
+import { figWarnInvariant } from "../../shared/invariants.js";
 
 const FIG_MENU_CHILD_TAGS = new Set([
   "FIG-MENU-ITEM",
@@ -51,7 +54,7 @@ class FigMenu extends HTMLElement {
   #boundTriggerContextMenu;
   #boundHostClick;
   #boundMenuKeydown;
-  #boundPopupClose;
+  #boundPopupLifecycle;
   #boundSlotChange;
   #boundSyncOverflow = this.#syncOverflow.bind(this);
   #focusedIndex = -1;
@@ -59,6 +62,7 @@ class FigMenu extends HTMLElement {
   #pointerReleaseTimer = 0;
   #showAtFrame = 0;
   #openSyncFrame = 0;
+  #popupState = "closed";
 
   static get observedAttributes() {
     return ["position", "offset", "closedby", "disabled", "open", "trigger"];
@@ -70,7 +74,7 @@ class FigMenu extends HTMLElement {
     this.#boundTriggerContextMenu = this.#handleTriggerContextMenu.bind(this);
     this.#boundHostClick = this.#handleHostClick.bind(this);
     this.#boundMenuKeydown = this.#handleMenuKeydown.bind(this);
-    this.#boundPopupClose = this.#handlePopupClose.bind(this);
+    this.#boundPopupLifecycle = this.#handlePopupLifecycle.bind(this);
     this.#boundSlotChange = this.#syncOverflow.bind(this);
     this.#initialize();
   }
@@ -92,6 +96,7 @@ class FigMenu extends HTMLElement {
       if (this.#isDisabled()) return;
       this.setAttribute("open", "");
     } else {
+      this.#cancelPendingOpen();
       this.removeAttribute("open");
     }
   }
@@ -215,7 +220,10 @@ class FigMenu extends HTMLElement {
     this.#panel = panel;
     this.#itemSlot = itemSlot;
     this.#syncPopupAttrs();
-    popup.addEventListener("close", this.#boundPopupClose);
+    popup.addEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPopupLifecycle,
+    );
     itemSlot.addEventListener("slotchange", this.#boundSlotChange);
   }
 
@@ -232,12 +240,24 @@ class FigMenu extends HTMLElement {
   }
 
   #detectTrigger() {
-    this.#trigger =
-      this.querySelector("[fig-menu-trigger]") ||
-      this.querySelector(
+    const explicit = Array.from(
+      this.querySelectorAll(
+        `[fig-menu-trigger], :scope > [slot="${FIG_MENU_TRIGGER_SLOT}"]`,
+      ),
+    );
+    const inferred = Array.from(
+      this.querySelectorAll(
         `:scope > :not(fig-menu-item):not(fig-separator):not(fig-menu-separator):not([slot="${FIG_MENU_TRIGGER_SLOT}"])`,
-      ) ||
-      this.querySelector(`[slot="${FIG_MENU_TRIGGER_SLOT}"]`);
+      ),
+    );
+    const candidates = [...new Set([...explicit, ...inferred])];
+    if (candidates.length > 1) {
+      figWarnInvariant(
+        `fig-menu-triggers:${candidates.length}`,
+        `fig-menu found ${candidates.length} possible triggers; mark exactly one with fig-menu-trigger.`,
+      );
+    }
+    this.#trigger = explicit[0] || inferred[0] || null;
     this.#assignTriggerSlot();
   }
 
@@ -458,12 +478,7 @@ class FigMenu extends HTMLElement {
     if (this.#usesContextMenuTrigger()) return;
     if (this.#isDisabled()) return;
     e.stopPropagation();
-    const popupShowing = this.#popup?.matches?.(":open") ?? false;
-    if (this.open && !popupShowing) {
-      this.removeAttribute("open");
-    }
-    const effectiveOpen = this.open && popupShowing;
-    if (effectiveOpen) {
+    if (this.open) {
       this.open = false;
     } else {
       if (this.#popup && this.#trigger) {
@@ -548,7 +563,10 @@ class FigMenu extends HTMLElement {
       const path = typeof e.composedPath === "function" ? e.composedPath() : [];
       if (this.#popup && path.includes(this.#popup)) return;
     }
-    if (!this.open || !this.#popup?.matches?.(":open")) {
+    if (
+      !this.open ||
+      (this.#popupState !== "opening" && this.#popupState !== "open")
+    ) {
       if (
         this.#trigger?.contains(e.target) &&
         (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")
@@ -592,7 +610,6 @@ class FigMenu extends HTMLElement {
       case "Escape": {
         e.preventDefault();
         this.open = false;
-        this.#trigger?.focus();
         break;
       }
       case "Enter":
@@ -607,15 +624,15 @@ class FigMenu extends HTMLElement {
     }
   }
 
-  #handlePopupClose() {
-    if (this.hasAttribute("open")) {
-      this.removeAttribute("open");
+  #handlePopupLifecycle(event) {
+    this.#popupState = event.detail?.state ?? "closed";
+    if (this.#popupState === "closed") {
+      if (this.hasAttribute("open")) {
+        this.removeAttribute("open");
+      }
+      this.#trigger?.setAttribute("aria-expanded", "false");
+      this.#focusedIndex = -1;
     }
-    if (this.#trigger) {
-      this.#trigger.setAttribute("aria-expanded", "false");
-      this.#trigger.focus();
-    }
-    this.#focusedIndex = -1;
   }
 
   #selectItem(item) {
@@ -666,6 +683,7 @@ class FigMenu extends HTMLElement {
       return;
     }
     this.#popup.open = true;
+    this.#popupState = this.#popup.lifecycleState ?? "opening";
     document.addEventListener("keydown", this.#boundMenuKeydown, true);
     if (this.#trigger) {
       this.#trigger.setAttribute("aria-expanded", "true");
@@ -686,9 +704,15 @@ class FigMenu extends HTMLElement {
     if (!this.#popup) return;
     document.removeEventListener("keydown", this.#boundMenuKeydown, true);
     this.#popup.open = false;
+    this.#popupState = this.#popup.lifecycleState ?? "closing";
     this.#trigger?.setAttribute("aria-expanded", "false");
   }
 }
-figDefineElement("fig-menu", FigMenu);
+const defineFigMenu = () => figDefineElement("fig-menu", FigMenu);
+if (figNeedsBuiltInPolyfill) {
+  figBuiltInPolyfillReady.then(defineFigMenu);
+} else {
+  defineFigMenu();
+}
 
 export { FigMenu };

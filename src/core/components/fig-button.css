@@ -3,4 +3,361 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+:is(button, fig-button) {
+  --fig-button-content-alignment: center;
+  --fig-button-text-alignment: center;
+  color: var(--figma-color-text-onbrand);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacer-2);
+  user-select: none;
+  justify-content: var(--fig-button-content-alignment);
+  text-align: var(--fig-button-text-alignment);
+  height: var(--spacer-4);
+  padding: 0 var(--spacer-2);
+  appearance: none;
+  border: 0;
+  min-width: 0;
+  outline: 0;
+  line-height: 1rem;
+  border-radius: var(--radius-medium);
+  background-color: var(--figma-color-bg-brand);
+  font-weight: 500;
+
+  &:active {
+    background-color: var(--figma-color-bg-brand-pressed);
+  }
+
+  &:hover {
+    background-color: var(--figma-color-bg-brand-hover);
+
+    &:active {
+      background-color: var(--figma-color-bg-brand-pressed);
+      color: var(--figma-color-text-onbrand-secondary);
+    }
+  }
+
+  &[variant="destructive"] {
+    background-color: var(--figma-color-bg-danger);
+    color: var(--figma-color-text-ondanger);
+
+    &:hover {
+      background-color: var(--figma-color-bg-danger-hover);
+    }
+
+    &:active,
+    &:hover:active {
+      background-color: var(--figma-color-bg-danger-pressed);
+      color: var(--figma-color-text-ondanger-secondary);
+    }
+  }
+
+  &[variant="destructiveSecondary"] {
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-danger);
+    padding: 0 calc(var(--spacer-2) - 1px);
+    background: none;
+    color: var(--figma-color-text-danger);
+
+    &:hover {
+      background-color: var(--figma-color-bg-danger-tertiary);
+    }
+
+    &:active,
+    &:hover:active {
+      box-shadow: inset 0 0 0 1px var(--figma-color-border-danger-strong);
+      background-color: var(--figma-color-bg-danger-tertiary);
+      color: var(--figma-color-text-danger-secondary);
+    }
+  }
+
+  &[variant="destructiveGhost"] {
+    box-shadow: none;
+    background: none;
+    color: var(--figma-color-text-danger);
+
+    &:hover:not(:active) {
+      background-color: var(--figma-color-bg-danger-tertiary);
+    }
+
+    &:active {
+      background-color: var(--figma-color-bg-danger-tertiary);
+      color: var(--figma-color-text-danger-secondary);
+    }
+  }
+
+  &[variant="destructiveLink"] {
+    box-shadow: none;
+    background: none;
+    color: var(--figma-color-text-danger);
+
+    &:hover:not(:active) {
+      background-color: transparent;
+    }
+
+    &:active {
+      outline: 0;
+      background-color: var(--figma-color-bg-danger-tertiary);
+      color: var(--figma-color-text-danger-secondary);
+    }
+  }
+
+  &[variant="link"] {
+    box-shadow: none;
+    background: none;
+    color: var(--figma-color-text-brand);
+
+    &:hover:not(:active) {
+      background-color: transparent;
+    }
+
+    &:active {
+      outline: 0;
+      background-color: var(--figma-color-bg-selected);
+      color: var(--figma-color-text-brand);
+    }
+  }
+
+  &[variant="ghost"] {
+    box-shadow: none;
+    background: none;
+    color: var(--figma-color-text);
+
+    &:hover:not(:active) {
+      background-color: var(--figma-color-bg-transparent-hover);
+    }
+
+    &:active {
+      outline: 0;
+      background-color: var(--figma-color-bg-transparent-pressed);
+      color: var(--figma-color-text);
+    }
+  }
+
+  &[variant="ghost"][disabled]:not([disabled="false"]) {
+    background-color: transparent;
+  }
+
+  &[variant="secondary"],
+  &[variant="property"] {
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    padding: 0 calc(var(--spacer-2) - 1px);
+    background: none;
+    color: var(--figma-color-text);
+
+    &:active,
+    &:active:hover {
+      background-color: var(--figma-color-bg-transparent-pressed);
+      color: var(--figma-color-text);
+    }
+
+    &:hover {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
+
+  &[variant="input"] {
+    background-color: var(--figma-color-bg-secondary);
+    box-shadow: none;
+    color: var(--figma-color-text);
+
+    &:hover {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+      background-color: var(--figma-color-bg-transparent);
+    }
+
+    &:active,
+    &:active:hover {
+      background-color: var(--figma-color-bg-transparent-pressed);
+      color: var(--figma-color-text);
+    }
+
+    &:focus-visible {
+      background-color: var(--figma-color-bg-secondary);
+    }
+  }
+
+  &[variant="overlay"] {
+    color-scheme: light;
+    background-color: var(--figma-color-bg);
+    color: var(--figma-color-text);
+    box-shadow: 0 0 0 1px var(--figma-color-bordertranslucent);
+
+    &:active,
+    &:has(:active) {
+      background-color: var(--figma-color-bg-secondary);
+      color: var(--figma-color-text);
+    }
+  }
+
+  &[icon]:not([icon="false"]) {
+    width: var(--spacer-4);
+    padding: 0;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: var(--spacer-4);
+
+    &[size="compact"] {
+      width: var(--spacer-3);
+      flex-basis: var(--spacer-3);
+    }
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    background-color: var(--figma-color-bg-disabled);
+    pointer-events: none;
+    cursor: not-allowed;
+
+    &:not([variant="secondary"]):not([variant="property"]):not(
+        [variant="destructiveSecondary"]
+      ):not([variant="destructiveGhost"]):not(
+        [variant="destructiveLink"]
+      ):not([variant="ghost"]) {
+      color: var(--figma-color-text-ondisabled);
+      box-shadow: none;
+    }
+
+    &[variant="secondary"],
+    &[variant="property"],
+    &[variant="destructiveSecondary"],
+    &[variant="destructiveGhost"],
+    &[variant="destructiveLink"],
+    &[variant="ghost"] {
+      color: var(--figma-color-text-disabled);
+      background-color: transparent;
+    }
+  }
+
+  &[size="large"],
+  &[size="large"] > button {
+    height: var(--spacer-5);
+    padding: 0 var(--spacer-3);
+  }
+
+  &[size="large"][icon]:not([icon="false"]),
+  &[size="large"][icon]:not([icon="false"]) > button {
+    width: var(--spacer-5);
+    flex-basis: var(--spacer-5);
+    padding: 0;
+  }
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &[inline="false"],
+  &[inline="false"] > button {
+    --fig-button-content-alignment: flex-start;
+    --fig-button-text-alignment: start;
+    display: flex;
+    width: 100%;
+    height: auto;
+    align-items: center;
+    padding: var(--spacer-1) var(--spacer-2);
+  }
+
+  &[align="start"] {
+    --fig-button-content-alignment: flex-start;
+    --fig-button-text-alignment: start;
+  }
+
+  &[align="center"] {
+    --fig-button-content-alignment: center;
+    --fig-button-text-alignment: center;
+  }
+
+  &[align="end"] {
+    --fig-button-content-alignment: flex-end;
+    --fig-button-text-alignment: end;
+  }
+
+  &[type="select"],
+  &[type="upload"] {
+    position: relative;
+    overflow: hidden;
+
+    > select,
+    > input,
+    > fig-dropdown {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      appearance: none;
+    }
+  }
+
+  &[inline="false"] {
+    padding: 0;
+  }
+
+  &[selected]:not([selected="false"]) {
+    &,
+    &:hover {
+      color: var(--figma-color-icon-brand);
+      background-color: var(--figma-color-bg-selected);
+    }
+  }
+
+  &:focus-visible,
+  &[data-focus-visible],
+  &[type="select"]:focus-within,
+  &[type="upload"]:focus-within {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  svg {
+    *[fill]:not([fill="none"]) {
+      fill: currentColor;
+    }
+
+    *[stroke]:not([stroke="none"]) {
+      stroke: currentColor;
+    }
+  }
+
+  &[type="select"] {
+    &[icon]:not([icon="false"]) {
+      width: auto;
+      padding-right: var(--spacer-1);
+    }
+
+    fig-dropdown {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0;
+    }
+  }
+
+  &[type="select"]:not([icon]) fig-icon[slot="append"] {
+    margin-right: calc(var(--spacer-1) * -1);
+    margin-left: auto;
+  }
+
+  &:has(fig-icon[slot="prepend"]) {
+    padding-left: var(--spacer-1);
+
+    &[size="large"] {
+      padding-left: var(--spacer-2);
+    }
+  }
+}
+
+fig-button[variant="property"] {
+  --fig-button-content-alignment: flex-start;
+  --fig-button-text-alignment: start;
+  width: 100%;
+
+  & > fig-icon[slot="prepend"] {
+    color: var(--figma-color-icon-secondary);
+  }
+
+  &[selected]:not([selected="false"]) {
+    box-shadow: none;
+  }
+
+  &:has(> [slot="prepend"]) {
+    flex: 1 1 auto;
+    padding: 0 calc(var(--spacer-2) - 1px) 0 0;
+  }
+}

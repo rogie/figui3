@@ -312,6 +312,7 @@ class Fig3DRotate extends HTMLElement {
           precision: "1",
           value: axisValues[axis],
           default: this.#defaultAxisValue(axis.at(-1).toLowerCase()),
+          steppers: "false",
           units: "°",
         },
         figCreateElement("span", { slot: "prepend" }, axisLabels[axis]),
@@ -331,6 +332,7 @@ class Fig3DRotate extends HTMLElement {
     for (const axis of this.#fields) {
       const input = this.querySelector(`fig-input-number[name="${axis}"]`);
       if (!input) continue;
+      input.setAttribute("steppers", "false");
       this.#fieldInputs[axis] = input;
       if (!this.#fieldInputHandlers[axis]) {
         this.#fieldInputHandlers[axis] = (e) => {

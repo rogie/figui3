@@ -1,7 +1,10 @@
 import { access, readdir, readFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import { expect, test } from "@playwright/test";
-import { editorComponentContracts } from "../../playground/src/testing/componentManifest";
+import {
+  componentContracts,
+  editorComponentContracts,
+} from "../../playground/src/testing/componentManifest";
 
 const readWorkspaceFile = (path: string) =>
   readFile(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -33,8 +36,18 @@ const customizedBuiltIns = new Set([
   "fig-toast",
 ]);
 
+const sharedStyleOwners = new Map([
+  ["fig-chit", "src/core/components/fig-swatch.css"],
+  ["fig-image", "src/core/components/fig-media.css"],
+  ["fig-menu-separator", "src/core/components/fig-separator.css"],
+  ["fig-segment", "src/core/components/fig-segmented-control.css"],
+  ["fig-split-input", "src/core/components/fig-combo-input.css"],
+  ["fig-toast", "src/editor/styles/fig-toast.css"],
+  ["fig-video", "src/core/components/fig-media.css"],
+]);
+
 const registrationPattern =
-  /(?:figDefineElement|figDefineCustomizedBuiltIn|figEditorDefineElement|figLabDefineElement|defineElement|customElements\.define)\(\s*"([^"]+)"/g;
+  /(?:figDefineElement|figDefineCustomizedBuiltIn|figDefineCustomElement|figEditorDefineElement|figLabDefineElement|defineElement|customElements\.define)\(\s*"([^"]+)"/g;
 
 test("declarations cover every registered autonomous custom element", async () => {
   const autonomousSources = await sourceFiles();
@@ -62,7 +75,7 @@ test("declarations cover every registered autonomous custom element", async () =
   expect(declared.has("fig-input-slider-wheel")).toBe(true);
 });
 
-test("every registered tag owns a matching JavaScript and CSS pair", async () => {
+test("every registered tag has component or shared-owner styles", async () => {
   for (const file of await sourceFiles()) {
     const source = await readWorkspaceFile(file);
     for (const match of source.matchAll(registrationPattern)) {
@@ -72,7 +85,10 @@ test("every registered tag owns a matching JavaScript and CSS pair", async () =>
         true,
       );
       await access(
-        new URL(`../../${dirname(file)}/${tag}.css`, import.meta.url),
+        new URL(
+          `../../${sharedStyleOwners.get(tag) ?? `${dirname(file)}/${tag}.css`}`,
+          import.meta.url,
+        ),
       );
     }
   }
@@ -99,7 +115,10 @@ test("component directories contain only paired per-tag modules", async () => {
     const styles = files
       .filter((file) => file.endsWith(".css"))
       .map((file) => file.slice(0, -4));
-    expect(scripts, `${domain} JavaScript/CSS pairs`).toEqual(styles);
+    expect(
+      scripts.filter((component) => !sharedStyleOwners.has(component)),
+      `${domain} JavaScript/CSS pairs`,
+    ).toEqual(styles);
     for (const component of scripts) {
       const source = await readWorkspaceFile(
         `src/${domain}/components/${component}.js`,
@@ -127,6 +146,9 @@ test("npm manifest publishes DOM, React, and module declarations", async () => {
   expect(manifest.exports["./fig-input-slider.js"].types).toBe(
     "./types/fig-input-slider.d.ts",
   );
+  expect(manifest.exports["./propskit.js"].types).toBe(
+    "./types/propskit.d.ts",
+  );
   expect(manifest.exports["./icons.css"]).toBe("./dist/icons.css");
   expect(manifest.exports["./src/icons.css"]).toBe("./icons.css");
   expect(manifest.exports["./src/fig-layer.js"]).toBe(
@@ -139,14 +161,34 @@ test("npm manifest publishes DOM, React, and module declarations", async () => {
     "./src/lab/entrypoints/fig-input-slider.js",
   );
   expect(manifest.exports["./src/fig-property.js"]).toBe(
-    "./src/editor/entrypoints/fig-property.js",
+    "./src/core/entrypoints/fig-property.js",
+  );
+  expect(manifest.exports["./src/fig-property.css"]).toBe(
+    "./src/core/entrypoints/fig-property.css",
   );
   expect(manifest.files).toContain("icons.css");
   expect(manifest.files).toContain("icons/manifest.js");
   expect(manifest.files).toContain("icons/manifest.d.ts");
   expect(manifest.files).toContain("src/");
+  expect(manifest.files).toContain("propskit.js");
   expect(manifest.files).not.toContain("fig-property.js");
   expect(manifest.files).not.toContain("fig-input-slider.css");
+});
+
+test("core registrations all have shared component contracts", async () => {
+  const sources = await Promise.all(
+    (await sourceFiles(["src/core"])).map(readWorkspaceFile),
+  );
+  const registered = new Set<string>();
+  for (const source of sources) {
+    for (const match of source.matchAll(registrationPattern)) {
+      registered.add(match[1]);
+    }
+  }
+
+  expect(componentContracts.map((contract) => contract.tag).sort()).toEqual(
+    [...registered].sort(),
+  );
 });
 
 test("editor registrations all have shared component contracts", async () => {

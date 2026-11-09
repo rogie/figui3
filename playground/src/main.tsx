@@ -2,7 +2,6 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import SandboxApp from "./SandboxApp";
 import TestApp from "./TestApp";
-import { getPropsKitMigration } from "./data/propkitMigration";
 import { hashRequiresEditorControls } from "./lib/editorSections";
 import "./App.css";
 
@@ -22,8 +21,8 @@ function normalizePathname(pathname: string): string {
 function resolveModeFromPath(pathname: string): PlaygroundMode {
   const normalized = normalizePathname(pathname);
   if (
-    normalized === "/figui3/lab" ||
-    normalized.startsWith("/figui3/lab/")
+    normalized === "/propskit/lab" ||
+    normalized.startsWith("/propskit/lab/")
   ) {
     return "lab";
   }
@@ -38,7 +37,7 @@ function resolveModeFromPath(pathname: string): PlaygroundMode {
 
 function applyTitleForMode(mode: PlaygroundMode) {
   if (mode === "lab") {
-    document.title = "Lab playground: Experimental FigUI3 components";
+    document.title = "PropsKit Lab: Experimental FigUI3 components";
     return;
   }
   if (mode === "sandbox") {
@@ -49,18 +48,7 @@ function applyTitleForMode(mode: PlaygroundMode) {
     document.title = "FigUI3 component tests";
     return;
   }
-  document.title =
-    "FigUI3 playground: A framework-agnostic set of Figma web components";
-}
-
-function migratePropsKitHash(hash: string): string {
-  const route = hash.replace(/^#/, "");
-  const [sectionId, exampleId] = route.split("/");
-  if (!sectionId || !exampleId) return hash;
-  const migration = getPropsKitMigration(sectionId, exampleId);
-  return migration
-    ? `#${migration.sectionId}/${migration.exampleId}`
-    : hash;
+  document.title = "PropsKit: Figma components and property panels";
 }
 
 function ensureSupportedRoute() {
@@ -69,45 +57,41 @@ function ensureSupportedRoute() {
   const search = window.location.search;
   const hash = window.location.hash;
   if (normalized === "/" || normalized === "") {
-    window.history.replaceState(null, "", `/figui3${search}${hash}`);
+    window.history.replaceState(null, "", `/propskit${search}${hash}`);
     return;
   }
 
   if (
     normalized === "/propkit/lab" ||
     normalized.startsWith("/propkit/lab/") ||
-    normalized === "/propskit/lab" ||
-    normalized.startsWith("/propskit/lab/") ||
+    normalized === "/figui3/lab" ||
+    normalized.startsWith("/figui3/lab/") ||
     normalized === "/lab" ||
     normalized.startsWith("/lab/")
   ) {
-    window.history.replaceState(null, "", `/figui3/lab${search}${hash}`);
+    window.history.replaceState(null, "", `/propskit/lab${search}${hash}`);
     return;
   }
 
   if (
     normalized === "/propkit" ||
     normalized.startsWith("/propkit/") ||
-    normalized === "/propskit" ||
-    normalized.startsWith("/propskit/")
+    normalized === "/figui3" ||
+    normalized.startsWith("/figui3/")
   ) {
-    window.history.replaceState(
-      null,
-      "",
-      `/figui3${search}${migratePropsKitHash(hash)}`,
-    );
+    window.history.replaceState(null, "", `/propskit${search}${hash}`);
     return;
   }
 
   const supported =
-    normalized === "/figui3" ||
-    normalized.startsWith("/figui3/") ||
+    normalized === "/propskit" ||
+    normalized.startsWith("/propskit/") ||
     normalized === "/sandbox" ||
     normalized.startsWith("/sandbox/") ||
     normalized === "/tests" ||
     normalized.startsWith("/tests/");
   if (!supported) {
-    window.history.replaceState(null, "", `/figui3${search}${hash}`);
+    window.history.replaceState(null, "", `/propskit${search}${hash}`);
   }
 }
 

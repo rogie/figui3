@@ -1,45 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  publicAliases,
+  rootAssetNames,
+} from "../scripts/artifacts.mjs";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-const rootAssetNames = [
-  "fig.css",
-  "fig.js",
-  "fig-color.js",
-  "fig-editor.css",
-  "fig-editor.js",
-  "fig-lab.css",
-  "fig-lab.js",
-  "base.css",
-  "components.css",
-  "icons.css",
-];
-
-const publicAliases = {
-  "fig-layer.js": "src/core/entrypoints/fig-layer.js",
-  "fig-layer.css": "src/core/entrypoints/fig-layer.css",
-  "fig-input-rotate.js": "src/editor/entrypoints/fig-input-rotate.js",
-  "fig-input-rotate.css": "src/editor/entrypoints/fig-input-rotate.css",
-  "fig-property.js": "src/editor/entrypoints/fig-property.js",
-  "fig-property.css": "src/editor/entrypoints/fig-property.css",
-  "fig-gradient-editor.js": "src/editor/entrypoints/fig-gradient-editor.js",
-  "fig-gradient-editor.css": "src/editor/entrypoints/fig-gradient-editor.css",
-  "fig-palette-editor.js": "src/editor/entrypoints/fig-palette-editor.js",
-  "fig-palette-editor.css": "src/editor/entrypoints/fig-palette-editor.css",
-  "fig-popup-easing.js": "src/editor/entrypoints/fig-popup-easing.js",
-  "fig-popup-easing.css": "src/editor/entrypoints/fig-popup-easing.css",
-  "fig-popup-gradient.js": "src/editor/entrypoints/fig-popup-gradient.js",
-  "fig-popup-gradient.css": "src/editor/entrypoints/fig-popup-gradient.css",
-  "fig-popup-palette.js": "src/editor/entrypoints/fig-popup-palette.js",
-  "fig-popup-palette.css": "src/editor/entrypoints/fig-popup-palette.css",
-  "fig-input-slider.js": "src/lab/entrypoints/fig-input-slider.js",
-  "fig-input-slider.css": "src/lab/entrypoints/fig-input-slider.css",
-};
-
 function listSourceAssets(directory = "src") {
   const absoluteDirectory = path.join(repoRoot, directory);
   if (!fs.existsSync(absoluteDirectory)) return [];

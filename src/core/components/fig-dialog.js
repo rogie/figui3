@@ -12,6 +12,7 @@ import {
   figNextFrame,
   figUniqueId,
 } from "../runtime/index.js";
+import { figCreatePointerSession } from "../../shared/pointer-session.js";
 import { FigTooltip } from "./fig-tooltip.js";
 
 export function figEnsureAutoDialogHeader(host) {
@@ -69,6 +70,14 @@ class FigDialog extends HTMLDialogElement {
     this._offset = 16;
     this._positionInitialized = false;
     this._dragThreshold = 3;
+    this._dragSession = figCreatePointerSession({
+      threshold: this._dragThreshold,
+      listenerTarget: document,
+      capture: true,
+      onActivate: () => this._activateDrag(),
+      onMove: ({ event }) => this._updateDrag(event),
+      onFinish: ({ event }) => this._finishDrag(event),
+    });
     this._boundPointerDown = this._handlePointerDown.bind(this);
     this._boundPointerMove = this._handlePointerMove.bind(this);
     this._boundPointerUp = this._handlePointerUp.bind(this);
@@ -451,9 +460,7 @@ class FigDialog extends HTMLDialogElement {
 
   _removeDragListeners() {
     this.removeEventListener("pointerdown", this._boundPointerDown);
-    document.removeEventListener("pointermove", this._boundPointerMove);
-    document.removeEventListener("pointerup", this._boundPointerUp);
-    document.removeEventListener("pointercancel", this._boundPointerUp);
+    this._dragSession?.abort("disabled-or-disconnected");
   }
 
   _isInteractiveElement(element) {
@@ -541,56 +548,47 @@ class FigDialog extends HTMLDialogElement {
     // Store offset from pointer to dialog top-left corner
     this._dragOffset.x = e.clientX - rect.left;
     this._dragOffset.y = e.clientY - rect.top;
-
-    document.addEventListener("pointermove", this._boundPointerMove);
-    document.addEventListener("pointerup", this._boundPointerUp);
-    document.addEventListener("pointercancel", this._boundPointerUp);
+    this._dragSession.start(e, {
+      target: document,
+      captureTarget: this,
+    });
   }
 
-  _handlePointerMove(e) {
-    // Check if we should start dragging (threshold exceeded)
-    if (this._dragPending && !this._isDragging) {
-      const dx = Math.abs(e.clientX - this._dragStartPos.x);
-      const dy = Math.abs(e.clientY - this._dragStartPos.y);
+  _activateDrag() {
+    this._isDragging = true;
+    this._dragPending = false;
+    this.style.cursor = "grabbing";
+    const rect = this.getBoundingClientRect();
+    this.style.top = `${rect.top}px`;
+    this.style.left = `${rect.left}px`;
+    this.style.bottom = "auto";
+    this.style.right = "auto";
+    this.style.margin = "0";
+  }
 
-      if (dx > this._dragThreshold || dy > this._dragThreshold) {
-        this._isDragging = true;
-        this._dragPending = false;
-        this.setPointerCapture(e.pointerId);
-        this.style.cursor = "grabbing";
-
-        const rect = this.getBoundingClientRect();
-        this.style.top = `${rect.top}px`;
-        this.style.left = `${rect.left}px`;
-        this.style.bottom = "auto";
-        this.style.right = "auto";
-        this.style.margin = "0";
-      }
-    }
-
-    if (!this._isDragging) return;
-
+  _updateDrag(e) {
     this.style.left = `${e.clientX - this._dragOffset.x}px`;
     this.style.top = `${e.clientY - this._dragOffset.y}px`;
     e.preventDefault();
   }
 
-  _handlePointerUp(e) {
-    if (this._isDragging) {
-      if (this.hasPointerCapture?.(e.pointerId)) {
-        this.releasePointerCapture(e.pointerId);
-      }
-      this.style.cursor = "";
-    }
-
+  _finishDrag(e) {
+    this.style.cursor = "";
     this._isDragging = false;
     this._dragPending = false;
+    e?.preventDefault?.();
+  }
 
-    document.removeEventListener("pointermove", this._boundPointerMove);
-    document.removeEventListener("pointerup", this._boundPointerUp);
-    document.removeEventListener("pointercancel", this._boundPointerUp);
+  _handlePointerMove(e) {
+    this._dragSession?.move(e);
+  }
 
-    e.preventDefault();
+  _handlePointerUp(e) {
+    if (e.type === "pointercancel") {
+      this._dragSession?.cancel("pointercancel", e);
+    } else {
+      this._dragSession?.commit(e);
+    }
   }
 
   static get observedAttributes() {

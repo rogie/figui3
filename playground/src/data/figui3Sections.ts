@@ -1464,7 +1464,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Audio</label>
-    <fig-input-file accepts="audio/*" preview url="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" filename="t-rex-roar.mp3" full></fig-input-file>
+    <fig-input-file accepts="audio/*" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
   </fig-field>
 </div>`,
       },
@@ -2148,7 +2148,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "upload",
         name: "Upload",
         markup: `<div class="prop-panel">
-  <fig-image upload="true" label="Upload" size="auto" full checkerboard="true"></fig-image>
+  <fig-image upload="icon" label="Add image" size="auto" full checkerboard="true"></fig-image>
 </div>`,
       },
     ],
@@ -2340,7 +2340,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "upload",
         name: "Upload",
         markup: `<div class="prop-panel">
-  <fig-video upload="true" controls="true" muted size="auto" full checkerboard="true"></fig-video>
+  <fig-video upload="icon" label="Add video" controls="true" muted size="auto" full checkerboard="true"></fig-video>
 </div>`,
       },
     ],

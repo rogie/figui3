@@ -3,4 +3,194 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+:is(fig-media, fig-image, fig-video) {
+  --fig-media-fit: contain;
+  --fig-media-aspect-ratio: 4/3;
+  --fig-media-size: 100%;
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  max-width: var(--fig-media-size);
+  align-items: stretch;
+  position: relative;
+
+  &:has(> :is([slot="overlay"], fig-input-file[variant="overlay"])) {
+    display: inline-grid;
+    grid-template-areas: "media-preview";
+  }
+
+  &[size="small"] {
+    --fig-media-size: 2rem;
+    width: var(--fig-media-size);
+  }
+
+  &[size="medium"] {
+    --fig-media-size: 4rem;
+    width: var(--fig-media-size);
+  }
+
+  &[size="large"] {
+    --fig-media-size: 6rem;
+    width: var(--fig-media-size);
+  }
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &[aspect-ratio] {
+    width: 100%;
+  }
+
+  &[size]:not([size=""]):not([size="auto"]) {
+    width: var(--fig-media-size);
+  }
+
+  > fig-preview {
+    --fig-preview-fit: var(--fig-media-fit);
+    width: 100%;
+    max-width: var(--fig-media-size);
+    aspect-ratio: var(--fig-media-aspect-ratio);
+    min-height: 4rem;
+  }
+
+  &[size="small"] > fig-preview,
+  &[size="medium"] > fig-preview,
+  &[size="large"] > fig-preview,
+  &[aspect-ratio] > fig-preview {
+    min-height: auto;
+  }
+
+  &[checkerboard]:not([checkerboard="false"]) > fig-preview {
+    background: var(--checkerboard);
+  }
+
+  > :is(fig-preview, [slot="overlay"], fig-input-file[variant="overlay"]) {
+    grid-area: media-preview;
+  }
+
+  > fig-preview > video,
+  > fig-preview > img,
+  > fig-preview > .fig-media-element[data-generated] {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: var(--fig-preview-fit);
+    object-position: center;
+    z-index: 0;
+  }
+
+  > fig-spinner[slot="overlay"][data-loading-indicator][data-generated] {
+    place-self: center;
+    max-width: none;
+    z-index: 1;
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  &:not(
+      :has(
+        > fig-preview
+          > video.fig-media-element[data-generated][src]:not([src=""])
+      )
+    ):is(:not([poster]), [poster=""])
+    > fig-preview
+    > video.fig-media-element[data-generated] {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:not(
+      :has(
+        > fig-preview
+          > img.fig-media-element[data-generated][src]:not([src=""])
+      )
+    )
+    > fig-preview
+    > img.fig-media-element[data-generated] {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  > fig-preview > fig-input-file:is([data-generated], [variant="overlay"]) {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    max-width: calc(100% - var(--spacer-4));
+  }
+
+  &:not(
+      :has(
+        > fig-preview
+          > :is(img, video).fig-media-element[data-generated][src]:not(
+            [src=""]
+          )
+      )
+    )
+    > fig-preview
+    > fig-input-file:is([data-generated], [variant="overlay"]),
+  > fig-preview:hover
+    > fig-input-file:is([data-generated], [variant="overlay"]),
+  > fig-preview:focus-within
+    > fig-input-file:is([data-generated], [variant="overlay"]) {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  > :is([slot="overlay"], fig-input-file[variant="overlay"]) {
+    place-self: center;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    max-width: calc(100% - var(--spacer-4));
+  }
+
+  &:not(
+      :has(
+        > fig-preview
+          > :is(img, video).fig-media-element[data-generated][src]:not(
+            [src=""]
+          )
+      )
+    )
+    > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> fig-preview:hover)
+    > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> fig-preview:focus-within)
+    > :is([slot="overlay"], fig-input-file[variant="overlay"]),
+  &:has(> [slot="overlay"]:is(:focus, :focus-within, :active))
+    > [slot="overlay"],
+  &:has(
+      > fig-input-file[variant="overlay"]:is(:focus, :focus-within, :active)
+    )
+    > fig-input-file[variant="overlay"],
+  > [slot="overlay"]:focus-within,
+  > fig-input-file[variant="overlay"]:focus-within,
+  > [slot="overlay"]:hover,
+  > fig-input-file[variant="overlay"]:hover {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  > fig-media-controls[data-generated] {
+    position: static;
+    width: 100%;
+    pointer-events: auto;
+  }
+
+  > figcaption {
+    display: block;
+    width: 100%;
+    color: var(--figma-color-text-secondary);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height);
+    text-align: left;
+    white-space: normal;
+  }
+}

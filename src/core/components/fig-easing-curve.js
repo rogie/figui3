@@ -58,16 +58,11 @@ class FigEasingCurve extends HTMLElement {
   #pickerPopup = null;
   #pickerPopupAnchor = null;
   #pickerPopupAnchorResizeObserver = null;
-  #boundPickerClosed = () => {
-    if (!this.#pickerPopup) return;
-    if (
-      this.#pickerPopup.hasAttribute("open") ||
-      this.#pickerPopup.matches?.(":open") ||
-      this.#pickerPopup.matches?.(":popover-open")
-    ) {
-      return;
+  #boundPickerLifecycle = (event) => {
+    if (event.target !== this.#pickerPopup) return;
+    if (event.detail?.state === "closed") {
+      this.#pickerPopupAnchorResizeObserver?.disconnect();
     }
-    this.#pickerPopupAnchorResizeObserver?.disconnect();
   };
 
   static PRESETS = [
@@ -1772,8 +1767,10 @@ class FigEasingCurve extends HTMLElement {
       };
       popup.addEventListener("input", handlePopupEvent);
       popup.addEventListener("change", handlePopupEvent);
-      popup.addEventListener("close", this.#boundPickerClosed);
-      popup.addEventListener("toggle", this.#boundPickerClosed);
+      popup.addEventListener(
+        "fig-popup-lifecycle",
+        this.#boundPickerLifecycle,
+      );
       (figGetOverlayRoot() ?? document.body).append(popup);
       this.#pickerPopup = popup;
       this.#select?.setAttribute("aria-controls", popup.id);
@@ -1840,8 +1837,10 @@ class FigEasingCurve extends HTMLElement {
 
   #destroyPickerPopup() {
     if (!this.#pickerPopup) return;
-    this.#pickerPopup.removeEventListener("close", this.#boundPickerClosed);
-    this.#pickerPopup.removeEventListener("toggle", this.#boundPickerClosed);
+    this.#pickerPopup.removeEventListener(
+      "fig-popup-lifecycle",
+      this.#boundPickerLifecycle,
+    );
     this.#pickerPopup.open = false;
     this.#pickerPopup.remove();
     this.#select?.removeAttribute("aria-controls");

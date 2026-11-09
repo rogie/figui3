@@ -4,9 +4,90 @@ Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 /* Dropdown */
+select,
+input[type="text"][list] {
+  padding: var(--spacer-2);
+
+  &:not([multiple]) {
+    height: var(--fig-dropdown-height, var(--spacer-4));
+    padding: 0 var(--spacer-4) 0 var(--spacer-2);
+    background-color: var(--figma-color-bg);
+    background-image: var(--icon-16-chevron);
+    background-position: calc(100% - var(--spacer-1)) 50%;
+    background-size: 1rem;
+    background-repeat: no-repeat;
+  }
+  &[multiple] {
+    overflow: auto;
+    option{
+      padding: var(--spacer-1) var(--spacer-2);
+      border-radius: var(--radius-medium);
+      &:checked {
+        background-color: var(--figma-color-bg-selected-strong) !important;
+      }
+      &:active{
+        background-color: var(--figma-color-bg-active);
+      }
+      &:hover{
+        background-color: var(--figma-color-bg-hover);
+      }
+    }
+  }
+  border-radius: var(--radius-medium);
+  display: flex;
+  appearance: none;
+  align-items: center;
+  border: 0;
+  color: var(--figma-color-text);
+  box-shadow: inset 0 0 0 1px var(--figma-color-border);
+  accent-color: var(--figma-color-bg-brand);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  &:focus-visible {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &::-webkit-calendar-picker-indicator {
+    color-scheme: inherit;
+    opacity: 0;
+  }
+}
+
+input[type="text"][list],
+select:not([multiple]) {
+  padding-right: var(--spacer-4);
+  padding-left: var(--spacer-2);
+}
+
 fig-dropdown {
   & > *:not(select) {
     display: none !important;
+  }
+
+  &[size="large"] {
+    --fig-dropdown-height: var(--spacer-5);
+  }
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &[variant="ghost"] {
+    border-radius: var(--radius-medium);
+    background: transparent;
+
+    > select {
+      box-shadow: none;
+      background: transparent;
+    }
+
+    &:hover:not([disabled]):not([disabled="false"]) {
+      background-color: var(--figma-color-bg-secondary);
+    }
   }
 }
 

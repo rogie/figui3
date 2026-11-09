@@ -4,6 +4,11 @@ https://polyformproject.org/licenses/shield/1.0.0
 Required Notice: Copyright (c) 2026 Rogie King
 Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
 */
+import {
+  figDefineCustomElement,
+  figInvariantId,
+} from "../../shared/invariants.js";
+
 const HTMLElement = globalThis.HTMLElement ?? class {};
 const CustomEvent = class extends (globalThis.CustomEvent ?? class {}) {
   constructor(type, options = {}) {
@@ -17,10 +22,7 @@ const CustomEvent = class extends (globalThis.CustomEvent ?? class {}) {
 };
 
 function figEditorDefineElement(name, constructor) {
-  if (typeof customElements === "undefined") return;
-  if (!customElements.get(name)) {
-    customElements.define(name, constructor);
-  }
+  figDefineCustomElement(name, constructor);
 }
 
 function figEditorGetOverlayRoot() {
@@ -49,7 +51,7 @@ function figEditorBooleanAttribute(element, name) {
 }
 
 function figEditorUniqueId() {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  return figInvariantId("fig-editor");
 }
 
 function figEditorCssUrl(url) {

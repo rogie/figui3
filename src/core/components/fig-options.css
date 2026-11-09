@@ -3,4 +3,16 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
-/* Styles are provided by ordered shared cascade partials. */
+fig-options {
+  display: flex;
+  width: 100%;
+
+  & > fig-segmented-control {
+    flex: 1;
+    min-width: 0;
+  }
+
+  & > fig-dropdown {
+    flex: 1;
+  }
+}

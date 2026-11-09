@@ -47,6 +47,11 @@ function figBindInputSlotTooltip(node) {
 
 function figClearInputSlotTooltip(node) {
   figHideInputSlotTooltip({ currentTarget: node });
+  node.removeEventListener("pointerenter", figShowInputSlotTooltip);
+  node.removeEventListener("pointerleave", figHideInputSlotTooltip);
+  node.removeEventListener("focus", figShowInputSlotTooltip);
+  node.removeEventListener("blur", figHideInputSlotTooltip);
+  delete node.dataset.figInputSlotTooltipBound;
   delete node.dataset.figInputSlotFullText;
   node.removeAttribute("aria-label");
 }

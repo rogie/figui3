@@ -60,7 +60,7 @@ test.describe("editor component manifest contracts", () => {
           property.property,
           property.value,
         );
-        expect(String(actual)).toBe(String(property.expected));
+        expect(actual).toEqual(property.expected);
       });
     }
 

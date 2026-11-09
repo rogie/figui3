@@ -5,6 +5,75 @@ import { gradientValueToCss } from "../lib/gradientPreview";
 import { setupWebGpuShaderPreviews } from "../lib/webgpuShaderPreview";
 
 const SYNC_ID_ATTRIBUTE = "data-playground-sync-id";
+const VALUE_SYNC_SELECTOR =
+  "fig-3d-rotate, fig-input-slider, fig-input-slider-hue, fig-input-slider-opacity, fig-input-slider-delta, fig-input-slider-stepper, fig-input-slider-wheel, fig-input-wheel, fig-origin-grid, fig-joystick, fig-segmented-control";
+const VALUE_SYNC_TAGS = new Set(VALUE_SYNC_SELECTOR.split(", "));
+
+type OwnershipPhase = "stable" | "patching" | "replacing" | "interacting";
+
+interface OwnershipState {
+  phase: OwnershipPhase;
+  generation: number;
+  root: HTMLElement | null;
+}
+
+type OwnershipEvent =
+  | { type: "PATCH"; root: HTMLElement }
+  | { type: "REPLACE" }
+  | { type: "COMMIT"; root: HTMLElement; generation: number }
+  | { type: "INTERACT"; root: HTMLElement }
+  | { type: "SETTLE"; root: HTMLElement; generation: number };
+
+function reduceOwnership(
+  state: OwnershipState,
+  event: OwnershipEvent,
+): OwnershipState {
+  switch (event.type) {
+    case "PATCH":
+      if (
+        state.root !== event.root ||
+        (state.phase !== "stable" && state.phase !== "interacting")
+      ) {
+        return state;
+      }
+      return {
+        phase: "patching",
+        generation: state.generation + 1,
+        root: event.root,
+      };
+    case "REPLACE":
+      return {
+        phase: "replacing",
+        generation: state.generation + 1,
+        root: null,
+      };
+    case "COMMIT":
+      if (
+        state.generation !== event.generation ||
+        (state.phase !== "patching" && state.phase !== "replacing")
+      ) {
+        return state;
+      }
+      return { phase: "stable", generation: state.generation, root: event.root };
+    case "INTERACT":
+      if (
+        state.root !== event.root ||
+        (state.phase !== "stable" && state.phase !== "interacting")
+      ) {
+        return state;
+      }
+      return { ...state, phase: "interacting" };
+    case "SETTLE":
+      if (
+        state.phase !== "interacting" ||
+        state.generation !== event.generation ||
+        state.root !== event.root
+      ) {
+        return state;
+      }
+      return { ...state, phase: "stable" };
+  }
+}
 
 interface Props {
   example: Example;
@@ -17,6 +86,35 @@ interface Props {
 
 function isComponentTag(tag: string): boolean {
   return tag.startsWith("fig-");
+}
+
+function getPrimaryControls(container: HTMLElement) {
+  return Array.from(container.querySelectorAll("*")).filter((node) => {
+    const el = node as Element;
+    if (!isComponentTag(el.tagName.toLowerCase())) return false;
+    let parent = el.parentElement;
+    while (parent) {
+      if (isComponentTag(parent.tagName.toLowerCase())) return false;
+      parent = parent.parentElement;
+    }
+    return true;
+  });
+}
+
+function reconcileCachedControlValues(
+  root: HTMLElement,
+  cache: Map<number, string>,
+) {
+  if (!cache.size) return;
+  const fields = Array.from(root.querySelectorAll("fig-field"));
+  const controls = fields.length ? null : getPrimaryControls(root);
+
+  for (const [fieldIndex, value] of cache) {
+    const target = fields.length
+      ? fields[fieldIndex]?.querySelector(VALUE_SYNC_SELECTOR)
+      : controls?.[fieldIndex];
+    target?.setAttribute("value", value);
+  }
 }
 
 function createSyncSource(markup: string): HTMLElement | null {
@@ -134,37 +232,88 @@ export default function ExampleView({
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sourceRootRef = useRef<HTMLElement | null>(null);
+  const controlValueCacheRef = useRef<Map<number, string>>(new Map());
+  const ownershipRef = useRef<OwnershipState>({
+    phase: "stable",
+    generation: 0,
+    root: null,
+  });
 
-  const getPrimaryControls = (container: HTMLElement) =>
-    Array.from(container.querySelectorAll("*")).filter((node) => {
-      const el = node as Element;
-      if (!isComponentTag(el.tagName.toLowerCase())) return false;
-      let parent = el.parentElement;
-      while (parent) {
-        if (isComponentTag(parent.tagName.toLowerCase())) return false;
-        parent = parent.parentElement;
-      }
-      return true;
+  const dispatchOwnership = (event: OwnershipEvent) => {
+    ownershipRef.current = reduceOwnership(ownershipRef.current, event);
+    return ownershipRef.current;
+  };
+
+  const beginInteraction = (target: Node) => {
+    const container = containerRef.current;
+    const ownership = ownershipRef.current;
+    const root = ownership.root;
+    if (
+      !container ||
+      !root ||
+      !root.isConnected ||
+      !container.contains(root) ||
+      !root.contains(target)
+    ) {
+      return null;
+    }
+    const next = dispatchOwnership({ type: "INTERACT", root });
+    if (next.phase !== "interacting") return null;
+    return { root, generation: next.generation };
+  };
+
+  const settleInteraction = (
+    token: { root: HTMLElement; generation: number } | null,
+  ) => {
+    if (!token) return;
+    queueMicrotask(() => {
+      dispatchOwnership({ type: "SETTLE", ...token });
     });
+  };
 
   useLayoutEffect(() => {
     const container = containerRef.current;
     const nextSourceRoot = createSyncSource(markup);
     if (!container || !nextSourceRoot) return;
 
+    reconcileCachedControlValues(
+      nextSourceRoot,
+      controlValueCacheRef.current,
+    );
     const previousSourceRoot = sourceRootRef.current;
     const liveRoot = container.querySelector(
       `:scope > [${SYNC_ID_ATTRIBUTE}="0"]`,
     ) as HTMLElement | null;
-    const canPatch =
+    const hasPatchableStructure =
       previousSourceRoot &&
       liveRoot &&
       structureSignature(previousSourceRoot) ===
-        structureSignature(nextSourceRoot) &&
-      patchPreview(liveRoot, previousSourceRoot, nextSourceRoot);
+        structureSignature(nextSourceRoot);
+    let didPatch = false;
 
-    if (!canPatch) {
+    if (hasPatchableStructure) {
+      const patching = dispatchOwnership({ type: "PATCH", root: liveRoot });
+      didPatch = patchPreview(liveRoot, previousSourceRoot, nextSourceRoot);
+      if (didPatch) {
+        dispatchOwnership({
+          type: "COMMIT",
+          root: liveRoot,
+          generation: patching.generation,
+        });
+      }
+    }
+
+    if (!didPatch) {
+      const replacing = dispatchOwnership({ type: "REPLACE" });
       container.replaceChildren(nextSourceRoot.cloneNode(true));
+      const replacementRoot = container.querySelector(
+        `:scope > [${SYNC_ID_ATTRIBUTE}="0"]`,
+      ) as HTMLElement;
+      dispatchOwnership({
+        type: "COMMIT",
+        root: replacementRoot,
+        generation: replacing.generation,
+      });
     }
     sourceRootRef.current = nextSourceRoot;
   }, [example.id, markup]);
@@ -177,9 +326,14 @@ export default function ExampleView({
       const customEvent = event as CustomEvent<{ src?: string; file?: File }>;
       const imageEl = event.target as HTMLElement | null;
       if (!imageEl || imageEl.tagName.toLowerCase() !== "fig-image") return;
+      const interaction = beginInteraction(imageEl);
+      if (!interaction) return;
 
       const src = customEvent.detail?.src;
-      if (!src) return;
+      if (!src) {
+        settleInteraction(interaction);
+        return;
+      }
 
       const field = imageEl.closest("fig-field");
       let fieldIndex = -1;
@@ -190,9 +344,13 @@ export default function ExampleView({
         const controls = getPrimaryControls(container);
         fieldIndex = controls.indexOf(imageEl);
       }
-      if (fieldIndex < 0) return;
+      if (fieldIndex < 0) {
+        settleInteraction(interaction);
+        return;
+      }
 
       onPersistImageSource(fieldIndex, src);
+      settleInteraction(interaction);
     };
 
     container.addEventListener("loaded", handleLoaded as EventListener);
@@ -226,11 +384,28 @@ export default function ExampleView({
         return true;
       });
 
+    const observedOwnership = ownershipRef.current;
     const syncDialogState = (dialog: HTMLDialogElement) => {
+      const ownership = ownershipRef.current;
+      if (
+        ownership.generation !== observedOwnership.generation ||
+        ownership.root !== observedOwnership.root ||
+        ownership.root === null ||
+        !dialog.isConnected ||
+        !ownership.root.contains(dialog)
+      ) {
+        return;
+      }
+      const interaction = beginInteraction(dialog);
+      if (!interaction) return;
       const controls = getPrimaryControls();
       const fieldIndex = controls.indexOf(dialog);
-      if (fieldIndex < 0) return;
+      if (fieldIndex < 0) {
+        settleInteraction(interaction);
+        return;
+      }
       onPersistDialogOpenState(fieldIndex, dialog.hasAttribute("open"));
+      settleInteraction(interaction);
     };
 
     const dialogs = Array.from(
@@ -303,7 +478,10 @@ export default function ExampleView({
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName.toLowerCase();
       if (!target || tag !== "fig-switch") return;
+      const interaction = beginInteraction(target);
+      if (!interaction) return;
       syncSwitchCheckedState(target);
+      settleInteraction(interaction);
     };
 
     container.addEventListener("input", handleInput as EventListener);
@@ -312,25 +490,9 @@ export default function ExampleView({
     };
   }, [onPersistSwitchCheckedState, markup]);
 
-  const controlValueCacheRef = useRef<Map<number, string>>(new Map());
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    const VALUE_SYNC_TAGS = new Set([
-      "fig-3d-rotate",
-      "fig-input-slider",
-      "fig-input-slider-hue",
-      "fig-input-slider-opacity",
-      "fig-input-slider-delta",
-      "fig-input-slider-stepper",
-      "fig-input-slider-wheel",
-      "fig-input-wheel",
-      "fig-origin-grid",
-      "fig-joystick",
-      "fig-segmented-control",
-    ]);
 
     const resolveFieldIndex = (target: HTMLElement): number => {
       const field = target.closest("fig-field");
@@ -344,21 +506,38 @@ export default function ExampleView({
     const handleInput = (event: Event) => {
       const target = event.target as HTMLElement | null;
       if (!target || !VALUE_SYNC_TAGS.has(target.tagName.toLowerCase())) return;
+      const interaction = beginInteraction(target);
+      if (!interaction) return;
       const value = target.getAttribute("value");
-      if (value === null) return;
+      if (value === null) {
+        settleInteraction(interaction);
+        return;
+      }
       const fieldIndex = resolveFieldIndex(target);
-      if (fieldIndex < 0) return;
+      if (fieldIndex < 0) {
+        settleInteraction(interaction);
+        return;
+      }
       controlValueCacheRef.current.set(fieldIndex, value);
+      settleInteraction(interaction);
     };
 
     const handleChange = (event: Event) => {
       const target = event.target as HTMLElement | null;
       const tagName = target?.tagName.toLowerCase();
       if (!target || !tagName || !VALUE_SYNC_TAGS.has(tagName)) return;
+      const interaction = beginInteraction(target);
+      if (!interaction) return;
       const value = target.getAttribute("value");
-      if (value === null) return;
+      if (value === null) {
+        settleInteraction(interaction);
+        return;
+      }
       const fieldIndex = resolveFieldIndex(target);
-      if (fieldIndex < 0) return;
+      if (fieldIndex < 0) {
+        settleInteraction(interaction);
+        return;
+      }
       controlValueCacheRef.current.delete(fieldIndex);
       const shouldSkipPersistForFocusedControl =
         tagName === "fig-segmented-control" ||
@@ -369,9 +548,11 @@ export default function ExampleView({
       if (shouldSkipPersistForFocusedControl) {
         // Avoid full example markup refresh after stateful interactions; preserving DOM
         // keeps focus on controls and retains locally uploaded image options.
+        settleInteraction(interaction);
         return;
       }
       onPersistControlValue?.(fieldIndex, value);
+      settleInteraction(interaction);
     };
 
     container.addEventListener("input", handleInput as EventListener);
@@ -387,20 +568,7 @@ export default function ExampleView({
     const cache = controlValueCacheRef.current;
     if (!container || !cache.size) return;
 
-    const fields = Array.from(container.querySelectorAll("fig-field"));
-    const controls = fields.length ? null : getPrimaryControls(container);
-
-    for (const [fieldIndex, value] of cache) {
-      let target: Element | null = null;
-      if (fields.length && fields[fieldIndex]) {
-        target = fields[fieldIndex].querySelector(
-          "fig-3d-rotate, fig-input-slider, fig-input-slider-hue, fig-input-slider-opacity, fig-input-slider-delta, fig-input-slider-stepper, fig-input-slider-wheel, fig-input-wheel, fig-origin-grid, fig-joystick, fig-segmented-control",
-        );
-      } else if (controls) {
-        target = controls[fieldIndex] ?? null;
-      }
-      target?.setAttribute("value", value);
-    }
+    reconcileCachedControlValues(container, cache);
   }, [markup]);
 
   useEffect(() => {
