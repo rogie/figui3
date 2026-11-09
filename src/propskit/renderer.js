@@ -178,9 +178,12 @@ function renderMediaControl(host, node, value, uploadedOptions = []) {
 
   options.forEach((option) => {
     const media = document.createElement(mediaTag(node.controlType));
+    media.dataset.propskitMediaOption = node.path;
+    media.dataset.propskitMediaValue = option.value;
     media.setAttribute("value", option.value);
     media.setAttribute("aria-label", option.label);
     media.setAttribute("src", option.value);
+    media.setAttribute("upload", "icon");
     media.setAttribute("full", "");
     if (option.value === selected) media.setAttribute("selected", "");
     applyMediaAttributes(media, node, true);
@@ -545,10 +548,41 @@ export function mountPropsKitPanel(panel, target) {
     PropsKitStore.updateValue(panel.id, path, next, "change", event);
   };
 
+  const handleMediaOptionChange = (event, media, path) => {
+    if (event.type !== "change" || media.hasAttribute("src")) return;
+    const node = nodesByPath.get(path);
+    const value = media.dataset.propskitMediaValue;
+    if (!node || !value) return;
+
+    node.mediaOptions = node.mediaOptions.filter(
+      (option) => option.value !== value,
+    );
+    const uploaded = uploadedMediaOptions.get(path);
+    if (uploaded) {
+      uploadedMediaOptions.set(
+        path,
+        uploaded.filter((option) => option.value !== value),
+      );
+    }
+
+    const current = panel.values[path] ?? node.defaultValue;
+    if (current === value) {
+      PropsKitStore.updateValue(panel.id, path, "", "change", event);
+    } else {
+      media.remove();
+    }
+    if (objectUrls.delete(value)) URL.revokeObjectURL(value);
+  };
+
   const handleInteractionEvent = (event) => {
     if (!eventBelongsToPanel(event)) return;
     const host = event.target;
     if (!(host instanceof HTMLElement) || syncing.has(host)) return;
+    const mediaOptionPath = host.dataset.propskitMediaOption;
+    if (mediaOptionPath) {
+      handleMediaOptionChange(event, host, mediaOptionPath);
+      return;
+    }
     const mediaAddPath = host.dataset.propskitMediaAdd;
     if (mediaAddPath) {
       if (event.type === "change" || event.type === "loaded") {

@@ -426,6 +426,20 @@ test.describe("PropsKit", () => {
             (video) => video.getAttribute("upload"),
           ),
         },
+        sourceUploadModes: {
+          images: Array.from(
+            root.element.querySelectorAll(
+              "fig-image[src]",
+            ),
+            (image) => image.getAttribute("upload"),
+          ),
+          videos: Array.from(
+            root.element.querySelectorAll(
+              "fig-video[src]",
+            ),
+            (video) => video.getAttribute("upload"),
+          ),
+        },
         uploadTilesFirst: Array.from(
           root.element.querySelectorAll("[data-propskit-media-choice]"),
           (chooser) =>
@@ -472,12 +486,81 @@ test.describe("PropsKit", () => {
       images: ["icon", "icon", "icon"],
       videos: ["icon"],
     });
+    expect(result.sourceUploadModes).toEqual({
+      images: ["icon", "icon", "icon", "icon"],
+      videos: ["icon", "icon"],
+    });
     expect(result.uploadTilesFirst).toEqual([true, true, true, true]);
     expect(result.values).toEqual({
       emptyImage: "",
       hero: "/one.webp",
       gallery: "/three.webp",
       reel: "/two.mp4",
+    });
+  });
+
+  test("removes cleared image and video options from choosers", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const { figCreateProps, figCreatePropsRoot } = await import(
+        "/propskit.js"
+      );
+      const kit = figCreateProps("Media", {
+        gallery: {
+          type: "image",
+          options: ["/one.webp", "/two.webp"],
+          default: "/one.webp",
+        },
+        reel: {
+          type: "video",
+          options: ["/one.mp4", "/two.mp4"],
+          default: "/two.mp4",
+        },
+      });
+      const root = figCreatePropsRoot({
+        target: document.querySelector("#fixture-root"),
+        panelIds: [kit.id],
+      });
+      const clearMedia = (selector: string) => {
+        const input = root.element.querySelector(
+          `${selector} fig-input-file[data-generated]`,
+        ) as HTMLElement;
+        input.dispatchEvent(
+          new CustomEvent("change", {
+            bubbles: true,
+            detail: { cleared: true },
+          }),
+        );
+      };
+
+      clearMedia('fig-image[value="/two.webp"]');
+      clearMedia('fig-video[value="/two.mp4"]');
+      kit.setValue("gallery", "/three.webp");
+
+      return {
+        galleryValue: kit.values.gallery,
+        galleryOptions: Array.from(
+          root.element.querySelectorAll(
+            '[data-propskit-media-choice="gallery"] fig-image[value]',
+          ),
+          (media) => media.getAttribute("value"),
+        ),
+        reelValue: kit.values.reel,
+        reelOptions: Array.from(
+          root.element.querySelectorAll(
+            '[data-propskit-media-choice="reel"] fig-video[value]',
+          ),
+          (media) => media.getAttribute("value"),
+        ),
+      };
+    });
+
+    expect(result).toEqual({
+      galleryValue: "/three.webp",
+      galleryOptions: ["/one.webp", "/three.webp"],
+      reelValue: "",
+      reelOptions: ["/one.mp4"],
     });
   });
 

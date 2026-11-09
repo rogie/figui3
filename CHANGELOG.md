@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.10.2]
+
+### Changed
+
+- Added compact upload actions to populated PropsKit image and video choices.
+
+### Fixed
+
+- Removed cleared image and video choices from PropsKit choosers.
+
 ## [11.10.1]
 
 ### Changed
