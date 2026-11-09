@@ -50,10 +50,11 @@ const kit = figCreateProps("Appearance", {
   description: {
     type: "text",
     default: "",
+    placeholder: "Add description",
     multiline: true,
     autoresize: true
   },
-  accentColor: "#0D99FF",
+  accent: "#0D99FF",
   alignment: {
     type: "options",
     default: "Center",
@@ -93,12 +94,14 @@ const kit = figCreateProps(null, {
   numbers: {
     withStepper: {
       type: "number",
+      label: "Stepper",
       control: "number",
       default: 16,
       units: "px"
     },
     withoutStepper: {
       type: "number",
+      label: "Without",
       control: "number",
       stepper: false,
       default: 16,
@@ -328,10 +331,11 @@ export const propskitSections: PropsKitSection[] = [
           description: {
             type: "text",
             default: "",
+            placeholder: "Add description",
             multiline: true,
             autoresize: true,
           },
-          accentColor: "#0D99FF",
+          accent: "#0D99FF",
           alignment: {
             type: "options",
             default: "Center",
@@ -376,12 +380,14 @@ export const propskitSections: PropsKitSection[] = [
           numbers: {
             withStepper: {
               type: "number",
+              label: "Stepper",
               control: "number",
               default: 16,
               units: "px",
             },
             withoutStepper: {
               type: "number",
+              label: "Without",
               control: "number",
               stepper: false,
               default: 16,

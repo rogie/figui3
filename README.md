@@ -97,7 +97,12 @@ Agent skills ship in `.cursor/skills/` (included in the npm package):
 - `figui3` — core `fig.js` components
 - `fig-editor` — `fig-select` and `fig-fill-picker`
 - `fig-lab` — experimental audio, wheel, reorder, canvas, and AI components
-- `propkit` — property-row composition; examples are included in `/propskit`
+- `propskit` — declarative property panels; examples are included in `/propskit`
+
+Cursor discovers this repository's root `.cursor/skills/` automatically. In a
+consuming project, npm installs the packaged copies under
+`node_modules/@rogieking/figui3/.cursor/skills/`; Cursor does not automatically
+discover skills inside `node_modules`, but agents can read those files directly.
 
 See the generated [bundle registration inventory](BUNDLES.md) for the exact
 tags registered by Core, Editor, and Lab.

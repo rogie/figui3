@@ -13,6 +13,10 @@ import {
   controlAttributeRules,
   getSplitInputTypePreset,
 } from "../../playground/src/lib/attributeRules";
+import {
+  INSTALL_COMMAND,
+  INSTALL_PROMPT,
+} from "../../playground/src/lib/installPrompt";
 import { labSections } from "../../playground/src/data/labSections";
 import { propskitSections } from "../../playground/src/data/propskitSections";
 
@@ -33,6 +37,21 @@ function markupTags(value: unknown, tags = new Set<string>()) {
   }
   return tags;
 }
+
+test("installation prompt points agents to packaged Cursor skills", () => {
+  expect(INSTALL_COMMAND).toBe("npm i @rogieking/figui3");
+  expect(INSTALL_PROMPT).toContain(
+    "node_modules/@rogieking/figui3/.cursor/skills/",
+  );
+  for (const skill of ["figui3", "fig-editor", "fig-lab", "propskit"]) {
+    expect(INSTALL_PROMPT).toContain(`${skill}/SKILL.md`);
+  }
+  expect(INSTALL_PROMPT).toContain(
+    "does not automatically discover skills inside node_modules",
+  );
+  expect(INSTALL_PROMPT).not.toContain("playground");
+  expect(INSTALL_PROMPT).not.toContain("propkit/SKILL.md");
+});
 
 test("playground control tags have attribute rules or an explicit exclusion", () => {
   const intentionalWithoutControls = new Set([

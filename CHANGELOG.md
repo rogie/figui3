@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.10.0]
+
+### Added
+
+- Added PropsKit, a declarative property-panel API with configuration normalization, reactive storage, rendering, TypeScript declarations, documentation, and playground examples.
+- Added selectable image and video options to PropsKit, plus `upload="icon"` controls for compact `fig-image` and `fig-video` upload actions.
+- Added shared lifecycle, state-machine, invariant, and pointer-session infrastructure with browser and unit regression coverage.
+
+### Changed
+
+- Promoted `fig-property` to the core bundle and reorganized shared component styling into reusable utilities.
+- Made `fig-input-number` steppers visible by default; use `steppers="false"` to hide them. PropsKit slider controls now use `stepper: true`, while exact number inputs use `stepper: false` to hide steppers.
+- Replaced PropsKit image and video `multiple` arrays with selectable `options`; audio continues to use `multiple` and `maxItems`.
+- Renamed the packaged `propkit` skill to `propskit` and clarified how npm-installed Cursor skills are consumed from `node_modules`.
+
+### Fixed
+
+- Hardened async resource cleanup, overlay ownership, nested popups, gesture sessions, reconnect behavior, and custom-element registration.
+- Improved WebGPU shader preview cleanup and expanded source, package, component, and runtime contract coverage.
+
 ## [11.9.0]
 
 ### Added
@@ -9,16 +29,12 @@ All notable changes to this project will be documented in this file.
 - Added generated icon sources, a shared icon manifest, and standalone `icons.css`.
 - Added SSR-safe explicit registration, complete DOM and React declarations, and React runtime guidance.
 - Added generated bundle inventories, browser-support CI, and Chromium, Firefox, and WebKit contract coverage.
-- Added `upload="icon"` Add/Remove controls for image and video uploads; PropsKit media chooser grids use this mode with a 12rem maximum height and native scrollbar overflow.
 
 ### Changed
 
 - Split all core, Editor, and Lab custom elements into per-tag JavaScript and CSS source pairs under `src/` while retaining the existing aggregate package and `dist/` entrypoints.
 - Bundled complete Editor and Lab aggregates while preserving standalone component imports.
 - Reorganized playground navigation, package builds, licensing checks, and source packaging around the new component structure.
-- Made `fig-input-number` steppers visible by default; use `steppers="false"` to hide them. Internal `fig-slider` number inputs remain stepper-free.
-- Replaced PropsKit’s `variant: "stepper"` schema with `stepper: true` for slider stepper mode. Exact number inputs use the same option to hide default steppers with `stepper: false`.
-- **Breaking:** Replaced PropsKit image/video `multiple` arrays with selectable `options`; multiple candidates render in `fig-chooser` and resolve to one selected source string. Audio retains `multiple` / `maxItems`.
 
 ### Fixed
 

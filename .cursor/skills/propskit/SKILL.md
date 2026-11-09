@@ -1,5 +1,5 @@
 ---
-name: propkit
+name: propskit
 description: >-
   Guides declarative PropsKit property panels rendered from JSON-style FigUI3
   control definitions.
