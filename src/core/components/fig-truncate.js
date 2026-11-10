@@ -12,7 +12,7 @@ import { FigTooltip } from "./fig-tooltip.js";
 
 /* Text Truncation */
 class FigTruncate extends HTMLElement {
-  static observedAttributes = ["position", "tail", "tooltip"];
+  static observedAttributes = ["overflow", "position", "tail", "tooltip"];
 
   #originalText = null;
   #boundEnter = null;
@@ -66,6 +66,12 @@ class FigTruncate extends HTMLElement {
   #renderContent() {
     const position = this.getAttribute("position") || "right";
     const text = this.#originalText || "";
+    const fadeClasses = [
+      "fig-overflow-fade",
+      "fig-overflow-fade-left",
+      "fig-overflow-fade-right",
+    ];
+    this.classList.remove(...fadeClasses);
     if (position === "middle") {
       const tail = this.getAttribute("tail");
       let splitIndex;
@@ -82,10 +88,22 @@ class FigTruncate extends HTMLElement {
       const endSpan = document.createElement("span");
       endSpan.className = "end";
       endSpan.textContent = text.slice(splitIndex);
+      if (this.getAttribute("overflow") === "fade") {
+        startSpan.classList.add("fig-overflow-fade", "fig-overflow-fade-right");
+        endSpan.classList.add("fig-overflow-fade", "fig-overflow-fade-left");
+      }
       this.appendChild(startSpan);
       this.appendChild(endSpan);
     } else {
       this.textContent = text;
+      if (this.getAttribute("overflow") === "fade") {
+        this.classList.add(
+          "fig-overflow-fade",
+          position === "left"
+            ? "fig-overflow-fade-left"
+            : "fig-overflow-fade-right",
+        );
+      }
     }
   }
 

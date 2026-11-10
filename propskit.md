@@ -466,7 +466,7 @@ PropsKit image and video choosers use `upload="icon"` for their generated upload
 - `fig-spinner`: loading spinner. Attrs/modifiers: `size="small"`.
 - `fig-shimmer`: animated loading wrapper. Attrs/modifiers: `duration`, `playing`, `aria-label`, `aria-labelledby`.
 - `fig-skeleton`: skeleton placeholder around real fields. Attrs/modifiers: inherited shimmer attrs plus wrapped field content.
-- `fig-truncate`: right, left, or middle truncation with optional tooltip. Attrs/modifiers: `position`, `tail`, `tooltip`.
+- `fig-truncate`: right, left, or middle truncation with ellipsis or fade overflow and an optional tooltip. Attrs/modifiers: `position`, `overflow`, `tail`, `tooltip`.
 - `fig-layer`: layer tree row. Attrs/modifiers: `open`, `selected`, `visible`, nested `fig-layer`, `.fig-layer-row`, `.fig-layer-icon`, `.fig-layer-chevron`.
 
 ## Control Selection Rules

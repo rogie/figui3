@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.3]
+
+### Added
+
+- Added `overflow="fade"` to `fig-truncate` with edge-aware right, left, and middle truncation, playground controls, documentation, and browser coverage.
+
 ## [11.11.2]
 
 ### Added

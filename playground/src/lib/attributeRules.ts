@@ -1472,6 +1472,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-truncate": {
     position: { label: "Position", type: "enum", options: ["right", "left", "middle"] },
+    overflow: { label: "Overflow", type: "enum", options: ["ellipsis", "fade"] },
     tail: { label: "Tail", type: "string" },
     tooltip: { label: "Tooltip", type: "boolean", boolMode: "presence" },
   },

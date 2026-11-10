@@ -47,3 +47,21 @@ fig-truncate {
     }
   }
 }
+
+@supports (animation-timeline: scroll(self inline)) {
+  fig-truncate[overflow="fade"] {
+    text-overflow: clip;
+
+    &[position="middle"] > :is(.start, .end) {
+      text-overflow: clip;
+    }
+
+    &[position="left"].fig-overflow-fade-left,
+    &[position="middle"] > .end.fig-overflow-fade-left {
+      --fig-overflow-fade-left: var(--fig-overflow-fade-size);
+      --fig-overflow-fade-left-opacity: 0;
+
+      animation: none;
+    }
+  }
+}

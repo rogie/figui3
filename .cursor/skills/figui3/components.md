@@ -572,12 +572,12 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 ### `fig-truncate`
 
 ```tsx
-<fig-truncate position="middle" tooltip tail="…">
+<fig-truncate position="middle" overflow="fade" tooltip tail="…">
   A very long layer name
 </fig-truncate>
 ```
 
-- Attrs: `position` (`right` | `left` | `middle`), `tooltip`, `tail`
+- Attrs: `position` (`right` | `left` | `middle`), `overflow` (`ellipsis` | `fade`), `tooltip`, `tail`
 
 ### `.fig-overflow-fade`
 

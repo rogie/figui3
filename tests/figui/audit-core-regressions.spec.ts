@@ -911,6 +911,73 @@ test.describe("fig.js audit core regressions", () => {
     expect(state.shown).toEqual(["edited-.png"]);
   });
 
+  test("fig-truncate maps fade overflow to its truncation edge", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <fig-truncate id="trunc" overflow="fade">
+          a-very-long-file-name.png
+        </fig-truncate>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const el = root.querySelector("#trunc") as HTMLElement;
+      const classes = (target: Element) => [...target.classList].sort();
+      const leftFade = (target: Element) => {
+        const style = getComputedStyle(target);
+        return {
+          size: style.getPropertyValue("--fig-overflow-fade-left").trim(),
+          opacity: style
+            .getPropertyValue("--fig-overflow-fade-left-opacity")
+            .trim(),
+        };
+      };
+
+      const right = classes(el);
+      el.setAttribute("position", "left");
+      const left = classes(el);
+      const leftFadeState = leftFade(el);
+      el.setAttribute("position", "middle");
+      const middle = {
+        host: classes(el),
+        start: classes(el.querySelector(".start")!),
+        end: classes(el.querySelector(".end")!),
+        endFade: leftFade(el.querySelector(".end")!),
+      };
+      el.setAttribute("overflow", "ellipsis");
+      const ellipsis = {
+        host: classes(el),
+        start: classes(el.querySelector(".start")!),
+        end: classes(el.querySelector(".end")!),
+      };
+
+      return { right, left, leftFadeState, middle, ellipsis };
+    });
+
+    expect(state.right).toEqual([
+      "fig-overflow-fade",
+      "fig-overflow-fade-right",
+    ]);
+    expect(state.left).toEqual([
+      "fig-overflow-fade",
+      "fig-overflow-fade-left",
+    ]);
+    expect(state.leftFadeState).toEqual({ size: "32px", opacity: "0" });
+    expect(state.middle).toEqual({
+      host: [],
+      start: ["fig-overflow-fade", "fig-overflow-fade-right", "start"],
+      end: ["end", "fig-overflow-fade", "fig-overflow-fade-left"],
+      endFade: { size: "32px", opacity: "0" },
+    });
+    expect(state.ellipsis).toEqual({
+      host: [],
+      start: ["start"],
+      end: ["end"],
+    });
+  });
+
   test("fig-easing-curve cleans up canceled and disconnected drags", async ({
     page,
   }) => {
